@@ -2328,12 +2328,18 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
   const openRelaxPreview = () => {
     setRelaxPreviewOpen(true);
-    trackEvent("relax_filters_preview_open", { changes_count: relaxPreviewChanges.length });
+    trackEvent("relax_filters_preview_open", {
+      changes_count: relaxPreviewChanges.length,
+      restriction_types: relaxPreviewChanges.map((item) => item.id).join(","),
+    });
   };
 
   const cancelRelaxPreview = () => {
     setRelaxPreviewOpen(false);
-    trackEvent("relax_filters_cancelled", { changes_count: relaxPreviewChanges.length });
+    trackEvent("relax_filters_cancelled", {
+      changes_count: relaxPreviewChanges.length,
+      restriction_types: relaxPreviewChanges.map((item) => item.id).join(","),
+    });
   };
 
   const applyRelaxPreview = () => {
@@ -2345,7 +2351,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     requestAnimationFrame(() => {
       void onSubmit({ preventDefault: () => {} } as FormEvent);
     });
-    trackEvent("relax_filters_applied", { changes_count: relaxPreviewChanges.length });
+    trackEvent("relax_filters_applied", {
+      changes_count: relaxPreviewChanges.length,
+      restriction_types: relaxPreviewChanges.map((item) => item.id).join(","),
+    });
   };
 
   const undoZeroResultRelaxAction = useCallback((requestedAction?: ZeroResultRelaxAction) => {
