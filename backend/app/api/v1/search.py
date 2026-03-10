@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from app.api.v1.airports import _validate_iata
 from app.infrastructure.providers.ryanair_public_provider import RyanairPublicProvider
+from app.services.quick_search_dedupe import dedupe_ranked_results
 from app.services.quick_search_execution import build_execution_plan, execute_plan
 from app.services.quick_search_expansion import expand_search_sides
 from app.services.quick_search_planner import build_pair_plan
@@ -574,6 +575,7 @@ def quick_search(
             relaxed_filters.append("departure_window")
 
     ranked_results = rank_quick_search_results(flights_after_filters, pair_plan)
+    deduped = dedupe_ranked_results(ranked_results)
 
     return {
         "query": {
@@ -691,6 +693,7 @@ def quick_search(
                     "travel_date",
                     "departure_time_local",
                 ],
+                "dedupe": deduped.meta,
             },
         },
         "filters": {
@@ -709,7 +712,17 @@ def quick_search(
                 "currency": item.flight.currency,
                 "source": item.flight.source,
                 "score": item.score_breakdown,
+                "origin_seed_iata": item.origin_seed_iata,
+                "destination_seed_iata": item.destination_seed_iata,
+                "origin_iata_used": item.origin,
+                "destination_iata_used": item.destination,
+                "origin_is_seed": item.origin_is_seed,
+                "destination_is_seed": item.destination_is_seed,
+                "origin_distance_from_seed_km": item.origin_distance_from_seed_km,
+                "destination_distance_from_seed_km": item.destination_distance_from_seed_km,
+                "pair_category": item.pair_category,
+                "discovery_explanation": item.discovery_explanation,
             }
-            for item in ranked_results
+            for item in deduped.results
         ],
     }

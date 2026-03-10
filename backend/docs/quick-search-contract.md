@@ -109,3 +109,18 @@ Tie-breakers (stable):
 3. `distance_penalty_total`
 4. `travel_date`
 5. `departure_time_local`
+
+## Final deduplication
+A dedicated dedupe phase runs after ranking and before serialization.
+Semantic identity key (heuristic):
+- `origin_iata_used`
+- `destination_iata_used`
+- `travel_date`
+- `departure_time_local`
+- `source`
+- `currency`
+
+When duplicates compete, the winner is selected by:
+1. lower `final_score`
+2. lower `price`
+3. lower `distance_penalty_total`

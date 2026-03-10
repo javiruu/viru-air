@@ -15,6 +15,14 @@ class RankedResult:
     flight: ProviderFlight
     final_score: float
     score_breakdown: dict[str, float | str]
+    origin_seed_iata: str
+    destination_seed_iata: str
+    origin_is_seed: bool
+    destination_is_seed: bool
+    origin_distance_from_seed_km: float
+    destination_distance_from_seed_km: float
+    pair_category: str
+    discovery_explanation: str
 
 
 def rank_quick_search_results(
@@ -58,6 +66,13 @@ def rank_quick_search_results(
             + pair_category_bias
         )
 
+        discovery_explanation = {
+            "seed-seed": "direct_seed",
+            "seed-nearby": "nearby_destination",
+            "nearby-seed": "nearby_origin",
+            "nearby-nearby": "nearby_both_sides",
+        }.get(pair.pair_reason, "unknown")
+
         ranked.append(
             RankedResult(
                 origin=origin,
@@ -73,6 +88,14 @@ def rank_quick_search_results(
                     "distance_penalty_total": round(distance_penalty_total, 4),
                     "pair_category": pair.pair_reason,
                 },
+                origin_seed_iata=pair.origin_seed_iata,
+                destination_seed_iata=pair.destination_seed_iata,
+                origin_is_seed=pair.origin_is_seed,
+                destination_is_seed=pair.destination_is_seed,
+                origin_distance_from_seed_km=pair.origin_distance_from_seed_km,
+                destination_distance_from_seed_km=pair.destination_distance_from_seed_km,
+                pair_category=pair.pair_reason,
+                discovery_explanation=discovery_explanation,
             )
         )
 
