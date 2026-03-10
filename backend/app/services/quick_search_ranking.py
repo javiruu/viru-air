@@ -1,0 +1,90 @@
+from __future__ import annotations
+
+import datetime as dt
+from dataclasses import dataclass
+
+from app.domain.entities import ProviderFlight
+from app.services.quick_search_planner import PairPlanItem
+
+
+@dataclass(frozen=True)
+class RankedResult:
+    origin: str
+    destination: str
+    travel_date: dt.date
+    flight: ProviderFlight
+    final_score: float
+    score_breakdown: dict[str, float | str]
+
+
+def rank_quick_search_results(
+    rows: list[tuple[str, str, dt.date, ProviderFlight]],
+    planned_pairs: list[PairPlanItem],
+) -> list[RankedResult]:
+    if not rows:
+        return []
+
+    pair_by_key = {(pair.origin_iata, pair.destination_iata): pair for pair in planned_pairs}
+    min_price = min(max(0.0, float(row[3].price)) for row in rows)
+
+    ranked: list[RankedResult] = []
+    for origin, destination, travel_date, flight in rows:
+        pair = pair_by_key.get((origin, destination))
+        if pair is None:
+            continue
+
+        price_value = max(0.0, float(flight.price))
+        price_component = price_value - min_price
+
+        origin_seed_penalty = 0.0 if pair.origin_is_seed else 12.0
+        destination_seed_penalty = 0.0 if pair.destination_is_seed else 12.0
+
+        origin_distance_penalty = pair.origin_distance_from_seed_km * 0.06
+        destination_distance_penalty = pair.destination_distance_from_seed_km * 0.06
+        distance_penalty_total = origin_distance_penalty + destination_distance_penalty
+
+        pair_category_bias = {
+            "seed-seed": 0.0,
+            "seed-nearby": 8.0,
+            "nearby-seed": 8.0,
+            "nearby-nearby": 22.0,
+        }.get(pair.pair_reason, 30.0)
+
+        final_score = (
+            price_component
+            + origin_seed_penalty
+            + destination_seed_penalty
+            + distance_penalty_total
+            + pair_category_bias
+        )
+
+        ranked.append(
+            RankedResult(
+                origin=origin,
+                destination=destination,
+                travel_date=travel_date,
+                flight=flight,
+                final_score=round(final_score, 4),
+                score_breakdown={
+                    "final_score": round(final_score, 4),
+                    "price_component": round(price_component, 4),
+                    "origin_seed_penalty": round(origin_seed_penalty, 4),
+                    "destination_seed_penalty": round(destination_seed_penalty, 4),
+                    "distance_penalty_total": round(distance_penalty_total, 4),
+                    "pair_category": pair.pair_reason,
+                },
+            )
+        )
+
+    ranked.sort(
+        key=lambda item: (
+            item.final_score,
+            item.flight.price,
+            item.score_breakdown["distance_penalty_total"],
+            str(item.travel_date),
+            item.flight.departure_time_local or "99:99",
+            item.origin,
+            item.destination,
+        )
+    )
+    return ranked

@@ -94,3 +94,18 @@ The endpoint still returns `query`, `filters`, `results` and now adds:
 
 Planned pairs expose: seed/nearby category, distances from seed, and `pair_priority_score`.
 Execution metadata includes waves, cache hits, provider calls and effective limits.
+
+## Ranking (current)
+Final result ranking uses a multi-factor score:
+- `price_component` (relative to cheapest candidate in current result set)
+- `origin_seed_penalty`
+- `destination_seed_penalty`
+- `distance_penalty_total`
+- `pair_category` bias (`seed-seed` < mixed < `nearby-nearby`)
+
+Tie-breakers (stable):
+1. `final_score`
+2. `price`
+3. `distance_penalty_total`
+4. `travel_date`
+5. `departure_time_local`

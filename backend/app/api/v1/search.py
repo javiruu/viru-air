@@ -11,6 +11,7 @@ from app.infrastructure.providers.ryanair_public_provider import RyanairPublicPr
 from app.services.quick_search_execution import build_execution_plan, execute_plan
 from app.services.quick_search_expansion import expand_search_sides
 from app.services.quick_search_planner import build_pair_plan
+from app.services.quick_search_ranking import rank_quick_search_results
 
 router = APIRouter()
 provider = RyanairPublicProvider()
@@ -572,14 +573,7 @@ def quick_search(
             flights_after_filters = combined
             relaxed_filters.append("departure_window")
 
-    flights_sorted = sorted(
-        flights_after_filters,
-        key=lambda entry: (
-            str(entry[2]),
-            entry[3].departure_time_local or "99:99",
-            entry[3].price,
-        ),
-    )
+    ranked_results = rank_quick_search_results(flights_after_filters, pair_plan)
 
     return {
         "query": {
@@ -681,6 +675,23 @@ def quick_search(
                 },
             },
             "execution": execution_meta,
+            "ranking": {
+                "version": "quick_ranking.v1",
+                "signals": [
+                    "price_component",
+                    "origin_seed_penalty",
+                    "destination_seed_penalty",
+                    "distance_penalty_total",
+                    "pair_category",
+                ],
+                "tie_breakers": [
+                    "final_score",
+                    "price",
+                    "distance_penalty_total",
+                    "travel_date",
+                    "departure_time_local",
+                ],
+            },
         },
         "filters": {
             "applied": filters_applied,
@@ -690,14 +701,15 @@ def quick_search(
         },
         "results": [
             {
-                "origin": origin_code,
-                "destination": destination_code,
-                "travel_date": str(travel_date_item),
-                "departure_time_local": flight.departure_time_local,
-                "price": flight.price,
-                "currency": flight.currency,
-                "source": flight.source,
+                "origin": item.origin,
+                "destination": item.destination,
+                "travel_date": str(item.travel_date),
+                "departure_time_local": item.flight.departure_time_local,
+                "price": item.flight.price,
+                "currency": item.flight.currency,
+                "source": item.flight.source,
+                "score": item.score_breakdown,
             }
-            for origin_code, destination_code, travel_date_item, flight in flights_sorted
+            for item in ranked_results
         ],
     }
