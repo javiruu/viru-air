@@ -3231,7 +3231,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       ) : null}
 
       {hasSearched ? (
-      <>
+      <QuickSearchResultsWorkspace>
       <div id="qs-workspace-hint" className="qs-workspace-hint">
         {pageWorkspaceHint}
       </div>
@@ -4148,7 +4148,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         </div>
       ) : null}
 
-      </>
+      </QuickSearchResultsWorkspace>
       ) : (
         <section className="panel panel-soft section-gap-sm" aria-live="polite">
           <div className="panel-header">
