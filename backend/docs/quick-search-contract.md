@@ -79,3 +79,6 @@ The endpoint still returns `query`, `filters`, `results` and now adds:
 - `meta.legacy_aliases_used`
 - `meta.filter_support`
 - `meta.pair_counts`
+
+`execution.max_pairs` and `execution.max_requests` are applied to pair planning.
+`execution.timeout_ms` is already part of the contract; provider-level timeout enforcement is marked as pending.

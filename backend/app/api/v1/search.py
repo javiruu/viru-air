@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from app.api.v1.airports import _validate_iata
 from app.infrastructure.airports_catalog import expand_side, resolve_seed_airport
 from app.infrastructure.providers.ryanair_public_provider import RyanairPublicProvider
+from app.services.quick_search_planner import build_pair_plan
 
 router = APIRouter()
 provider = RyanairPublicProvider()
@@ -501,6 +502,9 @@ def quick_search(
     filters_applied: dict[str, Any] = {}
     relaxed_filters: list[str] = []
 
+    if canonical.execution.timeout_ms != 8000:
+        warnings.append("timeout_ms_not_yet_enforced_at_provider_level")
+
     if max_stops > 0:
         warnings.append("stops_no_disponible_en_modo_rapido")
 
@@ -531,26 +535,28 @@ def quick_search(
         filters_applied["exclusion"] = True
 
     date_candidates = _build_flex_dates(travel_date_value, days_before, days_after)
+    pair_plan, pair_plan_stats = build_pair_plan(
+        origin_expanded,
+        destination_expanded,
+        max_pairs=max_pairs,
+        max_requests=canonical.execution.max_requests,
+        date_count=len(date_candidates),
+    )
+    if pair_plan_stats["truncated"]:
+        warnings.append("limite_combinaciones_alternativas")
+
     combined: list[tuple[str, str, dt.date, Any]] = []
     pair_count = 0
-    for origin_code in origin_candidates:
-        for destination_code in destination_candidates:
-            if origin_code == destination_code:
-                continue
-            if pair_count >= max_pairs:
-                warnings.append("limite_combinaciones_alternativas")
-                break
-            for travel_date_item in date_candidates:
-                try:
-                    flights = provider.get_flights(origin_code, destination_code, str(travel_date_item))
-                except Exception:
-                    warnings.append("ryanair_unavailable_parcial")
-                    flights = []
-                for flight in flights:
-                    combined.append((origin_code, destination_code, travel_date_item, flight))
-            pair_count += 1
-        if pair_count >= max_pairs:
-            break
+    for pair in pair_plan:
+        for travel_date_item in date_candidates:
+            try:
+                flights = provider.get_flights(pair.origin_iata, pair.destination_iata, str(travel_date_item))
+            except Exception:
+                warnings.append("ryanair_unavailable_parcial")
+                flights = []
+            for flight in flights:
+                combined.append((pair.origin_iata, pair.destination_iata, travel_date_item, flight))
+        pair_count += 1
 
     filtered = [
         (origin_code, destination_code, travel_date_item, flight)
@@ -630,8 +636,11 @@ def quick_search(
             },
             "pair_counts": {
                 "evaluated": pair_count,
-                "truncated": pair_count >= max_pairs,
+                "total_pairs": pair_plan_stats["total_pairs"],
+                "selected_pairs": pair_plan_stats["selected_pairs"],
+                "truncated": pair_plan_stats["truncated"],
                 "max_pairs": max_pairs,
+                "max_pairs_by_requests": pair_plan_stats["max_pairs_by_requests"],
             },
         },
         "filters": {
