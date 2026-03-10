@@ -3196,6 +3196,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         </div>
       ) : null}
 
+      {hasSearched ? (
+      <>
       <div id="qs-workspace-hint" className="qs-workspace-hint">
         {pageWorkspaceHint}
       </div>
@@ -4110,6 +4112,16 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           {message}
         </div>
       ) : null}
+
+      </>
+      ) : (
+        <section className="panel panel-soft section-gap-sm" aria-live="polite">
+          <div className="panel-header">
+            <h2>{t("searchReadyTitle")}</h2>
+            <span className="muted">{t("searchReadyHint")}</span>
+          </div>
+        </section>
+      )}
 
       {(weatherOrigin || weatherDestination) ? (
         <details className="panel panel-soft section-gap qs-secondary-weather">
