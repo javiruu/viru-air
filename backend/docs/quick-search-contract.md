@@ -86,5 +86,8 @@ The endpoint still returns `query`, `filters`, `results` and now adds:
 - `meta.filter_support`
 - `meta.pair_counts`
 
-`execution.max_pairs` and `execution.max_requests` are applied to pair planning.
+`execution.max_pairs` is applied to base O×D planned pairs (after filtering and priority ordering).
+`execution.max_requests` is surfaced for next execution stage budgeting and metadata (`max_pairs_by_requests`).
 `execution.timeout_ms` is already part of the contract; provider-level timeout enforcement is marked as pending.
+
+Planned pairs expose: seed/nearby category, distances from seed, and `pair_priority_score`.

@@ -637,7 +637,23 @@ def quick_search(
                 "truncated": pair_plan_stats["truncated"],
                 "max_pairs": max_pairs,
                 "max_pairs_by_requests": pair_plan_stats["max_pairs_by_requests"],
+                "max_pairs_scope": "base_pairs_only",
             },
+            "planned_pairs": [
+                {
+                    "origin_iata": pair.origin_iata,
+                    "destination_iata": pair.destination_iata,
+                    "origin_seed_iata": pair.origin_seed_iata,
+                    "destination_seed_iata": pair.destination_seed_iata,
+                    "origin_is_seed": pair.origin_is_seed,
+                    "destination_is_seed": pair.destination_is_seed,
+                    "origin_distance_from_seed_km": pair.origin_distance_from_seed_km,
+                    "destination_distance_from_seed_km": pair.destination_distance_from_seed_km,
+                    "pair_priority_score": pair.pair_priority_score,
+                    "pair_reason": pair.pair_reason,
+                }
+                for pair in pair_plan
+            ],
             "expansion": {
                 "origin": {
                     "side": origin_side.summary.side,
