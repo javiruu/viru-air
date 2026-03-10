@@ -70,6 +70,23 @@ class QuickSearchRankingTests(unittest.TestCase):
         ranked = rank_quick_search_results(rows, pairs)
         self.assertEqual(ranked[0].origin, "AGP")
 
+    def test_soft_filters_weight_changes_penalty_intensity(self):
+        pairs = [
+            self._pair("LEI", "DUB", reason="seed-seed", origin_seed=True, destination_seed=True, od_km=0, dd_km=0),
+            self._pair("AGP", "DUB", reason="nearby-seed", origin_seed=False, destination_seed=True, od_km=180, dd_km=0),
+        ]
+        rows = [
+            ("LEI", "DUB", dt.date(2026, 6, 1), self._flight(100, dep="11:00")),
+            ("AGP", "DUB", dt.date(2026, 6, 1), self._flight(95, dep="10:00")),
+        ]
+
+        ranked_soft = rank_quick_search_results(rows, pairs, soft_filters_weight=0.2)
+        ranked_strict = rank_quick_search_results(rows, pairs, soft_filters_weight=1.2)
+        self.assertLess(
+            ranked_soft[1].score_breakdown["distance_penalty_total"],
+            ranked_strict[1].score_breakdown["distance_penalty_total"],
+        )
+
     def test_ranking_is_deterministic_with_tie_breakers(self):
         pairs = [
             self._pair("LEI", "DUB", reason="seed-seed", origin_seed=True, destination_seed=True, od_km=0, dd_km=0),

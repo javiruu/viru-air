@@ -41,6 +41,10 @@ class QuickSearchPayload(BaseModel):
     departure_from: str | None = None
     departure_to: str | None = None
     max_stops: int | None = None
+    duration_max_min: int | None = None
+    duration_max: int | None = None
+    risk_allowed: str | None = None
+    risk_filter: str | None = None
     exclude_origins: str | list[str] | None = None
     exclude_destinations: str | list[str] | None = None
     strict_filters: bool | None = None
@@ -82,6 +86,8 @@ class QuickSearchConstraints(BaseModel):
     strict_filters: bool = True
     include_stops: bool | None = None
     max_stops: int | None = None
+    duration_max_min: int | None = None
+    risk_allowed: str | None = None
     soft_filters_weight: float | None = None
 
 
@@ -331,6 +337,24 @@ def _normalize_quick_search_request(
                     if query_overrides.get("max_stops") is not None
                     else legacy_payload.max_stops
                 ),
+                "duration_max_min": (
+                    payload_dict.get("duration_max_min")
+                    if payload_dict.get("duration_max_min") is not None
+                    else payload_dict.get("duration_max")
+                    if payload_dict.get("duration_max") is not None
+                    else legacy_payload.duration_max_min
+                    if legacy_payload.duration_max_min is not None
+                    else legacy_payload.duration_max
+                ),
+                "risk_allowed": (
+                    payload_dict.get("risk_allowed")
+                    if payload_dict.get("risk_allowed") is not None
+                    else payload_dict.get("risk_filter")
+                    if payload_dict.get("risk_filter") is not None
+                    else legacy_payload.risk_allowed
+                    if legacy_payload.risk_allowed is not None
+                    else legacy_payload.risk_filter
+                ),
                 "soft_filters_weight": (
                     query_overrides.get("soft_filters_weight")
                     if query_overrides.get("soft_filters_weight") is not None
@@ -353,9 +377,11 @@ def _normalize_quick_search_request(
     destination_list = _parse_iata_input(canonical.destination.seed_iata)
 
     filter_support = {
-        "supported": ["strict_filters", "departure_window", "exclude_origins", "exclude_destinations"],
-        "legacy_partial": ["include_stops", "max_stops", "soft_filters_weight"],
-        "pending": ["stop-logic", "soft-ranking-weight"],
+        "hard_supported": ["strict_filters", "departure_window", "exclude_origins", "exclude_destinations"],
+        "soft_supported": ["soft_filters_weight", "seed_distance_penalty", "pair_category_bias"],
+        "unsupported": ["include_stops", "max_stops", "duration_max_min", "risk_allowed"],
+        "legacy_partial": ["include_stops", "max_stops"],
+        "pending": ["stop-logic", "duration-filter", "risk-model"],
     }
 
     return canonical, origin_list, destination_list, {"aliases": legacy_aliases_used, **filter_support}
@@ -517,6 +543,8 @@ def quick_search(
     strict_filters = canonical.constraints.strict_filters
     include_stops = bool(canonical.constraints.include_stops)
     max_stops = canonical.constraints.max_stops or 0
+    duration_max_min = canonical.constraints.duration_max_min
+    risk_allowed = canonical.constraints.risk_allowed
     soft_filters_weight = canonical.constraints.soft_filters_weight if canonical.constraints.soft_filters_weight is not None else 0.6
 
     max_pairs = canonical.execution.max_pairs
@@ -529,9 +557,27 @@ def quick_search(
         warnings.append("timeout_ms_not_yet_enforced_at_provider_level")
         _warn("timeout_ms_non_default", timeout_ms=canonical.execution.timeout_ms)
 
-    if max_stops > 0:
+    if include_stops or max_stops > 0:
         warnings.append("stops_no_disponible_en_modo_rapido")
-        _warn("stops_not_supported_quick", max_stops=max_stops)
+        _warn("unsupported_filter", filter="include_stops/max_stops", include_stops=include_stops, max_stops=max_stops)
+        if strict_filters:
+            _warn("strict_filter_not_enforceable", filter="include_stops/max_stops")
+        else:
+            _warn("degraded_filter_application", filter="include_stops/max_stops", mode="soft")
+
+    if duration_max_min is not None:
+        _warn("provider_missing_field_for_filter", filter="duration_max_min", value=duration_max_min)
+        if strict_filters:
+            _warn("strict_filter_not_enforceable", filter="duration_max_min")
+        else:
+            _warn("degraded_filter_application", filter="duration_max_min", mode="soft")
+
+    if risk_allowed not in (None, "", "all"):
+        _warn("unsupported_filter", filter="risk_allowed", value=risk_allowed)
+        if strict_filters:
+            _warn("strict_filter_not_enforceable", filter="risk_allowed")
+        else:
+            _warn("degraded_filter_application", filter="risk_allowed", mode="soft")
 
     exclude_origin_list = canonical.constraints.exclude_origins
     exclude_destination_list = canonical.constraints.exclude_destinations
@@ -628,7 +674,11 @@ def quick_search(
             relaxed_filters.append("departure_window")
 
     started = _phase_start()
-    ranked_results = rank_quick_search_results(flights_after_filters, pair_plan)
+    ranked_results = rank_quick_search_results(
+        flights_after_filters,
+        pair_plan,
+        soft_filters_weight=soft_filters_weight,
+    )
     _phase_end("ranking_ms", started)
 
     started = _phase_start()
@@ -683,6 +733,8 @@ def quick_search(
                 "strict_filters": strict_filters,
                 "include_stops": include_stops,
                 "max_stops": max_stops,
+                "duration_max_min": duration_max_min,
+                "risk_allowed": risk_allowed,
                 "soft_filters_weight": soft_filters_weight,
             },
             "execution": canonical.execution.model_dump(),
@@ -716,7 +768,9 @@ def quick_search(
             "contract_version": "quick_search.v2",
             "legacy_aliases_used": filter_contract["aliases"],
             "filter_support": {
-                "supported": filter_contract["supported"],
+                "hard_supported": filter_contract["hard_supported"],
+                "soft_supported": filter_contract["soft_supported"],
+                "unsupported": filter_contract["unsupported"],
                 "legacy_partial": filter_contract["legacy_partial"],
                 "pending": filter_contract["pending"],
             },
@@ -780,6 +834,16 @@ def quick_search(
                 "cache_hits": execution_meta.get("cache_hits", 0),
                 "cache_misses": execution_meta.get("cache_misses", 0),
                 "final_results_count": len(deduped.results),
+            },
+            "filters_engine": {
+                "strict_mode_effective": strict_filters,
+                "unsupported_filters_ignored": [
+                    item["meta"].get("filter")
+                    for item in warnings_structured
+                    if item.get("code") in {"unsupported_filter", "provider_missing_field_for_filter"}
+                ],
+                "hard_filters_applied": ["exclude_origins", "exclude_destinations", "departure_window"],
+                "soft_filters_applied": ["seed_distance_penalty", "pair_category_bias", "soft_filters_weight"],
             },
             "warnings_structured": warnings_structured,
             "ranking": {

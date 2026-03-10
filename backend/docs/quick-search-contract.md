@@ -125,6 +125,16 @@ When duplicates compete, the winner is selected by:
 2. lower `price`
 3. lower `distance_penalty_total`
 
+## Filter matrix (Quick-Search)
+| Filter | Type | Phase | Strict mode | Non-strict mode | Notes |
+|---|---|---|---|---|---|
+| `exclude_origins`, `exclude_destinations` | hard | expansion / pre-pairs | enforced | enforced | side-specific exclusions |
+| `departure_window` | hard | post-fetch filter | enforced | can relax only when result set is empty | legacy behavior kept |
+| `soft_filters_weight` | soft | ranking | scales soft penalties | scales soft penalties | affects seed/deviation penalties |
+| `include_stops`, `max_stops` | unsupported (legacy_partial) | n/a | warning `strict_filter_not_enforceable` | warning `degraded_filter_application` | provider data not reliable in quick mode |
+| `duration_max_min` | unsupported | n/a | warning `strict_filter_not_enforceable` | warning `degraded_filter_application` | provider missing duration field |
+| `risk_allowed` | unsupported | n/a | warning `strict_filter_not_enforceable` | warning `degraded_filter_application` | risk model pending |
+
 ## Observability and debug
 - Every search emits `meta.query_trace_id`.
 - Phase timings are exposed in `meta.pipeline_metrics`.

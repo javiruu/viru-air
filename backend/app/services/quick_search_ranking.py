@@ -28,6 +28,8 @@ class RankedResult:
 def rank_quick_search_results(
     rows: list[tuple[str, str, dt.date, ProviderFlight]],
     planned_pairs: list[PairPlanItem],
+    *,
+    soft_filters_weight: float = 0.6,
 ) -> list[RankedResult]:
     if not rows:
         return []
@@ -36,6 +38,8 @@ def rank_quick_search_results(
     min_price = min(max(0.0, float(row[3].price)) for row in rows)
 
     ranked: list[RankedResult] = []
+    soft_weight_factor = max(0.0, min(2.0, soft_filters_weight)) / 0.6
+
     for origin, destination, travel_date, flight in rows:
         pair = pair_by_key.get((origin, destination))
         if pair is None:
@@ -44,11 +48,11 @@ def rank_quick_search_results(
         price_value = max(0.0, float(flight.price))
         price_component = price_value - min_price
 
-        origin_seed_penalty = 0.0 if pair.origin_is_seed else 12.0
-        destination_seed_penalty = 0.0 if pair.destination_is_seed else 12.0
+        origin_seed_penalty = (0.0 if pair.origin_is_seed else 12.0) * soft_weight_factor
+        destination_seed_penalty = (0.0 if pair.destination_is_seed else 12.0) * soft_weight_factor
 
-        origin_distance_penalty = pair.origin_distance_from_seed_km * 0.06
-        destination_distance_penalty = pair.destination_distance_from_seed_km * 0.06
+        origin_distance_penalty = pair.origin_distance_from_seed_km * 0.06 * soft_weight_factor
+        destination_distance_penalty = pair.destination_distance_from_seed_km * 0.06 * soft_weight_factor
         distance_penalty_total = origin_distance_penalty + destination_distance_penalty
 
         pair_category_bias = {
@@ -56,7 +60,7 @@ def rank_quick_search_results(
             "seed-nearby": 8.0,
             "nearby-seed": 8.0,
             "nearby-nearby": 22.0,
-        }.get(pair.pair_reason, 30.0)
+        }.get(pair.pair_reason, 30.0) * soft_weight_factor
 
         final_score = (
             price_component
@@ -87,6 +91,7 @@ def rank_quick_search_results(
                     "destination_seed_penalty": round(destination_seed_penalty, 4),
                     "distance_penalty_total": round(distance_penalty_total, 4),
                     "pair_category": pair.pair_reason,
+                    "soft_filters_weight_applied": round(soft_weight_factor, 4),
                 },
                 origin_seed_iata=pair.origin_seed_iata,
                 destination_seed_iata=pair.destination_seed_iata,
