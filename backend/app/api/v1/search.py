@@ -4,7 +4,7 @@ from typing import Any
 from fastapi import APIRouter, Body, HTTPException, Query
 
 from app.core.errors import ApiError, message_for_code
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from app.api.v1.airports import _validate_iata
 from app.infrastructure.airports_catalog import expand_airports, get_airport
@@ -41,6 +41,53 @@ class QuickSearchPayload(BaseModel):
     flex_days_after: int | None = None
     dias_antes: int | None = None
     dias_despues: int | None = None
+
+
+class QuickSearchSide(BaseModel):
+    seed_iata: str
+    include_nearby: bool = False
+    radius_km: int = Field(default=150, ge=10, le=500)
+    max_candidates: int = Field(default=6, ge=1, le=20)
+
+    @field_validator("seed_iata")
+    @classmethod
+    def validate_seed_iata(cls, value: str) -> str:
+        return _validate_iata(value)
+
+
+class QuickSearchTravel(BaseModel):
+    date: dt.date
+    flex_before: int = Field(default=0, ge=0, le=7)
+    flex_after: int = Field(default=0, ge=0, le=7)
+
+
+class QuickSearchDepartureWindow(BaseModel):
+    after: str | None = None
+    before: str | None = None
+
+
+class QuickSearchConstraints(BaseModel):
+    departure_window: QuickSearchDepartureWindow | None = None
+    exclude_origins: list[str] = Field(default_factory=list)
+    exclude_destinations: list[str] = Field(default_factory=list)
+    strict_filters: bool = True
+    include_stops: bool | None = None
+    max_stops: int | None = None
+    soft_filters_weight: float | None = None
+
+
+class QuickSearchExecution(BaseModel):
+    max_pairs: int = Field(default=12, ge=1, le=200)
+    max_requests: int = Field(default=120, ge=1, le=1000)
+    timeout_ms: int = Field(default=8000, ge=1000, le=30000)
+
+
+class QuickSearchCanonicalRequest(BaseModel):
+    origin: QuickSearchSide
+    destination: QuickSearchSide
+    travel: QuickSearchTravel
+    constraints: QuickSearchConstraints = Field(default_factory=QuickSearchConstraints)
+    execution: QuickSearchExecution = Field(default_factory=QuickSearchExecution)
 
 
 def _clamp_days(value: int | None, max_days: int = 7) -> int:
@@ -131,6 +178,179 @@ def _parse_iata_input(value: str | list[str]) -> list[str]:
     return cleaned
 
 
+def _normalize_quick_search_request(
+    payload_dict: dict[str, Any] | None,
+    query_overrides: dict[str, Any],
+) -> tuple[QuickSearchCanonicalRequest, list[str], list[str], dict[str, list[str]]]:
+    payload_dict = payload_dict or {}
+    legacy_payload = QuickSearchPayload.model_validate(payload_dict)
+
+    is_canonical = isinstance(payload_dict.get("origin"), dict) and isinstance(payload_dict.get("destination"), dict)
+    legacy_aliases_used: list[str] = []
+
+    if is_canonical:
+        canonical_dict = {
+            "origin": payload_dict.get("origin"),
+            "destination": payload_dict.get("destination"),
+            "travel": payload_dict.get("travel"),
+            "constraints": payload_dict.get("constraints") or {},
+            "execution": payload_dict.get("execution") or {},
+        }
+
+        # query params still override canonical body for compatibility with existing clients
+        if query_overrides.get("origin_iata"):
+            canonical_dict["origin"] = {**(canonical_dict.get("origin") or {}), "seed_iata": query_overrides["origin_iata"]}
+            legacy_aliases_used.append("query.origin_iata")
+        if query_overrides.get("destination_iata"):
+            canonical_dict["destination"] = {**(canonical_dict.get("destination") or {}), "seed_iata": query_overrides["destination_iata"]}
+            legacy_aliases_used.append("query.destination_iata")
+        if query_overrides.get("travel_date"):
+            canonical_dict["travel"] = {**(canonical_dict.get("travel") or {}), "date": query_overrides["travel_date"]}
+            legacy_aliases_used.append("query.travel_date")
+    else:
+        origin_value = query_overrides.get("origin_iata") or legacy_payload.origin_iata
+        destination_value = query_overrides.get("destination_iata") or legacy_payload.destination_iata
+        travel_date_value = query_overrides.get("travel_date") or legacy_payload.travel_date or legacy_payload.date
+
+        if legacy_payload.include_nearby_origin is not None:
+            legacy_aliases_used.append("include_nearby_origin")
+        if legacy_payload.include_nearby_destination is not None:
+            legacy_aliases_used.append("include_nearby_destination")
+        if legacy_payload.strict_mode is not None:
+            legacy_aliases_used.append("strict_mode")
+        if legacy_payload.departure_from:
+            legacy_aliases_used.append("departure_from")
+        if legacy_payload.departure_to:
+            legacy_aliases_used.append("departure_to")
+        if legacy_payload.date:
+            legacy_aliases_used.append("date")
+        if legacy_payload.dias_antes is not None or legacy_payload.dias_despues is not None:
+            legacy_aliases_used.append("dias_antes/dias_despues")
+
+        canonical_dict = {
+            "origin": {
+                "seed_iata": origin_value,
+                "include_nearby": (
+                    query_overrides.get("include_nearby_origins")
+                    if query_overrides.get("include_nearby_origins") is not None
+                    else legacy_payload.include_nearby_origins
+                    if legacy_payload.include_nearby_origins is not None
+                    else legacy_payload.include_nearby_origin
+                    if legacy_payload.include_nearby_origin is not None
+                    else False
+                ),
+                "radius_km": (
+                    query_overrides.get("radius_km")
+                    if query_overrides.get("radius_km") is not None
+                    else legacy_payload.radius_km
+                    if legacy_payload.radius_km is not None
+                    else 150
+                ),
+                "max_candidates": 6,
+            },
+            "destination": {
+                "seed_iata": destination_value,
+                "include_nearby": (
+                    query_overrides.get("include_nearby_destinations")
+                    if query_overrides.get("include_nearby_destinations") is not None
+                    else legacy_payload.include_nearby_destinations
+                    if legacy_payload.include_nearby_destinations is not None
+                    else legacy_payload.include_nearby_destination
+                    if legacy_payload.include_nearby_destination is not None
+                    else False
+                ),
+                "radius_km": (
+                    query_overrides.get("radius_km")
+                    if query_overrides.get("radius_km") is not None
+                    else legacy_payload.radius_km
+                    if legacy_payload.radius_km is not None
+                    else 150
+                ),
+                "max_candidates": 6,
+            },
+            "travel": {
+                "date": travel_date_value,
+                "flex_before": _clamp_days(
+                    query_overrides.get("flex_days_before")
+                    if query_overrides.get("flex_days_before") is not None
+                    else legacy_payload.flex_days_before
+                    if legacy_payload.flex_days_before is not None
+                    else legacy_payload.dias_antes
+                    if legacy_payload.dias_antes is not None
+                    else 0
+                ),
+                "flex_after": _clamp_days(
+                    query_overrides.get("flex_days_after")
+                    if query_overrides.get("flex_days_after") is not None
+                    else legacy_payload.flex_days_after
+                    if legacy_payload.flex_days_after is not None
+                    else legacy_payload.dias_despues
+                    if legacy_payload.dias_despues is not None
+                    else 0
+                ),
+            },
+            "constraints": {
+                "departure_window": {
+                    "after": query_overrides.get("depart_after") or legacy_payload.depart_after or legacy_payload.departure_from,
+                    "before": query_overrides.get("depart_before") or legacy_payload.depart_before or legacy_payload.departure_to,
+                },
+                "exclude_origins": _normalize_iata_list(
+                    query_overrides.get("exclude_origins") if query_overrides.get("exclude_origins") is not None else legacy_payload.exclude_origins
+                ),
+                "exclude_destinations": _normalize_iata_list(
+                    query_overrides.get("exclude_destinations")
+                    if query_overrides.get("exclude_destinations") is not None
+                    else legacy_payload.exclude_destinations
+                ),
+                "strict_filters": (
+                    query_overrides.get("strict_filters")
+                    if query_overrides.get("strict_filters") is not None
+                    else legacy_payload.strict_filters
+                    if legacy_payload.strict_filters is not None
+                    else legacy_payload.strict_mode
+                    if legacy_payload.strict_mode is not None
+                    else True
+                ),
+                "include_stops": (
+                    query_overrides.get("include_stops")
+                    if query_overrides.get("include_stops") is not None
+                    else legacy_payload.include_stops
+                ),
+                "max_stops": (
+                    query_overrides.get("max_stops")
+                    if query_overrides.get("max_stops") is not None
+                    else legacy_payload.max_stops
+                ),
+                "soft_filters_weight": (
+                    query_overrides.get("soft_filters_weight")
+                    if query_overrides.get("soft_filters_weight") is not None
+                    else legacy_payload.soft_filters_weight
+                ),
+            },
+            "execution": {
+                "max_pairs": 12,
+                "max_requests": 120,
+                "timeout_ms": 8000,
+            },
+        }
+
+    try:
+        canonical = QuickSearchCanonicalRequest.model_validate(canonical_dict)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=exc.errors()) from exc
+
+    origin_list = _parse_iata_input(canonical.origin.seed_iata)
+    destination_list = _parse_iata_input(canonical.destination.seed_iata)
+
+    filter_support = {
+        "supported": ["strict_filters", "departure_window", "exclude_origins", "exclude_destinations"],
+        "legacy_partial": ["include_stops", "max_stops", "soft_filters_weight"],
+        "pending": ["stop-logic", "soft-ranking-weight"],
+    }
+
+    return canonical, origin_list, destination_list, {"aliases": legacy_aliases_used, **filter_support}
+
+
 @router.get("/deeplink")
 def deeplink(
     origin_iata: str,
@@ -213,7 +433,7 @@ def deeplink(
 
 @router.post("/quick")
 def quick_search(
-    payload: QuickSearchPayload | None = Body(default=None),
+    payload: dict[str, Any] | None = Body(default=None),
     origin_iata: str | None = Query(default=None),
     destination_iata: str | None = Query(default=None),
     travel_date: dt.date | None = Query(default=None),
@@ -231,81 +451,45 @@ def quick_search(
     flex_days_before: int | None = Query(default=None),
     flex_days_after: int | None = Query(default=None),
 ) -> dict:
-    payload = payload or QuickSearchPayload()
-    origin_value = origin_iata or payload.origin_iata
-    destination_value = destination_iata or payload.destination_iata
-    travel_date_value = travel_date or payload.travel_date or payload.date
-    if not origin_value:
-        raise _required_error("origin_iata")
-    if not destination_value:
-        raise _required_error("destination_iata")
-    if not travel_date_value:
-        raise _required_error("travel_date")
+    canonical, origin_list, destination_list, filter_contract = _normalize_quick_search_request(
+        payload,
+        {
+            "origin_iata": origin_iata,
+            "destination_iata": destination_iata,
+            "travel_date": travel_date,
+            "radius_km": radius_km,
+            "include_stops": include_stops,
+            "include_nearby_origins": include_nearby_origins,
+            "include_nearby_destinations": include_nearby_destinations,
+            "depart_after": depart_after,
+            "depart_before": depart_before,
+            "max_stops": max_stops,
+            "exclude_origins": exclude_origins,
+            "exclude_destinations": exclude_destinations,
+            "strict_filters": strict_filters,
+            "soft_filters_weight": soft_filters_weight,
+            "flex_days_before": flex_days_before,
+            "flex_days_after": flex_days_after,
+        },
+    )
 
-    radius_km = radius_km if radius_km is not None else payload.radius_km if payload.radius_km is not None else 150
-    include_stops = include_stops if include_stops is not None else payload.include_stops if payload.include_stops is not None else False
-    include_nearby_origins = (
-        include_nearby_origins
-        if include_nearby_origins is not None
-        else payload.include_nearby_origins
-        if payload.include_nearby_origins is not None
-        else payload.include_nearby_origin
-        if payload.include_nearby_origin is not None
-        else False
-    )
-    include_nearby_destinations = (
-        include_nearby_destinations
-        if include_nearby_destinations is not None
-        else payload.include_nearby_destinations
-        if payload.include_nearby_destinations is not None
-        else payload.include_nearby_destination
-        if payload.include_nearby_destination is not None
-        else False
-    )
-    depart_after = depart_after or payload.depart_after or payload.departure_from
-    depart_before = depart_before or payload.depart_before or payload.departure_to
-    max_stops = max_stops if max_stops is not None else payload.max_stops if payload.max_stops is not None else 0
-    exclude_origins = exclude_origins if exclude_origins is not None else payload.exclude_origins
-    exclude_destinations = exclude_destinations if exclude_destinations is not None else payload.exclude_destinations
-    strict_filters = (
-        strict_filters
-        if strict_filters is not None
-        else payload.strict_filters
-        if payload.strict_filters is not None
-        else payload.strict_mode
-        if payload.strict_mode is not None
-        else True
-    )
-    soft_filters_weight = (
-        soft_filters_weight
-        if soft_filters_weight is not None
-        else payload.soft_filters_weight
-        if payload.soft_filters_weight is not None
-        else 0.6
-    )
-    days_before = (
-        flex_days_before
-        if flex_days_before is not None
-        else payload.flex_days_before
-        if payload.flex_days_before is not None
-        else payload.dias_antes
-        if payload.dias_antes is not None
-        else 0
-    )
-    days_after = (
-        flex_days_after
-        if flex_days_after is not None
-        else payload.flex_days_after
-        if payload.flex_days_after is not None
-        else payload.dias_despues
-        if payload.dias_despues is not None
-        else 0
-    )
-    days_before = _clamp_days(days_before)
-    days_after = _clamp_days(days_after)
+    travel_date_value = canonical.travel.date
+    days_before = canonical.travel.flex_before
+    days_after = canonical.travel.flex_after
 
-    origin_list = _parse_iata_input(origin_value)
-    destination_list = _parse_iata_input(destination_value)
+    include_nearby_origins = canonical.origin.include_nearby
+    include_nearby_destinations = canonical.destination.include_nearby
+    radius_km_origin = canonical.origin.radius_km
+    radius_km_destination = canonical.destination.radius_km
+
+    depart_after = canonical.constraints.departure_window.after if canonical.constraints.departure_window else None
+    depart_before = canonical.constraints.departure_window.before if canonical.constraints.departure_window else None
+    strict_filters = canonical.constraints.strict_filters
+    include_stops = bool(canonical.constraints.include_stops)
+    max_stops = canonical.constraints.max_stops or 0
+    soft_filters_weight = canonical.constraints.soft_filters_weight if canonical.constraints.soft_filters_weight is not None else 0.6
+
+    max_pairs = canonical.execution.max_pairs
 
     warnings: list[str] = []
     filters_applied: dict[str, Any] = {}
@@ -314,8 +498,8 @@ def quick_search(
     if max_stops > 0:
         warnings.append("stops_no_disponible_en_modo_rapido")
 
-    exclude_origin_list = _normalize_iata_list(exclude_origins)
-    exclude_destination_list = _normalize_iata_list(exclude_destinations)
+    exclude_origin_list = canonical.constraints.exclude_origins
+    exclude_destination_list = canonical.constraints.exclude_destinations
     if any(code in exclude_origin_list for code in origin_list) or any(code in exclude_destination_list for code in destination_list):
         filters_applied["exclusion"] = True
 
@@ -324,11 +508,15 @@ def quick_search(
     if include_nearby_origins:
         if any(not get_airport(code) for code in origin_list):
             warnings.append("origen_no_disponible_en_catalogo")
-        origin_candidates = expand_airports(origin_list, radius_km, limit_per_seed=6)
+        origin_candidates = expand_airports(origin_list, radius_km_origin, limit_per_seed=canonical.origin.max_candidates)
     if include_nearby_destinations:
         if any(not get_airport(code) for code in destination_list):
             warnings.append("destino_no_disponible_en_catalogo")
-        destination_candidates = expand_airports(destination_list, radius_km, limit_per_seed=6)
+        destination_candidates = expand_airports(
+            destination_list,
+            radius_km_destination,
+            limit_per_seed=canonical.destination.max_candidates,
+        )
 
     origin_candidates = [code for code in origin_candidates if code not in exclude_origin_list]
     destination_candidates = [
@@ -338,7 +526,6 @@ def quick_search(
     if not origin_candidates or not destination_candidates:
         filters_applied["exclusion"] = True
 
-    pair_limit = 12
     date_candidates = _build_flex_dates(travel_date_value, days_before, days_after)
     combined: list[tuple[str, str, dt.date, Any]] = []
     pair_count = 0
@@ -346,7 +533,7 @@ def quick_search(
         for destination_code in destination_candidates:
             if origin_code == destination_code:
                 continue
-            if pair_count >= pair_limit:
+            if pair_count >= max_pairs:
                 warnings.append("limite_combinaciones_alternativas")
                 break
             for travel_date_item in date_candidates:
@@ -358,7 +545,7 @@ def quick_search(
                 for flight in flights:
                     combined.append((origin_code, destination_code, travel_date_item, flight))
             pair_count += 1
-        if pair_count >= pair_limit:
+        if pair_count >= max_pairs:
             break
 
     filtered = [
@@ -388,25 +575,40 @@ def quick_search(
 
     return {
         "query": {
-            "origin_iata": ",".join(origin_list),
-            "destination_iata": ",".join(destination_list),
-            "travel_date": str(travel_date_value),
-            "flex_days_before": days_before,
-            "flex_days_after": days_after,
-            "travel_dates": [str(date_item) for date_item in date_candidates],
-            "radius_km": radius_km,
-            "include_stops": include_stops,
-            "include_nearby_origins": include_nearby_origins,
-            "include_nearby_destinations": include_nearby_destinations,
-            "depart_after": depart_after,
-            "depart_before": depart_before,
-            "max_stops": max_stops,
-            "exclude_origins": exclude_origin_list,
-            "exclude_destinations": exclude_destination_list,
-            "strict_filters": strict_filters,
-            "soft_filters_weight": soft_filters_weight,
+            "origin": canonical.origin.model_dump(),
+            "destination": canonical.destination.model_dump(),
+            "travel": {
+                "date": str(travel_date_value),
+                "flex_before": days_before,
+                "flex_after": days_after,
+                "travel_dates": [str(date_item) for date_item in date_candidates],
+            },
+            "constraints": {
+                "departure_window": {"after": depart_after, "before": depart_before},
+                "exclude_origins": exclude_origin_list,
+                "exclude_destinations": exclude_destination_list,
+                "strict_filters": strict_filters,
+                "include_stops": include_stops,
+                "max_stops": max_stops,
+                "soft_filters_weight": soft_filters_weight,
+            },
+            "execution": canonical.execution.model_dump(),
             "expanded_origins": origin_candidates,
             "expanded_destinations": destination_candidates,
+        },
+        "meta": {
+            "contract_version": "quick_search.v2",
+            "legacy_aliases_used": filter_contract["aliases"],
+            "filter_support": {
+                "supported": filter_contract["supported"],
+                "legacy_partial": filter_contract["legacy_partial"],
+                "pending": filter_contract["pending"],
+            },
+            "pair_counts": {
+                "evaluated": pair_count,
+                "truncated": pair_count >= max_pairs,
+                "max_pairs": max_pairs,
+            },
         },
         "filters": {
             "applied": filters_applied,
