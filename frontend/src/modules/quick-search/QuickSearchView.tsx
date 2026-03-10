@@ -13,6 +13,7 @@ import { formatRelativeTime } from "@/modules/shared/format";
 import { trackEvent } from "@/modules/shared/analytics";
 import { formatCurrency, formatNumber } from "@/modules/shared/format";
 import { buildDateRange } from "@/modules/quick-search/utils";
+import { buildCriteriaSignature, parseNumericInput } from "@/modules/quick-search/searchCriteria";
 const QuickSearchAdvancedFilters = dynamic(() =>
   import("@/modules/quick-search/components/QuickSearchAdvancedFilters").then((m) => m.QuickSearchAdvancedFilters),
 );
@@ -76,26 +77,6 @@ type ExecutedCriteriaSnapshot = {
   filters: string[];
 };
 
-type NumericParseOptions = {
-  allowFloat?: boolean;
-  min?: number;
-  max?: number;
-};
-
-function parseNumericInput(raw: string, options: NumericParseOptions = {}): number | null {
-  const value = raw.trim();
-  if (!value) return null;
-  const normalized = value.replace(",", ".");
-  const pattern = options.allowFloat ? /^\d+(\.\d+)?$/ : /^\d+$/;
-  if (!pattern.test(normalized)) return null;
-  const parsed = Number(normalized);
-  if (!Number.isFinite(parsed)) return null;
-  if (!options.allowFloat && !Number.isInteger(parsed)) return null;
-  if (options.min !== undefined && parsed < options.min) return null;
-  if (options.max !== undefined && parsed > options.max) return null;
-  return parsed;
-}
-
 const AIRPORTS = airportsIata as Array<{ 
   iata: string;
   name: string;
@@ -151,6 +132,7 @@ function buildAirportSuggestions(value: string, limit = 6) {
 export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchMode }) {
   const router = useRouter();
   const [executedCriteria, setExecutedCriteria] = useState<ExecutedCriteriaSnapshot | null>(null);
+  // signature of the last successfully executed criteria (used to detect pending changes)
   const [appliedCriteriaSignature, setAppliedCriteriaSignature] = useState<string | null>(null);
   const initialOrigin = mode === "recommendations" ? "" : "MAD";
   const initialDestination = mode === "recommendations" ? "" : "DUB";
@@ -1787,11 +1769,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const radiusActive = includeNearbyOrigins || includeNearbyDestinations;
   const hasInvalidRoute = !originValid || !destinationValid;
   const routeInputsValid = originValid && destinationValid;
-  const currentCriteriaSignature = useMemo(() => JSON.stringify({
+  // edited criteria signature drives the dirty-state check against last applied criteria
+  const currentCriteriaSignature = useMemo(() => buildCriteriaSignature({
     origin,
     destination,
-    originCountryOnly: originCountryOnly?.code ?? null,
-    destinationCountryOnly: destinationCountryOnly?.code ?? null,
+    originCountryCode: originCountryOnly?.code ?? null,
+    destinationCountryCode: destinationCountryOnly?.code ?? null,
     travelDate,
     returnDate,
     isReturn,
