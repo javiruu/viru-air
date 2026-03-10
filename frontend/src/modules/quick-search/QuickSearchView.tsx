@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 
 import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
 import { getAirportMeta } from "@/modules/shared/airports";
@@ -3235,14 +3236,15 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         {pageWorkspaceHint}
       </div>
       <div className="qs-workspace">
-        {isFiltersOpen ? (
+        {isFiltersOpen && typeof document !== "undefined"
+        ? createPortal((
           <button
             type="button"
             className="qs-filters-backdrop"
             aria-label={t("pickClose")}
             onClick={closeFiltersDrawer}
           />
-        ) : null}
+        ), document.body) : null}
         <aside
           id="qs-filters-drawer"
           role="dialog"
