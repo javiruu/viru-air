@@ -807,6 +807,39 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   }, [isFiltersOpen, filtersCloseRef]);
 
   useEffect(() => {
+    if (!isFiltersOpen) return;
+    if (typeof window === "undefined") return;
+
+    const body = document.body;
+    const docEl = document.documentElement;
+    const scrollY = window.scrollY;
+
+    const prevBodyOverflow = body.style.overflow;
+    const prevBodyPosition = body.style.position;
+    const prevBodyTop = body.style.top;
+    const prevBodyWidth = body.style.width;
+    const prevBodyOverscroll = body.style.overscrollBehavior;
+    const prevDocOverscroll = docEl.style.overscrollBehavior;
+
+    body.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+    body.style.overscrollBehavior = "contain";
+    docEl.style.overscrollBehavior = "contain";
+
+    return () => {
+      body.style.overflow = prevBodyOverflow;
+      body.style.position = prevBodyPosition;
+      body.style.top = prevBodyTop;
+      body.style.width = prevBodyWidth;
+      body.style.overscrollBehavior = prevBodyOverscroll;
+      docEl.style.overscrollBehavior = prevDocOverscroll;
+      window.scrollTo(0, scrollY);
+    };
+  }, [isFiltersOpen]);
+
+  useEffect(() => {
     if (!activePicker) return;
     if (typeof window === "undefined") return;
     window.requestAnimationFrame(() => {
