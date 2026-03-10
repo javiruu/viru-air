@@ -7,7 +7,7 @@ from app.core.errors import ApiError, message_for_code
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from app.api.v1.airports import _validate_iata
-from app.infrastructure.airports_catalog import expand_airports, get_airport
+from app.infrastructure.airports_catalog import expand_side, resolve_seed_airport
 from app.infrastructure.providers.ryanair_public_provider import RyanairPublicProvider
 
 router = APIRouter()
@@ -491,6 +491,12 @@ def quick_search(
 
     max_pairs = canonical.execution.max_pairs
 
+    try:
+        resolve_seed_airport(canonical.origin.seed_iata)
+        resolve_seed_airport(canonical.destination.seed_iata)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
     warnings: list[str] = []
     filters_applied: dict[str, Any] = {}
     relaxed_filters: list[str] = []
@@ -503,25 +509,23 @@ def quick_search(
     if any(code in exclude_origin_list for code in origin_list) or any(code in exclude_destination_list for code in destination_list):
         filters_applied["exclusion"] = True
 
-    origin_candidates = origin_list[:]
-    destination_candidates = destination_list[:]
-    if include_nearby_origins:
-        if any(not get_airport(code) for code in origin_list):
-            warnings.append("origen_no_disponible_en_catalogo")
-        origin_candidates = expand_airports(origin_list, radius_km_origin, limit_per_seed=canonical.origin.max_candidates)
-    if include_nearby_destinations:
-        if any(not get_airport(code) for code in destination_list):
-            warnings.append("destino_no_disponible_en_catalogo")
-        destination_candidates = expand_airports(
-            destination_list,
-            radius_km_destination,
-            limit_per_seed=canonical.destination.max_candidates,
-        )
+    origin_expanded = expand_side(
+        seed_iata=canonical.origin.seed_iata,
+        include_nearby=include_nearby_origins,
+        radius_km=radius_km_origin,
+        max_candidates=canonical.origin.max_candidates,
+        exclusions=exclude_origin_list,
+    )
+    destination_expanded = expand_side(
+        seed_iata=canonical.destination.seed_iata,
+        include_nearby=include_nearby_destinations,
+        radius_km=radius_km_destination,
+        max_candidates=canonical.destination.max_candidates,
+        exclusions=exclude_destination_list,
+    )
 
-    origin_candidates = [code for code in origin_candidates if code not in exclude_origin_list]
-    destination_candidates = [
-        code for code in destination_candidates if code not in exclude_destination_list
-    ]
+    origin_candidates = [candidate.expanded_iata for candidate in origin_expanded]
+    destination_candidates = [candidate.expanded_iata for candidate in destination_expanded]
 
     if not origin_candidates or not destination_candidates:
         filters_applied["exclusion"] = True
@@ -593,8 +597,28 @@ def quick_search(
                 "soft_filters_weight": soft_filters_weight,
             },
             "execution": canonical.execution.model_dump(),
-            "expanded_origins": origin_candidates,
-            "expanded_destinations": destination_candidates,
+            "expanded_origins": [
+                {
+                    "seed_iata": candidate.seed_iata,
+                    "expanded_iata": candidate.expanded_iata,
+                    "is_seed": candidate.is_seed,
+                    "distance_km": candidate.distance_km,
+                    "candidate_reason": candidate.candidate_reason,
+                    "source_of_expansion": candidate.source_of_expansion,
+                }
+                for candidate in origin_expanded
+            ],
+            "expanded_destinations": [
+                {
+                    "seed_iata": candidate.seed_iata,
+                    "expanded_iata": candidate.expanded_iata,
+                    "is_seed": candidate.is_seed,
+                    "distance_km": candidate.distance_km,
+                    "candidate_reason": candidate.candidate_reason,
+                    "source_of_expansion": candidate.source_of_expansion,
+                }
+                for candidate in destination_expanded
+            ],
         },
         "meta": {
             "contract_version": "quick_search.v2",
