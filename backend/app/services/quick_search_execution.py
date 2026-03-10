@@ -24,6 +24,7 @@ class ExecutionUnit:
 class ExecutionPlan:
     units: list[ExecutionUnit]
     waves: dict[str, int]
+    stats: dict[str, int | bool]
 
 
 _CACHE_LOCK = threading.Lock()
@@ -60,9 +61,11 @@ def build_execution_plan(
             rows.append((key, unit))
 
     rows.sort(key=lambda row: row[0])
-    selected = [row[1] for row in rows[: max(1, max_requests)]]
+    requested_units_count = min(len(rows), max(1, max_requests))
+    selected = [row[1] for row in rows[:requested_units_count]]
 
     waves = {"wave_1": 0, "wave_2": 0, "wave_3": 0}
+    executed_pair_keys: set[tuple[str, str]] = set()
     for unit in selected:
         if unit.pair_reason == "seed-seed":
             waves["wave_1"] += 1
@@ -70,8 +73,23 @@ def build_execution_plan(
             waves["wave_2"] += 1
         else:
             waves["wave_3"] += 1
+        executed_pair_keys.add((unit.origin_iata, unit.destination_iata))
 
-    return ExecutionPlan(units=selected, waves=waves)
+    planned_pair_keys = {(pair.origin_iata, pair.destination_iata) for pair in planned_pairs}
+    skipped_pair_keys = planned_pair_keys - executed_pair_keys
+
+    return ExecutionPlan(
+        units=selected,
+        waves=waves,
+        stats={
+            "planned_pairs_count": len(planned_pair_keys),
+            "executed_pairs_count": len(executed_pair_keys),
+            "skipped_pairs_count": len(skipped_pair_keys),
+            "requested_units_count": requested_units_count,
+            "skipped_units_count": max(0, len(rows) - requested_units_count),
+            "truncated_by_max_requests": len(rows) > requested_units_count,
+        },
+    )
 
 
 def execute_plan(
@@ -87,7 +105,10 @@ def execute_plan(
     combined: list[tuple[str, str, dt.date, ProviderFlight]] = []
     warnings: list[str] = []
     cache_hits = 0
+    cache_misses = 0
     provider_calls = 0
+    timed_out_units_count = 0
+    provider_failures = 0
 
     with ThreadPoolExecutor(max_workers=concurrency) as executor:
         futures = {
@@ -102,16 +123,26 @@ def execute_plan(
                     cache_hits += 1
                 else:
                     provider_calls += 1
+                    cache_misses += 1
                 for flight in flights:
                     combined.append((unit.origin_iata, unit.destination_iata, unit.travel_date, flight))
-            except Exception:
-                warnings.append("ryanair_unavailable_parcial")
+            except Exception as exc:
+                provider_failures += 1
+                if "timeout" in str(exc).lower():
+                    timed_out_units_count += 1
+                    warnings.append("provider_timeout_parcial")
+                else:
+                    warnings.append("ryanair_unavailable_parcial")
 
     meta = {
+        **plan.stats,
         "planned_units": len(plan.units),
         "executed_units": len(plan.units),
         "provider_calls": provider_calls,
         "cache_hits": cache_hits,
+        "cache_misses": cache_misses,
+        "timed_out_units_count": timed_out_units_count,
+        "provider_failures": provider_failures,
         "concurrency_limit": concurrency,
         "timeout_ms": timeout_ms,
         "waves": plan.waves,

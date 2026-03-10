@@ -30,10 +30,12 @@ class QuickSearchExecutionTests(unittest.TestCase):
         plan = build_execution_plan(pairs, dates, max_requests=2)
         self.assertEqual(len(plan.units), 2)
         self.assertEqual(plan.waves["wave_1"], 2)
+        self.assertTrue(plan.stats["truncated_by_max_requests"])
+        self.assertEqual(plan.stats["requested_units_count"], 2)
 
     def test_execute_plan_uses_cache(self):
-        pairs = [self._pair("LEI", "DUB", 0.0, "seed-seed")]
-        dates = [dt.date(2026, 6, 1)]
+        pairs = [self._pair("LEI", "MAN", 0.0, "seed-seed")]
+        dates = [dt.date(2030, 1, 9)]
         plan = build_execution_plan(pairs, dates, max_requests=5)
 
         calls = {"n": 0}
@@ -50,13 +52,41 @@ class QuickSearchExecutionTests(unittest.TestCase):
                 )
             ]
 
-        rows1, meta1, _ = execute_plan(plan, concurrency_limit=2, timeout_ms=3000, fetch_flights=fake_fetch)
+        rows1, _meta1, _ = execute_plan(plan, concurrency_limit=2, timeout_ms=3000, fetch_flights=fake_fetch)
         rows2, meta2, _ = execute_plan(plan, concurrency_limit=2, timeout_ms=3000, fetch_flights=fake_fetch)
 
         self.assertEqual(len(rows1), 1)
         self.assertEqual(len(rows2), 1)
         self.assertEqual(calls["n"], 1)
         self.assertEqual(meta2["cache_hits"], 1)
+        self.assertEqual(meta2["cache_misses"], 0)
+
+    def test_execute_plan_timeout_does_not_break_all(self):
+        pairs = [
+            self._pair("LEI", "DUB", 0.0, "seed-seed"),
+            self._pair("LEI", "ORK", 1000.0, "seed-nearby"),
+        ]
+        dates = [dt.date(2026, 6, 1)]
+        plan = build_execution_plan(pairs, dates, max_requests=5)
+
+        def fake_fetch(origin: str, destination: str, date_str: str, timeout_ms: int):
+            if destination == "ORK":
+                raise TimeoutError("provider timeout")
+            return [
+                ProviderFlight(
+                    price=29.99,
+                    currency="EUR",
+                    departure_time_local="11:00",
+                    captured_at=dt.datetime.now(dt.UTC).replace(tzinfo=None),
+                    source="test",
+                )
+            ]
+
+        rows, meta, warnings = execute_plan(plan, concurrency_limit=2, timeout_ms=1500, fetch_flights=fake_fetch)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(meta["timed_out_units_count"], 1)
+        self.assertEqual(meta["provider_failures"], 1)
+        self.assertIn("provider_timeout_parcial", warnings)
 
 
 if __name__ == "__main__":
