@@ -46,6 +46,12 @@
 ## Optional fields
 - `origin.include_nearby`, `origin.radius_km`, `origin.max_candidates`
 - `destination.include_nearby`, `destination.radius_km`, `destination.max_candidates`
+
+### Expansion rules
+- Seed is always included first when valid.
+- `max_candidates` counts the final set including seed.
+- If seed is explicitly excluded in `exclude_origins`/`exclude_destinations`, request is rejected.
+- Origin and destination expansion are independent (no cross-side side-effects).
 - `travel.flex_before`, `travel.flex_after`
 - `constraints.*`
 - `execution.*`

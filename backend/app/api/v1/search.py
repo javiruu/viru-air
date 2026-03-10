@@ -7,8 +7,8 @@ from app.core.errors import ApiError, message_for_code
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from app.api.v1.airports import _validate_iata
-from app.infrastructure.airports_catalog import expand_side, resolve_seed_airport
 from app.infrastructure.providers.ryanair_public_provider import RyanairPublicProvider
+from app.services.quick_search_expansion import expand_search_sides
 from app.services.quick_search_planner import build_pair_plan
 
 router = APIRouter()
@@ -492,12 +492,6 @@ def quick_search(
 
     max_pairs = canonical.execution.max_pairs
 
-    try:
-        resolve_seed_airport(canonical.origin.seed_iata)
-        resolve_seed_airport(canonical.destination.seed_iata)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-
     warnings: list[str] = []
     filters_applied: dict[str, Any] = {}
     relaxed_filters: list[str] = []
@@ -510,29 +504,29 @@ def quick_search(
 
     exclude_origin_list = canonical.constraints.exclude_origins
     exclude_destination_list = canonical.constraints.exclude_destinations
-    if any(code in exclude_origin_list for code in origin_list) or any(code in exclude_destination_list for code in destination_list):
-        filters_applied["exclusion"] = True
 
-    origin_expanded = expand_side(
-        seed_iata=canonical.origin.seed_iata,
-        include_nearby=include_nearby_origins,
-        radius_km=radius_km_origin,
-        max_candidates=canonical.origin.max_candidates,
-        exclusions=exclude_origin_list,
-    )
-    destination_expanded = expand_side(
-        seed_iata=canonical.destination.seed_iata,
-        include_nearby=include_nearby_destinations,
-        radius_km=radius_km_destination,
-        max_candidates=canonical.destination.max_candidates,
-        exclusions=exclude_destination_list,
-    )
+    # Expansion phase (explicit + side-independent)
+    try:
+        origin_side, destination_side = expand_search_sides(
+            origin_seed_iata=canonical.origin.seed_iata,
+            destination_seed_iata=canonical.destination.seed_iata,
+            include_nearby_origins=include_nearby_origins,
+            include_nearby_destinations=include_nearby_destinations,
+            origin_radius_km=radius_km_origin,
+            destination_radius_km=radius_km_destination,
+            origin_max_candidates=canonical.origin.max_candidates,
+            destination_max_candidates=canonical.destination.max_candidates,
+            exclude_origins=exclude_origin_list,
+            exclude_destinations=exclude_destination_list,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    origin_expanded = origin_side.candidates
+    destination_expanded = destination_side.candidates
 
     origin_candidates = [candidate.expanded_iata for candidate in origin_expanded]
     destination_candidates = [candidate.expanded_iata for candidate in destination_expanded]
-
-    if not origin_candidates or not destination_candidates:
-        filters_applied["exclusion"] = True
 
     date_candidates = _build_flex_dates(travel_date_value, days_before, days_after)
     pair_plan, pair_plan_stats = build_pair_plan(
@@ -611,6 +605,7 @@ def quick_search(
                     "distance_km": candidate.distance_km,
                     "candidate_reason": candidate.candidate_reason,
                     "source_of_expansion": candidate.source_of_expansion,
+                    "side": "origin",
                 }
                 for candidate in origin_expanded
             ],
@@ -622,6 +617,7 @@ def quick_search(
                     "distance_km": candidate.distance_km,
                     "candidate_reason": candidate.candidate_reason,
                     "source_of_expansion": candidate.source_of_expansion,
+                    "side": "destination",
                 }
                 for candidate in destination_expanded
             ],
@@ -641,6 +637,28 @@ def quick_search(
                 "truncated": pair_plan_stats["truncated"],
                 "max_pairs": max_pairs,
                 "max_pairs_by_requests": pair_plan_stats["max_pairs_by_requests"],
+            },
+            "expansion": {
+                "origin": {
+                    "side": origin_side.summary.side,
+                    "seed_iata": origin_side.summary.seed_iata,
+                    "include_nearby_applied": origin_side.summary.include_nearby_applied,
+                    "radius_km_effective": origin_side.summary.radius_km_effective,
+                    "max_candidates_effective": origin_side.summary.max_candidates_effective,
+                    "exclusions_applied": origin_side.summary.exclusions_applied,
+                    "total_candidates_before_limit": origin_side.summary.total_candidates_before_limit,
+                    "total_candidates_after_limit": origin_side.summary.total_candidates_after_limit,
+                },
+                "destination": {
+                    "side": destination_side.summary.side,
+                    "seed_iata": destination_side.summary.seed_iata,
+                    "include_nearby_applied": destination_side.summary.include_nearby_applied,
+                    "radius_km_effective": destination_side.summary.radius_km_effective,
+                    "max_candidates_effective": destination_side.summary.max_candidates_effective,
+                    "exclusions_applied": destination_side.summary.exclusions_applied,
+                    "total_candidates_before_limit": destination_side.summary.total_candidates_before_limit,
+                    "total_candidates_after_limit": destination_side.summary.total_candidates_after_limit,
+                },
             },
         },
         "filters": {
