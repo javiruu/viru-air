@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from app.api.v1.airports import _validate_iata
 from app.infrastructure.providers.ryanair_public_provider import RyanairPublicProvider
+from app.services.quick_search_execution import build_execution_plan, execute_plan
 from app.services.quick_search_expansion import expand_search_sides
 from app.services.quick_search_planner import build_pair_plan
 
@@ -81,6 +82,7 @@ class QuickSearchExecution(BaseModel):
     max_pairs: int = Field(default=12, ge=1, le=200)
     max_requests: int = Field(default=120, ge=1, le=1000)
     timeout_ms: int = Field(default=8000, ge=1000, le=30000)
+    concurrency_limit: int = Field(default=6, ge=1, le=32)
 
 
 class QuickSearchCanonicalRequest(BaseModel):
@@ -539,18 +541,20 @@ def quick_search(
     if pair_plan_stats["truncated"]:
         warnings.append("limite_combinaciones_alternativas")
 
-    combined: list[tuple[str, str, dt.date, Any]] = []
-    pair_count = 0
-    for pair in pair_plan:
-        for travel_date_item in date_candidates:
-            try:
-                flights = provider.get_flights(pair.origin_iata, pair.destination_iata, str(travel_date_item))
-            except Exception:
-                warnings.append("ryanair_unavailable_parcial")
-                flights = []
-            for flight in flights:
-                combined.append((pair.origin_iata, pair.destination_iata, travel_date_item, flight))
-        pair_count += 1
+    execution_plan = build_execution_plan(
+        pair_plan,
+        date_candidates,
+        max_requests=canonical.execution.max_requests,
+    )
+
+    combined, execution_meta, execution_warnings = execute_plan(
+        execution_plan,
+        concurrency_limit=canonical.execution.concurrency_limit,
+        timeout_ms=canonical.execution.timeout_ms,
+        fetch_flights=lambda o, d, date_str, timeout: provider.get_flights(o, d, date_str, timeout_ms=timeout),
+    )
+    pair_count = len(pair_plan)
+    warnings.extend(execution_warnings)
 
     filtered = [
         (origin_code, destination_code, travel_date_item, flight)
@@ -676,6 +680,7 @@ def quick_search(
                     "total_candidates_after_limit": destination_side.summary.total_candidates_after_limit,
                 },
             },
+            "execution": execution_meta,
         },
         "filters": {
             "applied": filters_applied,

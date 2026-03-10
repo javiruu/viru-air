@@ -15,11 +15,11 @@ class RyanairPublicProvider:
     def __init__(self, currency: str = "EUR") -> None:
         self.currency = currency
 
-    def get_flights(self, origin: str, destination: str, travel_date: str) -> list[ProviderFlight]:
+    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 12000) -> list[ProviderFlight]:
         origin = origin.upper().strip()
         destination = destination.upper().strip()
-        flights = self._fetch_availability(origin, destination, travel_date)
-        fares = self._fetch_one_way_fares(origin, destination, travel_date)
+        flights = self._fetch_availability(origin, destination, travel_date, timeout_ms=timeout_ms)
+        fares = self._fetch_one_way_fares(origin, destination, travel_date, timeout_ms=timeout_ms)
         if not flights:
             return fares
         if not fares:
@@ -39,7 +39,7 @@ class RyanairPublicProvider:
         )
 
     def _fetch_one_way_fares(
-        self, origin: str, destination: str, travel_date: str
+        self, origin: str, destination: str, travel_date: str, *, timeout_ms: int
     ) -> list[ProviderFlight]:
         url = (
             "https://www.ryanair.com/api/farfnd/3/oneWayFares"
@@ -49,7 +49,7 @@ class RyanairPublicProvider:
             f"&outboundDepartureDateTo={travel_date}"
             f"&currency={self.currency}"
         )
-        data = self._get_json(url)
+        data = self._get_json(url, timeout_ms=timeout_ms)
         fares = data.get("fares") or []
         flights: list[ProviderFlight] = []
         for fare in fares:
@@ -70,7 +70,7 @@ class RyanairPublicProvider:
         return flights
 
     def _fetch_availability(
-        self, origin: str, destination: str, travel_date: str
+        self, origin: str, destination: str, travel_date: str, *, timeout_ms: int
     ) -> list[ProviderFlight]:
         url = (
             "https://www.ryanair.com/api/booking/v4/es-es/availability"
@@ -85,7 +85,7 @@ class RyanairPublicProvider:
             f"&IncludeConnectingFlights=false"
             f"&Currency={self.currency}"
         )
-        data = self._get_json(url)
+        data = self._get_json(url, timeout_ms=timeout_ms)
         trips = data.get("trips") or []
         flights: list[ProviderFlight] = []
         for trip in trips:
@@ -120,10 +120,10 @@ class RyanairPublicProvider:
             unique.append(flight)
         return unique
 
-    def _get_json(self, url: str) -> dict[str, Any]:
+    def _get_json(self, url: str, *, timeout_ms: int = 12000) -> dict[str, Any]:
         resp = requests.get(
             url,
-            timeout=12,
+            timeout=max(1, timeout_ms / 1000),
             headers={
                 "User-Agent": "Mozilla/5.0",
                 "Accept": "application/json",

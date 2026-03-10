@@ -33,7 +33,8 @@
   "execution": {
     "max_pairs": 24,
     "max_requests": 120,
-    "timeout_ms": 8000
+    "timeout_ms": 8000,
+    "concurrency_limit": 6
   }
 }
 ```
@@ -87,7 +88,9 @@ The endpoint still returns `query`, `filters`, `results` and now adds:
 - `meta.pair_counts`
 
 `execution.max_pairs` is applied to base O×D planned pairs (after filtering and priority ordering).
-`execution.max_requests` is surfaced for next execution stage budgeting and metadata (`max_pairs_by_requests`).
-`execution.timeout_ms` is already part of the contract; provider-level timeout enforcement is marked as pending.
+`execution.max_requests` limits provider request units (O×D×date).
+`execution.timeout_ms` is applied per provider request.
+`execution.concurrency_limit` controls max parallel provider calls.
 
 Planned pairs expose: seed/nearby category, distances from seed, and `pair_priority_score`.
+Execution metadata includes waves, cache hits, provider calls and effective limits.
