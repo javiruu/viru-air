@@ -1,0 +1,130 @@
+import datetime as dt
+import unittest
+from unittest.mock import patch
+
+try:
+    from app.api.v1.search import quick_search
+    from app.domain.entities import ProviderFlight
+except Exception:  # pragma: no cover
+    quick_search = None
+    ProviderFlight = None
+
+
+def _flight(price: float, dep: str, source: str = "test-provider") -> ProviderFlight:
+    return ProviderFlight(
+        price=price,
+        currency="EUR",
+        departure_time_local=dep,
+        captured_at=dt.datetime.now(dt.UTC).replace(tzinfo=None),
+        source=source,
+    )
+
+
+@unittest.skipIf(quick_search is None or ProviderFlight is None, "fastapi app deps not available")
+class QuickSearchE2ERegressionTests(unittest.TestCase):
+    def _payload(self, **overrides):
+        payload = {
+            "origin": {"seed_iata": "LEI", "include_nearby": False, "radius_km": 250, "max_candidates": 6},
+            "destination": {"seed_iata": "DUB", "include_nearby": False, "radius_km": 250, "max_candidates": 6},
+            "travel": {"date": "2026-06-14", "flex_before": 0, "flex_after": 0},
+            "constraints": {"strict_filters": True},
+            "execution": {"max_pairs": 12, "max_requests": 24, "timeout_ms": 3000, "concurrency_limit": 4},
+        }
+        payload.update(overrides)
+        return payload
+
+    def test_seed_only_base_flow(self):
+        payload = self._payload()
+        with patch("app.api.v1.search.provider.get_flights", return_value=[_flight(55, "10:00")]):
+            result = quick_search(payload=payload, debug=True)
+
+        self.assertEqual(result["meta"]["query_trace_id"][:3], "qs_")
+        self.assertEqual(len(result["results"]), 1)
+        self.assertEqual(result["results"][0]["origin"], "LEI")
+        self.assertEqual(result["results"][0]["destination"], "DUB")
+
+    def test_origin_nearby_expansion_is_real(self):
+        payload = self._payload(origin={"seed_iata": "LEI", "include_nearby": True, "radius_km": 260, "max_candidates": 4})
+
+        def fake_fetch(origin: str, destination: str, date: str, timeout_ms: int):
+            if origin == "LEI":
+                return [_flight(62, "09:30")]
+            if origin == "AGP":
+                return [_flight(58, "09:45")]
+            return []
+
+        with patch("app.api.v1.search.provider.get_flights", side_effect=fake_fetch):
+            result = quick_search(payload=payload, debug=True)
+
+        expanded_origins = result["query"]["expanded_origins"]
+        self.assertTrue(any(item["expanded_iata"] == "AGP" for item in expanded_origins))
+        planned_pairs = result["meta"]["planned_pairs"]
+        self.assertTrue(any(item["origin_iata"] == "AGP" for item in planned_pairs))
+
+    def test_both_nearby_builds_cross_pairs(self):
+        payload = self._payload(
+            origin={"seed_iata": "LEI", "include_nearby": True, "radius_km": 260, "max_candidates": 3},
+            destination={"seed_iata": "DUB", "include_nearby": True, "radius_km": 300, "max_candidates": 3},
+            execution={"max_pairs": 8, "max_requests": 8, "timeout_ms": 3000, "concurrency_limit": 2},
+        )
+
+        with patch("app.api.v1.search.provider.get_flights", return_value=[_flight(70, "11:00")]):
+            result = quick_search(payload=payload, debug=True)
+
+        categories = {item["pair_reason"] for item in result["meta"]["planned_pairs"]}
+        self.assertIn("seed-seed", categories)
+        self.assertTrue(any(cat in categories for cat in {"seed-nearby", "nearby-seed", "nearby-nearby"}))
+
+    def test_ranking_keeps_seed_reasonable_priority(self):
+        payload = self._payload(origin={"seed_iata": "LEI", "include_nearby": True, "radius_km": 260, "max_candidates": 3})
+
+        def fake_fetch(origin: str, destination: str, date: str, timeout_ms: int):
+            if origin == "LEI":
+                return [_flight(60, "10:00")]
+            if origin == "AGP":
+                return [_flight(58, "10:00")]
+            return []
+
+        with patch("app.api.v1.search.provider.get_flights", side_effect=fake_fetch):
+            result = quick_search(payload=payload, debug=True)
+
+        self.assertGreaterEqual(len(result["results"]), 1)
+        top = result["results"][0]
+        self.assertEqual(top["origin"], "LEI")
+        self.assertEqual(top["pair_category"], "seed-seed")
+
+    def test_budget_degradation_and_warnings(self):
+        payload = self._payload(
+            origin={"seed_iata": "LEI", "include_nearby": True, "radius_km": 260, "max_candidates": 4},
+            destination={"seed_iata": "DUB", "include_nearby": True, "radius_km": 300, "max_candidates": 4},
+            travel={"date": "2026-06-14", "flex_before": 1, "flex_after": 1},
+            execution={"max_pairs": 10, "max_requests": 2, "timeout_ms": 3000, "concurrency_limit": 2},
+        )
+        with patch("app.api.v1.search.provider.get_flights", return_value=[_flight(90, "12:00")]):
+            result = quick_search(payload=payload, debug=True)
+
+        warning_codes = {w["code"] for w in result["meta"]["warnings_structured"]}
+        self.assertIn("max_requests_reached", warning_codes)
+        self.assertTrue(result["meta"]["execution"]["truncated_by_max_requests"])
+
+    def test_timeout_partial_does_not_break_whole_search(self):
+        payload = self._payload(
+            origin={"seed_iata": "LEI", "include_nearby": True, "radius_km": 260, "max_candidates": 3},
+            execution={"max_pairs": 6, "max_requests": 6, "timeout_ms": 1500, "concurrency_limit": 2},
+        )
+
+        def fake_fetch(origin: str, destination: str, date: str, timeout_ms: int):
+            if origin == "AGP":
+                raise TimeoutError("provider timeout")
+            return [_flight(72, "13:00")]
+
+        with patch("app.api.v1.search.provider.get_flights", side_effect=fake_fetch):
+            result = quick_search(payload=payload, debug=True)
+
+        warning_codes = {w["code"] for w in result["meta"]["warnings_structured"]}
+        self.assertIn("provider_timeout_partial", warning_codes)
+        self.assertGreaterEqual(len(result["results"]), 1)
+
+
+if __name__ == "__main__":
+    unittest.main()
