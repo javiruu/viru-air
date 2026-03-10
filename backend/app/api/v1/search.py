@@ -1,4 +1,8 @@
 import datetime as dt
+import logging
+import os
+import time
+import uuid
 from typing import Any
 
 from fastapi import APIRouter, Body, HTTPException, Query
@@ -16,6 +20,7 @@ from app.services.quick_search_ranking import rank_quick_search_results
 
 router = APIRouter()
 provider = RyanairPublicProvider()
+logger = logging.getLogger(__name__)
 
 
 class QuickSearchPayload(BaseModel):
@@ -455,7 +460,26 @@ def quick_search(
     soft_filters_weight: float | None = Query(default=None),
     flex_days_before: int | None = Query(default=None),
     flex_days_after: int | None = Query(default=None),
+    debug: bool = Query(default=False),
 ) -> dict:
+    query_trace_id = f"qs_{uuid.uuid4().hex[:12]}"
+    is_debug_allowed = os.getenv("APP_ENV", "local") == "local"
+    debug_mode = bool(debug and is_debug_allowed)
+
+    t0 = time.perf_counter()
+    phase_ms: dict[str, int] = {}
+    warnings_structured: list[dict[str, Any]] = []
+
+    def _phase_start() -> float:
+        return time.perf_counter()
+
+    def _phase_end(name: str, started_at: float) -> None:
+        phase_ms[name] = int((time.perf_counter() - started_at) * 1000)
+
+    def _warn(code: str, **meta: Any) -> None:
+        warnings_structured.append({"code": code, "meta": meta})
+
+    started = _phase_start()
     canonical, origin_list, destination_list, filter_contract = _normalize_quick_search_request(
         payload,
         {
@@ -477,6 +501,7 @@ def quick_search(
             "flex_days_after": flex_days_after,
         },
     )
+    _phase_end("request_normalization_ms", started)
 
     travel_date_value = canonical.travel.date
     days_before = canonical.travel.flex_before
@@ -502,14 +527,17 @@ def quick_search(
 
     if canonical.execution.timeout_ms != 8000:
         warnings.append("timeout_ms_not_yet_enforced_at_provider_level")
+        _warn("timeout_ms_non_default", timeout_ms=canonical.execution.timeout_ms)
 
     if max_stops > 0:
         warnings.append("stops_no_disponible_en_modo_rapido")
+        _warn("stops_not_supported_quick", max_stops=max_stops)
 
     exclude_origin_list = canonical.constraints.exclude_origins
     exclude_destination_list = canonical.constraints.exclude_destinations
 
     # Expansion phase (explicit + side-independent)
+    started = _phase_start()
     try:
         origin_side, destination_side = expand_search_sides(
             origin_seed_iata=canonical.origin.seed_iata,
@@ -525,6 +553,7 @@ def quick_search(
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    _phase_end("nearby_expansion_ms", started)
 
     origin_expanded = origin_side.candidates
     destination_expanded = destination_side.candidates
@@ -532,7 +561,13 @@ def quick_search(
     origin_candidates = [candidate.expanded_iata for candidate in origin_expanded]
     destination_candidates = [candidate.expanded_iata for candidate in destination_expanded]
 
+    if include_nearby_origins and len(origin_expanded) <= 1:
+        _warn("no_nearby_candidates_found", side="origin", seed_iata=canonical.origin.seed_iata)
+    if include_nearby_destinations and len(destination_expanded) <= 1:
+        _warn("no_nearby_candidates_found", side="destination", seed_iata=canonical.destination.seed_iata)
+
     date_candidates = _build_flex_dates(travel_date_value, days_before, days_after)
+    started = _phase_start()
     pair_plan, pair_plan_stats = build_pair_plan(
         origin_expanded,
         destination_expanded,
@@ -542,13 +577,18 @@ def quick_search(
     )
     if pair_plan_stats["truncated"]:
         warnings.append("limite_combinaciones_alternativas")
+        _warn("max_pairs_truncated", max_pairs=max_pairs, total_pairs=pair_plan_stats["total_pairs"])
+    _phase_end("pair_planning_ms", started)
 
+    started = _phase_start()
     execution_plan = build_execution_plan(
         pair_plan,
         date_candidates,
         max_requests=canonical.execution.max_requests,
     )
+    _phase_end("execution_planning_ms", started)
 
+    started = _phase_start()
     combined, execution_meta, execution_warnings = execute_plan(
         execution_plan,
         concurrency_limit=canonical.execution.concurrency_limit,
@@ -557,6 +597,19 @@ def quick_search(
     )
     pair_count = len(pair_plan)
     warnings.extend(execution_warnings)
+    for code in execution_warnings:
+        _warn(code)
+    if execution_meta.get("truncated_by_max_requests"):
+        _warn(
+            "max_requests_reached",
+            requested_units_count=execution_meta.get("requested_units_count"),
+            skipped_units_count=execution_meta.get("skipped_units_count"),
+        )
+    if execution_meta.get("timed_out_units_count", 0):
+        _warn("provider_timeout_partial", count=execution_meta.get("timed_out_units_count"))
+    if execution_meta.get("provider_failures", 0):
+        _warn("provider_error_partial", count=execution_meta.get("provider_failures"))
+    _phase_end("provider_fetch_ms", started)
 
     filtered = [
         (origin_code, destination_code, travel_date_item, flight)
@@ -574,8 +627,44 @@ def quick_search(
             flights_after_filters = combined
             relaxed_filters.append("departure_window")
 
+    started = _phase_start()
     ranked_results = rank_quick_search_results(flights_after_filters, pair_plan)
+    _phase_end("ranking_ms", started)
+
+    started = _phase_start()
     deduped = dedupe_ranked_results(ranked_results)
+    _phase_end("dedupe_ms", started)
+    phase_ms["total_search_ms"] = int((time.perf_counter() - t0) * 1000)
+
+    logger.info(
+        "quick_search trace=%s results=%s planned_pairs=%s requested_units=%s",
+        query_trace_id,
+        len(deduped.results),
+        pair_plan_stats["total_pairs"],
+        execution_meta.get("requested_units_count", 0),
+    )
+
+    debug_payload: dict[str, Any] | None = None
+    if debug_mode:
+        debug_payload = {
+            "trace": {"query_trace_id": query_trace_id, "app_env": os.getenv("APP_ENV", "local")},
+            "warnings_structured": warnings_structured,
+            "expanded": {
+                "origins": [candidate.__dict__ for candidate in origin_expanded],
+                "destinations": [candidate.__dict__ for candidate in destination_expanded],
+            },
+            "planned_pairs": [pair.__dict__ for pair in pair_plan],
+            "execution_units": [
+                {
+                    "origin_iata": unit.origin_iata,
+                    "destination_iata": unit.destination_iata,
+                    "travel_date": str(unit.travel_date),
+                    "pair_reason": unit.pair_reason,
+                    "pair_priority_score": unit.pair_priority_score,
+                }
+                for unit in execution_plan.units
+            ],
+        }
 
     return {
         "query": {
@@ -623,6 +712,7 @@ def quick_search(
             ],
         },
         "meta": {
+            "query_trace_id": query_trace_id,
             "contract_version": "quick_search.v2",
             "legacy_aliases_used": filter_contract["aliases"],
             "filter_support": {
@@ -677,6 +767,21 @@ def quick_search(
                 },
             },
             "execution": execution_meta,
+            "pipeline_metrics": phase_ms,
+            "pipeline_counters": {
+                "origin_candidates_count": len(origin_expanded),
+                "destination_candidates_count": len(destination_expanded),
+                "planned_pairs_count": pair_plan_stats["total_pairs"],
+                "executed_pairs_count": execution_meta.get("executed_pairs_count", 0),
+                "skipped_pairs_count": execution_meta.get("skipped_pairs_count", 0),
+                "requested_units_count": execution_meta.get("requested_units_count", 0),
+                "provider_failures_count": execution_meta.get("provider_failures", 0),
+                "timeout_count": execution_meta.get("timed_out_units_count", 0),
+                "cache_hits": execution_meta.get("cache_hits", 0),
+                "cache_misses": execution_meta.get("cache_misses", 0),
+                "final_results_count": len(deduped.results),
+            },
+            "warnings_structured": warnings_structured,
             "ranking": {
                 "version": "quick_ranking.v1",
                 "signals": [
@@ -695,6 +800,8 @@ def quick_search(
                 ],
                 "dedupe": deduped.meta,
             },
+            "debug": debug_payload,
+
         },
         "filters": {
             "applied": filters_applied,
@@ -722,6 +829,9 @@ def quick_search(
                 "destination_distance_from_seed_km": item.destination_distance_from_seed_km,
                 "pair_category": item.pair_category,
                 "discovery_explanation": item.discovery_explanation,
+                "query_trace_id": query_trace_id,
+                "selected_from_pair_id": f"{item.origin}->{item.destination}",
+                "candidate_reason": "seed" if item.origin_is_seed and item.destination_is_seed else "expanded",
             }
             for item in deduped.results
         ],

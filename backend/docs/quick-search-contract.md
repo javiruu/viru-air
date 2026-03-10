@@ -124,3 +124,10 @@ When duplicates compete, the winner is selected by:
 1. lower `final_score`
 2. lower `price`
 3. lower `distance_penalty_total`
+
+## Observability and debug
+- Every search emits `meta.query_trace_id`.
+- Phase timings are exposed in `meta.pipeline_metrics`.
+- Structured counters are exposed in `meta.pipeline_counters`.
+- Structured warning objects are exposed in `meta.warnings_structured`.
+- Debug payload is available only when `APP_ENV=local` and `debug=true`.
