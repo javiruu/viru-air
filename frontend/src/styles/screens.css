@@ -1261,8 +1261,10 @@ h1 {
   border-right: none;
   border-top: none;
   border-bottom: none;
-  z-index: 82;
+  z-index: 1201;
   overflow: auto;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   transform: translateX(106%);
   transition: transform 0.24s ease;
 }
@@ -1274,7 +1276,7 @@ h1 {
 .qs-filters-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 81;
+  z-index: 1200;
   border: none;
   background: rgba(18, 24, 30, 0.42);
 }
@@ -1285,10 +1287,15 @@ h1 {
 }
 
 .qs-filters-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
+  padding-top: 0.35rem;
+  background: color-mix(in srgb, var(--surface) 90%, var(--panel));
 }
 
 .qs-filters-close {
