@@ -124,6 +124,26 @@ def _build_flex_dates(base_date: dt.date, days_before: int, days_after: int) -> 
         dates.append(base_date + dt.timedelta(days=offset))
     return dates
 
+
+def _normalize_radius_km(value: Any, include_nearby: bool, default: int = 150) -> int:
+    if value is None:
+        return default
+    try:
+        radius = int(value)
+    except (TypeError, ValueError):
+        return default
+
+    if radius < 10:
+        # Defensive compatibility: old clients used radius=0 as sentinel for "nearby off".
+        # Canonical v2 expects radius always within [10, 500], so normalize only when nearby is off.
+        return default if not include_nearby else radius
+
+    if radius > 500:
+        return 500
+
+    return radius
+
+
 def _time_to_minutes(value: str | None) -> int | None:
     if not value:
         return None
@@ -243,45 +263,43 @@ def _normalize_quick_search_request(
         if legacy_payload.dias_antes is not None or legacy_payload.dias_despues is not None:
             legacy_aliases_used.append("dias_antes/dias_despues")
 
+        include_nearby_origins_value = (
+            query_overrides.get("include_nearby_origins")
+            if query_overrides.get("include_nearby_origins") is not None
+            else legacy_payload.include_nearby_origins
+            if legacy_payload.include_nearby_origins is not None
+            else legacy_payload.include_nearby_origin
+            if legacy_payload.include_nearby_origin is not None
+            else False
+        )
+        include_nearby_destinations_value = (
+            query_overrides.get("include_nearby_destinations")
+            if query_overrides.get("include_nearby_destinations") is not None
+            else legacy_payload.include_nearby_destinations
+            if legacy_payload.include_nearby_destinations is not None
+            else legacy_payload.include_nearby_destination
+            if legacy_payload.include_nearby_destination is not None
+            else False
+        )
+        raw_radius_km = (
+            query_overrides.get("radius_km")
+            if query_overrides.get("radius_km") is not None
+            else legacy_payload.radius_km
+            if legacy_payload.radius_km is not None
+            else 150
+        )
+
         canonical_dict = {
             "origin": {
                 "seed_iata": origin_value,
-                "include_nearby": (
-                    query_overrides.get("include_nearby_origins")
-                    if query_overrides.get("include_nearby_origins") is not None
-                    else legacy_payload.include_nearby_origins
-                    if legacy_payload.include_nearby_origins is not None
-                    else legacy_payload.include_nearby_origin
-                    if legacy_payload.include_nearby_origin is not None
-                    else False
-                ),
-                "radius_km": (
-                    query_overrides.get("radius_km")
-                    if query_overrides.get("radius_km") is not None
-                    else legacy_payload.radius_km
-                    if legacy_payload.radius_km is not None
-                    else 150
-                ),
+                "include_nearby": include_nearby_origins_value,
+                "radius_km": _normalize_radius_km(raw_radius_km, include_nearby_origins_value),
                 "max_candidates": 6,
             },
             "destination": {
                 "seed_iata": destination_value,
-                "include_nearby": (
-                    query_overrides.get("include_nearby_destinations")
-                    if query_overrides.get("include_nearby_destinations") is not None
-                    else legacy_payload.include_nearby_destinations
-                    if legacy_payload.include_nearby_destinations is not None
-                    else legacy_payload.include_nearby_destination
-                    if legacy_payload.include_nearby_destination is not None
-                    else False
-                ),
-                "radius_km": (
-                    query_overrides.get("radius_km")
-                    if query_overrides.get("radius_km") is not None
-                    else legacy_payload.radius_km
-                    if legacy_payload.radius_km is not None
-                    else 150
-                ),
+                "include_nearby": include_nearby_destinations_value,
+                "radius_km": _normalize_radius_km(raw_radius_km, include_nearby_destinations_value),
                 "max_candidates": 6,
             },
             "travel": {
@@ -367,6 +385,18 @@ def _normalize_quick_search_request(
                 "timeout_ms": 8000,
             },
         }
+
+    origin_side_dict = dict(canonical_dict.get("origin") or {})
+    destination_side_dict = dict(canonical_dict.get("destination") or {})
+
+    include_nearby_origin = bool(origin_side_dict.get("include_nearby", False))
+    include_nearby_destination = bool(destination_side_dict.get("include_nearby", False))
+
+    origin_side_dict["radius_km"] = _normalize_radius_km(origin_side_dict.get("radius_km"), include_nearby_origin)
+    destination_side_dict["radius_km"] = _normalize_radius_km(destination_side_dict.get("radius_km"), include_nearby_destination)
+
+    canonical_dict["origin"] = origin_side_dict
+    canonical_dict["destination"] = destination_side_dict
 
     try:
         canonical = QuickSearchCanonicalRequest.model_validate(canonical_dict)

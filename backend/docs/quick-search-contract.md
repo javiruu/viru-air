@@ -48,6 +48,15 @@
 - `origin.include_nearby`, `origin.radius_km`, `origin.max_candidates`
 - `destination.include_nearby`, `destination.radius_km`, `destination.max_candidates`
 
+## Radius semantics (canonical v2)
+- `radius_km` is a **valid numeric radius**, not an on/off sentinel.
+- Valid range: `10..500`.
+- `include_nearby` toggles expansion independently per side:
+  - `false` → no nearby expansion for that side (seed only), radius is ignored operationally.
+  - `true` → nearby expansion enabled and radius is used.
+- Defensive compatibility: legacy clients sending `radius_km=0` with `include_nearby=false` are normalized to default `150` server-side before validation.
+- New clients should always send a valid radius (for example current UI value, default `150`) and should not send sentinel `0`.
+
 ### Expansion rules
 - Seed is always included first when valid.
 - `max_candidates` counts the final set including seed.

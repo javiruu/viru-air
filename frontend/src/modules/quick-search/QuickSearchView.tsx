@@ -668,14 +668,14 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           duration_max: durationMax ? Number(durationMax) : null,
           depart_after: departAfter || null,
           depart_before: departBefore || null,
-          radius_km: includeNearbyOrigins || includeNearbyDestinations ? radiusKm : 0,
+          radius_km: normalizedRadiusKm,
           exclude_origins_count: excludeOrigins.length,
           exclude_destinations_count: excludeDestinations.length,
         });
         trackEvent("quicksearch_empty_shown", {
           strict_filters: strictFilters,
           include_stops: includeStops,
-          radius_km: includeNearbyOrigins || includeNearbyDestinations ? radiusKm : 0,
+          radius_km: normalizedRadiusKm,
         });
         zeroResultsTracked.current = true;
       }
@@ -1159,7 +1159,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       date: travelDate,
       flex_days_before: daysBefore,
       flex_days_after: daysAfter,
-      radius_km: radiusActive ? radiusKm : 0,
+      radius_km: normalizedRadiusKm,
       include_stops: includeStops,
       include_nearby_origins: includeNearbyOrigins,
       include_nearby_destinations: includeNearbyDestinations,
@@ -1194,7 +1194,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       has_destination_country_scope: Boolean(destinationCountryOnly),
       include_stops: includeStops,
       strict_filters: strictFilters,
-      radius_km: radiusActive ? radiusKm : 0,
+      radius_km: normalizedRadiusKm,
       flex_days_before: daysBefore,
       flex_days_after: daysAfter,
     });
@@ -1763,6 +1763,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
   const originCode = origin.trim().toUpperCase();
   const destinationCode = destination.trim().toUpperCase();
+  const normalizedRadiusKm = Math.min(500, Math.max(10, Number.isFinite(radiusKm) ? radiusKm : 150));
   const originValid = originCountryOnly ? originCountryOnly.airports.length > 0 : (
     originCode.length === 3 && airportsByIata.has(originCode)
   );
@@ -2502,7 +2503,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         date: result.travel_date || travelDate,
         flex_days_before: daysBefore,
         flex_days_after: daysAfter,
-        radius_km: radiusActive ? radiusKm : 0,
+        radius_km: normalizedRadiusKm,
         include_nearby_origin: includeNearbyOrigins,
         include_nearby_destination: includeNearbyDestinations,
         price_min: parseNumericInput(priceMin, { min: 0 }) ?? undefined,
