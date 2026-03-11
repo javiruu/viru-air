@@ -1,7 +1,4 @@
-"use client";
-
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 
 const tabs = [
   { id: "busqueda", label: "Búsqueda", href: "/preferencias/busqueda", desc: "Cómo quieres buscar por defecto." },
@@ -9,9 +6,12 @@ const tabs = [
   { id: "region", label: "Idioma y región", href: "/preferencias/region", desc: "Idioma, moneda y formatos regionales." },
 ] as const;
 
-export default function PreferenciasHubPage() {
-  const searchParams = useSearchParams();
-  const selected = searchParams.get("tab") ?? "busqueda";
+type PageProps = {
+  searchParams?: { [key: string]: string | string[] | undefined };
+};
+
+export default function PreferenciasHubPage({ searchParams }: PageProps) {
+  const selected = typeof searchParams?.tab === "string" ? searchParams.tab : "busqueda";
 
   return (
     <main className="shell" id="main-content">
