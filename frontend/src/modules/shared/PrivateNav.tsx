@@ -7,11 +7,12 @@ import { NAV_V1_PRIVATE } from "@/modules/shared/navigationV1";
 
 export default function PrivateNav() {
   const pathname = usePathname();
+  const pathnameValue = pathname ?? "";
 
   return (
     <nav className="private-nav" aria-label="Navegación principal">
       {NAV_V1_PRIVATE.map((item) => {
-        const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const active = pathnameValue === item.href || pathnameValue.startsWith(`${item.href}/`);
         return (
           <Link
             key={item.href}

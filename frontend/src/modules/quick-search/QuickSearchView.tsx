@@ -34,6 +34,7 @@ const QuickSearchStatePanels = dynamic(() =>
 );
 import { normalizeQuickSearchResults } from "@/modules/quick-search/api/normalizeQuickSearchResponse";
 import { toQuickSearchQuery } from "@/modules/quick-search/api/buildQuickSearchRequest";
+import { QuickSearchResultsWorkspace } from "@/modules/quick-search/components/QuickSearchResultsWorkspace";
 import {
   AirportIataEntry,
   CountryAirports,

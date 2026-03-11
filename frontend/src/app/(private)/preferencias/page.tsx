@@ -6,12 +6,18 @@ const tabs = [
   { id: "region", label: "Idioma y región", href: "/preferencias/region", desc: "Idioma, moneda y formatos regionales." },
 ] as const;
 
-type PageProps = {
-  searchParams?: { [key: string]: string | string[] | undefined };
+type SearchParamsShape = {
+  [key: string]: string | string[] | undefined;
 };
 
-export default function PreferenciasHubPage({ searchParams }: PageProps) {
-  const selected = typeof searchParams?.tab === "string" ? searchParams.tab : "busqueda";
+type PageProps = {
+  searchParams?: Promise<SearchParamsShape>;
+};
+
+export default async function PreferenciasHubPage({ searchParams }: PageProps) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+
+  const selected = typeof resolvedSearchParams?.tab === "string" ? resolvedSearchParams.tab : "busqueda";
 
   return (
     <main className="shell" id="main-content">
