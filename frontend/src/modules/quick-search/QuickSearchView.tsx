@@ -15,8 +15,8 @@ import { trackEvent } from "@/modules/shared/analytics";
 import { formatCurrency, formatNumber } from "@/modules/shared/format";
 import { buildDateRange } from "@/modules/quick-search/utils";
 import { buildCriteriaSignature, parseNumericInput } from "@/modules/quick-search/searchCriteria";
-const QuickSearchAdvancedFilters = dynamic(() =>
-  import("@/modules/quick-search/components/QuickSearchAdvancedFilters").then((m) => m.QuickSearchAdvancedFilters),
+const QuickSearchFiltersDrawer = dynamic(() =>
+  import("@/modules/quick-search/components/QuickSearchFiltersDrawer").then((m) => m.QuickSearchFiltersDrawer),
 );
 const QuickSearchLoadingProgress = dynamic(() =>
   import("@/modules/quick-search/components/QuickSearchLoadingProgress").then((m) => m.QuickSearchLoadingProgress),
