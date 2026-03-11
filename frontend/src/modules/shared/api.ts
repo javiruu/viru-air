@@ -1,5 +1,5 @@
 import { translate } from "@/i18n";
-import { hasToken } from "@/modules/shared/auth";
+import { getToken, hasToken } from "@/modules/shared/auth";
 
 const RAW_API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1").trim();
 
@@ -24,11 +24,8 @@ function resolveApiBase(rawBase: string): string {
 const API_BASE = resolveApiBase(RAW_API_BASE);
 
 function authHeaders(): HeadersInit {
-  if (typeof window === "undefined") {
-    return {};
-  }
-  const token = window.localStorage.getItem("viru_token");
-  if (!token || token === "null" || token === "undefined") {
+  const token = getToken();
+  if (!token) {
     return {};
   }
   return { Authorization: `Bearer ${token}` };

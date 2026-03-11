@@ -4,7 +4,7 @@ import Link from "next/link";
 import { type KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { apiFetch } from "@/modules/shared/api";
+import { apiFetchWithStatus } from "@/modules/shared/api";
 import { clearToken } from "@/modules/shared/auth";
 import { persistLocale, useI18n } from "@/i18n";
 
@@ -28,14 +28,20 @@ export default function AccountMenu() {
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
-    apiFetch<Me>("/auth/me")
-      .then((data) => {
-        setMe(data);
-        if (data?.locale) {
-          persistLocale(data.locale === "en" ? "en" : "es");
+    apiFetchWithStatus<Me>("/auth/me").then((result) => {
+      if (!result.ok) {
+        if (result.status === 401) {
+          clearToken();
         }
-      })
-      .catch(() => setMe(null));
+        setMe(null);
+        return;
+      }
+      const data = result.data;
+      setMe(data);
+      if (data?.locale) {
+        persistLocale(data.locale === "en" ? "en" : "es");
+      }
+    });
   }, []);
 
   useEffect(() => {

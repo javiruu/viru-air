@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-import { apiFetch } from "@/modules/shared/api";
+import { apiFetchWithStatus } from "@/modules/shared/api";
 import { clearToken, hasToken } from "@/modules/shared/auth";
 import { buildLoginRedirect, currentPathWithSearch } from "@/modules/shared/navigation";
 import AirLoader from "@/modules/shared/AirLoader";
@@ -30,17 +30,21 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
         router.replace(loginRedirect);
         return;
       }
-      try {
-        const me = await apiFetch<Me>("/auth/me");
+      const meResult = await apiFetchWithStatus<Me>("/auth/me");
+      if (meResult.ok) {
+        const me = meResult.data;
         if (me?.locale) {
           persistLocale(me.locale === "en" ? "en" : "es");
         }
         if (active) setState("authed");
-      } catch {
-        clearToken();
-        setState("redirecting");
-        router.replace(loginRedirect);
+        return;
       }
+
+      if (meResult.status === 401) {
+        clearToken();
+      }
+      setState("redirecting");
+      router.replace(loginRedirect);
     }
 
     validateSession();

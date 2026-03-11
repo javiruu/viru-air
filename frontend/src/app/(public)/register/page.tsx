@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 
-import { apiFetch } from "@/modules/shared/api";
+import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
 import { AuthOut, clearToken, hasToken, saveToken } from "@/modules/shared/auth";
 import { resolvePostAuthUrl } from "@/modules/shared/navigation";
 import ThemeToggle from "@/modules/shared/ThemeToggle";
@@ -26,13 +26,18 @@ function RegisterContent() {
   useEffect(() => {
     let active = true;
     if (!hasToken()) return;
-    apiFetch("/auth/me")
-      .then(() => {
-        if (active) router.replace("/dashboard");
-      })
-      .catch(() => {
+
+    apiFetchWithStatus<{ id: string }>("/auth/me").then((result) => {
+      if (!active) return;
+      if (result.ok) {
+        router.replace("/dashboard");
+        return;
+      }
+      if (result.status === 401) {
         clearToken();
-      });
+      }
+    });
+
     return () => {
       active = false;
     };
