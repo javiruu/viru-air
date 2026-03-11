@@ -1016,9 +1016,38 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     return t("weatherVariable");
   }
 
+  type WeatherFetchErrorCode = "out_of_range" | "provider_error";
+
+  class WeatherFetchError extends Error {
+    code: WeatherFetchErrorCode;
+
+    constructor(code: WeatherFetchErrorCode, message: string) {
+      super(message);
+      this.code = code;
+    }
+  }
+
+  function isWeatherRangeSupported(start: string, end: string): boolean {
+    const startDate = new Date(`${start}T00:00:00Z`);
+    const endDate = new Date(`${end}T00:00:00Z`);
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return false;
+
+    const today = new Date();
+    const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+    const maxDate = new Date(todayUtc);
+    maxDate.setUTCDate(maxDate.getUTCDate() + 14);
+
+    return startDate >= todayUtc && endDate <= maxDate;
+  }
+
   async function fetchWeather(iata: string, start: string, end: string): Promise<WeatherReport | null> {
     const meta = getAirportMeta(iata);
     if (!meta) return null;
+
+    if (!isWeatherRangeSupported(start, end)) {
+      throw new WeatherFetchError("out_of_range", "weather_out_of_range");
+    }
+
     const params = new URLSearchParams({
       latitude: String(meta.latitude),
       longitude: String(meta.longitude),
@@ -1029,7 +1058,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     });
     const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`);
     if (!res.ok) {
-      throw new Error("No se pudo cargar clima");
+      const reasonRaw = await res.text().catch(() => "");
+      const isRange400 = res.status === 400 && reasonRaw.toLowerCase().includes("out of allowed range");
+      if (isRange400) {
+        throw new WeatherFetchError("out_of_range", "weather_out_of_range");
+      }
+      throw new WeatherFetchError("provider_error", `weather_provider_${res.status}`);
     }
     const data = await res.json();
     const times: string[] = data?.daily?.time || [];
@@ -1214,10 +1248,15 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       setIsLoading(true);
       const originWeatherIata = originCountryOnly ? "" : origin;
       const destinationWeatherIata = destinationCountryOnly ? "" : destination;
-      const originWeatherPromise = range.length > 0 && originWeatherIata
+      const weatherRangeSupported = range.length > 0 && isWeatherRangeSupported(range[0], range[range.length - 1]);
+      if (!weatherRangeSupported && (originWeatherIata || destinationWeatherIata)) {
+        setWeatherMessage(t("weatherUnavailableRange"));
+      }
+
+      const originWeatherPromise = weatherRangeSupported && originWeatherIata
         ? fetchWeather(originWeatherIata, range[0], range[range.length - 1])
         : Promise.resolve(null);
-      const destinationWeatherPromise = range.length > 0 && destinationWeatherIata
+      const destinationWeatherPromise = weatherRangeSupported && destinationWeatherIata
         ? fetchWeather(destinationWeatherIata, range[0], range[range.length - 1])
         : Promise.resolve(null);
       void Promise.allSettled([originWeatherPromise, destinationWeatherPromise]).then(([originWeather, destinationWeather]) => {
@@ -1228,8 +1267,15 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         if (destinationWeather.status === "fulfilled") {
           setWeatherDestination(destinationWeather.value);
         }
+
         if (originWeather.status === "rejected" || destinationWeather.status === "rejected") {
-          setWeatherMessage(t("weatherError"));
+          const reasons = [originWeather, destinationWeather]
+            .filter((item): item is PromiseRejectedResult => item.status === "rejected")
+            .map((item) => item.reason);
+          const hasOutOfRange = reasons.some(
+            (reason) => reason && typeof reason === "object" && "code" in reason && reason.code === "out_of_range",
+          );
+          setWeatherMessage(hasOutOfRange ? t("weatherUnavailableRange") : t("weatherError"));
         }
       });
       const searchResult = await apiFetchWithStatus<SearchResponse>(`/search/quick?${query}`, {

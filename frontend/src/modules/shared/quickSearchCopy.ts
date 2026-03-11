@@ -274,6 +274,8 @@ export const QUICK_SEARCH_COPY = {
     selectReturnHint: "Selecciona una fecha de vuelta para completar ida y vuelta",
     returnBefore: "La fecha de vuelta no puede ser anterior a la ida",
     weatherError: "No se pudo cargar el clima para todas las fechas.",
+    weatherUnavailableRange: "Clima no disponible para las fechas seleccionadas.",
+
     searchFailed: "No se pudo buscar.",
     noFlights: "No hay vuelos disponibles para esa fecha.",
     watchAdded: "Vuelo anadido a la watchlist",
@@ -561,6 +563,7 @@ export const QUICK_SEARCH_COPY = {
     selectReturnHint: "Select a return date to complete round trip",
     returnBefore: "Return date cannot be earlier than outbound",
     weatherError: "Weather data could not be loaded for all dates.",
+    weatherUnavailableRange: "Weather unavailable for the selected dates.",
     searchFailed: "Search failed.",
     noFlights: "No flights available for that date.",
     watchAdded: "Flight added to watchlist",
