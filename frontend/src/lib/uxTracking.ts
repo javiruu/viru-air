@@ -1,3 +1,6 @@
+import { hasToken } from "@/modules/shared/auth";
+import { apiFetchBestEffort } from "@/modules/shared/api";
+
 type UxMeta = Record<string, string | number | boolean | null | undefined>;
 
 function compactMeta(input: UxMeta = {}): Record<string, string | number | boolean | null> {
@@ -15,26 +18,17 @@ function compactMeta(input: UxMeta = {}): Record<string, string | number | boole
 
 export async function trackUxEvent(eventName: string, metadata: UxMeta = {}): Promise<void> {
   if (typeof window === "undefined") return;
-  try {
-    const token = window.localStorage.getItem("viru_token");
-    if (!token) return;
+  if (!hasToken()) return;
 
-    const payload = {
-      event_name: eventName,
-      duration_ms: typeof metadata.duration_ms === "number" ? Number(metadata.duration_ms) : undefined,
-      metadata: compactMeta(metadata),
-    };
+  const payload = {
+    event_name: eventName,
+    duration_ms: typeof metadata.duration_ms === "number" ? Number(metadata.duration_ms) : undefined,
+    metadata: compactMeta(metadata),
+  };
 
-    await fetch("/api/v1/ux/events", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-      keepalive: true,
-    });
-  } catch {
-    // No-op: telemetry should never break UX
-  }
+  await apiFetchBestEffort("/ux/events", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    keepalive: true,
+  });
 }

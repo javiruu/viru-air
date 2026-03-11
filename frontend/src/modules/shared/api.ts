@@ -144,6 +144,18 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
 
 export { API_BASE };
 
+export async function apiFetchBestEffort(path: string, init?: RequestInit): Promise<void> {
+  try {
+    const mergedHeaders = buildHeaders(init);
+    await fetch(`${API_BASE}${path}`, {
+      ...init,
+      headers: mergedHeaders,
+    });
+  } catch {
+    // best-effort by design
+  }
+}
+
 export type ApiError = {
   status: number;
   code?: string;
