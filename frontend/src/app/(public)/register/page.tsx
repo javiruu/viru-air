@@ -20,7 +20,7 @@ function RegisterContent() {
   const [fieldError, setFieldError] = useState<{ email?: string; password?: string }>({});
 
   const returnUrl = useMemo(() => {
-    return resolvePostAuthUrl(searchParams.get("returnUrl"));
+    return resolvePostAuthUrl(searchParams?.get("returnUrl"));
   }, [searchParams]);
 
   useEffect(() => {

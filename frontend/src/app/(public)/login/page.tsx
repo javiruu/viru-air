@@ -21,7 +21,7 @@ function LoginContent() {
   const [logoutNotice, setLogoutNotice] = useState(false);
 
   const returnUrl = useMemo(() => {
-    return resolvePostAuthUrl(searchParams.get("returnUrl"));
+    return resolvePostAuthUrl(searchParams?.get("returnUrl"));
   }, [searchParams]);
 
   useEffect(() => {
