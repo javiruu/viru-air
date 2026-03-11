@@ -33,7 +33,7 @@ const QuickSearchStatePanels = dynamic(() =>
   import("@/modules/quick-search/components/QuickSearchStatePanels").then((m) => m.QuickSearchStatePanels),
 );
 import { normalizeQuickSearchResults } from "@/modules/quick-search/api/normalizeQuickSearchResponse";
-import { toQuickSearchQuery } from "@/modules/quick-search/api/buildQuickSearchRequest";
+import { prepareQuickSearchRequest, toQuickSearchQuery } from "@/modules/quick-search/api/buildQuickSearchRequest";
 import { QuickSearchResultsWorkspace } from "@/modules/quick-search/components/QuickSearchResultsWorkspace";
 import {
   AirportIataEntry,
@@ -1198,7 +1198,17 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       flex_days_before: daysBefore,
       flex_days_after: daysAfter,
     });
-    const query = toQuickSearchQuery(payload);
+    const preparedRequest = prepareQuickSearchRequest(payload);
+    if (preparedRequest.issues.length > 0) {
+      setSearchError(t("errorText"));
+      setSearchState("idle");
+      setIsLoading(false);
+      trackEvent("quicksearch_contract_blocked", {
+        issues: preparedRequest.issues.map((issue) => issue.code).join(","),
+      });
+      return;
+    }
+    const query = toQuickSearchQuery(preparedRequest.params);
     try {
       if (!isCurrentRequest()) return;
       setIsLoading(true);
@@ -1262,6 +1272,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             setSearchState("rate");
             setSearchError(t("rateLimitText"));
           } else {
+            if (status === 422) {
+              trackEvent("quicksearch_contract_rejected", {
+                has_field_errors: Object.keys(validationErrors).length > 0,
+                detail: error.message?.slice(0, 120) || "validation_error",
+              });
+            }
             setSearchState("error");
             setSearchError(Object.keys(validationErrors).length > 0 ? t("errorText") : t("searchFailed"));
           }

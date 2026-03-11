@@ -18,6 +18,90 @@ export type QuickSearchQueryParams = {
   soft_filters_weight: number;
 };
 
+export type QuickSearchContractIssueCode =
+  | "missing_origin"
+  | "missing_destination"
+  | "missing_travel_date"
+  | "invalid_radius"
+  | "invalid_flex_days"
+  | "invalid_soft_filters_weight"
+  | "invalid_max_stops";
+
+export type QuickSearchContractIssue = {
+  code: QuickSearchContractIssueCode;
+  message: string;
+};
+
+export type QuickSearchPreparedRequest = {
+  params: QuickSearchQueryParams;
+  issues: QuickSearchContractIssue[];
+};
+
+function clampInt(value: number, min: number, max: number, fallback: number): number {
+  if (!Number.isFinite(value)) return fallback;
+  return Math.min(max, Math.max(min, Math.trunc(value)));
+}
+
+function normalizeIataValue(value: string | string[]): string | string[] {
+  if (Array.isArray(value)) {
+    return value.map((item) => item.trim().toUpperCase()).filter(Boolean);
+  }
+  return value.trim().toUpperCase();
+}
+
+export function prepareQuickSearchRequest(input: QuickSearchQueryParams): QuickSearchPreparedRequest {
+  const normalized: QuickSearchQueryParams = {
+    ...input,
+    origin_iata: normalizeIataValue(input.origin_iata),
+    destination_iata: normalizeIataValue(input.destination_iata),
+    travel_date: input.travel_date?.trim?.() || "",
+    date: input.date?.trim?.() || input.travel_date?.trim?.() || "",
+    flex_days_before: clampInt(input.flex_days_before, 0, 7, 0),
+    flex_days_after: clampInt(input.flex_days_after, 0, 7, 0),
+    radius_km: clampInt(input.radius_km, 10, 500, 150),
+    include_stops: Boolean(input.include_stops),
+    include_nearby_origins: Boolean(input.include_nearby_origins),
+    include_nearby_destinations: Boolean(input.include_nearby_destinations),
+    max_stops: clampInt(input.max_stops, 0, 4, 0),
+    exclude_origins: (input.exclude_origins || []).map((item) => item.trim().toUpperCase()).filter(Boolean),
+    exclude_destinations: (input.exclude_destinations || []).map((item) => item.trim().toUpperCase()).filter(Boolean),
+    strict_filters: Boolean(input.strict_filters),
+    soft_filters_weight: Number.isFinite(input.soft_filters_weight)
+      ? Math.min(1, Math.max(0, input.soft_filters_weight))
+      : 0.6,
+    depart_after: input.depart_after || undefined,
+    depart_before: input.depart_before || undefined,
+  };
+
+  if (!normalized.include_stops) {
+    normalized.max_stops = 0;
+  }
+
+  const issues: QuickSearchContractIssue[] = [];
+  const hasOrigin = Array.isArray(normalized.origin_iata)
+    ? normalized.origin_iata.length > 0
+    : normalized.origin_iata.length > 0;
+  const hasDestination = Array.isArray(normalized.destination_iata)
+    ? normalized.destination_iata.length > 0
+    : normalized.destination_iata.length > 0;
+
+  if (!hasOrigin) issues.push({ code: "missing_origin", message: "origin_iata is required" });
+  if (!hasDestination) issues.push({ code: "missing_destination", message: "destination_iata is required" });
+  if (!normalized.travel_date) issues.push({ code: "missing_travel_date", message: "travel_date is required" });
+  if (!Number.isFinite(input.radius_km)) issues.push({ code: "invalid_radius", message: "radius_km must be numeric" });
+  if (!Number.isFinite(input.flex_days_before) || !Number.isFinite(input.flex_days_after)) {
+    issues.push({ code: "invalid_flex_days", message: "flex_days_before/flex_days_after must be numeric" });
+  }
+  if (!Number.isFinite(input.soft_filters_weight)) {
+    issues.push({ code: "invalid_soft_filters_weight", message: "soft_filters_weight must be numeric" });
+  }
+  if (!Number.isFinite(input.max_stops)) {
+    issues.push({ code: "invalid_max_stops", message: "max_stops must be numeric" });
+  }
+
+  return { params: normalized, issues };
+}
+
 export function toQuickSearchQuery(params: QuickSearchQueryParams): string {
   const query = new URLSearchParams();
   const originValue = Array.isArray(params.origin_iata) ? params.origin_iata.join(",") : params.origin_iata;

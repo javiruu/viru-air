@@ -78,6 +78,13 @@ Legacy aliases (accepted temporarily):
 - `strict_mode`
 - `dias_antes` / `dias_despues`
 
+### Legacy conflict watchlist
+- `date` vs `travel_date`: `travel_date` is canonical; `date` should be treated as compatibility alias.
+- `include_stops` / `max_stops`: accepted for compatibility but not fully enforceable in quick mode.
+- `strict_mode` vs `strict_filters`: `strict_filters` is canonical.
+- `include_nearby_origin(s)` / `include_nearby_destination(s)`: canonical uses plural side flags.
+- `radius_km=0` sentinel: deprecated; clients must send valid radius in `10..500`.
+
 ## Filter implementation status
 Response includes:
 - `meta.filter_support.supported`
