@@ -31,6 +31,27 @@ if run_seed_users:
 
 logger = logging.getLogger("app.access")
 
+
+def _parse_cors_origins() -> list[str]:
+    env_value = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
+    if env_value:
+        origins = [item.strip() for item in env_value.split(",") if item.strip()]
+        if origins:
+            return origins
+
+    return [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3101",
+        "http://127.0.0.1:3101",
+        "http://45.136.18.49:3000",
+        "http://45.136.18.49:3101",
+        "http://45.136.18.49:3200",
+        "http://45.136.18.49:3300",
+        "http://192.168.56.1:3000",
+    ]
+
+
 app = FastAPI(title="Viru API", version="0.1.0")
 
 
@@ -75,17 +96,8 @@ class AccessLogMiddleware:
             logger.info(json.dumps(log_payload, ensure_ascii=False))
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3101",
-        "http://127.0.0.1:3101",
-        "http://45.136.18.49:3000",
-        "http://45.136.18.49:3101",
-        "http://45.136.18.49:3200",
-        "http://45.136.18.49:3300",
-        "http://192.168.56.1:3000",
-    ],
+    allow_origins=_parse_cors_origins(),
+    allow_origin_regex=os.getenv("CORS_ALLOW_ORIGIN_REGEX", r"^https?://45\.136\.18\.49(?::\d+)?$"),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

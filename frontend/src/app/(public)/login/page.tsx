@@ -75,8 +75,14 @@ function LoginContent() {
       });
       saveToken(data.access_token);
       router.push(returnUrl);
-    } catch {
-      setError(t("public.auth.loginError"));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      const networkLike =
+        message.includes("Failed to fetch") ||
+        message.includes("NetworkError") ||
+        message.includes("ERR_FAILED") ||
+        message.includes("CORS");
+      setError(t(networkLike ? "public.auth.loginNetworkError" : "public.auth.loginError"));
     }
   }
 
