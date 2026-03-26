@@ -1,6 +1,8 @@
-﻿# Viru Platform (Fases 1-10)
+# Viru Platform (Fases 1-10)
 
-Monorepo inicial de Viru (Ryanair Tracker) montado desde la carpeta `fases`, con trazabilidad fase a fase, arquitectura fullstack y base de operación.
+Viru Tracker es una plataforma enfocada en optimizar la compra de vuelos Ryanair mediante watchlists, historicos de precios y alertas inteligentes. Analiza tendencias reales y ayuda a decidir cuando comprar, priorizando claridad, simplicidad y decisiones basadas en datos.
+
+Monorepo inicial de Viru (Ryanair Tracker) montado desde la carpeta `fases`, con trazabilidad fase a fase, arquitectura fullstack y base de operacion.
 
 ## Estructura
 
@@ -39,7 +41,7 @@ Variables recomendadas:
 
 Importante: `JWT_SECRET` es obligatorio y no puede ser `change-me`.
 
-## Calidad (ejecución real)
+## Calidad (ejecucion real)
 
 ```bash
 cd backend
@@ -49,7 +51,7 @@ cd ../frontend
 npm run build
 ```
 
-## Hardening / Operación
+## Hardening / Operacion
 
 - Health: `GET /health`
 - Readiness: `GET /ready`
