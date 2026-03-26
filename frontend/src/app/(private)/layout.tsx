@@ -10,15 +10,15 @@ export default function PrivateLayout({ children }: { children: ReactNode }) {
     <RequireAuth>
       <div className="private-layout">
         <div className="private-account-anchor">
-          <div className="private-theme-toggle">
-            <ThemeToggle />
-          </div>
-          <AccountMenu />
-        </div>
-        <div className="private-content">
           <PrivateNav />
-          {children}
+          <div className="private-account-controls">
+            <div className="private-theme-toggle">
+              <ThemeToggle />
+            </div>
+            <AccountMenu />
+          </div>
         </div>
+        <div className="private-content">{children}</div>
       </div>
     </RequireAuth>
   );

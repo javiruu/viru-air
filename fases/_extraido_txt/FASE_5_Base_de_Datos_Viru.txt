@@ -1,0 +1,187 @@
+FASE 5 - BASE DE DATOS
+Viru - Ryanair Tracker
+Documento tecnico - Diseno de datos, relaciones, indices y optimizacion
+Fecha: 2026-02-12
+0. Objetivo y alcance de la Fase 5
+Esta fase define el modelo de datos corporativo de Viru con detalle de implementacion para que el equipo pueda construir el sistema sin huecos funcionales ni ambiguedades operativas. El foco es transformar los requisitos de producto y las decisiones de arquitectura y backend en un esquema relacional robusto, auditable y optimizado para workloads mixtos: transaccional, series temporales y analitica operativa.
+El alcance cubre: eleccion del motor de base de datos, topologia logica, diseno conceptual y logico, diccionario de tablas, claves y restricciones, indices por patron de consulta, estrategia de particionado, politicas de retencion, seguridad en datos, backup y recuperacion, migraciones y criterios de aceptacion. Se incluyen edge cases y mitigaciones porque el dominio combina datos sensibles de usuario con ingesta externa variable.
+Este documento mantiene coherencia 1:1 con las fases anteriores. Se preserva la entidad central FlightWatch y su historico PriceSnapshot, se incorpora la capa de alertas anti-spam, se contempla el uso de ryanair-py a traves de metadatos de proveedor y se deja preparada la evolucion a self-connect, prediccion y busqueda de destinos baratos sin romper contratos actuales.
+La filosofia de esta fase prioriza exactitud semantica sobre simplicidad aparente. Donde existen decisiones abiertas de negocio, se modela una opcion por defecto y se dejan extensiones forward-compatible. El resultado es una base de datos apta para operar en entorno enterprise con crecimiento sostenido, observabilidad y gobernanza de cambios.
+5.1 Principios de diseno de datos y ADR de base de datos
+El primer principio es separar datos transaccionales de datos de observacion temporal. Entidades como User, FlightWatch, AlertRule o UserPreference requieren integridad fuerte y operaciones ACID de baja latencia. En cambio, PriceSnapshot y metricas asociadas son series temporales de alta cardinalidad y deben optimizarse para escritura continua, lectura por rango y archivado por ventanas.
+El segundo principio es identidad estable por entidad y versionado explicito de cambios. Cada tabla principal usa identificadores inmutables (UUID o ULID) para evitar acoplarse a significados funcionales volatiles. Los campos con semantica externa, como currency o provider payload, se guardan junto a metadatos de calidad para auditoria y trazabilidad.
+El tercer principio es modelar reglas de negocio como datos cuando aporten control operativo. Las politicas de escaneo, cooldown de alertas, preferencias de radio y filtros horarios no se hardcodean en aplicacion: se persisten como columnas tipadas y JSON validado. Esto reduce deploys por cambios de producto y mejora capacidad de experimentacion.
+El cuarto principio es diseno para degradacion controlada. La dependencia externa de proveedor de vuelos puede fallar o devolver formatos inestables. Por eso el esquema incluye banderas de stale data, score de calidad, huella de payload y estado de ejecucion para que frontend y backend expliquen al usuario la calidad del dato en vez de ocultar fallos.
+ADR-DB-01: PostgreSQL como store principal; ADR-DB-02: Redis para cache, lock distribuido y cola; ADR-DB-03: particion temporal mensual en snapshots; ADR-DB-04: outbox pattern para notificaciones; ADR-DB-05: retencion escalonada por criticidad. Estos ADR quedan acoplados al plan de migraciones de Fase 6 para despliegue continuo seguro.
+5.2 Eleccion tecnologica de base de datos y topologia
+Se adopta PostgreSQL 16 como base de datos primaria por madurez ACID, soporte de JSONB, indices avanzados, particionado nativo y ecosistema operativo estable. El dominio de Viru exige joins consistentes entre usuarios, watchlists, reglas y eventos de notificacion, algo que un motor estrictamente documental haria mas costoso de gobernar y auditar.
+La topologia de produccion recomendada es primaria mas replica de lectura, con failover gestionado por plataforma cloud y backups continuos para recuperacion punto en el tiempo. El trafico de escritura se concentra en la primaria y la replica absorbe consultas analiticas no criticas, exportaciones y endpoints de historico de gran volumen cuando no comprometan frescura.
+Redis se usa como componente complementario, no como fuente de verdad. Sus funciones son: cache corta de lecturas frecuentes, rate limiting por usuario, distributed locks para jobs de tracking y cola ligera para tareas asincronas. Toda decision irreversible de negocio se confirma en PostgreSQL para evitar inconsistencias ante reinicios o expiracion de llaves.
+Para conexiones se define pooler dedicado (PgBouncer en modo transaction). Este punto es clave en escenarios con workers concurrentes y picos de refresh manual. Sin pooler, la aplicacion podria saturar el limite de conexiones del motor y degradar todo el sistema. Con pooler y limites por servicio se preserva estabilidad del plano de datos.
+5.3 Modelo conceptual de dominio de datos
+El modelo conceptual parte de un eje central: cada usuario crea objetos FlightWatch para una ruta y fecha de viaje. Sobre cada watch se registran observaciones de precio (PriceSnapshot), se aplican reglas de alerta (AlertRule) y se generan eventos de comunicacion (NotificationEvent). Esta cadena conserva trazabilidad desde la configuracion inicial hasta el impacto en UX.
+Se distinguen dominios de datos: Identidad, Tracking, Alerting, Search, Inteligencia, Contenido y Operaciones. Cada dominio tiene fronteras claras para minimizar acoplamiento y permitir evolucion independiente. Por ejemplo, QuickSearch puede crecer con alternativas y self-connect sin alterar la semantica base de FlightWatch.
+El modelo conceptual contempla que un watch puede evolucionar de activo a vencido sin perder historico. No se elimina informacion operacional salvo politicas de retencion definidas. Esta decision habilita analitica de largo plazo, entrenamiento de modelos y auditorias de soporte cuando un usuario cuestiona por que recibio una sugerencia concreta.
+La cardinalidad principal es: User 1..N FlightWatch; FlightWatch 1..N PriceSnapshot; FlightWatch 1..N AlertRule; AlertRule 1..N NotificationEvent. En paralelo, User 1..1 UserPreference con historial opcional de cambios. Para funcionalidades futuras, SearchJob 1..N SearchResult y SearchResult 0..N SelfConnectLeg establecen una expansion limpia.
+Se incluye dominio de contenido contextual por pais para consejos de viaje. El mapeo aeropuerto-pais y pais-idioma no se incrusta en codigo de frontend; se persiste con version de contenido y fecha de revision. Eso permite control editorial y reduce riesgo de recomendaciones obsoletas.
+5.4 Diseno logico detallado por modulos
+5.4.1 Modulo de identidad y acceso
+Tabla users: almacena identidad canonica y estado de cuenta. Campos recomendados: id UUID PK, email CITEXT UNIQUE, password_hash, is_verified, is_locked, failed_login_count, lock_until_utc, locale, timezone, created_at_utc, updated_at_utc, deleted_at_utc NULL. El uso de CITEXT evita duplicados por mayusculas o minusculas sin logica ad hoc.
+Tabla user_sessions: conserva sesiones activas o refresh tokens con rotacion. Campos: id UUID PK, user_id FK users, refresh_token_hash, user_agent_hash, ip_hash, issued_at_utc, expires_at_utc, revoked_at_utc NULL, revoke_reason. Se evita guardar token plano para reducir impacto ante filtracion.
+Tabla password_reset_tokens y tabla email_verification_tokens separan flujos criticos de cuenta con expiracion estricta e invalidacion de un solo uso. El backend puede operar sin estas tablas en MVP, pero su inclusion desde el inicio evita deuda de seguridad y simplifica auditoria de incidentes.
+Restricciones clave: user_sessions requiere UNIQUE(user_id, refresh_token_hash) y CHECK(expires_at_utc > issued_at_utc). En users se recomienda CHECK(length(password_hash) > 20) como barrera basica de calidad de dato. Todos los timestamps se almacenan en UTC para consistencia entre zonas horarias.
+5.4.2 Modulo core de tracking
+Tabla flight_watch representa la intencion de seguimiento de precio. Campos: id UUID PK, user_id FK, origin_iata CHAR(3), destination_iata CHAR(3), travel_date_local DATE, target_price NUMERIC(10,2) NULL, status VARCHAR(20), is_paused BOOLEAN, include_stops BOOLEAN, radius_km SMALLINT NULL, scan_policy_json JSONB, created_at_utc, updated_at_utc, archived_at_utc NULL.
+La definicion por defecto usa granularidad ruta + fecha para alinearse con fase funcional actual. Para evolucion sin ruptura se incluye departure_time_local NULL opcional y source_granularity ENUM('route_day','departure_instance'). Esto permite migrar a tracking por salida concreta en planes avanzados sin cambiar PK ni endpoints existentes.
+Se propone constraint de unicidad suave: UNIQUE(user_id, origin_iata, destination_iata, travel_date_local, deleted_marker) donde deleted_marker es columna derivada para soft delete. Evita duplicados accidentales y a la vez permite re-crear watch historico una vez archivado de forma limpia.
+Tabla watch_state_history registra transiciones de estado para trazabilidad operacional: active, paused, archived, expired. Esto ayuda a explicar por que un watch dejo de escanear y evita depender de inferencias en logs de aplicacion. Cada cambio guarda actor (system o user) y motivo estructurado.
+5.4.3 Modulo de series temporales de precio
+Tabla price_snapshot es la tabla de mayor crecimiento. Campos: id ULID PK, watch_id UUID FK, captured_at_utc TIMESTAMPTZ, observed_travel_date DATE, departure_time_local TIME NULL, raw_price NUMERIC(10,2), raw_currency CHAR(3), normalized_price_eur NUMERIC(10,2) NULL, fx_rate_used NUMERIC(18,8) NULL, provider VARCHAR(40), provider_payload_hash CHAR(64), quality_score SMALLINT, is_stale BOOLEAN DEFAULT FALSE, ingest_status VARCHAR(20), created_at_utc.
+La tabla se particiona por rango mensual en captured_at_utc para controlar tamano de indices, acelerar vacuum y habilitar retencion selectiva. Cada particion hereda constraints y mantiene indices locales orientados a consultas por watch y ventana temporal. Esta estrategia reduce costo de mantenimiento frente a una tabla monolitica.
+Deduplicacion: UNIQUE(watch_id, captured_at_utc, provider_payload_hash) evita insertar replicas identicas durante retries. Si el proveedor devuelve datos semanticamente iguales con metadatos distintos, se usa hash canonizado del payload normalizado para preservar consistencia. La deduplicacion se decide en DB, no solo en aplicacion.
+Se agrega tabla snapshot_daily_aggregate para precomputar min_price, max_price, avg_price y last_price por watch y dia. Esta tabla no sustituye snapshots crudos; solo acelera endpoints de calendario y comparativas. Se llena por job incremental idempotente que re-procesa ventanas recientes para corregir llegadas tardias.
+5.4.4 Modulo de alertas y notificaciones
+Tabla alert_rule define reglas por watch. Campos: id UUID PK, watch_id UUID FK, rule_type VARCHAR(30), threshold_value NUMERIC(10,2) NULL, threshold_currency CHAR(3) NULL, min_change_pct NUMERIC(5,2) NULL, cooldown_minutes INT DEFAULT 0, notify_on_every_change BOOLEAN DEFAULT FALSE, channels JSONB, enabled BOOLEAN DEFAULT TRUE, last_triggered_at_utc NULL, created_at_utc, updated_at_utc.
+Tabla notification_event registra cada intento de entrega. Campos: id UUID PK, rule_id UUID FK, watch_id UUID FK, user_id UUID FK, channel VARCHAR(20), delivery_status VARCHAR(20), status_reason VARCHAR(120), payload_json JSONB, dedupe_key CHAR(64), sent_at_utc NULL, created_at_utc, retry_count SMALLINT DEFAULT 0, provider_message_id VARCHAR(120) NULL.
+Se impone UNIQUE(dedupe_key) para bloquear duplicados producidos por reintentos o ejecuciones concurrentes de jobs. El dedupe_key combina rule_id, bucket temporal de cooldown y estado de precio para garantizar idempotencia semantica. Esta decision es central para el requisito de anti-spam.
+Tabla notification_outbox desacopla transaccion de negocio de envio externo. La regla se dispara en transaccion local y el evento se publica a outbox; un worker aparte entrega email o push. Este patron elimina inconsistencias del tipo regla evaluada pero notificacion perdida por fallo de red.
+5.4.5 Modulo de busqueda rapida, alternativos y self-connect
+Tabla search_job modela cada ejecucion de busqueda rapida. Campos: id UUID PK, user_id UUID FK, origin_iata CHAR(3), destination_iata CHAR(3), date_from DATE, date_to DATE, radius_km SMALLINT, include_stops BOOLEAN, avoid_departure_before TIME NULL, avoided_airports JSONB NULL, status VARCHAR(20), requested_at_utc, finished_at_utc NULL, diagnostics_json JSONB.
+Tabla search_result almacena resultados individuales ordenables y filtrables. Campos: id UUID PK, job_id UUID FK, itinerary_type VARCHAR(20), origin_iata, destination_iata, departure_at_utc, arrival_at_utc, total_price NUMERIC(10,2), currency CHAR(3), normalized_total_eur NUMERIC(10,2), duration_minutes INT, stop_count SMALLINT, risk_level VARCHAR(10), deeplink_url TEXT, provider VARCHAR(40), ranking_score NUMERIC(9,4), created_at_utc.
+Para self-connect se usa tabla self_connect_leg con cardinalidad 1..N respecto de search_result. Cada tramo guarda origin, destination, departure, arrival, price y buffer_minutes. Esto permite exponer al frontend desglose completo y advertencias sobre conexion justa sin duplicar columnas de manera anti-normalizada.
+El esquema diferencia resultado efimero de configuracion persistente. search_job y search_result tienen retencion corta para no inflar almacenamiento con consultas exploratorias. Las preferencias estables de usuario se guardan en user_preference, no en search_job, evitando mezclar historico operativo con configuracion de producto.
+5.4.6 Modulo de prediccion y explicabilidad
+Tabla price_prediction almacena inferencias para cada watch y corte temporal. Campos: id UUID PK, watch_id UUID FK, model_version VARCHAR(40), predicted_direction VARCHAR(10), confidence NUMERIC(5,4), recommended_action VARCHAR(12), explanation_json JSONB, features_hash CHAR(64), generated_at_utc, valid_until_utc, created_at_utc.
+El campo explanation_json no es decorativo; su funcion es dar soporte a UX explicable y soporte tecnico. Debe incluir top features, ventana historica usada y razones humanas legibles para el mensaje esperar o comprar. Sin esta evidencia, la recomendacion de IA se vuelve dificil de defender ante usuarios y QA.
+Se controla duplicado con UNIQUE(watch_id, model_version, generated_at_utc) y se define indice por (watch_id, generated_at_utc DESC) para recuperar rapido la recomendacion vigente. El backend nunca sobreescribe predicciones previas: inserta nueva version para conservar historico de comportamiento del modelo.
+Para auditoria de deriva se incluye tabla prediction_feedback opcional con interacciones de usuario (si siguio o no recomendacion, resultado observado). Esta tabla no es obligatoria en MVP pero conviene definirla temprano para acelerar mejora del modelo en fases futuras.
+5.4.7 Modulo de contenido, sugerencias e internacionalizacion
+Tabla user_preference concentra defaults de experiencia: default_radius_km, include_stops_default, avoid_departure_before, preferred_currency, language, timezone, notify_channels_default. Se mantiene 1:1 con users mediante UNIQUE(user_id). Al usar columnas tipadas se minimizan errores que surgirian con preferencias puramente JSON.
+Tabla country_policy_content soporta consejos contextuales por pais e idioma. Campos: id UUID PK, country_code CHAR(2), language CHAR(2), title, body_markdown, disclaimer, source_label, review_due_date, content_version INT, is_active BOOLEAN, updated_by, updated_at_utc. UNIQUE(country_code, language, content_version) asegura trazabilidad editorial.
+Tabla airport_catalog y tabla airport_alternative_map resuelven geografia de busqueda alternativa. airport_catalog guarda iata, nombre, pais, latitud, longitud y estado operativo. airport_alternative_map precalcula vecinos por radio para acelerar consultas sin recalcular distancia geodesica en cada request.
+Tabla suggestion recibe propuestas de usuario con controles anti-abuso: id UUID PK, user_id NULL, text, locale, source_ip_hash, user_agent_hash, spam_score, moderation_status, created_at_utc, reviewed_at_utc NULL. La separacion entre captura y moderacion habilita escalado de soporte y evita mezclar feedback limpio con ruido.
+5.4.8 Modulo de operaciones, idempotencia y auditoria
+Tabla api_idempotency_key protege endpoints sensibles (crear watch, refresh manual, crear regla). Campos: id UUID PK, user_id, idempotency_key, request_fingerprint, response_code, response_body_hash, created_at_utc, expires_at_utc. UNIQUE(user_id, idempotency_key) evita duplicidades por reintentos de red o dobles clics.
+Tabla audit_event captura eventos de seguridad y negocio con esquema estable: actor_type, actor_id, event_type, entity_type, entity_id, before_json, after_json, ip_hash, occurred_at_utc, correlation_id. Esta tabla es esencial para investigacion de incidencias y cumplimiento interno.
+Tabla job_execution_log registra corrida de workers de tracking, agregacion y alertas. Campos: job_name, shard_key, started_at_utc, ended_at_utc, status, attempts, error_code, metrics_json. Permite medir SLO de procesamiento y diagnosticar cuellos de botella de datos.
+Finalmente, tabla schema_version_audit guarda metadata de migraciones aplicadas (revision, author, deployed_at, checksum). Aunque Alembic ya mantiene su historial, un registro enriquecido facilita governance empresarial y aprobaciones de cambio.
+5.5 Relaciones entre tablas y reglas de integridad
+Las relaciones se implementan con foreign keys estrictas salvo en tablas de retencion corta donde una FK diferida pueda impactar rendimiento extremo. En general se recomienda mantener integridad referencial completa para reducir huella de bugs silenciosos y evitar datos huerfanos que afecten analitica y UX.
+Relaciones troncales: users -> flight_watch -> price_snapshot; flight_watch -> alert_rule -> notification_event; users -> user_preference; users -> search_job -> search_result -> self_connect_leg. Estas cadenas reflejan el ciclo funcional completo del producto y permiten reconstruir decisiones pasadas con precision.
+Reglas de borrado: se evita DELETE CASCADE agresivo en historico de negocio. Cuando un usuario desactiva elementos, se usa soft delete y archivado logico. Solo en datos efimeros o derivados, como search_result asociado a search_job expirado, puede aplicarse cascada controlada para limpieza automatica.
+Se definen CHECK constraints de negocio para prevenir estados invalidos en origen. Ejemplos: origin_iata <> destination_iata, target_price >= 0, cooldown_minutes >= 0, confidence between 0 and 1, stop_count >= 0. Estas reglas reducen dependencia de validaciones exclusivas de backend y fortalecen defensa en profundidad.
+5.6 Estrategia de indices por patron de consulta
+El diseno de indices parte de consultas reales del producto, no de recetas genericas. Los endpoints mas frecuentes son: listar watches por usuario y estado; recuperar historico por watch y rango de fechas; evaluar reglas activas; mostrar notificaciones recientes; cargar resultados de busqueda con filtros. Cada patron tiene su indice dedicado y su costo de mantenimiento asumido.
+Indices propuestos en users y sesiones: UNIQUE(email), INDEX(is_locked, lock_until_utc), INDEX(user_id, expires_at_utc DESC) en user_sessions. Esto acelera autenticacion, revocacion y limpieza de sesiones vencidas. Para seguridad se evita indexar datos hash de baja cardinalidad sin necesidad.
+Indices propuestos en flight_watch: INDEX(user_id, status, travel_date_local), INDEX(user_id, created_at_utc DESC), INDEX(origin_iata, destination_iata, travel_date_local) para trabajos batch por ruta. Si el volumen crece, un indice parcial WHERE status='active' reduce costo en listados operativos.
+Indices propuestos en price_snapshot: INDEX(watch_id, captured_at_utc DESC), BRIN(captured_at_utc) por particion, INDEX(watch_id, observed_travel_date). El B-tree resuelve lecturas por watch; BRIN abarata scans por tiempo global en tablas grandes. Se evita indexar provider_payload_hash fuera de la unique key para no duplicar peso.
+Indices propuestos en alerting y search: INDEX(alert_rule_id, enabled), INDEX(notification_event.user_id, created_at_utc DESC), INDEX(search_result.job_id, ranking_score DESC), INDEX(search_result.normalized_total_eur, duration_minutes). Para filtros avanzados sobre JSONB se agregan GIN selectivos solo cuando el patron de consulta lo justifique con metricas.
+5.7 Optimizacion de rendimiento y capacidad
+La primera palanca de rendimiento es particionado y retencion. price_snapshot y notification_event crecen de forma continua; por ello se define recorte por edad y archivado frio en almacenamiento barato. Mantener datos infinitos en caliente degrada indices y vacuum, incrementando latencia de endpoints de usuario.
+La segunda palanca es materializacion selectiva de agregados. snapshot_daily_aggregate reduce costo de calcular min y max por dia en tiempo real. Para comparativas multi-watch se puede crear vista materializada incremental por usuario y semana, actualizada por scheduler, evitando queries ad hoc costosas en horas pico.
+La tercera palanca es control de planes de consulta. Se habilita auto_explain en entornos no productivos, se monitoriza pg_stat_statements y se versionan EXPLAIN ANALYZE de queries criticas como artefactos de QA. Ningun indice nuevo se aprueba sin medir beneficio real y costo de escritura.
+La cuarta palanca es gestion de concurrencia y bloqueos. Las operaciones de evaluacion de alertas trabajan en lotes pequenos con SKIP LOCKED para distribuir carga entre workers sin colisionar. En alta de watch y reglas se usa transaccion corta y validacion previa para minimizar tiempo de lock.
+La quinta palanca es presupuesto de almacenamiento y IOPS por etapa. Se definen umbrales de crecimiento, estimacion de snapshots por watch y por dia, y alarmas de capacidad anticipada. La observabilidad de costo de base de datos es parte del producto, no una tarea posterior de infraestructura.
+5.8 Politicas de retencion, archivado y gobernanza del dato
+Retencion sugerida: price_snapshot crudo 18 meses en caliente y 24 meses en archivo frio; snapshot_daily_aggregate 36 meses; notification_event 12 meses; search_result 90 dias; logs de job 180 dias; audit_event 24 meses o segun politica legal interna. Estas ventanas se parametrizan para ajustarse a negocio y coste.
+El archivado se ejecuta por lotes idempotentes fuera de horas pico. Cada lote mueve particiones completas cuando sea posible para reducir overhead y riesgo de inconsistencias. Antes de purgar se verifica checkpoint de backup para garantizar recuperabilidad en caso de borrado accidental.
+Gobernanza de contenido: country_policy_content exige fecha de revision y responsable editorial. Si review_due_date expira, el contenido sigue visible solo con bandera warning interna hasta ser actualizado. Esto reduce riesgo de consejo obsoleto sin bloquear experiencia del usuario final.
+Se define diccionario de datos versionado en repositorio con owners por tabla y por columna sensible. Cualquier cambio de tipo o semantica requiere ADR breve y plan de migracion. Esta disciplina evita divergencia entre codigo, base de datos y documentacion operativa.
+5.9 Seguridad de base de datos y privacidad
+La seguridad de datos aplica principio de minimo privilegio con roles separados: app_rw para operaciones de negocio, app_ro para lecturas controladas, migrator para DDL, analyst_ro para consultas analiticas sin acceso a PII directa. Las credenciales se rotan por secreto gestionado y nunca se almacenan en repositorio.
+PII se minimiza y se protege con hashing o tokenizacion en campos como ip y user agent. Email se guarda en claro solo donde funcionalmente imprescindible, con cifrado en reposo provisto por plataforma. Para registros de auditoria se prioriza almacenar identificadores internos frente a datos personales completos.
+En entornos con requisito estricto multi-tenant puede habilitarse RLS por user_id en tablas sensibles expuestas a consultas directas. Aunque la aplicacion ya filtra por usuario, RLS agrega defensa de ultima linea ante errores de codigo o consultas ad hoc no previstas.
+Las consultas administrativas y exportaciones se registran en audit_event con correlation_id y motivo de acceso. Esto facilita responder a incidentes y peticiones internas de cumplimiento. Toda extraccion masiva requiere canal autenticado y limite de velocidad para evitar exfiltracion silenciosa.
+5.10 Backup, recuperacion y continuidad operativa
+Se define politica de backup continuo con WAL shipping y snapshots diarios. Objetivo de recuperacion: RPO <= 15 minutos y RTO <= 60 minutos para entorno productivo inicial. Estos objetivos son realistas para un producto en crecimiento y deben revisarse cuando aumente impacto comercial.
+Se ejecutan pruebas de restauracion mensuales en entorno aislado con validacion funcional, no solo tecnica. Restaurar un dump no es suficiente si la aplicacion falla por secretos faltantes, indices invalidos o drift de esquema. El runbook de recuperacion incluye chequeos de consistencia y reindexacion selectiva.
+La replica de lectura no sustituye backups. Ante corrupcion logica, ambas instancias pueden replicar el error. Por eso se conserva historial de WAL y puntos de recuperacion etiquetados antes de migraciones de alto riesgo.
+El plan de continuidad incluye degradacion funcional: si falla BD primaria, el frontend puede mostrar ultimo snapshot conocido y bloquear operaciones de escritura hasta restauracion. Esta estrategia evita pantalla en blanco y mantiene transparencia con usuario mediante estado de servicio.
+5.11 Migraciones y estrategia de evolucion del esquema
+El ciclo de cambios usa migraciones versionadas con Alembic y politica expand-contract. Primero se agregan columnas o tablas nuevas compatibles, despues se migra escritura en aplicacion, luego se limpia legado. Esta secuencia evita downtime y reduce riesgo de rollback complejo.
+Cada migracion incluye: script forward, script rollback, pruebas de integridad, estimacion de tiempo, impacto en locks y plan de ejecucion por entorno. Migraciones largas sobre price_snapshot se programan por particion para evitar bloqueos globales.
+Se prohiben cambios destructivos sin ventana de observacion. Columnas deprecadas pasan por estado read-only antes de ser eliminadas. Si una columna tiene uso en dashboards o jobs secundarios, se documenta dependencia y owner responsable de adaptacion.
+Para colaboracion entre equipos se define contrato de esquema por version. Frontend y backend no consumen campos experimentales sin feature flag y sin migration guard. Este control mantiene consistencia cuando multiples ramas despliegan en paralelo.
+5.12 Casos limite de datos y mitigaciones
+Caso limite 1: cambio de moneda inesperado del proveedor. Mitigacion: almacenar raw_currency y raw_price siempre, normalizar a EUR con fx_rate_used versionado, y marcar quality_score bajo cuando no haya conversion confiable. La UI puede mostrar aviso en vez de mezclar series incompatibles.
+Caso limite 2: horarios ambiguos por cambio de hora estacional. Mitigacion: guardar captured_at_utc como fuente de verdad y mantener travel_date_local separado de departure_time_local. En consultas por calendario se usa travel_date_local; en ordenacion temporal se usa UTC.
+Caso limite 3: duplicados por reintentos concurrentes de refresh manual y job programado. Mitigacion: dedupe por provider_payload_hash mas unique key, lock corto por watch_id y uso de idempotency_key para acciones de usuario.
+Caso limite 4: explosiones de cardinalidad por busquedas exploratorias masivas. Mitigacion: retencion corta en search_result, limites por usuario, paginacion obligatoria e indices de ordenacion solo en columnas realmente usadas. Se evita almacenar payload crudo gigante en cada resultado.
+Caso limite 5: contenido de sugerencias malicioso o spam. Mitigacion: sanitizacion de texto, hash de origen, score de abuso y cola de moderacion. El dato crudo se conserva lo minimo necesario para investigacion interna y luego se anonimiza segun politica.
+5.13 DDL de referencia para implementacion
+Los siguientes fragmentos sirven como base de implementacion. No sustituyen migraciones reales, pero fijan contratos de columnas, constraints e indices mas importantes para iniciar desarrollo de Fase 5 con consistencia.
+CREATE TABLE users (
+id UUID PRIMARY KEY,
+email CITEXT NOT NULL UNIQUE,
+password_hash TEXT NOT NULL,
+is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+is_locked BOOLEAN NOT NULL DEFAULT FALSE,
+failed_login_count INT NOT NULL DEFAULT 0,
+lock_until_utc TIMESTAMPTZ NULL,
+locale VARCHAR(8) NOT NULL DEFAULT 'es',
+timezone VARCHAR(64) NOT NULL DEFAULT 'Europe/Madrid',
+created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
+updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE flight_watch (
+id UUID PRIMARY KEY,
+user_id UUID NOT NULL REFERENCES users(id),
+origin_iata CHAR(3) NOT NULL,
+destination_iata CHAR(3) NOT NULL,
+travel_date_local DATE NOT NULL,
+target_price NUMERIC(10,2) NULL,
+status VARCHAR(20) NOT NULL,
+is_paused BOOLEAN NOT NULL DEFAULT FALSE,
+include_stops BOOLEAN NOT NULL DEFAULT FALSE,
+radius_km SMALLINT NULL,
+scan_policy_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
+updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
+CHECK (origin_iata <> destination_iata)
+);
+CREATE TABLE price_snapshot (
+id CHAR(26) PRIMARY KEY,
+watch_id UUID NOT NULL REFERENCES flight_watch(id),
+captured_at_utc TIMESTAMPTZ NOT NULL,
+observed_travel_date DATE NOT NULL,
+raw_price NUMERIC(10,2) NOT NULL CHECK (raw_price >= 0),
+raw_currency CHAR(3) NOT NULL,
+normalized_price_eur NUMERIC(10,2) NULL,
+provider VARCHAR(40) NOT NULL,
+provider_payload_hash CHAR(64) NOT NULL,
+quality_score SMALLINT NOT NULL DEFAULT 100,
+is_stale BOOLEAN NOT NULL DEFAULT FALSE,
+created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
+UNIQUE (watch_id, captured_at_utc, provider_payload_hash)
+) PARTITION BY RANGE (captured_at_utc);
+CREATE INDEX idx_watch_user_status_date
+ON flight_watch(user_id, status, travel_date_local);
+CREATE INDEX idx_snapshot_watch_captured_desc
+ON price_snapshot(watch_id, captured_at_utc DESC);
+5.14 Checklist de calidad y criterios de aceptacion de la fase
+Existe diccionario de tablas con owner y descripcion funcional para cada entidad.
+Todas las FK, UNIQUE y CHECK criticas estan definidas y probadas.
+Los indices de consultas principales tienen evidencia de mejora con EXPLAIN ANALYZE.
+price_snapshot esta particionada y con politica de retencion operativa validada.
+Alertas y notificaciones son idempotentes y resistentes a reintentos.
+Hay plan de backup y restore probado con objetivos RPO y RTO medibles.
+Migraciones siguen estrategia expand-contract y tienen rollback documentado.
+Campos sensibles aplican minimizacion de PII y controles de acceso por rol.
+Se cubren edge cases de moneda, zona horaria, duplicados y spam.
+El esquema queda listo para Fase 6 sin refactor estructural mayor.
+5.15 Entregables de la Fase 5 y enlace con fases siguientes
+Con esta fase queda definido el plano de datos completo de Viru para produccion inicial y escalado progresivo. El equipo backend dispone de estructura de persistencia implementable, reglas de integridad, indices y criterios de rendimiento alineados con UX y operacion real.
+Para Fase 6 (DevOps y despliegue) se entregan como entrada obligatoria: scripts de migracion, matriz de permisos por rol, politica de backup, plan de monitorizacion SQL, runbook de incidentes de datos y tablero base de salud de particiones e indices.
+Para Fase 7 y posteriores, el modelo admite integrar mejoras sin ruptura: self-connect avanzado, prediccion versionada, contenido por pais con gobernanza y exploracion de destinos baratos. Esto se logra porque las extensiones se acoplan como modulos y no fuerzan redisenar entidades troncales.
+La recomendacion operativa final es ejecutar una revision conjunta Arquitectura-Backend-Frontend-QA antes de congelar el esquema v1.0. Ese hito asegura que contratos API, consultas de interfaz y pruebas de calidad de datos queden cerrados antes de iniciar hardening de despliegue.
+Nota de coherencia: ver FASE 1 secciones 1.8 (Contexto de mercado y oportunidad) y 1.9 (Monetizacion y escalabilidad) para alinear decisiones de producto, arquitectura, roadmap y operacion.
+5.12 Ideas de datos adicionales (orientadas a producto)
+- Guardar un "indice de volatilidad" por vuelo (numero de cambios en X dias).
+- Guardar "primer precio visto" para comparativas de ahorro real.
+- Tabla ligera de "preferencias por usuario" con defaults y limites (radio, horarios).
+5.13 Ideas avanzadas de datos
+- Tabla de "eventos de usuario" (clicks, aperturas) para evaluar valor real.
+- Conservacion de datos por ventanas (90 dias, 1 ano) para equilibrar coste y utilidad.
+5.14 Consistencia de datos (canon)
+- Campo de precio trackeado corresponde a base 1 adulto sin extras.
+- Entidad de vuelo MVP = Ruta + Dia, con extension a hora futura.

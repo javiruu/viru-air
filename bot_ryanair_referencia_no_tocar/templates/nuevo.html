@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nuevo vuelo · Ryanair Bot</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    :root { 
+      --bg:#0b1220; --card:#121a2b; --text:#e8ecf1; --muted:#9fb0c7; 
+      --acc:#4cc2ff; --ok:#19c37d; --warn:#faae2b; --err:#ef4146; 
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; background:var(--bg); color:var(--text);
+      font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial;
+    }
+    .wrap{max-width:760px;margin:40px auto;padding:0 16px}
+    .card{
+      background:var(--card);
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:14px;
+      padding:22px;
+      box-shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+    h1{margin:0 0 6px;font-size:26px}
+    .muted{color:var(--muted);margin-bottom:18px}
+    form{display:grid;gap:14px;margin-top:10px}
+    label{font-weight:600}
+    input[type="text"], input[type="date"], input[type="number"]{
+      width:100%; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.03); color:var(--text); outline:none;
+    }
+    input::placeholder{color:#a9b7c6}
+    .row{display:grid;grid-template-columns:1fr 1fr; gap:14px}
+    .actions{display:flex; gap:12px; flex-wrap:wrap; margin-top:6px}
+    .btn{
+      display:inline-block; padding:10px 14px; border-radius:10px; 
+      border:1px solid rgba(255,255,255,.12); text-decoration:none; 
+      color:var(--text); background:rgba(255,255,255,.03); cursor:pointer;
+      transition:.2s border-color,.2s transform;
+    }
+    .btn:hover{border-color:var(--acc);transform:translateY(-2px);}
+    .btn.primary{
+      background:linear-gradient(180deg, rgba(76,194,255,.18), rgba(76,194,255,.08));
+      border-color:var(--acc);
+    }
+    .flash{
+      padding:10px 12px; border-radius:10px; margin:8px 0;
+      border:1px solid rgba(255,255,255,.1); font-weight:500;
+    }
+    .flash.ok{border-color:rgba(25,195,125,.5); background:rgba(25,195,125,.12)}
+    .flash.warn{border-color:rgba(250,174,43,.5); background:rgba(250,174,43,.12)}
+    .flash.error{border-color:rgba(239,65,70,.5); background:rgba(239,65,70,.12)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>➕ Añadir nuevo vuelo</h1>
+      <p class="muted">Introduce origen/destino (códigos IATA de 3 letras), la fecha del vuelo y, opcionalmente, un precio objetivo.</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="flash {{ category|lower }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" action="{{ url_for('nuevo_vuelo') }}" novalidate>
+        <div class="row">
+          <div>
+            <label for="origin">Origen (IATA)</label>
+            <input
+              id="origin"
+              name="origin"
+              type="text"
+              inputmode="latin"
+              pattern="[A-Za-z]{3}"
+              maxlength="3"
+              required
+              placeholder="MAD"
+              value="{{ origin or '' }}"
+            >
+          </div>
+          <div>
+            <label for="destination">Destino (IATA)</label>
+            <input
+              id="destination"
+              name="destination"
+              type="text"
+              inputmode="latin"
+              pattern="[A-Za-z]{3}"
+              maxlength="3"
+              required
+              placeholder="AGP"
+              value="{{ destination or '' }}"
+            >
+          </div>
+        </div>
+
+        <div>
+          <label for="date">Fecha</label>
+          <input
+            id="date"
+            name="date"
+            type="date"
+            required
+            value="{{ date or '' }}"
+          >
+        </div>
+
+        <div>
+          <label for="target_price">Precio objetivo (€)</label>
+          <input
+            id="target_price"
+            name="target_price"
+            type="number"
+            step="0.01"
+            placeholder="29.99"
+            value="{{ target_price or '' }}"
+          >
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" type="submit">Guardar vuelo</button>
+          <a class="btn" href="{{ url_for('home') }}">Volver al panel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Forzar mayúsculas en campos IATA
+    const up = el => el && el.addEventListener('input', () => {
+      el.value = el.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,3);
+    });
+    up(document.getElementById('origin'));
+    up(document.getElementById('destination'));
+  </script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ t("panel_title") }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    :root {
+      --bg:#0b1220;
+      --card:#121a2b;
+      --text:#e8ecf1;
+      --muted:#9fb0c7;
+      --acc:#4cc2ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, 'Helvetica Neue', Arial;
+    }
+    .wrap { max-width: 980px; margin: 40px auto; padding: 0 16px; }
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      position: relative;
+    }
+    h1 { margin: 0 0 6px; font-size: 28px; }
+    .muted { color: var(--muted); }
+    .lang-switch {
+      position: absolute;
+      top: 18px;
+      right: 22px;
+    }
+    .lang-switch a {
+      text-decoration: none;
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.04);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: .2s all;
+    }
+    .lang-switch a:hover {
+      border-color: var(--acc);
+      color: var(--acc);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+    .tile {
+      display: block;
+      padding: 18px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.06);
+      text-decoration: none;
+      color: inherit;
+      transition: .2s transform, .2s border-color;
+    }
+    .tile:hover { transform: translateY(-2px); border-color: var(--acc); }
+    .tile h3 { margin: 0 0 6px; font-size: 18px; }
+    .kpi { margin-top: 6px; font-size: 13px; color: var(--muted); }
+    .footer {
+      margin-top: 22px;
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .ok { background: #19c37d; }
+    code {
+      background: rgba(255,255,255,.06);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <!-- Botón idioma -->
+      <div class="lang-switch">
+        <a href="{{ url_for('set_lang', code=lang_toggle) }}">{{ t('lang_toggle_label') }}</a>
+      </div>
+
+      <!-- Título principal -->
+      <h1>🛫 {{ t('panel_title') }}</h1>
+      <div class="muted">{{ t('panel_subtitle') }}</div>
+
+      <!-- Bloques -->
+      <div class="grid">
+        <a class="tile" href="{{ url_for('lista_vuelos') }}">
+          <h3>✈️ {{ t('tile_saved_flights') }}</h3>
+          <div class="muted">{{ t('tile_saved_desc') }}</div>
+          <div class="kpi">{{ t('kpi_total') if t('kpi_total') != 'kpi_total' else 'Total' }}: {{ vuelos|length if vuelos else 0 }}</div>
+        </a>
+
+        <a class="tile" href="{{ url_for('ver_historico') }}">
+          <h3>📊 {{ t('tile_history') }}</h3>
+          <div class="muted">{{ t('tile_history_desc') }}</div>
+          <div class="kpi">{{ t('kpi_records') if t('kpi_records') != 'kpi_records' else 'Registros' }}: {{ historico|length if historico else 0 }}</div>
+        </a>
+
+        <a class="tile" href="{{ url_for('nuevo_vuelo') }}">
+          <h3>➕ {{ t('tile_add_flight') }}</h3>
+          <div class="muted">{{ t('tile_add_desc') }}</div>
+        </a>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <span class="badge"><span class="dot ok"></span> {{ t('footer_running') }}</span>
+        <span class="badge">{{ t('footer_files') }}:
+          <code>vuelos_guardados.json</code> · <code>precios_historicos.json</code>
+        </span>
+        <span class="badge">{{ t('footer_port') }}: <code>8080</code></span>
+
+        <!-- 🕒 Última actualización -->
+        <span class="badge">
+          🕒 {{ 'Última actualización' if lang == 'es' else 'Last update' }}:
+          <code>{{ last_update or '—' }}</code>
+        </span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,333 @@
+FASE 8 - TESTINGProyecto VIRU - Ryanair Tracker
+Dossier tecnico de estrategia, diseno, automatizacion y aseguramiento de calidad
+Version: 1.0Fecha: 12/02/2026Autor: Equipo de desarrollo senior (QA, Backend, Frontend, DevOps, Arquitectura)
+8.1 Objetivo de la fase
+Esta fase define el sistema integral de pruebas para VIRU con enfoque enterprise: prevenir regresiones, demostrar cumplimiento funcional y no funcional, reducir riesgo operativo y ofrecer evidencia verificable para cada release.
+El plan cubre pruebas unitarias, de integracion, contrato, extremo a extremo, seguridad, rendimiento, resiliencia y calidad de datos. Se incorpora una estrategia de ejecucion en pipeline CI/CD, criterios de salida por entorno y gobierno de defectos.
+Se asume continuidad con las fases anteriores: arquitectura modular, backend con proveedor Ryanair via adapter (incluyendo ryanair-py como uno de los proveedores posibles), frontend web con flujos autenticados y base de datos con historicos de precio, alertas y preferencias.
+8.2 Alcance de QA y principios rectores
+8.2.1 Alcance funcional cubierto
+Autenticacion y sesiones: registro, login, renovacion de token, cierre de sesion y aislamiento por usuario.
+Gestion de vuelos trackeados: alta, validacion de duplicados, activacion, archivado por vencimiento y consultas.
+Tracking y muestreo de precios: ejecucion programada, refresh manual, almacenamiento historico y deduplicacion.
+Alertas: reglas por umbral, por cambio, anti-spam, entrega por email/in-app y trazabilidad del envio.
+Busqueda rapida: aeropuertos alternativos, ventana de fechas, filtros avanzados y ranking.
+Escalas/self-connect: calculo de buffer, clasificacion de riesgo y disclaimers.
+Historico visual: series temporales, calendario, min/max y comparativas.
+Preferencias e internacionalizacion: defaults por usuario, ES/EN, plantillas localizadas.
+Sugerencias y contenido contextual por pais: ingestion segura, moderacion y representacion en UI.
+8.2.2 Principios de calidad
+Shift-left: los errores deben detectarse lo antes posible (tests unitarios y contrato en pull request).
+Risk-based testing: mayor profundidad en componentes de alto impacto (pricing, alertas, autenticacion, integridad de historico).
+Determinismo: pruebas repetibles con datos semilla, reloj controlado y mocks de proveedor externo.
+Observabilidad de QA: cada fallo debe generar evidencia accionable (logs, trazas, snapshot, payload).
+No regresion: cada bug critico debe convertirse en prueba automatizada antes de cerrarse.
+8.3 Estrategia de testing por capas (piramide)
+La estrategia se diseña como una piramide realista para minimizar coste de mantenimiento y maximizar señal:
+Capa
+Objetivo
+Herramientas recomendadas
+Meta de cobertura
+Unit tests
+Validar reglas y funciones aisladas
+pytest, pytest-mock, factory-boy, hypothesis
+>=85% backend core, >=80% frontend utils
+Integration tests
+Validar modulos con DB/colas/cache reales de test
+pytest + testcontainers + docker compose
+100% de endpoints criticos
+Contract/API tests
+Evitar ruptura de contratos entre frontend-backend y proveedores
+Schemathesis, Pact, OpenAPI validator
+100% endpoints publicos
+E2E/UI tests
+Verificar recorridos de usuario de punta a punta
+Playwright
+Flujos P0 y P1
+Performance/Resilience
+Detectar cuellos de botella y degradacion
+k6, Locust, Chaos toolkit
+SLO definidos por caso
+Security tests
+Reducir superficie de ataque y fallas OWASP
+Semgrep, Bandit, ZAP, Trivy
+0 vulnerabilidades criticas
+8.3.1 Distribucion objetivo del esfuerzo
+60% unitarios
+20% integracion y contrato
+15% E2E
+5% rendimiento, seguridad y caos (por release y nightly)
+Esta distribucion protege velocidad de desarrollo sin sacrificar confianza en produccion.
+8.4 Entornos de prueba y datos
+8.4.1 Entornos
+Local: ejecucion rapida en developer workstation con servicios minimizados.
+CI efimero: despliegue por pull request con DB temporal y mocks de proveedor.
+Staging: copia cercana a produccion, datos anonimizados y carga de prueba controlada.
+Preproduccion de carga: entorno dedicado para stress, soak y chaos testing.
+Produccion (safe checks): smoke post-deploy, canary assertions y synthetic monitoring.
+8.4.2 Gestion de datos de prueba
+Datos semilla versionados (fixtures) por dominio: usuarios, vuelos, observaciones, alertas, preferencias.
+Anonimizacion obligatoria de cualquier dato real importado desde produccion.
+Generadores de datos sinteticos para casos extremos (precios negativos, fechas invalidadas, monedas raras).
+Catalogo de escenarios de frontera: DST, cambio de mes, leap year, timezone offset, errores de proveedor.
+Reinicio transaccional por test o aislamiento por esquema para evitar acoplamiento entre suites.
+8.4.3 Control de tiempo
+Dado que VIRU depende de fechas de vuelo y ventanas de escaneo, se exige control de reloj en pruebas:
+Inyeccion de clock de aplicacion (no usar datetime.now() directo en dominio).
+Freezegun o utilidades equivalentes para congelar tiempo.
+Casos obligatorios sobre cambio de dia, horario de verano y cierre de ventana de alerta.
+8.5 Fase de pruebas unitarias
+8.5.1 Backend - dominios y servicios
+Los unit tests deben cubrir reglas puras y orquestacion local sin IO real.
+Normalizacion de precios y moneda; redondeo y precision decimal.
+Reglas de deduplicacion de observaciones por clave temporal y proveedor.
+Evaluador de alertas (baja bajo objetivo, subida sobre umbral, cada cambio).
+Motor de anti-spam (cooldown, ventana de silencio, umbral minimo de variacion).
+Clasificador de estado de vuelo (activo, vencido, archivado).
+Ranking de busqueda rapida con filtros y preferencias del usuario.
+Calculo de riesgo de self-connect por buffer disponible y reglas de seguridad.
+Fallback de proveedor: timeout, error transitorio, error permanente y circuito abierto.
+8.5.2 Frontend - logica cliente
+Validadores de formularios (IATA, fecha, rango de radio, umbrales).
+Transformadores de datos para graficos y calendario.
+Gestores de estado (cache de consultas, invalidacion, optimistic update).
+Internacionalizacion: pluralizacion, claves faltantes y fallback de idioma.
+Comportamiento de componentes de alerta y banners de riesgo.
+8.5.3 Cobertura y calidad de codigo
+Coverage gate: fallar pipeline si backend core <85% o si modulos criticos <90%.
+Mutation testing (subconjunto semanal) para medir calidad real de aserciones.
+Linters + type checking estrictos como prerequisito de tests.
+8.6 Pruebas de integracion
+8.6.1 Integracion backend + DB
+Estas pruebas validan que repositorios, transacciones, indices y constraints funcionan de forma consistente.
+Crear vuelo trackeado y escribir primera observacion en una sola transaccion.
+Refresh manual concurrente: no generar duplicados en observaciones.
+Archivado automatico por vencimiento sin perder historico.
+Lectura de min/max/ultimo con dataset grande y tiempos dentro de SLO.
+Persistencia de preferencias y efecto real en busqueda rapida.
+Auditoria de envios de alerta con correlacion evento-notificacion.
+8.6.2 Integracion con proveedor externo (Ryanair adapter)
+La integracion con proveedor debe testearse con contratos estables y escenarios de degradacion.
+Happy path: consulta de tarifa valida para origen-destino-fecha.
+Moneda no respetada por proveedor: normalizacion y etiquetado de confianza.
+Timeout y retry con backoff exponencial y jitter.
+Respuesta parcial o con campos faltantes: parser tolerante + alerta operativa.
+Rate limit: circuito abierto temporal y reintento controlado.
+Fallback a ultimo valor conocido con estado de dato degradado.
+8.6.3 Integracion backend + colas + scheduler
+Encolado de trabajos periodicos por vuelo activo sin duplicar jobs.
+Ejecucion idempotente de worker ante reintento.
+Garantia at-least-once con deduplicacion de side effects.
+Orden de eventos para alerta por cada cambio sin reenvio accidental.
+8.7 Pruebas de contrato API
+8.7.1 Contrato REST/OpenAPI
+Validar esquema de request/response para todos los endpoints publicos.
+Verificar codigos HTTP esperados y payload de error estandarizado.
+Comprobar versionado de API y compatibilidad hacia atras.
+Detectar campos removidos o cambios de tipo antes de merge.
+8.7.2 Consumer-driven contracts
+Frontend y backend deben negociar contrato con pactos versionados.
+Publicar pacts por flujo de UI en cada build del frontend.
+Verificar pacts en backend antes de publicar imagen.
+Bloquear deploy si contrato incompatible afecta flujos P0/P1.
+8.8 Pruebas E2E (end-to-end)
+8.8.1 Flujos P0 obligatorios
+Registro -> login -> alta de vuelo -> refresh manual -> historico visible.
+Creacion de alerta por umbral -> simulacion de bajada -> notificacion emitida.
+Busqueda rapida con filtros -> seleccion de opcion -> redireccion a Ryanair.
+Cambio ES/EN en interfaz y mensajes de alerta coherentes.
+Archivado automatico de vuelo vencido visible en estado de vuelos.
+8.8.2 Flujos P1 recomendados
+Comparativa de dos vuelos en grafico/calendario.
+Aplicacion de preferencias guardadas en nuevo flujo de busqueda.
+Self-connect con riesgo alto: visualizacion de disclaimer y bloqueo opcional.
+Envio de sugerencia por usuario autenticado con validacion anti abuso.
+8.8.3 Criterios de robustez E2E
+Retries solo para operaciones flaky de infraestructura, no para aserciones funcionales.
+Captura automatica de screenshot, video y console logs al fallar.
+Etiquetado de pruebas por criticidad para priorizar debugging.
+8.9 Testing no funcional
+8.9.1 Rendimiento
+Se establecen objetivos medibles por endpoint y por job de tracking.
+Escenario
+Carga objetivo
+SLO
+Herramienta
+GET historico vuelo
+200 req/s
+p95 < 300 ms
+k6
+POST refresh manual
+50 req/s
+p95 < 700 ms
+k6
+Motor de alertas batch
+10k reglas/min
+latencia < 60 s
+Locust
+Busqueda rapida
+30 req/s
+p95 < 1200 ms
+k6
+Ingesta scheduler
+100k observaciones/h
+sin perdida de eventos
+benchmark interno
+8.9.2 Resiliencia y caos
+Caida de proveedor externo durante 30 min: sistema sigue sirviendo historico y marca estado degradado.
+Latencia extrema en DB: activar timeouts, pool caps y proteccion de colas.
+Reinicio de worker durante lote: reanudacion sin duplicar alertas.
+Perdida temporal de cache: sistema funcional con penalizacion controlada.
+8.9.3 Seguridad
+SAST y dependency scan en cada PR (Bandit, Semgrep, pip-audit).
+DAST en staging (OWASP ZAP baseline/full para endpoints criticos).
+Pruebas de autorizacion horizontal: un usuario no puede acceder a vuelos de otro.
+Pruebas CSRF/CORS/session fixation donde aplique.
+Fuzzing de entradas de formulario y payload JSON.
+8.9.4 Calidad de datos
+Verificar monotonia temporal de observaciones por vuelo.
+Deteccion de outliers de precio y etiquetado para analitica.
+Consistencia de moneda y conversion.
+Integridad referencial completa entre vuelo, observacion, alerta y notificacion.
+8.10 Casos limite y edge cases obligatorios
+Fechas invalidas: 31/02, fechas pasadas en alta de vuelo, timezone ambiguo.
+DST: cambio horario de verano/invierno afectando jobs y visualizacion.
+Moneda inesperada o missing currency en proveedor.
+Precio 0 o negativo en respuesta externa (datos corruptos).
+Duplicado de vuelo trackeado por carrera concurrente.
+Usuario elimina vuelo mientras job de refresh esta en curso.
+Caida de servicio de email durante evento masivo de alertas.
+Cambio de estructura en respuesta de proveedor (breaking shape).
+Redireccion a URL externa malformada o no permitida.
+Input IATA invalido o aeropuerto inactivo.
+8.11 Trazabilidad requisito - prueba
+Cada requisito funcional debe mapearse a suites automatizadas. Se recomienda mantener una matriz viva en repositorio (quality/traceability-matrix.md).
+Requisito
+Suite
+Tipo
+Criterio de aceptacion
+F-USER-001/002 Login-Register
+auth_tests.py + e2e_auth.spec.ts
+Unit+E2E
+Alta y login exitosos; errores controlados
+F-TRACK-001 Guardado historico
+test_tracking_persistence.py
+Integration
+Cada refresh persiste observacion valida
+F-ALERT-003 Cada cambio
+test_alert_rules.py + e2e_alerts.spec.ts
+Unit+E2E
+Notifica sin spam bajo reglas
+F-SEARCH-FAST-001 Busqueda IA
+test_search_optimizer.py
+Unit+Integration
+Ranking y filtros coherentes
+F-OUT-001 Deep-link
+e2e_redirect.spec.ts
+E2E
+URL de salida valida y segura
+F-I18N-001 ES/EN
+test_i18n.ts + e2e_lang.spec.ts
+Unit+E2E
+Textos y plantillas consistentes
+8.12 CI/CD orientado a testing
+8.12.1 Pipeline por pull request
+Etapa 1: lint + type check + unit tests rapidos.
+Etapa 2: integration + contract tests en entorno efimero.
+Etapa 3: seguridad estatica + dependency scan.
+Etapa 4: smoke E2E de flujos P0.
+Publicacion de reportes (JUnit, cobertura, artefactos de fallo).
+8.12.2 Pipeline nightly
+Suite E2E completa (P0/P1/P2).
+Performance baseline con comparativa historica.
+DAST completo y chequeo de imagenes de contenedor.
+Mutation testing parcial en modulos criticos.
+8.12.3 Reglas de gate
+No se permite merge con fallos en tests P0.
+No se permite deploy a produccion si security scan reporta criticos.
+No se permite release si cobertura global cae por debajo de umbral pactado.
+Defectos Sev-1 o Sev-2 abiertos bloquean release.
+8.13 Gestion de defectos y severidad
+Severidad
+Definicion
+SLA de respuesta
+Politica de release
+Sev-1
+Caida total o riesgo de datos/seguridad
+<1 hora
+Bloqueo total
+Sev-2
+Funcion critica degradada con workaround pobre
+<4 horas
+Bloqueo parcial
+Sev-3
+Fallo funcional moderado
+<1 dia
+Release condicionado
+Sev-4
+Defecto menor de UX o texto
+<3 dias
+No bloqueante
+8.13.1 Flujo de vida de bug
+Nuevo -> Triaged -> En progreso -> En verificacion QA -> Cerrado.
+Todo bug Sev-1/2 exige RCA (root cause analysis) y accion preventiva.
+Todo bug cerrado debe incluir evidencia de prueba automatizada agregada o actualizada.
+8.14 Observabilidad para pruebas y diagnostico
+Correlacion por request-id y job-id en backend y workers.
+Structured logging en JSON con campos de negocio (user_id hash, flight_id, alert_rule_id).
+Trazas distribuidas para rutas API criticas y llamadas a proveedor.
+Dashboards QA: tasa de fallos por suite, tiempo medio de reparacion, flakiness.
+Alarmas sobre incremento de errores de parser/proveedor.
+8.15 Plan de ejecucion incremental de la fase
+8.15.1 Sprint de calidad recomendado
+Sprint 1: unit + integration core (auth, tracking, alertas).
+Sprint 2: contrato API + E2E P0 + calidad de datos.
+Sprint 3: rendimiento baseline + seguridad + chaos drills.
+Sprint 4: reduccion de flakiness + endurecimiento de gates + cierre de deuda.
+8.15.2 Entregables minimos de la fase 8
+Repositorio de tests con estructura estandar y convenciones documentadas.
+Matriz de trazabilidad requisito-prueba actualizada.
+Dashboards de calidad y reporte automatizado en CI.
+Playbook de incidente QA (fallos recurrentes, rollback, desactivacion de feature flags).
+Checklist de salida para pasar a Fase 9.
+8.16 Riesgos de testing y mitigaciones
+Riesgo
+Impacto
+Mitigacion
+Flakiness en E2E
+Falsos negativos y perdida de confianza
+Aislar dependencias, test-id estables, retries controlados
+Dependencia de proveedor externo
+Inestabilidad en suites
+Mock/record-replay + ventana acotada de tests reales
+Dataset insuficiente
+Baja cobertura de edge cases
+Generador sintetico y catalogo de fronteras
+Tiempo alto de pipeline
+Menor productividad
+Paralelizar, priorizar P0 en PR y mover pesados a nightly
+Fuga de secretos en tests
+Riesgo de seguridad
+Secret manager, mascarado de logs, credenciales efimeras
+8.17 Criterios de aceptacion de la Fase 8
+Suites unitarias e integracion automatizadas y estables con tasa de exito >= 98% en 10 ejecuciones consecutivas.
+Flujos E2E P0 automatizados con evidencia y sin fallos bloqueantes.
+Contrato API validado y versionado, sin incompatibilidades abiertas.
+SAST/DAST/dependency scan sin vulnerabilidades criticas.
+Reporte de rendimiento con SLO cumplidos en escenarios definidos.
+Runbooks de QA y defecto severo documentados.
+Aprobacion conjunta de QA lead, backend lead y frontend lead.
+8.18 Conclusiones operativas de la fase
+La Fase 8 convierte la calidad en una capacidad continua del producto, no en una tarea puntual. El resultado esperado es un sistema de testing que protege velocidad de entrega, minimiza regresiones y mantiene trazabilidad completa entre requisito, codigo y evidencia.
+El siguiente paso natural es la Fase 9, donde toda la operativa y decisiones tecnicas se consolidan en documentacion tecnica extensa: mantenimiento, despliegue, glosario, FAQ tecnica y procedimientos de evolucion.
+Nota de coherencia: ver FASE 1 secciones 1.8 (Contexto de mercado y oportunidad) y 1.9 (Monetizacion y escalabilidad) para alinear decisiones de producto, arquitectura, roadmap y operacion.
+8.13 Ideas de pruebas orientadas a UX real
+- Prueba con usuarios no tecnicos: verificar que entienden el precio trackeado.
+- Prueba de "fatiga de alertas": medir si demasiadas alertas generan abandono.
+- Prueba de "modo degradado": comprobar que la UI explica bien el ultimo dato.
+8.14 Ideas avanzadas de validacion
+- Test de percepcion: usuarios entienden la diferencia entre precio orientativo y final.
+- Test de confianza: medir si la gente confia en una recomendacion de compra.
+8.15 Pruebas de coherencia
+- Verificar que UI, API y BD usan la misma definicion de precio trackeado.
+- Verificar que la busqueda rapida se describe como heuristica en MVP.

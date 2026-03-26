@@ -1,0 +1,304 @@
+FASE 10 - FUTURAS ESCALABILIDADESProyecto Viru (Ryanair Tracker)
+Dossier tecnico de evolucion - Version 1.0 - 13/02/2026
+10.1 Objetivo estrategico de la Fase 10
+Esta fase define la evolucion de Viru desde una plataforma web funcional y modular hacia un ecosistema preparado para cargas de empresa grande, expansion geografica, multiples proveedores de datos y ciclos de entrega continuos con riesgo controlado. El foco no es solo escalar trafico; tambien escalar producto, equipos, operacion y gobierno tecnico sin degradar experiencia de usuario ni confiabilidad.
+El alcance se organiza en tres ejes obligatorios que se refuerzan mutuamente: (1) arquitectura de microservicios con migracion progresiva desde el modelo actual, (2) internacionalizacion de extremo a extremo para crecer en mercados de distintos idiomas y contextos regulatorios, y (3) rendimiento extremo para sostener latencias bajas, costos razonables y resiliencia frente a picos de demanda, volatilidad de precios y dependencias externas.
+Se adopta un principio rector: no ejecutar una ruptura total del sistema. En lugar de un big-bang, la estrategia utiliza evolucion incremental, frontier services, contratos versionados y despliegues canary para aislar riesgo. Cada paso debe ser reversible mediante rollback tecnico y rollback de feature flags, preservando continuidad de negocio y calidad percibida por el usuario final.
+Adicionalmente, la fase incorpora criterios de aceptacion medibles (SLO, error budget, p95/p99, costos unitarios por usuario y por consulta), de modo que la escalabilidad no quede en declaraciones teoricas sino en indicadores operativos verificables por producto, arquitectura y DevOps.
+10.2 Principios de arquitectura para escalar sin reescrituras
+10.2.1 Principios no negociables
+Primero, separar claramente dominios de negocio de infraestructura. La logica de valor (tracking, alertas, recomendacion, comparativas, self-connect, preferencias) no debe estar acoplada a detalles de proveedor o libreria. Esto protege a Viru ante cambios de fuentes externas y facilita evolucion de cada componente con ciclos independientes.
+Segundo, desacoplar por eventos donde exista asincronia natural: escaneo de precios, evaluacion de reglas de alerta, materializacion de historicos, entrenamiento e inferencia de modelos y pipelines de analitica. El desacople por colas o streams evita cuellos de botella del request-response tradicional y permite escalar consumidores horizontalmente.
+Tercero, aplicar consistencia apropiada por caso de uso: consistencia fuerte para autenticacion, permisos, facturacion y cambios criticos de perfil; consistencia eventual para paneles analiticos, recomendaciones y vistas agregadas de historico. Esta distincion reduce costo sin sacrificar seguridad o integridad donde si importa.
+Cuarto, observabilidad por defecto. Ningun servicio nuevo se considera listo si no expone trazas distribuidas, metricas de negocio y logs estructurados con correlacion por request-id y user-id anonimizado. Escalar sin observabilidad genera puntos ciegos; esta fase lo evita desde el diseno.
+10.2.2 Mapa de capacidades futuras
+Capas de entrada: API Gateway, BFF web, autenticacion central, proteccion anti-abuso.
+Dominio core: Flight Tracking, Search Optimizer, Alerts, Historical Analytics, Prediction Engine.
+Soporte de producto: User Preferences, Content & Policy, Suggestions, Notifications.
+Plataforma: Event Bus, Cache distribuida, Storage transaccional, Data Lake, Feature Flags.
+Confiabilidad: Rate limiting, circuit breakers, retries con backoff, idempotencia, dead-letter queues.
+Gobierno: versionado de APIs, contratos, ADR, data catalog, control de costos.
+10.3 Escalabilidad por microservicios
+10.3.1 Bounded contexts propuestos
+Para minimizar acoplamientos, Viru se divide en contextos de negocio con ownership claro. Cada contexto publica contratos estables y evita compartir tablas como mecanismo de integracion. Las dependencias se resuelven por APIs internas versionadas o por eventos de dominio.
+A) Identity & Access Service
+Gestiona usuarios, sesiones, tokens, MFA opcional, rotacion de claves y politicas de acceso por rol/plan. Debe centralizar autorizacion para impedir duplicidad de reglas de seguridad en servicios satelite. Expone introspeccion de token y emite eventos de cambios sensibles del perfil.
+B) Flight Catalog & Tracking Service
+Custodia vuelos trackeados por usuario, estado activo/vencido, configuracion de objetivos y metadatos de proveedor. Orquesta job scheduler para escaneos periodicos y on-demand, y emite eventos de 'price_observed' con contrato canonico inmutable.
+C) Price Ingestion Adapter Service
+Encapsula integracion con proveedores externos, incluyendo ryanair-py como adaptador inicial. Su funcion es normalizar respuestas, registrar provenance de datos, aplicar validaciones de integridad y traducir fallos de proveedor a codigos internos consistentes para el resto del sistema.
+D) Alerting Rules Engine
+Evalua reglas por vuelo y por usuario: umbral inferior/superior, variacion porcentual, 'avisar cada cambio', ventanas horarias, cooldown y digest. Este servicio recibe eventos de precio, decide disparos y delega envio en Notification Service para desacoplar logica de regla y canal.
+E) Notification Service
+Gestiona canales email, in-app y push web futuro. Mantiene plantillas localizables, politicas anti-spam, trazabilidad de entregas y supresion por preferencias. Debe soportar reintentos idempotentes y estados de entrega para auditoria.
+F) Search Optimizer Service
+Resuelve busquedas de aeropuertos alternativos, flexibilidad de fechas y filtros avanzados. En fase de madurez incorpora ranking inteligente basado en historico y preferencias. Debe permitir modos directo y self-connect con etiquetado de riesgo.
+G) Prediction & Recommendation Service
+Entrena y sirve modelos de prediccion de tendencia de precio (esperar/comprar). Versiona datasets y modelos, publica score + confianza + explicacion breve, y conserva trazabilidad de features para auditoria y mejora continua.
+H) Content & Localization Service
+Almacena contenido contextual por pais y aeropuerto, politicas informativas y textos multilenguaje. Se integra con el sistema i18n para resolver fallbacks, versionado editorial y revisiones periodicas.
+I) Analytics & Reporting Service
+Construye vistas agregadas para paneles, cohortes, conversion de alertas, precision de prediccion y salud operativa de negocio. Se alimenta por eventos y no impacta latencia del camino transaccional.
+10.3.2 Estrategia de migracion: modular monolith a microservicios
+La migracion propuesta es tipo strangler fig, reemplazando capacidades por segmentos funcionales, nunca por capas completas de golpe. Cada extraccion debe cumplir cuatro condiciones: contrato compatible, observabilidad equivalente o mejor, rendimiento no inferior y plan de rollback probado.
+Fase M0 - Preparacion
+Introducir API Gateway y versionado semantico de endpoints.
+Formalizar contratos de eventos y esquema en registry.
+Implementar trazabilidad distribuida end-to-end.
+Extraer configuracion a gestion centralizada y secrets manager.
+Fase M1 - Extraccion de integracion proveedor
+Aislar Price Ingestion Adapter sin cambiar UX.
+Mantener interfaz del backend actual para evitar ruptura de frontend.
+Comparar paridad funcional con shadow traffic.
+Fase M2 - Reglas y notificaciones
+Mover motor de alertas a servicio dedicado.
+Separar envio de notificaciones por cola asimetrica.
+Activar feature flag por cohortes de usuarios.
+Fase M3 - Search Optimizer y recomendaciones
+Desacoplar busqueda avanzada en servicio independiente.
+Habilitar self-connect con etiquetas de riesgo.
+Agregar scoring y logs explicables para recomendaciones.
+Fase M4 - Datos y analitica
+Materializar data mart de producto y operaciones.
+Cerrar dependencias de consultas pesadas sobre base transaccional.
+Definir governance de eventos y politicas de retencion.
+Durante todas las etapas se recomienda doble escritura temporal (con control de idempotencia) solo cuando sea imprescindible, y por tiempo limitado. La permanencia de doble escritura incrementa complejidad operativa; por ello debe tener fecha de caducidad y plan de retirada.
+10.3.3 Patrones de resiliencia obligatorios en microservicios
+Cada servicio que dependa de recursos externos debe implementar timeout explicito, retries acotados, exponential backoff con jitter y circuit breaker. Sin estos patrones, la degradacion de un proveedor externo puede propagarse en cascada al resto de la plataforma.
+Timeout por clase de operacion (lectura rapida, consulta agregada, batch).
+Retry solo para errores transitorios y metodos idempotentes.
+Bulkhead por pools de conexiones y workers separados por tipo de carga.
+Dead-letter queue para eventos no procesables con politicas de reproceso.
+Fallback funcional: ultimo valor conocido, respuesta parcial, mensaje transparente.
+El sistema debe priorizar degradacion elegante sobre indisponibilidad total. Para el usuario, es preferible ver datos actualizados hace X minutos con mensaje claro, que recibir errores intermitentes sin contexto. Esta decision protege confianza y reduce churn.
+10.4 Internacionalizacion avanzada (i18n + l10n)
+10.4.1 Alcance de internacionalizacion de extremo a extremo
+La internacionalizacion no se limita a traducir etiquetas UI. En Viru debe cubrir flujo completo: interfaz web, emails y notificaciones, plantillas de alerta, mensajes de errores backend, contenido contextual por pais, disclaimers de self-connect, formatos de fecha/hora, moneda y convenciones numericas.
+Para evitar deuda, se define un contrato unico de claves de traduccion por dominio. Frontend y backend consumen el mismo namespace conceptual (ejemplo: alerts.threshold.triggered, tracking.last_update_label), aunque usen repositorios tecnicos distintos. Esto evita divergencias de termino entre canales.
+Tambien se exige soporte de fallback jerarquico: idioma usuario -> idioma de mercado -> ingles base. Si falta una cadena localizada, el sistema no debe romper interfaz ni mostrar claves internas. Debe registrar warning tecnico y continuar con fallback controlado.
+10.4.2 Arquitectura tecnica i18n
+Localization Gateway para resolver idioma/cultura por request y perfil.
+Translation bundles versionados por servicio y por canal (web, email, notificacion).
+Content service con variantes por pais, aeropuerto y legal disclaimer.
+Formato de moneda desacoplado del valor numerico almacenado.
+Calendario y zona horaria por usuario con UTC en persistencia.
+Se recomienda almacenar importes en centimos de moneda base y convertir en capa de presentacion. En escenarios multi-moneda, el historico debe conservar moneda original observada y, opcionalmente, una conversion de referencia con timestamp de tipo de cambio para analitica comparativa.
+10.4.3 Flujo editorial y gobierno de traducciones
+La calidad de i18n depende de proceso, no solo de tecnologia. Debe existir pipeline editorial con estados Draft -> Review -> Approved -> Published, incluyendo control de cambios y posibilidad de rollback de contenido. Toda publicacion de textos sensibles (legales, politicas por pais) requiere doble aprobacion funcional y legal.
+Lint de claves huérfanas o duplicadas en CI.
+Bloqueo de merge si faltan traducciones criticas en rutas principales.
+Snapshots visuales por idioma para detectar truncamientos y desbordes.
+Telemetria de missing translations en tiempo real.
+Para escalado global, incorporar testing linguistico en idiomas con expansion textual alta y orden de lectura diferente. Aunque inicio sea ES/EN, el diseno debe estar listo para idiomas con mayor longitud media y caracteres no latinos.
+10.4.4 Riesgos i18n y mitigaciones
+Riesgo: incoherencia terminologica entre web y emails.
+Mitigacion: glosario central y revisiones transversales por dominio.
+Riesgo: desbordes de UI por textos largos.
+Mitigacion: componentes responsivos y tests snapshot multi-idioma.
+Riesgo: contenido legal desactualizado por pais.
+Mitigacion: fecha de revision obligatoria y expiracion automatica.
+Riesgo: errores de moneda y confusion del usuario.
+Mitigacion: mostrar moneda, origen del dato y timestamp de conversion.
+10.5 Rendimiento extremo y capacidad
+10.5.1 Objetivos cuantitativos de rendimiento (SLO)
+Para que la escalabilidad sea verificable, se definen objetivos iniciales sujetos a ajuste por crecimiento real. El backend transaccional debe mantener p95 menor a 250 ms en endpoints de lectura principal y p99 menor a 700 ms bajo carga nominal. Para operaciones de busqueda avanzada, se acepta p95 hasta 900 ms con pagina de resultados parcial progresiva si el calculo total supera el umbral.
+La disponibilidad objetivo recomendada para produccion es 99.9 por ciento mensual en servicios core (auth, tracking, alerts, read APIs), con presupuesto de error gestionado por SRE. Cuando se agota el error budget, se congelan features no criticas y se prioriza estabilidad.
+En capacidad, el sistema debe soportar picos de 10x sobre demanda media en ventanas cortas sin perdida de eventos y con degradacion controlada. Esto se logra con colas desacopladas, autoscaling por metrica compuesta (CPU, memoria, lag de cola) y politicas de admission control.
+10.5.2 Estrategia de cache multinivel
+Cache de cliente y CDN para recursos estaticos y catalogos semiestaticos.
+Cache de aplicacion para respuestas de busqueda repetibles de corta vida.
+Cache de datos para metadatos de aeropuertos, reglas y configuraciones.
+Invalidacion por eventos para evitar stale data prolongado.
+El cache debe diseñarse con TTL diferenciados por criticidad del dato. Precios y alertas requieren frescura mayor; contenido contextual y catalogos admiten TTL mas amplios. Debe medirse hit ratio por endpoint y su impacto real en latencia y costos, evitando cachear indiscriminadamente.
+10.5.3 Escalado de base de datos y almacenamiento
+A medida que crecen observaciones de precio, la base transaccional puede degradarse. La estrategia de escalado combina particionado temporal de tablas voluminosas, indices orientados a patrones de consulta, replicas de lectura para paneles y offloading de historicos antiguos a almacenamiento analitico.
+Particionado mensual de price_observations.
+Indices compuestos por (user_id, tracked_flight_id, observed_at).
+Read replicas para endpoints de consulta intensiva.
+Archivado frio para datos fuera de ventana operativa.
+La regla de oro es separar camino de escritura critica de consultas analiticas pesadas. Ningun dashboard debe competir con transacciones de negocio en la misma ruta de recursos durante horas pico.
+10.5.4 Procesamiento asincrono y control de backlog
+Jobs de escaneo, evaluacion de alertas y envios se procesan en colas con prioridades. El sistema debe protegerse de tormentas de eventos mediante backpressure y politicas de shedding para cargas no criticas. La salud se mide por lag de cola, edad maxima de mensaje y tasa de reintentos.
+Colas por dominio: ingestion, rules, notifications, analytics.
+Prioridad alta para eventos de alerta y estado critico.
+Reintentos acotados + DLQ + replay manual controlado.
+Idempotency keys para evitar efectos duplicados.
+El dimensionamiento de workers no debe basarse solo en CPU. Debe incorporar latencia de I/O, consumo de memoria por mensaje y saturacion de conexiones externas. Este enfoque evita escalados falsamente optimos que elevan costo sin mejorar throughput.
+10.5.5 Gestion de memoria y estabilidad de procesos
+Se establece una politica explicita de memoria para todos los servicios. Cada contenedor define request y limit realistas basados en profiling, con margen de seguridad para picos. Se prohibe desplegar servicios sin limites de memoria, ya que esto compromete estabilidad de nodo y cluster.
+Perfilado periodico de heap y objetos vivos en servicios Python.
+Limpieza de caches in-process con politicas LRU/TTL.
+Reinicio controlado por fuga detectada y umbral de RSS.
+Alertas tempranas de crecimiento anomalo por pendiente temporal.
+Pruebas soak de larga duracion para detectar leaks no evidentes.
+En incidentes OOM, el runbook exige: aislar version desplegada, comparar diff de consumo, activar feature flags de reduccion de carga, ampliar replicas temporalmente y analizar dumps antes de aplicar rollback definitivo. Esta disciplina evita ciclos repetitivos de caida-recuperacion.
+10.5.6 Rendimiento de frontend en escenarios de alto volumen
+El rendimiento extremo tambien exige frontend eficiente: code-splitting por ruta, hidratacion progresiva, prefetch selectivo y rendering virtualizado en listas largas de historico. El objetivo es mantener TTI competitivo incluso en dispositivos medios y redes no ideales.
+Carga diferida de modulos pesados (graficas comparativas, admin).
+Virtualizacion para tablas y listas de observaciones.
+Compresion de assets y cache busting controlado.
+Presupuesto de rendimiento por release (bundle size budget).
+Se recomienda presupuestar cada feature con coste de rendimiento antes de aprobarse. Feature que incumple presupuesto entra en optimizacion previa al release.
+10.6 Escalabilidad de datos, analitica y ML
+10.6.1 Arquitectura de datos para crecimiento
+El crecimiento de Viru exige separar claramente sistemas transaccionales y analiticos. La capa operativa mantiene consistencia de negocio, mientras que la capa analitica consume eventos para construir modelos, cohortes y reportes sin impactar UX. Esta separacion reduce contencion y habilita experimentacion.
+Event bus como fuente de verdad de cambios de dominio.
+Data Lake para historico bruto y trazabilidad temporal.
+Data Warehouse para metricas de producto y negocio.
+Feature Store para consistencia entrenamiento-inferencia.
+Todo dataset usado por modelos debe tener lineage verificable: version de esquema, ventana temporal, filtros aplicados y calidad de datos.
+10.6.2 MLOps para prediccion de precios
+El servicio de prediccion debe operar con pipeline completo MLOps: entrenamiento programado, validacion automatica, registro de modelos, despliegue progresivo y monitoreo de drift. Sin este ciclo, el modelo se degrada con cambios de mercado y pierde utilidad para usuario.
+Metricas minimas: AUC o equivalente de clasificacion, calibracion, precision por segmento.
+Monitoreo de drift de features y drift de concepto.
+A/B testing de recomendaciones con guardrails de experiencia.
+Rollback de modelo por performance degradada.
+Cada recomendacion mostrada al usuario debe incluir version de modelo y razon corta interpretable. Esta explicabilidad reduce riesgo reputacional.
+10.6.3 Gobernanza y privacidad de datos
+La escalabilidad de datos no puede comprometer privacidad. Debe aplicarse minimizacion de datos personales, seudonimizacion para analitica y control de acceso por proposito. Adicionalmente, se deben soportar borrado y exportacion bajo requerimientos de privacidad aplicables.
+Separacion de PII en almacenes protegidos.
+Tokenizacion de identificadores en pipelines analiticos.
+Retencion diferenciada por tipo de dato.
+Auditoria de acceso a datasets sensibles.
+Catalogo de datos con propietario y criticidad.
+10.7 Internacionalizacion de mercado y expansion geografica
+10.7.1 Estrategia por oleadas de paises
+La expansion debe seguir oleadas para controlar complejidad: primero mercados con mayor afinidad operativa y linguistica, luego regiones con particularidades regulatorias. Cada ola incluye readiness tecnico, contenido, soporte y metricas de adopcion.
+Ola 1: profundizar ES/EN con variaciones regionales y timezone robusto.
+Ola 2: nuevos idiomas de alfabeto latino y mayor expansion textual.
+Ola 3: mercados con requisitos legales y formatos complejos.
+Cada entrada de mercado debe disponer de checklist de go-live: cobertura de traduccion, politicas por pais verificadas, soporte de moneda y pruebas E2E.
+10.7.2 Cumplimiento y consideraciones legales por region
+A medida que Viru crece, aumenta exposicion regulatoria en privacidad, comunicaciones comerciales y transparencia de recomendaciones. Se requiere una capa legal-operativa que valide textos, mecanismos de consentimiento y politicas de retencion por jurisdiccion.
+Registro de consentimiento por canal de notificacion.
+Preferencias de contacto y opt-out granular.
+Disclaimers localizados para recomendaciones y self-connect.
+Proceso de actualizacion legal con versionado y fecha efectiva.
+Este control evita riesgos de sancion y protege la confianza del usuario en mercados con regulacion estricta.
+10.8 Fiabilidad extrema: multi-region, DR y continuidad
+10.8.1 Estrategia de alta disponibilidad
+La plataforma debe evolucionar a despliegues multi-zona y, para servicios criticos, preparacion multi-region activo-pasivo con failover probado. Se recomienda iniciar por componentes de lectura y notificacion, dejando procesos de escritura con conmutacion controlada para evitar inconsistencia.
+RTO objetivo inicial: 60 minutos; RPO objetivo inicial: 15 minutos.
+Backups cifrados y pruebas de restore calendarizadas.
+Replicacion de secretos y configuracion en region secundaria.
+Playbooks de failover y failback con responsables claros.
+No basta con definir DR en papel: la organizacion debe ejecutar simulacros trimestrales y documentar tiempo real de recuperacion por componente.
+10.8.2 Chaos engineering y pruebas de resiliencia
+Para validar robustez real se aplican experimentos controlados: caida de proveedor externo, latencia inducida, saturacion de cola, perdida parcial de cache y reinicio de nodos. El objetivo es comprobar que los mecanismos de degradacion funcionan en condiciones no ideales.
+Gamadays mensuales con escenarios predefinidos.
+Hipotesis explicitas antes de cada experimento.
+Metricas de impacto y tiempo de recuperacion.
+Acciones de mejora con seguimiento hasta cierre.
+Esta practica evita falsa sensacion de seguridad y acelera madurez operativa de equipos.
+10.9 Escalabilidad organizacional y modelo operativo
+10.9.1 Estructura de equipos para crecimiento
+La escalabilidad tecnica requiere escalabilidad de equipos. Se propone evolucionar de un equipo unico a pods por dominio: Core Product, Search & Pricing, Notifications & Growth, Data & ML, y Platform/SRE. Cada pod mantiene ownership de servicios y SLO asociados.
+Product + Engineering + QA integrados por pod.
+SRE y seguridad como funciones transversales habilitadoras.
+Ritos de arquitectura con ADR obligatoria para cambios mayores.
+Roadmap compartido con capacidad reservada para deuda tecnica.
+Sin esta estructura, el crecimiento provoca colisiones de prioridades y deterioro de calidad por falta de ownership.
+10.9.2 Gobierno tecnico y decision making
+Se recomienda governance liviano pero firme: RFC para iniciativas de alto impacto, ADR para decisiones de arquitectura, y tech radar para estandarizar herramientas. Todo cambio que afecte costo o confiabilidad debe incluir analisis de impacto y plan de rollback.
+Comite de arquitectura quincenal orientado a decisiones, no presentaciones.
+Definition of Ready tecnica para epicas de plataforma.
+Definition of Done ampliada con observabilidad, seguridad y pruebas de carga.
+Metricas DORA y metricas de calidad operativa como scorecard mensual.
+10.10 Plan de implementacion por trimestres
+10.10.1 Roadmap sugerido (12 meses)
+Trimestre
+Objetivo principal
+Entregables clave
+KPI de salida
+Q1
+Base de escalabilidad
+API Gateway, contratos de eventos, adapter proveedor aislado, observabilidad completa
+p95 estable, tasa de errores controlada, cobertura de trazas > 90%
+Q2
+Desacople funcional
+Rules Engine y Notifications desacoplados, colas por dominio, anti-spam avanzado
+reduccion de latencia de alertas, menor error operativo, backlog estable
+Q3
+i18n + rendimiento
+pipeline editorial i18n, fallback robusto, cache multinivel, optimizacion frontend
+mejora TTI, menor tasa de abandono, zero missing critical translations
+Q4
+Madurez avanzada
+MLOps inicial, DR probado, chaos program, expansion de mercado por oleadas
+SLO cumplidos, RTO/RPO validados, precision de recomendacion sostenible
+Este roadmap es adaptable. Si en cualquier trimestre se consume error budget de forma persistente, se prioriza estabilidad sobre nuevas capacidades, reprogramando entregables no criticos para no comprometer experiencia de usuario.
+10.10.2 Dependencias criticas y gestion de riesgos
+Dependencia de proveedor externo para datos de precios.
+Disponibilidad y calidad de eventos para analitica y ML.
+Capacidad de equipo para operar servicios adicionales.
+Madurez de observabilidad y respuesta a incidentes.
+Cada dependencia debe tener plan de contingencia documentado. El riesgo no gestionado en escalabilidad se convierte en deuda operacional de alto costo.
+10.11 Matriz de riesgos de escalabilidad
+Riesgo
+Probabilidad
+Impacto
+Deteccion
+Mitigacion
+Cambio abrupto en fuente externa de precios
+Alta
+Alta
+Incremento de errores adapter, caida de cobertura
+Provider abstraction, fallback, pruebas de contrato, canary
+Degradacion por fugas de memoria en workers
+Media
+Alta
+Crecimiento RSS, OOMKilled, latencia variable
+Soak tests, limites de memoria, perfilado, autorestart controlado
+Saturacion de colas en picos de demanda
+Media
+Alta
+Lag creciente, edad maxima de mensajes
+Autoscaling por lag, prioridades, shedding no critico
+Inconsistencia de traducciones y contenido legal
+Media
+Media/Alta
+Errores de QA linguistico, tickets de soporte
+Pipeline editorial con doble aprobacion y fallback
+Coste cloud fuera de control en escalado horizontal
+Media
+Alta
+Aumento costo por usuario activo
+FinOps, presupuestos por servicio, rightsizing, cache efectiva
+Drift de modelo y recomendaciones pobres
+Media
+Media
+Caida de precision y conversion
+MLOps, monitoreo drift, rollback de modelo
+10.12 Criterios de aceptacion de la Fase 10
+La fase se considera cumplida solo si existen evidencias tecnicas y operativas de que la arquitectura puede crecer sin reescrituras disruptivas. No se acepta un cierre basado en documentos sin ejecucion parcial verificable.
+Contratos de servicios y eventos versionados y publicados.
+Al menos dos dominios desacoplados en servicios independientes con trafico real.
+SLO definidos, medidos y reportados con tablero de seguimiento.
+Pipeline i18n funcional con fallback y validaciones en CI.
+Plan DR probado con resultados de simulacro y lecciones aprendidas.
+Runbooks de memoria/OOM y colas validados en ejercicio controlado.
+Roadmap trimestral aprobado con responsables y fechas objetivo.
+Adicionalmente, se recomienda un checkpoint ejecutivo de arquitectura al cierre para validar que el costo incremental por usuario no crece de forma desproporcionada respecto al valor entregado.
+10.13 Entregables documentales y tecnicos asociados
+ADR de descomposicion por bounded contexts.
+RFC de migracion strangler con fases M0-M4.
+Especificacion de contratos API y eventos con versionado.
+Guia i18n/l10n y glosario terminologico central.
+Plan de capacidad, stress test y soak test.
+Runbooks operativos de fallos de proveedor, cola, memoria y DR.
+Dashboard de SLO, error budget y costos unitarios.
+Backlog priorizado de escalabilidad con criterios de salida por trimestre.
+10.14 Conclusiones ejecutivas de la fase
+Viru puede escalar a nivel empresa grande si adopta un enfoque de evolucion controlada: desacople progresivo por dominio, excelencia operativa en observabilidad y resiliencia, y disciplina de producto para internacionalizar sin deuda desbordada. El valor de esta fase es convertir la escalabilidad en una capacidad recurrente, no en un proyecto aislado.
+El riesgo principal no es tecnico puro, sino de ejecucion: intentar acelerar demasiados frentes en paralelo sin capacidad de operacion. Por eso se prioriza roadmap por oleadas, gates de salida y ownership claro por equipo. Este enfoque reduce probabilidad de regresiones graves.
+Con los criterios aqui definidos, la siguiente iteracion puede entrar en plan de implementacion detallado (epicas, historias, estimaciones y presupuesto) manteniendo trazabilidad completa con fases 1 a 9 y con una base robusta para crecimiento global, multi-dominio y multi-proveedor.
+Nota de coherencia: ver FASE 1 secciones 1.8 (Contexto de mercado y oportunidad) y 1.9 (Monetizacion y escalabilidad) para alinear decisiones de producto, arquitectura, roadmap y operacion.
+10.10 Ideas adicionales de expansion (no tecnicas)
+- Modelo "club de ofertas": emails semanales con mejores bajadas.
+- Alianzas con travel bloggers para crecer sin publicidad agresiva.
+- Expansion por mercados con mayores usuarios de Ryanair primero.
+10.11 Ideas avanzadas de expansion
+- Pilotos con ciudades clave antes de abrir nuevos paises.
+- Segmento "corporate light": pequenas empresas con viajes frecuentes.
+10.12 Coherencia con MVP
+- Las reglas MVP (precio, identidad, canales) deben mantenerse como base antes de escalar a multi-proveedor.

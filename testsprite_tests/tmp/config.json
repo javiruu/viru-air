@@ -1,0 +1,19 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000",
+  "loginUser": "user@viru.local",
+  "loginPassword": "ViruUser123",
+  "executionArgs": {
+    "projectName": "viru-tracker",
+    "projectPath": "c:\\Users\\javiru\\Desktop\\viru-tracker",
+    "testIds": [],
+    "additionalInstruction": "Execute all frontend test cases based on the SKILLSPRITE_USER_CAPABILITIES.md specifications for Viru Tracker application",
+    "envs": {
+      "API_KEY": "sk-user-JehSpNu_Fv_qXfvRFjKuLoNAqa4sBdUj2_0pkj_GdVO9qTBsKs9hEWIZtlGj8QGsl9jwne1NnYhP4JycDKNFhMrXYzb7FKemVU9KVy5nilkpad9l7MdA2gl8h-v04hRqoAg"
+    }
+  },
+  "serverPort": 62065,
+  "proxy": "http://0f2b6e05-08ad-4c1e-bedc-c2b2801480d1:ByqBmWd5x28rasmKNL8VzLCFYyPUm02Q@tun.testsprite.com:8080"
+}

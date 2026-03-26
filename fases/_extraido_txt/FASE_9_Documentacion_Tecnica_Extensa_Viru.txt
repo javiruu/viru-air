@@ -1,0 +1,414 @@
+FASE 9 - DOCUMENTACION TECNICA EXTENSA
+Proyecto VIRU - Ryanair Tracker
+Dossier operativo de mantenimiento, despliegue, gobierno tecnico, glosario y FAQ
+Version: 1.0 | Fecha: 13/02/2026 | Responsable: Equipo senior de arquitectura, backend, frontend, DevOps, QA y producto
+9.1 Objetivo y alcance de la fase
+Esta fase consolida el conocimiento tecnico del producto en un corpus unico, mantenible y accionable. La finalidad no es solo describir como esta construido VIRU, sino habilitar su operacion continua por cualquier equipo que no haya participado en el desarrollo original. El resultado esperado es un manual de referencia para desarrollo, operaciones, soporte y evolucion de producto.
+El alcance incluye manual de mantenimiento, guia de despliegue, protocolos de incidentes, lineamientos de seguridad, data governance, observabilidad, politicas de cambios, onboarding y estandares de documentacion viva. Se incluye ademas un glosario tecnico y una FAQ orientada a problemas reales de operacion y entrega continua.
+Esta documentacion se alinea con las decisiones previas de fases 1 a 8: requisitos funcionales, arquitectura global, backend con adapter de proveedor, frontend modular, modelo de base de datos enterprise, pipeline DevOps y estrategia de testing automatizada. No sustituye el codigo ni la infraestructura como fuente de verdad ejecutable, pero los hace interpretables con bajo riesgo de ambiguedad.
+9.2 Principios de documentacion de referencia
+9.2.1 Principios rectores
+La documentacion debe tratarse como un sistema de produccion: versionada, revisada, testeada y observada. Cada cambio de comportamiento del sistema debe reflejarse en un cambio de documentacion en la misma pull request o en una task vinculada de cumplimiento obligatorio.
+Single source of truth por dominio: arquitectura, API, datos, seguridad y operaciones tienen dueños claros.
+Trazabilidad bidireccional: cada requisito importante debe enlazar a implementacion, pruebas y runbook.
+Lenguaje operacional: escribir para ejecutar tareas, no para explicar teorias sin accion.
+Tiempo de respuesta a cambios: actualizacion documental dentro del mismo ciclo de release.
+Antiguedad maxima recomendada: 90 dias sin revision para secciones criticas.
+Los documentos deben priorizar decisiones explicitas sobre prosa descriptiva. Para cada tema critico se exige registrar contexto, alternativas evaluadas, decision final, impacto y condiciones de reevaluacion. Este formato evita que la memoria del equipo dependa de personas clave y reduce la deuda de conocimiento.
+9.2.2 Estructura minima obligatoria por seccion
+Que problema resuelve la seccion.
+Como se ejecuta el proceso paso a paso.
+Que riesgos existen y como mitigarlos.
+Como se valida que el proceso funciono.
+Que evidencias deben quedar registradas.
+Con esta estructura, el lector siempre dispone de un plano operativo completo y no necesita inferir comportamientos criticos. La calidad de una seccion se mide por su ejecutabilidad en situaciones de presion, especialmente incidentes y despliegues urgentes.
+9.3 Mapa documental y propietarios
+9.3.1 Artefactos principales
+README del repositorio: vision general y arranque rapido.
+ADR (Architecture Decision Records): decisiones de arquitectura y su contexto.
+OpenAPI y contratos de eventos: definicion formal de interfaces.
+Runbooks de incidentes: guias accionables para fallos frecuentes y severos.
+Playbooks de release y rollback: guias de despliegue seguro.
+Catalogo de jobs y schedulers: inventario de procesos periodicos.
+Diccionario de datos: definiciones de tablas, campos y relaciones.
+Catalogo de feature flags y configuraciones sensibles.
+Cada artefacto tiene un owner tecnico primario y un owner secundario. El owner primario responde por exactitud tecnica; el secundario responde por continuidad operativa en ausencia del primario. El objetivo es eliminar puntos unicos de fallo de conocimiento.
+9.3.2 Matriz RACI de documentacion
+Dominio
+Responsible
+Accountable
+Consulted
+Informed
+Arquitectura y ADR
+Arquitecto
+Tech Lead
+Backend, DevOps
+Producto, QA
+API y eventos
+Backend Lead
+Tech Lead
+Frontend, QA
+Soporte
+UI flows y UX
+Frontend Lead
+Product Owner
+QA, Backend
+Soporte
+Infra, CI/CD, runbooks
+DevOps Lead
+Tech Lead
+Backend, Seguridad
+Producto
+Datos y migraciones
+DB Owner
+Backend Lead
+DevOps, QA
+Producto
+Testing y calidad
+QA Lead
+Tech Lead
+Backend, Frontend
+Producto
+La matriz anterior define la gobernanza minima para que cada documento tenga mantenimiento continuo. No se aceptan zonas sin propietario. Los cambios que afecten varios dominios deben aprobarse de forma cruzada para impedir inconsistencias entre capas.
+9.4 Manual de mantenimiento
+9.4.1 Objetivo operacional del mantenimiento
+El mantenimiento de VIRU debe asegurar continuidad funcional, integridad de datos, seguridad y rendimiento con cambios frecuentes en proveedores externos. El plan combina mantenimiento preventivo, correctivo y evolutivo para sostener calidad sin frenar velocidad de producto.
+La estrategia preventiva incluye revision de dependencias, rotacion de secretos, verificaciones de integridad de jobs, control de consumo de recursos y pruebas sinteticas de rutas criticas. El mantenimiento correctivo se apoya en runbooks estandarizados y niveles de severidad con SLA internos.
+El mantenimiento evolutivo se rige por backlog priorizado y feature flags. Ninguna mejora debe introducir deuda operativa silenciosa; toda funcionalidad nueva requiere plan de observabilidad, pruebas y actualizacion de documentacion antes de considerarse cerrada.
+9.4.2 Rutina diaria, semanal y mensual
+Rutina diaria
+Revisar tablero de salud: disponibilidad API, latencia p95/p99, tasa de errores, cola de jobs.
+Verificar ejecucion de jobs de tracking y archivado por vencimiento.
+Confirmar entrega de alertas: tasa de exito por canal, rebotes email, colas pendientes.
+Validar estado del proveedor externo y tasa de respuestas invalidas.
+Revisar alertas de memoria, CPU y disco en servicios backend y workers.
+Rutina semanal
+Analizar tendencias de errores por endpoint y por tipo de excepcion.
+Revisar crecimiento de tablas historicas y politicas de retencion.
+Ejecutar prueba de restore puntual en entorno de staging.
+Actualizar dependencias patch y verificar resultados de seguridad automatizada.
+Revisar efectividad de feature flags activas e inactivas.
+Rutina mensual
+Revisar ADR activas y marcar decisiones candidatas a reevaluacion.
+Ejecutar game day de incidentes prioritarios y medir tiempo de recuperacion.
+Auditar permisos de infraestructura y rotar credenciales de alto impacto.
+Evaluar costos por servicio y optimizaciones de capacidad.
+Revisar cobertura documental y antiguedad de secciones criticas.
+Estas rutinas deben ejecutarse con evidencia en tickets o bitacora operativa. La disciplina documental evita que las tareas recurrentes dependan de memoria individual y reduce la variabilidad entre operadores.
+9.4.3 Mantenimiento del adapter de proveedor y ryanair-py
+El adapter de proveedor es un componente de riesgo alto porque depende de comportamientos externos. El mantenimiento exige monitorear cambios de respuesta, errores de parsing y degradacion silenciosa en precios o disponibilidad. Toda anomalia debe aislarse en el adapter para no contaminar dominios internos.
+Versionado interno del adapter con changelog y pruebas de regresion especificas.
+Contrato de normalizacion: campos obligatorios, moneda, timestamps, origen de dato y nivel de confianza.
+Fallback controlado cuando la fuente retorna valores vacios o inconsistentes.
+Circuit breaker para evitar tormentas de reintentos ante fallos persistentes.
+Cache temporal con TTL para mitigar picos y proteger al proveedor.
+La libreria ryanair-py puede utilizarse como implementacion del adapter para consulta de rutas y precios, pero debe encapsularse detras de interfaces internas estables. Nunca se debe acoplar la logica de negocio a clases o respuestas crudas de la libreria. Esta separacion permite sustituir proveedor o estrategia de consulta sin reescribir el dominio.
+Cuando se actualice la version de la libreria, el proceso obligatorio es: rama de experimento, comparativa de respuestas reales, suite de contrato, test de rendimiento del adapter y despliegue canary con observacion reforzada. Si falla cualquier gate, se revierte inmediatamente y se documenta el incidente de compatibilidad.
+9.4.4 Gestion de configuracion y secretos
+Separacion estricta por entorno: local, CI, staging, produccion.
+Variables de entorno con esquema validado al arranque.
+Secretos en gestor dedicado, nunca en repositorio ni en logs.
+Rotacion periodica de claves y tokens con ventana de coexistencia.
+Politica de minimo privilegio para cuentas de servicio.
+Los secretos deben etiquetarse por criticidad y propietario. Cada secreto requiere fecha de rotacion, procedimiento de revocacion y pruebas de continuidad. Las rotaciones deben ser ensayadas primero en staging para detectar dependencias ocultas.
+9.4.5 Gestion de falta de memoria y estabilidad
+La falta de memoria es un modo de fallo critico porque afecta estabilidad global y puede degradar simultaneamente API, workers y colas. La estrategia combina prevencion, deteccion temprana y recuperacion automatizada con minima perdida de trabajo.
+Limites de memoria por contenedor y reservas garantizadas por servicio.
+Backpressure en colas para evitar crecimiento infinito de consumo.
+Batching y streaming en tareas pesadas para reducir picos de heap.
+Control de concurrencia dinamico en workers segun headroom disponible.
+Politica de restart con jitter y proteccion contra restart loops.
+El runbook de OOM debe definir pasos exactos: identificar proceso afectado, confirmar patron temporal, reducir carga entrante, drenar colas no criticas, ampliar capacidad temporal si aplica, y ejecutar analisis post mortem con heap profiling. Ningun incidente OOM se cierra sin accion preventiva permanente.
+Para sostener calidad bajo presion, se recomienda un presupuesto de memoria por dominio funcional. Cada nueva feature declara su costo aproximado de memoria y su impacto en picos. Si supera umbral acordado, requiere aprobacion de arquitectura y plan de optimizacion antes de merge.
+9.5 Guia de despliegue
+9.5.1 Pre-requisitos y validaciones previas
+Verificar estado de rama release y aprobaciones requeridas.
+Confirmar paso de pruebas unitarias, integracion, contrato, E2E y seguridad.
+Validar migraciones de base de datos con dry run en staging.
+Comprobar disponibilidad de dependencias externas y proveedor.
+Asegurar plan de rollback actualizado y ensayado.
+No se autoriza despliegue si existe deuda critica abierta en seguridad, integridad de datos o regresiones P0/P1. El criterio de salida prioriza continuidad de negocio sobre velocidad de entrega.
+9.5.2 Estrategia de release
+La estrategia recomendada es progressive delivery con canary y feature flags. Primero se despliega infraestructura y artefactos inactivos, luego se habilitan rutas por cohortes controladas. Este enfoque reduce radio de impacto y facilita rollback selectivo.
+Blue/Green para cambios estructurales o migraciones de alto riesgo.
+Canary para cambios de negocio con impacto acotado.
+Feature flags para activacion gradual por porcentaje o segmento.
+Kill switch para funcionalidades de riesgo alto.
+Cada release debe publicar un release note tecnico con riesgos conocidos, indicadores observables y criterios concretos de rollback. El release note se considera parte del despliegue y no un anexo opcional.
+9.5.3 Pasos de despliegue detallados
+Congelar merges no urgentes durante la ventana de despliegue.
+Construir artefactos firmados e inmutables.
+Desplegar infraestructura declarativa y validar drift.
+Aplicar migraciones compatibles con version anterior.
+Desplegar backend y workers en modo canary.
+Ejecutar smoke tests automatizados y chequeos sinteticos.
+Monitorear 15-30 minutos indicadores clave.
+Escalar porcentaje de trafico hasta 100% si no hay desviaciones.
+Habilitar flags de funcionalidad segun plan de activacion.
+Cerrar despliegue con evidencias y reporte de estado.
+Durante todo el proceso, el canal de incidentes debe permanecer activo y con responsables designados. Cualquier degradacion significativa activa protocolo de pausa y evaluacion inmediata.
+9.5.4 Rollback y restauracion
+El rollback debe ser una operacion de primera clase, no un plan teorico. Se debe poder revertir version de aplicacion sin perder trazabilidad de eventos y con impacto minimo en usuarios activos.
+Rollback de aplicacion: redeploy de imagen anterior validada.
+Rollback de feature flag: deshabilitacion inmediata sin redeploy.
+Rollback de esquema: solo si hay plan reversible; preferir migraciones expand-contract.
+Rollback de configuracion: restauracion atomica de version previa de secrets/config.
+En incidentes de datos, la restauracion se ejecuta desde backup verificado y con script de reconciliacion posterior. Toda restauracion requiere aprobacion dual (owner tecnico y responsable de datos).
+9.5.5 Checklist post-despliegue
+Latencia p95/p99 en rango esperado.
+Error rate global y por endpoint sin desviaciones anormales.
+Jobs scheduler ejecutando en tiempos previstos.
+Alertas enviadas correctamente en pruebas controladas.
+Dashboards y logs mostrando telemetria completa.
+Sin alarmas criticas de memoria, CPU o base de datos.
+Confirmacion de soporte de que no hay tickets de impacto nuevo.
+El cierre formal del despliegue se realiza solo cuando el checklist esta completo. Si algun punto falla, el release queda en estado observado y no se considera finalizado.
+9.6 Runbooks operativos
+9.6.1 Estructura estandar de un runbook
+Sintoma y criterios de deteccion.
+Impacto probable en negocio y usuarios.
+Diagnostico rapido (5-10 minutos).
+Acciones de contencion inmediata.
+Acciones de correccion permanente.
+Verificacion de recuperacion.
+Comunicacion interna y externa.
+Post mortem y acciones preventivas.
+Todos los runbooks deben estar escritos para ejecucion por ingenieria de guardia sin contexto previo. Si requieren conocimiento tribal, el runbook esta incompleto.
+9.6.2 Runbook: caida del proveedor externo
+Cuando el proveedor externo responde con errores sistematicos o datos no confiables, la prioridad es preservar estabilidad interna y evitar decisiones de negocio incorrectas. Se activa modo degradado de lectura con cache reciente y marcadores de frescura.
+Reducir concurrencia de consultas externas.
+Activar circuit breaker y fallback de cache.
+Suspender alertas agresivas para evitar ruido por datos inestables.
+Etiquetar resultados como datos degradados en API/UI.
+Reevaluar cada 10 minutos hasta recuperacion.
+Tras recuperacion, se ejecuta reconciliacion para actualizar muestras faltantes sin saturar sistema. El post mortem debe identificar si el problema fue externo puro o amplificado por configuracion interna.
+9.6.3 Runbook: cola de jobs saturada
+Confirmar longitud de cola y tasa de consumo real.
+Clasificar jobs por criticidad y aplicar priorizacion.
+Aumentar workers solo si existe headroom de memoria/DB.
+Pausar jobs no criticos temporalmente.
+Verificar bloqueos de base de datos y contention de indices.
+La saturacion de cola suele ser sintoma, no causa raiz. Debe analizarse tasa de produccion de eventos, tamaño de payload y tiempos de IO para cerrar la causa estructural.
+9.6.4 Runbook: incidentes de memoria
+Detectar servicio afectado y confirmar OOM killer o throttling.
+Capturar metricas de heap y snapshots si el sistema lo permite.
+Reducir concurrencia y tasa de ingreso temporalmente.
+Aplicar restart escalonado con control de impacto.
+Analizar endpoints o jobs con mayor huella.
+Abrir ticket de hardening con deadline y owner.
+No se permite cerrar incidentes de memoria con la solucion unica de aumentar recursos. Debe existir mejora de eficiencia o control de carga que reduzca probabilidad de repeticion.
+9.7 Gobierno de datos y cumplimiento
+9.7.1 Clasificacion de datos
+Publicos: metadata no sensible de aeropuertos y rutas.
+Internos: telemetria, eventos de sistema, logs tecnicos.
+Sensibles de usuario: email, preferencias, configuraciones de alerta.
+Criticos de negocio: historico de precios, reglas, auditoria.
+Cada categoria tiene politicas de acceso, retencion y enmascaramiento. Las politicas deben implementarse tecnicamente y no solo declararse en documentos.
+9.7.2 Retencion y borrado
+La retencion debe equilibrar analitica, costo y privacidad. Los datos de alto volumen se agregan y compactan tras ventanas temporales definidas para conservar valor estadistico con menor huella.
+Historico granular de precios: retencion corta-media segun coste.
+Agregados diarios/semanales: retencion larga para analitica.
+Logs de aplicacion: retencion corta con export de incidentes relevantes.
+Auditoria de cambios criticos: retencion extendida.
+El borrado debe ser trazable y verificable. Toda solicitud de eliminacion de datos de usuario dispara workflow de supresion y comprobacion posterior en sistemas dependientes.
+9.7.3 Integridad y calidad de datos
+Constraints de dominio en base de datos y validacion en capa API.
+Idempotencia en escritura de observaciones de precio.
+Controles anti-duplicado por clave funcional y ventana temporal.
+Checks de consistencia entre estado de vuelo y fechas.
+Reconciliacion periodica entre tablas operativas y agregados.
+La calidad de datos se monitoriza con reglas automatizadas. Desviaciones fuera de umbral generan alertas y ticket de remediacion con owner obligado.
+9.8 Seguridad operativa
+9.8.1 Hardening de aplicacion e infraestructura
+Autenticacion robusta, expiracion de tokens y revocacion.
+Autorizacion por roles y ownership de recursos.
+Rate limiting por identidad y por IP.
+Proteccion contra abuso de endpoints de busqueda y alertas.
+Headers de seguridad y validacion estricta de entrada.
+Escaneo continuo de dependencias y contenedores.
+La seguridad debe integrarse en el ciclo de despliegue, no tratarse como actividad separada. Un hallazgo critico bloquea release hasta mitigacion o excepcion formal aprobada.
+9.8.2 Politica de incidentes de seguridad
+Detectar y clasificar severidad (critica, alta, media, baja).
+Contener: aislar componente comprometido o ruta afectada.
+Erradicar: eliminar vector de ataque y credenciales comprometidas.
+Recuperar: restaurar servicio con validacion reforzada.
+Comunicar: stakeholders internos y, si aplica, usuarios.
+Aprender: post mortem con acciones preventivas medibles.
+Las evidencias forenses deben conservarse de forma inmutable segun politicas internas. Ningun incidente se cierra sin verificacion de que el vector no puede repetirse bajo las mismas condiciones.
+9.9 Observabilidad y SLO
+9.9.1 Telemetria minima obligatoria
+Logs estructurados con correlation_id en todo request principal.
+Metricas de sistema: CPU, memoria, disco, red.
+Metricas de aplicacion: latencia, errores, throughput, colas.
+Trazas distribuidas para flujos API -> worker -> DB -> proveedor.
+Eventos de negocio: alerta disparada, vuelo archivado, refresh manual.
+La ausencia de telemetria en componentes nuevos bloquea su salida a produccion. Cada endpoint o job debe declarar que metrica aporta y como se interpreta.
+9.9.2 SLI/SLO recomendados
+SLI
+Objetivo
+Ventana
+Disponibilidad API
+>= 99.9%
+Mensual
+Latencia p95 API
+< 350 ms
+Semanal
+Error rate 5xx
+< 0.5%
+Semanal
+Exito envio alertas
+>= 98%
+Diaria
+Freshness historico
+<= 6h en vuelos activos
+Diaria
+Fallo jobs criticos
+< 1% ejecuciones
+Semanal
+Los SLO deben revisarse por fase de madurez. Inicialmente pueden ser conservadores; al estabilizar plataforma, se elevan objetivos y se endurecen budgets de error.
+9.9.3 Alertado y escalado
+Alertas accionables, no informativas, con umbral claro.
+Enriquecimiento de alerta con contexto tecnico y runbook enlazado.
+Escalado por severidad y horario de guardia.
+Mecanismo de deduplicacion para evitar tormentas de paginas.
+Un sistema de alertas util reduce MTTR y evita fatiga del equipo. El catalogo de alertas se depura mensualmente para retirar ruido y mejorar señal.
+9.10 Politica de cambios, versionado y compatibilidad
+9.10.1 Versionado
+Versionado semantico para API y contratos publicos.
+Compatibilidad hacia atras para cambios menores.
+Deprecaciones comunicadas con ventana minima definida.
+Breaking changes solo con plan de migracion documentado.
+La compatibilidad se valida automaticamente en CI mediante pruebas de contrato y snapshots de esquema. No se acepta merge de cambios incompatibles sin justificacion formal.
+9.10.2 Proceso de RFC y ADR
+Abrir RFC para cambios arquitectonicos o de alto impacto.
+Documentar problema, alternativas, costos y riesgos.
+Recoger revision de dominios afectados.
+Decidir y emitir ADR con fecha de reevaluacion.
+Actualizar documentacion operativa y tecnica vinculada.
+Este proceso evita decisiones implcitas y mejora la calidad de largo plazo. Las ADR antiguas deben revisarse para confirmar vigencia ante cambios de contexto.
+9.11 Onboarding tecnico
+9.11.1 Plan de incorporacion en 30 dias
+Semana 1 - Entorno y fundamentos
+Levantar entorno local con datos semilla y pruebas basicas.
+Leer arquitectura global, mapa de modulos y principales ADR.
+Ejecutar flujos funcionales clave desde UI y API.
+Semana 2 - Desarrollo guiado
+Corregir bug acotado con pruebas y documentacion.
+Revisar pipeline CI/CD y runbooks de incidentes.
+Participar en revisiones de codigo y quality gates.
+Semana 3 - Operacion y observabilidad
+Interpretar dashboards y alertas de staging.
+Ejecutar despliegue supervisado en entorno de prueba.
+Simular incidente y aplicar runbook de recuperacion.
+Semana 4 - Autonomia
+Entregar mejora mediana con ADR liviana y cobertura de tests.
+Actualizar documentacion afectada y defender decisiones.
+Presentar retro de deuda tecnica detectada y plan de mejora.
+El objetivo del onboarding no es solo entender el codigo, sino operar el sistema con criterio. La autonomia se considera alcanzada cuando la persona puede diagnosticar incidencias comunes y desplegar con seguridad.
+9.12 Glosario tecnico
+Adapter de proveedor: Capa que traduce una fuente externa de vuelos/precios al modelo interno estable de VIRU.
+Aggregates: Datos resumidos derivados del historico granular para consultas rapidas y analitica.
+Backpressure: Mecanismo para limitar ingreso de carga cuando la capacidad de procesamiento se aproxima al limite.
+Canary release: Despliegue gradual a una fraccion de trafico para validar cambios con bajo riesgo.
+Circuit breaker: Patron de resiliencia que interrumpe llamadas a un servicio inestable para evitar cascadas de fallo.
+Correlation ID: Identificador comun en logs/trazas para seguir una peticion de extremo a extremo.
+Expand-contract: Estrategia de migracion de esquema compatible por fases para evitar downtime.
+Feature flag: Interruptor de funcionalidad que permite activar/desactivar comportamientos sin redeploy.
+Freshness: Antiguedad del dato respecto al momento actual.
+Idempotencia: Propiedad de una operacion que produce el mismo resultado aunque se ejecute varias veces.
+MTTR: Mean Time To Recovery: tiempo medio de recuperacion de incidentes.
+OOM: Out Of Memory: condicion de falta de memoria que provoca degradacion o terminacion de procesos.
+Retry with jitter: Reintentos con variacion temporal aleatoria para evitar sincronizacion de picos.
+Runbook: Guia operativa paso a paso para diagnosticar y resolver un escenario concreto.
+SLA: Compromiso de servicio acordado con negocio o usuarios.
+SLI/SLO: Indicadores de nivel de servicio y objetivos cuantitativos asociados.
+Soak test: Prueba de larga duracion para detectar degradacion progresiva.
+Synthetic monitoring: Pruebas automatizadas periodicas que simulan interacciones de usuario.
+TTL: Time To Live: tiempo maximo de validez de un dato en cache.
+Zero-downtime: Capacidad de desplegar cambios sin interrupcion perceptible del servicio.
+9.13 FAQ tecnica
+9.13.1 Backend y proveedor
+P: Que hacer si el proveedor retorna moneda distinta a la solicitada?
+R: Normalizar en adapter, guardar moneda original y moneda normalizada, y marcar nivel de confianza del dato. Evitar conversion silenciosa sin registro.
+P: Como evitar duplicados en historico de precios?
+R: Aplicar clave funcional por vuelo-trackeado, timestamp de muestra y hash de payload relevante. Complementar con deduplicacion logica en worker.
+P: Que pasa si falla un job critico repetidamente?
+R: Activar politica de retries con limite, enviar alerta severa, pausar job dependiente y ejecutar runbook de cola o proveedor segun causa.
+P: Como desacoplar el dominio de cambios en ryanair-py?
+R: Exponer interfaz interna propia, mapear respuestas en adapter y prohibir uso directo de estructuras externas fuera de esa capa.
+P: Como decidir entre cache y dato en tiempo real?
+R: Usar cache para disponibilidad y costo; priorizar tiempo real en acciones explicitas de usuario y en evaluaciones de alerta de alto valor.
+P: Que hacer ante crecimiento acelerado de tabla de observaciones?
+R: Particionar por fecha, comprimir historico antiguo, promover agregados y ajustar retencion segun objetivos de negocio.
+P: Como tratar escalas/self-connect con riesgo alto?
+R: Aplicar umbral minimo de conexion, etiquetar riesgo, mostrar disclaimer y permitir filtro estricto para excluir conexiones criticas.
+P: Como prevenir spam de alertas por cambios pequenos?
+R: Definir delta minimo configurable, ventana de enfriamiento y modo digest para usuarios con alta volatilidad.
+9.13.2 Frontend, UX y producto
+P: Como mantener consistencia ES/EN sin deuda de traducciones?
+R: Centralizar claves i18n, lint de claves faltantes en CI y politica de no merge con strings hardcoded.
+P: Como garantizar accesibilidad en graficos historicos?
+R: Acompanhar visual con tablas resumen, texto alternativo, contraste adecuado y navegacion por teclado.
+P: Que hacer si el usuario percibe discrepancias en precios?
+R: Mostrar timestamp de ultima actualizacion, fuente del dato y contexto de precio orientativo para reducir interpretaciones incorrectas.
+P: Como reducir abandono en flujo de anadir vuelo?
+R: Usar defaults por preferencias, validaciones tempranas y feedback inmediato de campos invalidos.
+P: Como gestionar evolucion de filtros avanzados sin romper UX?
+R: Introducir filtros por capas, guardar presets, y medir uso real para evitar sobrecarga de interfaz.
+9.13.3 DevOps, seguridad y operaciones
+P: Como minimizar riesgo en despliegues frecuentes?
+R: Aplicar canary, quality gates duros, rollback ensayado y observabilidad reforzada durante ventanas de release.
+P: Que hacer si se detecta fuga de memoria gradual?
+R: Capturar perfiles, identificar ruta o job responsable, aplicar limites de concurrencia y plan de correccion con prueba soak.
+P: Como responder a vulnerabilidad critica en dependencia?
+R: Parche prioritario, rebuild de imagen, despliegue urgente con smoke de seguridad y comunicado interno de riesgo.
+P: Como asegurar restauracion real de backups?
+R: Ejecutar pruebas de restore periodicas con verificacion de integridad y tiempos medidos de recuperacion.
+P: Como evitar drift de infraestructura?
+R: Gestion declarativa, deteccion automatica de cambios manuales y bloqueo de modificaciones fuera de pipeline.
+9.14 Plantillas operativas
+9.14.1 Plantilla de post mortem
+Resumen ejecutivo del incidente.
+Linea de tiempo minuto a minuto.
+Impacto en usuarios y negocio.
+Causa raiz tecnica y organizativa.
+Acciones inmediatas aplicadas.
+Acciones preventivas permanentes con owner y fecha.
+Lecciones aprendidas y cambios en runbooks/tests.
+La calidad del post mortem determina la reduccion real de reincidencia. Debe evitar culpabilizacion personal y centrarse en mejoras del sistema.
+9.14.2 Plantilla de release note tecnico
+Version y alcance de cambios.
+Migraciones y compatibilidad.
+Flags involucradas y estado inicial.
+Riesgos conocidos y monitoreo recomendado.
+Criterios de rollback.
+Responsables de guardia durante la ventana.
+Un release note de alta calidad reduce incertidumbre entre desarrollo, operaciones y soporte. Debe ser claro, breve y operacional.
+9.15 Criterios de aceptacion de la Fase 9
+Existe manual de mantenimiento con rutinas y evidencias obligatorias.
+La guia de despliegue incluye canary, rollback y checklist post-release.
+Runbooks de incidentes criticos estan completos y probados en simulacion.
+Glosario tecnico cubre terminos clave del sistema.
+FAQ tecnica responde casos reales de operacion y desarrollo.
+Documentacion tiene propietarios definidos y ciclo de revision activo.
+No hay secciones criticas sin trazabilidad a implementacion o prueba.
+La fase se considera aprobada cuando un equipo nuevo puede desplegar, operar y mantener VIRU siguiendo esta documentacion sin dependencia directa del equipo creador.
+9.16 Roadmap de documentacion viva
+La documentacion de Fase 9 no se cierra como artefacto estatico. Se transforma en sistema vivo con metricas de calidad documental: cobertura por dominio, tiempo medio de actualizacion tras cambio, numero de incidencias por instruccion incompleta y satisfaccion del equipo operador.
+Objetivo trimestral 1: reducir ambiguedades operativas en runbooks de alta severidad.
+Objetivo trimestral 2: automatizar validaciones de links, versiones y referencias cruzadas.
+Objetivo trimestral 3: integrar aprendizaje de post mortems en FAQ y playbooks.
+La mejora continua de documentacion debe estar en backlog recurrente. Un producto de alta calidad requiere memoria institucional formal, no dependencia de conversaciones informales.
+9.17 Conclusiones de la fase
+La Fase 9 convierte el conocimiento tecnico disperso en capacidad operativa repetible. Con manuales accionables, guias de despliegue, runbooks, glosario y FAQ, VIRU queda preparado para escalar equipo y complejidad sin degradar calidad.
+Esta fase tambien reduce riesgo de continuidad, especialmente frente a cambios del proveedor externo, incidentes de memoria y evolucion rapida de funcionalidades. Al tener procesos documentados, medibles y versionados, la plataforma puede crecer con control y resiliencia.
+Como siguiente paso, la Fase 10 puede enfocarse en escalabilidad futura avanzada: fronteras de microservicios, i18n ampliada, rendimiento extremo, estrategias multi-proveedor y optimizacion de costos a gran escala.
+Nota de coherencia: ver FASE 1 secciones 1.8 (Contexto de mercado y oportunidad) y 1.9 (Monetizacion y escalabilidad) para alinear decisiones de producto, arquitectura, roadmap y operacion.
+9.13 Ideas para documentacion viva
+- Mini guia "como interpretar precios" para usuarios finales.
+- Seccion "limitaciones conocidas" (frescura, proveedor, precios orientativos).
+9.14 Ideas avanzadas de soporte
+- FAQ para usuarios no tecnicos explicando "por que cambia el precio".
+- Guia de "mejores practicas" para viajar barato con Ryanair.
+9.15 Consistencia documental
+- Glosario obligatorio: definicion de precio trackeado, identidad de vuelo y canales de alerta.

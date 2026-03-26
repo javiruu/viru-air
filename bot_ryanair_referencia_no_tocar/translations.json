@@ -1,0 +1,101 @@
+{
+  "es": {
+    "lang_toggle_label": "English 🇬🇧",
+
+    "panel_title": "Ryanair Bot — Panel",
+    "panel_subtitle": "Consulta, añade y monitoriza precios guardados desde el bot o la web.",
+    "tile_saved_flights": "Vuelos guardados",
+    "tile_saved_desc": "Lista de rutas monitorizadas y su fecha.",
+    "tile_history": "Histórico de precios",
+    "tile_history_desc": "Evolución de precios chequeados automáticamente.",
+    "tile_add_flight": "Añadir vuelo",
+    "tile_add_desc": "Crea una nueva ruta (ORIGEN → DESTINO y fecha).",
+    "footer_running": "Web en marcha",
+    "footer_files": "Archivos",
+    "footer_port": "Puerto",
+
+    "nav_home": "Inicio",
+    "nav_flights": "Vuelos",
+    "nav_history": "Histórico",
+    "nav_add": "Añadir vuelo",
+
+    "flights_title": "Vuelos guardados",
+    "flights_empty": "No tienes vuelos guardados todavía.",
+    "flights_table_origin": "Origen",
+    "flights_table_destination": "Destino",
+    "flights_table_date": "Fecha",
+
+    "history_title": "Histórico de precios",
+    "history_subtitle": "Selecciona una ruta y fecha concreta para visualizar la evolución de precios:",
+    "select_route": "— Selecciona una ruta —",
+    "update_prices": "Actualizar precios ahora",
+    "back_panel": "Volver al panel",
+
+    "new_title": "Añadir vuelo",
+    "new_subtitle": "Introduce los datos del vuelo que quieres monitorizar.",
+    "new_origin_label": "Origen (IATA · 3 letras)",
+    "new_destination_label": "Destino (IATA · 3 letras)",
+    "new_date_label": "Fecha (YYYY-MM-DD)",
+    "new_submit": "Guardar vuelo",
+    "new_cancel": "Cancelar",
+
+    "flash_saved_ok": "✅ Vuelo añadido correctamente.",
+    "flash_saved_err": "❌ Error al guardar el vuelo.",
+    "flash_dup_warn": "⚠️ Ese vuelo ya está guardado.",
+    "flash_origin_err": "El origen debe ser un código IATA de 3 letras (ej. MAD).",
+    "flash_dest_err": "El destino debe ser un código IATA de 3 letras (ej. AGP).",
+    "flash_date_err": "Formato de fecha incorrecto. Usa YYYY-MM-DD.",
+    "flash_update_ok": "✅ {n} precios actualizados correctamente.",
+    "flash_update_warn": "⚠️ No se pudieron actualizar precios."
+  },
+
+  "en": {
+    "lang_toggle_label": "Español 🇪🇸",
+
+    "panel_title": "Ryanair Bot — Dashboard",
+    "panel_subtitle": "View, add and monitor saved prices from the bot or the web.",
+    "tile_saved_flights": "Saved flights",
+    "tile_saved_desc": "List of monitored routes and their date.",
+    "tile_history": "Price history",
+    "tile_history_desc": "Automatically checked price evolution.",
+    "tile_add_flight": "Add flight",
+    "tile_add_desc": "Create a new route (ORIGIN → DESTINATION and date).",
+    "footer_running": "Web running",
+    "footer_files": "Files",
+    "footer_port": "Port",
+
+    "nav_home": "Home",
+    "nav_flights": "Flights",
+    "nav_history": "History",
+    "nav_add": "Add flight",
+
+    "flights_title": "Saved flights",
+    "flights_empty": "You have no saved flights yet.",
+    "flights_table_origin": "Origin",
+    "flights_table_destination": "Destination",
+    "flights_table_date": "Date",
+
+    "history_title": "Price history",
+    "history_subtitle": "Select a specific route and date to view price trends:",
+    "select_route": "— Select a route —",
+    "update_prices": "Update prices now",
+    "back_panel": "Back to dashboard",
+
+    "new_title": "Add flight",
+    "new_subtitle": "Enter the details of the flight you want to monitor.",
+    "new_origin_label": "Origin (IATA · 3 letters)",
+    "new_destination_label": "Destination (IATA · 3 letters)",
+    "new_date_label": "Date (YYYY-MM-DD)",
+    "new_submit": "Save flight",
+    "new_cancel": "Cancel",
+
+    "flash_saved_ok": "✅ Flight saved successfully.",
+    "flash_saved_err": "❌ Error saving flight.",
+    "flash_dup_warn": "⚠️ That flight is already saved.",
+    "flash_origin_err": "Origin must be a 3-letter IATA code (e.g. MAD).",
+    "flash_dest_err": "Destination must be a 3-letter IATA code (e.g. AGP).",
+    "flash_date_err": "Invalid date format. Use YYYY-MM-DD.",
+    "flash_update_ok": "✅ {n} prices updated successfully.",
+    "flash_update_warn": "⚠️ Couldn’t update prices."
+  }
+}

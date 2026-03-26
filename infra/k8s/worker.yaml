@@ -1,0 +1,25 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: viru-worker-tracking
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: viru-worker-tracking
+  template:
+    metadata:
+      labels:
+        app: viru-worker-tracking
+    spec:
+      containers:
+        - name: worker
+          image: ghcr.io/your-org/viru-backend:latest
+          command: ["python", "-c", "print('worker placeholder')"]
+          resources:
+            requests:
+              cpu: "300m"
+              memory: "768Mi"
+            limits:
+              cpu: "1"
+              memory: "1536Mi"

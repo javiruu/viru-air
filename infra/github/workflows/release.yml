@@ -1,0 +1,33 @@
+﻿name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  quality-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Backend tests
+        run: |
+          cd backend
+          pip install -e .[dev]
+          pytest -q
+      - name: Frontend build
+        run: |
+          cd frontend
+          npm install
+          npm run build
+
+  canary-deploy:
+    needs: [quality-gates]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Deploy canary 5% -> 25% -> 50% -> 100%"
+      - run: echo "If SLI degrades, rollback immediately"

@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Node / frontend
+node_modules/
+.next/
+dist/
+build/
+coverage/
+
+# Local env and secrets
+.env
+.env.*
+!.env.example
+*.db
+*.sqlite*
+*.pem
+*.key
+*.p12
+keys.txt
+token.txt
+*.pid
+
+# Logs
+*.log
+logs/
+logs_ia/
+
+# Editor / temp
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+%TEMP%/
+
+# OS
+.DS_Store
+Thumbs.db

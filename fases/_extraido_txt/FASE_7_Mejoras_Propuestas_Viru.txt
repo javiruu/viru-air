@@ -1,0 +1,531 @@
+VIRU - DOSSIER TECNICOFASE 7 - MEJORAS PROPUESTAS
+Integracion tecnica y de experiencia de usuarioVersion 1.0 - 2026-02-12
+7.1 Objetivo de la fase
+Esta fase define la integracion completa, una por una, de las mejoras propuestas en la documentacion funcional y en el backlog de ideas de Viru. El alcance no se limita a describir funcionalidades superficiales: para cada mejora se fija su impacto sobre backend, frontend, modelo de datos, observabilidad, seguridad, costes operativos, pruebas y experiencia de usuario. El resultado debe permitir implementacion directa por equipos de ingenieria sin depender de interpretaciones ambiguas.
+La estrategia de esta fase no introduce componentes aislados; integra mejoras dentro de la arquitectura aprobada en las fases anteriores. Eso implica mantener consistencia entre el motor de tracking, el adapter de proveedor de vuelos, los contratos API, el estado de interfaz, la gobernanza de datos y el pipeline de despliegue. Cualquier mejora que no pueda sostenerse en operacion queda reconducida a una implementacion incremental con feature flags y criterios de salida medibles.
+Se asume como condicion de calidad que cada mejora tiene que demostrar tres cosas antes de considerarse lista para produccion: valor tangible para el usuario, compatibilidad con limites operativos reales y trazabilidad tecnica para diagnostico. Por ello, ademas de funcionalidad, se especifican riesgos, edge cases, mitigaciones, KPI de adopcion y criterios de aceptacion. Este enfoque evita deuda tecnica encubierta y evita mejoras 'bonitas' pero no sostenibles.
+7.2 Principios de integracion
+Todas las mejoras se implementan sobre contratos estables. En backend, las nuevas capacidades deben colgar de endpoints versionados o de ampliaciones backward compatible del contrato existente. En frontend, se prioriza composicion de componentes y reutilizacion de patrones de estado para no duplicar logica de validacion. En base de datos, cada extension incluye migracion explicita, indices asociados y estrategia de rollback.
+Se adopta una regla de degradacion controlada: si una mejora depende de datos externos no disponibles temporalmente, la aplicacion no debe romper la ruta principal de compra o consulta. Debe mostrar estado explicito de degradacion, ultima muestra valida y opcion de reintento. Esta regla aplica de forma transversal a prediccion de precios, deep-link externo, rutas con escala y explorador de destinos baratos.
+El despliegue se realiza por etapas: activacion interna, beta cerrada, canary de bajo porcentaje y apertura general. Cada salto exige umbrales minimos de SLO tecnico y metricas de uso. Si se incumple un umbral de error, latencia o rebote de interfaz, se ejecuta rollback por flag sin necesidad de rollback completo de base de datos, salvo cambios destructivos. La gobernanza de releases de esta fase prioriza control sobre velocidad.
+7.3 Matriz de priorizacion de mejoras
+Se propone priorizacion por impacto en valor percibido, complejidad tecnica y riesgo operativo. El orden siguiente minimiza dependencia circular y permite aprendizaje temprano con telemetria util.
+ID
+Mejora
+Impacto usuario
+Complejidad
+Riesgo operativo
+Prioridad
+M1
+Alertas avanzadas por umbral y cada cambio
+Muy alto
+Media
+Media
+P0
+M2
+Aeropuertos alternativos y radio configurable
+Alto
+Media
+Media
+P0
+M3
+Filtros avanzados de viaje
+Alto
+Media
+Baja
+P0
+M4
+Preferencias guardadas del viajero
+Alto
+Baja
+Baja
+P0
+M5
+UX historico: hover, zoom, heatmap
+Medio-alto
+Media
+Baja
+P1
+M6
+Comparativa multi-vuelo
+Medio-alto
+Media
+Baja
+P1
+M7
+Prediccion de precio tipo AirHint
+Muy alto
+Alta
+Media-alta
+P1
+M8
+Escalas/self-connect con riesgo
+Alto
+Alta
+Alta
+P1
+M9
+Destinos baratos tipo Everywhere
+Muy alto
+Alta
+Media
+P1
+M10
+Deep-link robusto a Ryanair
+Medio-alto
+Media
+Alta
+P1
+M11
+Consejos y politicas por pais
+Medio
+Media
+Media
+P2
+M12
+Internacionalizacion ES/EN completa
+Alto
+Media
+Baja
+P2
+M13
+Seccion de sugerencias y circuito de producto
+Medio
+Baja
+Media
+P2
+El orden de ejecucion recomendado para maximizar traccion temprana es: M1 -> M2 -> M3 -> M4 -> M5 -> M6 -> M10 -> M7 -> M8 -> M9 -> M12 -> M11 -> M13. El motivo es habilitar primero mejoras de valor inmediato y bajo riesgo, consolidar base de datos y telemetria, y despues desplegar motores mas costosos (prediccion, self-connect y exploracion masiva).
+7.4 M1 - Alertas avanzadas por umbral y por cada cambio
+Dependencias previas: Motor de tracking estable (Fase 3), tablas de observaciones (Fase 5), workers y colas (Fase 6).
+Objetivo funcional
+Se implementa un motor de alertas por vuelo con tres modos configurables: umbral inferior (avisar cuando el precio cae por debajo de X), umbral superior (avisar subida brusca por encima de Y) y modo seguimiento intensivo (avisar cada cambio relevante). Esta mejora convierte el tracker en un asistente activo, no solo en un repositorio historico.
+El comportamiento debe ser determinista. Un cambio de precio solo genera notificacion cuando existe transicion de estado respecto al ultimo valor notificado o cuando se supera un delta minimo definido por usuario o por plataforma. Con esto se reduce ruido por micro-variaciones insignificantes.
+El diseño contempla multi-canal en fases: email e in-app en MVP, con web push opcional tras estabilizacion. Los canales comparten una misma cola de eventos para garantizar consistencia de mensajes y trazabilidad de entrega.
+Integracion tecnica
+Backend: se incorpora un AlertRuleEngine desacoplado del poller principal. El poller registra observaciones; el engine evalua reglas y emite eventos de notificacion idempotentes. Cada evento incluye correlation_id, rule_id, sample_id y snapshot de precio para auditoria. La idempotencia evita duplicados cuando reintentos de cola coinciden con el mismo cambio.
+Base de datos: nuevas tablas alert_rule, alert_delivery, alert_delivery_attempt y alert_suppression_window. Se indexa por user_id, tracked_flight_id, status y next_evaluation_at. Se añade control de frecuencia con cooldown por regla para mitigar spam sin eliminar capacidad de alta sensibilidad.
+Frontend: se añaden formularios de configuracion granular por vuelo, vista de historial de alertas y centro de notificaciones con estado de entrega. Se integra onboarding contextual para explicar diferencias entre 'cada cambio' y 'solo umbral', evitando configuraciones incorrectas.
+Operacion: se define limite por usuario para reglas activas y cadencia maxima por hora. Los workers de notificacion se ejecutan con backpressure y DLQ para errores permanentes. Observabilidad con metricas de ratio envio/exito, latencia media y supresiones aplicadas.
+Impacto UX y producto
+El usuario obtiene control explicito del nivel de vigilancia y deja de depender de revisar manualmente el panel. El beneficio principal es la reduccion de ansiedad operativa: el sistema avisa de forma oportuna cuando hay oportunidad real o riesgo de encarecimiento.
+La experiencia se apoya en copy claro y transparente. Cada regla muestra una previsualizacion textual: 'Te avisaremos cuando baje de 29 EUR' o 'Te avisaremos ante cambios superiores a 8 EUR'. Esta previsualizacion reduce errores de configuracion y aumenta confianza.
+El centro de notificaciones aporta trazabilidad: no solo se ve que hubo cambios, sino que se verifica si el aviso se entrego y por que canal. Esto mejora percepcion de fiabilidad y reduce tickets de soporte del tipo 'no me llego la alerta'.
+Riesgos, edge cases y mitigaciones
+Edge case: proveedor devuelve precio en moneda distinta a la esperada. Mitigacion: normalizacion previa en pipeline de observaciones y bloqueo de evaluacion de reglas hasta confirmar moneda o tipo de cambio confiable.
+Edge case: oscilaciones rapidas de precio generan tormenta de eventos. Mitigacion: ventana de agregacion de segundos/minutos, delta minimo configurable y politicas de digest cuando la variacion no cambia recomendacion de compra.
+Edge case: usuario activa muchas reglas conflictivas sobre el mismo vuelo. Mitigacion: validacion en UI y API para detectar redundancias, sugerir fusion y evitar sobrecoste de evaluacion.
+Riesgo legal/entregabilidad en email: dominios sin autenticar penalizan deliverability. Mitigacion: SPF/DKIM/DMARC obligatorios, warm-up progresivo y monitor de rebote duro.
+KPI y criterios de aceptacion
+Objetivo de producto: tasa de activacion de alertas >= 45 por ciento en usuarios con al menos un vuelo guardado durante los primeros 30 dias.
+Objetivo tecnico: latencia p95 desde observacion hasta evento de notificacion menor a 90 segundos en modo umbral, y menor a 3 minutos en modo digest.
+Objetivo de calidad: ratio de duplicados menor a 0.5 por ciento y tasa de entrega email superior a 97 por ciento, excluyendo rebotes por direccion invalida.
+Aceptacion funcional: pruebas automatizadas de transicion de reglas, idempotencia y supresion deben cubrir al menos 90 por ciento de ramas del engine.
+Plan de despliegue
+Semana 1: activacion interna con usuarios de test y verificacion de cargas sintenticas de oscilacion alta.
+Semana 2: beta cerrada al 5 por ciento de usuarios con canal in-app y email opcional.
+Semana 3: canary al 20 por ciento con observacion de ruido y ajuste de cooldown por defecto.
+Semana 4: despliegue general con panel de salud en tiempo real y playbook de rollback por feature flag.
+7.4 M2 - Aeropuertos alternativos y radio configurable
+Dependencias previas: Catalogo aeroportuario y normalizacion geoespacial en base de datos.
+Objetivo funcional
+La mejora amplifica la capacidad de descubrimiento de precio al incluir aeropuertos cercanos al origen o destino principal. El objetivo no es reemplazar la busqueda directa, sino exponer opciones de ahorro donde la proximidad geografica compense.
+Se incorpora radio configurable en kilometros con valores recomendados por perfil de usuario y por densidad aeroportuaria de la region. Esta configuracion puede guardarse como preferencia para no repetir ajustes en cada consulta.
+La funcionalidad debe preservar legibilidad. No basta con listar combinaciones; debe explicar por que aparece cada alternativa, su distancia estimada y su efecto en precio total esperado.
+Integracion tecnica
+Backend: se introduce AirportProximityService con indice geoespacial de aeropuertos activos. El servicio resuelve vecinos por radio usando coordenadas normalizadas y cache de resultados por par (iata, radio_km).
+Se amplian endpoints de busqueda para aceptar include_nearby_origins, include_nearby_destinations y radius_km. El contrato devuelve metadata de distancia y un score compuesto para ranking inicial.
+Base de datos: tabla airport_catalog con latitud, longitud, timezone, ciudad y pais; indice GIST o equivalente geoespacial. Tabla de versionado de catalogo para trazabilidad cuando cambian datos aeroportuarios.
+Frontend: selector de radio con presets inteligentes (50, 100, 150, 250 km), chips de aeropuertos alternativos y etiquetas explicativas del impacto en precio. Se añade control para excluir manualmente aeropuertos no deseados.
+Operacion: actualizacion programada del catalogo aeroportuario y pruebas de regresion de proximidad para evitar errores por coordenadas corruptas.
+Impacto UX y producto
+El usuario recibe resultados mas utiles sin tener que investigar manualmente aeropuertos vecinos. Esto eleva percepcion de inteligencia del producto y aumenta probabilidad de conversion en rutas con alta elasticidad de precio.
+La UX evita sobrecarga cognitiva con ranking por ahorro neto estimado y filtros de distancia maxima. La idea es no mostrar cien opciones poco relevantes, sino un conjunto explicable y accionable.
+El guardado de radio por defecto reduce friccion en sesiones repetidas y refuerza sensacion de personalizacion.
+Riesgos, edge cases y mitigaciones
+Edge case: ciudades con multiples aeropuertos muy cercanos saturan resultados. Mitigacion: limite por cluster y deduplicacion por equivalencia de trayecto.
+Edge case: distancia corta pero conectividad terrestre mala. Mitigacion: mostrar distancia como aproximacion y advertencia de verificacion de traslado local.
+Edge case: catalogo con coordenadas faltantes. Mitigacion: fallback a lista principal sin bloquear busqueda, con evento de calidad de datos para correccion.
+Riesgo de latencia: expansion combinatoria al aumentar radio. Mitigacion: top-k temprano, cache por consulta y umbrales de corte por score.
+KPI y criterios de aceptacion
+Tasa de uso del modo alternativo >= 30 por ciento en usuarios activos de busqueda durante el primer trimestre.
+Incremento de ahorro medio estimado por consulta >= 8 por ciento frente a baseline sin aeropuertos alternativos.
+Latencia p95 de busqueda con alternativos <= 1.8x respecto a busqueda simple.
+Aceptacion funcional: pruebas de geocalculo, exclusiones de aeropuerto y ranking explicable con snapshots reproducibles.
+Plan de despliegue
+Fase alfa: solo destinos alternativos con radio fijo de 100 km para validar pipeline.
+Fase beta: radio configurable y exclusion manual de aeropuertos.
+Fase general: combinacion origen y destino alternativos con score ajustable por feedback.
+7.4 M3 - Filtros avanzados de viaje
+Objetivo funcional
+Se incorporan filtros de duracion total, franja horaria de salida/llegada, limite de escalas y exclusion de aeropuertos concretos. El objetivo es que el resultado barato tambien sea util para el contexto real del viaje.
+Estos filtros deben aplicarse de forma coherente tanto en busqueda puntual como en explorador de destinos. La consistencia evita escenarios donde una pantalla 'respeta' preferencias y otra las ignora.
+La semantica de cada filtro se documenta en interfaz y API para evitar malentendidos. Por ejemplo, 'duracion total maxima' debe dejar claro si incluye escalas y tiempos de espera.
+Integracion tecnica
+Backend: QueryPlanner con etapa de filtrado temprano y etapa de ranking final. Los filtros duros se aplican primero para recortar espacio de busqueda; luego se ordena por score multi-factor.
+API: se agregan parametros strict_filters=true y soft_filters_weight para permitir modos estricto o preferente. Esto evita respuesta vacia cuando el usuario fija condiciones demasiado restrictivas.
+Base de datos: materializacion opcional de campos derivados (departure_hour_bucket, total_duration_min, connection_count) para acelerar filtros frecuentes.
+Frontend: panel lateral con filtros editables y resumen de filtros activos. Se muestra contador de resultados y motivo de descarte cuando no hay coincidencias.
+Observabilidad: metricas de 'filtro que mas elimina' y 'ratio de cero resultados por combinacion de filtros' para mejorar defaults.
+Impacto UX y producto
+El usuario deja de enfrentar listados irrelevantes. Puede priorizar calidad de horario, evitar madrugones o conexiones largas, y mantener equilibrio entre precio y conveniencia.
+La experiencia mejora con feedback inmediato: al activar un filtro, el recuento se actualiza y se comunica impacto. Esta interactividad reduce frustracion y evita la sensacion de 'buscador opaco'.
+En terminos de confianza, explicar por que no hay resultados es tan importante como mostrar resultados. Se añaden mensajes constructivos para relajar un filtro concreto cuando corresponde.
+Riesgos, edge cases y mitigaciones
+Edge case: combinacion de filtros imposible produce cero resultados repetidamente. Mitigacion: sugerencias automaticas de relajacion en orden de menor impacto.
+Edge case: datos incompletos de duracion en proveedor. Mitigacion: marcar resultado con calidad baja y excluirlo solo en modo estricto.
+Edge case: diferencias de zona horaria al filtrar hora local. Mitigacion: normalizar por timezone de aeropuerto y validar conversion en test de frontera.
+Riesgo de performance en filtros complejos: mitigacion con indices parciales y caching de consultas frecuentes por perfil.
+KPI y criterios de aceptacion
+Reduccion de tasa de rebote en pantalla de resultados >= 15 por ciento.
+Disminucion de cero resultados no explicados a menos del 2 por ciento.
+Latencia p95 de aplicar filtro interactivo en cliente < 300 ms sobre dataset paginado.
+Aceptacion: pruebas de consistencia entre pantallas y pruebas de timezone obligatorias.
+Plan de despliegue
+Despliegue incremental por grupos de filtros: primero horarios y aeropuertos, luego duracion y conexiones.
+Habilitacion de modo estricto por defecto en beta y ajuste posterior segun telemetria.
+Activacion final con presets sugeridos por segmento de usuario.
+7.4 M4 - Preferencias guardadas del viajero frecuente
+Objetivo funcional
+Se habilita un modulo de preferencias persistentes que aplica valores por defecto en busqueda y tracking: radio_km, franja horaria minima, modo de alertas, moneda preferida e idioma.
+El objetivo es reducir friccion recurrente y aumentar velocidad de uso en sesiones repetidas. Esta mejora impacta especialmente a usuarios intensivos que realizan busquedas diarias.
+Las preferencias deben ser transparentes, editables y reversibles. El usuario no debe sentir que la aplicacion toma decisiones ocultas.
+Integracion tecnica
+Backend: UserPreferenceService con esquema versionado y validacion de rangos. Se expone endpoint GET/PUT idempotente con ETag para evitar overwrite concurrente desde varios dispositivos.
+Base de datos: tabla user_preference con jsonb tipado y columnas indexadas para campos de alto uso. Se guarda updated_by_source para auditar cambios desde web o API.
+Frontend: pantalla de preferencias y atajos en formularios para 'guardar como predeterminado'. Se añade boton de restaurar defaults recomendados.
+DevOps: banderas de configuracion remota para cambiar defaults globales sin migraciones.
+Impacto UX y producto
+La principal mejora UX es el ahorro de pasos. Un usuario habitual puede lanzar una busqueda relevante con menos clics y menor carga mental.
+El sistema comunica cuando una preferencia esta aplicada mediante chips visibles. Esto evita confusiones del tipo 'por que no veo vuelos antes de las 7:00'.
+Al permitir reset selectivo por categoria, se evita el problema de reset total que suele frustrar usuarios avanzados.
+Riesgos, edge cases y mitigaciones
+Edge case: preferencias corruptas por version antigua de cliente. Mitigacion: schema_version con migrador server-side y fallback a defaults seguros.
+Edge case: cambio de idioma y moneda simultaneo en mitad de flujo. Mitigacion: aplicacion transaccional y refresco coherente de caches de interfaz.
+Riesgo de soporte: usuario no recuerda filtros predeterminados. Mitigacion: resumen contextual siempre visible y onboarding corto.
+KPI y criterios de aceptacion
+Aumento de retencion D30 en usuarios con mas de tres busquedas semanales.
+Reduccion de tiempo medio hasta primera consulta util >= 20 por ciento.
+Incidencias por configuracion inesperada < 1 por ciento de sesiones.
+Aceptacion: pruebas de migracion de preferencias entre versiones y pruebas de concurrencia.
+Plan de despliegue
+Lanzamiento con conjunto minimo de preferencias (radio, horario minimo, idioma).
+Segunda ola con moneda y comportamiento de alertas.
+Tercera ola con plantillas por tipo de viaje.
+7.4 M5 - UX avanzada del historico: hover, zoom y heatmap calendario
+Objetivo funcional
+Se mejora el historico para convertirlo en herramienta de decision y no solo visualizacion pasiva. El grafico incorpora hover de precision, zoom temporal y reset rapido.
+En modo calendario se introduce codificacion visual de minimos y maximos, mas escala gradual de color para detectar periodos de encarecimiento o abaratamiento.
+El objetivo es que un usuario no tecnico entienda tendencias en segundos y pueda actuar sin abrir varias pantallas.
+Integracion tecnica
+Frontend: componente TimeSeriesChart con virtualizacion de puntos para grandes historicos. Se soporta pinch/zoom en moviles y selector de rango en desktop.
+Backend/API: endpoint de agregacion por bucket (hora, dia) para evitar payload excesivo cuando se visualizan periodos largos.
+Base de datos: vista materializada opcional para estadisticos diarios (min, max, media, volatilidad) y refresco incremental.
+Observabilidad: metricas de interaccion en grafico (uso de zoom, hover, cambio de rango) para medir utilidad real de la mejora.
+Impacto UX y producto
+La experiencia gana claridad. Hover evita adivinanzas sobre valores exactos y reduce necesidad de abrir detalle tabular.
+El heatmap del calendario facilita identificar 'ventanas de compra' con lenguaje visual intuitivo. Para usuarios nuevos esto reduce curva de aprendizaje.
+Se incorpora accesibilidad: contraste suficiente, alternativa textual y estados distinguibles para usuarios con daltonismo.
+Riesgos, edge cases y mitigaciones
+Edge case: historicos con huecos de datos por caida temporal del proveedor. Mitigacion: representar gaps de forma explicita sin interpolacion engañosa.
+Edge case: demasiados puntos en dispositivos de bajo rendimiento. Mitigacion: downsampling adaptativo y limite de precision visual por nivel de zoom.
+Riesgo de interpretacion incorrecta del color. Mitigacion: leyenda fija y tooltip con contexto temporal completo.
+KPI y criterios de aceptacion
+Incremento de uso de historico por sesion >= 25 por ciento.
+Mejora de CTR en accion 'crear alerta' desde historico >= 12 por ciento.
+Tiempo de render inicial p95 < 1.2 s para 365 dias agregados.
+Aceptacion: pruebas visuales de regresion y pruebas de accesibilidad WCAG AA.
+Plan de despliegue
+Activacion inicial en desktop, luego extension movil tras optimizacion.
+Canary por cohortes de volumen de datos para validar rendimiento.
+Apertura general con tutorial contextual de 30 segundos.
+7.4 M6 - Comparativa de vuelos guardados en grafico y calendario
+Objetivo funcional
+Se habilita comparativa simultanea de dos o mas vuelos guardados para detectar cual ofrece mejor ventana de compra en cada periodo.
+El valor de negocio es alto para usuarios que dudan entre destinos o fechas alternativas. En lugar de comparar manualmente pantallas, obtienen una vista consolidada y accionable.
+La comparativa debe mantener claridad incluso con series multiples; por ello se fija un maximo recomendado de elementos visibles por defecto con opcion de ampliar.
+Integracion tecnica
+Backend: endpoint de comparacion que recibe lista de tracked_flight_ids y devuelve series alineadas por eje temporal comun. Se maneja timezone por vuelo para evitar desplazamientos incorrectos.
+Base de datos: indices compuestos por tracked_flight_id y observed_at para lecturas por lote. Posible cache de comparaciones frecuentes por usuario.
+Frontend: leyenda interactiva, activacion/desactivacion de series y sincronizacion de tooltips. En calendario, modo paralelo por columnas y resumen de minimos por vuelo.
+QA: pruebas de coherencia numerica entre vista individual y vista comparada para prevenir discrepancias.
+Impacto UX y producto
+La comparativa reduce incertidumbre y mejora la decision. El usuario visualiza rapidamente si una ruta es consistentemente mas barata o solo puntual.
+La interfaz ofrece explicaciones legibles, por ejemplo: 'Ruta A muestra menor volatilidad, Ruta B ofrece minimo absoluto mas bajo'.
+Para evitar saturacion, se añade mensaje de recomendacion cuando la comparacion supera el limite optimo visual.
+Riesgos, edge cases y mitigaciones
+Edge case: series con granularidad distinta por huecos de tracking. Mitigacion: alineacion por bucket y marca explicita de datos faltantes.
+Edge case: mezcla de monedas por fuentes historicas. Mitigacion: normalizacion previa y bloqueo de comparacion si no hay conversion confiable.
+Riesgo de UX: demasiadas series en un mismo grafico. Mitigacion: limite inicial de 4 series con paginacion o comparacion por lotes.
+KPI y criterios de aceptacion
+Aumento de sesiones con accion posterior (alerta o deep-link) tras usar comparativa >= 18 por ciento.
+Ratio de errores de coherencia de series en QA igual a cero en release candidate.
+Tiempo de carga p95 de comparativa de 4 vuelos < 2.0 s.
+Aceptacion: pruebas de snapshot y pruebas de precision aritmetica en agregaciones.
+Plan de despliegue
+Lanzamiento primero en modo grafico.
+Segunda iteracion para calendario comparado.
+Tercera iteracion con recomendaciones automaticas basadas en volatilidad.
+7.4 M7 - Prediccion de precios y recomendacion compra/espera
+Dependencias previas: Historico estable y observabilidad avanzada de datos (Fases 5 y 6).
+Objetivo funcional
+Se integra un motor de recomendacion que sugiere 'comprar ahora' o 'esperar' con nivel de confianza y horizonte temporal estimado. La funcion no promete certezas; ofrece apoyo probabilistico basado en historico y contexto.
+El alcance inicial es modelo interpretable de riesgo de subida en ventana corta, antes de evolucionar a modelos mas complejos. Este enfoque favorece auditabilidad y reduce riesgo reputacional.
+Cada recomendacion debe incluir justificacion resumida: tendencia reciente, cercania de fecha y volatilidad observada. La explicacion es parte obligatoria de la experiencia.
+Integracion tecnica
+Backend ML: pipeline de features (dias hasta salida, tendencia 7/14 dias, volatilidad, estacionalidad mensual, comportamiento por ruta y dia de semana). Entrenamiento offline y serving online con versionado de modelo.
+Se crea tabla prediction_snapshot con model_version, input_hash, score, recommendation y reason_codes. Esto permite reproducir recomendaciones ante incidencias.
+API: endpoint /predictions con contratos claros para score y confidence. Se separa calculo asincrono de entrega para no bloquear ruta principal de busqueda.
+Frontend: modulo de recomendacion junto al precio con estado de 'disponible/no disponible'. Se evita lenguaje absoluto y se incluye disclaimer visible.
+Operaciones: monitor de drift de datos y recalibracion mensual. Si el drift supera umbral, se entra en modo conservador sin recomendacion fuerte.
+Impacto UX y producto
+La mejora aumenta valor percibido porque traduce datos complejos en accion clara. El usuario entiende mejor cuando conviene actuar y cuando esperar.
+El impacto UX depende de la confianza. Por eso la recomendacion incluye nivel de certeza y explicacion corta en lenguaje natural.
+En casos de baja confianza, la interfaz comunica incertidumbre y propone activar alertas, evitando falsas promesas.
+Riesgos, edge cases y mitigaciones
+Edge case: rutas nuevas con poco historico. Mitigacion: modelo fallback por segmento de ruta y mensaje de confianza baja.
+Edge case: cambios de fuente de datos alteran distribucion. Mitigacion: validacion de schema de entrada y bloqueo de inferencia ante anomalias.
+Riesgo reputacional: usuario interpreta recomendacion como garantia financiera. Mitigacion: copy legal explicito y politica de responsabilidad limitada.
+Riesgo tecnico: latencia alta de inferencia. Mitigacion: cache por clave de consulta y precomputo diario de rutas calientes.
+KPI y criterios de aceptacion
+Objetivo minimo de precision direccional > 62 por ciento en validacion temporal fuera de muestra.
+Reduccion de consultas repetidas sobre el mismo vuelo >= 10 por ciento (indicador de confianza en recomendacion).
+CTR en accion recomendada (deep-link o espera con alerta) >= 20 por ciento.
+Aceptacion: reportes de calibracion, curvas de precision/recall y auditoria de reason_codes por release.
+Plan de despliegue
+Fase 1: recomendacion silenciosa para medicion offline sin exponer al usuario.
+Fase 2: exposicion a 10 por ciento con copy conservador y feedback explicito.
+Fase 3: apertura progresiva tras validar calidad por ruta y temporada.
+7.4 M8 - Escalas y self-connect con evaluacion de riesgo
+Objetivo funcional
+Se habilita modo opcional de rutas con escala para escenarios sin directos competitivos o con ahorro potencial significativo. La funcion debe explicitar que se trata de conexion autogestionada.
+El objetivo es ampliar oportunidades sin comprometer transparencia. El sistema no puede presentar una conexion riesgosa como equivalente a un itinerario protegido.
+Se incorpora una puntuacion de riesgo basada en buffer de conexion, aeropuerto, franja horaria y probabilidad de incidencias operativas.
+Integracion tecnica
+Backend: ConnectionBuilder que combina dos tramos y calcula buffer real considerando timezone y tiempos minimos de conexion configurables.
+Tabla connection_policy para reglas por aeropuerto: mct_min, tolerancia recomendada, bloqueo nocturno, advertencias especificas.
+API devuelve no solo precio total estimado sino tambien riesgo, margen de conexion y motivos del riesgo.
+Frontend: modal de advertencia obligatorio antes de redirigir, con checklist de responsabilidades (equipaje, control, posible perdida de segundo tramo).
+QA y seguridad: pruebas de frontera temporal (cambios de dia, horario de verano) y validacion de disclaimers antes de CTA final.
+Impacto UX y producto
+El usuario obtiene mas opciones cuando el directo no compensa, pero sin engaño. La explicacion de riesgo aumenta confianza y reduce mala experiencia post-compra.
+El sistema ayuda a decidir mostrando trade-off claro: ahorro potencial frente a riesgo de conexion.
+El modal de confirmacion evita clic impulsivo y mejora calidad de conversion, priorizando decisiones informadas.
+Riesgos, edge cases y mitigaciones
+Edge case: conexion con buffer menor al umbral dinamico. Mitigacion: bloquear por defecto o etiquetar riesgo extremo sin CTA directo.
+Edge case: aeropuertos diferentes en misma ciudad. Mitigacion: marcar traslado externo obligatorio y aumentar riesgo automatico.
+Riesgo legal por expectativas de proteccion. Mitigacion: copy contractual visible y registro de aceptacion del usuario.
+Riesgo operativo: explosion combinatoria de tramos. Mitigacion: filtros previos y limite de candidatos por fase de busqueda.
+KPI y criterios de aceptacion
+Tasa de uso de modo escalas >= 12 por ciento en rutas sin directos favorables.
+Disminucion de reclamaciones de 'conexion inviable sugerida' por debajo de 0.5 por ciento de sesiones con self-connect.
+Latencia p95 de calculo de conexiones < 2.5 s con limites de candidatos definidos.
+Aceptacion: suite de pruebas de timezone, overnight y validacion de disclaimers.
+Plan de despliegue
+Beta inicialmente en pocas regiones y rutas de alta demanda.
+Ajuste de politicas mct segun telemetria de riesgo y feedback.
+Despliegue general con opt-in explicito y ayuda contextual.
+7.4 M9 - Destinos baratos tipo Everywhere
+Objetivo funcional
+Se incorpora un explorador desde origen fijo hacia multiples destinos para rango de fechas flexible. Esta mejora responde al caso de usuario que prioriza presupuesto sobre destino especifico.
+El valor diferencial esta en descubrir oportunidades que no aparecen en busqueda tradicional. Debe soportar orden por precio, distancia y preferencias personales.
+El modo Everywhere no sustituye filtros de calidad; debe reutilizar restricciones de horario, escalas y aeropuertos excluidos para mantener relevancia.
+Integracion tecnica
+Backend: motor de exploracion masiva con estrategia top-k y cancelacion temprana. Se segmenta por ventanas temporales para controlar consumo.
+Se introduce cache por origen y ventana de fechas con invalidacion por tiempo y por cambios de proveedor.
+Base de datos: tabla exploration_snapshot para conservar resultados y habilitar comparativas historicas de destinos.
+Frontend: vista de tarjetas y mapa opcional, con resumen de precio minimo, tendencia y CTA a detalle de ruta.
+DevOps: colas separadas para workloads de exploracion para no afectar tracking principal.
+Impacto UX y producto
+UX orientada a inspiracion con control de presupuesto. El usuario puede fijar techo de precio y descubrir destinos viables rapidamente.
+La interfaz debe equilibrar exploracion y precision: primero muestra panorama, luego permite profundizar en detalles de ruta y horarios.
+El reuso de filtros personales evita frustracion de resultados que no cumplen preferencias basicas.
+Riesgos, edge cases y mitigaciones
+Edge case: volumen alto de consultas simultaneas en temporadas pico. Mitigacion: cache caliente y rate limiting por usuario/segmento.
+Edge case: destinos sin datos suficientes o con precios inestables. Mitigacion: indicador de confianza y opcion de crear alerta en lugar de compra inmediata.
+Riesgo de sesgo de ranking por datos parciales. Mitigacion: etiquetar cobertura y calidad de muestra por destino.
+KPI y criterios de aceptacion
+Adopcion del modo Everywhere >= 20 por ciento de usuarios activos mensuales.
+CTR desde explorador a detalle de ruta >= 25 por ciento.
+Coste medio por consulta controlado dentro de presupuesto operativo definido en Fase 6.
+Aceptacion: pruebas de rendimiento bajo carga y pruebas de relevancia de ranking.
+Plan de despliegue
+Release por fases: lista simple primero, despues mapa y tendencias.
+Activacion mediante feature flag en cohortes de exploradores frecuentes.
+Optimizacion continua de cache segun patrones de uso reales.
+7.4 M10 - Deep-link robusto a Ryanair
+Objetivo funcional
+Se fortalece el mecanismo de redireccion para abrir en Ryanair la busqueda ya precargada con origen, destino y fecha. El objetivo es reducir friccion entre descubrimiento y compra.
+La mejora debe ser resiliente a cambios de formato de URL del proveedor. No se puede depender de concatenaciones fragiles no verificadas.
+Se incorpora validacion previa del link y fallback seguro cuando el formato no coincide con version soportada.
+Integracion tecnica
+Backend: LinkBuilder por estrategia versionada. Cada estrategia conoce formato de parametros y reglas de encoding.
+Se agrega LinkValidator para verificar integridad minima antes de devolver URL al cliente.
+Se guardan metricas de exito de apertura y fallos por version para detectar roturas tempranas.
+Frontend: CTA con feedback claro ('Abrir en Ryanair') y ruta alternativa si el enlace falla (copiar parametros de busqueda).
+Operacion: monitor diario de salud de deep-link con pruebas synthetic.
+Impacto UX y producto
+El impacto UX es inmediato: menos pasos entre encontrar oferta y ejecutar compra real.
+La confianza mejora cuando el usuario percibe consistencia del enlace y recibe alternativas si hay fallo.
+Un fallback honesto evita abandono total de sesion ante cambios externos del proveedor.
+Riesgos, edge cases y mitigaciones
+Edge case: cambio repentino de estructura de URL en proveedor. Mitigacion: versionado de estrategias y circuito rapido de hotfix.
+Edge case: caracteres especiales o monedas no soportadas en parametros. Mitigacion: encoding estricto y validacion previa.
+Riesgo de dependencia externa alta. Mitigacion: observabilidad dedicada y modo degradado funcional.
+KPI y criterios de aceptacion
+Tasa de exito de apertura de deep-link >= 98 por ciento.
+Reduccion de abandono entre resultado y compra >= 12 por ciento.
+Tiempo de respuesta del endpoint de enlace < 150 ms p95.
+Aceptacion: test matrix de formatos y synthetic checks diarios.
+Plan de despliegue
+Lanzamiento con estrategia primaria y fallback manual.
+Incorporacion de detector de version de enlace en semana 2.
+Despliegue total tras dos semanas sin degradacion.
+7.4 M11 - Consejos y politicas por pais
+Objetivo funcional
+Se habilita un modulo de contenido contextual que muestra recomendaciones y politicas relevantes segun pais de salida o ruta. El objetivo es reducir fricciones de viaje no relacionadas con precio.
+El contenido debe gestionarse como dato versionado y revisable, no como texto hardcodeado. La gobernanza editorial es parte del requisito tecnico.
+La experiencia debe mantener tono orientativo y no reemplazar fuentes oficiales; se añade aviso de verificacion final.
+Integracion tecnica
+Backend: ContentPolicyService con fallback por pais y por idioma. Reglas de prioridad: ruta especifica, pais, region, global.
+Base de datos: tablas policy_content, policy_revision y policy_audit con campos de vigencia y autor responsable.
+Frontend: tarjetas contextuales no intrusivas en resultados y detalle de vuelo, con opcion de ampliar.
+Operaciones: workflow editorial con estado draft/review/published y SLA de revision periodica.
+Seguridad: sanitizacion estricta de contenido enriquecido para evitar XSS.
+Impacto UX y producto
+La mejora aumenta percepcion de acompañamiento integral y puede reducir errores del usuario en preparativos de viaje.
+Un diseño no intrusivo evita sobrecargar la decision principal de compra; el contenido aparece donde aporta contexto real.
+El aviso de fuente orientativa protege confianza y evita expectativa de asesoria legal.
+Riesgos, edge cases y mitigaciones
+Edge case: politica caducada permanece visible. Mitigacion: campos de expiracion y alertas de revision.
+Edge case: contenido contradictorio entre niveles de regla. Mitigacion: prioridad determinista y trazabilidad de version activa.
+Riesgo de responsabilidad por informacion inexacta. Mitigacion: disclaimer y enlace a fuentes oficiales cuando sea posible.
+KPI y criterios de aceptacion
+Uso de contenido contextual en al menos 15 por ciento de sesiones relevantes.
+Incidencias por contenido obsoleto < 1 por ciento mensual.
+Tiempo medio de publicacion de correccion critica < 24 h.
+Aceptacion: pruebas de prioridad de reglas y auditoria de revisiones.
+Plan de despliegue
+Arranque con contenido minimo para mercados clave.
+Expansion progresiva por paises segun demanda.
+Ciclo editorial mensual con monitor de vigencia.
+7.4 M12 - Internacionalizacion ES/EN end-to-end
+Objetivo funcional
+Se implementa internacionalizacion integral: interfaz, notificaciones, emails, mensajes de recomendacion y contenido contextual. No se limita a traducir etiquetas aisladas.
+El objetivo es permitir experiencia consistente para usuarios bilingues o internacionales sin mezclar idiomas en un mismo flujo.
+Se prioriza arquitectura i18n sostenible con claves estables y proceso de versionado.
+Integracion tecnica
+Frontend: libreria i18n con carga lazy por namespace, deteccion de idioma del usuario y override manual persistente.
+Backend: plantillas multilenguaje para notificaciones y mensajes de sistema. Los eventos incluyen locale para render consistente.
+Base de datos: soporte de contenido localizado por clave e idioma, con fallback controlado a idioma por defecto.
+QA: pruebas de snapshot por idioma y test de truncamiento para evitar roturas visuales en textos largos.
+Impacto UX y producto
+El usuario percibe producto profesional y coherente en su idioma de preferencia.
+Disminuye friccion cognitiva y errores de accion derivados de mensajes mezclados.
+La consistencia en emails y alertas mejora claridad y aumenta tasa de accion.
+Riesgos, edge cases y mitigaciones
+Edge case: clave faltante en idioma activo. Mitigacion: fallback a idioma por defecto y alerta automatica de traduccion faltante.
+Edge case: textos largos rompen layout en movil. Mitigacion: pruebas de overflow y reglas de truncamiento semantico.
+Riesgo operativo: deuda de traduccion en releases rapidos. Mitigacion: pipeline de validacion que bloquea despliegue con claves criticas faltantes.
+KPI y criterios de aceptacion
+Cobertura de traduccion critica del 100 por ciento antes de GA.
+Incidencias por mezcla de idioma < 0.5 por ciento de sesiones.
+Aumento de conversion en segmento EN medido frente a baseline pre-i18n.
+Aceptacion: suite automatizada de claves y snapshots por locale.
+Plan de despliegue
+Fase 1: interfaz principal y formularios.
+Fase 2: notificaciones y emails.
+Fase 3: contenido contextual y mensajes de recomendacion avanzados.
+7.4 M13 - Seccion de sugerencias y circuito de feedback de producto
+Objetivo funcional
+Se crea una seccion para recoger sugerencias de usuario con trazabilidad de estado interno. El objetivo es convertir feedback disperso en backlog accionable.
+La funcionalidad debe equilibrar apertura y proteccion anti-abuso. Se requiere control de spam y moderacion basica.
+El circuito completo incluye captura, clasificacion, priorizacion y respuesta de estado a nivel de producto.
+Integracion tecnica
+Backend: FeedbackService con categorias, severidad percibida y relacion opcional con pantalla/funcionalidad.
+Base de datos: tablas feedback_item, feedback_vote, feedback_status_history y feedback_moderation_event.
+Frontend: formulario breve, historial de envios y estado (recibido, en revision, planificado).
+Seguridad: rate limiting, captcha progresivo y sanitizacion de contenido.
+Analytics: panel de temas recurrentes y correlacion con metricas de abandono.
+Impacto UX y producto
+El usuario siente que su voz influye en roadmap, lo que aumenta fidelidad y retencion.
+Mostrar estado del feedback reduce sensacion de 'buzon negro' y mejora relacion de confianza.
+La clasificacion por categorias facilita que el usuario aporte mejor contexto con menos esfuerzo.
+Riesgos, edge cases y mitigaciones
+Edge case: spam automatizado en formulario. Mitigacion: captcha escalonado, bloqueo por reputacion y deteccion de patrones.
+Edge case: feedback sensible con datos personales. Mitigacion: redaccion automatica de PII y politica de retencion.
+Riesgo de expectativas excesivas ('si lo envio se implementa'). Mitigacion: copy claro sobre proceso de evaluacion.
+KPI y criterios de aceptacion
+Tasa de feedback util clasificado >= 70 por ciento.
+Tiempo medio de triage inicial < 72 h para items no spam.
+Reduccion de tickets repetidos en soporte tras publicar estado de sugerencias.
+Aceptacion: pruebas de anti-spam y auditoria de estado historico.
+Plan de despliegue
+Lanzamiento interno para calibrar moderacion.
+Apertura controlada con limites de envio por usuario.
+Escalado con votos comunitarios cuando el flujo sea estable.
+7.5 Impacto tecnico transversal acumulado
+La suma de mejoras incrementa significativamente la complejidad del sistema, por lo que se define una regla de arquitectura: toda mejora nueva debe mapearse explicitamente a un bounded context y no puede introducir dependencias ciclicas entre modulos de tracking, busqueda, alertas y recomendaciones. Esta disciplina evita que una optimizacion local degrade mantenibilidad global.
+A nivel de datos, la plataforma pasa de un modelo centrado en observaciones de precio a un ecosistema con reglas, preferencias, predicciones, contenidos y feedback. Para sostener este crecimiento sin degradar rendimiento, es obligatorio mantener politicas de retencion por dominio, indices por patron de consulta y revisiones periodicas de cardinalidad.
+En operacion, la principal amenaza es la competencia por recursos entre workloads: tracking periodico, exploracion masiva, inferencia de prediccion y notificaciones. La mitigacion definida es separacion de colas, budgets por worker, limites de memoria por servicio y priorizacion de tareas criticas de cara al usuario.
+La observabilidad tambien debe escalar. Se recomienda estandarizar eventos de negocio con esquema comun (user_id hash, feature_id, outcome, latency_ms, degraded_mode) para correlacionar impacto tecnico con impacto UX y tomar decisiones de producto basadas en evidencia.
+7.6 Plan de ejecucion por oleadas
+Para preservar calidad y evitar regresiones, la fase 7 se despliega en cinco oleadas con criterios de salida obligatorios.
+Oleada A - Fundacion de valor inmediato (4-6 semanas)
+M1 Alertas avanzadas
+M2 Aeropuertos alternativos
+M3 Filtros avanzados
+M4 Preferencias
+Criterio de salida: estabilidad p95, ruido de alertas controlado y satisfaccion de busqueda mejorada sin aumento de errores.
+Oleada B - Analitica visual (3-4 semanas)
+M5 Historico avanzado
+M6 Comparativa multi-vuelo
+Criterio de salida: mejora de interaccion con historico y coherencia numerica entre vistas.
+Oleada C - Conversion robusta (2-3 semanas)
+M10 Deep-link robusto
+Criterio de salida: exito de redireccion >= 98 por ciento sostenido dos semanas.
+Oleada D - Inteligencia y expansion (6-8 semanas)
+M7 Prediccion
+M8 Escalas/self-connect
+M9 Everywhere
+Criterio de salida: precision minima validada, riesgo controlado y coste por consulta dentro de presupuesto.
+Oleada E - Madurez de producto (3-5 semanas)
+M12 Internacionalizacion
+M11 Politicas por pais
+M13 Sugerencias
+Criterio de salida: consistencia multilenguaje y circuito de feedback operacional.
+7.7 Riesgos estrategicos de fase y mitigacion macro
+Riesgo 1 - Sobreextender alcance simultaneo. Mitigacion: gobernanza de roadmap por oleadas, limite de WIP tecnico y validacion de KPI por release antes de abrir siguiente bloque.
+Riesgo 2 - Deuda tecnica silenciosa por urgencia de features. Mitigacion: Definition of Done reforzada: tests, observabilidad, runbook y migraciones reversibles son obligatorios para cerrar cada mejora.
+Riesgo 3 - Dependencia externa inestable. Mitigacion: adapters versionados, monitor synthetic, degradacion elegante y fallbacks funcionales en frontend.
+Riesgo 4 - Coste operativo creciente. Mitigacion: presupuestos por carga, cache jerarquico, consultas top-k y apagado automatico de features intensivas en escenarios de saturacion.
+Riesgo 5 - Complejidad de comunicacion al usuario. Mitigacion: principios de copy consistentes, microinteracciones explicativas y decisiones reversibles desde preferencias.
+7.8 Criterios globales de aceptacion de Fase 7
+Cada mejora debe demostrar cumplimiento de KPI funcional y tecnico durante al menos dos semanas de observacion post-release.
+No se permite cerrar una mejora con errores P1 abiertos ni con deuda de seguridad alta sin plan acordado y fecha de cierre.
+Todas las mejoras deben tener pruebas automatizadas de contrato API, pruebas de regresion visual en frontend y pruebas de rendimiento de ruta critica.
+Se exige trazabilidad completa: documento de decision tecnica, migraciones aplicadas, feature flags y runbook de rollback.
+La experiencia final debe mantener consistencia de lenguaje, accesibilidad minima WCAG AA y mensajes explicativos en casos de degradacion.
+7.9 Entregables de la fase
+Especificacion detallada por mejora (este documento).
+Backlog tecnico priorizado con dependencias y estimacion por oleada.
+Contrato API actualizado para cada feature impactada.
+Plan de pruebas unificado por mejora y por integracion transversal.
+Plan de despliegue y monitoreo asociado a feature flags.
+Matriz de KPI y dashboard minimo para seguimiento de adopcion y salud.
+7.10 Cierre
+La Fase 7 deja definido un camino de implementacion exhaustivo para evolucionar Viru de un tracker funcional a una plataforma de decision de viaje con alto valor operativo y experiencia diferenciada. La clave de exito no es solo agregar funciones, sino integrarlas sin romper consistencia arquitectonica ni sostenibilidad de costes.
+El enfoque adoptado prioriza calidad empresarial: observabilidad desde el diseño, riesgos tratados antes de produccion, y decisiones de producto respaldadas por datos. Esta disciplina permite crecer sin perder control tecnico.
+Con esta fase cerrada, el proyecto queda listo para entrar en Fase 8 (testing integral) con criterios de prueba concretos por mejora y por flujo extremo.
+Nota de coherencia: ver FASE 1 secciones 1.8 (Contexto de mercado y oportunidad) y 1.9 (Monetizacion y escalabilidad) para alinear decisiones de producto, arquitectura, roadmap y operacion.
+7.8 Nuevas mejoras propuestas (ideas originales)
+- "Recomendacion de compra por objetivo": si el usuario define un precio objetivo, la UI muestra distancia a ese objetivo.
+- "Alertas inteligentes": ajustar frecuencia segun comportamiento del usuario (si ignora, reducir).
+- "Modo planificador": comparar 3 vuelos en diferentes fechas con un resumen de pros/contras.
+- "Alertas por bajada porcentual": no solo por precio absoluto.
+7.9 Nuevas ideas de valor
+- "Rango recomendado": mostrar un rango en vez de un precio exacto para gestionar expectativas.
+- "Alertas por eventos": ejemplo: "precio bajo antes del puente".
+7.10 Normalizacion de nombres (para evitar duplicados)
+- "Busqueda rapida" = heuristica MVP.
+- "Prediccion compra/espera" = IA real.
+- "Alertas inteligentes" = ajuste de frecuencia segun comportamiento.
