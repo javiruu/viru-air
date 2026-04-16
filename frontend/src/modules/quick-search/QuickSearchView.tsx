@@ -1638,6 +1638,94 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     });
     return filtered.length > 200 ? filtered.slice(0, 200) : filtered;
   }, [airportSearch, countryAirports]);
+  const airportPickerModal = activePicker ? (
+    <div className="airport-modal-overlay" onClick={closePicker}>
+      <section
+        className="airport-modal qs-airport-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("modalPickTitle")}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="qs-airport-modal__body">
+          <div className="airport-modal-left qs-airport-modal__countries">
+            <div className="qs-airport-modal__header">
+              <h2>{activePicker === "origin" ? t("modalOriginCountry") : t("modalDestinationCountry")}</h2>
+            </div>
+            <div className="airport-country-grid">
+              {countryOptions.map((country) => {
+                const isActive = selectedCountry?.code === country.code;
+                return (
+                  <button
+                    key={country.code}
+                    type="button"
+                    className={isActive ? "country-pill active" : "country-pill"}
+                    onClick={() => {
+                      setSelectedCountry(country);
+                      setCountrySelectionTouched(true);
+                    }}
+                  >
+                    {renderFlag(country.code)}
+                    {country.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="airport-modal-right qs-airport-modal__airports">
+            <div className="airport-modal-header qs-airport-modal__header">
+              <h3>{t("modalPickTitle")}</h3>
+              <button type="button" className="link-reset" onClick={clearSelection}>
+                {t("modalClear")}
+              </button>
+            </div>
+            {selectedCountry ? (
+              <div className="section-gap-sm">
+                <button type="button" className="btn-secondary btn-compact" onClick={() => selectCountryOnly(selectedCountry)}>
+                  {t("pickCountryOnly").replace("{country}", selectedCountry.name)}
+                </button>
+                <p className="panel-note">{t("pickCountryOnlyHint")}</p>
+              </div>
+            ) : null}
+            <div className="airport-search qs-airport-modal__search">
+              <input
+                ref={airportSearchInputRef}
+                className="qs-input"
+                name="airport_search"
+                autoComplete="off"
+                value={airportSearch}
+                onChange={(e) => setAirportSearch(e.target.value)}
+                placeholder={t("pickSearch")}
+              />
+            </div>
+            {recentAirports.length > 0 ? (
+              <div className="airport-recent qs-airport-modal__recents">
+                <span className="muted">{t("pickRecent")}</span>
+                <div className="airport-recent-grid">
+                  {recentAirports.map((iata) => (
+                    <button key={`recent-${iata}`} type="button" onClick={() => selectAirport(iata)}>
+                      {iata}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            <div className="airport-list">
+              {filteredCountryAirports.map((airport) => (
+                <button key={airport.iata} type="button" onClick={() => selectAirport(airport.iata)}>
+                  {renderFlag(selectedCountry?.code || null)}
+                  {airport.municipality || airport.name} <span>{airport.iata}</span>
+                </button>
+              ))}
+              {countryAirports.length === 0 ? (
+                <p className="panel-note">{t("pickEmpty")}</p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  ) : null;
   const activeSuggestions = activeAutocompleteField === "origin"
     ? originSuggestions
     : activeAutocompleteField === "destination"
@@ -3847,89 +3935,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         </aside>
         </div>
       </div>
-      {activePicker ? (
-        <div className="airport-modal-overlay" onClick={closePicker}>
-          <section className="airport-modal qs-airport-modal" role="dialog" aria-modal="true" aria-label={t("modalPickTitle")} onClick={(event) => event.stopPropagation()}>
-            <div className="qs-airport-modal__body">
-              <div className="airport-modal-left qs-airport-modal__countries">
-                <div className="qs-airport-modal__header">
-                  <h2>{activePicker === "origin" ? t("modalOriginCountry") : t("modalDestinationCountry")}</h2>
-                </div>
-                <div className="airport-country-grid">
-                  {countryOptions.map((country) => {
-                    const isActive = selectedCountry?.code === country.code;
-                    return (
-                      <button
-                        key={country.code}
-                        type="button"
-                        className={isActive ? "country-pill active" : "country-pill"}
-                        onClick={() => {
-                          setSelectedCountry(country);
-                          setCountrySelectionTouched(true);
-                        }}
-                      >
-                        {renderFlag(country.code)}
-                        {country.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              <div className="airport-modal-right qs-airport-modal__airports">
-                <div className="airport-modal-header qs-airport-modal__header">
-                  <h3>{t("modalPickTitle")}</h3>
-                  <button type="button" className="link-reset" onClick={clearSelection}>
-                    {t("modalClear")}
-                  </button>
-                </div>
-                {selectedCountry ? (
-                  <div className="section-gap-sm">
-                    <button type="button" className="btn-secondary btn-compact" onClick={() => selectCountryOnly(selectedCountry)}>
-                      {t("pickCountryOnly").replace("{country}", selectedCountry.name)}
-                    </button>
-                    <p className="panel-note">{t("pickCountryOnlyHint")}</p>
-                  </div>
-                ) : null}
-                <div className="airport-search qs-airport-modal__search">
-                  <input
-                    ref={airportSearchInputRef}
-                    className="qs-input"
-                    name="airport_search"
-                    autoComplete="off"
-                    value={airportSearch}
-                    onChange={(e) => setAirportSearch(e.target.value)}
-                    placeholder={t("pickSearch")}
-                  />
-                </div>
-                {recentAirports.length > 0 ? (
-                  <div className="airport-recent qs-airport-modal__recents">
-                    <span className="muted">{t("pickRecent")}</span>
-                    <div className="airport-recent-grid">
-                      {recentAirports.map((iata) => (
-                        <button key={`recent-${iata}`} type="button" onClick={() => selectAirport(iata)}>
-                          {iata}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-                <div className="airport-list">
-                  {filteredCountryAirports.map((airport) => (
-                    <button key={airport.iata} type="button" onClick={() => selectAirport(airport.iata)}>
-                      {renderFlag(selectedCountry?.code || null)}
-                      {airport.municipality || airport.name} <span>{airport.iata}</span>
-                    </button>
-                  ))}
-                  {countryAirports.length === 0 ? (
-                    <p className="panel-note">{t("pickEmpty")}</p>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-      ) : null}
-
       {copyModalOpen ? (
         <div className="airport-modal-overlay" onClick={() => setCopyModalOpen(false)}>
           <section className="modal-card" role="dialog" aria-modal="true" aria-label={t("deepLinkModalTitle")} onClick={(event) => event.stopPropagation()}>
@@ -3993,6 +3998,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           </div>
         </section>
       )}
+
+      {airportPickerModal}
 
       {(weatherOrigin || weatherDestination) ? (
         <details className="panel panel-soft section-gap qs-secondary-weather">
