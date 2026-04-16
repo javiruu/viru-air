@@ -5108,41 +5108,52 @@ textarea::placeholder {
   appearance: none;
 }
 
-.qs-input.date-ghost[data-empty="true"] {
-  color: transparent;
-}
-
-.qs-input.date-ghost[data-empty="true"]::-webkit-datetime-edit {
-  color: transparent;
-}
-
-.qs-input.date-ghost[data-empty="false"]::-webkit-datetime-edit {
-  color: var(--ink);
-}
-
-.qs-date-grid .qs-input[type="date"] {
-  min-height: 44px;
-  height: 44px;
-  padding: 0.55rem 44px 0.55rem 0.85rem;
+.qs-date-picker {
   position: relative;
 }
 
-.qs-input.date-ghost::-webkit-calendar-picker-indicator {
-  opacity: 0;
-  display: block;
-  width: 36px;
-  height: 36px;
-  margin: 0;
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
+.qs-date-trigger {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+  padding: 0.72rem 2.85rem 0.72rem 0.9rem;
   cursor: pointer;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 249, 242, 0.96)),
+    var(--input-bg);
 }
 
-.qs-input.date-ghost::-webkit-clear-button,
-.qs-input.date-ghost::-webkit-inner-spin-button {
-  display: none;
+.qs-date-trigger:hover {
+  border-color: var(--qs-input-border-strong);
+  box-shadow:
+    inset 0 1px 2px rgba(31, 29, 26, 0.1),
+    0 14px 24px rgba(31, 29, 26, 0.08);
+}
+
+.qs-date-picker.is-open .qs-date-trigger {
+  border-color: rgba(217, 93, 57, 0.55);
+  box-shadow:
+    0 0 0 3px rgba(217, 93, 57, 0.12),
+    inset 0 1px 2px rgba(31, 29, 26, 0.1),
+    0 18px 28px rgba(31, 29, 26, 0.1);
+}
+
+.qs-date-picker.is-invalid .qs-date-trigger {
+  border-color: var(--state-error-border);
+}
+
+.qs-date-trigger__value {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.qs-date-trigger:not(.has-value) .qs-date-trigger__value {
+  color: var(--qs-placeholder);
+  font-weight: 500;
 }
 
 .qs-date-inline-icon {
@@ -5158,14 +5169,177 @@ textarea::placeholder {
   pointer-events: none;
 }
 
-.qs-date-placeholder {
+.qs-date-popover {
   position: absolute;
-  left: 0.85rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--qs-placeholder);
-  font-weight: 500;
-  pointer-events: none;
+  top: calc(100% + 0.65rem);
+  left: 0;
+  z-index: 60;
+  width: min(100%, 332px);
+  min-width: 292px;
+  padding: 1rem;
+  border-radius: 26px;
+  border: 1px solid rgba(205, 191, 170, 0.78);
+  background:
+    radial-gradient(circle at top right, rgba(217, 93, 57, 0.1), transparent 32%),
+    radial-gradient(circle at left center, rgba(46, 110, 98, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(255, 248, 241, 0.96));
+  box-shadow: 0 28px 56px rgba(32, 28, 21, 0.18);
+  backdrop-filter: blur(12px);
+}
+
+.qs-date-popover__header,
+.qs-date-popover__nav,
+.qs-date-popover__footer {
+  display: flex;
+  align-items: center;
+}
+
+.qs-date-popover__header {
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 0.85rem;
+}
+
+.qs-date-popover__header strong {
+  display: block;
+  color: #1f1d1a;
+  font-size: 1.02rem;
+  letter-spacing: -0.02em;
+  text-transform: capitalize;
+}
+
+.qs-date-popover__eyebrow {
+  display: block;
+  margin-bottom: 0.12rem;
+  color: #7c6757;
+  font-size: 0.69rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.qs-date-popover__nav {
+  gap: 0.45rem;
+}
+
+.qs-date-nav {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 999px;
+  border: 1px solid rgba(205, 191, 170, 0.82);
+  background: rgba(255, 255, 255, 0.82);
+  color: #5f574c;
+  display: inline-grid;
+  place-items: center;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.qs-date-nav:hover {
+  transform: translateY(-1px);
+  border-color: rgba(217, 93, 57, 0.28);
+  background: rgba(255, 243, 236, 0.96);
+  color: #9a3412;
+}
+
+.qs-date-nav svg {
+  width: 15px;
+  height: 15px;
+}
+
+.qs-date-popover__weekdays,
+.qs-date-popover__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.qs-date-popover__weekdays {
+  gap: 0.3rem;
+  margin-bottom: 0.42rem;
+}
+
+.qs-date-popover__weekdays span {
+  display: grid;
+  place-items: center;
+  min-height: 1.75rem;
+  color: #8a7766;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.qs-date-popover__grid {
+  gap: 0.34rem;
+}
+
+.qs-date-day {
+  min-height: 2.5rem;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #1f1d1a;
+  display: inline-grid;
+  place-items: center;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.qs-date-day:hover:not(.is-disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(205, 191, 170, 0.8);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 12px 18px rgba(32, 28, 21, 0.08);
+}
+
+.qs-date-day__number {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.qs-date-day.is-outside {
+  color: #b4a593;
+}
+
+.qs-date-day.is-today {
+  border-color: rgba(46, 110, 98, 0.24);
+  color: #1f6a5d;
+}
+
+.qs-date-day.is-selected {
+  border-color: rgba(217, 93, 57, 0.42);
+  background: linear-gradient(180deg, rgba(217, 93, 57, 0.16), rgba(255, 239, 233, 0.96));
+  color: #9a3412;
+  box-shadow: 0 12px 24px rgba(217, 93, 57, 0.14);
+}
+
+.qs-date-day.is-disabled {
+  opacity: 0.36;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.qs-date-popover__footer {
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(205, 191, 170, 0.34);
+}
+
+.qs-date-popover__footer-label {
+  color: #8a7766;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.qs-date-popover__footer strong {
+  color: #1f1d1a;
+  font-size: 0.84rem;
+  letter-spacing: -0.01em;
+  text-align: right;
 }
 
 .qs-check-inline {
@@ -5177,6 +5351,11 @@ textarea::placeholder {
 @media (max-width: 900px) {
   .qs-date-grid {
     grid-template-columns: 1fr;
+  }
+
+  .qs-date-popover {
+    width: 100%;
+    min-width: 0;
   }
 
   .qs-check-inline {

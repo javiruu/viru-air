@@ -33,6 +33,7 @@ const QuickSearchStatePanels = dynamic(() =>
   import("@/modules/quick-search/components/QuickSearchStatePanels").then((m) => m.QuickSearchStatePanels),
 );
 import { buildQuickSearchCanonicalPayload, prepareQuickSearchRequest } from "@/modules/quick-search/api/buildQuickSearchRequest";
+import { QuickSearchDatePicker } from "@/modules/quick-search/components/QuickSearchDatePicker";
 import { QuickSearchResultsWorkspace } from "@/modules/quick-search/components/QuickSearchResultsWorkspace";
 import {
   AirportIataEntry,
@@ -2854,35 +2855,19 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 </svg>
               </span>
             </span>
-            <div className="qs-input-wrap">
-              <input
-                className="qs-input date-ghost"
-                type="date"
-                name="travel_date"
-                autoComplete="off"
-                data-empty={!travelDate}
-                value={travelDate}
-                onBlur={() => setDateTouched(true)}
-                onChange={(e) => {
-                  setTravelDate(e.target.value);
-                  setFieldErrors((prev) => ({ ...prev, travel_date: undefined }));
-                }}
-                aria-invalid={(dateTouched && !travelDate) || Boolean(fieldErrors.travel_date)}
-              />
-              {!travelDate ? <span className="qs-date-placeholder" aria-hidden="true">{t("placeholderDates")}</span> : null}
-              <span className="qs-date-inline-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                  <rect x="3" y="4" width="18" height="17" rx="3" fill="none" stroke="currentColor" strokeWidth="1.6" />
-                  <path
-                    d="M8 2v4M16 2v4M3 9h18"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-            </div>
+            <QuickSearchDatePicker
+              name="travel_date"
+              label={t("dateLabel")}
+              value={travelDate}
+              placeholder={t("placeholderDates")}
+              localeTag={localeTag}
+              invalid={(dateTouched && !travelDate) || Boolean(fieldErrors.travel_date)}
+              onBlur={() => setDateTouched(true)}
+              onChange={(value) => {
+                setTravelDate(value);
+                setFieldErrors((prev) => ({ ...prev, travel_date: undefined }));
+              }}
+            />
             {(dateTouched && !travelDate) || fieldErrors.travel_date ? (
               <small className="qs-error">{fieldErrors.travel_date || t("selectOutbound")}</small>
             ) : null}
@@ -2913,31 +2898,15 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           {isReturn ? (
             <label className="date-field qs-label">
               <span>{t("returnLabel")}</span>
-              <div className="qs-input-wrap">
-                <input
-                  className="qs-input date-ghost"
-                  type="date"
-                  name="return_date"
-                  autoComplete="off"
-                  data-empty={!returnDate}
-                  value={returnDate}
-                  onChange={(e) => setReturnDate(e.target.value)}
-                  min={travelDate || undefined}
-                />
-                {!returnDate ? <span className="qs-date-placeholder" aria-hidden="true">{t("placeholderDates")}</span> : null}
-                <span className="qs-date-inline-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                    <rect x="3" y="4" width="18" height="17" rx="3" fill="none" stroke="currentColor" strokeWidth="1.6" />
-                    <path
-                      d="M8 2v4M16 2v4M3 9h18"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </span>
-              </div>
+              <QuickSearchDatePicker
+                name="return_date"
+                label={t("returnLabel")}
+                value={returnDate}
+                placeholder={t("placeholderDates")}
+                localeTag={localeTag}
+                min={travelDate || undefined}
+                onChange={setReturnDate}
+              />
               {tripType === "round_trip_incomplete" ? (
                 <small className="qs-search-hint qs-return-hint">{t("selectReturnHint")}</small>
               ) : null}
