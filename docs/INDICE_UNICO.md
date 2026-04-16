@@ -20,6 +20,7 @@ Este es el mapa maestro de lectura. Si vuelves al proyecto tras tiempo fuera, em
 
 - [ADR](adr/ADR-001-monolito-modular.md), [ADR-002](adr/ADR-002-stack-base.md), [ADR-003](adr/ADR-003-provider-adapter.md)
 - [Contrato operativo Codex](reference/codex-operating-contract.md)
+- [Skill local de contexto Codex](../skills/viru-tracker-context/SKILL.md)
 - [Referencias técnicas](reference/README.md)
 - [Sistema UI](ui/UI_SYSTEM_V1.md), [Contrato UI](ui/UI_CONTRACT_V1.md), [Checklist visual](ui/UI_VISUAL_QA_CHECKLIST.md)
 - [Changelog consolidado](changelog/2026-03-08-c1-c6-consolidated.md)

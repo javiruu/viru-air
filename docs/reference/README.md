@@ -12,6 +12,7 @@ Esta carpeta reúne documentación técnica activa que sirve como apoyo directo 
 ## Contenido actual
 
 - `codex-operating-contract.md`: reglas operativas persistentes para sesiones de Codex en este repo.
+- `../skills/viru-tracker-context/`: espejo local de la skill reusable para reentrada y contexto de Codex.
 - `backend/quick-search-contract.md`: contrato canónico de quick search backend.
 - `backend/quick-search-acceptance-checklist.md`: checklist de aceptación técnica de quick search backend.
 - `feature-flags.md`: flags funcionales vigentes documentados.
