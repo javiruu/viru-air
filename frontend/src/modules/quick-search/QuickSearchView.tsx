@@ -354,6 +354,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     debugEpochRef,
     debugLastTickLogTsRef,
   } = useQuickSearchMainState(initialOrigin, initialDestination);
+  const normalizedRadiusKm = Math.min(500, Math.max(10, Number.isFinite(radiusKm) ? radiusKm : 150));
 
   const debugLog = useCallback((message: string) => {
     if (process.env.NODE_ENV === "production" || typeof window === "undefined") return;
@@ -488,7 +489,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     departBefore,
     includeNearbyOrigins,
     includeNearbyDestinations,
-    radiusKm,
+    normalizedRadiusKm,
     excludeOrigins.length,
     excludeDestinations.length,
     zeroResultsTracked,
@@ -1613,7 +1614,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
   const originCode = origin.trim().toUpperCase();
   const destinationCode = destination.trim().toUpperCase();
-  const normalizedRadiusKm = Math.min(500, Math.max(10, Number.isFinite(radiusKm) ? radiusKm : 150));
   const originValid = originCountryOnly ? originCountryOnly.airports.length > 0 : (
     originCode.length === 3 && airportsByIata.has(originCode)
   );
@@ -2261,8 +2261,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     travelDate,
     daysBefore,
     daysAfter,
-    radiusActive,
-    radiusKm,
     includeNearbyOrigins,
     includeNearbyDestinations,
     priceMin,
@@ -2281,6 +2279,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     adults,
     applyFlexReturn,
     bufferMin,
+    normalizedRadiusKm,
   ]);
 
   const quickSearchHint = useFtueHint("quick_search");
