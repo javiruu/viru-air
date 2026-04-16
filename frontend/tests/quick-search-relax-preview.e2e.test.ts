@@ -19,12 +19,12 @@ test("quick-search relax filters preview supports cancel and confirm", async (t)
 
     const originInput = page.locator('input[name="origin_iata"]');
     const destinationInput = page.locator('input[name="destination_iata"]');
-    const dateInput = page.locator('input[name="travel_date"]');
+    const datePicker = page.locator('[data-ui="qs-date-picker-v2"]').first();
 
     try {
       await originInput.waitFor({ state: "visible", timeout: 8000 });
       await destinationInput.waitFor({ state: "visible", timeout: 8000 });
-      await dateInput.waitFor({ state: "visible", timeout: 8000 });
+      await datePicker.waitFor({ state: "visible", timeout: 8000 });
     } catch {
       t.skip("Quick-Search form is not directly reachable (likely auth/session required).");
       return;
@@ -32,7 +32,8 @@ test("quick-search relax filters preview supports cancel and confirm", async (t)
 
     await originInput.fill("MAD");
     await destinationInput.fill("DUB");
-    await dateInput.fill("2026-12-15");
+    await datePicker.locator(".qs-date-trigger").click();
+    await page.locator(".qs-date-popover .qs-date-day:not(.is-disabled):not(.is-outside)").nth(10).click();
     await page.getByRole("button", { name: "Buscar" }).click();
 
     const relaxButton = page.getByRole("button", { name: "Relajar filtros" }).first();

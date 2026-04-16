@@ -2861,6 +2861,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               value={travelDate}
               placeholder={t("placeholderDates")}
               localeTag={localeTag}
+              variant="outbound"
               invalid={(dateTouched && !travelDate) || Boolean(fieldErrors.travel_date)}
               onBlur={() => setDateTouched(true)}
               onChange={(value) => {
@@ -2904,6 +2905,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 value={returnDate}
                 placeholder={t("placeholderDates")}
                 localeTag={localeTag}
+                variant="return"
                 min={travelDate || undefined}
                 onChange={setReturnDate}
               />

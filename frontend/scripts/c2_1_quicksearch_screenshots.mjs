@@ -94,7 +94,9 @@ async function fillAndSearch(page) {
   await page.waitForSelector('input[name="origin_iata"]', { timeout: 20000 });
   await page.fill('input[name="origin_iata"]', "MAD");
   await page.fill('input[name="destination_iata"]', "DUB");
-  await page.fill('input[name="travel_date"]', "2026-04-12");
+  await page.waitForSelector('[data-ui="qs-date-picker-v2"]', { timeout: 10000 });
+  await page.locator('[data-ui="qs-date-picker-v2"] .qs-date-trigger').first().click();
+  await page.locator(".qs-date-popover .qs-date-day:not(.is-disabled):not(.is-outside)").nth(12).click();
   await page.click('button[type="submit"]');
 }
 

@@ -35,6 +35,7 @@ try {
 
     const fileName = `snapshots_quick-search-${vp.name}.png`;
     const target = path.join(qaDir, fileName);
+    const pickerVisible = await page.locator('[data-ui="qs-date-picker-v2"]').first().count();
 
     let previousHash = null;
     try {
@@ -51,6 +52,7 @@ try {
     report.snapshots.push({
       viewport: vp,
       file: path.relative(repoRoot, target),
+      pickerV2Visible: pickerVisible > 0,
       previousHash,
       currentHash,
       changed: previousHash ? previousHash !== currentHash : true,

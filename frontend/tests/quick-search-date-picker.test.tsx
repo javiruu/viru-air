@@ -14,11 +14,14 @@ test("QuickSearchDatePicker renders placeholder state with viru trigger markup",
       onChange={() => undefined}
       placeholder="Selecciona fechas"
       localeTag="es-ES"
+      variant="outbound"
     />,
   );
 
-  assert.match(html, /Selecciona fechas/);
+  assert.match(html, /data-ui="qs-date-picker-v2"/);
+  assert.match(html, /Selecciona salida/);
   assert.match(html, /qs-date-trigger/);
+  assert.doesNotMatch(html, /type="date"/);
   assert.doesNotMatch(html, /qs-date-popover/);
 });
 
@@ -32,6 +35,7 @@ test("QuickSearchDatePicker renders open calendar grid with selected day", () =>
       onChange={() => undefined}
       placeholder="Selecciona fechas"
       localeTag="es-ES"
+      variant="return"
       defaultOpen={true}
     />,
   );
@@ -41,4 +45,5 @@ test("QuickSearchDatePicker renders open calendar grid with selected day", () =>
   assert.match(html, /qs-date-popover__grid/);
   assert.match(html, /qs-date-day is-selected/);
   assert.match(html, /Fecha seleccionada/);
+  assert.match(html, /Vuelta elegida/);
 });

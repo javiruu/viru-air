@@ -10,6 +10,7 @@ type Props = {
   onChange: (value: string) => void;
   placeholder: string;
   localeTag: string;
+  variant?: "outbound" | "return";
   min?: string;
   invalid?: boolean;
   onBlur?: () => void;
@@ -92,6 +93,10 @@ export function QuickSearchDatePicker(props: Props) {
       nextMonth: "Mes siguiente",
       chooseDate: "Elige una fecha para continuar",
       selectedDate: "Fecha seleccionada",
+      selectOutbound: "Selecciona salida",
+      selectReturn: "Anade vuelta",
+      outboundReady: "Salida elegida",
+      returnReady: "Vuelta elegida",
     }
     : {
       openCalendar: "Open calendar",
@@ -100,6 +105,10 @@ export function QuickSearchDatePicker(props: Props) {
       nextMonth: "Next month",
       chooseDate: "Choose a date to continue",
       selectedDate: "Selected date",
+      selectOutbound: "Select outbound",
+      selectReturn: "Add return",
+      outboundReady: "Outbound selected",
+      returnReady: "Return selected",
     };
 
   const selectedDate = useMemo(() => parseIsoDate(props.value), [props.value]);
@@ -160,16 +169,32 @@ export function QuickSearchDatePicker(props: Props) {
     ? new Intl.DateTimeFormat(props.localeTag, {
       day: "numeric",
       month: "short",
-      year: "numeric",
     }).format(selectedDate)
     : props.placeholder;
+  const selectedMeta = selectedDate
+    ? new Intl.DateTimeFormat(props.localeTag, {
+      weekday: "long",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(selectedDate)
+    : props.variant === "return"
+      ? locale.selectReturn
+      : locale.selectOutbound;
+  const selectedStateLabel = selectedDate
+    ? (props.variant === "return" ? locale.returnReady : locale.outboundReady)
+    : props.label;
 
   const calendarDays = useMemo(() => {
     return buildCalendarDays(viewMonth, selectedDate, minDate);
   }, [viewMonth, selectedDate, minDate]);
 
   return (
-    <div className={`qs-date-picker${open ? " is-open" : ""}${props.invalid ? " is-invalid" : ""}`} ref={rootRef}>
+    <div
+      className={`qs-date-picker${open ? " is-open" : ""}${props.invalid ? " is-invalid" : ""}`}
+      data-ui="qs-date-picker-v2"
+      ref={rootRef}
+    >
       <input type="hidden" name={props.name} value={props.value} />
       <button
         type="button"
@@ -183,18 +208,29 @@ export function QuickSearchDatePicker(props: Props) {
           handleBlur?.();
         }}
       >
-        <span className="qs-date-trigger__value">{selectedLabel}</span>
-        <span className="qs-date-inline-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-            <rect x="3" y="4" width="18" height="17" rx="3" fill="none" stroke="currentColor" strokeWidth="1.6" />
-            <path
-              d="M8 2v4M16 2v4M3 9h18"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-            />
-          </svg>
+        <span className="qs-date-trigger__content">
+          <span className="qs-date-trigger__eyebrow">{selectedStateLabel}</span>
+          <span className="qs-date-trigger__value">{selectedLabel}</span>
+          <span className="qs-date-trigger__meta">{selectedMeta}</span>
+        </span>
+        <span className="qs-date-trigger__actions" aria-hidden="true">
+          <span className="qs-date-inline-icon">
+            <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="17" rx="3" fill="none" stroke="currentColor" strokeWidth="1.6" />
+              <path
+                d="M8 2v4M16 2v4M3 9h18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+              />
+            </svg>
+          </span>
+          <span className={`qs-date-trigger__caret${open ? " is-open" : ""}`}>
+            <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+              <path d="m6.5 9 5.5 6 5.5-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
         </span>
       </button>
       {open ? (
