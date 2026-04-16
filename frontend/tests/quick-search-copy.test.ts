@@ -6,7 +6,7 @@ import { getQuickSearchCopy } from "../src/modules/shared/quickSearchCopy";
 test("quick search copy defaults to es", () => {
   const { locale, t } = getQuickSearchCopy(undefined);
   assert.equal(locale, "es");
-  assert.equal(t("title"), "Busqueda Rapida");
+  assert.equal(t("title"), "Búsqueda rápida");
 });
 
 test("quick search copy resolves en locale", () => {

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildQuickSearchCanonicalPayload, toQuickSearchQuery } from "../src/modules/quick-search/requestBuilder";
+import { prepareQuickSearchRequest } from "../src/modules/quick-search/api/buildQuickSearchRequest";
 import { normalizeQuickSearchResults } from "../src/modules/quick-search/responseNormalizer";
 
 test("toQuickSearchQuery keeps quick-search API contract shape", () => {
@@ -139,4 +140,48 @@ test("smoke flow: request builder + normalizer interop", () => {
   assert.ok(query.includes("origin_iata=MAD"));
   assert.equal(normalized[0]?.itinerary_type, "direct");
   assert.equal(normalized[0]?.stale_data, false);
+});
+
+test("prepareQuickSearchRequest normalizes input, clamps values and reports contract issues", () => {
+  const prepared = prepareQuickSearchRequest({
+    origin_iata: " mad ",
+    destination_iata: " ",
+    travel_date: "",
+    date: "",
+    flex_days_before: Number.NaN,
+    flex_days_after: 9,
+    radius_km: Number.NaN,
+    include_stops: false,
+    include_nearby_origins: 1 as unknown as boolean,
+    include_nearby_destinations: 0 as unknown as boolean,
+    depart_after: "07:00",
+    depart_before: "22:00",
+    max_stops: Number.NaN,
+    exclude_origins: [" opo "],
+    exclude_destinations: [" stn "],
+    strict_filters: 1 as unknown as boolean,
+    soft_filters_weight: Number.NaN,
+  });
+
+  assert.equal(prepared.params.origin_iata, "MAD");
+  assert.equal(prepared.params.destination_iata, "");
+  assert.equal(prepared.params.flex_days_before, 0);
+  assert.equal(prepared.params.flex_days_after, 7);
+  assert.equal(prepared.params.radius_km, 150);
+  assert.equal(prepared.params.max_stops, 0);
+  assert.equal(prepared.params.include_stops, false);
+  assert.equal(prepared.params.soft_filters_weight, 0.6);
+  assert.deepEqual(prepared.params.exclude_origins, ["OPO"]);
+  assert.deepEqual(prepared.params.exclude_destinations, ["STN"]);
+  assert.deepEqual(
+    prepared.issues.map((issue) => issue.code),
+    [
+      "missing_destination",
+      "missing_travel_date",
+      "invalid_radius",
+      "invalid_flex_days",
+      "invalid_soft_filters_weight",
+      "invalid_max_stops",
+    ],
+  );
 });

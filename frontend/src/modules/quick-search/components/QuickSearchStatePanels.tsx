@@ -1,3 +1,5 @@
+import React from "react";
+
 import { ZeroResultRelaxAction } from "@/modules/quick-search/types";
 
 type Props = {

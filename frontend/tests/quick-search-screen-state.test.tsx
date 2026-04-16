@@ -1,0 +1,124 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+
+import { useQuickSearchScreenState } from "../src/modules/quick-search/state/useQuickSearchScreenState";
+import type { SearchResult } from "../src/modules/quick-search/types";
+
+function renderScreenState(overrides: Partial<Parameters<typeof useQuickSearchScreenState>[0]> = {}) {
+  let snapshot: ReturnType<typeof useQuickSearchScreenState> | undefined;
+
+  function Harness() {
+    snapshot = useQuickSearchScreenState({
+      results: [],
+      priceMin: "",
+      priceMax: "",
+      durationMax: "",
+      riskFilter: "all",
+      sortBy: "ranking",
+      showHighRisk: false,
+      filtersNotice: [],
+      filtersMeta: null,
+      isDegraded: false,
+      searchMeta: null,
+      weatherMessage: "",
+      strictFilters: false,
+      includeStops: true,
+      radiusActive: true,
+      radiusKm: 150,
+      excludeOriginsCount: 0,
+      excludeDestinationsCount: 0,
+      departAfter: "07:00",
+      departBefore: "22:00",
+      emptyCausesExpanded: false,
+      t: ((key: string) => key) as Parameters<typeof useQuickSearchScreenState>[0]["t"],
+      tWarn: (key: string) => key,
+      ...overrides,
+    });
+    return null;
+  }
+
+  renderToStaticMarkup(<Harness />);
+  assert.ok(snapshot);
+  return snapshot;
+}
+
+function buildResult(overrides: Partial<SearchResult> = {}): SearchResult {
+  return {
+    origin: "MAD",
+    destination: "DUB",
+    travel_date: "2026-05-12",
+    departure_time_local: "09:30",
+    price: 49,
+    price_total: 49,
+    currency: "EUR",
+    source: "ryanair",
+    duration_total: 120,
+    duration_total_min: 120,
+    risk_label: "low",
+    ranking_score: 0.91,
+    stale_data: false,
+    itinerary_type: "direct",
+    legs: [],
+    ...overrides,
+  };
+}
+
+test("useQuickSearchScreenState exposes degraded state, groups warnings and hides high-risk results by default", () => {
+  const state = renderScreenState({
+    results: [
+      buildResult({ result_id: "low-1", risk_label: "low", ranking_score: 0.9 }),
+      buildResult({ result_id: "high-1", destination: "LIS", risk_label: "high", ranking_score: 0.95 }),
+    ],
+    filtersNotice: ["ryanair_unavailable_parcial", "backend failed temporarily"],
+    searchMeta: { stale_data: true },
+  });
+
+  assert.equal(state.showDegradedState, true);
+  assert.equal(state.visibleResults.length, 1);
+  assert.equal(state.visibleResults[0]?.result_id, "low-1");
+  assert.equal(state.hiddenHighRiskResults.length, 1);
+  assert.deepEqual(state.groupedNeutralWarnings, [{ message: "ryanair_unavailable_parcial", count: 1 }]);
+  assert.deepEqual(state.groupedCriticalWarnings, [{ message: "backend failed temporarily", count: 1 }]);
+});
+
+test("useQuickSearchScreenState derives zero-result causes and relax actions from visible constraints", () => {
+  const collapsed = renderScreenState({
+    strictFilters: true,
+    includeStops: false,
+    radiusActive: false,
+    radiusKm: 50,
+    durationMax: "180",
+    departAfter: "07:00",
+    departBefore: "10:00",
+    excludeOriginsCount: 1,
+    excludeDestinationsCount: 2,
+    t: ((key: string) => `copy:${key}`) as Parameters<typeof useQuickSearchScreenState>[0]["t"],
+  });
+
+  assert.equal(collapsed.emptyStateMainTitle, "copy:emptyStateMainTitle");
+  assert.equal(collapsed.zeroResultCauses.length, 6);
+  assert.equal(collapsed.visibleZeroResultCauses.length, 3);
+  assert.equal(collapsed.canExpandZeroResultCauses, true);
+  assert.deepEqual(
+    collapsed.zeroResultActions.map((action) => action.id),
+    ["disable_strict", "increase_duration", "open_radius_150", "clear_exclusions"],
+  );
+
+  const expanded = renderScreenState({
+    strictFilters: true,
+    includeStops: false,
+    radiusActive: false,
+    radiusKm: 50,
+    durationMax: "180",
+    departAfter: "07:00",
+    departBefore: "10:00",
+    excludeOriginsCount: 1,
+    excludeDestinationsCount: 2,
+    emptyCausesExpanded: true,
+    t: ((key: string) => `copy:${key}`) as Parameters<typeof useQuickSearchScreenState>[0]["t"],
+  });
+
+  assert.equal(expanded.visibleZeroResultCauses.length, expanded.zeroResultCauses.length);
+});

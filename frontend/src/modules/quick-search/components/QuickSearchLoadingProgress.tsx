@@ -1,3 +1,5 @@
+import React from "react";
+
 import { QuickSearchLoadingSubcheckStatus } from "@/modules/quick-search/types";
 
 type LoadingSubcheck = {
