@@ -1,55 +1,11 @@
-﻿# Frontend PR Checklist (Ejecutable)
-
-Proyecto: `viru-tracker`  
-Fecha: 2026-02-18  
-Scope: coherencia UI, redundancias, UX, a11y y mantenibilidad frontend.
-
-## 1) Gate de PR
-- [x] `npm run test` en `frontend/` pasa.
-- [x] `npm run lint` en `frontend/` pasa sin errores de configuracion.
-- [ ] No hay warnings de CSS nuevos en logs de dev/perf.
-- [ ] Se adjuntan capturas desktop + mobile de: `/dashboard`, `/quick-search`, `/watchlist`, `/alerts`.
-
-Comandos:
-```powershell
-cd frontend
-npm run test
-npm run lint
-```
-
-## 2) Hallazgos y criterios de aceptacion
-
-### H1. Controles globales duplicados (ThemeToggle/AccountMenu)
-- [x] El control global aparece una sola vez por pantalla privada.
-- [x] No hay doble render de `ThemeToggle` ni `AccountMenu` en `layout` + pagina.
-
-Aceptacion:
-- `frontend/src/app/(private)/layout.tsx` mantiene el ancla global.
-- `frontend/src/app/(private)/watchlist/page.tsx` y `frontend/src/app/(private)/quick-search/page.tsx` no vuelven a renderizar esos controles.
-
-Verificacion:
-```powershell
-rg -n "ThemeToggle|AccountMenu" frontend/src/app
-```
+﻿Status: reference
+Scope: reusable QA reference or checklist
+Last reviewed: 2026-04-15
+Canonical source: docs/qa/frontend-pr-checklist.md
+Related: docs/qa/README.md, docs/archive/qa/README.md
 
 ---
-
-### H2. Menu de cuenta redundante/no user-friendly
-- [x] No hay 4 items distintos apuntando al mismo `href="/preferences"`.
-- [x] Cada item del menu lleva a una accion o ruta realmente distinta.
-- [x] `Ayuda / Feedback` usa canal real (no `.local`) o fallback definido.
-
-Aceptacion:
-- Navegacion clara: `Perfil`, `Preferencias`, `Apariencia`, `Idioma`, `Ayuda`, `Cerrar sesion`.
-
-Verificacion:
-```powershell
-Get-Content -Raw frontend/src/modules/shared/AccountMenu.tsx
-```
-
----
-
-### H3. Modales accesibles y consistentes
+# H3. Modales accesibles y consistentes
 - [x] Todos los modales usan `role="dialog"` y `aria-modal="true"`.
 - [x] Botones de cierre icon-only tienen `aria-label`.
 - [x] `Escape` y click fuera cierran modal de forma consistente.
@@ -150,3 +106,8 @@ Verificacion:
 - [x] Coherencia de lenguaje y formatos.
 - [ ] Menor deuda tecnica en modulos criticos.
 - [ ] PR lista para review funcional + QA visual.
+
+
+
+
+

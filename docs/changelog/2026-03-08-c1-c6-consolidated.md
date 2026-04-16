@@ -1,3 +1,10 @@
+﻿Status: reference
+Scope: historical consolidated change log
+Last reviewed: 2026-04-15
+Canonical source: docs/changelog/2026-03-08-c1-c6-consolidated.md
+Related: docs/INDICE_UNICO.md
+
+---
 # Changelog consolidado C1–C6
 
 Date: 2026-03-08
@@ -36,3 +43,8 @@ Date: 2026-03-08
 - Bugs hallados/fijados en C6:
   1. Deprecación de status HTTP 422 en `backend/app/main.py` (`HTTP_422_UNPROCESSABLE_ENTITY` -> `HTTP_422_UNPROCESSABLE_CONTENT`).
   2. Flake en test de watchlist refresh por dependencia externa real (Ryanair 500): se fijó test con provider fake determinístico (`test_watchlist_flow.py`).
+
+
+
+
+
