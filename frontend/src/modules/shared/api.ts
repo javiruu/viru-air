@@ -110,15 +110,27 @@ function isAuthEntryPath(path: string): boolean {
   return path === "/auth/login" || path === "/auth/register";
 }
 
+function isNetworkFailure(error: unknown): boolean {
+  return error instanceof TypeError;
+}
+
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   if (path === "/auth/me" && !hasToken()) {
     throw new Error(translate("shared.errors.sessionRequired"));
   }
   const mergedHeaders = buildHeaders(init);
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: mergedHeaders,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      headers: mergedHeaders,
+    });
+  } catch (error) {
+    if (isNetworkFailure(error)) {
+      throw new Error(translate("shared.errors.generic"));
+    }
+    throw error;
+  }
 
   if (!response.ok) {
     const text = await response.text();
@@ -195,10 +207,27 @@ export async function apiFetchWithStatus<T>(
     };
   }
   const mergedHeaders = buildHeaders(init);
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: mergedHeaders,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      headers: mergedHeaders,
+    });
+  } catch (error) {
+    if (isNetworkFailure(error)) {
+      return {
+        ok: false,
+        status: 0,
+        headers: new Headers(),
+        error: {
+          status: 0,
+          code: "NETWORK_ERROR",
+          message: translate("shared.errors.generic"),
+        },
+      };
+    }
+    throw error;
+  }
 
   if (!response.ok) {
     const rawText = await response.text();
@@ -266,4 +295,3 @@ export async function apiFetchWithStatus<T>(
   const data = (await response.json()) as T;
   return { ok: true, data, status: response.status, headers: response.headers };
 }
-
