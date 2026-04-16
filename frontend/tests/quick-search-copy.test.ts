@@ -29,4 +29,7 @@ test("quick search copy exposes state microcopy in es", () => {
   assert.equal(t("stateErrorHint"), "Revisa los datos del formulario y vuelve a intentarlo.");
   assert.equal(t("stateRateHint"), "Hemos limitado temporalmente la frecuencia para proteger el servicio.");
   assert.equal(t("loadingSubcheckTitle"), "Comprobaciones en curso");
+  assert.equal(t("flexTitle"), "Que margen tienes con la fecha?");
+  assert.equal(t("flexPresetCustom"), "Personalizar");
+  assert.equal(t("flexCustomSummary"), "Personalizado · -{before} / +{after} dias");
 });

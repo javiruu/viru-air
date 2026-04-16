@@ -15,6 +15,11 @@ import { trackEvent } from "@/modules/shared/analytics";
 import { formatCurrency, formatNumber } from "@/modules/shared/format";
 import { buildDateRange } from "@/modules/quick-search/utils";
 import { buildCriteriaSignature, parseNumericInput } from "@/modules/quick-search/searchCriteria";
+import {
+  clampQuickSearchFlexDays,
+  formatQuickSearchFlexSummary,
+  getQuickSearchFlexPreset,
+} from "@/modules/quick-search/flexibility";
 const QuickSearchFiltersDrawer = dynamic(() =>
   import("@/modules/quick-search/components/QuickSearchFiltersDrawer").then((m) => m.QuickSearchFiltersDrawer),
 );
@@ -652,6 +657,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     [regionPref?.language, pref?.language],
   );
   const { locale, localeTag, t, tWarn } = copy;
+  const [flexCustomPanelOpen, setFlexCustomPanelOpen] = useState(false);
   const isRecommendations = mode === "recommendations";
   const pageTitle = isRecommendations ? t("titleRecommendations") : t("title");
   const pageSubtitle = isRecommendations ? t("subtitleRecommendations") : t("subtitle");
@@ -1402,6 +1408,31 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     return date.toLocaleDateString(localeTag, { day: "2-digit", month: "short" });
   }
 
+  function setFlexPreset(nextPreset: "exact" | "plus-1" | "plus-2" | "plus-3") {
+    if (nextPreset === "exact") {
+      setDaysBefore(0);
+      setDaysAfter(0);
+    } else if (nextPreset === "plus-1") {
+      setDaysBefore(1);
+      setDaysAfter(1);
+    } else if (nextPreset === "plus-2") {
+      setDaysBefore(2);
+      setDaysAfter(2);
+    } else {
+      setDaysBefore(3);
+      setDaysAfter(3);
+    }
+    setFlexCustomPanelOpen(false);
+  }
+
+  function updateDaysBefore(delta: number) {
+    setDaysBefore((prev) => clampQuickSearchFlexDays(prev + delta));
+  }
+
+  function updateDaysAfter(delta: number) {
+    setDaysAfter((prev) => clampQuickSearchFlexDays(prev + delta));
+  }
+
   function changeAdults(delta: number) {
     setAdults((prev) => Math.min(9, Math.max(1, prev + delta)));
   }
@@ -1839,8 +1870,20 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const summaryMeta = `${adults} ${adults === 1 ? t("summaryPassengersSingular") : t("summaryPassengersPlural")} - ${
     summaryTripTypeLabel
   } - ${summaryDate}`;
-  const summaryFlex =
-    daysBefore === 0 && daysAfter === 0 ? t("exactDate") : `${t("flexible")} +/-${daysBefore}/${daysAfter}`;
+  const flexPreset = getQuickSearchFlexPreset(daysBefore, daysAfter);
+  const summaryFlex = formatQuickSearchFlexSummary(daysBefore, daysAfter, {
+    exact: t("exactDate"),
+    plusOne: t("flexPresetOne"),
+    plusTwo: t("flexPresetTwo"),
+    plusThree: t("flexPresetThree"),
+    customTemplate: t("flexCustomSummary"),
+  });
+  const effectiveFlexCustomPanelOpen = flexCustomPanelOpen || flexPreset === "custom";
+  const flexHelperText = effectiveFlexCustomPanelOpen
+    ? t("flexHelperCustom")
+    : flexPreset === "exact"
+      ? t("flexHelperExact")
+      : t("flexHelperFlexible");
   const summaryStrict = strictFilters ? t("summaryStrictOn") : t("summaryStrictOff");
   const loadingPhaseLabel = loadingPhase === "requesting"
     ? t("loadingPhaseRequesting")
@@ -2021,10 +2064,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     if (daysBefore > 0 || daysAfter > 0) {
       chips.push({
         id: "flex",
-        label: `${t("flexible")} +/-${daysBefore}/${daysAfter}`,
+        label: summaryFlex,
         onClear: () => {
           setDaysBefore(0);
           setDaysAfter(0);
+          setFlexCustomPanelOpen(false);
         },
       });
     }
@@ -2109,6 +2153,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   }, [
     daysBefore,
     daysAfter,
+    summaryFlex,
     radiusActive,
     radiusKm,
     includeNearbyOrigins,
@@ -2126,6 +2171,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     t,
     setDaysAfter,
     setDaysBefore,
+    setFlexCustomPanelOpen,
     setDurationMax,
     setExcludeDestinations,
     setExcludeOrigins,
@@ -2870,39 +2916,111 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         </div>
         <div className="qs-flex-row">
           <div className="qs-flex-control">
-            <span className="qs-label-title">{t("flexTitle")}</span>
-            <details className="qs-flex-popover">
-              <summary>
-                {daysBefore === 0 && daysAfter === 0 ? t("exactDate") : `${t("flexible")} +/-${daysBefore}/${daysAfter}`}
-              </summary>
+            <div className="qs-flex-header">
+              <span className="qs-label-title">{t("flexTitle")}</span>
+              <span className="qs-flex-summary">{summaryFlex}</span>
+            </div>
+            <p className="qs-flex-helper">{flexHelperText}</p>
+            <div className="qs-flex-presets" role="group" aria-label={t("flexTitle")}>
+              <button
+                type="button"
+                className={`qs-flex-preset ${!effectiveFlexCustomPanelOpen && flexPreset === "exact" ? "is-active" : ""}`}
+                aria-pressed={!effectiveFlexCustomPanelOpen && flexPreset === "exact"}
+                onClick={() => setFlexPreset("exact")}
+              >
+                {t("flexPresetExact")}
+              </button>
+              <button
+                type="button"
+                className={`qs-flex-preset ${!effectiveFlexCustomPanelOpen && flexPreset === "plus-1" ? "is-active" : ""}`}
+                aria-pressed={!effectiveFlexCustomPanelOpen && flexPreset === "plus-1"}
+                onClick={() => setFlexPreset("plus-1")}
+              >
+                {t("flexPresetOne")}
+              </button>
+              <button
+                type="button"
+                className={`qs-flex-preset ${!effectiveFlexCustomPanelOpen && flexPreset === "plus-2" ? "is-active" : ""}`}
+                aria-pressed={!effectiveFlexCustomPanelOpen && flexPreset === "plus-2"}
+                onClick={() => setFlexPreset("plus-2")}
+              >
+                {t("flexPresetTwo")}
+              </button>
+              <button
+                type="button"
+                className={`qs-flex-preset ${!effectiveFlexCustomPanelOpen && flexPreset === "plus-3" ? "is-active" : ""}`}
+                aria-pressed={!effectiveFlexCustomPanelOpen && flexPreset === "plus-3"}
+                onClick={() => setFlexPreset("plus-3")}
+              >
+                {t("flexPresetThree")}
+              </button>
+              <button
+                type="button"
+                className={`qs-flex-preset ${effectiveFlexCustomPanelOpen ? "is-active" : ""}`}
+                aria-pressed={effectiveFlexCustomPanelOpen}
+                onClick={() => setFlexCustomPanelOpen(true)}
+              >
+                {t("flexPresetCustom")}
+              </button>
+            </div>
+            {effectiveFlexCustomPanelOpen ? (
               <div className="qs-flex-panel">
-                <label className="qs-flex-field">
-                  {t("daysBefore")}
-                  <input
-                    className="qs-input"
-                    type="number"
-                    name="flex_days_before"
-                    autoComplete="off"
-                    min={0}
-                    max={7}
-                    value={daysBefore}
-                    onChange={(e) => setDaysBefore(Math.max(0, Number(e.target.value)))}
-                  />
-                </label>
-                <label className="qs-flex-field">
-                  {t("daysAfter")}
-                  <input
-                    className="qs-input"
-                    type="number"
-                    name="flex_days_after"
-                    autoComplete="off"
-                    min={0}
-                    max={7}
-                    value={daysAfter}
-                    onChange={(e) => setDaysAfter(Math.max(0, Number(e.target.value)))}
-                  />
-                </label>
-                <span className="qs-flex-helper">{t("flexHelper")}</span>
+                <div className="qs-flex-grid">
+                  <div className="qs-flex-field">
+                    <span>{t("flexBeforeControl")}</span>
+                    <div className="qs-flex-stepper">
+                      <button
+                        type="button"
+                        className="qs-flex-stepper-btn"
+                        aria-label={`${t("daysBefore")}: -1`}
+                        onClick={() => updateDaysBefore(-1)}
+                        disabled={daysBefore <= 0}
+                      >
+                        -
+                      </button>
+                      <div className="qs-flex-stepper-value">
+                        <strong>{daysBefore}</strong>
+                        <span>{t("daysBefore")}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="qs-flex-stepper-btn"
+                        aria-label={`${t("daysBefore")}: +1`}
+                        onClick={() => updateDaysBefore(1)}
+                        disabled={daysBefore >= 7}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                  <div className="qs-flex-field">
+                    <span>{t("flexAfterControl")}</span>
+                    <div className="qs-flex-stepper">
+                      <button
+                        type="button"
+                        className="qs-flex-stepper-btn"
+                        aria-label={`${t("daysAfter")}: -1`}
+                        onClick={() => updateDaysAfter(-1)}
+                        disabled={daysAfter <= 0}
+                      >
+                        -
+                      </button>
+                      <div className="qs-flex-stepper-value">
+                        <strong>{daysAfter}</strong>
+                        <span>{t("daysAfter")}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="qs-flex-stepper-btn"
+                        aria-label={`${t("daysAfter")}: +1`}
+                        onClick={() => updateDaysAfter(1)}
+                        disabled={daysAfter >= 7}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
                 {isReturn ? (
                   <label className="qs-check">
                     <input
@@ -2927,7 +3045,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                   </label>
                 ) : null}
               </div>
-            </details>
+            ) : null}
           </div>
         </div>
         <span className="sr-only" aria-live="polite">{autocompleteLiveText}</span>
