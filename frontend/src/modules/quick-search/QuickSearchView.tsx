@@ -32,7 +32,7 @@ const QuickSearchSearchForm = dynamic(() =>
 const QuickSearchStatePanels = dynamic(() =>
   import("@/modules/quick-search/components/QuickSearchStatePanels").then((m) => m.QuickSearchStatePanels),
 );
-import { prepareQuickSearchRequest, toQuickSearchQuery } from "@/modules/quick-search/api/buildQuickSearchRequest";
+import { buildQuickSearchCanonicalPayload, prepareQuickSearchRequest } from "@/modules/quick-search/api/buildQuickSearchRequest";
 import { QuickSearchResultsWorkspace } from "@/modules/quick-search/components/QuickSearchResultsWorkspace";
 import {
   AirportIataEntry,
@@ -77,7 +77,6 @@ type ExecutedCriteriaSnapshot = {
   route: string;
   dateLabel: string;
   paxLabel: string;
-  filters: string[];
 };
 
 const AIRPORTS = airportsIata as Array<{ 
@@ -1006,19 +1005,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       strict_filters: strictFilters,
       soft_filters_weight: 0.6,
     };
-    const snapshotFilters: string[] = [];
-    if (includeStops) snapshotFilters.push(`${t("maxStops")}: ${maxStops}`);
-    if (durationMax) snapshotFilters.push(`${t("durationMax")}: ${durationMax}`);
-    if (riskFilter !== "all") snapshotFilters.push(`${t("riskAllowed")}: ${formatRiskLabel(riskFilter)}`);
-    if (radiusActive) snapshotFilters.push(`${t("summaryRadius")}: ${radiusKm} km`);
-    if (nextExcludeOrigins.length || nextExcludeDestinations.length) {
-      snapshotFilters.push(`${t("summaryExclusions")}: ${nextExcludeOrigins.length + nextExcludeDestinations.length}`);
-    }
     const nextExecutedCriteria: ExecutedCriteriaSnapshot = {
       route: `${originCountryOnly ? originCountryOnly.name : origin} → ${destinationCountryOnly ? destinationCountryOnly.name : destination}`,
       dateLabel: isReturn && returnDate ? `${travelDate} → ${returnDate}` : travelDate,
       paxLabel: `${adults} ${adults === 1 ? t("summaryPassengersSingular") : t("summaryPassengersPlural")}`,
-      filters: snapshotFilters,
     };
     trackEvent("quicksearch_search_submitted", {
       has_origin_country_scope: Boolean(originCountryOnly),
@@ -1039,7 +1029,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       });
       return;
     }
-    const query = toQuickSearchQuery(preparedRequest.params);
+    const canonicalPayload = buildQuickSearchCanonicalPayload(preparedRequest.params);
     try {
       if (!isCurrentRequest()) return;
       setIsLoading(true);
@@ -1075,8 +1065,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           setWeatherMessage(hasOutOfRange ? t("weatherUnavailableRange") : t("weatherError"));
         }
       });
-      const searchResult = await apiFetchWithStatus<SearchResponse>(`/search/quick?${query}`, {
+      const searchResult = await apiFetchWithStatus<SearchResponse>("/search/quick", {
         method: "POST",
+        body: JSON.stringify(canonicalPayload),
       });
       if (!isCurrentRequest()) return;
       setProgress("response_parsed", 80);
@@ -3386,17 +3377,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               ) : null}
 
             </div>
-            {hasSearched && executedCriteria ? (
-              <div className="qs-executed-criteria" aria-live="polite">
-                <strong>{t("appliedCriteriaTitle")}:</strong>
-                <span>{executedCriteria.route}</span>
-                <span>{executedCriteria.dateLabel}</span>
-                <span>{executedCriteria.paxLabel}</span>
-                {executedCriteria.filters.map((item) => (
-                  <span key={item} className="qs-summary-chip">{item}</span>
-                ))}
-              </div>
-            ) : null}
             <div className="qs-results-controls">
               {pendingSearchChanges ? (
                 <button type="button" className="btn-search qs-apply-sticky" onClick={runSearch}>

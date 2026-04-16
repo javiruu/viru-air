@@ -1,1 +1,1 @@
-export { toQuickSearchQuery } from "./api/buildQuickSearchRequest";
+export { buildQuickSearchCanonicalPayload, toQuickSearchQuery } from "./api/buildQuickSearchRequest";
