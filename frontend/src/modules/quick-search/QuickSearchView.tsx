@@ -32,8 +32,7 @@ const QuickSearchSearchForm = dynamic(() =>
 const QuickSearchStatePanels = dynamic(() =>
   import("@/modules/quick-search/components/QuickSearchStatePanels").then((m) => m.QuickSearchStatePanels),
 );
-import { normalizeQuickSearchResults } from "@/modules/quick-search/api/normalizeQuickSearchResponse";
-import { prepareQuickSearchRequest, toQuickSearchQuery } from "@/modules/quick-search/api/buildQuickSearchRequest";
+import { buildQuickSearchCanonicalPayload, prepareQuickSearchRequest } from "@/modules/quick-search/api/buildQuickSearchRequest";
 import { QuickSearchResultsWorkspace } from "@/modules/quick-search/components/QuickSearchResultsWorkspace";
 import {
   AirportIataEntry,
@@ -58,6 +57,8 @@ import {
   ZeroResultRelaxAction,
 } from "@/modules/quick-search/types";
 import { useQuickSearchMainState } from "@/modules/quick-search/state/useQuickSearchController";
+import { useQuickSearchLoadingFlow } from "@/modules/quick-search/state/useQuickSearchLoadingFlow";
+import { useQuickSearchScreenState } from "@/modules/quick-search/state/useQuickSearchScreenState";
 import airportsIata from "@/data/airports_iata.min.json";
 
 const RELAX_HIGHLIGHT_BY_ACTION: Record<ZeroResultRelaxAction, Exclude<SummaryHighlightKey, null>> = {
@@ -76,7 +77,6 @@ type ExecutedCriteriaSnapshot = {
   route: string;
   dateLabel: string;
   paxLabel: string;
-  filters: string[];
 };
 
 const AIRPORTS = airportsIata as Array<{ 
@@ -354,6 +354,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     debugEpochRef,
     debugLastTickLogTsRef,
   } = useQuickSearchMainState(initialOrigin, initialDestination);
+  const normalizedRadiusKm = Math.min(500, Math.max(10, Number.isFinite(radiusKm) ? radiusKm : 150));
 
   const debugLog = useCallback((message: string) => {
     if (process.env.NODE_ENV === "production" || typeof window === "undefined") return;
@@ -372,34 +373,38 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     return () => window.clearTimeout(timeout);
   }, [origin, destination, setRoutePulse]);
 
-  useEffect(() => {
-    const minVisibleMs = 240;
-    if (hideTimeoutRef.current) {
-      window.clearTimeout(hideTimeoutRef.current);
-      hideTimeoutRef.current = null;
-    }
-    if (searchState === "loading") {
-      loadingStartRef.current = typeof performance !== "undefined" ? performance.now() : Date.now();
-      setShowLoader(true);
-      return;
-    }
-    if (!showLoader) return;
-    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
-    const startedAt = loadingStartRef.current ?? now;
-    const elapsed = Math.max(0, now - startedAt);
-    const remaining = Math.max(0, minVisibleMs - elapsed);
-    hideTimeoutRef.current = window.setTimeout(() => {
-      setShowLoader(false);
-      hideTimeoutRef.current = null;
-      loadingStartRef.current = null;
-    }, remaining);
-    return () => {
-      if (hideTimeoutRef.current) {
-        window.clearTimeout(hideTimeoutRef.current);
-        hideTimeoutRef.current = null;
-      }
-    };
-  }, [searchState, showLoader, hideTimeoutRef, loadingStartRef, setShowLoader]);
+  useQuickSearchLoadingFlow({
+    searchState,
+    showLoader,
+    loadingVisualHold,
+    targetProgress,
+    displayProgress,
+    prefersReducedMotion,
+    setShowLoader,
+    setShowBoarding,
+    setLoadingVisualHold,
+    setDisplayProgress,
+    setLoadingPhase,
+    setTargetProgress,
+    activeLoadingRequestRef,
+    prevSearchStateRef,
+    requestIdRef,
+    progressRafRef,
+    animFromRef,
+    animToRef,
+    animStartTsRef,
+    animDurationMsRef,
+    lastTargetRef,
+    isAnimatingRef,
+    displayProgressRef,
+    commitRafRef,
+    boardingThresholdTimerRef,
+    takeoffHoldTimerRef,
+    loadingStartRef,
+    hideTimeoutRef,
+    debugLastTickLogTsRef,
+    debugLog,
+  });
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
@@ -427,214 +432,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     return () => media.removeListener(apply);
   }, [setIsMobileViewport]);
 
-  useEffect(() => {
-    displayProgressRef.current = displayProgress;
-  }, [displayProgress, displayProgressRef]);
-
-  useEffect(() => {
-    const calcDuration = (delta: number) => {
-      if (delta <= 10) return 220;
-      if (delta <= 30) return 420;
-      if (delta <= 60) return 680;
-      return 900;
-    };
-    const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
-    const flushProgress = (value: number) => {
-      displayProgressRef.current = value;
-      setDisplayProgress(value);
-      animFromRef.current = value;
-      animToRef.current = value;
-      lastTargetRef.current = value;
-      isAnimatingRef.current = false;
-      if (progressRafRef.current) {
-        window.cancelAnimationFrame(progressRafRef.current);
-        progressRafRef.current = null;
-      }
-    };
-    const animate = (ts: number) => {
-      const from = animFromRef.current;
-      const to = animToRef.current;
-      const duration = Math.max(1, animDurationMsRef.current);
-      const elapsed = ts - animStartTsRef.current;
-      const progress = Math.max(0, Math.min(1, elapsed / duration));
-      let next = from + easeOutCubic(progress) * (to - from);
-      if (to >= from) {
-        next = Math.min(next, to);
-      } else {
-        next = Math.max(next, to);
-      }
-      const nextSafe = to >= 0 ? Math.min(next, to) : next;
-      const prevInt = Math.round(displayProgressRef.current);
-      const nextInt = Math.round(nextSafe);
-      if (process.env.NODE_ENV !== "production") {
-        if (ts - debugLastTickLogTsRef.current >= 120 || progress >= 1) {
-          debugLastTickLogTsRef.current = ts;
-          debugLog(`tick from=${from.toFixed(1)} to=${to.toFixed(1)} display=${nextSafe.toFixed(1)} t=${progress.toFixed(2)}`);
-        }
-      }
-      if (nextInt !== prevInt || progress >= 1) {
-        displayProgressRef.current = nextSafe;
-        setDisplayProgress(nextSafe);
-      }
-      if (progress >= 1) {
-        isAnimatingRef.current = false;
-        progressRafRef.current = null;
-        displayProgressRef.current = to;
-        setDisplayProgress(to);
-        return;
-      }
-      progressRafRef.current = window.requestAnimationFrame(animate);
-    };
-    if (prefersReducedMotion) {
-      flushProgress(targetProgress);
-      return;
-    }
-    const targetUnchanged = targetProgress === lastTargetRef.current;
-    if (targetUnchanged) {
-      if (isAnimatingRef.current) {
-        return;
-      }
-      if (displayProgressRef.current === targetProgress) {
-        return;
-      }
-    } else if (progressRafRef.current) {
-      debugLog("cancel RAF (new segment)");
-      window.cancelAnimationFrame(progressRafRef.current);
-      progressRafRef.current = null;
-      isAnimatingRef.current = false;
-    }
-    const from = displayProgressRef.current;
-    const to = targetProgress;
-    if (from === to) {
-      flushProgress(to);
-      return;
-    }
-    const delta = Math.abs(to - from);
-    animFromRef.current = from;
-    animToRef.current = to;
-    animStartTsRef.current = typeof performance !== "undefined" ? performance.now() : 0;
-    animDurationMsRef.current = calcDuration(delta);
-    lastTargetRef.current = to;
-    isAnimatingRef.current = true;
-    progressRafRef.current = window.requestAnimationFrame(animate);
-  }, [
-    targetProgress,
-    prefersReducedMotion,
-    animDurationMsRef,
-    animFromRef,
-    animStartTsRef,
-    animToRef,
-    debugLastTickLogTsRef,
-    debugLog,
-    displayProgressRef,
-    isAnimatingRef,
-    lastTargetRef,
-    progressRafRef,
-    setDisplayProgress,
-  ]);
-
-  useEffect(() => {
-    if (boardingThresholdTimerRef.current) {
-      window.clearTimeout(boardingThresholdTimerRef.current);
-      boardingThresholdTimerRef.current = null;
-    }
-    if (searchState === "loading") {
-      setShowBoarding(false);
-      boardingThresholdTimerRef.current = window.setTimeout(() => {
-        setShowBoarding(true);
-      }, 300);
-      return () => {
-        if (boardingThresholdTimerRef.current) {
-          window.clearTimeout(boardingThresholdTimerRef.current);
-          boardingThresholdTimerRef.current = null;
-        }
-      };
-    }
-    if (!loadingVisualHold) {
-      setShowBoarding(false);
-    }
-  }, [searchState, loadingVisualHold, boardingThresholdTimerRef, setShowBoarding]);
-
-  useEffect(() => {
-    if (commitRafRef.current) {
-      window.cancelAnimationFrame(commitRafRef.current);
-      commitRafRef.current = null;
-    }
-    const prev = prevSearchStateRef.current;
-    if (prev === "loading" && (searchState === "success" || searchState === "empty")) {
-      const requestId = activeLoadingRequestRef.current;
-      if (requestId !== null && requestId === requestIdRef.current) {
-        setLoadingVisualHold(true);
-        const raf1 = window.requestAnimationFrame(() => {
-          const raf2 = window.requestAnimationFrame(() => {
-            if (requestId !== requestIdRef.current) return;
-            debugLog("target -> 100 (committed)");
-            setLoadingPhase("committed");
-            setTargetProgress(100);
-          });
-          commitRafRef.current = raf2;
-        });
-        commitRafRef.current = raf1;
-        if (takeoffHoldTimerRef.current) {
-          window.clearTimeout(takeoffHoldTimerRef.current);
-          takeoffHoldTimerRef.current = null;
-        }
-        takeoffHoldTimerRef.current = window.setTimeout(() => {
-          if (requestId !== requestIdRef.current) return;
-          setLoadingVisualHold(false);
-        }, 240);
-      }
-    } else if (searchState === "rate" || searchState === "error" || searchState === "idle") {
-      setLoadingVisualHold(false);
-      setShowBoarding(false);
-    }
-    prevSearchStateRef.current = searchState;
-  }, [
-    searchState,
-    activeLoadingRequestRef,
-    commitRafRef,
-    debugLog,
-    prevSearchStateRef,
-    requestIdRef,
-    setLoadingPhase,
-    setLoadingVisualHold,
-    setShowBoarding,
-    setTargetProgress,
-    takeoffHoldTimerRef,
-  ]);
-
-  useEffect(() => () => {
-    if (progressRafRef.current) {
-      debugLog("cancel RAF (cleanup)");
-      window.cancelAnimationFrame(progressRafRef.current);
-      progressRafRef.current = null;
-    }
-    if (commitRafRef.current) {
-      window.cancelAnimationFrame(commitRafRef.current);
-      commitRafRef.current = null;
-    }
-    if (boardingThresholdTimerRef.current) {
-      window.clearTimeout(boardingThresholdTimerRef.current);
-      boardingThresholdTimerRef.current = null;
-    }
-    if (takeoffHoldTimerRef.current) {
-      window.clearTimeout(takeoffHoldTimerRef.current);
-      takeoffHoldTimerRef.current = null;
-    }
-    if (hideTimeoutRef.current) {
-      window.clearTimeout(hideTimeoutRef.current);
-      hideTimeoutRef.current = null;
-    }
-    loadingStartRef.current = null;
-  }, [
-    boardingThresholdTimerRef,
-    commitRafRef,
-    debugLog,
-    hideTimeoutRef,
-    loadingStartRef,
-    progressRafRef,
-    takeoffHoldTimerRef,
-  ]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -692,7 +489,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     departBefore,
     includeNearbyOrigins,
     includeNearbyDestinations,
-    radiusKm,
+    normalizedRadiusKm,
     excludeOrigins.length,
     excludeDestinations.length,
     zeroResultsTracked,
@@ -1209,19 +1006,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       strict_filters: strictFilters,
       soft_filters_weight: 0.6,
     };
-    const snapshotFilters: string[] = [];
-    if (includeStops) snapshotFilters.push(`${t("maxStops")}: ${maxStops}`);
-    if (durationMax) snapshotFilters.push(`${t("durationMax")}: ${durationMax}`);
-    if (riskFilter !== "all") snapshotFilters.push(`${t("riskAllowed")}: ${formatRiskLabel(riskFilter)}`);
-    if (radiusActive) snapshotFilters.push(`${t("summaryRadius")}: ${radiusKm} km`);
-    if (nextExcludeOrigins.length || nextExcludeDestinations.length) {
-      snapshotFilters.push(`${t("summaryExclusions")}: ${nextExcludeOrigins.length + nextExcludeDestinations.length}`);
-    }
     const nextExecutedCriteria: ExecutedCriteriaSnapshot = {
       route: `${originCountryOnly ? originCountryOnly.name : origin} → ${destinationCountryOnly ? destinationCountryOnly.name : destination}`,
       dateLabel: isReturn && returnDate ? `${travelDate} → ${returnDate}` : travelDate,
       paxLabel: `${adults} ${adults === 1 ? t("summaryPassengersSingular") : t("summaryPassengersPlural")}`,
-      filters: snapshotFilters,
     };
     trackEvent("quicksearch_search_submitted", {
       has_origin_country_scope: Boolean(originCountryOnly),
@@ -1242,7 +1030,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       });
       return;
     }
-    const query = toQuickSearchQuery(preparedRequest.params);
+    const canonicalPayload = buildQuickSearchCanonicalPayload(preparedRequest.params);
     try {
       if (!isCurrentRequest()) return;
       setIsLoading(true);
@@ -1278,8 +1066,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           setWeatherMessage(hasOutOfRange ? t("weatherUnavailableRange") : t("weatherError"));
         }
       });
-      const searchResult = await apiFetchWithStatus<SearchResponse>(`/search/quick?${query}`, {
+      const searchResult = await apiFetchWithStatus<SearchResponse>("/search/quick", {
         method: "POST",
+        body: JSON.stringify(canonicalPayload),
       });
       if (!isCurrentRequest()) return;
       setProgress("response_parsed", 80);
@@ -1825,7 +1614,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
   const originCode = origin.trim().toUpperCase();
   const destinationCode = destination.trim().toUpperCase();
-  const normalizedRadiusKm = Math.min(500, Math.max(10, Number.isFinite(radiusKm) ? radiusKm : 150));
   const originValid = originCountryOnly ? originCountryOnly.airports.length > 0 : (
     originCode.length === 3 && airportsByIata.has(originCode)
   );
@@ -2063,8 +1851,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     : t("summaryDurationOpen");
   const summaryRadius = `${t("summaryRadius")} ${radiusKm} km`;
   const summaryExclusions = `${t("summaryExclusions")} ${excludeOrigins.length + excludeDestinations.length}`;
-  const showDegradedState = isDegraded || Boolean(searchMeta?.stale_data);
-  const explainChipLabel = showDegradedState ? t("degradedChip") : t("toolbarExplain");
   const sortLabel = {
     ranking: t("sortRanking"),
     price: t("sortPrice"),
@@ -2075,113 +1861,51 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const originCountry = resolveInputCountryCode(originCountryOnly?.code, originSelectedCountryCode);
   const destinationCountry = resolveInputCountryCode(destinationCountryOnly?.code, destinationSelectedCountryCode);
   const deeplinkUrl = deepLink?.url || deepLink?.fallback_url || localRyanairUrl;
-  const normalizedResults = useMemo(() => normalizeQuickSearchResults(results), [results]);
-  const { visibleResults, hiddenHighRiskResults } = useMemo(() => {
-    const min = parseNumericInput(priceMin, { min: 0 });
-    const max = parseNumericInput(priceMax, { min: 0 });
-    const durMax = parseNumericInput(durationMax, { min: 1 });
-    let list = normalizedResults.filter((item) => {
-      if (riskFilter !== "all" && item.risk_label !== riskFilter) {
-        if (riskFilter !== "high" && item.risk_label === "high") return true;
-        return false;
-      }
-      if (min !== null && item.price_total !== undefined && item.price_total < min) return false;
-      if (max !== null && item.price_total !== undefined && item.price_total > max) return false;
-      if (durMax !== null && item.duration_total_min != null && item.duration_total_min > durMax) return false;
-      return true;
-    });
-    const hiddenHighRisk = list.filter((item) => item.risk_label === "high" && riskFilter !== "high");
-    if (!showHighRisk && riskFilter !== "high") {
-      list = list.filter((item) => item.risk_label !== "high");
-    }
-    const riskScore = (label?: string | null) => {
-      if (label === "low") return 1;
-      if (label === "medium") return 2;
-      if (label === "high") return 3;
-      return 9;
-    };
-    list = list.slice().sort((a, b) => {
-      if (sortBy === "price") {
-        return (a.price_total ?? 0) - (b.price_total ?? 0);
-      }
-      if (sortBy === "duration") {
-        return (a.duration_total ?? 99999) - (b.duration_total ?? 99999);
-      }
-      if (sortBy === "risk") {
-        return riskScore(a.risk_label) - riskScore(b.risk_label);
-      }
-      if (sortBy === "freshness") {
-        const aTs = a.freshness_ts ? new Date(a.freshness_ts).getTime() : 0;
-        const bTs = b.freshness_ts ? new Date(b.freshness_ts).getTime() : 0;
-        return bTs - aTs;
-      }
-      return (b.ranking_score ?? 0) - (a.ranking_score ?? 0);
-    });
-    return { visibleResults: list, hiddenHighRiskResults: hiddenHighRisk };
-  }, [normalizedResults, priceMin, priceMax, durationMax, riskFilter, sortBy, showHighRisk]);
-
-  const warningSeverity = useMemo(() => {
-    const neutralByCode = new Set([
-      tWarn("ryanair_unavailable_parcial"),
-      tWarn("limite_combinaciones_alternativas"),
-    ]);
-    const criticalPattern = /(error|fall|failed|bloque|blocked|rate|limit)/i;
-    const neutral: string[] = [];
-    const critical: string[] = [];
-    filtersNotice.forEach((notice) => {
-      if (neutralByCode.has(notice)) {
-        neutral.push(notice);
-        return;
-      }
-      if (criticalPattern.test(notice)) {
-        critical.push(notice);
-        return;
-      }
-      neutral.push(notice);
-    });
-    return { neutral, critical };
-  }, [filtersNotice, tWarn]);
-
-  const groupedNeutralWarnings = useMemo(() => {
-    const grouped = new Map<string, number>();
-    for (const notice of warningSeverity.neutral) {
-      grouped.set(notice, (grouped.get(notice) || 0) + 1);
-    }
-    return Array.from(grouped.entries()).map(([message, count]) => ({ message, count }));
-  }, [warningSeverity.neutral]);
-
-  const groupedCriticalWarnings = useMemo(() => {
-    const grouped = new Map<string, number>();
-    for (const notice of warningSeverity.critical) {
-      grouped.set(notice, (grouped.get(notice) || 0) + 1);
-    }
-    return Array.from(grouped.entries()).map(([message, count]) => ({ message, count }));
-  }, [warningSeverity.critical]);
-
+  const {
+    durationMaxNumber,
+    visibleResults,
+    hiddenHighRiskResults,
+    warningSeverity,
+    groupedNeutralWarnings,
+    groupedCriticalWarnings,
+    infoItemsCount,
+    sourcesSummary,
+    showDegradedState,
+    zeroResultCauses,
+    visibleZeroResultCauses,
+    canExpandZeroResultCauses,
+    emptyStateMainTitle,
+    zeroResultActions,
+  } = useQuickSearchScreenState({
+    results,
+    priceMin,
+    priceMax,
+    durationMax,
+    riskFilter,
+    sortBy,
+    showHighRisk,
+    filtersNotice,
+    filtersMeta,
+    isDegraded,
+    searchMeta,
+    weatherMessage,
+    strictFilters,
+    includeStops,
+    radiusActive,
+    radiusKm,
+    excludeOriginsCount: excludeOrigins.length,
+    excludeDestinationsCount: excludeDestinations.length,
+    departAfter,
+    departBefore,
+    emptyCausesExpanded,
+    t,
+    tWarn,
+  });
+  const explainChipLabel = showDegradedState ? t("degradedChip") : t("toolbarExplain");
   const warningDetailOpenLabel = t("warningDetailsOpen");
   const warningDetailCloseLabel = t("warningDetailsClose");
   const warningGroupedTitle = t("warningsGroupedTitle");
   const warningProblemTitle = t("warningProblemTitle");
-  const infoItemsCount =
-    (filtersMeta?.relaxed && filtersMeta.relaxed.length > 0 ? 1 : 0)
-    + (warningSeverity.critical.length > 0 ? 1 : 0)
-    + (warningSeverity.neutral.length > 0 ? 1 : 0)
-    + (showDegradedState ? 1 : 0)
-    + (weatherMessage ? 1 : 0)
-    + 1;
-  const sourcesSummary = useMemo(() => {
-    const grouped = new Map<string, number>();
-    visibleResults.forEach((item) => {
-      const source = (item.source || "").trim() || t("sourceUnknown");
-      grouped.set(source, (grouped.get(source) || 0) + 1);
-    });
-    const entries = Array.from(grouped.entries()).sort((a, b) => b[1] - a[1]);
-    const preview = entries.slice(0, 2).map(([source, count]) => `${source} (${count})`).join(", ");
-    return {
-      entries,
-      preview,
-    };
-  }, [visibleResults, t]);
 
   useEffect(() => {
     if (!hasSearched || sourcesSummary.entries.length === 0) return;
@@ -2331,64 +2055,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   }, [activeChips]);
 
   const [relaxPreviewOpen, setRelaxPreviewOpen] = useState(false);
-
-  const durationMaxNumber = useMemo(() => parseNumericInput(durationMax, { min: 1 }), [durationMax]);
-
-  const timeWindowMinutes = useMemo(() => {
-    const parseMinutes = (value: string) => {
-      const [h, m] = value.split(":").map(Number);
-      if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
-      return h * 60 + m;
-    };
-    const from = parseMinutes(departAfter);
-    const to = parseMinutes(departBefore);
-    if (from === null || to === null) return null;
-    if (to >= from) return to - from;
-    return 24 * 60 - from + to;
-  }, [departAfter, departBefore]);
-
-  const zeroResultCauses = useMemo(() => {
-    const causes: string[] = [];
-    if (strictFilters) causes.push(t("emptyCauseStrict"));
-    if (!includeStops) causes.push(t("emptyCauseStops"));
-    if (durationMaxNumber !== null) causes.push(t("emptyCauseDuration"));
-    if (timeWindowMinutes !== null && timeWindowMinutes <= 360) causes.push(t("emptyCauseTimeWindow"));
-    if (!radiusActive || radiusKm < 150) causes.push(t("emptyCauseRadius"));
-    if (excludeOrigins.length > 0 || excludeDestinations.length > 0) causes.push(t("emptyCauseExclusions"));
-    return causes;
-  }, [
-    strictFilters,
-    includeStops,
-    durationMaxNumber,
-    timeWindowMinutes,
-    radiusActive,
-    radiusKm,
-    excludeOrigins.length,
-    excludeDestinations.length,
-    t,
-  ]);
-  const visibleZeroResultCauses = emptyCausesExpanded ? zeroResultCauses : zeroResultCauses.slice(0, 3);
-  const canExpandZeroResultCauses = zeroResultCauses.length > 3;
-  const emptyStateMainTitle = t("emptyStateMainTitle");
-
-  const zeroResultActions = useMemo(() => {
-    const actions: Array<{ id: ZeroResultRelaxAction; label: string }> = [];
-    if (strictFilters) actions.push({ id: "disable_strict", label: t("emptyActionDisableStrict") });
-    if (durationMaxNumber !== null) actions.push({ id: "increase_duration", label: t("emptyActionIncreaseDuration") });
-    if (!radiusActive || radiusKm < 150) actions.push({ id: "open_radius_150", label: t("emptyActionOpenRadius") });
-    if (excludeOrigins.length > 0 || excludeDestinations.length > 0) {
-      actions.push({ id: "clear_exclusions", label: t("emptyActionClearExclusions") });
-    }
-    return actions;
-  }, [
-    strictFilters,
-    durationMaxNumber,
-    radiusActive,
-    radiusKm,
-    excludeOrigins.length,
-    excludeDestinations.length,
-    t,
-  ]);
 
   const relaxPreviewChanges = useMemo(() => {
     const rows: Array<{ id: string; label: string; before: string; after: string }> = [];
@@ -2595,8 +2261,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     travelDate,
     daysBefore,
     daysAfter,
-    radiusActive,
-    radiusKm,
     includeNearbyOrigins,
     includeNearbyDestinations,
     priceMin,
@@ -2615,6 +2279,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     adults,
     applyFlexReturn,
     bufferMin,
+    normalizedRadiusKm,
   ]);
 
   const quickSearchHint = useFtueHint("quick_search");
@@ -2626,31 +2291,45 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
   return (
     <main className="shell quick-search-shell" id="main-content">
-      <div className="page-header qs-page-header">
-        <button className="btn-ghost" type="button" onClick={() => router.push("/dashboard")}>
-          {t("back")}
-        </button>
-        <div className="page-title">
-          <h1>{pageTitle}</h1>
-          <p>{pageSubtitle}</p>
-        </div>
-      </div>
-
-      {quickSearchHint.visible ? (
-        <section className="notice notice-compact notice-info section-gap" role="status" aria-live="polite">
-          <div>
-            <strong>{t("quickLookTitle")}</strong>
-            <p>{t("quickLookBody")}</p>
-          </div>
-          <div className="notice-actions">
-            <button type="button" className="btn-ghost btn-compact" onClick={quickSearchHint.dismiss}>
-              {t("quickLookAcknowledge")}
+      <section className="qs-command-stage">
+        <div className="panel panel-soft qs-command-stage__intro">
+          <div className="page-header qs-page-header">
+            <button className="btn-ghost" type="button" onClick={() => router.push("/dashboard")}>
+              {t("back")}
             </button>
+            <div className="page-title">
+              <h1>{pageTitle}</h1>
+              <p>{pageSubtitle}</p>
+            </div>
           </div>
-        </section>
-      ) : null}
-
-      <QuickSearchSearchForm formRef={formRef} isReady={isReady} routePulse={routePulse} onSubmit={onSubmit}>
+          <div className="qs-hero-meta" aria-live="polite">
+            <span className="qs-hero-chip">{summaryTrip}</span>
+            <span className="qs-hero-chip">{summaryMeta}</span>
+            <span className="qs-hero-chip">{summaryFlex}</span>
+            <span className={`qs-hero-chip ${showDegradedState ? "qs-hero-chip-warning" : ""}`}>
+              {showDegradedState ? t("degradedChip") : summaryStrict}
+            </span>
+            {hasSearched ? (
+              <span className="qs-hero-chip qs-hero-chip-accent">
+                {visibleResults.length} {t("results")}
+              </span>
+            ) : null}
+          </div>
+          {quickSearchHint.visible ? (
+            <section className="notice notice-compact notice-info qs-hero-hint" role="status" aria-live="polite">
+              <div>
+                <strong>{t("quickLookTitle")}</strong>
+                <p>{t("quickLookBody")}</p>
+              </div>
+              <div className="notice-actions">
+                <button type="button" className="btn-ghost btn-compact" onClick={quickSearchHint.dismiss}>
+                  {t("quickLookAcknowledge")}
+                </button>
+              </div>
+            </section>
+          ) : null}
+        </div>
+        <QuickSearchSearchForm formRef={formRef} isReady={isReady} routePulse={routePulse} onSubmit={onSubmit}>
         <div className="qs-route">
           <div className="qs-route-card">
             <label className="qs-label">
@@ -3270,29 +2949,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             {t("ready")}
           </div>
         </div>
-      </QuickSearchSearchForm>
-
-      <section className="panel panel-soft qs-search-summary-compact section-gap-sm" aria-live="polite">
-        <div className="panel-header">
-          <h3>{t("searchSummaryTitle")}</h3>
-        </div>
-        <div className="qs-summary-detail-row">
-          <span className="qs-summary-chip">{summaryTrip}</span>
-          <span className="qs-summary-chip">{summaryMeta}</span>
-          <span className="qs-summary-chip">{summaryFlex}</span>
-          <span className="qs-summary-chip">{summaryStrict}</span>
-        </div>
+        </QuickSearchSearchForm>
       </section>
-
-      {pendingSearchChanges ? (
-        <div className="notice notice-warning section-gap-sm qs-pending-changes" role="status" aria-live="polite">
-          <strong>{t("pendingChangesTitle")}</strong>
-          <span>{t("pendingChangesBody")}</span>
-          <button type="button" className="btn-search" onClick={runSearch}>
-            {t("applyAndSearch")}
-          </button>
-        </div>
-      ) : null}
 
       {hasSearched ? (
       <QuickSearchResultsWorkspace>
@@ -3684,6 +3342,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             </button>
           </div>
         </aside>
+        <div className="qs-workspace-grid">
         <section className="panel panel-soft qs-results-panel">
           <div className="qs-results-toolbar" ref={resultsToolbarRef} tabIndex={-1}>
             <div className="qs-results-summary">
@@ -3717,17 +3376,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               ) : null}
 
             </div>
-            {hasSearched && executedCriteria ? (
-              <div className="qs-executed-criteria" aria-live="polite">
-                <strong>{t("appliedCriteriaTitle")}:</strong>
-                <span>{executedCriteria.route}</span>
-                <span>{executedCriteria.dateLabel}</span>
-                <span>{executedCriteria.paxLabel}</span>
-                {executedCriteria.filters.map((item) => (
-                  <span key={item} className="qs-summary-chip">{item}</span>
-                ))}
-              </div>
-            ) : null}
             <div className="qs-results-controls">
               {pendingSearchChanges ? (
                 <button type="button" className="btn-search qs-apply-sticky" onClick={runSearch}>
@@ -3943,8 +3591,38 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             onTrackCopyParams={(rowId) => trackEvent("quicksearch_row_copy_params_clicked", { row_id: rowId })}
           />
 
+        </section>
+        <aside className="qs-context-rail">
+          {pendingSearchChanges ? (
+            <div className="notice notice-warning qs-pending-changes" role="status" aria-live="polite">
+              <strong>{t("pendingChangesTitle")}</strong>
+              <span>{t("pendingChangesBody")}</span>
+              <button type="button" className="btn-search" onClick={runSearch}>
+                {t("applyAndSearch")}
+              </button>
+            </div>
+          ) : null}
+          <section className="panel panel-soft qs-search-summary-compact" aria-live="polite">
+            <div className="panel-header">
+              <h3>{t("searchSummaryTitle")}</h3>
+            </div>
+            <div className="qs-summary-detail-row">
+              <span className="qs-summary-chip">{summaryTrip}</span>
+              <span className="qs-summary-chip">{summaryMeta}</span>
+              <span className="qs-summary-chip">{summaryFlex}</span>
+              <span className="qs-summary-chip">{summaryStrict}</span>
+            </div>
+            {executedCriteria ? (
+              <div className="qs-context-applied">
+                <strong>{t("appliedCriteriaTitle")}:</strong>
+                <span>{executedCriteria.route}</span>
+                <span>{executedCriteria.dateLabel}</span>
+                <span>{executedCriteria.paxLabel}</span>
+              </div>
+            ) : null}
+          </section>
           <details
-            className="qs-info-stack"
+            className="panel panel-soft qs-info-stack"
             open={infoExpanded}
             onToggle={(event) => {
               const open = event.currentTarget.open;
@@ -4073,7 +3751,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               </p>
             </div>
           </details>
-        </section>
+        </aside>
+        </div>
       </div>
       {activePicker ? (
         <div className="airport-modal-overlay" onClick={closePicker}>
@@ -4314,5 +3993,3 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     </main>
   );
 }
-
-

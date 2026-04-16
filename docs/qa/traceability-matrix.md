@@ -1,4 +1,11 @@
-﻿# QA Traceability Matrix
+﻿Status: reference
+Scope: reusable QA reference or checklist
+Last reviewed: 2026-04-15
+Canonical source: docs/qa/traceability-matrix.md
+Related: docs/qa/README.md, docs/archive/qa/README.md
+
+---
+# QA Traceability Matrix
 
 | Requisito | Endpoint/Ruta | Test inicial |
 |---|---|---|
@@ -10,3 +17,8 @@
 
 Notas:
 - Se deja preparada la estructura para ampliar suites P0/P1 según Fase 8.
+
+
+
+
+

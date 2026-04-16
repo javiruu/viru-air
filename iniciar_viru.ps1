@@ -55,6 +55,7 @@ New-Item -ItemType Directory -Force -Path $logsDir | Out-Null
 $ts = Get-Date -Format "yyyyMMdd-HHmmss"
 $backendLog = Join-Path $logsDir "backend-$ts.log"
 $frontendLog = Join-Path $logsDir "frontend-$ts.log"
+$frontendBuildDir = Join-Path $root "frontend\.next"
 
 # Mata procesos previos en 3000/8000 para evitar conflictos
 $ports = @(3000, 8000)
@@ -63,6 +64,11 @@ foreach ($p in $ports) {
   foreach ($c in $conns) {
     try { Stop-Process -Id $c.OwningProcess -Force -ErrorAction SilentlyContinue } catch {}
   }
+}
+
+# Evita errores de chunks huérfanos de Next al reusar builds parciales.
+if (Test-Path $frontendBuildDir) {
+  Remove-Item -LiteralPath $frontendBuildDir -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 if ($runBackground) {

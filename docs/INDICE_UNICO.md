@@ -1,47 +1,56 @@
-﻿# INDICE_UNICO de Documentación
+﻿Status: canonical
+Scope: master navigation for project documentation
+Last reviewed: 2026-04-15
+Canonical source: docs/INDICE_UNICO.md
+Related: docs/INDICE_UNICO.md
 
-Última actualización: 2026-03-08
+---
+# Indice Unico de Documentacion
 
-## Planes activos
-- `docs/plans/2026-02-18-fusion-watchlist-historico-plan.md` — Plan de implementación del panel unificado de seguimiento.
-- `docs/plans/2026-02-19-air-loader-global-design.md` — Diseño del loader global y reutilizable.
-- `docs/plans/2026-02-23-recommendations-ai-design.md` — Diseño de Recomendaciones IA (Explorer).
-- `docs/plans/2026-02-25-quick-search-loading-checkpoints-design.md` — Diseño de loading avanzado con checkpoints y mensajería por vuelo.
-- `docs/plans/2026-02-25-quick-search-loading-checkpoints-plan.md` — Plan de implementación fase a fase del loading avanzado en quick-search.
-- `docs/plans/2026-03-07-c1-session-hardening-status.md` — Estado real de Ciclo 1 (sesión, auth y rutas puente).
+Este es el mapa maestro de lectura. Si vuelves al proyecto tras tiempo fuera, empieza aquí.
 
-## QA
-- `docs/qa/frontend-pr-checklist.md` — Checklist general de coherencia UX/UI y mantenibilidad frontend.
-- `docs/qa/watchlist-history-fusion-pr-checklist.md` — Checklist ejecutable específico para fusión Watchlist + Histórico.
-- `docs/qa/testsprite.md` — Referencia de pruebas Testsprite.
-- `docs/qa/traceability-matrix.md` — Trazabilidad de requisitos y pruebas.
-- `docs/qa/SKILLSPRITE_USER_CAPABILITIES.md` — Capacidades funcionales del usuario.
-- `docs/checks/c1-smoke.md` — Smoke manual para C1.
-- `docs/qa/2026-03-08-c6-qa-consolidated-report.md` — Consolidado QA de C6 por flujo crítico + smoke operativo.
-- `docs/qa/2026-03-08-c6-open-issues.md` — Issues abiertos clasificados (blocking/important/post-release).
-- `docs/qa/2026-03-08-c6-command-outputs.md` — Salidas reales de build/tests/smoke.
-- `docs/qa/2026-03-08-c6-docs-index.md` — Índice vivo de documentación alineada con implementación.
-- `docs/qa/2026-03-08-c6-checklist-cb1-cd2.md` — Checklist final C-B1..C-D2.
-- `docs/qa/2026-03-08-c6-readiness-acta.md` — Acta final de readiness (GO/NO-GO + riesgos).
+## Start Here
 
-## ADR
-- `docs/adr/ADR-001-monolito-modular.md`
-- `docs/adr/ADR-002-stack-base.md`
-- `docs/adr/ADR-003-provider-adapter.md`
+- [Reenganche rápido](overview/start-here.md): recorrido de 10-20 minutos para recuperar contexto.
+- [Estado actual del sistema](overview/current-state.md): qué existe hoy en backend, frontend, infra y documentación.
+- [Mapa del repo](overview/repo-map.md): dónde vive cada módulo y qué carpetas importan de verdad.
+- [Inventario completo](DOCS_INVENTORY.md): clasificación de toda la documentación detectada.
 
-## Runbooks
-- `docs/runbooks/runbook-canary-rollback.md`
-- `docs/runbooks/runbook-oom.md`
-- `docs/runbooks/runbook-provider-degraded.md`
+## Current System
 
-## Guías generales
-- `docs/estetica.md`
-- `docs/feature-flags.md`
+- [ADR](adr/ADR-001-monolito-modular.md), [ADR-002](adr/ADR-002-stack-base.md), [ADR-003](adr/ADR-003-provider-adapter.md)
+- [Contrato operativo Codex](reference/codex-operating-contract.md)
+- [Skill local de contexto Codex](../skills/viru-tracker-context/SKILL.md)
+- [Referencias técnicas](reference/README.md)
+- [Sistema UI](ui/UI_SYSTEM_V1.md), [Contrato UI](ui/UI_CONTRACT_V1.md), [Checklist visual](ui/UI_VISUAL_QA_CHECKLIST.md)
+- [Changelog consolidado](changelog/2026-03-08-c1-c6-consolidated.md)
 
-## Changelog
-- `docs/changelog/2026-03-08-c1-c6-consolidated.md` — Cambios consolidados de C1 a C6.
+## Active Specs
 
-## Convención de mantenimiento
-- Todo documento nuevo debe quedar enlazado aquí.
-- Todo plan que pase a implementación debe incluir criterio de aceptación verificable.
-- Toda iniciativa frontend relevante debe incluir checklist QA asociado.
+- [Resumen de specs activas](specs/README.md)
+- Producto: [Dashboard redesign v2](specs/product/dashboard-redesign-v2.md)
+- UI: [UI changes](specs/ui/ui-changes.md)
+- Policies: [Policies rewrite](specs/policies/policies-page-rewrite.md), [component spec](specs/policies/policies-page-component-spec.md), [copy deck](specs/policies/policies-page-copy-deck-es.md), [acceptance checklist](specs/policies/policies-page-acceptance-checklist.md)
+- Planes y diseños históricos útiles: [docs/plans/](plans/)
+
+## Ops/QA
+
+- [Runbooks](runbooks/)
+- [Checks manuales](checks/)
+- [QA evergreen](qa/README.md)
+- [Frontend PR checklist](qa/frontend-pr-checklist.md)
+- [Traceability matrix](qa/traceability-matrix.md)
+- [Testsprite catalog](qa/testsprite.md)
+
+## History
+
+- [Archivo de fases](archive/fases/README.md)
+- [Archivo de QA](archive/qa/README.md)
+- [Prompts archivados](archive/prompts/README.md)
+- [Tooling y reportes archivados](archive/tooling/README.md)
+- [Legado de raíz](archive/root-legacy/)
+
+
+
+
+

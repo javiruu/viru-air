@@ -37,6 +37,38 @@ export type QuickSearchPreparedRequest = {
   issues: QuickSearchContractIssue[];
 };
 
+export type QuickSearchCanonicalPayload = {
+  origin: {
+    seed_iata: string;
+    include_nearby: boolean;
+    radius_km: number;
+    max_candidates: number;
+  };
+  destination: {
+    seed_iata: string;
+    include_nearby: boolean;
+    radius_km: number;
+    max_candidates: number;
+  };
+  travel: {
+    date: string;
+    flex_before: number;
+    flex_after: number;
+  };
+  constraints: {
+    departure_window: {
+      after?: string;
+      before?: string;
+    };
+    exclude_origins: string[];
+    exclude_destinations: string[];
+    strict_filters: boolean;
+    include_stops: boolean;
+    max_stops: number;
+    soft_filters_weight: number;
+  };
+};
+
 function clampInt(value: number, min: number, max: number, fallback: number): number {
   if (!Number.isFinite(value)) return fallback;
   return Math.min(max, Math.max(min, Math.trunc(value)));
@@ -127,4 +159,45 @@ export function toQuickSearchQuery(params: QuickSearchQueryParams): string {
   query.set("strict_filters", String(params.strict_filters));
   query.set("soft_filters_weight", String(params.soft_filters_weight));
   return query.toString();
+}
+
+function toSeedIata(value: string | string[]): string {
+  if (Array.isArray(value)) {
+    return value[0] || "";
+  }
+  return value;
+}
+
+export function buildQuickSearchCanonicalPayload(params: QuickSearchQueryParams): QuickSearchCanonicalPayload {
+  return {
+    origin: {
+      seed_iata: toSeedIata(params.origin_iata),
+      include_nearby: params.include_nearby_origins,
+      radius_km: params.radius_km,
+      max_candidates: 6,
+    },
+    destination: {
+      seed_iata: toSeedIata(params.destination_iata),
+      include_nearby: params.include_nearby_destinations,
+      radius_km: params.radius_km,
+      max_candidates: 6,
+    },
+    travel: {
+      date: params.travel_date,
+      flex_before: params.flex_days_before,
+      flex_after: params.flex_days_after,
+    },
+    constraints: {
+      departure_window: {
+        after: params.depart_after,
+        before: params.depart_before,
+      },
+      exclude_origins: params.exclude_origins,
+      exclude_destinations: params.exclude_destinations,
+      strict_filters: params.strict_filters,
+      include_stops: params.include_stops,
+      max_stops: params.max_stops,
+      soft_filters_weight: params.soft_filters_weight,
+    },
+  };
 }

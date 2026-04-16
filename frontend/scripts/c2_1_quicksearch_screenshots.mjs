@@ -108,7 +108,7 @@ async function runScenario(browser, scenario, fileName) {
   await fillAndSearch(page);
 
   if (scenario === "normal") {
-    await page.waitForSelector(".qs-results-list article", { timeout: 10000 });
+    await page.waitForSelector(".qs-result-row", { timeout: 15000 });
   } else if (scenario === "empty") {
     await page.waitForSelector(".qs-empty-title", { timeout: 10000 });
   } else if (scenario === "error") {
@@ -129,7 +129,7 @@ async function runStrictSoft(browser) {
   await fillAndSearch(page);
   await page.waitForSelector(".qs-results-list article", { timeout: 10000 });
 
-  await page.getByRole("button", { name: /Filtros/i }).click();
+  await page.locator(".qs-filters-toggle").click();
   await page.waitForSelector("#qs-filters-drawer.open", { timeout: 5000 });
 
   await page.screenshot({ path: path.join(OUT_DIR, "04-strict-soft.png"), fullPage: true });

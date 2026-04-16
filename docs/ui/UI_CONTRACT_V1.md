@@ -1,6 +1,13 @@
+﻿Status: canonical
+Scope: UI system, visual contract, or design guidance
+Last reviewed: 2026-04-15
+Canonical source: docs/ui/UI_CONTRACT_V1.md
+Related: docs/ui/UI_SYSTEM_V1.md, docs/specs/README.md
+
+---
 # UI Contract v1 (Viru Tracker)
 
-> Referencia de freeze oficial: `docs/UI_SYSTEM_V1.md`
+> Referencia de freeze oficial: `docs/ui/UI_SYSTEM_V1.md`
 
 ## Objetivo
 Establecer reglas mínimas para mantener consistencia visual y reducir regresiones en la interfaz.
@@ -139,3 +146,13 @@ Estados breves:
 2. No introducir cambios visuales no intencionados.
 3. Mantener compatibilidad con dark/light.
 4. Mantener focus visible en elementos interactivos.
+
+
+
+
+
+
+
+
+
+

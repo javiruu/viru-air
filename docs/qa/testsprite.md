@@ -1,4 +1,11 @@
-﻿# Testsprite - Viru Tracker Test Catalog
+﻿Status: reference
+Scope: reusable QA reference or checklist
+Last reviewed: 2026-04-15
+Canonical source: docs/qa/testsprite.md
+Related: docs/qa/README.md, docs/archive/qa/README.md
+
+---
+# Testsprite - Viru Tracker Test Catalog
 
 Fecha: 2026-02-15
 
@@ -115,3 +122,8 @@ Para cada flag, validar:
 - El backend usa JWT bearer; los endpoints privados requieren Authorization: Bearer <token>.
 - El backend corre por defecto en 8000 y el frontend en 3000.
 - El stack base es FastAPI + Next.js; datos locales pueden usar SQLite.
+
+
+
+
+
