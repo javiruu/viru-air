@@ -2301,31 +2301,45 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
   return (
     <main className="shell quick-search-shell" id="main-content">
-      <div className="page-header qs-page-header">
-        <button className="btn-ghost" type="button" onClick={() => router.push("/dashboard")}>
-          {t("back")}
-        </button>
-        <div className="page-title">
-          <h1>{pageTitle}</h1>
-          <p>{pageSubtitle}</p>
-        </div>
-      </div>
-
-      {quickSearchHint.visible ? (
-        <section className="notice notice-compact notice-info section-gap" role="status" aria-live="polite">
-          <div>
-            <strong>{t("quickLookTitle")}</strong>
-            <p>{t("quickLookBody")}</p>
-          </div>
-          <div className="notice-actions">
-            <button type="button" className="btn-ghost btn-compact" onClick={quickSearchHint.dismiss}>
-              {t("quickLookAcknowledge")}
+      <section className="qs-command-stage">
+        <div className="panel panel-soft qs-command-stage__intro">
+          <div className="page-header qs-page-header">
+            <button className="btn-ghost" type="button" onClick={() => router.push("/dashboard")}>
+              {t("back")}
             </button>
+            <div className="page-title">
+              <h1>{pageTitle}</h1>
+              <p>{pageSubtitle}</p>
+            </div>
           </div>
-        </section>
-      ) : null}
-
-      <QuickSearchSearchForm formRef={formRef} isReady={isReady} routePulse={routePulse} onSubmit={onSubmit}>
+          <div className="qs-hero-meta" aria-live="polite">
+            <span className="qs-hero-chip">{summaryTrip}</span>
+            <span className="qs-hero-chip">{summaryMeta}</span>
+            <span className="qs-hero-chip">{summaryFlex}</span>
+            <span className={`qs-hero-chip ${showDegradedState ? "qs-hero-chip-warning" : ""}`}>
+              {showDegradedState ? t("degradedChip") : summaryStrict}
+            </span>
+            {hasSearched ? (
+              <span className="qs-hero-chip qs-hero-chip-accent">
+                {visibleResults.length} {t("results")}
+              </span>
+            ) : null}
+          </div>
+          {quickSearchHint.visible ? (
+            <section className="notice notice-compact notice-info qs-hero-hint" role="status" aria-live="polite">
+              <div>
+                <strong>{t("quickLookTitle")}</strong>
+                <p>{t("quickLookBody")}</p>
+              </div>
+              <div className="notice-actions">
+                <button type="button" className="btn-ghost btn-compact" onClick={quickSearchHint.dismiss}>
+                  {t("quickLookAcknowledge")}
+                </button>
+              </div>
+            </section>
+          ) : null}
+        </div>
+        <QuickSearchSearchForm formRef={formRef} isReady={isReady} routePulse={routePulse} onSubmit={onSubmit}>
         <div className="qs-route">
           <div className="qs-route-card">
             <label className="qs-label">
@@ -2945,29 +2959,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             {t("ready")}
           </div>
         </div>
-      </QuickSearchSearchForm>
-
-      <section className="panel panel-soft qs-search-summary-compact section-gap-sm" aria-live="polite">
-        <div className="panel-header">
-          <h3>{t("searchSummaryTitle")}</h3>
-        </div>
-        <div className="qs-summary-detail-row">
-          <span className="qs-summary-chip">{summaryTrip}</span>
-          <span className="qs-summary-chip">{summaryMeta}</span>
-          <span className="qs-summary-chip">{summaryFlex}</span>
-          <span className="qs-summary-chip">{summaryStrict}</span>
-        </div>
+        </QuickSearchSearchForm>
       </section>
-
-      {pendingSearchChanges ? (
-        <div className="notice notice-warning section-gap-sm qs-pending-changes" role="status" aria-live="polite">
-          <strong>{t("pendingChangesTitle")}</strong>
-          <span>{t("pendingChangesBody")}</span>
-          <button type="button" className="btn-search" onClick={runSearch}>
-            {t("applyAndSearch")}
-          </button>
-        </div>
-      ) : null}
 
       {hasSearched ? (
       <QuickSearchResultsWorkspace>
@@ -3359,6 +3352,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             </button>
           </div>
         </aside>
+        <div className="qs-workspace-grid">
         <section className="panel panel-soft qs-results-panel">
           <div className="qs-results-toolbar" ref={resultsToolbarRef} tabIndex={-1}>
             <div className="qs-results-summary">
@@ -3618,8 +3612,38 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             onTrackCopyParams={(rowId) => trackEvent("quicksearch_row_copy_params_clicked", { row_id: rowId })}
           />
 
+        </section>
+        <aside className="qs-context-rail">
+          {pendingSearchChanges ? (
+            <div className="notice notice-warning qs-pending-changes" role="status" aria-live="polite">
+              <strong>{t("pendingChangesTitle")}</strong>
+              <span>{t("pendingChangesBody")}</span>
+              <button type="button" className="btn-search" onClick={runSearch}>
+                {t("applyAndSearch")}
+              </button>
+            </div>
+          ) : null}
+          <section className="panel panel-soft qs-search-summary-compact" aria-live="polite">
+            <div className="panel-header">
+              <h3>{t("searchSummaryTitle")}</h3>
+            </div>
+            <div className="qs-summary-detail-row">
+              <span className="qs-summary-chip">{summaryTrip}</span>
+              <span className="qs-summary-chip">{summaryMeta}</span>
+              <span className="qs-summary-chip">{summaryFlex}</span>
+              <span className="qs-summary-chip">{summaryStrict}</span>
+            </div>
+            {executedCriteria ? (
+              <div className="qs-context-applied">
+                <strong>{t("appliedCriteriaTitle")}:</strong>
+                <span>{executedCriteria.route}</span>
+                <span>{executedCriteria.dateLabel}</span>
+                <span>{executedCriteria.paxLabel}</span>
+              </div>
+            ) : null}
+          </section>
           <details
-            className="qs-info-stack"
+            className="panel panel-soft qs-info-stack"
             open={infoExpanded}
             onToggle={(event) => {
               const open = event.currentTarget.open;
@@ -3748,7 +3772,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               </p>
             </div>
           </details>
-        </section>
+        </aside>
+        </div>
       </div>
       {activePicker ? (
         <div className="airport-modal-overlay" onClick={closePicker}>
