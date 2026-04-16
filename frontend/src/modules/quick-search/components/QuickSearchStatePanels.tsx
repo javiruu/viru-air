@@ -23,7 +23,7 @@ type Props = {
 export function QuickSearchStatePanels(props: Props) {
   if (props.searchState === "idle") {
     return (
-      <div className="qs-state">
+      <div className="qs-state qs-state-idle">
         <h3>{props.t("searchReadyTitle")}</h3>
         <p>{props.t("searchReadyText")}</p>
         <span className="muted">{props.t("searchReadyHint")}</span>
@@ -33,7 +33,7 @@ export function QuickSearchStatePanels(props: Props) {
 
   if (props.searchState === "rate") {
     return (
-      <div className="qs-state">
+      <div className="qs-state qs-state-rate">
         <h3>{props.t("rateLimitTitle")}</h3>
         <p>{props.t("rateLimitText")}</p>
         <span className="muted">{props.t("stateRateHint")}</span>
@@ -44,7 +44,7 @@ export function QuickSearchStatePanels(props: Props) {
 
   if (props.searchState === "error") {
     return (
-      <div className="qs-state">
+      <div className="qs-state qs-state-error">
         <h3>{props.t("errorTitle")}</h3>
         <p>{props.searchError || props.t("searchFailed")}</p>
         <span className="muted">{props.t("stateErrorHint")}</span>
@@ -57,7 +57,7 @@ export function QuickSearchStatePanels(props: Props) {
 
   if (props.searchState === "empty") {
     return (
-      <div className="qs-state">
+      <div className="qs-state qs-state-empty">
         <h3 className="qs-empty-title">{props.emptyStateMainTitle}</h3>
         <p>{props.t("emptyText")}</p>
         <span className="muted">{props.t("stateEmptyHint")}</span>

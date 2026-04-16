@@ -2283,6 +2283,52 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   ]);
 
   const quickSearchHint = useFtueHint("quick_search");
+  const heroStatusTone =
+    searchState === "error" || searchState === "rate"
+      ? "alert"
+      : searchState === "loading"
+        ? "active"
+        : showDegradedState || searchState === "empty"
+          ? "warning"
+          : hasSearched
+            ? "ready"
+            : "idle";
+  const heroStatusLabel =
+    searchState === "loading"
+      ? t("loadingTitle")
+      : searchState === "error"
+        ? t("errorTitle")
+        : searchState === "rate"
+          ? t("rateLimitTitle")
+          : showDegradedState
+            ? t("degradedBadge")
+            : hasSearched
+              ? t("ready")
+              : t("searchReadyTitle");
+  const heroStatusTitle =
+    searchState === "success"
+      ? `${visibleResults.length} ${t("results")}`
+      : searchState === "loading"
+        ? `${progressPercent}%`
+        : searchState === "rate"
+          ? `${rateLimitSeconds}s`
+          : searchState === "empty"
+            ? emptyStateMainTitle
+            : searchState === "error"
+              ? t("errorTitle")
+              : t("searchReadyTitle");
+  const heroStatusBody =
+    searchState === "success"
+      ? executedCriteria?.route || summaryTrip
+      : searchState === "loading"
+        ? t("loadingText")
+        : searchState === "rate"
+          ? `${t("rateLimitText")} ${rateLimitSeconds}s`
+          : searchState === "empty"
+            ? t("emptyText")
+            : searchState === "error"
+              ? (searchError || t("searchFailed"))
+              : (searchDisabledHint || t("searchReadyHint"));
 
   const runSearch = () => {
     void onSubmit({ preventDefault: () => {} } as FormEvent);
@@ -2292,42 +2338,100 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   return (
     <main className="shell quick-search-shell" id="main-content">
       <section className="qs-command-stage">
-        <div className="panel panel-soft qs-command-stage__intro">
-          <div className="page-header qs-page-header">
-            <button className="btn-ghost" type="button" onClick={() => router.push("/dashboard")}>
-              {t("back")}
-            </button>
-            <div className="page-title">
-              <h1>{pageTitle}</h1>
-              <p>{pageSubtitle}</p>
+        <div className="qs-command-stage__top">
+          <div className="panel panel-soft qs-command-stage__intro">
+            <div className="page-header qs-page-header">
+              <button className="btn-ghost" type="button" onClick={() => router.push("/dashboard")}>
+                {t("back")}
+              </button>
+              <div className="page-title">
+                <h1>{pageTitle}</h1>
+                <p>{pageSubtitle}</p>
+              </div>
             </div>
-          </div>
-          <div className="qs-hero-meta" aria-live="polite">
-            <span className="qs-hero-chip">{summaryTrip}</span>
-            <span className="qs-hero-chip">{summaryMeta}</span>
-            <span className="qs-hero-chip">{summaryFlex}</span>
-            <span className={`qs-hero-chip ${showDegradedState ? "qs-hero-chip-warning" : ""}`}>
-              {showDegradedState ? t("degradedChip") : summaryStrict}
-            </span>
-            {hasSearched ? (
-              <span className="qs-hero-chip qs-hero-chip-accent">
-                {visibleResults.length} {t("results")}
+            <div className="qs-hero-meta" aria-live="polite">
+              <span className="qs-hero-chip">{summaryTrip}</span>
+              <span className="qs-hero-chip">{summaryMeta}</span>
+              <span className="qs-hero-chip">{summaryFlex}</span>
+              <span className={`qs-hero-chip ${showDegradedState ? "qs-hero-chip-warning" : ""}`}>
+                {showDegradedState ? t("degradedChip") : summaryStrict}
               </span>
+              {hasSearched ? (
+                <span className="qs-hero-chip qs-hero-chip-accent">
+                  {visibleResults.length} {t("results")}
+                </span>
+              ) : null}
+            </div>
+            {quickSearchHint.visible ? (
+              <section className="notice notice-compact notice-info qs-hero-hint" role="status" aria-live="polite">
+                <div>
+                  <strong>{t("quickLookTitle")}</strong>
+                  <p>{t("quickLookBody")}</p>
+                </div>
+                <div className="notice-actions">
+                  <button type="button" className="btn-ghost btn-compact" onClick={quickSearchHint.dismiss}>
+                    {t("quickLookAcknowledge")}
+                  </button>
+                </div>
+              </section>
             ) : null}
           </div>
-          {quickSearchHint.visible ? (
-            <section className="notice notice-compact notice-info qs-hero-hint" role="status" aria-live="polite">
-              <div>
-                <strong>{t("quickLookTitle")}</strong>
-                <p>{t("quickLookBody")}</p>
+          <aside className={`panel panel-soft qs-command-stage__status qs-command-stage__status-${heroStatusTone}`} aria-live="polite">
+            <div className="qs-command-stage__status-head">
+              <span className="qs-command-stage__eyebrow">{t("searchSummaryTitle")}</span>
+              <span className={`qs-command-stage__status-badge qs-command-stage__status-badge-${heroStatusTone}`}>
+                {heroStatusLabel}
+              </span>
+            </div>
+            <div className="qs-command-stage__status-copy">
+              <strong>{heroStatusTitle}</strong>
+              <p>{heroStatusBody}</p>
+            </div>
+            <div className="qs-command-stage__status-grid">
+              <div className="qs-command-stage__metric">
+                <span>{searchState === "loading" ? t("loadingTitle") : t("results")}</span>
+                <strong>{searchState === "loading" ? `${progressPercent}%` : visibleResults.length}</strong>
               </div>
-              <div className="notice-actions">
-                <button type="button" className="btn-ghost btn-compact" onClick={quickSearchHint.dismiss}>
-                  {t("quickLookAcknowledge")}
-                </button>
+              <div className="qs-command-stage__metric">
+                <span>{t("filtersTitle")}</span>
+                <strong>{activeChips.length}</strong>
               </div>
-            </section>
-          ) : null}
+              <div className="qs-command-stage__metric">
+                <span>{t("infoSectionTitle")}</span>
+                <strong>{infoItemsCount}</strong>
+              </div>
+            </div>
+            {executedCriteria ? (
+              <div className="qs-command-stage__snapshot">
+                <span>{executedCriteria.route}</span>
+                <span>{executedCriteria.dateLabel}</span>
+                <span>{executedCriteria.paxLabel}</span>
+              </div>
+            ) : (
+              <div className="qs-summary-detail-row qs-command-stage__snapshot">
+                <span className="qs-summary-chip">{summaryTrip}</span>
+                <span className="qs-summary-chip">{summaryMeta}</span>
+                <span className="qs-summary-chip">{summaryFlex}</span>
+              </div>
+            )}
+            <div className="qs-command-stage__signals">
+              {pendingSearchChanges ? (
+                <span className="qs-summary-chip qs-command-stage__signal qs-command-stage__signal-pending">
+                  {t("pendingChangesTitle")}
+                </span>
+              ) : null}
+              {warningSeverity.critical.length > 0 ? (
+                <span className="qs-summary-chip qs-command-stage__signal qs-command-stage__signal-critical">
+                  {warningSeverity.critical.length} {warningProblemTitle}
+                </span>
+              ) : null}
+              {searchMeta?.freshness_ts ? (
+                <span className="qs-summary-chip qs-command-stage__signal">
+                  {t("freshnessLabel")} {formatFreshness(searchMeta.freshness_ts)}
+                </span>
+              ) : null}
+            </div>
+          </aside>
         </div>
         <QuickSearchSearchForm formRef={formRef} isReady={isReady} routePulse={routePulse} onSubmit={onSubmit}>
         <div className="qs-route">
@@ -3344,6 +3448,24 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         </aside>
         <div className="qs-workspace-grid">
         <section className="panel panel-soft qs-results-panel">
+          <div className="qs-results-stagehead">
+            <div className="qs-results-stagehead__copy">
+              <span className="qs-results-stagehead__eyebrow">{t("searchSummaryTitle")}</span>
+              <h2>{hasSearched ? `${visibleResults.length} ${t("results")}` : t("searchReadyTitle")}</h2>
+              <p>
+                {executedCriteria
+                  ? `${executedCriteria.route} - ${executedCriteria.dateLabel}`
+                  : `${summaryTrip} - ${summaryMeta}`}
+              </p>
+            </div>
+            <div className="qs-results-stagehead__meta">
+              <span className="qs-summary-chip">{summaryFlex}</span>
+              <span className="qs-summary-chip">{showDegradedState ? t("degradedBadge") : summaryStrict}</span>
+              {pendingSearchChanges ? (
+                <span className="qs-summary-chip qs-results-stagehead__chip-warning">{t("pendingChangesTitle")}</span>
+              ) : null}
+            </div>
+          </div>
           <div className="qs-results-toolbar" ref={resultsToolbarRef} tabIndex={-1}>
             <div className="qs-results-summary">
               <strong>{visibleResults.length}</strong> {t("results")}
