@@ -7,7 +7,7 @@ from typing import Any
 import requests
 from fastapi import APIRouter, HTTPException
 
-from app.infrastructure.airports_catalog import nearby_airports
+from app.infrastructure.airports_catalog import AIRPORTS, nearby_airports
 
 router = APIRouter()
 
@@ -59,6 +59,18 @@ def _validate_iata(value: str) -> str:
     if len(cleaned) != 3 or not cleaned.isalpha():
         raise HTTPException(status_code=400, detail="iata_invalido")
     return cleaned
+
+
+def _country_code_from_airport(airport) -> str:
+    region = (airport.region or "").strip().upper()
+    if "-" in region:
+        prefix = region.split("-", 1)[0].strip()
+        if len(prefix) == 2 and prefix.isalpha():
+            return prefix
+    country = (airport.country or "").strip().upper()
+    if len(country) == 2 and country.isalpha():
+        return country
+    return ""
 
 
 @lru_cache(maxsize=512)
@@ -154,5 +166,27 @@ def nearby(
         "radius_km": radius_km,
         "nearby": matches,
         "count": len(matches),
+        "source": "catalog_master",
+    }
+
+
+@router.get("/seeds")
+def list_seed_airports() -> dict[str, Any]:
+    items = [
+        {
+            "iata": airport.iata,
+            "name": airport.name,
+            "municipality": airport.city,
+            "country_code": _country_code_from_airport(airport),
+            "iso_region": airport.region or "",
+            "type": airport.airport_type or "",
+            "is_primary": airport.is_primary,
+            "source": airport.source,
+        }
+        for airport in AIRPORTS
+    ]
+    return {
+        "items": items,
+        "count": len(items),
         "source": "catalog_master",
     }

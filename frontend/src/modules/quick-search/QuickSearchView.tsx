@@ -67,7 +67,6 @@ import { normalizeQuickSearchResponse } from "@/modules/quick-search/responseNor
 import { useQuickSearchMainState } from "@/modules/quick-search/state/useQuickSearchController";
 import { useQuickSearchLoadingFlow } from "@/modules/quick-search/state/useQuickSearchLoadingFlow";
 import { useQuickSearchScreenState } from "@/modules/quick-search/state/useQuickSearchScreenState";
-import airportsIata from "@/data/airports_iata.min.json";
 
 const RELAX_HIGHLIGHT_BY_ACTION: Record<ZeroResultRelaxAction, Exclude<SummaryHighlightKey, null>> = {
   disable_strict: "strict",
@@ -87,32 +86,18 @@ type ExecutedCriteriaSnapshot = {
   paxLabel: string;
 };
 
-const AIRPORTS = airportsIata as Array<{ 
-  iata: string;
-  name: string;
-  municipality: string;
-  country_code: string;
-  iso_region: string;
-  type: string;
-}>;
+type QuickSearchSeedAirportResponse = {
+  items: AirportIataEntry[];
+  count: number;
+  source: string;
+};
 
-const airportsByCountry = new Map<string, typeof AIRPORTS>();
-const airportsByIata = new Map<string, (typeof AIRPORTS)[number]>();
-
-for (const a of AIRPORTS) {
-  airportsByIata.set(a.iata, a);
-  const key = a.country_code || "";
-  const list = airportsByCountry.get(key) || [];
-  list.push(a);
-  airportsByCountry.set(key, list);
-}
-
-function buildAirportSuggestions(value: string, limit = 6) {
+function buildAirportSuggestions(airports: AirportIataEntry[], value: string, limit = 6) {
   const q = value.trim().toLowerCase();
   if (!q) return [];
   const out: Array<{ iata: string; name: string }> = [];
   const seen = new Set<string>();
-  for (const airport of AIRPORTS) {
+  for (const airport of airports) {
     if (out.length >= limit) break;
     if (airport.iata.toLowerCase().startsWith(q)) {
       out.push({
@@ -123,7 +108,7 @@ function buildAirportSuggestions(value: string, limit = 6) {
     }
   }
   if (out.length < limit) {
-    for (const airport of AIRPORTS) {
+    for (const airport of airports) {
       if (out.length >= limit) break;
       if (seen.has(airport.iata)) continue;
       const hay = `${airport.name} ${airport.municipality}`.toLowerCase();
@@ -141,6 +126,7 @@ function buildAirportSuggestions(value: string, limit = 6) {
 
 export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchMode }) {
   const router = useRouter();
+  const [seedAirports, setSeedAirports] = useState<AirportIataEntry[]>([]);
   const [executedCriteria, setExecutedCriteria] = useState<ExecutedCriteriaSnapshot | null>(null);
   // signature of the last successfully executed criteria (used to detect pending changes)
   const [appliedCriteriaSignature, setAppliedCriteriaSignature] = useState<string | null>(null);
@@ -363,6 +349,41 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     debugLastTickLogTsRef,
   } = useQuickSearchMainState(initialOrigin, initialDestination);
   const normalizedRadiusKm = Math.min(500, Math.max(10, Number.isFinite(radiusKm) ? radiusKm : 150));
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch<QuickSearchSeedAirportResponse>("/airports/seeds")
+      .then((data) => {
+        if (cancelled) return;
+        setSeedAirports(Array.isArray(data?.items) ? data.items : []);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setSeedAirports([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const airportsByCountry = useMemo(() => {
+    const next = new Map<string, AirportIataEntry[]>();
+    for (const airport of seedAirports) {
+      const key = airport.country_code || "";
+      const list = next.get(key) || [];
+      list.push(airport);
+      next.set(key, list);
+    }
+    return next;
+  }, [seedAirports]);
+
+  const airportsByIata = useMemo(() => {
+    const next = new Map<string, AirportIataEntry>();
+    for (const airport of seedAirports) {
+      next.set(airport.iata, airport);
+    }
+    return next;
+  }, [seedAirports]);
 
   const debugLog = useCallback((message: string) => {
     if (process.env.NODE_ENV === "production" || typeof window === "undefined") return;
@@ -684,7 +705,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     }));
     list.sort((a, b) => a.name.localeCompare(b.name));
     return list;
-  }, [countryDisplayNames]);
+  }, [airportsByCountry, countryDisplayNames]);
   const countryByCode = useMemo(() => {
     return new Map(countryOptions.map((country) => [country.code, country]));
   }, [countryOptions]);
@@ -694,7 +715,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     const mad = airportsByIata.get("MAD");
     const next = (mad && countryByCode.get(mad.country_code)) || countryOptions[0] || null;
     setSelectedCountry(next);
-  }, [selectedCountry, countryOptions, countryByCode, setSelectedCountry]);
+  }, [airportsByIata, selectedCountry, countryOptions, countryByCode, setSelectedCountry]);
 
   useEffect(() => {
     if (!selectedCountry) return;
@@ -831,7 +852,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     const entry = airportsByIata.get(code);
     if (!entry) return null;
     return countryByCode.get(entry.country_code) || null;
-  }, [countryByCode]);
+  }, [airportsByIata, countryByCode]);
 
   function weatherLabel(code: number): string {
     if (code === 0) return t("weatherClear");
@@ -1677,11 +1698,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     return "round_trip";
   }
 
-  const originSuggestions = useMemo(() => buildAirportSuggestions(origin), [origin]);
-  const destinationSuggestions = useMemo(() => buildAirportSuggestions(destination), [destination]);
+  const originSuggestions = useMemo(() => buildAirportSuggestions(seedAirports, origin), [origin, seedAirports]);
+  const destinationSuggestions = useMemo(() => buildAirportSuggestions(seedAirports, destination), [destination, seedAirports]);
   const countryAirports = useMemo(
     () => (selectedCountry ? airportsByCountry.get(selectedCountry.code) || [] : []),
-    [selectedCountry],
+    [airportsByCountry, selectedCountry],
   );
   const filteredCountryAirports = useMemo(() => {
     const q = airportSearch.trim().toLowerCase();
@@ -1969,6 +1990,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     destinationCountryOnly,
     includeNearbyOrigins,
     includeNearbyDestinations,
+    airportsByIata,
     findCountryByIataLocal,
   ]);
   const loadingSubcheckActiveIndex = loadingPhase === "requesting"

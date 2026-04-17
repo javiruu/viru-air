@@ -110,6 +110,14 @@ The endpoint still returns `query`, `filters`, `results` and now adds:
 - `meta.filter_support`
 - `meta.pair_counts`
 
+## Quick-search seed catalog
+- `GET /api/v1/airports/seeds` is the canonical source for seed airports allowed by quick-search UI.
+- The UI should use this catalog for IATA validation, autocomplete and country-only airport pools instead of broader static airport datasets.
+- Response shape:
+  - `items[]`: `{ iata, name, municipality, country_code, iso_region, type, is_primary, source }`
+  - `count`
+  - `source`
+
 `execution.max_pairs` is applied to base O×D planned pairs (after filtering and priority ordering).
 `execution.max_requests` limits provider request units (O×D×date).
 `execution.timeout_ms` is applied per provider request.
