@@ -761,8 +761,17 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     return `https://www.ryanair.com/es/es/trip/flights/select?${params.toString()}`;
   }, [adults, destination, destinationCountryOnly, isReturn, origin, originCountryOnly, returnDate, travelDate]);
 
+  const originCode = origin.trim().toUpperCase();
+  const destinationCode = destination.trim().toUpperCase();
+  const originValid = originCountryOnly ? originCountryOnly.airports.length > 0 : (
+    originCode.length === 3 && airportsByIata.has(originCode)
+  );
+  const destinationValid = destinationCountryOnly ? destinationCountryOnly.airports.length > 0 : (
+    destinationCode.length === 3 && airportsByIata.has(destinationCode)
+  );
+
   useEffect(() => {
-    if (!origin || !destination || !travelDate || originCountryOnly || destinationCountryOnly) {
+    if (!travelDate || originCountryOnly || destinationCountryOnly || !originValid || !destinationValid) {
       setDeepLink(null);
       setDeepLinkError("");
       return;
@@ -773,8 +782,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     }
     const controller = new AbortController();
     const params = new URLSearchParams();
-    params.set("origin_iata", origin);
-    params.set("destination_iata", destination);
+    params.set("origin_iata", originCode);
+    params.set("destination_iata", destinationCode);
     params.set("date_out", travelDate);
     if (isReturn && returnDate) {
       params.set("date_in", returnDate);
@@ -800,7 +809,22 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         setDeepLinkError(t("deepLinkError"));
       });
     return () => controller.abort();
-  }, [origin, destination, travelDate, returnDate, isReturn, adults, locale, t, originCountryOnly, destinationCountryOnly, setDeepLink, setDeepLinkError]);
+  }, [
+    adults,
+    destinationCode,
+    destinationCountryOnly,
+    destinationValid,
+    isReturn,
+    locale,
+    originCode,
+    originCountryOnly,
+    originValid,
+    returnDate,
+    setDeepLink,
+    setDeepLinkError,
+    t,
+    travelDate,
+  ]);
 
   const findCountryByIataLocal = useCallback((iata: string): CountryAirports | null => {
     const code = iata.trim().toUpperCase();
@@ -993,8 +1017,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setExcludeDestinations(nextExcludeDestinations);
     const range = buildDateRange(travelDate, isReturn ? returnDate : travelDate);
     const payload = {
-      origin_iata: originCountryOnly ? originCountryOnly.airports.map((item) => item.iata) : origin,
-      destination_iata: destinationCountryOnly ? destinationCountryOnly.airports.map((item) => item.iata) : destination,
+      origin_iata: originCountryOnly ? originCountryOnly.airports.map((item) => item.iata) : originCode,
+      destination_iata: destinationCountryOnly ? destinationCountryOnly.airports.map((item) => item.iata) : destinationCode,
       travel_date: travelDate,
       date: travelDate,
       flex_days_before: daysBefore,
@@ -1043,8 +1067,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     try {
       if (!isCurrentRequest()) return;
       setIsLoading(true);
-      const originWeatherIata = originCountryOnly ? "" : origin;
-      const destinationWeatherIata = destinationCountryOnly ? "" : destination;
+      const originWeatherIata = originCountryOnly ? "" : originCode;
+      const destinationWeatherIata = destinationCountryOnly ? "" : destinationCode;
       const weatherRangeSupported = range.length > 0 && isWeatherRangeSupported(range[0], range[range.length - 1]);
       if (!weatherRangeSupported && (originWeatherIata || destinationWeatherIata)) {
         setWeatherMessage(t("weatherUnavailableRange"));
@@ -1653,14 +1677,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     return "round_trip";
   }
 
-  const originCode = origin.trim().toUpperCase();
-  const destinationCode = destination.trim().toUpperCase();
-  const originValid = originCountryOnly ? originCountryOnly.airports.length > 0 : (
-    originCode.length === 3 && airportsByIata.has(originCode)
-  );
-  const destinationValid = destinationCountryOnly ? destinationCountryOnly.airports.length > 0 : (
-    destinationCode.length === 3 && airportsByIata.has(destinationCode)
-  );
   const originSuggestions = useMemo(() => buildAirportSuggestions(origin), [origin]);
   const destinationSuggestions = useMemo(() => buildAirportSuggestions(destination), [destination]);
   const countryAirports = useMemo(
