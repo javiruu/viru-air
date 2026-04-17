@@ -5,9 +5,11 @@ from unittest.mock import patch
 try:
     from app.api.v1.search import quick_search
     from app.domain.entities import ProviderFlight
+    from app.services.quick_search_execution import _CACHE
 except Exception:  # pragma: no cover
     quick_search = None
     ProviderFlight = None
+    _CACHE = None
 
 
 def _flight(price: float, dep: str, source: str = "test-provider") -> ProviderFlight:
@@ -22,6 +24,10 @@ def _flight(price: float, dep: str, source: str = "test-provider") -> ProviderFl
 
 @unittest.skipIf(quick_search is None or ProviderFlight is None, "fastapi app deps not available")
 class QuickSearchE2ERegressionTests(unittest.TestCase):
+    def setUp(self):
+        if _CACHE is not None:
+            _CACHE.clear()
+
     def _payload(self, **overrides):
         payload = {
             "origin": {"seed_iata": "LEI", "include_nearby": False, "radius_km": 250, "max_candidates": 6},
@@ -33,15 +39,45 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
         payload.update(overrides)
         return payload
 
+    def _call_quick_search(self, payload, debug=True):
+        return quick_search(
+            payload=payload,
+            origin_iata=None,
+            destination_iata=None,
+            travel_date=None,
+            radius_km=None,
+            include_stops=None,
+            include_nearby_origins=None,
+            include_nearby_destinations=None,
+            depart_after=None,
+            depart_before=None,
+            max_stops=None,
+            exclude_origins=None,
+            exclude_destinations=None,
+            strict_filters=None,
+            soft_filters_weight=None,
+            flex_days_before=None,
+            flex_days_after=None,
+            debug=debug,
+        )
+
     def test_seed_only_base_flow(self):
         payload = self._payload()
         with patch("app.api.v1.search.provider.get_flights", return_value=[_flight(55, "10:00")]):
-            result = quick_search(payload=payload, debug=True)
+            result = self._call_quick_search(payload)
 
         self.assertEqual(result["meta"]["query_trace_id"][:3], "qs_")
         self.assertEqual(len(result["results"]), 1)
-        self.assertEqual(result["results"][0]["origin"], "LEI")
-        self.assertEqual(result["results"][0]["destination"], "DUB")
+        first = result["results"][0]
+        self.assertEqual(first["origin"], "LEI")
+        self.assertEqual(first["destination"], "DUB")
+        self.assertEqual(first["result_id"], "LEI-DUB-2026-06-14-0")
+        self.assertEqual(first["price_total"], 55)
+        self.assertEqual(first["duration_total_min"], None)
+        self.assertEqual(first["ranking_score"], first["score"]["final_score"])
+        self.assertFalse(first["stale_data"])
+        self.assertEqual(first["itinerary_type"], "direct")
+        self.assertEqual(first["legs"], [])
 
     def test_origin_nearby_expansion_is_real(self):
         payload = self._payload(origin={"seed_iata": "LEI", "include_nearby": True, "radius_km": 260, "max_candidates": 4})
@@ -54,7 +90,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             return []
 
         with patch("app.api.v1.search.provider.get_flights", side_effect=fake_fetch):
-            result = quick_search(payload=payload, debug=True)
+            result = self._call_quick_search(payload)
 
         expanded_origins = result["query"]["expanded_origins"]
         self.assertTrue(any(item["expanded_iata"] == "AGP" for item in expanded_origins))
@@ -69,7 +105,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
         )
 
         with patch("app.api.v1.search.provider.get_flights", return_value=[_flight(70, "11:00")]):
-            result = quick_search(payload=payload, debug=True)
+            result = self._call_quick_search(payload)
 
         categories = {item["pair_reason"] for item in result["meta"]["planned_pairs"]}
         self.assertIn("seed-seed", categories)
@@ -86,7 +122,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             return []
 
         with patch("app.api.v1.search.provider.get_flights", side_effect=fake_fetch):
-            result = quick_search(payload=payload, debug=True)
+            result = self._call_quick_search(payload)
 
         self.assertGreaterEqual(len(result["results"]), 1)
         top = result["results"][0]
@@ -101,7 +137,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             execution={"max_pairs": 10, "max_requests": 2, "timeout_ms": 3000, "concurrency_limit": 2},
         )
         with patch("app.api.v1.search.provider.get_flights", return_value=[_flight(90, "12:00")]):
-            result = quick_search(payload=payload, debug=True)
+            result = self._call_quick_search(payload)
 
         warning_codes = {w["code"] for w in result["meta"]["warnings_structured"]}
         self.assertIn("max_requests_reached", warning_codes)
@@ -119,7 +155,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             return [_flight(72, "13:00")]
 
         with patch("app.api.v1.search.provider.get_flights", side_effect=fake_fetch):
-            result = quick_search(payload=payload, debug=True)
+            result = self._call_quick_search(payload)
 
         warning_codes = {w["code"] for w in result["meta"]["warnings_structured"]}
         self.assertIn("provider_timeout_partial", warning_codes)
