@@ -98,6 +98,32 @@ test("normalizeQuickSearchResults maps backend score breakdown into ranking_scor
   assert.deepEqual(normalized[0]?.legs, []);
 });
 
+test("normalizeQuickSearchResults coerces malformed raw values into render-safe defaults", () => {
+  const normalized = normalizeQuickSearchResults([
+    {
+      origin: null as unknown as string,
+      destination: undefined as unknown as string,
+      travel_date: null as unknown as string,
+      departure_time_local: 123 as unknown as string,
+      price: "55" as unknown as number,
+      currency: 42 as unknown as string,
+      source: { provider: "ryanair" } as unknown as string,
+      price_total: "57" as unknown as number,
+      duration_total: "90" as unknown as number,
+      freshness_ts: 123 as unknown as string,
+    },
+  ]);
+
+  assert.equal(normalized[0]?.origin, "UNK");
+  assert.equal(normalized[0]?.destination, "UNK");
+  assert.equal(normalized[0]?.price, 55);
+  assert.equal(normalized[0]?.price_total, 57);
+  assert.equal(normalized[0]?.currency, "EUR");
+  assert.equal(normalized[0]?.source, "");
+  assert.equal(normalized[0]?.duration_total_min, 90);
+  assert.equal(normalized[0]?.freshness_ts, null);
+});
+
 test("buildQuickSearchCanonicalPayload maps frontend request into contract v2 body", () => {
   const payload = buildQuickSearchCanonicalPayload({
     origin_iata: ["MAD", "BCN"],

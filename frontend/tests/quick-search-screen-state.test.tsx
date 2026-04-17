@@ -122,3 +122,15 @@ test("useQuickSearchScreenState derives zero-result causes and relax actions fro
 
   assert.equal(expanded.visibleZeroResultCauses.length, expanded.zeroResultCauses.length);
 });
+
+test("useQuickSearchScreenState groups sources defensively when raw source values are malformed", () => {
+  const state = renderScreenState({
+    results: [
+      buildResult({ result_id: "raw-1", source: 123 as unknown as string }),
+      buildResult({ result_id: "raw-2", destination: "LIS", source: "" }),
+    ],
+  });
+
+  assert.deepEqual(state.sourcesSummary.entries, [["sourceUnknown", 2]]);
+  assert.equal(state.sourcesSummary.preview, "sourceUnknown (2)");
+});

@@ -1558,6 +1558,13 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     return `${hours} h`;
   }
 
+  function formatFreshnessTime(value?: string | null) {
+    if (!value) return null;
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return parsed.toLocaleTimeString(localeTag, { hour: "2-digit", minute: "2-digit" });
+  }
+
   function mapFieldValidationMessage(field: QuickSearchField, message: string): string {
     const normalized = message.toLowerCase();
     if (field === "travel_date") {
@@ -4041,8 +4048,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               {showDegradedState ? (
                 <p className="panel-note qs-degraded-inline">
                   <strong>{t("degradedBadge")}</strong>: {t("degradedHint")}
-                  {searchMeta?.freshness_ts ? (
-                    <span> · {t("lastData")}: {new Date(searchMeta.freshness_ts).toLocaleTimeString(localeTag, { hour: "2-digit", minute: "2-digit" })}</span>
+                  {formatFreshnessTime(searchMeta?.freshness_ts) ? (
+                    <span> · {t("lastData")}: {formatFreshnessTime(searchMeta?.freshness_ts)}</span>
                   ) : null}
                 </p>
               ) : null}

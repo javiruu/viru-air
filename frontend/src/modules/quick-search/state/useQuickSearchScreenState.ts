@@ -145,7 +145,10 @@ export function useQuickSearchScreenState({
   const sourcesSummary = useMemo(() => {
     const grouped = new Map<string, number>();
     visibleResults.forEach((item) => {
-      const source = (item.source || "").trim() || t("sourceUnknown");
+      const source =
+        typeof item.source === "string" && item.source.trim()
+          ? item.source.trim()
+          : t("sourceUnknown");
       grouped.set(source, (grouped.get(source) || 0) + 1);
     });
     const entries = Array.from(grouped.entries()).sort((a, b) => b[1] - a[1]);
