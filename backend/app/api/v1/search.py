@@ -905,13 +905,20 @@ def quick_search(
         },
         "results": [
             {
+                "result_id": f"{item.origin}-{item.destination}-{item.travel_date}-{idx}",
                 "origin": item.origin,
                 "destination": item.destination,
                 "travel_date": str(item.travel_date),
                 "departure_time_local": item.flight.departure_time_local,
                 "price": item.flight.price,
+                "price_total": item.flight.price,
                 "currency": item.flight.currency,
                 "source": item.flight.source,
+                "duration_total_min": None,
+                "ranking_score": item.final_score,
+                "stale_data": False,
+                "itinerary_type": "direct",
+                "legs": [],
                 "score": item.score_breakdown,
                 "origin_seed_iata": item.origin_seed_iata,
                 "destination_seed_iata": item.destination_seed_iata,
@@ -927,6 +934,6 @@ def quick_search(
                 "selected_from_pair_id": f"{item.origin}->{item.destination}",
                 "candidate_reason": "seed" if item.origin_is_seed and item.destination_is_seed else "expanded",
             }
-            for item in deduped.results
+            for idx, item in enumerate(deduped.results)
         ],
     }

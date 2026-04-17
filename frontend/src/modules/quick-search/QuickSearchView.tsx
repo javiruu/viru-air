@@ -57,11 +57,13 @@ import {
   RegionPref,
   SearchResult,
   SearchResponse,
+  SearchResponseRaw,
   WeatherDay,
   WeatherReport,
   SummaryHighlightKey,
   ZeroResultRelaxAction,
 } from "@/modules/quick-search/types";
+import { normalizeQuickSearchResponse } from "@/modules/quick-search/responseNormalizer";
 import { useQuickSearchMainState } from "@/modules/quick-search/state/useQuickSearchController";
 import { useQuickSearchLoadingFlow } from "@/modules/quick-search/state/useQuickSearchLoadingFlow";
 import { useQuickSearchScreenState } from "@/modules/quick-search/state/useQuickSearchScreenState";
@@ -1073,14 +1075,14 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           setWeatherMessage(hasOutOfRange ? t("weatherUnavailableRange") : t("weatherError"));
         }
       });
-      const searchResult = await apiFetchWithStatus<SearchResponse>("/search/quick", {
+      const searchResult = await apiFetchWithStatus<SearchResponseRaw>("/search/quick", {
         method: "POST",
         body: JSON.stringify(canonicalPayload),
       });
       if (!isCurrentRequest()) return;
       setProgress("response_parsed", 80);
       if (searchResult.ok) {
-          const data = searchResult.data;
+          const data: SearchResponse = normalizeQuickSearchResponse(searchResult.data);
           setResults(data.results);
           setExecutedCriteria(nextExecutedCriteria);
           setFiltersMeta(data.filters || null);

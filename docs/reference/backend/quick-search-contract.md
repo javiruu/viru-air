@@ -1,6 +1,6 @@
 ﻿Status: reference
 Scope: technical reference for implementation work
-Last reviewed: 2026-04-15
+Last reviewed: 2026-04-17
 Canonical source: docs/reference/backend/quick-search-contract.md
 Related: docs/INDICE_UNICO.md, docs/overview/current-state.md
 
@@ -117,6 +117,28 @@ The endpoint still returns `query`, `filters`, `results` and now adds:
 
 Planned pairs expose: seed/nearby category, distances from seed, and `pair_priority_score`.
 Execution metadata includes waves, cache hits, provider calls and effective limits.
+
+### Result item shape (`results[]`)
+Stable fields returned for frontend compatibility:
+- `result_id`: stable row id generated server-side
+- `origin`, `destination`, `travel_date`, `departure_time_local`
+- `price`, `price_total`, `currency`, `source`
+- `duration_total_min`: nullable until provider duration data is exposed in quick mode
+- `ranking_score`: numeric alias of the final ranking score used by the UI
+- `stale_data`: current quick-search responses return `false` unless degraded/stale semantics are introduced later
+- `itinerary_type`: currently `direct` in quick mode
+- `legs`: currently an empty list in quick mode unless richer provider segment data is introduced later
+
+Compatibility/extended fields still returned:
+- `score`: structured ranking breakdown
+- `origin_seed_iata`, `destination_seed_iata`
+- `origin_iata_used`, `destination_iata_used`
+- `origin_is_seed`, `destination_is_seed`
+- `origin_distance_from_seed_km`, `destination_distance_from_seed_km`
+- `pair_category`, `discovery_explanation`, `query_trace_id`, `selected_from_pair_id`, `candidate_reason`
+
+Defensive client note:
+- Clients should still normalize missing optional fields such as `duration_total_min`, `legs` or `ranking_score` for backward compatibility with older responses.
 
 ## Ranking (current)
 Final result ranking uses a multi-factor score:

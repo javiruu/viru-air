@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
 import { buildQuickSearchCanonicalPayload, toQuickSearchQuery } from "../src/modules/quick-search/requestBuilder";
 import { prepareQuickSearchRequest } from "../src/modules/quick-search/api/buildQuickSearchRequest";
-import { normalizeQuickSearchResults } from "../src/modules/quick-search/responseNormalizer";
+import { normalizeQuickSearchResponse, normalizeQuickSearchResults } from "../src/modules/quick-search/responseNormalizer";
+import { QuickSearchResultsList } from "../src/modules/quick-search/components/QuickSearchResultsList";
 
 test("toQuickSearchQuery keeps quick-search API contract shape", () => {
   const query = toQuickSearchQuery({
@@ -71,6 +74,28 @@ test("normalizeQuickSearchResults fills fallback fields (edge case: missing ids/
   assert.equal(normalized[0]?.price_total, 42);
   assert.equal(normalized[0]?.itinerary_type, "self_connect");
   assert.equal(normalized[0]?.legs?.length, 1);
+});
+
+test("normalizeQuickSearchResults maps backend score breakdown into ranking_score", () => {
+  const normalized = normalizeQuickSearchResults([
+    {
+      origin: "LEI",
+      destination: "DUB",
+      travel_date: "2026-06-14",
+      departure_time_local: "10:00",
+      price: 55,
+      currency: "EUR",
+      source: "ryanair",
+      score: {
+        final_score: 12.34,
+        pair_category: "seed-seed",
+      },
+      legs: null as unknown as [],
+    },
+  ]);
+
+  assert.equal(normalized[0]?.ranking_score, 12.34);
+  assert.deepEqual(normalized[0]?.legs, []);
 });
 
 test("buildQuickSearchCanonicalPayload maps frontend request into contract v2 body", () => {
@@ -184,4 +209,75 @@ test("prepareQuickSearchRequest normalizes input, clamps values and reports cont
       "invalid_max_stops",
     ],
   );
+});
+
+test("normalizeQuickSearchResponse keeps quick-search results renderable from backend raw shape", () => {
+  const response = normalizeQuickSearchResponse({
+    meta: {
+      currency: "EUR",
+      stale_data: false,
+    },
+    results: [
+      {
+        origin: "LEI",
+        destination: "DUB",
+        travel_date: "2026-06-14",
+        departure_time_local: "10:00",
+        price: 55,
+        currency: "EUR",
+        source: "ryanair",
+        score: {
+          final_score: 0.91,
+        },
+      },
+    ],
+    filters: {
+      warnings: [],
+    },
+  });
+
+  const html = renderToStaticMarkup(
+    React.createElement(QuickSearchResultsList, {
+      visibleResults: response.results,
+      compactView: false,
+      expandedRows: {},
+      openRowMenuId: null,
+      deeplinkUrl: "",
+      hiddenHighRiskResults: [],
+      showHighRisk: false,
+      origin: "LEI",
+      destination: "DUB",
+      radiusKm: 150,
+      departAfter: "07:00",
+      departBefore: "22:00",
+      localeTag: "es",
+      getCopyPayload: () => "payload",
+      rowMenuTriggerRefs: { current: {} },
+      t: (key: string) => key,
+      formatMoney: (value: number, currency?: string) => `${currency || "EUR"} ${value}`,
+      formatScore: (value: number) => value.toFixed(2),
+      formatRiskLabel: (label?: string | null) => label || "--",
+      formatFreshness: (value?: string | null) => value || "--",
+      formatMinutes: (value?: number | null) => `${value ?? 0} min`,
+      resultKey: (result: { result_id?: string | null }) => result.result_id || "fallback",
+      getResultTags: () => [],
+      addToWatchlist: () => undefined,
+      setExpandedRows: () => undefined,
+      setSelectedResultId: () => undefined,
+      setOpenRowMenuId: () => undefined,
+      setCopyModalPayload: () => undefined,
+      setCopyModalOpen: () => undefined,
+      closeRowMenu: () => undefined,
+      onTrackOpenRyanair: () => undefined,
+      onToggleHighRisk: () => undefined,
+      onTrackRowOverflow: () => undefined,
+      onTrackCopyParams: () => undefined,
+    }),
+  );
+
+  assert.equal(response.results[0]?.ranking_score, 0.91);
+  assert.equal(response.results[0]?.price_total, 55);
+  assert.match(html, /LEI/);
+  assert.match(html, /DUB/);
+  assert.match(html, /EUR 55/);
 });

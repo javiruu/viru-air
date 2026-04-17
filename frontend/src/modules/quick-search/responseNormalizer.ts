@@ -1,1 +1,1 @@
-export { normalizeQuickSearchResults } from "./api/normalizeQuickSearchResponse";
+export { normalizeQuickSearchResponse, normalizeQuickSearchResults } from "./api/normalizeQuickSearchResponse";

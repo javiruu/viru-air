@@ -1,4 +1,23 @@
-export type SearchResult = {
+export type QuickSearchLeg = {
+  origin_iata: string;
+  destination_iata: string;
+  dep_ts: string;
+  arr_ts: string;
+  flight_num?: string | null;
+  price?: number | null;
+};
+
+export type QuickSearchScoreBreakdown = {
+  final_score?: number | null;
+  price_component?: number | null;
+  origin_seed_penalty?: number | null;
+  destination_seed_penalty?: number | null;
+  distance_penalty_total?: number | null;
+  pair_category?: string | null;
+  soft_filters_weight_applied?: number | null;
+};
+
+export type SearchResultRaw = {
   result_id?: string | null;
   origin: string;
   destination: string;
@@ -15,28 +34,20 @@ export type SearchResult = {
   minutes_buffer?: number | null;
   distance_km_ground?: number | null;
   ranking_score?: number | null;
+  score?: QuickSearchScoreBreakdown | number | null;
   freshness_ts?: string | null;
   stale_data?: boolean;
   deeplink_url?: string | null;
   itinerary_type?: string | null;
-  legs?: Array<{
-    origin_iata: string;
-    destination_iata: string;
-    dep_ts: string;
-    arr_ts: string;
-    flight_num?: string | null;
-    price?: number | null;
-  }>;
+  legs?: QuickSearchLeg[];
   segments?: {
-    legs?: Array<{
-      origin_iata: string;
-      destination_iata: string;
-      dep_ts: string;
-      arr_ts: string;
-      flight_num?: string | null;
-      price?: number | null;
-    }>;
+    legs?: QuickSearchLeg[];
   };
+};
+
+export type SearchResult = Omit<SearchResultRaw, "score"> & {
+  ranking_score?: number | null;
+  legs?: QuickSearchLeg[];
 };
 
 export type SearchFilters = {
@@ -46,7 +57,7 @@ export type SearchFilters = {
   discarded?: number;
 };
 
-export type SearchResponse = {
+export type SearchResponseRaw = {
   job_id?: string;
   meta?: {
     query?: Record<string, unknown>;
@@ -60,6 +71,11 @@ export type SearchResponse = {
     truncated?: boolean;
     warnings?: Array<{ code: string; message: string }>;
   };
+  results: SearchResultRaw[];
+  filters?: SearchFilters;
+};
+
+export type SearchResponse = Omit<SearchResponseRaw, "results"> & {
   results: SearchResult[];
   filters?: SearchFilters;
 };
