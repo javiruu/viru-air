@@ -9,9 +9,7 @@ function resolveApiBase(rawBase: string): string {
     const parsed = new URL(rawBase);
     const currentHost = window.location.hostname;
     const isLocalApi = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
-    const isCurrentLocal = currentHost === "localhost" || currentHost === "127.0.0.1";
-
-    if (isLocalApi && !isCurrentLocal) {
+    if (isLocalApi && parsed.hostname !== currentHost) {
       parsed.hostname = currentHost;
       return parsed.toString().replace(/\/$/, "");
     }

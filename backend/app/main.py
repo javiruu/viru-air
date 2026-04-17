@@ -125,7 +125,10 @@ class AccessLogMiddleware:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_parse_cors_origins(),
-    allow_origin_regex=os.getenv("CORS_ALLOW_ORIGIN_REGEX", r"^https?://45\.136\.18\.49(?::\d+)?$"),
+    allow_origin_regex=os.getenv(
+        "CORS_ALLOW_ORIGIN_REGEX",
+        r"^https?://(45\.136\.18\.49|localhost|127\.0\.0\.1)(?::\d+)?$",
+    ),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

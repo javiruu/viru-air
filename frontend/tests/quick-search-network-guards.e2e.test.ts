@@ -110,7 +110,9 @@ test("quick-search blocks partial and unsupported IATAs before network search re
 
     assert.equal(trackedResponses.filter((item) => item.url.includes("/search/deeplink")).length, 0);
 
-    await page.getByRole("button", { name: "Buscar" }).click();
+    const searchButton = page.getByRole("button", { name: "Buscar" });
+    await searchButton.waitFor({ state: "visible", timeout: 10000 });
+    assert.equal(await searchButton.isDisabled(), true);
     await page.waitForTimeout(900);
 
     assert.equal(trackedResponses.filter((item) => item.url.includes("/search/quick")).length, 0);
