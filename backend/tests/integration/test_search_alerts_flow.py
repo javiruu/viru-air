@@ -1,11 +1,31 @@
-﻿from datetime import date, timedelta
+from datetime import date, timedelta
 
 from fastapi.testclient import TestClient
 
+import app.api.v1.search as search_api
+from app.core.time import utc_now_naive
+from app.domain.entities import ProviderFlight
 from tests.helpers import register_and_token
 
 
-def test_quick_search_and_alert_rule(client: TestClient) -> None:
+class _FakeSearchProvider:
+    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000) -> list[ProviderFlight]:
+        if origin == "MAD" and destination == "DUB":
+            return [
+                ProviderFlight(
+                    price=41.0,
+                    currency="EUR",
+                    departure_time_local="10:20",
+                    captured_at=utc_now_naive(),
+                    source="fake-search-provider",
+                )
+            ]
+        return []
+
+
+def test_quick_search_and_alert_rule(client: TestClient, monkeypatch) -> None:
+    monkeypatch.setattr(search_api, "provider", _FakeSearchProvider())
+
     token = register_and_token(client)
     headers = {"Authorization": f"Bearer {token}"}
 
