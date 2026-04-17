@@ -171,6 +171,15 @@ export type ApiError = {
   message: string;
   details?: unknown;
   retry_after_sec?: number;
+  correlation_id?: string;
+};
+
+type ParsedErrorEnvelope = {
+  code?: string;
+  message?: string;
+  details?: unknown;
+  retry_after_sec?: number;
+  correlation_id?: string;
 };
 
 function extractDetailMessage(detail: unknown): string | null {
@@ -185,6 +194,26 @@ function extractDetailMessage(detail: unknown): string | null {
     return typeof firstMsg === "string" && firstMsg.trim().length > 0 ? firstMsg : null;
   }
   return null;
+}
+
+function extractTopLevelErrorEnvelope(parsed: unknown): ParsedErrorEnvelope | null {
+  if (!parsed || typeof parsed !== "object") return null;
+  const candidate = parsed as Record<string, unknown>;
+  const hasKnownKey = (
+    "code" in candidate
+    || "message" in candidate
+    || "details" in candidate
+    || "retry_after_sec" in candidate
+    || "correlation_id" in candidate
+  );
+  if (!hasKnownKey) return null;
+  return {
+    code: typeof candidate.code === "string" ? candidate.code : undefined,
+    message: typeof candidate.message === "string" ? candidate.message : undefined,
+    details: candidate.details,
+    retry_after_sec: typeof candidate.retry_after_sec === "number" ? candidate.retry_after_sec : undefined,
+    correlation_id: typeof candidate.correlation_id === "string" ? candidate.correlation_id : undefined,
+  };
 }
 
 export async function apiFetchWithStatus<T>(
@@ -265,29 +294,33 @@ export async function apiFetchWithStatus<T>(
       parsed = null;
     }
     const parsedObj = parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+    const topLevelEnvelope = extractTopLevelErrorEnvelope(parsed);
     const errorObj =
       parsed && typeof parsed === "object" && "error" in (parsed as Record<string, unknown>)
         ? (parsed as { error?: Record<string, unknown> }).error || {}
         : null;
     const detail = parsedObj?.detail;
     const message =
+      topLevelEnvelope?.message ||
       extractDetailMessage(detail) ||
       (errorObj?.message as string | undefined) ||
       (typeof rawText === "string" && rawText.trim().length > 0 ? rawText : `HTTP ${response.status}`);
     const retryAfter =
-      typeof errorObj?.retry_after_sec === "number"
+      topLevelEnvelope?.retry_after_sec ||
+      (typeof errorObj?.retry_after_sec === "number"
         ? errorObj.retry_after_sec
-        : Number(response.headers.get("retry-after")) || undefined;
+        : Number(response.headers.get("retry-after")) || undefined);
     return {
       ok: false,
       status: response.status,
       headers: response.headers,
       error: {
         status: response.status,
-        code: (errorObj?.code as string | undefined) || undefined,
+        code: topLevelEnvelope?.code || (errorObj?.code as string | undefined) || undefined,
         message,
-        details: errorObj?.details ?? detail,
+        details: topLevelEnvelope?.details ?? errorObj?.details ?? detail,
         retry_after_sec: retryAfter,
+        correlation_id: topLevelEnvelope?.correlation_id || response.headers.get("x-correlation-id") || undefined,
       },
     };
   }

@@ -23,6 +23,16 @@ provider = RyanairPublicProvider()
 logger = logging.getLogger(__name__)
 
 
+def _error_reason_from_http_exception(exc: HTTPException) -> str:
+    if isinstance(exc.detail, str):
+        return exc.detail
+    if isinstance(exc.detail, list):
+        return "validation_error"
+    if isinstance(exc.detail, dict) and isinstance(exc.detail.get("code"), str):
+        return str(exc.detail["code"])
+    return "request_failed"
+
+
 class QuickSearchPayload(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -429,12 +439,35 @@ def deeplink(
     infants: int = 0,
     locale: str = "es-es",
 ) -> dict:
-    origin = _validate_iata(origin_iata)
-    destination = _validate_iata(destination_iata)
-    if adults < 1 or adults > 9:
-        raise HTTPException(status_code=400, detail="adultos_invalidos")
-    if date_in and date_in < date_out:
-        raise HTTPException(status_code=400, detail="fecha_vuelta_invalida")
+    normalized_payload = {
+        "origin_iata": origin_iata.strip().upper(),
+        "destination_iata": destination_iata.strip().upper(),
+        "date_out": str(date_out),
+        "date_in": str(date_in) if date_in else None,
+        "adults": adults,
+        "teens": teens,
+        "children": children,
+        "infants": infants,
+        "locale": locale,
+    }
+    try:
+        origin = _validate_iata(origin_iata)
+        destination = _validate_iata(destination_iata)
+        normalized_payload["origin_iata"] = origin
+        normalized_payload["destination_iata"] = destination
+        if adults < 1 or adults > 9:
+            raise HTTPException(status_code=400, detail="adultos_invalidos")
+        if date_in and date_in < date_out:
+            raise HTTPException(status_code=400, detail="fecha_vuelta_invalida")
+    except HTTPException as exc:
+        reason = _error_reason_from_http_exception(exc)
+        logger.warning("deeplink_rejected reason=%s payload=%s", reason, normalized_payload)
+        raise ApiError(
+            status=exc.status_code,
+            code="deeplink_invalid_request",
+            message="Deep-link request rejected by backend validation.",
+            details=[{"reason": reason, "normalized_payload": normalized_payload}],
+        ) from exc
 
     is_return = "true" if date_in else "false"
     base = f"https://www.ryanair.com/{locale}/trip/flights/select"
@@ -536,27 +569,54 @@ def quick_search(
         warnings_structured.append({"code": code, "meta": meta})
 
     started = _phase_start()
-    canonical, origin_list, destination_list, filter_contract = _normalize_quick_search_request(
-        payload,
-        {
-            "origin_iata": origin_iata,
-            "destination_iata": destination_iata,
-            "travel_date": travel_date,
-            "radius_km": radius_km,
-            "include_stops": include_stops,
-            "include_nearby_origins": include_nearby_origins,
-            "include_nearby_destinations": include_nearby_destinations,
-            "depart_after": depart_after,
-            "depart_before": depart_before,
-            "max_stops": max_stops,
-            "exclude_origins": exclude_origins,
-            "exclude_destinations": exclude_destinations,
-            "strict_filters": strict_filters,
-            "soft_filters_weight": soft_filters_weight,
-            "flex_days_before": flex_days_before,
-            "flex_days_after": flex_days_after,
-        },
-    )
+    query_overrides = {
+        "origin_iata": origin_iata,
+        "destination_iata": destination_iata,
+        "travel_date": travel_date,
+        "radius_km": radius_km,
+        "include_stops": include_stops,
+        "include_nearby_origins": include_nearby_origins,
+        "include_nearby_destinations": include_nearby_destinations,
+        "depart_after": depart_after,
+        "depart_before": depart_before,
+        "max_stops": max_stops,
+        "exclude_origins": exclude_origins,
+        "exclude_destinations": exclude_destinations,
+        "strict_filters": strict_filters,
+        "soft_filters_weight": soft_filters_weight,
+        "flex_days_before": flex_days_before,
+        "flex_days_after": flex_days_after,
+    }
+    try:
+        canonical, origin_list, destination_list, filter_contract = _normalize_quick_search_request(
+            payload,
+            query_overrides,
+        )
+    except HTTPException as exc:
+        reason = _error_reason_from_http_exception(exc)
+        detail_item = {
+            "query_trace_id": query_trace_id,
+            "reason": reason,
+            "raw_payload": payload or {},
+            "query_overrides": {
+                key: (str(value) if isinstance(value, dt.date) else value)
+                for key, value in query_overrides.items()
+                if value is not None
+            },
+        }
+        logger.warning(
+            "quick_search_normalization_rejected trace=%s reason=%s payload=%s query=%s",
+            query_trace_id,
+            reason,
+            payload or {},
+            detail_item["query_overrides"],
+        )
+        raise ApiError(
+            status=exc.status_code,
+            code="quick_search_invalid_request",
+            message="Quick-search request rejected during request normalization.",
+            details=[detail_item],
+        ) from exc
     _phase_end("request_normalization_ms", started)
 
     travel_date_value = canonical.travel.date
@@ -628,7 +688,28 @@ def quick_search(
             exclude_destinations=exclude_destination_list,
         )
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        reason = str(exc)
+        detail_item = {
+            "query_trace_id": query_trace_id,
+            "reason": reason,
+            "canonical_request": canonical.model_dump(mode="json"),
+        }
+        if ":" in reason:
+            reason_code, rejected_value = reason.split(":", 1)
+            detail_item["reason_code"] = reason_code
+            detail_item["rejected_value"] = rejected_value
+        logger.warning(
+            "quick_search_rejected trace=%s reason=%s canonical=%s",
+            query_trace_id,
+            reason,
+            canonical.model_dump(mode="json"),
+        )
+        raise ApiError(
+            status=400,
+            code="quick_search_invalid_request",
+            message="Quick-search request rejected by backend validation.",
+            details=[detail_item],
+        ) from exc
     _phase_end("nearby_expansion_ms", started)
 
     origin_expanded = origin_side.candidates

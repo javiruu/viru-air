@@ -194,6 +194,12 @@ When duplicates compete, the winner is selected by:
 - Structured counters are exposed in `meta.pipeline_counters`.
 - Structured warning objects are exposed in `meta.warnings_structured`.
 - Debug payload is available only when `APP_ENV=local` and `debug=true`.
+- Rejected quick-search requests now return a standard error envelope with `correlation_id`.
+- For backend validation rejections during quick-search expansion, `details[0]` includes:
+  - `query_trace_id`
+  - `reason`
+  - `reason_code` / `rejected_value` when the backend can derive them
+  - `canonical_request` for local diagnosis
 
 
 

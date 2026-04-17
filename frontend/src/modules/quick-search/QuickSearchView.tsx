@@ -396,6 +396,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     console.debug(`[qs] ${message} ts=${ts}ms`);
   }, [debugEpochRef]);
 
+  const logQuickSearchApiError = useCallback((scope: string, meta: Record<string, unknown>) => {
+    if (typeof window === "undefined") return;
+    // eslint-disable-next-line no-console
+    console.error(`[qs] ${scope}`, meta);
+  }, []);
+
   useEffect(() => {
     setRoutePulse(true);
     const timeout = window.setTimeout(() => setRoutePulse(false), 140);
@@ -814,18 +820,35 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     params.set("children", "0");
     params.set("infants", "0");
     params.set("locale", locale === "en" ? "en-us" : "es-es");
-    apiFetch<DeepLinkResponse>(`/search/deeplink?${params.toString()}`, {
+    apiFetchWithStatus<DeepLinkResponse>(`/search/deeplink?${params.toString()}`, {
       method: "GET",
       signal: controller.signal,
     })
-      .then((data) => {
-        setDeepLink(data);
-        setDeepLinkError("");
-      })
-      .catch(() => {
+      .then((result) => {
         if (controller.signal.aborted) {
           return;
         }
+        if (result.ok) {
+          setDeepLink(result.data);
+          setDeepLinkError("");
+          return;
+        }
+        logQuickSearchApiError("deeplink_failed", {
+          status: result.status,
+          error: result.error,
+          params: Object.fromEntries(params.entries()),
+        });
+        setDeepLink(null);
+        setDeepLinkError(t("deepLinkError"));
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) {
+          return;
+        }
+        logQuickSearchApiError("deeplink_exception", {
+          error,
+          params: Object.fromEntries(params.entries()),
+        });
         setDeepLink(null);
         setDeepLinkError(t("deepLinkError"));
       });
@@ -845,6 +868,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setDeepLinkError,
     t,
     travelDate,
+    logQuickSearchApiError,
   ]);
 
   const findCountryByIataLocal = useCallback((iata: string): CountryAirports | null => {
@@ -1148,6 +1172,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           }
         } else {
           const { status, error } = searchResult;
+          logQuickSearchApiError("quick_search_failed", {
+            status,
+            error,
+            request: canonicalPayload,
+          });
           const validationErrors = parseValidationErrors(error.details);
           if (Object.keys(validationErrors).length > 0) {
             setFieldErrors(validationErrors);
@@ -1174,6 +1203,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       }
     } catch (error) {
       if (!isCurrentRequest()) return;
+      logQuickSearchApiError("quick_search_unhandled_exception", {
+        error,
+        request: canonicalPayload,
+      });
       setProgress("client_done", 95);
       setSearchState("error");
       setSearchError(t("searchFailed"));

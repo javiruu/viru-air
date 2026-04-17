@@ -32,6 +32,34 @@ if run_seed_users:
 logger = logging.getLogger("app.access")
 
 
+def _sanitize_request_body(body):
+    if isinstance(body, dict):
+        sanitized = {}
+        for key, value in body.items():
+            if "password" in key.lower():
+                sanitized[key] = "***"
+            else:
+                sanitized[key] = _sanitize_request_body(value)
+        return sanitized
+    if isinstance(body, list):
+        return [_sanitize_request_body(item) for item in body]
+    return body
+
+
+async def _safe_request_body(request: Request):
+    try:
+        body = await request.body()
+    except Exception:
+        return None
+    if not body:
+        return None
+    try:
+        parsed = json.loads(body)
+    except Exception:
+        return body.decode("utf-8", errors="replace")[:2000]
+    return _sanitize_request_body(parsed)
+
+
 def _parse_cors_origins() -> list[str]:
     env_value = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
     if env_value:
@@ -136,19 +164,43 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
+    safe_body = await _safe_request_body(request)
     if isinstance(exc.detail, str):
         code = exc.detail
         details = []
     elif isinstance(exc.detail, list):
         code = "validation_error"
         details = exc.detail
+    elif isinstance(exc.detail, dict):
+        code = str(exc.detail.get("code") or "request_failed")
+        raw_details = exc.detail.get("details", [])
+        if isinstance(raw_details, (list, dict)):
+            details = raw_details
+        else:
+            details = [{"detail": raw_details}]
     else:
         code = "request_failed"
         details = []
+    logger.warning(
+        json.dumps(
+            {
+                "event": "http_exception",
+                "correlation_id": get_correlation_id() or getattr(request.state, "correlation_id", "") or "-",
+                "path": request.url.path,
+                "method": request.method,
+                "query": dict(request.query_params),
+                "status": exc.status_code,
+                "code": code,
+                "detail": exc.detail,
+                "body": safe_body,
+            },
+            ensure_ascii=False,
+        )
+    )
     envelope = error_envelope(
         status=exc.status_code,
         code=code,
-        message=message_for_code(code, fallback="Request failed."),
+        message=str(exc.detail.get("message")) if isinstance(exc.detail, dict) and exc.detail.get("message") else message_for_code(code, fallback="Request failed."),
         details=details,
     )
     return JSONResponse(status_code=exc.status_code, content=envelope)

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from app.core.request_context import get_correlation_id
+
 
 @dataclass
 class ApiError(Exception):
@@ -20,12 +22,15 @@ def error_envelope(
     details: list[dict] | dict | None = None,
     retry_after_sec: int | None = None,
 ) -> dict:
+    correlation_id = get_correlation_id() or None
     payload = {
         "status": status,
         "code": code,
         "message": message,
         "details": details or [],
     }
+    if correlation_id:
+        payload["correlation_id"] = correlation_id
     if retry_after_sec is not None:
         payload["retry_after_sec"] = retry_after_sec
     return payload
