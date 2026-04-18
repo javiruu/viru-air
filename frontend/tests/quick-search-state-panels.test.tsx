@@ -3,7 +3,9 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
+import { QuickSearchLoadingProgress } from "../src/modules/quick-search/components/QuickSearchLoadingProgress";
 import { QuickSearchStatePanels } from "../src/modules/quick-search/components/QuickSearchStatePanels";
+import { getQuickSearchVisualState } from "../src/modules/quick-search/state/getQuickSearchVisualState";
 
 function t(key: string) {
   const copy: Record<string, string> = {
@@ -85,4 +87,56 @@ test("QuickSearchStatePanels renders retry affordance for error state", () => {
   assert.match(html, /Algo fallo/);
   assert.match(html, /backend exploded/);
   assert.match(html, /Reintentar/);
+});
+
+test("visual loading keeps the empty panel hidden until the search is really finished", () => {
+  const visualState = getQuickSearchVisualState({
+    searchState: "empty",
+    showLoader: false,
+    loadingVisualHold: true,
+    visibleResultsCount: 0,
+  });
+  const panelState = visualState === "success_empty" ? "empty" : visualState;
+  const html = renderToStaticMarkup(
+    <>
+      <QuickSearchLoadingProgress
+        show={visualState === "loading"}
+        loadingVisualHold={true}
+        loadingAria="Cargando"
+        loadingPhaseLabel="Preparando vista"
+        progressPercent={95}
+        loadingSubcheckTitle="Comprobaciones"
+        loadingSubchecks={[{ id: "request", label: "Buscando vuelos", status: "active" }]}
+        loadingSubcheckDone="completado"
+        loadingSubcheckActive="en curso"
+        prefersReducedMotion={true}
+        boardedCount={0}
+        showBoarding={false}
+        boardingPassengers={4}
+        loadingTitle="Buscando vuelos"
+        loadingText="Espera mientras preparamos la vista"
+      />
+      <QuickSearchStatePanels
+        searchState={panelState}
+        rateLimitSeconds={0}
+        searchError={null}
+        emptyStateMainTitle="0 resultados con estos filtros"
+        locale="es"
+        zeroResultCauses={["Strict activo"]}
+        visibleZeroResultCauses={["Strict activo"]}
+        canExpandZeroResultCauses={false}
+        emptyCausesExpanded={false}
+        zeroResultActions={[]}
+        onToggleEmptyCauses={() => undefined}
+        onRelaxAction={() => undefined}
+        onRunSearch={() => undefined}
+        onEmptyCta={() => undefined}
+        t={t}
+      />
+    </>,
+  );
+
+  assert.match(html, /qs-state-loading/);
+  assert.doesNotMatch(html, /qs-state-empty/);
+  assert.doesNotMatch(html, /0 resultados con estos filtros/);
 });

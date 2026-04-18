@@ -3,6 +3,7 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
+import { getQuickSearchVisualState } from "../src/modules/quick-search/state/getQuickSearchVisualState";
 import { useQuickSearchScreenState } from "../src/modules/quick-search/state/useQuickSearchScreenState";
 import type { SearchResult } from "../src/modules/quick-search/types";
 
@@ -133,4 +134,37 @@ test("useQuickSearchScreenState groups sources defensively when raw source value
 
   assert.deepEqual(state.sourcesSummary.entries, [["sourceUnknown", 2]]);
   assert.equal(state.sourcesSummary.preview, "sourceUnknown (2)");
+});
+
+test("getQuickSearchVisualState keeps loading dominant while the visual hold is active", () => {
+  const visualState = getQuickSearchVisualState({
+    searchState: "empty",
+    showLoader: false,
+    loadingVisualHold: true,
+    visibleResultsCount: 0,
+  });
+
+  assert.equal(visualState, "loading");
+});
+
+test("getQuickSearchVisualState resolves final success states after loading finishes", () => {
+  assert.equal(
+    getQuickSearchVisualState({
+      searchState: "success",
+      showLoader: false,
+      loadingVisualHold: false,
+      visibleResultsCount: 2,
+    }),
+    "success_with_results",
+  );
+
+  assert.equal(
+    getQuickSearchVisualState({
+      searchState: "success",
+      showLoader: false,
+      loadingVisualHold: false,
+      visibleResultsCount: 0,
+    }),
+    "success_empty",
+  );
 });

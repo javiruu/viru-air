@@ -65,6 +65,7 @@ import {
 } from "@/modules/quick-search/types";
 import { normalizeQuickSearchResponse } from "@/modules/quick-search/responseNormalizer";
 import { useQuickSearchMainState } from "@/modules/quick-search/state/useQuickSearchController";
+import { getQuickSearchVisualState } from "@/modules/quick-search/state/getQuickSearchVisualState";
 import { useQuickSearchLoadingFlow } from "@/modules/quick-search/state/useQuickSearchLoadingFlow";
 import { useQuickSearchScreenState } from "@/modules/quick-search/state/useQuickSearchScreenState";
 
@@ -2498,22 +2499,47 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   ]);
 
   const quickSearchHint = useFtueHint("quick_search");
+  const visualSearchState = getQuickSearchVisualState({
+    searchState,
+    showLoader,
+    loadingVisualHold,
+    visibleResultsCount: visibleResults.length,
+  });
+  const isVisualLoading = visualSearchState === "loading";
+  const showResultsWorkspace = hasSearched || isVisualLoading;
+  const showResultsStagehead = !isVisualLoading;
+  const showResultsList = visualSearchState === "success_with_results";
+  const showResultsToolbar = visualSearchState === "success_with_results";
+  const panelSearchState =
+    visualSearchState === "success_empty"
+      ? "empty"
+      : visualSearchState === "success_with_results"
+        ? "success"
+        : visualSearchState;
+  const resultsStageTitle =
+    isVisualLoading
+      ? t("loadingTitle")
+      : visualSearchState === "success_empty"
+        ? emptyStateMainTitle
+        : hasSearched
+          ? `${visibleResults.length} ${t("results")}`
+          : t("searchReadyTitle");
   const heroStatusTone =
-    searchState === "error" || searchState === "rate"
+    visualSearchState === "error" || visualSearchState === "rate"
       ? "alert"
-      : searchState === "loading"
+      : isVisualLoading
         ? "active"
-        : showDegradedState || searchState === "empty"
+        : showDegradedState || visualSearchState === "success_empty"
           ? "warning"
           : hasSearched
             ? "ready"
             : "idle";
   const heroStatusLabel =
-    searchState === "loading"
+    isVisualLoading
       ? t("loadingTitle")
-      : searchState === "error"
+      : visualSearchState === "error"
         ? t("errorTitle")
-        : searchState === "rate"
+        : visualSearchState === "rate"
           ? t("rateLimitTitle")
           : showDegradedState
             ? t("degradedBadge")
@@ -2521,27 +2547,27 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               ? t("ready")
               : t("searchReadyTitle");
   const heroStatusTitle =
-    searchState === "success"
+    visualSearchState === "success_with_results"
       ? `${visibleResults.length} ${t("results")}`
-      : searchState === "loading"
-        ? `${progressPercent}%`
-        : searchState === "rate"
+      : isVisualLoading
+        ? t("loadingTitle")
+        : visualSearchState === "rate"
           ? `${rateLimitSeconds}s`
-          : searchState === "empty"
+          : visualSearchState === "success_empty"
             ? emptyStateMainTitle
-            : searchState === "error"
+            : visualSearchState === "error"
               ? t("errorTitle")
               : t("searchReadyTitle");
   const heroStatusBody =
-    searchState === "success"
+    visualSearchState === "success_with_results"
       ? executedCriteria?.route || summaryTrip
-      : searchState === "loading"
+      : isVisualLoading
         ? t("loadingText")
-        : searchState === "rate"
+        : visualSearchState === "rate"
           ? `${t("rateLimitText")} ${rateLimitSeconds}s`
-          : searchState === "empty"
+          : visualSearchState === "success_empty"
             ? t("emptyText")
-            : searchState === "error"
+            : visualSearchState === "error"
               ? (searchError || t("searchFailed"))
               : (searchDisabledHint || t("searchReadyHint"));
 
@@ -2571,7 +2597,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               <span className={`qs-hero-chip ${showDegradedState ? "qs-hero-chip-warning" : ""}`}>
                 {showDegradedState ? t("degradedChip") : summaryStrict}
               </span>
-              {hasSearched ? (
+              {visualSearchState === "success_with_results" ? (
                 <span className="qs-hero-chip qs-hero-chip-accent">
                   {visibleResults.length} {t("results")}
                 </span>
@@ -2604,8 +2630,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             </div>
             <div className="qs-command-stage__status-grid">
               <div className="qs-command-stage__metric">
-                <span>{searchState === "loading" ? t("loadingTitle") : t("results")}</span>
-                <strong>{searchState === "loading" ? `${progressPercent}%` : visibleResults.length}</strong>
+                <span>{isVisualLoading ? t("loadingTitle") : t("results")}</span>
+                <strong>{isVisualLoading ? loadingPhaseLabel : visibleResults.length}</strong>
               </div>
               <div className="qs-command-stage__metric">
                 <span>{t("filtersTitle")}</span>
@@ -3296,6 +3322,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               </div>
             ) : null}
           </div>
+          {!hasSearched && !isVisualLoading ? (
           <div className="qs-ready" aria-live="polite">
             <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
               <path
@@ -3309,11 +3336,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             </svg>
             {t("ready")}
           </div>
+          ) : null}
         </div>
         </QuickSearchSearchForm>
       </section>
 
-      {hasSearched ? (
+      {showResultsWorkspace ? (
       <QuickSearchResultsWorkspace>
       <div id="qs-workspace-hint" className="qs-workspace-hint">
         {pageWorkspaceHint}
@@ -3705,10 +3733,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         </aside>
         <div className="qs-workspace-grid">
         <section className="panel panel-soft qs-results-panel">
+          {showResultsStagehead ? (
           <div className="qs-results-stagehead">
             <div className="qs-results-stagehead__copy">
               <span className="qs-results-stagehead__eyebrow">{t("searchSummaryTitle")}</span>
-              <h2>{hasSearched ? `${visibleResults.length} ${t("results")}` : t("searchReadyTitle")}</h2>
+              <h2>{resultsStageTitle}</h2>
               <p>
                 {executedCriteria
                   ? `${executedCriteria.route} - ${executedCriteria.dateLabel}`
@@ -3723,6 +3752,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               ) : null}
             </div>
           </div>
+          ) : null}
+          {showResultsToolbar ? (
           <div className="qs-results-toolbar" ref={resultsToolbarRef} tabIndex={-1}>
             <div className="qs-results-summary">
               <strong>{visibleResults.length}</strong> {t("results")}
@@ -3854,6 +3885,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               </button>
             </div>
           </div>
+          ) : null}
 
           {activeChips.length > 0 ? (
             <div className="qs-active-chips">
@@ -3876,7 +3908,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           ) : null}
 
           <QuickSearchLoadingProgress
-            show={showLoader}
+            show={isVisualLoading}
             loadingVisualHold={loadingVisualHold}
             loadingAria={t("loadingAria")}
             loadingPhaseLabel={loadingPhaseLabel}
@@ -3917,7 +3949,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           ) : null}
 
           <QuickSearchStatePanels
-            searchState={searchState}
+            searchState={panelSearchState}
             rateLimitSeconds={rateLimitSeconds}
             searchError={searchError}
             emptyStateMainTitle={emptyStateMainTitle}
@@ -3933,6 +3965,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             onEmptyCta={openRelaxPreview}
             t={t}
           />
+          {showResultsList ? (
           <QuickSearchResultsList
             visibleResults={visibleResults}
             compactView={compactView}
@@ -3969,6 +4002,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             onTrackRowOverflow={(rowId) => trackEvent("quicksearch_row_overflow_opened", { row_id: rowId })}
             onTrackCopyParams={(rowId) => trackEvent("quicksearch_row_copy_params_clicked", { row_id: rowId })}
           />
+          ) : null}
 
         </section>
         <aside className="qs-context-rail">
