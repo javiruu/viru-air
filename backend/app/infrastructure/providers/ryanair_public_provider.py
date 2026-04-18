@@ -8,29 +8,58 @@ from app.core.time import utc_now_naive
 
 import requests
 
-from app.domain.entities import ProviderFlight, ProviderPrice
+from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderPrice, ProviderSourceFetchError
 
 
 class RyanairPublicProvider:
     def __init__(self, currency: str = "EUR") -> None:
         self.currency = currency
+        self._session = requests.Session()
 
-    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 12000) -> list[ProviderFlight]:
+    def get_flights(
+        self, origin: str, destination: str, travel_date: str, timeout_ms: int = 12000
+    ) -> ProviderFetchResult:
         origin = origin.upper().strip()
         destination = destination.upper().strip()
-        flights = self._fetch_availability(origin, destination, travel_date, timeout_ms=timeout_ms)
-        fares = self._fetch_one_way_fares(origin, destination, travel_date, timeout_ms=timeout_ms)
-        if not flights:
-            return fares
-        if not fares:
-            return flights
-        return self._dedupe_flights(flights + fares)
+        warnings: list[str] = []
+        availability_error = False
+        fares_error = False
+
+        try:
+            availability = self._fetch_availability(origin, destination, travel_date, timeout_ms=timeout_ms)
+        except requests.RequestException:
+            availability = []
+            availability_error = True
+            warnings.append("ryanair_availability_failed_partial")
+
+        try:
+            fares = self._fetch_one_way_fares(origin, destination, travel_date, timeout_ms=timeout_ms)
+        except requests.RequestException:
+            fares = []
+            fares_error = True
+            warnings.append("ryanair_fares_failed_partial")
+
+        flights = self._dedupe_flights(availability + fares)
+        if flights:
+            return ProviderFetchResult(flights=flights, warnings=warnings)
+
+        if availability_error and fares_error:
+            raise ProviderSourceFetchError(
+                warning_codes=[
+                    "ryanair_availability_failed",
+                    "ryanair_fares_failed",
+                    "ryanair_provider_unavailable_total",
+                ],
+                message=f"Ryanair provider unavailable for {origin}->{destination} on {travel_date}",
+            )
+
+        return ProviderFetchResult(flights=[], warnings=warnings)
 
     def get_cheapest_price(self, origin: str, destination: str, travel_date: str) -> ProviderPrice | None:
-        flights = self.get_flights(origin, destination, travel_date)
-        if not flights:
+        result = self.get_flights(origin, destination, travel_date)
+        if not result.flights:
             return None
-        best = min(flights, key=lambda f: f.price)
+        best = min(result.flights, key=lambda f: f.price)
         return ProviderPrice(
             price=best.price,
             currency=best.currency,
@@ -121,7 +150,7 @@ class RyanairPublicProvider:
         return unique
 
     def _get_json(self, url: str, *, timeout_ms: int = 12000) -> dict[str, Any]:
-        resp = requests.get(
+        resp = self._session.get(
             url,
             timeout=max(1, timeout_ms / 1000),
             headers={
@@ -142,10 +171,11 @@ class RyanairPublicProvider:
             return None
 
     def debug_payload(self, origin: str, destination: str, travel_date: str) -> dict[str, Any]:
-        flights = self.get_flights(origin, destination, travel_date)
+        result = self.get_flights(origin, destination, travel_date)
         return {
             "origin": origin,
             "destination": destination,
             "travel_date": travel_date,
-            "flights": [asdict(f) for f in flights],
+            "warnings": result.warnings,
+            "flights": [asdict(f) for f in result.flights],
         }

@@ -84,6 +84,31 @@ test("useQuickSearchScreenState exposes degraded state, groups warnings and hide
   assert.deepEqual(state.groupedCriticalWarnings, [{ message: "backend failed temporarily", count: 1 }]);
 });
 
+test("useQuickSearchScreenState prioritizes provider outage copy when no results can be confirmed", () => {
+  const state = renderScreenState({
+    filtersNotice: ["ryanair_provider_unavailable_total"],
+  });
+
+  assert.equal(state.emptyStateMainTitle, "emptyStateProviderTitle");
+  assert.deepEqual(state.zeroResultCauses, ["emptyCauseProvider"]);
+  assert.deepEqual(state.zeroResultActions, []);
+});
+
+test("useQuickSearchScreenState surfaces partial provider outage without hiding relax options", () => {
+  const state = renderScreenState({
+    filtersNotice: ["ryanair_availability_failed_partial"],
+    strictFilters: true,
+    durationMax: "180",
+  });
+
+  assert.equal(state.emptyStateMainTitle, "emptyStateProviderPartialTitle");
+  assert.equal(state.zeroResultCauses[0], "emptyCauseProvider");
+  assert.deepEqual(
+    state.zeroResultActions.map((action) => action.id),
+    ["disable_strict", "increase_duration"],
+  );
+});
+
 test("useQuickSearchScreenState derives zero-result causes and relax actions from visible constraints", () => {
   const collapsed = renderScreenState({
     strictFilters: true,

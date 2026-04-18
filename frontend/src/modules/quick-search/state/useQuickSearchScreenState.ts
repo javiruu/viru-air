@@ -100,6 +100,13 @@ export function useQuickSearchScreenState({
     const neutralByCode = new Set([
       tWarn("ryanair_unavailable_parcial"),
       tWarn("limite_combinaciones_alternativas"),
+      tWarn("ryanair_availability_failed_partial"),
+      tWarn("ryanair_fares_failed_partial"),
+    ]);
+    const criticalByCode = new Set([
+      tWarn("ryanair_provider_unavailable_total"),
+      tWarn("ryanair_availability_failed"),
+      tWarn("ryanair_fares_failed"),
     ]);
     const criticalPattern = /(error|fall|failed|bloque|blocked|rate|limit)/i;
     const neutral: string[] = [];
@@ -107,6 +114,10 @@ export function useQuickSearchScreenState({
     filtersNotice.forEach((notice) => {
       if (neutralByCode.has(notice)) {
         neutral.push(notice);
+        return;
+      }
+      if (criticalByCode.has(notice)) {
+        critical.push(notice);
         return;
       }
       if (criticalPattern.test(notice)) {
@@ -174,8 +185,16 @@ export function useQuickSearchScreenState({
     return 24 * 60 - from + to;
   }, [departAfter, departBefore]);
 
+  const providerTotalOutage = warningSeverity.critical.includes(tWarn("ryanair_provider_unavailable_total"));
+  const providerPartialOutage = warningSeverity.neutral.includes(tWarn("ryanair_availability_failed_partial"))
+    || warningSeverity.neutral.includes(tWarn("ryanair_fares_failed_partial"));
+
   const zeroResultCauses = useMemo(() => {
+    if (providerTotalOutage) {
+      return [t("emptyCauseProvider")];
+    }
     const causes: string[] = [];
+    if (providerPartialOutage) causes.push(t("emptyCauseProvider"));
     if (strictFilters) causes.push(t("emptyCauseStrict"));
     if (!includeStops) causes.push(t("emptyCauseStops"));
     if (durationMaxNumber !== null) causes.push(t("emptyCauseDuration"));
@@ -192,14 +211,21 @@ export function useQuickSearchScreenState({
     radiusKm,
     excludeOriginsCount,
     excludeDestinationsCount,
+    providerPartialOutage,
+    providerTotalOutage,
     t,
   ]);
 
   const visibleZeroResultCauses = emptyCausesExpanded ? zeroResultCauses : zeroResultCauses.slice(0, 3);
   const canExpandZeroResultCauses = zeroResultCauses.length > 3;
-  const emptyStateMainTitle = t("emptyStateMainTitle");
+  const emptyStateMainTitle = providerTotalOutage
+    ? t("emptyStateProviderTitle")
+    : providerPartialOutage && visibleResults.length === 0
+      ? t("emptyStateProviderPartialTitle")
+      : t("emptyStateMainTitle");
 
   const zeroResultActions = useMemo(() => {
+    if (providerTotalOutage) return [];
     const actions: Array<{ id: ZeroResultRelaxAction; label: string }> = [];
     if (strictFilters) actions.push({ id: "disable_strict", label: t("emptyActionDisableStrict") });
     if (durationMaxNumber !== null) actions.push({ id: "increase_duration", label: t("emptyActionIncreaseDuration") });
@@ -208,7 +234,7 @@ export function useQuickSearchScreenState({
       actions.push({ id: "clear_exclusions", label: t("emptyActionClearExclusions") });
     }
     return actions;
-  }, [strictFilters, durationMaxNumber, radiusActive, radiusKm, excludeOriginsCount, excludeDestinationsCount, t]);
+  }, [strictFilters, durationMaxNumber, radiusActive, radiusKm, excludeOriginsCount, excludeDestinationsCount, providerTotalOutage, t]);
 
   return {
     durationMaxNumber,

@@ -1,12 +1,15 @@
 import datetime as dt
 import unittest
 
-from app.domain.entities import ProviderFlight
-from app.services.quick_search_execution import build_execution_plan, execute_plan
+from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError
+from app.services.quick_search_execution import _CACHE, build_execution_plan, execute_plan
 from app.services.quick_search_planner import PairPlanItem
 
 
 class QuickSearchExecutionTests(unittest.TestCase):
+    def setUp(self) -> None:
+        _CACHE.clear()
+
     def _pair(self, o: str, d: str, score: float, reason: str) -> PairPlanItem:
         return PairPlanItem(
             origin_iata=o,
@@ -87,6 +90,46 @@ class QuickSearchExecutionTests(unittest.TestCase):
         self.assertEqual(meta["timed_out_units_count"], 1)
         self.assertEqual(meta["provider_failures"], 1)
         self.assertIn("provider_timeout_parcial", warnings)
+
+    def test_execute_plan_keeps_partial_results_and_warnings(self):
+        pairs = [self._pair("LEI", "DUB", 0.0, "seed-seed")]
+        dates = [dt.date(2026, 6, 1)]
+        plan = build_execution_plan(pairs, dates, max_requests=5)
+
+        def fake_fetch(origin: str, destination: str, date_str: str, timeout_ms: int):
+            return ProviderFetchResult(
+                flights=[
+                    ProviderFlight(
+                        price=31.5,
+                        currency="EUR",
+                        departure_time_local="06:45",
+                        captured_at=dt.datetime.now(dt.UTC).replace(tzinfo=None),
+                        source="ryanair-public-fares",
+                    )
+                ],
+                warnings=["ryanair_availability_failed_partial"],
+            )
+
+        rows, meta, warnings = execute_plan(plan, concurrency_limit=2, timeout_ms=3000, fetch_flights=fake_fetch)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(meta["provider_failures"], 0)
+        self.assertIn("ryanair_availability_failed_partial", warnings)
+
+    def test_execute_plan_propagates_source_failure_codes(self):
+        pairs = [self._pair("LEI", "DUB", 0.0, "seed-seed")]
+        dates = [dt.date(2026, 6, 1)]
+        plan = build_execution_plan(pairs, dates, max_requests=5)
+
+        def fake_fetch(origin: str, destination: str, date_str: str, timeout_ms: int):
+            raise ProviderSourceFetchError(
+                warning_codes=["ryanair_availability_failed", "ryanair_provider_unavailable_total"],
+                message="provider unavailable",
+            )
+
+        rows, meta, warnings = execute_plan(plan, concurrency_limit=2, timeout_ms=3000, fetch_flights=fake_fetch)
+        self.assertEqual(rows, [])
+        self.assertEqual(meta["provider_failures"], 1)
+        self.assertIn("ryanair_provider_unavailable_total", warnings)
 
 
 if __name__ == "__main__":

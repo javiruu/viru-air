@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from app.domain.entities import ProviderFlight
+from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError
 from app.services.quick_search_planner import PairPlanItem
 
 
@@ -28,7 +28,7 @@ class ExecutionPlan:
 
 
 _CACHE_LOCK = threading.Lock()
-_CACHE: dict[tuple[str, str, str], tuple[float, list[ProviderFlight]]] = {}
+_CACHE: dict[tuple[str, str, str], tuple[float, ProviderFetchResult]] = {}
 _CACHE_TTL_SECONDS = 300
 
 
@@ -97,7 +97,7 @@ def execute_plan(
     *,
     concurrency_limit: int,
     timeout_ms: int,
-    fetch_flights: Callable[[str, str, str, int], list[ProviderFlight]],
+    fetch_flights: Callable[[str, str, str, int], list[ProviderFlight] | ProviderFetchResult],
 ) -> tuple[list[tuple[str, str, dt.date, ProviderFlight]], dict[str, Any], list[str]]:
     timeout_ms = max(1000, timeout_ms)
     concurrency = max(1, concurrency_limit)
@@ -118,14 +118,18 @@ def execute_plan(
         for future in as_completed(futures):
             unit = futures[future]
             try:
-                flights, was_cache_hit = future.result()
+                fetch_result, was_cache_hit = future.result()
                 if was_cache_hit:
                     cache_hits += 1
                 else:
                     provider_calls += 1
                     cache_misses += 1
-                for flight in flights:
+                warnings.extend(fetch_result.warnings)
+                for flight in fetch_result.flights:
                     combined.append((unit.origin_iata, unit.destination_iata, unit.travel_date, flight))
+            except ProviderSourceFetchError as exc:
+                provider_failures += 1
+                warnings.extend(exc.warning_codes)
             except Exception as exc:
                 provider_failures += 1
                 if "timeout" in str(exc).lower():
@@ -153,8 +157,8 @@ def execute_plan(
 def _fetch_with_cache(
     unit: ExecutionUnit,
     timeout_ms: int,
-    fetch_flights: Callable[[str, str, str, int], list[ProviderFlight]],
-) -> tuple[list[ProviderFlight], bool]:
+    fetch_flights: Callable[[str, str, str, int], list[ProviderFlight] | ProviderFetchResult],
+) -> tuple[ProviderFetchResult, bool]:
     key = (unit.origin_iata, unit.destination_iata, str(unit.travel_date))
     now = time.time()
 
@@ -163,9 +167,13 @@ def _fetch_with_cache(
         if cached and now - cached[0] <= _CACHE_TTL_SECONDS:
             return cached[1], True
 
-    flights = fetch_flights(unit.origin_iata, unit.destination_iata, str(unit.travel_date), timeout_ms)
+    raw_result = fetch_flights(unit.origin_iata, unit.destination_iata, str(unit.travel_date), timeout_ms)
+    if isinstance(raw_result, ProviderFetchResult):
+        fetch_result = raw_result
+    else:
+        fetch_result = ProviderFetchResult(flights=raw_result, warnings=[])
 
     with _CACHE_LOCK:
-        _CACHE[key] = (now, flights)
+        _CACHE[key] = (now, fetch_result)
 
-    return flights, False
+    return fetch_result, False

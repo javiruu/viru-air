@@ -2119,6 +2119,19 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const warningDetailCloseLabel = t("warningDetailsClose");
   const warningGroupedTitle = t("warningsGroupedTitle");
   const warningProblemTitle = t("warningProblemTitle");
+  const providerPartialWarnings = groupedNeutralWarnings.filter((group) =>
+    [
+      tWarn("ryanair_availability_failed_partial"),
+      tWarn("ryanair_fares_failed_partial"),
+    ].includes(group.message),
+  );
+  const providerTotalWarnings = groupedCriticalWarnings.filter((group) =>
+    [
+      tWarn("ryanair_provider_unavailable_total"),
+      tWarn("ryanair_availability_failed"),
+      tWarn("ryanair_fares_failed"),
+    ].includes(group.message),
+  );
 
   useEffect(() => {
     if (!hasSearched || sourcesSummary.entries.length === 0) return;
@@ -3946,6 +3959,17 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 <button type="button" className="btn-ghost" onClick={cancelRelaxPreview}>{t("relaxPreviewCancel")}</button>
               </div>
             </section>
+          ) : null}
+
+          {providerTotalWarnings.length > 0 && visibleResults.length === 0 ? (
+            <div className="notice notice-error section-gap-sm" role="status" aria-live="polite">
+              {providerTotalWarnings.map((group) => `${group.message}${group.count > 1 ? ` (${group.count})` : ""}`).join(" ")}
+            </div>
+          ) : null}
+          {providerPartialWarnings.length > 0 && showResultsList ? (
+            <div className="notice notice-info section-gap-sm" role="status" aria-live="polite">
+              {providerPartialWarnings.map((group) => `${group.message}${group.count > 1 ? ` (${group.count})` : ""}`).join(" ")}
+            </div>
           ) : null}
 
           <QuickSearchStatePanels

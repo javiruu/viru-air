@@ -756,6 +756,8 @@ def quick_search(
     warnings.extend(execution_warnings)
     for code in execution_warnings:
         _warn(code)
+    if any(code.endswith("_partial") for code in execution_warnings) and combined:
+        _warn("provider_partial_results_served", count=len(combined))
     if execution_meta.get("truncated_by_max_requests"):
         _warn(
             "max_requests_reached",
