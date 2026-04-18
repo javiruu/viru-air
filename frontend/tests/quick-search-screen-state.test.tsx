@@ -101,6 +101,7 @@ test("useQuickSearchScreenState surfaces partial provider outage without hiding 
     durationMax: "180",
   });
 
+  assert.equal(state.showDegradedState, true);
   assert.equal(state.emptyStateMainTitle, "emptyStateProviderPartialTitle");
   assert.equal(state.zeroResultCauses[0], "emptyCauseProvider");
   assert.deepEqual(

@@ -56,7 +56,6 @@ export function useQuickSearchScreenState({
   t,
   tWarn,
 }: QuickSearchScreenStateArgs) {
-  const showDegradedState = isDegraded || Boolean(searchMeta?.stale_data);
   const normalizedResults = useMemo(() => normalizeQuickSearchResults(results), [results]);
   const { visibleResults, hiddenHighRiskResults } = useMemo(() => {
     const min = parseNumericInput(priceMin, { min: 0 });
@@ -145,14 +144,6 @@ export function useQuickSearchScreenState({
     return Array.from(grouped.entries()).map(([message, count]) => ({ message, count }));
   }, [warningSeverity.critical]);
 
-  const infoItemsCount =
-    (filtersMeta?.relaxed && filtersMeta.relaxed.length > 0 ? 1 : 0)
-    + (warningSeverity.critical.length > 0 ? 1 : 0)
-    + (warningSeverity.neutral.length > 0 ? 1 : 0)
-    + (showDegradedState ? 1 : 0)
-    + (weatherMessage ? 1 : 0)
-    + 1;
-
   const sourcesSummary = useMemo(() => {
     const grouped = new Map<string, number>();
     visibleResults.forEach((item) => {
@@ -188,6 +179,18 @@ export function useQuickSearchScreenState({
   const providerTotalOutage = warningSeverity.critical.includes(tWarn("ryanair_provider_unavailable_total"));
   const providerPartialOutage = warningSeverity.neutral.includes(tWarn("ryanair_availability_failed_partial"))
     || warningSeverity.neutral.includes(tWarn("ryanair_fares_failed_partial"));
+  const showDegradedState =
+    isDegraded
+    || Boolean(searchMeta?.stale_data)
+    || providerPartialOutage
+    || providerTotalOutage;
+  const infoItemsCount =
+    (filtersMeta?.relaxed && filtersMeta.relaxed.length > 0 ? 1 : 0)
+    + (warningSeverity.critical.length > 0 ? 1 : 0)
+    + (warningSeverity.neutral.length > 0 ? 1 : 0)
+    + (showDegradedState ? 1 : 0)
+    + (weatherMessage ? 1 : 0)
+    + 1;
 
   const zeroResultCauses = useMemo(() => {
     if (providerTotalOutage) {
