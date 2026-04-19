@@ -558,6 +558,7 @@ def quick_search(
     t0 = time.perf_counter()
     phase_ms: dict[str, int] = {}
     warnings_structured: list[dict[str, Any]] = []
+    warnings_structured_seen: set[tuple[str, tuple[tuple[str, str], ...]]] = set()
 
     def _phase_start() -> float:
         return time.perf_counter()
@@ -566,6 +567,11 @@ def quick_search(
         phase_ms[name] = int((time.perf_counter() - started_at) * 1000)
 
     def _warn(code: str, **meta: Any) -> None:
+        normalized_meta = tuple(sorted((str(key), repr(value)) for key, value in meta.items()))
+        dedupe_key = (code, normalized_meta)
+        if dedupe_key in warnings_structured_seen:
+            return
+        warnings_structured_seen.add(dedupe_key)
         warnings_structured.append({"code": code, "meta": meta})
 
     started = _phase_start()
@@ -828,6 +834,8 @@ def quick_search(
                 for unit in execution_plan.units
             ],
         }
+
+    warnings = list(dict.fromkeys(warnings))
 
     return {
         "query": {

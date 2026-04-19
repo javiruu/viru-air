@@ -1046,6 +1046,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setJobId(null);
     setIsDegraded(false);
     setSearchState("loading");
+    setShowLoader(true);
     setLoadingVisualHold(false);
     setDisplayProgress(0);
     setProgress("requesting", 30);
@@ -2519,32 +2520,39 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     visibleResultsCount: visibleResults.length,
   });
   const isVisualLoading = visualSearchState === "loading";
-  const showResultsWorkspace = hasSearched || isVisualLoading;
+  const isIdleVisualState = visualSearchState === "idle";
+  const hasFinalResults = visualSearchState === "success_with_results";
+  const hasFinalEmptyState = visualSearchState === "success_empty";
+  const showResultsWorkspace = !isIdleVisualState;
   const showResultsStagehead = !isVisualLoading;
-  const showResultsList = visualSearchState === "success_with_results";
-  const showResultsToolbar = visualSearchState === "success_with_results";
+  const showResultsList = hasFinalResults;
+  const showResultsToolbar = hasFinalResults;
   const panelSearchState =
-    visualSearchState === "success_empty"
+    hasFinalEmptyState
       ? "empty"
-      : visualSearchState === "success_with_results"
+      : hasFinalResults
         ? "success"
         : visualSearchState;
   const resultsStageTitle =
     isVisualLoading
       ? t("loadingTitle")
-      : visualSearchState === "success_empty"
+      : hasFinalEmptyState
         ? emptyStateMainTitle
-        : hasSearched
+        : hasFinalResults
           ? `${visibleResults.length} ${t("results")}`
-          : t("searchReadyTitle");
+          : visualSearchState === "error"
+            ? t("errorTitle")
+            : visualSearchState === "rate"
+              ? t("rateLimitTitle")
+              : t("searchReadyTitle");
   const heroStatusTone =
     visualSearchState === "error" || visualSearchState === "rate"
       ? "alert"
       : isVisualLoading
         ? "active"
-        : showDegradedState || visualSearchState === "success_empty"
+        : showDegradedState || hasFinalEmptyState
           ? "warning"
-          : hasSearched
+          : hasFinalResults
             ? "ready"
             : "idle";
   const heroStatusLabel =
@@ -2556,29 +2564,29 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           ? t("rateLimitTitle")
           : showDegradedState
             ? t("degradedBadge")
-            : hasSearched
-              ? t("ready")
+            : hasFinalResults || hasFinalEmptyState
+              ? t("searchSummaryTitle")
               : t("searchReadyTitle");
   const heroStatusTitle =
-    visualSearchState === "success_with_results"
+    hasFinalResults
       ? `${visibleResults.length} ${t("results")}`
       : isVisualLoading
         ? t("loadingTitle")
         : visualSearchState === "rate"
           ? `${rateLimitSeconds}s`
-          : visualSearchState === "success_empty"
+          : hasFinalEmptyState
             ? emptyStateMainTitle
             : visualSearchState === "error"
               ? t("errorTitle")
               : t("searchReadyTitle");
   const heroStatusBody =
-    visualSearchState === "success_with_results"
+    hasFinalResults
       ? executedCriteria?.route || summaryTrip
       : isVisualLoading
         ? t("loadingText")
         : visualSearchState === "rate"
           ? `${t("rateLimitText")} ${rateLimitSeconds}s`
-          : visualSearchState === "success_empty"
+          : hasFinalEmptyState
             ? t("emptyText")
             : visualSearchState === "error"
               ? (searchError || t("searchFailed"))
@@ -3335,7 +3343,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               </div>
             ) : null}
           </div>
-          {!hasSearched && !isVisualLoading ? (
+          {isIdleVisualState ? (
           <div className="qs-ready" aria-live="polite">
             <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
               <path

@@ -140,3 +140,36 @@ test("visual loading keeps the empty panel hidden until the search is really fin
   assert.doesNotMatch(html, /qs-state-empty/);
   assert.doesNotMatch(html, /0 resultados con estos filtros/);
 });
+
+test("visual loading stays dominant when the loader is already active for a fast final-empty response", () => {
+  const visualState = getQuickSearchVisualState({
+    searchState: "empty",
+    showLoader: true,
+    loadingVisualHold: false,
+    visibleResultsCount: 0,
+  });
+  const panelState = visualState === "success_empty" ? "empty" : visualState;
+  const html = renderToStaticMarkup(
+    <QuickSearchStatePanels
+      searchState={panelState}
+      rateLimitSeconds={0}
+      searchError={null}
+      emptyStateMainTitle="0 resultados con estos filtros"
+      locale="es"
+      zeroResultCauses={["Strict activo"]}
+      visibleZeroResultCauses={["Strict activo"]}
+      canExpandZeroResultCauses={false}
+      emptyCausesExpanded={false}
+      zeroResultActions={[]}
+      onToggleEmptyCauses={() => undefined}
+      onRelaxAction={() => undefined}
+      onRunSearch={() => undefined}
+      onEmptyCta={() => undefined}
+      t={t}
+    />,
+  );
+
+  assert.equal(visualState, "loading");
+  assert.doesNotMatch(html, /qs-state-empty/);
+  assert.doesNotMatch(html, /0 resultados con estos filtros/);
+});

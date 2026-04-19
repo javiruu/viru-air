@@ -32,6 +32,17 @@ _CACHE: dict[tuple[str, str, str], tuple[float, ProviderFetchResult]] = {}
 _CACHE_TTL_SECONDS = 300
 
 
+def _dedupe_warning_codes(warnings: list[str]) -> list[str]:
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for code in warnings:
+        if code in seen:
+            continue
+        seen.add(code)
+        deduped.append(code)
+    return deduped
+
+
 def build_execution_plan(
     planned_pairs: list[PairPlanItem],
     date_candidates: list[dt.date],
@@ -151,7 +162,7 @@ def execute_plan(
         "timeout_ms": timeout_ms,
         "waves": plan.waves,
     }
-    return combined, meta, warnings
+    return combined, meta, _dedupe_warning_codes(warnings)
 
 
 def _fetch_with_cache(

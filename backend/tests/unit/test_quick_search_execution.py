@@ -115,6 +115,23 @@ class QuickSearchExecutionTests(unittest.TestCase):
         self.assertEqual(meta["provider_failures"], 0)
         self.assertIn("ryanair_availability_failed_partial", warnings)
 
+    def test_execute_plan_dedupes_warning_codes_from_multiple_units(self):
+        pairs = [
+            self._pair("LEI", "DUB", 0.0, "seed-seed"),
+            self._pair("LEI", "ORK", 1000.0, "seed-nearby"),
+        ]
+        dates = [dt.date(2026, 6, 1)]
+        plan = build_execution_plan(pairs, dates, max_requests=5)
+
+        def fake_fetch(origin: str, destination: str, date_str: str, timeout_ms: int):
+            return ProviderFetchResult(
+                flights=[],
+                warnings=["ryanair_availability_failed_partial"],
+            )
+
+        _rows, _meta, warnings = execute_plan(plan, concurrency_limit=2, timeout_ms=3000, fetch_flights=fake_fetch)
+        self.assertEqual(warnings, ["ryanair_availability_failed_partial"])
+
     def test_execute_plan_propagates_source_failure_codes(self):
         pairs = [self._pair("LEI", "DUB", 0.0, "seed-seed")]
         dates = [dt.date(2026, 6, 1)]
