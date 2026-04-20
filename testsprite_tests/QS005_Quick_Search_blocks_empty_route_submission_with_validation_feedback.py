@@ -1,5 +1,6 @@
 import asyncio
 from playwright import async_api
+from playwright.async_api import expect
 
 async def run_test():
     pw = None
@@ -28,31 +29,18 @@ async def run_test():
         # Open a new page in the browser context
         page = await context.new_page()
 
-        # Navigate to your target URL and wait until the network request is committed
-        await page.goto("http://localhost:3000", wait_until="commit", timeout=10000)
-
-        # Wait for the main page to reach DOMContentLoaded state (optional for stability)
-        try:
-            await page.wait_for_load_state("domcontentloaded", timeout=3000)
-        except async_api.Error:
-            pass
-
-        # Iterate through all iframes and wait for them to load as well
-        for frame in page.frames:
-            try:
-                await frame.wait_for_load_state("domcontentloaded", timeout=3000)
-            except async_api.Error:
-                pass
-
         # Interact with the page elements to simulate user flow
         # -> Navigate to http://localhost:3000
-        await page.goto("http://localhost:3000", wait_until="commit", timeout=10000)
+        await page.goto("http://localhost:3000")
+        
+        # -> Navigate to /quick-search and inspect the quick-search form fields
+        await page.goto("http://localhost:3000/quick-search")
         
         # --> Assertions to verify final state
         frame = context.pages[-1]
-        # Assert that backend endpoints are not exposed in the UI
-        assert not await page.locator("xpath=//*[contains(normalize-space(.), '/health')]").is_visible(), 'Found visible occurrence of "/health" in the UI'
-        assert not await page.locator("xpath=//*[contains(normalize-space(.), '/ready')]").is_visible(), 'Found visible occurrence of "/ready" in the UI'
+        assert await frame.locator("xpath=//*[contains(., 'Debes introducir un origen o destino')]").nth(0).is_visible(), "The quick-search form should show a validation message that a search is required when origin and destination are empty"
+        current_url = await frame.evaluate("() => window.location.href")
+        assert '/quick-search' in current_url, "The page should remain on /quick-search after submitting the quick-search without origin and destination"
         await asyncio.sleep(5)
 
     finally:

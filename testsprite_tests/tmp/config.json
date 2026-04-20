@@ -6,14 +6,12 @@
   "loginUser": "user@viru.local",
   "loginPassword": "ViruUser123",
   "executionArgs": {
-    "projectName": "viru-tracker",
-    "projectPath": "c:\\Users\\javiru\\Desktop\\viru-tracker",
+    "projectName": "viru-tracker-quick-search",
+    "projectPath": "C:\\Users\\javiru\\Desktop\\viru-tracker",
     "testIds": [],
-    "additionalInstruction": "Execute all frontend test cases based on the SKILLSPRITE_USER_CAPABILITIES.md specifications for Viru Tracker application",
-    "envs": {
-      "API_KEY": "<configured-via-root-mcp.json>"
-    }
+    "additionalInstruction": "Generate and execute only the quick-search frontend test cases from testsprite_frontend_test_plan.json. Align with the current quick-search page at /quick-search, current Spanish locale labels, the dedicated login page at /login, and the current autocomplete-plus-date-picker flow. Do not invent dashboard, alerts, history, preferences, or health-check scenarios. Prefer stable selectors and assertions tied to current quick-search behavior.",
+    "envs": {}
   },
-  "serverPort": 62065,
-  "proxy": "http://0f2b6e05-08ad-4c1e-bedc-c2b2801480d1:ByqBmWd5x28rasmKNL8VzLCFYyPUm02Q@tun.testsprite.com:8080"
+  "serverPort": 61734,
+  "proxy": "http://0810339b-53c7-4ebf-a5e9-280bafa84e77:E6UJ48Z3lVKhXXz6MLwM03JPwHJUzdhk@tun.testsprite.com:8080"
 }
