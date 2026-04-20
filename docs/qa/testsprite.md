@@ -7,6 +7,68 @@ Related: docs/qa/README.md, docs/archive/qa/README.md
 ---
 # Testsprite - Viru Tracker Test Catalog
 
+## Bootstrap para Codex
+
+Esta referencia asume una integracion `repo-first`: la configuracion canonica de TestSprite vive en `mcp.json` del repo y cada maquina Codex debe materializarla una vez con el bootstrap oficial del proyecto.
+
+### Prerequisitos
+
+- Codex CLI instalado y con sesion iniciada.
+- Node.js 22 o superior.
+- `npx` disponible en `PATH`.
+- Acceso local al repo completo de Viru Tracker.
+
+### Comando unico por maquina
+
+Ejecuta uno de estos comandos desde la raiz del repo:
+
+```powershell
+node scripts/testsprite/register-codex-mcp.mjs
+```
+
+```powershell
+powershell -File scripts/testsprite/register-codex.ps1
+```
+
+```bash
+./scripts/testsprite/register-codex.sh
+```
+
+El bootstrap:
+
+- lee y valida `mcp.json`,
+- elimina la entrada previa de `TestSprite` si existia,
+- registra `TestSprite` en Codex con `codex mcp add`,
+- y verifica el resultado con `codex mcp get TestSprite --json`.
+
+### Como verificar la instalacion
+
+```powershell
+codex mcp list
+codex mcp get TestSprite --json
+```
+
+Validacion esperada:
+
+- `codex mcp list` incluye `TestSprite`.
+- `codex mcp get TestSprite --json` muestra `command: "npx"`.
+- Los `args` incluyen `@testsprite/testsprite-mcp@latest`.
+- `env.API_KEY` existe porque se materializa desde `mcp.json`.
+
+### Cuando re-registrar
+
+Vuelve a ejecutar el bootstrap si:
+
+- cambias `mcp.json`,
+- cambias la `API_KEY`,
+- abres el repo en otra maquina,
+- o Codex pierde la configuracion MCP local.
+
+### Regla de fuente de verdad
+
+- `mcp.json` es la unica configuracion canonica del servidor TestSprite.
+- Los artefactos en `testsprite_tests/` o `docs/archive/tooling/testsprite/` no deben actuar como origen de configuracion.
+
 Fecha: 2026-02-15
 
 Este documento lista todo lo que se puede hacer en Viru Tracker segun los .md y .log del repo, para que Testsprite lo pruebe.

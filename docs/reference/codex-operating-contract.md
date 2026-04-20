@@ -40,6 +40,8 @@ Condensar el conocimiento operativo estable extraido del master document externo
 - Las skills deben ser de proposito unico, con entradas explicitas y salidas verificables.
 - Secretos, tokens y datos sensibles no deben vivir en markdown, commits, PRs, comentarios, capturas ni logs compartidos.
 - Los conectores o automatizaciones se tratan como superficies sensibles: activalos solo con owner claro, guardrails y rollback.
+- Para pruebas E2E o reproducciones de navegador real, usa TestSprite cuando exista necesidad realista y la maquina ya haya ejecutado el bootstrap del repo.
+- En Viru Tracker, `mcp.json` es la fuente canonica de configuracion de TestSprite; Codex debe materializarla localmente con el bootstrap del repo antes de asumir disponibilidad.
 
 ## Roles adaptados a Codex
 

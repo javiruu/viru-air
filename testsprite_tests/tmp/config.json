@@ -11,7 +11,7 @@
     "testIds": [],
     "additionalInstruction": "Execute all frontend test cases based on the SKILLSPRITE_USER_CAPABILITIES.md specifications for Viru Tracker application",
     "envs": {
-      "API_KEY": "sk-user-JehSpNu_Fv_qXfvRFjKuLoNAqa4sBdUj2_0pkj_GdVO9qTBsKs9hEWIZtlGj8QGsl9jwne1NnYhP4JycDKNFhMrXYzb7FKemVU9KVy5nilkpad9l7MdA2gl8h-v04hRqoAg"
+      "API_KEY": "<configured-via-root-mcp.json>"
     }
   },
   "serverPort": 62065,

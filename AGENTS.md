@@ -11,8 +11,11 @@
 - Antes de publicar cambios en GitHub, prepara resumen, archivos clave, riesgos, rollback y validacion manual si el impacto lo requiere.
 - Publica cambios del repo usando la skill de GitHub correspondiente.
 - Nunca pongas secretos en markdown, commits, PRs, capturas o logs.
-- En esta maquina, algunos chats pueden arrancar desde `C:\Users\javiru\Desktop\viru-tracker`, que es una copia visible sin `.git`; el checkout Git canonico para publicar es esta carpeta `_publish_repo`.
-- Si un agente informa que "no hay git" en la carpeta padre, debe reubicar las operaciones de Git/publicacion a este checkout antes de concluir que no puede hacer `commit` o `push`.
+- Para QA E2E o bugs que no se reproduzcan bien con scripts, prioriza TestSprite si el bootstrap del repo ya se ejecuto en esa maquina.
+- La configuracion canonica de TestSprite vive en `mcp.json`; no dupliques `API_KEY` ni la config del servidor en artefactos temporales o reportes.
+- En esta maquina, la carpeta visible `C:\Users\javiru\Desktop\viru-tracker` puede ser una copia de trabajo sin `.git`; el checkout Git real para publicar vive en `C:\Users\javiru\Desktop\viru-tracker\_publish_repo`.
+- Antes de afirmar que "no hay git" o que no se puede publicar, comprueba `C:\Users\javiru\Desktop\viru-tracker\_publish_repo\.git` y ejecuta los comandos Git/publicacion desde ese checkout real si existe.
+- Si el chat se abrio en la carpeta padre sin `.git`, trata `_publish_repo` como fuente canonica para `git status`, `commit`, `push` y verificaciones de rama/HEAD.
 
 ## Busqueda segura en este repo
 
