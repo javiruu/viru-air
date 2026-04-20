@@ -37,6 +37,9 @@
     "For private routes, wait until the auth guard has completed and the quick-search inputs are visible before interacting with the page.",
     "Mouse-selection tests must type into the field, wait for a visible suggestions list, and click a visible suggestion before asserting the selected value.",
     "Empty-route validation tests must actually submit from the quick-search form, for example by pressing Enter from the origin field or using the submit button, before asserting error text.",
+    "Keyboard-selection tests must press ArrowDown and then Enter on input[name=\"origin_iata\"], and then assert the input value changed to a 3-letter IATA code after the key presses.",
+    "Valid-search tests must assert the concrete absence of visible .qs-error elements for origin, destination, and outbound date after choosing both route values and a future outbound date.",
+    "For empty-route validation, clear both route inputs first, keep the test on /quick-search, submit from the origin field, and assert against the current message copy that starts with 'Please enter a search'.",
     "Prefer direct navigation to /login and /quick-search; avoid homepage-first flows unless the page under test explicitly requires them."
   ],
   "out_of_scope": [
