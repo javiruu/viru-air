@@ -24,12 +24,20 @@
     }
   ],
   "functional_requirements": [
+    "All quick-search tests must authenticate first and wait for the private-route auth guard to finish before asserting on the form.",
     "Typing a partial query in an airport field shows autocomplete suggestions.",
     "Selecting a suggestion with the mouse fills the field with the airport IATA code and closes the suggestions list.",
     "Keyboard navigation with ArrowDown and Enter can select an autocomplete suggestion.",
     "Clearing an airport field hides its suggestions list.",
     "Submitting without a route shows a visible validation error on the quick-search page.",
     "Providing a valid route and outbound date enables search submission without inline validation errors."
+  ],
+  "test_generation_guidance": [
+    "Use the current quick-search selectors instead of inferred XPath: input[name=\"origin_iata\"], input[name=\"destination_iata\"], #origin-suggestions, #destination-suggestions, button[type=\"submit\"], and .qs-error when asserting inline field errors.",
+    "For private routes, wait until the auth guard has completed and the quick-search inputs are visible before interacting with the page.",
+    "Mouse-selection tests must type into the field, wait for a visible suggestions list, and click a visible suggestion before asserting the selected value.",
+    "Empty-route validation tests must actually submit from the quick-search form, for example by pressing Enter from the origin field or using the submit button, before asserting error text.",
+    "Prefer direct navigation to /login and /quick-search; avoid homepage-first flows unless the page under test explicitly requires them."
   ],
   "out_of_scope": [
     "Alerts",

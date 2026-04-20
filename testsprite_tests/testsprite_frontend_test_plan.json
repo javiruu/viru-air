@@ -61,19 +61,19 @@
       },
       {
         "type": "action",
-        "description": "Navigate to /quick-search"
+        "description": "Navigate to /quick-search and wait until the auth guard has finished and input[name=\"origin_iata\"] is visible"
       },
       {
         "type": "action",
-        "description": "Type \"par\" into the origin IATA input"
+        "description": "Type \"par\" into input[name=\"origin_iata\"] and wait for #origin-suggestions to become visible"
       },
       {
         "type": "action",
-        "description": "Click the first visible origin suggestion in the autocomplete dropdown"
+        "description": "Click the first visible button inside #origin-suggestions"
       },
       {
         "type": "assertion",
-        "description": "Verify the origin field now contains a 3-letter IATA code and the origin suggestions dropdown is no longer visible"
+        "description": "Verify input[name=\"origin_iata\"] now contains a 3-letter IATA code and #origin-suggestions is no longer visible"
       }
     ]
   },
@@ -143,23 +143,23 @@
       },
       {
         "type": "action",
-        "description": "Navigate to /quick-search"
+        "description": "Navigate to /quick-search and wait until the auth guard has finished and input[name=\"origin_iata\"] is visible"
       },
       {
         "type": "action",
-        "description": "Type \"par\" into the origin IATA input"
+        "description": "Type \"par\" into input[name=\"origin_iata\"] and wait for #origin-suggestions to become visible"
       },
       {
         "type": "assertion",
-        "description": "Verify the origin suggestions dropdown is visible"
+        "description": "Verify #origin-suggestions is visible"
       },
       {
         "type": "action",
-        "description": "Clear the origin IATA input"
+        "description": "Clear input[name=\"origin_iata\"]"
       },
       {
         "type": "assertion",
-        "description": "Verify the origin suggestions dropdown is not visible"
+        "description": "Verify #origin-suggestions is not visible"
       }
     ]
   },
@@ -188,19 +188,19 @@
       },
       {
         "type": "action",
-        "description": "Navigate to /quick-search"
+        "description": "Navigate to /quick-search and wait until the auth guard has finished and both route inputs are visible"
       },
       {
         "type": "action",
-        "description": "Clear the origin and destination IATA inputs if they contain any values"
+        "description": "Clear input[name=\"origin_iata\"] and input[name=\"destination_iata\"] if they contain any values"
       },
       {
         "type": "action",
-        "description": "Press Enter from the origin IATA input without providing route values"
+        "description": "Press Enter from input[name=\"origin_iata\"] to submit the empty route state"
       },
       {
         "type": "assertion",
-        "description": "Verify a visible validation message mentions that a search is required and the URL still contains /quick-search"
+        "description": "Verify a visible validation message mentions that a search is required, the route inputs remain on /quick-search, and at least one visible validation element uses current quick-search selectors instead of XPath"
       }
     ]
   },

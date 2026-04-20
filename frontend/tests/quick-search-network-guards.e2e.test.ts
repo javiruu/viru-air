@@ -79,6 +79,15 @@ async function selectFirstAvailableDate(page: Page, datePickerTrigger: ReturnTyp
   await page.keyboard.press("Escape");
 }
 
+async function waitForAutocomplete(page: Page, selector: string, state: "visible" | "hidden") {
+  await page.locator(selector).waitFor({ state, timeout: 10000 });
+}
+
+async function clearRoute(originInput: ReturnType<Page["locator"]>, destinationInput: ReturnType<Page["locator"]>) {
+  await originInput.fill("");
+  await destinationInput.fill("");
+}
+
 test("quick-search blocks partial and unsupported IATAs before network search requests", async (t) => {
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ viewport: { width: 1366, height: 900 } });
@@ -149,6 +158,84 @@ test("quick-search keeps supported AGP to DUB requests below 400", async (t) => 
     const quickResponses = trackedResponses.filter((item) => item.url.includes("/search/quick"));
     assert.ok(quickResponses.length >= 1);
     assert.equal(quickResponses.every((item) => item.status < 400), true);
+  } finally {
+    await browser.close();
+  }
+});
+
+test("quick-search selects an origin suggestion with the mouse and closes the dropdown", async (t) => {
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+
+  try {
+    const setup = await openQuickSearch(context);
+    if (!setup) {
+      t.skip(`Quick-Search not reachable at ${BASE_URL}. Start frontend/backend and retry.`);
+      return;
+    }
+
+    const { page, originInput, destinationInput } = setup;
+    await clearRoute(originInput, destinationInput);
+    await originInput.type("par", { delay: 100 });
+    await waitForAutocomplete(page, "#origin-suggestions", "visible");
+
+    const firstSuggestion = page.locator("#origin-suggestions button").first();
+    const selectedIata = (await firstSuggestion.locator("strong").textContent())?.trim() || "";
+    assert.match(selectedIata, /^[A-Z]{3}$/);
+
+    await firstSuggestion.click();
+
+    assert.equal(await originInput.inputValue(), selectedIata);
+    await waitForAutocomplete(page, "#origin-suggestions", "hidden");
+  } finally {
+    await browser.close();
+  }
+});
+
+test("quick-search hides origin suggestions when the origin input is cleared", async (t) => {
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+
+  try {
+    const setup = await openQuickSearch(context);
+    if (!setup) {
+      t.skip(`Quick-Search not reachable at ${BASE_URL}. Start frontend/backend and retry.`);
+      return;
+    }
+
+    const { page, originInput, destinationInput } = setup;
+    await clearRoute(originInput, destinationInput);
+    await originInput.type("par", { delay: 100 });
+    await waitForAutocomplete(page, "#origin-suggestions", "visible");
+
+    await originInput.fill("");
+
+    await waitForAutocomplete(page, "#origin-suggestions", "hidden");
+  } finally {
+    await browser.close();
+  }
+});
+
+test("quick-search blocks empty route submission with validation feedback", async (t) => {
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+
+  try {
+    const setup = await openQuickSearch(context);
+    if (!setup) {
+      t.skip(`Quick-Search not reachable at ${BASE_URL}. Start frontend/backend and retry.`);
+      return;
+    }
+
+    const { page, originInput, destinationInput } = setup;
+    await clearRoute(originInput, destinationInput);
+
+    await originInput.press("Enter");
+
+    await page.getByText(/Please enter a search/i).first().waitFor({ state: "visible", timeout: 10000 });
+    assert.equal(await originInput.getAttribute("aria-invalid"), "true");
+    assert.equal(await destinationInput.getAttribute("aria-invalid"), "true");
+    assert.match(page.url(), /\/quick-search$/);
   } finally {
     await browser.close();
   }

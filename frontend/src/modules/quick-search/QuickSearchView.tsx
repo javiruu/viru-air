@@ -2748,11 +2748,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                     onAutocompleteFieldBlur();
                   }}
                   onChange={(e) => {
-                    setOrigin(e.target.value.toUpperCase());
+                    const nextValue = e.target.value.toUpperCase();
+                    setOrigin(nextValue);
                     setOriginCountryOnly(null);
                     setOriginSelectedCountryCode(null);
                     setFieldErrors((prev) => ({ ...prev, origin_iata: undefined }));
-                    setActiveAutocompleteField("origin");
+                    setActiveAutocompleteField(nextValue.trim() ? "origin" : null);
                     setActiveAutocompleteIndex(-1);
                   }}
                   onKeyDown={(event) => {
@@ -2924,11 +2925,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                     onAutocompleteFieldBlur();
                   }}
                   onChange={(e) => {
-                    setDestination(e.target.value.toUpperCase());
+                    const nextValue = e.target.value.toUpperCase();
+                    setDestination(nextValue);
                     setDestinationCountryOnly(null);
                     setDestinationSelectedCountryCode(null);
                     setFieldErrors((prev) => ({ ...prev, destination_iata: undefined }));
-                    setActiveAutocompleteField("destination");
+                    setActiveAutocompleteField(nextValue.trim() ? "destination" : null);
                     setActiveAutocompleteIndex(-1);
                   }}
                   onKeyDown={(event) => {
