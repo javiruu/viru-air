@@ -11,6 +11,8 @@
 - Antes de publicar cambios en GitHub, prepara resumen, archivos clave, riesgos, rollback y validacion manual si el impacto lo requiere.
 - Publica cambios del repo usando la skill de GitHub correspondiente.
 - Nunca pongas secretos en markdown, commits, PRs, capturas o logs.
+- En esta maquina, algunos chats pueden arrancar desde `C:\Users\javiru\Desktop\viru-tracker`, que es una copia visible sin `.git`; el checkout Git canonico para publicar es esta carpeta `_publish_repo`.
+- Si un agente informa que "no hay git" en la carpeta padre, debe reubicar las operaciones de Git/publicacion a este checkout antes de concluir que no puede hacer `commit` o `push`.
 
 ## Busqueda segura en este repo
 
