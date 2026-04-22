@@ -5707,6 +5707,19 @@ textarea::placeholder {
   outline-offset: 2px;
 }
 
+.btn-search:disabled {
+  opacity: 1;
+  color: var(--ink-muted);
+  border-color: color-mix(in srgb, var(--border) 76%, rgba(217, 93, 57, 0.12));
+  background:
+    linear-gradient(180deg, rgba(247, 239, 228, 0.96), rgba(238, 230, 218, 0.94)),
+    var(--surface);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 8px 18px rgba(47, 40, 24, 0.08);
+  filter: none;
+}
+
 .btn-search:disabled::after {
   display: none;
 }
