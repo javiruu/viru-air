@@ -6372,8 +6372,6 @@ textarea::placeholder {
 
 
 .private-account-anchor {
-  position: sticky;
-  top: 0;
   z-index: 1000;
   display: flex;
   align-items: center;
