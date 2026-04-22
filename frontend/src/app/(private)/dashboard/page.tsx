@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
+import { DashboardNewsRail } from "@/components/components/dashboard/DashboardNewsRail";
+import { getDashboardFeaturedNews } from "@/data/dashboardNews";
 import { useI18n } from "@/i18n";
 import { useFtueHint } from "@/lib/ftue";
 import { trackUxEvent } from "@/lib/uxTracking";
@@ -230,60 +232,126 @@ export default function DashboardPage() {
   const hasOpportunity = Boolean(topSuggestion);
   const heroStatus = t("dashboard.hero.status", { count: watches.length, activity: activityLabel });
   const heroCtaHref = "/quick-search";
+  const featuredNews = useMemo(() => getDashboardFeaturedNews(localeTag), [localeTag]);
 
   return (
     <main className="shell dashboard-shell" id="main-content">
-      <section className="dashboard-hero-state">
-        <div className="dashboard-hero-content">
-          <div className="dashboard-hero-title">
-            <h2>{t("dashboard.hero.title")}</h2>
-            <p className="dashboard-hero-status">{heroStatus}</p>
-          </div>
-          <div className="dashboard-hero-highlight">
-            {watches.length === 0 ? (
-              <div className="hero-empty">
-                <strong>{t("dashboard.hero.onboardingTitle")}</strong>
-                <p>{t("dashboard.hero.onboardingBody")}</p>
+      <section className="dashboard-top-stage">
+        <div className="dashboard-top-main">
+          <section className="dashboard-hero-state">
+            <div className="dashboard-hero-content">
+              <div className="dashboard-hero-title">
+                <h2>{t("dashboard.hero.title")}</h2>
+                <p className="dashboard-hero-status">{heroStatus}</p>
               </div>
-            ) : hasOpportunity && topSuggestion ? (
-              <div className="hero-opportunity">
-                <div>
-                  <span className="hero-label">{t("dashboard.hero.opportunityRouteLabel")}</span>
-                  <strong>{topSuggestion.title}</strong>
-                  <p>{topSuggestion.detail}</p>
-                </div>
-                <div className="hero-opportunity-metrics">
-                  <div>
-                    <span className="hero-label">{t("dashboard.hero.opportunityPriceLabel")}</span>
-                    <strong>{t("dashboard.hero.opportunityValueUnknown")}</strong>
+              <div className="dashboard-hero-highlight">
+                {watches.length === 0 ? (
+                  <div className="hero-empty">
+                    <strong>{t("dashboard.hero.onboardingTitle")}</strong>
+                    <p>{t("dashboard.hero.onboardingBody")}</p>
                   </div>
-                  <div>
-                    <span className="hero-label">{t("dashboard.hero.opportunityDeltaLabel")}</span>
-                    <strong>{t("dashboard.hero.opportunityValueUnknown")}</strong>
+                ) : hasOpportunity && topSuggestion ? (
+                  <div className="hero-opportunity">
+                    <div>
+                      <span className="hero-label">{t("dashboard.hero.opportunityRouteLabel")}</span>
+                      <strong>{topSuggestion.title}</strong>
+                      <p>{topSuggestion.detail}</p>
+                    </div>
+                    <div className="hero-opportunity-metrics">
+                      <div>
+                        <span className="hero-label">{t("dashboard.hero.opportunityPriceLabel")}</span>
+                        <strong>{t("dashboard.hero.opportunityValueUnknown")}</strong>
+                      </div>
+                      <div>
+                        <span className="hero-label">{t("dashboard.hero.opportunityDeltaLabel")}</span>
+                        <strong>{t("dashboard.hero.opportunityValueUnknown")}</strong>
+                      </div>
+                      <span className="status-badge status-ok">{t("dashboard.hero.opportunityBadge")}</span>
+                    </div>
                   </div>
-                  <span className="status-badge status-ok">{t("dashboard.hero.opportunityBadge")}</span>
+                ) : (
+                  <div className="hero-empty">
+                    <strong>{t("dashboard.hero.noOpportunityTitle")}</strong>
+                    <p>{t("dashboard.hero.noOpportunityBody")}</p>
+                  </div>
+                )}
+              </div>
+              <div className="dashboard-hero-actions">
+                <Link
+                  href={heroCtaHref}
+                  className="btn-primary"
+                  onClick={() => trackEvent("dashboard_click_hero_cta", { area: "dashboard", source: "hero" })}
+                >
+                  {t("dashboard.hero.ctaExplore")}
+                </Link>
+              </div>
+            </div>
+            <div className="dashboard-hero-side">
+              <span className="lang-pill">{locale}</span>
+            </div>
+          </section>
+
+          <section className="dashboard-section dashboard-section-manage">
+            <div className="dashboard-section-head">
+              <div>
+                <h3>{t("dashboard.sections.manage")}</h3>
+                <p>{t("dashboard.sections.manageHint")}</p>
+              </div>
+            </div>
+            <div className="dashboard-primary-grid">
+              <article className="module-card">
+                <div className="module-head">
+                  <h4 className="module-title">{t("dashboard.modules.watchlist.title")}</h4>
+                  <span className="module-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 3h14v18l-7-4-7 4V3z" />
+                    </svg>
+                  </span>
                 </div>
-              </div>
-            ) : (
-              <div className="hero-empty">
-                <strong>{t("dashboard.hero.noOpportunityTitle")}</strong>
-                <p>{t("dashboard.hero.noOpportunityBody")}</p>
-              </div>
-            )}
-          </div>
-          <div className="dashboard-hero-actions">
-            <Link
-              href={heroCtaHref}
-              className="btn-primary"
-              onClick={() => trackEvent("dashboard_click_hero_cta", { area: "dashboard", source: "hero" })}
-            >
-              {t("dashboard.hero.ctaExplore")}
-            </Link>
-          </div>
+                <p className="module-desc">{t("dashboard.modules.watchlist.desc")}</p>
+                <div className="module-actions">
+                  <Link
+                    href="/watchlist"
+                    className="btn-secondary"
+                    onClick={() => trackEvent("dashboard_click_watchlist", { area: "dashboard", source: "watchlist_card" })}
+                  >
+                    {t("dashboard.modules.watchlist.primary")}
+                  </Link>
+                  <Link href="/watchlist" className="link-subtle">
+                    {t("dashboard.modules.watchlist.secondary")}
+                  </Link>
+                </div>
+              </article>
+
+              <article className="module-card">
+                <div className="module-head">
+                  <h4 className="module-title">{t("dashboard.modules.alerts.title")}</h4>
+                  <span className="module-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2a6 6 0 0 1 6 6v4l2 3H4l2-3V8a6 6 0 0 1 6-6z" />
+                      <path d="M9 18a3 3 0 0 0 6 0" />
+                    </svg>
+                  </span>
+                </div>
+                <p className="module-desc">{t("dashboard.modules.alerts.desc")}</p>
+                <div className="module-actions">
+                  <Link
+                    href="/alerts"
+                    className="btn-secondary"
+                    onClick={() => trackEvent("dashboard_alerts_open", { area: "dashboard", source: "alerts_card" })}
+                  >
+                    {t("dashboard.modules.alerts.primary")}
+                  </Link>
+                  <Link href="/alerts" className="link-subtle">
+                    {t("dashboard.modules.alerts.secondary")}
+                  </Link>
+                </div>
+              </article>
+            </div>
+          </section>
         </div>
-        <div className="dashboard-hero-side">
-          <span className="lang-pill">{locale}</span>
-        </div>
+
+        <DashboardNewsRail item={featuredNews} localeTag={localeTag} />
       </section>
 
       {dashboardHint.visible ? (
@@ -313,66 +381,6 @@ export default function DashboardPage() {
           </div>
         </section>
       ) : null}
-
-      <section className="dashboard-section">
-        <div className="dashboard-section-head">
-          <div>
-            <h3>{t("dashboard.sections.manage")}</h3>
-            <p>{t("dashboard.sections.manageHint")}</p>
-          </div>
-        </div>
-        <div className="dashboard-primary-grid">
-          <article className="module-card">
-            <div className="module-head">
-              <h4 className="module-title">{t("dashboard.modules.watchlist.title")}</h4>
-              <span className="module-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 3h14v18l-7-4-7 4V3z" />
-                </svg>
-              </span>
-            </div>
-            <p className="module-desc">{t("dashboard.modules.watchlist.desc")}</p>
-            <div className="module-actions">
-              <Link
-                href="/watchlist"
-                className="btn-secondary"
-                onClick={() => trackEvent("dashboard_click_watchlist", { area: "dashboard", source: "watchlist_card" })}
-              >
-                {t("dashboard.modules.watchlist.primary")}
-              </Link>
-              <Link href="/watchlist" className="link-subtle">
-                {t("dashboard.modules.watchlist.secondary")}
-              </Link>
-            </div>
-          </article>
-
-          <article className="module-card">
-            <div className="module-head">
-              <h4 className="module-title">{t("dashboard.modules.alerts.title")}</h4>
-              <span className="module-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2a6 6 0 0 1 6 6v4l2 3H4l2-3V8a6 6 0 0 1 6-6z" />
-                  <path d="M9 18a3 3 0 0 0 6 0" />
-                </svg>
-              </span>
-            </div>
-            <p className="module-desc">{t("dashboard.modules.alerts.desc")}</p>
-            <div className="module-actions">
-              <Link
-                href="/alerts"
-                className="btn-secondary"
-                onClick={() => trackEvent("dashboard_alerts_open", { area: "dashboard", source: "alerts_card" })}
-              >
-                {t("dashboard.modules.alerts.primary")}
-              </Link>
-              <Link href="/alerts" className="link-subtle">
-                {t("dashboard.modules.alerts.secondary")}
-              </Link>
-            </div>
-          </article>
-
-        </div>
-      </section>
 
       <section className="dashboard-section">
         <div className="dashboard-section-head">
