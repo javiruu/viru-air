@@ -286,31 +286,6 @@ export default function HomePage() {
           <p>{t("public.landing.gridSearchBody")}</p>
         </article>
       </section>
-
-      <footer className="landing-footer landing-stage landing-stage-delay-3">
-        <div className="landing-footer-brand">
-          <span className="landing-dot" aria-hidden="true" />
-          <div>
-            <strong>Viru Tracker</strong>
-            <p>{t("public.landing.brandTagline")}</p>
-          </div>
-        </div>
-        <div className="landing-footer-links">
-          <div>
-            <h4>{t("public.landing.footerProduct")}</h4>
-            <Link href="/policies">{t("public.landing.policies")}</Link>
-            <Link href="/login">{t("public.landing.ctaEnter")}</Link>
-            <Link href="/register">{t("public.landing.ctaCreate")}</Link>
-          </div>
-          <div>
-            <h4>{t("public.landing.footerSupport")}</h4>
-            <Link href="/ayuda">{t("public.landing.footerHelp")}</Link>
-            <a href="mailto:soporte@viru.app">{t("public.landing.footerContact")}</a>
-            <a href="mailto:ayuda@viru.app">{t("public.landing.footerFaq")}</a>
-            <a href="mailto:press@viru.app">{t("public.landing.footerPress")}</a>
-          </div>
-        </div>
-      </footer>
     </main>
   );
 }

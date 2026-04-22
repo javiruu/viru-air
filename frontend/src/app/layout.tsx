@@ -2,6 +2,8 @@ import "../styles/globals.css";
 import type { Metadata } from "next";
 import Script from "next/script";
 
+import ViruFooterBlock from "@/modules/shared/ViruFooterBlock";
+
 export const metadata: Metadata = {
   title: "Viru",
   description: "Ryanair Tracker",
@@ -39,6 +41,7 @@ gtag('config', '${gaMeasurementId}');`}
           Saltar al contenido
         </a>
         {children}
+        <ViruFooterBlock />
       </body>
     </html>
   );
