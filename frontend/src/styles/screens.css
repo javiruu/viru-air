@@ -10618,7 +10618,7 @@ textarea::placeholder {
 .account-profile-glass {
   position: relative;
   overflow: hidden;
-  border-radius: 30px;
+  border-radius: 26px;
   border: 1px solid color-mix(in srgb, var(--border) 72%, white 28%);
   background:
     linear-gradient(145deg, rgba(255, 252, 247, 0.84), rgba(248, 240, 231, 0.7)),
@@ -10633,9 +10633,9 @@ textarea::placeholder {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.9fr);
-  gap: 1.15rem;
-  padding: 1.2rem;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.82fr);
+  gap: 1rem;
+  padding: 1rem;
 }
 
 .account-profile-main,
@@ -10647,7 +10647,7 @@ textarea::placeholder {
 .account-profile-hero,
 .account-profile-panel {
   position: relative;
-  border-radius: 24px;
+  border-radius: 20px;
   border: 1px solid color-mix(in srgb, var(--border) 66%, white 34%);
   background:
     linear-gradient(155deg, rgba(255, 255, 255, 0.52), rgba(255, 247, 238, 0.22)),
@@ -10659,9 +10659,9 @@ textarea::placeholder {
 }
 
 .account-profile-hero {
-  padding: 1.35rem;
+  padding: 1.1rem;
   display: grid;
-  gap: 1.3rem;
+  gap: 1rem;
   background:
     radial-gradient(circle at top left, rgba(217, 93, 57, 0.14), transparent 36%),
     radial-gradient(circle at bottom right, rgba(46, 110, 98, 0.14), transparent 34%),
@@ -10681,8 +10681,8 @@ textarea::placeholder {
 .account-profile-loading-copy h2 {
   margin: 0;
   font-family: "Playfair Display", serif;
-  font-size: clamp(1.5rem, 2.8vw, 2.3rem);
-  line-height: 1.05;
+  font-size: clamp(1.28rem, 2.1vw, 1.72rem);
+  line-height: 1.12;
 }
 
 .account-profile-hero-copy p,
@@ -10718,16 +10718,16 @@ textarea::placeholder {
 .account-profile-identity {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 1rem;
+  gap: 0.85rem;
   align-items: center;
 }
 
 .account-profile-avatar-shell {
   position: relative;
-  width: 122px;
-  height: 122px;
-  padding: 6px;
-  border-radius: 32px;
+  width: 92px;
+  height: 92px;
+  padding: 5px;
+  border-radius: 24px;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.18)),
     rgba(255, 255, 255, 0.22);
@@ -10741,7 +10741,7 @@ textarea::placeholder {
   height: 100%;
   display: grid;
   place-items: center;
-  border-radius: 28px;
+  border-radius: 20px;
   object-fit: cover;
   background:
     linear-gradient(145deg, color-mix(in srgb, var(--surface-3) 88%, white 12%), color-mix(in srgb, var(--surface) 78%, var(--accent) 22%));
@@ -10749,14 +10749,14 @@ textarea::placeholder {
 
 .account-profile-avatar-fallback {
   color: var(--ink);
-  font-size: 2rem;
+  font-size: 1.45rem;
   font-weight: 700;
   letter-spacing: 0.04em;
 }
 
 .account-profile-meta {
   display: grid;
-  gap: 0.9rem;
+  gap: 0.7rem;
 }
 
 .account-profile-meta-line {
@@ -10768,14 +10768,14 @@ textarea::placeholder {
 }
 
 .account-profile-meta-line strong {
-  font-size: 1rem;
+  font-size: 0.96rem;
   overflow-wrap: anywhere;
 }
 
 .account-profile-meta-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
+  gap: 0.6rem;
 }
 
 .account-profile-meta-card,
@@ -10789,25 +10789,25 @@ textarea::placeholder {
 }
 
 .account-profile-meta-card {
-  padding: 0.8rem 0.9rem;
+  padding: 0.65rem 0.75rem;
   display: grid;
-  gap: 0.35rem;
+  gap: 0.22rem;
 }
 
 .account-profile-meta-card span,
 .account-profile-session-copy span {
   color: var(--ink-muted);
-  font-size: 0.8rem;
+  font-size: 0.76rem;
 }
 
 .account-profile-meta-card strong {
-  font-size: 1rem;
+  font-size: 0.92rem;
 }
 
 .account-profile-panel {
-  padding: 1.15rem;
+  padding: 0.95rem;
   display: grid;
-  gap: 1rem;
+  gap: 0.85rem;
 }
 
 .account-profile-panel-soft {
@@ -10826,22 +10826,22 @@ textarea::placeholder {
 .account-profile-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.95rem;
+  gap: 0.8rem;
 }
 
 .account-profile-field {
   display: grid;
-  gap: 0.45rem;
-  font-size: 0.9rem;
+  gap: 0.35rem;
+  font-size: 0.86rem;
   font-weight: 600;
   color: var(--ink);
 }
 
 .account-profile-field input {
   width: 100%;
-  min-height: 50px;
-  padding: 0.82rem 0.95rem;
-  border-radius: 16px;
+  min-height: 44px;
+  padding: 0.7rem 0.85rem;
+  border-radius: 14px;
   border: 1px solid color-mix(in srgb, var(--border) 78%, white 22%);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 250, 244, 0.66)),
@@ -10860,7 +10860,7 @@ textarea::placeholder {
 .account-profile-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.6rem;
 }
 
 .account-profile-form .account-profile-actions {
@@ -10870,34 +10870,34 @@ textarea::placeholder {
 
 .account-profile-session-list {
   display: grid;
-  gap: 0.7rem;
+  gap: 0.55rem;
 }
 
 .account-profile-session-row {
-  padding: 0.85rem 0.9rem;
+  padding: 0.7rem 0.78rem;
   display: flex;
-  gap: 0.75rem;
+  gap: 0.6rem;
   align-items: flex-start;
   justify-content: space-between;
 }
 
 .account-profile-session-copy {
   display: grid;
-  gap: 0.3rem;
+  gap: 0.2rem;
 }
 
 .account-profile-session-copy p {
   margin: 0;
   color: var(--ink-muted);
-  font-size: 0.86rem;
-  line-height: 1.45;
+  font-size: 0.8rem;
+  line-height: 1.35;
 }
 
 .account-profile-loading {
-  padding: 1.5rem;
+  padding: 1.2rem;
   display: grid;
   gap: 1rem;
-  min-height: 320px;
+  min-height: 280px;
   align-items: center;
 }
 
@@ -10984,13 +10984,13 @@ textarea::placeholder {
 
 @media (max-width: 760px) {
   .account-profile-grid {
-    padding: 0.9rem;
+    padding: 0.8rem;
   }
 
   .account-profile-hero,
   .account-profile-panel,
   .account-profile-loading {
-    padding: 1rem;
+    padding: 0.9rem;
   }
 
   .account-profile-identity {
@@ -11004,8 +11004,8 @@ textarea::placeholder {
   }
 
   .account-profile-avatar-shell {
-    width: 106px;
-    height: 106px;
+    width: 82px;
+    height: 82px;
   }
 
   .account-profile-session-row,
