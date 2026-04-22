@@ -198,6 +198,7 @@
 
 .viru-footer-block {
   position: relative;
+  overflow: hidden;
   width: 100%;
   margin-top: 3rem;
   padding: 3.25rem 0 2rem;
@@ -212,6 +213,7 @@
   position: relative;
   z-index: 1;
   padding-top: 0;
+  padding-bottom: 0;
 }
 
 .viru-footer-glow {

@@ -40,8 +40,10 @@ gtag('config', '${gaMeasurementId}');`}
         <a className="skip-link" href="#main-content">
           Saltar al contenido
         </a>
-        {children}
-        <ViruFooterBlock />
+        <div className="app-root">
+          <div className="app-content">{children}</div>
+          <ViruFooterBlock />
+        </div>
       </body>
     </html>
   );
