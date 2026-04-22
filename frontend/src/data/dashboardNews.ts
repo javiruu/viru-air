@@ -19,7 +19,7 @@ const dashboardNewsEs: DashboardNewsItem = {
   publishedAt: "2026-04-20",
   readTime: "4 min de lectura",
   image: "/images/dashboard-news-flight-window.svg",
-  href: "/soporte/about-us?from=dashboard-news",
+  href: "/soporte/novedades/price-windows?from=dashboard-news",
   ctaLabel: "Leer actualización",
 };
 
@@ -32,7 +32,7 @@ const dashboardNewsEn: DashboardNewsItem = {
   publishedAt: "2026-04-20",
   readTime: "4 min read",
   image: "/images/dashboard-news-flight-window.svg",
-  href: "/soporte/about-us?from=dashboard-news",
+  href: "/soporte/novedades/price-windows?from=dashboard-news",
   ctaLabel: "Read update",
 };
 
