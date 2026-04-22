@@ -6384,6 +6384,16 @@ textarea::placeholder {
   background: var(--bg);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(0);
+  opacity: 1;
+  transition:
+    opacity 180ms cubic-bezier(0.2, 0, 0, 1),
+    transform 180ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.private-account-anchor.is-leaving {
+  opacity: 0.82;
+  transform: translateY(-6px);
 }
 
 .private-account-controls {
@@ -6395,6 +6405,17 @@ textarea::placeholder {
 
 .private-content {
   padding-top: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .private-account-anchor {
+    transition: none;
+  }
+
+  .private-account-anchor.is-leaving {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .private-theme-toggle {
