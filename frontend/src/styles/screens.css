@@ -7150,6 +7150,210 @@ textarea::placeholder {
   background: rgba(167, 120, 52, 0.12);
 }
 
+/* =========================
+   SUPPORT CONTACT PAGE
+   ========================= */
+.support-contact-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.support-contact-hero {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(217, 93, 57, 0.16), transparent 26%),
+    radial-gradient(circle at top right, rgba(46, 110, 98, 0.14), transparent 28%),
+    linear-gradient(145deg, rgba(255, 250, 244, 0.96), rgba(255, 244, 232, 0.9)),
+    var(--panel-bg);
+}
+
+.support-contact-hero::after {
+  content: "";
+  position: absolute;
+  right: -48px;
+  top: -64px;
+  width: 180px;
+  height: 180px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.28), transparent 70%);
+  pointer-events: none;
+}
+
+.support-contact-hero-copy {
+  position: relative;
+  display: grid;
+  gap: 1rem;
+}
+
+.support-contact-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: fit-content;
+  padding: 0.32rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(217, 93, 57, 0.24);
+  background: rgba(255, 250, 244, 0.74);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.support-contact-hero-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.support-contact-hero-header h2 {
+  margin: 0;
+  max-width: 18ch;
+  font-size: clamp(1.7rem, 4vw, 2.7rem);
+  line-height: 1.04;
+}
+
+.support-contact-hero-header p {
+  margin: 0.75rem 0 0;
+  max-width: 46rem;
+  color: var(--ink-muted);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.support-contact-points {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.support-contact-point {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: flex-start;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(217, 205, 187, 0.72);
+  background: rgba(255, 250, 244, 0.78);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58);
+}
+
+.support-contact-point p {
+  margin: 0;
+  color: var(--ink-muted);
+  line-height: 1.55;
+}
+
+.support-contact-point-icon,
+.support-contact-aside-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: rgba(217, 93, 57, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(217, 93, 57, 0.18);
+  box-shadow: 0 10px 22px rgba(217, 93, 57, 0.1);
+  flex: 0 0 auto;
+}
+
+.support-contact-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.support-contact-form-panel,
+.support-contact-aside {
+  display: grid;
+  gap: 1rem;
+}
+
+.support-contact-form-header {
+  align-items: start;
+}
+
+.support-contact-form textarea {
+  min-height: 220px;
+}
+
+.support-contact-form input::placeholder,
+.support-contact-form textarea::placeholder {
+  color: var(--placeholder);
+}
+
+.support-contact-actions {
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.support-contact-actions .panel-note {
+  max-width: 26rem;
+  line-height: 1.5;
+}
+
+.support-contact-aside-copy {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.support-contact-aside-cards {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.support-contact-aside-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.85rem;
+  padding: 1rem;
+  align-items: start;
+}
+
+.support-contact-aside-card h3 {
+  margin: 0 0 0.28rem;
+  font-size: 1rem;
+}
+
+.support-contact-aside-card p {
+  margin: 0;
+  color: var(--ink-muted);
+  line-height: 1.55;
+}
+
+@media (max-width: 900px) {
+  .support-contact-hero-header,
+  .support-contact-actions {
+    flex-direction: column;
+  }
+
+  .support-contact-points,
+  .support-contact-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .support-contact-page {
+    gap: 1rem;
+  }
+
+  .support-contact-point,
+  .support-contact-aside-card {
+    border-radius: 16px;
+  }
+
+  .support-contact-form textarea {
+    min-height: 180px;
+  }
+}
+
 .status-down {
   color: #a03922;
   border-color: rgba(178, 74, 48, 0.38);

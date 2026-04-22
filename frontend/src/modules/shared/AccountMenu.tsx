@@ -94,8 +94,7 @@ export default function AccountMenu() {
         hint: t("account.menu.hints.supportGroup"),
         items: [
           { label: t("account.menu.help"), href: "/soporte/ayuda", icon: "fa-headset" },
-          { label: t("account.menu.feedback"), href: "/soporte/feedback", icon: "fa-bug" },
-          { label: t("account.menu.suggestions"), href: "/suggestions", icon: "fa-lightbulb" },
+          { label: t("account.menu.contact"), href: "/soporte/contacto", icon: "fa-paper-plane" },
         ],
       },
     ],

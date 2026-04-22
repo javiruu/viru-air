@@ -20,6 +20,7 @@ export const CANONICAL_ROUTES = {
   history: "/watchlist",
   preferences: "/preferencias",
   supportFeedback: "/soporte/feedback",
+  privateContact: "/soporte/contacto",
   suggestions: "/suggestions",
   publicHelp: "/ayuda",
   privateHelp: "/soporte/ayuda",
