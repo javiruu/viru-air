@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { apiFetchWithStatus } from "@/modules/shared/api";
 import { clearToken } from "@/modules/shared/auth";
+import { buildAccountMenuGroups } from "@/modules/shared/accountMenuConfig";
 import { persistLocale, useI18n } from "@/i18n";
 
 type Me = { id: string; email: string; locale: string; is_admin: boolean };
@@ -74,32 +75,7 @@ export default function AccountMenu() {
   const initials = useMemo(() => getInitials(me?.email || me?.id || t("account.menu.label")), [me?.email, me?.id, t]);
   const accountLabel = me?.email || t("account.menu.label");
 
-  const menuGroups = useMemo(
-    () => [
-      {
-        title: t("account.menu.accountGroup"),
-        hint: t("account.menu.hints.accountGroup"),
-        items: [
-          { label: t("account.menu.profile"), href: "/cuenta/perfil", icon: "fa-id-card-clip" },
-          { label: t("account.menu.security"), href: "/cuenta/seguridad", icon: "fa-shield-lock" },
-        ],
-      },
-      {
-        title: t("account.menu.preferencesGroup"),
-        hint: t("account.menu.hints.preferencesGroup"),
-        items: [{ label: t("account.menu.preferencesHub"), href: "/preferencias", icon: "fa-sliders" }],
-      },
-      {
-        title: t("account.menu.supportGroup"),
-        hint: t("account.menu.hints.supportGroup"),
-        items: [
-          { label: t("account.menu.help"), href: "/soporte/ayuda", icon: "fa-headset" },
-          { label: t("account.menu.contact"), href: "/soporte/contacto", icon: "fa-paper-plane" },
-        ],
-      },
-    ],
-    [t],
-  );
+  const menuGroups = useMemo(() => buildAccountMenuGroups(t), [t]);
 
   function onTriggerKeyDown(event: ReactKeyboardEvent<HTMLButtonElement>) {
     if (event.key === "Enter" || event.key === " ") {
