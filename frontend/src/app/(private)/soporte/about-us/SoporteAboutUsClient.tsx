@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { useI18n } from "@/i18n";
 
+import AnimatedQuoteBlock from "./AnimatedQuoteBlock";
 import { buildSupportAboutMembers } from "./content";
 
 export default function SoporteAboutUsClient() {
@@ -42,6 +43,7 @@ export default function SoporteAboutUsClient() {
             </div>
             <span className="status-badge status-ok">{t("support.aboutUs.badge")}</span>
           </div>
+          <AnimatedQuoteBlock />
         </div>
 
         <div className="support-about-principles">
