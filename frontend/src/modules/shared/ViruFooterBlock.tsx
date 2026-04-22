@@ -159,93 +159,90 @@ export default function ViruFooterBlock() {
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
     >
+      <div className="viru-footer-glow viru-footer-glow-primary" aria-hidden="true" />
+      <div className="viru-footer-glow viru-footer-glow-secondary" aria-hidden="true" />
       <div className="shell viru-footer-shell">
-        <div className="viru-footer-surface">
-          <div className="viru-footer-glow viru-footer-glow-primary" aria-hidden="true" />
-          <div className="viru-footer-glow viru-footer-glow-secondary" aria-hidden="true" />
-
-          <motion.div
-            className="viru-footer-top"
-            initial={shouldReduceMotion ? undefined : { opacity: 0, y: 12 }}
-            whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.45, delay: 0.05 }}
-          >
-            <div className="viru-footer-brand">
-              <span className="viru-footer-brand-mark" aria-hidden="true">
-                <span className="landing-dot" />
-              </span>
-              <div className="viru-footer-brand-copy">
-                <span className="viru-footer-kicker">{t("shared.footer.kicker")}</span>
-                <h2>Viru Tracker</h2>
-                <p>
-                  {isPrivateContext ? t("shared.footer.privateBody") : t("shared.footer.publicBody")}
-                </p>
-              </div>
+        <motion.div
+          className="viru-footer-top"
+          initial={shouldReduceMotion ? undefined : { opacity: 0, y: 12 }}
+          whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.45, delay: 0.05 }}
+        >
+          <div className="viru-footer-brand">
+            <span className="viru-footer-brand-mark" aria-hidden="true">
+              <span className="landing-dot" />
+            </span>
+            <div className="viru-footer-brand-copy">
+              <span className="viru-footer-kicker">{t("shared.footer.kicker")}</span>
+              <h2>Viru Tracker</h2>
+              <p>
+                {isPrivateContext ? t("shared.footer.privateBody") : t("shared.footer.publicBody")}
+              </p>
             </div>
+          </div>
 
-            <div className="viru-footer-utility">
-              <div className="viru-footer-status">
-                <span className="viru-footer-status-label">{t("shared.footer.statusLabel")}</span>
-                <strong>{isPrivateContext ? t("shared.footer.statusPrivate") : t("shared.footer.statusPublic")}</strong>
+          <div className="viru-footer-utility">
+            <div className="viru-footer-status">
+              <span className="viru-footer-status-label">{t("shared.footer.statusLabel")}</span>
+              <strong>{isPrivateContext ? t("shared.footer.statusPrivate") : t("shared.footer.statusPublic")}</strong>
+            </div>
+            <div className="viru-footer-actions">
+              {quickLinks.map((item) => (
+                <Link key={item.href} href={item.href} className="viru-footer-chip">
+                  {item.label}
+                </Link>
+              ))}
+              <button type="button" className="viru-footer-chip viru-footer-chip-ghost" onClick={onCopyLink}>
+                {t("shared.footer.copyLink")}
+              </button>
+              <button type="button" className="viru-footer-scroll" onClick={onScrollToTop}>
+                <span>{t("shared.footer.scrollTop")}</span>
+                <i className="fa-solid fa-arrow-up" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+        </motion.div>
+
+        <div className="viru-footer-grid">
+          {footerGroups.map((group, index) => (
+            <motion.section
+              key={group.title}
+              className="viru-footer-column"
+              initial={shouldReduceMotion ? undefined : { opacity: 0, y: 14 }}
+              whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.42, delay: 0.08 + index * 0.06 }}
+            >
+              <div className="viru-footer-column-head">
+                <h3>{group.title}</h3>
               </div>
-              <div className="viru-footer-actions">
-                {quickLinks.map((item) => (
-                  <Link key={item.href} href={item.href} className="viru-footer-chip">
-                    {item.label}
-                  </Link>
+              <ul>
+                {group.links.map((link) => (
+                  <li key={`${group.title}-${link.href}`}>
+                    {link.external ? (
+                      <a href={link.href} className="viru-footer-link">
+                        {link.icon ? <i className={`fa-solid ${link.icon}`} aria-hidden="true" /> : null}
+                        <span>{link.label}</span>
+                      </a>
+                    ) : (
+                      <Link href={link.href} className="viru-footer-link">
+                        {link.icon ? <i className={`fa-solid ${link.icon}`} aria-hidden="true" /> : null}
+                        <span>{link.label}</span>
+                      </Link>
+                    )}
+                  </li>
                 ))}
-                <button type="button" className="viru-footer-chip viru-footer-chip-ghost" onClick={onCopyLink}>
-                  {t("shared.footer.copyLink")}
-                </button>
-                <button type="button" className="viru-footer-scroll" onClick={onScrollToTop}>
-                  <span>{t("shared.footer.scrollTop")}</span>
-                  <i className="fa-solid fa-arrow-up" aria-hidden="true" />
-                </button>
-              </div>
-            </div>
-          </motion.div>
+              </ul>
+            </motion.section>
+          ))}
+        </div>
 
-          <div className="viru-footer-grid">
-            {footerGroups.map((group, index) => (
-              <motion.section
-                key={group.title}
-                className="viru-footer-column"
-                initial={shouldReduceMotion ? undefined : { opacity: 0, y: 14 }}
-                whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.25 }}
-                transition={{ duration: 0.42, delay: 0.08 + index * 0.06 }}
-              >
-                <div className="viru-footer-column-head">
-                  <h3>{group.title}</h3>
-                </div>
-                <ul>
-                  {group.links.map((link) => (
-                    <li key={`${group.title}-${link.href}`}>
-                      {link.external ? (
-                        <a href={link.href} className="viru-footer-link">
-                          {link.icon ? <i className={`fa-solid ${link.icon}`} aria-hidden="true" /> : null}
-                          <span>{link.label}</span>
-                        </a>
-                      ) : (
-                        <Link href={link.href} className="viru-footer-link">
-                          {link.icon ? <i className={`fa-solid ${link.icon}`} aria-hidden="true" /> : null}
-                          <span>{link.label}</span>
-                        </Link>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </motion.section>
-            ))}
-          </div>
-
-          <div className="viru-footer-bottom">
-            <p>
-              {t("shared.footer.copyright", { year: new Date().getFullYear() })}
-            </p>
-            <p>{t("shared.footer.note")}</p>
-          </div>
+        <div className="viru-footer-bottom">
+          <p>
+            {t("shared.footer.copyright", { year: new Date().getFullYear() })}
+          </p>
+          <p>{t("shared.footer.note")}</p>
         </div>
       </div>
     </motion.footer>

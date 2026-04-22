@@ -198,27 +198,20 @@
 
 .viru-footer-block {
   position: relative;
-  padding: 0 0 2rem;
+  width: 100%;
+  margin-top: 3rem;
+  padding: 3.25rem 0 2rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  background:
+    radial-gradient(circle at 18% 24%, rgba(217, 93, 57, 0.1), transparent 26%),
+    radial-gradient(circle at 84% 18%, rgba(46, 110, 98, 0.11), transparent 24%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 38%, transparent), color-mix(in srgb, var(--bg) 76%, var(--surface) 24%));
 }
 
 .viru-footer-shell {
-  padding-top: 0;
-}
-
-.viru-footer-surface {
   position: relative;
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--border) 78%, white 22%);
-  border-radius: 32px;
-  background:
-    radial-gradient(circle at top left, rgba(217, 93, 57, 0.14), transparent 28%),
-    radial-gradient(circle at 88% 18%, rgba(46, 110, 98, 0.16), transparent 24%),
-    linear-gradient(145deg, rgba(255, 251, 246, 0.94), rgba(248, 239, 229, 0.88)),
-    var(--panel-bg);
-  box-shadow:
-    0 28px 60px rgba(32, 28, 21, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.72);
-  padding: 1.4rem;
+  z-index: 1;
+  padding-top: 0;
 }
 
 .viru-footer-glow {
@@ -376,15 +369,7 @@
 .viru-footer-column {
   display: grid;
   gap: 0.7rem;
-  border: 1px solid color-mix(in srgb, var(--border) 72%, white 28%);
-  border-radius: 22px;
-  background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.46), rgba(255, 247, 238, 0.18)),
-    color-mix(in srgb, var(--surface) 84%, transparent);
-  box-shadow:
-    0 16px 32px rgba(32, 28, 21, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.62);
-  padding: 1rem;
+  padding: 0.25rem 0.35rem 0.25rem 0;
 }
 
 .viru-footer-column-head h3 {
@@ -422,7 +407,7 @@
 
 .viru-footer-link:hover,
 .viru-footer-link:focus-visible {
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.34);
   outline: none;
 }
 
@@ -462,11 +447,6 @@
 }
 
 @media (max-width: 640px) {
-  .viru-footer-surface {
-    border-radius: 24px;
-    padding: 1rem;
-  }
-
   .viru-footer-grid {
     grid-template-columns: 1fr;
   }
@@ -482,16 +462,12 @@
   }
 }
 
-:root[data-theme="dark"] .viru-footer-surface {
-  border-color: rgba(95, 114, 104, 0.72);
+:root[data-theme="dark"] .viru-footer-block {
+  border-top-color: rgba(95, 114, 104, 0.58);
   background:
-    radial-gradient(circle at top left, rgba(224, 123, 86, 0.18), transparent 30%),
-    radial-gradient(circle at 88% 18%, rgba(111, 178, 161, 0.16), transparent 24%),
-    linear-gradient(145deg, rgba(23, 30, 27, 0.94), rgba(15, 21, 19, 0.92)),
-    var(--panel-bg);
-  box-shadow:
-    0 30px 66px rgba(0, 0, 0, 0.48),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    radial-gradient(circle at 18% 24%, rgba(224, 123, 86, 0.12), transparent 28%),
+    radial-gradient(circle at 84% 18%, rgba(111, 178, 161, 0.11), transparent 24%),
+    linear-gradient(180deg, rgba(18, 24, 22, 0.92), rgba(15, 18, 17, 0.98));
 }
 
 :root[data-theme="dark"] .viru-footer-brand-mark,
