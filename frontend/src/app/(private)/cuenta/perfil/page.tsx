@@ -146,14 +146,11 @@ export default function PerfilPage() {
   if (!profile) {
     return (
       <main className="shell account-profile-shell" id="main-content">
-        <div className="page-header">
-          <button className="btn-ghost" type="button" onClick={() => router.push("/dashboard")}>
-            {t("shared.actions.back")}
+        <div className="account-profile-topbar">
+          <button className="account-profile-navlink" type="button" onClick={() => router.push("/dashboard")}>
+            <span aria-hidden="true">←</span>
+            <span>{t("shared.actions.back")}</span>
           </button>
-          <div className="page-title">
-            <h1>{t("account.profile.title")}</h1>
-            <p>{t("account.profile.subtitle")}</p>
-          </div>
         </div>
 
         <section className="account-profile-glass account-profile-loading">
@@ -172,11 +169,13 @@ export default function PerfilPage() {
 
   return (
     <main className="shell account-profile-shell" id="main-content">
-      <div className="page-header">
-        <button className="btn-ghost" type="button" onClick={() => router.push("/dashboard")}>
-          {t("shared.actions.back")}
+      <div className="account-profile-topbar">
+        <button className="account-profile-navlink" type="button" onClick={() => router.push("/dashboard")}>
+          <span aria-hidden="true">←</span>
+          <span>{t("shared.actions.back")}</span>
         </button>
-        <div className="page-title">
+        <div className="account-profile-heading">
+          <span className="account-profile-kicker">Viru Account</span>
           <h1>{t("account.profile.title")}</h1>
           <p>{t("account.profile.pageSubtitle")}</p>
         </div>
@@ -216,7 +215,7 @@ export default function PerfilPage() {
                 <div className="account-profile-meta">
                   <div className="account-profile-meta-line">
                     <strong>{profile.email}</strong>
-                    <span className={`status-badge ${statusClass}`}>{profile.status}</span>
+                    <span className={`account-profile-status ${statusClass}`}>{profile.status}</span>
                   </div>
                   <div className="account-profile-meta-grid">
                     <div className="account-profile-meta-card">
@@ -238,6 +237,13 @@ export default function PerfilPage() {
                           : "--"}
                       </strong>
                     </div>
+                  </div>
+                  <div className="account-profile-banner">
+                    <span className="account-profile-banner-label">Profile surface</span>
+                    <p>
+                      Identity details, session control, and sensitive actions now live in one focused account canvas
+                      instead of the old split utility layout.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -284,7 +290,11 @@ export default function PerfilPage() {
                 </label>
 
                 <div className="account-profile-actions">
-                  <button type="submit" className="btn-primary" disabled={saving}>
+                  <button
+                    type="submit"
+                    className="account-profile-button account-profile-button-primary"
+                    disabled={saving}
+                  >
                     {saving ? t("account.profile.saving") : t("account.profile.saveAction")}
                   </button>
                 </div>
@@ -315,7 +325,7 @@ export default function PerfilPage() {
                         </p>
                         {session.ip ? <span>{session.ip}</span> : null}
                       </div>
-                      <span className={`status-badge ${session.is_active ? "status-ok" : "status-degraded"}`}>
+                      <span className={`account-profile-status ${session.is_active ? "status-ok" : "status-degraded"}`}>
                         {session.is_active ? t("account.profile.sessionActive") : t("account.profile.sessionClosed")}
                       </span>
                     </div>
@@ -324,7 +334,12 @@ export default function PerfilPage() {
               )}
 
               <div className="account-profile-actions">
-                <button type="button" className="btn-ghost" onClick={onCloseAllSessions} disabled={closingSessions}>
+                <button
+                  type="button"
+                  className="account-profile-button account-profile-button-secondary"
+                  onClick={onCloseAllSessions}
+                  disabled={closingSessions}
+                >
                   {closingSessions ? t("account.profile.closingSessions") : t("account.profile.closeAllSessions")}
                 </button>
               </div>
@@ -342,7 +357,11 @@ export default function PerfilPage() {
               <p className="account-profile-danger-copy">{t("account.profile.deleteNote")}</p>
 
               <div className="account-profile-actions">
-                <button type="button" className="btn-danger" onClick={() => setConfirmDeleteOpen(true)}>
+                <button
+                  type="button"
+                  className="account-profile-button account-profile-button-danger"
+                  onClick={() => setConfirmDeleteOpen(true)}
+                >
                   {t("account.profile.deleteAction")}
                 </button>
               </div>
@@ -384,10 +403,18 @@ export default function PerfilPage() {
               />
             </label>
             <div className="cta-row">
-              <button type="button" className="btn-ghost" onClick={() => setConfirmDeleteOpen(false)}>
+              <button
+                type="button"
+                className="account-profile-button account-profile-button-secondary"
+                onClick={() => setConfirmDeleteOpen(false)}
+              >
                 {t("account.profile.confirmCancel")}
               </button>
-              <button type="button" className="btn-danger" onClick={onDeleteAccount}>
+              <button
+                type="button"
+                className="account-profile-button account-profile-button-danger"
+                onClick={onDeleteAccount}
+              >
                 {t("account.profile.confirmDelete")}
               </button>
             </div>
