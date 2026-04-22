@@ -10405,3 +10405,417 @@ textarea::placeholder {
   background: color-mix(in srgb, var(--accent) 14%, var(--surface));
   box-shadow: 0 8px 14px rgba(31, 29, 26, 0.08);
 }
+
+.account-profile-shell {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.account-profile-glass {
+  position: relative;
+  overflow: hidden;
+  border-radius: 30px;
+  border: 1px solid color-mix(in srgb, var(--border) 72%, white 28%);
+  background:
+    linear-gradient(145deg, rgba(255, 252, 247, 0.84), rgba(248, 240, 231, 0.7)),
+    color-mix(in srgb, var(--panel-bg) 90%, transparent);
+  box-shadow:
+    0 28px 60px rgba(32, 28, 21, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(22px);
+}
+
+.account-profile-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.9fr);
+  gap: 1.15rem;
+  padding: 1.2rem;
+}
+
+.account-profile-main,
+.account-profile-side {
+  display: grid;
+  gap: 1rem;
+}
+
+.account-profile-hero,
+.account-profile-panel {
+  position: relative;
+  border-radius: 24px;
+  border: 1px solid color-mix(in srgb, var(--border) 66%, white 34%);
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.52), rgba(255, 247, 238, 0.22)),
+    color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow:
+    0 18px 40px rgba(32, 28, 21, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.64);
+  backdrop-filter: blur(18px);
+}
+
+.account-profile-hero {
+  padding: 1.35rem;
+  display: grid;
+  gap: 1.3rem;
+  background:
+    radial-gradient(circle at top left, rgba(217, 93, 57, 0.14), transparent 36%),
+    radial-gradient(circle at bottom right, rgba(46, 110, 98, 0.14), transparent 34%),
+    linear-gradient(155deg, rgba(255, 255, 255, 0.54), rgba(255, 247, 238, 0.22)),
+    color-mix(in srgb, var(--surface) 88%, transparent);
+}
+
+.account-profile-hero-copy,
+.account-profile-panel-header,
+.account-profile-loading-copy {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.account-profile-hero-copy h2,
+.account-profile-panel-header h3,
+.account-profile-loading-copy h2 {
+  margin: 0;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(1.5rem, 2.8vw, 2.3rem);
+  line-height: 1.05;
+}
+
+.account-profile-hero-copy p,
+.account-profile-panel-header p,
+.account-profile-loading-copy p,
+.account-profile-danger-copy,
+.account-profile-empty {
+  margin: 0;
+  color: var(--ink-muted);
+  line-height: 1.6;
+}
+
+.account-profile-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.account-profile-kicker::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent-2) 55%, white 45%));
+  box-shadow: 0 0 0 5px rgba(217, 93, 57, 0.12);
+}
+
+.account-profile-identity {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+}
+
+.account-profile-avatar-shell {
+  position: relative;
+  width: 122px;
+  height: 122px;
+  padding: 6px;
+  border-radius: 32px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.18)),
+    rgba(255, 255, 255, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    0 20px 36px rgba(32, 28, 21, 0.14);
+}
+
+.account-profile-avatar {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  border-radius: 28px;
+  object-fit: cover;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-3) 88%, white 12%), color-mix(in srgb, var(--surface) 78%, var(--accent) 22%));
+}
+
+.account-profile-avatar-fallback {
+  color: var(--ink);
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.account-profile-meta {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.account-profile-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.account-profile-meta-line strong {
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.account-profile-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.account-profile-meta-card,
+.account-profile-session-row {
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, white 30%);
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.5), rgba(255, 249, 241, 0.18)),
+    color-mix(in srgb, var(--surface) 86%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.account-profile-meta-card {
+  padding: 0.8rem 0.9rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.account-profile-meta-card span,
+.account-profile-session-copy span {
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+}
+
+.account-profile-meta-card strong {
+  font-size: 1rem;
+}
+
+.account-profile-panel {
+  padding: 1.15rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.account-profile-panel-soft {
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.46), rgba(255, 247, 238, 0.18)),
+    color-mix(in srgb, var(--surface) 82%, transparent);
+}
+
+.account-profile-danger {
+  background:
+    radial-gradient(circle at top right, rgba(217, 93, 57, 0.14), transparent 42%),
+    linear-gradient(155deg, rgba(255, 255, 255, 0.42), rgba(255, 247, 238, 0.16)),
+    color-mix(in srgb, var(--surface) 82%, transparent);
+}
+
+.account-profile-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.95rem;
+}
+
+.account-profile-field {
+  display: grid;
+  gap: 0.45rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.account-profile-field input {
+  width: 100%;
+  min-height: 50px;
+  padding: 0.82rem 0.95rem;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, white 22%);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 250, 244, 0.66)),
+    var(--input-bg);
+  color: var(--text-primary);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    0 10px 20px rgba(32, 28, 21, 0.06);
+}
+
+.account-profile-field input:focus-visible {
+  outline: 3px solid rgba(217, 93, 57, 0.18);
+  border-color: var(--border-focus);
+}
+
+.account-profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.account-profile-form .account-profile-actions {
+  grid-column: 1 / -1;
+  padding-top: 0.2rem;
+}
+
+.account-profile-session-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.account-profile-session-row {
+  padding: 0.85rem 0.9rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.account-profile-session-copy {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.account-profile-session-copy p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.account-profile-loading {
+  padding: 1.5rem;
+  display: grid;
+  gap: 1rem;
+  min-height: 320px;
+  align-items: center;
+}
+
+.account-profile-delete-modal {
+  background:
+    radial-gradient(circle at top right, rgba(217, 93, 57, 0.12), transparent 38%),
+    linear-gradient(180deg, rgba(255, 252, 247, 0.96), rgba(249, 241, 232, 0.96));
+  border: 1px solid color-mix(in srgb, var(--border) 72%, white 28%);
+  box-shadow: 0 28px 56px rgba(32, 28, 21, 0.28);
+}
+
+.account-profile-orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(18px);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.account-profile-orb-primary {
+  top: -56px;
+  right: 10%;
+  width: 220px;
+  height: 220px;
+  background: rgba(217, 93, 57, 0.16);
+}
+
+.account-profile-orb-secondary {
+  bottom: -72px;
+  left: 8%;
+  width: 200px;
+  height: 200px;
+  background: rgba(46, 110, 98, 0.14);
+}
+
+:root[data-theme="dark"] .account-profile-glass {
+  border-color: rgba(94, 109, 101, 0.7);
+  background:
+    linear-gradient(145deg, rgba(23, 30, 27, 0.84), rgba(16, 21, 19, 0.74)),
+    color-mix(in srgb, var(--panel-bg) 82%, transparent);
+  box-shadow:
+    0 30px 64px rgba(0, 0, 0, 0.46),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+:root[data-theme="dark"] .account-profile-hero,
+:root[data-theme="dark"] .account-profile-panel,
+:root[data-theme="dark"] .account-profile-meta-card,
+:root[data-theme="dark"] .account-profile-session-row,
+:root[data-theme="dark"] .account-profile-delete-modal {
+  border-color: rgba(95, 114, 104, 0.65);
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0.14)),
+    color-mix(in srgb, var(--surface) 76%, transparent);
+  box-shadow:
+    0 18px 38px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme="dark"] .account-profile-field input {
+  background:
+    linear-gradient(180deg, rgba(21, 28, 26, 0.92), rgba(17, 23, 21, 0.84)),
+    var(--input-bg);
+  border-color: rgba(95, 114, 104, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+:root[data-theme="dark"] .account-profile-kicker::before {
+  box-shadow: 0 0 0 5px rgba(224, 123, 86, 0.16);
+}
+
+@media (max-width: 980px) {
+  .account-profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .account-profile-side {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+@media (max-width: 760px) {
+  .account-profile-grid {
+    padding: 0.9rem;
+  }
+
+  .account-profile-hero,
+  .account-profile-panel,
+  .account-profile-loading {
+    padding: 1rem;
+  }
+
+  .account-profile-identity {
+    grid-template-columns: 1fr;
+  }
+
+  .account-profile-meta-grid,
+  .account-profile-form,
+  .account-profile-side {
+    grid-template-columns: 1fr;
+  }
+
+  .account-profile-avatar-shell {
+    width: 106px;
+    height: 106px;
+  }
+
+  .account-profile-session-row,
+  .account-profile-meta-line {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-profile-glass,
+  .account-profile-hero,
+  .account-profile-panel,
+  .account-profile-field input {
+    transition: none !important;
+  }
+}
