@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { t } from "../src/i18n";
+import { ABOUT_US_QUOTE_TEXT } from "../src/app/(private)/soporte/about-us/AnimatedQuoteBlock";
 import { buildSupportAboutMembers } from "../src/app/(private)/soporte/about-us/content";
 import { buildAccountMenuGroups } from "../src/modules/shared/accountMenuConfig";
 
@@ -26,4 +27,8 @@ test("about-us content builder returns the expected bilingual team shape", () =>
     esMembers.map((member) => member.focus.length),
     [2, 2, 2, 2],
   );
+});
+
+test("about-us animated quote keeps the requested vibe-coding copy", () => {
+  assert.equal(ABOUT_US_QUOTE_TEXT, "Hecho 100% con vibe-coding y amor");
 });
