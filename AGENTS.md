@@ -17,6 +17,7 @@
 - Antes de afirmar que "no hay git" o que no se puede publicar, comprueba `C:\Users\javiru\Desktop\viru-tracker\_publish_repo\.git` y ejecuta los comandos Git/publicacion desde ese checkout real si existe.
 - Si el chat se abrio en la carpeta padre sin `.git`, trata `_publish_repo` como fuente canonica para `git status`, `commit`, `push` y verificaciones de rama/HEAD.
 - Tras publicar cambios hechos en `_publish_repo`, sincroniza esos mismos archivos de vuelta a la carpeta visible `C:\Users\javiru\Desktop\viru-tracker`.
+- Si una verificacion clave se bloquea por dependencias faltantes del entorno (por ejemplo `pytest`, `fastapi` u otras del runtime de backend/tests), dedica tiempo a instalar y dejar operativo ese entorno antes de cerrar el trabajo; no cierres la tarea solo reportando que faltan paquetes.
 - Cuando el usuario pida copiar o tomar como referencia fuerte una UI externa, no la rebajes a una version sobria por defecto. En Viru, prioriza conservar la ambicion visual, riqueza compositiva y pulido del referente, adaptandolo al sistema del producto sin volverlo generico o plano.
 
 ## Busqueda segura en este repo
