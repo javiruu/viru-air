@@ -2176,6 +2176,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     warningSeverity,
     groupedNeutralWarnings,
     groupedCriticalWarnings,
+    providerPartialInlineNotice,
     infoItemsCount,
     sourcesSummary,
     showDegradedState,
@@ -2216,10 +2217,18 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const warningProblemTitle = t("warningProblemTitle");
   const providerPartialWarnings = groupedNeutralWarnings.filter((group) =>
     [
+      tWarn("ryanair_unavailable_partial"),
+      tWarn("ryanair_unavailable_parcial"),
       tWarn("ryanair_availability_failed_partial"),
       tWarn("ryanair_fares_failed_partial"),
     ].includes(group.message),
   );
+  const providerPartialInlineText = providerPartialInlineNotice
+    ?? (
+      providerPartialWarnings.length > 0
+        ? providerPartialWarnings.map((group) => `${group.message}${group.count > 1 ? ` (${group.count})` : ""}`).join(" ")
+        : ""
+    );
   const providerTotalWarnings = groupedCriticalWarnings.filter((group) =>
     [
       tWarn("ryanair_provider_unavailable_total"),
@@ -3717,9 +3726,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               {providerTotalWarnings.map((group) => `${group.message}${group.count > 1 ? ` (${group.count})` : ""}`).join(" ")}
             </div>
           ) : null}
-          {providerPartialWarnings.length > 0 && showResultsList ? (
+          {providerPartialInlineText && showResultsList ? (
             <div className="notice notice-info section-gap-sm" role="status" aria-live="polite">
-              {providerPartialWarnings.map((group) => `${group.message}${group.count > 1 ? ` (${group.count})` : ""}`).join(" ")}
+              {providerPartialInlineText}
             </div>
           ) : null}
 

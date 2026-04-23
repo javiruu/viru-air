@@ -102,6 +102,7 @@ The endpoint still returns `query`, `filters`, `results` and now adds:
 - `meta.legacy_aliases_used`
 - `meta.filter_support`
 - `meta.pair_counts`
+- `meta.provider_status`
 
 `execution.max_pairs` is applied to base O×D planned pairs (after filtering and priority ordering).
 `execution.max_requests` limits provider request units (O×D×date).
@@ -157,3 +158,28 @@ When duplicates compete, the winner is selected by:
 - Structured counters are exposed in `meta.pipeline_counters`.
 - Structured warning objects are exposed in `meta.warnings_structured`.
 - Debug payload is available only when `APP_ENV=local` and `debug=true`.
+
+## Provider status (canonical v2)
+`meta.provider_status` exposes provider degradation per fetch path:
+
+```json
+{
+  "provider": "ryanair",
+  "availability": { "status": "ok|failed" },
+  "fares": { "status": "ok|failed" },
+  "overall": "ok|partial_degraded|total_outage",
+  "partial_results_served": true,
+  "total_outage": false
+}
+```
+
+Interpretation rules:
+- `overall=partial_degraded` with `partial_results_served=true`: show a neutral partial warning while keeping results visible.
+- `overall=total_outage`: show critical outage messaging (results may be empty).
+- `filters.warnings` stays compatible; clients should prefer `meta.provider_status` for presentation decisions.
+
+## Warning code normalization
+- Canonical warning suffix is `_partial`.
+- Legacy aliases received from lower layers are normalized in API output:
+  - `provider_timeout_parcial` → `provider_timeout_partial`
+  - `ryanair_unavailable_parcial` → `ryanair_unavailable_partial`

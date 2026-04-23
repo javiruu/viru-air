@@ -98,6 +98,7 @@ export function useQuickSearchScreenState({
   const warningSeverity = useMemo(() => {
     const neutralByCode = new Set([
       tWarn("ryanair_unavailable_parcial"),
+      tWarn("ryanair_unavailable_partial"),
       tWarn("limite_combinaciones_alternativas"),
       tWarn("ryanair_availability_failed_partial"),
       tWarn("ryanair_fares_failed_partial"),
@@ -178,7 +179,20 @@ export function useQuickSearchScreenState({
 
   const providerTotalOutage = warningSeverity.critical.includes(tWarn("ryanair_provider_unavailable_total"));
   const providerPartialOutage = warningSeverity.neutral.includes(tWarn("ryanair_availability_failed_partial"))
-    || warningSeverity.neutral.includes(tWarn("ryanair_fares_failed_partial"));
+    || warningSeverity.neutral.includes(tWarn("ryanair_fares_failed_partial"))
+    || warningSeverity.neutral.includes(tWarn("ryanair_unavailable_partial"))
+    || warningSeverity.neutral.includes(tWarn("ryanair_unavailable_parcial"));
+  const providerStatus = searchMeta?.provider_status;
+  const providerPartialInlineNotice = useMemo(() => {
+    if (!providerStatus) return null;
+    if (providerStatus.overall !== "partial_degraded") return null;
+    if (!providerStatus.partial_results_served) return null;
+    const availabilityFailed = providerStatus.availability?.status === "failed";
+    const faresFailed = providerStatus.fares?.status === "failed";
+    if (availabilityFailed && !faresFailed) return t("providerPartialAvailabilityNotice");
+    if (faresFailed && !availabilityFailed) return t("providerPartialFaresNotice");
+    return t("providerPartialMixedNotice");
+  }, [providerStatus, t]);
   const showDegradedState =
     isDegraded
     || Boolean(searchMeta?.stale_data)
@@ -246,6 +260,7 @@ export function useQuickSearchScreenState({
     warningSeverity,
     groupedNeutralWarnings,
     groupedCriticalWarnings,
+    providerPartialInlineNotice,
     infoItemsCount,
     sourcesSummary,
     showDegradedState,

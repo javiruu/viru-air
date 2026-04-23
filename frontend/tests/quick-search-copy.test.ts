@@ -23,6 +23,21 @@ test("quick search warning fallback returns code", () => {
   assert.equal(tWarn("unknown_code"), "unknown_code");
 });
 
+test("quick search copy includes precise partial-provider warnings", () => {
+  const es = getQuickSearchCopy("es");
+  const en = getQuickSearchCopy("en");
+
+  assert.equal(
+    es.tWarn("ryanair_availability_failed_partial"),
+    "No pudimos confirmar toda la disponibilidad de Ryanair; mostramos tarifas directas que si respondieron.",
+  );
+  assert.equal(
+    en.tWarn("ryanair_fares_failed_partial"),
+    "Some Ryanair fare checks failed; showing results confirmed by availability.",
+  );
+  assert.equal(es.tWarn("ryanair_unavailable_partial"), "Algunas combinaciones no pudieron consultarse.");
+});
+
 test("quick search copy exposes state microcopy in es", () => {
   const { t } = getQuickSearchCopy("es");
   assert.equal(t("stateEmptyHint"), "Ajusta filtros o usa una accion rapida para recuperar resultados.");

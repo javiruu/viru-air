@@ -110,6 +110,24 @@ test("useQuickSearchScreenState surfaces partial provider outage without hiding 
   );
 });
 
+test("useQuickSearchScreenState exposes contextual inline partial notice from provider_status", () => {
+  const state = renderScreenState({
+    searchMeta: {
+      provider_status: {
+        provider: "ryanair",
+        availability: { status: "failed" },
+        fares: { status: "ok" },
+        overall: "partial_degraded",
+        partial_results_served: true,
+        total_outage: false,
+      },
+    },
+    t: ((key: string) => key) as Parameters<typeof useQuickSearchScreenState>[0]["t"],
+  });
+
+  assert.equal(state.providerPartialInlineNotice, "providerPartialAvailabilityNotice");
+});
+
 test("useQuickSearchScreenState derives zero-result causes and relax actions from visible constraints", () => {
   const collapsed = renderScreenState({
     strictFilters: true,

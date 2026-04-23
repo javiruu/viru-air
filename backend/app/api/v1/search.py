@@ -22,6 +22,27 @@ router = APIRouter()
 provider = RyanairPublicProvider()
 logger = logging.getLogger(__name__)
 
+_WARNING_CODE_ALIASES: dict[str, str] = {
+    "provider_timeout_parcial": "provider_timeout_partial",
+    "ryanair_unavailable_parcial": "ryanair_unavailable_partial",
+}
+
+
+def _normalize_warning_code(code: str) -> str:
+    return _WARNING_CODE_ALIASES.get(code, code)
+
+
+def _normalize_warning_codes(codes: list[str]) -> list[str]:
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for raw_code in codes:
+        code = _normalize_warning_code(raw_code)
+        if code in seen:
+            continue
+        seen.add(code)
+        deduped.append(code)
+    return deduped
+
 
 def _error_reason_from_http_exception(exc: HTTPException) -> str:
     if isinstance(exc.detail, str):
@@ -567,6 +588,7 @@ def quick_search(
         phase_ms[name] = int((time.perf_counter() - started_at) * 1000)
 
     def _warn(code: str, **meta: Any) -> None:
+        code = _normalize_warning_code(code)
         normalized_meta = tuple(sorted((str(key), repr(value)) for key, value in meta.items()))
         dedupe_key = (code, normalized_meta)
         if dedupe_key in warnings_structured_seen:
@@ -775,11 +797,12 @@ def quick_search(
         )
         _phase_add("provider_fetch_ms", int((time.perf_counter() - started) * 1000))
 
-        warning_codes = list(execution_warnings)
-        warnings.extend(execution_warnings)
-        for code in execution_warnings:
+        normalized_execution_warnings = _normalize_warning_codes(execution_warnings)
+        warning_codes = list(normalized_execution_warnings)
+        warnings.extend(normalized_execution_warnings)
+        for code in normalized_execution_warnings:
             _warn(code)
-        if any(code.endswith("_partial") for code in execution_warnings) and combined:
+        if any(code.endswith("_partial") for code in normalized_execution_warnings) and combined:
             _warn("provider_partial_results_served", count=len(combined))
             warning_codes.append("provider_partial_results_served")
         if execution_meta.get("truncated_by_max_requests"):
@@ -860,7 +883,7 @@ def quick_search(
     degradation_signal_codes = {
         "ryanair_availability_failed_partial",
         "ryanair_fares_failed_partial",
-        "ryanair_unavailable_parcial",
+        "ryanair_unavailable_partial",
         "provider_error_partial",
     }
     pass_1_has_degradation = any(code in degradation_signal_codes for code in pass_1["warning_codes"])
@@ -983,9 +1006,41 @@ def quick_search(
                 rescue_auto_relaxed.append("departure_window_auto")
 
     relaxed_filters = list(dict.fromkeys(relaxed_filters + rescue_auto_relaxed))
-    warnings = list(dict.fromkeys(warnings))
+    warnings = _normalize_warning_codes(warnings)
     phase_ms["total_search_ms"] = int((time.perf_counter() - t0) * 1000)
     requested_date_candidates = _build_flex_dates(travel_date_value, requested_days_before, requested_days_after)
+
+    warning_codes_set = set(warnings)
+    availability_failed = bool(
+        warning_codes_set
+        & {
+            "ryanair_availability_failed_partial",
+            "ryanair_availability_failed",
+        }
+    )
+    fares_failed = bool(
+        warning_codes_set
+        & {
+            "ryanair_fares_failed_partial",
+            "ryanair_fares_failed",
+        }
+    )
+    provider_total_outage = "ryanair_provider_unavailable_total" in warning_codes_set
+    partial_results_served = bool(deduped.results) and (availability_failed or fares_failed)
+    if provider_total_outage:
+        provider_overall_status = "total_outage"
+    elif availability_failed or fares_failed:
+        provider_overall_status = "partial_degraded"
+    else:
+        provider_overall_status = "ok"
+    provider_status = {
+        "provider": "ryanair",
+        "availability": {"status": "failed" if availability_failed else "ok"},
+        "fares": {"status": "failed" if fares_failed else "ok"},
+        "overall": provider_overall_status,
+        "partial_results_served": partial_results_served,
+        "total_outage": provider_total_outage,
+    }
 
     logger.info(
         "quick_search trace=%s results=%s planned_pairs=%s requested_units=%s rescue=%s winning_step=%s",
@@ -1160,6 +1215,7 @@ def quick_search(
                 "hard_filters_applied": ["exclude_origins", "exclude_destinations", "departure_window"],
                 "soft_filters_applied": ["seed_distance_penalty", "pair_category_bias", "soft_filters_weight"],
             },
+            "provider_status": provider_status,
             "warnings_structured": warnings_structured,
             "ranking": {
                 "version": "quick_ranking.v1",

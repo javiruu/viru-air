@@ -80,6 +80,14 @@ export type SearchResponseRaw = {
       }>;
     };
     warnings?: Array<{ code: string; message: string }>;
+    provider_status?: {
+      provider: string;
+      availability: { status: "ok" | "failed" };
+      fares: { status: "ok" | "failed" };
+      overall: "ok" | "partial_degraded" | "total_outage";
+      partial_results_served: boolean;
+      total_outage: boolean;
+    };
   };
   results: SearchResultRaw[];
   filters?: SearchFilters;

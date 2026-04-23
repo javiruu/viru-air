@@ -66,6 +66,11 @@ def test_quick_search_returns_results_when_availability_degrades(client: TestCli
     assert len(payload["results"]) == 1
     assert payload["results"][0]["source"] == "ryanair-public-fares"
     assert "ryanair_availability_failed_partial" in payload["filters"]["warnings"]
+    assert payload["meta"]["provider_status"]["overall"] == "partial_degraded"
+    assert payload["meta"]["provider_status"]["availability"]["status"] == "failed"
+    assert payload["meta"]["provider_status"]["fares"]["status"] == "ok"
+    assert payload["meta"]["provider_status"]["partial_results_served"] is True
+    assert payload["meta"]["provider_status"]["total_outage"] is False
     assert any(item["code"] == "provider_partial_results_served" for item in payload["meta"]["warnings_structured"])
 
 
@@ -89,6 +94,11 @@ def test_quick_search_exposes_total_provider_outage(client: TestClient, monkeypa
     assert payload["results"] == []
     assert "ryanair_provider_unavailable_total" in payload["filters"]["warnings"]
     assert "rescue_mode_applied" in payload["filters"]["warnings"]
+    assert payload["meta"]["provider_status"]["overall"] == "total_outage"
+    assert payload["meta"]["provider_status"]["availability"]["status"] == "failed"
+    assert payload["meta"]["provider_status"]["fares"]["status"] == "failed"
+    assert payload["meta"]["provider_status"]["partial_results_served"] is False
+    assert payload["meta"]["provider_status"]["total_outage"] is True
     assert payload["meta"]["rescue"]["attempted"] is True
     assert payload["meta"]["rescue"]["winning_step"] is None
     assert any(item["code"] == "ryanair_provider_unavailable_total" for item in payload["meta"]["warnings_structured"])
