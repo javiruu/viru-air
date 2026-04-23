@@ -709,6 +709,15 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const pageTitle = isRecommendations ? t("titleRecommendations") : t("title");
   const pageSubtitle = isRecommendations ? t("subtitleRecommendations") : t("subtitle");
   const pageWorkspaceHint = isRecommendations ? t("workspaceHintRecommendations") : t("workspaceHint");
+  const relaxedLabels = useMemo(() => {
+    if (!filtersMeta?.relaxed || filtersMeta.relaxed.length === 0) return [];
+    return filtersMeta.relaxed.map((item) => {
+      if (item === "date_flex_auto") return t("relaxedDateFlexAuto");
+      if (item === "nearby_auto") return t("relaxedNearbyAuto");
+      if (item === "departure_window_auto") return t("relaxedDepartureWindowAuto");
+      return item;
+    });
+  }, [filtersMeta?.relaxed, t]);
   const formatScore = (value: number) => formatNumber(value, { maximumFractionDigits: 2 }, localeTag);
   const formatMoney = (value: number, currency?: string) => {
     const code = currency ?? searchMeta?.currency ?? "EUR";
@@ -3854,9 +3863,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                   ) : null}
                 </div>
               ) : null}
-              {filtersMeta?.relaxed && filtersMeta.relaxed.length > 0 ? (
+              {relaxedLabels.length > 0 ? (
                 <div className="notice notice-compact notice-success">
-                  {t("filtersRelaxed")}: {filtersMeta.relaxed.join(", ")}.
+                  {t("filtersRelaxed")}: {relaxedLabels.join(", ")}.
                 </div>
               ) : null}
               {sourcesSummary.entries.length > 0 ? (

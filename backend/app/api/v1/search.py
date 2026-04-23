@@ -626,16 +626,16 @@ def quick_search(
     _phase_end("request_normalization_ms", started)
 
     travel_date_value = canonical.travel.date
-    days_before = canonical.travel.flex_before
-    days_after = canonical.travel.flex_after
+    requested_days_before = canonical.travel.flex_before
+    requested_days_after = canonical.travel.flex_after
 
-    include_nearby_origins = canonical.origin.include_nearby
-    include_nearby_destinations = canonical.destination.include_nearby
-    radius_km_origin = canonical.origin.radius_km
-    radius_km_destination = canonical.destination.radius_km
+    requested_include_nearby_origins = canonical.origin.include_nearby
+    requested_include_nearby_destinations = canonical.destination.include_nearby
+    requested_radius_km_origin = canonical.origin.radius_km
+    requested_radius_km_destination = canonical.destination.radius_km
 
-    depart_after = canonical.constraints.departure_window.after if canonical.constraints.departure_window else None
-    depart_before = canonical.constraints.departure_window.before if canonical.constraints.departure_window else None
+    requested_depart_after = canonical.constraints.departure_window.after if canonical.constraints.departure_window else None
+    requested_depart_before = canonical.constraints.departure_window.before if canonical.constraints.departure_window else None
     strict_filters = canonical.constraints.strict_filters
     include_stops = bool(canonical.constraints.include_stops)
     max_stops = canonical.constraints.max_stops or 0
@@ -644,6 +644,7 @@ def quick_search(
     soft_filters_weight = canonical.constraints.soft_filters_weight if canonical.constraints.soft_filters_weight is not None else 0.6
 
     max_pairs = canonical.execution.max_pairs
+    max_requests_per_pass = max(1, canonical.execution.max_requests // 4)
 
     warnings: list[str] = []
     filters_applied: dict[str, Any] = {}
@@ -678,139 +679,322 @@ def quick_search(
     exclude_origin_list = canonical.constraints.exclude_origins
     exclude_destination_list = canonical.constraints.exclude_destinations
 
-    # Expansion phase (explicit + side-independent)
-    started = _phase_start()
-    try:
-        origin_side, destination_side = expand_search_sides(
-            origin_seed_iata=canonical.origin.seed_iata,
-            destination_seed_iata=canonical.destination.seed_iata,
-            include_nearby_origins=include_nearby_origins,
-            include_nearby_destinations=include_nearby_destinations,
-            origin_radius_km=radius_km_origin,
-            destination_radius_km=radius_km_destination,
-            origin_max_candidates=canonical.origin.max_candidates,
-            destination_max_candidates=canonical.destination.max_candidates,
-            exclude_origins=exclude_origin_list,
-            exclude_destinations=exclude_destination_list,
+    def _phase_add(name: str, elapsed_ms: int) -> None:
+        phase_ms[name] = phase_ms.get(name, 0) + elapsed_ms
+
+    def _run_pass(
+        *,
+        step: str,
+        days_before: int,
+        days_after: int,
+        include_nearby_origins: bool,
+        include_nearby_destinations: bool,
+        radius_km_origin: int,
+        radius_km_destination: int,
+        depart_after: str | None,
+        depart_before: str | None,
+    ) -> dict[str, Any]:
+        started = _phase_start()
+        try:
+            origin_side, destination_side = expand_search_sides(
+                origin_seed_iata=canonical.origin.seed_iata,
+                destination_seed_iata=canonical.destination.seed_iata,
+                include_nearby_origins=include_nearby_origins,
+                include_nearby_destinations=include_nearby_destinations,
+                origin_radius_km=radius_km_origin,
+                destination_radius_km=radius_km_destination,
+                origin_max_candidates=canonical.origin.max_candidates,
+                destination_max_candidates=canonical.destination.max_candidates,
+                exclude_origins=exclude_origin_list,
+                exclude_destinations=exclude_destination_list,
+            )
+        except ValueError as exc:
+            reason = str(exc)
+            detail_item = {
+                "query_trace_id": query_trace_id,
+                "reason": reason,
+                "canonical_request": canonical.model_dump(mode="json"),
+                "rescue_step": step,
+            }
+            if ":" in reason:
+                reason_code, rejected_value = reason.split(":", 1)
+                detail_item["reason_code"] = reason_code
+                detail_item["rejected_value"] = rejected_value
+            logger.warning(
+                "quick_search_rejected trace=%s reason=%s canonical=%s step=%s",
+                query_trace_id,
+                reason,
+                canonical.model_dump(mode="json"),
+                step,
+            )
+            raise ApiError(
+                status=400,
+                code="quick_search_invalid_request",
+                message="Quick-search request rejected by backend validation.",
+                details=[detail_item],
+            ) from exc
+        _phase_add("nearby_expansion_ms", int((time.perf_counter() - started) * 1000))
+
+        origin_expanded = origin_side.candidates
+        destination_expanded = destination_side.candidates
+
+        if include_nearby_origins and len(origin_expanded) <= 1:
+            _warn("no_nearby_candidates_found", side="origin", seed_iata=canonical.origin.seed_iata)
+        if include_nearby_destinations and len(destination_expanded) <= 1:
+            _warn("no_nearby_candidates_found", side="destination", seed_iata=canonical.destination.seed_iata)
+
+        date_candidates = _build_flex_dates(travel_date_value, days_before, days_after)
+
+        started = _phase_start()
+        pair_plan, pair_plan_stats = build_pair_plan(
+            origin_expanded,
+            destination_expanded,
+            max_pairs=max_pairs,
+            max_requests=max_requests_per_pass,
+            date_count=len(date_candidates),
         )
-    except ValueError as exc:
-        reason = str(exc)
-        detail_item = {
-            "query_trace_id": query_trace_id,
-            "reason": reason,
-            "canonical_request": canonical.model_dump(mode="json"),
+        if pair_plan_stats["truncated"]:
+            warnings.append("limite_combinaciones_alternativas")
+            _warn("max_pairs_truncated", max_pairs=max_pairs, total_pairs=pair_plan_stats["total_pairs"])
+        _phase_add("pair_planning_ms", int((time.perf_counter() - started) * 1000))
+
+        started = _phase_start()
+        execution_plan = build_execution_plan(
+            pair_plan,
+            date_candidates,
+            max_requests=max_requests_per_pass,
+        )
+        _phase_add("execution_planning_ms", int((time.perf_counter() - started) * 1000))
+
+        started = _phase_start()
+        combined, execution_meta, execution_warnings = execute_plan(
+            execution_plan,
+            concurrency_limit=canonical.execution.concurrency_limit,
+            timeout_ms=canonical.execution.timeout_ms,
+            fetch_flights=lambda o, d, date_str, timeout: provider.get_flights(o, d, date_str, timeout_ms=timeout),
+        )
+        _phase_add("provider_fetch_ms", int((time.perf_counter() - started) * 1000))
+
+        warning_codes = list(execution_warnings)
+        warnings.extend(execution_warnings)
+        for code in execution_warnings:
+            _warn(code)
+        if any(code.endswith("_partial") for code in execution_warnings) and combined:
+            _warn("provider_partial_results_served", count=len(combined))
+            warning_codes.append("provider_partial_results_served")
+        if execution_meta.get("truncated_by_max_requests"):
+            _warn(
+                "max_requests_reached",
+                requested_units_count=execution_meta.get("requested_units_count"),
+                skipped_units_count=execution_meta.get("skipped_units_count"),
+            )
+        if execution_meta.get("timed_out_units_count", 0):
+            _warn("provider_timeout_partial", count=execution_meta.get("timed_out_units_count"))
+            warning_codes.append("provider_timeout_partial")
+        if execution_meta.get("provider_failures", 0):
+            _warn("provider_error_partial", count=execution_meta.get("provider_failures"))
+            warning_codes.append("provider_error_partial")
+
+        filtered = [
+            (origin_code, destination_code, travel_date_item, flight)
+            for origin_code, destination_code, travel_date_item, flight in combined
+            if _matches_time_window(flight.departure_time_local, depart_after, depart_before)
+        ]
+
+        pass_filters_applied: dict[str, Any] = {}
+        pass_relaxed_filters: list[str] = []
+        if depart_after or depart_before:
+            pass_filters_applied["departure_window"] = {"after": depart_after, "before": depart_before}
+
+        if strict_filters:
+            flights_after_filters = filtered
+        else:
+            flights_after_filters = filtered
+            if not flights_after_filters and (depart_after or depart_before):
+                flights_after_filters = combined
+                pass_relaxed_filters.append("departure_window")
+
+        started = _phase_start()
+        ranked_results = rank_quick_search_results(
+            flights_after_filters,
+            pair_plan,
+            soft_filters_weight=soft_filters_weight,
+        )
+        _phase_add("ranking_ms", int((time.perf_counter() - started) * 1000))
+
+        started = _phase_start()
+        deduped = dedupe_ranked_results(ranked_results)
+        _phase_add("dedupe_ms", int((time.perf_counter() - started) * 1000))
+
+        return {
+            "step": step,
+            "origin_side": origin_side,
+            "destination_side": destination_side,
+            "origin_expanded": origin_expanded,
+            "destination_expanded": destination_expanded,
+            "date_candidates": date_candidates,
+            "pair_plan": pair_plan,
+            "pair_plan_stats": pair_plan_stats,
+            "execution_plan": execution_plan,
+            "execution_meta": execution_meta,
+            "combined": combined,
+            "flights_after_filters": flights_after_filters,
+            "filters_applied": pass_filters_applied,
+            "relaxed_filters": pass_relaxed_filters,
+            "warning_codes": list(dict.fromkeys(warning_codes)),
+            "deduped": deduped,
         }
-        if ":" in reason:
-            reason_code, rejected_value = reason.split(":", 1)
-            detail_item["reason_code"] = reason_code
-            detail_item["rejected_value"] = rejected_value
-        logger.warning(
-            "quick_search_rejected trace=%s reason=%s canonical=%s",
-            query_trace_id,
-            reason,
-            canonical.model_dump(mode="json"),
-        )
-        raise ApiError(
-            status=400,
-            code="quick_search_invalid_request",
-            message="Quick-search request rejected by backend validation.",
-            details=[detail_item],
-        ) from exc
-    _phase_end("nearby_expansion_ms", started)
 
-    origin_expanded = origin_side.candidates
-    destination_expanded = destination_side.candidates
-
-    origin_candidates = [candidate.expanded_iata for candidate in origin_expanded]
-    destination_candidates = [candidate.expanded_iata for candidate in destination_expanded]
-
-    if include_nearby_origins and len(origin_expanded) <= 1:
-        _warn("no_nearby_candidates_found", side="origin", seed_iata=canonical.origin.seed_iata)
-    if include_nearby_destinations and len(destination_expanded) <= 1:
-        _warn("no_nearby_candidates_found", side="destination", seed_iata=canonical.destination.seed_iata)
-
-    date_candidates = _build_flex_dates(travel_date_value, days_before, days_after)
-    started = _phase_start()
-    pair_plan, pair_plan_stats = build_pair_plan(
-        origin_expanded,
-        destination_expanded,
-        max_pairs=max_pairs,
-        max_requests=canonical.execution.max_requests,
-        date_count=len(date_candidates),
+    pass_1 = _run_pass(
+        step="pass_1_exact",
+        days_before=requested_days_before,
+        days_after=requested_days_after,
+        include_nearby_origins=requested_include_nearby_origins,
+        include_nearby_destinations=requested_include_nearby_destinations,
+        radius_km_origin=requested_radius_km_origin,
+        radius_km_destination=requested_radius_km_destination,
+        depart_after=requested_depart_after,
+        depart_before=requested_depart_before,
     )
-    if pair_plan_stats["truncated"]:
-        warnings.append("limite_combinaciones_alternativas")
-        _warn("max_pairs_truncated", max_pairs=max_pairs, total_pairs=pair_plan_stats["total_pairs"])
-    _phase_end("pair_planning_ms", started)
 
-    started = _phase_start()
-    execution_plan = build_execution_plan(
-        pair_plan,
-        date_candidates,
-        max_requests=canonical.execution.max_requests,
-    )
-    _phase_end("execution_planning_ms", started)
+    degradation_signal_codes = {
+        "ryanair_availability_failed_partial",
+        "ryanair_fares_failed_partial",
+        "ryanair_unavailable_parcial",
+        "provider_error_partial",
+    }
+    pass_1_has_degradation = any(code in degradation_signal_codes for code in pass_1["warning_codes"])
 
-    started = _phase_start()
-    combined, execution_meta, execution_warnings = execute_plan(
-        execution_plan,
-        concurrency_limit=canonical.execution.concurrency_limit,
-        timeout_ms=canonical.execution.timeout_ms,
-        fetch_flights=lambda o, d, date_str, timeout: provider.get_flights(o, d, date_str, timeout_ms=timeout),
-    )
-    pair_count = len(pair_plan)
-    warnings.extend(execution_warnings)
-    for code in execution_warnings:
-        _warn(code)
-    if any(code.endswith("_partial") for code in execution_warnings) and combined:
-        _warn("provider_partial_results_served", count=len(combined))
-    if execution_meta.get("truncated_by_max_requests"):
-        _warn(
-            "max_requests_reached",
-            requested_units_count=execution_meta.get("requested_units_count"),
-            skipped_units_count=execution_meta.get("skipped_units_count"),
-        )
-    if execution_meta.get("timed_out_units_count", 0):
-        _warn("provider_timeout_partial", count=execution_meta.get("timed_out_units_count"))
-    if execution_meta.get("provider_failures", 0):
-        _warn("provider_error_partial", count=execution_meta.get("provider_failures"))
-    _phase_end("provider_fetch_ms", started)
-
-    filtered = [
-        (origin_code, destination_code, travel_date_item, flight)
-        for origin_code, destination_code, travel_date_item, flight in combined
-        if _matches_time_window(flight.departure_time_local, depart_after, depart_before)
+    rescue_attempted = False
+    rescue_pass_summaries: list[dict[str, Any]] = [
+        {
+            "step": pass_1["step"],
+            "result_count": len(pass_1["deduped"].results),
+            "warnings": pass_1["warning_codes"],
+        }
     ]
-    if depart_after or depart_before:
-        filters_applied["departure_window"] = {"after": depart_after, "before": depart_before}
+    selected_pass = pass_1
 
-    if strict_filters:
-        flights_after_filters = filtered
-    else:
-        flights_after_filters = filtered
-        if not flights_after_filters and (depart_after or depart_before):
-            flights_after_filters = combined
-            relaxed_filters.append("departure_window")
+    rescue_step_config_by_name: dict[str, dict[str, Any]] = {}
+    if len(pass_1["deduped"].results) == 0 and pass_1_has_degradation:
+        rescue_attempted = True
+        warnings.append("rescue_mode_applied")
+        _warn("rescue_mode_applied")
 
-    started = _phase_start()
-    ranked_results = rank_quick_search_results(
-        flights_after_filters,
-        pair_plan,
-        soft_filters_weight=soft_filters_weight,
-    )
-    _phase_end("ranking_ms", started)
+        rescue_steps: list[dict[str, Any]] = []
+        if requested_days_before == 0 and requested_days_after == 0:
+            rescue_steps.append(
+                {
+                    "step": "pass_2_rescue_date",
+                    "days_before": 1,
+                    "days_after": 1,
+                    "include_nearby_origins": requested_include_nearby_origins,
+                    "include_nearby_destinations": requested_include_nearby_destinations,
+                    "radius_km_origin": requested_radius_km_origin,
+                    "radius_km_destination": requested_radius_km_destination,
+                    "depart_after": requested_depart_after,
+                    "depart_before": requested_depart_before,
+                }
+            )
+        rescue_steps.append(
+            {
+                "step": "pass_3_rescue_nearby",
+                "days_before": requested_days_before,
+                "days_after": requested_days_after,
+                "include_nearby_origins": True,
+                "include_nearby_destinations": True,
+                "radius_km_origin": max(150, requested_radius_km_origin),
+                "radius_km_destination": max(150, requested_radius_km_destination),
+                "depart_after": requested_depart_after,
+                "depart_before": requested_depart_before,
+            }
+        )
+        rescue_steps.append(
+            {
+                "step": "pass_4_rescue_time_window",
+                "days_before": 1 if requested_days_before == 0 and requested_days_after == 0 else requested_days_before,
+                "days_after": 1 if requested_days_before == 0 and requested_days_after == 0 else requested_days_after,
+                "include_nearby_origins": True,
+                "include_nearby_destinations": True,
+                "radius_km_origin": max(150, requested_radius_km_origin),
+                "radius_km_destination": max(150, requested_radius_km_destination),
+                "depart_after": None,
+                "depart_before": None,
+            }
+        )
 
-    started = _phase_start()
-    deduped = dedupe_ranked_results(ranked_results)
-    _phase_end("dedupe_ms", started)
+        rescue_step_config_by_name = {item["step"]: item for item in rescue_steps}
+
+        for config in rescue_steps:
+            candidate_pass = _run_pass(
+                step=config["step"],
+                days_before=config["days_before"],
+                days_after=config["days_after"],
+                include_nearby_origins=config["include_nearby_origins"],
+                include_nearby_destinations=config["include_nearby_destinations"],
+                radius_km_origin=config["radius_km_origin"],
+                radius_km_destination=config["radius_km_destination"],
+                depart_after=config["depart_after"],
+                depart_before=config["depart_before"],
+            )
+            rescue_pass_summaries.append(
+                {
+                    "step": candidate_pass["step"],
+                    "result_count": len(candidate_pass["deduped"].results),
+                    "warnings": candidate_pass["warning_codes"],
+                }
+            )
+            if len(candidate_pass["deduped"].results) > 0:
+                selected_pass = candidate_pass
+                break
+
+    origin_side = selected_pass["origin_side"]
+    destination_side = selected_pass["destination_side"]
+    origin_expanded = selected_pass["origin_expanded"]
+    destination_expanded = selected_pass["destination_expanded"]
+    date_candidates = selected_pass["date_candidates"]
+    pair_plan = selected_pass["pair_plan"]
+    pair_plan_stats = selected_pass["pair_plan_stats"]
+    execution_plan = selected_pass["execution_plan"]
+    execution_meta = selected_pass["execution_meta"]
+    combined = selected_pass["combined"]
+    flights_after_filters = selected_pass["flights_after_filters"]
+    deduped = selected_pass["deduped"]
+    filters_applied = selected_pass["filters_applied"]
+    relaxed_filters = selected_pass["relaxed_filters"]
+    pair_count = len(pair_plan)
+
+    rescue_winning_step: str | None = None
+    rescue_auto_relaxed: list[str] = []
+    if rescue_attempted and selected_pass["step"] != "pass_1_exact" and len(deduped.results) > 0:
+        rescue_winning_step = selected_pass["step"]
+        step_config = rescue_step_config_by_name.get(selected_pass["step"])
+        if step_config:
+            if step_config["days_before"] != requested_days_before or step_config["days_after"] != requested_days_after:
+                rescue_auto_relaxed.append("date_flex_auto")
+            if (
+                step_config["include_nearby_origins"] != requested_include_nearby_origins
+                or step_config["include_nearby_destinations"] != requested_include_nearby_destinations
+                or step_config["radius_km_origin"] != requested_radius_km_origin
+                or step_config["radius_km_destination"] != requested_radius_km_destination
+            ):
+                rescue_auto_relaxed.append("nearby_auto")
+            if step_config["depart_after"] != requested_depart_after or step_config["depart_before"] != requested_depart_before:
+                rescue_auto_relaxed.append("departure_window_auto")
+
+    relaxed_filters = list(dict.fromkeys(relaxed_filters + rescue_auto_relaxed))
+    warnings = list(dict.fromkeys(warnings))
     phase_ms["total_search_ms"] = int((time.perf_counter() - t0) * 1000)
+    requested_date_candidates = _build_flex_dates(travel_date_value, requested_days_before, requested_days_after)
 
     logger.info(
-        "quick_search trace=%s results=%s planned_pairs=%s requested_units=%s",
+        "quick_search trace=%s results=%s planned_pairs=%s requested_units=%s rescue=%s winning_step=%s",
         query_trace_id,
         len(deduped.results),
         pair_plan_stats["total_pairs"],
         execution_meta.get("requested_units_count", 0),
+        rescue_attempted,
+        rescue_winning_step,
     )
 
     debug_payload: dict[str, Any] | None = None
@@ -833,9 +1017,13 @@ def quick_search(
                 }
                 for unit in execution_plan.units
             ],
+            "rescue": {
+                "attempted": rescue_attempted,
+                "applied_steps": [item["step"] for item in rescue_pass_summaries if item["step"] != "pass_1_exact"],
+                "winning_step": rescue_winning_step,
+                "pass_summaries": rescue_pass_summaries,
+            },
         }
-
-    warnings = list(dict.fromkeys(warnings))
 
     return {
         "query": {
@@ -843,12 +1031,12 @@ def quick_search(
             "destination": canonical.destination.model_dump(),
             "travel": {
                 "date": str(travel_date_value),
-                "flex_before": days_before,
-                "flex_after": days_after,
-                "travel_dates": [str(date_item) for date_item in date_candidates],
+                "flex_before": requested_days_before,
+                "flex_after": requested_days_after,
+                "travel_dates": [str(date_item) for date_item in requested_date_candidates],
             },
             "constraints": {
-                "departure_window": {"after": depart_after, "before": depart_before},
+                "departure_window": {"after": requested_depart_after, "before": requested_depart_before},
                 "exclude_origins": exclude_origin_list,
                 "exclude_destinations": exclude_destination_list,
                 "strict_filters": strict_filters,
@@ -894,6 +1082,12 @@ def quick_search(
                 "unsupported": filter_contract["unsupported"],
                 "legacy_partial": filter_contract["legacy_partial"],
                 "pending": filter_contract["pending"],
+            },
+            "rescue": {
+                "attempted": rescue_attempted,
+                "applied_steps": [item["step"] for item in rescue_pass_summaries if item["step"] != "pass_1_exact"],
+                "winning_step": rescue_winning_step,
+                "pass_summaries": rescue_pass_summaries,
             },
             "pair_counts": {
                 "evaluated": pair_count,

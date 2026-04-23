@@ -69,6 +69,16 @@ export type SearchResponseRaw = {
     total_candidates?: number;
     returned?: number;
     truncated?: boolean;
+    rescue?: {
+      attempted: boolean;
+      applied_steps: string[];
+      winning_step: string | null;
+      pass_summaries: Array<{
+        step: string;
+        result_count: number;
+        warnings: string[];
+      }>;
+    };
     warnings?: Array<{ code: string; message: string }>;
   };
   results: SearchResultRaw[];
