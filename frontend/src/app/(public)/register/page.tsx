@@ -88,7 +88,7 @@ function RegisterContent() {
   return (
     <main className="shell glass-signin-shell" id="main-content">
       <div className="glass-signin-topbar">
-        <button className="btn-ghost" type="button" onClick={() => router.push("/login")}>
+        <button className="btn-ghost" type="button" onClick={() => router.push("/")}>
           {t("shared.actions.back")}
         </button>
         <ThemeToggle />
