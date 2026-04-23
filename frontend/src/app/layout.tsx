@@ -2,6 +2,7 @@ import "../styles/globals.css";
 import type { Metadata } from "next";
 import Script from "next/script";
 
+import { NotificationCenterProvider } from "@/components/components/notifications/notification-center";
 import ViruFooterBlock from "@/modules/shared/ViruFooterBlock";
 
 export const metadata: Metadata = {
@@ -37,13 +38,15 @@ gtag('config', '${gaMeasurementId}');`}
         ) : null}
       </head>
       <body>
-        <a className="skip-link" href="#main-content">
-          Saltar al contenido
-        </a>
-        <div className="app-root">
-          <div className="app-content">{children}</div>
-          <ViruFooterBlock />
-        </div>
+        <NotificationCenterProvider>
+          <a className="skip-link" href="#main-content">
+            Saltar al contenido
+          </a>
+          <div className="app-root">
+            <div className="app-content">{children}</div>
+            <ViruFooterBlock />
+          </div>
+        </NotificationCenterProvider>
       </body>
     </html>
   );

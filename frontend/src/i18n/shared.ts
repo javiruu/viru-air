@@ -56,6 +56,15 @@ export const sharedEs = {
     dark: "Modo oscuro",
     light: "Modo claro",
   },
+  notifications: {
+    loginSuccessBody: "Tu panel privado ya estÃ¡ disponible.",
+    registerSuccessBody: "Tu cuenta estÃ¡ activa y lista para usar.",
+    sessionRequiredTitle: "Acceso requerido",
+    sessionExpiredTitle: "SesiÃ³n caducada",
+    themeChangedTitle: "Tema actualizado",
+    themeDarkBody: "Modo oscuro activado.",
+    themeLightBody: "Modo claro activado.",
+  },
   footer: {
     kicker: "Footer block",
     publicBody:
@@ -165,6 +174,15 @@ export const sharedEn = {
   theme: {
     dark: "Dark mode",
     light: "Light mode",
+  },
+  notifications: {
+    loginSuccessBody: "Your private panel is now available.",
+    registerSuccessBody: "Your account is active and ready.",
+    sessionRequiredTitle: "Sign-in required",
+    sessionExpiredTitle: "Session expired",
+    themeChangedTitle: "Theme updated",
+    themeDarkBody: "Dark mode enabled.",
+    themeLightBody: "Light mode enabled.",
   },
   footer: {
     kicker: "Footer block",

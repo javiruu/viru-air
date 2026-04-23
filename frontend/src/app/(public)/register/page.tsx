@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 
+import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
 import { AuthOut, clearToken, hasToken, saveToken } from "@/modules/shared/auth";
 import { resolvePostAuthUrl } from "@/modules/shared/navigation";
@@ -14,6 +15,7 @@ function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useI18n();
+  const { notify } = useNotificationCenter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -65,9 +67,20 @@ function RegisterContent() {
         body: JSON.stringify({ email: normalizedEmail, password }),
       });
       saveToken(data.access_token);
+      notify({
+        tone: "success",
+        title: t("public.auth.registerSuccess"),
+        description: t("shared.notifications.registerSuccessBody"),
+      });
       router.push(returnUrl);
-    } catch {
-      setError(t("public.auth.registerError"));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t("public.auth.registerError");
+      setError(message);
+      notify({
+        tone: "error",
+        title: t("shared.notices.error"),
+        description: message,
+      });
     }
   }
 

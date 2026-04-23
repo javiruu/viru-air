@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 
+import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
 import { AuthOut, clearToken, hasToken, saveToken } from "@/modules/shared/auth";
 import { resolvePostAuthUrl } from "@/modules/shared/navigation";
@@ -14,23 +15,15 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useI18n();
+  const { notify } = useNotificationCenter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [fieldError, setFieldError] = useState<{ email?: string; password?: string }>({});
-  const [logoutNotice, setLogoutNotice] = useState(false);
 
   const returnUrl = useMemo(() => {
     return resolvePostAuthUrl(searchParams?.get("returnUrl"));
   }, [searchParams]);
-
-  useEffect(() => {
-    const flag = window.localStorage.getItem("viru-logout-notice");
-    if (flag) {
-      setLogoutNotice(true);
-      window.localStorage.removeItem("viru-logout-notice");
-    }
-  }, []);
 
   useEffect(() => {
     let active = true;
@@ -74,6 +67,11 @@ function LoginContent() {
         body: JSON.stringify({ email: normalizedEmail, password }),
       });
       saveToken(data.access_token);
+      notify({
+        tone: "success",
+        title: t("public.auth.loginSuccess"),
+        description: t("shared.notifications.loginSuccessBody"),
+      });
       router.push(returnUrl);
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
@@ -82,23 +80,18 @@ function LoginContent() {
         message.includes("NetworkError") ||
         message.includes("ERR_FAILED") ||
         message.includes("CORS");
-      setError(t(networkLike ? "public.auth.loginNetworkError" : "public.auth.loginError"));
+      const nextError = t(networkLike ? "public.auth.loginNetworkError" : "public.auth.loginError");
+      setError(nextError);
+      notify({
+        tone: "error",
+        title: t("shared.notices.error"),
+        description: nextError,
+      });
     }
   }
 
   return (
     <main className="shell" id="main-content">
-      {logoutNotice ? (
-        <div className="toast notice-success" role="status" aria-live="polite">
-          <strong>{t("public.auth.loginLogoutTitle")}</strong>
-          <span>{t("public.auth.loginLogoutBody")}</span>
-          <div className="toast-actions">
-            <button className="btn-ghost" type="button" onClick={() => setLogoutNotice(false)}>
-              {t("public.auth.loginLogoutCta")}
-            </button>
-          </div>
-        </div>
-      ) : null}
       <div className="page-header">
         <button className="btn-ghost" type="button" onClick={() => router.push("/")}>
           {t("shared.actions.back")}

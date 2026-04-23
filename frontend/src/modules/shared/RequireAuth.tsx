@@ -1,9 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
+import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetchWithStatus } from "@/modules/shared/api";
 import { clearToken, hasToken } from "@/modules/shared/auth";
 import { buildLoginRedirect, currentPathWithSearch } from "@/modules/shared/navigation";
@@ -17,7 +18,9 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useI18n();
+  const { notify } = useNotificationCenter();
   const [state, setState] = useState<GateState>("checking");
+  const notifiedRef = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -26,6 +29,14 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
 
     async function validateSession() {
       if (!hasToken()) {
+        if (!notifiedRef.current) {
+          notify({
+            tone: "warning",
+            title: t("shared.notifications.sessionRequiredTitle"),
+            description: t("shared.errors.sessionRequired"),
+          });
+          notifiedRef.current = true;
+        }
         setState("redirecting");
         router.replace(loginRedirect);
         return;
@@ -42,6 +53,14 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
 
       if (meResult.status === 401) {
         clearToken();
+        if (!notifiedRef.current) {
+          notify({
+            tone: "warning",
+            title: t("shared.notifications.sessionExpiredTitle"),
+            description: t("shared.errors.sessionExpired"),
+          });
+          notifiedRef.current = true;
+        }
       }
       setState("redirecting");
       router.replace(loginRedirect);
@@ -51,7 +70,7 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
     return () => {
       active = false;
     };
-  }, [pathname, router]);
+  }, [notify, pathname, router, t]);
 
   if (state !== "authed") {
     return (

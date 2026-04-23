@@ -4,6 +4,7 @@ import Link from "next/link";
 import { type KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetchWithStatus } from "@/modules/shared/api";
 import { clearToken } from "@/modules/shared/auth";
 import { buildAccountMenuGroups } from "@/modules/shared/accountMenuConfig";
@@ -23,6 +24,7 @@ function getInitials(value: string): string {
 export default function AccountMenu() {
   const router = useRouter();
   const { t } = useI18n();
+  const { notify } = useNotificationCenter();
   const [open, setOpen] = useState(false);
   const [me, setMe] = useState<Me | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -91,8 +93,12 @@ export default function AccountMenu() {
 
   function onLogout() {
     clearToken();
-    window.localStorage.setItem("viru-logout-notice", "true");
-    router.push("/");
+    notify({
+      tone: "success",
+      title: t("public.auth.loginLogoutTitle"),
+      description: t("public.auth.loginLogoutBody"),
+    });
+    router.push("/login");
   }
 
   return (

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useI18n } from "@/i18n";
+import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 
 type ThemeMode = "light" | "dark";
 
@@ -23,6 +24,7 @@ function getPreferredTheme(): ThemeMode {
 
 export default function ThemeToggle() {
   const { t } = useI18n();
+  const { notify } = useNotificationCenter();
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -36,6 +38,12 @@ export default function ThemeToggle() {
     setIsDark(next);
     applyTheme(theme);
     window.localStorage.setItem(STORAGE_KEY, theme);
+    notify({
+      tone: "info",
+      title: t("shared.notifications.themeChangedTitle"),
+      description: next ? t("shared.notifications.themeDarkBody") : t("shared.notifications.themeLightBody"),
+      durationMs: 2800,
+    });
   }
 
   const title = isDark ? t("shared.theme.dark") : t("shared.theme.light");
