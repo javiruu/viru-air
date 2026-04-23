@@ -584,7 +584,7 @@ export function QuickSearchFilterConsole(props: FilterConsoleProps) {
             <strong>{props.t("pendingChangesTitle")}</strong>
             <span>{props.t("pendingChangesBody")}</span>
           </div>
-          <button type="button" className="btn-search" onClick={props.onApplyAndSearch}>
+          <button type="button" className="btn-search qs-filter-pending-cta" onClick={props.onApplyAndSearch} data-ui="qs-filter-pending-apply-search">
             {props.t("applyAndSearch")}
           </button>
         </div>

@@ -71,6 +71,7 @@ import { useQuickSearchMainState } from "@/modules/quick-search/state/useQuickSe
 import { getQuickSearchVisualState } from "@/modules/quick-search/state/getQuickSearchVisualState";
 import { useQuickSearchLoadingFlow } from "@/modules/quick-search/state/useQuickSearchLoadingFlow";
 import { useQuickSearchScreenState } from "@/modules/quick-search/state/useQuickSearchScreenState";
+import { getPendingActionVisibility } from "@/modules/quick-search/state/pendingActionPolicy";
 
 const RELAX_HIGHLIGHT_BY_ACTION: Record<ZeroResultRelaxAction, Exclude<SummaryHighlightKey, null>> = {
   disable_strict: "strict",
@@ -2009,6 +2010,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     bufferMin,
   ]);
   const pendingSearchChanges = Boolean(hasSearched && appliedCriteriaSignature && currentCriteriaSignature !== appliedCriteriaSignature);
+  const pendingActionVisibility = getPendingActionVisibility(pendingSearchChanges);
 
   const searchDisabledHint = !routeInputsValid
     ? t("searchHintRouteInvalid")
@@ -3387,7 +3389,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           activeChips={activeChips}
           activeFiltersCount={activeChips.length}
           appliedFiltersCount={hasSearched ? activeChips.length : 0}
-          pendingSearchChanges={pendingSearchChanges}
+          pendingSearchChanges={pendingActionVisibility.consoleAction}
           isFiltersOpen={isFiltersOpen}
           radiusActive={radiusActive}
           radiusKm={radiusKm}
@@ -3570,11 +3572,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
             </div>
             <div className="qs-results-controls">
-              {pendingSearchChanges ? (
-                <button type="button" className="btn-search qs-apply-sticky" onClick={runSearch}>
-                  {t("applyAndSearch")}
-                </button>
-              ) : null}
               <label className="field">
                 {t("orderBy")}
                 <select
@@ -3784,13 +3781,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
         </section>
         <aside className="qs-context-rail">
-          {pendingSearchChanges ? (
+          {pendingActionVisibility.contextRailNotice ? (
             <div className="notice notice-warning qs-pending-changes" role="status" aria-live="polite">
               <strong>{t("pendingChangesTitle")}</strong>
               <span>{t("pendingChangesBody")}</span>
-              <button type="button" className="btn-search" onClick={runSearch}>
-                {t("applyAndSearch")}
-              </button>
             </div>
           ) : null}
           <section className="panel panel-soft qs-search-summary-compact" aria-live="polite">

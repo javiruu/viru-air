@@ -118,5 +118,8 @@ test("QuickSearchFilterConsole renders grouped summaries and active chips", () =
   assert.match(html, /Resultados visibles/);
   assert.match(html, /Precio maximo: 120/);
   assert.match(html, /Cambios sin aplicar/);
+  assert.match(html, /data-ui="qs-filter-pending-apply-search"/);
   assert.match(html, /data-ui="qs-filter-console"/);
+  const pendingCtaMatches = html.match(/Aplicar y buscar/g) || [];
+  assert.equal(pendingCtaMatches.length, 1);
 });
