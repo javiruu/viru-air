@@ -6455,6 +6455,21 @@ textarea::placeholder {
   z-index: 1;
 }
 
+.glass-forgot-card {
+  width: min(100%, 640px);
+  padding: 1.75rem;
+  border-radius: 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--border) 75%, var(--surface));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--surface) 92%, transparent), color-mix(in srgb, var(--panel-bg) 88%, transparent));
+  backdrop-filter: blur(16px);
+  box-shadow:
+    0 24px 54px color-mix(in srgb, var(--shadow-strong) 52%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 10%, transparent);
+  position: relative;
+  z-index: 1;
+}
+
 .glass-signin-head {
   text-align: center;
   display: grid;
@@ -6599,11 +6614,18 @@ textarea::placeholder {
   line-height: 1.45;
 }
 
+.glass-forgot-footer {
+  margin-top: 0.85rem;
+  display: flex;
+  justify-content: center;
+}
+
 @media (max-width: 740px) {
   .glass-signin-shell {
     min-height: auto;
   }
 
+  .glass-forgot-card,
   .glass-signin-card {
     padding: 1.1rem;
     border-radius: 1.15rem;

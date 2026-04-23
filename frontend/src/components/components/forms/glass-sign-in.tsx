@@ -16,6 +16,7 @@ type GlassSignInCardProps = {
   t: TranslateFn;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
+  onForgotPassword?: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
 
@@ -35,6 +36,7 @@ export function GlassSignInCard({
   t,
   onEmailChange,
   onPasswordChange,
+  onForgotPassword,
   onSubmit,
 }: GlassSignInCardProps) {
   const shouldReduceMotion = useReducedMotion();
@@ -109,15 +111,17 @@ export function GlassSignInCard({
           {fieldError.password ? <small className="field-error">{fieldError.password}</small> : null}
         </label>
 
-        <div className="glass-signin-subline">
-          <label className="glass-signin-remember">
-            <input type="checkbox" name="remember" />
-            <span>{t("public.auth.loginRememberMe")}</span>
-          </label>
-          <button type="button" className="glass-signin-forgot">
-            {t("public.auth.loginForgotPassword")}
-          </button>
-        </div>
+        {!isRegister ? (
+          <div className="glass-signin-subline">
+            <label className="glass-signin-remember">
+              <input type="checkbox" name="remember" />
+              <span>{t("public.auth.loginRememberMe")}</span>
+            </label>
+            <button type="button" className="glass-signin-forgot" onClick={onForgotPassword}>
+              {t("public.auth.loginForgotPassword")}
+            </button>
+          </div>
+        ) : null}
 
         {error ? (
           <div className="notice notice-error" role="status" aria-live="polite">

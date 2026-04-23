@@ -107,6 +107,7 @@ function LoginContent() {
         t={t}
         onEmailChange={setEmail}
         onPasswordChange={setPassword}
+        onForgotPassword={() => router.push("/forgot-password")}
         onSubmit={onSubmit}
       />
     </main>
