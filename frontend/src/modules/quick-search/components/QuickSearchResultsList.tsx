@@ -142,7 +142,11 @@ function QuickSearchResultsListInner(props: Props) {
                           });
                         }}
                       >
-                        ⋯
+                        <svg className="qs-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
+                          <circle cx="6" cy="12" r="1.7" fill="currentColor" />
+                          <circle cx="12" cy="12" r="1.7" fill="currentColor" />
+                          <circle cx="18" cy="12" r="1.7" fill="currentColor" />
+                        </svg>
                       </button>
                       {props.openRowMenuId === rowId ? (
                         <div

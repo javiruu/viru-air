@@ -76,6 +76,20 @@ const RELAX_HIGHLIGHT_BY_ACTION: Record<ZeroResultRelaxAction, Exclude<SummaryHi
   clear_exclusions: "exclusions",
 };
 
+function QuickSearchCloseIcon() {
+  return (
+    <svg className="qs-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M6.75 6.75 17.25 17.25M17.25 6.75 6.75 17.25"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 const IATA_TO_MAC: Record<string, string> = {
   BRU: "BRL",
 };
@@ -3685,7 +3699,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                         onClick={() => removeChip(iata, excludeOrigins, setExcludeOrigins)}
                         aria-label={t("ariaRemoveFilter").replace("{value}", iata)}
                       >
-                        {iata} <span aria-hidden="true">x</span>
+                        <span>{iata}</span>
+                        <QuickSearchCloseIcon />
                       </button>
                     ))}
                     <input
@@ -3716,7 +3731,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                         onClick={() => removeChip(iata, excludeDestinations, setExcludeDestinations)}
                         aria-label={t("ariaRemoveFilter").replace("{value}", iata)}
                       >
-                        {iata} <span aria-hidden="true">x</span>
+                        <span>{iata}</span>
+                        <QuickSearchCloseIcon />
                       </button>
                     ))}
                     <input
@@ -3837,7 +3853,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 onToggle={(event) => setIsExplainOpen(event.currentTarget.open)}
               >
                 <summary className={`qs-explain-trigger qs-results-explain-chip qs-how-order__summary ${showDegradedState ? "qs-degraded-chip" : ""}`} role="button" aria-label={t("explainTitle")} ref={explainTriggerRef}>
-                  <span aria-hidden="true">ⓘ</span> {explainChipLabel}
+                  <svg className="qs-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.7" />
+                    <path d="M12 8v.2M12 11v5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                  </svg>
+                  {explainChipLabel}
                 </summary>
                 <div className="panel panel-soft qs-explain-panel qs-how-order__panel">
                   <div className="panel-header">
@@ -3924,7 +3944,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                   onClick={chip.onClear}
                   aria-label={t("ariaRemoveFilter").replace("{value}", chip.label)}
                 >
-                  {chip.label} <span aria-hidden="true">x</span>
+                  <span>{chip.label}</span>
+                  <QuickSearchCloseIcon />
                 </button>
               ))}
             </div>
@@ -4244,7 +4265,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               {toast.actionLabel}
             </button>
           ) : null}
-          <button type="button" className="btn-ghost" aria-label={t("pickClose")} onClick={() => setToast(null)}>x</button>
+          <button type="button" className="btn-ghost qs-toast-close" aria-label={t("pickClose")} onClick={() => setToast(null)}>
+            <QuickSearchCloseIcon />
+          </button>
         </div>
       ) : null}
 
