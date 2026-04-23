@@ -7,6 +7,7 @@ import { BadgeCheck, ShieldCheck, Sparkles } from "lucide-react";
 type TranslateFn = (key: string, params?: Record<string, string>) => string;
 
 type GlassSignInCardProps = {
+  variant?: "login" | "register";
   email: string;
   password: string;
   error: string;
@@ -25,6 +26,7 @@ const socialProviders = [
 ];
 
 export function GlassSignInCard({
+  variant = "login",
   email,
   password,
   error,
@@ -36,6 +38,13 @@ export function GlassSignInCard({
   onSubmit,
 }: GlassSignInCardProps) {
   const shouldReduceMotion = useReducedMotion();
+  const isRegister = variant === "register";
+  const chipText = t(isRegister ? "public.auth.registerTitle" : "public.auth.loginTitle");
+  const titleText = t(isRegister ? "public.auth.registerPageTitle" : "public.auth.loginPageTitle");
+  const taglineText = t(isRegister ? "public.auth.registerTagline" : "public.auth.loginTagline");
+  const emailLabel = t(isRegister ? "public.auth.registerEmail" : "public.auth.loginEmail");
+  const passwordLabel = t(isRegister ? "public.auth.registerPassword" : "public.auth.loginPassword");
+  const submitText = t(isRegister ? "public.auth.registerAction" : "public.auth.loginAction");
 
   return (
     <motion.section
@@ -50,9 +59,9 @@ export function GlassSignInCard({
       aria-labelledby="glass-signin-title"
     >
       <div className="glass-signin-head">
-        <span className="glass-signin-chip">{t("public.auth.loginTitle")}</span>
-        <h1 id="glass-signin-title">{t("public.auth.loginPageTitle")}</h1>
-        <p>{t("public.auth.loginTagline")}</p>
+        <span className="glass-signin-chip">{chipText}</span>
+        <h1 id="glass-signin-title">{titleText}</h1>
+        <p>{taglineText}</p>
       </div>
 
       <div className="glass-signin-social">
@@ -75,7 +84,7 @@ export function GlassSignInCard({
 
       <form className="glass-signin-form" onSubmit={onSubmit}>
         <label>
-          {t("public.auth.loginEmail")}
+          {emailLabel}
           <input
             name="email"
             autoComplete="email"
@@ -88,10 +97,10 @@ export function GlassSignInCard({
         </label>
 
         <label>
-          {t("public.auth.loginPassword")}
+          {passwordLabel}
           <input
             name="password"
-            autoComplete="current-password"
+            autoComplete={isRegister ? "new-password" : "current-password"}
             value={password}
             onChange={(event) => onPasswordChange(event.target.value)}
             type="password"
@@ -117,7 +126,7 @@ export function GlassSignInCard({
         ) : null}
 
         <button type="submit" className="btn-primary glass-signin-submit" disabled={submitting}>
-          {submitting ? t("shared.states.loading") : t("public.auth.loginAction")}
+          {submitting ? t("shared.states.loading") : submitText}
         </button>
       </form>
 
