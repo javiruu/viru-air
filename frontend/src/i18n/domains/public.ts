@@ -98,6 +98,11 @@ export const publicEs = {
     loginError: "No pudimos iniciar sesión. Revisa tus credenciales.",
     loginNetworkError: "No pudimos conectar con el servidor. Revisa la conexión o configuración (CORS/API) e inténtalo de nuevo.",
     loginSuccess: "Sesión iniciada.",
+    loginSocialContinue: "Continuar con",
+    loginOr: "o",
+    loginRememberMe: "Recordarme",
+    loginForgotPassword: "Olvidaste tu contrasena?",
+    loginTermsNote: "Al continuar aceptas los terminos y la politica de privacidad.",
     loginLoading: "Cargando formulario…",
     registerTitle: "Crear cuenta",
     registerSubtitle: "Configura tu panel en segundos.",
@@ -231,6 +236,11 @@ export const publicEn = {
     loginError: "We couldn't sign you in. Check your credentials and try again.",
     loginNetworkError: "We couldn't reach the server. Check connection or config (CORS/API) and try again.",
     loginSuccess: "Signed in.",
+    loginSocialContinue: "Continue with",
+    loginOr: "or",
+    loginRememberMe: "Remember me",
+    loginForgotPassword: "Forgot password?",
+    loginTermsNote: "By continuing you agree to our terms and privacy policy.",
     loginLoading: "Loading form…",
     registerTitle: "Create account",
     registerSubtitle: "Set up your panel in seconds.",
@@ -263,3 +273,4 @@ export const publicEn = {
     toIndex: "Index",
   },
 };
+

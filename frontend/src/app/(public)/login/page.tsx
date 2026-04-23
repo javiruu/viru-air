@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 
+import { GlassSignInCard } from "@/components/components/forms/glass-sign-in";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
 import { AuthOut, clearToken, hasToken, saveToken } from "@/modules/shared/auth";
@@ -91,72 +92,23 @@ function LoginContent() {
   }
 
   return (
-    <main className="shell" id="main-content">
-      <div className="page-header">
+    <main className="shell glass-signin-shell" id="main-content">
+      <div className="glass-signin-topbar">
         <button className="btn-ghost" type="button" onClick={() => router.push("/")}>
           {t("shared.actions.back")}
         </button>
-        <div className="page-title">
-          <h1>{t("public.auth.loginPageTitle")}</h1>
-          <p>{t("public.auth.loginTagline")}</p>
-        </div>
-        <div className="page-actions">
-          <ThemeToggle />
-        </div>
+        <ThemeToggle />
       </div>
-      <section className="auth-grid">
-        <div className="stack-lg">
-          <div>
-            <h2>{t("public.auth.loginWelcome")}</h2>
-            <p>{t("public.auth.loginWelcomeBody")}</p>
-          </div>
-          <div className="marketing-card">
-            <div className="login-loader">
-              <span>Viru</span>
-              <div className="login-words">
-                <span className="login-word">{t("public.auth.loginWordTrack")}</span>
-                <span className="login-word">{t("public.auth.loginWordAlerts")}</span>
-                <span className="login-word">{t("public.auth.loginWordCompare")}</span>
-                <span className="login-word">{t("public.auth.loginWordDrops")}</span>
-                <span className="login-word">{t("public.auth.loginWordTravel")}</span>
-              </div>
-            </div>
-            <p className="muted">{t("public.auth.loginMarketingMuted")}</p>
-          </div>
-        </div>
-        <form className="panel form" onSubmit={onSubmit}>
-          <label>
-            {t("public.auth.loginEmail")}
-            <input
-              name="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              type="email"
-              placeholder="tu@email.com"
-            />
-            {fieldError.email ? <small className="field-error">{fieldError.email}</small> : null}
-          </label>
-          <label>
-            {t("public.auth.loginPassword")}
-            <input
-              name="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              type="password"
-              placeholder={t("public.auth.passwordPlaceholder")}
-            />
-            {fieldError.password ? <small className="field-error">{fieldError.password}</small> : null}
-          </label>
-          {error ? (
-            <div className="notice notice-error" role="status" aria-live="polite">
-              {error}
-            </div>
-          ) : null}
-          <button type="submit" className="btn-primary">{t("public.auth.loginAction")}</button>
-        </form>
-      </section>
+      <GlassSignInCard
+        email={email}
+        password={password}
+        error={error}
+        fieldError={fieldError}
+        t={t}
+        onEmailChange={setEmail}
+        onPasswordChange={setPassword}
+        onSubmit={onSubmit}
+      />
     </main>
   );
 }
