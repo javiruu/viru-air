@@ -3,7 +3,6 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { createPortal } from "react-dom";
 
 import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
 import { getAirportMeta } from "@/modules/shared/airports";
@@ -20,9 +19,12 @@ import {
   formatQuickSearchFlexSummary,
   getQuickSearchFlexPreset,
 } from "@/modules/quick-search/flexibility";
-const QuickSearchFiltersDrawer = dynamic(() =>
-  import("@/modules/quick-search/components/QuickSearchFiltersDrawer").then((m) => m.QuickSearchFiltersDrawer),
-);
+import {
+  clampQuickSearchRadius,
+  mergeQuickSearchIataTokens,
+  parseQuickSearchIataTokens,
+  QUICK_SEARCH_RADIUS_DEFAULT,
+} from "@/modules/quick-search/filterUtils";
 const QuickSearchLoadingProgress = dynamic(() =>
   import("@/modules/quick-search/components/QuickSearchLoadingProgress").then((m) => m.QuickSearchLoadingProgress),
   { ssr: false },
@@ -39,6 +41,7 @@ const QuickSearchStatePanels = dynamic(() =>
 );
 import { buildQuickSearchCanonicalPayload, prepareQuickSearchRequest } from "@/modules/quick-search/api/buildQuickSearchRequest";
 import { QuickSearchDatePicker } from "@/modules/quick-search/components/QuickSearchDatePicker";
+import { QuickSearchFilterConsole } from "@/modules/quick-search/components/QuickSearchFilterConsole";
 import { QuickSearchResultsWorkspace } from "@/modules/quick-search/components/QuickSearchResultsWorkspace";
 import {
   AirportIataEntry,
@@ -363,7 +366,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     debugEpochRef,
     debugLastTickLogTsRef,
   } = useQuickSearchMainState(initialOrigin, initialDestination);
-  const normalizedRadiusKm = Math.min(500, Math.max(10, Number.isFinite(radiusKm) ? radiusKm : 150));
+  const normalizedRadiusKm = clampQuickSearchRadius(radiusKm);
 
   useEffect(() => {
     let cancelled = false;
@@ -1535,7 +1538,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
   function applyPreferences() {
     if (!pref) return;
-    setRadiusKm(Number.isFinite(pref.default_radius_km) ? pref.default_radius_km : 150);
+    setRadiusKm(clampQuickSearchRadius(pref.default_radius_km));
     setIncludeStops(Boolean(pref.include_stops_default));
     setDepartAfter(pref.avoid_departure_before ?? "07:00");
     setPrefBadge(true);
@@ -1602,11 +1605,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   }
 
   function parseIataList(raw: string): string[] {
-    return raw
-      .toUpperCase()
-      .split(/[,\s]+/)
-      .map((item) => item.trim())
-      .filter((item) => item.length === 3);
+    return parseQuickSearchIataTokens(raw);
   }
 
   function addChip(
@@ -1615,16 +1614,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setCurrent: (next: string[]) => void,
     setInput: (next: string) => void,
   ) {
-    const parsed = parseIataList(value);
+    const parsed = parseQuickSearchIataTokens(value);
     if (parsed.length === 0) {
       setInput(value.toUpperCase());
       return;
     }
-    const next = [...current];
-    parsed.forEach((iata) => {
-      if (!next.includes(iata)) next.push(iata);
-    });
-    setCurrent(next);
+    setCurrent(mergeQuickSearchIataTokens(current, value));
     setInput("");
   }
 
@@ -1635,6 +1630,80 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   ) {
     setCurrent(current.filter((item) => item !== value));
   }
+
+  function updateRadiusKm(value: number) {
+    setRadiusKm(clampQuickSearchRadius(value));
+  }
+
+  const commitExcludeOriginInput = useCallback(() => {
+    addChip(excludeOriginInput, excludeOrigins, setExcludeOrigins, setExcludeOriginInput);
+  }, [excludeOriginInput, excludeOrigins, setExcludeOriginInput, setExcludeOrigins]);
+
+  const commitExcludeDestinationInput = useCallback(() => {
+    addChip(excludeDestinationInput, excludeDestinations, setExcludeDestinations, setExcludeDestinationInput);
+  }, [excludeDestinationInput, excludeDestinations, setExcludeDestinationInput, setExcludeDestinations]);
+
+  const resetCoverageFilters = useCallback(() => {
+    setIncludeNearbyOrigins(false);
+    setIncludeNearbyDestinations(false);
+    setRadiusKm(QUICK_SEARCH_RADIUS_DEFAULT);
+    setExcludeOrigins([]);
+    setExcludeDestinations([]);
+    setExcludeOriginInput("");
+    setExcludeDestinationInput("");
+  }, [
+    setExcludeDestinationInput,
+    setExcludeDestinations,
+    setExcludeOriginInput,
+    setExcludeOrigins,
+    setIncludeNearbyDestinations,
+    setIncludeNearbyOrigins,
+    setRadiusKm,
+  ]);
+
+  const resetTimingFilters = useCallback(() => {
+    setDepartAfter("07:00");
+    setDepartBefore("22:00");
+    setStrictFilters(true);
+  }, [setDepartAfter, setDepartBefore, setStrictFilters]);
+
+  const resetVisibleFilters = useCallback(() => {
+    setPriceMin("");
+    setPriceMax("");
+    setDurationMax("");
+    setRiskFilter("all");
+    setSortBy("ranking");
+  }, [setDurationMax, setPriceMax, setPriceMin, setRiskFilter, setSortBy]);
+
+  const resetExperimentalFilters = useCallback(() => {
+    setIncludeStops(false);
+    setMaxStops(1);
+    setBufferMin("");
+  }, [setBufferMin, setIncludeStops, setMaxStops]);
+
+  const applyDirectCoveragePreset = useCallback(() => {
+    setIncludeNearbyOrigins(false);
+    setIncludeNearbyDestinations(false);
+    setRadiusKm(QUICK_SEARCH_RADIUS_DEFAULT);
+  }, [setIncludeNearbyDestinations, setIncludeNearbyOrigins, setRadiusKm]);
+
+  const applyOriginNearbyPreset = useCallback(() => {
+    setIncludeNearbyOrigins(true);
+    setIncludeNearbyDestinations(false);
+    setRadiusKm(QUICK_SEARCH_RADIUS_DEFAULT);
+  }, [setIncludeNearbyDestinations, setIncludeNearbyOrigins, setRadiusKm]);
+
+  const applyBothNearbyPreset = useCallback(() => {
+    setIncludeNearbyOrigins(true);
+    setIncludeNearbyDestinations(true);
+    setRadiusKm(QUICK_SEARCH_RADIUS_DEFAULT);
+  }, [setIncludeNearbyDestinations, setIncludeNearbyOrigins, setRadiusKm]);
+
+  const applyRegionalCoveragePreset = useCallback(() => {
+    setIncludeNearbyOrigins(true);
+    setIncludeNearbyDestinations(true);
+    setRadiusKm(250);
+  }, [setIncludeNearbyDestinations, setIncludeNearbyOrigins, setRadiusKm]);
 
   function formatMinutes(value?: number | null) {
     if (!value && value !== 0) return "--";
@@ -2181,11 +2250,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         },
       });
     }
-    if (radiusActive && radiusKm !== 150) {
+    if (radiusActive && radiusKm !== QUICK_SEARCH_RADIUS_DEFAULT) {
       chips.push({
         id: "radius",
         label: `${t("radiusLabel")}: ${radiusKm} km`,
-        onClear: () => setRadiusKm(150),
+        onClear: () => setRadiusKm(QUICK_SEARCH_RADIUS_DEFAULT),
       });
     }
     if (includeNearbyOrigins) {
@@ -2223,6 +2292,20 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         onClear: () => setDurationMax(""),
       });
     }
+    if (departAfter !== "07:00") {
+      chips.push({
+        id: "depart-after",
+        label: `${t("departAfter")}: ${departAfter}`,
+        onClear: () => setDepartAfter("07:00"),
+      });
+    }
+    if (departBefore !== "22:00") {
+      chips.push({
+        id: "depart-before",
+        label: `${t("departBefore")}: ${departBefore}`,
+        onClear: () => setDepartBefore("22:00"),
+      });
+    }
     if (!strictFilters) {
       chips.push({
         id: "strict",
@@ -2242,6 +2325,13 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         id: "risk",
         label: `${t("riskAllowed")}: ${formatRiskLabel(riskFilter)}`,
         onClear: () => setRiskFilter("all"),
+      });
+    }
+    if (bufferMin) {
+      chips.push({
+        id: "buffer-min",
+        label: `${t("bufferMin")}: ${bufferMin}`,
+        onClear: () => setBufferMin(""),
       });
     }
     if (excludeOrigins.length > 0) {
@@ -2270,10 +2360,13 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     priceMin,
     priceMax,
     durationMax,
+    departAfter,
+    departBefore,
     strictFilters,
     includeStops,
     maxStops,
     riskFilter,
+    bufferMin,
     excludeOrigins,
     excludeDestinations,
     formatRiskLabel,
@@ -2282,11 +2375,14 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setDaysBefore,
     setFlexCustomPanelOpen,
     setDurationMax,
+    setDepartAfter,
+    setDepartBefore,
     setExcludeDestinations,
     setExcludeOrigins,
     setIncludeNearbyDestinations,
     setIncludeNearbyOrigins,
     setIncludeStops,
+    setBufferMin,
     setPriceMax,
     setPriceMin,
     setRadiusKm,
@@ -3278,51 +3374,76 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           </div>
         </div>
 
-        <section className="panel panel-soft qs-setup-critical-filters">
-          <div className="panel-header">
-            <h3>{t("filtersTitle")}</h3>
-            <button type="button" className="btn-ghost btn-compact" onClick={() => setIsFiltersOpen(true)}>
-              {t("toolbarFilters")}
-            </button>
-          </div>
-          <div className="qs-filter-grid">
-            <label className="qs-check">
-              <input
-                type="checkbox"
-                name="include_stops_quick"
-                checked={includeStops}
-                onChange={(e) => setIncludeStops(e.target.checked)}
-              />
-              <span className="qs-check-ui" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5.5 12.5 10 17l8.5-9" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
-              {t("includeStops")}
-            </label>
-            <label className="field">
-              {t("maxStops")}
-              <select value={maxStops} onChange={(e) => setMaxStops(Number(e.target.value))} className="qs-input" disabled={!includeStops}>
-                <option value={1}>{t("stopsOne")}</option>
-                <option value={2}>{t("stopsTwo")}</option>
-              </select>
-            </label>
-            <label className="field">
-              {t("durationMax")}
-              <input className="qs-input" type="number" min={1} step={1} value={durationMax} onChange={(e) => setDurationMax(e.target.value)} placeholder="240" aria-invalid={Boolean(fieldErrors.duration_max)} />
-              {fieldErrors.duration_max ? <small className="qs-error">{fieldErrors.duration_max}</small> : null}
-            </label>
-            <label className="field">
-              {t("riskAllowed")}
-              <select value={riskFilter} onChange={(e) => setRiskFilter(e.target.value as "all" | "low" | "medium" | "high")} className="qs-input">
-                <option value="all">{t("riskAll")}</option>
-                <option value="low">{t("riskLow")}</option>
-                <option value="medium">{t("riskMedium")}</option>
-                <option value="high">{t("riskHigh")}</option>
-              </select>
-            </label>
-            <label className="field">
-              {t("radiusLabel")}
-              <input className="qs-input" type="number" min={0} value={radiusKm} onChange={(e) => setRadiusKm(Math.max(0, Number(e.target.value)))} disabled={!radiusActive} />
-            </label>
-          </div>
-        </section>
+        <QuickSearchFilterConsole
+          activeChips={activeChips}
+          activeFiltersCount={activeChips.length}
+          appliedFiltersCount={hasSearched ? activeChips.length : 0}
+          pendingSearchChanges={pendingSearchChanges}
+          isFiltersOpen={isFiltersOpen}
+          radiusActive={radiusActive}
+          radiusKm={radiusKm}
+          priceMin={priceMin}
+          priceMax={priceMax}
+          durationMax={durationMax}
+          riskFilter={riskFilter}
+          sortBy={sortBy}
+          includeStops={includeStops}
+          maxStops={maxStops}
+          bufferMin={bufferMin}
+          includeNearbyOrigins={includeNearbyOrigins}
+          includeNearbyDestinations={includeNearbyDestinations}
+          departAfter={departAfter}
+          departBefore={departBefore}
+          strictFilters={strictFilters}
+          excludeOrigins={excludeOrigins}
+          excludeDestinations={excludeDestinations}
+          excludeOriginInput={excludeOriginInput}
+          excludeDestinationInput={excludeDestinationInput}
+          prefAvailable={Boolean(pref)}
+          prefBadge={prefBadge}
+          fieldErrors={fieldErrors}
+          filtersCloseRef={filtersCloseRef}
+          t={t}
+          formatRiskLabel={formatRiskLabel}
+          setRadiusKm={updateRadiusKm}
+          setPriceMin={setPriceMin}
+          setPriceMax={setPriceMax}
+          setDurationMax={setDurationMax}
+          setRiskFilter={setRiskFilter}
+          setSortBy={setSortBy}
+          setIncludeStops={setIncludeStops}
+          setMaxStops={setMaxStops}
+          setBufferMin={setBufferMin}
+          setIncludeNearbyOrigins={setIncludeNearbyOrigins}
+          setIncludeNearbyDestinations={setIncludeNearbyDestinations}
+          setDepartAfter={setDepartAfter}
+          setDepartBefore={setDepartBefore}
+          setStrictFilters={setStrictFilters}
+          setExcludeOrigins={setExcludeOrigins}
+          setExcludeDestinations={setExcludeDestinations}
+          setExcludeOriginInput={setExcludeOriginInput}
+          setExcludeDestinationInput={setExcludeDestinationInput}
+          addExcludeOrigin={commitExcludeOriginInput}
+          addExcludeDestination={commitExcludeDestinationInput}
+          removeExcludeOrigin={(iata) => removeChip(iata, excludeOrigins, setExcludeOrigins)}
+          removeExcludeDestination={(iata) => removeChip(iata, excludeDestinations, setExcludeDestinations)}
+          onOpenFilters={() => {
+            trackEvent("quicksearch_filters_opened", { active_filters: activeChips.length, source: "console" });
+            setIsFiltersOpen(true);
+          }}
+          onCloseFilters={closeFiltersDrawer}
+          onApplyAndSearch={runSearch}
+          onApplyPreferences={applyPreferences}
+          onClearAllFilters={clearAllFilters}
+          onResetCoverage={resetCoverageFilters}
+          onResetTiming={resetTimingFilters}
+          onResetVisible={resetVisibleFilters}
+          onResetExperimental={resetExperimentalFilters}
+          onPresetDirect={applyDirectCoveragePreset}
+          onPresetOriginNearby={applyOriginNearbyPreset}
+          onPresetBothNearby={applyBothNearbyPreset}
+          onPresetRegional={applyRegionalCoveragePreset}
+        />
 
         <div className="qs-actions">
           <div className="qs-search-cta">
@@ -3384,392 +3505,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         {pageWorkspaceHint}
       </div>
       <div className="qs-workspace">
-        {isFiltersOpen && typeof document !== "undefined"
-        ? createPortal((
-          <button
-            type="button"
-            className="qs-filters-backdrop"
-            aria-label={t("pickClose")}
-            onClick={closeFiltersDrawer}
-          />
-        ), document.body) : null}
-        <aside
-          id="qs-filters-drawer"
-          role="dialog"
-          aria-modal={isFiltersOpen}
-          aria-label={t("filtersTitle")}
-          className={`panel panel-soft qs-filters-panel ${isFiltersOpen ? "open" : ""}`}
-        >
-          <div className="qs-filters-header">
-            <div>
-              <h2>{t("filtersTitle")}</h2>
-              <span className="muted">{t("filtersSubtitle")}</span>
-            </div>
-            <button
-              type="button"
-              className="btn-ghost qs-filters-close"
-              aria-label={t("pickClose")}
-              ref={filtersCloseRef}
-              onClick={closeFiltersDrawer}
-            >
-              {t("pickClose")}
-            </button>
-          </div>
-          <div className="qs-filters-grid">
-            <div className="qs-filter-group qs-filter-core">
-              <div className="qs-filter-head">
-                <h3>{t("infoSectionTitle")}</h3>
-              </div>
-              <div className="qs-filter-grid">
-                <label className="field">
-                  {t("priceMin")}
-                  <input
-                    type="number"
-                    min={0}
-                    step={1}
-                    name="price_min"
-                    autoComplete="off"
-                    value={priceMin}
-                    onChange={(e) => setPriceMin(e.target.value)}
-                    placeholder="10"
-                    className="qs-input"
-                    aria-invalid={Boolean(fieldErrors.price_min)}
-                  />
-                  {fieldErrors.price_min ? <small className="qs-error">{fieldErrors.price_min}</small> : null}
-                </label>
-                <label className="field">
-                  {t("durationMax")}
-                  <input
-                    type="number"
-                    min={1}
-                    step={1}
-                    name="duration_max"
-                    autoComplete="off"
-                    value={durationMax}
-                    onChange={(e) => setDurationMax(e.target.value)}
-                    placeholder="240"
-                    className="qs-input"
-                    aria-invalid={Boolean(fieldErrors.duration_max)}
-                  />
-                  {fieldErrors.duration_max ? <small className="qs-error">{fieldErrors.duration_max}</small> : null}
-                </label>
-                <label className="field">
-                  {t("priceMax")}
-                  <input
-                    type="number"
-                    min={0}
-                    step={1}
-                    name="price_max"
-                    autoComplete="off"
-                    value={priceMax}
-                    onChange={(e) => setPriceMax(e.target.value)}
-                    placeholder="120"
-                    className="qs-input"
-                    aria-invalid={Boolean(fieldErrors.price_max)}
-                  />
-                  {fieldErrors.price_max ? <small className="qs-error">{fieldErrors.price_max}</small> : null}
-                </label>
-              </div>
-            </div>
-
-            <details className="qs-filter-accordion" open>
-              <summary className="qs-filter-summary">
-                <div className="qs-filter-head">
-                  <h3>{t("alternatesTitle")}</h3>
-                  {prefBadge ? <span className="badge badge-control">{t("appliedPref")}</span> : null}
-                </div>
-              </summary>
-              <div className="qs-filter-group">
-                <div className="qs-filter-grid">
-                  <label className="field">
-                    {t("radiusLabel")}
-                    <div className="qs-range">
-                      <input
-                        type="range"
-                        name="radius_km_range"
-                        min={0}
-                        max={300}
-                        value={radiusKm}
-                        onChange={(e) => setRadiusKm(Math.max(0, Number(e.target.value)))}
-                        disabled={!radiusActive}
-                      />
-                      <input
-                        name="radius_km"
-                        autoComplete="off"
-                        value={radiusKm}
-                        onChange={(e) => setRadiusKm(Math.max(0, Number(e.target.value)))}
-                        className="qs-input"
-                        disabled={!radiusActive}
-                      />
-                    </div>
-                    <small className="muted">{radiusActive ? t("radiusHint") : t("radiusInactive")}</small>
-                  </label>
-                <label className="qs-check">
-                  <input
-                    type="checkbox"
-                    name="include_nearby_origins"
-                    checked={includeNearbyOrigins}
-                    onChange={(e) => setIncludeNearbyOrigins(e.target.checked)}
-                  />
-                  <span className="qs-check-ui" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                      <path
-                        d="M5.5 12.5 10 17l8.5-9"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                  {t("nearbyOrigins")}
-                </label>
-                <label className="qs-check">
-                  <input
-                    type="checkbox"
-                    name="include_nearby_destinations"
-                    checked={includeNearbyDestinations}
-                    onChange={(e) => setIncludeNearbyDestinations(e.target.checked)}
-                  />
-                  <span className="qs-check-ui" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                      <path
-                        d="M5.5 12.5 10 17l8.5-9"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                  {t("nearbyDestinations")}
-                </label>
-              </div>
-              </div>
-            </details>
-
-            <details className="qs-filter-accordion">
-              <summary className="qs-filter-summary">
-                <div className="qs-filter-head">
-                  <h3>{t("timeTitle")}</h3>
-                  <span className="muted">{t("timeSubtitle")}</span>
-                </div>
-              </summary>
-              <div className="qs-filter-group">
-              <div className="qs-filter-grid">
-                <label className="field">
-                  {t("departAfter")}
-                  <input
-                    type="time"
-                    name="depart_after"
-                    autoComplete="off"
-                    value={departAfter}
-                    onChange={(e) => setDepartAfter(e.target.value)}
-                    className="qs-input"
-                  />
-                </label>
-                <label className="field">
-                  {t("departBefore")}
-                  <input
-                    type="time"
-                    name="depart_before"
-                    autoComplete="off"
-                    value={departBefore}
-                    onChange={(e) => setDepartBefore(e.target.value)}
-                    className="qs-input"
-                  />
-                </label>
-                <label className="qs-check">
-                  <input
-                    type="checkbox"
-                    name="strict_filters"
-                    checked={strictFilters}
-                    onChange={(e) => setStrictFilters(e.target.checked)}
-                  />
-                  <span className="qs-check-ui" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                      <path
-                        d="M5.5 12.5 10 17l8.5-9"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                  {t("strictMode")}
-                </label>
-              </div>
-              {!strictFilters ? (
-                <div className="qs-warning">
-                  {t("strictWarning")}
-                </div>
-              ) : null}
-              </div>
-            </details>
-
-            <details className="qs-filter-accordion">
-              <summary className="qs-filter-summary">
-                <div className="qs-filter-head">
-                  <h3>{t("stopsTitle")}</h3>
-                  <span className="muted">{t("stopsSubtitle")}</span>
-                </div>
-              </summary>
-              <div className="qs-filter-group">
-              <div className="qs-filter-grid">
-                <label className="qs-check">
-                  <input
-                    type="checkbox"
-                    name="include_stops"
-                    checked={includeStops}
-                    onChange={(e) => setIncludeStops(e.target.checked)}
-                  />
-                  <span className="qs-check-ui" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                      <path
-                        d="M5.5 12.5 10 17l8.5-9"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                  {t("includeStops")}
-                </label>
-                <label className="field">
-                  {t("maxStops")}
-                  <select
-                    name="max_stops"
-                    autoComplete="off"
-                    value={maxStops}
-                    onChange={(e) => setMaxStops(Number(e.target.value))}
-                    className="qs-input"
-                    disabled={!includeStops}
-                  >
-                    <option value={1}>{t("stopsOne")}</option>
-                    <option value={2}>{t("stopsTwo")}</option>
-                  </select>
-                </label>
-                <label className="field">
-                  {t("riskAllowed")}
-                  <select
-                    name="risk_filter"
-                    autoComplete="off"
-                    value={riskFilter}
-                    onChange={(e) => setRiskFilter(e.target.value as "all" | "low" | "medium" | "high")}
-                    className="qs-input"
-                  >
-                    <option value="all">{t("riskAll")}</option>
-                    <option value="low">{t("riskLow")}</option>
-                    <option value="medium">{t("riskMedium")}</option>
-                    <option value="high">{t("riskHigh")}</option>
-                  </select>
-                </label>
-                <label className="field">
-                  {t("bufferMin")}
-                  <input
-                    type="number"
-                    min={0}
-                    step={1}
-                    name="buffer_min"
-                    autoComplete="off"
-                    value={bufferMin}
-                    onChange={(e) => setBufferMin(e.target.value)}
-                    placeholder="45"
-                    className="qs-input"
-                    disabled={!includeStops}
-                    aria-invalid={Boolean(fieldErrors.buffer_min)}
-                  />
-                  {fieldErrors.buffer_min ? <small className="qs-error">{fieldErrors.buffer_min}</small> : null}
-                  <small className="muted">{t("bufferMinHint")}</small>
-                </label>
-                <div className="field">
-                  <span>{t("excludeOrigins")}</span>
-                  <div className="qs-chip-input">
-                    {excludeOrigins.map((iata) => (
-                      <button
-                        key={`origin-${iata}`}
-                        type="button"
-                        className="qs-chip"
-                        onClick={() => removeChip(iata, excludeOrigins, setExcludeOrigins)}
-                        aria-label={t("ariaRemoveFilter").replace("{value}", iata)}
-                      >
-                        <span>{iata}</span>
-                        <QuickSearchCloseIcon />
-                      </button>
-                    ))}
-                    <input
-                      name="exclude_origins"
-                      autoComplete="off"
-                      value={excludeOriginInput}
-                      onChange={(e) => setExcludeOriginInput(e.target.value.toUpperCase())}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === "," || e.key === " ") {
-                          e.preventDefault();
-                          addChip(excludeOriginInput, excludeOrigins, setExcludeOrigins, setExcludeOriginInput);
-                        }
-                      }}
-                      onBlur={() => addChip(excludeOriginInput, excludeOrigins, setExcludeOrigins, setExcludeOriginInput)}
-                      placeholder="MAD, BCN"
-                      className="qs-input"
-                    />
-                  </div>
-                </div>
-                <div className="field">
-                  <span>{t("excludeDestinations")}</span>
-                  <div className="qs-chip-input">
-                    {excludeDestinations.map((iata) => (
-                      <button
-                        key={`dest-${iata}`}
-                        type="button"
-                        className="qs-chip"
-                        onClick={() => removeChip(iata, excludeDestinations, setExcludeDestinations)}
-                        aria-label={t("ariaRemoveFilter").replace("{value}", iata)}
-                      >
-                        <span>{iata}</span>
-                        <QuickSearchCloseIcon />
-                      </button>
-                    ))}
-                    <input
-                      name="exclude_destinations"
-                      autoComplete="off"
-                      value={excludeDestinationInput}
-                      onChange={(e) => setExcludeDestinationInput(e.target.value.toUpperCase())}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === "," || e.key === " ") {
-                          e.preventDefault();
-                          addChip(excludeDestinationInput, excludeDestinations, setExcludeDestinations, setExcludeDestinationInput);
-                        }
-                      }}
-                      onBlur={() => addChip(excludeDestinationInput, excludeDestinations, setExcludeDestinations, setExcludeDestinationInput)}
-                      placeholder="DUB, LIS"
-                      className="qs-input"
-                    />
-                  </div>
-                </div>
-              </div>
-              {includeStops ? (
-                <div className="qs-warning qs-warning-warm">
-                  {t("selfConnectWarning")}
-                </div>
-              ) : null}
-              </div>
-            </details>
-          </div>
-          <div className="qs-filter-actions">
-            <button type="button" className="btn-ghost qs-reset-all" onClick={clearAllFilters} disabled={activeChips.length === 0}>
-              {t("resetAll")}
-            </button>
-            <button type="button" className="btn-ghost" onClick={applyPreferences} disabled={!pref}>
-              {t("resetPrefs")}
-            </button>
-          </div>
-        </aside>
         <div className="qs-workspace-grid">
         <section className="panel panel-soft qs-results-panel">
           {showResultsStagehead ? (
@@ -3928,27 +3663,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               </button>
             </div>
           </div>
-          ) : null}
-
-          {activeChips.length > 0 ? (
-            <div className="qs-active-chips">
-              <span className="muted">{t("toolbarActiveFilters")}</span>
-              <button type="button" className="btn-ghost qs-reset-all-inline" onClick={clearAllFilters}>
-                {t("resetAll")}
-              </button>
-              {activeChips.map((chip) => (
-                <button
-                  key={chip.id}
-                  type="button"
-                  className="qs-chip"
-                  onClick={chip.onClear}
-                  aria-label={t("ariaRemoveFilter").replace("{value}", chip.label)}
-                >
-                  <span>{chip.label}</span>
-                  <QuickSearchCloseIcon />
-                </button>
-              ))}
-            </div>
           ) : null}
 
           <QuickSearchLoadingProgress

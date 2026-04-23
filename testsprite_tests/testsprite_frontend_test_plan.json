@@ -252,5 +252,87 @@
         "description": "Verify there are no visible .qs-error elements for origin, destination, or outbound date after submission, and do not treat a mere URL check as sufficient proof"
       }
     ]
+  },
+  {
+    "id": "QS007",
+    "title": "Quick Search filter console opens coverage controls and applies nearby radius",
+    "description": "Verifies the guided filter console can open the advanced drawer, apply nearby-airport coverage, and expose active chips before a search.",
+    "category": "Quick Search Filters",
+    "priority": "High",
+    "steps": [
+      { "type": "action", "description": "Navigate to /login, authenticate, then navigate to /quick-search and wait for input[name=\"origin_iata\"] plus [data-ui=\"qs-filter-console\"] to be visible" },
+      { "type": "action", "description": "Click [data-ui=\"qs-filter-open\"]" },
+      { "type": "assertion", "description": "Verify [data-ui=\"qs-filter-drawer\"] is visible and contains the Coverage section" },
+      { "type": "action", "description": "Click [data-ui=\"qs-filter-card-coverage\"] if the drawer is not already open, then click the Regional preset or set [data-ui=\"qs-filter-radius-input\"] to 250 after enabling nearby origin and destination" },
+      { "type": "action", "description": "Close the drawer" },
+      { "type": "assertion", "description": "Verify [data-ui=\"qs-filter-active-chips\"] is visible and contains nearby/radius chips, and [data-ui=\"qs-filter-count\"] shows a non-zero active filter count" }
+    ]
+  },
+  {
+    "id": "QS008",
+    "title": "Quick Search runs MAD-DUB with coverage and time filters",
+    "description": "Verifies a MAD-DUB search can run with nearby coverage, a departure time window, and strict mode visible in the console.",
+    "category": "Quick Search Filters",
+    "priority": "High",
+    "steps": [
+      { "type": "action", "description": "Authenticate, navigate to /quick-search, set input[name=\"origin_iata\"] to MAD and input[name=\"destination_iata\"] to DUB, and select the first enabled outbound date" },
+      { "type": "action", "description": "Open [data-ui=\"qs-filter-drawer\"], enable [data-ui=\"qs-filter-nearby-origin\"] and [data-ui=\"qs-filter-nearby-destination\"], set [data-ui=\"qs-filter-radius-input\"] to 150, set [data-ui=\"qs-filter-depart-after\"] to 06:00 and [data-ui=\"qs-filter-depart-before\"] to 22:00, then close the drawer" },
+      { "type": "action", "description": "Click button[type=\"submit\"] and wait for loading to finish or for a provider/degraded state to appear" },
+      { "type": "assertion", "description": "Verify the page shows results, an empty state, or a provider error state, and the submitted UI still shows the active coverage/time filter chips without inline validation errors" }
+    ]
+  },
+  {
+    "id": "QS009",
+    "title": "Quick Search applies visible-result filters after AGP-DUB search",
+    "description": "Verifies client-side result filters for price, duration, risk, and sort remain usable after searching AGP-DUB.",
+    "category": "Quick Search Filters",
+    "priority": "High",
+    "steps": [
+      { "type": "action", "description": "Authenticate, navigate to /quick-search, search AGP to DUB with the first enabled outbound date, and wait for results or a final state" },
+      { "type": "action", "description": "Open [data-ui=\"qs-filter-drawer\"], set [data-ui=\"qs-filter-price-max\"] to 120, set [data-ui=\"qs-filter-duration-max\"] to 240, set [data-ui=\"qs-filter-risk\"] to low, set [data-ui=\"qs-filter-sort\"] to price, then close the drawer" },
+      { "type": "assertion", "description": "Verify [data-ui=\"qs-filter-active-chips\"] includes price, duration, and risk filters; if results exist, verify the visible result count updates without a new validation error" }
+    ]
+  },
+  {
+    "id": "QS010",
+    "title": "Quick Search handles LEI-DUB exclusions and reset",
+    "description": "Verifies exclusions accept valid IATA chips, reject invalid tokens, and reset correctly for a LEI-DUB scenario.",
+    "category": "Quick Search Filters",
+    "priority": "Medium",
+    "steps": [
+      { "type": "action", "description": "Authenticate, navigate to /quick-search, set origin LEI and destination DUB, and select a future outbound date" },
+      { "type": "action", "description": "Open [data-ui=\"qs-filter-drawer\"], type MAD INVALID BCN into [data-ui=\"qs-filter-exclude-origins\"], type DUB LIS into [data-ui=\"qs-filter-exclude-destinations\"], and blur each field" },
+      { "type": "assertion", "description": "Verify valid IATA chips such as MAD, BCN, DUB, and LIS are shown while INVALID is not accepted as a chip" },
+      { "type": "action", "description": "Click Restablecer grupo in the Coverage section" },
+      { "type": "assertion", "description": "Verify exclusion chips are removed and coverage active chips are cleared" }
+    ]
+  },
+  {
+    "id": "QS011",
+    "title": "Quick Search marks self-connect filters as partial support",
+    "description": "Verifies the self-connect controls are visually separated as partial support and expose buffer/max-stops controls.",
+    "category": "Quick Search Filters",
+    "priority": "Medium",
+    "steps": [
+      { "type": "action", "description": "Authenticate, navigate to /quick-search, open [data-ui=\"qs-filter-drawer\"], and scroll to [data-ui=\"qs-filter-experimental\"]" },
+      { "type": "assertion", "description": "Verify the section contains the partial-support label and the self-connect warning copy" },
+      { "type": "action", "description": "Enable [data-ui=\"qs-filter-include-stops\"], set [data-ui=\"qs-filter-max-stops\"] to 2, and set [data-ui=\"qs-filter-buffer-min\"] to 60" },
+      { "type": "assertion", "description": "Verify active chips or section summary indicate self-connect/buffer filters are active" }
+    ]
+  },
+  {
+    "id": "QS012",
+    "title": "Quick Search reset all clears filters across BCN-STN and MAD-LIS scenarios",
+    "description": "Verifies reset-all clears guided-console filters after multiple route edits.",
+    "category": "Quick Search Filters",
+    "priority": "High",
+    "steps": [
+      { "type": "action", "description": "Authenticate, navigate to /quick-search, set route BCN to STN, select a future outbound date, and enable at least one coverage, timing, visible-result, and self-connect filter" },
+      { "type": "assertion", "description": "Verify [data-ui=\"qs-filter-count\"] reports active filters and [data-ui=\"qs-filter-active-chips\"] is visible" },
+      { "type": "action", "description": "Change route to MAD to LIS without navigating away" },
+      { "type": "assertion", "description": "Verify [data-ui=\"qs-filter-pending\"] appears or the console indicates unapplied changes" },
+      { "type": "action", "description": "Click the reset-all control in [data-ui=\"qs-filter-active-chips\"]" },
+      { "type": "assertion", "description": "Verify active chips disappear and the console returns to the no-extra-filters copy" }
+    ]
   }
 ]

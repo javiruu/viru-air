@@ -19,6 +19,9 @@
         "Use autocomplete suggestions with mouse or keyboard",
         "Pick an outbound date",
         "Submit a search",
+        "Open and use the guided filter console",
+        "Apply coverage, timing, visible-result, and partial self-connect filters",
+        "Reset active filters",
         "See validation feedback when required route data is missing"
       ]
     }
@@ -31,6 +34,11 @@
     "Clearing an airport field hides its suggestions list.",
     "Submitting without a route shows a visible validation error on the quick-search page.",
     "Providing a valid route and outbound date enables search submission without inline validation errors."
+    ,"The quick-search filter console exposes stable data-ui selectors for drawer, chips, coverage, timing, visible-result, and experimental controls."
+    ,"Coverage filters can enable nearby origins/destinations, clamp radius to the supported range, and manage IATA exclusions."
+    ,"Visible-result filters for price, duration, risk, and sort adjust returned results without changing the backend request contract."
+    ,"Self-connect controls are presented as partial support and include visible warning copy."
+    ,"Reset controls can clear one filter group or all active filters."
   ],
   "test_generation_guidance": [
     "Use the current quick-search selectors instead of inferred XPath: input[name=\"origin_iata\"], input[name=\"destination_iata\"], #origin-suggestions, #destination-suggestions, button[type=\"submit\"], and .qs-error when asserting inline field errors.",
@@ -40,6 +48,8 @@
     "Keyboard-selection tests must press ArrowDown and then Enter on input[name=\"origin_iata\"], and then assert the input value changed to a 3-letter IATA code after the key presses.",
     "Valid-search tests must assert the concrete absence of visible .qs-error elements for origin, destination, and outbound date after choosing both route values and a future outbound date.",
     "For empty-route validation, clear both route inputs first, keep the test on /quick-search, submit from the origin field, and assert against the current message copy that starts with 'Please enter a search'.",
+    "Filter tests should prefer stable data-ui selectors such as [data-ui=\"qs-filter-console\"], [data-ui=\"qs-filter-open\"], [data-ui=\"qs-filter-drawer\"], [data-ui=\"qs-filter-active-chips\"], [data-ui=\"qs-filter-radius-input\"], [data-ui=\"qs-filter-depart-after\"], [data-ui=\"qs-filter-price-max\"], and [data-ui=\"qs-filter-experimental\"].",
+    "When the provider cannot return live flight results, filter tests should still verify the submitted state, active chips, final empty/error/degraded copy, and absence of unrelated validation errors.",
     "Prefer direct navigation to /login and /quick-search; avoid homepage-first flows unless the page under test explicitly requires them."
   ],
   "out_of_scope": [

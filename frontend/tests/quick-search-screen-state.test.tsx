@@ -150,6 +150,22 @@ test("useQuickSearchScreenState derives zero-result causes and relax actions fro
   assert.equal(expanded.visibleZeroResultCauses.length, expanded.zeroResultCauses.length);
 });
 
+test("useQuickSearchScreenState applies visible result filters for price, duration and risk", () => {
+  const state = renderScreenState({
+    results: [
+      buildResult({ result_id: "cheap-fast-low", price_total: 45, duration_total_min: 80, risk_label: "low" }),
+      buildResult({ result_id: "expensive-low", destination: "LIS", price_total: 170, duration_total_min: 85, risk_label: "low" }),
+      buildResult({ result_id: "slow-low", destination: "OPO", price_total: 60, duration_total_min: 220, risk_label: "low" }),
+      buildResult({ result_id: "medium-risk", destination: "STN", price_total: 50, duration_total_min: 90, risk_label: "medium" }),
+    ],
+    priceMax: "100",
+    durationMax: "120",
+    riskFilter: "low",
+  });
+
+  assert.deepEqual(state.visibleResults.map((item) => item.result_id), ["cheap-fast-low"]);
+});
+
 test("useQuickSearchScreenState groups sources defensively when raw source values are malformed", () => {
   const state = renderScreenState({
     results: [
