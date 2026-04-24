@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 
 import { NotificationCenterProvider } from "@/components/components/notifications/notification-center";
+import NavigationPendingOverlay from "@/modules/shared/NavigationPendingOverlay";
 import ViruFooterBlock from "@/modules/shared/ViruFooterBlock";
 
 export const metadata: Metadata = {
@@ -39,6 +40,7 @@ gtag('config', '${gaMeasurementId}');`}
       </head>
       <body>
         <NotificationCenterProvider>
+          <NavigationPendingOverlay />
           <a className="skip-link" href="#main-content">
             Saltar al contenido
           </a>
