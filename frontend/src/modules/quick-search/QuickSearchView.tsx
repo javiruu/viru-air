@@ -97,6 +97,14 @@ function QuickSearchCloseIcon() {
 const IATA_TO_MAC: Record<string, string> = {
   BRU: "BRL",
 };
+const NON_FATAL_QS_SCOPES = new Set<string>([
+  "seed_countries_fallback_used",
+  "seed_bootstrap_failed",
+  "origin_suggestions_failed",
+  "destination_suggestions_failed",
+  "origin_code_validation_failed",
+  "destination_code_validation_failed",
+]);
 const EMPTY_SEARCH_VALIDATION_MESSAGE = "Please enter a search";
 
 type ExecutedCriteriaSnapshot = {
@@ -446,7 +454,13 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
   const logQuickSearchApiError = useCallback((scope: string, meta: Record<string, unknown>) => {
     if (typeof window === "undefined") return;
+    const nonFatal = NON_FATAL_QS_SCOPES.has(scope);
     if (process.env.NODE_ENV === "production") {
+      // eslint-disable-next-line no-console
+      console.warn(`[qs] ${scope}`, meta);
+      return;
+    }
+    if (nonFatal) {
       // eslint-disable-next-line no-console
       console.warn(`[qs] ${scope}`, meta);
       return;
