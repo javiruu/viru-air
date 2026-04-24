@@ -97,6 +97,21 @@ class QuickSearchContractAlignmentTests(unittest.TestCase):
         self.assertEqual(canonical.origin.seed_iata_list, origin_list)
         self.assertEqual(canonical.destination.seed_iata_list, destination_list)
 
+    def test_seed_pool_contract_exposes_requested_and_effective_scope(self):
+        _, origin_list, destination_list, contract = _normalize_quick_search_request(
+            payload_dict={
+                "origin_iata": ["FCO", "MXP", "FCO"],
+                "destination_iata": ["MAD", "BCN", "MAD"],
+                "travel_date": "2026-05-21",
+            },
+            query_overrides={},
+        )
+        seed_pool = contract["seed_pool"]
+        self.assertEqual(seed_pool["origin_requested_count"], 2)
+        self.assertEqual(seed_pool["destination_requested_count"], 2)
+        self.assertEqual(seed_pool["origin_effective_iata"], origin_list)
+        self.assertEqual(seed_pool["destination_effective_iata"], destination_list)
+
 
 if __name__ == "__main__":
     unittest.main()

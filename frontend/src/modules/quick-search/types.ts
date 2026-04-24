@@ -79,6 +79,16 @@ export type SearchResponseRaw = {
         warnings: string[];
       }>;
     };
+    query_signature?: string;
+    planned_route_scope?: {
+      winning_step?: string;
+      origin_seed_pool_effective?: string[];
+      destination_seed_pool_effective?: string[];
+      origin_expanded_iata?: string[];
+      destination_expanded_iata?: string[];
+      origin_expanded_count?: number;
+      destination_expanded_count?: number;
+    };
     warnings?: Array<{ code: string; message: string }>;
     provider_status?: {
       provider: string;

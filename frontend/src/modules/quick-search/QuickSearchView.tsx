@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 
@@ -39,7 +39,11 @@ const QuickSearchSearchForm = dynamic(() =>
 const QuickSearchStatePanels = dynamic(() =>
   import("@/modules/quick-search/components/QuickSearchStatePanels").then((m) => m.QuickSearchStatePanels),
 );
-import { buildQuickSearchCanonicalPayload, prepareQuickSearchRequest } from "@/modules/quick-search/api/buildQuickSearchRequest";
+import {
+  buildQuickSearchCanonicalPayload,
+  buildQuickSearchExpectedSignatures,
+  prepareQuickSearchRequest,
+} from "@/modules/quick-search/api/buildQuickSearchRequest";
 import { QuickSearchDatePicker } from "@/modules/quick-search/components/QuickSearchDatePicker";
 import { QuickSearchFilterConsole } from "@/modules/quick-search/components/QuickSearchFilterConsole";
 import { QuickSearchResultsWorkspace } from "@/modules/quick-search/components/QuickSearchResultsWorkspace";
@@ -182,6 +186,7 @@ function buildAirportSuggestions(airports: AirportIataEntry[], value: string, li
 
 export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchMode }) {
   const router = useRouter();
+  const expectedQuerySignaturesRef = useRef<Set<string> | null>(null);
   const [seedAirports, setSeedAirports] = useState<AirportIataEntry[]>([]);
   const [seedCountries, setSeedCountries] = useState<QuickSearchCountrySeed[]>([]);
   const [originSuggestions, setOriginSuggestions] = useState<Array<{ iata: string; name: string }>>([]);
@@ -1358,6 +1363,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       return;
     }
     const canonicalPayload = buildQuickSearchCanonicalPayload(preparedRequest.params);
+    expectedQuerySignaturesRef.current = await buildQuickSearchExpectedSignatures(canonicalPayload);
     try {
       if (!isCurrentRequest()) return;
       setIsLoading(true);
@@ -1401,6 +1407,18 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       setProgress("response_parsed", 80);
       if (searchResult.ok) {
           const data: SearchResponse = normalizeQuickSearchResponse(searchResult.data);
+          const responseSignature = data.meta?.query_signature;
+          const expectedSignatures = expectedQuerySignaturesRef.current;
+          if (
+            typeof responseSignature === "string"
+            && expectedSignatures
+            && !expectedSignatures.has(responseSignature)
+          ) {
+            trackEvent("quicksearch_response_signature_mismatch", {
+              response_signature: responseSignature,
+              expected_count: expectedSignatures.size,
+            });
+          }
           setResults(data.results);
           setExecutedCriteria(nextExecutedCriteria);
           setFiltersMeta(data.filters || null);

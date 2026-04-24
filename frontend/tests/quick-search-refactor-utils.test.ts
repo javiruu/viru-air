@@ -4,7 +4,11 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { buildQuickSearchCanonicalPayload, toQuickSearchQuery } from "../src/modules/quick-search/requestBuilder";
-import { prepareQuickSearchRequest } from "../src/modules/quick-search/api/buildQuickSearchRequest";
+import {
+  buildQuickSearchExpectedSignatures,
+  buildQuickSearchQuerySignature,
+  prepareQuickSearchRequest,
+} from "../src/modules/quick-search/api/buildQuickSearchRequest";
 import { normalizeQuickSearchResponse, normalizeQuickSearchResults } from "../src/modules/quick-search/responseNormalizer";
 import { QuickSearchResultsList } from "../src/modules/quick-search/components/QuickSearchResultsList";
 
@@ -180,6 +184,59 @@ test("buildQuickSearchCanonicalPayload dedupes and normalizes seed_iata_list", (
   assert.deepEqual(payload.origin.seed_iata_list, ["FCO", "MXP"]);
   assert.equal(payload.destination.seed_iata, "MAD");
   assert.deepEqual(payload.destination.seed_iata_list, ["MAD", "BCN"]);
+});
+
+test("buildQuickSearchQuerySignature is deterministic and changes by winning step", async () => {
+  const payload = buildQuickSearchCanonicalPayload({
+    origin_iata: ["FCO", "MXP"],
+    destination_iata: ["MAD", "BCN"],
+    travel_date: "2026-07-10",
+    date: "2026-07-10",
+    flex_days_before: 0,
+    flex_days_after: 0,
+    radius_km: 150,
+    include_stops: false,
+    include_nearby_origins: false,
+    include_nearby_destinations: false,
+    max_stops: 0,
+    exclude_origins: [],
+    exclude_destinations: [],
+    strict_filters: true,
+    soft_filters_weight: 0.6,
+  });
+
+  const exact = await buildQuickSearchQuerySignature({ payload, winningStep: "pass_1_exact" });
+  const nearby = await buildQuickSearchQuerySignature({ payload, winningStep: "pass_4_rescue_nearby" });
+  const exactSecondTime = await buildQuickSearchQuerySignature({ payload, winningStep: "pass_1_exact" });
+
+  assert.equal(exact, exactSecondTime);
+  assert.notEqual(exact, nearby);
+  assert.match(exact, /^qsig_[a-f0-9]{24}$/);
+});
+
+test("buildQuickSearchExpectedSignatures contains all rescue v3 pass variants", async () => {
+  const payload = buildQuickSearchCanonicalPayload({
+    origin_iata: ["FCO", "MXP"],
+    destination_iata: ["MAD", "BCN"],
+    travel_date: "2026-07-10",
+    date: "2026-07-10",
+    flex_days_before: 0,
+    flex_days_after: 0,
+    radius_km: 150,
+    include_stops: false,
+    include_nearby_origins: false,
+    include_nearby_destinations: false,
+    max_stops: 0,
+    exclude_origins: [],
+    exclude_destinations: [],
+    strict_filters: true,
+    soft_filters_weight: 0.6,
+  });
+
+  const signatures = await buildQuickSearchExpectedSignatures(payload);
+  assert.equal(signatures.size, 5);
+  const unknown = await buildQuickSearchQuerySignature({ payload, winningStep: "pass_unknown_custom" });
+  assert.equal(signatures.has(unknown), false);
 });
 
 test("smoke flow: request builder + normalizer interop", () => {

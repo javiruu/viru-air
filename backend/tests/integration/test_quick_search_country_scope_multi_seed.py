@@ -7,7 +7,9 @@ from app.core.time import utc_now_naive
 from app.domain.entities import ProviderFetchResult, ProviderFlight
 from app.infrastructure.airports_catalog import ExpandedAirportCandidate
 from app.services.quick_search_execution import _CACHE
+from app.services.quick_search_dedupe import DedupeOutcome
 from app.services.quick_search_expansion import SideExpansionResult, SideExpansionSummary
+from app.services.quick_search_ranking import RankedResult
 
 
 def _build_side_result(side: str, seed_iata: str, include_nearby: bool, radius_km: int, max_candidates: int) -> SideExpansionResult:
@@ -177,7 +179,7 @@ def test_country_scope_multi_seed_rescue_finds_results(client, monkeypatch) -> N
 
     assert len(payload["results"]) >= 1
     assert payload["meta"]["rescue"]["attempted"] is True
-    assert payload["meta"]["rescue"]["winning_step"] == "pass_2_rescue_date"
+    assert payload["meta"]["rescue"]["winning_step"] == "pass_3_rescue_date"
     assert "date_flex_auto" in payload["filters"]["relaxed"]
 
 
@@ -196,3 +198,94 @@ def test_country_scope_multi_seed_exhausted_keeps_empty_with_metadata(client, mo
     assert payload["meta"]["rescue"]["winning_step"] is None
     assert "rescue_mode_applied" in payload["filters"]["warnings"]
     assert any(item["code"] == "country_scope_multi_seed_applied" for item in payload["meta"]["warnings_structured"])
+    assert payload["meta"]["planned_route_scope"]["winning_step"] == "pass_1_exact"
+
+
+class _ProviderNoDegradationAlwaysEmpty:
+    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000):
+        del origin, destination, travel_date, timeout_ms
+        return ProviderFetchResult(flights=[], warnings=[])
+
+
+def test_country_scope_empty_without_degradation_triggers_rescue(client, monkeypatch) -> None:
+    _CACHE.clear()
+    travel_date_iso = str(date.today() + timedelta(days=30))
+    monkeypatch.setattr(search_api, "provider", _ProviderNoDegradationAlwaysEmpty())
+    monkeypatch.setattr(search_api, "expand_search_sides", _fake_expand_search_sides)
+
+    response = client.post("/api/v1/search/quick", json=_payload(travel_date_iso))
+    assert response.status_code == 200
+    payload = response.json()
+
+    assert payload["meta"]["rescue"]["attempted"] is True
+    assert payload["meta"]["rescue"]["winning_step"] is None
+    assert payload["meta"]["rescue"]["pass_summaries"][0]["step"] == "pass_1_exact"
+    assert payload["meta"]["rescue"]["pass_summaries"][1]["step"] == "pass_2_rescue_budget_boost"
+    assert payload["results"] == []
+
+
+def test_country_scope_query_signature_changes_across_route_directions(client, monkeypatch) -> None:
+    _CACHE.clear()
+    travel_date_iso = str(date.today() + timedelta(days=30))
+    monkeypatch.setattr(search_api, "provider", _ProviderOnlySecondSeedPair())
+    monkeypatch.setattr(search_api, "expand_search_sides", _fake_expand_search_sides)
+
+    first = client.post("/api/v1/search/quick", json=_payload(travel_date_iso))
+    assert first.status_code == 200
+    first_json = first.json()
+
+    reversed_payload = _payload(travel_date_iso)
+    reversed_payload["origin"], reversed_payload["destination"] = reversed_payload["destination"], reversed_payload["origin"]
+    second = client.post("/api/v1/search/quick", json=reversed_payload)
+    assert second.status_code == 200
+    second_json = second.json()
+
+    assert first_json["meta"]["query_signature"] != second_json["meta"]["query_signature"]
+
+
+def _make_ranked_result(origin: str, destination: str, travel_date_iso: str, source: str) -> RankedResult:
+    return RankedResult(
+        origin=origin,
+        destination=destination,
+        travel_date=date.fromisoformat(travel_date_iso),
+        flight=ProviderFlight(
+            price=70.0,
+            currency="EUR",
+            departure_time_local="11:00",
+            captured_at=utc_now_naive(),
+            source=source,
+        ),
+        final_score=10.0,
+        score_breakdown={"distance_penalty_total": 0.0},
+        origin_seed_iata=origin,
+        destination_seed_iata=destination,
+        origin_is_seed=True,
+        destination_is_seed=True,
+        origin_distance_from_seed_km=0.0,
+        destination_distance_from_seed_km=0.0,
+        pair_category="seed-seed",
+        discovery_explanation="test",
+    )
+
+
+def test_country_scope_discards_out_of_scope_results(client, monkeypatch) -> None:
+    _CACHE.clear()
+    travel_date_iso = str(date.today() + timedelta(days=30))
+    monkeypatch.setattr(search_api, "provider", _ProviderOnlySecondSeedPair())
+    monkeypatch.setattr(search_api, "expand_search_sides", _fake_expand_search_sides)
+
+    original_dedupe = search_api.dedupe_ranked_results
+
+    def _fake_dedupe(ranked):
+        real_outcome = original_dedupe(ranked)
+        injected = _make_ranked_result("ZZZ", "YYY", travel_date_iso, "fake-out-of-scope")
+        return DedupeOutcome(results=list(real_outcome.results) + [injected], meta=real_outcome.meta)
+
+    monkeypatch.setattr(search_api, "dedupe_ranked_results", _fake_dedupe)
+
+    response = client.post("/api/v1/search/quick", json=_payload(travel_date_iso))
+    assert response.status_code == 200
+    payload = response.json()
+
+    assert "result_out_of_scope_discarded" in payload["filters"]["warnings"]
+    assert all(item["origin"] != "ZZZ" for item in payload["results"])

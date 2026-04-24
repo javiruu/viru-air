@@ -71,6 +71,23 @@ export type QuickSearchCanonicalPayload = {
   };
 };
 
+function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+  const entries = Object.entries(value as Record<string, unknown>)
+    .filter(([, item]) => item !== undefined)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, item]) => `${JSON.stringify(key)}:${stableStringify(item)}`);
+  return `{${entries.join(",")}}`;
+}
+
+async function sha256Hex(input: string): Promise<string> {
+  const bytes = new TextEncoder().encode(input);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  const hex = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+  return hex;
+}
+
 function clampInt(value: number, min: number, max: number, fallback: number): number {
   if (!Number.isFinite(value)) return fallback;
   return Math.min(max, Math.max(min, Math.trunc(value)));
@@ -212,4 +229,47 @@ export function buildQuickSearchCanonicalPayload(params: QuickSearchQueryParams)
       soft_filters_weight: params.soft_filters_weight,
     },
   };
+}
+
+type QuerySignatureInput = {
+  payload: QuickSearchCanonicalPayload;
+  winningStep: string;
+};
+
+export async function buildQuickSearchQuerySignature({ payload, winningStep }: QuerySignatureInput): Promise<string> {
+  const signaturePayload = {
+    origin_seed_pool: payload.origin.seed_iata_list || [payload.origin.seed_iata],
+    destination_seed_pool: payload.destination.seed_iata_list || [payload.destination.seed_iata],
+    travel_date: payload.travel.date,
+    flex_before: payload.travel.flex_before,
+    flex_after: payload.travel.flex_after,
+    include_nearby_origins: payload.origin.include_nearby,
+    include_nearby_destinations: payload.destination.include_nearby,
+    radius_km_origin: payload.origin.radius_km,
+    radius_km_destination: payload.destination.radius_km,
+    depart_after: payload.constraints.departure_window.after ?? null,
+    depart_before: payload.constraints.departure_window.before ?? null,
+    strict_filters: payload.constraints.strict_filters,
+    include_stops: payload.constraints.include_stops,
+    max_stops: payload.constraints.max_stops,
+    soft_filters_weight: Number(payload.constraints.soft_filters_weight.toFixed(4)),
+    winning_step: winningStep,
+  };
+  const hex = await sha256Hex(stableStringify(signaturePayload));
+  return `qsig_${hex.slice(0, 24)}`;
+}
+
+const QUICK_SEARCH_WINNING_STEPS = [
+  "pass_1_exact",
+  "pass_2_rescue_budget_boost",
+  "pass_3_rescue_date",
+  "pass_4_rescue_nearby",
+  "pass_5_rescue_time_window",
+] as const;
+
+export async function buildQuickSearchExpectedSignatures(payload: QuickSearchCanonicalPayload): Promise<Set<string>> {
+  const signatures = await Promise.all(
+    QUICK_SEARCH_WINNING_STEPS.map((step) => buildQuickSearchQuerySignature({ payload, winningStep: step })),
+  );
+  return new Set(signatures);
 }

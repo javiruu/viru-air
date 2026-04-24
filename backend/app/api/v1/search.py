@@ -1,4 +1,6 @@
 import datetime as dt
+import hashlib
+import json
 import logging
 import os
 import time
@@ -44,6 +46,51 @@ def _normalize_warning_codes(codes: list[str]) -> list[str]:
         seen.add(code)
         deduped.append(code)
     return deduped
+
+
+def _stable_json_dumps(value: Any) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+
+
+def _build_query_signature(
+    *,
+    origin_seed_pool: list[str],
+    destination_seed_pool: list[str],
+    travel_date: dt.date,
+    flex_before: int,
+    flex_after: int,
+    include_nearby_origins: bool,
+    include_nearby_destinations: bool,
+    radius_km_origin: int,
+    radius_km_destination: int,
+    depart_after: str | None,
+    depart_before: str | None,
+    strict_filters: bool,
+    include_stops: bool,
+    max_stops: int,
+    soft_filters_weight: float,
+    winning_step: str,
+) -> str:
+    payload = {
+        "origin_seed_pool": origin_seed_pool,
+        "destination_seed_pool": destination_seed_pool,
+        "travel_date": str(travel_date),
+        "flex_before": flex_before,
+        "flex_after": flex_after,
+        "include_nearby_origins": include_nearby_origins,
+        "include_nearby_destinations": include_nearby_destinations,
+        "radius_km_origin": radius_km_origin,
+        "radius_km_destination": radius_km_destination,
+        "depart_after": depart_after,
+        "depart_before": depart_before,
+        "strict_filters": strict_filters,
+        "include_stops": include_stops,
+        "max_stops": max_stops,
+        "soft_filters_weight": round(float(soft_filters_weight), 4),
+        "winning_step": winning_step,
+    }
+    digest = hashlib.sha256(_stable_json_dumps(payload).encode("utf-8")).hexdigest()
+    return f"qsig_{digest[:24]}"
 
 
 def _error_reason_from_http_exception(exc: HTTPException) -> str:
@@ -471,6 +518,19 @@ def _normalize_quick_search_request(
     origin_side_dict = dict(canonical_dict.get("origin") or {})
     destination_side_dict = dict(canonical_dict.get("destination") or {})
 
+    origin_requested_candidates = list(
+        dict.fromkeys(
+            _normalize_iata_list(origin_side_dict.get("seed_iata"))
+            + _normalize_iata_list(origin_side_dict.get("seed_iata_list"))
+        )
+    )
+    destination_requested_candidates = list(
+        dict.fromkeys(
+            _normalize_iata_list(destination_side_dict.get("seed_iata"))
+            + _normalize_iata_list(destination_side_dict.get("seed_iata_list"))
+        )
+    )
+
     for side_dict in (origin_side_dict, destination_side_dict):
         side_candidates = _normalize_iata_list(side_dict.get("seed_iata"))
         side_candidates.extend(_normalize_iata_list(side_dict.get("seed_iata_list")))
@@ -518,8 +578,14 @@ def _normalize_quick_search_request(
         "pending": ["stop-logic", "duration-filter", "risk-model"],
         "seed_pool": {
             "cap": SEED_POOL_CAP,
+            "origin_requested_count": len(origin_requested_candidates),
+            "destination_requested_count": len(destination_requested_candidates),
+            "origin_requested_iata": origin_requested_candidates,
+            "destination_requested_iata": destination_requested_candidates,
             "origin_count": len(origin_list),
             "destination_count": len(destination_list),
+            "origin_effective_iata": origin_list,
+            "destination_effective_iata": destination_list,
             "origin_truncated": origin_seed_pool_truncated,
             "destination_truncated": destination_seed_pool_truncated,
         },
@@ -782,6 +848,7 @@ def quick_search(
 
     exclude_origin_list = canonical.constraints.exclude_origins
     exclude_destination_list = canonical.constraints.exclude_destinations
+    country_scope_multi_seed_mode = len(origin_seed_pool) > 1 or len(destination_seed_pool) > 1
 
     if len(origin_seed_pool) > 1:
         _warn("country_scope_multi_seed_applied", side="origin", seed_count=len(origin_seed_pool))
@@ -860,7 +927,14 @@ def quick_search(
         radius_km_destination: int,
         depart_after: str | None,
         depart_before: str | None,
+        max_pairs_override: int | None = None,
+        max_requests_override: int | None = None,
     ) -> dict[str, Any]:
+        max_pairs_effective = max(1, max_pairs_override if max_pairs_override is not None else max_pairs)
+        max_requests_effective = max(
+            1,
+            max_requests_override if max_requests_override is not None else max_requests_per_pass,
+        )
         started = _phase_start()
         try:
             origin_results: list[SideExpansionResult] = []
@@ -957,20 +1031,20 @@ def quick_search(
         pair_plan, pair_plan_stats = build_pair_plan(
             origin_expanded,
             destination_expanded,
-            max_pairs=max_pairs,
-            max_requests=max_requests_per_pass,
+            max_pairs=max_pairs_effective,
+            max_requests=max_requests_effective,
             date_count=len(date_candidates),
         )
         if pair_plan_stats["truncated"]:
             warnings.append("limite_combinaciones_alternativas")
-            _warn("max_pairs_truncated", max_pairs=max_pairs, total_pairs=pair_plan_stats["total_pairs"])
+            _warn("max_pairs_truncated", max_pairs=max_pairs_effective, total_pairs=pair_plan_stats["total_pairs"])
         _phase_add("pair_planning_ms", int((time.perf_counter() - started) * 1000))
 
         started = _phase_start()
         execution_plan = build_execution_plan(
             pair_plan,
             date_candidates,
-            max_requests=max_requests_per_pass,
+            max_requests=max_requests_effective,
         )
         _phase_add("execution_planning_ms", int((time.perf_counter() - started) * 1000))
 
@@ -1052,6 +1126,8 @@ def quick_search(
             "relaxed_filters": pass_relaxed_filters,
             "warning_codes": list(dict.fromkeys(warning_codes)),
             "deduped": deduped,
+            "max_pairs_effective": max_pairs_effective,
+            "max_requests_effective": max_requests_effective,
         }
 
     pass_1 = _run_pass(
@@ -1082,21 +1158,41 @@ def quick_search(
             "step": pass_1["step"],
             "result_count": len(pass_1["deduped"].results),
             "warnings": pass_1["warning_codes"],
+            "max_pairs_effective": pass_1["max_pairs_effective"],
+            "max_requests_effective": pass_1["max_requests_effective"],
         }
     ]
     selected_pass = pass_1
 
     rescue_step_config_by_name: dict[str, dict[str, Any]] = {}
-    if len(pass_1["deduped"].results) == 0 and pass_1_has_degradation:
+    should_rescue_for_country_scope = len(pass_1["deduped"].results) == 0 and country_scope_multi_seed_mode
+    if len(pass_1["deduped"].results) == 0 and (pass_1_has_degradation or should_rescue_for_country_scope):
         rescue_attempted = True
         warnings.append("rescue_mode_applied")
         _warn("rescue_mode_applied")
 
+        budget_boost_max_requests = min(canonical.execution.max_requests, max_requests_per_pass * 2)
+        budget_boost_max_pairs = min(200, max_pairs * 2)
         rescue_steps: list[dict[str, Any]] = []
+        rescue_steps.append(
+            {
+                "step": "pass_2_rescue_budget_boost",
+                "days_before": requested_days_before,
+                "days_after": requested_days_after,
+                "include_nearby_origins": requested_include_nearby_origins,
+                "include_nearby_destinations": requested_include_nearby_destinations,
+                "radius_km_origin": requested_radius_km_origin,
+                "radius_km_destination": requested_radius_km_destination,
+                "depart_after": requested_depart_after,
+                "depart_before": requested_depart_before,
+                "max_pairs_override": budget_boost_max_pairs,
+                "max_requests_override": budget_boost_max_requests,
+            }
+        )
         if requested_days_before == 0 and requested_days_after == 0:
             rescue_steps.append(
                 {
-                    "step": "pass_2_rescue_date",
+                    "step": "pass_3_rescue_date",
                     "days_before": 1,
                     "days_after": 1,
                     "include_nearby_origins": requested_include_nearby_origins,
@@ -1105,11 +1201,13 @@ def quick_search(
                     "radius_km_destination": requested_radius_km_destination,
                     "depart_after": requested_depart_after,
                     "depart_before": requested_depart_before,
+                    "max_pairs_override": None,
+                    "max_requests_override": None,
                 }
             )
         rescue_steps.append(
             {
-                "step": "pass_3_rescue_nearby",
+                "step": "pass_4_rescue_nearby",
                 "days_before": requested_days_before,
                 "days_after": requested_days_after,
                 "include_nearby_origins": True,
@@ -1118,11 +1216,13 @@ def quick_search(
                 "radius_km_destination": max(150, requested_radius_km_destination),
                 "depart_after": requested_depart_after,
                 "depart_before": requested_depart_before,
+                "max_pairs_override": None,
+                "max_requests_override": None,
             }
         )
         rescue_steps.append(
             {
-                "step": "pass_4_rescue_time_window",
+                "step": "pass_5_rescue_time_window",
                 "days_before": 1 if requested_days_before == 0 and requested_days_after == 0 else requested_days_before,
                 "days_after": 1 if requested_days_before == 0 and requested_days_after == 0 else requested_days_after,
                 "include_nearby_origins": True,
@@ -1131,6 +1231,8 @@ def quick_search(
                 "radius_km_destination": max(150, requested_radius_km_destination),
                 "depart_after": None,
                 "depart_before": None,
+                "max_pairs_override": None,
+                "max_requests_override": None,
             }
         )
 
@@ -1149,12 +1251,16 @@ def quick_search(
                 radius_km_destination=config["radius_km_destination"],
                 depart_after=config["depart_after"],
                 depart_before=config["depart_before"],
+                max_pairs_override=config["max_pairs_override"],
+                max_requests_override=config["max_requests_override"],
             )
             rescue_pass_summaries.append(
                 {
                     "step": candidate_pass["step"],
                     "result_count": len(candidate_pass["deduped"].results),
                     "warnings": candidate_pass["warning_codes"],
+                    "max_pairs_effective": candidate_pass["max_pairs_effective"],
+                    "max_requests_effective": candidate_pass["max_requests_effective"],
                 }
             )
             if len(candidate_pass["deduped"].results) > 0:
@@ -1196,6 +1302,60 @@ def quick_search(
                 rescue_auto_relaxed.append("departure_window_auto")
 
     relaxed_filters = list(dict.fromkeys(relaxed_filters + rescue_auto_relaxed))
+
+    origin_scope_iata = {candidate.expanded_iata for candidate in origin_expanded}
+    destination_scope_iata = {candidate.expanded_iata for candidate in destination_expanded}
+    scoped_ranked_results = [
+        item
+        for item in deduped.results
+        if item.origin in origin_scope_iata and item.destination in destination_scope_iata
+    ]
+    out_of_scope_discarded = max(0, len(deduped.results) - len(scoped_ranked_results))
+    if out_of_scope_discarded > 0:
+        warnings.append("result_out_of_scope_discarded")
+        _warn(
+            "result_out_of_scope_discarded",
+            step=selected_pass["step"],
+            discarded_count=out_of_scope_discarded,
+        )
+
+    signature_origin_seed_pool = filter_contract.get("seed_pool", {}).get("origin_requested_iata") or origin_seed_pool
+    signature_destination_seed_pool = filter_contract.get("seed_pool", {}).get("destination_requested_iata") or destination_seed_pool
+    query_signature = _build_query_signature(
+        origin_seed_pool=signature_origin_seed_pool,
+        destination_seed_pool=signature_destination_seed_pool,
+        travel_date=travel_date_value,
+        flex_before=requested_days_before,
+        flex_after=requested_days_after,
+        include_nearby_origins=requested_include_nearby_origins,
+        include_nearby_destinations=requested_include_nearby_destinations,
+        radius_km_origin=requested_radius_km_origin,
+        radius_km_destination=requested_radius_km_destination,
+        depart_after=requested_depart_after,
+        depart_before=requested_depart_before,
+        strict_filters=strict_filters,
+        include_stops=include_stops,
+        max_stops=max_stops,
+        soft_filters_weight=soft_filters_weight,
+        winning_step=selected_pass["step"],
+    )
+
+    planned_route_scope = {
+        "winning_step": selected_pass["step"],
+        "origin_seed_pool_effective": list(origin_seed_pool),
+        "destination_seed_pool_effective": list(destination_seed_pool),
+        "origin_expanded_iata": sorted(origin_scope_iata),
+        "destination_expanded_iata": sorted(destination_scope_iata),
+        "origin_expanded_count": len(origin_scope_iata),
+        "destination_expanded_count": len(destination_scope_iata),
+    }
+    seed_pool_trace = {
+        **filter_contract.get("seed_pool", {}),
+        "winning_step": selected_pass["step"],
+        "origin_scope_count": len(origin_scope_iata),
+        "destination_scope_count": len(destination_scope_iata),
+    }
+
     warnings = _normalize_warning_codes(warnings)
     phase_ms["total_search_ms"] = int((time.perf_counter() - t0) * 1000)
     requested_date_candidates = _build_flex_dates(travel_date_value, requested_days_before, requested_days_after)
@@ -1216,7 +1376,7 @@ def quick_search(
         }
     )
     provider_total_outage = "ryanair_provider_unavailable_total" in warning_codes_set
-    partial_results_served = bool(deduped.results) and (availability_failed or fares_failed)
+    partial_results_served = bool(scoped_ranked_results) and (availability_failed or fares_failed)
     if provider_total_outage:
         provider_overall_status = "total_outage"
     elif availability_failed or fares_failed:
@@ -1235,7 +1395,7 @@ def quick_search(
     logger.info(
         "quick_search trace=%s results=%s planned_pairs=%s requested_units=%s rescue=%s winning_step=%s",
         query_trace_id,
-        len(deduped.results),
+        len(scoped_ranked_results),
         pair_plan_stats["total_pairs"],
         execution_meta.get("requested_units_count", 0),
         rescue_attempted,
@@ -1268,6 +1428,8 @@ def quick_search(
                 "winning_step": rescue_winning_step,
                 "pass_summaries": rescue_pass_summaries,
             },
+            "query_signature": query_signature,
+            "planned_route_scope": planned_route_scope,
         }
 
     return {
@@ -1319,6 +1481,7 @@ def quick_search(
         },
         "meta": {
             "query_trace_id": query_trace_id,
+            "query_signature": query_signature,
             "contract_version": "quick_search.v2",
             "legacy_aliases_used": filter_contract["aliases"],
             "filter_support": {
@@ -1327,7 +1490,7 @@ def quick_search(
                 "unsupported": filter_contract["unsupported"],
                 "legacy_partial": filter_contract["legacy_partial"],
                 "pending": filter_contract["pending"],
-                "seed_pool": filter_contract.get("seed_pool", {}),
+                "seed_pool": seed_pool_trace,
             },
             "rescue": {
                 "attempted": rescue_attempted,
@@ -1335,6 +1498,7 @@ def quick_search(
                 "winning_step": rescue_winning_step,
                 "pass_summaries": rescue_pass_summaries,
             },
+            "planned_route_scope": planned_route_scope,
             "pair_counts": {
                 "evaluated": pair_count,
                 "total_pairs": pair_plan_stats["total_pairs"],
@@ -1394,7 +1558,7 @@ def quick_search(
                 "timeout_count": execution_meta.get("timed_out_units_count", 0),
                 "cache_hits": execution_meta.get("cache_hits", 0),
                 "cache_misses": execution_meta.get("cache_misses", 0),
-                "final_results_count": len(deduped.results),
+                "final_results_count": len(scoped_ranked_results),
             },
             "filters_engine": {
                 "strict_mode_effective": strict_filters,
@@ -1433,7 +1597,7 @@ def quick_search(
             "applied": filters_applied,
             "relaxed": relaxed_filters,
             "warnings": warnings,
-            "discarded": max(0, len(combined) - len(flights_after_filters)),
+            "discarded": max(0, len(combined) - len(flights_after_filters)) + out_of_scope_discarded,
         },
         "results": [
             {
@@ -1466,6 +1630,6 @@ def quick_search(
                 "selected_from_pair_id": f"{item.origin}->{item.destination}",
                 "candidate_reason": "seed" if item.origin_is_seed and item.destination_is_seed else "expanded",
             }
-            for idx, item in enumerate(deduped.results)
+            for idx, item in enumerate(scoped_ranked_results)
         ],
     }
