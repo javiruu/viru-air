@@ -125,6 +125,21 @@ type QuickSearchCountrySeedResponse = {
   source: string;
 };
 
+function resolveCountryName(code: string): string {
+  const normalized = code.trim().toUpperCase();
+  if (!normalized) return "";
+  if (typeof Intl === "undefined" || typeof Intl.DisplayNames !== "function") {
+    return normalized;
+  }
+  try {
+    const locale = typeof navigator !== "undefined" && navigator.language ? navigator.language : "en";
+    const display = new Intl.DisplayNames([locale], { type: "region" });
+    return display.of(normalized) || normalized;
+  } catch {
+    return normalized;
+  }
+}
+
 function buildAirportSuggestions(airports: AirportIataEntry[], value: string, limit = 6) {
   const q = value.trim().toLowerCase();
   if (!q) return [];
@@ -431,6 +446,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
   const logQuickSearchApiError = useCallback((scope: string, meta: Record<string, unknown>) => {
     if (typeof window === "undefined") return;
+    if (process.env.NODE_ENV === "production") {
+      // eslint-disable-next-line no-console
+      console.warn(`[qs] ${scope}`, meta);
+      return;
+    }
     // eslint-disable-next-line no-console
     console.error(`[qs] ${scope}`, meta);
   }, []);
@@ -453,6 +473,45 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     return data;
   }, [mergeSeedAirportEntries]);
 
+  const fetchSeedCountriesFromSeeds = useCallback(async (): Promise<QuickSearchCountrySeed[]> => {
+    const byCode = new Map<string, number>();
+    const pageLimit = 500;
+    let offset = 0;
+    let guard = 0;
+
+    while (guard < 20) {
+      guard += 1;
+      const data = await fetchSeedAirports({ limit: pageLimit, offset });
+      const items = Array.isArray(data?.items) ? data.items : [];
+      for (const airport of items) {
+        const code = (airport.country_code || "").trim().toUpperCase();
+        if (!code) continue;
+        byCode.set(code, (byCode.get(code) || 0) + 1);
+      }
+
+      const nextOffset = typeof data?.next_offset === "number" ? data.next_offset : null;
+      if (nextOffset !== null && nextOffset > offset) {
+        offset = nextOffset;
+        continue;
+      }
+
+      const total = typeof data?.total === "number" ? data.total : null;
+      if (total !== null && offset + items.length < total && items.length > 0) {
+        offset += items.length;
+        continue;
+      }
+      break;
+    }
+
+    return Array.from(byCode.entries())
+      .map(([code, airport_count]) => ({
+        code,
+        name: resolveCountryName(code),
+        airport_count,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [fetchSeedAirports]);
+
   useEffect(() => {
     let cancelled = false;
     apiFetch<QuickSearchCountrySeedResponse>("/airports/countries")
@@ -460,15 +519,24 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         if (cancelled) return;
         setSeedCountries(Array.isArray(data?.items) ? data.items : []);
       })
-      .catch((error) => {
-        if (cancelled) return;
-        setSeedCountries([]);
-        logQuickSearchApiError("seed_countries_failed", { error });
+      .catch(async (error) => {
+        try {
+          const fallbackItems = await fetchSeedCountriesFromSeeds();
+          if (cancelled) return;
+          setSeedCountries(fallbackItems);
+          logQuickSearchApiError("seed_countries_fallback_used", {
+            countries: fallbackItems.length,
+          });
+        } catch (fallbackError) {
+          if (cancelled) return;
+          setSeedCountries([]);
+          logQuickSearchApiError("seed_countries_failed", { error, fallbackError });
+        }
       });
     return () => {
       cancelled = true;
     };
-  }, [logQuickSearchApiError]);
+  }, [fetchSeedCountriesFromSeeds, logQuickSearchApiError]);
 
   useEffect(() => {
     let cancelled = false;
