@@ -1,10 +1,10 @@
 import "../styles/globals.css";
 import type { Metadata } from "next";
 import Script from "next/script";
+import { Suspense } from "react";
 
 import { NotificationCenterProvider } from "@/components/components/notifications/notification-center";
 import NavigationPendingOverlay from "@/modules/shared/NavigationPendingOverlay";
-import ViruFooterBlock from "@/modules/shared/ViruFooterBlock";
 
 export const metadata: Metadata = {
   title: "Viru",
@@ -40,13 +40,14 @@ gtag('config', '${gaMeasurementId}');`}
       </head>
       <body>
         <NotificationCenterProvider>
-          <NavigationPendingOverlay />
+          <Suspense fallback={null}>
+            <NavigationPendingOverlay />
+          </Suspense>
           <a className="skip-link" href="#main-content">
             Saltar al contenido
           </a>
           <div className="app-root">
             <div className="app-content">{children}</div>
-            <ViruFooterBlock />
           </div>
         </NotificationCenterProvider>
       </body>
