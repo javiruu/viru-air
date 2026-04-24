@@ -40,12 +40,14 @@ export type QuickSearchPreparedRequest = {
 export type QuickSearchCanonicalPayload = {
   origin: {
     seed_iata: string;
+    seed_iata_list?: string[];
     include_nearby: boolean;
     radius_km: number;
     max_candidates: number;
   };
   destination: {
     seed_iata: string;
+    seed_iata_list?: string[];
     include_nearby: boolean;
     radius_km: number;
     max_candidates: number;
@@ -163,21 +165,31 @@ export function toQuickSearchQuery(params: QuickSearchQueryParams): string {
 
 function toSeedIata(value: string | string[]): string {
   if (Array.isArray(value)) {
-    return value[0] || "";
+    return value[0]?.trim().toUpperCase() || "";
   }
-  return value;
+  return value.trim().toUpperCase();
+}
+
+function toSeedIataList(value: string | string[]): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const deduped = Array.from(new Set(value.map((item) => item.trim().toUpperCase()).filter(Boolean)));
+  return deduped.length > 0 ? deduped : undefined;
 }
 
 export function buildQuickSearchCanonicalPayload(params: QuickSearchQueryParams): QuickSearchCanonicalPayload {
+  const originSeedList = toSeedIataList(params.origin_iata);
+  const destinationSeedList = toSeedIataList(params.destination_iata);
   return {
     origin: {
       seed_iata: toSeedIata(params.origin_iata),
+      ...(originSeedList ? { seed_iata_list: originSeedList } : {}),
       include_nearby: params.include_nearby_origins,
       radius_km: params.radius_km,
       max_candidates: 6,
     },
     destination: {
       seed_iata: toSeedIata(params.destination_iata),
+      ...(destinationSeedList ? { seed_iata_list: destinationSeedList } : {}),
       include_nearby: params.include_nearby_destinations,
       radius_km: params.radius_km,
       max_candidates: 6,

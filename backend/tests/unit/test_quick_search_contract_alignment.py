@@ -56,6 +56,47 @@ class QuickSearchContractAlignmentTests(unittest.TestCase):
         self.assertEqual(canonical.origin.radius_km, 180)
         self.assertEqual(canonical.destination.radius_km, 180)
 
+    def test_canonical_seed_iata_list_is_normalized_and_preserved(self):
+        payload = {
+            "origin": {
+                "seed_iata": "fco",
+                "seed_iata_list": ["MXP", "FCO", "mxp", "CIA"],
+                "include_nearby": False,
+                "radius_km": 150,
+                "max_candidates": 6,
+            },
+            "destination": {
+                "seed_iata": "mad",
+                "seed_iata_list": ["BCN", "MAD", "GRO"],
+                "include_nearby": False,
+                "radius_km": 150,
+                "max_candidates": 6,
+            },
+            "travel": {"date": "2026-05-21", "flex_before": 0, "flex_after": 0},
+        }
+        canonical, origin_list, destination_list, contract = _normalize_quick_search_request(payload_dict=payload, query_overrides={})
+        self.assertEqual(canonical.origin.seed_iata, origin_list[0])
+        self.assertEqual(canonical.destination.seed_iata, destination_list[0])
+        self.assertGreaterEqual(len(origin_list), 2)
+        self.assertGreaterEqual(len(destination_list), 2)
+        self.assertEqual(canonical.origin.seed_iata_list, origin_list)
+        self.assertEqual(canonical.destination.seed_iata_list, destination_list)
+        self.assertIn("seed_pool", contract)
+
+    def test_legacy_array_origin_destination_feed_seed_iata_list(self):
+        canonical, origin_list, destination_list, _ = _normalize_quick_search_request(
+            payload_dict={
+                "origin_iata": ["FCO", "MXP", "CIA"],
+                "destination_iata": ["MAD", "BCN", "GRO"],
+                "travel_date": "2026-05-21",
+            },
+            query_overrides={},
+        )
+        self.assertEqual(canonical.origin.seed_iata, origin_list[0])
+        self.assertEqual(canonical.destination.seed_iata, destination_list[0])
+        self.assertEqual(canonical.origin.seed_iata_list, origin_list)
+        self.assertEqual(canonical.destination.seed_iata_list, destination_list)
+
 
 if __name__ == "__main__":
     unittest.main()

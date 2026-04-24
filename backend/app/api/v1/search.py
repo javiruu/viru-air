@@ -11,16 +11,18 @@ from app.core.errors import ApiError, message_for_code
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from app.api.v1.airports import _validate_iata
+from app.infrastructure.airports_catalog import resolve_seed_airport
 from app.infrastructure.providers.ryanair_public_provider import RyanairPublicProvider
 from app.services.quick_search_dedupe import dedupe_ranked_results
 from app.services.quick_search_execution import build_execution_plan, execute_plan
-from app.services.quick_search_expansion import expand_search_sides
+from app.services.quick_search_expansion import SideExpansionResult, SideExpansionSummary, expand_search_sides
 from app.services.quick_search_planner import build_pair_plan
 from app.services.quick_search_ranking import rank_quick_search_results
 
 router = APIRouter()
 provider = RyanairPublicProvider()
 logger = logging.getLogger(__name__)
+SEED_POOL_CAP = 8
 
 _WARNING_CODE_ALIASES: dict[str, str] = {
     "provider_timeout_parcial": "provider_timeout_partial",
@@ -89,6 +91,7 @@ class QuickSearchPayload(BaseModel):
 
 class QuickSearchSide(BaseModel):
     seed_iata: str
+    seed_iata_list: list[str] | None = None
     include_nearby: bool = False
     radius_km: int = Field(default=150, ge=10, le=500)
     max_candidates: int = Field(default=6, ge=1, le=20)
@@ -97,6 +100,16 @@ class QuickSearchSide(BaseModel):
     @classmethod
     def validate_seed_iata(cls, value: str) -> str:
         return _validate_iata(value)
+
+    @field_validator("seed_iata_list")
+    @classmethod
+    def validate_seed_iata_list(cls, value: list[str] | None) -> list[str] | None:
+        if value is None:
+            return None
+        cleaned: list[str] = []
+        for item in value:
+            cleaned.append(_validate_iata(item))
+        return cleaned
 
 
 class QuickSearchTravel(BaseModel):
@@ -224,6 +237,42 @@ def _normalize_iata_list(value: str | list[str] | None) -> list[str]:
     return [item for item in items if item]
 
 
+def _seed_priority_key(iata: str) -> tuple[int, str]:
+    try:
+        airport = resolve_seed_airport(iata)
+        return (0 if airport.is_primary else 1, iata)
+    except ValueError:
+        return (1, iata)
+
+
+def _normalize_seed_pool(
+    seed_iata: str,
+    seed_iata_list: list[str] | None,
+    *,
+    cap: int,
+) -> tuple[list[str], bool]:
+    raw_codes: list[str] = []
+    raw_codes.extend(_parse_iata_input(seed_iata))
+    if seed_iata_list:
+        raw_codes.extend(_parse_iata_input(seed_iata_list))
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for code in raw_codes:
+        if code in seen:
+            continue
+        seen.add(code)
+        deduped.append(code)
+
+    if not deduped:
+        raise HTTPException(status_code=400, detail="iata_invalido")
+
+    deduped.sort(key=_seed_priority_key)
+    effective = deduped[: max(1, cap)]
+    truncated = len(deduped) > len(effective)
+    return effective, truncated
+
+
 def _required_error(field: str) -> ApiError:
     return ApiError(
         status=422,
@@ -322,13 +371,15 @@ def _normalize_quick_search_request(
 
         canonical_dict = {
             "origin": {
-                "seed_iata": origin_value,
+                "seed_iata": origin_value[0] if isinstance(origin_value, list) and origin_value else origin_value,
+                "seed_iata_list": origin_value if isinstance(origin_value, list) else None,
                 "include_nearby": include_nearby_origins_value,
                 "radius_km": _normalize_radius_km(raw_radius_km, include_nearby_origins_value),
                 "max_candidates": 6,
             },
             "destination": {
-                "seed_iata": destination_value,
+                "seed_iata": destination_value[0] if isinstance(destination_value, list) and destination_value else destination_value,
+                "seed_iata_list": destination_value if isinstance(destination_value, list) else None,
                 "include_nearby": include_nearby_destinations_value,
                 "radius_km": _normalize_radius_km(raw_radius_km, include_nearby_destinations_value),
                 "max_candidates": 6,
@@ -420,6 +471,16 @@ def _normalize_quick_search_request(
     origin_side_dict = dict(canonical_dict.get("origin") or {})
     destination_side_dict = dict(canonical_dict.get("destination") or {})
 
+    for side_dict in (origin_side_dict, destination_side_dict):
+        side_candidates = _normalize_iata_list(side_dict.get("seed_iata"))
+        side_candidates.extend(_normalize_iata_list(side_dict.get("seed_iata_list")))
+        if side_candidates:
+            side_dict["seed_iata"] = side_candidates[0]
+            if len(side_candidates) > 1:
+                side_dict["seed_iata_list"] = side_candidates
+        elif "seed_iata_list" in side_dict:
+            side_dict.pop("seed_iata_list", None)
+
     include_nearby_origin = bool(origin_side_dict.get("include_nearby", False))
     include_nearby_destination = bool(destination_side_dict.get("include_nearby", False))
 
@@ -434,8 +495,20 @@ def _normalize_quick_search_request(
     except ValidationError as exc:
         raise HTTPException(status_code=422, detail=exc.errors()) from exc
 
-    origin_list = _parse_iata_input(canonical.origin.seed_iata)
-    destination_list = _parse_iata_input(canonical.destination.seed_iata)
+    origin_list, origin_seed_pool_truncated = _normalize_seed_pool(
+        canonical.origin.seed_iata,
+        canonical.origin.seed_iata_list,
+        cap=SEED_POOL_CAP,
+    )
+    destination_list, destination_seed_pool_truncated = _normalize_seed_pool(
+        canonical.destination.seed_iata,
+        canonical.destination.seed_iata_list,
+        cap=SEED_POOL_CAP,
+    )
+    canonical.origin.seed_iata = origin_list[0]
+    canonical.origin.seed_iata_list = origin_list
+    canonical.destination.seed_iata = destination_list[0]
+    canonical.destination.seed_iata_list = destination_list
 
     filter_support = {
         "hard_supported": ["strict_filters", "departure_window", "exclude_origins", "exclude_destinations"],
@@ -443,6 +516,13 @@ def _normalize_quick_search_request(
         "unsupported": ["include_stops", "max_stops", "duration_max_min", "risk_allowed"],
         "legacy_partial": ["include_stops", "max_stops"],
         "pending": ["stop-logic", "duration-filter", "risk-model"],
+        "seed_pool": {
+            "cap": SEED_POOL_CAP,
+            "origin_count": len(origin_list),
+            "destination_count": len(destination_list),
+            "origin_truncated": origin_seed_pool_truncated,
+            "destination_truncated": destination_seed_pool_truncated,
+        },
     }
 
     return canonical, origin_list, destination_list, {"aliases": legacy_aliases_used, **filter_support}
@@ -648,6 +728,8 @@ def quick_search(
     _phase_end("request_normalization_ms", started)
 
     travel_date_value = canonical.travel.date
+    origin_seed_pool = list(origin_list)
+    destination_seed_pool = list(destination_list)
     requested_days_before = canonical.travel.flex_before
     requested_days_after = canonical.travel.flex_after
 
@@ -701,12 +783,75 @@ def quick_search(
     exclude_origin_list = canonical.constraints.exclude_origins
     exclude_destination_list = canonical.constraints.exclude_destinations
 
+    if len(origin_seed_pool) > 1:
+        _warn("country_scope_multi_seed_applied", side="origin", seed_count=len(origin_seed_pool))
+    if len(destination_seed_pool) > 1:
+        _warn("country_scope_multi_seed_applied", side="destination", seed_count=len(destination_seed_pool))
+    if filter_contract.get("seed_pool", {}).get("origin_truncated"):
+        _warn(
+            "country_scope_seed_pool_truncated",
+            side="origin",
+            cap=filter_contract["seed_pool"]["cap"],
+            effective_count=filter_contract["seed_pool"]["origin_count"],
+        )
+    if filter_contract.get("seed_pool", {}).get("destination_truncated"):
+        _warn(
+            "country_scope_seed_pool_truncated",
+            side="destination",
+            cap=filter_contract["seed_pool"]["cap"],
+            effective_count=filter_contract["seed_pool"]["destination_count"],
+        )
+
     def _phase_add(name: str, elapsed_ms: int) -> None:
         phase_ms[name] = phase_ms.get(name, 0) + elapsed_ms
+
+    def _candidate_rank_key(candidate: Any) -> tuple[int, float, str, str]:
+        return (
+            0 if getattr(candidate, "is_seed", False) else 1,
+            float(getattr(candidate, "distance_km", 0.0)),
+            str(getattr(candidate, "seed_iata", "")),
+            str(getattr(candidate, "expanded_iata", "")),
+        )
+
+    def _merge_side_results(
+        *,
+        side: str,
+        seed_pool: list[str],
+        include_nearby: bool,
+        radius_km: int,
+        max_candidates: int,
+        exclusions: list[str],
+        results: list[SideExpansionResult],
+    ) -> SideExpansionResult:
+        merged_by_iata: dict[str, Any] = {}
+        for result in results:
+            for candidate in result.candidates:
+                existing = merged_by_iata.get(candidate.expanded_iata)
+                if existing is None or _candidate_rank_key(candidate) < _candidate_rank_key(existing):
+                    merged_by_iata[candidate.expanded_iata] = candidate
+
+        merged_candidates = sorted(merged_by_iata.values(), key=_candidate_rank_key)
+        limited = merged_candidates[: max(1, max_candidates)]
+        return SideExpansionResult(
+            side=side,
+            candidates=limited,
+            summary=SideExpansionSummary(
+                side=side,
+                seed_iata=seed_pool[0],
+                include_nearby_applied=include_nearby,
+                radius_km_effective=radius_km,
+                max_candidates_effective=max(1, max_candidates),
+                exclusions_applied=sorted({code.strip().upper() for code in exclusions if code}),
+                total_candidates_before_limit=len(merged_candidates),
+                total_candidates_after_limit=len(limited),
+            ),
+        )
 
     def _run_pass(
         *,
         step: str,
+        origin_seed_pool_pass: list[str],
+        destination_seed_pool_pass: list[str],
         days_before: int,
         days_after: int,
         include_nearby_origins: bool,
@@ -718,17 +863,58 @@ def quick_search(
     ) -> dict[str, Any]:
         started = _phase_start()
         try:
-            origin_side, destination_side = expand_search_sides(
-                origin_seed_iata=canonical.origin.seed_iata,
-                destination_seed_iata=canonical.destination.seed_iata,
-                include_nearby_origins=include_nearby_origins,
-                include_nearby_destinations=include_nearby_destinations,
-                origin_radius_km=radius_km_origin,
-                destination_radius_km=radius_km_destination,
-                origin_max_candidates=canonical.origin.max_candidates,
-                destination_max_candidates=canonical.destination.max_candidates,
-                exclude_origins=exclude_origin_list,
-                exclude_destinations=exclude_destination_list,
+            origin_results: list[SideExpansionResult] = []
+            destination_results: list[SideExpansionResult] = []
+
+            for origin_seed in origin_seed_pool_pass:
+                origin_side_item, _ = expand_search_sides(
+                    origin_seed_iata=origin_seed,
+                    destination_seed_iata=destination_seed_pool_pass[0],
+                    include_nearby_origins=include_nearby_origins,
+                    include_nearby_destinations=include_nearby_destinations,
+                    origin_radius_km=radius_km_origin,
+                    destination_radius_km=radius_km_destination,
+                    origin_max_candidates=canonical.origin.max_candidates,
+                    destination_max_candidates=canonical.destination.max_candidates,
+                    exclude_origins=exclude_origin_list,
+                    exclude_destinations=exclude_destination_list,
+                )
+                origin_results.append(origin_side_item)
+
+            for destination_seed in destination_seed_pool_pass:
+                _, destination_side_item = expand_search_sides(
+                    origin_seed_iata=origin_seed_pool_pass[0],
+                    destination_seed_iata=destination_seed,
+                    include_nearby_origins=include_nearby_origins,
+                    include_nearby_destinations=include_nearby_destinations,
+                    origin_radius_km=radius_km_origin,
+                    destination_radius_km=radius_km_destination,
+                    origin_max_candidates=canonical.origin.max_candidates,
+                    destination_max_candidates=canonical.destination.max_candidates,
+                    exclude_origins=exclude_origin_list,
+                    exclude_destinations=exclude_destination_list,
+                )
+                destination_results.append(destination_side_item)
+
+            origin_target_max_candidates = min(24, max(1, canonical.origin.max_candidates * len(origin_seed_pool_pass)))
+            destination_target_max_candidates = min(24, max(1, canonical.destination.max_candidates * len(destination_seed_pool_pass)))
+            origin_side = _merge_side_results(
+                side="origin",
+                seed_pool=origin_seed_pool_pass,
+                include_nearby=include_nearby_origins,
+                radius_km=radius_km_origin,
+                max_candidates=origin_target_max_candidates,
+                exclusions=exclude_origin_list,
+                results=origin_results,
+            )
+            destination_side = _merge_side_results(
+                side="destination",
+                seed_pool=destination_seed_pool_pass,
+                include_nearby=include_nearby_destinations,
+                radius_km=radius_km_destination,
+                max_candidates=destination_target_max_candidates,
+                exclusions=exclude_destination_list,
+                results=destination_results,
             )
         except ValueError as exc:
             reason = str(exc)
@@ -870,6 +1056,8 @@ def quick_search(
 
     pass_1 = _run_pass(
         step="pass_1_exact",
+        origin_seed_pool_pass=origin_seed_pool,
+        destination_seed_pool_pass=destination_seed_pool,
         days_before=requested_days_before,
         days_after=requested_days_after,
         include_nearby_origins=requested_include_nearby_origins,
@@ -951,6 +1139,8 @@ def quick_search(
         for config in rescue_steps:
             candidate_pass = _run_pass(
                 step=config["step"],
+                origin_seed_pool_pass=origin_seed_pool,
+                destination_seed_pool_pass=destination_seed_pool,
                 days_before=config["days_before"],
                 days_after=config["days_after"],
                 include_nearby_origins=config["include_nearby_origins"],
@@ -1137,6 +1327,7 @@ def quick_search(
                 "unsupported": filter_contract["unsupported"],
                 "legacy_partial": filter_contract["legacy_partial"],
                 "pending": filter_contract["pending"],
+                "seed_pool": filter_contract.get("seed_pool", {}),
             },
             "rescue": {
                 "attempted": rescue_attempted,

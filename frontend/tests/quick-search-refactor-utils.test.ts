@@ -146,13 +146,40 @@ test("buildQuickSearchCanonicalPayload maps frontend request into contract v2 bo
   });
 
   assert.equal(payload.origin.seed_iata, "MAD");
+  assert.deepEqual(payload.origin.seed_iata_list, ["MAD", "BCN"]);
   assert.equal(payload.origin.include_nearby, true);
   assert.equal(payload.destination.seed_iata, "DUB");
+  assert.equal(payload.destination.seed_iata_list, undefined);
   assert.equal(payload.travel.date, "2026-03-20");
   assert.equal(payload.travel.flex_before, 1);
   assert.equal(payload.constraints.departure_window.after, "07:00");
   assert.deepEqual(payload.constraints.exclude_origins, ["OPO"]);
   assert.equal(payload.constraints.strict_filters, false);
+});
+
+test("buildQuickSearchCanonicalPayload dedupes and normalizes seed_iata_list", () => {
+  const payload = buildQuickSearchCanonicalPayload({
+    origin_iata: [" fco ", "MXP", "FCO"],
+    destination_iata: ["mad", "BCN", "MAD"],
+    travel_date: "2026-03-20",
+    date: "2026-03-20",
+    flex_days_before: 0,
+    flex_days_after: 0,
+    radius_km: 150,
+    include_stops: false,
+    include_nearby_origins: false,
+    include_nearby_destinations: false,
+    max_stops: 0,
+    exclude_origins: [],
+    exclude_destinations: [],
+    strict_filters: true,
+    soft_filters_weight: 0.6,
+  });
+
+  assert.equal(payload.origin.seed_iata, "FCO");
+  assert.deepEqual(payload.origin.seed_iata_list, ["FCO", "MXP"]);
+  assert.equal(payload.destination.seed_iata, "MAD");
+  assert.deepEqual(payload.destination.seed_iata_list, ["MAD", "BCN"]);
 });
 
 test("smoke flow: request builder + normalizer interop", () => {
