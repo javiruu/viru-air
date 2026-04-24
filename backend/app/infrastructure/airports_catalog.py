@@ -91,13 +91,117 @@ def _load_master_catalog() -> list[Airport]:
     return out
 
 
+def country_code_from_airport(airport: Airport) -> str:
+    region = (airport.region or "").strip().upper()
+    if "-" in region:
+        prefix = region.split("-", 1)[0].strip()
+        if len(prefix) == 2 and prefix.isalpha():
+            return prefix
+    country = (airport.country or "").strip().upper()
+    if len(country) == 2 and country.isalpha():
+        return country
+    return ""
+
+
 AIRPORTS: list[Airport] = _load_master_catalog()
 AIRPORT_BY_IATA = {airport.iata: airport for airport in AIRPORTS}
+AIRPORTS_SORTED = sorted(
+    AIRPORTS,
+    key=lambda airport: (
+        country_code_from_airport(airport),
+        airport.city,
+        airport.name,
+        airport.iata,
+    ),
+)
 
 
 @lru_cache(maxsize=1024)
 def get_airport(iata: str) -> Airport | None:
     return AIRPORT_BY_IATA.get(iata.upper().strip())
+
+
+def _airport_matches_query(airport: Airport, normalized_query: str) -> bool:
+    if not normalized_query:
+        return True
+    return normalized_query in " ".join(
+        [
+            airport.iata,
+            airport.name,
+            airport.city,
+            airport.country,
+            airport.region or "",
+        ]
+    ).lower()
+
+
+def _query_rank(airport: Airport, normalized_query: str) -> tuple[int, str, str, str]:
+    if not normalized_query:
+        return (0, country_code_from_airport(airport), airport.city, airport.iata)
+    iata = airport.iata.lower()
+    name = airport.name.lower()
+    city = airport.city.lower()
+    if iata == normalized_query:
+        rank = 0
+    elif iata.startswith(normalized_query):
+        rank = 1
+    elif name.startswith(normalized_query) or city.startswith(normalized_query):
+        rank = 2
+    else:
+        rank = 3
+    return (rank, country_code_from_airport(airport), airport.city, airport.iata)
+
+
+def list_seed_airports(
+    *,
+    query: str | None = None,
+    country_code: str | None = None,
+    limit: int | None = None,
+    offset: int = 0,
+) -> tuple[list[Airport], int, int | None]:
+    normalized_query = (query or "").strip().lower()
+    normalized_country = (country_code or "").strip().upper()
+    if offset < 0:
+        offset = 0
+
+    filtered = [
+        airport
+        for airport in AIRPORTS_SORTED
+        if (not normalized_country or country_code_from_airport(airport) == normalized_country)
+        and _airport_matches_query(airport, normalized_query)
+    ]
+    if normalized_query:
+        filtered.sort(key=lambda airport: _query_rank(airport, normalized_query))
+    total = len(filtered)
+
+    if limit is None:
+        return filtered[offset:], total, None
+
+    effective_limit = max(1, limit)
+    page = filtered[offset : offset + effective_limit]
+    next_offset = offset + len(page)
+    if next_offset >= total:
+        next_offset = None
+    return page, total, next_offset
+
+
+def list_seed_countries() -> list[dict[str, object]]:
+    counters: dict[str, int] = {}
+    names: dict[str, str] = {}
+    for airport in AIRPORTS:
+        code = country_code_from_airport(airport)
+        if not code:
+            continue
+        counters[code] = counters.get(code, 0) + 1
+        current_name = names.get(code)
+        if not current_name and airport.country:
+            names[code] = airport.country
+    rows = [
+        {"code": code, "name": names.get(code, code), "airport_count": count}
+        for code, count in counters.items()
+    ]
+    rows.sort(key=lambda item: (str(item["name"]), str(item["code"])))
+    return rows
 
 
 def resolve_seed_airport(iata: str) -> Airport:

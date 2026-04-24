@@ -48,6 +48,14 @@
 - `origin.include_nearby`, `origin.radius_km`, `origin.max_candidates`
 - `destination.include_nearby`, `destination.radius_km`, `destination.max_candidates`
 
+## Airport seed catalog endpoints (picker/autocomplete)
+- `GET /api/v1/airports/seeds`
+  - Backward compatible: without query params it returns the full seed list.
+  - Progressive mode params: `q`, `country_code`, `limit`, `offset`.
+  - Response shape: `{ items, count, total, source, next_offset? }`.
+- `GET /api/v1/airports/countries`
+  - Response shape: `{ items: [{ code, name, airport_count }], count, source }`.
+
 ## Radius semantics (canonical v2)
 - `radius_km` is a **valid numeric radius**, not an on/off sentinel.
 - Valid range: `10..500`.

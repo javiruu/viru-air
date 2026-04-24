@@ -108,6 +108,20 @@ type ExecutedCriteriaSnapshot = {
 type QuickSearchSeedAirportResponse = {
   items: AirportIataEntry[];
   count: number;
+  total?: number;
+  next_offset?: number;
+  source: string;
+};
+
+type QuickSearchCountrySeed = {
+  code: string;
+  name: string;
+  airport_count: number;
+};
+
+type QuickSearchCountrySeedResponse = {
+  items: QuickSearchCountrySeed[];
+  count: number;
   source: string;
 };
 
@@ -146,6 +160,10 @@ function buildAirportSuggestions(airports: AirportIataEntry[], value: string, li
 export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchMode }) {
   const router = useRouter();
   const [seedAirports, setSeedAirports] = useState<AirportIataEntry[]>([]);
+  const [seedCountries, setSeedCountries] = useState<QuickSearchCountrySeed[]>([]);
+  const [originSuggestions, setOriginSuggestions] = useState<Array<{ iata: string; name: string }>>([]);
+  const [destinationSuggestions, setDestinationSuggestions] = useState<Array<{ iata: string; name: string }>>([]);
+  const [countryAirports, setCountryAirports] = useState<AirportIataEntry[]>([]);
   const [executedCriteria, setExecutedCriteria] = useState<ExecutedCriteriaSnapshot | null>(null);
   // signature of the last successfully executed criteria (used to detect pending changes)
   const [appliedCriteriaSignature, setAppliedCriteriaSignature] = useState<string | null>(null);
@@ -369,20 +387,16 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   } = useQuickSearchMainState(initialOrigin, initialDestination);
   const normalizedRadiusKm = clampQuickSearchRadius(radiusKm);
 
-  useEffect(() => {
-    let cancelled = false;
-    apiFetch<QuickSearchSeedAirportResponse>("/airports/seeds")
-      .then((data) => {
-        if (cancelled) return;
-        setSeedAirports(Array.isArray(data?.items) ? data.items : []);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setSeedAirports([]);
-      });
-    return () => {
-      cancelled = true;
-    };
+  const mergeSeedAirportEntries = useCallback((entries: AirportIataEntry[]) => {
+    if (!Array.isArray(entries) || entries.length === 0) return;
+    setSeedAirports((prev) => {
+      const byIata = new Map(prev.map((item) => [item.iata, item]));
+      for (const entry of entries) {
+        if (!entry?.iata) continue;
+        byIata.set(entry.iata, entry);
+      }
+      return Array.from(byIata.values());
+    });
   }, []);
 
   const airportsByCountry = useMemo(() => {
@@ -420,6 +434,109 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     // eslint-disable-next-line no-console
     console.error(`[qs] ${scope}`, meta);
   }, []);
+
+  const fetchSeedAirports = useCallback(async (params: {
+    q?: string;
+    country_code?: string;
+    limit?: number;
+    offset?: number;
+  }) => {
+    const search = new URLSearchParams();
+    if (params.q) search.set("q", params.q);
+    if (params.country_code) search.set("country_code", params.country_code);
+    if (params.limit) search.set("limit", String(params.limit));
+    if (params.offset) search.set("offset", String(params.offset));
+    const query = search.toString();
+    const data = await apiFetch<QuickSearchSeedAirportResponse>(`/airports/seeds${query ? `?${query}` : ""}`);
+    const items = Array.isArray(data?.items) ? data.items : [];
+    mergeSeedAirportEntries(items);
+    return data;
+  }, [mergeSeedAirportEntries]);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch<QuickSearchCountrySeedResponse>("/airports/countries")
+      .then((data) => {
+        if (cancelled) return;
+        setSeedCountries(Array.isArray(data?.items) ? data.items : []);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setSeedCountries([]);
+        logQuickSearchApiError("seed_countries_failed", { error });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [logQuickSearchApiError]);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([
+      fetchSeedAirports({ q: "MAD", limit: 6 }),
+      fetchSeedAirports({ q: "DUB", limit: 6 }),
+    ]).catch((error) => {
+      if (cancelled) return;
+      logQuickSearchApiError("seed_bootstrap_failed", { error });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchSeedAirports, logQuickSearchApiError]);
+
+  useEffect(() => {
+    const value = origin.trim();
+    if (!value) {
+      setOriginSuggestions([]);
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      fetchSeedAirports({ q: value, limit: 6 })
+        .then((data) => {
+          setOriginSuggestions(buildAirportSuggestions(data.items || [], value));
+        })
+        .catch((error) => {
+          setOriginSuggestions([]);
+          logQuickSearchApiError("origin_suggestions_failed", { error, value });
+        });
+    }, 120);
+    return () => window.clearTimeout(timeout);
+  }, [origin, fetchSeedAirports, logQuickSearchApiError]);
+
+  useEffect(() => {
+    const value = destination.trim();
+    if (!value) {
+      setDestinationSuggestions([]);
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      fetchSeedAirports({ q: value, limit: 6 })
+        .then((data) => {
+          setDestinationSuggestions(buildAirportSuggestions(data.items || [], value));
+        })
+        .catch((error) => {
+          setDestinationSuggestions([]);
+          logQuickSearchApiError("destination_suggestions_failed", { error, value });
+        });
+    }, 120);
+    return () => window.clearTimeout(timeout);
+  }, [destination, fetchSeedAirports, logQuickSearchApiError]);
+
+  useEffect(() => {
+    const code = origin.trim().toUpperCase();
+    if (code.length !== 3 || airportsByIata.has(code)) return;
+    fetchSeedAirports({ q: code, limit: 6 }).catch((error) => {
+      logQuickSearchApiError("origin_code_validation_failed", { error, code });
+    });
+  }, [origin, airportsByIata, fetchSeedAirports, logQuickSearchApiError]);
+
+  useEffect(() => {
+    const code = destination.trim().toUpperCase();
+    if (code.length !== 3 || airportsByIata.has(code)) return;
+    fetchSeedAirports({ q: code, limit: 6 }).catch((error) => {
+      logQuickSearchApiError("destination_code_validation_failed", { error, code });
+    });
+  }, [destination, airportsByIata, fetchSeedAirports, logQuickSearchApiError]);
 
   useEffect(() => {
     setRoutePulse(true);
@@ -732,14 +849,14 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     }
   }, [localeTag]);
   const countryOptions = useMemo(() => {
-    const list = Array.from(airportsByCountry.entries()).map(([code, airports]) => ({
-      code,
-      name: countryDisplayNames?.of(code) || code,
-      airports,
+    const list = seedCountries.map((country) => ({
+      code: country.code,
+      name: countryDisplayNames?.of(country.code) || country.name || country.code,
+      airports: airportsByCountry.get(country.code) || [],
     }));
     list.sort((a, b) => a.name.localeCompare(b.name));
     return list;
-  }, [airportsByCountry, countryDisplayNames]);
+  }, [seedCountries, airportsByCountry, countryDisplayNames]);
   const countryByCode = useMemo(() => {
     return new Map(countryOptions.map((country) => [country.code, country]));
   }, [countryOptions]);
@@ -1355,6 +1472,25 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     }
   }
 
+  const loadCountryAirports = useCallback(async (countryCode: string) => {
+    const all: AirportIataEntry[] = [];
+    let offset = 0;
+    let guard = 0;
+    while (guard < 30) {
+      guard += 1;
+      const page = await fetchSeedAirports({
+        country_code: countryCode,
+        limit: 500,
+        offset,
+      });
+      const items = Array.isArray(page.items) ? page.items : [];
+      all.push(...items);
+      if (typeof page.next_offset !== "number") break;
+      offset = page.next_offset;
+    }
+    return all;
+  }, [fetchSeedAirports]);
+
   function selectAirport(iata: string) {
     setAirportSelectionTouched(true);
     const entry = airportsByIata.get(iata.trim().toUpperCase());
@@ -1376,21 +1512,24 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     closePickerWithFocusReturn();
   }
 
-  const selectCountryOnly = useCallback((country: CountryAirports | null) => {
+  const selectCountryOnly = useCallback(async (country: CountryAirports | null) => {
     if (!country) return;
+    const airports = await loadCountryAirports(country.code);
+    const completeCountry: CountryAirports = { ...country, airports };
     if (activePicker === "origin") {
       setOrigin("");
-      setOriginCountryOnly(country);
+      setOriginCountryOnly(completeCountry);
       setOriginSelectedCountryCode(null);
     }
     if (activePicker === "destination") {
       setDestination("");
-      setDestinationCountryOnly(country);
+      setDestinationCountryOnly(completeCountry);
       setDestinationSelectedCountryCode(null);
     }
     closePickerWithFocusReturn();
   }, [
     activePicker,
+    loadCountryAirports,
     setDestination,
     setDestinationCountryOnly,
     setDestinationSelectedCountryCode,
@@ -1402,7 +1541,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
   const closePicker = useCallback(() => {
     if (activePicker && countrySelectionTouched && !airportSelectionTouched && selectedCountry) {
-      selectCountryOnly(selectedCountry);
+      void selectCountryOnly(selectedCountry);
       return;
     }
     closePickerWithFocusReturn();
@@ -1826,23 +1965,35 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     return "round_trip";
   }
 
-  const originSuggestions = useMemo(() => buildAirportSuggestions(seedAirports, origin), [origin, seedAirports]);
-  const destinationSuggestions = useMemo(() => buildAirportSuggestions(seedAirports, destination), [destination, seedAirports]);
-  const countryAirports = useMemo(
-    () => (selectedCountry ? airportsByCountry.get(selectedCountry.code) || [] : []),
-    [airportsByCountry, selectedCountry],
-  );
-  const filteredCountryAirports = useMemo(() => {
-    const q = airportSearch.trim().toLowerCase();
-    const filtered = countryAirports.filter((a) => {
-      if (!q) return true;
-      if (a.iata.toLowerCase().startsWith(q)) return true;
-      if (a.name.toLowerCase().includes(q)) return true;
-      if (a.municipality.toLowerCase().includes(q)) return true;
-      return false;
-    });
-    return filtered.length > 200 ? filtered.slice(0, 200) : filtered;
-  }, [airportSearch, countryAirports]);
+  useEffect(() => {
+    if (!activePicker || !selectedCountry?.code) {
+      setCountryAirports([]);
+      return;
+    }
+    let cancelled = false;
+    fetchSeedAirports({
+      country_code: selectedCountry.code,
+      q: airportSearch.trim() || undefined,
+      limit: 200,
+    })
+      .then((data) => {
+        if (cancelled) return;
+        setCountryAirports(Array.isArray(data.items) ? data.items : []);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setCountryAirports([]);
+        logQuickSearchApiError("country_airports_failed", {
+          error,
+          country_code: selectedCountry.code,
+          q: airportSearch.trim() || undefined,
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activePicker, selectedCountry?.code, airportSearch, fetchSeedAirports, logQuickSearchApiError]);
+  const filteredCountryAirports = countryAirports;
   const airportPickerModal = activePicker ? (
     <div className="airport-modal-overlay" onClick={closePicker}>
       <section
@@ -1886,7 +2037,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             </div>
             {selectedCountry ? (
               <div className="section-gap-sm">
-                <button type="button" className="btn-secondary btn-compact" onClick={() => selectCountryOnly(selectedCountry)}>
+                <button type="button" className="btn-secondary btn-compact" onClick={() => void selectCountryOnly(selectedCountry)}>
                   {t("pickCountryOnly").replace("{country}", selectedCountry.name)}
                 </button>
                 <p className="panel-note">{t("pickCountryOnlyHint")}</p>
