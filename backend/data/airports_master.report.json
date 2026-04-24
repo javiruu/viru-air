@@ -1,0 +1,53 @@
+{
+  "generated_at_utc": "2026-04-24T07:37:39Z",
+  "source": "ryanair_airports+ourairports",
+  "total_airports": 222,
+  "countries_total": 35,
+  "countries": {
+    "AL": 1,
+    "AT": 4,
+    "BA": 2,
+    "BE": 2,
+    "BG": 4,
+    "CY": 2,
+    "CZ": 4,
+    "DE": 14,
+    "DK": 2,
+    "EE": 1,
+    "ES": 22,
+    "FI": 2,
+    "FR": 23,
+    "GB": 22,
+    "GR": 16,
+    "HR": 7,
+    "HU": 1,
+    "IE": 5,
+    "IT": 32,
+    "JO": 1,
+    "LT": 3,
+    "LU": 1,
+    "LV": 1,
+    "MA": 12,
+    "ME": 1,
+    "MT": 1,
+    "NL": 2,
+    "NO": 2,
+    "PL": 13,
+    "PT": 4,
+    "RO": 4,
+    "RS": 1,
+    "SE": 6,
+    "SK": 2,
+    "TR": 2
+  },
+  "skipped": [
+    {
+      "iata": "BSL",
+      "reason": "country_mismatch"
+    },
+    {
+      "iata": "VIL",
+      "reason": "country_mismatch"
+    }
+  ]
+}

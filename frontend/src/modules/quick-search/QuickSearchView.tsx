@@ -1152,14 +1152,35 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       setFieldErrors({ travel_date: t("selectOutbound") });
       return;
     }
-    if (!originValid || !destinationValid) {
+    const ensureSeedCode = async (code: string) => {
+      const normalized = code.trim().toUpperCase();
+      if (!normalized || normalized.length !== 3) return false;
+      if (airportsByIata.has(normalized)) return true;
+      try {
+        const response = await fetchSeedAirports({ q: normalized, limit: 6 });
+        return Array.isArray(response.items) && response.items.some((item) => item.iata === normalized);
+      } catch {
+        return false;
+      }
+    };
+
+    let originValidNow = originValid;
+    let destinationValidNow = destinationValid;
+    if (!originCountryOnly && !originValidNow) {
+      originValidNow = await ensureSeedCode(originCode);
+    }
+    if (!destinationCountryOnly && !destinationValidNow) {
+      destinationValidNow = await ensureSeedCode(destinationCode);
+    }
+
+    if (!originValidNow || !destinationValidNow) {
       setSearchState("error");
       setSearchError(t("errorText"));
-      if (!originValid) setOriginTouched(true);
-      if (!destinationValid) setDestinationTouched(true);
+      if (!originValidNow) setOriginTouched(true);
+      if (!destinationValidNow) setDestinationTouched(true);
       setFieldErrors({
-        origin_iata: !originValid ? t("iataInvalid") : undefined,
-        destination_iata: !destinationValid ? t("iataInvalid") : undefined,
+        origin_iata: !originValidNow ? t("iataInvalid") : undefined,
+        destination_iata: !destinationValidNow ? t("iataInvalid") : undefined,
       });
       return;
     }

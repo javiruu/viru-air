@@ -16,9 +16,9 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT_PATH = ROOT / "backend" / "data" / "airports_master.json"
 REPORT_PATH = ROOT / "backend" / "data" / "airports_master.report.json"
 
-RYANAIR_STATIONS_URLS = (
-    "https://www.ryanair.com/api/views/locate/3/stations/en/active",
-    "https://www.ryanair.com/api/views/locate/3/stations/es/active",
+RYANAIR_AIRPORTS_URLS = (
+    "https://www.ryanair.com/api/views/locate/3/airports/en/active",
+    "https://www.ryanair.com/api/views/locate/3/airports/es/active",
 )
 OURAIRPORTS_CSV_URL = "https://davidmegginson.github.io/ourairports-data/airports.csv"
 
@@ -51,43 +51,43 @@ def _coerce_float(value: Any) -> float | None:
     return number
 
 
-def _parse_ryanair_stations(payload: Any) -> dict[str, dict[str, Any]]:
-    stations: dict[str, dict[str, Any]] = {}
+def _parse_ryanair_airports(payload: Any) -> dict[str, dict[str, Any]]:
+    airports: dict[str, dict[str, Any]] = {}
     candidates: list[dict[str, Any]] = []
 
     if isinstance(payload, dict):
-        if isinstance(payload.get("stations"), list):
-            candidates = [row for row in payload["stations"] if isinstance(row, dict)]
+        if isinstance(payload.get("airports"), list):
+            candidates = [row for row in payload["airports"] if isinstance(row, dict)]
         else:
             for code, row in payload.items():
                 if not isinstance(row, dict):
                     continue
-                if "code" not in row:
-                    row = {**row, "code": str(code)}
+                if "iataCode" not in row and "code" not in row:
+                    row = {**row, "iataCode": str(code)}
                 candidates.append(row)
     elif isinstance(payload, list):
         candidates = [row for row in payload if isinstance(row, dict)]
 
     for row in candidates:
-        iata = str(row.get("code") or row.get("iataCode") or "").strip().upper()
+        iata = str(row.get("iataCode") or row.get("code") or "").strip().upper()
         if not IATA_RE.fullmatch(iata):
             continue
         if iata in EXCLUDED_CITY_CODES:
             continue
-        stations[iata] = row
-    return stations
+        airports[iata] = row
+    return airports
 
 
-def _load_ryanair_stations() -> dict[str, dict[str, Any]]:
+def _load_ryanair_airports() -> dict[str, dict[str, Any]]:
     merged: dict[str, dict[str, Any]] = {}
-    for url in RYANAIR_STATIONS_URLS:
+    for url in RYANAIR_AIRPORTS_URLS:
         try:
             payload = _fetch_json(url)
         except requests.RequestException:
             continue
-        merged.update(_parse_ryanair_stations(payload))
+        merged.update(_parse_ryanair_airports(payload))
     if not merged:
-        raise RuntimeError("ryanair_stations_unavailable")
+        raise RuntimeError("ryanair_airports_unavailable")
     return merged
 
 
@@ -129,7 +129,7 @@ def _load_ourairports() -> dict[str, dict[str, Any]]:
 
 
 def main() -> None:
-    stations = _load_ryanair_stations()
+    stations = _load_ryanair_airports()
     reference = _load_ourairports()
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -157,7 +157,7 @@ def main() -> None:
                 "iata": iata,
                 "icao": ref["icao"],
                 "name": ref["name"],
-                "city": ref["city"] or str(station.get("name") or "").strip(),
+                "city": ref["city"] or str(station.get("name") or station.get("cityCode") or "").strip(),
                 "country": country_name,
                 "region": ref["region"],
                 "latitude": ref["latitude"],
@@ -165,7 +165,7 @@ def main() -> None:
                 "timezone": ref["timezone"],
                 "airport_type": ref["airport_type"],
                 "is_primary": ref["airport_type"] == "large_airport",
-                "source": f"ryanair_stations+ourairports:{generated_at}",
+                "source": f"ryanair_airports+ourairports:{generated_at}",
             }
         )
         country_counter.update([ref["country_code"]])
@@ -178,7 +178,7 @@ def main() -> None:
         json.dumps(
             {
                 "generated_at_utc": generated_at,
-                "source": "ryanair_stations+ourairports",
+                "source": "ryanair_airports+ourairports",
                 "total_airports": len(items),
                 "countries_total": len(country_counter),
                 "countries": dict(sorted(country_counter.items())),
