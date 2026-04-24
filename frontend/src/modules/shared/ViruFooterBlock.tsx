@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
 import { useMemo } from "react";
 import { usePathname } from "next/navigation";
 
@@ -152,23 +152,11 @@ export default function ViruFooterBlock() {
   }
 
   return (
-    <motion.footer
-      className="viru-footer-block"
-      initial={shouldReduceMotion ? undefined : { opacity: 0, y: 18 }}
-      whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-    >
+    <footer className="viru-footer-block">
       <div className="viru-footer-glow viru-footer-glow-primary" aria-hidden="true" />
       <div className="viru-footer-glow viru-footer-glow-secondary" aria-hidden="true" />
       <div className="shell viru-footer-shell">
-        <motion.div
-          className="viru-footer-top"
-          initial={shouldReduceMotion ? undefined : { opacity: 0, y: 12 }}
-          whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.45, delay: 0.05 }}
-        >
+        <div className="viru-footer-top">
           <div className="viru-footer-brand">
             <span className="viru-footer-brand-mark" aria-hidden="true">
               <span className="landing-dot" />
@@ -202,17 +190,13 @@ export default function ViruFooterBlock() {
               </button>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         <div className="viru-footer-grid">
           {footerGroups.map((group, index) => (
-            <motion.section
+            <section
               key={group.title}
               className="viru-footer-column"
-              initial={shouldReduceMotion ? undefined : { opacity: 0, y: 14 }}
-              whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.25 }}
-              transition={{ duration: 0.42, delay: 0.08 + index * 0.06 }}
             >
               <div className="viru-footer-column-head">
                 <h3>{group.title}</h3>
@@ -232,9 +216,9 @@ export default function ViruFooterBlock() {
                       </Link>
                     )}
                   </li>
-                ))}
-              </ul>
-            </motion.section>
+                  ))}
+                </ul>
+            </section>
           ))}
         </div>
 
@@ -245,6 +229,6 @@ export default function ViruFooterBlock() {
           <p>{t("shared.footer.note")}</p>
         </div>
       </div>
-    </motion.footer>
+    </footer>
   );
 }
