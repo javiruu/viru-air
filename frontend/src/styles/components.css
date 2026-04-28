@@ -199,7 +199,8 @@
 .notification-center {
   position: fixed;
   top: 1.2rem;
-  right: 1.2rem;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 110;
   width: min(360px, calc(100vw - 1.4rem));
   display: grid;
@@ -307,7 +308,6 @@
 @media (max-width: 640px) {
   .notification-center {
     top: 0.72rem;
-    right: 0.72rem;
     width: min(360px, calc(100vw - 1rem));
   }
 }
