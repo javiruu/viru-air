@@ -8,9 +8,22 @@ function resolveApiBase(rawBase: string): string {
   try {
     const parsed = new URL(rawBase);
     const currentHost = window.location.hostname;
+    const currentProtocol = window.location.protocol;
     const isLocalApi = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
     if (isLocalApi && parsed.hostname !== currentHost) {
       parsed.hostname = currentHost;
+      // Keep WAN access aligned with the page protocol to avoid mixed-content blocking.
+      if (currentProtocol === "https:" && parsed.protocol === "http:") {
+        parsed.protocol = "https:";
+      }
+      return parsed.toString().replace(/\/$/, "");
+    }
+    if (currentProtocol === "https:" && parsed.protocol === "http:") {
+      parsed.protocol = "https:";
+      if (parsed.hostname === currentHost && parsed.port === "8000") {
+        // WAN deployments usually terminate TLS on 443 and proxy /api internally.
+        parsed.port = "";
+      }
       return parsed.toString().replace(/\/$/, "");
     }
   } catch {
