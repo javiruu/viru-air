@@ -9,21 +9,27 @@ function resolveApiBase(rawBase: string): string {
     const parsed = new URL(rawBase);
     const currentHost = window.location.hostname;
     const currentProtocol = window.location.protocol;
+    const isHttpsPage = currentProtocol === "https:";
     const isLocalApi = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+    let didMutate = false;
+
+    if (isHttpsPage && parsed.protocol === "http:") {
+      parsed.protocol = "https:";
+      didMutate = true;
+    }
+
     if (isLocalApi && parsed.hostname !== currentHost) {
       parsed.hostname = currentHost;
-      // Keep WAN access aligned with the page protocol to avoid mixed-content blocking.
-      if (currentProtocol === "https:" && parsed.protocol === "http:") {
-        parsed.protocol = "https:";
-      }
-      return parsed.toString().replace(/\/$/, "");
+      didMutate = true;
     }
-    if (currentProtocol === "https:" && parsed.protocol === "http:") {
-      parsed.protocol = "https:";
-      if (parsed.hostname === currentHost && parsed.port === "8000") {
-        // WAN deployments usually terminate TLS on 443 and proxy /api internally.
-        parsed.port = "";
-      }
+
+    if (isHttpsPage && parsed.hostname === currentHost && parsed.port === "8000") {
+      // WAN deployments usually terminate TLS on 443 and proxy /api internally.
+      parsed.port = "";
+      didMutate = true;
+    }
+
+    if (didMutate) {
       return parsed.toString().replace(/\/$/, "");
     }
   } catch {
