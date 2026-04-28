@@ -58,6 +58,14 @@
   --shadow-elevation: 0 16px 28px rgba(47, 40, 24, 0.12);
   --btn-shadow: 0 10px 20px rgba(47, 40, 24, 0.16);
   --btn-shadow-strong: 0 14px 30px rgba(32, 28, 21, 0.22);
+  --ui-root-font-size: 16px;
+  --ui-shell-max-width: 1060px;
+  --ui-dashboard-max-width: 1160px;
+  --ui-shell-padding-top: 1.6rem;
+  --ui-shell-padding-inline: 0.95rem;
+  --ui-shell-padding-bottom: 2.45rem;
+  --ui-policies-aside-width: 252px;
+  --ui-hero-density-padding: 2rem;
 }
 
 :root[data-theme="dark"] {
@@ -122,6 +130,10 @@
   box-sizing: border-box;
 }
 
+html {
+  font-size: var(--ui-root-font-size);
+}
+
 body {
   margin: 0;
   font-family: "IBM Plex Sans", sans-serif;
@@ -171,14 +183,51 @@ body {
 
 h1 {
   font-family: "Playfair Display", serif;
-  font-size: clamp(2rem, 3.8vw, 3.4rem);
+  font-size: clamp(1.8rem, 3.3vw, 3rem);
   margin: 0 0 0.5rem;
 }
 
 .shell {
-  max-width: 1120px;
+  max-width: var(--ui-shell-max-width);
   margin: 0 auto;
-  padding: 2rem 1rem 3rem;
+  padding: var(--ui-shell-padding-top) var(--ui-shell-padding-inline) var(--ui-shell-padding-bottom);
+}
+
+@media (max-width: 1440px) and (min-width: 1280px) {
+  :root {
+    --ui-root-font-size: 14.5px;
+    --ui-shell-max-width: 1020px;
+    --ui-dashboard-max-width: 1110px;
+    --ui-policies-aside-width: 238px;
+    --ui-hero-density-padding: 1.75rem;
+  }
+}
+
+@media (max-width: 1366px) and (min-width: 1024px) {
+  :root {
+    --ui-root-font-size: 14px;
+    --ui-shell-max-width: 980px;
+    --ui-dashboard-max-width: 1060px;
+    --ui-shell-padding-top: 1.35rem;
+    --ui-shell-padding-inline: 0.85rem;
+    --ui-shell-padding-bottom: 2rem;
+    --ui-policies-aside-width: 220px;
+    --ui-hero-density-padding: 1.55rem;
+  }
+
+  .qs-workspace-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dashboard-top-stage {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .private-account-anchor {
+    gap: 0.65rem;
+    min-height: 48px;
+    padding: 7px 12px;
+  }
 }
 
 .landing-shell {
@@ -895,7 +944,7 @@ h1 {
 
 .policies-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-columns: minmax(0, 1fr) var(--ui-policies-aside-width);
   gap: 1.8rem;
   align-items: flex-start;
 }
@@ -1454,8 +1503,8 @@ h1 {
 
 .quick-search-shell {
   --qs-sticky-top: 0px;
-  --qs-toolbar-height: 56px;
-  --qs-summary-height: 52px;
+  --qs-toolbar-height: 52px;
+  --qs-summary-height: 48px;
 }
 
 .qs-workspace {
@@ -1468,7 +1517,7 @@ h1 {
 
 .qs-workspace-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.75fr);
+  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.7fr);
   gap: 1rem;
   align-items: start;
 }
@@ -6419,7 +6468,7 @@ textarea::placeholder {
 
 .glass-signin-shell {
   position: relative;
-  min-height: calc(100vh - 8rem);
+  min-height: calc(100vh - 6.5rem);
   display: grid;
   align-content: start;
   justify-items: center;
@@ -6453,7 +6502,7 @@ textarea::placeholder {
 }
 
 .glass-signin-topbar {
-  width: min(100%, 960px);
+  width: min(100%, 920px);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -6463,7 +6512,7 @@ textarea::placeholder {
 }
 
 .glass-signin-card {
-  width: min(100%, 640px);
+  width: min(100%, 600px);
   padding: 1.75rem;
   border-radius: 1.5rem;
   border: 1px solid color-mix(in srgb, var(--border) 75%, var(--surface));
@@ -6478,7 +6527,7 @@ textarea::placeholder {
 }
 
 .glass-forgot-card {
-  width: min(100%, 640px);
+  width: min(100%, 600px);
   padding: 1.75rem;
   border-radius: 1.5rem;
   border: 1px solid color-mix(in srgb, var(--border) 75%, var(--surface));
@@ -6683,8 +6732,8 @@ textarea::placeholder {
   justify-content: space-between;
   gap: 0.9rem;
   width: 100%;
-  padding: 10px 16px;
-  min-height: 56px;
+  padding: 8px 14px;
+  min-height: 52px;
   box-sizing: border-box;
   background: var(--bg);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
@@ -7026,12 +7075,12 @@ textarea::placeholder {
    DASHBOARD PREMIUM
    ========================= */
 .dashboard-shell {
-  max-width: 1240px;
+  max-width: var(--ui-dashboard-max-width);
 }
 
 .dashboard-top-stage {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.78fr);
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.72fr);
   gap: 1.25rem;
   align-items: start;
 }
@@ -7046,8 +7095,8 @@ textarea::placeholder {
   position: relative;
   display: grid;
   grid-template-columns: 1.6fr 0.4fr;
-  gap: 1.6rem;
-  padding: 2.4rem;
+  gap: 1.25rem;
+  padding: var(--ui-hero-density-padding);
   border-radius: var(--radius-xl);
   background:
     linear-gradient(140deg, rgba(255, 244, 229, 0.92), rgba(255, 252, 245, 0.65)),
@@ -7081,7 +7130,7 @@ textarea::placeholder {
 
 .dashboard-hero-title h2 {
   margin: 0;
-  font-size: 2rem;
+  font-size: 1.78rem;
 }
 
 .dashboard-hero-status {
