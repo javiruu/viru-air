@@ -10,9 +10,13 @@
 - Si cambias contratos de backend, rutas, datos o comportamiento sensible, deja evidencia clara y actualiza la documentacion canonica que corresponda.
 - Antes de publicar cambios en GitHub, prepara resumen, archivos clave, riesgos, rollback y validacion manual si el impacto lo requiere.
 - Publica cambios del repo usando la skill de GitHub correspondiente.
+- Cierre automatico: toda tarea de codigo que no sea diagnostico-only debe terminar en commit + push a `main` dentro de `_publish_repo`.
+- Antes de declarar "done", ejecuta la checklist `docs/reference/done-checklist.md` y usa la plantilla `docs/reference/final-report-template.md`.
 - Nunca pongas secretos en markdown, commits, PRs, capturas o logs.
 - Para QA E2E o bugs que no se reproduzcan bien con scripts, prioriza TestSprite si el bootstrap del repo ya se ejecuto en esa maquina.
 - La configuracion canonica de TestSprite vive en `mcp.json`; no dupliques `API_KEY` ni la config del servidor en artefactos temporales o reportes.
+- Para capturas UI y evidencia visual reutilizable, usa `docs/runbooks/runbook-ui-captures.md` como guia canonica.
+- Si una conversacion requiere un flujo nuevo de capturas, actualiza ese runbook (seccion "Recetas") y reutiliza scripts estables `frontend/scripts/qa_capture_*`.
 - En esta maquina, la carpeta visible `C:\Users\javiru\Desktop\viru-tracker` puede ser una copia de trabajo sin `.git`; el checkout Git real para publicar vive en `C:\Users\javiru\Desktop\viru-tracker\_publish_repo`.
 - Antes de afirmar que "no hay git" o que no se puede publicar, comprueba `C:\Users\javiru\Desktop\viru-tracker\_publish_repo\.git` y ejecuta los comandos Git/publicacion desde ese checkout real si existe.
 - Si el chat se abrio en la carpeta padre sin `.git`, trata `_publish_repo` como fuente canonica para `git status`, `commit`, `push` y verificaciones de rama/HEAD.

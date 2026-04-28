@@ -74,6 +74,48 @@ Notas:
 - Runbook canary/rollback: `docs/runbooks/runbook-canary-rollback.md`
 - Manifiestos base: `infra/k8s/*.yaml`
 
+## Publicacion segura (main) y guardrails
+
+Repositorio canonico para publicar en esta maquina:
+- `C:\Users\javiru\Desktop\viru-tracker\_publish_repo`
+
+Checklist obligatoria de cierre:
+- `docs/reference/done-checklist.md`
+
+Plantilla obligatoria de reporte final:
+- `docs/reference/final-report-template.md`
+
+Instalacion unica del hook pre-push:
+
+```powershell
+cd C:\Users\javiru\Desktop\viru-tracker\_publish_repo
+powershell -ExecutionPolicy Bypass -File .\scripts\install-git-hooks.ps1
+```
+
+Validacion rapida antes de commit/push:
+
+```powershell
+cd C:\Users\javiru\Desktop\viru-tracker\_publish_repo
+powershell -ExecutionPolicy Bypass -File .\scripts\release_guard.ps1 -AllowDirtyWorktree
+```
+
+Validacion de staging acotado (ejemplo):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\release_guard.ps1 `
+  -AllowDirtyWorktree `
+  -ExpectedPaths README.md,frontend/src/styles/components.css
+```
+
+Auditoria de 30 segundos tras publicar:
+
+```powershell
+git log -1 --oneline
+git rev-parse --abbrev-ref HEAD
+git rev-parse HEAD
+git ls-remote origin main
+```
+
 ## Fases implementadas en este montaje
 
 Cada fase queda reflejada en:
