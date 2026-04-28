@@ -55,7 +55,7 @@ powershell -ExecutionPolicy Bypass -Command "$pidFile='%WAN_PID%'; $out='%WAN_OU
 goto menu
 
 :wan_stop
-powershell -ExecutionPolicy Bypass -Command "$pidFile='%WAN_PID%'; if(-not (Test-Path $pidFile)){Write-Host 'No habia tunel WAN activo.'; exit 0}; $pid=[int](Get-Content $pidFile -ErrorAction SilentlyContinue); if($pid -gt 0){Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue}; Remove-Item $pidFile -Force -ErrorAction SilentlyContinue; Write-Host 'Tunel WAN detenido.'"
+powershell -ExecutionPolicy Bypass -Command "$pidFile='%WAN_PID%'; if(-not (Test-Path $pidFile)){Write-Host 'No habia tunel WAN activo.'; exit 0}; $tpid=[int](Get-Content $pidFile -ErrorAction SilentlyContinue); if($tpid -gt 0){Stop-Process -Id $tpid -Force -ErrorAction SilentlyContinue}; Remove-Item $pidFile -Force -ErrorAction SilentlyContinue; Write-Host 'Tunel WAN detenido.'"
 goto menu
 
 :wan_logs
