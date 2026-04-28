@@ -134,6 +134,13 @@ html {
   font-size: var(--ui-root-font-size);
 }
 
+/* Force desktop rendering density equivalent to browser zoom-out 75% */
+@media (min-width: 1024px) {
+  html {
+    zoom: 75%;
+  }
+}
+
 body {
   margin: 0;
   font-family: "IBM Plex Sans", sans-serif;
