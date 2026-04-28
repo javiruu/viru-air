@@ -5,6 +5,7 @@ const RAW_API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/
 
 function resolveApiBase(rawBase: string): string {
   if (typeof window === "undefined") return rawBase;
+  if (rawBase.startsWith("/")) return rawBase.replace(/\/$/, "");
   try {
     const parsed = new URL(rawBase);
     const currentHost = window.location.hostname;
@@ -27,6 +28,10 @@ function resolveApiBase(rawBase: string): string {
       // WAN deployments usually terminate TLS on 443 and proxy /api internally.
       parsed.port = "";
       didMutate = true;
+    }
+
+    if (isHttpsPage && parsed.hostname === currentHost && parsed.pathname.startsWith("/api/")) {
+      return parsed.pathname.replace(/\/$/, "");
     }
 
     if (didMutate) {

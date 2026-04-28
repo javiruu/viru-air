@@ -76,14 +76,14 @@ if ($runBackground) {
   cmd /c "cd /d `"$root\backend`" && start /B `"`" `"$backendPython`" -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload > `"$backendLog`" 2>&1" | Out-Null
 
   # Frontend (modo background con logs)
-  cmd /c "cd /d `"$root\frontend`" && set NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api/v1 && start /B npm run dev > `"$frontendLog`" 2>&1" | Out-Null
+  cmd /c "cd /d `"$root\frontend`" && set NEXT_PUBLIC_API_URL=/api/v1 && start /B npm run dev > `"$frontendLog`" 2>&1" | Out-Null
 } else {
   # Backend (modo foreground en nueva ventana)
   $backendCmd = "title Viru Backend && cd /d `"$root\backend`" && `"$backendPython`" -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload"
   Start-Process -FilePath "cmd.exe" -ArgumentList "/k", $backendCmd | Out-Null
 
   # Frontend (modo foreground en nueva ventana)
-  $frontendCmd = "title Viru Frontend && cd /d `"$root\frontend`" && set NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api/v1 && npm run dev"
+  $frontendCmd = "title Viru Frontend && cd /d `"$root\frontend`" && set NEXT_PUBLIC_API_URL=/api/v1 && npm run dev"
   Start-Process -FilePath "cmd.exe" -ArgumentList "/k", $frontendCmd | Out-Null
 }
 

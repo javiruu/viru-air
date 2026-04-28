@@ -41,6 +41,12 @@ Variables recomendadas:
 
 Importante: `JWT_SECRET` es obligatorio y no puede ser `change-me`.
 
+## WAN (tunel publico)
+
+- El tunel WAN publica solo el frontend (`127.0.0.1:3000`).
+- Las llamadas browser a `/api/*` se enrutan desde Next.js hacia backend local `127.0.0.1:8000` mediante `rewrites`.
+- Para evitar 404 en login WAN, usa `NEXT_PUBLIC_API_URL=/api/v1`.
+
 ## Calidad (ejecucion real)
 
 ```bash
