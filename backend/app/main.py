@@ -16,6 +16,7 @@ from app.core.request_context import get_correlation_id, normalize_correlation_i
 from app.api.v1.router import api_v1
 from app.core.logging import configure_logging
 from app.infrastructure.db import models  # noqa: F401
+from app.infrastructure.db.schema_compat import ensure_search_preference_columns
 from app.infrastructure.db.seed import ensure_seed_users
 from app.infrastructure.db.session import Base, engine
 
@@ -26,6 +27,7 @@ run_seed_users = os.getenv("RUN_SEED_USERS", "false").lower() in {"1", "true", "
 
 if run_db_init:
     Base.metadata.create_all(bind=engine)
+ensure_search_preference_columns(engine)
 if run_seed_users:
     ensure_seed_users()
 
