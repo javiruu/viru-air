@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { memo } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type Props = {
@@ -81,7 +81,7 @@ function buildCalendarDays(viewMonth: Date, selected: Date | null, minDate: Date
   });
 }
 
-export function QuickSearchDatePicker(props: Props) {
+function QuickSearchDatePickerInner(props: Props) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(Boolean(props.defaultOpen));
   const handleBlur = props.onBlur;
@@ -304,3 +304,21 @@ export function QuickSearchDatePicker(props: Props) {
     </div>
   );
 }
+
+function areDatePickerPropsEqual(prev: Props, next: Props): boolean {
+  return (
+    prev.name === next.name
+    && prev.label === next.label
+    && prev.value === next.value
+    && prev.placeholder === next.placeholder
+    && prev.localeTag === next.localeTag
+    && prev.variant === next.variant
+    && prev.min === next.min
+    && prev.invalid === next.invalid
+    && prev.onBlur === next.onBlur
+    && prev.onChange === next.onChange
+    && prev.defaultOpen === next.defaultOpen
+  );
+}
+
+export const QuickSearchDatePicker = memo(QuickSearchDatePickerInner, areDatePickerPropsEqual);

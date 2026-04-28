@@ -1,4 +1,4 @@
-import React, { RefObject } from "react";
+import React, { memo, RefObject } from "react";
 import { createPortal } from "react-dom";
 
 import { QuickSearchFieldErrors } from "@/modules/quick-search/types";
@@ -96,7 +96,7 @@ function SupportBadge({ children, tone = "neutral" }: { children: string; tone?:
   return <span className={`qs-filter-support qs-filter-support-${tone}`}>{children}</span>;
 }
 
-export function QuickSearchFilterConsole(props: FilterConsoleProps) {
+function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
   const coverageSummary = props.radiusActive
     ? `${props.radiusKm} km`
     : props.t("filterCoverageDirect");
@@ -618,3 +618,75 @@ export function QuickSearchFilterConsole(props: FilterConsoleProps) {
     </section>
   );
 }
+
+function areFilterConsolePropsEqual(prev: FilterConsoleProps, next: FilterConsoleProps): boolean {
+  return (
+    prev.activeChips === next.activeChips
+    && prev.activeFiltersCount === next.activeFiltersCount
+    && prev.appliedFiltersCount === next.appliedFiltersCount
+    && prev.pendingSearchChanges === next.pendingSearchChanges
+    && prev.isFiltersOpen === next.isFiltersOpen
+    && prev.radiusActive === next.radiusActive
+    && prev.radiusKm === next.radiusKm
+    && prev.priceMin === next.priceMin
+    && prev.priceMax === next.priceMax
+    && prev.durationMax === next.durationMax
+    && prev.riskFilter === next.riskFilter
+    && prev.sortBy === next.sortBy
+    && prev.includeStops === next.includeStops
+    && prev.maxStops === next.maxStops
+    && prev.bufferMin === next.bufferMin
+    && prev.includeNearbyOrigins === next.includeNearbyOrigins
+    && prev.includeNearbyDestinations === next.includeNearbyDestinations
+    && prev.departAfter === next.departAfter
+    && prev.departBefore === next.departBefore
+    && prev.strictFilters === next.strictFilters
+    && prev.excludeOrigins === next.excludeOrigins
+    && prev.excludeDestinations === next.excludeDestinations
+    && prev.excludeOriginInput === next.excludeOriginInput
+    && prev.excludeDestinationInput === next.excludeDestinationInput
+    && prev.prefAvailable === next.prefAvailable
+    && prev.prefBadge === next.prefBadge
+    && prev.fieldErrors === next.fieldErrors
+    && prev.filtersCloseRef === next.filtersCloseRef
+    && prev.t === next.t
+    && prev.formatRiskLabel === next.formatRiskLabel
+    && prev.setRadiusKm === next.setRadiusKm
+    && prev.setPriceMin === next.setPriceMin
+    && prev.setPriceMax === next.setPriceMax
+    && prev.setDurationMax === next.setDurationMax
+    && prev.setRiskFilter === next.setRiskFilter
+    && prev.setSortBy === next.setSortBy
+    && prev.setIncludeStops === next.setIncludeStops
+    && prev.setMaxStops === next.setMaxStops
+    && prev.setBufferMin === next.setBufferMin
+    && prev.setIncludeNearbyOrigins === next.setIncludeNearbyOrigins
+    && prev.setIncludeNearbyDestinations === next.setIncludeNearbyDestinations
+    && prev.setDepartAfter === next.setDepartAfter
+    && prev.setDepartBefore === next.setDepartBefore
+    && prev.setStrictFilters === next.setStrictFilters
+    && prev.setExcludeOrigins === next.setExcludeOrigins
+    && prev.setExcludeDestinations === next.setExcludeDestinations
+    && prev.setExcludeOriginInput === next.setExcludeOriginInput
+    && prev.setExcludeDestinationInput === next.setExcludeDestinationInput
+    && prev.addExcludeOrigin === next.addExcludeOrigin
+    && prev.addExcludeDestination === next.addExcludeDestination
+    && prev.removeExcludeOrigin === next.removeExcludeOrigin
+    && prev.removeExcludeDestination === next.removeExcludeDestination
+    && prev.onOpenFilters === next.onOpenFilters
+    && prev.onCloseFilters === next.onCloseFilters
+    && prev.onApplyAndSearch === next.onApplyAndSearch
+    && prev.onApplyPreferences === next.onApplyPreferences
+    && prev.onClearAllFilters === next.onClearAllFilters
+    && prev.onResetCoverage === next.onResetCoverage
+    && prev.onResetTiming === next.onResetTiming
+    && prev.onResetVisible === next.onResetVisible
+    && prev.onResetExperimental === next.onResetExperimental
+    && prev.onPresetDirect === next.onPresetDirect
+    && prev.onPresetOriginNearby === next.onPresetOriginNearby
+    && prev.onPresetBothNearby === next.onPresetBothNearby
+    && prev.onPresetRegional === next.onPresetRegional
+  );
+}
+
+export const QuickSearchFilterConsole = memo(QuickSearchFilterConsoleInner, areFilterConsolePropsEqual);

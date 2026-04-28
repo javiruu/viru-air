@@ -1901,9 +1901,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setCurrent(current.filter((item) => item !== value));
   }
 
-  function updateRadiusKm(value: number) {
+  const updateRadiusKm = useCallback((value: number) => {
     setRadiusKm(clampQuickSearchRadius(value));
-  }
+  }, [setRadiusKm]);
 
   const commitExcludeOriginInput = useCallback(() => {
     addChip(excludeOriginInput, excludeOrigins, setExcludeOrigins, setExcludeOriginInput);
@@ -2994,9 +2994,38 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               ? (searchError || t("searchFailed"))
               : (searchDisabledHint || t("searchReadyHint"));
 
-  const runSearch = () => {
+  const runSearch = useCallback(() => {
     void onSubmit({ preventDefault: () => {} } as FormEvent);
-  };
+  }, [onSubmit]);
+
+  const removeExcludeOriginChip = useCallback((iata: string) => {
+    removeChip(iata, excludeOrigins, setExcludeOrigins);
+  }, [excludeOrigins, setExcludeOrigins]);
+
+  const removeExcludeDestinationChip = useCallback((iata: string) => {
+    removeChip(iata, excludeDestinations, setExcludeDestinations);
+  }, [excludeDestinations, setExcludeDestinations]);
+
+  const openFiltersFromConsole = useCallback(() => {
+    trackEvent("quicksearch_filters_opened", { active_filters: activeChips.length, source: "console" });
+    setIsFiltersOpen(true);
+  }, [activeChips.length, setIsFiltersOpen]);
+
+  const toggleEmptyCauses = useCallback(() => {
+    setEmptyCausesExpanded((prev) => !prev);
+  }, [setEmptyCausesExpanded]);
+
+  const toggleHighRisk = useCallback(() => {
+    setShowHighRisk((prev) => !prev);
+  }, [setShowHighRisk]);
+
+  const trackRowOverflow = useCallback((rowId: string) => {
+    trackEvent("quicksearch_row_overflow_opened", { row_id: rowId });
+  }, []);
+
+  const trackCopyParams = useCallback((rowId: string) => {
+    trackEvent("quicksearch_row_copy_params_clicked", { row_id: rowId });
+  }, []);
 
 
   return (
@@ -3717,12 +3746,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           setExcludeDestinationInput={setExcludeDestinationInput}
           addExcludeOrigin={commitExcludeOriginInput}
           addExcludeDestination={commitExcludeDestinationInput}
-          removeExcludeOrigin={(iata) => removeChip(iata, excludeOrigins, setExcludeOrigins)}
-          removeExcludeDestination={(iata) => removeChip(iata, excludeDestinations, setExcludeDestinations)}
-          onOpenFilters={() => {
-            trackEvent("quicksearch_filters_opened", { active_filters: activeChips.length, source: "console" });
-            setIsFiltersOpen(true);
-          }}
+          removeExcludeOrigin={removeExcludeOriginChip}
+          removeExcludeDestination={removeExcludeDestinationChip}
+          onOpenFilters={openFiltersFromConsole}
           onCloseFilters={closeFiltersDrawer}
           onApplyAndSearch={runSearch}
           onApplyPreferences={applyPreferences}
@@ -4015,7 +4041,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             canExpandZeroResultCauses={canExpandZeroResultCauses}
             emptyCausesExpanded={emptyCausesExpanded}
             zeroResultActions={zeroResultActions}
-            onToggleEmptyCauses={() => setEmptyCausesExpanded((prev) => !prev)}
+            onToggleEmptyCauses={toggleEmptyCauses}
             onRelaxAction={onZeroResultRelaxAction}
             onRunSearch={runSearch}
             onEmptyCta={openRelaxPreview}
@@ -4054,9 +4080,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             setCopyModalOpen={setCopyModalOpen}
             closeRowMenu={closeRowMenu}
             onTrackOpenRyanair={trackOpenRyanair}
-            onToggleHighRisk={() => setShowHighRisk((prev) => !prev)}
-            onTrackRowOverflow={(rowId) => trackEvent("quicksearch_row_overflow_opened", { row_id: rowId })}
-            onTrackCopyParams={(rowId) => trackEvent("quicksearch_row_copy_params_clicked", { row_id: rowId })}
+            onToggleHighRisk={toggleHighRisk}
+            onTrackRowOverflow={trackRowOverflow}
+            onTrackCopyParams={trackCopyParams}
           />
           ) : null}
 
