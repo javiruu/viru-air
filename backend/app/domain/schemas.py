@@ -191,11 +191,15 @@ class AlertEvaluateIn(BaseModel):
 class PreferenceIn(BaseModel):
     default_radius_km: int = Field(default=150, ge=0, le=500)
     include_stops_default: bool = False
+    include_nearby_origins_default: bool = False
+    include_nearby_destinations_default: bool = False
     avoid_departure_before: str | None = None
+    depart_before_default: str | None = None
+    strict_filters_default: bool = True
     preferred_currency: str = "EUR"
     language: str = "es"
 
-    @field_validator("avoid_departure_before")
+    @field_validator("avoid_departure_before", "depart_before_default")
     @classmethod
     def validate_departure_before(cls, value: str | None) -> str | None:
         if value is None or not value.strip():

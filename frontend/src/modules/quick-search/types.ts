@@ -134,7 +134,11 @@ export type WeatherReport = {
 export type Pref = {
   default_radius_km: number;
   include_stops_default: boolean;
+  include_nearby_origins_default: boolean;
+  include_nearby_destinations_default: boolean;
   avoid_departure_before: string | null;
+  depart_before_default: string | null;
+  strict_filters_default: boolean;
   preferred_currency: string;
   language: string;
 };

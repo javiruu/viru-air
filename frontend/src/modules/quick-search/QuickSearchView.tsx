@@ -25,6 +25,7 @@ import {
   parseQuickSearchIataTokens,
   QUICK_SEARCH_RADIUS_DEFAULT,
 } from "@/modules/quick-search/filterUtils";
+import { resolveQuickSearchPreferenceDefaults } from "@/modules/quick-search/preferences";
 const QuickSearchLoadingProgress = dynamic(() =>
   import("@/modules/quick-search/components/QuickSearchLoadingProgress").then((m) => m.QuickSearchLoadingProgress),
   { ssr: false },
@@ -966,18 +967,31 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   useEffect(() => {
     apiFetch<Pref>("/preferences/search")
       .then((data) => {
+        const defaults = resolveQuickSearchPreferenceDefaults(data);
         setPref(data);
-        setRadiusKm((prev) => (
-          Number.isFinite(data.default_radius_km) ? data.default_radius_km : prev
-        ));
-        setIncludeStops(Boolean(data.include_stops_default));
-        setDepartAfter((prev) => data.avoid_departure_before ?? prev);
+        setRadiusKm(defaults.radiusKm);
+        setIncludeStops(defaults.includeStops);
+        setDepartAfter(defaults.departAfter);
+        setDepartBefore(defaults.departBefore);
+        setIncludeNearbyOrigins(defaults.includeNearbyOrigins);
+        setIncludeNearbyDestinations(defaults.includeNearbyDestinations);
+        setStrictFilters(defaults.strictFilters);
         setPrefBadge(true);
       })
       .catch(() => {
         setPref(null);
       });
-  }, [setDepartAfter, setIncludeStops, setPref, setPrefBadge, setRadiusKm]);
+  }, [
+    setDepartAfter,
+    setDepartBefore,
+    setIncludeNearbyDestinations,
+    setIncludeNearbyOrigins,
+    setIncludeStops,
+    setPref,
+    setPrefBadge,
+    setRadiusKm,
+    setStrictFilters,
+  ]);
 
   useEffect(() => {
     apiFetch<RegionPref>("/preferences/region")

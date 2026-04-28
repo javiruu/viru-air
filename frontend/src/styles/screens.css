@@ -4858,6 +4858,99 @@ h1 {
   width: min(560px, 92vw);
 }
 
+.prefs-search-hero {
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+}
+
+.prefs-search-form {
+  gap: 1rem;
+}
+
+.prefs-search-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.prefs-search-card {
+  min-height: 100%;
+}
+
+.prefs-search-card h2 {
+  margin: 0;
+  font-family: "Playfair Display", serif;
+  font-size: 1.18rem;
+}
+
+.prefs-search-card p {
+  margin: 0.25rem 0 0;
+}
+
+.prefs-search-card-coverage {
+  background:
+    radial-gradient(circle at 14% 0%, rgba(46, 110, 98, 0.1), transparent 34%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 94%, white 6%), color-mix(in srgb, var(--surface-2) 46%, var(--surface) 54%));
+}
+
+.prefs-search-card-timing {
+  background:
+    radial-gradient(circle at 88% 0%, rgba(217, 93, 57, 0.12), transparent 30%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 94%, white 6%), color-mix(in srgb, var(--surface-3) 34%, var(--surface) 66%));
+}
+
+.prefs-search-card-connectivity {
+  background:
+    radial-gradient(circle at 10% 10%, rgba(217, 93, 57, 0.08), transparent 28%),
+    radial-gradient(circle at 92% 18%, rgba(46, 110, 98, 0.08), transparent 30%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 96%, white 4%), color-mix(in srgb, var(--surface-2) 42%, var(--surface) 58%));
+}
+
+.prefs-search-toggle-grid,
+.prefs-search-time-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.prefs-search-inline-callout {
+  display: grid;
+  gap: 0.2rem;
+  border-style: dashed;
+}
+
+.prefs-search-inline-callout strong {
+  font-size: 0.88rem;
+}
+
+:root[data-theme="dark"] .prefs-search-card-coverage,
+:root[data-theme="dark"] .prefs-search-card-timing,
+:root[data-theme="dark"] .prefs-search-card-connectivity {
+  border-color: rgba(95, 114, 104, 0.66);
+  box-shadow:
+    0 18px 34px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme="dark"] .prefs-search-card-coverage {
+  background:
+    radial-gradient(circle at 14% 0%, rgba(111, 178, 161, 0.12), transparent 34%),
+    linear-gradient(180deg, rgba(25, 31, 29, 0.94), rgba(20, 26, 24, 0.94));
+}
+
+:root[data-theme="dark"] .prefs-search-card-timing {
+  background:
+    radial-gradient(circle at 88% 0%, rgba(224, 123, 86, 0.14), transparent 30%),
+    linear-gradient(180deg, rgba(25, 31, 29, 0.94), rgba(18, 22, 20, 0.98));
+}
+
+:root[data-theme="dark"] .prefs-search-card-connectivity {
+  background:
+    radial-gradient(circle at 10% 10%, rgba(224, 123, 86, 0.1), transparent 28%),
+    radial-gradient(circle at 92% 18%, rgba(111, 178, 161, 0.1), transparent 30%),
+    linear-gradient(180deg, rgba(25, 31, 29, 0.94), rgba(20, 26, 24, 0.96));
+}
+
 select {
   border: 1px solid var(--border-default);
   border-radius: 8px;
@@ -10609,6 +10702,13 @@ textarea::placeholder {
   }
 
   .prefs-radius-row {
+    grid-template-columns: 1fr;
+  }
+
+  .prefs-search-grid,
+  .prefs-search-toggle-grid,
+  .prefs-search-time-grid,
+  .prefs-search-hero {
     grid-template-columns: 1fr;
   }
 

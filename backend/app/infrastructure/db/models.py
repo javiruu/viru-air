@@ -109,7 +109,11 @@ class UserPreference(Base):
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), unique=True, index=True)
     default_radius_km: Mapped[int] = mapped_column(default=150)
     include_stops_default: Mapped[bool] = mapped_column(Boolean, default=False)
+    include_nearby_origins_default: Mapped[bool] = mapped_column(Boolean, default=False)
+    include_nearby_destinations_default: Mapped[bool] = mapped_column(Boolean, default=False)
     avoid_departure_before: Mapped[str | None] = mapped_column(String(5), nullable=True)
+    depart_before_default: Mapped[str | None] = mapped_column(String(5), nullable=True)
+    strict_filters_default: Mapped[bool] = mapped_column(Boolean, default=True)
     preferred_currency: Mapped[str] = mapped_column(String(3), default="EUR")
     language: Mapped[str] = mapped_column(String(8), default="es")
 

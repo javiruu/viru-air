@@ -24,14 +24,22 @@ def get_preferences(
         return {
             "default_radius_km": 150,
             "include_stops_default": False,
+            "include_nearby_origins_default": False,
+            "include_nearby_destinations_default": False,
             "avoid_departure_before": None,
+            "depart_before_default": None,
+            "strict_filters_default": True,
             "preferred_currency": "EUR",
             "language": current_user.locale,
         }
     return {
         "default_radius_km": pref.default_radius_km,
         "include_stops_default": pref.include_stops_default,
+        "include_nearby_origins_default": pref.include_nearby_origins_default,
+        "include_nearby_destinations_default": pref.include_nearby_destinations_default,
         "avoid_departure_before": pref.avoid_departure_before,
+        "depart_before_default": pref.depart_before_default,
+        "strict_filters_default": pref.strict_filters_default,
         "preferred_currency": pref.preferred_currency,
         "language": pref.language,
     }
@@ -56,7 +64,11 @@ def set_preferences(
         db.add(pref)
     pref.default_radius_km = payload.default_radius_km
     pref.include_stops_default = payload.include_stops_default
+    pref.include_nearby_origins_default = payload.include_nearby_origins_default
+    pref.include_nearby_destinations_default = payload.include_nearby_destinations_default
     pref.avoid_departure_before = payload.avoid_departure_before
+    pref.depart_before_default = payload.depart_before_default
+    pref.strict_filters_default = payload.strict_filters_default
     pref.preferred_currency = payload.preferred_currency
     pref.language = payload.language
     db.commit()
