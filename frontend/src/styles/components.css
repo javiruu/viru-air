@@ -209,11 +209,40 @@
 
 .notification-card {
   pointer-events: auto;
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--border) 72%, white 28%);
   border-radius: 12px;
-  background: color-mix(in srgb, var(--surface) 94%, white 6%);
-  box-shadow: 0 18px 38px var(--shadow-strong);
+  background: color-mix(in srgb, var(--surface) 71%, transparent);
+  -webkit-backdrop-filter: blur(15px) saturate(150%);
+  backdrop-filter: blur(15px) saturate(150%);
+  box-shadow:
+    0 14px 30px var(--shadow-strong),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
   padding: 0.68rem 0.78rem;
+  isolation: isolate;
+}
+
+.notification-card.notice-success {
+  border-color: color-mix(in srgb, var(--state-success-border) 84%, var(--border));
+  background: color-mix(in srgb, var(--surface) 82%, var(--state-success-bg));
+  color: var(--state-success-text);
+}
+
+.notification-card.notice-warning {
+  border-color: color-mix(in srgb, var(--state-warning-border) 84%, var(--border));
+  background: color-mix(in srgb, var(--surface) 82%, var(--state-warning-bg));
+  color: var(--state-warning-text);
+}
+
+.notification-card.notice-error {
+  border-color: color-mix(in srgb, var(--state-error-border) 84%, var(--border));
+  background: color-mix(in srgb, var(--surface) 82%, var(--state-error-bg));
+  color: var(--state-error-text);
+}
+
+.notification-card.notice-info {
+  border-color: color-mix(in srgb, var(--state-info-border) 84%, var(--border));
+  background: color-mix(in srgb, var(--surface) 82%, var(--state-info-bg));
+  color: var(--state-info-text);
 }
 
 .notification-card-head {

@@ -51,6 +51,22 @@ cd ../frontend
 npm run build
 ```
 
+## Capturas UI rapidas (flujo recomendado)
+
+Cuando necesites evidencia visual rapida en frontend, usa este flujo minimo en lugar de improvisar:
+
+1. Arranca servicios con `powershell -ExecutionPolicy Bypass -File .\iniciar_viru.ps1`.
+2. Ejecuta el script de captura reutilizable:
+   - `node frontend/scripts/qa_capture_notification_login.mjs`
+3. Revisa los PNG generados en `docs/qa/`:
+   - `notifications-login-desktop-full.png`
+   - `notifications-login-desktop-component.png`
+
+Notas:
+- El script abre `/login`, inicia sesion con el usuario semilla local y captura el toast real.
+- Para nuevos casos UI, crea o amplia scripts estables en `frontend/scripts/qa_capture_*.mjs` y guarda salidas en `docs/qa/`.
+- Guia canonica completa: `docs/runbooks/runbook-ui-captures.md`.
+
 ## Hardening / Operacion
 
 - Health: `GET /health`
