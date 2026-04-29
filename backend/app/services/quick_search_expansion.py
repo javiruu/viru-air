@@ -85,7 +85,7 @@ def _expand_side_with_summary(
         seed_iata=seed_upper,
         include_nearby=include_nearby,
         radius_km=radius_km,
-        max_candidates=min(16, max(1, max_candidates * 2)),
+        max_candidates=min(80, max(1, max_candidates * 4)),
         exclusions=exclusions_normalized,
     )
 

@@ -140,8 +140,10 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             result = self._call_quick_search(payload)
 
         warning_codes = {w["code"] for w in result["meta"]["warnings_structured"]}
-        self.assertIn("max_requests_reached", warning_codes)
-        self.assertTrue(result["meta"]["execution"]["truncated_by_max_requests"])
+        self.assertIn("max_pairs_truncated", warning_codes)
+        self.assertFalse(result["meta"]["execution"]["truncated_by_max_requests"])
+        self.assertTrue(result["meta"]["truncation_signals"]["pair_cap"])
+        self.assertIn("execution_budget", result["meta"])
 
     def test_timeout_partial_does_not_break_whole_search(self):
         payload = self._payload(

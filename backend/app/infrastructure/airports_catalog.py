@@ -215,7 +215,7 @@ def nearby_airports(iata: str, radius_km: int, limit: int = 8) -> list[dict]:
     seed = resolve_seed_airport(iata)
     if radius_km < 10 or radius_km > 500:
         raise ValueError("radius_out_of_range")
-    if limit < 1 or limit > 50:
+    if limit < 1 or limit > 300:
         raise ValueError("limit_out_of_range")
 
     matches: list[tuple[Airport, float]] = []

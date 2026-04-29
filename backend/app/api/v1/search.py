@@ -25,6 +25,8 @@ router = APIRouter()
 provider = RyanairPublicProvider()
 logger = logging.getLogger(__name__)
 SEED_POOL_CAP = 8
+QUICK_SEARCH_MAX_PAIRS_CAP = 400
+QUICK_SEARCH_MAX_REQUESTS_CAP = 3000
 
 _WARNING_CODE_ALIASES: dict[str, str] = {
     "provider_timeout_parcial": "provider_timeout_partial",
@@ -141,7 +143,7 @@ class QuickSearchSide(BaseModel):
     seed_iata_list: list[str] | None = None
     include_nearby: bool = False
     radius_km: int = Field(default=150, ge=10, le=500)
-    max_candidates: int = Field(default=6, ge=1, le=20)
+    max_candidates: int = Field(default=10, ge=1, le=60)
 
     @field_validator("seed_iata")
     @classmethod
@@ -183,8 +185,8 @@ class QuickSearchConstraints(BaseModel):
 
 
 class QuickSearchExecution(BaseModel):
-    max_pairs: int = Field(default=12, ge=1, le=200)
-    max_requests: int = Field(default=120, ge=1, le=1000)
+    max_pairs: int = Field(default=48, ge=1, le=QUICK_SEARCH_MAX_PAIRS_CAP)
+    max_requests: int = Field(default=480, ge=1, le=QUICK_SEARCH_MAX_REQUESTS_CAP)
     timeout_ms: int = Field(default=8000, ge=1000, le=30000)
     concurrency_limit: int = Field(default=6, ge=1, le=32)
 
@@ -214,6 +216,46 @@ def _build_flex_dates(base_date: dt.date, days_before: int, days_after: int) -> 
     for offset in range(-days_before, days_after + 1):
         dates.append(base_date + dt.timedelta(days=offset))
     return dates
+
+
+def _compute_dynamic_execution_budget(
+    *,
+    requested_max_pairs: int,
+    requested_max_requests: int,
+    origin_pool_count: int,
+    destination_pool_count: int,
+    flex_before: int,
+    flex_after: int,
+    include_nearby_origins: bool,
+    include_nearby_destinations: bool,
+) -> tuple[int, int, dict[str, int]]:
+    origin_count = max(1, origin_pool_count)
+    destination_count = max(1, destination_pool_count)
+    pair_complexity = origin_count * destination_count
+    date_count = max(1, flex_before + flex_after + 1)
+    nearby_sides = int(bool(include_nearby_origins)) + int(bool(include_nearby_destinations))
+
+    pair_multiplier = 6 + (nearby_sides * 4)
+    target_pairs = pair_complexity * pair_multiplier
+    effective_max_pairs = min(
+        QUICK_SEARCH_MAX_PAIRS_CAP,
+        max(1, requested_max_pairs, target_pairs),
+    )
+
+    request_multiplier = 2 if nearby_sides > 0 else 1
+    target_requests = effective_max_pairs * date_count * request_multiplier
+    effective_max_requests = min(
+        QUICK_SEARCH_MAX_REQUESTS_CAP,
+        max(1, requested_max_requests, target_requests),
+    )
+
+    return effective_max_pairs, effective_max_requests, {
+        "pair_complexity": pair_complexity,
+        "date_count": date_count,
+        "nearby_sides": nearby_sides,
+        "target_pairs": target_pairs,
+        "target_requests": target_requests,
+    }
 
 
 def _normalize_radius_km(value: Any, include_nearby: bool, default: int = 150) -> int:
@@ -422,14 +464,14 @@ def _normalize_quick_search_request(
                 "seed_iata_list": origin_value if isinstance(origin_value, list) else None,
                 "include_nearby": include_nearby_origins_value,
                 "radius_km": _normalize_radius_km(raw_radius_km, include_nearby_origins_value),
-                "max_candidates": 6,
+                "max_candidates": 10,
             },
             "destination": {
                 "seed_iata": destination_value[0] if isinstance(destination_value, list) and destination_value else destination_value,
                 "seed_iata_list": destination_value if isinstance(destination_value, list) else None,
                 "include_nearby": include_nearby_destinations_value,
                 "radius_km": _normalize_radius_km(raw_radius_km, include_nearby_destinations_value),
-                "max_candidates": 6,
+                "max_candidates": 10,
             },
             "travel": {
                 "date": travel_date_value,
@@ -509,8 +551,8 @@ def _normalize_quick_search_request(
                 ),
             },
             "execution": {
-                "max_pairs": 12,
-                "max_requests": 120,
+                "max_pairs": 48,
+                "max_requests": 480,
                 "timeout_ms": 8000,
             },
         }
@@ -813,8 +855,16 @@ def quick_search(
     risk_allowed = canonical.constraints.risk_allowed
     soft_filters_weight = canonical.constraints.soft_filters_weight if canonical.constraints.soft_filters_weight is not None else 0.6
 
-    max_pairs = canonical.execution.max_pairs
-    max_requests_per_pass = max(1, canonical.execution.max_requests // 4)
+    max_pairs_dynamic_base, max_requests_dynamic_base, budget_signals = _compute_dynamic_execution_budget(
+        requested_max_pairs=canonical.execution.max_pairs,
+        requested_max_requests=canonical.execution.max_requests,
+        origin_pool_count=len(origin_seed_pool),
+        destination_pool_count=len(destination_seed_pool),
+        flex_before=requested_days_before,
+        flex_after=requested_days_after,
+        include_nearby_origins=requested_include_nearby_origins,
+        include_nearby_destinations=requested_include_nearby_destinations,
+    )
 
     warnings: list[str] = []
     filters_applied: dict[str, Any] = {}
@@ -930,11 +980,13 @@ def quick_search(
         max_pairs_override: int | None = None,
         max_requests_override: int | None = None,
     ) -> dict[str, Any]:
-        max_pairs_effective = max(1, max_pairs_override if max_pairs_override is not None else max_pairs)
+        max_pairs_effective = max(1, max_pairs_override if max_pairs_override is not None else max_pairs_dynamic_base)
         max_requests_effective = max(
             1,
-            max_requests_override if max_requests_override is not None else max_requests_per_pass,
+            max_requests_override if max_requests_override is not None else max_requests_dynamic_base,
         )
+        if max_pairs_override is None:
+            max_pairs_effective = max(1, max_pairs_dynamic_base)
         started = _phase_start()
         try:
             origin_results: list[SideExpansionResult] = []
@@ -1037,6 +1089,7 @@ def quick_search(
         )
         if pair_plan_stats["truncated"]:
             warnings.append("limite_combinaciones_alternativas")
+            warnings.append("pair_cap_reached")
             _warn("max_pairs_truncated", max_pairs=max_pairs_effective, total_pairs=pair_plan_stats["total_pairs"])
         _phase_add("pair_planning_ms", int((time.perf_counter() - started) * 1000))
 
@@ -1066,6 +1119,7 @@ def quick_search(
             _warn("provider_partial_results_served", count=len(combined))
             warning_codes.append("provider_partial_results_served")
         if execution_meta.get("truncated_by_max_requests"):
+            warnings.append("request_cap_reached")
             _warn(
                 "max_requests_reached",
                 requested_units_count=execution_meta.get("requested_units_count"),
@@ -1128,6 +1182,10 @@ def quick_search(
             "deduped": deduped,
             "max_pairs_effective": max_pairs_effective,
             "max_requests_effective": max_requests_effective,
+            "expansion_cap_reached": (
+                origin_side.summary.total_candidates_before_limit > origin_side.summary.total_candidates_after_limit
+                or destination_side.summary.total_candidates_before_limit > destination_side.summary.total_candidates_after_limit
+            ),
         }
 
     pass_1 = _run_pass(
@@ -1171,8 +1229,8 @@ def quick_search(
         warnings.append("rescue_mode_applied")
         _warn("rescue_mode_applied")
 
-        budget_boost_max_requests = min(canonical.execution.max_requests, max_requests_per_pass * 2)
-        budget_boost_max_pairs = min(200, max_pairs * 2)
+        budget_boost_max_requests = min(QUICK_SEARCH_MAX_REQUESTS_CAP, max_requests_dynamic_base * 2)
+        budget_boost_max_pairs = min(QUICK_SEARCH_MAX_PAIRS_CAP, max_pairs_dynamic_base * 2)
         rescue_steps: list[dict[str, Any]] = []
         rescue_steps.append(
             {
@@ -1504,9 +1562,26 @@ def quick_search(
                 "total_pairs": pair_plan_stats["total_pairs"],
                 "selected_pairs": pair_plan_stats["selected_pairs"],
                 "truncated": pair_plan_stats["truncated"],
-                "max_pairs": max_pairs,
+                "max_pairs": selected_pass["max_pairs_effective"],
                 "max_pairs_by_requests": pair_plan_stats["max_pairs_by_requests"],
                 "max_pairs_scope": "base_pairs_only",
+            },
+            "truncation_signals": {
+                "expansion_cap": bool(selected_pass.get("expansion_cap_reached")),
+                "pair_cap": bool(pair_plan_stats["truncated"]),
+                "request_cap": bool(execution_meta.get("truncated_by_max_requests")),
+            },
+            "execution_budget": {
+                "requested": canonical.execution.model_dump(),
+                "effective": {
+                    "max_pairs": selected_pass["max_pairs_effective"],
+                    "max_requests": selected_pass["max_requests_effective"],
+                },
+                "dynamic_signals": budget_signals,
+                "caps": {
+                    "max_pairs_cap": QUICK_SEARCH_MAX_PAIRS_CAP,
+                    "max_requests_cap": QUICK_SEARCH_MAX_REQUESTS_CAP,
+                },
             },
             "planned_pairs": [
                 {

@@ -69,6 +69,12 @@ export type QuickSearchCanonicalPayload = {
     max_stops: number;
     soft_filters_weight: number;
   };
+  execution: {
+    max_pairs: number;
+    max_requests: number;
+    timeout_ms: number;
+    concurrency_limit: number;
+  };
 };
 
 function stableStringify(value: unknown): string {
@@ -193,9 +199,19 @@ function toSeedIataList(value: string | string[]): string[] | undefined {
   return deduped.length > 0 ? deduped : undefined;
 }
 
+function isWideSearchMode(params: QuickSearchQueryParams): boolean {
+  const seedRich =
+    (Array.isArray(params.origin_iata) && params.origin_iata.length > 1)
+    || (Array.isArray(params.destination_iata) && params.destination_iata.length > 1);
+  const hasFlex = params.flex_days_before > 0 || params.flex_days_after > 0;
+  const hasNearby = params.include_nearby_origins || params.include_nearby_destinations;
+  return seedRich || hasFlex || hasNearby;
+}
+
 export function buildQuickSearchCanonicalPayload(params: QuickSearchQueryParams): QuickSearchCanonicalPayload {
   const originSeedList = toSeedIataList(params.origin_iata);
   const destinationSeedList = toSeedIataList(params.destination_iata);
+  const wideSearchMode = isWideSearchMode(params);
   return {
     origin: {
       seed_iata: toSeedIata(params.origin_iata),
@@ -228,6 +244,19 @@ export function buildQuickSearchCanonicalPayload(params: QuickSearchQueryParams)
       max_stops: params.max_stops,
       soft_filters_weight: params.soft_filters_weight,
     },
+    execution: wideSearchMode
+      ? {
+          max_pairs: 120,
+          max_requests: 1600,
+          timeout_ms: 8000,
+          concurrency_limit: 10,
+        }
+      : {
+          max_pairs: 48,
+          max_requests: 480,
+          timeout_ms: 8000,
+          concurrency_limit: 6,
+        },
   };
 }
 
