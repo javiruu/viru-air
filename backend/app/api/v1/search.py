@@ -2,6 +2,7 @@ import datetime as dt
 import hashlib
 import json
 import logging
+import math
 import os
 import time
 import uuid
@@ -13,7 +14,7 @@ from app.core.errors import ApiError, message_for_code
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from app.api.v1.airports import _validate_iata
-from app.infrastructure.airports_catalog import resolve_seed_airport
+from app.infrastructure.airports_catalog import get_airport, resolve_seed_airport
 from app.infrastructure.providers.ryanair_public_provider import RyanairPublicProvider
 from app.services.quick_search_dedupe import dedupe_ranked_results
 from app.services.quick_search_execution import build_execution_plan, execute_plan
@@ -103,6 +104,30 @@ def _error_reason_from_http_exception(exc: HTTPException) -> str:
     if isinstance(exc.detail, dict) and isinstance(exc.detail.get("code"), str):
         return str(exc.detail["code"])
     return "request_failed"
+
+
+def _estimate_duration_minutes(origin: str, destination: str) -> int | None:
+    origin_airport = get_airport(origin)
+    destination_airport = get_airport(destination)
+    if not origin_airport or not destination_airport:
+        return None
+    radius = 6371.0
+    phi1 = math.radians(origin_airport.latitude)
+    phi2 = math.radians(destination_airport.latitude)
+    d_phi = math.radians(destination_airport.latitude - origin_airport.latitude)
+    d_lambda = math.radians(destination_airport.longitude - origin_airport.longitude)
+    a = math.sin(d_phi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(d_lambda / 2) ** 2
+    distance_km = radius * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    flight_hours = distance_km / 780.0 + 0.5
+    return max(45, int(flight_hours * 60))
+
+
+def _risk_label_from_pair_category(category: str | None) -> str:
+    if category == "seed-seed":
+        return "low"
+    if category in {"seed-nearby", "nearby-seed"}:
+        return "medium"
+    return "high"
 
 
 class QuickSearchPayload(BaseModel):
@@ -1685,9 +1710,11 @@ def quick_search(
                 "price_total": item.flight.price,
                 "currency": item.flight.currency,
                 "source": item.flight.source,
-                "duration_total_min": None,
+                "duration_total_min": _estimate_duration_minutes(item.origin, item.destination),
+                "risk_label": _risk_label_from_pair_category(item.pair_category),
                 "ranking_score": item.final_score,
                 "stale_data": False,
+                "freshness_ts": item.flight.captured_at.isoformat(),
                 "itinerary_type": "direct",
                 "legs": [],
                 "score": item.score_breakdown,
