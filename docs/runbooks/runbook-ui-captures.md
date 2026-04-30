@@ -78,6 +78,23 @@ Si en otra conversacion hace falta una captura con flujo nuevo:
 ### Receta: Quick Search Weather Card
 
 - Objetivo: capturar evidencia visual de `/quick-search` en ruta privada con sesion autenticada.
+- Preflight obligatorio (antes de ejecutar QA visual):
+
+```powershell
+# 1) Backend health (debe devolver 200)
+Invoke-WebRequest -Uri "http://127.0.0.1:8000/health" -UseBasicParsing
+
+# 2) Frontend
+cd frontend
+npm.cmd run dev
+```
+
+- Si backend no esta levantado, iniciar uvicorn desde el entorno del repo:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
 - Comando canonico:
 
 ```powershell
@@ -99,4 +116,39 @@ npm.cmd run qa:visual:quick-search
   - `docs/qa/snapshots_quick-search-tablet768.png`
   - `docs/qa/snapshots_quick-search-mobile375.png`
   - `docs/qa/snapshots_quick-search-mobile320.png`
+- Campos clave que hay que revisar en `quick-search-visual-report.json`:
+  - `auth.success`: confirma sesion valida para ruta privada.
+  - `snapshots[*].resultsVisible`: numero de filas visibles en resultados.
+  - `snapshots[*].detailsButtons`: confirma si hay botones de "Detalles".
+  - `snapshots[*].weatherDetailsVisible`: confirma si existe `.qs-result-weather` al expandir.
+
+#### Diagnostico rapido de fallos recurrentes
+
+1. `auth.success = false`
+   - Causa probable: backend caido o credenciales invalidas.
+   - Accion: comprobar `http://127.0.0.1:8000/health` y repetir con `QA_LOGIN_EMAIL`/`QA_LOGIN_PASSWORD`.
+
+2. `auth.success = true` pero `resultsVisible = 0`
+   - Causa probable: no hay vuelos para la combinacion/fecha actual.
+   - Accion: este run no puede validar estado expandido porque no hay filas.
+   - Siguiente paso recomendado:
+     - ejecutar un run guiado con ruta/fecha conocida con resultados, o
+     - usar mock controlado de `/search/quick` solo para QA visual (documentando el mock).
+
+3. `detailsButtons = 0` y `resultsVisible > 0`
+   - Causa probable: vista compacta activa o estado UI no desplegable.
+   - Accion: desactivar compact view en flujo de QA o forzar expansion por selector estable.
+
+4. `weatherDetailsVisible = 0` con detalles abiertos
+   - Causa probable: no hay match de fecha del vuelo con dias de weather disponibles.
+   - Accion: verificar rango de fechas y respuesta meteo; si proveedor falla, mockear `open-meteo`.
+
 - Nota: si el proveedor meteo no responde, usar mock de `https://api.open-meteo.com/v1/forecast` solo para materializar el estado visual.
+
+#### Criterio de aceptacion para cerrar una verificacion de clima en detalles
+
+- `auth.success = true`
+- `resultsVisible > 0`
+- `detailsButtons > 0`
+- `weatherDetailsVisible > 0` en al menos un viewport
+- Capturas guardadas en `docs/qa/` y referenciadas en el reporte final con ruta absoluta.
