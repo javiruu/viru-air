@@ -1,0 +1,199 @@
+{
+  "generatedAt": "2026-04-23T12:51:29.600Z",
+  "routes": [
+    "MAD-DUB",
+    "AGP-DUB",
+    "LEI-DUB",
+    "BCN-STN",
+    "MAD-LIS"
+  ],
+  "observations": [
+    {
+      "route": "MAD-DUB",
+      "origin": {
+        "seed_iata": "MAD",
+        "include_nearby": true,
+        "radius_km": 240,
+        "max_candidates": 6
+      },
+      "destination": {
+        "seed_iata": "DUB",
+        "include_nearby": true,
+        "radius_km": 240,
+        "max_candidates": 6
+      },
+      "travel": {
+        "date": "2026-05-08",
+        "flex_before": 0,
+        "flex_after": 0
+      },
+      "constraints": {
+        "departure_window": {
+          "after": "09:00",
+          "before": "18:30"
+        },
+        "exclude_origins": [
+          "ABC",
+          "MAD"
+        ],
+        "exclude_destinations": [
+          "DUB"
+        ],
+        "strict_filters": true,
+        "include_stops": true,
+        "max_stops": 2,
+        "soft_filters_weight": 0.6
+      },
+      "visibleRows": 1,
+      "chipCount": 12
+    },
+    {
+      "route": "AGP-DUB",
+      "origin": {
+        "seed_iata": "AGP",
+        "include_nearby": true,
+        "radius_km": 240,
+        "max_candidates": 6
+      },
+      "destination": {
+        "seed_iata": "DUB",
+        "include_nearby": true,
+        "radius_km": 240,
+        "max_candidates": 6
+      },
+      "travel": {
+        "date": "2026-06-08",
+        "flex_before": 0,
+        "flex_after": 0
+      },
+      "constraints": {
+        "departure_window": {
+          "after": "09:00",
+          "before": "18:30"
+        },
+        "exclude_origins": [
+          "ABC",
+          "MAD"
+        ],
+        "exclude_destinations": [
+          "DUB"
+        ],
+        "strict_filters": true,
+        "include_stops": true,
+        "max_stops": 2,
+        "soft_filters_weight": 0.6
+      },
+      "visibleRows": 0,
+      "chipCount": 12
+    },
+    {
+      "route": "LEI-DUB",
+      "origin": {
+        "seed_iata": "LEI",
+        "include_nearby": true,
+        "radius_km": 240,
+        "max_candidates": 6
+      },
+      "destination": {
+        "seed_iata": "DUB",
+        "include_nearby": true,
+        "radius_km": 240,
+        "max_candidates": 6
+      },
+      "travel": {
+        "date": "2026-07-08",
+        "flex_before": 0,
+        "flex_after": 0
+      },
+      "constraints": {
+        "departure_window": {
+          "after": "09:00",
+          "before": "18:30"
+        },
+        "exclude_origins": [
+          "ABC",
+          "MAD"
+        ],
+        "exclude_destinations": [
+          "DUB"
+        ],
+        "strict_filters": true,
+        "include_stops": true,
+        "max_stops": 2,
+        "soft_filters_weight": 0.6
+      },
+      "visibleRows": 0,
+      "chipCount": 12
+    },
+    {
+      "route": "BCN-STN",
+      "origin": {
+        "seed_iata": "BCN",
+        "include_nearby": false,
+        "radius_km": 150,
+        "max_candidates": 6
+      },
+      "destination": {
+        "seed_iata": "STN",
+        "include_nearby": false,
+        "radius_km": 150,
+        "max_candidates": 6
+      },
+      "travel": {
+        "date": "2026-08-08",
+        "flex_before": 0,
+        "flex_after": 0
+      },
+      "constraints": {
+        "departure_window": {
+          "after": "09:00",
+          "before": "18:30"
+        },
+        "exclude_origins": [],
+        "exclude_destinations": [],
+        "strict_filters": true,
+        "include_stops": false,
+        "max_stops": 0,
+        "soft_filters_weight": 0.6
+      },
+      "visibleRows": 2,
+      "chipCount": 2
+    },
+    {
+      "route": "MAD-LIS",
+      "origin": {
+        "seed_iata": "MAD",
+        "include_nearby": false,
+        "radius_km": 150,
+        "max_candidates": 6
+      },
+      "destination": {
+        "seed_iata": "LIS",
+        "include_nearby": false,
+        "radius_km": 150,
+        "max_candidates": 6
+      },
+      "travel": {
+        "date": "2026-09-08",
+        "flex_before": 0,
+        "flex_after": 0
+      },
+      "constraints": {
+        "departure_window": {
+          "after": "09:00",
+          "before": "18:30"
+        },
+        "exclude_origins": [],
+        "exclude_destinations": [],
+        "strict_filters": true,
+        "include_stops": false,
+        "max_stops": 0,
+        "soft_filters_weight": 0.6
+      },
+      "visibleRows": 2,
+      "chipCount": 2
+    }
+  ],
+  "payloadCount": 5,
+  "screenshotsDir": "docs/qa"
+}
