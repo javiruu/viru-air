@@ -3025,6 +3025,135 @@ h1 {
   text-transform: capitalize;
 }
 
+.watchlist-decision-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 0.95rem;
+  align-items: start;
+}
+
+.watch-map-panel {
+  min-height: 100%;
+  display: grid;
+  gap: 0.7rem;
+  background: linear-gradient(160deg, rgba(255, 247, 235, 0.92), rgba(243, 239, 232, 0.84));
+}
+
+.watch-map-header {
+  align-items: start;
+}
+
+.watch-map-mode {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.2rem 0.62rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  background: var(--surface);
+}
+
+.watch-map-mode-compare {
+  border-color: rgba(46, 110, 98, 0.45);
+  background: rgba(46, 110, 98, 0.12);
+}
+
+.watch-map-copy {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.watch-map-insight {
+  border-radius: 11px;
+  border: 1px solid rgba(217, 93, 57, 0.28);
+  background: rgba(217, 93, 57, 0.1);
+  padding: 0.48rem 0.6rem;
+  font-size: 0.84rem;
+  color: var(--ink);
+}
+
+.watch-map-insight-stability {
+  border-color: rgba(46, 110, 98, 0.34);
+  background: rgba(46, 110, 98, 0.12);
+}
+
+.watch-map-limit {
+  font-size: 0.77rem;
+  color: var(--ink-muted);
+}
+
+.watch-map-stage {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--surface) 92%, #f8f4ed);
+}
+
+.watch-map-canvas {
+  height: 380px;
+}
+
+.mapcn-marker-host {
+  pointer-events: auto;
+}
+
+.watch-map-chip {
+  display: grid;
+  gap: 0.08rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255, 250, 244, 0.95);
+  padding: 0.25rem 0.45rem;
+  font-size: 0.7rem;
+  line-height: 1.12;
+  box-shadow: 0 8px 20px rgba(31, 29, 26, 0.18);
+}
+
+.watch-map-chip strong {
+  font-size: 0.74rem;
+}
+
+.watch-map-chip.is-primary {
+  border-color: rgba(217, 93, 57, 0.55);
+  box-shadow: 0 10px 24px rgba(217, 93, 57, 0.22);
+}
+
+.watch-map-chip-destination.is-primary {
+  border-color: rgba(46, 110, 98, 0.5);
+}
+
+.watch-map-popup {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 180px;
+}
+
+.watch-map-popup header {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.watch-map-popup header span {
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+}
+
+.watch-map-popup p {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 1120px) {
+  .watchlist-decision-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .watch-map-canvas {
+    height: 320px;
+  }
+}
+
 
 .row-start {
   display: flex;

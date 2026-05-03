@@ -46,3 +46,27 @@ export type CompatibleResponse = {
   compatible_iata: string[];
   source: string;
 };
+
+export type WatchMapRouteView = {
+  watchId: string;
+  origin: string;
+  destination: string;
+  originCoordinates: [number, number];
+  destinationCoordinates: [number, number];
+  priceCurrent: number | null;
+  priceTarget: number | null;
+  currency: string;
+  trend: "up" | "down" | "flat";
+  isPrimary: boolean;
+  isCompared: boolean;
+  volatility: number | null;
+  freshnessTs: string | null;
+};
+
+export type WatchMapMode = "single" | "compare";
+
+export type WatchMapInsight = {
+  type: "opportunity" | "stability" | "speed" | "neutral";
+  text: string;
+  relatedWatchIds: string[];
+};

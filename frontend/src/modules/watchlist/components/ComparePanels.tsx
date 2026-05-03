@@ -117,9 +117,9 @@ export function ComparePanels({
         <div className="panel-header">
           <div>
             <h2 className="panel-title">Comparativa multi-vuelo</h2>
-            <p className="panel-subtitle">Selecciona hasta 3 vuelos para ver precio, estabilidad y frescura.</p>
+            <p className="panel-subtitle">Selecciona hasta 4 vuelos para ver precio, estabilidad y frescura.</p>
           </div>
-          <span className="compare-count">{compareSelection.length}/3 seleccionados</span>
+          <span className="compare-count">{compareSelection.length}/4 seleccionados</span>
         </div>
         {compareNotice ? (
           <div className="notice notice-error notice-compact">{compareNotice}</div>

@@ -1,4 +1,5 @@
 import "../styles/globals.css";
+import "maplibre-gl/dist/maplibre-gl.css";
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Suspense } from "react";

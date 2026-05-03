@@ -59,8 +59,8 @@ export function useWatchlistViewState() {
     setCompareNotice("");
     setCompareIds((prev) => {
       if (prev.includes(id)) return prev.filter((item) => item !== id);
-      if (prev.length >= 3) {
-        setCompareNotice("Puedes comparar hasta 3 vuelos a la vez.");
+      if (prev.length >= 4) {
+        setCompareNotice("Puedes comparar hasta 4 vuelos a la vez.");
         return prev;
       }
       return [...prev, id];

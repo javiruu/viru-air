@@ -1,9 +1,19 @@
 ﻿import { useMemo } from "react";
 
 import { formatCurrency, formatRelativeTime } from "@/modules/shared/format";
+import { getAirportMeta } from "@/modules/shared/airports";
 import { monthDays, toIsoMonth } from "@/modules/watchlist/dateUtils";
 import { formatDateTime } from "@/modules/watchlist/presentation";
-import type { HistoryRow, HoverPoint, ListSort, RangeWindow, Watch } from "@/modules/watchlist/types";
+import type {
+  HistoryRow,
+  HoverPoint,
+  ListSort,
+  RangeWindow,
+  Watch,
+  WatchMapInsight,
+  WatchMapMode,
+  WatchMapRouteView,
+} from "@/modules/watchlist/types";
 
 type WatchMetaEntry = {
   latest: HistoryRow | null;
@@ -366,6 +376,111 @@ export function useWatchlistDerived({
     };
   }, [compareSelection]);
 
+  const watchMapRoutes = useMemo<WatchMapRouteView[]>(() => {
+    const compareSet = new Set(compareIds);
+    const compareCapped = compareSelection.slice(0, 4).map((item) => item.id);
+    const activeIds = compareCapped.length > 0 ? new Set(compareCapped) : selectedWatchId ? new Set([selectedWatchId]) : compareSet;
+
+    const routes = items
+      .filter((watch) => activeIds.has(watch.id))
+      .map((watch) => {
+        const originMeta = getAirportMeta(watch.origin_iata);
+        const destinationMeta = getAirportMeta(watch.destination_iata);
+        if (!originMeta || !destinationMeta) return null;
+        const meta = watchMeta.get(watch.id);
+        const latest = meta?.latest ?? null;
+        const previous = meta?.previous ?? null;
+        const trend: "up" | "down" | "flat" =
+          !latest || !previous ? "flat" : latest.price > previous.price ? "up" : latest.price < previous.price ? "down" : "flat";
+
+        return {
+          watchId: watch.id,
+          origin: watch.origin_iata,
+          destination: watch.destination_iata,
+          originCoordinates: [originMeta.longitude, originMeta.latitude] as [number, number],
+          destinationCoordinates: [destinationMeta.longitude, destinationMeta.latitude] as [number, number],
+          priceCurrent: latest?.price ?? null,
+          priceTarget: watch.target_price ?? null,
+          currency: latest?.currency ?? "EUR",
+          trend,
+          isPrimary: watch.id === selectedWatchId,
+          isCompared: compareSet.has(watch.id),
+          volatility: meta?.min != null && meta?.max != null ? meta.max - meta.min : null,
+          freshnessTs: latest?.capturedAt ?? null,
+        };
+      })
+      .filter((entry): entry is WatchMapRouteView => Boolean(entry));
+
+    if (routes.length > 0) return routes;
+    const fallback = items.find((watch) => watch.id === selectedWatchId) ?? items[0];
+    if (!fallback) return [];
+    const originMeta = getAirportMeta(fallback.origin_iata);
+    const destinationMeta = getAirportMeta(fallback.destination_iata);
+    if (!originMeta || !destinationMeta) return [];
+    const meta = watchMeta.get(fallback.id);
+
+    return [
+      {
+        watchId: fallback.id,
+        origin: fallback.origin_iata,
+        destination: fallback.destination_iata,
+        originCoordinates: [originMeta.longitude, originMeta.latitude],
+        destinationCoordinates: [destinationMeta.longitude, destinationMeta.latitude],
+        priceCurrent: meta?.latest?.price ?? null,
+        priceTarget: fallback.target_price ?? null,
+        currency: meta?.latest?.currency ?? "EUR",
+        trend: "flat",
+        isPrimary: true,
+        isCompared: false,
+        volatility: meta?.min != null && meta?.max != null ? meta.max - meta.min : null,
+        freshnessTs: meta?.latest?.capturedAt ?? null,
+      },
+    ];
+  }, [compareIds, compareSelection, items, selectedWatchId, watchMeta]);
+
+  const watchMapMode = useMemo<WatchMapMode>(() => {
+    const compareCount = watchMapRoutes.filter((route) => route.isCompared).length;
+    return compareCount >= 2 ? "compare" : "single";
+  }, [watchMapRoutes]);
+
+  const watchMapInsight = useMemo<WatchMapInsight>(() => {
+    if (watchMapRoutes.length === 0) {
+      return {
+        type: "neutral",
+        text: "No hay rutas activas para mostrar en el mapa.",
+        relatedWatchIds: [],
+      };
+    }
+
+    const activeRoutes = watchMapRoutes.filter((route) => route.isCompared || route.isPrimary);
+    const withPrice = activeRoutes.filter((route) => route.priceCurrent != null);
+    if (withPrice.length > 1) {
+      const cheapest = withPrice.reduce((acc, route) => ((route.priceCurrent ?? Infinity) < (acc.priceCurrent ?? Infinity) ? route : acc));
+      return {
+        type: "opportunity",
+        text: `Oportunidad activa: ${cheapest.origin} -> ${cheapest.destination} tiene el precio más bajo ahora.`,
+        relatedWatchIds: [cheapest.watchId],
+      };
+    }
+
+    const withVolatility = activeRoutes.filter((route) => route.volatility != null);
+    if (withVolatility.length > 1) {
+      const stable = withVolatility.reduce((acc, route) => ((route.volatility ?? Infinity) < (acc.volatility ?? Infinity) ? route : acc));
+      return {
+        type: "stability",
+        text: `Más estable ahora: ${stable.origin} -> ${stable.destination}.`,
+        relatedWatchIds: [stable.watchId],
+      };
+    }
+
+    const primary = activeRoutes.find((route) => route.isPrimary) ?? activeRoutes[0];
+    return {
+      type: "neutral",
+      text: `Ruta en foco: ${primary.origin} -> ${primary.destination}.`,
+      relatedWatchIds: [primary.watchId],
+    };
+  }, [watchMapRoutes]);
+
   return {
     watchMeta,
     lastUpdatedGlobal,
@@ -393,5 +508,8 @@ export function useWatchlistDerived({
     compareOptions,
     compareSelection,
     compareBadges,
+    watchMapRoutes,
+    watchMapMode,
+    watchMapInsight,
   };
 }

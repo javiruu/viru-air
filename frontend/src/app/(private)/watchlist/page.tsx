@@ -8,6 +8,7 @@ import { AirportPickerModal } from "@/modules/watchlist/components/AirportPicker
 import { ComparePanels } from "@/modules/watchlist/components/ComparePanels";
 import { HistoryIntegratedPanel } from "@/modules/watchlist/components/HistoryIntegratedPanel";
 import { SmartWatchListPanel } from "@/modules/watchlist/components/SmartWatchListPanel";
+import { WatchlistMapDecisionPanel } from "@/modules/watchlist/components/WatchlistMapDecisionPanel";
 import { monthLabel } from "@/modules/watchlist/dateUtils";
 import { useWatchlistController } from "@/modules/watchlist/useWatchlistController";
 
@@ -120,30 +121,44 @@ export default function WatchlistPage() {
         onNextMonth={view.nextMonth}
       />
 
-      <SmartWatchListPanel
-        items={actions.items}
-        smartListItems={derived.smartListItems}
-        watchMeta={derived.watchMeta}
-        historyRows={actions.historyRows}
-        lastUpdatedGlobal={derived.lastUpdatedGlobal}
-        watchSearch={view.watchSearch}
-        watchSort={view.watchSort}
-        hasSearchFilter={derived.hasSearchFilter}
-        selectedWatchId={view.selectedWatchId}
-        refreshingWatchId={actions.refreshingWatchId}
-        onSearchChange={view.setWatchSearch}
-        onSortChange={view.setWatchSort}
-        onClearSearch={() => view.setWatchSearch("")}
-        onSelectWatch={selectWatch}
-        onRefreshWatch={actions.refresh}
-        onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
-        onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
-        onDeleteWatch={actions.deleteWatch}
-        onBulkPause={(ids) => actions.bulkUpdateStatus(ids, "paused")}
-        onBulkResume={(ids) => actions.bulkUpdateStatus(ids, "active")}
-        onBulkDelete={actions.bulkDelete}
-        onOpenAddWatch={() => actions.setShowAdd(true)}
-      />
+      <section className="watchlist-decision-grid section-gap">
+        <SmartWatchListPanel
+          items={actions.items}
+          smartListItems={derived.smartListItems}
+          watchMeta={derived.watchMeta}
+          historyRows={actions.historyRows}
+          lastUpdatedGlobal={derived.lastUpdatedGlobal}
+          watchSearch={view.watchSearch}
+          watchSort={view.watchSort}
+          hasSearchFilter={derived.hasSearchFilter}
+          selectedWatchId={view.selectedWatchId}
+          refreshingWatchId={actions.refreshingWatchId}
+          onSearchChange={view.setWatchSearch}
+          onSortChange={view.setWatchSort}
+          onClearSearch={() => view.setWatchSearch("")}
+          onSelectWatch={selectWatch}
+          onRefreshWatch={actions.refresh}
+          onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
+          onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
+          onDeleteWatch={actions.deleteWatch}
+          onBulkPause={(ids) => actions.bulkUpdateStatus(ids, "paused")}
+          onBulkResume={(ids) => actions.bulkUpdateStatus(ids, "active")}
+          onBulkDelete={actions.bulkDelete}
+          onOpenAddWatch={() => actions.setShowAdd(true)}
+        />
+
+        <WatchlistMapDecisionPanel
+          routes={derived.watchMapRoutes}
+          mode={derived.watchMapMode}
+          insight={derived.watchMapInsight}
+          compareLimitExceeded={view.compareIds.length > 4}
+          onFocusWatch={(watchId) => {
+            const watch = actions.items.find((item) => item.id === watchId);
+            if (!watch) return;
+            selectWatch(watch);
+          }}
+        />
+      </section>
 
       <ComparePanels
         compareCards={derived.compareCards}
