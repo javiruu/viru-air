@@ -34,16 +34,16 @@ export default function WatchlistPage() {
       <div className="page-header watchlist-header">
         <div className="watchlist-header-left">
           <button className="btn-ghost" type="button" onClick={() => router.push("/dashboard")}>
-            Atrás
+            Back
           </button>
         </div>
         <div className="page-title">
-          <h1>Seguimiento de Vuelos</h1>
-          <p>Centro de mando para vigilar, filtrar, analizar y comparar sin cambiar de pantalla.</p>
+          <h1>Flight Watchlist</h1>
+          <p>Control center to monitor, filter, analyze, and compare without changing screens.</p>
         </div>
         <div className="page-actions watchlist-header-right">
           <button className="btn-primary" type="button" onClick={() => actions.setShowAdd(true)}>
-            Añadir vuelo
+            Add flight
           </button>
         </div>
       </div>
@@ -51,12 +51,12 @@ export default function WatchlistPage() {
       {watchlistHint.visible ? (
         <section className="notice notice-compact notice-info section-gap" role="status" aria-live="polite">
           <div>
-            <strong>Primer vistazo</strong>
-            <p>Guarda vuelos aquí para seguir sus cambios.</p>
+            <strong>Quick start</strong>
+            <p>Save flights here to track their changes.</p>
           </div>
           <div className="notice-actions">
             <button type="button" className="btn-ghost btn-compact" onClick={watchlistHint.dismiss}>
-              Entendido
+              Got it
             </button>
           </div>
         </section>
@@ -64,7 +64,7 @@ export default function WatchlistPage() {
 
       {derived.lastUpdatedGlobal ? (
         <div className="notice notice-info section-gap" role="status" aria-live="polite">
-          Última actualización: {derived.lastUpdatedGlobal}
+          Last update: {derived.lastUpdatedGlobal}
         </div>
       ) : null}
 

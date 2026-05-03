@@ -118,8 +118,8 @@ export default function PreferenciasRegionPage() {
                 value={pref.language}
                 onChange={(event) => setPref({ ...pref, language: event.target.value })}
               >
-                <option value="es">Español</option>
-                <option value="en">English</option>
+                <option value="es">{t("preferences.region.languageOptionSpanish")}</option>
+                <option value="en">{t("preferences.region.languageOptionEnglish")}</option>
               </select>
             </label>
 

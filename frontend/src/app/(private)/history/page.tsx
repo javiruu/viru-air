@@ -14,8 +14,8 @@ export default function HistoryPage() {
   return (
     <main className="shell" id="main-content">
       <section className="panel panel-soft stack section-gap" aria-live="polite">
-        <h1>Redirigiendo al panel unificado</h1>
-        <p>El histórico ahora forma parte de Seguimiento de Vuelos.</p>
+        <h1>Redirecting to the unified panel</h1>
+        <p>History is now part of Flight Watchlist.</p>
       </section>
     </main>
   );

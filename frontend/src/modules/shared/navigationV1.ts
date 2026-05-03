@@ -1,19 +1,19 @@
 export const NAV_V1_PRIVATE = [
-  { href: "/dashboard", label: "Panel" },
-  { href: "/watchlist", label: "Seguimiento" },
-  { href: "/quick-search", label: "Búsqueda rápida" },
-  { href: "/alerts", label: "Alertas" },
-  { href: "/recomendaciones", label: "Recomendaciones" },
-  { href: "/preferencias", label: "Preferencias" },
-  { href: "/soporte/ayuda", label: "Ayuda" },
+  { href: "/dashboard", labelKey: "shared.footer.links.dashboard" },
+  { href: "/watchlist", labelKey: "shared.footer.links.watchlist" },
+  { href: "/quick-search", labelKey: "shared.footer.links.quickSearch" },
+  { href: "/alerts", labelKey: "shared.footer.links.alerts" },
+  { href: "/recomendaciones", labelKey: "shared.footer.links.recommendations" },
+  { href: "/preferencias", labelKey: "shared.footer.links.preferences" },
+  { href: "/soporte/ayuda", labelKey: "shared.footer.links.help" },
 ] as const;
 
 export const NAV_V1_PUBLIC = [
-  { href: "/", label: "Inicio" },
-  { href: "/ayuda", label: "Ayuda" },
-  { href: "/policies", label: "Políticas" },
-  { href: "/login", label: "Entrar" },
-  { href: "/register", label: "Crear cuenta" },
+  { href: "/", labelKey: "shared.footer.links.home" },
+  { href: "/ayuda", labelKey: "shared.footer.links.help" },
+  { href: "/policies", labelKey: "shared.footer.links.policies" },
+  { href: "/login", labelKey: "shared.actions.enter" },
+  { href: "/register", labelKey: "shared.footer.links.register" },
 ] as const;
 
 export const CANONICAL_ROUTES = {

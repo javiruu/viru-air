@@ -145,6 +145,19 @@ npm.cmd run qa:visual:quick-search
 
 - Nota: si el proveedor meteo no responde, usar mock de `https://api.open-meteo.com/v1/forecast` solo para materializar el estado visual.
 
+### Receta: Auditoria i18n (English)
+
+- Objetivo: verificar que, tras seleccionar ingles, no queden textos visibles en espanol en rutas publicas y privadas.
+- Comando:
+
+```powershell
+node frontend/scripts/qa_capture_i18n_english.mjs
+```
+
+- Salidas esperadas:
+  - `docs/qa/i18n-english-audit-report.json`
+  - `docs/qa/i18n-en-*.png`
+
 #### Criterio de aceptacion para cerrar una verificacion de clima en detalles
 
 - `auth.success = true`

@@ -163,7 +163,7 @@ export default function DashboardPage() {
     [noteActiveId, startNewNote, t]
   );
 
-  const userName = me?.email || me?.id || "Usuario";
+  const userName = me?.email || me?.id || "User";
   const userInitials = useMemo(() => {
     const clean = userName.trim();
     const [first, second] = clean.split(/[\s.@_-]+/).filter(Boolean);
@@ -357,12 +357,12 @@ export default function DashboardPage() {
       {dashboardHint.visible ? (
         <section className="notice notice-compact notice-info section-gap" role="status" aria-live="polite">
           <div>
-            <strong>Primer vistazo</strong>
-            <p>Aquí puedes ver un resumen de tu actividad y accesos rápidos.</p>
+            <strong>Quick start</strong>
+            <p>Here you can see a summary of your activity and quick access points.</p>
           </div>
           <div className="notice-actions">
             <button type="button" className="btn-ghost btn-compact" onClick={dashboardHint.dismiss}>
-              Entendido
+              Got it
             </button>
           </div>
         </section>

@@ -55,7 +55,7 @@ export function GlassForgotPasswordCard({
             value={email}
             onChange={(event) => onEmailChange(event.target.value)}
             type="email"
-            placeholder="tu@email.com"
+            placeholder={t("public.auth.emailPlaceholder")}
           />
         </label>
 

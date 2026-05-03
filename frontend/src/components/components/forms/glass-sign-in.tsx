@@ -93,7 +93,7 @@ export function GlassSignInCard({
             value={email}
             onChange={(event) => onEmailChange(event.target.value)}
             type="email"
-            placeholder="tu@email.com"
+            placeholder={t("public.auth.emailPlaceholder")}
           />
           {fieldError.email ? <small className="field-error">{fieldError.email}</small> : null}
         </label>

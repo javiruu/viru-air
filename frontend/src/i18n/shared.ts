@@ -47,6 +47,7 @@ export const sharedEs = {
     openAccountMenu: "Abrir menú de cuenta",
     accountMenu: "Menú de cuenta",
     changeTheme: "Cambiar tema",
+    mainNavigation: "Navegación principal",
   },
   loader: {
     flightLabel: "cargando vuelo",
@@ -166,6 +167,7 @@ export const sharedEn = {
     openAccountMenu: "Open account menu",
     accountMenu: "Account menu",
     changeTheme: "Change theme",
+    mainNavigation: "Main navigation",
   },
   loader: {
     flightLabel: "loading flight",
