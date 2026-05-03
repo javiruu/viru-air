@@ -5,6 +5,7 @@ import PrivateTopBar from "@/modules/shared/PrivateTopBar";
 import ThemeToggle from "@/modules/shared/ThemeToggle";
 import RequireAuth from "@/modules/shared/RequireAuth";
 import PrivateNav from "@/modules/shared/PrivateNav";
+import ViruFooterBlock from "@/modules/shared/ViruFooterBlock";
 
 export default function PrivateLayout({ children }: { children: ReactNode }) {
   return (
@@ -20,6 +21,7 @@ export default function PrivateLayout({ children }: { children: ReactNode }) {
           </div>
         </PrivateTopBar>
         <div className="private-content">{children}</div>
+        <ViruFooterBlock />
       </div>
     </RequireAuth>
   );

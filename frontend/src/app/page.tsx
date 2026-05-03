@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import ThemeToggle from "@/modules/shared/ThemeToggle";
 import AirLoader from "@/modules/shared/AirLoader";
+import ViruFooterBlock from "@/modules/shared/ViruFooterBlock";
 import { apiFetchWithStatus } from "@/modules/shared/api";
 import { clearToken, hasToken } from "@/modules/shared/auth";
 import { useI18n } from "@/i18n";
@@ -57,6 +58,7 @@ export default function HomePage() {
   }
 
   return (
+    <>
     <main className="shell landing-shell" id="main-content">
       <header className="landing-header">
         <div className="landing-brand">
@@ -287,5 +289,7 @@ export default function HomePage() {
         </article>
       </section>
     </main>
+    <ViruFooterBlock />
+    </>
   );
 }
