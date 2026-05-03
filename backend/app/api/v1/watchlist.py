@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.errors import error_envelope, message_for_code
 from app.core.idempotency import replay_if_exists, request_hash, store_response
+from app.domain.entities import ProviderFetchResult
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -188,11 +189,14 @@ def refresh_watch(
                 return response
 
     try:
-        flights = provider.get_flights(
+        provider_result = provider.get_flights(
             watch.origin_iata, watch.destination_iata, str(watch.travel_date_local)
         )
     except Exception as exc:
         raise HTTPException(status_code=502, detail="ryanair_unavailable") from exc
+
+    # Backward/forward compatibility: providers may return a legacy list or ProviderFetchResult.
+    flights = provider_result.flights if isinstance(provider_result, ProviderFetchResult) else provider_result
     if not flights:
         raise HTTPException(status_code=404, detail="no_flights_found")
     for flight in flights:
