@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 
 import { useFtueHint } from "@/lib/ftue";
 import { AddWatchModal } from "@/modules/watchlist/components/AddWatchModal";
@@ -8,9 +9,26 @@ import { AirportPickerModal } from "@/modules/watchlist/components/AirportPicker
 import { ComparePanels } from "@/modules/watchlist/components/ComparePanels";
 import { HistoryIntegratedPanel } from "@/modules/watchlist/components/HistoryIntegratedPanel";
 import { SmartWatchListPanel } from "@/modules/watchlist/components/SmartWatchListPanel";
-import { WatchlistMapDecisionPanel } from "@/modules/watchlist/components/WatchlistMapDecisionPanel";
 import { monthLabel } from "@/modules/watchlist/dateUtils";
 import { useWatchlistController } from "@/modules/watchlist/useWatchlistController";
+
+const WatchlistMapDecisionPanel = dynamic(
+  () =>
+    import("@/modules/watchlist/components/WatchlistMapDecisionPanel").then(
+      (module) => module.WatchlistMapDecisionPanel,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <section className="panel panel-soft watch-map-panel section-gap">
+        <div className="panel-header">
+          <h2 className="panel-title">Mesa de decisiones</h2>
+        </div>
+        <p className="panel-note">Cargando mapa de rutas...</p>
+      </section>
+    ),
+  },
+);
 
 const LINE_COLORS = ["#D95D39", "#2E6E62", "#B45309", "#0F766E", "#7C2D12", "#1D4ED8"];
 

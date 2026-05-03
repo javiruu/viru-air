@@ -16,6 +16,8 @@ type Props = {
   departAfter: string;
   departBefore: string;
   localeTag: string;
+  weatherOrigin?: unknown;
+  weatherDestination?: unknown;
   getCopyPayload: (result: SearchResult) => string;
   rowMenuTriggerRefs: React.MutableRefObject<Record<string, HTMLButtonElement | null>>;
   t: (key: any) => string;
