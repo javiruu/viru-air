@@ -38,6 +38,9 @@ logs_ia/
 *~
 %TEMP%/
 testsprite_tests/tmp/
+*.tsbuildinfo
+frontend/let
+backend/=*
 
 # OS
 .DS_Store

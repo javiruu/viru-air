@@ -17,6 +17,46 @@ function Pass([string]$Message) {
   Write-Host "RELEASE_GUARD_OK: $Message" -ForegroundColor Green
 }
 
+function Matches-AnyPattern([string]$Path, [string[]]$Patterns) {
+  foreach ($pattern in $Patterns) {
+    if ($Path -like $pattern) {
+      return $true
+    }
+  }
+  return $false
+}
+
+function Test-ProbablyBinary([string]$AbsolutePath) {
+  if (-not (Test-Path $AbsolutePath)) {
+    return $false
+  }
+
+  try {
+    $stream = [System.IO.File]::OpenRead($AbsolutePath)
+    try {
+      $length = [Math]::Min(4096, [int]$stream.Length)
+      if ($length -le 0) {
+        return $false
+      }
+
+      $buffer = New-Object byte[] $length
+      [void]$stream.Read($buffer, 0, $length)
+      foreach ($b in $buffer) {
+        if ($b -eq 0) {
+          return $true
+        }
+      }
+      return $false
+    }
+    finally {
+      $stream.Dispose()
+    }
+  }
+  catch {
+    return $false
+  }
+}
+
 if (-not (Test-Path ".git")) {
   Fail "No se encontro .git en '$RepoRoot'. Ejecuta este guard dentro de _publish_repo."
 }
@@ -34,6 +74,55 @@ if (-not $AllowDirtyWorktree) {
   }
   Pass "Working tree limpio."
 }
+
+$staged = @(git diff --name-only --cached)
+$tracked = @(git ls-files)
+$pathsToInspect = @($tracked + $staged | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)
+
+$blockedPatterns = @("*.tsbuildinfo", "*/=*", "=*")
+$temporaryPrefixes = @("testsprite_tests/tmp/", "logs/", "logs_ia/", "coverage/", ".next/", "dist/", "build/")
+$temporaryAllowedPrefixes = @("docs/qa/", "docs/archive/")
+
+$violations = New-Object System.Collections.Generic.List[string]
+foreach ($path in $pathsToInspect) {
+  $normalized = $path.Replace("\", "/")
+  $abs = Join-Path $RepoRoot $normalized
+  if (-not (Test-Path $abs)) {
+    continue
+  }
+
+  if (Matches-AnyPattern $normalized $blockedPatterns) {
+    $violations.Add("$normalized (patron bloqueado)")
+  }
+
+  if ($normalized.StartsWith("frontend/")) {
+    $ext = [System.IO.Path]::GetExtension($normalized)
+    if ([string]::IsNullOrWhiteSpace($ext)) {
+      if (Test-ProbablyBinary $abs) {
+        $violations.Add("$normalized (binario en frontend sin extension permitida)")
+      }
+    }
+  }
+
+  if (Matches-AnyPattern $normalized ($temporaryPrefixes | ForEach-Object { "$_*" })) {
+    $allowed = $false
+    foreach ($allowedPrefix in $temporaryAllowedPrefixes) {
+      if ($normalized.StartsWith($allowedPrefix)) {
+        $allowed = $true
+        break
+      }
+    }
+    if (-not $allowed) {
+      $violations.Add("$normalized (output temporal fuera de docs/qa o docs/archive)")
+    }
+  }
+}
+
+if ($violations.Count -gt 0) {
+  $list = ($violations | Select-Object -Unique) -join ", "
+  Fail "Artefactos bloqueados detectados: $list"
+}
+Pass "Validacion anti-basura sin hallazgos."
 
 if ($ExpectedPaths.Count -gt 0) {
   $expected = $ExpectedPaths | ForEach-Object { $_.Replace("\", "/") }
@@ -69,4 +158,3 @@ if ($PrePush) {
 
 Pass "Release guard completado."
 exit 0
-

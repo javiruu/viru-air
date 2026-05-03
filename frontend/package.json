@@ -10,7 +10,7 @@
     "test": "tsx --test",
     "test:e2e:quick-search": "tsx --test tests/quick-search-relax-preview.e2e.test.ts",
     "qa:visual:quick-search": "node scripts/qa_quick_search_visual.mjs",
-    "update:airports": "node ./frontend/scripts/update_airports_iata.mjs"
+    "update:airports": "node ./scripts/update_airports_iata.mjs"
   },
   "dependencies": {
     "framer-motion": "^12.38.0",
