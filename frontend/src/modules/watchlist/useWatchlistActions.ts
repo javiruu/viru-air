@@ -264,6 +264,56 @@ export function useWatchlistActions({
     }
   }
 
+  async function updateWatchStatus(id: string, status: "active" | "paused"): Promise<void> {
+    try {
+      await apiFetch<Watch>(`/watchlist/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ status }),
+      });
+      await load();
+      setMessage(status === "paused" ? "Vuelo pausado." : "Vuelo reanudado.");
+      setMessageType("success");
+    } catch {
+      setMessage("No se pudo actualizar el estado del vuelo.");
+      setMessageType("error");
+    }
+  }
+
+  async function deleteWatch(id: string): Promise<void> {
+    try {
+      await apiFetch<{ status: string }>(`/watchlist/${id}`, { method: "DELETE" });
+      await load();
+      setMessage("Vuelo eliminado.");
+      setMessageType("success");
+    } catch {
+      setMessage("No se pudo eliminar el vuelo.");
+      setMessageType("error");
+    }
+  }
+
+  async function bulkUpdateStatus(ids: string[], status: "active" | "paused"): Promise<void> {
+    if (ids.length === 0) return;
+    await Promise.allSettled(
+      ids.map((id) =>
+        apiFetch<Watch>(`/watchlist/${id}`, {
+          method: "PUT",
+          body: JSON.stringify({ status }),
+        }),
+      ),
+    );
+    await load();
+    setMessage(status === "paused" ? "Vuelos pausados." : "Vuelos reanudados.");
+    setMessageType("success");
+  }
+
+  async function bulkDelete(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+    await Promise.allSettled(ids.map((id) => apiFetch<{ status: string }>(`/watchlist/${id}`, { method: "DELETE" })));
+    await load();
+    setMessage("Vuelos eliminados.");
+    setMessageType("success");
+  }
+
   function openPicker(which: PickerField): void {
     if (!travelDate) {
       setMessage("Selecciona fecha antes de elegir aeropuertos.");
@@ -317,6 +367,10 @@ export function useWatchlistActions({
     onSubmit,
     refresh,
     refreshFiltered,
+    updateWatchStatus,
+    deleteWatch,
+    bulkUpdateStatus,
+    bulkDelete,
     openPicker,
     clearSelection,
     selectAirport,

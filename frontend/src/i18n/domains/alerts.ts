@@ -1,4 +1,4 @@
-export const alertsEs = {
+﻿export const alertsEs = {
   pageTitle: "Alertas",
   pageSubtitle: "Reglas por umbral, cambios y cooldown con trazabilidad.",
   form: {
@@ -23,6 +23,14 @@ export const alertsEs = {
     previewThresholdHigh: "Te avisaremos cuando supere {value}.",
     placeholder: "Ej: 29.90",
     category: "Categoría",
+    ruleTypeHelp: "Usa umbral para precio objetivo, o cada cambio para monitoreo continuo.",
+    cooldownHelp: "Cooldown evita ruido cuando el precio cambia varias veces en poco tiempo.",
+  },
+  presets: {
+    title: "Presets rápidos",
+    drop10: "Avísame si baja 10%",
+    price40: "Precio < 40 EUR",
+    weekend: "Fin de semana",
   },
   ruleNames: {
     thresholdLow: "Bajar de un precio",
@@ -106,6 +114,14 @@ export const alertsEn = {
     previewThresholdHigh: "We'll notify you when it exceeds {value}.",
     placeholder: "E.g.: 29.90",
     category: "Category",
+    ruleTypeHelp: "Use threshold for target prices, or every change for continuous monitoring.",
+    cooldownHelp: "Cooldown avoids noise when price updates happen in short bursts.",
+  },
+  presets: {
+    title: "Quick presets",
+    drop10: "Alert me if drops 10%",
+    price40: "Price < 40 EUR",
+    weekend: "Weekend",
   },
   ruleNames: {
     thresholdLow: "Lower than a price",

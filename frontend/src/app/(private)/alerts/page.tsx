@@ -92,6 +92,30 @@ export default function AlertsPage() {
     [t]
   );
 
+  const quickPresets = useMemo(
+    () => [
+      { id: "drop_10", label: t("alerts.presets.drop10"), apply: () => {
+        setRuleType("threshold_low");
+        setThresholdValue("40");
+        setCooldownMinutes(60);
+        setNotifyEveryChange(false);
+      } },
+      { id: "price_40", label: t("alerts.presets.price40"), apply: () => {
+        setRuleType("threshold_low");
+        setThresholdValue("40");
+        setCooldownMinutes(30);
+        setNotifyEveryChange(false);
+      } },
+      { id: "weekend", label: t("alerts.presets.weekend"), apply: () => {
+        setRuleType("every_change");
+        setThresholdValue("");
+        setCooldownMinutes(120);
+        setNotifyEveryChange(true);
+      } },
+    ],
+    [t],
+  );
+
   const ruleLabel = useCallback(
     (value: string) => ruleOptions.find((rule) => rule.value === value)?.label || value,
     [ruleOptions]
@@ -275,6 +299,16 @@ export default function AlertsPage() {
         </div>
 
         <form className="alert-form" onSubmit={onSubmit}>
+          <div className="alert-preview">
+            <strong>{t("alerts.presets.title")}</strong>
+            <div className="alert-actions">
+              {quickPresets.map((preset) => (
+                <button key={preset.id} type="button" className="btn-ghost btn-compact" onClick={preset.apply}>
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <label className="field">
             {t("alerts.form.flight")}
             <select
@@ -301,6 +335,7 @@ export default function AlertsPage() {
                 </option>
               ))}
             </select>
+            <small className="panel-note">{t("alerts.form.ruleTypeHelp")}</small>
           </label>
 
           {ruleType !== "every_change" ? (
@@ -330,6 +365,7 @@ export default function AlertsPage() {
                 </option>
               ))}
             </select>
+            <small className="panel-note">{t("alerts.form.cooldownHelp")}</small>
           </label>
 
           <label className="alert-check">

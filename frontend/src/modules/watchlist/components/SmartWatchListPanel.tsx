@@ -46,6 +46,12 @@ type SmartWatchListPanelProps = {
   onClearSearch: () => void;
   onSelectWatch: (watch: WatchItem) => void;
   onRefreshWatch: (watchId: string) => void;
+  onPauseWatch: (watchId: string) => void;
+  onResumeWatch: (watchId: string) => void;
+  onDeleteWatch: (watchId: string) => void;
+  onBulkPause: (watchIds: string[]) => void;
+  onBulkResume: (watchIds: string[]) => void;
+  onBulkDelete: (watchIds: string[]) => void;
   onOpenAddWatch: () => void;
 };
 
@@ -65,8 +71,18 @@ export function SmartWatchListPanel({
   onClearSearch,
   onSelectWatch,
   onRefreshWatch,
+  onPauseWatch,
+  onResumeWatch,
+  onDeleteWatch,
+  onBulkPause,
+  onBulkResume,
+  onBulkDelete,
   onOpenAddWatch,
 }: SmartWatchListPanelProps) {
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const hasSelection = selectedIds.length > 0;
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+
   return (
     <section className="panel panel-soft section-gap">
       <div className="panel-header">
@@ -116,6 +132,13 @@ export function SmartWatchListPanel({
           >
             Limpiar búsqueda
           </button>
+          {hasSelection ? (
+            <div className="alert-actions">
+              <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkPause(selectedIds)}>Pausar</button>
+              <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkResume(selectedIds)}>Reanudar</button>
+              <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkDelete(selectedIds)}>Eliminar</button>
+            </div>
+          ) : null}
         </div>
       </div>
       {items.length === 0 ? (
@@ -160,6 +183,7 @@ export function SmartWatchListPanel({
         const deltaLabel = !meta?.latest || !meta?.previous
           ? "Sin variación"
           : formatSignedCurrency(meta.latest.price - meta.previous.price, meta.latest.currency);
+        const routeHealthLabel = trend === "up" ? "Sube" : trend === "down" ? "Baja" : "Estable";
 
         const values = historyRows
           .filter((row) => row.watchId === watch.id)
@@ -186,8 +210,22 @@ export function SmartWatchListPanel({
           >
             <div className="watch-details">
               <div className="watch-route">
+                <input
+                  type="checkbox"
+                  checked={selectedSet.has(watch.id)}
+                  onChange={(event) => {
+                    event.stopPropagation();
+                    setSelectedIds((prev) =>
+                      event.target.checked ? Array.from(new Set([...prev, watch.id])) : prev.filter((id) => id !== watch.id),
+                    );
+                  }}
+                  aria-label={`Seleccionar ${watch.origin_iata} ${watch.destination_iata}`}
+                />
                 <strong>{watch.origin_iata}{" -> "}{watch.destination_iata}</strong>
                 <span className="watch-date">{watch.travel_date_local}</span>
+                <span className={`status-pill ${trend === "up" ? "error" : trend === "down" ? "success" : "warning"}`}>
+                  {routeHealthLabel}
+                </span>
               </div>
               <div className="watch-meta">
                 <span className="watch-meta-chip">Última actualización: {safeDateTime(meta?.latest?.capturedAt)}</span>
@@ -238,6 +276,20 @@ export function SmartWatchListPanel({
               >
                 {refreshingWatchId === watch.id ? "Actualizando..." : "Actualizar"}
               </button>
+              <div className="alert-actions">
+                {watch.status === "paused" ? (
+                  <button className="btn-ghost btn-compact" type="button" onClick={(e) => { e.stopPropagation(); onResumeWatch(watch.id); }}>
+                    Reanudar
+                  </button>
+                ) : (
+                  <button className="btn-ghost btn-compact" type="button" onClick={(e) => { e.stopPropagation(); onPauseWatch(watch.id); }}>
+                    Pausar
+                  </button>
+                )}
+                <button className="btn-ghost btn-compact" type="button" onClick={(e) => { e.stopPropagation(); onDeleteWatch(watch.id); }}>
+                  Eliminar
+                </button>
+              </div>
             </div>
           </article>
         );
@@ -246,3 +298,4 @@ export function SmartWatchListPanel({
   );
 }
 
+import { useMemo, useState } from "react";

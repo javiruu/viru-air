@@ -397,10 +397,12 @@ export default function RecommendationsExplorer() {
                 <label className="field">
                   <span>{t("recommendations.daysBefore")}</span>
                   <input type="number" min={0} max={7} value={daysBefore} onChange={(event) => setDaysBefore(Number(event.target.value))} />
+                  <small className="panel-note">{t("recommendations.daysBeforeHelp")}</small>
                 </label>
                 <label className="field">
                   <span>{t("recommendations.daysAfter")}</span>
                   <input type="number" min={0} max={7} value={daysAfter} onChange={(event) => setDaysAfter(Number(event.target.value))} />
+                  <small className="panel-note">{t("recommendations.daysAfterHelp")}</small>
                 </label>
               </div>
 
@@ -469,6 +471,7 @@ export default function RecommendationsExplorer() {
                     {t("recommendations.filterFlexible")}
                   </label>
                 </div>
+                <p className="panel-note">{t("recommendations.filterModeHelp")}</p>
 
                 {!strictFilters ? (
                   <label className="field reco-slider-row">
@@ -634,6 +637,7 @@ export default function RecommendationsExplorer() {
                         </h3>
                         <p className="reco-price-xl">{formatCurrency(item.price, item.currency || "EUR", localeTag)}</p>
                         <p className="reco-smart-tag">{smartTag}</p>
+                        <p className="panel-note">{t("recommendations.whyShownShort", { reason: reasons[0] ? t(reasons[0].key, reasons[0].params) : t("recommendations.emptyBody") })}</p>
                         <p className="reco-topby-line">{topByLine}</p>
                         <p className="reco-meta-line">{formatRouteMeta(item, t)}</p>
                       </div>

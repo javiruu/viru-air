@@ -16,7 +16,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
-from app.domain.schemas import WatchCreateIn, WatchOut
+from app.domain.schemas import WatchCreateIn, WatchOut, WatchUpdateIn
 from app.infrastructure.db.models import FlightWatch, PriceSnapshot, User
 from app.infrastructure.db.session import get_db
 from app.infrastructure.providers.ryanair_public_provider import RyanairPublicProvider
@@ -107,7 +107,7 @@ def list_watches(
     watches = list(
         db.scalars(
             select(FlightWatch)
-            .where(FlightWatch.user_id == current_user.id)
+            .where(FlightWatch.user_id == current_user.id, FlightWatch.status != "deleted")
             .order_by(FlightWatch.created_at.desc(), FlightWatch.id.desc())
         )
     )
@@ -122,6 +122,50 @@ def list_watches(
         )
         for w in watches
     ]
+
+
+@router.put("/{watch_id}", response_model=WatchOut)
+def update_watch(
+    watch_id: str,
+    payload: WatchUpdateIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> WatchOut:
+    watch = db.scalar(
+        select(FlightWatch).where(FlightWatch.id == watch_id, FlightWatch.user_id == current_user.id)
+    )
+    if not watch or watch.status == "deleted":
+        raise HTTPException(status_code=404, detail="watch_not_found")
+
+    watch.status = payload.status
+    watch.is_paused = payload.status == "paused"
+    db.commit()
+    db.refresh(watch)
+    return WatchOut(
+        id=watch.id,
+        origin_iata=watch.origin_iata,
+        destination_iata=watch.destination_iata,
+        travel_date_local=watch.travel_date_local,
+        target_price=float(watch.target_price) if watch.target_price else None,
+        status=watch.status,
+    )
+
+
+@router.delete("/{watch_id}")
+def delete_watch(
+    watch_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict[str, str]:
+    watch = db.scalar(
+        select(FlightWatch).where(FlightWatch.id == watch_id, FlightWatch.user_id == current_user.id)
+    )
+    if not watch or watch.status == "deleted":
+        raise HTTPException(status_code=404, detail="watch_not_found")
+    watch.status = "deleted"
+    watch.is_paused = True
+    db.commit()
+    return {"status": "ok"}
 
 
 @router.post("/{watch_id}/refresh-now")
@@ -151,6 +195,10 @@ def refresh_watch(
     )
     if not watch:
         raise HTTPException(status_code=404, detail="watch_not_found")
+    if watch.status == "deleted":
+        raise HTTPException(status_code=404, detail="watch_not_found")
+    if watch.is_paused or watch.status == "paused":
+        raise HTTPException(status_code=409, detail="watch_paused")
 
     if REFRESH_COOLDOWN_SECONDS > 0:
         latest_snapshot = db.scalar(

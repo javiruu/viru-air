@@ -136,6 +136,12 @@ export default function WatchlistPage() {
         onClearSearch={() => view.setWatchSearch("")}
         onSelectWatch={selectWatch}
         onRefreshWatch={actions.refresh}
+        onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
+        onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
+        onDeleteWatch={actions.deleteWatch}
+        onBulkPause={(ids) => actions.bulkUpdateStatus(ids, "paused")}
+        onBulkResume={(ids) => actions.bulkUpdateStatus(ids, "active")}
+        onBulkDelete={actions.bulkDelete}
         onOpenAddWatch={() => actions.setShowAdd(true)}
       />
 

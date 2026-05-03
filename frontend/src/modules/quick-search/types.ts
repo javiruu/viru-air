@@ -167,8 +167,13 @@ export type QuickSearchExplainTag = { key: string; label: string; tone: QuickSea
 export type QuickSearchTripType = "one_way" | "round_trip" | "round_trip_incomplete";
 export type QuickSearchLoadingPhase = "idle" | "requesting" | "response_parsed" | "client_done" | "committed";
 export type QuickSearchLoadingSubcheckStatus = "pending" | "active" | "done";
-export type ZeroResultRelaxAction = "disable_strict" | "increase_duration" | "open_radius_150" | "clear_exclusions";
-export type SummaryHighlightKey = "strict" | "duration" | "radius" | "exclusions" | null;
+export type ZeroResultRelaxAction =
+  | "disable_strict"
+  | "increase_duration"
+  | "open_radius_150"
+  | "clear_exclusions"
+  | "open_date_flex";
+export type SummaryHighlightKey = "strict" | "duration" | "radius" | "exclusions" | "date_flex" | null;
 
 export type RelaxUndoPayload =
   | { action: "disable_strict"; strictFilters: boolean }
@@ -185,6 +190,12 @@ export type RelaxUndoPayload =
       excludeDestinations: string[];
       excludeOriginInput: string;
       excludeDestinationInput: string;
+    }
+  | {
+      action: "open_date_flex";
+      daysBefore: number;
+      daysAfter: number;
+      applyFlexReturn: boolean;
     };
 
 export type AirportIataEntry = {

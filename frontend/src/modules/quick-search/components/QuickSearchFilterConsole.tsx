@@ -128,6 +128,7 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
             <span className="qs-filter-eyebrow">{props.t("filterConsoleEyebrow")}</span>
             <h2>{props.t("filtersTitle")}</h2>
             <span className="muted">{props.t("filtersSubtitle")}</span>
+            <p className="panel-note">{props.t("filtersMicrocopy")}</p>
           </div>
           <button
             type="button"

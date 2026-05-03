@@ -22,6 +22,8 @@
   systemLabel: "Sistema",
   daysBefore: "Dias antes",
   daysAfter: "Dias despues",
+  daysBeforeHelp: "Amplia dias previos para ver ventanas de precio cercanas.",
+  daysAfterHelp: "Amplia dias posteriores para descubrir mejores combinaciones.",
   modeTitle: "Modo",
   mode: {
     discover: "Descubrir",
@@ -43,6 +45,7 @@
   filtersTitle: "Filtros avanzados",
   filtersSubtitle: "Limpia ruido antes del ranking.",
   filterMode: "Modo filtrado",
+  filterModeHelp: "Estricto reduce ruido; flexible muestra mas rutas con menor score.",
   filterStrict: "Estricto (excluye completamente)",
   filterFlexible: "Flexible (reduce score)",
   radiusLabel: "Radio (km)",
@@ -103,6 +106,7 @@
     watch: "Revisar con cuidado",
   },
   whyTop: "Por que esta arriba",
+  whyShownShort: "Por que te la mostramos: {reason}",
   reasons: {
     priceBelowAvg: "Precio {percent}% por debajo de la media",
     priceAboveAvg: "Precio {percent}% por encima de la media",
@@ -162,6 +166,8 @@ export const recommendationsEn = {
   systemLabel: "System",
   daysBefore: "Days before",
   daysAfter: "Days after",
+  daysBeforeHelp: "Expand previous days to catch nearby price windows.",
+  daysAfterHelp: "Expand following days to surface better combinations.",
   modeTitle: "Mode",
   mode: {
     discover: "Discover",
@@ -183,6 +189,7 @@ export const recommendationsEn = {
   filtersTitle: "Advanced filters",
   filtersSubtitle: "Reduce noise before ranking.",
   filterMode: "Filtering mode",
+  filterModeHelp: "Strict reduces noise; flexible shows more routes with lower scores.",
   filterStrict: "Strict (fully exclude)",
   filterFlexible: "Flexible (reduce score)",
   radiusLabel: "Radius (km)",
@@ -243,6 +250,7 @@ export const recommendationsEn = {
     watch: "Watch closely",
   },
   whyTop: "Why this ranks high",
+  whyShownShort: "Why we showed this: {reason}",
   reasons: {
     priceBelowAvg: "Price is {percent}% below average",
     priceAboveAvg: "Price is {percent}% above average",

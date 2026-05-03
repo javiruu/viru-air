@@ -83,6 +83,7 @@ const RELAX_HIGHLIGHT_BY_ACTION: Record<ZeroResultRelaxAction, Exclude<SummaryHi
   increase_duration: "duration",
   open_radius_150: "radius",
   clear_exclusions: "exclusions",
+  open_date_flex: "date_flex",
 };
 
 function QuickSearchCloseIcon() {
@@ -2492,6 +2493,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     excludeDestinationsCount: excludeDestinations.length,
     departAfter,
     departBefore,
+    daysBefore,
+    daysAfter,
     emptyCausesExpanded,
     t,
     tWarn,
@@ -2763,6 +2766,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       setIncludeNearbyOrigins(undoPayload.includeNearbyOrigins);
       setIncludeNearbyDestinations(undoPayload.includeNearbyDestinations);
       setRadiusKm(undoPayload.radiusKm);
+    } else if (undoPayload.action === "open_date_flex") {
+      setDaysBefore(undoPayload.daysBefore);
+      setDaysAfter(undoPayload.daysAfter);
+      setApplyFlexReturn(undoPayload.applyFlexReturn);
     } else {
       setExcludeOrigins(undoPayload.excludeOrigins);
       setExcludeDestinations(undoPayload.excludeDestinations);
@@ -2781,9 +2788,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setExcludeDestinations,
     setExcludeOriginInput,
     setExcludeOrigins,
+    setDaysAfter,
+    setDaysBefore,
     setIncludeNearbyDestinations,
     setIncludeNearbyOrigins,
     setRadiusKm,
+    setApplyFlexReturn,
     setStrictFilters,
     setSummaryHighlightKey,
     setToast,
@@ -2796,6 +2806,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       increase_duration: t("emptyActionIncreaseDuration"),
       open_radius_150: t("emptyActionOpenRadius"),
       clear_exclusions: t("emptyActionClearExclusions"),
+      open_date_flex: t("emptyActionDateFlex"),
     };
 
     if (action === "disable_strict") {
@@ -2815,6 +2826,16 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       setIncludeNearbyOrigins(true);
       setIncludeNearbyDestinations(true);
       setRadiusKm(150);
+    } else if (action === "open_date_flex") {
+      relaxUndoRef.current = {
+        action,
+        daysBefore,
+        daysAfter,
+        applyFlexReturn,
+      };
+      setDaysBefore(Math.max(2, daysBefore));
+      setDaysAfter(Math.max(2, daysAfter));
+      setApplyFlexReturn(true);
     } else {
       relaxUndoRef.current = {
         action,
@@ -2843,6 +2864,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     includeNearbyOrigins,
     includeNearbyDestinations,
     radiusKm,
+    daysBefore,
+    daysAfter,
+    applyFlexReturn,
     excludeOrigins,
     excludeDestinations,
     excludeOriginInput,
@@ -2854,9 +2878,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setExcludeDestinations,
     setExcludeOriginInput,
     setExcludeOrigins,
+    setDaysAfter,
+    setDaysBefore,
     setIncludeNearbyDestinations,
     setIncludeNearbyOrigins,
     setRadiusKm,
+    setApplyFlexReturn,
     setStrictFilters,
     setSummaryHighlightKey,
     setToast,
@@ -4076,6 +4103,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             departAfter={departAfter}
             departBefore={departBefore}
             localeTag={localeTag}
+            weatherOrigin={weatherOrigin}
+            weatherDestination={weatherDestination}
             getCopyPayload={getCopyPayload}
             rowMenuTriggerRefs={rowMenuTriggerRefs}
             t={t}
@@ -4327,95 +4356,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       )}
 
       {airportPickerModal}
-
-      {(weatherOrigin || weatherDestination) ? (
-        <details className="panel panel-soft section-gap qs-secondary-weather">
-          <summary className="qs-info-summary">
-            <strong>{t("weatherTitle")}</strong>
-            <span className="muted">{t("viewDetail")}</span>
-          </summary>
-          <div className="panel-header">
-            <h2>{t("weatherTitle")}</h2>
-            <span className="muted">{t("weatherSubtitle")}</span>
-          </div>
-          <div className="weather-grid">
-            {weatherOrigin ? (
-              <div className="weather-group">
-                <h3>
-                  {weatherOrigin.city} ({weatherOrigin.iata}) - {t("weatherOrigin")}
-                </h3>
-                <div className="weather-days">
-                  {weatherOrigin.days.map((day) => {
-                    const dateLabel = new Date(day.date).toLocaleDateString(localeTag, { weekday: "short", day: "2-digit", month: "short" });
-                    return (
-                      <div key={`${weatherOrigin.iata}-${day.date}`} className="cardm">
-                        <div className="card">
-                          <div className="weather">
-                            <strong>{dateLabel}</strong>
-                            <div className="main">{Math.round(day.tempMax)} C</div>
-                            <div className="mainsub">{Math.round(day.tempMin)} C</div>
-                          </div>
-                          <div className="upper">
-                            <span>{day.description}</span>
-                            <span>{day.precipProb ?? 0}%</span>
-                          </div>
-                          <div className="humiditytext">precip</div>
-                          <div className="airtext">clima</div>
-                        </div>
-                        <div className="card2">
-                          <div className="lower">
-                            <div className="aqi">Max {Math.round(day.tempMax)} C</div>
-                            <div className="realfeel">Min {Math.round(day.tempMin)} C</div>
-                            <div>Prob {day.precipProb ?? 0}%</div>
-                          </div>
-                        </div>
-                        <div className="card3">{t("weatherDepart")}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-            {weatherDestination ? (
-              <div className="weather-group">
-                <h3>
-                  {weatherDestination.city} ({weatherDestination.iata}) - {t("weatherDestination")}
-                </h3>
-                <div className="weather-days">
-                  {weatherDestination.days.map((day) => {
-                    const dateLabel = new Date(day.date).toLocaleDateString(localeTag, { weekday: "short", day: "2-digit", month: "short" });
-                    return (
-                      <div key={`${weatherDestination.iata}-${day.date}`} className="cardm">
-                        <div className="card">
-                          <div className="weather">
-                            <strong>{dateLabel}</strong>
-                            <div className="main">{Math.round(day.tempMax)} C</div>
-                            <div className="mainsub">{Math.round(day.tempMin)} C</div>
-                          </div>
-                          <div className="upper">
-                            <span>{day.description}</span>
-                            <span>{day.precipProb ?? 0}%</span>
-                          </div>
-                          <div className="humiditytext">precip</div>
-                          <div className="airtext">clima</div>
-                        </div>
-                        <div className="card2">
-                          <div className="lower">
-                            <div className="aqi">Max {Math.round(day.tempMax)} C</div>
-                            <div className="realfeel">Min {Math.round(day.tempMin)} C</div>
-                            <div>Prob {day.precipProb ?? 0}%</div>
-                          </div>
-                        </div>
-                        <div className="card3">{t("weatherArrive")}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </details>
-      ) : null}
 
     </main>
   );

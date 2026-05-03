@@ -104,6 +104,18 @@ class WatchOut(BaseModel):
     status: str
 
 
+class WatchUpdateIn(BaseModel):
+    status: str
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if normalized not in {"active", "paused"}:
+            raise ValueError("invalid_watch_status")
+        return normalized
+
+
 class SnapshotOut(BaseModel):
     captured_at_utc: datetime
     raw_price: float

@@ -26,6 +26,8 @@ type QuickSearchScreenStateArgs = {
   excludeDestinationsCount: number;
   departAfter: string;
   departBefore: string;
+  daysBefore: number;
+  daysAfter: number;
   emptyCausesExpanded: boolean;
   t: (key: QuickSearchCopyKey) => string;
   tWarn: (key: string) => string;
@@ -52,6 +54,8 @@ export function useQuickSearchScreenState({
   excludeDestinationsCount,
   departAfter,
   departBefore,
+  daysBefore,
+  daysAfter,
   emptyCausesExpanded,
   t,
   tWarn,
@@ -247,11 +251,23 @@ export function useQuickSearchScreenState({
     if (strictFilters) actions.push({ id: "disable_strict", label: t("emptyActionDisableStrict") });
     if (durationMaxNumber !== null) actions.push({ id: "increase_duration", label: t("emptyActionIncreaseDuration") });
     if (!radiusActive || radiusKm < 150) actions.push({ id: "open_radius_150", label: t("emptyActionOpenRadius") });
+    if (daysBefore < 2 || daysAfter < 2) actions.push({ id: "open_date_flex", label: t("emptyActionDateFlex") });
     if (excludeOriginsCount > 0 || excludeDestinationsCount > 0) {
       actions.push({ id: "clear_exclusions", label: t("emptyActionClearExclusions") });
     }
     return actions;
-  }, [strictFilters, durationMaxNumber, radiusActive, radiusKm, excludeOriginsCount, excludeDestinationsCount, providerTotalOutage, t]);
+  }, [
+    strictFilters,
+    durationMaxNumber,
+    radiusActive,
+    radiusKm,
+    daysBefore,
+    daysAfter,
+    excludeOriginsCount,
+    excludeDestinationsCount,
+    providerTotalOutage,
+    t,
+  ]);
 
   return {
     durationMaxNumber,
