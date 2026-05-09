@@ -13928,8 +13928,66 @@ textarea::placeholder {
 
 .qs-filter-console-drawer {
   display: grid;
-  gap: 0.9rem;
+  gap: 0.95rem;
   padding: 1rem;
+  padding-bottom: 1.4rem;
+  overflow: visible;
+}
+
+.qs-filters-panel {
+  box-sizing: border-box;
+  width: min(540px, 100vw);
+  max-width: 100vw;
+}
+
+.qs-filters-header {
+  padding: 1rem 1rem 0.7rem;
+}
+
+.qs-filter-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  padding: 0.8rem 1rem max(0.95rem, env(safe-area-inset-bottom, 0px));
+  margin: 0;
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.qs-filter-console-drawer .field,
+.qs-filter-console-drawer .qs-check {
+  min-width: 0;
+}
+
+.qs-filter-console-drawer .field > span,
+.qs-filter-console-drawer .field > label {
+  min-width: 0;
+}
+
+.qs-filter-console-drawer .qs-input,
+.qs-filter-console-drawer select.qs-input,
+.qs-filter-console-drawer input.qs-input {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0.62rem 0.78rem;
+}
+
+.qs-filter-console-drawer select.qs-input {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qs-filter-console-drawer .qs-range {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(88px, 124px);
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.qs-filter-console-drawer .qs-range input[type="number"] {
+  text-align: center;
 }
 
 .qs-filter-group-guided {
@@ -13955,7 +14013,7 @@ textarea::placeholder {
 .qs-filter-group-guided .qs-filter-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
+  gap: 0.85rem;
 }
 
 .qs-filter-wide {
@@ -14012,6 +14070,15 @@ textarea::placeholder {
 }
 
 @media (max-width: 520px) {
+  .qs-filters-panel {
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  .qs-filters-header {
+    padding: 0.85rem 0.8rem 0.66rem;
+  }
+
   .qs-filter-console {
     border-radius: 18px;
     padding: 0.85rem;
@@ -14026,6 +14093,14 @@ textarea::placeholder {
 
   .qs-filter-console-drawer {
     padding: 0.75rem;
+  }
+
+  .qs-filter-actions {
+    padding-inline: 0.75rem;
+  }
+
+  .qs-filter-console-drawer .qs-range {
+    grid-template-columns: 1fr;
   }
 }
 

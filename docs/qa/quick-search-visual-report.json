@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-09T14:59:18.018Z",
+  "generatedAt": "2026-05-09T16:16:19.744Z",
   "baseUrl": "http://127.0.0.1:3000",
   "targetPath": "/quick-search",
   "auth": {
@@ -7,22 +7,75 @@
     "success": true,
     "loginUrlDetected": true,
     "tokenFound": true,
-    "usingDefaultSeedCreds": false
+    "usingDefaultSeedCreds": true
   },
   "snapshots": [
     {
       "viewport": {
-        "name": "desktop",
-        "width": 1440,
-        "height": 900
+        "name": "mobile360",
+        "width": 360,
+        "height": 780
       },
-      "file": "docs\\qa\\snapshots_quick-search-desktop.png",
+      "file": "docs\\qa\\snapshots_quick-search-mobile360.png",
+      "panelFile": "docs\\qa\\snapshots_quick-search-filters-mobile360.png",
       "pickerV2Visible": true,
       "resultsVisible": 0,
       "detailsButtons": 0,
       "weatherDetailsVisible": 0,
-      "previousHash": "1f26f7cfd8322548bd3e71bde69cdb8932ca9bb4b4710b99ecc7b90379ed456c",
-      "currentHash": "95fc382c5501c3e745d5f22259bd4a5426c926d11832e19850d7338cace87ff7",
+      "panelChecks": {
+        "ok": true,
+        "drawerFullyVisible": true,
+        "closeFullyVisible": true,
+        "hasVerticalScroll": true,
+        "overflowYAuto": true,
+        "controlsOverlapCount": 0,
+        "controlsMinWidth": 276.0625,
+        "controlsAnyTooNarrow": false,
+        "contentBottomReachable": false,
+        "focusOutlineVisible": true,
+        "maxStopsDisabled": true,
+        "activeBadgeVisible": true,
+        "riskText": "Todos",
+        "sortText": "Ranking",
+        "focusVisible": true,
+        "bottomReachableAfterScroll": true
+      },
+      "previousHash": null,
+      "currentHash": "475ea78bd8276d7930619719635c998de11e67a93d805f7fc4aa212ad89ad61d",
+      "changed": true
+    },
+    {
+      "viewport": {
+        "name": "mobile390",
+        "width": 390,
+        "height": 844
+      },
+      "file": "docs\\qa\\snapshots_quick-search-mobile390.png",
+      "panelFile": "docs\\qa\\snapshots_quick-search-filters-mobile390.png",
+      "pickerV2Visible": true,
+      "resultsVisible": 0,
+      "detailsButtons": 0,
+      "weatherDetailsVisible": 0,
+      "panelChecks": {
+        "ok": true,
+        "drawerFullyVisible": true,
+        "closeFullyVisible": true,
+        "hasVerticalScroll": true,
+        "overflowYAuto": true,
+        "controlsOverlapCount": 0,
+        "controlsMinWidth": 306.0625,
+        "controlsAnyTooNarrow": false,
+        "contentBottomReachable": false,
+        "focusOutlineVisible": true,
+        "maxStopsDisabled": true,
+        "activeBadgeVisible": true,
+        "riskText": "Todos",
+        "sortText": "Ranking",
+        "focusVisible": true,
+        "bottomReachableAfterScroll": true
+      },
+      "previousHash": null,
+      "currentHash": "e60ae5fec41576861a46c656229bc495f798e98ee62622a55d2bda28f34c1a76",
       "changed": true
     },
     {
@@ -32,43 +85,101 @@
         "height": 1024
       },
       "file": "docs\\qa\\snapshots_quick-search-tablet768.png",
+      "panelFile": "docs\\qa\\snapshots_quick-search-filters-tablet768.png",
       "pickerV2Visible": true,
       "resultsVisible": 0,
       "detailsButtons": 0,
       "weatherDetailsVisible": 0,
-      "previousHash": "f2fd320552ebbcfad3084784c5ee8fba9ead7bf97811bdebcbd8a09e40dcda6a",
-      "currentHash": "20d5fb1481dccb661129c72649b40ed6b35c97abff132432a7e785ee387f39b8",
+      "panelChecks": {
+        "ok": true,
+        "drawerFullyVisible": true,
+        "closeFullyVisible": true,
+        "hasVerticalScroll": true,
+        "overflowYAuto": true,
+        "controlsOverlapCount": 0,
+        "controlsMinWidth": 441,
+        "controlsAnyTooNarrow": false,
+        "contentBottomReachable": false,
+        "focusOutlineVisible": true,
+        "maxStopsDisabled": true,
+        "activeBadgeVisible": true,
+        "riskText": "Todos",
+        "sortText": "Ranking",
+        "focusVisible": true,
+        "bottomReachableAfterScroll": true
+      },
+      "previousHash": "20d5fb1481dccb661129c72649b40ed6b35c97abff132432a7e785ee387f39b8",
+      "currentHash": "1c96753103a63d7f32712b65815ff4e127a8a4defb2fec5e95fdb097b8e428ac",
       "changed": true
     },
     {
       "viewport": {
-        "name": "mobile375",
-        "width": 375,
-        "height": 812
+        "name": "tablet1024",
+        "width": 1024,
+        "height": 900
       },
-      "file": "docs\\qa\\snapshots_quick-search-mobile375.png",
+      "file": "docs\\qa\\snapshots_quick-search-tablet1024.png",
+      "panelFile": "docs\\qa\\snapshots_quick-search-filters-tablet1024.png",
       "pickerV2Visible": true,
       "resultsVisible": 0,
       "detailsButtons": 0,
       "weatherDetailsVisible": 0,
-      "previousHash": "6cf4dd7d00e46f26b47c00d3d61816e23638961daca6b7f2675c2720a489d8a6",
-      "currentHash": "4511ccd205ce6e9070745e95bda7dd2724e0824224323eb1db031198beff811c",
+      "panelChecks": {
+        "ok": true,
+        "drawerFullyVisible": true,
+        "closeFullyVisible": true,
+        "hasVerticalScroll": true,
+        "overflowYAuto": true,
+        "controlsOverlapCount": 0,
+        "controlsMinWidth": 165.03125,
+        "controlsAnyTooNarrow": false,
+        "contentBottomReachable": false,
+        "focusOutlineVisible": true,
+        "maxStopsDisabled": true,
+        "activeBadgeVisible": true,
+        "riskText": "Todos",
+        "sortText": "Ranking",
+        "focusVisible": true,
+        "bottomReachableAfterScroll": true
+      },
+      "previousHash": null,
+      "currentHash": "c2bc13fe198229d50c42f0d9fcd22ab07144b44006858d34a09d63a550b94bb8",
       "changed": true
     },
     {
       "viewport": {
-        "name": "mobile320",
-        "width": 320,
-        "height": 712
+        "name": "desktop1440",
+        "width": 1440,
+        "height": 900
       },
-      "file": "docs\\qa\\snapshots_quick-search-mobile320.png",
+      "file": "docs\\qa\\snapshots_quick-search-desktop1440.png",
+      "panelFile": "docs\\qa\\snapshots_quick-search-filters-desktop1440.png",
       "pickerV2Visible": true,
       "resultsVisible": 0,
       "detailsButtons": 0,
       "weatherDetailsVisible": 0,
-      "previousHash": "177c598f90ac986f5163a47919ca80e98a64e385f636183129d84e542ff736cd",
-      "currentHash": "32eb8d0892a4149d588002500e67146db5ae8cc2bc1eac255edea1dc2dc80f0a",
+      "panelChecks": {
+        "ok": true,
+        "drawerFullyVisible": true,
+        "closeFullyVisible": true,
+        "hasVerticalScroll": true,
+        "overflowYAuto": true,
+        "controlsOverlapCount": 0,
+        "controlsMinWidth": 163.75,
+        "controlsAnyTooNarrow": false,
+        "contentBottomReachable": false,
+        "focusOutlineVisible": true,
+        "maxStopsDisabled": true,
+        "activeBadgeVisible": true,
+        "riskText": "Todos",
+        "sortText": "Ranking",
+        "focusVisible": true,
+        "bottomReachableAfterScroll": true
+      },
+      "previousHash": null,
+      "currentHash": "a97cdef4313d27f2e3bd5df34df8cf006c784cd0bacf219988d5a6c8364908ff",
       "changed": true
     }
-  ]
+  ],
+  "failures": []
 }

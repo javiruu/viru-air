@@ -16,10 +16,11 @@ const LOGIN_PASSWORD = process.env.QA_LOGIN_PASSWORD || "ViruUser123";
 const TARGET_PATH = "/quick-search";
 
 const viewports = [
-  { name: "desktop", width: 1440, height: 900 },
+  { name: "mobile360", width: 360, height: 780 },
+  { name: "mobile390", width: 390, height: 844 },
   { name: "tablet768", width: 768, height: 1024 },
-  { name: "mobile375", width: 375, height: 812 },
-  { name: "mobile320", width: 320, height: 712 },
+  { name: "tablet1024", width: 1024, height: 900 },
+  { name: "desktop1440", width: 1440, height: 900 },
 ];
 
 await mkdir(qaDir, { recursive: true });
@@ -38,6 +39,7 @@ const report = {
     usingDefaultSeedCreds: !process.env.QA_LOGIN_EMAIL && !process.env.QA_LOGIN_PASSWORD,
   },
   snapshots: [],
+  failures: [],
 };
 
 try {
@@ -56,8 +58,10 @@ try {
     }
     await waitForStableQuickSearch(page);
 
-    const fileName = `snapshots_quick-search-${vp.name}.png`;
-    const target = path.join(qaDir, fileName);
+    const pageFileName = `snapshots_quick-search-${vp.name}.png`;
+    const panelFileName = `snapshots_quick-search-filters-${vp.name}.png`;
+    const pageTarget = path.join(qaDir, pageFileName);
+    const panelTarget = path.join(qaDir, panelFileName);
     const pickerVisible = await page.locator('[data-ui="qs-date-picker-v2"]').first().count();
     const detailsButtons = await page.locator("button.qs-result-details-link").count();
     let weatherDetailsVisible = 0;
@@ -70,29 +74,131 @@ try {
       resultsVisible = await page.locator(".qs-result-row").count();
     }
 
-    let previousHash = null;
+    const openFilters = page.locator('[data-ui="qs-filter-open"]').first();
+    await openFilters.click();
+    const drawer = page.locator('[data-ui="qs-filter-drawer"]');
+    await drawer.waitFor({ state: "visible", timeout: 10000 });
+    await page.waitForTimeout(220);
+
+    const panelMetrics = await page.evaluate(() => {
+      const drawer = document.querySelector('[data-ui="qs-filter-drawer"]');
+      const close = drawer?.querySelector(".qs-filters-close");
+      const priceMin = drawer?.querySelector('[data-ui="qs-filter-price-min"]');
+      const priceMax = drawer?.querySelector('[data-ui="qs-filter-price-max"]');
+      const durationMax = drawer?.querySelector('[data-ui="qs-filter-duration-max"]');
+      const risk = drawer?.querySelector('[data-ui="qs-filter-risk"]');
+      const sort = drawer?.querySelector('[data-ui="qs-filter-sort"]');
+      const maxStops = drawer?.querySelector('[data-ui="qs-filter-max-stops"]');
+      const resetVisible = drawer?.querySelector('[data-ui="qs-filter-reset-visible"]');
+      const activeBadge = document.querySelector('[data-ui="qs-filter-count"]');
+      if (!drawer || !close || !priceMin || !priceMax || !durationMax || !risk || !sort || !maxStops || !resetVisible || !activeBadge) {
+        return { ok: false };
+      }
+      const viewportW = window.innerWidth;
+      const viewportH = window.innerHeight;
+      const dr = drawer.getBoundingClientRect();
+      const cr = close.getBoundingClientRect();
+      const controls = [priceMin, priceMax, durationMax, risk, sort].map((el) => {
+        const r = el.getBoundingClientRect();
+        return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, height: r.height };
+      });
+      const overlap = (a, b) => !(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top);
+      let overlaps = 0;
+      for (let i = 0; i < controls.length; i += 1) {
+        for (let j = i + 1; j < controls.length; j += 1) {
+          if (overlap(controls[i], controls[j])) overlaps += 1;
+        }
+      }
+      const drawerStyle = window.getComputedStyle(drawer);
+      const badgeStyle = window.getComputedStyle(activeBadge);
+      const maxStopsDisabled = maxStops.hasAttribute("disabled");
+      const riskText = risk.tagName === "SELECT" ? risk.options[risk.selectedIndex]?.text ?? "" : "";
+      const sortText = sort.tagName === "SELECT" ? sort.options[sort.selectedIndex]?.text ?? "" : "";
+      return {
+        ok: true,
+        drawerFullyVisible: dr.left >= 0 && dr.top >= 0 && dr.right <= viewportW && dr.bottom <= viewportH,
+        closeFullyVisible: cr.left >= dr.left && cr.top >= dr.top && cr.right <= dr.right && cr.bottom <= dr.bottom,
+        hasVerticalScroll: drawer.scrollHeight > drawer.clientHeight,
+        overflowYAuto: ["auto", "overlay", "scroll"].includes(drawerStyle.overflowY),
+        controlsOverlapCount: overlaps,
+        controlsMinWidth: Math.min(...controls.map((c) => c.width)),
+        controlsAnyTooNarrow: controls.some((c) => c.width < 120),
+        contentBottomReachable: resetVisible.getBoundingClientRect().bottom <= dr.bottom + 1,
+        focusOutlineVisible: true,
+        maxStopsDisabled,
+        activeBadgeVisible: badgeStyle.visibility !== "hidden" && badgeStyle.opacity !== "0",
+        riskText,
+        sortText,
+      };
+    });
+
+    await page.locator('[data-ui="qs-filter-price-min"]').first().focus();
+    const focusVisible = await page.evaluate(() => {
+      const drawer = document.querySelector('[data-ui="qs-filter-drawer"]');
+      const input = drawer?.querySelector('[data-ui="qs-filter-price-min"]');
+      if (!drawer || !input) return false;
+      const dr = drawer.getBoundingClientRect();
+      const ir = input.getBoundingClientRect();
+      return ir.left >= dr.left && ir.right <= dr.right && ir.top >= dr.top && ir.bottom <= dr.bottom;
+    });
+
+    await page.locator('[data-ui="qs-filter-drawer"]').evaluate((el) => {
+      el.scrollTop = el.scrollHeight;
+    });
+    await page.waitForTimeout(120);
+    const bottomReachableAfterScroll = await page.evaluate(() => {
+      const drawer = document.querySelector('[data-ui="qs-filter-drawer"]');
+      const apply = drawer?.querySelector('[data-ui="qs-filter-apply-preferences"]');
+      if (!drawer || !apply) return false;
+      const dr = drawer.getBoundingClientRect();
+      const ar = apply.getBoundingClientRect();
+      return ar.bottom <= dr.bottom + 2;
+    });
+
+    let previousPageHash = null;
     try {
-      const previous = await readFile(target);
-      previousHash = sha256(previous);
+      const previous = await readFile(pageTarget);
+      previousPageHash = sha256(previous);
     } catch {
-      previousHash = null;
+      previousPageHash = null;
     }
 
-    await page.screenshot({ path: target, fullPage: true });
-    const current = await readFile(target);
+    await page.screenshot({ path: pageTarget, fullPage: true });
+    await drawer.screenshot({ path: panelTarget });
+    const current = await readFile(pageTarget);
     const currentHash = sha256(current);
 
     report.snapshots.push({
       viewport: vp,
-      file: path.relative(repoRoot, target),
+      file: path.relative(repoRoot, pageTarget),
+      panelFile: path.relative(repoRoot, panelTarget),
       pickerV2Visible: pickerVisible > 0,
       resultsVisible,
       detailsButtons,
       weatherDetailsVisible,
-      previousHash,
+      panelChecks: {
+        ...panelMetrics,
+        focusVisible,
+        bottomReachableAfterScroll,
+      },
+      previousHash: previousPageHash,
       currentHash,
-      changed: previousHash ? previousHash !== currentHash : true,
+      changed: previousPageHash ? previousPageHash !== currentHash : true,
     });
+
+    const check = report.snapshots[report.snapshots.length - 1].panelChecks;
+    const reasons = [];
+    if (!check.ok) reasons.push("panel-dom-missing");
+    if (check.ok && !check.drawerFullyVisible) reasons.push("drawer-clipped");
+    if (check.ok && !check.closeFullyVisible) reasons.push("close-button-clipped");
+    if (check.ok && check.controlsOverlapCount > 0) reasons.push("controls-overlap");
+    if (check.ok && check.controlsAnyTooNarrow) reasons.push("controls-too-narrow");
+    if (check.ok && !check.overflowYAuto) reasons.push("drawer-overflow-not-scrollable");
+    if (check.ok && !check.bottomReachableAfterScroll) reasons.push("footer-controls-not-reachable-after-scroll");
+    if (check.ok && !check.focusVisible) reasons.push("focus-clipped");
+    if (reasons.length > 0) {
+      report.failures.push({ viewport: vp.name, reasons });
+    }
 
     await page.close();
   }
@@ -107,6 +213,10 @@ await writeFile(reportPath, JSON.stringify(report, null, 2) + "\n", "utf8");
 console.log(`Visual QA report: ${path.relative(repoRoot, reportPath)}`);
 if (!report.auth.success) {
   console.warn("Warning: quick-search visual QA ran without confirmed authenticated session.");
+}
+if (report.failures.length > 0) {
+  console.error(`Visual QA failures: ${JSON.stringify(report.failures)}`);
+  process.exitCode = 1;
 }
 
 function sha256(buffer) {
