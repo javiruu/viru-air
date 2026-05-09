@@ -1,0 +1,1 @@
+"use strict";exports.id=843,exports.ids=[843],exports.modules={8843:(r,e,s)=>{s.r(e),s.d(e,{QuickSearchSearchForm:()=>c});var a=s(5512);function c({formRef:r,isReady:e,routePulse:s,onSubmit:c,children:i}){return(0,a.jsx)("form",{ref:r,className:`panel form quick-search-panel ${e?"ready":""} ${s?"route-pulse":""}`,onSubmit:c,"aria-describedby":"qs-workspace-hint",children:i})}}};

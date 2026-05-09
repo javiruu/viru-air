@@ -40,7 +40,7 @@ def add_rule(
         status_code, body = replay
         response = JSONResponse(status_code=status_code, content=body)
         response.headers["x-idempotency-replayed"] = "true"
-        return response  # type: ignore[return-value]
+        return response
 
     watch = db.get(FlightWatch, payload.watch_id)
     if not watch:

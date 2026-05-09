@@ -1,0 +1,32 @@
+[
+  {
+    "id": "QS201",
+    "title": "Quick Search strict check returns visible results for MAD -> BCN",
+    "description": "Validates that quick-search for MAD to BCN returns a successful API response and renders at least one visible result row in UI.",
+    "category": "Quick Search",
+    "priority": "High",
+    "steps": [
+      { "type": "action", "description": "Create an authenticated session and open /quick-search" },
+      { "type": "action", "description": "Select origin MAD and destination BCN from airport selectors" },
+      { "type": "action", "description": "Choose the first enabled future outbound date" },
+      { "type": "action", "description": "Click Buscar and wait for /api/v1/search/quick response" },
+      { "type": "assertion", "description": "Assert response status is 200 and response payload contains top-level 'results'" },
+      { "type": "assertion", "description": "Assert .qs-results-list is visible and includes at least one .qs-result-row with MAD and BCN in route text" }
+    ]
+  },
+  {
+    "id": "QS202",
+    "title": "Quick Search strict check returns visible results for VLC -> LIS",
+    "description": "Validates that quick-search for VLC to LIS returns a successful API response and renders at least one visible result row in UI.",
+    "category": "Quick Search",
+    "priority": "High",
+    "steps": [
+      { "type": "action", "description": "Create an authenticated session and open /quick-search" },
+      { "type": "action", "description": "Select origin VLC and destination LIS from airport selectors" },
+      { "type": "action", "description": "Choose the first enabled future outbound date" },
+      { "type": "action", "description": "Click Buscar and wait for /api/v1/search/quick response" },
+      { "type": "assertion", "description": "Assert response status is 200 and response payload contains top-level 'results'" },
+      { "type": "assertion", "description": "Assert .qs-results-list is visible and includes at least one .qs-result-row with VLC and LIS in route text" }
+    ]
+  }
+]

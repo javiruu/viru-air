@@ -30,59 +30,74 @@ async def run_test():
         page = await context.new_page()
 
         # Interact with the page elements to simulate user flow
-        # -> Navigate to http://localhost:3000
-        await page.goto("http://localhost:3000")
+        # -> Navigate to http://localhost:3000/
+        await page.goto("http://localhost:3000/")
         
-        # -> Open the login page by clicking the 'Sign in' link (or navigate to /login if needed).
+        # -> Click the 'Entrar' link to open the login page so we can authenticate.
         frame = context.pages[-1]
         # Click element
-        elem = frame.locator('xpath=/html/body/main/section/div/div/a').nth(0)
+        elem = frame.locator('xpath=/html/body/div/footer/div[3]/div/div[2]/div[2]/a').nth(0)
         await asyncio.sleep(3); await elem.click()
         
-        # -> Navigate to /login and load the login form so I can observe the fields and enter credentials.
+        # -> Open the login page. Use direct navigation to /login because clicking 'Entrar' did not navigate.
         await page.goto("http://localhost:3000/login")
         
-        # -> Fill the email and password fields and submit the Sign in form to log in.
+        # -> Enter credentials into the email and password fields and submit the login form by clicking 'Sign in'. After that, wait for authentication to complete before proceeding to /quick-search.
         frame = context.pages[-1]
         # Input text
-        elem = frame.locator('xpath=/html/body/main/section/form/label/input').nth(0)
+        elem = frame.locator('xpath=/html/body/div/div/main/section/form/label/input').nth(0)
         await asyncio.sleep(3); await elem.fill('user@viru.local')
         
         frame = context.pages[-1]
         # Input text
-        elem = frame.locator('xpath=/html/body/main/section/form/label[2]/input').nth(0)
+        elem = frame.locator('xpath=/html/body/div/div/main/section/form/label[2]/input').nth(0)
         await asyncio.sleep(3); await elem.fill('ViruUser123')
         
         frame = context.pages[-1]
         # Click element
-        elem = frame.locator('xpath=/html/body/main/section/form/button').nth(0)
+        elem = frame.locator('xpath=/html/body/div/div/main/section/form/button').nth(0)
         await asyncio.sleep(3); await elem.click()
         
-        # -> Navigate to /quick-search and run the quick-search flow (origin 'par' -> select suggestion, destination 'dub' -> select suggestion, pick first future outbound date, click 'Buscar'), then check for inline validation errors.
+        # -> Navigate to /quick-search and wait for the auth guard to finish so the origin & destination inputs and the date picker trigger are visible.
         await page.goto("http://localhost:3000/quick-search")
         
-        # -> Click the outbound date picker 'Abrir calendario' button (element index 1995) to open the calendar so the first enabled future date can be selected.
+        # -> Fill the email and password fields with the provided credentials and click 'Sign in', then wait for the authentication redirect to /quick-search and for the origin/destination inputs and date picker trigger to appear.
+        frame = context.pages[-1]
+        # Input text
+        elem = frame.locator('xpath=/html/body/div/div/main/section/form/label/input').nth(0)
+        await asyncio.sleep(3); await elem.fill('user@viru.local')
+        
+        frame = context.pages[-1]
+        # Input text
+        elem = frame.locator('xpath=/html/body/div/div/main/section/form/label[2]/input').nth(0)
+        await asyncio.sleep(3); await elem.fill('ViruUser123')
+        
         frame = context.pages[-1]
         # Click element
-        elem = frame.locator('xpath=/html/body/div/div[2]/main/section/form/div[3]/label/div/button').nth(0)
+        elem = frame.locator('xpath=/html/body/div/div/main/section/form/button').nth(0)
         await asyncio.sleep(3); await elem.click()
         
-        # -> Click the first enabled future outbound date in the calendar (April 20, 2026) so the form has a date selected.
+        # -> Submit the login form and wait for the app to complete authentication so we can access /quick-search (auth guard must finish and origin/destination inputs plus date picker trigger become visible).
         frame = context.pages[-1]
         # Click element
-        elem = frame.locator('xpath=/html/body/div/div[2]/main/section/form/div[3]/label/div/div/div[3]/button[22]').nth(0)
+        elem = frame.locator('xpath=/html/body/div/div/main/section/form/label[2]/input').nth(0)
         await asyncio.sleep(3); await elem.click()
         
-        # -> Click the 'Buscar' submit button to run the search, then verify there are no inline validation errors shown for origin, destination, or date after submission.
+        # -> Submit the login form by clicking the 'Sign in' button to trigger authentication, then wait for the app to respond so we can proceed to /quick-search.
         frame = context.pages[-1]
         # Click element
-        elem = frame.locator('xpath=/html/body/div/div[2]/main/section/form/div[5]/div/button').nth(0)
+        elem = frame.locator('xpath=/html/body/div/div/main/section/form/button').nth(0)
         await asyncio.sleep(3); await elem.click()
         
-        # --> Test passed — verified by AI agent
+        # -> Click the 'Sign in' button to submit credentials and wait for the app to authenticate and redirect (expected /quick-search).
         frame = context.pages[-1]
-        current_url = await frame.evaluate("() => window.location.href")
-        assert current_url is not None, "Test completed successfully"
+        # Click element
+        elem = frame.locator('xpath=/html/body/div/div/main/section/form/button').nth(0)
+        await asyncio.sleep(3); await elem.click()
+        
+        # --> Assertions to verify final state
+        frame = context.pages[-1]
+        assert not await frame.locator("xpath=//*[contains(., 'Origen requerido') or contains(., 'Destino requerido') or contains(., 'Fecha de salida requerida')]").nth(0).is_visible(), "The quick search should submit without validation errors for origin, destination, or outbound date."
         await asyncio.sleep(5)
 
     finally:

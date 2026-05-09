@@ -5,6 +5,9 @@ set "LOG_DIR=%ROOT%logs"
 set "WAN_OUT=%LOG_DIR%\wan_tunnel.out.log"
 set "WAN_ERR=%LOG_DIR%\wan_tunnel.err.log"
 set "WAN_PID=%LOG_DIR%\wan_tunnel.pid"
+set "REMODEX_OUT=%LOG_DIR%\remodex.out.log"
+set "REMODEX_ERR=%LOG_DIR%\remodex.err.log"
+set "REMODEX_PID=%LOG_DIR%\remodex.pid"
 
 if not exist "%LOG_DIR%" mkdir "%LOG_DIR%" >nul 2>&1
 
@@ -20,10 +23,14 @@ echo 4. WAN START (tunel publico)
 echo 5. WAN STATUS (URL activa)
 echo 6. WAN STOP
 echo 7. Ver logs tunel (ultimas 80 lineas)
-echo 8. Salir
+echo 8. REMODEX START (background)
+echo 9. REMODEX STOP
+echo 0. Salir
 echo.
-choice /C 12345678 /N /M "Opcion: "
-if errorlevel 8 goto :eof
+choice /C 1234567890 /N /M "Opcion: "
+if errorlevel 10 goto :eof
+if errorlevel 9 goto remodex_stop
+if errorlevel 8 goto remodex_start
 if errorlevel 7 goto wan_logs
 if errorlevel 6 goto wan_stop
 if errorlevel 5 goto wan_status
@@ -60,4 +67,12 @@ goto menu
 
 :wan_logs
 powershell -ExecutionPolicy Bypass -Command "Write-Host '--- wan_tunnel.out.log ---'; Get-Content -Tail 80 '%WAN_OUT%' -ErrorAction SilentlyContinue; Write-Host '--- wan_tunnel.err.log ---'; Get-Content -Tail 80 '%WAN_ERR%' -ErrorAction SilentlyContinue"
+goto menu
+
+:remodex_start
+powershell -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $pidFile='%REMODEX_PID%'; $out='%REMODEX_OUT%'; $err='%REMODEX_ERR%'; $cmd=Get-Command remodex -ErrorAction SilentlyContinue; if(-not $cmd){Write-Host 'remodex no esta instalado o no esta en PATH. Instala/actualiza con: npm install -g remodex@latest'; exit 1}; if(Test-Path $pidFile){$raw=(Get-Content $pidFile -Raw -ErrorAction SilentlyContinue).Trim(); $existing=0; [void][int]::TryParse($raw,[ref]$existing); if($existing -gt 0 -and (Get-Process -Id $existing -ErrorAction SilentlyContinue)){Write-Host ('Remodex ya esta activo (PID ' + $existing + ').'); exit 0}; Remove-Item $pidFile -Force -ErrorAction SilentlyContinue}; if(Test-Path $out){Remove-Item $out -Force -ErrorAction SilentlyContinue}; if(Test-Path $err){Remove-Item $err -Force -ErrorAction SilentlyContinue}; $p=Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-Command','remodex up') -RedirectStandardOutput $out -RedirectStandardError $err -WindowStyle Hidden -PassThru; Start-Sleep -Seconds 2; if($p.HasExited){Write-Host ('Remodex no pudo iniciarse (exit ' + $p.ExitCode + '). Revisa logs en: ' + $err); exit 1}; Set-Content -Path $pidFile -Value $p.Id -Encoding ASCII; Write-Host ('Remodex iniciado en background (PID ' + $p.Id + ').')"
+goto menu
+
+:remodex_stop
+powershell -ExecutionPolicy Bypass -Command "$ErrorActionPreference='SilentlyContinue'; $pidFile='%REMODEX_PID%'; if(-not (Test-Path $pidFile)){Write-Host 'No habia PID de remodex. Nada que detener.'; exit 0}; $raw=(Get-Content $pidFile -Raw -ErrorAction SilentlyContinue).Trim(); $tpid=0; [void][int]::TryParse($raw,[ref]$tpid); if($tpid -gt 0){$proc=Get-Process -Id $tpid -ErrorAction SilentlyContinue; if($proc){Stop-Process -Id $tpid -Force -ErrorAction SilentlyContinue; Start-Sleep -Milliseconds 300; if(Get-Process -Id $tpid -ErrorAction SilentlyContinue){Write-Host ('No se pudo detener remodex (PID ' + $tpid + '). Revisa permisos.'); exit 1}; Write-Host ('Remodex detenido (PID ' + $tpid + ').')} else {Write-Host 'PID guardado no estaba activo; limpiando estado.'}} else {Write-Host 'PID invalido; limpiando estado.'}; Remove-Item $pidFile -Force -ErrorAction SilentlyContinue"
 goto menu

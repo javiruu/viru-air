@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { hasToken } from "@/modules/shared/auth";
@@ -29,10 +29,13 @@ export default function ViruFooterBlock() {
   const { t } = useI18n();
   const pathname = usePathname() ?? "/";
   const shouldReduceMotion = useReducedMotion();
-  const loggedIn = hasToken();
+  const [hasSession, setHasSession] = useState(false);
 
-  const isPrivateContext =
-    loggedIn ||
+  useEffect(() => {
+    setHasSession(hasToken());
+  }, []);
+
+  const isPrivateRoute =
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/watchlist") ||
     pathname.startsWith("/quick-search") ||
@@ -45,6 +48,7 @@ export default function ViruFooterBlock() {
     pathname.startsWith("/cuenta") ||
     pathname.startsWith("/soporte") ||
     pathname.startsWith("/admin");
+  const isPrivateContext = isPrivateRoute || hasSession;
 
   const isAdminContext = pathname.startsWith("/admin");
 

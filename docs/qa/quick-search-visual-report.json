@@ -1,6 +1,14 @@
 {
-  "generatedAt": "2026-04-28T11:21:07.839Z",
+  "generatedAt": "2026-05-09T14:59:18.018Z",
   "baseUrl": "http://127.0.0.1:3000",
+  "targetPath": "/quick-search",
+  "auth": {
+    "attempted": true,
+    "success": true,
+    "loginUrlDetected": true,
+    "tokenFound": true,
+    "usingDefaultSeedCreds": false
+  },
   "snapshots": [
     {
       "viewport": {
@@ -9,9 +17,12 @@
         "height": 900
       },
       "file": "docs\\qa\\snapshots_quick-search-desktop.png",
-      "pickerV2Visible": false,
-      "previousHash": "0a2cdc8b8b9b436bb69d656e2131ab4ceca6896fa78e2f4b2801dac2a2dbec48",
-      "currentHash": "0b69b848fe4510e3b0595dae787298d8e0394502bffce7e6d14b810e92b154a9",
+      "pickerV2Visible": true,
+      "resultsVisible": 0,
+      "detailsButtons": 0,
+      "weatherDetailsVisible": 0,
+      "previousHash": "1f26f7cfd8322548bd3e71bde69cdb8932ca9bb4b4710b99ecc7b90379ed456c",
+      "currentHash": "95fc382c5501c3e745d5f22259bd4a5426c926d11832e19850d7338cace87ff7",
       "changed": true
     },
     {
@@ -21,9 +32,12 @@
         "height": 1024
       },
       "file": "docs\\qa\\snapshots_quick-search-tablet768.png",
-      "pickerV2Visible": false,
-      "previousHash": "d3ea7a95153e3858cc1afd897d77fa10bbe110d71fa2015c487d35d63b702f0d",
-      "currentHash": "67481d68e13ba6f975f2d0a767e8364721c6a260ea64e6a62b9c469214a0d600",
+      "pickerV2Visible": true,
+      "resultsVisible": 0,
+      "detailsButtons": 0,
+      "weatherDetailsVisible": 0,
+      "previousHash": "f2fd320552ebbcfad3084784c5ee8fba9ead7bf97811bdebcbd8a09e40dcda6a",
+      "currentHash": "20d5fb1481dccb661129c72649b40ed6b35c97abff132432a7e785ee387f39b8",
       "changed": true
     },
     {
@@ -33,9 +47,12 @@
         "height": 812
       },
       "file": "docs\\qa\\snapshots_quick-search-mobile375.png",
-      "pickerV2Visible": false,
-      "previousHash": "1e7b346093eb194d07d4d28507e897fae424f5deed1ad7cef35a67c927ff0acc",
-      "currentHash": "c8fc85b1a218a39e0272c009302fabb15fcf383dce43f7ac092add626b93b3ed",
+      "pickerV2Visible": true,
+      "resultsVisible": 0,
+      "detailsButtons": 0,
+      "weatherDetailsVisible": 0,
+      "previousHash": "6cf4dd7d00e46f26b47c00d3d61816e23638961daca6b7f2675c2720a489d8a6",
+      "currentHash": "4511ccd205ce6e9070745e95bda7dd2724e0824224323eb1db031198beff811c",
       "changed": true
     },
     {
@@ -45,9 +62,12 @@
         "height": 712
       },
       "file": "docs\\qa\\snapshots_quick-search-mobile320.png",
-      "pickerV2Visible": false,
-      "previousHash": "f3c4b6f5eb250fa4a590307adc141db11861d5f28777b72597de52c1cfa15dce",
-      "currentHash": "02169fc86f605ae700b53482e09f2164b858d3a29fc04d7a583c79931aaf1fb4",
+      "pickerV2Visible": true,
+      "resultsVisible": 0,
+      "detailsButtons": 0,
+      "weatherDetailsVisible": 0,
+      "previousHash": "177c598f90ac986f5163a47919ca80e98a64e385f636183129d84e542ff736cd",
+      "currentHash": "32eb8d0892a4149d588002500e67146db5ae8cc2bc1eac255edea1dc2dc80f0a",
       "changed": true
     }
   ]

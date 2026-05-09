@@ -1,4 +1,4 @@
-import React, { memo, RefObject } from "react";
+import React, { memo, RefObject, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { QuickSearchFieldErrors } from "@/modules/quick-search/types";
@@ -97,10 +97,33 @@ function SupportBadge({ children, tone = "neutral" }: { children: string; tone?:
 }
 
 function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
+  const [showAllChips, setShowAllChips] = useState(false);
+  const groupedActiveChips = useMemo(() => {
+    const groups: Record<string, ActiveChip[]> = {
+      Ruta: [],
+      Apertura: [],
+      Reglas: [],
+      Vista: [],
+    };
+    for (const chip of props.activeChips) {
+      if (chip.id.includes("price") || chip.id.includes("duration") || chip.id.includes("risk")) {
+        groups.Vista.push(chip);
+      } else if (chip.id.includes("flex") || chip.id.includes("radius") || chip.id.includes("nearby")) {
+        groups.Apertura.push(chip);
+      } else if (chip.id.includes("depart") || chip.id.includes("strict") || chip.id.includes("stop") || chip.id.includes("buffer") || chip.id.includes("exclude")) {
+        groups.Reglas.push(chip);
+      } else {
+        groups.Ruta.push(chip);
+      }
+    }
+    return Object.entries(groups)
+      .filter(([, chips]) => chips.length > 0)
+      .flatMap(([group, chips]) => chips.map((chip) => ({ ...chip, group })));
+  }, [props.activeChips]);
   const coverageSummary = props.radiusActive
     ? `${props.radiusKm} km`
     : props.t("filterCoverageDirect");
-  const timingSummary = `${props.departAfter || "--"}-${props.departBefore || "--"}`;
+  const rulesSummary = `${props.departAfter || "--"}-${props.departBefore || "--"}`;
   const visibleSummary =
     props.priceMin || props.priceMax || props.durationMax || props.riskFilter !== "all"
       ? props.t("filterVisibleCustom")
@@ -306,8 +329,8 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
             <div className="qs-filter-section-head">
               <div>
                 <span className="qs-filter-eyebrow">{props.t("filterAppliedOnSearch")}</span>
-                <h3>{props.t("timeTitle")}</h3>
-                <p>{props.t("timeSubtitle")}</p>
+                <h3>Reglas del viaje</h3>
+                <p>Define qué resultados son aceptables para ti.</p>
               </div>
               <button type="button" className="btn-ghost btn-compact" onClick={props.onResetTiming} data-ui="qs-filter-reset-timing">
                 {props.t("resetGroup")}
@@ -459,7 +482,7 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
             <div className="qs-filter-section-head">
               <div>
                 <span className="qs-filter-eyebrow">{props.t("filterPartialSupport")}</span>
-                <h3>{props.t("stopsTitle")}</h3>
+                <h3>Escalas y riesgo</h3>
                 <p>{props.t("stopsSubtitle")}</p>
               </div>
               <button type="button" className="btn-ghost btn-compact" onClick={props.onResetExperimental} data-ui="qs-filter-reset-experimental">
@@ -562,9 +585,9 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
           <strong>{coverageSummary}</strong>
           <SupportBadge tone="live">{props.t("filterAppliedOnSearch")}</SupportBadge>
         </button>
-        <button type="button" className="qs-filter-console-card" onClick={props.onOpenFilters} data-ui="qs-filter-card-timing" aria-label={props.t("timeTitle")}>
-          <span>{props.t("timeTitle")}</span>
-          <strong>{timingSummary}</strong>
+        <button type="button" className="qs-filter-console-card" onClick={props.onOpenFilters} data-ui="qs-filter-card-rules" aria-label="Reglas del viaje">
+          <span>Reglas del viaje</span>
+          <strong>{rulesSummary}</strong>
           <SupportBadge tone="live">{props.strictFilters ? props.t("summaryStrictOn") : props.t("summaryStrictOff")}</SupportBadge>
         </button>
         <button type="button" className="qs-filter-console-card" onClick={props.onOpenFilters} data-ui="qs-filter-card-visible" aria-label={props.t("visibleResultsTitle")}>
@@ -572,11 +595,16 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
           <strong>{visibleSummary}</strong>
           <SupportBadge>{props.t("filterAppliedToResults")}</SupportBadge>
         </button>
-        <button type="button" className="qs-filter-console-card" onClick={props.onOpenFilters} data-ui="qs-filter-card-experimental" aria-label={props.t("stopsTitle")}>
-          <span>{props.t("stopsTitle")}</span>
+        <button type="button" className="qs-filter-console-card" onClick={props.onOpenFilters} data-ui="qs-filter-card-stops-risk" aria-label="Escalas y riesgo">
+          <span>Escalas y riesgo</span>
           <strong>{experimentalSummary}</strong>
           <SupportBadge tone="partial">{props.t("filterPartialSupport")}</SupportBadge>
         </button>
+      </div>
+
+      <div className="qs-filter-mode-legend" aria-live="polite">
+        <span className="qs-filter-mode-chip">{props.t("filterAppliedOnSearch")}</span>
+        <span className="qs-filter-mode-chip">{props.t("filterAppliedToResults")}</span>
       </div>
 
       {props.pendingSearchChanges ? (
@@ -597,19 +625,24 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
           <button type="button" className="btn-ghost qs-reset-all-inline" onClick={props.onClearAllFilters}>
             {props.t("resetAll")}
           </button>
-          {props.activeChips.map((chip) => (
+          {(showAllChips ? groupedActiveChips : groupedActiveChips.slice(0, 6)).map((chip) => (
             <button
-              key={chip.id}
+              key={`${chip.group}-${chip.id}`}
               type="button"
               className="qs-chip"
               onClick={chip.onClear}
               aria-label={props.t("ariaRemoveFilter").replace("{value}", chip.label)}
               data-ui={`qs-filter-chip-${chip.id}`}
             >
-              <span>{chip.label}</span>
+              <span>{chip.group}: {chip.label}</span>
               <QuickSearchCloseIcon />
             </button>
           ))}
+          {!showAllChips && groupedActiveChips.length > 6 ? (
+            <button type="button" className="btn-ghost btn-compact" onClick={() => setShowAllChips(true)}>
+              +{groupedActiveChips.length - 6} más
+            </button>
+          ) : null}
         </div>
       ) : (
         <p className="panel-note qs-filter-console-empty">{props.t("filterNoActive")}</p>

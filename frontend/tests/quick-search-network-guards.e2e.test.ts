@@ -2,17 +2,30 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { chromium, type BrowserContext, type Page } from "playwright";
-import { createSessionToken } from "./helpers/e2e-backend";
 
 const BASE_URL = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
+const API_BASE = process.env.E2E_API_BASE_URL || "http://127.0.0.1:8000/api/v1";
+
+async function createSessionToken() {
+  const email = `codex-e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
+  const password = "Test123456!";
+  const response = await fetch(`${API_BASE}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!response.ok) {
+    throw new Error(`register_failed_${response.status}`);
+  }
+  const auth = await response.json() as { access_token?: string };
+  if (!auth.access_token) {
+    throw new Error("register_missing_token");
+  }
+  return auth.access_token;
+}
 
 async function openQuickSearch(context: BrowserContext) {
-  let token: string;
-  try {
-    token = await createSessionToken();
-  } catch {
-    return null;
-  }
+  const token = await createSessionToken();
   await context.addInitScript((value) => {
     window.localStorage.setItem("viru_token", value);
   }, token);

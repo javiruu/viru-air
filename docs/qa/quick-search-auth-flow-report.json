@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "url": "http://127.0.0.1:3000/login?returnUrl=%2Fquick-search",
+  "searched": false,
+  "results": 0,
+  "detailsButtons": 0,
+  "weatherBlocks": 0,
+  "error": null
+}

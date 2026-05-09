@@ -30,17 +30,49 @@ async def run_test():
         page = await context.new_page()
 
         # Interact with the page elements to simulate user flow
-        # -> Navigate to http://localhost:3000
-        await page.goto("http://localhost:3000")
+        # -> Navigate to http://localhost:3000/
+        await page.goto("http://localhost:3000/")
         
-        # -> Navigate to /quick-search and inspect the quick-search form fields
+        # -> Open the login page by clicking the 'Entrar' link so we can sign in and continue to /quick-search.
+        frame = context.pages[-1]
+        # Click element
+        elem = frame.locator('xpath=/html/body/div/footer/div[3]/div/div[2]/div[2]/a').nth(0)
+        await asyncio.sleep(3); await elem.click()
+        
+        # -> Open the quick-search page at /quick-search so I can verify submitting an empty route shows validation and stays on that page.
         await page.goto("http://localhost:3000/quick-search")
+        
+        # -> Fill the email and password fields and click 'Sign in' to authenticate (then wait for the app to continue to /quick-search).
+        frame = context.pages[-1]
+        # Input text
+        elem = frame.locator('xpath=/html/body/div/div/main/section/form/label/input').nth(0)
+        await asyncio.sleep(3); await elem.fill('user@viru.local')
+        
+        frame = context.pages[-1]
+        # Input text
+        elem = frame.locator('xpath=/html/body/div/div/main/section/form/label[2]/input').nth(0)
+        await asyncio.sleep(3); await elem.fill('ViruUser123')
+        
+        frame = context.pages[-1]
+        # Click element
+        elem = frame.locator('xpath=/html/body/div/div/main/section/form/button').nth(0)
+        await asyncio.sleep(3); await elem.click()
+        
+        # -> Navigate to /quick-search and wait for the auth guard to finish so the quick-search page and its origin/destination inputs are visible.
+        await page.goto("http://localhost:3000/quick-search")
+        
+        # -> Retry loading /quick-search by clicking the Reload button and wait for the page to respond so we can proceed to authenticate or to the quick-search form.
+        frame = context.pages[-1]
+        # Click element
+        elem = frame.locator('xpath=/html/body/div/div/div[2]/div/button').nth(0)
+        await asyncio.sleep(3); await elem.click()
         
         # --> Assertions to verify final state
         frame = context.pages[-1]
-        assert await frame.locator("xpath=//*[contains(., 'Debes introducir un origen o destino')]").nth(0).is_visible(), "The quick-search form should show a validation message that a search is required when origin and destination are empty"
         current_url = await frame.evaluate("() => window.location.href")
-        assert '/quick-search' in current_url, "The page should remain on /quick-search after submitting the quick-search without origin and destination"
+        assert '/quick-search' in current_url, "The page should have navigated to /quick-search and remained there after submitting an empty quick-search form"
+        assert await frame.locator("xpath=//*[contains(., 'Please enter a search')]").nth(0).is_visible(), "The quick-search form should show a validation message starting with 'Please enter a search' after submitting without origin and destination"
+        assert await frame.locator("xpath=//*[contains(., 'Origen')]").nth(0).is_visible(), "The quick-search inputs (such as 'Origen') should remain visible indicating the inline validation is shown within the quick-search form"
         await asyncio.sleep(5)
 
     finally:

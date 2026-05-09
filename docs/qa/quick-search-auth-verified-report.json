@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "authenticated": true,
+  "searched": true,
+  "results": 0,
+  "detailsButtons": 0,
+  "weatherBlocks": 0,
+  "mobileWeatherBlocks": 0,
+  "error": null
+}

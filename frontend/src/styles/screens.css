@@ -13807,6 +13807,25 @@ textarea::placeholder {
   padding-top: 0.8rem;
 }
 
+.qs-filter-mode-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.qs-filter-mode-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0.24rem 0.62rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 74%, white 26%);
+  background: color-mix(in srgb, var(--surface) 90%, white 10%);
+  color: var(--ink-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
 .qs-filter-console .qs-check-ui,
 .qs-filter-console .qs-check-ui svg,
 .qs-filter-console-drawer .qs-check-ui,

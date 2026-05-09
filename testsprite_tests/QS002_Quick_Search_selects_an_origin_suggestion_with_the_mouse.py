@@ -30,37 +30,38 @@ async def run_test():
         page = await context.new_page()
 
         # Interact with the page elements to simulate user flow
-        # -> Navigate to http://localhost:3000
-        await page.goto("http://localhost:3000")
+        # -> Navigate to http://localhost:3000/
+        await page.goto("http://localhost:3000/")
         
-        # -> Open the login page by clicking the visible 'Sign in' control so we can enter credentials and reach /quick-search.
+        # -> Click the visible 'Entrar' link to open the login page.
         frame = context.pages[-1]
         # Click element
-        elem = frame.locator('xpath=/html/body/main/section/div/div/a').nth(0)
+        elem = frame.locator('xpath=/html/body/div/footer/div[3]/div/div[2]/div[2]/a').nth(0)
         await asyncio.sleep(3); await elem.click()
         
-        # -> Fill the email and password fields and submit the login form, then navigate to /quick-search and wait for the page to load.
+        # -> Fill the login form: type user@viru.local into email (index 648), type ViruUser123 into password (index 651), then click the 'Sign in' button (index 659).
         frame = context.pages[-1]
         # Input text
-        elem = frame.locator('xpath=/html/body/main/section/form/label/input').nth(0)
+        elem = frame.locator('xpath=/html/body/div/div/main/section/form/label/input').nth(0)
         await asyncio.sleep(3); await elem.fill('user@viru.local')
         
         frame = context.pages[-1]
         # Input text
-        elem = frame.locator('xpath=/html/body/main/section/form/label[2]/input').nth(0)
+        elem = frame.locator('xpath=/html/body/div/div/main/section/form/label[2]/input').nth(0)
         await asyncio.sleep(3); await elem.fill('ViruUser123')
         
         frame = context.pages[-1]
         # Click element
-        elem = frame.locator('xpath=/html/body/main/section/form/button').nth(0)
+        elem = frame.locator('xpath=/html/body/div/div/main/section/form/button').nth(0)
         await asyncio.sleep(3); await elem.click()
         
-        # -> Navigate to /quick-search to access the quick-search origin input and run the autocomplete suggestion click test.
+        # -> Navigate to /quick-search and wait until the page finishes loading and input[name="origin_iata"] is visible so we can run the origin suggestion interaction.
         await page.goto("http://localhost:3000/quick-search")
         
         # --> Assertions to verify final state
         frame = context.pages[-1]
-        assert await frame.locator("xpath=//*[contains(., 'PAR')]").nth(0).is_visible() and (not await frame.locator("xpath=//*[contains(@class, 'autocomplete-suggestions')]").nth(0).is_visible()), "The origin field should contain the IATA code PAR and the origin suggestions dropdown should be closed after selecting a suggestion"
+        assert await frame.locator("xpath=//*[contains(., 'PAR')]").nth(0).text_content() == "PAR", "The origin field should contain the IATA code PAR after selecting a visible origin suggestion"
+        assert not await frame.locator("xpath=//*[@id='origin-suggestions']").nth(0).is_visible(), "The suggestions list should be closed after selecting an origin suggestion"
         await asyncio.sleep(5)
 
     finally:

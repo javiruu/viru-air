@@ -4167,25 +4167,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               <span>{t("pendingChangesBody")}</span>
             </div>
           ) : null}
-          <section className="panel panel-soft qs-search-summary-compact" aria-live="polite">
-            <div className="panel-header">
-              <h3>{t("searchSummaryTitle")}</h3>
-            </div>
-            <div className="qs-summary-detail-row">
-              <span className="qs-summary-chip">{summaryTrip}</span>
-              <span className="qs-summary-chip">{summaryMeta}</span>
-              <span className="qs-summary-chip">{summaryFlex}</span>
-              <span className="qs-summary-chip">{summaryStrict}</span>
-            </div>
-            {executedCriteria ? (
-              <div className="qs-context-applied">
-                <strong>{t("appliedCriteriaTitle")}:</strong>
-                <span>{executedCriteria.route}</span>
-                <span>{executedCriteria.dateLabel}</span>
-                <span>{executedCriteria.paxLabel}</span>
-              </div>
-            ) : null}
-          </section>
           <details
             className="panel panel-soft qs-info-stack"
             open={infoExpanded}

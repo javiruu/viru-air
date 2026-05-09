@@ -126,6 +126,19 @@
           <h3>➕ {{ t('tile_add_flight') }}</h3>
           <div class="muted">{{ t('tile_add_desc') }}</div>
         </a>
+
+        <!-- NUEVO: Búsqueda rápida ±3 días -->
+        <a class="tile" href="{{ url_for('quick_scan_view') }}">
+          <h3>⚡ {{ t('tile_quick_scan') if t('tile_quick_scan') != 'tile_quick_scan' else 'Búsqueda rápida (±3 días)' }}</h3>
+          <div class="muted">
+            {{ t('tile_quick_scan_desc') if t('tile_quick_scan_desc') != 'tile_quick_scan_desc'
+               else 'Explora todas las rutas cercanas Liubliana ↔ Almería alrededor de una fecha y guarda resultados.' }}
+          </div>
+          <div class="kpi">
+            {{ t('tile_quick_scan_hint') if t('tile_quick_scan_hint') != 'tile_quick_scan_hint'
+               else 'Solo Ryanair · guarda en precios_historicos.json' }}
+          </div>
+        </a>
       </div>
 
       <!-- Footer -->

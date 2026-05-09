@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
+from time import sleep
 
 import app.api.v1.watchlist as watchlist_api
 from app.domain.entities import ProviderFlight
@@ -26,22 +27,8 @@ class _SequenceProvider:
         ]
 
 
-class _MutableClock:
-    def __init__(self, start: datetime) -> None:
-        self.current = start
-
-    def now(self) -> datetime:
-        return self.current
-
-    def advance(self, seconds: int) -> None:
-        self.current = self.current + timedelta(seconds=seconds)
-
-
 def test_history_and_alert_events_keep_descending_order(client: TestClient, monkeypatch) -> None:
-    clock = _MutableClock(datetime(2026, 3, 9, 9, 0, 0))
     monkeypatch.setattr(watchlist_api, "provider", _SequenceProvider())
-    monkeypatch.setattr(watchlist_api, "REFRESH_COOLDOWN_SECONDS", 60)
-    monkeypatch.setattr(watchlist_api, "utc_now_naive", clock.now)
 
     token = register_and_token(client)
     headers = {"Authorization": f"Bearer {token}"}
@@ -91,7 +78,7 @@ def test_history_and_alert_events_keep_descending_order(client: TestClient, monk
             json={"watch_id": watch_id},
         )
         assert evaluated.status_code == 200
-        clock.advance(61)
+        sleep(0.01)
 
     history = client.get(f"/api/v1/prices/history?watch_id={watch_id}", headers=headers)
     assert history.status_code == 200

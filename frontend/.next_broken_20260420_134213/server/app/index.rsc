@@ -1,0 +1,20 @@
+1:"$Sreact.fragment"
+2:I[5244,[],""]
+3:I[3866,[],""]
+4:I[8173,["8173","static/chunks/8173-c309d73fcddfbbcc.js","4345","static/chunks/app/not-found-884ee8889238da69.js"],""]
+5:I[7033,[],"ClientPageRoot"]
+6:I[9809,["8173","static/chunks/8173-c309d73fcddfbbcc.js","5013","static/chunks/5013-058ca39f493edd0b.js","7813","static/chunks/7813-226fb0fa44f2830f.js","8974","static/chunks/app/page-6819b38838140101.js"],"default"]
+9:I[6213,[],"OutletBoundary"]
+b:I[3388,["5013","static/chunks/5013-058ca39f493edd0b.js","4209","static/chunks/app/loading-1e5ffd37875dd408.js"],"default"]
+c:I[6213,[],"MetadataBoundary"]
+e:I[6213,[],"ViewportBoundary"]
+10:I[4788,["5013","static/chunks/5013-058ca39f493edd0b.js","4219","static/chunks/app/global-error-71f8aca99cf8c62b.js"],"default"]
+:HL["/_next/static/css/36b41e4ac9bc58fb.css","style"]
+:HL["/_next/static/css/870722fd58496b03.css","style"]
+:HL["/_next/static/css/ef46db3751d8e999.css","style"]
+0:{"P":null,"b":"4Y-sJCIIxA2qhzdFON8wP","p":"","c":["",""],"i":false,"f":[[["",{"children":["__PAGE__",{}]},"$undefined","$undefined",true],["",["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/36b41e4ac9bc58fb.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}],["$","link","1",{"rel":"stylesheet","href":"/_next/static/css/870722fd58496b03.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}],["$","link","2",{"rel":"stylesheet","href":"/_next/static/css/ef46db3751d8e999.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"es","suppressHydrationWarning":true,"data-theme":"light","children":[["$","head",null,{"children":[["$","link",null,{"rel":"stylesheet","href":"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css","referrerPolicy":"no-referrer"}],null]}],["$","body",null,{"children":[["$","a",null,{"className":"skip-link","href":"#main-content","children":"Saltar al contenido"}],["$","$L2",null,{"parallelRouterKey":"children","segmentPath":["children"],"error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[],["$","main",null,{"className":"not-found","id":"main-content","children":["$","section",null,{"className":"sky-door-card","children":[["$","h1",null,{"className":"door-title","children":"Viru Tracker no encontro esta ruta"}],["$","p",null,{"className":"door-description","children":"La puerta que buscas no existe en el mapa de vuelo. Revisa la ruta o vuelve al panel principal."}],["$","div",null,{"className":"sky-door","children":[["$","div",null,{"className":"door-left","children":["$","span",null,{"className":"door-handle"}]}],["$","div",null,{"className":"door-right","children":["$","span",null,{"className":"door-handle"}]}],["$","div",null,{"className":"door-content","children":[["$","p",null,{"className":"door-message","children":"Viru no puede aterrizar aqui."}],["$","div",null,{"className":"action-buttons","children":[["$","$L4",null,{"className":"btn","href":"/dashboard","children":"Ir al panel"}],["$","$L4",null,{"className":"btn","href":"/login","children":"Iniciar sesion"}]]}]]}]]}],["$","small",null,{"className":"muted","children":"Error 404 · Ruta perdida en seguimiento"}]]}]}]],"forbidden":"$undefined","unauthorized":"$undefined"}]]}]]}]]}],{"children":["__PAGE__",["$","$1","c",{"children":[["$","$L5",null,{"Component":"$6","searchParams":{},"params":{},"promises":["$@7","$@8"]}],null,["$","$L9",null,{"children":"$La"}]]}],{},null,false]},[["$","$Lb","l",{}],[],[]],false],["$","$1","h",{"children":[null,["$","$1","8EbbWPKr-kVyay5WnZqHg",{"children":[["$","$Lc",null,{"children":"$Ld"}],["$","$Le",null,{"children":"$Lf"}],null]}]]}],false]],"m":"$undefined","G":["$10",[]],"s":false,"S":true}
+7:{}
+8:{}
+f:[["$","meta","0",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
+d:[["$","meta","0",{"charSet":"utf-8"}],["$","title","1",{"children":"Viru"}],["$","meta","2",{"name":"description","content":"Ryanair Tracker"}]]
+a:null

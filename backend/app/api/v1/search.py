@@ -333,7 +333,6 @@ def _matches_time_window(
     if after_minutes is None and before_minutes is None:
         return True
     if after_minutes is None:
-        assert before_minutes is not None
         return dep_minutes <= before_minutes
     if before_minutes is None:
         return dep_minutes >= after_minutes
@@ -412,7 +411,7 @@ def _parse_iata_input(value: str | list[str]) -> list[str]:
 def _normalize_quick_search_request(
     payload_dict: dict[str, Any] | None,
     query_overrides: dict[str, Any],
-) -> tuple[QuickSearchCanonicalRequest, list[str], list[str], dict[str, Any]]:
+) -> tuple[QuickSearchCanonicalRequest, list[str], list[str], dict[str, list[str]]]:
     payload_dict = payload_dict or {}
     legacy_payload = QuickSearchPayload.model_validate(payload_dict)
 
@@ -458,7 +457,7 @@ def _normalize_quick_search_request(
         if legacy_payload.dias_antes is not None or legacy_payload.dias_despues is not None:
             legacy_aliases_used.append("dias_antes/dias_despues")
 
-        include_nearby_origins_value = bool(
+        include_nearby_origins_value = (
             query_overrides.get("include_nearby_origins")
             if query_overrides.get("include_nearby_origins") is not None
             else legacy_payload.include_nearby_origins
@@ -467,7 +466,7 @@ def _normalize_quick_search_request(
             if legacy_payload.include_nearby_origin is not None
             else False
         )
-        include_nearby_destinations_value = bool(
+        include_nearby_destinations_value = (
             query_overrides.get("include_nearby_destinations")
             if query_overrides.get("include_nearby_destinations") is not None
             else legacy_payload.include_nearby_destinations
@@ -930,22 +929,19 @@ def quick_search(
         _warn("country_scope_multi_seed_applied", side="origin", seed_count=len(origin_seed_pool))
     if len(destination_seed_pool) > 1:
         _warn("country_scope_multi_seed_applied", side="destination", seed_count=len(destination_seed_pool))
-    seed_pool_meta = filter_contract.get("seed_pool")
-    if not isinstance(seed_pool_meta, dict):
-        seed_pool_meta = {}
-    if seed_pool_meta.get("origin_truncated"):
+    if filter_contract.get("seed_pool", {}).get("origin_truncated"):
         _warn(
             "country_scope_seed_pool_truncated",
             side="origin",
-            cap=seed_pool_meta.get("cap"),
-            effective_count=seed_pool_meta.get("origin_count"),
+            cap=filter_contract["seed_pool"]["cap"],
+            effective_count=filter_contract["seed_pool"]["origin_count"],
         )
-    if seed_pool_meta.get("destination_truncated"):
+    if filter_contract.get("seed_pool", {}).get("destination_truncated"):
         _warn(
             "country_scope_seed_pool_truncated",
             side="destination",
-            cap=seed_pool_meta.get("cap"),
-            effective_count=seed_pool_meta.get("destination_count"),
+            cap=filter_contract["seed_pool"]["cap"],
+            effective_count=filter_contract["seed_pool"]["destination_count"],
         )
 
     def _phase_add(name: str, elapsed_ms: int) -> None:
@@ -1358,6 +1354,7 @@ def quick_search(
     destination_side = selected_pass["destination_side"]
     origin_expanded = selected_pass["origin_expanded"]
     destination_expanded = selected_pass["destination_expanded"]
+    date_candidates = selected_pass["date_candidates"]
     pair_plan = selected_pass["pair_plan"]
     pair_plan_stats = selected_pass["pair_plan_stats"]
     execution_plan = selected_pass["execution_plan"]
@@ -1405,16 +1402,8 @@ def quick_search(
             discarded_count=out_of_scope_discarded,
         )
 
-    signature_origin_seed_pool_raw = seed_pool_meta.get("origin_requested_iata")
-    signature_destination_seed_pool_raw = seed_pool_meta.get("destination_requested_iata")
-    signature_origin_seed_pool = (
-        signature_origin_seed_pool_raw if isinstance(signature_origin_seed_pool_raw, list) else origin_seed_pool
-    )
-    signature_destination_seed_pool = (
-        signature_destination_seed_pool_raw
-        if isinstance(signature_destination_seed_pool_raw, list)
-        else destination_seed_pool
-    )
+    signature_origin_seed_pool = filter_contract.get("seed_pool", {}).get("origin_requested_iata") or origin_seed_pool
+    signature_destination_seed_pool = filter_contract.get("seed_pool", {}).get("destination_requested_iata") or destination_seed_pool
     query_signature = _build_query_signature(
         origin_seed_pool=signature_origin_seed_pool,
         destination_seed_pool=signature_destination_seed_pool,
@@ -1444,7 +1433,7 @@ def quick_search(
         "destination_expanded_count": len(destination_scope_iata),
     }
     seed_pool_trace = {
-        **seed_pool_meta,
+        **filter_contract.get("seed_pool", {}),
         "winning_step": selected_pass["step"],
         "origin_scope_count": len(origin_scope_iata),
         "destination_scope_count": len(destination_scope_iata),

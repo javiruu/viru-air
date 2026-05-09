@@ -1,0 +1,76 @@
+[
+  {
+    "id": "QS101",
+    "title": "Quick Search returns results for MAD → BCN",
+    "description": "Logs in, performs a quick-search for a MAD to BCN route with a future outbound date, and verifies results render for that route.",
+    "category": "Quick Search",
+    "priority": "High",
+    "steps": [
+      { "type": "action", "description": "Navigate to /login" },
+      { "type": "action", "description": "Type \"{{LOGIN_USER}}\" into the email field" },
+      { "type": "action", "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field" },
+      { "type": "action", "description": "Click the \"Iniciar sesión\" button" },
+      {
+        "type": "action",
+        "description": "Navigate to /quick-search and wait until input[name=\"origin_iata\"] and input[name=\"destination_iata\"] are visible"
+      },
+      {
+        "type": "action",
+        "description": "Type \"mad\" into input[name=\"origin_iata\"], wait for #origin-suggestions to be visible, and click the first visible button inside #origin-suggestions"
+      },
+      {
+        "type": "action",
+        "description": "Type \"bcn\" into input[name=\"destination_iata\"], wait for #destination-suggestions to be visible, and click the first visible button inside #destination-suggestions"
+      },
+      {
+        "type": "action",
+        "description": "Open the outbound date picker, choose the first enabled future date, and ensure the selected date is reflected in the date trigger"
+      },
+      {
+        "type": "action",
+        "description": "Click button[type=\"submit\"] only after both route inputs contain 3-letter IATA codes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .qs-results-list is visible and at least one .qs-result-row exists, and that a visible .qs-result-route contains 'MAD' and 'BCN'"
+      }
+    ]
+  },
+  {
+    "id": "QS102",
+    "title": "Quick Search returns results for VLC → LIS",
+    "description": "Logs in, performs a quick-search for a VLC to LIS route with a future outbound date, and verifies results render for that route.",
+    "category": "Quick Search",
+    "priority": "High",
+    "steps": [
+      { "type": "action", "description": "Navigate to /login" },
+      { "type": "action", "description": "Type \"{{LOGIN_USER}}\" into the email field" },
+      { "type": "action", "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field" },
+      { "type": "action", "description": "Click the \"Iniciar sesión\" button" },
+      {
+        "type": "action",
+        "description": "Navigate to /quick-search and wait until input[name=\"origin_iata\"] and input[name=\"destination_iata\"] are visible"
+      },
+      {
+        "type": "action",
+        "description": "Type \"vlc\" into input[name=\"origin_iata\"], wait for #origin-suggestions to be visible, and click the first visible button inside #origin-suggestions"
+      },
+      {
+        "type": "action",
+        "description": "Type \"lis\" into input[name=\"destination_iata\"], wait for #destination-suggestions to be visible, and click the first visible button inside #destination-suggestions"
+      },
+      {
+        "type": "action",
+        "description": "Open the outbound date picker, choose the first enabled future date, and ensure the selected date is reflected in the date trigger"
+      },
+      {
+        "type": "action",
+        "description": "Click button[type=\"submit\"] only after both route inputs contain 3-letter IATA codes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify .qs-results-list is visible and at least one .qs-result-row exists, and that a visible .qs-result-route contains 'VLC' and 'LIS'"
+      }
+    ]
+  }
+]

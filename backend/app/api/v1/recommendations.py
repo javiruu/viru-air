@@ -9,8 +9,7 @@ from fastapi import APIRouter, Body, HTTPException
 
 from app.core.errors import ApiError, message_for_code
 
-from app.domain.entities import ProviderFetchResult, ProviderFlight
-from app.domain.schemas import RecommendationAiMeta, RecommendationRequest, RecommendationResponse
+from app.domain.schemas import RecommendationRequest, RecommendationResponse
 from app.infrastructure.airports_catalog import expand_airports, get_airport
 from app.infrastructure.providers.ryanair_public_provider import RyanairPublicProvider
 
@@ -90,7 +89,6 @@ def _matches_time_window(
     if after_minutes is None and before_minutes is None:
         return True
     if after_minutes is None:
-        assert before_minutes is not None
         return dep_minutes <= before_minutes
     if before_minutes is None:
         return dep_minutes >= after_minutes
@@ -294,7 +292,7 @@ def _build_candidates(
     origin_candidates = [code for code in origin_candidates if code not in exclude_origins]
     destination_candidates = [code for code in destination_candidates if code not in exclude_destinations]
 
-    pairs: list[tuple[str, str, list[tuple[dt.date, ProviderFlight]]]] = []
+    pairs: list[tuple[str, str, list[tuple[dt.date, Any]]]] = []
     pair_limit = 12
     pair_count = 0
     for origin_code in origin_candidates:
@@ -303,13 +301,10 @@ def _build_candidates(
                 continue
             if pair_count >= pair_limit:
                 return pairs
-            flights_by_date: list[tuple[dt.date, ProviderFlight]] = []
+            flights_by_date: list[tuple[dt.date, Any]] = []
             for date_value in dates:
-                flights: list[ProviderFlight] = []
                 try:
-                    result = provider.get_flights(origin_code, destination_code, str(date_value))
-                    if isinstance(result, ProviderFetchResult):
-                        flights = result.flights
+                    flights = provider.get_flights(origin_code, destination_code, str(date_value))
                 except Exception:
                     flights = []
                 for flight in flights:
@@ -495,19 +490,6 @@ def recommendations(
 
     enriched_sorted = sorted(enriched, key=lambda entry: entry["score"], reverse=True)
 
-    ai_meta = RecommendationAiMeta(
-        used=bool(ai_result),
-        model=OPENAI_MODEL if ai_result else None,
-        error=ai_error,
-        reasoning_mode="ai" if ai_result else "heuristic",
-        summary=(
-            "Ranking based on AI model signals."
-            if ai_result
-            else "Using heuristic ranking based on price, trend, speed, and climate."
-        ),
-        active_signals=["price", "trend", "speed", "climate", "novelty"],
-    )
-
     return RecommendationResponse(
         query={
             "origin_iata": ",".join(origin_list),
@@ -527,5 +509,16 @@ def recommendations(
             "weights": weights,
         },
         items=enriched_sorted,
-        ai=ai_meta,
+        ai={
+            "used": bool(ai_result),
+            "model": OPENAI_MODEL if ai_result else None,
+            "error": ai_error,
+            "reasoning_mode": "ai" if ai_result else "heuristic",
+            "summary": (
+                "Ranking based on AI model signals."
+                if ai_result
+                else "Using heuristic ranking based on price, trend, speed, and climate."
+            ),
+            "active_signals": ["price", "trend", "speed", "climate", "novelty"],
+        },
     )

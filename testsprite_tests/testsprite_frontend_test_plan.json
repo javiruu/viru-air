@@ -322,18 +322,17 @@
   },
   {
     "id": "QS012",
-    "title": "Quick Search reset all clears active guided-console filters",
-    "description": "Verifies the global reset-all action clears active coverage, timing, visible-result, and self-connect filters using stable selectors.",
+    "title": "Quick Search reset all clears filters across BCN-STN and MAD-LIS scenarios",
+    "description": "Verifies reset-all clears guided-console filters after multiple route edits.",
     "category": "Quick Search Filters",
     "priority": "High",
     "steps": [
-      { "type": "action", "description": "Authenticate, navigate directly to /quick-search, and wait until input[name=\"origin_iata\"], input[name=\"destination_iata\"], and [data-ui=\"qs-filter-console\"] are visible" },
-      { "type": "action", "description": "Click [data-ui=\"qs-filter-open\"] and wait for [data-ui=\"qs-filter-drawer\"] to be visible" },
-      { "type": "action", "description": "Click [data-ui=\"qs-filter-preset-regional\"], set [data-ui=\"qs-filter-depart-after\"] to 09:00, set [data-ui=\"qs-filter-price-max\"] to 120, click [data-ui=\"qs-filter-include-stops\"], and set [data-ui=\"qs-filter-buffer-min\"] to 60" },
-      { "type": "action", "description": "Close the drawer with Escape so the console summary and active chips are visible" },
-      { "type": "assertion", "description": "Verify [data-ui=\"qs-filter-active-chips\"] contains active chips and [data-ui=\"qs-filter-count\"] reports a non-zero active filter count" },
-      { "type": "action", "description": "Click [data-ui=\"qs-filter-reset-all\"] in the console active-chip area" },
-      { "type": "assertion", "description": "Verify [data-ui=\"qs-filter-active-chips\"] no longer contains chip buttons and the console returns to the no-extra-filters copy" }
+      { "type": "action", "description": "Authenticate, navigate to /quick-search, set route BCN to STN, select a future outbound date, and enable at least one coverage, timing, visible-result, and self-connect filter" },
+      { "type": "assertion", "description": "Verify [data-ui=\"qs-filter-count\"] reports active filters and [data-ui=\"qs-filter-active-chips\"] is visible" },
+      { "type": "action", "description": "Change route to MAD to LIS without navigating away" },
+      { "type": "assertion", "description": "Verify [data-ui=\"qs-filter-pending\"] appears or the console indicates unapplied changes" },
+      { "type": "action", "description": "Click the reset-all control in [data-ui=\"qs-filter-active-chips\"]" },
+      { "type": "assertion", "description": "Verify active chips disappear and the console returns to the no-extra-filters copy" }
     ]
   }
 ]

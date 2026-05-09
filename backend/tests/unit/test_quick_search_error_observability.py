@@ -17,23 +17,17 @@ def test_quick_search_invalid_seed_returns_traceable_error_envelope() -> None:
         headers={"x-correlation-id": "corrtest123"},
     )
 
-    assert response.status_code < 500
+    assert response.status_code == 400
     payload = response.json()
 
-    if response.status_code == 400:
-        assert payload["code"] == "quick_search_invalid_request"
-        assert payload["message"] == "Quick-search request rejected by backend validation."
-        assert payload["correlation_id"] == "corrtest123"
-        assert len(payload["details"]) == 1
-        assert payload["details"][0]["reason"] == "unknown_seed_iata:TSF"
-        assert payload["details"][0]["reason_code"] == "unknown_seed_iata"
-        assert payload["details"][0]["rejected_value"] == "TSF"
-        assert payload["details"][0]["query_trace_id"].startswith("qs_")
-        return
-
-    assert response.status_code == 200
-    assert payload["meta"]["query_trace_id"].startswith("qs_")
-    assert isinstance(payload["results"], list)
+    assert payload["code"] == "quick_search_invalid_request"
+    assert payload["message"] == "Quick-search request rejected by backend validation."
+    assert payload["correlation_id"] == "corrtest123"
+    assert len(payload["details"]) == 1
+    assert payload["details"][0]["reason"] == "unknown_seed_iata:TSF"
+    assert payload["details"][0]["reason_code"] == "unknown_seed_iata"
+    assert payload["details"][0]["rejected_value"] == "TSF"
+    assert payload["details"][0]["query_trace_id"].startswith("qs_")
 
 
 def test_quick_search_invalid_iata_during_normalization_returns_traceable_error_envelope() -> None:

@@ -3,7 +3,8 @@ import os
 import json
 import atexit
 import logging
-from datetime import datetime, date as date_cls
+from datetime import datetime
+
 import requests
 from flask import (
     Flask, render_template, jsonify, redirect, url_for,
@@ -11,6 +12,7 @@ from flask import (
 )
 from apscheduler.schedulers.background import BackgroundScheduler
 from ryanair_api import get_price  # get_price(origin, destination, date) -> float|None
+from scan import quick_scan_liubliana_almeria  # NUEVO: búsqueda rápida ±3 días
 
 # ==============================
 # LOGGING
@@ -42,6 +44,7 @@ LAST_UPDATE_FILE = os.path.join(BASE_DIR, "last_update.txt")
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
+
 def send_telegram_alert(text: str):
     """Envía mensaje a Telegram usando tu bot."""
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
@@ -58,6 +61,7 @@ def send_telegram_alert(text: str):
     except Exception as e:
         logger.error(f"Error en send_telegram_alert: {e}")
 
+
 # ==============================
 # I18N (traducciones)
 # ==============================
@@ -73,7 +77,9 @@ def _load_translations():
         logger.error(f"Error cargando translations.json: {e}")
     return {}
 
+
 LANGS = _load_translations()
+
 
 def get_lang():
     code = request.cookies.get("lang")
@@ -82,6 +88,7 @@ def get_lang():
     header = (request.headers.get("Accept-Language") or "").lower()
     return "es" if header.startswith("es") else "en"
 
+
 @app.route("/lang/<code>")
 def set_lang(code):
     if code not in LANGS:
@@ -89,6 +96,7 @@ def set_lang(code):
     resp = make_response(redirect(request.referrer or url_for("home")))
     resp.set_cookie("lang", code, max_age=60 * 60 * 24 * 365, samesite="Lax")
     return resp
+
 
 @app.context_processor
 def inject_i18n():
@@ -108,6 +116,8 @@ def inject_i18n():
 # ==============================
 # HELPERS
 # ==============================
+
+
 def load_json(path):
     try:
         with open(path, "r", encoding="utf-8") as f:
@@ -118,6 +128,7 @@ def load_json(path):
         logger.error(f"Error leyendo {path}: {e}")
         return []
 
+
 def save_json(path, data):
     try:
         with open(path, "w", encoding="utf-8") as f:
@@ -127,6 +138,7 @@ def save_json(path, data):
         logger.error(f"Error guardando {path}: {e}")
         return False
 
+
 def set_last_update(ts=None):
     try:
         if ts is None:
@@ -135,6 +147,7 @@ def set_last_update(ts=None):
             f.write(ts)
     except Exception as e:
         logger.error(f"Error guardando last update: {e}")
+
 
 def get_last_update():
     try:
@@ -146,11 +159,13 @@ def get_last_update():
     return "—"
 
 # ==============================
-# Ventanas / control de cambios
+# Ventanas / control histórico diario
 # ==============================
-PRICE_CHANGE_EPS = 0.01     # sensibilidad para "ha cambiado el precio"
+
+PRICE_CHANGE_EPS = 0.01     # sensibilidad
 AM_START, AM_END = (5, 10)  # 05:00–10:59
-PM_START, PM_END = (11, 17) # 11:00–17:59
+PM_START, PM_END = (11, 17)  # 11:00–17:59
+
 
 def _window_of(dt: datetime) -> str | None:
     h = dt.hour
@@ -160,6 +175,7 @@ def _window_of(dt: datetime) -> str | None:
         return "PM"
     return None
 
+
 def _same_ymd(a_iso: str, b_dt: datetime) -> bool:
     try:
         a = datetime.strptime(a_iso[:19], "%Y-%m-%dT%H:%M:%S")
@@ -167,7 +183,9 @@ def _same_ymd(a_iso: str, b_dt: datetime) -> bool:
     except Exception:
         return False
 
-def _find_day_window_index(hist: list, o: str, d: str, flight_date: str, day_dt: datetime, win: str) -> int | None:
+
+def _find_day_window_index(hist: list, o: str, d: str, flight_date: str,
+                           day_dt: datetime, win: str) -> int | None:
     """Índice del registro del mismo vuelo/día/ventana ('AM'/'PM') o None."""
     for i in range(len(hist) - 1, -1, -1):
         h = hist[i]
@@ -186,10 +204,13 @@ def _find_day_window_index(hist: list, o: str, d: str, flight_date: str, day_dt:
                 return i
     return None
 
+
 def _price_changed(a: float, b: float, eps: float = PRICE_CHANGE_EPS) -> bool:
     return abs(a - b) > eps
 
-def _store_alert_marker_for_flight(vuelos: list, o: str, d: str, flight_date: str, price: float):
+
+def _store_alert_marker_for_flight(vuelos: list, o: str, d: str,
+                                   flight_date: str, price: float):
     """Guarda last_alert_at/last_alert_price en vuelos_guardados.json para el vuelo concreto."""
     changed = False
     now_iso = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
@@ -202,12 +223,9 @@ def _store_alert_marker_for_flight(vuelos: list, o: str, d: str, flight_date: st
     if changed:
         save_json(VUELOS_FILE, vuelos)
 
+
 def _can_alert_now(vuelo: dict, price: float, target: float) -> bool:
-    """
-    True solo si hay cruce/caída bajo target sin spam:
-    - precio actual <= target
-    - y (nunca avisado) o (último precio avisado > target) o (nuevo precio es menor que el último avisado por > eps) o (no se ha avisado hoy)
-    """
+    """True solo si precio <= target y no se spamea."""
     if price > target:
         return False
 
@@ -218,14 +236,16 @@ def _can_alert_now(vuelo: dict, price: float, target: float) -> bool:
 
     try:
         if last_price is not None and float(last_price) > float(target):
-            return True  # cruce desde arriba
+            return True
     except Exception:
         pass
 
     if isinstance(last_at, str):
         try:
             last_dt = datetime.strptime(last_at[:19], "%Y-%m-%dT%H:%M:%S")
-            if last_dt.date() == datetime.now().date() and not _price_changed(float(last_price or price), float(price)):
+            if last_dt.date() == datetime.now().date() and not _price_changed(
+                float(last_price or price), float(price)
+            ):
                 return False
         except Exception:
             pass
@@ -239,16 +259,17 @@ def _can_alert_now(vuelo: dict, price: float, target: float) -> bool:
     return last_price is None
 
 # ==============================
-# ACTUALIZACIÓN DE PRECIOS (máx 2 puntos/día por vuelo)
+# ACTUALIZACIÓN DE PRECIOS (vuelos guardados)
 # ==============================
+
+
 def actualizar_precios_core():
     """
-    Guarda como mucho DOS puntos por día y vuelo:
+    Para cada vuelo en vuelos_guardados.json guarda como mucho DOS puntos por día:
     - uno en AM (05:00–10:59)
     - uno en PM (11:00–17:59)
-    Solo escribe si hay cambio respecto al punto ya guardado en la ventana.
-    Si existe, lo SUSTITUYE por el nuevo precio.
-    Envía alerta solo si el precio cae por debajo del target y pasa la compuerta anti-spam.
+    Solo escribe si hay cambio frente al punto guardado en esa ventana.
+    Envía alerta si cae por debajo del target (con anti-spam).
     """
     now = datetime.now()
     win = _window_of(now)
@@ -286,9 +307,13 @@ def actualizar_precios_core():
                         "checked_at": now.strftime("%Y-%m-%dT%H:%M:%S")
                     }
                     cambios += 1
-                    logger.info(f"✏️ Actualizado {origin}->{destination} {date_str} ({win}) {old_price}→{precio}")
+                    logger.info(
+                        f"✏️ Actualizado {origin}->{destination} {date_str} ({win}) {old_price}→{precio}"
+                    )
                 else:
-                    logger.info(f"🔁 Sin cambios {origin}->{destination} {date_str} ({win}) {old_price}")
+                    logger.info(
+                        f"🔁 Sin cambios {origin}->{destination} {date_str} ({win}) {old_price}"
+                    )
             else:
                 historico.append({
                     "origin": origin,
@@ -300,18 +325,21 @@ def actualizar_precios_core():
                 cambios += 1
                 logger.info(f"➕ Guardado {origin}->{destination} {date_str} ({win}) = {precio}")
 
-            # Alertas: solo si cae por debajo del target y no spameamos
             target = vuelo.get("target_price")
             if isinstance(target, (int, float)):
                 target = float(target)
                 if _can_alert_now(vuelo, precio, target):
-                    logger.info(f"🔔 Bajo objetivo ({origin}->{destination} {date_str}): {precio} <= {target}")
+                    logger.info(
+                        f"🔔 Bajo objetivo ({origin}->{destination} {date_str}): {precio} <= {target}"
+                    )
                     send_telegram_alert(
                         f"🔔 ¡Precio bajo objetivo!\n\n"
                         f"{origin} → {destination} ({date_str})\n"
                         f"Precio actual: {precio}€ (objetivo: {target}€)"
                     )
-                    _store_alert_marker_for_flight(vuelos, origin, destination, date_str, precio)
+                    _store_alert_marker_for_flight(
+                        vuelos, origin, destination, date_str, precio
+                    )
 
         except Exception as e:
             logger.error(f"❌ Error actualizando {vuelo}: {e}")
@@ -325,6 +353,7 @@ def actualizar_precios_core():
 
     return cambios
 
+
 @app.route("/actualizar")
 def actualizar_precios():
     nuevos = actualizar_precios_core()
@@ -336,19 +365,63 @@ def actualizar_precios():
     return redirect(url_for("ver_historico"))
 
 # ==============================
+# BÚSQUEDA RÁPIDA (usa scan.py)
+# ==============================
+
+
+@app.route("/quick-scan", methods=["GET", "POST"])
+def quick_scan_view():
+    """
+    Lanza la búsqueda rápida ±3 días para las rutas predefinidas (solo Ryanair).
+    Toda la lógica pesada está en scan.py::quick_scan_liubliana_almeria.
+    """
+    results = None
+    base_date = ""
+    bundle = LANGS.get(get_lang(), {})
+    t = (lambda k, **fmt: bundle.get(k, k).format(**fmt) if fmt else bundle.get(k, k))
+
+    if request.method == "POST":
+        base_date = (request.form.get("date") or "").strip()
+        if not base_date:
+            flash("Introduce una fecha.", "error")
+        else:
+            try:
+                results = quick_scan_liubliana_almeria(base_date)
+                if not results:
+                    msg_tpl = bundle.get("quick_scan_empty",
+                                         "No se encontraron vuelos en ±3 días de {date}.")
+                    flash(msg_tpl.format(date=base_date), "warn")
+            except ValueError as e:
+                flash(str(e), "error")
+            except Exception as e:
+                logger.error(f"Error en quick_scan_view: {e}")
+                flash("Error realizando la búsqueda rápida.", "error")
+
+    return render_template("quick_scan.html", results=results, base_date=base_date)
+
+# ==============================
 # RUTAS WEB
 # ==============================
+
+
 @app.route("/")
 def home():
     vuelos = load_json(VUELOS_FILE)
     historico = load_json(HISTORICO_FILE)
     last_update = get_last_update()
-    return render_template("index.html", vuelos=vuelos, historico=historico, last_update=last_update)
+    return render_template(
+        "index.html",
+        vuelos=vuelos,
+        historico=historico,
+        last_update=last_update
+    )
+
 
 @app.route("/vuelos")
 def lista_vuelos():
     vuelos = load_json(VUELOS_FILE)
     return render_template("vuelos.html", vuelos=vuelos)
+
 
 @app.route("/historico")
 def ver_historico():
@@ -359,6 +432,7 @@ def ver_historico():
         if e.get('origin') and e.get('destination') and e.get('date')
     })
     return render_template("historico.html", historico=historico, routes=routes)
+
 
 @app.route("/nuevo", methods=["GET", "POST"])
 def nuevo_vuelo():
@@ -380,7 +454,13 @@ def nuevo_vuelo():
                 raise ValueError
         except ValueError:
             flash("Precio objetivo inválido.", "error")
-            return render_template("nuevo.html", origin=origin, destination=destination, date=date_str, target_price=target_raw), 400
+            return render_template(
+                "nuevo.html",
+                origin=origin,
+                destination=destination,
+                date=date_str,
+                target_price=target_raw
+            ), 400
 
     errors = []
     if len(origin) != 3:
@@ -395,10 +475,21 @@ def nuevo_vuelo():
     if errors:
         for e in errors:
             flash(e, "error")
-        return render_template("nuevo.html", origin=origin, destination=destination, date=date_str, target_price=target_raw), 400
+        return render_template(
+            "nuevo.html",
+            origin=origin,
+            destination=destination,
+            date=date_str,
+            target_price=target_raw
+        ), 400
 
     vuelos = load_json(VUELOS_FILE)
-    if any(v.get("origin")==origin and v.get("destination")==destination and v.get("date")==date_str for v in vuelos):
+    if any(
+        v.get("origin") == origin
+        and v.get("destination") == destination
+        and v.get("date") == date_str
+        for v in vuelos
+    ):
         flash(t("flash_dup_warn"), "warn")
         return redirect(url_for("lista_vuelos"))
 
@@ -417,13 +508,17 @@ def nuevo_vuelo():
 # ==============================
 # API
 # ==============================
+
+
 @app.route("/api/vuelos")
 def api_vuelos():
     return jsonify(load_json(VUELOS_FILE))
 
+
 @app.route("/api/historico")
 def api_historico():
     return jsonify(load_json(HISTORICO_FILE))
+
 
 @app.route("/api/inject_price", methods=["POST"])
 def api_inject_price():
@@ -453,6 +548,7 @@ def api_inject_price():
     set_last_update()
     return jsonify({"message": "Precio inyectado correctamente"}), 200
 
+
 @app.route("/api/delete_price", methods=["POST"])
 def api_delete_price():
     data = request.get_json(force=True) or {}
@@ -465,11 +561,13 @@ def api_delete_price():
         return jsonify({"message": "Datos incompletos"}), 400
 
     historico = load_json(HISTORICO_FILE)
-    idx = next((i for i, h in enumerate(historico)
-                if h.get("origin")==origin and
-                   h.get("destination")==destination and
-                   h.get("date")==date and
-                   h.get("checked_at")==checked_at), None)
+    idx = next((
+        i for i, h in enumerate(historico)
+        if h.get("origin") == origin
+        and h.get("destination") == destination
+        and h.get("date") == date
+        and h.get("checked_at") == checked_at
+    ), None)
 
     if idx is None:
         return jsonify({"message": "No se encontró ese registro"}), 404
@@ -479,63 +577,32 @@ def api_delete_price():
     set_last_update()
     return jsonify({"message": "Registro eliminado correctamente"}), 200
 
-# === API para eliminar vuelo completo ===
-@app.route("/api/delete_flight", methods=["POST"])
-def api_delete_flight():
-    data = request.get_json(force=True) or {}
-    origin = (data.get("origin") or "").strip().upper()
-    destination = (data.get("destination") or "").strip().upper()
-    date = (data.get("date") or "").strip()
 
-    if not (origin and destination and date):
-        return jsonify({"message": "Datos incompletos"}), 400
-
-    vuelos = load_json(VUELOS_FILE)
-    before = len(vuelos)
-
-    def key_tuple(v: dict):
-        return (
-            (v.get("origin") or "").strip().upper(),
-            (v.get("destination") or "").strip().upper(),
-            (v.get("date") or "").strip(),
-        )
-
-    nuevos = [v for v in vuelos if key_tuple(v) != (origin, destination, date)]
-    removed = before - len(nuevos)
-
-    if removed == 0:
-        return jsonify({"message": "No se encontró ese vuelo"}), 404
-
-    if not save_json(VUELOS_FILE, nuevos):
-        return jsonify({"message": "Error guardando cambios"}), 500
-
-    return jsonify({"message": f"Vuelo eliminado ({removed})"}), 200
-
-# === API para el calendario (FullCalendar.js) ===
 @app.route("/api/calendar")
 def api_calendar():
     vuelos = load_json(VUELOS_FILE)
     events = []
     for v in vuelos:
-        try:
-            events.append({
-                "title": f"{v['origin']} → {v['destination']}",
-                "start": v["date"]
-            })
-        except KeyError:
+        o = v.get("origin")
+        d = v.get("destination")
+        dt = v.get("date")
+        if not (o and d and dt):
             continue
+        events.append({"title": f"{o} → {d}", "start": dt})
     return jsonify(events)
 
 # ==============================
 # SCHEDULER
 # ==============================
+
 scheduler = None
+
+
 def start_scheduler():
     global scheduler
     if scheduler is not None:
         return
     scheduler = BackgroundScheduler(daemon=True)
-    # Ejecuta cada hora; la función decide si está dentro de la ventana AM/PM antes de registrar
     scheduler.add_job(
         actualizar_precios_core,
         "interval",
@@ -550,6 +617,8 @@ def start_scheduler():
 # ==============================
 # ERRORES
 # ==============================
+
+
 @app.errorhandler(404)
 def page_not_found(e):
     if request.path.startswith("/api/"):
@@ -559,6 +628,7 @@ def page_not_found(e):
 # ==============================
 # ENTRY POINT
 # ==============================
+
 if __name__ == "__main__":
     should_start = (not app.debug) or (os.environ.get("WERKZEUG_RUN_MAIN") == "true")
     if should_start:

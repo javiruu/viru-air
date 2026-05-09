@@ -6,7 +6,6 @@ from sqlalchemy import delete, desc, func, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_admin
-from app.core.time import utc_now_naive
 from app.domain.schemas import (
     AdminPasswordIn,
     AdminProductMetricsOut,
@@ -321,9 +320,9 @@ def product_health(db: Session = Depends(get_db), _: User = Depends(require_admi
             ],
             "frequent": [
                 {
-                    "message": row._mapping["message"],
-                    "count": int(row._mapping["count"]),
-                    "last_seen": row._mapping["last_seen"].isoformat() if row._mapping["last_seen"] else None,
+                    "message": row.message,
+                    "count": int(row.count),
+                    "last_seen": row.last_seen.isoformat() if row.last_seen else None,
                 }
                 for row in frequent_errors
             ],

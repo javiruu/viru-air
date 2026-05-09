@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>⚡ Búsqueda rápida ±3 días · Ryanair Bot</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    :root{
+      --bg:#0b1220; --card:#121a2b; --text:#e8ecf1; --muted:#9fb0c7; --acc:#4cc2ff;
+    }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial
+    }
+    .wrap{max-width:1000px;margin:40px auto;padding:0 16px}
+    .card{
+      background:var(--card);
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:14px;
+      padding:20px 22px;
+      box-shadow:0 10px 30px rgba(0,0,0,.25)
+    }
+    h1{margin:0 0 6px}
+    .muted{color:var(--muted)}
+    .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+    input[type="date"]{
+      background:#0f1626;
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.12);
+      padding:10px 12px;
+      border-radius:10px;
+      outline:none
+    }
+    input[type="date"]:focus{
+      border-color:var(--acc);
+      box-shadow:0 0 0 1px rgba(76,194,255,.4);
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      text-decoration:none;
+      color:var(--text);
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      padding:10px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      transition:.2s transform,.2s border-color,.2s background;
+      font-size:14px;
+    }
+    .btn:hover{
+      transform:translateY(-2px);
+      border-color:var(--acc);
+      background:rgba(76,194,255,.08);
+    }
+    .btn-ghost{
+      background:transparent;
+      border-style:dashed;
+      border-color:rgba(255,255,255,.18);
+    }
+
+    .toolbar{
+      display:flex;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      gap:10px;
+      margin:14px 0 6px
+    }
+    .filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+    select{
+      background:#0f1626;
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.12);
+      padding:8px 10px;
+      border-radius:10px;
+      font-size:14px;
+    }
+    select:focus{
+      border-color:var(--acc);
+      box-shadow:0 0 0 1px rgba(76,194,255,.4);
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:10px;
+      overflow:hidden;
+      border-radius:12px
+    }
+    th,td{
+      padding:12px 14px;
+      border-bottom:1px solid rgba(255,255,255,.06)
+    }
+    th{
+      background:rgba(255,255,255,.05);
+      text-align:left;
+      font-weight:600;
+      color:var(--acc);
+      cursor:pointer;
+      user-select:none;
+      font-size:14px;
+    }
+    tr:hover td{
+      background:rgba(255,255,255,.03)
+    }
+    .right{text-align:right}
+
+    .pill{
+      display:inline-block;
+      border:1px solid rgba(255,255,255,.15);
+      color:var(--muted);
+      border-radius:999px;
+      padding:2px 8px;
+      font-size:12px
+    }
+    .pill-strong{
+      border-color:rgba(76,194,255,.7);
+      color:#9fe0ff;
+      background:rgba(76,194,255,.08);
+    }
+    .empty{
+      padding:18px;
+      text-align:center;
+      color:var(--muted)
+    }
+    .badge{
+      font-size:12px;
+      border:1px solid rgba(76,194,255,.5);
+      color:#9fe0ff;
+      padding:2px 8px;
+      border-radius:999px
+    }
+
+    /* Barra de resumen */
+    .summary-bar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin:10px 0 4px;
+    }
+    .summary-item{
+      flex:1 1 130px;
+      min-width:130px;
+      background:rgba(255,255,255,.03);
+      border-radius:10px;
+      padding:8px 10px;
+      border:1px solid rgba(255,255,255,.06);
+    }
+    .summary-label{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:2px;
+    }
+    .summary-value{
+      font-size:16px;
+      font-weight:600;
+    }
+
+    /* Mejor precio resaltado */
+    tr.best-row td{
+      background:rgba(25,195,125,.10);
+    }
+    .best-pill{
+      border-color:#19c37d;
+      color:#b9f5d5;
+      background:rgba(25,195,125,.18);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="toolbar">
+        <h1>⚡ Búsqueda rápida (±3 días)</h1>
+        <div class="row">
+          <a class="btn" href="{{ url_for('home') }}">⬅ Volver</a>
+          <a class="btn" href="{{ url_for('ver_historico') }}">📈 Ver histórico</a>
+        </div>
+      </div>
+
+      <p class="muted">
+        Explora todas las rutas Ryanair entre <strong>zona Liubliana</strong> y <strong>zona Almería</strong> en la fecha indicada,
+        con margen de <strong>±3 días</strong>. Los resultados también se guardan en <code>precios_historicos.json</code>
+        con etiqueta <span class="badge">quick_scan</span>.
+      </p>
+
+      <form method="post" class="row" style="gap:12px;margin:10px 0 6px">
+        <label for="date">📅 Fecha base</label>
+        <input id="date" name="date" type="date" required value="{{ base_date or '' }}">
+        <button class="btn" type="submit">🔎 Escanear</button>
+        {% if base_date %}
+          <span class="pill">Base: {{ base_date }} · margen ±3 días</span>
+        {% endif %}
+      </form>
+
+      {% if results is not none %}
+        {% if results|length == 0 %}
+          <div class="empty">No se encontraron vuelos para ±3 días.</div>
+        {% else %}
+
+          <!-- Barra de filtros + info -->
+          <div class="toolbar">
+            <div class="filters">
+              <span class="pill" id="resultsCount">{{ results|length }} resultados</span>
+
+              <!-- Filtro dirección (Liubliana ↔ Almería) -->
+              <select id="dirFilter" title="Dirección">
+                <option value="">Ambas direcciones</option>
+                <option value="LJ-AL">Liubliana → Almería</option>
+                <option value="AL-LJ">Almería → Liubliana</option>
+              </select>
+
+              <select id="routeFilter">
+                <option value="">Todas las rutas</option>
+              </select>
+
+              <select id="dayFilter">
+                <option value="">Todos los días</option>
+              </select>
+
+              <select id="sortSelect" title="Ordenar">
+                <option value="price-asc">Precio ↑</option>
+                <option value="price-desc">Precio ↓</option>
+                <option value="date-asc">Fecha ↑</option>
+                <option value="date-desc">Fecha ↓</option>
+              </select>
+
+              <button id="btnResetFilters" type="button" class="btn btn-ghost">🔄 Reset filtros</button>
+              <button id="btnExport" type="button" class="btn">⬇ Exportar CSV</button>
+            </div>
+            <div class="row">
+              <span class="pill">Solo Ryanair · Guardado en histórico</span>
+            </div>
+          </div>
+
+          <!-- Barra de resumen dinámica -->
+          <div id="summaryBar" class="summary-bar" style="display:none;">
+            <div class="summary-item">
+              <div class="summary-label">Más barato</div>
+              <div class="summary-value" id="summaryMin">—</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Más caro</div>
+              <div class="summary-value" id="summaryMax">—</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Precio medio</div>
+              <div class="summary-value" id="summaryAvg">—</div>
+            </div>
+          </div>
+
+          <div style="overflow:auto">
+            <table id="resultsTable">
+              <thead>
+                <tr>
+                  <th data-k="origin">Origen</th>
+                  <th data-k="destination">Destino</th>
+                  <th data-k="date">Fecha vuelo</th>
+                  <th data-k="price" class="right">Precio (€)</th>
+                  <th data-k="checked_at">Comprobado</th>
+                  <th data-k="tag">Etiqueta / Info</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  {% if results is not none and results|length > 0 %}
+  <script>
+    // Datos brutos desde el backend
+    const raw = {{ results|tojson }};
+
+    // Definimos los "lados" para inferir dirección
+    const LJU_SIDE = ['TRS','TSF','ZAG','KLU','VIE'];
+    const ALM_SIDE = ['ALC','AGP','SVQ','MAD'];
+
+    const tbody        = document.querySelector('#resultsTable tbody');
+    const routeFilter  = document.getElementById('routeFilter');
+    const dayFilter    = document.getElementById('dayFilter');
+    const dirFilter    = document.getElementById('dirFilter');
+    const sortSelect   = document.getElementById('sortSelect');
+    const btnExport    = document.getElementById('btnExport');
+    const btnReset     = document.getElementById('btnResetFilters');
+    const resultsCount = document.getElementById('resultsCount');
+
+    const summaryBar = document.getElementById('summaryBar');
+    const summaryMin = document.getElementById('summaryMin');
+    const summaryMax = document.getElementById('summaryMax');
+    const summaryAvg = document.getElementById('summaryAvg');
+
+    // Direccion Liubliana/Almería en función de origen/destino
+    function directionOf(r){
+      const o = r.origin;
+      const d = r.destination;
+      const oL = LJU_SIDE.includes(o), dL = LJU_SIDE.includes(d);
+      const oA = ALM_SIDE.includes(o), dA = ALM_SIDE.includes(d);
+      if (oL && dA) return 'Liubliana → Almería';
+      if (oA && dL) return 'Almería → Liubliana';
+      return '';
+    }
+
+    // Inicializar filtros (rutas y días)
+    const routes = [...new Set(raw.map(r => `${r.origin}→${r.destination}`))].sort();
+    routes.forEach(r => {
+      const o = document.createElement('option');
+      o.value = r; o.textContent = r;
+      routeFilter.appendChild(o);
+    });
+    const days = [...new Set(raw.map(r => r.date))].sort();
+    days.forEach(d => {
+      const o = document.createElement('option');
+      o.value = d; o.textContent = d;
+      dayFilter.appendChild(o);
+    });
+
+    function cmp(a,b){ return a<b?-1:a>b?1:0; }
+
+    function applySort(arr){
+      const mode = sortSelect.value || 'price-asc';
+      const copy = arr.slice();
+      switch(mode){
+        case 'price-asc':
+          copy.sort((a,b)=> (a.price??1e9)-(b.price??1e9));
+          break;
+        case 'price-desc':
+          copy.sort((a,b)=> (b.price??1e-9)-(a.price??1e-9));
+          break;
+        case 'date-asc':
+          copy.sort((a,b)=> cmp(a.date,b.date) || cmp(a.origin+a.destination, b.origin+b.destination));
+          break;
+        case 'date-desc':
+          copy.sort((a,b)=> cmp(b.date,a.date) || cmp(a.origin+a.destination, b.origin+b.destination));
+          break;
+      }
+      return copy;
+    }
+
+    function applyFilters(){
+      const rf = routeFilter.value;
+      const df = dayFilter.value;
+      const dfDir = dirFilter.value; // '', 'LJ-AL', 'AL-LJ'
+
+      let out = raw.filter(r=>{
+        if (rf && `${r.origin}→${r.destination}` !== rf) return false;
+        if (df && r.date !== df) return false;
+
+        if (dfDir){
+          const dir = directionOf(r);
+          if (dfDir === 'LJ-AL' && dir !== 'Liubliana → Almería') return false;
+          if (dfDir === 'AL-LJ' && dir !== 'Almería → Liubliana') return false;
+        }
+        return true;
+      });
+      return applySort(out);
+    }
+
+    function render(){
+      const rows = applyFilters();
+      tbody.innerHTML = '';
+
+      // Actualizar contador
+      resultsCount.textContent = `${rows.length} resultados`;
+
+      // Calcular resumen (ignorando precios nulos)
+      const priced = rows.filter(r => r.price != null);
+      if (priced.length){
+        let min = priced[0].price;
+        let max = priced[0].price;
+        let sum = 0;
+        for (const r of priced){
+          const p = Number(r.price);
+          if (p < min) min = p;
+          if (p > max) max = p;
+          sum += p;
+        }
+        const avg = sum / priced.length;
+
+        summaryMin.textContent = `${min.toFixed(2)} €`;
+        summaryMax.textContent = `${max.toFixed(2)} €`;
+        summaryAvg.textContent = `${avg.toFixed(2)} €`;
+        summaryBar.style.display = 'flex';
+      } else {
+        summaryBar.style.display = 'none';
+      }
+
+      const minPrice = priced.length ? Math.min(...priced.map(r => r.price)) : null;
+
+      for (const r of rows){
+        const tr = document.createElement('tr');
+        const isBest = (minPrice != null && r.price != null && Number(r.price) === Number(minPrice));
+        if (isBest) tr.classList.add('best-row');
+
+        const dir = directionOf(r);
+        const tagText = r.tag || 'quick_scan';
+        const tagHtml = `${tagText}${dir ? ' · ' + dir : ''}${isBest ? ' · <span class="pill best-pill">Mejor precio</span>' : ''}`;
+
+        tr.innerHTML = `
+          <td>${r.origin}</td>
+          <td>${r.destination}</td>
+          <td>${r.date}</td>
+          <td class="right">${(r.price!=null)? Number(r.price).toFixed(2) : '—'}</td>
+          <td>${(r.checked_at||'').replace('T',' ')}</td>
+          <td>${tagHtml}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    routeFilter.addEventListener('change', render);
+    dayFilter.addEventListener('change', render);
+    dirFilter.addEventListener('change', render);
+    sortSelect.addEventListener('change', render);
+
+    // Reset filtros
+    btnReset.addEventListener('click', ()=>{
+      routeFilter.value = '';
+      dayFilter.value   = '';
+      dirFilter.value   = '';
+      sortSelect.value  = 'price-asc';
+      render();
+    });
+
+    // Exportación CSV sencilla (incluye dirección calculada)
+    btnExport.addEventListener('click', ()=>{
+      const rows = applyFilters();
+      const head = ['origin','destination','date','price','checked_at','tag','direction'];
+      const lines = [head.join(',')].concat(
+        rows.map(r => {
+          const dir = directionOf(r);
+          const vals = {
+            origin: r.origin ?? '',
+            destination: r.destination ?? '',
+            date: r.date ?? '',
+            price: (r.price!=null) ? String(r.price) : '',
+            checked_at: r.checked_at ?? '',
+            tag: r.tag ?? 'quick_scan',
+            direction: dir
+          };
+          return head.map(k => String(vals[k]).replace(/,/g,'')).join(',');
+        })
+      );
+      const blob = new Blob([lines.join('\n')], {type:'text/csv'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `quick_scan_{{ base_date or '' }}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Orden por clic de cabecera (atajo visual)
+    document.querySelectorAll('#resultsTable thead th').forEach(th=>{
+      th.addEventListener('click', ()=>{
+        const k = th.dataset.k;
+        if (k === 'price'){
+          sortSelect.value = (sortSelect.value === 'price-asc' ? 'price-desc' : 'price-asc');
+        } else if (k === 'date'){
+          sortSelect.value = (sortSelect.value === 'date-asc' ? 'date-desc' : 'date-asc');
+        }
+        render();
+      });
+    });
+
+    // Render inicial
+    render();
+  </script>
+  {% endif %}
+</body>
+</html>

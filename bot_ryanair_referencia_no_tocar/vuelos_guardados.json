@@ -49,5 +49,65 @@
     "origin": "SVQ",
     "destination": "TRS",
     "date": "2025-11-22"
+  },
+  {
+    "origin": "AGP",
+    "destination": "TSF",
+    "date": "2026-01-02"
+  },
+  {
+    "origin": "SVQ",
+    "destination": "TRS",
+    "date": "2026-01-02"
+  },
+  {
+    "origin": "AGP",
+    "destination": "BLQ",
+    "date": "2026-01-02"
+  },
+  {
+    "origin": "AGP",
+    "destination": "KRK",
+    "date": "2026-02-26"
+  },
+  {
+    "origin": "ALC",
+    "destination": "KRK",
+    "date": "2026-02-26"
+  },
+  {
+    "origin": "TRS",
+    "destination": "KRK",
+    "date": "2026-02-27"
+  },
+  {
+    "origin": "TSF",
+    "destination": "KRK",
+    "date": "2026-02-26"
+  },
+  {
+    "origin": "KRK",
+    "destination": "AGP",
+    "date": "2026-03-01"
+  },
+  {
+    "origin": "KRK",
+    "destination": "ALC",
+    "date": "2026-03-01"
+  },
+  {
+    "origin": "KRK",
+    "destination": "TRS",
+    "date": "2026-03-01"
+  },
+  {
+    "origin": "KRK",
+    "destination": "BLQ",
+    "date": "2026-03-01"
+  },
+  {
+    "origin": "BLQ",
+    "destination": "KRK",
+    "date": "2026-01-26"
   }
 ]

@@ -47,7 +47,7 @@ def create_watch(
         status_code, body = replay
         response = JSONResponse(status_code=status_code, content=body)
         response.headers["x-idempotency-replayed"] = "true"
-        return response  # type: ignore[return-value]
+        return response
 
     origin_iata = payload.origin_iata.upper()
     destination_iata = payload.destination_iata.upper()
@@ -188,7 +188,7 @@ def refresh_watch(
         status_code, body = replay
         response = JSONResponse(status_code=status_code, content=body)
         response.headers["x-idempotency-replayed"] = "true"
-        return response  # type: ignore[return-value]
+        return response
 
     watch = db.scalar(
         select(FlightWatch).where(FlightWatch.id == watch_id, FlightWatch.user_id == current_user.id)
@@ -234,7 +234,7 @@ def refresh_watch(
                     ),
                 )
                 response.headers["Retry-After"] = str(retry_after)
-                return response  # type: ignore[return-value]
+                return response
 
     try:
         provider_result = provider.get_flights(
