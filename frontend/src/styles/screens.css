@@ -38,8 +38,8 @@
   --qs-text-secondary: #5f574c;
   --qs-placeholder: #7a7165;
   --qs-placeholder-focus: #9a8f82;
-  --qs-input-border: #cdbfaa;
-  --qs-input-border-strong: #b79f81;
+  --qs-input-border: #8c7558;
+  --qs-input-border-strong: #735c42;
   --qs-input-elevation: 0 10px 20px rgba(31, 29, 26, 0.08);
   --qs-panel-shadow: 0 22px 44px rgba(32, 28, 21, 0.14);
   --qs-panel-shadow-strong: 0 26px 56px rgba(32, 28, 21, 0.2);
@@ -53,7 +53,7 @@
   --text-primary: #1f1d1a;
   --text-secondary: #5b5349;
   --placeholder: #7a7165;
-  --border-default: #d9cdbb;
+  --border-default: #9f8769;
   --border-focus: rgba(217, 93, 57, 0.62);
   --shadow-elevation: 0 16px 28px rgba(47, 40, 24, 0.12);
   --btn-shadow: 0 10px 20px rgba(47, 40, 24, 0.16);
@@ -106,8 +106,8 @@
   --qs-text-secondary: #cfc7bb;
   --qs-placeholder: #b5ac9f;
   --qs-placeholder-focus: #ddd4c8;
-  --qs-input-border: #49554f;
-  --qs-input-border-strong: #5f7268;
+  --qs-input-border: #62736b;
+  --qs-input-border-strong: #7f958a;
   --qs-input-elevation: 0 10px 24px rgba(0, 0, 0, 0.35);
   --qs-panel-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
   --qs-panel-shadow-strong: 0 30px 62px rgba(0, 0, 0, 0.72);
@@ -119,7 +119,7 @@
   --text-primary: #f2ebe0;
   --text-secondary: #cfc7bb;
   --placeholder: #b5ac9f;
-  --border-default: #46514c;
+  --border-default: #5f6f68;
   --border-focus: rgba(232, 150, 120, 0.78);
   --shadow-elevation: 0 20px 34px rgba(0, 0, 0, 0.55);
   --btn-shadow: 0 12px 24px rgba(0, 0, 0, 0.45);
@@ -4689,23 +4689,23 @@ h1 {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #e16a3f, #d95d39);
-  color: var(--accent-ink);
-  border: 1px solid rgba(217, 93, 57, 0.5);
+  background: linear-gradient(135deg, var(--color-accent-hover), var(--color-button-primary));
+  color: var(--color-button-primary-text);
+  border: 1px solid color-mix(in srgb, var(--color-button-primary) 52%, transparent);
   box-shadow: var(--btn-shadow);
 }
 
 .btn-secondary {
-  background: var(--surface-2);
-  color: var(--ink);
-  border: 1px solid var(--border);
+  background: var(--color-button-secondary);
+  color: var(--color-button-secondary-text);
+  border: 1px solid var(--color-button-secondary-border);
   box-shadow: var(--btn-shadow);
 }
 
 .btn-ghost {
   background: transparent;
-  color: var(--ink);
-  border: 1px solid var(--border);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-strong);
 }
 
 .btn-critical {
@@ -5450,7 +5450,7 @@ textarea::placeholder {
 
 .qs-input:focus-visible {
   outline: none;
-  border-color: var(--qs-input-border-strong);
+  border-color: var(--color-input-focus);
   box-shadow: var(--qs-focus-ring), inset 0 1px 2px rgba(31, 29, 26, 0.22);
 }
 
@@ -5480,7 +5480,7 @@ textarea::placeholder {
   list-style: none;
   border-radius: 12px;
   border: 1px solid color-mix(in srgb, var(--qs-input-border-strong) 50%, transparent);
-  background: color-mix(in srgb, var(--surface) 95%, #fff);
+  background: var(--color-dropdown-bg);
   box-shadow: 0 18px 30px rgba(31, 29, 26, 0.14);
 }
 
@@ -7178,8 +7178,8 @@ textarea::placeholder {
   right: 0;
   top: calc(100% + 0.45rem);
   width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border-default);
+  background: var(--color-dropdown-bg);
+  border: 1px solid var(--color-border-strong);
   border-radius: 16px;
   box-shadow: 0 20px 40px var(--shadow-strong);
   padding: 0.45rem;
@@ -7220,8 +7220,8 @@ textarea::placeholder {
 .account-group-card {
   padding: 0.8rem 0.9rem;
   border-radius: 12px;
-  border: 1px solid var(--border-default);
-  background: color-mix(in srgb, var(--surface) 85%, var(--panel-bg));
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-card);
   display: grid;
   gap: 0.65rem;
   box-shadow: 0 12px 28px rgba(31, 29, 26, 0.12);
@@ -7266,8 +7266,8 @@ textarea::placeholder {
 
 .account-link:hover,
 .account-link:focus-visible {
-  border-color: rgba(217, 93, 57, 0.4);
-  background: rgba(217, 93, 57, 0.08);
+  border-color: color-mix(in srgb, var(--color-accent) 42%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-card));
   transform: translateX(2px);
 }
 
@@ -7347,8 +7347,8 @@ textarea::placeholder {
 
 .account-dropdown a:hover,
 .account-dropdown button:hover {
-  background: var(--surface-2);
-  border-color: var(--border-default);
+  background: var(--color-surface-elevated);
+  border-color: var(--color-border-strong);
   transform: translateX(1px);
 }
 
@@ -7360,9 +7360,9 @@ textarea::placeholder {
 
 .account-logout {
   margin-top: 0.22rem;
-  background: linear-gradient(135deg, #3a2621, #2b1b17) !important;
-  color: #f8e6dc !important;
-  border: 1px solid rgba(217, 93, 57, 0.45) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent-pressed) 66%, #2b1b17), color-mix(in srgb, var(--color-accent-pressed) 82%, #1d1411)) !important;
+  color: var(--color-button-primary-text) !important;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 46%, transparent) !important;
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
@@ -7385,7 +7385,7 @@ textarea::placeholder {
 }
 
 :root[data-theme="dark"] .account-logout {
-  color: #fbe8e2 !important;
+  color: var(--color-button-primary-text) !important;
 }
 
 @keyframes menuIn {
@@ -7534,7 +7534,7 @@ textarea::placeholder {
   position: relative;
   overflow: hidden;
   border-radius: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.46);
+  border: 1px solid color-mix(in srgb, var(--color-border) 74%, white 26%);
   background:
     linear-gradient(180deg, rgba(255, 250, 244, 0.74), rgba(241, 234, 224, 0.46)),
     linear-gradient(135deg, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0.08));
@@ -7581,14 +7581,14 @@ textarea::placeholder {
   min-height: 2rem;
   padding: 0.38rem 0.8rem;
   border-radius: 999px;
-  background: rgba(255, 248, 241, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: color-mix(in srgb, var(--color-chip-bg) 88%, transparent);
+  border: 1px solid var(--color-chip-border);
   backdrop-filter: blur(12px);
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #564839;
+  color: var(--color-chip-text);
 }
 
 .dashboard-news-body {
@@ -7610,7 +7610,7 @@ textarea::placeholder {
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #7b6958;
+  color: var(--color-text-secondary);
 }
 
 .dashboard-news-copy h3 {
@@ -7624,7 +7624,7 @@ textarea::placeholder {
 
 .dashboard-news-excerpt {
   margin: 0;
-  color: #5d5348;
+  color: var(--color-text-secondary);
   line-height: 1.72;
   font-size: 0.94rem;
 }
@@ -7658,7 +7658,7 @@ textarea::placeholder {
 
 .dashboard-news-meta p {
   margin: 0.18rem 0 0;
-  color: #756759;
+  color: var(--color-text-secondary);
   font-size: 0.8rem;
   line-height: 1.45;
 }
@@ -7671,9 +7671,9 @@ textarea::placeholder {
   min-height: 3rem;
   padding: 0.8rem 0.95rem;
   border-radius: 18px;
-  background: rgba(255, 248, 241, 0.58);
-  border: 1px solid rgba(140, 123, 105, 0.18);
-  color: var(--ink);
+  background: color-mix(in srgb, var(--color-chip-bg) 84%, transparent);
+  border: 1px solid var(--color-chip-border);
+  color: var(--color-text-primary);
   text-decoration: none;
   font-weight: 600;
   transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
@@ -7682,8 +7682,8 @@ textarea::placeholder {
 .dashboard-news-link:hover,
 .dashboard-news-link:focus-visible {
   transform: translateY(-2px);
-  border-color: rgba(217, 93, 57, 0.34);
-  background: rgba(255, 250, 246, 0.82);
+  border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
+  background: color-mix(in srgb, var(--color-chip-bg) 94%, white 6%);
   box-shadow: 0 14px 28px rgba(84, 63, 40, 0.12);
 }
 
@@ -8739,8 +8739,8 @@ textarea::placeholder {
   display: grid;
   place-items: center;
   border-radius: 14px;
-  background: rgba(217, 93, 57, 0.12);
-  color: var(--accent);
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  color: var(--color-accent);
 }
 
 .support-about-section {
@@ -12553,7 +12553,7 @@ textarea::placeholder {
 
 .private-nav-link.is-active {
   color: var(--text-primary);
-  border-color: rgba(217, 93, 57, 0.5);
+  border-color: color-mix(in srgb, var(--color-accent) 52%, transparent);
   background: color-mix(in srgb, var(--accent) 14%, var(--surface));
   box-shadow: 0 8px 14px rgba(31, 29, 26, 0.08);
 }
@@ -14232,6 +14232,41 @@ textarea::placeholder {
   font-size: 0.72rem;
   color: #604a3b;
   font-variant-numeric: tabular-nums;
+}
+
+:root[data-theme="dark"] .qs-secondary-weather {
+  border-color: color-mix(in srgb, var(--color-border) 82%, var(--color-accent) 18%);
+  background:
+    radial-gradient(circle at 14% 14%, color-mix(in srgb, var(--color-accent) 24%, transparent), transparent 38%),
+    radial-gradient(circle at 86% 12%, rgba(111, 178, 161, 0.14), transparent 30%),
+    linear-gradient(160deg, color-mix(in srgb, var(--surface) 84%, #1a201d 16%), color-mix(in srgb, var(--surface-2) 86%, #121614 14%));
+}
+
+:root[data-theme="dark"] .qs-secondary-weather .weather-group {
+  border-color: color-mix(in srgb, var(--color-border-strong) 88%, var(--color-accent) 12%);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 88%, #161b19 12%), color-mix(in srgb, var(--surface-2) 90%, #0f1312 10%));
+}
+
+:root[data-theme="dark"] .qs-weather-card {
+  border-color: color-mix(in srgb, var(--color-border-strong) 88%, var(--color-accent) 12%);
+  background:
+    radial-gradient(circle at 84% 16%, color-mix(in srgb, var(--color-accent) 22%, transparent), transparent 36%),
+    linear-gradient(148deg, color-mix(in srgb, var(--surface) 86%, #1a1f1d 14%), color-mix(in srgb, var(--surface-2) 88%, #131816 12%));
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .qs-weather-card__stage {
+  border-color: color-mix(in srgb, var(--color-accent) 44%, var(--color-border));
+  background: color-mix(in srgb, var(--surface) 78%, #ffffff 6%);
+  color: var(--color-accent-hover);
+}
+
+:root[data-theme="dark"] .qs-weather-card__temp,
+:root[data-theme="dark"] .qs-weather-card__temp-min,
+:root[data-theme="dark"] .qs-weather-card__row,
+:root[data-theme="dark"] .qs-weather-card__footer {
+  color: var(--color-text-primary);
 }
 
 @media (max-width: 840px) {
