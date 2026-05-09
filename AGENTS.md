@@ -251,6 +251,12 @@ Rules:
   - `chore: ...`
 - If the change is significant, consider whether `HISTORY.md` should be updated.
 - Never create multiple parallel GitHub versions of `viru-tracker` by default.
+- Mandatory publish sequence for completed work:
+  1. make the requested code changes
+  2. run and pass the relevant checks/verification
+  3. mirror `C:\Users\javiru\Desktop\viru-tracker` into `C:\Users\javiru\Desktop\viru-tracker\_publish_repo`
+  4. from `_publish_repo`, create the commit to `main`
+  5. from `_publish_repo`, push to GitHub and confirm local `HEAD` equals `origin/main`
 - The expected path is:
   1. make the requested change
   2. verify it properly
