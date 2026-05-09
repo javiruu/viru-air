@@ -14,6 +14,7 @@ type QuickSearchScreenStateArgs = {
   sortBy: "ranking" | "price" | "duration" | "risk" | "freshness";
   showHighRisk: boolean;
   filtersNotice: string[];
+  filtersWarningCodes: string[];
   filtersMeta: SearchFilters | null;
   isDegraded: boolean;
   searchMeta: SearchResponse["meta"] | null;
@@ -42,6 +43,7 @@ export function useQuickSearchScreenState({
   sortBy,
   showHighRisk,
   filtersNotice,
+  filtersWarningCodes,
   filtersMeta,
   isDegraded,
   searchMeta,
@@ -100,38 +102,43 @@ export function useQuickSearchScreenState({
   }, [normalizedResults, priceMin, priceMax, durationMax, riskFilter, sortBy, showHighRisk]);
 
   const warningSeverity = useMemo(() => {
-    const neutralByCode = new Set([
-      tWarn("ryanair_unavailable_parcial"),
-      tWarn("ryanair_unavailable_partial"),
-      tWarn("limite_combinaciones_alternativas"),
-      tWarn("ryanair_availability_failed_partial"),
-      tWarn("ryanair_fares_failed_partial"),
+    const neutralCodes = new Set([
+      "ryanair_unavailable_partial",
+      "ryanair_availability_failed_partial",
+      "ryanair_fares_failed_partial",
+      "provider_timeout_partial",
+      "provider_error_partial",
     ]);
-    const criticalByCode = new Set([
-      tWarn("ryanair_provider_unavailable_total"),
-      tWarn("ryanair_availability_failed"),
-      tWarn("ryanair_fares_failed"),
+    const criticalCodes = new Set([
+      "ryanair_provider_unavailable_total",
+      "ryanair_availability_failed",
+      "ryanair_fares_failed",
     ]);
-    const criticalPattern = /(error|fall|failed|bloque|blocked|rate|limit)/i;
+    const sourceCodesOrNotices = filtersWarningCodes.length > 0 ? filtersWarningCodes : filtersNotice;
     const neutral: string[] = [];
     const critical: string[] = [];
-    filtersNotice.forEach((notice) => {
-      if (neutralByCode.has(notice)) {
-        neutral.push(notice);
+    sourceCodesOrNotices.forEach((codeOrNotice) => {
+      if (!filtersWarningCodes.length) {
+        if (/(error|fall|failed|bloque|blocked|rate|limit)/i.test(codeOrNotice)) {
+          critical.push(codeOrNotice);
+          return;
+        }
+        neutral.push(codeOrNotice);
         return;
       }
-      if (criticalByCode.has(notice)) {
-        critical.push(notice);
+      const code = codeOrNotice;
+      if (criticalCodes.has(code)) {
+        critical.push(tWarn(code));
         return;
       }
-      if (criticalPattern.test(notice)) {
-        critical.push(notice);
+      if (neutralCodes.has(code)) {
+        neutral.push(tWarn(code));
         return;
       }
-      neutral.push(notice);
+      neutral.push(tWarn(code));
     });
     return { neutral, critical };
-  }, [filtersNotice, tWarn]);
+  }, [filtersWarningCodes, filtersNotice, tWarn]);
 
   const groupedNeutralWarnings = useMemo(() => {
     const grouped = new Map<string, number>();
@@ -181,11 +188,10 @@ export function useQuickSearchScreenState({
     return 24 * 60 - from + to;
   }, [departAfter, departBefore]);
 
-  const providerTotalOutage = warningSeverity.critical.includes(tWarn("ryanair_provider_unavailable_total"));
-  const providerPartialOutage = warningSeverity.neutral.includes(tWarn("ryanair_availability_failed_partial"))
-    || warningSeverity.neutral.includes(tWarn("ryanair_fares_failed_partial"))
-    || warningSeverity.neutral.includes(tWarn("ryanair_unavailable_partial"))
-    || warningSeverity.neutral.includes(tWarn("ryanair_unavailable_parcial"));
+  const providerTotalOutage = filtersWarningCodes.includes("ryanair_provider_unavailable_total");
+  const providerPartialOutage = filtersWarningCodes.includes("ryanair_availability_failed_partial")
+    || filtersWarningCodes.includes("ryanair_fares_failed_partial")
+    || filtersWarningCodes.includes("ryanair_unavailable_partial");
   const providerStatus = searchMeta?.provider_status;
   const providerPartialInlineNotice = useMemo(() => {
     if (!providerStatus) return null;
@@ -197,6 +203,7 @@ export function useQuickSearchScreenState({
     if (faresFailed && !availabilityFailed) return t("providerPartialFaresNotice");
     return t("providerPartialMixedNotice");
   }, [providerStatus, t]);
+  const hasGroupedWarnings = warningSeverity.critical.length > 0 || warningSeverity.neutral.length > 0;
   const showDegradedState =
     isDegraded
     || Boolean(searchMeta?.stale_data)
@@ -206,7 +213,7 @@ export function useQuickSearchScreenState({
     (filtersMeta?.relaxed && filtersMeta.relaxed.length > 0 ? 1 : 0)
     + (warningSeverity.critical.length > 0 ? 1 : 0)
     + (warningSeverity.neutral.length > 0 ? 1 : 0)
-    + (showDegradedState ? 1 : 0)
+    + (showDegradedState && !hasGroupedWarnings ? 1 : 0)
     + (weatherMessage ? 1 : 0)
     + 1;
 

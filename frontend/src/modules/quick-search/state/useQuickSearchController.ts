@@ -32,6 +32,7 @@ export function useQuickSearchMainState(initialOrigin: string, initialDestinatio
   const [weatherDestination, setWeatherDestination] = useState<WeatherReport | null>(null);
   const [weatherMessage, setWeatherMessage] = useState("");
   const [filtersNotice, setFiltersNotice] = useState<string[]>([]);
+  const [filtersWarningCodes, setFiltersWarningCodes] = useState<string[]>([]);
   const [filtersMeta, setFiltersMeta] = useState<SearchFilters | null>(null);
   const [searchMeta, setSearchMeta] = useState<SearchResponse["meta"] | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
@@ -174,6 +175,8 @@ export function useQuickSearchMainState(initialOrigin: string, initialDestinatio
     setWeatherMessage,
     filtersNotice,
     setFiltersNotice,
+    filtersWarningCodes,
+    setFiltersWarningCodes,
     filtersMeta,
     setFiltersMeta,
     searchMeta,

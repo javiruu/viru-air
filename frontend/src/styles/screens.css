@@ -2353,6 +2353,99 @@ h1 {
   gap: 0.58rem;
 }
 
+.qs-info-tier {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.58rem 0.64rem;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  background: #FFFFFF;
+}
+
+.qs-info-tier-kicker {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748B;
+  font-weight: 600;
+}
+
+.qs-info-tier strong {
+  font-size: 0.92rem;
+  color: #1E293B;
+  font-weight: 700;
+}
+
+.qs-info-tier p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #475569;
+}
+
+.qs-info-impact-row {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.42rem 0.46rem;
+  border-radius: 10px;
+  border: 1px solid #E2E8F0;
+  background: #F8FAFC;
+}
+
+.qs-info-impact-row strong {
+  font-size: 0.78rem;
+}
+
+.qs-info-impact-row span {
+  font-size: 0.8rem;
+  color: #334155;
+}
+
+.qs-info-impact-row-critical {
+  border-color: #FECACA;
+  background: #FEF2F2;
+}
+
+.qs-info-tech {
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  background: #FFFFFF;
+}
+
+.qs-info-tech-summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.42rem 0.58rem;
+}
+
+.qs-info-tech-summary::-webkit-details-marker {
+  display: none;
+}
+
+.qs-info-tech-summary span {
+  min-width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  border: 1px solid #CBD5E1;
+  background: #F8FAFC;
+  color: #334155;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.qs-info-tech-body {
+  border-top: 1px solid #E2E8F0;
+  padding: 0.52rem 0.58rem 0.62rem;
+  display: grid;
+  gap: 0.52rem;
+}
+
 .qs-explain-grid {
   margin-top: 0.8rem;
   display: grid;

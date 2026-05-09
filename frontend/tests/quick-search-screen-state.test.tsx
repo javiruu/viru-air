@@ -20,6 +20,7 @@ function renderScreenState(overrides: Partial<Parameters<typeof useQuickSearchSc
       sortBy: "ranking",
       showHighRisk: false,
       filtersNotice: [],
+      filtersWarningCodes: [],
       filtersMeta: null,
       isDegraded: false,
       searchMeta: null,
@@ -72,7 +73,7 @@ test("useQuickSearchScreenState exposes degraded state, groups warnings and hide
       buildResult({ result_id: "low-1", risk_label: "low", ranking_score: 0.9 }),
       buildResult({ result_id: "high-1", destination: "LIS", risk_label: "high", ranking_score: 0.95 }),
     ],
-    filtersNotice: ["ryanair_unavailable_parcial", "backend failed temporarily"],
+    filtersWarningCodes: ["ryanair_unavailable_partial", "provider_error_partial", "ryanair_provider_unavailable_total"],
     searchMeta: { stale_data: true },
   });
 
@@ -80,13 +81,17 @@ test("useQuickSearchScreenState exposes degraded state, groups warnings and hide
   assert.equal(state.visibleResults.length, 1);
   assert.equal(state.visibleResults[0]?.result_id, "low-1");
   assert.equal(state.hiddenHighRiskResults.length, 1);
-  assert.deepEqual(state.groupedNeutralWarnings, [{ message: "ryanair_unavailable_parcial", count: 1 }]);
-  assert.deepEqual(state.groupedCriticalWarnings, [{ message: "backend failed temporarily", count: 1 }]);
+  assert.deepEqual(state.groupedNeutralWarnings, [
+    { message: "ryanair_unavailable_partial", count: 1 },
+    { message: "provider_error_partial", count: 1 },
+  ]);
+  assert.deepEqual(state.groupedCriticalWarnings, [{ message: "ryanair_provider_unavailable_total", count: 1 }]);
+  assert.equal(state.infoItemsCount, 3);
 });
 
 test("useQuickSearchScreenState prioritizes provider outage copy when no results can be confirmed", () => {
   const state = renderScreenState({
-    filtersNotice: ["ryanair_provider_unavailable_total"],
+    filtersWarningCodes: ["ryanair_provider_unavailable_total"],
   });
 
   assert.equal(state.emptyStateMainTitle, "emptyStateProviderTitle");
@@ -96,7 +101,7 @@ test("useQuickSearchScreenState prioritizes provider outage copy when no results
 
 test("useQuickSearchScreenState surfaces partial provider outage without hiding relax options", () => {
   const state = renderScreenState({
-    filtersNotice: ["ryanair_availability_failed_partial"],
+    filtersWarningCodes: ["ryanair_availability_failed_partial"],
     strictFilters: true,
     durationMax: "180",
   });

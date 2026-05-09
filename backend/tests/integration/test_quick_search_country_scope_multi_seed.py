@@ -196,7 +196,7 @@ def test_country_scope_multi_seed_exhausted_keeps_empty_with_metadata(client, mo
     assert payload["results"] == []
     assert payload["meta"]["rescue"]["attempted"] is True
     assert payload["meta"]["rescue"]["winning_step"] is None
-    assert "rescue_mode_applied" in payload["filters"]["warnings"]
+    assert "rescue_mode_applied" not in payload["filters"]["warnings"]
     assert any(item["code"] == "country_scope_multi_seed_applied" for item in payload["meta"]["warnings_structured"])
     assert payload["meta"]["planned_route_scope"]["winning_step"] == "pass_1_exact"
 
@@ -287,5 +287,5 @@ def test_country_scope_discards_out_of_scope_results(client, monkeypatch) -> Non
     assert response.status_code == 200
     payload = response.json()
 
-    assert "result_out_of_scope_discarded" in payload["filters"]["warnings"]
+    assert "result_out_of_scope_discarded" not in payload["filters"]["warnings"]
     assert all(item["origin"] != "ZZZ" for item in payload["results"])

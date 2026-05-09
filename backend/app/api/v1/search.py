@@ -33,6 +33,18 @@ _WARNING_CODE_ALIASES: dict[str, str] = {
     "provider_timeout_parcial": "provider_timeout_partial",
     "ryanair_unavailable_parcial": "ryanair_unavailable_partial",
 }
+_UI_WARNING_CRITICAL_CODES: set[str] = {
+    "ryanair_provider_unavailable_total",
+    "ryanair_availability_failed",
+    "ryanair_fares_failed",
+}
+_UI_WARNING_PARTIAL_CODES: set[str] = {
+    "ryanair_unavailable_partial",
+    "ryanair_availability_failed_partial",
+    "ryanair_fares_failed_partial",
+    "provider_timeout_partial",
+    "provider_error_partial",
+}
 
 
 def _normalize_warning_code(code: str) -> str:
@@ -49,6 +61,21 @@ def _normalize_warning_codes(codes: list[str]) -> list[str]:
         seen.add(code)
         deduped.append(code)
     return deduped
+
+
+def _filter_ui_warning_codes(codes: list[str]) -> list[str]:
+    """
+    Policy for the `/quick-search` information rail:
+    expose only critical/provider-partial degradation warnings.
+    Keep full warning telemetry in `meta.warnings_structured`.
+    """
+    visible: list[str] = []
+    for raw_code in codes:
+        code = _normalize_warning_code(raw_code)
+        if code in _UI_WARNING_CRITICAL_CODES or code in _UI_WARNING_PARTIAL_CODES:
+            if code not in visible:
+                visible.append(code)
+    return visible
 
 
 def _stable_json_dumps(value: Any) -> str:
@@ -1440,6 +1467,7 @@ def quick_search(
     }
 
     warnings = _normalize_warning_codes(warnings)
+    ui_warning_codes = _filter_ui_warning_codes(warnings)
     phase_ms["total_search_ms"] = int((time.perf_counter() - t0) * 1000)
     requested_date_candidates = _build_flex_dates(travel_date_value, requested_days_before, requested_days_after)
 
@@ -1696,7 +1724,7 @@ def quick_search(
         "filters": {
             "applied": filters_applied,
             "relaxed": relaxed_filters,
-            "warnings": warnings,
+            "warnings": ui_warning_codes,
             "discarded": max(0, len(combined) - len(flights_after_filters)) + out_of_scope_discarded,
         },
         "results": [

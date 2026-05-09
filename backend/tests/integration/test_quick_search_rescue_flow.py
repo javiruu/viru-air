@@ -186,7 +186,7 @@ def test_quick_search_rescue_date_finds_results(client: TestClient, monkeypatch)
     assert payload["meta"]["rescue"]["attempted"] is True
     assert payload["meta"]["rescue"]["winning_step"] == "pass_3_rescue_date"
     assert "date_flex_auto" in payload["filters"]["relaxed"]
-    assert "rescue_mode_applied" in payload["filters"]["warnings"]
+    assert "rescue_mode_applied" not in payload["filters"]["warnings"]
     assert [item["step"] for item in payload["meta"]["rescue"]["pass_summaries"][:2]] == [
         "pass_1_exact",
         "pass_2_rescue_budget_boost",
@@ -224,7 +224,7 @@ def test_quick_search_rescue_exhausted_keeps_empty_results(client: TestClient, m
     assert payload["results"] == []
     assert payload["meta"]["rescue"]["attempted"] is True
     assert payload["meta"]["rescue"]["winning_step"] is None
-    assert "rescue_mode_applied" in payload["filters"]["warnings"]
+    assert "rescue_mode_applied" not in payload["filters"]["warnings"]
     assert payload["meta"]["rescue"]["applied_steps"] == [
         "pass_2_rescue_budget_boost",
         "pass_3_rescue_date",

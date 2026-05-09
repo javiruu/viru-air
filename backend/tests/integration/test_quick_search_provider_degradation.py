@@ -93,7 +93,7 @@ def test_quick_search_exposes_total_provider_outage(client: TestClient, monkeypa
 
     assert payload["results"] == []
     assert "ryanair_provider_unavailable_total" in payload["filters"]["warnings"]
-    assert "rescue_mode_applied" in payload["filters"]["warnings"]
+    assert "rescue_mode_applied" not in payload["filters"]["warnings"]
     assert payload["meta"]["provider_status"]["overall"] == "total_outage"
     assert payload["meta"]["provider_status"]["availability"]["status"] == "failed"
     assert payload["meta"]["provider_status"]["fares"]["status"] == "failed"
@@ -122,7 +122,7 @@ def test_quick_search_dedupes_repeated_partial_warnings(client: TestClient, monk
     payload = response.json()
 
     assert payload["results"] == []
-    assert payload["filters"]["warnings"] == ["ryanair_availability_failed_partial", "rescue_mode_applied"]
+    assert payload["filters"]["warnings"] == ["ryanair_availability_failed_partial"]
     assert payload["meta"]["rescue"]["attempted"] is True
     assert payload["meta"]["rescue"]["winning_step"] is None
     assert [
