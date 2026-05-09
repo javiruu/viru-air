@@ -24,6 +24,9 @@ type Props = {
   boardingPassengers: number;
   loadingTitle: string;
   loadingText: string;
+  loadingTotalText: string;
+  loadingProgressText: string;
+  loadingScopeText: string;
 };
 
 export function QuickSearchLoadingProgress(props: Props) {
@@ -101,6 +104,11 @@ export function QuickSearchLoadingProgress(props: Props) {
       </section>
       <h3>{props.loadingTitle}</h3>
       <p>{props.loadingText}</p>
+      <div className="qs-loading-kpis" aria-live="polite">
+        <p className="qs-loading-kpi">{props.loadingTotalText}</p>
+        <p className="qs-loading-kpi"><strong>{props.loadingProgressText}</strong></p>
+        <p className="qs-loading-kpi qs-loading-kpi-muted">{props.loadingScopeText}</p>
+      </div>
       <div className="qs-skeleton-cards" aria-hidden="true">
         {Array.from({ length: 4 }).map((_, idx) => (
           <article key={`skeleton-card-${idx}`} className="qs-skeleton-card">

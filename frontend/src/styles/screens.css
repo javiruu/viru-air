@@ -11879,6 +11879,28 @@ textarea::placeholder {
   background: #16a34a;
 }
 
+.qs-loading-kpis {
+  margin-top: 10px;
+  display: grid;
+  gap: 4px;
+  text-align: left;
+}
+
+.qs-loading-kpi {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--qs-boarding-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.qs-loading-kpi strong {
+  font-size: 0.84rem;
+}
+
+.qs-loading-kpi-muted {
+  color: var(--qs-boarding-muted);
+}
+
 .qs-boarding-track {
   position: relative;
   height: 76px;

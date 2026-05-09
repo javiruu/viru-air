@@ -57,6 +57,23 @@ cd ../frontend
 npm run build
 ```
 
+Para E2E frontend con autenticacion real:
+
+```bash
+cd frontend
+npm run test:e2e:real
+```
+
+Notas E2E:
+- Los tests arrancan backend y frontend automaticamente (`8000` y `3000`) si no estan levantados.
+- Si no logra arrancar algun servicio dentro del timeout, el test falla con error de bootstrap.
+- Variables opcionales:
+  - `E2E_BASE_URL` (default `http://127.0.0.1:3000`)
+  - `E2E_API_BASE_URL` (default `http://127.0.0.1:8000/api/v1`)
+  - `E2E_BACKEND_PYTHON` (ruta al `python.exe` de backend si no usas `.venv` por defecto)
+  - `E2E_BACKEND_START_TIMEOUT_MS` (default `45000`)
+  - `E2E_FRONTEND_START_TIMEOUT_MS` (default `90000`)
+
 ## Capturas UI rapidas (flujo recomendado)
 
 Cuando necesites evidencia visual rapida en frontend, usa este flujo minimo en lugar de improvisar:

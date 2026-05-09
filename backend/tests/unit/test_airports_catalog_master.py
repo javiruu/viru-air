@@ -1,13 +1,20 @@
 import unittest
+import unicodedata
 
 from app.infrastructure.airports_catalog import expand_side, resolve_seed_airport
 
 
 class AirportsCatalogMasterTests(unittest.TestCase):
+    @staticmethod
+    def _normalize_text(value: str) -> str:
+        normalized = unicodedata.normalize("NFKD", value)
+        without_marks = "".join(char for char in normalized if not unicodedata.combining(char))
+        return without_marks.casefold()
+
     def test_resolve_seed_ok(self):
         airport = resolve_seed_airport("LEI")
         self.assertEqual(airport.iata, "LEI")
-        self.assertEqual(airport.city.lower(), "almeria")
+        self.assertEqual(self._normalize_text(airport.city), "almeria")
 
     def test_resolve_seed_missing(self):
         with self.assertRaises(ValueError):

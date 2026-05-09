@@ -195,6 +195,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const [destinationSuggestions, setDestinationSuggestions] = useState<Array<{ iata: string; name: string }>>([]);
   const [countryAirports, setCountryAirports] = useState<AirportIataEntry[]>([]);
   const [executedCriteria, setExecutedCriteria] = useState<ExecutedCriteriaSnapshot | null>(null);
+  const [loaderPlannedTotalFlights, setLoaderPlannedTotalFlights] = useState(0);
+  const [loaderResolvedTotalFlights, setLoaderResolvedTotalFlights] = useState<number | null>(null);
+  const [loaderScopeRoutes, setLoaderScopeRoutes] = useState(0);
+  const [loaderScopeDates, setLoaderScopeDates] = useState(0);
   // signature of the last successfully executed criteria (used to detect pending changes)
   const [appliedCriteriaSignature, setAppliedCriteriaSignature] = useState<string | null>(null);
   const initialOrigin = mode === "recommendations" ? "" : "MAD";
@@ -1310,6 +1314,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setFiltersNotice([]);
     setFiltersMeta(null);
     setSearchMeta(null);
+    setLoaderResolvedTotalFlights(null);
     setJobId(null);
     setIsDegraded(false);
     setSearchState("loading");
@@ -1353,6 +1358,14 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       strict_filters: strictFilters,
       soft_filters_weight: 0.6,
     };
+    const originScopeCount = Array.isArray(payload.origin_iata) ? payload.origin_iata.length : 1;
+    const destinationScopeCount = Array.isArray(payload.destination_iata) ? payload.destination_iata.length : 1;
+    const datesScopeCount = Math.max(1, range.length);
+    const routesScopeCount = Math.max(1, originScopeCount * destinationScopeCount);
+    const plannedTotalFlights = Math.max(1, routesScopeCount * datesScopeCount);
+    setLoaderScopeRoutes(routesScopeCount);
+    setLoaderScopeDates(datesScopeCount);
+    setLoaderPlannedTotalFlights(plannedTotalFlights);
     const nextExecutedCriteria: ExecutedCriteriaSnapshot = {
       route: `${originCountryOnly ? originCountryOnly.name : origin} → ${destinationCountryOnly ? destinationCountryOnly.name : destination}`,
       dateLabel: isReturn && returnDate ? `${travelDate} → ${returnDate}` : travelDate,
@@ -1438,6 +1451,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           setExecutedCriteria(nextExecutedCriteria);
           setFiltersMeta(data.filters || null);
           setSearchMeta(data.meta || null);
+          if (typeof data.meta?.total_candidates === "number" && Number.isFinite(data.meta.total_candidates)) {
+            setLoaderResolvedTotalFlights(Math.max(0, data.meta.total_candidates));
+          }
           setJobId(data.job_id || null);
           setIsDegraded(Boolean(data.meta?.stale_data || data.results.find((item) => item.stale_data)));
           if (data.filters?.warnings && data.filters.warnings.length > 0) {
@@ -2357,6 +2373,17 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           ? t("loadingPhaseCommitted")
           : t("loadingPhaseRequesting");
   const progressPercent = Math.max(0, Math.min(100, Math.round(displayProgress)));
+  const totalFlightsForLoader = Math.max(0, loaderResolvedTotalFlights ?? loaderPlannedTotalFlights);
+  const currentFlightsForLoader = totalFlightsForLoader > 0
+    ? Math.min(totalFlightsForLoader, Math.round((progressPercent / 100) * totalFlightsForLoader))
+    : 0;
+  const loadingTotalText = t("loadingTotalFlights").replace("{count}", formatNumber(totalFlightsForLoader, localeTag));
+  const loadingProgressText = t("loadingProgressFlights")
+    .replace("{current}", formatNumber(currentFlightsForLoader, localeTag))
+    .replace("{total}", formatNumber(totalFlightsForLoader, localeTag));
+  const loadingScopeText = t("loadingScope")
+    .replace("{routes}", formatNumber(loaderScopeRoutes, localeTag))
+    .replace("{days}", formatNumber(loaderScopeDates, localeTag));
   const boardingPassengers = isMobileViewport ? 24 : 50;
   const progressRatio = Math.min(1, Math.max(0, displayProgress / 100));
   const easedProgressRatio = Math.pow(progressRatio, 2.2);
@@ -4035,6 +4062,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             boardingPassengers={boardingPassengers}
             loadingTitle={t("loadingTitle")}
             loadingText={t("loadingText")}
+            loadingTotalText={loadingTotalText}
+            loadingProgressText={loadingProgressText}
+            loadingScopeText={loadingScopeText}
           />
           {relaxPreviewOpen ? (
             <section className="panel panel-soft section-gap-sm" aria-live="polite">

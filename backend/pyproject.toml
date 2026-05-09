@@ -26,7 +26,9 @@ dev = [
   "pytest-asyncio>=0.24.0",
   "httpx>=0.28.0",
   "ruff>=0.8.2",
-  "mypy>=1.13.0"
+  "mypy>=1.13.0",
+  "types-requests>=2.32.0.20250328",
+  "types-passlib>=1.7.7.20250602"
 ]
 
 [tool.pytest.ini_options]
@@ -35,6 +37,18 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = false
+
+[[tool.mypy.overrides]]
+module = ["jose", "jose.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["requests", "requests.*", "passlib", "passlib.*"]
+ignore_missing_imports = true
 
 [tool.setuptools]
 packages = ["app"]

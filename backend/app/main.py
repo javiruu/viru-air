@@ -7,8 +7,9 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
+from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT
 
 from app.core.errors import ApiError, error_envelope, message_for_code
 from app.core.request_context import get_correlation_id, normalize_correlation_id, set_correlation_id
@@ -86,18 +87,18 @@ app = FastAPI(title="Viru API", version="0.1.0")
 
 
 class AccessLogMiddleware:
-    def __init__(self, app: FastAPI) -> None:
+    def __init__(self, app: ASGIApp) -> None:
         self.app = app
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
 
         start = time.perf_counter()
-        status_code = None
+        status_code: int | None = None
 
-        async def send_wrapper(message):
+        async def send_wrapper(message: Message) -> None:
             nonlocal status_code
             if message["type"] == "http.response.start":
                 status_code = message.get("status")
@@ -108,6 +109,8 @@ class AccessLogMiddleware:
         finally:
             elapsed_ms = int((time.perf_counter() - start) * 1000)
             headers = {k.decode(): v.decode() for k, v in scope.get("headers", [])}
+            client = scope.get("client")
+            client_host = client[0] if isinstance(client, tuple) and len(client) > 0 else None
             log_payload = {
                 "event": "http",
                 "correlation_id": get_correlation_id() or headers.get("x-correlation-id") or "-",
@@ -115,7 +118,7 @@ class AccessLogMiddleware:
                 "path": scope.get("path"),
                 "status": status_code or 500,
                 "elapsed_ms": elapsed_ms,
-                "client": scope.get("client")[0] if scope.get("client") else None,
+                "client": client_host,
                 "origin": headers.get("origin"),
                 "referer": headers.get("referer"),
                 "user_agent": headers.get("user-agent"),
@@ -170,6 +173,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     safe_body = await _safe_request_body(request)
+    details: list[dict[str, object]] | list[object] | dict[str, object]
     if isinstance(exc.detail, str):
         code = exc.detail
         details = []

@@ -42,7 +42,7 @@ def test_error_envelope_shape_is_consistent(client: TestClient) -> None:
     bad_search = client.post("/api/v1/search/quick", json={})
     assert bad_search.status_code == 422
     payload_search = bad_search.json()
-    assert payload_search["code"] == "validation_error"
+    assert payload_search["code"] == "quick_search_invalid_request"
     assert isinstance(payload_search["details"], list)
 
 

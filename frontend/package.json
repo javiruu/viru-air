@@ -8,6 +8,8 @@
     "start": "next start -p 3000",
     "lint": "next lint",
     "test": "tsx --test",
+    "test:e2e": "tsx --test tests/*.e2e.test.ts",
+    "test:e2e:real": "tsx --test tests/quick-search-loading-transition.e2e.test.ts",
     "test:e2e:quick-search": "tsx --test tests/quick-search-relax-preview.e2e.test.ts",
     "qa:visual:quick-search": "node scripts/qa_quick_search_visual.mjs",
     "update:airports": "node ./scripts/update_airports_iata.mjs"

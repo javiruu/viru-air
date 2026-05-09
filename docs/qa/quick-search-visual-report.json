@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-10T11:20:52.169Z",
+  "generatedAt": "2026-04-28T11:21:07.839Z",
   "baseUrl": "http://127.0.0.1:3000",
   "snapshots": [
     {
@@ -8,9 +8,10 @@
         "width": 1440,
         "height": 900
       },
-      "file": "docs/qa/snapshots_quick-search-desktop.png",
-      "previousHash": "f71d0214125a12358dff19ccbdd3492cb920c72284dd46914a0459e7eb6f95fe",
-      "currentHash": "0a2cdc8b8b9b436bb69d656e2131ab4ceca6896fa78e2f4b2801dac2a2dbec48",
+      "file": "docs\\qa\\snapshots_quick-search-desktop.png",
+      "pickerV2Visible": false,
+      "previousHash": "0a2cdc8b8b9b436bb69d656e2131ab4ceca6896fa78e2f4b2801dac2a2dbec48",
+      "currentHash": "0b69b848fe4510e3b0595dae787298d8e0394502bffce7e6d14b810e92b154a9",
       "changed": true
     },
     {
@@ -19,9 +20,10 @@
         "width": 768,
         "height": 1024
       },
-      "file": "docs/qa/snapshots_quick-search-tablet768.png",
-      "previousHash": null,
-      "currentHash": "d3ea7a95153e3858cc1afd897d77fa10bbe110d71fa2015c487d35d63b702f0d",
+      "file": "docs\\qa\\snapshots_quick-search-tablet768.png",
+      "pickerV2Visible": false,
+      "previousHash": "d3ea7a95153e3858cc1afd897d77fa10bbe110d71fa2015c487d35d63b702f0d",
+      "currentHash": "67481d68e13ba6f975f2d0a767e8364721c6a260ea64e6a62b9c469214a0d600",
       "changed": true
     },
     {
@@ -30,9 +32,10 @@
         "width": 375,
         "height": 812
       },
-      "file": "docs/qa/snapshots_quick-search-mobile375.png",
-      "previousHash": "d623aabf519c93f91ba0a17d281e5ec3e98abaf5d9362c151e2fdd55bebffa23",
-      "currentHash": "1e7b346093eb194d07d4d28507e897fae424f5deed1ad7cef35a67c927ff0acc",
+      "file": "docs\\qa\\snapshots_quick-search-mobile375.png",
+      "pickerV2Visible": false,
+      "previousHash": "1e7b346093eb194d07d4d28507e897fae424f5deed1ad7cef35a67c927ff0acc",
+      "currentHash": "c8fc85b1a218a39e0272c009302fabb15fcf383dce43f7ac092add626b93b3ed",
       "changed": true
     },
     {
@@ -41,9 +44,10 @@
         "width": 320,
         "height": 712
       },
-      "file": "docs/qa/snapshots_quick-search-mobile320.png",
-      "previousHash": "0ecf4f0da2d1674b3cca0e3c5f6e4be0d12947c7eff2e33b4f624799d7661a00",
-      "currentHash": "f3c4b6f5eb250fa4a590307adc141db11861d5f28777b72597de52c1cfa15dce",
+      "file": "docs\\qa\\snapshots_quick-search-mobile320.png",
+      "pickerV2Visible": false,
+      "previousHash": "f3c4b6f5eb250fa4a590307adc141db11861d5f28777b72597de52c1cfa15dce",
+      "currentHash": "02169fc86f605ae700b53482e09f2164b858d3a29fc04d7a583c79931aaf1fb4",
       "changed": true
     }
   ]

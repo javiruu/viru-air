@@ -23,6 +23,9 @@ test("QuickSearchLoadingProgress stays hidden when loader is inactive and not he
       boardingPassengers={4}
       loadingTitle="Buscando vuelos"
       loadingText="Espera mientras preparamos la vista"
+      loadingTotalText="Vuelos a buscar: 120"
+      loadingProgressText="Progreso: 0/120 vuelos"
+      loadingScopeText="Cobertura activa: 24 rutas x 5 dias"
     />,
   );
 
@@ -50,6 +53,9 @@ test("QuickSearchLoadingProgress renders progress, subchecks and skeleton cards"
       boardingPassengers={4}
       loadingTitle="Buscando vuelos"
       loadingText="Espera mientras preparamos la vista"
+      loadingTotalText="Vuelos a buscar: 120"
+      loadingProgressText="Progreso: 50/120 vuelos"
+      loadingScopeText="Cobertura activa: 24 rutas x 5 dias"
     />,
   );
 
@@ -57,5 +63,8 @@ test("QuickSearchLoadingProgress renders progress, subchecks and skeleton cards"
   assert.match(html, /Buscando vuelo MAD-DUB/);
   assert.match(html, /Calculando ranking/);
   assert.match(html, /Buscando vuelos/);
+  assert.match(html, /Vuelos a buscar: 120/);
+  assert.match(html, /Progreso: 50\/120 vuelos/);
+  assert.match(html, /Cobertura activa: 24 rutas x 5 dias/);
   assert.match(html, /qs-skeleton-card/);
 });
