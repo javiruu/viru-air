@@ -20,6 +20,15 @@ async function setTheme(theme) {
   await page.waitForTimeout(220);
 }
 
+async function enforceTheme(theme) {
+  for (let i = 0; i < 4; i += 1) {
+    await setTheme(theme);
+    const active = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
+    if (active === theme) return;
+    await page.waitForTimeout(220);
+  }
+}
+
 async function ensureLogin() {
   await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded' });
   const ok = await page.evaluate(async ({ email, password }) => {
@@ -60,7 +69,7 @@ await ensureLogin();
 
 // Dashboard dark full + account menu + footer
 await openRoute(['/dashboard']);
-await setTheme('dark');
+await enforceTheme('dark');
 await cap('dashboard-dark-full.png');
 const trigger = page.locator('.account-trigger').first();
 if (await trigger.count()) { await trigger.click(); await page.waitForTimeout(300); }
@@ -71,7 +80,7 @@ await cap('dashboard-dark-footer.png');
 
 // Quick search dark empty date
 await openRoute(['/quick-search']);
-await setTheme('dark');
+await enforceTheme('dark');
 await page.evaluate(() => {
   const input = document.querySelector('input[type="date"]');
   if (input) {
@@ -105,7 +114,7 @@ await cap('quick-search-dark-results-attempt.png');
 
 // Recommendations dark
 await openRoute(['/recomendaciones', '/recommendations']);
-await setTheme('dark');
+await enforceTheme('dark');
 await page.waitForTimeout(700);
 await cap('recommendations-dark-full.png');
 await page.evaluate(()=>window.scrollTo(0, document.body.scrollHeight));
@@ -114,18 +123,18 @@ await cap('recommendations-dark-footer.png');
 
 // Alerts dark
 await openRoute(['/alerts']);
-await setTheme('dark');
+await enforceTheme('dark');
 await page.waitForTimeout(700);
 await cap('alerts-dark-full.png');
 
 // Light controls
 await openRoute(['/quick-search']);
-await setTheme('light');
+await enforceTheme('light');
 await page.waitForTimeout(700);
 await cap('quick-search-light-full.png');
 
 await openRoute(['/dashboard']);
-await setTheme('light');
+await enforceTheme('light');
 await page.waitForTimeout(700);
 await cap('dashboard-light-full.png');
 

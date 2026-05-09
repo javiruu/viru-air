@@ -7697,6 +7697,39 @@ textarea::placeholder {
   outline: none;
 }
 
+/* Dashboard dispatch/news card: dark-native editorial treatment (avoid light leakage). */
+:root[data-theme="dark"] .dashboard-news-card {
+  border-color: color-mix(in srgb, var(--color-border) 82%, var(--color-border-strong) 18%);
+  background:
+    radial-gradient(circle at top right, rgba(224, 123, 86, 0.12), transparent 30%),
+    radial-gradient(circle at left center, rgba(111, 178, 161, 0.1), transparent 32%),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-surface-elevated) 88%, var(--color-surface) 12%), color-mix(in srgb, var(--color-surface) 92%, var(--color-surface-muted) 8%));
+  box-shadow: 0 26px 58px rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(18px);
+}
+
+:root[data-theme="dark"] .dashboard-news-card::before {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 34%),
+    radial-gradient(circle at top right, rgba(224, 123, 86, 0.22), transparent 30%);
+}
+
+:root[data-theme="dark"] .dashboard-news-meta {
+  border-top-color: color-mix(in srgb, var(--color-border) 82%, transparent);
+}
+
+:root[data-theme="dark"] .dashboard-news-author-mark {
+  background: linear-gradient(145deg, rgba(111, 178, 161, 0.2), rgba(224, 123, 86, 0.16));
+  border-color: color-mix(in srgb, var(--color-border-strong) 62%, rgba(255, 255, 255, 0.16));
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .dashboard-news-link:hover,
+:root[data-theme="dark"] .dashboard-news-link:focus-visible {
+  background: color-mix(in srgb, var(--color-chip-bg) 94%, var(--color-surface) 6%);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.36);
+}
+
 .hero-user-card {
   display: flex;
   gap: 0.6rem;
@@ -13689,6 +13722,7 @@ textarea::placeholder {
 :root[data-theme="dark"] .qs-command-stage__status,
 :root[data-theme="dark"] .qs-results-panel,
 :root[data-theme="dark"] .qs-result-row,
+:root[data-theme="dark"] .qs-flex-control,
 :root[data-theme="dark"] .qs-filter-group,
 :root[data-theme="dark"] .qs-filter-accordion,
 :root[data-theme="dark"] .qs-flex-panel,
@@ -13718,6 +13752,169 @@ textarea::placeholder {
   background: rgba(255, 255, 255, 0.05);
   color: var(--ink);
   box-shadow: none;
+}
+
+:root[data-theme="dark"] .qs-setup-critical-filters {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-surface) 90%, var(--color-surface-elevated) 10%), color-mix(in srgb, var(--color-surface-elevated) 86%, var(--color-surface-muted) 14%));
+}
+
+/* Final dark pass: quick-search central form must be fully dark-native. */
+:root[data-theme="dark"] .qs-flex-summary {
+  background: color-mix(in srgb, var(--surface) 88%, var(--surface-2) 12%);
+  border-color: color-mix(in srgb, var(--border) 82%, var(--accent) 18%);
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .qs-flex-preset {
+  border-color: color-mix(in srgb, var(--color-border) 86%, var(--color-border-strong) 14%);
+  background: color-mix(in srgb, var(--color-surface) 84%, var(--color-surface-elevated) 16%);
+  color: var(--color-text-primary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme="dark"] .qs-flex-preset:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 38%, var(--color-border));
+  background: color-mix(in srgb, var(--color-surface-elevated) 84%, var(--color-surface) 16%);
+}
+
+:root[data-theme="dark"] .qs-flex-preset.is-active {
+  border-color: color-mix(in srgb, var(--color-accent) 48%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface));
+  color: var(--color-text-primary);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.34);
+}
+
+:root[data-theme="dark"] .qs-flex-stepper {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background: color-mix(in srgb, var(--color-input-bg) 86%, var(--color-surface) 14%);
+}
+
+:root[data-theme="dark"] .qs-flex-stepper-btn {
+  background: color-mix(in srgb, var(--color-surface) 76%, var(--color-surface-elevated) 24%);
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .qs-flex-stepper-btn:disabled {
+  opacity: 0.55;
+  color: var(--color-text-disabled);
+  background: color-mix(in srgb, var(--color-surface) 88%, var(--color-surface-muted) 12%);
+}
+
+:root[data-theme="dark"] .qs-date-trigger {
+  border-color: color-mix(in srgb, var(--color-input-border) 86%, var(--color-border));
+  background: color-mix(in srgb, var(--color-input-bg) 90%, var(--color-surface) 10%);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.34);
+}
+
+:root[data-theme="dark"] .qs-date-trigger__value {
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .qs-date-trigger:not(.has-value) .qs-date-trigger__value {
+  color: var(--color-input-placeholder);
+}
+
+:root[data-theme="dark"] .qs-date-inline-icon {
+  background: color-mix(in srgb, var(--color-surface-elevated) 76%, var(--color-surface) 24%);
+  border-color: color-mix(in srgb, var(--color-border) 82%, var(--color-border-strong) 18%);
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .qs-date-trigger__actions {
+  border-left-color: color-mix(in srgb, var(--color-border) 84%, transparent);
+}
+
+:root[data-theme="dark"] .qs-date-trigger__caret {
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .qs-date-trigger__caret.is-open {
+  color: color-mix(in srgb, var(--color-accent) 68%, var(--color-text-primary));
+  background: color-mix(in srgb, var(--color-accent) 14%, var(--color-surface));
+}
+
+:root[data-theme="dark"] .qs-date-popover {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background:
+    radial-gradient(circle at top right, rgba(224, 123, 86, 0.12), transparent 34%),
+    radial-gradient(circle at left center, rgba(111, 178, 161, 0.1), transparent 30%),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-surface-elevated) 90%, var(--color-surface) 10%), color-mix(in srgb, var(--color-surface) 88%, var(--color-surface-muted) 12%));
+  box-shadow: 0 30px 56px rgba(0, 0, 0, 0.58);
+}
+
+:root[data-theme="dark"] .qs-date-popover::before {
+  border-left-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  border-top-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background: color-mix(in srgb, var(--color-surface-elevated) 92%, var(--color-surface) 8%);
+}
+
+:root[data-theme="dark"] .qs-date-popover__header strong,
+:root[data-theme="dark"] .qs-date-day,
+:root[data-theme="dark"] .qs-date-popover__footer strong {
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .qs-date-popover__eyebrow,
+:root[data-theme="dark"] .qs-date-popover__weekdays span,
+:root[data-theme="dark"] .qs-date-popover__footer-label {
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .qs-date-nav {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background: color-mix(in srgb, var(--color-surface) 84%, var(--color-surface-elevated) 16%);
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .qs-date-nav:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 36%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 14%, var(--color-surface));
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .qs-date-day:hover:not(.is-disabled) {
+  border-color: color-mix(in srgb, var(--color-border-strong) 72%, var(--color-border));
+  background: color-mix(in srgb, var(--color-surface-elevated) 80%, var(--color-surface) 20%);
+  box-shadow: 0 10px 16px rgba(0, 0, 0, 0.32);
+}
+
+:root[data-theme="dark"] .qs-date-day.is-outside {
+  color: color-mix(in srgb, var(--color-text-muted) 76%, var(--color-surface-elevated));
+}
+
+:root[data-theme="dark"] .qs-date-day.is-today {
+  border-color: color-mix(in srgb, var(--color-info-border) 70%, var(--color-border));
+  color: var(--color-info-text);
+}
+
+:root[data-theme="dark"] .qs-date-day.is-selected {
+  border-color: color-mix(in srgb, var(--color-accent) 54%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface-elevated));
+  color: var(--color-text-primary);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme="dark"] .qs-date-popover__footer {
+  border-top-color: color-mix(in srgb, var(--color-border) 84%, transparent);
+}
+
+:root[data-theme="dark"] .qs-summary {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background: color-mix(in srgb, var(--color-surface) 88%, var(--color-surface-elevated) 12%);
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme="dark"] .qs-degraded-inline {
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .btn-search:disabled {
+  color: var(--color-text-disabled);
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-accent) 16%);
+  background: color-mix(in srgb, var(--color-surface) 88%, var(--color-surface-muted) 12%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 8px 18px rgba(0, 0, 0, 0.28);
 }
 
 @media (max-width: 720px) {
@@ -14317,4 +14514,39 @@ textarea::placeholder {
   .qs-weather-card__footer {
     flex-wrap: wrap;
   }
+}
+
+/* Final cascade guard: prevent light islands in quick-search dark mode. */
+:root[data-theme="dark"] .quick-search-shell .quick-search-panel {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background:
+    radial-gradient(circle at top right, rgba(224, 123, 86, 0.1), transparent 28%),
+    radial-gradient(circle at left center, rgba(111, 178, 161, 0.08), transparent 24%),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-surface-elevated) 88%, var(--color-surface) 12%), color-mix(in srgb, var(--color-surface) 92%, var(--color-surface-muted) 8%));
+  box-shadow:
+    0 24px 46px rgba(0, 0, 0, 0.44),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme="dark"] .quick-search-shell .quick-search-panel::before {
+  background: radial-gradient(circle at 12% 18%, rgba(224, 123, 86, 0.14), transparent 42%);
+}
+
+:root[data-theme="dark"] .quick-search-shell .quick-search-panel::after {
+  background: radial-gradient(circle at 84% 72%, rgba(111, 178, 161, 0.12), transparent 40%);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-summary {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background: color-mix(in srgb, var(--color-surface) 90%, var(--color-surface-elevated) 10%);
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme="dark"] .quick-search-shell .btn-search:disabled {
+  color: var(--color-text-disabled);
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-accent) 16%);
+  background: color-mix(in srgb, var(--color-surface) 90%, var(--color-surface-muted) 10%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 8px 18px rgba(0, 0, 0, 0.28);
 }
