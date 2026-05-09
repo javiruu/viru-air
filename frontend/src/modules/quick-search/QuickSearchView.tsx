@@ -370,10 +370,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setPrefersReducedMotion,
     isMobileViewport,
     setIsMobileViewport,
-    warningsExpanded,
-    setWarningsExpanded,
-    criticalWarningsExpanded,
-    setCriticalWarningsExpanded,
     emptyCausesExpanded,
     setEmptyCausesExpanded,
     infoExpanded,
@@ -810,18 +806,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     const timer = window.setTimeout(() => setSummaryHighlightKey(null), 800);
     return () => window.clearTimeout(timer);
   }, [summaryHighlightKey, setSummaryHighlightKey]);
-
-  useEffect(() => {
-    if (filtersWarningCodes.length === 0 && warningsExpanded) {
-      setWarningsExpanded(false);
-    }
-  }, [filtersWarningCodes.length, warningsExpanded, setWarningsExpanded]);
-
-  useEffect(() => {
-    if (filtersWarningCodes.length === 0 && criticalWarningsExpanded) {
-      setCriticalWarningsExpanded(false);
-    }
-  }, [filtersWarningCodes.length, criticalWarningsExpanded, setCriticalWarningsExpanded]);
 
   useEffect(() => {
     if (searchState !== "empty" && emptyCausesExpanded) {
@@ -2531,8 +2515,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     tWarn,
   });
   const explainChipLabel = showDegradedState ? t("degradedChip") : t("toolbarExplain");
-  const warningDetailOpenLabel = t("warningDetailsOpen");
-  const warningDetailCloseLabel = t("warningDetailsClose");
   const warningGroupedTitle = t("warningsGroupedTitle");
   const warningProblemTitle = t("warningProblemTitle");
   const providerPartialWarnings = groupedNeutralWarnings.filter((group) =>
@@ -4253,68 +4235,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                         </li>
                       ))}
                     </ul>
-                  </div>
-                </details>
-              ) : null}
-              {(warningSeverity.critical.length > 0 || warningSeverity.neutral.length > 0) ? (
-                <details className="qs-info-tech">
-                  <summary className="qs-info-tech-summary">
-                    <strong>{t("detailsToggle")}</strong>
-                    <span>{warningSeverity.critical.length + warningSeverity.neutral.length}</span>
-                  </summary>
-                  <div className="qs-info-tech-body">
-                    {warningSeverity.critical.length > 0 ? (
-                      <div className="notice notice-compact notice-error qs-warning-grouped qs-warning-grouped-critical">
-                        <div className="qs-warning-grouped-head">
-                          <strong>{warningProblemTitle}</strong>
-                          <span className="qs-warning-grouped-count">{warningSeverity.critical.length}</span>
-                          <button
-                            type="button"
-                            className="btn-ghost btn-compact"
-                            aria-expanded={criticalWarningsExpanded}
-                            aria-controls="qs-warning-critical-details"
-                            onClick={() => setCriticalWarningsExpanded((prev) => !prev)}
-                          >
-                            {criticalWarningsExpanded ? warningDetailCloseLabel : warningDetailOpenLabel}
-                          </button>
-                        </div>
-                        {criticalWarningsExpanded ? (
-                          <div id="qs-warning-critical-details" className="qs-warning-grouped-details">
-                            <ul>
-                              {warningSeverity.critical.map((notice, idx) => (
-                                <li key={`${notice}-${idx}`}>{notice}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : null}
-                    {warningSeverity.neutral.length > 0 ? (
-                      <div className="notice notice-compact notice-info qs-warning-grouped qs-warning-grouped-neutral">
-                        <div className="qs-warning-grouped-head">
-                          <strong>{warningGroupedTitle}</strong>
-                          <span className="qs-warning-grouped-count">{warningSeverity.neutral.length}</span>
-                          <button
-                            type="button"
-                            className="btn-ghost btn-compact"
-                            aria-expanded={warningsExpanded}
-                            aria-controls="qs-warning-details"
-                            onClick={() => setWarningsExpanded((prev) => !prev)}
-                          >
-                            {warningsExpanded ? warningDetailCloseLabel : warningDetailOpenLabel}
-                          </button>
-                        </div>
-                        {warningsExpanded ? (
-                          <div id="qs-warning-details" className="qs-warning-grouped-details">
-                            <ul>
-                              {warningSeverity.neutral.map((notice, idx) => (
-                                <li key={`${notice}-${idx}`}>{notice}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : null}
                   </div>
                 </details>
               ) : null}
