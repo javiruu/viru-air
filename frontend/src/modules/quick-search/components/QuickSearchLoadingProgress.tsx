@@ -71,7 +71,7 @@ export function QuickSearchLoadingProgress(props: Props) {
               width: `${props.progressPercent}%`,
               height: 10,
               borderRadius: 999,
-              background: "var(--qs-boarding-ink, #0F172A)",
+              background: "var(--qs-boarding-ink, var(--color-text-primary))",
               transition: props.prefersReducedMotion ? "none" : "width 180ms ease",
               position: "absolute",
               left: 10,

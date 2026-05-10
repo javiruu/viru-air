@@ -411,7 +411,7 @@ export function HistoryIntegratedPanel({
                 y1={chartHeight - chartPad.bottom}
                 x2={chartWidth - chartPad.right}
                 y2={chartHeight - chartPad.bottom}
-                stroke="#b8a995"
+                stroke="var(--color-border-strong)"
                 strokeWidth="1"
               />
               <line
@@ -419,7 +419,7 @@ export function HistoryIntegratedPanel({
                 y1={chartPad.top}
                 x2={chartPad.left}
                 y2={chartHeight - chartPad.bottom}
-                stroke="#b8a995"
+                stroke="var(--color-border-strong)"
                 strokeWidth="1"
               />
               {[0.25, 0.5, 0.75].map((ratio) => {
@@ -450,7 +450,7 @@ export function HistoryIntegratedPanel({
                     cx={hoverPoint.x}
                     cy={hoverPoint.y}
                     r={7}
-                    fill="#fffaf4"
+                    fill="var(--color-surface)"
                     stroke={hoverPoint.color}
                     strokeWidth="2.2"
                   />
@@ -466,7 +466,7 @@ export function HistoryIntegratedPanel({
                       cy={point.y}
                       r={selectedPoint === point.capturedAt ? 6.2 : 4}
                       fill={serie.color}
-                      stroke={selectedPoint === point.capturedAt ? "#1f1d1a" : "#fffaf4"}
+                      stroke={selectedPoint === point.capturedAt ? "var(--color-text-primary)" : "var(--color-surface)"}
                       strokeWidth={selectedPoint === point.capturedAt ? 2 : 1}
                     >
                       <title>{`${serie.date} - ${formatDateTime(point.capturedAt)} - ${formatCurrency(point.price, point.currency)}`}</title>

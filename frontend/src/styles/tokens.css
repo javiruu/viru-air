@@ -5,6 +5,7 @@
   --color-app-shell: var(--bg);
   --color-surface: var(--surface);
   --color-surface-elevated: var(--surface-2);
+  --color-surface-muted: color-mix(in srgb, var(--surface) 80%, var(--surface-2));
   --color-card: var(--panel-bg);
   --color-card-hover: color-mix(in srgb, var(--surface) 88%, var(--surface-2));
   --color-border: var(--border);
@@ -14,6 +15,7 @@
   --color-text-secondary: var(--ink-muted);
   --color-text-muted: var(--ink-muted);
   --color-text-disabled: color-mix(in srgb, var(--ink-muted) 72%, transparent);
+  --color-text-inverse: var(--accent-ink);
 
   --color-accent: var(--accent);
   --color-accent-hover: color-mix(in srgb, var(--accent) 88%, #ffffff 12%);
@@ -25,19 +27,31 @@
   --color-chip-border: color-mix(in srgb, var(--border) 84%, transparent);
 
   --color-input-bg: var(--input-bg);
+  --color-input-text: var(--color-text-primary);
+  --color-input-placeholder: var(--placeholder);
   --color-input-border: var(--qs-input-border);
   --color-input-focus: var(--border-focus);
 
+  --color-button-primary-bg: var(--accent);
   --color-button-primary: var(--accent);
   --color-button-primary-text: var(--accent-ink);
   --color-button-secondary: var(--surface-2);
   --color-button-secondary-text: var(--ink);
   --color-button-secondary-border: var(--border-default);
+  --color-button-disabled-bg: color-mix(in srgb, var(--surface) 82%, var(--surface-2));
+  --color-button-disabled-text: var(--color-text-disabled);
+
+  --color-badge-bg: color-mix(in srgb, var(--color-chip-bg) 86%, var(--color-surface));
+  --color-badge-text: var(--color-text-primary);
+  --color-badge-border: color-mix(in srgb, var(--color-border) 84%, transparent);
 
   --color-footer-bg: color-mix(in srgb, var(--surface) 22%, var(--bg));
   --color-footer-text: var(--ink-muted);
+  --color-footer-link: var(--accent);
   --color-overlay: var(--overlay);
   --color-dropdown-bg: color-mix(in srgb, var(--surface) 94%, var(--surface-2));
+  --color-dropdown-border: var(--color-border);
+  --color-dropdown-hover: color-mix(in srgb, var(--surface) 72%, var(--surface-2));
 
   --space-section-sm: 0.5rem;
   --space-section-md: 1rem;
@@ -74,6 +88,7 @@
 
 :root[data-theme="dark"] {
   --color-card-hover: color-mix(in srgb, var(--surface) 84%, var(--surface-2));
+  --color-surface-muted: color-mix(in srgb, var(--surface) 70%, var(--surface-2));
   --color-text-disabled: color-mix(in srgb, var(--ink-muted) 70%, transparent);
   --color-accent-hover: color-mix(in srgb, var(--accent) 86%, #ffffff 14%);
   --color-accent-pressed: color-mix(in srgb, var(--accent) 78%, #000000 22%);
