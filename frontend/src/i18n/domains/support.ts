@@ -83,7 +83,7 @@ export const supportEs = {
     subtitle: "Conoce al equipo que cuida la experiencia de soporte en Viru.",
     eyebrow: "Equipo de soporte",
     badge: "Humano y cercano",
-    heroTitle: "Un bloque pequeno, multidisciplinar y muy pegado al producto.",
+    heroTitle: "Un bloque pequeño, multidisciplinar y muy pegado al producto.",
     heroBody:
       "Nos coordinamos entre soporte, operaciones y experiencia de producto para responder con criterio, contexto y seguimiento real cuando algo importa de verdad.",
     principles: {
