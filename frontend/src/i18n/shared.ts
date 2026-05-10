@@ -1,4 +1,4 @@
-export const sharedEs = {
+﻿export const sharedEs = {
   actions: {
     back: "Volver",
     cancel: "Cancelar",
@@ -58,10 +58,10 @@ export const sharedEs = {
     light: "Modo claro",
   },
   notifications: {
-    loginSuccessBody: "Tu panel privado ya estÃ¡ disponible.",
-    registerSuccessBody: "Tu cuenta estÃ¡ activa y lista para usar.",
+    loginSuccessBody: "Tu panel privado ya está disponible.",
+    registerSuccessBody: "Tu cuenta está activa y lista para usar.",
     sessionRequiredTitle: "Acceso requerido",
-    sessionExpiredTitle: "SesiÃ³n caducada",
+    sessionExpiredTitle: "Sesión caducada",
     themeChangedTitle: "Tema actualizado",
     themeDarkBody: "Modo oscuro activado.",
     themeLightBody: "Modo claro activado.",

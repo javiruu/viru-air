@@ -1,4 +1,4 @@
-export const accountEs = {
+﻿export const accountEs = {
   menu: {
     label: "Cuenta",
     status: "Conectado",
