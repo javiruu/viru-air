@@ -125,8 +125,8 @@ export default function HomePage() {
                 <i className="fa-solid fa-calendar-check" aria-hidden="true" />
               </div>
               <div className="demo-calendar-grid">
-                {calendarDays.map((day) => (
-                  <span key={day} className="demo-day">{day}</span>
+                {calendarDays.map((day, index) => (
+                  <span key={`demo-day-${index}`} className="demo-day">{day}</span>
                 ))}
                 {Array.from({ length: 14 }).map((_, index) => (
                   <span key={index} className={`demo-date demo-date-${(index % 3) + 1}`}>

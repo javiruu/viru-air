@@ -538,8 +538,8 @@ export function HistoryIntegratedPanel({
                 <button className="btn-ghost" onClick={onNextMonth}>Mes siguiente</button>
               </div>
               <div className="history-calendar-grid">
-                {["L", "M", "X", "J", "V", "S", "D"].map((weekday) => (
-                  <div key={weekday} className="history-weekday">{weekday}</div>
+                {["L", "M", "X", "J", "V", "S", "D"].map((weekday, index) => (
+                  <div key={`history-weekday-${index}`} className="history-weekday">{weekday}</div>
                 ))}
                 {monthCells.map((day, idx) => {
                   const event = day ? calendarEvents[day] : undefined;
