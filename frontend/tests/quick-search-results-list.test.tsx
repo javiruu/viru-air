@@ -25,6 +25,7 @@ function buildResult(): SearchResult {
     stale_data: false,
     itinerary_type: "direct",
     legs: [],
+    deeplink_url: "https://www.ryanair.com/es/es",
   };
 }
 
@@ -64,7 +65,7 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
       compactView={false}
       expandedRows={{}}
       openRowMenuId={null}
-      deeplinkUrl=""
+      deeplinkUrl="https://www.ryanair.com/es/es/trip/flights/select?originIata=MAD&destinationIata=LIS&dateOut=2026-06-01&adults=1"
       hiddenHighRiskResults={[]}
       showHighRisk={false}
       origin="MAD"
@@ -103,4 +104,6 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
   assert.match(html, /EUR 39/);
   assert.match(html, /Guardar/);
   assert.match(html, /Ver detalle/);
+  assert.match(html, /Abrir en Ryanair/);
+  assert.match(html, /trip\/flights\/select/);
 });

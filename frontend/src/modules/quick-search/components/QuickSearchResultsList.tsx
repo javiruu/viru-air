@@ -41,6 +41,21 @@ type Props = {
   onTrackCopyParams: (rowId: string) => void;
 };
 
+function isOfficialRyanairFlightDeepLink(value: string | null | undefined): boolean {
+  if (!value) return false;
+  try {
+    const parsed = new URL(value);
+    const host = parsed.hostname.toLowerCase();
+    const isRyanairHost = host === "ryanair.com" || host === "www.ryanair.com";
+    const isFlightSelectPath = parsed.pathname.toLowerCase().includes("/trip/flights/select");
+    const hasRouteParams = Boolean(parsed.searchParams.get("originIata") && parsed.searchParams.get("destinationIata"));
+    const hasDateOut = Boolean(parsed.searchParams.get("dateOut"));
+    return isRyanairHost && isFlightSelectPath && hasRouteParams && hasDateOut;
+  } catch {
+    return false;
+  }
+}
+
 function QuickSearchResultsListInner(props: Props) {
   return (
     <>
@@ -48,7 +63,11 @@ function QuickSearchResultsListInner(props: Props) {
         <div className={`qs-results-list ${props.compactView ? "compact" : ""}`}>
           {props.visibleResults.map((r, idx) => {
             const rowId = props.resultKey(r, idx);
-            const rowLink = r.deeplink_url || props.deeplinkUrl;
+            const rowLink = isOfficialRyanairFlightDeepLink(r.deeplink_url)
+              ? r.deeplink_url
+              : isOfficialRyanairFlightDeepLink(props.deeplinkUrl)
+                ? props.deeplinkUrl
+                : "";
             const expanded = Boolean(props.expandedRows[rowId]);
             const detailsId = `details-${rowId}`;
             const compactTag = props.getResultTags(r, "compact")[0];
@@ -124,6 +143,17 @@ function QuickSearchResultsListInner(props: Props) {
                       >
                         {expanded ? props.t("detailsHide") : props.t("detailsToggle")}
                       </button>
+                    ) : null}
+                    {!props.compactView && rowLink ? (
+                      <a
+                        className="btn-ghost qs-row-open-ryanair"
+                        href={rowLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={props.onTrackOpenRyanair}
+                      >
+                        {props.t("deepLink")}
+                      </a>
                     ) : null}
                     <div className="qs-row-menu-wrap">
                       <button
