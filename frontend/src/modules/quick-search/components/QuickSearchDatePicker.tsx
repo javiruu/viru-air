@@ -264,8 +264,8 @@ function QuickSearchDatePickerInner(props: Props) {
             </div>
           </div>
           <div className="qs-date-popover__weekdays" aria-hidden="true">
-            {weekdayLabels.map((item) => (
-              <span key={`${props.name}-${item}`}>{item}</span>
+            {weekdayLabels.map((item, index) => (
+              <span key={`${props.name}-weekday-${index}`}>{item}</span>
             ))}
           </div>
           <div className="qs-date-popover__grid">
