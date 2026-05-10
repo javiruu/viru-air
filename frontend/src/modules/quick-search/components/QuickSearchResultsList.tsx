@@ -44,12 +44,26 @@ type Props = {
 function isOfficialRyanairFlightDeepLink(value: string | null | undefined): boolean {
   if (!value) return false;
   try {
-    const parsed = new URL(value);
+    const parsed = new URL(value, "https://www.ryanair.com");
     const host = parsed.hostname.toLowerCase();
-    const isRyanairHost = host === "ryanair.com" || host === "www.ryanair.com";
+    const isRyanairHost = host === "ryanair.com" || host.endsWith(".ryanair.com");
     const isFlightSelectPath = parsed.pathname.toLowerCase().includes("/trip/flights/select");
-    const hasRouteParams = Boolean(parsed.searchParams.get("originIata") && parsed.searchParams.get("destinationIata"));
-    const hasDateOut = Boolean(parsed.searchParams.get("dateOut"));
+    const queryMap = new Map<string, string>();
+    for (const [key, raw] of parsed.searchParams.entries()) {
+      queryMap.set(key.toLowerCase(), raw);
+    }
+    const pick = (...keys: string[]) => {
+      for (const key of keys) {
+        const value = queryMap.get(key.toLowerCase());
+        if (value) return value;
+      }
+      return "";
+    };
+    const origin = pick("originIata", "origin_iata", "tpOriginIata");
+    const destination = pick("destinationIata", "destination_iata", "tpDestinationIata");
+    const dateOut = pick("dateOut", "date_out", "tpStartDate");
+    const hasRouteParams = Boolean(origin && destination);
+    const hasDateOut = Boolean(dateOut);
     return isRyanairHost && isFlightSelectPath && hasRouteParams && hasDateOut;
   } catch {
     return false;

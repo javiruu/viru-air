@@ -107,3 +107,87 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
   assert.match(html, /Abrir en Ryanair/);
   assert.match(html, /trip\/flights\/select/);
 });
+
+test("QuickSearchResultsList accepts official relative deeplink variants and rejects landing pages", () => {
+  const htmlWithRelativeLink = renderToStaticMarkup(
+    <QuickSearchResultsList
+      visibleResults={[{ ...buildResult(), deeplink_url: "/es/es/trip/flights/select?origin_iata=MAD&destination_iata=LIS&date_out=2026-06-01&adults=1" }]}
+      compactView={false}
+      expandedRows={{}}
+      openRowMenuId={"res-1"}
+      deeplinkUrl=""
+      hiddenHighRiskResults={[]}
+      showHighRisk={false}
+      origin="MAD"
+      destination="DUB"
+      radiusKm={150}
+      departAfter="07:00"
+      departBefore="22:00"
+      localeTag="es"
+      getCopyPayload={() => "payload"}
+      rowMenuTriggerRefs={{ current: {} }}
+      t={t}
+      formatMoney={(value, currency) => `${currency || "EUR"} ${value}`}
+      formatScore={(value) => value.toFixed(2)}
+      formatRiskLabel={(label) => label || "--"}
+      formatFreshness={(value) => value || "--"}
+      formatMinutes={(value) => `${value ?? 0} min`}
+      resultKey={(result) => result.result_id || "fallback"}
+      getResultTags={() => [{ key: "risk", label: "bajo riesgo", tone: "low" }]}
+      addToWatchlist={() => undefined}
+      setExpandedRows={() => undefined}
+      setSelectedResultId={() => undefined}
+      setOpenRowMenuId={() => undefined}
+      setCopyModalPayload={() => undefined}
+      setCopyModalOpen={() => undefined}
+      closeRowMenu={() => undefined}
+      onTrackOpenRyanair={() => undefined}
+      onToggleHighRisk={() => undefined}
+      onTrackRowOverflow={() => undefined}
+      onTrackCopyParams={() => undefined}
+    />,
+  );
+
+  assert.match(htmlWithRelativeLink, /Abrir en Ryanair/);
+
+  const htmlWithLandingOnly = renderToStaticMarkup(
+    <QuickSearchResultsList
+      visibleResults={[{ ...buildResult(), deeplink_url: "https://www.ryanair.com/es/es" }]}
+      compactView={false}
+      expandedRows={{}}
+      openRowMenuId={"res-1"}
+      deeplinkUrl=""
+      hiddenHighRiskResults={[]}
+      showHighRisk={false}
+      origin="MAD"
+      destination="DUB"
+      radiusKm={150}
+      departAfter="07:00"
+      departBefore="22:00"
+      localeTag="es"
+      getCopyPayload={() => "payload"}
+      rowMenuTriggerRefs={{ current: {} }}
+      t={t}
+      formatMoney={(value, currency) => `${currency || "EUR"} ${value}`}
+      formatScore={(value) => value.toFixed(2)}
+      formatRiskLabel={(label) => label || "--"}
+      formatFreshness={(value) => value || "--"}
+      formatMinutes={(value) => `${value ?? 0} min`}
+      resultKey={(result) => result.result_id || "fallback"}
+      getResultTags={() => [{ key: "risk", label: "bajo riesgo", tone: "low" }]}
+      addToWatchlist={() => undefined}
+      setExpandedRows={() => undefined}
+      setSelectedResultId={() => undefined}
+      setOpenRowMenuId={() => undefined}
+      setCopyModalPayload={() => undefined}
+      setCopyModalOpen={() => undefined}
+      closeRowMenu={() => undefined}
+      onTrackOpenRyanair={() => undefined}
+      onToggleHighRisk={() => undefined}
+      onTrackRowOverflow={() => undefined}
+      onTrackCopyParams={() => undefined}
+    />,
+  );
+
+  assert.doesNotMatch(htmlWithLandingOnly, /Abrir en Ryanair/);
+});
