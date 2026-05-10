@@ -51,8 +51,39 @@ export type CriteriaSignatureInput = {
   bufferMin: string;
 };
 
+function parseIataTokens(raw: string): string[] {
+  const seen = new Set<string>();
+  return raw
+    .toUpperCase()
+    .split(/[,\s]+/)
+    .map((item) => item.trim())
+    .filter((item) => /^[A-Z]{3}$/.test(item))
+    .filter((item) => {
+      if (seen.has(item)) return false;
+      seen.add(item);
+      return true;
+    });
+}
+
+function mergeIataTokens(current: string[], raw: string): string[] {
+  const next = [...current];
+  for (const iata of parseIataTokens(raw)) {
+    if (!next.includes(iata)) next.push(iata);
+  }
+  return next;
+}
+
 // NOTE: This signature defines "applied vs edited" search criteria comparisons.
 // Keep fields in sync with submit payload-relevant UI inputs.
 export function buildCriteriaSignature(input: CriteriaSignatureInput): string {
-  return JSON.stringify(input);
+  const normalizedExcludeOrigins = mergeIataTokens(input.excludeOrigins, input.excludeOriginInput);
+  const normalizedExcludeDestinations = mergeIataTokens(input.excludeDestinations, input.excludeDestinationInput);
+  return JSON.stringify({
+    ...input,
+    excludeOrigins: normalizedExcludeOrigins,
+    excludeDestinations: normalizedExcludeDestinations,
+    // The exclusion textboxes are transient draft UI; compare the applied semantic state.
+    excludeOriginInput: "",
+    excludeDestinationInput: "",
+  });
 }
