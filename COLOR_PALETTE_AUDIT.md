@@ -329,3 +329,54 @@ Ratios estimados con valores base de tokens (sin overlays dinámicos):
 - Riesgos restantes:
   - Fase 1 no tokeniza todavia paletas de series (`--chart-series-*`) ni colores de rutas en mapa.
   - `account-menu-dark` y `footer-dark` se capturaron como pantalla completa de `/dashboard`; no se automatizo interaccion del menu en esta fase CLI.
+
+## 15. Phase 2 base component normalization
+
+Date: 2026-05-10
+
+Normalized components:
+- Buttons: primary/secondary/ghost/critical/danger disabled and focus-visible states unified with semantic tokens.
+- Inputs/selects/textareas: text, placeholder, border, background and focus ring normalized with input tokens.
+- Chips/badges: base legibility and border/background/text tokenized.
+- Dropdowns: account dropdown border/hover switched to dropdown tokens.
+- Cards/panels: kept existing structure; no layout or behavior changes.
+- Footer: link color and hover state aligned to footer/dropdown semantic tokens.
+- Empty states: retained structure and behavior; no new hardcodes introduced.
+
+Tokens reused:
+- --color-surface-muted
+- --color-text-inverse
+- --color-input-text
+- --color-input-placeholder
+- --color-button-primary-bg
+- --color-button-disabled-bg
+- --color-button-disabled-text
+- --color-badge-bg
+- --color-badge-text
+- --color-badge-border
+- --color-footer-link
+- --color-dropdown-border
+- --color-dropdown-hover
+
+Hardcodes removed in base UI:
+- .badge base: transparent border + implicit ink -> semantic badge tokens
+- .chip base: hardcoded green border/bg/text -> chip tokens
+- .form controls: border/bg/text from raw vars -> semantic input tokens
+- select global + focus/placeholder: moved to semantic input tokens
+- .account-dropdown hover/border: moved to dropdown tokens
+- button disabled states: opacity-only style replaced with semantic disabled tokens
+- critical/danger/logout button text and gradients moved from hardcoded hex blends to token-based color-mix
+
+Screenshots generated:
+- docs/color-audit/phase2-screenshots/dashboard-light.png
+- docs/color-audit/phase2-screenshots/dashboard-dark.png
+- docs/color-audit/phase2-screenshots/dashboard-dark-account-menu-open.png
+- docs/color-audit/phase2-screenshots/quick-search-light.png
+- docs/color-audit/phase2-screenshots/quick-search-dark.png
+- docs/color-audit/phase2-screenshots/recommendations-dark.png
+- docs/color-audit/phase2-screenshots/alerts-dark.png
+- docs/color-audit/phase2-screenshots/footer-dark.png
+
+Remaining risks:
+- Some hardcoded warm decorative gradients remain in marketing/weather/illustrative zones; they are not slate/blue leakage and were not changed in this phase.
+- extract-colors still reports global hex usage in non-base decorative/data-viz contexts; requires a later scoped phase to avoid overreach.

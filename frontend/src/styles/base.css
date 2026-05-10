@@ -3,10 +3,11 @@
 /* Base layer */
 
 :where(a, button, input, select, textarea, [role="button"], [tabindex]):focus-visible {
-  outline: 3px solid var(--border-focus, #4f7fa6);
+  outline: 3px solid var(--color-input-focus);
   outline-offset: 2px;
 }
 
 :where(button, input, select, textarea):disabled {
   cursor: not-allowed;
+  color: var(--color-button-disabled-text);
 }

@@ -512,7 +512,7 @@
   gap: 0.6rem;
   width: 100%;
   padding: 0.55rem 0.2rem;
-  color: var(--color-text-primary);
+  color: var(--color-footer-link);
   text-decoration: none;
   border-radius: 12px;
 }
@@ -525,7 +525,7 @@
 
 .viru-footer-link:hover,
 .viru-footer-link:focus-visible {
-  background: color-mix(in srgb, var(--color-chip-bg) 86%, transparent);
+  background: color-mix(in srgb, var(--color-dropdown-hover) 84%, transparent);
   outline: none;
 }
 

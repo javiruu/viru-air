@@ -999,29 +999,27 @@ h1 {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  border: 1px solid transparent;
+  border: 1px solid var(--color-badge-border);
+  background: var(--color-badge-bg);
+  color: var(--color-badge-text);
 }
 
 .badge-important {
-  color: var(--ink);
   background: rgba(217, 93, 57, 0.16);
   border-color: rgba(217, 93, 57, 0.35);
 }
 
 .badge-transparency {
-  color: var(--ink);
   background: rgba(79, 127, 166, 0.14);
   border-color: rgba(79, 127, 166, 0.35);
 }
 
 .badge-limitation {
-  color: var(--ink);
   background: rgba(121, 106, 88, 0.16);
   border-color: rgba(121, 106, 88, 0.35);
 }
 
 .badge-control {
-  color: var(--ink);
   background: rgba(46, 110, 98, 0.14);
   border-color: rgba(46, 110, 98, 0.35);
 }
@@ -4054,9 +4052,9 @@ h1 {
   align-items: center;
   gap: 0.3rem;
   border-radius: 999px;
-  border: 1px solid rgba(46, 110, 98, 0.4);
-  background: rgba(46, 110, 98, 0.12);
-  color: #2a5d54;
+  border: 1px solid var(--color-chip-border);
+  background: var(--color-chip-bg);
+  color: var(--color-chip-text);
   font-size: 0.72rem;
   font-weight: 700;
   padding: 0.08rem 0.5rem;
@@ -4709,15 +4707,15 @@ h1 {
 }
 
 .btn-critical {
-  background: linear-gradient(135deg, #2a1f1c, #1f1714);
-  color: #f8e6dc;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent-pressed) 70%, var(--color-surface) 30%), color-mix(in srgb, var(--color-accent-pressed) 86%, var(--color-surface) 14%));
+  color: var(--color-text-inverse);
   border: 1px solid rgba(217, 93, 57, 0.4);
   box-shadow: var(--btn-shadow-strong);
 }
 
 .btn-danger {
-  background: linear-gradient(135deg, #3a2621, #2b1b17);
-  color: #f8e6dc;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent-pressed) 62%, var(--color-surface) 38%), color-mix(in srgb, var(--color-accent-pressed) 82%, var(--color-surface) 18%));
+  color: var(--color-text-inverse);
   border: 1px solid rgba(217, 93, 57, 0.45);
   box-shadow: var(--btn-shadow-strong);
 }
@@ -4758,9 +4756,13 @@ h1 {
 .btn-ghost:disabled,
 .btn-critical:disabled,
 .btn-danger:disabled {
-  opacity: 0.55;
+  background: var(--color-button-disabled-bg);
+  color: var(--color-button-disabled-text);
+  border-color: color-mix(in srgb, var(--color-border) 82%, transparent);
+  opacity: 1;
   cursor: not-allowed;
   box-shadow: none;
+  transform: none;
 }
 
 .split {
@@ -4780,30 +4782,30 @@ h1 {
 }
 
 .form input {
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--color-input-border);
   border-radius: 8px;
   padding: 0.65rem;
   font: inherit;
-  background: var(--input-bg);
-  color: var(--ink);
+  background: var(--color-input-bg);
+  color: var(--color-input-text);
 }
 
 .form select {
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--color-input-border);
   border-radius: 8px;
   padding: 0.65rem;
   font: inherit;
-  background: var(--input-bg);
-  color: var(--ink);
+  background: var(--color-input-bg);
+  color: var(--color-input-text);
 }
 
 .form textarea {
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--color-input-border);
   border-radius: 8px;
   padding: 0.65rem;
   font: inherit;
-  background: var(--input-bg);
-  color: var(--ink);
+  background: var(--color-input-bg);
+  color: var(--color-input-text);
   resize: vertical;
 }
 
@@ -5180,12 +5182,12 @@ h1 {
 }
 
 select {
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--color-input-border);
   border-radius: 8px;
   padding: 0.6rem;
   font: inherit;
-  background: var(--input-bg);
-  color: var(--ink);
+  background: var(--color-input-bg);
+  color: var(--color-input-text);
 }
 
 input:focus-visible,
@@ -5220,13 +5222,13 @@ input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--border-focus) 38%, transparent);
+  border-color: var(--color-input-focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-input-focus) 38%, transparent);
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: var(--placeholder);
+  color: var(--color-input-placeholder);
 }
 
 .field-error {
@@ -7237,7 +7239,7 @@ textarea::placeholder {
   top: calc(100% + 0.45rem);
   width: 100%;
   background: var(--color-dropdown-bg);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--color-dropdown-border);
   border-radius: 16px;
   box-shadow: 0 20px 40px var(--shadow-strong);
   padding: 0.45rem;
@@ -7405,8 +7407,8 @@ textarea::placeholder {
 
 .account-dropdown a:hover,
 .account-dropdown button:hover {
-  background: var(--color-surface-elevated);
-  border-color: var(--color-border-strong);
+  background: var(--color-dropdown-hover);
+  border-color: var(--color-dropdown-border);
   transform: translateX(1px);
 }
 
@@ -7418,7 +7420,7 @@ textarea::placeholder {
 
 .account-logout {
   margin-top: 0.22rem;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent-pressed) 66%, #2b1b17), color-mix(in srgb, var(--color-accent-pressed) 82%, #1d1411)) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent-pressed) 70%, var(--color-surface) 30%), color-mix(in srgb, var(--color-accent-pressed) 86%, var(--color-surface) 14%)) !important;
   color: var(--color-button-primary-text) !important;
   border: 1px solid color-mix(in srgb, var(--color-accent) 46%, transparent) !important;
   display: inline-flex;
