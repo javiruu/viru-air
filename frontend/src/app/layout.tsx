@@ -6,6 +6,7 @@ import { Suspense } from "react";
 
 import { NotificationCenterProvider } from "@/components/components/notifications/notification-center";
 import NavigationPendingOverlay from "@/modules/shared/NavigationPendingOverlay";
+import ScrollActivityScrollbar from "@/modules/shared/ScrollActivityScrollbar";
 
 export const metadata: Metadata = {
   title: "Viru",
@@ -40,6 +41,7 @@ gtag('config', '${gaMeasurementId}');`}
         ) : null}
       </head>
       <body>
+        <ScrollActivityScrollbar />
         <NotificationCenterProvider>
           <Suspense fallback={null}>
             <NavigationPendingOverlay />

@@ -25,6 +25,8 @@
   --history-grid: rgba(155, 132, 105, 0.12);
   --history-ghost: rgba(71, 82, 95, 0.12);
   --history-scrollbar: rgba(121, 106, 88, 0.45);
+  --app-scrollbar-thumb: rgba(111, 97, 80, 0.56);
+  --app-scrollbar-thumb-hover: rgba(98, 85, 70, 0.72);
   --history-accent-origin: #4f7fa6;
   --history-accent-destination: #3b8e80;
   --history-accent-date: #c79a3a;
@@ -93,6 +95,8 @@
   --history-grid: rgba(185, 204, 196, 0.12);
   --history-ghost: rgba(158, 182, 193, 0.16);
   --history-scrollbar: rgba(162, 184, 175, 0.5);
+  --app-scrollbar-thumb: rgba(164, 184, 176, 0.58);
+  --app-scrollbar-thumb-hover: rgba(187, 207, 200, 0.76);
   --history-accent-origin: #6aa0c5;
   --history-accent-destination: #53a99a;
   --history-accent-date: #d1a94d;
@@ -132,6 +136,50 @@
 
 html {
   font-size: var(--ui-root-font-size);
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 2s ease;
+}
+
+html::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+  transition: background-color 2s ease;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background: var(--app-scrollbar-thumb-hover);
+}
+
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html.is-scrolling {
+  scrollbar-color: var(--app-scrollbar-thumb) transparent;
+}
+
+html.is-scrolling::-webkit-scrollbar-thumb {
+  background: var(--app-scrollbar-thumb);
+}
+
+html.is-scrolling.is-wheel-scrolling::-webkit-scrollbar-thumb {
+  transition-duration: 0.2s;
+}
+
+html.is-scrollbar-proximity {
+  scrollbar-color: var(--app-scrollbar-thumb) transparent;
+  transition-duration: 0.5s;
+}
+
+html.is-scrollbar-proximity::-webkit-scrollbar-thumb {
+  background: var(--app-scrollbar-thumb);
+  transition-duration: 0.5s;
 }
 
 /* Force desktop rendering density equivalent to browser zoom-out 75% */
