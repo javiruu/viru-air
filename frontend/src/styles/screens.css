@@ -8589,6 +8589,119 @@ textarea::placeholder {
   }
 }
 
+/* Dark-mode hardening: /soporte/contacto should not leak light surfaces. */
+:root[data-theme="dark"] .support-contact-hero {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background:
+    radial-gradient(circle at top left, rgba(224, 123, 86, 0.14), transparent 26%),
+    radial-gradient(circle at top right, rgba(111, 178, 161, 0.12), transparent 28%),
+    linear-gradient(152deg, color-mix(in srgb, var(--color-surface) 90%, var(--color-surface-elevated) 10%), color-mix(in srgb, var(--color-surface-elevated) 86%, var(--color-surface-muted) 14%));
+}
+
+:root[data-theme="dark"] .support-contact-hero::after {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.08), transparent 72%);
+}
+
+:root[data-theme="dark"] .support-contact-eyebrow {
+  border-color: color-mix(in srgb, var(--color-accent) 34%, var(--color-border));
+  background: color-mix(in srgb, var(--color-surface-elevated) 84%, var(--color-surface) 16%);
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .support-contact-hero-header h2,
+:root[data-theme="dark"] .support-contact-form-header h2,
+:root[data-theme="dark"] .support-contact-aside-card h3 {
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .support-contact-hero-header p,
+:root[data-theme="dark"] .support-contact-point p,
+:root[data-theme="dark"] .support-contact-response-note,
+:root[data-theme="dark"] .support-contact-aside-card p,
+:root[data-theme="dark"] .support-contact-field-hint,
+:root[data-theme="dark"] .support-contact-form-kicker,
+:root[data-theme="dark"] .support-contact-account-chip span {
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .support-contact-point,
+:root[data-theme="dark"] .support-contact-form-panel,
+:root[data-theme="dark"] .support-contact-aside,
+:root[data-theme="dark"] .support-contact-aside-card,
+:root[data-theme="dark"] .support-contact-checklist {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background:
+    radial-gradient(circle at top right, rgba(224, 123, 86, 0.08), transparent 30%),
+    linear-gradient(165deg, color-mix(in srgb, var(--color-surface-elevated) 88%, var(--color-surface) 12%), color-mix(in srgb, var(--color-surface) 90%, var(--color-surface-muted) 10%));
+  box-shadow:
+    0 18px 36px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme="dark"] .support-contact-account-chip,
+:root[data-theme="dark"] .support-contact-counter,
+:root[data-theme="dark"] .support-contact-checklist-item {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background: color-mix(in srgb, var(--color-surface) 88%, var(--color-surface-elevated) 12%);
+  color: var(--color-text-secondary);
+  box-shadow: none;
+}
+
+:root[data-theme="dark"] .support-contact-account-chip strong,
+:root[data-theme="dark"] .support-contact-checklist-item {
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .support-contact-counter-short {
+  border-color: color-mix(in srgb, var(--color-warning-border) 64%, var(--color-border));
+  background: color-mix(in srgb, var(--color-warning-bg) 54%, var(--color-surface));
+  color: var(--color-warning-text);
+}
+
+:root[data-theme="dark"] .support-contact-counter-ready {
+  border-color: color-mix(in srgb, var(--color-success-border) 64%, var(--color-border));
+  background: color-mix(in srgb, var(--color-success-bg) 52%, var(--color-surface));
+  color: var(--color-success-text);
+}
+
+:root[data-theme="dark"] .support-contact-counter-rich {
+  border-color: color-mix(in srgb, var(--color-accent) 52%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 20%, var(--color-surface));
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .support-contact-field textarea,
+:root[data-theme="dark"] .support-contact-field input {
+  border-color: color-mix(in srgb, var(--color-input-border) 84%, var(--color-border));
+  background: color-mix(in srgb, var(--color-input-bg) 90%, var(--color-surface) 10%);
+  color: var(--color-input-text);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 10px 24px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme="dark"] .support-contact-field input::placeholder,
+:root[data-theme="dark"] .support-contact-field textarea::placeholder {
+  color: var(--color-input-placeholder);
+}
+
+:root[data-theme="dark"] .support-contact-field textarea:focus-visible,
+:root[data-theme="dark"] .support-contact-field input:focus-visible {
+  border-color: var(--color-input-focus);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 0 3px color-mix(in srgb, var(--color-input-focus) 35%, transparent),
+    0 14px 26px rgba(0, 0, 0, 0.34);
+}
+
+:root[data-theme="dark"] .support-contact-field.is-invalid textarea,
+:root[data-theme="dark"] .support-contact-field.is-invalid input {
+  border-color: color-mix(in srgb, var(--color-danger-border) 68%, var(--color-border));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 0 3px color-mix(in srgb, var(--color-danger-border) 34%, transparent);
+}
+
 /* =========================
    SUPPORT ABOUT US PAGE
    ========================= */
@@ -14672,4 +14785,80 @@ textarea::placeholder {
   border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
   background: color-mix(in srgb, var(--color-surface) 88%, var(--color-surface-elevated) 12%);
   color: var(--color-text-primary);
+}
+
+/* Final dark pass: quick-search info rail + airport picker must avoid light leakage. */
+:root[data-theme="dark"] .quick-search-shell .qs-info-stack {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background:
+    radial-gradient(circle at 92% 10%, rgba(224, 123, 86, 0.1), transparent 28%),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-surface) 90%, var(--color-surface-elevated) 10%), color-mix(in srgb, var(--color-surface-elevated) 86%, var(--color-surface-muted) 14%));
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-info-summary,
+:root[data-theme="dark"] .quick-search-shell .qs-info-body,
+:root[data-theme="dark"] .quick-search-shell .qs-info-tech-body {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-info-tier,
+:root[data-theme="dark"] .quick-search-shell .qs-info-tech,
+:root[data-theme="dark"] .quick-search-shell .qs-sources-panel,
+:root[data-theme="dark"] .quick-search-shell .qs-info-impact-row {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background: color-mix(in srgb, var(--color-surface-elevated) 88%, var(--color-surface) 12%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-info-tier-kicker {
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-info-tier strong,
+:root[data-theme="dark"] .quick-search-shell .qs-info-impact-row span,
+:root[data-theme="dark"] .quick-search-shell .qs-sources-panel strong {
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-sources-panel li span {
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-info-impact-row-critical {
+  border-color: color-mix(in srgb, var(--color-danger-border) 74%, var(--color-border));
+  background: color-mix(in srgb, var(--color-danger-bg) 52%, var(--color-surface));
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background:
+    radial-gradient(circle at top right, rgba(224, 123, 86, 0.12), transparent 30%),
+    radial-gradient(circle at 18% 14%, rgba(111, 178, 161, 0.1), transparent 26%),
+    linear-gradient(170deg, color-mix(in srgb, var(--color-surface-elevated) 90%, var(--color-surface) 10%), color-mix(in srgb, var(--color-surface) 92%, var(--color-surface-muted) 8%));
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__header,
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__search {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background: color-mix(in srgb, var(--color-surface) 90%, var(--color-surface-elevated) 10%);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__countries {
+  border-right-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+}
+
+:root[data-theme="dark"] .quick-search-shell .airport-modal-left,
+:root[data-theme="dark"] .quick-search-shell .airport-modal-right {
+  background: transparent;
+}
+
+:root[data-theme="dark"] .quick-search-shell .airport-modal-left h2,
+:root[data-theme="dark"] .quick-search-shell .airport-modal-header h3,
+:root[data-theme="dark"] .quick-search-shell .airport-list button,
+:root[data-theme="dark"] .quick-search-shell .country-pill {
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .quick-search-shell .airport-list button:hover {
+  background: color-mix(in srgb, var(--color-surface-elevated) 84%, var(--color-surface) 16%);
 }

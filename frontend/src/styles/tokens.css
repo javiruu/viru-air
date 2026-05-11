@@ -45,9 +45,14 @@
   --color-badge-text: var(--color-text-primary);
   --color-badge-border: color-mix(in srgb, var(--color-border) 84%, transparent);
 
-  --color-footer-bg: color-mix(in srgb, var(--surface) 22%, var(--bg));
+  --color-footer-bg: color-mix(in srgb, var(--bg) 92%, var(--surface) 8%);
+  --color-footer-border: color-mix(in srgb, var(--border) 74%, transparent);
+  --color-footer-title: var(--ink);
   --color-footer-text: var(--ink-muted);
+  --color-footer-muted: color-mix(in srgb, var(--ink-muted) 94%, var(--ink) 6%);
   --color-footer-link: var(--accent);
+  --color-footer-link-hover: color-mix(in srgb, var(--accent) 82%, var(--ink) 18%);
+  --color-footer-icon: var(--accent-2);
   --color-overlay: var(--overlay);
   --color-dropdown-bg: color-mix(in srgb, var(--surface) 94%, var(--surface-2));
   --color-dropdown-border: var(--color-border);
@@ -93,8 +98,15 @@
   --color-accent-hover: color-mix(in srgb, var(--accent) 86%, #ffffff 14%);
   --color-accent-pressed: color-mix(in srgb, var(--accent) 78%, #000000 22%);
   --color-chip-bg: color-mix(in srgb, var(--surface) 78%, #ffffff 5%);
-  --color-chip-border: color-mix(in srgb, var(--border) 92%, #b2c5bb 8%);
-  --color-footer-bg: color-mix(in srgb, var(--surface) 42%, var(--bg));
+  --color-chip-border: color-mix(in srgb, var(--border) 92%, var(--accent-2) 8%);
+  --color-footer-bg: color-mix(in srgb, var(--bg) 96%, var(--surface) 4%);
+  --color-footer-border: color-mix(in srgb, var(--border) 88%, transparent);
+  --color-footer-title: var(--ink);
+  --color-footer-text: var(--ink-muted);
+  --color-footer-muted: color-mix(in srgb, var(--ink-muted) 92%, var(--ink) 8%);
+  --color-footer-link: var(--accent);
+  --color-footer-link-hover: color-mix(in srgb, var(--accent) 84%, var(--ink) 16%);
+  --color-footer-icon: var(--accent-2);
   --color-dropdown-bg: color-mix(in srgb, var(--surface) 84%, #101513 16%);
 
   --state-success-bg: color-mix(in srgb, #2e6e62 28%, transparent);

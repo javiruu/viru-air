@@ -113,9 +113,12 @@ export function GlassSignInCard({
 
         {!isRegister ? (
           <div className="glass-signin-subline">
-            <label className="glass-signin-remember">
-              <input type="checkbox" name="remember" />
-              <span>{t("public.auth.loginRememberMe")}</span>
+            <label className="glass-signin-remember" htmlFor="remember-session">
+              <input id="remember-session" type="checkbox" name="remember" defaultChecked />
+              <span className="glass-signin-remember-copy">
+                <strong>{t("public.auth.loginRememberMe")}</strong>
+                <small>{t("public.auth.loginRememberMeHint")}</small>
+              </span>
             </label>
             <button type="button" className="glass-signin-forgot" onClick={onForgotPassword}>
               {t("public.auth.loginForgotPassword")}
