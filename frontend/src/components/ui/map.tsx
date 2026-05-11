@@ -188,7 +188,13 @@ export function MapControls({ showNavigation = true }: MapControlsProps) {
     const nav = new maplibregl.NavigationControl({ visualizePitch: true, showCompass: true, showZoom: true });
     map.addControl(nav, "top-right");
     return () => {
-      map.removeControl(nav);
+      try {
+        if (typeof map.hasControl === "function" && map.hasControl(nav)) {
+          map.removeControl(nav);
+        }
+      } catch {
+        // Map teardown / Fast Refresh can detach controls before this cleanup runs.
+      }
     };
   }, [map, showNavigation]);
   return null;
