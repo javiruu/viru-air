@@ -1,47 +1,57 @@
-# Python
-__pycache__/
-*.py[cod]
-.venv/
-venv/
+# Deprecated local mirror
+_publish_repo/
 
-# Node / frontend
-node_modules/
-.next/
-dist/
-build/
-coverage/
-*.egg-info/
+# Local/generated trees
+tree_filtrado.txt
 
-# Local env and secrets
+# Sensitive/local-only files
+token.txt
 .env
 .env.*
 !.env.example
-*.db
-*.sqlite*
 *.pem
 *.key
 *.p12
 keys.txt
-token.txt
 *.pid
 
-# Logs
-*.log
+# Local databases
+viru.db
+*.db
+*.sqlite
+*.sqlite3
+*.sqlite*
+
+# Caches and generated output
+node_modules/
+npm-cache/
+.venv/
+venv/
+.next/
+.next_broken_*/
+.pytest_cache/
+__pycache__/
 logs/
 logs_ia/
-
-# Editor / temp
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+test-results/
+tmp/
 %TEMP%/
+_bench_before/
+_bench_after/
+coverage/
+dist/
+build/
+*.egg-info/
 testsprite_tests/tmp/
 *.tsbuildinfo
 frontend/let
 backend/=*
 
-# OS
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 .DS_Store
 Thumbs.db

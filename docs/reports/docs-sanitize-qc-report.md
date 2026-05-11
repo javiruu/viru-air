@@ -30,3 +30,4 @@ Se ha verificado el estado publicado del saneamiento documental sin reorganizar 
 ## Conclusion
 
 La documentacion esta utilizable y consistente para seguir trabajando encima, con dos pendientes manuales claros: revisar el tratamiento final de `users_prueba.txt` y decidir si se quiere recuperar en el inventario una traza mas explicita de acciones historicas `mover/archivar`.
+# Nota posterior: `_publish_repo` fue un artefacto local temporal usado durante el saneamiento documental. No forma parte del flujo actual ni debe usarse como fuente de verdad.

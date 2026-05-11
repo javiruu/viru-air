@@ -1,0 +1,4 @@
+# Ejemplo seguro (ficticio) de formato para pruebas locales
+# nombre,email,rol
+Usuario Demo,demo@example.com,user
+Admin Demo,admin@example.com,admin

@@ -303,3 +303,4 @@ En lugar de rehacer `docs/` por completo, la propuesta inicial es consolidar sob
 4. Mover documentos raíz fuera de la entrada principal usando `git mv` cuando aplique en `_publish_repo`.
 5. Reordenar prompts, QA e histórico sin perder trazabilidad.
 6. Validar enlaces y generar informe final.
+# Nota posterior: `_publish_repo` fue un artefacto local temporal usado durante el saneamiento documental. No forma parte del flujo actual ni debe usarse como fuente de verdad.

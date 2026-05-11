@@ -25,7 +25,7 @@ Usa esta lista para cerrar cualquier tarea de codigo en `viru-tracker`.
 
 ## 4) Publicacion obligatoria
 
-- [ ] Cambios hechos en checkout canonico: `_publish_repo`.
+- [ ] Cambios hechos en checkout canonico: raiz del repo (`viru-tracker`).
 - [ ] Diff revisado y acotado al pedido.
 - [ ] Commit Conventional Commit en `main`.
 - [ ] Push confirmado a `origin/main`.
@@ -37,4 +37,3 @@ Usa esta lista para cerrar cualquier tarea de codigo en `viru-tracker`.
 - [ ] Files changed
 - [ ] Verification
 - [ ] Publish status (commit + push)
-

@@ -68,11 +68,11 @@ Regla clave:
 
 Repositorio Git canónico para publicación:
 
-- `C:\Users\javiru\Desktop\viru-tracker\_publish_repo`
+- `C:\Users\javiru\Desktop\viru-tracker`
 
 Validación rápida antes de commit o push:
 
 ```powershell
-cd C:\Users\javiru\Desktop\viru-tracker\_publish_repo
+cd C:\Users\javiru\Desktop\viru-tracker
 powershell -ExecutionPolicy Bypass -File .\scripts\release_guard.ps1 -AllowDirtyWorktree
 ```

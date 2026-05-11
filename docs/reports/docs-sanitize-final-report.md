@@ -234,3 +234,4 @@ Estado esperado de cierre para publicación:
 1. Revisar manualmente `users_prueba.txt` y decidir su destino fuera de la documentación del proyecto.
 2. Decidir si `fases/_extraido_txt/` debe eliminarse por duplicidad histórica.
 3. Decidir si `skills/remodex/` debe permanecer en el repo como referencia externa o salir del perímetro documental de Viru.
+# Nota posterior: `_publish_repo` fue un artefacto local temporal usado durante el saneamiento documental. No forma parte del flujo actual ni debe usarse como fuente de verdad.
