@@ -1,29 +1,36 @@
-﻿Status: reference
-Scope: reusable QA reference or checklist
-Last reviewed: 2026-04-15
-Canonical source: docs/qa/README.md
-Related: docs/qa/README.md, docs/archive/qa/README.md
+﻿# QA
 
----
-# QA
+**Estado:** vivo  
+**Última revisión:** 2026-05-11  
+**Fuente de verdad:** sí  
+**Área:** QA
 
-En `docs/qa/` solo se queda lo reutilizable entre cambios y ciclos. La evidencia fechada, capturas y reportes de releases pasados vive en `docs/archive/qa/`.
+`docs/qa/` conserva solo material vivo o reutilizable. El histórico de ciclos cerrados está en [archive/qa](../archive/qa/README.md).
 
-## Evergreen
+## Qué vive aquí
 
-- [frontend-pr-checklist.md](frontend-pr-checklist.md): checklist ejecutable para PRs frontend.
-- [testsprite.md](testsprite.md): catálogo funcional orientado a Testsprite.
-- [traceability-matrix.md](traceability-matrix.md): matriz base de trazabilidad de requisitos y pruebas.
+- `acceptance-checklists/`: checklists reutilizables.
+- `testsprite/`: catálogo y contexto funcional para TestSprite.
+- `visual/`: capturas y activos visuales activos.
+- `reports/`: reportes ligeros y resultados activos que siguen siendo útiles.
+- `evidence/`: evidencia adicional referenciada.
+- `traceability-matrix.md`: matriz base de trazabilidad.
 
-## Archivado
+## Lectura recomendada
 
-- Evidencia de ciclos y readiness: [../archive/qa/2026-03-08/](../archive/qa/2026-03-08/) y [../archive/qa/2026-03-09/](../archive/qa/2026-03-09/).
-- QA específica de iniciativas antiguas: [../archive/qa/feature-specific/](../archive/qa/feature-specific/).
+- [Frontend PR checklist](acceptance-checklists/frontend-pr-checklist.md)
+- [Traceability matrix](traceability-matrix.md)
+- [TestSprite catalog](testsprite/testsprite-catalog.md)
+- [SkillSprite user capabilities](testsprite/skillsprite-user-capabilities.md)
 
-## Regla de mantenimiento
+## Qué no debe quedarse aquí
 
-Si un documento QA sirve solo para una release, una ronda de validación o una iniciativa ya cerrada, debe ir al archivo y quedar enlazado desde allí, no competir con el material reusable.
+- actas de un ciclo cerrado;
+- reportes fechados duplicados;
+- prompts de herramientas;
+- dumps o logs masivos no referenciados.
 
+## Histórico
 
-
-
+- ciclos cerrados y readiness: [../archive/qa/README.md](../archive/qa/README.md)
+- reportes de tooling: [../archive/tooling/README.md](../archive/tooling/README.md)

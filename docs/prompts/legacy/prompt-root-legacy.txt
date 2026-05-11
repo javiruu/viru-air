@@ -1,0 +1,7 @@
+lee todas las documentaciones, logs y logs_ia del proyecto. utiliza las skills de frontend-design, fullstack-developer y ui_design
+
+prompt:
+
+cuando hagas esto. genera un log en logs_ia
+
+

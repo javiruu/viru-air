@@ -1,2 +1,0 @@
- - admin@viru.local / ViruAdmin123 (admin)
-  - user@viru.local / ViruUser123 (no admin)

@@ -1,22 +1,36 @@
-﻿Status: archived
-Scope: overview of archived documentation families
-Last reviewed: 2026-04-15
-Original source: docs/archive/README.md
-Related: docs/archive/README.md, docs/INDICE_UNICO.md
+﻿# Archivo histórico
 
----
-# Archive
+**Estado:** histórico  
+**Última revisión:** 2026-05-11  
+**Fuente de verdad:** no  
+**Área:** archivo
 
-Esta zona conserva material histórico, evidencia puntual y artefactos de trabajo que siguen siendo útiles como contexto, pero no forman parte de la ruta principal de lectura.
+`docs/archive/` conserva material histórico, duplicado o ya consolidado en otra parte. No es fuente de verdad activa.
 
-## Familias archivadas
+## Qué hay aquí
 
+- `root-legacy/`: restos históricos que antes estaban en la raíz.
 - `fases/`: documentación fundacional y transcripciones largas.
-- `qa/`: evidencias y reportes fechados.
-- `prompts/`: prompts operativos usados en sesiones anteriores.
-- `tooling/`: salidas de Tools/Testsprite y reportes visuales.
-- `root-legacy/`: restos históricos que antes estaban en la raíz o duplicados.
+- `qa/`: evidencias y reportes cerrados por ciclo.
+- `prompts/`: prompts operativos archivados.
+- `tooling/`: salidas de herramientas y reportes auxiliares.
+- `duplicated/`: copias retiradas de la navegación principal.
+- `old-reports/`: checks y reportes históricos sueltos.
+- `extracted-txt/`: snapshots textuales y extracciones.
 
+## Cuándo consultar `archive/`
 
+- cuando necesites trazabilidad histórica;
+- cuando una spec viva cite un origen antiguo;
+- cuando quieras comparar estado actual vs estado previo.
 
+## Criterios usados en este saneamiento
 
+- una fuente de verdad por tema cuando fue posible;
+- histórico separado de documentación viva;
+- duplicados retirados de la navegación principal;
+- evidencias pesadas fuera de specs y overview.
+
+## Advertencia
+
+Los documentos archivados pueden estar obsoletos, incompletos o contradecir la documentación viva.

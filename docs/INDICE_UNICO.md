@@ -1,56 +1,124 @@
-﻿Status: canonical
-Scope: master navigation for project documentation
-Last reviewed: 2026-04-15
-Canonical source: docs/INDICE_UNICO.md
-Related: docs/INDICE_UNICO.md
+﻿# Índice Único de Documentación
 
----
-# Indice Unico de Documentacion
+**Estado:** vivo  
+**Última revisión:** 2026-05-11  
+**Fuente de verdad:** sí  
+**Área:** documentación
 
-Este es el mapa maestro de lectura. Si vuelves al proyecto tras tiempo fuera, empieza aquí.
+## Por rol
 
-## Start Here
+### Nuevo desarrollador
 
-- [Reenganche rápido](overview/start-here.md): recorrido de 10-20 minutos para recuperar contexto.
-- [Estado actual del sistema](overview/current-state.md): qué existe hoy en backend, frontend, infra y documentación.
-- [Mapa del repo](overview/repo-map.md): dónde vive cada módulo y qué carpetas importan de verdad.
-- [Inventario completo](DOCS_INVENTORY.md): clasificación de toda la documentación detectada.
+- [README raíz](../README.md)
+- [Documentación de `docs/`](README.md)
+- [Overview del proyecto](overview/project-overview.md)
+- [Estado actual](overview/current-state.md)
+- [Mapa del repo](overview/repo-map.md)
 
-## Current System
+### Backend
 
-- [ADR](adr/ADR-001-monolito-modular.md), [ADR-002](adr/ADR-002-stack-base.md), [ADR-003](adr/ADR-003-provider-adapter.md)
-- [Contrato operativo Codex](reference/codex-operating-contract.md)
-- [Skill local de contexto Codex](../skills/viru-tracker-context/SKILL.md)
-- [Referencias técnicas](reference/README.md)
-- [Sistema UI](ui/UI_SYSTEM_V1.md), [Contrato UI](ui/UI_CONTRACT_V1.md), [Checklist visual](ui/UI_VISUAL_QA_CHECKLIST.md)
-- [Changelog consolidado](changelog/2026-03-08-c1-c6-consolidated.md)
+- [Backend](engineering/backend.md)
+- [Reference](reference/README.md)
+- [Quick Search contract](reference/backend/quick-search-contract.md)
+- [Quick Search acceptance checklist](reference/backend/quick-search-acceptance-checklist.md)
 
-## Active Specs
+### Frontend
 
-- [Resumen de specs activas](specs/README.md)
-- Producto: [Dashboard redesign v2](specs/product/dashboard-redesign-v2.md)
-- UI: [UI changes](specs/ui/ui-changes.md)
-- Policies: [Policies rewrite](specs/policies/policies-page-rewrite.md), [component spec](specs/policies/policies-page-component-spec.md), [copy deck](specs/policies/policies-page-copy-deck-es.md), [acceptance checklist](specs/policies/policies-page-acceptance-checklist.md)
-- Planes y diseños históricos útiles: [docs/plans/](plans/)
+- [Frontend](engineering/frontend.md)
+- [UI System](ui/UI_SYSTEM_V1.md)
+- [UI Contract](ui/UI_CONTRACT_V1.md)
+- [Specs activas](specs/README.md)
 
-## Ops/QA
+### Producto
 
-- [Runbooks](runbooks/)
-- [Checks manuales](checks/)
-- [QA evergreen](qa/README.md)
-- [Frontend PR checklist](qa/frontend-pr-checklist.md)
+- [Dashboard](product/dashboard.md)
+- [Quick Search](product/quick-search.md)
+- [Watchlist](product/watchlist.md)
+- [Policies Page](product/policies-page.md)
+
+### QA
+
+- [README QA](qa/README.md)
+- [Frontend PR checklist](qa/acceptance-checklists/frontend-pr-checklist.md)
 - [Traceability matrix](qa/traceability-matrix.md)
-- [Testsprite catalog](qa/testsprite.md)
+- [TestSprite catalog](qa/testsprite/testsprite-catalog.md)
 
-## History
+### DevOps
 
-- [Archivo de fases](archive/fases/README.md)
-- [Archivo de QA](archive/qa/README.md)
+- [Infra](engineering/infra.md)
+- [Observabilidad](engineering/observability.md)
+- [Runbooks](runbooks/)
+- [Archive QA](archive/qa/README.md)
+
+### Agente IA / Codex
+
+- [AGENTS.md](../AGENTS.md)
+- [Codex operating contract](reference/codex-operating-contract.md)
+- [Prompts y contexto IA](prompts/README.md)
+- [Inventario documental](DOCS_INVENTORY.md)
+
+## Por área
+
+### Overview
+
+- [Documentación de `docs/`](README.md)
+- [Overview del proyecto](overview/project-overview.md)
+- [Estado actual](overview/current-state.md)
+- [Mapa del repo](overview/repo-map.md)
+- [Resumen de arquitectura](overview/architecture-summary.md)
+
+### Product
+
+- [Dashboard](product/dashboard.md)
+- [Quick Search](product/quick-search.md)
+- [Watchlist](product/watchlist.md)
+- [Policies Page](product/policies-page.md)
+
+### Engineering
+
+- [Backend](engineering/backend.md)
+- [Frontend](engineering/frontend.md)
+- [Base de datos](engineering/database.md)
+- [Testing y QA](engineering/testing.md)
+- [Infra](engineering/infra.md)
+- [Seguridad](engineering/security.md)
+- [Observabilidad](engineering/observability.md)
+
+### Runbooks
+
+- [Runbooks operativos](runbooks/)
+
+### Plans
+
+- [Planes de trabajo](plans/README.md)
+- [Planes completados](plans/completed/)
+
+### ADRs
+
+- [ADR-001](adr/ADR-001-monolito-modular.md)
+- [ADR-002](adr/ADR-002-stack-base.md)
+- [ADR-003](adr/ADR-003-provider-adapter.md)
+
+### Specs
+
+- [Specs activas](specs/README.md)
+
+### QA
+
+- [README QA](qa/README.md)
+- [Visual QA](qa/visual/)
+- [Reportes QA](qa/reports/)
+
+### Prompts
+
+- [Prompts y contexto IA](prompts/README.md)
 - [Prompts archivados](archive/prompts/README.md)
-- [Tooling y reportes archivados](archive/tooling/README.md)
-- [Legado de raíz](archive/root-legacy/)
 
+### Archive
 
-
-
-
+- [README archive](archive/README.md)
+- [Root legacy](archive/root-legacy/README.md)
+- [Fases](archive/fases/README.md)
+- [QA histórico](archive/qa/README.md)
+- [Duplicados archivados](archive/duplicated/README.md)
+- [Reportes históricos](archive/old-reports/README.md)

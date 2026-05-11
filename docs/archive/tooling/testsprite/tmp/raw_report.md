@@ -8,21 +8,21 @@ Related: docs/archive/README.md, docs/INDICE_UNICO.md
 # 2️⃣ Requirement Validation Summary
 
 #### Test TC001 Create a new alert and verify it appears in the alerts list
-- **Test Code:** [TC001_Create_a_new_alert_and_verify_it_appears_in_the_alerts_list.py](./TC001_Create_a_new_alert_and_verify_it_appears_in_the_alerts_list.py)
+- **Test Code:** `TC001_Create_a_new_alert_and_verify_it_appears_in_the_alerts_list.py`
 - **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7560e81-4f14-4862-9c38-560e674c2fa1/1c2103c5-537c-4fb7-8e75-f0161f9ab51b
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC002 Validation: required fields show errors when saving an empty new alert
-- **Test Code:** [TC002_Validation_required_fields_show_errors_when_saving_an_empty_new_alert.py](./TC002_Validation_required_fields_show_errors_when_saving_an_empty_new_alert.py)
+- **Test Code:** `TC002_Validation_required_fields_show_errors_when_saving_an_empty_new_alert.py`
 - **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7560e81-4f14-4862-9c38-560e674c2fa1/959c2b31-35e6-4152-803f-1e24af428e97
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC003 Filter alerts by category and verify only matching results are shown
-- **Test Code:** [TC003_Filter_alerts_by_category_and_verify_only_matching_results_are_shown.py](./TC003_Filter_alerts_by_category_and_verify_only_matching_results_are_shown.py)
+- **Test Code:** `TC003_Filter_alerts_by_category_and_verify_only_matching_results_are_shown.py`
 - **Test Error:** Test summary: The alerts Category filter was selected successfully (option 'Bajar de un precio' at index 1270). The Alerts page title/header 'Alertas' is visible. The Alerts list area is visible but contains the message 'Aun no hay alertas generadas para este vuelo.' — no alert items are present to verify filtering behavior. Verification outcome: unable to confirm that alerts can be filtered by category because there are no alert items to filter. Recommendation: Seed or create alert items for the flight (matching the 'Bajar de un precio' category and other categories) and re-run the test to assert that the list updates according to the selected category. Completed steps and evidence: - Login performed with user@viru.local - Navigated to /alerts - Selected category 'Bajar de un precio' (index 1270) - Searched for 'Price'/'Precio' -> not found - Alerts list empty message found ('Aun no hay alertas generadas para este vuelo.').
 - **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7560e81-4f14-4862-9c38-560e674c2fa1/197d3425-e73c-4bdb-9f53-7e0620f218eb
 - **Status:** ❌ Failed
@@ -30,7 +30,7 @@ Related: docs/archive/README.md, docs/INDICE_UNICO.md
 ---
 
 #### Test TC004 Empty-state handling: filtering to a category with no alerts shows no results message
-- **Test Code:** [TC004_Empty_state_handling_filtering_to_a_category_with_no_alerts_shows_no_results_message.py](./TC004_Empty_state_handling_filtering_to_a_category_with_no_alerts_shows_no_results_message.py)
+- **Test Code:** `TC004_Empty_state_handling_filtering_to_a_category_with_no_alerts_shows_no_results_message.py`
 - **Test Error:** Summary of verification (stopping):
 
 1) Page title/heading
@@ -68,14 +68,14 @@ If further actions are desired, specify whether to (A) attempt mapping the Categ
 ---
 
 #### Test TC005 Add a new watchlist item from the Watchlist page
-- **Test Code:** [TC005_Add_a_new_watchlist_item_from_the_Watchlist_page.py](./TC005_Add_a_new_watchlist_item_from_the_Watchlist_page.py)
+- **Test Code:** `TC005_Add_a_new_watchlist_item_from_the_Watchlist_page.py`
 - **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7560e81-4f14-4862-9c38-560e674c2fa1/bd04033f-79e6-4180-a82f-fbc456cd34cc
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC006 Attempt to add an item with missing required fields
-- **Test Code:** [TC006_Attempt_to_add_an_item_with_missing_required_fields.py](./TC006_Attempt_to_add_an_item_with_missing_required_fields.py)
+- **Test Code:** `TC006_Attempt_to_add_an_item_with_missing_required_fields.py`
 - **Test Error:** Test result: FAILED for the specific assertions that English messages 'Required' and 'Please' are visible.
 
 What was performed:
@@ -100,21 +100,21 @@ Conclusion: The add-item form does validate required fields, but the expected En
 ---
 
 #### Test TC007 Close the add-item form without adding an item
-- **Test Code:** [TC007_Close_the_add_item_form_without_adding_an_item.py](./TC007_Close_the_add_item_form_without_adding_an_item.py)
+- **Test Code:** `TC007_Close_the_add_item_form_without_adding_an_item.py`
 - **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7560e81-4f14-4862-9c38-560e674c2fa1/67fe6a68-9fb8-4743-bd24-373a7c4fd72a
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC008 View Search History list on History page
-- **Test Code:** [TC008_View_Search_History_list_on_History_page.py](./TC008_View_Search_History_list_on_History_page.py)
+- **Test Code:** `TC008_View_Search_History_list_on_History_page.py`
 - **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7560e81-4f14-4862-9c38-560e674c2fa1/bad0ae19-1dbe-4c2b-bf9a-0ee857dec963
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC009 Re-run a search from a history item and return to Dashboard
-- **Test Code:** [TC009_Re_run_a_search_from_a_history_item_and_return_to_Dashboard.py](./TC009_Re_run_a_search_from_a_history_item_and_return_to_Dashboard.py)
+- **Test Code:** `TC009_Re_run_a_search_from_a_history_item_and_return_to_Dashboard.py`
 - **Test Error:** Test outcome: FAILED to verify that clicking a history item triggers a search rerun and navigates to the Dashboard results view. Evidence: Current tab URL is /history; flight MAD -> DUB (2026-02-21) was selected in the flight dropdown (index 1328). Page shows captured-records summary and price series chart but contains no clickable history entries (previously displayed "Sin registros."). Because no history items are present, the action "click the first history item" could not be performed and navigation to /dashboard could not be observed. Recommended next steps: (1) Seed history data for the selected flight (via backend fixture, API, or by creating test history entries) so list items appear in /history, or (2) modify the test to use a known recordable flight or simulate a previous capture. After data is available, re-run remaining steps: click the first history item and assert the URL contains '/dashboard'.
 - **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7560e81-4f14-4862-9c38-560e674c2fa1/29b3d4de-7462-4b7a-8097-2636ffb10cb8
 - **Status:** ❌ Failed
@@ -122,7 +122,7 @@ Conclusion: The add-item form does validate required fields, but the expected En
 ---
 
 #### Test TC010 Repeat search from history shows visible results section on Dashboard
-- **Test Code:** [TC010_Repeat_search_from_history_shows_visible_results_section_on_Dashboard.py](./TC010_Repeat_search_from_history_shows_visible_results_section_on_Dashboard.py)
+- **Test Code:** `TC010_Repeat_search_from_history_shows_visible_results_section_on_Dashboard.py`
 - **Test Error:** {"dashboard_in_title": false, "results_visible": false} - Verification failed: after clicking the history item the application remained on the Historico page (/history) and no Dashboard results area was visible. The page shows 'Sin registros.'; expected the Dashboard view with visible 'Results'.
 - **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7560e81-4f14-4862-9c38-560e674c2fa1/c3f3f7c5-420b-4a02-8311-bb93a5c49ddf
 - **Status:** ❌ Failed
@@ -130,7 +130,7 @@ Conclusion: The add-item form does validate required fields, but the expected En
 ---
 
 #### Test TC011 Delete a single history item and confirm removal
-- **Test Code:** [TC011_Delete_a_single_history_item_and_confirm_removal.py](./TC011_Delete_a_single_history_item_and_confirm_removal.py)
+- **Test Code:** `TC011_Delete_a_single_history_item_and_confirm_removal.py`
 - **Test Error:** Test result: FAILED to verify deletion. Evidence and findings:
 - Current URL / page: http://localhost:3000/history
 - Selected flight: MAD -> DUB (2026-02-21) (dropdown index 1310)
@@ -145,7 +145,7 @@ Conclusion: Deletion cannot be performed because there are no history entries to
 ---
 
 #### Test TC012 Cancel deletion of a single history item
-- **Test Code:** [TC012_Cancel_deletion_of_a_single_history_item.py](./TC012_Cancel_deletion_of_a_single_history_item.py)
+- **Test Code:** `TC012_Cancel_deletion_of_a_single_history_item.py`
 - **Test Error:** Test unable to complete: The history list contains no records after selecting flight 'MAD -> DUB (2026-02-21)' (page shows 'Sin registros.'). Delete button for the first history item is not present, so steps to open the delete confirmation and verify cancel behavior cannot be executed. Summary of performed steps: navigated to /login; entered credentials (user@viru.local / ViruUser123); signed in; opened History view; selected flight MAD -> DUB (2026-02-21). Blocker: no history records available on the History page, therefore Delete/Confirm/Cancel actions cannot be tested. Recommendation: create or import at least one history record for the selected flight (or provide test data) and re-run the test to validate the delete-cancel flow.
 - **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7560e81-4f14-4862-9c38-560e674c2fa1/d2852433-4942-4ab5-858c-c58700aaa385
 - **Status:** ❌ Failed
@@ -153,14 +153,14 @@ Conclusion: Deletion cannot be performed because there are no history entries to
 ---
 
 #### Test TC013 Clear all history and confirm empty state
-- **Test Code:** [TC013_Clear_all_history_and_confirm_empty_state.py](./TC013_Clear_all_history_and_confirm_empty_state.py)
+- **Test Code:** `TC013_Clear_all_history_and_confirm_empty_state.py`
 - **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7560e81-4f14-4862-9c38-560e674c2fa1/a5d9be38-57ef-4354-852b-85415834b06d
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC014 Cancel clear-all history action
-- **Test Code:** [TC014_Cancel_clear_all_history_action.py](./TC014_Cancel_clear_all_history_action.py)
+- **Test Code:** `TC014_Cancel_clear_all_history_action.py`
 - **Test Error:** Cannot proceed with test step 'Click the "Clear all history" button' because no clear-all control or confirmation dialog is present on the current /history page. Current page state (evidence):
 - Headings: 'Historico', 'Selecciona vuelo', 'Registros capturados'.
 - Visible empty state message: 'Sin registros.' (no records present).
@@ -175,63 +175,63 @@ Because the required control is missing, the requested verification (that cancel
 ---
 
 #### Test TC015 View existing preferences on the Preferences page
-- **Test Code:** [TC015_View_existing_preferences_on_the_Preferences_page.py](./TC015_View_existing_preferences_on_the_Preferences_page.py)
+- **Test Code:** `TC015_View_existing_preferences_on_the_Preferences_page.py`
 - **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7560e81-4f14-4862-9c38-560e674c2fa1/4c2e53b0-8dd9-40f5-8b4f-f8a4dd121087
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC016 Update display preferences and notification settings and save successfully
-- **Test Code:** [TC016_Update_display_preferences_and_notification_settings_and_save_successfully.py](./TC016_Update_display_preferences_and_notification_settings_and_save_successfully.py)
+- **Test Code:** `TC016_Update_display_preferences_and_notification_settings_and_save_successfully.py`
 - **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7560e81-4f14-4862-9c38-560e674c2fa1/29290bcd-5c88-4fcb-9429-18751902895a
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC017 Update API provider preferences and save successfully
-- **Test Code:** [TC017_Update_API_provider_preferences_and_save_successfully.py](./TC017_Update_API_provider_preferences_and_save_successfully.py)
+- **Test Code:** `TC017_Update_API_provider_preferences_and_save_successfully.py`
 - **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7560e81-4f14-4862-9c38-560e674c2fa1/62851901-d34c-46fe-b33e-67401b374092
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC018 Validation error appears when saving invalid preference values
-- **Test Code:** [TC018_Validation_error_appears_when_saving_invalid_preference_values.py](./TC018_Validation_error_appears_when_saving_invalid_preference_values.py)
+- **Test Code:** `TC018_Validation_error_appears_when_saving_invalid_preference_values.py`
 - **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7560e81-4f14-4862-9c38-560e674c2fa1/4268b029-4b26-44a7-9671-5521afc5e1f2
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC019 Saved values remain visible on the Preferences page after saving
-- **Test Code:** [TC019_Saved_values_remain_visible_on_the_Preferences_page_after_saving.py](./TC019_Saved_values_remain_visible_on_the_Preferences_page_after_saving.py)
+- **Test Code:** `TC019_Saved_values_remain_visible_on_the_Preferences_page_after_saving.py`
 - **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7560e81-4f14-4862-9c38-560e674c2fa1/4582ad05-b928-4708-abcc-1eedb857151a
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC020 Save button provides visible feedback during save attempt
-- **Test Code:** [TC020_Save_button_provides_visible_feedback_during_save_attempt.py](./TC020_Save_button_provides_visible_feedback_during_save_attempt.py)
+- **Test Code:** `TC020_Save_button_provides_visible_feedback_during_save_attempt.py`
 - **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7560e81-4f14-4862-9c38-560e674c2fa1/d601880f-3ef6-4937-9341-c1f8e9843a80
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC021 Quick Search: Select a suggestion by mouse click and submit to view results
-- **Test Code:** [TC021_Quick_Search_Select_a_suggestion_by_mouse_click_and_submit_to_view_results.py](./TC021_Quick_Search_Select_a_suggestion_by_mouse_click_and_submit_to_view_results.py)
+- **Test Code:** `TC021_Quick_Search_Select_a_suggestion_by_mouse_click_and_submit_to_view_results.py`
 - **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7560e81-4f14-4862-9c38-560e674c2fa1/a6884e44-bbaa-4763-85ee-2f6cc95263dd
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC022 Quick Search: Submit selected suggestion and verify results are shown
-- **Test Code:** [TC022_Quick_Search_Submit_selected_suggestion_and_verify_results_are_shown.py](./TC022_Quick_Search_Submit_selected_suggestion_and_verify_results_are_shown.py)
+- **Test Code:** `TC022_Quick_Search_Submit_selected_suggestion_and_verify_results_are_shown.py`
 - **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7560e81-4f14-4862-9c38-560e674c2fa1/91d81fc2-3887-49a4-a7a3-3aeb65d2cd1e
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC023 Quick Search: Submit query via Enter after selecting suggestion with keyboard
-- **Test Code:** [TC023_Quick_Search_Submit_query_via_Enter_after_selecting_suggestion_with_keyboard.py](./TC023_Quick_Search_Submit_query_via_Enter_after_selecting_suggestion_with_keyboard.py)
+- **Test Code:** `TC023_Quick_Search_Submit_query_via_Enter_after_selecting_suggestion_with_keyboard.py`
 - **Test Error:** Test result: FAILED to verify keyboard navigation in suggestions and Enter-to-submit via suggestion.
 
 What was executed:
@@ -262,7 +262,7 @@ Final status: Test incomplete for keyboard suggestion navigation (success=false)
 ---
 
 #### Test TC024 Quick Search: Press Enter to submit after keyboard highlighting a suggestion
-- **Test Code:** [TC024_Quick_Search_Press_Enter_to_submit_after_keyboard_highlighting_a_suggestion.py](./TC024_Quick_Search_Press_Enter_to_submit_after_keyboard_highlighting_a_suggestion.py)
+- **Test Code:** `TC024_Quick_Search_Press_Enter_to_submit_after_keyboard_highlighting_a_suggestion.py`
 - **Test Error:** Verification summary:
 - Result: Enter did not submit a highlighted suggestion and no results area with route listings appeared. No London-related suggestion entries were found in the airport selector list or on the page.
 - Evidence collected: origin airport selector input shows value 'lon'; visible selectable item present: 'Barcelona (Todos los aeropuertos) - BCN'; no matches for LON, LHR, LGW, LCY, STN or 'London' in selector list; the 'resultados' section displays only guidance text (e.g., 'Introduce una ruta y pulsa Buscar para ver oportunidades.'); the Buscar button remains disabled in the current UI state.
@@ -354,7 +354,7 @@ Origin input current value and focus indication — raw matching texts:
 ---
 
 #### Test TC025 Quick Search: Empty query submission shows validation error
-- **Test Code:** [TC025_Quick_Search_Empty_query_submission_shows_validation_error.py](./TC025_Quick_Search_Empty_query_submission_shows_validation_error.py)
+- **Test Code:** `TC025_Quick_Search_Empty_query_submission_shows_validation_error.py`
 - **Test Error:** Test result: FAILED — submitting an empty quick search did not display the expected validation message.
 
 Summary of what was executed:
@@ -383,14 +383,14 @@ Deliverable: Final test status = FAILED. The specific validation text was not fo
 ---
 
 #### Test TC026 Quick Search: Suggestions list closes when search input is cleared
-- **Test Code:** [TC026_Quick_Search_Suggestions_list_closes_when_search_input_is_cleared.py](./TC026_Quick_Search_Suggestions_list_closes_when_search_input_is_cleared.py)
+- **Test Code:** `TC026_Quick_Search_Suggestions_list_closes_when_search_input_is_cleared.py`
 - **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7560e81-4f14-4862-9c38-560e674c2fa1/3b736192-6181-4257-82a6-b0a1337747ce
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
 
 #### Test TC027 Quick Search: Submitting a typed query without selecting a suggestion shows results
-- **Test Code:** [TC027_Quick_Search_Submitting_a_typed_query_without_selecting_a_suggestion_shows_results.py](./TC027_Quick_Search_Submitting_a_typed_query_without_selecting_a_suggestion_shows_results.py)
+- **Test Code:** `TC027_Quick_Search_Submitting_a_typed_query_without_selecting_a_suggestion_shows_results.py`
 - **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/d7560e81-4f14-4862-9c38-560e674c2fa1/e1dea781-be8e-4450-a507-0f995a8c3cbe
 - **Status:** ✅ Passed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
@@ -410,6 +410,7 @@ Deliverable: Final test status = FAILED. The specific validation text was not fo
 ## 4️⃣ Key Gaps / Risks
 {AI_GNERATED_KET_GAPS_AND_RISKS}
 ---
+
 
 
 
