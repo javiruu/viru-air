@@ -163,7 +163,7 @@ export default function DashboardPage() {
     [noteActiveId, startNewNote, t]
   );
 
-  const userName = me?.email || me?.id || "User";
+  const userName = me?.email || me?.id || "Usuario";
   const userInitials = useMemo(() => {
     const clean = userName.trim();
     const [first, second] = clean.split(/[\s.@_-]+/).filter(Boolean);
@@ -266,7 +266,7 @@ export default function DashboardPage() {
                         <span className="hero-label">{t("dashboard.hero.opportunityDeltaLabel")}</span>
                         <strong>{t("dashboard.hero.opportunityValueUnknown")}</strong>
                       </div>
-                      <span className="status-badge status-ok">{t("dashboard.hero.opportunityBadge")}</span>
+                      <span className="status-pill success">{t("dashboard.hero.opportunityBadge")}</span>
                     </div>
                   </div>
                 ) : (
@@ -357,12 +357,12 @@ export default function DashboardPage() {
       {dashboardHint.visible ? (
         <section className="notice notice-compact notice-info section-gap" role="status" aria-live="polite">
           <div>
-            <strong>Quick start</strong>
-            <p>Here you can see a summary of your activity and quick access points.</p>
+            <strong>{t("dashboard.ftue.title")}</strong>
+            <p>{t("dashboard.ftue.body")}</p>
           </div>
           <div className="notice-actions">
             <button type="button" className="btn-ghost btn-compact" onClick={dashboardHint.dismiss}>
-              Got it
+              {t("dashboard.ftue.confirm")}
             </button>
           </div>
         </section>

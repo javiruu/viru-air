@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 
+import { useI18n } from "@/i18n";
 import { useFtueHint } from "@/lib/ftue";
 import { AddWatchModal } from "@/modules/watchlist/components/AddWatchModal";
 import { AirportPickerModal } from "@/modules/watchlist/components/AirportPickerModal";
@@ -38,6 +39,7 @@ const CHART_PAD = { left: 54, right: 18, top: 18, bottom: 38 };
 
 export default function WatchlistPage() {
   const router = useRouter();
+  const { t } = useI18n();
 
   const watchlistHint = useFtueHint("watchlist");
 
@@ -53,16 +55,16 @@ export default function WatchlistPage() {
       <div className="page-header watchlist-header">
         <div className="watchlist-header-left">
           <button className="btn-ghost" type="button" onClick={() => router.push("/dashboard")}>
-            Back
+            {t("shared.actions.back")}
           </button>
         </div>
         <div className="page-title">
-          <h1>Flight Watchlist</h1>
-          <p>Control center to monitor, filter, analyze, and compare without changing screens.</p>
+          <h1>{t("watchlist.title")}</h1>
+          <p>{t("watchlist.subtitle")}</p>
         </div>
         <div className="page-actions watchlist-header-right">
           <button className="btn-primary" type="button" onClick={() => actions.setShowAdd(true)}>
-            Add flight
+            {t("watchlist.addFlight")}
           </button>
         </div>
       </div>
@@ -70,12 +72,12 @@ export default function WatchlistPage() {
       {watchlistHint.visible ? (
         <section className="notice notice-compact notice-info section-gap" role="status" aria-live="polite">
           <div>
-            <strong>Quick start</strong>
-            <p>Save flights here to track their changes.</p>
+            <strong>{t("watchlist.quickStartTitle")}</strong>
+            <p>{t("watchlist.quickStartBody")}</p>
           </div>
           <div className="notice-actions">
             <button type="button" className="btn-ghost btn-compact" onClick={watchlistHint.dismiss}>
-              Got it
+              {t("watchlist.quickStartConfirm")}
             </button>
           </div>
         </section>
@@ -83,7 +85,7 @@ export default function WatchlistPage() {
 
       {derived.lastUpdatedGlobal ? (
         <div className="notice notice-info section-gap" role="status" aria-live="polite">
-          Last update: {derived.lastUpdatedGlobal}
+          {t("watchlist.lastUpdate", { value: derived.lastUpdatedGlobal })}
         </div>
       ) : null}
 

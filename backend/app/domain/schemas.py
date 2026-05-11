@@ -3,6 +3,13 @@ from datetime import date as Date, datetime
 import re
 
 from pydantic import BaseModel, Field, field_validator, model_validator
+from app.domain.vocabulary import (
+    ALERT_RULE_TYPE_THRESHOLD_HIGH,
+    ALERT_RULE_TYPE_THRESHOLD_LOW,
+    ALLOWED_RULE_TYPES,
+    RULE_TYPE_ALIASES,
+    WATCH_STATUS_UPDATABLE,
+)
 
 
 class RegisterIn(BaseModel):
@@ -111,7 +118,7 @@ class WatchUpdateIn(BaseModel):
     @classmethod
     def validate_status(cls, value: str) -> str:
         normalized = value.strip().lower()
-        if normalized not in {"active", "paused"}:
+        if normalized not in WATCH_STATUS_UPDATABLE:
             raise ValueError("invalid_watch_status")
         return normalized
 
@@ -149,13 +156,6 @@ class SnapshotBatchOut(BaseModel):
     departure_time_local: str | None = None
 
 
-RULE_TYPE_ALIASES = {
-    "threshold_below": "threshold_low",
-    "threshold_above": "threshold_high",
-}
-ALLOWED_RULE_TYPES = {"threshold_low", "threshold_high", "every_change", *RULE_TYPE_ALIASES.keys()}
-
-
 class AlertRuleIn(BaseModel):
     watch_id: str
     rule_type: str
@@ -173,7 +173,7 @@ class AlertRuleIn(BaseModel):
 
     @model_validator(mode="after")
     def validate_threshold_requirement(self):
-        if self.rule_type in {"threshold_low", "threshold_high"} and self.threshold_value is None:
+        if self.rule_type in {ALERT_RULE_TYPE_THRESHOLD_LOW, ALERT_RULE_TYPE_THRESHOLD_HIGH} and self.threshold_value is None:
             raise ValueError("threshold_value_required")
         return self
 

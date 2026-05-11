@@ -11,6 +11,10 @@ test("route bridges point legacy preferences to canonical hub", () => {
   assert.equal(resolveBridgeRoute("/preferences"), "/preferencias");
 });
 
+test("route bridges point suggestions to support feedback idea", () => {
+  assert.equal(resolveBridgeRoute("/suggestions"), "/soporte/feedback?type=idea");
+});
+
 test("route bridges support canonical preference tabs mapping", () => {
   assert.equal(resolveBridgeRoute("/preferencias/busqueda"), "/preferencias?tab=busqueda");
   assert.equal(resolveBridgeRoute("/preferencias/apariencia"), "/preferencias?tab=apariencia");

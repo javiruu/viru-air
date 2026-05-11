@@ -8,6 +8,7 @@ import { alertsEs } from "./domains/alerts";
 import { recommendationsEs } from "./domains/recommendations";
 import { suggestionsEs } from "./domains/suggestions";
 import { adminEs } from "./domains/admin";
+import { watchlistEs } from "./domains/watchlist";
 
 const es = {
   shared: sharedEs,
@@ -20,6 +21,7 @@ const es = {
   recommendations: recommendationsEs,
   suggestions: suggestionsEs,
   admin: adminEs,
+  watchlist: watchlistEs,
 };
 
 export default es;

@@ -87,8 +87,7 @@ export default function ViruFooterBlock() {
           { label: t("shared.footer.links.watchlist"), href: "/watchlist", icon: "fa-binoculars" },
           { label: t("shared.footer.links.quickSearch"), href: "/quick-search", icon: "fa-magnifying-glass-chart" },
           { label: t("shared.footer.links.alerts"), href: "/alerts", icon: "fa-bell" },
-          { label: t("shared.footer.links.recommendations"), href: "/recomendaciones", icon: "fa-sparkles" },
-          { label: t("shared.footer.links.suggestions"), href: "/suggestions", icon: "fa-lightbulb" },
+          { label: t("shared.footer.links.opportunities"), href: "/recomendaciones", icon: "fa-sparkles" },
         ],
       },
       {
@@ -108,6 +107,7 @@ export default function ViruFooterBlock() {
           { label: t("shared.footer.links.supportHelp"), href: "/soporte/ayuda", icon: "fa-headset" },
           { label: t("shared.footer.links.contact"), href: "/soporte/contacto", icon: "fa-paper-plane" },
           { label: t("shared.footer.links.feedback"), href: "/soporte/feedback", icon: "fa-bug" },
+          { label: t("shared.footer.links.productFeedback"), href: "/soporte/feedback?type=idea", icon: "fa-lightbulb" },
           { label: t("shared.footer.links.aboutUs"), href: "/soporte/about-us", icon: "fa-people-group" },
           { label: t("shared.footer.links.policies"), href: "/policies", icon: "fa-scale-balanced" },
         ],

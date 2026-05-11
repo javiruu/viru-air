@@ -3,7 +3,7 @@ export const NAV_V1_PRIVATE = [
   { href: "/watchlist", labelKey: "shared.footer.links.watchlist" },
   { href: "/quick-search", labelKey: "shared.footer.links.quickSearch" },
   { href: "/alerts", labelKey: "shared.footer.links.alerts" },
-  { href: "/recomendaciones", labelKey: "shared.footer.links.recommendations" },
+  { href: "/recomendaciones", labelKey: "shared.footer.links.opportunities" },
   { href: "/preferencias", labelKey: "shared.footer.links.preferences" },
   { href: "/soporte/ayuda", labelKey: "shared.footer.links.help" },
 ] as const;
@@ -21,7 +21,7 @@ export const CANONICAL_ROUTES = {
   preferences: "/preferencias",
   supportFeedback: "/soporte/feedback",
   privateContact: "/soporte/contacto",
-  suggestions: "/suggestions",
+  suggestions: "/soporte/feedback?type=idea",
   publicHelp: "/ayuda",
   privateHelp: "/soporte/ayuda",
 } as const;

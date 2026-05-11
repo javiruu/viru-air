@@ -6,6 +6,7 @@ from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from app.domain.schemas import AlertRuleIn, AlertRuleUpdateIn
+from app.domain.vocabulary import DELIVERY_STATUS_QUEUED
 from app.infrastructure.db.models import AlertRule, FlightWatch, NotificationEvent, PriceSnapshot
 
 
@@ -127,7 +128,7 @@ def evaluate_rules_for_watch(db: Session, watch_id: str) -> list[NotificationEve
         event = NotificationEvent(
             rule_id=rule.id,
             channel="in_app",
-            delivery_status="queued",
+            delivery_status=DELIVERY_STATUS_QUEUED,
             message=message,
         )
         db.add(event)

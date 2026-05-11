@@ -1,5 +1,5 @@
 ﻿export const recommendationsEs = {
-  title: "Recomendaciones inteligentes",
+  title: "Oportunidades",
   subtitle: "La IA de Viru revisa tendencia, clima y precio para sugerirte opciones accionables.",
   heroPill: "Explorador IA",
   heroTitle: "Tu radar de oportunidades",
@@ -59,7 +59,7 @@
   maxStops: "Max. escalas",
   strictFilters: "Aplicar filtros estrictos",
   softWeight: "Fuerza de filtro flexible",
-  resultsTitle: "Recomendaciones vivas",
+  resultsTitle: "Oportunidades vivas",
   resultsSubtitle: "Escanea rapido y abre detalles solo cuando lo necesites.",
   sortLabel: "Ordenar por",
   sortDirection: "Direccion",
@@ -72,7 +72,7 @@
     climate: "Mejor clima",
     trend: "Tendencia",
   },
-  search: "Buscar recomendaciones",
+  search: "Buscar oportunidades",
   searchStrong: "Actualizar radar inteligente",
   refresh: "Actualizar radar",
   loading: "Analizando...",
@@ -143,7 +143,7 @@
 };
 
 export const recommendationsEn = {
-  title: "Smart recommendations",
+  title: "Opportunities",
   subtitle: "Viru AI combines trend, weather, and price to surface actionable routes.",
   heroPill: "AI Explorer",
   heroTitle: "Your opportunity radar",
@@ -203,7 +203,7 @@ export const recommendationsEn = {
   maxStops: "Max stops",
   strictFilters: "Apply strict filters",
   softWeight: "Flexible filter strength",
-  resultsTitle: "Live recommendations",
+  resultsTitle: "Live opportunities",
   resultsSubtitle: "Scan fast and expand only when needed.",
   sortLabel: "Sort by",
   sortDirection: "Direction",
@@ -216,7 +216,7 @@ export const recommendationsEn = {
     climate: "Best climate",
     trend: "Trend",
   },
-  search: "Get recommendations",
+  search: "Find opportunities",
   searchStrong: "Update smart radar",
   refresh: "Refresh radar",
   loading: "Analyzing...",

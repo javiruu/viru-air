@@ -51,9 +51,9 @@ Ejemplo de clases actuales:
 ## Componente: StatusPill
 Uso: mostrar estado de entidades y procesos.
 
-Estados estándar:
+Estados estandar:
 - `success` (activo/completado)
-- `warn` (pausado/pendiente/en espera)
+- `warning` (pausado/pendiente/en espera)
 - `error` (fallo)
 
 Reglas:
@@ -103,7 +103,8 @@ Componentes que deben consumir esta semántica:
 - `field-error` / feedback inline
 
 Compatibilidad legacy:
-- `warn` se mantiene como alias temporal de `warning`.
+- No introducir `warn` en nuevos cambios.
+- Tratar cualquier `warn` heredado como `warning` hasta su limpieza total.
 
 ## Glosario UI (ES)
 Términos preferidos en la interfaz visible:
@@ -137,8 +138,8 @@ Estados breves:
 4. Si hay error, indicar acción siguiente cuando aplique.
 
 ## Convenciones legacy / deprecación
-- Rutas canónicas: `/dashboard`, `/watchlist`, `/quick-search`, `/alerts`, `/preferencias`.
-- Puentes legacy permitidos por compatibilidad: `/history`, `/preferences` (redirigen a canónica).
+- Rutas canonicas: `/dashboard`, `/watchlist`, `/quick-search`, `/alerts`, `/recomendaciones`, `/preferencias`.
+- Puentes legacy permitidos por compatibilidad: `/history`, `/preferences`, `/suggestions` (redirigen a canonica).
 - Evitar clases ambiguas de estado legacy (`warn`) en nuevos cambios. Usar `warning`.
 
 ## Reglas de regresión

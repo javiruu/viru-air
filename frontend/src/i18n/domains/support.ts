@@ -10,7 +10,7 @@ export const supportEs = {
   feedback: {
     title: "Reportar problema",
     subtitle: "Canal para incidencias y bloqueos.",
-    pageSubtitle: "Si algo falla, cuentanos aqui. Para ideas de producto usa Sugerencias.",
+    pageSubtitle: "Si algo falla, cuentanos aqui. Para ideas de producto usa tipo Idea.",
     sectionTitle: "Enviar incidencia",
     sectionHint: "Incluye pasos y contexto. Llega directo al equipo.",
     typeLabel: "Tipo",
@@ -152,7 +152,7 @@ export const supportEn = {
   feedback: {
     title: "Report an issue",
     subtitle: "Channel for incidents and blockers.",
-    pageSubtitle: "If something is broken, report it here. For product ideas use Suggestions.",
+    pageSubtitle: "If something is broken, report it here. For product ideas use the Idea type.",
     sectionTitle: "Send incident",
     sectionHint: "Include steps and context. It goes directly to the team.",
     typeLabel: "Type",

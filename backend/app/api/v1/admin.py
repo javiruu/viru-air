@@ -6,6 +6,7 @@ from sqlalchemy import delete, desc, func, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_admin
+from app.core.time import utc_now_naive
 from app.domain.schemas import (
     AdminPasswordIn,
     AdminProductMetricsOut,
@@ -14,6 +15,7 @@ from app.domain.schemas import (
     WatchCreateIn,
     WatchOut,
 )
+from app.domain.vocabulary import SYSTEM_STATUS_CRITICAL, SYSTEM_STATUS_DEGRADED, SYSTEM_STATUS_OK
 from app.infrastructure.db.models import (
     AlertRule,
     FlightWatch,
@@ -291,11 +293,11 @@ def product_health(db: Session = Depends(get_db), _: User = Depends(require_admi
     error_count_weekly = int(
         db.scalar(select(func.count(ClientErrorEvent.id)).where(ClientErrorEvent.created_at >= weekly_from)) or 0
     )
-    system_status = "ok"
+    system_status = SYSTEM_STATUS_OK
     if error_count_weekly >= 25:
-        system_status = "critical"
+        system_status = SYSTEM_STATUS_CRITICAL
     elif error_count_weekly >= 5:
-        system_status = "degraded"
+        system_status = SYSTEM_STATUS_DEGRADED
 
     return {
         "usage": usage,

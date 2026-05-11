@@ -6,6 +6,7 @@ from uuid import uuid4
 from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.vocabulary import DELIVERY_STATUS_QUEUED, WATCH_STATUS_ACTIVE
 from app.infrastructure.db.session import Base
 
 
@@ -34,7 +35,7 @@ class FlightWatch(Base):
     destination_iata: Mapped[str] = mapped_column(String(3))
     travel_date_local: Mapped[datetime.date] = mapped_column(Date)
     target_price: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
-    status: Mapped[str] = mapped_column(String(20), default="active")
+    status: Mapped[str] = mapped_column(String(20), default=WATCH_STATUS_ACTIVE)
     is_paused: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
 
@@ -75,7 +76,7 @@ class NotificationEvent(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     rule_id: Mapped[str] = mapped_column(ForeignKey("alert_rule.id"), index=True)
     channel: Mapped[str] = mapped_column(String(20), default="in_app")
-    delivery_status: Mapped[str] = mapped_column(String(20), default="queued")
+    delivery_status: Mapped[str] = mapped_column(String(20), default=DELIVERY_STATUS_QUEUED)
     message: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
 

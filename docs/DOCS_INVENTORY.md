@@ -9,6 +9,14 @@
 
 Inventario completo de documentos `.md` y `.txt` relevantes del repositorio tras el saneamiento documental. Excluye dependencias, cach?s, builds, entornos virtuales, `_publish_repo` y otras salidas generadas masivas.
 
+## Actualizacion manual 2026-05-11 (Fase 0)
+
+Entradas vivas agregadas:
+
+- `docs/overview/current-state.md`
+- `docs/reference/product-language-map.md`
+- `docs/qa/fase-0-limpieza-conceptual-checklist.md`
+
 ## Tabla
 
 | Ruta actual | Tipo | Estado | Acci?n propuesta | Nueva ruta | Motivo | Fuente de verdad |

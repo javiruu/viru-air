@@ -11,6 +11,10 @@ from fastapi.responses import JSONResponse
 from app.core.errors import error_envelope, message_for_code
 from app.core.idempotency import replay_if_exists, request_hash, store_response
 from app.domain.entities import ProviderFetchResult
+from app.domain.vocabulary import (
+    WATCH_STATUS_DELETED,
+    WATCH_STATUS_PAUSED,
+)
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -107,7 +111,7 @@ def list_watches(
     watches = list(
         db.scalars(
             select(FlightWatch)
-            .where(FlightWatch.user_id == current_user.id, FlightWatch.status != "deleted")
+            .where(FlightWatch.user_id == current_user.id, FlightWatch.status != WATCH_STATUS_DELETED)
             .order_by(FlightWatch.created_at.desc(), FlightWatch.id.desc())
         )
     )
@@ -134,7 +138,7 @@ def update_watch(
     watch = db.scalar(
         select(FlightWatch).where(FlightWatch.id == watch_id, FlightWatch.user_id == current_user.id)
     )
-    if not watch or watch.status == "deleted":
+    if not watch or watch.status == WATCH_STATUS_DELETED:
         raise HTTPException(status_code=404, detail="watch_not_found")
 
     watch.status = payload.status
@@ -162,7 +166,7 @@ def delete_watch(
     )
     if not watch or watch.status == "deleted":
         raise HTTPException(status_code=404, detail="watch_not_found")
-    watch.status = "deleted"
+    watch.status = WATCH_STATUS_DELETED
     watch.is_paused = True
     db.commit()
     return {"status": "ok"}
@@ -195,9 +199,9 @@ def refresh_watch(
     )
     if not watch:
         raise HTTPException(status_code=404, detail="watch_not_found")
-    if watch.status == "deleted":
+    if watch.status == WATCH_STATUS_DELETED:
         raise HTTPException(status_code=404, detail="watch_not_found")
-    if watch.is_paused or watch.status == "paused":
+    if watch.is_paused or watch.status == WATCH_STATUS_PAUSED:
         raise HTTPException(status_code=409, detail="watch_paused")
 
     if REFRESH_COOLDOWN_SECONDS > 0:

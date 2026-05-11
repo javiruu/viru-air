@@ -78,6 +78,11 @@ export const dashboardEs = {
     emptyTitle: "Sin oportunidades activas",
     emptyBody: "Genera nuevas búsquedas para desbloquear rutas destacadas.",
   },
+  ftue: {
+    title: "Primeros pasos",
+    body: "Aqui ves un resumen de actividad y accesos rapidos del workspace.",
+    confirm: "Entendido",
+  },
   suggestions: {
     topTitle: "Mejor precio potencial: {origin} → {destination} esta semana",
     topDetail: "Detectamos una ventana de precio en las próximas 72h.",
@@ -290,6 +295,11 @@ export const dashboardEn = {
     cta: "View opportunities",
     emptyTitle: "No active opportunities",
     emptyBody: "Run new searches to unlock highlighted routes.",
+  },
+  ftue: {
+    title: "Quick start",
+    body: "Here you can review your activity summary and workspace shortcuts.",
+    confirm: "Got it",
   },
   suggestions: {
     topTitle: "Best price potential: {origin} → {destination} this week",

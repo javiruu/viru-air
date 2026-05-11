@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { trackUxEvent } from "@/lib/uxTracking";
 import { apiFetch } from "@/modules/shared/api";
 import { formatCurrency, formatRelativeTime } from "@/modules/shared/format";
+import { getDeliveryStatusMeta, getWatchStatusMeta } from "@/modules/shared/statusCatalog";
 import { useI18n } from "@/i18n";
 
 type Watch = {
@@ -41,21 +42,6 @@ type AlertEvent = {
 type AlertSegment = "all" | "security" | "price";
 function formatEur(value: number): string {
   return formatCurrency(value, "EUR");
-}
-
-function deliveryStatusLabel(status: string): string {
-  const normalized = status.toLowerCase();
-  if (normalized === "queued") return "En espera";
-  if (normalized === "sent" || normalized === "delivered") return "Enviado";
-  if (normalized === "failed" || normalized === "error") return "Error";
-  return status;
-}
-
-function deliveryStatusTone(status: string): "warning" | "success" | "error" {
-  const normalized = status.toLowerCase();
-  if (normalized === "queued") return "warning";
-  if (normalized === "sent" || normalized === "delivered") return "success";
-  return "error";
 }
 
 export default function AlertsPage() {
@@ -234,14 +220,14 @@ export default function AlertsPage() {
   }
 
   async function removeRule(rule: AlertRule) {
-    const confirmed = window.confirm("¿Seguro que quieres eliminar esta alerta?");
+    const confirmed = window.confirm(t("alerts.messages.confirmDelete"));
     if (!confirmed) return;
     try {
       await apiFetch(`/alerts/rules/${rule.id}`, { method: "DELETE" });
       const updated = await apiFetch<AlertRule[]>(`/alerts/rules?watch_id=${selectedWatchId}`);
       setRules(updated);
       setStatus("success");
-      setMessage("Alerta eliminada");
+      setMessage(t("alerts.messages.ruleDeleted"));
     } catch {
       setMessage(t("alerts.messages.ruleDeleteError"));
       setStatus("error");
@@ -432,6 +418,7 @@ export default function AlertsPage() {
           </p>
         ) : (
           filteredRules.map((rule) => {
+            const watchStatus = getWatchStatusMeta(rule.enabled ? "active" : "paused", t);
             const thresholdText =
               rule.rule_type !== "every_change" && rule.threshold_value
                 ? t("alerts.row.threshold", { value: formatEur(Number(rule.threshold_value)) })
@@ -452,8 +439,8 @@ export default function AlertsPage() {
                   <button className="btn-ghost" type="button" onClick={() => removeRule(rule)}>
                     {t("alerts.row.actions.delete")}
                   </button>
-                  <span className={`status-pill ${rule.enabled ? "success" : "warning"}`}>
-                    {rule.enabled ? t("alerts.row.status.active") : t("alerts.row.status.paused")}
+                  <span className={`status-pill ${watchStatus.tone}`}>
+                    {watchStatus.label}
                   </span>
                 </div>
               </div>
@@ -475,29 +462,32 @@ export default function AlertsPage() {
         {events.length === 0 ? (
           <p className="panel-note">{t("alerts.history.empty")}</p>
         ) : (
-          events.map((eventItem) => (
-            <div key={eventItem.id} className="list-row alert-event">
-              <div className="alert-event-main">
-                <strong>{eventItem.origin_iata} {" → "} {eventItem.destination_iata}</strong>
-                <div className="panel-note">
-                  {t("alerts.history.timeLabel", {
-                    date: eventItem.travel_date_local,
-                    time: new Date(eventItem.created_at).toLocaleString(localeTag),
-                  })}
+          events.map((eventItem) => {
+            const delivery = getDeliveryStatusMeta(eventItem.delivery_status, t);
+            return (
+              <div key={eventItem.id} className="list-row alert-event">
+                <div className="alert-event-main">
+                  <strong>{eventItem.origin_iata} {" → "} {eventItem.destination_iata}</strong>
+                  <div className="panel-note">
+                    {t("alerts.history.timeLabel", {
+                      date: eventItem.travel_date_local,
+                      time: new Date(eventItem.created_at).toLocaleString(localeTag),
+                    })}
+                  </div>
+                  <div className="alert-message">{eventItem.message}</div>
                 </div>
-                <div className="alert-message">{eventItem.message}</div>
+                <div className="alert-event-side">
+                  <time className="alert-timestamp" dateTime={eventItem.created_at}>
+                    {new Date(eventItem.created_at).toLocaleTimeString(localeTag, { hour: "2-digit", minute: "2-digit" })}
+                  </time>
+                  <span className="alert-channel">{eventItem.channel.replace("_", " ")}</span>
+                  <span className={`status-pill ${delivery.tone}`}>
+                    {delivery.label}
+                  </span>
+                </div>
               </div>
-              <div className="alert-event-side">
-                <time className="alert-timestamp" dateTime={eventItem.created_at}>
-                  {new Date(eventItem.created_at).toLocaleTimeString(localeTag, { hour: "2-digit", minute: "2-digit" })}
-                </time>
-                <span className="alert-channel">{eventItem.channel.replace("_", " ")}</span>
-                <span className={`status-pill ${deliveryStatusTone(eventItem.delivery_status)}`}>
-                  {deliveryStatusLabel(eventItem.delivery_status)}
-                </span>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </section>
 

@@ -34,12 +34,14 @@
 - [Dashboard](product/dashboard.md)
 - [Quick Search](product/quick-search.md)
 - [Watchlist](product/watchlist.md)
+- [Product language map](reference/product-language-map.md)
 - [Policies Page](product/policies-page.md)
 
 ### QA
 
 - [README QA](qa/README.md)
 - [Frontend PR checklist](qa/acceptance-checklists/frontend-pr-checklist.md)
+- [Fase 0 limpieza conceptual](qa/fase-0-limpieza-conceptual-checklist.md)
 - [Traceability matrix](qa/traceability-matrix.md)
 - [TestSprite catalog](qa/testsprite/testsprite-catalog.md)
 
