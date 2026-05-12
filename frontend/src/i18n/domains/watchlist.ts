@@ -1,11 +1,11 @@
 export const watchlistEs = {
   title: "Watchlist",
   subtitle: "Tu mesa para vigilar, comparar y decidir sin salir de la misma vista.",
-  addFlight: "Anadir vuelo",
+  addFlight: "Añadir vuelo",
   quickStartTitle: "Primeros pasos",
-  quickStartBody: "Guarda vuelos aqui para seguir cambios de precio y horario.",
+  quickStartBody: "Guarda vuelos aquí para seguir cambios de precio y horario.",
   quickStartConfirm: "Entendido",
-  lastUpdate: "Ultima actualizacion: {value}",
+  lastUpdate: "Última actualización: {value}",
   mapLoadingTitle: "Mesa de decisiones",
   mapLoadingBody: "Cargando mapa de rutas...",
 };

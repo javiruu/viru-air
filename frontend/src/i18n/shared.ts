@@ -67,7 +67,7 @@
     themeLightBody: "Modo claro activado.",
   },
   footer: {
-    kicker: "Footer block",
+    kicker: "Bloque de navegación",
     publicBody:
       "Accesos editoriales y soporte real para moverte por Viru sin ruido ni enlaces fantasma.",
     privateBody:
@@ -83,10 +83,10 @@
       explore: "Explorar",
       access: "Acceso",
       contact: "Contacto",
-      workspace: "Workspace",
+      workspace: "Espacio de trabajo",
       account: "Cuenta",
       support: "Soporte",
-      admin: "Admin",
+      admin: "Administración",
     },
     links: {
       home: "Inicio",
@@ -111,8 +111,8 @@
       supportHelp: "Centro de ayuda",
       contact: "Contacto",
       feedback: "Reportar problema",
-      aboutUs: "About us",
-      admin: "Panel admin",
+      aboutUs: "Sobre Viru",
+      admin: "Panel de administración",
       productHealth: "Salud del producto",
     },
   },

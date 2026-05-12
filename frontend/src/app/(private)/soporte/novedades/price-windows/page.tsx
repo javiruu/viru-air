@@ -25,6 +25,7 @@ type ArticleContent = {
   closingTitle: string;
   closingBody: string[];
   ctaLabel: string;
+  aboutLabel: string;
 };
 
 const contentEs: ArticleContent = {
@@ -65,6 +66,7 @@ const contentEs: ArticleContent = {
     "La intención no es abrir una sección de blog genérica. Es crear una capa de lectura cuidada dentro del producto, allí donde una actualización realmente cambia cómo decides.",
   ],
   ctaLabel: "Volver al dashboard",
+  aboutLabel: "Sobre Viru",
 };
 
 const contentEn: ArticleContent = {
@@ -105,6 +107,7 @@ const contentEn: ArticleContent = {
     "The goal is not to create a generic blog section. It is to create a careful reading layer inside the product, where an update truly changes how a decision is made.",
   ],
   ctaLabel: "Back to dashboard",
+  aboutLabel: "About Viru",
 };
 
 export default function SupportNewsPriceWindowsPage() {
@@ -196,7 +199,7 @@ export default function SupportNewsPriceWindowsPage() {
                 {content.ctaLabel}
               </Link>
               <Link className="btn-ghost" href="/soporte/about-us">
-                About Viru
+                {content.aboutLabel}
               </Link>
             </footer>
           </div>

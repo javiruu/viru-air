@@ -1,10 +1,12 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { useI18n } from "@/i18n";
 import { apiFetch } from "@/modules/shared/api";
+import { getSystemStatusMeta } from "@/modules/shared/statusCatalog";
 
 type Me = { id: string; email: string; locale: string; is_admin: boolean };
 
@@ -32,14 +34,9 @@ type ProductHealth = {
   };
 };
 
-function statusLabel(status: ProductHealth["system"]["status"]): string {
-  if (status === "ok") return "Verde · Normal";
-  if (status === "degraded") return "Amarillo · Degradado";
-  return "Rojo · Problema";
-}
-
 export default function ProductHealthPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [me, setMe] = useState<Me | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -76,6 +73,8 @@ export default function ProductHealthPage() {
     return <main className="shell"><div className="notice notice-info">Cargando Product Health...</div></main>;
   }
 
+  const systemMeta = data ? getSystemStatusMeta(data.system.status, t) : null;
+
   return (
     <main className="shell section-gap-lg">
       <section className="page-header">
@@ -93,18 +92,18 @@ export default function ProductHealthPage() {
           <section className="panel panel-soft section-gap">
             <div className="panel-header">
               <h2 className="panel-title">Estado del sistema</h2>
-              <span className={`status-pill ${data.system.status === "ok" ? "success" : data.system.status === "degraded" ? "warning" : "error"}`}>
-                {statusLabel(data.system.status)}
+              <span className={`status-pill ${systemMeta?.tone ?? "info"}`}>
+                {systemMeta?.label ?? data.system.status}
               </span>
             </div>
-            <p className="panel-note">Última actualización de datos: {data.system.last_data_update ?? "sin datos"}</p>
-            <p className="panel-note">Última ejecución de alertas: {data.system.last_alert_execution ?? "sin datos"}</p>
+            <p className="panel-note">Ãšltima actualizaciÃ³n de datos: {data.system.last_data_update ?? "sin datos"}</p>
+            <p className="panel-note">Ãšltima ejecuciÃ³n de alertas: {data.system.last_alert_execution ?? "sin datos"}</p>
           </section>
 
           <section className="section-gap">
             <div className="dashboard-primary-grid">
               <article className="module-card"><strong>Visitas dashboard</strong><span>{data.usage.dashboard_view?.weekly ?? 0}</span></article>
-              <article className="module-card"><strong>Búsquedas rápidas</strong><span>{data.usage.quick_search_executed?.weekly ?? 0}</span></article>
+              <article className="module-card"><strong>BÃºsquedas rÃ¡pidas</strong><span>{data.usage.quick_search_executed?.weekly ?? 0}</span></article>
               <article className="module-card"><strong>Refresh watchlist</strong><span>{data.usage.watchlist_refresh?.weekly ?? 0}</span></article>
               <article className="module-card"><strong>Alertas creadas</strong><span>{data.usage.alert_created?.weekly ?? 0}</span></article>
               <article className="module-card"><strong>Alertas disparadas</strong><span>{data.usage.alert_triggered?.weekly ?? 0}</span></article>
@@ -116,15 +115,15 @@ export default function ProductHealthPage() {
             <h2 className="panel-title">Indicadores clave</h2>
             <div className="split section-gap-sm">
               <div className="panel-soft panel">
-                <strong>% búsquedas sin resultados</strong>
+                <strong>% bÃºsquedas sin resultados</strong>
                 <p>{data.indicators.search_empty_rate_pct}%</p>
               </div>
               <div className="panel-soft panel">
-                <strong>Ratio refresh → acción</strong>
+                <strong>Ratio refresh â†’ acciÃ³n</strong>
                 <p>{data.indicators.watchlist_refresh_to_action_pct}%</p>
               </div>
               <div className="panel-soft panel">
-                <strong>Tasa creación alertas</strong>
+                <strong>Tasa creaciÃ³n alertas</strong>
                 <p>{data.indicators.alert_create_rate_pct}%</p>
               </div>
             </div>
@@ -146,7 +145,7 @@ export default function ProductHealthPage() {
                 <ul>
                   {data.errors.recent.map((item, idx) => (
                     <li key={`${item.created_at}-${idx}`}>
-                      <strong>{item.section}</strong> · {item.message}
+                      <strong>{item.section}</strong> Â· {item.message}
                     </li>
                   ))}
                 </ul>
@@ -159,7 +158,7 @@ export default function ProductHealthPage() {
                 <ul>
                   {data.errors.frequent.map((item, idx) => (
                     <li key={`${item.message}-${idx}`}>
-                      <strong>{item.count}x</strong> · {item.message}
+                      <strong>{item.count}x</strong> Â· {item.message}
                     </li>
                   ))}
                 </ul>
@@ -171,3 +170,6 @@ export default function ProductHealthPage() {
     </main>
   );
 }
+
+
+

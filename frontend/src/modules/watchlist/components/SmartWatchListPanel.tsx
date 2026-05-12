@@ -1,4 +1,8 @@
-﻿import { formatCurrency, formatSignedCurrency } from "@/modules/shared/format";
+﻿import { useMemo, useState } from "react";
+
+import { useI18n } from "@/i18n";
+import { formatCurrency, formatSignedCurrency } from "@/modules/shared/format";
+import { getWatchStatusMeta } from "@/modules/shared/statusCatalog";
 import { buildSparklinePath, freshnessLabel, safeDateTime } from "@/modules/watchlist/presentation";
 
 type ListSort = "freshness" | "price_asc" | "price_desc" | "delta";
@@ -79,6 +83,7 @@ export function SmartWatchListPanel({
   onBulkDelete,
   onOpenAddWatch,
 }: SmartWatchListPanelProps) {
+  const { t } = useI18n();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const hasSelection = selectedIds.length > 0;
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
@@ -172,6 +177,7 @@ export function SmartWatchListPanel({
         </div>
       ) : null}
       {smartListItems.map((watch) => {
+        const watchStatus = getWatchStatusMeta(watch.status, t);
         const meta = watchMeta.get(watch.id);
         const trend = !meta?.latest || !meta?.previous
           ? "flat"
@@ -223,6 +229,7 @@ export function SmartWatchListPanel({
                 />
                 <strong>{watch.origin_iata}{" -> "}{watch.destination_iata}</strong>
                 <span className="watch-date">{watch.travel_date_local}</span>
+                <span className={`status-pill ${watchStatus.tone}`}>{watchStatus.label}</span>
                 <span className={`status-pill ${trend === "up" ? "error" : trend === "down" ? "success" : "warning"}`}>
                   {routeHealthLabel}
                 </span>
@@ -298,4 +305,6 @@ export function SmartWatchListPanel({
   );
 }
 
-import { useMemo, useState } from "react";
+
+
+

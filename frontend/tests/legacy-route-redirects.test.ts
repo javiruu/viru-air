@@ -23,6 +23,8 @@ test("history and preferences routes use server redirect pages", () => {
   assert.match(preferencesSource, /redirect\("\/preferencias"\)/);
   assert.doesNotMatch(historySource, /useEffect|router\.replace/);
   assert.doesNotMatch(preferencesSource, /useEffect|router\.replace/);
+  assert.doesNotMatch(historySource, /Redirecting|History is now part of/);
+  assert.doesNotMatch(preferencesSource, /Redirecting to the unified panel|History is now part of Flight Watchlist/);
 });
 
 test("suggestions legacy route redirects to feedback idea flow", () => {
