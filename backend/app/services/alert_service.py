@@ -138,13 +138,35 @@ def evaluate_rules_for_watch(db: Session, watch_id: str) -> list[NotificationEve
             channels.append("email")
 
         for channel in channels:
+            group_reason = rule.rule_type
+            group_bucket = utc_now_naive().strftime("%Y%m%d%H%M")
+            dedupe_key = f"{watch_id}:{rule.id}:{group_reason}:{channel}:{group_bucket}"
+            existing = db.scalar(
+                select(NotificationEvent)
+                .where(NotificationEvent.dedupe_key == dedupe_key)
+                .order_by(desc(NotificationEvent.created_at), desc(NotificationEvent.id))
+                .limit(1)
+            )
+            if existing:
+                existing.grouped_count = max(1, existing.grouped_count) + 1
+                existing.is_digest = existing.grouped_count > 1
+                existing.group_reason = group_reason
+                existing.message = f"Resumen de {existing.grouped_count} avisos ({group_reason})."
+                db.add(existing)
+                created.append(existing)
+                continue
+
             event = NotificationEvent(
                 rule_id=rule.id,
                 channel=channel,
                 delivery_status=DELIVERY_STATUS_QUEUED,
                 attempts=0,
                 next_attempt_at=utc_now_naive(),
-                dedupe_key=f"{rule.id}:{latest.id}:{channel}",
+                dedupe_key=dedupe_key,
+                group_key=f"{watch_id}:{rule.id}:{group_reason}:{group_bucket}",
+                group_reason=group_reason,
+                is_digest=False,
+                grouped_count=1,
                 message=message,
             )
             db.add(event)

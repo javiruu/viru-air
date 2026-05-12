@@ -165,6 +165,9 @@ def evaluate_rules(
                 "rule_id": e.rule_id,
                 "channel": e.channel,
                 "delivery_status": e.delivery_status,
+                "is_digest": e.is_digest,
+                "grouped_count": e.grouped_count,
+                "group_reason": e.group_reason,
                 "message": e.message,
                 "created_at": e.created_at.isoformat(),
             }
@@ -195,6 +198,9 @@ def get_events(
             "next_attempt_at": event.next_attempt_at.isoformat() if event.next_attempt_at else None,
             "last_error": event.last_error,
             "delivered_at": event.delivered_at.isoformat() if event.delivered_at else None,
+            "is_digest": event.is_digest,
+            "grouped_count": event.grouped_count,
+            "group_reason": event.group_reason,
             "message": event.message,
             "created_at": event.created_at.isoformat(),
         }

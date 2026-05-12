@@ -84,6 +84,10 @@ class NotificationEvent(Base):
     last_error: Mapped[str | None] = mapped_column(String(500), nullable=True)
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
     dedupe_key: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
+    group_key: Mapped[str | None] = mapped_column(String(180), nullable=True, index=True)
+    group_reason: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    is_digest: Mapped[bool] = mapped_column(Boolean, default=False)
+    grouped_count: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
 
 
@@ -123,6 +127,10 @@ class UserPreference(Base):
     strict_filters_default: Mapped[bool] = mapped_column(Boolean, default=True)
     preferred_currency: Mapped[str] = mapped_column(String(3), default="EUR")
     language: Mapped[str] = mapped_column(String(8), default="es")
+    quiet_hours_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    quiet_hours_start: Mapped[str | None] = mapped_column(String(5), nullable=True)
+    quiet_hours_end: Mapped[str | None] = mapped_column(String(5), nullable=True)
+    quiet_hours_timezone: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
 
 class UserProfile(Base):

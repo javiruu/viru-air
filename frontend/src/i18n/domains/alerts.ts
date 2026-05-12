@@ -28,6 +28,11 @@
     category: "Categoría",
     ruleTypeHelp: "Usa umbral para precio objetivo, o cada cambio para monitoreo continuo.",
     cooldownHelp: "Cooldown evita ruido cuando el precio cambia varias veces en poco tiempo.",
+    quietHoursTitle: "Horas tranquilas",
+    quietHoursEnabled: "Activar horas tranquilas",
+    quietHoursStart: "Desde",
+    quietHoursEnd: "Hasta",
+    quietHoursHelp: "Durante este horario Viru agrupa avisos para no molestarte.",
   },
   presets: {
     title: "Presets rápidos",
@@ -91,6 +96,9 @@
     deliveredDelivery: "Entregada",
     sentDelivery: "Enviado",
     failedDelivery: "No se pudo enviar",
+    groupedLabel: "Agrupada",
+    digestSummary: "Resumen de {count} avisos",
+    quietHoursPending: "Pendiente hasta que terminen tus horas tranquilas",
   },
   note: {
     description: "Email e in-app en MVP. Cooldown reduce ruido.",
@@ -131,6 +139,11 @@ export const alertsEn = {
     category: "Category",
     ruleTypeHelp: "Use threshold for target prices, or every change for continuous monitoring.",
     cooldownHelp: "Cooldown avoids noise when price updates happen in short bursts.",
+    quietHoursTitle: "Quiet hours",
+    quietHoursEnabled: "Enable quiet hours",
+    quietHoursStart: "From",
+    quietHoursEnd: "To",
+    quietHoursHelp: "During this period Viru groups alerts to avoid interruptions.",
   },
   presets: {
     title: "Quick presets",
@@ -194,6 +207,9 @@ export const alertsEn = {
     deliveredDelivery: "Delivered",
     sentDelivery: "Sent",
     failedDelivery: "Delivery failed",
+    groupedLabel: "Grouped",
+    digestSummary: "Summary of {count} alerts",
+    quietHoursPending: "Pending until your quiet hours end",
   },
   note: {
     description: "Email and in-app in MVP. Cooldown reduces noise.",

@@ -20,6 +20,10 @@ def test_preferences_roundtrip(client: TestClient) -> None:
             "strict_filters_default": False,
             "preferred_currency": "EUR",
             "language": "es",
+            "quiet_hours_enabled": True,
+            "quiet_hours_start": "22:00",
+            "quiet_hours_end": "08:00",
+            "quiet_hours_timezone": "Europe/Madrid",
         },
     )
     assert put.status_code == 200
@@ -36,6 +40,10 @@ def test_preferences_roundtrip(client: TestClient) -> None:
         "strict_filters_default": False,
         "preferred_currency": "EUR",
         "language": "es",
+        "quiet_hours_enabled": True,
+        "quiet_hours_start": "22:00",
+        "quiet_hours_end": "08:00",
+        "quiet_hours_timezone": "Europe/Madrid",
     }
 
 
@@ -56,6 +64,10 @@ def test_preferences_reject_invalid_depart_before_default(client: TestClient) ->
             "strict_filters_default": True,
             "preferred_currency": "EUR",
             "language": "es",
+            "quiet_hours_enabled": False,
+            "quiet_hours_start": "25:00",
+            "quiet_hours_end": "08:00",
+            "quiet_hours_timezone": "Europe/Madrid",
         },
     )
 

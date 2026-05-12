@@ -31,6 +31,10 @@ def get_preferences(
             "strict_filters_default": True,
             "preferred_currency": "EUR",
             "language": current_user.locale,
+            "quiet_hours_enabled": False,
+            "quiet_hours_start": None,
+            "quiet_hours_end": None,
+            "quiet_hours_timezone": current_user.timezone,
         }
     return {
         "default_radius_km": pref.default_radius_km,
@@ -42,6 +46,10 @@ def get_preferences(
         "strict_filters_default": pref.strict_filters_default,
         "preferred_currency": pref.preferred_currency,
         "language": pref.language,
+        "quiet_hours_enabled": pref.quiet_hours_enabled,
+        "quiet_hours_start": pref.quiet_hours_start,
+        "quiet_hours_end": pref.quiet_hours_end,
+        "quiet_hours_timezone": pref.quiet_hours_timezone or current_user.timezone,
     }
 
 
@@ -71,6 +79,10 @@ def set_preferences(
     pref.strict_filters_default = payload.strict_filters_default
     pref.preferred_currency = payload.preferred_currency
     pref.language = payload.language
+    pref.quiet_hours_enabled = payload.quiet_hours_enabled
+    pref.quiet_hours_start = payload.quiet_hours_start
+    pref.quiet_hours_end = payload.quiet_hours_end
+    pref.quiet_hours_timezone = payload.quiet_hours_timezone or current_user.timezone
     db.commit()
     return {"status": "ok"}
 

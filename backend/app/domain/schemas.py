@@ -245,6 +245,9 @@ class NotificationEventOut(BaseModel):
     next_attempt_at: str | None = None
     last_error: str | None = None
     delivered_at: str | None = None
+    is_digest: bool = False
+    grouped_count: int = 1
+    group_reason: str | None = None
     message: str
     created_at: str
 
@@ -267,6 +270,10 @@ class PreferenceIn(BaseModel):
     strict_filters_default: bool = True
     preferred_currency: str = "EUR"
     language: str = "es"
+    quiet_hours_enabled: bool = False
+    quiet_hours_start: str | None = None
+    quiet_hours_end: str | None = None
+    quiet_hours_timezone: str | None = None
 
     @field_validator("avoid_departure_before", "depart_before_default")
     @classmethod
@@ -276,6 +283,22 @@ class PreferenceIn(BaseModel):
         if not re.match(r"^(?:[01]\d|2[0-3]):[0-5]\d$", value.strip()):
             raise ValueError("invalid_time_format")
         return value.strip()
+
+    @field_validator("quiet_hours_start", "quiet_hours_end")
+    @classmethod
+    def validate_quiet_hours_time(cls, value: str | None) -> str | None:
+        if value is None or not value.strip():
+            return None
+        cleaned = value.strip()
+        if not re.match(r"^(?:[01]\d|2[0-3]):[0-5]\d$", cleaned):
+            raise ValueError("invalid_time_format")
+        return cleaned
+
+    @model_validator(mode="after")
+    def validate_quiet_hours_range(self):
+        if self.quiet_hours_enabled and (not self.quiet_hours_start or not self.quiet_hours_end):
+            raise ValueError("quiet_hours_range_required")
+        return self
 
     @field_validator("preferred_currency")
     @classmethod

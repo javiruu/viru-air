@@ -41,8 +41,18 @@ type AlertEvent = {
   next_attempt_at?: string | null;
   last_error?: string | null;
   delivered_at?: string | null;
+  is_digest?: boolean;
+  grouped_count?: number;
+  group_reason?: string | null;
   message: string;
   created_at: string;
+};
+
+type QuietHoursPreference = {
+  quiet_hours_enabled: boolean;
+  quiet_hours_start: string | null;
+  quiet_hours_end: string | null;
+  quiet_hours_timezone: string | null;
 };
 
 type AlertSegment = "all" | "security" | "price";
@@ -66,6 +76,9 @@ export default function AlertsPage() {
   const [message, setMessage] = useState("");
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [segmentFilter, setSegmentFilter] = useState<AlertSegment>("all");
+  const [quietHoursEnabled, setQuietHoursEnabled] = useState(false);
+  const [quietHoursStart, setQuietHoursStart] = useState("22:00");
+  const [quietHoursEnd, setQuietHoursEnd] = useState("08:00");
 
   const ruleOptions = useMemo(
     () => [
@@ -123,6 +136,13 @@ export default function AlertsPage() {
         }
       })
       .catch(() => setMessage(t("alerts.messages.watchlistLoadError")));
+    apiFetch<QuietHoursPreference>("/preferences")
+      .then((prefs) => {
+        setQuietHoursEnabled(Boolean(prefs.quiet_hours_enabled));
+        setQuietHoursStart(prefs.quiet_hours_start || "22:00");
+        setQuietHoursEnd(prefs.quiet_hours_end || "08:00");
+      })
+      .catch(() => undefined);
   }, [t]);
 
   useEffect(() => {
@@ -274,6 +294,27 @@ export default function AlertsPage() {
     }
   }
 
+  async function saveQuietHours() {
+    try {
+      const current = await apiFetch<Record<string, unknown>>("/preferences");
+      await apiFetch("/preferences", {
+        method: "PUT",
+        body: JSON.stringify({
+          ...current,
+          quiet_hours_enabled: quietHoursEnabled,
+          quiet_hours_start: quietHoursStart,
+          quiet_hours_end: quietHoursEnd,
+          quiet_hours_timezone: null,
+        }),
+      });
+      setStatus("success");
+      setMessage(t("alerts.messages.evaluationComplete"));
+    } catch {
+      setStatus("error");
+      setMessage(t("alerts.messages.ruleUpdateError"));
+    }
+  }
+
   return (
     <main className="shell" id="main-content">
       <div className="page-header">
@@ -285,6 +326,39 @@ export default function AlertsPage() {
           <p>{t("alerts.pageSubtitle")}</p>
         </div>
       </div>
+
+      <section className="panel panel-soft stack">
+        <div className="row-between">
+          <h2 className="panel-title">{t("alerts.form.quietHoursTitle")}</h2>
+        </div>
+        <label className="alert-check">
+          <input
+            type="checkbox"
+            checked={quietHoursEnabled}
+            onChange={(event) => setQuietHoursEnabled(event.target.checked)}
+          />
+          <span className="alert-check-ui" aria-hidden="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5.5 12.5 10 17l8.5-9" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          {t("alerts.form.quietHoursEnabled")}
+        </label>
+        <div className="row-actions">
+          <label className="field">
+            {t("alerts.form.quietHoursStart")}
+            <input value={quietHoursStart} onChange={(event) => setQuietHoursStart(event.target.value)} />
+          </label>
+          <label className="field">
+            {t("alerts.form.quietHoursEnd")}
+            <input value={quietHoursEnd} onChange={(event) => setQuietHoursEnd(event.target.value)} />
+          </label>
+          <button className="btn-ghost" type="button" onClick={saveQuietHours}>
+            {t("alerts.form.buttonSave")}
+          </button>
+        </div>
+        <p className="panel-note">{t("alerts.form.quietHoursHelp")}</p>
+      </section>
 
       <section className="panel panel-soft stack">
         <div className="row-between">
@@ -514,6 +588,14 @@ export default function AlertsPage() {
                   </time>
                   <span className="alert-channel">{channelCopy(eventItem.channel)}</span>
                   <span className="panel-note">{deliveryCopy(eventItem.delivery_status)}</span>
+                  {eventItem.is_digest || (eventItem.grouped_count ?? 1) > 1 ? (
+                    <span className="panel-note">
+                      {t("alerts.history.groupedLabel")} · {t("alerts.history.digestSummary", { count: eventItem.grouped_count ?? 1 })}
+                    </span>
+                  ) : null}
+                  {eventItem.delivery_status === "queued" && eventItem.last_error === "quiet_hours_active" ? (
+                    <span className="panel-note">{t("alerts.history.quietHoursPending")}</span>
+                  ) : null}
                   <span className={`status-pill ${delivery.tone}`}>
                     {delivery.label}
                   </span>
