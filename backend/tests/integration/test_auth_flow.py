@@ -23,3 +23,12 @@ def test_login_with_invalid_credentials_returns_standardized_auth_error(client: 
     assert login.status_code == 401
     assert login.json()["code"] == "invalid_auth"
     assert login.json()["status"] == 401
+
+
+def test_register_duplicate_returns_409(client: TestClient) -> None:
+    payload = {"email": "dup@viru.dev", "password": "Pass1234"}
+    first = client.post("/api/v1/auth/register", json=payload)
+    second = client.post("/api/v1/auth/register", json=payload)
+    assert first.status_code == 200
+    assert second.status_code == 409
+    assert second.json()["code"] == "email_exists"

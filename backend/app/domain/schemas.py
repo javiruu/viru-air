@@ -111,6 +111,10 @@ class WatchOut(BaseModel):
     status: str
 
 
+class WatchDetailOut(WatchOut):
+    latest_snapshot: "SnapshotOut | None" = None
+
+
 class WatchUpdateIn(BaseModel):
     status: str
 
@@ -156,12 +160,17 @@ class SnapshotBatchOut(BaseModel):
     departure_time_local: str | None = None
 
 
+class WatchRefreshBulkIn(BaseModel):
+    watch_ids: list[str] = Field(default_factory=list, min_length=1, max_length=100)
+
+
 class AlertRuleIn(BaseModel):
     watch_id: str
     rule_type: str
     threshold_value: float | None = Field(default=None, ge=0)
     notify_on_every_change: bool = False
     cooldown_minutes: int = Field(default=60, ge=1, le=10080)
+    min_change_pct: float | None = Field(default=None, ge=0, le=100)
 
     @field_validator("rule_type")
     @classmethod
@@ -184,6 +193,7 @@ class AlertRuleUpdateIn(BaseModel):
     notify_on_every_change: bool | None = None
     cooldown_minutes: int | None = Field(default=None, ge=1, le=10080)
     enabled: bool | None = None
+    min_change_pct: float | None = Field(default=None, ge=0, le=100)
 
     @field_validator("rule_type")
     @classmethod

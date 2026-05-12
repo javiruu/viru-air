@@ -175,3 +175,23 @@ def test_batch_history_can_filter_by_captured_since(client: TestClient, monkeypa
     )
     assert with_future_filter.status_code == 200
     assert with_future_filter.json() == []
+
+
+def test_prices_summary_returns_aggregates(client: TestClient, monkeypatch) -> None:
+    monkeypatch.setattr(watchlist_api, "provider", _FakeProvider())
+    monkeypatch.setattr(watchlist_api, "REFRESH_COOLDOWN_SECONDS", 0)
+
+    token = register_and_token(client, email="summary@viru.dev")
+    headers = {"Authorization": f"Bearer {token}"}
+    watch_id = _create_watch(client, headers, "MAD", "DUB", 38)
+
+    assert client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers).status_code == 200
+    assert client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers).status_code == 200
+
+    summary = client.get(f"/api/v1/prices/summary?watch_id={watch_id}", headers=headers)
+    assert summary.status_code == 200
+    payload = summary.json()
+    assert payload["watch_id"] == watch_id
+    assert payload["count"] == 2
+    assert payload["min_price"] <= payload["max_price"]
+    assert payload["latest_price"] is not None

@@ -68,6 +68,11 @@ def test_watchlist_create_list_and_refresh(client: TestClient, monkeypatch) -> N
     assert history.status_code == 200
     assert len(history.json()) >= 1
 
+    detail = client.get(f"/api/v1/watchlist/{watch_id}", headers=headers)
+    assert detail.status_code == 200
+    assert detail.json()["id"] == watch_id
+    assert detail.json()["latest_snapshot"] is not None
+
 
 def test_watchlist_refresh_supports_provider_fetch_result(client: TestClient, monkeypatch) -> None:
     monkeypatch.setattr(watchlist_api, "provider", _FakeProviderFetchResult())
@@ -115,3 +120,42 @@ def test_watchlist_create_duplicate_returns_409(client: TestClient, monkeypatch)
     assert duplicated.status_code == 409
     body = duplicated.json()
     assert body.get("code") == "watch_already_exists" or body.get("detail") == "watch_already_exists"
+
+
+def test_watchlist_refresh_bulk_returns_summary(client: TestClient, monkeypatch) -> None:
+    monkeypatch.setattr(watchlist_api, "provider", _FakeProvider())
+
+    token = register_and_token(client, email="bulk-refresh@viru.dev")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    create_a = client.post(
+        "/api/v1/watchlist",
+        headers=headers,
+        json={
+            "origin_iata": "MAD",
+            "destination_iata": "DUB",
+            "travel_date_local": str(date.today() + timedelta(days=33)),
+        },
+    )
+    create_b = client.post(
+        "/api/v1/watchlist",
+        headers=headers,
+        json={
+            "origin_iata": "BCN",
+            "destination_iata": "LIS",
+            "travel_date_local": str(date.today() + timedelta(days=34)),
+        },
+    )
+    watch_a = create_a.json()["id"]
+    watch_b = create_b.json()["id"]
+
+    bulk = client.post(
+        "/api/v1/watchlist/refresh-bulk",
+        headers=headers,
+        json={"watch_ids": [watch_a, watch_b, "missing-watch-id"]},
+    )
+    assert bulk.status_code == 200
+    payload = bulk.json()
+    assert payload["requested"] == 3
+    assert set(payload["refreshed"]) == {watch_a, watch_b}
+    assert any(item["code"] == "watch_not_found" for item in payload["failed"])

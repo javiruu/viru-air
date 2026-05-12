@@ -65,6 +65,7 @@ class AlertRule(Base):
     watch_id: Mapped[str] = mapped_column(ForeignKey("flight_watch.id"), index=True)
     rule_type: Mapped[str] = mapped_column(String(30))
     threshold_value: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    min_change_pct: Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True)
     notify_on_every_change: Mapped[bool] = mapped_column(Boolean, default=False)
     cooldown_minutes: Mapped[int] = mapped_column(default=60)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)

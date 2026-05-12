@@ -95,30 +95,38 @@ def evaluate_rules_for_watch(db: Session, watch_id: str) -> list[NotificationEve
 
         trigger = False
         message = ""
+        previous_price = float(previous.raw_price) if previous else None
+        latest_price = float(latest.raw_price)
+
+        if rule.min_change_pct is not None and previous_price not in (None, 0):
+            delta_pct = abs((latest_price - previous_price) / previous_price) * 100.0
+            if delta_pct < float(rule.min_change_pct):
+                continue
+
         if rule.rule_type == "threshold_low" and rule.threshold_value is not None:
-            if float(latest.raw_price) <= float(rule.threshold_value) and (
-                not previous or float(previous.raw_price) > float(rule.threshold_value)
+            if latest_price <= float(rule.threshold_value) and (
+                not previous or previous_price > float(rule.threshold_value)
             ):
                 trigger = True
                 message = (
-                    f"Precio bajo: {float(latest.raw_price):.2f} {latest.raw_currency} "
+                    f"Precio bajo: {latest_price:.2f} {latest.raw_currency} "
                     f"(umbral {float(rule.threshold_value):.2f})."
                 )
         elif rule.rule_type == "threshold_high" and rule.threshold_value is not None:
-            if float(latest.raw_price) >= float(rule.threshold_value) and (
-                not previous or float(previous.raw_price) < float(rule.threshold_value)
+            if latest_price >= float(rule.threshold_value) and (
+                not previous or previous_price < float(rule.threshold_value)
             ):
                 trigger = True
                 message = (
-                    f"Precio alto: {float(latest.raw_price):.2f} {latest.raw_currency} "
+                    f"Precio alto: {latest_price:.2f} {latest.raw_currency} "
                     f"(umbral {float(rule.threshold_value):.2f})."
                 )
         elif rule.rule_type == "every_change":
-            if previous and float(previous.raw_price) != float(latest.raw_price):
-                delta = float(latest.raw_price) - float(previous.raw_price)
+            if previous and previous_price != latest_price:
+                delta = latest_price - previous_price
                 trigger = True
                 message = (
-                    f"Cambio de precio: {float(previous.raw_price):.2f} -> {float(latest.raw_price):.2f} "
+                    f"Cambio de precio: {previous_price:.2f} -> {latest_price:.2f} "
                     f"{latest.raw_currency} ({delta:+.2f})."
                 )
 

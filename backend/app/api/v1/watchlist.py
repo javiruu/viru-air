@@ -20,7 +20,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
-from app.domain.schemas import WatchCreateIn, WatchOut, WatchUpdateIn
+from app.domain.schemas import WatchCreateIn, WatchDetailOut, WatchOut, WatchRefreshBulkIn, WatchUpdateIn
 from app.infrastructure.db.models import FlightWatch, PriceSnapshot, User
 from app.infrastructure.db.session import get_db
 from app.infrastructure.providers.ryanair_public_provider import RyanairPublicProvider
@@ -128,6 +128,61 @@ def list_watches(
     ]
 
 
+@router.post("/refresh-bulk")
+def refresh_watch_bulk(
+    payload: WatchRefreshBulkIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict[str, object]:
+    deduped_watch_ids = list(dict.fromkeys(payload.watch_ids))
+    refreshed: list[str] = []
+    failed: list[dict[str, str]] = []
+    for watch_id in deduped_watch_ids:
+        try:
+            _refresh_watch_now(db=db, watch_id=watch_id, current_user=current_user)
+            refreshed.append(watch_id)
+        except HTTPException as exc:
+            failed.append({"watch_id": watch_id, "code": str(exc.detail)})
+    return {"status": "ok", "requested": len(deduped_watch_ids), "refreshed": refreshed, "failed": failed}
+
+
+@router.get("/{watch_id}", response_model=WatchDetailOut)
+def get_watch_detail(
+    watch_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> WatchDetailOut:
+    watch = db.scalar(
+        select(FlightWatch).where(FlightWatch.id == watch_id, FlightWatch.user_id == current_user.id)
+    )
+    if not watch or watch.status == WATCH_STATUS_DELETED:
+        raise HTTPException(status_code=404, detail="watch_not_found")
+
+    latest = db.scalar(
+        select(PriceSnapshot)
+        .where(PriceSnapshot.watch_id == watch.id)
+        .order_by(PriceSnapshot.captured_at_utc.desc(), PriceSnapshot.id.desc())
+    )
+    return WatchDetailOut(
+        id=watch.id,
+        origin_iata=watch.origin_iata,
+        destination_iata=watch.destination_iata,
+        travel_date_local=watch.travel_date_local,
+        target_price=float(watch.target_price) if watch.target_price else None,
+        status=watch.status,
+        latest_snapshot=(
+            None
+            if latest is None
+            else {
+                "captured_at_utc": latest.captured_at_utc,
+                "raw_price": float(latest.raw_price),
+                "raw_currency": latest.raw_currency,
+                "departure_time_local": latest.departure_time_local,
+            }
+        ),
+    )
+
+
 @router.put("/{watch_id}", response_model=WatchOut)
 def update_watch(
     watch_id: str,
@@ -194,6 +249,23 @@ def refresh_watch(
         response.headers["x-idempotency-replayed"] = "true"
         return response
 
+    refresh_result = _refresh_watch_now(db=db, watch_id=watch_id, current_user=current_user)
+    if isinstance(refresh_result, JSONResponse):
+        return refresh_result
+    body = {"status": "queued", "watch_id": watch_id}
+    store_response(
+        db,
+        user_id=current_user.id,
+        endpoint=endpoint,
+        idempotency_key=idempotency_key,
+        req_hash=req_hash,
+        response_status=200,
+        response_body=body,
+    )
+    return body
+
+
+def _refresh_watch_now(db: Session, watch_id: str, current_user: User) -> JSONResponse | None:
     watch = db.scalar(
         select(FlightWatch).where(FlightWatch.id == watch_id, FlightWatch.user_id == current_user.id)
     )
@@ -247,7 +319,6 @@ def refresh_watch(
     except Exception as exc:
         raise HTTPException(status_code=502, detail="ryanair_unavailable") from exc
 
-    # Backward/forward compatibility: providers may return a legacy list or ProviderFetchResult.
     flights = provider_result.flights if isinstance(provider_result, ProviderFetchResult) else provider_result
     if not flights:
         raise HTTPException(status_code=404, detail="no_flights_found")
@@ -262,14 +333,4 @@ def refresh_watch(
         )
         db.add(snapshot)
     db.commit()
-    body = {"status": "queued", "watch_id": watch_id}
-    store_response(
-        db,
-        user_id=current_user.id,
-        endpoint=endpoint,
-        idempotency_key=idempotency_key,
-        req_hash=req_hash,
-        response_status=200,
-        response_body=body,
-    )
-    return body
+    return None

@@ -8,12 +8,18 @@ import time
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Body, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, Header, HTTPException, Query
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.core.errors import ApiError, message_for_code
+from app.core.idempotency import replay_if_exists, request_hash, store_response
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
+from app.api.deps import get_current_user
 from app.api.v1.airports import _validate_iata
+from app.infrastructure.db.models import FlightWatch, User
+from app.infrastructure.db.session import get_db
 from app.infrastructure.airports_catalog import get_airport, resolve_seed_airport
 from app.infrastructure.providers.ryanair_public_provider import RyanairPublicProvider
 from app.services.quick_search_dedupe import dedupe_ranked_results
@@ -249,6 +255,18 @@ class QuickSearchCanonicalRequest(BaseModel):
     travel: QuickSearchTravel
     constraints: QuickSearchConstraints = Field(default_factory=QuickSearchConstraints)
     execution: QuickSearchExecution = Field(default_factory=QuickSearchExecution)
+
+
+class QuickSearchSaveResultIn(BaseModel):
+    origin_iata: str = Field(min_length=3, max_length=3)
+    destination_iata: str = Field(min_length=3, max_length=3)
+    travel_date: dt.date
+    price_total: float | None = Field(default=None, ge=0)
+
+    @field_validator("origin_iata", "destination_iata")
+    @classmethod
+    def validate_save_iata(cls, value: str) -> str:
+        return _validate_iata(value)
 
 
 def _clamp_days(value: int | None, max_days: int = 7) -> int:
@@ -1763,3 +1781,71 @@ def quick_search(
             for idx, item in enumerate(scoped_ranked_results)
         ],
     }
+
+
+@router.post("/save-result")
+def save_result(
+    payload: QuickSearchSaveResultIn,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict[str, str]:
+    endpoint = "POST:/api/v1/search/save-result"
+    req_hash = request_hash(payload.model_dump(mode="json"))
+    replay = replay_if_exists(
+        db,
+        user_id=current_user.id,
+        endpoint=endpoint,
+        idempotency_key=idempotency_key,
+        req_hash=req_hash,
+    )
+    if replay:
+        _, body = replay
+        return body
+
+    if payload.origin_iata == payload.destination_iata:
+        raise HTTPException(status_code=400, detail="origin_equals_destination")
+
+    existing = db.scalar(
+        select(FlightWatch).where(
+            FlightWatch.user_id == current_user.id,
+            FlightWatch.origin_iata == payload.origin_iata,
+            FlightWatch.destination_iata == payload.destination_iata,
+            FlightWatch.travel_date_local == payload.travel_date,
+            FlightWatch.status != "deleted",
+        )
+    )
+    if existing:
+        body = {"watch_id": existing.id, "created_or_existing": "existing"}
+        store_response(
+            db,
+            user_id=current_user.id,
+            endpoint=endpoint,
+            idempotency_key=idempotency_key,
+            req_hash=req_hash,
+            response_status=200,
+            response_body=body,
+        )
+        return body
+
+    watch = FlightWatch(
+        user_id=current_user.id,
+        origin_iata=payload.origin_iata,
+        destination_iata=payload.destination_iata,
+        travel_date_local=payload.travel_date,
+        target_price=payload.price_total,
+    )
+    db.add(watch)
+    db.commit()
+    db.refresh(watch)
+    body = {"watch_id": watch.id, "created_or_existing": "created"}
+    store_response(
+        db,
+        user_id=current_user.id,
+        endpoint=endpoint,
+        idempotency_key=idempotency_key,
+        req_hash=req_hash,
+        response_status=200,
+        response_body=body,
+    )
+    return body

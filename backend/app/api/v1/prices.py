@@ -94,3 +94,48 @@ def history_batch(
         )
         for r in rows
     ]
+
+
+@router.get("/summary")
+def summary(
+    watch_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict[str, float | int | str | None]:
+    watch = db.scalar(
+        select(FlightWatch).where(FlightWatch.id == watch_id, FlightWatch.user_id == current_user.id)
+    )
+    if not watch:
+        raise HTTPException(status_code=404, detail="watch_not_found")
+
+    rows = list(
+        db.scalars(
+            select(PriceSnapshot)
+            .where(PriceSnapshot.watch_id == watch_id)
+            .order_by(PriceSnapshot.captured_at_utc.asc(), PriceSnapshot.id.asc())
+        )
+    )
+    if not rows:
+        return {
+            "watch_id": watch_id,
+            "count": 0,
+            "min_price": None,
+            "max_price": None,
+            "avg_price": None,
+            "latest_price": None,
+            "delta_pct": None,
+        }
+
+    prices = [float(row.raw_price) for row in rows]
+    first = prices[0]
+    latest = prices[-1]
+    delta_pct = None if first == 0 else round(((latest - first) / first) * 100.0, 2)
+    return {
+        "watch_id": watch_id,
+        "count": len(prices),
+        "min_price": min(prices),
+        "max_price": max(prices),
+        "avg_price": round(sum(prices) / len(prices), 2),
+        "latest_price": latest,
+        "delta_pct": delta_pct,
+    }
