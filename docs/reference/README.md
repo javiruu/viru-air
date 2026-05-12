@@ -17,6 +17,7 @@ Esta carpeta reúne documentación técnica activa que sirve como apoyo directo 
 - `backend/quick-search-acceptance-checklist.md`: checklist de aceptación técnica de quick search backend.
 - `feature-flags.md`: flags funcionales vigentes documentados.
 - `quick-search-weather-policy.md`: política funcional para la integración de weather en quick search.
+- `quick-search-legacy-alias-sunset.md`: política de transición y retirada de aliases legacy en quick search.
 
 ## Uso recomendado
 

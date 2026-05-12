@@ -21,6 +21,7 @@
 - [Reference](reference/README.md)
 - [Quick Search contract](reference/backend/quick-search-contract.md)
 - [Quick Search acceptance checklist](reference/backend/quick-search-acceptance-checklist.md)
+- [Quick Search legacy alias sunset](reference/quick-search-legacy-alias-sunset.md)
 
 ### Frontend
 
@@ -104,6 +105,7 @@
 ### Specs
 
 - [Specs activas](specs/README.md)
+- [Phase 1 Codex MVP](specs/phase1-codex.md)
 
 ### QA
 

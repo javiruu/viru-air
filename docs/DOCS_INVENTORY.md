@@ -17,6 +17,14 @@ Entradas vivas agregadas:
 - `docs/reference/product-language-map.md`
 - `docs/qa/fase-0-limpieza-conceptual-checklist.md`
 
+## Actualizacion manual 2026-05-12 (Fase 1)
+
+Entradas vivas agregadas:
+
+- `docs/specs/phase1-codex.md`
+- `docs/reference/quick-search-legacy-alias-sunset.md`
+- `skills/phase1-mvp/SKILL.md`
+
 ## Tabla
 
 | Ruta actual | Tipo | Estado | Acci?n propuesta | Nueva ruta | Motivo | Fuente de verdad |

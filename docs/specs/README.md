@@ -12,6 +12,7 @@ Esta carpeta agrupa especificaciones que todavía sirven como guía de producto 
 ## Producto
 
 - [product/dashboard-redesign-v2.md](product/dashboard-redesign-v2.md): reorganización del dashboard sin añadir funcionalidad compleja.
+- [phase1-codex.md](phase1-codex.md): cierre operativo del MVP de Fase 1 (scope, DoD y verificación).
 
 ## UI
 
