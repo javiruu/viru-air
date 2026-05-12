@@ -33,6 +33,8 @@ function renderScreenState(overrides: Partial<Parameters<typeof useQuickSearchSc
       excludeDestinationsCount: 0,
       departAfter: "07:00",
       departBefore: "22:00",
+      daysBefore: 1,
+      daysAfter: 1,
       emptyCausesExpanded: false,
       t: ((key: string) => key) as Parameters<typeof useQuickSearchScreenState>[0]["t"],
       tWarn: (key: string) => key,

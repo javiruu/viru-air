@@ -11,5 +11,5 @@ test("private nav follows canonical Phase 0 IA", () => {
 });
 
 test("private nav does not expose suggestions as workspace module", () => {
-  assert.equal(NAV_V1_PRIVATE.some((item) => item.href === "/suggestions"), false);
+  assert.equal(NAV_V1_PRIVATE.map((item) => item.href as string).includes("/suggestions"), false);
 });

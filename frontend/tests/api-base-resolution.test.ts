@@ -5,7 +5,7 @@ test("resolveApiBase avoids Next rewrite proxy for local dev relative /api base"
   const originalWindow = (globalThis as { window?: unknown }).window;
   const originalNodeEnv = process.env.NODE_ENV;
 
-  process.env.NODE_ENV = "development";
+  (process.env as Record<string, string | undefined>).NODE_ENV = "development";
   (globalThis as { window?: unknown }).window = {
     location: {
       hostname: "localhost",
@@ -17,7 +17,7 @@ test("resolveApiBase avoids Next rewrite proxy for local dev relative /api base"
     const { resolveApiBase } = await import("../src/modules/shared/api");
     assert.equal(resolveApiBase("/api/v1"), "http://127.0.0.1:8000/api/v1");
   } finally {
-    process.env.NODE_ENV = originalNodeEnv;
+    (process.env as Record<string, string | undefined>).NODE_ENV = originalNodeEnv;
     if (typeof originalWindow === "undefined") {
       delete (globalThis as { window?: unknown }).window;
     } else {
@@ -25,4 +25,3 @@ test("resolveApiBase avoids Next rewrite proxy for local dev relative /api base"
     }
   }
 });
-

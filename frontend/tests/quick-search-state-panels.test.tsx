@@ -96,7 +96,12 @@ test("visual loading keeps the empty panel hidden until the search is really fin
     loadingVisualHold: true,
     visibleResultsCount: 0,
   });
-  const panelState = visualState === "success_empty" ? "empty" : visualState;
+  const panelState =
+    visualState === "success_empty"
+      ? "empty"
+      : visualState === "success_with_results"
+        ? "success"
+        : visualState;
   const html = renderToStaticMarkup(
     <>
       <QuickSearchLoadingProgress
@@ -115,6 +120,9 @@ test("visual loading keeps the empty panel hidden until the search is really fin
         boardingPassengers={4}
         loadingTitle="Buscando vuelos"
         loadingText="Espera mientras preparamos la vista"
+        loadingTotalText="0 resultados"
+        loadingProgressText="95% completado"
+        loadingScopeText="Comprobando disponibilidad"
       />
       <QuickSearchStatePanels
         searchState={panelState}
@@ -148,7 +156,12 @@ test("visual loading stays dominant when the loader is already active for a fast
     loadingVisualHold: false,
     visibleResultsCount: 0,
   });
-  const panelState = visualState === "success_empty" ? "empty" : visualState;
+  const panelState =
+    visualState === "success_empty"
+      ? "empty"
+      : visualState === "success_with_results"
+        ? "success"
+        : visualState;
   const html = renderToStaticMarkup(
     <QuickSearchStatePanels
       searchState={panelState}

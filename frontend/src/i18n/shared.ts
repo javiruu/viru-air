@@ -67,21 +67,17 @@
     themeLightBody: "Modo claro activado.",
   },
   footer: {
-    kicker: "Bloque de navegación",
     publicBody:
-      "Accesos editoriales y soporte real para moverte por Viru sin ruido ni enlaces fantasma.",
+      "Seguimiento de precios Ryanair con alertas, histórico y contexto para decidir cuándo comprar.",
     privateBody:
-      "Tu mapa completo de trabajo en Viru: producto, cuenta, soporte y rutas operativas reales en un solo bloque.",
-    statusLabel: "Contexto activo",
+      "Tu espacio de trabajo en Viru para seguir rutas, alertas y decisiones con claridad.",
     statusPublic: "Acceso público",
     statusPrivate: "Espacio privado",
-    copyLink: "Copiar enlace base",
-    scrollTop: "Volver arriba",
-    note: "Footer adaptado a Viru con rutas reales del producto y accesos de soporte existentes.",
+    navLabel: "Navegación de pie de página",
+    scrollTop: "Volver arriba ↑",
     copyright: "© {year} Viru Tracker. Todos los derechos reservados.",
     groups: {
-      explore: "Explorar",
-      access: "Acceso",
+      explore: "Producto",
       contact: "Contacto",
       workspace: "Espacio de trabajo",
       account: "Cuenta",
@@ -206,21 +202,17 @@ export const sharedEn = {
     themeLightBody: "Light mode enabled.",
   },
   footer: {
-    kicker: "Footer block",
+    navLabel: "Footer navigation",
     publicBody:
-      "Editorial access points and real support so you can move through Viru without noise or fake links.",
+      "Ryanair fare tracking with alerts, history, and context to decide when to book.",
     privateBody:
-      "Your complete Viru work map: product, account, support, and real operational routes in one block.",
-    statusLabel: "Active context",
+      "Your Viru workspace for tracking routes, alerts, and decisions with clarity.",
     statusPublic: "Public access",
     statusPrivate: "Private space",
-    copyLink: "Copy base link",
-    scrollTop: "Back to top",
-    note: "Footer adapted to Viru with real product routes and existing support entry points.",
+    scrollTop: "Back to top ↑",
     copyright: "© {year} Viru Tracker. All rights reserved.",
     groups: {
-      explore: "Explore",
-      access: "Access",
+      explore: "Product",
       contact: "Contact",
       workspace: "Workspace",
       account: "Account",

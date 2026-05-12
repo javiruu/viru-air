@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { usePathname } from "next/navigation";
 
-import { hasToken } from "@/modules/shared/auth";
 import { useI18n } from "@/i18n";
 
 type FooterLink = {
@@ -20,20 +19,10 @@ type FooterGroup = {
   links: FooterLink[];
 };
 
-function buildHrefWithOrigin(href: string) {
-  if (typeof window === "undefined") return href;
-  return new URL(href, window.location.origin).toString();
-}
-
 export default function ViruFooterBlock() {
   const { t } = useI18n();
   const pathname = usePathname() ?? "/";
   const shouldReduceMotion = useReducedMotion();
-  const [hasSession, setHasSession] = useState(false);
-
-  useEffect(() => {
-    setHasSession(hasToken());
-  }, []);
 
   const isPrivateRoute =
     pathname.startsWith("/dashboard") ||
@@ -48,7 +37,7 @@ export default function ViruFooterBlock() {
     pathname.startsWith("/cuenta") ||
     pathname.startsWith("/soporte") ||
     pathname.startsWith("/admin");
-  const isPrivateContext = isPrivateRoute || hasSession;
+  const isPrivateContext = isPrivateRoute;
 
   const isAdminContext = pathname.startsWith("/admin");
 
@@ -57,24 +46,24 @@ export default function ViruFooterBlock() {
       {
         title: t("shared.footer.groups.explore"),
         links: [
-          { label: t("shared.footer.links.home"), href: "/", icon: "fa-house" },
-          { label: t("shared.footer.links.help"), href: "/ayuda", icon: "fa-circle-question" },
-          { label: t("shared.footer.links.policies"), href: "/policies", icon: "fa-shield-heart" },
+          { label: t("shared.footer.links.home"), href: "/" },
+          { label: t("shared.footer.links.help"), href: "/ayuda" },
+          { label: t("shared.footer.links.policies"), href: "/policies" },
         ],
       },
       {
-        title: t("shared.footer.groups.access"),
+        title: t("shared.footer.groups.account"),
         links: [
-          { label: t("shared.actions.enter"), href: "/login", icon: "fa-right-to-bracket" },
-          { label: t("shared.footer.links.register"), href: "/register", icon: "fa-user-plus" },
+          { label: t("shared.actions.enter"), href: "/login" },
+          { label: t("shared.footer.links.register"), href: "/register" },
         ],
       },
       {
         title: t("shared.footer.groups.contact"),
         links: [
-          { label: t("shared.footer.links.supportEmail"), href: "mailto:soporte@viru.app", icon: "fa-envelope", external: true },
-          { label: t("shared.footer.links.privacyEmail"), href: "mailto:privacidad@viru.app", icon: "fa-user-shield", external: true },
-          { label: t("shared.footer.links.pressEmail"), href: "mailto:press@viru.app", icon: "fa-newspaper", external: true },
+          { label: t("shared.footer.links.supportEmail"), href: "mailto:soporte@viru.app", external: true },
+          { label: t("shared.footer.links.privacyEmail"), href: "mailto:privacidad@viru.app", external: true },
+          { label: t("shared.footer.links.pressEmail"), href: "mailto:press@viru.app", external: true },
         ],
       },
     ];
@@ -83,33 +72,33 @@ export default function ViruFooterBlock() {
       {
         title: t("shared.footer.groups.workspace"),
         links: [
-          { label: t("shared.footer.links.dashboard"), href: "/dashboard", icon: "fa-table-columns" },
-          { label: t("shared.footer.links.watchlist"), href: "/watchlist", icon: "fa-binoculars" },
-          { label: t("shared.footer.links.quickSearch"), href: "/quick-search", icon: "fa-magnifying-glass-chart" },
-          { label: t("shared.footer.links.alerts"), href: "/alerts", icon: "fa-bell" },
-          { label: t("shared.footer.links.opportunities"), href: "/recomendaciones", icon: "fa-sparkles" },
+          { label: t("shared.footer.links.dashboard"), href: "/dashboard" },
+          { label: t("shared.footer.links.watchlist"), href: "/watchlist" },
+          { label: t("shared.footer.links.quickSearch"), href: "/quick-search" },
+          { label: t("shared.footer.links.alerts"), href: "/alerts" },
+          { label: t("shared.footer.links.opportunities"), href: "/recomendaciones" },
         ],
       },
       {
         title: t("shared.footer.groups.account"),
         links: [
-          { label: t("shared.footer.links.profile"), href: "/cuenta/perfil", icon: "fa-id-card-clip" },
-          { label: t("shared.footer.links.security"), href: "/cuenta/seguridad", icon: "fa-shield-halved" },
-          { label: t("shared.footer.links.preferences"), href: "/preferencias", icon: "fa-sliders" },
-          { label: t("shared.footer.links.appearance"), href: "/preferencias/apariencia", icon: "fa-palette" },
-          { label: t("shared.footer.links.searchPrefs"), href: "/preferencias/busqueda", icon: "fa-compass-drafting" },
-          { label: t("shared.footer.links.region"), href: "/preferencias/region", icon: "fa-globe" },
+          { label: t("shared.footer.links.profile"), href: "/cuenta/perfil" },
+          { label: t("shared.footer.links.security"), href: "/cuenta/seguridad" },
+          { label: t("shared.footer.links.preferences"), href: "/preferencias" },
+          { label: t("shared.footer.links.appearance"), href: "/preferencias/apariencia" },
+          { label: t("shared.footer.links.searchPrefs"), href: "/preferencias/busqueda" },
+          { label: t("shared.footer.links.region"), href: "/preferencias/region" },
         ],
       },
       {
         title: t("shared.footer.groups.support"),
         links: [
-          { label: t("shared.footer.links.supportHelp"), href: "/soporte/ayuda", icon: "fa-headset" },
-          { label: t("shared.footer.links.contact"), href: "/soporte/contacto", icon: "fa-paper-plane" },
-          { label: t("shared.footer.links.feedback"), href: "/soporte/feedback", icon: "fa-bug" },
-          { label: t("shared.footer.links.productFeedback"), href: "/soporte/feedback?type=idea", icon: "fa-lightbulb" },
-          { label: t("shared.footer.links.aboutUs"), href: "/soporte/about-us", icon: "fa-people-group" },
-          { label: t("shared.footer.links.policies"), href: "/policies", icon: "fa-scale-balanced" },
+          { label: t("shared.footer.links.supportHelp"), href: "/soporte/ayuda" },
+          { label: t("shared.footer.links.contact"), href: "/soporte/contacto" },
+          { label: t("shared.footer.links.feedback"), href: "/soporte/feedback" },
+          { label: t("shared.footer.links.productFeedback"), href: "/soporte/feedback?type=idea" },
+          { label: t("shared.footer.links.aboutUs"), href: "/soporte/about-us" },
+          { label: t("shared.footer.links.policies"), href: "/policies" },
         ],
       },
     ];
@@ -118,42 +107,14 @@ export default function ViruFooterBlock() {
       privateGroups.push({
         title: t("shared.footer.groups.admin"),
         links: [
-          { label: t("shared.footer.links.admin"), href: "/admin", icon: "fa-crown" },
-          { label: t("shared.footer.links.productHealth"), href: "/admin/product-health", icon: "fa-heart-pulse" },
+          { label: t("shared.footer.links.admin"), href: "/admin" },
+          { label: t("shared.footer.links.productHealth"), href: "/admin/product-health" },
         ],
       });
     }
 
     return isPrivateContext ? privateGroups : publicGroups;
   }, [isAdminContext, isPrivateContext, t]);
-
-  const quickLinks = useMemo<FooterLink[]>(() => {
-    if (isPrivateContext) {
-      return [
-        { label: t("shared.footer.links.help"), href: "/soporte/ayuda" },
-        { label: t("shared.footer.links.contact"), href: "/soporte/contacto" },
-        { label: t("shared.footer.links.feedback"), href: "/soporte/feedback?type=bug" },
-      ];
-    }
-
-    return [
-      { label: t("shared.actions.enter"), href: "/login" },
-      { label: t("shared.footer.links.register"), href: "/register" },
-      { label: t("shared.footer.links.policies"), href: "/policies" },
-    ];
-  }, [isPrivateContext, t]);
-
-  function onScrollToTop() {
-    window.scrollTo({ top: 0, behavior: shouldReduceMotion ? "auto" : "smooth" });
-  }
-
-  function onCopyLink() {
-    const shareTarget = isPrivateContext ? "/dashboard" : "/";
-    const absolute = buildHrefWithOrigin(shareTarget);
-    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-      void navigator.clipboard.writeText(absolute);
-    }
-  }
 
   return (
     <motion.footer
@@ -174,41 +135,19 @@ export default function ViruFooterBlock() {
           transition={{ duration: 0.45, delay: 0.05 }}
         >
           <div className="viru-footer-brand">
-            <span className="viru-footer-brand-mark" aria-hidden="true">
-              <span className="landing-dot" />
-            </span>
             <div className="viru-footer-brand-copy">
-              <span className="viru-footer-kicker">{t("shared.footer.kicker")}</span>
               <h2>Viru Tracker</h2>
               <p>
                 {isPrivateContext ? t("shared.footer.privateBody") : t("shared.footer.publicBody")}
               </p>
-            </div>
-          </div>
-
-          <div className="viru-footer-utility">
-            <div className="viru-footer-status">
-              <span className="viru-footer-status-label">{t("shared.footer.statusLabel")}</span>
-              <strong>{isPrivateContext ? t("shared.footer.statusPrivate") : t("shared.footer.statusPublic")}</strong>
-            </div>
-            <div className="viru-footer-actions">
-              {quickLinks.map((item) => (
-                <Link key={item.href} href={item.href} className="viru-footer-chip">
-                  {item.label}
-                </Link>
-              ))}
-              <button type="button" className="viru-footer-chip viru-footer-chip-ghost" onClick={onCopyLink}>
-                {t("shared.footer.copyLink")}
-              </button>
-              <button type="button" className="viru-footer-scroll" onClick={onScrollToTop}>
-                <span>{t("shared.footer.scrollTop")}</span>
-                <i className="fa-solid fa-arrow-up" aria-hidden="true" />
-              </button>
+              <span className="viru-footer-context-pill">
+                {isPrivateContext ? t("shared.footer.statusPrivate") : t("shared.footer.statusPublic")}
+              </span>
             </div>
           </div>
         </motion.div>
 
-        <div className="viru-footer-grid">
+        <nav className="viru-footer-grid" aria-label={t("shared.footer.navLabel")}>
           {footerGroups.map((group, index) => (
             <motion.section
               key={group.title}
@@ -226,12 +165,10 @@ export default function ViruFooterBlock() {
                   <li key={`${group.title}-${link.href}`}>
                     {link.external ? (
                       <a href={link.href} className="viru-footer-link">
-                        {link.icon ? <i className={`fa-solid ${link.icon}`} aria-hidden="true" /> : null}
                         <span>{link.label}</span>
                       </a>
                     ) : (
                       <Link href={link.href} className="viru-footer-link">
-                        {link.icon ? <i className={`fa-solid ${link.icon}`} aria-hidden="true" /> : null}
                         <span>{link.label}</span>
                       </Link>
                     )}
@@ -240,13 +177,24 @@ export default function ViruFooterBlock() {
                 </ul>
             </motion.section>
           ))}
-        </div>
+        </nav>
 
         <div className="viru-footer-bottom">
           <p>
             {t("shared.footer.copyright", { year: new Date().getFullYear() })}
           </p>
-          <p>{t("shared.footer.note")}</p>
+          <div className="viru-footer-bottom-links">
+            <Link href="/policies" className="viru-footer-link-inline">
+              {t("shared.footer.links.policies")}
+            </Link>
+            <button
+              type="button"
+              className="viru-footer-link-inline viru-footer-link-inline-button"
+              onClick={() => window.scrollTo({ top: 0, behavior: shouldReduceMotion ? "auto" : "smooth" })}
+            >
+              {t("shared.footer.scrollTop")}
+            </button>
+          </div>
         </div>
       </div>
     </motion.footer>
