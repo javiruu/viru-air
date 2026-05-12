@@ -24,6 +24,8 @@ Entradas vivas agregadas:
 - `docs/specs/phase1-codex.md`
 - `docs/reference/quick-search-legacy-alias-sunset.md`
 - `skills/phase1-mvp/SKILL.md`
+- `docs/qa/reports/2026-05-12-fase1-cumplimiento.md`
+- `backend/tests/unit/test_airports_endpoints.py`
 
 ## Tabla
 

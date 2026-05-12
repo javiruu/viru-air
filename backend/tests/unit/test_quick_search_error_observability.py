@@ -11,7 +11,7 @@ def test_quick_search_invalid_seed_returns_traceable_error_envelope() -> None:
         "/api/v1/search/quick",
         json={
             "origin": {"seed_iata": "AGP", "include_nearby": False, "radius_km": 150, "max_candidates": 6},
-            "destination": {"seed_iata": "TSF", "include_nearby": False, "radius_km": 150, "max_candidates": 6},
+            "destination": {"seed_iata": "ZZZ", "include_nearby": False, "radius_km": 150, "max_candidates": 6},
             "travel": {"date": "2026-06-14", "flex_before": 0, "flex_after": 0},
         },
         headers={"x-correlation-id": "corrtest123"},
@@ -24,9 +24,9 @@ def test_quick_search_invalid_seed_returns_traceable_error_envelope() -> None:
     assert payload["message"] == "Quick-search request rejected by backend validation."
     assert payload["correlation_id"] == "corrtest123"
     assert len(payload["details"]) == 1
-    assert payload["details"][0]["reason"] == "unknown_seed_iata:TSF"
+    assert payload["details"][0]["reason"] == "unknown_seed_iata:ZZZ"
     assert payload["details"][0]["reason_code"] == "unknown_seed_iata"
-    assert payload["details"][0]["rejected_value"] == "TSF"
+    assert payload["details"][0]["rejected_value"] == "ZZZ"
     assert payload["details"][0]["query_trace_id"].startswith("qs_")
 
 
