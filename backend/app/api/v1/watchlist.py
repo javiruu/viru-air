@@ -251,6 +251,17 @@ def refresh_watch(
 
     refresh_result = _refresh_watch_now(db=db, watch_id=watch_id, current_user=current_user)
     if isinstance(refresh_result, JSONResponse):
+        if idempotency_key:
+            response_body = json.loads(refresh_result.body.decode("utf-8"))
+            store_response(
+                db,
+                user_id=current_user.id,
+                endpoint=endpoint,
+                idempotency_key=idempotency_key,
+                req_hash=req_hash,
+                response_status=refresh_result.status_code,
+                response_body=response_body,
+            )
         return refresh_result
     body = {"status": "queued", "watch_id": watch_id}
     store_response(
@@ -317,7 +328,27 @@ def _refresh_watch_now(db: Session, watch_id: str, current_user: User) -> JSONRe
             watch.origin_iata, watch.destination_iata, str(watch.travel_date_local)
         )
     except Exception as exc:
-        raise HTTPException(status_code=502, detail="ryanair_unavailable") from exc
+        logger.warning(
+            json.dumps(
+                {
+                    "event": "watch_refresh_provider_degraded",
+                    "user_id": current_user.id,
+                    "watch_id": watch.id,
+                    "provider": "ryanair",
+                    "error": str(exc),
+                },
+                ensure_ascii=False,
+            )
+        )
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "queued",
+                "watch_id": watch.id,
+                "stale_data": True,
+                "provider_status": "degraded",
+            },
+        )
 
     flights = provider_result.flights if isinstance(provider_result, ProviderFetchResult) else provider_result
     if not flights:

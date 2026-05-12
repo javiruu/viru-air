@@ -897,6 +897,14 @@ def quick_search(
             payload or {},
             detail_item["query_overrides"],
         )
+        if exc.status_code == 422 and reason == "validation_error":
+            details = exc.detail if isinstance(exc.detail, list) else [detail_item]
+            raise ApiError(
+                status=422,
+                code="validation_error",
+                message=message_for_code("validation_error"),
+                details=details,
+            ) from exc
         raise ApiError(
             status=exc.status_code,
             code="quick_search_invalid_request",
