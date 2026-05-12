@@ -1,9 +1,12 @@
+import { useEffect, useState } from "react";
+
 import { useI18n } from "@/i18n";
+import { apiFetch } from "@/modules/shared/api";
 import { formatCurrency, formatPercent, formatRelativeTime } from "@/modules/shared/format";
 import { getWatchStatusMeta } from "@/modules/shared/statusCatalog";
 import { freshnessLabel, safeDateTime } from "@/modules/watchlist/presentation";
 import { hasPriceSummaryData } from "@/modules/watchlist/summary";
-import type { PriceSummary, Watch, WatchDetail } from "@/modules/watchlist/types";
+import type { PriceCalendarResponse, PriceSummary, Watch, WatchDetail } from "@/modules/watchlist/types";
 
 type WatchDetailPanelProps = {
   selectedWatch: Watch | null;
@@ -25,6 +28,27 @@ export function WatchDetailPanel({
   onResumeWatch,
 }: WatchDetailPanelProps) {
   const { t } = useI18n();
+  const [calendar, setCalendar] = useState<PriceCalendarResponse | null>(null);
+
+  useEffect(() => {
+    if (!selectedWatch?.id) {
+      setCalendar(null);
+      return;
+    }
+    let mounted = true;
+    apiFetch<PriceCalendarResponse>(`/prices/calendar?watch_id=${selectedWatch.id}`)
+      .then((payload) => {
+        if (!mounted) return;
+        setCalendar(payload);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setCalendar(null);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [selectedWatch?.id]);
 
   if (!selectedWatch) {
     return (
@@ -89,6 +113,44 @@ export function WatchDetailPanel({
           </>
         ) : (
           <p className="panel-note">{t("watchlist.summary.empty")}</p>
+        )}
+      </div>
+      <div className="history-summary">
+        <h3 className="panel-title">Calendario</h3>
+        {calendar?.days?.length ? (
+          <>
+            <p className="panel-note">Los precios son orientativos y dependen de la frescura del proveedor.</p>
+            <div className="table-wrap">
+              <table className="table-compact">
+                <thead>
+                  <tr>
+                    <th>Día</th>
+                    <th>Mín</th>
+                    <th>Máx</th>
+                    <th>Media</th>
+                    <th>Capturas</th>
+                    <th>Señal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {calendar.days.map((day) => (
+                    <tr key={`calendar-${day.date}`}>
+                      <td>{day.date}</td>
+                      <td>{formatCurrency(day.min_price, calendar.currency)}</td>
+                      <td>{formatCurrency(day.max_price, calendar.currency)}</td>
+                      <td>{formatCurrency(day.avg_price, calendar.currency)}</td>
+                      <td>{day.snapshot_count}</td>
+                      <td>
+                        {day.is_daily_min ? "Mínimo del periodo" : day.is_daily_max ? "Máximo del periodo" : day.freshness_state || "normal"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : (
+          <p className="panel-note">Aún no hay suficientes capturas para crear un calendario.</p>
         )}
       </div>
     </section>

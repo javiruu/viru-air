@@ -34,6 +34,45 @@ export type PriceSummary = {
   delta_pct: number | null;
 };
 
+export type PriceCalendarDay = {
+  date: string;
+  min_price: number;
+  max_price: number;
+  avg_price: number;
+  snapshot_count: number;
+  is_daily_min: boolean;
+  is_daily_max: boolean;
+  freshness_state?: "fresh" | "mixed" | "stale" | null;
+};
+
+export type PriceCalendarResponse = {
+  watch_id: string;
+  currency: string;
+  days: PriceCalendarDay[];
+};
+
+export type PriceCompareWatch = {
+  watch_id: string;
+  route: string;
+  travel_date: string;
+  currency: string;
+  latest_price: number | null;
+  min_price: number | null;
+  max_price: number | null;
+  avg_price: number | null;
+  snapshot_count: number;
+  volatility_hint: "low" | "medium" | "high" | "insufficient_data";
+};
+
+export type PriceCompareResponse = {
+  currency_mode: "single" | "mixed";
+  watches: PriceCompareWatch[];
+  points: Array<{
+    watch_id: string;
+    points: Array<{ date: string; avg_price: number; snapshot_count: number; currency: string }>;
+  }>;
+};
+
 export type HistoryRow = {
   watchId: string;
   origin: string;
