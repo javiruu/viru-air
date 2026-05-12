@@ -87,3 +87,42 @@ Se considera **main estable** para fase de cierre porque:
 - Smoke runtime de rutas criticas: OK.
 - Fixes aplicados solo a regresiones de test (sin features nuevas).
 - Estado de fases consolidado y postponed explicitado en documentacion de cierre.
+
+## Addendum RC tightening (2026-05-12)
+
+Contexto:
+- Se ejecuta una pasada final para cerrar riesgo tecnico pendiente: drift Alembic/check + validacion completa pre-RC.
+
+Cambios aplicados (sin features):
+- Alineacion de metadata SQLAlchemy con migraciones:
+  - `backend/app/infrastructure/db/models.py`
+  - removido `index=True` en campos `unique` de:
+    - `users.email`
+    - `refresh_token.token_hash`
+    - `password_reset_token.token_hash`
+- Limpieza trivial ruff:
+  - `backend/app/api/v1/search.py` (variable no usada)
+  - `backend/scripts/migrate_sqlite_to_postgres.py` (f-string redundante)
+  - `backend/tests/integration/test_notification_worker.py` (import no usado)
+
+Validaciones ejecutadas:
+- Alembic:
+  - `DB_URL=sqlite:///./_tmp_clean_audit2.db python -m alembic upgrade head` -> OK
+  - `DB_URL=sqlite:///./_tmp_clean_audit2.db python -m alembic check` -> drift residual limitado a `remove_index` (sin `ix_users_email` ni cambios add/unique de token_hash).
+- PostgreSQL drift:
+  - `docker --version` y `psql --version` no disponibles.
+  - Estado: `PostgreSQL drift check not run`.
+- Ruff:
+  - `backend/.venv/Scripts/python -m ruff check .` -> OK.
+- E2E quick-search con servicios vivos:
+  - backend `/health` 200, frontend `/quick-search` 200.
+  - `npm run test:e2e:quick-search` -> skipped por guard auth/reachability (`Quick-Search form is not directly reachable (likely auth/session required).`).
+- Regression final:
+  - backend `pytest -q` -> `134 passed`.
+  - frontend `npm test` -> `87 pass, 0 fail, 15 skipped`.
+  - frontend `npm run lint` -> OK.
+  - frontend `npm run build` -> OK.
+
+Decision:
+- `main` sigue **stable with accepted caveats**.
+- Recomendacion de release: **apto para etiquetar `v0.1-rc1` con confianza razonable**.

@@ -28,7 +28,7 @@ def main() -> None:
                 rows = [dict(r._mapping) for r in src_conn.execute(select(src_table)).fetchall()]
 
             if not rows:
-                print(f"  0 rows")
+                print("  0 rows")
                 continue
 
             with pg_engine.begin() as dst_conn:

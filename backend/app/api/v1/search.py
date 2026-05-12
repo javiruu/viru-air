@@ -1407,7 +1407,6 @@ def quick_search(
     destination_side = selected_pass["destination_side"]
     origin_expanded = selected_pass["origin_expanded"]
     destination_expanded = selected_pass["destination_expanded"]
-    date_candidates = selected_pass["date_candidates"]
     pair_plan = selected_pass["pair_plan"]
     pair_plan_stats = selected_pass["pair_plan_stats"]
     execution_plan = selected_pass["execution_plan"]
