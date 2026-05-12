@@ -172,3 +172,5 @@ def test_alert_rule_min_change_pct_is_applied(client: TestClient, monkeypatch) -
     second_eval = client.post("/api/v1/alerts/evaluate", headers=headers, json={"watch_id": watch_id})
     assert second_eval.status_code == 200
     assert second_eval.json()["created"] == 1
+    event = second_eval.json()["events"][0]
+    assert event["delivery_status"] == "queued"

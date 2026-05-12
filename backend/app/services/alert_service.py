@@ -1,6 +1,6 @@
 ﻿from datetime import timedelta
 
-from app.core.time import as_utc_aware, utc_now
+from app.core.time import as_utc_aware, utc_now, utc_now_naive
 
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
@@ -133,14 +133,22 @@ def evaluate_rules_for_watch(db: Session, watch_id: str) -> list[NotificationEve
         if not trigger:
             continue
 
-        event = NotificationEvent(
-            rule_id=rule.id,
-            channel="in_app",
-            delivery_status=DELIVERY_STATUS_QUEUED,
-            message=message,
-        )
-        db.add(event)
-        created.append(event)
+        channels = ["in_app"]
+        if rule.notify_on_every_change and rule.rule_type != "every_change":
+            channels.append("email")
+
+        for channel in channels:
+            event = NotificationEvent(
+                rule_id=rule.id,
+                channel=channel,
+                delivery_status=DELIVERY_STATUS_QUEUED,
+                attempts=0,
+                next_attempt_at=utc_now_naive(),
+                dedupe_key=f"{rule.id}:{latest.id}:{channel}",
+                message=message,
+            )
+            db.add(event)
+            created.append(event)
 
     if created:
         db.commit()

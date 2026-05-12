@@ -79,6 +79,11 @@ class NotificationEvent(Base):
     channel: Mapped[str] = mapped_column(String(20), default="in_app")
     delivery_status: Mapped[str] = mapped_column(String(20), default=DELIVERY_STATUS_QUEUED)
     message: Mapped[str] = mapped_column(Text)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    last_error: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    dedupe_key: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
 
 

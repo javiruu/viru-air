@@ -232,6 +232,31 @@ class AlertEvaluateIn(BaseModel):
     watch_id: str
 
 
+class NotificationEventOut(BaseModel):
+    id: str
+    rule_id: str
+    watch_id: str
+    origin_iata: str
+    destination_iata: str
+    travel_date_local: str
+    channel: str
+    delivery_status: str
+    attempts: int
+    next_attempt_at: str | None = None
+    last_error: str | None = None
+    delivered_at: str | None = None
+    message: str
+    created_at: str
+
+
+class DispatchPendingOut(BaseModel):
+    processed: int
+    delivered: int
+    failed: int
+    retried: int
+    skipped: int
+
+
 class PreferenceIn(BaseModel):
     default_radius_km: int = Field(default=150, ge=0, le=500)
     include_stops_default: bool = False

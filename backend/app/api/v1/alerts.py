@@ -4,8 +4,14 @@ from fastapi.responses import JSONResponse
 from app.core.idempotency import replay_if_exists, request_hash, store_response
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
-from app.domain.schemas import AlertEvaluateIn, AlertRuleIn, AlertRuleUpdateIn
+from app.api.deps import get_current_user, require_admin
+from app.domain.schemas import (
+    AlertEvaluateIn,
+    AlertRuleIn,
+    AlertRuleUpdateIn,
+    DispatchPendingOut,
+    NotificationEventOut,
+)
 from app.infrastructure.db.models import AlertRule, FlightWatch, User
 from app.infrastructure.db.session import get_db
 from app.services.alert_service import (
@@ -16,6 +22,7 @@ from app.services.alert_service import (
     list_rules,
     update_rule,
 )
+from app.services.notification_service import dispatch_pending_events
 
 router = APIRouter()
 
@@ -166,7 +173,7 @@ def evaluate_rules(
     }
 
 
-@router.get("/events")
+@router.get("/events", response_model=list[NotificationEventOut])
 def get_events(
     watch_id: str | None = None,
     limit: int = 50,
@@ -184,8 +191,27 @@ def get_events(
             "travel_date_local": str(watch.travel_date_local),
             "channel": event.channel,
             "delivery_status": event.delivery_status,
+            "attempts": event.attempts,
+            "next_attempt_at": event.next_attempt_at.isoformat() if event.next_attempt_at else None,
+            "last_error": event.last_error,
+            "delivered_at": event.delivered_at.isoformat() if event.delivered_at else None,
             "message": event.message,
             "created_at": event.created_at.isoformat(),
         }
         for event, rule, watch in rows
     ]
+
+
+@router.post("/dispatch-pending", response_model=DispatchPendingOut)
+def dispatch_pending(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> dict[str, int]:
+    result = dispatch_pending_events(db)
+    return {
+        "processed": result.processed,
+        "delivered": result.delivered,
+        "failed": result.failed,
+        "retried": result.retried,
+        "skipped": result.skipped,
+    }

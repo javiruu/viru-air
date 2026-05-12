@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { trackUxEvent } from "@/lib/uxTracking";
 import { apiFetch } from "@/modules/shared/api";
+import { getDeliveryStateCopy, getNotificationChannelCopy } from "@/modules/alerts/deliveryPresentation";
 import { formatCurrency, formatRelativeTime } from "@/modules/shared/format";
 import { getDeliveryStatusMeta, getWatchStatusMeta } from "@/modules/shared/statusCatalog";
 import { useI18n } from "@/i18n";
@@ -36,6 +37,10 @@ type AlertEvent = {
   travel_date_local: string;
   channel: string;
   delivery_status: string;
+  attempts?: number;
+  next_attempt_at?: string | null;
+  last_error?: string | null;
+  delivered_at?: string | null;
   message: string;
   created_at: string;
 };
@@ -156,6 +161,9 @@ export default function AlertsPage() {
       ? t("alerts.form.previewThresholdLow", { value: formatEur(amount) })
       : t("alerts.form.previewThresholdHigh", { value: formatEur(amount) });
   }, [ruleType, selectedWatch, thresholdValue, t]);
+
+  const deliveryCopy = useCallback((status: string) => getDeliveryStateCopy(status, t), [t]);
+  const channelCopy = useCallback((channel: string) => getNotificationChannelCopy(channel, t), [t]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -504,7 +512,8 @@ export default function AlertsPage() {
                   <time className="alert-timestamp" dateTime={eventItem.created_at}>
                     {new Date(eventItem.created_at).toLocaleTimeString(localeTag, { hour: "2-digit", minute: "2-digit" })}
                   </time>
-                  <span className="alert-channel">{eventItem.channel.replace("_", " ")}</span>
+                  <span className="alert-channel">{channelCopy(eventItem.channel)}</span>
+                  <span className="panel-note">{deliveryCopy(eventItem.delivery_status)}</span>
                   <span className={`status-pill ${delivery.tone}`}>
                     {delivery.label}
                   </span>
