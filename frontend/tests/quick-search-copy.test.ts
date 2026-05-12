@@ -13,8 +13,8 @@ test("quick search copy resolves en locale", () => {
   const { locale, t } = getQuickSearchCopy("en");
   assert.equal(locale, "en");
   assert.equal(t("title"), "Quick Search");
-  assert.equal(t("ariaFiltersToggle"), "Filters ({count})");
-  assert.equal(t("ariaRemoveFilter"), "Remove {value}");
+  assert.equal(t("ariaFiltersToggle"), "Active settings ({count})");
+  assert.equal(t("ariaRemoveFilter"), "Remove filter {value}");
   assert.equal(t("loadingSubcheckFlight"), "Searching flight {route}");
 });
 
