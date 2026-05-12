@@ -74,6 +74,32 @@ export function ComparePanels({
   const [isLoadingCompare, setIsLoadingCompare] = useState(false);
   const selectedCount = compareIds.length;
   const compareQuery = useMemo(() => compareIds.join(","), [compareIds]);
+  const compareBadgesFromResponse = useMemo(() => {
+    const watches = compareResponse?.watches ?? [];
+    if (watches.length === 0) {
+      return { bestPriceId: null as string | null, stableId: null as string | null };
+    }
+    const bestPrice = watches
+      .filter((item) => item.latest_price != null || item.min_price != null)
+      .reduce<typeof watches[number] | null>((acc, item) => {
+        const score = item.latest_price ?? item.min_price ?? Number.POSITIVE_INFINITY;
+        if (!acc) return item;
+        const accScore = acc.latest_price ?? acc.min_price ?? Number.POSITIVE_INFINITY;
+        return score < accScore ? item : acc;
+      }, null);
+    const stable = watches
+      .filter((item) => item.volatility_hint !== "insufficient_data")
+      .reduce<typeof watches[number] | null>((acc, item) => {
+        const rank = item.volatility_hint === "low" ? 0 : item.volatility_hint === "medium" ? 1 : 2;
+        if (!acc) return item;
+        const accRank = acc.volatility_hint === "low" ? 0 : acc.volatility_hint === "medium" ? 1 : 2;
+        return rank < accRank ? item : acc;
+      }, null);
+    return {
+      bestPriceId: bestPrice?.watch_id ?? null,
+      stableId: stable?.watch_id ?? null,
+    };
+  }, [compareResponse?.watches]);
 
   useEffect(() => {
     if (selectedCount < 2 || selectedCount > 4) {
@@ -130,11 +156,11 @@ export function ComparePanels({
                       <strong>{formatCurrency(card.latest.price, card.latest.currency)}</strong>
                     </div>
                     <div>
-                      <span className="compare-label">Min</span>
+                      <span className="compare-label">Mínimo</span>
                       <strong>{formatCurrency(card.min, card.latest.currency)}</strong>
                     </div>
                     <div>
-                      <span className="compare-label">Max</span>
+                      <span className="compare-label">Máximo</span>
                       <strong>{formatCurrency(card.max, card.latest.currency)}</strong>
                     </div>
                   </div>
@@ -190,8 +216,8 @@ export function ComparePanels({
                   <div className="compare-head">
                     <strong>{origin} → {destination}</strong>
                     <div className="compare-badges">
-                      {compareBadges?.bestPriceId === card.watch_id ? <span className="compare-badge">Mejor precio</span> : null}
-                      {compareBadges?.stableId === card.watch_id ? <span className="compare-badge">Más estable</span> : null}
+                      {compareBadgesFromResponse.bestPriceId === card.watch_id ? <span className="compare-badge">Mejor precio</span> : null}
+                      {compareBadgesFromResponse.stableId === card.watch_id ? <span className="compare-badge">Más estable</span> : null}
                     </div>
                   </div>
                   <div className="compare-subtitle">{card.travel_date}</div>

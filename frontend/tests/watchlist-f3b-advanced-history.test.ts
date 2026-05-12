@@ -19,6 +19,14 @@ test("compare panel consumes compare endpoint and uses required states", () => {
   assert.match(source, /apiFetch<PriceCompareResponse>\(`\/prices\/compare\?watch_ids=\$\{compareQuery\}`\)/);
   assert.match(source, /Selecciona entre 2 y 4 rutas para comparar\./);
   assert.match(source, /Hay monedas distintas; compara con cuidado\./);
+  assert.doesNotMatch(source, />Min</);
+  assert.doesNotMatch(source, />Max</);
+  assert.match(source, /Mínimo|MÃ­nimo/);
+  assert.match(source, /Máximo|MÃ¡ximo/);
+  assert.match(source, /Volatilidad: \{volatilityLabel\(card\.volatility_hint\)\}/);
+  assert.match(source, /compareBadgesFromResponse/);
+  assert.doesNotMatch(source, /compareBadges\?\.bestPriceId === card\.watch_id/);
+  assert.doesNotMatch(source, /compareBadges\?\.stableId === card\.watch_id/);
 });
 
 test("compare selection keeps max 4 guard", () => {
