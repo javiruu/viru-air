@@ -38,7 +38,8 @@ def _sanitize_request_body(body):
     if isinstance(body, dict):
         sanitized = {}
         for key, value in body.items():
-            if "password" in key.lower():
+            key_lower = key.lower()
+            if "password" in key_lower or "token" in key_lower:
                 sanitized[key] = "***"
             else:
                 sanitized[key] = _sanitize_request_body(value)

@@ -114,6 +114,7 @@ function buildHeaders(init?: RequestInit): Headers {
 function clearStoredToken() {
   if (typeof window !== "undefined") {
     window.localStorage.removeItem("viru_token");
+    window.localStorage.removeItem("viru_refresh_token");
   }
 }
 

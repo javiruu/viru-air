@@ -1,4 +1,6 @@
 import os
+import hashlib
+import secrets
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -35,9 +37,30 @@ if not JWT_SECRET or JWT_SECRET == "change-me":
     )
 JWT_ALG = os.getenv("JWT_ALG", "HS256")
 ACCESS_TOKEN_MINUTES = int(os.getenv("ACCESS_TOKEN_MINUTES", "30"))
+REFRESH_TOKEN_DAYS = int(os.getenv("REFRESH_TOKEN_DAYS", "30"))
+RESET_TOKEN_MINUTES = int(os.getenv("RESET_TOKEN_MINUTES", "30"))
+TOKEN_HASH_SECRET = os.getenv("TOKEN_HASH_SECRET", JWT_SECRET)
 
 
 def create_access_token(subject: str) -> str:
     expires = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_MINUTES)
     payload = {"sub": subject, "exp": expires}
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
+
+
+def create_refresh_token() -> str:
+    return secrets.token_urlsafe(48)
+
+
+def create_reset_token() -> str:
+    return secrets.token_urlsafe(48)
+
+
+def hash_token(token: str) -> str:
+    return hashlib.sha256(f"{TOKEN_HASH_SECRET}:{token}".encode("utf-8")).hexdigest()
+
+
+def hash_ip(ip: str | None) -> str | None:
+    if not ip:
+        return None
+    return hashlib.sha256(f"{TOKEN_HASH_SECRET}:{ip}".encode("utf-8")).hexdigest()

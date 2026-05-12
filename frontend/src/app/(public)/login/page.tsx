@@ -6,7 +6,7 @@ import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import { GlassSignInCard } from "@/components/components/forms/glass-sign-in";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
-import { AuthOut, clearToken, hasToken, saveToken } from "@/modules/shared/auth";
+import { AuthOut, clearToken, hasToken, saveAuthTokens } from "@/modules/shared/auth";
 import { resolvePostAuthUrl } from "@/modules/shared/navigation";
 import ThemeToggle from "@/modules/shared/ThemeToggle";
 import AirLoader from "@/modules/shared/AirLoader";
@@ -67,7 +67,7 @@ function LoginContent() {
         method: "POST",
         body: JSON.stringify({ email: normalizedEmail, password }),
       });
-      saveToken(data.access_token);
+      saveAuthTokens(data);
       notify({
         tone: "success",
         title: t("public.auth.loginSuccess"),

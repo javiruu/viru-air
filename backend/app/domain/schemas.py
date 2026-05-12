@@ -31,7 +31,29 @@ class LoginIn(RegisterIn):
 
 class AuthOut(BaseModel):
     access_token: str
+    refresh_token: str | None = None
     token_type: str = "bearer"
+
+
+class RefreshIn(BaseModel):
+    refresh_token: str = Field(min_length=16)
+
+
+class ForgotPasswordIn(BaseModel):
+    email: str
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value: str) -> str:
+        email = value.strip().lower()
+        if "@" not in email or email.startswith("@") or email.endswith("@"):
+            raise ValueError("invalid_email")
+        return email
+
+
+class ResetPasswordIn(BaseModel):
+    token: str = Field(min_length=16)
+    new_password: str = Field(min_length=8)
 
 
 class MeOut(BaseModel):

@@ -7,6 +7,7 @@ import { GlassForgotPasswordCard } from "@/components/components/forms/glass-for
 import ThemeToggle from "@/modules/shared/ThemeToggle";
 import AirLoader from "@/modules/shared/AirLoader";
 import { useI18n } from "@/i18n";
+import { submitForgotPassword } from "@/modules/shared/forgot-password";
 
 function ForgotPasswordContent() {
   const router = useRouter();
@@ -30,9 +31,12 @@ function ForgotPasswordContent() {
 
     setSubmitting(true);
     try {
-      // Backend reset endpoint is not yet available; keep response generic for security.
-      await new Promise((resolve) => setTimeout(resolve, 420));
-      setDone(true);
+      const status = await submitForgotPassword(normalizedEmail);
+      if (status === "success") {
+        setDone(true);
+        return;
+      }
+      setError(t("shared.errors.generic"));
     } finally {
       setSubmitting(false);
     }
