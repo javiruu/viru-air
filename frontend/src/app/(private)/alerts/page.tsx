@@ -23,6 +23,7 @@ type AlertRule = {
   cooldown_minutes: number;
   enabled: boolean;
   threshold_value?: number | null;
+  min_change_pct?: number | null;
   notify_on_every_change?: boolean;
 };
 
@@ -54,6 +55,7 @@ export default function AlertsPage() {
   const [ruleType, setRuleType] = useState("threshold_low");
   const [thresholdValue, setThresholdValue] = useState("");
   const [notifyEveryChange, setNotifyEveryChange] = useState(false);
+  const [minChangePct, setMinChangePct] = useState("");
   const [cooldownMinutes, setCooldownMinutes] = useState(60);
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -176,6 +178,7 @@ export default function AlertsPage() {
           watch_id: selectedWatchId,
           rule_type: ruleType,
           threshold_value: ruleType === "every_change" ? null : Number(thresholdValue),
+          min_change_pct: minChangePct ? Number(minChangePct) : null,
           notify_on_every_change: notifyEveryChange,
           cooldown_minutes: cooldownMinutes,
         }),
@@ -190,6 +193,7 @@ export default function AlertsPage() {
       setStatus("success");
       setMessage(t("alerts.messages.ruleCreated"));
       setThresholdValue("");
+      setMinChangePct("");
       setNotifyEveryChange(false);
     } catch {
       setStatus("error");
@@ -209,7 +213,10 @@ export default function AlertsPage() {
     try {
       await apiFetch(`/alerts/rules/${rule.id}`, {
         method: "PUT",
-        body: JSON.stringify({ enabled: !rule.enabled }),
+        body: JSON.stringify({
+          enabled: !rule.enabled,
+          min_change_pct: rule.min_change_pct ?? null,
+        }),
       });
       const updated = await apiFetch<AlertRule[]>(`/alerts/rules?watch_id=${selectedWatchId}`);
       setRules(updated);
@@ -354,6 +361,18 @@ export default function AlertsPage() {
             <small className="panel-note">{t("alerts.form.cooldownHelp")}</small>
           </label>
 
+          <label className="field">
+            {t("alerts.form.minChangePct")}
+            <input
+              name="min_change_pct"
+              autoComplete="off"
+              value={minChangePct}
+              onChange={(e) => setMinChangePct(e.target.value)}
+              placeholder={t("alerts.form.minChangePctPlaceholder")}
+            />
+            <small className="panel-note">{t("alerts.form.minChangePctHelp")}</small>
+          </label>
+
           <label className="alert-check">
             <input
               name="notify_every_change"
@@ -423,12 +442,17 @@ export default function AlertsPage() {
               rule.rule_type !== "every_change" && rule.threshold_value
                 ? t("alerts.row.threshold", { value: formatEur(Number(rule.threshold_value)) })
                 : "";
+            const minChangeText =
+              rule.min_change_pct != null
+                ? t("alerts.row.minChange", { value: rule.min_change_pct })
+                : "";
             return (
               <div className="list-row alert-row" key={rule.id}>
                 <div>
                   <strong>{ruleLabel(rule.rule_type)}</strong>
                   <div className="panel-note">
                     {thresholdText}
+                    {minChangeText}
                     {t("alerts.row.cooldown", { value: rule.cooldown_minutes })}
                   </div>
                 </div>

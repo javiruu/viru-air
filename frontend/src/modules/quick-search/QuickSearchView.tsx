@@ -1506,57 +1506,34 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   async function addToWatchlist(result: SearchResult) {
     setMessage("");
     try {
-      try {
-        const response = await apiFetch<{ watch_id?: string; created_or_existing?: string }>("/search/save-result", {
-          method: "POST",
-          body: JSON.stringify({
-            job_id: jobId,
-            result_id: result.result_id ?? null,
-            origin_iata: result.origin,
-            destination_iata: result.destination,
-            travel_date: result.travel_date,
-            price_total: result.price_total ?? result.price,
-            currency: result.currency,
-            duration_total: result.duration_total_min ?? result.duration_total ?? null,
-            stop_count: result.stop_count ?? null,
-            risk_label: result.risk_label ?? null,
-            minutes_buffer: result.minutes_buffer ?? null,
-            distance_km_ground: result.distance_km_ground ?? null,
-            ranking_score: result.ranking_score ?? null,
-            freshness_ts: result.freshness_ts ?? null,
-            deeplink_url: result.deeplink_url ?? deeplinkUrl ?? null,
-            itinerary_type: result.itinerary_type ?? null,
-          }),
+      const response = await apiFetch<{ watch_id?: string; created_or_existing?: string }>("/search/save-result", {
+        method: "POST",
+        body: JSON.stringify({
+          job_id: jobId,
+          result_id: result.result_id ?? null,
+          origin_iata: result.origin,
+          destination_iata: result.destination,
+          travel_date: result.travel_date,
+          price_total: result.price_total ?? result.price,
+          currency: result.currency,
+          duration_total: result.duration_total_min ?? result.duration_total ?? null,
+          stop_count: result.stop_count ?? null,
+          risk_label: result.risk_label ?? null,
+          minutes_buffer: result.minutes_buffer ?? null,
+          distance_km_ground: result.distance_km_ground ?? null,
+          ranking_score: result.ranking_score ?? null,
+          freshness_ts: result.freshness_ts ?? null,
+          deeplink_url: result.deeplink_url ?? deeplinkUrl ?? null,
+          itinerary_type: result.itinerary_type ?? null,
+        }),
+      });
+      if (response.created_or_existing === "existing") {
+        setToast({
+          message: t("watchExists"),
+          actionLabel: t("viewWatchlist"),
+          onAction: () => router.push("/watchlist"),
         });
-        if (response.created_or_existing === "existing") {
-          setToast({
-            message: t("watchExists"),
-            actionLabel: t("viewWatchlist"),
-            onAction: () => router.push("/watchlist"),
-          });
-        } else {
-          trackEvent("quicksearch_watchlist_added", {
-            origin: result.origin,
-            destination: result.destination,
-            travel_date: result.travel_date,
-            source: result.source,
-            risk_label: result.risk_label ?? null,
-          });
-          setToast({
-            message: t("watchAdded"),
-            actionLabel: t("viewWatchlist"),
-            onAction: () => router.push("/watchlist"),
-          });
-        }
-      } catch {
-        await apiFetch("/watchlist", {
-          method: "POST",
-          body: JSON.stringify({
-            origin_iata: result.origin,
-            destination_iata: result.destination,
-            travel_date_local: result.travel_date,
-          }),
-        });
+      } else {
         trackEvent("quicksearch_watchlist_added", {
           origin: result.origin,
           destination: result.destination,

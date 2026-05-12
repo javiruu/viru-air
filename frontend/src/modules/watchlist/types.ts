@@ -14,6 +14,26 @@ export type Snapshot = {
   departure_time_local: string | null;
 };
 
+export type WatchDetail = {
+  id: string;
+  origin_iata: string;
+  destination_iata: string;
+  travel_date_local: string;
+  target_price?: number | null;
+  status: string;
+  latest_snapshot: Snapshot | null;
+};
+
+export type PriceSummary = {
+  watch_id: string;
+  count: number;
+  min_price: number | null;
+  max_price: number | null;
+  avg_price: number | null;
+  latest_price: number | null;
+  delta_pct: number | null;
+};
+
 export type HistoryRow = {
   watchId: string;
   origin: string;

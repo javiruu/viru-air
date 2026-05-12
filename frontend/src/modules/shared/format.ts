@@ -51,6 +51,10 @@ export function formatNumber(
   return formatter.format(value);
 }
 
+export function formatPercent(value: number, locale = "es-ES"): string {
+  return `${formatNumber(value, { maximumFractionDigits: 2, minimumFractionDigits: 0 }, locale)}%`;
+}
+
 export function formatRelativeTime(input: string | Date | null | undefined): string {
   if (!input) return "sin datos";
   const date = input instanceof Date ? input : new Date(input);

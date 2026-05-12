@@ -8,6 +8,9 @@
     ruleType: "Tipo de regla",
     threshold: "Umbral (EUR)",
     cooldown: "Cooldown (min)",
+    minChangePct: "Cambio mínimo relevante",
+    minChangePctPlaceholder: "Ej: 2.5",
+    minChangePctHelp: "Evita avisos por cambios pequeños.",
     notifyLabel: "Avisar cada cambio relevante",
     watchDefault: "-- seleccionar --",
     buttonSave: "Guardar regla",
@@ -66,6 +69,7 @@
   row: {
     cooldown: "Cooldown: {value} min",
     threshold: "Umbral: {value} · ",
+    minChange: "Cambio mínimo: {value}% · ",
     actions: {
       pause: "Pausar",
       activate: "Activar",
@@ -101,6 +105,9 @@ export const alertsEn = {
     ruleType: "Rule type",
     threshold: "Threshold (EUR)",
     cooldown: "Cooldown (min)",
+    minChangePct: "Minimum relevant change",
+    minChangePctPlaceholder: "E.g.: 2.5",
+    minChangePctHelp: "Avoid alerts for tiny changes.",
     notifyLabel: "Notify on every relevant change",
     watchDefault: "-- select --",
     buttonSave: "Save rule",
@@ -159,6 +166,7 @@ export const alertsEn = {
   row: {
     cooldown: "Cooldown: {value} min",
     threshold: "Threshold: {value} · ",
+    minChange: "Minimum change: {value}% · ",
     actions: {
       pause: "Pause",
       activate: "Activate",

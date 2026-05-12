@@ -8,6 +8,30 @@ export const watchlistEs = {
   lastUpdate: "Última actualización: {value}",
   mapLoadingTitle: "Mesa de decisiones",
   mapLoadingBody: "Cargando mapa de rutas...",
+  detail: {
+    title: "Detalle de ruta",
+    empty: "Selecciona una ruta para ver su detalle.",
+    loading: "Cargando detalle...",
+    currentPrice: "Precio actual:",
+    latestSnapshot: "Último snapshot:",
+    freshness: "Frescura:",
+    freshnessUnknown: "Sin datos",
+    lastUpdateRelative: "Última actualización",
+    actions: {
+      refresh: "Actualizar",
+      pause: "Pausar",
+      resume: "Reanudar",
+    },
+  },
+  summary: {
+    latest: "Último precio",
+    min: "Mínimo observado",
+    max: "Máximo observado",
+    avg: "Media",
+    delta: "Delta",
+    count: "Snapshots",
+    empty: "Aún no hay histórico suficiente para resumir esta ruta.",
+  },
 };
 
 export const watchlistEn = {
@@ -20,4 +44,28 @@ export const watchlistEn = {
   lastUpdate: "Last update: {value}",
   mapLoadingTitle: "Decision desk",
   mapLoadingBody: "Loading route map...",
+  detail: {
+    title: "Route detail",
+    empty: "Select a route to view details.",
+    loading: "Loading detail...",
+    currentPrice: "Current price:",
+    latestSnapshot: "Latest snapshot:",
+    freshness: "Freshness:",
+    freshnessUnknown: "No data",
+    lastUpdateRelative: "Last update",
+    actions: {
+      refresh: "Refresh",
+      pause: "Pause",
+      resume: "Resume",
+    },
+  },
+  summary: {
+    latest: "Latest price",
+    min: "Observed minimum",
+    max: "Observed maximum",
+    avg: "Average",
+    delta: "Delta",
+    count: "Snapshots",
+    empty: "Not enough history to summarize this route yet.",
+  },
 };

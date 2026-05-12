@@ -3,8 +3,9 @@
 import { trackUxEvent } from "@/lib/uxTracking";
 import { apiFetch } from "@/modules/shared/api";
 import { COUNTRY_AIRPORTS, CountryAirports, findCountryByIata } from "@/modules/shared/airports";
+import { summarizeRefreshBulkResult } from "@/modules/watchlist/summary";
 import { toIsoMonth } from "@/modules/watchlist/dateUtils";
-import type { CompatibleResponse, HistoryRow, Snapshot, Watch } from "@/modules/watchlist/types";
+import type { CompatibleResponse, HistoryRow, PriceSummary, Snapshot, Watch, WatchDetail } from "@/modules/watchlist/types";
 
 type MessageType = "error" | "success";
 type PickerField = "origin" | "destination";
@@ -46,6 +47,10 @@ export function useWatchlistActions({
   const [activePicker, setActivePicker] = useState<PickerField | null>(null);
   const [refreshingWatchId, setRefreshingWatchId] = useState<string | null>(null);
   const [isRefreshingFiltered, setIsRefreshingFiltered] = useState(false);
+  const [isRefreshingBulk, setIsRefreshingBulk] = useState(false);
+  const [selectedWatchDetail, setSelectedWatchDetail] = useState<WatchDetail | null>(null);
+  const [selectedWatchSummary, setSelectedWatchSummary] = useState<PriceSummary | null>(null);
+  const [isLoadingSelectedWatchDetail, setIsLoadingSelectedWatchDetail] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<CountryAirports | null>(
     findCountryByIata("MAD") || COUNTRY_AIRPORTS[0] || null,
   );
@@ -169,6 +174,36 @@ export function useWatchlistActions({
       .catch(() => setCompatibleOrigins([]));
   }, [destination, travelDate, origin]);
 
+  useEffect(() => {
+    if (!selectedWatchId) {
+      setSelectedWatchDetail(null);
+      setSelectedWatchSummary(null);
+      return;
+    }
+    let isMounted = true;
+    setIsLoadingSelectedWatchDetail(true);
+    Promise.all([
+      apiFetch<WatchDetail>(`/watchlist/${selectedWatchId}`),
+      apiFetch<PriceSummary>(`/prices/summary?watch_id=${selectedWatchId}`),
+    ])
+      .then(([detail, summary]) => {
+        if (!isMounted) return;
+        setSelectedWatchDetail(detail);
+        setSelectedWatchSummary(summary);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setSelectedWatchDetail(null);
+        setSelectedWatchSummary(null);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingSelectedWatchDetail(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedWatchId]);
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setMessage("");
@@ -249,12 +284,21 @@ export function useWatchlistActions({
 
     setIsRefreshingFiltered(true);
     try {
-      await Promise.allSettled(
-        targets.map((item) => apiFetch<{ status: string }>(`/watchlist/${item.id}/refresh-now`, { method: "POST" })),
-      );
+      const response = await apiFetch<{
+        status: string;
+        requested: number;
+        refreshed: string[];
+        failed: Array<{ watch_id: string; code: string }>;
+      }>("/watchlist/refresh-bulk", {
+        method: "POST",
+        body: JSON.stringify({ watch_ids: targets.map((item) => item.id) }),
+      });
+      const summary = summarizeRefreshBulkResult(response);
       void trackUxEvent("watchlist_refresh", { scope: "filtered", count: targets.length });
       await load();
-      setMessage("Refresh ejecutado para los vuelos filtrados.");
+      setMessage(
+        `Refresh masivo: ${summary.updated} actualizadas, ${summary.skippedCooldown} omitidas por cooldown, ${summary.failed} fallidas, ${summary.degradedOrStale} degradadas/stale.`,
+      );
       setMessageType("success");
     } catch {
       setMessage("No se pudo refrescar el grupo filtrado.");
@@ -314,6 +358,33 @@ export function useWatchlistActions({
     setMessageType("success");
   }
 
+  async function bulkRefresh(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+    setIsRefreshingBulk(true);
+    try {
+      const response = await apiFetch<{
+        status: string;
+        requested: number;
+        refreshed: string[];
+        failed: Array<{ watch_id: string; code: string }>;
+      }>("/watchlist/refresh-bulk", {
+        method: "POST",
+        body: JSON.stringify({ watch_ids: ids }),
+      });
+      const summary = summarizeRefreshBulkResult(response);
+      await load();
+      setMessage(
+        `Refresh masivo: ${summary.updated} actualizadas, ${summary.skippedCooldown} omitidas por cooldown, ${summary.failed} fallidas, ${summary.degradedOrStale} degradadas/stale.`,
+      );
+      setMessageType("success");
+    } catch {
+      setMessage("No se pudo refrescar la selección.");
+      setMessageType("error");
+    } finally {
+      setIsRefreshingBulk(false);
+    }
+  }
+
   function openPicker(which: PickerField): void {
     if (!travelDate) {
       setMessage("Selecciona fecha antes de elegir aeropuertos.");
@@ -353,6 +424,10 @@ export function useWatchlistActions({
     activePicker,
     refreshingWatchId,
     isRefreshingFiltered,
+    isRefreshingBulk,
+    selectedWatchDetail,
+    selectedWatchSummary,
+    isLoadingSelectedWatchDetail,
     selectedCountry,
     compatibleOrigins,
     compatibleDestinations,
@@ -371,6 +446,7 @@ export function useWatchlistActions({
     deleteWatch,
     bulkUpdateStatus,
     bulkDelete,
+    bulkRefresh,
     openPicker,
     clearSelection,
     selectAirport,

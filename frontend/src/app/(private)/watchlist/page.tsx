@@ -10,6 +10,7 @@ import { AirportPickerModal } from "@/modules/watchlist/components/AirportPicker
 import { ComparePanels } from "@/modules/watchlist/components/ComparePanels";
 import { HistoryIntegratedPanel } from "@/modules/watchlist/components/HistoryIntegratedPanel";
 import { SmartWatchListPanel } from "@/modules/watchlist/components/SmartWatchListPanel";
+import { WatchDetailPanel } from "@/modules/watchlist/components/WatchDetailPanel";
 import { monthLabel } from "@/modules/watchlist/dateUtils";
 import { useWatchlistController } from "@/modules/watchlist/useWatchlistController";
 
@@ -164,7 +165,19 @@ export default function WatchlistPage() {
           onBulkPause={(ids) => actions.bulkUpdateStatus(ids, "paused")}
           onBulkResume={(ids) => actions.bulkUpdateStatus(ids, "active")}
           onBulkDelete={actions.bulkDelete}
+          onBulkRefresh={actions.bulkRefresh}
+          isRefreshingBulk={actions.isRefreshingBulk}
           onOpenAddWatch={() => actions.setShowAdd(true)}
+        />
+
+        <WatchDetailPanel
+          selectedWatch={derived.selectedWatch}
+          detail={actions.selectedWatchDetail}
+          summary={actions.selectedWatchSummary}
+          isLoading={actions.isLoadingSelectedWatchDetail}
+          onRefreshWatch={actions.refresh}
+          onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
+          onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
         />
 
         <WatchlistMapDecisionPanel

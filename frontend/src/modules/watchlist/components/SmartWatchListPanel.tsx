@@ -56,6 +56,8 @@ type SmartWatchListPanelProps = {
   onBulkPause: (watchIds: string[]) => void;
   onBulkResume: (watchIds: string[]) => void;
   onBulkDelete: (watchIds: string[]) => void;
+  onBulkRefresh: (watchIds: string[]) => void;
+  isRefreshingBulk: boolean;
   onOpenAddWatch: () => void;
 };
 
@@ -81,6 +83,8 @@ export function SmartWatchListPanel({
   onBulkPause,
   onBulkResume,
   onBulkDelete,
+  onBulkRefresh,
+  isRefreshingBulk,
   onOpenAddWatch,
 }: SmartWatchListPanelProps) {
   const { t } = useI18n();
@@ -139,6 +143,9 @@ export function SmartWatchListPanel({
           </button>
           {hasSelection ? (
             <div className="alert-actions">
+              <button type="button" className="btn-secondary btn-compact" onClick={() => onBulkRefresh(selectedIds)} disabled={isRefreshingBulk}>
+                {isRefreshingBulk ? "Actualizando..." : "Actualizar"}
+              </button>
               <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkPause(selectedIds)}>Pausar</button>
               <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkResume(selectedIds)}>Reanudar</button>
               <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkDelete(selectedIds)}>Eliminar</button>
