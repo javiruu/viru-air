@@ -222,3 +222,14 @@ Entradas vivas agregadas:
 
 - `docs/runbooks/runbook-notification-worker.md`
 - `backend/tests/integration/test_notification_worker.py`
+
+## Actualizacion manual 2026-05-12 (release closure)
+
+Entradas vivas agregadas:
+
+- `docs/qa/reports/2026-05-12-release-closure.md`
+
+Entradas vivas actualizadas:
+
+- `docs/qa/reports/2026-05-12-fases-0-3-audit.md`
+- `docs/overview/current-state.md`

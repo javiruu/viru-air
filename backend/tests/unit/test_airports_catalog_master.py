@@ -1,4 +1,5 @@
 import unittest
+import unicodedata
 
 from app.infrastructure.airports_catalog import expand_side, resolve_seed_airport
 
@@ -7,7 +8,10 @@ class AirportsCatalogMasterTests(unittest.TestCase):
     def test_resolve_seed_ok(self):
         airport = resolve_seed_airport("LEI")
         self.assertEqual(airport.iata, "LEI")
-        self.assertEqual(airport.city.lower(), "almeria")
+        city_folded = (
+            unicodedata.normalize("NFD", airport.city.lower()).encode("ascii", "ignore").decode("ascii")
+        )
+        self.assertEqual(city_folded, "almeria")
 
     def test_resolve_seed_missing(self):
         with self.assertRaises(ValueError):

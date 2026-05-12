@@ -1,7 +1,7 @@
 # Estado actual
 
 **Estado:** vivo  
-**Ultima revision:** 2026-05-11  
+**Ultima revision:** 2026-05-12  
 **Fuente de verdad:** si  
 **Area:** overview
 
@@ -38,3 +38,15 @@
 - `Alertas` mantiene reglas, cooldown e historial.
 - `Oportunidades` es la etiqueta visible de `/recomendaciones`.
 - `Suggestions` deja de ser modulo core y queda como alias legacy hacia feedback de producto.
+
+## Estado de cierre por fases (2026-05-12)
+
+- F0: done.
+- F1: done (producto basico).
+- F2: done (producto basico).
+- F3A: done.
+- F3B: done.
+- F3C: done.
+- F3C.2: done.
+- F3D: done.
+- F3 global: partial por alcance (postponed no bloqueante).

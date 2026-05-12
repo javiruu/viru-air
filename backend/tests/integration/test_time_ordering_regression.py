@@ -28,6 +28,8 @@ class _SequenceProvider:
 
 
 def test_history_and_alert_events_keep_descending_order(client: TestClient, monkeypatch) -> None:
+    monkeypatch.setenv("WATCH_REFRESH_COOLDOWN_SECONDS", "0")
+    monkeypatch.setattr(watchlist_api, "REFRESH_COOLDOWN_SECONDS", 0)
     monkeypatch.setattr(watchlist_api, "provider", _SequenceProvider())
 
     token = register_and_token(client)
