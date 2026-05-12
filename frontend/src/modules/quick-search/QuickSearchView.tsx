@@ -2364,13 +2364,13 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const currentFlightsForLoader = totalFlightsForLoader > 0
     ? Math.min(totalFlightsForLoader, Math.round((progressPercent / 100) * totalFlightsForLoader))
     : 0;
-  const loadingTotalText = t("loadingTotalFlights").replace("{count}", formatNumber(totalFlightsForLoader, localeTag));
+  const loadingTotalText = t("loadingTotalFlights").replace("{count}", formatNumber(totalFlightsForLoader, {}, localeTag));
   const loadingProgressText = t("loadingProgressFlights")
-    .replace("{current}", formatNumber(currentFlightsForLoader, localeTag))
-    .replace("{total}", formatNumber(totalFlightsForLoader, localeTag));
+    .replace("{current}", formatNumber(currentFlightsForLoader, {}, localeTag))
+    .replace("{total}", formatNumber(totalFlightsForLoader, {}, localeTag));
   const loadingScopeText = t("loadingScope")
-    .replace("{routes}", formatNumber(loaderScopeRoutes, localeTag))
-    .replace("{days}", formatNumber(loaderScopeDates, localeTag));
+    .replace("{routes}", formatNumber(loaderScopeRoutes, {}, localeTag))
+    .replace("{days}", formatNumber(loaderScopeDates, {}, localeTag));
   const boardingPassengers = isMobileViewport ? 24 : 50;
   const progressRatio = Math.min(1, Math.max(0, displayProgress / 100));
   const easedProgressRatio = Math.pow(progressRatio, 2.2);
@@ -3048,9 +3048,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               ? (searchError || t("searchFailed"))
               : (searchDisabledHint || t("searchReadyHint"));
 
-  const runSearch = useCallback(() => {
+  const runSearch = () => {
     void onSubmit({ preventDefault: () => {} } as FormEvent);
-  }, [onSubmit]);
+  };
 
   const removeExcludeOriginChip = useCallback((iata: string) => {
     removeChip(iata, excludeOrigins, setExcludeOrigins);

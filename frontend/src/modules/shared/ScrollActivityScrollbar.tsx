@@ -11,8 +11,8 @@ const WHEEL_CLASS_HOLD_MS = 220;
 
 export default function ScrollActivityScrollbar() {
   useEffect(() => {
-    let timeoutId: ReturnType<typeof window.setTimeout> | null = null;
-    let wheelTimeoutId: ReturnType<typeof window.setTimeout> | null = null;
+    let timeoutId: number | null = null;
+    let wheelTimeoutId: number | null = null;
 
     const showScrollbar = () => {
       document.documentElement.classList.add(SCROLLING_CLASS);
