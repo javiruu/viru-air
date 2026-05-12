@@ -288,8 +288,12 @@ export function MapRoute({
         map.off("mouseenter", layerId, handleMouseEnter);
         map.off("mouseleave", layerId, handleMouseLeave);
       }
-      if (map.getLayer(layerId)) map.removeLayer(layerId);
-      if (map.getSource(sourceId)) map.removeSource(sourceId);
+      try {
+        if (map.getLayer(layerId)) map.removeLayer(layerId);
+        if (map.getSource(sourceId)) map.removeSource(sourceId);
+      } catch {
+        // During fast teardown the style can be disposed before this cleanup executes.
+      }
     };
   }, [color, coordinates, dashArray, interactive, layerId, map, onClick, onMouseEnter, onMouseLeave, opacity, sourceId, width]);
 
