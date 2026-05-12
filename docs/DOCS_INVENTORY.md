@@ -215,3 +215,10 @@ Entradas vivas agregadas:
 | skills/viru-tracker-context/references/operating-rules.md | contexto IA | vivo | conservar | skills/viru-tracker-context/references/operating-rules.md | Contexto reusable para agentes dentro de Viru | skills/viru-tracker-context/references/operating-rules.md |
 | skills/viru-tracker-context/references/project-context.md | contexto IA | vivo | conservar | skills/viru-tracker-context/references/project-context.md | Contexto reusable para agentes dentro de Viru | skills/viru-tracker-context/references/project-context.md |
 | users_prueba.txt | sensitive | sensible | revisar manualmente | users_prueba.txt | Posible dato personal o material de prueba sensible | revisi?n manual requerida |
+
+## Actualizacion manual 2026-05-12 (F3C.2)
+
+Entradas vivas agregadas:
+
+- `docs/runbooks/runbook-notification-worker.md`
+- `backend/tests/integration/test_notification_worker.py`

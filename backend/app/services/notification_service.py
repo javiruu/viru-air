@@ -61,7 +61,7 @@ def _next_attempt_delay(attempts: int) -> timedelta:
     return timedelta(minutes=minutes)
 
 
-def _eligible_events_query(now) -> select:
+def _eligible_events_query(now, *, limit: int) -> select:
     return (
         select(NotificationEvent, User, UserPreference)
         .join(AlertRule, NotificationEvent.rule_id == AlertRule.id)
@@ -82,7 +82,7 @@ def _eligible_events_query(now) -> select:
             )
         )
         .order_by(asc(NotificationEvent.created_at), asc(NotificationEvent.id))
-        .limit(DEFAULT_DISPATCH_BATCH_SIZE)
+        .limit(limit)
     )
 
 
@@ -121,14 +121,15 @@ def _quiet_hours_end(
     return end_local.astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
 
 
-def dispatch_pending_events(db: Session) -> DispatchResult:
+def dispatch_pending_events(db: Session, *, limit: int | None = None) -> DispatchResult:
     now = utc_now_naive()
     result = DispatchResult()
+    batch_limit = limit if limit is not None else DEFAULT_DISPATCH_BATCH_SIZE
     adapters: dict[str, NotificationAdapter] = {
         "in_app": InAppNotificationAdapter(),
         "email": EmailNotificationAdapter(),
     }
-    rows = list(db.execute(_eligible_events_query(now)).all())
+    rows = list(db.execute(_eligible_events_query(now, limit=batch_limit)).all())
     for event, user, preference in rows:
         result.processed += 1
         adapter = adapters.get(event.channel)
