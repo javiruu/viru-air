@@ -41,7 +41,7 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
         router.replace(loginRedirect);
         return;
       }
-      const meResult = await apiFetchWithStatus<Me>("/auth/me");
+      const meResult = await apiFetchWithStatus<Me>("/auth/me", undefined, { timeoutMs: 7000 });
       if (meResult.ok) {
         const me = meResult.data;
         if (me?.locale) {

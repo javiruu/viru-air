@@ -250,6 +250,7 @@ function extractTopLevelErrorEnvelope(parsed: unknown): ParsedErrorEnvelope | nu
 export async function apiFetchWithStatus<T>(
   path: string,
   init?: RequestInit,
+  options?: { timeoutMs?: number },
 ): Promise<
   | { ok: true; data: T; status: number; headers: Headers }
   | { ok: false; error: ApiError; status: number; headers: Headers }
@@ -267,13 +268,33 @@ export async function apiFetchWithStatus<T>(
     };
   }
   const mergedHeaders = buildHeaders(init);
+  const timeoutMs = options?.timeoutMs;
+  const controller = timeoutMs ? new AbortController() : null;
+  const timeoutId = timeoutMs
+    ? globalThis.setTimeout(() => {
+      controller?.abort();
+    }, timeoutMs)
+    : null;
   let response: Response;
   try {
     response = await fetch(`${API_BASE}${path}`, {
       ...init,
+      signal: controller?.signal,
       headers: mergedHeaders,
     });
   } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      return {
+        ok: false,
+        status: 0,
+        headers: new Headers(),
+        error: {
+          status: 0,
+          code: "NETWORK_TIMEOUT",
+          message: translate("shared.errors.generic"),
+        },
+      };
+    }
     if (isNetworkFailure(error)) {
       return {
         ok: false,
@@ -287,6 +308,10 @@ export async function apiFetchWithStatus<T>(
       };
     }
     throw error;
+  } finally {
+    if (timeoutId != null) {
+      globalThis.clearTimeout(timeoutId);
+    }
   }
 
   if (!response.ok) {

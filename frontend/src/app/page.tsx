@@ -25,7 +25,7 @@ export default function HomePage() {
         if (active) setState("public");
         return;
       }
-      const meResult = await apiFetchWithStatus<{ id: string }>("/auth/me");
+      const meResult = await apiFetchWithStatus<{ id: string }>("/auth/me", undefined, { timeoutMs: 7000 });
       if (meResult.ok) {
         router.replace("/dashboard");
         return;
