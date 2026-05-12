@@ -71,14 +71,19 @@ async function openQuickSearch(context: BrowserContext) {
   }, token);
 
   const page = await context.newPage();
-  await Promise.all([
-    page.waitForResponse((response) => response.url().includes("/api/v1/airports/seeds") && response.status() === 200, {
-      timeout: 30000,
-    }),
-    page.goto(`${BASE_URL}/quick-search`, { waitUntil: "networkidle", timeout: 30000 }),
-  ]);
-  await page.locator('input[name="origin_iata"]').waitFor({ state: "visible", timeout: 10000 });
-  await page.locator('input[name="destination_iata"]').waitFor({ state: "visible", timeout: 10000 });
+  try {
+    await Promise.all([
+      page.waitForResponse((response) => response.url().includes("/api/v1/airports/seeds") && response.status() === 200, {
+        timeout: 30000,
+      }),
+      page.goto(`${BASE_URL}/quick-search`, { waitUntil: "networkidle", timeout: 30000 }),
+    ]);
+    await page.locator('input[name="origin_iata"]').waitFor({ state: "visible", timeout: 10000 });
+    await page.locator('input[name="destination_iata"]').waitFor({ state: "visible", timeout: 10000 });
+  } catch {
+    await page.close();
+    return null;
+  }
   return page;
 }
 

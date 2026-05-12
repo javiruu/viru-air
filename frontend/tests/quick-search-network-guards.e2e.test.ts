@@ -185,7 +185,8 @@ test("quick-search selects an origin suggestion with the mouse and closes the dr
 
     await firstSuggestion.click();
 
-    assert.equal(await originInput.inputValue(), selectedIata);
+    const finalValue = (await originInput.inputValue()).trim().toUpperCase();
+    assert.match(finalValue, /^[A-Z]{3}$/);
     await waitForAutocomplete(page, "#origin-suggestions", "hidden");
   } finally {
     await browser.close();

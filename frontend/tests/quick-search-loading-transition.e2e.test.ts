@@ -196,8 +196,8 @@ test("quick-search shows a visible loading state before a fast final empty respo
       });
     });
 
-    await originInput.fill("MAD");
-    await destinationInput.fill("CDG");
+    await originInput.fill("AGP");
+    await destinationInput.fill("DUB");
     await selectStableFutureDate(page, datePicker);
     await page.getByRole("button", { name: "Buscar" }).click();
 
