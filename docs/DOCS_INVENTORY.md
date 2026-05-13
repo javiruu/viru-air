@@ -298,3 +298,10 @@ Entradas vivas agregadas:
 - docs/qa/reports/2026-05-12-watchlist-w9-final-polish.md
 - docs/qa/screenshots/watchlist-w9-final.png
 
+
+## Actualizacion manual 2026-05-13 (watchlist W9.1 final remedy)
+
+Entradas vivas agregadas:
+
+- docs/qa/reports/2026-05-12-watchlist-w9-1-final-remedy.md
+

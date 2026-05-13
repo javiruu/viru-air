@@ -242,7 +242,7 @@ export function SmartWatchListPanel({
                   }}
                   aria-label={`Seleccionar ${watch.origin_iata} ${watch.destination_iata}`}
                 />
-                <strong>{watch.origin_iata}{" -> "}{watch.destination_iata}</strong>
+                <strong>{watch.origin_iata}{" → "}{watch.destination_iata}</strong>
                 <span className="watch-date">{watch.travel_date_local}</span>
                 <span className={`status-pill ${watchStatus.tone}`}>{watchStatus.label}</span>
                 <span className={`status-pill ${trend === "up" ? "error" : trend === "down" ? "success" : "warning"}`}>
@@ -251,7 +251,7 @@ export function SmartWatchListPanel({
               </div>
               <div className="watch-meta">
                 <span className="watch-meta-chip">Última actualización: {safeDateTime(meta?.latest?.capturedAt)}</span>
-                <span className="watch-meta-chip">{t("watchlist.detail.freshness")} {freshness.fullText}</span>
+                <span className="watch-meta-chip watch-meta-chip--freshness">{t("watchlist.detail.freshness")} {freshness.fullText}</span>
                 <span className="watch-note">Precio orientativo base 1 adulto, sin extras.</span>
               </div>
             </div>
@@ -319,6 +319,7 @@ export function SmartWatchListPanel({
     </section>
   );
 }
+
 
 
 

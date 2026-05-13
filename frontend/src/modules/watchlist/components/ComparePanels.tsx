@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 
 import { useI18n } from "@/i18n";
 import { apiFetch } from "@/modules/shared/api";
@@ -156,7 +156,7 @@ export function ComparePanels({
           <div className="compare-grid">
             {compareCards.map((card) => {
               const trend = card.delta > 0 ? "up" : card.delta < 0 ? "down" : "flat";
-              const deltaLabel = card.delta === 0 ? "Sin variaci�n" : formatSignedCurrency(card.delta, card.latest.currency);
+              const deltaLabel = card.delta === 0 ? "Sin variaciï¿½n" : formatSignedCurrency(card.delta, card.latest.currency);
               return (
                 <article key={`compare-${card.date}`} className="compare-card">
                   <div className="compare-head">
@@ -176,15 +176,15 @@ export function ComparePanels({
                       <strong>{formatCurrency(card.latest.price, card.latest.currency)}</strong>
                     </div>
                     <div>
-                      <span className="compare-label">M�nimo</span>
+                      <span className="compare-label">Mï¿½nimo</span>
                       <strong>{formatCurrency(card.min, card.latest.currency)}</strong>
                     </div>
                     <div>
-                      <span className="compare-label">M�ximo</span>
+                      <span className="compare-label">Mï¿½ximo</span>
                       <strong>{formatCurrency(card.max, card.latest.currency)}</strong>
                     </div>
                   </div>
-                  <div className="compare-meta">�ltima actualizaci�n: {formatDateTime(card.latest.capturedAt)}</div>
+                  <div className="compare-meta">ï¿½ltima actualizaciï¿½n: {formatDateTime(card.latest.capturedAt)}</div>
                 </article>
               );
             })}
@@ -216,7 +216,7 @@ export function ComparePanels({
                   </svg>
                 </span>
                 <span className="compare-route">
-                  {option.origin} ? {option.destination}
+                  {option.origin} → {option.destination}
                 </span>
                 <span className="compare-date">{option.travelDate}</span>
               </label>
@@ -238,7 +238,7 @@ export function ComparePanels({
               return (
                 <article key={`multi-${card.watch_id}`} className="compare-card compare-card--multi">
                   <div className="compare-head">
-                    <strong>{origin} ? {destination}</strong>
+                    <strong>{origin} → {destination}</strong>
                     <div className="compare-badges">
                       {compareBadgesFromResponse.bestPriceId === card.watch_id ? <span className="compare-badge">{t("watchlist.compare.bestPriceBadge")}</span> : null}
                       {compareBadgesFromResponse.stableId === card.watch_id ? <span className="compare-badge">{t("watchlist.compare.mostStableBadge")}</span> : null}
@@ -252,7 +252,7 @@ export function ComparePanels({
                       <strong>{card.latest_price == null ? "Sin datos" : formatCurrency(card.latest_price, card.currency)}</strong>
                     </div>
                     <div>
-                      <span className="compare-label">M�n / M�x</span>
+                      <span className="compare-label">Mï¿½n / Mï¿½x</span>
                       <strong>
                         {card.min_price != null && card.max_price != null
                           ? `${formatCurrency(card.min_price, card.currency)}-${formatCurrency(card.max_price, card.currency)}`

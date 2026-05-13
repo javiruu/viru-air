@@ -22,7 +22,7 @@ test("W0: /watchlist render path keeps main building blocks wired", () => {
   assert.match(source, /<ComparePanels/);
 });
 
-test("W0: watchlist list/detail/history/calendar/compare copies remain present in current baseline", () => {
+test("W0: watchlist list/detail/history/compare copies remain present in current baseline", () => {
   const smartPanel = fs.readFileSync(SMART_PANEL, "utf8");
   const detailPanel = fs.readFileSync(DETAIL_PANEL, "utf8");
   const historyPanel = fs.readFileSync(HISTORY_PANEL, "utf8");
@@ -31,7 +31,7 @@ test("W0: watchlist list/detail/history/calendar/compare copies remain present i
   assert.match(smartPanel, /watchlist\.smartList\.heading/);
   assert.match(detailPanel, /watchlist\.detail\.title/);
   assert.match(historyPanel, /watchlist\.history\.title|Histórico integrado|Historico integrado/);
-  assert.match(detailPanel, /Calendario/);
+  assert.doesNotMatch(detailPanel, /Calendario/);
   assert.match(comparePanel, /Comparativa multi-vuelo/);
 });
 

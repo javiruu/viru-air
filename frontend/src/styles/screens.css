@@ -3687,6 +3687,10 @@ h1 {
   background: color-mix(in srgb, var(--surface) 86%, var(--surface-2));
 }
 
+.watch-meta-chip--freshness {
+  white-space: nowrap;
+}
+
 .watch-note {
   color: var(--ink-muted);
   width: 100%;
@@ -4497,6 +4501,16 @@ h1 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
   gap: 0.6rem;
+}
+
+.history-summary--kpis .history-confidence-notice {
+  grid-column: 1 / -1;
+}
+
+.history-confidence-notice strong,
+.history-confidence-notice p {
+  word-break: normal;
+  overflow-wrap: normal;
 }
 
 .history-kpi {

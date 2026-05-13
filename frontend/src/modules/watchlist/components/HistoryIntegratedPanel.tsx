@@ -146,7 +146,7 @@ export function HistoryIntegratedPanel({
   const { t } = useI18n();
   const hasSelectedWatch = Boolean(selectedWatch);
   const selectedRouteValue = selectedWatch
-    ? `${selectedWatch.origin_iata} ? ${selectedWatch.destination_iata} · ${selectedWatch.travel_date_local}`
+    ? `${selectedWatch.origin_iata} → ${selectedWatch.destination_iata} · ${selectedWatch.travel_date_local}`
     : t("watchlist.history.selectedRouteEmpty");
 
   return (
@@ -248,7 +248,7 @@ export function HistoryIntegratedPanel({
 
       <div className="history-range history-range-toolbar">
         <div className="history-range-left">
-          <strong>Rango</strong>
+          <strong>Rango temporal</strong>
           <p className="muted">Ajusta el rango temporal del gráfico.</p>
         </div>
         <div className="history-range-control">
@@ -522,4 +522,5 @@ export function HistoryIntegratedPanel({
     </section>
   );
 }
+
 

@@ -65,8 +65,8 @@
     noDataLabel: "Sin datos todavía",
     noDataDetail: "actualiza para crear el primer snapshot",
     needsReviewLabel: "Necesita revisión",
-    lastUpdatedAgo: "última actualización {time}",
-    updatedAgo: "actualizado {time}",
+    lastUpdatedAgo: "hace {time}",
+    updatedAgo: "hace {time}",
     observingLabel: "En observación",
     observedLabel: "Dato observado",
   },
@@ -165,8 +165,8 @@ export const watchlistEn = {
     noDataLabel: "Sin datos todavía",
     noDataDetail: "actualiza para crear el primer snapshot",
     needsReviewLabel: "Necesita revisión",
-    lastUpdatedAgo: "última actualización {time}",
-    updatedAgo: "actualizado {time}",
+    lastUpdatedAgo: "hace {time}",
+    updatedAgo: "hace {time}",
     observingLabel: "En observación",
     observedLabel: "Dato observado",
   },
@@ -197,4 +197,5 @@ export const watchlistEn = {
     filterDescription: "Adjust range and check point to inspect details.",
   },
 };
+
 

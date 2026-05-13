@@ -12,7 +12,7 @@ More specific instructions may exist in nested `AGENTS.md` files. When working i
 
 Complete the requested task end-to-end with a small, intentional, verified change.
 
-`viru-tracker` is not generic SaaS. It should remain clear, controlled, sober, distinctive, and slightly editorial.
+`viru-tracker` is not generic SaaS. It should remain clear, controlled, sober, distinctive, and slightly editorial, while still having personality and feeling user-friendly, warm, approachable, and close.
 
 A good result is not merely code that compiles. A good result solves the real task, preserves product character, is verified with appropriate evidence, and is published correctly when the user asked for a completed change.
 
