@@ -1,5 +1,6 @@
 ﻿import { FormEvent, useEffect, useState } from "react";
 
+import { useI18n } from "@/i18n";
 import { trackUxEvent } from "@/lib/uxTracking";
 import { apiFetch } from "@/modules/shared/api";
 import { COUNTRY_AIRPORTS, CountryAirports, findCountryByIata } from "@/modules/shared/airports";
@@ -35,6 +36,7 @@ export function useWatchlistActions({
   setSelectedWatchId,
   setCalendarCursor,
 }: UseWatchlistActionsInput) {
+  const { t } = useI18n();
   const [items, setItems] = useState<Watch[]>([]);
   const [historyRows, setHistoryRows] = useState<HistoryRow[]>([]);
   const [origin, setOrigin] = useState("");
@@ -53,6 +55,7 @@ export function useWatchlistActions({
   const [selectedWatchDetail, setSelectedWatchDetail] = useState<WatchDetail | null>(null);
   const [selectedWatchSummary, setSelectedWatchSummary] = useState<PriceSummary | null>(null);
   const [isLoadingSelectedWatchDetail, setIsLoadingSelectedWatchDetail] = useState(false);
+  const [listErrorMessage, setListErrorMessage] = useState("");
   const [selectedCountry, setSelectedCountry] = useState<CountryAirports | null>(
     findCountryByIata("MAD") || COUNTRY_AIRPORTS[0] || null,
   );
@@ -64,6 +67,7 @@ export function useWatchlistActions({
     setIsLoadingHistoryInitial(true);
     try {
       const rows = await apiFetch<Watch[]>("/watchlist");
+      setListErrorMessage("");
       setItems(rows);
 
       if (!selectedOrigin && rows.length > 0) {
@@ -110,6 +114,9 @@ export function useWatchlistActions({
         const seed = merged[0]?.travelDate || rows[0]?.travel_date_local || "";
         setCalendarCursor(toIsoMonth(seed));
       }
+    } catch (error) {
+      setListErrorMessage(t("watchlist.smartList.inlineLoadError"));
+      throw error;
     } finally {
       setIsLoadingHistoryInitial(false);
       setIsLoadingWatchlist(false);
@@ -119,7 +126,7 @@ export function useWatchlistActions({
   useEffect(() => {
     load()
       .catch(() => {
-        setMessage("No se pudo cargar watchlist");
+        setMessage(t("watchlist.messages.loadError"));
         setMessageType("error");
       })
       .finally(() => setIsLoadingWatchlist(false));
@@ -221,19 +228,19 @@ export function useWatchlistActions({
     setMessageType("error");
 
     if (!travelDate) {
-      setMessage("Selecciona una fecha antes de guardar.");
+      setMessage(t("watchlist.messages.selectDateBeforeSave"));
       return;
     }
     if (!origin || !destination) {
-      setMessage("Completa origen y destino.");
+      setMessage(t("watchlist.messages.completeRoute"));
       return;
     }
     if (compatibleDestinations.length > 0 && !compatibleDestinations.includes(destination)) {
-      setMessage("Destino no compatible con el origen seleccionado.");
+      setMessage(t("watchlist.messages.destinationNotCompatible"));
       return;
     }
     if (compatibleOrigins.length > 0 && !compatibleOrigins.includes(origin)) {
-      setMessage("Origen no compatible con el destino seleccionado.");
+      setMessage(t("watchlist.messages.originNotCompatible"));
       return;
     }
 
@@ -248,7 +255,7 @@ export function useWatchlistActions({
         }),
       });
       await load();
-      setMessage("Vuelo creado");
+      setMessage(t("watchlist.messages.flightCreated"));
       setMessageType("success");
       setShowAdd(false);
       setOrigin("");
@@ -256,7 +263,7 @@ export function useWatchlistActions({
       setTravelDate("");
       setTargetPrice("");
     } catch {
-      setMessage("No se pudo crear vuelo");
+      setMessage(t("watchlist.messages.createError"));
       setMessageType("error");
     }
   }
@@ -267,10 +274,10 @@ export function useWatchlistActions({
       await apiFetch<{ status: string }>(`/watchlist/${id}/refresh-now`, { method: "POST" });
       void trackUxEvent("watchlist_refresh", { scope: "single" });
       await load();
-      setMessage("Refresh lanzado");
+      setMessage(t("watchlist.messages.refreshLaunched"));
       setMessageType("success");
     } catch {
-      setMessage("No se pudo refrescar");
+      setMessage(t("watchlist.messages.refreshError"));
       setMessageType("error");
     } finally {
       setRefreshingWatchId((current) => (current === id ? null : current));
@@ -288,7 +295,7 @@ export function useWatchlistActions({
     );
 
     if (targets.length === 0) {
-      setMessage("No hay vuelos para refrescar con los filtros actuales.");
+      setMessage(t("watchlist.messages.noFlightsForFilteredRefresh"));
       setMessageType("error");
       return;
     }
@@ -308,11 +315,11 @@ export function useWatchlistActions({
       void trackUxEvent("watchlist_refresh", { scope: "filtered", count: targets.length });
       await load();
       setMessage(
-        `Refresh masivo: ${summary.updated} actualizadas, ${summary.skippedCooldown} omitidas por cooldown, ${summary.failed} fallidas, ${summary.degradedOrStale} degradadas/stale.`,
+        t("watchlist.messages.bulkRefreshSummary", { updated: summary.updated, skippedCooldown: summary.skippedCooldown, failed: summary.failed, degradedOrStale: summary.degradedOrStale }),
       );
       setMessageType("success");
     } catch {
-      setMessage("No se pudo refrescar el grupo filtrado.");
+      setMessage(t("watchlist.messages.filteredRefreshError"));
       setMessageType("error");
     } finally {
       setIsRefreshingFiltered(false);
@@ -326,10 +333,10 @@ export function useWatchlistActions({
         body: JSON.stringify({ status }),
       });
       await load();
-      setMessage(status === "paused" ? "Vuelo pausado." : "Vuelo reanudado.");
+      setMessage(status === "paused" ? t("watchlist.messages.flightPaused") : t("watchlist.messages.flightResumed"));
       setMessageType("success");
     } catch {
-      setMessage("No se pudo actualizar el estado del vuelo.");
+      setMessage(t("watchlist.messages.statusUpdateError"));
       setMessageType("error");
     }
   }
@@ -338,10 +345,10 @@ export function useWatchlistActions({
     try {
       await apiFetch<{ status: string }>(`/watchlist/${id}`, { method: "DELETE" });
       await load();
-      setMessage("Vuelo eliminado.");
+      setMessage(t("watchlist.messages.flightDeleted"));
       setMessageType("success");
     } catch {
-      setMessage("No se pudo eliminar el vuelo.");
+      setMessage(t("watchlist.messages.deleteError"));
       setMessageType("error");
     }
   }
@@ -357,7 +364,7 @@ export function useWatchlistActions({
       ),
     );
     await load();
-    setMessage(status === "paused" ? "Vuelos pausados." : "Vuelos reanudados.");
+    setMessage(status === "paused" ? t("watchlist.messages.flightsPaused") : t("watchlist.messages.flightsResumed"));
     setMessageType("success");
   }
 
@@ -365,7 +372,7 @@ export function useWatchlistActions({
     if (ids.length === 0) return;
     await Promise.allSettled(ids.map((id) => apiFetch<{ status: string }>(`/watchlist/${id}`, { method: "DELETE" })));
     await load();
-    setMessage("Vuelos eliminados.");
+    setMessage(t("watchlist.messages.flightsDeleted"));
     setMessageType("success");
   }
 
@@ -385,11 +392,11 @@ export function useWatchlistActions({
       const summary = summarizeRefreshBulkResult(response);
       await load();
       setMessage(
-        `Refresh masivo: ${summary.updated} actualizadas, ${summary.skippedCooldown} omitidas por cooldown, ${summary.failed} fallidas, ${summary.degradedOrStale} degradadas/stale.`,
+        t("watchlist.messages.bulkRefreshSummary", { updated: summary.updated, skippedCooldown: summary.skippedCooldown, failed: summary.failed, degradedOrStale: summary.degradedOrStale }),
       );
       setMessageType("success");
     } catch {
-      setMessage("No se pudo refrescar la selección.");
+      setMessage(t("watchlist.messages.selectionRefreshError"));
       setMessageType("error");
     } finally {
       setIsRefreshingBulk(false);
@@ -398,7 +405,7 @@ export function useWatchlistActions({
 
   function openPicker(which: PickerField): void {
     if (!travelDate) {
-      setMessage("Selecciona fecha antes de elegir aeropuertos.");
+      setMessage(t("watchlist.messages.selectDateBeforeAirports"));
       setMessageType("error");
       return;
     }
@@ -441,6 +448,7 @@ export function useWatchlistActions({
     selectedWatchDetail,
     selectedWatchSummary,
     isLoadingSelectedWatchDetail,
+    listErrorMessage,
     selectedCountry,
     compatibleOrigins,
     compatibleDestinations,

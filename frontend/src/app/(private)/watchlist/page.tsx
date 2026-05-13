@@ -137,6 +137,8 @@ export default function WatchlistPage() {
           onBulkRefresh={actions.bulkRefresh}
           isRefreshingBulk={actions.isRefreshingBulk}
           isLoading={actions.isLoadingWatchlist}
+          listErrorMessage={actions.listErrorMessage}
+          onRetryLoad={actions.load}
           onOpenAddWatch={() => actions.setShowAdd(true)}
         />
 

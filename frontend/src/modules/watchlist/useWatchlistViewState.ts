@@ -1,9 +1,11 @@
 import { useCallback, useState } from "react";
 
+import { useI18n } from "@/i18n";
 import { shiftMonth } from "@/modules/watchlist/dateUtils";
 import type { ListSort, RangeWindow, ViewMode } from "@/modules/watchlist/types";
 
 export function useWatchlistViewState() {
+  const { t } = useI18n();
   const [selectedOrigin, setSelectedOrigin] = useState("");
   const [selectedDestination, setSelectedDestination] = useState("");
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
@@ -60,12 +62,12 @@ export function useWatchlistViewState() {
     setCompareIds((prev) => {
       if (prev.includes(id)) return prev.filter((item) => item !== id);
       if (prev.length >= 4) {
-        setCompareNotice("Puedes comparar hasta 4 rutas.");
+        setCompareNotice(t("watchlist.compare.maxSelectionMessage"));
         return prev;
       }
       return [...prev, id];
     });
-  }, []);
+  }, [t]);
 
   return {
     selectedOrigin,

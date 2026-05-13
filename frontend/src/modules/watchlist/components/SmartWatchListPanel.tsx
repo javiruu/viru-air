@@ -60,6 +60,8 @@ type SmartWatchListPanelProps = {
   onBulkRefresh: (watchIds: string[]) => void;
   isRefreshingBulk: boolean;
   isLoading: boolean;
+  listErrorMessage: string;
+  onRetryLoad: () => void;
   onOpenAddWatch: () => void;
 };
 
@@ -88,6 +90,8 @@ export function SmartWatchListPanel({
   onBulkRefresh,
   isRefreshingBulk,
   isLoading,
+  listErrorMessage,
+  onRetryLoad,
   onOpenAddWatch,
 }: SmartWatchListPanelProps) {
   const { t } = useI18n();
@@ -120,7 +124,7 @@ export function SmartWatchListPanel({
               autoComplete="off"
               value={watchSearch}
               onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="MAD DUB 2026-04-20"
+              placeholder={t("watchlist.smartList.searchPlaceholder")}
             />
           </label>
           <label className="watch-smart-sort" htmlFor="watch-smart-sort">
@@ -188,6 +192,14 @@ export function SmartWatchListPanel({
               </div>
             </article>
           ))}
+        </div>
+      ) : null}
+      {listErrorMessage ? (
+        <div className={`notice notice-compact section-gap-sm ${items.length === 0 ? "notice-error" : "notice-info"}`} role="alert" aria-live="assertive">
+          <span>{listErrorMessage}</span>
+          <button type="button" className="btn-ghost btn-compact" onClick={onRetryLoad}>
+            {t("watchlist.smartList.retryLoad")}
+          </button>
         </div>
       ) : null}
       {items.length === 0 && !isLoading ? (

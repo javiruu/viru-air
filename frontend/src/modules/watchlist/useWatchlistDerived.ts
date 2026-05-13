@@ -1,5 +1,6 @@
 ﻿import { useMemo } from "react";
 
+import { useI18n } from "@/i18n";
 import { formatCurrency, formatRelativeTime } from "@/modules/shared/format";
 import { getAirportMeta } from "@/modules/shared/airports";
 import { monthDays, toIsoMonth } from "@/modules/watchlist/dateUtils";
@@ -68,6 +69,7 @@ export function useWatchlistDerived({
   chartPad,
   lineColors,
 }: UseWatchlistDerivedInput) {
+  const { t } = useI18n();
   const watchMeta = useMemo(() => {
     const map = new Map<string, WatchMetaEntry>();
     const grouped = historyRows.reduce<Record<string, HistoryRow[]>>((acc, row) => {
@@ -448,9 +450,7 @@ export function useWatchlistDerived({
       const hasWatchItems = items.length > 0;
       return {
         type: "neutral",
-        text: hasWatchItems
-          ? "Mapa no disponible para estas rutas."
-          : "Añade una ruta a tu Watchlist para verla aquí.",
+        text: hasWatchItems ? t("watchlist.map.unavailableTitle") : t("watchlist.map.emptyTitle"),
         relatedWatchIds: [],
       };
     }
@@ -461,7 +461,7 @@ export function useWatchlistDerived({
       const cheapest = withPrice.reduce((acc, route) => ((route.priceCurrent ?? Infinity) < (acc.priceCurrent ?? Infinity) ? route : acc));
       return {
         type: "opportunity",
-        text: `Oportunidad activa: ${cheapest.origin} -> ${cheapest.destination} tiene el precio más bajo ahora.`,
+        text: t("watchlist.map.insightOpportunity", { origin: cheapest.origin, destination: cheapest.destination }),
         relatedWatchIds: [cheapest.watchId],
       };
     }
@@ -471,7 +471,7 @@ export function useWatchlistDerived({
       const stable = withVolatility.reduce((acc, route) => ((route.volatility ?? Infinity) < (acc.volatility ?? Infinity) ? route : acc));
       return {
         type: "stability",
-        text: `Más estable ahora: ${stable.origin} -> ${stable.destination}.`,
+        text: t("watchlist.map.insightStability", { origin: stable.origin, destination: stable.destination }),
         relatedWatchIds: [stable.watchId],
       };
     }
@@ -479,10 +479,10 @@ export function useWatchlistDerived({
     const primary = activeRoutes.find((route) => route.isPrimary) ?? activeRoutes[0];
     return {
       type: "neutral",
-      text: `Ruta en foco: ${primary.origin} -> ${primary.destination}.`,
+      text: t("watchlist.map.insightFocus", { origin: primary.origin, destination: primary.destination }),
       relatedWatchIds: [primary.watchId],
     };
-  }, [watchMapRoutes, items.length]);
+  }, [items.length, t, watchMapRoutes]);
 
   return {
     watchMeta,
