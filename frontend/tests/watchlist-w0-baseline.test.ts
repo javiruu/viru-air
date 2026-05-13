@@ -28,7 +28,7 @@ test("W0: watchlist list/detail/history/calendar/compare copies remain present i
   const historyPanel = fs.readFileSync(HISTORY_PANEL, "utf8");
   const comparePanel = fs.readFileSync(COMPARE_PANEL, "utf8");
 
-  assert.match(smartPanel, /Lista inteligente de vuelos/);
+  assert.match(smartPanel, /watchlist\.smartList\.heading/);
   assert.match(detailPanel, /watchlist\.detail\.title/);
   assert.match(historyPanel, /watchlist\.history\.title|Histórico integrado|Historico integrado/);
   assert.match(detailPanel, /Calendario/);

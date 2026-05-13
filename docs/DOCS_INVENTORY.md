@@ -260,3 +260,9 @@ Entradas vivas agregadas:
 
 - docs/qa/reports/2026-05-12-watchlist-w3-contextual-actions.md
 
+## Actualizacion manual 2026-05-13 (watchlist W4 routes heading)
+
+Entradas vivas agregadas:
+
+- docs/qa/reports/2026-05-12-watchlist-w4-routes-heading.md
+

@@ -2,6 +2,11 @@
   title: "Watchlist",
   subtitle: "Tu mesa para vigilar, comparar y decidir sin salir de la misma vista.",
   addFlight: "Añadir vuelo",
+  smartList: {
+    heading: "Rutas vigiladas",
+    activeCount: "{count} activas",
+    showingCount: "Mostrando {shown} de {total} rutas.",
+  },
   quickStartTitle: "Primeros pasos",
   quickStartBody: "Guarda vuelos aquí para seguir cambios de precio y horario.",
   quickStartConfirm: "Entendido",
@@ -59,6 +64,11 @@ export const watchlistEn = {
   title: "Watchlist",
   subtitle: "Your control table to monitor, compare, and decide without changing views.",
   addFlight: "Add flight",
+  smartList: {
+    heading: "Monitored routes",
+    activeCount: "{count} active",
+    showingCount: "Showing {shown} of {total} routes.",
+  },
   quickStartTitle: "Quick start",
   quickStartBody: "Save flights here to track schedule and price changes.",
   quickStartConfirm: "Got it",

@@ -97,13 +97,13 @@ export function SmartWatchListPanel({
     <section className="panel panel-soft section-gap">
       <div className="panel-header">
         <div>
-          <h2 className="panel-title">Lista inteligente de vuelos</h2>
+          <h2 className="panel-title">{t("watchlist.smartList.heading")}</h2>
           <span className="muted">
-            {items.length} activos{lastUpdatedGlobal ? ` · Última actualización ${lastUpdatedGlobal}` : ""}
+            {t("watchlist.smartList.activeCount", { count: items.length })}{lastUpdatedGlobal ? ` · Última actualización ${lastUpdatedGlobal}` : ""}
           </span>
           {items.length > 0 ? (
             <span className="watch-smart-meta">
-              Mostrando {smartListItems.length} de {items.length} vuelos.
+              {t("watchlist.smartList.showingCount", { shown: smartListItems.length, total: items.length })}
             </span>
           ) : null}
         </div>
