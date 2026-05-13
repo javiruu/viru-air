@@ -291,3 +291,10 @@ Entradas vivas agregadas:
 
 - docs/qa/reports/2026-05-12-watchlist-w8-reactive-compare.md
 
+## Actualizacion manual 2026-05-13 (watchlist W9 final polish)
+
+Entradas vivas agregadas:
+
+- docs/qa/reports/2026-05-12-watchlist-w9-final-polish.md
+- docs/qa/screenshots/watchlist-w9-final.png
+

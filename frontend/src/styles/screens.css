@@ -3167,7 +3167,7 @@ h1 {
 .watchlist-decision-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  gap: 0.95rem;
+  gap: 1.05rem;
   align-items: start;
 }
 
@@ -3201,6 +3201,7 @@ h1 {
 .watch-map-copy {
   display: grid;
   gap: 0.35rem;
+  max-width: 74ch;
 }
 
 .watch-map-insight {
@@ -3220,6 +3221,7 @@ h1 {
 .watch-map-limit {
   font-size: 0.77rem;
   color: var(--ink-muted);
+  text-wrap: pretty;
 }
 
 .watch-map-stage {
@@ -3643,7 +3645,7 @@ h1 {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 1.4rem;
+  gap: 1rem 1.2rem;
 }
 
 .watch-details {
@@ -3656,6 +3658,10 @@ h1 {
   gap: 0.6rem;
   flex-wrap: wrap;
   align-items: baseline;
+}
+
+.watch-route strong {
+  white-space: nowrap;
 }
 
 .watch-date {
@@ -3714,6 +3720,11 @@ h1 {
   gap: 0.7rem;
   align-items: flex-end;
   flex-wrap: wrap;
+}
+
+.watch-bulk-toolbar {
+  margin-left: auto;
+  row-gap: 0.45rem;
 }
 
 .watch-smart-meta {
@@ -3919,7 +3930,7 @@ h1 {
 .compare-head {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.6rem;
 }
 
@@ -4014,12 +4025,17 @@ h1 {
 
 .compare-route {
   font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .compare-date {
   font-size: 0.82rem;
   color: var(--ink-muted);
   justify-self: end;
+  white-space: nowrap;
 }
 
 .compare-count {
@@ -4047,6 +4063,7 @@ h1 {
   display: flex;
   gap: 0.4rem;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .compare-badge {
@@ -4070,6 +4087,7 @@ h1 {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
 .compare-subtitle {
@@ -4477,7 +4495,7 @@ h1 {
 
 .history-summary--kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
   gap: 0.6rem;
 }
 
@@ -4485,6 +4503,8 @@ h1 {
   display: grid;
   gap: 0.2rem;
   padding: 0.5rem 0.7rem;
+  align-content: start;
+  min-height: 72px;
   border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--surface);
@@ -4497,10 +4517,35 @@ h1 {
   letter-spacing: 0.08em;
   font-size: 0.7rem;
   color: var(--ink-muted);
+  line-height: 1.2;
 }
 
 .history-kpi strong {
   color: var(--ink);
+  line-height: 1.2;
+}
+
+.watchlist-page > .section-gap {
+  margin-top: 0.88rem;
+}
+
+.watchlist-page .panel-title,
+.watchlist-page .panel-subtitle,
+.watchlist-page .panel-note,
+.watchlist-page .muted {
+  text-wrap: pretty;
+  word-break: normal;
+}
+
+.watch-detail-panel .panel-header {
+  align-items: flex-start;
+}
+
+@media (min-width: 1121px) {
+  .watch-detail-panel {
+    position: sticky;
+    top: 1rem;
+  }
 }
 
 .history-disclaimer {
@@ -11133,9 +11178,17 @@ textarea::placeholder {
     align-items: flex-start;
   }
 
+  .watch-route strong {
+    white-space: normal;
+  }
+
   .watch-smart-tools {
     width: 100%;
     align-items: stretch;
+  }
+
+  .watch-bulk-toolbar {
+    margin-left: 0;
   }
 
   .watch-smart-search,
@@ -11163,6 +11216,10 @@ textarea::placeholder {
 
   .compare-body {
     grid-template-columns: 1fr;
+  }
+
+  .compare-date {
+    justify-self: start;
   }
 
   .prefs-layout {
