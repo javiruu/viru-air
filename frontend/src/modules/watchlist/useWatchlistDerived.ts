@@ -445,9 +445,12 @@ export function useWatchlistDerived({
 
   const watchMapInsight = useMemo<WatchMapInsight>(() => {
     if (watchMapRoutes.length === 0) {
+      const hasWatchItems = items.length > 0;
       return {
         type: "neutral",
-        text: "No hay rutas activas para mostrar en el mapa.",
+        text: hasWatchItems
+          ? "Mapa no disponible para estas rutas."
+          : "Añade una ruta a tu Watchlist para verla aquí.",
         relatedWatchIds: [],
       };
     }
@@ -479,7 +482,7 @@ export function useWatchlistDerived({
       text: `Ruta en foco: ${primary.origin} -> ${primary.destination}.`,
       relatedWatchIds: [primary.watchId],
     };
-  }, [watchMapRoutes]);
+  }, [watchMapRoutes, items.length]);
 
   return {
     watchMeta,

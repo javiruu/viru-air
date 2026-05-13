@@ -1,13 +1,15 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { useI18n } from "@/i18n";
 import { Map, MapControls, MapMarker, MapPopup, MapRoute, type MapRef } from "@/components/ui/map";
 import { formatCurrency } from "@/modules/shared/format";
 import type { WatchMapInsight, WatchMapMode, WatchMapRouteView } from "@/modules/watchlist/types";
 
 type WatchlistMapDecisionPanelProps = {
   routes: WatchMapRouteView[];
+  hasWatchItems: boolean;
   mode: WatchMapMode;
   insight: WatchMapInsight;
   compareLimitExceeded: boolean;
@@ -27,15 +29,18 @@ function trendLabel(route: WatchMapRouteView) {
 
 export function WatchlistMapDecisionPanel({
   routes,
+  hasWatchItems,
   mode,
   insight,
   compareLimitExceeded,
   onFocusWatch,
 }: WatchlistMapDecisionPanelProps) {
+  const { t } = useI18n();
   const mapRef = useRef<MapRef>(null);
   const [activePopupWatchId, setActivePopupWatchId] = useState<string | null>(null);
 
   const visibleRoutes = useMemo(() => routes.slice(0, 4), [routes]);
+  const hasMapData = visibleRoutes.length > 0;
   const primary = useMemo(
     () => visibleRoutes.find((route) => route.isPrimary) ?? visibleRoutes[0] ?? null,
     [visibleRoutes],
@@ -70,16 +75,38 @@ export function WatchlistMapDecisionPanel({
     if (!activePopupWatchId && primary) setActivePopupWatchId(primary.watchId);
   }, [activePopupWatchId, primary]);
 
+  if (!hasMapData) {
+    return (
+      <section className="panel panel-soft watch-map-panel section-gap" aria-label={t("watchlist.map.title")}>
+        <div className="panel-header watch-map-header">
+          <div>
+            <h2 className="panel-title">{t("watchlist.map.title")}</h2>
+          </div>
+        </div>
+        <div className="watch-map-copy">
+          <span className="watch-map-insight watch-map-insight-neutral">
+            {hasWatchItems ? t("watchlist.map.unavailableTitle") : t("watchlist.map.emptyTitle")}
+          </span>
+          <span className="watch-map-limit">
+            {hasWatchItems ? t("watchlist.map.unavailableBody") : t("watchlist.map.emptyBody")}
+          </span>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="panel panel-soft watch-map-panel section-gap" aria-label="Mesa de decisiones de rutas">
+    <section className="panel panel-soft watch-map-panel section-gap" aria-label={t("watchlist.map.title")}>
       <div className="panel-header watch-map-header">
         <div>
-          <h2 className="panel-title">Mesa de decisiones</h2>
+          <h2 className="panel-title">{t("watchlist.map.title")}</h2>
           <p className="panel-subtitle">
-            {mode === "compare" ? "Comparación activa de rutas" : "Ruta seleccionada en foco"}
+            {mode === "compare" ? t("watchlist.map.compareMode") : t("watchlist.map.focusMode")}
           </p>
         </div>
-        <span className={`watch-map-mode watch-map-mode-${mode}`}>{mode === "compare" ? "Modo comparación" : "Modo enfoque"}</span>
+        <span className={`watch-map-mode watch-map-mode-${mode}`}>
+          {mode === "compare" ? t("watchlist.map.comparePill") : t("watchlist.map.focusPill")}
+        </span>
       </div>
 
       <div className="watch-map-copy">
@@ -153,7 +180,7 @@ export function WatchlistMapDecisionPanel({
               <article className="watch-map-popup">
                 <header>
                   <strong>
-                    {popupRoute.origin} → {popupRoute.destination}
+                    {popupRoute.origin} {"->"} {popupRoute.destination}
                   </strong>
                   <span>{trendLabel(popupRoute)}</span>
                 </header>

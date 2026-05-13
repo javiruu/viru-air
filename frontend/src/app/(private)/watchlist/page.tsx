@@ -24,7 +24,7 @@ const WatchlistMapDecisionPanel = dynamic(
     loading: () => (
       <section className="panel panel-soft watch-map-panel section-gap">
         <div className="panel-header">
-          <h2 className="panel-title">Mesa de decisiones</h2>
+          <h2 className="panel-title">Mapa de rutas</h2>
         </div>
         <p className="panel-note">Cargando mapa de rutas...</p>
       </section>
@@ -188,6 +188,7 @@ export default function WatchlistPage() {
 
       <WatchlistMapDecisionPanel
         routes={derived.watchMapRoutes}
+        hasWatchItems={actions.items.length > 0}
         mode={derived.watchMapMode}
         insight={derived.watchMapInsight}
         compareLimitExceeded={view.compareIds.length > 4}

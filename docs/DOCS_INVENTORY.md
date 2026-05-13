@@ -278,3 +278,9 @@ Entradas vivas agregadas:
 
 - docs/qa/reports/2026-05-12-watchlist-w6-actionable-freshness.md
 
+## Actualizacion manual 2026-05-13 (watchlist W7 map empty state)
+
+Entradas vivas agregadas:
+
+- docs/qa/reports/2026-05-12-watchlist-w7-map-empty-state.md
+
