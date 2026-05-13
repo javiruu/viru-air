@@ -205,132 +205,136 @@ export function HistoryIntegratedPanel({
           </div>
         </div>
 
-        <div className="filter-grid history-filters">
-          <label className="history-filter history-origin">
-            <span className="history-label">
-              <span className="history-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                  <path
-                    d="M3 11l18-6-6 18-2.2-7.2L3 11z"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M11 13l7-7"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                  />
-                </svg>
+        <div className="history-filters">
+          <div className="history-route-group" aria-label="Filtros de ruta">
+            <label className="history-filter history-origin">
+              <span className="history-label">
+                <span className="history-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+                    <path
+                      d="M3 11l18-6-6 18-2.2-7.2L3 11z"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M11 13l7-7"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </span>
+                Origen
               </span>
-              Origen
-            </span>
-            <select className="history-input" name="history_origin" autoComplete="off" value={selectedOrigin} onChange={(e) => onOriginChange(e.target.value)}>
-              <option value="">-- origen --</option>
-              {allOrigins.map((origin) => <option key={origin} value={origin}>{origin}</option>)}
-            </select>
-          </label>
+              <select className="history-input" name="history_origin" autoComplete="off" value={selectedOrigin} onChange={(e) => onOriginChange(e.target.value)}>
+                <option value="">-- origen --</option>
+                {allOrigins.map((origin) => <option key={origin} value={origin}>{origin}</option>)}
+              </select>
+            </label>
 
-          <label className="history-filter history-destination">
-            <span className="history-label">
-              <span className="history-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                  <path
-                    d="M12 21s7-7.4 7-12a7 7 0 1 0-14 0c0 4.6 7 12 7 12z"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinejoin="round"
-                  />
-                  <circle cx="12" cy="9" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-                </svg>
+            <label className="history-filter history-destination">
+              <span className="history-label">
+                <span className="history-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+                    <path
+                      d="M12 21s7-7.4 7-12a7 7 0 1 0-14 0c0 4.6 7 12 7 12z"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinejoin="round"
+                    />
+                    <circle cx="12" cy="9" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
+                  </svg>
+                </span>
+                Destino
               </span>
-              Destino
-            </span>
-            <select
-              className="history-input"
-              name="history_destination"
-              autoComplete="off"
-              value={selectedDestination}
-              onChange={(e) => onDestinationChange(e.target.value)}
-              disabled={!selectedOrigin}
-            >
-              <option value="">-- destino --</option>
-              {allDestinations.map((destination) => <option key={destination} value={destination}>{destination}</option>)}
-            </select>
-          </label>
+              <select
+                className="history-input"
+                name="history_destination"
+                autoComplete="off"
+                value={selectedDestination}
+                onChange={(e) => onDestinationChange(e.target.value)}
+                disabled={!selectedOrigin}
+              >
+                <option value="">-- destino --</option>
+                {allDestinations.map((destination) => <option key={destination} value={destination}>{destination}</option>)}
+              </select>
+            </label>
+          </div>
 
-          <label className="history-filter history-date">
-            <span className="history-label">
-              <span className="history-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                  <rect x="3" y="4" width="18" height="17" rx="3" fill="none" stroke="currentColor" strokeWidth="1.6" />
-                  <path
-                    d="M8 2v4M16 2v4M3 9h18"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                  />
-                </svg>
+          <div className="history-temporal-group" aria-label="Filtros temporales">
+            <label className="history-filter history-date">
+              <span className="history-label">
+                <span className="history-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+                    <rect x="3" y="4" width="18" height="17" rx="3" fill="none" stroke="currentColor" strokeWidth="1.6" />
+                    <path
+                      d="M8 2v4M16 2v4M3 9h18"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </span>
+                Fechas de vuelo
               </span>
-              Fechas de vuelo
-            </span>
-            <select
-              multiple
-              name="history_dates"
-              autoComplete="off"
-              value={selectedDates}
-              disabled={!selectedOrigin || !selectedDestination}
-              onChange={(e) => {
-                const values = Array.from(e.target.selectedOptions).map((option) => option.value);
-                onDatesChange(values);
-              }}
-              className="history-input history-scroll history-multi"
-            >
-              {allTravelDates.map((travelDate) => <option key={travelDate} value={travelDate}>{travelDate}</option>)}
-            </select>
-          </label>
+              <select
+                multiple
+                name="history_dates"
+                autoComplete="off"
+                value={selectedDates}
+                disabled={!selectedOrigin || !selectedDestination}
+                onChange={(e) => {
+                  const values = Array.from(e.target.selectedOptions).map((option) => option.value);
+                  onDatesChange(values);
+                }}
+                className="history-input history-scroll history-multi"
+              >
+                {allTravelDates.map((travelDate) => <option key={travelDate} value={travelDate}>{travelDate}</option>)}
+              </select>
+            </label>
 
-          <label className="history-filter history-point">
-            <span className="history-label">
-              <span className="history-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                  <path
-                    d="M4 17h16M5 14l4-4 3 3 6-6"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+            <label className="history-filter history-point">
+              <span className="history-label">
+                <span className="history-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+                    <path
+                      d="M4 17h16M5 14l4-4 3 3 6-6"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+                Punto (fecha de consulta)
               </span>
-              Punto (fecha de consulta)
-            </span>
-            <select
-              className="history-input"
-              name="history_point"
-              autoComplete="off"
-              value={selectedPoint}
-              disabled={selectedDates.length !== 1 || pointOptions.length === 0}
-              onChange={(e) => onPointChange(e.target.value)}
-            >
-              <option value="">Selecciona un punto para ver detalle</option>
-              {pointOptions.map((point) => <option key={point.value} value={point.value}>{point.label}</option>)}
-            </select>
-            <span className="history-helper">
-              {selectedDates.length !== 1
-                ? "Selecciona una sola fecha para habilitar."
-                : pointOptions.length === 0
-                  ? "No hay puntos para la fecha seleccionada."
-                  : "Selecciona un punto para activar el detalle."}
-            </span>
-          </label>
+              <select
+                className="history-input"
+                name="history_point"
+                autoComplete="off"
+                value={selectedPoint}
+                disabled={selectedDates.length !== 1 || pointOptions.length === 0}
+                onChange={(e) => onPointChange(e.target.value)}
+              >
+                <option value="">Selecciona un punto para ver detalle</option>
+                {pointOptions.map((point) => <option key={point.value} value={point.value}>{point.label}</option>)}
+              </select>
+              <span className="history-helper">
+                {selectedDates.length !== 1
+                  ? "Selecciona una sola fecha para habilitar."
+                  : pointOptions.length === 0
+                    ? "No hay puntos para la fecha seleccionada."
+                    : "Selecciona un punto para activar el detalle."}
+              </span>
+            </label>
+          </div>
         </div>
       </div>
 
