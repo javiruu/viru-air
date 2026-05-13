@@ -1,5 +1,6 @@
-import type { CSSProperties, MouseEvent as ReactMouseEvent } from "react";
+﻿import type { CSSProperties, MouseEvent as ReactMouseEvent } from "react";
 
+import { useI18n } from "@/i18n";
 import { formatCurrency } from "@/modules/shared/format";
 import { formatDateTime } from "@/modules/watchlist/presentation";
 
@@ -79,9 +80,6 @@ type HistoryIntegratedPanelProps = {
   selectedDestination: string;
   selectedDates: string[];
   selectedPoint: string;
-  allOrigins: string[];
-  allDestinations: string[];
-  allTravelDates: string[];
   pointOptions: PointOption[];
   rangeWindow: RangeWindow;
   chartIsCompact: boolean;
@@ -100,9 +98,6 @@ type HistoryIntegratedPanelProps = {
   chartPad: { left: number; right: number; top: number; bottom: number };
   onToggleViewMode: () => void;
   onApplyFilters: () => void;
-  onOriginChange: (value: string) => void;
-  onDestinationChange: (value: string) => void;
-  onDatesChange: (values: string[]) => void;
   onPointChange: (value: string) => void;
   onRangeChange: (value: RangeWindow) => void;
   onToggleRangeWindow: () => void;
@@ -121,9 +116,6 @@ export function HistoryIntegratedPanel({
   selectedDestination,
   selectedDates,
   selectedPoint,
-  allOrigins,
-  allDestinations,
-  allTravelDates,
   pointOptions,
   rangeWindow,
   chartIsCompact,
@@ -142,9 +134,6 @@ export function HistoryIntegratedPanel({
   chartPad,
   onToggleViewMode,
   onApplyFilters,
-  onOriginChange,
-  onDestinationChange,
-  onDatesChange,
   onPointChange,
   onRangeChange,
   onToggleRangeWindow,
@@ -154,6 +143,12 @@ export function HistoryIntegratedPanel({
   onPrevMonth,
   onNextMonth,
 }: HistoryIntegratedPanelProps) {
+  const { t } = useI18n();
+  const hasSelectedWatch = Boolean(selectedWatch);
+  const selectedRouteValue = selectedWatch
+    ? `${selectedWatch.origin_iata} ? ${selectedWatch.destination_iata} · ${selectedWatch.travel_date_local}`
+    : t("watchlist.history.selectedRouteEmpty");
+
   return (
     <section className="panel history-panel section-gap">
       <div className="panel-header">
@@ -179,12 +174,10 @@ export function HistoryIntegratedPanel({
                 />
               </svg>
             </span>
-            Histórico integrado
+            {t("watchlist.history.title")}
           </h2>
           <p className="muted">
-            {selectedWatch
-              ? `Analizando ${selectedWatch.origin_iata} → ${selectedWatch.destination_iata} (${selectedWatch.travel_date_local})`
-              : "Selecciona un vuelo para enfocar el análisis."}
+            {hasSelectedWatch ? t("watchlist.history.subtitleWithRoute") : t("watchlist.history.subtitleWithoutRoute")}
           </p>
         </div>
       </div>
@@ -192,109 +185,26 @@ export function HistoryIntegratedPanel({
       <div className="history-filterbar">
         <div className="history-filterbar-header">
           <div className="history-filterbar-title">
-            <strong>Filtros</strong>
-            <span className="muted">Ajusta origen, destino, fechas y punto para ver detalle.</span>
+            <strong>{t("watchlist.history.filterTitle")}</strong>
+            <span className="muted">{t("watchlist.history.filterDescription")}</span>
           </div>
           <div className="history-filterbar-actions">
             <button className="btn-secondary btn-layered" onClick={onToggleViewMode}>
               {viewMode === "chart" ? "Ver calendario" : "Ver gráfico"}
             </button>
-            <button className="btn-primary btn-layered" type="button" disabled={isRefreshingFiltered} onClick={onApplyFilters}>
+            <button className="btn-primary btn-layered" type="button" disabled={isRefreshingFiltered || !hasSelectedWatch} onClick={onApplyFilters}>
               {isRefreshingFiltered ? "Actualizando..." : "Aplicar filtros"}
             </button>
           </div>
         </div>
 
         <div className="filter-grid history-filters">
-          <label className="history-filter history-origin">
-            <span className="history-label">
-              <span className="history-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                  <path
-                    d="M3 11l18-6-6 18-2.2-7.2L3 11z"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M11 13l7-7"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-              Origen
-            </span>
-            <select className="history-input" name="history_origin" autoComplete="off" value={selectedOrigin} onChange={(e) => onOriginChange(e.target.value)}>
-              <option value="">-- origen --</option>
-              {allOrigins.map((origin) => <option key={origin} value={origin}>{origin}</option>)}
-            </select>
-          </label>
-
-          <label className="history-filter history-destination">
-            <span className="history-label">
-              <span className="history-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                  <path
-                    d="M12 21s7-7.4 7-12a7 7 0 1 0-14 0c0 4.6 7 12 7 12z"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinejoin="round"
-                  />
-                  <circle cx="12" cy="9" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-                </svg>
-              </span>
-              Destino
-            </span>
-            <select
-              className="history-input"
-              name="history_destination"
-              autoComplete="off"
-              value={selectedDestination}
-              onChange={(e) => onDestinationChange(e.target.value)}
-              disabled={!selectedOrigin}
-            >
-              <option value="">-- destino --</option>
-              {allDestinations.map((destination) => <option key={destination} value={destination}>{destination}</option>)}
-            </select>
-          </label>
-
-          <label className="history-filter history-date">
-            <span className="history-label">
-              <span className="history-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                  <rect x="3" y="4" width="18" height="17" rx="3" fill="none" stroke="currentColor" strokeWidth="1.6" />
-                  <path
-                    d="M8 2v4M16 2v4M3 9h18"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-              Fechas de vuelo
-            </span>
-            <select
-              multiple
-              name="history_dates"
-              autoComplete="off"
-              value={selectedDates}
-              disabled={!selectedOrigin || !selectedDestination}
-              onChange={(e) => {
-                const values = Array.from(e.target.selectedOptions).map((option) => option.value);
-                onDatesChange(values);
-              }}
-              className="history-input history-scroll history-multi"
-            >
-              {allTravelDates.map((travelDate) => <option key={travelDate} value={travelDate}>{travelDate}</option>)}
-            </select>
-          </label>
+          <div className="history-filter history-route-summary">
+            <span className="history-label">{t("watchlist.history.selectedRouteLabel")}</span>
+            <div className="history-input" aria-live="polite">
+              {selectedRouteValue}
+            </div>
+          </div>
 
           <label className="history-filter history-point">
             <span className="history-label">
@@ -317,18 +227,20 @@ export function HistoryIntegratedPanel({
               name="history_point"
               autoComplete="off"
               value={selectedPoint}
-              disabled={selectedDates.length !== 1 || pointOptions.length === 0}
+              disabled={!hasSelectedWatch || selectedDates.length !== 1 || pointOptions.length === 0}
               onChange={(e) => onPointChange(e.target.value)}
             >
               <option value="">Selecciona un punto para ver detalle</option>
               {pointOptions.map((point) => <option key={point.value} value={point.value}>{point.label}</option>)}
             </select>
             <span className="history-helper">
-              {selectedDates.length !== 1
-                ? "Selecciona una sola fecha para habilitar."
-                : pointOptions.length === 0
-                  ? "No hay puntos para la fecha seleccionada."
-                  : "Selecciona un punto para activar el detalle."}
+              {!hasSelectedWatch
+                ? "Selecciona una ruta de tu Watchlist para habilitar."
+                : selectedDates.length !== 1
+                  ? "Selecciona una sola fecha para habilitar."
+                  : pointOptions.length === 0
+                    ? "No hay puntos para la fecha seleccionada."
+                    : "Selecciona un punto para activar el detalle."}
             </span>
           </label>
         </div>
@@ -372,7 +284,14 @@ export function HistoryIntegratedPanel({
         </div>
       </div>
 
-      {viewMode === "chart" ? (
+      {!hasSelectedWatch ? (
+        <div className="panel history-stage history-chart history-scroll history-chart-panel">
+          <div className="history-ghost">
+            <div className="history-ghost-line" />
+            <p>{t("watchlist.history.selectedRouteEmpty")}</p>
+          </div>
+        </div>
+      ) : viewMode === "chart" ? (
         <div
           key={`chart-${selectedOrigin}-${selectedDestination}-${selectedDates.join(",")}-${selectedPoint}`}
           className={`panel history-stage history-chart history-scroll history-chart-panel${chartIsCompact ? " history-chart--compact" : ""}`}
@@ -603,3 +522,4 @@ export function HistoryIntegratedPanel({
     </section>
   );
 }
+

@@ -1,4 +1,4 @@
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
@@ -10,13 +10,7 @@ const HISTORY_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "c
 const COMPARE_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "ComparePanels.tsx");
 const NAV_V1 = path.join(process.cwd(), "src", "modules", "shared", "navigationV1.ts");
 
-const FORBIDDEN_WATCHLIST_COPY = [
-  "Back",
-  "Flight Watchlist",
-  "Add flight",
-  "Quick start",
-  "Last update",
-];
+const FORBIDDEN_WATCHLIST_COPY = ["Back", "Flight Watchlist", "Add flight", "Quick start", "Last update"];
 
 test("W0: /watchlist render path keeps main building blocks wired", () => {
   const source = fs.readFileSync(WATCHLIST_PAGE, "utf8");
@@ -36,7 +30,7 @@ test("W0: watchlist list/detail/history/calendar/compare copies remain present i
 
   assert.match(smartPanel, /Lista inteligente de vuelos/);
   assert.match(detailPanel, /watchlist\.detail\.title/);
-  assert.match(historyPanel, /Histórico integrado|Historico integrado/);
+  assert.match(historyPanel, /watchlist\.history\.title|Histórico integrado|Historico integrado/);
   assert.match(detailPanel, /Calendario/);
   assert.match(comparePanel, /Comparativa multi-vuelo/);
 });

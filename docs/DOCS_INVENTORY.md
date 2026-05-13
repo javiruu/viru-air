@@ -246,3 +246,10 @@ Entradas vivas agregadas:
 Entradas vivas agregadas:
 
 - `docs/qa/reports/2026-05-12-watchlist-w1-layout.md`
+
+## Actualizacion manual 2026-05-13 (watchlist W2 single route selection)
+
+Entradas vivas agregadas:
+
+- docs/qa/reports/2026-05-12-watchlist-w2-single-route-selection.md
+

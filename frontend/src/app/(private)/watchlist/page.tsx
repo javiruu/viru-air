@@ -148,9 +148,6 @@ export default function WatchlistPage() {
         selectedDestination={view.selectedDestination}
         selectedDates={view.selectedDates}
         selectedPoint={view.selectedPoint}
-        allOrigins={derived.allOrigins}
-        allDestinations={derived.allDestinations}
-        allTravelDates={derived.allTravelDates}
         pointOptions={derived.pointOptions}
         rangeWindow={view.rangeWindow}
         chartIsCompact={derived.chartIsCompact}
@@ -169,9 +166,6 @@ export default function WatchlistPage() {
         chartPad={CHART_PAD}
         onToggleViewMode={view.toggleViewMode}
         onApplyFilters={actions.refreshFiltered}
-        onOriginChange={view.onOriginChange}
-        onDestinationChange={view.onDestinationChange}
-        onDatesChange={view.onDatesChange}
         onPointChange={view.setSelectedPoint}
         onRangeChange={view.setRangeWindow}
         onToggleRangeWindow={view.toggleRangeWindow}

@@ -1,4 +1,4 @@
-export const watchlistEs = {
+﻿export const watchlistEs = {
   title: "Watchlist",
   subtitle: "Tu mesa para vigilar, comparar y decidir sin salir de la misma vista.",
   addFlight: "Añadir vuelo",
@@ -31,6 +31,15 @@ export const watchlistEs = {
     delta: "Delta",
     count: "Snapshots",
     empty: "Aún no hay histórico suficiente para resumir esta ruta.",
+  },
+  history: {
+    title: "Histórico integrado",
+    subtitleWithRoute: "Histórico de la ruta seleccionada.",
+    subtitleWithoutRoute: "Selecciona una ruta de tu Watchlist para ver su histórico.",
+    selectedRouteLabel: "Ruta seleccionada",
+    selectedRouteEmpty: "Selecciona una ruta de tu Watchlist para ver su histórico.",
+    filterTitle: "Filtros",
+    filterDescription: "Ajusta rango y punto de consulta para ver detalle.",
   },
 };
 
@@ -68,4 +77,14 @@ export const watchlistEn = {
     count: "Snapshots",
     empty: "Not enough history to summarize this route yet.",
   },
+  history: {
+    title: "Integrated history",
+    subtitleWithRoute: "History for the selected route.",
+    subtitleWithoutRoute: "Select a route from your Watchlist to view its history.",
+    selectedRouteLabel: "Selected route",
+    selectedRouteEmpty: "Select a route from your Watchlist to view its history.",
+    filterTitle: "Filters",
+    filterDescription: "Adjust range and check point to inspect details.",
+  },
 };
+
