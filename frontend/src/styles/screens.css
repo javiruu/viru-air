@@ -4197,6 +4197,7 @@ h1 {
 .history-filter {
   position: relative;
   display: grid;
+  min-width: 0;
   gap: 0.4rem;
   padding: 0.7rem 0.75rem 0.8rem 0.9rem;
   border-radius: 16px;
@@ -4275,6 +4276,9 @@ h1 {
 }
 
 .history-input {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   border: 1px solid rgba(217, 203, 187, 0.7);
   border-radius: 12px;
   padding: 0.62rem 0.7rem;
