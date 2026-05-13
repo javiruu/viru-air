@@ -39,14 +39,24 @@ export default function PreferenciasBusquedaPage() {
   const [errors, setErrors] = useState<SearchPreferenceErrors>({});
   const [toast, setToast] = useState<ToastState>(null);
   const [saving, setSaving] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
 
-  useEffect(() => {
+  function loadPreferences() {
+    setLoadFailed(false);
     apiFetch<Pref>("/preferences/search")
       .then((data) => {
         setPref(data);
         setInitialPref(data);
       })
-      .catch(() => setToast({ tone: "error", message: t("preferences.search.loadError") }));
+      .catch(() => {
+        setLoadFailed(true);
+        setToast({ tone: "error", message: t("preferences.search.loadError") });
+      });
+  }
+
+  useEffect(() => {
+    loadPreferences();
+    // we intentionally reload when translation context changes
   }, [t]);
 
   useEffect(() => {
@@ -119,8 +129,19 @@ export default function PreferenciasBusquedaPage() {
           </div>
         </div>
         <section className="panel panel-soft air-loader-section">
-          <AirLoader size={0.85} />
-          <p className="muted">{t("preferences.search.loading")}</p>
+          {loadFailed ? (
+            <>
+              <p className="muted">{t("preferences.search.loadError")}</p>
+              <button className="btn-primary" type="button" onClick={loadPreferences}>
+                {t("shared.actions.retry")}
+              </button>
+            </>
+          ) : (
+            <>
+              <AirLoader size={0.85} />
+              <p className="muted">{t("preferences.search.loading")}</p>
+            </>
+          )}
         </section>
       </main>
     );

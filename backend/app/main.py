@@ -64,13 +64,7 @@ async def _safe_request_body(request: Request):
 
 
 def _parse_cors_origins() -> list[str]:
-    env_value = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
-    if env_value:
-        origins = [item.strip() for item in env_value.split(",") if item.strip()]
-        if origins:
-            return origins
-
-    return [
+    default_origins = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:3101",
@@ -81,6 +75,15 @@ def _parse_cors_origins() -> list[str]:
         "http://45.136.18.49:3300",
         "http://192.168.56.1:3000",
     ]
+    env_value = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
+    if env_value:
+        env_origins = [item.strip() for item in env_value.split(",") if item.strip()]
+        if env_origins:
+            # Keep dev-safe defaults even when env overrides are present.
+            merged = list(dict.fromkeys([*default_origins, *env_origins]))
+            return merged
+
+    return default_origins
 
 
 app = FastAPI(title="Viru API", version="0.1.0")
