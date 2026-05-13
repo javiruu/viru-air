@@ -240,3 +240,9 @@ Entradas vivas agregadas:
 
 - `docs/qa/reports/2026-05-12-watchlist-w0-baseline.md`
 - `docs/qa/screenshots/watchlist-w0-baseline.png`
+
+## Actualizacion manual 2026-05-13 (watchlist W1 layout)
+
+Entradas vivas agregadas:
+
+- `docs/qa/reports/2026-05-12-watchlist-w1-layout.md`

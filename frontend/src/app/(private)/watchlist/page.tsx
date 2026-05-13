@@ -100,6 +100,46 @@ export default function WatchlistPage() {
         </div>
       ) : null}
 
+      <section className="watchlist-decision-grid section-gap">
+        <SmartWatchListPanel
+          items={actions.items}
+          smartListItems={derived.smartListItems}
+          watchMeta={derived.watchMeta}
+          historyRows={actions.historyRows}
+          lastUpdatedGlobal={derived.lastUpdatedGlobal}
+          watchSearch={view.watchSearch}
+          watchSort={view.watchSort}
+          hasSearchFilter={derived.hasSearchFilter}
+          selectedWatchId={view.selectedWatchId}
+          refreshingWatchId={actions.refreshingWatchId}
+          onSearchChange={view.setWatchSearch}
+          onSortChange={view.setWatchSort}
+          onClearSearch={() => view.setWatchSearch("")}
+          onSelectWatch={selectWatch}
+          onRefreshWatch={actions.refresh}
+          onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
+          onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
+          onDeleteWatch={actions.deleteWatch}
+          onBulkPause={(ids) => actions.bulkUpdateStatus(ids, "paused")}
+          onBulkResume={(ids) => actions.bulkUpdateStatus(ids, "active")}
+          onBulkDelete={actions.bulkDelete}
+          onBulkRefresh={actions.bulkRefresh}
+          isRefreshingBulk={actions.isRefreshingBulk}
+          onOpenAddWatch={() => actions.setShowAdd(true)}
+        />
+
+        <WatchDetailPanel
+          selectedWatch={derived.selectedWatch}
+          detail={actions.selectedWatchDetail}
+          summary={actions.selectedWatchSummary}
+          isLoading={actions.isLoadingSelectedWatchDetail}
+          onRefreshWatch={actions.refresh}
+          onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
+          onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
+        />
+
+      </section>
+
       <HistoryIntegratedPanel
         selectedWatch={derived.selectedWatch}
         viewMode={view.viewMode}
@@ -142,57 +182,6 @@ export default function WatchlistPage() {
         onNextMonth={view.nextMonth}
       />
 
-      <section className="watchlist-decision-grid section-gap">
-        <SmartWatchListPanel
-          items={actions.items}
-          smartListItems={derived.smartListItems}
-          watchMeta={derived.watchMeta}
-          historyRows={actions.historyRows}
-          lastUpdatedGlobal={derived.lastUpdatedGlobal}
-          watchSearch={view.watchSearch}
-          watchSort={view.watchSort}
-          hasSearchFilter={derived.hasSearchFilter}
-          selectedWatchId={view.selectedWatchId}
-          refreshingWatchId={actions.refreshingWatchId}
-          onSearchChange={view.setWatchSearch}
-          onSortChange={view.setWatchSort}
-          onClearSearch={() => view.setWatchSearch("")}
-          onSelectWatch={selectWatch}
-          onRefreshWatch={actions.refresh}
-          onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
-          onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
-          onDeleteWatch={actions.deleteWatch}
-          onBulkPause={(ids) => actions.bulkUpdateStatus(ids, "paused")}
-          onBulkResume={(ids) => actions.bulkUpdateStatus(ids, "active")}
-          onBulkDelete={actions.bulkDelete}
-          onBulkRefresh={actions.bulkRefresh}
-          isRefreshingBulk={actions.isRefreshingBulk}
-          onOpenAddWatch={() => actions.setShowAdd(true)}
-        />
-
-        <WatchDetailPanel
-          selectedWatch={derived.selectedWatch}
-          detail={actions.selectedWatchDetail}
-          summary={actions.selectedWatchSummary}
-          isLoading={actions.isLoadingSelectedWatchDetail}
-          onRefreshWatch={actions.refresh}
-          onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
-          onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
-        />
-
-        <WatchlistMapDecisionPanel
-          routes={derived.watchMapRoutes}
-          mode={derived.watchMapMode}
-          insight={derived.watchMapInsight}
-          compareLimitExceeded={view.compareIds.length > 4}
-          onFocusWatch={(watchId) => {
-            const watch = actions.items.find((item) => item.id === watchId);
-            if (!watch) return;
-            selectWatch(watch);
-          }}
-        />
-      </section>
-
       <ComparePanels
         compareCards={derived.compareCards}
         compareOptions={derived.compareOptions}
@@ -201,6 +190,18 @@ export default function WatchlistPage() {
         compareIds={view.compareIds}
         compareNotice={view.compareNotice}
         onToggleCompare={view.toggleCompare}
+      />
+
+      <WatchlistMapDecisionPanel
+        routes={derived.watchMapRoutes}
+        mode={derived.watchMapMode}
+        insight={derived.watchMapInsight}
+        compareLimitExceeded={view.compareIds.length > 4}
+        onFocusWatch={(watchId) => {
+          const watch = actions.items.find((item) => item.id === watchId);
+          if (!watch) return;
+          selectWatch(watch);
+        }}
       />
 
       <AddWatchModal
