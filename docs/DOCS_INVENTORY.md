@@ -284,3 +284,10 @@ Entradas vivas agregadas:
 
 - docs/qa/reports/2026-05-12-watchlist-w7-map-empty-state.md
 
+
+## Actualizacion manual 2026-05-13 (watchlist W8 reactive compare)
+
+Entradas vivas agregadas:
+
+- docs/qa/reports/2026-05-12-watchlist-w8-reactive-compare.md
+

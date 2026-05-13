@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { useI18n } from "@/i18n";
 import { apiFetch } from "@/modules/shared/api";
 import { formatCurrency, formatSignedCurrency } from "@/modules/shared/format";
 import { formatDateTime } from "@/modules/watchlist/presentation";
@@ -70,6 +71,7 @@ export function ComparePanels({
   compareNotice,
   onToggleCompare,
 }: ComparePanelsProps) {
+  const { t } = useI18n();
   const [compareResponse, setCompareResponse] = useState<PriceCompareResponse | null>(null);
   const [isLoadingCompare, setIsLoadingCompare] = useState(false);
   const selectedCount = compareIds.length;
@@ -77,8 +79,13 @@ export function ComparePanels({
   const compareBadgesFromResponse = useMemo(() => {
     const watches = compareResponse?.watches ?? [];
     if (watches.length === 0) {
-      return { bestPriceId: null as string | null, stableId: null as string | null };
+      return {
+        bestPriceId: null as string | null,
+        stableId: null as string | null,
+        freshestId: null as string | null,
+      };
     }
+
     const bestPrice = watches
       .filter((item) => item.latest_price != null || item.min_price != null)
       .reduce<typeof watches[number] | null>((acc, item) => {
@@ -87,6 +94,7 @@ export function ComparePanels({
         const accScore = acc.latest_price ?? acc.min_price ?? Number.POSITIVE_INFINITY;
         return score < accScore ? item : acc;
       }, null);
+
     const stable = watches
       .filter((item) => item.volatility_hint !== "insufficient_data")
       .reduce<typeof watches[number] | null>((acc, item) => {
@@ -95,11 +103,23 @@ export function ComparePanels({
         const accRank = acc.volatility_hint === "low" ? 0 : acc.volatility_hint === "medium" ? 1 : 2;
         return rank < accRank ? item : acc;
       }, null);
+
+    const freshestPoint = (compareResponse?.points ?? []).reduce<{ watchId: string; ts: number } | null>((acc, point) => {
+      const lastDate = point.points
+        .map((item) => new Date(item.date).getTime())
+        .filter((value) => Number.isFinite(value))
+        .reduce((max, value) => (value > max ? value : max), Number.NEGATIVE_INFINITY);
+      if (!Number.isFinite(lastDate)) return acc;
+      if (!acc || lastDate > acc.ts) return { watchId: point.watch_id, ts: lastDate };
+      return acc;
+    }, null);
+
     return {
       bestPriceId: bestPrice?.watch_id ?? null,
       stableId: stable?.watch_id ?? null,
+      freshestId: freshestPoint?.watchId ?? null,
     };
-  }, [compareResponse?.watches]);
+  }, [compareResponse?.points, compareResponse?.watches]);
 
   useEffect(() => {
     if (selectedCount < 2 || selectedCount > 4) {
@@ -136,7 +156,7 @@ export function ComparePanels({
           <div className="compare-grid">
             {compareCards.map((card) => {
               const trend = card.delta > 0 ? "up" : card.delta < 0 ? "down" : "flat";
-              const deltaLabel = card.delta === 0 ? "Sin variación" : formatSignedCurrency(card.delta, card.latest.currency);
+              const deltaLabel = card.delta === 0 ? "Sin variaci�n" : formatSignedCurrency(card.delta, card.latest.currency);
               return (
                 <article key={`compare-${card.date}`} className="compare-card">
                   <div className="compare-head">
@@ -156,15 +176,15 @@ export function ComparePanels({
                       <strong>{formatCurrency(card.latest.price, card.latest.currency)}</strong>
                     </div>
                     <div>
-                      <span className="compare-label">Mínimo</span>
+                      <span className="compare-label">M�nimo</span>
                       <strong>{formatCurrency(card.min, card.latest.currency)}</strong>
                     </div>
                     <div>
-                      <span className="compare-label">Máximo</span>
+                      <span className="compare-label">M�ximo</span>
                       <strong>{formatCurrency(card.max, card.latest.currency)}</strong>
                     </div>
                   </div>
-                  <div className="compare-meta">Última actualización: {formatDateTime(card.latest.capturedAt)}</div>
+                  <div className="compare-meta">�ltima actualizaci�n: {formatDateTime(card.latest.capturedAt)}</div>
                 </article>
               );
             })}
@@ -176,13 +196,13 @@ export function ComparePanels({
         <div className="panel-header">
           <div>
             <h2 className="panel-title">Comparativa multi-vuelo</h2>
-            <p className="panel-subtitle">Selecciona hasta 4 vuelos para ver precio, estabilidad y frescura.</p>
+            <p className="panel-subtitle">{t("watchlist.compare.subtitle")}</p>
           </div>
           <span className="compare-count">{compareIds.length}/4 seleccionados</span>
         </div>
         {compareNotice ? <div className="notice notice-error notice-compact">{compareNotice}</div> : null}
         {compareResponse?.currency_mode === "mixed" ? (
-          <div className="notice notice-info notice-compact">Hay monedas distintas; compara con cuidado.</div>
+          <div className="notice notice-info notice-compact">{t("watchlist.compare.mixedCurrencyWarning")}</div>
         ) : null}
         <div className="compare-selector">
           {compareOptions.map((option) => {
@@ -196,15 +216,19 @@ export function ComparePanels({
                   </svg>
                 </span>
                 <span className="compare-route">
-                  {option.origin} → {option.destination}
+                  {option.origin} ? {option.destination}
                 </span>
                 <span className="compare-date">{option.travelDate}</span>
               </label>
             );
           })}
         </div>
-        {compareIds.length < 2 || compareIds.length > 4 ? (
-          <p className="muted">Selecciona entre 2 y 4 rutas para comparar.</p>
+        {selectedCount === 0 ? (
+          <p className="muted">{t("watchlist.compare.emptySelectionMessage")}</p>
+        ) : selectedCount === 1 ? (
+          <p className="muted">{t("watchlist.compare.oneSelectionMessage")}</p>
+        ) : selectedCount > 4 ? (
+          <p className="muted">{t("watchlist.compare.maxSelectionMessage")}</p>
         ) : isLoadingCompare ? (
           <p className="muted">Cargando comparativa...</p>
         ) : compareResponse?.watches?.length ? (
@@ -214,10 +238,11 @@ export function ComparePanels({
               return (
                 <article key={`multi-${card.watch_id}`} className="compare-card compare-card--multi">
                   <div className="compare-head">
-                    <strong>{origin} → {destination}</strong>
+                    <strong>{origin} ? {destination}</strong>
                     <div className="compare-badges">
-                      {compareBadgesFromResponse.bestPriceId === card.watch_id ? <span className="compare-badge">Mejor precio</span> : null}
-                      {compareBadgesFromResponse.stableId === card.watch_id ? <span className="compare-badge">Más estable</span> : null}
+                      {compareBadgesFromResponse.bestPriceId === card.watch_id ? <span className="compare-badge">{t("watchlist.compare.bestPriceBadge")}</span> : null}
+                      {compareBadgesFromResponse.stableId === card.watch_id ? <span className="compare-badge">{t("watchlist.compare.mostStableBadge")}</span> : null}
+                      {compareBadgesFromResponse.freshestId === card.watch_id ? <span className="compare-badge">{t("watchlist.compare.freshestBadge")}</span> : null}
                     </div>
                   </div>
                   <div className="compare-subtitle">{card.travel_date}</div>
@@ -227,7 +252,7 @@ export function ComparePanels({
                       <strong>{card.latest_price == null ? "Sin datos" : formatCurrency(card.latest_price, card.currency)}</strong>
                     </div>
                     <div>
-                      <span className="compare-label">Mín / Máx</span>
+                      <span className="compare-label">M�n / M�x</span>
                       <strong>
                         {card.min_price != null && card.max_price != null
                           ? `${formatCurrency(card.min_price, card.currency)}-${formatCurrency(card.max_price, card.currency)}`

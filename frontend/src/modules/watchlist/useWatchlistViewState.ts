@@ -60,7 +60,7 @@ export function useWatchlistViewState() {
     setCompareIds((prev) => {
       if (prev.includes(id)) return prev.filter((item) => item !== id);
       if (prev.length >= 4) {
-        setCompareNotice("Puedes comparar hasta 4 vuelos a la vez.");
+        setCompareNotice("Puedes comparar hasta 4 rutas.");
         return prev;
       }
       return [...prev, id];
