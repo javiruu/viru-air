@@ -22,9 +22,9 @@ function routeColor(route: WatchMapRouteView) {
 }
 
 function trendLabel(route: WatchMapRouteView) {
-  if (route.trend === "up") return "En subida";
-  if (route.trend === "down") return "En bajada";
-  return "Estable";
+  if (route.trend === "up") return "up";
+  if (route.trend === "down") return "down";
+  return "stable";
 }
 
 export function WatchlistMapDecisionPanel({
@@ -111,8 +111,24 @@ export function WatchlistMapDecisionPanel({
 
       <div className="watch-map-copy">
         <span className={`watch-map-insight watch-map-insight-${insight.type}`}>{insight.text}</span>
-        {compareLimitExceeded ? <span className="watch-map-limit">Se muestran hasta 4 rutas para mantener la lectura limpia.</span> : null}
+        {compareLimitExceeded ? <span className="watch-map-limit">{t("watchlist.map.compareLimitHint")}</span> : null}
       </div>
+      {hasMapData ? (
+        <div className="watch-map-legend" role="note" aria-label={t("watchlist.map.legendAriaLabel")}>
+          <span className="watch-map-legend-item">
+            <span className="watch-map-legend-swatch watch-map-legend-swatch-primary" aria-hidden="true" />
+            <span>{t("watchlist.map.legendPrimary")}</span>
+          </span>
+          <span className="watch-map-legend-item">
+            <span className="watch-map-legend-swatch watch-map-legend-swatch-compared" aria-hidden="true" />
+            <span>{t("watchlist.map.legendCompared")}</span>
+          </span>
+          <span className="watch-map-legend-item">
+            <span className="watch-map-legend-swatch watch-map-legend-swatch-other" aria-hidden="true" />
+            <span>{t("watchlist.map.legendOther")}</span>
+          </span>
+        </div>
+      ) : null}
 
       <div className="watch-map-stage">
         <Map ref={mapRef} center={[-3.7, 40.4]} zoom={4.3} className="watch-map-canvas">
@@ -148,7 +164,7 @@ export function WatchlistMapDecisionPanel({
             >
               <div className={`watch-map-chip ${route.isPrimary ? "is-primary" : ""}`}>
                 <strong>{route.origin}</strong>
-                <span>{route.priceCurrent != null ? formatCurrency(route.priceCurrent, route.currency) : "Sin dato"}</span>
+                <span>{route.priceCurrent != null ? formatCurrency(route.priceCurrent, route.currency) : t("watchlist.compare.noData")}</span>
               </div>
             </MapMarker>
           ))}
@@ -165,7 +181,7 @@ export function WatchlistMapDecisionPanel({
             >
               <div className={`watch-map-chip watch-map-chip-destination ${route.isPrimary ? "is-primary" : ""}`}>
                 <strong>{route.destination}</strong>
-                <span>{route.priceTarget != null ? `Objetivo ${formatCurrency(route.priceTarget, route.currency)}` : "Sin objetivo"}</span>
+                <span>{route.priceTarget != null ? t("watchlist.map.targetLabel", { value: formatCurrency(route.priceTarget, route.currency) }) : t("watchlist.map.noTarget")}</span>
               </div>
             </MapMarker>
           ))}
@@ -182,26 +198,32 @@ export function WatchlistMapDecisionPanel({
                   <strong>
                     {popupRoute.origin} {"->"} {popupRoute.destination}
                   </strong>
-                  <span>{trendLabel(popupRoute)}</span>
+                  <span>
+                    {trendLabel(popupRoute) === "up"
+                      ? t("watchlist.smartList.trendUp")
+                      : trendLabel(popupRoute) === "down"
+                        ? t("watchlist.smartList.trendDown")
+                        : t("watchlist.smartList.trendStable")}
+                  </span>
                 </header>
                 <p>
-                  Actual:{" "}
+                  {t("watchlist.compare.current")}:{" "}
                   {popupRoute.priceCurrent != null
                     ? formatCurrency(popupRoute.priceCurrent, popupRoute.currency)
-                    : "Sin dato"}
+                    : t("watchlist.compare.noData")}
                 </p>
                 <p>
-                  Objetivo:{" "}
+                  {t("watchlist.map.targetLabelShort")}:{" "}
                   {popupRoute.priceTarget != null
                     ? formatCurrency(popupRoute.priceTarget, popupRoute.currency)
-                    : "No definido"}
+                    : t("watchlist.map.noTarget")}
                 </p>
                 <button
                   type="button"
                   className="btn-secondary btn-compact"
                   onClick={() => onFocusWatch(popupRoute.watchId)}
                 >
-                  Ir al detalle
+                  {t("watchlist.map.goToDetail")}
                 </button>
               </article>
             </MapPopup>

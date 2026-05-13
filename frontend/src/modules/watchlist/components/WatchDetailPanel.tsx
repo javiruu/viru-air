@@ -98,12 +98,12 @@ export function WatchDetailPanel({
                 <p>{t(confidence.messageKey)}</p>
               </div>
             ) : null}
-            <div className="history-kpi"><span>{t("watchlist.summary.latest")}</span><strong>{summaryData.latest_price == null ? "--" : formatCurrency(summaryData.latest_price, "EUR")}</strong></div>
-            <div className="history-kpi"><span>{t("watchlist.summary.min")}</span><strong>{summaryData.min_price == null ? "--" : formatCurrency(summaryData.min_price, "EUR")}</strong></div>
-            <div className="history-kpi"><span>{t("watchlist.summary.max")}</span><strong>{summaryData.max_price == null ? "--" : formatCurrency(summaryData.max_price, "EUR")}</strong></div>
-            <div className="history-kpi"><span>{t("watchlist.summary.avg")}</span><strong>{summaryData.avg_price == null ? "--" : formatCurrency(summaryData.avg_price, "EUR")}</strong></div>
-            <div className="history-kpi"><span>{t("watchlist.summary.delta")}</span><strong>{summaryData.delta_pct == null ? "--" : formatPercent(summaryData.delta_pct)}</strong></div>
-            <div className="history-kpi"><span>{t("watchlist.summary.count")}</span><strong>{summaryData.count}</strong></div>
+            <div className="history-kpi"><span className="history-kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 16l6-6 4 4 6-8" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg></span><span>{t("watchlist.summary.latest")}</span><strong>{summaryData.latest_price == null ? "--" : formatCurrency(summaryData.latest_price, "EUR")}</strong></div>
+            <div className="history-kpi"><span className="history-kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 14l6-6 4 4 6-8" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg></span><span>{t("watchlist.summary.min")}</span><strong>{summaryData.min_price == null ? "--" : formatCurrency(summaryData.min_price, "EUR")}</strong></div>
+            <div className="history-kpi"><span className="history-kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 18l6-10 4 6 6-10" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg></span><span>{t("watchlist.summary.max")}</span><strong>{summaryData.max_price == null ? "--" : formatCurrency(summaryData.max_price, "EUR")}</strong></div>
+            <div className="history-kpi"><span className="history-kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5v14" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg></span><span>{t("watchlist.summary.avg")}</span><strong>{summaryData.avg_price == null ? "--" : formatCurrency(summaryData.avg_price, "EUR")}</strong></div>
+            <div className="history-kpi"><span className="history-kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 15l5-6 5 6" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg></span><span>{t("watchlist.summary.delta")}</span><strong>{summaryData.delta_pct == null ? "--" : formatPercent(summaryData.delta_pct)}</strong></div>
+            <div className="history-kpi"><span className="history-kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 5v14M17 5v14M4 9h16M4 15h16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg></span><span>{t("watchlist.summary.count")}</span><strong>{summaryData.count}</strong></div>
           </>
         ) : (
           <p className="panel-note">{t("watchlist.summary.empty")}</p>

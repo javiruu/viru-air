@@ -102,7 +102,8 @@ export function SmartWatchListPanel({
         <div>
           <h2 className="panel-title">{t("watchlist.smartList.heading")}</h2>
           <span className="muted">
-            {t("watchlist.smartList.activeCount", { count: items.length })}{lastUpdatedGlobal ? ` · Última actualización ${lastUpdatedGlobal}` : ""}
+            {t("watchlist.smartList.activeCount", { count: items.length })}
+            {lastUpdatedGlobal ? ` · ${t("watchlist.lastUpdateInline", { value: lastUpdatedGlobal })}` : ""}
           </span>
           {items.length > 0 ? (
             <span className="watch-smart-meta">
@@ -134,7 +135,7 @@ export function SmartWatchListPanel({
               <option value="freshness">{t("watchlist.smartList.sortFreshness")}</option>
               <option value="price_asc">{t("watchlist.smartList.sortPriceAsc")}</option>
               <option value="price_desc">{t("watchlist.smartList.sortPriceDesc")}</option>
-              <option value="delta">Mayor variación</option>
+              <option value="delta">{t("watchlist.smartList.sortDelta")}</option>
             </select>
           </label>
           <button
@@ -191,31 +192,31 @@ export function SmartWatchListPanel({
       ) : null}
       {items.length === 0 && !isLoading ? (
         <div className="empty-guide">
-          <p className="panel-note">Todavía no tienes vuelos vigilados.</p>
+          <p className="panel-note">{t("watchlist.smartList.emptyTitle")}</p>
           <div className="empty-steps">
             <div>
-              <strong>1. Define tu ruta</strong>
-              <span>Elige origen, destino y fecha exacta.</span>
+              <strong>{t("watchlist.smartList.emptyStep1Title")}</strong>
+              <span>{t("watchlist.smartList.emptyStep1Body")}</span>
             </div>
             <div>
-              <strong>2. Marca precio objetivo</strong>
-              <span>Opcional, para detectar bajadas rápido.</span>
+              <strong>{t("watchlist.smartList.emptyStep2Title")}</strong>
+              <span>{t("watchlist.smartList.emptyStep2Body")}</span>
             </div>
             <div>
-              <strong>3. Activa alertas</strong>
-              <span>Recibe cambios sin revisar a mano.</span>
+              <strong>{t("watchlist.smartList.emptyStep3Title")}</strong>
+              <span>{t("watchlist.smartList.emptyStep3Body")}</span>
             </div>
           </div>
           <button className="btn-primary" type="button" onClick={onOpenAddWatch}>
-            Añadir tu primer vuelo
+            {t("watchlist.smartList.emptyCta")}
           </button>
         </div>
       ) : null}
       {items.length > 0 && smartListItems.length === 0 ? (
         <div className="watch-empty-search" role="status" aria-live="polite">
-          <p>No hay vuelos que coincidan con la búsqueda actual.</p>
+          <p>{t("watchlist.smartList.searchEmpty")}</p>
           <button type="button" className="btn-ghost btn-compact" onClick={onClearSearch}>
-            Ver todos los vuelos
+            {t("watchlist.smartList.searchEmptyCta")}
           </button>
         </div>
       ) : null}
@@ -240,6 +241,18 @@ export function SmartWatchListPanel({
           .slice(-7)
           .map((row) => row.price);
         const sparkPath = buildSparklinePath(values);
+        const sparkMin = values.length > 0 ? Math.min(...values) : null;
+        const sparkMax = values.length > 0 ? Math.max(...values) : null;
+        const sparkLatest = values.length > 0 ? values[values.length - 1] : null;
+        const sparkStart = values.length > 0 ? values[0] : null;
+        const sparkTrend =
+          sparkStart == null || sparkLatest == null
+            ? "flat"
+            : sparkLatest > sparkStart
+              ? "up"
+              : sparkLatest < sparkStart
+                ? "down"
+                : "flat";
         const freshness = getFreshnessPresentation({
           t,
           lastUpdatedAt: meta?.latest?.capturedAt,
@@ -254,7 +267,11 @@ export function SmartWatchListPanel({
             role="button"
             tabIndex={0}
             aria-pressed={selectedWatchId === watch.id}
-            aria-label={`Seleccionar vuelo ${watch.origin_iata} a ${watch.destination_iata} del ${watch.travel_date_local}`}
+            aria-label={t("watchlist.smartList.selectRowAria", {
+              origin: watch.origin_iata,
+              destination: watch.destination_iata,
+              date: watch.travel_date_local,
+            })}
             onKeyDown={(event) => {
               if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
@@ -273,7 +290,10 @@ export function SmartWatchListPanel({
                       event.target.checked ? Array.from(new Set([...prev, watch.id])) : prev.filter((id) => id !== watch.id),
                     );
                   }}
-                  aria-label={`Seleccionar ${watch.origin_iata} ${watch.destination_iata}`}
+                  aria-label={t("watchlist.smartList.selectCheckboxAria", {
+                    origin: watch.origin_iata,
+                    destination: watch.destination_iata,
+                  })}
                 />
                 <strong>{watch.origin_iata}{" → "}{watch.destination_iata}</strong>
                 <span className="watch-date">{watch.travel_date_local}</span>
@@ -283,7 +303,7 @@ export function SmartWatchListPanel({
                 </span>
               </div>
               <div className="watch-meta">
-                <span className="watch-meta-chip">Última actualización: {safeDateTime(meta?.latest?.capturedAt)}</span>
+                <span className="watch-meta-chip">{t("watchlist.detail.latestSnapshot")} {safeDateTime(meta?.latest?.capturedAt)}</span>
                 <span className="watch-meta-chip watch-meta-chip--freshness">{t("watchlist.detail.freshness")} {freshness.fullText}</span>
                 <span className="watch-note">{t("watchlist.smartList.priceDisclaimer")}</span>
               </div>
@@ -312,13 +332,47 @@ export function SmartWatchListPanel({
               </div>
               <div className="watch-spark">
                 {sparkPath ? (
-                  <svg viewBox="0 0 96 28" role="img" aria-label={t("watchlist.smartList.shortTrendAriaLabel")}>
+                  <svg
+                    viewBox="0 0 96 28"
+                    role="img"
+                    aria-label={t("watchlist.smartList.shortTrendAriaLabelWithRoute", {
+                      origin: watch.origin_iata,
+                      destination: watch.destination_iata,
+                    })}
+                  >
+                    <line x1="0" y1="14" x2="96" y2="14" className="watch-spark-baseline" />
                     <path d={sparkPath} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    {values.length > 1 && sparkStart != null ? <circle cx="0" cy={28 - (((sparkStart - (sparkMin ?? sparkStart)) / ((sparkMax ?? sparkStart) - (sparkMin ?? sparkStart) || 1)) * 28)} r="1.7" className="watch-spark-point watch-spark-point-start" /> : null}
+                    {sparkLatest != null ? <circle cx="96" cy={28 - (((sparkLatest - (sparkMin ?? sparkLatest)) / ((sparkMax ?? sparkLatest) - (sparkMin ?? sparkLatest) || 1)) * 28)} r="2.3" className="watch-spark-point watch-spark-point-end" /> : null}
+                    {sparkLatest != null && sparkMin != null && sparkMax != null ? (
+                      <title>
+                        {t("watchlist.smartList.shortTrendTitle", {
+                          latest: formatCurrency(sparkLatest, meta?.latest?.currency ?? "EUR"),
+                          min: formatCurrency(sparkMin, meta?.latest?.currency ?? "EUR"),
+                          max: formatCurrency(sparkMax, meta?.latest?.currency ?? "EUR"),
+                          trend:
+                            sparkTrend === "up"
+                              ? t("watchlist.smartList.trendUp")
+                              : sparkTrend === "down"
+                                ? t("watchlist.smartList.trendDown")
+                                : t("watchlist.smartList.trendStable"),
+                        })}
+                      </title>
+                    ) : null}
                   </svg>
                 ) : (
                   <span className="muted">{t("watchlist.smartList.noTrend")}</span>
                 )}
               </div>
+              {sparkLatest != null && sparkMin != null && sparkMax != null ? (
+                <div className="watch-spark-meta muted">
+                  {t("watchlist.smartList.sparklineMeta", {
+                    latest: formatCurrency(sparkLatest, meta?.latest?.currency ?? "EUR"),
+                    min: formatCurrency(sparkMin, meta?.latest?.currency ?? "EUR"),
+                    max: formatCurrency(sparkMax, meta?.latest?.currency ?? "EUR"),
+                  })}
+                </div>
+              ) : null}
               <div className="watch-row-actions">
                 <button
                   className="btn-secondary"

@@ -1,17 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-
 import { useI18n } from "@/i18n";
 import { apiFetch } from "@/modules/shared/api";
 import { formatCurrency, formatSignedCurrency } from "@/modules/shared/format";
 import { formatDateTime } from "@/modules/watchlist/presentation";
 import type { PriceCompareResponse } from "@/modules/watchlist/types";
-
 type CompareLatest = {
   capturedAt: string;
   currency: string;
   price: number;
 };
-
 type CompareCard = {
   date: string;
   latest: CompareLatest;
@@ -19,14 +16,12 @@ type CompareCard = {
   min: number;
   max: number;
 };
-
 type CompareOption = {
   id: string;
   origin: string;
   destination: string;
   travelDate: string;
 };
-
 type CompareSelectionItem = {
   id: string;
   origin: string;
@@ -38,13 +33,11 @@ type CompareSelectionItem = {
   min: number | null;
   max: number | null;
 };
-
 type CompareBadges = {
   bestPriceId: string | null;
   freshestId: string | null;
   stableId: string | null;
 };
-
 type ComparePanelsProps = {
   compareCards: CompareCard[] | null;
   compareOptions: CompareOption[];
@@ -54,16 +47,13 @@ type ComparePanelsProps = {
   compareNotice: string;
   onToggleCompare: (id: string) => void;
 };
-
 type CompareTab = "quick" | "multi";
-
 function volatilityLabel(value: "low" | "medium" | "high" | "insufficient_data", t: (key: string) => string): string {
   if (value === "low") return t("watchlist.compare.volatilityLow");
   if (value === "medium") return t("watchlist.compare.volatilityMedium");
   if (value === "high") return t("watchlist.compare.volatilityHigh");
   return t("watchlist.compare.noData");
 }
-
 export function ComparePanels({
   compareCards,
   compareOptions,
@@ -75,16 +65,15 @@ export function ComparePanels({
   const [activeTab, setActiveTab] = useState<CompareTab>("quick");
   const [compareResponse, setCompareResponse] = useState<PriceCompareResponse | null>(null);
   const [isLoadingCompare, setIsLoadingCompare] = useState(false);
+  const [hasCompareError, setHasCompareError] = useState(false);
   const selectedCount = compareIds.length;
   const compareQuery = useMemo(() => compareIds.join(","), [compareIds]);
   const hasQuickData = Boolean(compareCards && compareCards.length > 0);
-
   useEffect(() => {
     if (activeTab === "quick" && !hasQuickData) {
       setActiveTab("multi");
     }
   }, [activeTab, hasQuickData]);
-
   const compareBadgesFromResponse = useMemo(() => {
     const watches = compareResponse?.watches ?? [];
     if (watches.length === 0) {
@@ -94,7 +83,6 @@ export function ComparePanels({
         freshestId: null as string | null,
       };
     }
-
     const bestPrice = watches
       .filter((item) => item.latest_price != null || item.min_price != null)
       .reduce<typeof watches[number] | null>((acc, item) => {
@@ -103,7 +91,6 @@ export function ComparePanels({
         const accScore = acc.latest_price ?? acc.min_price ?? Number.POSITIVE_INFINITY;
         return score < accScore ? item : acc;
       }, null);
-
     const stable = watches
       .filter((item) => item.volatility_hint !== "insufficient_data")
       .reduce<typeof watches[number] | null>((acc, item) => {
@@ -112,7 +99,6 @@ export function ComparePanels({
         const accRank = acc.volatility_hint === "low" ? 0 : acc.volatility_hint === "medium" ? 1 : 2;
         return rank < accRank ? item : acc;
       }, null);
-
     const freshestPoint = (compareResponse?.points ?? []).reduce<{ watchId: string; ts: number } | null>((acc, point) => {
       const lastDate = point.points
         .map((item) => new Date(item.date).getTime())
@@ -122,17 +108,16 @@ export function ComparePanels({
       if (!acc || lastDate > acc.ts) return { watchId: point.watch_id, ts: lastDate };
       return acc;
     }, null);
-
     return {
       bestPriceId: bestPrice?.watch_id ?? null,
       stableId: stable?.watch_id ?? null,
       freshestId: freshestPoint?.watchId ?? null,
     };
   }, [compareResponse?.points, compareResponse?.watches]);
-
   useEffect(() => {
     if (selectedCount < 2 || selectedCount > 4) {
       setCompareResponse(null);
+      setHasCompareError(false);
       return;
     }
     let mounted = true;
@@ -141,10 +126,12 @@ export function ComparePanels({
       .then((payload) => {
         if (!mounted) return;
         setCompareResponse(payload);
+        setHasCompareError(false);
       })
       .catch(() => {
         if (!mounted) return;
         setCompareResponse(null);
+        setHasCompareError(true);
       })
       .finally(() => {
         if (mounted) setIsLoadingCompare(false);
@@ -153,7 +140,6 @@ export function ComparePanels({
       mounted = false;
     };
   }, [compareQuery, selectedCount]);
-
   return (
     <section className="panel compare-panel section-gap">
       <div className="panel-header">
@@ -163,7 +149,6 @@ export function ComparePanels({
         </div>
         <span className="compare-count">{compareIds.length}/4 {t("watchlist.compare.selected")}</span>
       </div>
-
       <div className="compare-tabs" role="tablist" aria-label={t("watchlist.compare.modeLabel")}>
         <button
           id="compare-tab-quick"
@@ -191,7 +176,6 @@ export function ComparePanels({
           {t("watchlist.compare.tabs.multi")}
         </button>
       </div>
-
       {activeTab === "quick" ? (
         <div id="compare-tabpanel-quick" role="tabpanel" aria-labelledby="compare-tab-quick" className="compare-panel-body">
           {hasQuickData ? (
@@ -238,6 +222,7 @@ export function ComparePanels({
       ) : (
         <div id="compare-tabpanel-multi" role="tabpanel" aria-labelledby="compare-tab-multi" className="compare-panel-body">
           {compareNotice ? <div className="notice notice-error notice-compact">{compareNotice}</div> : null}
+          {hasCompareError ? <div className="notice notice-error notice-compact">{t("watchlist.compare.errorInline")}</div> : null}
           {compareResponse?.currency_mode === "mixed" ? (
             <div className="notice notice-info notice-compact">{t("watchlist.compare.mixedCurrencyWarning")}</div>
           ) : null}
@@ -252,9 +237,7 @@ export function ComparePanels({
                       <path d="M5 12l4 4 10-10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </span>
-                  <span className="compare-route">
-                    {option.origin} → {option.destination}
-                  </span>
+                  <span className="compare-route">{option.origin} {"->"} {option.destination}</span>
                   <span className="compare-date">{option.travelDate}</span>
                 </label>
               );
@@ -275,7 +258,7 @@ export function ComparePanels({
                 return (
                   <article key={`multi-${card.watch_id}`} className="compare-card compare-card--multi">
                     <div className="compare-head">
-                      <strong>{origin} → {destination}</strong>
+                      <strong>{origin} {"->"} {destination}</strong>
                       <div className="compare-badges">
                         {compareBadgesFromResponse.bestPriceId === card.watch_id ? <span className="compare-badge">{t("watchlist.compare.bestPriceBadge")}</span> : null}
                         {compareBadgesFromResponse.stableId === card.watch_id ? <span className="compare-badge">{t("watchlist.compare.mostStableBadge")}</span> : null}

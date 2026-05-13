@@ -41,13 +41,13 @@ export function AddWatchModal({
         className="modal-card"
         role="dialog"
         aria-modal="true"
-        aria-label="Anadir vuelo"
+        aria-label={t("watchlist.modal.title")}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="modal-header">
           <div>
-            <h2 className="panel-title">Anadir vuelo</h2>
-            <p className="panel-subtitle">Selecciona fecha y aeropuertos compatibles.</p>
+            <h2 className="panel-title">{t("watchlist.modal.title")}</h2>
+            <p className="panel-subtitle">{t("watchlist.modal.subtitle")}</p>
           </div>
           <button className="modal-close" type="button" aria-label={t("watchlist.modal.close")} onClick={onClose}>
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -58,7 +58,7 @@ export function AddWatchModal({
 
         <form className="form" onSubmit={onSubmit}>
           <label className="date-field field">
-            Fecha
+            {t("watchlist.modal.date")}
             <input
               type="date"
               name="travel_date"
@@ -70,7 +70,7 @@ export function AddWatchModal({
 
           <div className="airport-row">
             <label className="field">
-              Origen (IATA)
+              {t("watchlist.modal.origin")}
               <input
                 name="origin_iata"
                 autoComplete="off"
@@ -80,17 +80,17 @@ export function AddWatchModal({
                 disabled={!travelDate}
               />
               <small className="hint">
-                {travelDate ? "Escribe el codigo o usa el selector." : "Selecciona fecha para habilitar."}
+                {travelDate ? t("watchlist.modal.hintEnabled") : t("watchlist.modal.hintDisabled")}
               </small>
             </label>
             <button type="button" className="btn-ghost" onClick={() => onOpenPicker("origin")} disabled={!travelDate}>
-              Elegir aeropuerto
+              {t("watchlist.modal.pickAirport")}
             </button>
           </div>
 
           <div className="airport-row">
             <label className="field">
-              Destino (IATA)
+              {t("watchlist.modal.destination")}
               <input
                 name="destination_iata"
                 autoComplete="off"
@@ -100,16 +100,16 @@ export function AddWatchModal({
                 disabled={!travelDate}
               />
               <small className="hint">
-                {travelDate ? "Escribe el codigo o usa el selector." : "Selecciona fecha para habilitar."}
+                {travelDate ? t("watchlist.modal.hintEnabled") : t("watchlist.modal.hintDisabled")}
               </small>
             </label>
             <button type="button" className="btn-ghost" onClick={() => onOpenPicker("destination")} disabled={!travelDate}>
-              Elegir aeropuerto
+              {t("watchlist.modal.pickAirport")}
             </button>
           </div>
 
           <label className="field">
-            Precio objetivo (EUR)
+            {t("watchlist.modal.targetPrice")}
             <input
               name="target_price"
               autoComplete="off"
@@ -122,10 +122,10 @@ export function AddWatchModal({
 
           <div className="cta-row">
             <button type="submit" className="btn-primary">
-              Guardar
+              {t("watchlist.modal.save")}
             </button>
             <button type="button" className="btn-ghost" onClick={onClose}>
-              Cancelar
+              {t("shared.actions.cancel")}
             </button>
           </div>
         </form>

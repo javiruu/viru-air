@@ -153,6 +153,11 @@ export function HistoryIntegratedPanel({
   const hasCalendarData = Boolean(visibleMonth);
   const hasSummary = Boolean(summary);
   const summaryData = summary ?? null;
+  const calendarMidpoint = calendarRange ? calendarRange.min + (calendarRange.max - calendarRange.min) / 2 : null;
+  const weekdays = t("watchlist.history.weekdays")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
   const selectedRouteValue = selectedWatch
     ? `${selectedWatch.origin_iata} → ${selectedWatch.destination_iata} · ${selectedWatch.travel_date_local}`
     : t("watchlist.history.selectFlightPlaceholder");
@@ -461,18 +466,30 @@ export function HistoryIntegratedPanel({
           {hasSummary && summaryData ? (
             <div className="history-summary history-summary--kpis">
               <div className="history-kpi">
+                <span className="history-kpi-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M4 18h16M6 14l4-4 4 3 4-5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </span>
                 <span>{t("watchlist.summary.avg")}</span>
                 <strong>{formatCurrency(summaryData.avg, summaryData.currency)}</strong>
               </div>
               <div className="history-kpi">
+                <span className="history-kpi-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M4 16l6-6 3 3 7-7" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </span>
                 <span>{t("watchlist.summary.min")}</span>
                 <strong>{formatCurrency(summaryData.min, summaryData.currency)}</strong>
               </div>
               <div className="history-kpi">
+                <span className="history-kpi-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M4 14l6-6 3 3 7-7M18 7h3v3" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </span>
                 <span>{t("watchlist.summary.max")}</span>
                 <strong>{formatCurrency(summaryData.max, summaryData.currency)}</strong>
               </div>
               <div className="history-kpi">
+                <span className="history-kpi-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M7 5v14M17 5v14M4 9h16M4 15h16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </span>
                 <span>{t("watchlist.summary.count")}</span>
                 <strong>{summaryData.total}</strong>
               </div>
@@ -493,7 +510,7 @@ export function HistoryIntegratedPanel({
                 <button className="btn-ghost" type="button" onClick={onNextMonth}>{t("watchlist.history.nextMonth")}</button>
               </div>
               <div className="history-calendar-grid history-primary">
-                {["L", "M", "X", "J", "V", "S", "D"].map((weekday, index) => (
+                {(weekdays.length === 7 ? weekdays : ["L", "M", "X", "J", "V", "S", "D"]).map((weekday, index) => (
                   <div key={`history-weekday-${index}`} className="history-weekday">{weekday}</div>
                 ))}
                 {monthCells.map((day, idx) => {
@@ -521,7 +538,7 @@ export function HistoryIntegratedPanel({
                           <div className="history-day-number">{day.slice(-2)}</div>
                           {event ? (
                             <div className="history-day-meta">
-                              {event.count} puntos
+                              {t("watchlist.history.pointsCount", { count: event.count })}
                               <br />
                               {formatCurrency(event.min, calendarCurrency)}-{formatCurrency(event.max, calendarCurrency)}
                             </div>
@@ -537,9 +554,23 @@ export function HistoryIntegratedPanel({
                   <span>{t("watchlist.history.cheapest")}</span>
                   <div className="history-heat-bar" />
                   <span>{t("watchlist.history.mostExpensive")}</span>
-                  <span className="muted">
-                    {formatCurrency(calendarRange.min, calendarCurrency)} - {formatCurrency(calendarRange.max, calendarCurrency)}
-                  </span>
+                  <div className="history-heat-scale">
+                    <span className="history-heat-scale-item">
+                      <strong>{t("watchlist.history.legendLow")}</strong>
+                      <span className="tabular-nums">{formatCurrency(calendarRange.min, calendarCurrency)}</span>
+                    </span>
+                    {calendarMidpoint != null ? (
+                      <span className="history-heat-scale-item">
+                        <strong>{t("watchlist.history.legendMid")}</strong>
+                        <span className="tabular-nums">{formatCurrency(calendarMidpoint, calendarCurrency)}</span>
+                      </span>
+                    ) : null}
+                    <span className="history-heat-scale-item">
+                      <strong>{t("watchlist.history.legendHigh")}</strong>
+                      <span className="tabular-nums">{formatCurrency(calendarRange.max, calendarCurrency)}</span>
+                    </span>
+                  </div>
+                  <p className="muted history-heat-explainer">{t("watchlist.history.heatLegendExplainer")}</p>
                 </div>
               ) : null}
             </>

@@ -21,16 +21,21 @@ const WatchlistMapDecisionPanel = dynamic(
     ),
   {
     ssr: false,
-    loading: () => (
-      <section className="panel panel-soft watch-map-panel section-gap">
-        <div className="panel-header">
-          <h2 className="panel-title">Mapa de rutas</h2>
-        </div>
-        <p className="panel-note">Cargando mapa de rutas...</p>
-      </section>
-    ),
+    loading: () => <WatchlistMapLoadingPanel />,
   },
 );
+
+function WatchlistMapLoadingPanel() {
+  const { t } = useI18n();
+  return (
+    <section className="panel panel-soft watch-map-panel section-gap">
+      <div className="panel-header">
+        <h2 className="panel-title">{t("watchlist.mapLoadingTitle")}</h2>
+      </div>
+      <p className="panel-note">{t("watchlist.mapLoadingBody")}</p>
+    </section>
+  );
+}
 
 const LINE_COLORS = ["#D95D39", "#2E6E62", "#B45309", "#0F766E", "#7C2D12", "#1D4ED8"];
 
