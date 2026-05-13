@@ -253,3 +253,10 @@ Entradas vivas agregadas:
 
 - docs/qa/reports/2026-05-12-watchlist-w2-single-route-selection.md
 
+
+## Actualizacion manual 2026-05-13 (watchlist W3 contextual actions)
+
+Entradas vivas agregadas:
+
+- docs/qa/reports/2026-05-12-watchlist-w3-contextual-actions.md
+

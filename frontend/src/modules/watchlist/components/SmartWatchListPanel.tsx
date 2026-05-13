@@ -90,6 +90,7 @@ export function SmartWatchListPanel({
   const { t } = useI18n();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const hasSelection = selectedIds.length > 0;
+  const selectionCount = selectedIds.length;
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
 
   return (
@@ -142,13 +143,14 @@ export function SmartWatchListPanel({
             Limpiar búsqueda
           </button>
           {hasSelection ? (
-            <div className="alert-actions">
+            <div className="alert-actions" role="toolbar" aria-label={t("watchlist.bulk.toolbarAriaLabel")} data-testid="watchlist-bulk-toolbar">
+              <span className="watch-smart-meta">{t("watchlist.bulk.selectedCount", { count: selectionCount })}</span>
               <button type="button" className="btn-secondary btn-compact" onClick={() => onBulkRefresh(selectedIds)} disabled={isRefreshingBulk}>
-                {isRefreshingBulk ? "Actualizando..." : "Actualizar"}
+                {isRefreshingBulk ? t("watchlist.bulk.refreshing") : t("watchlist.bulk.refreshSelected")}
               </button>
-              <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkPause(selectedIds)}>Pausar</button>
-              <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkResume(selectedIds)}>Reanudar</button>
-              <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkDelete(selectedIds)}>Eliminar</button>
+              <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkPause(selectedIds)}>{t("watchlist.bulk.pause")}</button>
+              <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkResume(selectedIds)}>{t("watchlist.bulk.resume")}</button>
+              <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkDelete(selectedIds)}>{t("watchlist.bulk.delete")}</button>
             </div>
           ) : null}
         </div>

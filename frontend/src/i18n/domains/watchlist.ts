@@ -6,6 +6,18 @@
   quickStartBody: "Guarda vuelos aquí para seguir cambios de precio y horario.",
   quickStartConfirm: "Entendido",
   lastUpdate: "Última actualización: {value}",
+  bulk: {
+    toolbarAriaLabel: "Acciones masivas de watchlist",
+    selectedCount: {
+      one: "{count} seleccionado",
+      other: "{count} seleccionados",
+    },
+    refreshSelected: "Actualizar seleccionados",
+    refreshing: "Actualizando...",
+    pause: "Pausar",
+    resume: "Reanudar",
+    delete: "Eliminar",
+  },
   mapLoadingTitle: "Mesa de decisiones",
   mapLoadingBody: "Cargando mapa de rutas...",
   detail: {
@@ -51,6 +63,18 @@ export const watchlistEn = {
   quickStartBody: "Save flights here to track schedule and price changes.",
   quickStartConfirm: "Got it",
   lastUpdate: "Last update: {value}",
+  bulk: {
+    toolbarAriaLabel: "Watchlist bulk actions",
+    selectedCount: {
+      one: "{count} selected",
+      other: "{count} selected",
+    },
+    refreshSelected: "Refresh selected",
+    refreshing: "Refreshing...",
+    pause: "Pause",
+    resume: "Resume",
+    delete: "Delete",
+  },
   mapLoadingTitle: "Decision desk",
   mapLoadingBody: "Loading route map...",
   detail: {
