@@ -252,6 +252,8 @@ If a mock represents an external contract, keep it consistent with docs, types, 
 
 Use the project’s existing scripts and documented commands.
 
+For Playwright/browser auth flows, reuse existing tests/scripts and previous QA evidence before creating a new test case (see `frontend/tests/*quick-search*e2e*.ts`, `frontend/scripts/qa_*.mjs`, and `docs/qa/reports/*quick-search*`).
+
 Before inventing a new command:
 
 - check package scripts, test config, Makefile/task runner, or docs;

@@ -201,6 +201,8 @@ Verification ladder:
 Rules:
 
 - Prefer adding a regression test for bug fixes when feasible.
+- Assume Playwright/Chromium are already available in this repo workflow; do not reinstall them unless a concrete missing-binary/version error proves it is necessary.
+- Before creating new Playwright/TestSprite flows, reuse existing frontend tests/scripts and prior QA reports from `docs/qa/` whenever they already cover the same auth/session journey.
 - Do not add broad, slow, speculative tests unrelated to the task.
 - Do not rely on “build passes” as proof of a user-visible fix.
 - If a test cannot be written or run, say so explicitly and explain why.

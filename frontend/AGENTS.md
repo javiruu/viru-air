@@ -175,6 +175,8 @@ If a contract is unclear:
 
 For browser-visible work, real rendered verification is required whenever feasible.
 
+Before creating a new Playwright/TestSprite scenario, check and reuse existing repo assets first (especially `frontend/tests/*quick-search*e2e*.ts`, `frontend/scripts/qa_*.mjs`, and prior evidence in `docs/qa/reports/`).
+
 Do not claim a visual or browser-visible fix based only on:
 
 - code inspection;
