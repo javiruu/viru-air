@@ -3,7 +3,8 @@
 import { useI18n } from "@/i18n";
 import { formatCurrency, formatSignedCurrency } from "@/modules/shared/format";
 import { getWatchStatusMeta } from "@/modules/shared/statusCatalog";
-import { buildSparklinePath, freshnessLabel, safeDateTime } from "@/modules/watchlist/presentation";
+import { buildSparklinePath, safeDateTime } from "@/modules/watchlist/presentation";
+import { getFreshnessPresentation } from "@/modules/watchlist/summary";
 
 type ListSort = "freshness" | "price_asc" | "price_desc" | "delta";
 
@@ -206,6 +207,11 @@ export function SmartWatchListPanel({
           .slice(-7)
           .map((row) => row.price);
         const sparkPath = buildSparklinePath(values);
+        const freshness = getFreshnessPresentation({
+          t,
+          lastUpdatedAt: meta?.latest?.capturedAt,
+          freshnessState: meta?.latest ? "observing" : null,
+        });
 
         return (
           <article
@@ -245,7 +251,7 @@ export function SmartWatchListPanel({
               </div>
               <div className="watch-meta">
                 <span className="watch-meta-chip">Última actualización: {safeDateTime(meta?.latest?.capturedAt)}</span>
-                <span className="watch-meta-chip">Frescura: {freshnessLabel(meta?.latest?.capturedAt)}</span>
+                <span className="watch-meta-chip">{t("watchlist.detail.freshness")} {freshness.fullText}</span>
                 <span className="watch-note">Precio orientativo base 1 adulto, sin extras.</span>
               </div>
             </div>

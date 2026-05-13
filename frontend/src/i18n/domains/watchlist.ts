@@ -40,6 +40,15 @@
       resume: "Reanudar",
     },
   },
+  freshness: {
+    noDataLabel: "Sin datos todavía",
+    noDataDetail: "actualiza para crear el primer snapshot",
+    needsReviewLabel: "Necesita revisión",
+    lastUpdatedAgo: "última actualización {time}",
+    updatedAgo: "actualizado {time}",
+    observingLabel: "En observación",
+    observedLabel: "Dato observado",
+  },
   summary: {
     latest: "Último precio",
     min: "Mínimo observado",
@@ -109,6 +118,15 @@ export const watchlistEn = {
       pause: "Pause",
       resume: "Resume",
     },
+  },
+  freshness: {
+    noDataLabel: "Sin datos todavía",
+    noDataDetail: "actualiza para crear el primer snapshot",
+    needsReviewLabel: "Necesita revisión",
+    lastUpdatedAgo: "última actualización {time}",
+    updatedAgo: "actualizado {time}",
+    observingLabel: "En observación",
+    observedLabel: "Dato observado",
   },
   summary: {
     latest: "Latest price",

@@ -58,11 +58,11 @@ test("W5: se mantiene formateo de KPIs y se bloquea copy EN en watchlist", () =>
   const source = fs.readFileSync(DETAIL_PANEL_FILE, "utf8");
   const pageSource = fs.readFileSync(WATCHLIST_PAGE, "utf8");
 
-  assert.match(source, /formatCurrency\(summary\.latest_price, "EUR"\)/);
-  assert.match(source, /formatCurrency\(summary\.min_price, "EUR"\)/);
-  assert.match(source, /formatCurrency\(summary\.max_price, "EUR"\)/);
-  assert.match(source, /formatCurrency\(summary\.avg_price, "EUR"\)/);
-  assert.match(source, /formatPercent\(summary\.delta_pct\)/);
+  assert.match(source, /formatCurrency\(summaryData\.latest_price, "EUR"\)/);
+  assert.match(source, /formatCurrency\(summaryData\.min_price, "EUR"\)/);
+  assert.match(source, /formatCurrency\(summaryData\.max_price, "EUR"\)/);
+  assert.match(source, /formatCurrency\(summaryData\.avg_price, "EUR"\)/);
+  assert.match(source, /formatPercent\(summaryData\.delta_pct\)/);
 
   for (const snippet of FORBIDDEN_EN_COPY) {
     assert.equal(pageSource.includes(snippet), false, `watchlist page still contains forbidden EN copy: ${snippet}`);

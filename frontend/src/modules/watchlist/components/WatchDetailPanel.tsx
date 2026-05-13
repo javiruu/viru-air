@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 
 import { useI18n } from "@/i18n";
 import { apiFetch } from "@/modules/shared/api";
-import { formatCurrency, formatPercent, formatRelativeTime } from "@/modules/shared/format";
+import { formatCurrency, formatPercent } from "@/modules/shared/format";
 import { getWatchStatusMeta } from "@/modules/shared/statusCatalog";
-import { freshnessLabel, safeDateTime } from "@/modules/watchlist/presentation";
-import { getHistoryConfidence, hasPriceSummaryData } from "@/modules/watchlist/summary";
+import { safeDateTime } from "@/modules/watchlist/presentation";
+import { getFreshnessPresentation, getHistoryConfidence, hasPriceSummaryData } from "@/modules/watchlist/summary";
 import type { PriceCalendarResponse, PriceSummary, Watch, WatchDetail } from "@/modules/watchlist/types";
 
 type WatchDetailPanelProps = {
@@ -64,6 +64,11 @@ export function WatchDetailPanel({
   const hasSummaryData = Boolean(summary && hasPriceSummaryData(summary));
   const summaryData = hasSummaryData ? summary : null;
   const confidence = getHistoryConfidence(summary?.count ?? 0);
+  const freshness = getFreshnessPresentation({
+    t,
+    lastUpdatedAt: detail?.latest_snapshot?.captured_at_utc,
+    freshnessState: detail?.latest_snapshot ? "observing" : null,
+  });
 
   return (
     <section className="panel panel-soft section-gap">
@@ -79,14 +84,11 @@ export function WatchDetailPanel({
           {t("watchlist.detail.currentPrice")} {detail?.latest_snapshot ? formatCurrency(detail.latest_snapshot.raw_price, detail.latest_snapshot.raw_currency) : "--"}
         </span>
         <span className="panel-note">
-          {t("watchlist.detail.latestSnapshot")} {detail?.latest_snapshot ? safeDateTime(detail.latest_snapshot.captured_at_utc) : "--"}
-        </span>
-        <span className="panel-note">
-          {t("watchlist.detail.freshness")} {detail?.latest_snapshot ? freshnessLabel(detail.latest_snapshot.captured_at_utc) : t("watchlist.detail.freshnessUnknown")}
+          {t("watchlist.detail.freshness")} {freshness.fullText}
         </span>
         {detail?.latest_snapshot ? (
           <span className="panel-note">
-            {t("watchlist.detail.lastUpdateRelative")} {formatRelativeTime(detail.latest_snapshot.captured_at_utc)}
+            {t("watchlist.detail.latestSnapshot")} {safeDateTime(detail.latest_snapshot.captured_at_utc)}
           </span>
         ) : null}
       </div>

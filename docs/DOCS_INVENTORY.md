@@ -272,3 +272,9 @@ Entradas vivas agregadas:
 
 - docs/qa/reports/2026-05-12-watchlist-w5-history-confidence.md
 
+## Actualizacion manual 2026-05-13 (watchlist W6 actionable freshness)
+
+Entradas vivas agregadas:
+
+- docs/qa/reports/2026-05-12-watchlist-w6-actionable-freshness.md
+

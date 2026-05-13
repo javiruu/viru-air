@@ -1,3 +1,5 @@
+import { formatRelativeTime } from "@/modules/shared/format";
+
 type RefreshBulkResponse = {
   status: string;
   requested: number;
@@ -58,4 +60,47 @@ export function getHistoryConfidence(snapshotCount: number): HistoryConfidence {
     titleKey: "watchlist.summary.historyConfidence.sufficientTitle",
     messageKey: "watchlist.summary.historyConfidence.sufficientMessage",
   };
+}
+
+type Translator = (key: string, params?: Record<string, string | number>) => string;
+
+export type FreshnessPresentation = {
+  label: string;
+  detail: string;
+  fullText: string;
+};
+
+export function getFreshnessPresentation(args: {
+  t: Translator;
+  lastUpdatedAt?: string | null;
+  freshnessState?: string | null;
+  now?: Date;
+}): FreshnessPresentation {
+  const { t, lastUpdatedAt, freshnessState, now } = args;
+  if (!lastUpdatedAt) {
+    const label = t("watchlist.freshness.noDataLabel");
+    const detail = t("watchlist.freshness.noDataDetail");
+    return { label, detail, fullText: `${label} · ${detail}` };
+  }
+
+  const date = new Date(lastUpdatedAt);
+  if (Number.isNaN(date.getTime())) {
+    const label = t("watchlist.freshness.noDataLabel");
+    const detail = t("watchlist.freshness.noDataDetail");
+    return { label, detail, fullText: `${label} · ${detail}` };
+  }
+
+  const nowMs = now?.getTime() ?? Date.now();
+  const diffHours = Math.max(0, (nowMs - date.getTime()) / (1000 * 60 * 60));
+  const relativeTime = formatRelativeTime(date);
+
+  if (diffHours > 24) {
+    const label = t("watchlist.freshness.needsReviewLabel");
+    const detail = t("watchlist.freshness.lastUpdatedAgo", { time: relativeTime });
+    return { label, detail, fullText: `${label} · ${detail}` };
+  }
+
+  const label = freshnessState ? t("watchlist.freshness.observingLabel") : t("watchlist.freshness.observingLabel");
+  const detail = t("watchlist.freshness.updatedAgo", { time: relativeTime });
+  return { label, detail, fullText: `${label} · ${detail}` };
 }
