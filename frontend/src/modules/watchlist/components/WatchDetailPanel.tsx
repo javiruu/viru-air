@@ -5,7 +5,7 @@ import { apiFetch } from "@/modules/shared/api";
 import { formatCurrency, formatPercent, formatRelativeTime } from "@/modules/shared/format";
 import { getWatchStatusMeta } from "@/modules/shared/statusCatalog";
 import { freshnessLabel, safeDateTime } from "@/modules/watchlist/presentation";
-import { hasPriceSummaryData } from "@/modules/watchlist/summary";
+import { getHistoryConfidence, hasPriceSummaryData } from "@/modules/watchlist/summary";
 import type { PriceCalendarResponse, PriceSummary, Watch, WatchDetail } from "@/modules/watchlist/types";
 
 type WatchDetailPanelProps = {
@@ -61,6 +61,9 @@ export function WatchDetailPanel({
 
   const focus = detail || selectedWatch;
   const status = getWatchStatusMeta(focus.status, t);
+  const hasSummaryData = Boolean(summary && hasPriceSummaryData(summary));
+  const summaryData = hasSummaryData ? summary : null;
+  const confidence = getHistoryConfidence(summary?.count ?? 0);
 
   return (
     <section className="panel panel-soft section-gap">
@@ -102,14 +105,20 @@ export function WatchDetailPanel({
         )}
       </div>
       <div className="history-summary history-summary--kpis">
-        {summary && hasPriceSummaryData(summary) ? (
+        {summaryData ? (
           <>
-            <div className="history-kpi"><span>{t("watchlist.summary.latest")}</span><strong>{summary.latest_price == null ? "--" : formatCurrency(summary.latest_price, "EUR")}</strong></div>
-            <div className="history-kpi"><span>{t("watchlist.summary.min")}</span><strong>{summary.min_price == null ? "--" : formatCurrency(summary.min_price, "EUR")}</strong></div>
-            <div className="history-kpi"><span>{t("watchlist.summary.max")}</span><strong>{summary.max_price == null ? "--" : formatCurrency(summary.max_price, "EUR")}</strong></div>
-            <div className="history-kpi"><span>{t("watchlist.summary.avg")}</span><strong>{summary.avg_price == null ? "--" : formatCurrency(summary.avg_price, "EUR")}</strong></div>
-            <div className="history-kpi"><span>{t("watchlist.summary.delta")}</span><strong>{summary.delta_pct == null ? "--" : formatPercent(summary.delta_pct)}</strong></div>
-            <div className="history-kpi"><span>{t("watchlist.summary.count")}</span><strong>{summary.count}</strong></div>
+            {confidence.level !== "none" && confidence.titleKey && confidence.messageKey ? (
+              <div className="notice notice-info notice-compact" role="status" aria-live="polite">
+                <strong>{t(confidence.titleKey)}</strong>
+                <p>{t(confidence.messageKey)}</p>
+              </div>
+            ) : null}
+            <div className="history-kpi"><span>{t("watchlist.summary.latest")}</span><strong>{summaryData.latest_price == null ? "--" : formatCurrency(summaryData.latest_price, "EUR")}</strong></div>
+            <div className="history-kpi"><span>{t("watchlist.summary.min")}</span><strong>{summaryData.min_price == null ? "--" : formatCurrency(summaryData.min_price, "EUR")}</strong></div>
+            <div className="history-kpi"><span>{t("watchlist.summary.max")}</span><strong>{summaryData.max_price == null ? "--" : formatCurrency(summaryData.max_price, "EUR")}</strong></div>
+            <div className="history-kpi"><span>{t("watchlist.summary.avg")}</span><strong>{summaryData.avg_price == null ? "--" : formatCurrency(summaryData.avg_price, "EUR")}</strong></div>
+            <div className="history-kpi"><span>{t("watchlist.summary.delta")}</span><strong>{summaryData.delta_pct == null ? "--" : formatPercent(summaryData.delta_pct)}</strong></div>
+            <div className="history-kpi"><span>{t("watchlist.summary.count")}</span><strong>{summaryData.count}</strong></div>
           </>
         ) : (
           <p className="panel-note">{t("watchlist.summary.empty")}</p>

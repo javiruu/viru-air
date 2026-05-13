@@ -266,3 +266,9 @@ Entradas vivas agregadas:
 
 - docs/qa/reports/2026-05-12-watchlist-w4-routes-heading.md
 
+## Actualizacion manual 2026-05-13 (watchlist W5 history confidence)
+
+Entradas vivas agregadas:
+
+- docs/qa/reports/2026-05-12-watchlist-w5-history-confidence.md
+

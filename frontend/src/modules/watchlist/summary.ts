@@ -26,3 +26,36 @@ export function summarizeRefreshBulkResult(result: RefreshBulkResponse): Refresh
 export function hasPriceSummaryData(summary: { count: number }): boolean {
   return summary.count > 0;
 }
+
+export type HistoryConfidenceLevel = "none" | "initial" | "limited" | "sufficient";
+
+export type HistoryConfidence = {
+  level: HistoryConfidenceLevel;
+  titleKey: string | null;
+  messageKey: string | null;
+};
+
+export function getHistoryConfidence(snapshotCount: number): HistoryConfidence {
+  if (snapshotCount <= 0) {
+    return { level: "none", titleKey: null, messageKey: null };
+  }
+  if (snapshotCount <= 1) {
+    return {
+      level: "initial",
+      titleKey: "watchlist.summary.historyConfidence.initialTitle",
+      messageKey: "watchlist.summary.historyConfidence.initialMessage",
+    };
+  }
+  if (snapshotCount <= 3) {
+    return {
+      level: "limited",
+      titleKey: "watchlist.summary.historyConfidence.limitedTitle",
+      messageKey: "watchlist.summary.historyConfidence.limitedMessage",
+    };
+  }
+  return {
+    level: "sufficient",
+    titleKey: "watchlist.summary.historyConfidence.sufficientTitle",
+    messageKey: "watchlist.summary.historyConfidence.sufficientMessage",
+  };
+}

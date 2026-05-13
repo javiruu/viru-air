@@ -48,6 +48,14 @@
     delta: "Delta",
     count: "Snapshots",
     empty: "Aún no hay histórico suficiente para resumir esta ruta.",
+    historyConfidence: {
+      initialTitle: "Histórico inicial",
+      initialMessage: "Solo hay 1 captura. Todavía no hay suficiente tendencia para decidir.",
+      limitedTitle: "Histórico limitado",
+      limitedMessage: "Hay pocas capturas. Interpreta la tendencia con cautela.",
+      sufficientTitle: "Histórico suficiente",
+      sufficientMessage: "Ya hay varias capturas para comparar la evolución.",
+    },
   },
   history: {
     title: "Histórico integrado",
@@ -110,6 +118,14 @@ export const watchlistEn = {
     delta: "Delta",
     count: "Snapshots",
     empty: "Not enough history to summarize this route yet.",
+    historyConfidence: {
+      initialTitle: "Histórico inicial",
+      initialMessage: "Solo hay 1 captura. Todavía no hay suficiente tendencia para decidir.",
+      limitedTitle: "Histórico limitado",
+      limitedMessage: "Hay pocas capturas. Interpreta la tendencia con cautela.",
+      sufficientTitle: "Histórico suficiente",
+      sufficientMessage: "Ya hay varias capturas para comparar la evolución.",
+    },
   },
   history: {
     title: "Integrated history",
