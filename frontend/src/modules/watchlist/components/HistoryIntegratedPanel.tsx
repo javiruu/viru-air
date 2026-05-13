@@ -96,6 +96,7 @@ type HistoryIntegratedPanelProps = {
   calendarEvents: Record<string, CalendarEvent>;
   calendarRange: CalendarRange;
   calendarCurrency: string;
+  calendarHasUsefulData: boolean;
   chartWidth: number;
   chartPad: { left: number; right: number; top: number; bottom: number };
   onToggleViewMode: () => void;
@@ -134,6 +135,7 @@ export function HistoryIntegratedPanel({
   calendarEvents,
   calendarRange,
   calendarCurrency,
+  calendarHasUsefulData,
   chartWidth,
   chartPad,
   onToggleViewMode,
@@ -150,6 +152,7 @@ export function HistoryIntegratedPanel({
   const { t } = useI18n();
   const hasSelectedWatch = Boolean(selectedWatch);
   const hasChartData = Boolean(chartModel && chartModel.length > 0);
+  const chartPointCount = chartModel?.reduce((acc, serie) => acc + serie.points.length, 0) ?? 0;
   const hasCalendarData = Boolean(visibleMonth);
   const hasSummary = Boolean(summary);
   const summaryData = summary ?? null;
@@ -202,9 +205,11 @@ export function HistoryIntegratedPanel({
             <span className="muted">{t("watchlist.history.filterDescription")}</span>
           </div>
           <div className="history-filterbar-actions">
-            <button className="btn-secondary btn-layered" type="button" onClick={onToggleViewMode}>
-              {viewMode === "chart" ? t("watchlist.history.viewCalendar") : t("watchlist.history.viewChart")}
-            </button>
+            {calendarHasUsefulData ? (
+              <button className="btn-secondary btn-layered" type="button" onClick={onToggleViewMode}>
+                {viewMode === "chart" ? t("watchlist.history.viewCalendar") : t("watchlist.history.viewChart")}
+              </button>
+            ) : null}
             <button className="btn-primary btn-layered" type="button" disabled={isRefreshingFiltered || !hasSelectedWatch} onClick={onApplyFilters}>
               {isRefreshingFiltered ? t("watchlist.history.refreshing") : t("watchlist.history.applyFilters")}
             </button>
@@ -266,10 +271,10 @@ export function HistoryIntegratedPanel({
         </div>
         <div className="history-range-control">
           <label className="history-range-field">
-            <span className="history-range-label">{t("watchlist.history.rangeLabel")}</span>
             <select
               className="history-input"
               name="history_range"
+              aria-label={t("watchlist.history.rangeLabel")}
               autoComplete="off"
               value={rangeWindow}
               onChange={(e) => onRangeChange(e.target.value as RangeWindow)}
@@ -417,13 +422,13 @@ export function HistoryIntegratedPanel({
               ) : null}
               {chartModel?.map((serie) => (
                 <g key={serie.date}>
-                  <polyline fill="none" stroke={serie.color} strokeWidth="2.4" points={serie.path} />
+                  <polyline fill="none" stroke={serie.color} strokeWidth={chartPointCount < 4 ? 3.4 : 2.8} points={serie.path} />
                   {serie.points.map((point) => (
                     <circle
                       key={`${serie.date}-${point.capturedAt}`}
                       cx={point.x}
                       cy={point.y}
-                      r={selectedPoint === point.capturedAt ? 6.2 : 4}
+                      r={selectedPoint === point.capturedAt ? 6.4 : chartPointCount < 4 ? 5 : 4.3}
                       fill={serie.color}
                       stroke={selectedPoint === point.capturedAt ? "var(--color-text-primary)" : "var(--color-surface)"}
                       strokeWidth={selectedPoint === point.capturedAt ? 2 : 1}
@@ -495,6 +500,12 @@ export function HistoryIntegratedPanel({
               </div>
             </div>
           ) : null}
+          {chartPointCount > 0 && chartPointCount < 4 ? (
+            <div className="history-compact-note" role="status" aria-live="polite">
+              <strong>{t("watchlist.history.chartBuildingTitle")}</strong>
+              <p>{t("watchlist.history.chartBuildingBody")}</p>
+            </div>
+          ) : null}
           <details className="history-disclaimer">
             <summary>{t("watchlist.history.priceMeaningTitle")}</summary>
             <p>{t("watchlist.history.priceMeaningBody")}</p>
@@ -502,7 +513,7 @@ export function HistoryIntegratedPanel({
         </div>
       ) : hasSelectedWatch && !isLoadingHistory ? (
         <div key={`calendar-${visibleMonth}`} className="panel history-stage history-calendar history-calendar-panel history-layout">
-          {hasCalendarData ? (
+          {hasCalendarData && calendarHasUsefulData ? (
             <>
               <div className="history-calendar-nav">
                 <button className="btn-ghost" type="button" onClick={onPrevMonth}>{t("watchlist.history.prevMonth")}</button>
@@ -575,9 +586,9 @@ export function HistoryIntegratedPanel({
               ) : null}
             </>
           ) : (
-            <div className="history-ghost history-ghost--calendar">
-              <div className="history-ghost-line" />
-              <p>{t("watchlist.history.calendarEmpty")}</p>
+            <div className="history-compact-note history-compact-note--calendar">
+              <strong>{t("watchlist.history.calendarUnavailableTitle")}</strong>
+              <p>{t("watchlist.history.calendarUnavailableBody")}</p>
             </div>
           )}
           <details className="history-disclaimer">

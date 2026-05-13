@@ -21,8 +21,8 @@ test("W4: smart list heading uses rutas vigiladas copy and removes old long titl
 test("W4: search and sort controls remain visible in smart panel", () => {
   const panelSource = fs.readFileSync(SMART_PANEL, "utf8");
 
-  assert.match(panelSource, /Buscar/);
-  assert.match(panelSource, /Ordenar/);
+  assert.match(panelSource, /watchlist\.smartList\.search/);
+  assert.match(panelSource, /watchlist\.smartList\.sort/);
   assert.match(panelSource, /watch-smart-search/);
   assert.match(panelSource, /watch-smart-sort/);
 });

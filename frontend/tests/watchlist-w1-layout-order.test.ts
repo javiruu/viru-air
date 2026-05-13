@@ -41,6 +41,6 @@ test("W1: compare and map feature blocks keep required labels", () => {
   const compareSource = fs.readFileSync(COMPARE_PANEL, "utf8");
   const mapSource = fs.readFileSync(MAP_PANEL, "utf8");
 
-  assert.match(compareSource, /Comparativa multi-vuelo/);
+  assert.match(compareSource, /watchlist\.compare\.title/);
   assert.match(mapSource, /watchlist\.map\.title|Mapa de rutas/);
 });

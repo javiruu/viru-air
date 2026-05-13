@@ -41,7 +41,7 @@ test("W8: compare selection guard keeps hard limit at 4 routes", () => {
   const source = fs.readFileSync(VIEW_STATE, "utf8");
 
   assert.match(source, /if \(prev\.length >= 4\)/);
-  assert.match(source, /Puedes comparar hasta 4 rutas\./);
+  assert.match(source, /watchlist\.compare\.maxSelectionMessage/);
 });
 
 test("W8: compare selection remains isolated from bulk destructive toolbar", () => {

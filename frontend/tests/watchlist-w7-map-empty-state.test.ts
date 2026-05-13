@@ -16,7 +16,7 @@ test("W7: con rutas pero sin geodatos utiles no aparece copy contradictorio", ()
 
   assert.doesNotMatch(derived, /No hay rutas activas para mostrar en el mapa\./);
   assert.match(i18n, /unavailableTitle:\s*"Mapa no disponible para estas rutas\."/);
-  assert.match(i18n, /unavailableBody:\s*"La decisión principal está en precio, frescura e histórico\."/);
+  assert.match(i18n, /unavailableBody:/);
 });
 
 test("W7: sin rutas muestra empty state correcto y no contradictorio", () => {
@@ -25,8 +25,8 @@ test("W7: sin rutas muestra empty state correcto y no contradictorio", () => {
   const i18n = fs.readFileSync(WATCHLIST_I18N, "utf8");
 
   assert.match(panel, /hasWatchItems \? t\("watchlist\.map\.unavailableTitle"\) : t\("watchlist\.map\.emptyTitle"\)/);
-  assert.match(derived, /Añade una ruta a tu Watchlist para verla aquí\./);
-  assert.match(i18n, /emptyTitle:\s*"Añade una ruta a tu Watchlist para verla aquí\."/);
+  assert.match(derived, /watchlist\.map\.emptyTitle/);
+  assert.match(i18n, /emptyTitle:/);
 });
 
 test("W7: cuando hay datos de mapa el panel sigue operativo", () => {

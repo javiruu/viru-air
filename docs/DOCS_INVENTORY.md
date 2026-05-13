@@ -305,3 +305,9 @@ Entradas vivas agregadas:
 
 - docs/qa/reports/2026-05-12-watchlist-w9-1-final-remedy.md
 
+## Actualizacion manual 2026-05-13 (watchlist W9.2 history rescue)
+
+Entradas vivas agregadas:
+
+- docs/qa/reports/2026-05-12-watchlist-w9-2-history-rescue.md
+

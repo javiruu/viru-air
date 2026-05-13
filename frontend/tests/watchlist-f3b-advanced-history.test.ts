@@ -21,7 +21,7 @@ test("compare panel consumes compare endpoint and uses required states", () => {
   assert.match(source, /watchlist\.compare\.emptySelectionMessage/);
   assert.match(source, /watchlist\.compare\.oneSelectionMessage/);
   assert.match(source, /watchlist\.compare\.mixedCurrencyWarning/);
-  assert.match(source, /Volatilidad: \{volatilityLabel\(card\.volatility_hint\)\}/);
+  assert.match(source, /watchlist\.compare\.volatility/);
   assert.match(source, /compareBadgesFromResponse/);
   assert.doesNotMatch(source, /compareBadges\?\.bestPriceId === card\.watch_id/);
   assert.doesNotMatch(source, /compareBadges\?\.stableId === card\.watch_id/);
@@ -30,5 +30,5 @@ test("compare panel consumes compare endpoint and uses required states", () => {
 test("compare selection keeps max 4 guard", () => {
   const source = fs.readFileSync(VIEW_STATE_FILE, "utf8");
   assert.match(source, /if \(prev\.length >= 4\)/);
-  assert.match(source, /Puedes comparar hasta 4 rutas\./);
+  assert.match(source, /watchlist\.compare\.maxSelectionMessage/);
 });

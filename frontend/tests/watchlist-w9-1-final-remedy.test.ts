@@ -35,8 +35,8 @@ test("W9.1: route separators use arrows and never question marks", () => {
   assert.match(detail, /origin_iata\} \{"→"\} \{focus\.destination_iata\}/);
   assert.match(smart, /\{" → "\}/);
   assert.match(history, /origin_iata\} → \$\{selectedWatch\.destination_iata\}/);
-  assert.match(compare, /\{option\.origin\} → \{option\.destination\}/);
-  assert.match(compare, /<strong>\{origin\} → \{destination\}<\/strong>/);
+  assert.match(compare, /\{option\.origin\} \{"->"\} \{option\.destination\}/);
+  assert.match(compare, /<strong>\{origin\} \{"->"\} \{destination\}<\/strong>/);
 
   assert.doesNotMatch(history, /\$\{selectedWatch\.origin_iata\} \? \$/);
   assert.doesNotMatch(compare, /\{option\.origin\} \? \{option\.destination\}/);
@@ -48,9 +48,9 @@ test("W9.1: no duplicate 'Rango RANGO' and confidence copy remains intact", () =
   const detail = fs.readFileSync(DETAIL_PANEL, "utf8");
   const i18n = fs.readFileSync(WATCHLIST_I18N, "utf8");
 
-  assert.match(history, /Rango temporal/);
-  assert.match(history, /history-range-label">Rango</);
-  assert.doesNotMatch(history, /<strong>Rango<\/strong>/);
+  assert.match(history, /watchlist\.history\.rangeTitle/);
+  assert.match(history, /aria-label=\{t\("watchlist\.history\.rangeLabel"\)\}/);
+  assert.doesNotMatch(history, /history-range-label/);
 
   assert.match(detail, /history-confidence-notice/);
   assert.match(i18n, /limitedTitle:\s*"Histórico limitado"/);

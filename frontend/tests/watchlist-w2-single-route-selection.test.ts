@@ -23,9 +23,9 @@ test("W2: history panel uses selected route summary and removes editable route s
 
   assert.match(source, /name="history_range"/);
   assert.match(source, /name="history_point"/);
-  assert.match(source, /Ver calendario|Ver gráfico/);
-  assert.match(source, /Vista acotada/);
-  assert.match(source, /Reset zoom/);
+  assert.match(source, /watchlist\.history\.viewCalendar|watchlist\.history\.viewChart/);
+  assert.match(source, /watchlist\.history\.compactView/);
+  assert.match(source, /watchlist\.history\.resetZoom/);
 });
 
 test("W2: history panel shows empty state when no selected route", () => {

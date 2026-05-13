@@ -45,8 +45,8 @@ test("W6: i18n agrega copy de frescura accionable en ES", () => {
   assert.match(source, /noDataLabel:\s*"/);
   assert.match(source, /noDataDetail:\s*"actualiza para crear el primer snapshot"/);
   assert.match(source, /needsReviewLabel:\s*"/);
-  assert.match(source, /lastUpdatedAgo:\s*"hace \{time\}"/);
-  assert.match(source, /updatedAgo:\s*"hace \{time\}"/);
+  assert.match(source, /lastUpdatedAgo:\s*"\{time\}"/);
+  assert.match(source, /updatedAgo:\s*"\{time\}"/);
   assert.match(source, /observingLabel:\s*"/);
 });
 

@@ -291,8 +291,7 @@ export function useWatchlistDerived({
   }, [flatChartPoints, selectedPoint]);
 
   const calendarEvents = useMemo(() => {
-    const source = filteredRows.length > 0 ? filteredRows : historyRows;
-    return source.reduce<Record<string, { min: number; max: number; count: number }>>((acc, row) => {
+    return filteredRows.reduce<Record<string, { min: number; max: number; count: number }>>((acc, row) => {
       const current = acc[row.travelDate];
       if (!current) {
         acc[row.travelDate] = { min: row.price, max: row.price, count: 1 };
@@ -303,10 +302,21 @@ export function useWatchlistDerived({
       }
       return acc;
     }, {});
-  }, [filteredRows, historyRows]);
+  }, [filteredRows]);
 
-  const visibleMonth = calendarCursor || toIsoMonth(Object.keys(calendarEvents)[0] || "");
-  const monthCells = monthDays(visibleMonth);
+  const visibleMonth = useMemo(() => {
+    if (calendarCursor) return calendarCursor;
+    if (selectedDates.length > 0) return toIsoMonth(selectedDates[0]);
+    if (selectedPoint) {
+      const selectedRow = filteredRows.find((row) => row.capturedAt === selectedPoint);
+      if (selectedRow) return toIsoMonth(selectedRow.travelDate);
+    }
+    const latestRow = filteredRows[filteredRows.length - 1];
+    if (latestRow) return toIsoMonth(latestRow.travelDate);
+    const firstEventDay = Object.keys(calendarEvents).sort()[0];
+    return toIsoMonth(firstEventDay || "");
+  }, [calendarCursor, selectedDates, selectedPoint, filteredRows, calendarEvents]);
+  const monthCells = useMemo(() => (visibleMonth ? monthDays(visibleMonth) : []), [visibleMonth]);
 
   const calendarRange = useMemo(() => {
     const days = monthCells.filter(Boolean);
@@ -323,6 +333,10 @@ export function useWatchlistDerived({
     () => filteredRows[0]?.currency ?? historyRows[0]?.currency ?? "EUR",
     [filteredRows, historyRows],
   );
+  const calendarHasUsefulData = useMemo(() => {
+    const eventDays = Object.keys(calendarEvents).length;
+    return eventDays >= 3 && filteredRows.length >= 4;
+  }, [calendarEvents, filteredRows.length]);
 
   const compareOptions = useMemo(() => {
     return items.map((item) => {
@@ -508,6 +522,7 @@ export function useWatchlistDerived({
     monthCells,
     calendarRange,
     calendarCurrency,
+    calendarHasUsefulData,
     compareOptions,
     compareSelection,
     compareBadges,

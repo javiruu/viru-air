@@ -178,6 +178,7 @@ export default function WatchlistPage() {
         calendarEvents={derived.calendarEvents}
         calendarRange={derived.calendarRange}
         calendarCurrency={derived.calendarCurrency}
+        calendarHasUsefulData={derived.calendarHasUsefulData}
         chartWidth={CHART_WIDTH}
         chartPad={CHART_PAD}
         onToggleViewMode={view.toggleViewMode}

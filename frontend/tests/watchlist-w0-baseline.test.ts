@@ -32,7 +32,7 @@ test("W0: watchlist list/detail/history/compare copies remain present in current
   assert.match(detailPanel, /watchlist\.detail\.title/);
   assert.match(historyPanel, /watchlist\.history\.title|Histórico integrado|Historico integrado/);
   assert.doesNotMatch(detailPanel, /Calendario/);
-  assert.match(comparePanel, /Comparativa multi-vuelo/);
+  assert.match(comparePanel, /watchlist\.compare\.title/);
 });
 
 test("W0: watchlist private copy keeps EN blocked literals out of route source", () => {
