@@ -233,3 +233,10 @@ Entradas vivas actualizadas:
 
 - `docs/qa/reports/2026-05-12-fases-0-3-audit.md`
 - `docs/overview/current-state.md`
+
+## Actualizacion manual 2026-05-12 (watchlist W0 baseline)
+
+Entradas vivas agregadas:
+
+- `docs/qa/reports/2026-05-12-watchlist-w0-baseline.md`
+- `docs/qa/screenshots/watchlist-w0-baseline.png`
