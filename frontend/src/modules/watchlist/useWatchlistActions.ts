@@ -48,6 +48,8 @@ export function useWatchlistActions({
   const [refreshingWatchId, setRefreshingWatchId] = useState<string | null>(null);
   const [isRefreshingFiltered, setIsRefreshingFiltered] = useState(false);
   const [isRefreshingBulk, setIsRefreshingBulk] = useState(false);
+  const [isLoadingWatchlist, setIsLoadingWatchlist] = useState(true);
+  const [isLoadingHistoryInitial, setIsLoadingHistoryInitial] = useState(true);
   const [selectedWatchDetail, setSelectedWatchDetail] = useState<WatchDetail | null>(null);
   const [selectedWatchSummary, setSelectedWatchSummary] = useState<PriceSummary | null>(null);
   const [isLoadingSelectedWatchDetail, setIsLoadingSelectedWatchDetail] = useState(false);
@@ -58,60 +60,69 @@ export function useWatchlistActions({
   const [compatibleDestinations, setCompatibleDestinations] = useState<string[]>([]);
 
   async function load(): Promise<void> {
-    const rows = await apiFetch<Watch[]>("/watchlist");
-    setItems(rows);
+    setIsLoadingWatchlist(true);
+    setIsLoadingHistoryInitial(true);
+    try {
+      const rows = await apiFetch<Watch[]>("/watchlist");
+      setItems(rows);
 
-    if (!selectedOrigin && rows.length > 0) {
-      setSelectedOrigin(rows[0].origin_iata);
-      setSelectedDestination(rows[0].destination_iata);
-      setSelectedDates([rows[0].travel_date_local]);
-    }
+      if (!selectedOrigin && rows.length > 0) {
+        setSelectedOrigin(rows[0].origin_iata);
+        setSelectedDestination(rows[0].destination_iata);
+        setSelectedDates([rows[0].travel_date_local]);
+      }
 
-    if (!selectedWatchId && rows.length > 0) {
-      setSelectedWatchId(rows[0].id);
-    }
+      if (!selectedWatchId && rows.length > 0) {
+        setSelectedWatchId(rows[0].id);
+      }
 
-    const snapshots = rows.length
-      ? await apiFetch<Array<Snapshot & { watch_id: string }>>("/prices/history/batch", {
-          method: "POST",
-          body: JSON.stringify({ watch_ids: rows.map((watch) => watch.id) }),
+      const snapshots = rows.length
+        ? await apiFetch<Array<Snapshot & { watch_id: string }>>("/prices/history/batch", {
+            method: "POST",
+            body: JSON.stringify({ watch_ids: rows.map((watch) => watch.id) }),
+          })
+        : [];
+
+      const watchMap = new Map(rows.map((watch) => [watch.id, watch]));
+      const merged = snapshots
+        .map<HistoryRow | null>((snapshot) => {
+          const watch = watchMap.get(snapshot.watch_id);
+          if (!watch) return null;
+          return {
+            watchId: watch.id,
+            origin: watch.origin_iata,
+            destination: watch.destination_iata,
+            travelDate: watch.travel_date_local,
+            capturedAt: snapshot.captured_at_utc,
+            price: snapshot.raw_price,
+            currency: snapshot.raw_currency,
+            departureTime: snapshot.departure_time_local,
+          };
         })
-      : [];
+        .filter((row): row is HistoryRow => Boolean(row));
+      setHistoryRows(merged);
 
-    const watchMap = new Map(rows.map((watch) => [watch.id, watch]));
-    const merged = snapshots
-      .map<HistoryRow | null>((snapshot) => {
-        const watch = watchMap.get(snapshot.watch_id);
-        if (!watch) return null;
-        return {
-          watchId: watch.id,
-          origin: watch.origin_iata,
-          destination: watch.destination_iata,
-          travelDate: watch.travel_date_local,
-          capturedAt: snapshot.captured_at_utc,
-          price: snapshot.raw_price,
-          currency: snapshot.raw_currency,
-          departureTime: snapshot.departure_time_local,
-        };
-      })
-      .filter((row): row is HistoryRow => Boolean(row));
-    setHistoryRows(merged);
+      if (rows.length > 0 && !rows.some((row) => row.id === selectedWatchId)) {
+        setSelectedWatchId(rows[0].id);
+      }
 
-    if (rows.length > 0 && !rows.some((row) => row.id === selectedWatchId)) {
-      setSelectedWatchId(rows[0].id);
-    }
-
-    if (!calendarCursor) {
-      const seed = merged[0]?.travelDate || rows[0]?.travel_date_local || "";
-      setCalendarCursor(toIsoMonth(seed));
+      if (!calendarCursor) {
+        const seed = merged[0]?.travelDate || rows[0]?.travel_date_local || "";
+        setCalendarCursor(toIsoMonth(seed));
+      }
+    } finally {
+      setIsLoadingHistoryInitial(false);
+      setIsLoadingWatchlist(false);
     }
   }
 
   useEffect(() => {
-    load().catch(() => {
-      setMessage("No se pudo cargar watchlist");
-      setMessageType("error");
-    });
+    load()
+      .catch(() => {
+        setMessage("No se pudo cargar watchlist");
+        setMessageType("error");
+      })
+      .finally(() => setIsLoadingWatchlist(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -425,6 +436,8 @@ export function useWatchlistActions({
     refreshingWatchId,
     isRefreshingFiltered,
     isRefreshingBulk,
+    isLoadingWatchlist,
+    isLoadingHistoryInitial,
     selectedWatchDetail,
     selectedWatchSummary,
     isLoadingSelectedWatchDetail,

@@ -1,4 +1,5 @@
-﻿import type { FormEventHandler } from "react";
+import type { FormEventHandler } from "react";
+import { useI18n } from "@/i18n";
 
 type PickerField = "origin" | "destination";
 
@@ -31,6 +32,7 @@ export function AddWatchModal({
   onTargetPriceChange,
   onOpenPicker,
 }: AddWatchModalProps) {
+  const { t } = useI18n();
   if (!isOpen) return null;
 
   return (
@@ -47,8 +49,10 @@ export function AddWatchModal({
             <h2 className="panel-title">Anadir vuelo</h2>
             <p className="panel-subtitle">Selecciona fecha y aeropuertos compatibles.</p>
           </div>
-          <button className="modal-close" type="button" aria-label="Cerrar modal" onClick={onClose}>
-            X
+          <button className="modal-close" type="button" aria-label={t("watchlist.modal.close")} onClick={onClose}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
           </button>
         </div>
 
@@ -129,3 +133,4 @@ export function AddWatchModal({
     </div>
   );
 }
+

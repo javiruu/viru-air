@@ -50,6 +50,12 @@ export default function WatchlistPage() {
     chartPad: CHART_PAD,
     lineColors: LINE_COLORS,
   });
+  const hasHistoryData = Boolean(
+    (derived.chartModel?.some((serie) => serie.points.length > 0) ?? false) ||
+      Object.keys(derived.calendarEvents).length > 0,
+  );
+  const isLoadingHistory = Boolean(derived.selectedWatch && actions.isLoadingHistoryInitial && !hasHistoryData);
+  const isRefreshingHistory = Boolean(actions.isRefreshingFiltered && hasHistoryData);
 
   return (
     <main className="shell watchlist-page" id="main-content">
@@ -125,6 +131,7 @@ export default function WatchlistPage() {
           onBulkDelete={actions.bulkDelete}
           onBulkRefresh={actions.bulkRefresh}
           isRefreshingBulk={actions.isRefreshingBulk}
+          isLoading={actions.isLoadingWatchlist}
           onOpenAddWatch={() => actions.setShowAdd(true)}
         />
 
@@ -143,6 +150,8 @@ export default function WatchlistPage() {
       <HistoryIntegratedPanel
         selectedWatch={derived.selectedWatch}
         viewMode={view.viewMode}
+        isLoadingHistory={isLoadingHistory}
+        isRefreshingHistory={isRefreshingHistory}
         isRefreshingFiltered={actions.isRefreshingFiltered}
         selectedOrigin={view.selectedOrigin}
         selectedDestination={view.selectedDestination}

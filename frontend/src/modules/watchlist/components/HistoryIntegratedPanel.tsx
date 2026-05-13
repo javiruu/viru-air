@@ -75,6 +75,8 @@ type CalendarRange = {
 type HistoryIntegratedPanelProps = {
   selectedWatch: SelectedWatch;
   viewMode: ViewMode;
+  isLoadingHistory: boolean;
+  isRefreshingHistory: boolean;
   isRefreshingFiltered: boolean;
   selectedOrigin: string;
   selectedDestination: string;
@@ -111,6 +113,8 @@ type HistoryIntegratedPanelProps = {
 export function HistoryIntegratedPanel({
   selectedWatch,
   viewMode,
+  isLoadingHistory,
+  isRefreshingHistory,
   isRefreshingFiltered,
   selectedOrigin,
   selectedDestination,
@@ -145,9 +149,13 @@ export function HistoryIntegratedPanel({
 }: HistoryIntegratedPanelProps) {
   const { t } = useI18n();
   const hasSelectedWatch = Boolean(selectedWatch);
+  const hasChartData = Boolean(chartModel && chartModel.length > 0);
+  const hasCalendarData = Boolean(visibleMonth);
+  const hasSummary = Boolean(summary);
+  const summaryData = summary ?? null;
   const selectedRouteValue = selectedWatch
     ? `${selectedWatch.origin_iata} → ${selectedWatch.destination_iata} · ${selectedWatch.travel_date_local}`
-    : t("watchlist.history.selectedRouteEmpty");
+    : t("watchlist.history.selectFlightPlaceholder");
 
   return (
     <section className="panel history-panel section-gap">
@@ -189,11 +197,11 @@ export function HistoryIntegratedPanel({
             <span className="muted">{t("watchlist.history.filterDescription")}</span>
           </div>
           <div className="history-filterbar-actions">
-            <button className="btn-secondary btn-layered" onClick={onToggleViewMode}>
-              {viewMode === "chart" ? "Ver calendario" : "Ver gráfico"}
+            <button className="btn-secondary btn-layered" type="button" onClick={onToggleViewMode}>
+              {viewMode === "chart" ? t("watchlist.history.viewCalendar") : t("watchlist.history.viewChart")}
             </button>
             <button className="btn-primary btn-layered" type="button" disabled={isRefreshingFiltered || !hasSelectedWatch} onClick={onApplyFilters}>
-              {isRefreshingFiltered ? "Actualizando..." : "Aplicar filtros"}
+              {isRefreshingFiltered ? t("watchlist.history.refreshing") : t("watchlist.history.applyFilters")}
             </button>
           </div>
         </div>
@@ -220,7 +228,7 @@ export function HistoryIntegratedPanel({
                   />
                 </svg>
               </span>
-              Punto (fecha de consulta)
+              {t("watchlist.history.pointLabel")}
             </span>
             <select
               className="history-input"
@@ -230,17 +238,17 @@ export function HistoryIntegratedPanel({
               disabled={!hasSelectedWatch || selectedDates.length !== 1 || pointOptions.length === 0}
               onChange={(e) => onPointChange(e.target.value)}
             >
-              <option value="">Selecciona un punto para ver detalle</option>
+              <option value="">{t("watchlist.history.pointPlaceholder")}</option>
               {pointOptions.map((point) => <option key={point.value} value={point.value}>{point.label}</option>)}
             </select>
             <span className="history-helper">
               {!hasSelectedWatch
-                ? "Selecciona una ruta de tu Watchlist para habilitar."
+                ? t("watchlist.history.pointHelperSelectRoute")
                 : selectedDates.length !== 1
-                  ? "Selecciona una sola fecha para habilitar."
+                  ? t("watchlist.history.pointHelperSelectOneDate")
                   : pointOptions.length === 0
-                    ? "No hay puntos para la fecha seleccionada."
-                    : "Selecciona un punto para activar el detalle."}
+                    ? t("watchlist.history.pointHelperNoPoints")
+                    : t("watchlist.history.pointHelperReady")}
             </span>
           </label>
         </div>
@@ -248,12 +256,12 @@ export function HistoryIntegratedPanel({
 
       <div className="history-range history-range-toolbar">
         <div className="history-range-left">
-          <strong>Rango temporal</strong>
-          <p className="muted">Ajusta el rango temporal del gráfico.</p>
+          <strong>{t("watchlist.history.rangeTitle")}</strong>
+          <p className="muted">{t("watchlist.history.rangeBody")}</p>
         </div>
         <div className="history-range-control">
           <label className="history-range-field">
-            <span className="history-range-label">Rango</span>
+            <span className="history-range-label">{t("watchlist.history.rangeLabel")}</span>
             <select
               className="history-input"
               name="history_range"
@@ -261,11 +269,11 @@ export function HistoryIntegratedPanel({
               value={rangeWindow}
               onChange={(e) => onRangeChange(e.target.value as RangeWindow)}
             >
-              <option value="7">Últimos 7 días</option>
-              <option value="14">Últimos 14 días</option>
-              <option value="30">Últimos 30 días</option>
-              <option value="90">Últimos 90 días</option>
-              <option value="all">Todo el histórico</option>
+              <option value="7">{t("watchlist.history.range7")}</option>
+              <option value="14">{t("watchlist.history.range14")}</option>
+              <option value="30">{t("watchlist.history.range30")}</option>
+              <option value="90">{t("watchlist.history.range90")}</option>
+              <option value="all">{t("watchlist.history.rangeAll")}</option>
             </select>
           </label>
           <div className="history-range-actions">
@@ -275,53 +283,80 @@ export function HistoryIntegratedPanel({
               aria-pressed={rangeWindow !== "all"}
               onClick={onToggleRangeWindow}
             >
-              Vista acotada
+              {t("watchlist.history.compactView")}
             </button>
             <button className="btn-ghost btn-layered" type="button" onClick={onResetZoom}>
-              Reset zoom
+              {t("watchlist.history.resetZoom")}
             </button>
           </div>
         </div>
       </div>
+      {isRefreshingHistory ? (
+        <div className="history-refresh-indicator muted" role="status" aria-live="polite">
+          {t("watchlist.history.refreshing")}
+        </div>
+      ) : null}
+      {isLoadingHistory ? (
+        <div className="history-loading" role="status" aria-live="polite" aria-label={t("watchlist.smartList.loadingAria")}>
+          <div className="skeleton skeleton-line history-skeleton-toolbar" />
+          <div className="history-layout">
+            <div className="history-primary">
+              <span className="skeleton skeleton-block history-skeleton-chart" />
+            </div>
+            <div className="history-support">
+              <span className="skeleton skeleton-line history-skeleton-line" />
+              <span className="skeleton skeleton-line history-skeleton-line" />
+              <span className="skeleton skeleton-line history-skeleton-line" />
+            </div>
+          </div>
+          <div className="history-summary history-summary--kpis">
+            <span className="history-kpi"><span className="skeleton skeleton-line" /><strong className="skeleton skeleton-line" /></span>
+            <span className="history-kpi"><span className="skeleton skeleton-line" /><strong className="skeleton skeleton-line" /></span>
+            <span className="history-kpi"><span className="skeleton skeleton-line" /><strong className="skeleton skeleton-line" /></span>
+            <span className="history-kpi"><span className="skeleton skeleton-line" /><strong className="skeleton skeleton-line" /></span>
+          </div>
+        </div>
+      ) : null}
 
-      {!hasSelectedWatch ? (
+      {!hasSelectedWatch && !isLoadingHistory ? (
         <div className="panel history-stage history-chart history-scroll history-chart-panel">
           <div className="history-ghost">
             <div className="history-ghost-line" />
             <p>{t("watchlist.history.selectedRouteEmpty")}</p>
           </div>
         </div>
-      ) : viewMode === "chart" ? (
+      ) : hasSelectedWatch && !isLoadingHistory && viewMode === "chart" ? (
         <div
           key={`chart-${selectedOrigin}-${selectedDestination}-${selectedDates.join(",")}-${selectedPoint}`}
-          className={`panel history-stage history-chart history-scroll history-chart-panel${chartIsCompact ? " history-chart--compact" : ""}`}
+          className={`panel history-stage history-chart history-scroll history-chart-panel history-layout${chartIsCompact ? " history-chart--compact" : ""}`}
         >
-          <div className="history-detail">
+          <div className="history-detail history-support">
             {selectedPointData ? (
               <div className="history-detail-card">
                 <div>
-                  <span className="history-detail-label">Punto seleccionado</span>
+                <span className="history-detail-label">{t("watchlist.history.selectedPointLabel")}</span>
                   <strong>{formatCurrency(selectedPointData.price, selectedPointData.currency)}</strong>
                 </div>
                 <div className="history-detail-meta">
                   <span>{formatDateTime(selectedPointData.capturedAt)}</span>
                   <span>{selectedPointData.date}</span>
-                  {selectedPointData.departureTime ? <span>Salida {selectedPointData.departureTime}</span> : null}
+                  {selectedPointData.departureTime ? <span>{t("watchlist.history.departureAt", { value: selectedPointData.departureTime })}</span> : null}
                 </div>
               </div>
             ) : (
               <div className="history-detail-empty">
-                Selecciona un punto para ver detalle.
+                {t("watchlist.history.selectPointHelp")}
               </div>
             )}
           </div>
-          {chartModel && chartModel.length > 0 ? (
+          <div className="history-primary">
+          {hasChartData ? (
             <svg
               className="history-svg"
               viewBox={`0 0 ${chartWidth} ${chartHeight}`}
               width="100%"
               role="img"
-              aria-label="Gráfico de histórico de precios"
+              aria-label={t("watchlist.history.chartAriaLabel")}
               onMouseMove={onChartMouseMove}
               onMouseLeave={onChartMouseLeave}
             >
@@ -375,7 +410,7 @@ export function HistoryIntegratedPanel({
                   />
                 </g>
               ) : null}
-              {chartModel.map((serie) => (
+              {chartModel?.map((serie) => (
                 <g key={serie.date}>
                   <polyline fill="none" stroke={serie.color} strokeWidth="2.4" points={serie.path} />
                   {serie.points.map((point) => (
@@ -397,9 +432,10 @@ export function HistoryIntegratedPanel({
           ) : (
             <div className="history-ghost">
               <div className="history-ghost-line" />
-              <p>Selecciona filtros con datos históricos para ver el gráfico.</p>
+              <p>{t("watchlist.history.chartEmpty")}</p>
             </div>
           )}
+          </div>
           {hoverPoint ? (
             <div
               className="history-tooltip"
@@ -411,7 +447,7 @@ export function HistoryIntegratedPanel({
               <span className="history-tooltip-tag">{hoverPoint.date}</span>
               <strong>{formatCurrency(hoverPoint.price, hoverPoint.currency)}</strong>
               <span>{formatDateTime(hoverPoint.capturedAt)}</span>
-              {hoverPoint.departureTime ? <span>Salida {hoverPoint.departureTime}</span> : null}
+              {hoverPoint.departureTime ? <span>{t("watchlist.history.departureAt", { value: hoverPoint.departureTime })}</span> : null}
             </div>
           ) : null}
           <div className="history-legend">
@@ -422,41 +458,41 @@ export function HistoryIntegratedPanel({
               </span>
             ))}
           </div>
-          {summary ? (
+          {hasSummary && summaryData ? (
             <div className="history-summary history-summary--kpis">
               <div className="history-kpi">
-                <span>Media</span>
-                <strong>{formatCurrency(summary.avg, summary.currency)}</strong>
+                <span>{t("watchlist.summary.avg")}</span>
+                <strong>{formatCurrency(summaryData.avg, summaryData.currency)}</strong>
               </div>
               <div className="history-kpi">
-                <span>Mínimo</span>
-                <strong>{formatCurrency(summary.min, summary.currency)}</strong>
+                <span>{t("watchlist.summary.min")}</span>
+                <strong>{formatCurrency(summaryData.min, summaryData.currency)}</strong>
               </div>
               <div className="history-kpi">
-                <span>Máximo</span>
-                <strong>{formatCurrency(summary.max, summary.currency)}</strong>
+                <span>{t("watchlist.summary.max")}</span>
+                <strong>{formatCurrency(summaryData.max, summaryData.currency)}</strong>
               </div>
               <div className="history-kpi">
-                <span>N puntos</span>
-                <strong>{summary.total}</strong>
+                <span>{t("watchlist.summary.count")}</span>
+                <strong>{summaryData.total}</strong>
               </div>
             </div>
           ) : null}
           <details className="history-disclaimer">
-            <summary>¿Qué significa este precio?</summary>
-            <p>Precio orientativo: base 1 adulto, sin extras de equipaje ni servicios.</p>
+            <summary>{t("watchlist.history.priceMeaningTitle")}</summary>
+            <p>{t("watchlist.history.priceMeaningBody")}</p>
           </details>
         </div>
-      ) : (
-        <div key={`calendar-${visibleMonth}`} className="panel history-stage history-calendar history-calendar-panel">
-          {visibleMonth ? (
+      ) : hasSelectedWatch && !isLoadingHistory ? (
+        <div key={`calendar-${visibleMonth}`} className="panel history-stage history-calendar history-calendar-panel history-layout">
+          {hasCalendarData ? (
             <>
               <div className="history-calendar-nav">
-                <button className="btn-ghost" onClick={onPrevMonth}>Mes anterior</button>
+                <button className="btn-ghost" type="button" onClick={onPrevMonth}>{t("watchlist.history.prevMonth")}</button>
                 <strong className="month-title">{monthTitle}</strong>
-                <button className="btn-ghost" onClick={onNextMonth}>Mes siguiente</button>
+                <button className="btn-ghost" type="button" onClick={onNextMonth}>{t("watchlist.history.nextMonth")}</button>
               </div>
-              <div className="history-calendar-grid">
+              <div className="history-calendar-grid history-primary">
                 {["L", "M", "X", "J", "V", "S", "D"].map((weekday, index) => (
                   <div key={`history-weekday-${index}`} className="history-weekday">{weekday}</div>
                 ))}
@@ -498,9 +534,9 @@ export function HistoryIntegratedPanel({
               </div>
               {calendarRange ? (
                 <div className="history-heat-legend">
-                  <span>Más barato</span>
+                  <span>{t("watchlist.history.cheapest")}</span>
                   <div className="history-heat-bar" />
-                  <span>Más caro</span>
+                  <span>{t("watchlist.history.mostExpensive")}</span>
                   <span className="muted">
                     {formatCurrency(calendarRange.min, calendarCurrency)} - {formatCurrency(calendarRange.max, calendarCurrency)}
                   </span>
@@ -510,15 +546,15 @@ export function HistoryIntegratedPanel({
           ) : (
             <div className="history-ghost history-ghost--calendar">
               <div className="history-ghost-line" />
-              <p>No hay datos para calendario.</p>
+              <p>{t("watchlist.history.calendarEmpty")}</p>
             </div>
           )}
           <details className="history-disclaimer">
-            <summary>¿Qué significa este precio?</summary>
-            <p>Precio orientativo: base 1 adulto, sin extras de equipaje ni servicios.</p>
+            <summary>{t("watchlist.history.priceMeaningTitle")}</summary>
+            <p>{t("watchlist.history.priceMeaningBody")}</p>
           </details>
         </div>
-      )}
+      ) : null}
     </section>
   );
 }

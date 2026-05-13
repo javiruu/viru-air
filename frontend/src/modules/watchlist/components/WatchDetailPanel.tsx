@@ -68,6 +68,13 @@ export function WatchDetailPanel({
           </span>
         ) : null}
       </div>
+      {isLoading && !detail ? (
+        <div className="history-summary history-summary--kpis" aria-label={t("watchlist.smartList.loadingAria")}>
+          <div className="history-kpi"><span className="skeleton skeleton-line" /><strong className="skeleton skeleton-line" /></div>
+          <div className="history-kpi"><span className="skeleton skeleton-line" /><strong className="skeleton skeleton-line" /></div>
+          <div className="history-kpi"><span className="skeleton skeleton-line" /><strong className="skeleton skeleton-line" /></div>
+        </div>
+      ) : null}
       <div className="alert-actions">
         <button className="btn-secondary btn-compact" type="button" onClick={() => onRefreshWatch(focus.id)}>
           {t("watchlist.detail.actions.refresh")}

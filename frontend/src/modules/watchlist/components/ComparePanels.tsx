@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useI18n } from "@/i18n";
 import { apiFetch } from "@/modules/shared/api";
@@ -55,27 +55,36 @@ type ComparePanelsProps = {
   onToggleCompare: (id: string) => void;
 };
 
-function volatilityLabel(value: "low" | "medium" | "high" | "insufficient_data"): string {
-  if (value === "low") return "Baja";
-  if (value === "medium") return "Media";
-  if (value === "high") return "Alta";
-  return "Sin datos";
+type CompareTab = "quick" | "multi";
+
+function volatilityLabel(value: "low" | "medium" | "high" | "insufficient_data", t: (key: string) => string): string {
+  if (value === "low") return t("watchlist.compare.volatilityLow");
+  if (value === "medium") return t("watchlist.compare.volatilityMedium");
+  if (value === "high") return t("watchlist.compare.volatilityHigh");
+  return t("watchlist.compare.noData");
 }
 
 export function ComparePanels({
   compareCards,
   compareOptions,
-  compareSelection,
-  compareBadges,
   compareIds,
   compareNotice,
   onToggleCompare,
 }: ComparePanelsProps) {
   const { t } = useI18n();
+  const [activeTab, setActiveTab] = useState<CompareTab>("quick");
   const [compareResponse, setCompareResponse] = useState<PriceCompareResponse | null>(null);
   const [isLoadingCompare, setIsLoadingCompare] = useState(false);
   const selectedCount = compareIds.length;
   const compareQuery = useMemo(() => compareIds.join(","), [compareIds]);
+  const hasQuickData = Boolean(compareCards && compareCards.length > 0);
+
+  useEffect(() => {
+    if (activeTab === "quick" && !hasQuickData) {
+      setActiveTab("multi");
+    }
+  }, [activeTab, hasQuickData]);
+
   const compareBadgesFromResponse = useMemo(() => {
     const watches = compareResponse?.watches ?? [];
     if (watches.length === 0) {
@@ -146,136 +155,165 @@ export function ComparePanels({
   }, [compareQuery, selectedCount]);
 
   return (
-    <>
-      {compareCards ? (
-        <section className="panel compare-panel section-gap">
-          <div className="panel-header">
-            <h2 className="panel-title">Comparativa rapida</h2>
-            <span className="muted">Dos fechas seleccionadas</span>
-          </div>
-          <div className="compare-grid">
-            {compareCards.map((card) => {
-              const trend = card.delta > 0 ? "up" : card.delta < 0 ? "down" : "flat";
-              const deltaLabel = card.delta === 0 ? "Sin variaciï¿½n" : formatSignedCurrency(card.delta, card.latest.currency);
-              return (
-                <article key={`compare-${card.date}`} className="compare-card">
-                  <div className="compare-head">
-                    <strong>{card.date}</strong>
-                    <span className={`trend-chip trend-${trend}`}>
-                      <span className="trend-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                          <path d="M6 15l6-6 6 6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </span>
-                      {deltaLabel}
-                    </span>
-                  </div>
-                  <div className="compare-body">
-                    <div>
-                      <span className="compare-label">Actual</span>
-                      <strong>{formatCurrency(card.latest.price, card.latest.currency)}</strong>
-                    </div>
-                    <div>
-                      <span className="compare-label">Mï¿½nimo</span>
-                      <strong>{formatCurrency(card.min, card.latest.currency)}</strong>
-                    </div>
-                    <div>
-                      <span className="compare-label">Mï¿½ximo</span>
-                      <strong>{formatCurrency(card.max, card.latest.currency)}</strong>
-                    </div>
-                  </div>
-                  <div className="compare-meta">ï¿½ltima actualizaciï¿½n: {formatDateTime(card.latest.capturedAt)}</div>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
+    <section className="panel compare-panel section-gap">
+      <div className="panel-header">
+        <div>
+          <h2 className="panel-title">{t("watchlist.compare.title")}</h2>
+          <p className="panel-subtitle">{t("watchlist.compare.subtitle")}</p>
+        </div>
+        <span className="compare-count">{compareIds.length}/4 {t("watchlist.compare.selected")}</span>
+      </div>
 
-      <section className="panel compare-multi-panel section-gap">
-        <div className="panel-header">
-          <div>
-            <h2 className="panel-title">Comparativa multi-vuelo</h2>
-            <p className="panel-subtitle">{t("watchlist.compare.subtitle")}</p>
-          </div>
-          <span className="compare-count">{compareIds.length}/4 seleccionados</span>
+      <div className="compare-tabs" role="tablist" aria-label={t("watchlist.compare.modeLabel")}>
+        <button
+          id="compare-tab-quick"
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "quick"}
+          aria-controls="compare-tabpanel-quick"
+          tabIndex={activeTab === "quick" ? 0 : -1}
+          className={`compare-tab ${activeTab === "quick" ? "is-active" : ""}`}
+          disabled={!hasQuickData}
+          onClick={() => setActiveTab("quick")}
+        >
+          {t("watchlist.compare.tabs.quick")}
+        </button>
+        <button
+          id="compare-tab-multi"
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "multi"}
+          aria-controls="compare-tabpanel-multi"
+          tabIndex={activeTab === "multi" ? 0 : -1}
+          className={`compare-tab ${activeTab === "multi" ? "is-active" : ""}`}
+          onClick={() => setActiveTab("multi")}
+        >
+          {t("watchlist.compare.tabs.multi")}
+        </button>
+      </div>
+
+      {activeTab === "quick" ? (
+        <div id="compare-tabpanel-quick" role="tabpanel" aria-labelledby="compare-tab-quick" className="compare-panel-body">
+          {hasQuickData ? (
+            <div className="compare-grid">
+              {compareCards!.map((card) => {
+                const trend = card.delta > 0 ? "up" : card.delta < 0 ? "down" : "flat";
+                const deltaLabel = card.delta === 0 ? t("watchlist.compare.noChange") : formatSignedCurrency(card.delta, card.latest.currency);
+                return (
+                  <article key={`compare-${card.date}`} className="compare-card">
+                    <div className="compare-head">
+                      <strong>{card.date}</strong>
+                      <span className={`trend-chip trend-${trend}`}>
+                        <span className="trend-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+                            <path d="M6 15l6-6 6 6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </span>
+                        {deltaLabel}
+                      </span>
+                    </div>
+                    <div className="compare-body">
+                      <div>
+                        <span className="compare-label">{t("watchlist.compare.current")}</span>
+                        <strong>{formatCurrency(card.latest.price, card.latest.currency)}</strong>
+                      </div>
+                      <div>
+                        <span className="compare-label">{t("watchlist.compare.min")}</span>
+                        <strong>{formatCurrency(card.min, card.latest.currency)}</strong>
+                      </div>
+                      <div>
+                        <span className="compare-label">{t("watchlist.compare.max")}</span>
+                        <strong>{formatCurrency(card.max, card.latest.currency)}</strong>
+                      </div>
+                    </div>
+                    <div className="compare-meta">{t("watchlist.compare.lastUpdate", { value: formatDateTime(card.latest.capturedAt) })}</div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="muted">{t("watchlist.compare.quickEmpty")}</p>
+          )}
         </div>
-        {compareNotice ? <div className="notice notice-error notice-compact">{compareNotice}</div> : null}
-        {compareResponse?.currency_mode === "mixed" ? (
-          <div className="notice notice-info notice-compact">{t("watchlist.compare.mixedCurrencyWarning")}</div>
-        ) : null}
-        <div className="compare-selector">
-          {compareOptions.map((option) => {
-            const isChecked = compareIds.includes(option.id);
-            return (
-              <label key={option.id} className={`compare-option ${isChecked ? "active" : ""}`}>
-                <input type="checkbox" name="compare_selection" value={option.id} checked={isChecked} onChange={() => onToggleCompare(option.id)} />
-                <span className="compare-check" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                    <path d="M5 12l4 4 10-10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                <span className="compare-route">
-                  {option.origin} → {option.destination}
-                </span>
-                <span className="compare-date">{option.travelDate}</span>
-              </label>
-            );
-          })}
-        </div>
-        {selectedCount === 0 ? (
-          <p className="muted">{t("watchlist.compare.emptySelectionMessage")}</p>
-        ) : selectedCount === 1 ? (
-          <p className="muted">{t("watchlist.compare.oneSelectionMessage")}</p>
-        ) : selectedCount > 4 ? (
-          <p className="muted">{t("watchlist.compare.maxSelectionMessage")}</p>
-        ) : isLoadingCompare ? (
-          <p className="muted">Cargando comparativa...</p>
-        ) : compareResponse?.watches?.length ? (
-          <div className="compare-grid compare-grid--multi">
-            {compareResponse.watches.map((card) => {
-              const [origin = card.route, destination = ""] = card.route.split("->");
+      ) : (
+        <div id="compare-tabpanel-multi" role="tabpanel" aria-labelledby="compare-tab-multi" className="compare-panel-body">
+          {compareNotice ? <div className="notice notice-error notice-compact">{compareNotice}</div> : null}
+          {compareResponse?.currency_mode === "mixed" ? (
+            <div className="notice notice-info notice-compact">{t("watchlist.compare.mixedCurrencyWarning")}</div>
+          ) : null}
+          <div className="compare-selector">
+            {compareOptions.map((option) => {
+              const isChecked = compareIds.includes(option.id);
               return (
-                <article key={`multi-${card.watch_id}`} className="compare-card compare-card--multi">
-                  <div className="compare-head">
-                    <strong>{origin} → {destination}</strong>
-                    <div className="compare-badges">
-                      {compareBadgesFromResponse.bestPriceId === card.watch_id ? <span className="compare-badge">{t("watchlist.compare.bestPriceBadge")}</span> : null}
-                      {compareBadgesFromResponse.stableId === card.watch_id ? <span className="compare-badge">{t("watchlist.compare.mostStableBadge")}</span> : null}
-                      {compareBadgesFromResponse.freshestId === card.watch_id ? <span className="compare-badge">{t("watchlist.compare.freshestBadge")}</span> : null}
-                    </div>
-                  </div>
-                  <div className="compare-subtitle">{card.travel_date}</div>
-                  <div className="compare-body">
-                    <div>
-                      <span className="compare-label">Actual</span>
-                      <strong>{card.latest_price == null ? "Sin datos" : formatCurrency(card.latest_price, card.currency)}</strong>
-                    </div>
-                    <div>
-                      <span className="compare-label">Mï¿½n / Mï¿½x</span>
-                      <strong>
-                        {card.min_price != null && card.max_price != null
-                          ? `${formatCurrency(card.min_price, card.currency)}-${formatCurrency(card.max_price, card.currency)}`
-                          : "Sin datos"}
-                      </strong>
-                    </div>
-                    <div>
-                      <span className="compare-label">Media</span>
-                      <strong>{card.avg_price == null ? "Sin datos" : formatCurrency(card.avg_price, card.currency)}</strong>
-                    </div>
-                  </div>
-                  <div className="compare-meta">
-                    <span>Capturas: {card.snapshot_count}</span>
-                    <span>Volatilidad: {volatilityLabel(card.volatility_hint)}</span>
-                  </div>
-                </article>
+                <label key={option.id} className={`compare-option ${isChecked ? "active" : ""}`}>
+                  <input type="checkbox" name="compare_selection" value={option.id} checked={isChecked} onChange={() => onToggleCompare(option.id)} />
+                  <span className="compare-check" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+                      <path d="M5 12l4 4 10-10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <span className="compare-route">
+                    {option.origin} → {option.destination}
+                  </span>
+                  <span className="compare-date">{option.travelDate}</span>
+                </label>
               );
             })}
           </div>
-        ) : (
-          <p className="muted">No hay datos para comparar en este rango.</p>
-        )}
-      </section>
-    </>
+          {selectedCount === 0 ? (
+            <p className="muted">{t("watchlist.compare.emptySelectionMessage")}</p>
+          ) : selectedCount === 1 ? (
+            <p className="muted">{t("watchlist.compare.oneSelectionMessage")}</p>
+          ) : selectedCount > 4 ? (
+            <p className="muted">{t("watchlist.compare.maxSelectionMessage")}</p>
+          ) : isLoadingCompare ? (
+            <p className="muted">{t("watchlist.compare.loading")}</p>
+          ) : compareResponse?.watches?.length ? (
+            <div className="compare-grid compare-grid--multi">
+              {compareResponse.watches.map((card) => {
+                const [origin = card.route, destination = ""] = card.route.split("->");
+                return (
+                  <article key={`multi-${card.watch_id}`} className="compare-card compare-card--multi">
+                    <div className="compare-head">
+                      <strong>{origin} → {destination}</strong>
+                      <div className="compare-badges">
+                        {compareBadgesFromResponse.bestPriceId === card.watch_id ? <span className="compare-badge">{t("watchlist.compare.bestPriceBadge")}</span> : null}
+                        {compareBadgesFromResponse.stableId === card.watch_id ? <span className="compare-badge">{t("watchlist.compare.mostStableBadge")}</span> : null}
+                        {compareBadgesFromResponse.freshestId === card.watch_id ? <span className="compare-badge">{t("watchlist.compare.freshestBadge")}</span> : null}
+                      </div>
+                    </div>
+                    <div className="compare-subtitle">{card.travel_date}</div>
+                    <div className="compare-body">
+                      <div>
+                        <span className="compare-label">{t("watchlist.compare.current")}</span>
+                        <strong>{card.latest_price == null ? t("watchlist.compare.noData") : formatCurrency(card.latest_price, card.currency)}</strong>
+                      </div>
+                      <div>
+                        <span className="compare-label">{t("watchlist.compare.minMax")}</span>
+                        <strong>
+                          {card.min_price != null && card.max_price != null
+                            ? `${formatCurrency(card.min_price, card.currency)}-${formatCurrency(card.max_price, card.currency)}`
+                            : t("watchlist.compare.noData")}
+                        </strong>
+                      </div>
+                      <div>
+                        <span className="compare-label">{t("watchlist.summary.avg")}</span>
+                        <strong>{card.avg_price == null ? t("watchlist.compare.noData") : formatCurrency(card.avg_price, card.currency)}</strong>
+                      </div>
+                    </div>
+                    <div className="compare-meta">
+                      <span>{t("watchlist.compare.captures", { count: card.snapshot_count })}</span>
+                      <span>{t("watchlist.compare.volatility", { value: volatilityLabel(card.volatility_hint, t) })}</span>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="muted">{t("watchlist.compare.noDataInRange")}</p>
+          )}
+        </div>
+      )}
+    </section>
   );
 }

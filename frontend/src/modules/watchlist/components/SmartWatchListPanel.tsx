@@ -59,6 +59,7 @@ type SmartWatchListPanelProps = {
   onBulkDelete: (watchIds: string[]) => void;
   onBulkRefresh: (watchIds: string[]) => void;
   isRefreshingBulk: boolean;
+  isLoading: boolean;
   onOpenAddWatch: () => void;
 };
 
@@ -86,6 +87,7 @@ export function SmartWatchListPanel({
   onBulkDelete,
   onBulkRefresh,
   isRefreshingBulk,
+  isLoading,
   onOpenAddWatch,
 }: SmartWatchListPanelProps) {
   const { t } = useI18n();
@@ -110,7 +112,7 @@ export function SmartWatchListPanel({
         </div>
         <div className="watch-smart-tools">
           <label className="watch-smart-search" htmlFor="watch-smart-search">
-            Buscar
+            {t("watchlist.smartList.search")}
             <input
               id="watch-smart-search"
               name="watch_smart_search"
@@ -121,7 +123,7 @@ export function SmartWatchListPanel({
             />
           </label>
           <label className="watch-smart-sort" htmlFor="watch-smart-sort">
-            Ordenar
+            {t("watchlist.smartList.sort")}
             <select
               id="watch-smart-sort"
               name="watch_smart_sort"
@@ -129,9 +131,9 @@ export function SmartWatchListPanel({
               value={watchSort}
               onChange={(event) => onSortChange(event.target.value as ListSort)}
             >
-              <option value="freshness">Frescura</option>
-              <option value="price_asc">Precio ascendente</option>
-              <option value="price_desc">Precio descendente</option>
+              <option value="freshness">{t("watchlist.smartList.sortFreshness")}</option>
+              <option value="price_asc">{t("watchlist.smartList.sortPriceAsc")}</option>
+              <option value="price_desc">{t("watchlist.smartList.sortPriceDesc")}</option>
               <option value="delta">Mayor variación</option>
             </select>
           </label>
@@ -141,7 +143,7 @@ export function SmartWatchListPanel({
             onClick={onClearSearch}
             disabled={!hasSearchFilter}
           >
-            Limpiar búsqueda
+            {t("watchlist.smartList.clearSearch")}
           </button>
           {hasSelection ? (
             <div className="alert-actions watch-bulk-toolbar" role="toolbar" aria-label={t("watchlist.bulk.toolbarAriaLabel")} data-testid="watchlist-bulk-toolbar">
@@ -156,7 +158,38 @@ export function SmartWatchListPanel({
           ) : null}
         </div>
       </div>
-      {items.length === 0 ? (
+      {isLoading && items.length === 0 ? (
+        <div className="watchlist-skeleton-list" role="status" aria-live="polite" aria-label={t("watchlist.smartList.loadingAria")}>
+          {[0, 1, 2].map((index) => (
+            <article key={index} className="watch-row watch-row-skeleton" aria-hidden="true">
+              <div className="watch-details">
+                <div className="watch-route">
+                  <span className="skeleton skeleton-pill watch-skeleton-checkbox" />
+                  <span className="skeleton skeleton-line watch-skeleton-route" />
+                  <span className="skeleton skeleton-pill watch-skeleton-date" />
+                  <span className="skeleton skeleton-pill watch-skeleton-pill" />
+                  <span className="skeleton skeleton-pill watch-skeleton-pill" />
+                </div>
+                <div className="watch-meta">
+                  <span className="skeleton skeleton-pill watch-skeleton-meta" />
+                  <span className="skeleton skeleton-pill watch-skeleton-meta" />
+                  <span className="skeleton skeleton-line watch-skeleton-note" />
+                </div>
+              </div>
+              <div className="watch-price-area">
+                <div className="watch-price">
+                  <span className="skeleton skeleton-line watch-skeleton-caption" />
+                  <span className="skeleton skeleton-line watch-skeleton-price" />
+                  <span className="skeleton skeleton-pill watch-skeleton-delta" />
+                </div>
+                <span className="skeleton skeleton-block watch-skeleton-spark" />
+                <span className="skeleton skeleton-pill watch-skeleton-button" />
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : null}
+      {items.length === 0 && !isLoading ? (
         <div className="empty-guide">
           <p className="panel-note">Todavía no tienes vuelos vigilados.</p>
           <div className="empty-steps">
@@ -197,9 +230,9 @@ export function SmartWatchListPanel({
               ? "down"
               : "flat";
         const deltaLabel = !meta?.latest || !meta?.previous
-          ? "Sin variación"
+          ? t("watchlist.smartList.noTrend")
           : formatSignedCurrency(meta.latest.price - meta.previous.price, meta.latest.currency);
-        const routeHealthLabel = trend === "up" ? "Sube" : trend === "down" ? "Baja" : "Estable";
+        const routeHealthLabel = trend === "up" ? t("watchlist.smartList.trendUp") : trend === "down" ? t("watchlist.smartList.trendDown") : t("watchlist.smartList.trendStable");
 
         const values = historyRows
           .filter((row) => row.watchId === watch.id)
@@ -252,12 +285,12 @@ export function SmartWatchListPanel({
               <div className="watch-meta">
                 <span className="watch-meta-chip">Última actualización: {safeDateTime(meta?.latest?.capturedAt)}</span>
                 <span className="watch-meta-chip watch-meta-chip--freshness">{t("watchlist.detail.freshness")} {freshness.fullText}</span>
-                <span className="watch-note">Precio orientativo base 1 adulto, sin extras.</span>
+                <span className="watch-note">{t("watchlist.smartList.priceDisclaimer")}</span>
               </div>
             </div>
             <div className="watch-price-area">
               <div className="watch-price">
-                <span className="watch-price-caption">Precio actual</span>
+                <span className="watch-price-caption">{t("watchlist.smartList.currentPrice")}</span>
                 <strong className="watch-price-main">
                   {meta?.latest ? formatCurrency(meta.latest.price, meta.latest.currency) : "--"}
                 </strong>
@@ -279,38 +312,40 @@ export function SmartWatchListPanel({
               </div>
               <div className="watch-spark">
                 {sparkPath ? (
-                  <svg viewBox="0 0 96 28" role="img" aria-label="Tendencia breve de precio">
+                  <svg viewBox="0 0 96 28" role="img" aria-label={t("watchlist.smartList.shortTrendAriaLabel")}>
                     <path d={sparkPath} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                   </svg>
                 ) : (
-                  <span className="muted">Sin tendencia</span>
+                  <span className="muted">{t("watchlist.smartList.noTrend")}</span>
                 )}
               </div>
-              <button
-                className="btn-secondary"
-                type="button"
-                disabled={refreshingWatchId === watch.id}
-                aria-busy={refreshingWatchId === watch.id}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onRefreshWatch(watch.id);
-                }}
-              >
-                {refreshingWatchId === watch.id ? "Actualizando..." : "Actualizar"}
-              </button>
-              <div className="alert-actions">
-                {watch.status === "paused" ? (
-                  <button className="btn-ghost btn-compact" type="button" onClick={(e) => { e.stopPropagation(); onResumeWatch(watch.id); }}>
-                    Reanudar
-                  </button>
-                ) : (
-                  <button className="btn-ghost btn-compact" type="button" onClick={(e) => { e.stopPropagation(); onPauseWatch(watch.id); }}>
-                    Pausar
-                  </button>
-                )}
-                <button className="btn-ghost btn-compact" type="button" onClick={(e) => { e.stopPropagation(); onDeleteWatch(watch.id); }}>
-                  Eliminar
+              <div className="watch-row-actions">
+                <button
+                  className="btn-secondary"
+                  type="button"
+                  disabled={refreshingWatchId === watch.id}
+                  aria-busy={refreshingWatchId === watch.id}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onRefreshWatch(watch.id);
+                  }}
+                >
+                  {refreshingWatchId === watch.id ? t("watchlist.smartList.updating") : t("watchlist.smartList.refresh")}
                 </button>
+                <div className="alert-actions">
+                  {watch.status === "paused" ? (
+                    <button className="btn-ghost btn-compact" type="button" onClick={(e) => { e.stopPropagation(); onResumeWatch(watch.id); }}>
+                      {t("watchlist.smartList.resume")}
+                    </button>
+                  ) : (
+                    <button className="btn-ghost btn-compact" type="button" onClick={(e) => { e.stopPropagation(); onPauseWatch(watch.id); }}>
+                      {t("watchlist.smartList.pause")}
+                    </button>
+                  )}
+                  <button className="btn-ghost btn-compact" type="button" onClick={(e) => { e.stopPropagation(); onDeleteWatch(watch.id); }}>
+                    {t("watchlist.smartList.delete")}
+                  </button>
+                </div>
               </div>
             </div>
           </article>

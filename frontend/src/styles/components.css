@@ -11,13 +11,15 @@
 .panel-soft {
   background: var(--surface);
   border-color: rgba(217, 205, 187, 0.7);
-  box-shadow: 0 14px 30px var(--shadow);
+  box-shadow: none;
 }
 
 .panel-title {
   margin: 0;
-  font-family: "Playfair Display", serif;
-  font-size: 1.15rem;
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 1.28rem;
+  line-height: 1.18;
+  letter-spacing: -0.01em;
 }
 
 .panel-subtitle {
@@ -50,7 +52,7 @@
 
 .panel-header h2 {
   margin: 0;
-  font-family: "Playfair Display", serif;
+  font-family: "IBM Plex Sans", sans-serif;
 }
 
 .panel-actions {
