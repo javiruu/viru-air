@@ -37,11 +37,11 @@ test("W7: cuando hay datos de mapa el panel sigue operativo", () => {
   assert.match(panel, /visibleRoutes\.map\(\(route\) =>/);
 });
 
-test("W7: mapa sigue en zona secundaria despues de comparativa (W1)", () => {
+test("W7: mapa se renderiza antes de comparativa para ocupar fila intermedia", () => {
   const source = fs.readFileSync(WATCHLIST_PAGE, "utf8");
   const comparePos = source.indexOf("<ComparePanels");
   const mapPos = source.indexOf("<WatchlistMapDecisionPanel");
-  assert.ok(comparePos >= 0 && mapPos >= 0 && comparePos < mapPos);
+  assert.ok(comparePos >= 0 && mapPos >= 0 && mapPos < comparePos);
 });
 
 test("W7: watchlist mantiene bloqueo de copy EN", () => {

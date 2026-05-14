@@ -111,110 +111,119 @@ export default function WatchlistPage() {
         </div>
       ) : null}
 
-      <section className="watchlist-decision-grid section-gap">
-        <SmartWatchListPanel
-          items={actions.items}
-          smartListItems={derived.smartListItems}
-          watchMeta={derived.watchMeta}
-          historyRows={actions.historyRows}
-          lastUpdatedGlobal={derived.lastUpdatedGlobal}
-          watchSearch={view.watchSearch}
-          watchSort={view.watchSort}
-          hasSearchFilter={derived.hasSearchFilter}
-          selectedWatchId={view.selectedWatchId}
-          refreshingWatchId={actions.refreshingWatchId}
-          onSearchChange={view.setWatchSearch}
-          onSortChange={view.setWatchSort}
-          onClearSearch={() => view.setWatchSearch("")}
-          onSelectWatch={selectWatch}
-          onRefreshWatch={actions.refresh}
-          onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
-          onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
-          onDeleteWatch={actions.deleteWatch}
-          onBulkPause={(ids) => actions.bulkUpdateStatus(ids, "paused")}
-          onBulkResume={(ids) => actions.bulkUpdateStatus(ids, "active")}
-          onBulkDelete={actions.bulkDelete}
-          onBulkRefresh={actions.bulkRefresh}
-          isRefreshingBulk={actions.isRefreshingBulk}
-          isLoading={actions.isLoadingWatchlist}
-          listErrorMessage={actions.listErrorMessage}
-          onRetryLoad={actions.load}
-          onOpenAddWatch={() => actions.setShowAdd(true)}
-        />
+      <section className="watchlist-cockpit-grid section-gap">
+        <div className="watchlist-area watchlist-area-history">
+          <HistoryIntegratedPanel
+            selectedWatch={derived.selectedWatch}
+            viewMode={view.viewMode}
+            isLoadingHistory={isLoadingHistory}
+            isRefreshingHistory={isRefreshingHistory}
+            isRefreshingFiltered={actions.isRefreshingFiltered}
+            selectedOrigin={view.selectedOrigin}
+            selectedDestination={view.selectedDestination}
+            selectedDates={view.selectedDates}
+            selectedPoint={view.selectedPoint}
+            pointOptions={derived.pointOptions}
+            rangeWindow={view.rangeWindow}
+            chartIsCompact={derived.chartIsCompact}
+            chartHeight={derived.chartHeight}
+            chartModel={derived.chartModel}
+            selectedPointData={derived.selectedPointData}
+            hoverPoint={hover.hoverPoint}
+            summary={derived.summary}
+            visibleMonth={derived.visibleMonth}
+            monthTitle={monthLabel(derived.visibleMonth)}
+            monthCells={derived.monthCells}
+            calendarEvents={derived.calendarEvents}
+            calendarRange={derived.calendarRange}
+            calendarCurrency={derived.calendarCurrency}
+            calendarHasUsefulData={derived.calendarHasUsefulData}
+            chartWidth={CHART_WIDTH}
+            chartPad={CHART_PAD}
+            onToggleViewMode={view.toggleViewMode}
+            onApplyFilters={actions.refreshFiltered}
+            onPointChange={view.setSelectedPoint}
+            onRangeChange={view.setRangeWindow}
+            onToggleRangeWindow={view.toggleRangeWindow}
+            onResetZoom={view.resetZoom}
+            onChartMouseMove={hover.handleChartMove}
+            onChartMouseLeave={hover.clearHover}
+            onPrevMonth={view.prevMonth}
+            onNextMonth={view.nextMonth}
+          />
+        </div>
 
-        <WatchDetailPanel
-          selectedWatch={derived.selectedWatch}
-          detail={actions.selectedWatchDetail}
-          summary={actions.selectedWatchSummary}
-          isLoading={actions.isLoadingSelectedWatchDetail}
-          onRefreshWatch={actions.refresh}
-          onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
-          onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
-        />
+        <div className="watchlist-area watchlist-area-routes">
+          <SmartWatchListPanel
+            items={actions.items}
+            smartListItems={derived.smartListItems}
+            watchMeta={derived.watchMeta}
+            historyRows={actions.historyRows}
+            lastUpdatedGlobal={derived.lastUpdatedGlobal}
+            watchSearch={view.watchSearch}
+            watchSort={view.watchSort}
+            hasSearchFilter={derived.hasSearchFilter}
+            selectedWatchId={view.selectedWatchId}
+            refreshingWatchId={actions.refreshingWatchId}
+            onSearchChange={view.setWatchSearch}
+            onSortChange={view.setWatchSort}
+            onClearSearch={() => view.setWatchSearch("")}
+            onSelectWatch={selectWatch}
+            onRefreshWatch={actions.refresh}
+            onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
+            onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
+            onDeleteWatch={actions.deleteWatch}
+            onBulkPause={(ids) => actions.bulkUpdateStatus(ids, "paused")}
+            onBulkResume={(ids) => actions.bulkUpdateStatus(ids, "active")}
+            onBulkDelete={actions.bulkDelete}
+            onBulkRefresh={actions.bulkRefresh}
+            isRefreshingBulk={actions.isRefreshingBulk}
+            isLoading={actions.isLoadingWatchlist}
+            listErrorMessage={actions.listErrorMessage}
+            onRetryLoad={actions.load}
+            onOpenAddWatch={() => actions.setShowAdd(true)}
+          />
+        </div>
 
+        <div className="watchlist-area watchlist-area-detail">
+          <WatchDetailPanel
+            selectedWatch={derived.selectedWatch}
+            detail={actions.selectedWatchDetail}
+            summary={actions.selectedWatchSummary}
+            isLoading={actions.isLoadingSelectedWatchDetail}
+            onRefreshWatch={actions.refresh}
+            onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
+            onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
+          />
+        </div>
+
+        <div className="watchlist-area watchlist-area-map">
+          <WatchlistMapDecisionPanel
+            routes={derived.watchMapRoutes}
+            hasWatchItems={actions.items.length > 0}
+            mode={derived.watchMapMode}
+            insight={derived.watchMapInsight}
+            compareLimitExceeded={view.compareIds.length > 4}
+            onFocusWatch={(watchId) => {
+              const watch = actions.items.find((item) => item.id === watchId);
+              if (!watch) return;
+              selectWatch(watch);
+            }}
+          />
+        </div>
+
+        <div className="watchlist-area watchlist-area-compare">
+          <ComparePanels
+            compareCards={derived.compareCards}
+            compareOptions={derived.compareOptions}
+            compareSelection={derived.compareSelection}
+            compareBadges={derived.compareBadges}
+            compareIds={view.compareIds}
+            compareNotice={view.compareNotice}
+            onToggleCompare={view.toggleCompare}
+          />
+        </div>
       </section>
-
-      <HistoryIntegratedPanel
-        selectedWatch={derived.selectedWatch}
-        viewMode={view.viewMode}
-        isLoadingHistory={isLoadingHistory}
-        isRefreshingHistory={isRefreshingHistory}
-        isRefreshingFiltered={actions.isRefreshingFiltered}
-        selectedOrigin={view.selectedOrigin}
-        selectedDestination={view.selectedDestination}
-        selectedDates={view.selectedDates}
-        selectedPoint={view.selectedPoint}
-        pointOptions={derived.pointOptions}
-        rangeWindow={view.rangeWindow}
-        chartIsCompact={derived.chartIsCompact}
-        chartHeight={derived.chartHeight}
-        chartModel={derived.chartModel}
-        selectedPointData={derived.selectedPointData}
-        hoverPoint={hover.hoverPoint}
-        summary={derived.summary}
-        visibleMonth={derived.visibleMonth}
-        monthTitle={monthLabel(derived.visibleMonth)}
-        monthCells={derived.monthCells}
-        calendarEvents={derived.calendarEvents}
-        calendarRange={derived.calendarRange}
-        calendarCurrency={derived.calendarCurrency}
-        calendarHasUsefulData={derived.calendarHasUsefulData}
-        chartWidth={CHART_WIDTH}
-        chartPad={CHART_PAD}
-        onToggleViewMode={view.toggleViewMode}
-        onApplyFilters={actions.refreshFiltered}
-        onPointChange={view.setSelectedPoint}
-        onRangeChange={view.setRangeWindow}
-        onToggleRangeWindow={view.toggleRangeWindow}
-        onResetZoom={view.resetZoom}
-        onChartMouseMove={hover.handleChartMove}
-        onChartMouseLeave={hover.clearHover}
-        onPrevMonth={view.prevMonth}
-        onNextMonth={view.nextMonth}
-      />
-
-      <ComparePanels
-        compareCards={derived.compareCards}
-        compareOptions={derived.compareOptions}
-        compareSelection={derived.compareSelection}
-        compareBadges={derived.compareBadges}
-        compareIds={view.compareIds}
-        compareNotice={view.compareNotice}
-        onToggleCompare={view.toggleCompare}
-      />
-
-      <WatchlistMapDecisionPanel
-        routes={derived.watchMapRoutes}
-        hasWatchItems={actions.items.length > 0}
-        mode={derived.watchMapMode}
-        insight={derived.watchMapInsight}
-        compareLimitExceeded={view.compareIds.length > 4}
-        onFocusWatch={(watchId) => {
-          const watch = actions.items.find((item) => item.id === watchId);
-          if (!watch) return;
-          selectWatch(watch);
-        }}
-      />
 
       <AddWatchModal
         isOpen={actions.showAdd}

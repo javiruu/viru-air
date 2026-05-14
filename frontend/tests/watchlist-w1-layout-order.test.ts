@@ -9,7 +9,7 @@ const MAP_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "compo
 
 const FORBIDDEN_WATCHLIST_COPY = ["Back", "Flight Watchlist", "Add flight", "Quick start", "Last update"];
 
-test("W1: watchlist layout renders decision workspace before history", () => {
+test("W1: watchlist layout uses cockpit composition HIS/RUT + DET/MAP + COM", () => {
   const source = fs.readFileSync(WATCHLIST_PAGE, "utf8");
 
   const listPos = source.indexOf("<SmartWatchListPanel");
@@ -24,10 +24,14 @@ test("W1: watchlist layout renders decision workspace before history", () => {
   assert.ok(comparePos >= 0, "ComparePanels must render");
   assert.ok(mapPos >= 0, "WatchlistMapDecisionPanel must render");
 
-  assert.ok(listPos < historyPos, "list must appear before history in page composition");
-  assert.ok(detailPos < historyPos, "detail must appear before history in page composition");
-  assert.ok(historyPos < comparePos, "history must appear before compare");
-  assert.ok(comparePos < mapPos, "compare must appear before map");
+  assert.match(source, /className="watchlist-cockpit-grid section-gap"/);
+  assert.match(source, /className="watchlist-area watchlist-area-history"/);
+  assert.match(source, /className="watchlist-area watchlist-area-routes"/);
+  assert.match(source, /className="watchlist-area watchlist-area-detail"/);
+  assert.match(source, /className="watchlist-area watchlist-area-map"/);
+  assert.match(source, /className="watchlist-area watchlist-area-compare"/);
+  assert.ok(historyPos < mapPos, "map block remains in secondary area under top row");
+  assert.ok(mapPos < comparePos, "compare block remains in the full-width final row");
 });
 
 test("W1: watchlist route source keeps EN blocked literals out", () => {

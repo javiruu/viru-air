@@ -4812,6 +4812,27 @@ h1 {
   max-width: var(--watchlist-shell-max-width);
 }
 
+.watchlist-cockpit-grid {
+  display: grid;
+  gap: 1rem;
+  align-items: start;
+  grid-template-columns: minmax(0, 1.42fr) minmax(320px, 1fr);
+  grid-template-areas:
+    "history routes"
+    "detail map"
+    "compare compare";
+}
+
+.watchlist-area {
+  min-width: 0;
+}
+
+.watchlist-area-history { grid-area: history; }
+.watchlist-area-routes { grid-area: routes; }
+.watchlist-area-detail { grid-area: detail; }
+.watchlist-area-map { grid-area: map; }
+.watchlist-area-compare { grid-area: compare; }
+
 .watchlist-page .panel-title,
 .watchlist-page .panel-subtitle,
 .watchlist-page .panel-note,
@@ -4828,6 +4849,29 @@ h1 {
   .watch-detail-panel {
     position: sticky;
     top: 1rem;
+  }
+}
+
+@media (max-width: 1120px) {
+  .watchlist-cockpit-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "history"
+      "routes"
+      "detail"
+      "map"
+      "compare";
+  }
+}
+
+@media (max-width: 768px) {
+  .watchlist-cockpit-grid {
+    grid-template-areas:
+      "routes"
+      "detail"
+      "history"
+      "map"
+      "compare";
   }
 }
 

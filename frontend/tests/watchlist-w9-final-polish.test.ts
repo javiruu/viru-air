@@ -13,7 +13,7 @@ const SUMMARY = path.join(process.cwd(), "src", "modules", "watchlist", "summary
 
 const FORBIDDEN_EN_COPY = ["Back", "Flight Watchlist", "Add flight", "Quick start", "Last update", "Min", "Max"];
 
-test("W9: main reading order remains routes -> detail -> history -> compare -> map", () => {
+test("W9: main reading order follows cockpit layout history -> routes -> detail -> map -> compare", () => {
   const source = fs.readFileSync(WATCHLIST_PAGE, "utf8");
   const listPos = source.indexOf("<SmartWatchListPanel");
   const detailPos = source.indexOf("<WatchDetailPanel");
@@ -22,10 +22,10 @@ test("W9: main reading order remains routes -> detail -> history -> compare -> m
   const mapPos = source.indexOf("<WatchlistMapDecisionPanel");
 
   assert.ok(listPos >= 0 && detailPos >= 0 && historyPos >= 0 && comparePos >= 0 && mapPos >= 0);
+  assert.ok(historyPos < listPos);
   assert.ok(listPos < detailPos);
-  assert.ok(detailPos < historyPos);
-  assert.ok(historyPos < comparePos);
-  assert.ok(comparePos < mapPos);
+  assert.ok(detailPos < mapPos);
+  assert.ok(mapPos < comparePos);
 });
 
 test("W9: old/forbidden copy does not reappear in watchlist page", () => {
