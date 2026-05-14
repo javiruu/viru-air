@@ -293,7 +293,7 @@ export function HistoryIntegratedPanel({
               aria-pressed={rangeWindow !== "all"}
               onClick={onToggleRangeWindow}
             >
-              {t("watchlist.history.compactView")}
+              {rangeWindow === "all" ? t("watchlist.history.compactView") : t("watchlist.history.rangeAll")}
             </button>
             <button className="btn-ghost btn-layered" type="button" onClick={onResetZoom}>
               {t("watchlist.history.resetZoom")}

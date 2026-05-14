@@ -35,8 +35,8 @@ test("W9.1: route separators use arrows and never question marks", () => {
   assert.match(detail, /origin_iata\} \{"→"\} \{focus\.destination_iata\}/);
   assert.match(smart, /\{" → "\}/);
   assert.match(history, /origin_iata\} → \$\{selectedWatch\.destination_iata\}/);
-  assert.match(compare, /\{option\.origin\} \{"->"\} \{option\.destination\}/);
-  assert.match(compare, /<strong>\{origin\} \{"->"\} \{destination\}<\/strong>/);
+  assert.match(compare, /{option\.origin} → {option\.destination}/);
+  assert.match(compare, /<strong>{origin} → {destination}<\/strong>/);
 
   assert.doesNotMatch(history, /\$\{selectedWatch\.origin_iata\} \? \$/);
   assert.doesNotMatch(compare, /\{option\.origin\} \? \{option\.destination\}/);

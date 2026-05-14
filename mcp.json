@@ -1,13 +1,18 @@
 {
-    "mcpServers":  {
-                       "TestSprite":  {
-                                          "args":  [
-                                                       "@testsprite/testsprite-mcp@latest"
-                                                   ],
-                                          "env":  {
-                                                      "API_KEY":  "${TESTSPRITE_API_KEY}"
-                                                  },
-                                          "command":  "npx"
-                                      }
-                   }
+    "mcpServers": {
+        "TestSprite": {
+            "command": "npx",
+            "args": ["@testsprite/testsprite-mcp@latest"],
+            "env": {
+                "API_KEY": "${TESTSPRITE_API_KEY}"
+            }
+        },
+        "lazyweb": {
+            "type": "streamable-http",
+            "url": "https://www.lazyweb.com/mcp",
+            "headers": {
+                "Authorization": "Bearer ${LAZYWEB_TOKEN}"
+            }
+        }
+    }
 }

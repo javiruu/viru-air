@@ -237,7 +237,7 @@ export function ComparePanels({
                       <path d="M5 12l4 4 10-10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </span>
-                  <span className="compare-route">{option.origin} {"->"} {option.destination}</span>
+                  <span className="compare-route">{option.origin} → {option.destination}</span>
                   <span className="compare-date">{option.travelDate}</span>
                 </label>
               );
@@ -258,7 +258,7 @@ export function ComparePanels({
                 return (
                   <article key={`multi-${card.watch_id}`} className="compare-card compare-card--multi">
                     <div className="compare-head">
-                      <strong>{origin} {"->"} {destination}</strong>
+                      <strong>{origin} → {destination}</strong>
                       <div className="compare-badges">
                         {compareBadgesFromResponse.bestPriceId === card.watch_id ? <span className="compare-badge">{t("watchlist.compare.bestPriceBadge")}</span> : null}
                         {compareBadgesFromResponse.stableId === card.watch_id ? <span className="compare-badge">{t("watchlist.compare.mostStableBadge")}</span> : null}

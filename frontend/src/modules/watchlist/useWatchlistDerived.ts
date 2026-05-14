@@ -395,7 +395,14 @@ export function useWatchlistDerived({
   const watchMapRoutes = useMemo<WatchMapRouteView[]>(() => {
     const compareSet = new Set(compareIds);
     const compareCapped = compareSelection.slice(0, 4).map((item) => item.id);
-    const activeIds = compareCapped.length > 0 ? new Set(compareCapped) : selectedWatchId ? new Set([selectedWatchId]) : compareSet;
+    const activeIds =
+      selectedWatchId && compareCapped.length > 0 && !compareSet.has(selectedWatchId)
+        ? new Set([selectedWatchId])
+        : compareCapped.length > 0
+          ? new Set(compareCapped)
+          : selectedWatchId
+            ? new Set([selectedWatchId])
+            : compareSet;
 
     const routes = items
       .filter((watch) => activeIds.has(watch.id))

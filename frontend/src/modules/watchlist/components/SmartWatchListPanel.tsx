@@ -295,6 +295,7 @@ export function SmartWatchListPanel({
               <div className="watch-route">
                 <input
                   type="checkbox"
+                  className="watch-bulk-checkbox"
                   checked={selectedSet.has(watch.id)}
                   onChange={(event) => {
                     event.stopPropagation();
