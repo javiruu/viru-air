@@ -187,6 +187,25 @@ See `/docs/AGENTS.md` for documentation-specific rules.
 
 ---
 
+## Design context for agents
+
+For UI/UX work driven by coding agents, use these local artifacts as persistent design context:
+
+- `/DESIGN.md` (canonical design direction for agents in this repo root);
+- `/.codex/skills/viru-tracker-ui/SKILL.md`;
+- `/.codex/skills/viru-tracker-ui/references/product-context.md`;
+- `/.codex/skills/viru-tracker-ui/references/visual-direction.md`;
+- `/.codex/skills/viru-tracker-ui/references/qa-checklist.md`.
+
+Rules:
+
+- Treat `/DESIGN.md` as the active design contract for agent-driven UI proposals and incremental improvements.
+- Keep it aligned with canonical UI docs in `/docs/ui` (`estetica.md`, `UI_CONTRACT_V1.md`, `UI_SYSTEM_V1.md`, `UI_VISUAL_QA_CHECKLIST.md`).
+- Use the skill/references to guide tone, hierarchy, and QA expectations; do not use them to justify logic, route, or API contract changes.
+- If these files are added, moved, renamed, or archived, update `/docs/DOCS_INVENTORY.md` and `/docs/INDICE_UNICO.md` in the same change.
+
+---
+
 ## Verification standard
 
 Use the smallest set of checks that can prove the change safely.
