@@ -1,4 +1,4 @@
-﻿import { useI18n } from "@/i18n";
+import { useI18n } from "@/i18n";
 import { formatCurrency, formatPercent } from "@/modules/shared/format";
 import { getWatchStatusMeta } from "@/modules/shared/statusCatalog";
 import { safeDateTime } from "@/modules/watchlist/presentation";
@@ -29,8 +29,14 @@ export function WatchDetailPanel({
   if (!selectedWatch) {
     return (
       <section className="panel panel-soft section-gap watch-detail-panel">
-        <h2 className="panel-title">{t("watchlist.detail.title")}</h2>
-        <p className="panel-note">{t("watchlist.detail.empty")}</p>
+        <header className="watch-detail-header">
+          <h2 className="panel-title">{t("watchlist.detail.title")}</h2>
+          <p className="panel-note">{t("watchlist.detail.subtitle")}</p>
+        </header>
+        <div className="watch-detail-empty-state">
+          <strong>{t("watchlist.detail.emptyTitle")}</strong>
+          <p className="panel-note">{t("watchlist.detail.empty")}</p>
+        </div>
       </section>
     );
   }
@@ -46,28 +52,88 @@ export function WatchDetailPanel({
     freshnessState: detail?.latest_snapshot ? "observing" : null,
   });
 
+  const latestSnapshot = detail?.latest_snapshot ?? null;
+  const currency = latestSnapshot?.raw_currency ?? "EUR";
+  const currentPriceValue = latestSnapshot ? formatCurrency(latestSnapshot.raw_price, currency) : "--";
+  const minPriceValue = summaryData?.min_price == null ? "--" : formatCurrency(summaryData.min_price, currency);
+  const deltaFromMin = latestSnapshot && summaryData?.min_price != null
+    ? latestSnapshot.raw_price - summaryData.min_price
+    : null;
+  const deltaFromMinValue = deltaFromMin == null ? "--" : formatCurrency(deltaFromMin, currency);
+
+  const trendText = summaryData?.delta_pct == null
+    ? t("watchlist.detail.operational.trendUnknown")
+    : summaryData.delta_pct > 0
+      ? t("watchlist.detail.operational.trendUp")
+      : summaryData.delta_pct < 0
+        ? t("watchlist.detail.operational.trendDown")
+        : t("watchlist.detail.operational.trendFlat");
+
+  const interpretationText = confidence.level === "sufficient"
+    ? t("watchlist.detail.interpretation.sufficient")
+    : confidence.level === "limited"
+      ? t("watchlist.detail.interpretation.limited")
+      : t("watchlist.detail.interpretation.initial");
+
   return (
     <section className="panel panel-soft section-gap watch-detail-panel">
-      <div className="row-between">
-        <h2 className="panel-title">{t("watchlist.detail.title")}</h2>
+      <header className="watch-detail-header">
+        <div>
+          <h2 className="panel-title">{t("watchlist.detail.title")}</h2>
+          <p className="panel-subtitle">{t("watchlist.detail.subtitle")}</p>
+        </div>
         {isLoading ? <span className="panel-note">{t("watchlist.detail.loading")}</span> : null}
-      </div>
-      <div className="stack">
-        <strong>{focus.origin_iata} {"→"} {focus.destination_iata}</strong>
-        <span className="panel-note">{focus.travel_date_local}</span>
+      </header>
+
+      <div className="watch-detail-hero">
+        <div className="watch-detail-route">
+          <strong>{focus.origin_iata} {"→"} {focus.destination_iata}</strong>
+          <span className="panel-note">{focus.travel_date_local}</span>
+        </div>
         <span className={`status-pill ${status.tone}`}>{status.label}</span>
-        <span className="panel-note">
-          {t("watchlist.detail.currentPrice")} {detail?.latest_snapshot ? formatCurrency(detail.latest_snapshot.raw_price, detail.latest_snapshot.raw_currency) : "--"}
-        </span>
-        <span className="panel-note">
-          {t("watchlist.detail.freshness")} {freshness.fullText}
-        </span>
-        {detail?.latest_snapshot ? (
-          <span className="panel-note">
-            {t("watchlist.detail.latestSnapshot")} {safeDateTime(detail.latest_snapshot.captured_at_utc)}
-          </span>
-        ) : null}
       </div>
+
+      <div className="watch-detail-block">
+        <h3 className="watch-detail-block-title">{t("watchlist.detail.mainReadingTitle")}</h3>
+        <div className="watch-detail-metrics">
+          <div className="watch-detail-metric">
+            <span>{t("watchlist.detail.currentPriceLabel")}</span>
+            <strong>{currentPriceValue}</strong>
+          </div>
+          <div className="watch-detail-metric">
+            <span>{t("watchlist.detail.bestPriceLabel")}</span>
+            <strong>{minPriceValue}</strong>
+          </div>
+          <div className="watch-detail-metric">
+            <span>{t("watchlist.detail.deltaFromMinLabel")}</span>
+            <strong>{deltaFromMinValue}</strong>
+          </div>
+          <div className="watch-detail-metric">
+            <span>{t("watchlist.detail.freshnessLabel")}</span>
+            <strong>{freshness.fullText}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div className="watch-detail-block">
+        <h3 className="watch-detail-block-title">{t("watchlist.detail.operational.title")}</h3>
+        <div className="watch-detail-operational">
+          <span>{t("watchlist.detail.latestSnapshot")} {latestSnapshot ? safeDateTime(latestSnapshot.captured_at_utc) : "--"}</span>
+          <span>{t("watchlist.summary.count")} {summaryData ? summaryData.count : "--"}</span>
+          <span>{t("watchlist.summary.delta")} {summaryData?.delta_pct == null ? "--" : formatPercent(summaryData.delta_pct)}</span>
+          <span>{t("watchlist.detail.operational.trend")} {trendText}</span>
+        </div>
+      </div>
+
+      {summaryData ? (
+        <div className="notice notice-info notice-compact history-confidence-notice" role="status" aria-live="polite">
+          <strong>{confidence.titleKey ? t(confidence.titleKey) : t("watchlist.detail.interpretation.title")}</strong>
+          <p>{confidence.messageKey ? t(confidence.messageKey) : interpretationText}</p>
+        </div>
+      ) : (
+        <p className="panel-note">{t("watchlist.summary.empty")}</p>
+      )}
+
       {isLoading && !detail ? (
         <div className="history-summary history-summary--kpis" aria-label={t("watchlist.smartList.loadingAria")}>
           <div className="history-kpi"><span className="skeleton skeleton-line" /><strong className="skeleton skeleton-line" /></div>
@@ -75,7 +141,8 @@ export function WatchDetailPanel({
           <div className="history-kpi"><span className="skeleton skeleton-line" /><strong className="skeleton skeleton-line" /></div>
         </div>
       ) : null}
-      <div className="alert-actions">
+
+      <div className="alert-actions watch-detail-actions">
         <button className="btn-secondary btn-compact" type="button" onClick={() => onRefreshWatch(focus.id)}>
           {t("watchlist.detail.actions.refresh")}
         </button>
@@ -89,26 +156,30 @@ export function WatchDetailPanel({
           </button>
         )}
       </div>
-      <div className="history-summary history-summary--kpis">
-        {summaryData ? (
-          <>
-            {confidence.level !== "none" && confidence.titleKey && confidence.messageKey ? (
-              <div className="notice notice-info notice-compact history-confidence-notice" role="status" aria-live="polite">
-                <strong>{t(confidence.titleKey)}</strong>
-                <p>{t(confidence.messageKey)}</p>
-              </div>
-            ) : null}
-            <div className="history-kpi"><span className="history-kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 16l6-6 4 4 6-8" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg></span><span>{t("watchlist.summary.latest")}</span><strong>{summaryData.latest_price == null ? "--" : formatCurrency(summaryData.latest_price, "EUR")}</strong></div>
-            <div className="history-kpi"><span className="history-kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 14l6-6 4 4 6-8" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg></span><span>{t("watchlist.summary.min")}</span><strong>{summaryData.min_price == null ? "--" : formatCurrency(summaryData.min_price, "EUR")}</strong></div>
-            <div className="history-kpi"><span className="history-kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 18l6-10 4 6 6-10" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg></span><span>{t("watchlist.summary.max")}</span><strong>{summaryData.max_price == null ? "--" : formatCurrency(summaryData.max_price, "EUR")}</strong></div>
-            <div className="history-kpi"><span className="history-kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5v14" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg></span><span>{t("watchlist.summary.avg")}</span><strong>{summaryData.avg_price == null ? "--" : formatCurrency(summaryData.avg_price, "EUR")}</strong></div>
-            <div className="history-kpi"><span className="history-kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 15l5-6 5 6" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg></span><span>{t("watchlist.summary.delta")}</span><strong>{summaryData.delta_pct == null ? "--" : formatPercent(summaryData.delta_pct)}</strong></div>
-            <div className="history-kpi"><span className="history-kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 5v14M17 5v14M4 9h16M4 15h16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg></span><span>{t("watchlist.summary.count")}</span><strong>{summaryData.count}</strong></div>
-          </>
-        ) : (
-          <p className="panel-note">{t("watchlist.summary.empty")}</p>
-        )}
+
+      <div className="watch-detail-interpretation notice notice-info notice-compact" role="status" aria-live="polite">
+        <strong>{t("watchlist.detail.interpretation.title")}</strong>
+        <p>{interpretationText}</p>
       </div>
+
+      {summaryData ? (
+        <div className="watch-detail-legacy-kpis" hidden>
+          {confidence.level !== "none" && confidence.titleKey && confidence.messageKey ? (
+            <div className="notice notice-info notice-compact history-confidence-notice" role="status" aria-live="polite">
+              <strong>{t(confidence.titleKey)}</strong>
+              <p>{t(confidence.messageKey)}</p>
+            </div>
+          ) : null}
+          <div className="history-summary history-summary--kpis">
+            <div className="history-kpi"><span>{t("watchlist.summary.latest")}</span><strong>{summaryData.latest_price == null ? "--" : formatCurrency(summaryData.latest_price, "EUR")}</strong></div>
+            <div className="history-kpi"><span>{t("watchlist.summary.min")}</span><strong>{summaryData.min_price == null ? "--" : formatCurrency(summaryData.min_price, "EUR")}</strong></div>
+            <div className="history-kpi"><span>{t("watchlist.summary.max")}</span><strong>{summaryData.max_price == null ? "--" : formatCurrency(summaryData.max_price, "EUR")}</strong></div>
+            <div className="history-kpi"><span>{t("watchlist.summary.avg")}</span><strong>{summaryData.avg_price == null ? "--" : formatCurrency(summaryData.avg_price, "EUR")}</strong></div>
+            <div className="history-kpi"><span>{t("watchlist.summary.delta")}</span><strong>{summaryData.delta_pct == null ? "--" : formatPercent(summaryData.delta_pct)}</strong></div>
+            <div className="history-kpi"><span>{t("watchlist.summary.count")}</span><strong>{summaryData.count}</strong></div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

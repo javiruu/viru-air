@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-05-14T11:44:02.941Z",
+  "baseUrl": "http://127.0.0.1:3000",
+  "targetPath": "/watchlist",
+  "auth": {
+    "success": true
+  },
+  "interactions": {
+    "routeSwitch": {
+      "firstRoute": "MAD → KUN",
+      "secondRoute": "ALC → TSF",
+      "changed": true
+    },
+    "refreshClicked": true,
+    "pauseResumeFromDet": {
+      "beforeLabel": "Pausar",
+      "afterLabel": "Pausar",
+      "changed": false
+    },
+    "comparePanelVisibleAfterSelection": true,
+    "historyResponds": true
+  },
+  "consoleErrors": [],
+  "request500": [],
+  "screenshots": {
+    "desktop": "docs\\qa\\screenshots\\watchlist-fase4-det-desktop-1440x900.png",
+    "mobile": "docs\\qa\\screenshots\\watchlist-fase4-det-mobile-375x812.png"
+  }
+}

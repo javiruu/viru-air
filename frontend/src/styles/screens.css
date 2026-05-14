@@ -4930,6 +4930,114 @@ h1 {
   align-items: flex-start;
 }
 
+.watch-detail-panel {
+  padding: 0.9rem;
+  display: grid;
+  gap: 0.72rem;
+  align-content: start;
+}
+
+.watch-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.watch-detail-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--border) 74%, transparent);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+}
+
+.watch-detail-route {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.watch-detail-route strong {
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+}
+
+.watch-detail-block {
+  display: grid;
+  gap: 0.46rem;
+}
+
+.watch-detail-block-title {
+  margin: 0;
+  font-size: 0.77rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+}
+
+.watch-detail-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.48rem;
+}
+
+.watch-detail-metric {
+  display: grid;
+  gap: 0.22rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+  min-height: 58px;
+}
+
+.watch-detail-metric > span {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink-muted);
+}
+
+.watch-detail-metric > strong {
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.watch-detail-operational {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.38rem 0.52rem;
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+  padding: 0.45rem 0.2rem 0.1rem;
+}
+
+.watch-detail-actions {
+  margin-top: 0.1rem;
+}
+
+.watch-detail-empty-state {
+  border: 1px dashed color-mix(in srgb, var(--border) 74%, transparent);
+  border-radius: 14px;
+  padding: 0.75rem;
+  background: color-mix(in srgb, var(--surface-2) 72%, transparent);
+  display: grid;
+  gap: 0.34rem;
+}
+
+.watch-detail-interpretation {
+  margin-top: 0.12rem;
+}
+
+.watch-detail-interpretation p {
+  margin: 0.2rem 0 0;
+}
+
 @media (min-width: 1121px) {
   .watch-detail-panel {
     position: sticky;
@@ -4980,6 +5088,19 @@ h1 {
 
   .history-chart svg {
     min-height: 220px;
+  }
+
+  .watch-detail-metrics,
+  .watch-detail-operational {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .watch-detail-actions {
+    flex-wrap: wrap;
+  }
+
+  .watch-detail-actions > .btn-compact {
+    min-height: 40px;
   }
 }
 
