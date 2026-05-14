@@ -34,13 +34,17 @@ export function useWatchlistController({
     setCalendarCursor: view.setCalendarCursor,
   });
 
-  const { compareIds, setCompareIds } = view;
+  const { setCompareIds } = view;
   const { items } = actions;
 
   useEffect(() => {
-    if (compareIds.length === 0) return;
-    setCompareIds((prev) => prev.filter((id) => items.some((item) => item.id === id)));
-  }, [compareIds, items, setCompareIds]);
+    setCompareIds((prev) => {
+      if (prev.length === 0) return prev;
+      const next = prev.filter((id) => items.some((item) => item.id === id));
+      const unchanged = next.length === prev.length && next.every((id, index) => id === prev[index]);
+      return unchanged ? prev : next;
+    });
+  }, [items, setCompareIds]);
 
   const { setSelectedWatchId, setSelectedOrigin, setSelectedDestination, setSelectedDates, setSelectedPoint } = view;
   const selectWatch = useCallback(
