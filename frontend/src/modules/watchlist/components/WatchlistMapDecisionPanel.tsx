@@ -4,12 +4,22 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useI18n } from "@/i18n";
 import { Map, MapControls, MapMarker, MapPopup, MapRoute, type MapRef } from "@/components/ui/map";
+import { getWatchStatusMeta } from "@/modules/shared/statusCatalog";
 import { formatCurrency } from "@/modules/shared/format";
+import { safeDateTime } from "@/modules/watchlist/presentation";
 import type { WatchMapInsight, WatchMapMode, WatchMapRouteView } from "@/modules/watchlist/types";
 
 type WatchlistMapDecisionPanelProps = {
   routes: WatchMapRouteView[];
+  hasSelectedRoute: boolean;
   hasWatchItems: boolean;
+  selectedRouteContext: {
+    origin: string;
+    destination: string;
+    travelDate: string;
+    status: string;
+    lastCaptureAt: string | null;
+  } | null;
   mode: WatchMapMode;
   insight: WatchMapInsight;
   compareLimitExceeded: boolean;
@@ -29,7 +39,9 @@ function trendLabel(route: WatchMapRouteView) {
 
 export function WatchlistMapDecisionPanel({
   routes,
+  hasSelectedRoute,
   hasWatchItems,
+  selectedRouteContext,
   mode,
   insight,
   compareLimitExceeded,
@@ -52,6 +64,10 @@ export function WatchlistMapDecisionPanel({
       null,
     [activePopupWatchId, primary, visibleRoutes],
   );
+  const selectedRouteLabel = primary ? `${primary.origin} → ${primary.destination}` : "--";
+  const selectedStatus = primary ? getWatchStatusMeta(primary.status, t) : null;
+  const fallbackRouteLabel = selectedRouteContext ? `${selectedRouteContext.origin} → ${selectedRouteContext.destination}` : "--";
+  const fallbackStatus = selectedRouteContext ? getWatchStatusMeta(selectedRouteContext.status, t) : null;
 
   useEffect(() => {
     if (!primary) return;
@@ -75,21 +91,72 @@ export function WatchlistMapDecisionPanel({
     if (!activePopupWatchId && primary) setActivePopupWatchId(primary.watchId);
   }, [activePopupWatchId, primary]);
 
+  if (!hasSelectedRoute) {
+    return (
+      <section className="panel panel-soft watch-map-panel section-gap" aria-label={t("watchlist.map.title")}>
+        <div className="panel-header watch-map-header">
+          <div>
+            <h2 className="panel-title">{t("watchlist.map.title")}</h2>
+            <p className="panel-subtitle">{t("watchlist.map.noRouteSelectedLabel")}</p>
+          </div>
+        </div>
+        <div className="watch-map-empty-state" role="status" aria-live="polite">
+          <div className="watch-map-empty-visual" aria-hidden="true">
+            <span className="watch-map-empty-node watch-map-empty-node-origin">ORG</span>
+            <span className="watch-map-empty-line" />
+            <span className="watch-map-empty-node watch-map-empty-node-destination">DST</span>
+          </div>
+          <div className="watch-map-empty-copy">
+            <strong>{t("watchlist.map.emptySelectionTitle")}</strong>
+            <p className="panel-note">{t("watchlist.map.emptySelectionBody")}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   if (!hasMapData) {
     return (
       <section className="panel panel-soft watch-map-panel section-gap" aria-label={t("watchlist.map.title")}>
         <div className="panel-header watch-map-header">
           <div>
             <h2 className="panel-title">{t("watchlist.map.title")}</h2>
+            <p className="panel-subtitle">{fallbackRouteLabel}</p>
           </div>
+          {fallbackStatus ? <span className={`status-pill ${fallbackStatus.tone}`}>{fallbackStatus.label}</span> : null}
         </div>
-        <div className="watch-map-copy">
-          <span className="watch-map-insight watch-map-insight-neutral">
-            {hasWatchItems ? t("watchlist.map.unavailableTitle") : t("watchlist.map.emptyTitle")}
-          </span>
-          <span className="watch-map-limit">
-            {hasWatchItems ? t("watchlist.map.unavailableBody") : t("watchlist.map.emptyBody")}
-          </span>
+        <div className="watch-map-empty-state" role="status" aria-live="polite">
+          <div className="watch-map-empty-visual" aria-hidden="true">
+            <span className="watch-map-empty-node watch-map-empty-node-origin">{selectedRouteContext?.origin ?? "ORG"}</span>
+            <span className="watch-map-empty-line" />
+            <span className="watch-map-empty-node watch-map-empty-node-destination">{selectedRouteContext?.destination ?? "DST"}</span>
+          </div>
+          <div className="watch-map-empty-copy">
+            <strong>{hasWatchItems ? t("watchlist.map.unavailableTitle") : t("watchlist.map.emptyTitle")}</strong>
+            <p className="panel-note">
+              {hasWatchItems ? t("watchlist.map.unavailableBody") : t("watchlist.map.emptyBody")}
+            </p>
+          </div>
+          {selectedRouteContext ? (
+            <div className="watch-map-meta" role="list" aria-label={t("watchlist.map.metaAriaLabel")}>
+              <div className="watch-map-meta-item" role="listitem">
+                <span>{t("watchlist.map.originLabel")}</span>
+                <strong>{selectedRouteContext.origin}</strong>
+              </div>
+              <div className="watch-map-meta-item" role="listitem">
+                <span>{t("watchlist.map.destinationLabel")}</span>
+                <strong>{selectedRouteContext.destination}</strong>
+              </div>
+              <div className="watch-map-meta-item" role="listitem">
+                <span>{t("watchlist.map.dateLabel")}</span>
+                <strong>{selectedRouteContext.travelDate || "--"}</strong>
+              </div>
+              <div className="watch-map-meta-item" role="listitem">
+                <span>{t("watchlist.map.lastCaptureLabel")}</span>
+                <strong>{selectedRouteContext.lastCaptureAt ? safeDateTime(selectedRouteContext.lastCaptureAt) : "--"}</strong>
+              </div>
+            </div>
+          ) : null}
         </div>
       </section>
     );
@@ -100,19 +167,35 @@ export function WatchlistMapDecisionPanel({
       <div className="panel-header watch-map-header">
         <div>
           <h2 className="panel-title">{t("watchlist.map.title")}</h2>
-          <p className="panel-subtitle">
-            {mode === "compare" ? t("watchlist.map.compareMode") : t("watchlist.map.focusMode")}
-          </p>
+          <p className="panel-subtitle">{selectedRouteLabel}</p>
         </div>
-        <span className={`watch-map-mode watch-map-mode-${mode}`}>
-          {mode === "compare" ? t("watchlist.map.comparePill") : t("watchlist.map.focusPill")}
-        </span>
+        {selectedStatus ? <span className={`status-pill ${selectedStatus.tone}`}>{selectedStatus.label}</span> : null}
       </div>
 
       <div className="watch-map-copy">
         <span className={`watch-map-insight watch-map-insight-${insight.type}`}>{insight.text}</span>
         {compareLimitExceeded ? <span className="watch-map-limit">{t("watchlist.map.compareLimitHint")}</span> : null}
       </div>
+      {primary ? (
+        <div className="watch-map-meta" role="list" aria-label={t("watchlist.map.metaAriaLabel")}>
+          <div className="watch-map-meta-item" role="listitem">
+            <span>{t("watchlist.map.originLabel")}</span>
+            <strong>{primary.origin}</strong>
+          </div>
+          <div className="watch-map-meta-item" role="listitem">
+            <span>{t("watchlist.map.destinationLabel")}</span>
+            <strong>{primary.destination}</strong>
+          </div>
+          <div className="watch-map-meta-item" role="listitem">
+            <span>{t("watchlist.map.dateLabel")}</span>
+            <strong>{primary.travelDate || "--"}</strong>
+          </div>
+          <div className="watch-map-meta-item" role="listitem">
+            <span>{t("watchlist.map.lastCaptureLabel")}</span>
+            <strong>{primary.freshnessTs ? safeDateTime(primary.freshnessTs) : "--"}</strong>
+          </div>
+        </div>
+      ) : null}
       {hasMapData ? (
         <div className="watch-map-legend" role="note" aria-label={t("watchlist.map.legendAriaLabel")}>
           <span className="watch-map-legend-item">
@@ -196,7 +279,7 @@ export function WatchlistMapDecisionPanel({
               <article className="watch-map-popup">
                 <header>
                   <strong>
-                    {popupRoute.origin} {"->"} {popupRoute.destination}
+                    {popupRoute.origin} {"→"} {popupRoute.destination}
                   </strong>
                   <span>
                     {trendLabel(popupRoute) === "up"

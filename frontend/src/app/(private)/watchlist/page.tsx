@@ -199,7 +199,19 @@ export default function WatchlistPage() {
         <div className="watchlist-area watchlist-area-map">
           <WatchlistMapDecisionPanel
             routes={derived.watchMapRoutes}
+            hasSelectedRoute={Boolean(derived.selectedWatch)}
             hasWatchItems={actions.items.length > 0}
+            selectedRouteContext={
+              derived.selectedWatch
+                ? {
+                    origin: derived.selectedWatch.origin_iata,
+                    destination: derived.selectedWatch.destination_iata,
+                    travelDate: derived.selectedWatch.travel_date_local,
+                    status: derived.selectedWatch.status,
+                    lastCaptureAt: actions.selectedWatchDetail?.latest_snapshot?.captured_at_utc ?? null,
+                  }
+                : null
+            }
             mode={derived.watchMapMode}
             insight={derived.watchMapInsight}
             compareLimitExceeded={view.compareIds.length > 4}

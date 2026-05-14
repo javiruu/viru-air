@@ -110,6 +110,8 @@ export type WatchMapRouteView = {
   watchId: string;
   origin: string;
   destination: string;
+  travelDate: string;
+  status: string;
   originCoordinates: [number, number];
   destinationCoordinates: [number, number];
   priceCurrent: number | null;

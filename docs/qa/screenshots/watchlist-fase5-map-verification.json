@@ -1,0 +1,18 @@
+{
+  "generatedAt": "2026-05-14T12:11:30.711Z",
+  "route": "/watchlist",
+  "consoleErrors": [],
+  "request500": [],
+  "checks": {
+    "mapChangedWithRouteSelection": true,
+    "mapHeaderRouteFirst": "ALC → TSF",
+    "mapHeaderRouteSecond": "MAD → KUN",
+    "detailChanged": true,
+    "historyChanged": true,
+    "comparePanelVisible": true
+  },
+  "screenshots": {
+    "desktop": "docs\\qa\\screenshots\\watchlist-fase5-map-desktop-1440x900.png",
+    "mobile": "docs\\qa\\screenshots\\watchlist-fase5-map-mobile-375x812.png"
+  }
+}
