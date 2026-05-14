@@ -37,6 +37,12 @@ Entradas vivas agregadas:
 - `.codex/skills/viru-tracker-ui/references/visual-direction.md`
 - `.codex/skills/viru-tracker-ui/references/qa-checklist.md`
 
+## Actualizacion manual 2026-05-14 (install taste frontend skill)
+
+Entradas vivas agregadas:
+
+- `.codex/skills/taste-skill/SKILL.md`
+
 ## Tabla
 
 | Ruta actual | Tipo | Estado | Acci?n propuesta | Nueva ruta | Motivo | Fuente de verdad |
@@ -49,6 +55,7 @@ Entradas vivas agregadas:
 | .codex/skills/viru-tracker-ui/references/product-context.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/references/product-context.md | Contexto de producto para tareas UI del skill Viru Tracker UI | .codex/skills/viru-tracker-ui/references/product-context.md |
 | .codex/skills/viru-tracker-ui/references/visual-direction.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/references/visual-direction.md | Direccion visual editorial y restricciones del skill Viru Tracker UI | .codex/skills/viru-tracker-ui/references/visual-direction.md |
 | .codex/skills/viru-tracker-ui/references/qa-checklist.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/references/qa-checklist.md | Checklist minima de QA visual para cambios del skill | .codex/skills/viru-tracker-ui/references/qa-checklist.md |
+| .codex/skills/taste-skill/SKILL.md | contexto IA | vivo | conservar | .codex/skills/taste-skill/SKILL.md | Skill de direccion visual frontend premium para tareas de estetica/UI | .codex/skills/taste-skill/SKILL.md |
 | docs/DOCS_INVENTORY.md | overview | vivo | conservar | docs/DOCS_INVENTORY.md | Inventario documental ?nico | docs/DOCS_INVENTORY.md |
 | docs/INDICE_UNICO.md | overview | vivo | conservar | docs/INDICE_UNICO.md | Mapa ?nico de navegaci?n | docs/INDICE_UNICO.md |
 | docs/README.md | overview | vivo | conservar | docs/README.md | Gu?a principal de navegaci?n documental | docs/README.md |

@@ -78,3 +78,8 @@ Antes de cerrar cambios UI:
 - No cambiar logica de negocio, contratos API ni rutas sin peticion explicita.
 - No introducir librerias nuevas para ajustes visuales menores.
 - Mantener consistencia con `AGENTS.md`, `frontend/AGENTS.md` y docs UI canonicos.
+
+## 10) Skill de ejecucion visual recomendado
+- Skill instalado: `/.codex/skills/taste-skill/SKILL.md`.
+- Uso esperado: decisiones de frontend estetica (jerarquia, ritmo, composicion, motion y polish).
+- Regla de prioridad: este documento y `docs/ui/*` siguen siendo el contrato canonico.

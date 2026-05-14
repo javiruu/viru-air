@@ -12,6 +12,11 @@ Related: docs/ui/UI_SYSTEM_V1.md, docs/specs/README.md
 ## Objetivo
 Establecer reglas mínimas para mantener consistencia visual y reducir regresiones en la interfaz.
 
+## Skill recomendado para cambios visuales por agente
+- Skill instalado: `/.codex/skills/taste-skill/SKILL.md`.
+- Debe usarse como soporte de criterio visual en tareas de frontend/estetica.
+- El contrato de este documento prevalece si existe conflicto.
+
 ## Naming y capas de estilos
 - `base.css`: fundamentos y reset.
 - `tokens.css`: variables de diseño (color, spacing, tipografía, foco, estados).

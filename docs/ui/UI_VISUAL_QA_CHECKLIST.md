@@ -9,6 +9,10 @@ Related: docs/ui/UI_SYSTEM_V1.md, docs/specs/README.md
 
 Checklist obligatorio para PRs con cambios de interfaz.
 
+Referencia operativa para agentes:
+- `/.codex/skills/taste-skill/SKILL.md` para direccion visual.
+- Este checklist manda para validar salida final.
+
 ## Rutas core
 - `/dashboard`
 - `/watchlist`

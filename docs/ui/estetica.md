@@ -7,6 +7,14 @@ Related: docs/ui/UI_SYSTEM_V1.md, docs/specs/README.md
 ---
 # Guia de Estetica Viru
 
+USO DE SKILL DE ESTETICA PARA AGENTES
+=====================================
+- Skill instalado: `/.codex/skills/taste-skill/SKILL.md`.
+- Objetivo: subir calidad visual sin caer en patrones SaaS genericos.
+- Uso recomendado: cambios en jerarquia visual, composicion, ritmo, tipografia, densidad, motion y polish UI.
+- Limite: no usar el skill para justificar cambios de logica, rutas o contratos API.
+- Verificacion: complementar con `docs/ui/UI_VISUAL_QA_CHECKLIST.md`.
+
 OBJETIVO
 ========
 Estandarizar la identidad visual del producto y aportar ideas de evolucion sin romper la estetica editorial.

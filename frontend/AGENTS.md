@@ -397,3 +397,11 @@ Avoid:
 - shipping stateful UI without checking relevant states;
 - ignoring mobile/responsive impact when layout changes;
 - using screenshots that do not show the changed area clearly.
+
+---
+
+## Skill visual recomendado para agentes
+
+- Skill instalado en repo: `/.codex/skills/taste-skill/SKILL.md`.
+- Usarlo en tareas de frontend/estetica para elevar calidad visual sin caer en UI generica.
+- Mantener prioridad de contratos canonicos: `DESIGN.md`, `docs/ui/UI_SYSTEM_V1.md`, `docs/ui/UI_CONTRACT_V1.md` y `docs/ui/estetica.md`.

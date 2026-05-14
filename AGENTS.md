@@ -193,6 +193,7 @@ For UI/UX work driven by coding agents, use these local artifacts as persistent 
 
 - `/DESIGN.md` (canonical design direction for agents in this repo root);
 - `/.codex/skills/viru-tracker-ui/SKILL.md`;
+- `/.codex/skills/taste-skill/SKILL.md`;
 - `/.codex/skills/viru-tracker-ui/references/product-context.md`;
 - `/.codex/skills/viru-tracker-ui/references/visual-direction.md`;
 - `/.codex/skills/viru-tracker-ui/references/qa-checklist.md`.

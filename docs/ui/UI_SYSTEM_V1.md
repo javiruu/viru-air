@@ -12,6 +12,11 @@ Fecha de freeze: 2026-03-09
 
 Este documento es la referencia oficial para evitar deriva del sistema visual.
 
+## 0) Skill operativo para agentes (frontend estetica)
+- Skill instalado: `/.codex/skills/taste-skill/SKILL.md`.
+- Uso: direccionar implementacion visual en tareas UI para mantener caracter editorial y evitar soluciones genericas.
+- No sustituye este freeze: cualquier propuesta del skill debe respetar tokens, naming y patrones congelados en este documento.
+
 ## 1) Tokens congelados (canon)
 Fuente: `frontend/src/styles/tokens.css`
 
