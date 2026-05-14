@@ -56,8 +56,10 @@
 ### Agente IA / Codex
 
 - [AGENTS.md](../AGENTS.md)
+- [Design System para agentes](../DESIGN.md)
 - [Codex operating contract](reference/codex-operating-contract.md)
 - [Prompts y contexto IA](prompts/README.md)
+- [Skill Viru Tracker UI](../.codex/skills/viru-tracker-ui/SKILL.md)
 - [Inventario documental](DOCS_INVENTORY.md)
 
 ## Por área
@@ -116,6 +118,8 @@
 ### Prompts
 
 - [Prompts y contexto IA](prompts/README.md)
+- [Design System para agentes](../DESIGN.md)
+- [Skill Viru Tracker UI](../.codex/skills/viru-tracker-ui/SKILL.md)
 - [Prompts archivados](archive/prompts/README.md)
 
 ### Archive

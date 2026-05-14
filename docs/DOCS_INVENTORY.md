@@ -27,13 +27,28 @@ Entradas vivas agregadas:
 - `docs/qa/reports/2026-05-12-fase1-cumplimiento.md`
 - `backend/tests/unit/test_airports_endpoints.py`
 
+## Actualizacion manual 2026-05-14 (design skill viru-tracker-ui)
+
+Entradas vivas agregadas:
+
+- `DESIGN.md`
+- `.codex/skills/viru-tracker-ui/SKILL.md`
+- `.codex/skills/viru-tracker-ui/references/product-context.md`
+- `.codex/skills/viru-tracker-ui/references/visual-direction.md`
+- `.codex/skills/viru-tracker-ui/references/qa-checklist.md`
+
 ## Tabla
 
 | Ruta actual | Tipo | Estado | Acci?n propuesta | Nueva ruta | Motivo | Fuente de verdad |
 |---|---|---|---|---|---|---|
 | .github/pull_request_template.md | unknown | revisar manualmente | revisar manualmente | .github/pull_request_template.md | Clasificaci?n no resuelta autom?ticamente | revisi?n manual requerida |
 | AGENTS.md | contexto IA | vivo | conservar | AGENTS.md | Contrato operativo principal para agentes | AGENTS.md |
+| DESIGN.md | contexto IA | vivo | conservar | DESIGN.md | Sistema de diseno para agentes con direccion visual canonica de Viru | DESIGN.md |
 | README.md | overview | vivo | conservar | README.md | Punto de entrada principal del repositorio | README.md |
+| .codex/skills/viru-tracker-ui/SKILL.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/SKILL.md | Skill de diseno incremental para Codex/Open Design en Viru | .codex/skills/viru-tracker-ui/SKILL.md |
+| .codex/skills/viru-tracker-ui/references/product-context.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/references/product-context.md | Contexto de producto para tareas UI del skill Viru Tracker UI | .codex/skills/viru-tracker-ui/references/product-context.md |
+| .codex/skills/viru-tracker-ui/references/visual-direction.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/references/visual-direction.md | Direccion visual editorial y restricciones del skill Viru Tracker UI | .codex/skills/viru-tracker-ui/references/visual-direction.md |
+| .codex/skills/viru-tracker-ui/references/qa-checklist.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/references/qa-checklist.md | Checklist minima de QA visual para cambios del skill | .codex/skills/viru-tracker-ui/references/qa-checklist.md |
 | docs/DOCS_INVENTORY.md | overview | vivo | conservar | docs/DOCS_INVENTORY.md | Inventario documental ?nico | docs/DOCS_INVENTORY.md |
 | docs/INDICE_UNICO.md | overview | vivo | conservar | docs/INDICE_UNICO.md | Mapa ?nico de navegaci?n | docs/INDICE_UNICO.md |
 | docs/README.md | overview | vivo | conservar | docs/README.md | Gu?a principal de navegaci?n documental | docs/README.md |
