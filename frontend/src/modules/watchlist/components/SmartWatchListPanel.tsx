@@ -33,6 +33,8 @@ type WatchMetaEntry = {
     price: number;
     currency: string;
   } | null;
+  min: number | null;
+  max: number | null;
 };
 
 type SmartWatchListPanelProps = {
@@ -270,6 +272,16 @@ export function SmartWatchListPanel({
           lastUpdatedAt: meta?.latest?.capturedAt,
           freshnessState: meta?.latest ? "observing" : null,
         });
+        const priceDropAmount = trend === "down" && meta?.latest && meta?.previous
+          ? meta.previous.price - meta.latest.price
+          : null;
+        const priceDropPercent =
+          priceDropAmount != null && meta?.previous && meta.previous.price > 0
+            ? Math.round((priceDropAmount / meta.previous.price) * 100)
+            : null;
+        const hasMeaningfulDrop = priceDropAmount != null && priceDropPercent != null && priceDropPercent > 0;
+        const isBestPrice =
+          meta?.latest && meta?.min != null && meta.latest.price <= meta.min && meta?.max != null && meta.max > meta.min;
 
         return (
           <article
@@ -343,6 +355,21 @@ export function SmartWatchListPanel({
                   {deltaLabel}
                 </span>
               </div>
+              {hasMeaningfulDrop || isBestPrice ? (
+                <div className="watch-price-badges">
+                  {hasMeaningfulDrop ? (
+                    <span className="price-drop-badge">
+                      <svg viewBox="0 0 16 16" className="price-drop-icon" aria-hidden="true">
+                        <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      {formatCurrency(priceDropAmount!, meta?.latest?.currency ?? "EUR")} ({priceDropPercent}%)
+                    </span>
+                  ) : null}
+                  {isBestPrice ? (
+                    <span className="best-price-badge">{t("watchlist.compare.bestPriceBadge")}</span>
+                  ) : null}
+                </div>
+              ) : null}
               <div className="watch-spark">
                 {sparkPath ? (
                   <svg

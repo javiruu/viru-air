@@ -3982,6 +3982,47 @@ h1 {
   transform: rotate(180deg);
 }
 
+/* Price drop & best-price inline badges */
+.watch-price-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.1rem;
+}
+
+.price-drop-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.725rem;
+  font-weight: 600;
+  line-height: 1.3;
+  border: 1px solid rgba(46, 110, 98, 0.4);
+  background: rgba(46, 110, 98, 0.12);
+  color: var(--accent-2);
+}
+
+.price-drop-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.best-price-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.725rem;
+  font-weight: 600;
+  line-height: 1.3;
+  border: 1px solid rgba(204, 158, 66, 0.45);
+  background: rgba(204, 158, 66, 0.12);
+  color: #8b6914;
+}
+
 .trend-flat {
   color: var(--ink-muted);
 }
