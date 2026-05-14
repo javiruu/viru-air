@@ -158,7 +158,6 @@ export default function WatchlistPage() {
             items={actions.items}
             smartListItems={derived.smartListItems}
             watchMeta={derived.watchMeta}
-            historyRows={actions.historyRows}
             lastUpdatedGlobal={derived.lastUpdatedGlobal}
             watchSearch={view.watchSearch}
             watchSort={view.watchSort}

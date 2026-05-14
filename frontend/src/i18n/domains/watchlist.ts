@@ -6,6 +6,8 @@
   smartList: {
     heading: "Rutas vigiladas",
     activeCount: "{count} activas",
+    pausedCount: "{count} pausadas",
+    totalCount: "{count} total",
     showingCount: "Mostrando {shown} de {total} rutas.",
     search: "Buscar",
     searchPlaceholder: "MAD DUB 2026-04-20",
@@ -269,6 +271,8 @@ export const watchlistEn = {
   smartList: {
     heading: "Monitored routes",
     activeCount: "{count} active",
+    pausedCount: "{count} paused",
+    totalCount: "{count} total",
     showingCount: "Showing {shown} of {total} routes.",
     search: "Search",
     searchPlaceholder: "MAD DUB 2026-04-20",

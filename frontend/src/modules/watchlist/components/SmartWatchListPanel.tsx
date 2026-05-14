@@ -3,7 +3,7 @@
 import { useI18n } from "@/i18n";
 import { formatCurrency, formatSignedCurrency } from "@/modules/shared/format";
 import { getWatchStatusMeta } from "@/modules/shared/statusCatalog";
-import { buildSparklinePath, safeDateTime } from "@/modules/watchlist/presentation";
+import { safeDateTime } from "@/modules/watchlist/presentation";
 import { getFreshnessPresentation } from "@/modules/watchlist/summary";
 
 type ListSort = "freshness" | "price_asc" | "price_desc" | "delta";
@@ -15,12 +15,6 @@ type WatchItem = {
   travel_date_local: string;
   target_price?: number | null;
   status: string;
-};
-
-type HistoryRow = {
-  watchId: string;
-  capturedAt: string;
-  price: number;
 };
 
 type WatchMetaEntry = {
@@ -41,7 +35,6 @@ type SmartWatchListPanelProps = {
   items: WatchItem[];
   smartListItems: WatchItem[];
   watchMeta: Map<string, WatchMetaEntry>;
-  historyRows: HistoryRow[];
   lastUpdatedGlobal: string;
   watchSearch: string;
   watchSort: ListSort;
@@ -71,7 +64,6 @@ export function SmartWatchListPanel({
   items,
   smartListItems,
   watchMeta,
-  historyRows,
   lastUpdatedGlobal,
   watchSearch,
   watchSort,
@@ -101,16 +93,20 @@ export function SmartWatchListPanel({
   const hasSelection = selectedIds.length > 0;
   const selectionCount = selectedIds.length;
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const activeCount = useMemo(() => items.filter((item) => item.status !== "paused").length, [items]);
+  const pausedCount = useMemo(() => items.filter((item) => item.status === "paused").length, [items]);
 
   return (
     <section className="panel panel-soft section-gap">
       <div className="panel-header">
-        <div>
+        <div className="watch-smart-header-copy">
           <h2 className="panel-title">{t("watchlist.smartList.heading")}</h2>
-          <span className="muted">
-            {t("watchlist.smartList.activeCount", { count: items.length })}
-            {lastUpdatedGlobal ? ` · ${t("watchlist.lastUpdateInline", { value: lastUpdatedGlobal })}` : ""}
-          </span>
+          <div className="watch-smart-counts muted" role="status" aria-live="polite">
+            <span className="watch-smart-count-pill">{t("watchlist.smartList.activeCount", { count: activeCount })}</span>
+            <span className="watch-smart-count-pill">{t("watchlist.smartList.pausedCount", { count: pausedCount })}</span>
+            <span className="watch-smart-count-pill">{t("watchlist.smartList.totalCount", { count: items.length })}</span>
+            {lastUpdatedGlobal ? <span>{t("watchlist.lastUpdateInline", { value: lastUpdatedGlobal })}</span> : null}
+          </div>
           {items.length > 0 ? (
             <span className="watch-smart-meta">
               {t("watchlist.smartList.showingCount", { shown: smartListItems.length, total: items.length })}
@@ -249,24 +245,6 @@ export function SmartWatchListPanel({
           : formatSignedCurrency(meta.latest.price - meta.previous.price, meta.latest.currency);
         const routeHealthLabel = trend === "up" ? t("watchlist.smartList.trendUp") : trend === "down" ? t("watchlist.smartList.trendDown") : t("watchlist.smartList.trendStable");
 
-        const values = historyRows
-          .filter((row) => row.watchId === watch.id)
-          .sort((a, b) => new Date(a.capturedAt).getTime() - new Date(b.capturedAt).getTime())
-          .slice(-7)
-          .map((row) => row.price);
-        const sparkPath = buildSparklinePath(values);
-        const sparkMin = values.length > 0 ? Math.min(...values) : null;
-        const sparkMax = values.length > 0 ? Math.max(...values) : null;
-        const sparkLatest = values.length > 0 ? values[values.length - 1] : null;
-        const sparkStart = values.length > 0 ? values[0] : null;
-        const sparkTrend =
-          sparkStart == null || sparkLatest == null
-            ? "flat"
-            : sparkLatest > sparkStart
-              ? "up"
-              : sparkLatest < sparkStart
-                ? "down"
-                : "flat";
         const freshness = getFreshnessPresentation({
           t,
           lastUpdatedAt: meta?.latest?.capturedAt,
@@ -323,11 +301,14 @@ export function SmartWatchListPanel({
                 <strong>{watch.origin_iata}{" → "}{watch.destination_iata}</strong>
                 <span className="watch-date">{watch.travel_date_local}</span>
                 <span className={`status-pill ${watchStatus.tone}`}>{watchStatus.label}</span>
+                <strong className="watch-inline-price">
+                  {meta?.latest ? formatCurrency(meta.latest.price, meta.latest.currency) : "--"}
+                </strong>
+              </div>
+              <div className="watch-meta">
                 <span className={`status-pill ${trend === "up" ? "error" : trend === "down" ? "success" : "warning"}`}>
                   {routeHealthLabel}
                 </span>
-              </div>
-              <div className="watch-meta">
                 <span className="watch-meta-chip">{t("watchlist.detail.latestSnapshot")} {safeDateTime(meta?.latest?.capturedAt)}</span>
                 <span className="watch-meta-chip watch-meta-chip--freshness">{t("watchlist.detail.freshness")} {freshness.fullText}</span>
                 <span className="watch-note">{t("watchlist.smartList.priceDisclaimer")}</span>
@@ -336,9 +317,6 @@ export function SmartWatchListPanel({
             <div className="watch-price-area">
               <div className="watch-price">
                 <span className="watch-price-caption">{t("watchlist.smartList.currentPrice")}</span>
-                <strong className="watch-price-main">
-                  {meta?.latest ? formatCurrency(meta.latest.price, meta.latest.currency) : "--"}
-                </strong>
                 <span className={`trend-chip trend-${trend}`}>
                   <span className="trend-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
@@ -368,49 +346,6 @@ export function SmartWatchListPanel({
                   {isBestPrice ? (
                     <span className="best-price-badge">{t("watchlist.compare.bestPriceBadge")}</span>
                   ) : null}
-                </div>
-              ) : null}
-              <div className="watch-spark">
-                {sparkPath ? (
-                  <svg
-                    viewBox="0 0 96 28"
-                    role="img"
-                    aria-label={t("watchlist.smartList.shortTrendAriaLabelWithRoute", {
-                      origin: watch.origin_iata,
-                      destination: watch.destination_iata,
-                    })}
-                  >
-                    <line x1="0" y1="14" x2="96" y2="14" className="watch-spark-baseline" />
-                    <path d={sparkPath} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                    {values.length > 1 && sparkStart != null ? <circle cx="0" cy={28 - (((sparkStart - (sparkMin ?? sparkStart)) / ((sparkMax ?? sparkStart) - (sparkMin ?? sparkStart) || 1)) * 28)} r="1.7" className="watch-spark-point watch-spark-point-start" /> : null}
-                    {sparkLatest != null ? <circle cx="96" cy={28 - (((sparkLatest - (sparkMin ?? sparkLatest)) / ((sparkMax ?? sparkLatest) - (sparkMin ?? sparkLatest) || 1)) * 28)} r="2.3" className="watch-spark-point watch-spark-point-end" /> : null}
-                    {sparkLatest != null && sparkMin != null && sparkMax != null ? (
-                      <title>
-                        {t("watchlist.smartList.shortTrendTitle", {
-                          latest: formatCurrency(sparkLatest, meta?.latest?.currency ?? "EUR"),
-                          min: formatCurrency(sparkMin, meta?.latest?.currency ?? "EUR"),
-                          max: formatCurrency(sparkMax, meta?.latest?.currency ?? "EUR"),
-                          trend:
-                            sparkTrend === "up"
-                              ? t("watchlist.smartList.trendUp")
-                              : sparkTrend === "down"
-                                ? t("watchlist.smartList.trendDown")
-                                : t("watchlist.smartList.trendStable"),
-                        })}
-                      </title>
-                    ) : null}
-                  </svg>
-                ) : (
-                  <span className="muted">{t("watchlist.smartList.noTrend")}</span>
-                )}
-              </div>
-              {sparkLatest != null && sparkMin != null && sparkMax != null ? (
-                <div className="watch-spark-meta muted">
-                  {t("watchlist.smartList.sparklineMeta", {
-                    latest: formatCurrency(sparkLatest, meta?.latest?.currency ?? "EUR"),
-                    min: formatCurrency(sparkMin, meta?.latest?.currency ?? "EUR"),
-                    max: formatCurrency(sparkMax, meta?.latest?.currency ?? "EUR"),
-                  })}
                 </div>
               ) : null}
               <div className="watch-row-actions">

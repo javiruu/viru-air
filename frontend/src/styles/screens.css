@@ -3712,22 +3712,22 @@ h1 {
 
 .watch-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, auto);
-  align-items: end;
-  gap: 1rem 1.2rem;
-  min-height: 122px;
+  grid-template-columns: minmax(0, 1fr) minmax(178px, auto);
+  align-items: center;
+  gap: 0.72rem 0.84rem;
+  min-height: 110px;
 }
 
 .watch-details {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.45rem;
 }
 
 .watch-route {
   display: flex;
-  gap: 0.6rem;
+  gap: 0.44rem;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
 }
 
 .watch-route strong {
@@ -3735,15 +3735,23 @@ h1 {
 }
 
 .watch-date {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--ink-muted);
+}
+
+.watch-inline-price {
+  margin-left: auto;
+  font-size: 1.04rem;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: 0.01em;
 }
 
 .watch-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
-  font-size: 0.84rem;
+  gap: 0.3rem;
+  font-size: 0.8rem;
   color: var(--ink-muted);
 }
 
@@ -3766,19 +3774,20 @@ h1 {
 .watch-note {
   color: var(--ink-muted);
   width: 100%;
+  font-size: 0.74rem;
 }
 
 .watch-price {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.28rem;
   text-align: right;
 }
 
 .watch-price-area {
   display: grid;
-  gap: 0.48rem;
+  gap: 0.38rem;
   justify-items: end;
-  align-content: end;
+  align-content: center;
 }
 
 .watch-price-caption {
@@ -3794,9 +3803,33 @@ h1 {
   font-feature-settings: "tnum";
 }
 
+.watch-smart-header-copy {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.watch-smart-counts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  margin-top: 0.15rem;
+}
+
+.watch-smart-count-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.42rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 80%, var(--surface-2));
+  font-size: 0.74rem;
+  letter-spacing: 0.01em;
+}
+
 .watch-smart-tools {
   display: flex;
-  gap: 0.7rem;
+  gap: 0.52rem;
   align-items: flex-end;
   flex-wrap: wrap;
 }
@@ -3816,15 +3849,15 @@ h1 {
 .watch-smart-search,
 .watch-smart-sort {
   display: grid;
-  gap: 0.3rem;
-  font-size: 0.78rem;
+  gap: 0.22rem;
+  font-size: 0.75rem;
   color: var(--ink-muted);
 }
 
 .watch-smart-search input,
 .watch-smart-sort select {
-  min-width: 180px;
-  padding: 0.45rem 0.6rem;
+  min-width: 145px;
+  padding: 0.4rem 0.55rem;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--surface);
@@ -3839,7 +3872,7 @@ h1 {
 .watch-row {
   cursor: pointer;
   border-radius: 14px;
-  padding: 0.72rem 0.66rem;
+  padding: 0.7rem;
   border: 1px solid transparent;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -3909,11 +3942,15 @@ h1 {
 }
 
 .watch-row-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto;
   align-items: center;
-  justify-content: flex-end;
-  gap: 0.4rem;
-  flex-wrap: wrap;
+  justify-items: end;
+  gap: 0.32rem;
+}
+
+.watch-row-actions > .btn-secondary {
+  min-width: 108px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -4883,6 +4920,10 @@ h1 {
 .watchlist-page .muted {
   text-wrap: pretty;
   word-break: normal;
+}
+
+.watchlist-area-routes .panel {
+  padding: 0.9rem;
 }
 
 .watch-detail-panel .panel-header {
@@ -11664,6 +11705,10 @@ textarea::placeholder {
     align-items: stretch;
   }
 
+  .watch-smart-counts {
+    gap: 0.25rem 0.35rem;
+  }
+
   .watch-bulk-toolbar {
     margin-left: 0;
   }
@@ -11689,10 +11734,26 @@ textarea::placeholder {
 
   .watch-price-area {
     justify-items: start;
+    width: 100%;
   }
 
   .watch-row-actions {
-    justify-content: flex-start;
+    width: 100%;
+    justify-items: start;
+    gap: 0.42rem;
+  }
+
+  .watch-row-actions .alert-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, auto)) minmax(0, auto);
+    justify-content: start;
+    gap: 0.36rem;
+  }
+
+  .watch-inline-price {
+    margin-left: 0;
+    width: 100%;
   }
 
   .compare-body {
