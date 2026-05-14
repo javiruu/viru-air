@@ -4402,6 +4402,23 @@ h1 {
   gap: 0.25rem;
 }
 
+.history-context {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.history-route-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.history-route-line-text {
+  font-size: 0.86rem;
+  color: var(--ink-muted);
+}
+
 .history-title {
   display: inline-flex;
   align-items: center;
@@ -4431,11 +4448,15 @@ h1 {
 
 .history-filterbar {
   margin-top: 0.9rem;
-  padding: 0.9rem;
+  padding: 0.8rem;
   border-radius: 18px;
   border: 1px solid var(--border);
   background: var(--surface-2);
   box-shadow: none;
+}
+
+.history-filterbar--compact {
+  margin-top: 0.75rem;
 }
 
 .history-filterbar-header {
@@ -4461,7 +4482,7 @@ h1 {
 }
 
 .history-filters {
-  padding: 0.8rem;
+  padding: 0.62rem;
   border-radius: 16px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.45), transparent);
   border: 1px solid rgba(217, 203, 187, 0.35);
@@ -4471,8 +4492,8 @@ h1 {
   position: relative;
   display: grid;
   min-width: 0;
-  gap: 0.4rem;
-  padding: 0.7rem 0.75rem 0.8rem 0.9rem;
+  gap: 0.35rem;
+  padding: 0.58rem 0.68rem 0.65rem 0.82rem;
   border-radius: 16px;
   background: var(--history-glass);
   border: 1px solid rgba(217, 203, 187, 0.5);
@@ -4555,7 +4576,7 @@ h1 {
   border: 1px solid rgba(217, 203, 187, 0.7);
   border-radius: 12px;
   padding: 0.62rem 0.7rem;
-  min-height: 48px;
+  min-height: 42px;
   font: inherit;
   background: var(--input-bg);
   color: var(--ink);
@@ -4621,7 +4642,7 @@ h1 {
   box-shadow: 0 20px 38px var(--shadow);
   border: 1px solid rgba(217, 203, 187, 0.7);
   border-radius: 16px;
-  padding: 1rem 1.1rem 1.4rem;
+  padding: 1rem 1.1rem 1.15rem;
 }
 
 .history-svg {
@@ -4664,7 +4685,7 @@ h1 {
 
 .history-chart svg {
   width: 100%;
-  height: 180px;
+  min-height: 260px;
 }
 
 .history-grid {
@@ -4754,6 +4775,10 @@ h1 {
   gap: 0.6rem;
 }
 
+.history-summary--hero {
+  margin-top: 0.82rem;
+}
+
 .history-summary--kpis .history-confidence-notice {
   grid-column: 1 / -1;
 }
@@ -4801,6 +4826,25 @@ h1 {
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
+}
+
+.history-range-inline {
+  --history-accent: var(--history-accent-date);
+  --history-halo: rgba(199, 154, 58, 0.24);
+}
+
+.history-range-inline .history-range-control {
+  justify-content: flex-start;
+  gap: 0.6rem;
+}
+
+.history-range-inline .history-range-field {
+  min-width: 180px;
+}
+
+.history-microcopy {
+  margin-top: 0.72rem;
+  font-size: 0.82rem;
 }
 
 .watchlist-page > .section-gap {
@@ -4872,6 +4916,29 @@ h1 {
       "history"
       "map"
       "compare";
+  }
+
+  .history-filterbar-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .history-route-line {
+    align-items: flex-start;
+  }
+
+  .history-range-inline .history-range-field {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .history-range-inline .history-range-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .history-chart svg {
+    min-height: 220px;
   }
 }
 

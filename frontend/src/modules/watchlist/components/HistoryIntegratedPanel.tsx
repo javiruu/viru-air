@@ -11,6 +11,7 @@ type SelectedWatch = {
   origin_iata: string;
   destination_iata: string;
   travel_date_local: string;
+  status: string;
 } | null;
 
 type PointOption = {
@@ -164,6 +165,35 @@ export function HistoryIntegratedPanel({
   const selectedRouteValue = selectedWatch
     ? `${selectedWatch.origin_iata} → ${selectedWatch.destination_iata} · ${selectedWatch.travel_date_local}`
     : t("watchlist.history.selectFlightPlaceholder");
+  const statusLabel = !selectedWatch
+    ? t("watchlist.history.status.pending")
+    : selectedWatch.status === "active"
+      ? t("watchlist.history.status.active")
+      : selectedWatch.status === "paused"
+        ? t("watchlist.history.status.paused")
+        : selectedWatch.status === "pending"
+          ? t("watchlist.history.status.pending")
+          : t("watchlist.history.status.noData");
+  const statusTone = !selectedWatch
+    ? "info"
+    : selectedWatch.status === "active"
+      ? "success"
+      : selectedWatch.status === "paused"
+        ? "warning"
+        : selectedWatch.status === "pending"
+          ? "warning"
+          : "info";
+  const allChartPoints = chartModel?.flatMap((serie) => serie.points) ?? [];
+  const latestPoint =
+    allChartPoints.length > 0
+      ? allChartPoints.reduce((latest, point) =>
+          new Date(point.capturedAt).getTime() > new Date(latest.capturedAt).getTime() ? point : latest,
+        )
+      : null;
+  const currentPriceValue = latestPoint ? formatCurrency(latestPoint.price, latestPoint.currency) : "--";
+  const bestPriceValue = summaryData ? formatCurrency(summaryData.min, summaryData.currency) : "--";
+  const lastCaptureValue = latestPoint ? formatDateTime(latestPoint.capturedAt) : "--";
+  const snapshotsCountValue = summaryData ? String(summaryData.total) : "--";
 
   return (
     <section className="panel history-panel section-gap">
@@ -192,13 +222,38 @@ export function HistoryIntegratedPanel({
             </span>
             {t("watchlist.history.title")}
           </h2>
-          <p className="muted">
-            {hasSelectedWatch ? t("watchlist.history.subtitleWithRoute") : t("watchlist.history.subtitleWithoutRoute")}
-          </p>
+          <div className="history-context">
+            <p className="muted">
+              {hasSelectedWatch ? t("watchlist.history.subtitleWithRoute") : t("watchlist.history.subtitleWithoutRoute")}
+            </p>
+            <div className="history-route-line">
+              <span className="history-route-line-text">{selectedRouteValue}</span>
+              <span className={`status-pill ${statusTone}`}>{statusLabel}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="history-filterbar">
+      <div className="history-summary history-summary--kpis history-summary--hero">
+        <div className="history-kpi">
+          <span>{t("watchlist.smartList.currentPrice")}</span>
+          <strong>{currentPriceValue}</strong>
+        </div>
+        <div className="history-kpi">
+          <span>{t("watchlist.summary.min")}</span>
+          <strong>{bestPriceValue}</strong>
+        </div>
+        <div className="history-kpi">
+          <span>{t("watchlist.history.lastCapture")}</span>
+          <strong>{lastCaptureValue}</strong>
+        </div>
+        <div className="history-kpi">
+          <span>{t("watchlist.summary.count")}</span>
+          <strong>{snapshotsCountValue}</strong>
+        </div>
+      </div>
+
+      <div className="history-filterbar history-filterbar--compact">
         <div className="history-filterbar-header">
           <div className="history-filterbar-title">
             <strong>{t("watchlist.history.filterTitle")}</strong>
@@ -261,43 +316,39 @@ export function HistoryIntegratedPanel({
                     : t("watchlist.history.pointHelperReady")}
             </span>
           </label>
-        </div>
-      </div>
-
-      <div className="history-range history-range-toolbar">
-        <div className="history-range-left">
-          <strong>{t("watchlist.history.rangeTitle")}</strong>
-          <p className="muted">{t("watchlist.history.rangeBody")}</p>
-        </div>
-        <div className="history-range-control">
-          <label className="history-range-field">
-            <select
-              className="history-input"
-              name="history_range"
-              aria-label={t("watchlist.history.rangeLabel")}
-              autoComplete="off"
-              value={rangeWindow}
-              onChange={(e) => onRangeChange(e.target.value as RangeWindow)}
-            >
-              <option value="7">{t("watchlist.history.range7")}</option>
-              <option value="14">{t("watchlist.history.range14")}</option>
-              <option value="30">{t("watchlist.history.range30")}</option>
-              <option value="90">{t("watchlist.history.range90")}</option>
-              <option value="all">{t("watchlist.history.rangeAll")}</option>
-            </select>
-          </label>
-          <div className="history-range-actions">
-            <button
-              className={`btn-ghost btn-layered ${rangeWindow === "all" ? "" : "is-active"}`}
-              type="button"
-              aria-pressed={rangeWindow !== "all"}
-              onClick={onToggleRangeWindow}
-            >
-              {rangeWindow === "all" ? t("watchlist.history.compactView") : t("watchlist.history.rangeAll")}
-            </button>
-            <button className="btn-ghost btn-layered" type="button" onClick={onResetZoom}>
-              {t("watchlist.history.resetZoom")}
-            </button>
+          <div className="history-filter history-range-inline">
+            <span className="history-label">{t("watchlist.history.rangeTitle")}</span>
+            <div className="history-range-control">
+              <label className="history-range-field">
+                <select
+                  className="history-input"
+                  name="history_range"
+                  aria-label={t("watchlist.history.rangeLabel")}
+                  autoComplete="off"
+                  value={rangeWindow}
+                  onChange={(e) => onRangeChange(e.target.value as RangeWindow)}
+                >
+                  <option value="7">{t("watchlist.history.range7")}</option>
+                  <option value="14">{t("watchlist.history.range14")}</option>
+                  <option value="30">{t("watchlist.history.range30")}</option>
+                  <option value="90">{t("watchlist.history.range90")}</option>
+                  <option value="all">{t("watchlist.history.rangeAll")}</option>
+                </select>
+              </label>
+              <div className="history-range-actions">
+                <button
+                  className={`btn-ghost btn-layered ${rangeWindow === "all" ? "" : "is-active"}`}
+                  type="button"
+                  aria-pressed={rangeWindow !== "all"}
+                  onClick={onToggleRangeWindow}
+                >
+                  {rangeWindow === "all" ? t("watchlist.history.compactView") : t("watchlist.history.rangeAll")}
+                </button>
+                <button className="btn-ghost btn-layered" type="button" onClick={onResetZoom}>
+                  {t("watchlist.history.resetZoom")}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -506,6 +557,7 @@ export function HistoryIntegratedPanel({
               <p>{t("watchlist.history.chartBuildingBody")}</p>
             </div>
           ) : null}
+          <p className="history-microcopy muted">{t("watchlist.history.trendMicrocopy")}</p>
           <details className="history-disclaimer">
             <summary>{t("watchlist.history.priceMeaningTitle")}</summary>
             <p>{t("watchlist.history.priceMeaningBody")}</p>
@@ -591,6 +643,7 @@ export function HistoryIntegratedPanel({
               <p>{t("watchlist.history.calendarUnavailableBody")}</p>
             </div>
           )}
+          <p className="history-microcopy muted">{t("watchlist.history.trendMicrocopy")}</p>
           <details className="history-disclaimer">
             <summary>{t("watchlist.history.priceMeaningTitle")}</summary>
             <p>{t("watchlist.history.priceMeaningBody")}</p>
