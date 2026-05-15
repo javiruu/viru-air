@@ -40,7 +40,7 @@ function WatchlistMapLoadingPanel() {
 const LINE_COLORS = ["#D95D39", "#2E6E62", "#B45309", "#0F766E", "#7C2D12", "#1D4ED8"];
 
 const CHART_WIDTH = 920;
-const CHART_HEIGHT = 360;
+const CHART_HEIGHT = 420;
 const CHART_PAD = { left: 54, right: 18, top: 18, bottom: 38 };
 
 export default function WatchlistPage() {
@@ -130,7 +130,6 @@ export default function WatchlistPage() {
             chartModel={derived.chartModel}
             selectedPointData={derived.selectedPointData}
             hoverPoint={hover.hoverPoint}
-            summary={derived.summary}
             visibleMonth={derived.visibleMonth}
             monthTitle={monthLabel(derived.visibleMonth)}
             monthCells={derived.monthCells}

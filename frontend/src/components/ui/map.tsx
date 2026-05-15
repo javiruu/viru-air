@@ -253,7 +253,7 @@ export function MapRoute({
             "line-opacity": opacity,
             ...(dashArray ? { "line-dasharray": dashArray } : {}),
           },
-          layout: interactive ? undefined : { visibility: "visible" },
+          layout: { visibility: "visible" },
         });
       } else {
         map.setPaintProperty(layerId, "line-color", color);
@@ -328,7 +328,11 @@ export function MapMarker({ longitude, latitude, children, onClick }: MapMarkerP
         host.element.removeEventListener("click", onClick);
       }
       marker.remove();
-      host.root.unmount();
+      // Defer unmount to avoid React 18 race condition
+      // (marker.remove() can trigger re-renders via map events)
+      queueMicrotask(() => {
+        host.root?.unmount();
+      });
       markerRef.current = null;
       renderHostRef.current = null;
     };
@@ -375,7 +379,11 @@ export function MapPopup({ longitude, latitude, children, onClose, closeButton =
     return () => {
       if (onClose) popup.off("close", onClose);
       popup.remove();
-      host.root.unmount();
+      // Defer unmount to avoid React 18 race condition
+      // (popup.remove() can trigger re-renders via map events)
+      queueMicrotask(() => {
+        host.root?.unmount();
+      });
       popupRef.current = null;
       renderHostRef.current = null;
     };

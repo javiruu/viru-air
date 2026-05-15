@@ -54,14 +54,6 @@ type HoverPoint = {
   color: string;
 } | null;
 
-type Summary = {
-  avg: number;
-  min: number;
-  max: number;
-  total: number;
-  currency: string;
-} | null;
-
 type CalendarEvent = {
   min: number;
   max: number;
@@ -90,7 +82,6 @@ type HistoryIntegratedPanelProps = {
   chartModel: ChartSerie[] | null;
   selectedPointData: SelectedPointData;
   hoverPoint: HoverPoint;
-  summary: Summary;
   visibleMonth: string;
   monthTitle: string;
   monthCells: Array<string | null>;
@@ -127,10 +118,8 @@ export function HistoryIntegratedPanel({
   chartIsCompact,
   chartHeight,
   chartModel,
-  selectedPointData,
-  hoverPoint,
-  summary,
-  visibleMonth,
+  selectedPointData,    hoverPoint,
+    visibleMonth,
   monthTitle,
   monthCells,
   calendarEvents,
@@ -155,8 +144,7 @@ export function HistoryIntegratedPanel({
   const hasChartData = Boolean(chartModel && chartModel.length > 0);
   const chartPointCount = chartModel?.reduce((acc, serie) => acc + serie.points.length, 0) ?? 0;
   const hasCalendarData = Boolean(visibleMonth);
-  const hasSummary = Boolean(summary);
-  const summaryData = summary ?? null;
+
   const calendarMidpoint = calendarRange ? calendarRange.min + (calendarRange.max - calendarRange.min) / 2 : null;
   const weekdays = t("watchlist.history.weekdays")
     .split(",")
@@ -190,10 +178,7 @@ export function HistoryIntegratedPanel({
           new Date(point.capturedAt).getTime() > new Date(latest.capturedAt).getTime() ? point : latest,
         )
       : null;
-  const currentPriceValue = latestPoint ? formatCurrency(latestPoint.price, latestPoint.currency) : "--";
-  const bestPriceValue = summaryData ? formatCurrency(summaryData.min, summaryData.currency) : "--";
-  const lastCaptureValue = latestPoint ? formatDateTime(latestPoint.capturedAt) : "--";
-  const snapshotsCountValue = summaryData ? String(summaryData.total) : "--";
+
 
   return (
     <section className="panel history-panel section-gap">
@@ -234,25 +219,6 @@ export function HistoryIntegratedPanel({
         </div>
       </div>
 
-      <div className="history-summary history-summary--kpis history-summary--hero">
-        <div className="history-kpi">
-          <span>{t("watchlist.smartList.currentPrice")}</span>
-          <strong>{currentPriceValue}</strong>
-        </div>
-        <div className="history-kpi">
-          <span>{t("watchlist.summary.min")}</span>
-          <strong>{bestPriceValue}</strong>
-        </div>
-        <div className="history-kpi">
-          <span>{t("watchlist.history.lastCapture")}</span>
-          <strong>{lastCaptureValue}</strong>
-        </div>
-        <div className="history-kpi">
-          <span>{t("watchlist.summary.count")}</span>
-          <strong>{snapshotsCountValue}</strong>
-        </div>
-      </div>
-
       <div className="history-filterbar history-filterbar--compact">
         <div className="history-filterbar-header">
           <div className="history-filterbar-title">
@@ -265,7 +231,7 @@ export function HistoryIntegratedPanel({
                 {viewMode === "chart" ? t("watchlist.history.viewCalendar") : t("watchlist.history.viewChart")}
               </button>
             ) : null}
-            <button className="btn-primary btn-layered" type="button" disabled={isRefreshingFiltered || !hasSelectedWatch} onClick={onApplyFilters}>
+            <button className="btn-compact history-filter-apply" type="button" disabled={isRefreshingFiltered || !hasSelectedWatch} onClick={onApplyFilters}>
               {isRefreshingFiltered ? t("watchlist.history.refreshing") : t("watchlist.history.applyFilters")}
             </button>
           </div>
@@ -370,12 +336,7 @@ export function HistoryIntegratedPanel({
               <span className="skeleton skeleton-line history-skeleton-line" />
             </div>
           </div>
-          <div className="history-summary history-summary--kpis">
-            <span className="history-kpi"><span className="skeleton skeleton-line" /><strong className="skeleton skeleton-line" /></span>
-            <span className="history-kpi"><span className="skeleton skeleton-line" /><strong className="skeleton skeleton-line" /></span>
-            <span className="history-kpi"><span className="skeleton skeleton-line" /><strong className="skeleton skeleton-line" /></span>
-            <span className="history-kpi"><span className="skeleton skeleton-line" /><strong className="skeleton skeleton-line" /></span>
-          </div>
+
         </div>
       ) : null}
 
@@ -519,38 +480,6 @@ export function HistoryIntegratedPanel({
               </span>
             ))}
           </div>
-          {hasSummary && summaryData ? (
-            <div className="history-summary history-summary--kpis">
-              <div className="history-kpi">
-                <span className="history-kpi-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24"><path d="M4 18h16M6 14l4-4 4 3 4-5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                </span>
-                <span>{t("watchlist.summary.avg")}</span>
-                <strong>{formatCurrency(summaryData.avg, summaryData.currency)}</strong>
-              </div>
-              <div className="history-kpi">
-                <span className="history-kpi-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24"><path d="M4 16l6-6 3 3 7-7" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                </span>
-                <span>{t("watchlist.summary.min")}</span>
-                <strong>{formatCurrency(summaryData.min, summaryData.currency)}</strong>
-              </div>
-              <div className="history-kpi">
-                <span className="history-kpi-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24"><path d="M4 14l6-6 3 3 7-7M18 7h3v3" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                </span>
-                <span>{t("watchlist.summary.max")}</span>
-                <strong>{formatCurrency(summaryData.max, summaryData.currency)}</strong>
-              </div>
-              <div className="history-kpi">
-                <span className="history-kpi-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24"><path d="M7 5v14M17 5v14M4 9h16M4 15h16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                </span>
-                <span>{t("watchlist.summary.count")}</span>
-                <strong>{summaryData.total}</strong>
-              </div>
-            </div>
-          ) : null}
           {chartPointCount > 0 && chartPointCount < 4 ? (
             <div className="history-compact-note" role="status" aria-live="polite">
               <strong>{t("watchlist.history.chartBuildingTitle")}</strong>

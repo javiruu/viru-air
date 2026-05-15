@@ -3047,7 +3047,6 @@ h1 {
 
 .history-chart-panel {
   margin-top: 1rem;
-  overflow-x: auto;
 }
 
 .history-chart--compact {
@@ -3183,13 +3182,14 @@ h1 {
 
 .legend-chip {
   border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 0.16rem 0.6rem;
-  font-size: 0.82rem;
+  border-radius: 6px;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.78rem;
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  background: var(--surface);
+  gap: 0.35rem;
+  background: transparent;
+  line-height: 1.6;
 }
 
 .legend-dot {
@@ -4565,10 +4565,7 @@ h1 {
 .history-filterbar {
   margin-top: 0.9rem;
   padding: 0.8rem;
-  border-radius: 18px;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  box-shadow: none;
+  border-top: 1px solid var(--border);
 }
 
 .history-filterbar--compact {
@@ -4580,13 +4577,14 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.65rem;
 }
 
 .history-filterbar-title {
   display: grid;
-  gap: 0.25rem;
-  font-size: 0.92rem;
+  gap: 0.15rem;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 .history-filterbar-actions {
@@ -4599,9 +4597,6 @@ h1 {
 
 .history-filters {
   padding: 0.62rem;
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45), transparent);
-  border: 1px solid rgba(217, 203, 187, 0.35);
 }
 
 .history-filter {
@@ -4609,12 +4604,7 @@ h1 {
   display: grid;
   min-width: 0;
   gap: 0.35rem;
-  padding: 0.58rem 0.68rem 0.65rem 0.82rem;
-  border-radius: 16px;
-  background: var(--history-glass);
-  border: 1px solid rgba(217, 203, 187, 0.5);
-  box-shadow: none;
-  backdrop-filter: blur(3px);
+  padding: 0.42rem 0.68rem 0.48rem 0.82rem;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -4631,7 +4621,6 @@ h1 {
 }
 
 .history-filter:hover {
-  box-shadow: none;
   transform: translateY(-1px);
 }
 
@@ -10771,6 +10760,14 @@ textarea::placeholder {
   border-radius: 11px;
 }
 
+.history-filter-apply {
+  min-height: 34px;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9px;
+  font-size: 0.82rem;
+  gap: 0.4rem;
+}
+
 .notice-success {
   border-color: var(--state-success-border);
   background: var(--state-success-bg);
@@ -15712,4 +15709,34 @@ textarea::placeholder {
 
 :root[data-theme="dark"] .quick-search-shell .airport-list button:hover {
   background: color-mix(in srgb, var(--color-surface-elevated) 84%, var(--color-surface) 16%);
+}
+
+
+/* Animated route dot for watchlist map */
+.watch-map-route-dot {
+  width: 14px;
+  height: 14px;
+  background: #D95D39;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(217, 93, 57, 0.35), 0 0 12px rgba(217, 93, 57, 0.35);
+  pointer-events: none;
+  animation: watchRouteDotPulse 2s ease-in-out infinite;
+}
+
+@keyframes watchRouteDotPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(217, 93, 57, 0.35), 0 0 8px rgba(217, 93, 57, 0.2);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(217, 93, 57, 0.15), 0 0 16px rgba(217, 93, 57, 0.25);
+    transform: scale(1.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .watch-map-route-dot {
+    animation: none;
+  }
 }

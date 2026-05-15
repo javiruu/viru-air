@@ -165,6 +165,7 @@ export const AIRPORT_META: Record<string, AirportMeta> = {
   LTN: { iata: "LTN", name: "Londres Luton", city: "Londres", country: "Reino Unido", latitude: 51.8747, longitude: -0.3683 },
   MAN: { iata: "MAN", name: "Mánchester", city: "Mánchester", country: "Reino Unido", latitude: 53.3537, longitude: -2.2749 },
   STN: { iata: "STN", name: "Londres Stansted", city: "Londres", country: "Reino Unido", latitude: 51.885, longitude: 0.235 },
+  KUN: { iata: "KUN", name: "Aeropuerto de Kaunas", city: "Kaunas", country: "Lituania", latitude: 54.9633, longitude: 24.0847 },
 };
 
 export function findCountryByIata(iata: string): CountryAirports | null {

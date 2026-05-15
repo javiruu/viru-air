@@ -26,6 +26,58 @@ type WatchlistMapDecisionPanelProps = {
   onFocusWatch: (watchId: string) => void;
 };
 
+function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return reduced;
+}
+
+function AnimatedRouteDot({ originCoordinates, destinationCoordinates }: {
+  originCoordinates: [number, number];
+  destinationCoordinates: [number, number];
+}) {
+  const reduced = useReducedMotion();
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (reduced) return;
+    let startTime: number | null = null;
+    const duration = 4000;
+    let rafId: number;
+
+    function tick(timestamp: number) {
+      if (startTime === null) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const raw = (elapsed % duration) / duration;
+      const eased = raw < 0.5
+        ? 2 * raw * raw
+        : 1 - Math.pow(-2 * raw + 2, 2) / 2;
+      setProgress(eased);
+      rafId = requestAnimationFrame(tick);
+    }
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [reduced]);
+
+  if (reduced) return null;
+
+  const lng = originCoordinates[0] + (destinationCoordinates[0] - originCoordinates[0]) * progress;
+  const lat = originCoordinates[1] + (destinationCoordinates[1] - originCoordinates[1]) * progress;
+
+  return (
+    <MapMarker longitude={lng} latitude={lat}>
+      <div className="watch-map-route-dot" aria-hidden="true" />
+    </MapMarker>
+  );
+}
+
 function routeColor(route: WatchMapRouteView) {
   if (route.isPrimary) return "#D95D39";
   return route.isCompared ? "#2E6E62" : "#8F7A65";
@@ -234,6 +286,13 @@ export function WatchlistMapDecisionPanel({
               />
             );
           })}
+
+          {primary ? (
+            <AnimatedRouteDot
+              originCoordinates={primary.originCoordinates}
+              destinationCoordinates={primary.destinationCoordinates}
+            />
+          ) : null}
 
           {visibleRoutes.map((route) => (
             <MapMarker
