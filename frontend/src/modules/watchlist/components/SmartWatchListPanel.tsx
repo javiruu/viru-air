@@ -371,7 +371,7 @@ export function SmartWatchListPanel({
                       {t("watchlist.smartList.pause")}
                     </button>
                   )}
-                  <button className="btn-ghost btn-compact" type="button" onClick={(e) => { e.stopPropagation(); onDeleteWatch(watch.id); }}>
+                  <button className="btn-danger btn-compact" type="button" onClick={(e) => { e.stopPropagation(); onDeleteWatch(watch.id); }}>
                     {t("watchlist.smartList.delete")}
                   </button>
                 </div>

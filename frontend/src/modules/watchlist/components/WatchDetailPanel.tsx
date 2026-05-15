@@ -54,7 +54,9 @@ export function WatchDetailPanel({
 
   const latestSnapshot = detail?.latest_snapshot ?? null;
   const currency = latestSnapshot?.raw_currency ?? "EUR";
-  const currentPriceValue = latestSnapshot ? formatCurrency(latestSnapshot.raw_price, currency) : "--";
+  const hasSnapshotPrice = latestSnapshot && latestSnapshot.raw_price != null && latestSnapshot.raw_price >= 0;
+  const currentPriceValue = hasSnapshotPrice ? formatCurrency(latestSnapshot.raw_price, currency) : "--";
+  const currentPriceStatus = !latestSnapshot ? "no-snapshot" : !hasSnapshotPrice ? "pending-capture" : "ok";
   const minPriceValue = summaryData?.min_price == null ? "--" : formatCurrency(summaryData.min_price, currency);
   const deltaFromMin = latestSnapshot && summaryData?.min_price != null
     ? latestSnapshot.raw_price - summaryData.min_price
@@ -98,7 +100,16 @@ export function WatchDetailPanel({
         <div className="watch-detail-metrics">
           <div className="watch-detail-metric">
             <span>{t("watchlist.detail.currentPriceLabel")}</span>
-            <strong>{currentPriceValue}</strong>
+            <strong>
+              {currentPriceValue}
+              {currentPriceStatus !== "ok" ? (
+                <span className="watch-detail-price-status">
+                  {currentPriceStatus === "no-snapshot"
+                    ? t("watchlist.noDataLabel")
+                    : t("watchlist.noDataDetail")}
+                </span>
+              ) : null}
+            </strong>
           </div>
           <div className="watch-detail-metric">
             <span>{t("watchlist.detail.bestPriceLabel")}</span>

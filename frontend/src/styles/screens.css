@@ -3232,6 +3232,8 @@ h1 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.42rem;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .watch-map-meta-item {
@@ -3413,6 +3415,8 @@ h1 {
 .watch-map-empty-copy {
   display: grid;
   gap: 0.25rem;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 @media (max-width: 1120px) {
@@ -4778,7 +4782,7 @@ h1 {
 
 .history-chart-controls .btn-ghost {
   border-radius: 999px;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   padding: 0.2rem 0.6rem;
 }
 
@@ -5041,7 +5045,7 @@ h1 {
 
 .watch-detail-block-title {
   margin: 0;
-  font-size: 0.77rem;
+  font-size: 0.82rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--ink-muted);
@@ -5051,6 +5055,18 @@ h1 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.48rem;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.watch-detail-price-status {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--ink-muted);
+  margin-top: 0.12rem;
+  line-height: 1.2;
+  font-style: italic;
 }
 
 .watch-detail-metric {
@@ -5080,9 +5096,11 @@ h1 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.38rem 0.52rem;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--ink-muted);
   padding: 0.45rem 0.2rem 0.1rem;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .watch-detail-actions {
