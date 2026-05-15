@@ -221,10 +221,6 @@ export function HistoryIntegratedPanel({
 
       <div className="history-filterbar history-filterbar--compact">
         <div className="history-filterbar-header">
-          <div className="history-filterbar-title">
-            <strong>{t("watchlist.history.filterTitle")}</strong>
-            {t("watchlist.history.filterDescription") && <span className="muted">{t("watchlist.history.filterDescription")}</span>}
-          </div>
           <div className="history-filterbar-actions">
             {calendarHasUsefulData ? (
               <button className="btn-secondary btn-layered" type="button" onClick={onToggleViewMode}>

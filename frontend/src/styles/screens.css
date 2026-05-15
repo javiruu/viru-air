@@ -3424,9 +3424,6 @@ h1 {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .history-layout {
-    grid-template-columns: 1fr;
-  }
 
   .watch-map-canvas {
     height: 320px;
@@ -3768,11 +3765,15 @@ h1 {
 }
 
 .watchlist-page .history-chart .history-svg {
-  height: 320px;
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .watchlist-page .history-chart--compact .history-svg {
-  height: 240px;
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .page-title h1 {
@@ -4507,14 +4508,22 @@ h1 {
 }
 
 .history-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
-  gap: 0.85rem;
+  display: block;
+  position: relative;
 }
 
-.history-primary,
-.history-support {
+.history-primary {
   min-width: 0;
+}
+
+.history-support {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.75rem;
+  z-index: 2;
+  min-width: 0;
+  max-width: 280px;
+  pointer-events: auto;
 }
 
 .history-heading {
