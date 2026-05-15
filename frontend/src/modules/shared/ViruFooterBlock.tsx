@@ -150,9 +150,6 @@ export default function ViruFooterBlock() {
         links: [
           { label: t("shared.footer.links.dashboard"), href: "/dashboard", icon: "table-columns" },
           { label: t("shared.footer.links.watchlist"), href: "/watchlist", icon: "binoculars" },
-          { label: t("shared.footer.links.quickSearch"), href: "/quick-search", icon: "magnifying-glass-chart" },
-          { label: t("shared.footer.links.alerts"), href: "/alerts", icon: "bell" },
-          { label: t("shared.footer.links.opportunities"), href: "/recomendaciones", icon: "sparkles" },
         ],
       },
       {

@@ -141,7 +141,7 @@ export function ComparePanels({
     };
   }, [compareQuery, selectedCount]);
   return (
-    <section className="panel compare-panel section-gap">
+    <section className={`panel compare-panel section-gap${compareIds.length < 2 ? " compare-empty" : ""}`}>
       <div className="panel-header">
         <div>
           <h2 className="panel-title">{t("watchlist.compare.title")}</h2>

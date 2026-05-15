@@ -31,7 +31,6 @@ export function WatchDetailPanel({
       <section className="panel panel-soft section-gap watch-detail-panel">
         <header className="watch-detail-header">
           <h2 className="panel-title">{t("watchlist.detail.title")}</h2>
-          <p className="panel-note">{t("watchlist.detail.subtitle")}</p>
         </header>
         <div className="watch-detail-empty-state">
           <strong>{t("watchlist.detail.emptyTitle")}</strong>
@@ -82,7 +81,6 @@ export function WatchDetailPanel({
       <header className="watch-detail-header">
         <div>
           <h2 className="panel-title">{t("watchlist.detail.title")}</h2>
-          <p className="panel-subtitle">{t("watchlist.detail.subtitle")}</p>
         </div>
         {isLoading ? <span className="panel-note">{t("watchlist.detail.loading")}</span> : null}
       </header>

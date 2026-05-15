@@ -223,7 +223,7 @@ export function HistoryIntegratedPanel({
         <div className="history-filterbar-header">
           <div className="history-filterbar-title">
             <strong>{t("watchlist.history.filterTitle")}</strong>
-            <span className="muted">{t("watchlist.history.filterDescription")}</span>
+            {t("watchlist.history.filterDescription") && <span className="muted">{t("watchlist.history.filterDescription")}</span>}
           </div>
           <div className="history-filterbar-actions">
             {calendarHasUsefulData ? (

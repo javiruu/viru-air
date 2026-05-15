@@ -5308,6 +5308,52 @@ h1 {
   min-height: 160px;
 }
 
+n/* ── Watchlist — visual hierarchy ── */
+
+/* Level 2: detail panel — softer border */
+.watch-detail-panel {
+  border-color: color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+/* Level 3: map — lighter still */
+.watch-map-panel {
+  border-color: color-mix(in srgb, var(--border) 44%, transparent);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+}
+
+.watch-map-panel .panel-title {
+  font-size: 0.95rem;
+}
+
+/* Level 3: compare — discreet when empty */
+.compare-panel {
+  border-color: color-mix(in srgb, var(--border) 44%, transparent);
+}
+
+.compare-panel.compare-empty {
+  opacity: 0.72;
+}
+
+.compare-panel.compare-empty .panel-title {
+  font-size: 0.95rem;
+}
+
+.compare-panel.compare-empty .panel-subtitle {
+  font-size: 0.82rem;
+}
+
+/* Footer — reduce weight */
+.viru-footer-block {
+  border-top: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
+}
+
+.viru-footer-link {
+  font-size: 0.85rem;
+}
+
+.viru-footer-glow {
+  display: none;
+}
 .history-ghost-line {
   position: absolute;
   width: min(70%, 360px);
