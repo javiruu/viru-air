@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --bg: #f6f0e7;
   --surface: #fffaf4;
   --surface-2: #f4ede2;
@@ -13596,57 +13596,249 @@ textarea::placeholder {
   border: 0;
 }
 
-/* /quick-search â€” Airport modal: escalable con listas largas, sin solapes */
+/* /quick-search — Airport modal: redesigned for clarity, accessibility, and visual polish */
 .qs-airport-modal {
+  position: relative;
   width: min(1040px, 96vw);
   min-height: min(620px, calc(100dvh - 3rem));
   max-height: 82vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  border-radius: 28px;
   background:
-    radial-gradient(circle at top right, rgba(217, 93, 57, 0.08), transparent 22%),
+    radial-gradient(circle at 92% 6%, rgba(217, 93, 57, 0.07), transparent 28%),
+    radial-gradient(circle at 8% 90%, rgba(46, 110, 98, 0.05), transparent 24%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 248, 241, 0.96));
+  animation: qsModalFadeIn 220ms ease-out both;
 }
 
+@keyframes qsModalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ── Close button ── */
+.qs-airport-modal__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(205, 191, 170, 0.36);
+  background: rgba(255, 252, 248, 0.88);
+  color: var(--ink, #1f1d1a);
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms, transform 80ms;
+}
+
+.qs-airport-modal__close:hover {
+  background: rgba(255, 248, 241, 1);
+  border-color: rgba(205, 191, 170, 0.56);
+  transform: scale(1.06);
+}
+
+.qs-airport-modal__close:focus-visible {
+  outline: 3px solid var(--border-focus, #8c7558);
+  outline-offset: 2px;
+}
+
+/* ── Header ── */
 .qs-airport-modal__header {
   position: sticky;
   top: 0;
   z-index: 3;
   background: rgba(255, 252, 248, 0.98);
-  border-bottom: 1px solid rgba(205, 191, 170, 0.36);
+  border-bottom: 1px solid rgba(205, 191, 170, 0.28);
+  backdrop-filter: blur(8px);
 }
 
+/* ── Body grid ── */
 .qs-airport-modal__body {
   display: grid;
-  grid-template-columns: minmax(320px, 1.08fr) minmax(360px, 0.92fr);
-  gap: 18px;
-  padding: 16px;
+  grid-template-columns: minmax(300px, 1.12fr) minmax(340px, 0.88fr);
+  gap: 0;
   overflow: hidden;
   flex: 1 1 auto;
 }
 
+/* ── Left panel: Countries ── */
 .qs-airport-modal__countries {
   overflow: auto;
-  padding-right: 10px;
-  border-right: 1px solid rgba(205, 191, 170, 0.28);
+  padding: 20px 18px 20px 20px;
+  border-right: 1px solid rgba(205, 191, 170, 0.22);
 }
 
+.qs-airport-modal__countries .qs-airport-modal__header h2 {
+  margin: 0 0 14px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink, #1f1d1a);
+}
+
+/* Country grid: 3 columns for breathing room */
+.qs-airport-modal .airport-country-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px 8px;
+}
+
+/* Country pill: bigger touch targets, hover state */
+.qs-airport-modal .country-pill {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink, #1f1d1a);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 120ms, border-color 120ms, transform 100ms, box-shadow 120ms;
+}
+
+.qs-airport-modal .country-pill:hover {
+  background: rgba(46, 110, 98, 0.06);
+  border-color: rgba(46, 110, 98, 0.14);
+  transform: translateY(-1px);
+}
+
+.qs-airport-modal .country-pill:focus-visible {
+  outline: 3px solid var(--border-focus, #8c7558);
+  outline-offset: 1px;
+}
+
+.qs-airport-modal .country-pill.active {
+  background: var(--accent-2, #2e6e62);
+  color: var(--color-text-inverse, #fff);
+  padding: 8px 14px;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(46, 110, 98, 0.22);
+  font-weight: 600;
+}
+
+.qs-airport-modal .country-pill.active:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(46, 110, 98, 0.28);
+}
+
+.country-pill__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Right panel: Airports ── */
 .qs-airport-modal__airports {
   overflow: auto;
-  padding-left: 10px;
+  padding: 18px 20px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
+/* Header with count badge */
+.qs-airport-modal__airports .qs-airport-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 0;
+  border-bottom: none;
+  background: transparent;
+  position: static;
+}
+
+.qs-airport-modal__airports .qs-airport-modal__header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qs-airport-modal__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  background: rgba(46, 110, 98, 0.12);
+  color: var(--accent-2, #2e6e62);
+}
+
+/* ── "Use all [Country]" button ── */
+.qs-airport-modal__country-action {
+  display: grid;
+  gap: 6px;
+}
+
+.qs-airport-modal__use-country {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(46, 110, 98, 0.22);
+  background:
+    linear-gradient(135deg, rgba(46, 110, 98, 0.06), rgba(46, 110, 98, 0.02));
+  color: var(--accent-2, #2e6e62);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms, transform 80ms;
+}
+
+.qs-airport-modal__use-country:hover {
+  background: rgba(46, 110, 98, 0.1);
+  border-color: rgba(46, 110, 98, 0.32);
+  transform: translateY(-1px);
+}
+
+.qs-airport-modal__use-country:focus-visible {
+  outline: 3px solid var(--border-focus, #8c7558);
+  outline-offset: 2px;
+}
+
+/* ── Search bar with icon ── */
 .qs-airport-modal__search {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: rgba(255, 252, 248, 0.98);
-  padding-top: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(205, 191, 170, 0.28);
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
+.qs-airport-modal__search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--ink-muted, #8c7d6d);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.qs-airport-modal__search-input {
+  padding-left: 36px !important;
+}
+
+/* ── Recents ── */
 .qs-airport-modal__recents {
   display: flex;
   flex-wrap: wrap;
@@ -13654,6 +13846,111 @@ textarea::placeholder {
   align-items: center;
 }
 
+.qs-airport-modal__recents-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted, #8c7d6d);
+  margin-right: 2px;
+}
+
+.qs-airport-modal__recent-chip {
+  border: 1px solid rgba(205, 191, 170, 0.36);
+  background: rgba(255, 252, 248, 0.8);
+  color: var(--ink, #1f1d1a);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 100ms, border-color 100ms;
+}
+
+.qs-airport-modal__recent-chip:hover {
+  background: rgba(46, 110, 98, 0.08);
+  border-color: rgba(46, 110, 98, 0.2);
+}
+
+.qs-airport-modal__recent-chip:focus-visible {
+  outline: 3px solid var(--border-focus, #8c7558);
+  outline-offset: 1px;
+}
+
+/* ── Airport list items ── */
+.qs-airport-modal .airport-list {
+  display: grid;
+  gap: 2px;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-right: 4px;
+}
+
+.qs-airport-modal__airport-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 10px 12px;
+  font-size: 0.92rem;
+  color: var(--ink, #1f1d1a);
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background 100ms, border-color 100ms, transform 80ms;
+}
+
+.qs-airport-modal__airport-item:hover {
+  background: rgba(46, 110, 98, 0.05);
+  border-color: rgba(46, 110, 98, 0.12);
+  transform: translateX(2px);
+}
+
+.qs-airport-modal__airport-item:focus-visible {
+  outline: 3px solid var(--border-focus, #8c7558);
+  outline-offset: 1px;
+}
+
+.qs-airport-modal__airport-name {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qs-airport-modal__airport-iata {
+  flex: 0 0 auto;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--accent-2, #2e6e62);
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(46, 110, 98, 0.08);
+}
+
+/* ── Empty state ── */
+.qs-airport-modal__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--ink-muted, #8c7d6d);
+}
+
+.qs-airport-modal__empty p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* ── Responsive: mobile stacks vertically ── */
 @media (max-width: 900px) {
   .airport-modal-overlay {
     align-items: flex-start;
@@ -13666,16 +13963,30 @@ textarea::placeholder {
 
   .qs-airport-modal__countries {
     border-right: none;
-    border-bottom: 1px solid rgba(205, 191, 170, 0.28);
-    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(205, 191, 170, 0.22);
+    padding-bottom: 14px;
+    max-height: 260px;
+  }
+
+  .qs-airport-modal .airport-country-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .qs-airport-modal__airports {
+    padding-left: 20px;
+  }
+
+  .qs-airport-modal__close {
+    top: 10px;
+    right: 10px;
   }
 }
 
 .qs-airport-modal__countries button,
 .qs-airport-modal__countries a,
 .qs-airport-modal__countries [role="button"] {
-  padding-top: 6px;
-  padding-bottom: 6px;
+  padding-top: 8px;
+  padding-bottom: 8px;
 }
 
 .private-nav {
@@ -15758,6 +16069,16 @@ textarea::placeholder {
     linear-gradient(170deg, color-mix(in srgb, var(--color-surface-elevated) 90%, var(--color-surface) 10%), color-mix(in srgb, var(--color-surface) 92%, var(--color-surface-muted) 8%));
 }
 
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__close {
+  border-color: color-mix(in srgb, var(--color-border) 80%, var(--color-border-strong) 20%);
+  background: color-mix(in srgb, var(--color-surface-elevated) 88%, var(--color-surface) 12%);
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__close:hover {
+  background: color-mix(in srgb, var(--color-surface-elevated) 96%, var(--color-surface) 4%);
+}
+
 :root[data-theme="dark"] .quick-search-shell .qs-airport-modal__header,
 :root[data-theme="dark"] .quick-search-shell .qs-airport-modal__search {
   border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
@@ -15775,13 +16096,61 @@ textarea::placeholder {
 
 :root[data-theme="dark"] .quick-search-shell .airport-modal-left h2,
 :root[data-theme="dark"] .quick-search-shell .airport-modal-header h3,
-:root[data-theme="dark"] .quick-search-shell .airport-list button,
 :root[data-theme="dark"] .quick-search-shell .country-pill {
   color: var(--color-text-primary);
 }
 
-:root[data-theme="dark"] .quick-search-shell .airport-list button:hover {
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__airport-item {
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__airport-item:hover {
   background: color-mix(in srgb, var(--color-surface-elevated) 84%, var(--color-surface) 16%);
+  border-color: color-mix(in srgb, var(--color-border) 70%, var(--color-border-strong) 30%);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__airport-iata {
+  background: rgba(111, 178, 161, 0.14);
+  color: color-mix(in srgb, var(--color-accent-secondary) 80%, white 20%);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__count {
+  background: rgba(111, 178, 161, 0.16);
+  color: color-mix(in srgb, var(--color-accent-secondary) 80%, white 20%);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__use-country {
+  border-color: rgba(111, 178, 161, 0.24);
+  background: rgba(111, 178, 161, 0.08);
+  color: color-mix(in srgb, var(--color-accent-secondary) 80%, white 20%);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__use-country:hover {
+  background: rgba(111, 178, 161, 0.14);
+  border-color: rgba(111, 178, 161, 0.34);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__recent-chip {
+  border-color: color-mix(in srgb, var(--color-border) 72%, var(--color-border-strong) 28%);
+  background: color-mix(in srgb, var(--color-surface-elevated) 80%, var(--color-surface) 20%);
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__recent-chip:hover {
+  background: color-mix(in srgb, var(--color-surface-elevated) 92%, var(--color-surface) 8%);
+  border-color: rgba(111, 178, 161, 0.24);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__search-icon {
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__empty {
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__recents-label {
+  color: var(--color-text-secondary);
 }
 
 

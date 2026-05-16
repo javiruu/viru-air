@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
@@ -2119,18 +2119,30 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         aria-label={t("modalPickTitle")}
         onClick={(event) => event.stopPropagation()}
       >
+        <button
+          type="button"
+          className="qs-airport-modal__close"
+          onClick={closePicker}
+          aria-label={t("pickClose")}
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </button>
         <div className="qs-airport-modal__body">
-          <div className="airport-modal-left qs-airport-modal__countries">
+          <div className="airport-modal-left qs-airport-modal__countries" role="region" aria-label={activePicker === "origin" ? t("modalOriginCountry") : t("modalDestinationCountry")}>
             <div className="qs-airport-modal__header">
               <h2>{activePicker === "origin" ? t("modalOriginCountry") : t("modalDestinationCountry")}</h2>
             </div>
-            <div className="airport-country-grid">
+            <div className="airport-country-grid" role="listbox" aria-label={activePicker === "origin" ? t("modalOriginCountry") : t("modalDestinationCountry")}>
               {countryOptions.map((country) => {
                 const isActive = selectedCountry?.code === country.code;
                 return (
                   <button
                     key={country.code}
                     type="button"
+                    role="option"
+                    aria-selected={isActive}
                     className={isActive ? "country-pill active" : "country-pill"}
                     onClick={() => {
                       setSelectedCountry(country);
@@ -2138,44 +2150,55 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                     }}
                   >
                     {renderFlag(country.code)}
-                    {country.name}
+                    <span className="country-pill__name">{country.name}</span>
                   </button>
                 );
               })}
             </div>
           </div>
-          <div className="airport-modal-right qs-airport-modal__airports">
+          <div className="airport-modal-right qs-airport-modal__airports" aria-live="polite">
             <div className="airport-modal-header qs-airport-modal__header">
-              <h3>{t("modalPickTitle")}</h3>
+              <h3>
+                {t("modalPickTitle")}
+                {filteredCountryAirports.length > 0 ? (
+                  <span className="qs-airport-modal__count">{filteredCountryAirports.length}</span>
+                ) : null}
+              </h3>
               <button type="button" className="link-reset" onClick={clearSelection}>
                 {t("modalClear")}
               </button>
             </div>
             {selectedCountry ? (
-              <div className="section-gap-sm">
-                <button type="button" className="btn-secondary btn-compact" onClick={() => void selectCountryOnly(selectedCountry)}>
-                  {t("pickCountryOnly").replace("{country}", selectedCountry.name)}
+              <div className="qs-airport-modal__country-action">
+                <button type="button" className="qs-airport-modal__use-country" onClick={() => void selectCountryOnly(selectedCountry)}>
+                  {renderFlag(selectedCountry.code)}
+                  <span>{t("pickCountryOnly").replace("{country}", selectedCountry.name)}</span>
                 </button>
                 <p className="panel-note">{t("pickCountryOnlyHint")}</p>
               </div>
             ) : null}
-            <div className="airport-search qs-airport-modal__search">
+            <div className="airport-search qs-airport-modal__search" role="search">
+              <svg className="qs-airport-modal__search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <circle cx="7" cy="7" r="5.25" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M11 11l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
               <input
                 ref={airportSearchInputRef}
-                className="qs-input"
+                className="qs-input qs-airport-modal__search-input"
                 name="airport_search"
                 autoComplete="off"
                 value={airportSearch}
                 onChange={(e) => setAirportSearch(e.target.value)}
                 placeholder={t("pickSearch")}
+                aria-label={t("pickSearch")}
               />
             </div>
             {recentAirports.length > 0 ? (
               <div className="airport-recent qs-airport-modal__recents">
-                <span className="muted">{t("pickRecent")}</span>
+                <span className="qs-airport-modal__recents-label">{t("pickRecent")}</span>
                 <div className="airport-recent-grid">
                   {recentAirports.map((iata) => (
-                    <button key={`recent-${iata}`} type="button" onClick={() => selectAirport(iata)}>
+                    <button key={`recent-${iata}`} type="button" className="qs-airport-modal__recent-chip" onClick={() => selectAirport(iata)}>
                       {iata}
                     </button>
                   ))}
@@ -2184,13 +2207,22 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             ) : null}
             <div className="airport-list">
               {filteredCountryAirports.map((airport) => (
-                <button key={airport.iata} type="button" onClick={() => selectAirport(airport.iata)}>
+                <button key={airport.iata} type="button" className="qs-airport-modal__airport-item" onClick={() => selectAirport(airport.iata)}>
                   {renderFlag(selectedCountry?.code || null)}
-                  {airport.municipality || airport.name} <span>{airport.iata}</span>
+                  <span className="qs-airport-modal__airport-name">{airport.municipality || airport.name}</span>
+                  <span className="qs-airport-modal__airport-iata">{airport.iata}</span>
                 </button>
               ))}
               {countryAirports.length === 0 ? (
-                <p className="panel-note">{t("pickEmpty")}</p>
+                <div className="qs-airport-modal__empty">
+                  <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                    <circle cx="16" cy="16" r="12" stroke="currentColor" strokeWidth="1.5" opacity="0.35" />
+                    <path d="M12 20c1.2-2.4 6.8-2.4 8 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
+                    <circle cx="12" cy="14" r="1.2" fill="currentColor" opacity="0.4" />
+                    <circle cx="20" cy="14" r="1.2" fill="currentColor" opacity="0.4" />
+                  </svg>
+                  <p>{t("pickEmpty")}</p>
+                </div>
               ) : null}
             </div>
           </div>
