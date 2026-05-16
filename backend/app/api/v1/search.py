@@ -534,14 +534,14 @@ def _normalize_quick_search_request(
                 "seed_iata_list": origin_value if isinstance(origin_value, list) else None,
                 "include_nearby": include_nearby_origins_value,
                 "radius_km": _normalize_radius_km(raw_radius_km, include_nearby_origins_value),
-                "max_candidates": 10,
+                "max_candidates": 40 if origin_value == "ANY" else 10,
             },
             "destination": {
                 "seed_iata": destination_value[0] if isinstance(destination_value, list) and destination_value else destination_value,
                 "seed_iata_list": destination_value if isinstance(destination_value, list) else None,
                 "include_nearby": include_nearby_destinations_value,
                 "radius_km": _normalize_radius_km(raw_radius_km, include_nearby_destinations_value),
-                "max_candidates": 10,
+                "max_candidates": 40 if destination_value == "ANY" else 10,
             },
             "travel": {
                 "date": travel_date_value,
@@ -873,6 +873,11 @@ def quick_search(
         "flex_days_before": flex_days_before,
         "flex_days_after": flex_days_after,
     }
+    
+    user_currency = "EUR"
+    if payload and isinstance(payload, dict):
+        user_currency = str(payload.get("currency", "EUR")).upper().strip()
+        
     try:
         canonical, origin_list, destination_list, filter_contract = _normalize_quick_search_request(
             payload,
@@ -1184,7 +1189,7 @@ def quick_search(
             execution_plan,
             concurrency_limit=canonical.execution.concurrency_limit,
             timeout_ms=canonical.execution.timeout_ms,
-            fetch_flights=lambda o, d, date_str, timeout: provider.get_flights(o, d, date_str, timeout_ms=timeout),
+            fetch_flights=lambda o, d, date_str, timeout: provider.get_flights(o, d, date_str, timeout_ms=timeout, currency=user_currency),
         )
         _phase_add("provider_fetch_ms", int((time.perf_counter() - started) * 1000))
 
@@ -1234,6 +1239,10 @@ def quick_search(
             flights_after_filters,
             pair_plan,
             soft_filters_weight=soft_filters_weight,
+            strict_filters=strict_filters,
+            max_stops=max_stops,
+            include_stops=include_stops,
+            duration_max_min=duration_max_min,
         )
         _phase_add("ranking_ms", int((time.perf_counter() - started) * 1000))
 

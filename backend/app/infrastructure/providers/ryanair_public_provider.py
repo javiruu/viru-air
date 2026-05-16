@@ -12,12 +12,11 @@ from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderPri
 
 
 class RyanairPublicProvider:
-    def __init__(self, currency: str = "EUR") -> None:
-        self.currency = currency
+    def __init__(self) -> None:
         self._session = requests.Session()
 
     def get_flights(
-        self, origin: str, destination: str, travel_date: str, timeout_ms: int = 12000
+        self, origin: str, destination: str, travel_date: str, timeout_ms: int = 12000, currency: str = "EUR"
     ) -> ProviderFetchResult:
         origin = origin.upper().strip()
         destination = destination.upper().strip()
@@ -26,14 +25,14 @@ class RyanairPublicProvider:
         fares_error = False
 
         try:
-            availability = self._fetch_availability(origin, destination, travel_date, timeout_ms=timeout_ms)
+            availability = self._fetch_availability(origin, destination, travel_date, timeout_ms=timeout_ms, currency=currency)
         except requests.RequestException:
             availability = []
             availability_error = True
             warnings.append("ryanair_availability_failed_partial")
 
         try:
-            fares = self._fetch_one_way_fares(origin, destination, travel_date, timeout_ms=timeout_ms)
+            fares = self._fetch_one_way_fares(origin, destination, travel_date, timeout_ms=timeout_ms, currency=currency)
         except requests.RequestException:
             fares = []
             fares_error = True
@@ -55,8 +54,8 @@ class RyanairPublicProvider:
 
         return ProviderFetchResult(flights=[], warnings=warnings)
 
-    def get_cheapest_price(self, origin: str, destination: str, travel_date: str) -> ProviderPrice | None:
-        result = self.get_flights(origin, destination, travel_date)
+    def get_cheapest_price(self, origin: str, destination: str, travel_date: str, currency: str = "EUR") -> ProviderPrice | None:
+        result = self.get_flights(origin, destination, travel_date, currency=currency)
         if not result.flights:
             return None
         best = min(result.flights, key=lambda f: f.price)
@@ -68,7 +67,7 @@ class RyanairPublicProvider:
         )
 
     def _fetch_one_way_fares(
-        self, origin: str, destination: str, travel_date: str, *, timeout_ms: int
+        self, origin: str, destination: str, travel_date: str, *, timeout_ms: int, currency: str
     ) -> list[ProviderFlight]:
         url = (
             "https://www.ryanair.com/api/farfnd/3/oneWayFares"
@@ -76,7 +75,7 @@ class RyanairPublicProvider:
             f"&arrivalAirportIataCode={destination}"
             f"&outboundDepartureDateFrom={travel_date}"
             f"&outboundDepartureDateTo={travel_date}"
-            f"&currency={self.currency}"
+            f"&currency={currency}"
         )
         data = self._get_json(url, timeout_ms=timeout_ms)
         fares = data.get("fares") or []
@@ -90,7 +89,7 @@ class RyanairPublicProvider:
             flights.append(
                 ProviderFlight(
                     price=float(price),
-                    currency=self.currency,
+                    currency=currency,
                     departure_time_local=self._to_time(dep),
                     captured_at=utc_now_naive(),
                     source="ryanair-public-fares",
@@ -99,7 +98,7 @@ class RyanairPublicProvider:
         return flights
 
     def _fetch_availability(
-        self, origin: str, destination: str, travel_date: str, *, timeout_ms: int
+        self, origin: str, destination: str, travel_date: str, *, timeout_ms: int, currency: str
     ) -> list[ProviderFlight]:
         url = (
             "https://www.ryanair.com/api/booking/v4/es-es/availability"
@@ -112,7 +111,7 @@ class RyanairPublicProvider:
             f"&RoundTrip=false"
             f"&ToUs=AGREED"
             f"&IncludeConnectingFlights=false"
-            f"&Currency={self.currency}"
+            f"&Currency={currency}"
         )
         data = self._get_json(url, timeout_ms=timeout_ms)
         trips = data.get("trips") or []
@@ -130,7 +129,7 @@ class RyanairPublicProvider:
                 flights.append(
                     ProviderFlight(
                         price=float(amount),
-                        currency=self.currency,
+                        currency=currency,
                         departure_time_local=self._to_time(departure),
                         captured_at=utc_now_naive(),
                         source="ryanair-public-availability",
@@ -170,8 +169,8 @@ class RyanairPublicProvider:
         except ValueError:
             return None
 
-    def debug_payload(self, origin: str, destination: str, travel_date: str) -> dict[str, Any]:
-        result = self.get_flights(origin, destination, travel_date)
+    def debug_payload(self, origin: str, destination: str, travel_date: str, currency: str = "EUR") -> dict[str, Any]:
+        result = self.get_flights(origin, destination, travel_date, currency=currency)
         return {
             "origin": origin,
             "destination": destination,

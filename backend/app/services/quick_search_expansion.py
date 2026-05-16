@@ -38,25 +38,42 @@ def expand_search_sides(
     exclude_destinations: list[str],
 ) -> tuple[SideExpansionResult, SideExpansionResult]:
     # Explicit seed resolution phase (fail fast, no silent fallback)
-    resolve_seed_airport(origin_seed_iata)
-    resolve_seed_airport(destination_seed_iata)
+    if origin_seed_iata.upper() != "ANY":
+        resolve_seed_airport(origin_seed_iata)
+    if destination_seed_iata.upper() != "ANY":
+        resolve_seed_airport(destination_seed_iata)
 
-    origin_result = _expand_side_with_summary(
-        side="origin",
-        seed_iata=origin_seed_iata,
-        include_nearby=include_nearby_origins,
-        radius_km=origin_radius_km,
-        max_candidates=origin_max_candidates,
-        exclusions=exclude_origins,
-    )
-    destination_result = _expand_side_with_summary(
-        side="destination",
-        seed_iata=destination_seed_iata,
-        include_nearby=include_nearby_destinations,
-        radius_km=destination_radius_km,
-        max_candidates=destination_max_candidates,
-        exclusions=exclude_destinations,
-    )
+    if origin_seed_iata.upper() == "ANY":
+        origin_result = _expand_anywhere(
+            side="origin",
+            max_candidates=origin_max_candidates,
+            exclusions=exclude_origins,
+        )
+    else:
+        origin_result = _expand_side_with_summary(
+            side="origin",
+            seed_iata=origin_seed_iata,
+            include_nearby=include_nearby_origins,
+            radius_km=origin_radius_km,
+            max_candidates=origin_max_candidates,
+            exclusions=exclude_origins,
+        )
+
+    if destination_seed_iata.upper() == "ANY":
+        destination_result = _expand_anywhere(
+            side="destination",
+            max_candidates=destination_max_candidates,
+            exclusions=exclude_destinations,
+        )
+    else:
+        destination_result = _expand_side_with_summary(
+            side="destination",
+            seed_iata=destination_seed_iata,
+            include_nearby=include_nearby_destinations,
+            radius_km=destination_radius_km,
+            max_candidates=destination_max_candidates,
+            exclusions=exclude_destinations,
+        )
 
     if not origin_result.candidates:
         raise ValueError("origin_candidates_empty_after_exclusions")
@@ -64,6 +81,49 @@ def expand_search_sides(
         raise ValueError("destination_candidates_empty_after_exclusions")
 
     return origin_result, destination_result
+
+
+def _expand_anywhere(
+    *,
+    side: str,
+    max_candidates: int,
+    exclusions: list[str],
+) -> SideExpansionResult:
+    from app.infrastructure.airports_catalog import AIRPORTS
+    
+    exclusions_normalized = sorted({code.strip().upper() for code in exclusions if code and len(code.strip()) == 3})
+    
+    # Take primary airports first, fallback to others
+    primaries = [a for a in AIRPORTS if a.is_primary and a.iata not in exclusions_normalized]
+    
+    import random
+    random.seed(42) # Deterministic for testing
+    
+    sampled = random.sample(primaries, min(len(primaries), max(1, max_candidates)))
+    
+    candidates = [
+        ExpandedAirportCandidate(
+            seed_iata="ANY",
+            expanded_iata=airport.iata,
+            is_seed=False,
+            distance_km=0.0,
+            candidate_reason="anywhere",
+            source_of_expansion=f"global_pool:{side}",
+        )
+        for airport in sampled
+    ]
+    
+    summary = SideExpansionSummary(
+        side=side,
+        seed_iata="ANY",
+        include_nearby_applied=False,
+        radius_km_effective=0,
+        max_candidates_effective=max(1, max_candidates),
+        exclusions_applied=exclusions_normalized,
+        total_candidates_before_limit=len(primaries),
+        total_candidates_after_limit=len(candidates),
+    )
+    return SideExpansionResult(side=side, candidates=candidates, summary=summary)
 
 
 def _expand_side_with_summary(

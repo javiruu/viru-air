@@ -30,6 +30,10 @@ def rank_quick_search_results(
     planned_pairs: list[PairPlanItem],
     *,
     soft_filters_weight: float = 0.6,
+    strict_filters: bool = False,
+    max_stops: int = 0,
+    include_stops: bool = False,
+    duration_max_min: int | None = None,
 ) -> list[RankedResult]:
     if not rows:
         return []
@@ -44,6 +48,19 @@ def rank_quick_search_results(
         pair = pair_by_key.get((origin, destination))
         if pair is None:
             continue
+
+        # Post-scraping strict filters (placeholder for future provider expansions)
+        if strict_filters:
+            flight_stops = getattr(flight, "stops", 0)
+            if not include_stops and flight_stops > 0:
+                continue
+            if flight_stops > max_stops:
+                continue
+            
+            flight_duration = getattr(flight, "duration_mins", None)
+            if duration_max_min is not None and flight_duration is not None:
+                if flight_duration > duration_max_min:
+                    continue
 
         price_value = max(0.0, float(flight.price))
         price_component = price_value - min_price

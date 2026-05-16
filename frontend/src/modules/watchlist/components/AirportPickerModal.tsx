@@ -90,6 +90,11 @@ export function AirportPickerModal({
               <button type="button" className="link-reset" onClick={onClearSelection}>
                 Borrar seleccion
               </button>
+              {activePicker === "destination" && (
+                <button type="button" className="link-reset" onClick={() => onSelectAirport("ANY")}>
+                  A cualquier lugar
+                </button>
+              )}
               <button type="button" className="modal-close" aria-label="Cerrar selector de aeropuerto" onClick={onClose}>
                 X
               </button>
