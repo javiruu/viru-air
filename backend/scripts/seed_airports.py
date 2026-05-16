@@ -1,6 +1,5 @@
-import csv
+import json
 import sys
-import requests
 from pathlib import Path
 
 # Setup Python path to import app
@@ -8,89 +7,55 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.infrastructure.db.session import SessionLocal, engine
 from app.infrastructure.db.models import Airport, Base
-from sqlalchemy import select
-
-OURAIRPORTS_URL = "https://davidmegginson.github.io/ourairports-data/airports.csv"
+from sqlalchemy import select, delete
 
 def seed_airports():
-    print(f"Downloading {OURAIRPORTS_URL}...")
-    try:
-        resp = requests.get(OURAIRPORTS_URL, timeout=30)
-        resp.raise_for_status()
-    except requests.RequestException as e:
-        print(f"Failed to download airports data: {e}")
+    master_path = Path(__file__).resolve().parents[1] / "data" / "airports_master.json"
+    print(f"Reading from {master_path}...")
+    
+    if not master_path.exists():
+        print(f"File not found: {master_path}")
         return
 
-    lines = resp.text.splitlines()
-    reader = csv.DictReader(lines)
+    with open(master_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
     
     # Ensure table exists
     Base.metadata.create_all(engine)
     
     db = SessionLocal()
     try:
-        existing = {a for a in db.scalars(select(Airport.iata)).all() if a}
+        # Delete existing airports to ensure ONLY the ones from Ryanair are kept
+        db.execute(delete(Airport))
+        db.commit()
+        print("Cleared existing airports table.")
         
         batch = []
         count = 0
-        skipped = 0
         
-        for row in reader:
-            iata = row.get("iata_code", "").strip().upper()
-            if not iata or len(iata) != 3:
-                skipped += 1
-                continue
-                
-            if iata in existing:
-                skipped += 1
-                continue
-                
-            airport_type = row.get("type", "")
-            if airport_type in ("closed", "heliport", "seaplane_base"):
-                skipped += 1
-                continue
-            
-            try:
-                lat = float(row.get("latitude_deg") or 0)
-                lon = float(row.get("longitude_deg") or 0)
-            except ValueError:
-                skipped += 1
-                continue
-            
-            # Limpiar nombre de ciudad si falta
-            city = row.get("municipality")
-            if not city:
-                city = row.get("name", "Unknown")
-            
+        for row in data:
             a = Airport(
-                iata=iata,
-                icao=row.get("ident") or None,
-                name=row.get("name", "Unknown"),
-                city=city,
-                country=row.get("iso_country", "Unknown"),
-                region=row.get("iso_region") or None,
-                latitude=lat,
-                longitude=lon,
-                timezone=None,
-                airport_type=airport_type,
-                is_primary=(airport_type == "large_airport"),
-                source="ourairports"
+                iata=row["iata"],
+                icao=row.get("icao"),
+                name=row["name"],
+                city=row["city"],
+                country=row["country"],
+                region=row.get("region"),
+                latitude=row["latitude"],
+                longitude=row["longitude"],
+                timezone=row.get("timezone"),
+                airport_type=row.get("airport_type"),
+                is_primary=row.get("is_primary", False),
+                source=row.get("source", "ryanair_airports")
             )
             batch.append(a)
-            existing.add(iata)
             
-            if len(batch) >= 1000:
-                db.add_all(batch)
-                db.commit()
-                count += len(batch)
-                batch = []
-                
         if batch:
             db.add_all(batch)
             db.commit()
             count += len(batch)
             
-        print(f"Successfully seeded {count} airports. Skipped {skipped} without valid IATA or excluded type.")
+        print(f"Successfully seeded {count} Ryanair-supported airports.")
         
     finally:
         db.close()
