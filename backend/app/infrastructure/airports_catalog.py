@@ -57,13 +57,83 @@ def _is_valid_iata(value: str) -> bool:
     return len(cleaned) == 3 and cleaned.isalpha()
 
 
+def _ensure_seed_from_master() -> None:
+    """Re-seed the airport table from airports_master.json if count mismatches.
+
+    Runs once at import time to guarantee the DB always reflects
+    the curated Ryanair-only master list, preventing stale non-Ryanair
+    airports from leaking into the API and frontend.
+    """
+    import logging
+
+    logger = logging.getLogger("app.airports_catalog")
+
+    if not DATA_PATH.exists():
+        logger.warning("airports_master.json not found at %s — skipping auto-seed", DATA_PATH)
+        return
+
+    with open(DATA_PATH, "r", encoding="utf-8") as f:
+        master_data = json.load(f)
+
+    master_count = len(master_data)
+    master_iatas = {row["iata"] for row in master_data}
+
+    from sqlalchemy import func, select, delete
+    from app.infrastructure.db.session import Base, engine
+
+    # Ensure table exists
+    Base.metadata.create_all(bind=engine)
+
+    db = SessionLocal()
+    try:
+        db_count = db.scalar(select(func.count()).select_from(DbAirport))
+        if db_count is not None and db_count == master_count:
+            db_iatas_rows = db.execute(select(DbAirport.iata)).all()
+            db_iatas = {row[0] for row in db_iatas_rows}
+            if db_iatas == master_iatas:
+                return  # DB is in sync
+
+        logger.info(
+            "Airport catalog mismatch (db=%s, master=%s) — re-seeding from airports_master.json",
+            db_count,
+            master_count,
+        )
+        db.execute(delete(DbAirport))
+        db.flush()
+
+        for row in master_data:
+            db.add(DbAirport(
+                iata=row["iata"],
+                icao=row.get("icao"),
+                name=row["name"],
+                city=row["city"],
+                country=row["country"],
+                region=row.get("region"),
+                latitude=row["latitude"],
+                longitude=row["longitude"],
+                timezone=row.get("timezone"),
+                airport_type=row.get("airport_type"),
+                is_primary=row.get("is_primary", False),
+                source=row.get("source", "ryanair_airports"),
+            ))
+        db.commit()
+        logger.info("Seeded %d Ryanair-supported airports.", master_count)
+    except Exception:
+        db.rollback()
+        logger.exception("Failed to auto-seed airports — continuing with existing DB data")
+    finally:
+        db.close()
+
+
 def _load_master_catalog() -> list[Airport]:
+    _ensure_seed_from_master()
+
     db = SessionLocal()
     try:
         db_airports = db.query(DbAirport).all()
     finally:
         db.close()
-    
+
     out: list[Airport] = []
     for item in db_airports:
         out.append(
