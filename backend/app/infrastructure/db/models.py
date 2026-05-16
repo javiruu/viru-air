@@ -1,4 +1,4 @@
-﻿from datetime import datetime
+from datetime import datetime
 
 from app.core.time import utc_now_naive
 from uuid import uuid4
@@ -263,3 +263,22 @@ class UserNote(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
 
     user: Mapped[User] = relationship(back_populates="notes")
+
+
+class Airport(Base):
+    __tablename__ = "airport"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    iata: Mapped[str] = mapped_column(String(3), unique=True, index=True)
+    icao: Mapped[str | None] = mapped_column(String(4), nullable=True, index=True)
+    name: Mapped[str] = mapped_column(String(200))
+    city: Mapped[str] = mapped_column(String(100))
+    country: Mapped[str] = mapped_column(String(100))
+    region: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    latitude: Mapped[float] = mapped_column(Numeric(10, 6))
+    longitude: Mapped[float] = mapped_column(Numeric(10, 6))
+    timezone: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    airport_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    is_primary: Mapped[bool] = mapped_column(Boolean, default=False)
+    source: Mapped[str] = mapped_column(String(50), default="ourairports")
+

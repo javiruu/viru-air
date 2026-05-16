@@ -1,4 +1,4 @@
-﻿export type Airport = {
+export type Airport = {
   iata: string;
   name: string;
 };
@@ -181,6 +181,36 @@ export function findAirportByIata(iata: string): Airport | null {
 export function getAirportMeta(iata: string): AirportMeta | null {
   const code = iata.toUpperCase();
   return AIRPORT_META[code] || null;
+}
+
+import { apiFetchWithStatus } from "@/modules/shared/api";
+
+export async function searchAirportsAsync(query: string): Promise<AirportMeta[]> {
+  if (!query || query.trim().length < 2) return [];
+  const response = await apiFetchWithStatus<{ items: any[] }>(`/airports/seeds?q=${encodeURIComponent(query)}`);
+  if (!response.ok) return [];
+  return response.data.items.map(item => ({
+    iata: item.iata,
+    name: item.name,
+    city: item.municipality,
+    country: item.country_code,
+    latitude: Number(item.latitude),
+    longitude: Number(item.longitude),
+  }));
+}
+
+export async function getAirportMetaAsync(iata: string): Promise<AirportMeta | null> {
+  const code = iata.toUpperCase();
+  if (AIRPORT_META[code]) {
+    return AIRPORT_META[code];
+  }
+  const results = await searchAirportsAsync(code);
+  const match = results.find(r => r.iata === code);
+  if (match) {
+    AIRPORT_META[code] = match; // cache it
+    return match;
+  }
+  return null;
 }
 
 

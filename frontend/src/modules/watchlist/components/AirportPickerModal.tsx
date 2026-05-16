@@ -1,5 +1,6 @@
-﻿import type { CountryAirports } from "@/modules/shared/airports";
-import { COUNTRY_AIRPORTS } from "@/modules/shared/airports";
+import type { CountryAirports, AirportMeta } from "@/modules/shared/airports";
+import { COUNTRY_AIRPORTS, searchAirportsAsync } from "@/modules/shared/airports";
+import { useState, useEffect } from "react";
 
 type PickerField = "origin" | "destination";
 
@@ -24,7 +25,35 @@ export function AirportPickerModal({
   onClearSelection,
   onSelectAirport,
 }: AirportPickerModalProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<AirportMeta[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    if (searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const results = await searchAirportsAsync(searchQuery);
+        setSearchResults(results);
+      } catch (err) {
+        console.error("Search failed:", err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   if (!activePicker) return null;
+
+  const displayAirports = searchQuery.trim().length >= 2 
+    ? searchResults 
+    : (selectedCountry?.airports || []);
 
   return (
     <div className="airport-modal-overlay" onClick={onClose}>
@@ -68,7 +97,19 @@ export function AirportPickerModal({
           </div>
 
           <div className="airport-list">
-            {(selectedCountry?.airports || []).map((airport) => {
+            <input 
+              type="text" 
+              className="ui-input" 
+              placeholder="Buscar aeropuerto o ciudad..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ marginBottom: "1rem" }}
+            />
+            {isSearching && <p className="muted">Buscando...</p>}
+            {!isSearching && displayAirports.length === 0 && searchQuery.trim().length >= 2 && (
+              <p className="muted">No se encontraron aeropuertos.</p>
+            )}
+            {!isSearching && displayAirports.map((airport) => {
               const allowed =
                 activePicker === "origin"
                   ? compatibleOrigins.length === 0 || compatibleOrigins.includes(airport.iata)

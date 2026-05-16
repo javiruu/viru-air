@@ -4,8 +4,11 @@ import json
 from dataclasses import asdict, dataclass
 from functools import lru_cache
 from math import asin, cos, radians, sin, sqrt
-from pathlib import Path
+from math import asin, cos, radians, sin, sqrt
 from typing import Iterable
+
+from app.infrastructure.db.session import SessionLocal
+from app.infrastructure.db.models import Airport as DbAirport
 
 
 @dataclass(frozen=True)
@@ -54,38 +57,28 @@ def _is_valid_iata(value: str) -> bool:
 
 
 def _load_master_catalog() -> list[Airport]:
-    if not DATA_PATH.exists():
-        raise RuntimeError(f"airports_master_catalog_missing:{DATA_PATH}")
-    raw = json.loads(DATA_PATH.read_text(encoding="utf-8"))
-    if not isinstance(raw, list):
-        raise RuntimeError("airports_master_catalog_invalid_format")
-
+    db = SessionLocal()
+    try:
+        db_airports = db.query(DbAirport).all()
+    finally:
+        db.close()
+    
     out: list[Airport] = []
-    for item in raw:
-        if not isinstance(item, dict):
-            continue
-        iata = str(item.get("iata") or "").strip().upper()
-        if not _is_valid_iata(iata):
-            continue
-        try:
-            lat = float(item["latitude"])
-            lon = float(item["longitude"])
-        except (KeyError, TypeError, ValueError):
-            continue
+    for item in db_airports:
         out.append(
             Airport(
-                iata=iata,
-                icao=str(item.get("icao") or "").strip().upper() or None,
-                name=str(item.get("name") or iata),
-                city=str(item.get("city") or ""),
-                country=str(item.get("country") or ""),
-                region=str(item.get("region") or "") or None,
-                latitude=lat,
-                longitude=lon,
-                timezone=str(item.get("timezone") or "") or None,
-                airport_type=str(item.get("airport_type") or "") or None,
-                is_primary=bool(item.get("is_primary", False)),
-                source=str(item.get("source") or "airports_master"),
+                iata=item.iata,
+                icao=item.icao,
+                name=item.name,
+                city=item.city,
+                country=item.country,
+                region=item.region,
+                latitude=float(item.latitude),
+                longitude=float(item.longitude),
+                timezone=item.timezone,
+                airport_type=item.airport_type,
+                is_primary=bool(item.is_primary),
+                source=item.source,
             )
         )
     return out

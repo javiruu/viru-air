@@ -193,6 +193,8 @@ def list_seed_airports_route(
             "country_code": country_code_from_airport(airport),
             "iso_region": airport.region or "",
             "type": airport.airport_type or "",
+            "latitude": airport.latitude,
+            "longitude": airport.longitude,
             "is_primary": airport.is_primary,
             "source": airport.source,
         }
