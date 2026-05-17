@@ -206,6 +206,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const [loaderScopeDates, setLoaderScopeDates] = useState(0);
   // signature of the last successfully executed criteria (used to detect pending changes)
   const [appliedCriteriaSignature, setAppliedCriteriaSignature] = useState<string | null>(null);
+  const [countrySearchInput, setCountrySearchInput] = useState("");
   const initialOrigin = mode === "recommendations" ? "" : "MAD";
   const initialDestination = mode === "recommendations" ? "" : "DUB";
   const {
@@ -941,6 +942,13 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     list.sort((a, b) => a.name.localeCompare(b.name));
     return list;
   }, [seedCountries, airportsByCountry, countryDisplayNames]);
+
+  const filteredCountryOptions = useMemo(() => {
+    if (!countrySearchInput.trim()) return countryOptions;
+    const q = normalizeText(countrySearchInput.trim());
+    return countryOptions.filter(c => normalizeText(c.name).includes(q) || normalizeText(c.code).includes(q));
+  }, [countryOptions, countrySearchInput]);
+
   const countryByCode = useMemo(() => {
     return new Map(countryOptions.map((country) => [country.code, country]));
   }, [countryOptions]);
@@ -2136,11 +2144,26 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         </button>
         <div className="qs-airport-modal__body">
           <div className="airport-modal-left qs-airport-modal__countries" role="region" aria-label={activePicker === "origin" ? t("modalOriginCountry") : t("modalDestinationCountry")}>
-            <div className="qs-airport-modal__header">
+            <div className="qs-airport-modal__header" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <h2>{activePicker === "origin" ? t("modalOriginCountry") : t("modalDestinationCountry")}</h2>
+              <div className="airport-search qs-airport-modal__search" role="search" style={{ padding: 0, border: "none" }}>
+                <svg className="qs-airport-modal__search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" style={{ left: "12px", top: "14px" }}>
+                  <circle cx="7" cy="7" r="5.25" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M11 11l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+                <input
+                  className="qs-input qs-airport-modal__search-input"
+                  name="country_search"
+                  autoComplete="off"
+                  value={countrySearchInput}
+                  onChange={(e) => setCountrySearchInput(e.target.value)}
+                  placeholder={t("pickCountrySearch")}
+                  aria-label={t("pickCountrySearch")}
+                />
+              </div>
             </div>
             <div className="airport-country-grid" role="listbox" aria-label={activePicker === "origin" ? t("modalOriginCountry") : t("modalDestinationCountry")}>
-              {countryOptions.map((country) => {
+              {filteredCountryOptions.map((country) => {
                 const isActive = selectedCountry?.code === country.code;
                 return (
                   <button
