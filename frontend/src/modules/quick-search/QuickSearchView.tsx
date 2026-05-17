@@ -154,14 +154,19 @@ function resolveCountryName(code: string): string {
   }
 }
 
+function normalizeText(text: string): string {
+  if (!text) return "";
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
 function buildAirportSuggestions(airports: AirportIataEntry[], value: string, limit = 6) {
-  const q = value.trim().toLowerCase();
+  const q = normalizeText(value.trim());
   if (!q) return [];
   const out: Array<{ iata: string; name: string }> = [];
   const seen = new Set<string>();
   for (const airport of airports) {
     if (out.length >= limit) break;
-    if (airport.iata.toLowerCase().startsWith(q)) {
+    if (normalizeText(airport.iata).startsWith(q)) {
       out.push({
         iata: airport.iata,
         name: airport.municipality || airport.name,
@@ -173,7 +178,7 @@ function buildAirportSuggestions(airports: AirportIataEntry[], value: string, li
     for (const airport of airports) {
       if (out.length >= limit) break;
       if (seen.has(airport.iata)) continue;
-      const hay = `${airport.name} ${airport.municipality}`.toLowerCase();
+      const hay = normalizeText(`${airport.name} ${airport.municipality}`);
       if (hay.includes(q)) {
         out.push({
           iata: airport.iata,

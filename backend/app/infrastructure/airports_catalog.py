@@ -7,9 +7,16 @@ from math import asin, cos, radians, sin, sqrt
 from math import asin, cos, radians, sin, sqrt
 from pathlib import Path
 from typing import Iterable
+import unicodedata
 
 from app.infrastructure.db.session import SessionLocal
 from app.infrastructure.db.models import Airport as DbAirport
+
+def _normalize_text(text: str | None) -> str:
+    if not text:
+        return ""
+    nfkd_form = unicodedata.normalize('NFKD', str(text))
+    return nfkd_form.encode('ASCII', 'ignore').decode('utf-8').lower()
 
 
 @dataclass(frozen=True)
@@ -188,7 +195,7 @@ def get_airport(iata: str) -> Airport | None:
 def _airport_matches_query(airport: Airport, normalized_query: str) -> bool:
     if not normalized_query:
         return True
-    return normalized_query in " ".join(
+    return normalized_query in _normalize_text(" ".join(
         [
             airport.iata,
             airport.name,
@@ -196,15 +203,15 @@ def _airport_matches_query(airport: Airport, normalized_query: str) -> bool:
             airport.country,
             airport.region or "",
         ]
-    ).lower()
+    ))
 
 
 def _query_rank(airport: Airport, normalized_query: str) -> tuple[int, str, str, str]:
     if not normalized_query:
         return (0, country_code_from_airport(airport), airport.city, airport.iata)
-    iata = airport.iata.lower()
-    name = airport.name.lower()
-    city = airport.city.lower()
+    iata = _normalize_text(airport.iata)
+    name = _normalize_text(airport.name)
+    city = _normalize_text(airport.city)
     if iata == normalized_query:
         rank = 0
     elif iata.startswith(normalized_query):
@@ -223,7 +230,7 @@ def list_seed_airports(
     limit: int | None = None,
     offset: int = 0,
 ) -> tuple[list[Airport], int, int | None]:
-    normalized_query = (query or "").strip().lower()
+    normalized_query = _normalize_text(query).strip()
     normalized_country = (country_code or "").strip().upper()
     if offset < 0:
         offset = 0
