@@ -315,7 +315,7 @@ export function useWatchlistActions({
       void trackUxEvent("watchlist_refresh", { scope: "filtered", count: targets.length });
       await load();
       setMessage(
-        t("watchlist.messages.bulkRefreshSummary", { updated: summary.updated, skippedCooldown: summary.skippedCooldown, failed: summary.failed, degradedOrStale: summary.degradedOrStale }),
+        t("watchlist.messages.bulkRefreshSummary", { updated: summary.updated, skippedCooldown: summary.skippedCooldown, skippedPaused: summary.skippedPaused, failed: summary.failed, degradedOrStale: summary.degradedOrStale }),
       );
       setMessageType("success");
     } catch {
@@ -355,7 +355,7 @@ export function useWatchlistActions({
 
   async function bulkUpdateStatus(ids: string[], status: "active" | "paused"): Promise<void> {
     if (ids.length === 0) return;
-    await Promise.allSettled(
+    const results = await Promise.allSettled(
       ids.map((id) =>
         apiFetch<Watch>(`/watchlist/${id}`, {
           method: "PUT",
@@ -363,17 +363,29 @@ export function useWatchlistActions({
         }),
       ),
     );
+    const failedCount = results.filter((r) => r.status === "rejected").length;
     await load();
-    setMessage(status === "paused" ? t("watchlist.messages.flightsPaused") : t("watchlist.messages.flightsResumed"));
-    setMessageType("success");
+    if (failedCount > 0) {
+      setMessage(t("watchlist.messages.bulkPartialError", { failed: failedCount, total: ids.length }));
+      setMessageType(failedCount === ids.length ? "error" : "success");
+    } else {
+      setMessage(status === "paused" ? t("watchlist.messages.flightsPaused") : t("watchlist.messages.flightsResumed"));
+      setMessageType("success");
+    }
   }
 
   async function bulkDelete(ids: string[]): Promise<void> {
     if (ids.length === 0) return;
-    await Promise.allSettled(ids.map((id) => apiFetch<{ status: string }>(`/watchlist/${id}`, { method: "DELETE" })));
+    const results = await Promise.allSettled(ids.map((id) => apiFetch<{ status: string }>(`/watchlist/${id}`, { method: "DELETE" })));
+    const failedCount = results.filter((r) => r.status === "rejected").length;
     await load();
-    setMessage(t("watchlist.messages.flightsDeleted"));
-    setMessageType("success");
+    if (failedCount > 0) {
+      setMessage(t("watchlist.messages.bulkPartialError", { failed: failedCount, total: ids.length }));
+      setMessageType(failedCount === ids.length ? "error" : "success");
+    } else {
+      setMessage(t("watchlist.messages.flightsDeleted"));
+      setMessageType("success");
+    }
   }
 
   async function bulkRefresh(ids: string[]): Promise<void> {
@@ -392,7 +404,7 @@ export function useWatchlistActions({
       const summary = summarizeRefreshBulkResult(response);
       await load();
       setMessage(
-        t("watchlist.messages.bulkRefreshSummary", { updated: summary.updated, skippedCooldown: summary.skippedCooldown, failed: summary.failed, degradedOrStale: summary.degradedOrStale }),
+        t("watchlist.messages.bulkRefreshSummary", { updated: summary.updated, skippedCooldown: summary.skippedCooldown, skippedPaused: summary.skippedPaused, failed: summary.failed, degradedOrStale: summary.degradedOrStale }),
       );
       setMessageType("success");
     } catch {

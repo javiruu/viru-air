@@ -1,5 +1,5 @@
-export function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString("es-ES", {
+export function formatDateTime(iso: string, locale = "es-ES"): string {
+  return new Date(iso).toLocaleString(locale, {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -8,17 +8,18 @@ export function formatDateTime(iso: string): string {
   });
 }
 
-export function safeDateTime(iso?: string | null): string {
-  if (!iso) return "Sin datos";
+export function safeDateTime(iso?: string | null, locale = "es-ES"): string {
+  if (!iso) return "";
   const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "Sin datos";
-  return formatDateTime(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return formatDateTime(iso, locale);
 }
 
+/** @deprecated Use getFreshnessPresentation from summary.ts instead. */
 export function freshnessLabel(iso?: string | null): string {
-  if (!iso) return "Sin datos";
+  if (!iso) return "";
   const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "Sin datos";
+  if (Number.isNaN(date.getTime())) return "";
   const hours = (Date.now() - date.getTime()) / (1000 * 60 * 60);
   if (hours <= 6) return "Reciente";
   if (hours <= 24) return "En observación";

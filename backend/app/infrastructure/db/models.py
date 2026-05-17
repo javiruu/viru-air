@@ -36,7 +36,6 @@ class FlightWatch(Base):
     travel_date_local: Mapped[datetime.date] = mapped_column(Date)
     target_price: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default=WATCH_STATUS_ACTIVE)
-    is_paused: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
 
     user: Mapped[User] = relationship(back_populates="watches")

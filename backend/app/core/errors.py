@@ -52,6 +52,7 @@ ERROR_MESSAGES: dict[str, str] = {
     "no_flights_found": "No flights found.",
     "ryanair_unavailable": "Provider unavailable. Try again later.",
     "idempotency_mismatch": "Idempotency key reused with a different payload.",
+    "travel_date_in_past": "Travel date cannot be in the past.",
 }
 
 

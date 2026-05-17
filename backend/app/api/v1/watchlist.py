@@ -12,6 +12,7 @@ from app.core.errors import error_envelope, message_for_code
 from app.core.idempotency import replay_if_exists, request_hash, store_response
 from app.domain.entities import ProviderFetchResult
 from app.domain.vocabulary import (
+    WATCH_STATUS_ACTIVE,
     WATCH_STATUS_DELETED,
     WATCH_STATUS_PAUSED,
 )
@@ -60,7 +61,7 @@ def create_watch(
         raise HTTPException(status_code=400, detail="origin_equals_destination")
 
     existing = db.scalar(
-        select(FlightWatch.id).where(
+        select(FlightWatch).where(
             FlightWatch.user_id == current_user.id,
             FlightWatch.origin_iata == origin_iata,
             FlightWatch.destination_iata == destination_iata,
@@ -68,6 +69,19 @@ def create_watch(
         )
     )
     if existing:
+        if existing.status == WATCH_STATUS_DELETED:
+            existing.status = WATCH_STATUS_ACTIVE
+            existing.target_price = payload.target_price
+            db.commit()
+            db.refresh(existing)
+            return WatchOut(
+                id=existing.id,
+                origin_iata=existing.origin_iata,
+                destination_iata=existing.destination_iata,
+                travel_date_local=existing.travel_date_local,
+                target_price=float(existing.target_price) if existing.target_price else None,
+                status=existing.status,
+            )
         raise HTTPException(status_code=409, detail="watch_already_exists")
 
     watch = FlightWatch(
@@ -197,7 +211,8 @@ def update_watch(
         raise HTTPException(status_code=404, detail="watch_not_found")
 
     watch.status = payload.status
-    watch.is_paused = payload.status == "paused"
+    if payload.target_price is not None:
+        watch.target_price = payload.target_price if payload.target_price > 0 else None
     db.commit()
     db.refresh(watch)
     return WatchOut(
@@ -219,10 +234,9 @@ def delete_watch(
     watch = db.scalar(
         select(FlightWatch).where(FlightWatch.id == watch_id, FlightWatch.user_id == current_user.id)
     )
-    if not watch or watch.status == "deleted":
+    if not watch or watch.status == WATCH_STATUS_DELETED:
         raise HTTPException(status_code=404, detail="watch_not_found")
     watch.status = WATCH_STATUS_DELETED
-    watch.is_paused = True
     db.commit()
     return {"status": "ok"}
 
@@ -284,7 +298,7 @@ def _refresh_watch_now(db: Session, watch_id: str, current_user: User) -> JSONRe
         raise HTTPException(status_code=404, detail="watch_not_found")
     if watch.status == WATCH_STATUS_DELETED:
         raise HTTPException(status_code=404, detail="watch_not_found")
-    if watch.is_paused or watch.status == WATCH_STATUS_PAUSED:
+    if watch.status == WATCH_STATUS_PAUSED:
         raise HTTPException(status_code=409, detail="watch_paused")
 
     if REFRESH_COOLDOWN_SECONDS > 0:
@@ -352,7 +366,10 @@ def _refresh_watch_now(db: Session, watch_id: str, current_user: User) -> JSONRe
 
     flights = provider_result.flights if isinstance(provider_result, ProviderFetchResult) else provider_result
     if not flights:
-        raise HTTPException(status_code=404, detail="no_flights_found")
+        return JSONResponse(
+            status_code=200,
+            content={"status": "no_flights", "watch_id": watch.id},
+        )
     for flight in flights:
         snapshot = PriceSnapshot(
             watch_id=watch.id,

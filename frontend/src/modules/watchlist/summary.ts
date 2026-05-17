@@ -10,17 +10,20 @@ type RefreshBulkResponse = {
 export type RefreshBulkSummary = {
   updated: number;
   skippedCooldown: number;
+  skippedPaused: number;
   failed: number;
   degradedOrStale: number;
 };
 
 export function summarizeRefreshBulkResult(result: RefreshBulkResponse): RefreshBulkSummary {
   const skippedCooldown = result.failed.filter((item) => item.code === "refresh_cooldown_active").length;
+  const skippedPaused = result.failed.filter((item) => item.code === "watch_paused").length;
   const degradedOrStale = result.failed.filter((item) => item.code.includes("degraded") || item.code.includes("stale")).length;
   return {
     updated: result.refreshed.length,
     skippedCooldown,
-    failed: Math.max(0, result.failed.length - skippedCooldown),
+    skippedPaused,
+    failed: Math.max(0, result.failed.length - skippedCooldown - skippedPaused),
     degradedOrStale,
   };
 }
@@ -100,7 +103,7 @@ export function getFreshnessPresentation(args: {
     return { label, detail, fullText: `${label} · ${detail}` };
   }
 
-  const label = freshnessState ? t("watchlist.freshness.observingLabel") : t("watchlist.freshness.observingLabel");
+  const label = freshnessState ? t("watchlist.freshness.observingLabel") : t("watchlist.freshness.observedLabel");
   const detail = t("watchlist.freshness.updatedAgo", { time: relativeTime });
   return { label, detail, fullText: `${label} · ${detail}` };
 }

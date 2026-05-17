@@ -123,6 +123,13 @@ class WatchCreateIn(BaseModel):
             raise ValueError("iata_invalido")
         return cleaned
 
+    @field_validator("travel_date_local")
+    @classmethod
+    def validate_travel_date(cls, value: Date) -> Date:
+        if value < Date.today():
+            raise ValueError("travel_date_in_past")
+        return value
+
 
 class WatchOut(BaseModel):
     id: str
@@ -139,6 +146,7 @@ class WatchDetailOut(WatchOut):
 
 class WatchUpdateIn(BaseModel):
     status: str
+    target_price: float | None = None
 
     @field_validator("status")
     @classmethod
@@ -147,6 +155,13 @@ class WatchUpdateIn(BaseModel):
         if normalized not in WATCH_STATUS_UPDATABLE:
             raise ValueError("invalid_watch_status")
         return normalized
+
+    @field_validator("target_price")
+    @classmethod
+    def validate_target_price(cls, value: float | None) -> float | None:
+        if value is not None and value < 0:
+            raise ValueError("target_price_min_zero")
+        return value
 
 
 class SnapshotOut(BaseModel):

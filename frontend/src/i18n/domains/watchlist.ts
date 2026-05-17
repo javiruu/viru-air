@@ -275,7 +275,10 @@
     refreshError: "No se pudo refrescar",
     noFlightsForFilteredRefresh: "No hay vuelos para refrescar con los filtros actuales.",
     bulkRefreshSummary:
-      "Refresh masivo: {updated} actualizadas, {skippedCooldown} omitidas por cooldown, {failed} fallidas, {degradedOrStale} degradadas/stale.",
+      "Refresh masivo: {updated} actualizadas, {skippedCooldown} omitidas por cooldown, {skippedPaused} pausadas, {failed} fallidas, {degradedOrStale} degradadas/stale.",
+    bulkPartialError: "{failed} de {total} no se pudieron actualizar.",
+    noFlightsAvailable: "No hay vuelos disponibles para esta ruta y fecha.",
+    travelDateInPast: "La fecha de viaje no puede ser en el pasado.",
     filteredRefreshError: "No se pudo refrescar el grupo filtrado.",
     flightPaused: "Vuelo pausado.",
     flightResumed: "Vuelo reanudado.",
@@ -567,7 +570,10 @@ export const watchlistEn = {
     refreshError: "Refresh could not be started",
     noFlightsForFilteredRefresh: "There are no flights to refresh with current filters.",
     bulkRefreshSummary:
-      "Bulk refresh: {updated} updated, {skippedCooldown} skipped by cooldown, {failed} failed, {degradedOrStale} degraded/stale.",
+      "Bulk refresh: {updated} updated, {skippedCooldown} skipped by cooldown, {skippedPaused} paused, {failed} failed, {degradedOrStale} degraded/stale.",
+    bulkPartialError: "{failed} of {total} could not be updated.",
+    noFlightsAvailable: "No flights available for this route and date.",
+    travelDateInPast: "Travel date cannot be in the past.",
     filteredRefreshError: "The filtered group could not be refreshed.",
     flightPaused: "Flight paused.",
     flightResumed: "Flight resumed.",

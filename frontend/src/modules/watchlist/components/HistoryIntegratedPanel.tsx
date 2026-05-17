@@ -154,23 +154,19 @@ export function HistoryIntegratedPanel({
     ? `${selectedWatch.origin_iata} → ${selectedWatch.destination_iata} · ${selectedWatch.travel_date_local}`
     : t("watchlist.history.selectFlightPlaceholder");
   const statusLabel = !selectedWatch
-    ? t("watchlist.history.status.pending")
+    ? t("watchlist.history.status.noData")
     : selectedWatch.status === "active"
       ? t("watchlist.history.status.active")
       : selectedWatch.status === "paused"
         ? t("watchlist.history.status.paused")
-        : selectedWatch.status === "pending"
-          ? t("watchlist.history.status.pending")
-          : t("watchlist.history.status.noData");
+        : t("watchlist.history.status.noData");
   const statusTone = !selectedWatch
     ? "info"
     : selectedWatch.status === "active"
       ? "success"
       : selectedWatch.status === "paused"
         ? "warning"
-        : selectedWatch.status === "pending"
-          ? "warning"
-          : "info";
+        : "info";
   const allChartPoints = chartModel?.flatMap((serie) => serie.points) ?? [];
   const latestPoint =
     allChartPoints.length > 0

@@ -166,29 +166,7 @@ export function WatchDetailPanel({
         )}
       </div>
 
-      <div className="watch-detail-interpretation notice notice-info notice-compact" role="status" aria-live="polite">
-        <strong>{t("watchlist.detail.interpretation.title")}</strong>
-        <p>{interpretationText}</p>
-      </div>
 
-      {summaryData ? (
-        <div className="watch-detail-legacy-kpis" hidden>
-          {confidence.level !== "none" && confidence.titleKey && confidence.messageKey ? (
-            <div className="notice notice-info notice-compact history-confidence-notice" role="status" aria-live="polite">
-              <strong>{t(confidence.titleKey)}</strong>
-              <p>{t(confidence.messageKey)}</p>
-            </div>
-          ) : null}
-          <div className="history-summary history-summary--kpis">
-            <div className="history-kpi"><span>{t("watchlist.summary.latest")}</span><strong>{summaryData.latest_price == null ? "--" : formatCurrency(summaryData.latest_price, "EUR")}</strong></div>
-            <div className="history-kpi"><span>{t("watchlist.summary.min")}</span><strong>{summaryData.min_price == null ? "--" : formatCurrency(summaryData.min_price, "EUR")}</strong></div>
-            <div className="history-kpi"><span>{t("watchlist.summary.max")}</span><strong>{summaryData.max_price == null ? "--" : formatCurrency(summaryData.max_price, "EUR")}</strong></div>
-            <div className="history-kpi"><span>{t("watchlist.summary.avg")}</span><strong>{summaryData.avg_price == null ? "--" : formatCurrency(summaryData.avg_price, "EUR")}</strong></div>
-            <div className="history-kpi"><span>{t("watchlist.summary.delta")}</span><strong>{summaryData.delta_pct == null ? "--" : formatPercent(summaryData.delta_pct)}</strong></div>
-            <div className="history-kpi"><span>{t("watchlist.summary.count")}</span><strong>{summaryData.count}</strong></div>
-          </div>
-        </div>
-      ) : null}
     </section>
   );
 }
