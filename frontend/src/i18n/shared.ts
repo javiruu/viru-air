@@ -67,18 +67,18 @@
     themeLightBody: "Modo claro activado.",
   },
   footer: {
-    kicker: "Navegación editorial",
+    kicker: "Terminal Viru",
     publicBody:
-      "Seguimiento de precios Ryanair con alertas, histórico y contexto para decidir cuándo comprar.",
+      "Cabina pública de señales para seguir precios Ryanair con contexto, alertas y criterio de compra.",
     privateBody:
       "Tu espacio de trabajo en Viru para seguir rutas, alertas y decisiones con claridad.",
     statusLabel: "Contexto activo",
-    statusPublic: "Acceso público",
+    statusPublic: "Ruta abierta",
     statusPrivate: "Espacio privado",
     copyLink: "Copiar enlace base",
     navLabel: "Navegación de pie de página",
     scrollTop: "Volver arriba ↑",
-    note: "Rutas y soporte oficial de Viru Tracker.",
+    note: "Rutas, señales y soporte oficial de Viru Tracker.",
     copyright: "© {year} Viru Tracker. Todos los derechos reservados.",
     groups: {
       explore: "Producto",
@@ -207,18 +207,18 @@ export const sharedEn = {
     themeLightBody: "Light mode enabled.",
   },
   footer: {
-    kicker: "Editorial navigation",
+    kicker: "Viru Terminal",
     navLabel: "Footer navigation",
     publicBody:
-      "Ryanair fare tracking with alerts, history, and context to decide when to book.",
+      "Public signal cockpit to track Ryanair fares with context, alerts, and better booking timing.",
     privateBody:
       "Your Viru workspace for tracking routes, alerts, and decisions with clarity.",
     statusLabel: "Active context",
-    statusPublic: "Public access",
+    statusPublic: "Open route",
     statusPrivate: "Private space",
     copyLink: "Copy base link",
     scrollTop: "Back to top ↑",
-    note: "Official Viru Tracker routes and support.",
+    note: "Official Viru Tracker routes, signals, and support.",
     copyright: "© {year} Viru Tracker. All rights reserved.",
     groups: {
       explore: "Product",

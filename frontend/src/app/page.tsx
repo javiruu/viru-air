@@ -59,237 +59,233 @@ export default function HomePage() {
 
   return (
     <>
-    <main className="shell landing-shell" id="main-content">
-      <header className="landing-header">
-        <div className="landing-brand">
-          <span className="landing-dot" aria-hidden="true" />
+      <main className="shell landing-shell" id="main-content">
+        <header className="landing-header">
+          <div className="landing-brand">
+            <span className="landing-dot" aria-hidden="true" />
+            <div>
+              <div className="landing-kicker">Viru Tracker</div>
+              <p className="landing-tagline">{t("public.landing.brandTagline")}</p>
+            </div>
+          </div>
+          <div className="landing-actions">
+            <Link href="/policies" className="linkInline">{t("public.landing.policies")}</Link>
+            <ThemeToggle />
+          </div>
+        </header>
+
+        <section className="landing-hero-v2 landing-stage">
+          <div className="landing-hero-airway" aria-hidden="true">
+            <span className="airway-point airway-point-origin">MAD</span>
+            <span className="airway-arc" />
+            <span className="airway-point airway-point-destination">FCO</span>
+          </div>
+          <div className="landing-hero-v2-copy">
+            <p className="landing-eyebrow">{t("public.landing.heroEyebrow")}</p>
+            <h1>{t("public.landing.heroTitle")}</h1>
+            <p className="landing-claim">{t("public.landing.heroClaim")}</p>
+            <p className="landing-body">{t("public.landing.heroBody")}</p>
+            <div className="landing-cta-row">
+              <Link href="/login" className="btn-primary btn-layered">{t("public.landing.ctaEnter")}</Link>
+              <Link href="/register" className="btn-secondary">{t("public.landing.ctaCreate")}</Link>
+            </div>
+            <p className="landing-cta-note">{t("public.landing.ctaSupport")}</p>
+          </div>
+
+          <aside className="landing-signal-panel">
+            <div className="landing-panel-header landing-panel-header-v2">
+              <div>
+                <h2>{t("public.landing.signalTitle")}</h2>
+                <p>{t("public.landing.signalSubtitle")}</p>
+              </div>
+              <span className="landing-pill">{t("public.landing.signalPill")}</span>
+            </div>
+            <div className="landing-signal-top">
+              <div className="signal-route">
+                <span className="signal-label">{t("public.landing.signalRouteLabel")}</span>
+                <strong>{"MAD -> FCO"}</strong>
+                <span className="signal-meta">{t("public.landing.signalRouteMeta")}</span>
+              </div>
+              <div className="signal-chip signal-chip-success signal-chip-pulse">-18%</div>
+            </div>
+            <div className="signal-bars" aria-hidden="true">
+              <span style={{ height: "30%" }} />
+              <span style={{ height: "52%" }} />
+              <span style={{ height: "42%" }} />
+              <span style={{ height: "68%" }} />
+              <span style={{ height: "57%" }} />
+              <span style={{ height: "75%" }} />
+              <span style={{ height: "49%" }} />
+            </div>
+            <div className="landing-signal-grid">
+              <div className="signal-cell">
+                <span>{t("public.landing.signalTrendLabel")}</span>
+                <strong>{t("public.landing.signalTrendValue")}</strong>
+              </div>
+              <div className="signal-cell">
+                <span>{t("public.landing.signalWindowLabel")}</span>
+                <strong>{t("public.landing.signalWindowValue")}</strong>
+              </div>
+            </div>
+            <div className="landing-flight-strip" aria-hidden="true">
+              <span>MAD</span>
+              <span>TRACK ACTIVO</span>
+              <span>FCO</span>
+              <span>+24H</span>
+            </div>
+            <div className="landing-signal-foot">
+              <span className="signal-chip">{t("public.landing.signalSource")}</span>
+              <span className="signal-chip signal-chip-muted">{t("public.landing.signalUpdated")}</span>
+            </div>
+          </aside>
+        </section>
+
+        <section className="landing-proof-band landing-stage landing-stage-delay">
+          <div className="landing-proof-copy">
+            <p className="landing-eyebrow">{t("public.landing.proofEyebrow")}</p>
+            <h2>{t("public.landing.proofTitle")}</h2>
+            <p>{t("public.landing.proofBody")}</p>
+          </div>
+          <div className="landing-metrics-v2">
+            <article className="landing-metric-v2">
+              <strong>{t("public.landing.metricPricesStrong")}</strong>
+              <span>{t("public.landing.metricPricesLabel")}</span>
+            </article>
+            <article className="landing-metric-v2">
+              <strong>{t("public.landing.metricRefreshStrong")}</strong>
+              <span>{t("public.landing.metricRefreshLabel")}</span>
+            </article>
+            <article className="landing-metric-v2">
+              <strong>{t("public.landing.metricLocalAiStrong")}</strong>
+              <span>{t("public.landing.metricLocalAiLabel")}</span>
+            </article>
+            <article className="landing-metric-v2">
+              <strong>{t("public.landing.metricNoSmokeStrong")}</strong>
+              <span>{t("public.landing.metricNoSmokeLabel")}</span>
+            </article>
+          </div>
+        </section>
+
+        <section className="landing-capabilities landing-stage landing-stage-delay-2">
+          <article className="landing-capability-main">
+            <div className="landing-panel-header landing-panel-header-v2">
+              <div>
+                <h2>{t("public.landing.capMainTitle")}</h2>
+                <p>{t("public.landing.capMainSubtitle")}</p>
+              </div>
+              <span className="landing-pill">{t("public.landing.capMainPill")}</span>
+            </div>
+            <div className="landing-cap-main-grid">
+              <div className="pulse-row">
+                <div>
+                  <div className="pulse-label">{t("public.landing.pulseTrendLabel")}</div>
+                  <div className="pulse-value">{"MAD -> FCO"}</div>
+                </div>
+                <div className="pulse-chip">-18%</div>
+              </div>
+              <div className="pulse-row">
+                <div>
+                  <div className="pulse-label">{t("public.landing.pulseAlertLabel")}</div>
+                  <div className="pulse-value">{"BRU -> LIS"}</div>
+                </div>
+                <div className="pulse-chip pulse-chip-muted">{t("public.landing.pulseAlertState")}</div>
+              </div>
+              <div className="pulse-row">
+                <div>
+                  <div className="pulse-label">{t("public.landing.pulseLastLabel")}</div>
+                  <div className="pulse-value">{t("public.landing.pulseLastValue")}</div>
+                </div>
+                <div className="pulse-chip">{t("public.landing.pulseOk")}</div>
+              </div>
+            </div>
+          </article>
+          <div className="landing-capability-side">
+            <article className="landing-cap-card">
+              <h3>{t("public.landing.whyVisibility")}</h3>
+              <p>{t("public.landing.whyVisibilityBody")}</p>
+            </article>
+            <article className="landing-cap-card">
+              <h3>{t("public.landing.whyAlerts")}</h3>
+              <p>{t("public.landing.whyAlertsBody")}</p>
+            </article>
+            <article className="landing-cap-card">
+              <h3>{t("public.landing.whyCompare")}</h3>
+              <p>{t("public.landing.whyCompareBody")}</p>
+            </article>
+            <article className="landing-cap-card">
+              <h3>{t("public.landing.whyQuickSearch")}</h3>
+              <p>{t("public.landing.whyQuickSearchBody")}</p>
+            </article>
+          </div>
+        </section>
+
+        <section className="landing-flow-v2 landing-stage landing-stage-delay-3">
+          <div className="landing-section-title">
+            <h2>{t("public.landing.stepsTitle")}</h2>
+            <p>{t("public.landing.stepsSubtitle")}</p>
+          </div>
+          <div className="landing-steps-grid-v2" role="list">
+            <article className="landing-step-v2">
+              <span className="step-index">01</span>
+              <h3>{t("public.landing.stepRoute")}</h3>
+              <p>{t("public.landing.stepRouteBody")}</p>
+            </article>
+            <article className="landing-step-v2">
+              <span className="step-index">02</span>
+              <h3>{t("public.landing.stepTrends")}</h3>
+              <p>{t("public.landing.stepTrendsBody")}</p>
+            </article>
+            <article className="landing-step-v2">
+              <span className="step-index">03</span>
+              <h3>{t("public.landing.stepAlerts")}</h3>
+              <p>{t("public.landing.stepAlertsBody")}</p>
+            </article>
+            <article className="landing-step-v2">
+              <span className="step-index">04</span>
+              <h3>{t("public.landing.stepBuy")}</h3>
+              <p>{t("public.landing.stepBuyBody")}</p>
+            </article>
+          </div>
+        </section>
+
+        <section className="landing-close-cta landing-stage landing-stage-delay-3">
           <div>
-            <div className="landing-kicker">Viru Tracker</div>
-            <p className="landing-tagline">{t("public.landing.brandTagline")}</p>
+            <p className="landing-eyebrow">{t("public.landing.closeEyebrow")}</p>
+            <h2>{t("public.landing.closeTitle")}</h2>
+            <p>{t("public.landing.closeBody")}</p>
           </div>
-        </div>
-        <div className="landing-actions">
-          <Link href="/policies" className="linkInline">{t("public.landing.policies")}</Link>
-          <ThemeToggle />
-        </div>
-      </header>
-
-      <section className="landing-hero landing-stage">
-        <div className="landing-hero-copy">
-          <h1>{t("public.landing.heroTitle")}</h1>
-          <p className="landing-claim">{t("public.landing.heroClaim")}</p>
-          <p>{t("public.landing.heroBody")}</p>
-          <div className="cta-row landing-cta">
+          <div className="landing-close-actions">
             <Link href="/login" className="btn-primary btn-layered">{t("public.landing.ctaEnter")}</Link>
+            <Link href="/register" className="btn-secondary">{t("public.landing.ctaCreate")}</Link>
+            <Link href="/policies" className="linkInline">{t("public.landing.policies")}</Link>
           </div>
-          <p className="landing-cta-note">
-            {t("public.landing.ctaNoAccount")}{" "}
-            <Link href="/register" className="linkInline">{t("public.landing.ctaCreate")}</Link>
-          </p>
-        </div>
+        </section>
 
-        <div className="landing-hero-panel">
-          <div className="landing-panel-header">
+        <section className="landing-calendar-preview landing-stage landing-stage-delay-3">
+          <div className="landing-panel-header landing-panel-header-v2">
             <div>
               <h2>{t("public.landing.demoTitle")}</h2>
               <p>{t("public.landing.demoSubtitle")}</p>
             </div>
             <span className="landing-pill">{t("public.landing.demoPulse")}</span>
           </div>
-          <div className="landing-demo">
-            <div className="demo-chart">
-              <div className="demo-chart-header">
-                <span>{t("public.landing.demoHistory")}</span>
-                <strong>EUR 68 → 54</strong>
-              </div>
-              <div className="demo-chart-bars">
-                <span style={{ height: "34%" }} />
-                <span style={{ height: "52%" }} />
-                <span style={{ height: "46%" }} />
-                <span style={{ height: "64%" }} />
-                <span style={{ height: "58%" }} />
-                <span style={{ height: "72%" }} />
-                <span style={{ height: "48%" }} />
-                <span style={{ height: "62%" }} />
-                <span style={{ height: "40%" }} />
-                <span style={{ height: "68%" }} />
-              </div>
-              <div className="demo-trend">
-                <i className="fa-solid fa-arrow-trend-down" aria-hidden="true" />
-                <span>{t("public.landing.demoTrend")}</span>
-              </div>
-            </div>
-            <div className="demo-calendar">
-              <div className="demo-calendar-header">
-                <span>{t("public.landing.demoCalendar")}</span>
-                <i className="fa-solid fa-calendar-check" aria-hidden="true" />
-              </div>
-              <div className="demo-calendar-grid">
-                {calendarDays.map((day, index) => (
-                  <span key={`demo-day-${index}`} className="demo-day">{day}</span>
-                ))}
-                {Array.from({ length: 14 }).map((_, index) => (
-                  <span key={index} className={`demo-date demo-date-${(index % 3) + 1}`}>
-                    {index + 10}
-                  </span>
-                ))}
-              </div>
-            </div>
+          <div className="demo-calendar-grid demo-calendar-grid-v2">
+            {calendarDays.map((day, index) => (
+              <span key={`demo-day-${index}`} className="demo-day">{day}</span>
+            ))}
+            {Array.from({ length: 14 }).map((_, index) => (
+              <span key={index} className={`demo-date demo-date-${(index % 3) + 1}`}>
+                {index + 10}
+              </span>
+            ))}
           </div>
-          <div className="demo-footnote">
-            <span className="demo-chip">Ryanair</span>
-            <span className="demo-chip demo-chip-muted">{t("public.landing.demoUpdated")}</span>
+          <div className="demo-meta-strip">
+            <span className="signal-chip">{t("public.landing.demoTrend")}</span>
+            <span className="signal-chip signal-chip-muted">{t("public.landing.demoUpdated")}</span>
           </div>
-        </div>
-      </section>
-
-      <section className="landing-metrics landing-stage landing-stage-delay">
-        <div className="landing-metric">
-          <strong>{t("public.landing.metricPricesStrong")}</strong>
-          <span>{t("public.landing.metricPricesLabel")}</span>
-        </div>
-        <div className="landing-metric">
-          <strong>{t("public.landing.metricRefreshStrong")}</strong>
-          <span>{t("public.landing.metricRefreshLabel")}</span>
-        </div>
-        <div className="landing-metric">
-          <strong>{t("public.landing.metricLocalAiStrong")}</strong>
-          <span>{t("public.landing.metricLocalAiLabel")}</span>
-        </div>
-        <div className="landing-metric">
-          <strong>{t("public.landing.metricNoSmokeStrong")}</strong>
-          <span>{t("public.landing.metricNoSmokeLabel")}</span>
-        </div>
-      </section>
-
-      <section className="landing-why landing-stage landing-stage-delay-2">
-        <div className="landing-section-title">
-          <h2>{t("public.landing.whyTitle")}</h2>
-          <p>{t("public.landing.whySubtitle")}</p>
-        </div>
-        <div className="landing-why-grid">
-          <article className="landing-why-card">
-            <i className="fa-solid fa-eye" aria-hidden="true" />
-            <div>
-              <h3>{t("public.landing.whyVisibility")}</h3>
-              <p>{t("public.landing.whyVisibilityBody")}</p>
-            </div>
-          </article>
-          <article className="landing-why-card">
-            <i className="fa-solid fa-bell" aria-hidden="true" />
-            <div>
-              <h3>{t("public.landing.whyAlerts")}</h3>
-              <p>{t("public.landing.whyAlertsBody")}</p>
-            </div>
-          </article>
-          <article className="landing-why-card">
-            <i className="fa-solid fa-chart-line" aria-hidden="true" />
-            <div>
-              <h3>{t("public.landing.whyCompare")}</h3>
-              <p>{t("public.landing.whyCompareBody")}</p>
-            </div>
-          </article>
-          <article className="landing-why-card">
-            <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
-            <div>
-              <h3>{t("public.landing.whyQuickSearch")}</h3>
-              <p>{t("public.landing.whyQuickSearchBody")}</p>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section className="landing-pulse-section landing-stage landing-stage-delay-3">
-        <div className="landing-panel-header">
-          <div>
-            <h2>{t("public.landing.pulseTitle")}</h2>
-            <p>{t("public.landing.pulseSubtitle")}</p>
-          </div>
-          <span className="landing-pill">{t("public.landing.pulseEdition")}</span>
-        </div>
-        <div className="landing-pulse">
-          <div className="pulse-row">
-            <div>
-              <div className="pulse-label">{t("public.landing.pulseTrendLabel")}</div>
-              <div className="pulse-value">MAD → FCO</div>
-            </div>
-            <div className="pulse-chip">-18%</div>
-          </div>
-          <div className="pulse-row">
-            <div>
-              <div className="pulse-label">{t("public.landing.pulseAlertLabel")}</div>
-              <div className="pulse-value">BRU → LIS</div>
-            </div>
-            <div className="pulse-chip pulse-chip-muted">{t("public.landing.pulseAlertState")}</div>
-          </div>
-          <div className="pulse-row">
-            <div>
-              <div className="pulse-label">{t("public.landing.pulseLastLabel")}</div>
-              <div className="pulse-value">{t("public.landing.pulseLastValue")}</div>
-            </div>
-            <div className="pulse-chip">{t("public.landing.pulseOk")}</div>
-          </div>
-        </div>
-        <div className="landing-pulse-grid">
-          <div className="pulse-card">
-            <h3>{t("public.landing.pulseCardWatchlist")}</h3>
-            <p>{t("public.landing.pulseCardWatchlistBody")}</p>
-          </div>
-          <div className="pulse-card">
-            <h3>{t("public.landing.pulseCardAlerts")}</h3>
-            <p>{t("public.landing.pulseCardAlertsBody")}</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="landing-steps landing-stage landing-stage-delay-3">
-        <div className="landing-steps-header">
-          <h2>{t("public.landing.stepsTitle")}</h2>
-          <p>{t("public.landing.stepsSubtitle")}</p>
-        </div>
-        <div className="landing-steps-grid">
-          <div className="landing-step">
-            <i className="fa-solid fa-route" aria-hidden="true" />
-            <h3>{t("public.landing.stepRoute")}</h3>
-            <p>{t("public.landing.stepRouteBody")}</p>
-          </div>
-          <div className="landing-step">
-            <i className="fa-solid fa-wave-square" aria-hidden="true" />
-            <h3>{t("public.landing.stepTrends")}</h3>
-            <p>{t("public.landing.stepTrendsBody")}</p>
-          </div>
-          <div className="landing-step">
-            <i className="fa-solid fa-bell" aria-hidden="true" />
-            <h3>{t("public.landing.stepAlerts")}</h3>
-            <p>{t("public.landing.stepAlertsBody")}</p>
-          </div>
-          <div className="landing-step">
-            <i className="fa-solid fa-plane-departure" aria-hidden="true" />
-            <h3>{t("public.landing.stepBuy")}</h3>
-            <p>{t("public.landing.stepBuyBody")}</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="landing-grid landing-stage landing-stage-delay-3">
-        <article className="landing-card">
-          <i className="fa-solid fa-shield" aria-hidden="true" />
-          <h3>{t("public.landing.gridWatch")}</h3>
-          <p>{t("public.landing.gridWatchBody")}</p>
-        </article>
-        <article className="landing-card">
-          <i className="fa-solid fa-chart-line" aria-hidden="true" />
-          <h3>{t("public.landing.gridCompare")}</h3>
-          <p>{t("public.landing.gridCompareBody")}</p>
-        </article>
-        <article className="landing-card">
-          <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
-          <h3>{t("public.landing.gridSearch")}</h3>
-          <p>{t("public.landing.gridSearchBody")}</p>
-        </article>
-      </section>
-    </main>
-    <ViruFooterBlock />
+        </section>
+      </main>
+      <ViruFooterBlock />
     </>
   );
 }

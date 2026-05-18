@@ -89,6 +89,13 @@
   --state-info-border: rgba(79, 127, 166, 0.36);
   --state-info-text: var(--ink);
   --state-info-icon: #4f7fa6;
+
+  --landing-glow-warm: rgba(217, 93, 57, 0.14);
+  --landing-route-line: color-mix(in srgb, var(--accent-2) 46%, var(--border));
+  --landing-runway-light: color-mix(in srgb, var(--accent) 34%, #ffd6a8);
+  --landing-terminal-glass: color-mix(in srgb, var(--surface) 84%, transparent);
+  --landing-signal-active: color-mix(in srgb, var(--state-success-border) 86%, var(--accent-2));
+  --landing-flight-strip-border: color-mix(in srgb, var(--border) 84%, var(--accent) 16%);
 }
 
 :root[data-theme="dark"] {
@@ -124,4 +131,11 @@
   --state-info-bg: color-mix(in srgb, #4f7fa6 22%, transparent);
   --state-info-border: color-mix(in srgb, #4f7fa6 52%, #cfdceb 16%);
   --state-info-text: var(--ink);
+
+  --landing-glow-warm: rgba(217, 93, 57, 0.18);
+  --landing-route-line: color-mix(in srgb, var(--accent-2) 54%, #8ab8d4);
+  --landing-runway-light: color-mix(in srgb, var(--accent) 46%, #ffd9b2);
+  --landing-terminal-glass: color-mix(in srgb, var(--surface) 74%, #ffffff 6%);
+  --landing-signal-active: color-mix(in srgb, var(--state-success-border) 84%, #b0d8c7);
+  --landing-flight-strip-border: color-mix(in srgb, var(--border) 78%, var(--accent-2) 22%);
 }
