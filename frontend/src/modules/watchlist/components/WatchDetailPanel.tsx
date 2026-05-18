@@ -24,7 +24,7 @@ export function WatchDetailPanel({
   onPauseWatch,
   onResumeWatch,
 }: WatchDetailPanelProps) {
-  const { t } = useI18n();
+  const { t, localeTag } = useI18n();
 
   if (!selectedWatch) {
     return (
@@ -47,6 +47,7 @@ export function WatchDetailPanel({
   const confidence = getHistoryConfidence(summary?.count ?? 0);
   const freshness = getFreshnessPresentation({
     t,
+    locale: localeTag,
     lastUpdatedAt: detail?.latest_snapshot?.captured_at_utc,
     freshnessState: detail?.latest_snapshot ? "observing" : null,
   });
@@ -54,13 +55,13 @@ export function WatchDetailPanel({
   const latestSnapshot = detail?.latest_snapshot ?? null;
   const currency = latestSnapshot?.raw_currency ?? "EUR";
   const hasSnapshotPrice = latestSnapshot && latestSnapshot.raw_price != null && latestSnapshot.raw_price >= 0;
-  const currentPriceValue = hasSnapshotPrice ? formatCurrency(latestSnapshot.raw_price, currency) : "--";
+  const currentPriceValue = hasSnapshotPrice ? formatCurrency(latestSnapshot.raw_price, currency, localeTag) : "--";
   const currentPriceStatus = !latestSnapshot ? "no-snapshot" : !hasSnapshotPrice ? "pending-capture" : "ok";
-  const minPriceValue = summaryData?.min_price == null ? "--" : formatCurrency(summaryData.min_price, currency);
+  const minPriceValue = summaryData?.min_price == null ? "--" : formatCurrency(summaryData.min_price, currency, localeTag);
   const deltaFromMin = latestSnapshot && summaryData?.min_price != null
     ? latestSnapshot.raw_price - summaryData.min_price
     : null;
-  const deltaFromMinValue = deltaFromMin == null ? "--" : formatCurrency(deltaFromMin, currency);
+  const deltaFromMinValue = deltaFromMin == null ? "--" : formatCurrency(deltaFromMin, currency, localeTag);
 
   const trendText = summaryData?.delta_pct == null
     ? t("watchlist.detail.operational.trendUnknown")
@@ -127,9 +128,9 @@ export function WatchDetailPanel({
       <div className="watch-detail-block">
         <h3 className="watch-detail-block-title">{t("watchlist.detail.operational.title")}</h3>
         <div className="watch-detail-operational">
-          <span>{t("watchlist.detail.latestSnapshot")} {latestSnapshot ? safeDateTime(latestSnapshot.captured_at_utc) : "--"}</span>
+          <span>{t("watchlist.detail.latestSnapshot")} {latestSnapshot ? safeDateTime(latestSnapshot.captured_at_utc, localeTag) : "--"}</span>
           <span>{t("watchlist.summary.count")} {summaryData ? summaryData.count : "--"}</span>
-          <span>{t("watchlist.summary.delta")} {summaryData?.delta_pct == null ? "--" : formatPercent(summaryData.delta_pct)}</span>
+          <span>{t("watchlist.summary.delta")} {summaryData?.delta_pct == null ? "--" : formatPercent(summaryData.delta_pct, localeTag)}</span>
           <span>{t("watchlist.detail.operational.trend")} {trendText}</span>
         </div>
       </div>

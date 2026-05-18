@@ -3,7 +3,7 @@ export function toIsoMonth(dateLike: string): string {
   return dateLike.slice(0, 7);
 }
 
-export function monthLabel(month: string, locale = "es-ES"): string {
+export function monthLabel(month: string, locale: string): string {
   if (!month) return "Sin datos";
   const [year, monthPart] = month.split("-");
   const d = new Date(Number(year), Number(monthPart) - 1, 1);

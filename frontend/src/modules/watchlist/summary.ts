@@ -75,11 +75,12 @@ export type FreshnessPresentation = {
 
 export function getFreshnessPresentation(args: {
   t: Translator;
+  locale: string;
   lastUpdatedAt?: string | null;
   freshnessState?: string | null;
   now?: Date;
 }): FreshnessPresentation {
-  const { t, lastUpdatedAt, freshnessState, now } = args;
+  const { t, locale, lastUpdatedAt, freshnessState, now } = args;
   if (!lastUpdatedAt) {
     const label = t("watchlist.freshness.noDataLabel");
     const detail = t("watchlist.freshness.noDataDetail");
@@ -95,7 +96,7 @@ export function getFreshnessPresentation(args: {
 
   const nowMs = now?.getTime() ?? Date.now();
   const diffHours = Math.max(0, (nowMs - date.getTime()) / (1000 * 60 * 60));
-  const relativeTime = formatRelativeTime(date);
+  const relativeTime = formatRelativeTime(date, locale);
 
   if (diffHours > 24) {
     const label = t("watchlist.freshness.needsReviewLabel");

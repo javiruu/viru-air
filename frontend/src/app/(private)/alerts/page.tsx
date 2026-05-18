@@ -56,8 +56,8 @@ type QuietHoursPreference = {
 };
 
 type AlertSegment = "all" | "security" | "price";
-function formatEur(value: number): string {
-  return formatCurrency(value, "EUR");
+function formatEur(value: number, locale: string): string {
+  return formatCurrency(value, "EUR", locale);
 }
 
 export default function AlertsPage() {
@@ -178,9 +178,9 @@ export default function AlertsPage() {
     const amount = Number(thresholdValue);
     if (Number.isNaN(amount)) return t("alerts.form.previewInvalidThreshold");
     return ruleType === "threshold_low"
-      ? t("alerts.form.previewThresholdLow", { value: formatEur(amount) })
-      : t("alerts.form.previewThresholdHigh", { value: formatEur(amount) });
-  }, [ruleType, selectedWatch, thresholdValue, t]);
+      ? t("alerts.form.previewThresholdLow", { value: formatEur(amount, localeTag) })
+      : t("alerts.form.previewThresholdHigh", { value: formatEur(amount, localeTag) });
+  }, [localeTag, ruleType, selectedWatch, thresholdValue, t]);
 
   const deliveryCopy = useCallback((status: string) => getDeliveryStateCopy(status, t), [t]);
   const channelCopy = useCallback((channel: string) => getNotificationChannelCopy(channel, t), [t]);
@@ -522,7 +522,7 @@ export default function AlertsPage() {
             const watchStatus = getWatchStatusMeta(rule.enabled ? "active" : "paused", t);
             const thresholdText =
               rule.rule_type !== "every_change" && rule.threshold_value
-                ? t("alerts.row.threshold", { value: formatEur(Number(rule.threshold_value)) })
+                ? t("alerts.row.threshold", { value: formatEur(Number(rule.threshold_value), localeTag) })
                 : "";
             const minChangeText =
               rule.min_change_pct != null
@@ -560,7 +560,7 @@ export default function AlertsPage() {
           <div>
             <h2 className="panel-title">{t("alerts.history.title")}</h2>
             <p className="panel-note">
-              Última evaluación de alertas: {events[0]?.created_at ? formatRelativeTime(events[0].created_at) : "sin datos"}
+              Última evaluación de alertas: {events[0]?.created_at ? formatRelativeTime(events[0].created_at, localeTag) : "sin datos"}
             </p>
           </div>
           <span className="panel-note">{t("alerts.history.count", { count: events.length })}</span>

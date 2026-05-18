@@ -26,18 +26,18 @@ function getCurrencyFormatter(
   return formatter;
 }
 
-export function formatCurrency(value: number, currency: string, locale = "es-ES"): string {
+export function formatCurrency(value: number, currency: string, locale: string): string {
   return getCurrencyFormatter(locale, currency).format(value);
 }
 
-export function formatSignedCurrency(value: number, currency: string, locale = "es-ES"): string {
+export function formatSignedCurrency(value: number, currency: string, locale: string): string {
   return getCurrencyFormatter(locale, currency, "exceptZero").format(value);
 }
 
 export function formatNumber(
   value: number,
   options: { maximumFractionDigits?: number; minimumFractionDigits?: number } = {},
-  locale = "es-ES",
+  locale: string,
 ): string {
   const key = numberKey(locale, options.maximumFractionDigits, options.minimumFractionDigits);
   let formatter = numberFormatters.get(key);
@@ -51,21 +51,22 @@ export function formatNumber(
   return formatter.format(value);
 }
 
-export function formatPercent(value: number, locale = "es-ES"): string {
+export function formatPercent(value: number, locale: string): string {
   return `${formatNumber(value, { maximumFractionDigits: 2, minimumFractionDigits: 0 }, locale)}%`;
 }
 
-export function formatRelativeTime(input: string | Date | null | undefined): string {
-  if (!input) return "sin datos";
+export function formatRelativeTime(input: string | Date | null | undefined, locale: string): string {
+  if (!input) return locale.startsWith("en") ? "no data" : "sin datos";
   const date = input instanceof Date ? input : new Date(input);
-  if (Number.isNaN(date.getTime())) return "sin datos";
+  if (Number.isNaN(date.getTime())) return locale.startsWith("en") ? "no data" : "sin datos";
 
   const diffMs = Date.now() - date.getTime();
   const diffMin = Math.max(0, Math.floor(diffMs / 60000));
-  if (diffMin < 1) return "hace menos de 1 min";
-  if (diffMin < 60) return `hace ${diffMin} min`;
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  if (diffMin < 1) return rtf.format(0, "minute");
+  if (diffMin < 60) return rtf.format(-diffMin, "minute");
   const diffHours = Math.floor(diffMin / 60);
-  if (diffHours < 24) return `hace ${diffHours} h`;
+  if (diffHours < 24) return rtf.format(-diffHours, "hour");
   const diffDays = Math.floor(diffHours / 24);
-  return `hace ${diffDays} d`;
+  return rtf.format(-diffDays, "day");
 }

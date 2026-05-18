@@ -20,5 +20,5 @@ test("monthDays pads to full weeks", () => {
 });
 
 test("monthLabel returns localized label", () => {
-  assert.match(monthLabel("2026-02"), /2026/);
+  assert.match(monthLabel("2026-02", "es-ES"), /2026/);
 });

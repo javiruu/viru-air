@@ -88,7 +88,7 @@ export function SmartWatchListPanel({
   onRetryLoad,
   onOpenAddWatch,
 }: SmartWatchListPanelProps) {
-  const { t } = useI18n();
+  const { t, localeTag } = useI18n();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const hasSelection = selectedIds.length > 0;
   const selectionCount = selectedIds.length;
@@ -242,11 +242,12 @@ export function SmartWatchListPanel({
               : "flat";
         const deltaLabel = !meta?.latest || !meta?.previous
           ? t("watchlist.smartList.noTrend")
-          : formatSignedCurrency(meta.latest.price - meta.previous.price, meta.latest.currency);
+          : formatSignedCurrency(meta.latest.price - meta.previous.price, meta.latest.currency, localeTag);
         const routeHealthLabel = trend === "up" ? t("watchlist.smartList.trendUp") : trend === "down" ? t("watchlist.smartList.trendDown") : t("watchlist.smartList.trendStable");
 
         const freshness = getFreshnessPresentation({
           t,
+          locale: localeTag,
           lastUpdatedAt: meta?.latest?.capturedAt,
           freshnessState: meta?.latest ? "observing" : null,
         });
@@ -302,14 +303,14 @@ export function SmartWatchListPanel({
                 <span className="watch-date">{watch.travel_date_local}</span>
                 <span className={`status-pill ${watchStatus.tone}`}>{watchStatus.label}</span>
                 <strong className="watch-inline-price">
-                  {meta?.latest ? formatCurrency(meta.latest.price, meta.latest.currency) : "--"}
+                  {meta?.latest ? formatCurrency(meta.latest.price, meta.latest.currency, localeTag) : "--"}
                 </strong>
               </div>
               <div className="watch-meta">
                 <span className={`status-pill ${trend === "up" ? "error" : trend === "down" ? "success" : "warning"}`}>
                   {routeHealthLabel}
                 </span>
-                <span className="watch-meta-chip">{t("watchlist.detail.latestSnapshot")} {safeDateTime(meta?.latest?.capturedAt)}</span>
+                <span className="watch-meta-chip">{t("watchlist.detail.latestSnapshot")} {safeDateTime(meta?.latest?.capturedAt, localeTag)}</span>
                 <span className="watch-meta-chip watch-meta-chip--freshness">{t("watchlist.detail.freshness")} {freshness.fullText}</span>
                 <span className="watch-note">{t("watchlist.smartList.priceDisclaimer")}</span>
               </div>
@@ -340,7 +341,7 @@ export function SmartWatchListPanel({
                       <svg viewBox="0 0 16 16" className="price-drop-icon" aria-hidden="true">
                         <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                      {formatCurrency(priceDropAmount!, meta?.latest?.currency ?? "EUR")} ({priceDropPercent}%)
+                      {formatCurrency(priceDropAmount!, meta?.latest?.currency ?? "EUR", localeTag)} ({priceDropPercent}%)
                     </span>
                   ) : null}
                   {isBestPrice ? (

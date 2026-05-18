@@ -9,7 +9,6 @@ import { getAirportMeta } from "@/modules/shared/airports";
 import { getQuickSearchCopy } from "@/modules/shared/quickSearchCopy";
 import { useFtueHint } from "@/lib/ftue";
 import { trackUxEvent } from "@/lib/uxTracking";
-import { formatRelativeTime } from "@/modules/shared/format";
 import { trackEvent } from "@/modules/shared/analytics";
 import { formatCurrency, formatNumber } from "@/modules/shared/format";
 import { buildDateRange } from "@/modules/quick-search/utils";

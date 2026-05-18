@@ -99,7 +99,7 @@ export function WatchlistMapDecisionPanel({
   compareLimitExceeded,
   onFocusWatch,
 }: WatchlistMapDecisionPanelProps) {
-  const { t } = useI18n();
+  const { t, localeTag } = useI18n();
   const mapRef = useRef<MapRef>(null);
   const [activePopupWatchId, setActivePopupWatchId] = useState<string | null>(null);
 
@@ -205,7 +205,7 @@ export function WatchlistMapDecisionPanel({
               </div>
               <div className="watch-map-meta-item" role="listitem">
                 <span>{t("watchlist.map.lastCaptureLabel")}</span>
-                <strong>{selectedRouteContext.lastCaptureAt ? safeDateTime(selectedRouteContext.lastCaptureAt) : "--"}</strong>
+                <strong>{selectedRouteContext.lastCaptureAt ? safeDateTime(selectedRouteContext.lastCaptureAt, localeTag) : "--"}</strong>
               </div>
             </div>
           ) : null}
@@ -244,7 +244,7 @@ export function WatchlistMapDecisionPanel({
           </div>
           <div className="watch-map-meta-item" role="listitem">
             <span>{t("watchlist.map.lastCaptureLabel")}</span>
-            <strong>{primary.freshnessTs ? safeDateTime(primary.freshnessTs) : "--"}</strong>
+            <strong>{primary.freshnessTs ? safeDateTime(primary.freshnessTs, localeTag) : "--"}</strong>
           </div>
         </div>
       ) : null}
@@ -306,7 +306,7 @@ export function WatchlistMapDecisionPanel({
             >
               <div className={`watch-map-chip ${route.isPrimary ? "is-primary" : ""}`}>
                 <strong>{route.origin}</strong>
-                <span>{route.priceCurrent != null ? formatCurrency(route.priceCurrent, route.currency) : t("watchlist.compare.noData")}</span>
+                <span>{route.priceCurrent != null ? formatCurrency(route.priceCurrent, route.currency, localeTag) : t("watchlist.compare.noData")}</span>
               </div>
             </MapMarker>
           ))}
@@ -323,7 +323,7 @@ export function WatchlistMapDecisionPanel({
             >
               <div className={`watch-map-chip watch-map-chip-destination ${route.isPrimary ? "is-primary" : ""}`}>
                 <strong>{route.destination}</strong>
-                <span>{route.priceTarget != null ? t("watchlist.map.targetLabel", { value: formatCurrency(route.priceTarget, route.currency) }) : t("watchlist.map.noTarget")}</span>
+                <span>{route.priceTarget != null ? t("watchlist.map.targetLabel", { value: formatCurrency(route.priceTarget, route.currency, localeTag) }) : t("watchlist.map.noTarget")}</span>
               </div>
             </MapMarker>
           ))}
@@ -351,13 +351,13 @@ export function WatchlistMapDecisionPanel({
                 <p>
                   {t("watchlist.compare.current")}:{" "}
                   {popupRoute.priceCurrent != null
-                    ? formatCurrency(popupRoute.priceCurrent, popupRoute.currency)
+                    ? formatCurrency(popupRoute.priceCurrent, popupRoute.currency, localeTag)
                     : t("watchlist.compare.noData")}
                 </p>
                 <p>
                   {t("watchlist.map.targetLabelShort")}:{" "}
                   {popupRoute.priceTarget != null
-                    ? formatCurrency(popupRoute.priceTarget, popupRoute.currency)
+                    ? formatCurrency(popupRoute.priceTarget, popupRoute.currency, localeTag)
                     : t("watchlist.map.noTarget")}
                 </p>
                 <button
