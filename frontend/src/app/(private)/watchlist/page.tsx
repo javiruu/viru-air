@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 
+import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
 import { useFtueHint } from "@/lib/ftue";
 import { AddWatchModal } from "@/modules/watchlist/components/AddWatchModal";
@@ -46,6 +47,7 @@ const CHART_PAD = { left: 54, right: 18, top: 18, bottom: 38 };
 export default function WatchlistPage() {
   const router = useRouter();
   const { t, localeTag } = useI18n();
+  const { notify } = useNotificationCenter();
 
   const watchlistHint = useFtueHint("watchlist");
 
@@ -61,6 +63,16 @@ export default function WatchlistPage() {
   );
   const isLoadingHistory = Boolean(derived.selectedWatch && actions.isLoadingHistoryInitial && !hasHistoryData);
   const isRefreshingHistory = Boolean(actions.isRefreshingFiltered && hasHistoryData);
+  const handleSelectWatch = (watch: Parameters<typeof selectWatch>[0]) => {
+    selectWatch(watch);
+    notify({ tone: "success", title: t("watchlist.messages.flightSelected") });
+  };
+  const handleSelectWatchById = (watchId: string) => {
+    const watchExists = actions.items.some((item) => item.id === watchId);
+    if (!watchExists) return;
+    selectWatchById(watchId);
+    notify({ tone: "success", title: t("watchlist.messages.flightSelected") });
+  };
 
   return (
     <main className="shell watchlist-page" id="main-content">
@@ -165,7 +177,7 @@ export default function WatchlistPage() {
             onSearchChange={view.setWatchSearch}
             onSortChange={view.setWatchSort}
             onClearSearch={() => view.setWatchSearch("")}
-            onSelectWatch={selectWatch}
+            onSelectWatch={handleSelectWatch}
             onRefreshWatch={actions.refresh}
             onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
             onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
@@ -188,7 +200,7 @@ export default function WatchlistPage() {
             onToggleCalendarSelector={view.toggleCalendarSelector}
             onCloseCalendarSelector={view.closeCalendarSelector}
             onCalendarSelectorDayChange={view.setCalendarSelectorDay}
-            onSelectWatchById={selectWatchById}
+            onSelectWatchById={handleSelectWatchById}
             onCalendarPrevMonth={view.prevMonth}
             onCalendarNextMonth={view.nextMonth}
           />
@@ -228,7 +240,7 @@ export default function WatchlistPage() {
             onFocusWatch={(watchId) => {
               const watch = actions.items.find((item) => item.id === watchId);
               if (!watch) return;
-              selectWatch(watch);
+              handleSelectWatch(watch);
             }}
           />
         </div>
