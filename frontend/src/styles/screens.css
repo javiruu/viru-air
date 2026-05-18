@@ -16492,6 +16492,65 @@ textarea::placeholder {
   gap: 1.35rem;
 }
 
+.landing-shell-full {
+  position: relative;
+  width: 100%;
+  overflow-x: clip;
+  display: grid;
+  gap: 1.2rem;
+  padding: var(--ui-shell-padding-top) 0 var(--ui-shell-padding-bottom);
+}
+
+.landing-inner {
+  width: min(100%, 1440px);
+  margin: 0 auto;
+  padding-inline: clamp(1rem, 2.8vw, 2.5rem);
+}
+
+.landing-inner-wide {
+  width: min(100%, 1600px);
+}
+
+.landing-fullband {
+  width: 100%;
+  padding-inline: clamp(0.4rem, 1.4vw, 1rem);
+}
+
+.landing-fullband-hero,
+.landing-fullband-proof,
+.landing-fullband-close {
+  position: relative;
+}
+
+.landing-fullband-hero::before,
+.landing-fullband-proof::before,
+.landing-fullband-close::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.landing-fullband-hero::before {
+  background:
+    radial-gradient(circle at 12% 40%, color-mix(in srgb, var(--landing-glow-warm) 60%, transparent), transparent 48%),
+    radial-gradient(circle at 84% 22%, color-mix(in srgb, var(--accent-2) 12%, transparent), transparent 42%);
+}
+
+.landing-fullband-proof::before {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--landing-glow-warm) 48%, transparent), transparent 48%);
+}
+
+.landing-fullband-close::before {
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--landing-route-line) 8%, transparent));
+}
+
+.landing-fullband .landing-inner {
+  position: relative;
+  z-index: 1;
+}
+
 .landing-header {
   display: flex;
   justify-content: space-between;
@@ -16882,6 +16941,14 @@ textarea::placeholder {
 
   .landing-shell {
     gap: 1rem;
+  }
+
+  .landing-shell-full {
+    gap: 0.95rem;
+  }
+
+  .landing-fullband {
+    padding-inline: 0.35rem;
   }
 }
 

@@ -1,0 +1,4 @@
+desktop-light: path=/, overflow=false, body=1520, viewport=1536
+desktop-dark: path=/, overflow=false, body=1520, viewport=1536
+mobile-light: path=/, overflow=false, body=374, viewport=390
+mobile-dark: path=/, overflow=false, body=374, viewport=390

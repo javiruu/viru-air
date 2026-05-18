@@ -75,7 +75,11 @@ function buildHrefWithOrigin(href: string) {
   return new URL(href, window.location.origin).toString();
 }
 
-export default function ViruFooterBlock() {
+type ViruFooterBlockProps = {
+  variant?: "default" | "landing";
+};
+
+export default function ViruFooterBlock({ variant = "default" }: ViruFooterBlockProps) {
   const { t } = useI18n();
   const pathname = usePathname() ?? "/";
   const shouldReduceMotion = useReducedMotion();
@@ -219,7 +223,7 @@ export default function ViruFooterBlock() {
 
   return (
     <motion.footer
-      className="viru-footer-block"
+      className={`viru-footer-block${variant === "landing" ? " viru-footer-landing" : ""}`}
       initial={shouldReduceMotion ? undefined : { opacity: 0, y: 18 }}
       whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
