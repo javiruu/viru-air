@@ -1,117 +1,87 @@
-﻿Status: canonical
-Scope: UI system, visual contract, or design guidance
-Last reviewed: 2026-04-15
-Canonical source: docs/ui/UI_SYSTEM_V1.md
-Related: docs/ui/UI_SYSTEM_V1.md, docs/specs/README.md
+Status: canonical  
+Scope: UI system, visual contract  
+Last reviewed: 2026-05-15  
+Fuente de verdad: docs/ui/UI_SYSTEM_V1.md  
 
----
-# UI System v1 — Freeze oficial (Viru-Tracker)
+---  
 
-Estado: **Vigente**
-Fecha de freeze: 2026-03-09
+# UI System v1 — Freeze oficial (Viru Tracker)
 
-Este documento es la referencia oficial para evitar deriva del sistema visual.
+**Estado:** Vigente  
+**Fecha de freeze:** 2026-03-09  
 
-## 0) Skill operativo para agentes (frontend estetica)
-- Skill instalado: `/.codex/skills/taste-skill/SKILL.md`.
-- Uso: direccionar implementacion visual en tareas UI para mantener caracter editorial y evitar soluciones genericas.
-- No sustituye este freeze: cualquier propuesta del skill debe respetar tokens, naming y patrones congelados en este documento.
+Este documento define los tokens y patrones visuales _congelados_ para Viru Tracker. Cualquier propuesta de cambio UI debe respetar las convenciones aquí establecidas.
 
-## 1) Tokens congelados (canon)
-Fuente: `frontend/src/styles/tokens.css`
+## 0) Skill operativo para agentes (frontend estética)
+- Skill: `/.codex/skills/taste-skill/SKILL.md` (usar para orientación estética).
+- No sustituir tokens/patrones de este documento sin aprobación. El Skill sugiere mejoras (jerarquía, ritmo, motion) pero _no modifica_ los nombres ni tokens congelados aquí listados.
 
-### Spacing y layout base
-- `--space-section-sm`
-- `--space-section-md`
-- `--space-section-lg`
-- `--space-panel-padding`
-- `--space-panel-header-gap`
+## 1) Tokens básicos congelados  
+_Fuente: `frontend/src/styles/tokens.css`_
 
-### Tipografía auxiliar
-- `--text-meta-size`
+### Espaciados
+- `--space-section-sm`, `--space-section-md`, `--space-section-lg` (tamaños de sección).
+- `--space-panel-padding` (padding interno de panel).
+- `--space-panel-header-gap` (gap en cabecera de panel).
 
-### Tokens de estado (semántica)
-- `--state-success-bg|border|text|icon`
-- `--state-warning-bg|border|text|icon`
-- `--state-error-bg|border|text|icon`
-- `--state-info-bg|border|text|icon`
+### Tipografía
+- `--text-meta-size` (tamaño de texto auxiliar/meta, e.g. fechas, códigos).
 
-### Tokens de apoyo dashboard (congelados v1)
-- `--dashboard-section-gap`
-- `--dashboard-block-gap`
-- `--dashboard-muted-size`
-- `--dashboard-muted-tone`
+### Semántica de estados
+- `--state-success-bg/border/text/icon` (éxito).
+- `--state-warning-bg/border/text/icon` (advertencia; usamos ámbar suave).
+- `--state-error-bg/border/text/icon` (error; usamos coral suave).
+- `--state-info-bg/border/text/icon` (información; usamos hielo azul).
 
-## 2) Componentes/patrones base congelados
-Fuente: `frontend/src/styles/components.css`
+### Colores base congelados
+- `--bg` (fondo base: #121212).
+- `--surface` (panel principal: #1E1E1E).
+- `--surface-2` (panel secundario: #242424).
+- `--ink` (texto principal: #F5EAD6).
+- `--accent` (acción primaria: #FFB000, luz de pista).
+- `--accent-2` (acción/estado secundario: #10B981, verde radar).
+- `--border` (borde sutil: #242424).
+- `--shadow` (sombra ligera, e.g. rgba(0,0,0,0.6)).
 
-- `panel`, `panel-soft`
-- `panel-title`, `panel-subtitle`, `panel-note`
-- `page-header`
-- `panel-header`, `panel-actions`
-- `list-row`
-- `action-row`, `row-actions`
-- `section-gap`, `section-gap-sm`, `section-gap-lg`
-- `notice-compact`, `notice-actions`
-- `card`
-- `status-pill` (`success|warning|error|info`)
-- `state-success|warning|error|info`
+## 2) Componentes base congelados  
+_Fuente: `frontend/src/styles/components.css`_
 
-## 3) Reglas congeladas por capa
-- `tokens.css`: semántica reutilizable (colores, spacing, estados, jerarquías base).
-- `components.css`: patrones reutilizables, no dependientes de una ruta concreta.
-- `screens.css`: solo reglas de pantalla (layout/orden/overrides específicos).
-- `globals.css`: agregación de capas.
+- `panel`, `panel-soft` (contenedores).
+- `page-header`, `panel-header`, `panel-actions`.
+- `panel-title`, `panel-subtitle`.
+- `list-row`, `action-row`, `row-actions`.
+- `section-gap`, `section-gap-sm`, `section-gap-lg`.
+- `card`, `status-pill`, `notice-compact`, `notice-actions`.
+- Clases de estado aplicables: `state-success`, `state-warning`, `state-error`, `state-info`.
 
-## 4) Naming congelado
-### Tokens
-- `--categoria-subcategoria-modificador`
-- Ejemplo: `--state-error-border`
+## 3) Reglas por capa
+- `tokens.css`: definiciones semánticas (colores, spacing, estados).  
+- `components.css`: patrones reutilizables, independientes de rutas.  
+- `screens.css`: ajustes exclusivos de una pantalla.  
+- `globals.css`: importación de las capas anteriores.  
 
-### Clases de estado
-- `state-success|warning|error|info`
-- `status-pill success|warning|error|info`
+## 4) Naming y convención
+- **Tokens:** `--categoria-subcategoria-modificador` (e.g. `--state-error-border`).  
+- **Estados:** `state-success|warning|error|info`; `status-pill.success|warning|error|info`.  
+- **Clases de patrones:** nombres semánticos (`panel-*`, `notice-*`, `action-row`, `list-row`). No usar nombres ambiguos (`misc`, `tmp`, `box2`, etc.).  
 
-### Patrones
-- nombres semánticos (`panel-*`, `notice-*`, `action-row`, `list-row`)
-- prohibidos nombres ambiguos (`misc`, `tmp`, `box2`, `wrapFix`, etc.)
+## 5) Glosario UI (texto visible ES)
+- **Términos:** Panel, Seguimiento, Búsqueda rápida, Alerta, Histórico, Comparativa, Preferencias, Ayuda, **Aeropuerto, Vuelo**.  
+- **Verbos:** Buscar, Actualizar, Guardar, Eliminar, Activar/Desactivar, Reintentar.  
+- **Estados breves:** Cargando…, Sin resultados, Error, Listo.  
 
-## 5) Glosario UI congelado (ES visible)
-Términos:
-- Panel, Seguimiento, Búsqueda rápida, Alerta, Histórico, Comparativa, Preferencias, Ayuda
+## 6) Evolución controlada
+- **Nuevos tokens:** crear _solo si_ valor repetido en 2+ módulos (espacio, color, radio, semántica).  
+- **Nuevos patrones:** crear en `components.css` _solo si_ aparece en 2+ pantallas.  
+- **Mantener en `screens.css`** lo exclusivo de una ruta.  
+- Cualquier excepción debe documentarse en el PR (ui visual checklist).
 
-Verbos:
-- Buscar, Actualizar, Guardar, Eliminar, Activar/Desactivar, Reintentar
+## 7) Elementos en refactor (no congelados aún)
+- Composición interna de Quick Search.  
+- Overrides responsive puntuales en `screens.css`.  
+- Alias legacy de rutas (`/history`, `/preferences`) aún redirigen por compatibilidad.  
 
-Estados breves:
-- Cargando…, Sin resultados, Error, Listo
-
-## 6) Evolución controlada (cómo extender sin degradar)
-Crear token nuevo **solo si**:
-1) el valor se repite en 2+ módulos, o
-2) representa semántica estable (estado, jerarquía, spacing de sistema).
-
-Crear patrón en `components.css` **solo si**:
-1) aparece en 2+ pantallas, y
-2) no depende del orden/layout de una ruta específica.
-
-Mantener en `screens.css` **solo si**:
-1) el comportamiento es exclusivo de una pantalla, o
-2) la abstracción generaría acoplamiento artificial.
-
-Toda excepción debe documentarse en PR (sección UI visual checklist).
-
-## 7) Elementos no congelados aún (deliberado)
-- `quick-search` a nivel de composición interna (sigue en refactor progresivo).
-- ciertos overrides responsive puntuales en `screens.css` pendientes de consolidación.
-- alias legacy de rutas (`/history`, `/preferences`) se mantienen por compatibilidad.
-
-## 8) Compatibilidad y deprecación
-- Rutas canónicas: `/dashboard`, `/watchlist`, `/quick-search`, `/alerts`, `/preferencias`.
-- Puentes compatibles: `/history`, `/preferences` (redirigen a canónicas).
-- Evitar reintroducir `warn` como naming activo; usar `warning`.
-
-
-
-
-
+## 8) Compatibilidad
+- **Rutas canon:** `/dashboard`, `/watchlist`, `/quick-search`, `/alerts`, `/preferencias`.  
+- **Rutas legacy:** `/history`→`/preferencias`, `/suggestions`→en revisión.  
+- **Naming legacy:** nunca usar `warn` en nuevos cambios (usar `warning`).

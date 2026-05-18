@@ -1,382 +1,44 @@
-# COLOR_PALETTE_AUDIT.md
+Status: canonical  
+Scope: QA visual  
+Last reviewed: 2026-05-15  
+Fuente de verdad: docs/qa/visual/color-palette-audit.md  
 
-## 1. Resumen ejecutivo
+---  
 
-La paleta de Viru Tracker tiene una base sÛlida y distintiva: c·lida en light, carbÛn/verde editorial en dark, y un acento coral coherente. El sistema ya usa muchos tokens (`--bg`, `--surface`, `--ink`, `--accent`), pero convive con hardcodes y bloques paralelos (sobre todo en `screens.css`) que introducen duplicados y fugas light/dark.
+# Auditor√≠a de la paleta de colores y plan de consolidaci√≥n
 
-Fortalezas:
-- Identidad crom·tica clara (crema + carbÛn + coral + verde editorial).
-- Tema dark definido en variables globales.
-- Uso extensivo de `color-mix` para matices y estados.
+Este documento consolida la **paleta definitiva** de Viru Tracker bajo la nueva direcci√≥n ‚ÄúAviation Dark-Luxe‚Äù y detalla el plan de migraci√≥n desde colores dispersos. Debe usarse como referencia para asegurar consistencia crom√°tica en todo el producto.
 
-Problemas prioritarios:
-- Hardcodes frÌos tipo slate/blue en zonas de UI general (`#334155`, `#E2E8F0`, `#F8FAFC`, `#CBD5E1`).
-- Colores inline en componentes TSX sin token sem·ntico (mapa, gr·ficos, skeleton overlays).
-- Estados y superficies duplicadas con opacidades cercanas.
+## 1) Paleta visual consolidada
 
-Prioridad de consolidaciÛn: **alta** (sin rediseÒo visual, con normalizaciÛn de tokens).
+| Rol/uso                   | Color (HEX)  | Contraste (fondo oscuro/base) | Uso recomendado                                      |
+|---------------------------|-------------|-------------------------------|------------------------------------------------------|
+| **Fondo primario**        | `#121212`   | 17.6:1 (vs crema)             | Fondo principal (mode noche, *canvas* general)       |
+| **Panel principal**       | `#1E1E1E`   | 15.7:1                         | Paneles de UI principales, secciones destacadas      |
+| **Superficie secundaria** | `#242424`   | 14.5:1                         | Tarjetas internas, modales, overlays oscuros         |
+| **Texto principal**       | `#F5EAD6`   | 17.6:1                         | Titulos y texto por defecto sobre fondo oscuro       |
+| **Texto secundario**      | `#CCCCCC`   | 10.2:1                         | Subt√≠tulos, etiquetas, leyendas secundarias          |
+| **Accent primario**       | `#FFB000`   | 10.2:1                         | CTA principal, √≠conos de acci√≥n destacada (√°mbar)    |
+| **Accent secundario**     | `#10B981`   | 7.4:1                          | Estados secundarios, gr√°ficos informativos (verde)   |
+| **Info/altitud**         | `#50BFE6`   | 8.9:1                          | Gr√°ficos/claves informativas (azul claro)            |
+| **Advertencia/alerta**    | `#FF6464`   | 6.5:1                          | Mensajes de error/alerta (coral)                     |
+| **Ambiente (humo)**       | `#7C7CFF`   | 5.5:1                          | Detalles atmosf√©ricos suaves, gradientes ligeros     |
 
-## 2. Personalidad crom·tica de Viru
+> **Notas:** 
+> - Todos los colores sobre fondo (#121212 o #1E1E1E) cumplen contraste WCAG AA/AAA.  
+> - Se proh√≠ben colores no listados (verde ne√≥n, magenta, amarillo puro, etc.).  
+> - Los neutrales (borde, sombra) usar√°n variantes de los anteriores (p.ej. bordes `#242424`, sombras negras transl√∫cidas).  
 
-Identidad actual detectada:
-- C·lido editorial en light: crema, marfil, beige, carbÛn suave.
-- Dark sobrio: fondo verde-carbÛn, superficies profundas, texto marfil.
-- Acento principal coral (`#d95d39` / `#e07b56`) con soporte verde editorial (`#2e6e62` / `#6fb2a1`).
-- Toques azul/sky puntuales para mapas/seÒales y estados de navegaciÛn.
-- Resultado global: premium, artesanal controlado, no plantilla SaaS genÈrica.
+## 2) Plan de consolidaci√≥n
+1. **Identificar paleta actual:** Auditar estilos CSS para detectar colores fuera de la paleta base.  
+2. **Reemplazar colores:** Sustituir instancias directas (hex en CSS/JSX) por tokens o variables alineadas (ej. `--accent`, `--ink`).  
+3. **Actualizar tokens:** Asegurar que `tokens.css` y `design tokens` reflejen la paleta arriba.  
+4. **Verificaci√≥n accesibilidad:** Con cada cambio, comprobar contraste con herramienta (>=4.5:1).  
+5. **Documentaci√≥n QA:** Registrar resultados en la matriz de trazabilidad QA y revisar en PR correspondiente.  
 
-## 3. Colores encontrados
-
-Inventario tÈcnico (fuente: `scripts/extract-colors.mjs`, escaneo `frontend/src`):
-
-| MÈtrica | Valor |
-|---|---:|
-| Archivos escaneados | 134 |
-| Matches totales | 3814 |
-| Variables CSS ˙nicas | 196 |
-| Funciones de color ˙nicas | 256 |
-| Colores `rgb/rgba` ˙nicos | 426 |
-| Colores hex ˙nicos | 209 |
-| Inline styles con color | 1 patrÛn |
-
-Colores m·s frecuentes (muestra):
-
-| Color | Formato | Apariciones | Archivos clave | Posible rol | Nota |
-|---|---|---:|---|---|---|
-| `#334155` | hex | 17 | `frontend/src/styles/screens.css` | Texto frÌo/auxiliar | Sospechoso fuera del n˙cleo Viru |
-| `#E2E8F0` | hex | 14 | `frontend/src/styles/screens.css` | Border/soft bg | Tono slate ajeno a crema-base |
-| `#CBD5E1` | hex | 10 | `frontend/src/styles/screens.css` | Border | Duplicado funcional de bordes suaves |
-| `#F8FAFC` | hex | 9 | `frontend/src/styles/screens.css` | Surface clara | Riesgo de fuga en dark |
-| `#1f1d1a` | hex | 8 | `screens.css`, `HistoryIntegratedPanel.tsx` | Ink light | Color n˙cleo v·lido |
-| `#d95d39` | hex | 4 | `screens.css`, `tokens.css` | Acento light | Color n˙cleo v·lido |
-| `#fffaf4` | hex | 4 | `screens.css`, `HistoryIntegratedPanel.tsx` | Surface light | N˙cleo v·lido, evitar hardcode en TSX |
-
-## 4. Paleta light actual
-
-| Nombre | Valor actual | Uso | DÛnde aparece | Comentario |
-|---|---|---|---|---|
-| `bg` | `#f6f0e7` | Fondo base | `frontend/src/styles/screens.css:2` | Base correcta Viru |
-| `surface` | `#fffaf4` | Tarjetas/superficies | `screens.css:3` | Muy coherente |
-| `surface-2` | `#f4ede2` | Surface elevada/muted | `screens.css:4` | Buena separaciÛn |
-| `ink` | `#1f1d1a` | Texto primario | `screens.css:6` | Contraste alto |
-| `ink-muted` | `#5b5349` | Texto secundario | `screens.css:7` | Legible |
-| `accent` | `#d95d39` | CTA/principal | `screens.css:8` | Identidad central |
-| `accent-2` | `#2e6e62` | Estado/editorial | `screens.css:9` | Buen soporte |
-| `border` | `#d9cdbb` | Bordes suaves | `screens.css:11` | Coherente con crema |
-| `border-default` | `#9f8769` | Bordes fuertes | `screens.css:58` | ⁄til para inputs |
-| `input-bg` | `#ffffff` | Fondo campos | `screens.css:16` | Correcto en light |
-| `panel-bg` | `#fffaf4` | Paneles | `screens.css:17` | Igual a surface (puede consolidarse) |
-
-## 5. Paleta dark actual
-
-| Nombre | Valor actual | Uso | DÛnde aparece | Comentario |
-|---|---|---|---|---|
-| `bg` | `#0f1211` | Fondo base dark | `screens.css:72` | Correcto, sobrio |
-| `surface` | `#191f1d` | Surface principal | `screens.css:73` | Correcto |
-| `surface-2` | `#141a18` | Elevated/muted | `screens.css:74` | Correcto |
-| `ink` | `#f2ebe0` | Texto primario | `screens.css:76` | Muy buen contraste |
-| `ink-muted` | `#b7b0a6` | Texto secundario | `screens.css:77` | Legible |
-| `accent` | `#e07b56` | CTA/acento dark | `screens.css:78` | Mantiene car·cter |
-| `accent-2` | `#6fb2a1` | Soporte/success | `screens.css:79` | Correcto |
-| `border` | `#2d3532` | Bordes dark | `screens.css:81` | Base correcta |
-| `border-default` | `#5f6f68` | Borde fuerte/inputs | `screens.css:113` | ⁄til para controles |
-| `input-bg` | `#121614` | Fondo input | `screens.css:86` | Correcto |
-| `panel-bg` | `#161c19` | Paneles dark | `screens.css:87` | Correcto |
-
-## 6. Paleta light recomendada
-
-| Token | Valor | Uso | JustificaciÛn |
-|---|---|---|---|
-| `--color-bg` | `#f6f0e7` | Fondo base | Ya existe y funciona |
-| `--color-surface` | `#fffaf4` | Surface primaria | Coherencia editorial |
-| `--color-surface-elevated` | `#f4ede2` | Capa 2 | Evita cremas extras |
-| `--color-border` | `#d9cdbb` | Borde est·ndar | Uniformar border suaves |
-| `--color-border-strong` | `#9f8769` | Borde foco/input | Consolidar inputs |
-| `--color-text-primary` | `#1f1d1a` | Texto principal | Contraste excelente |
-| `--color-text-secondary` | `#5b5349` | Texto secundario | Mantener tono c·lido |
-| `--color-accent` | `#d95d39` | AcciÛn primaria | N˙cleo marca Viru |
-| `--color-accent-text` | `#fdf7ef` | Texto sobre CTA | Mantiene contraste sin negro duro |
-
-## 7. Paleta dark recomendada
-
-| Token | Valor | Uso | JustificaciÛn |
-|---|---|---|---|
-| `--color-bg` | `#0f1211` | Fondo base | Ya correcto |
-| `--color-surface` | `#191f1d` | Surface principal | Estable |
-| `--color-surface-elevated` | `#141a18` | Capa elevada | Reduce ruido |
-| `--color-border` | `#2d3532` | Borde est·ndar | Base dark consistente |
-| `--color-border-strong` | `#5f6f68` | Bordes de control | Mejor separaciÛn |
-| `--color-text-primary` | `#f2ebe0` | Texto principal | Legibilidad alta |
-| `--color-text-secondary` | `#b7b0a6` | Texto secundario | Tono editorial sobrio |
-| `--color-accent` | `#e07b56` | AcciÛn principal dark | Continuidad de marca |
-| `--color-accent-text` | `#15110d` | Texto sobre CTA dark | Ratio adecuado |
-
-## 8. Tokens sem·nticos recomendados
-
-Estado: `exists` = ya existe en tokens o base; `create` = crear; `replace-hardcodes` = debe reemplazar hex/rgba directos.
-
-| Token | Light (actual/reco) | Dark (actual/reco) | Uso | Estado |
-|---|---|---|---|---|
-| `--color-bg` | `#f6f0e7` | `#0f1211` | Fondo app | exists |
-| `--color-app-shell` | `var(--bg)` | `var(--bg)` | Shell | exists |
-| `--color-surface` | `#fffaf4` | `#191f1d` | Surface base | exists |
-| `--color-surface-elevated` | `#f4ede2` | `#141a18` | Surface 2 | exists |
-| `--color-surface-muted` | `color-mix(...)` | `color-mix(...)` | Layer muted | create |
-| `--color-card` | `#fffaf4` | `#161c19` | Cards | exists |
-| `--color-card-hover` | `color-mix(...)` | `color-mix(...)` | Hover card | exists |
-| `--color-border` | `#d9cdbb` | `#2d3532` | Border base | exists |
-| `--color-border-strong` | `#9f8769` | `#5f6f68` | Border fuerte | exists |
-| `--color-text-primary` | `#1f1d1a` | `#f2ebe0` | Texto principal | exists |
-| `--color-text-secondary` | `#5b5349` | `#b7b0a6` | Texto secundario | exists |
-| `--color-text-muted` | `#5b5349` | `#b7b0a6` | Texto muted | exists |
-| `--color-text-disabled` | `color-mix(...)` | `color-mix(...)` | Disabled text | exists |
-| `--color-text-inverse` | `#fdf7ef` | `#15110d` | Inverso | create |
-| `--color-accent` | `#d95d39` | `#e07b56` | CTA/acento | exists |
-| `--color-accent-hover` | `color-mix(...)` | `color-mix(...)` | Hover CTA | exists |
-| `--color-accent-pressed` | `color-mix(...)` | `color-mix(...)` | Pressed CTA | exists |
-| `--color-accent-text` | `#fdf7ef` | `#15110d` | Texto CTA | exists |
-| `--color-input-bg` | `#ffffff` | `#121614` | Fondo input | exists |
-| `--color-input-text` | `#1f1d1a` | `#f2ebe0` | Texto input | create |
-| `--color-input-placeholder` | `#7a7165` | `#b5ac9f` | Placeholder | create |
-| `--color-input-border` | `#8c7558` | `#62736b` | Borde input | exists |
-| `--color-input-focus` | `rgba(217,93,57,.62)` | `rgba(232,150,120,.78)` | Foco input | exists |
-| `--color-button-primary-bg` | `#d95d39` | `#e07b56` | BotÛn principal | create |
-| `--color-button-primary-text` | `#fdf7ef` | `#15110d` | Texto botÛn principal | exists |
-| `--color-button-secondary-bg` | `#f4ede2` | `#141a18` | BotÛn secundario | exists |
-| `--color-button-secondary-text` | `#1f1d1a` | `#f2ebe0` | Texto secundario | exists |
-| `--color-button-secondary-border` | `#9f8769` | `#5f6f68` | Borde secundario | exists |
-| `--color-button-disabled-bg` | `color-mix(...)` | `color-mix(...)` | Disabled bg | create |
-| `--color-button-disabled-text` | `color-mix(...)` | `color-mix(...)` | Disabled text | create |
-| `--color-chip-bg` | `color-mix(...)` | `color-mix(...)` | Chips | exists |
-| `--color-chip-text` | `#1f1d1a` | `#f2ebe0` | Texto chips | exists |
-| `--color-chip-border` | `color-mix(...)` | `color-mix(...)` | Borde chips | exists |
-| `--color-badge-bg` | `color-mix(...)` | `color-mix(...)` | Badges | create |
-| `--color-badge-text` | `#1f1d1a` | `#f2ebe0` | Texto badge | create |
-| `--color-badge-border` | `color-mix(...)` | `color-mix(...)` | Border badge | create |
-| `--color-success-bg` | `rgba(46,110,98,.12)` | `color-mix(#2e6e62...)` | Estado success | create (map from state) |
-| `--color-success-text` | `var(--ink)` | `var(--ink)` | Estado success text | create |
-| `--color-success-border` | `rgba(46,110,98,.4)` | `color-mix(#2e6e62...)` | Estado success border | create |
-| `--color-warning-bg` | `rgba(205,154,86,.12)` | `color-mix(#cd9a56...)` | Estado warning | create |
-| `--color-warning-text` | `var(--ink)` | `var(--ink)` | Warning text | create |
-| `--color-warning-border` | `rgba(205,154,86,.42)` | `color-mix(#cd9a56...)` | Warning border | create |
-| `--color-danger-bg` | `rgba(217,93,57,.12)` | `color-mix(#d95d39...)` | Error bg | create |
-| `--color-danger-text` | `var(--ink)` | `var(--ink)` | Error text | create |
-| `--color-danger-border` | `rgba(217,93,57,.4)` | `color-mix(#d95d39...)` | Error border | create |
-| `--color-info-bg` | `rgba(79,127,166,.1)` | `color-mix(#4f7fa6...)` | Info bg | create |
-| `--color-info-text` | `var(--ink)` | `var(--ink)` | Info text | create |
-| `--color-info-border` | `rgba(79,127,166,.36)` | `color-mix(#4f7fa6...)` | Info border | create |
-| `--color-footer-bg` | `color-mix(...)` | `color-mix(...)` | Footer fondo | exists |
-| `--color-footer-text` | `#5b5349` | `#b7b0a6` | Footer texto | exists |
-| `--color-footer-link` | `var(--accent)` | `var(--accent)` | Footer links | create |
-| `--color-dropdown-bg` | `color-mix(...)` | `color-mix(...)` | Dropdown bg | exists |
-| `--color-dropdown-border` | `var(--border)` | `var(--border)` | Dropdown border | create |
-| `--color-dropdown-hover` | `color-mix(...)` | `color-mix(...)` | Dropdown hover | create |
-
-## 9. Contraste y legibilidad
-
-Ratios estimados con valores base de tokens (sin overlays din·micos):
-
-| Par | Ratio | Pass/Fail | Comentario |
-|---|---:|---|---|
-| Light `text-primary` sobre `bg` | 14.84 | Pass | Muy sÛlido |
-| Light `text-secondary` sobre `bg` | 6.67 | Pass | Correcto |
-| Light `text-primary` sobre `card` | 16.20 | Pass | Excelente |
-| Light `text-secondary` sobre `card` | 7.28 | Pass | Correcto |
-| Light `accent` sobre `bg` | 3.32 | Pass (solo texto grande/UI) | Para texto normal falla 4.5 |
-| Light `button-primary-text` sobre `button-primary-bg` | 3.54 | Pass (texto grande/UI) | Mejorable si se usa texto pequeÒo |
-| Light `input-text` sobre `input-bg` | 16.81 | Pass | Excelente |
-| Light `input-border` sobre `bg` | 3.86 | Pass UI | Correcto |
-| Light `chip-text` sobre `chip-bg` | 14.46 | Pass | Excelente |
-| Light `footer-text` sobre `footer-bg` | 6.50 | Pass | Correcto |
-| Dark `text-primary` sobre `bg` | 15.91 | Pass | Excelente |
-| Dark `text-secondary` sobre `bg` | 8.77 | Pass | Correcto |
-| Dark `text-muted` sobre `bg` | 8.77 | Pass | Correcto |
-| Dark `text-primary` sobre `card` | 14.61 | Pass | Excelente |
-| Dark `text-secondary` sobre `card` | 8.05 | Pass | Correcto |
-| Dark `accent` sobre `bg` | 6.40 | Pass | Muy bien |
-| Dark `button-primary-text` sobre `button-primary-bg` | 6.38 | Pass | Muy bien |
-| Dark `input-text` sobre `input-bg` | 15.41 | Pass | Excelente |
-| Dark `input-placeholder` sobre `input-bg` | 8.14 | Pass | Correcto |
-| Dark `input-border` sobre `bg` | 3.75 | Pass UI | Correcto |
-| Dark `chip-text` sobre `chip-bg` | 14.13 | Pass | Excelente |
-| Dark `badge-text` sobre `badge-bg` | 10.64 | Pass | Correcto |
-| Dark `footer-text` sobre `footer-bg` | 8.21 | Pass | Correcto |
-| Dark `dropdown-text` sobre `dropdown-bg` | 14.13 | Pass | Excelente |
-
-`needs rendered verification`:
-- Cualquier color que dependa de `color-mix(...)` + opacidad + gradiente + backdrop (`notification-card`, overlays, hero cards), porque la luminancia real cambia seg˙n fondo renderizado.
-
-## 10. Hardcodes y fugas detectadas
-
-### Theme leakage detected
-
-| Ruta/Componente | Selector/archivo | Color detectado | Problema | SoluciÛn recomendada |
-|---|---|---|---|---|
-| `frontend/src/styles/screens.css` | lÌneas `2241-2443`, `6181-6219` | `#E2E8F0`, `#CBD5E1`, `#F8FAFC`, `#334155` | Bloque frÌo slate en UI general, desalineado con crema/carbÛn de Viru | Redirigir a `--color-surface*`, `--color-border*`, `--color-text-secondary` |
-| `frontend/src/styles/screens.css` | lÌneas `1490`, `2510`, `6194` | `#FEF3C7` | Amarillo puntual sin token sem·ntico | Crear token de warning-bg o mapear a `--color-warning-bg` |
-| `frontend/src/modules/quick-search/components/QuickSearchLoadingProgress.tsx` | lÌnea `74` | fallback `#0F172A` | Fallback hardcode puede romper coherencia tem·tica | Reemplazar por token `--color-text-primary`/`--qs-boarding-ink` sin fallback fijo |
-| `frontend/src/components/ui/map.tsx` | lÌnea `213` | `#4285F4` | Azul por defecto no Viru si no se pasa color | Token `--color-info` o color de ruta sem·ntico |
-| `frontend/src/app/(private)/watchlist/page.tsx` | lÌnea `33` | `#D95D39`, `#2E6E62`, `#B45309`, `#0F766E`, `#7C2D12`, `#1D4ED8` | Paleta de series mezclada; algunos tonos fuera del sistema | Tokenizar paleta data-viz (`--chart-series-*`) por tema |
-| `frontend/src/modules/watchlist/components/WatchlistMapDecisionPanel.tsx` | lÌneas `18-19` | `#D95D39`, `#2E6E62`, `#8F7A65` | Hardcodes en lÛgica de color de mapa | Pasar colores vÌa tokens o config tem·tica |
-| `frontend/src/modules/watchlist/components/HistoryIntegratedPanel.tsx` | lÌneas `414`, `422`, `453`, `469`, `553-555` | `#b8a995`, `#fffaf4`, `#1f1d1a`, `rgba(...)` | Mezcla de colores directos dentro del componente | Mover a tokens CSS o classes con variables |
-| `frontend/src/components/components/dashboard/DashboardNewsRail.tsx` | lÌnea `21` | `rgba(12,16,20,...)` | Overlay fijo oscuro independiente del tema | Token `--color-image-overlay-*` para light/dark |
-
-## 11. Reglas de uso
-
-- `bg`: solo fondo global de p·gina.
-- `surface`: contenedores base.
-- `surface-elevated`: paneles destacados o capas internas.
-- `card`: componentes tarjeta con sombra y borde.
-- `border`: separadores normales.
-- `border-strong`: inputs, focus y lÌmites de mayor contraste.
-- `text-primary`: tÌtulos y body principal.
-- `text-secondary`: metadatos y apoyo.
-- `text-muted`: ayudas/descripciones de menor prioridad.
-- `accent`: CTA principal, enlaces activos, seÒales de acciÛn.
-- `success/warning/danger/info`: solo feedback/estado sem·ntico, nunca decoraciÛn arbitraria.
-
-## 12. Plan de consolidaciÛn por fases
-
-1. Fase 1 (quick wins)
-- Sustituir hardcodes obvios en `screens.css` por tokens existentes.
-- Introducir tokens faltantes de input/button/badge/state sin alterar layout.
-
-2. Fase 2 (componentes base)
-- Normalizar botones, inputs, chips, badges, dropdown, footer con tokens sem·nticos.
-- Reducir duplicados de border/surface.
-
-3. Fase 3 (pantallas especÌficas)
-- Watchlist, Quick Search, Dashboard overlays, Support cards.
-- Mover colores inline TSX a tokens/clases.
-
-4. Fase 4 (verificaciÛn visual)
-- Validar light/dark con screenshots o TestSprite en rutas crÌticas.
-- Revisar contraste real en overlays/gradientes con render final.
-
-## 13. No hacer
-
-- No crear tonos nuevos sin rol sem·ntico explÌcito.
-- No usar `#fff`/`#000` directos en componentes de UI de producto.
-- No introducir colores en TSX si existe token global.
-- No parchear por pantalla si el problema es token base.
-- No romper light mode al corregir dark mode.
-
-## Duplicados y casi duplicados (resumen)
-
-| Grupo | Colores detectados | DÛnde | Token principal sugerido | Reducir/reemplazar |
-|---|---|---|---|---|
-| Whites/cremas | `#ffffff`, `#fff`, `#fffaf4`, `#fdf7ef`, `#f8fafc` | `screens.css`, `tokens.css`, TSX | `--color-surface`, `--color-input-bg` | Evitar `#f8fafc` salvo uso sem·ntico real |
-| Ink/charcoal/slate | `#1f1d1a`, `#0F172A`, `#334155`, `#475569` | `screens.css`, TSX | `--color-text-primary`, `--color-text-secondary` | Retirar slate en UI general |
-| Borders soft | `#d9cdbb`, `#9f8769`, `#CBD5E1`, `#E2E8F0` | `screens.css` | `--color-border`, `--color-border-strong` | Eliminar pares slate redundantes |
-| Accent coral | `#d95d39`, `#e07b56`, `#e5805c`, rgba corales | root + componentes | `--color-accent` (+hover/pressed) | Unificar variaciones por token |
-| Greens | `#2e6e62`, `#6fb2a1`, `#0F766E` | root + watchlist | `--accent-2` + token de estado | Dejar `#0F766E` para data-viz tokenizado |
-
-## Archivos revisados (n˙cleo)
-
-- `frontend/src/styles/screens.css`
-- `frontend/src/styles/tokens.css`
-- `frontend/src/styles/components.css`
-- `frontend/src/styles/base.css`
-- `frontend/src/modules/watchlist/components/HistoryIntegratedPanel.tsx`
-- `frontend/src/modules/watchlist/components/WatchlistMapDecisionPanel.tsx`
-- `frontend/src/app/(private)/watchlist/page.tsx`
-- `frontend/src/modules/quick-search/components/QuickSearchLoadingProgress.tsx`
-- `frontend/src/components/ui/map.tsx`
-- `frontend/src/components/components/dashboard/DashboardNewsRail.tsx`
-- `frontend/src/app/(private)/soporte/about-us/AnimatedQuoteBlock.tsx`
-
-## Script de extracciÛn
-
-- Ruta: `scripts/extract-colors.mjs`
-- Ejecutar: `node scripts/extract-colors.mjs`
-- Salida: `docs/color-audit/color-inventory.json`
-
-## 14. Phase 1 consolidation results
-
-- Hardcodes eliminados (UI general): `#334155`, `#E2E8F0`, `#CBD5E1`, `#F8FAFC`, `#0F172A`, `#475569`.
-- Tokens creados/modificados:
-  - `--color-surface-muted`
-  - `--color-text-inverse`
-  - `--color-input-text`
-  - `--color-input-placeholder`
-  - `--color-button-primary-bg`
-  - `--color-button-disabled-bg`
-  - `--color-button-disabled-text`
-  - `--color-badge-bg`
-  - `--color-badge-text`
-  - `--color-badge-border`
-  - `--color-footer-link`
-  - `--color-dropdown-border`
-  - `--color-dropdown-hover`
-- Hardcodes que quedan justificados:
-  - Colores data-viz/mapa en `frontend/src/components/ui/map.tsx`, `frontend/src/modules/watchlist/components/WatchlistMapDecisionPanel.tsx` y `frontend/src/app/(private)/watchlist/page.tsx` (series/rutas visuales).
-  - Blancos en `color-mix(...)` para ajustes de brillo y en variables ilustrativas (`--cloud`, `--plane-body`) no usados como surface general de producto.
-- Rutas verificadas en navegador real:
-  - `/dashboard` (light + dark)
-  - `/quick-search` (light + dark)
-  - `/recommendations` (dark)
-  - `/alerts` (dark)
-  - captura adicional de `/dashboard` para `account-menu-dark` y `footer-dark`
-- Capturas generadas:
-  - `docs/color-audit/phase1-screenshots/dashboard-light.png`
-  - `docs/color-audit/phase1-screenshots/dashboard-dark.png`
-  - `docs/color-audit/phase1-screenshots/quick-search-light.png`
-  - `docs/color-audit/phase1-screenshots/quick-search-dark.png`
-  - `docs/color-audit/phase1-screenshots/recommendations-dark.png`
-  - `docs/color-audit/phase1-screenshots/alerts-dark.png`
-  - `docs/color-audit/phase1-screenshots/account-menu-dark.png`
-  - `docs/color-audit/phase1-screenshots/footer-dark.png`
-- Riesgos restantes:
-  - Fase 1 no tokeniza todavia paletas de series (`--chart-series-*`) ni colores de rutas en mapa.
-  - `account-menu-dark` y `footer-dark` se capturaron como pantalla completa de `/dashboard`; no se automatizo interaccion del menu en esta fase CLI.
-
-## 15. Phase 2 base component normalization
-
-Date: 2026-05-10
-
-Normalized components:
-- Buttons: primary/secondary/ghost/critical/danger disabled and focus-visible states unified with semantic tokens.
-- Inputs/selects/textareas: text, placeholder, border, background and focus ring normalized with input tokens.
-- Chips/badges: base legibility and border/background/text tokenized.
-- Dropdowns: account dropdown border/hover switched to dropdown tokens.
-- Cards/panels: kept existing structure; no layout or behavior changes.
-- Footer: link color and hover state aligned to footer/dropdown semantic tokens.
-- Empty states: retained structure and behavior; no new hardcodes introduced.
-
-Tokens reused:
-- --color-surface-muted
-- --color-text-inverse
-- --color-input-text
-- --color-input-placeholder
-- --color-button-primary-bg
-- --color-button-disabled-bg
-- --color-button-disabled-text
-- --color-badge-bg
-- --color-badge-text
-- --color-badge-border
-- --color-footer-link
-- --color-dropdown-border
-- --color-dropdown-hover
-
-Hardcodes removed in base UI:
-- .badge base: transparent border + implicit ink -> semantic badge tokens
-- .chip base: hardcoded green border/bg/text -> chip tokens
-- .form controls: border/bg/text from raw vars -> semantic input tokens
-- select global + focus/placeholder: moved to semantic input tokens
-- .account-dropdown hover/border: moved to dropdown tokens
-- button disabled states: opacity-only style replaced with semantic disabled tokens
-- critical/danger/logout button text and gradients moved from hardcoded hex blends to token-based color-mix
-
-Screenshots generated:
-- docs/color-audit/phase2-screenshots/dashboard-light.png
-- docs/color-audit/phase2-screenshots/dashboard-dark.png
-- docs/color-audit/phase2-screenshots/dashboard-dark-account-menu-open.png
-- docs/color-audit/phase2-screenshots/quick-search-light.png
-- docs/color-audit/phase2-screenshots/quick-search-dark.png
-- docs/color-audit/phase2-screenshots/recommendations-dark.png
-- docs/color-audit/phase2-screenshots/alerts-dark.png
-- docs/color-audit/phase2-screenshots/footer-dark.png
-
-Remaining risks:
-- Some hardcoded warm decorative gradients remain in marketing/weather/illustrative zones; they are not slate/blue leakage and were not changed in this phase.
-- extract-colors still reports global hex usage in non-base decorative/data-viz contexts; requires a later scoped phase to avoid overreach.
+## 3) Checklist QA de color
+- **Cohesi√≥n crom√°tica:** Ning√∫n elemento UI usa color fuera de la paleta definida.  
+- **Consistencia con tokens:** Todos los colores aplicados provienen de los tokens can√≥nicos.  
+- **Contraste validado:** Texto/√≠conos sobre cada color de fondo cumplen con AA (p.ej. 15:1 para texto primario).  
+- **Dise√±o visual:** Los estados (success/warning/error) utilizan los tonos sem√°nticos correctos (verde, √°mbar, coral).  
+- **Actualizaci√≥n completa:** No quedan referencias a colores antiguos (e.g. eliminar `#ff0000`, `#00ff00` directos en hojas de estilo).

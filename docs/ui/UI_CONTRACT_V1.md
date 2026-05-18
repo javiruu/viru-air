@@ -1,164 +1,77 @@
-﻿Status: canonical
-Scope: UI system, visual contract, or design guidance
-Last reviewed: 2026-04-15
-Canonical source: docs/ui/UI_CONTRACT_V1.md
-Related: docs/ui/UI_SYSTEM_V1.md, docs/specs/README.md
+Status: canonical  
+Scope: UI system, visual contract  
+Last reviewed: 2026-05-15  
+Fuente de verdad: docs/ui/UI_CONTRACT_V1.md  
 
----
-# UI Contract v1 (Viru Tracker)
+---  
+
+# UI Contract v1 — Viru Tracker
 
 > Referencia de freeze oficial: `docs/ui/UI_SYSTEM_V1.md`
 
 ## Objetivo
-Establecer reglas mínimas para mantener consistencia visual y reducir regresiones en la interfaz.
+Reglas mínimas para consistencia visual, coherencia editorial y prevenir regresiones en la interfaz.
 
-## Skill recomendado para cambios visuales por agente
-- Skill instalado: `/.codex/skills/taste-skill/SKILL.md`.
-- Debe usarse como soporte de criterio visual en tareas de frontend/estetica.
-- El contrato de este documento prevalece si existe conflicto.
+## Skill de estética recomendado
+- Skill: `/.codex/skills/taste-skill/SKILL.md` (para guiar criterios visuales).  
+- Este contrato prevalece ante cualquier sugerencia de estilo.  
 
-## Naming y capas de estilos
-- `base.css`: fundamentos y reset.
-- `tokens.css`: variables de diseño (color, spacing, tipografía, foco, estados).
-- `components.css`: componentes y patrones reutilizables.
-- `screens.css`: ajustes específicos por pantalla.
+## Estructura de archivos CSS
+- `base.css`: reseteo y estilos globales básicos.  
+- `tokens.css`: variables de diseño (colores, tipografía, espaciamientos, focos, estados).  
+- `components.css`: patrones y componentes reutilizables.  
+- `screens.css`: estilos específicos para cada pantalla.  
 
-Reglas de ubicación:
-1. Si el patrón aparece en 2+ pantallas, debe vivir en `components.css`.
-2. Si es un valor semántico repetido (espacio, color, radio, tono), debe vivir en `tokens.css`.
-3. `screens.css` solo para layout/orden/alineación exclusivos de una ruta.
+**Reglas de ubicación:**  
+1. Un patrón común a 2+ pantallas → `components.css`.  
+2. Un valor repetido en varias partes (color, space, radio, tono) → `tokens.css`.  
+3. Exclusivo de una ruta/pantalla → `screens.css`.  
 
-## Componente: Card
-Uso: contenedor visual para bloques de contenido.
+## Componentes clave
 
-Reglas:
-- padding consistente por defecto.
-- puede tener header y footer opcionales.
-- no mezclar acciones primarias en más de una por card.
+- **Card:** contenedor genérico. Debe tener padding consistente y opcionales header/footer. No incluir más de una acción primaria en la misma card. (e.g. `.panel`, `.card`)  
 
-Ejemplo de clases actuales:
-- `.module-card`
-- `.panel`
+- **PanelHeader:** cabecera de sección. Debe incluir título (Playfair Display) + subtítulo (IBM Plex Sans) y una acción a la derecha. Separación clara entre título y acciones. (e.g. `.panel-title`, `.row-between`)  
 
-## Componente: PanelHeader
-Uso: cabecera de panel o sección.
+- **StatusPill:** etiqueta de estado. Colores semánticos consistentes (verde éxito, ámbar advertencia, coral error, azul info). Texto breve (p.ej. “Activo”); tamaño homogéneo. (Clase `.status-pill`)  
 
-Debe incluir:
-- título claro
-- acción opcional alineada a la derecha
-- separación visual consistente
+- **ActionRow:** fila de acciones. Botón principal a la izquierda, secundarios ordenados después (`.btn-secondary`, `.btn-ghost`). Espacio uniforme entre botones. (e.g. `.row-actions`, `.module-actions`)  
 
-Ejemplo de clases actuales:
-- `.panel-title`
-- `.row-between`
-- `.dashboard-section-head`
+## Semántica de estados
+Única en toda la UI: 
+- **success:** operación completada.  
+- **warning:** proceso en pausa o pendiente.  
+- **error:** fallo o validación.  
+- **info:** mensaje neutral/contextual.  
 
-## Componente: StatusPill
-Uso: mostrar estado de entidades y procesos.
+Tokens (`tokens.css`):  
+- `--state-success-*`, `--state-warning-*`, `--state-error-*`, `--state-info-*`.  
 
-Estados estandar:
-- `success` (activo/completado)
-- `warning` (pausado/pendiente/en espera)
-- `error` (fallo)
+Clases base (`components.css`):  
+- `.state-success`, `.state-warning`, `.state-error`, `.state-info`.  
 
-Reglas:
-- color semántico consistente
-- tamaño homogéneo
-- texto breve y accionable
+Componentes que usan estos estados: `status-pill`, `notice`, `toast`, campos (`.field-error` feedback).  
 
-Ejemplo de clase:
-- `.status-pill`
-
-## Componente: ActionRow
-Uso: agrupación de acciones de un bloque.
-
-Reglas:
-- CTA principal primero
-- secundarios en `btn-secondary` o `btn-ghost`
-- spacing uniforme
-
-Ejemplo de clases actuales:
-- `.row-actions`
-- `.module-actions`
-- `.alert-actions`
-
-## State Semantics
-Semántica única de estados en toda la UI:
-- `success`: operación completada o acción confirmada.
-- `warning`: estado parcial, reversible o cooldown.
-- `error`: fallo, validación o error de API.
-- `info`: mensaje neutral o contextual.
-
-Tokens obligatorios (`tokens.css`):
-- `--state-success-*`
-- `--state-warning-*`
-- `--state-error-*`
-- `--state-info-*`
-
-Clases base (`components.css`):
-- `.state-success`
-- `.state-warning`
-- `.state-error`
-- `.state-info`
-
-Componentes que deben consumir esta semántica:
-- `status-pill`
-- `notice`
-- `toast`
-- `field-error` / feedback inline
-
-Compatibilidad legacy:
-- No introducir `warn` en nuevos cambios.
-- Tratar cualquier `warn` heredado como `warning` hasta su limpieza total.
+**Compatibilidad legacy:** no usar `warn` en nuevo código. Tratar `warn` heredado como `warning` durante migración.  
 
 ## Glosario UI (ES)
-Términos preferidos en la interfaz visible:
-- Panel
-- Seguimiento
-- Búsqueda rápida
-- Alerta
-- Histórico
-- Comparativa
-- Preferencias
-- Ayuda
+- **Términos:** Panel, Seguimiento, Búsqueda rápida, Alerta, Histórico, Comparativa, Preferencias, Ayuda, **Vuelo**, **Terminal**.  
+- **Verbos:** Buscar, Actualizar, Guardar, Eliminar, Activar / Desactivar, Reintentar.  
+- **Estados:** Cargando…, Sin resultados, Error, Listo.  
 
-Verbos preferidos:
-- Buscar
-- Actualizar
-- Guardar
-- Eliminar
-- Activar / Desactivar
-- Reintentar
+## Microcopy breve
+1. Mensajes operativos de 1-2 frases.  
+2. Sin mezclar ES/EN en textos visibles.  
+3. Repetir términos del glosario en todas las pantallas.  
+4. En caso de error, indicar la acción siguiente (si aplica).  
 
-Estados breves:
-- Cargando…
-- Sin resultados
-- Error
-- Listo
+## Convenciones legacy / Deprecación
+- **Rutas canónicas:** `/dashboard`, `/watchlist`, `/quick-search`, `/alerts`, `/recomendaciones`, `/preferencias`.  
+- **Rutas legacy:** `/history`→`/preferencias`, `/suggestions`→en revisión.  
+- Usar nombres claros de estado (`warning` en lugar de `warn`).  
 
-## Reglas de microcopy breve
-1. Mensajes operativos de una o dos frases.
-2. Evitar mezcla ES/EN en UI visible.
-3. Repetir términos de glosario en todos los módulos.
-4. Si hay error, indicar acción siguiente cuando aplique.
-
-## Convenciones legacy / deprecación
-- Rutas canonicas: `/dashboard`, `/watchlist`, `/quick-search`, `/alerts`, `/recomendaciones`, `/preferencias`.
-- Puentes legacy permitidos por compatibilidad: `/history`, `/preferences`, `/suggestions` (redirigen a canonica).
-- Evitar clases ambiguas de estado legacy (`warn`) en nuevos cambios. Usar `warning`.
-
-## Reglas de regresión
-1. Todo refactor de estilos requiere build OK.
-2. No introducir cambios visuales no intencionados.
-3. Mantener compatibilidad con dark/light.
-4. Mantener focus visible en elementos interactivos.
-
-
-
-
-
-
-
-
-
-
+## Reglas de regresión (QA)
+1. Todo cambio en estilos debe pasar build y pruebas automatizadas.  
+2. No introducir cambios visuales no intencionados (UI regressions).  
+3. Mantener compatibilidad con modos Dark/Light (contraste legible).  
+4. Focus claramente visible en elementos interactivos.

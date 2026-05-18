@@ -1,7 +1,7 @@
 ﻿# Índice Único de Documentación
 
 **Estado:** vivo  
-**Última revisión:** 2026-05-11  
+**Última revisión:** 2026-05-18  
 **Fuente de verdad:** sí  
 **Área:** documentación
 
@@ -28,6 +28,7 @@
 - [Frontend](engineering/frontend.md)
 - [UI System](ui/UI_SYSTEM_V1.md)
 - [UI Contract](ui/UI_CONTRACT_V1.md)
+- [Estética UI](ui/estetica.md)
 - [Specs activas](specs/README.md)
 
 ### Producto
@@ -45,6 +46,7 @@
 - [Fase 0 limpieza conceptual](qa/fase-0-limpieza-conceptual-checklist.md)
 - [Traceability matrix](qa/traceability-matrix.md)
 - [TestSprite catalog](qa/testsprite/testsprite-catalog.md)
+- [Auditoría de paleta](qa/visual/color-palette-audit.md)
 
 ### DevOps
 
@@ -114,6 +116,7 @@
 
 - [README QA](qa/README.md)
 - [Visual QA](qa/visual/)
+- [Auditoría de paleta](qa/visual/color-palette-audit.md)
 - [Reportes QA](qa/reports/)
 
 ### Prompts
