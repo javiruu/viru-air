@@ -12,6 +12,8 @@ export function useWatchlistViewState() {
   const [selectedPoint, setSelectedPoint] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("chart");
   const [calendarCursor, setCalendarCursor] = useState("");
+  const [isCalendarSelectorOpen, setIsCalendarSelectorOpen] = useState(false);
+  const [calendarSelectorDay, setCalendarSelectorDay] = useState("");
   const [rangeWindow, setRangeWindow] = useState<RangeWindow>("30");
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [compareNotice, setCompareNotice] = useState("");
@@ -39,6 +41,20 @@ export function useWatchlistViewState() {
 
   const toggleViewMode = useCallback(() => {
     setViewMode((current) => (current === "chart" ? "calendar" : "chart"));
+  }, []);
+
+  const openCalendarSelector = useCallback(() => {
+    setIsCalendarSelectorOpen(true);
+  }, []);
+
+  const closeCalendarSelector = useCallback(() => {
+    setIsCalendarSelectorOpen(false);
+    setCalendarSelectorDay("");
+  }, []);
+
+  const toggleCalendarSelector = useCallback(() => {
+    setIsCalendarSelectorOpen((current) => !current);
+    setCalendarSelectorDay("");
   }, []);
 
   const toggleRangeWindow = useCallback(() => {
@@ -76,6 +92,8 @@ export function useWatchlistViewState() {
     selectedPoint,
     viewMode,
     calendarCursor,
+    isCalendarSelectorOpen,
+    calendarSelectorDay,
     rangeWindow,
     compareIds,
     compareNotice,
@@ -87,7 +105,10 @@ export function useWatchlistViewState() {
     setSelectedDates,
     setSelectedPoint,
     setCalendarCursor,
+    setIsCalendarSelectorOpen,
+    setCalendarSelectorDay,
     setRangeWindow,
+    setViewMode,
     setSelectedWatchId,
     setWatchSearch,
     setWatchSort,
@@ -96,6 +117,9 @@ export function useWatchlistViewState() {
     onDestinationChange,
     onDatesChange,
     toggleViewMode,
+    openCalendarSelector,
+    closeCalendarSelector,
+    toggleCalendarSelector,
     toggleRangeWindow,
     resetZoom,
     prevMonth,

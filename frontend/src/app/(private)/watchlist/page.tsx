@@ -49,7 +49,7 @@ export default function WatchlistPage() {
 
   const watchlistHint = useFtueHint("watchlist");
 
-  const { view, actions, derived, hover, selectWatch } = useWatchlistController({
+  const { view, actions, derived, hover, selectWatch, selectWatchById } = useWatchlistController({
     chartBaseHeight: CHART_HEIGHT,
     chartWidth: CHART_WIDTH,
     chartPad: CHART_PAD,
@@ -139,7 +139,6 @@ export default function WatchlistPage() {
             calendarHasUsefulData={derived.calendarHasUsefulData}
             chartWidth={CHART_WIDTH}
             chartPad={CHART_PAD}
-            onToggleViewMode={view.toggleViewMode}
             onApplyFilters={actions.refreshFiltered}
             onPointChange={view.setSelectedPoint}
             onRangeChange={view.setRangeWindow}
@@ -180,6 +179,18 @@ export default function WatchlistPage() {
             listErrorMessage={actions.listErrorMessage}
             onRetryLoad={actions.load}
             onOpenAddWatch={() => actions.setShowAdd(true)}
+            isCalendarSelectorOpen={view.isCalendarSelectorOpen}
+            calendarSelectorDay={view.calendarSelectorDay}
+            calendarSelectorMonth={derived.calendarSelectorVisibleMonth}
+            calendarSelectorMonthCells={derived.calendarSelectorMonthCells}
+            calendarSelectorEvents={derived.calendarSelectorEvents}
+            calendarSelectorFlightsByDay={derived.calendarSelectorFlightsByDay}
+            onToggleCalendarSelector={view.toggleCalendarSelector}
+            onCloseCalendarSelector={view.closeCalendarSelector}
+            onCalendarSelectorDayChange={view.setCalendarSelectorDay}
+            onSelectWatchById={selectWatchById}
+            onCalendarPrevMonth={view.prevMonth}
+            onCalendarNextMonth={view.nextMonth}
           />
         </div>
 

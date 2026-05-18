@@ -46,7 +46,16 @@ export function useWatchlistController({
     });
   }, [items, setCompareIds]);
 
-  const { setSelectedWatchId, setSelectedOrigin, setSelectedDestination, setSelectedDates, setSelectedPoint } = view;
+  const {
+    setSelectedWatchId,
+    setSelectedOrigin,
+    setSelectedDestination,
+    setSelectedDates,
+    setSelectedPoint,
+    setViewMode,
+    setIsCalendarSelectorOpen,
+    setCalendarSelectorDay,
+  } = view;
   const selectWatch = useCallback(
     (watch: Watch) => {
       setSelectedWatchId(watch.id);
@@ -54,8 +63,20 @@ export function useWatchlistController({
       setSelectedDestination(watch.destination_iata);
       setSelectedDates([watch.travel_date_local]);
       setSelectedPoint("");
+      setViewMode("chart");
+      setIsCalendarSelectorOpen(false);
+      setCalendarSelectorDay("");
     },
-    [setSelectedDestination, setSelectedDates, setSelectedOrigin, setSelectedPoint, setSelectedWatchId],
+    [setCalendarSelectorDay, setIsCalendarSelectorOpen, setSelectedDestination, setSelectedDates, setSelectedOrigin, setSelectedPoint, setSelectedWatchId, setViewMode],
+  );
+
+  const selectWatchById = useCallback(
+    (watchId: string) => {
+      const watch = items.find((item) => item.id === watchId);
+      if (!watch) return;
+      selectWatch(watch);
+    },
+    [items, selectWatch],
   );
 
   const derived = useWatchlistDerived({
@@ -89,5 +110,6 @@ export function useWatchlistController({
     derived,
     hover,
     selectWatch,
+    selectWatchById,
   };
 }

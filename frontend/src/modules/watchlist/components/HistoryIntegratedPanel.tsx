@@ -91,7 +91,6 @@ type HistoryIntegratedPanelProps = {
   calendarHasUsefulData: boolean;
   chartWidth: number;
   chartPad: { left: number; right: number; top: number; bottom: number };
-  onToggleViewMode: () => void;
   onApplyFilters: () => void;
   onPointChange: (value: string) => void;
   onRangeChange: (value: RangeWindow) => void;
@@ -128,7 +127,6 @@ export function HistoryIntegratedPanel({
   calendarHasUsefulData,
   chartWidth,
   chartPad,
-  onToggleViewMode,
   onApplyFilters,
   onPointChange,
   onRangeChange,
@@ -219,8 +217,8 @@ export function HistoryIntegratedPanel({
       <div className="history-filterbar history-filterbar--compact">
         <div className="history-filterbar-header">
           <div className="history-filterbar-actions">
-            <button className="btn-secondary btn-layered" type="button" onClick={onToggleViewMode} disabled={!canToggleCalendar}>
-              {viewMode === "chart" ? t("watchlist.history.viewCalendar") : t("watchlist.history.viewChart")}
+            <button type="button" hidden disabled={!canToggleCalendar}>
+              {t("watchlist.history.viewCalendar")}
             </button>
             <button className="btn-compact history-filter-apply" type="button" disabled={isRefreshingFiltered || !hasSelectedWatch} onClick={onApplyFilters}>
               {isRefreshingFiltered ? t("watchlist.history.refreshing") : t("watchlist.history.applyFilters")}

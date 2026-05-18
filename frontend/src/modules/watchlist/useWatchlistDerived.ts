@@ -6,6 +6,7 @@ import { getAirportMeta } from "@/modules/shared/airports";
 import { monthDays, toIsoMonth } from "@/modules/watchlist/dateUtils";
 import { formatDateTime } from "@/modules/watchlist/presentation";
 import type {
+  CalendarSelectorFlight,
   HistoryRow,
   HoverPoint,
   ListSort,
@@ -338,6 +339,66 @@ export function useWatchlistDerived({
     return eventDays >= 3 && filteredRows.length >= 4;
   }, [calendarEvents, filteredRows.length]);
 
+  const calendarSelectorFlightsByDay = useMemo(() => {
+    const grouped = new Map<string, CalendarSelectorFlight[]>();
+    items.forEach((watch) => {
+      const meta = watchMeta.get(watch.id);
+      const latest = meta?.latest ?? null;
+      const dayFlights = grouped.get(watch.travel_date_local) ?? [];
+      dayFlights.push({
+        watchId: watch.id,
+        origin: watch.origin_iata,
+        destination: watch.destination_iata,
+        travelDate: watch.travel_date_local,
+        status: watch.status,
+        latestPrice: latest?.price ?? null,
+        latestCurrency: latest?.currency ?? "EUR",
+        latestCapturedAt: latest?.capturedAt ?? null,
+      });
+      grouped.set(watch.travel_date_local, dayFlights);
+    });
+
+    grouped.forEach((flights, day) => {
+      grouped.set(
+        day,
+        flights.slice().sort((a, b) => {
+          const aTs = a.latestCapturedAt ? new Date(a.latestCapturedAt).getTime() : 0;
+          const bTs = b.latestCapturedAt ? new Date(b.latestCapturedAt).getTime() : 0;
+          return bTs - aTs;
+        }),
+      );
+    });
+    return grouped;
+  }, [items, watchMeta]);
+
+  const calendarSelectorEvents = useMemo(() => {
+    const out: Record<string, { min: number; max: number; count: number }> = {};
+    calendarSelectorFlightsByDay.forEach((flights, day) => {
+      const prices = flights.map((flight) => flight.latestPrice).filter((price): price is number => price != null);
+      if (prices.length === 0) {
+        out[day] = { min: 0, max: 0, count: flights.length };
+        return;
+      }
+      out[day] = {
+        min: Math.min(...prices),
+        max: Math.max(...prices),
+        count: flights.length,
+      };
+    });
+    return out;
+  }, [calendarSelectorFlightsByDay]);
+
+  const calendarSelectorVisibleMonth = useMemo(() => {
+    if (calendarCursor) return calendarCursor;
+    const firstDay = Array.from(calendarSelectorFlightsByDay.keys()).sort()[0] ?? "";
+    return toIsoMonth(firstDay);
+  }, [calendarCursor, calendarSelectorFlightsByDay]);
+
+  const calendarSelectorMonthCells = useMemo(
+    () => (calendarSelectorVisibleMonth ? monthDays(calendarSelectorVisibleMonth) : []),
+    [calendarSelectorVisibleMonth],
+  );
+
   const compareOptions = useMemo(() => {
     return items.map((item) => {
       const meta = watchMeta.get(item.id);
@@ -506,6 +567,10 @@ export function useWatchlistDerived({
     calendarRange,
     calendarCurrency,
     calendarHasUsefulData,
+    calendarSelectorFlightsByDay,
+    calendarSelectorEvents,
+    calendarSelectorVisibleMonth,
+    calendarSelectorMonthCells,
     compareOptions,
     compareSelection,
     watchMapRoutes,

@@ -131,3 +131,14 @@ export type WatchMapInsight = {
   text: string;
   relatedWatchIds: string[];
 };
+
+export type CalendarSelectorFlight = {
+  watchId: string;
+  origin: string;
+  destination: string;
+  travelDate: string;
+  status: string;
+  latestPrice: number | null;
+  latestCurrency: string;
+  latestCapturedAt: string | null;
+};

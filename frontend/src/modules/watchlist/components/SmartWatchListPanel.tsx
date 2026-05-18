@@ -3,8 +3,10 @@
 import { useI18n } from "@/i18n";
 import { formatCurrency, formatSignedCurrency } from "@/modules/shared/format";
 import { getWatchStatusMeta } from "@/modules/shared/statusCatalog";
+import { monthLabel } from "@/modules/watchlist/dateUtils";
 import { safeDateTime } from "@/modules/watchlist/presentation";
 import { getFreshnessPresentation } from "@/modules/watchlist/summary";
+import type { CalendarSelectorFlight } from "@/modules/watchlist/types";
 
 type ListSort = "freshness" | "price_asc" | "price_desc" | "delta";
 
@@ -58,6 +60,18 @@ type SmartWatchListPanelProps = {
   listErrorMessage: string;
   onRetryLoad: () => void;
   onOpenAddWatch: () => void;
+  isCalendarSelectorOpen: boolean;
+  calendarSelectorDay: string;
+  calendarSelectorMonth: string;
+  calendarSelectorMonthCells: string[];
+  calendarSelectorEvents: Record<string, { min: number; max: number; count: number }>;
+  calendarSelectorFlightsByDay: Map<string, CalendarSelectorFlight[]>;
+  onToggleCalendarSelector: () => void;
+  onCloseCalendarSelector: () => void;
+  onCalendarSelectorDayChange: (day: string) => void;
+  onSelectWatchById: (watchId: string) => void;
+  onCalendarPrevMonth: () => void;
+  onCalendarNextMonth: () => void;
 };
 
 export function SmartWatchListPanel({
@@ -87,12 +101,36 @@ export function SmartWatchListPanel({
   listErrorMessage,
   onRetryLoad,
   onOpenAddWatch,
+  isCalendarSelectorOpen,
+  calendarSelectorDay,
+  calendarSelectorMonth,
+  calendarSelectorMonthCells,
+  calendarSelectorEvents,
+  calendarSelectorFlightsByDay,
+  onToggleCalendarSelector,
+  onCloseCalendarSelector,
+  onCalendarSelectorDayChange,
+  onSelectWatchById,
+  onCalendarPrevMonth,
+  onCalendarNextMonth,
 }: SmartWatchListPanelProps) {
   const { t, localeTag } = useI18n();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const hasSelection = selectedIds.length > 0;
   const selectionCount = selectedIds.length;
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const calendarWeekdays = useMemo(
+    () =>
+      t("watchlist.history.weekdays")
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean),
+    [t],
+  );
+  const calendarDayFlights = useMemo(
+    () => (calendarSelectorDay ? calendarSelectorFlightsByDay.get(calendarSelectorDay) ?? [] : []),
+    [calendarSelectorDay, calendarSelectorFlightsByDay],
+  );
   const activeCount = useMemo(() => items.filter((item) => item.status !== "paused").length, [items]);
   const pausedCount = useMemo(() => items.filter((item) => item.status === "paused").length, [items]);
 
@@ -159,8 +197,81 @@ export function SmartWatchListPanel({
               <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkDelete(selectedIds)}>{t("watchlist.bulk.delete")}</button>
             </div>
           ) : null}
+          <button
+            type="button"
+            className={`btn-secondary btn-layered ${isCalendarSelectorOpen ? "is-active" : ""}`}
+            onClick={onToggleCalendarSelector}
+            aria-expanded={isCalendarSelectorOpen}
+            aria-controls="watchlist-calendar-selector"
+            disabled={calendarSelectorFlightsByDay.size === 0}
+          >
+            {t("watchlist.history.viewCalendar")}
+          </button>
         </div>
       </div>
+      {isCalendarSelectorOpen ? (
+        <div className="history-calendar-panel section-gap-sm" id="watchlist-calendar-selector">
+          <div className="history-calendar-nav">
+            <button className="btn-ghost btn-compact" type="button" onClick={onCalendarPrevMonth}>
+              {t("watchlist.history.prevMonth")}
+            </button>
+            <strong className="month-title">{monthLabel(calendarSelectorMonth, localeTag)}</strong>
+            <button className="btn-ghost btn-compact" type="button" onClick={onCalendarNextMonth}>
+              {t("watchlist.history.nextMonth")}
+            </button>
+          </div>
+          <div className="history-calendar-grid history-primary">
+            {(calendarWeekdays.length === 7 ? calendarWeekdays : ["L", "M", "X", "J", "V", "S", "D"]).map((weekday, index) => (
+              <div key={`watchlist-selector-weekday-${index}`} className="history-weekday">{weekday}</div>
+            ))}
+            {calendarSelectorMonthCells.map((day, idx) => {
+              const event = day ? calendarSelectorEvents[day] : undefined;
+              const isSelectedDay = day === calendarSelectorDay;
+              return (
+                <button
+                  key={`${day || "empty"}-${idx}`}
+                  type="button"
+                  className={`history-day ${day ? "has-day" : "empty"} ${event ? "has-event" : ""} ${isSelectedDay ? "is-selected" : ""}`}
+                  disabled={!day || !event}
+                  onClick={() => {
+                    if (!day || !event) return;
+                    const flights = calendarSelectorFlightsByDay.get(day) ?? [];
+                    if (flights.length <= 1) {
+                      const single = flights[0];
+                      if (single) onSelectWatchById(single.watchId);
+                      return;
+                    }
+                    onCalendarSelectorDayChange(day);
+                  }}
+                >
+                  {day ? (
+                    <>
+                      <div className="history-day-number">{day.slice(-2)}</div>
+                      {event ? <div className="history-day-meta">{t("watchlist.history.calendarFlightsCount", { count: event.count })}</div> : null}
+                    </>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+          {calendarSelectorDay && calendarDayFlights.length > 1 ? (
+            <div className="history-compact-note history-compact-note--calendar" role="dialog" aria-label={t("watchlist.history.dayFlightsTitle", { day: calendarSelectorDay })}>
+              <strong>{t("watchlist.history.dayFlightsTitle", { day: calendarSelectorDay })}</strong>
+              <div className="watch-bulk-toolbar">
+                {calendarDayFlights.map((flight) => (
+                  <button key={flight.watchId} type="button" className="btn-ghost btn-compact" onClick={() => onSelectWatchById(flight.watchId)}>
+                    {flight.origin}{" -> "}{flight.destination} · {flight.travelDate} · {flight.latestPrice == null ? "--" : formatCurrency(flight.latestPrice, flight.latestCurrency, localeTag)}
+                    {flight.latestCapturedAt ? ` (${safeDateTime(flight.latestCapturedAt, localeTag)})` : ""}
+                  </button>
+                ))}
+              </div>
+              <button type="button" className="btn-ghost btn-compact" onClick={onCloseCalendarSelector}>
+                {t("watchlist.history.closeCalendarSelector")}
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       {isLoading && items.length === 0 ? (
         <div className="watchlist-skeleton-list" role="status" aria-live="polite" aria-label={t("watchlist.smartList.loadingAria")}>
           {[0, 1, 2].map((index) => (
