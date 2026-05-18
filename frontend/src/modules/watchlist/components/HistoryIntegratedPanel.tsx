@@ -139,11 +139,12 @@ export function HistoryIntegratedPanel({
   onPrevMonth,
   onNextMonth,
 }: HistoryIntegratedPanelProps) {
-  const { t } = useI18n();
+  const { t, localeTag } = useI18n();
   const hasSelectedWatch = Boolean(selectedWatch);
   const hasChartData = Boolean(chartModel && chartModel.length > 0);
   const chartPointCount = chartModel?.reduce((acc, serie) => acc + serie.points.length, 0) ?? 0;
   const hasCalendarData = Boolean(visibleMonth);
+  const canToggleCalendar = hasCalendarData && calendarHasUsefulData;
 
   const calendarMidpoint = calendarRange ? calendarRange.min + (calendarRange.max - calendarRange.min) / 2 : null;
   const weekdays = t("watchlist.history.weekdays")
@@ -218,16 +219,15 @@ export function HistoryIntegratedPanel({
       <div className="history-filterbar history-filterbar--compact">
         <div className="history-filterbar-header">
           <div className="history-filterbar-actions">
-            {calendarHasUsefulData ? (
-              <button className="btn-secondary btn-layered" type="button" onClick={onToggleViewMode}>
-                {viewMode === "chart" ? t("watchlist.history.viewCalendar") : t("watchlist.history.viewChart")}
-              </button>
-            ) : null}
+            <button className="btn-secondary btn-layered" type="button" onClick={onToggleViewMode} disabled={!canToggleCalendar}>
+              {viewMode === "chart" ? t("watchlist.history.viewCalendar") : t("watchlist.history.viewChart")}
+            </button>
             <button className="btn-compact history-filter-apply" type="button" disabled={isRefreshingFiltered || !hasSelectedWatch} onClick={onApplyFilters}>
               {isRefreshingFiltered ? t("watchlist.history.refreshing") : t("watchlist.history.applyFilters")}
             </button>
           </div>
         </div>
+        {!canToggleCalendar ? <span className="history-helper">{t("watchlist.history.calendarUnavailableBody")}</span> : null}
 
         <div className="filter-grid history-filters">
           <div className="history-filter history-route-summary">
@@ -349,10 +349,10 @@ export function HistoryIntegratedPanel({
               <div className="history-detail-card">
                 <div>
                 <span className="history-detail-label">{t("watchlist.history.selectedPointLabel")}</span>
-                  <strong>{formatCurrency(selectedPointData.price, selectedPointData.currency)}</strong>
+                  <strong>{formatCurrency(selectedPointData.price, selectedPointData.currency, localeTag)}</strong>
                 </div>
                 <div className="history-detail-meta">
-                  <span>{formatDateTime(selectedPointData.capturedAt)}</span>
+                  <span>{formatDateTime(selectedPointData.capturedAt, localeTag)}</span>
                   <span>{selectedPointData.date}</span>
                   {selectedPointData.departureTime ? <span>{t("watchlist.history.departureAt", { value: selectedPointData.departureTime })}</span> : null}
                 </div>
@@ -437,7 +437,7 @@ export function HistoryIntegratedPanel({
                       stroke={selectedPoint === point.capturedAt ? "var(--color-text-primary)" : "var(--color-surface)"}
                       strokeWidth={selectedPoint === point.capturedAt ? 2 : 1}
                     >
-                      <title>{`${serie.date} - ${formatDateTime(point.capturedAt)} - ${formatCurrency(point.price, point.currency)}`}</title>
+                      <title>{`${serie.date} - ${formatDateTime(point.capturedAt, localeTag)} - ${formatCurrency(point.price, point.currency, localeTag)}`}</title>
                     </circle>
                   ))}
                 </g>
@@ -459,8 +459,8 @@ export function HistoryIntegratedPanel({
               }}
             >
               <span className="history-tooltip-tag">{hoverPoint.date}</span>
-              <strong>{formatCurrency(hoverPoint.price, hoverPoint.currency)}</strong>
-              <span>{formatDateTime(hoverPoint.capturedAt)}</span>
+              <strong>{formatCurrency(hoverPoint.price, hoverPoint.currency, localeTag)}</strong>
+              <span>{formatDateTime(hoverPoint.capturedAt, localeTag)}</span>
               {hoverPoint.departureTime ? <span>{t("watchlist.history.departureAt", { value: hoverPoint.departureTime })}</span> : null}
             </div>
           ) : null}
@@ -524,7 +524,7 @@ export function HistoryIntegratedPanel({
                             <div className="history-day-meta">
                               {t("watchlist.history.pointsCount", { count: event.count })}
                               <br />
-                              {formatCurrency(event.min, calendarCurrency)}-{formatCurrency(event.max, calendarCurrency)}
+                              {formatCurrency(event.min, calendarCurrency, localeTag)}-{formatCurrency(event.max, calendarCurrency, localeTag)}
                             </div>
                           ) : null}
                         </>
@@ -541,17 +541,17 @@ export function HistoryIntegratedPanel({
                   <div className="history-heat-scale">
                     <span className="history-heat-scale-item">
                       <strong>{t("watchlist.history.legendLow")}</strong>
-                      <span className="tabular-nums">{formatCurrency(calendarRange.min, calendarCurrency)}</span>
+                      <span className="tabular-nums">{formatCurrency(calendarRange.min, calendarCurrency, localeTag)}</span>
                     </span>
                     {calendarMidpoint != null ? (
                       <span className="history-heat-scale-item">
                         <strong>{t("watchlist.history.legendMid")}</strong>
-                        <span className="tabular-nums">{formatCurrency(calendarMidpoint, calendarCurrency)}</span>
+                        <span className="tabular-nums">{formatCurrency(calendarMidpoint, calendarCurrency, localeTag)}</span>
                       </span>
                     ) : null}
                     <span className="history-heat-scale-item">
                       <strong>{t("watchlist.history.legendHigh")}</strong>
-                      <span className="tabular-nums">{formatCurrency(calendarRange.max, calendarCurrency)}</span>
+                      <span className="tabular-nums">{formatCurrency(calendarRange.max, calendarCurrency, localeTag)}</span>
                     </span>
                   </div>
                   <p className="muted history-heat-explainer">{t("watchlist.history.heatLegendExplainer")}</p>
