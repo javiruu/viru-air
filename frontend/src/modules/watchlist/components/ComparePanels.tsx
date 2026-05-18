@@ -22,27 +22,9 @@ type CompareOption = {
   destination: string;
   travelDate: string;
 };
-type CompareSelectionItem = {
-  id: string;
-  origin: string;
-  destination: string;
-  travelDate: string;
-  latest: CompareLatest | null;
-  delta: number;
-  volatility: number | null;
-  min: number | null;
-  max: number | null;
-};
-type CompareBadges = {
-  bestPriceId: string | null;
-  freshestId: string | null;
-  stableId: string | null;
-};
 type ComparePanelsProps = {
   compareCards: CompareCard[] | null;
   compareOptions: CompareOption[];
-  compareSelection: CompareSelectionItem[];
-  compareBadges: CompareBadges | null;
   compareIds: string[];
   compareNotice: string;
   onToggleCompare: (id: string) => void;
@@ -61,7 +43,7 @@ export function ComparePanels({
   compareNotice,
   onToggleCompare,
 }: ComparePanelsProps) {
-  const { t } = useI18n();
+  const { t, localeTag } = useI18n();
   const [activeTab, setActiveTab] = useState<CompareTab>("quick");
   const [compareResponse, setCompareResponse] = useState<PriceCompareResponse | null>(null);
   const [isLoadingCompare, setIsLoadingCompare] = useState(false);
@@ -182,7 +164,7 @@ export function ComparePanels({
             <div className="compare-grid">
               {compareCards!.map((card) => {
                 const trend = card.delta > 0 ? "up" : card.delta < 0 ? "down" : "flat";
-                const deltaLabel = card.delta === 0 ? t("watchlist.compare.noChange") : formatSignedCurrency(card.delta, card.latest.currency);
+                const deltaLabel = card.delta === 0 ? t("watchlist.compare.noChange") : formatSignedCurrency(card.delta, card.latest.currency, localeTag);
                 return (
                   <article key={`compare-${card.date}`} className="compare-card">
                     <div className="compare-head">
@@ -199,18 +181,18 @@ export function ComparePanels({
                     <div className="compare-body">
                       <div>
                         <span className="compare-label">{t("watchlist.compare.current")}</span>
-                        <strong>{formatCurrency(card.latest.price, card.latest.currency)}</strong>
+                        <strong>{formatCurrency(card.latest.price, card.latest.currency, localeTag)}</strong>
                       </div>
                       <div>
                         <span className="compare-label">{t("watchlist.compare.min")}</span>
-                        <strong>{formatCurrency(card.min, card.latest.currency)}</strong>
+                        <strong>{formatCurrency(card.min, card.latest.currency, localeTag)}</strong>
                       </div>
                       <div>
                         <span className="compare-label">{t("watchlist.compare.max")}</span>
-                        <strong>{formatCurrency(card.max, card.latest.currency)}</strong>
+                        <strong>{formatCurrency(card.max, card.latest.currency, localeTag)}</strong>
                       </div>
                     </div>
-                    <div className="compare-meta">{t("watchlist.compare.lastUpdate", { value: formatDateTime(card.latest.capturedAt) })}</div>
+                    <div className="compare-meta">{t("watchlist.compare.lastUpdate", { value: formatDateTime(card.latest.capturedAt, localeTag) })}</div>
                   </article>
                 );
               })}
@@ -269,19 +251,19 @@ export function ComparePanels({
                     <div className="compare-body">
                       <div>
                         <span className="compare-label">{t("watchlist.compare.current")}</span>
-                        <strong>{card.latest_price == null ? t("watchlist.compare.noData") : formatCurrency(card.latest_price, card.currency)}</strong>
+                        <strong>{card.latest_price == null ? t("watchlist.compare.noData") : formatCurrency(card.latest_price, card.currency, localeTag)}</strong>
                       </div>
                       <div>
                         <span className="compare-label">{t("watchlist.compare.minMax")}</span>
                         <strong>
                           {card.min_price != null && card.max_price != null
-                            ? `${formatCurrency(card.min_price, card.currency)}-${formatCurrency(card.max_price, card.currency)}`
+                            ? `${formatCurrency(card.min_price, card.currency, localeTag)}-${formatCurrency(card.max_price, card.currency, localeTag)}`
                             : t("watchlist.compare.noData")}
                         </strong>
                       </div>
                       <div>
                         <span className="compare-label">{t("watchlist.summary.avg")}</span>
-                        <strong>{card.avg_price == null ? t("watchlist.compare.noData") : formatCurrency(card.avg_price, card.currency)}</strong>
+                        <strong>{card.avg_price == null ? t("watchlist.compare.noData") : formatCurrency(card.avg_price, card.currency, localeTag)}</strong>
                       </div>
                     </div>
                     <div className="compare-meta">

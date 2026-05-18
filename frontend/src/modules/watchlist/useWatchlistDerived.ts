@@ -69,7 +69,7 @@ export function useWatchlistDerived({
   chartPad,
   lineColors,
 }: UseWatchlistDerivedInput) {
-  const { t } = useI18n();
+  const { t, localeTag } = useI18n();
   const watchMeta = useMemo(() => {
     const map = new Map<string, WatchMetaEntry>();
     const grouped = historyRows.reduce<Record<string, HistoryRow[]>>((acc, row) => {
@@ -98,8 +98,8 @@ export function useWatchlistDerived({
       const current = new Date(row.capturedAt).getTime();
       return current > acc ? current : acc;
     }, 0);
-    return latest ? formatRelativeTime(new Date(latest).toISOString()) : "";
-  }, [historyRows]);
+    return latest ? formatRelativeTime(new Date(latest).toISOString(), localeTag) : "";
+  }, [historyRows, localeTag]);
 
   const allOrigins = useMemo(() => Array.from(new Set(items.map((watch) => watch.origin_iata))).sort(), [items]);
 
@@ -199,9 +199,9 @@ export function useWatchlistDerived({
     const rows = groupedByDate[selectedDates[0]] || [];
     return rows.map((row) => ({
       value: row.capturedAt,
-      label: `${formatDateTime(row.capturedAt)} - ${formatCurrency(row.price, row.currency)}`,
+      label: `${formatDateTime(row.capturedAt, localeTag)} - ${formatCurrency(row.price, row.currency, localeTag)}`,
     }));
-  }, [groupedByDate, selectedDates]);
+  }, [groupedByDate, localeTag, selectedDates]);
 
   const summary = useMemo(() => {
     if (selectedDates.length !== 1) return null;
@@ -364,34 +364,6 @@ export function useWatchlistDerived({
     return compareOptions.filter((option) => compareIds.includes(option.id));
   }, [compareOptions, compareIds]);
 
-  const compareBadges = useMemo(() => {
-    if (compareSelection.length === 0) return null;
-    const withPrice = compareSelection.filter((option) => option.latest);
-    const bestPrice = withPrice.reduce((acc, option) => {
-      if (!acc) return option;
-      if (!option.latest) return acc;
-      return option.latest.price < (acc.latest?.price ?? Infinity) ? option : acc;
-    }, null as typeof withPrice[number] | null);
-    const freshest = withPrice.reduce((acc, option) => {
-      if (!acc) return option;
-      if (!option.latest) return acc;
-      return new Date(option.latest.capturedAt).getTime() > new Date(acc.latest?.capturedAt ?? 0).getTime()
-        ? option
-        : acc;
-    }, null as typeof withPrice[number] | null);
-    const stable = compareSelection.reduce((acc, option) => {
-      if (!acc) return option;
-      if (option.volatility == null) return acc;
-      if (acc.volatility == null) return option;
-      return option.volatility < acc.volatility ? option : acc;
-    }, null as typeof compareSelection[number] | null);
-    return {
-      bestPriceId: bestPrice?.id ?? null,
-      freshestId: freshest?.id ?? null,
-      stableId: stable?.id ?? null,
-    };
-  }, [compareSelection]);
-
   const watchMapRoutes = useMemo<WatchMapRouteView[]>(() => {
     const compareSet = new Set(compareIds);
     const compareCapped = compareSelection.slice(0, 4).map((item) => item.id);
@@ -536,7 +508,6 @@ export function useWatchlistDerived({
     calendarHasUsefulData,
     compareOptions,
     compareSelection,
-    compareBadges,
     watchMapRoutes,
     watchMapMode,
     watchMapInsight,

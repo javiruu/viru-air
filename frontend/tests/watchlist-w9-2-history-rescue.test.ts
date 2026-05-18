@@ -17,7 +17,7 @@ test("W9.2: frescura no genera 'hace hace'", () => {
   const format = fs.readFileSync(FORMAT, "utf8");
   const i18n = fs.readFileSync(I18N, "utf8");
 
-  assert.match(format, /return `hace \$\{diffHours\} h`/);
+  assert.match(format, /new Intl\.RelativeTimeFormat/);
   assert.match(summary, /watchlist\.freshness\.updatedAgo/);
   assert.match(summary, /watchlist\.freshness\.lastUpdatedAgo/);
   assert.match(i18n, /lastUpdatedAgo:\s*"\{time\}"/);
@@ -26,8 +26,10 @@ test("W9.2: frescura no genera 'hace hace'", () => {
 
 test("W9.2: comparativa usa copy ES y bloquea copy EN", () => {
   const i18n = fs.readFileSync(I18N, "utf8");
-  assert.match(i18n, /Selecciona hasta 4 rutas para comparar precio, estabilidad y frescura\./);
-  assert.match(i18n, /compare:\s*\{[\s\S]*subtitle:\s*"Selecciona hasta 4 rutas para comparar precio, estabilidad y frescura\."/);
+  assert.match(i18n, /subtitle:\s*"Compara hasta 4 rutas"/);
+  assert.match(i18n, /emptySelectionMessage:\s*"Selecciona 2–4 rutas para comparar"/);
+  assert.match(i18n, /oneSelectionMessage:\s*"Elige otra ruta para comparar"/);
+  assert.match(i18n, /maxSelectionMessage:\s*"Puedes comparar hasta 4 rutas\."/);
 });
 
 test("W9.2: elimina duplicidad 'Rango temporal RANGO' en histórico", () => {

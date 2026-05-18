@@ -45,7 +45,7 @@ const CHART_PAD = { left: 54, right: 18, top: 18, bottom: 38 };
 
 export default function WatchlistPage() {
   const router = useRouter();
-  const { t } = useI18n();
+  const { t, localeTag } = useI18n();
 
   const watchlistHint = useFtueHint("watchlist");
 
@@ -131,7 +131,7 @@ export default function WatchlistPage() {
             selectedPointData={derived.selectedPointData}
             hoverPoint={hover.hoverPoint}
             visibleMonth={derived.visibleMonth}
-            monthTitle={monthLabel(derived.visibleMonth)}
+            monthTitle={monthLabel(derived.visibleMonth, localeTag)}
             monthCells={derived.monthCells}
             calendarEvents={derived.calendarEvents}
             calendarRange={derived.calendarRange}
@@ -226,8 +226,6 @@ export default function WatchlistPage() {
           <ComparePanels
             compareCards={derived.compareCards}
             compareOptions={derived.compareOptions}
-            compareSelection={derived.compareSelection}
-            compareBadges={derived.compareBadges}
             compareIds={view.compareIds}
             compareNotice={view.compareNotice}
             onToggleCompare={view.toggleCompare}
