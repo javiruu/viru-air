@@ -159,3 +159,101 @@ def test_watchlist_refresh_bulk_returns_summary(client: TestClient, monkeypatch)
     assert payload["requested"] == 3
     assert set(payload["refreshed"]) == {watch_a, watch_b}
     assert any(item["code"] == "watch_not_found" for item in payload["failed"])
+
+
+def test_watchlist_status_bulk_returns_partial_summary(client: TestClient, monkeypatch) -> None:
+    monkeypatch.setattr(watchlist_api, "provider", _FakeProvider())
+
+    token = register_and_token(client, email="bulk-status@viru.dev")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    create_a = client.post(
+        "/api/v1/watchlist",
+        headers=headers,
+        json={
+            "origin_iata": "MAD",
+            "destination_iata": "DUB",
+            "travel_date_local": str(date.today() + timedelta(days=37)),
+        },
+    )
+    create_b = client.post(
+        "/api/v1/watchlist",
+        headers=headers,
+        json={
+            "origin_iata": "BCN",
+            "destination_iata": "LIS",
+            "travel_date_local": str(date.today() + timedelta(days=38)),
+        },
+    )
+    watch_a = create_a.json()["id"]
+    watch_b = create_b.json()["id"]
+
+    bulk = client.post(
+        "/api/v1/watchlist/status-bulk",
+        headers=headers,
+        json={"watch_ids": [watch_a, watch_b, "missing-watch-id"], "status": "paused"},
+    )
+    assert bulk.status_code == 200
+    payload = bulk.json()
+    assert payload["requested"] == 3
+    assert set(payload["updated_ids"]) == {watch_a, watch_b}
+    assert any(item["code"] == "watch_not_found" for item in payload["failed"])
+
+
+def test_watchlist_delete_bulk_returns_partial_summary(client: TestClient, monkeypatch) -> None:
+    monkeypatch.setattr(watchlist_api, "provider", _FakeProvider())
+
+    token = register_and_token(client, email="bulk-delete@viru.dev")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    create_a = client.post(
+        "/api/v1/watchlist",
+        headers=headers,
+        json={
+            "origin_iata": "MAD",
+            "destination_iata": "DUB",
+            "travel_date_local": str(date.today() + timedelta(days=39)),
+        },
+    )
+    create_b = client.post(
+        "/api/v1/watchlist",
+        headers=headers,
+        json={
+            "origin_iata": "BCN",
+            "destination_iata": "LIS",
+            "travel_date_local": str(date.today() + timedelta(days=40)),
+        },
+    )
+    watch_a = create_a.json()["id"]
+    watch_b = create_b.json()["id"]
+
+    bulk = client.post(
+        "/api/v1/watchlist/delete-bulk",
+        headers=headers,
+        json={"watch_ids": [watch_a, watch_b, "missing-watch-id"]},
+    )
+    assert bulk.status_code == 200
+    payload = bulk.json()
+    assert payload["requested"] == 3
+    assert set(payload["deleted_ids"]) == {watch_a, watch_b}
+    assert any(item["code"] == "watch_not_found" for item in payload["failed"])
+
+
+def test_watchlist_status_bulk_rejects_invalid_payload(client: TestClient, monkeypatch) -> None:
+    monkeypatch.setattr(watchlist_api, "provider", _FakeProvider())
+    token = register_and_token(client, email="bulk-status-invalid@viru.dev")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    invalid_status = client.post(
+        "/api/v1/watchlist/status-bulk",
+        headers=headers,
+        json={"watch_ids": ["watch-a"], "status": "invalid"},
+    )
+    assert invalid_status.status_code == 422
+
+    empty_ids = client.post(
+        "/api/v1/watchlist/status-bulk",
+        headers=headers,
+        json={"watch_ids": [], "status": "paused"},
+    )
+    assert empty_ids.status_code == 422

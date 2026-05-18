@@ -20,6 +20,10 @@ El backend de Viru Tracker está implementado con FastAPI y organiza API, domini
 - Endpoints operativos visibles:
   - `/health`
   - `/ready`
+- Contrato watchlist batch activo:
+  - `POST /api/v1/watchlist/refresh-bulk`
+  - `POST /api/v1/watchlist/status-bulk`
+  - `POST /api/v1/watchlist/delete-bulk`
 - Dominio documentado con mayor detalle en:
   - [Quick Search contract](../reference/backend/quick-search-contract.md)
   - [Quick Search acceptance checklist](../reference/backend/quick-search-acceptance-checklist.md)

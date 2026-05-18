@@ -201,6 +201,23 @@ class WatchRefreshBulkIn(BaseModel):
     watch_ids: list[str] = Field(default_factory=list, min_length=1, max_length=100)
 
 
+class WatchStatusBulkIn(BaseModel):
+    watch_ids: list[str] = Field(default_factory=list, min_length=1, max_length=100)
+    status: str
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if normalized not in WATCH_STATUS_UPDATABLE:
+            raise ValueError("invalid_watch_status")
+        return normalized
+
+
+class WatchDeleteBulkIn(BaseModel):
+    watch_ids: list[str] = Field(default_factory=list, min_length=1, max_length=100)
+
+
 class AlertRuleIn(BaseModel):
     watch_id: str
     rule_type: str

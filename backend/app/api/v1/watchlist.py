@@ -21,7 +21,15 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
-from app.domain.schemas import WatchCreateIn, WatchDetailOut, WatchOut, WatchRefreshBulkIn, WatchUpdateIn
+from app.domain.schemas import (
+    WatchCreateIn,
+    WatchDeleteBulkIn,
+    WatchDetailOut,
+    WatchOut,
+    WatchRefreshBulkIn,
+    WatchStatusBulkIn,
+    WatchUpdateIn,
+)
 from app.infrastructure.db.models import FlightWatch, PriceSnapshot, User
 from app.infrastructure.db.session import get_db
 from app.infrastructure.providers.ryanair_public_provider import RyanairPublicProvider
@@ -158,6 +166,60 @@ def refresh_watch_bulk(
         except HTTPException as exc:
             failed.append({"watch_id": watch_id, "code": str(exc.detail)})
     return {"status": "ok", "requested": len(deduped_watch_ids), "refreshed": refreshed, "failed": failed}
+
+
+@router.post("/status-bulk")
+def update_watch_status_bulk(
+    payload: WatchStatusBulkIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict[str, object]:
+    deduped_watch_ids = list(dict.fromkeys(payload.watch_ids))
+    updated_ids: list[str] = []
+    failed: list[dict[str, str]] = []
+    for watch_id in deduped_watch_ids:
+        watch = db.scalar(
+            select(FlightWatch).where(FlightWatch.id == watch_id, FlightWatch.user_id == current_user.id)
+        )
+        if not watch or watch.status == WATCH_STATUS_DELETED:
+            failed.append({"watch_id": watch_id, "code": "watch_not_found"})
+            continue
+        watch.status = payload.status
+        updated_ids.append(watch_id)
+    db.commit()
+    return {
+        "status": "ok",
+        "requested": len(deduped_watch_ids),
+        "updated_ids": updated_ids,
+        "failed": failed,
+    }
+
+
+@router.post("/delete-bulk")
+def delete_watch_bulk(
+    payload: WatchDeleteBulkIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict[str, object]:
+    deduped_watch_ids = list(dict.fromkeys(payload.watch_ids))
+    deleted_ids: list[str] = []
+    failed: list[dict[str, str]] = []
+    for watch_id in deduped_watch_ids:
+        watch = db.scalar(
+            select(FlightWatch).where(FlightWatch.id == watch_id, FlightWatch.user_id == current_user.id)
+        )
+        if not watch or watch.status == WATCH_STATUS_DELETED:
+            failed.append({"watch_id": watch_id, "code": "watch_not_found"})
+            continue
+        watch.status = WATCH_STATUS_DELETED
+        deleted_ids.append(watch_id)
+    db.commit()
+    return {
+        "status": "ok",
+        "requested": len(deduped_watch_ids),
+        "deleted_ids": deleted_ids,
+        "failed": failed,
+    }
 
 
 @router.get("/{watch_id}", response_model=WatchDetailOut)
