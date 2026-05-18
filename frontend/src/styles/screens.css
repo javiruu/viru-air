@@ -2011,16 +2011,6 @@ h1 {
   gap: 0.8rem;
 }
 
-.qs-toast {
-  position: fixed;
-  bottom: 1.2rem;
-  right: 1.2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  z-index: 80;
-}
-
 .qs-pending-changes {
   margin: 0;
   display: grid;
@@ -15007,8 +14997,7 @@ textarea::placeholder {
   position: relative;
 }
 
-.qs-row-menu-trigger,
-.qs-toast-close {
+.qs-row-menu-trigger {
   width: 40px;
   min-width: 40px;
   min-height: 40px;

@@ -81,7 +81,6 @@ export function useQuickSearchMainState(initialOrigin: string, initialDestinatio
   const [deepLinkError, setDeepLinkError] = useState("");
   const [copyModalOpen, setCopyModalOpen] = useState(false);
   const [copyModalPayload, setCopyModalPayload] = useState("");
-  const [toast, setToast] = useState<{ message: string; actionLabel?: string; onAction?: () => void } | null>(null);
   const [summaryHighlightKey, setSummaryHighlightKey] = useState<SummaryHighlightKey>(null);
   const [originTouched, setOriginTouched] = useState(false);
   const [destinationTouched, setDestinationTouched] = useState(false);
@@ -273,8 +272,6 @@ export function useQuickSearchMainState(initialOrigin: string, initialDestinatio
     setCopyModalOpen,
     copyModalPayload,
     setCopyModalPayload,
-    toast,
-    setToast,
     summaryHighlightKey,
     setSummaryHighlightKey,
     originTouched,

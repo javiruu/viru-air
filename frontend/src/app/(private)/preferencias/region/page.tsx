@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import AirLoader from "@/modules/shared/AirLoader";
 import { apiFetch } from "@/modules/shared/api";
 import { persistLocale, useI18n } from "@/i18n";
@@ -15,18 +16,16 @@ type RegionPref = {
   currency: string;
 };
 
-type ToastState = { tone: "success" | "error"; message: string } | null;
-
 const REGION_OPTIONS = ["ES", "EU", "US", "UK"] as const;
 const CURRENCY_OPTIONS = ["EUR", "USD", "GBP"] as const;
 
 export default function PreferenciasRegionPage() {
   const router = useRouter();
   const { t } = useI18n();
+  const { notify } = useNotificationCenter();
   const [pref, setPref] = useState<RegionPref | null>(null);
   const [initialPref, setInitialPref] = useState<RegionPref | null>(null);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<ToastState>(null);
 
   useEffect(() => {
     apiFetch<RegionPref>("/preferences/region")
@@ -37,14 +36,8 @@ export default function PreferenciasRegionPage() {
           persistLocale(data.language === "en" ? "en" : "es");
         }
       })
-      .catch(() => setToast({ tone: "error", message: t("preferences.region.loadError") }));
-  }, [t]);
-
-  useEffect(() => {
-    if (!toast) return;
-    const timer = window.setTimeout(() => setToast(null), 3200);
-    return () => window.clearTimeout(timer);
-  }, [toast]);
+      .catch(() => notify({ tone: "error", title: t("preferences.region.loadError"), durationMs: 3200 }));
+  }, [notify, t]);
 
   const dirty = useMemo(() => {
     if (!pref || !initialPref) return false;
@@ -64,9 +57,9 @@ export default function PreferenciasRegionPage() {
       if (pref.language) {
         persistLocale(pref.language === "en" ? "en" : "es");
       }
-      setToast({ tone: "success", message: t("preferences.region.saveSuccess") });
+      notify({ tone: "success", title: t("preferences.region.saveSuccess"), durationMs: 3200 });
     } catch {
-      setToast({ tone: "error", message: t("preferences.region.saveError") });
+      notify({ tone: "error", title: t("preferences.region.saveError"), durationMs: 3200 });
     } finally {
       setSaving(false);
     }
@@ -188,12 +181,6 @@ export default function PreferenciasRegionPage() {
           </div>
         </form>
       </section>
-
-      {toast ? (
-        <div className={`toast ${toast.tone === "success" ? "notice-success" : "notice-error"}`} role="status" aria-live="polite">
-          {toast.message}
-        </div>
-      ) : null}
     </main>
   );
 }

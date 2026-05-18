@@ -37,8 +37,6 @@ export type GlassProfileSession = {
   is_active: boolean;
 };
 
-export type GlassProfileToastState = { tone: "success" | "error"; message: string } | null;
-
 type TranslateFn = (key: string, params?: Record<string, string>) => string;
 
 type GlassProfileSettingsCardProps = {
@@ -46,7 +44,6 @@ type GlassProfileSettingsCardProps = {
   sessions: GlassProfileSession[];
   saving: boolean;
   closingSessions: boolean;
-  toast: GlassProfileToastState;
   confirmDeleteOpen: boolean;
   confirmText: string;
   localeTag: string;
@@ -96,7 +93,6 @@ export function GlassProfileSettingsCard({
   sessions,
   saving,
   closingSessions,
-  toast,
   confirmDeleteOpen,
   confirmText,
   localeTag,
@@ -507,21 +503,6 @@ export function GlassProfileSettingsCard({
         ) : null}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {toast ? (
-          <motion.div
-            className={`toast ${toast.tone === "success" ? "notice-success" : "notice-error"}`}
-            role="status"
-            aria-live="polite"
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 12 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-          >
-            {toast.message}
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
     </main>
   );
 }

@@ -3,10 +3,9 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
+import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
 import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
-
-type ToastState = { tone: "success" | "error"; message: string } | null;
 type Me = { id: string; email: string; locale: string; is_admin: boolean };
 
 function isValidOptionalUrl(value: string): boolean {
@@ -27,19 +26,13 @@ function getCounterTone(length: number): "short" | "ready" | "rich" {
 
 export default function SoporteContactoClient() {
   const { t } = useI18n();
+  const { notify } = useNotificationCenter();
   const [me, setMe] = useState<Me | null>(null);
   const [message, setMessage] = useState("");
   const [attachmentUrl, setAttachmentUrl] = useState("");
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<ToastState>(null);
   const [messageError, setMessageError] = useState("");
   const [attachmentError, setAttachmentError] = useState("");
-
-  useEffect(() => {
-    if (!toast) return;
-    const timer = window.setTimeout(() => setToast(null), 3200);
-    return () => window.clearTimeout(timer);
-  }, [toast]);
 
   useEffect(() => {
     apiFetchWithStatus<Me>("/auth/me").then((result) => {
@@ -70,7 +63,11 @@ export default function SoporteContactoClient() {
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     if (!validateForm()) {
-      setToast({ tone: "error", message: trimmedLength === 0 ? t("support.contact.validation") : t("support.contact.error") });
+      notify({
+        tone: "error",
+        title: trimmedLength === 0 ? t("support.contact.validation") : t("support.contact.error"),
+        durationMs: 3200,
+      });
       return;
     }
     setSaving(true);
@@ -87,9 +84,9 @@ export default function SoporteContactoClient() {
       setAttachmentUrl("");
       setMessageError("");
       setAttachmentError("");
-      setToast({ tone: "success", message: t("support.contact.success") });
+      notify({ tone: "success", title: t("support.contact.success"), durationMs: 3200 });
     } catch {
-      setToast({ tone: "error", message: t("support.contact.error") });
+      notify({ tone: "error", title: t("support.contact.error"), durationMs: 3200 });
     } finally {
       setSaving(false);
     }
@@ -300,12 +297,6 @@ export default function SoporteContactoClient() {
           </div>
         </aside>
       </div>
-
-      {toast ? (
-        <div className={`toast ${toast.tone === "success" ? "notice-success" : "notice-error"}`} role="status" aria-live="polite">
-          {toast.message}
-        </div>
-      ) : null}
     </main>
   );
 }

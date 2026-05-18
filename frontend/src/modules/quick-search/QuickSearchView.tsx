@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 
+import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
 import { getAirportMeta } from "@/modules/shared/airports";
 import { getQuickSearchCopy } from "@/modules/shared/quickSearchCopy";
@@ -84,20 +85,6 @@ const RELAX_HIGHLIGHT_BY_ACTION: Record<ZeroResultRelaxAction, Exclude<SummaryHi
   clear_exclusions: "exclusions",
   open_date_flex: "date_flex",
 };
-
-function QuickSearchCloseIcon() {
-  return (
-    <svg className="qs-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M6.75 6.75 17.25 17.25M17.25 6.75 6.75 17.25"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
 
 const IATA_TO_MAC: Record<string, string> = {
   BRU: "BRL",
@@ -192,6 +179,7 @@ function buildAirportSuggestions(airports: AirportIataEntry[], value: string, li
 
 export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchMode }) {
   const router = useRouter();
+  const { notify } = useNotificationCenter();
   const expectedQuerySignaturesRef = useRef<Set<string> | null>(null);
   const [seedAirports, setSeedAirports] = useState<AirportIataEntry[]>([]);
   const [seedCountries, setSeedCountries] = useState<QuickSearchCountrySeed[]>([]);
@@ -337,8 +325,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setCopyModalOpen,
     copyModalPayload,
     setCopyModalPayload,
-    toast,
-    setToast,
     summaryHighlightKey,
     setSummaryHighlightKey,
     originTouched,
@@ -1540,10 +1526,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         }),
       });
       if (response.created_or_existing === "existing") {
-        setToast({
-          message: t("watchExists"),
+        notify({
+          tone: "success",
+          title: t("watchExists"),
           actionLabel: t("viewWatchlist"),
           onAction: () => router.push("/watchlist"),
+          durationMs: 3200,
         });
       } else {
         trackEvent("quicksearch_watchlist_added", {
@@ -1553,10 +1541,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           source: result.source,
           risk_label: result.risk_label ?? null,
         });
-        setToast({
-          message: t("watchAdded"),
+        notify({
+          tone: "success",
+          title: t("watchAdded"),
           actionLabel: t("viewWatchlist"),
           onAction: () => router.push("/watchlist"),
+          durationMs: 3200,
         });
       }
     } catch (error) {
@@ -2829,7 +2819,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     trackEvent("quicksearch_relax_undo_clicked", { action: undoPayload.action });
     setSummaryHighlightKey(RELAX_HIGHLIGHT_BY_ACTION[undoPayload.action]);
     relaxUndoRef.current = null;
-    setToast(null);
   }, [
     relaxUndoRef,
     setDurationMax,
@@ -2845,7 +2834,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setApplyFlexReturn,
     setStrictFilters,
     setSummaryHighlightKey,
-    setToast,
   ]);
 
   const onZeroResultRelaxAction = useCallback((action: ZeroResultRelaxAction) => {
@@ -2900,10 +2888,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     }
 
     setSummaryHighlightKey(RELAX_HIGHLIGHT_BY_ACTION[action]);
-    setToast({
-      message: `${t("relaxToastPrefix")} ${actionLabelMap[action]}`,
+    notify({
+      tone: "success",
+      title: `${t("relaxToastPrefix")} ${actionLabelMap[action]}`,
       actionLabel: t("undoAction"),
       onAction: () => undoZeroResultRelaxAction(action),
+      durationMs: 3200,
     });
   }, [
     t,
@@ -2935,7 +2925,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setApplyFlexReturn,
     setStrictFilters,
     setSummaryHighlightKey,
-    setToast,
+    notify,
   ]);
 
   const selectedResult = useMemo(() => {
@@ -4306,7 +4296,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 className="btn-primary"
                 onClick={async () => {
                   await navigator.clipboard.writeText(copyModalPayload);
-                  setToast({ message: t("deepLinkCopied") });
+                  notify({ tone: "success", title: t("deepLinkCopied"), durationMs: 3200 });
                   setCopyModalOpen(false);
                 }}
               >
@@ -4314,20 +4304,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               </button>
             </div>
           </section>
-        </div>
-      ) : null}
-
-      {toast ? (
-        <div className="notice notice-success qs-toast">
-          <span>{toast.message}</span>
-          {toast.actionLabel && toast.onAction ? (
-            <button type="button" className="btn-ghost" onClick={toast.onAction}>
-              {toast.actionLabel}
-            </button>
-          ) : null}
-          <button type="button" className="btn-ghost qs-toast-close" aria-label={t("pickClose")} onClick={() => setToast(null)}>
-            <QuickSearchCloseIcon />
-          </button>
         </div>
       ) : null}
 

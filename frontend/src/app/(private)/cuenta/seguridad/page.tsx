@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import AirLoader from "@/modules/shared/AirLoader";
 import { apiFetch } from "@/modules/shared/api";
 import { useI18n } from "@/i18n";
@@ -13,17 +14,15 @@ type SecurityEvent = {
   created_at: string;
 };
 
-type ToastState = { tone: "success" | "error"; message: string } | null;
-
 export default function SeguridadPage() {
   const router = useRouter();
   const { t, localeTag } = useI18n();
+  const { notify } = useNotificationCenter();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [events, setEvents] = useState<SecurityEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<ToastState>(null);
 
   useEffect(() => {
     apiFetch<{ items: SecurityEvent[] }>("/account/security/activity")
@@ -31,12 +30,6 @@ export default function SeguridadPage() {
       .catch(() => setEvents([]))
       .finally(() => setLoading(false));
   }, []);
-
-  useEffect(() => {
-    if (!toast) return;
-    const timer = window.setTimeout(() => setToast(null), 3200);
-    return () => window.clearTimeout(timer);
-  }, [toast]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -48,9 +41,9 @@ export default function SeguridadPage() {
       });
       setCurrentPassword("");
       setNewPassword("");
-      setToast({ tone: "success", message: t("account.security.passwordSuccess") });
+      notify({ tone: "success", title: t("account.security.passwordSuccess"), durationMs: 3200 });
     } catch {
-      setToast({ tone: "error", message: t("account.security.passwordError") });
+      notify({ tone: "error", title: t("account.security.passwordError"), durationMs: 3200 });
     } finally {
       setSaving(false);
     }
@@ -151,12 +144,6 @@ export default function SeguridadPage() {
           </div>
         )}
       </section>
-
-      {toast ? (
-        <div className={`toast ${toast.tone === "success" ? "notice-success" : "notice-error"}`} role="status" aria-live="polite">
-          {toast.message}
-        </div>
-      ) : null}
     </main>
   );
 }

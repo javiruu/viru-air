@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { trackUxEvent } from "@/lib/uxTracking";
 import { apiFetch } from "@/modules/shared/api";
 import { getDeliveryStateCopy, getNotificationChannelCopy } from "@/modules/alerts/deliveryPresentation";
@@ -63,6 +64,7 @@ function formatEur(value: number, locale: string): string {
 export default function AlertsPage() {
   const router = useRouter();
   const { t, localeTag } = useI18n();
+  const { notify } = useNotificationCenter();
   const [watches, setWatches] = useState<Watch[]>([]);
   const [selectedWatchId, setSelectedWatchId] = useState("");
   const [rules, setRules] = useState<AlertRule[]>([]);
@@ -79,6 +81,17 @@ export default function AlertsPage() {
   const [quietHoursEnabled, setQuietHoursEnabled] = useState(false);
   const [quietHoursStart, setQuietHoursStart] = useState("22:00");
   const [quietHoursEnd, setQuietHoursEnd] = useState("08:00");
+
+  useEffect(() => {
+    if (!message || status === "idle" || status === "sending") return;
+    notify({
+      tone: status === "success" ? "success" : "error",
+      title: message,
+      durationMs: 3200,
+    });
+    setMessage("");
+    setStatus("idle");
+  }, [message, notify, status]);
 
   const ruleOptions = useMemo(
     () => [
@@ -606,12 +619,6 @@ export default function AlertsPage() {
         )}
       </section>
 
-      {message ? (
-        <div className={`toast ${status === "success" ? "notice-success" : "notice-error"}`} role="status" aria-live="polite">
-          <strong>{status === "success" ? t("alerts.toast.ready") : t("alerts.toast.attention")}</strong>
-          <span>{message}</span>
-        </div>
-      ) : null}
     </main>
   );
 }

@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import AirLoader from "@/modules/shared/AirLoader";
 import { apiFetch } from "@/modules/shared/api";
 import { useI18n } from "@/i18n";
@@ -14,15 +15,13 @@ type AppearancePref = {
   high_contrast: boolean;
 };
 
-type ToastState = { tone: "success" | "error"; message: string } | null;
-
 export default function PreferenciasAparienciaPage() {
   const router = useRouter();
   const { t } = useI18n();
+  const { notify } = useNotificationCenter();
   const [pref, setPref] = useState<AppearancePref | null>(null);
   const [initialPref, setInitialPref] = useState<AppearancePref | null>(null);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<ToastState>(null);
 
   const themeOptions = useMemo(
     () => [
@@ -47,14 +46,8 @@ export default function PreferenciasAparienciaPage() {
         setPref(data);
         setInitialPref(data);
       })
-      .catch(() => setToast({ tone: "error", message: t("preferences.appearance.loadError") }));
-  }, [t]);
-
-  useEffect(() => {
-    if (!toast) return;
-    const timer = window.setTimeout(() => setToast(null), 3200);
-    return () => window.clearTimeout(timer);
-  }, [toast]);
+      .catch(() => notify({ tone: "error", title: t("preferences.appearance.loadError"), durationMs: 3200 }));
+  }, [notify, t]);
 
   const dirty = useMemo(() => {
     if (!pref || !initialPref) return false;
@@ -71,9 +64,9 @@ export default function PreferenciasAparienciaPage() {
         body: JSON.stringify(pref),
       });
       setInitialPref(pref);
-      setToast({ tone: "success", message: t("preferences.appearance.saveSuccess") });
+      notify({ tone: "success", title: t("preferences.appearance.saveSuccess"), durationMs: 3200 });
     } catch {
-      setToast({ tone: "error", message: t("preferences.appearance.saveError") });
+      notify({ tone: "error", title: t("preferences.appearance.saveError"), durationMs: 3200 });
     } finally {
       setSaving(false);
     }
@@ -207,12 +200,6 @@ export default function PreferenciasAparienciaPage() {
           </div>
         </form>
       </section>
-
-      {toast ? (
-        <div className={`toast ${toast.tone === "success" ? "notice-success" : "notice-error"}`} role="status" aria-live="polite">
-          {toast.message}
-        </div>
-      ) : null}
     </main>
   );
 }

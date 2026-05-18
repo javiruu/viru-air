@@ -1,12 +1,11 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetch } from "@/modules/shared/api";
 import { useI18n } from "@/i18n";
-
-type ToastState = { tone: "success" | "error"; message: string } | null;
 
 type Props = {
   initialFeedbackType: "bug" | "idea" | "general";
@@ -21,22 +20,16 @@ export default function SoporteFeedbackClient({
 }: Props) {
   const router = useRouter();
   const { t } = useI18n();
+  const { notify } = useNotificationCenter();
   const [feedbackType, setFeedbackType] = useState<Props["initialFeedbackType"]>(initialFeedbackType);
   const [message, setMessage] = useState(initialMessage);
   const [attachmentUrl, setAttachmentUrl] = useState(initialAttachmentUrl);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<ToastState>(null);
-
-  useEffect(() => {
-    if (!toast) return;
-    const timer = window.setTimeout(() => setToast(null), 3200);
-    return () => window.clearTimeout(timer);
-  }, [toast]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     if (!message.trim()) {
-      setToast({ tone: "error", message: t("support.feedback.validation") });
+      notify({ tone: "error", title: t("support.feedback.validation"), durationMs: 3200 });
       return;
     }
     setSaving(true);
@@ -51,9 +44,9 @@ export default function SoporteFeedbackClient({
       });
       setMessage("");
       setAttachmentUrl("");
-      setToast({ tone: "success", message: t("support.feedback.success") });
+      notify({ tone: "success", title: t("support.feedback.success"), durationMs: 3200 });
     } catch {
-      setToast({ tone: "error", message: t("support.feedback.error") });
+      notify({ tone: "error", title: t("support.feedback.error"), durationMs: 3200 });
     } finally {
       setSaving(false);
     }
@@ -110,12 +103,6 @@ export default function SoporteFeedbackClient({
           </div>
         </form>
       </section>
-
-      {toast ? (
-        <div className={`toast ${toast.tone === "success" ? "notice-success" : "notice-error"}`} role="status" aria-live="polite">
-          {toast.message}
-        </div>
-      ) : null}
     </main>
   );
 }

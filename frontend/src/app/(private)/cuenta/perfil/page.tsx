@@ -3,11 +3,11 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import {
   GlassProfileData,
   GlassProfileSession,
   GlassProfileSettingsCard,
-  GlassProfileToastState,
 } from "@/components/components/forms/glass-profile-settings";
 import { useI18n } from "@/i18n";
 import { apiFetch } from "@/modules/shared/api";
@@ -16,11 +16,11 @@ import { clearToken } from "@/modules/shared/auth";
 export default function PerfilPage() {
   const router = useRouter();
   const { t, localeTag } = useI18n();
+  const { notify } = useNotificationCenter();
   const [profile, setProfile] = useState<GlassProfileData | null>(null);
   const [sessions, setSessions] = useState<GlassProfileSession[]>([]);
   const [saving, setSaving] = useState(false);
   const [closingSessions, setClosingSessions] = useState(false);
-  const [toast, setToast] = useState<GlassProfileToastState>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
 
@@ -33,14 +33,8 @@ export default function PerfilPage() {
         setProfile(profileData);
         setSessions(sessionsData.items || []);
       })
-      .catch(() => setToast({ tone: "error", message: t("account.profile.updateError") }));
-  }, [t]);
-
-  useEffect(() => {
-    if (!toast) return;
-    const timer = window.setTimeout(() => setToast(null), 3200);
-    return () => window.clearTimeout(timer);
-  }, [toast]);
+      .catch(() => notify({ tone: "error", title: t("account.profile.updateError"), durationMs: 3200 }));
+  }, [notify, t]);
 
   function updateField(key: "display_name" | "avatar_url", value: string) {
     if (!profile) return;
@@ -60,9 +54,9 @@ export default function PerfilPage() {
         }),
       });
       setProfile(updated);
-      setToast({ tone: "success", message: t("account.profile.updateSuccess") });
+      notify({ tone: "success", title: t("account.profile.updateSuccess"), durationMs: 3200 });
     } catch {
-      setToast({ tone: "error", message: t("account.profile.updateError") });
+      notify({ tone: "error", title: t("account.profile.updateError"), durationMs: 3200 });
     } finally {
       setSaving(false);
     }
@@ -73,9 +67,9 @@ export default function PerfilPage() {
     try {
       await apiFetch<{ status: string }>("/account/sessions/close_all", { method: "POST" });
       setSessions((prev) => prev.map((item) => ({ ...item, is_active: false })));
-      setToast({ tone: "success", message: t("account.profile.closeAllSuccess") });
+      notify({ tone: "success", title: t("account.profile.closeAllSuccess"), durationMs: 3200 });
     } catch {
-      setToast({ tone: "error", message: t("account.profile.closeAllError") });
+      notify({ tone: "error", title: t("account.profile.closeAllError"), durationMs: 3200 });
     } finally {
       setClosingSessions(false);
     }
@@ -89,7 +83,7 @@ export default function PerfilPage() {
       clearToken();
       router.push("/");
     } catch {
-      setToast({ tone: "error", message: t("account.profile.deleteError") });
+      notify({ tone: "error", title: t("account.profile.deleteError"), durationMs: 3200 });
     }
   }
 
@@ -99,7 +93,6 @@ export default function PerfilPage() {
       sessions={sessions}
       saving={saving}
       closingSessions={closingSessions}
-      toast={toast}
       confirmDeleteOpen={confirmDeleteOpen}
       confirmText={confirmText}
       localeTag={localeTag}

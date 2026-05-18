@@ -1,8 +1,9 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
 import AirLoader from "@/modules/shared/AirLoader";
 import { apiFetch } from "@/modules/shared/api";
@@ -19,8 +20,6 @@ import {
   SearchPreferenceErrors,
 } from "@/modules/preferences/searchPreferences";
 
-type ToastState = { tone: "success" | "error"; message: string } | null;
-
 function PreferenceIcon({ path }: { path: string }) {
   return (
     <span className="prefs-icon" aria-hidden="true">
@@ -34,14 +33,14 @@ function PreferenceIcon({ path }: { path: string }) {
 export default function PreferenciasBusquedaPage() {
   const router = useRouter();
   const { t } = useI18n();
+  const { notify } = useNotificationCenter();
   const [pref, setPref] = useState<Pref | null>(null);
   const [initialPref, setInitialPref] = useState<Pref | null>(null);
   const [errors, setErrors] = useState<SearchPreferenceErrors>({});
-  const [toast, setToast] = useState<ToastState>(null);
   const [saving, setSaving] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
 
-  function loadPreferences() {
+  const loadPreferences = useCallback(() => {
     setLoadFailed(false);
     apiFetch<Pref>("/preferences/search")
       .then((data) => {
@@ -50,20 +49,14 @@ export default function PreferenciasBusquedaPage() {
       })
       .catch(() => {
         setLoadFailed(true);
-        setToast({ tone: "error", message: t("preferences.search.loadError") });
+        notify({ tone: "error", title: t("preferences.search.loadError"), durationMs: 3200 });
       });
-  }
+  }, [notify, t]);
 
   useEffect(() => {
     loadPreferences();
     // we intentionally reload when translation context changes
-  }, [t]);
-
-  useEffect(() => {
-    if (!toast) return;
-    const timer = window.setTimeout(() => setToast(null), 3200);
-    return () => window.clearTimeout(timer);
-  }, [toast]);
+  }, [loadPreferences]);
 
   const dirty = useMemo(() => {
     if (!pref || !initialPref) return false;
@@ -96,7 +89,7 @@ export default function PreferenciasBusquedaPage() {
     const nextErrors = validateSearchPreferences(pref, t);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
-      setToast({ tone: "error", message: t("preferences.search.validationError") });
+      notify({ tone: "error", title: t("preferences.search.validationError"), durationMs: 3200 });
       return;
     }
     if (!dirty) return;
@@ -108,9 +101,9 @@ export default function PreferenciasBusquedaPage() {
         body: JSON.stringify(pref),
       });
       setInitialPref(pref);
-      setToast({ tone: "success", message: t("preferences.search.saveSuccess") });
+      notify({ tone: "success", title: t("preferences.search.saveSuccess"), durationMs: 3200 });
     } catch {
-      setToast({ tone: "error", message: t("preferences.search.saveError") });
+      notify({ tone: "error", title: t("preferences.search.saveError"), durationMs: 3200 });
     } finally {
       setSaving(false);
     }
@@ -395,12 +388,6 @@ export default function PreferenciasBusquedaPage() {
           </div>
         </section>
       </form>
-
-      {toast ? (
-        <div className={`toast ${toast.tone === "success" ? "notice-success" : "notice-error"}`} role="status" aria-live="polite">
-          {toast.message}
-        </div>
-      ) : null}
     </main>
   );
 }
