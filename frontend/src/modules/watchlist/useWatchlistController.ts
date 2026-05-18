@@ -52,9 +52,6 @@ export function useWatchlistController({
     setSelectedDestination,
     setSelectedDates,
     setSelectedPoint,
-    setViewMode,
-    setIsCalendarSelectorOpen,
-    setCalendarSelectorDay,
   } = view;
   const selectWatch = useCallback(
     (watch: Watch) => {
@@ -63,11 +60,8 @@ export function useWatchlistController({
       setSelectedDestination(watch.destination_iata);
       setSelectedDates([watch.travel_date_local]);
       setSelectedPoint("");
-      setViewMode("chart");
-      setIsCalendarSelectorOpen(false);
-      setCalendarSelectorDay("");
     },
-    [setCalendarSelectorDay, setIsCalendarSelectorOpen, setSelectedDestination, setSelectedDates, setSelectedOrigin, setSelectedPoint, setSelectedWatchId, setViewMode],
+    [setSelectedDestination, setSelectedDates, setSelectedOrigin, setSelectedPoint, setSelectedWatchId],
   );
 
   const selectWatchById = useCallback(

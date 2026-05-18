@@ -370,7 +370,12 @@ export function MapPopup({ longitude, latitude, children, onClose, closeButton =
     host.element.className = className ?? "mapcn-popup-host";
     renderHostRef.current = host;
     renderInHost(host.root, children);
-    const popup = new maplibregl.Popup({ closeButton, closeOnClick: false })
+    const popup = new maplibregl.Popup({
+      closeButton,
+      closeOnClick: false,
+      // Avoid browser auto-scroll when popup content includes focusable elements.
+      focusAfterOpen: false,
+    })
       .setLngLat([longitude, latitude])
       .setDOMContent(host.element)
       .addTo(map);

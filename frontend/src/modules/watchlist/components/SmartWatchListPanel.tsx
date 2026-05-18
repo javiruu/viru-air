@@ -133,6 +133,7 @@ export function SmartWatchListPanel({
   );
   const activeCount = useMemo(() => items.filter((item) => item.status !== "paused").length, [items]);
   const pausedCount = useMemo(() => items.filter((item) => item.status === "paused").length, [items]);
+  const showListMode = !isCalendarSelectorOpen;
 
   return (
     <section className="panel panel-soft section-gap">
@@ -227,15 +228,23 @@ export function SmartWatchListPanel({
             {calendarSelectorMonthCells.map((day, idx) => {
               const event = day ? calendarSelectorEvents[day] : undefined;
               const isSelectedDay = day === calendarSelectorDay;
+              const dayFlights = day ? calendarSelectorFlightsByDay.get(day) ?? [] : [];
+              const firstDayFlight = dayFlights[0];
+              const dayTitle = !day || !event
+                ? undefined
+                : firstDayFlight
+                  ? `${firstDayFlight.origin} -> ${firstDayFlight.destination} · ${firstDayFlight.travelDate}${dayFlights.length > 1 ? ` · +${dayFlights.length - 1}` : ""}`
+                  : t("watchlist.history.calendarFlightsCount", { count: event.count });
               return (
                 <button
                   key={`${day || "empty"}-${idx}`}
                   type="button"
                   className={`history-day ${day ? "has-day" : "empty"} ${event ? "has-event" : ""} ${isSelectedDay ? "is-selected" : ""}`}
                   disabled={!day || !event}
+                  title={dayTitle}
                   onClick={() => {
                     if (!day || !event) return;
-                    const flights = calendarSelectorFlightsByDay.get(day) ?? [];
+                    const flights = dayFlights;
                     if (flights.length <= 1) {
                       const single = flights[0];
                       if (single) onSelectWatchById(single.watchId);
@@ -272,7 +281,7 @@ export function SmartWatchListPanel({
           ) : null}
         </div>
       ) : null}
-      {isLoading && items.length === 0 ? (
+      {showListMode && isLoading && items.length === 0 ? (
         <div className="watchlist-skeleton-list" role="status" aria-live="polite" aria-label={t("watchlist.smartList.loadingAria")}>
           {[0, 1, 2].map((index) => (
             <article key={index} className="watch-row watch-row-skeleton" aria-hidden="true">
@@ -333,7 +342,7 @@ export function SmartWatchListPanel({
           </button>
         </div>
       ) : null}
-      {items.length > 0 && smartListItems.length === 0 ? (
+      {showListMode && items.length > 0 && smartListItems.length === 0 ? (
         <div className="watch-empty-search" role="status" aria-live="polite">
           <p>{t("watchlist.smartList.searchEmpty")}</p>
           <button type="button" className="btn-ghost btn-compact" onClick={onClearSearch}>
@@ -341,7 +350,8 @@ export function SmartWatchListPanel({
           </button>
         </div>
       ) : null}
-      {smartListItems.map((watch) => {
+      {showListMode
+        ? smartListItems.map((watch) => {
         const watchStatus = getWatchStatusMeta(watch.status, t);
         const meta = watchMeta.get(watch.id);
         const trend = !meta?.latest || !meta?.previous
@@ -491,7 +501,8 @@ export function SmartWatchListPanel({
             </div>
           </article>
         );
-      })}
+          })
+        : null}
     </section>
   );
 }
