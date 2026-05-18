@@ -17,6 +17,8 @@ Backend work must be:
 - safe for existing data and user-facing flows;
 - verified with the smallest meaningful checks.
 
+When backend payloads drive UI presentation (status, labels, metadata), preserve theme-agnostic semantics so dark/light rendering can remain consistent in frontend contracts.
+
 Do not treat backend work as only “making tests pass”. A backend change is complete only when the real behavior, contract, failure mode, and evidence are understood.
 
 ---

@@ -202,6 +202,7 @@ Rules:
 
 - Treat `/DESIGN.md` as the active design contract for agent-driven UI proposals and incremental improvements.
 - Keep it aligned with canonical UI docs in `/docs/ui` (`estetica.md`, `UI_CONTRACT_V1.md`, `UI_SYSTEM_V1.md`, `UI_VISUAL_QA_CHECKLIST.md`).
+- Preserve the dual-theme direction across all UI docs: dark mode = Aviation Dark-Luxe, light mode = luminous counterpart of the same identity (not generic SaaS white UI).
 - Use the skill/references to guide tone, hierarchy, and QA expectations; do not use them to justify logic, route, or API contract changes.
 - If these files are added, moved, renamed, or archived, update `/docs/DOCS_INVENTORY.md` and `/docs/INDICE_UNICO.md` in the same change.
 
@@ -293,6 +294,12 @@ If two possible implementations exist:
 - the other is still controlled but has more hierarchy, intention, and product character;
 
 prefer the second.
+
+### Dual-theme rule
+
+- Viru is dual-theme by contract: dark and light must share the same editorial/aeronautical personality.
+- Do not document or implement Viru as dark-only unless the user explicitly asks for that scope.
+- Keep cues and semantics consistent across themes (IATA/rutas/terminales/radar, hierarchy, accent behavior, and state meaning).
 
 Detailed frontend, visual hierarchy, adaptation, screenshot, and browser QA rules belong in `/frontend/AGENTS.md`.
 

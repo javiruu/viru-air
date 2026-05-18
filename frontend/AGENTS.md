@@ -43,6 +43,12 @@ The UI should feel intentional, calm, structured, elegant, not noisy, not empty,
 
 Simplicity means reducing friction and unnecessary logic, not removing character.
 
+Viru is dual-theme by contract:
+
+- dark mode: Aviation Dark-Luxe / Cinematic Flight Intelligence;
+- light mode: luminous daytime counterpart of the same identity;
+- both modes must preserve the same editorial hierarchy, cues, and semantic behavior.
+
 ---
 
 ## UI implementation principles
@@ -65,6 +71,12 @@ For UI changes, think in terms of:
 3. interaction path;
 4. visual state;
 5. verification evidence.
+
+Theme rule for UI changes:
+
+1. do not solve only for dark mode;
+2. verify equivalent intent in light mode;
+3. avoid "plain white SaaS" drift in light mode.
 
 ---
 
@@ -191,6 +203,8 @@ Browser-visible work is verified with visible evidence from one of these paths:
 1. TestSprite or real browser automation;
 2. screenshots captured by the agent in the real browser flow.
 
+When visuals, hierarchy, or palette are affected, verify both dark and light modes unless the user explicitly limits scope.
+
 If neither is available, say exactly what remains unverified.
 
 ---
@@ -250,6 +264,7 @@ Screenshot rules:
 
 - Prefer full-context screenshots over tiny crops.
 - The screenshot must show the real rendered result.
+- For theme-sensitive changes, capture evidence in both dark and light modes.
 - If the user complained about positioning, spacing, hierarchy, duplication, or visual balance, capture enough context to prove that exact issue is resolved.
 - Do not rely on screenshots of intermediate broken states unless explaining a limitation.
 

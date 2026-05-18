@@ -36,6 +36,8 @@ Verification ladder:
 5. Real browser verification for browser-visible work.
 6. TestSprite or screenshots for visual/user-flow evidence.
 
+When the change impacts UI look/feel, hierarchy, or palette, verification must cover both dark and light themes unless the user explicitly narrows scope.
+
 Do not use a broad test suite as a substitute for a targeted check when the bug or behavior can be tested directly.
 
 Do not claim a fix is verified unless the checks actually cover the changed behavior.
@@ -108,6 +110,8 @@ Browser-visible work is verified with visible evidence from at least one of thes
 1. TestSprite or real browser automation;
 2. screenshots captured by the agent in the real browser flow.
 
+For theme-sensitive work, evidence should include dark and light mode results.
+
 Use TestSprite by default for:
 
 - multi-step flows;
@@ -126,6 +130,7 @@ Screenshot expectations:
 - simple UI change → full section/page + focused changed component;
 - structural/layout change → full page + changed section + interaction state if relevant;
 - stateful UI → capture affected default/open/loading/empty/error/success states when relevant.
+- theme-sensitive change → capture equivalent views in dark and light.
 
 Screenshots must show the real rendered result and enough context to prove the reported issue is resolved.
 

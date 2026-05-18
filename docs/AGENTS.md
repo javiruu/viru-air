@@ -234,6 +234,17 @@ Preserve the language and naming style of the document being edited. If a docume
 
 Do not rename concepts, routes, services, files, or workflows for taste. Use the names that appear in the codebase and canonical docs.
 
+For Viru UI documentation, preserve the dual-theme contract:
+
+- dark mode and light mode must be documented as the same product identity with different luminance;
+- avoid dark-only wording unless explicitly scoped;
+- avoid generic white-SaaS wording for light mode.
+
+Documentation hygiene:
+
+- remove broken citation markers or research artifacts (for example `†L`, `【`, `】`);
+- do not paste audit/report scaffolding into final canonical docs.
+
 ---
 
 ## Special document types
@@ -320,6 +331,7 @@ Before finishing documentation work:
 - check that referenced files actually exist when feasible;
 - check that the doc does not conflict with live source-of-truth docs;
 - check that inventory updates match the actual files changed;
+- for UI guideline updates, check dark/light consistency across `DESIGN.md`, `docs/ui/estetica.md`, `docs/ui/UI_SYSTEM_V1.md`, `docs/ui/UI_CONTRACT_V1.md`, and `docs/qa/visual/color-palette-audit.md`;
 - run formatting or lint checks if the project has docs checks.
 
 If verification cannot be completed, say exactly what was not checked and why.
