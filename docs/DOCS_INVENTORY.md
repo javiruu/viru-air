@@ -43,7 +43,7 @@ Entradas vivas agregadas:
 
 - `.codex/skills/taste-skill/SKILL.md`
 
-## Actualizacion manual 2026-05-18 (aviation dark-luxe visual docs)
+## Actualizacion manual 2026-05-18 (aviation dual dark-light visual docs)
 
 Entradas vivas actualizadas:
 
@@ -191,7 +191,7 @@ Entradas vivas actualizadas:
 | docs/qa/testsprite/skillsprite-user-capabilities.md | QA | vivo | conservar | docs/qa/testsprite/skillsprite-user-capabilities.md | Referencia activa para TestSprite y QA funcional | docs/qa/testsprite/skillsprite-user-capabilities.md |
 | docs/qa/testsprite/testsprite-catalog.md | QA | vivo | conservar | docs/qa/testsprite/testsprite-catalog.md | Referencia activa para TestSprite y QA funcional | docs/qa/testsprite/testsprite-catalog.md |
 | docs/qa/traceability-matrix.md | QA | vivo | conservar | docs/qa/traceability-matrix.md | Navegaci?n y matriz reutilizable de QA | docs/qa/traceability-matrix.md |
-| docs/qa/visual/color-palette-audit.md | QA | vivo | conservar | docs/qa/visual/color-palette-audit.md | Auditoria canonica de paleta y plan de consolidacion visual | docs/qa/visual/color-palette-audit.md |
+| docs/qa/visual/color-palette-audit.md | QA | vivo | conservar | docs/qa/visual/color-palette-audit.md | Auditoria canonica de paleta dual dark/light y plan de consolidacion visual | docs/qa/visual/color-palette-audit.md |
 | docs/reference/README.md | overview | vivo | conservar | docs/reference/README.md | Referencia t?cnica o de proceso activa | docs/reference/README.md |
 | docs/reference/backend/quick-search-acceptance-checklist.md | backend | vivo | conservar | docs/reference/backend/quick-search-acceptance-checklist.md | Referencia t?cnica backend can?nica | docs/reference/backend/quick-search-acceptance-checklist.md |
 | docs/reference/backend/quick-search-contract.md | backend | vivo | conservar | docs/reference/backend/quick-search-contract.md | Referencia t?cnica backend can?nica | docs/reference/backend/quick-search-contract.md |

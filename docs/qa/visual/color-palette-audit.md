@@ -1,44 +1,43 @@
-Status: canonical  
-Scope: QA visual  
-Last reviewed: 2026-05-15  
-Fuente de verdad: docs/qa/visual/color-palette-audit.md  
+Status: canonical
+Scope: QA visual
+Last reviewed: 2026-05-18
+Fuente de verdad: docs/qa/visual/color-palette-audit.md
 
----  
+---
 
 # Auditoría de la paleta de colores y plan de consolidación
 
-Este documento consolida la **paleta definitiva** de Viru Tracker bajo la nueva dirección “Aviation Dark-Luxe” y detalla el plan de migración desde colores dispersos. Debe usarse como referencia para asegurar consistencia cromática en todo el producto.
+Este documento consolida la paleta visual dual de Viru Tracker para garantizar consistencia entre los temas dark/light bajo la misma identidad aeronáutica.
 
-## 1) Paleta visual consolidada
+## 1) Paleta visual consolidada (dual)
 
-| Rol/uso                   | Color (HEX)  | Contraste (fondo oscuro/base) | Uso recomendado                                      |
-|---------------------------|-------------|-------------------------------|------------------------------------------------------|
-| **Fondo primario**        | `#121212`   | 17.6:1 (vs crema)             | Fondo principal (mode noche, *canvas* general)       |
-| **Panel principal**       | `#1E1E1E`   | 15.7:1                         | Paneles de UI principales, secciones destacadas      |
-| **Superficie secundaria** | `#242424`   | 14.5:1                         | Tarjetas internas, modales, overlays oscuros         |
-| **Texto principal**       | `#F5EAD6`   | 17.6:1                         | Titulos y texto por defecto sobre fondo oscuro       |
-| **Texto secundario**      | `#CCCCCC`   | 10.2:1                         | Subtítulos, etiquetas, leyendas secundarias          |
-| **Accent primario**       | `#FFB000`   | 10.2:1                         | CTA principal, íconos de acción destacada (ámbar)    |
-| **Accent secundario**     | `#10B981`   | 7.4:1                          | Estados secundarios, gráficos informativos (verde)   |
-| **Info/altitud**         | `#50BFE6`   | 8.9:1                          | Gráficos/claves informativas (azul claro)            |
-| **Advertencia/alerta**    | `#FF6464`   | 6.5:1                          | Mensajes de error/alerta (coral)                     |
-| **Ambiente (humo)**       | `#7C7CFF`   | 5.5:1                          | Detalles atmosféricos suaves, gradientes ligeros     |
+| Rol/uso | Dark | Light | Uso recomendado | Contraste de referencia |
+|---|---|---|---|---|
+| **Lienzo primario** | `#121212` | `#FFFFFF` | Fondo principal por tema | Verificar contraste texto en ambos temas |
+| **Panel principal** | `#1E1E1E` | `#F5F5F5` | Paneles y bloques principales | Mantener separación clara por capas |
+| **Superficie secundaria** | `#242424` | `#F0F0F0` | Tarjetas internas y subpaneles | Evitar planos sin jerarquía |
+| **Texto principal** | `#F5EAD6` | `#121212` | Lectura principal por tema | Cumplir AA en ambos temas |
+| **Accent primario** | `#FFB000` | `#FFB000` | CTA y acciones clave | Compartido entre temas |
+| **Accent secundario** | `#10B981` | `#10B981` | Estados secundarios / radar | Compartido entre temas |
+| **Info/altitud** | `#50BFE6` | `#50BFE6` | Información y data visual | Compartido entre temas |
+| **Error/alerta** | `#FF6464` | `#FF6464` | Error y advertencia crítica | Compartido entre temas |
+| **Ambiente/haze** | `#7C7CFF` | `#7C7CFF` | Solo detalle atmosférico | No usar como color masivo |
 
-> **Notas:** 
-> - Todos los colores sobre fondo (#121212 o #1E1E1E) cumplen contraste WCAG AA/AAA.  
-> - Se prohíben colores no listados (verde neón, magenta, amarillo puro, etc.).  
-> - Los neutrales (borde, sombra) usarán variantes de los anteriores (p.ej. bordes `#242424`, sombras negras translúcidas).  
+> **Notas**
+> - La paleta es única y coherente entre temas; cambia luminancia, no personalidad.
+> - Se prohíben colores fuera de esta paleta salvo validación explícita.
+> - En light mode, evitar resultado “SaaS blanco plano”: conservar jerarquía editorial y cues de vuelo.
 
 ## 2) Plan de consolidación
-1. **Identificar paleta actual:** Auditar estilos CSS para detectar colores fuera de la paleta base.  
-2. **Reemplazar colores:** Sustituir instancias directas (hex en CSS/JSX) por tokens o variables alineadas (ej. `--accent`, `--ink`).  
-3. **Actualizar tokens:** Asegurar que `tokens.css` y `design tokens` reflejen la paleta arriba.  
-4. **Verificación accesibilidad:** Con cada cambio, comprobar contraste con herramienta (>=4.5:1).  
-5. **Documentación QA:** Registrar resultados en la matriz de trazabilidad QA y revisar en PR correspondiente.  
+1. Auditar estilos para detectar colores fuera de paleta.
+2. Sustituir hardcodes por tokens/variables semánticas.
+3. Mantener trazabilidad en QA por componente y por tema.
+4. Validar contraste y foco visible en dark y light.
+5. Registrar resultados en la matriz de QA.
 
 ## 3) Checklist QA de color
-- **Cohesión cromática:** Ningún elemento UI usa color fuera de la paleta definida.  
-- **Consistencia con tokens:** Todos los colores aplicados provienen de los tokens canónicos.  
-- **Contraste validado:** Texto/íconos sobre cada color de fondo cumplen con AA (p.ej. 15:1 para texto primario).  
-- **Diseño visual:** Los estados (success/warning/error) utilizan los tonos semánticos correctos (verde, ámbar, coral).  
-- **Actualización completa:** No quedan referencias a colores antiguos (e.g. eliminar `#ff0000`, `#00ff00` directos en hojas de estilo).
+- Cohesión cromática: sin colores fuera de paleta.
+- Consistencia semántica: estados compartidos entre temas.
+- Contraste validado: textos e iconos cumplen AA en dark y light.
+- Jerarquía visual: paneles/superficies conservan estructura en ambos temas.
+- Uso de `#7C7CFF`: solo ambiental/haze, nunca color dominante de interfaz.
