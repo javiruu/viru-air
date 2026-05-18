@@ -7,5 +7,8 @@ Validar antes de cerrar cada ajuste:
 - Focus visible en elementos interactivos.
 - Contraste aceptable en dark/light.
 - Estados relevantes verificados (loading, empty, error, success) segun la ruta.
+- Microinteracciones presentes y suaves en hover/seleccion/carga/confirmacion cuando aplique.
+- Microcopy cercano y humano, sin tono infantil.
+- Resultado visual con calidez y personalidad; no frio, plano ni corporativo.
 - Build frontend en verde cuando el cambio toca UI renderizada.
 - Evidencia visual minima (captura de contexto + captura del componente afectado).

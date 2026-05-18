@@ -16,7 +16,12 @@ Este documento define los tokens y patrones visuales congelados. Cualquier cambi
 - Skill: `/.codex/skills/taste-skill/SKILL.md`.
 - El skill guía criterio visual, pero no autoriza romper naming/tokens congelados.
 
-## 1) Tokens básicos congelados
+## 1) Principio de intención visual (sin cambiar freeze)
+- La identidad objetivo es cálida, animada, cercana y aeronáutica.
+- El freeze técnico se mantiene: este documento no habilita cambios de API, rutas o lógica.
+- Dark + light comparten personalidad; cambia luminancia, no identidad.
+
+## 2) Tokens básicos congelados
 _Fuente: `frontend/src/styles/tokens.css`_
 
 ### Espaciados
@@ -53,7 +58,7 @@ Estos valores alinean la guía dark/light, pero **no se declaran aquí como toke
 - Light text: `#121212`
 - Shared accents: `#FFB000`, `#10B981`, `#50BFE6`, `#FF6464`
 
-## 2) Componentes base congelados
+## 3) Componentes base congelados
 _Fuente: `frontend/src/styles/components.css`_
 
 - `panel`, `panel-soft`
@@ -64,34 +69,34 @@ _Fuente: `frontend/src/styles/components.css`_
 - `card`, `status-pill`, `notice-compact`, `notice-actions`
 - `state-success|state-warning|state-error|state-info`
 
-## 3) Reglas por capa
+## 4) Reglas por capa
 - `tokens.css`: valores semánticos reutilizables.
 - `components.css`: patrones compartidos entre pantallas.
 - `screens.css`: ajustes exclusivos por ruta.
 - `globals.css`: composición de capas.
 
-## 4) Naming y convención
+## 5) Naming y convención
 - Tokens: `--categoria-subcategoria-modificador`.
 - Estados: `success|warning|error|info`.
 - Patrones: nombres semánticos; evitar nombres ambiguos.
 
-## 5) Glosario UI (ES visible)
+## 6) Glosario UI (ES visible)
 - Términos: Panel, Seguimiento, Búsqueda rápida, Alerta, Histórico, Comparativa, Preferencias, Ayuda, Aeropuerto, Vuelo.
 - Verbos: Buscar, Actualizar, Guardar, Eliminar, Activar/Desactivar, Reintentar.
-- Estados breves: Cargando…, Sin resultados, Error, Listo.
+- Estados breves: Cargando..., Sin resultados, Error, Listo.
 
-## 6) Evolución controlada
+## 7) Evolución controlada
 - Crear token nuevo solo si el valor se repite en 2+ módulos o representa semántica estable.
 - Crear patrón en `components.css` solo si aparece en 2+ pantallas.
 - Mantener en `screens.css` lo exclusivo por ruta.
 - Documentar excepciones en PR.
 
-## 7) Elementos en refactor (no congelados aún)
+## 8) Elementos en refactor (no congelados aún)
 - Composición interna de Quick Search.
 - Overrides responsive puntuales en `screens.css`.
 - Alias legacy (`/history`, `/preferences`) por compatibilidad.
 
-## 8) Compatibilidad
+## 9) Compatibilidad
 - Rutas canon: `/dashboard`, `/watchlist`, `/quick-search`, `/alerts`, `/preferencias`.
-- Rutas legacy: `/history`→`/preferencias`, `/suggestions`→en revisión.
+- Rutas legacy: `/history`->`/preferencias`, `/suggestions`->en revisión.
 - No reintroducir `warn`; usar `warning`.

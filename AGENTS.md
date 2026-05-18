@@ -12,7 +12,7 @@ More specific instructions may exist in nested `AGENTS.md` files. When working i
 
 Complete the requested task end-to-end with a small, intentional, verified change.
 
-`viru-tracker` is not generic SaaS. It should remain clear, controlled, sober, distinctive, and slightly editorial, while still having personality and feeling user-friendly, warm, approachable, and close.
+`viru-tracker` is not generic SaaS. It should remain clear, intentional, warm, animated, distinctive, and human, with strong visual taste and a close, approachable feel.
 
 A good result is not merely code that compiles. A good result solves the real task, preserves product character, is verified with appropriate evidence, and is published correctly when the user asked for a completed change.
 
@@ -258,23 +258,41 @@ For browser-visible work, follow the more specific rules in `/frontend/AGENTS.md
 ### Viru is not generic SaaS
 
 - Viru Tracker is not a generic dashboard template.
-- It has more personality, more editorial intention, and more visual character than a default SaaS admin panel.
+- It has more personality, more art-directed intention, and more visual character than a default SaaS admin panel.
 - Do not flatten Viru into a generic, over-simplified, low-tension interface.
+- “Not generic SaaS” means more personality, not less.
 
 Preserve:
 
 - hierarchy;
 - rhythm;
 - visual intention;
-- premium restraint;
-- editorial composition;
+- premium warmth;
+- editorial warmth with personality;
 - controlled asymmetry where it helps;
 - useful density;
 - strong grouping;
-- clear information priority.
+- clear information priority;
+- microcopy that feels close and alive;
+- subtle motion that adds clarity, delight, continuity, and personality.
 
 The goal is not “plain”.
-The goal is “clear, intentional, sober, and distinctive”.
+The goal is “clear, warm, memorable, and distinctive without noise”.
+
+### Warm identity principles
+
+For design direction and reviews, apply these principles:
+
+1. Warmth before coldness.
+2. Personality before neutrality.
+3. Intentional motion, not immobility.
+4. Clarity without austerity.
+5. Premium but close, never distant.
+6. Aeronautical aesthetic, not airline-corporate UI.
+7. Light mode must have soul, not flat generic white.
+8. Dark mode can be cinematic, never gloomy.
+9. The interface must feel designed, not assembled.
+10. Small details should make people smile without getting in the way.
 
 ### Simplicity rule
 
@@ -297,7 +315,7 @@ prefer the second.
 
 ### Dual-theme rule
 
-- Viru is dual-theme by contract: dark and light must share the same editorial/aeronautical personality.
+- Viru is dual-theme by contract: dark and light must share the same warm/aeronautical personality.
 - Do not document or implement Viru as dark-only unless the user explicitly asks for that scope.
 - Keep cues and semantics consistent across themes (IATA/rutas/terminales/radar, hierarchy, accent behavior, and state meaning).
 

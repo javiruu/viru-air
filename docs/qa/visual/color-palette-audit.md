@@ -7,7 +7,7 @@ Fuente de verdad: docs/qa/visual/color-palette-audit.md
 
 # Auditoría de la paleta de colores y plan de consolidación
 
-Este documento consolida la paleta visual dual de Viru Tracker para garantizar consistencia entre los temas dark/light bajo la misma identidad aeronáutica.
+Este documento consolida la paleta visual dual de Viru Tracker para garantizar consistencia entre dark/light bajo una identidad aeronáutica cálida, con personalidad y claridad operativa.
 
 ## 1) Paleta visual consolidada (dual)
 
@@ -26,7 +26,8 @@ Este documento consolida la paleta visual dual de Viru Tracker para garantizar c
 > **Notas**
 > - La paleta es única y coherente entre temas; cambia luminancia, no personalidad.
 > - Se prohíben colores fuera de esta paleta salvo validación explícita.
-> - En light mode, evitar resultado “SaaS blanco plano”: conservar jerarquía editorial y cues de vuelo.
+> - En light mode, evitar resultado “SaaS blanco plano”: conservar jerarquía, calidez y cues de vuelo.
+> - En dark mode, evitar resultado lúgubre: mantener contraste, profundidad y legibilidad humana.
 
 ## 2) Plan de consolidación
 1. Auditar estilos para detectar colores fuera de paleta.
@@ -40,4 +41,5 @@ Este documento consolida la paleta visual dual de Viru Tracker para garantizar c
 - Consistencia semántica: estados compartidos entre temas.
 - Contraste validado: textos e iconos cumplen AA en dark y light.
 - Jerarquía visual: paneles/superficies conservan estructura en ambos temas.
+- Calidez visual: el resultado no debe sentirse frío, plano o corporativo.
 - Uso de `#7C7CFF`: solo ambiental/haze, nunca color dominante de interfaz.

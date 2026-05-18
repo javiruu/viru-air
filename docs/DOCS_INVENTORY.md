@@ -53,18 +53,34 @@ Entradas vivas actualizadas:
 - `docs/ui/UI_CONTRACT_V1.md`
 - `docs/qa/visual/color-palette-audit.md`
 
+## Actualizacion manual 2026-05-18 (warm identity rewrite for Viru)
+
+Entradas vivas actualizadas:
+
+- `AGENTS.md`
+- `DESIGN.md`
+- `docs/overview/project-overview.md`
+- `docs/ui/estetica.md`
+- `docs/ui/UI_SYSTEM_V1.md`
+- `docs/ui/UI_CONTRACT_V1.md`
+- `docs/qa/visual/color-palette-audit.md`
+- `.codex/skills/viru-tracker-ui/SKILL.md`
+- `.codex/skills/viru-tracker-ui/references/product-context.md`
+- `.codex/skills/viru-tracker-ui/references/visual-direction.md`
+- `.codex/skills/viru-tracker-ui/references/qa-checklist.md`
+
 ## Tabla
 
 | Ruta actual | Tipo | Estado | Acci?n propuesta | Nueva ruta | Motivo | Fuente de verdad |
 |---|---|---|---|---|---|---|
 | .github/pull_request_template.md | unknown | revisar manualmente | revisar manualmente | .github/pull_request_template.md | Clasificaci?n no resuelta autom?ticamente | revisi?n manual requerida |
 | AGENTS.md | contexto IA | vivo | conservar | AGENTS.md | Contrato operativo principal para agentes | AGENTS.md |
-| DESIGN.md | contexto IA | vivo | conservar | DESIGN.md | Sistema de diseno para agentes con direccion visual canonica de Viru | DESIGN.md |
+| DESIGN.md | contexto IA | vivo | conservar | DESIGN.md | Sistema de diseno para agentes con direccion visual calida, animada y de premium humano | DESIGN.md |
 | README.md | overview | vivo | conservar | README.md | Punto de entrada principal del repositorio | README.md |
-| .codex/skills/viru-tracker-ui/SKILL.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/SKILL.md | Skill de diseno incremental para Codex/Open Design en Viru | .codex/skills/viru-tracker-ui/SKILL.md |
-| .codex/skills/viru-tracker-ui/references/product-context.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/references/product-context.md | Contexto de producto para tareas UI del skill Viru Tracker UI | .codex/skills/viru-tracker-ui/references/product-context.md |
-| .codex/skills/viru-tracker-ui/references/visual-direction.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/references/visual-direction.md | Direccion visual editorial y restricciones del skill Viru Tracker UI | .codex/skills/viru-tracker-ui/references/visual-direction.md |
-| .codex/skills/viru-tracker-ui/references/qa-checklist.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/references/qa-checklist.md | Checklist minima de QA visual para cambios del skill | .codex/skills/viru-tracker-ui/references/qa-checklist.md |
+| .codex/skills/viru-tracker-ui/SKILL.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/SKILL.md | Skill de diseno incremental para Codex orientado a calidez, personalidad y claridad | .codex/skills/viru-tracker-ui/SKILL.md |
+| .codex/skills/viru-tracker-ui/references/product-context.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/references/product-context.md | Contexto de producto para tareas UI con enfoque cercano, calido y no generico | .codex/skills/viru-tracker-ui/references/product-context.md |
+| .codex/skills/viru-tracker-ui/references/visual-direction.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/references/visual-direction.md | Direccion visual calida y con personalidad para el skill Viru Tracker UI | .codex/skills/viru-tracker-ui/references/visual-direction.md |
+| .codex/skills/viru-tracker-ui/references/qa-checklist.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/references/qa-checklist.md | Checklist de QA visual para validar claridad, calidez y personalidad del skill | .codex/skills/viru-tracker-ui/references/qa-checklist.md |
 | .codex/skills/taste-skill/SKILL.md | contexto IA | vivo | conservar | .codex/skills/taste-skill/SKILL.md | Skill de direccion visual frontend premium para tareas de estetica/UI | .codex/skills/taste-skill/SKILL.md |
 | docs/DOCS_INVENTORY.md | overview | vivo | conservar | docs/DOCS_INVENTORY.md | Inventario documental ?nico | docs/DOCS_INVENTORY.md |
 | docs/INDICE_UNICO.md | overview | vivo | conservar | docs/INDICE_UNICO.md | Mapa ?nico de navegaci?n | docs/INDICE_UNICO.md |
@@ -148,7 +164,7 @@ Entradas vivas actualizadas:
 | docs/engineering/testing.md | testing | vivo | conservar | docs/engineering/testing.md | Resumen t?cnico vivo por dominio | docs/engineering/testing.md |
 | docs/overview/architecture-summary.md | architecture | vivo | conservar | docs/overview/architecture-summary.md | Onboarding y mapa vivo del proyecto | docs/overview/architecture-summary.md |
 | docs/overview/current-state.md | overview | vivo | conservar | docs/overview/current-state.md | Onboarding y mapa vivo del proyecto | docs/overview/current-state.md |
-| docs/overview/project-overview.md | overview | vivo | conservar | docs/overview/project-overview.md | Onboarding y mapa vivo del proyecto | docs/overview/project-overview.md |
+| docs/overview/project-overview.md | overview | vivo | conservar | docs/overview/project-overview.md | Onboarding y mapa vivo del proyecto con direccion de producto clara y cercana | docs/overview/project-overview.md |
 | docs/overview/repo-map.md | overview | vivo | conservar | docs/overview/repo-map.md | Onboarding y mapa vivo del proyecto | docs/overview/repo-map.md |
 | docs/overview/start-here.md | overview | vivo | conservar | docs/overview/start-here.md | Onboarding y mapa vivo del proyecto | docs/overview/start-here.md |
 | docs/plans/README.md | plan | vivo | conservar | docs/plans/README.md | Gu?a de organizaci?n de planes | docs/plans/README.md |
@@ -191,7 +207,7 @@ Entradas vivas actualizadas:
 | docs/qa/testsprite/skillsprite-user-capabilities.md | QA | vivo | conservar | docs/qa/testsprite/skillsprite-user-capabilities.md | Referencia activa para TestSprite y QA funcional | docs/qa/testsprite/skillsprite-user-capabilities.md |
 | docs/qa/testsprite/testsprite-catalog.md | QA | vivo | conservar | docs/qa/testsprite/testsprite-catalog.md | Referencia activa para TestSprite y QA funcional | docs/qa/testsprite/testsprite-catalog.md |
 | docs/qa/traceability-matrix.md | QA | vivo | conservar | docs/qa/traceability-matrix.md | Navegaci?n y matriz reutilizable de QA | docs/qa/traceability-matrix.md |
-| docs/qa/visual/color-palette-audit.md | QA | vivo | conservar | docs/qa/visual/color-palette-audit.md | Auditoria canonica de paleta dual dark/light y plan de consolidacion visual | docs/qa/visual/color-palette-audit.md |
+| docs/qa/visual/color-palette-audit.md | QA | vivo | conservar | docs/qa/visual/color-palette-audit.md | Auditoria canonica de paleta dual dark/light con enfoque de calidez y claridad visual | docs/qa/visual/color-palette-audit.md |
 | docs/reference/README.md | overview | vivo | conservar | docs/reference/README.md | Referencia t?cnica o de proceso activa | docs/reference/README.md |
 | docs/reference/backend/quick-search-acceptance-checklist.md | backend | vivo | conservar | docs/reference/backend/quick-search-acceptance-checklist.md | Referencia t?cnica backend can?nica | docs/reference/backend/quick-search-acceptance-checklist.md |
 | docs/reference/backend/quick-search-contract.md | backend | vivo | conservar | docs/reference/backend/quick-search-contract.md | Referencia t?cnica backend can?nica | docs/reference/backend/quick-search-contract.md |
@@ -215,10 +231,10 @@ Entradas vivas actualizadas:
 | docs/specs/policies/policies-page-rewrite.md | spec | vivo | conservar | docs/specs/policies/policies-page-rewrite.md | Especificaci?n activa | docs/specs/policies/policies-page-rewrite.md |
 | docs/specs/product/dashboard-redesign-v2.md | spec | vivo | conservar | docs/specs/product/dashboard-redesign-v2.md | Especificaci?n activa | docs/specs/product/dashboard-redesign-v2.md |
 | docs/specs/ui/ui-changes.md | spec | vivo | conservar | docs/specs/ui/ui-changes.md | Especificaci?n activa | docs/specs/ui/ui-changes.md |
-| docs/ui/UI_CONTRACT_V1.md | frontend | vivo | conservar | docs/ui/UI_CONTRACT_V1.md | Contrato visual y sistema UI can?nico | docs/ui/UI_CONTRACT_V1.md |
-| docs/ui/UI_SYSTEM_V1.md | frontend | vivo | conservar | docs/ui/UI_SYSTEM_V1.md | Contrato visual y sistema UI can?nico | docs/ui/UI_SYSTEM_V1.md |
+| docs/ui/UI_CONTRACT_V1.md | frontend | vivo | conservar | docs/ui/UI_CONTRACT_V1.md | Contrato visual y sistema UI canonico con identidad calida y no generica | docs/ui/UI_CONTRACT_V1.md |
+| docs/ui/UI_SYSTEM_V1.md | frontend | vivo | conservar | docs/ui/UI_SYSTEM_V1.md | Contrato visual y sistema UI canonico con identidad calida y no generica | docs/ui/UI_SYSTEM_V1.md |
 | docs/ui/UI_VISUAL_QA_CHECKLIST.md | frontend | vivo | conservar | docs/ui/UI_VISUAL_QA_CHECKLIST.md | Contrato visual y sistema UI can?nico | docs/ui/UI_VISUAL_QA_CHECKLIST.md |
-| docs/ui/estetica.md | frontend | vivo | conservar | docs/ui/estetica.md | Contrato visual y sistema UI can?nico | docs/ui/estetica.md |
+| docs/ui/estetica.md | frontend | vivo | conservar | docs/ui/estetica.md | Contrato visual y sistema UI canonico con identidad calida y no generica | docs/ui/estetica.md |
 | fases/_extraido_txt/FASE_10_Futuras_Escalabilidades_Viru.txt | historical | duplicado | eliminar candidato | docs/archive/fases/transcripts/FASE_10_Futuras_Escalabilidades_Viru.txt | Transcripci?n duplicada ya preservada en archive | docs/archive/fases/transcripts/FASE_10_Futuras_Escalabilidades_Viru.txt |
 | fases/_extraido_txt/FASE_1_Analisis_de_Documentacion_Viru.txt | historical | duplicado | eliminar candidato | docs/archive/fases/transcripts/FASE_1_Analisis_de_Documentacion_Viru.txt | Transcripci?n duplicada ya preservada en archive | docs/archive/fases/transcripts/FASE_1_Analisis_de_Documentacion_Viru.txt |
 | fases/_extraido_txt/FASE_2_Arquitectura_Global_Viru.txt | historical | duplicado | eliminar candidato | docs/archive/fases/transcripts/FASE_2_Arquitectura_Global_Viru.txt | Transcripci?n duplicada ya preservada en archive | docs/archive/fases/transcripts/FASE_2_Arquitectura_Global_Viru.txt |

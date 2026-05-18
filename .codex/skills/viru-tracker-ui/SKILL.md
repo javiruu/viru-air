@@ -1,6 +1,6 @@
 ---
 name: Viru Tracker UI
-description: Mejoras incrementales de UI/UX para Viru Tracker con estilo editorial sobrio y no generico.
+description: Mejoras incrementales de UI/UX para Viru Tracker con identidad calida, animada, cercana y no generica.
 trigger_words:
   - diseno
   - interfaz
@@ -22,12 +22,13 @@ od:
 # Skill: Viru Tracker UI
 
 ## Objetivo
-Aplicar mejoras visuales incrementales y verificables en Viru Tracker, preservando su identidad editorial y su contrato UI canonico.
+Aplicar mejoras visuales incrementales y verificables en Viru Tracker, preservando su identidad calida, con personalidad y su contrato UI canonico.
 
 ## Alcance obligatorio
 - Cambios incrementales UI/UX en superficies existentes.
 - Mantener paleta/tokens y semantica de estados (`success`, `warning`, `error`, `info`).
 - Respetar componentes y patrones base del sistema UI vigente.
+- Favorecer claridad + calidez + personalidad sin ruido visual.
 
 ## Fuera de alcance por defecto
 - Cambiar logica de negocio.
