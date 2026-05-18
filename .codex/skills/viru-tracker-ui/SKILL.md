@@ -29,12 +29,18 @@ Aplicar mejoras visuales incrementales y verificables en Viru Tracker, preservan
 - Mantener paleta/tokens y semantica de estados (`success`, `warning`, `error`, `info`).
 - Respetar componentes y patrones base del sistema UI vigente.
 - Favorecer claridad + calidez + personalidad sin ruido visual.
+- Reforzar microinteracciones suaves y microcopy vivo cuando aporte comprension.
 
 ## Fuera de alcance por defecto
 - Cambiar logica de negocio.
 - Alterar rutas o contratos API.
 - Reescribir pantallas completas sin solicitud explicita.
 - Introducir dependencias nuevas para ajustes visuales menores.
+
+## Guardrails de interpretacion
+- No entregar propuestas sobrias, frias, contenidas o corporativas como salida valida.
+- No usar "editorial premium" como direccion dominante.
+- No confundir simplicidad con austeridad ni con perdida de alma visual.
 
 ## Flujo recomendado
 1. Leer `DESIGN.md` y referencias de esta skill.

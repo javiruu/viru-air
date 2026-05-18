@@ -1,31 +1,38 @@
-# DESIGN.md — Viru Tracker (Dirección de Diseño)
+# DESIGN.md - Viru Tracker (Direccion de Diseno)
 
 **Estado:** Vivo
-**Última revisión:** 2026-05-18
-**Área:** Diseño (UI/UX)
+**Ultima revision:** 2026-05-18
+**Area:** Diseno (UI/UX)
 
-## 1) Definición base de identidad
-- **Viru Tracker no es SaaS genérico:** es una plataforma de flight intelligence con identidad cálida, animada y aeronáutica.
-- **Impresión deseada:** premium y bien diseñada, pero cercana, intuitiva y humana.
-- **Dirección dual:**
-  - **Dark mode:** Aviation Dark-Luxe cinematográfico, nunca lúgubre.
+## 1) Definicion base de identidad
+- **Viru Tracker no es SaaS generico:** es una plataforma de flight intelligence con identidad calida, animada y aeronautica.
+- **Impresion deseada:** premium y bien disenada, pero cercana, intuitiva y humana.
+- **Direccion dual:**
+  - **Dark mode:** Aviation Dark-Luxe cinematografico, nunca lugubre.
   - **Light mode:** contraparte luminosa con alma, nunca blanco corporativo plano.
-- **Personalidad compartida en ambos modos:** cues aeronáuticos (IATA, rutas, terminales, radar), ritmo visual, acentos semánticos y microcopy vivo.
-- **Mejoras incrementales:** priorizar iteraciones progresivas sobre rediseños amplios.
+- **Personalidad compartida en ambos modos:** cues aeronauticos (IATA, rutas, terminales, radar), ritmo visual, acentos semanticos y microcopy vivo.
+- **Mejoras incrementales:** priorizar iteraciones progresivas sobre redisenos amplios.
 
 ## 2) Principios obligatorios
 1. Calidez antes que frialdad.
 2. Personalidad antes que neutralidad.
-3. Animación con intención, no inmovilidad.
+3. Animacion con intencion, no inmovilidad.
 4. Claridad sin austeridad.
 5. Premium cercano, no premium distante.
-6. Aeronáutico aesthetic, no corporativo de aerolínea.
-7. Light mode con alma, no blanco genérico.
-8. Dark mode cinematográfico, no lúgubre.
-9. La interfaz debe parecer diseñada, no ensamblada.
-10. Los detalles deben hacer sonreír sin estorbar.
+6. Aeronautico aesthetic, no corporativo de aerolinea.
+7. Light mode con alma, no blanco generico.
+8. Dark mode cinematografico, no lugubre.
+9. La interfaz debe parecer disenada, viva y cuidada, no ensamblada.
+10. Los detalles deben hacer sonreir sin estorbar.
 
-## 3) Paleta y tokens canónicos
+## 2.1) Anti-interpretaciones (bloqueante para agentes)
+- No interpretar "claridad" como austeridad visual.
+- No interpretar "premium" como distancia emocional.
+- No interpretar "orden" como composicion sobria o apagada.
+- No interpretar "funcional" como dashboard corporativo frio.
+- No interpretar "minimal" como ausencia de personalidad.
+
+## 3) Paleta y tokens canonicos
 **Paleta de referencia dual:**
 - **Dark canvas:** `#121212`
 - **Light canvas:** `#FFFFFF`
@@ -36,30 +43,32 @@
 - **Acentos compartidos:** `#FFB000`, `#10B981`, `#50BFE6`, `#FF6464`
 
 **Reglas:**
-- Usar únicamente colores de la paleta aprobada.
-- Evitar extremos visuales: negro puro masivo en dark y blanco plano sin jerarquía en light.
-- Mantener contraste legible, semántica de estados y cues de vuelo en ambos modos.
+- Usar unicamente colores de la paleta aprobada.
+- Evitar extremos visuales: negro puro masivo en dark y blanco plano sin jerarquia en light.
+- Mantener contraste legible, semantica de estados y cues de vuelo en ambos modos.
 
-## 4) Tipografía, microcopy y composición
+## 4) Tipografia, microcopy y composicion
 - **Titulares:** Playfair Display.
-- **Subtítulos/cuerpo:** IBM Plex Sans.
-- **Datos de vuelo:** monoespaciada para códigos y horarios cuando aporte claridad.
-- **Lenguaje UI:** español consistente, accionable y cercano; evitar mezcla ES/EN en texto visible.
-- **Composición:** paneles con ritmo, jerarquía clara, densidad útil y asimetría controlada cuando mejora lectura.
-- **Evitar:** grids repetitivas sin ritmo y estética dominante de “dashboard serio”.
+- **Subtitulos/cuerpo:** IBM Plex Sans.
+- **Datos de vuelo:** monoespaciada para codigos y horarios cuando aporte claridad.
+- **Lenguaje UI:** espanol consistente, accionable y cercano; evitar mezcla ES/EN en texto visible.
+- **Composicion:** paneles con ritmo, jerarquia clara, densidad util y asimetria controlada cuando mejora lectura. Debe sentirse cabina viva, no maqueta editorial contenida.
+- **Evitar:** grids repetitivas sin ritmo y estetica dominante de "dashboard serio".
 
-## 5) Interacción y microanimación
-- Motion con intención: **claridad + delight + continuidad + personalidad**.
+## 5) Interaccion y microanimacion
+- Motion con intencion: **claridad + delight + continuidad + personalidad**.
 - Entrada de secciones: fade + desplazamiento suave (4-8px).
-- Hover de tarjetas: elevación mínima + glow contextual tenue.
-- Click en botones: compresión leve (1-2px).
-- Añadir microinteracciones en hover, selección, carga, empty states y confirmaciones.
+- Hover de tarjetas: elevacion minima + glow contextual tenue.
+- Click en botones: compresion leve (1-2px).
+- Anadir microinteracciones en hover, seleccion, carga, empty states y confirmaciones.
+- Cada estado importante debe incluir senal de acompanamiento (copy/feedback) para transmitir mimo de producto.
 
-**Límites de motion y estilo:**
+**Limites de motion y estilo:**
 - Sin ruido visual barato.
 - Sin exceso de colores.
 - Sin animaciones mareantes.
-- Sin estética cyberpunk, “Awwwards” poco usable o clon corporativo.
+- Sin estetica cyberpunk, "Awwwards" poco usable o clon corporativo.
+- Sin tono sobrio/frio como resultado dominante.
 
 ## 6) Componentes congelados (UI System v1)
 Patrones base (`components.css`):
@@ -67,30 +76,30 @@ Patrones base (`components.css`):
 `panel-title`, `panel-subtitle`, `list-row`, `action-row`, `row-actions`,
 `section-gap` (sm/lg), `status-pill`, `state-success|warning|error|info`.
 
-*Regla de extensión:* si un patrón se repite en 2+ pantallas, extraer a componente/tokens canónicos.
+*Regla de extension:* si un patron se repite en 2+ pantallas, extraer a componente/tokens canonicos.
 
-## 7) Estados y semántica
-- `success`: éxito/completado.
+## 7) Estados y semantica
+- `success`: exito/completado.
 - `warning`: parcial/pendiente.
-- `error`: falla/validación.
+- `error`: falla/validacion.
 - `info`: contexto neutral.
 
 No usar `warn` en cambios nuevos.
 
-## 8) QA visual mínimo
+## 8) QA visual minimo
 Antes de cerrar cambios visuales:
 - Validar flujos core (`/dashboard`, `/watchlist`, `/quick-search`, `/alerts`, `/login`, `/register`).
-- Revisar resoluciones desktop/tablet/móvil.
+- Revisar resoluciones desktop/tablet/movil.
 - Confirmar focus visible, sin solapes ni overflow horizontal.
 - Validar estados clave (loading, empty, error, success) con personalidad y claridad.
 - Probar siempre ambos temas (dark y light) y verificar que conservan la misma identidad de marca.
 
-## 9) Límites para desarrolladores
+## 9) Limites para desarrolladores
 - Cambios visuales incrementales, verificables y documentados.
-- No tocar lógica de negocio, rutas o API sin aprobación explícita.
-- No añadir librerías para retoques estéticos menores.
+- No tocar logica de negocio, rutas o API sin aprobacion explicita.
+- No anadir librerias para retoques esteticos menores.
 
-## 10) Skill de diseño incremental
+## 10) Skill de diseno incremental
 - Skill: `/.codex/skills/taste-skill/SKILL.md`.
-- Uso: jerarquía, ritmo, composición, motion y polish visual.
-- Prioridad: `DESIGN.md` y `docs/ui/*` son contrato canónico.
+- Uso: jerarquia, ritmo, composicion, motion y polish visual.
+- Prioridad: `DESIGN.md` y `docs/ui/*` son contrato canonico.

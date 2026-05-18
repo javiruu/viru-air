@@ -1,4 +1,4 @@
-# Visual Direction — Viru Tracker
+# Visual Direction - Viru Tracker
 
 - Mantener jerarquia fuerte: titulo > contenido > acciones.
 - Disenar composicion con ritmo y densidad util; evitar grids repetitivas sin intencion.
@@ -9,3 +9,10 @@
 - Semantica de estado unificada: `success`, `warning`, `error`, `info`.
 - Motion con intencion: claridad, delight, continuidad y personalidad.
 - Priorizar mejoras pequenas, legibles y comprobables por ruta.
+
+## Anti-anclas explicitas
+- "Premium" no significa frio ni distante.
+- "Claro" no significa sobrio o austero.
+- "Ordenado" no significa editorial contenido.
+- "Funcional" no significa corporativo generico.
+- La interfaz debe sentirse como cabina de inteligencia aerea calida, elegante y viva.

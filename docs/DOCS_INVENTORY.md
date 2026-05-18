@@ -69,6 +69,21 @@ Entradas vivas actualizadas:
 - `.codex/skills/viru-tracker-ui/references/visual-direction.md`
 - `.codex/skills/viru-tracker-ui/references/qa-checklist.md`
 
+## Actualizacion manual 2026-05-18 (warm cockpit direction hardening)
+
+Entradas vivas actualizadas:
+
+- `AGENTS.md`
+- `DESIGN.md`
+- `docs/ui/estetica.md`
+- `docs/ui/UI_CONTRACT_V1.md`
+- `docs/ui/UI_SYSTEM_V1.md`
+- `docs/ui/UI_VISUAL_QA_CHECKLIST.md`
+- `docs/qa/visual/color-palette-audit.md`
+- `.codex/skills/viru-tracker-ui/SKILL.md`
+- `.codex/skills/viru-tracker-ui/references/visual-direction.md`
+- `.codex/skills/viru-tracker-ui/references/qa-checklist.md`
+
 ## Tabla
 
 | Ruta actual | Tipo | Estado | Acci?n propuesta | Nueva ruta | Motivo | Fuente de verdad |

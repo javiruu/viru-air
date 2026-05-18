@@ -1,4 +1,4 @@
-# QA Checklist — Viru Tracker UI Skill
+# QA Checklist - Viru Tracker UI Skill
 
 Validar antes de cerrar cada ajuste:
 - Jerarquia visual clara y CTA principal sin competir con secundarios.
@@ -10,5 +10,6 @@ Validar antes de cerrar cada ajuste:
 - Microinteracciones presentes y suaves en hover/seleccion/carga/confirmacion cuando aplique.
 - Microcopy cercano y humano, sin tono infantil.
 - Resultado visual con calidez y personalidad; no frio, plano ni corporativo.
+- La propuesta no puede tener tono sobrio o "editorial serio" como dominante.
 - Build frontend en verde cuando el cambio toca UI renderizada.
 - Evidencia visual minima (captura de contexto + captura del componente afectado).

@@ -268,7 +268,7 @@ Preserve:
 - rhythm;
 - visual intention;
 - premium warmth;
-- editorial warmth with personality;
+- warm aeronautical character with personality;
 - controlled asymmetry where it helps;
 - useful density;
 - strong grouping;
@@ -287,11 +287,11 @@ For design direction and reviews, apply these principles:
 2. Personality before neutrality.
 3. Intentional motion, not immobility.
 4. Clarity without austerity.
-5. Premium but close, never distant.
+5. Premium but close, never distant or austere.
 6. Aeronautical aesthetic, not airline-corporate UI.
 7. Light mode must have soul, not flat generic white.
 8. Dark mode can be cinematic, never gloomy.
-9. The interface must feel designed, not assembled.
+9. The interface must feel designed, alive, and cared for, not assembled.
 10. Small details should make people smile without getting in the way.
 
 ### Simplicity rule

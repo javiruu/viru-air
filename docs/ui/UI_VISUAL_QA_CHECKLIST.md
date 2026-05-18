@@ -1,6 +1,6 @@
-﻿Status: canonical
+Status: canonical
 Scope: UI system, visual contract, or design guidance
-Last reviewed: 2026-04-15
+Last reviewed: 2026-05-18
 Canonical source: docs/ui/UI_VISUAL_QA_CHECKLIST.md
 Related: docs/ui/UI_SYSTEM_V1.md, docs/specs/README.md
 
@@ -25,32 +25,35 @@ Rutas recomendadas adicionales:
 - `/ayuda`
 - `/policies`
 
-## Resoluciones mínimas
-- Desktop estándar: `1440x900`
+## Resoluciones minimas
+- Desktop estandar: `1440x900`
 - Tablet: `768x1024`
 - Mobile: `375x812`
 - Mobile compacto: `320x780`
 
 ## Verificaciones transversales (todas las rutas)
-- [ ] Jerarquía visual clara (título, contenido, acciones)
-- [ ] Spacing y alineación consistentes
+- [ ] Jerarquia visual clara (titulo, contenido, acciones)
+- [ ] Spacing y alineacion consistentes
 - [ ] CTA principal visible y sin competir con secundarios
 - [ ] Focus visible en botones/inputs/enlaces
 - [ ] Sin scroll horizontal no intencional
 - [ ] Sin solapes de componentes en mobile
 - [ ] Contraste aceptable en dark/light
+- [ ] Microinteracciones suaves y utiles en elementos interactivos clave
+- [ ] Microcopy cercano, vivo y con tono humano
+- [ ] La pantalla no transmite tono sobrio/frio/corporativo como resultado dominante
 
-## Estados mínimos por pantalla
+## Estados minimos por pantalla
 
 ### /dashboard
 - [ ] Estado normal con datos
 - [ ] Estado con notice/banner
-- [ ] Estado mínimo (sin actividad/sin oportunidades)
+- [ ] Estado minimo (sin actividad/sin oportunidades)
 
 ### /watchlist
 - [ ] Lista con vuelos
-- [ ] Estado vacío
-- [ ] Estado de actualización visible (feedback de acción)
+- [ ] Estado vacio
+- [ ] Estado de actualizacion visible (feedback de accion)
 
 ### /quick-search
 - [ ] Loading
@@ -66,15 +69,15 @@ Rutas recomendadas adicionales:
 
 ### /login y /register
 - [ ] Formulario normal
-- [ ] Error de validación visible cerca del campo
+- [ ] Error de validacion visible cerca del campo
 - [ ] Feedback de error general claro
 
 ### /ayuda y /policies (recomendado)
 - [ ] Legibilidad de bloques de texto
-- [ ] Índice/estructura visible
-- [ ] No roturas de maquetación en mobile
+- [ ] Indice/estructura visible
+- [ ] No roturas de maquetacion en mobile
 
-## Evidencia mínima en PR
+## Evidencia minima en PR
 - [ ] Capturas desktop de rutas core
 - [ ] Capturas mobile 375 de rutas privadas core
 - [ ] Capturas mobile 320 de rutas privadas core
@@ -82,8 +85,3 @@ Rutas recomendadas adicionales:
 
 Ruta de snapshots sugerida:
 - `docs/qa/snapshots/`
-
-
-
-
-
