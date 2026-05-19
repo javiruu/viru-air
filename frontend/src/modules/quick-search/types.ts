@@ -108,6 +108,25 @@ export type SearchResponse = Omit<SearchResponseRaw, "results"> & {
   filters?: SearchFilters;
 };
 
+export type QuickSearchCalendarDayHintBucket = "low" | "mid" | "high" | "none";
+
+export type QuickSearchCalendarDayHint = {
+  date: string;
+  min_price: number | null;
+  bucket: QuickSearchCalendarDayHintBucket;
+  no_data_reason?: string | null;
+};
+
+export type QuickSearchCalendarHintsResponse = {
+  days: QuickSearchCalendarDayHint[];
+  meta: {
+    currency: string;
+    cache_ttl_sec: number;
+    cache_hit: boolean;
+    partial: boolean;
+  };
+};
+
 export type DeepLinkResponse = {
   status: string;
   url: string;

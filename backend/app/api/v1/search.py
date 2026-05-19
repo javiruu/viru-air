@@ -1,9 +1,12 @@
 import datetime as dt
+import calendar as calendar_lib
 import hashlib
 import json
 import logging
 import math
 import os
+import re
+import threading
 import time
 import uuid
 from typing import Any
@@ -34,6 +37,9 @@ logger = logging.getLogger(__name__)
 SEED_POOL_CAP = 8
 QUICK_SEARCH_MAX_PAIRS_CAP = 400
 QUICK_SEARCH_MAX_REQUESTS_CAP = 3000
+CALENDAR_HINTS_CACHE_TTL_SECONDS = 600
+_CALENDAR_HINTS_CACHE_LOCK = threading.Lock()
+_CALENDAR_HINTS_CACHE: dict[tuple[str, str, str, int, str], tuple[float, dict[str, Any]]] = {}
 
 _WARNING_CODE_ALIASES: dict[str, str] = {
     "provider_timeout_parcial": "provider_timeout_partial",
@@ -269,6 +275,29 @@ class QuickSearchSaveResultIn(BaseModel):
         return _validate_iata(value)
 
 
+class QuickSearchCalendarHintsIn(BaseModel):
+    origin_iata: str = Field(min_length=3, max_length=3)
+    destination_iata: str = Field(min_length=3, max_length=3)
+    month: str = Field(pattern=r"^\d{4}-\d{2}$")
+    adults: int = Field(default=1, ge=1, le=9)
+
+    @field_validator("origin_iata", "destination_iata")
+    @classmethod
+    def validate_iata(cls, value: str) -> str:
+        return _validate_iata(value)
+
+    @field_validator("month")
+    @classmethod
+    def validate_month(cls, value: str) -> str:
+        if not re.match(r"^\d{4}-\d{2}$", value):
+            raise ValueError("month_must_match_yyyy_mm")
+        try:
+            dt.date.fromisoformat(f"{value}-01")
+        except ValueError as exc:
+            raise ValueError("month_invalid") from exc
+        return value
+
+
 def _clamp_days(value: int | None, max_days: int = 7) -> int:
     if value is None:
         return 0
@@ -286,6 +315,64 @@ def _build_flex_dates(base_date: dt.date, days_before: int, days_after: int) -> 
     for offset in range(-days_before, days_after + 1):
         dates.append(base_date + dt.timedelta(days=offset))
     return dates
+
+
+def _build_month_dates(month_iso: str) -> list[dt.date]:
+    year, month = month_iso.split("-")
+    year_int = int(year)
+    month_int = int(month)
+    total_days = calendar_lib.monthrange(year_int, month_int)[1]
+    return [dt.date(year_int, month_int, day) for day in range(1, total_days + 1)]
+
+
+def _bucketize_day_prices_terciles(day_min_prices: dict[dt.date, float]) -> dict[dt.date, str]:
+    if not day_min_prices:
+        return {}
+
+    sorted_values = sorted(day_min_prices.values())
+    total_values = len(sorted_values)
+    if total_values == 1:
+        only_day = next(iter(day_min_prices.keys()))
+        return {only_day: "low"}
+    if total_values == 2:
+        ordered_days = sorted(day_min_prices.items(), key=lambda item: (item[1], item[0].isoformat()))
+        return {
+            ordered_days[0][0]: "low",
+            ordered_days[1][0]: "high" if ordered_days[1][1] > ordered_days[0][1] else "low",
+        }
+
+    low_index = max(0, math.ceil(total_values / 3) - 1)
+    mid_index = max(0, math.ceil((2 * total_values) / 3) - 1)
+    low_threshold = sorted_values[low_index]
+    mid_threshold = sorted_values[mid_index]
+
+    buckets: dict[dt.date, str] = {}
+    for day, price in day_min_prices.items():
+        if price <= low_threshold:
+            buckets[day] = "low"
+        elif price <= mid_threshold:
+            buckets[day] = "mid"
+        else:
+            buckets[day] = "high"
+    return buckets
+
+
+def _calendar_hints_cache_get(cache_key: tuple[str, str, str, int, str]) -> dict[str, Any] | None:
+    now = time.time()
+    with _CALENDAR_HINTS_CACHE_LOCK:
+        cached = _CALENDAR_HINTS_CACHE.get(cache_key)
+        if not cached:
+            return None
+        created_at, payload = cached
+        if now - created_at > CALENDAR_HINTS_CACHE_TTL_SECONDS:
+            _CALENDAR_HINTS_CACHE.pop(cache_key, None)
+            return None
+        return payload
+
+
+def _calendar_hints_cache_set(cache_key: tuple[str, str, str, int, str], payload: dict[str, Any]) -> None:
+    with _CALENDAR_HINTS_CACHE_LOCK:
+        _CALENDAR_HINTS_CACHE[cache_key] = (time.time(), payload)
 
 
 def _compute_dynamic_execution_budget(
@@ -807,6 +894,123 @@ def deeplink(
         "fallback_url": encode(minimal_params),
         "strategy": "full",
     }
+
+
+@router.post("/quick/calendar-hints")
+def quick_search_calendar_hints(
+    payload: QuickSearchCalendarHintsIn = Body(...),
+) -> dict[str, Any]:
+    month_dates = _build_month_dates(payload.month)
+    if not month_dates:
+        return {
+            "days": [],
+            "meta": {
+                "currency": "EUR",
+                "cache_ttl_sec": CALENDAR_HINTS_CACHE_TTL_SECONDS,
+                "cache_hit": False,
+                "partial": False,
+            },
+        }
+
+    cache_currency = "EUR"
+    cache_key = (
+        payload.origin_iata,
+        payload.destination_iata,
+        payload.month,
+        payload.adults,
+        cache_currency,
+    )
+    cached_payload = _calendar_hints_cache_get(cache_key)
+    if cached_payload:
+        cached_copy = dict(cached_payload)
+        cached_meta = dict(cached_copy.get("meta", {}))
+        cached_meta["cache_hit"] = True
+        cached_copy["meta"] = cached_meta
+        return cached_copy
+
+    origin_side, destination_side = expand_search_sides(
+        origin_seed_iata=payload.origin_iata,
+        destination_seed_iata=payload.destination_iata,
+        include_nearby_origins=False,
+        include_nearby_destinations=False,
+        origin_radius_km=150,
+        destination_radius_km=150,
+        origin_max_candidates=1,
+        destination_max_candidates=1,
+        exclude_origins=[],
+        exclude_destinations=[],
+    )
+
+    planned_pairs, _pair_meta = build_pair_plan(
+        origin_side.candidates,
+        destination_side.candidates,
+        max_pairs=1,
+        max_requests=max(1, len(month_dates)),
+        date_count=max(1, len(month_dates)),
+    )
+    execution_plan = build_execution_plan(
+        planned_pairs,
+        month_dates,
+        max_requests=max(1, len(month_dates)),
+    )
+
+    combined_rows, execution_meta, warnings = execute_plan(
+        execution_plan,
+        concurrency_limit=6,
+        timeout_ms=6000,
+        fetch_flights=lambda origin, destination, travel_date, timeout_ms: provider.get_flights(
+            origin,
+            destination,
+            travel_date,
+            timeout_ms,
+        ),
+    )
+
+    day_min_prices: dict[dt.date, float] = {}
+    response_currency = "EUR"
+    for _origin_iata, _destination_iata, travel_date, flight in combined_rows:
+        response_currency = str(flight.currency or response_currency).upper()
+        current = day_min_prices.get(travel_date)
+        if current is None or float(flight.price) < current:
+            day_min_prices[travel_date] = float(flight.price)
+
+    bucket_by_day = _bucketize_day_prices_terciles(day_min_prices)
+    days_payload: list[dict[str, Any]] = []
+    for day in month_dates:
+        min_price = day_min_prices.get(day)
+        if min_price is None:
+            days_payload.append(
+                {
+                    "date": day.isoformat(),
+                    "min_price": None,
+                    "bucket": "none",
+                    "no_data_reason": "no_fare_data",
+                }
+            )
+            continue
+        days_payload.append(
+            {
+                "date": day.isoformat(),
+                "min_price": round(min_price, 2),
+                "bucket": bucket_by_day.get(day, "mid"),
+                "no_data_reason": None,
+            }
+        )
+
+    partial = bool(warnings) or int(execution_meta.get("provider_failures", 0)) > 0 or int(
+        execution_meta.get("timed_out_units_count", 0)
+    ) > 0
+    response_payload = {
+        "days": days_payload,
+        "meta": {
+            "currency": response_currency,
+            "cache_ttl_sec": CALENDAR_HINTS_CACHE_TTL_SECONDS,
+            "cache_hit": False,
+            "partial": partial,
+        },
+    }
+    _calendar_hints_cache_set(cache_key, response_payload)
+    return response_payload
 
 
 @router.post("/quick")

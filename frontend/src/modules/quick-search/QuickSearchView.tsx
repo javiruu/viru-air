@@ -53,6 +53,8 @@ import {
   CountryAirports,
   DeepLinkResponse,
   Pref,
+  QuickSearchCalendarDayHint,
+  QuickSearchCalendarHintsResponse,
   QuickSearchAutocompleteField,
   QuickSearchExplainTag,
   QuickSearchField,
@@ -125,6 +127,19 @@ type QuickSearchCountrySeedResponse = {
   source: string;
 };
 
+function currentMonthIso(): string {
+  const now = new Date();
+  const month = `${now.getMonth() + 1}`.padStart(2, "0");
+  return `${now.getFullYear()}-${month}`;
+}
+
+function monthFromDateIso(dateIso: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateIso)) {
+    return currentMonthIso();
+  }
+  return dateIso.slice(0, 7);
+}
+
 function resolveCountryName(code: string): string {
   const normalized = code.trim().toUpperCase();
   if (!normalized) return "";
@@ -194,6 +209,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   // signature of the last successfully executed criteria (used to detect pending changes)
   const [appliedCriteriaSignature, setAppliedCriteriaSignature] = useState<string | null>(null);
   const [countrySearchInput, setCountrySearchInput] = useState("");
+  const [calendarVisibleMonth, setCalendarVisibleMonth] = useState<string>(currentMonthIso);
+  const [calendarHintsByMonth, setCalendarHintsByMonth] = useState<Record<string, Record<string, QuickSearchCalendarDayHint>>>({});
+  const [calendarHintsLoadingMonth, setCalendarHintsLoadingMonth] = useState<string | null>(null);
   const initialOrigin = mode === "recommendations" ? "" : "MAD";
   const initialDestination = mode === "recommendations" ? "" : "DUB";
   const {
@@ -1031,6 +1049,76 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const destinationValid = destinationCountryOnly ? destinationCountryOnly.airports.length > 0 : (
     destinationCode.length === 3 && airportsByIata.has(destinationCode)
   );
+  const canRequestCalendarHints = !originCountryOnly && !destinationCountryOnly && originValid && destinationValid;
+
+  useEffect(() => {
+    setCalendarHintsByMonth({});
+    setCalendarHintsLoadingMonth(null);
+  }, [adults, canRequestCalendarHints, destinationCode, originCode]);
+
+  useEffect(() => {
+    if (!canRequestCalendarHints) return;
+    if (!calendarVisibleMonth) return;
+    if (calendarHintsByMonth[calendarVisibleMonth]) return;
+
+    const controller = new AbortController();
+    const requestedMonth = calendarVisibleMonth;
+    setCalendarHintsLoadingMonth(requestedMonth);
+
+    apiFetchWithStatus<QuickSearchCalendarHintsResponse>("/search/quick/calendar-hints", {
+      method: "POST",
+      signal: controller.signal,
+      body: JSON.stringify({
+        origin_iata: originCode,
+        destination_iata: destinationCode,
+        month: requestedMonth,
+        adults,
+      }),
+    })
+      .then((result) => {
+        if (controller.signal.aborted) return;
+        if (!result.ok) {
+          logQuickSearchApiError("calendar_hints_failed", {
+            status: result.status,
+            error: result.error,
+            origin_iata: originCode,
+            destination_iata: destinationCode,
+            month: requestedMonth,
+          });
+          return;
+        }
+        const days = Array.isArray(result.data.days) ? result.data.days : [];
+        const hintsForMonth = days.reduce<Record<string, QuickSearchCalendarDayHint>>((acc, day) => {
+          if (!day?.date) return acc;
+          acc[day.date] = day;
+          return acc;
+        }, {});
+        setCalendarHintsByMonth((prev) => ({ ...prev, [requestedMonth]: hintsForMonth }));
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        logQuickSearchApiError("calendar_hints_exception", {
+          error,
+          origin_iata: originCode,
+          destination_iata: destinationCode,
+          month: requestedMonth,
+        });
+      })
+      .finally(() => {
+        if (controller.signal.aborted) return;
+        setCalendarHintsLoadingMonth((current) => (current === requestedMonth ? null : current));
+      });
+
+    return () => controller.abort();
+  }, [
+    adults,
+    calendarHintsByMonth,
+    calendarVisibleMonth,
+    canRequestCalendarHints,
+    destinationCode,
+    logQuickSearchApiError,
+    originCode,
+  ]);
 
   useEffect(() => {
     if (!travelDate || originCountryOnly || destinationCountryOnly || !originValid || !destinationValid) {
@@ -3708,10 +3796,14 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               placeholder={t("placeholderDates")}
               localeTag={localeTag}
               variant="outbound"
+              dayHintsByIso={calendarHintsByMonth[calendarVisibleMonth] || {}}
+              hintsLoading={calendarHintsLoadingMonth === calendarVisibleMonth}
+              onVisibleMonthChange={setCalendarVisibleMonth}
               invalid={(dateTouched && !travelDate) || Boolean(fieldErrors.travel_date)}
               onBlur={() => setDateTouched(true)}
               onChange={(value) => {
                 setTravelDate(value);
+                setCalendarVisibleMonth(monthFromDateIso(value));
                 setFieldErrors((prev) => ({ ...prev, travel_date: undefined }));
               }}
             />

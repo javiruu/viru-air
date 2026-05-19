@@ -110,6 +110,54 @@ The endpoint still returns `query`, `filters`, `results` and now adds:
 - `meta.filter_support`
 - `meta.pair_counts`
 
+## Monthly calendar hints (`POST /api/v1/search/quick/calendar-hints`)
+
+Fast monthly endpoint for `/quick-search` datepicker heat hints.
+
+### Request
+
+```json
+{
+  "origin_iata": "MAD",
+  "destination_iata": "DUB",
+  "month": "2030-06",
+  "adults": 1
+}
+```
+
+### Response
+
+```json
+{
+  "days": [
+    {
+      "date": "2030-06-05",
+      "min_price": 60.0,
+      "bucket": "low",
+      "no_data_reason": null
+    },
+    {
+      "date": "2030-06-20",
+      "min_price": null,
+      "bucket": "none",
+      "no_data_reason": "no_fare_data"
+    }
+  ],
+  "meta": {
+    "currency": "EUR",
+    "cache_ttl_sec": 600,
+    "cache_hit": false,
+    "partial": false
+  }
+}
+```
+
+### Bucket semantics
+- `low`: cheaper third of priced days in the month.
+- `mid`: middle third of priced days.
+- `high`: expensive third of priced days.
+- `none`: day without usable fare data.
+
 ## Quick-search seed catalog
 - `GET /api/v1/airports/seeds` is the canonical source for seed airports allowed by quick-search UI.
 - The UI should use this catalog for IATA validation, autocomplete and country-only airport pools instead of broader static airport datasets.

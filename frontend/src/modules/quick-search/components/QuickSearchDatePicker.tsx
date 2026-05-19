@@ -2,6 +2,7 @@
 
 import React, { memo } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { QuickSearchCalendarDayHint } from "@/modules/quick-search/types";
 
 type Props = {
   name: string;
@@ -15,6 +16,9 @@ type Props = {
   invalid?: boolean;
   onBlur?: () => void;
   defaultOpen?: boolean;
+  dayHintsByIso?: Record<string, QuickSearchCalendarDayHint>;
+  hintsLoading?: boolean;
+  onVisibleMonthChange?: (monthIso: string) => void;
 };
 
 type CalendarDay = {
@@ -38,6 +42,12 @@ function formatIsoDate(value: Date): string {
   const month = `${value.getMonth() + 1}`.padStart(2, "0");
   const day = `${value.getDate()}`.padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function formatIsoMonth(value: Date): string {
+  const year = value.getFullYear();
+  const month = `${value.getMonth() + 1}`.padStart(2, "0");
+  return `${year}-${month}`;
 }
 
 function startOfMonth(value: Date): Date {
@@ -97,6 +107,7 @@ function QuickSearchDatePickerInner(props: Props) {
       selectReturn: "Anade vuelta",
       outboundReady: "Salida elegida",
       returnReady: "Vuelta elegida",
+      noPriceHint: "Sin datos de precio para este día",
     }
     : {
       openCalendar: "Open calendar",
@@ -109,6 +120,7 @@ function QuickSearchDatePickerInner(props: Props) {
       selectReturn: "Add return",
       outboundReady: "Outbound selected",
       returnReady: "Return selected",
+      noPriceHint: "No fare data for this day",
     };
 
   const selectedDate = useMemo(() => parseIsoDate(props.value), [props.value]);
@@ -122,6 +134,11 @@ function QuickSearchDatePickerInner(props: Props) {
     const anchorDate = selectedDate || minDate || new Date();
     setViewMonth(startOfMonth(anchorDate));
   }, [open, selectedDate, minDate]);
+
+  useEffect(() => {
+    if (!open || !props.onVisibleMonthChange) return;
+    props.onVisibleMonthChange(formatIsoMonth(viewMonth));
+  }, [open, props.onVisibleMonthChange, viewMonth]);
 
   useEffect(() => {
     if (!open) return;
@@ -270,27 +287,50 @@ function QuickSearchDatePickerInner(props: Props) {
           </div>
           <div className="qs-date-popover__grid">
             {calendarDays.map((day) => (
-              <button
-                key={`${props.name}-${day.iso}`}
-                type="button"
-                className={[
-                  "qs-date-day",
-                  day.inMonth ? "" : "is-outside",
-                  day.isToday ? "is-today" : "",
-                  day.isSelected ? "is-selected" : "",
-                  day.isDisabled ? "is-disabled" : "",
-                ].filter(Boolean).join(" ")}
-                disabled={day.isDisabled}
-                aria-pressed={day.isSelected}
-                aria-label={dayLabelFormatter.format(day.date)}
-                onClick={() => {
-                  props.onChange(day.iso);
-                  setOpen(false);
-                  handleBlur?.();
-                }}
-              >
-                <span className="qs-date-day__number">{day.date.getDate()}</span>
-              </button>
+              (() => {
+                const hint = day.inMonth ? props.dayHintsByIso?.[day.iso] : undefined;
+                const noData = Boolean(hint && hint.bucket === "none");
+                const hintClass = hint && hint.bucket !== "none" ? `hint-${hint.bucket}` : "";
+                const loadingClass = props.hintsLoading && day.inMonth && !day.isDisabled ? "is-hints-loading" : "";
+                return (
+                  <button
+                    key={`${props.name}-${day.iso}`}
+                    type="button"
+                    data-date={day.iso}
+                    className={[
+                      "qs-date-day",
+                      day.inMonth ? "" : "is-outside",
+                      day.isToday ? "is-today" : "",
+                      day.isSelected ? "is-selected" : "",
+                      day.isDisabled ? "is-disabled" : "",
+                      hintClass,
+                      noData ? "is-no-price-data" : "",
+                      loadingClass,
+                    ].filter(Boolean).join(" ")}
+                    disabled={day.isDisabled}
+                    aria-pressed={day.isSelected}
+                    aria-label={dayLabelFormatter.format(day.date)}
+                    onClick={() => {
+                      props.onChange(day.iso);
+                      setOpen(false);
+                      handleBlur?.();
+                    }}
+                  >
+                    <span className="qs-date-day__number">{day.date.getDate()}</span>
+                    {noData ? (
+                      <span className="qs-date-day__no-price" aria-hidden="true">
+                        <span className="qs-date-day__no-price-icon">
+                          <svg viewBox="0 0 20 20" role="img" aria-hidden="true">
+                            <circle cx="10" cy="10" r="7.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
+                            <path d="M6 14 14 6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                          </svg>
+                        </span>
+                        <span className="qs-date-day__no-price-tooltip">{locale.noPriceHint}</span>
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })()
             ))}
           </div>
           <div className="qs-date-popover__footer">
@@ -318,6 +358,9 @@ function areDatePickerPropsEqual(prev: Props, next: Props): boolean {
     && prev.onBlur === next.onBlur
     && prev.onChange === next.onChange
     && prev.defaultOpen === next.defaultOpen
+    && prev.dayHintsByIso === next.dayHintsByIso
+    && prev.hintsLoading === next.hintsLoading
+    && prev.onVisibleMonthChange === next.onVisibleMonthChange
   );
 }
 
