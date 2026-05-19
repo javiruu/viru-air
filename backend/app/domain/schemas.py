@@ -302,6 +302,9 @@ class PreferenceIn(BaseModel):
     depart_before_default: str | None = None
     strict_filters_default: bool = True
     country_price_hint_mode_default: Literal["min", "median", "fixed_route"] = "min"
+    calendar_hint_bucket_mode_default: Literal["monthly_terciles", "guidelines"] = "monthly_terciles"
+    calendar_hint_guideline_low_max_default: float = Field(default=90, ge=0)
+    calendar_hint_guideline_mid_max_default: float = Field(default=150, gt=0)
     preferred_currency: str = "EUR"
     language: str = "es"
     quiet_hours_enabled: bool = False
@@ -349,6 +352,12 @@ class PreferenceIn(BaseModel):
         if language not in {"es", "en"}:
             raise ValueError("invalid_language")
         return language
+
+    @model_validator(mode="after")
+    def validate_calendar_hint_thresholds(self):
+        if self.calendar_hint_guideline_mid_max_default <= self.calendar_hint_guideline_low_max_default:
+            raise ValueError("calendar_hint_guideline_mid_must_be_greater_than_low")
+        return self
 
 
 class AppearancePreferenceIn(BaseModel):

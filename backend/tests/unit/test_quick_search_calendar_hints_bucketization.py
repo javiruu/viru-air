@@ -1,6 +1,11 @@
 import datetime as dt
 
-from app.api.v1.search import _aggregate_day_prices, _bucketize_day_prices_terciles, _rank_pairs_adaptive
+from app.api.v1.search import (
+    _aggregate_day_prices,
+    _bucketize_day_prices_guidelines,
+    _bucketize_day_prices_terciles,
+    _rank_pairs_adaptive,
+)
 
 
 def test_bucketize_day_prices_terciles_assigns_low_mid_high() -> None:
@@ -27,6 +32,20 @@ def test_bucketize_day_prices_terciles_handles_small_sets() -> None:
     assert one_bucket == {dt.date(2030, 6, 2): "low"}
     assert two_buckets[dt.date(2030, 6, 2)] == "low"
     assert two_buckets[dt.date(2030, 6, 3)] == "high"
+
+
+def test_bucketize_day_prices_guidelines_uses_inclusive_boundaries() -> None:
+    values = {
+        dt.date(2030, 6, 5): 90.0,
+        dt.date(2030, 6, 10): 150.0,
+        dt.date(2030, 6, 15): 150.01,
+    }
+
+    buckets = _bucketize_day_prices_guidelines(values, low_max=90.0, mid_max=150.0)
+
+    assert buckets[dt.date(2030, 6, 5)] == "low"
+    assert buckets[dt.date(2030, 6, 10)] == "mid"
+    assert buckets[dt.date(2030, 6, 15)] == "high"
 
 
 def test_rank_pairs_adaptive_is_deterministic_and_prefers_coverage_then_price() -> None:

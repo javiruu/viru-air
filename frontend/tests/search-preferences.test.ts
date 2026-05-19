@@ -6,6 +6,8 @@ import { buildSearchPreferenceSummary, validateSearchPreferences } from "../src/
 const copy: Record<string, string> = {
   "preferences.search.rangeError": "range {min}-{max}",
   "preferences.search.timeError": "bad time",
+  "preferences.search.guidelineLowError": "bad low",
+  "preferences.search.guidelineMidError": "bad mid",
   "preferences.search.summaryCoverageRegional": "regional coverage",
   "preferences.search.summaryCoverageDirect": "direct coverage",
   "preferences.search.summaryTimingWindow": "time window",
@@ -33,6 +35,9 @@ test("validateSearchPreferences catches invalid radius and late-departure time",
       include_nearby_origins_default: false,
       include_nearby_destinations_default: false,
       country_price_hint_mode_default: "min",
+      calendar_hint_bucket_mode_default: "monthly_terciles",
+      calendar_hint_guideline_low_max_default: 90,
+      calendar_hint_guideline_mid_max_default: 80,
       avoid_departure_before: "07:00",
       depart_before_default: "25:00",
       strict_filters_default: true,
@@ -44,6 +49,7 @@ test("validateSearchPreferences catches invalid radius and late-departure time",
 
   assert.equal(errors.default_radius_km, "range 0-500");
   assert.equal(errors.depart_before_default, "bad time");
+  assert.equal(errors.calendar_hint_guideline_mid_max_default, "bad mid");
 });
 
 test("buildSearchPreferenceSummary describes regional flexible defaults", () => {
@@ -54,6 +60,9 @@ test("buildSearchPreferenceSummary describes regional flexible defaults", () => 
       include_nearby_origins_default: true,
       include_nearby_destinations_default: false,
       country_price_hint_mode_default: "fixed_route",
+      calendar_hint_bucket_mode_default: "guidelines",
+      calendar_hint_guideline_low_max_default: 90,
+      calendar_hint_guideline_mid_max_default: 150,
       avoid_departure_before: "07:00",
       depart_before_default: "22:00",
       strict_filters_default: false,

@@ -47,6 +47,10 @@ export default function PreferenciasBusquedaPage() {
         const normalized: Pref = {
           ...data,
           country_price_hint_mode_default: data.country_price_hint_mode_default || "min",
+          calendar_hint_bucket_mode_default: data.calendar_hint_bucket_mode_default || "monthly_terciles",
+          calendar_hint_guideline_low_max_default: Number(data.calendar_hint_guideline_low_max_default ?? 90),
+          calendar_hint_guideline_mid_max_default: Number(data.calendar_hint_guideline_mid_max_default ?? 150),
+          preferred_currency: data.preferred_currency || "EUR",
         };
         setPref(normalized);
         setInitialPref(normalized);
@@ -84,6 +88,12 @@ export default function PreferenciasBusquedaPage() {
       ...pref,
       default_radius_km: Number.isNaN(parsed) ? SEARCH_PREF_MIN_RADIUS_KM : parsed,
     });
+  }
+
+  function onGuidelineThresholdChange(field: "calendar_hint_guideline_low_max_default" | "calendar_hint_guideline_mid_max_default", value: string) {
+    if (!pref) return;
+    const parsed = Number(value);
+    updatePref(field, Number.isFinite(parsed) ? parsed : 0);
   }
 
   async function onSubmit(event: FormEvent) {
@@ -239,6 +249,65 @@ export default function PreferenciasBusquedaPage() {
                 <option value="fixed_route">{t("preferences.search.countryHintModeFixedRoute")}</option>
               </select>
             </label>
+
+            <label className="field" htmlFor="pref-calendar-bucket-mode">
+              {t("preferences.search.calendarHintBucketMode")}
+              <span className="hint">{t("preferences.search.calendarHintBucketModeHint")}</span>
+              <select
+                id="pref-calendar-bucket-mode"
+                className="prefs-control"
+                value={pref.calendar_hint_bucket_mode_default || "monthly_terciles"}
+                onChange={(event) => updatePref("calendar_hint_bucket_mode_default", event.target.value as Pref["calendar_hint_bucket_mode_default"])}
+              >
+                <option value="monthly_terciles">{t("preferences.search.calendarHintBucketModeMonthly")}</option>
+                <option value="guidelines">{t("preferences.search.calendarHintBucketModeGuidelines")}</option>
+              </select>
+            </label>
+
+            {pref.calendar_hint_bucket_mode_default === "guidelines" ? (
+              <div className="field">
+                <span>{t("preferences.search.calendarHintGuidelinesTitle")}</span>
+                <div className="prefs-radius-row">
+                  <label className="field" htmlFor="pref-guideline-low">
+                    {t("preferences.search.calendarHintGuidelineLowLabel")}
+                    <input
+                      id="pref-guideline-low"
+                      className="prefs-control"
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={pref.calendar_hint_guideline_low_max_default}
+                      onChange={(event) => onGuidelineThresholdChange("calendar_hint_guideline_low_max_default", event.target.value)}
+                    />
+                    {errors.calendar_hint_guideline_low_max_default ? (
+                      <span className="prefs-error">{errors.calendar_hint_guideline_low_max_default}</span>
+                    ) : null}
+                  </label>
+                  <label className="field" htmlFor="pref-guideline-mid">
+                    {t("preferences.search.calendarHintGuidelineMidLabel")}
+                    <input
+                      id="pref-guideline-mid"
+                      className="prefs-control"
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={pref.calendar_hint_guideline_mid_max_default}
+                      onChange={(event) => onGuidelineThresholdChange("calendar_hint_guideline_mid_max_default", event.target.value)}
+                    />
+                    {errors.calendar_hint_guideline_mid_max_default ? (
+                      <span className="prefs-error">{errors.calendar_hint_guideline_mid_max_default}</span>
+                    ) : null}
+                  </label>
+                </div>
+                <span className="hint">
+                  {t("preferences.search.calendarHintGuidelinesHint", {
+                    low: pref.calendar_hint_guideline_low_max_default,
+                    mid: pref.calendar_hint_guideline_mid_max_default,
+                    currency: pref.preferred_currency || "EUR",
+                  })}
+                </span>
+              </div>
+            ) : null}
 
             <label className="field" htmlFor="pref-radius">
               {t("preferences.search.radiusLabel")}

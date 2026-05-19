@@ -57,6 +57,8 @@ def test_quick_search_calendar_hints_returns_month_with_buckets_and_cache(client
     assert data["meta"]["partial"] is False
     assert data["meta"]["scope_mode"] == "iata"
     assert data["meta"]["aggregation_mode"] == "min"
+    assert data["meta"]["bucket_mode"] == "monthly_terciles"
+    assert data["meta"]["guideline_thresholds_effective"] is None
 
     days_by_iso = {day["date"]: day for day in data["days"]}
     assert days_by_iso["2030-06-05"]["bucket"] == "low"
@@ -147,3 +149,51 @@ def test_quick_search_calendar_hints_country_scope_supports_aggregation_modes(cl
     assert country_country_response.status_code == 200
     country_country_data = country_country_response.json()
     assert country_country_data["meta"]["scope_mode"] == "country_country"
+
+
+def test_quick_search_calendar_hints_supports_guideline_bucket_mode(client: TestClient, monkeypatch) -> None:
+    _CACHE.clear()
+    with search_api._CALENDAR_HINTS_CACHE_LOCK:
+        search_api._CALENDAR_HINTS_CACHE.clear()
+
+    fake_provider = _CalendarHintsProvider()
+    monkeypatch.setattr(search_api, "provider", fake_provider)
+
+    base_payload = {
+        "origin_iata": "MAD",
+        "destination_iata": "DUB",
+        "month": "2030-06",
+        "adults": 1,
+    }
+
+    terciles_response = client.post(
+        "/api/v1/search/quick/calendar-hints",
+        json={**base_payload, "bucket_mode": "monthly_terciles"},
+    )
+    assert terciles_response.status_code == 200
+    terciles_data = terciles_response.json()
+    terciles_days_by_iso = {day["date"]: day for day in terciles_data["days"]}
+    assert terciles_days_by_iso["2030-06-15"]["bucket"] == "high"
+
+    guidelines_response = client.post(
+        "/api/v1/search/quick/calendar-hints",
+        json={
+            **base_payload,
+            "bucket_mode": "guidelines",
+            "guideline_thresholds": {
+                "low_max": 100,
+                "mid_max": 220,
+                "currency": "EUR",
+            },
+        },
+    )
+    assert guidelines_response.status_code == 200
+    guidelines_data = guidelines_response.json()
+    guidelines_days_by_iso = {day["date"]: day for day in guidelines_data["days"]}
+    assert guidelines_days_by_iso["2030-06-15"]["bucket"] == "mid"
+    assert guidelines_data["meta"]["bucket_mode"] == "guidelines"
+    assert guidelines_data["meta"]["guideline_thresholds_effective"] == {
+        "low_max": 100.0,
+        "mid_max": 220.0,
+        "currency": "EUR",
+    }

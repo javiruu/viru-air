@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import ApiError, message_for_code
 from app.core.idempotency import replay_if_exists, request_hash, store_response
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from app.api.deps import get_current_user
 from app.api.v1.airports import _validate_iata
@@ -40,7 +40,9 @@ QUICK_SEARCH_MAX_PAIRS_CAP = 400
 QUICK_SEARCH_MAX_REQUESTS_CAP = 3000
 CALENDAR_HINTS_CACHE_TTL_SECONDS = 600
 _CALENDAR_HINTS_CACHE_LOCK = threading.Lock()
-_CALENDAR_HINTS_CACHE: dict[tuple[str, str, int, str, str], tuple[float, dict[str, Any]]] = {}
+_CALENDAR_HINTS_CACHE: dict[tuple[str, str, int, str, str, str], tuple[float, dict[str, Any]]] = {}
+CALENDAR_HINTS_GUIDELINE_DEFAULT_LOW_MAX = 90.0
+CALENDAR_HINTS_GUIDELINE_DEFAULT_MID_MAX = 150.0
 
 _WARNING_CODE_ALIASES: dict[str, str] = {
     "provider_timeout_parcial": "provider_timeout_partial",
@@ -276,12 +278,26 @@ class QuickSearchSaveResultIn(BaseModel):
         return _validate_iata(value)
 
 
+class QuickSearchGuidelineThresholdsIn(BaseModel):
+    low_max: float = Field(ge=0)
+    mid_max: float = Field(gt=0)
+    currency: Literal["EUR", "USD", "GBP"] = "EUR"
+
+    @model_validator(mode="after")
+    def validate_order(self):
+        if self.mid_max <= self.low_max:
+            raise ValueError("guideline_mid_max_invalid")
+        return self
+
+
 class QuickSearchCalendarHintsIn(BaseModel):
     origin_iata: str | list[str]
     destination_iata: str | list[str]
     month: str = Field(pattern=r"^\d{4}-\d{2}$")
     adults: int = Field(default=1, ge=1, le=9)
     aggregation_mode: Literal["min", "median", "fixed_route"] = "min"
+    bucket_mode: Literal["monthly_terciles", "guidelines"] = "monthly_terciles"
+    guideline_thresholds: QuickSearchGuidelineThresholdsIn | None = None
 
     @field_validator("origin_iata", "destination_iata", mode="before")
     @classmethod
@@ -361,6 +377,64 @@ def _bucketize_day_prices_terciles(day_min_prices: dict[dt.date, float]) -> dict
         else:
             buckets[day] = "high"
     return buckets
+
+
+def _bucketize_day_prices_guidelines(
+    day_min_prices: dict[dt.date, float],
+    *,
+    low_max: float,
+    mid_max: float,
+) -> dict[dt.date, str]:
+    buckets: dict[dt.date, str] = {}
+    for day, price in day_min_prices.items():
+        if price <= low_max:
+            buckets[day] = "low"
+        elif price <= mid_max:
+            buckets[day] = "mid"
+        else:
+            buckets[day] = "high"
+    return buckets
+
+
+def _resolve_guideline_thresholds(payload: QuickSearchCalendarHintsIn) -> dict[str, Any] | None:
+    if payload.bucket_mode != "guidelines":
+        return None
+    thresholds = payload.guideline_thresholds
+    if thresholds is None:
+        return {
+            "low_max": CALENDAR_HINTS_GUIDELINE_DEFAULT_LOW_MAX,
+            "mid_max": CALENDAR_HINTS_GUIDELINE_DEFAULT_MID_MAX,
+            "currency": "EUR",
+        }
+    low_max = float(thresholds.low_max)
+    mid_max = float(thresholds.mid_max)
+    if low_max < 0:
+        low_max = 0.0
+    if mid_max <= low_max:
+        mid_max = max(low_max + 1.0, CALENDAR_HINTS_GUIDELINE_DEFAULT_MID_MAX)
+    currency = str(thresholds.currency).strip().upper()
+    if currency not in {"EUR", "USD", "GBP"}:
+        currency = "EUR"
+    return {
+        "low_max": round(low_max, 2),
+        "mid_max": round(mid_max, 2),
+        "currency": currency,
+    }
+
+
+def _bucketize_day_prices_by_mode(
+    day_min_prices: dict[dt.date, float],
+    *,
+    bucket_mode: Literal["monthly_terciles", "guidelines"],
+    guideline_thresholds: dict[str, Any] | None,
+) -> dict[dt.date, str]:
+    if bucket_mode == "guidelines" and guideline_thresholds:
+        return _bucketize_day_prices_guidelines(
+            day_min_prices,
+            low_max=float(guideline_thresholds["low_max"]),
+            mid_max=float(guideline_thresholds["mid_max"]),
+        )
+    return _bucketize_day_prices_terciles(day_min_prices)
 
 
 def _normalize_calendar_hint_iata_pool(value: str | list[str]) -> list[str]:
@@ -552,7 +626,7 @@ def _to_pair_plan_items(pairs: list[tuple[str, str]]) -> list[PairPlanItem]:
     return items
 
 
-def _calendar_hints_cache_get(cache_key: tuple[str, str, int, str, str]) -> dict[str, Any] | None:
+def _calendar_hints_cache_get(cache_key: tuple[str, str, int, str, str, str]) -> dict[str, Any] | None:
     now = time.time()
     with _CALENDAR_HINTS_CACHE_LOCK:
         cached = _CALENDAR_HINTS_CACHE.get(cache_key)
@@ -565,7 +639,7 @@ def _calendar_hints_cache_get(cache_key: tuple[str, str, int, str, str]) -> dict
         return payload
 
 
-def _calendar_hints_cache_set(cache_key: tuple[str, str, int, str, str], payload: dict[str, Any]) -> None:
+def _calendar_hints_cache_set(cache_key: tuple[str, str, int, str, str, str], payload: dict[str, Any]) -> None:
     with _CALENDAR_HINTS_CACHE_LOCK:
         _CALENDAR_HINTS_CACHE[cache_key] = (time.time(), payload)
 
@@ -1110,18 +1184,26 @@ def quick_search_calendar_hints(
     origin_pool = _normalize_calendar_hint_iata_pool(payload.origin_iata)
     destination_pool = _normalize_calendar_hint_iata_pool(payload.destination_iata)
     scope_mode = _resolve_calendar_scope_mode(origin_pool, destination_pool)
+    bucket_mode_effective: Literal["monthly_terciles", "guidelines"] = payload.bucket_mode
+    guideline_thresholds_effective = _resolve_guideline_thresholds(payload)
     aggregation_mode_effective: Literal["min", "median", "fixed_route"] = (
         "min" if scope_mode == "iata" else payload.aggregation_mode
     )
 
     cache_currency = "EUR"
     cache_scope_signature = _build_calendar_scope_signature(origin_pool, destination_pool)
+    cache_bucket_signature = (
+        f"{bucket_mode_effective}:{_stable_json_dumps(guideline_thresholds_effective)}"
+        if guideline_thresholds_effective
+        else bucket_mode_effective
+    )
     cache_key = (
         cache_scope_signature,
         payload.month,
         payload.adults,
         cache_currency,
         aggregation_mode_effective,
+        cache_bucket_signature,
     )
     cached_payload = _calendar_hints_cache_get(cache_key)
     if cached_payload:
@@ -1238,7 +1320,11 @@ def quick_search_calendar_hints(
         aggregation_mode_effective,
     )
 
-    bucket_by_day = _bucketize_day_prices_terciles(day_aggregated_prices)
+    bucket_by_day = _bucketize_day_prices_by_mode(
+        day_aggregated_prices,
+        bucket_mode=bucket_mode_effective,
+        guideline_thresholds=guideline_thresholds_effective,
+    )
     days_payload: list[dict[str, Any]] = []
     for day in month_dates:
         min_price = day_aggregated_prices.get(day)
@@ -1284,6 +1370,8 @@ def quick_search_calendar_hints(
             },
             "ranked_routes_count": len(selected_pairs),
             "aggregation_mode": aggregation_mode_effective,
+            "bucket_mode": bucket_mode_effective,
+            "guideline_thresholds_effective": guideline_thresholds_effective,
         },
     }
     _calendar_hints_cache_set(cache_key, response_payload)

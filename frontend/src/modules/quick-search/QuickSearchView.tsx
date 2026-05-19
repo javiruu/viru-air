@@ -54,7 +54,9 @@ import {
   DeepLinkResponse,
   Pref,
   QuickSearchCalendarAggregationMode,
+  QuickSearchCalendarBucketMode,
   QuickSearchCalendarDayHint,
+  QuickSearchCalendarGuidelineThresholds,
   QuickSearchCalendarHintsResponse,
   QuickSearchCalendarScopeMode,
   QuickSearchAutocompleteField,
@@ -984,6 +986,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         const normalized: Pref = {
           ...data,
           country_price_hint_mode_default: data.country_price_hint_mode_default || "min",
+          calendar_hint_bucket_mode_default: data.calendar_hint_bucket_mode_default || "monthly_terciles",
+          calendar_hint_guideline_low_max_default: Number(data.calendar_hint_guideline_low_max_default ?? 90),
+          calendar_hint_guideline_mid_max_default: Number(data.calendar_hint_guideline_mid_max_default ?? 150),
+          preferred_currency: data.preferred_currency || "EUR",
         };
         const defaults = resolveQuickSearchPreferenceDefaults(normalized);
         setPref(normalized);
@@ -1100,6 +1106,37 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     if (mode === "median" || mode === "fixed_route") return mode;
     return "min";
   }, [hasCountryScopeForCalendarHints, pref?.country_price_hint_mode_default]);
+  const calendarHintBucketMode = useMemo<QuickSearchCalendarBucketMode>(() => {
+    const mode = pref?.calendar_hint_bucket_mode_default || "monthly_terciles";
+    return mode === "guidelines" ? "guidelines" : "monthly_terciles";
+  }, [pref?.calendar_hint_bucket_mode_default]);
+  const calendarHintGuidelineThresholds = useMemo<QuickSearchCalendarGuidelineThresholds | null>(() => {
+    if (calendarHintBucketMode !== "guidelines") return null;
+    const rawLow = Number(pref?.calendar_hint_guideline_low_max_default ?? 90);
+    const safeLow = Number.isFinite(rawLow) && rawLow >= 0 ? rawLow : 90;
+    const rawMid = Number(pref?.calendar_hint_guideline_mid_max_default ?? 150);
+    const safeMid = Number.isFinite(rawMid) && rawMid > safeLow ? rawMid : Math.max(safeLow + 1, 150);
+    const rawCurrency = (pref?.preferred_currency || "EUR").toUpperCase();
+    const safeCurrency = rawCurrency === "USD" || rawCurrency === "GBP" || rawCurrency === "EUR" ? rawCurrency : "EUR";
+    return {
+      low_max: Number(safeLow.toFixed(2)),
+      mid_max: Number(safeMid.toFixed(2)),
+      currency: safeCurrency,
+    };
+  }, [
+    calendarHintBucketMode,
+    pref?.calendar_hint_guideline_low_max_default,
+    pref?.calendar_hint_guideline_mid_max_default,
+    pref?.preferred_currency,
+  ]);
+  const calendarHintGuidelineSignature = useMemo(() => {
+    if (!calendarHintGuidelineThresholds) return "none";
+    return [
+      calendarHintGuidelineThresholds.low_max.toFixed(2),
+      calendarHintGuidelineThresholds.mid_max.toFixed(2),
+      calendarHintGuidelineThresholds.currency,
+    ].join(":");
+  }, [calendarHintGuidelineThresholds]);
   const calendarHintsScopeSignature = useMemo(() => {
     const originScope = originCalendarHintPool.join(",");
     const destinationScope = destinationCalendarHintPool.join(",");
@@ -1112,10 +1149,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const calendarHintsRequestKey = useMemo(() => {
     if (!calendarVisibleMonth) return "";
     if (!canRequestCalendarHints) return "";
-    return `${calendarVisibleMonth}|${calendarHintsScopeSignature}|${calendarHintAggregationMode}|${adults}`;
+    return `${calendarVisibleMonth}|${calendarHintsScopeSignature}|${calendarHintAggregationMode}|${calendarHintBucketMode}|${calendarHintGuidelineSignature}|${adults}`;
   }, [
     adults,
     calendarHintAggregationMode,
+    calendarHintBucketMode,
+    calendarHintGuidelineSignature,
     calendarHintsScopeSignature,
     calendarVisibleMonth,
     canRequestCalendarHints,
@@ -1125,7 +1164,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   useEffect(() => {
     setCalendarHintsByKey({});
     setCalendarHintsLoadingKey(null);
-  }, [adults, calendarHintAggregationMode, calendarHintsScopeSignature]);
+  }, [adults, calendarHintAggregationMode, calendarHintBucketMode, calendarHintGuidelineSignature, calendarHintsScopeSignature]);
 
   useEffect(() => {
     if (!canRequestCalendarHints) return;
@@ -1151,6 +1190,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         month: requestedMonth,
         adults,
         aggregation_mode: calendarHintAggregationMode,
+        bucket_mode: calendarHintBucketMode,
+        guideline_thresholds: calendarHintBucketMode === "guidelines" ? calendarHintGuidelineThresholds : undefined,
       }),
     })
       .then((result) => {
@@ -1163,6 +1204,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             destination_iata: destinationCountryOnly ? destinationCalendarHintPool : destinationCode,
             month: requestedMonth,
             aggregation_mode: calendarHintAggregationMode,
+            bucket_mode: calendarHintBucketMode,
+            guideline_thresholds: calendarHintBucketMode === "guidelines" ? calendarHintGuidelineThresholds : undefined,
           });
           return;
         }
@@ -1189,6 +1232,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           destination_iata: destinationCountryOnly ? destinationCalendarHintPool : destinationCode,
           month: requestedMonth,
           aggregation_mode: calendarHintAggregationMode,
+          bucket_mode: calendarHintBucketMode,
+          guideline_thresholds: calendarHintBucketMode === "guidelines" ? calendarHintGuidelineThresholds : undefined,
         });
       })
       .finally(() => {
@@ -1200,6 +1245,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   }, [
     adults,
     calendarHintAggregationMode,
+    calendarHintBucketMode,
+    calendarHintGuidelineThresholds,
     calendarHintsByKey,
     calendarHintsRequestKey,
     calendarHintsScopeMode,

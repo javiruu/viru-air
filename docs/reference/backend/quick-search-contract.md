@@ -122,7 +122,8 @@ Fast monthly endpoint for `/quick-search` datepicker heat hints.
   "destination_iata": "DUB",
   "month": "2030-06",
   "adults": 1,
-  "aggregation_mode": "min"
+  "aggregation_mode": "min",
+  "bucket_mode": "monthly_terciles"
 }
 ```
 
@@ -134,7 +135,13 @@ Country scope request (mixed or both sides):
   "destination_iata": "DUB",
   "month": "2030-06",
   "adults": 1,
-  "aggregation_mode": "median"
+  "aggregation_mode": "median",
+  "bucket_mode": "guidelines",
+  "guideline_thresholds": {
+    "low_max": 90,
+    "mid_max": 150,
+    "currency": "EUR"
+  }
 }
 ```
 
@@ -169,15 +176,26 @@ Country scope request (mixed or both sides):
       "destination_count": 1
     },
     "ranked_routes_count": 3,
-    "aggregation_mode": "median"
+    "aggregation_mode": "median",
+    "bucket_mode": "guidelines",
+    "guideline_thresholds_effective": {
+      "low_max": 90.0,
+      "mid_max": 150.0,
+      "currency": "EUR"
+    }
   }
 }
 ```
 
 ### Bucket semantics
-- `low`: cheaper third of priced days in the month.
-- `mid`: middle third of priced days.
-- `high`: expensive third of priced days.
+- `bucket_mode=monthly_terciles`:
+  - `low`: cheaper third of priced days in the month.
+  - `mid`: middle third of priced days.
+  - `high`: expensive third of priced days.
+- `bucket_mode=guidelines`:
+  - `low`: `price <= low_max`
+  - `mid`: `price > low_max` and `price <= mid_max`
+  - `high`: `price > mid_max`
 - `none`: day without usable fare data.
 
 ### Scope and aggregation notes
@@ -191,6 +209,14 @@ Country scope request (mixed or both sides):
   - `median`: day price = median across recommended routes.
   - `fixed_route`: day price from a single recommended route.
 - For `scope_mode=iata`, backend keeps simple route behavior and treats aggregation effectively as `min`.
+- `bucket_mode`:
+  - `monthly_terciles` (default)
+  - `guidelines`
+- `guideline_thresholds` is optional but required in practice for deterministic custom guideline behavior:
+  - `{ low_max, mid_max, currency }`
+  - `low_max >= 0`
+  - `mid_max > low_max`
+  - `currency` in `EUR|USD|GBP`
 
 ## Search preferences extension (`GET/PUT /api/v1/preferences/search`)
 - Added field: `country_price_hint_mode_default` with allowed values:
@@ -199,6 +225,11 @@ Country scope request (mixed or both sides):
   - `fixed_route`
 - Default value: `min`.
 - This preference is consumed by quick-search calendar hints when at least one side is country scope.
+- Added fields:
+  - `calendar_hint_bucket_mode_default`: `monthly_terciles|guidelines` (default `monthly_terciles`)
+  - `calendar_hint_guideline_low_max_default`: number (default `90`)
+  - `calendar_hint_guideline_mid_max_default`: number (default `150`, must be greater than `low`)
+- Guideline thresholds are stored in `preferred_currency` and converted when that currency is changed through this endpoint.
 
 ## Quick-search seed catalog
 - `GET /api/v1/airports/seeds` is the canonical source for seed airports allowed by quick-search UI.

@@ -10,6 +10,9 @@ export type QuickSearchPreferenceDefaults = {
   includeNearbyDestinations: boolean;
   strictFilters: boolean;
   countryPriceHintMode: "min" | "median" | "fixed_route";
+  calendarHintBucketMode: "monthly_terciles" | "guidelines";
+  calendarHintGuidelineLowMax: number;
+  calendarHintGuidelineMidMax: number;
 };
 
 export function resolveQuickSearchPreferenceDefaults(
@@ -25,5 +28,8 @@ export function resolveQuickSearchPreferenceDefaults(
     includeNearbyDestinations: Boolean(pref.include_nearby_destinations_default),
     strictFilters: pref.strict_filters_default !== false,
     countryPriceHintMode: pref.country_price_hint_mode_default || "min",
+    calendarHintBucketMode: pref.calendar_hint_bucket_mode_default || "monthly_terciles",
+    calendarHintGuidelineLowMax: Number(pref.calendar_hint_guideline_low_max_default ?? 90),
+    calendarHintGuidelineMidMax: Number(pref.calendar_hint_guideline_mid_max_default ?? 150),
   };
 }

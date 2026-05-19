@@ -1,7 +1,14 @@
 import { Pref } from "@/modules/quick-search/types";
 
 export type SearchPreferenceErrors = Partial<
-  Record<"default_radius_km" | "avoid_departure_before" | "depart_before_default", string>
+  Record<
+    "default_radius_km"
+    | "avoid_departure_before"
+    | "depart_before_default"
+    | "calendar_hint_guideline_low_max_default"
+    | "calendar_hint_guideline_mid_max_default",
+    string
+  >
 >;
 
 export const SEARCH_PREF_MIN_RADIUS_KM = 0;
@@ -46,6 +53,17 @@ export function validateSearchPreferences(
     !isValidHour(nextPref.depart_before_default)
   ) {
     nextErrors.depart_before_default = t("preferences.search.timeError");
+  }
+
+  if (Number.isNaN(nextPref.calendar_hint_guideline_low_max_default) || nextPref.calendar_hint_guideline_low_max_default < 0) {
+    nextErrors.calendar_hint_guideline_low_max_default = t("preferences.search.guidelineLowError");
+  }
+
+  if (
+    Number.isNaN(nextPref.calendar_hint_guideline_mid_max_default)
+    || nextPref.calendar_hint_guideline_mid_max_default <= nextPref.calendar_hint_guideline_low_max_default
+  ) {
+    nextErrors.calendar_hint_guideline_mid_max_default = t("preferences.search.guidelineMidError");
   }
 
   return nextErrors;

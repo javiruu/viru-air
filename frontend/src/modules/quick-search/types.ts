@@ -111,6 +111,12 @@ export type SearchResponse = Omit<SearchResponseRaw, "results"> & {
 export type QuickSearchCalendarDayHintBucket = "low" | "mid" | "high" | "none";
 export type QuickSearchCalendarAggregationMode = "min" | "median" | "fixed_route";
 export type QuickSearchCalendarScopeMode = "iata" | "country_mixed" | "country_country";
+export type QuickSearchCalendarBucketMode = "monthly_terciles" | "guidelines";
+export type QuickSearchCalendarGuidelineThresholds = {
+  low_max: number;
+  mid_max: number;
+  currency: "EUR" | "USD" | "GBP";
+};
 
 export type QuickSearchCalendarDayHint = {
   date: string;
@@ -135,6 +141,8 @@ export type QuickSearchCalendarHintsResponse = {
     };
     ranked_routes_count?: number;
     aggregation_mode?: QuickSearchCalendarAggregationMode;
+    bucket_mode?: QuickSearchCalendarBucketMode;
+    guideline_thresholds_effective?: QuickSearchCalendarGuidelineThresholds | null;
   };
 };
 
@@ -167,6 +175,9 @@ export type Pref = {
   include_nearby_origins_default: boolean;
   include_nearby_destinations_default: boolean;
   country_price_hint_mode_default: QuickSearchCalendarAggregationMode;
+  calendar_hint_bucket_mode_default: QuickSearchCalendarBucketMode;
+  calendar_hint_guideline_low_max_default: number;
+  calendar_hint_guideline_mid_max_default: number;
   avoid_departure_before: string | null;
   depart_before_default: string | null;
   strict_filters_default: boolean;

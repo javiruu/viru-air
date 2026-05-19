@@ -13,6 +13,22 @@ from app.infrastructure.db.models import (
 from app.infrastructure.db.session import get_db
 
 router = APIRouter()
+_CURRENCY_TO_EUR: dict[str, float] = {
+    "EUR": 1.0,
+    "USD": 0.93,
+    "GBP": 1.17,
+}
+
+
+def _convert_currency_amount(amount: float, from_currency: str, to_currency: str) -> float:
+    src = from_currency.strip().upper()
+    dst = to_currency.strip().upper()
+    if src == dst:
+        return round(float(amount), 2)
+    src_to_eur = _CURRENCY_TO_EUR.get(src, 1.0)
+    dst_to_eur = _CURRENCY_TO_EUR.get(dst, 1.0)
+    amount_in_eur = float(amount) * src_to_eur
+    return round(amount_in_eur / dst_to_eur, 2)
 
 
 @router.get("")
@@ -27,6 +43,9 @@ def get_preferences(
             "include_nearby_origins_default": False,
             "include_nearby_destinations_default": False,
             "country_price_hint_mode_default": "min",
+            "calendar_hint_bucket_mode_default": "monthly_terciles",
+            "calendar_hint_guideline_low_max_default": 90.0,
+            "calendar_hint_guideline_mid_max_default": 150.0,
             "avoid_departure_before": None,
             "depart_before_default": None,
             "strict_filters_default": True,
@@ -43,6 +62,17 @@ def get_preferences(
         "include_nearby_origins_default": pref.include_nearby_origins_default,
         "include_nearby_destinations_default": pref.include_nearby_destinations_default,
         "country_price_hint_mode_default": pref.country_price_hint_mode_default or "min",
+        "calendar_hint_bucket_mode_default": pref.calendar_hint_bucket_mode_default or "monthly_terciles",
+        "calendar_hint_guideline_low_max_default": float(
+            pref.calendar_hint_guideline_low_max_default
+            if pref.calendar_hint_guideline_low_max_default is not None
+            else 90.0
+        ),
+        "calendar_hint_guideline_mid_max_default": float(
+            pref.calendar_hint_guideline_mid_max_default
+            if pref.calendar_hint_guideline_mid_max_default is not None
+            else 150.0
+        ),
         "avoid_departure_before": pref.avoid_departure_before,
         "depart_before_default": pref.depart_before_default,
         "strict_filters_default": pref.strict_filters_default,
@@ -69,6 +99,13 @@ def set_preferences(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     pref = db.scalar(select(UserPreference).where(UserPreference.user_id == current_user.id))
+    existing_currency = (pref.preferred_currency if pref else payload.preferred_currency).upper()
+    incoming_currency = payload.preferred_currency.upper()
+    low_max_value = float(payload.calendar_hint_guideline_low_max_default)
+    mid_max_value = float(payload.calendar_hint_guideline_mid_max_default)
+    if pref and existing_currency != incoming_currency:
+        low_max_value = _convert_currency_amount(low_max_value, existing_currency, incoming_currency)
+        mid_max_value = _convert_currency_amount(mid_max_value, existing_currency, incoming_currency)
     if not pref:
         pref = UserPreference(user_id=current_user.id)
         db.add(pref)
@@ -77,6 +114,9 @@ def set_preferences(
     pref.include_nearby_origins_default = payload.include_nearby_origins_default
     pref.include_nearby_destinations_default = payload.include_nearby_destinations_default
     pref.country_price_hint_mode_default = payload.country_price_hint_mode_default
+    pref.calendar_hint_bucket_mode_default = payload.calendar_hint_bucket_mode_default
+    pref.calendar_hint_guideline_low_max_default = low_max_value
+    pref.calendar_hint_guideline_mid_max_default = mid_max_value
     pref.avoid_departure_before = payload.avoid_departure_before
     pref.depart_before_default = payload.depart_before_default
     pref.strict_filters_default = payload.strict_filters_default

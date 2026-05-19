@@ -11,6 +11,8 @@ test("quick-search requests monthly calendar hints from backend", () => {
   assert.match(source, /setCalendarHintsByKey/);
   assert.match(source, /calendarHintsRequestKey/);
   assert.match(source, /aggregation_mode:\s*calendarHintAggregationMode/);
+  assert.match(source, /bucket_mode:\s*calendarHintBucketMode/);
+  assert.match(source, /guideline_thresholds:\s*calendarHintBucketMode === "guidelines" \? calendarHintGuidelineThresholds : undefined/);
   assert.match(source, /origin_iata:\s*originCountryOnly/);
   assert.match(source, /destination_iata:\s*destinationCountryOnly/);
 });
