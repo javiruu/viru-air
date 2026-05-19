@@ -53,8 +53,10 @@ import {
   CountryAirports,
   DeepLinkResponse,
   Pref,
+  QuickSearchCalendarAggregationMode,
   QuickSearchCalendarDayHint,
   QuickSearchCalendarHintsResponse,
+  QuickSearchCalendarScopeMode,
   QuickSearchAutocompleteField,
   QuickSearchExplainTag,
   QuickSearchField,
@@ -125,6 +127,11 @@ type QuickSearchCountrySeedResponse = {
   items: QuickSearchCountrySeed[];
   count: number;
   source: string;
+};
+
+type CalendarHintsCacheEntry = {
+  dayHintsByIso: Record<string, QuickSearchCalendarDayHint>;
+  scopeMode: QuickSearchCalendarScopeMode;
 };
 
 function currentMonthIso(): string {
@@ -210,8 +217,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const [appliedCriteriaSignature, setAppliedCriteriaSignature] = useState<string | null>(null);
   const [countrySearchInput, setCountrySearchInput] = useState("");
   const [calendarVisibleMonth, setCalendarVisibleMonth] = useState<string>(currentMonthIso);
-  const [calendarHintsByMonth, setCalendarHintsByMonth] = useState<Record<string, Record<string, QuickSearchCalendarDayHint>>>({});
-  const [calendarHintsLoadingMonth, setCalendarHintsLoadingMonth] = useState<string | null>(null);
+  const [calendarHintsByKey, setCalendarHintsByKey] = useState<Record<string, CalendarHintsCacheEntry>>({});
+  const [calendarHintsLoadingKey, setCalendarHintsLoadingKey] = useState<string | null>(null);
   const initialOrigin = mode === "recommendations" ? "" : "MAD";
   const initialDestination = mode === "recommendations" ? "" : "DUB";
   const {
@@ -974,8 +981,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   useEffect(() => {
     apiFetch<Pref>("/preferences/search")
       .then((data) => {
-        const defaults = resolveQuickSearchPreferenceDefaults(data);
-        setPref(data);
+        const normalized: Pref = {
+          ...data,
+          country_price_hint_mode_default: data.country_price_hint_mode_default || "min",
+        };
+        const defaults = resolveQuickSearchPreferenceDefaults(normalized);
+        setPref(normalized);
         setRadiusKm(defaults.radiusKm);
         setIncludeStops(defaults.includeStops);
         setDepartAfter(defaults.departAfter);
@@ -1049,30 +1060,97 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const destinationValid = destinationCountryOnly ? destinationCountryOnly.airports.length > 0 : (
     destinationCode.length === 3 && airportsByIata.has(destinationCode)
   );
-  const canRequestCalendarHints = !originCountryOnly && !destinationCountryOnly && originValid && destinationValid;
+  const originCalendarHintPool = useMemo(() => {
+    if (originCountryOnly?.airports?.length) {
+      return Array.from(
+        new Set(
+          originCountryOnly.airports
+            .map((airport) => (airport?.iata || "").trim().toUpperCase())
+            .filter((iata) => iata.length === 3),
+        ),
+      );
+    }
+    if (!originValid) return [];
+    return [originCode];
+  }, [originCode, originCountryOnly, originValid]);
+  const destinationCalendarHintPool = useMemo(() => {
+    if (destinationCountryOnly?.airports?.length) {
+      return Array.from(
+        new Set(
+          destinationCountryOnly.airports
+            .map((airport) => (airport?.iata || "").trim().toUpperCase())
+            .filter((iata) => iata.length === 3),
+        ),
+      );
+    }
+    if (!destinationValid) return [];
+    return [destinationCode];
+  }, [destinationCode, destinationCountryOnly, destinationValid]);
+  const hasCountryScopeForCalendarHints = Boolean(originCountryOnly || destinationCountryOnly);
+  const calendarHintsScopeMode = useMemo<QuickSearchCalendarScopeMode>(() => {
+    const hasOriginCountry = Boolean(originCountryOnly);
+    const hasDestinationCountry = Boolean(destinationCountryOnly);
+    if (hasOriginCountry && hasDestinationCountry) return "country_country";
+    if (hasOriginCountry || hasDestinationCountry) return "country_mixed";
+    return "iata";
+  }, [destinationCountryOnly, originCountryOnly]);
+  const calendarHintAggregationMode = useMemo<QuickSearchCalendarAggregationMode>(() => {
+    if (!hasCountryScopeForCalendarHints) return "min";
+    const mode = pref?.country_price_hint_mode_default || "min";
+    if (mode === "median" || mode === "fixed_route") return mode;
+    return "min";
+  }, [hasCountryScopeForCalendarHints, pref?.country_price_hint_mode_default]);
+  const calendarHintsScopeSignature = useMemo(() => {
+    const originScope = originCalendarHintPool.join(",");
+    const destinationScope = destinationCalendarHintPool.join(",");
+    return `o:${originScope}|d:${destinationScope}`;
+  }, [destinationCalendarHintPool, originCalendarHintPool]);
+  const canRequestCalendarHints = originValid
+    && destinationValid
+    && originCalendarHintPool.length > 0
+    && destinationCalendarHintPool.length > 0;
+  const calendarHintsRequestKey = useMemo(() => {
+    if (!calendarVisibleMonth) return "";
+    if (!canRequestCalendarHints) return "";
+    return `${calendarVisibleMonth}|${calendarHintsScopeSignature}|${calendarHintAggregationMode}|${adults}`;
+  }, [
+    adults,
+    calendarHintAggregationMode,
+    calendarHintsScopeSignature,
+    calendarVisibleMonth,
+    canRequestCalendarHints,
+  ]);
+  const calendarHintsActive = calendarHintsRequestKey ? calendarHintsByKey[calendarHintsRequestKey] : undefined;
 
   useEffect(() => {
-    setCalendarHintsByMonth({});
-    setCalendarHintsLoadingMonth(null);
-  }, [adults, canRequestCalendarHints, destinationCode, originCode]);
+    setCalendarHintsByKey({});
+    setCalendarHintsLoadingKey(null);
+  }, [adults, calendarHintAggregationMode, calendarHintsScopeSignature]);
 
   useEffect(() => {
     if (!canRequestCalendarHints) return;
     if (!calendarVisibleMonth) return;
-    if (calendarHintsByMonth[calendarVisibleMonth]) return;
+    if (!calendarHintsRequestKey) return;
+    if (calendarHintsByKey[calendarHintsRequestKey]) return;
 
     const controller = new AbortController();
     const requestedMonth = calendarVisibleMonth;
-    setCalendarHintsLoadingMonth(requestedMonth);
+    const requestKey = calendarHintsRequestKey;
+    setCalendarHintsLoadingKey(requestKey);
 
     apiFetchWithStatus<QuickSearchCalendarHintsResponse>("/search/quick/calendar-hints", {
       method: "POST",
       signal: controller.signal,
       body: JSON.stringify({
-        origin_iata: originCode,
-        destination_iata: destinationCode,
+        origin_iata: originCountryOnly
+          ? originCalendarHintPool
+          : originCalendarHintPool[0] || originCode,
+        destination_iata: destinationCountryOnly
+          ? destinationCalendarHintPool
+          : destinationCalendarHintPool[0] || destinationCode,
         month: requestedMonth,
         adults,
+        aggregation_mode: calendarHintAggregationMode,
       }),
     })
       .then((result) => {
@@ -1081,9 +1159,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           logQuickSearchApiError("calendar_hints_failed", {
             status: result.status,
             error: result.error,
-            origin_iata: originCode,
-            destination_iata: destinationCode,
+            origin_iata: originCountryOnly ? originCalendarHintPool : originCode,
+            destination_iata: destinationCountryOnly ? destinationCalendarHintPool : destinationCode,
             month: requestedMonth,
+            aggregation_mode: calendarHintAggregationMode,
           });
           return;
         }
@@ -1093,31 +1172,46 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           acc[day.date] = day;
           return acc;
         }, {});
-        setCalendarHintsByMonth((prev) => ({ ...prev, [requestedMonth]: hintsForMonth }));
+        const scopeMode = result.data.meta?.scope_mode || calendarHintsScopeMode;
+        setCalendarHintsByKey((prev) => ({
+          ...prev,
+          [requestKey]: {
+            dayHintsByIso: hintsForMonth,
+            scopeMode,
+          },
+        }));
       })
       .catch((error) => {
         if (controller.signal.aborted) return;
         logQuickSearchApiError("calendar_hints_exception", {
           error,
-          origin_iata: originCode,
-          destination_iata: destinationCode,
+          origin_iata: originCountryOnly ? originCalendarHintPool : originCode,
+          destination_iata: destinationCountryOnly ? destinationCalendarHintPool : destinationCode,
           month: requestedMonth,
+          aggregation_mode: calendarHintAggregationMode,
         });
       })
       .finally(() => {
         if (controller.signal.aborted) return;
-        setCalendarHintsLoadingMonth((current) => (current === requestedMonth ? null : current));
+        setCalendarHintsLoadingKey((current) => (current === requestKey ? null : current));
       });
 
     return () => controller.abort();
   }, [
     adults,
-    calendarHintsByMonth,
+    calendarHintAggregationMode,
+    calendarHintsByKey,
+    calendarHintsRequestKey,
+    calendarHintsScopeMode,
     calendarVisibleMonth,
     canRequestCalendarHints,
     destinationCode,
+    destinationCalendarHintPool,
+    destinationCountryOnly,
     logQuickSearchApiError,
     originCode,
+    originCalendarHintPool,
+    originCountryOnly,
   ]);
 
   useEffect(() => {
@@ -3796,8 +3890,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               placeholder={t("placeholderDates")}
               localeTag={localeTag}
               variant="outbound"
-              dayHintsByIso={calendarHintsByMonth[calendarVisibleMonth] || {}}
-              hintsLoading={calendarHintsLoadingMonth === calendarVisibleMonth}
+              dayHintsByIso={calendarHintsActive?.dayHintsByIso || {}}
+              hintsLoading={calendarHintsLoadingKey === calendarHintsRequestKey}
+              showCountryEstimateBadge={canRequestCalendarHints && hasCountryScopeForCalendarHints}
+              hintScopeMode={calendarHintsActive?.scopeMode || calendarHintsScopeMode}
               onVisibleMonthChange={setCalendarVisibleMonth}
               invalid={(dateTouched && !travelDate) || Boolean(fieldErrors.travel_date)}
               onBlur={() => setDateTouched(true)}

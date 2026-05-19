@@ -121,7 +121,20 @@ Fast monthly endpoint for `/quick-search` datepicker heat hints.
   "origin_iata": "MAD",
   "destination_iata": "DUB",
   "month": "2030-06",
-  "adults": 1
+  "adults": 1,
+  "aggregation_mode": "min"
+}
+```
+
+Country scope request (mixed or both sides):
+
+```json
+{
+  "origin_iata": ["MAD", "BCN", "AGP"],
+  "destination_iata": "DUB",
+  "month": "2030-06",
+  "adults": 1,
+  "aggregation_mode": "median"
 }
 ```
 
@@ -147,7 +160,16 @@ Fast monthly endpoint for `/quick-search` datepicker heat hints.
     "currency": "EUR",
     "cache_ttl_sec": 600,
     "cache_hit": false,
-    "partial": false
+    "partial": false,
+    "scope_mode": "country_mixed",
+    "ranked_airports": {
+      "origin": ["MAD", "BCN", "AGP"],
+      "destination": ["DUB"],
+      "origin_count": 3,
+      "destination_count": 1
+    },
+    "ranked_routes_count": 3,
+    "aggregation_mode": "median"
   }
 }
 ```
@@ -157,6 +179,26 @@ Fast monthly endpoint for `/quick-search` datepicker heat hints.
 - `mid`: middle third of priced days.
 - `high`: expensive third of priced days.
 - `none`: day without usable fare data.
+
+### Scope and aggregation notes
+- `origin_iata` and `destination_iata` accept a single IATA (`string`) or a seed pool (`string[]`).
+- `scope_mode`:
+  - `iata`: IATA↔IATA request.
+  - `country_mixed`: one side is a country pool.
+  - `country_country`: both sides are country pools.
+- `aggregation_mode`:
+  - `min`: day price = minimum across recommended routes.
+  - `median`: day price = median across recommended routes.
+  - `fixed_route`: day price from a single recommended route.
+- For `scope_mode=iata`, backend keeps simple route behavior and treats aggregation effectively as `min`.
+
+## Search preferences extension (`GET/PUT /api/v1/preferences/search`)
+- Added field: `country_price_hint_mode_default` with allowed values:
+  - `min`
+  - `median`
+  - `fixed_route`
+- Default value: `min`.
+- This preference is consumed by quick-search calendar hints when at least one side is country scope.
 
 ## Quick-search seed catalog
 - `GET /api/v1/airports/seeds` is the canonical source for seed airports allowed by quick-search UI.

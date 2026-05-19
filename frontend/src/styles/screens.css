@@ -6987,6 +6987,20 @@ textarea::placeholder {
   text-transform: uppercase;
 }
 
+.qs-date-popover__hint-scope-badge {
+  display: inline-flex;
+  margin-top: 0.28rem;
+  padding: 0.16rem 0.48rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #2e6e62 36%, transparent);
+  background: color-mix(in srgb, #2e6e62 12%, transparent);
+  color: #2e6e62;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .qs-date-popover__nav {
   gap: 0.45rem;
 }
@@ -15648,6 +15662,12 @@ textarea::placeholder {
 :root[data-theme="dark"] .qs-date-popover__weekdays span,
 :root[data-theme="dark"] .qs-date-popover__footer-label {
   color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .qs-date-popover__hint-scope-badge {
+  border-color: color-mix(in srgb, #2e6e62 55%, var(--color-border));
+  background: color-mix(in srgb, #2e6e62 24%, var(--color-surface));
+  color: color-mix(in srgb, var(--color-text-primary) 88%, #8de0cf 12%);
 }
 
 :root[data-theme="dark"] .qs-date-nav {

@@ -1,4 +1,5 @@
 from datetime import date as Date, datetime
+from typing import Literal
 
 import re
 
@@ -300,6 +301,7 @@ class PreferenceIn(BaseModel):
     avoid_departure_before: str | None = None
     depart_before_default: str | None = None
     strict_filters_default: bool = True
+    country_price_hint_mode_default: Literal["min", "median", "fixed_route"] = "min"
     preferred_currency: str = "EUR"
     language: str = "es"
     quiet_hours_enabled: bool = False

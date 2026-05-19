@@ -44,8 +44,12 @@ export default function PreferenciasBusquedaPage() {
     setLoadFailed(false);
     apiFetch<Pref>("/preferences/search")
       .then((data) => {
-        setPref(data);
-        setInitialPref(data);
+        const normalized: Pref = {
+          ...data,
+          country_price_hint_mode_default: data.country_price_hint_mode_default || "min",
+        };
+        setPref(normalized);
+        setInitialPref(normalized);
       })
       .catch(() => {
         setLoadFailed(true);
@@ -220,6 +224,21 @@ export default function PreferenciasBusquedaPage() {
                 </button>
               </div>
             </div>
+
+            <label className="field" htmlFor="pref-country-hint-mode">
+              {t("preferences.search.countryHintMode")}
+              <span className="hint">{t("preferences.search.countryHintModeHint")}</span>
+              <select
+                id="pref-country-hint-mode"
+                className="prefs-control"
+                value={pref.country_price_hint_mode_default || "min"}
+                onChange={(event) => updatePref("country_price_hint_mode_default", event.target.value as Pref["country_price_hint_mode_default"])}
+              >
+                <option value="min">{t("preferences.search.countryHintModeMin")}</option>
+                <option value="median">{t("preferences.search.countryHintModeMedian")}</option>
+                <option value="fixed_route">{t("preferences.search.countryHintModeFixedRoute")}</option>
+              </select>
+            </label>
 
             <label className="field" htmlFor="pref-radius">
               {t("preferences.search.radiusLabel")}

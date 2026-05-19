@@ -82,3 +82,23 @@ test("QuickSearchDatePicker renders no-data marker with compact tooltip", () => 
   assert.match(html, /qs-date-day__no-price-tooltip/);
   assert.match(html, /Sin datos de precio para este d(?:í|i)a/);
 });
+
+test("QuickSearchDatePicker renders country estimate badge when scope is country", () => {
+  const html = renderToStaticMarkup(
+    <QuickSearchDatePicker
+      name="travel_date"
+      label="Fecha"
+      value="2026-06-10"
+      onChange={() => undefined}
+      placeholder="Selecciona fechas"
+      localeTag="es-ES"
+      variant="outbound"
+      defaultOpen={true}
+      showCountryEstimateBadge={true}
+      hintScopeMode="country_mixed"
+    />,
+  );
+
+  assert.match(html, /qs-date-popover__hint-scope-badge/);
+  assert.match(html, /Estimacion pais/);
+});

@@ -9,6 +9,7 @@ test("resolveQuickSearchPreferenceDefaults maps stored search preferences into q
     include_stops_default: true,
     include_nearby_origins_default: true,
     include_nearby_destinations_default: false,
+    country_price_hint_mode_default: "median",
     avoid_departure_before: "07:00",
     depart_before_default: "22:00",
     strict_filters_default: false,
@@ -24,5 +25,6 @@ test("resolveQuickSearchPreferenceDefaults maps stored search preferences into q
     includeNearbyOrigins: true,
     includeNearbyDestinations: false,
     strictFilters: false,
+    countryPriceHintMode: "median",
   });
 });

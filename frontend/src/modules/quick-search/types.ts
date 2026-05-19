@@ -109,6 +109,8 @@ export type SearchResponse = Omit<SearchResponseRaw, "results"> & {
 };
 
 export type QuickSearchCalendarDayHintBucket = "low" | "mid" | "high" | "none";
+export type QuickSearchCalendarAggregationMode = "min" | "median" | "fixed_route";
+export type QuickSearchCalendarScopeMode = "iata" | "country_mixed" | "country_country";
 
 export type QuickSearchCalendarDayHint = {
   date: string;
@@ -124,6 +126,15 @@ export type QuickSearchCalendarHintsResponse = {
     cache_ttl_sec: number;
     cache_hit: boolean;
     partial: boolean;
+    scope_mode?: QuickSearchCalendarScopeMode;
+    ranked_airports?: {
+      origin?: string[];
+      destination?: string[];
+      origin_count?: number;
+      destination_count?: number;
+    };
+    ranked_routes_count?: number;
+    aggregation_mode?: QuickSearchCalendarAggregationMode;
   };
 };
 
@@ -155,6 +166,7 @@ export type Pref = {
   include_stops_default: boolean;
   include_nearby_origins_default: boolean;
   include_nearby_destinations_default: boolean;
+  country_price_hint_mode_default: QuickSearchCalendarAggregationMode;
   avoid_departure_before: string | null;
   depart_before_default: string | null;
   strict_filters_default: boolean;

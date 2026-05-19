@@ -9,6 +9,7 @@ export type QuickSearchPreferenceDefaults = {
   includeNearbyOrigins: boolean;
   includeNearbyDestinations: boolean;
   strictFilters: boolean;
+  countryPriceHintMode: "min" | "median" | "fixed_route";
 };
 
 export function resolveQuickSearchPreferenceDefaults(
@@ -23,5 +24,6 @@ export function resolveQuickSearchPreferenceDefaults(
     includeNearbyOrigins: Boolean(pref.include_nearby_origins_default),
     includeNearbyDestinations: Boolean(pref.include_nearby_destinations_default),
     strictFilters: pref.strict_filters_default !== false,
+    countryPriceHintMode: pref.country_price_hint_mode_default || "min",
   };
 }

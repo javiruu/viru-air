@@ -26,6 +26,7 @@ def get_preferences(
             "include_stops_default": False,
             "include_nearby_origins_default": False,
             "include_nearby_destinations_default": False,
+            "country_price_hint_mode_default": "min",
             "avoid_departure_before": None,
             "depart_before_default": None,
             "strict_filters_default": True,
@@ -41,6 +42,7 @@ def get_preferences(
         "include_stops_default": pref.include_stops_default,
         "include_nearby_origins_default": pref.include_nearby_origins_default,
         "include_nearby_destinations_default": pref.include_nearby_destinations_default,
+        "country_price_hint_mode_default": pref.country_price_hint_mode_default or "min",
         "avoid_departure_before": pref.avoid_departure_before,
         "depart_before_default": pref.depart_before_default,
         "strict_filters_default": pref.strict_filters_default,
@@ -74,6 +76,7 @@ def set_preferences(
     pref.include_stops_default = payload.include_stops_default
     pref.include_nearby_origins_default = payload.include_nearby_origins_default
     pref.include_nearby_destinations_default = payload.include_nearby_destinations_default
+    pref.country_price_hint_mode_default = payload.country_price_hint_mode_default
     pref.avoid_departure_before = payload.avoid_departure_before
     pref.depart_before_default = payload.depart_before_default
     pref.strict_filters_default = payload.strict_filters_default

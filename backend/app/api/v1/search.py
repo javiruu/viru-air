@@ -4,12 +4,13 @@ import hashlib
 import json
 import logging
 import math
+import statistics
 import os
 import re
 import threading
 import time
 import uuid
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, Query
 from sqlalchemy import select
@@ -23,12 +24,12 @@ from app.api.deps import get_current_user
 from app.api.v1.airports import _validate_iata
 from app.infrastructure.db.models import FlightWatch, User
 from app.infrastructure.db.session import get_db
-from app.infrastructure.airports_catalog import get_airport, resolve_seed_airport
+from app.infrastructure.airports_catalog import ExpandedAirportCandidate, get_airport, resolve_seed_airport
 from app.infrastructure.providers.ryanair_public_provider import RyanairPublicProvider
 from app.services.quick_search_dedupe import dedupe_ranked_results
 from app.services.quick_search_execution import build_execution_plan, execute_plan
 from app.services.quick_search_expansion import SideExpansionResult, SideExpansionSummary, expand_search_sides
-from app.services.quick_search_planner import build_pair_plan
+from app.services.quick_search_planner import PairPlanItem, build_pair_plan
 from app.services.quick_search_ranking import rank_quick_search_results
 
 router = APIRouter()
@@ -39,7 +40,7 @@ QUICK_SEARCH_MAX_PAIRS_CAP = 400
 QUICK_SEARCH_MAX_REQUESTS_CAP = 3000
 CALENDAR_HINTS_CACHE_TTL_SECONDS = 600
 _CALENDAR_HINTS_CACHE_LOCK = threading.Lock()
-_CALENDAR_HINTS_CACHE: dict[tuple[str, str, str, int, str], tuple[float, dict[str, Any]]] = {}
+_CALENDAR_HINTS_CACHE: dict[tuple[str, str, int, str, str], tuple[float, dict[str, Any]]] = {}
 
 _WARNING_CODE_ALIASES: dict[str, str] = {
     "provider_timeout_parcial": "provider_timeout_partial",
@@ -276,15 +277,20 @@ class QuickSearchSaveResultIn(BaseModel):
 
 
 class QuickSearchCalendarHintsIn(BaseModel):
-    origin_iata: str = Field(min_length=3, max_length=3)
-    destination_iata: str = Field(min_length=3, max_length=3)
+    origin_iata: str | list[str]
+    destination_iata: str | list[str]
     month: str = Field(pattern=r"^\d{4}-\d{2}$")
     adults: int = Field(default=1, ge=1, le=9)
+    aggregation_mode: Literal["min", "median", "fixed_route"] = "min"
 
-    @field_validator("origin_iata", "destination_iata")
+    @field_validator("origin_iata", "destination_iata", mode="before")
     @classmethod
-    def validate_iata(cls, value: str) -> str:
-        return _validate_iata(value)
+    def validate_iata_scope(cls, value: str | list[str]) -> str | list[str]:
+        if isinstance(value, list):
+            if not value:
+                raise ValueError("iata_scope_empty")
+            return [_validate_iata(str(item)) for item in value]
+        return _validate_iata(str(value))
 
     @field_validator("month")
     @classmethod
@@ -357,7 +363,196 @@ def _bucketize_day_prices_terciles(day_min_prices: dict[dt.date, float]) -> dict
     return buckets
 
 
-def _calendar_hints_cache_get(cache_key: tuple[str, str, str, int, str]) -> dict[str, Any] | None:
+def _normalize_calendar_hint_iata_pool(value: str | list[str]) -> list[str]:
+    raw_items = [value] if isinstance(value, str) else list(value)
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for raw in raw_items:
+        code = _validate_iata(str(raw))
+        try:
+            resolve_seed_airport(code)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        if code in seen:
+            continue
+        seen.add(code)
+        deduped.append(code)
+    if not deduped:
+        raise HTTPException(status_code=422, detail="iata_scope_empty")
+    return deduped
+
+
+def _resolve_calendar_scope_mode(origin_pool: list[str], destination_pool: list[str]) -> str:
+    origin_country_scope = len(origin_pool) > 1
+    destination_country_scope = len(destination_pool) > 1
+    if origin_country_scope and destination_country_scope:
+        return "country_country"
+    if origin_country_scope or destination_country_scope:
+        return "country_mixed"
+    return "iata"
+
+
+def _build_calendar_scope_signature(origin_pool: list[str], destination_pool: list[str]) -> str:
+    origin_key = ",".join(sorted(origin_pool))
+    destination_key = ",".join(sorted(destination_pool))
+    return f"o:{origin_key}|d:{destination_key}"
+
+
+def _prioritize_iata_pool(pool: list[str], *, max_size: int) -> list[str]:
+    unique = list(dict.fromkeys(pool))
+
+    def sort_key(iata: str) -> tuple[int, str, str, str]:
+        airport = get_airport(iata)
+        is_primary = bool(airport and airport.is_primary)
+        country = (airport.country if airport else "") or ""
+        city = (airport.city if airport else "") or ""
+        return (0 if is_primary else 1, country, city, iata)
+
+    ordered = sorted(unique, key=sort_key)
+    return ordered[: max(1, max_size)]
+
+
+def _pick_calendar_anchor_dates(month_dates: list[dt.date], *, max_dates: int = 6) -> list[dt.date]:
+    if len(month_dates) <= max_dates:
+        return month_dates
+    if max_dates <= 1:
+        return [month_dates[0]]
+    last_index = len(month_dates) - 1
+    indices = {
+        int(round((position / (max_dates - 1)) * last_index))
+        for position in range(max_dates)
+    }
+    return [month_dates[index] for index in sorted(indices)]
+
+
+def _to_scope_candidates(pool: list[str], side: str) -> list[ExpandedAirportCandidate]:
+    return [
+        ExpandedAirportCandidate(
+            seed_iata=iata,
+            expanded_iata=iata,
+            is_seed=True,
+            distance_km=0.0,
+            candidate_reason="calendar_hint_scope",
+            source_of_expansion=f"calendar_hint_scope:{side}",
+        )
+        for iata in pool
+    ]
+
+
+def _build_pair_day_prices(
+    rows: list[tuple[str, str, dt.date, Any]],
+) -> tuple[dict[tuple[str, str], dict[dt.date, float]], str]:
+    pair_prices: dict[tuple[str, str], dict[dt.date, float]] = {}
+    response_currency = "EUR"
+    for origin_iata, destination_iata, travel_date, flight in rows:
+        response_currency = str(flight.currency or response_currency).upper()
+        pair_key = (origin_iata, destination_iata)
+        by_day = pair_prices.setdefault(pair_key, {})
+        price = float(flight.price)
+        current = by_day.get(travel_date)
+        if current is None or price < current:
+            by_day[travel_date] = price
+    return pair_prices, response_currency
+
+
+def _rank_pairs_adaptive(
+    candidate_pairs: list[tuple[str, str]],
+    pair_prices_by_day: dict[tuple[str, str], dict[dt.date, float]],
+) -> list[tuple[str, str]]:
+    def score(pair: tuple[str, str]) -> tuple[int, float, float, str, str]:
+        prices = sorted(pair_prices_by_day.get(pair, {}).values())
+        coverage = len(prices)
+        if coverage == 0:
+            return (0, float("inf"), float("inf"), pair[0], pair[1])
+        median_price = float(statistics.median(prices))
+        best_price = float(prices[0])
+        # higher coverage first, then cheaper prices
+        return (-coverage, median_price, best_price, pair[0], pair[1])
+
+    return sorted(candidate_pairs, key=score)
+
+
+def _rank_airport_pool_adaptive(
+    pool: list[str],
+    *,
+    side: Literal["origin", "destination"],
+    pair_prices_by_day: dict[tuple[str, str], dict[dt.date, float]],
+) -> list[str]:
+    rows: list[tuple[int, float, str]] = []
+    for iata in pool:
+        coverage = 0
+        best_price = float("inf")
+        for (origin_iata, destination_iata), prices_by_day in pair_prices_by_day.items():
+            matches = origin_iata == iata if side == "origin" else destination_iata == iata
+            if not matches:
+                continue
+            coverage += len(prices_by_day)
+            if prices_by_day:
+                best_price = min(best_price, min(prices_by_day.values()))
+        rows.append((-coverage, best_price, iata))
+    rows.sort(key=lambda item: (item[0], item[1], item[2]))
+    return [item[2] for item in rows]
+
+
+def _combine_ranked_pool(
+    prioritized_pool: list[str],
+    adaptive_ranked_pool: list[str],
+    *,
+    limit: int,
+) -> list[str]:
+    out: list[str] = []
+    for iata in adaptive_ranked_pool + prioritized_pool:
+        if iata in out:
+            continue
+        out.append(iata)
+        if len(out) >= max(1, limit):
+            break
+    return out
+
+
+def _aggregate_day_prices(
+    selected_pairs: list[tuple[str, str]],
+    pair_prices_by_day: dict[tuple[str, str], dict[dt.date, float]],
+    month_dates: list[dt.date],
+    aggregation_mode: Literal["min", "median", "fixed_route"],
+) -> dict[dt.date, float]:
+    aggregated: dict[dt.date, float] = {}
+    for day in month_dates:
+        prices = [
+            pair_prices_by_day[pair][day]
+            for pair in selected_pairs
+            if pair in pair_prices_by_day and day in pair_prices_by_day[pair]
+        ]
+        if not prices:
+            continue
+        if aggregation_mode == "median":
+            aggregated[day] = float(statistics.median(prices))
+        else:
+            aggregated[day] = float(min(prices))
+    return aggregated
+
+
+def _to_pair_plan_items(pairs: list[tuple[str, str]]) -> list[PairPlanItem]:
+    items: list[PairPlanItem] = []
+    for index, (origin_iata, destination_iata) in enumerate(pairs):
+        items.append(
+            PairPlanItem(
+                origin_iata=origin_iata,
+                destination_iata=destination_iata,
+                origin_seed_iata=origin_iata,
+                destination_seed_iata=destination_iata,
+                origin_is_seed=True,
+                destination_is_seed=True,
+                origin_distance_from_seed_km=0.0,
+                destination_distance_from_seed_km=0.0,
+                pair_priority_score=float(index),
+                pair_reason="seed-seed",
+            )
+        )
+    return items
+
+
+def _calendar_hints_cache_get(cache_key: tuple[str, str, int, str, str]) -> dict[str, Any] | None:
     now = time.time()
     with _CALENDAR_HINTS_CACHE_LOCK:
         cached = _CALENDAR_HINTS_CACHE.get(cache_key)
@@ -370,7 +565,7 @@ def _calendar_hints_cache_get(cache_key: tuple[str, str, str, int, str]) -> dict
         return payload
 
 
-def _calendar_hints_cache_set(cache_key: tuple[str, str, str, int, str], payload: dict[str, Any]) -> None:
+def _calendar_hints_cache_set(cache_key: tuple[str, str, int, str, str], payload: dict[str, Any]) -> None:
     with _CALENDAR_HINTS_CACHE_LOCK:
         _CALENDAR_HINTS_CACHE[cache_key] = (time.time(), payload)
 
@@ -912,13 +1107,21 @@ def quick_search_calendar_hints(
             },
         }
 
+    origin_pool = _normalize_calendar_hint_iata_pool(payload.origin_iata)
+    destination_pool = _normalize_calendar_hint_iata_pool(payload.destination_iata)
+    scope_mode = _resolve_calendar_scope_mode(origin_pool, destination_pool)
+    aggregation_mode_effective: Literal["min", "median", "fixed_route"] = (
+        "min" if scope_mode == "iata" else payload.aggregation_mode
+    )
+
     cache_currency = "EUR"
+    cache_scope_signature = _build_calendar_scope_signature(origin_pool, destination_pool)
     cache_key = (
-        payload.origin_iata,
-        payload.destination_iata,
+        cache_scope_signature,
         payload.month,
         payload.adults,
         cache_currency,
+        aggregation_mode_effective,
     )
     cached_payload = _calendar_hints_cache_get(cache_key)
     if cached_payload:
@@ -928,34 +1131,96 @@ def quick_search_calendar_hints(
         cached_copy["meta"] = cached_meta
         return cached_copy
 
-    origin_side, destination_side = expand_search_sides(
-        origin_seed_iata=payload.origin_iata,
-        destination_seed_iata=payload.destination_iata,
-        include_nearby_origins=False,
-        include_nearby_destinations=False,
-        origin_radius_km=150,
-        destination_radius_km=150,
-        origin_max_candidates=1,
-        destination_max_candidates=1,
-        exclude_origins=[],
-        exclude_destinations=[],
+    prioritized_origin_pool = _prioritize_iata_pool(origin_pool, max_size=12 if len(origin_pool) > 1 else 1)
+    prioritized_destination_pool = _prioritize_iata_pool(
+        destination_pool,
+        max_size=12 if len(destination_pool) > 1 else 1,
     )
+    origin_candidates = _to_scope_candidates(prioritized_origin_pool, "origin")
+    destination_candidates = _to_scope_candidates(prioritized_destination_pool, "destination")
+    candidate_pairs = [
+        (origin_iata, destination_iata)
+        for origin_iata in prioritized_origin_pool
+        for destination_iata in prioritized_destination_pool
+        if origin_iata != destination_iata
+    ]
+    if not candidate_pairs:
+        raise HTTPException(status_code=422, detail="calendar_hints_scope_has_no_valid_pairs")
 
-    planned_pairs, _pair_meta = build_pair_plan(
-        origin_side.candidates,
-        destination_side.candidates,
-        max_pairs=1,
-        max_requests=max(1, len(month_dates)),
-        date_count=max(1, len(month_dates)),
-    )
-    execution_plan = build_execution_plan(
-        planned_pairs,
+    anchor_pair_prices_by_day: dict[tuple[str, str], dict[dt.date, float]] = {}
+    anchor_currency = "EUR"
+    anchor_execution_meta: dict[str, Any] = {}
+    anchor_warnings: list[dict[str, Any]] = []
+    if scope_mode == "iata":
+        ranked_origin_pool = prioritized_origin_pool[:1]
+        ranked_destination_pool = prioritized_destination_pool[:1]
+        selected_pairs = candidate_pairs[:1]
+    else:
+        anchor_dates = _pick_calendar_anchor_dates(month_dates)
+        anchor_pair_cap = min(24, len(candidate_pairs))
+        anchor_planned_pairs, _anchor_pair_meta = build_pair_plan(
+            origin_candidates,
+            destination_candidates,
+            max_pairs=max(1, anchor_pair_cap),
+            max_requests=max(1, anchor_pair_cap * max(1, len(anchor_dates))),
+            date_count=max(1, len(anchor_dates)),
+        )
+        anchor_execution_plan = build_execution_plan(
+            anchor_planned_pairs,
+            anchor_dates,
+            max_requests=max(1, anchor_pair_cap * max(1, len(anchor_dates))),
+        )
+        anchor_rows, anchor_execution_meta, anchor_warnings = execute_plan(
+            anchor_execution_plan,
+            concurrency_limit=6,
+            timeout_ms=5000,
+            fetch_flights=lambda origin, destination, travel_date, timeout_ms: provider.get_flights(
+                origin,
+                destination,
+                travel_date,
+                timeout_ms,
+            ),
+        )
+        anchor_pair_prices_by_day, anchor_currency = _build_pair_day_prices(anchor_rows)
+        origin_ranked_adaptive = _rank_airport_pool_adaptive(
+            prioritized_origin_pool,
+            side="origin",
+            pair_prices_by_day=anchor_pair_prices_by_day,
+        )
+        destination_ranked_adaptive = _rank_airport_pool_adaptive(
+            prioritized_destination_pool,
+            side="destination",
+            pair_prices_by_day=anchor_pair_prices_by_day,
+        )
+        ranked_origin_pool = _combine_ranked_pool(
+            prioritized_origin_pool,
+            origin_ranked_adaptive,
+            limit=6,
+        )
+        ranked_destination_pool = _combine_ranked_pool(
+            prioritized_destination_pool,
+            destination_ranked_adaptive,
+            limit=6,
+        )
+        ranked_candidate_pairs = [
+            (origin_iata, destination_iata)
+            for origin_iata in ranked_origin_pool
+            for destination_iata in ranked_destination_pool
+            if origin_iata != destination_iata
+        ]
+        if not ranked_candidate_pairs:
+            ranked_candidate_pairs = candidate_pairs[:1]
+        ranked_pairs = _rank_pairs_adaptive(ranked_candidate_pairs, anchor_pair_prices_by_day)
+        route_cap = 1 if aggregation_mode_effective == "fixed_route" else min(8, len(ranked_pairs))
+        selected_pairs = ranked_pairs[: max(1, route_cap)]
+
+    full_month_execution_plan = build_execution_plan(
+        _to_pair_plan_items(selected_pairs),
         month_dates,
-        max_requests=max(1, len(month_dates)),
+        max_requests=max(1, len(selected_pairs) * max(1, len(month_dates))),
     )
-
-    combined_rows, execution_meta, warnings = execute_plan(
-        execution_plan,
+    full_rows, full_execution_meta, full_warnings = execute_plan(
+        full_month_execution_plan,
         concurrency_limit=6,
         timeout_ms=6000,
         fetch_flights=lambda origin, destination, travel_date, timeout_ms: provider.get_flights(
@@ -965,19 +1230,18 @@ def quick_search_calendar_hints(
             timeout_ms,
         ),
     )
+    pair_prices_by_day, response_currency = _build_pair_day_prices(full_rows)
+    day_aggregated_prices = _aggregate_day_prices(
+        selected_pairs,
+        pair_prices_by_day,
+        month_dates,
+        aggregation_mode_effective,
+    )
 
-    day_min_prices: dict[dt.date, float] = {}
-    response_currency = "EUR"
-    for _origin_iata, _destination_iata, travel_date, flight in combined_rows:
-        response_currency = str(flight.currency or response_currency).upper()
-        current = day_min_prices.get(travel_date)
-        if current is None or float(flight.price) < current:
-            day_min_prices[travel_date] = float(flight.price)
-
-    bucket_by_day = _bucketize_day_prices_terciles(day_min_prices)
+    bucket_by_day = _bucketize_day_prices_terciles(day_aggregated_prices)
     days_payload: list[dict[str, Any]] = []
     for day in month_dates:
-        min_price = day_min_prices.get(day)
+        min_price = day_aggregated_prices.get(day)
         if min_price is None:
             days_payload.append(
                 {
@@ -997,9 +1261,13 @@ def quick_search_calendar_hints(
             }
         )
 
-    partial = bool(warnings) or int(execution_meta.get("provider_failures", 0)) > 0 or int(
-        execution_meta.get("timed_out_units_count", 0)
+    partial = bool(anchor_warnings or full_warnings) or int(anchor_execution_meta.get("provider_failures", 0)) > 0 or int(
+        anchor_execution_meta.get("timed_out_units_count", 0)
+    ) > 0 or int(full_execution_meta.get("provider_failures", 0)) > 0 or int(
+        full_execution_meta.get("timed_out_units_count", 0)
     ) > 0
+    if response_currency == "EUR" and anchor_currency:
+        response_currency = anchor_currency
     response_payload = {
         "days": days_payload,
         "meta": {
@@ -1007,6 +1275,15 @@ def quick_search_calendar_hints(
             "cache_ttl_sec": CALENDAR_HINTS_CACHE_TTL_SECONDS,
             "cache_hit": False,
             "partial": partial,
+            "scope_mode": scope_mode,
+            "ranked_airports": {
+                "origin": ranked_origin_pool,
+                "destination": ranked_destination_pool,
+                "origin_count": len(ranked_origin_pool),
+                "destination_count": len(ranked_destination_pool),
+            },
+            "ranked_routes_count": len(selected_pairs),
+            "aggregation_mode": aggregation_mode_effective,
         },
     }
     _calendar_hints_cache_set(cache_key, response_payload)

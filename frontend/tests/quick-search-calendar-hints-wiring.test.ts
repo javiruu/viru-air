@@ -8,14 +8,19 @@ const QUICK_SEARCH_VIEW = path.join(process.cwd(), "src", "modules", "quick-sear
 test("quick-search requests monthly calendar hints from backend", () => {
   const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
   assert.match(source, /\/search\/quick\/calendar-hints/);
-  assert.match(source, /setCalendarHintsByMonth/);
-  assert.match(source, /calendarVisibleMonth/);
+  assert.match(source, /setCalendarHintsByKey/);
+  assert.match(source, /calendarHintsRequestKey/);
+  assert.match(source, /aggregation_mode:\s*calendarHintAggregationMode/);
+  assert.match(source, /origin_iata:\s*originCountryOnly/);
+  assert.match(source, /destination_iata:\s*destinationCountryOnly/);
 });
 
 test("outbound date picker is wired with hints props and visible-month callback", () => {
   const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
   assert.match(source, /name="travel_date"/);
-  assert.match(source, /dayHintsByIso=\{calendarHintsByMonth\[calendarVisibleMonth\] \|\| \{\}\}/);
-  assert.match(source, /hintsLoading=\{calendarHintsLoadingMonth === calendarVisibleMonth\}/);
+  assert.match(source, /dayHintsByIso=\{calendarHintsActive\?\.dayHintsByIso \|\| \{\}\}/);
+  assert.match(source, /hintsLoading=\{calendarHintsLoadingKey === calendarHintsRequestKey\}/);
+  assert.match(source, /showCountryEstimateBadge=\{canRequestCalendarHints && hasCountryScopeForCalendarHints\}/);
+  assert.match(source, /hintScopeMode=\{calendarHintsActive\?\.scopeMode \|\| calendarHintsScopeMode\}/);
   assert.match(source, /onVisibleMonthChange=\{setCalendarVisibleMonth\}/);
 });

@@ -2,7 +2,7 @@
 
 import React, { memo } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { QuickSearchCalendarDayHint } from "@/modules/quick-search/types";
+import type { QuickSearchCalendarDayHint, QuickSearchCalendarScopeMode } from "@/modules/quick-search/types";
 
 type Props = {
   name: string;
@@ -19,6 +19,8 @@ type Props = {
   dayHintsByIso?: Record<string, QuickSearchCalendarDayHint>;
   hintsLoading?: boolean;
   onVisibleMonthChange?: (monthIso: string) => void;
+  showCountryEstimateBadge?: boolean;
+  hintScopeMode?: QuickSearchCalendarScopeMode;
 };
 
 type CalendarDay = {
@@ -108,6 +110,8 @@ function QuickSearchDatePickerInner(props: Props) {
       outboundReady: "Salida elegida",
       returnReady: "Vuelta elegida",
       noPriceHint: "Sin datos de precio para este día",
+      countryEstimateMixed: "Estimacion pais",
+      countryEstimateCountryCountry: "Estimacion pais-pais",
     }
     : {
       openCalendar: "Open calendar",
@@ -121,7 +125,12 @@ function QuickSearchDatePickerInner(props: Props) {
       outboundReady: "Outbound selected",
       returnReady: "Return selected",
       noPriceHint: "No fare data for this day",
+      countryEstimateMixed: "Country estimate",
+      countryEstimateCountryCountry: "Country-country estimate",
     };
+  const countryEstimateLabel = props.hintScopeMode === "country_country"
+    ? locale.countryEstimateCountryCountry
+    : locale.countryEstimateMixed;
 
   const selectedDate = useMemo(() => parseIsoDate(props.value), [props.value]);
   const minDate = useMemo(() => parseIsoDate(props.min), [props.min]);
@@ -256,6 +265,9 @@ function QuickSearchDatePickerInner(props: Props) {
             <div>
               <span className="qs-date-popover__eyebrow">{props.label}</span>
               <strong>{monthLabel}</strong>
+              {props.showCountryEstimateBadge ? (
+                <span className="qs-date-popover__hint-scope-badge">{countryEstimateLabel}</span>
+              ) : null}
             </div>
             <div className="qs-date-popover__nav">
               <button
@@ -361,6 +373,8 @@ function areDatePickerPropsEqual(prev: Props, next: Props): boolean {
     && prev.dayHintsByIso === next.dayHintsByIso
     && prev.hintsLoading === next.hintsLoading
     && prev.onVisibleMonthChange === next.onVisibleMonthChange
+    && prev.showCountryEstimateBadge === next.showCountryEstimateBadge
+    && prev.hintScopeMode === next.hintScopeMode
   );
 }
 

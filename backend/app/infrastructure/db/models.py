@@ -121,6 +121,7 @@ class UserPreference(Base):
     include_stops_default: Mapped[bool] = mapped_column(Boolean, default=False)
     include_nearby_origins_default: Mapped[bool] = mapped_column(Boolean, default=False)
     include_nearby_destinations_default: Mapped[bool] = mapped_column(Boolean, default=False)
+    country_price_hint_mode_default: Mapped[str] = mapped_column(String(16), default="min")
     avoid_departure_before: Mapped[str | None] = mapped_column(String(5), nullable=True)
     depart_before_default: Mapped[str | None] = mapped_column(String(5), nullable=True)
     strict_filters_default: Mapped[bool] = mapped_column(Boolean, default=True)
