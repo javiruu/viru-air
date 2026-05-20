@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import AccountMenu from "@/modules/shared/AccountMenu";
+import LanguageToggle from "@/modules/shared/LanguageToggle";
 import PrivateTopBar from "@/modules/shared/PrivateTopBar";
 import ThemeToggle from "@/modules/shared/ThemeToggle";
 import RequireAuth from "@/modules/shared/RequireAuth";
@@ -14,6 +15,9 @@ export default function PrivateLayout({ children }: { children: ReactNode }) {
         <PrivateTopBar>
           <PrivateNav />
           <div className="private-account-controls">
+            <div className="private-locale-toggle">
+              <LanguageToggle />
+            </div>
             <div className="private-theme-toggle">
               <ThemeToggle />
             </div>

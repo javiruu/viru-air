@@ -2059,9 +2059,14 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
   function applyPreferences() {
     if (!pref) return;
-    setRadiusKm(clampQuickSearchRadius(pref.default_radius_km));
-    setIncludeStops(Boolean(pref.include_stops_default));
-    setDepartAfter(pref.avoid_departure_before ?? "07:00");
+    const defaults = resolveQuickSearchPreferenceDefaults(pref);
+    setRadiusKm(defaults.radiusKm);
+    setIncludeStops(defaults.includeStops);
+    setDepartAfter(defaults.departAfter);
+    setDepartBefore(defaults.departBefore);
+    setIncludeNearbyOrigins(defaults.includeNearbyOrigins);
+    setIncludeNearbyDestinations(defaults.includeNearbyDestinations);
+    setStrictFilters(defaults.strictFilters);
     setPrefBadge(true);
   }
 

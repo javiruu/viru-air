@@ -47,6 +47,7 @@
     openAccountMenu: "Abrir menú de cuenta",
     accountMenu: "Menú de cuenta",
     changeTheme: "Cambiar tema",
+    changeLanguage: "Cambiar idioma",
     mainNavigation: "Navegación principal",
   },
   loader: {
@@ -188,6 +189,7 @@ export const sharedEn = {
     openAccountMenu: "Open account menu",
     accountMenu: "Account menu",
     changeTheme: "Change theme",
+    changeLanguage: "Change language",
     mainNavigation: "Main navigation",
   },
   loader: {
