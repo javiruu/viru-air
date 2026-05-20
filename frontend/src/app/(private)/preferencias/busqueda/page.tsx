@@ -166,14 +166,14 @@ export default function PreferenciasBusquedaPage() {
           <h1>{t("preferences.search.title")}</h1>
           <p>{t("preferences.search.subtitleStrong")}</p>
         </div>
-        {dirty ? <span className="status-pill warning">{t("preferences.search.pendingBadge")}</span> : null}
+        {dirty ? <span className="status-pill warning prefs-pending-badge">{t("preferences.search.pendingBadge")}</span> : null}
       </div>
 
       <section className="panel prefs-hero prefs-search-hero">
         <div className="prefs-hero-copy">
           <p className="prefs-kicker">{t("preferences.search.heroKicker")}</p>
           <h2>{summary.title}</h2>
-          <p>{summary.body}</p>
+          <p className="prefs-hero-summary">{summary.body}</p>
         </div>
         <div className="prefs-hero-chips">
           {summary.chips.map((chip) => (
@@ -267,7 +267,7 @@ export default function PreferenciasBusquedaPage() {
             {pref.calendar_hint_bucket_mode_default === "guidelines" ? (
               <div className="field">
                 <span>{t("preferences.search.calendarHintGuidelinesTitle")}</span>
-                <div className="prefs-radius-row">
+                <div className="prefs-guideline-grid">
                   <label className="field" htmlFor="pref-guideline-low">
                     {t("preferences.search.calendarHintGuidelineLowLabel")}
                     <input

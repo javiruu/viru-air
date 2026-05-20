@@ -201,6 +201,28 @@ function buildAirportSuggestions(airports: AirportIataEntry[], value: string, li
   return out;
 }
 
+function getPageNumbers(current: number, total: number) {
+  const pages: (number | string)[] = [];
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (current > 3) {
+      pages.push("...");
+    }
+    const start = Math.max(2, current - 1);
+    const end = Math.min(total - 1, current + 1);
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    if (current < total - 2) {
+      pages.push("...");
+    }
+    pages.push(total);
+  }
+  return pages;
+}
+
 export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchMode }) {
   const router = useRouter();
   const { notify } = useNotificationCenter();
@@ -2769,6 +2791,42 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     t,
     tWarn,
   });
+
+  // Reset pagination when results or filters change
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
+
+  const resultsSignature = useMemo(() => {
+    return `${results.length}:${priceMin}:${priceMax}:${durationMax}:${riskFilter}:${sortBy}:${showHighRisk}:${strictFilters}:${includeStops}:${radiusKm}:${departAfter}:${departBefore}:${daysBefore}:${daysAfter}`;
+  }, [
+    results.length,
+    priceMin,
+    priceMax,
+    durationMax,
+    riskFilter,
+    sortBy,
+    showHighRisk,
+    strictFilters,
+    includeStops,
+    radiusKm,
+    departAfter,
+    departBefore,
+    daysBefore,
+    daysAfter,
+  ]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [resultsSignature]);
+
+  const totalPages = Math.ceil(visibleResults.length / PAGE_SIZE) || 1;
+  const activePage = Math.min(currentPage, totalPages);
+
+  const paginatedResults = useMemo(() => {
+    const start = (activePage - 1) * PAGE_SIZE;
+    return visibleResults.slice(start, start + PAGE_SIZE);
+  }, [visibleResults, activePage]);
+
   const explainChipLabel = showDegradedState ? t("degradedChip") : t("toolbarExplain");
   const warningGroupedTitle = t("warningsGroupedTitle");
   const warningProblemTitle = t("warningProblemTitle");
@@ -4358,7 +4416,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             visibleZeroResultCauses={visibleZeroResultCauses}
             canExpandZeroResultCauses={canExpandZeroResultCauses}
             emptyCausesExpanded={emptyCausesExpanded}
-            zeroResultActions={zeroResultActions}
+              zeroResultActions={zeroResultActions}
             onToggleEmptyCauses={toggleEmptyCauses}
             onRelaxAction={onZeroResultRelaxAction}
             onRunSearch={runSearch}
@@ -4366,44 +4424,113 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             t={t}
           />
           {showResultsList ? (
-          <QuickSearchResultsList
-            visibleResults={visibleResults}
-            compactView={compactView}
-            expandedRows={expandedRows}
-            openRowMenuId={openRowMenuId}
-            deeplinkUrl={deeplinkUrl}
-            hiddenHighRiskResults={hiddenHighRiskResults}
-            showHighRisk={showHighRisk}
-            origin={origin}
-            destination={destination}
-            radiusKm={radiusKm}
-            departAfter={departAfter}
-            departBefore={departBefore}
-            localeTag={localeTag}
-            weatherOrigin={weatherOrigin}
-            weatherDestination={weatherDestination}
-            getCopyPayload={getCopyPayload}
-            rowMenuTriggerRefs={rowMenuTriggerRefs}
-            t={t}
-            formatMoney={formatMoney}
-            formatScore={formatScore}
-            formatRiskLabel={formatRiskLabel}
-            formatFreshness={formatFreshness}
-            formatMinutes={formatMinutes}
-            resultKey={resultKey}
-            getResultTags={getResultTags}
-            addToWatchlist={addToWatchlist}
-            setExpandedRows={setExpandedRows}
-            setSelectedResultId={setSelectedResultId}
-            setOpenRowMenuId={setOpenRowMenuId}
-            setCopyModalPayload={setCopyModalPayload}
-            setCopyModalOpen={setCopyModalOpen}
-            closeRowMenu={closeRowMenu}
-            onTrackOpenRyanair={trackOpenRyanair}
-            onToggleHighRisk={toggleHighRisk}
-            onTrackRowOverflow={trackRowOverflow}
-            onTrackCopyParams={trackCopyParams}
-          />
+            <>
+              <QuickSearchResultsList
+                visibleResults={paginatedResults}
+                compactView={compactView}
+                expandedRows={expandedRows}
+                openRowMenuId={openRowMenuId}
+                deeplinkUrl={deeplinkUrl}
+                hiddenHighRiskResults={hiddenHighRiskResults}
+                showHighRisk={showHighRisk}
+                origin={origin}
+                destination={destination}
+                radiusKm={radiusKm}
+                departAfter={departAfter}
+                departBefore={departBefore}
+                localeTag={localeTag}
+                weatherOrigin={weatherOrigin}
+                weatherDestination={weatherDestination}
+                getCopyPayload={getCopyPayload}
+                rowMenuTriggerRefs={rowMenuTriggerRefs}
+                t={t}
+                formatMoney={formatMoney}
+                formatScore={formatScore}
+                formatRiskLabel={formatRiskLabel}
+                formatFreshness={formatFreshness}
+                formatMinutes={formatMinutes}
+                resultKey={resultKey}
+                getResultTags={getResultTags}
+                addToWatchlist={addToWatchlist}
+                setExpandedRows={setExpandedRows}
+                setSelectedResultId={setSelectedResultId}
+                setOpenRowMenuId={setOpenRowMenuId}
+                setCopyModalPayload={setCopyModalPayload}
+                setCopyModalOpen={setCopyModalOpen}
+                closeRowMenu={closeRowMenu}
+                onTrackOpenRyanair={trackOpenRyanair}
+                onToggleHighRisk={toggleHighRisk}
+                onTrackRowOverflow={trackRowOverflow}
+                onTrackCopyParams={trackCopyParams}
+              />
+              {totalPages > 1 ? (
+                <div className="qs-pagination animate-fade-in" role="navigation" aria-label="Pagination">
+                  <div className="qs-pagination-stats">
+                    {t("paginationShowing")
+                      .replace("{start}", String((activePage - 1) * PAGE_SIZE + 1))
+                      .replace("{end}", String(Math.min(activePage * PAGE_SIZE, visibleResults.length)))
+                      .replace("{total}", String(visibleResults.length))}
+                  </div>
+                  <div className="qs-pagination-nav">
+                    <button
+                      className="qs-pagination-btn qs-pagination-btn-arrow"
+                      onClick={() => {
+                        setCurrentPage((p) => Math.max(1, p - 1));
+                        const el = document.querySelector(".qs-results-panel");
+                        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }}
+                      disabled={activePage === 1}
+                      aria-label={t("paginationPrev")}
+                    >
+                      <span className="qs-pagination-arrow">←</span>
+                      <span className="qs-pagination-btn-text">{t("paginationPrev")}</span>
+                    </button>
+
+                    <div className="qs-pagination-pages">
+                      {getPageNumbers(activePage, totalPages).map((num, idx) => {
+                        if (num === "...") {
+                          return (
+                            <span key={`ellipsis-${idx}`} className="qs-pagination-ellipsis" aria-hidden="true">
+                              ...
+                            </span>
+                          );
+                        }
+                        const isSelected = num === activePage;
+                        return (
+                          <button
+                            key={`page-${num}`}
+                            className={`qs-pagination-btn ${isSelected ? "active" : ""}`}
+                            onClick={() => {
+                              setCurrentPage(Number(num));
+                              const el = document.querySelector(".qs-results-panel");
+                              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                            }}
+                            aria-current={isSelected ? "page" : undefined}
+                            aria-label={`Ir a la pagina ${num}`}
+                          >
+                            {num}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      className="qs-pagination-btn qs-pagination-btn-arrow"
+                      onClick={() => {
+                        setCurrentPage((p) => Math.min(totalPages, p + 1));
+                        const el = document.querySelector(".qs-results-panel");
+                        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }}
+                      disabled={activePage === totalPages}
+                      aria-label={t("paginationNext")}
+                    >
+                      <span className="qs-pagination-btn-text">{t("paginationNext")}</span>
+                      <span className="qs-pagination-arrow">→</span>
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </>
           ) : null}
 
         </section>

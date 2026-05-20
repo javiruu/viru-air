@@ -17,6 +17,7 @@ test("refresh bulk summary splits updated, cooldown, failed, degraded", () => {
   assert.deepEqual(summary, {
     updated: 2,
     skippedCooldown: 1,
+    skippedPaused: 0,
     failed: 1,
     degradedOrStale: 1,
   });

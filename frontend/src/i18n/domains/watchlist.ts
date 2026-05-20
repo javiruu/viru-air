@@ -1,4 +1,4 @@
-﻿export const watchlistEs = {
+export const watchlistEs = {
   title: "Watchlist",
   subtitle: "Vigila, compara y decide desde una sola vista.",
   addFlight: "Añadir vuelo",
@@ -189,7 +189,7 @@
       limitedTitle: "Histórico limitado",
       limitedMessage: "Hay pocas capturas. Interpreta la tendencia con cautela.",
       sufficientTitle: "Histórico suficiente",
-      sufficientMessage: "Suficientes capturas para analizar tendencia.",
+      sufficientMessage: "Ya hay varias capturas para comparar la evolución.",
     },
   },
   history: {

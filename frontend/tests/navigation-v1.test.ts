@@ -6,7 +6,7 @@ import { NAV_V1_PRIVATE } from "../src/modules/shared/navigationV1";
 test("private nav follows canonical Phase 0 IA", () => {
   assert.deepEqual(
     NAV_V1_PRIVATE.map((item) => item.href),
-    ["/dashboard", "/watchlist", "/quick-search", "/alerts", "/recomendaciones", "/preferencias", "/soporte/ayuda"],
+    ["/dashboard", "/watchlist", "/puerta-a-puerta", "/quick-search", "/alerts", "/recomendaciones", "/preferencias", "/soporte/ayuda"],
   );
 });
 

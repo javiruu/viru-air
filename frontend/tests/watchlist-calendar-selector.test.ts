@@ -25,7 +25,7 @@ test("watchlist page wires calendar selector with watch selection callback", () 
   const source = fs.readFileSync(WATCHLIST_PAGE, "utf8");
   assert.match(source, /onToggleCalendarSelector=\{view\.toggleCalendarSelector\}/);
   assert.match(source, /onCalendarSelectorDayChange=\{view\.setCalendarSelectorDay\}/);
-  assert.match(source, /onSelectWatchById=\{selectWatchById\}/);
+  assert.match(source, /onSelectWatchById=\{(selectWatchById|handleSelectWatchById)\}/);
 });
 
 test("history panel still renders history svg", () => {
