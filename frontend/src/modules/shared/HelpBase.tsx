@@ -1,12 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 
 import AirLoader from "@/modules/shared/AirLoader";
 import { apiFetch } from "@/modules/shared/api";
 
-type HelpSection = { title: string; body: string };
+export type HelpSection = {
+  title: string;
+  body: string;
+  cta_label?: string;
+  cta_href?: string;
+};
 type HelpPayload = { title: string; status?: { state: string; message: string }; sections: HelpSection[] };
 
 type HelpBaseProps = {
@@ -97,14 +102,39 @@ export default function HelpBase(props: HelpBaseProps) {
         </section>
       ) : null}
 
-      {help.sections.map((section, index) => (
-        <section key={`${section.title}-${index}`} className="panel">
-          <div className="panel-header">
-            <h2>{section.title}</h2>
-          </div>
-          <p className="panel-note">{section.body}</p>
-        </section>
-      ))}
+      <HelpSections sections={help.sections} />
     </main>
+  );
+}
+
+function sectionCta(section: HelpSection): { label: string; href: string } | null {
+  const label = section.cta_label?.trim();
+  const href = section.cta_href?.trim();
+  if (!label || !href) return null;
+  return { label, href };
+}
+
+export function HelpSections({ sections }: { sections: HelpSection[] }) {
+  return (
+    <>
+      {sections.map((section, index) => {
+        const cta = sectionCta(section);
+        return (
+          <section key={`${section.title}-${index}`} className="panel">
+            <div className="panel-header">
+              <h2>{section.title}</h2>
+            </div>
+            <p className="panel-note">{section.body}</p>
+            {cta ? (
+              <div className="row-actions">
+                <Link className="btn-ghost" href={cta.href}>
+                  {cta.label}
+                </Link>
+              </div>
+            ) : null}
+          </section>
+        );
+      })}
+    </>
   );
 }

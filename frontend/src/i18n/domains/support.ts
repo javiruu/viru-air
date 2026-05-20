@@ -1,8 +1,8 @@
 export const supportEs = {
   help: {
     title: "Centro de ayuda",
-    subtitle: "Resolvemos tus dudas frecuentes.",
-    subtitleLoaded: "Soporte y respuestas claras para tu panel.",
+    subtitle: "Atajos reales para moverte por Viru sin perder contexto.",
+    subtitleLoaded: "Que puedes hacer ahora en cada modulo principal.",
     loading: "Cargando ayuda...",
     systemStatus: "Estado del sistema",
     systemNote: "Seguimos monitoreando servicios y proveedores.",
@@ -143,8 +143,8 @@ export const supportEs = {
 export const supportEn = {
   help: {
     title: "Help center",
-    subtitle: "We resolve your most frequent questions.",
-    subtitleLoaded: "Support and clear answers for your panel.",
+    subtitle: "Real shortcuts to move across Viru without losing context.",
+    subtitleLoaded: "What you can do now in each core module.",
     loading: "Loading help...",
     systemStatus: "System status",
     systemNote: "We keep monitoring services and providers.",
