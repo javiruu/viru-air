@@ -39,7 +39,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
         payload.update(overrides)
         return payload
 
-    def _call_quick_search(self, payload, debug=True):
+    def _call_quick_search(self, payload, debug=True, page=None, page_size=None):
         return quick_search(
             payload=payload,
             origin_iata=None,
@@ -58,6 +58,8 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             soft_filters_weight=None,
             flex_days_before=None,
             flex_days_after=None,
+            page=page,
+            page_size=page_size,
             debug=debug,
         )
 
@@ -165,6 +167,35 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
         warning_codes = {w["code"] for w in result["meta"]["warnings_structured"]}
         self.assertIn("provider_timeout_partial", warning_codes)
         self.assertGreaterEqual(len(result["results"]), 1)
+
+    def test_pagination_meta_and_page_window(self):
+        payload = self._payload(
+            origin={"seed_iata": "LEI", "include_nearby": True, "radius_km": 260, "max_candidates": 3},
+            destination={"seed_iata": "DUB", "include_nearby": True, "radius_km": 300, "max_candidates": 3},
+            execution={"max_pairs": 12, "max_requests": 48, "timeout_ms": 3000, "concurrency_limit": 2},
+            pagination={"page": 2, "page_size": 2},
+        )
+        with patch("app.api.v1.search.provider.get_flights", return_value=[_flight(60, "10:00")]):
+            result = self._call_quick_search(payload)
+        pagination = result["meta"]["pagination"]
+        self.assertEqual(pagination["page"], 2)
+        self.assertEqual(pagination["page_size"], 2)
+        self.assertGreaterEqual(pagination["total_results"], len(result["results"]))
+        self.assertGreaterEqual(pagination["total_pages"], 1)
+        self.assertLessEqual(len(result["results"]), 2)
+
+    def test_pagination_out_of_range_clamps_to_last_page(self):
+        payload = self._payload(
+            origin={"seed_iata": "LEI", "include_nearby": True, "radius_km": 260, "max_candidates": 3},
+            destination={"seed_iata": "DUB", "include_nearby": True, "radius_km": 300, "max_candidates": 3},
+            execution={"max_pairs": 12, "max_requests": 48, "timeout_ms": 3000, "concurrency_limit": 2},
+            pagination={"page": 999, "page_size": 3},
+        )
+        with patch("app.api.v1.search.provider.get_flights", return_value=[_flight(65, "11:00")]):
+            result = self._call_quick_search(payload)
+        pagination = result["meta"]["pagination"]
+        self.assertEqual(pagination["page"], pagination["total_pages"])
+        self.assertGreaterEqual(pagination["total_pages"], 1)
 
 
 if __name__ == "__main__":

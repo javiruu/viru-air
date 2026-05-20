@@ -1448,7 +1448,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     };
   }
 
-  async function onSubmit(event: FormEvent) {
+  async function onSubmit(event: FormEvent, options?: { page?: number }) {
     event.preventDefault();
     const startedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
     requestIdRef.current += 1;
@@ -1593,6 +1593,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       exclude_destinations: nextExcludeDestinations,
       strict_filters: strictFilters,
       soft_filters_weight: 0.6,
+      page: options?.page ?? 1,
+      page_size: PAGE_SIZE,
     };
     const originScopeCount = Array.isArray(payload.origin_iata) ? payload.origin_iata.length : 1;
     const destinationScopeCount = Array.isArray(payload.destination_iata) ? payload.destination_iata.length : 1;
@@ -1687,6 +1689,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           setExecutedCriteria(nextExecutedCriteria);
           setFiltersMeta(data.filters || null);
           setSearchMeta(data.meta || null);
+          setCurrentPage(data.meta?.pagination?.page ?? (options?.page ?? 1));
           if (typeof data.meta?.total_candidates === "number" && Number.isFinite(data.meta.total_candidates)) {
             setLoaderResolvedTotalFlights(Math.max(0, data.meta.total_candidates));
           }
@@ -1697,7 +1700,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           setFiltersNotice(warningCodes.map((item) => tWarn(item)));
           setProgress("client_done", 95);
           setHasSearched(true);
-          const isEmptyResult = data.results.length === 0;
+          const isEmptyResult = (data.meta?.pagination?.total_results ?? data.results.length) === 0;
           setSearchState(isEmptyResult ? "empty" : "success");
           const durationMs = Math.round((typeof performance !== "undefined" ? performance.now() : Date.now()) - startedAt);
           void trackUxEvent("quick_search_executed", { duration_ms: durationMs, result_count: data.results.length });
@@ -2792,14 +2795,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     tWarn,
   });
 
-  // Reset pagination when results or filters change
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
 
   const resultsSignature = useMemo(() => {
-    return `${results.length}:${priceMin}:${priceMax}:${durationMax}:${riskFilter}:${sortBy}:${showHighRisk}:${strictFilters}:${includeStops}:${radiusKm}:${departAfter}:${departBefore}:${daysBefore}:${daysAfter}`;
+    return `${priceMin}:${priceMax}:${durationMax}:${riskFilter}:${sortBy}:${showHighRisk}:${strictFilters}:${includeStops}:${radiusKm}:${departAfter}:${departBefore}:${daysBefore}:${daysAfter}:${origin}:${destination}:${travelDate}:${returnDate}:${isReturn}`;
   }, [
-    results.length,
     priceMin,
     priceMax,
     durationMax,
@@ -2813,19 +2814,22 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     departBefore,
     daysBefore,
     daysAfter,
+    origin,
+    destination,
+    travelDate,
+    returnDate,
+    isReturn,
   ]);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [resultsSignature]);
 
-  const totalPages = Math.ceil(visibleResults.length / PAGE_SIZE) || 1;
-  const activePage = Math.min(currentPage, totalPages);
-
-  const paginatedResults = useMemo(() => {
-    const start = (activePage - 1) * PAGE_SIZE;
-    return visibleResults.slice(start, start + PAGE_SIZE);
-  }, [visibleResults, activePage]);
+  const backendPagination = searchMeta?.pagination;
+  const totalPages = Math.max(1, Number(backendPagination?.total_pages || 1));
+  const activePage = Math.min(Math.max(1, currentPage), totalPages);
+  const pageSize = Math.max(1, Number(backendPagination?.page_size || PAGE_SIZE));
+  const totalResults = Math.max(0, Number(backendPagination?.total_results || visibleResults.length));
 
   const explainChipLabel = showDegradedState ? t("degradedChip") : t("toolbarExplain");
   const warningGroupedTitle = t("warningsGroupedTitle");
@@ -3308,7 +3312,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       : hasFinalEmptyState
         ? emptyStateMainTitle
         : hasFinalResults
-          ? `${visibleResults.length} ${t("results")}`
+          ? `${totalResults} ${t("results")}`
           : visualSearchState === "error"
             ? t("errorTitle")
             : visualSearchState === "rate"
@@ -3338,7 +3342,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               : t("searchReadyTitle");
   const heroStatusTitle =
     hasFinalResults
-      ? `${visibleResults.length} ${t("results")}`
+      ? `${totalResults} ${t("results")}`
       : isVisualLoading
         ? t("loadingTitle")
         : visualSearchState === "rate"
@@ -3362,8 +3366,16 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               : (searchDisabledHint || t("searchReadyHint"));
 
   const runSearch = () => {
-    void onSubmit({ preventDefault: () => {} } as FormEvent);
+    void onSubmit({ preventDefault: () => {} } as FormEvent, { page: 1 });
   };
+
+  const goToPage = useCallback((nextPage: number) => {
+    const bounded = Math.min(totalPages, Math.max(1, nextPage));
+    setCurrentPage(bounded);
+    void onSubmit({ preventDefault: () => {} } as FormEvent, { page: bounded });
+    const el = document.querySelector(".qs-results-panel");
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [totalPages]);
 
   const removeExcludeOriginChip = useCallback((iata: string) => {
     removeChip(iata, excludeOrigins, setExcludeOrigins);
@@ -3418,7 +3430,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               </span>
               {visualSearchState === "success_with_results" ? (
                 <span className="qs-hero-chip qs-hero-chip-accent">
-                  {visibleResults.length} {t("results")}
+                  {totalResults} {t("results")}
                 </span>
               ) : null}
             </div>
@@ -3450,7 +3462,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             <div className="qs-command-stage__status-grid">
               <div className="qs-command-stage__metric">
                 <span>{isVisualLoading ? t("loadingTitle") : t("results")}</span>
-                <strong>{isVisualLoading ? loadingPhaseLabel : visibleResults.length}</strong>
+                <strong>{isVisualLoading ? loadingPhaseLabel : totalResults}</strong>
               </div>
               <div className="qs-command-stage__metric">
                 <span>{t("filtersTitle")}</span>
@@ -4221,7 +4233,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           {showResultsToolbar ? (
           <div className="qs-results-toolbar" ref={resultsToolbarRef} tabIndex={-1}>
             <div className="qs-results-summary">
-              <strong>{visibleResults.length}</strong> {t("results")}
+              <strong>{totalResults}</strong> {t("results")}
               {hasSearched ? <span className="muted"> - {t("orderedBy")} {sortLabel[sortBy]}</span> : null}
               {searchMeta?.truncated ? <span className="chip chip-warn">{t("truncated")}</span> : null}
               {hasSearched ? (
@@ -4426,7 +4438,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           {showResultsList ? (
             <>
               <QuickSearchResultsList
-                visibleResults={paginatedResults}
+                visibleResults={visibleResults}
                 compactView={compactView}
                 expandedRows={expandedRows}
                 openRowMenuId={openRowMenuId}
@@ -4467,17 +4479,15 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 <div className="qs-pagination animate-fade-in" role="navigation" aria-label="Pagination">
                   <div className="qs-pagination-stats">
                     {t("paginationShowing")
-                      .replace("{start}", String((activePage - 1) * PAGE_SIZE + 1))
-                      .replace("{end}", String(Math.min(activePage * PAGE_SIZE, visibleResults.length)))
-                      .replace("{total}", String(visibleResults.length))}
+                      .replace("{start}", String(totalResults === 0 ? 0 : (activePage - 1) * pageSize + 1))
+                      .replace("{end}", String(Math.min(activePage * pageSize, totalResults)))
+                      .replace("{total}", String(totalResults))}
                   </div>
                   <div className="qs-pagination-nav">
                     <button
                       className="qs-pagination-btn qs-pagination-btn-arrow"
                       onClick={() => {
-                        setCurrentPage((p) => Math.max(1, p - 1));
-                        const el = document.querySelector(".qs-results-panel");
-                        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                        goToPage(activePage - 1);
                       }}
                       disabled={activePage === 1}
                       aria-label={t("paginationPrev")}
@@ -4501,9 +4511,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                             key={`page-${num}`}
                             className={`qs-pagination-btn ${isSelected ? "active" : ""}`}
                             onClick={() => {
-                              setCurrentPage(Number(num));
-                              const el = document.querySelector(".qs-results-panel");
-                              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                              goToPage(Number(num));
                             }}
                             aria-current={isSelected ? "page" : undefined}
                             aria-label={`Ir a la pagina ${num}`}
@@ -4517,9 +4525,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                     <button
                       className="qs-pagination-btn qs-pagination-btn-arrow"
                       onClick={() => {
-                        setCurrentPage((p) => Math.min(totalPages, p + 1));
-                        const el = document.querySelector(".qs-results-panel");
-                        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                        goToPage(activePage + 1);
                       }}
                       disabled={activePage === totalPages}
                       aria-label={t("paginationNext")}

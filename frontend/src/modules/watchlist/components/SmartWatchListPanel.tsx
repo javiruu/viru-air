@@ -9,6 +9,23 @@ import { getFreshnessPresentation } from "@/modules/watchlist/summary";
 import type { CalendarSelectorFlight } from "@/modules/watchlist/types";
 
 type ListSort = "freshness" | "price_asc" | "price_desc" | "delta";
+const WATCHLIST_PAGE_SIZE = 4;
+
+function getPageNumbers(current: number, total: number) {
+  const pages: (number | string)[] = [];
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (current > 3) pages.push("...");
+    const start = Math.max(2, current - 1);
+    const end = Math.min(total - 1, current + 1);
+    for (let i = start; i <= end; i++) pages.push(i);
+    if (current < total - 2) pages.push("...");
+    pages.push(total);
+  }
+  return pages;
+}
 
 type WatchItem = {
   id: string;
@@ -116,6 +133,7 @@ export function SmartWatchListPanel({
 }: SmartWatchListPanelProps) {
   const { t, localeTag } = useI18n();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const hasSelection = selectedIds.length > 0;
   const selectionCount = selectedIds.length;
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
@@ -134,6 +152,18 @@ export function SmartWatchListPanel({
   const activeCount = useMemo(() => items.filter((item) => item.status !== "paused").length, [items]);
   const pausedCount = useMemo(() => items.filter((item) => item.status === "paused").length, [items]);
   const showListMode = !isCalendarSelectorOpen;
+  const totalPages = Math.max(1, Math.ceil(smartListItems.length / WATCHLIST_PAGE_SIZE));
+  const boundedPage = Math.min(currentPage, totalPages);
+  const pagedListItems = useMemo(() => {
+    const start = (boundedPage - 1) * WATCHLIST_PAGE_SIZE;
+    return smartListItems.slice(start, start + WATCHLIST_PAGE_SIZE);
+  }, [boundedPage, smartListItems]);
+  const shownStart = smartListItems.length === 0 ? 0 : (boundedPage - 1) * WATCHLIST_PAGE_SIZE + 1;
+  const shownEnd = Math.min(boundedPage * WATCHLIST_PAGE_SIZE, smartListItems.length);
+  const goToPage = (page: number) => {
+    const next = Math.max(1, Math.min(page, totalPages));
+    setCurrentPage(next);
+  };
 
   return (
     <section className="panel panel-soft section-gap">
@@ -160,7 +190,10 @@ export function SmartWatchListPanel({
               name="watch_smart_search"
               autoComplete="off"
               value={watchSearch}
-              onChange={(event) => onSearchChange(event.target.value)}
+              onChange={(event) => {
+                setCurrentPage(1);
+                onSearchChange(event.target.value);
+              }}
               placeholder={t("watchlist.smartList.searchPlaceholder")}
             />
           </label>
@@ -171,7 +204,10 @@ export function SmartWatchListPanel({
               name="watch_smart_sort"
               autoComplete="off"
               value={watchSort}
-              onChange={(event) => onSortChange(event.target.value as ListSort)}
+              onChange={(event) => {
+                setCurrentPage(1);
+                onSortChange(event.target.value as ListSort);
+              }}
             >
               <option value="freshness">{t("watchlist.smartList.sortFreshness")}</option>
               <option value="price_asc">{t("watchlist.smartList.sortPriceAsc")}</option>
@@ -182,7 +218,10 @@ export function SmartWatchListPanel({
           <button
             type="button"
             className="btn-ghost btn-compact watch-smart-reset"
-            onClick={onClearSearch}
+            onClick={() => {
+              setCurrentPage(1);
+              onClearSearch();
+            }}
             disabled={!hasSearchFilter}
           >
             {t("watchlist.smartList.clearSearch")}
@@ -351,7 +390,7 @@ export function SmartWatchListPanel({
         </div>
       ) : null}
       {showListMode
-        ? smartListItems.map((watch) => {
+        ? pagedListItems.map((watch) => {
         const watchStatus = getWatchStatusMeta(watch.status, t);
         const meta = watchMeta.get(watch.id);
         const trend = !meta?.latest || !meta?.previous
@@ -503,6 +542,56 @@ export function SmartWatchListPanel({
         );
           })
         : null}
+      {showListMode && smartListItems.length > 0 ? (
+        <div className="qs-pagination animate-fade-in" role="navigation" aria-label="Watchlist pagination">
+          <div className="qs-pagination-stats">
+            {t("watchlist.smartList.showingCount", { shown: shownEnd, total: smartListItems.length })} · {shownStart}-{shownEnd}
+          </div>
+          <div className="qs-pagination-nav">
+            <button
+              className="qs-pagination-btn qs-pagination-btn-arrow"
+              onClick={() => goToPage(boundedPage - 1)}
+              disabled={boundedPage === 1}
+              aria-label="Pagina anterior"
+            >
+              <span className="qs-pagination-arrow">←</span>
+              <span className="qs-pagination-btn-text">Anterior</span>
+            </button>
+            <div className="qs-pagination-pages">
+              {getPageNumbers(boundedPage, totalPages).map((num, idx) => {
+                if (num === "...") {
+                  return (
+                    <span key={`watchlist-ellipsis-${idx}`} className="qs-pagination-ellipsis" aria-hidden="true">
+                      ...
+                    </span>
+                  );
+                }
+                const isSelected = num === boundedPage;
+                return (
+                  <button
+                    key={`watchlist-page-${num}`}
+                    className={`qs-pagination-btn ${isSelected ? "active" : ""}`}
+                    onClick={() => goToPage(Number(num))}
+                    aria-current={isSelected ? "page" : undefined}
+                    aria-label={`Ir a la pagina ${num}`}
+                  >
+                    {num}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              className="qs-pagination-btn qs-pagination-btn-arrow"
+              onClick={() => goToPage(boundedPage + 1)}
+              disabled={boundedPage === totalPages}
+              aria-label="Pagina siguiente"
+            >
+              <span className="qs-pagination-btn-text">Siguiente</span>
+              <span className="qs-pagination-arrow">→</span>
+            </button>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

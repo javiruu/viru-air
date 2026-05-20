@@ -37,6 +37,8 @@ class QuickSearchContractAlignmentTests(unittest.TestCase):
         self.assertEqual(canonical.destination.seed_iata, "TSF")
         self.assertFalse(canonical.origin.include_nearby)
         self.assertFalse(canonical.destination.include_nearby)
+        self.assertEqual(canonical.pagination.page, 1)
+        self.assertEqual(canonical.pagination.page_size, 10)
 
     def test_legacy_radius_zero_is_normalized_when_nearby_disabled(self):
         canonical, *_ = _normalize_quick_search_request(

@@ -16,6 +16,8 @@ export type QuickSearchQueryParams = {
   exclude_destinations: string[];
   strict_filters: boolean;
   soft_filters_weight: number;
+  page?: number;
+  page_size?: number;
 };
 
 export type QuickSearchContractIssueCode =
@@ -74,6 +76,10 @@ export type QuickSearchCanonicalPayload = {
     max_requests: number;
     timeout_ms: number;
     concurrency_limit: number;
+  };
+  pagination: {
+    page: number;
+    page_size: number;
   };
 };
 
@@ -183,6 +189,8 @@ export function toQuickSearchQuery(params: QuickSearchQueryParams): string {
   if (params.exclude_destinations.length > 0) query.set("exclude_destinations", params.exclude_destinations.join(","));
   query.set("strict_filters", String(params.strict_filters));
   query.set("soft_filters_weight", String(params.soft_filters_weight));
+  if (params.page) query.set("page", String(params.page));
+  if (params.page_size) query.set("page_size", String(params.page_size));
   return query.toString();
 }
 
@@ -243,6 +251,10 @@ export function buildQuickSearchCanonicalPayload(params: QuickSearchQueryParams)
       include_stops: params.include_stops,
       max_stops: params.max_stops,
       soft_filters_weight: params.soft_filters_weight,
+    },
+    pagination: {
+      page: clampInt(params.page ?? 1, 1, 9999, 1),
+      page_size: clampInt(params.page_size ?? 10, 1, 100, 10),
     },
     execution: wideSearchMode
       ? {

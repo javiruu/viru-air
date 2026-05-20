@@ -159,6 +159,8 @@ test("buildQuickSearchCanonicalPayload maps frontend request into contract v2 bo
   assert.equal(payload.constraints.departure_window.after, "07:00");
   assert.deepEqual(payload.constraints.exclude_origins, ["OPO"]);
   assert.equal(payload.constraints.strict_filters, false);
+  assert.equal(payload.pagination.page, 1);
+  assert.equal(payload.pagination.page_size, 10);
 });
 
 test("buildQuickSearchCanonicalPayload dedupes and normalizes seed_iata_list", () => {
@@ -326,6 +328,14 @@ test("normalizeQuickSearchResponse keeps quick-search results renderable from ba
     meta: {
       currency: "EUR",
       stale_data: false,
+      pagination: {
+        page: 2,
+        page_size: 10,
+        total_results: 42,
+        total_pages: 5,
+        has_next: true,
+        has_prev: true,
+      },
     },
     results: [
       {
@@ -387,6 +397,7 @@ test("normalizeQuickSearchResponse keeps quick-search results renderable from ba
 
   assert.equal(response.results[0]?.ranking_score, 0.91);
   assert.equal(response.results[0]?.price_total, 55);
+  assert.equal(response.meta?.pagination?.total_results, 42);
   assert.match(html, /LEI/);
   assert.match(html, /DUB/);
   assert.match(html, /EUR 55/);

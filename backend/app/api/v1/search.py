@@ -258,12 +258,18 @@ class QuickSearchExecution(BaseModel):
     concurrency_limit: int = Field(default=6, ge=1, le=32)
 
 
+class QuickSearchPagination(BaseModel):
+    page: int = Field(default=1, ge=1)
+    page_size: int = Field(default=10, ge=1, le=100)
+
+
 class QuickSearchCanonicalRequest(BaseModel):
     origin: QuickSearchSide
     destination: QuickSearchSide
     travel: QuickSearchTravel
     constraints: QuickSearchConstraints = Field(default_factory=QuickSearchConstraints)
     execution: QuickSearchExecution = Field(default_factory=QuickSearchExecution)
+    pagination: QuickSearchPagination = Field(default_factory=QuickSearchPagination)
 
 
 class QuickSearchSaveResultIn(BaseModel):
@@ -826,6 +832,7 @@ def _normalize_quick_search_request(
             "travel": payload_dict.get("travel"),
             "constraints": payload_dict.get("constraints") or {},
             "execution": payload_dict.get("execution") or {},
+            "pagination": payload_dict.get("pagination") or {},
         }
 
         # query params still override canonical body for compatibility with existing clients
@@ -838,6 +845,12 @@ def _normalize_quick_search_request(
         if query_overrides.get("travel_date"):
             canonical_dict["travel"] = {**(canonical_dict.get("travel") or {}), "date": query_overrides["travel_date"]}
             legacy_aliases_used.append("query.travel_date")
+        if query_overrides.get("page") is not None:
+            canonical_dict["pagination"] = {**(canonical_dict.get("pagination") or {}), "page": query_overrides["page"]}
+            legacy_aliases_used.append("query.page")
+        if query_overrides.get("page_size") is not None:
+            canonical_dict["pagination"] = {**(canonical_dict.get("pagination") or {}), "page_size": query_overrides["page_size"]}
+            legacy_aliases_used.append("query.page_size")
     else:
         origin_value = query_overrides.get("origin_iata") or legacy_payload.origin_iata
         destination_value = query_overrides.get("destination_iata") or legacy_payload.destination_iata
@@ -980,6 +993,14 @@ def _normalize_quick_search_request(
                 "max_pairs": 48,
                 "max_requests": 480,
                 "timeout_ms": 8000,
+            },
+            "pagination": {
+                "page": query_overrides.get("page") if query_overrides.get("page") is not None else payload_dict.get("page", 1),
+                "page_size": (
+                    query_overrides.get("page_size")
+                    if query_overrides.get("page_size") is not None
+                    else payload_dict.get("page_size", 10)
+                ),
             },
         }
 
@@ -1397,6 +1418,8 @@ def quick_search(
     soft_filters_weight: float | None = Query(default=None),
     flex_days_before: int | None = Query(default=None),
     flex_days_after: int | None = Query(default=None),
+    page: int | None = Query(default=None, ge=1),
+    page_size: int | None = Query(default=None, ge=1, le=100),
     debug: bool = Query(default=False),
 ) -> dict:
     query_trace_id = f"qs_{uuid.uuid4().hex[:12]}"
@@ -1441,6 +1464,8 @@ def quick_search(
         "soft_filters_weight": soft_filters_weight,
         "flex_days_before": flex_days_before,
         "flex_days_after": flex_days_after,
+        "page": page,
+        "page_size": page_size,
     }
     
     user_currency = "EUR"
@@ -2023,6 +2048,14 @@ def quick_search(
         for item in deduped.results
         if item.origin in origin_scope_iata and item.destination in destination_scope_iata
     ]
+    total_results_count = len(scoped_ranked_results)
+    pagination_page = max(1, int(canonical.pagination.page))
+    pagination_page_size = max(1, int(canonical.pagination.page_size))
+    pagination_total_pages = max(1, math.ceil(total_results_count / pagination_page_size)) if total_results_count > 0 else 1
+    pagination_page_effective = min(pagination_page, pagination_total_pages)
+    pagination_start = (pagination_page_effective - 1) * pagination_page_size
+    pagination_end = pagination_start + pagination_page_size
+    paginated_ranked_results = scoped_ranked_results[pagination_start:pagination_end]
     out_of_scope_discarded = max(0, len(deduped.results) - len(scoped_ranked_results))
     if out_of_scope_discarded > 0:
         warnings.append("result_out_of_scope_discarded")
@@ -2109,7 +2142,7 @@ def quick_search(
     logger.info(
         "quick_search trace=%s results=%s planned_pairs=%s requested_units=%s rescue=%s winning_step=%s",
         query_trace_id,
-        len(scoped_ranked_results),
+        len(paginated_ranked_results),
         pair_plan_stats["total_pairs"],
         execution_meta.get("requested_units_count", 0),
         rescue_attempted,
@@ -2289,7 +2322,16 @@ def quick_search(
                 "timeout_count": execution_meta.get("timed_out_units_count", 0),
                 "cache_hits": execution_meta.get("cache_hits", 0),
                 "cache_misses": execution_meta.get("cache_misses", 0),
-                "final_results_count": len(scoped_ranked_results),
+                "final_results_count": total_results_count,
+                "paginated_results_count": len(paginated_ranked_results),
+            },
+            "pagination": {
+                "page": pagination_page_effective,
+                "page_size": pagination_page_size,
+                "total_results": total_results_count,
+                "total_pages": pagination_total_pages,
+                "has_next": pagination_page_effective < pagination_total_pages,
+                "has_prev": pagination_page_effective > 1,
             },
             "filters_engine": {
                 "strict_mode_effective": strict_filters,
@@ -2332,7 +2374,7 @@ def quick_search(
         },
         "results": [
             {
-                "result_id": f"{item.origin}-{item.destination}-{item.travel_date}-{idx}",
+                "result_id": f"{item.origin}-{item.destination}-{item.travel_date}-{pagination_start + idx}",
                 "origin": item.origin,
                 "destination": item.destination,
                 "travel_date": str(item.travel_date),
@@ -2363,7 +2405,7 @@ def quick_search(
                 "selected_from_pair_id": f"{item.origin}->{item.destination}",
                 "candidate_reason": "seed" if item.origin_is_seed and item.destination_is_seed else "expanded",
             }
-            for idx, item in enumerate(scoped_ranked_results)
+            for idx, item in enumerate(paginated_ranked_results)
         ],
     }
 
