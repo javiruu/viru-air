@@ -20,6 +20,7 @@
 - [Backend](engineering/backend.md)
 - [Reference](reference/README.md)
 - [Quick Search contract](reference/backend/quick-search-contract.md)
+- [Door-to-door API contract](reference/backend/door-to-door-contract.md)
 - [Quick Search acceptance checklist](reference/backend/quick-search-acceptance-checklist.md)
 - [Quick Search legacy alias sunset](reference/quick-search-legacy-alias-sunset.md)
 
@@ -36,6 +37,7 @@
 - [Dashboard](product/dashboard.md)
 - [Quick Search](product/quick-search.md)
 - [Watchlist](product/watchlist.md)
+- [Puerta a puerta](product/door-to-door.md)
 - [Product language map](reference/product-language-map.md)
 - [Policies Page](product/policies-page.md)
 
@@ -80,6 +82,7 @@
 - [Dashboard](product/dashboard.md)
 - [Quick Search](product/quick-search.md)
 - [Watchlist](product/watchlist.md)
+- [Puerta a puerta](product/door-to-door.md)
 - [Policies Page](product/policies-page.md)
 
 ### Engineering

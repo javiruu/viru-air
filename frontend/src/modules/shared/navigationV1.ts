@@ -1,6 +1,7 @@
 export const NAV_V1_PRIVATE = [
   { href: "/dashboard", labelKey: "shared.footer.links.dashboard" },
   { href: "/watchlist", labelKey: "shared.footer.links.watchlist" },
+  { href: "/puerta-a-puerta", labelKey: "shared.footer.links.doorToDoor" },
   { href: "/quick-search", labelKey: "shared.footer.links.quickSearch" },
   { href: "/alerts", labelKey: "shared.footer.links.alerts" },
   { href: "/recomendaciones", labelKey: "shared.footer.links.opportunities" },

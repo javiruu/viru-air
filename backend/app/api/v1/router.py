@@ -1,4 +1,6 @@
-﻿from fastapi import APIRouter
+from fastapi import APIRouter
+
+from app.door_to_door.api import routes as door_to_door
 
 from app.api.v1 import (
     account,
@@ -22,6 +24,7 @@ api_v1 = APIRouter()
 api_v1.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_v1.include_router(admin.router, prefix="/admin", tags=["admin"])
 api_v1.include_router(watchlist.router, prefix="/watchlist", tags=["watchlist"])
+api_v1.include_router(door_to_door.router, prefix="/door-to-door", tags=["door-to-door"])
 api_v1.include_router(prices.router, prefix="/prices", tags=["prices"])
 api_v1.include_router(search.router, prefix="/search", tags=["search"])
 api_v1.include_router(airports.router, prefix="/airports", tags=["airports"])

@@ -9,6 +9,7 @@ import { recommendationsEn } from "./domains/recommendations";
 import { suggestionsEn } from "./domains/suggestions";
 import { adminEn } from "./domains/admin";
 import { watchlistEn } from "./domains/watchlist";
+import { doorToDoorEn } from "./domains/doorToDoor";
 
 const en = {
   shared: sharedEn,
@@ -22,6 +23,7 @@ const en = {
   suggestions: suggestionsEn,
   admin: adminEn,
   watchlist: watchlistEn,
+  doorToDoor: doorToDoorEn,
 };
 
 export default en;

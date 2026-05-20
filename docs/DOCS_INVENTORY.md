@@ -374,3 +374,14 @@ Entradas vivas agregadas:
 
 - docs/qa/reports/2026-05-12-watchlist-w9-2-history-rescue.md
 
+
+## Actualizacion manual 2026-05-20 (Puerta a puerta V1)
+
+Entradas vivas agregadas:
+
+- `docs/product/door-to-door.md`
+- `docs/reference/backend/door-to-door-contract.md`
+
+Entradas vivas actualizadas:
+
+- `docs/INDICE_UNICO.md`

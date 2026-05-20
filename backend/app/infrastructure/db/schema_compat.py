@@ -1,6 +1,8 @@
 from sqlalchemy import inspect, text
 from sqlalchemy.engine import Engine
 
+from app.infrastructure.db.session import Base
+
 
 SEARCH_PREFERENCE_COLUMN_PATCHES = (
     ("include_nearby_origins_default", "ALTER TABLE user_preference ADD COLUMN include_nearby_origins_default BOOLEAN NOT NULL DEFAULT 0"),
@@ -39,3 +41,16 @@ def ensure_search_preference_columns(engine: Engine) -> None:
     with engine.begin() as connection:
         for ddl in missing_patches:
             connection.execute(text(ddl))
+
+
+def ensure_door_to_door_tables(engine: Engine) -> None:
+    inspector = inspect(engine)
+    existing_tables = set(inspector.get_table_names())
+    table_names = {
+        "door_to_door_saved_location",
+        "door_to_door_search_history",
+        "door_to_door_chosen_option",
+    }
+    missing = [Base.metadata.tables[name] for name in table_names if name not in existing_tables]
+    if missing:
+        Base.metadata.create_all(bind=engine, tables=missing)

@@ -1,6 +1,7 @@
 import { useI18n } from "@/i18n";
 import { formatCurrency, formatPercent } from "@/modules/shared/format";
 import { getWatchStatusMeta } from "@/modules/shared/statusCatalog";
+import { DoorToDoorWatchlistSuggestion } from "@/modules/door-to-door/components/DoorToDoorWatchlistSuggestion";
 import { safeDateTime } from "@/modules/watchlist/presentation";
 import { getFreshnessPresentation, getHistoryConfidence, hasPriceSummaryData } from "@/modules/watchlist/summary";
 import type { PriceSummary, Watch, WatchDetail } from "@/modules/watchlist/types";
@@ -151,6 +152,8 @@ export function WatchDetailPanel({
           <div className="history-kpi"><span className="skeleton skeleton-line" /><strong className="skeleton skeleton-line" /></div>
         </div>
       ) : null}
+
+      <DoorToDoorWatchlistSuggestion watch={focus} />
 
       <div className="alert-actions watch-detail-actions">
         <button className="btn-secondary btn-compact" type="button" onClick={() => onRefreshWatch(focus.id)}>

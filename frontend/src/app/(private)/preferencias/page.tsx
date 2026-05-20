@@ -2,6 +2,7 @@ import Link from "next/link";
 
 const tabs = [
   { id: "busqueda", label: "Búsqueda", href: "/preferencias/busqueda", desc: "Cómo quieres buscar por defecto." },
+  { id: "puerta-a-puerta", label: "Puerta a puerta", href: "/preferencias/puerta-a-puerta", desc: "Ubicación habitual para rutas completas." },
   { id: "apariencia", label: "Apariencia", href: "/preferencias/apariencia", desc: "Tema, densidad y accesibilidad." },
   { id: "region", label: "Idioma y región", href: "/preferencias/region", desc: "Idioma, moneda y formatos regionales." },
 ] as const;

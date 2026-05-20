@@ -255,6 +255,45 @@ class IdempotencyRecord(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
 
 
+class DoorToDoorSavedLocation(Base):
+    __tablename__ = "door_to_door_saved_location"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), unique=True, index=True)
+    location_type: Mapped[str] = mapped_column(String(32))
+    label: Mapped[str] = mapped_column(String(180))
+    lat: Mapped[float | None] = mapped_column(Numeric(10, 6), nullable=True)
+    lng: Mapped[float | None] = mapped_column(Numeric(10, 6), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
+
+
+class DoorToDoorSearchHistory(Base):
+    __tablename__ = "door_to_door_search_history"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    watch_id: Mapped[str] = mapped_column(ForeignKey("flight_watch.id"), index=True)
+    origin_json: Mapped[str] = mapped_column(Text)
+    final_destination_json: Mapped[str] = mapped_column(Text)
+    preferences_json: Mapped[str] = mapped_column(Text)
+    summary_json: Mapped[str] = mapped_column(Text)
+    warnings_json: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, index=True)
+
+
+class DoorToDoorChosenOption(Base):
+    __tablename__ = "door_to_door_chosen_option"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    watch_id: Mapped[str] = mapped_column(ForeignKey("flight_watch.id"), index=True)
+    history_id: Mapped[str | None] = mapped_column(ForeignKey("door_to_door_search_history.id"), nullable=True)
+    option_id: Mapped[str] = mapped_column(String(80))
+    option_label: Mapped[str] = mapped_column(String(120))
+    option_summary_json: Mapped[str] = mapped_column(Text, default="{}")
+    chosen_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, index=True)
+
+
 class UserNote(Base):
     __tablename__ = "user_note"
 
