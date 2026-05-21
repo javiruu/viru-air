@@ -49,6 +49,7 @@ type CompareChartPoint = {
 type CompareChartSerie = {
   watchId: string;
   label: string;
+  travelDate: string;
   color: string;
   path: string;
   points: CompareChartPoint[];
@@ -85,7 +86,7 @@ export function ComparePanels({
   const [hasCompareError, setHasCompareError] = useState(false);
 
   const [hoveredWatchId, setHoveredWatchId] = useState<string | null>(null);
-  const [hoveredPoint, setHoveredPoint] = useState<(CompareChartPoint & { label: string; color: string }) | null>(null);
+  const [hoveredPoint, setHoveredPoint] = useState<(CompareChartPoint & { label: string; color: string; travelDate: string }) | null>(null);
 
   const selectedCount = compareIds.length;
   const compareQuery = useMemo(() => compareIds.join(","), [compareIds]);
@@ -146,11 +147,13 @@ export function ComparePanels({
     }
 
     const routeByWatchId = new Map(watches.map((item) => [item.watch_id, item.route]));
+    const travelDateByWatchId = new Map(watches.map((item) => [item.watch_id, item.travel_date]));
     const prepared = pointBlocks
       .map((block, index) => {
         const route = routeByWatchId.get(block.watch_id) ?? block.watch_id;
         const [origin = route, destination = ""] = route.split("->");
         const label = `${origin.trim()} -> ${destination.trim()}`;
+        const travelDate = travelDateByWatchId.get(block.watch_id) ?? "";
         const color = CHART_COLORS[index % CHART_COLORS.length];
         const points = block.points
           .map((item) => {
@@ -167,6 +170,7 @@ export function ComparePanels({
         return {
           watchId: block.watch_id,
           label,
+          travelDate,
           color,
           points,
         };
@@ -206,6 +210,7 @@ export function ComparePanels({
       return {
         watchId: serie.watchId,
         label: serie.label,
+        travelDate: serie.travelDate,
         color: serie.color,
         path,
         points,
@@ -376,12 +381,22 @@ export function ComparePanels({
                       className="compare-chart-svg"
                       viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
                       role="img"
-                      aria-label="Grafico comparativo de vuelos seleccionados"
+                      aria-label="Gráfico comparativo de vuelos seleccionados"
                     >
                       {[0, 0.33, 0.66, 1].map((ratio) => {
                         const y = CHART_PAD.top + (CHART_HEIGHT - CHART_PAD.top - CHART_PAD.bottom) * ratio;
                         return <line key={`y-grid-${ratio}`} x1={CHART_PAD.left} y1={y} x2={CHART_WIDTH - CHART_PAD.right} y2={y} className="compare-chart-grid" />;
                       })}
+
+                      {hoveredPoint && (
+                        <line
+                          x1={hoveredPoint.x}
+                          y1={CHART_PAD.top}
+                          x2={hoveredPoint.x}
+                          y2={hoveredPoint.y}
+                          className="compare-chart-guide"
+                        />
+                      )}
 
                       {sortedChartSeries.map((serie) => {
                         const isFocused = hoveredWatchId === serie.watchId;
@@ -394,12 +409,16 @@ export function ComparePanels({
                               stroke={serie.color}
                               className={`compare-chart-line ${isFocused ? "is-focused" : ""} ${isMuted ? "is-muted" : ""}`}
                             />
-                            {serie.points.length > 0 && (
-                              <>
-                                <circle cx={serie.points[0].x} cy={serie.points[0].y} r={isFocused ? 3.5 : 2.6} fill={serie.color} className={`compare-chart-endpoint ${isMuted ? "is-muted" : ""}`} />
-                                <circle cx={serie.points[serie.points.length - 1].x} cy={serie.points[serie.points.length - 1].y} r={isFocused ? 4.5 : 3.2} fill={serie.color} className={`compare-chart-endpoint compare-chart-endpoint--last ${isMuted ? "is-muted" : ""}`} />
-                              </>
-                            )}
+                            {serie.points.map((point, i) => (
+                              <circle
+                                key={`visible-${serie.watchId}-${i}`}
+                                cx={point.x}
+                                cy={point.y}
+                                r={isFocused ? 3.8 : 2.8}
+                                fill={serie.color}
+                                className={`compare-chart-endpoint ${isMuted ? "is-muted" : ""}`}
+                              />
+                            ))}
                           </g>
                         );
                       })}
@@ -416,7 +435,7 @@ export function ComparePanels({
                               style={{ cursor: "crosshair", pointerEvents: "all" }}
                               onMouseEnter={() => {
                                 setHoveredWatchId(serie.watchId);
-                                setHoveredPoint({ ...point, label: serie.label, color: serie.color });
+                                setHoveredPoint({ ...point, label: serie.label, color: serie.color, travelDate: serie.travelDate });
                               }}
                               onMouseLeave={() => {
                                 setHoveredWatchId(null);
@@ -437,13 +456,18 @@ export function ComparePanels({
                           opacity: 1,
                         }}
                       >
-                        <span className="history-tooltip-tag" style={{ color: hoveredPoint.color }}>
-                          {hoveredPoint.label}
+                        <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--ink-muted)", letterSpacing: "0.05em" }}>
+                          {hoveredPoint.travelDate}
                         </span>
-                        <strong style={{ fontSize: "1.05rem" }}>
+                        <strong style={{ fontSize: "1.15rem", display: "block", color: "var(--ink)" }}>
                           {formatCurrency(hoveredPoint.price, hoveredPoint.currency, localeTag)}
                         </strong>
-                        <span>{formatDateTime(hoveredPoint.date, localeTag)}</span>
+                        <span style={{ fontSize: "0.82rem", color: "var(--ink-muted)", display: "block" }}>
+                          {formatDateTime(hoveredPoint.date, localeTag)}
+                        </span>
+                        <span className="history-tooltip-tag" style={{ color: hoveredPoint.color, marginTop: "0.3rem", display: "block" }}>
+                          {hoveredPoint.label}
+                        </span>
                       </div>
                     )}
                   </div>
