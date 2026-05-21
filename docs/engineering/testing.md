@@ -7,7 +7,10 @@
 
 ## Resumen
 
-La estrategia documental de testing se reparte entre checklists reutilizables, catálogos TestSprite, capturas vivas y reportes archivados por ciclo.
+La estrategia de testing queda dividida asi:
+
+- Visual/UI: cierre por revision manual del usuario en navegador real y feedback explicito.
+- Tecnico de terminal: build/tests/lint/typecheck ejecutados por la IA cuando aplique.
 
 ## Contenido principal
 
@@ -15,9 +18,8 @@ La estrategia documental de testing se reparte entre checklists reutilizables, c
   - [README QA](../qa/README.md)
   - [Frontend PR checklist](../qa/acceptance-checklists/frontend-pr-checklist.md)
   - [Traceability matrix](../qa/traceability-matrix.md)
-- TestSprite:
-  - [Catálogo TestSprite](../qa/testsprite/testsprite-catalog.md)
-  - [SkillSprite user capabilities](../qa/testsprite/skillsprite-user-capabilities.md)
+- Evidencia visual:
+  - [Runbook UI captures](../runbooks/runbook-ui-captures.md)
 - Histórico:
   - [Archive QA](../archive/qa/README.md)
   - [Tooling archivado](../archive/tooling/README.md)

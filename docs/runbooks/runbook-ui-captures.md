@@ -18,9 +18,13 @@ Definir un flujo reutilizable para obtener evidencia visual de cambios UI (captu
 ## Flujo estandar de capturas
 
 1. Levantar servicios necesarios (frontend y backend si la pantalla depende de API/autenticacion).
-2. Abrir la ruta real en navegador (Playwright o TestSprite).
+2. Pedir al usuario revision manual en navegador real indicando:
+   - ruta/pagina;
+   - interaccion exacta;
+   - resultado esperado;
+   - feedback solicitado.
 3. Reproducir la interaccion exacta del caso.
-4. Capturar como minimo:
+4. Si se necesita soporte visual adicional, capturar como minimo:
    - una captura full page
    - una captura de la seccion cambiada
    - una captura del componente cambiado
@@ -42,8 +46,13 @@ Definir un flujo reutilizable para obtener evidencia visual de cambios UI (captu
 Cuando el estado visual depende de un proveedor externo inestable:
 
 - Primero intentar flujo real.
-- Si bloquea la verificacion visual, mockear solo el endpoint externo en Playwright (`page.route`) para forzar el estado UI.
+- Si bloquea la verificacion visual, mockear solo el endpoint externo en navegador/script para forzar el estado UI.
 - Documentar en el reporte final que se uso mock visual y que la logica funcional no se modifico por ese mock.
+
+## Regla de responsabilidades
+
+- Validacion visual/UI final: responsabilidad del usuario via revision manual y feedback.
+- Build/tests/lint/typecheck de terminal: responsabilidad de la IA cuando aplique.
 
 ## Estructura recomendada para scripts
 

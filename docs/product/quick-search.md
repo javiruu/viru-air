@@ -7,7 +7,7 @@
 
 ## Resumen
 
-Quick Search es una de las áreas más documentadas del proyecto y cuenta con contrato backend, checklist técnico, política de weather y catálogo de QA/TestSprite.
+Quick Search es una de las áreas más documentadas del proyecto y cuenta con contrato backend, checklist técnico, política de weather y guías de QA visual/manual.
 
 ## Contenido principal
 
@@ -18,7 +18,7 @@ Quick Search es una de las áreas más documentadas del proyecto y cuenta con co
 - Comportamiento auxiliar:
   - [Quick Search weather policy](../reference/quick-search-weather-policy.md)
 - QA y capturas:
-  - [Catálogo TestSprite](../qa/testsprite/testsprite-catalog.md)
+  - [Runbook UI captures](../runbooks/runbook-ui-captures.md)
   - [Reportes QA](../qa/reports/)
 
 ## Relacionado

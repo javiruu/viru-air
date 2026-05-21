@@ -2,7 +2,7 @@
 
 This file defines testing-specific rules for coding agents working inside the testing area of `viru-tracker`.
 
-The root `/AGENTS.md` still applies. This file adds specific guidance for regression tests, browser automation, TestSprite, visual evidence, stable test data, and verification strategy.
+The root `/AGENTS.md` still applies. This file adds specific guidance for regression tests, browser automation, visual evidence, stable test data, and verification strategy.
 
 ---
 
@@ -34,7 +34,7 @@ Verification ladder:
 3. Build/typecheck/lint when relevant.
 4. API/integration verification when runtime behavior matters.
 5. Real browser verification for browser-visible work.
-6. TestSprite or screenshots for visual/user-flow evidence.
+6. Manual user review feedback for visual/UI closure.
 
 When the change impacts UI look/feel, hierarchy, or palette, verification must cover both dark and light themes unless the user explicitly narrows scope.
 
@@ -81,7 +81,6 @@ Use:
 - component tests for local UI behavior;
 - integration tests for API/service boundaries;
 - end-to-end or browser automation for real flows;
-- TestSprite for multi-step browser-visible workflows;
 - screenshots for scoped visual verification.
 
 Do not add broad, slow, fragile tests for a small local change.
@@ -105,25 +104,16 @@ Do not claim a visual or browser-visible fix based only on:
 - reasoning;
 - “it should work”.
 
-Browser-visible work is verified with visible evidence from at least one of these paths:
-
-1. TestSprite or real browser automation;
-2. screenshots captured by the agent in the real browser flow.
+Browser-visible work closes with manual user review feedback on the real rendered result.
 
 For theme-sensitive work, evidence should include dark and light mode results.
 
-Use TestSprite by default for:
+For visual/UI closure, the AI must ask the user for:
 
-- multi-step flows;
-- real navigation;
-- login/register/account menu behavior;
-- forms with validation;
-- dashboards and interactive states;
-- reported browser regressions;
-- session-dependent behavior;
-- API-backed UI interactions.
-
-Use screenshots instead when the change is static, scoped, or when TestSprite is flaky for that route.
+- route/page to review;
+- exact interaction;
+- expected visual result;
+- feedback confirming the observed result.
 
 Screenshot expectations:
 
@@ -286,7 +276,7 @@ Final reports for testing work must include:
 - whether they passed or failed;
 - what behavior the tests prove;
 - any browser route or flow tested;
-- any screenshots or TestSprite evidence used;
+- any screenshots used (if any);
 - any known limitation or unverified part.
 
 Do not write:

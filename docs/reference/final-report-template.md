@@ -10,14 +10,18 @@ Usar este formato al cerrar tareas.
 - [ruta/archivo 2]
 
 ## Verification
-- Method: [tests | build | TestSprite | screenshots | combinacion]
+- Method: [tests | build | lint | typecheck | combinacion]
 - Route/page tested: [ruta exacta]
 - Interaction: [accion exacta]
 - Visible evidence: [que prueba la evidencia]
 - Limitations: [si aplica]
 
+## Visual validation (when UI changes apply)
+- User manual review requested: [si/no]
+- Manual review checklist: [ruta | interaccion | resultado esperado]
+- User feedback received: [resumen corto]
+
 ## Publish status
 - Branch: `main`
 - Commit: `[hash]`
 - Push: `origin/main` actualizado
-

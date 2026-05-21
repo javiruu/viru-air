@@ -223,7 +223,7 @@ Rules:
 
 - Prefer adding a regression test for bug fixes when feasible.
 - Assume Playwright/Chromium are already available in this repo workflow; do not reinstall them unless a concrete missing-binary/version error proves it is necessary.
-- Before creating new Playwright/TestSprite flows, reuse existing frontend tests/scripts and prior QA reports from `docs/qa/` whenever they already cover the same auth/session journey.
+- Before creating new browser automation flows, reuse existing frontend tests/scripts and prior QA reports from `docs/qa/` whenever they already cover the same auth/session journey.
 - Do not add broad, slow, speculative tests unrelated to the task.
 - Do not rely on “build passes” as proof of a user-visible fix.
 - If a test cannot be written or run, say so explicitly and explain why.
@@ -239,6 +239,8 @@ For UI, browser, API, and network bugs:
 - Capture the real failing request and real failing response when the issue is HTTP/network related.
 - Inspect console output, server logs, API payloads, response bodies, auth/session state, and actual runtime configuration when relevant.
 - If frontend and backend disagree, treat the contract mismatch as a first-class root-cause candidate.
+- For visual/UI validation, request manual user review in the real UI and collect explicit feedback (route, interaction, expected result, observed result).
+- Build/tests/lint/typecheck in terminal remain the AI's responsibility when relevant.
 
 “Done” means:
 
@@ -521,7 +523,7 @@ Use nested `AGENTS.md` files for specialized guidance:
   - visual hierarchy;
   - browser verification;
   - screenshots;
-  - TestSprite usage;
+  - manual user visual review;
   - frontend contracts.
 
 - `/backend/AGENTS.md`:
@@ -541,7 +543,7 @@ Use nested `AGENTS.md` files for specialized guidance:
 - `/tests/AGENTS.md`:
   - testing strategy;
   - regression tests;
-  - TestSprite/test automation;
+  - terminal test automation;
   - visual evidence;
   - stable test data.
 

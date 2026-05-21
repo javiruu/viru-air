@@ -187,7 +187,7 @@ If a contract is unclear:
 
 For browser-visible work, real rendered verification is required whenever feasible.
 
-Before creating a new Playwright/TestSprite scenario, check and reuse existing repo assets first (especially `frontend/tests/*quick-search*e2e*.ts`, `frontend/scripts/qa_*.mjs`, and prior evidence in `docs/qa/reports/`).
+Before creating a new browser scenario, check and reuse existing repo assets first (especially `frontend/tests/*quick-search*e2e*.ts`, `frontend/scripts/qa_*.mjs`, and prior evidence in `docs/qa/reports/`).
 
 Do not claim a visual or browser-visible fix based only on:
 
@@ -198,10 +198,10 @@ Do not claim a visual or browser-visible fix based only on:
 - reasoning;
 - “it should work”.
 
-Browser-visible work is verified with visible evidence from one of these paths:
+Browser-visible work closes with user-validated evidence:
 
-1. TestSprite or real browser automation;
-2. screenshots captured by the agent in the real browser flow.
+1. the AI asks the user to review the route manually in a real browser;
+2. the user confirms feedback on the expected visible result.
 
 When visuals, hierarchy, or palette are affected, verify both dark and light modes unless the user explicitly limits scope.
 
@@ -209,36 +209,22 @@ If neither is available, say exactly what remains unverified.
 
 ---
 
-## TestSprite policy
+## Visual review policy
 
-Use TestSprite by default when the task involves:
+For visual/UI closure, ask the user for manual review feedback with:
 
-- multi-step flows;
-- real navigation between pages;
-- login/register/account menu behavior;
-- forms with validation;
-- dashboards and interactive states;
-- reported browser regressions;
-- session-dependent behavior;
-- API-backed UI interactions.
+- route/page to open;
+- exact interaction to perform;
+- expected visible result;
+- feedback requested from the user.
 
-Do not force TestSprite when:
-
-- the task is a tiny static visual change and screenshots are faster and sufficient;
-- TestSprite is flaky for that route and manual screenshot verification is more reliable;
-- the page state is simple enough that 2–4 screenshots fully prove the result.
-
-Decision rule:
-
-- use TestSprite for flows;
-- use screenshots for scoped static verification;
-- use both when the change is critical.
+Build/tests/lint/typecheck in terminal stay under AI responsibility when relevant.
 
 ---
 
 ## Screenshot verification
 
-When TestSprite is not used, capture screenshots in the real browser.
+When screenshots are needed as support evidence, capture them in the real browser.
 
 For a simple UI change:
 

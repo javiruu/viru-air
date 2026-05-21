@@ -10,7 +10,6 @@
 ## Qué vive aquí
 
 - `acceptance-checklists/`: checklists reutilizables.
-- `testsprite/`: catálogo y contexto funcional para TestSprite.
 - `visual/`: capturas y activos visuales activos.
 - `reports/`: reportes ligeros y resultados activos que siguen siendo útiles.
 - `evidence/`: evidencia adicional referenciada.
@@ -20,8 +19,17 @@
 
 - [Frontend PR checklist](acceptance-checklists/frontend-pr-checklist.md)
 - [Traceability matrix](traceability-matrix.md)
-- [TestSprite catalog](testsprite/testsprite-catalog.md)
-- [SkillSprite user capabilities](testsprite/skillsprite-user-capabilities.md)
+- [Runbook UI captures](../runbooks/runbook-ui-captures.md)
+
+## Politica de validacion visual
+
+- Para cambios visuales/UI, la validacion final depende de revision manual del usuario en navegador real.
+- La IA debe pedir siempre:
+  - ruta/pagina a revisar;
+  - interaccion exacta;
+  - resultado esperado;
+  - feedback observado.
+- Build/tests/lint/typecheck de terminal siguen siendo responsabilidad de la IA.
 
 ## Qué no debe quedarse aquí
 
