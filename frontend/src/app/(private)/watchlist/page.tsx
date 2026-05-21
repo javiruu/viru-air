@@ -247,7 +247,6 @@ export default function WatchlistPage() {
 
         <div className="watchlist-area watchlist-area-compare">
           <ComparePanels
-            compareCards={derived.compareCards}
             compareOptions={derived.compareOptions}
             compareIds={view.compareIds}
             compareNotice={view.compareNotice}
