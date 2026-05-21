@@ -18461,3 +18461,57 @@ textarea::placeholder {
   border: 1px solid color-mix(in srgb, var(--border) 80%, white 20%);
   background: color-mix(in srgb, var(--surface) 96%, white 4%);
 }
+
+/* Puntos del gráfico comparativo */
+.compare-chart-endpoint {
+  stroke: var(--surface);
+  stroke-width: 1.5;
+  transition: r 0.2s ease, opacity 0.25s ease;
+}
+
+/* Guia vertical discontinua para charts */
+.compare-chart-guide {
+  stroke: color-mix(in srgb, var(--border) 60%, transparent);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+  pointer-events: none;
+}
+
+/* 1. Fondo limpio y Premium (Lo mejor del "despues") */
+.history-chart {
+  position: relative;
+  background:
+    linear-gradient(150deg, color-mix(in srgb, var(--history-wash-1) 62%, transparent), transparent),
+    color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 20px 38px var(--shadow);
+  border: 1px solid rgba(217, 203, 187, 0.7);
+  border-radius: 16px;
+  padding: 1rem 1.1rem 1.15rem;
+}
+
+/* 2. Cuadricula sutil: mantenemos las horizontales muy suaves, ocultamos la caja dura */
+.history-svg line.history-grid {
+  stroke: color-mix(in srgb, var(--history-grid) 60%, transparent);
+  stroke-width: 1;
+}
+.history-svg > line:not(.history-grid) {
+  display: none;
+}
+
+/* 3. Linea contundente (Lo mejor del "antes") */
+.history-line,
+.history-svg polyline {
+  fill: none;
+  stroke: var(--accent) !important;
+  stroke-width: 3.4 !important;
+  stroke-linejoin: round;
+}
+
+/* 4. Puntos a juego y bien definidos */
+.history-dot,
+.history-svg circle:not(.compare-chart-endpoint) {
+  fill: var(--accent) !important;
+  stroke: var(--surface) !important;
+  stroke-width: 2 !important;
+  opacity: 1 !important;
+}
