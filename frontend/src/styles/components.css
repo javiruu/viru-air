@@ -48,6 +48,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+  min-width: 0;
 }
 
 .panel-header h2 {
@@ -128,6 +129,11 @@
   gap: 0.5rem;
   flex-wrap: wrap;
   align-items: center;
+  min-width: 0;
+}
+
+.row-actions > * {
+  min-width: 0;
 }
 
 .state-success,
@@ -392,6 +398,7 @@
 .viru-footer-brand-copy {
   display: grid;
   gap: 0.28rem;
+  min-width: 0;
 }
 
 .viru-footer-kicker {
@@ -415,12 +422,14 @@
   max-width: 42rem;
   color: var(--color-footer-text);
   line-height: 1.62;
+  overflow-wrap: anywhere;
 }
 
 .viru-footer-utility {
   display: grid;
   gap: 0.9rem;
   justify-items: end;
+  min-width: 0;
 }
 
 .viru-footer-status {
@@ -448,6 +457,12 @@
   flex-wrap: wrap;
   gap: 0.55rem;
   justify-content: flex-end;
+  min-width: 0;
+  width: 100%;
+}
+
+.viru-footer-actions > * {
+  min-width: 0;
 }
 
 .viru-footer-chip,
@@ -465,6 +480,14 @@
   font-size: 0.86rem;
   font-weight: 700;
   box-shadow: 0 12px 24px color-mix(in srgb, var(--shadow-strong) 20%, transparent);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.viru-footer-chip span,
+.viru-footer-scroll span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .viru-footer-chip:hover,
@@ -522,6 +545,12 @@
   color: var(--color-footer-link);
   text-decoration: none;
   border-radius: 12px;
+  min-width: 0;
+}
+
+.viru-footer-link span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .viru-footer-link i {

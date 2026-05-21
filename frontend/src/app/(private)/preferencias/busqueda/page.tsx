@@ -185,8 +185,8 @@ export default function PreferenciasBusquedaPage() {
       </section>
 
       <form className="prefs-form prefs-search-form" onSubmit={onSubmit}>
-        <div className="prefs-search-grid">
-          <section className="panel prefs-card prefs-search-card prefs-search-card-coverage">
+        <div className="prefs-search-grid prefs-search-grid-essential">
+          <section className="panel prefs-card prefs-search-card prefs-search-card-coverage prefs-search-card-essential">
             <div className="prefs-card-head">
               <PreferenceIcon path="M3 12h4l2-3 4 6 3-4h5" />
               <div>
@@ -235,112 +235,9 @@ export default function PreferenciasBusquedaPage() {
               </div>
             </div>
 
-            <label className="field" htmlFor="pref-country-hint-mode">
-              {t("preferences.search.countryHintMode")}
-              <span className="hint">{t("preferences.search.countryHintModeHint")}</span>
-              <select
-                id="pref-country-hint-mode"
-                className="prefs-control"
-                value={pref.country_price_hint_mode_default || "min"}
-                onChange={(event) => updatePref("country_price_hint_mode_default", event.target.value as Pref["country_price_hint_mode_default"])}
-              >
-                <option value="min">{t("preferences.search.countryHintModeMin")}</option>
-                <option value="median">{t("preferences.search.countryHintModeMedian")}</option>
-                <option value="fixed_route">{t("preferences.search.countryHintModeFixedRoute")}</option>
-              </select>
-            </label>
-
-            <label className="field" htmlFor="pref-calendar-bucket-mode">
-              {t("preferences.search.calendarHintBucketMode")}
-              <span className="hint">{t("preferences.search.calendarHintBucketModeHint")}</span>
-              <select
-                id="pref-calendar-bucket-mode"
-                className="prefs-control"
-                value={pref.calendar_hint_bucket_mode_default || "monthly_terciles"}
-                onChange={(event) => updatePref("calendar_hint_bucket_mode_default", event.target.value as Pref["calendar_hint_bucket_mode_default"])}
-              >
-                <option value="monthly_terciles">{t("preferences.search.calendarHintBucketModeMonthly")}</option>
-                <option value="guidelines">{t("preferences.search.calendarHintBucketModeGuidelines")}</option>
-              </select>
-            </label>
-
-            {pref.calendar_hint_bucket_mode_default === "guidelines" ? (
-              <div className="field">
-                <span>{t("preferences.search.calendarHintGuidelinesTitle")}</span>
-                <div className="prefs-guideline-grid">
-                  <label className="field" htmlFor="pref-guideline-low">
-                    {t("preferences.search.calendarHintGuidelineLowLabel")}
-                    <input
-                      id="pref-guideline-low"
-                      className="prefs-control"
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={pref.calendar_hint_guideline_low_max_default}
-                      onChange={(event) => onGuidelineThresholdChange("calendar_hint_guideline_low_max_default", event.target.value)}
-                    />
-                    {errors.calendar_hint_guideline_low_max_default ? (
-                      <span className="prefs-error">{errors.calendar_hint_guideline_low_max_default}</span>
-                    ) : null}
-                  </label>
-                  <label className="field" htmlFor="pref-guideline-mid">
-                    {t("preferences.search.calendarHintGuidelineMidLabel")}
-                    <input
-                      id="pref-guideline-mid"
-                      className="prefs-control"
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={pref.calendar_hint_guideline_mid_max_default}
-                      onChange={(event) => onGuidelineThresholdChange("calendar_hint_guideline_mid_max_default", event.target.value)}
-                    />
-                    {errors.calendar_hint_guideline_mid_max_default ? (
-                      <span className="prefs-error">{errors.calendar_hint_guideline_mid_max_default}</span>
-                    ) : null}
-                  </label>
-                </div>
-                <span className="hint">
-                  {t("preferences.search.calendarHintGuidelinesHint", {
-                    low: pref.calendar_hint_guideline_low_max_default,
-                    mid: pref.calendar_hint_guideline_mid_max_default,
-                    currency: pref.preferred_currency || "EUR",
-                  })}
-                </span>
-              </div>
-            ) : null}
-
-            <label className="field" htmlFor="pref-radius">
-              {t("preferences.search.radiusLabel")}
-              <span className="hint">{t("preferences.search.radiusHint")}</span>
-              <div className="prefs-radius-row">
-                <input
-                  id="pref-radius"
-                  type="range"
-                  min={SEARCH_PREF_MIN_RADIUS_KM}
-                  max={SEARCH_PREF_MAX_RADIUS_KM}
-                  step={5}
-                  value={Math.min(SEARCH_PREF_MAX_RADIUS_KM, Math.max(SEARCH_PREF_MIN_RADIUS_KM, pref.default_radius_km))}
-                  onChange={(event) => onRadiusChange(event.target.value)}
-                />
-                <input
-                  className="prefs-control"
-                  type="number"
-                  min={SEARCH_PREF_MIN_RADIUS_KM}
-                  max={SEARCH_PREF_MAX_RADIUS_KM}
-                  name="default_radius_km"
-                  autoComplete="off"
-                  value={pref.default_radius_km}
-                  onChange={(event) => onRadiusChange(event.target.value)}
-                />
-              </div>
-              <span className="hint">
-                {t("preferences.search.radiusSummary", { value: pref.default_radius_km, hours: radiusDriveHours })}
-              </span>
-              {errors.default_radius_km ? <span className="prefs-error">{errors.default_radius_km}</span> : null}
-            </label>
           </section>
 
-          <section className="panel prefs-card prefs-search-card prefs-search-card-timing">
+          <section className="panel prefs-card prefs-search-card prefs-search-card-timing prefs-search-card-essential">
             <div className="prefs-card-head">
               <PreferenceIcon path="M12 6v6l4 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" />
               <div>
@@ -428,38 +325,157 @@ export default function PreferenciasBusquedaPage() {
           </section>
         </div>
 
-        <section className="panel prefs-card prefs-search-card prefs-search-card-connectivity">
-          <div className="prefs-card-head">
-            <PreferenceIcon path="M2.5 12h7m5 0h7M9.5 9l3 3-3 3m5-6l3 3-3 3" />
-            <div>
-              <h2>{t("preferences.search.connectivityTitle")}</h2>
-              <p className="panel-note">{t("preferences.search.connectivityHint")}</p>
-            </div>
-          </div>
+        <details className="panel panel-soft prefs-advanced" open={false}>
+          <summary>
+            <span>Ajustes avanzados</span>
+            <span className="panel-note">Calendario, radio y conectividad secundaria.</span>
+          </summary>
+          <div className="prefs-advanced-content">
+            <section className="panel prefs-card prefs-search-card prefs-search-card-connectivity">
+              <div className="prefs-card-head">
+                <PreferenceIcon path="M2.5 12h7m5 0h7M9.5 9l3 3-3 3m5-6l3 3-3 3" />
+                <div>
+                  <h2>{t("preferences.search.connectivityTitle")}</h2>
+                  <p className="panel-note">{t("preferences.search.connectivityHint")}</p>
+                </div>
+              </div>
 
-          <div className="field">
-            <span>{t("preferences.search.includeStops")}</span>
-            <span className="hint">{t("preferences.search.includeStopsHint")}</span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={pref.include_stops_default}
-              className={`prefs-toggle ${pref.include_stops_default ? "is-on" : ""}`}
-              onClick={() => updatePref("include_stops_default", !pref.include_stops_default)}
-            >
-              <span className="prefs-toggle-track" aria-hidden="true">
-                <span className="prefs-toggle-knob" />
-              </span>
-              <span className="prefs-toggle-text">
-                {pref.include_stops_default ? t("preferences.search.enabled") : t("preferences.search.disabled")}
-              </span>
-            </button>
-            <div className="panel panel-soft prefs-inline-callout prefs-search-inline-callout">
-              <strong>{t("preferences.search.connectivityCalloutTitle")}</strong>
-              <p className="panel-note">{t("preferences.search.connectivityCalloutBody")}</p>
-            </div>
+              <div className="field">
+                <span>{t("preferences.search.includeStops")}</span>
+                <span className="hint">{t("preferences.search.includeStopsHint")}</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={pref.include_stops_default}
+                  className={`prefs-toggle ${pref.include_stops_default ? "is-on" : ""}`}
+                  onClick={() => updatePref("include_stops_default", !pref.include_stops_default)}
+                >
+                  <span className="prefs-toggle-track" aria-hidden="true">
+                    <span className="prefs-toggle-knob" />
+                  </span>
+                  <span className="prefs-toggle-text">
+                    {pref.include_stops_default ? t("preferences.search.enabled") : t("preferences.search.disabled")}
+                  </span>
+                </button>
+                <div className="panel panel-soft prefs-inline-callout prefs-search-inline-callout">
+                  <strong>{t("preferences.search.connectivityCalloutTitle")}</strong>
+                  <p className="panel-note">{t("preferences.search.connectivityCalloutBody")}</p>
+                </div>
+              </div>
+
+              <label className="field" htmlFor="pref-radius">
+                {t("preferences.search.radiusLabel")}
+                <span className="hint">{t("preferences.search.radiusHint")}</span>
+                <div className="prefs-radius-row">
+                  <input
+                    id="pref-radius"
+                    type="range"
+                    min={SEARCH_PREF_MIN_RADIUS_KM}
+                    max={SEARCH_PREF_MAX_RADIUS_KM}
+                    step={5}
+                    value={Math.min(SEARCH_PREF_MAX_RADIUS_KM, Math.max(SEARCH_PREF_MIN_RADIUS_KM, pref.default_radius_km))}
+                    onChange={(event) => onRadiusChange(event.target.value)}
+                  />
+                  <input
+                    className="prefs-control"
+                    type="number"
+                    min={SEARCH_PREF_MIN_RADIUS_KM}
+                    max={SEARCH_PREF_MAX_RADIUS_KM}
+                    name="default_radius_km"
+                    autoComplete="off"
+                    value={pref.default_radius_km}
+                    onChange={(event) => onRadiusChange(event.target.value)}
+                  />
+                </div>
+                <span className="hint">
+                  {t("preferences.search.radiusSummary", { value: pref.default_radius_km, hours: radiusDriveHours })}
+                </span>
+                {errors.default_radius_km ? <span className="prefs-error">{errors.default_radius_km}</span> : null}
+              </label>
+            </section>
+
+            <section className="panel prefs-card prefs-search-card prefs-search-card-connectivity">
+              <div>
+                <h2>{t("preferences.search.countryHintMode")}</h2>
+                <p className="panel-note">{t("preferences.search.countryHintModeHint")}</p>
+              </div>
+
+              <label className="field" htmlFor="pref-country-hint-mode">
+                {t("preferences.search.countryHintMode")}
+                <span className="hint">{t("preferences.search.countryHintModeHint")}</span>
+                <select
+                  id="pref-country-hint-mode"
+                  className="prefs-control"
+                  value={pref.country_price_hint_mode_default || "min"}
+                  onChange={(event) => updatePref("country_price_hint_mode_default", event.target.value as Pref["country_price_hint_mode_default"])}
+                >
+                  <option value="min">{t("preferences.search.countryHintModeMin")}</option>
+                  <option value="median">{t("preferences.search.countryHintModeMedian")}</option>
+                  <option value="fixed_route">{t("preferences.search.countryHintModeFixedRoute")}</option>
+                </select>
+              </label>
+
+              <label className="field" htmlFor="pref-calendar-bucket-mode">
+                {t("preferences.search.calendarHintBucketMode")}
+                <span className="hint">{t("preferences.search.calendarHintBucketModeHint")}</span>
+                <select
+                  id="pref-calendar-bucket-mode"
+                  className="prefs-control"
+                  value={pref.calendar_hint_bucket_mode_default || "monthly_terciles"}
+                  onChange={(event) => updatePref("calendar_hint_bucket_mode_default", event.target.value as Pref["calendar_hint_bucket_mode_default"])}
+                >
+                  <option value="monthly_terciles">{t("preferences.search.calendarHintBucketModeMonthly")}</option>
+                  <option value="guidelines">{t("preferences.search.calendarHintBucketModeGuidelines")}</option>
+                </select>
+              </label>
+
+              {pref.calendar_hint_bucket_mode_default === "guidelines" ? (
+                <div className="field">
+                  <span>{t("preferences.search.calendarHintGuidelinesTitle")}</span>
+                  <div className="prefs-guideline-grid">
+                    <label className="field" htmlFor="pref-guideline-low">
+                      {t("preferences.search.calendarHintGuidelineLowLabel")}
+                      <input
+                        id="pref-guideline-low"
+                        className="prefs-control"
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={pref.calendar_hint_guideline_low_max_default}
+                        onChange={(event) => onGuidelineThresholdChange("calendar_hint_guideline_low_max_default", event.target.value)}
+                      />
+                      {errors.calendar_hint_guideline_low_max_default ? (
+                        <span className="prefs-error">{errors.calendar_hint_guideline_low_max_default}</span>
+                      ) : null}
+                    </label>
+                    <label className="field" htmlFor="pref-guideline-mid">
+                      {t("preferences.search.calendarHintGuidelineMidLabel")}
+                      <input
+                        id="pref-guideline-mid"
+                        className="prefs-control"
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={pref.calendar_hint_guideline_mid_max_default}
+                        onChange={(event) => onGuidelineThresholdChange("calendar_hint_guideline_mid_max_default", event.target.value)}
+                      />
+                      {errors.calendar_hint_guideline_mid_max_default ? (
+                        <span className="prefs-error">{errors.calendar_hint_guideline_mid_max_default}</span>
+                      ) : null}
+                    </label>
+                  </div>
+                  <span className="hint">
+                    {t("preferences.search.calendarHintGuidelinesHint", {
+                      low: pref.calendar_hint_guideline_low_max_default,
+                      mid: pref.calendar_hint_guideline_mid_max_default,
+                      currency: pref.preferred_currency || "EUR",
+                    })}
+                  </span>
+                </div>
+              ) : null}
+            </section>
           </div>
-        </section>
+        </details>
 
         <section className="panel panel-soft prefs-savebar">
           <div className="prefs-savebar-copy">

@@ -87,6 +87,12 @@ export default function HomePage() {
                 <h1>{t("public.landing.heroTitle")}</h1>
                 <p className="landing-claim">{t("public.landing.heroClaim")}</p>
                 <p className="landing-body">{t("public.landing.heroBody")}</p>
+                <ul className="landing-hero-points" aria-label={t("public.landing.heroPointsLabel")}>
+                  <li>{t("public.landing.heroPointQuickSearch")}</li>
+                  <li>{t("public.landing.heroPointWatchlists")}</li>
+                  <li>{t("public.landing.heroPointPulse")}</li>
+                  <li>{t("public.landing.heroPointAlerts")}</li>
+                </ul>
                 <div className="landing-cta-row">
                   <Link href="/login" className="btn-primary btn-layered">{t("public.landing.ctaEnter")}</Link>
                   <Link href="/register" className="btn-secondary">{t("public.landing.ctaCreate")}</Link>

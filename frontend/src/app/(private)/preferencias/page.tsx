@@ -1,10 +1,10 @@
 import Link from "next/link";
 
 const tabs = [
-  { id: "busqueda", label: "Búsqueda", href: "/preferencias/busqueda", desc: "Cómo quieres buscar por defecto." },
-  { id: "puerta-a-puerta", label: "Puerta a puerta", href: "/preferencias/puerta-a-puerta", desc: "Ubicación habitual para rutas completas." },
-  { id: "apariencia", label: "Apariencia", href: "/preferencias/apariencia", desc: "Tema, densidad y accesibilidad." },
-  { id: "region", label: "Idioma y región", href: "/preferencias/region", desc: "Idioma, moneda y formatos regionales." },
+  { id: "busqueda", label: "Búsqueda", href: "/preferencias/busqueda", desc: "Tu base para Búsqueda rápida." },
+  { id: "puerta-a-puerta", label: "Puerta a puerta", href: "/preferencias/puerta-a-puerta", desc: "Origen habitual." },
+  { id: "apariencia", label: "Apariencia", href: "/preferencias/apariencia", desc: "Tema y densidad." },
+  { id: "region", label: "Idioma y región", href: "/preferencias/region", desc: "Idioma, moneda y formatos." },
 ] as const;
 
 type SearchParamsShape = {
@@ -25,11 +25,11 @@ export default async function PreferenciasHubPage({ searchParams }: PageProps) {
       <div className="page-header">
         <div className="page-title">
           <h1>Preferencias</h1>
-          <p>Un único punto para ajustar búsqueda, apariencia y región.</p>
+          <p>Ajusta búsqueda, apariencia y región en un solo lugar.</p>
         </div>
       </div>
 
-      <section className="panel panel-soft stack">
+      <section className="panel panel-soft stack prefs-hub-tabs">
         <div className="row-actions" role="tablist" aria-label="Secciones de preferencias">
           {tabs.map((tab) => {
             const isActive = selected === tab.id;
@@ -47,18 +47,33 @@ export default async function PreferenciasHubPage({ searchParams }: PageProps) {
           })}
         </div>
 
-        <div className="stack">
-          {tabs.map((tab) => (
-            <article key={tab.id} className="panel panel-soft">
-              <div className="panel-header">
-                <h2>{tab.label}</h2>
-                <Link href={tab.href} className="btn-primary btn-compact">
-                  Abrir sección
-                </Link>
+        <div className="stack prefs-hub-stack">
+          <article className="panel prefs-hub-primary">
+            <div className="panel-header">
+              <div>
+                <p className="prefs-kicker">Base de búsqueda</p>
+                <h2>Búsqueda</h2>
               </div>
-              <p className="panel-note">{tab.desc}</p>
-            </article>
-          ))}
+              <Link href="/preferencias/busqueda" className="btn-primary btn-compact">
+                Abrir sección
+              </Link>
+            </div>
+            <p className="panel-note">Tu base para Búsqueda rápida.</p>
+          </article>
+
+          <div className="prefs-hub-secondary-grid">
+            {tabs.filter((tab) => tab.id !== "busqueda").map((tab) => (
+              <article key={tab.id} className="panel panel-soft prefs-hub-secondary">
+                <div className="panel-header">
+                  <h2>{tab.label}</h2>
+                  <Link href={tab.href} className="btn-ghost btn-compact">
+                    Abrir
+                  </Link>
+                </div>
+                <p className="panel-note">{tab.desc}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
     </main>
