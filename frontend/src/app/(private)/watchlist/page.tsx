@@ -135,8 +135,6 @@ export default function WatchlistPage() {
             selectedDestination={view.selectedDestination}
             selectedDates={view.selectedDates}
             selectedPoint={view.selectedPoint}
-            pointOptions={derived.pointOptions}
-            rangeWindow={view.rangeWindow}
             chartIsCompact={derived.chartIsCompact}
             chartHeight={derived.chartHeight}
             chartModel={derived.chartModel}
@@ -152,10 +150,6 @@ export default function WatchlistPage() {
             chartWidth={CHART_WIDTH}
             chartPad={CHART_PAD}
             onApplyFilters={actions.refreshFiltered}
-            onPointChange={view.setSelectedPoint}
-            onRangeChange={view.setRangeWindow}
-            onToggleRangeWindow={view.toggleRangeWindow}
-            onResetZoom={view.resetZoom}
             onChartMouseMove={hover.handleChartMove}
             onChartMouseLeave={hover.clearHover}
             onPrevMonth={view.prevMonth}

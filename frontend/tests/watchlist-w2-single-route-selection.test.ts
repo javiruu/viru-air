@@ -12,7 +12,7 @@ const FORBIDDEN_WATCHLIST_COPY = ["Back", "Flight Watchlist", "Add flight", "Qui
 test("W2: history panel uses selected route summary and removes editable route selectors", () => {
   const source = fs.readFileSync(HISTORY_PANEL, "utf8");
 
-  assert.match(source, /watchlist\.history\.selectedRouteLabel/);
+  assert.match(source, /history-route-line-text/);
   assert.match(source, /selectedWatch\.origin_iata/);
   assert.match(source, /selectedWatch\.destination_iata/);
   assert.match(source, /selectedWatch\.travel_date_local/);
@@ -21,11 +21,9 @@ test("W2: history panel uses selected route summary and removes editable route s
   assert.doesNotMatch(source, /name="history_destination"/);
   assert.doesNotMatch(source, /name="history_dates"/);
 
-  assert.match(source, /name="history_range"/);
-  assert.match(source, /name="history_point"/);
+  assert.doesNotMatch(source, /name="history_range"/);
+  assert.doesNotMatch(source, /name="history_point"/);
   assert.match(source, /watchlist\.history\.viewCalendar|watchlist\.history\.viewChart/);
-  assert.match(source, /watchlist\.history\.compactView/);
-  assert.match(source, /watchlist\.history\.resetZoom/);
 });
 
 test("W2: history panel shows empty state when no selected route", () => {

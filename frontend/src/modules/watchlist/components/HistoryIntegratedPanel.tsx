@@ -5,7 +5,6 @@ import { formatCurrency } from "@/modules/shared/format";
 import { formatDateTime } from "@/modules/watchlist/presentation";
 
 type ViewMode = "chart" | "calendar";
-type RangeWindow = "all" | "7" | "14" | "30" | "90";
 
 type SelectedWatch = {
   origin_iata: string;
@@ -13,11 +12,6 @@ type SelectedWatch = {
   travel_date_local: string;
   status: string;
 } | null;
-
-type PointOption = {
-  value: string;
-  label: string;
-};
 
 type ChartPoint = {
   capturedAt: string;
@@ -75,8 +69,6 @@ type HistoryIntegratedPanelProps = {
   selectedDestination: string;
   selectedDates: string[];
   selectedPoint: string;
-  pointOptions: PointOption[];
-  rangeWindow: RangeWindow;
   chartIsCompact: boolean;
   chartHeight: number;
   chartModel: ChartSerie[] | null;
@@ -92,10 +84,6 @@ type HistoryIntegratedPanelProps = {
   chartWidth: number;
   chartPad: { left: number; right: number; top: number; bottom: number };
   onApplyFilters: () => void;
-  onPointChange: (value: string) => void;
-  onRangeChange: (value: RangeWindow) => void;
-  onToggleRangeWindow: () => void;
-  onResetZoom: () => void;
   onChartMouseMove: (event: ReactMouseEvent<SVGSVGElement>) => void;
   onChartMouseLeave: () => void;
   onPrevMonth: () => void;
@@ -112,8 +100,6 @@ export function HistoryIntegratedPanel({
   selectedDestination,
   selectedDates,
   selectedPoint,
-  pointOptions,
-  rangeWindow,
   chartIsCompact,
   chartHeight,
   chartModel,
@@ -128,10 +114,6 @@ export function HistoryIntegratedPanel({
   chartWidth,
   chartPad,
   onApplyFilters,
-  onPointChange,
-  onRangeChange,
-  onToggleRangeWindow,
-  onResetZoom,
   onChartMouseMove,
   onChartMouseLeave,
   onPrevMonth,
@@ -227,86 +209,6 @@ export function HistoryIntegratedPanel({
         </div>
         {!canToggleCalendar ? <span className="history-helper">{t("watchlist.history.calendarUnavailableBody")}</span> : null}
 
-        <div className="filter-grid history-filters">
-          <div className="history-filter history-route-summary">
-            <span className="history-label">{t("watchlist.history.selectedRouteLabel")}</span>
-            <div className="history-input" aria-live="polite">
-              {selectedRouteValue}
-            </div>
-          </div>
-
-          <label className="history-filter history-point">
-            <span className="history-label">
-              <span className="history-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                  <path
-                    d="M4 17h16M5 14l4-4 3 3 6-6"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-              {t("watchlist.history.pointLabel")}
-            </span>
-            <select
-              className="history-input"
-              name="history_point"
-              autoComplete="off"
-              value={selectedPoint}
-              disabled={!hasSelectedWatch || selectedDates.length !== 1 || pointOptions.length === 0}
-              onChange={(e) => onPointChange(e.target.value)}
-            >
-              <option value="">{t("watchlist.history.pointPlaceholder")}</option>
-              {pointOptions.map((point) => <option key={point.value} value={point.value}>{point.label}</option>)}
-            </select>
-            <span className="history-helper">
-              {!hasSelectedWatch
-                ? t("watchlist.history.pointHelperSelectRoute")
-                : selectedDates.length !== 1
-                  ? t("watchlist.history.pointHelperSelectOneDate")
-                  : pointOptions.length === 0
-                    ? t("watchlist.history.pointHelperNoPoints")
-                    : t("watchlist.history.pointHelperReady")}
-            </span>
-          </label>
-          <div className="history-filter history-range-inline">
-            <span className="history-label">{t("watchlist.history.rangeTitle")}</span>
-            <div className="history-range-control">
-              <label className="history-range-field">
-                <select
-                  className="history-input"
-                  name="history_range"
-                  aria-label={t("watchlist.history.rangeLabel")}
-                  autoComplete="off"
-                  value={rangeWindow}
-                  onChange={(e) => onRangeChange(e.target.value as RangeWindow)}
-                >
-                  <option value="7">{t("watchlist.history.range7")}</option>
-                  <option value="14">{t("watchlist.history.range14")}</option>
-                  <option value="30">{t("watchlist.history.range30")}</option>
-                  <option value="90">{t("watchlist.history.range90")}</option>
-                  <option value="all">{t("watchlist.history.rangeAll")}</option>
-                </select>
-              </label>
-              <div className="history-range-actions">
-                <button
-                  className={`btn-ghost btn-layered ${rangeWindow === "all" ? "" : "is-active"}`}
-                  type="button"
-                  aria-pressed={rangeWindow !== "all"}
-                  onClick={onToggleRangeWindow}
-                >
-                  {rangeWindow === "all" ? t("watchlist.history.compactView") : t("watchlist.history.rangeAll")}
-                </button>
-                <button className="btn-ghost btn-layered" type="button" onClick={onResetZoom}>
-                  {t("watchlist.history.resetZoom")}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
       {isRefreshingHistory ? (
         <div className="history-refresh-indicator muted" role="status" aria-live="polite">
