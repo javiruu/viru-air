@@ -22,8 +22,19 @@ test("alerts page renders grouped and quiet hours pending event copies", () => {
   assert.match(source, /alerts\.history\.quietHoursPending/);
 });
 
+test("alerts page includes cockpit hero and cross-module flow links", () => {
+  const source = fs.readFileSync(ALERTS_PAGE, "utf8");
+  assert.match(source, /alerts\.hero\.title/);
+  assert.match(source, /alerts\.hero\.cards\.activeRules/);
+  assert.match(source, /alerts\.flow\.goWatchlist/);
+  assert.match(source, /alerts\.flow\.goQuickSearch/);
+  assert.match(source, /alerts\.flow\.goDashboard/);
+});
+
 test("spanish alerts copy includes grouped and quiet hours messaging", () => {
   const source = fs.readFileSync(ALERTS_I18N, "utf8");
   assert.match(source, /groupedLabel: "Agrupada"/);
   assert.match(source, /quietHoursPending: "Pendiente hasta que terminen tus horas tranquilas"/);
+  assert.match(source, /kicker: "Cabina de señales"/);
+  assert.match(source, /quietHoursSaved: "Horas tranquilas actualizadas\."/);
 });

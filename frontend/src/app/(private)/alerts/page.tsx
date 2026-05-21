@@ -1,15 +1,16 @@
 ﻿"use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
+import { useI18n } from "@/i18n";
 import { trackUxEvent } from "@/lib/uxTracking";
-import { apiFetch } from "@/modules/shared/api";
 import { getDeliveryStateCopy, getNotificationChannelCopy } from "@/modules/alerts/deliveryPresentation";
+import { apiFetch } from "@/modules/shared/api";
 import { formatCurrency, formatRelativeTime } from "@/modules/shared/format";
 import { getDeliveryStatusMeta, getWatchStatusMeta } from "@/modules/shared/statusCatalog";
-import { useI18n } from "@/i18n";
 
 type Watch = {
   id: string;
@@ -57,6 +58,7 @@ type QuietHoursPreference = {
 };
 
 type AlertSegment = "all" | "security" | "price";
+
 function formatEur(value: number, locale: string): string {
   return formatCurrency(value, "EUR", locale);
 }
@@ -65,6 +67,8 @@ export default function AlertsPage() {
   const router = useRouter();
   const { t, localeTag } = useI18n();
   const { notify } = useNotificationCenter();
+  const formRef = useRef<HTMLFormElement | null>(null);
+
   const [watches, setWatches] = useState<Watch[]>([]);
   const [selectedWatchId, setSelectedWatchId] = useState("");
   const [rules, setRules] = useState<AlertRule[]>([]);
@@ -81,6 +85,8 @@ export default function AlertsPage() {
   const [quietHoursEnabled, setQuietHoursEnabled] = useState(false);
   const [quietHoursStart, setQuietHoursStart] = useState("22:00");
   const [quietHoursEnd, setQuietHoursEnd] = useState("08:00");
+  const [thresholdFieldError, setThresholdFieldError] = useState<string | null>(null);
+  const [minChangeFieldError, setMinChangeFieldError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!message || status === "idle" || status === "sending") return;
@@ -99,7 +105,7 @@ export default function AlertsPage() {
       { value: "threshold_high", label: t("alerts.ruleNames.thresholdHigh") },
       { value: "every_change", label: t("alerts.ruleNames.everyChange") },
     ],
-    [t]
+    [t],
   );
 
   const categoryOptions = useMemo(
@@ -108,36 +114,48 @@ export default function AlertsPage() {
       { value: "security", label: t("alerts.categories.security") },
       { value: "price", label: t("alerts.categories.price") },
     ],
-    [t]
+    [t],
   );
 
   const quickPresets = useMemo(
     () => [
-      { id: "drop_10", label: t("alerts.presets.drop10"), apply: () => {
-        setRuleType("threshold_low");
-        setThresholdValue("40");
-        setCooldownMinutes(60);
-        setNotifyEveryChange(false);
-      } },
-      { id: "price_40", label: t("alerts.presets.price40"), apply: () => {
-        setRuleType("threshold_low");
-        setThresholdValue("40");
-        setCooldownMinutes(30);
-        setNotifyEveryChange(false);
-      } },
-      { id: "weekend", label: t("alerts.presets.weekend"), apply: () => {
-        setRuleType("every_change");
-        setThresholdValue("");
-        setCooldownMinutes(120);
-        setNotifyEveryChange(true);
-      } },
+      {
+        id: "drop_10",
+        label: t("alerts.presets.drop10"),
+        apply: () => {
+          setRuleType("threshold_low");
+          setThresholdValue("40");
+          setCooldownMinutes(60);
+          setNotifyEveryChange(false);
+        },
+      },
+      {
+        id: "price_40",
+        label: t("alerts.presets.price40"),
+        apply: () => {
+          setRuleType("threshold_low");
+          setThresholdValue("40");
+          setCooldownMinutes(30);
+          setNotifyEveryChange(false);
+        },
+      },
+      {
+        id: "weekend",
+        label: t("alerts.presets.weekend"),
+        apply: () => {
+          setRuleType("every_change");
+          setThresholdValue("");
+          setCooldownMinutes(120);
+          setNotifyEveryChange(true);
+        },
+      },
     ],
     [t],
   );
 
   const ruleLabel = useCallback(
     (value: string) => ruleOptions.find((rule) => rule.value === value)?.label || value,
-    [ruleOptions]
+    [ruleOptions],
   );
 
   useEffect(() => {
@@ -148,7 +166,11 @@ export default function AlertsPage() {
           setSelectedWatchId(rows[0].id);
         }
       })
-      .catch(() => setMessage(t("alerts.messages.watchlistLoadError")));
+      .catch(() => {
+        setStatus("error");
+        setMessage(t("alerts.messages.watchlistLoadError"));
+      });
+
     apiFetch<QuietHoursPreference>("/preferences")
       .then((prefs) => {
         setQuietHoursEnabled(Boolean(prefs.quiet_hours_enabled));
@@ -164,6 +186,7 @@ export default function AlertsPage() {
       setEvents([]);
       return;
     }
+
     Promise.all([
       apiFetch<AlertRule[]>(`/alerts/rules?watch_id=${selectedWatchId}`),
       apiFetch<AlertEvent[]>(`/alerts/events?watch_id=${selectedWatchId}&limit=50`),
@@ -172,7 +195,10 @@ export default function AlertsPage() {
         setRules(ruleRows);
         setEvents(eventRows);
       })
-      .catch(() => setMessage(t("alerts.messages.rulesLoadError")));
+      .catch(() => {
+        setStatus("error");
+        setMessage(t("alerts.messages.rulesLoadError"));
+      });
   }, [selectedWatchId, t]);
 
   const selectedWatch = useMemo(
@@ -180,39 +206,102 @@ export default function AlertsPage() {
     [watches, selectedWatchId],
   );
 
+  const summary = useMemo(() => {
+    const active = rules.filter((rule) => rule.enabled).length;
+    const paused = Math.max(0, rules.length - active);
+    const queued = events.filter((eventItem) => (eventItem.delivery_status || "").toLowerCase() === "queued").length;
+    const delivered = events.filter((eventItem) => {
+      const normalized = (eventItem.delivery_status || "").toLowerCase();
+      return normalized === "delivered" || normalized === "sent";
+    }).length;
+    const failed = events.filter((eventItem) => {
+      const normalized = (eventItem.delivery_status || "").toLowerCase();
+      return normalized === "failed" || normalized === "error";
+    }).length;
+
+    return {
+      active,
+      paused,
+      queued,
+      delivered,
+      failed,
+      hasSignal: events.length > 0 || rules.length > 0,
+      lastEvaluation: events[0]?.created_at ?? null,
+    };
+  }, [events, rules]);
+
   const previewText = useMemo(() => {
     if (!selectedWatch) return t("alerts.form.previewSelectFlight");
-    if (ruleType === "every_change") {
-      return t("alerts.form.previewEveryChange");
-    }
-    if (!thresholdValue) {
-      return t("alerts.form.previewDefineThreshold");
-    }
+    if (ruleType === "every_change") return t("alerts.form.previewEveryChange");
+    if (!thresholdValue) return t("alerts.form.previewDefineThreshold");
+
     const amount = Number(thresholdValue);
     if (Number.isNaN(amount)) return t("alerts.form.previewInvalidThreshold");
+
     return ruleType === "threshold_low"
       ? t("alerts.form.previewThresholdLow", { value: formatEur(amount, localeTag) })
       : t("alerts.form.previewThresholdHigh", { value: formatEur(amount, localeTag) });
-  }, [localeTag, ruleType, selectedWatch, thresholdValue, t]);
+  }, [localeTag, ruleType, selectedWatch, t, thresholdValue]);
 
-  const deliveryCopy = useCallback((status: string) => getDeliveryStateCopy(status, t), [t]);
+  const filteredRules = useMemo(() => {
+    if (segmentFilter === "all") return rules;
+    if (segmentFilter === "security") return rules.filter((rule) => rule.rule_type === "every_change");
+    return rules.filter((rule) => rule.rule_type === "threshold_low" || rule.rule_type === "threshold_high");
+  }, [rules, segmentFilter]);
+
+  const deliveryCopy = useCallback((deliveryStatus: string) => getDeliveryStateCopy(deliveryStatus, t), [t]);
   const channelCopy = useCallback((channel: string) => getNotificationChannelCopy(channel, t), [t]);
+
+  function focusRuleForm() {
+    if (!formRef.current) return;
+    formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    const firstInput = formRef.current.querySelector("select, input");
+    if (firstInput instanceof HTMLElement) firstInput.focus();
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
+    setThresholdFieldError(null);
+    setMinChangeFieldError(null);
+
     if (!selectedWatchId) {
       setStatus("error");
       setMessage(t("alerts.messages.selectFlight"));
       return;
     }
-    if (ruleType !== "every_change" && !thresholdValue) {
+
+    if (ruleType !== "every_change" && !thresholdValue.trim()) {
+      const text = t("alerts.messages.defineThreshold");
       setStatus("error");
-      setMessage(t("alerts.messages.defineThreshold"));
+      setMessage(text);
+      setThresholdFieldError(text);
       return;
     }
+
+    if (ruleType !== "every_change") {
+      const thresholdNumber = Number(thresholdValue);
+      if (Number.isNaN(thresholdNumber) || thresholdNumber <= 0) {
+        const text = t("alerts.messages.invalidThreshold");
+        setStatus("error");
+        setMessage(text);
+        setThresholdFieldError(text);
+        return;
+      }
+    }
+
+    if (minChangePct.trim()) {
+      const minChangeNumber = Number(minChangePct);
+      if (Number.isNaN(minChangeNumber) || minChangeNumber < 0) {
+        const text = t("alerts.messages.invalidMinChange");
+        setStatus("error");
+        setMessage(text);
+        setMinChangeFieldError(text);
+        return;
+      }
+    }
+
     try {
       setStatus("sending");
-      setMessage("");
       await apiFetch("/alerts/rules", {
         method: "POST",
         body: JSON.stringify({
@@ -224,6 +313,7 @@ export default function AlertsPage() {
           cooldown_minutes: cooldownMinutes,
         }),
       });
+
       const [updatedRules, updatedEvents] = await Promise.all([
         apiFetch<AlertRule[]>(`/alerts/rules?watch_id=${selectedWatchId}`),
         apiFetch<AlertEvent[]>(`/alerts/events?watch_id=${selectedWatchId}&limit=50`),
@@ -242,14 +332,6 @@ export default function AlertsPage() {
     }
   }
 
-  const filteredRules = useMemo(() => {
-    if (segmentFilter === "all") return rules;
-    if (segmentFilter === "security") {
-      return rules.filter((rule) => rule.rule_type === "every_change");
-    }
-    return rules.filter((rule) => rule.rule_type === "threshold_low" || rule.rule_type === "threshold_high");
-  }, [segmentFilter, rules]);
-
   async function toggleRule(rule: AlertRule) {
     try {
       await apiFetch(`/alerts/rules/${rule.id}`, {
@@ -262,14 +344,15 @@ export default function AlertsPage() {
       const updated = await apiFetch<AlertRule[]>(`/alerts/rules?watch_id=${selectedWatchId}`);
       setRules(updated);
     } catch {
-      setMessage(t("alerts.messages.ruleUpdateError"));
       setStatus("error");
+      setMessage(t("alerts.messages.ruleUpdateError"));
     }
   }
 
   async function removeRule(rule: AlertRule) {
     const confirmed = window.confirm(t("alerts.messages.confirmDelete"));
     if (!confirmed) return;
+
     try {
       await apiFetch(`/alerts/rules/${rule.id}`, { method: "DELETE" });
       const updated = await apiFetch<AlertRule[]>(`/alerts/rules?watch_id=${selectedWatchId}`);
@@ -277,13 +360,14 @@ export default function AlertsPage() {
       setStatus("success");
       setMessage(t("alerts.messages.ruleDeleted"));
     } catch {
-      setMessage(t("alerts.messages.ruleDeleteError"));
       setStatus("error");
+      setMessage(t("alerts.messages.ruleDeleteError"));
     }
   }
 
   async function evaluateNow() {
     if (!selectedWatchId) return;
+
     try {
       setIsEvaluating(true);
       await apiFetch("/alerts/evaluate", {
@@ -293,15 +377,17 @@ export default function AlertsPage() {
       const previousEventCount = events.length;
       const updatedEvents = await apiFetch<AlertEvent[]>(`/alerts/events?watch_id=${selectedWatchId}&limit=50`);
       setEvents(updatedEvents);
+
       const triggeredCount = Math.max(0, updatedEvents.length - previousEventCount);
       if (triggeredCount > 0) {
         void trackUxEvent("alert_triggered", { count: triggeredCount });
       }
-      setMessage(t("alerts.messages.evaluationComplete"));
+
       setStatus("success");
+      setMessage(t("alerts.messages.evaluationComplete"));
     } catch {
-      setMessage(t("alerts.messages.evaluationError"));
       setStatus("error");
+      setMessage(t("alerts.messages.evaluationError"));
     } finally {
       setIsEvaluating(false);
     }
@@ -321,7 +407,7 @@ export default function AlertsPage() {
         }),
       });
       setStatus("success");
-      setMessage(t("alerts.messages.evaluationComplete"));
+      setMessage(t("alerts.messages.quietHoursSaved"));
     } catch {
       setStatus("error");
       setMessage(t("alerts.messages.ruleUpdateError"));
@@ -340,7 +426,71 @@ export default function AlertsPage() {
         </div>
       </div>
 
-      <section className="panel panel-soft stack">
+      <section className="panel panel-soft stack alerts-hero">
+        <div className="alerts-hero-top">
+          <div>
+            <span className="alerts-kicker">{t("alerts.hero.kicker")}</span>
+            <h2 className="panel-title">{t("alerts.hero.title")}</h2>
+            <p className="panel-note">{t("alerts.hero.subtitle")}</p>
+          </div>
+          <div className="alerts-hero-actions">
+            <button className="btn-primary" type="button" onClick={evaluateNow} disabled={isEvaluating}>
+              {isEvaluating ? t("alerts.form.buttonEvaluating") : t("alerts.form.buttonSimulate")}
+            </button>
+            <button className="btn-secondary" type="button" onClick={focusRuleForm}>
+              {t("alerts.hero.createRule")}
+            </button>
+            <button className="btn-ghost" type="button" onClick={() => router.push("/dashboard")}>
+              {t("alerts.hero.backToDashboard")}
+            </button>
+          </div>
+        </div>
+
+        <div className="alerts-hero-grid">
+          <article className="alerts-metric-card">
+            <span>{t("alerts.hero.cards.activeRules")}</span>
+            <strong>{summary.active}</strong>
+            <small>{t("alerts.hero.cards.pausedRules", { count: summary.paused })}</small>
+          </article>
+          <article className="alerts-metric-card">
+            <span>{t("alerts.hero.cards.deliveryHealth")}</span>
+            <strong>{summary.delivered}</strong>
+            <small>{t("alerts.hero.cards.pendingAndFailed", { pending: summary.queued, failed: summary.failed })}</small>
+          </article>
+          <article className="alerts-metric-card">
+            <span>{t("alerts.hero.cards.lastEvaluation")}</span>
+            <strong>
+              {summary.lastEvaluation
+                ? formatRelativeTime(summary.lastEvaluation, localeTag)
+                : t("alerts.hero.cards.noData")}
+            </strong>
+            <small>{t("alerts.hero.cards.lastEvaluationHint")}</small>
+          </article>
+        </div>
+
+        <div className="alerts-flow-links">
+          {watches.length === 0 ? (
+            <>
+              <p className="panel-note">{t("alerts.flow.emptyWatchlistHint")}</p>
+              <Link href="/watchlist" className="btn-ghost btn-compact">{t("alerts.flow.goWatchlist")}</Link>
+              <Link href="/quick-search" className="btn-ghost btn-compact">{t("alerts.flow.goQuickSearch")}</Link>
+            </>
+          ) : !summary.hasSignal ? (
+            <>
+              <p className="panel-note">{t("alerts.flow.noSignalHint")}</p>
+              <Link href="/watchlist" className="btn-ghost btn-compact">{t("alerts.flow.goWatchlist")}</Link>
+              <Link href="/quick-search" className="btn-ghost btn-compact">{t("alerts.flow.goQuickSearch")}</Link>
+            </>
+          ) : (
+            <>
+              <p className="panel-note">{t("alerts.flow.hasSignalHint")}</p>
+              <Link href="/dashboard" className="btn-ghost btn-compact">{t("alerts.flow.goDashboard")}</Link>
+            </>
+          )}
+        </div>
+      </section>
+
+      <section className="panel panel-soft stack section-gap">
         <div className="row-between">
           <h2 className="panel-title">{t("alerts.form.quietHoursTitle")}</h2>
         </div>
@@ -373,7 +523,7 @@ export default function AlertsPage() {
         <p className="panel-note">{t("alerts.form.quietHoursHelp")}</p>
       </section>
 
-      <section className="panel panel-soft stack">
+      <section className="panel panel-soft stack section-gap">
         <div className="row-between">
           <div>
             <h2 className="panel-title">{t("alerts.form.title")}</h2>
@@ -381,12 +531,12 @@ export default function AlertsPage() {
           </div>
           {selectedWatch ? (
             <span className="alert-chip">
-              {selectedWatch.origin_iata} {" → "} {selectedWatch.destination_iata} · {selectedWatch.travel_date_local}
+              {selectedWatch.origin_iata} {" ? "} {selectedWatch.destination_iata} · {selectedWatch.travel_date_local}
             </span>
           ) : null}
         </div>
 
-        <form className="alert-form" onSubmit={onSubmit}>
+        <form ref={formRef} className="alert-form" onSubmit={onSubmit}>
           <div className="alert-preview">
             <strong>{t("alerts.presets.title")}</strong>
             <div className="alert-actions">
@@ -397,6 +547,7 @@ export default function AlertsPage() {
               ))}
             </div>
           </div>
+
           <label className="field">
             {t("alerts.form.flight")}
             <select
@@ -406,9 +557,9 @@ export default function AlertsPage() {
               onChange={(e) => setSelectedWatchId(e.target.value)}
             >
               <option value="">{t("alerts.form.watchDefault")}</option>
-              {watches.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.origin_iata} {" → "} {w.destination_iata} ({w.travel_date_local})
+              {watches.map((watch) => (
+                <option key={watch.id} value={watch.id}>
+                  {watch.origin_iata} {" ? "} {watch.destination_iata} ({watch.travel_date_local})
                 </option>
               ))}
             </select>
@@ -436,6 +587,7 @@ export default function AlertsPage() {
                 onChange={(e) => setThresholdValue(e.target.value)}
                 placeholder={t("alerts.form.placeholder")}
               />
+              {thresholdFieldError ? <small className="prefs-error">{thresholdFieldError}</small> : null}
             </label>
           ) : null}
 
@@ -465,6 +617,7 @@ export default function AlertsPage() {
               onChange={(e) => setMinChangePct(e.target.value)}
               placeholder={t("alerts.form.minChangePctPlaceholder")}
             />
+            {minChangeFieldError ? <small className="prefs-error">{minChangeFieldError}</small> : null}
             <small className="panel-note">{t("alerts.form.minChangePctHelp")}</small>
           </label>
 
@@ -498,7 +651,7 @@ export default function AlertsPage() {
             <button className="btn-primary" type="submit" disabled={status === "sending"}>
               {status === "sending" ? t("alerts.form.buttonSaving") : t("alerts.form.buttonSave")}
             </button>
-            <button className="btn-ghost" type="button" onClick={evaluateNow} disabled={isEvaluating}>
+            <button className="btn-secondary" type="button" onClick={evaluateNow} disabled={isEvaluating}>
               {isEvaluating ? t("alerts.form.buttonEvaluating") : t("alerts.form.buttonSimulate")}
             </button>
             <span className="panel-note">{t("alerts.note.description")}</span>
@@ -511,21 +664,24 @@ export default function AlertsPage() {
           <h2 className="panel-title">{t("alerts.list.title")}</h2>
           <span className="panel-note">{t("alerts.list.count", { count: filteredRules.length })}</span>
         </div>
-        <label className="field">
-          {t("alerts.form.category")}
-          <select
-            name="category_filter"
-            autoComplete="off"
-            value={segmentFilter}
-            onChange={(event) => setSegmentFilter(event.target.value as AlertSegment)}
-          >
-            {categoryOptions.map((option) => (
-              <option key={option.value} value={option.value}>
+
+        <div className="alerts-segment-toolbar" role="tablist" aria-label={t("alerts.form.category")}>
+          {categoryOptions.map((option) => {
+            const isActive = option.value === segmentFilter;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                className={`btn-ghost btn-compact alerts-segment-btn ${isActive ? "is-active" : ""}`}
+                onClick={() => setSegmentFilter(option.value as AlertSegment)}
+                aria-pressed={isActive}
+              >
                 {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+              </button>
+            );
+          })}
+        </div>
+
         {filteredRules.length === 0 ? (
           <p className="panel-note">
             {segmentFilter === "all" ? t("alerts.list.emptyAll") : t("alerts.list.emptySegment")}
@@ -534,33 +690,32 @@ export default function AlertsPage() {
           filteredRules.map((rule) => {
             const watchStatus = getWatchStatusMeta(rule.enabled ? "active" : "paused", t);
             const thresholdText =
-              rule.rule_type !== "every_change" && rule.threshold_value
+              rule.rule_type !== "every_change" && rule.threshold_value != null
                 ? t("alerts.row.threshold", { value: formatEur(Number(rule.threshold_value), localeTag) })
                 : "";
             const minChangeText =
               rule.min_change_pct != null
                 ? t("alerts.row.minChange", { value: rule.min_change_pct })
                 : "";
+
             return (
               <div className="list-row alert-row" key={rule.id}>
                 <div>
                   <strong>{ruleLabel(rule.rule_type)}</strong>
-                  <div className="panel-note">
-                    {thresholdText}
-                    {minChangeText}
-                    {t("alerts.row.cooldown", { value: rule.cooldown_minutes })}
+                  <div className="panel-note alerts-rule-meta">
+                    {thresholdText ? <span>{thresholdText}</span> : null}
+                    {minChangeText ? <span>{minChangeText}</span> : null}
+                    <span>{t("alerts.row.cooldown", { value: rule.cooldown_minutes })}</span>
                   </div>
                 </div>
                 <div className="alert-actions">
-                  <button className="btn-ghost" type="button" onClick={() => toggleRule(rule)}>
+                  <button className="btn-secondary btn-compact" type="button" onClick={() => toggleRule(rule)}>
                     {rule.enabled ? t("alerts.row.actions.pause") : t("alerts.row.actions.activate")}
                   </button>
-                  <button className="btn-ghost" type="button" onClick={() => removeRule(rule)}>
+                  <button className="btn-danger btn-compact" type="button" onClick={() => removeRule(rule)}>
                     {t("alerts.row.actions.delete")}
                   </button>
-                  <span className={`status-pill ${watchStatus.tone}`}>
-                    {watchStatus.label}
-                  </span>
+                  <span className={`status-pill ${watchStatus.tone}`}>{watchStatus.label}</span>
                 </div>
               </div>
             );
@@ -573,11 +728,16 @@ export default function AlertsPage() {
           <div>
             <h2 className="panel-title">{t("alerts.history.title")}</h2>
             <p className="panel-note">
-              Última evaluación de alertas: {events[0]?.created_at ? formatRelativeTime(events[0].created_at, localeTag) : "sin datos"}
+              {t("alerts.history.lastEvaluation", {
+                value: events[0]?.created_at
+                  ? formatRelativeTime(events[0].created_at, localeTag)
+                  : t("alerts.hero.cards.noData"),
+              })}
             </p>
           </div>
           <span className="panel-note">{t("alerts.history.count", { count: events.length })}</span>
         </div>
+
         {events.length === 0 ? (
           <p className="panel-note">{t("alerts.history.empty")}</p>
         ) : (
@@ -586,7 +746,7 @@ export default function AlertsPage() {
             return (
               <div key={eventItem.id} className="list-row alert-event">
                 <div className="alert-event-main">
-                  <strong>{eventItem.origin_iata} {" → "} {eventItem.destination_iata}</strong>
+                  <strong>{eventItem.origin_iata} {" ? "} {eventItem.destination_iata}</strong>
                   <div className="panel-note">
                     {t("alerts.history.timeLabel", {
                       date: eventItem.travel_date_local,
@@ -609,16 +769,14 @@ export default function AlertsPage() {
                   {eventItem.delivery_status === "queued" && eventItem.last_error === "quiet_hours_active" ? (
                     <span className="panel-note">{t("alerts.history.quietHoursPending")}</span>
                   ) : null}
-                  <span className={`status-pill ${delivery.tone}`}>
-                    {delivery.label}
-                  </span>
+                  <span className={`status-pill ${delivery.tone}`}>{delivery.label}</span>
                 </div>
               </div>
             );
           })
         )}
       </section>
-
     </main>
   );
 }
+
