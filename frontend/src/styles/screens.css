@@ -4614,7 +4614,6 @@ h1 {
 
 @media (prefers-reduced-motion: reduce) {
   .watch-row,
-  .compare-tab,
   .compare-option,
   .history-filter {
     transition: none;
@@ -4842,38 +4841,6 @@ h1 {
 
 .compare-multi-panel {
   position: relative;
-}
-
-.compare-tabs {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 0.2rem;
-  margin: 0.55rem 0 0.8rem;
-  background: color-mix(in srgb, var(--surface) 90%, transparent);
-}
-
-.compare-tab {
-  border: 0;
-  border-radius: 999px;
-  padding: 0.35rem 0.72rem;
-  background: transparent;
-  color: var(--ink-muted);
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.compare-tab.is-active {
-  background: color-mix(in srgb, var(--accent-2) 18%, var(--surface));
-  color: var(--ink);
-}
-
-.compare-tab:focus-visible {
-  outline: 2px solid var(--border-focus);
-  outline-offset: 1px;
 }
 
 .compare-panel-body {
