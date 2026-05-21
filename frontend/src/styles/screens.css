@@ -3526,8 +3526,8 @@ h1 {
 .history-detail-empty {
   padding: 0.7rem 0.85rem;
   border-radius: 14px;
-  border: 1px dashed rgba(217, 205, 187, 0.7);
-  background: rgba(255, 250, 244, 0.7);
+  border: 1px dashed color-mix(in srgb, var(--border) 74%, transparent);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
   font-size: 0.85rem;
   color: var(--ink-muted);
 }
@@ -3571,8 +3571,8 @@ h1 {
   margin-top: 0.7rem;
   padding: 0.72rem 0.85rem;
   border-radius: 12px;
-  border: 1px dashed rgba(217, 205, 187, 0.7);
-  background: rgba(255, 250, 244, 0.62);
+  border: 1px dashed color-mix(in srgb, var(--border) 74%, transparent);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
   color: var(--ink-muted);
 }
 .history-compact-note strong {
@@ -3800,6 +3800,18 @@ h1 {
 .watch-map-popup p {
   margin: 0;
   font-size: 0.82rem;
+}
+
+.maplibregl-popup-content {
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--border) 74%, transparent);
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  color: var(--ink);
+  box-shadow: 0 16px 30px color-mix(in srgb, var(--shadow-strong) 22%, transparent);
+}
+
+.maplibregl-popup-tip {
+  border-top-color: color-mix(in srgb, var(--surface) 96%, transparent) !important;
 }
 
 .watch-map-empty-state {
@@ -4726,8 +4738,8 @@ h1 {
   gap: 0.8rem;
   padding: 0.8rem;
   border-radius: 14px;
-  border: 1px dashed rgba(217, 205, 187, 0.7);
-  background: rgba(255, 250, 244, 0.6);
+  border: 1px dashed color-mix(in srgb, var(--border) 78%, transparent);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
 }
 
 .watch-empty-search {
@@ -4739,8 +4751,8 @@ h1 {
   flex-wrap: wrap;
   padding: 0.7rem 0.8rem;
   border-radius: 12px;
-  border: 1px dashed rgba(121, 106, 88, 0.35);
-  background: rgba(255, 250, 244, 0.62);
+  border: 1px dashed color-mix(in srgb, var(--border) 72%, transparent);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
   color: var(--ink-muted);
 }
 
@@ -4765,7 +4777,12 @@ h1 {
 }
 
 .compare-panel {
-  background: linear-gradient(150deg, rgba(255, 250, 244, 0.9), rgba(243, 239, 232, 0.85));
+  background:
+    linear-gradient(
+      150deg,
+      color-mix(in srgb, var(--surface) 92%, transparent),
+      color-mix(in srgb, var(--surface-2) 82%, transparent)
+    );
   box-shadow: 0 12px 24px color-mix(in srgb, var(--shadow-strong) 10%, transparent);
 }
 
@@ -4960,6 +4977,154 @@ h1 {
 .compare-card--multi {
   display: grid;
   gap: 0.6rem;
+}
+
+.compare-chart {
+  display: grid;
+  gap: 0.48rem;
+  border: 1px solid color-mix(in srgb, var(--border) 74%, transparent);
+  border-radius: 12px;
+  background:
+    linear-gradient(150deg, color-mix(in srgb, var(--history-wash-1) 62%, transparent), transparent),
+    color-mix(in srgb, var(--surface) 94%, transparent);
+  padding: 0.5rem 0.56rem 0.54rem;
+}
+
+.compare-chart-frame {
+  width: 100%;
+  overflow: hidden;
+}
+
+.compare-chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.compare-chart-grid {
+  stroke: color-mix(in srgb, var(--history-grid) 84%, transparent);
+  stroke-width: 1;
+}
+
+.compare-chart-line {
+  stroke-width: 2;
+  opacity: 0.36;
+  transition: opacity 0.2s ease, stroke-width 0.2s ease;
+}
+
+.compare-chart-line.is-current {
+  stroke-width: 2.7;
+  opacity: 0.98;
+}
+
+.compare-chart-endpoint {
+  opacity: 0.72;
+  stroke: color-mix(in srgb, var(--surface) 86%, var(--panel-bg));
+  stroke-width: 1.25;
+}
+
+.compare-chart-endpoint--last {
+  opacity: 1;
+}
+
+.compare-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.32rem 0.45rem;
+  align-items: center;
+}
+
+.compare-chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.33rem;
+  padding: 0.14rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+  color: var(--ink-muted);
+  font-size: 0.68rem;
+  line-height: 1.2;
+}
+
+.compare-chart-legend-item i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex: 0 0 8px;
+}
+
+.compare-chart-legend-item.is-current {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--accent-2) 38%, var(--border));
+  background: color-mix(in srgb, var(--accent-2) 13%, var(--surface));
+}
+
+.compare-chart-empty {
+  margin: 0;
+  padding: 0.25rem 0.12rem;
+}
+
+/* Nuevo bloque para el Chart Global y Hover */
+.compare-chart--global {
+  margin-bottom: 1.25rem;
+  padding: 1.2rem;
+  border-radius: 16px;
+  box-shadow: 0 16px 32px var(--shadow);
+}
+
+.compare-chart--global .compare-chart-svg {
+  min-height: 200px;
+}
+
+.compare-chart--global .compare-chart-legend-item {
+  font-size: 0.82rem;
+  padding: 0.35rem 0.75rem;
+  cursor: default;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+/* Modificamos el estado base para que destaque si no hay hover */
+.compare-chart-line {
+  stroke-width: 2.2;
+  opacity: 0.85;
+  transition: opacity 0.25s ease, stroke-width 0.25s ease;
+}
+
+/* Estados de Hover para las lineas */
+.compare-chart-line.is-focused {
+  stroke-width: 3.2;
+  opacity: 1;
+}
+
+.compare-chart-line.is-muted,
+.compare-chart-endpoint.is-muted {
+  opacity: 0.15;
+}
+
+/* Interaccion con las tarjetas */
+.compare-card--multi.is-hovered {
+  border-color: rgba(46, 110, 98, 0.45);
+  box-shadow: 0 16px 28px var(--shadow);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 680px) {
+  .compare-chart {
+    padding: 0.46rem 0.48rem 0.5rem;
+  }
+
+  .compare-chart-line {
+    stroke-width: 1.75;
+  }
+
+  .compare-chart-line.is-current {
+    stroke-width: 2.45;
+  }
+
+  .compare-chart-legend-item {
+    font-size: 0.65rem;
+  }
 }
 
 .compare-badges {
@@ -5764,10 +5929,10 @@ h1 {
 
 .history-disclaimer {
   margin-top: 0.75rem;
-  border: 1px dashed rgba(217, 205, 187, 0.65);
+  border: 1px dashed color-mix(in srgb, var(--border) 72%, transparent);
   border-radius: 12px;
   padding: 0.5rem 0.7rem;
-  background: rgba(255, 250, 244, 0.6);
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
   font-size: 0.82rem;
   color: var(--ink-muted);
 }
@@ -5790,7 +5955,7 @@ h1 {
 }
 
 .history-disclaimer[open] summary::after {
-  content: "â€“";
+  content: "-";
 }
 
 .history-disclaimer p {
@@ -5799,7 +5964,7 @@ h1 {
 
 .history-calendar {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.65), transparent),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 80%, transparent), transparent),
     var(--panel-bg);
   box-shadow: 0 18px 36px var(--shadow);
 }
@@ -5880,7 +6045,7 @@ h1 {
   min-height: 160px;
 }
 
-n/* ── Watchlist — visual hierarchy ── */
+/* ── Watchlist — visual hierarchy ── */
 
 /* Level 2: detail panel — softer border */
 .watch-detail-panel {
@@ -11618,6 +11783,22 @@ textarea::placeholder {
   border-radius: 9px;
   font-size: 0.82rem;
   gap: 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--border) 74%, transparent);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  color: var(--ink);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--shadow) 35%, transparent);
+}
+
+.history-filter-apply:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 46%, var(--border));
+  background: color-mix(in srgb, var(--surface-2) 90%, transparent);
+}
+
+.history-filter-apply:disabled {
+  border-color: color-mix(in srgb, var(--border) 68%, transparent);
+  background: color-mix(in srgb, var(--surface-2) 82%, transparent);
+  color: var(--ink-muted);
+  box-shadow: none;
 }
 
 .notice-success {
@@ -18238,4 +18419,45 @@ textarea::placeholder {
   .d2d-loading-radar span {
     animation: none;
   }
+}
+
+/* Watchlist history visual refresh aligned with compare chart */
+.history-chart {
+  position: relative;
+  background:
+    linear-gradient(150deg, color-mix(in srgb, var(--history-wash-1) 62%, transparent), transparent),
+    color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 20px 38px var(--shadow);
+  border: 1px solid rgba(217, 203, 187, 0.7);
+  border-radius: 16px;
+  padding: 1rem 1.1rem 1.15rem;
+}
+
+.history-svg line[stroke="var(--color-border-strong)"] {
+  stroke: color-mix(in srgb, var(--history-grid) 84%, transparent);
+  stroke-width: 0.8;
+}
+
+.history-line,
+.history-svg polyline {
+  fill: none;
+  stroke: var(--accent-2);
+  stroke-width: 2.2;
+  stroke-linejoin: round;
+}
+
+.history-dot,
+.history-svg circle:not(.compare-chart-endpoint) {
+  fill: var(--accent);
+  opacity: 0.85;
+  transition: r 0.12s ease, opacity 0.12s ease;
+  stroke: var(--surface);
+  stroke-width: 1.5;
+}
+
+.history-tooltip {
+  z-index: 50;
+  box-shadow: 0 14px 28px rgba(31, 29, 26, 0.16);
+  border: 1px solid color-mix(in srgb, var(--border) 80%, white 20%);
+  background: color-mix(in srgb, var(--surface) 96%, white 4%);
 }
