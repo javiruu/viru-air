@@ -104,7 +104,7 @@ export default function PreferenciasAparienciaPage() {
         </div>
       </div>
 
-      <section className="panel">
+      <section className="panel prefs-priority-block">
         <div className="panel-header">
           <h2>{t("preferences.appearance.themeLabel")}</h2>
           <span className="muted">{t("preferences.appearance.themeHint")}</span>
@@ -125,7 +125,7 @@ export default function PreferenciasAparienciaPage() {
         </div>
       </section>
 
-      <section className="panel">
+      <section className="panel panel-soft prefs-secondary-block">
         <div className="panel-header">
           <h2>{t("preferences.appearance.densityLabel")}</h2>
           <span className="muted">{t("preferences.appearance.densityHint")}</span>
@@ -146,12 +146,12 @@ export default function PreferenciasAparienciaPage() {
         </div>
       </section>
 
-      <section className="panel panel-soft">
-        <div className="panel-header">
-          <h2>{t("preferences.appearance.accessibilityTitle")}</h2>
-          <span className="muted">{t("preferences.appearance.accessibilityHint")}</span>
-        </div>
-        <div className="form">
+      <details className="panel panel-soft prefs-advanced" open={false}>
+        <summary>
+          <span>{t("preferences.appearance.accessibilityTitle")}</span>
+          <span className="panel-note">{t("preferences.appearance.accessibilityHint")}</span>
+        </summary>
+        <div className="prefs-advanced-content form">
           <div className="field">
             <span>{t("preferences.appearance.reduceMotion")}</span>
             <span className="hint">{t("preferences.appearance.reduceMotionHint")}</span>
@@ -189,7 +189,7 @@ export default function PreferenciasAparienciaPage() {
             </button>
           </div>
         </div>
-      </section>
+      </details>
 
       <section className="panel">
         <form onSubmit={onSubmit}>

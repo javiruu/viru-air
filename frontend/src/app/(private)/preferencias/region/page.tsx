@@ -97,82 +97,88 @@ export default function PreferenciasRegionPage() {
         </div>
       </div>
 
-      <section className="panel">
+      <section className="panel prefs-priority-block">
         <div className="panel-header">
           <h2>{t("preferences.region.sectionTitle")}</h2>
           <span className="muted">{t("preferences.region.sectionHint")}</span>
         </div>
         <form className="form" onSubmit={onSubmit}>
-          <div className="split">
-            <label>
-              {t("preferences.region.languageLabel")}
-              <select
-                name="language"
-                value={pref.language}
-                onChange={(event) => setPref({ ...pref, language: event.target.value })}
-              >
-                <option value="es">{t("preferences.region.languageOptionSpanish")}</option>
-                <option value="en">{t("preferences.region.languageOptionEnglish")}</option>
-              </select>
-            </label>
+          <fieldset className="panel panel-soft prefs-secondary-block prefs-region-group">
+            <legend>Contexto regional</legend>
+            <div className="split">
+              <label>
+                {t("preferences.region.languageLabel")}
+                <select
+                  name="language"
+                  value={pref.language}
+                  onChange={(event) => setPref({ ...pref, language: event.target.value })}
+                >
+                  <option value="es">{t("preferences.region.languageOptionSpanish")}</option>
+                  <option value="en">{t("preferences.region.languageOptionEnglish")}</option>
+                </select>
+              </label>
+
+              <label>
+                {t("preferences.region.regionLabel")}
+                <select
+                  name="region"
+                  value={pref.region}
+                  onChange={(event) => setPref({ ...pref, region: event.target.value })}
+                >
+                  {REGION_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset className="panel panel-soft prefs-region-group">
+            <legend>Formato y moneda</legend>
+            <div className="split">
+              <label>
+                {t("preferences.region.timeFormatLabel")}
+                <select
+                  name="time_format"
+                  value={pref.time_format}
+                  onChange={(event) => setPref({ ...pref, time_format: event.target.value })}
+                >
+                  <option value="24h">24h</option>
+                  <option value="12h">12h</option>
+                </select>
+              </label>
+
+              <label>
+                {t("preferences.region.decimalLabel")}
+                <select
+                  name="decimal_separator"
+                  value={pref.decimal_separator}
+                  onChange={(event) => setPref({ ...pref, decimal_separator: event.target.value })}
+                >
+                  <option value=",">{t("preferences.region.decimalComma")}</option>
+                  <option value=".">{t("preferences.region.decimalDot")}</option>
+                </select>
+              </label>
+            </div>
 
             <label>
-              {t("preferences.region.regionLabel")}
-              <select
-                name="region"
-                value={pref.region}
-                onChange={(event) => setPref({ ...pref, region: event.target.value })}
-              >
-                {REGION_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
+              {t("preferences.region.currencyLabel")}
+              <input
+                type="text"
+                name="currency"
+                list="region-currency-options"
+                value={pref.currency}
+                onChange={(event) => setPref({ ...pref, currency: event.target.value.toUpperCase() })}
+              />
+              <datalist id="region-currency-options">
+                {CURRENCY_OPTIONS.map((option) => (
+                  <option key={option} value={option} />
                 ))}
-              </select>
+              </datalist>
             </label>
-          </div>
-
-          <div className="split">
-            <label>
-              {t("preferences.region.timeFormatLabel")}
-              <select
-                name="time_format"
-                value={pref.time_format}
-                onChange={(event) => setPref({ ...pref, time_format: event.target.value })}
-              >
-                <option value="24h">24h</option>
-                <option value="12h">12h</option>
-              </select>
-            </label>
-
-            <label>
-              {t("preferences.region.decimalLabel")}
-              <select
-                name="decimal_separator"
-                value={pref.decimal_separator}
-                onChange={(event) => setPref({ ...pref, decimal_separator: event.target.value })}
-              >
-                <option value=",">{t("preferences.region.decimalComma")}</option>
-                <option value=".">{t("preferences.region.decimalDot")}</option>
-              </select>
-            </label>
-          </div>
-
-          <label>
-            {t("preferences.region.currencyLabel")}
-            <input
-              type="text"
-              name="currency"
-              list="region-currency-options"
-              value={pref.currency}
-              onChange={(event) => setPref({ ...pref, currency: event.target.value.toUpperCase() })}
-            />
-            <datalist id="region-currency-options">
-              {CURRENCY_OPTIONS.map((option) => (
-                <option key={option} value={option} />
-              ))}
-            </datalist>
-          </label>
+          </fieldset>
 
           <div className="row-actions">
             <button type="submit" className="btn-primary" disabled={saving || !dirty}>

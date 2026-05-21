@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -45,9 +45,9 @@ export default function PreferenciasPuertaAPuertaPage() {
         lng: lng ? Number(lng) : null,
       });
       setSaved(next);
-      notify({ tone: "success", title: "Ubicación de Puerta a puerta guardada" });
+      notify({ tone: "success", title: "Ubicación guardada" });
     } catch {
-      notify({ tone: "error", title: "No se pudo guardar la ubicación" });
+      notify({ tone: "error", title: "No se pudo guardar" });
     } finally {
       setSaving(false);
     }
@@ -68,23 +68,23 @@ export default function PreferenciasPuertaAPuertaPage() {
         <button className="btn-ghost" type="button" onClick={() => router.push("/preferencias")}>{t("shared.actions.back")}</button>
         <div className="page-title">
           <h1>Puerta a puerta</h1>
-          <p>Gestiona la ubicación habitual que Viru usará cuando calcules rutas completas.</p>
+          <p>Define tu origen habitual.</p>
         </div>
       </div>
 
       <section className="panel prefs-hero d2d-prefs-hero">
         <div>
           <p className="prefs-kicker">Origen habitual</p>
-          <h2>{saved ? saved.label : "Aún no has guardado ubicación"}</h2>
-          <p className="prefs-hero-summary">Se guarda solo con tu consentimiento y puedes borrarla cuando quieras.</p>
+          <h2>{saved ? saved.label : "Aún no hay ubicación guardada"}</h2>
+          <p className="prefs-hero-summary">Solo se usa con tu permiso.</p>
         </div>
-        {saved ? <span className="status-pill success">Guardada</span> : <span className="status-pill warning">Temporal hasta guardar</span>}
+        {saved ? <span className="status-pill success">Guardada</span> : <span className="status-pill warning">Pendiente de guardar</span>}
       </section>
 
-      <form className="panel panel-soft prefs-form d2d-location-form" onSubmit={onSubmit}>
+      <form className="panel panel-soft prefs-form d2d-location-form prefs-priority-block" onSubmit={onSubmit}>
         {loading ? <p className="panel-note">Cargando ubicación…</p> : null}
         <label className="field">
-          Etiqueta visible
+          Etiqueta
           <input className="prefs-control" value={label} onChange={(event) => setLabel(event.target.value)} />
         </label>
         <label className="field">
@@ -101,10 +101,22 @@ export default function PreferenciasPuertaAPuertaPage() {
           <label className="field">Longitud<input className="prefs-control" value={lng} onChange={(event) => setLng(event.target.value)} /></label>
         </div>
         <div className="row-actions">
-          <button className="btn-primary" type="submit" disabled={saving || !label.trim()}>{saving ? "Guardando…" : "Guardar ubicación"}</button>
-          <button className="btn-ghost" type="button" onClick={onDelete} disabled={!saved}>Borrar ubicación</button>
+          <button className="btn-primary" type="submit" disabled={saving || !label.trim()}>{saving ? "Guardando…" : "Guardar"}</button>
         </div>
       </form>
+
+      <section className="panel panel-soft prefs-secondary-block d2d-danger-zone">
+        <div className="panel-header">
+          <div>
+            <h2>Borrar ubicación guardada</h2>
+            <p className="panel-note">Acción secundaria para limpiar tu origen habitual.</p>
+          </div>
+          <span className="status-pill warning">Acción destructiva</span>
+        </div>
+        <div className="row-actions">
+          <button className="btn-ghost" type="button" onClick={onDelete} disabled={!saved}>Borrar</button>
+        </div>
+      </section>
     </main>
   );
 }

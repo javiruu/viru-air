@@ -6277,7 +6277,7 @@ h1 {
    ========================= */
 .prefs-shell {
   display: grid;
-  gap: 1.15rem;
+  gap: 1.4rem;
 }
 
 .prefs-header {
@@ -6287,7 +6287,7 @@ h1 {
 .prefs-hero {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-  gap: 1.05rem;
+  gap: 1.2rem;
   padding: 1.35rem;
   border-radius: var(--radius-lg);
   background:
@@ -6321,6 +6321,8 @@ h1 {
   color: var(--ink-muted);
   max-width: 52ch;
   line-height: 1.5;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .prefs-hero-summary {
@@ -6333,6 +6335,7 @@ h1 {
   align-content: flex-start;
   justify-content: flex-end;
   gap: 0.55rem;
+  min-width: 0;
 }
 
 .prefs-hero-chips .status-pill {
@@ -6383,8 +6386,60 @@ h1 {
 
 .prefs-form {
   display: grid;
-  gap: 1rem;
+  gap: 1.25rem;
   padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
+}
+
+.prefs-priority-block {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border) 62%);
+  box-shadow: 0 16px 30px rgba(31, 29, 26, 0.08);
+}
+
+.prefs-secondary-block {
+  border-style: dashed;
+}
+
+.prefs-advanced {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.prefs-advanced summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.8rem;
+  font-weight: 700;
+}
+
+.prefs-advanced summary span {
+  min-width: 0;
+}
+
+.prefs-advanced summary .panel-note {
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.prefs-advanced summary::-webkit-details-marker {
+  display: none;
+}
+
+.prefs-advanced summary::after {
+  content: "+";
+  font-size: 1.1rem;
+  color: var(--accent);
+}
+
+.prefs-advanced[open] summary::after {
+  content: "–";
+}
+
+.prefs-advanced-content {
+  display: grid;
+  gap: 1rem;
 }
 
 .prefs-card {
@@ -6416,6 +6471,10 @@ h1 {
   display: flex;
   align-items: flex-start;
   gap: 0.82rem;
+}
+
+.prefs-card-head > div {
+  min-width: 0;
 }
 
 .prefs-card-head h2 {
@@ -6536,11 +6595,14 @@ h1 {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  min-width: 0;
 }
 
 .prefs-chip-row .btn-ghost {
   min-height: 44px;
   border-color: color-mix(in srgb, var(--border-default) 72%, var(--accent) 28%);
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .prefs-chip-row .btn-ghost.is-active {
@@ -6581,6 +6643,7 @@ h1 {
 .prefs-savebar-copy {
   display: grid;
   gap: 0.18rem;
+  min-width: 0;
 }
 
 .prefs-savebar-copy span {
@@ -6615,7 +6678,7 @@ h1 {
 }
 
 .prefs-search-form {
-  gap: 1.08rem;
+  gap: 1.3rem;
 }
 
 .prefs-search-grid {
@@ -6625,8 +6688,16 @@ h1 {
   align-items: start;
 }
 
+.prefs-search-grid-essential {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .prefs-search-card {
   min-height: 100%;
+}
+
+.prefs-search-card-essential {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border) 62%);
 }
 
 .prefs-search-card h2 {
@@ -6673,6 +6744,46 @@ h1 {
 
 .prefs-search-inline-callout strong {
   font-size: 0.88rem;
+}
+
+.prefs-hub-stack {
+  gap: 1.2rem;
+}
+
+.prefs-hub-primary {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border) 58%);
+}
+
+.prefs-hub-secondary-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.prefs-hub-secondary .panel-header h2 {
+  font-size: 1.02rem;
+}
+
+.prefs-region-group {
+  border-color: color-mix(in srgb, var(--border) 82%, var(--accent) 18%);
+}
+
+.prefs-region-group legend {
+  padding: 0 0.3rem;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--ink) 88%, var(--accent) 12%);
+}
+
+.d2d-danger-zone .panel-header {
+  align-items: center;
+}
+
+.d2d-location-coords {
+  min-width: 0;
+}
+
+.d2d-location-coords label {
+  min-width: 0;
 }
 
 :root[data-theme="dark"] .prefs-search-card-coverage,
@@ -12880,7 +12991,9 @@ textarea::placeholder {
   .prefs-search-grid,
   .prefs-search-toggle-grid,
   .prefs-search-time-grid,
-  .prefs-search-hero {
+  .prefs-search-hero,
+  .prefs-search-grid-essential,
+  .prefs-hub-secondary-grid {
     grid-template-columns: 1fr;
   }
 
@@ -17064,7 +17177,7 @@ textarea::placeholder {
   width: 100%;
   overflow-x: clip;
   display: grid;
-  gap: 1.2rem;
+  gap: 1.45rem;
   padding: var(--ui-shell-padding-top) 0 var(--ui-shell-padding-bottom);
 }
 
@@ -17176,6 +17289,29 @@ textarea::placeholder {
   color: var(--ink-muted);
   line-height: 1.7;
   max-width: 54ch;
+}
+
+.landing-hero-points {
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.landing-hero-points li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  color: color-mix(in srgb, var(--ink) 90%, var(--accent) 10%);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.landing-hero-points li::before {
+  content: "•";
+  color: var(--accent);
+  font-weight: 700;
 }
 
 .landing-cta-row {
@@ -17351,6 +17487,7 @@ textarea::placeholder {
   display: grid;
   grid-template-columns: minmax(0, 1.18fr) minmax(0, 0.82fr);
   gap: 0.9rem;
+  margin-top: 0.75rem;
 }
 
 .landing-capability-main,
@@ -17387,9 +17524,9 @@ textarea::placeholder {
 
 .landing-cap-card:hover,
 .landing-cap-card:focus-within {
-  transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
-  box-shadow: 0 12px 28px var(--shadow);
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 24%, var(--border));
+  box-shadow: 0 8px 18px var(--shadow);
 }
 
 .landing-cap-card h3 {
@@ -17540,6 +17677,19 @@ textarea::placeholder {
 :root[data-theme="dark"] .demo-calendar-grid-v2 {
   border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
   background-color: color-mix(in srgb, var(--color-surface) 90%, var(--color-surface-elevated) 10%);
+}
+
+:root[data-theme="dark"] .landing-cap-card {
+  border-color: color-mix(in srgb, var(--color-border) 90%, transparent);
+  background:
+    linear-gradient(140deg, color-mix(in srgb, var(--accent-2) 7%, transparent), transparent 58%),
+    color-mix(in srgb, var(--color-surface) 92%, var(--color-surface-elevated) 8%);
+}
+
+:root[data-theme="dark"] .landing-cap-card:hover,
+:root[data-theme="dark"] .landing-cap-card:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 18%, var(--color-border));
+  box-shadow: 0 7px 16px color-mix(in srgb, var(--shadow) 58%, transparent);
 }
 
 :root[data-theme="dark"] .signal-bars span {
@@ -18373,4 +18523,58 @@ textarea::placeholder {
   stroke: var(--surface) !important;
   stroke-width: 2 !important;
   opacity: 1 !important;
+}
+
+/* Fase 1: anti-overflow quirurgico (private nav, quick-search, watchlist, compare) */
+.private-nav {
+  width: 100%;
+  max-width: 100%;
+}
+
+.watch-details,
+.watch-route,
+.watch-smart-tools,
+.watch-bulk-toolbar,
+.watch-smart-search,
+.watch-smart-sort,
+.watch-row-actions,
+.compare-head,
+.history-route-line-text,
+.qs-filter-console-head > div,
+.qs-filter-section-head > div,
+.qs-filter-pending > div {
+  min-width: 0;
+}
+
+.watch-smart-tools,
+.watch-bulk-toolbar,
+.watch-smart-search,
+.watch-smart-sort,
+.watch-row-actions {
+  max-width: 100%;
+}
+
+.watch-bulk-toolbar {
+  flex-wrap: wrap;
+}
+
+.watch-smart-search input,
+.watch-smart-sort select {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.compare-head > strong,
+.history-route-line-text,
+.qs-filter-console-head p,
+.qs-filter-section-head p,
+.qs-filter-pending span {
+  overflow-wrap: anywhere;
+}
+
+.compare-date {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
