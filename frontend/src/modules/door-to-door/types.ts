@@ -45,6 +45,7 @@ export type DoorToDoorLeg = {
   departure_at?: string | null;
   arrival_at?: string | null;
   duration_minutes?: number | null;
+  distance_meters?: number | null;
   price_min?: number | null;
   price_max?: number | null;
   provider?: string | null;
@@ -101,6 +102,7 @@ export type DoorToDoorResponse = {
 export type DoorToDoorSuggestion = DoorToDoorLocation & {
   id: string;
   subtitle: string;
+  source_type: "local_static" | "mock" | "api";
 };
 
 export type DoorToDoorSavedLocation = DoorToDoorLocation & {
@@ -120,4 +122,24 @@ export type DoorToDoorHistoryItem = {
   total_price_max?: number | null;
   risk_level?: DoorToDoorRiskLevel | null;
   chosen_option_id?: string | null;
+};
+
+export type DoorToDoorProviderStatus = {
+  name: string;
+  enabled: boolean;
+  status:
+    | "functional_api"
+    | "functional_mock"
+    | "functional_deeplink"
+    | "functional_scraper"
+    | "scraper_base_only"
+    | "deeplink_stub"
+    | "pure_stub"
+    | "disabled";
+  source_type: DoorToDoorSource["source_type"];
+  production_ready: boolean;
+  supports_search: boolean;
+  supports_booking_url: boolean;
+  has_tests: boolean;
+  notes?: string | null;
 };

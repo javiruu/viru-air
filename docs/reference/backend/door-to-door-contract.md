@@ -1,7 +1,7 @@
 # Door-to-door API contract
 
 **Estado:** vivo
-**Última revisión:** 2026-05-20
+**Última revisión:** 2026-05-22
 **Fuente de verdad:** sí
 **Área:** backend
 
@@ -16,6 +16,8 @@ Todos los endpoints requieren usuario autenticado.
 ## POST `/search`
 
 Calcula opciones puerta a puerta para un `flight_watch_id` del usuario.
+
+También acepta alias `watchId` en el payload para compatibilidad frontend.
 
 ### Request
 
@@ -73,15 +75,56 @@ Calcula opciones puerta a puerta para un `flight_watch_id` del usuario.
 }
 ```
 
-V1 devuelve opciones mock estimadas y guarda un historial resumido del cálculo.
+V1.1 devuelve combinaciones según providers habilitados por entorno y guarda un historial resumido del cálculo.
+
+Warnings relevantes:
+
+- `ESTIMATED_MOCK_DATA`: hay opciones mock estimadas activas.
+- `FLIGHT_TIME_ESTIMATED`: no hay horario completo del vuelo guardado; se usa salida conocida y llegada estimada.
+- `NO_REAL_PROVIDER_COVERAGE`: no hay providers reales activos para la ruta/configuración actual.
+- `NO_COVERAGE`: no quedan opciones válidas tras filtros/cobertura.
+- `UNCONFIRMED_PRICE`: hay opciones sin precio confirmado (por ejemplo deeplink) que se mantienen para abrir proveedor.
+- `GOOGLE_ROUTES_UNAVAILABLE`: no se pudo calcular rutas reales con Google en ese intento.
+- `PROVIDER_PARTIAL_COVERAGE`: un provider activo solo pudo cubrir parte de la consulta.
+
+### Filtros y `NO_COVERAGE`
+
+- `max_price` se interpreta como precio máximo del grupo. Una opción queda disponible si su `total_price_min` no supera ese valor.
+- `public_transport_only` limita modos terrestres a bus, tren y caminata.
+- Los flags `allow_*` ocultan opciones que contienen tramos terrestres no permitidos.
+- Si no queda ninguna opción, `options` será `[]` y `warnings` incluirá `NO_COVERAGE`.
+- Si `max_price` está definido y una opción no tiene precio confirmado (`total_price_min = null`), la opción puede mantenerse y se reporta `UNCONFIRMED_PRICE`.
+- Si `final_destination.type` es `airport_only`, el backend omite el tramo terrestre de llegada.
+
+### Opción elegida
+
+`summary.chosen_option_id` devuelve la última opción elegida para ese watch si esa opción sigue presente en los resultados filtrados.
 
 ## GET `/suggestions`
 
-Devuelve sugerencias mock para autocomplete.
+Devuelve sugerencias para autocomplete.
 
 Query params:
 
 - `q`: texto opcional.
+
+Si Google Places está activo (`DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS=1`, `DOOR_TO_DOOR_ENABLE_GOOGLE_PLACES=1`, `GOOGLE_MAPS_API_KEY`), mezcla sugerencias `source_type: "api"` con las `local_static`.
+
+Cada sugerencia conserva su fuente y puede incluir `place_id` para resolver coordenadas reales en búsquedas posteriores.
+
+## GET `/providers/status`
+
+Devuelve el registro de providers con estado funcional real:
+
+- `name`
+- `enabled`
+- `status` (`functional_api`, `functional_mock`, `functional_deeplink`, `functional_scraper`, `scraper_base_only`, `deeplink_stub`, `pure_stub`, `disabled`)
+- `source_type`
+- `production_ready`
+- `supports_search`
+- `supports_booking_url`
+- `has_tests`
+- `notes`
 
 ## Saved location
 
@@ -102,10 +145,19 @@ La retención funcional V1 es 90 días.
 
 La interfaz común de providers vive en `app.door_to_door.providers.base.DoorToDoorProvider`.
 
-V1 incluye:
+V1.1 incluye:
 
-- mock provider activo;
-- placeholders para APIs, open data y agregadores;
-- scraper base y adapters opt-in para BlaBlaCar, GoOpti, ALSA y Renfe.
+- mock provider configurable por flag (`DOOR_TO_DOOR_ENABLE_MOCK_PROVIDER`);
+- deeplink providers funcionales para primer paso real parcial (`blablacar_deeplink`, `goopti_deeplink`) bajo `DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS`;
+- `google_routes` como primer provider API real para duración/distancia (sin precio confirmado), activable con:
+  - `DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS`
+  - `DOOR_TO_DOOR_ENABLE_GOOGLE_ROUTES`
+  - `GOOGLE_MAPS_API_KEY`
+- `google_places` para suggestions reales, activable con:
+  - `DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS`
+  - `DOOR_TO_DOOR_ENABLE_GOOGLE_PLACES`
+  - `GOOGLE_MAPS_API_KEY`
+- placeholders/stubs para APIs, open data y agregadores;
+- scraper base + status explícito (`scraper_base_only`) para BlaBlaCar, GoOpti, ALSA y Renfe, controlado por `DOOR_TO_DOOR_ENABLE_SCRAPERS`.
 
 Los scrapers están apagados por defecto y requieren flag explícita por proveedor. No se permite login scraping, captcha bypass, evasión de protecciones ni sesiones privadas.

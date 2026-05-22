@@ -1,7 +1,7 @@
 # Puerta a puerta
 
 **Estado:** vivo
-**Última revisión:** 2026-05-20
+**Última revisión:** 2026-05-22
 **Fuente de verdad:** sí
 **Área:** producto
 
@@ -23,14 +23,14 @@ La feature vive como apartado privado en `/puerta-a-puerta` y puede recibir un v
 
 En `/watchlist`, el detalle de ruta muestra una sugerencia contextual para abrir Puerta a puerta con el vuelo seleccionado.
 
-## Flujo V1
+## Flujo V1.1
 
 1. El usuario elige un vuelo guardado.
 2. Configura origen terrestre y destino final.
-3. Ajusta margen, pasajeros, equipaje y filtros esenciales.
+3. Ajusta margen, pasajeros, equipaje, precio máximo y filtros esenciales.
 4. Calcula ruta completa.
 5. Revisa opción recomendada, alternativas, timeline, radar abstracto, fuente y confianza.
-6. Puede marcar una opción como elegida.
+6. Puede marcar una opción como elegida; al volver a calcular, Viru la recupera si sigue disponible.
 
 ## Destino final
 
@@ -44,9 +44,15 @@ El destino final puede ser:
 
 Cuando el destino es `solo aeropuerto`, la ruta termina en el aeropuerto de llegada y se omite el tramo terrestre posterior.
 
-## Datos y confianza
+## Datos, filtros y confianza
 
-V1 usa datos mock normalizados para entregar una experiencia estable sin credenciales externas.
+V1.1 queda en estado híbrido honesto:
+
+- mock normalizado para UX estable;
+- primer paso real parcial con providers deeplink;
+- primer provider API real parcial (`google_routes`) para duración/distancia sin precio confirmado;
+- suggestions reales opcionales (`google_places`) bajo API key y flags;
+- sin scraping real activo por defecto.
 
 Cada dato debe indicar fuente y confianza:
 
@@ -56,11 +62,15 @@ Cada dato debe indicar fuente y confianza:
 - fecha de comprobación;
 - expiración cuando aplique.
 
+Los filtros de transporte y `max_price` pueden ocultar opciones. Si no queda ninguna opción válida, la UI muestra `NO_COVERAGE` con ajustes sugeridos: subir margen, permitir shuttle/coche compartido o terminar solo en aeropuerto.
+
+Si no hay providers reales activos y el mock está desactivado, la UI debe mostrar explícitamente “Sin cobertura real todavía” (`NO_REAL_PROVIDER_COVERAGE`), evitando rutas inventadas.
+
 Los scrapers existen solo como arquitectura opt-in y están apagados por defecto.
 
 ## Persistencia
 
-V1 persiste:
+V1.1 persiste:
 
 - ubicación global guardada por usuario, solo con consentimiento;
 - historial de cálculos durante 90 días;
@@ -73,7 +83,7 @@ El historial guarda resumen e inputs, no payloads completos de proveedor.
 La UI debe mantener identidad Viru:
 
 - cálida y premium;
-- aeronaútica, no mapa genérico;
+- aeronáutica, no mapa genérico;
 - compatible dark/light;
 - con radar abstracto, timeline, boarding-pass cues, IATA y panel de decisión;
 - con jerarquía clara entre recomendada, alternativas, ruta visual, desglose y fuentes.

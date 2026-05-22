@@ -1,7 +1,7 @@
 ﻿from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import AliasChoices, BaseModel, Field, model_validator
 
 DoorToDoorSourceType = Literal["api", "open_data", "aggregator", "deeplink", "scraper", "mock"]
 DoorToDoorConfidence = Literal["live", "cached", "estimated", "deeplink", "unavailable"]
@@ -10,6 +10,17 @@ DoorToDoorLocationType = Literal["city", "address", "station", "saved_location",
 DoorToDoorSortBy = Literal["best_balance", "cheapest", "lowest_risk", "fastest", "fewest_changes"]
 DoorToDoorLuggage = Literal["backpack", "cabin", "checked"]
 DoorToDoorMode = Literal["bus", "train", "rideshare", "shuttle", "taxi", "car", "walking", "flight"]
+DoorToDoorSuggestionSourceType = Literal["local_static", "mock", "api"]
+DoorToDoorProviderStatusKind = Literal[
+    "functional_api",
+    "functional_mock",
+    "functional_deeplink",
+    "functional_scraper",
+    "scraper_base_only",
+    "deeplink_stub",
+    "pure_stub",
+    "disabled",
+]
 
 
 class DoorToDoorLocation(BaseModel):
@@ -36,7 +47,12 @@ class DoorToDoorPreferences(BaseModel):
 
 
 class DoorToDoorSearchRequest(BaseModel):
-    flight_watch_id: str = Field(min_length=1, max_length=80)
+    flight_watch_id: str = Field(
+        min_length=1,
+        max_length=80,
+        validation_alias=AliasChoices("flight_watch_id", "watchId"),
+        serialization_alias="flight_watch_id",
+    )
     origin: DoorToDoorLocation
     final_destination: DoorToDoorLocation
     preferences: DoorToDoorPreferences = Field(default_factory=DoorToDoorPreferences)
@@ -78,6 +94,7 @@ class DoorToDoorLegOut(BaseModel):
     departure_at: datetime | None = None
     arrival_at: datetime | None = None
     duration_minutes: int | None = Field(default=None, ge=0)
+    distance_meters: int | None = Field(default=None, ge=0)
     price_min: float | None = Field(default=None, ge=0)
     price_max: float | None = Field(default=None, ge=0)
     provider: str | None = None
@@ -138,8 +155,10 @@ class DoorToDoorSuggestionOut(BaseModel):
     type: DoorToDoorLocationType
     label: str
     subtitle: str
+    source_type: DoorToDoorSuggestionSourceType = "local_static"
     lat: float | None = None
     lng: float | None = None
+    place_id: str | None = None
 
 
 class DoorToDoorSavedLocationIn(BaseModel):
@@ -182,3 +201,15 @@ class DoorToDoorChosenOptionOut(BaseModel):
     option_id: str
     option_label: str
     chosen_at: datetime
+
+
+class DoorToDoorProviderStatusOut(BaseModel):
+    name: str
+    enabled: bool
+    status: DoorToDoorProviderStatusKind
+    source_type: DoorToDoorSourceType
+    production_ready: bool
+    supports_search: bool
+    supports_booking_url: bool
+    has_tests: bool
+    notes: str | None = None

@@ -1,12 +1,16 @@
 import React from "react";
+
+import { useI18n } from "@/i18n";
+
 export function DoorToDoorErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const { t } = useI18n();
   return (
     <section className="notice notice-error d2d-error-state" role="alert">
       <div>
-        <strong>No hemos podido completar todas las fuentes.</strong>
-        <p>{message || "Te mostramos las opciones con datos suficientes cuando estén disponibles."}</p>
+        <strong>{t("doorToDoor.states.errorTitle")}</strong>
+        <p>{message || t("doorToDoor.states.errorBody")}</p>
       </div>
-      <button className="btn-secondary btn-compact" type="button" onClick={onRetry}>Reintentar</button>
+      <button className="btn-secondary btn-compact" type="button" onClick={onRetry}>{t("doorToDoor.states.retry")}</button>
     </section>
   );
 }
