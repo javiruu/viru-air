@@ -7,17 +7,21 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
+from app.door_to_door.providers.registry import resolve_provider_runtime
 from app.door_to_door.schemas import (
     DoorToDoorChosenOptionIn,
     DoorToDoorChosenOptionOut,
     DoorToDoorFlightOut,
     DoorToDoorHistoryOut,
+    DoorToDoorProviderStatusOut,
     DoorToDoorSavedLocationIn,
     DoorToDoorSavedLocationOut,
     DoorToDoorSearchRequest,
     DoorToDoorSearchResponse,
     DoorToDoorSuggestionOut,
+    DoorToDoorWarningOut,
 )
+from app.door_to_door.services.cache_service import DoorToDoorCacheService
 from app.door_to_door.services.search_service import DoorToDoorSearchService
 from app.infrastructure.db.models import (
     DoorToDoorChosenOption,
@@ -33,16 +37,20 @@ router = APIRouter()
 MADRID = ZoneInfo("Europe/Madrid")
 DEFAULT_FLIGHT_DURATION_MINUTES = 155
 
+# TODO(door-to-door): add client-provided Google Places session token to reduce billing
+# and improve autocomplete quality across consecutive keystrokes.
 SUGGESTIONS = [
-    DoorToDoorSuggestionOut(id="city_almeria", type="city", label="Almería", subtitle="Ciudad de salida frecuente", lat=36.834, lng=-2.463),
-    DoorToDoorSuggestionOut(id="station_almeria", type="station", label="Estación de Almería", subtitle="Tren y bus interurbano", lat=36.8402, lng=-2.4576),
-    DoorToDoorSuggestionOut(id="airport_agp", type="airport", label="Aeropuerto de Málaga AGP", subtitle="Terminal de salida", lat=36.6749, lng=-4.4991),
-    DoorToDoorSuggestionOut(id="airport_tsf", type="airport_only", label="Solo aeropuerto TSF", subtitle="Terminar al aterrizar, sin tramo terrestre", lat=45.6508, lng=12.1978),
-    DoorToDoorSuggestionOut(id="city_treviso", type="city", label="Treviso centro", subtitle="Centro urbano desde TSF", lat=45.6669, lng=12.243),
-    DoorToDoorSuggestionOut(id="city_venice", type="city", label="Venecia", subtitle="Destino final frecuente desde Treviso", lat=45.4408, lng=12.3155),
-    DoorToDoorSuggestionOut(id="city_padua", type="city", label="Padua", subtitle="Ciudad cercana conectada por tren", lat=45.4064, lng=11.8768),
-    DoorToDoorSuggestionOut(id="station_treviso", type="station", label="Treviso Centrale", subtitle="Estación principal", lat=45.6595, lng=12.2451),
+    DoorToDoorSuggestionOut(id="city_almeria", type="city", label="Almería", subtitle="Ciudad de salida frecuente", source_type="local_static", lat=36.834, lng=-2.463),
+    DoorToDoorSuggestionOut(id="station_almeria", type="station", label="Estación de Almería", subtitle="Tren y bus interurbano", source_type="local_static", lat=36.8402, lng=-2.4576),
+    DoorToDoorSuggestionOut(id="airport_agp", type="airport", label="Aeropuerto de Málaga AGP", subtitle="Terminal de salida", source_type="local_static", lat=36.6749, lng=-4.4991),
+    DoorToDoorSuggestionOut(id="airport_tsf", type="airport_only", label="Solo aeropuerto TSF", subtitle="Terminar al aterrizar, sin tramo terrestre", source_type="local_static", lat=45.6508, lng=12.1978),
+    DoorToDoorSuggestionOut(id="city_treviso", type="city", label="Treviso centro", subtitle="Centro urbano desde TSF", source_type="local_static", lat=45.6669, lng=12.243),
+    DoorToDoorSuggestionOut(id="city_venice", type="city", label="Venecia", subtitle="Destino final frecuente desde Treviso", source_type="local_static", lat=45.4408, lng=12.3155),
+    DoorToDoorSuggestionOut(id="city_padua", type="city", label="Padua", subtitle="Ciudad cercana conectada por tren", source_type="local_static", lat=45.4064, lng=11.8768),
+    DoorToDoorSuggestionOut(id="station_treviso", type="station", label="Treviso Centrale", subtitle="Estacion principal", source_type="local_static", lat=45.6595, lng=12.2451),
 ]
+
+cache_service = DoorToDoorCacheService(ttl_seconds=300)
 
 
 def _get_watch(db: Session, user: User, watch_id: str) -> FlightWatch:
@@ -52,7 +60,8 @@ def _get_watch(db: Session, user: User, watch_id: str) -> FlightWatch:
     return watch
 
 
-def _flight_context(db: Session, watch: FlightWatch) -> DoorToDoorFlightOut:
+def _flight_context(db: Session, watch: FlightWatch) -> tuple[DoorToDoorFlightOut, list[DoorToDoorWarningOut]]:
+    warnings: list[DoorToDoorWarningOut] = []
     latest = db.scalar(
         select(PriceSnapshot)
         .where(PriceSnapshot.watch_id == watch.id)
@@ -60,21 +69,33 @@ def _flight_context(db: Session, watch: FlightWatch) -> DoorToDoorFlightOut:
     )
     confidence = "estimated"
     departure_clock = time(hour=14, minute=20)
+
     if latest and latest.departure_time_local:
         try:
             hour, minute = latest.departure_time_local.split(":", 1)
             departure_clock = time(hour=int(hour), minute=int(minute))
-            confidence = "live"
         except ValueError:
             confidence = "estimated"
+
     departure = datetime.combine(watch.travel_date_local, departure_clock, tzinfo=MADRID)
     arrival = departure + timedelta(minutes=DEFAULT_FLIGHT_DURATION_MINUTES)
-    return DoorToDoorFlightOut(
-        origin_airport=watch.origin_iata,
-        destination_airport=watch.destination_iata,
-        departure_at=departure,
-        arrival_at=arrival,
-        flight_time_confidence=confidence,
+
+    warnings.append(
+        DoorToDoorWarningOut(
+            code="FLIGHT_TIME_ESTIMATED",
+            message="No hay horario completo para este vuelo guardado. Se usa salida conocida y llegada estimada.",
+        )
+    )
+
+    return (
+        DoorToDoorFlightOut(
+            origin_airport=watch.origin_iata,
+            destination_airport=watch.destination_iata,
+            departure_at=departure,
+            arrival_at=arrival,
+            flight_time_confidence=confidence,
+        ),
+        warnings,
     )
 
 
@@ -89,12 +110,41 @@ def _saved_location_out(location: DoorToDoorSavedLocation) -> DoorToDoorSavedLoc
     )
 
 
+@router.get("/providers/status", response_model=list[DoorToDoorProviderStatusOut])
+def providers_status() -> list[DoorToDoorProviderStatusOut]:
+    runtime = resolve_provider_runtime()
+    return runtime.statuses
+
+
 @router.get("/suggestions", response_model=list[DoorToDoorSuggestionOut])
-def suggestions(q: str = Query(default="", max_length=120)) -> list[DoorToDoorSuggestionOut]:
+async def suggestions(q: str = Query(default="", max_length=120)) -> list[DoorToDoorSuggestionOut]:
     query = q.strip().lower()
-    if not query:
-        return SUGGESTIONS
-    return [item for item in SUGGESTIONS if query in item.label.lower() or query in item.subtitle.lower()]
+    static_items = (
+        SUGGESTIONS
+        if not query
+        else [item for item in SUGGESTIONS if query in item.label.lower() or query in item.subtitle.lower()]
+    )
+    runtime = resolve_provider_runtime()
+    if runtime.google_places_provider is None:
+        return static_items
+
+    try:
+        google_items = await runtime.google_places_provider.suggest(q, limit=6)
+    except Exception:
+        google_items = []
+
+    if not google_items:
+        return static_items
+
+    merged: list[DoorToDoorSuggestionOut] = []
+    seen: set[str] = set()
+    for item in [*google_items, *static_items]:
+        key = item.label.strip().lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(item)
+    return merged[:10]
 
 
 @router.post("/search", response_model=DoorToDoorSearchResponse)
@@ -104,15 +154,46 @@ async def search_door_to_door(
     current_user: User = Depends(get_current_user),
 ) -> DoorToDoorSearchResponse:
     watch = _get_watch(db, current_user, payload.flight_watch_id)
+    flight, flight_warnings = _flight_context(db, watch)
+
     if payload.save_origin_as_default:
         _upsert_saved_location(db, current_user.id, DoorToDoorSavedLocationIn(location=payload.origin))
-    service = DoorToDoorSearchService()
-    return await service.search(
+
+    runtime = resolve_provider_runtime()
+    enabled_providers = ",".join(
+        sorted(item.name for item in runtime.statuses if item.enabled and item.supports_search)
+    )
+    runtime_signature = ":".join(
+        [
+            f"mock={int(runtime.mock_enabled)}",
+            f"real={int(runtime.real_enabled)}",
+            f"scrapers={int(runtime.scrapers_enabled)}",
+            f"search={enabled_providers}",
+        ]
+    )
+    cache_key = (
+        f"d2d:{runtime_signature}:{current_user.id}:{payload.flight_watch_id}:"
+        f"{payload.model_dump_json(by_alias=True)}"
+    )
+    cached_response = cache_service.get(cache_key)
+    if cached_response:
+        return cached_response
+
+    service = DoorToDoorSearchService(
+        providers=runtime.providers,
+        provider_statuses=runtime.statuses,
+        mock_enabled=runtime.mock_enabled,
+    )
+    response = await service.search(
         db=db,
         user_id=current_user.id,
         request=payload,
-        flight=_flight_context(db, watch),
+        flight=flight,
+        bootstrap_warnings=flight_warnings,
     )
+
+    cache_service.set(cache_key, response)
+    return response
 
 
 @router.get("/saved-location", response_model=DoorToDoorSavedLocationOut | None)
@@ -169,9 +250,7 @@ def list_history(
     if watch_id:
         query = query.where(DoorToDoorSearchHistory.watch_id == watch_id)
     rows = list(db.scalars(query.order_by(DoorToDoorSearchHistory.created_at.desc(), DoorToDoorSearchHistory.id.desc()).limit(20)))
-    chosen_rows = list(
-        db.scalars(select(DoorToDoorChosenOption).where(DoorToDoorChosenOption.user_id == current_user.id))
-    )
+    chosen_rows = list(db.scalars(select(DoorToDoorChosenOption).where(DoorToDoorChosenOption.user_id == current_user.id)))
     chosen_by_history = {item.history_id: item.option_id for item in chosen_rows if item.history_id}
     return [_history_out(row, chosen_by_history.get(row.id)) for row in rows]
 

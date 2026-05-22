@@ -6,10 +6,15 @@ import type {
   DoorToDoorResponse,
   DoorToDoorSavedLocation,
   DoorToDoorSuggestion,
+  DoorToDoorProviderStatus,
 } from "@/modules/door-to-door/types";
 
 export function fetchDoorToDoorSuggestions(query: string): Promise<DoorToDoorSuggestion[]> {
   return apiFetch<DoorToDoorSuggestion[]>(`/door-to-door/suggestions?q=${encodeURIComponent(query)}`);
+}
+
+export function fetchDoorToDoorProviderStatus(): Promise<DoorToDoorProviderStatus[]> {
+  return apiFetch<DoorToDoorProviderStatus[]>("/door-to-door/providers/status");
 }
 
 export function fetchSavedDoorToDoorLocation(): Promise<DoorToDoorSavedLocation | null> {

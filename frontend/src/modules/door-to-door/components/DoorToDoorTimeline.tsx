@@ -1,4 +1,6 @@
 import React from "react";
+
+import { useI18n } from "@/i18n";
 import type { DoorToDoorFlight, DoorToDoorOption } from "@/modules/door-to-door/types";
 
 function shortTime(value?: string | null) {
@@ -7,15 +9,16 @@ function shortTime(value?: string | null) {
 }
 
 export function DoorToDoorTimeline({ option, flight }: { option: DoorToDoorOption | null; flight?: DoorToDoorFlight | null }) {
+  const { t } = useI18n();
   const legs = option?.legs ?? [];
   return (
     <section className="panel panel-soft d2d-timeline-panel">
       <div className="panel-header">
-        <h2 className="panel-title">Timeline de tramos</h2>
-        {flight?.flight_time_confidence === "estimated" ? <span className="status-pill warning">Horario estimado</span> : null}
+        <h2 className="panel-title">{t("doorToDoor.timeline.title")}</h2>
+        {flight?.flight_time_confidence === "estimated" ? <span className="status-pill warning">{t("doorToDoor.timeline.estimatedSchedule")}</span> : null}
       </div>
       {legs.length === 0 ? (
-        <p className="panel-note">Calcula una ruta para ver salida terrestre, vuelo y llegada terrestre.</p>
+        <p className="panel-note">{t("doorToDoor.timeline.empty")}</p>
       ) : (
         <ol className="d2d-timeline">
           {legs.map((leg, index) => (
@@ -23,7 +26,7 @@ export function DoorToDoorTimeline({ option, flight }: { option: DoorToDoorOptio
               <span className={`d2d-timeline-node d2d-mode-${leg.mode}`} aria-hidden="true" />
               <div>
                 <strong>{leg.from} → {leg.to}</strong>
-                <p>{leg.mode === "flight" ? "Vuelo" : "Tramo terrestre"} · {leg.duration_minutes ?? "--"} min · {shortTime(leg.departure_at)} - {shortTime(leg.arrival_at)}</p>
+                <p>{leg.mode === "flight" ? t("doorToDoor.timeline.flight") : t("doorToDoor.timeline.ground")} · {leg.duration_minutes ?? "--"} min · {shortTime(leg.departure_at)} - {shortTime(leg.arrival_at)}</p>
               </div>
             </li>
           ))}
