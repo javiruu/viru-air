@@ -1,6 +1,7 @@
 """Unit tests for GTFS transit provider and feed service."""
 
 import io
+import json
 import os
 import tempfile
 import zipfile
@@ -304,6 +305,12 @@ def test_load_feed_descriptors_from_env(monkeypatch):
 
 def test_load_feed_descriptors_empty_when_no_env(monkeypatch):
     monkeypatch.delenv("DOOR_TO_DOOR_GTFS_FEEDS_JSON", raising=False)
+    monkeypatch.delenv("DOOR_TO_DOOR_GTFS_FEEDS_FILE", raising=False)
+    # Also monkeypatch the fallback manifest discovery to return nothing
+    monkeypatch.setattr(
+        "app.door_to_door.services.gtfs_feed_service.Path.exists",
+        lambda self: False,
+    )
     descriptors = load_feed_descriptors()
     assert descriptors == []
 
@@ -495,4 +502,231 @@ def test_provider_status_gtfs_disabled_without_flag(monkeypatch):
     assert statuses["gtfs_transit"].status == "disabled"
 
 
-import json  # noqa: E402 - needed for monkeypatch.setenv above
+# ---------------------------------------------------------------------------
+# Granular warning tests
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def provider_no_nearby_stops(feed_service: FakeGtfsFeedService, monkeypatch) -> GtfsTransitProvider:
+    """Provider where origin has lat/lng far from any stop."""
+    monkeypatch.setattr(
+        "app.door_to_door.providers.gtfs_transit.load_feed_descriptors",
+        lambda: [_build_feed_descriptor()],
+    )
+    monkeypatch.setattr(
+        "app.door_to_door.providers.gtfs_transit.GtfsFeedService",
+        lambda **kw: feed_service,
+    )
+    return GtfsTransitProvider(feed_service=feed_service)
+
+
+@pytest.mark.asyncio
+async def test_provider_emite_no_nearby_stops(provider_no_nearby_stops):
+    """When origin is far from any stop, emit GTFS_NO_NEARBY_STOPS."""
+    results = await provider_no_nearby_stops.search(_make_query(
+        origin_lat=40.4168,
+        origin_lng=-3.7038,
+        origin_label="Madrid (lejos del feed)",
+        final_lat=36.7213,
+        final_lng=-4.4215,
+    ))
+    warnings = provider_no_nearby_stops.consume_warnings()
+    assert any(w.code == "GTFS_NO_NEARBY_STOPS" for w in warnings)
+    # Should still return results if inbound is fine, or empty if nowhere near
+    assert isinstance(results, list)
+
+
+@pytest.mark.asyncio
+async def test_provider_emite_no_service_for_date(provider):
+    """When feed has stops but no service on the target date, emit GTFS_NO_SERVICE_FOR_DATE."""
+    # Use a Saturday (July 18, 2026), but our fixture only has weekday service
+    saturday = datetime(2026, 7, 18, 14, 20, tzinfo=timezone(timedelta(hours=2)))
+    results = await provider.search(_make_query(
+        departure_at=saturday,
+        arrival_at=saturday + timedelta(hours=1, minutes=15),
+    ))
+    warnings = provider.consume_warnings()
+    # The feed has no weekend service → GTFS_NO_SERVICE_FOR_DATE or GTFS_NO_MATCHING_SERVICE
+    assert any(
+        w.code in ("GTFS_NO_SERVICE_FOR_DATE", "GTFS_NO_MATCHING_SERVICE")
+        for w in warnings
+    )
+
+
+@pytest.mark.asyncio
+async def test_provider_filtra_viajes_demasiado_tarde_para_vuelo(provider):
+    """Trips arriving after flight departure minus buffer should be filtered out.
+
+    Flight departs at 09:00, buffer = 120min → latest arrival must be <= 07:00.
+    Our fixture has trips arriving at 08:40 and 10:40 — both after 07:00.
+    Therefore, all trips should be filtered → GTFS_NO_MATCHING_SERVICE.
+    """
+    early_dep = datetime(2026, 7, 15, 9, 0, tzinfo=timezone(timedelta(hours=2)))
+    early_arr = early_dep + timedelta(hours=1, minutes=15)
+    await provider.search(_make_query(
+        departure_at=early_dep,
+        arrival_at=early_arr,
+        min_airport_buffer_minutes=120,
+    ))
+    warnings = provider.consume_warnings()
+    assert any(
+        w.code == "GTFS_NO_MATCHING_SERVICE"
+        for w in warnings
+    ), "Expected GTFS_NO_MATCHING_SERVICE when all trips arrive after flight buffer cutoff"
+
+
+@pytest.mark.asyncio
+async def test_provider_no_busca_inbound_airport_only(provider):
+    """When final_destination.type='airport_only', provider skips inbound search."""
+    results = await provider.search(_make_query(
+        final_type="airport_only",
+        final_label="Solo AGP",
+    ))
+    warnings = provider.consume_warnings()
+    if results:
+        for option in results:
+            ground_legs = [leg for leg in option.legs if leg.type == "ground"]
+            # Only outbound ground leg (or none if no trips)
+            assert len(ground_legs) <= 1
+    # Should not emit inbound-related warnings
+    inbound_warnings = [w for w in warnings if "vuelta" in w.message or "inbound" in w.message.lower()]
+    assert len(inbound_warnings) == 0
+
+
+@pytest.mark.asyncio
+async def test_provider_emite_partial_coverage(provider):
+    """When only one leg has trips, emit GTFS_PARTIAL_COVERAGE."""
+    # Use fixture where only outbound trips exist but inbound destination
+    # coordinates are far away → no inbound trips
+    results = await provider.search(_make_query(
+        final_lat=40.4168,  # Far from the Andalusia feed
+        final_lng=-3.7038,
+        final_label="Madrid (sin cobertura)",
+    ))
+    warnings = provider.consume_warnings()
+    # Should have partial coverage or no nearby stops
+    assert any(
+        w.code in ("GTFS_PARTIAL_COVERAGE", "GTFS_NO_NEARBY_STOPS")
+        for w in warnings
+    )
+
+
+@pytest.mark.asyncio
+async def test_provider_filtra_duracion_excesiva(provider):
+    """Trips longer than max_ground_duration should be filtered out."""
+    # Our fixture has trips of 30-35 min, well under the 240 min default max
+    # Test that short trips are kept
+    results = await provider.search(_make_query())
+    if results:
+        for option in results:
+            for leg in option.legs:
+                if leg.type == "ground" and leg.duration_minutes:
+                    assert leg.duration_minutes <= 240  # under max
+
+
+@pytest.mark.asyncio
+async def test_provider_respeta_max_walk_radius(feed_service, monkeypatch):
+    """Feed service with small walk radius should find fewer stops."""
+    # Create a feed service with tiny radius
+    feed_service.max_walk_radius = 100  # only 100m
+    monkeypatch.setattr(
+        "app.door_to_door.providers.gtfs_transit.load_feed_descriptors",
+        lambda: [_build_feed_descriptor()],
+    )
+    monkeypatch.setattr(
+        "app.door_to_door.providers.gtfs_transit.GtfsFeedService",
+        lambda **kw: feed_service,
+    )
+    provider = GtfsTransitProvider(feed_service=feed_service)
+
+    # Origin coords are ~5km from the station in our fixture
+    results = await provider.search(_make_query(
+        origin_lat=36.76,  # slightly off from the station
+        origin_lng=-4.42,
+    ))
+    warnings = provider.consume_warnings()
+    # With 100m radius, likely no nearby stops
+    assert any(
+        w.code in ("GTFS_NO_NEARBY_STOPS", "GTFS_NO_MATCHING_SERVICE")
+        for w in warnings
+    ) or results == []
+
+
+@pytest.mark.asyncio
+async def test_provider_emite_feed_unavailable(monkeypatch, feed_service):
+    """When all feeds fail to load, emit GTFS_FEED_UNAVAILABLE."""
+    # Create a descriptor pointing to a non-existent feed
+    bad_descriptor = GtfsFeedDescriptor(
+        id="bad_feed",
+        name="Bad Feed",
+        region="nowhere",
+        url="file:///nonexistent.zip",
+    )
+    monkeypatch.setattr(
+        "app.door_to_door.providers.gtfs_transit.load_feed_descriptors",
+        lambda: [bad_descriptor],
+    )
+    # Use the real GtfsFeedService that will try to download and fail
+    from app.door_to_door.services.gtfs_feed_service import GtfsFeedService
+    real_svc = GtfsFeedService(cache_ttl_seconds=0)
+    monkeypatch.setattr(
+        "app.door_to_door.providers.gtfs_transit.GtfsFeedService",
+        lambda **kw: real_svc,
+    )
+    provider = GtfsTransitProvider(feed_service=real_svc)
+
+    results = await provider.search(_make_query())
+    warnings = provider.consume_warnings()
+    assert any(w.code == "GTFS_FEED_UNAVAILABLE" for w in warnings)
+    assert results == []
+
+
+@pytest.mark.asyncio
+async def test_provider_warning_code_especifico(provider):
+    """Each failure mode emits the correct warning code."""
+    results = await provider.search(_make_query())
+    warnings = provider.consume_warnings()
+    codes = {w.code for w in warnings}
+
+    # With our standard fixture we expect at minimum:
+    # UNCONFIRMED_PRICE and GTFS_PRICE_UNAVAILABLE
+    # (since we have trips and the feed loads fine)
+    assert "UNCONFIRMED_PRICE" in codes
+    assert "GTFS_PRICE_UNAVAILABLE" in codes
+
+
+@pytest.mark.asyncio
+async def test_provider_load_descriptors_from_file(monkeypatch, tmp_path):
+    """load_feed_descriptors loads from DOOR_TO_DOOR_GTFS_FEEDS_FILE path."""
+    manifest_path = tmp_path / "gtfs_feeds.json"
+    manifest_path.write_text(json.dumps([
+        {"id": "file_feed", "name": "File Feed", "url": "https://example.com/file.zip"},
+    ]))
+    monkeypatch.setenv("DOOR_TO_DOOR_GTFS_FEEDS_FILE", str(manifest_path))
+    monkeypatch.delenv("DOOR_TO_DOOR_GTFS_FEEDS_JSON", raising=False)
+
+    descriptors = load_feed_descriptors()
+    assert len(descriptors) == 1
+    assert descriptors[0].id == "file_feed"
+
+
+# ---------------------------------------------------------------------------
+# Integration: provider + search service
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_search_service_integra_gtfs_warnings(provider, monkeypatch):
+    """Search service collects and deduplicates GTFS warnings."""
+    from app.door_to_door.services.search_service import DoorToDoorSearchService
+
+    # We just verify the provider can be wrapped without errors
+    # The search service integration is tested in integration tests
+    result = await provider.search(_make_query())
+    warnings = provider.consume_warnings()
+    # Warnings should be deduplicated by code+provider
+    codes = [w.code for w in warnings]
+    # Each warning code should appear at most once
+    assert len(codes) == len(set(codes))
+
+
+

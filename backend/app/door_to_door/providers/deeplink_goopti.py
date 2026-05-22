@@ -1,18 +1,33 @@
+"""GoOpti deeplink provider: generates external shuttle search links.
+
+Honest provider — no fake durations, no fake prices, no fake availability.
+Generates a GoOpti search URL and returns status=real_deeplink.
+"""
+
 from datetime import timedelta
 from urllib.parse import urlencode
 
 from app.door_to_door.domain.models import ProviderHealth
-from app.door_to_door.domain.risk import calculate_risk_level
-from app.door_to_door.domain.scoring import score_itinerary
 from app.door_to_door.providers.base import DoorToDoorProvider, DoorToDoorProviderQuery
 from app.door_to_door.providers.deeplink_blablacar import BlaBlaCarDeepLinkProvider
-from app.door_to_door.schemas import DoorToDoorLegOut, DoorToDoorOptionOut, DoorToDoorSourceOut
+from app.door_to_door.schemas import (
+    DoorToDoorDeepLinkOut,
+    DoorToDoorLegOut,
+    DoorToDoorOptionOut,
+    DoorToDoorPriceOut,
+    DoorToDoorSourceOut,
+)
 
 
 class GoOptiDeepLinkProvider(DoorToDoorProvider):
     provider_name = "goopti_deeplink"
     source_type = "deeplink"
     search_base_url = "https://www.goopti.com/es/"
+
+    TRUST_COPY = (
+        "Viru abre la búsqueda externa en GoOpti. "
+        "Precio, horarios y plazas se confirman fuera de Viru."
+    )
 
     async def healthcheck(self) -> ProviderHealth:
         return ProviderHealth(self.provider_name, "ok", self.source_type, "deeplink")
@@ -25,14 +40,7 @@ class GoOptiDeepLinkProvider(DoorToDoorProvider):
 
         flight = query.flight
         checked_at = query.checked_at
-        airport_buffer = max(query.preferences.min_airport_buffer_minutes, 120)
-        outbound_minutes = 210
-        outbound_arrival = flight.departure_at - timedelta(minutes=airport_buffer)
-        outbound_departure = outbound_arrival - timedelta(minutes=outbound_minutes)
         flight_duration = int((flight.arrival_at - flight.departure_at).total_seconds() / 60)
-        inbound_minutes = 55
-        inbound_departure = flight.arrival_at + timedelta(minutes=30)
-        inbound_arrival = inbound_departure + timedelta(minutes=inbound_minutes)
         deeplink, url_warning = self._build_deeplink(query)
 
         if flight.flight_time_confidence == "estimated":
@@ -64,20 +72,35 @@ class GoOptiDeepLinkProvider(DoorToDoorProvider):
             booking_url=deeplink,
         )
 
+        deep_link = DoorToDoorDeepLinkOut(
+            url=deeplink,
+            label="Buscar traslado en GoOpti",
+            kind="provider_search",
+            opens_external=True,
+        )
+
         origin_airport_city = BlaBlaCarDeepLinkProvider._city_for_airport(flight.origin_airport)
-        origin_airport_label = f"Aeropuerto de {origin_airport_city} {flight.origin_airport}" if origin_airport_city else f"Aeropuerto de {flight.origin_airport}"
+        origin_airport_label = (
+            f"Aeropuerto de {origin_airport_city} {flight.origin_airport}"
+            if origin_airport_city
+            else f"Aeropuerto de {flight.origin_airport}"
+        )
         dest_airport_city = BlaBlaCarDeepLinkProvider._city_for_airport(flight.destination_airport)
-        dest_airport_label = f"Aeropuerto de {dest_airport_city} {flight.destination_airport}" if dest_airport_city else f"Aeropuerto de {flight.destination_airport}"
+        dest_airport_label = (
+            f"Aeropuerto de {dest_airport_city} {flight.destination_airport}"
+            if dest_airport_city
+            else f"Aeropuerto de {flight.destination_airport}"
+        )
 
         legs = [
             DoorToDoorLegOut(
                 type="ground",
                 mode="bus",
-                from_label=query.origin.label,
-                to_label=origin_airport_label,
-                departure_at=outbound_departure,
-                arrival_at=outbound_arrival,
-                duration_minutes=outbound_minutes,
+                from_location=query.origin.label,
+                to_location=origin_airport_label,
+                departure_at=None,
+                arrival_at=None,
+                duration_minutes=None,
                 price_min=None,
                 price_max=None,
                 provider="local_transfer",
@@ -87,8 +110,8 @@ class GoOptiDeepLinkProvider(DoorToDoorProvider):
             DoorToDoorLegOut(
                 type="flight",
                 mode="flight",
-                from_label=flight.origin_airport,
-                to_label=flight.destination_airport,
+                from_location=flight.origin_airport,
+                to_location=flight.destination_airport,
                 departure_at=flight.departure_at,
                 arrival_at=flight.arrival_at,
                 duration_minutes=flight_duration,
@@ -99,11 +122,11 @@ class GoOptiDeepLinkProvider(DoorToDoorProvider):
             DoorToDoorLegOut(
                 type="ground",
                 mode="shuttle",
-                from_label=dest_airport_label,
-                to_label=query.final_destination.label,
-                departure_at=inbound_departure,
-                arrival_at=inbound_arrival,
-                duration_minutes=inbound_minutes,
+                from_location=dest_airport_label,
+                to_location=query.final_destination.label,
+                departure_at=None,
+                arrival_at=None,
+                duration_minutes=None,
                 price_min=None,
                 price_max=None,
                 provider="goopti",
@@ -113,39 +136,31 @@ class GoOptiDeepLinkProvider(DoorToDoorProvider):
             ),
         ]
 
-        total_duration = outbound_minutes + airport_buffer + flight_duration + inbound_minutes
-        risk = calculate_risk_level(airport_buffer, 2, "deeplink")
-        score = score_itinerary(
-            price_midpoint=None,
-            duration_minutes=total_duration,
-            airport_buffer_minutes=airport_buffer,
-            transfer_count=2,
-            risk_level=risk,
-            confidence="deeplink",
-            uncomfortable_hour=outbound_departure.hour < 6,
-            luggage_penalty=0,
-        )
-
         return [
             DoorToDoorOptionOut(
                 id="option_goopti_deeplink",
-                label="Llegada con GoOpti",
-                description="Enlace directo para traslado final desde aeropuerto de llegada. Precio final en proveedor.",
+                label="Buscar traslado en GoOpti",
+                description="Abre la búsqueda externa para traslado desde el aeropuerto de llegada. Sin precio ni disponibilidad confirmados.",
+                status="real_deeplink",
                 total_price_min=None,
                 total_price_max=None,
                 price_per_person_min=None,
                 price_per_person_max=None,
                 currency="EUR",
-                total_duration_minutes=total_duration,
-                risk_level=risk,
-                score=score,
+                total_duration_minutes=None,
+                risk_level="unknown",
+                score=None,
                 transfer_count=2,
-                airport_buffer_minutes=airport_buffer,
+                airport_buffer_minutes=None,
                 confidence="deeplink",
                 source_types=["deeplink", "api"],
                 sources=[source],
                 legs=legs,
-                is_extended=True,
+                is_recommended=False,
+                is_extended=False,
+                deep_link=deep_link,
+                price=DoorToDoorPriceOut(amount=None, currency=None, status="external"),
+                trust_copy=self.TRUST_COPY,
             )
         ]
 
@@ -155,7 +170,6 @@ class GoOptiDeepLinkProvider(DoorToDoorProvider):
 
         params: dict[str, str] = {}
 
-        # pickup = airport of arrival
         airport_label = f"Aeropuerto de {flight.destination_airport}"
         params["pickup"] = airport_label
 

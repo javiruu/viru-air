@@ -83,7 +83,7 @@ def test_mock_active_returns_mock_options_with_warning(client: TestClient, monke
     assert body["options"]
     assert any(warning["code"] == "ESTIMATED_MOCK_DATA" for warning in body["warnings"])
     assert all(option["confidence"] == "estimated" for option in body["options"])
-    assert all(option["source_types"] == ["mock"] for option in body["options"])
+    assert all(option["source_types"] == ["estimate"] for option in body["options"])
 
 
 def test_mock_disabled_without_real_returns_no_coverage(client: TestClient, monkeypatch) -> None:
@@ -219,7 +219,7 @@ def test_source_metadata_is_present(client: TestClient, monkeypatch) -> None:
 
     assert source["provider"]
     assert source["source_provider"]
-    assert source["source_type"] == "mock"
+    assert source["source_type"] == "estimate"
     assert source["confidence"] == "estimated"
     assert source["checked_at"]
     assert source["expires_at"]
@@ -307,8 +307,8 @@ def test_search_returns_api_option_when_google_routes_provider_is_simulated(clie
                     DoorToDoorLegOut(
                         type="ground",
                         mode="car",
-                        from_label="Almería",
-                        to_label="Aeropuerto de Málaga AGP",
+                        from_location="Almería",
+                        to_location="Aeropuerto de Málaga AGP",
                         duration_minutes=215,
                         distance_meters=198000,
                         provider="google_routes",
@@ -318,8 +318,8 @@ def test_search_returns_api_option_when_google_routes_provider_is_simulated(clie
                     DoorToDoorLegOut(
                         type="flight",
                         mode="flight",
-                        from_label="AGP",
-                        to_label="TSF",
+                        from_location="AGP",
+                        to_location="TSF",
                         duration_minutes=155,
                         provider="flight_watch",
                         source_type="api",
@@ -493,8 +493,8 @@ def test_gtfs_with_mock_returns_open_data_option(client: TestClient, monkeypatch
                     DoorToDoorLegOut(
                         type="ground",
                         mode="bus",
-                        from_label="Almería",
-                        to_label="Aeropuerto de Málaga AGP",
+                        from_location="Almería",
+                        to_location="Aeropuerto de Málaga AGP",
                         departure_at="2026-06-14T07:30:00+02:00",
                         arrival_at="2026-06-14T11:00:00+02:00",
                         duration_minutes=210,
@@ -505,8 +505,8 @@ def test_gtfs_with_mock_returns_open_data_option(client: TestClient, monkeypatch
                     DoorToDoorLegOut(
                         type="flight",
                         mode="flight",
-                        from_label="AGP",
-                        to_label="TSF",
+                        from_location="AGP",
+                        to_location="TSF",
                         duration_minutes=155,
                         provider="flight_watch",
                         source_type="api",

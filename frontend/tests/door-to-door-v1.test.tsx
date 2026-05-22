@@ -34,6 +34,7 @@ const mockOption: DoorToDoorOption = {
   id: "option_best",
   label: "Mejor equilibrio",
   description: "Sales de Almería con margen cómodo antes del vuelo.",
+  status: "estimate_only",
   total_price_min: 42,
   total_price_max: 68,
   price_per_person_min: 42,
@@ -45,14 +46,14 @@ const mockOption: DoorToDoorOption = {
   transfer_count: 2,
   airport_buffer_minutes: 140,
   confidence: "estimated",
-  source_types: ["mock"],
-  sources: [{ provider: "mock_bus", source_provider: "mock_bus", source_type: "mock", confidence: "estimated", checked_at: "2026-05-20T10:00:00+02:00" }],
+  source_types: ["estimate"],
+  sources: [{ provider: "mock_multimodal", source_provider: "mock_multimodal", source_type: "estimate", confidence: "estimated", checked_at: "2026-05-20T10:00:00+02:00" }],
   is_recommended: true,
   is_extended: false,
   legs: [
-    { type: "ground", mode: "bus", from: "Almería", to: "Aeropuerto de Málaga AGP", departure_at: "2026-06-14T08:10:00+02:00", arrival_at: "2026-06-14T12:00:00+02:00", duration_minutes: 230, price_min: 18, price_max: 28, provider: "mock_bus", source_type: "mock", confidence: "estimated" },
-    { type: "flight", mode: "flight", from: "AGP", to: "TSF", departure_at: "2026-06-14T14:20:00+02:00", arrival_at: "2026-06-14T16:55:00+02:00", duration_minutes: 155, provider: "flight_watch", source_type: "mock", confidence: "estimated" },
-    { type: "ground", mode: "shuttle", from: "Treviso Airport TSF", to: "Treviso centro", departure_at: "2026-06-14T17:30:00+02:00", arrival_at: "2026-06-14T18:10:00+02:00", duration_minutes: 40, price_min: 12, price_max: 20, provider: "mock_shuttle", source_type: "mock", confidence: "estimated" },
+    { type: "ground", mode: "bus", from: "Almería", to: "Aeropuerto de Málaga AGP", departure_at: "2026-06-14T08:10:00+02:00", arrival_at: "2026-06-14T12:00:00+02:00", duration_minutes: 230, price_min: 18, price_max: 28, provider: "mock_multimodal", source_type: "estimate", confidence: "estimated" },
+    { type: "flight", mode: "flight", from: "AGP", to: "TSF", departure_at: "2026-06-14T14:20:00+02:00", arrival_at: "2026-06-14T16:55:00+02:00", duration_minutes: 155, provider: "flight_watch", source_type: "estimate", confidence: "estimated" },
+    { type: "ground", mode: "shuttle", from: "Treviso Airport TSF", to: "Treviso centro", departure_at: "2026-06-14T17:30:00+02:00", arrival_at: "2026-06-14T18:10:00+02:00", duration_minutes: 40, price_min: 12, price_max: 20, provider: "mock_multimodal", source_type: "estimate", confidence: "estimated" },
   ],
 };
 
@@ -60,6 +61,7 @@ const deeplinkOption: DoorToDoorOption = {
   id: "option_blablacar_deeplink",
   label: "Ruta con BlaBlaCar",
   description: "Enlace directo para tramo terrestre de salida. Precio final en proveedor.",
+  status: "real_deeplink",
   total_price_min: null,
   total_price_max: null,
   price_per_person_min: null,
@@ -94,6 +96,7 @@ const apiRouteOption: DoorToDoorOption = {
   id: "option_google_routes",
   label: "Duración real de ruta terrestre",
   description: "Duración y distancia calculadas con proveedor de rutas.",
+  status: "real_result",
   total_price_min: null,
   total_price_max: null,
   price_per_person_min: null,
@@ -173,19 +176,18 @@ test("Door-to-door option, radar, filters, and timeline render mock and flight-e
   const html = renderToStaticMarkup(
     <>
       <DoorToDoorFilters preferences={preferences} onChange={() => undefined} />
-      <DoorToDoorOptionCard option={mockOption} selected={true} chosen={true} onSelect={() => undefined} onChoose={() => undefined} />
+      <DoorToDoorOptionCard option={mockOption} chosen={true} onChoose={() => undefined} />
       <DoorToDoorRouteVisual option={mockOption} flight={flight} />
       <DoorToDoorTimeline option={mockOption} flight={flight} />
     </>,
   );
   assert.match(html, /Precio máximo del grupo/);
   assert.match(html, /Datos estimados/);
-  assert.match(html, /Plan elegido/);
   assert.match(html, /Horario estimado/);
 });
 
 test("Door-to-door deeplink option renders open-provider CTA and handles null price", () => {
-  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={deeplinkOption} selected={false} chosen={false} onSelect={() => undefined} onChoose={() => undefined} />);
+  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={deeplinkOption} chosen={false} onChoose={() => undefined} />);
   assert.match(html, /sin precio confirmado/);
   assert.match(html, /Abrir BlaBlaCar/);
   assert.match(html, /Comparación limitada/);
@@ -195,7 +197,7 @@ test("Door-to-door deeplink option renders open-provider CTA and handles null pr
 });
 
 test("Door-to-door api option renders real duration and keeps price unconfirmed", () => {
-  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={apiRouteOption} selected={false} chosen={false} onSelect={() => undefined} onChoose={() => undefined} />);
+  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={apiRouteOption} chosen={false} onChoose={() => undefined} />);
   assert.match(html, /duración real/);
   assert.match(html, /sin precio confirmado/);
   assert.doesNotMatch(html, /desde \\d+/);
@@ -232,6 +234,7 @@ const gtfsOption: DoorToDoorOption = {
   id: "option_gtfs_transit",
   label: "Transporte público (horario real)",
   description: "Horario según feed público GTFS.",
+  status: "real_result",
   total_price_min: null,
   total_price_max: null,
   price_per_person_min: null,
@@ -283,7 +286,7 @@ const gtfsOption: DoorToDoorOption = {
 };
 
 test("Door-to-door GTFS transit option renders public schedule and handles null price", () => {
-  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={gtfsOption} selected={false} chosen={false} onSelect={() => undefined} onChoose={() => undefined} />);
+  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={gtfsOption} chosen={false} onChoose={() => undefined} />);
   assert.match(html, /sin precio confirmado/);
   assert.match(html, /horario público/);
   assert.match(html, /Datos abiertos/);

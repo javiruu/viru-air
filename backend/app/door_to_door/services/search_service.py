@@ -105,12 +105,12 @@ class DoorToDoorSearchService:
         warnings.extend(filter_warnings)
 
         if options:
-            if self.mock_enabled or any("mock" in option.source_types for option in options):
+            if self.mock_enabled or any("estimate" in option.source_types or "mock" in option.source_types for option in options):
                 self._append_warning(
                     warnings,
                     DoorToDoorWarningOut(
                         code="ESTIMATED_MOCK_DATA",
-                        message="Algunas rutas usan datos mock estimados mientras se conectan fuentes reales.",
+                        message="Algunas rutas usan estimaciones orientativas mientras se conectan fuentes reales.",
                     ),
                 )
         else:
@@ -152,7 +152,7 @@ class DoorToDoorSearchService:
 
     def _has_enabled_real_search_provider(self) -> bool:
         for item in self.provider_statuses:
-            if item.enabled and item.source_type != "mock" and item.supports_search:
+            if item.enabled and item.source_type not in ("mock", "estimate") and item.supports_search:
                 return True
         return False
 
@@ -224,16 +224,25 @@ class DoorToDoorSearchService:
         return allowed
 
     def _sort_options(self, options: list[DoorToDoorOptionOut], sort_by: str) -> list[DoorToDoorOptionOut]:
-        if sort_by == "cheapest":
-            return sorted(options, key=lambda item: (item.total_price_min is None, item.total_price_min or 10_000))
-        if sort_by == "lowest_risk":
-            risk_order = {"low": 0, "medium": 1, "unknown": 2, "high": 3}
-            return sorted(options, key=lambda item: (risk_order[item.risk_level], -item.score))
-        if sort_by == "fastest":
-            return sorted(options, key=lambda item: item.total_duration_minutes)
-        if sort_by == "fewest_changes":
-            return sorted(options, key=lambda item: (item.transfer_count, -item.score))
-        return sorted(options, key=lambda item: item.score, reverse=True)
+        # Always put estimate_only last, then sort by the requested criteria
+        status_order = {"real_result": 0, "real_deeplink": 1, "estimate_only": 2}
+
+        def _sort_key(item: DoorToDoorOptionOut):
+            status_rank = status_order.get(item.status, 2)
+            if sort_by == "cheapest":
+                return (status_rank, item.total_price_min is None, item.total_price_min or 10_000)
+            if sort_by == "lowest_risk":
+                risk_order = {"low": 0, "medium": 1, "unknown": 2, "high": 3}
+                return (status_rank, risk_order[item.risk_level], -(item.score or 0))
+            if sort_by == "fastest":
+                has_duration = item.total_duration_minutes is None
+                return (status_rank, has_duration, item.total_duration_minutes or 999_999)
+            if sort_by == "fewest_changes":
+                return (status_rank, item.transfer_count, -(item.score or 0))
+            # best_balance: sort by score descending within status groups
+            return (status_rank, -(item.score or 0))
+
+        return sorted(options, key=_sort_key)
 
     def _append_warning(
         self,

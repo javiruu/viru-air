@@ -5,6 +5,7 @@ from typing import Callable
 from app.door_to_door.providers.base import DoorToDoorProvider
 from app.door_to_door.providers.deeplink_blablacar import BlaBlaCarDeepLinkProvider
 from app.door_to_door.providers.deeplink_goopti import GoOptiDeepLinkProvider
+from app.door_to_door.providers.deeplink_maps import GoogleMapsDeepLinkProvider
 from app.door_to_door.providers.google_places import GooglePlacesSuggestionsProvider
 from app.door_to_door.providers.google_routes import GoogleRoutesProvider
 from app.door_to_door.providers.gtfs_transit import GtfsTransitProvider
@@ -92,14 +93,26 @@ def resolve_provider_runtime() -> ProviderRuntime:
             factory=GtfsTransitProvider,
         ),
         ProviderDescriptor(
+            name="google_maps_deeplink",
+            source_type="maps",
+            base_status="functional_maps",
+            production_ready=True,
+            supports_search=True,
+            supports_booking_url=True,
+            has_tests=False,
+            notes="Genera enlaces de navegacion real en Google Maps. Siempre activo; no requiere API key.",
+            is_real=True,
+            factory=GoogleMapsDeepLinkProvider,
+        ),
+        ProviderDescriptor(
             name="mock_multimodal",
-            source_type="mock",
-            base_status="functional_mock",
+            source_type="estimate",
+            base_status="functional_estimate",
             production_ready=False,
             supports_search=True,
             supports_booking_url=False,
             has_tests=True,
-            notes="Provider mock de desarrollo y QA. No debe estar activo por defecto en produccion.",
+            notes="Provider de estimacion orientativa. Solo se activa como fallback; nunca como recomendacion principal.",
             is_mock=True,
             factory=MockDoorToDoorProvider,
         ),
@@ -293,6 +306,9 @@ def resolve_provider_runtime() -> ProviderRuntime:
         if descriptor.is_mock:
             enabled = mock_enabled
             status = descriptor.base_status if enabled else "disabled"
+        elif descriptor.name == "google_maps_deeplink":
+            enabled = True  # always enabled, no API key needed
+            status = "functional_maps"
         elif descriptor.name == "google_routes" or descriptor.name == "gtfs_transit":
             enabled = (
                 google_routes_enabled

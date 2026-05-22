@@ -91,8 +91,10 @@ Warnings relevantes:
 - `BLABLACAR_DEEPLINK_PARTIAL`: el deeplink de BlaBlaCar no pudo prellenar todos los parámetros (ej. aeropuerto sin ciudad mapeada). El enlace se mantiene; el usuario debe ajustar búsqueda en proveedor.
 - `GOOPTI_DEEPLINK_PARTIAL`: el deeplink de GoOpti no pudo prellenar todos los parámetros. El enlace se mantiene; el usuario debe ajustar búsqueda en proveedor.
 - `GTFS_FEED_UNAVAILABLE`: no se pudo descargar o parsear el feed GTFS configurado. La búsqueda continúa con otros providers.
-- `GTFS_PARTIAL_COVERAGE`: el feed GTFS tiene datos pero no cubre la ruta/origen/destino completo.
-- `GTFS_NO_MATCHING_SERVICE`: el feed está disponible pero no se encontraron viajes para la consulta.
+- `GTFS_NO_NEARBY_STOPS`: el feed GTFS está cargado pero no se encontraron paradas cercanas al origen o destino dentro del radio configurado.
+- `GTFS_NO_SERVICE_FOR_DATE`: el feed tiene paradas cercanas pero no existe servicio activo para la fecha del vuelo (según calendar.txt).
+- `GTFS_NO_MATCHING_SERVICE`: hay servicio en la fecha pero ningún viaje encaja en la ventana horaria, buffer de aeropuerto o duración máxima.
+- `GTFS_PARTIAL_COVERAGE`: el feed GTFS tiene datos pero solo cubre uno de los tramos (ida o vuelta), no ambos.
 - `GTFS_PRICE_UNAVAILABLE`: se encontraron horarios GTFS pero sin información de tarifa.
 
 ### Filtros y `NO_COVERAGE`

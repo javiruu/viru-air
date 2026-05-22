@@ -35,6 +35,8 @@ DEFAULT_CACHE_TTL = int(os.getenv("DOOR_TO_DOOR_GTFS_CACHE_TTL_SECONDS", "86400"
 DEFAULT_MAX_WALK_RADIUS = int(os.getenv("DOOR_TO_DOOR_GTFS_MAX_WALK_RADIUS_METERS", "2000"))
 DEFAULT_MAX_RESULTS = int(os.getenv("DOOR_TO_DOOR_GTFS_MAX_RESULTS", "3"))
 DEFAULT_DOWNLOAD_TIMEOUT = 20.0
+# Hard cap: walk radius must not exceed this value regardless of env
+MAX_WALK_RADIUS_HARD_CAP = 5000  # 5 km
 _REQUIRED_FILES = {"agency.txt", "stops.txt", "routes.txt", "trips.txt", "stop_times.txt"}
 
 # Route type constants (GTFS standard)
@@ -71,10 +73,40 @@ class GtfsFeedDescriptor:
 
 
 def load_feed_descriptors() -> list[GtfsFeedDescriptor]:
-    """Load feed descriptors from DOOR_TO_DOOR_GTFS_FEEDS_JSON env or return empty."""
+    """Load feed descriptors from DOOR_TO_DOOR_GTFS_FEEDS_JSON env or DOOR_TO_DOOR_GTFS_FEEDS_FILE.
+
+    Priority:
+    1. DOOR_TO_DOOR_GTFS_FEEDS_JSON env var (inline JSON string)
+    2. DOOR_TO_DOOR_GTFS_FEEDS_FILE env var (path to JSON file)
+    3. Default manifest file at providers/gtfs_feeds.json (if exists)
+    """
     raw = os.getenv("DOOR_TO_DOOR_GTFS_FEEDS_JSON", "")
-    if not raw.strip():
-        return []
+    if raw.strip():
+        return _parse_descriptors_json(raw)
+
+    file_path = os.getenv("DOOR_TO_DOOR_GTFS_FEEDS_FILE", "")
+    if file_path.strip():
+        try:
+            raw = Path(file_path).read_text(encoding="utf-8")
+            return _parse_descriptors_json(raw)
+        except (OSError, json.JSONDecodeError):
+            logger.warning("gtfs_feed_descriptors_file_invalid", extra={"path": file_path})
+            return []
+
+    # Fallback: look for default manifest next to this module
+    default_manifest = Path(__file__).resolve().parent.parent / "providers" / "gtfs_feeds.json"
+    if default_manifest.exists():
+        try:
+            raw = default_manifest.read_text(encoding="utf-8")
+            return _parse_descriptors_json(raw)
+        except (OSError, json.JSONDecodeError):
+            pass
+
+    return []
+
+
+def _parse_descriptors_json(raw: str) -> list[GtfsFeedDescriptor]:
+    """Parse JSON string into feed descriptors, skipping invalid entries."""
     try:
         items = json.loads(raw)
     except json.JSONDecodeError:
@@ -193,7 +225,8 @@ class GtfsFeedService:
     ) -> None:
         self.cache_dir = cache_dir or DEFAULT_CACHE_DIR
         self.cache_ttl = cache_ttl_seconds if cache_ttl_seconds is not None else DEFAULT_CACHE_TTL
-        self.max_walk_radius = max_walk_radius_meters if max_walk_radius_meters is not None else DEFAULT_MAX_WALK_RADIUS
+        raw_walk = max_walk_radius_meters if max_walk_radius_meters is not None else DEFAULT_MAX_WALK_RADIUS
+        self.max_walk_radius = min(raw_walk, MAX_WALK_RADIUS_HARD_CAP)
         self.max_results = max_results if max_results is not None else DEFAULT_MAX_RESULTS
         self._feeds: dict[str, ParsedGtfsFeed] = {}
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -249,7 +282,11 @@ class GtfsFeedService:
         return feed
 
     def find_nearby_stops(self, feed_id: str, lat: float, lng: float) -> list[GtfsStop]:
-        """Find stops within max_walk_radius of the given coordinates, sorted nearest first."""
+        """Find stops within max_walk_radius of the given coordinates, sorted nearest first.
+
+        Returns all stops within radius (up to a generous cap) so that downstream
+        trip matching has enough candidates to find connecting routes.
+        """
         feed = self._feeds.get(feed_id)
         if feed is None:
             return []
@@ -259,7 +296,8 @@ class GtfsFeedService:
             if dist <= self.max_walk_radius:
                 stops.append((dist, stop))
         stops.sort(key=lambda item: item[0])
-        return [s for _, s in stops[: self.max_results * 2]]
+        # Cap at a generous maximum to avoid explosion, but much higher than max_results
+        return [s for _, s in stops[:50]]
 
     def find_trips_between(
         self,
@@ -271,6 +309,28 @@ class GtfsFeedService:
         latest_arrival: datetime | None = None,
     ) -> list[GtfsTransitLeg]:
         """Find direct trips from from_stop_id to to_stop_id on target_date."""
+        return self.find_trips_between_any(
+            feed_id=feed_id,
+            from_stop_ids={from_stop_id},
+            to_stop_ids={to_stop_id},
+            target_date=target_date,
+            earliest_departure=earliest_departure,
+            latest_arrival=latest_arrival,
+        )
+
+    def find_trips_between_any(
+        self,
+        feed_id: str,
+        from_stop_ids: set[str],
+        to_stop_ids: set[str],
+        target_date: date,
+        earliest_departure: datetime | None = None,
+        latest_arrival: datetime | None = None,
+    ) -> list[GtfsTransitLeg]:
+        """Find direct trips that serve any from_stop_id before any to_stop_id on target_date.
+
+        More efficient than calling find_trips_between for every pair: builds index once.
+        """
         feed = self._feeds.get(feed_id)
         if feed is None:
             return []
@@ -279,23 +339,6 @@ class GtfsFeedService:
         if not active_services:
             return []
 
-        from_times: dict[str, int] = {}  # trip_id -> departure_seconds
-        to_times: dict[str, int] = {}    # trip_id -> arrival_seconds
-
-        # Collect departure times at from_stop
-        for trip_id, st_list in feed.stop_times.items():
-            for st in st_list:
-                if st.stop_id == from_stop_id:
-                    from_times[trip_id] = st.departure_seconds
-                    break
-
-        # Collect arrival times at to_stop
-        for trip_id, st_list in feed.stop_times.items():
-            for st in st_list:
-                if st.stop_id == to_stop_id:
-                    to_times[trip_id] = st.arrival_seconds
-
-        results: list[GtfsTransitLeg] = []
         earliest_seconds: int | None = None
         latest_seconds: int | None = None
 
@@ -304,20 +347,44 @@ class GtfsFeedService:
         if latest_arrival is not None:
             latest_seconds = latest_arrival.hour * 3600 + latest_arrival.minute * 60
 
-        for trip_id, dep_sec in from_times.items():
-            arr_sec = to_times.get(trip_id)
-            if arr_sec is None or arr_sec <= dep_sec:
-                continue
+        results: list[GtfsTransitLeg] = []
+
+        for trip_id, st_list in feed.stop_times.items():
             trip = feed.trips.get(trip_id)
-            if trip is None:
-                continue
-            if trip.service_id not in active_services:
+            if trip is None or trip.service_id not in active_services:
                 continue
 
-            # Time window filter
-            if earliest_seconds is not None and dep_sec < earliest_seconds:
+            # Find the first from-stop that has a to-stop after it in the sequence.
+            # Iterate stops in order; track the earliest unmatched from-stop.
+            from_st: GtfsStopTime | None = None
+            to_st: GtfsStopTime | None = None
+            for st in st_list:
+                if st.stop_id in from_stop_ids and from_st is None:
+                    from_st = st
+                if from_st is not None and st.stop_id in to_stop_ids and st.stop_id != from_st.stop_id:
+                    to_st = st
+                    if to_st.arrival_seconds > from_st.departure_seconds:
+                        break  # first valid pair found
+                    # Arrival not after departure — keep searching for a later dest stop
+                    to_st = None
+            if from_st is None or to_st is None:
                 continue
-            if latest_seconds is not None and arr_sec > latest_seconds:
+
+            dep_sec = from_st.departure_seconds
+            arr_sec = to_st.arrival_seconds
+
+            # GTFS allows times ≥ 24:00:00 for trips past midnight.
+            # Normalize to 0–23 hour range by wrapping to the next day.
+            dep_day_offset = dep_sec // 86400
+            arr_day_offset = arr_sec // 86400
+            dep_sec_norm = dep_sec % 86400
+            arr_sec_norm = arr_sec % 86400
+
+            # Time window filter — use normalized values so overnight trips
+            # are compared correctly within the target date's 0-86399 range.
+            if earliest_seconds is not None and dep_sec_norm < earliest_seconds:
+                continue
+            if latest_seconds is not None and arr_sec_norm > latest_seconds:
                 continue
 
             route = feed.routes.get(trip.route_id)
@@ -329,17 +396,17 @@ class GtfsFeedService:
 
             dep_dt = datetime(
                 target_date.year, target_date.month, target_date.day,
-                dep_sec // 3600, (dep_sec % 3600) // 60, dep_sec % 60,
+                dep_sec_norm // 3600, (dep_sec_norm % 3600) // 60, dep_sec_norm % 60,
                 tzinfo=timezone.utc,
-            )
+            ) + timedelta(days=dep_day_offset)
             arr_dt = datetime(
                 target_date.year, target_date.month, target_date.day,
-                arr_sec // 3600, (arr_sec % 3600) // 60, arr_sec % 60,
+                arr_sec_norm // 3600, (arr_sec_norm % 3600) // 60, arr_sec_norm % 60,
                 tzinfo=timezone.utc,
-            )
+            ) + timedelta(days=arr_day_offset)
 
-            from_stop = feed.stops.get(from_stop_id)
-            to_stop = feed.stops.get(to_stop_id)
+            from_stop_obj = feed.stops.get(from_st.stop_id)
+            to_stop_obj = feed.stops.get(to_st.stop_id)
 
             results.append(
                 GtfsTransitLeg(
@@ -350,10 +417,10 @@ class GtfsFeedService:
                     departure_at=dep_dt,
                     arrival_at=arr_dt,
                     duration_minutes=int(duration / 60),
-                    from_stop_name=from_stop.name if from_stop else from_stop_id,
-                    to_stop_name=to_stop.name if to_stop else to_stop_id,
-                    from_stop_id=from_stop_id,
-                    to_stop_id=to_stop_id,
+                    from_stop_name=from_stop_obj.name if from_stop_obj else from_st.stop_id,
+                    to_stop_name=to_stop_obj.name if to_stop_obj else to_st.stop_id,
+                    from_stop_id=from_st.stop_id,
+                    to_stop_id=to_st.stop_id,
                 )
             )
 
@@ -413,24 +480,32 @@ class GtfsFeedService:
 
     @staticmethod
     def _active_services(feed: ParsedGtfsFeed, target_date: date) -> set[str]:
-        """Determine which service_ids are active on target_date."""
+        """Determine which service_ids are active on target_date.
+
+        Priority:
+        1. calendar.txt: add service_ids whose date range + day-of-week covers target_date
+        2. calendar_dates.txt exception_type=2: remove service_id for target_date
+        3. calendar_dates.txt exception_type=1: add service_id for target_date
+
+        If calendar.txt is empty (feed uses calendar_dates exclusively),
+        only exception_type=1 entries determine active services.
+        """
         active: set[str] = set()
 
-        # calendar.txt
-        day_name = target_date.strftime("%A").lower()
+        # calendar.txt — regular schedule
         for sid, dates in feed.calendar.items():
             if target_date in dates:
                 active.add(sid)
 
-        # calendar_dates.txt (exceptions override)
-        if sid in feed.calendar_dates:
-            exc = feed.calendar_dates[sid].get(target_date)
-            if exc == 2:  # service removed
+        # calendar_dates.txt — exceptions (removals first, then additions)
+        for sid, exc_map in feed.calendar_dates.items():
+            exc = exc_map.get(target_date)
+            if exc == 2:  # service removed for this date
                 active.discard(sid)
 
         for sid, exc_map in feed.calendar_dates.items():
             exc = exc_map.get(target_date)
-            if exc == 1:  # service added
+            if exc == 1:  # service added for this date
                 active.add(sid)
 
         return active

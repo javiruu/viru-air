@@ -3,9 +3,9 @@ import React from "react";
 import { useI18n } from "@/i18n";
 import type { DoorToDoorOption } from "@/modules/door-to-door/types";
 import { DoorToDoorRiskPill } from "@/modules/door-to-door/components/DoorToDoorRiskPill";
-import { DoorToDoorSourceBadge } from "@/modules/door-to-door/components/DoorToDoorSourceBadge";
 
-function durationLabel(minutes: number) {
+function durationLabel(minutes: number | null | undefined) {
+  if (minutes == null) return null;
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   return `${hours}h${String(mins).padStart(2, "0")}`;
@@ -13,35 +13,26 @@ function durationLabel(minutes: number) {
 
 export function DoorToDoorOptionCard({
   option,
-  selected,
   chosen,
   compact = false,
-  onSelect,
   onChoose,
 }: {
   option: DoorToDoorOption;
-  selected: boolean;
   chosen: boolean;
   compact?: boolean;
-  onSelect: () => void;
   onChoose: () => void;
 }) {
   const { t } = useI18n();
-  const hasConfirmedPrice = option.total_price_min != null && option.total_price_max != null;
-  const isDeeplinkUnpriced = option.source_types.includes("deeplink") && !hasConfirmedPrice;
-  const isUnpricedExternal = isDeeplinkUnpriced || (option.source_types.includes("open_data") && !hasConfirmedPrice);
-  const hasGoogleRoutes = option.sources.some((source) => source.provider === "google_routes");
-  const hasGtfsTransit = option.sources.some((source) => source.provider === "gtfs_transit");
-  const strongRecommended = option.is_recommended && hasConfirmedPrice && !isDeeplinkUnpriced;
-  const blablacarLeg = option.legs.find((leg) => leg.provider === "blablacar" && leg.booking_url);
-  const gooptiLeg = option.legs.find((leg) => leg.provider === "goopti" && leg.booking_url);
-  const genericBookingLeg = !blablacarLeg && !gooptiLeg ? option.legs.find((leg) => leg.booking_url) : null;
+  const isRealResult = option.status === "real_result";
+  const isRealDeeplink = option.status === "real_deeplink";
+  const isEstimate = option.status === "estimate_only";
+  const hasDuration = option.total_duration_minutes != null;
+  const hasPrice = option.total_price_min != null && option.total_price_max != null;
 
-  function kickerLabel() {
-    if (isUnpricedExternal) return t("doorToDoor.option.limited");
-    if (strongRecommended) return t("doorToDoor.option.recommended");
-    if (option.is_extended || compact) return t("doorToDoor.option.alternative");
-    return t("doorToDoor.option.defaultKicker");
+  function statusBadge() {
+    if (isRealResult) return <span className="status-pill success d2d-badge">{t("doorToDoor.option.realResult")}</span>;
+    if (isRealDeeplink) return <span className="status-pill info d2d-badge">{t("doorToDoor.option.realDeeplink")}</span>;
+    return <span className="status-pill warning d2d-badge">{t("doorToDoor.option.estimateOnly")}</span>;
   }
 
   function priceLabel() {
@@ -50,44 +41,66 @@ export function DoorToDoorOptionCard({
     return t("doorToDoor.option.estimatedRange", { min: option.total_price_min, max: option.total_price_max, currency: option.currency });
   }
 
+  const durStr = durationLabel(option.total_duration_minutes);
+
   return (
-    <article className={`d2d-option-card ${selected ? "is-selected" : ""} ${strongRecommended ? "is-recommended" : ""} ${chosen ? "is-chosen" : ""} ${compact ? "is-compact" : ""} ${isUnpricedExternal ? "is-limited" : ""}`}>
-      <button type="button" className="d2d-option-main" onClick={onSelect} aria-pressed={selected}>
+    <article className={`d2d-option-card ${isRealResult ? "is-real" : ""} ${isRealDeeplink ? "is-deeplink" : ""} ${isEstimate ? "is-estimate" : ""} ${chosen ? "is-chosen" : ""} ${compact ? "is-compact" : ""}`}>
+      <div className="d2d-option-main">
         <div className="d2d-option-head">
           <div>
-            <span className="d2d-option-kicker">{kickerLabel()}</span>
+            {statusBadge()}
             <h3>{option.label}</h3>
           </div>
           <DoorToDoorRiskPill risk={option.risk_level} />
         </div>
-        <strong className="d2d-option-price">{priceLabel()} · {durationLabel(option.total_duration_minutes)}</strong>
-        <p>{isUnpricedExternal ? t("doorToDoor.option.routeToProvider") : option.description}</p>
-        {isUnpricedExternal ? <p className="d2d-option-trust-note">{isDeeplinkUnpriced ? t("doorToDoor.option.deeplinkDisclosure") : t("doorToDoor.source.openDataHint")}</p> : null}
-        <div className="d2d-option-meta">
-          <span>{t("doorToDoor.option.buffer", { minutes: option.airport_buffer_minutes ?? "--" })}</span>
-          <span>{t("doorToDoor.option.transfers", { count: option.transfer_count })}</span>
-          <span>{t("doorToDoor.option.score", { score: option.score })}</span>
-          {option.price_per_person_min != null ? <span>{t("doorToDoor.option.perPerson", { min: option.price_per_person_min, max: option.price_per_person_max ?? option.price_per_person_min, currency: option.currency })}</span> : null}
-        </div>
-        <div className="d2d-option-sources">
-          {hasGoogleRoutes ? <span className="status-pill success d2d-badge">{t("doorToDoor.option.realDuration")}</span> : null}
-          {hasGtfsTransit ? <span className="status-pill info d2d-badge" title={t("doorToDoor.source.openDataHint")}>{t("doorToDoor.option.openDataSchedule")}</span> : null}
-          {!hasConfirmedPrice ? <span className="status-pill warning d2d-badge">{t("doorToDoor.option.noPrice")}</span> : null}
-          {option.sources.slice(0, 2).map((source) => (
-            <DoorToDoorSourceBadge key={`${option.id}-${source.provider}`} confidence={source.confidence} label={source.source_type === "mock" ? t("doorToDoor.source.mock") : source.source_type === "open_data" ? t("doorToDoor.source.openData") : undefined} />
-          ))}
-          {option.source_types.includes("scraper") ? <DoorToDoorSourceBadge confidence="cached" label={t("doorToDoor.source.scraper")} /> : null}
-        </div>
-      </button>
-      <div className="d2d-option-actions">
-        {blablacarLeg ? (
-          <a className="btn-secondary btn-compact" href={blablacarLeg.booking_url || "#"} target="_blank" rel="noreferrer">{t("doorToDoor.option.openBlaBlaCar")}</a>
-        ) : gooptiLeg ? (
-          <a className="btn-secondary btn-compact" href={gooptiLeg.booking_url || "#"} target="_blank" rel="noreferrer">{t("doorToDoor.option.openGoOpti")}</a>
-        ) : genericBookingLeg ? (
-          <a className="btn-secondary btn-compact" href={genericBookingLeg.booking_url || "#"} target="_blank" rel="noreferrer">{t("doorToDoor.option.openBooking")}</a>
+
+        <p>{option.description}</p>
+
+        {option.trust_copy ? (
+          <p className="d2d-option-trust-note">{option.trust_copy}</p>
         ) : null}
-        <button type="button" className="btn-ghost btn-compact" onClick={onChoose}>{chosen ? t("doorToDoor.option.chosen") : t("doorToDoor.option.markChosen")}</button>
+
+        <div className="d2d-option-meta">
+          {hasDuration ? <span>{t("doorToDoor.option.buffer", { minutes: option.airport_buffer_minutes ?? "--" })}</span> : null}
+          <span>{t("doorToDoor.option.transfers", { count: option.transfer_count })}</span>
+          {option.score != null ? <span>{t("doorToDoor.option.score", { score: option.score })}</span> : null}
+          {hasPrice ? <strong className="d2d-option-price">{priceLabel()}{durStr ? ` · ${durStr}` : ""}</strong> : (
+            <span className="d2d-option-price-unconfirmed">{isRealDeeplink ? t("doorToDoor.option.externalPriceNote") : t("doorToDoor.option.noPrice")}</span>
+          )}
+        </div>
+
+        {/* Source summary */}
+        <div className="d2d-option-sources">
+          {option.sources.slice(0, 2).map((source) => {
+            const sourceLabel =
+              source.source_type === "maps" ? t("doorToDoor.source.maps") :
+              source.source_type === "deeplink" ? t("doorToDoor.source.deeplink") :
+              source.source_type === "open_data" ? t("doorToDoor.source.openData") :
+              source.source_type === "estimate" ? t("doorToDoor.source.estimate") :
+              source.source_type === "mock" ? t("doorToDoor.source.mock") :
+              source.source_type;
+            const tone = source.source_type === "maps" ? "info" : source.source_type === "open_data" ? "success" : source.source_type === "deeplink" ? "info" : "warning";
+            return <span key={`${option.id}-${source.provider}`} className={`status-pill ${tone} d2d-badge`}>{sourceLabel}</span>;
+          })}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="d2d-option-actions">
+        {option.deep_link ? (
+          <a className="btn-secondary btn-compact" href={option.deep_link.url} target="_blank" rel="noreferrer">
+            {option.deep_link.label}
+          </a>
+        ) : option.sources.some((s) => s.booking_url) ? (
+          <a className="btn-secondary btn-compact" href={option.sources.find((s) => s.booking_url)!.booking_url!} target="_blank" rel="noreferrer">
+            {t("doorToDoor.option.openBooking")}
+          </a>
+        ) : null}
+        {!isEstimate ? (
+          <button type="button" className="btn-ghost btn-compact" onClick={onChoose}>
+            {chosen ? t("doorToDoor.option.chosen") : t("doorToDoor.option.markChosen")}
+          </button>
+        ) : null}
       </div>
     </article>
   );

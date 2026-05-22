@@ -30,7 +30,7 @@ export type DoorToDoorPreferences = {
 export type DoorToDoorSource = {
   provider: string;
   source_provider: string;
-  source_type: "api" | "open_data" | "aggregator" | "deeplink" | "scraper" | "mock";
+  source_type: "api" | "open_data" | "aggregator" | "deeplink" | "scraper" | "mock" | "maps" | "estimate";
   confidence: DoorToDoorConfidence;
   checked_at: string;
   expires_at?: string | null;
@@ -54,18 +54,35 @@ export type DoorToDoorLeg = {
   confidence?: DoorToDoorConfidence | null;
 };
 
+export type DoorToDoorOptionStatus = "real_result" | "real_deeplink" | "estimate_only";
+export type DoorToDoorDeepLinkKind = "directions" | "provider_search" | "booking";
+
+export type DoorToDoorDeepLink = {
+  url: string;
+  label: string;
+  kind: DoorToDoorDeepLinkKind;
+  opens_external: boolean;
+};
+
+export type DoorToDoorPrice = {
+  amount: number | null;
+  currency: string | null;
+  status: "confirmed" | "unavailable" | "external" | "estimated";
+};
+
 export type DoorToDoorOption = {
   id: string;
   label: string;
   description: string;
+  status: DoorToDoorOptionStatus;
   total_price_min?: number | null;
   total_price_max?: number | null;
   price_per_person_min?: number | null;
   price_per_person_max?: number | null;
   currency: string;
-  total_duration_minutes: number;
+  total_duration_minutes?: number | null;
   risk_level: DoorToDoorRiskLevel;
-  score: number;
+  score?: number | null;
   transfer_count: number;
   airport_buffer_minutes?: number | null;
   confidence: DoorToDoorConfidence;
@@ -74,6 +91,9 @@ export type DoorToDoorOption = {
   legs: DoorToDoorLeg[];
   is_recommended: boolean;
   is_extended: boolean;
+  deep_link?: DoorToDoorDeepLink | null;
+  price?: DoorToDoorPrice | null;
+  trust_copy?: string | null;
 };
 
 export type DoorToDoorFlight = {
@@ -131,7 +151,10 @@ export type DoorToDoorProviderStatus = {
     | "functional_api"
     | "functional_mock"
     | "functional_deeplink"
+    | "functional_open_data"
     | "functional_scraper"
+    | "functional_estimate"
+    | "functional_maps"
     | "scraper_base_only"
     | "deeplink_stub"
     | "pure_stub"

@@ -1,17 +1,32 @@
+"""BlaBlaCar deeplink provider: generates external search links.
+
+Honest provider — no fake durations, no fake prices, no fake availability.
+Generates a BlaBlaCar search URL and returns status=real_deeplink.
+"""
+
 from datetime import timedelta
 from urllib.parse import urlencode
 
 from app.door_to_door.domain.models import ProviderHealth
-from app.door_to_door.domain.risk import calculate_risk_level
-from app.door_to_door.domain.scoring import score_itinerary
 from app.door_to_door.providers.base import DoorToDoorProvider, DoorToDoorProviderQuery
-from app.door_to_door.schemas import DoorToDoorLegOut, DoorToDoorOptionOut, DoorToDoorSourceOut
+from app.door_to_door.schemas import (
+    DoorToDoorDeepLinkOut,
+    DoorToDoorLegOut,
+    DoorToDoorOptionOut,
+    DoorToDoorPriceOut,
+    DoorToDoorSourceOut,
+)
 
 
 class BlaBlaCarDeepLinkProvider(DoorToDoorProvider):
     provider_name = "blablacar_deeplink"
     source_type = "deeplink"
     search_base_url = "https://www.blablacar.es/search"
+
+    TRUST_COPY = (
+        "Viru abre la búsqueda externa en BlaBlaCar. "
+        "Precio, horarios y plazas se confirman fuera de Viru."
+    )
 
     async def healthcheck(self) -> ProviderHealth:
         return ProviderHealth(self.provider_name, "ok", self.source_type, "deeplink")
@@ -22,10 +37,6 @@ class BlaBlaCarDeepLinkProvider(DoorToDoorProvider):
 
         flight = query.flight
         checked_at = query.checked_at
-        airport_buffer = max(query.preferences.min_airport_buffer_minutes, 120)
-        outbound_minutes = 230
-        outbound_arrival = flight.departure_at - timedelta(minutes=airport_buffer)
-        outbound_departure = outbound_arrival - timedelta(minutes=outbound_minutes)
         flight_duration = int((flight.arrival_at - flight.departure_at).total_seconds() / 60)
         deeplink, url_warning = self._build_deeplink(query)
 
@@ -58,18 +69,29 @@ class BlaBlaCarDeepLinkProvider(DoorToDoorProvider):
             booking_url=deeplink,
         )
 
+        deep_link = DoorToDoorDeepLinkOut(
+            url=deeplink,
+            label="Buscar en BlaBlaCar",
+            kind="provider_search",
+            opens_external=True,
+        )
+
         airport_city = self._city_for_airport(flight.origin_airport)
-        airport_label = f"Aeropuerto de {airport_city} {flight.origin_airport}" if airport_city else f"Aeropuerto de {flight.origin_airport}"
+        airport_label = (
+            f"Aeropuerto de {airport_city} {flight.origin_airport}"
+            if airport_city
+            else f"Aeropuerto de {flight.origin_airport}"
+        )
 
         legs = [
             DoorToDoorLegOut(
                 type="ground",
                 mode="rideshare",
-                from_label=query.origin.label,
-                to_label=airport_label,
-                departure_at=outbound_departure,
-                arrival_at=outbound_arrival,
-                duration_minutes=outbound_minutes,
+                from_location=query.origin.label,
+                to_location=airport_label,
+                departure_at=None,
+                arrival_at=None,
+                duration_minutes=None,
                 price_min=None,
                 price_max=None,
                 provider="blablacar",
@@ -80,8 +102,8 @@ class BlaBlaCarDeepLinkProvider(DoorToDoorProvider):
             DoorToDoorLegOut(
                 type="flight",
                 mode="flight",
-                from_label=flight.origin_airport,
-                to_label=flight.destination_airport,
+                from_location=flight.origin_airport,
+                to_location=flight.destination_airport,
                 departure_at=flight.departure_at,
                 arrival_at=flight.arrival_at,
                 duration_minutes=flight_duration,
@@ -91,24 +113,22 @@ class BlaBlaCarDeepLinkProvider(DoorToDoorProvider):
             ),
         ]
 
-        inbound_minutes = 0
-        transfer_count = 1
         dest_airport_city = self._city_for_airport(flight.destination_airport)
-        dest_airport_label = f"Aeropuerto de {dest_airport_city} {flight.destination_airport}" if dest_airport_city else f"Aeropuerto de {flight.destination_airport}"
+        dest_airport_label = (
+            f"Aeropuerto de {dest_airport_city} {flight.destination_airport}"
+            if dest_airport_city
+            else f"Aeropuerto de {flight.destination_airport}"
+        )
         if query.final_destination.type != "airport_only":
-            inbound_minutes = 45
-            inbound_departure = flight.arrival_at + timedelta(minutes=35)
-            inbound_arrival = inbound_departure + timedelta(minutes=inbound_minutes)
-            transfer_count = 2
             legs.append(
                 DoorToDoorLegOut(
                     type="ground",
                     mode="shuttle",
-                    from_label=dest_airport_label,
-                    to_label=query.final_destination.label,
-                    departure_at=inbound_departure,
-                    arrival_at=inbound_arrival,
-                    duration_minutes=inbound_minutes,
+                    from_location=dest_airport_label,
+                    to_location=query.final_destination.label,
+                    departure_at=None,
+                    arrival_at=None,
+                    duration_minutes=None,
                     price_min=None,
                     price_max=None,
                     provider="local_transfer",
@@ -117,39 +137,31 @@ class BlaBlaCarDeepLinkProvider(DoorToDoorProvider):
                 )
             )
 
-        total_duration = outbound_minutes + airport_buffer + flight_duration + inbound_minutes
-        risk = calculate_risk_level(airport_buffer, transfer_count, "deeplink")
-        score = score_itinerary(
-            price_midpoint=None,
-            duration_minutes=total_duration,
-            airport_buffer_minutes=airport_buffer,
-            transfer_count=transfer_count,
-            risk_level=risk,
-            confidence="deeplink",
-            uncomfortable_hour=outbound_departure.hour < 6,
-            luggage_penalty=0,
-        )
-
         return [
             DoorToDoorOptionOut(
                 id="option_blablacar_deeplink",
-                label="Ruta con BlaBlaCar",
-                description="Enlace directo para tramo terrestre de salida. Precio final en proveedor.",
+                label="Buscar coche compartido en BlaBlaCar",
+                description="Abre la búsqueda externa con origen, ciudad del aeropuerto y fecha del vuelo. Sin precio ni disponibilidad confirmados.",
+                status="real_deeplink",
                 total_price_min=None,
                 total_price_max=None,
                 price_per_person_min=None,
                 price_per_person_max=None,
                 currency="EUR",
-                total_duration_minutes=total_duration,
-                risk_level=risk,
-                score=score,
-                transfer_count=transfer_count,
-                airport_buffer_minutes=airport_buffer,
+                total_duration_minutes=None,
+                risk_level="unknown",
+                score=None,
+                transfer_count=1,
+                airport_buffer_minutes=None,
                 confidence="deeplink",
                 source_types=["deeplink", "api"],
                 sources=[source],
                 legs=legs,
-                is_extended=True,
+                is_recommended=False,
+                is_extended=False,
+                deep_link=deep_link,
+                price=DoorToDoorPriceOut(amount=None, currency=None, status="external"),
+                trust_copy=self.TRUST_COPY,
             )
         ]
 

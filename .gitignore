@@ -23,6 +23,7 @@ viru.db
 *.sqlite*
 
 # Caches and generated output
+.gtfs_cache/
 node_modules/
 npm-cache/
 .venv/
