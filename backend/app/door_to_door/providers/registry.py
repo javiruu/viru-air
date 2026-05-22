@@ -7,6 +7,7 @@ from app.door_to_door.providers.deeplink_blablacar import BlaBlaCarDeepLinkProvi
 from app.door_to_door.providers.deeplink_goopti import GoOptiDeepLinkProvider
 from app.door_to_door.providers.google_places import GooglePlacesSuggestionsProvider
 from app.door_to_door.providers.google_routes import GoogleRoutesProvider
+from app.door_to_door.providers.gtfs_transit import GtfsTransitProvider
 from app.door_to_door.providers.mock import MockDoorToDoorProvider
 from app.door_to_door.schemas import DoorToDoorProviderStatusOut, DoorToDoorSourceType
 
@@ -48,6 +49,11 @@ def _has_google_key() -> bool:
     return bool(os.getenv("GOOGLE_MAPS_API_KEY", "").strip())
 
 
+def _has_gtfs_feeds() -> bool:
+    raw = os.getenv("DOOR_TO_DOOR_GTFS_FEEDS_JSON", "").strip()
+    return bool(raw)
+
+
 def resolve_provider_runtime() -> ProviderRuntime:
     app_env = os.getenv("APP_ENV", "local").strip().lower()
     mock_default = app_env in {"local", "dev", "development", "test"}
@@ -56,12 +62,35 @@ def resolve_provider_runtime() -> ProviderRuntime:
     scrapers_enabled = _env_flag("DOOR_TO_DOOR_ENABLE_SCRAPERS", False)
     google_routes_flag = _env_flag("DOOR_TO_DOOR_ENABLE_GOOGLE_ROUTES", False)
     google_places_flag = _env_flag("DOOR_TO_DOOR_ENABLE_GOOGLE_PLACES", False)
+    gtfs_transit_flag = _env_flag("DOOR_TO_DOOR_ENABLE_GTFS_TRANSIT", False)
     has_google_key = _has_google_key()
+    has_gtfs_feeds = _has_gtfs_feeds()
 
     google_routes_enabled = real_enabled and google_routes_flag and has_google_key
     google_places_enabled = real_enabled and google_places_flag and has_google_key
+    gtfs_transit_enabled = real_enabled and gtfs_transit_flag and has_gtfs_feeds
 
     descriptors: list[ProviderDescriptor] = [
+        ProviderDescriptor(
+            name="gtfs_transit",
+            source_type="open_data",
+            base_status="functional_open_data" if gtfs_transit_enabled else "disabled",
+            production_ready=False,
+            supports_search=True,
+            supports_booking_url=False,
+            has_tests=True,
+            notes=(
+                "Horarios reales desde feeds GTFS/open data; sujeto a cobertura del feed."
+                if gtfs_transit_enabled
+                else (
+                    "Desactivado: faltan feeds configurados."
+                    if real_enabled and gtfs_transit_flag and not has_gtfs_feeds
+                    else "Desactivado: requiere DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS, DOOR_TO_DOOR_ENABLE_GTFS_TRANSIT y DOOR_TO_DOOR_GTFS_FEEDS_JSON."
+                )
+            ),
+            is_real=True,
+            factory=GtfsTransitProvider,
+        ),
         ProviderDescriptor(
             name="mock_multimodal",
             source_type="mock",
@@ -138,16 +167,7 @@ def resolve_provider_runtime() -> ProviderRuntime:
             is_real=False,
             factory=None,
         ),
-        ProviderDescriptor(
-            name="gtfs",
-            source_type="open_data",
-            base_status="pure_stub",
-            production_ready=False,
-            supports_search=False,
-            supports_booking_url=False,
-            has_tests=False,
-            notes="Placeholder GTFS sin busqueda operativa.",
-        ),
+
         ProviderDescriptor(
             name="opentripplanner",
             source_type="open_data",
@@ -273,9 +293,16 @@ def resolve_provider_runtime() -> ProviderRuntime:
         if descriptor.is_mock:
             enabled = mock_enabled
             status = descriptor.base_status if enabled else "disabled"
-        elif descriptor.name == "google_routes":
-            enabled = google_routes_enabled
-            status = "functional_api" if enabled else "disabled"
+        elif descriptor.name == "google_routes" or descriptor.name == "gtfs_transit":
+            enabled = (
+                google_routes_enabled
+                if descriptor.name == "google_routes"
+                else gtfs_transit_enabled
+            )
+            if descriptor.name == "google_routes":
+                status = "functional_api" if enabled else "disabled"
+            else:
+                status = "functional_open_data" if enabled else "disabled"
         elif descriptor.is_real:
             enabled = real_enabled
             status = descriptor.base_status if enabled else "disabled"

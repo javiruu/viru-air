@@ -393,3 +393,158 @@ def test_score_prefers_safer_route_when_buffer_is_low() -> None:
 
 def test_high_risk_when_airport_buffer_under_90() -> None:
     assert calculate_risk_level(89, 1, "estimated") == "high"
+
+
+def _set_gtfs_env(monkeypatch, *, gtfs_enabled: bool, feeds_json: str = "") -> None:
+    monkeypatch.setenv("DOOR_TO_DOOR_ENABLE_GTFS_TRANSIT", "1" if gtfs_enabled else "0")
+    monkeypatch.setenv("DOOR_TO_DOOR_GTFS_FEEDS_JSON", feeds_json)
+    monkeypatch.setenv("DOOR_TO_DOOR_GTFS_CACHE_DIR", ".gtfs_cache_test")
+
+
+def test_gtfs_disabled_yields_no_change(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(monkeypatch, mock=True, real=False, scrapers=False)
+    _set_gtfs_env(monkeypatch, gtfs_enabled=False, feeds_json="")
+    headers = _auth_headers(client, "gtfs-off@viru.dev")
+    watch_id = _create_watch(client, headers)
+
+    response = client.post("/api/v1/door-to-door/search", json=_search_payload(watch_id), headers=headers)
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert all("open_data" not in option["source_types"] for option in body["options"])
+
+
+def test_gtfs_on_without_feeds_shows_disabled_status(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(monkeypatch, mock=False, real=True, scrapers=False)
+    _set_gtfs_env(monkeypatch, gtfs_enabled=True, feeds_json="")
+    headers = _auth_headers(client, "gtfs-nofeed@viru.dev")
+
+    response = client.get("/api/v1/door-to-door/providers/status", headers=headers)
+
+    assert response.status_code == 200, response.text
+    statuses = {item["name"]: item for item in response.json()}
+    assert statuses["gtfs_transit"]["enabled"] is False
+    assert statuses["gtfs_transit"]["status"] == "disabled"
+    assert "faltan feeds" in (statuses["gtfs_transit"]["notes"] or "").lower() or "feeds" in (statuses["gtfs_transit"]["notes"] or "").lower()
+
+
+def test_gtfs_provider_failure_does_not_break_search(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(monkeypatch, mock=True, real=True, scrapers=False)
+    _set_gtfs_env(monkeypatch, gtfs_enabled=True, feeds_json='[{"id":"test_feed","name":"Test Feed","region":"test","url":"https://example.com/gtfs.zip","source_type":"open_data","license_url":"https://example.com/license","attribution":"Test"}]')
+
+    from app.door_to_door.providers import gtfs_transit
+
+    original_search = gtfs_transit.GtfsTransitProvider.search
+
+    async def _failing_search(self, query):
+        raise RuntimeError("GTFS feed unavailable")
+
+    monkeypatch.setattr(gtfs_transit.GtfsTransitProvider, "search", _failing_search)
+
+    headers = _auth_headers(client, "gtfs-fail@viru.dev")
+    watch_id = _create_watch(client, headers)
+
+    response = client.post("/api/v1/door-to-door/search", json=_search_payload(watch_id), headers=headers)
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["options"]
+    assert any(warning["code"] in ("PARTIAL_PROVIDER_COVERAGE", "PROVIDER_PARTIAL_COVERAGE", "GTFS_FEED_UNAVAILABLE") for warning in body["warnings"])
+
+    monkeypatch.setattr(gtfs_transit.GtfsTransitProvider, "search", original_search)
+
+
+def test_gtfs_with_mock_returns_open_data_option(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(monkeypatch, mock=False, real=True, scrapers=False)
+    _set_gtfs_env(monkeypatch, gtfs_enabled=True, feeds_json='[{"id":"test_feed","name":"Test Feed","region":"test","url":"https://example.com/gtfs.zip","source_type":"open_data","license_url":"https://example.com/license","attribution":"Test"}]')
+
+    from app.door_to_door.providers import gtfs_transit
+    from app.door_to_door.schemas import DoorToDoorLegOut, DoorToDoorOptionOut, DoorToDoorSourceOut
+
+    async def _fake_gtfs_search(self, query):
+        checked_at = query.checked_at
+        return [
+            DoorToDoorOptionOut(
+                id="option_gtfs_test",
+                label="Transporte público (horario real)",
+                description="Horario según feed público GTFS.",
+                total_price_min=None,
+                total_price_max=None,
+                price_per_person_min=None,
+                price_per_person_max=None,
+                currency="EUR",
+                total_duration_minutes=320,
+                risk_level="medium",
+                score=68,
+                transfer_count=1,
+                airport_buffer_minutes=130,
+                confidence="cached",
+                source_types=["open_data"],
+                sources=[
+                    DoorToDoorSourceOut(
+                        provider="gtfs_transit",
+                        source_provider="ctan_andalucia",
+                        source_type="open_data",
+                        confidence="cached",
+                        checked_at=checked_at,
+                    )
+                ],
+                legs=[
+                    DoorToDoorLegOut(
+                        type="ground",
+                        mode="bus",
+                        from_label="Almería",
+                        to_label="Aeropuerto de Málaga AGP",
+                        departure_at="2026-06-14T07:30:00+02:00",
+                        arrival_at="2026-06-14T11:00:00+02:00",
+                        duration_minutes=210,
+                        provider="gtfs_transit",
+                        source_type="open_data",
+                        confidence="cached",
+                    ),
+                    DoorToDoorLegOut(
+                        type="flight",
+                        mode="flight",
+                        from_label="AGP",
+                        to_label="TSF",
+                        duration_minutes=155,
+                        provider="flight_watch",
+                        source_type="api",
+                        confidence="estimated",
+                    ),
+                ],
+            )
+        ]
+
+    monkeypatch.setattr(gtfs_transit.GtfsTransitProvider, "search", _fake_gtfs_search)
+
+    headers = _auth_headers(client, "gtfs-mock@viru.dev")
+    watch_id = _create_watch(client, headers)
+
+    response = client.post("/api/v1/door-to-door/search", json=_search_payload(watch_id), headers=headers)
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    open_data_options = [option for option in body["options"] if "open_data" in option["source_types"]]
+    assert open_data_options
+    assert open_data_options[0]["total_price_min"] is None
+    assert open_data_options[0]["total_price_max"] is None
+    assert any(source["source_type"] == "open_data" for source in open_data_options[0]["sources"])
+
+
+def test_gtfs_provider_status_is_honest(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(monkeypatch, mock=False, real=True, scrapers=False)
+    _set_gtfs_env(monkeypatch, gtfs_enabled=True, feeds_json='[{"id":"test_feed","name":"Test","region":"test","url":"https://example.com/gtfs.zip","source_type":"open_data","license_url":"https://example.com/license","attribution":"Test"}]')
+    headers = _auth_headers(client, "gtfs-status@viru.dev")
+
+    response = client.get("/api/v1/door-to-door/providers/status", headers=headers)
+
+    assert response.status_code == 200, response.text
+    statuses = {item["name"]: item for item in response.json()}
+    assert statuses["gtfs_transit"]["enabled"] is True
+    assert statuses["gtfs_transit"]["status"] == "functional_open_data"
+    assert statuses["gtfs_transit"]["source_type"] == "open_data"
+    assert statuses["gtfs_transit"]["supports_search"] is True
+    assert statuses["gtfs_transit"]["supports_booking_url"] is False
+    assert statuses["gtfs_transit"]["has_tests"] is True
+    assert statuses["gtfs_transit"]["production_ready"] is False

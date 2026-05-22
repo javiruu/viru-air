@@ -84,6 +84,7 @@ export const doorToDoorEs = {
     sourceMockHint: "Mock: estimado para decidir, no para reservar.",
     sourceDeeplinkHint: "Deeplink: abre proveedor externo; precio y plazas se confirman fuera.",
     sourceApiHint: "API/Open data: todavía no activo para esta ruta.",
+    openDataHint: "GTFS/Open Data: horarios publicados por fuente pública; precio y compra no confirmados.",
     sourceScraperHint: "Scraper: no activo en esta fase.",
     googleRoutesHint: "Duración y distancia calculadas con proveedor de rutas.",
     history: "Últimos cálculos",
@@ -111,6 +112,7 @@ export const doorToDoorEs = {
     deeplinkDisclosure: "Precio y disponibilidad se confirman fuera de Viru.",
     routeToProvider: "Ruta para consultar en proveedor",
     realDuration: "duración real",
+    openDataSchedule: "horario público",
   },
   source: {
     live: "Datos en vivo",
@@ -120,6 +122,7 @@ export const doorToDoorEs = {
     unavailable: "No disponible",
     mock: "Datos estimados",
     scraper: "Scraper opt-in",
+    openData: "Datos abiertos",
   },
   risk: {
     low: "riesgo bajo",
@@ -270,6 +273,7 @@ export const doorToDoorEn = {
     sourceMockHint: "Mock: estimated for planning, not booking.",
     sourceDeeplinkHint: "Deeplink: opens external provider; price and seats are confirmed outside.",
     sourceApiHint: "API/Open data: not active yet for this route.",
+    openDataHint: "GTFS/Open Data: public schedule; price and purchase not confirmed.",
     sourceScraperHint: "Scraper: not active in this phase.",
     googleRoutesHint: "Duration and distance calculated with route provider.",
     history: "Recent calculations",
@@ -297,6 +301,7 @@ export const doorToDoorEn = {
     deeplinkDisclosure: "Price and availability are confirmed outside Viru.",
     routeToProvider: "Route to check on provider",
     realDuration: "real duration",
+    openDataSchedule: "public schedule",
   },
   source: {
     live: "Live data",
@@ -306,6 +311,7 @@ export const doorToDoorEn = {
     unavailable: "Unavailable",
     mock: "Estimated data",
     scraper: "Opt-in scraper",
+    openData: "Open data",
   },
   risk: {
     low: "low risk",

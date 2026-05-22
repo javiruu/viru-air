@@ -15,6 +15,7 @@ DoorToDoorProviderStatusKind = Literal[
     "functional_api",
     "functional_mock",
     "functional_deeplink",
+    "functional_open_data",
     "functional_scraper",
     "scraper_base_only",
     "deeplink_stub",

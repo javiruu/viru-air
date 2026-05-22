@@ -1,9 +1,11 @@
 # Door-to-door API contract
 
 **Estado:** vivo
-**Última revisión:** 2026-05-22
+**Última revisión:** 2026-05-21
 **Fuente de verdad:** sí
 **Área:** backend
+
+> **V1.2** añade GTFS/open data transit provider (`gtfs_transit`) con `source_type=open_data` y `status=functional_open_data`.
 
 ## Resumen
 
@@ -88,6 +90,10 @@ Warnings relevantes:
 - `PROVIDER_PARTIAL_COVERAGE`: un provider activo solo pudo cubrir parte de la consulta.
 - `BLABLACAR_DEEPLINK_PARTIAL`: el deeplink de BlaBlaCar no pudo prellenar todos los parámetros (ej. aeropuerto sin ciudad mapeada). El enlace se mantiene; el usuario debe ajustar búsqueda en proveedor.
 - `GOOPTI_DEEPLINK_PARTIAL`: el deeplink de GoOpti no pudo prellenar todos los parámetros. El enlace se mantiene; el usuario debe ajustar búsqueda en proveedor.
+- `GTFS_FEED_UNAVAILABLE`: no se pudo descargar o parsear el feed GTFS configurado. La búsqueda continúa con otros providers.
+- `GTFS_PARTIAL_COVERAGE`: el feed GTFS tiene datos pero no cubre la ruta/origen/destino completo.
+- `GTFS_NO_MATCHING_SERVICE`: el feed está disponible pero no se encontraron viajes para la consulta.
+- `GTFS_PRICE_UNAVAILABLE`: se encontraron horarios GTFS pero sin información de tarifa.
 
 ### Filtros y `NO_COVERAGE`
 
@@ -101,6 +107,10 @@ Warnings relevantes:
 - Si `allow_shuttle` es `false`, no se ofrecen opciones de GoOpti.
 - Si `public_transport_only` es `true`, no se ofrecen opciones de rideshare/shuttle (salvo decisión explícita documentada).
 - Si `max_price` está definido y una opción no tiene precio confirmado (`total_price_min = null`), la opción se mantiene con warning `UNCONFIRMED_PRICE`.
+- Si `public_transport_only` es `true`, se priorizan providers GTFS/open data y se ocultan rideshare/shuttle.
+- Si `allow_bus` es `false`, no se devuelven opciones GTFS con `mode=bus`.
+- Si `allow_train` es `false`, no se devuelven opciones GTFS con `mode=train` o `mode=metro`.
+- Si `final_destination.type` es `airport_only`, GTFS no calcula tramo terrestre final.
 
 ### Opción elegida
 
@@ -124,8 +134,8 @@ Devuelve el registro de providers con estado funcional real:
 
 - `name`
 - `enabled`
-- `status` (`functional_api`, `functional_mock`, `functional_deeplink`, `functional_scraper`, `scraper_base_only`, `deeplink_stub`, `pure_stub`, `disabled`)
-- `source_type`
+- `status` (`functional_api`, `functional_mock`, `functional_deeplink`, `functional_open_data`, `functional_scraper`, `scraper_base_only`, `deeplink_stub`, `pure_stub`, `disabled`)
+- `source_type` (`api`, `open_data`, `aggregator`, `deeplink`, `scraper`, `mock`)
 - `production_ready`
 - `supports_search`
 - `supports_booking_url`
@@ -157,6 +167,11 @@ V1.1 incluye:
 - deeplink providers funcionales para primer paso real parcial (`blablacar_deeplink`, `goopti_deeplink`) bajo `DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS`;
   - `blablacar_deeplink`: genera URL de búsqueda en BlaBlaCar con origen, ciudad del aeropuerto de salida y fecha del vuelo. No confirma precio ni disponibilidad. Respeta `allow_rideshare`.
   - `goopti_deeplink`: genera URL de búsqueda en GoOpti con aeropuerto de llegada, destino final y fecha de llegada. No confirma precio ni disponibilidad. Respeta `allow_shuttle` y `airport_only`.
+- `gtfs_transit` como primer provider open_data real para horarios de transporte público, activable con:
+  - `DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS`
+  - `DOOR_TO_DOOR_ENABLE_GTFS_TRANSIT`
+  - `DOOR_TO_DOOR_GTFS_FEEDS_JSON` con al menos un feed configurado
+  - `gtfs_transit`: consulta horarios reales desde feeds GTFS estáticos. Descarga, cachea y parsea archivos mínimos (`agency.txt`, `stops.txt`, `routes.txt`, `trips.txt`, `stop_times.txt`, `calendar.txt`/`calendar_dates.txt`). Devuelve opciones con `source_type="open_data"`, `confidence="cached"`/`"live"`, `provider="gtfs_transit"`, sin precio confirmado (`UNCONFIRMED_PRICE`). Respeta `allow_bus`, `allow_train`, `public_transport_only` y `airport_only`. No genera `booking_url`. Sin scraping. Sin login.
 - `google_routes` como primer provider API real para duración/distancia (sin precio confirmado), activable con:
   - `DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS`
   - `DOOR_TO_DOOR_ENABLE_GOOGLE_ROUTES`

@@ -1,7 +1,7 @@
 # Puerta a puerta
 
 **Estado:** vivo
-**Última revisión:** 2026-05-22
+**Última revisión:** 2026-05-21
 **Fuente de verdad:** sí
 **Área:** producto
 
@@ -46,11 +46,12 @@ Cuando el destino es `solo aeropuerto`, la ruta termina en el aeropuerto de lleg
 
 ## Datos, filtros y confianza
 
-V1.1 queda en estado híbrido honesto:
+V1.2 queda en estado híbrido honesto:
 
 - mock normalizado para UX estable;
 - primer paso real parcial con providers deeplink (`blablacar_deeplink`, `goopti_deeplink`);
 - primer provider API real parcial (`google_routes`) para duración/distancia sin precio confirmado;
+- primer provider open_data parcial (`gtfs_transit`) para horarios reales de transporte público sin precio confirmado;
 - suggestions reales opcionales (`google_places`) bajo API key y flags;
 - sin scraping real activo por defecto.
 
@@ -66,8 +67,10 @@ Los filtros de transporte y `max_price` pueden ocultar opciones:
 - `allow_rideshare=false` oculta opciones de BlaBlaCar.
 - `allow_shuttle=false` oculta opciones de GoOpti.
 - `airport_only` oculta opciones de GoOpti (tramo terrestre de llegada).
-- `public_transport_only` oculta opciones de rideshare/shuttle.
-- `max_price` no filtra deeplinks sin precio confirmado; los mantiene con warning `UNCONFIRMED_PRICE`.
+- `public_transport_only` prioriza transporte público (GTFS) y oculta opciones de rideshare/shuttle.
+- `allow_bus=false` oculta opciones GTFS con `mode=bus`.
+- `allow_train=false` oculta opciones GTFS con `mode=train` o `mode=metro`.
+- `max_price` no filtra deeplinks ni opciones open_data sin precio confirmado; los mantiene con warning `UNCONFIRMED_PRICE`.
 
 Si no queda ninguna opción válida, la UI muestra `NO_COVERAGE` con ajustes sugeridos: subir margen, permitir shuttle/coche compartido o terminar solo en aeropuerto.
 
