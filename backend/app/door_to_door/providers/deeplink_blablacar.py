@@ -17,14 +17,36 @@ class BlaBlaCarDeepLinkProvider(DoorToDoorProvider):
         return ProviderHealth(self.provider_name, "ok", self.source_type, "deeplink")
 
     async def search(self, query: DoorToDoorProviderQuery) -> list[DoorToDoorOptionOut]:
+        if not query.preferences.allow_rideshare:
+            return []
+
         flight = query.flight
         checked_at = query.checked_at
-        outbound_minutes = 230
         airport_buffer = max(query.preferences.min_airport_buffer_minutes, 120)
+        outbound_minutes = 230
         outbound_arrival = flight.departure_at - timedelta(minutes=airport_buffer)
         outbound_departure = outbound_arrival - timedelta(minutes=outbound_minutes)
         flight_duration = int((flight.arrival_at - flight.departure_at).total_seconds() / 60)
-        deeplink = self._build_deeplink(query)
+        deeplink, url_warning = self._build_deeplink(query)
+
+        if flight.flight_time_confidence == "estimated":
+            self.push_warning(
+                "FLIGHT_TIME_ESTIMATED",
+                "La hora de llegada del vuelo es estimada. Verifica compatibilidad con el tramo terrestre.",
+            )
+
+        self.push_warning(
+            "UNCONFIRMED_PRICE",
+            "Precio y disponibilidad se confirman fuera de Viru.",
+            provider="blablacar_deeplink",
+        )
+
+        if url_warning:
+            self.push_warning(
+                "BLABLACAR_DEEPLINK_PARTIAL",
+                url_warning,
+                provider="blablacar_deeplink",
+            )
 
         source = DoorToDoorSourceOut(
             provider=self.provider_name,
@@ -36,12 +58,15 @@ class BlaBlaCarDeepLinkProvider(DoorToDoorProvider):
             booking_url=deeplink,
         )
 
+        airport_city = self._city_for_airport(flight.origin_airport)
+        airport_label = f"Aeropuerto de {airport_city} {flight.origin_airport}" if airport_city else f"Aeropuerto de {flight.origin_airport}"
+
         legs = [
             DoorToDoorLegOut(
                 type="ground",
                 mode="rideshare",
                 from_label=query.origin.label,
-                to_label=f"Aeropuerto de Málaga {flight.origin_airport}",
+                to_label=airport_label,
                 departure_at=outbound_departure,
                 arrival_at=outbound_arrival,
                 duration_minutes=outbound_minutes,
@@ -68,6 +93,8 @@ class BlaBlaCarDeepLinkProvider(DoorToDoorProvider):
 
         inbound_minutes = 0
         transfer_count = 1
+        dest_airport_city = self._city_for_airport(flight.destination_airport)
+        dest_airport_label = f"Aeropuerto de {dest_airport_city} {flight.destination_airport}" if dest_airport_city else f"Aeropuerto de {flight.destination_airport}"
         if query.final_destination.type != "airport_only":
             inbound_minutes = 45
             inbound_departure = flight.arrival_at + timedelta(minutes=35)
@@ -77,7 +104,7 @@ class BlaBlaCarDeepLinkProvider(DoorToDoorProvider):
                 DoorToDoorLegOut(
                     type="ground",
                     mode="shuttle",
-                    from_label=f"Treviso Airport {flight.destination_airport}",
+                    from_label=dest_airport_label,
                     to_label=query.final_destination.label,
                     departure_at=inbound_departure,
                     arrival_at=inbound_arrival,
@@ -126,13 +153,69 @@ class BlaBlaCarDeepLinkProvider(DoorToDoorProvider):
             )
         ]
 
-    def _build_deeplink(self, query: DoorToDoorProviderQuery) -> str:
-        params = urlencode(
-            {
-                "from": query.origin.label,
-                "to": f"Aeropuerto de Málaga {query.flight.origin_airport}",
-                "date": query.flight.departure_at.date().isoformat(),
-                "seats": query.preferences.passengers,
-            }
-        )
-        return f"{self.search_base_url}?{params}"
+    def _build_deeplink(self, query: DoorToDoorProviderQuery) -> tuple[str, str | None]:
+        flight = query.flight
+        warnings: list[str] = []
+
+        params: dict[str, str] = {}
+        if query.origin.label:
+            params["from"] = query.origin.label
+        else:
+            warnings.append("No se pudo determinar el origen para el deeplink.")
+
+        airport_city = self._city_for_airport(flight.origin_airport)
+        if airport_city:
+            params["to"] = airport_city
+        else:
+            warnings.append("No se pudo determinar la ciudad del aeropuerto de salida.")
+
+        if flight.departure_at:
+            params["date"] = flight.departure_at.date().isoformat()
+        else:
+            warnings.append("No se pudo determinar la fecha del vuelo para el deeplink.")
+
+        if query.preferences.passengers > 1:
+            params["seats"] = str(query.preferences.passengers)
+
+        deeplink = f"{self.search_base_url}?{urlencode(params)}" if params else self.search_base_url
+        warning_text = "; ".join(warnings) if warnings else None
+
+        if warnings and params:
+            warning_text = (
+                "El proveedor puede requerir ajustar el destino al aeropuerto. "
+                + warning_text
+            )
+
+        return deeplink, warning_text
+
+    @staticmethod
+    def _city_for_airport(iata: str) -> str | None:
+        mapping: dict[str, str] = {
+            "AGP": "Málaga",
+            "MAD": "Madrid",
+            "BCN": "Barcelona",
+            "ALC": "Alicante",
+            "VLC": "Valencia",
+            "SVQ": "Sevilla",
+            "BIO": "Bilbao",
+            "PMI": "Palma de Mallorca",
+            "GRO": "Girona",
+            "REU": "Reus",
+            "ZAZ": "Zaragoza",
+            "GRX": "Granada",
+            "LEI": "Almería",
+            "TSF": "Treviso",
+            "VCE": "Venecia",
+            "FCO": "Roma",
+            "MXP": "Milán",
+            "BGY": "Bérgamo",
+            "ORY": "París",
+            "CDG": "París",
+            "LGW": "Londres",
+            "STN": "Londres",
+            "LTN": "Londres",
+            "AMS": "Ámsterdam",
+            "BRU": "Bruselas",
+            "CRL": "Charleroi",
+        }
+        return mapping.get(iata.upper())

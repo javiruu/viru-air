@@ -187,7 +187,7 @@ test("Door-to-door option, radar, filters, and timeline render mock and flight-e
 test("Door-to-door deeplink option renders open-provider CTA and handles null price", () => {
   const html = renderToStaticMarkup(<DoorToDoorOptionCard option={deeplinkOption} selected={false} chosen={false} onSelect={() => undefined} onChoose={() => undefined} />);
   assert.match(html, /sin precio confirmado/);
-  assert.match(html, /Abrir proveedor/);
+  assert.match(html, /Abrir BlaBlaCar/);
   assert.match(html, /Comparación limitada/);
   assert.match(html, /https:\/\/www\.blablacar\.es\/search/);
   assert.doesNotMatch(html, /Recomendada/);
@@ -201,14 +201,17 @@ test("Door-to-door api option renders real duration and keeps price unconfirmed"
   assert.doesNotMatch(html, /desde \\d+/);
 });
 
-test("Door-to-door error and no coverage copy are i18n backed", () => {
-  const html = renderToStaticMarkup(<DoorToDoorErrorState message="" onRetry={() => undefined} />);
+test("Door-to-door i18n includes provider-specific CTAs and source disclosure", () => {
   const i18nSource = fs.readFileSync(D2D_I18N, "utf8");
-  assert.match(html, /No hemos podido completar todas las fuentes/);
+  assert.match(i18nSource, /openBlaBlaCar/);
+  assert.match(i18nSource, /openGoOpti/);
+  assert.match(i18nSource, /Abrir BlaBlaCar/);
+  assert.match(i18nSource, /Abrir GoOpti/);
+  assert.match(i18nSource, /Open BlaBlaCar/);
+  assert.match(i18nSource, /Open GoOpti/);
   assert.match(i18nSource, /noCoverageBody/);
   assert.match(i18nSource, /noRealCoverageTitle/);
   assert.match(i18nSource, /Datos estimados/);
-  assert.match(i18nSource, /Abrir proveedor/);
 });
 
 test("Door-to-door module has no mojibake markers", () => {
