@@ -9,7 +9,7 @@ import { getFreshnessPresentation } from "@/modules/watchlist/summary";
 import type { CalendarSelectorFlight } from "@/modules/watchlist/types";
 
 type ListSort = "freshness" | "price_asc" | "price_desc" | "delta";
-const WATCHLIST_PAGE_SIZE = 4;
+const WATCHLIST_PAGE_SIZE = 3;
 
 function getPageNumbers(current: number, total: number) {
   const pages: (number | string)[] = [];
