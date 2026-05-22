@@ -6,14 +6,14 @@ RISK_ORDER = {"low": 0, "medium": 1, "unknown": 2, "high": 3}
 def build_summary(options: list[DoorToDoorOptionOut]) -> DoorToDoorSummaryOut:
     if not options:
         return DoorToDoorSummaryOut()
-    recommended = max(options, key=lambda option: option.score)
+    recommended = max(options, key=lambda option: option.score or 0)
     cheapest = min(
         options,
-        key=lambda option: (option.total_price_min is None, option.total_price_min or 10_000, -option.score),
+        key=lambda option: (option.total_price_min is None, option.total_price_min or 10_000, -(option.score or 0)),
     )
-    lowest_risk = min(options, key=lambda option: (RISK_ORDER[option.risk_level], -option.score))
-    fastest = min(options, key=lambda option: option.total_duration_minutes)
-    fewest_changes = min(options, key=lambda option: (option.transfer_count, -option.score))
+    lowest_risk = min(options, key=lambda option: (RISK_ORDER[option.risk_level], -(option.score or 0)))
+    fastest = min(options, key=lambda option: (option.total_duration_minutes is None, option.total_duration_minutes or 999_999))
+    fewest_changes = min(options, key=lambda option: (option.transfer_count, -(option.score or 0)))
     for option in options:
         option.is_recommended = option.id == recommended.id
     return DoorToDoorSummaryOut(

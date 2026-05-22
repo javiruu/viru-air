@@ -2,6 +2,20 @@
 
 Returns legs with real transit schedules (when feeds are available), without
 inventing price or purchase availability.
+
+Granular warnings:
+- GTFS_FEED_UNAVAILABLE: feed download/parse failed
+- GTFS_NO_NEARBY_STOPS: feed loaded but no stops near origin/destination
+- GTFS_NO_SERVICE_FOR_DATE: feed has stops but no service on target date
+- GTFS_NO_MATCHING_SERVICE: service exists but no trips match the time window
+- GTFS_PARTIAL_COVERAGE: feed covers only some legs
+- GTFS_PRICE_UNAVAILABLE: schedules found but no fare data
+
+Defenses:
+- respect max_walk_radius from feed service
+- enforce max_ground_duration per leg
+- filter outbound trips arriving after flight departure minus buffer
+- skip inbound when final_destination.type == "airport_only"
 """
 
 from datetime import datetime, timedelta
@@ -14,6 +28,7 @@ from app.door_to_door.schemas import (
     DoorToDoorLegOut,
     DoorToDoorMode,
     DoorToDoorOptionOut,
+    DoorToDoorPriceOut,
     DoorToDoorSourceOut,
 )
 from app.door_to_door.services.gtfs_feed_service import (
@@ -22,15 +37,25 @@ from app.door_to_door.services.gtfs_feed_service import (
     load_feed_descriptors,
 )
 
+# Max reasonable duration for a ground transit leg (minutes)
+_MAX_GROUND_DURATION_MINUTES = 240  # 4 hours
+# Absolute max walk radius cap (meters) — overrides any feed service setting
+_MAX_WALK_RADIUS_HARD_CAP = 5000  # 5 km
+
 
 class GtfsTransitProvider(DoorToDoorProvider):
     provider_name = "gtfs_transit"
     source_type = "open_data"
 
-    def __init__(self, feed_service: GtfsFeedService | None = None) -> None:
+    def __init__(
+        self,
+        feed_service: GtfsFeedService | None = None,
+        max_ground_duration_minutes: int = _MAX_GROUND_DURATION_MINUTES,
+    ) -> None:
         super().__init__()
         self._feed_service = feed_service or GtfsFeedService()
         self._descriptors = load_feed_descriptors()
+        self._max_ground_duration = max_ground_duration_minutes
 
     async def healthcheck(self) -> ProviderHealth:
         if not self._descriptors:
@@ -66,6 +91,12 @@ class GtfsTransitProvider(DoorToDoorProvider):
         inbound_trips: list[GtfsTransitLeg] = []
         feed_warnings: list[str] = []
         any_loaded = False
+        outbound_no_nearby_stops = False
+        inbound_no_nearby_stops = False
+        outbound_no_service_for_date = False
+        inbound_no_service_for_date = False
+
+        airport_buffer = max(prefs.min_airport_buffer_minutes, 120)
 
         for descriptor in self._descriptors:
             feed = self._feed_service.load_feed(descriptor)
@@ -82,27 +113,34 @@ class GtfsTransitProvider(DoorToDoorProvider):
                     nearby_stops = self._feed_service.find_nearby_stops(
                         feed.feed_id, origin_lat, origin_lng
                     )
+                    if not nearby_stops:
+                        outbound_no_nearby_stops = True
+
                     # Find airport-area stops
                     airport_city = _city_for_airport(flight.origin_airport)
                     airport_search = airport_city or flight.origin_airport
                     airport_stops = _find_stops_by_name(feed, airport_search)
 
-                    # Match trips from origin stops to airport stops
-                    for orig_stop in nearby_stops[: self._feed_service.max_results]:
-                        for dest_stop in airport_stops[: self._feed_service.max_results]:
-                            if orig_stop.stop_id == dest_stop.stop_id:
-                                continue
-                            airport_buffer = max(prefs.min_airport_buffer_minutes, 120)
-                            latest_arrival = flight.departure_at - timedelta(minutes=airport_buffer)
-                            target_date = flight.departure_at.date()
-                            trips = self._feed_service.find_trips_between(
-                                feed.feed_id,
-                                orig_stop.stop_id,
-                                dest_stop.stop_id,
-                                target_date=target_date,
-                                latest_arrival=latest_arrival,
-                            )
-                            outbound_trips.extend(trips)
+                    # Match trips from ALL origin stops to ALL airport stops
+                    origin_ids = {s.stop_id for s in nearby_stops}
+                    airport_ids = {s.stop_id for s in airport_stops}
+                    trips_found_for_date = False
+                    if origin_ids and airport_ids:
+                        latest_arrival = flight.departure_at - timedelta(minutes=airport_buffer)
+                        target_date = flight.departure_at.date()
+                        trips = self._feed_service.find_trips_between_any(
+                            feed.feed_id,
+                            from_stop_ids=origin_ids,
+                            to_stop_ids=airport_ids,
+                            target_date=target_date,
+                            latest_arrival=latest_arrival,
+                        )
+                        if trips:
+                            trips_found_for_date = True
+                        outbound_trips.extend(trips)
+
+                    if nearby_stops and airport_stops and not trips_found_for_date:
+                        outbound_no_service_for_date = True
 
             # Inbound: arrival airport -> final destination
             if search_inbound:
@@ -112,69 +150,124 @@ class GtfsTransitProvider(DoorToDoorProvider):
                     nearby_stops = self._feed_service.find_nearby_stops(
                         feed.feed_id, dest_lat, dest_lng
                     )
+                    if not nearby_stops:
+                        inbound_no_nearby_stops = True
+
                     airport_city = _city_for_airport(flight.destination_airport)
                     airport_search = airport_city or flight.destination_airport
                     airport_stops = _find_stops_by_name(feed, airport_search)
 
-                    for orig_stop in airport_stops[: self._feed_service.max_results]:
-                        for dest_stop in nearby_stops[: self._feed_service.max_results]:
-                            if orig_stop.stop_id == dest_stop.stop_id:
-                                continue
-                            # Inbound: depart after flight arrival + buffer
-                            earliest_departure = flight.arrival_at + timedelta(minutes=30)
-                            target_date = flight.arrival_at.date()
-                            trips = self._feed_service.find_trips_between(
-                                feed.feed_id,
-                                orig_stop.stop_id,
-                                dest_stop.stop_id,
-                                target_date=target_date,
-                                earliest_departure=earliest_departure,
-                            )
-                            inbound_trips.extend(trips)
+                    airport_ids = {s.stop_id for s in airport_stops}
+                    dest_ids = {s.stop_id for s in nearby_stops}
+                    trips_found_for_date = False
+                    if airport_ids and dest_ids:
+                        earliest_departure = flight.arrival_at + timedelta(minutes=30)
+                        target_date = flight.arrival_at.date()
+                        trips = self._feed_service.find_trips_between_any(
+                            feed.feed_id,
+                            from_stop_ids=airport_ids,
+                            to_stop_ids=dest_ids,
+                            target_date=target_date,
+                            earliest_departure=earliest_departure,
+                        )
+                        if trips:
+                            trips_found_for_date = True
+                        inbound_trips.extend(trips)
 
-        # Emit feed warnings
+                    if nearby_stops and airport_stops and not trips_found_for_date:
+                        inbound_no_service_for_date = True
+
+        # --- Granular warnings ---
+
+        # 1. Feed unavailable
         if feed_warnings:
             self.push_warning(
                 "GTFS_FEED_UNAVAILABLE",
-                "; ".join(feed_warnings[:3]),  # cap at 3 feed messages
+                "; ".join(feed_warnings[:3]),
                 provider=self.provider_name,
             )
 
         if not any_loaded:
             self.push_warning(
-                "GTFS_PARTIAL_COVERAGE",
-                "Ningún feed GTFS disponible para esta consulta.",
+                "GTFS_FEED_UNAVAILABLE",
+                "Ningún feed GTFS pudo descargarse o parsearse para esta consulta.",
                 provider=self.provider_name,
             )
+            return []
+
+        # 2. No nearby stops
+        if search_outbound and outbound_no_nearby_stops:
+            self.push_warning(
+                "GTFS_NO_NEARBY_STOPS",
+                f"No se encontraron paradas públicas cercanas al origen «{query.origin.label}» "
+                f"(radio: {self._feed_service.max_walk_radius}m).",
+                provider=self.provider_name,
+            )
+        if search_inbound and inbound_no_nearby_stops:
+            self.push_warning(
+                "GTFS_NO_NEARBY_STOPS",
+                f"No se encontraron paradas públicas cercanas al destino «{query.final_destination.label}» "
+                f"(radio: {self._feed_service.max_walk_radius}m).",
+                provider=self.provider_name,
+            )
+
+        # 3. No service for date
+        if search_outbound and outbound_no_service_for_date:
+            self.push_warning(
+                "GTFS_NO_SERVICE_FOR_DATE",
+                f"Hay paradas cercanas, pero no se encontró servicio de transporte público "
+                f"para la fecha del vuelo ({flight.departure_at.date()}) en el tramo de ida.",
+                provider=self.provider_name,
+            )
+        if search_inbound and inbound_no_service_for_date:
+            self.push_warning(
+                "GTFS_NO_SERVICE_FOR_DATE",
+                f"Hay paradas cercanas, pero no se encontró servicio de transporte público "
+                f"para la fecha del vuelo ({flight.arrival_at.date()}) en el tramo de vuelta.",
+                provider=self.provider_name,
+            )
+
+        # Filter out absurd results: trips longer than max_ground_duration
+        outbound_trips = [
+            t for t in outbound_trips
+            if t.duration_minutes <= self._max_ground_duration
+        ]
+        inbound_trips = [
+            t for t in inbound_trips
+            if t.duration_minutes <= self._max_ground_duration
+        ]
 
         # Deduplicate trips
         outbound_trips = _deduplicate_trips(outbound_trips)
         inbound_trips = _deduplicate_trips(inbound_trips)
 
+        # 4. No matching service (loaded but no trips matched)
         if not outbound_trips and not inbound_trips:
-            if any_loaded:
-                self.push_warning(
-                    "GTFS_NO_MATCHING_SERVICE",
-                    "No se encontraron viajes de transporte público que coincidan con la ruta y horario.",
-                    provider=self.provider_name,
-                )
+            self.push_warning(
+                "GTFS_NO_MATCHING_SERVICE",
+                "No se encontraron viajes de transporte público que coincidan con la ruta, horario y "
+                "restricciones (buffer de aeropuerto, duración máxima, ventana horaria).",
+                provider=self.provider_name,
+            )
             return []
 
-        if any_loaded and (not outbound_trips or not inbound_trips):
+        # 5. Partial coverage
+        if search_outbound and search_inbound and (not outbound_trips or not inbound_trips):
+            missing = "ida" if not outbound_trips else "vuelta"
             self.push_warning(
                 "GTFS_PARTIAL_COVERAGE",
-                "Cobertura parcial: algunos tramos no tienen viajes GTFS disponibles.",
+                f"Cobertura parcial: hay viajes disponibles para un tramo pero no para el tramo de {missing}.",
                 provider=self.provider_name,
             )
 
-        # Emit flight_time_estimated if needed
+        # Flight time estimated warning
         if flight.flight_time_confidence == "estimated":
             self.push_warning(
                 "FLIGHT_TIME_ESTIMATED",
                 "La hora de llegada del vuelo es estimada. Verifica compatibilidad con el transporte público.",
             )
 
-        # Emit unconfirmed price
+        # Price warnings
         self.push_warning(
             "UNCONFIRMED_PRICE",
             "El precio del transporte público no está disponible. Consulta tarifas en la web del operador.",
@@ -190,7 +283,6 @@ class GtfsTransitProvider(DoorToDoorProvider):
 
         # Build options
         options: list[DoorToDoorOptionOut] = []
-        airport_buffer = max(prefs.min_airport_buffer_minutes, 120)
         flight_duration = int((flight.arrival_at - flight.departure_at).total_seconds() / 60)
 
         # Pick best outbound and inbound
@@ -277,8 +369,8 @@ class GtfsTransitProvider(DoorToDoorProvider):
             legs.append(DoorToDoorLegOut(
                 type="ground",
                 mode=mode,
-                from_label=outbound.from_stop_name,
-                to_label=outbound.to_stop_name,
+                from_location=outbound.from_stop_name,
+                to_location=outbound.to_stop_name,
                 departure_at=outbound.departure_at,
                 arrival_at=outbound.arrival_at,
                 duration_minutes=outbound.duration_minutes,
@@ -294,8 +386,8 @@ class GtfsTransitProvider(DoorToDoorProvider):
         legs.append(DoorToDoorLegOut(
             type="flight",
             mode="flight",
-            from_label=flight.origin_airport,
-            to_label=flight.destination_airport,
+            from_location=flight.origin_airport,
+            to_location=flight.destination_airport,
             departure_at=flight.departure_at,
             arrival_at=flight.arrival_at,
             duration_minutes=flight_duration,
@@ -310,8 +402,8 @@ class GtfsTransitProvider(DoorToDoorProvider):
             legs.append(DoorToDoorLegOut(
                 type="ground",
                 mode=mode,
-                from_label=inbound.from_stop_name,
-                to_label=inbound.to_stop_name,
+                from_location=inbound.from_stop_name,
+                to_location=inbound.to_stop_name,
                 departure_at=inbound.departure_at,
                 arrival_at=inbound.arrival_at,
                 duration_minutes=inbound.duration_minutes,
@@ -359,6 +451,7 @@ class GtfsTransitProvider(DoorToDoorProvider):
             id=f"option_gtfs_{option_idx}",
             label=label,
             description=description,
+            status="real_result",
             total_price_min=None,
             total_price_max=None,
             price_per_person_min=None,
@@ -374,6 +467,9 @@ class GtfsTransitProvider(DoorToDoorProvider):
             sources=sources,
             legs=legs,
             is_extended=not is_primary,
+            deep_link=None,
+            price=DoorToDoorPriceOut(amount=None, currency=None, status="unavailable"),
+            trust_copy="Horarios de transporte público según feed oficial. Sin precio confirmado. Consulta tarifas con el operador.",
         )
 
 

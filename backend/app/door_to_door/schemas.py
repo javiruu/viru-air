@@ -3,7 +3,9 @@ from typing import Literal
 
 from pydantic import AliasChoices, BaseModel, Field, model_validator
 
-DoorToDoorSourceType = Literal["api", "open_data", "aggregator", "deeplink", "scraper", "mock"]
+DoorToDoorSourceType = Literal["api", "open_data", "aggregator", "deeplink", "scraper", "mock", "estimate", "maps"]
+DoorToDoorOptionStatus = Literal["real_result", "real_deeplink", "estimate_only"]
+DoorToDoorDeepLinkKind = Literal["directions", "provider_search", "booking"]
 DoorToDoorConfidence = Literal["live", "cached", "estimated", "deeplink", "unavailable"]
 DoorToDoorRiskLevel = Literal["low", "medium", "high", "unknown"]
 DoorToDoorLocationType = Literal["city", "address", "station", "saved_location", "airport", "airport_only"]
@@ -17,6 +19,8 @@ DoorToDoorProviderStatusKind = Literal[
     "functional_deeplink",
     "functional_open_data",
     "functional_scraper",
+    "functional_estimate",
+    "functional_maps",
     "scraper_base_only",
     "deeplink_stub",
     "pure_stub",
@@ -90,8 +94,8 @@ class DoorToDoorSourceOut(BaseModel):
 class DoorToDoorLegOut(BaseModel):
     type: Literal["ground", "flight"]
     mode: DoorToDoorMode
-    from_label: str = Field(alias="from")
-    to_label: str = Field(alias="to")
+    from_location: str = Field(alias="from")
+    to_location: str = Field(alias="to")
     departure_at: datetime | None = None
     arrival_at: datetime | None = None
     duration_minutes: int | None = Field(default=None, ge=0)
@@ -106,18 +110,32 @@ class DoorToDoorLegOut(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class DoorToDoorDeepLinkOut(BaseModel):
+    url: str
+    label: str
+    kind: DoorToDoorDeepLinkKind
+    opens_external: bool = True
+
+
+class DoorToDoorPriceOut(BaseModel):
+    amount: float | None = None
+    currency: str | None = None
+    status: Literal["confirmed", "unavailable", "external", "estimated"] = "unavailable"
+
+
 class DoorToDoorOptionOut(BaseModel):
     id: str
     label: str
     description: str
+    status: DoorToDoorOptionStatus = "real_deeplink"
     total_price_min: float | None = Field(default=None, ge=0)
     total_price_max: float | None = Field(default=None, ge=0)
     price_per_person_min: float | None = Field(default=None, ge=0)
     price_per_person_max: float | None = Field(default=None, ge=0)
     currency: str = "EUR"
-    total_duration_minutes: int = Field(ge=0)
+    total_duration_minutes: int | None = Field(default=None, ge=0)
     risk_level: DoorToDoorRiskLevel
-    score: int = Field(ge=0, le=100)
+    score: int | None = Field(default=None, ge=0, le=100)
     transfer_count: int = Field(ge=0)
     airport_buffer_minutes: int | None = Field(default=None, ge=0)
     confidence: DoorToDoorConfidence
@@ -126,6 +144,9 @@ class DoorToDoorOptionOut(BaseModel):
     legs: list[DoorToDoorLegOut]
     is_recommended: bool = False
     is_extended: bool = False
+    deep_link: DoorToDoorDeepLinkOut | None = None
+    price: DoorToDoorPriceOut | None = None
+    trust_copy: str | None = None
 
 
 class DoorToDoorSummaryOut(BaseModel):
