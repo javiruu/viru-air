@@ -227,3 +227,78 @@ test("Door-to-door styles include responsive radar and mobile decision layout ho
   assert.match(source, /max-width: 680px/);
   assert.match(source, /prefers-reduced-motion/);
 });
+
+const gtfsOption: DoorToDoorOption = {
+  id: "option_gtfs_transit",
+  label: "Transporte público (horario real)",
+  description: "Horario según feed público GTFS.",
+  total_price_min: null,
+  total_price_max: null,
+  price_per_person_min: null,
+  price_per_person_max: null,
+  currency: "EUR",
+  total_duration_minutes: 320,
+  risk_level: "medium",
+  score: 68,
+  transfer_count: 1,
+  airport_buffer_minutes: 130,
+  confidence: "cached",
+  source_types: ["open_data"],
+  sources: [
+    {
+      provider: "gtfs_transit",
+      source_provider: "ctan_andalucia",
+      source_type: "open_data",
+      confidence: "cached",
+      checked_at: "2026-05-20T10:00:00+02:00",
+      booking_url: null,
+    },
+  ],
+  is_recommended: false,
+  is_extended: false,
+  legs: [
+    {
+      type: "ground",
+      mode: "bus",
+      from: "Almería",
+      to: "Aeropuerto de Málaga AGP",
+      departure_at: "2026-06-14T07:30:00+02:00",
+      arrival_at: "2026-06-14T11:00:00+02:00",
+      duration_minutes: 210,
+      provider: "gtfs_transit",
+      source_type: "open_data",
+      confidence: "cached",
+    },
+    {
+      type: "flight",
+      mode: "flight",
+      from: "AGP",
+      to: "TSF",
+      duration_minutes: 155,
+      provider: "flight_watch",
+      source_type: "api",
+      confidence: "estimated",
+    },
+  ],
+};
+
+test("Door-to-door GTFS transit option renders public schedule and handles null price", () => {
+  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={gtfsOption} selected={false} chosen={false} onSelect={() => undefined} onChoose={() => undefined} />);
+  assert.match(html, /sin precio confirmado/);
+  assert.match(html, /horario público/);
+  assert.match(html, /Datos abiertos/);
+  assert.match(html, /Transporte público/);
+  assert.doesNotMatch(html, /Abrir proveedor/);
+});
+
+test("Door-to-door i18n includes GTFS open data strings", () => {
+  const i18nSource = fs.readFileSync(D2D_I18N, "utf8");
+  assert.match(i18nSource, /openData/);
+  assert.match(i18nSource, /Datos abiertos/);
+  assert.match(i18nSource, /Open data/);
+  assert.match(i18nSource, /openDataSchedule/);
+  assert.match(i18nSource, /horario público/);
+  assert.match(i18nSource, /public schedule/);
+  assert.match(i18nSource, /openDataHint/);
+  assert.match(i18nSource, /GTFS\/Open Data/);
+});

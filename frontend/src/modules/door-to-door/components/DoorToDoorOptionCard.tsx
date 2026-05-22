@@ -29,14 +29,16 @@ export function DoorToDoorOptionCard({
   const { t } = useI18n();
   const hasConfirmedPrice = option.total_price_min != null && option.total_price_max != null;
   const isDeeplinkUnpriced = option.source_types.includes("deeplink") && !hasConfirmedPrice;
+  const isUnpricedExternal = isDeeplinkUnpriced || (option.source_types.includes("open_data") && !hasConfirmedPrice);
   const hasGoogleRoutes = option.sources.some((source) => source.provider === "google_routes");
+  const hasGtfsTransit = option.sources.some((source) => source.provider === "gtfs_transit");
   const strongRecommended = option.is_recommended && hasConfirmedPrice && !isDeeplinkUnpriced;
   const blablacarLeg = option.legs.find((leg) => leg.provider === "blablacar" && leg.booking_url);
   const gooptiLeg = option.legs.find((leg) => leg.provider === "goopti" && leg.booking_url);
   const genericBookingLeg = !blablacarLeg && !gooptiLeg ? option.legs.find((leg) => leg.booking_url) : null;
 
   function kickerLabel() {
-    if (isDeeplinkUnpriced) return t("doorToDoor.option.limited");
+    if (isUnpricedExternal) return t("doorToDoor.option.limited");
     if (strongRecommended) return t("doorToDoor.option.recommended");
     if (option.is_extended || compact) return t("doorToDoor.option.alternative");
     return t("doorToDoor.option.defaultKicker");
@@ -49,7 +51,7 @@ export function DoorToDoorOptionCard({
   }
 
   return (
-    <article className={`d2d-option-card ${selected ? "is-selected" : ""} ${strongRecommended ? "is-recommended" : ""} ${chosen ? "is-chosen" : ""} ${compact ? "is-compact" : ""} ${isDeeplinkUnpriced ? "is-limited" : ""}`}>
+    <article className={`d2d-option-card ${selected ? "is-selected" : ""} ${strongRecommended ? "is-recommended" : ""} ${chosen ? "is-chosen" : ""} ${compact ? "is-compact" : ""} ${isUnpricedExternal ? "is-limited" : ""}`}>
       <button type="button" className="d2d-option-main" onClick={onSelect} aria-pressed={selected}>
         <div className="d2d-option-head">
           <div>
@@ -59,8 +61,8 @@ export function DoorToDoorOptionCard({
           <DoorToDoorRiskPill risk={option.risk_level} />
         </div>
         <strong className="d2d-option-price">{priceLabel()} · {durationLabel(option.total_duration_minutes)}</strong>
-        <p>{isDeeplinkUnpriced ? t("doorToDoor.option.routeToProvider") : option.description}</p>
-        {isDeeplinkUnpriced ? <p className="d2d-option-trust-note">{t("doorToDoor.option.deeplinkDisclosure")}</p> : null}
+        <p>{isUnpricedExternal ? t("doorToDoor.option.routeToProvider") : option.description}</p>
+        {isUnpricedExternal ? <p className="d2d-option-trust-note">{isDeeplinkUnpriced ? t("doorToDoor.option.deeplinkDisclosure") : t("doorToDoor.source.openDataHint")}</p> : null}
         <div className="d2d-option-meta">
           <span>{t("doorToDoor.option.buffer", { minutes: option.airport_buffer_minutes ?? "--" })}</span>
           <span>{t("doorToDoor.option.transfers", { count: option.transfer_count })}</span>
@@ -69,9 +71,10 @@ export function DoorToDoorOptionCard({
         </div>
         <div className="d2d-option-sources">
           {hasGoogleRoutes ? <span className="status-pill success d2d-badge">{t("doorToDoor.option.realDuration")}</span> : null}
+          {hasGtfsTransit ? <span className="status-pill info d2d-badge" title={t("doorToDoor.source.openDataHint")}>{t("doorToDoor.option.openDataSchedule")}</span> : null}
           {!hasConfirmedPrice ? <span className="status-pill warning d2d-badge">{t("doorToDoor.option.noPrice")}</span> : null}
           {option.sources.slice(0, 2).map((source) => (
-            <DoorToDoorSourceBadge key={`${option.id}-${source.provider}`} confidence={source.confidence} label={source.source_type === "mock" ? t("doorToDoor.source.mock") : undefined} />
+            <DoorToDoorSourceBadge key={`${option.id}-${source.provider}`} confidence={source.confidence} label={source.source_type === "mock" ? t("doorToDoor.source.mock") : source.source_type === "open_data" ? t("doorToDoor.source.openData") : undefined} />
           ))}
           {option.source_types.includes("scraper") ? <DoorToDoorSourceBadge confidence="cached" label={t("doorToDoor.source.scraper")} /> : null}
         </div>
