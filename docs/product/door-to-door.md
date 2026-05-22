@@ -49,7 +49,7 @@ Cuando el destino es `solo aeropuerto`, la ruta termina en el aeropuerto de lleg
 V1.1 queda en estado híbrido honesto:
 
 - mock normalizado para UX estable;
-- primer paso real parcial con providers deeplink;
+- primer paso real parcial con providers deeplink (`blablacar_deeplink`, `goopti_deeplink`);
 - primer provider API real parcial (`google_routes`) para duración/distancia sin precio confirmado;
 - suggestions reales opcionales (`google_places`) bajo API key y flags;
 - sin scraping real activo por defecto.
@@ -62,7 +62,14 @@ Cada dato debe indicar fuente y confianza:
 - fecha de comprobación;
 - expiración cuando aplique.
 
-Los filtros de transporte y `max_price` pueden ocultar opciones. Si no queda ninguna opción válida, la UI muestra `NO_COVERAGE` con ajustes sugeridos: subir margen, permitir shuttle/coche compartido o terminar solo en aeropuerto.
+Los filtros de transporte y `max_price` pueden ocultar opciones:
+- `allow_rideshare=false` oculta opciones de BlaBlaCar.
+- `allow_shuttle=false` oculta opciones de GoOpti.
+- `airport_only` oculta opciones de GoOpti (tramo terrestre de llegada).
+- `public_transport_only` oculta opciones de rideshare/shuttle.
+- `max_price` no filtra deeplinks sin precio confirmado; los mantiene con warning `UNCONFIRMED_PRICE`.
+
+Si no queda ninguna opción válida, la UI muestra `NO_COVERAGE` con ajustes sugeridos: subir margen, permitir shuttle/coche compartido o terminar solo en aeropuerto.
 
 Si no hay providers reales activos y el mock está desactivado, la UI debe mostrar explícitamente “Sin cobertura real todavía” (`NO_REAL_PROVIDER_COVERAGE`), evitando rutas inventadas.
 

@@ -31,6 +31,9 @@ export function DoorToDoorOptionCard({
   const isDeeplinkUnpriced = option.source_types.includes("deeplink") && !hasConfirmedPrice;
   const hasGoogleRoutes = option.sources.some((source) => source.provider === "google_routes");
   const strongRecommended = option.is_recommended && hasConfirmedPrice && !isDeeplinkUnpriced;
+  const blablacarLeg = option.legs.find((leg) => leg.provider === "blablacar" && leg.booking_url);
+  const gooptiLeg = option.legs.find((leg) => leg.provider === "goopti" && leg.booking_url);
+  const genericBookingLeg = !blablacarLeg && !gooptiLeg ? option.legs.find((leg) => leg.booking_url) : null;
 
   function kickerLabel() {
     if (isDeeplinkUnpriced) return t("doorToDoor.option.limited");
@@ -74,8 +77,12 @@ export function DoorToDoorOptionCard({
         </div>
       </button>
       <div className="d2d-option-actions">
-        {option.legs.some((leg) => leg.booking_url) ? (
-          <a className="btn-secondary btn-compact" href={option.legs.find((leg) => leg.booking_url)?.booking_url || "#"} target="_blank" rel="noreferrer">{t("doorToDoor.option.openBooking")}</a>
+        {blablacarLeg ? (
+          <a className="btn-secondary btn-compact" href={blablacarLeg.booking_url || "#"} target="_blank" rel="noreferrer">{t("doorToDoor.option.openBlaBlaCar")}</a>
+        ) : gooptiLeg ? (
+          <a className="btn-secondary btn-compact" href={gooptiLeg.booking_url || "#"} target="_blank" rel="noreferrer">{t("doorToDoor.option.openGoOpti")}</a>
+        ) : genericBookingLeg ? (
+          <a className="btn-secondary btn-compact" href={genericBookingLeg.booking_url || "#"} target="_blank" rel="noreferrer">{t("doorToDoor.option.openBooking")}</a>
         ) : null}
         <button type="button" className="btn-ghost btn-compact" onClick={onChoose}>{chosen ? t("doorToDoor.option.chosen") : t("doorToDoor.option.markChosen")}</button>
       </div>

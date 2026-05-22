@@ -86,6 +86,8 @@ Warnings relevantes:
 - `UNCONFIRMED_PRICE`: hay opciones sin precio confirmado (por ejemplo deeplink) que se mantienen para abrir proveedor.
 - `GOOGLE_ROUTES_UNAVAILABLE`: no se pudo calcular rutas reales con Google en ese intento.
 - `PROVIDER_PARTIAL_COVERAGE`: un provider activo solo pudo cubrir parte de la consulta.
+- `BLABLACAR_DEEPLINK_PARTIAL`: el deeplink de BlaBlaCar no pudo prellenar todos los parámetros (ej. aeropuerto sin ciudad mapeada). El enlace se mantiene; el usuario debe ajustar búsqueda en proveedor.
+- `GOOPTI_DEEPLINK_PARTIAL`: el deeplink de GoOpti no pudo prellenar todos los parámetros. El enlace se mantiene; el usuario debe ajustar búsqueda en proveedor.
 
 ### Filtros y `NO_COVERAGE`
 
@@ -95,6 +97,10 @@ Warnings relevantes:
 - Si no queda ninguna opción, `options` será `[]` y `warnings` incluirá `NO_COVERAGE`.
 - Si `max_price` está definido y una opción no tiene precio confirmado (`total_price_min = null`), la opción puede mantenerse y se reporta `UNCONFIRMED_PRICE`.
 - Si `final_destination.type` es `airport_only`, el backend omite el tramo terrestre de llegada.
+- Si `allow_rideshare` es `false`, no se ofrecen opciones de BlaBlaCar.
+- Si `allow_shuttle` es `false`, no se ofrecen opciones de GoOpti.
+- Si `public_transport_only` es `true`, no se ofrecen opciones de rideshare/shuttle (salvo decisión explícita documentada).
+- Si `max_price` está definido y una opción no tiene precio confirmado (`total_price_min = null`), la opción se mantiene con warning `UNCONFIRMED_PRICE`.
 
 ### Opción elegida
 
@@ -149,6 +155,8 @@ V1.1 incluye:
 
 - mock provider configurable por flag (`DOOR_TO_DOOR_ENABLE_MOCK_PROVIDER`);
 - deeplink providers funcionales para primer paso real parcial (`blablacar_deeplink`, `goopti_deeplink`) bajo `DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS`;
+  - `blablacar_deeplink`: genera URL de búsqueda en BlaBlaCar con origen, ciudad del aeropuerto de salida y fecha del vuelo. No confirma precio ni disponibilidad. Respeta `allow_rideshare`.
+  - `goopti_deeplink`: genera URL de búsqueda en GoOpti con aeropuerto de llegada, destino final y fecha de llegada. No confirma precio ni disponibilidad. Respeta `allow_shuttle` y `airport_only`.
 - `google_routes` como primer provider API real para duración/distancia (sin precio confirmado), activable con:
   - `DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS`
   - `DOOR_TO_DOOR_ENABLE_GOOGLE_ROUTES`
