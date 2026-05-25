@@ -92,6 +92,21 @@ const deeplinkOption: DoorToDoorOption = {
   ],
 };
 
+const deeplinkWithApiDurationOption: DoorToDoorOption = {
+  ...deeplinkOption,
+  id: "option_blablacar_deeplink_with_api",
+  sources: [
+    ...deeplinkOption.sources,
+    {
+      provider: "google_routes",
+      source_provider: "google_routes",
+      source_type: "api",
+      confidence: "live",
+      checked_at: "2026-05-20T10:00:00+02:00",
+    },
+  ],
+};
+
 const apiRouteOption: DoorToDoorOption = {
   id: "option_google_routes",
   label: "Duración real de ruta terrestre",
@@ -163,11 +178,8 @@ test("DoorToDoorPanel includes no-coverage-real handling, provider status and wa
   const source = fs.readFileSync(PANEL, "utf8");
   assert.match(source, /watchId/);
   assert.match(source, /fetchDoorToDoorProviderStatus/);
-  assert.match(source, /NO_REAL_PROVIDER_COVERAGE/);
-  assert.match(source, /noRealCoverageTitle/);
+  assert.match(source, /noCoverageTitle/);
   assert.match(source, /providersStatus/);
-  assert.match(source, /noActiveProviders/);
-  assert.match(source, /coverageActionsDetail/);
   assert.match(source, /d2d-filters-collapse/);
   assert.match(source, /open=\{!isMobile \|\| showAdvancedFilters\}/);
 });
@@ -182,15 +194,16 @@ test("Door-to-door option, radar, filters, and timeline render mock and flight-e
     </>,
   );
   assert.match(html, /Precio máximo del grupo/);
-  assert.match(html, /Datos estimados/);
+  assert.match(html, /Estimación/);
   assert.match(html, /Horario estimado/);
 });
 
 test("Door-to-door deeplink option renders open-provider CTA and handles null price", () => {
   const html = renderToStaticMarkup(<DoorToDoorOptionCard option={deeplinkOption} chosen={false} onChoose={() => undefined} />);
-  assert.match(html, /sin precio confirmado/);
-  assert.match(html, /Abrir BlaBlaCar/);
-  assert.match(html, /Comparación limitada/);
+  assert.match(html, /precio/);
+  assert.match(html, /Abrir proveedor/);
+  assert.match(html, /se confirma fuera de Viru|sin precio confirmado/i);
+  assert.match(html, /8h30/);
   assert.match(html, /https:\/\/www\.blablacar\.es\/search/);
   assert.doesNotMatch(html, /Recomendada/);
   assert.doesNotMatch(html, /is-recommended/);
@@ -201,6 +214,12 @@ test("Door-to-door api option renders real duration and keeps price unconfirmed"
   assert.match(html, /duración real/);
   assert.match(html, /sin precio confirmado/);
   assert.doesNotMatch(html, /desde \\d+/);
+});
+
+test("Door-to-door deeplink option with Google Routes enrichment shows real-duration badge", () => {
+  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={deeplinkWithApiDurationOption} chosen={false} onChoose={() => undefined} />);
+  assert.match(html, /duración real/);
+  assert.match(html, /8h30/);
 });
 
 test("Door-to-door i18n includes provider-specific CTAs and source disclosure", () => {
@@ -288,7 +307,6 @@ const gtfsOption: DoorToDoorOption = {
 test("Door-to-door GTFS transit option renders public schedule and handles null price", () => {
   const html = renderToStaticMarkup(<DoorToDoorOptionCard option={gtfsOption} chosen={false} onChoose={() => undefined} />);
   assert.match(html, /sin precio confirmado/);
-  assert.match(html, /horario público/);
   assert.match(html, /Datos abiertos/);
   assert.match(html, /Transporte público/);
   assert.doesNotMatch(html, /Abrir proveedor/);

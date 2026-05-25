@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 
 import { useI18n } from "@/i18n";
 import type { DoorToDoorOption } from "@/modules/door-to-door/types";
@@ -28,6 +28,7 @@ export function DoorToDoorOptionCard({
   const isEstimate = option.status === "estimate_only";
   const hasDuration = option.total_duration_minutes != null;
   const hasPrice = option.total_price_min != null && option.total_price_max != null;
+  const hasGoogleRoutes = option.sources.some((source) => source.provider === "google_routes");
 
   function statusBadge() {
     if (isRealResult) return <span className="status-pill success d2d-badge">{t("doorToDoor.option.realResult")}</span>;
@@ -61,11 +62,20 @@ export function DoorToDoorOptionCard({
         ) : null}
 
         <div className="d2d-option-meta">
+          {hasGoogleRoutes ? <span className="status-pill info d2d-badge">{t("doorToDoor.option.realDuration")}</span> : null}
           {hasDuration ? <span>{t("doorToDoor.option.buffer", { minutes: option.airport_buffer_minutes ?? "--" })}</span> : null}
           <span>{t("doorToDoor.option.transfers", { count: option.transfer_count })}</span>
           {option.score != null ? <span>{t("doorToDoor.option.score", { score: option.score })}</span> : null}
-          {hasPrice ? <strong className="d2d-option-price">{priceLabel()}{durStr ? ` · ${durStr}` : ""}</strong> : (
-            <span className="d2d-option-price-unconfirmed">{isRealDeeplink ? t("doorToDoor.option.externalPriceNote") : t("doorToDoor.option.noPrice")}</span>
+          {hasPrice ? (
+            <strong className="d2d-option-price">
+              {priceLabel()}
+              {durStr ? ` · ${durStr}` : ""}
+            </strong>
+          ) : (
+            <span className="d2d-option-price-unconfirmed">
+              {isRealDeeplink ? t("doorToDoor.option.externalPriceNote") : t("doorToDoor.option.noPrice")}
+              {durStr ? ` · ${durStr}` : ""}
+            </span>
           )}
         </div>
 

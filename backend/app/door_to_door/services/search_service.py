@@ -9,12 +9,14 @@ from app.core.time import utc_now_naive
 from app.door_to_door.providers.base import DoorToDoorProvider, DoorToDoorProviderQuery
 from app.door_to_door.schemas import (
     DoorToDoorFlightOut,
+    DoorToDoorLegOut,
     DoorToDoorMode,
     DoorToDoorOptionOut,
     DoorToDoorPreferences,
     DoorToDoorProviderStatusOut,
     DoorToDoorSearchRequest,
     DoorToDoorSearchResponse,
+    DoorToDoorSourceOut,
     DoorToDoorSummaryOut,
     DoorToDoorWarningOut,
 )
@@ -101,6 +103,7 @@ class DoorToDoorSearchService:
                         ),
                     )
 
+        options = self._enrich_deeplink_with_google_routes(options)
         options, filter_warnings = self._apply_preferences(options, request.preferences)
         warnings.extend(filter_warnings)
 
@@ -195,6 +198,146 @@ class DoorToDoorSearchService:
                 )
 
         return filtered, warnings
+
+    def _enrich_deeplink_with_google_routes(self, options: list[DoorToDoorOptionOut]) -> list[DoorToDoorOptionOut]:
+        reference_option = next(
+            (
+                option
+                for option in options
+                if any(source.provider == "google_routes" and source.source_type == "api" for source in option.sources)
+            ),
+            None,
+        )
+        if reference_option is None:
+            return options
+
+        reference_source = next(
+            (
+                source
+                for source in reference_option.sources
+                if source.provider == "google_routes" and source.source_type == "api"
+            ),
+            None,
+        )
+        if reference_source is None:
+            return options
+
+        outbound_reference, inbound_reference = self._split_ground_reference_legs(reference_option.legs)
+        if outbound_reference is None and inbound_reference is None:
+            return options
+
+        merged: list[DoorToDoorOptionOut] = []
+        for option in options:
+            if option.status != "real_deeplink":
+                merged.append(option)
+                continue
+
+            legs = [leg.model_copy(deep=True) for leg in option.legs]
+            flight_index = next((index for index, leg in enumerate(legs) if leg.type == "flight"), -1)
+            updated = False
+            outbound_index: int | None = None
+
+            if flight_index > 0 and outbound_reference is not None:
+                for index in range(flight_index - 1, -1, -1):
+                    if legs[index].type == "ground":
+                        legs[index] = self._overlay_ground_leg(legs[index], outbound_reference)
+                        outbound_index = index
+                        updated = True
+                        break
+
+            if flight_index >= 0 and inbound_reference is not None:
+                for index in range(flight_index + 1, len(legs)):
+                    if legs[index].type == "ground":
+                        legs[index] = self._overlay_ground_leg(legs[index], inbound_reference)
+                        updated = True
+                        break
+
+            if not updated:
+                merged.append(option)
+                continue
+
+            airport_buffer = option.airport_buffer_minutes
+            if airport_buffer is None and outbound_index is not None and flight_index >= 0:
+                outbound_arrival = legs[outbound_index].arrival_at
+                flight_departure = legs[flight_index].departure_at
+                if outbound_arrival is not None and flight_departure is not None:
+                    diff_minutes = int((flight_departure - outbound_arrival).total_seconds() / 60)
+                    if diff_minutes > 0:
+                        airport_buffer = diff_minutes
+
+            total_duration = option.total_duration_minutes
+            if total_duration is None:
+                leg_minutes = [
+                    leg.duration_minutes
+                    for leg in legs
+                    if leg.type in {"ground", "flight"}
+                ]
+                if all(value is not None for value in leg_minutes):
+                    total_duration = sum(int(value or 0) for value in leg_minutes) + int(airport_buffer or 0)
+
+            sources = list(option.sources)
+            if not any(source.provider == "google_routes" and source.source_type == "api" for source in sources):
+                sources.append(
+                    DoorToDoorSourceOut(
+                        provider="google_routes",
+                        source_provider="google_routes",
+                        source_type="api",
+                        confidence=reference_source.confidence,
+                        checked_at=reference_source.checked_at,
+                        expires_at=reference_source.expires_at,
+                    )
+                )
+
+            source_types = list(option.source_types)
+            if "api" not in source_types:
+                source_types.append("api")
+
+            merged.append(
+                option.model_copy(
+                    update={
+                        "legs": legs,
+                        "sources": sources,
+                        "source_types": source_types,
+                        "airport_buffer_minutes": airport_buffer,
+                        "total_duration_minutes": total_duration,
+                    }
+                )
+            )
+
+        return merged
+
+    def _split_ground_reference_legs(
+        self,
+        legs: list[DoorToDoorLegOut],
+    ) -> tuple[DoorToDoorLegOut | None, DoorToDoorLegOut | None]:
+        flight_index = next((index for index, leg in enumerate(legs) if leg.type == "flight"), -1)
+        if flight_index < 0:
+            return None, None
+
+        outbound: DoorToDoorLegOut | None = None
+        inbound: DoorToDoorLegOut | None = None
+        for index, leg in enumerate(legs):
+            if leg.type != "ground":
+                continue
+            if leg.duration_minutes is None:
+                continue
+            if index < flight_index:
+                outbound = leg
+            elif index > flight_index and inbound is None:
+                inbound = leg
+        return outbound, inbound
+
+    def _overlay_ground_leg(self, base_leg: DoorToDoorLegOut, route_leg: DoorToDoorLegOut) -> DoorToDoorLegOut:
+        return base_leg.model_copy(
+            update={
+                "departure_at": route_leg.departure_at or base_leg.departure_at,
+                "arrival_at": route_leg.arrival_at or base_leg.arrival_at,
+                "duration_minutes": route_leg.duration_minutes if route_leg.duration_minutes is not None else base_leg.duration_minutes,
+                "distance_meters": route_leg.distance_meters if route_leg.distance_meters is not None else base_leg.distance_meters,
+                "source_type": "api",
+                "confidence": route_leg.confidence or base_leg.confidence,
+            }
+        )
 
     def _option_matches_modes(self, option: DoorToDoorOptionOut, preferences: DoorToDoorPreferences) -> bool:
         allowed_modes = self._allowed_ground_modes(preferences)

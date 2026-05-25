@@ -95,12 +95,16 @@ def resolve_provider_runtime() -> ProviderRuntime:
         ProviderDescriptor(
             name="google_maps_deeplink",
             source_type="maps",
-            base_status="functional_maps",
+            base_status="functional_maps" if real_enabled else "disabled",
             production_ready=True,
             supports_search=True,
             supports_booking_url=True,
             has_tests=False,
-            notes="Genera enlaces de navegacion real en Google Maps. Siempre activo; no requiere API key.",
+            notes=(
+                "Genera enlaces de navegacion real en Google Maps sin API key."
+                if real_enabled
+                else "Desactivado: requiere DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS."
+            ),
             is_real=True,
             factory=GoogleMapsDeepLinkProvider,
         ),
@@ -307,8 +311,8 @@ def resolve_provider_runtime() -> ProviderRuntime:
             enabled = mock_enabled
             status = descriptor.base_status if enabled else "disabled"
         elif descriptor.name == "google_maps_deeplink":
-            enabled = True  # always enabled, no API key needed
-            status = "functional_maps"
+            enabled = real_enabled
+            status = "functional_maps" if enabled else "disabled"
         elif descriptor.name == "google_routes" or descriptor.name == "gtfs_transit":
             enabled = (
                 google_routes_enabled
