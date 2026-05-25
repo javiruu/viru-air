@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timedelta
+﻿from datetime import UTC, datetime, timedelta
 from typing import Any
 
 
@@ -12,10 +12,10 @@ class DoorToDoorCacheService:
         if not item:
             return None
         created_at, value = item
-        if created_at + timedelta(seconds=self.ttl_seconds) < datetime.utcnow():
+        if created_at + timedelta(seconds=self.ttl_seconds) < datetime.now(UTC):
             self._items.pop(key, None)
             return None
         return value
 
     def set(self, key: str, value: Any) -> None:
-        self._items[key] = (datetime.utcnow(), value)
+        self._items[key] = (datetime.now(UTC), value)

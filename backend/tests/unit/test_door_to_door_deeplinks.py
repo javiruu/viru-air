@@ -80,8 +80,8 @@ async def test_blablacar_generates_booking_url_with_origin_dest_date():
     booking_url = blablacar_source.booking_url
     assert booking_url is not None
     assert booking_url.startswith("https://www.blablacar.es/search?")
-    assert "from=Almer%C3%ADa" in booking_url
-    assert "to=M%C3%A1laga" in booking_url or "to=Malaga" in booking_url
+    assert "fn=Almer%C3%ADa" in booking_url
+    assert "tn=M%C3%A1laga" in booking_url or "tn=Malaga" in booking_url
     assert query.flight.departure_at.date().isoformat() in booking_url
 
 

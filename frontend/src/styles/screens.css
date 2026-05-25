@@ -7096,6 +7096,43 @@ textarea::placeholder {
     background 0.16s ease,
     color 0.16s ease;
 }
+/* Variante neutra: mismo aspecto sin el padding izquierdo grande del icono de prefijo.
+   Para selects, inputs numericos, y cualquier control que no necesite el icono MapPin. */
+.qs-input-neutral {
+  min-height: var(--qs-control-height);
+  border: 1px solid var(--qs-input-border);
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+  font: inherit;
+  background: var(--input-bg);
+  color: var(--ink);
+  box-shadow:
+    inset 0 1px 2px rgba(31, 29, 26, 0.14),
+    var(--qs-input-elevation);
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background 0.16s ease,
+    color 0.16s ease;
+}
+
+.qs-input-neutral::placeholder {
+  color: var(--qs-placeholder);
+  opacity: 1;
+  transition: color 0.16s ease, opacity 0.16s ease;
+}
+
+.qs-input-neutral:focus-visible {
+  outline: none;
+  border-color: var(--color-input-focus);
+  box-shadow: var(--qs-focus-ring);
+}
+
+.qs-input-neutral:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: color-mix(in srgb, var(--input-bg) 64%, var(--surface));
+}
 
 .qs-route-card .qs-input {
   min-height: 44px;
@@ -18173,7 +18210,8 @@ textarea::placeholder {
   min-width: 0;
 }
 
-.d2d-input-with-suffix .prefs-control {
+.d2d-input-with-suffix .prefs-control,
+.d2d-input-with-suffix .qs-input-neutral {
   width: 100%;
   padding-right: 2.3rem;
 }
@@ -18280,7 +18318,8 @@ textarea::placeholder {
 }
 
 .d2d-filters-content .prefs-control,
-.d2d-filters-content .prefs-toggle {
+.d2d-filters-content .prefs-toggle,
+.d2d-filters-content .qs-input-neutral {
   width: 100%;
   min-width: 0;
 }
