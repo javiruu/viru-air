@@ -192,6 +192,18 @@ test("DoorToDoorPanel includes no-coverage-real handling, provider status and wa
   assert.match(source, /deep_link/);
 });
 
+test("DoorToDoorPanel includes vertical timeline, trust modal trigger, and collapsible history", () => {
+  const source = fs.readFileSync(PANEL, "utf8");
+  assert.match(source, /d2d-segment-timeline/);
+  assert.match(source, /status-pill state-info/);
+  assert.match(source, /trustModalTrigger/);
+  assert.match(source, /aria-haspopup="dialog"/);
+  assert.match(source, /d2d-trust-modal/);
+  assert.match(source, /showHistoryAction/);
+  assert.match(source, /hideHistoryAction/);
+  assert.match(source, /aria-expanded=\{showHistory\}/);
+});
+
 test("Door-to-door option, radar, filters, and timeline render mock and flight-estimated cues", () => {
   const html = renderToStaticMarkup(
     <>
@@ -204,6 +216,7 @@ test("Door-to-door option, radar, filters, and timeline render mock and flight-e
   assert.match(html, /Precio máximo del grupo/);
   assert.match(html, /Estimación/);
   assert.match(html, /Horario estimado/);
+  assert.match(html, /role="switch"/);
 });
 
 test("Door-to-door deeplink option renders open-provider CTA and handles null price", () => {
@@ -241,6 +254,9 @@ test("Door-to-door i18n includes provider-specific CTAs and source disclosure", 
   assert.match(i18nSource, /noCoverageBody/);
   assert.match(i18nSource, /noRealCoverageTitle/);
   assert.match(i18nSource, /Datos estimados/);
+  assert.match(i18nSource, /showHistoryAction/);
+  assert.match(i18nSource, /trustModalTitle/);
+  assert.match(i18nSource, /openMapsShort/);
 });
 
 test("Door-to-door module has no mojibake markers", () => {
@@ -252,6 +268,8 @@ test("Door-to-door styles include responsive radar and mobile decision layout ho
   const source = fs.readFileSync(STYLES, "utf8");
   assert.match(source, /d2d-route-visual/);
   assert.match(source, /d2d-decision-grid/);
+  assert.match(source, /d2d-segment-timeline/);
+  assert.match(source, /d2d-trust-modal/);
   assert.match(source, /d2d-option-compact-grid/);
   assert.match(source, /max-width: 680px/);
   assert.match(source, /prefers-reduced-motion/);

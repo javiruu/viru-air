@@ -52,9 +52,60 @@ export function DoorToDoorFilters({
         </label>
       </div>
       <div className="d2d-toggle-row">
-        <button type="button" className={`btn-ghost btn-compact ${preferences.public_transport_only ? "is-active" : ""}`} onClick={() => patch({ public_transport_only: !preferences.public_transport_only })}>{t("doorToDoor.filters.publicOnly")}</button>
-        <button type="button" className={`btn-ghost btn-compact ${preferences.allow_rideshare ? "is-active" : ""}`} onClick={() => patch({ allow_rideshare: !preferences.allow_rideshare })}>{t("doorToDoor.filters.rideshare")}</button>
-        <button type="button" className={`btn-ghost btn-compact ${preferences.allow_shuttle ? "is-active" : ""}`} onClick={() => patch({ allow_shuttle: !preferences.allow_shuttle })}>{t("doorToDoor.filters.shuttle")}</button>
+        <div className="field">
+          <span>{t("doorToDoor.filters.publicOnly")}</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={preferences.public_transport_only}
+            aria-label={t("doorToDoor.filters.publicOnly")}
+            className={`prefs-toggle ${preferences.public_transport_only ? "is-on" : ""}`}
+            onClick={() => patch({ public_transport_only: !preferences.public_transport_only })}
+          >
+            <span className="prefs-toggle-track" aria-hidden="true">
+              <span className="prefs-toggle-knob" />
+            </span>
+            <span className="prefs-toggle-text">
+              {preferences.public_transport_only ? t("doorToDoor.filters.enabled") : t("doorToDoor.filters.disabled")}
+            </span>
+          </button>
+        </div>
+        <div className="field">
+          <span>{t("doorToDoor.filters.rideshare")}</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={preferences.allow_rideshare}
+            aria-label={t("doorToDoor.filters.rideshare")}
+            className={`prefs-toggle ${preferences.allow_rideshare ? "is-on" : ""}`}
+            onClick={() => patch({ allow_rideshare: !preferences.allow_rideshare })}
+          >
+            <span className="prefs-toggle-track" aria-hidden="true">
+              <span className="prefs-toggle-knob" />
+            </span>
+            <span className="prefs-toggle-text">
+              {preferences.allow_rideshare ? t("doorToDoor.filters.enabled") : t("doorToDoor.filters.disabled")}
+            </span>
+          </button>
+        </div>
+        <div className="field">
+          <span>{t("doorToDoor.filters.shuttle")}</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={preferences.allow_shuttle}
+            aria-label={t("doorToDoor.filters.shuttle")}
+            className={`prefs-toggle ${preferences.allow_shuttle ? "is-on" : ""}`}
+            onClick={() => patch({ allow_shuttle: !preferences.allow_shuttle })}
+          >
+            <span className="prefs-toggle-track" aria-hidden="true">
+              <span className="prefs-toggle-knob" />
+            </span>
+            <span className="prefs-toggle-text">
+              {preferences.allow_shuttle ? t("doorToDoor.filters.enabled") : t("doorToDoor.filters.disabled")}
+            </span>
+          </button>
+        </div>
       </div>
     </>
   );
