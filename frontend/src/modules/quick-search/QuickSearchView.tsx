@@ -104,6 +104,28 @@ const NON_FATAL_QS_SCOPES = new Set<string>([
   "destination_code_validation_failed",
 ]);
 const EMPTY_SEARCH_VALIDATION_MESSAGE = "Please enter a search";
+const RYANAIR_TOP_CITIES = [
+  "Madrid",
+  "Barcelona",
+  "Dublin",
+  "London",
+  "Milan",
+  "Rome",
+  "Paris",
+  "Berlin",
+  "Lisbon",
+  "Porto",
+  "Brussels",
+  "Amsterdam",
+  "Vienna",
+  "Prague",
+  "Budapest",
+  "Warsaw",
+  "Athens",
+  "Malaga",
+  "Palma",
+  "Valencia",
+];
 
 type ExecutedCriteriaSnapshot = {
   route: string;
@@ -243,8 +265,16 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const [calendarVisibleMonth, setCalendarVisibleMonth] = useState<string>(currentMonthIso);
   const [calendarHintsByKey, setCalendarHintsByKey] = useState<Record<string, CalendarHintsCacheEntry>>({});
   const [calendarHintsLoadingKey, setCalendarHintsLoadingKey] = useState<string | null>(null);
-  const initialOrigin = mode === "recommendations" ? "" : "MAD";
-  const initialDestination = mode === "recommendations" ? "" : "DUB";
+  const initialOrigin = "";
+  const initialDestination = "";
+  const randomOriginPlaceholder = useMemo(
+    () => RYANAIR_TOP_CITIES[Math.floor(Math.random() * RYANAIR_TOP_CITIES.length)],
+    [],
+  );
+  const randomDestinationPlaceholder = useMemo(
+    () => RYANAIR_TOP_CITIES[Math.floor(Math.random() * RYANAIR_TOP_CITIES.length)],
+    [],
+  );
   const {
     origin,
     setOrigin,
@@ -3612,7 +3642,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                       }
                     }
                   }}
-                  placeholder={originCountryOnly ? originCountryOnly.name : t("placeholderOrigin")}
+                  placeholder={originCountryOnly ? originCountryOnly.name : randomOriginPlaceholder}
                   aria-invalid={(originTouched && !originValid) || Boolean(fieldErrors.origin_iata)}
                   aria-describedby="origin-help"
                   aria-expanded={activeAutocompleteField === "origin"}
@@ -3789,7 +3819,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                       }
                     }
                   }}
-                  placeholder={destinationCountryOnly ? destinationCountryOnly.name : t("placeholderDestination")}
+                  placeholder={destinationCountryOnly ? destinationCountryOnly.name : randomDestinationPlaceholder}
                   aria-invalid={(destinationTouched && !destinationValid) || Boolean(fieldErrors.destination_iata)}
                   aria-describedby="destination-help"
                   aria-expanded={activeAutocompleteField === "destination"}
