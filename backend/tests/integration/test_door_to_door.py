@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from urllib.parse import parse_qs, urlparse
 
 from fastapi.testclient import TestClient
 
@@ -112,12 +113,51 @@ def test_deeplink_provider_returns_booking_url_without_price(client: TestClient,
     deeplink_options = [option for option in body["options"] if "deeplink" in option["source_types"]]
     assert deeplink_options
     assert all(option["total_price_min"] is None and option["total_price_max"] is None for option in deeplink_options)
-    assert any(
-        (source.get("booking_url") or "").startswith("https://")
+    deeplink_source = next(
+        source
         for option in deeplink_options
         for source in option["sources"]
-        if source["source_type"] == "deeplink"
+        if source["source_type"] == "deeplink" and source["provider"] == "blablacar_deeplink"
     )
+    assert (deeplink_source.get("booking_url") or "").startswith("https://www.blablacar.es/search?")
+    parsed = urlparse(deeplink_source["booking_url"])
+    params = parse_qs(parsed.query)
+    assert params.get("fn")
+    assert params.get("tn")
+    assert params.get("db")
+    assert params.get("seats") == ["1"]
+    assert params.get("search_origin") == ["SEARCH"]
+    assert params.get("p0[ac]") == ["adult"]
+    assert params.get("from_place_id")
+    assert params.get("to_place_id")
+    assert "from" not in params
+    assert "to" not in params
+    assert "date" not in params
+
+
+def test_blablacar_deeplink_fallback_without_place_id_keeps_valid_url(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(monkeypatch, mock=False, real=True, scrapers=False)
+    headers = _auth_headers(client, "deeplink-fallback@viru.dev")
+    watch_id = _create_watch(client, headers)
+    payload = _search_payload(watch_id)
+    payload["origin"] = {"type": "city", "label": "Pueblo sin token", "lat": None, "lng": None, "place_id": None}
+
+    response = client.post("/api/v1/door-to-door/search", json=payload, headers=headers)
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    deeplink_options = [option for option in body["options"] if option["id"] == "option_blablacar_deeplink"]
+    assert deeplink_options
+    deeplink_source = next(
+        source for source in deeplink_options[0]["sources"] if source["provider"] == "blablacar_deeplink"
+    )
+    parsed = urlparse(deeplink_source["booking_url"])
+    params = parse_qs(parsed.query)
+    assert params.get("fn") == ["Pueblo sin token, España"]
+    assert params.get("tn")
+    assert params.get("db")
+    assert not params.get("from_place_id")
+    assert any(warning["code"] == "BLABLACAR_DEEPLINK_PARTIAL" for warning in body["warnings"])
 
 
 def test_provider_status_classifies_stubs_and_runtime_flags(client: TestClient, monkeypatch) -> None:

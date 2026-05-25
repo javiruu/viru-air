@@ -182,6 +182,14 @@ test("DoorToDoorPanel includes no-coverage-real handling, provider status and wa
   assert.match(source, /providersStatus/);
   assert.match(source, /d2d-filters-collapse/);
   assert.match(source, /open=\{!isMobile \|\| showAdvancedFilters\}/);
+  const originIndex = source.indexOf("id=\"d2d-origin\"");
+  const watchIndex = source.indexOf("id=\"d2d-watch\"");
+  const finalIndex = source.indexOf("id=\"d2d-final\"");
+  assert.ok(originIndex > -1 && watchIndex > -1 && finalIndex > -1);
+  assert.ok(originIndex < watchIndex);
+  assert.ok(watchIndex < finalIndex);
+  assert.match(source, /option_blablacar_deeplink/);
+  assert.match(source, /deep_link/);
 });
 
 test("Door-to-door option, radar, filters, and timeline render mock and flight-estimated cues", () => {
