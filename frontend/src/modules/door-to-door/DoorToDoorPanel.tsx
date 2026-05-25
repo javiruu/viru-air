@@ -2,12 +2,11 @@
 
 import React, { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
+import { ExternalLink, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
-import { apiFetch } from "@/modules/shared/api";
-import type { Watch } from "@/modules/watchlist/types";
 import {
   chooseDoorToDoorOption,
   fetchDoorToDoorHistory,
@@ -30,6 +29,8 @@ import type {
   DoorToDoorResponse,
   DoorToDoorSuggestion,
 } from "@/modules/door-to-door/types";
+import { apiFetch } from "@/modules/shared/api";
+import type { Watch } from "@/modules/watchlist/types";
 
 const DEFAULT_PREFERENCES: DoorToDoorPreferences = {
   min_airport_buffer_minutes: 120,
@@ -44,6 +45,17 @@ const DEFAULT_PREFERENCES: DoorToDoorPreferences = {
   allow_car: true,
   public_transport_only: false,
   sort_by: "best_balance",
+};
+
+type TrustTone = "success" | "warning";
+
+type SegmentNode = {
+  id: string;
+  title: string;
+  route: string;
+  timing: string;
+  badge: string;
+  actions: Array<{ href: string; label: string; ariaLabel: string }>;
 };
 
 function useSuggestionSearch(value: string) {
@@ -115,6 +127,39 @@ function formatHistoryDate(value: string, localeTag: string) {
   return new Intl.DateTimeFormat(localeTag, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
 
+function formatClock(value: string | null | undefined, localeTag: string) {
+  if (!value) return "--:--";
+  return new Intl.DateTimeFormat(localeTag, { hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+}
+
+function formatDurationLabel(minutes: number | null | undefined) {
+  if (minutes == null) return "--";
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours <= 0) return `${mins} min`;
+  return `${hours}h ${String(mins).padStart(2, "0")}m`;
+}
+
+function deriveTrustTone(option: DoorToDoorOption | null): TrustTone {
+  if (!option) return "warning";
+  const confirmed = option.sources.filter(
+    (source) =>
+      (source.source_type === "api" || source.source_type === "open_data" || source.source_type === "maps") &&
+      (source.confidence === "live" || source.confidence === "cached"),
+  ).length;
+  const uncertain = option.sources.filter(
+    (source) =>
+      source.source_type === "deeplink" ||
+      source.source_type === "estimate" ||
+      source.source_type === "mock" ||
+      source.confidence === "estimated" ||
+      source.confidence === "deeplink" ||
+      source.confidence === "unavailable",
+  ).length;
+  if (confirmed > 0 && confirmed >= uncertain) return "success";
+  return "warning";
+}
+
 export function DoorToDoorPanel() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -136,6 +181,8 @@ export function DoorToDoorPanel() {
   const [providerStatus, setProviderStatus] = useState<DoorToDoorProviderStatus[]>([]);
   const [isMobile, setIsMobile] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [showTrustModal, setShowTrustModal] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
@@ -187,27 +234,41 @@ export function DoorToDoorPanel() {
       .catch(() => setHistory([]));
   }, [selectedWatchId, chosenOptionId, response?.summary.history_id]);
 
+  useEffect(() => {
+    setShowHistory(false);
+  }, [selectedWatchId]);
+
   const selectedWatch = useMemo(() => watches.find((watch) => watch.id === selectedWatchId) || null, [watches, selectedWatchId]);
 
-  // Group options by status
   const realResults = useMemo(() => response?.options.filter((o) => o.status === "real_result") ?? [], [response]);
   const realDeeplinks = useMemo(() => response?.options.filter((o) => o.status === "real_deeplink") ?? [], [response]);
   const estimateOptions = useMemo(() => response?.options.filter((o) => o.status === "estimate_only") ?? [], [response]);
 
-  const hasResults = realResults.length > 0 || realDeeplinks.length > 0;
   const hasEstimates = estimateOptions.length > 0;
 
-  const attemptedRoute = `${origin.label || "—"} → ${selectedWatch?.origin_iata || "AGP"} → ${selectedWatch?.destination_iata || "TSF"} → ${finalDestination.label || "—"}`;
+  const attemptedRoute = `${origin.label || "-"} -> ${selectedWatch?.origin_iata || "AGP"} -> ${selectedWatch?.destination_iata || "TSF"} -> ${finalDestination.label || "-"}`;
   const providerStatusSummary = useMemo(() => {
     const enabled = providerStatus.filter((provider) => provider.enabled);
     const realEnabled = enabled.filter((provider) => provider.source_type !== "mock" && provider.source_type !== "estimate");
     const estimateEnabled = enabled.filter((provider) => provider.source_type === "mock" || provider.source_type === "estimate");
-    return { enabled: enabled.length, realEnabled: realEnabled.length, estimateEnabled: estimateEnabled.length, enabledNames: enabled.map((provider) => provider.name) };
+    return { enabled: enabled.length, realEnabled: realEnabled.length, estimateEnabled: estimateEnabled.length };
   }, [providerStatus]);
 
   const decisionModeLabel = t(`doorToDoor.filters.${preferences.sort_by === "best_balance" ? "bestBalance" : preferences.sort_by === "cheapest" ? "cheapest" : preferences.sort_by === "lowest_risk" ? "lowestRisk" : preferences.sort_by === "fastest" ? "fastest" : "fewestChanges"}`);
 
-  // Build segment deeplinks
+  const selectedPlan = useMemo(() => {
+    if (!response) return null;
+    return (
+      response.options.find((option) => option.id === chosenOptionId) ||
+      response.options.find((option) => option.id === response.summary.chosen_option_id) ||
+      response.options.find((option) => option.id === response.summary.recommended_option_id) ||
+      response.options[0] ||
+      null
+    );
+  }, [response, chosenOptionId]);
+
+  const trustTone = useMemo(() => deriveTrustTone(selectedPlan), [selectedPlan]);
+
   const segmentLinks = useMemo(() => {
     if (!selectedWatch) return null;
     const originLabel = origin.label;
@@ -232,6 +293,52 @@ export function DoorToDoorPanel() {
 
     return { mapsOutbound, mapsInbound, blablacarUrl, gooptiUrl };
   }, [selectedWatch, origin.label, finalDestination.label, response?.options]);
+
+  const timelineNodes = useMemo<SegmentNode[]>(() => {
+    if (!selectedWatch || !segmentLinks || !response) return [];
+    const groundLegs = selectedPlan?.legs.filter((leg) => leg.type === "ground") || [];
+    const outboundLeg = groundLegs[0];
+    const inboundLeg = groundLegs.length > 1 ? groundLegs[groundLegs.length - 1] : null;
+    const flightLeg = selectedPlan?.legs.find((leg) => leg.type === "flight") || null;
+
+    const nodes: SegmentNode[] = [
+      {
+        id: "outbound",
+        title: t("doorToDoor.sections.segmentOutbound"),
+        route: `${origin.label} -> ${selectedWatch.origin_iata}`,
+        timing: `${formatClock(outboundLeg?.departure_at, localeTag)} - ${formatClock(outboundLeg?.arrival_at, localeTag)}`,
+        badge: formatDurationLabel(outboundLeg?.duration_minutes),
+        actions: [
+          { href: segmentLinks.mapsOutbound, label: t("doorToDoor.sections.openMapsShort"), ariaLabel: t("doorToDoor.sections.openGoogleMaps") },
+          ...(segmentLinks.blablacarUrl ? [{ href: segmentLinks.blablacarUrl, label: t("doorToDoor.sections.openBlaBlaCarShort"), ariaLabel: t("doorToDoor.sections.openBlaBlaCarAction") }] : []),
+        ],
+      },
+      {
+        id: "flight",
+        title: t("doorToDoor.sections.segmentFlight"),
+        route: `${selectedWatch.origin_iata} -> ${selectedWatch.destination_iata}`,
+        timing: `${formatClock(response.flight.departure_at, localeTag)} - ${formatClock(response.flight.arrival_at, localeTag)}`,
+        badge: formatDurationLabel(flightLeg?.duration_minutes),
+        actions: [],
+      },
+    ];
+
+    if (finalDestination.type !== "airport_only") {
+      nodes.push({
+        id: "inbound",
+        title: t("doorToDoor.sections.segmentInbound"),
+        route: `${selectedWatch.destination_iata} -> ${finalDestination.label}`,
+        timing: `${formatClock(inboundLeg?.departure_at, localeTag)} - ${formatClock(inboundLeg?.arrival_at, localeTag)}`,
+        badge: formatDurationLabel(inboundLeg?.duration_minutes),
+        actions: [
+          ...(segmentLinks.mapsInbound ? [{ href: segmentLinks.mapsInbound, label: t("doorToDoor.sections.openMapsShort"), ariaLabel: t("doorToDoor.sections.openGoogleMaps") }] : []),
+          ...(segmentLinks.gooptiUrl ? [{ href: segmentLinks.gooptiUrl, label: t("doorToDoor.sections.openGoOptiShort"), ariaLabel: t("doorToDoor.sections.openGoOptiAction") }] : []),
+        ],
+      });
+    }
+
+    return nodes;
+  }, [selectedWatch, segmentLinks, response, selectedPlan, finalDestination.type, finalDestination.label, origin.label, t, localeTag]);
 
   const calculate = useCallback(async () => {
     if (!selectedWatch) {
@@ -300,7 +407,6 @@ export function DoorToDoorPanel() {
         <span className="status-pill info">{t("doorToDoor.flightIntelligence")}</span>
       </div>
 
-      {/* --- Form Section --- */}
       <section className="panel d2d-ops-panel">
         <div className="d2d-hero">
           <div>
@@ -310,15 +416,15 @@ export function DoorToDoorPanel() {
           </div>
           <div className="d2d-hero-ticket" aria-label={t("doorToDoor.selectedFlight")}>
             <span>{t("doorToDoor.form.preparationTitle")}</span>
-            <strong>{selectedWatch ? `${selectedWatch.origin_iata} → ${selectedWatch.destination_iata}` : t("doorToDoor.noFlight")}</strong>
+            <strong>{selectedWatch ? `${selectedWatch.origin_iata} -> ${selectedWatch.destination_iata}` : t("doorToDoor.noFlight")}</strong>
             <small>{selectedWatch?.travel_date_local || t("doorToDoor.chooseWatchedRoute")}</small>
           </div>
         </div>
 
         <div className="d2d-ops-summary">
-          <span><strong>{t("doorToDoor.form.origin")}:</strong> {origin.label || "—"}</span>
-          <span><strong>{t("doorToDoor.form.watch")}:</strong> {selectedWatch ? `${selectedWatch.origin_iata} → ${selectedWatch.destination_iata}` : "—"}</span>
-          <span><strong>{t("doorToDoor.form.finalDestination")}:</strong> {finalDestination.label || "—"}</span>
+          <span><strong>{t("doorToDoor.form.origin")}:</strong> {origin.label || "-"}</span>
+          <span><strong>{t("doorToDoor.form.watch")}:</strong> {selectedWatch ? `${selectedWatch.origin_iata} -> ${selectedWatch.destination_iata}` : "-"}</span>
+          <span><strong>{t("doorToDoor.form.finalDestination")}:</strong> {finalDestination.label || "-"}</span>
           <span><strong>{t("doorToDoor.filters.minBuffer")}:</strong> {preferences.min_airport_buffer_minutes} min</span>
           <span><strong>{t("doorToDoor.form.decisionMode")}:</strong> {decisionModeLabel}</span>
         </div>
@@ -333,7 +439,7 @@ export function DoorToDoorPanel() {
             <select id="d2d-watch" className="prefs-control" value={selectedWatchId} onChange={(event) => setSelectedWatchId(event.target.value)}>
               <option value="">{t("doorToDoor.form.selectWatch")}</option>
               {watches.map((watch) => (
-                <option key={watch.id} value={watch.id}>{watch.origin_iata} → {watch.destination_iata} · {watch.travel_date_local}</option>
+                <option key={watch.id} value={watch.id}>{watch.origin_iata} {"->"} {watch.destination_iata} - {watch.travel_date_local}</option>
               ))}
             </select>
           </label>
@@ -348,17 +454,54 @@ export function DoorToDoorPanel() {
           </label>
           <button className="btn-primary" type="submit" disabled={!selectedWatch || status === "loading"}>{t("doorToDoor.cta")}</button>
         </form>
-
-        <details className="panel panel-soft d2d-filters-collapse" open={!isMobile || showAdvancedFilters} onToggle={(event) => setShowAdvancedFilters((event.currentTarget as HTMLDetailsElement).open)}>
-          <summary>
-            <strong>{t("doorToDoor.form.decisionSettings")}</strong>
-            <span>{t("doorToDoor.filters.collapseHint")}</span>
-          </summary>
-          <DoorToDoorFilters preferences={preferences} onChange={setPreferences} embedded={true} />
-        </details>
       </section>
 
-      {/* --- States --- */}
+      <section className="d2d-decision-grid">
+        <div className="panel panel-soft d2d-route-stack">
+          <div className="d2d-section-head">
+            <h2>{t("doorToDoor.timeline.title")}</h2>
+            {response?.flight.flight_time_confidence === "estimated" ? (
+              <span className="status-pill warning">{t("doorToDoor.timeline.estimatedSchedule")}</span>
+            ) : null}
+          </div>
+          {timelineNodes.length === 0 ? <p className="panel-note">{t("doorToDoor.timeline.empty")}</p> : (
+            <ol className="d2d-segment-timeline" aria-label={t("doorToDoor.timeline.title")}>
+              {timelineNodes.map((node) => (
+                <li key={node.id} className="list-row d2d-segment-row">
+                  <div className="d2d-segment-node" aria-hidden="true" />
+                  <div className="d2d-segment-main">
+                    <strong>{node.title}</strong>
+                    <p className="d2d-segment-route">{node.route}</p>
+                    <p className="d2d-segment-time">{node.timing}</p>
+                  </div>
+                  <div className="d2d-segment-meta">
+                    <span className="status-pill state-info">{node.badge}</span>
+                    <div className="row-actions d2d-row-actions" role="group" aria-label={t("doorToDoor.sections.actionsTitle")}>
+                      {node.actions.map((action) => (
+                        <a key={`${node.id}-${action.href}`} className="btn-secondary btn-compact" href={action.href} target="_blank" rel="noreferrer" aria-label={action.ariaLabel}>
+                          <ExternalLink size={14} aria-hidden="true" />
+                          <span>{action.label}</span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+
+        <aside className="panel panel-soft d2d-settings-aside">
+          <details className="d2d-filters-collapse" open={!isMobile || showAdvancedFilters} onToggle={(event) => setShowAdvancedFilters((event.currentTarget as HTMLDetailsElement).open)}>
+            <summary>
+              <strong>{t("doorToDoor.form.decisionSettings")}</strong>
+              <span>{t("doorToDoor.filters.collapseHint")}</span>
+            </summary>
+            <DoorToDoorFilters preferences={preferences} onChange={setPreferences} embedded={true} />
+          </details>
+        </aside>
+      </section>
+
       {status === "empty" ? <DoorToDoorEmptyState hasWatch={Boolean(selectedWatch)} /> : null}
       {status === "loading" ? <DoorToDoorLoadingState /> : null}
       {status === "error" ? <DoorToDoorErrorState message={errorMessage} onRetry={calculate} /> : null}
@@ -374,26 +517,34 @@ export function DoorToDoorPanel() {
         </section>
       ) : null}
 
-      {/* --- Trip Summary --- */}
       {response && response.options.length > 0 ? (
         <>
-          <section className="d2d-trip-summary">
-            <h2>{t("doorToDoor.sections.tripSummary")}</h2>
-            <div className="d2d-trip-flow">
-              <span className="d2d-trip-node">{origin.label}</span>
-              <span className="d2d-trip-arrow">→</span>
-              <span className="d2d-trip-node d2d-trip-airport">{selectedWatch?.origin_iata}</span>
-              <span className="d2d-trip-arrow">✈</span>
-              <span className="d2d-trip-node d2d-trip-airport">{selectedWatch?.destination_iata}</span>
-              <span className="d2d-trip-arrow">→</span>
-              <span className="d2d-trip-node">{finalDestination.label}</span>
+          <section className="panel panel-soft d2d-chosen-trust">
+            <div className="d2d-section-head">
+              <h2>{t("doorToDoor.option.chosen")}</h2>
+              <button
+                type="button"
+                className={`status-pill ${trustTone}`}
+                onClick={() => setShowTrustModal(true)}
+                aria-haspopup="dialog"
+                aria-controls="d2d-trust-modal"
+                aria-label={t("doorToDoor.sections.trustModalTrigger")}
+              >
+                {trustTone === "success" ? <ShieldCheck size={14} aria-hidden="true" /> : <ShieldAlert size={14} aria-hidden="true" />}
+                <span>{trustTone === "success" ? t("doorToDoor.sections.trustConfirmed") : t("doorToDoor.sections.trustEstimated")}</span>
+              </button>
             </div>
-            {response.flight.flight_time_confidence === "estimated" ? (
-              <p className="panel-note warning">{t("doorToDoor.gtfsWarnings.feedUnavailable")} — {t("doorToDoor.source.estimated")}</p>
-            ) : null}
+            {selectedPlan ? (
+              <p className="panel-note">
+                <strong>{selectedPlan.label}</strong>
+                {" - "}
+                {selectedPlan.total_price_min ?? "--"}-{selectedPlan.total_price_max ?? "--"} {selectedPlan.currency}
+              </p>
+            ) : (
+              <p className="panel-note">{t("doorToDoor.sections.trustNoPlan")}</p>
+            )}
           </section>
 
-          {/* --- Real Results (GTFS, real APIs) --- */}
           {realResults.length > 0 ? (
             <section className="d2d-results-section">
               <div className="d2d-section-head">
@@ -413,7 +564,6 @@ export function DoorToDoorPanel() {
             </section>
           ) : null}
 
-          {/* --- Real Deeplinks (Google Maps, BlaBlaCar, GoOpti) --- */}
           {realDeeplinks.length > 0 ? (
             <section className="d2d-results-section">
               <div className="d2d-section-head">
@@ -434,56 +584,6 @@ export function DoorToDoorPanel() {
             </section>
           ) : null}
 
-          {/* --- Segment Actions (quick access to external searches) --- */}
-          {segmentLinks ? (
-            <section className="panel panel-soft d2d-segment-actions">
-              <h2>{t("doorToDoor.sections.actionsTitle")}</h2>
-
-              <div className="d2d-segment">
-                <strong>{t("doorToDoor.sections.segmentOutbound")}</strong>
-                <p>{origin.label} → {selectedWatch?.origin_iata}</p>
-                <div className="d2d-segment-links">
-                  <a className="btn-secondary btn-compact" href={segmentLinks.mapsOutbound} target="_blank" rel="noreferrer">
-                    {t("doorToDoor.sections.openGoogleMaps")}
-                  </a>
-                  {segmentLinks.blablacarUrl ? (
-                    <a className="btn-secondary btn-compact" href={segmentLinks.blablacarUrl} target="_blank" rel="noreferrer">
-                      {t("doorToDoor.sections.openBlaBlaCarAction")}
-                    </a>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="d2d-segment">
-                <strong>{t("doorToDoor.sections.segmentFlight")}</strong>
-                <p>{selectedWatch?.origin_iata} → {selectedWatch?.destination_iata} · {selectedWatch?.travel_date_local}</p>
-                {response.flight.flight_time_confidence === "estimated" ? (
-                  <span className="status-pill warning">{t("doorToDoor.timeline.estimatedSchedule")}</span>
-                ) : null}
-              </div>
-
-              {finalDestination.type !== "airport_only" ? (
-                <div className="d2d-segment">
-                  <strong>{t("doorToDoor.sections.segmentInbound")}</strong>
-                  <p>{selectedWatch?.destination_iata} → {finalDestination.label}</p>
-                  <div className="d2d-segment-links">
-                    {segmentLinks.mapsInbound ? (
-                      <a className="btn-secondary btn-compact" href={segmentLinks.mapsInbound} target="_blank" rel="noreferrer">
-                        {t("doorToDoor.sections.openGoogleMaps")}
-                      </a>
-                    ) : null}
-                    {segmentLinks.gooptiUrl ? (
-                      <a className="btn-secondary btn-compact" href={segmentLinks.gooptiUrl} target="_blank" rel="noreferrer">
-                        {t("doorToDoor.sections.openGoOptiAction")}
-                      </a>
-                    ) : null}
-                  </div>
-                </div>
-              ) : null}
-            </section>
-          ) : null}
-
-          {/* --- Estimate Only (fallback at the bottom) --- */}
           {hasEstimates ? (
             <section className="panel panel-soft d2d-estimate-section">
               <div className="d2d-section-head">
@@ -503,41 +603,45 @@ export function DoorToDoorPanel() {
               </div>
             </section>
           ) : null}
-
-          {/* --- Provider Status --- */}
-          <section className="panel panel-soft d2d-sources-panel">
-            <div className="panel-header"><h2 className="panel-title">{t("doorToDoor.sections.sources")}</h2></div>
-            <p className="panel-note">
-              <strong>{t("doorToDoor.sections.providersStatus")}:</strong> {t("doorToDoor.sections.providersMix", { enabled: providerStatusSummary.enabled, real: providerStatusSummary.realEnabled, estimate: providerStatusSummary.estimateEnabled })}
-            </p>
-            {response.warnings.length > 0 ? (
-              <div className="d2d-warnings-list">
-                {response.warnings.map((warning) => (
-                  <p key={`${warning.code}-${warning.provider || "global"}`} className="panel-note">
-                    <strong>{warning.code}:</strong> {warning.message}
-                  </p>
-                ))}
-              </div>
-            ) : null}
-          </section>
         </>
       ) : null}
 
-      {/* --- History --- */}
       <section className="panel panel-soft d2d-history-panel">
-        <div className="panel-header"><h2 className="panel-title">{t("doorToDoor.sections.history")}</h2></div>
-        {history.length === 0 ? <p className="panel-note">{t("doorToDoor.sections.historyEmpty")}</p> : (
-          <div className="d2d-history-list">
-            {history.map((item) => (
-              <article key={item.id}>
-                <strong>{item.origin_label} → {item.final_destination_label}</strong>
-                <span>{formatHistoryDate(item.created_at, localeTag)} · {item.recommended_label || t("doorToDoor.history.noRecommendation")} · {item.total_price_min ?? "--"}-{item.total_price_max ?? "--"} € · {item.risk_level || "--"}</span>
-                {item.chosen_option_id ? <em>{t("doorToDoor.history.chosen")}</em> : null}
-              </article>
-            ))}
+        <div className="action-row d2d-history-action-row">
+          <button type="button" className="btn-secondary" onClick={() => setShowHistory((current) => !current)} aria-expanded={showHistory} aria-controls="d2d-history-content">
+            {showHistory ? t("doorToDoor.sections.hideHistoryAction") : t("doorToDoor.sections.showHistoryAction")}
+          </button>
+        </div>
+        {showHistory ? (
+          <div id="d2d-history-content" className="d2d-history-content" aria-live="polite">
+            <div className="panel-header"><h2 className="panel-title">{t("doorToDoor.sections.history")}</h2></div>
+            {history.length === 0 ? <p className="panel-note">{t("doorToDoor.sections.historyEmpty")}</p> : (
+              <div className="d2d-history-list">
+                {history.map((item) => (
+                  <article key={item.id}>
+                    <strong>{item.origin_label} {"->"} {item.final_destination_label}</strong>
+                    <span>{formatHistoryDate(item.created_at, localeTag)} - {item.recommended_label || t("doorToDoor.history.noRecommendation")} - {item.total_price_min ?? "--"}-{item.total_price_max ?? "--"} EUR - {item.risk_level || "--"}</span>
+                    {item.chosen_option_id ? <em>{t("doorToDoor.history.chosen")}</em> : null}
+                  </article>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        ) : null}
       </section>
+
+      {showTrustModal ? (
+        <div className="modal-overlay d2d-trust-overlay" onClick={() => setShowTrustModal(false)}>
+          <section id="d2d-trust-modal" className="modal-card d2d-trust-modal" role="dialog" aria-modal="true" aria-label={t("doorToDoor.sections.trustModalTitle")} onClick={(event) => event.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{t("doorToDoor.sections.trustModalTitle")}</h2>
+              <button type="button" className="modal-close" onClick={() => setShowTrustModal(false)} aria-label={t("shared.actions.close")}>x</button>
+            </div>
+            <p className="panel-note">{trustTone === "success" ? t("doorToDoor.sections.trustModalBodyConfirmed") : t("doorToDoor.sections.trustModalBodyEstimated")}</p>
+            <p className="panel-note">{t("doorToDoor.sections.trustModalBodyAction")}</p>
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }
