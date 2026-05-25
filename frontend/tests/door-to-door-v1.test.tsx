@@ -216,7 +216,8 @@ test("Door-to-door option, radar, filters, and timeline render mock and flight-e
       <DoorToDoorTimeline option={mockOption} flight={flight} />
     </>,
   );
-  assert.match(html, /Precio máximo del grupo/);
+  assert.match(html, /Margen de conexión/);
+  assert.match(html, /Límite de precio/);
   assert.match(html, /Estimación/);
   assert.match(html, /Horario estimado/);
   assert.match(html, /role="switch"/);

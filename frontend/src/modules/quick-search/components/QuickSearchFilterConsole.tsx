@@ -1,4 +1,4 @@
-import React, { memo, RefObject, useMemo, useState } from "react";
+import React, { memo, RefObject } from "react";
 import { createPortal } from "react-dom";
 
 import { QuickSearchFieldErrors } from "@/modules/quick-search/types";
@@ -97,29 +97,7 @@ function SupportBadge({ children, tone = "neutral" }: { children: string; tone?:
 }
 
 function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
-  const [showAllChips, setShowAllChips] = useState(false);
-  const groupedActiveChips = useMemo(() => {
-    const groups: Record<string, ActiveChip[]> = {
-      Ruta: [],
-      Apertura: [],
-      Reglas: [],
-      Vista: [],
-    };
-    for (const chip of props.activeChips) {
-      if (chip.id.includes("price") || chip.id.includes("duration") || chip.id.includes("risk")) {
-        groups.Vista.push(chip);
-      } else if (chip.id.includes("flex") || chip.id.includes("radius") || chip.id.includes("nearby")) {
-        groups.Apertura.push(chip);
-      } else if (chip.id.includes("depart") || chip.id.includes("strict") || chip.id.includes("stop") || chip.id.includes("buffer") || chip.id.includes("exclude")) {
-        groups.Reglas.push(chip);
-      } else {
-        groups.Ruta.push(chip);
-      }
-    }
-    return Object.entries(groups)
-      .filter(([, chips]) => chips.length > 0)
-      .flatMap(([group, chips]) => chips.map((chip) => ({ ...chip, group })));
-  }, [props.activeChips]);
+
   const coverageSummary = props.radiusActive
     ? `${props.radiusKm} km`
     : props.t("filterCoverageDirect");
@@ -573,6 +551,11 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
             {props.activeFiltersCount} {props.t("filterCountLabel")}
             {props.appliedFiltersCount > 0 ? ` / ${props.appliedFiltersCount}` : ""}
           </span>
+          {props.activeChips.length > 0 ? (
+            <button type="button" className="btn-ghost btn-compact qs-reset-all-inline" onClick={props.onClearAllFilters}>
+              {props.t("resetAll")}
+            </button>
+          ) : null}
           <button type="button" className="btn-ghost btn-compact" onClick={props.onOpenFilters} data-ui="qs-filter-open">
             {props.t("toolbarFilters")}
           </button>
@@ -619,34 +602,7 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
         </div>
       ) : null}
 
-      {props.activeChips.length > 0 ? (
-        <div className="qs-active-chips qs-filter-console-chips" data-ui="qs-filter-active-chips">
-          <span className="muted">{props.t("toolbarActiveFilters")}</span>
-          <button type="button" className="btn-ghost qs-reset-all-inline" onClick={props.onClearAllFilters}>
-            {props.t("resetAll")}
-          </button>
-          {(showAllChips ? groupedActiveChips : groupedActiveChips.slice(0, 6)).map((chip) => (
-            <button
-              key={`${chip.group}-${chip.id}`}
-              type="button"
-              className="qs-chip"
-              onClick={chip.onClear}
-              aria-label={props.t("ariaRemoveFilter").replace("{value}", chip.label)}
-              data-ui={`qs-filter-chip-${chip.id}`}
-            >
-              <span>{chip.group}: {chip.label}</span>
-              <QuickSearchCloseIcon />
-            </button>
-          ))}
-          {!showAllChips && groupedActiveChips.length > 6 ? (
-            <button type="button" className="btn-ghost btn-compact" onClick={() => setShowAllChips(true)}>
-              +{groupedActiveChips.length - 6} más
-            </button>
-          ) : null}
-        </div>
-      ) : (
-        <p className="panel-note qs-filter-console-empty">{props.t("filterNoActive")}</p>
-      )}
+
 
       {props.isFiltersOpen && typeof document !== "undefined" ? createPortal(drawer, document.body) : null}
     </section>
