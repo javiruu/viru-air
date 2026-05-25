@@ -1948,8 +1948,19 @@ h1 {
   transition: transform 0.24s ease;
 }
 
+@keyframes qs-drawer-slide-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes qs-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .qs-filters-panel.open {
   transform: translateX(0);
+  animation: qs-drawer-slide-in 0.35s cubic-bezier(0.2, 0, 0, 1) forwards;
 }
 
 .qs-filters-backdrop {
@@ -1957,8 +1968,9 @@ h1 {
   inset: 0;
   z-index: 1200;
   border: none;
-  background: rgba(18, 24, 30, 0.42);
+  background: color-mix(in srgb, var(--ink) 42%, transparent);
   touch-action: none;
+  animation: qs-fade-in 0.3s ease forwards;
 }
 
 .qs-results-panel {
@@ -16397,6 +16409,7 @@ textarea::placeholder {
   font-size: 0.76rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .qs-filter-support {
@@ -16437,6 +16450,7 @@ textarea::placeholder {
   box-shadow:
     0 6px 14px rgba(32, 28, 21, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.56);
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1), border-color 0.2s ease;
 }
 
 .qs-filter-console-card:hover,
@@ -16445,7 +16459,18 @@ textarea::placeholder {
 .qs-filter-preset:focus-visible {
   border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
   outline: none;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 24px rgba(47, 40, 24, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.qs-filter-console-card:active,
+.qs-filter-preset:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow:
+    0 4px 10px rgba(47, 40, 24, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .qs-filter-console-card span,
@@ -16592,6 +16617,7 @@ textarea::placeholder {
   min-width: 0;
   box-sizing: border-box;
   padding: 0.62rem 0.78rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .qs-filter-console-drawer select.qs-input {
