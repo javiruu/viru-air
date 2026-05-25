@@ -83,6 +83,7 @@ import { getQuickSearchVisualState } from "@/modules/quick-search/state/getQuick
 import { useQuickSearchLoadingFlow } from "@/modules/quick-search/state/useQuickSearchLoadingFlow";
 import { useQuickSearchScreenState } from "@/modules/quick-search/state/useQuickSearchScreenState";
 import { getPendingActionVisibility } from "@/modules/quick-search/state/pendingActionPolicy";
+import { getTranslatedCityName, getApiSearchQuery, matchesCityTranslation } from "@/modules/shared/cityTranslations";
 
 const RELAX_HIGHLIGHT_BY_ACTION: Record<ZeroResultRelaxAction, Exclude<SummaryHighlightKey, null>> = {
   disable_strict: "strict",
@@ -191,17 +192,19 @@ function normalizeText(text: string): string {
   return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
-function buildAirportSuggestions(airports: AirportIataEntry[], value: string, limit = 6) {
+function buildAirportSuggestions(airports: AirportIataEntry[], value: string, limit = 6, locale = "en") {
   const q = normalizeText(value.trim());
   if (!q) return [];
   const out: Array<{ iata: string; name: string }> = [];
   const seen = new Set<string>();
   for (const airport of airports) {
     if (out.length >= limit) break;
-    if (normalizeText(airport.iata).startsWith(q)) {
+    const originalName = airport.municipality || airport.name;
+    const nIata = normalizeText(airport.iata);
+    if (nIata.startsWith(q) || matchesCityTranslation(originalName, value)) {
       out.push({
         iata: airport.iata,
-        name: airport.municipality || airport.name,
+        name: getTranslatedCityName(originalName, locale),
       });
       seen.add(airport.iata);
     }
@@ -210,11 +213,12 @@ function buildAirportSuggestions(airports: AirportIataEntry[], value: string, li
     for (const airport of airports) {
       if (out.length >= limit) break;
       if (seen.has(airport.iata)) continue;
+      const originalName = airport.municipality || airport.name;
       const hay = normalizeText(`${airport.name} ${airport.municipality}`);
-      if (hay.includes(q)) {
+      if (hay.includes(q) || matchesCityTranslation(originalName, value)) {
         out.push({
           iata: airport.iata,
-          name: airport.municipality || airport.name,
+          name: getTranslatedCityName(originalName, locale),
         });
         seen.add(airport.iata);
       }
@@ -652,9 +656,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       return;
     }
     const timeout = window.setTimeout(() => {
-      fetchSeedAirports({ q: value, limit: 6 })
+      const apiQuery = getApiSearchQuery(value);
+      fetchSeedAirports({ q: apiQuery, limit: 6 })
         .then((data) => {
-          setOriginSuggestions(buildAirportSuggestions(data.items || [], value));
+          setOriginSuggestions(buildAirportSuggestions(data.items || [], value, 6, pref?.language || "en"));
         })
         .catch((error) => {
           setOriginSuggestions([]);
@@ -662,7 +667,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         });
     }, 120);
     return () => window.clearTimeout(timeout);
-  }, [origin, fetchSeedAirports, logQuickSearchApiError]);
+  }, [origin, pref?.language, fetchSeedAirports, logQuickSearchApiError]);
 
   useEffect(() => {
     const value = destination.trim();
@@ -671,9 +676,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       return;
     }
     const timeout = window.setTimeout(() => {
-      fetchSeedAirports({ q: value, limit: 6 })
+      const apiQuery = getApiSearchQuery(value);
+      fetchSeedAirports({ q: apiQuery, limit: 6 })
         .then((data) => {
-          setDestinationSuggestions(buildAirportSuggestions(data.items || [], value));
+          setDestinationSuggestions(buildAirportSuggestions(data.items || [], value, 6, pref?.language || "en"));
         })
         .catch((error) => {
           setDestinationSuggestions([]);
@@ -681,7 +687,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         });
     }, 120);
     return () => window.clearTimeout(timeout);
-  }, [destination, fetchSeedAirports, logQuickSearchApiError]);
+  }, [destination, pref?.language, fetchSeedAirports, logQuickSearchApiError]);
 
   useEffect(() => {
     const code = origin.trim().toUpperCase();
