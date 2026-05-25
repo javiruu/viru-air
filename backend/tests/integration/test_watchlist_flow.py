@@ -60,7 +60,7 @@ def test_watchlist_create_list_and_refresh(client: TestClient, monkeypatch) -> N
     listing = client.get("/api/v1/watchlist", headers=headers)
     assert listing.status_code == 200
     assert len(listing.json()) == 1
-    assert listing.json()[0]["watchers_count"] == 1
+    assert listing.json()[0]["watchers_count"] == 0
 
     refresh = client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers)
     assert refresh.status_code == 200
@@ -73,7 +73,7 @@ def test_watchlist_create_list_and_refresh(client: TestClient, monkeypatch) -> N
     assert detail.status_code == 200
     assert detail.json()["id"] == watch_id
     assert detail.json()["latest_snapshot"] is not None
-    assert detail.json()["watchers_count"] == 1
+    assert detail.json()["watchers_count"] == 0
 
 
 def test_watchlist_list_exposes_watchers_count_per_route(client: TestClient, monkeypatch) -> None:
@@ -103,8 +103,8 @@ def test_watchlist_list_exposes_watchers_count_per_route(client: TestClient, mon
 
     assert list_a.status_code == 200
     assert list_b.status_code == 200
-    assert list_a.json()[0]["watchers_count"] == 2
-    assert list_b.json()[0]["watchers_count"] == 2
+    assert list_a.json()[0]["watchers_count"] == 1
+    assert list_b.json()[0]["watchers_count"] == 1
 
 
 def test_watchlist_refresh_supports_provider_fetch_result(client: TestClient, monkeypatch) -> None:

@@ -139,7 +139,7 @@ class WatchOut(BaseModel):
     travel_date_local: Date
     target_price: float | None
     status: str
-    watchers_count: int = Field(default=1, ge=1)
+    watchers_count: int = Field(default=0, ge=0)
 
 
 class WatchDetailOut(WatchOut):

@@ -46,7 +46,12 @@ def _watch_route_key(watch: FlightWatch) -> WatchRouteKey:
     return (watch.origin_iata, watch.destination_iata, watch.travel_date_local)
 
 
-def _count_watchers_by_route(db: Session, route_keys: set[WatchRouteKey]) -> dict[WatchRouteKey, int]:
+def _count_watchers_by_route(
+    db: Session,
+    route_keys: set[WatchRouteKey],
+    *,
+    current_user_id: str,
+) -> dict[WatchRouteKey, int]:
     if not route_keys:
         return {}
 
@@ -75,7 +80,7 @@ def _count_watchers_by_route(db: Session, route_keys: set[WatchRouteKey]) -> dic
             continue
         users_by_route.setdefault(key, set()).add(user_id)
 
-    return {key: len(user_ids) for key, user_ids in users_by_route.items()}
+    return {key: max(0, len(user_ids - {current_user_id})) for key, user_ids in users_by_route.items()}
 
 
 @router.post("", response_model=WatchOut)
@@ -120,8 +125,12 @@ def create_watch(
             existing.target_price = payload.target_price
             db.commit()
             db.refresh(existing)
-            watchers_count = _count_watchers_by_route(db, {_watch_route_key(existing)}).get(
-                _watch_route_key(existing), 1
+            watchers_count = _count_watchers_by_route(
+                db,
+                {_watch_route_key(existing)},
+                current_user_id=current_user.id,
+            ).get(
+                _watch_route_key(existing), 0
             )
             return WatchOut(
                 id=existing.id,
@@ -148,7 +157,11 @@ def create_watch(
         db.rollback()
         raise HTTPException(status_code=409, detail="watch_already_exists") from exc
     db.refresh(watch)
-    watchers_count = _count_watchers_by_route(db, {_watch_route_key(watch)}).get(_watch_route_key(watch), 1)
+    watchers_count = _count_watchers_by_route(
+        db,
+        {_watch_route_key(watch)},
+        current_user_id=current_user.id,
+    ).get(_watch_route_key(watch), 0)
     body = {
         "id": watch.id,
         "origin_iata": watch.origin_iata,
@@ -182,7 +195,11 @@ def list_watches(
         )
     )
     route_keys = {_watch_route_key(watch) for watch in watches}
-    watchers_count_by_route = _count_watchers_by_route(db, route_keys)
+    watchers_count_by_route = _count_watchers_by_route(
+        db,
+        route_keys,
+        current_user_id=current_user.id,
+    )
     return [
         WatchOut(
             id=w.id,
@@ -191,7 +208,7 @@ def list_watches(
             travel_date_local=w.travel_date_local,
             target_price=float(w.target_price) if w.target_price else None,
             status=w.status,
-            watchers_count=watchers_count_by_route.get(_watch_route_key(w), 1),
+            watchers_count=watchers_count_by_route.get(_watch_route_key(w), 0),
         )
         for w in watches
     ]
@@ -286,7 +303,11 @@ def get_watch_detail(
         .where(PriceSnapshot.watch_id == watch.id)
         .order_by(PriceSnapshot.captured_at_utc.desc(), PriceSnapshot.id.desc())
     )
-    watchers_count = _count_watchers_by_route(db, {_watch_route_key(watch)}).get(_watch_route_key(watch), 1)
+    watchers_count = _count_watchers_by_route(
+        db,
+        {_watch_route_key(watch)},
+        current_user_id=current_user.id,
+    ).get(_watch_route_key(watch), 0)
     return WatchDetailOut(
         id=watch.id,
         origin_iata=watch.origin_iata,
@@ -326,7 +347,11 @@ def update_watch(
         watch.target_price = payload.target_price if payload.target_price > 0 else None
     db.commit()
     db.refresh(watch)
-    watchers_count = _count_watchers_by_route(db, {_watch_route_key(watch)}).get(_watch_route_key(watch), 1)
+    watchers_count = _count_watchers_by_route(
+        db,
+        {_watch_route_key(watch)},
+        current_user_id=current_user.id,
+    ).get(_watch_route_key(watch), 0)
     return WatchOut(
         id=watch.id,
         origin_iata=watch.origin_iata,

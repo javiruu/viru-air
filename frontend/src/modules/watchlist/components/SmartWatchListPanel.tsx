@@ -392,7 +392,8 @@ export function SmartWatchListPanel({
       ) : null}
       {showListMode
         ? pagedListItems.map((watch) => {
-        const watchersCount = Math.max(1, Number(watch.watchers_count ?? 1));
+        const watchersCountRaw = Number(watch.watchers_count ?? 0);
+        const watchersCount = Number.isFinite(watchersCountRaw) ? Math.max(0, Math.floor(watchersCountRaw)) : 0;
         const watchStatus = getWatchStatusMeta(watch.status, t);
         const meta = watchMeta.get(watch.id);
         const trend = !meta?.latest || !meta?.previous
@@ -474,7 +475,11 @@ export function SmartWatchListPanel({
                 </span>
                 <span className="watch-meta-chip">{t("watchlist.detail.latestSnapshot")} {safeDateTime(meta?.latest?.capturedAt, localeTag)}</span>
                 <span className="watch-meta-chip watch-meta-chip--freshness">{t("watchlist.detail.freshness")} {freshness.fullText}</span>
-                <span className="watch-note">{t("watchlist.smartList.savedByCount", { count: watchersCount })}</span>
+                <span className="watch-note">
+                  {watchersCount === 0
+                    ? t("watchlist.smartList.noOtherWatchers")
+                    : t("watchlist.smartList.savedByCount", { count: watchersCount })}
+                </span>
                 <span className="watch-note">{t("watchlist.smartList.priceDisclaimer")}</span>
               </div>
             </div>
