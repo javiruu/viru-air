@@ -3456,19 +3456,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 <p>{pageSubtitle}</p>
               </div>
             </div>
-            <div className="qs-hero-meta" aria-live="polite">
-              <span className="qs-hero-chip">{summaryTrip}</span>
-              <span className="qs-hero-chip">{summaryMeta}</span>
-              <span className="qs-hero-chip">{summaryFlex}</span>
-              <span className={`qs-hero-chip ${showDegradedState ? "qs-hero-chip-warning" : ""}`}>
-                {showDegradedState ? t("degradedChip") : summaryStrict}
-              </span>
-              {visualSearchState === "success_with_results" ? (
-                <span className="qs-hero-chip qs-hero-chip-accent">
-                  {totalResults} {t("results")}
-                </span>
-              ) : null}
-            </div>
+
             {quickSearchHint.visible ? (
               <section className="notice notice-compact notice-info qs-hero-hint" role="status" aria-live="polite">
                 <div>
@@ -3483,62 +3471,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               </section>
             ) : null}
           </div>
-          <aside className={`panel panel-soft qs-command-stage__status qs-command-stage__status-${heroStatusTone}`} aria-live="polite">
-            <div className="qs-command-stage__status-head">
-              <span className="qs-command-stage__eyebrow">{t("searchSummaryTitle")}</span>
-              <span className={`qs-command-stage__status-badge qs-command-stage__status-badge-${heroStatusTone}`}>
-                {heroStatusLabel}
-              </span>
-            </div>
-            <div className="qs-command-stage__status-copy">
-              <strong>{heroStatusTitle}</strong>
-              <p>{heroStatusBody}</p>
-            </div>
-            <div className="qs-command-stage__status-grid">
-              <div className="qs-command-stage__metric">
-                <span>{isVisualLoading ? t("loadingTitle") : t("results")}</span>
-                <strong>{isVisualLoading ? loadingPhaseLabel : totalResults}</strong>
-              </div>
-              <div className="qs-command-stage__metric">
-                <span>{t("filtersTitle")}</span>
-                <strong>{activeChips.length}</strong>
-              </div>
-              <div className="qs-command-stage__metric">
-                <span>{t("infoSectionTitle")}</span>
-                <strong>{infoItemsCount}</strong>
-              </div>
-            </div>
-            {executedCriteria ? (
-              <div className="qs-command-stage__snapshot">
-                <span>{executedCriteria.route}</span>
-                <span>{executedCriteria.dateLabel}</span>
-                <span>{executedCriteria.paxLabel}</span>
-              </div>
-            ) : (
-              <div className="qs-summary-detail-row qs-command-stage__snapshot">
-                <span className="qs-summary-chip">{summaryTrip}</span>
-                <span className="qs-summary-chip">{summaryMeta}</span>
-                <span className="qs-summary-chip">{summaryFlex}</span>
-              </div>
-            )}
-            <div className="qs-command-stage__signals">
-              {pendingSearchChanges ? (
-                <span className="qs-summary-chip qs-command-stage__signal qs-command-stage__signal-pending">
-                  {t("pendingChangesTitle")}
-                </span>
-              ) : null}
-              {warningSeverity.critical.length > 0 ? (
-                <span className="qs-summary-chip qs-command-stage__signal qs-command-stage__signal-critical">
-                  {warningSeverity.critical.length} {warningProblemTitle}
-                </span>
-              ) : null}
-              {searchMeta?.freshness_ts ? (
-                <span className="qs-summary-chip qs-command-stage__signal">
-                  {t("freshnessLabel")} {formatFreshness(searchMeta.freshness_ts)}
-                </span>
-              ) : null}
-            </div>
-          </aside>
+
         </div>
         <QuickSearchSearchForm formRef={formRef} isReady={isReady} routePulse={routePulse} onSubmit={onSubmit}>
         <div className="qs-route">
