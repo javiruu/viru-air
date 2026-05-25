@@ -60,6 +60,7 @@ def test_watchlist_create_list_and_refresh(client: TestClient, monkeypatch) -> N
     listing = client.get("/api/v1/watchlist", headers=headers)
     assert listing.status_code == 200
     assert len(listing.json()) == 1
+    assert listing.json()[0]["watchers_count"] == 1
 
     refresh = client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers)
     assert refresh.status_code == 200
@@ -72,6 +73,38 @@ def test_watchlist_create_list_and_refresh(client: TestClient, monkeypatch) -> N
     assert detail.status_code == 200
     assert detail.json()["id"] == watch_id
     assert detail.json()["latest_snapshot"] is not None
+    assert detail.json()["watchers_count"] == 1
+
+
+def test_watchlist_list_exposes_watchers_count_per_route(client: TestClient, monkeypatch) -> None:
+    monkeypatch.setattr(watchlist_api, "provider", _FakeProvider())
+
+    travel_date = str(date.today() + timedelta(days=36))
+    payload = {
+        "origin_iata": "MAD",
+        "destination_iata": "DUB",
+        "travel_date_local": travel_date,
+        "target_price": 50,
+    }
+
+    token_a = register_and_token(client, email="watchers-a@viru.dev")
+    headers_a = {"Authorization": f"Bearer {token_a}"}
+    token_b = register_and_token(client, email="watchers-b@viru.dev")
+    headers_b = {"Authorization": f"Bearer {token_b}"}
+
+    first = client.post("/api/v1/watchlist", headers=headers_a, json=payload)
+    second = client.post("/api/v1/watchlist", headers=headers_b, json=payload)
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+
+    list_a = client.get("/api/v1/watchlist", headers=headers_a)
+    list_b = client.get("/api/v1/watchlist", headers=headers_b)
+
+    assert list_a.status_code == 200
+    assert list_b.status_code == 200
+    assert list_a.json()[0]["watchers_count"] == 2
+    assert list_b.json()[0]["watchers_count"] == 2
 
 
 def test_watchlist_refresh_supports_provider_fetch_result(client: TestClient, monkeypatch) -> None:
