@@ -2,7 +2,7 @@
 
 import React, { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
-import { ExternalLink, ShieldAlert, ShieldCheck } from "lucide-react";
+import { ExternalLink, ShieldAlert, ShieldCheck, MapPin } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
@@ -90,35 +90,53 @@ function LocationInput({
   const [focused, setFocused] = useState(false);
   const suggestions = useSuggestionSearch(value.label);
   return (
-    <label className="field d2d-autocomplete" htmlFor={id}>
-      {label}
-      <input
-        id={id}
-        className="prefs-control"
-        value={value.label}
-        onChange={(event) => onChange({ ...value, label: event.target.value, type: value.type || "city" })}
-        onFocus={() => setFocused(true)}
-        onBlur={() => window.setTimeout(() => setFocused(false), 120)}
-        autoComplete="off"
-      />
-      {focused && suggestions.length > 0 ? (
-        <div className="d2d-suggestions" role="listbox" aria-label={`${label}: sugerencias`}>
-          {suggestions.map((suggestion) => (
-            <button
-              key={suggestion.id}
-              type="button"
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => {
-                onChange(suggestion);
-                setFocused(false);
-              }}
-            >
-              <strong>{suggestion.label}</strong>
-              <span>{suggestion.subtitle}</span>
-            </button>
-          ))}
-        </div>
-      ) : null}
+    <label className="field d2d-autocomplete qs-label" htmlFor={id}>
+      <span>{label}</span>
+      <div className="qs-input-wrap">
+        <span className="qs-input-prefix" aria-hidden="true">
+          <span className="qs-input-icon">
+            <MapPin size={16} strokeWidth={2} />
+          </span>
+        </span>
+        <input
+          id={id}
+          className="qs-input qs-input-with-action"
+          value={value.label}
+          onChange={(event) => onChange({ ...value, label: event.target.value, type: value.type || "city" })}
+          onFocus={() => setFocused(true)}
+          onBlur={() => window.setTimeout(() => setFocused(false), 120)}
+          autoComplete="off"
+        />
+        <button
+          type="button"
+          className="qs-input-inline-action"
+          onClick={() => document.getElementById(id)?.focus()}
+          tabIndex={-1}
+          aria-hidden="true"
+        >
+          <MapPin size={14} strokeWidth={2.5} />
+        </button>
+        {focused && suggestions.length > 0 ? (
+          <ul className="qs-autocomplete" role="listbox" aria-label={`${label}: sugerencias`}>
+            {suggestions.map((suggestion) => (
+              <li key={suggestion.id} role="option" aria-selected={false}>
+                <button
+                  type="button"
+                  className="qs-autocomplete-item"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => {
+                    onChange(suggestion);
+                    setFocused(false);
+                  }}
+                >
+                  <strong>{suggestion.label}</strong>
+                  <span>{suggestion.subtitle}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
     </label>
   );
 }
@@ -428,9 +446,9 @@ export function DoorToDoorPanel() {
             <h2>{t("doorToDoor.form.essentialsTitle")}</h2>
           </div>
           <LocationInput id="d2d-origin" label={t("doorToDoor.form.origin")} value={origin} onChange={setOrigin} />
-          <label className="field" htmlFor="d2d-watch">
-            {t("doorToDoor.form.watch")}
-            <select id="d2d-watch" className="prefs-control" value={selectedWatchId} onChange={(event) => setSelectedWatchId(event.target.value)}>
+          <label className="field qs-label" htmlFor="d2d-watch">
+            <span>{t("doorToDoor.form.watch")}</span>
+            <select id="d2d-watch" className="qs-input-neutral" value={selectedWatchId} onChange={(event) => setSelectedWatchId(event.target.value)}>
               <option value="">{t("doorToDoor.form.selectWatch")}</option>
               {watches.map((watch) => (
                 <option key={watch.id} value={watch.id}>{watch.origin_iata} {"->"} {watch.destination_iata} - {watch.travel_date_local}</option>

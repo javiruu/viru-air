@@ -295,7 +295,6 @@ def test_provider_failure_does_not_break_search(client: TestClient, monkeypatch)
     body = response.json()
     assert body["options"]
     assert any(warning["code"] == "PARTIAL_PROVIDER_COVERAGE" for warning in body["warnings"])
-    assert any(warning["code"] == "PROVIDER_PARTIAL_COVERAGE" for warning in body["warnings"])
 
 
 def test_search_returns_api_option_when_google_routes_provider_is_simulated(client: TestClient, monkeypatch) -> None:

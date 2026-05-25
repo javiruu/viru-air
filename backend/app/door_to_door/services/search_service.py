@@ -16,6 +16,7 @@ from app.door_to_door.schemas import (
     DoorToDoorProviderStatusOut,
     DoorToDoorSearchRequest,
     DoorToDoorSearchResponse,
+    DoorToDoorSortBy,
     DoorToDoorSourceOut,
     DoorToDoorSummaryOut,
     DoorToDoorWarningOut,
@@ -83,14 +84,6 @@ class DoorToDoorSearchService:
                         code="PARTIAL_PROVIDER_COVERAGE",
                         provider=provider.provider_name,
                         message="Una fuente no ha respondido a tiempo. Te mostramos las opciones con datos suficientes.",
-                    ),
-                )
-                self._append_warning(
-                    warnings,
-                    DoorToDoorWarningOut(
-                        code="PROVIDER_PARTIAL_COVERAGE",
-                        provider=provider.provider_name,
-                        message="Proveedor con cobertura parcial en esta consulta.",
                     ),
                 )
                 if provider.provider_name == "google_routes":
@@ -366,7 +359,7 @@ class DoorToDoorSearchService:
             allowed.add("car")
         return allowed
 
-    def _sort_options(self, options: list[DoorToDoorOptionOut], sort_by: str) -> list[DoorToDoorOptionOut]:
+    def _sort_options(self, options: list[DoorToDoorOptionOut], sort_by: DoorToDoorSortBy) -> list[DoorToDoorOptionOut]:
         # Always put estimate_only last, then sort by the requested criteria
         status_order = {"real_result": 0, "real_deeplink": 1, "estimate_only": 2}
 

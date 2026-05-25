@@ -23,7 +23,7 @@ export function DoorToDoorFilters({
         <div className="d2d-filter-grid">
           <label className="field">
             <span className="d2d-filter-label">{t("doorToDoor.filters.sortBy")}</span>
-            <select className="prefs-control" value={preferences.sort_by} onChange={(event) => patch({ sort_by: event.target.value as DoorToDoorSortBy })}>
+            <select className="qs-input-neutral" value={preferences.sort_by} onChange={(event) => patch({ sort_by: event.target.value as DoorToDoorSortBy })}>
               <option value="best_balance">{t("doorToDoor.filters.bestBalance")}</option>
               <option value="cheapest">{t("doorToDoor.filters.cheapest")}</option>
               <option value="lowest_risk">{t("doorToDoor.filters.lowestRisk")}</option>
@@ -34,24 +34,24 @@ export function DoorToDoorFilters({
           <label className="field">
             <span className="d2d-filter-label">{t("doorToDoor.filters.minBuffer")}</span>
             <div className="d2d-input-with-suffix">
-              <input className="prefs-control" type="number" min={45} max={360} value={preferences.min_airport_buffer_minutes} onChange={(event) => patch({ min_airport_buffer_minutes: Number(event.target.value) })} />
+              <input className="qs-input-neutral" type="number" min={45} max={360} value={preferences.min_airport_buffer_minutes} onChange={(event) => patch({ min_airport_buffer_minutes: Number(event.target.value) })} />
               <span className="d2d-input-suffix" aria-hidden="true">min</span>
             </div>
           </label>
           <label className="field">
             <span className="d2d-filter-label">{t("doorToDoor.filters.passengers")}</span>
-            <input className="prefs-control" type="number" min={1} max={9} value={preferences.passengers} onChange={(event) => patch({ passengers: Number(event.target.value) })} />
+            <input className="qs-input-neutral" type="number" min={1} max={9} value={preferences.passengers} onChange={(event) => patch({ passengers: Number(event.target.value) })} />
           </label>
           <label className="field">
             <span className="d2d-filter-label">{t("doorToDoor.filters.maxPrice")}</span>
-            <input className="prefs-control" type="number" min={0} value={preferences.max_price ?? ""} placeholder="80" onChange={(event) => patch({ max_price: event.target.value === "" ? null : Number(event.target.value) })} />
+            <input className="qs-input-neutral" type="number" min={0} value={preferences.max_price ?? ""} placeholder="80" onChange={(event) => patch({ max_price: event.target.value === "" ? null : Number(event.target.value) })} />
           </label>
           <label className="field">
             <span className="d2d-filter-label-with-help">
               <span className="d2d-filter-label">{t("doorToDoor.filters.luggage")}</span>
               <span className="d2d-filter-help" title={t("doorToDoor.filters.maxPriceHint")} aria-label={t("doorToDoor.filters.luggageHelpAria")}>?</span>
             </span>
-            <select className="prefs-control" value={preferences.luggage} onChange={(event) => patch({ luggage: event.target.value as DoorToDoorPreferences["luggage"] })}>
+            <select className="qs-input-neutral" value={preferences.luggage} onChange={(event) => patch({ luggage: event.target.value as DoorToDoorPreferences["luggage"] })}>
               <option value="backpack">{t("doorToDoor.filters.backpack")}</option>
               <option value="cabin">{t("doorToDoor.filters.cabin")}</option>
               <option value="checked">{t("doorToDoor.filters.checked")}</option>
