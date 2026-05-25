@@ -18081,6 +18081,7 @@ textarea::placeholder {
 .d2d-filters-content {
   display: grid;
   gap: 0.75rem;
+  min-width: 0;
 }
 
 .d2d-checkbox-field {
@@ -18123,7 +18124,8 @@ textarea::placeholder {
 .d2d-suggestions button:hover,
 .d2d-suggestions button:focus-visible {
   background: color-mix(in srgb, var(--surface-2) 78%, transparent);
-  outline: none;
+  outline: 3px solid var(--color-input-focus);
+  outline-offset: 2px;
 }
 
 .d2d-suggestions span,
@@ -18140,6 +18142,7 @@ textarea::placeholder {
   gap: 0.45rem;
   flex-wrap: wrap;
   align-items: center;
+  min-width: 0;
 }
 
 .d2d-toggle-row .field {
@@ -18147,6 +18150,19 @@ textarea::placeholder {
   min-width: 0;
   display: grid;
   gap: 0.42rem;
+}
+
+.d2d-form .field,
+.d2d-filters-content .field {
+  min-width: 0;
+}
+
+.d2d-form .field-hint,
+.d2d-filters-content .field-hint {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .d2d-state-card,
@@ -18514,11 +18530,22 @@ textarea::placeholder {
   gap: 0.4rem;
 }
 
+.d2d-actions-toggle {
+  display: none;
+}
+
 .d2d-row-actions {
   opacity: 0;
   pointer-events: none;
   transform: translateY(4px);
   transition: opacity 0.18s ease, transform 0.18s ease;
+  min-width: 0;
+}
+
+.d2d-row-actions.is-open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
 }
 
 .d2d-segment-row:hover .d2d-row-actions,
@@ -18557,7 +18584,7 @@ textarea::placeholder {
 
 .d2d-trust-modal {
   width: min(560px, 92vw);
-  box-shadow: 0 18px 38px var(--shadow);
+  box-shadow: 0 10px 22px var(--shadow);
 }
 
 .d2d-history-list article {
@@ -18626,10 +18653,17 @@ textarea::placeholder {
     order: 1;
   }
 
+  .d2d-actions-toggle {
+    display: inline-flex;
+    width: max-content;
+  }
+
   .d2d-row-actions {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0);
+    display: none;
+  }
+
+  .d2d-row-actions.is-open {
+    display: flex;
   }
 }
 

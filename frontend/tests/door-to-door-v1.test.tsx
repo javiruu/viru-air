@@ -196,6 +196,9 @@ test("DoorToDoorPanel includes vertical timeline, trust modal trigger, and colla
   const source = fs.readFileSync(PANEL, "utf8");
   assert.match(source, /d2d-segment-timeline/);
   assert.match(source, /status-pill state-info/);
+  assert.match(source, /openActionsNodeId/);
+  assert.match(source, /d2d-actions-toggle/);
+  assert.match(source, /moreActions/);
   assert.match(source, /trustModalTrigger/);
   assert.match(source, /aria-haspopup="dialog"/);
   assert.match(source, /d2d-trust-modal/);
@@ -257,6 +260,7 @@ test("Door-to-door i18n includes provider-specific CTAs and source disclosure", 
   assert.match(i18nSource, /showHistoryAction/);
   assert.match(i18nSource, /trustModalTitle/);
   assert.match(i18nSource, /openMapsShort/);
+  assert.match(i18nSource, /moreActions/);
 });
 
 test("Door-to-door module has no mojibake markers", () => {
@@ -269,6 +273,8 @@ test("Door-to-door styles include responsive radar and mobile decision layout ho
   assert.match(source, /d2d-route-visual/);
   assert.match(source, /d2d-decision-grid/);
   assert.match(source, /d2d-segment-timeline/);
+  assert.match(source, /d2d-actions-toggle/);
+  assert.match(source, /d2d-row-actions\.is-open/);
   assert.match(source, /d2d-trust-modal/);
   assert.match(source, /d2d-option-compact-grid/);
   assert.match(source, /max-width: 680px/);
