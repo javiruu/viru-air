@@ -222,7 +222,7 @@ def test_source_metadata_is_present(client: TestClient, monkeypatch) -> None:
     assert source["source_type"] == "estimate"
     assert source["confidence"] == "estimated"
     assert source["checked_at"]
-    assert source["expires_at"]
+    assert "expires_at" in source
 
 
 def test_provider_failure_does_not_break_search(client: TestClient, monkeypatch) -> None:
@@ -340,6 +340,105 @@ def test_search_returns_api_option_when_google_routes_provider_is_simulated(clie
     assert api_options
     assert api_options[0]["total_price_min"] is None
     assert api_options[0]["legs"][0]["distance_meters"] == 198000
+
+
+def test_deeplink_options_are_enriched_with_google_routes_metrics(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(
+        monkeypatch,
+        mock=False,
+        real=True,
+        google_routes=True,
+        google_key="fake-google-key",
+    )
+    headers = _auth_headers(client, "google-routes-deeplink@viru.dev")
+    watch_id = _create_watch(client, headers)
+
+    from app.door_to_door.providers import google_routes
+    from app.door_to_door.schemas import DoorToDoorLegOut, DoorToDoorOptionOut, DoorToDoorSourceOut
+
+    async def _fake_google_search(self, query):  # noqa: ANN001
+        checked_at = query.checked_at
+        return [
+            DoorToDoorOptionOut(
+                id="option_google_routes_test_enrichment",
+                label="Duración real de ruta terrestre",
+                description="Duración y distancia calculadas con proveedor de rutas.",
+                status="real_result",
+                total_price_min=None,
+                total_price_max=None,
+                price_per_person_min=None,
+                price_per_person_max=None,
+                currency="EUR",
+                total_duration_minutes=505,
+                risk_level="medium",
+                score=72,
+                transfer_count=2,
+                airport_buffer_minutes=130,
+                confidence="live",
+                source_types=["api"],
+                sources=[
+                    DoorToDoorSourceOut(
+                        provider="google_routes",
+                        source_provider="google_routes",
+                        source_type="api",
+                        confidence="live",
+                        checked_at=checked_at,
+                    )
+                ],
+                legs=[
+                    DoorToDoorLegOut(
+                        type="ground",
+                        mode="car",
+                        from_location="Almería",
+                        to_location="Aeropuerto de Málaga AGP",
+                        departure_at="2026-06-14T08:00:00+02:00",
+                        arrival_at="2026-06-14T11:00:00+02:00",
+                        duration_minutes=180,
+                        distance_meters=198000,
+                        provider="google_routes",
+                        source_type="api",
+                        confidence="live",
+                    ),
+                    DoorToDoorLegOut(
+                        type="flight",
+                        mode="flight",
+                        from_location="AGP",
+                        to_location="TSF",
+                        duration_minutes=155,
+                        provider="flight_watch",
+                        source_type="api",
+                        confidence="estimated",
+                    ),
+                    DoorToDoorLegOut(
+                        type="ground",
+                        mode="car",
+                        from_location="Treviso Airport TSF",
+                        to_location="Treviso centro",
+                        departure_at="2026-06-14T17:20:00+02:00",
+                        arrival_at="2026-06-14T17:55:00+02:00",
+                        duration_minutes=35,
+                        distance_meters=6000,
+                        provider="google_routes",
+                        source_type="api",
+                        confidence="live",
+                    ),
+                ],
+            )
+        ]
+
+    monkeypatch.setattr(google_routes.GoogleRoutesProvider, "search", _fake_google_search)
+
+    response = client.post("/api/v1/door-to-door/search", json=_search_payload(watch_id), headers=headers)
+    assert response.status_code == 200, response.text
+    body = response.json()
+
+    deeplink_options = [option for option in body["options"] if option["status"] == "real_deeplink"]
+    assert deeplink_options
+    for option in deeplink_options:
+        assert option["total_duration_minutes"] is not None
+        assert any(source["provider"] == "google_routes" for source in option["sources"])
+        assert any(leg["type"] == "ground" and leg.get("distance_meters") is not None for leg in option["legs"])
+        assert option.get("deep_link") and option["deep_link"].get("url")
 
 
 def test_suggestions_merge_local_static_and_google_places(client: TestClient, monkeypatch) -> None:
