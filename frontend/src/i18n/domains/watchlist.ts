@@ -29,6 +29,10 @@ export const watchlistEs = {
     shortTrendAriaLabel: "Tendencia breve de precio",
     currentPrice: "Precio actual",
     priceDisclaimer: "Precio orientativo base 1 adulto, sin extras.",
+    savedByCount: {
+      one: "{count} persona tiene este vuelo guardado en su watchlist.",
+      other: "{count} personas tienen este vuelo guardado en su watchlist.",
+    },
     loadingAria: "Cargando rutas vigiladas",
     inlineLoadError: "No se pudo actualizar la lista ahora. Puedes reintentar sin perder los datos visibles.",
     retryLoad: "Reintentar carga",
@@ -331,6 +335,10 @@ export const watchlistEn = {
     shortTrendAriaLabel: "Short price trend",
     currentPrice: "Current price",
     priceDisclaimer: "Indicative base fare for 1 adult, no extras.",
+    savedByCount: {
+      one: "{count} person has this flight saved in their watchlist.",
+      other: "{count} people have this flight saved in their watchlist.",
+    },
     loadingAria: "Loading monitored routes",
     inlineLoadError: "The list could not be refreshed right now. You can retry without losing visible data.",
     retryLoad: "Retry load",

@@ -34,6 +34,7 @@ type WatchItem = {
   travel_date_local: string;
   target_price?: number | null;
   status: string;
+  watchers_count?: number | null;
 };
 
 type WatchMetaEntry = {
@@ -391,6 +392,7 @@ export function SmartWatchListPanel({
       ) : null}
       {showListMode
         ? pagedListItems.map((watch) => {
+        const watchersCount = Math.max(1, Number(watch.watchers_count ?? 1));
         const watchStatus = getWatchStatusMeta(watch.status, t);
         const meta = watchMeta.get(watch.id);
         const trend = !meta?.latest || !meta?.previous
@@ -472,6 +474,7 @@ export function SmartWatchListPanel({
                 </span>
                 <span className="watch-meta-chip">{t("watchlist.detail.latestSnapshot")} {safeDateTime(meta?.latest?.capturedAt, localeTag)}</span>
                 <span className="watch-meta-chip watch-meta-chip--freshness">{t("watchlist.detail.freshness")} {freshness.fullText}</span>
+                <span className="watch-note">{t("watchlist.smartList.savedByCount", { count: watchersCount })}</span>
                 <span className="watch-note">{t("watchlist.smartList.priceDisclaimer")}</span>
               </div>
             </div>

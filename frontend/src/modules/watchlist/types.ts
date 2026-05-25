@@ -5,6 +5,7 @@
   travel_date_local: string;
   target_price?: number | null;
   status: string;
+  watchers_count?: number | null;
 };
 
 export type Snapshot = {
@@ -21,6 +22,7 @@ export type WatchDetail = {
   travel_date_local: string;
   target_price?: number | null;
   status: string;
+  watchers_count?: number | null;
   latest_snapshot: Snapshot | null;
 };
 
