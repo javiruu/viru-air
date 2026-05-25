@@ -183,6 +183,7 @@ export function DoorToDoorPanel() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showTrustModal, setShowTrustModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [openActionsNodeId, setOpenActionsNodeId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
@@ -238,6 +239,10 @@ export function DoorToDoorPanel() {
     setShowHistory(false);
   }, [selectedWatchId]);
 
+  useEffect(() => {
+    if (!isMobile) setOpenActionsNodeId(null);
+  }, [isMobile]);
+
   const selectedWatch = useMemo(() => watches.find((watch) => watch.id === selectedWatchId) || null, [watches, selectedWatchId]);
 
   const realResults = useMemo(() => response?.options.filter((o) => o.status === "real_result") ?? [], [response]);
@@ -253,8 +258,6 @@ export function DoorToDoorPanel() {
     const estimateEnabled = enabled.filter((provider) => provider.source_type === "mock" || provider.source_type === "estimate");
     return { enabled: enabled.length, realEnabled: realEnabled.length, estimateEnabled: estimateEnabled.length };
   }, [providerStatus]);
-
-  const decisionModeLabel = t(`doorToDoor.filters.${preferences.sort_by === "best_balance" ? "bestBalance" : preferences.sort_by === "cheapest" ? "cheapest" : preferences.sort_by === "lowest_risk" ? "lowestRisk" : preferences.sort_by === "fastest" ? "fastest" : "fewestChanges"}`);
 
   const selectedPlan = useMemo(() => {
     if (!response) return null;
@@ -410,7 +413,6 @@ export function DoorToDoorPanel() {
       <section className="panel d2d-ops-panel">
         <div className="d2d-hero">
           <div>
-            <span className="d2d-mini-kicker">{t("doorToDoor.miniKicker")}</span>
             <h2>{t("doorToDoor.heroTitle")}</h2>
             <p>{t("doorToDoor.heroBody")}</p>
           </div>
@@ -419,14 +421,6 @@ export function DoorToDoorPanel() {
             <strong>{selectedWatch ? `${selectedWatch.origin_iata} -> ${selectedWatch.destination_iata}` : t("doorToDoor.noFlight")}</strong>
             <small>{selectedWatch?.travel_date_local || t("doorToDoor.chooseWatchedRoute")}</small>
           </div>
-        </div>
-
-        <div className="d2d-ops-summary">
-          <span><strong>{t("doorToDoor.form.origin")}:</strong> {origin.label || "-"}</span>
-          <span><strong>{t("doorToDoor.form.watch")}:</strong> {selectedWatch ? `${selectedWatch.origin_iata} -> ${selectedWatch.destination_iata}` : "-"}</span>
-          <span><strong>{t("doorToDoor.form.finalDestination")}:</strong> {finalDestination.label || "-"}</span>
-          <span><strong>{t("doorToDoor.filters.minBuffer")}:</strong> {preferences.min_airport_buffer_minutes} min</span>
-          <span><strong>{t("doorToDoor.form.decisionMode")}:</strong> {decisionModeLabel}</span>
         </div>
 
         <form className="panel panel-soft d2d-form d2d-form-essentials" onSubmit={onSubmit}>
@@ -476,14 +470,34 @@ export function DoorToDoorPanel() {
                   </div>
                   <div className="d2d-segment-meta">
                     <span className="status-pill state-info">{node.badge}</span>
-                    <div className="row-actions d2d-row-actions" role="group" aria-label={t("doorToDoor.sections.actionsTitle")}>
-                      {node.actions.map((action) => (
-                        <a key={`${node.id}-${action.href}`} className="btn-secondary btn-compact" href={action.href} target="_blank" rel="noreferrer" aria-label={action.ariaLabel}>
-                          <ExternalLink size={14} aria-hidden="true" />
-                          <span>{action.label}</span>
-                        </a>
-                      ))}
-                    </div>
+                    {node.actions.length > 0 ? (
+                      <>
+                        {isMobile ? (
+                          <button
+                            type="button"
+                            className="btn-ghost btn-compact d2d-actions-toggle"
+                            aria-expanded={openActionsNodeId === node.id}
+                            aria-controls={`d2d-actions-${node.id}`}
+                            onClick={() => setOpenActionsNodeId((current) => (current === node.id ? null : node.id))}
+                          >
+                            {t("doorToDoor.sections.moreActions")}
+                          </button>
+                        ) : null}
+                        <div
+                          id={`d2d-actions-${node.id}`}
+                          className={`row-actions d2d-row-actions ${isMobile && openActionsNodeId === node.id ? "is-open" : ""}`}
+                          role="group"
+                          aria-label={t("doorToDoor.sections.actionsTitle")}
+                        >
+                          {node.actions.map((action) => (
+                            <a key={`${node.id}-${action.href}`} className="btn-secondary btn-compact" href={action.href} target="_blank" rel="noreferrer" aria-label={action.ariaLabel}>
+                              <ExternalLink size={14} aria-hidden="true" />
+                              <span>{action.label}</span>
+                            </a>
+                          ))}
+                        </div>
+                      </>
+                    ) : null}
                   </div>
                 </li>
               ))}
@@ -537,7 +551,7 @@ export function DoorToDoorPanel() {
             {selectedPlan ? (
               <p className="panel-note">
                 <strong>{selectedPlan.label}</strong>
-                {" - "}
+                {" · "}
                 {selectedPlan.total_price_min ?? "--"}-{selectedPlan.total_price_max ?? "--"} {selectedPlan.currency}
               </p>
             ) : (
@@ -588,7 +602,7 @@ export function DoorToDoorPanel() {
             <section className="panel panel-soft d2d-estimate-section">
               <div className="d2d-section-head">
                 <h2>{t("doorToDoor.sections.estimateOnly")}</h2>
-                <span className="status-pill warning">{t("doorToDoor.source.estimated")}</span>
+                <span className="status-pill warning">{t("doorToDoor.sections.trustEstimated")}</span>
               </div>
               <p className="panel-note">{t("doorToDoor.sections.estimateExplanation")}</p>
               <div className="d2d-options-stack">
