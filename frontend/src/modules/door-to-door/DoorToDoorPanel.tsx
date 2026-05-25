@@ -218,11 +218,20 @@ export function DoorToDoorPanel() {
 
     const mapsOutbound = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originLabel)}&destination=${encodeURIComponent(originIata + " Airport")}&travelmode=driving&dir_action=navigate`;
     const mapsInbound = destLabel ? `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(destIata + " Airport")}&destination=${encodeURIComponent(destLabel)}&travelmode=driving&dir_action=navigate` : null;
-    const blablacarUrl = `https://www.blablacar.es/search?from=${encodeURIComponent(originLabel)}&to=${encodeURIComponent(originIata)}&date=${travelDate || ""}`;
-    const gooptiUrl = destLabel ? `https://www.goopti.com/es/?pickup=${encodeURIComponent("Aeropuerto de " + destIata)}&dropoff=${encodeURIComponent(destLabel)}&date=${travelDate || ""}` : null;
+    const blablacarOption = response?.options.find((option) => option.id === "option_blablacar_deeplink");
+    const gooptiOption = response?.options.find((option) => option.id === "option_goopti_deeplink");
+
+    const blablacarUrl =
+      blablacarOption?.deep_link?.url ||
+      blablacarOption?.sources.find((source) => source.provider === "blablacar_deeplink" && source.booking_url)?.booking_url ||
+      null;
+    const gooptiUrl =
+      gooptiOption?.deep_link?.url ||
+      gooptiOption?.sources.find((source) => source.provider === "goopti_deeplink" && source.booking_url)?.booking_url ||
+      (destLabel ? `https://www.goopti.com/es/?pickup=${encodeURIComponent("Aeropuerto de " + destIata)}&dropoff=${encodeURIComponent(destLabel)}&date=${travelDate || ""}` : null);
 
     return { mapsOutbound, mapsInbound, blablacarUrl, gooptiUrl };
-  }, [selectedWatch, origin.label, finalDestination.label]);
+  }, [selectedWatch, origin.label, finalDestination.label, response?.options]);
 
   const calculate = useCallback(async () => {
     if (!selectedWatch) {
@@ -318,6 +327,7 @@ export function DoorToDoorPanel() {
           <div className="d2d-section-head d2d-essentials-head">
             <h2>{t("doorToDoor.form.essentialsTitle")}</h2>
           </div>
+          <LocationInput id="d2d-origin" label={t("doorToDoor.form.origin")} value={origin} onChange={setOrigin} />
           <label className="field" htmlFor="d2d-watch">
             {t("doorToDoor.form.watch")}
             <select id="d2d-watch" className="prefs-control" value={selectedWatchId} onChange={(event) => setSelectedWatchId(event.target.value)}>
@@ -327,7 +337,6 @@ export function DoorToDoorPanel() {
               ))}
             </select>
           </label>
-          <LocationInput id="d2d-origin" label={t("doorToDoor.form.origin")} value={origin} onChange={setOrigin} />
           <LocationInput id="d2d-final" label={t("doorToDoor.form.finalDestination")} value={finalDestination} onChange={setFinalDestination} />
           <label className="field d2d-checkbox-field">
             <input type="checkbox" checked={finalDestination.type === "airport_only"} onChange={(event) => setFinalDestination(event.target.checked ? { type: "airport_only", label: t("doorToDoor.defaults.airportOnly", { iata: selectedWatch?.destination_iata || "TSF" }) } : defaultDestination)} />
@@ -437,9 +446,11 @@ export function DoorToDoorPanel() {
                   <a className="btn-secondary btn-compact" href={segmentLinks.mapsOutbound} target="_blank" rel="noreferrer">
                     {t("doorToDoor.sections.openGoogleMaps")}
                   </a>
-                  <a className="btn-secondary btn-compact" href={segmentLinks.blablacarUrl} target="_blank" rel="noreferrer">
-                    {t("doorToDoor.sections.openBlaBlaCarAction")}
-                  </a>
+                  {segmentLinks.blablacarUrl ? (
+                    <a className="btn-secondary btn-compact" href={segmentLinks.blablacarUrl} target="_blank" rel="noreferrer">
+                      {t("doorToDoor.sections.openBlaBlaCarAction")}
+                    </a>
+                  ) : null}
                 </div>
               </div>
 
