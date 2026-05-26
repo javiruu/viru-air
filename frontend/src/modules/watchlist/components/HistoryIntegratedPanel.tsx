@@ -103,8 +103,9 @@ export function HistoryIntegratedPanel({
   chartIsCompact,
   chartHeight,
   chartModel,
-  selectedPointData,    hoverPoint,
-    visibleMonth,
+  selectedPointData,
+  hoverPoint,
+  visibleMonth,
   monthTitle,
   monthCells,
   calendarEvents,
@@ -131,9 +132,11 @@ export function HistoryIntegratedPanel({
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
+  const selectedRouteLabel = t("watchlist.history.selectedRouteLabel");
   const selectedRouteValue = selectedWatch
     ? `${selectedWatch.origin_iata} → ${selectedWatch.destination_iata} · ${selectedWatch.travel_date_local}`
     : t("watchlist.history.selectFlightPlaceholder");
+  const rangeTitle = t("watchlist.history.rangeTitle");
   const statusLabel = !selectedWatch
     ? t("watchlist.history.status.noData")
     : selectedWatch.status === "active"
@@ -189,7 +192,7 @@ export function HistoryIntegratedPanel({
               {hasSelectedWatch ? t("watchlist.history.subtitleWithRoute") : t("watchlist.history.subtitleWithoutRoute")}
             </p>
             <div className="history-route-line">
-              <span className="history-route-line-text">{selectedRouteValue}</span>
+              <span className="history-route-line-text">{selectedRouteLabel}: {selectedRouteValue}</span>
               <span className={`status-pill ${statusTone}`}>{statusLabel}</span>
             </div>
           </div>
@@ -435,6 +438,9 @@ export function HistoryIntegratedPanel({
               </div>
               {calendarRange ? (
                 <div className="history-heat-legend">
+                  <span className="sr-only" aria-label={t("watchlist.history.rangeLabel")}>
+                    {rangeTitle}
+                  </span>
                   <span>{t("watchlist.history.cheapest")}</span>
                   <div className="history-heat-bar" />
                   <span>{t("watchlist.history.mostExpensive")}</span>

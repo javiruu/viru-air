@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { memo } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -97,6 +97,7 @@ function QuickSearchDatePickerInner(props: Props) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(Boolean(props.defaultOpen));
   const handleBlur = props.onBlur;
+  const onVisibleMonthChange = props.onVisibleMonthChange;
   const locale = props.localeTag.toLowerCase().startsWith("es")
     ? {
       openCalendar: "Abrir calendario",
@@ -106,12 +107,12 @@ function QuickSearchDatePickerInner(props: Props) {
       chooseDate: "Elige una fecha para continuar",
       selectedDate: "Fecha seleccionada",
       selectOutbound: "Selecciona salida",
-      selectReturn: "Anade vuelta",
+      selectReturn: "Añade vuelta",
       outboundReady: "Salida elegida",
       returnReady: "Vuelta elegida",
       noPriceHint: "Sin datos de precio para este día",
-      countryEstimateMixed: "Estimacion pais",
-      countryEstimateCountryCountry: "Estimacion pais-pais",
+      countryEstimateMixed: "Estimación país",
+      countryEstimateCountryCountry: "Estimación país-país",
     }
     : {
       openCalendar: "Open calendar",
@@ -145,9 +146,9 @@ function QuickSearchDatePickerInner(props: Props) {
   }, [open, selectedDate, minDate]);
 
   useEffect(() => {
-    if (!open || !props.onVisibleMonthChange) return;
-    props.onVisibleMonthChange(formatIsoMonth(viewMonth));
-  }, [open, props.onVisibleMonthChange, viewMonth]);
+    if (!open || !onVisibleMonthChange) return;
+    onVisibleMonthChange(formatIsoMonth(viewMonth));
+  }, [open, onVisibleMonthChange, viewMonth]);
 
   useEffect(() => {
     if (!open) return;

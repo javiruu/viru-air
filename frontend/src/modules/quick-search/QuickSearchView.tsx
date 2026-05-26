@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
@@ -1641,8 +1641,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setLoaderScopeDates(datesScopeCount);
     setLoaderPlannedTotalFlights(plannedTotalFlights);
     const nextExecutedCriteria: ExecutedCriteriaSnapshot = {
-      route: `${originCountryOnly ? originCountryOnly.name : origin} → ${destinationCountryOnly ? destinationCountryOnly.name : destination}`,
-      dateLabel: isReturn && returnDate ? `${travelDate} → ${returnDate}` : travelDate,
+      route: `${originCountryOnly ? originCountryOnly.name : origin} â†’ ${destinationCountryOnly ? destinationCountryOnly.name : destination}`,
+      dateLabel: isReturn && returnDate ? `${travelDate} â†’ ${returnDate}` : travelDate,
       paxLabel: `${adults} ${adults === 1 ? t("summaryPassengersSingular") : t("summaryPassengersPlural")}`,
     };
     trackEvent("quicksearch_search_submitted", {
@@ -2025,7 +2025,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   function onEmptySearchValidation() {
     const detail = `${EMPTY_SEARCH_VALIDATION_MESSAGE}. Search query is required.`;
     setSearchState("error");
-    setSearchError(`${detail} / Por favor, introduce una búsqueda.`);
+    setSearchError(`${detail} / Por favor, introduce una bÃºsqueda.`);
     setOriginTouched(true);
     setDestinationTouched(true);
     setFieldErrors({
@@ -2647,7 +2647,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const summaryDate = travelDate ? formatShortDate(travelDate) : "--";
   const summaryOriginLabel = originCountryOnly ? originCountryOnly.name : (origin || "---");
   const summaryDestinationLabel = destinationCountryOnly ? destinationCountryOnly.name : (destination || "---");
-  const summaryTrip = `${summaryOriginLabel} → ${summaryDestinationLabel}`;
+  const summaryTrip = `${summaryOriginLabel} â†’ ${summaryDestinationLabel}`;
   const summaryTripTypeLabel = tripType === "one_way"
     ? t("summaryOneWay")
     : tripType === "round_trip"
@@ -3085,10 +3085,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       rows.push({ id: "risk", label: t("riskAllowed"), before: formatRiskLabel(riskFilter), after: t("riskAll") });
     }
     if (priceMin) {
-      rows.push({ id: "priceMin", label: t("priceMin"), before: priceMin, after: "—" });
+      rows.push({ id: "priceMin", label: t("priceMin"), before: priceMin, after: "â€”" });
     }
     if (priceMax) {
-      rows.push({ id: "priceMax", label: t("priceMax"), before: priceMax, after: "—" });
+      rows.push({ id: "priceMax", label: t("priceMax"), before: priceMax, after: "â€”" });
     }
     return rows;
   }, [strictFilters, riskFilter, priceMin, priceMax, t, formatRiskLabel]);
@@ -3410,13 +3410,13 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     void onSubmit({ preventDefault: () => {} } as FormEvent, { page: 1 });
   };
 
-  const goToPage = useCallback((nextPage: number) => {
+  const goToPage = (nextPage: number) => {
     const bounded = Math.min(totalPages, Math.max(1, nextPage));
     setCurrentPage(bounded);
     void onSubmit({ preventDefault: () => {} } as FormEvent, { page: bounded });
     const el = document.querySelector(".qs-results-panel");
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [totalPages]);
+  };
 
   const removeExcludeOriginChip = useCallback((iata: string) => {
     removeChip(iata, excludeOrigins, setExcludeOrigins);
@@ -4294,7 +4294,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                   </div>
                   {selectedResult ? (
                     <div className="qs-explain-selected">
-                      <strong>{selectedResult.origin} {" → "} {selectedResult.destination}</strong>
+                      <strong>{selectedResult.origin} {" â†’ "} {selectedResult.destination}</strong>
                       <span>{t("score")}: {selectedResult.ranking_score ? formatScore(selectedResult.ranking_score) : "--"}</span>
                       <span>{t("riskAllowed")}: {formatRiskLabel(selectedResult.risk_label)}</span>
                       <span>{t("freshnessLabel")} {formatFreshness(selectedResult.freshness_ts)}</span>
@@ -4367,7 +4367,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 {relaxPreviewChanges.length > 0 ? (
                   relaxPreviewChanges.map((item) => (
                     <span key={item.id} className="qs-summary-chip">
-                      {item.label}: {item.before} → {item.after}
+                      {item.label}: {item.before} â†’ {item.after}
                     </span>
                   ))
                 ) : (
@@ -4466,7 +4466,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                       disabled={activePage === 1}
                       aria-label={t("paginationPrev")}
                     >
-                      <span className="qs-pagination-arrow">←</span>
+                      <span className="qs-pagination-arrow">â†</span>
                       <span className="qs-pagination-btn-text">{t("paginationPrev")}</span>
                     </button>
 
@@ -4505,7 +4505,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                       aria-label={t("paginationNext")}
                     >
                       <span className="qs-pagination-btn-text">{t("paginationNext")}</span>
-                      <span className="qs-pagination-arrow">→</span>
+                      <span className="qs-pagination-arrow">â†’</span>
                     </button>
                   </div>
                 </div>
@@ -4543,7 +4543,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 <p>
                   {showDegradedState ? t("degradedHint") : t("searchReadyHint")}
                   {formatFreshnessTime(searchMeta?.freshness_ts) ? (
-                    <span> · {t("lastData")}: {formatFreshnessTime(searchMeta?.freshness_ts)}</span>
+                    <span> Â· {t("lastData")}: {formatFreshnessTime(searchMeta?.freshness_ts)}</span>
                   ) : null}
                 </p>
               </section>
@@ -4553,7 +4553,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                   {warningSeverity.critical.length > 0 ? (
                     <div className="qs-info-impact-row qs-info-impact-row-critical">
                       <strong>{warningProblemTitle}</strong>
-                      <span>{groupedCriticalWarnings.map((group) => `${group.message}${group.count > 1 ? ` (${group.count})` : ""}`).join(" · ")}</span>
+                      <span>{groupedCriticalWarnings.map((group) => `${group.message}${group.count > 1 ? ` (${group.count})` : ""}`).join(" Â· ")}</span>
                     </div>
                   ) : null}
                   {providerPartialInlineText ? (
@@ -4565,7 +4565,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                   {warningSeverity.neutral.length > 0 && !providerPartialInlineText ? (
                     <div className="qs-info-impact-row qs-info-impact-row-neutral">
                       <strong>{warningGroupedTitle}</strong>
-                      <span>{groupedNeutralWarnings.map((group) => `${group.message}${group.count > 1 ? ` (${group.count})` : ""}`).join(" · ")}</span>
+                      <span>{groupedNeutralWarnings.map((group) => `${group.message}${group.count > 1 ? ` (${group.count})` : ""}`).join(" Â· ")}</span>
                     </div>
                   ) : null}
                   {weatherMessage ? (
