@@ -87,7 +87,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
     def test_origin_nearby_expansion_is_real(self):
         payload = self._payload(origin={"seed_iata": "LEI", "include_nearby": True, "radius_km": 260, "max_candidates": 4})
 
-        def fake_fetch(origin: str, destination: str, date: str, timeout_ms: int):
+        def fake_fetch(origin: str, destination: str, date: str, timeout_ms: int, currency: str = "EUR"):
             if origin == "LEI":
                 return [_flight(62, "09:30")]
             if origin == "AGP":
@@ -119,7 +119,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
     def test_ranking_keeps_seed_reasonable_priority(self):
         payload = self._payload(origin={"seed_iata": "LEI", "include_nearby": True, "radius_km": 260, "max_candidates": 3})
 
-        def fake_fetch(origin: str, destination: str, date: str, timeout_ms: int):
+        def fake_fetch(origin: str, destination: str, date: str, timeout_ms: int, currency: str = "EUR"):
             if origin == "LEI":
                 return [_flight(60, "10:00")]
             if origin == "AGP":
@@ -156,7 +156,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             execution={"max_pairs": 6, "max_requests": 6, "timeout_ms": 1500, "concurrency_limit": 2},
         )
 
-        def fake_fetch(origin: str, destination: str, date: str, timeout_ms: int):
+        def fake_fetch(origin: str, destination: str, date: str, timeout_ms: int, currency: str = "EUR"):
             if origin == "AGP":
                 raise TimeoutError("provider timeout")
             return [_flight(72, "13:00")]
