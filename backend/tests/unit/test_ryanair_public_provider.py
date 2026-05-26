@@ -9,10 +9,10 @@ from app.infrastructure.providers.ryanair_public_provider import RyanairPublicPr
 def test_get_flights_falls_back_to_fares_when_availability_fails(monkeypatch: pytest.MonkeyPatch) -> None:
     provider = RyanairPublicProvider()
 
-    def fake_availability(origin: str, destination: str, travel_date: str, *, timeout_ms: int):
+    def fake_availability(origin: str, destination: str, travel_date: str, *, timeout_ms: int, currency: str):
         raise requests.HTTPError("409 conflict")
 
-    def fake_fares(origin: str, destination: str, travel_date: str, *, timeout_ms: int):
+    def fake_fares(origin: str, destination: str, travel_date: str, *, timeout_ms: int, currency: str):
         return [
             ProviderFlight(
                 price=52.4,
