@@ -4,18 +4,19 @@ from unittest.mock import patch
 
 try:
     from app.api.v1.search import quick_search
-    from app.domain.entities import ProviderFlight
+    from app.domain.entities import ProviderFetchResult, ProviderFlight
     from app.services.quick_search_execution import _CACHE
 except Exception:  # pragma: no cover
     quick_search = None
+    ProviderFetchResult = None
     ProviderFlight = None
     _CACHE = None
 
 
-def _flight(price: float, dep: str, source: str = "test-provider") -> ProviderFlight:
+def _flight(price: float, dep: str, source: str = "test-provider", currency: str = "EUR") -> ProviderFlight:
     return ProviderFlight(
         price=price,
-        currency="EUR",
+        currency=currency,
         departure_time_local=dep,
         captured_at=dt.datetime.now(dt.UTC).replace(tzinfo=None),
         source=source,
@@ -196,6 +197,92 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
         pagination = result["meta"]["pagination"]
         self.assertEqual(pagination["page"], pagination["total_pages"])
         self.assertGreaterEqual(pagination["total_pages"], 1)
+
+    def test_provider_warning_passthrough_and_alias_normalization(self):
+        payload = self._payload()
+
+        def fake_fetch(origin: str, destination: str, date: str, timeout_ms: int, currency: str = "EUR"):
+            return ProviderFetchResult(
+                flights=[_flight(77, "14:20", source="duffel-offers")],
+                warnings=[
+                    "provider_timeout_parcial",
+                    "provider_timeout_parcial",
+                    "ryanair_fares_failed_partial",
+                ],
+            )
+
+        with patch("app.api.v1.search.provider.get_flights", side_effect=fake_fetch):
+            result = self._call_quick_search(payload)
+
+        codes = [item["code"] for item in result["meta"]["warnings_structured"]]
+        self.assertIn("provider_timeout_partial", codes)
+        self.assertIn("ryanair_fares_failed_partial", codes)
+        self.assertEqual(codes.count("provider_timeout_partial"), 1)
+        self.assertIn("provider_timeout_partial", result["filters"]["warnings"])
+
+    def test_partial_provider_failures_keep_results_from_other_pairs(self):
+        payload = self._payload(
+            origin={"seed_iata": "LEI", "include_nearby": True, "radius_km": 260, "max_candidates": 3},
+            destination={"seed_iata": "DUB", "include_nearby": True, "radius_km": 300, "max_candidates": 3},
+            execution={"max_pairs": 8, "max_requests": 16, "timeout_ms": 1500, "concurrency_limit": 2},
+        )
+
+        def fake_fetch(origin: str, destination: str, date: str, timeout_ms: int, currency: str = "EUR"):
+            if origin == "AGP":
+                raise TimeoutError("provider timeout")
+            return [_flight(91, "07:40", source="ryanair-public-fares")]
+
+        with patch("app.api.v1.search.provider.get_flights", side_effect=fake_fetch):
+            result = self._call_quick_search(payload)
+
+        self.assertGreaterEqual(len(result["results"]), 1)
+        warning_codes = {w["code"] for w in result["meta"]["warnings_structured"]}
+        self.assertIn("provider_timeout_partial", warning_codes)
+        self.assertIn("provider_error_partial", warning_codes)
+        self.assertGreater(result["meta"]["pipeline_counters"]["provider_failures_count"], 0)
+
+    def test_single_pair_preserves_multi_currency_multi_source_offers(self):
+        payload = self._payload(
+            origin={"seed_iata": "LEI", "include_nearby": False, "radius_km": 250, "max_candidates": 1},
+            destination={"seed_iata": "DUB", "include_nearby": False, "radius_km": 250, "max_candidates": 1},
+            execution={"max_pairs": 1, "max_requests": 1, "timeout_ms": 3000, "concurrency_limit": 1},
+        )
+
+        with patch(
+            "app.api.v1.search.provider.get_flights",
+            return_value=[
+                _flight(120, "10:15", source="ryanair-public-fares", currency="EUR"),
+                _flight(120, "10:15", source="duffel-offers", currency="USD"),
+            ],
+        ):
+            result = self._call_quick_search(payload)
+
+        self.assertEqual(len(result["results"]), 2)
+        currencies = {item["currency"] for item in result["results"]}
+        sources = {item["source"] for item in result["results"]}
+        self.assertEqual(currencies, {"EUR", "USD"})
+        self.assertEqual(sources, {"ryanair-public-fares", "duffel-offers"})
+
+    def test_second_identical_search_uses_cache_and_reduces_provider_calls(self):
+        payload = self._payload(
+            origin={"seed_iata": "LEI", "include_nearby": False, "radius_km": 250, "max_candidates": 1},
+            destination={"seed_iata": "DUB", "include_nearby": False, "radius_km": 250, "max_candidates": 1},
+            execution={"max_pairs": 1, "max_requests": 1, "timeout_ms": 3000, "concurrency_limit": 1},
+        )
+        calls = {"count": 0}
+
+        def fake_fetch(origin: str, destination: str, date: str, timeout_ms: int, currency: str = "EUR"):
+            calls["count"] += 1
+            return [_flight(66, "16:10", source="duffel-offers")]
+
+        with patch("app.api.v1.search.provider.get_flights", side_effect=fake_fetch):
+            first = self._call_quick_search(payload)
+            second = self._call_quick_search(payload)
+
+        self.assertEqual(calls["count"], 1)
+        self.assertEqual(first["meta"]["execution"]["cache_hits"], 0)
+        self.assertGreaterEqual(second["meta"]["execution"]["cache_hits"], 1)
+        self.assertEqual(first["results"][0]["price_total"], second["results"][0]["price_total"])
 
 
 if __name__ == "__main__":
