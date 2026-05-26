@@ -18282,7 +18282,8 @@ textarea::placeholder {
 
 .d2d-toggle-row,
 .d2d-option-meta,
-.d2d-option-sources {
+.d2d-option-sources,
+.d2d-option-quick-badges {
   display: flex;
   gap: 0.45rem;
   flex-wrap: wrap;
@@ -18529,6 +18530,79 @@ textarea::placeholder {
   justify-content: flex-end;
   gap: 0.45rem;
   padding: 0 0.9rem 0.85rem;
+}
+
+.d2d-decision-reasons {
+  margin-top: 0.15rem;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, var(--accent) 30%);
+  border-radius: 12px;
+  padding: 0.55rem 0.65rem;
+  background: color-mix(in srgb, var(--surface-2) 82%, transparent);
+}
+
+.d2d-decision-reasons strong {
+  display: block;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.d2d-decision-reasons ul {
+  margin: 0.35rem 0 0;
+  padding-left: 1.05rem;
+  display: grid;
+  gap: 0.22rem;
+}
+
+.d2d-decision-reasons li {
+  color: var(--ink-muted);
+  font-size: 0.82rem;
+}
+
+.d2d-option-comparator {
+  margin-top: 0.8rem;
+}
+
+.d2d-compare-collapse summary {
+  cursor: pointer;
+}
+
+.d2d-compare-collapse[open] summary {
+  margin-bottom: 0.45rem;
+}
+
+.d2d-compare-table {
+  margin-top: 0.5rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.d2d-compare-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) repeat(4, minmax(0, 1fr));
+  gap: 0.4rem;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
+  border-radius: 12px;
+  padding: 0.55rem 0.6rem;
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+}
+
+.d2d-compare-option {
+  font-size: 0.85rem;
+}
+
+.d2d-compare-metric {
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+}
+
+.d2d-compare-metric.is-better {
+  color: color-mix(in srgb, var(--success) 82%, var(--ink));
+}
+
+.d2d-compare-metric.is-worse {
+  color: color-mix(in srgb, var(--warning) 84%, var(--ink));
 }
 
 .d2d-route-visual {
@@ -18862,6 +18936,14 @@ textarea::placeholder {
 
   .d2d-row-actions.is-open {
     display: flex;
+  }
+
+  .d2d-compare-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .d2d-compare-option {
+    grid-column: 1 / -1;
   }
 }
 

@@ -20,9 +20,11 @@ import { DoorToDoorErrorState } from "@/modules/door-to-door/components/DoorToDo
 import { DoorToDoorFilters } from "@/modules/door-to-door/components/DoorToDoorFilters";
 import { DoorToDoorLoadingState } from "@/modules/door-to-door/components/DoorToDoorLoadingState";
 import { DoorToDoorOptionCard } from "@/modules/door-to-door/components/DoorToDoorOptionCard";
+import { getAlternativeDeltas, getDecisionBadges, getDecisionReasons, hasUncertainSources } from "@/modules/door-to-door/decision";
 import type {
   DoorToDoorHistoryItem,
   DoorToDoorLocation,
+  OptionDeltaSummary,
   DoorToDoorOption,
   DoorToDoorProviderStatus,
   DoorToDoorPreferences,
@@ -158,6 +160,12 @@ function formatDurationLabel(minutes: number | null | undefined) {
   return `${hours}h ${String(mins).padStart(2, "0")}m`;
 }
 
+function formatDelta(value: number | null, unit = "") {
+  if (value == null) return "--";
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${value}${unit}`;
+}
+
 function deriveTrustTone(option: DoorToDoorOption | null): TrustTone {
   if (!option) return "warning";
   const confirmed = option.sources.filter(
@@ -287,6 +295,25 @@ export function DoorToDoorPanel() {
       null
     );
   }, [response, chosenOptionId]);
+  const quickBadgesByOption = useMemo(() => {
+    if (!response) return {};
+    return getDecisionBadges(response.options);
+  }, [response]);
+
+  const recommendedOption = useMemo(() => {
+    if (!response) return null;
+    return response.options.find((option) => option.id === response.summary.recommended_option_id) || response.options[0] || null;
+  }, [response]);
+
+  const recommendedReasons = useMemo(() => {
+    if (!response || !recommendedOption) return [];
+    return getDecisionReasons(recommendedOption, response.options);
+  }, [response, recommendedOption]);
+
+  const alternativeDeltas = useMemo<OptionDeltaSummary[]>(() => {
+    if (!response || !recommendedOption) return [];
+    return getAlternativeDeltas(recommendedOption, response.options);
+  }, [response, recommendedOption]);
 
   const trustTone = useMemo(() => deriveTrustTone(selectedPlan), [selectedPlan]);
 
@@ -589,10 +616,42 @@ export function DoorToDoorPanel() {
                     key={option.id}
                     option={option}
                     chosen={option.id === chosenOptionId}
+                    quickBadges={quickBadgesByOption[option.id] ?? []}
+                    reasons={option.id === recommendedOption?.id ? recommendedReasons : []}
+                    trustInline={option.id === recommendedOption?.id && hasUncertainSources(option)}
                     onChoose={() => markChosen(option)}
                   />
                 ))}
               </div>
+            </section>
+          ) : null}
+
+          {recommendedOption && alternativeDeltas.length > 0 ? (
+            <section className="panel panel-soft d2d-option-comparator">
+              <details className="d2d-compare-collapse" open={!isMobile}>
+                <summary>
+                  <strong>{t("doorToDoor.option.comparatorTitle")}</strong>
+                </summary>
+                <div className="d2d-compare-table" role="table" aria-label={t("doorToDoor.option.comparatorTitle")}>
+                  {alternativeDeltas.map((delta) => (
+                    <article key={delta.option_id} className="d2d-compare-row" role="row">
+                      <strong className="d2d-compare-option">{delta.option_label}</strong>
+                      <span className={`d2d-compare-metric ${delta.delta_price != null && delta.delta_price <= 0 ? "is-better" : "is-worse"}`}>
+                        {t("doorToDoor.option.compare.price")}: {formatDelta(delta.delta_price, " EUR")}
+                      </span>
+                      <span className={`d2d-compare-metric ${delta.delta_duration_minutes != null && delta.delta_duration_minutes <= 0 ? "is-better" : "is-worse"}`}>
+                        {t("doorToDoor.option.compare.duration")}: {formatDelta(delta.delta_duration_minutes, "m")}
+                      </span>
+                      <span className={`d2d-compare-metric ${delta.delta_buffer_minutes != null && delta.delta_buffer_minutes >= 0 ? "is-better" : "is-worse"}`}>
+                        {t("doorToDoor.option.compare.buffer")}: {formatDelta(delta.delta_buffer_minutes, "m")}
+                      </span>
+                      <span className={`d2d-compare-metric ${delta.risk_change === "better" ? "is-better" : delta.risk_change === "worse" ? "is-worse" : ""}`}>
+                        {t("doorToDoor.option.compare.risk")}: {t(`doorToDoor.option.compareRisk.${delta.risk_change}`)}
+                      </span>
+                    </article>
+                  ))}
+                </div>
+              </details>
             </section>
           ) : null}
 
@@ -609,6 +668,7 @@ export function DoorToDoorPanel() {
                     key={option.id}
                     option={option}
                     chosen={option.id === chosenOptionId}
+                    quickBadges={quickBadgesByOption[option.id] ?? []}
                     onChoose={() => markChosen(option)}
                   />
                 ))}
@@ -629,6 +689,7 @@ export function DoorToDoorPanel() {
                     key={option.id}
                     option={option}
                     chosen={option.id === chosenOptionId}
+                    quickBadges={quickBadgesByOption[option.id] ?? []}
                     onChoose={() => markChosen(option)}
                   />
                 ))}

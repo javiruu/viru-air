@@ -96,6 +96,29 @@ export type DoorToDoorOption = {
   trust_copy?: string | null;
 };
 
+export type DecisionReasonKind = "price" | "buffer" | "risk" | "transfers" | "duration" | "confidence";
+
+export type DecisionReason = {
+  kind: DecisionReasonKind;
+  label: string;
+};
+
+export type DecisionBadgeKind = "fastest" | "lowest_risk" | "fewest_changes" | "best_estimated_price";
+
+export type DecisionBadge = {
+  kind: DecisionBadgeKind;
+  label: string;
+};
+
+export type OptionDeltaSummary = {
+  option_id: string;
+  option_label: string;
+  delta_price: number | null;
+  delta_duration_minutes: number | null;
+  delta_buffer_minutes: number | null;
+  risk_change: "better" | "worse" | "equal";
+};
+
 export type DoorToDoorFlight = {
   origin_airport: string;
   destination_airport: string;
