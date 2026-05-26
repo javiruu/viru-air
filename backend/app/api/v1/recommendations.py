@@ -11,10 +11,10 @@ from app.core.errors import ApiError, message_for_code
 
 from app.domain.schemas import RecommendationRequest, RecommendationResponse
 from app.infrastructure.airports_catalog import expand_airports, get_airport
-from app.infrastructure.providers.ryanair_public_provider import RyanairPublicProvider
+from app.infrastructure.providers.flight_provider import MultiSourceFlightProvider
 
 router = APIRouter()
-provider = RyanairPublicProvider()
+provider = MultiSourceFlightProvider()
 
 OPENAI_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
