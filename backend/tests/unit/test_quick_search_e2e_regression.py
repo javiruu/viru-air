@@ -284,6 +284,16 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
         self.assertGreaterEqual(second["meta"]["execution"]["cache_hits"], 1)
         self.assertEqual(first["results"][0]["price_total"], second["results"][0]["price_total"])
 
+    def test_provider_status_exposes_aggregated_shape(self):
+        payload = self._payload()
+        with patch("app.api.v1.search.provider.get_flights", return_value=[_flight(80, "12:10")]):
+            result = self._call_quick_search(payload)
+
+        provider_status = result["meta"]["provider_status"]
+        self.assertIn("providers", provider_status)
+        self.assertIn("overall_status", provider_status)
+        self.assertIsInstance(provider_status["providers"], list)
+
 
 if __name__ == "__main__":
     unittest.main()

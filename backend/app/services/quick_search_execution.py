@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError
+from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError, ProviderWarning
 from app.services.quick_search_planner import PairPlanItem
 
 
@@ -120,6 +120,8 @@ def execute_plan(
     provider_calls = 0
     timed_out_units_count = 0
     provider_failures = 0
+    provider_stats: dict[str, dict[str, Any]] = {}
+    structured_warning_events: list[ProviderWarning] = []
 
     with ThreadPoolExecutor(max_workers=concurrency) as executor:
         futures = {
@@ -136,11 +138,40 @@ def execute_plan(
                     provider_calls += 1
                     cache_misses += 1
                 warnings.extend(fetch_result.warnings)
+                for warning_event in fetch_result.warnings_structured or []:
+                    structured_warning_events.append(warning_event)
+                    stats = provider_stats.setdefault(
+                        warning_event.provider,
+                        {"id": warning_event.provider, "errors": 0, "timeouts": 0, "results_count": 0, "status": "ok"},
+                    )
+                    if warning_event.code == "provider_timeout_partial":
+                        stats["timeouts"] += 1
+                        stats["status"] = "degraded"
+                    if warning_event.severity in {"error", "warning"} and warning_event.code in {
+                        "provider_error_partial",
+                        "provider_total_outage",
+                    }:
+                        stats["errors"] += 1
+                        stats["status"] = "degraded"
                 for flight in fetch_result.flights:
                     combined.append((unit.origin_iata, unit.destination_iata, unit.travel_date, flight))
+                    source_provider = (flight.source or "").split("-")[0]
+                    if source_provider:
+                        stats = provider_stats.setdefault(
+                            source_provider,
+                            {"id": source_provider, "errors": 0, "timeouts": 0, "results_count": 0, "status": "ok"},
+                        )
+                        stats["results_count"] += 1
             except ProviderSourceFetchError as exc:
                 provider_failures += 1
                 warnings.extend(exc.warning_codes)
+                provider_key = exc.provider_id or "unknown"
+                stats = provider_stats.setdefault(
+                    provider_key,
+                    {"id": provider_key, "errors": 0, "timeouts": 0, "results_count": 0, "status": "degraded"},
+                )
+                stats["errors"] += 1
+                stats["status"] = "degraded"
             except Exception as exc:
                 provider_failures += 1
                 if "timeout" in str(exc).lower():
@@ -161,6 +192,11 @@ def execute_plan(
         "concurrency_limit": concurrency,
         "timeout_ms": timeout_ms,
         "waves": plan.waves,
+        "provider_statuses": list(provider_stats.values()),
+        "warnings_structured_events": [
+            {"code": item.code, "provider": item.provider, "severity": item.severity, "meta": item.meta or {}}
+            for item in structured_warning_events
+        ],
     }
     return combined, meta, _dedupe_warning_codes(warnings)
 

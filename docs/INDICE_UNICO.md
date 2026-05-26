@@ -20,6 +20,7 @@
 - [Backend](engineering/backend.md)
 - [Reference](reference/README.md)
 - [Quick Search contract](reference/backend/quick-search-contract.md)
+- [Provider integration guide](reference/backend/provider-integration-guide.md)
 - [Door-to-door API contract](reference/backend/door-to-door-contract.md)
 - [Quick Search acceptance checklist](reference/backend/quick-search-acceptance-checklist.md)
 - [Quick Search legacy alias sunset](reference/quick-search-legacy-alias-sunset.md)

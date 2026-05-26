@@ -47,11 +47,13 @@ CALENDAR_HINTS_GUIDELINE_DEFAULT_MID_MAX = 150.0
 _WARNING_CODE_ALIASES: dict[str, str] = {
     "provider_timeout_parcial": "provider_timeout_partial",
     "ryanair_unavailable_parcial": "ryanair_unavailable_partial",
+    "provider_total_outage": "provider_total_outage",
 }
 _UI_WARNING_CRITICAL_CODES: set[str] = {
     "ryanair_provider_unavailable_total",
     "ryanair_availability_failed",
     "ryanair_fares_failed",
+    "provider_total_outage",
 }
 _UI_WARNING_PARTIAL_CODES: set[str] = {
     "ryanair_unavailable_partial",
@@ -59,6 +61,7 @@ _UI_WARNING_PARTIAL_CODES: set[str] = {
     "ryanair_fares_failed_partial",
     "provider_timeout_partial",
     "provider_error_partial",
+    "provider_partial_results_served",
 }
 
 
@@ -1792,6 +1795,13 @@ def quick_search(
         warnings.extend(normalized_execution_warnings)
         for code in normalized_execution_warnings:
             _warn(code)
+        for event in execution_meta.get("warnings_structured_events", []):
+            _warn(
+                event.get("code", "provider_error_partial"),
+                provider=event.get("provider"),
+                severity=event.get("severity", "warning"),
+                **(event.get("meta") or {}),
+            )
         if any(code.endswith("_partial") for code in normalized_execution_warnings) and combined:
             _warn("provider_partial_results_served", count=len(combined))
             warning_codes.append("provider_partial_results_served")
@@ -1808,6 +1818,9 @@ def quick_search(
         if execution_meta.get("provider_failures", 0):
             _warn("provider_error_partial", count=execution_meta.get("provider_failures"))
             warning_codes.append("provider_error_partial")
+        if not combined and execution_meta.get("provider_failures", 0):
+            _warn("provider_total_outage", count=execution_meta.get("provider_failures"))
+            warning_codes.append("provider_total_outage")
 
         filtered = [
             (origin_code, destination_code, travel_date_item, flight)
@@ -2108,6 +2121,44 @@ def quick_search(
     requested_date_candidates = _build_flex_dates(travel_date_value, requested_days_before, requested_days_after)
 
     warning_codes_set = set(warnings)
+    provider_status_entries = execution_meta.get("provider_statuses", [])
+    provider_total_outage = "provider_total_outage" in warning_codes_set or "ryanair_provider_unavailable_total" in warning_codes_set
+    partial_results_served = bool(scoped_ranked_results) and bool(
+        warning_codes_set & {"provider_timeout_partial", "provider_error_partial"}
+    )
+    if provider_total_outage:
+        provider_overall_status = "total_outage"
+    elif warning_codes_set & {"provider_timeout_partial", "provider_error_partial"}:
+        provider_overall_status = "partial_degraded"
+    else:
+        provider_overall_status = "ok"
+    providers_aggregated = [
+        {
+            "id": item.get("id"),
+            "status": item.get("status", "ok"),
+            "degraded": item.get("status", "ok") != "ok",
+            "errors": int(item.get("errors", 0)),
+            "timeouts": int(item.get("timeouts", 0)),
+            "results_count": int(item.get("results_count", 0)),
+        }
+        for item in provider_status_entries
+    ]
+    known_provider_ids = provider.provider_ids() if hasattr(provider, "provider_ids") else []
+    known_ids_set = {item.get("id") for item in providers_aggregated}
+    for provider_id in known_provider_ids:
+        if provider_id in known_ids_set:
+            continue
+        providers_aggregated.append(
+            {
+                "id": provider_id,
+                "status": "ok",
+                "degraded": False,
+                "errors": 0,
+                "timeouts": 0,
+                "results_count": 0,
+            }
+        )
+    ryanair_item = next((item for item in providers_aggregated if item.get("id") == "ryanair"), None)
     availability_failed = bool(
         warning_codes_set
         & {
@@ -2122,14 +2173,6 @@ def quick_search(
             "ryanair_fares_failed",
         }
     )
-    provider_total_outage = "ryanair_provider_unavailable_total" in warning_codes_set
-    partial_results_served = bool(scoped_ranked_results) and (availability_failed or fares_failed)
-    if provider_total_outage:
-        provider_overall_status = "total_outage"
-    elif availability_failed or fares_failed:
-        provider_overall_status = "partial_degraded"
-    else:
-        provider_overall_status = "ok"
     provider_status = {
         "provider": "ryanair",
         "availability": {"status": "failed" if availability_failed else "ok"},
@@ -2137,6 +2180,14 @@ def quick_search(
         "overall": provider_overall_status,
         "partial_results_served": partial_results_served,
         "total_outage": provider_total_outage,
+        "providers": providers_aggregated,
+        "overall_status": provider_overall_status,
+        "legacy": {
+            "provider": "ryanair",
+            "overall": provider_overall_status,
+            "errors": int((ryanair_item or {}).get("errors", 0)),
+            "timeouts": int((ryanair_item or {}).get("timeouts", 0)),
+        },
     }
 
     logger.info(

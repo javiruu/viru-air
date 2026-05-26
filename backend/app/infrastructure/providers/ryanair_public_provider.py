@@ -8,12 +8,18 @@ from app.core.time import utc_now_naive
 
 import requests
 
-from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderPrice, ProviderSourceFetchError
+from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderPrice, ProviderSourceFetchError, ProviderWarning
+from app.infrastructure.providers.base import FlightProvider
 
 
-class RyanairPublicProvider:
+class RyanairPublicProvider(FlightProvider):
+    provider_id = "ryanair"
+
     def __init__(self) -> None:
         self._session = requests.Session()
+
+    def is_enabled(self) -> bool:
+        return True
 
     def get_flights(
         self, origin: str, destination: str, travel_date: str, timeout_ms: int = 12000, currency: str = "EUR"
@@ -39,8 +45,16 @@ class RyanairPublicProvider:
             warnings.append("ryanair_fares_failed_partial")
 
         flights = self._dedupe_flights(availability + fares)
+        warnings_structured = [
+            ProviderWarning(
+                code=self._to_canonical_warning(code),
+                provider=self.provider_id,
+                severity="warning",
+            )
+            for code in warnings
+        ]
         if flights:
-            return ProviderFetchResult(flights=flights, warnings=warnings)
+            return ProviderFetchResult(flights=flights, warnings=warnings, warnings_structured=warnings_structured)
 
         if availability_error and fares_error:
             raise ProviderSourceFetchError(
@@ -48,11 +62,19 @@ class RyanairPublicProvider:
                     "ryanair_availability_failed",
                     "ryanair_fares_failed",
                     "ryanair_provider_unavailable_total",
+                    "provider_total_outage",
                 ],
                 message=f"Ryanair provider unavailable for {origin}->{destination} on {travel_date}",
+                provider_id=self.provider_id,
+                severity="error",
             )
 
-        return ProviderFetchResult(flights=[], warnings=warnings)
+        return ProviderFetchResult(flights=[], warnings=warnings, warnings_structured=warnings_structured)
+
+    def _to_canonical_warning(self, warning_code: str) -> str:
+        if warning_code.endswith("_failed_partial") or warning_code.endswith("_unavailable_partial"):
+            return "provider_error_partial"
+        return warning_code
 
     def get_cheapest_price(self, origin: str, destination: str, travel_date: str, currency: str = "EUR") -> ProviderPrice | None:
         result = self.get_flights(origin, destination, travel_date, currency=currency)

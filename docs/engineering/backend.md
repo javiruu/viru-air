@@ -9,6 +9,14 @@
 
 El backend de Viru Tracker está implementado con FastAPI y organiza API, dominio, infraestructura y servicios bajo `backend/app/`.
 
+Desde 2026-05-26, la capa de vuelos usa arquitectura **provider-driven**:
+
+- contrato común `FlightProvider` para integraciones;
+- `FlightProviderRegistry` para activar/ordenar providers por configuración;
+- `FlightSearchOrchestrator` para merge, dedupe y normalización de warnings.
+
+Esto evita acoplar `quick-search`, `watchlist` y `recommendations` a un provider concreto.
+
 ## Cuándo usar este documento
 
 Úsalo como punto de entrada antes de abrir contratos más específicos o tests del backend.
@@ -27,6 +35,7 @@ El backend de Viru Tracker está implementado con FastAPI y organiza API, domini
 - Dominio documentado con mayor detalle en:
   - [Quick Search contract](../reference/backend/quick-search-contract.md)
   - [Quick Search acceptance checklist](../reference/backend/quick-search-acceptance-checklist.md)
+  - [Provider integration guide](../reference/backend/provider-integration-guide.md)
 
 ## Relacionado
 
