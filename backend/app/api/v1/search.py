@@ -25,7 +25,7 @@ from app.api.v1.airports import _validate_iata
 from app.infrastructure.db.models import FlightWatch, User
 from app.infrastructure.db.session import get_db
 from app.infrastructure.airports_catalog import ExpandedAirportCandidate, get_airport, resolve_seed_airport
-from app.infrastructure.providers.ryanair_public_provider import RyanairPublicProvider
+from app.infrastructure.providers.flight_provider import MultiSourceFlightProvider
 from app.services.quick_search_dedupe import dedupe_ranked_results
 from app.services.quick_search_execution import build_execution_plan, execute_plan
 from app.services.quick_search_expansion import SideExpansionResult, SideExpansionSummary, expand_search_sides
@@ -33,7 +33,7 @@ from app.services.quick_search_planner import PairPlanItem, build_pair_plan
 from app.services.quick_search_ranking import rank_quick_search_results
 
 router = APIRouter()
-provider = RyanairPublicProvider()
+provider = MultiSourceFlightProvider()
 logger = logging.getLogger(__name__)
 SEED_POOL_CAP = 8
 QUICK_SEARCH_MAX_PAIRS_CAP = 400

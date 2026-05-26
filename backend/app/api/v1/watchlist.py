@@ -32,10 +32,10 @@ from app.domain.schemas import (
 )
 from app.infrastructure.db.models import FlightWatch, PriceSnapshot, User
 from app.infrastructure.db.session import get_db
-from app.infrastructure.providers.ryanair_public_provider import RyanairPublicProvider
+from app.infrastructure.providers.flight_provider import MultiSourceFlightProvider
 
 router = APIRouter()
-provider = RyanairPublicProvider()
+provider = MultiSourceFlightProvider()
 logger = logging.getLogger("app.watchlist")
 REFRESH_COOLDOWN_SECONDS = max(0, int(os.getenv("WATCH_REFRESH_COOLDOWN_SECONDS", "60")))
 
