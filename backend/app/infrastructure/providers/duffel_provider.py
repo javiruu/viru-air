@@ -7,10 +7,13 @@ from typing import Any
 import requests
 
 from app.core.time import utc_now_naive
-from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError
+from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError, ProviderWarning
+from app.infrastructure.providers.base import FlightProvider
 
 
-class DuffelProvider:
+class DuffelProvider(FlightProvider):
+    provider_id = "duffel"
+
     def __init__(self, api_key: str | None = None, *, base_url: str = "https://api.duffel.com/air") -> None:
         self.api_key = (api_key or os.getenv("DUFFEL_API_KEY", "")).strip()
         self.base_url = base_url.rstrip("/")
@@ -26,6 +29,8 @@ class DuffelProvider:
             raise ProviderSourceFetchError(
                 warning_codes=["duffel_not_configured"],
                 message="Duffel provider is not configured",
+                provider_id=self.provider_id,
+                severity="warning",
             )
 
         origin = origin.upper().strip()
@@ -59,8 +64,10 @@ class DuffelProvider:
             body = resp.json()
         except requests.RequestException as exc:
             raise ProviderSourceFetchError(
-                warning_codes=["duffel_provider_unavailable_total"],
+                warning_codes=["duffel_provider_unavailable_total", "provider_total_outage"],
                 message=f"Duffel provider unavailable for {origin}->{destination} on {travel_date}",
+                provider_id=self.provider_id,
+                severity="error",
             ) from exc
 
         offers = ((body.get("data") or {}).get("offers") or [])
@@ -70,7 +77,16 @@ class DuffelProvider:
             if flight is not None:
                 flights.append(flight)
 
-        return ProviderFetchResult(flights=flights, warnings=[])
+        warnings_structured: list[ProviderWarning] = []
+        if not flights:
+            warnings_structured.append(
+                ProviderWarning(
+                    code="provider_empty_result",
+                    provider=self.provider_id,
+                    severity="info",
+                )
+            )
+        return ProviderFetchResult(flights=flights, warnings=[], warnings_structured=warnings_structured)
 
     def _to_flight(self, offer: dict[str, Any], *, fallback_currency: str) -> ProviderFlight | None:
         total_amount = offer.get("total_amount")

@@ -45,8 +45,7 @@ def test_get_flights_raises_when_both_sources_fail(monkeypatch: pytest.MonkeyPat
     with pytest.raises(ProviderSourceFetchError) as exc_info:
         provider.get_flights("MAD", "DUB", "2026-06-14")
 
-    assert exc_info.value.warning_codes == [
-        "ryanair_availability_failed",
-        "ryanair_fares_failed",
-        "ryanair_provider_unavailable_total",
-    ]
+    assert "ryanair_availability_failed" in exc_info.value.warning_codes
+    assert "ryanair_fares_failed" in exc_info.value.warning_codes
+    assert "ryanair_provider_unavailable_total" in exc_info.value.warning_codes
+    assert "provider_total_outage" in exc_info.value.warning_codes

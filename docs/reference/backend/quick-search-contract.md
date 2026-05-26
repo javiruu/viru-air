@@ -110,6 +110,27 @@ The endpoint still returns `query`, `filters`, `results` and now adds:
 - `meta.filter_support`
 - `meta.pair_counts`
 
+## Provider status (multi-provider compatible)
+
+`meta.provider_status` keeps legacy compatibility and now includes aggregated provider state:
+
+- `overall_status`: `ok | partial_degraded | total_outage`
+- `providers[]`:
+  - `id`
+  - `status`
+  - `degraded`
+  - `errors`
+  - `timeouts`
+  - `results_count`
+- `legacy`: compatibility payload derived for older consumers.
+
+Warnings canónicos esperados en `meta.warnings_structured`:
+
+- `provider_error_partial`
+- `provider_timeout_partial`
+- `provider_total_outage`
+- `provider_partial_results_served`
+
 ## Monthly calendar hints (`POST /api/v1/search/quick/calendar-hints`)
 
 Fast monthly endpoint for `/quick-search` datepicker heat hints.

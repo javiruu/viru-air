@@ -84,6 +84,20 @@ Entradas vivas actualizadas:
 - `.codex/skills/viru-tracker-ui/references/visual-direction.md`
 - `.codex/skills/viru-tracker-ui/references/qa-checklist.md`
 
+## Actualizacion manual 2026-05-26 (provider-driven backend architecture)
+
+Entradas vivas agregadas:
+
+- `docs/reference/backend/provider-integration-guide.md`
+
+Entradas vivas actualizadas:
+
+- `docs/engineering/backend.md`
+- `docs/reference/backend/quick-search-contract.md`
+- `docs/runbooks/runbook-provider-degraded.md`
+- `docs/adr/ADR-003-provider-adapter.md`
+- `docs/INDICE_UNICO.md`
+
 ## Tabla
 
 | Ruta actual | Tipo | Estado | Acci?n propuesta | Nueva ruta | Motivo | Fuente de verdad |

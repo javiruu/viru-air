@@ -486,7 +486,7 @@ def _refresh_watch_now(db: Session, watch_id: str, current_user: User) -> JSONRe
                     "event": "watch_refresh_provider_degraded",
                     "user_id": current_user.id,
                     "watch_id": watch.id,
-                    "provider": "ryanair",
+                    "providers": provider.provider_ids() if hasattr(provider, "provider_ids") else ["unknown"],
                     "error": str(exc),
                 },
                 ensure_ascii=False,

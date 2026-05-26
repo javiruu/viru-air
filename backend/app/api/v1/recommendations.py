@@ -9,6 +9,7 @@ from fastapi import APIRouter, Body, HTTPException
 
 from app.core.errors import ApiError, message_for_code
 
+from app.domain.entities import ProviderFetchResult
 from app.domain.schemas import RecommendationRequest, RecommendationResponse
 from app.infrastructure.airports_catalog import expand_airports, get_airport
 from app.infrastructure.providers.flight_provider import MultiSourceFlightProvider
@@ -304,9 +305,10 @@ def _build_candidates(
             flights_by_date: list[tuple[dt.date, Any]] = []
             for date_value in dates:
                 try:
-                    flights = provider.get_flights(origin_code, destination_code, str(date_value))
+                    provider_result = provider.get_flights(origin_code, destination_code, str(date_value))
                 except Exception:
-                    flights = []
+                    provider_result = []
+                flights = provider_result.flights if isinstance(provider_result, ProviderFetchResult) else provider_result
                 for flight in flights:
                     flights_by_date.append((date_value, flight))
             pairs.append((origin_code, destination_code, flights_by_date))
