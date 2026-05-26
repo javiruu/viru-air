@@ -190,6 +190,9 @@ test("DoorToDoorPanel includes no-coverage-real handling, provider status and wa
   assert.ok(watchIndex < finalIndex);
   assert.match(source, /option_blablacar_deeplink/);
   assert.match(source, /deep_link/);
+  assert.match(source, /comparatorTitle/);
+  assert.match(source, /recommendedReasons/);
+  assert.match(source, /quickBadgesByOption/);
 });
 
 test("DoorToDoorPanel includes vertical timeline, trust modal trigger, and collapsible history", () => {
@@ -211,7 +214,14 @@ test("Door-to-door option, radar, filters, and timeline render mock and flight-e
   const html = renderToStaticMarkup(
     <>
       <DoorToDoorFilters preferences={preferences} onChange={() => undefined} />
-      <DoorToDoorOptionCard option={mockOption} chosen={true} onChoose={() => undefined} />
+      <DoorToDoorOptionCard
+        option={mockOption}
+        chosen={true}
+        reasons={[{ kind: "price", label: "price" }, { kind: "risk", label: "risk" }]}
+        quickBadges={[{ kind: "fastest", label: "fastest" }]}
+        trustInline={true}
+        onChoose={() => undefined}
+      />
       <DoorToDoorRouteVisual option={mockOption} flight={flight} />
       <DoorToDoorTimeline option={mockOption} flight={flight} />
     </>,
@@ -221,6 +231,9 @@ test("Door-to-door option, radar, filters, and timeline render mock and flight-e
   assert.match(html, /Estimación/);
   assert.match(html, /Horario estimado/);
   assert.match(html, /role="switch"/);
+  assert.match(html, /Por qué esta ruta/);
+  assert.match(html, /Más rápida/);
+  assert.match(html, /Confirma precio y disponibilidad fuera de Viru/);
 });
 
 test("Door-to-door deeplink option renders open-provider CTA and handles null price", () => {

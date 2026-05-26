@@ -1,7 +1,7 @@
 ﻿import React from "react";
 
 import { useI18n } from "@/i18n";
-import type { DoorToDoorOption } from "@/modules/door-to-door/types";
+import type { DecisionBadge, DecisionReason, DoorToDoorOption } from "@/modules/door-to-door/types";
 import { DoorToDoorRiskPill } from "@/modules/door-to-door/components/DoorToDoorRiskPill";
 
 function durationLabel(minutes: number | null | undefined) {
@@ -15,11 +15,17 @@ export function DoorToDoorOptionCard({
   option,
   chosen,
   compact = false,
+  reasons = [],
+  quickBadges = [],
+  trustInline = false,
   onChoose,
 }: {
   option: DoorToDoorOption;
   chosen: boolean;
   compact?: boolean;
+  reasons?: DecisionReason[];
+  quickBadges?: DecisionBadge[];
+  trustInline?: boolean;
   onChoose: () => void;
 }) {
   const { t } = useI18n();
@@ -57,8 +63,31 @@ export function DoorToDoorOptionCard({
 
         <p>{option.description}</p>
 
-        {option.trust_copy ? (
+        {trustInline ? (
+          <p className="d2d-option-trust-note">{t("doorToDoor.option.confirmOutside")}</p>
+        ) : option.trust_copy ? (
           <p className="d2d-option-trust-note">{option.trust_copy}</p>
+        ) : null}
+
+        {quickBadges.length > 0 ? (
+          <div className="d2d-option-quick-badges" aria-label={t("doorToDoor.option.quickBadges")}>
+            {quickBadges.map((badge) => (
+              <span key={`${option.id}-${badge.kind}`} className="status-pill state-info d2d-badge">
+                {t(`doorToDoor.option.badges.${badge.label}`)}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        {reasons.length > 0 ? (
+          <section className="d2d-decision-reasons" aria-label={t("doorToDoor.option.whyThisRouteTitle")}>
+            <strong>{t("doorToDoor.option.whyThisRouteTitle")}</strong>
+            <ul>
+              {reasons.map((reason) => (
+                <li key={`${option.id}-${reason.kind}`}>{t(`doorToDoor.option.reasons.${reason.label}`)}</li>
+              ))}
+            </ul>
+          </section>
         ) : null}
 
         <div className="d2d-option-meta">
