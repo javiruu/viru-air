@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useI18n } from "@/i18n";
@@ -126,7 +126,7 @@ export function ComparePanels({
       .map((block, index) => {
         const route = routeByWatchId.get(block.watch_id) ?? block.watch_id;
         const [origin = route, destination = ""] = route.split("->");
-        const label = `${origin.trim()} -> ${destination.trim()}`;
+        const label = `${origin.trim()} → ${destination.trim()}`;
         const travelDate = travelDateByWatchId.get(block.watch_id) ?? "";
         const color = CHART_COLORS[index % CHART_COLORS.length];
         const points = block.points
@@ -258,7 +258,7 @@ export function ComparePanels({
                       <path d="M5 12l4 4 10-10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </span>
-                  <span className="compare-route">{option.origin} -&gt; {option.destination}</span>
+                  <span className="compare-route">{option.origin} → {option.destination}</span>
                   <span className="compare-date">{option.travelDate}</span>
                 </label>
               );
@@ -401,7 +401,7 @@ export function ComparePanels({
                       onMouseLeave={() => setHoveredWatchId(null)}
                     >
                       <div className="compare-head">
-                        <strong>{origin} -&gt; {destination}</strong>
+                        <strong>{origin} → {destination}</strong>
                         <div className="compare-badges">
                           {compareBadgesFromResponse.bestPriceId === card.watch_id ? <span className="compare-badge">{t("watchlist.compare.bestPriceBadge")}</span> : null}
                           {compareBadgesFromResponse.stableId === card.watch_id ? <span className="compare-badge">{t("watchlist.compare.mostStableBadge")}</span> : null}
