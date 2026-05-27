@@ -19,8 +19,6 @@ from app.door_to_door.schemas import (
     DoorToDoorSearchRequest,
     DoorToDoorSearchResponse,
     DoorToDoorSuggestionOut,
-    DoorToDoorSuggestionsMetaOut,
-    DoorToDoorSuggestionsResponseOut,
     DoorToDoorWarningOut,
 )
 from app.door_to_door.services.cache_service import DoorToDoorCacheService
@@ -117,7 +115,7 @@ def providers_status() -> list[DoorToDoorProviderStatusOut]:
     return runtime.statuses
 
 
-@router.get("/suggestions", response_model=DoorToDoorSuggestionsResponseOut)
+@router.get("/suggestions", response_model=list[DoorToDoorSuggestionOut])
 async def suggestions(
     q: str = Query(default="", max_length=120),
     session_token: str | None = Query(default=None, max_length=128),
@@ -125,7 +123,7 @@ async def suggestions(
     watch_id: str | None = Query(default=None, max_length=80),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> DoorToDoorSuggestionsResponseOut:
+) -> list[DoorToDoorSuggestionOut]:
     query = q.strip().lower()
     static_items = (
         SUGGESTIONS
@@ -134,13 +132,7 @@ async def suggestions(
     )
     runtime = resolve_provider_runtime()
     if runtime.google_places_provider is None:
-        return DoorToDoorSuggestionsResponseOut(
-            items=static_items[:10],
-            meta=DoorToDoorSuggestionsMetaOut(
-                provider_status="fallback_active",
-                degraded_reason="google_places_disabled",
-            ),
-        )
+        return static_items
 
     included_region_codes: list[str] = []
     if watch_id:
@@ -162,24 +154,9 @@ async def suggestions(
         )
     except Exception:
         google_items = []
-        return DoorToDoorSuggestionsResponseOut(
-            items=static_items[:10],
-            meta=DoorToDoorSuggestionsMetaOut(
-                provider_status="provider_error",
-                degraded_reason="google_places_request_failed",
-                used_region_codes=included_region_codes,
-            ),
-        )
 
     if not google_items:
-        return DoorToDoorSuggestionsResponseOut(
-            items=static_items[:10],
-            meta=DoorToDoorSuggestionsMetaOut(
-                provider_status="fallback_active",
-                degraded_reason="google_places_no_results",
-                used_region_codes=included_region_codes,
-            ),
-        )
+        return static_items
 
     merged: list[DoorToDoorSuggestionOut] = []
     seen: set[str] = set()
@@ -189,14 +166,7 @@ async def suggestions(
             continue
         seen.add(key)
         merged.append(item)
-    return DoorToDoorSuggestionsResponseOut(
-        items=merged[:10],
-        meta=DoorToDoorSuggestionsMetaOut(
-            provider_status="api_live",
-            degraded_reason=None,
-            used_region_codes=included_region_codes,
-        ),
-    )
+    return merged[:10]
 
 
 @router.post("/search", response_model=DoorToDoorSearchResponse)

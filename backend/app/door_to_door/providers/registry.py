@@ -68,8 +68,7 @@ def resolve_provider_runtime() -> ProviderRuntime:
     has_gtfs_feeds = _has_gtfs_feeds()
 
     google_routes_enabled = real_enabled and google_routes_flag and has_google_key
-    local_auto_google_places = app_env in {"local", "dev", "development"} and has_google_key
-    google_places_enabled = (real_enabled and google_places_flag and has_google_key) or local_auto_google_places
+    google_places_enabled = real_enabled and google_places_flag and has_google_key
     gtfs_transit_enabled = real_enabled and gtfs_transit_flag and has_gtfs_feeds
 
     descriptors: list[ProviderDescriptor] = [
@@ -177,13 +176,9 @@ def resolve_provider_runtime() -> ProviderRuntime:
                 "Sugerencias reales de lugares para autocompletar."
                 if google_places_enabled
                 else (
-                    "Desactivado en local: configura GOOGLE_MAPS_API_KEY para auto-activacion."
-                    if app_env in {"local", "dev", "development"} and not has_google_key
-                    else (
                     "Desactivado: falta GOOGLE_MAPS_API_KEY."
                     if real_enabled and google_places_flag and not has_google_key
                     else "Desactivado: requiere DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS, DOOR_TO_DOOR_ENABLE_GOOGLE_PLACES y GOOGLE_MAPS_API_KEY."
-                    )
                 )
             ),
             is_real=False,
