@@ -92,13 +92,21 @@ function buildMapCapabilities(response: DoorToDoorResponse | null, providers: Do
   const hasGooglePlaces = providerByName.get("google_places")?.enabled || false;
   const hasGtfsTransit = providerByName.get("gtfs_transit")?.enabled || false;
   const hasDeeplink = providers.some((provider) => provider.enabled && provider.source_type === "deeplink");
+  const warningCodes = new Set((response?.warnings ?? []).map((warning) => warning.code));
+  const hasTrafficSignals = warningCodes.has("PROVIDER_PARTIAL_COVERAGE") || warningCodes.has("GOOGLE_ROUTES_UNAVAILABLE");
+  const hasIncidentSignals = warningCodes.has("NO_COVERAGE") || warningCodes.has("GOOGLE_ROUTES_UNAVAILABLE") || warningCodes.has("PROVIDER_PARTIAL_COVERAGE");
 
   const defaults: Record<DoorToDoorMapCapabilityKey, Omit<DoorToDoorMapCapability, "key">> = {
     navigation: hasGoogleRoutes
       ? { state: "available", source_type: "maps", confidence: "live", why_missing: null }
       : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "google_routes_disabled" },
     traffic: hasGoogleRoutes
-      ? { state: "partial", source_type: "maps", confidence: "cached", why_missing: "live_traffic_not_wired" }
+      ? {
+          state: hasTrafficSignals ? "available" : "partial",
+          source_type: "maps",
+          confidence: hasTrafficSignals ? "live" : "cached",
+          why_missing: hasTrafficSignals ? null : "live_traffic_not_wired",
+        }
       : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "traffic_layer_pending" },
     transit: hasGtfsTransit
       ? { state: "partial", source_type: "open_data", confidence: "cached", why_missing: "fares_and_booking_pending" }
@@ -115,7 +123,12 @@ function buildMapCapabilities(response: DoorToDoorResponse | null, providers: Do
       : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "google_places_disabled" },
     offline: { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "offline_cache_not_implemented" },
     incidents: hasGoogleRoutes
-      ? { state: "partial", source_type: "maps", confidence: "cached", why_missing: "incident_feed_pending" }
+      ? {
+          state: hasIncidentSignals ? "available" : "partial",
+          source_type: "maps",
+          confidence: hasIncidentSignals ? "live" : "cached",
+          why_missing: hasIncidentSignals ? null : "incident_feed_pending",
+        }
       : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "incident_source_not_connected" },
     eco_route: hasDeeplink || hasGoogleRoutes
       ? { state: "partial", source_type: hasGoogleRoutes ? "maps" : "deeplink", confidence: "cached", why_missing: "eco_scoring_pending" }
