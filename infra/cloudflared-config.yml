@@ -1,0 +1,26 @@
+# Cloudflare Tunnel configuration for viru-tracker
+# Domain: viruair.dpdns.org
+#
+# This tunnel exposes your local viru-tracker (frontend:3000 + backend:8000)
+# through Cloudflare's edge network at your custom domain.
+# Cloudflare handles HTTPS automatically — no Caddy needed for tunnel mode.
+#
+# Setup: run scripts/setup-cloudflared.ps1 to install and configure.
+# Start:  cloudflared tunnel run viru-tracker
+#         (or use VIRU_PANEL.bat option A)
+
+tunnel: YOUR_TUNNEL_ID
+credentials-file: C:\Users\%USERNAME%\.cloudflared\YOUR_TUNNEL_ID.json
+
+ingress:
+  # API routes → backend
+  - hostname: viruair.dpdns.org
+    path: /api/*
+    service: http://localhost:8000
+
+  # All other traffic → frontend (Next.js)
+  - hostname: viruair.dpdns.org
+    service: http://localhost:3000
+
+  # Reject unmatched requests
+  - service: http_status:404

@@ -11,10 +11,17 @@
 
 FreeDomain ofrece dominios gratuitos bajo extensiones como `.DPDNS.ORG`, `.US.KG`, `.QZZ.IO`, `.XX.KG` y `.QD.JE`. Estos dominios pueden apuntarse a tu servidor usando un proveedor DNS externo (Cloudflare, FreeDNS, etc.).
 
-viru-tracker ya está preparado para funcionar con cualquier dominio personalizado gracias a:
-- Reverse proxy **Caddy** con auto-HTTPS (Let's Encrypt).
-- Backend con CORS dinámico que acepta el dominio configurado vía `DOMAIN`.
-- Frontend configurable con `NEXT_PUBLIC_API_URL`.
+viru-tracker soporta dos modos de despliegue con dominio personalizado:
+
+| Modo | Cuándo usarlo | Proxy/Túnel |
+|------|---------------|-------------|
+| **Cloudflare Tunnel** (laptop) | IP dinámica, sin router/puertos abiertos, portátil | `cloudflared` |
+| **Caddy + Docker** (servidor) | Servidor fijo con IP pública y puertos abiertos | `Caddy` |
+
+Ambos modos:
+- Proveen HTTPS automático.
+- Enrutan `/api/*` → backend (8000) y `/*` → frontend (3000).
+- Son soportados por el backend con CORS dinámico vía `DOMAIN`.
 
 ---
 
@@ -28,31 +35,84 @@ viru-tracker ya está preparado para funcionar con cualquier dominio personaliza
 
 ---
 
-## Paso 2: Configurar DNS
+## Paso 2: Elegir modo de despliegue
 
-FreeDomain **no gestiona DNS directamente**. Debes delegar el dominio a un proveedor DNS externo.
+### 🌩️ Modo A: Cloudflare Tunnel (recomendado para laptop / IP dinámica)
 
-### Opción A: Cloudflare (recomendado)
+Ideal si despliegas desde tu portátil con IP cambiante, sin acceso al router o detrás de CGNAT.
+
+**Cómo funciona**: `cloudflared` crea un túnel outbound persistente a Cloudflare. Cloudflare enruta `viruair.dpdns.org` a través de ese túnel hasta `localhost:3000` y `localhost:8000`.
+
+**Ventajas**:
+- No necesitas abrir puertos en el router.
+- No necesitas IP pública fija.
+- HTTPS automático gestionado por Cloudflare.
+- Funciona detrás de cualquier NAT/CGNAT.
+
+#### 2A.1 Delegar DNS a Cloudflare
 
 1. Crea una cuenta gratuita en [Cloudflare](https://cloudflare.com).
-2. Añade tu dominio FreeDomain como sitio.
-3. Cloudflare te dará dos nameservers. Vuelve al dashboard de FreeDomain y configura esos nameservers para tu dominio.
-4. En Cloudflare, crea estos registros DNS:
-   - **Tipo A**: `@` → IP de tu servidor (`45.136.18.49` u otra)
-   - **Tipo A**: `api` → IP de tu servidor (si usas subdominio separado para API)
+2. Añade tu dominio FreeDomain como sitio (`viruair.dpdns.org`).
+3. Cloudflare te dará dos nameservers (ej: `alice.ns.cloudflare.com`, `bob.ns.cloudflare.com`).
+4. Ve al dashboard de FreeDomain y configura los nameservers de tu dominio para que apunten a los de Cloudflare.
+5. Espera a que la delegación se propague (puede tardar minutos u horas).
 
-### Opción B: FreeDNS (Afraid.org)
+#### 2A.2 Instalar y configurar cloudflared
 
-1. Ve a [freedns.afraid.org](https://freedns.afraid.org) y crea cuenta.
-2. Añade tu dominio FreeDomain.
-3. Configura los nameservers de FreeDNS en el dashboard de FreeDomain.
-4. Crea un registro **A** apuntando a la IP de tu servidor.
+```powershell
+# Desde la raíz del repo:
+.
+scripts\setup-cloudflared.ps1
+```
 
-> **Nota**: La propagación DNS puede tardar de minutos a 48 horas. Verifica con `nslookup tu-dominio.dpdns.org`.
+Este script:
+1. Instala `cloudflared` (vía winget o descarga directa).
+2. Abre el navegador para autenticarte con Cloudflare.
+3. Crea el túnel `viru-tracker`.
+4. Configura el DNS (CNAME `viruair.dpdns.org` → `<tunnel-id>.cfargotunnel.com`).
+5. Escribe `infra/cloudflared-config.yml` con los IDs reales.
+
+#### 2A.3 Usar desde VIRU_PANEL.bat
+
+```
+VIRU_PANEL.bat
+  Opción 1: Iniciar VIRU (foreground)
+  Opción A: CF TUNNEL START  →  activa el túnel
+  Opción B: CF TUNNEL STATUS →  verifica conexión
+  Opción C: CF TUNNEL STOP   →  detiene el túnel
+  Opción D: Ver logs CF tunnel
+```
+
+Una vez iniciado, abre `https://viruair.dpdns.org`.
+
+#### 2A.4 Manual (sin VIRU_PANEL)
+
+```powershell
+# Terminal 1: Iniciar VIRU
+.\iniciar_viru.ps1 -Foreground
+
+# Terminal 2: Iniciar túnel
+cloudflared tunnel --config infra/cloudflared-config.yml run
+```
 
 ---
 
-## Paso 3: Configurar el servidor
+### 🐳 Modo B: Caddy + Docker (servidor con IP fija)
+
+Ideal para despliegue en VPS o servidor dedicado con IP pública fija.
+
+#### 2B.1 Delegar DNS y crear registros
+
+1. Añade tu dominio FreeDomain en Cloudflare.
+2. Configura los nameservers de FreeDomain para apuntar a Cloudflare.
+3. En Cloudflare DNS, crea:
+   - **Tipo A**: `@` → IP de tu servidor
+
+> La propagación DNS puede tardar de minutos a 48 horas. Verifica con `nslookup tu-dominio.dpdns.org`.
+
+---
+
+## Paso 3 (Modo B): Configurar servidor con Caddy + Docker
 
 Una vez que tengas el servidor con Docker y el repo clonado:
 
@@ -65,7 +125,7 @@ cp infra/.env.prod.example infra/.env
 Editar `infra/.env`:
 
 ```env
-DOMAIN=virutracker.dpdns.org
+DOMAIN=viruair.dpdns.org
 NEXT_PUBLIC_API_URL=/api/v1
 JWT_SECRET=<genera-un-valor-seguro>
 APP_ENV=production
@@ -75,7 +135,7 @@ APP_ENV=production
 
 ```bash
 cd infra
-DOMAIN=virutracker.dpdns.org docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+DOMAIN=viruair.dpdns.org docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
 Caddy:
@@ -87,24 +147,24 @@ Caddy:
 
 ```bash
 # API health check
-curl https://virutracker.dpdns.org/api/v1/health
+curl https://viruair.dpdns.org/api/v1/health
 
 # Frontend
-curl -I https://virutracker.dpdns.org/
+curl -I https://viruair.dpdns.org/
 ```
 
 ---
 
-## Paso 4: Configurar CORS (si la API está en otro dominio)
+## Paso 4: Configurar CORS (solo si API está en dominio separado)
 
-Si el frontend y la API comparten dominio (configuración recomendada con Caddy), **no se necesita CORS adicional**.
+Con el túnel de Cloudflare o Caddy, frontend y API comparten dominio (`viruair.dpdns.org`), así que **no se necesita CORS adicional**.
 
-Si usas dominios separados (ej: `api.virutracker.dpdns.org`), configura:
+Si usas dominios separados (ej: `api.viruair.dpdns.org`), configura:
 
 ```env
 # backend/.env
-DOMAIN=api.virutracker.dpdns.org
-CORS_ALLOW_ORIGINS=https://virutracker.dpdns.org
+DOMAIN=api.viruair.dpdns.org
+CORS_ALLOW_ORIGINS=https://viruair.dpdns.org
 ```
 
 ---
@@ -132,8 +192,11 @@ Si FreeDomain no funciona para tu caso:
 |----------|----------|
 | DNS no resuelve | Espera 1-48h o verifica nameservers en el dashboard de FreeDomain |
 | CORS error en navegador | Añade el dominio a `CORS_ALLOW_ORIGINS` en backend `.env` |
-| SSL no se genera | Verifica que el dominio resuelva a la IP pública del servidor y que los puertos 80/443 estén abiertos |
+| SSL no se genera (Caddy) | Verifica que el dominio resuelva a la IP pública y que los puertos 80/443 estén abiertos |
 | Caddy no arranca | `docker compose logs caddy` — error común: puerto 80/443 ya en uso |
+| cloudflared no instalado | Ejecuta `scripts/setup-cloudflared.ps1` (instala automáticamente) |
+| Tunnel no conecta | Verifica logs con `VIRU_PANEL.bat` opción D; comprueba que VIRU esté corriendo (puertos 3000/8000) |
+| `cloudflared tunnel login` falla | Asegúrate de haber añadido el dominio a tu cuenta de Cloudflare primero |
 | Dominio suspendido | Contacta a `abusereport@digitalplat.org` |
 
 ---
@@ -142,4 +205,6 @@ Si FreeDomain no funciona para tu caso:
 
 - [FreeDomain GitHub](https://github.com/DigitalPlatDev/FreeDomain)
 - [FreeDomain Dashboard](https://dash.domain.digitalplat.org/)
+- [Cloudflare Tunnel Docs](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)
+- [cloudflared Downloads](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/)
 - [Caddy Docker Docs](https://caddyserver.com/docs/running#docker)
