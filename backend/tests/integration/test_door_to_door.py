@@ -520,7 +520,7 @@ def test_suggestions_merge_local_static_and_google_places(client: TestClient, mo
     from app.door_to_door.providers import google_places
     from app.door_to_door.schemas import DoorToDoorSuggestionOut
 
-    async def _fake_suggest(self, query, *, limit=6, session_token=None):  # noqa: ANN001
+    async def _fake_suggest(self, query, *, limit=6, session_token=None, included_region_codes=None):  # noqa: ANN001
         return [
             DoorToDoorSuggestionOut(
                 id="google_treviso",
@@ -538,6 +538,52 @@ def test_suggestions_merge_local_static_and_google_places(client: TestClient, mo
     items = response.json()
     assert any(item["source_type"] == "api" for item in items)
     assert any(item["source_type"] == "local_static" for item in items)
+
+
+def test_suggestions_send_origin_country_code_from_selected_watch(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(
+        monkeypatch,
+        mock=False,
+        real=True,
+        google_places=True,
+        google_key="fake-google-key",
+    )
+    headers = _auth_headers(client, "google-places-region-origin@viru.dev")
+    watch_id = _create_watch(client, headers)
+    captured: dict[str, object] = {}
+    from app.door_to_door.providers import google_places
+
+    async def _fake_suggest(self, query, *, limit=6, session_token=None, included_region_codes=None):  # noqa: ANN001
+        captured["included_region_codes"] = included_region_codes
+        return []
+
+    monkeypatch.setattr(google_places.GooglePlacesSuggestionsProvider, "suggest", _fake_suggest)
+    response = client.get(f"/api/v1/door-to-door/suggestions?q=Madrid&field=origin&watch_id={watch_id}", headers=headers)
+    assert response.status_code == 200, response.text
+    assert captured.get("included_region_codes") == ["es"]
+
+
+def test_suggestions_send_destination_country_code_from_selected_watch(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(
+        monkeypatch,
+        mock=False,
+        real=True,
+        google_places=True,
+        google_key="fake-google-key",
+    )
+    headers = _auth_headers(client, "google-places-region-destination@viru.dev")
+    watch_id = _create_watch(client, headers)
+    captured: dict[str, object] = {}
+    from app.door_to_door.providers import google_places
+
+    async def _fake_suggest(self, query, *, limit=6, session_token=None, included_region_codes=None):  # noqa: ANN001
+        captured["included_region_codes"] = included_region_codes
+        return []
+
+    monkeypatch.setattr(google_places.GooglePlacesSuggestionsProvider, "suggest", _fake_suggest)
+    response = client.get(f"/api/v1/door-to-door/suggestions?q=Luxembourg&field=destination&watch_id={watch_id}", headers=headers)
+    assert response.status_code == 200, response.text
+    assert captured.get("included_region_codes") == ["it"]
 
 
 def test_suggestions_keep_local_static_when_google_places_disabled(client: TestClient, monkeypatch) -> None:

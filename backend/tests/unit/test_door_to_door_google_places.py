@@ -116,3 +116,34 @@ def test_google_places_suggestions_include_session_token_when_provided(monkeypat
     asyncio.run(provider.suggest("alme", limit=4, session_token="session-123"))
 
     assert captured_body.get("sessionToken") == "session-123"
+
+
+def test_google_places_supports_query_prediction_shape(monkeypatch) -> None:
+    monkeypatch.setenv("DOOR_TO_DOOR_ENABLE_GOOGLE_PLACES", "1")
+    monkeypatch.setenv("GOOGLE_MAPS_API_KEY", "fake-google-key")
+
+    def fake_post(*args, **kwargs):  # noqa: ANN002,ANN003
+        return _FakeResponse(
+            200,
+            {
+                "suggestions": [
+                    {
+                        "queryPrediction": {
+                            "text": {"text": "Avenida Pablo Iglesias, Madrid"},
+                            "structuredFormat": {
+                                "secondaryText": {"text": "Madrid, España"}
+                            },
+                        }
+                    }
+                ]
+            },
+        )
+
+    monkeypatch.setattr("app.door_to_door.providers.google_places.requests.post", fake_post)
+
+    provider = GooglePlacesSuggestionsProvider()
+    items = asyncio.run(provider.suggest("avenida pablo iglesias", limit=4))
+
+    assert len(items) == 1
+    assert "Avenida Pablo Iglesias" in items[0].label
+    assert items[0].source_type == "api"
