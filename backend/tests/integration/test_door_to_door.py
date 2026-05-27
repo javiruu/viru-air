@@ -535,7 +535,9 @@ def test_suggestions_merge_local_static_and_google_places(client: TestClient, mo
     monkeypatch.setattr(google_places.GooglePlacesSuggestionsProvider, "suggest", _fake_suggest)
     response = client.get("/api/v1/door-to-door/suggestions?q=tre", headers=headers)
     assert response.status_code == 200, response.text
-    items = response.json()
+    payload = response.json()
+    items = payload["items"]
+    assert payload["meta"]["provider_status"] == "api_live"
     assert any(item["source_type"] == "api" for item in items)
     assert any(item["source_type"] == "local_static" for item in items)
 
@@ -560,6 +562,8 @@ def test_suggestions_send_origin_country_code_from_selected_watch(client: TestCl
     monkeypatch.setattr(google_places.GooglePlacesSuggestionsProvider, "suggest", _fake_suggest)
     response = client.get(f"/api/v1/door-to-door/suggestions?q=Madrid&field=origin&watch_id={watch_id}", headers=headers)
     assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["meta"]["used_region_codes"] == ["es"]
     assert captured.get("included_region_codes") == ["es"]
 
 
@@ -583,6 +587,8 @@ def test_suggestions_send_destination_country_code_from_selected_watch(client: T
     monkeypatch.setattr(google_places.GooglePlacesSuggestionsProvider, "suggest", _fake_suggest)
     response = client.get(f"/api/v1/door-to-door/suggestions?q=Luxembourg&field=destination&watch_id={watch_id}", headers=headers)
     assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["meta"]["used_region_codes"] == ["it"]
     assert captured.get("included_region_codes") == ["it"]
 
 
@@ -592,7 +598,9 @@ def test_suggestions_keep_local_static_when_google_places_disabled(client: TestC
 
     response = client.get("/api/v1/door-to-door/suggestions?q=tre", headers=headers)
     assert response.status_code == 200, response.text
-    items = response.json()
+    payload = response.json()
+    items = payload["items"]
+    assert payload["meta"]["provider_status"] == "fallback_active"
     assert items
     assert all(item["source_type"] == "local_static" for item in items)
 

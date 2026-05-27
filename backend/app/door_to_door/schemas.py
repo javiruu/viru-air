@@ -183,6 +183,17 @@ class DoorToDoorSuggestionOut(BaseModel):
     place_id: str | None = None
 
 
+class DoorToDoorSuggestionsMetaOut(BaseModel):
+    provider_status: Literal["api_live", "fallback_active", "provider_error"] = "api_live"
+    degraded_reason: str | None = None
+    used_region_codes: list[str] = Field(default_factory=list)
+
+
+class DoorToDoorSuggestionsResponseOut(BaseModel):
+    items: list[DoorToDoorSuggestionOut] = Field(default_factory=list)
+    meta: DoorToDoorSuggestionsMetaOut = Field(default_factory=DoorToDoorSuggestionsMetaOut)
+
+
 class DoorToDoorSavedLocationIn(BaseModel):
     location: DoorToDoorLocation
 

@@ -134,7 +134,8 @@ function LocationInput({
   const [sessionToken, setSessionToken] = useState("");
   const { suggestions, loading, meta } = useSuggestionSearch(value.label, sessionToken, field, watchId);
   const hasSuggestions = suggestions.length > 0;
-  const showAutocomplete = focused && (loading || hasSuggestions);
+  const hasQuery = value.label.trim().length >= 2;
+  const showAutocomplete = focused && (loading || hasSuggestions || hasQuery);
 
   useEffect(() => {
     setActiveIndex(-1);
