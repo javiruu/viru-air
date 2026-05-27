@@ -1,4 +1,4 @@
-import type { CSSProperties, ElementType, ReactNode } from "react";
+import React, { type CSSProperties, type ElementType, type ReactNode } from "react";
 
 type SkeletonVariant = "line" | "pill" | "block" | "circle" | "card";
 

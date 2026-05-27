@@ -2,10 +2,8 @@ import "../styles/globals.css";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Suspense } from "react";
 
 import { NotificationCenterProvider } from "@/components/components/notifications/notification-center";
-import NavigationPendingOverlay from "@/modules/shared/NavigationPendingOverlay";
 import ScrollActivityScrollbar from "@/modules/shared/ScrollActivityScrollbar";
 
 export const metadata: Metadata = {
@@ -43,9 +41,6 @@ gtag('config', '${gaMeasurementId}');`}
       <body>
         <ScrollActivityScrollbar />
         <NotificationCenterProvider>
-          <Suspense fallback={null}>
-            <NavigationPendingOverlay />
-          </Suspense>
           <a className="skip-link" href="#main-content">
             Saltar al contenido
           </a>
