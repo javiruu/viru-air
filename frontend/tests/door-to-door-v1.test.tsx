@@ -193,6 +193,7 @@ test("DoorToDoorPanel includes no-coverage-real handling, provider status and wa
   assert.match(source, /comparatorTitle/);
   assert.match(source, /recommendedReasons/);
   assert.match(source, /quickBadgesByOption/);
+  assert.match(source, /blablacarAlwaysVisibleHint/);
 });
 
 test("DoorToDoorPanel includes vertical timeline, trust modal trigger, and collapsible history", () => {
@@ -275,6 +276,7 @@ test("Door-to-door i18n includes provider-specific CTAs and source disclosure", 
   assert.match(i18nSource, /trustModalTitle/);
   assert.match(i18nSource, /openMapsShort/);
   assert.match(i18nSource, /moreActions/);
+  assert.match(i18nSource, /blablacarAlwaysVisibleHint/);
 });
 
 test("Door-to-door module has no mojibake markers", () => {
