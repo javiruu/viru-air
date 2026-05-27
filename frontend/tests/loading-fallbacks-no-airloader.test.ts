@@ -9,6 +9,8 @@ const FRONTEND_SRC = path.resolve(TEST_DIR, "../src");
 
 const fallbackFiles = [
   "app/loading.tsx",
+  "app/(private)/loading.tsx",
+  "app/(public)/loading.tsx",
   "app/page.tsx",
   "app/(public)/login/page.tsx",
   "app/(public)/register/page.tsx",
@@ -37,4 +39,15 @@ test("key loading fallbacks use skeletons instead of AirLoader", () => {
       `expected Skeleton usage in ${relativePath}`,
     );
   }
+});
+
+test("root layout does not mount the global navigation shimmer overlay", () => {
+  const layoutPath = path.join(FRONTEND_SRC, "app/layout.tsx");
+  const content = fs.readFileSync(layoutPath, "utf8");
+
+  assert.doesNotMatch(
+    content,
+    /NavigationPendingOverlay/,
+    "expected root layout to avoid global navigation overlay mounting",
+  );
 });
