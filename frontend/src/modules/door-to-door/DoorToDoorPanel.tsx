@@ -2,7 +2,7 @@
 
 import React, { FormEvent, KeyboardEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
-import { ExternalLink, ShieldAlert, ShieldCheck, MapPin } from "lucide-react";
+import { Compass, ExternalLink, Layers3, MapPin, Navigation, Route, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
@@ -26,6 +26,8 @@ import type {
   DoorToDoorLocation,
   OptionDeltaSummary,
   DoorToDoorOption,
+  DoorToDoorMapCapability,
+  DoorToDoorMapCapabilityKey,
   DoorToDoorProviderStatus,
   DoorToDoorPreferences,
   DoorToDoorResponse,
@@ -60,6 +62,91 @@ type SegmentNode = {
   badge: string;
   actions: Array<{ href: string; label: string; ariaLabel: string }>;
 };
+
+type CapabilitySectionKey = "layers" | "alternatives" | "arrival" | "visual" | "saved";
+
+type CapabilityCard = {
+  key: DoorToDoorMapCapabilityKey;
+  section: CapabilitySectionKey;
+  titleKey: string;
+  descriptionKey: string;
+};
+
+const CAPABILITY_CARDS: CapabilityCard[] = [
+  { key: "navigation", section: "layers", titleKey: "doorToDoor.mapHub.cards.navigation.title", descriptionKey: "doorToDoor.mapHub.cards.navigation.description" },
+  { key: "traffic", section: "layers", titleKey: "doorToDoor.mapHub.cards.traffic.title", descriptionKey: "doorToDoor.mapHub.cards.traffic.description" },
+  { key: "transit", section: "layers", titleKey: "doorToDoor.mapHub.cards.transit.title", descriptionKey: "doorToDoor.mapHub.cards.transit.description" },
+  { key: "alternatives", section: "alternatives", titleKey: "doorToDoor.mapHub.cards.alternatives.title", descriptionKey: "doorToDoor.mapHub.cards.alternatives.description" },
+  { key: "eco_route", section: "alternatives", titleKey: "doorToDoor.mapHub.cards.eco_route.title", descriptionKey: "doorToDoor.mapHub.cards.eco_route.description" },
+  { key: "nearby_pois", section: "arrival", titleKey: "doorToDoor.mapHub.cards.nearby_pois.title", descriptionKey: "doorToDoor.mapHub.cards.nearby_pois.description" },
+  { key: "incidents", section: "arrival", titleKey: "doorToDoor.mapHub.cards.incidents.title", descriptionKey: "doorToDoor.mapHub.cards.incidents.description" },
+  { key: "street_view_preview", section: "visual", titleKey: "doorToDoor.mapHub.cards.street_view_preview.title", descriptionKey: "doorToDoor.mapHub.cards.street_view_preview.description" },
+  { key: "offline", section: "visual", titleKey: "doorToDoor.mapHub.cards.offline.title", descriptionKey: "doorToDoor.mapHub.cards.offline.description" },
+  { key: "saved_places", section: "saved", titleKey: "doorToDoor.mapHub.cards.saved_places.title", descriptionKey: "doorToDoor.mapHub.cards.saved_places.description" },
+];
+
+function buildMapCapabilities(response: DoorToDoorResponse | null, providers: DoorToDoorProviderStatus[]): DoorToDoorMapCapability[] {
+  const providerByName = new Map(providers.map((provider) => [provider.name, provider]));
+  const input = response?.map_capabilities ?? {};
+  const hasGoogleRoutes = providerByName.get("google_routes")?.enabled || false;
+  const hasGooglePlaces = providerByName.get("google_places")?.enabled || false;
+  const hasGtfsTransit = providerByName.get("gtfs_transit")?.enabled || false;
+  const hasDeeplink = providers.some((provider) => provider.enabled && provider.source_type === "deeplink");
+
+  const defaults: Record<DoorToDoorMapCapabilityKey, Omit<DoorToDoorMapCapability, "key">> = {
+    navigation: hasGoogleRoutes
+      ? { state: "available", source_type: "maps", confidence: "live", why_missing: null }
+      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "google_routes_disabled" },
+    traffic: hasGoogleRoutes
+      ? { state: "partial", source_type: "maps", confidence: "cached", why_missing: "live_traffic_not_wired" }
+      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "traffic_layer_pending" },
+    transit: hasGtfsTransit
+      ? { state: "partial", source_type: "open_data", confidence: "cached", why_missing: "fares_and_booking_pending" }
+      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "gtfs_provider_disabled" },
+    alternatives: response?.options?.length
+      ? { state: "available", source_type: "api", confidence: "cached", why_missing: null }
+      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "route_candidates_pending" },
+    street_view_preview: hasGoogleRoutes
+      ? { state: "partial", source_type: "maps", confidence: "cached", why_missing: "immersive_preview_pending" }
+      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "street_view_not_connected" },
+    saved_places: { state: "partial", source_type: "api", confidence: "cached", why_missing: "shared_lists_pending" },
+    nearby_pois: hasGooglePlaces
+      ? { state: "partial", source_type: "api", confidence: "live", why_missing: "busy_times_and_parking_pending" }
+      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "google_places_disabled" },
+    offline: { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "offline_cache_not_implemented" },
+    incidents: hasGoogleRoutes
+      ? { state: "partial", source_type: "maps", confidence: "cached", why_missing: "incident_feed_pending" }
+      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "incident_source_not_connected" },
+    eco_route: hasDeeplink || hasGoogleRoutes
+      ? { state: "partial", source_type: hasGoogleRoutes ? "maps" : "deeplink", confidence: "cached", why_missing: "eco_scoring_pending" }
+      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "eco_route_provider_pending" },
+  };
+
+  const keys: DoorToDoorMapCapabilityKey[] = [
+    "navigation",
+    "traffic",
+    "transit",
+    "alternatives",
+    "street_view_preview",
+    "saved_places",
+    "nearby_pois",
+    "offline",
+    "incidents",
+    "eco_route",
+  ];
+  return keys.map((key) => {
+    const fromApi = input[key];
+    const fallback = defaults[key];
+    return {
+      key,
+      state: fromApi?.state ?? fallback.state,
+      source_type: fromApi?.source_type ?? fallback.source_type,
+      confidence: fromApi?.confidence ?? fallback.confidence,
+      last_checked_at: fromApi?.last_checked_at ?? null,
+      why_missing: fromApi?.why_missing ?? fallback.why_missing ?? null,
+    };
+  });
+}
 
 function useSuggestionSearch(
   value: string,
@@ -413,6 +500,22 @@ export function DoorToDoorPanel() {
     const estimateEnabled = enabled.filter((provider) => provider.source_type === "mock" || provider.source_type === "estimate");
     return { enabled: enabled.length, realEnabled: realEnabled.length, estimateEnabled: estimateEnabled.length };
   }, [providerStatus]);
+  const mapCapabilities = useMemo(() => buildMapCapabilities(response, providerStatus), [response, providerStatus]);
+  const mapCapabilitiesBySection = useMemo(() => {
+    return {
+      layers: CAPABILITY_CARDS.filter((card) => card.section === "layers"),
+      alternatives: CAPABILITY_CARDS.filter((card) => card.section === "alternatives"),
+      arrival: CAPABILITY_CARDS.filter((card) => card.section === "arrival"),
+      visual: CAPABILITY_CARDS.filter((card) => card.section === "visual"),
+      saved: CAPABILITY_CARDS.filter((card) => card.section === "saved"),
+    };
+  }, []);
+  const capabilityStatusClass = useCallback((state: DoorToDoorMapCapability["state"]) => {
+    if (state === "available") return "success";
+    if (state === "partial") return "warning";
+    if (state === "unavailable") return "error";
+    return "info";
+  }, []);
 
   const selectedPlan = useMemo(() => {
     if (!response) return null;
@@ -573,6 +676,27 @@ export function DoorToDoorPanel() {
     }
   }
 
+  function renderCapabilityCard(card: CapabilityCard) {
+    const capability = mapCapabilities.find((item) => item.key === card.key);
+    if (!capability) return null;
+    return (
+      <article key={card.key} className={`d2d-map-card is-${capability.state}`}>
+        <div className="d2d-map-card-head">
+          <strong>{t(card.titleKey)}</strong>
+          <span className={`status-pill ${capabilityStatusClass(capability.state)}`}>
+            {t(`doorToDoor.mapHub.state.${capability.state}`)}
+          </span>
+        </div>
+        <p>{t(card.descriptionKey)}</p>
+        <div className="d2d-map-card-meta">
+          <span>{t("doorToDoor.mapHub.source")}: {capability.source_type}</span>
+          <span>{t("doorToDoor.mapHub.confidence")}: {t(`doorToDoor.source.${capability.confidence}`)}</span>
+          {capability.why_missing ? <span>{t("doorToDoor.mapHub.pending")}: {capability.why_missing}</span> : null}
+        </div>
+      </article>
+    );
+  }
+
   return (
     <main className="shell d2d-page" id="main-content">
       <div className="page-header d2d-page-header">
@@ -688,6 +812,56 @@ export function DoorToDoorPanel() {
             <DoorToDoorFilters preferences={preferences} onChange={setPreferences} embedded={true} />
           </details>
         </aside>
+      </section>
+
+      <section className="panel panel-soft d2d-map-hub" aria-label={t("doorToDoor.mapHub.title")}>
+        <div className="d2d-section-head">
+          <h2>{t("doorToDoor.mapHub.title")}</h2>
+          <span>{t("doorToDoor.mapHub.subtitle")}</span>
+        </div>
+        <p className="panel-note">{t("doorToDoor.mapHub.summary")}</p>
+
+        <div className="d2d-map-hub-grid">
+          <section className="d2d-map-section">
+            <header>
+              <h3><Layers3 size={16} aria-hidden="true" /> {t("doorToDoor.mapHub.sections.layers")}</h3>
+              <p>{t("doorToDoor.mapHub.sections.layersBody")}</p>
+            </header>
+            <div className="d2d-map-cards">{mapCapabilitiesBySection.layers.map(renderCapabilityCard)}</div>
+          </section>
+
+          <section className="d2d-map-section">
+            <header>
+              <h3><Route size={16} aria-hidden="true" /> {t("doorToDoor.mapHub.sections.alternatives")}</h3>
+              <p>{t("doorToDoor.mapHub.sections.alternativesBody")}</p>
+            </header>
+            <div className="d2d-map-cards">{mapCapabilitiesBySection.alternatives.map(renderCapabilityCard)}</div>
+          </section>
+
+          <section className="d2d-map-section">
+            <header>
+              <h3><Compass size={16} aria-hidden="true" /> {t("doorToDoor.mapHub.sections.arrival")}</h3>
+              <p>{t("doorToDoor.mapHub.sections.arrivalBody")}</p>
+            </header>
+            <div className="d2d-map-cards">{mapCapabilitiesBySection.arrival.map(renderCapabilityCard)}</div>
+          </section>
+
+          <section className="d2d-map-section">
+            <header>
+              <h3><Navigation size={16} aria-hidden="true" /> {t("doorToDoor.mapHub.sections.visual")}</h3>
+              <p>{t("doorToDoor.mapHub.sections.visualBody")}</p>
+            </header>
+            <div className="d2d-map-cards">{mapCapabilitiesBySection.visual.map(renderCapabilityCard)}</div>
+          </section>
+
+          <section className="d2d-map-section">
+            <header>
+              <h3><MapPin size={16} aria-hidden="true" /> {t("doorToDoor.mapHub.sections.saved")}</h3>
+              <p>{t("doorToDoor.mapHub.sections.savedBody")}</p>
+            </header>
+            <div className="d2d-map-cards">{mapCapabilitiesBySection.saved.map(renderCapabilityCard)}</div>
+          </section>
+        </div>
       </section>
 
       {status === "empty" ? <DoorToDoorEmptyState hasWatch={Boolean(selectedWatch)} /> : null}

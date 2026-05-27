@@ -140,6 +140,7 @@ export type DoorToDoorResponse = {
   };
   options: DoorToDoorOption[];
   warnings: Array<{ code: string; message: string; provider?: string | null }>;
+  map_capabilities?: Partial<Record<DoorToDoorMapCapabilityKey, Omit<DoorToDoorMapCapability, "key">>>;
 };
 
 export type DoorToDoorSuggestion = DoorToDoorLocation & {
@@ -199,4 +200,27 @@ export type DoorToDoorProviderStatus = {
   supports_booking_url: boolean;
   has_tests: boolean;
   notes?: string | null;
+};
+
+export type DoorToDoorMapCapabilityKey =
+  | "navigation"
+  | "traffic"
+  | "transit"
+  | "alternatives"
+  | "street_view_preview"
+  | "saved_places"
+  | "nearby_pois"
+  | "offline"
+  | "incidents"
+  | "eco_route";
+
+export type DoorToDoorCapabilityState = "available" | "partial" | "planned" | "unavailable";
+
+export type DoorToDoorMapCapability = {
+  key: DoorToDoorMapCapabilityKey;
+  state: DoorToDoorCapabilityState;
+  source_type: DoorToDoorSource["source_type"] | "none";
+  confidence: DoorToDoorConfidence;
+  last_checked_at?: string | null;
+  why_missing?: string | null;
 };

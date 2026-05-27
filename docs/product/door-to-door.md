@@ -97,3 +97,28 @@ La UI debe mantener identidad Viru:
 - compatible dark/light;
 - con radar abstracto, timeline, boarding-pass cues, IATA y panel de decisión;
 - con jerarquía clara entre recomendada, alternativas, ruta visual, desglose y fuentes.
+
+## Base parcial inspirada en Google Maps
+
+V1.3 incorpora un "Hub de capas y herramientas" dentro de `/puerta-a-puerta` para mantener una base completa parcial sin romper el foco actual de timeline + decision.
+
+El hub organiza capacidades por bloques:
+
+- capas del mapa;
+- rutas alternativas;
+- explorar zona de llegada;
+- verificacion visual;
+- guardados.
+
+Cada capacidad declara estado y transparencia operacional:
+
+- `available` (real);
+- `partial` (parcial funcional);
+- `planned` (sembrado para fases siguientes);
+- `unavailable` (no disponible en entorno actual).
+
+La implementacion mantiene el enfoque hibrido honesto:
+
+- reutiliza providers reales existentes (`google_routes`, `google_places`, `gtfs_transit`, deeplinks externos);
+- evita simular cobertura total;
+- muestra limites y pendientes de forma explicita por capacidad.
