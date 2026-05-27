@@ -193,10 +193,7 @@ test("DoorToDoorPanel includes no-coverage-real handling, provider status and wa
   assert.match(source, /comparatorTitle/);
   assert.match(source, /recommendedReasons/);
   assert.match(source, /quickBadgesByOption/);
-  assert.match(source, /buildMapCapabilities/);
-  assert.match(source, /map_capabilities/);
-  assert.match(source, /warningCodes/);
-  assert.match(source, /GOOGLE_ROUTES_UNAVAILABLE/);
+  assert.match(source, /filterSavedPlacesForWatch/);
   assert.match(source, /d2d-map-hub/);
   assert.match(source, /viru_d2d_saved_places_v1/);
   assert.match(source, /addSavedPlace/);

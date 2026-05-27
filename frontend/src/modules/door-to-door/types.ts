@@ -165,6 +165,14 @@ export type DoorToDoorSavedLocation = DoorToDoorLocation & {
   updated_at: string;
 };
 
+export type DoorToDoorSavedPlace = {
+  id: string;
+  label: string;
+  note: string;
+  created_at: string;
+  watch_id: string | null;
+};
+
 export type DoorToDoorHistoryItem = {
   id: string;
   watch_id: string;
