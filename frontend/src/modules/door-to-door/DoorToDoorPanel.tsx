@@ -163,6 +163,12 @@ function LocationInput({
   }, [newSessionToken]);
 
   function onInputKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (suggestions.length === 0) {
+      if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Enter") {
+        event.preventDefault();
+      }
+      return;
+    }
     if (!showAutocomplete) {
       if (event.key === "ArrowDown" && hasSuggestions) {
         event.preventDefault();

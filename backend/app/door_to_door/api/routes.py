@@ -301,15 +301,45 @@ def list_history(
     if watch_id:
         query = query.where(DoorToDoorSearchHistory.watch_id == watch_id)
     rows = list(db.scalars(query.order_by(DoorToDoorSearchHistory.created_at.desc(), DoorToDoorSearchHistory.id.desc()).limit(20)))
-    chosen_rows = list(db.scalars(select(DoorToDoorChosenOption).where(DoorToDoorChosenOption.user_id == current_user.id)))
-    chosen_by_history = {item.history_id: item.option_id for item in chosen_rows if item.history_id}
-    return [_history_out(row, chosen_by_history.get(row.id)) for row in rows]
+    chosen_rows = list(
+        db.scalars(
+            select(DoorToDoorChosenOption)
+            .where(DoorToDoorChosenOption.user_id == current_user.id)
+            .order_by(DoorToDoorChosenOption.chosen_at.desc(), DoorToDoorChosenOption.id.desc())
+        )
+    )
+    chosen_by_history: dict[str, str] = {}
+    for item in chosen_rows:
+        if not item.history_id or item.history_id in chosen_by_history:
+            continue
+        chosen_by_history[item.history_id] = item.option_id
+    return [_history_out(row, chosen_by_history.get(row.id), current_user.id) for row in rows]
 
 
-def _history_out(row: DoorToDoorSearchHistory, chosen_option_id: str | None) -> DoorToDoorHistoryOut:
-    origin = json.loads(row.origin_json)
-    final_destination = json.loads(row.final_destination_json)
-    summary = json.loads(row.summary_json)
+def _safe_json_object(value: str, *, field_name: str, history_id: str, user_id: str) -> dict:
+    try:
+        parsed = json.loads(value)
+    except (TypeError, ValueError):
+        logger.warning(
+            "door_to_door_history_invalid_json",
+            extra={"history_id": history_id, "user_id": user_id, "field": field_name},
+        )
+        return {}
+    if isinstance(parsed, dict):
+        return parsed
+    logger.warning(
+        "door_to_door_history_invalid_json_shape",
+        extra={"history_id": history_id, "user_id": user_id, "field": field_name},
+    )
+    return {}
+
+
+def _history_out(row: DoorToDoorSearchHistory, chosen_option_id: str | None, user_id: str) -> DoorToDoorHistoryOut:
+    origin = _safe_json_object(row.origin_json, field_name="origin_json", history_id=row.id, user_id=user_id)
+    final_destination = _safe_json_object(
+        row.final_destination_json, field_name="final_destination_json", history_id=row.id, user_id=user_id
+    )
+    summary = _safe_json_object(row.summary_json, field_name="summary_json", history_id=row.id, user_id=user_id)
     recommended = summary.get("recommended") or {}
     return DoorToDoorHistoryOut(
         id=row.id,

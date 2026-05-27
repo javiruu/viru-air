@@ -3,6 +3,9 @@ from urllib.parse import parse_qs, urlparse
 
 from fastapi.testclient import TestClient
 
+from app.infrastructure.db.models import DoorToDoorSearchHistory
+from app.infrastructure.db.session import get_db
+from app.main import app
 from app.door_to_door.domain.risk import calculate_risk_level
 from app.door_to_door.domain.scoring import score_itinerary
 from app.door_to_door.providers.base import DoorToDoorProvider, DoorToDoorProviderQuery
@@ -70,6 +73,13 @@ def _search_payload(watch_id: str) -> dict:
             "sort_by": "best_balance",
         },
     }
+
+
+def _open_test_db_session():
+    override = app.dependency_overrides[get_db]
+    db_gen = override()
+    db = next(db_gen)
+    return db, db_gen
 
 
 def test_mock_active_returns_mock_options_with_warning(client: TestClient, monkeypatch) -> None:
@@ -792,3 +802,68 @@ def test_gtfs_provider_status_is_honest(client: TestClient, monkeypatch) -> None
     assert statuses["gtfs_transit"]["supports_booking_url"] is False
     assert statuses["gtfs_transit"]["has_tests"] is True
     assert statuses["gtfs_transit"]["production_ready"] is False
+
+
+def test_history_returns_last_chosen_option_for_same_history_id(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(monkeypatch, mock=True, real=False, scrapers=False)
+    headers = _auth_headers(client, "history-last-chosen@viru.dev")
+    watch_id = _create_watch(client, headers)
+
+    search_response = client.post("/api/v1/door-to-door/search", json=_search_payload(watch_id), headers=headers)
+    assert search_response.status_code == 200, search_response.text
+    search_body = search_response.json()
+    history_id = search_body["summary"]["history_id"]
+    assert history_id
+    first = {"id": "option_first", "label": "First choice"}
+    second = {"id": "option_second", "label": "Second choice"}
+
+    choose_first = client.post(
+        f"/api/v1/door-to-door/history/{history_id}/chosen",
+        json={"option_id": first["id"], "option_label": first["label"], "option_summary": {}},
+        headers=headers,
+    )
+    assert choose_first.status_code == 200, choose_first.text
+    choose_second = client.post(
+        f"/api/v1/door-to-door/history/{history_id}/chosen",
+        json={"option_id": second["id"], "option_label": second["label"], "option_summary": {}},
+        headers=headers,
+    )
+    assert choose_second.status_code == 200, choose_second.text
+
+    history_response = client.get(f"/api/v1/door-to-door/history?watch_id={watch_id}", headers=headers)
+    assert history_response.status_code == 200, history_response.text
+    history_items = history_response.json()
+    assert history_items
+    target = next(item for item in history_items if item["id"] == history_id)
+    assert target["chosen_option_id"] == second["id"]
+
+
+def test_history_tolerates_corrupted_summary_json(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(monkeypatch, mock=True, real=False, scrapers=False)
+    headers = _auth_headers(client, "history-corrupt-json@viru.dev")
+    watch_id = _create_watch(client, headers)
+
+    search_response = client.post("/api/v1/door-to-door/search", json=_search_payload(watch_id), headers=headers)
+    assert search_response.status_code == 200, search_response.text
+    history_id = search_response.json()["summary"]["history_id"]
+    assert history_id
+
+    db, db_gen = _open_test_db_session()
+    try:
+        row = db.get(DoorToDoorSearchHistory, history_id)
+        assert row is not None
+        row.summary_json = "{broken-json"
+        db.commit()
+    finally:
+        db_gen.close()
+
+    history_response = client.get(f"/api/v1/door-to-door/history?watch_id={watch_id}", headers=headers)
+    assert history_response.status_code == 200, history_response.text
+    history_items = history_response.json()
+    assert history_items
+    target = next(item for item in history_items if item["id"] == history_id)
+    assert target["recommended_option_id"] is None
+    assert target["recommended_label"] is None
+    assert target["total_price_min"] is None
+    assert target["total_price_max"] is None
+    assert target["risk_level"] is None
