@@ -1,6 +1,6 @@
 "use client";
 
-import React, { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import React, { FormEvent, KeyboardEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { ExternalLink, ShieldAlert, ShieldCheck, MapPin } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -60,22 +60,36 @@ type SegmentNode = {
   actions: Array<{ href: string; label: string; ariaLabel: string }>;
 };
 
-function useSuggestionSearch(value: string) {
+function useSuggestionSearch(value: string, sessionToken: string) {
   const [suggestions, setSuggestions] = useState<DoorToDoorSuggestion[]>([]);
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
+    const query = value.trim();
+    if (query.length < 2) {
+      setSuggestions([]);
+      setLoading(false);
+      return;
+    }
     let alive = true;
-    fetchDoorToDoorSuggestions(value)
+    setLoading(true);
+    const timeoutId = window.setTimeout(() => {
+      fetchDoorToDoorSuggestions(query, sessionToken)
       .then((items) => {
-        if (alive) setSuggestions(items.slice(0, 6));
+        if (alive) setSuggestions(items.slice(0, 8));
       })
       .catch(() => {
         if (alive) setSuggestions([]);
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
       });
+    }, 180);
     return () => {
       alive = false;
+      window.clearTimeout(timeoutId);
     };
-  }, [value]);
-  return suggestions;
+  }, [value, sessionToken]);
+  return { suggestions, loading };
 }
 
 function LocationInput({
@@ -90,7 +104,69 @@ function LocationInput({
   onChange: (location: DoorToDoorLocation) => void;
 }) {
   const [focused, setFocused] = useState(false);
-  const suggestions = useSuggestionSearch(value.label);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const sessionTokenRef = useRef<string>("");
+  const listboxId = useId();
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const newSessionToken = useCallback(() => {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+    return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }, []);
+  const [sessionToken, setSessionToken] = useState("");
+  const { suggestions, loading } = useSuggestionSearch(value.label, sessionToken);
+  const hasSuggestions = suggestions.length > 0;
+  const showAutocomplete = focused && (loading || hasSuggestions);
+
+  useEffect(() => {
+    setActiveIndex(-1);
+  }, [value.label, suggestions.length]);
+
+  const selectSuggestion = useCallback((suggestion: DoorToDoorSuggestion) => {
+    onChange(suggestion);
+    setFocused(false);
+    setActiveIndex(-1);
+    setSessionToken("");
+    sessionTokenRef.current = "";
+  }, [onChange]);
+
+  const ensureSessionToken = useCallback(() => {
+    if (!sessionTokenRef.current) {
+      const token = newSessionToken();
+      sessionTokenRef.current = token;
+      setSessionToken(token);
+    }
+  }, [newSessionToken]);
+
+  function onInputKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (!showAutocomplete) {
+      if (event.key === "ArrowDown" && hasSuggestions) {
+        event.preventDefault();
+        setActiveIndex(0);
+      }
+      return;
+    }
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveIndex((current) => (current + 1) % suggestions.length);
+      return;
+    }
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveIndex((current) => (current <= 0 ? suggestions.length - 1 : current - 1));
+      return;
+    }
+    if (event.key === "Enter" && activeIndex >= 0 && activeIndex < suggestions.length) {
+      event.preventDefault();
+      selectSuggestion(suggestions[activeIndex]);
+      return;
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setFocused(false);
+      setActiveIndex(-1);
+    }
+  }
+
   return (
     <label className="field d2d-autocomplete qs-label" htmlFor={id}>
       <span>{label}</span>
@@ -101,35 +177,49 @@ function LocationInput({
           </span>
         </span>
         <input
+          ref={inputRef}
           id={id}
           className="qs-input qs-input-with-action"
           value={value.label}
           onChange={(event) => onChange({ ...value, label: event.target.value, type: value.type || "city" })}
-          onFocus={() => setFocused(true)}
+          onFocus={() => {
+            setFocused(true);
+            ensureSessionToken();
+          }}
           onBlur={() => window.setTimeout(() => setFocused(false), 120)}
+          onKeyDown={onInputKeyDown}
           autoComplete="off"
+          role="combobox"
+          aria-expanded={showAutocomplete}
+          aria-autocomplete="list"
+          aria-controls={listboxId}
+          aria-activedescendant={activeIndex >= 0 ? `${id}-option-${activeIndex}` : undefined}
         />
         <button
           type="button"
           className="qs-input-inline-action"
-          onClick={() => document.getElementById(id)?.focus()}
+          onClick={() => inputRef.current?.focus()}
           tabIndex={-1}
           aria-hidden="true"
         >
           <MapPin size={14} strokeWidth={2.5} />
         </button>
-        {focused && suggestions.length > 0 ? (
-          <ul className="qs-autocomplete" role="listbox" aria-label={`${label}: sugerencias`}>
-            {suggestions.map((suggestion) => (
-              <li key={suggestion.id} role="option" aria-selected={false}>
+        {showAutocomplete ? (
+          <ul id={listboxId} className="qs-autocomplete" role="listbox" aria-label={`${label}: sugerencias`}>
+            {loading && suggestions.length === 0 ? (
+              <li role="option" aria-selected={false} className="qs-autocomplete-item">
+                <span>Cargando sugerencias...</span>
+              </li>
+            ) : null}
+            {suggestions.map((suggestion, index) => (
+              <li key={suggestion.id} id={`${id}-option-${index}`} role="option" aria-selected={index === activeIndex}>
                 <button
                   type="button"
                   className="qs-autocomplete-item"
+                  data-active={index === activeIndex ? "true" : "false"}
                   onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => {
-                    onChange(suggestion);
-                    setFocused(false);
-                  }}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onClick={() => selectSuggestion(suggestion)}
                 >
                   <strong>{suggestion.label}</strong>
                   <span>{suggestion.subtitle}</span>

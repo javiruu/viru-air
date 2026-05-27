@@ -9,8 +9,10 @@ import type {
   DoorToDoorProviderStatus,
 } from "@/modules/door-to-door/types";
 
-export function fetchDoorToDoorSuggestions(query: string): Promise<DoorToDoorSuggestion[]> {
-  return apiFetch<DoorToDoorSuggestion[]>(`/door-to-door/suggestions?q=${encodeURIComponent(query)}`);
+export function fetchDoorToDoorSuggestions(query: string, sessionToken?: string): Promise<DoorToDoorSuggestion[]> {
+  const params = new URLSearchParams({ q: query });
+  if (sessionToken) params.set("session_token", sessionToken);
+  return apiFetch<DoorToDoorSuggestion[]>(`/door-to-door/suggestions?${params.toString()}`);
 }
 
 export function fetchDoorToDoorProviderStatus(): Promise<DoorToDoorProviderStatus[]> {

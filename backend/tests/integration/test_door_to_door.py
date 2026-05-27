@@ -160,6 +160,34 @@ def test_blablacar_deeplink_fallback_without_place_id_keeps_valid_url(client: Te
     assert any(warning["code"] == "BLABLACAR_DEEPLINK_PARTIAL" for warning in body["warnings"])
 
 
+def test_blablacar_remains_visible_when_rideshare_is_disabled(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(monkeypatch, mock=False, real=True, scrapers=False)
+    headers = _auth_headers(client, "deeplink-rideshare-off@viru.dev")
+    watch_id = _create_watch(client, headers)
+    payload = _search_payload(watch_id)
+    payload["preferences"]["allow_rideshare"] = False
+
+    response = client.post("/api/v1/door-to-door/search", json=payload, headers=headers)
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert any(option["id"] == "option_blablacar_deeplink" for option in body["options"])
+
+
+def test_blablacar_remains_visible_when_public_transport_only_is_enabled(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(monkeypatch, mock=False, real=True, scrapers=False)
+    headers = _auth_headers(client, "deeplink-public-only@viru.dev")
+    watch_id = _create_watch(client, headers)
+    payload = _search_payload(watch_id)
+    payload["preferences"]["public_transport_only"] = True
+
+    response = client.post("/api/v1/door-to-door/search", json=payload, headers=headers)
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert any(option["id"] == "option_blablacar_deeplink" for option in body["options"])
+
+
 def test_provider_status_classifies_stubs_and_runtime_flags(client: TestClient, monkeypatch) -> None:
     _set_provider_env(monkeypatch, mock=False, real=True, scrapers=False)
     headers = _auth_headers(client, "status@viru.dev")
@@ -492,7 +520,7 @@ def test_suggestions_merge_local_static_and_google_places(client: TestClient, mo
     from app.door_to_door.providers import google_places
     from app.door_to_door.schemas import DoorToDoorSuggestionOut
 
-    async def _fake_suggest(self, query, *, limit=6):  # noqa: ANN001
+    async def _fake_suggest(self, query, *, limit=6, session_token=None):  # noqa: ANN001
         return [
             DoorToDoorSuggestionOut(
                 id="google_treviso",
