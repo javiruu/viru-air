@@ -14,6 +14,7 @@ import { SmartWatchListPanel } from "@/modules/watchlist/components/SmartWatchLi
 import { WatchDetailPanel } from "@/modules/watchlist/components/WatchDetailPanel";
 import { monthLabel } from "@/modules/watchlist/dateUtils";
 import { useWatchlistController } from "@/modules/watchlist/useWatchlistController";
+import { Skeleton, SkeletonPanel } from "@/modules/shared/Skeleton";
 
 const WatchlistMapDecisionPanel = dynamic(
   () =>
@@ -29,12 +30,11 @@ const WatchlistMapDecisionPanel = dynamic(
 function WatchlistMapLoadingPanel() {
   const { t } = useI18n();
   return (
-    <section className="panel panel-soft watch-map-panel section-gap">
-      <div className="panel-header">
-        <h2 className="panel-title">{t("watchlist.mapLoadingTitle")}</h2>
-      </div>
-      <p className="panel-note">{t("watchlist.mapLoadingBody")}</p>
-    </section>
+    <SkeletonPanel className="watch-map-panel section-gap" ariaLabel={t("watchlist.mapLoadingBody")}>
+      <Skeleton variant="pill" width={170} height={18} />
+      <Skeleton variant="line" width="64%" />
+      <Skeleton variant="card" className="loading-skeleton-card" />
+    </SkeletonPanel>
   );
 }
 

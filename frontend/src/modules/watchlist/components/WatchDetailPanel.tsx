@@ -5,6 +5,7 @@ import { DoorToDoorWatchlistSuggestion } from "@/modules/door-to-door/components
 import { safeDateTime } from "@/modules/watchlist/presentation";
 import { getFreshnessPresentation, getHistoryConfidence, hasPriceSummaryData } from "@/modules/watchlist/summary";
 import type { PriceSummary, Watch, WatchDetail } from "@/modules/watchlist/types";
+import { Skeleton } from "@/modules/shared/Skeleton";
 
 type WatchDetailPanelProps = {
   selectedWatch: Watch | null;
@@ -84,7 +85,7 @@ export function WatchDetailPanel({
         <div>
           <h2 className="panel-title">{t("watchlist.detail.title")}</h2>
         </div>
-        {isLoading ? <span className="panel-note">{t("watchlist.detail.loading")}</span> : null}
+        {isLoading ? <Skeleton variant="pill" width={112} height={18} /> : null}
       </header>
 
       <div className="watch-detail-hero">
@@ -188,6 +189,5 @@ export function WatchDetailPanel({
 // watchlist.summary.delta
 // watchlist.summary.count
 // confidence.level !== "none"
-
 
 

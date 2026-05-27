@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
-import AirLoader from "@/modules/shared/AirLoader";
 import { apiFetch } from "@/modules/shared/api";
+import { SkeletonForm } from "@/modules/shared/Skeleton";
 import { Pref } from "@/modules/quick-search/types";
 import {
   buildSearchPreferenceSummary,
@@ -135,21 +135,16 @@ export default function PreferenciasBusquedaPage() {
             <p>{t("preferences.search.subtitle")}</p>
           </div>
         </div>
-        <section className="panel panel-soft air-loader-section">
-          {loadFailed ? (
-            <>
-              <p className="muted">{t("preferences.search.loadError")}</p>
-              <button className="btn-primary" type="button" onClick={loadPreferences}>
-                {t("shared.actions.retry")}
-              </button>
-            </>
-          ) : (
-            <>
-              <AirLoader size={0.85} />
-              <p className="muted">{t("preferences.search.loading")}</p>
-            </>
-          )}
-        </section>
+        {loadFailed ? (
+          <section className="panel panel-soft air-loader-section">
+            <p className="muted">{t("preferences.search.loadError")}</p>
+            <button className="btn-primary" type="button" onClick={loadPreferences}>
+              {t("shared.actions.retry")}
+            </button>
+          </section>
+        ) : (
+          <SkeletonForm className="air-loader-section" ariaLabel={t("preferences.search.loading")} />
+        )}
       </main>
     );
   }

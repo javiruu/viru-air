@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import ThemeToggle from "@/modules/shared/ThemeToggle";
-import AirLoader from "@/modules/shared/AirLoader";
+import { Skeleton, SkeletonPanel } from "@/modules/shared/Skeleton";
 import ViruFooterBlock from "@/modules/shared/ViruFooterBlock";
 import { apiFetchWithStatus } from "@/modules/shared/api";
 import { clearToken, hasToken } from "@/modules/shared/auth";
@@ -49,10 +49,15 @@ export default function HomePage() {
   if (state === "checking") {
     return (
       <main className="shell landing-shell" id="main-content">
-        <section className="panel panel-soft landing-check air-loader-section">
-          <AirLoader />
-          <p className="muted">{t("public.landing.checkingSession")}</p>
-        </section>
+        <SkeletonPanel className="landing-check air-loader-section" ariaLabel={t("public.landing.checkingSession")}>
+          <Skeleton variant="pill" width={180} height={18} />
+          <Skeleton variant="line" width="68%" />
+          <Skeleton variant="line" width="52%" />
+          <div className="loading-skeleton-row" aria-hidden="true">
+            <Skeleton variant="card" className="loading-skeleton-card" />
+            <Skeleton variant="card" className="loading-skeleton-card" />
+          </div>
+        </SkeletonPanel>
       </main>
     );
   }

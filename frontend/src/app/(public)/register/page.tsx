@@ -9,7 +9,7 @@ import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
 import { AuthOut, clearToken, hasToken, saveToken } from "@/modules/shared/auth";
 import { resolvePostAuthUrl } from "@/modules/shared/navigation";
 import ThemeToggle from "@/modules/shared/ThemeToggle";
-import AirLoader from "@/modules/shared/AirLoader";
+import { SkeletonForm } from "@/modules/shared/Skeleton";
 import { useI18n } from "@/i18n";
 
 function RegisterContent() {
@@ -114,10 +114,7 @@ export default function RegisterPage() {
     <Suspense
       fallback={
         <main className="shell" id="main-content">
-          <section className="panel panel-soft air-loader-section">
-            <AirLoader size={0.85} />
-            <p className="muted">{t("public.auth.registerLoading")}</p>
-          </section>
+          <SkeletonForm className="air-loader-section" ariaLabel={t("public.auth.registerLoading")} />
         </main>
       }
     >

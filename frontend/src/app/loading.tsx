@@ -1,13 +1,11 @@
 "use client";
 
-import AirLoader from "@/modules/shared/AirLoader";
+import { SkeletonPanel } from "@/modules/shared/Skeleton";
 
 export default function Loading() {
   return (
     <main className="shell air-loader-screen" id="main-content">
-      <section className="panel panel-soft air-loader-section">
-        <AirLoader />
-      </section>
+      <SkeletonPanel className="air-loader-section" ariaLabel="Cargando contenido" />
     </main>
   );
 }

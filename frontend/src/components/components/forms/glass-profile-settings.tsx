@@ -18,7 +18,7 @@ import {
   X,
 } from "lucide-react";
 
-import AirLoader from "@/modules/shared/AirLoader";
+import { Skeleton } from "@/modules/shared/Skeleton";
 
 export type GlassProfileData = {
   display_name: string;
@@ -155,12 +155,12 @@ export function GlassProfileSettingsCard({
 
         <section className="account-profile-glass account-profile-loading">
           <div className="account-profile-loading-copy">
-            <span className="account-profile-kicker">{t("account.profile.identityTitle")}</span>
-            <h2>{t("account.profile.pageSubtitle")}</h2>
-            <p>{t("shared.states.loading")}</p>
+            <Skeleton variant="pill" width={152} height={16} />
+            <Skeleton variant="line" width="78%" height={20} />
+            <Skeleton variant="line" width="66%" />
           </div>
-          <div className="air-loader-section">
-            <AirLoader size={0.9} />
+          <div className="air-loader-section" aria-hidden="true">
+            <Skeleton variant="circle" width={78} height={78} />
           </div>
         </section>
       </main>

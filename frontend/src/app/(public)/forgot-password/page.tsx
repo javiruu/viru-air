@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { GlassForgotPasswordCard } from "@/components/components/forms/glass-forgot-password";
 import ThemeToggle from "@/modules/shared/ThemeToggle";
-import AirLoader from "@/modules/shared/AirLoader";
+import { SkeletonForm } from "@/modules/shared/Skeleton";
 import { useI18n } from "@/i18n";
 import { submitForgotPassword } from "@/modules/shared/forgot-password";
 
@@ -70,10 +70,7 @@ export default function ForgotPasswordPage() {
     <Suspense
       fallback={
         <main className="shell" id="main-content">
-          <section className="panel panel-soft air-loader-section">
-            <AirLoader size={0.85} />
-            <p className="muted">{t("public.auth.forgotLoading")}</p>
-          </section>
+          <SkeletonForm className="air-loader-section" ariaLabel={t("public.auth.forgotLoading")} />
         </main>
       }
     >

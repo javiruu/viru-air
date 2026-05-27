@@ -8,7 +8,7 @@ import { useNotificationCenter } from "@/components/components/notifications/not
 import { apiFetchWithStatus } from "@/modules/shared/api";
 import { clearToken, hasToken } from "@/modules/shared/auth";
 import { buildLoginRedirect, currentPathWithSearch } from "@/modules/shared/navigation";
-import AirLoader from "@/modules/shared/AirLoader";
+import { Skeleton, SkeletonPanel } from "@/modules/shared/Skeleton";
 import { persistLocale, useI18n } from "@/i18n";
 
 type GateState = "checking" | "authed" | "redirecting";
@@ -75,11 +75,11 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
   if (state !== "authed") {
     return (
       <main className="shell auth-guard">
-        <div className="panel panel-soft auth-guard-card air-loader-wrap">
-          <AirLoader />
-          <div className="auth-guard-title">{t("account.authGuard.title")}</div>
-          <p>{t("account.authGuard.body")}</p>
-        </div>
+        <SkeletonPanel className="auth-guard-card air-loader-wrap" ariaLabel={t("account.authGuard.title")}>
+          <Skeleton variant="pill" width={220} height={18} />
+          <Skeleton variant="line" width="74%" />
+          <Skeleton variant="line" width="58%" />
+        </SkeletonPanel>
       </main>
     );
   }
