@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
 import asyncio
+import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -110,3 +111,83 @@ def test_google_routes_provider_uses_cache(monkeypatch) -> None:
     assert second
     assert second[0].sources[0].confidence == "cached"
     assert call_counter["count"] == 2
+
+
+def test_google_routes_walking_payload_omits_traffic_aware(monkeypatch) -> None:
+    monkeypatch.setenv("DOOR_TO_DOOR_ENABLE_GOOGLE_ROUTES", "1")
+    monkeypatch.setenv("GOOGLE_MAPS_API_KEY", "fake-google-key")
+
+    captured_payloads: list[dict] = []
+
+    def fake_post(*args, **kwargs):  # noqa: ANN002,ANN003
+        captured_payloads.append(kwargs.get("json") or {})
+        return _FakeResponse(200, {"routes": [{"duration": "1200s", "distanceMeters": 1200}]})
+
+    monkeypatch.setattr("app.door_to_door.providers.google_routes.requests.post", fake_post)
+    provider = GoogleRoutesProvider()
+
+    result = provider._fetch_route(
+        (36.834, -2.463),
+        (36.675, -4.499),
+        "walking",
+        datetime(2026, 6, 14, 8, 0, tzinfo=MADRID),
+    )
+
+    assert result is not None
+    assert captured_payloads
+    assert captured_payloads[0]["travelMode"] == "WALKING"
+    assert "routingPreference" not in captured_payloads[0]
+    assert "departureTime" not in captured_payloads[0]
+
+
+def test_google_routes_logs_http_failures(monkeypatch, caplog) -> None:
+    monkeypatch.setenv("DOOR_TO_DOOR_ENABLE_GOOGLE_ROUTES", "1")
+    monkeypatch.setenv("GOOGLE_MAPS_API_KEY", "fake-google-key")
+
+    class _FailingResponse(_FakeResponse):
+        text = "bad request"
+
+    def fake_post(*args, **kwargs):  # noqa: ANN002,ANN003
+        return _FailingResponse(400, {})
+
+    monkeypatch.setattr("app.door_to_door.providers.google_routes.requests.post", fake_post)
+    provider = GoogleRoutesProvider()
+
+    with caplog.at_level("WARNING"):
+        result = provider._fetch_route(
+            (36.834, -2.463),
+            (36.675, -4.499),
+            "driving",
+            datetime(2026, 6, 14, 8, 0, tzinfo=MADRID),
+        )
+
+    assert result is None
+    log_payload = json.loads(caplog.records[-1].message)
+    assert log_payload["event"] == "google_routes_compute_failed"
+    assert log_payload["status_code"] == 400
+    assert log_payload["provider"] == "google_routes"
+
+
+def test_google_routes_logs_request_exceptions(monkeypatch, caplog) -> None:
+    monkeypatch.setenv("DOOR_TO_DOOR_ENABLE_GOOGLE_ROUTES", "1")
+    monkeypatch.setenv("GOOGLE_MAPS_API_KEY", "fake-google-key")
+
+    def fake_post(*args, **kwargs):  # noqa: ANN002,ANN003
+        raise RuntimeError("network down")
+
+    monkeypatch.setattr("app.door_to_door.providers.google_routes.requests.post", fake_post)
+    provider = GoogleRoutesProvider()
+
+    with caplog.at_level("WARNING"):
+        result = provider._fetch_route(
+            (36.834, -2.463),
+            (36.675, -4.499),
+            "driving",
+            datetime(2026, 6, 14, 8, 0, tzinfo=MADRID),
+        )
+
+    assert result is None
+    log_payload = json.loads(caplog.records[-1].message)
+    assert log_payload["event"] == "google_routes_request_exception"
+    assert log_payload["provider"] == "google_routes"
+    assert log_payload["error_type"] == "RuntimeError"
