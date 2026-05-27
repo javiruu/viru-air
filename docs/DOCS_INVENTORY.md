@@ -389,6 +389,24 @@ Entradas vivas agregadas:
 - docs/qa/reports/2026-05-12-watchlist-w9-2-history-rescue.md
 
 
+## Actualizacion manual 2026-05-27 (FreeDomain domain setup)
+
+Entradas vivas agregadas:
+
+- `docs/runbooks/runbook-free-domain-setup.md`
+- `infra/Caddyfile`
+- `infra/docker-compose.prod.yml`
+- `infra/.env.prod.example`
+
+Entradas vivas actualizadas:
+
+- `infra/docker-compose.yml`
+- `infra/docker-compose.relaunch.yml`
+- `backend/.env.example`
+- `frontend/.env.example`
+- `backend/app/main.py`
+- `docs/INDICE_UNICO.md`
+
 ## Actualizacion manual 2026-05-20 (Puerta a puerta V1)
 
 Entradas vivas agregadas:

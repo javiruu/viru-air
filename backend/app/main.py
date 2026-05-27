@@ -76,6 +76,14 @@ def _parse_cors_origins() -> list[str]:
         "http://45.136.18.49:3300",
         "http://192.168.56.1:3000",
     ]
+
+    # Automatically add the configured DOMAIN (https) when set (e.g. via FreeDomain).
+    domain = os.getenv("DOMAIN", "").strip()
+    if domain:
+        domain_origin = f"https://{domain}"
+        if domain_origin not in default_origins:
+            default_origins = [*default_origins, domain_origin]
+
     env_value = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
     if env_value:
         env_origins = [item.strip() for item in env_value.split(",") if item.strip()]
@@ -129,13 +137,20 @@ class AccessLogMiddleware:
                 "ac_request_headers": headers.get("access-control-request-headers"),
             }
             logger.info(json.dumps(log_payload, ensure_ascii=False))
+_env_regex = os.getenv("CORS_ALLOW_ORIGIN_REGEX")
+if _env_regex is None:
+    _allow_origin_regex: str | None = (
+        r"^https?://(45\.136\.18\.49|localhost|127\.0\.0\.1)(?::\d+)?$"
+    )
+elif _env_regex.strip() == "":
+    _allow_origin_regex = None  # Explicitly disabled
+else:
+    _allow_origin_regex = _env_regex
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_parse_cors_origins(),
-    allow_origin_regex=os.getenv(
-        "CORS_ALLOW_ORIGIN_REGEX",
-        r"^https?://(45\.136\.18\.49|localhost|127\.0\.0\.1)(?::\d+)?$",
-    ),
+    allow_origin_regex=_allow_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

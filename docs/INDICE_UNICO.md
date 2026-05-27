@@ -99,6 +99,7 @@
 ### Runbooks
 
 - [Runbooks operativos](runbooks/)
+- [Configuración de dominio gratuito (FreeDomain)](runbooks/runbook-free-domain-setup.md)
 
 ### Plans
 

@@ -8,6 +8,7 @@ services:
       - ../backend/.env.example
     environment:
       JWT_SECRET: viru-local-dev-secret-please-change
+      DOMAIN: ${DOMAIN:-localhost}
     ports:
       - "18000:8000"
     volumes:
@@ -27,7 +28,7 @@ services:
     volumes:
       - ../frontend:/app
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
     depends_on:
       backend:
         condition: service_healthy

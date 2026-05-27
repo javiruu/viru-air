@@ -1,0 +1,24 @@
+# Caddy reverse proxy for viru-tracker
+# Usage: set DOMAIN env var, e.g. DOMAIN=virutracker.dpdns.org
+# Caddy will auto-provision TLS via Let's Encrypt when a valid public domain is used.
+
+{$DOMAIN:localhost} {
+	# Frontend (Next.js)
+	reverse_proxy /api/* viru-backend:8000
+	reverse_proxy /* viru-frontend:3000
+
+	# Security headers
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	# Gzip
+	encode gzip zstd
+
+	log {
+		output stdout
+		format json
+	}
+}
