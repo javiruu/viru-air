@@ -1,4 +1,5 @@
 ﻿import json
+import logging
 from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
@@ -52,6 +53,7 @@ SUGGESTIONS = [
 ]
 
 cache_service = DoorToDoorCacheService(ttl_seconds=300)
+logger = logging.getLogger(__name__)
 
 
 def _get_watch(db: Session, user: User, watch_id: str) -> FlightWatch:
@@ -161,6 +163,15 @@ async def suggestions(
         )
     except Exception:
         google_items = []
+        logger.exception(
+            "door_to_door_suggestions_provider_error",
+            extra={
+                "field": field,
+                "watch_id": watch_id,
+                "query": q,
+                "included_region_codes": included_region_codes,
+            },
+        )
         meta = DoorToDoorSuggestionsMetaOut(
             provider_status="provider_error",
             degraded_reason="suggestions_fetch_failed",
@@ -349,3 +360,7 @@ def choose_option(
         option_label=chosen.option_label,
         chosen_at=chosen.chosen_at,
     )
+
+
+
+
