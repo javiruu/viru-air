@@ -257,8 +257,8 @@ function LocationInput({
             ))}
           </ul>
         ) : null}
-        {!loading && value.label.trim().length >= 2 && meta.provider_status !== "api_live" ? (
-          <p className="panel-note">Autocomplete degradado ({meta.degraded_reason || "fallback"}).</p>
+        {focused && !loading && value.label.trim().length >= 2 && meta.provider_status !== "api_live" ? (
+          <p className="d2d-autocomplete-status">Autocomplete degradado ({meta.degraded_reason || "fallback"}).</p>
         ) : null}
       </div>
     </label>
