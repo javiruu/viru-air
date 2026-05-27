@@ -21,12 +21,14 @@ import { DoorToDoorFilters } from "@/modules/door-to-door/components/DoorToDoorF
 import { DoorToDoorLoadingState } from "@/modules/door-to-door/components/DoorToDoorLoadingState";
 import { DoorToDoorOptionCard } from "@/modules/door-to-door/components/DoorToDoorOptionCard";
 import { getAlternativeDeltas, getDecisionBadges, getDecisionReasons, hasUncertainSources } from "@/modules/door-to-door/decision";
+import { buildMapCapabilities, filterSavedPlacesForWatch } from "@/modules/door-to-door/mapHub";
 import type {
   DoorToDoorHistoryItem,
   DoorToDoorLocation,
+  DoorToDoorMapCapability,
+  DoorToDoorSavedPlace,
   OptionDeltaSummary,
   DoorToDoorOption,
-  DoorToDoorMapCapability,
   DoorToDoorMapCapabilityKey,
   DoorToDoorProviderStatus,
   DoorToDoorPreferences,
@@ -72,14 +74,6 @@ type CapabilityCard = {
   descriptionKey: string;
 };
 
-type DoorToDoorSavedPlace = {
-  id: string;
-  label: string;
-  note: string;
-  created_at: string;
-  watch_id: string | null;
-};
-
 const CAPABILITY_CARDS: CapabilityCard[] = [
   { key: "navigation", section: "layers", titleKey: "doorToDoor.mapHub.cards.navigation.title", descriptionKey: "doorToDoor.mapHub.cards.navigation.description" },
   { key: "traffic", section: "layers", titleKey: "doorToDoor.mapHub.cards.traffic.title", descriptionKey: "doorToDoor.mapHub.cards.traffic.description" },
@@ -92,82 +86,6 @@ const CAPABILITY_CARDS: CapabilityCard[] = [
   { key: "offline", section: "visual", titleKey: "doorToDoor.mapHub.cards.offline.title", descriptionKey: "doorToDoor.mapHub.cards.offline.description" },
   { key: "saved_places", section: "saved", titleKey: "doorToDoor.mapHub.cards.saved_places.title", descriptionKey: "doorToDoor.mapHub.cards.saved_places.description" },
 ];
-
-function buildMapCapabilities(response: DoorToDoorResponse | null, providers: DoorToDoorProviderStatus[]): DoorToDoorMapCapability[] {
-  const providerByName = new Map(providers.map((provider) => [provider.name, provider]));
-  const input = response?.map_capabilities ?? {};
-  const hasGoogleRoutes = providerByName.get("google_routes")?.enabled || false;
-  const hasGooglePlaces = providerByName.get("google_places")?.enabled || false;
-  const hasGtfsTransit = providerByName.get("gtfs_transit")?.enabled || false;
-  const hasDeeplink = providers.some((provider) => provider.enabled && provider.source_type === "deeplink");
-  const warningCodes = new Set((response?.warnings ?? []).map((warning) => warning.code));
-  const hasTrafficSignals = warningCodes.has("PROVIDER_PARTIAL_COVERAGE") || warningCodes.has("GOOGLE_ROUTES_UNAVAILABLE");
-  const hasIncidentSignals = warningCodes.has("NO_COVERAGE") || warningCodes.has("GOOGLE_ROUTES_UNAVAILABLE") || warningCodes.has("PROVIDER_PARTIAL_COVERAGE");
-
-  const defaults: Record<DoorToDoorMapCapabilityKey, Omit<DoorToDoorMapCapability, "key">> = {
-    navigation: hasGoogleRoutes
-      ? { state: "available", source_type: "maps", confidence: "live", why_missing: null }
-      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "google_routes_disabled" },
-    traffic: hasGoogleRoutes
-      ? {
-          state: hasTrafficSignals ? "available" : "partial",
-          source_type: "maps",
-          confidence: hasTrafficSignals ? "live" : "cached",
-          why_missing: hasTrafficSignals ? null : "live_traffic_not_wired",
-        }
-      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "traffic_layer_pending" },
-    transit: hasGtfsTransit
-      ? { state: "partial", source_type: "open_data", confidence: "cached", why_missing: "fares_and_booking_pending" }
-      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "gtfs_provider_disabled" },
-    alternatives: response?.options?.length
-      ? { state: "available", source_type: "api", confidence: "cached", why_missing: null }
-      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "route_candidates_pending" },
-    street_view_preview: hasGoogleRoutes
-      ? { state: "partial", source_type: "maps", confidence: "cached", why_missing: "immersive_preview_pending" }
-      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "street_view_not_connected" },
-    saved_places: { state: "partial", source_type: "api", confidence: "cached", why_missing: "shared_lists_pending" },
-    nearby_pois: hasGooglePlaces
-      ? { state: "partial", source_type: "api", confidence: "live", why_missing: "busy_times_and_parking_pending" }
-      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "google_places_disabled" },
-    offline: { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "offline_cache_not_implemented" },
-    incidents: hasGoogleRoutes
-      ? {
-          state: hasIncidentSignals ? "available" : "partial",
-          source_type: "maps",
-          confidence: hasIncidentSignals ? "live" : "cached",
-          why_missing: hasIncidentSignals ? null : "incident_feed_pending",
-        }
-      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "incident_source_not_connected" },
-    eco_route: hasDeeplink || hasGoogleRoutes
-      ? { state: "partial", source_type: hasGoogleRoutes ? "maps" : "deeplink", confidence: "cached", why_missing: "eco_scoring_pending" }
-      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "eco_route_provider_pending" },
-  };
-
-  const keys: DoorToDoorMapCapabilityKey[] = [
-    "navigation",
-    "traffic",
-    "transit",
-    "alternatives",
-    "street_view_preview",
-    "saved_places",
-    "nearby_pois",
-    "offline",
-    "incidents",
-    "eco_route",
-  ];
-  return keys.map((key) => {
-    const fromApi = input[key];
-    const fallback = defaults[key];
-    return {
-      key,
-      state: fromApi?.state ?? fallback.state,
-      source_type: fromApi?.source_type ?? fallback.source_type,
-      confidence: fromApi?.confidence ?? fallback.confidence,
-      last_checked_at: fromApi?.last_checked_at ?? null,
-      why_missing: fromApi?.why_missing ?? fallback.why_missing ?? null,
-    };
-  });
-}
 
 function useSuggestionSearch(
   value: string,
@@ -451,6 +369,7 @@ export function DoorToDoorPanel() {
   const [savedPlaces, setSavedPlaces] = useState<DoorToDoorSavedPlace[]>([]);
   const [savedPlaceLabel, setSavedPlaceLabel] = useState("");
   const [savedPlaceNote, setSavedPlaceNote] = useState("");
+  const visibleSavedPlaces = useMemo(() => filterSavedPlacesForWatch(savedPlaces, selectedWatchId), [savedPlaces, selectedWatchId]);
 
   useEffect(() => {
     setSelectedWatchId(watchIdParam);
@@ -948,8 +867,8 @@ export function DoorToDoorPanel() {
                 {t("doorToDoor.mapHub.savedPlaces.add")}
               </button>
               <div className="d2d-saved-places-list">
-                {savedPlaces.length === 0 ? <p className="panel-note">{t("doorToDoor.mapHub.savedPlaces.empty")}</p> : null}
-                {savedPlaces.map((item) => (
+                {visibleSavedPlaces.length === 0 ? <p className="panel-note">{t("doorToDoor.mapHub.savedPlaces.empty")}</p> : null}
+                {visibleSavedPlaces.map((item) => (
                   <article key={item.id} className="d2d-saved-place-item">
                     <div>
                       <strong>{item.label}</strong>
