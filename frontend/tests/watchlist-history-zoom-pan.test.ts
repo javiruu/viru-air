@@ -24,7 +24,8 @@ test("watchlist page wires chart viewport props and handlers into history panel"
 test("history panel exposes zoom reset CTA and pointer plus wheel interaction wiring", () => {
   const source = fs.readFileSync(HISTORY_PANEL, "utf8");
   assert.match(source, /watchlist\.history\.resetZoom/);
-  assert.match(source, /onWheel=\{onChartWheel\}/);
+  assert.match(source, /addEventListener\("wheel", handleWheel, \{ passive: false \}\)/);
+  assert.match(source, /onChartWheel\(event\)/);
   assert.match(source, /onPointerDown=\{onChartPointerDown\}/);
   assert.match(source, /onPointerMove=\{onChartPointerMove\}/);
   assert.match(source, /onPointerUp=\{onChartPointerUp\}/);
@@ -38,4 +39,3 @@ test("controller composes viewport hook with hover coordinate resolver", () => {
   assert.match(source, /resetKey:/);
   assert.match(source, /resolveChartCoordinates: viewport\.resolveChartCoordinates/);
 });
-
