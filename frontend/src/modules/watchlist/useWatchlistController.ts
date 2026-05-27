@@ -2,6 +2,7 @@ import { useCallback, useEffect } from "react";
 
 import type { Watch } from "@/modules/watchlist/types";
 import { useChartHover } from "@/modules/watchlist/useChartHover";
+import { useChartViewport } from "@/modules/watchlist/useChartViewport";
 import { useWatchlistActions } from "@/modules/watchlist/useWatchlistActions";
 import { useWatchlistDerived } from "@/modules/watchlist/useWatchlistDerived";
 import { useWatchlistViewState } from "@/modules/watchlist/useWatchlistViewState";
@@ -92,10 +93,17 @@ export function useWatchlistController({
     lineColors,
   });
 
+  const viewport = useChartViewport({
+    chartWidth,
+    chartHeight: derived.chartHeight,
+    resetKey: `${view.selectedOrigin}|${view.selectedDestination}|${view.selectedDates.join(",")}`,
+  });
+
   const hover = useChartHover({
     points: derived.flatChartPoints,
     chartWidth,
     chartHeight: derived.chartHeight,
+    resolveChartCoordinates: viewport.resolveChartCoordinates,
   });
 
   return {
@@ -103,6 +111,7 @@ export function useWatchlistController({
     actions,
     derived,
     hover,
+    viewport,
     selectWatch,
     selectWatchById,
   };

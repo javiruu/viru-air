@@ -51,7 +51,7 @@ export default function WatchlistPage() {
 
   const watchlistHint = useFtueHint("watchlist");
 
-  const { view, actions, derived, hover, selectWatch, selectWatchById } = useWatchlistController({
+  const { view, actions, derived, hover, viewport, selectWatch, selectWatchById } = useWatchlistController({
     chartBaseHeight: CHART_HEIGHT,
     chartWidth: CHART_WIDTH,
     chartPad: CHART_PAD,
@@ -149,9 +149,19 @@ export default function WatchlistPage() {
             calendarHasUsefulData={derived.calendarHasUsefulData}
             chartWidth={CHART_WIDTH}
             chartPad={CHART_PAD}
+            chartViewBox={viewport.viewBox}
+            chartIsZoomed={viewport.isZoomed}
+            chartIsDragging={viewport.isDragging}
             onApplyFilters={actions.refreshFiltered}
             onChartMouseMove={hover.handleChartMove}
             onChartMouseLeave={hover.clearHover}
+            onChartWheel={viewport.onWheel}
+            onChartPointerDown={viewport.onPointerDown}
+            onChartPointerMove={viewport.onPointerMove}
+            onChartPointerUp={viewport.onPointerUp}
+            onChartPointerCancel={viewport.onPointerCancel}
+            onChartPointerLeave={viewport.onPointerLeave}
+            onResetChartZoom={viewport.resetZoom}
             onPrevMonth={view.prevMonth}
             onNextMonth={view.nextMonth}
           />

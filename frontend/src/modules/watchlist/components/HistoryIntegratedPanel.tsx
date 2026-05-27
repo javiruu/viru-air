@@ -1,4 +1,9 @@
-﻿import type { CSSProperties, MouseEvent as ReactMouseEvent } from "react";
+﻿import type {
+  CSSProperties,
+  MouseEvent as ReactMouseEvent,
+  PointerEvent as ReactPointerEvent,
+  WheelEvent as ReactWheelEvent,
+} from "react";
 
 import { useI18n } from "@/i18n";
 import { formatCurrency } from "@/modules/shared/format";
@@ -83,9 +88,19 @@ type HistoryIntegratedPanelProps = {
   calendarHasUsefulData: boolean;
   chartWidth: number;
   chartPad: { left: number; right: number; top: number; bottom: number };
+  chartViewBox: { x: number; y: number; width: number; height: number };
+  chartIsZoomed: boolean;
+  chartIsDragging: boolean;
   onApplyFilters: () => void;
   onChartMouseMove: (event: ReactMouseEvent<SVGSVGElement>) => void;
   onChartMouseLeave: () => void;
+  onChartWheel: (event: ReactWheelEvent<SVGSVGElement>) => void;
+  onChartPointerDown: (event: ReactPointerEvent<SVGSVGElement>) => void;
+  onChartPointerMove: (event: ReactPointerEvent<SVGSVGElement>) => void;
+  onChartPointerUp: (event: ReactPointerEvent<SVGSVGElement>) => void;
+  onChartPointerCancel: (event: ReactPointerEvent<SVGSVGElement>) => void;
+  onChartPointerLeave: (event: ReactPointerEvent<SVGSVGElement>) => void;
+  onResetChartZoom: () => void;
   onPrevMonth: () => void;
   onNextMonth: () => void;
 };
@@ -114,9 +129,19 @@ export function HistoryIntegratedPanel({
   calendarHasUsefulData,
   chartWidth,
   chartPad,
+  chartViewBox,
+  chartIsZoomed,
+  chartIsDragging,
   onApplyFilters,
   onChartMouseMove,
   onChartMouseLeave,
+  onChartWheel,
+  onChartPointerDown,
+  onChartPointerMove,
+  onChartPointerUp,
+  onChartPointerCancel,
+  onChartPointerLeave,
+  onResetChartZoom,
   onPrevMonth,
   onNextMonth,
 }: HistoryIntegratedPanelProps) {
@@ -158,6 +183,12 @@ export function HistoryIntegratedPanel({
           new Date(point.capturedAt).getTime() > new Date(latest.capturedAt).getTime() ? point : latest,
         )
       : null;
+  const hoveredRatioX = hoverPoint
+    ? Math.min(1, Math.max(0, (hoverPoint.x - chartViewBox.x) / chartViewBox.width))
+    : 0;
+  const hoveredRatioY = hoverPoint
+    ? Math.min(1, Math.max(0, (hoverPoint.y - chartViewBox.y) / chartViewBox.height))
+    : 0;
 
 
   return (
@@ -267,15 +298,31 @@ export function HistoryIntegratedPanel({
             )}
           </div>
           <div className="history-primary">
+          {chartIsZoomed ? (
+            <div className="history-zoom-toolbar">
+              <button className="btn-ghost btn-compact history-zoom-reset" type="button" onClick={onResetChartZoom}>
+                {t("watchlist.history.resetZoom")}
+              </button>
+            </div>
+          ) : null}
           {hasChartData ? (
             <svg
-              className="history-svg"
-              viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+              className={`history-svg${chartIsZoomed ? " is-zoomed" : ""}${chartIsDragging ? " is-dragging" : ""}`}
+              viewBox={`${chartViewBox.x} ${chartViewBox.y} ${chartViewBox.width} ${chartViewBox.height}`}
               width="100%"
               role="img"
               aria-label={t("watchlist.history.chartAriaLabel")}
               onMouseMove={onChartMouseMove}
               onMouseLeave={onChartMouseLeave}
+              onWheel={onChartWheel}
+              onPointerDown={onChartPointerDown}
+              onPointerMove={onChartPointerMove}
+              onPointerUp={onChartPointerUp}
+              onPointerCancel={onChartPointerCancel}
+              onPointerLeave={(event) => {
+                onChartPointerLeave(event);
+                onChartMouseLeave();
+              }}
             >
               <line
                 x1={chartPad.left}
@@ -357,8 +404,8 @@ export function HistoryIntegratedPanel({
             <div
               className="history-tooltip"
               style={{
-                left: `${(hoverPoint.x / chartWidth) * 100}%`,
-                top: `${(hoverPoint.y / chartHeight) * 100}%`,
+                left: `${hoveredRatioX * 100}%`,
+                top: `${hoveredRatioY * 100}%`,
               }}
             >
               <span className="history-tooltip-tag">{hoverPoint.date}</span>

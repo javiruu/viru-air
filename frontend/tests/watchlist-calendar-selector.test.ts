@@ -30,5 +30,5 @@ test("watchlist page wires calendar selector with watch selection callback", () 
 
 test("history panel still renders history svg", () => {
   const source = fs.readFileSync(HISTORY_PANEL, "utf8");
-  assert.match(source, /className="history-svg"/);
+  assert.match(source, /history-svg/);
 });
