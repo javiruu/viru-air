@@ -5388,6 +5388,26 @@ h1 {
 
 .history-svg {
   display: block;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.history-svg.is-zoomed {
+  cursor: grab;
+}
+
+.history-svg.is-dragging {
+  cursor: grabbing;
+}
+
+.history-zoom-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.45rem;
+}
+
+.history-zoom-reset {
+  border-radius: 999px;
 }
 
 .history-chart-header {

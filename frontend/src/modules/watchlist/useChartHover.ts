@@ -7,19 +7,33 @@ type UseChartHoverInput = {
   chartWidth: number;
   chartHeight: number;
   snapThreshold?: number;
+  resolveChartCoordinates?: (event: MouseEvent<SVGSVGElement>) => { x: number; y: number } | null;
 };
 
-export function useChartHover({ points, chartWidth, chartHeight, snapThreshold = 520 }: UseChartHoverInput) {
+export function useChartHover({
+  points,
+  chartWidth,
+  chartHeight,
+  snapThreshold = 520,
+  resolveChartCoordinates,
+}: UseChartHoverInput) {
   const [hoverPoint, setHoverPoint] = useState<HoverPoint | null>(null);
 
   const handleChartMove = useCallback(
     (event: MouseEvent<SVGSVGElement>) => {
       if (!points.length) return;
-      const rect = event.currentTarget.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
-
-      const x = (event.clientX - rect.left) * (chartWidth / rect.width);
-      const y = (event.clientY - rect.top) * (chartHeight / rect.height);
+      const resolved = resolveChartCoordinates?.(event);
+      let x: number;
+      let y: number;
+      if (resolved) {
+        x = resolved.x;
+        y = resolved.y;
+      } else {
+        const rect = event.currentTarget.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        x = (event.clientX - rect.left) * (chartWidth / rect.width);
+        y = (event.clientY - rect.top) * (chartHeight / rect.height);
+      }
 
       let best: HoverPoint | null = null;
       let bestDist = Infinity;
@@ -40,7 +54,7 @@ export function useChartHover({ points, chartWidth, chartHeight, snapThreshold =
         setHoverPoint(null);
       }
     },
-    [points, chartWidth, chartHeight, snapThreshold],
+    [points, chartWidth, chartHeight, snapThreshold, resolveChartCoordinates],
   );
 
   const clearHover = useCallback(() => {
