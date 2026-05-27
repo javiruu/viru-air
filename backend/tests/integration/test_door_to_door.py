@@ -605,6 +605,30 @@ def test_suggestions_keep_local_static_when_google_places_disabled(client: TestC
     assert all(item["source_type"] == "local_static" for item in items)
 
 
+def test_suggestions_provider_error_returns_fallback_with_meta(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(
+        monkeypatch,
+        mock=False,
+        real=True,
+        google_places=True,
+        google_key="fake-google-key",
+    )
+    headers = _auth_headers(client, "google-places-provider-error@viru.dev")
+    from app.door_to_door.providers import google_places
+
+    async def _failing_suggest(self, query, *, limit=6, session_token=None, included_region_codes=None):  # noqa: ANN001
+        raise RuntimeError("provider unavailable")
+
+    monkeypatch.setattr(google_places.GooglePlacesSuggestionsProvider, "suggest", _failing_suggest)
+    response = client.get("/api/v1/door-to-door/suggestions?q=tre", headers=headers)
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["meta"]["provider_status"] == "provider_error"
+    assert payload["meta"]["degraded_reason"] == "suggestions_fetch_failed"
+    assert payload["items"]
+    assert all(item["source_type"] == "local_static" for item in payload["items"])
+
+
 def test_score_prefers_safer_route_when_buffer_is_low() -> None:
     safe = score_itinerary(55, 520, 150, 2, "low", "estimated")
     risky = score_itinerary(30, 420, 65, 1, "high", "estimated")
