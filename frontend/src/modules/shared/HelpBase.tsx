@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 
-import AirLoader from "@/modules/shared/AirLoader";
 import { apiFetch } from "@/modules/shared/api";
+import { SkeletonPanel } from "@/modules/shared/Skeleton";
 
 export type HelpSection = {
   title: string;
@@ -48,10 +48,7 @@ export default function HelpBase(props: HelpBaseProps) {
             <p>{props.subtitle}</p>
           </div>
         </div>
-        <section className="panel panel-soft air-loader-section">
-          <AirLoader size={0.85} />
-          <p className="muted">{props.loadingLabel}</p>
-        </section>
+        <SkeletonPanel className="air-loader-section" ariaLabel={props.loadingLabel} />
       </main>
     );
   }

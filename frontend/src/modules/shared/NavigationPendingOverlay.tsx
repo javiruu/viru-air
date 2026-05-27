@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
-import AirLoader from "@/modules/shared/AirLoader";
+import { SkeletonOverlay } from "@/modules/shared/Skeleton";
 
 const FAILSAFE_TIMEOUT_MS = 10000;
 
@@ -144,11 +144,6 @@ export default function NavigationPendingOverlay() {
 
   if (!isPending) return null;
 
-  return (
-    <div className="navigation-pending-overlay" role="status" aria-live="polite" aria-label="Cargando navegación">
-      <section className="panel panel-soft navigation-pending-overlay__card">
-        <AirLoader size={0.9} />
-      </section>
-    </div>
-  );
+  return <SkeletonOverlay ariaLabel="Cargando navegacion" />;
 }
+

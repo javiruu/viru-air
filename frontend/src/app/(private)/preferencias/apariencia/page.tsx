@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
-import AirLoader from "@/modules/shared/AirLoader";
+import { SkeletonForm } from "@/modules/shared/Skeleton";
 import { apiFetch } from "@/modules/shared/api";
 import { useI18n } from "@/i18n";
 
@@ -84,10 +84,7 @@ export default function PreferenciasAparienciaPage() {
             <p>{t("preferences.appearance.subtitle")}</p>
           </div>
         </div>
-        <section className="panel panel-soft air-loader-section">
-          <AirLoader size={0.85} />
-          <p className="muted">{t("preferences.appearance.loading")}</p>
-        </section>
+        <SkeletonForm className="air-loader-section" ariaLabel={t("preferences.appearance.loading")} />
       </main>
     );
   }

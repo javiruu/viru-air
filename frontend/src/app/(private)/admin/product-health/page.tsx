@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useI18n } from "@/i18n";
 import { apiFetch } from "@/modules/shared/api";
 import { getSystemStatusMeta } from "@/modules/shared/statusCatalog";
+import { SkeletonPanel } from "@/modules/shared/Skeleton";
 
 type Me = { id: string; email: string; locale: string; is_admin: boolean };
 
@@ -70,7 +71,11 @@ export default function ProductHealthPage() {
   }, [router]);
 
   if (!me?.is_admin || loading) {
-    return <main className="shell"><div className="notice notice-info">Cargando Product Health...</div></main>;
+    return (
+      <main className="shell">
+        <SkeletonPanel ariaLabel="Cargando Product Health" />
+      </main>
+    );
   }
 
   const systemMeta = data ? getSystemStatusMeta(data.system.status, t) : null;

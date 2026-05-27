@@ -4,8 +4,8 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
-import AirLoader from "@/modules/shared/AirLoader";
 import { apiFetch } from "@/modules/shared/api";
+import { Skeleton } from "@/modules/shared/Skeleton";
 import { useI18n } from "@/i18n";
 
 type SecurityEvent = {
@@ -122,9 +122,16 @@ export default function SeguridadPage() {
           <span className="muted">{t("account.security.activityHint")}</span>
         </div>
         {loading ? (
-          <div className="air-loader-section">
-            <AirLoader size={0.7} />
-            <p className="muted">{t("account.security.activityLoading")}</p>
+          <div className="loading-skeleton-list air-loader-section" role="status" aria-live="polite" aria-label={t("account.security.activityLoading")} aria-busy="true">
+            {Array.from({ length: 3 }).map((_, idx) => (
+              <article key={`security-activity-skeleton-${idx}`} className="loading-skeleton-list-row">
+                <div className="loading-skeleton-list-main">
+                  <Skeleton variant="line" width="52%" />
+                  <Skeleton variant="line" width="44%" />
+                </div>
+                <Skeleton variant="pill" width={88} height={20} />
+              </article>
+            ))}
           </div>
         ) : events.length === 0 ? (
           <p className="panel-note">{t("account.security.activityEmpty")}</p>

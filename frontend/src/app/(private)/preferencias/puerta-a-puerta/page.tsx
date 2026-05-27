@@ -7,6 +7,7 @@ import { useNotificationCenter } from "@/components/components/notifications/not
 import { useI18n } from "@/i18n";
 import { deleteDoorToDoorLocation, fetchSavedDoorToDoorLocation, saveDoorToDoorLocation } from "@/modules/door-to-door/api";
 import type { DoorToDoorLocationType, DoorToDoorSavedLocation } from "@/modules/door-to-door/types";
+import { Skeleton } from "@/modules/shared/Skeleton";
 
 export default function PreferenciasPuertaAPuertaPage() {
   const router = useRouter();
@@ -82,7 +83,11 @@ export default function PreferenciasPuertaAPuertaPage() {
       </section>
 
       <form className="panel panel-soft prefs-form d2d-location-form prefs-priority-block" onSubmit={onSubmit}>
-        {loading ? <p className="panel-note">{t("doorToDoor.preferences.loading")}</p> : null}
+        {loading ? (
+          <div className="air-loader-section" role="status" aria-live="polite" aria-label={t("doorToDoor.preferences.loading")} aria-busy="true">
+            <Skeleton variant="line" width="62%" />
+          </div>
+        ) : null}
         <label className="field">
           {t("doorToDoor.preferences.label")}
           <input className="prefs-control" value={label} onChange={(event) => setLabel(event.target.value)} />

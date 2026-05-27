@@ -6184,7 +6184,8 @@ h1 {
   border-color: color-mix(in srgb, var(--color-border) 82%, transparent);
 }
 
-.skeleton {
+.skeleton,
+.vt-skeleton {
   display: inline-block;
   border-radius: 10px;
   background: linear-gradient(
@@ -6194,7 +6195,111 @@ h1 {
     color-mix(in srgb, var(--surface-2) 88%, transparent) 90%
   );
   background-size: 220% 100%;
-  animation: watchlist-skeleton-shimmer 1.6s linear infinite;
+  animation: vt-skeleton-shimmer 1.6s linear infinite;
+}
+
+.vt-skeleton {
+  width: 100%;
+  min-height: 0.88rem;
+}
+
+.vt-skeleton--line {
+  min-height: 0.82rem;
+}
+
+.vt-skeleton--pill {
+  min-height: 1.1rem;
+  border-radius: 999px;
+}
+
+.vt-skeleton--block {
+  min-height: 2rem;
+  display: block;
+}
+
+.vt-skeleton--circle {
+  border-radius: 999px;
+}
+
+.vt-skeleton--card {
+  min-height: 5.2rem;
+  border-radius: 14px;
+  display: block;
+}
+
+.loading-skeleton-panel,
+.loading-skeleton-form,
+.loading-skeleton-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.loading-skeleton-row {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 0.2rem;
+}
+
+.loading-skeleton-card {
+  min-height: 5.4rem;
+}
+
+.loading-skeleton-form .loading-skeleton-field {
+  display: grid;
+  gap: 0.48rem;
+}
+
+.loading-skeleton-cta {
+  margin-top: 0.3rem;
+}
+
+.loading-skeleton-list-rows {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.loading-skeleton-list-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-border) 84%, transparent);
+  border-radius: 12px;
+  padding: 0.7rem 0.8rem;
+}
+
+.loading-skeleton-list-main {
+  display: grid;
+  gap: 0.42rem;
+}
+
+.loading-skeleton-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--overlay) 72%, transparent);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  pointer-events: none;
+}
+
+.loading-skeleton-overlay__card {
+  min-width: min(420px, calc(100vw - 2rem));
+  min-height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-color: color-mix(in srgb, var(--border) 70%, transparent);
+  box-shadow: 0 20px 52px var(--shadow-strong);
+}
+
+.loading-skeleton-overlay__stack {
+  display: grid;
+  place-items: center;
+  gap: 0.72rem;
 }
 
 .skeleton-line {
@@ -6228,13 +6333,14 @@ h1 {
 .watch-skeleton-spark { width: 96px; height: 28px; }
 .watch-skeleton-button { width: 7.6rem; min-height: 2rem; }
 
-@keyframes watchlist-skeleton-shimmer {
+@keyframes vt-skeleton-shimmer {
   0% { background-position: 100% 0; }
   100% { background-position: -120% 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .skeleton {
+  .skeleton,
+  .vt-skeleton {
     animation: none;
     background-position: 0 0;
   }

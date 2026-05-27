@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import ThemeToggle from "@/modules/shared/ThemeToggle";
-import AirLoader from "@/modules/shared/AirLoader";
+import { Skeleton, SkeletonPanel } from "@/modules/shared/Skeleton";
 import { apiFetchWithStatus } from "@/modules/shared/api";
 import { clearToken, hasToken } from "@/modules/shared/auth";
 import { useI18n } from "@/i18n";
@@ -48,10 +48,11 @@ export default function PruebaLandingPage() {
   if (state === "checking") {
     return (
       <main className="shell landing-prueba-shell" id="main-content">
-        <section className="panel panel-soft landing-check air-loader-section">
-          <AirLoader />
-          <p className="muted">{t("public.landing.checkingSession")}</p>
-        </section>
+        <SkeletonPanel className="landing-check air-loader-section" ariaLabel={t("public.landing.checkingSession")}>
+          <Skeleton variant="pill" width={188} height={18} />
+          <Skeleton variant="line" width="66%" />
+          <Skeleton variant="line" width="52%" />
+        </SkeletonPanel>
       </main>
     );
   }

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { useI18n } from "@/i18n";
 import { apiFetch } from "@/modules/shared/api";
-import AirLoader from "@/modules/shared/AirLoader";
+import { Skeleton, SkeletonPanel } from "@/modules/shared/Skeleton";
 
 type Me = { id: string; email: string; locale: string; is_admin: boolean };
 
@@ -271,10 +271,7 @@ export default function AdminPage() {
   if (!me?.is_admin) {
     return (
       <main className="shell" id="main-content">
-        <section className="panel panel-soft air-loader-section">
-          <AirLoader size={0.85} />
-          <p className="muted">{t("admin.loading")}</p>
-        </section>
+        <SkeletonPanel className="air-loader-section" ariaLabel={t("admin.loading")} />
       </main>
     );
   }
@@ -314,8 +311,16 @@ export default function AdminPage() {
         </div>
         <div className="stack">
           {qaChecks.length === 0 ? (
-            <div className="notice notice-info" role="status" aria-live="polite">
-              {t("admin.loading")}
+            <div className="loading-skeleton-list" role="status" aria-live="polite" aria-label={t("admin.loading")} aria-busy="true">
+              {Array.from({ length: 3 }).map((_, idx) => (
+                <article key={`admin-check-skeleton-${idx}`} className="loading-skeleton-list-row">
+                  <div className="loading-skeleton-list-main">
+                    <Skeleton variant="line" width="58%" />
+                    <Skeleton variant="line" width="42%" />
+                  </div>
+                  <Skeleton variant="pill" width={74} height={22} />
+                </article>
+              ))}
             </div>
           ) : (
             qaChecks.map((check) => (
@@ -337,7 +342,14 @@ export default function AdminPage() {
           <span className="panel-note">{t("admin.metricsSubtitle")}</span>
         </div>
         {!metrics ? (
-          <div className="notice notice-info" role="status" aria-live="polite">{t("admin.loading")}</div>
+          <div className="dashboard-primary-grid" role="status" aria-live="polite" aria-label={t("admin.loading")} aria-busy="true">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <article key={`admin-metric-skeleton-${idx}`} className="module-card">
+                <Skeleton variant="line" width="70%" />
+                <Skeleton variant="pill" width="44%" height={20} />
+              </article>
+            ))}
+          </div>
         ) : (
           <div className="dashboard-primary-grid">
             <article className="module-card"><strong>{t("admin.metricsQuickSearches")}</strong><span>{metrics.quick_search_executed}</span></article>
