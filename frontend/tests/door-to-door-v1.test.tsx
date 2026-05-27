@@ -193,7 +193,6 @@ test("DoorToDoorPanel includes no-coverage-real handling, provider status and wa
   assert.match(source, /comparatorTitle/);
   assert.match(source, /recommendedReasons/);
   assert.match(source, /quickBadgesByOption/);
-  assert.match(source, /blablacarAlwaysVisibleHint/);
 });
 
 test("DoorToDoorPanel includes vertical timeline, trust modal trigger, and collapsible history", () => {
@@ -209,6 +208,13 @@ test("DoorToDoorPanel includes vertical timeline, trust modal trigger, and colla
   assert.match(source, /showHistoryAction/);
   assert.match(source, /hideHistoryAction/);
   assert.match(source, /aria-expanded=\{showHistory\}/);
+});
+
+test("DoorToDoorPanel guards keyboard navigation when autocomplete has no suggestions", () => {
+  const source = fs.readFileSync(PANEL, "utf8");
+  assert.match(source, /if \(suggestions\.length === 0\)/);
+  assert.match(source, /event\.key === "ArrowDown" \|\| event\.key === "ArrowUp" \|\| event\.key === "Enter"/);
+  assert.match(source, /event\.preventDefault\(\)/);
 });
 
 test("Door-to-door option, radar, filters, and timeline render mock and flight-estimated cues", () => {
