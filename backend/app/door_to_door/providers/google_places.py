@@ -48,7 +48,8 @@ class GooglePlacesSuggestionsProvider:
             return []
 
         normalized_regions = tuple(sorted({code.strip().lower() for code in (included_region_codes or []) if code}))
-        cache_key = f"{normalized.lower()}|{','.join(normalized_regions)}"
+        token_fragment = (session_token or "").strip()[:32]
+        cache_key = f"{normalized.lower()}|{','.join(normalized_regions)}|{token_fragment}"
         cached = self._cache.get(cache_key)
         now = datetime.now(tz=UTC)
         if cached and cached.expires_at > now:

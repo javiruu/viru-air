@@ -1,6 +1,8 @@
 ﻿from __future__ import annotations
 
 import asyncio
+import json
+import logging
 import os
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -21,6 +23,7 @@ from app.door_to_door.schemas import (
 
 GOOGLE_ROUTES_ENDPOINT = "https://routes.googleapis.com/directions/v2:computeRoutes"
 GOOGLE_PLACE_DETAILS_ENDPOINT = "https://places.googleapis.com/v1/places/{place_id}"
+logger = logging.getLogger("app.door_to_door.google_routes")
 AIRPORT_COORDS: dict[str, tuple[float, float]] = {
     "AGP": (36.675, -4.499),
     "TSF": (45.651, 12.199),
@@ -405,6 +408,7 @@ class GoogleRoutesProvider(DoorToDoorProvider):
         mode: str,
         departure_at: datetime,
     ) -> _RouteResult | None:
+        normalized_mode = self._normalize_mode(mode)
         body: dict[str, object] = {
             "origin": {
                 "location": {
@@ -422,13 +426,13 @@ class GoogleRoutesProvider(DoorToDoorProvider):
                     }
                 }
             },
-            "travelMode": mode.upper(),
+            "travelMode": normalized_mode.upper(),
             "languageCode": "es-ES",
             "units": "METRIC",
         }
-        if mode in {"driving", "walking"}:
+        if self._supports_traffic_aware(normalized_mode):
             body["routingPreference"] = "TRAFFIC_AWARE"
-        if mode in {"driving", "transit"}:
+        if normalized_mode in {"driving", "transit"}:
             body["departureTime"] = departure_at.astimezone(UTC).replace(microsecond=0).isoformat().replace(
                 "+00:00", "Z"
             )
@@ -444,9 +448,37 @@ class GoogleRoutesProvider(DoorToDoorProvider):
                 timeout=self.timeout_seconds,
             )
             if response.status_code >= 400:
+                logger.warning(
+                    json.dumps(
+                        {
+                            "event": "google_routes_compute_failed",
+                            "provider": self.provider_name,
+                            "status_code": response.status_code,
+                            "mode": normalized_mode,
+                            "origin": self._serialize_coords(origin),
+                            "destination": self._serialize_coords(destination),
+                            "body_preview": (response.text or "")[:300],
+                        },
+                        ensure_ascii=False,
+                    )
+                )
                 return None
             payload = response.json()
-        except Exception:
+        except Exception as exc:  # pragma: no cover - defensive log path
+            logger.warning(
+                json.dumps(
+                    {
+                        "event": "google_routes_request_exception",
+                        "provider": self.provider_name,
+                        "mode": normalized_mode,
+                        "origin": self._serialize_coords(origin),
+                        "destination": self._serialize_coords(destination),
+                        "error_type": exc.__class__.__name__,
+                        "error": str(exc),
+                    },
+                    ensure_ascii=False,
+                )
+            )
             return None
         routes = payload.get("routes") or []
         if not routes:
@@ -495,3 +527,19 @@ class GoogleRoutesProvider(DoorToDoorProvider):
         if any(value == "cached" for value in confidences):
             return "cached"
         return "estimated"
+
+    @staticmethod
+    def _normalize_mode(mode: str) -> str:
+        normalized = mode.strip().lower()
+        if normalized in {"transit", "driving", "walking"}:
+            return normalized
+        return "driving"
+
+    @staticmethod
+    def _supports_traffic_aware(mode: str) -> bool:
+        return mode == "driving"
+
+    @staticmethod
+    def _serialize_coords(coords: tuple[float, float]) -> str:
+        lat, lng = coords
+        return f"{lat:.3f},{lng:.3f}"

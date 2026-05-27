@@ -3,7 +3,7 @@ from urllib.parse import parse_qs, urlparse
 
 from fastapi.testclient import TestClient
 
-from app.infrastructure.db.models import DoorToDoorSearchHistory
+from app.infrastructure.db.models import DoorToDoorSearchHistory, PriceSnapshot
 from app.infrastructure.db.session import get_db
 from app.main import app
 from app.door_to_door.domain.risk import calculate_risk_level
@@ -270,6 +270,34 @@ def test_watchid_alias_and_estimated_flight_warning(client: TestClient, monkeypa
     assert body["flight"]["origin_airport"] == "AGP"
     assert body["flight"]["flight_time_confidence"] == "estimated"
     assert any(warning["code"] == "FLIGHT_TIME_ESTIMATED" for warning in body["warnings"])
+
+
+def test_flight_time_warning_not_emitted_when_departure_time_is_available(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(monkeypatch, mock=True, real=False, scrapers=False)
+    headers = _auth_headers(client, "watchid-live-time@viru.dev")
+    watch_id = _create_watch(client, headers)
+    payload = _search_payload(watch_id)
+
+    db, db_gen = _open_test_db_session()
+    try:
+        db.add(
+            PriceSnapshot(
+                watch_id=watch_id,
+                departure_time_local="09:45",
+                raw_price=49.99,
+                raw_currency="EUR",
+                provider="test-provider",
+            )
+        )
+        db.commit()
+    finally:
+        db_gen.close()
+
+    response = client.post("/api/v1/door-to-door/search", json=payload, headers=headers)
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["flight"]["flight_time_confidence"] == "live"
+    assert not any(warning["code"] == "FLIGHT_TIME_ESTIMATED" for warning in body["warnings"])
 
 
 def test_airport_only_omits_arrival_ground_leg(client: TestClient, monkeypatch) -> None:
@@ -550,6 +578,46 @@ def test_suggestions_merge_local_static_and_google_places(client: TestClient, mo
     assert payload["meta"]["provider_status"] == "api_live"
     assert any(item["source_type"] == "api" for item in items)
     assert any(item["source_type"] == "local_static" for item in items)
+
+
+def test_suggestions_keep_homonyms_with_different_place_id(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(
+        monkeypatch,
+        mock=False,
+        real=True,
+        google_places=True,
+        google_key="fake-google-key",
+    )
+    headers = _auth_headers(client, "google-places-homonyms@viru.dev")
+    from app.door_to_door.providers import google_places
+    from app.door_to_door.schemas import DoorToDoorSuggestionOut
+
+    async def _fake_suggest(self, query, *, limit=6, session_token=None, included_region_codes=None):  # noqa: ANN001
+        return [
+            DoorToDoorSuggestionOut(
+                id="google_springfield_us",
+                type="city",
+                label="Springfield",
+                subtitle="Illinois, US",
+                source_type="api",
+                place_id="place_springfield_us",
+            ),
+            DoorToDoorSuggestionOut(
+                id="google_springfield_uk",
+                type="city",
+                label="Springfield",
+                subtitle="Fife, UK",
+                source_type="api",
+                place_id="place_springfield_uk",
+            ),
+        ]
+
+    monkeypatch.setattr(google_places.GooglePlacesSuggestionsProvider, "suggest", _fake_suggest)
+    response = client.get("/api/v1/door-to-door/suggestions?q=spring", headers=headers)
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    springfields = [item for item in payload["items"] if item["label"] == "Springfield" and item["source_type"] == "api"]
+    assert len(springfields) == 2
 
 
 def test_suggestions_send_origin_country_code_from_selected_watch(client: TestClient, monkeypatch) -> None:

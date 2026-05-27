@@ -147,3 +147,39 @@ def test_google_places_supports_query_prediction_shape(monkeypatch) -> None:
     assert len(items) == 1
     assert "Avenida Pablo Iglesias" in items[0].label
     assert items[0].source_type == "api"
+
+
+def test_google_places_cache_key_changes_with_session_token(monkeypatch) -> None:
+    monkeypatch.setenv("DOOR_TO_DOOR_ENABLE_GOOGLE_PLACES", "1")
+    monkeypatch.setenv("GOOGLE_MAPS_API_KEY", "fake-google-key")
+
+    call_counter = {"count": 0}
+
+    def fake_post(*args, **kwargs):  # noqa: ANN002,ANN003
+        call_counter["count"] += 1
+        return _FakeResponse(
+            200,
+            {
+                "suggestions": [
+                    {
+                        "placePrediction": {
+                            "placeId": "place_treviso",
+                            "text": {"text": "Treviso"},
+                            "structuredFormat": {
+                                "secondaryText": {"text": "Veneto, Italia"}
+                            },
+                        }
+                    }
+                ]
+            },
+        )
+
+    monkeypatch.setattr("app.door_to_door.providers.google_places.requests.post", fake_post)
+
+    provider = GooglePlacesSuggestionsProvider()
+    first = asyncio.run(provider.suggest("trevi", limit=4, session_token="session-a"))
+    second = asyncio.run(provider.suggest("trevi", limit=4, session_token="session-b"))
+
+    assert first
+    assert second
+    assert call_counter["count"] == 2

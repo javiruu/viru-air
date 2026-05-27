@@ -72,23 +72,27 @@ def _flight_context(db: Session, watch: FlightWatch) -> tuple[DoorToDoorFlightOu
     )
     confidence = "estimated"
     departure_clock = time(hour=14, minute=20)
+    using_estimated_schedule = True
 
     if latest and latest.departure_time_local:
         try:
             hour, minute = latest.departure_time_local.split(":", 1)
             departure_clock = time(hour=int(hour), minute=int(minute))
+            confidence = "live"
+            using_estimated_schedule = False
         except ValueError:
             confidence = "estimated"
 
     departure = datetime.combine(watch.travel_date_local, departure_clock, tzinfo=MADRID)
     arrival = departure + timedelta(minutes=DEFAULT_FLIGHT_DURATION_MINUTES)
 
-    warnings.append(
-        DoorToDoorWarningOut(
-            code="FLIGHT_TIME_ESTIMATED",
-            message="No hay horario completo para este vuelo guardado. Se usa salida conocida y llegada estimada.",
+    if using_estimated_schedule:
+        warnings.append(
+            DoorToDoorWarningOut(
+                code="FLIGHT_TIME_ESTIMATED",
+                message="No hay horario completo para este vuelo guardado. Se usa salida conocida y llegada estimada.",
+            )
         )
-    )
 
     return (
         DoorToDoorFlightOut(
@@ -190,12 +194,20 @@ async def suggestions(
     merged: list[DoorToDoorSuggestionOut] = []
     seen: set[str] = set()
     for item in [*google_items, *static_items]:
-        key = item.label.strip().lower()
+        key = _suggestion_dedupe_key(item)
         if key in seen:
             continue
         seen.add(key)
         merged.append(item)
     return DoorToDoorSuggestionsResponseOut(items=merged[:10], meta=meta)
+
+
+def _suggestion_dedupe_key(item: DoorToDoorSuggestionOut) -> str:
+    if item.place_id:
+        return f"place_id:{item.place_id.strip().lower()}"
+    normalized_label = item.label.strip().lower()
+    normalized_subtitle = item.subtitle.strip().lower()
+    return f"{item.type}:{normalized_label}:{normalized_subtitle}"
 
 
 @router.post("/search", response_model=DoorToDoorSearchResponse)
