@@ -15,6 +15,9 @@ token.txt
 keys.txt
 *.pid
 
+# Cloudflare Tunnel local config (contains real tunnel IDs)
+infra/cloudflared-config.local.yml
+
 # Local databases
 viru.db
 *.db
