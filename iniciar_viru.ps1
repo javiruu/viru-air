@@ -52,7 +52,7 @@ $env:JWT_SECRET = $jwtSecret
 # Logs (timestamped, no overwrite)
 $logsDir = Join-Path $root "logs"
 New-Item -ItemType Directory -Force -Path $logsDir | Out-Null
-$ts = Get-Date -Format "yyyyMMdd-HHmmss"
+$ts = Get-Date -Format "yyyyMMdd-HHmmss-fff"
 $backendLog = Join-Path $logsDir "backend-$ts.log"
 $frontendLog = Join-Path $logsDir "frontend-$ts.log"
 $frontendBuildDir = Join-Path $root "frontend\.next"

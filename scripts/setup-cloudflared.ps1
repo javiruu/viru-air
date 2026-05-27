@@ -1,12 +1,12 @@
-<# 
+﻿<# 
 .SYNOPSIS
   Instala cloudflared y configura un Cloudflare Tunnel para viru-tracker.
 
 .DESCRIPTION
   Este script:
-  1. Detecta o instala cloudflared (vía winget o descarga directa).
+  1. Detecta o instala cloudflared (vÃ­a winget o descarga directa).
   2. Autentica con Cloudflare (abre navegador).
-  3. Crea el túnel "viru-tracker" si no existe.
+  3. Crea el tÃºnel "viru-tracker" si no existe.
   4. Configura el DNS (CNAME -> tunnel) en Cloudflare para viruair.dpdns.org.
   5.  Escribe el archivo de config infra/cloudflared-config.local.yml con los IDs reales.
 
@@ -32,7 +32,7 @@ Write-Host "  Domain: $Domain"                        -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# ── 1. Check / install cloudflared ──────────────────────────────────────────
+# â”€â”€ 1. Check / install cloudflared â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 Write-Host "[1/5] Checking cloudflared..." -ForegroundColor Yellow
 
 $cloudflared = Get-Command cloudflared -ErrorAction SilentlyContinue
@@ -71,7 +71,7 @@ if (-not $cloudflared) {
 
 Write-Host "  cloudflared found at: $($cloudflared.Source)" -ForegroundColor Green
 
-# ── 2. Authenticate with Cloudflare ────────────────────────────────────────
+# â”€â”€ 2. Authenticate with Cloudflare â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 Write-Host ""
 Write-Host "[2/5] Authenticating with Cloudflare..." -ForegroundColor Yellow
 Write-Host "  A browser window will open. Log in to your Cloudflare account." -ForegroundColor Gray
@@ -91,7 +91,7 @@ if ($alreadyAuthed) {
   Write-Host "  Authentication successful." -ForegroundColor Green
 }
 
-# ── 3. Create tunnel ───────────────────────────────────────────────────────
+# â”€â”€ 3. Create tunnel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 Write-Host ""
 Write-Host "[3/5] Creating tunnel '$TunnelName'..." -ForegroundColor Yellow
 
@@ -116,14 +116,14 @@ if ($existingTunnel) {
   Write-Host "  Tunnel created: $TunnelId" -ForegroundColor Green
 }
 
-# ── 4. Configure DNS ───────────────────────────────────────────────────────
+# â”€â”€ 4. Configure DNS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 Write-Host ""
 Write-Host "[4/5] Configuring DNS for $Domain..." -ForegroundColor Yellow
 
 $cnameTarget = "$TunnelId.cfargotunnel.com"
 
 Write-Host "  Creating CNAME: $Domain -> $cnameTarget" -ForegroundColor Gray
-# cloudflared tunnel route dns is idempotent — succeeds silently if route exists
+# cloudflared tunnel route dns is idempotent â€” succeeds silently if route exists
 $routeOutput = cloudflared tunnel route dns $TunnelName $Domain 2>&1
 if ($LASTEXITCODE -ne 0) {
   # Check if it failed because the route already exists (expected)
@@ -140,7 +140,7 @@ if ($LASTEXITCODE -ne 0) {
   Write-Host "  DNS configured: $Domain -> $cnameTarget" -ForegroundColor Green
 }
 
-# ── 5. Write config file ───────────────────────────────────────────────────
+# â”€â”€ 5. Write config file â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 Write-Host ""
 Write-Host "[5/5] Writing tunnel config to $ConfigPath..." -ForegroundColor Yellow
 
@@ -154,18 +154,18 @@ $configContent = @"
 # Start:  cloudflared tunnel run $TunnelName
 #         (or use VIRU_PANEL.bat option A)
 #
-# Cloudflare handles HTTPS automatically — no Caddy needed.
+# Cloudflare handles HTTPS automatically â€” no Caddy needed.
 
 tunnel: $TunnelId
 credentials-file: $credentialsFile
 
 ingress:
-  # API routes → backend
+  # API routes -> backend
   - hostname: $Domain
     path: /api/*
     service: http://localhost:8000
 
-  # All other traffic → frontend (Next.js)
+  # All other traffic -> frontend (Next.js)
   - hostname: $Domain
     service: http://localhost:3000
 
@@ -178,9 +178,9 @@ if (-not (Test-Path $configDir)) { New-Item -ItemType Directory -Path $configDir
 Set-Content -Path $ConfigPath -Value $configContent -Encoding UTF8
 
 Write-Host "  Config written to: $ConfigPath" -ForegroundColor Green
-Write-Host "  (This file is git-ignored — it contains real tunnel IDs.)" -ForegroundColor Gray
+Write-Host "  (This file is git-ignored - it contains real tunnel IDs.)" -ForegroundColor Gray
 
-# ── Done ────────────────────────────────────────────────────────────────────
+# -- Done ------------------------------------------------------------------
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  SETUP COMPLETE"                        -ForegroundColor Cyan

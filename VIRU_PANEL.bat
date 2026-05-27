@@ -34,10 +34,12 @@ echo A. CF TUNNEL START (viruair.dpdns.org)
 echo B. CF TUNNEL STATUS
 echo C. CF TUNNEL STOP
 echo D. Ver logs CF tunnel
+echo E. PUBLICO RAPIDO (encender + URL)
 echo ----------------------------------------
 echo 0. Salir
 echo.
-choice /C 1234567890ABCD /N /M "Opcion: "
+choice /C 1234567890ABCDE /N /M "Opcion: "
+if errorlevel 15 goto public_quick_start
 if errorlevel 14 goto cf_logs
 if errorlevel 13 goto cf_stop
 if errorlevel 12 goto cf_status
@@ -105,4 +107,8 @@ goto menu
 
 :cf_logs
 powershell -ExecutionPolicy Bypass -Command "Write-Host '--- cf_tunnel.out.log (ultimas 40 lineas) ---'; Get-Content -Tail 40 '%CF_OUT%' -ErrorAction SilentlyContinue; Write-Host '--- cf_tunnel.err.log (ultimas 40 lineas) ---'; Get-Content -Tail 40 '%CF_ERR%' -ErrorAction SilentlyContinue"
+goto menu
+
+:public_quick_start
+powershell -ExecutionPolicy Bypass -File "%~dp0scripts\iniciar_viru_publico.ps1"
 goto menu
