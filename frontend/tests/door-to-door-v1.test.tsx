@@ -198,6 +198,9 @@ test("DoorToDoorPanel includes no-coverage-real handling, provider status and wa
   assert.match(source, /warningCodes/);
   assert.match(source, /GOOGLE_ROUTES_UNAVAILABLE/);
   assert.match(source, /d2d-map-hub/);
+  assert.match(source, /viru_d2d_saved_places_v1/);
+  assert.match(source, /addSavedPlace/);
+  assert.match(source, /d2d-saved-places-manager/);
   assert.match(source, /doorToDoor\.mapHub\.state\.\$\{capability\.state\}/);
 });
 
@@ -223,6 +226,7 @@ test("door-to-door i18n includes map hub copy in es and en", () => {
   assert.match(source, /Capas del mapa/);
   assert.match(source, /Map layers/);
   assert.match(source, /state:\s*\{\s*available:/);
+  assert.match(source, /savedPlaces:\s*\{/);
 });
 
 test("DoorToDoorPanel guards keyboard navigation when autocomplete has no suggestions", () => {

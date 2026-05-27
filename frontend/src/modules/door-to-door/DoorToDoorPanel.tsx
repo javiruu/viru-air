@@ -72,6 +72,14 @@ type CapabilityCard = {
   descriptionKey: string;
 };
 
+type DoorToDoorSavedPlace = {
+  id: string;
+  label: string;
+  note: string;
+  created_at: string;
+  watch_id: string | null;
+};
+
 const CAPABILITY_CARDS: CapabilityCard[] = [
   { key: "navigation", section: "layers", titleKey: "doorToDoor.mapHub.cards.navigation.title", descriptionKey: "doorToDoor.mapHub.cards.navigation.description" },
   { key: "traffic", section: "layers", titleKey: "doorToDoor.mapHub.cards.traffic.title", descriptionKey: "doorToDoor.mapHub.cards.traffic.description" },
@@ -440,10 +448,30 @@ export function DoorToDoorPanel() {
   const [showHistory, setShowHistory] = useState(false);
   const [openActionsNodeId, setOpenActionsNodeId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [savedPlaces, setSavedPlaces] = useState<DoorToDoorSavedPlace[]>([]);
+  const [savedPlaceLabel, setSavedPlaceLabel] = useState("");
+  const [savedPlaceNote, setSavedPlaceNote] = useState("");
 
   useEffect(() => {
     setSelectedWatchId(watchIdParam);
   }, [watchIdParam]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem("viru_d2d_saved_places_v1");
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as DoorToDoorSavedPlace[];
+      if (Array.isArray(parsed)) setSavedPlaces(parsed.slice(0, 12));
+    } catch {
+      setSavedPlaces([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("viru_d2d_saved_places_v1", JSON.stringify(savedPlaces.slice(0, 12)));
+  }, [savedPlaces]);
 
   useEffect(() => {
     setOrigin((current) => (current.label ? current : defaultOrigin));
@@ -710,6 +738,28 @@ export function DoorToDoorPanel() {
     );
   }
 
+  function addSavedPlace() {
+    const label = savedPlaceLabel.trim();
+    const note = savedPlaceNote.trim();
+    if (!label) return;
+    const item: DoorToDoorSavedPlace = {
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      label,
+      note,
+      created_at: new Date().toISOString(),
+      watch_id: selectedWatchId || null,
+    };
+    setSavedPlaces((current) => [item, ...current].slice(0, 12));
+    setSavedPlaceLabel("");
+    setSavedPlaceNote("");
+    notify({ tone: "success", title: t("doorToDoor.mapHub.savedPlaces.savedToast") });
+  }
+
+  function removeSavedPlace(id: string) {
+    setSavedPlaces((current) => current.filter((item) => item.id !== id));
+    notify({ tone: "success", title: t("doorToDoor.mapHub.savedPlaces.deletedToast") });
+  }
+
   return (
     <main className="shell d2d-page" id="main-content">
       <div className="page-header d2d-page-header">
@@ -873,6 +923,45 @@ export function DoorToDoorPanel() {
               <p>{t("doorToDoor.mapHub.sections.savedBody")}</p>
             </header>
             <div className="d2d-map-cards">{mapCapabilitiesBySection.saved.map(renderCapabilityCard)}</div>
+            <div className="d2d-saved-places-manager">
+              <label className="field qs-label" htmlFor="d2d-saved-place-label">
+                <span>{t("doorToDoor.mapHub.savedPlaces.label")}</span>
+                <input
+                  id="d2d-saved-place-label"
+                  className="qs-input-neutral"
+                  value={savedPlaceLabel}
+                  onChange={(event) => setSavedPlaceLabel(event.target.value)}
+                  placeholder={t("doorToDoor.mapHub.savedPlaces.labelPlaceholder")}
+                />
+              </label>
+              <label className="field qs-label" htmlFor="d2d-saved-place-note">
+                <span>{t("doorToDoor.mapHub.savedPlaces.note")}</span>
+                <input
+                  id="d2d-saved-place-note"
+                  className="qs-input-neutral"
+                  value={savedPlaceNote}
+                  onChange={(event) => setSavedPlaceNote(event.target.value)}
+                  placeholder={t("doorToDoor.mapHub.savedPlaces.notePlaceholder")}
+                />
+              </label>
+              <button type="button" className="btn-secondary btn-compact" onClick={addSavedPlace} disabled={!savedPlaceLabel.trim()}>
+                {t("doorToDoor.mapHub.savedPlaces.add")}
+              </button>
+              <div className="d2d-saved-places-list">
+                {savedPlaces.length === 0 ? <p className="panel-note">{t("doorToDoor.mapHub.savedPlaces.empty")}</p> : null}
+                {savedPlaces.map((item) => (
+                  <article key={item.id} className="d2d-saved-place-item">
+                    <div>
+                      <strong>{item.label}</strong>
+                      {item.note ? <p>{item.note}</p> : null}
+                    </div>
+                    <button type="button" className="btn-ghost btn-compact" onClick={() => removeSavedPlace(item.id)}>
+                      {t("doorToDoor.mapHub.savedPlaces.remove")}
+                    </button>
+                  </article>
+                ))}
+              </div>
+            </div>
           </section>
         </div>
       </section>

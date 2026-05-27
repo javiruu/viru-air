@@ -19062,6 +19062,38 @@ textarea::placeholder {
   color: var(--ink-muted);
 }
 
+.d2d-saved-places-manager {
+  margin-top: 0.55rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.d2d-saved-places-list {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.d2d-saved-place-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--border) 68%, transparent);
+  border-radius: 10px;
+  padding: 0.45rem 0.55rem;
+  background: color-mix(in srgb, var(--surface) 90%, var(--panel-bg) 10%);
+}
+
+.d2d-saved-place-item strong {
+  font-size: 0.82rem;
+}
+
+.d2d-saved-place-item p {
+  margin: 0.18rem 0 0;
+  font-size: 0.76rem;
+  color: var(--ink-muted);
+}
+
 .d2d-history-action-row {
   justify-content: flex-start;
 }
