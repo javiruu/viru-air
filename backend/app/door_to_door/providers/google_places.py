@@ -1,9 +1,11 @@
 ﻿from __future__ import annotations
 
 import asyncio
+import logging
 import os
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from typing import Sequence
 
 import requests
 
@@ -11,6 +13,7 @@ from app.door_to_door.domain.models import ProviderHealth
 from app.door_to_door.schemas import DoorToDoorSuggestionOut
 
 GOOGLE_PLACES_AUTOCOMPLETE_ENDPOINT = "https://places.googleapis.com/v1/places:autocomplete"
+logger = logging.getLogger("app.door_to_door.google_places")
 
 
 @dataclass(frozen=True)
@@ -30,20 +33,34 @@ class GooglePlacesSuggestionsProvider:
         self.cache_ttl_seconds = int(os.getenv("DOOR_TO_DOOR_GOOGLE_PLACES_CACHE_TTL_SECONDS", "600"))
         self._cache: dict[str, _CachedSuggestions] = {}
 
-    async def suggest(self, query: str, *, limit: int = 6, session_token: str | None = None) -> list[DoorToDoorSuggestionOut]:
+    async def suggest(
+        self,
+        query: str,
+        *,
+        limit: int = 6,
+        session_token: str | None = None,
+        included_region_codes: Sequence[str] | None = None,
+    ) -> list[DoorToDoorSuggestionOut]:
         normalized = query.strip()
         if not normalized:
             return []
         if not self.enabled or not self.api_key:
             return []
 
-        cache_key = normalized.lower()
+        normalized_regions = tuple(sorted({code.strip().lower() for code in (included_region_codes or []) if code}))
+        cache_key = f"{normalized.lower()}|{','.join(normalized_regions)}"
         cached = self._cache.get(cache_key)
         now = datetime.now(tz=UTC)
         if cached and cached.expires_at > now:
             return cached.items[:limit]
 
-        suggestions = await asyncio.to_thread(self._fetch_suggestions, normalized, limit, session_token)
+        suggestions = await asyncio.to_thread(
+            self._fetch_suggestions,
+            normalized,
+            limit,
+            session_token,
+            normalized_regions,
+        )
         if suggestions:
             self._cache[cache_key] = _CachedSuggestions(
                 items=suggestions,
@@ -76,12 +93,19 @@ class GooglePlacesSuggestionsProvider:
             message="Google Places listo para sugerencias reales.",
         )
 
-    def _fetch_suggestions(self, query: str, limit: int, session_token: str | None = None) -> list[DoorToDoorSuggestionOut]:
+    def _fetch_suggestions(
+        self,
+        query: str,
+        limit: int,
+        session_token: str | None = None,
+        included_region_codes: Sequence[str] | None = None,
+    ) -> list[DoorToDoorSuggestionOut]:
         body: dict[str, object] = {
             "input": query,
             "languageCode": "es",
-            "includedRegionCodes": ["es", "it"],
         }
+        if included_region_codes:
+            body["includedRegionCodes"] = list(included_region_codes)
         if session_token:
             body["sessionToken"] = session_token
 
@@ -100,15 +124,20 @@ class GooglePlacesSuggestionsProvider:
             timeout=self.timeout_seconds,
         )
         if response.status_code >= 400:
+            logger.warning(
+                "google_places_autocomplete_failed status=%s body=%s",
+                response.status_code,
+                (response.text or "")[:300],
+            )
             return []
 
         payload = response.json()
         suggestions_raw = payload.get("suggestions") or []
         items: list[DoorToDoorSuggestionOut] = []
         for index, entry in enumerate(suggestions_raw[:limit]):
-            prediction = entry.get("placePrediction") or {}
+            prediction = entry.get("placePrediction") or entry.get("queryPrediction") or {}
             place_id = prediction.get("placeId")
-            text_block = prediction.get("text") or {}
+            text_block = prediction.get("text") or prediction.get("structuredFormat", {}).get("mainText") or {}
             label = text_block.get("text") or ""
             if not isinstance(label, str) or not label.strip():
                 continue

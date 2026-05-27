@@ -23,6 +23,7 @@ from app.door_to_door.schemas import (
 )
 from app.door_to_door.services.cache_service import DoorToDoorCacheService
 from app.door_to_door.services.search_service import DoorToDoorSearchService
+from app.infrastructure.airports_catalog import country_code_from_airport, get_airport
 from app.infrastructure.db.models import (
     DoorToDoorChosenOption,
     DoorToDoorSavedLocation,
@@ -118,6 +119,10 @@ def providers_status() -> list[DoorToDoorProviderStatusOut]:
 async def suggestions(
     q: str = Query(default="", max_length=120),
     session_token: str | None = Query(default=None, max_length=128),
+    field: str = Query(default="origin", pattern="^(origin|destination)$"),
+    watch_id: str | None = Query(default=None, max_length=80),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> list[DoorToDoorSuggestionOut]:
     query = q.strip().lower()
     static_items = (
@@ -129,8 +134,24 @@ async def suggestions(
     if runtime.google_places_provider is None:
         return static_items
 
+    included_region_codes: list[str] = []
+    if watch_id:
+        watch = db.scalar(select(FlightWatch).where(FlightWatch.id == watch_id, FlightWatch.user_id == current_user.id))
+        if watch:
+            selected_iata = watch.origin_iata if field == "origin" else watch.destination_iata
+            airport = get_airport(selected_iata)
+            if airport:
+                country_code = country_code_from_airport(airport).strip().lower()
+                if country_code:
+                    included_region_codes = [country_code]
+
     try:
-        google_items = await runtime.google_places_provider.suggest(q, limit=6, session_token=session_token)
+        google_items = await runtime.google_places_provider.suggest(
+            q,
+            limit=8,
+            session_token=session_token,
+            included_region_codes=included_region_codes,
+        )
     except Exception:
         google_items = []
 

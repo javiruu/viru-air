@@ -60,7 +60,12 @@ type SegmentNode = {
   actions: Array<{ href: string; label: string; ariaLabel: string }>;
 };
 
-function useSuggestionSearch(value: string, sessionToken: string) {
+function useSuggestionSearch(
+  value: string,
+  sessionToken: string,
+  field: "origin" | "destination",
+  watchId: string,
+) {
   const [suggestions, setSuggestions] = useState<DoorToDoorSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   useEffect(() => {
@@ -73,7 +78,7 @@ function useSuggestionSearch(value: string, sessionToken: string) {
     let alive = true;
     setLoading(true);
     const timeoutId = window.setTimeout(() => {
-      fetchDoorToDoorSuggestions(query, sessionToken)
+      fetchDoorToDoorSuggestions(query, sessionToken, field, watchId || undefined)
       .then((items) => {
         if (alive) setSuggestions(items.slice(0, 8));
       })
@@ -88,7 +93,7 @@ function useSuggestionSearch(value: string, sessionToken: string) {
       alive = false;
       window.clearTimeout(timeoutId);
     };
-  }, [value, sessionToken]);
+  }, [value, sessionToken, field, watchId]);
   return { suggestions, loading };
 }
 
@@ -97,11 +102,15 @@ function LocationInput({
   label,
   value,
   onChange,
+  field,
+  watchId,
 }: {
   id: string;
   label: string;
   value: DoorToDoorLocation;
   onChange: (location: DoorToDoorLocation) => void;
+  field: "origin" | "destination";
+  watchId: string;
 }) {
   const [focused, setFocused] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -113,13 +122,18 @@ function LocationInput({
     return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   }, []);
   const [sessionToken, setSessionToken] = useState("");
-  const { suggestions, loading } = useSuggestionSearch(value.label, sessionToken);
+  const { suggestions, loading } = useSuggestionSearch(value.label, sessionToken, field, watchId);
   const hasSuggestions = suggestions.length > 0;
   const showAutocomplete = focused && (loading || hasSuggestions);
 
   useEffect(() => {
     setActiveIndex(-1);
   }, [value.label, suggestions.length]);
+  useEffect(() => {
+    setSessionToken("");
+    sessionTokenRef.current = "";
+    setActiveIndex(-1);
+  }, [watchId, field]);
 
   const selectSuggestion = useCallback((suggestion: DoorToDoorSuggestion) => {
     onChange(suggestion);
@@ -562,7 +576,7 @@ export function DoorToDoorPanel() {
           <div className="d2d-section-head d2d-essentials-head">
             <h2>{t("doorToDoor.form.essentialsTitle")}</h2>
           </div>
-          <LocationInput id="d2d-origin" label={t("doorToDoor.form.origin")} value={origin} onChange={setOrigin} />
+          <LocationInput id="d2d-origin" label={t("doorToDoor.form.origin")} value={origin} onChange={setOrigin} field="origin" watchId={selectedWatchId} />
           <label className="field qs-label" htmlFor="d2d-watch">
             <span>{t("doorToDoor.form.watch")}</span>
             <select id="d2d-watch" className="qs-input-neutral" value={selectedWatchId} onChange={(event) => setSelectedWatchId(event.target.value)}>
@@ -572,7 +586,7 @@ export function DoorToDoorPanel() {
               ))}
             </select>
           </label>
-          <LocationInput id="d2d-final" label={t("doorToDoor.form.finalDestination")} value={finalDestination} onChange={setFinalDestination} />
+          <LocationInput id="d2d-final" label={t("doorToDoor.form.finalDestination")} value={finalDestination} onChange={setFinalDestination} field="destination" watchId={selectedWatchId} />
           <label className="field d2d-checkbox-field">
             <input type="checkbox" checked={finalDestination.type === "airport_only"} onChange={(event) => setFinalDestination(event.target.checked ? { type: "airport_only", label: t("doorToDoor.defaults.airportOnly", { iata: selectedWatch?.destination_iata || "TSF" }) } : defaultDestination)} />
             {t("doorToDoor.form.airportOnly")}
