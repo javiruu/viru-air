@@ -2,8 +2,8 @@
   CSSProperties,
   MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
-  WheelEvent as ReactWheelEvent,
 } from "react";
+import { useEffect, useRef } from "react";
 
 import { useI18n } from "@/i18n";
 import { formatCurrency } from "@/modules/shared/format";
@@ -94,7 +94,7 @@ type HistoryIntegratedPanelProps = {
   onApplyFilters: () => void;
   onChartMouseMove: (event: ReactMouseEvent<SVGSVGElement>) => void;
   onChartMouseLeave: () => void;
-  onChartWheel: (event: ReactWheelEvent<SVGSVGElement>) => void;
+  onChartWheel: (event: WheelEvent) => void;
   onChartPointerDown: (event: ReactPointerEvent<SVGSVGElement>) => void;
   onChartPointerMove: (event: ReactPointerEvent<SVGSVGElement>) => void;
   onChartPointerUp: (event: ReactPointerEvent<SVGSVGElement>) => void;
@@ -146,6 +146,7 @@ export function HistoryIntegratedPanel({
   onNextMonth,
 }: HistoryIntegratedPanelProps) {
   const { t, localeTag } = useI18n();
+  const chartSvgRef = useRef<SVGSVGElement | null>(null);
   const hasSelectedWatch = Boolean(selectedWatch);
   const hasChartData = Boolean(chartModel && chartModel.length > 0);
   const chartPointCount = chartModel?.reduce((acc, serie) => acc + serie.points.length, 0) ?? 0;
@@ -190,6 +191,17 @@ export function HistoryIntegratedPanel({
     ? Math.min(1, Math.max(0, (hoverPoint.y - chartViewBox.y) / chartViewBox.height))
     : 0;
 
+  useEffect(() => {
+    const svg = chartSvgRef.current;
+    if (!svg || !hasChartData || viewMode !== "chart") return;
+    const handleWheel = (event: WheelEvent) => {
+      onChartWheel(event);
+    };
+    svg.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      svg.removeEventListener("wheel", handleWheel);
+    };
+  }, [hasChartData, onChartWheel, viewMode]);
 
   return (
     <section className="panel history-panel section-gap">
@@ -307,6 +319,7 @@ export function HistoryIntegratedPanel({
           ) : null}
           {hasChartData ? (
             <svg
+              ref={chartSvgRef}
               className={`history-svg${chartIsZoomed ? " is-zoomed" : ""}${chartIsDragging ? " is-dragging" : ""}`}
               viewBox={`${chartViewBox.x} ${chartViewBox.y} ${chartViewBox.width} ${chartViewBox.height}`}
               width="100%"
@@ -314,7 +327,6 @@ export function HistoryIntegratedPanel({
               aria-label={t("watchlist.history.chartAriaLabel")}
               onMouseMove={onChartMouseMove}
               onMouseLeave={onChartMouseLeave}
-              onWheel={onChartWheel}
               onPointerDown={onChartPointerDown}
               onPointerMove={onChartPointerMove}
               onPointerUp={onChartPointerUp}

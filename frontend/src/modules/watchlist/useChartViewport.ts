@@ -1,7 +1,6 @@
 import {
   MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
-  WheelEvent as ReactWheelEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -53,6 +52,16 @@ type UseChartViewportInput = {
   chartHeight: number;
   resetKey: string;
   maxZoom?: number;
+};
+
+type WheelLikeEvent = {
+  ctrlKey: boolean;
+  metaKey: boolean;
+  deltaY: number;
+  clientX: number;
+  clientY: number;
+  preventDefault: () => void;
+  currentTarget: EventTarget | null;
 };
 
 const EPSILON = 0.001;
@@ -223,10 +232,12 @@ export function useChartViewport({
   );
 
   const onWheel = useCallback(
-    (event: ReactWheelEvent<SVGSVGElement>) => {
+    (event: WheelLikeEvent) => {
       if (!event.ctrlKey && !event.metaKey) return;
+      const target = event.currentTarget;
+      if (!(target instanceof SVGSVGElement)) return;
       event.preventDefault();
-      const rect = toChartRect(event.currentTarget.getBoundingClientRect());
+      const rect = toChartRect(target.getBoundingClientRect());
       const center = clientToChart(
         { clientX: event.clientX, clientY: event.clientY },
         rect,
@@ -401,4 +412,3 @@ export function useChartViewport({
     onPointerLeave,
   };
 }
-
