@@ -30,7 +30,6 @@ import type {
   DoorToDoorPreferences,
   DoorToDoorResponse,
   DoorToDoorSuggestion,
-  DoorToDoorSuggestionsMeta,
 } from "@/modules/door-to-door/types";
 import { apiFetch } from "@/modules/shared/api";
 import type { Watch } from "@/modules/watchlist/types";
@@ -68,11 +67,6 @@ function useSuggestionSearch(
   watchId: string,
 ) {
   const [suggestions, setSuggestions] = useState<DoorToDoorSuggestion[]>([]);
-  const [meta, setMeta] = useState<DoorToDoorSuggestionsMeta>({
-    provider_status: "api_live",
-    degraded_reason: null,
-    used_region_codes: [],
-  });
   const [loading, setLoading] = useState(false);
   useEffect(() => {
     const query = value.trim();
@@ -85,15 +79,11 @@ function useSuggestionSearch(
     setLoading(true);
     const timeoutId = window.setTimeout(() => {
       fetchDoorToDoorSuggestions(query, sessionToken, field, watchId || undefined)
-      .then((payload) => {
-        if (!alive) return;
-        setSuggestions(payload.items.slice(0, 8));
-        setMeta(payload.meta);
+      .then((items) => {
+        if (alive) setSuggestions(items.slice(0, 8));
       })
       .catch(() => {
-        if (!alive) return;
-        setSuggestions([]);
-        setMeta({ provider_status: "provider_error", degraded_reason: "suggestions_fetch_failed", used_region_codes: [] });
+        if (alive) setSuggestions([]);
       })
       .finally(() => {
         if (alive) setLoading(false);
@@ -104,7 +94,7 @@ function useSuggestionSearch(
       window.clearTimeout(timeoutId);
     };
   }, [value, sessionToken, field, watchId]);
-  return { suggestions, loading, meta };
+  return { suggestions, loading };
 }
 
 function LocationInput({
@@ -132,10 +122,9 @@ function LocationInput({
     return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   }, []);
   const [sessionToken, setSessionToken] = useState("");
-  const { suggestions, loading, meta } = useSuggestionSearch(value.label, sessionToken, field, watchId);
+  const { suggestions, loading } = useSuggestionSearch(value.label, sessionToken, field, watchId);
   const hasSuggestions = suggestions.length > 0;
-  const hasQuery = value.label.trim().length >= 2;
-  const showAutocomplete = focused && (loading || hasSuggestions || hasQuery);
+  const showAutocomplete = focused && (loading || hasSuggestions);
 
   useEffect(() => {
     setActiveIndex(-1);
@@ -236,11 +225,6 @@ function LocationInput({
                 <span>Cargando sugerencias...</span>
               </li>
             ) : null}
-            {!loading && suggestions.length === 0 ? (
-              <li role="option" aria-selected={false} className="qs-autocomplete-item">
-                <span>{meta.provider_status === "fallback_active" ? "Sin resultados del proveedor, mostrando fallback." : "No hay sugerencias para esta búsqueda."}</span>
-              </li>
-            ) : null}
             {suggestions.map((suggestion, index) => (
               <li key={suggestion.id} id={`${id}-option-${index}`} role="option" aria-selected={index === activeIndex}>
                 <button
@@ -257,9 +241,6 @@ function LocationInput({
               </li>
             ))}
           </ul>
-        ) : null}
-        {!loading && hasQuery && meta.provider_status !== "api_live" ? (
-          <p className="panel-note">Autocomplete degradado ({meta.degraded_reason || "fallback"}).</p>
         ) : null}
       </div>
     </label>
