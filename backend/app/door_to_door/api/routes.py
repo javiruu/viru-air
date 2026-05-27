@@ -37,8 +37,6 @@ router = APIRouter()
 MADRID = ZoneInfo("Europe/Madrid")
 DEFAULT_FLIGHT_DURATION_MINUTES = 155
 
-# TODO(door-to-door): add client-provided Google Places session token to reduce billing
-# and improve autocomplete quality across consecutive keystrokes.
 SUGGESTIONS = [
     DoorToDoorSuggestionOut(id="city_almeria", type="city", label="Almería", subtitle="Ciudad de salida frecuente", source_type="local_static", lat=36.834, lng=-2.463),
     DoorToDoorSuggestionOut(id="station_almeria", type="station", label="Estación de Almería", subtitle="Tren y bus interurbano", source_type="local_static", lat=36.8402, lng=-2.4576),
@@ -117,7 +115,10 @@ def providers_status() -> list[DoorToDoorProviderStatusOut]:
 
 
 @router.get("/suggestions", response_model=list[DoorToDoorSuggestionOut])
-async def suggestions(q: str = Query(default="", max_length=120)) -> list[DoorToDoorSuggestionOut]:
+async def suggestions(
+    q: str = Query(default="", max_length=120),
+    session_token: str | None = Query(default=None, max_length=128),
+) -> list[DoorToDoorSuggestionOut]:
     query = q.strip().lower()
     static_items = (
         SUGGESTIONS
@@ -129,7 +130,7 @@ async def suggestions(q: str = Query(default="", max_length=120)) -> list[DoorTo
         return static_items
 
     try:
-        google_items = await runtime.google_places_provider.suggest(q, limit=6)
+        google_items = await runtime.google_places_provider.suggest(q, limit=6, session_token=session_token)
     except Exception:
         google_items = []
 
