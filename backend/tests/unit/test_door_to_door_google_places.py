@@ -99,6 +99,25 @@ def test_google_places_suggestions_use_cache(monkeypatch) -> None:
     assert call_counter["count"] == 1
 
 
+def test_google_places_cache_key_includes_region_codes(monkeypatch) -> None:
+    monkeypatch.setenv("DOOR_TO_DOOR_ENABLE_GOOGLE_PLACES", "1")
+    monkeypatch.setenv("GOOGLE_MAPS_API_KEY", "fake-google-key")
+
+    call_counter = {"count": 0}
+
+    def fake_post(*args, **kwargs):  # noqa: ANN002,ANN003
+        call_counter["count"] += 1
+        return _FakeResponse(200, {"suggestions": []})
+
+    monkeypatch.setattr("app.door_to_door.providers.google_places.requests.post", fake_post)
+
+    provider = GooglePlacesSuggestionsProvider()
+    asyncio.run(provider.suggest("madrid", included_region_codes=["es"]))
+    asyncio.run(provider.suggest("madrid", included_region_codes=["lu"]))
+
+    assert call_counter["count"] == 2
+
+
 def test_google_places_suggestions_include_session_token_when_provided(monkeypatch) -> None:
     monkeypatch.setenv("DOOR_TO_DOOR_ENABLE_GOOGLE_PLACES", "1")
     monkeypatch.setenv("GOOGLE_MAPS_API_KEY", "fake-google-key")

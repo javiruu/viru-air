@@ -1,12 +1,12 @@
-﻿import { apiFetch } from "@/modules/shared/api";
+import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
 import type {
   DoorToDoorHistoryItem,
   DoorToDoorLocation,
   DoorToDoorPreferences,
+  DoorToDoorProviderStatus,
   DoorToDoorResponse,
   DoorToDoorSavedLocation,
-  DoorToDoorSuggestion,
-  DoorToDoorProviderStatus,
+  DoorToDoorSuggestionsResponse,
 } from "@/modules/door-to-door/types";
 
 export function fetchDoorToDoorSuggestions(
@@ -14,12 +14,26 @@ export function fetchDoorToDoorSuggestions(
   sessionToken?: string,
   field?: "origin" | "destination",
   watchId?: string,
-): Promise<DoorToDoorSuggestion[]> {
+) {
   const params = new URLSearchParams({ q: query });
   if (sessionToken) params.set("session_token", sessionToken);
   if (field) params.set("field", field);
   if (watchId) params.set("watch_id", watchId);
-  return apiFetch<DoorToDoorSuggestion[]>(`/door-to-door/suggestions?${params.toString()}`);
+  return apiFetchWithStatus<DoorToDoorSuggestionsResponse>(
+    `/door-to-door/suggestions?${params.toString()}`,
+    undefined,
+    { timeoutMs: 4500 },
+  ).then((result) => {
+    if (result.ok) return result.data;
+    return {
+      items: [],
+      meta: {
+        provider_status: "provider_error" as const,
+        degraded_reason: result.error.code || "suggestions_fetch_failed",
+        used_region_codes: [],
+      },
+    };
+  });
 }
 
 export function fetchDoorToDoorProviderStatus(): Promise<DoorToDoorProviderStatus[]> {

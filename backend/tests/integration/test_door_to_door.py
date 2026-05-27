@@ -39,9 +39,13 @@ def _auth_headers(client: TestClient, email: str = "door@viru.dev") -> dict[str,
 
 
 def _create_watch(client: TestClient, headers: dict[str, str]) -> str:
+    return _create_watch_route(client, headers, origin_iata="AGP", destination_iata="TSF")
+
+
+def _create_watch_route(client: TestClient, headers: dict[str, str], *, origin_iata: str, destination_iata: str) -> str:
     payload = {
-        "origin_iata": "AGP",
-        "destination_iata": "TSF",
+        "origin_iata": origin_iata,
+        "destination_iata": destination_iata,
         "travel_date_local": str(date.today() + timedelta(days=30)),
         "target_price": 60,
     }
@@ -535,9 +539,11 @@ def test_suggestions_merge_local_static_and_google_places(client: TestClient, mo
     monkeypatch.setattr(google_places.GooglePlacesSuggestionsProvider, "suggest", _fake_suggest)
     response = client.get("/api/v1/door-to-door/suggestions?q=tre", headers=headers)
     assert response.status_code == 200, response.text
-    items = response.json()
+    payload = response.json()
+    items = payload["items"]
     assert any(item["source_type"] == "api" for item in items)
     assert any(item["source_type"] == "local_static" for item in items)
+    assert payload["meta"]["provider_status"] == "api_live"
 
 
 def test_suggestions_send_origin_country_code_from_selected_watch(client: TestClient, monkeypatch) -> None:
@@ -572,7 +578,7 @@ def test_suggestions_send_destination_country_code_from_selected_watch(client: T
         google_key="fake-google-key",
     )
     headers = _auth_headers(client, "google-places-region-destination@viru.dev")
-    watch_id = _create_watch(client, headers)
+    watch_id = _create_watch_route(client, headers, origin_iata="MAD", destination_iata="LUX")
     captured: dict[str, object] = {}
     from app.door_to_door.providers import google_places
 
@@ -583,7 +589,7 @@ def test_suggestions_send_destination_country_code_from_selected_watch(client: T
     monkeypatch.setattr(google_places.GooglePlacesSuggestionsProvider, "suggest", _fake_suggest)
     response = client.get(f"/api/v1/door-to-door/suggestions?q=Luxembourg&field=destination&watch_id={watch_id}", headers=headers)
     assert response.status_code == 200, response.text
-    assert captured.get("included_region_codes") == ["it"]
+    assert captured.get("included_region_codes") == ["lu"]
 
 
 def test_suggestions_keep_local_static_when_google_places_disabled(client: TestClient, monkeypatch) -> None:
@@ -592,9 +598,33 @@ def test_suggestions_keep_local_static_when_google_places_disabled(client: TestC
 
     response = client.get("/api/v1/door-to-door/suggestions?q=tre", headers=headers)
     assert response.status_code == 200, response.text
-    items = response.json()
+    payload = response.json()
+    items = payload["items"]
     assert items
     assert all(item["source_type"] == "local_static" for item in items)
+    assert payload["meta"]["provider_status"] == "fallback_active"
+
+
+def test_suggestions_provider_error_returns_fallback_with_meta(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(
+        monkeypatch,
+        mock=False,
+        real=True,
+        google_places=True,
+        google_key="fake-google-key",
+    )
+    headers = _auth_headers(client, "google-places-error-meta@viru.dev")
+    from app.door_to_door.providers import google_places
+
+    async def _failing_suggest(self, query, *, limit=6, session_token=None, included_region_codes=None):  # noqa: ANN001
+        raise RuntimeError("provider down")
+
+    monkeypatch.setattr(google_places.GooglePlacesSuggestionsProvider, "suggest", _failing_suggest)
+    response = client.get("/api/v1/door-to-door/suggestions?q=Madrid", headers=headers)
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["meta"]["provider_status"] == "provider_error"
+    assert payload["meta"]["degraded_reason"] == "google_places_request_failed"
 
 
 def test_score_prefers_safer_route_when_buffer_is_low() -> None:

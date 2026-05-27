@@ -125,8 +125,31 @@ Devuelve sugerencias para autocomplete.
 Query params:
 
 - `q`: texto opcional.
+- `session_token`: token de sesión de Places (opcional, recomendado).
+- `field`: `origin` o `destination` para contextualizar país por tramo.
+- `watch_id`: watch activo para derivar país desde IATA (si está disponible).
 
-Si Google Places está activo (`DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS=1`, `DOOR_TO_DOOR_ENABLE_GOOGLE_PLACES=1`, `GOOGLE_MAPS_API_KEY`), mezcla sugerencias `source_type: "api"` con las `local_static`.
+Respuesta:
+
+```json
+{
+  "items": [],
+  "meta": {
+    "provider_status": "api_live",
+    "degraded_reason": null,
+    "used_region_codes": ["es"]
+  }
+}
+```
+
+`provider_status`:
+
+- `api_live`: suggestions desde API de Google Places.
+- `fallback_active`: fallback local/catálogo activo (sin error fatal).
+- `provider_error`: error del proveedor remoto, fallback aplicado.
+
+En `APP_ENV=local|dev|development`, Google Places se autoactiva cuando existe `GOOGLE_MAPS_API_KEY`.  
+En entornos no locales, sigue requiriendo flags explícitos (`DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS=1` + `DOOR_TO_DOOR_ENABLE_GOOGLE_PLACES=1` + `GOOGLE_MAPS_API_KEY`).
 
 Cada sugerencia conserva su fuente y puede incluir `place_id` para resolver coordenadas reales en búsquedas posteriores.
 
@@ -179,9 +202,9 @@ V1.1 incluye:
   - `DOOR_TO_DOOR_ENABLE_GOOGLE_ROUTES`
   - `GOOGLE_MAPS_API_KEY`
 - `google_places` para suggestions reales, activable con:
-  - `DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS`
-  - `DOOR_TO_DOOR_ENABLE_GOOGLE_PLACES`
   - `GOOGLE_MAPS_API_KEY`
+  - En local/dev: auto-activación con API key.
+  - En staging/prod: además requiere `DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS` y `DOOR_TO_DOOR_ENABLE_GOOGLE_PLACES`.
 - placeholders/stubs para APIs, open data y agregadores;
 - scraper base + status explícito (`scraper_base_only`) para BlaBlaCar, GoOpti, ALSA y Renfe, controlado por `DOOR_TO_DOOR_ENABLE_SCRAPERS`.
 
