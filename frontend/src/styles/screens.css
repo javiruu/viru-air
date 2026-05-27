@@ -18347,6 +18347,12 @@ textarea::placeholder {
   position: relative;
 }
 
+.d2d-autocomplete-status {
+  margin: 0.3rem 0 0;
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+}
+
 .d2d-suggestions {
   position: absolute;
   z-index: 30;
