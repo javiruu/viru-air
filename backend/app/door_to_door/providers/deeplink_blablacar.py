@@ -51,9 +51,6 @@ class BlaBlaCarDeepLinkProvider(DoorToDoorProvider):
         return ProviderHealth(self.provider_name, "ok", self.source_type, "deeplink")
 
     async def search(self, query: DoorToDoorProviderQuery) -> list[DoorToDoorOptionOut]:
-        if not query.preferences.allow_rideshare:
-            return []
-
         flight = query.flight
         checked_at = query.checked_at
         flight_duration = int((flight.arrival_at - flight.departure_at).total_seconds() / 60)
