@@ -148,6 +148,17 @@ export type DoorToDoorSuggestion = DoorToDoorLocation & {
   source_type: "local_static" | "mock" | "api";
 };
 
+export type DoorToDoorSuggestionsMeta = {
+  provider_status: "api_live" | "fallback_active" | "provider_error";
+  degraded_reason: string | null;
+  used_region_codes: string[];
+};
+
+export type DoorToDoorSuggestionsResponse = {
+  items: DoorToDoorSuggestion[];
+  meta: DoorToDoorSuggestionsMeta;
+};
+
 export type DoorToDoorSavedLocation = DoorToDoorLocation & {
   id: string;
   updated_at: string;
