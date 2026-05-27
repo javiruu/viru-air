@@ -73,9 +73,40 @@ También acepta alias `watchId` en el payload para compatibilidad frontend.
     "chosen_option_id": null
   },
   "options": [],
-  "warnings": []
+  "warnings": [],
+  "map_capabilities": {
+    "navigation": {
+      "state": "available",
+      "source_type": "maps",
+      "confidence": "live",
+      "last_checked_at": "2026-05-27T09:10:00+02:00",
+      "why_missing": null
+    }
+  }
 }
 ```
+
+`map_capabilities` es opcional para mantener compatibilidad con clientes antiguos. Si no llega en payload, frontend aplica fallback seguro (`planned`) por capacidad.
+
+Claves canonicas de capacidades:
+
+- `navigation`
+- `traffic`
+- `transit`
+- `alternatives`
+- `street_view_preview`
+- `saved_places`
+- `nearby_pois`
+- `offline`
+- `incidents`
+- `eco_route`
+
+Estados permitidos por capacidad:
+
+- `available`
+- `partial`
+- `planned`
+- `unavailable`
 
 V1.1 devuelve combinaciones según providers habilitados por entorno y guarda un historial resumido del cálculo.
 

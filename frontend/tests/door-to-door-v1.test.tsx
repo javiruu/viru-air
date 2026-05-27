@@ -193,6 +193,10 @@ test("DoorToDoorPanel includes no-coverage-real handling, provider status and wa
   assert.match(source, /comparatorTitle/);
   assert.match(source, /recommendedReasons/);
   assert.match(source, /quickBadgesByOption/);
+  assert.match(source, /buildMapCapabilities/);
+  assert.match(source, /map_capabilities/);
+  assert.match(source, /d2d-map-hub/);
+  assert.match(source, /doorToDoor\.mapHub\.state\.\$\{capability\.state\}/);
 });
 
 test("DoorToDoorPanel includes vertical timeline, trust modal trigger, and collapsible history", () => {
@@ -208,6 +212,15 @@ test("DoorToDoorPanel includes vertical timeline, trust modal trigger, and colla
   assert.match(source, /showHistoryAction/);
   assert.match(source, /hideHistoryAction/);
   assert.match(source, /aria-expanded=\{showHistory\}/);
+  assert.match(source, /mapCapabilitiesBySection/);
+});
+
+test("door-to-door i18n includes map hub copy in es and en", () => {
+  const source = fs.readFileSync(D2D_I18N, "utf8");
+  assert.match(source, /mapHub:\s*\{/);
+  assert.match(source, /Capas del mapa/);
+  assert.match(source, /Map layers/);
+  assert.match(source, /state:\s*\{\s*available:/);
 });
 
 test("DoorToDoorPanel guards keyboard navigation when autocomplete has no suggestions", () => {
