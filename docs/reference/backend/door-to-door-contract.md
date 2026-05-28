@@ -156,6 +156,9 @@ Devuelve sugerencias para autocomplete.
 Query params:
 
 - `q`: texto opcional.
+- `session_token`: token de sesión de autocomplete (opcional).
+- `field`: campo de origen de la consulta (`origin` o `destination`, opcional).
+- `watch_id`: id del watch seleccionado para contextualizar sugerencias (opcional).
 
 Si Google Places está activo (`DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS=1`, `DOOR_TO_DOOR_ENABLE_GOOGLE_PLACES=1`, `GOOGLE_MAPS_API_KEY`), mezcla sugerencias `source_type: "api"` con las `local_static`.
 

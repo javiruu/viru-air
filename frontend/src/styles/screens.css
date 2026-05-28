@@ -18250,6 +18250,10 @@ textarea::placeholder {
   gap: 0.85rem;
 }
 
+.d2d-form-essentials > .btn-primary {
+  justify-self: start;
+}
+
 .d2d-essentials-head {
   grid-column: 1 / -1;
 }
@@ -18361,6 +18365,7 @@ textarea::placeholder {
   flex-direction: row;
   align-items: center;
   gap: 0.55rem;
+  min-height: 44px;
 }
 
 .d2d-autocomplete {
@@ -19170,6 +19175,11 @@ textarea::placeholder {
     grid-column: auto;
   }
 
+  .d2d-form-essentials > .btn-primary {
+    width: 100%;
+    justify-self: stretch;
+  }
+
   .d2d-route-stack {
     order: 2;
   }
@@ -19237,6 +19247,10 @@ textarea::placeholder {
   .d2d-segment-meta {
     grid-column: 2;
     justify-items: start;
+  }
+
+  .d2d-form-essentials {
+    gap: 0.7rem;
   }
 }
 

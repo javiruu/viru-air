@@ -10,6 +10,7 @@ from app.door_to_door.providers.google_places import GooglePlacesSuggestionsProv
 from app.door_to_door.providers.google_routes import GoogleRoutesProvider
 from app.door_to_door.providers.gtfs_transit import GtfsTransitProvider
 from app.door_to_door.providers.mock import MockDoorToDoorProvider
+from app.door_to_door.providers.nominatim import NominatimSuggestionsProvider
 from app.door_to_door.schemas import DoorToDoorProviderStatusOut, DoorToDoorSourceType
 
 
@@ -37,6 +38,7 @@ class ProviderRuntime:
     real_enabled: bool
     scrapers_enabled: bool
     google_places_provider: GooglePlacesSuggestionsProvider | None
+    nominatim_provider: NominatimSuggestionsProvider | None
 
 
 def _env_flag(name: str, default: bool) -> bool:
@@ -352,6 +354,9 @@ def resolve_provider_runtime() -> ProviderRuntime:
     google_places_provider = (
         GooglePlacesSuggestionsProvider() if google_places_enabled else None
     )
+    nominatim_provider = NominatimSuggestionsProvider()
+    if not nominatim_provider.enabled:
+        nominatim_provider = None
 
     return ProviderRuntime(
         providers=providers,
@@ -360,4 +365,5 @@ def resolve_provider_runtime() -> ProviderRuntime:
         real_enabled=real_enabled,
         scrapers_enabled=scrapers_enabled,
         google_places_provider=google_places_provider,
+        nominatim_provider=nominatim_provider,
     )

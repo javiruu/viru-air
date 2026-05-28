@@ -14,12 +14,13 @@ export function fetchDoorToDoorSuggestions(
   sessionToken?: string,
   field?: "origin" | "destination",
   watchId?: string,
+  signal?: AbortSignal,
 ): Promise<DoorToDoorSuggestionsResponse> {
   const params = new URLSearchParams({ q: query });
   if (sessionToken) params.set("session_token", sessionToken);
   if (field) params.set("field", field);
   if (watchId) params.set("watch_id", watchId);
-  return apiFetch<DoorToDoorSuggestionsResponse>(`/door-to-door/suggestions?${params.toString()}`);
+  return apiFetch<DoorToDoorSuggestionsResponse>(`/door-to-door/suggestions?${params.toString()}`, { signal });
 }
 
 export function fetchDoorToDoorProviderStatus(): Promise<DoorToDoorProviderStatus[]> {

@@ -199,6 +199,7 @@ test("DoorToDoorPanel includes no-coverage-real handling, provider status and wa
   assert.match(source, /addSavedPlace/);
   assert.match(source, /d2d-saved-places-manager/);
   assert.match(source, /doorToDoor\.mapHub\.state\.\$\{capability\.state\}/);
+  assert.match(source, /warnings\.some\(\(warning\) => warning\.code === "NO_COVERAGE"\)/);
 });
 
 test("DoorToDoorPanel includes vertical timeline, trust modal trigger, and collapsible history", () => {
@@ -224,6 +225,7 @@ test("door-to-door i18n includes map hub copy in es and en", () => {
   assert.match(source, /Map layers/);
   assert.match(source, /state:\s*\{\s*available:/);
   assert.match(source, /savedPlaces:\s*\{/);
+  assert.match(source, /listboxAria/);
 });
 
 test("DoorToDoorPanel guards keyboard navigation when autocomplete has no suggestions", () => {
@@ -231,6 +233,36 @@ test("DoorToDoorPanel guards keyboard navigation when autocomplete has no sugges
   assert.match(source, /if \(suggestions\.length === 0\)/);
   assert.match(source, /event\.key === "ArrowDown" \|\| event\.key === "ArrowUp" \|\| event\.key === "Enter"/);
   assert.match(source, /event\.preventDefault\(\)/);
+});
+
+test("DoorToDoorPanel clears stale geo metadata on manual input and localizes listbox aria", () => {
+  const source = fs.readFileSync(PANEL, "utf8");
+  assert.match(source, /lat:\s*null/);
+  assert.match(source, /lng:\s*null/);
+  assert.match(source, /place_id:\s*null/);
+  assert.match(source, /doorToDoor\.autocomplete\.listboxAria/);
+});
+
+test("DoorToDoorPanel guards stale requests, invalid submits, and duplicate saved places", () => {
+  const source = fs.readFileSync(PANEL, "utf8");
+  assert.match(source, /requestIdRef/);
+  assert.match(source, /requestId !== requestIdRef\.current/);
+  assert.match(source, /normalizeLabel\(origin\.label\)/);
+  assert.match(source, /normalizeLabel\(finalDestination\.label\)/);
+  assert.match(source, /finalDestination\.type !== "airport_only" && normalizedOrigin === normalizedDestination/);
+  assert.match(source, /status === "loading"/);
+  assert.match(source, /duplicate = savedPlaces\.some/);
+});
+
+test("Door-to-door suggestions support abortable requests", () => {
+  const panelSource = fs.readFileSync(PANEL, "utf8");
+  const apiSource = fs.readFileSync(API, "utf8");
+  assert.match(panelSource, /new AbortController\(\)/);
+  assert.match(panelSource, /controller\.abort\(\)/);
+  assert.match(panelSource, /error\.name === "AbortError"/);
+  assert.match(apiSource, /signal\?: AbortSignal/);
+  assert.match(apiSource, /\/door-to-door\/suggestions\?\$\{params\.toString\(\)\}/);
+  assert.match(apiSource, /\{\s*signal\s*\}/);
 });
 
 test("Door-to-door option, radar, filters, and timeline render mock and flight-estimated cues", () => {
@@ -315,6 +347,7 @@ test("Door-to-door styles include responsive radar and mobile decision layout ho
   assert.match(source, /d2d-row-actions\.is-open/);
   assert.match(source, /d2d-trust-modal/);
   assert.match(source, /d2d-option-compact-grid/);
+  assert.match(source, /d2d-form-essentials > \.btn-primary/);
   assert.match(source, /max-width: 680px/);
   assert.match(source, /prefers-reduced-motion/);
 });

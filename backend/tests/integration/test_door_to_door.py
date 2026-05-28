@@ -558,7 +558,7 @@ def test_suggestions_merge_local_static_and_google_places(client: TestClient, mo
     from app.door_to_door.providers import google_places
     from app.door_to_door.schemas import DoorToDoorSuggestionOut
 
-    async def _fake_suggest(self, query, *, limit=6, session_token=None, included_region_codes=None):  # noqa: ANN001
+    async def _fake_suggest(self, query, *, limit=6, session_token=None, preferred_region_codes=None):  # noqa: ANN001
         return [
             DoorToDoorSuggestionOut(
                 id="google_treviso",
@@ -592,7 +592,7 @@ def test_suggestions_keep_homonyms_with_different_place_id(client: TestClient, m
     from app.door_to_door.providers import google_places
     from app.door_to_door.schemas import DoorToDoorSuggestionOut
 
-    async def _fake_suggest(self, query, *, limit=6, session_token=None, included_region_codes=None):  # noqa: ANN001
+    async def _fake_suggest(self, query, *, limit=6, session_token=None, preferred_region_codes=None):  # noqa: ANN001
         return [
             DoorToDoorSuggestionOut(
                 id="google_springfield_us",
@@ -633,8 +633,8 @@ def test_suggestions_send_origin_country_code_from_selected_watch(client: TestCl
     captured: dict[str, object] = {}
     from app.door_to_door.providers import google_places
 
-    async def _fake_suggest(self, query, *, limit=6, session_token=None, included_region_codes=None):  # noqa: ANN001
-        captured["included_region_codes"] = included_region_codes
+    async def _fake_suggest(self, query, *, limit=6, session_token=None, preferred_region_codes=None):  # noqa: ANN001
+        captured["preferred_region_codes"] = preferred_region_codes
         return []
 
     monkeypatch.setattr(google_places.GooglePlacesSuggestionsProvider, "suggest", _fake_suggest)
@@ -642,7 +642,7 @@ def test_suggestions_send_origin_country_code_from_selected_watch(client: TestCl
     assert response.status_code == 200, response.text
     payload = response.json()
     assert payload["meta"]["used_region_codes"] == ["es"]
-    assert captured.get("included_region_codes") == ["es"]
+    assert captured.get("preferred_region_codes") == ["es"]
 
 
 def test_suggestions_send_destination_country_code_from_selected_watch(client: TestClient, monkeypatch) -> None:
@@ -658,8 +658,8 @@ def test_suggestions_send_destination_country_code_from_selected_watch(client: T
     captured: dict[str, object] = {}
     from app.door_to_door.providers import google_places
 
-    async def _fake_suggest(self, query, *, limit=6, session_token=None, included_region_codes=None):  # noqa: ANN001
-        captured["included_region_codes"] = included_region_codes
+    async def _fake_suggest(self, query, *, limit=6, session_token=None, preferred_region_codes=None):  # noqa: ANN001
+        captured["preferred_region_codes"] = preferred_region_codes
         return []
 
     monkeypatch.setattr(google_places.GooglePlacesSuggestionsProvider, "suggest", _fake_suggest)
@@ -667,7 +667,7 @@ def test_suggestions_send_destination_country_code_from_selected_watch(client: T
     assert response.status_code == 200, response.text
     payload = response.json()
     assert payload["meta"]["used_region_codes"] == ["it"]
-    assert captured.get("included_region_codes") == ["it"]
+    assert captured.get("preferred_region_codes") == ["it"]
 
 
 def test_suggestions_keep_local_static_when_google_places_disabled(client: TestClient, monkeypatch) -> None:
@@ -680,7 +680,20 @@ def test_suggestions_keep_local_static_when_google_places_disabled(client: TestC
     items = payload["items"]
     assert payload["meta"]["provider_status"] == "fallback_active"
     assert items
-    assert all(item["source_type"] == "local_static" for item in items)
+    assert any(item["source_type"] == "open_data" for item in items)
+
+
+def test_suggestions_include_typed_fallback_when_provider_is_disabled(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(monkeypatch, mock=False, real=True, google_places=False, google_key=None)
+    headers = _auth_headers(client, "google-places-typed-disabled@viru.dev")
+    query = "avenida pablo iglesias"
+
+    response = client.get(f"/api/v1/door-to-door/suggestions?q={query}", headers=headers)
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["meta"]["provider_status"] == "fallback_active"
+    assert any(item["label"].lower() == query for item in payload["items"])
+    assert any("fallback local" in item["subtitle"].lower() for item in payload["items"])
 
 
 def test_suggestions_provider_error_returns_fallback_with_meta(client: TestClient, monkeypatch) -> None:
@@ -694,17 +707,40 @@ def test_suggestions_provider_error_returns_fallback_with_meta(client: TestClien
     headers = _auth_headers(client, "google-places-provider-error@viru.dev")
     from app.door_to_door.providers import google_places
 
-    async def _failing_suggest(self, query, *, limit=6, session_token=None, included_region_codes=None):  # noqa: ANN001
+    async def _failing_suggest(self, query, *, limit=6, session_token=None, preferred_region_codes=None):  # noqa: ANN001
         raise RuntimeError("provider unavailable")
 
     monkeypatch.setattr(google_places.GooglePlacesSuggestionsProvider, "suggest", _failing_suggest)
     response = client.get("/api/v1/door-to-door/suggestions?q=tre", headers=headers)
     assert response.status_code == 200, response.text
     payload = response.json()
-    assert payload["meta"]["provider_status"] == "provider_error"
-    assert payload["meta"]["degraded_reason"] == "suggestions_fetch_failed"
+    assert payload["meta"]["provider_status"] == "fallback_active"
+    assert payload["meta"]["degraded_reason"] == "google_unavailable_using_open_data"
     assert payload["items"]
-    assert all(item["source_type"] == "local_static" for item in payload["items"])
+    assert any(item["source_type"] == "open_data" for item in payload["items"])
+
+
+def test_suggestions_provider_error_still_includes_typed_fallback(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(
+        monkeypatch,
+        mock=False,
+        real=True,
+        google_places=True,
+        google_key="fake-google-key",
+    )
+    headers = _auth_headers(client, "google-places-provider-error-typed@viru.dev")
+    query = "avenida pablo iglesias"
+    from app.door_to_door.providers import google_places
+
+    async def _failing_suggest(self, query, *, limit=6, session_token=None, preferred_region_codes=None):  # noqa: ANN001
+        raise RuntimeError("provider unavailable")
+
+    monkeypatch.setattr(google_places.GooglePlacesSuggestionsProvider, "suggest", _failing_suggest)
+    response = client.get(f"/api/v1/door-to-door/suggestions?q={query}", headers=headers)
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["meta"]["provider_status"] == "fallback_active"
+    assert any(item["label"].lower() == query for item in payload["items"])
 
 
 def test_score_prefers_safer_route_when_buffer_is_low() -> None:

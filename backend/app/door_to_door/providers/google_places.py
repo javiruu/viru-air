@@ -40,7 +40,7 @@ class GooglePlacesSuggestionsProvider:
         *,
         limit: int = 6,
         session_token: str | None = None,
-        included_region_codes: Sequence[str] | None = None,
+        preferred_region_codes: Sequence[str] | None = None,
     ) -> list[DoorToDoorSuggestionOut]:
         normalized = query.strip()
         if not normalized:
@@ -48,7 +48,7 @@ class GooglePlacesSuggestionsProvider:
         if not self.enabled or not self.api_key:
             return []
 
-        normalized_regions = tuple(sorted({code.strip().lower() for code in (included_region_codes or []) if code}))
+        normalized_regions = tuple(sorted({code.strip().lower() for code in (preferred_region_codes or []) if code}))
         token_fragment = (session_token or "").strip()[:32]
         cache_key = f"{normalized.lower()}|{','.join(normalized_regions)}|{token_fragment}"
         now = datetime.now(tz=UTC)
@@ -62,7 +62,6 @@ class GooglePlacesSuggestionsProvider:
             normalized,
             limit,
             session_token,
-            normalized_regions,
         )
         if suggestions:
             self._cache[cache_key] = _CachedSuggestions(
@@ -115,14 +114,11 @@ class GooglePlacesSuggestionsProvider:
         query: str,
         limit: int,
         session_token: str | None = None,
-        included_region_codes: Sequence[str] | None = None,
     ) -> list[DoorToDoorSuggestionOut]:
         body: dict[str, object] = {
             "input": query,
             "languageCode": "es",
         }
-        if included_region_codes:
-            body["includedRegionCodes"] = list(included_region_codes)
         if session_token:
             body["sessionToken"] = session_token
 
