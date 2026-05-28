@@ -216,6 +216,10 @@ test("DoorToDoorPanel includes vertical timeline, trust modal trigger, and colla
   assert.match(source, /hideHistoryAction/);
   assert.match(source, /aria-expanded=\{showHistory\}/);
   assert.match(source, /mapCapabilitiesBySection/);
+  assert.match(source, /coveragePanelTitle/);
+  assert.match(source, /showCoveragePanelAction/);
+  assert.match(source, /chosenPlanHidden/);
+  assert.match(source, /externalDisclaimer/);
 });
 
 test("door-to-door i18n includes map hub copy in es and en", () => {
@@ -226,6 +230,9 @@ test("door-to-door i18n includes map hub copy in es and en", () => {
   assert.match(source, /state:\s*\{\s*available:/);
   assert.match(source, /savedPlaces:\s*\{/);
   assert.match(source, /listboxAria/);
+  assert.match(source, /Cobertura y fuentes/);
+  assert.match(source, /Coverage and sources/);
+  assert.match(source, /Precio, horario y plazas se confirman fuera de Viru/);
 });
 
 test("DoorToDoorPanel guards keyboard navigation when autocomplete has no suggestions", () => {

@@ -582,6 +582,7 @@ export function DoorToDoorPanel() {
   const hasNoRealCoverage = warningCodes.has("NO_REAL_PROVIDER_COVERAGE");
   const hasPartialCoverage = warningCodes.has("PROVIDER_PARTIAL_COVERAGE");
   const hasNoCoverage = warningCodes.has("NO_COVERAGE");
+  const hasChosenPlan = Boolean(response?.summary.chosen_option_id);
 
   const segmentLinks = useMemo(() => {
     if (!selectedWatch) return null;
@@ -854,7 +855,7 @@ export function DoorToDoorPanel() {
       <section className="d2d-decision-grid">
         <div className="panel panel-soft d2d-route-stack">
           <div className="d2d-section-head">
-            <h2>{t("doorToDoor.timeline.title")}</h2>
+            <h2>{t("doorToDoor.sections.tripSummary")}</h2>
             {response?.flight.flight_time_confidence === "estimated" ? (
               <span className="status-pill warning">{t("doorToDoor.timeline.estimatedSchedule")}</span>
             ) : null}
@@ -918,14 +919,17 @@ export function DoorToDoorPanel() {
         </aside>
       </section>
 
-      <section className="panel panel-soft d2d-map-hub" aria-label={t("doorToDoor.mapHub.title")}>
+      <section className="panel panel-soft d2d-map-hub" aria-label={t("doorToDoor.sections.coveragePanelTitle")}>
         <div className="d2d-section-head">
-          <h2>{t("doorToDoor.mapHub.title")}</h2>
-          <span>{t("doorToDoor.mapHub.subtitle")}</span>
+          <h2>{t("doorToDoor.sections.coveragePanelTitle")}</h2>
+          <span>{t("doorToDoor.sections.coveragePanelBody")}</span>
         </div>
-        <p className="panel-note">{t("doorToDoor.mapHub.summary")}</p>
-
-        <div className="d2d-map-hub-grid">
+        <details className="d2d-filters-collapse">
+          <summary>
+            <strong>{t("doorToDoor.sections.showCoveragePanelAction")}</strong>
+          </summary>
+          <p className="panel-note">{t("doorToDoor.mapHub.summary")}</p>
+          <div className="d2d-map-hub-grid">
           <section className="d2d-map-section">
             <header>
               <h3><Layers3 size={16} aria-hidden="true" /> {t("doorToDoor.mapHub.sections.layers")}</h3>
@@ -1004,7 +1008,8 @@ export function DoorToDoorPanel() {
               </div>
             </div>
           </section>
-        </div>
+          </div>
+        </details>
       </section>
 
       {status === "empty" ? <DoorToDoorEmptyState hasWatch={Boolean(selectedWatch)} /> : null}
@@ -1042,7 +1047,7 @@ export function DoorToDoorPanel() {
         <>
           <section className="panel panel-soft d2d-chosen-trust">
             <div className="d2d-section-head">
-              <h2>{t("doorToDoor.option.chosen")}</h2>
+              <h2>{t("doorToDoor.sections.sources")}</h2>
               <button
                 type="button"
                 className={`status-pill ${trustTone}`}
@@ -1055,14 +1060,15 @@ export function DoorToDoorPanel() {
                 <span>{trustTone === "success" ? t("doorToDoor.sections.trustConfirmed") : t("doorToDoor.sections.trustEstimated")}</span>
               </button>
             </div>
-            {selectedPlan ? (
+            <p className="panel-note"><strong>{t("doorToDoor.sections.providersStatus")}:</strong> {t("doorToDoor.sections.providersMix", { enabled: providerStatusSummary.enabled, real: providerStatusSummary.realEnabled, estimate: providerStatusSummary.estimateEnabled })}</p>
+            {hasChosenPlan && selectedPlan ? (
               <p className="panel-note">
                 <strong>{selectedPlan.label}</strong>
                 {" · "}
                 {selectedPlan.total_price_min ?? "--"}-{selectedPlan.total_price_max ?? "--"} {selectedPlan.currency}
               </p>
             ) : (
-              <p className="panel-note">{t("doorToDoor.sections.trustNoPlan")}</p>
+              <p className="panel-note">{t("doorToDoor.sections.chosenPlanHidden")}</p>
             )}
           </section>
 
@@ -1124,6 +1130,7 @@ export function DoorToDoorPanel() {
                 <span className="status-pill info">{realDeeplinks.length}</span>
               </div>
               <p className="panel-note">{t("doorToDoor.sections.limitedComparisonBody")}</p>
+              <p className="panel-note">{t("doorToDoor.sections.externalDisclaimer")}</p>
               <div className="d2d-options-stack">
                 {realDeeplinks.map((option) => (
                   <DoorToDoorOptionCard
