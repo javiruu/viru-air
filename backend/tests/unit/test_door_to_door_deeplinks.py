@@ -100,7 +100,7 @@ async def test_blablacar_no_inventa_precio():
 
 
 @pytest.mark.asyncio
-async def test_blablacar_sigue_visible_con_allow_rideshare_false():
+async def test_blablacar_provider_generates_raw_option_even_if_allow_rideshare_false():
     provider = BlaBlaCarDeepLinkProvider()
     results = await provider.search(_make_query(allow_rideshare=False))
     assert len(results) == 1
@@ -108,7 +108,7 @@ async def test_blablacar_sigue_visible_con_allow_rideshare_false():
 
 
 @pytest.mark.asyncio
-async def test_blablacar_sigue_visible_con_public_transport_only():
+async def test_blablacar_provider_generates_raw_option_even_if_public_transport_only():
     provider = BlaBlaCarDeepLinkProvider()
     results = await provider.search(_make_query(
         public_transport_only=True,

@@ -138,7 +138,7 @@ Warnings relevantes:
 - Si `final_destination.type` es `airport_only`, el backend omite el tramo terrestre de llegada.
 - Si `allow_rideshare` es `false`, no se ofrecen opciones de BlaBlaCar.
 - Si `allow_shuttle` es `false`, no se ofrecen opciones de GoOpti.
-- Si `public_transport_only` es `true`, no se ofrecen opciones de rideshare/shuttle (salvo decisión explícita documentada).
+- Si `public_transport_only` es `true`, no se ofrecen opciones de rideshare/shuttle.
 - Si `max_price` está definido y una opción no tiene precio confirmado (`total_price_min = null`), la opción se mantiene con warning `UNCONFIRMED_PRICE`.
 - Si `public_transport_only` es `true`, se priorizan providers GTFS/open data y se ocultan rideshare/shuttle.
 - Si `allow_bus` es `false`, no se devuelven opciones GTFS con `mode=bus`.

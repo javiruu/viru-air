@@ -24,10 +24,10 @@ export const doorToDoorEs = {
   autocomplete: {
     listboxAria: "{label}: sugerencias",
     loading: "Cargando sugerencias...",
-    fallbackResults: "Google no disponible, usando fallback real de mapas abiertos.",
+    fallbackResults: "Mostrando resultados con mapas abiertos.",
     noSuggestions: "No hay sugerencias para esta búsqueda.",
     degraded: "Autocomplete degradado.",
-    degradedUsingOpenData: "Google no disponible, usando fallback real de mapas abiertos.",
+    degradedUsingOpenData: "Usando mapas abiertos para las sugerencias.",
     degradedNoResults: "No hay resultados para esta búsqueda.",
   },
   defaults: {
@@ -93,7 +93,7 @@ export const doorToDoorEs = {
     providersMix: "{enabled} activos · {real} reales · {estimate} estimación",
     limitedComparisonTitle: "Fuente externa",
     limitedComparisonBody: "Este enlace abre el proveedor. Revisa horarios, precio y disponibilidad antes de decidir.",
-    blablacarAlwaysVisibleHint: "BlaBlaCar se mantiene visible como búsqueda externa aunque desactives coche compartido en filtros.",
+    blablacarAlwaysVisibleHint: "BlaBlaCar solo aparece si coche compartido está habilitado y no activas modo solo transporte público.",
     attemptedRoute: "Ruta consultada",
     coverageActions: "Qué puedes hacer ahora",
     noActiveProviders: "sin providers activos",
@@ -358,10 +358,10 @@ export const doorToDoorEn = {
   autocomplete: {
     listboxAria: "{label}: suggestions",
     loading: "Loading suggestions...",
-    fallbackResults: "Google is unavailable, using real open-map fallback.",
+    fallbackResults: "Showing results with open maps.",
     noSuggestions: "No suggestions for this search.",
     degraded: "Autocomplete degraded.",
-    degradedUsingOpenData: "Google is unavailable, using real open-map fallback.",
+    degradedUsingOpenData: "Using open maps for suggestions.",
     degradedNoResults: "No results found for this search.",
   },
   defaults: {
@@ -427,7 +427,7 @@ export const doorToDoorEn = {
     providersMix: "{enabled} active · {real} real · {estimate} estimate",
     limitedComparisonTitle: "External source",
     limitedComparisonBody: "This link opens the provider. Check times, price, and availability before deciding.",
-    blablacarAlwaysVisibleHint: "BlaBlaCar stays visible as an external search even when rideshare is disabled in filters.",
+    blablacarAlwaysVisibleHint: "BlaBlaCar appears only when rideshare is enabled and public-transport-only mode is off.",
     attemptedRoute: "Requested route",
     coverageActions: "What you can do now",
     noActiveProviders: "no active providers",
