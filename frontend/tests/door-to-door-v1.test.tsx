@@ -246,12 +246,20 @@ test("DoorToDoorPanel clears stale geo metadata on manual input and localizes li
 test("DoorToDoorPanel guards stale requests, invalid submits, and duplicate saved places", () => {
   const source = fs.readFileSync(PANEL, "utf8");
   assert.match(source, /requestIdRef/);
+  assert.match(source, /historyRequestIdRef/);
+  assert.match(source, /resolveActiveOption/);
+  assert.match(source, /chosenFromServer/);
+  assert.match(source, /recommendedFromServer/);
   assert.match(source, /requestId !== requestIdRef\.current/);
+  assert.match(source, /requestId !== historyRequestIdRef\.current/);
   assert.match(source, /normalizeLabel\(origin\.label\)/);
   assert.match(source, /normalizeLabel\(finalDestination\.label\)/);
   assert.match(source, /finalDestination\.type !== "airport_only" && normalizedOrigin === normalizedDestination/);
   assert.match(source, /status === "loading"/);
   assert.match(source, /duplicate = savedPlaces\.some/);
+  assert.match(source, /await refreshHistory\(\)/);
+  assert.match(source, /setResponse\(null\)/);
+  assert.match(source, /setStatus\("empty"\)/);
 });
 
 test("Door-to-door suggestions support abortable requests", () => {
@@ -350,6 +358,18 @@ test("Door-to-door styles include responsive radar and mobile decision layout ho
   assert.match(source, /d2d-form-essentials > \.btn-primary/);
   assert.match(source, /max-width: 680px/);
   assert.match(source, /prefers-reduced-motion/);
+});
+
+test("DoorToDoorPanel route-stack supports provider fallback actions and partial coverage notices", () => {
+  const source = fs.readFileSync(PANEL, "utf8");
+  assert.match(source, /openProviderAction/);
+  assert.match(source, /partialCoverageBody/);
+  assert.match(source, /hasNoRealCoverage/);
+  assert.match(source, /hasPartialCoverage/);
+  assert.match(source, /outboundLeg\?\.booking_url/);
+  assert.match(source, /inboundLeg\?\.booking_url/);
+  assert.match(source, /segmentLinks\.blablacarUrl && !outboundBooking/);
+  assert.match(source, /segmentLinks\.gooptiUrl && !inboundBooking/);
 });
 
 const gtfsOption: DoorToDoorOption = {

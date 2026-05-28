@@ -62,6 +62,7 @@ type SegmentNode = {
   route: string;
   timing: string;
   badge: string;
+  providerLabel: string | null;
   actions: Array<{ href: string; label: string; ariaLabel: string }>;
 };
 
@@ -361,6 +362,19 @@ function deriveTrustTone(option: DoorToDoorOption | null): TrustTone {
   return "warning";
 }
 
+function resolveActiveOption(response: DoorToDoorResponse | null, chosenOptionId: string): DoorToDoorOption | null {
+  if (!response || response.options.length === 0) return null;
+  const chosenFromServer = response.summary?.chosen_option_id || null;
+  const recommendedFromServer = response.summary?.recommended_option_id || null;
+  return (
+    response.options.find((option) => option.id === chosenFromServer) ||
+    response.options.find((option) => option.id === chosenOptionId) ||
+    response.options.find((option) => option.id === recommendedFromServer) ||
+    response.options[0] ||
+    null
+  );
+}
+
 function autocompleteStatusCopy(meta: DoorToDoorSuggestionsMeta, t: ReturnType<typeof useI18n>["t"]) {
   if (meta.degraded_reason === "google_unavailable_using_open_data") {
     return t("doorToDoor.autocomplete.degradedUsingOpenData");
@@ -400,6 +414,7 @@ export function DoorToDoorPanel() {
   const [savedPlaceLabel, setSavedPlaceLabel] = useState("");
   const [savedPlaceNote, setSavedPlaceNote] = useState("");
   const requestIdRef = useRef(0);
+  const historyRequestIdRef = useRef(0);
   const visibleSavedPlaces = useMemo(() => filterSavedPlacesForWatch(savedPlaces, selectedWatchId), [savedPlaces, selectedWatchId]);
 
   useEffect(() => {
@@ -461,15 +476,37 @@ export function DoorToDoorPanel() {
       .catch(() => undefined);
   }, [watchIdParam]);
 
+  const refreshHistory = useCallback(async () => {
+    if (!selectedWatchId) {
+      setHistory([]);
+      return;
+    }
+    const requestId = historyRequestIdRef.current + 1;
+    historyRequestIdRef.current = requestId;
+    try {
+      const items = await fetchDoorToDoorHistory(selectedWatchId);
+      if (requestId !== historyRequestIdRef.current) return;
+      setHistory(items);
+    } catch {
+      if (requestId !== historyRequestIdRef.current) return;
+      setHistory([]);
+    }
+  }, [selectedWatchId]);
+
   useEffect(() => {
-    if (!selectedWatchId) return;
-    fetchDoorToDoorHistory(selectedWatchId)
-      .then((items) => setHistory(items))
-      .catch(() => setHistory([]));
-  }, [selectedWatchId, chosenOptionId, response?.summary.history_id]);
+    void refreshHistory();
+  }, [refreshHistory, chosenOptionId, response?.summary.history_id]);
 
   useEffect(() => {
     setShowHistory(false);
+  }, [selectedWatchId]);
+
+  useEffect(() => {
+    setResponse(null);
+    setChosenOptionId("");
+    setOpenActionsNodeId(null);
+    setErrorMessage("");
+    setStatus("empty");
   }, [selectedWatchId]);
 
   useEffect(() => {
@@ -519,16 +556,7 @@ export function DoorToDoorPanel() {
     return "info";
   }, []);
 
-  const selectedPlan = useMemo(() => {
-    if (!response) return null;
-    return (
-      response.options.find((option) => option.id === chosenOptionId) ||
-      response.options.find((option) => option.id === response.summary.chosen_option_id) ||
-      response.options.find((option) => option.id === response.summary.recommended_option_id) ||
-      response.options[0] ||
-      null
-    );
-  }, [response, chosenOptionId]);
+  const selectedPlan = useMemo(() => resolveActiveOption(response, chosenOptionId), [response, chosenOptionId]);
   const quickBadgesByOption = useMemo(() => {
     if (!response) return {};
     return getDecisionBadges(response.options);
@@ -550,6 +578,10 @@ export function DoorToDoorPanel() {
   }, [response, recommendedOption]);
 
   const trustTone = useMemo(() => deriveTrustTone(selectedPlan), [selectedPlan]);
+  const warningCodes = useMemo(() => new Set((response?.warnings ?? []).map((warning) => warning.code)), [response?.warnings]);
+  const hasNoRealCoverage = warningCodes.has("NO_REAL_PROVIDER_COVERAGE");
+  const hasPartialCoverage = warningCodes.has("PROVIDER_PARTIAL_COVERAGE");
+  const hasNoCoverage = warningCodes.has("NO_COVERAGE");
 
   const segmentLinks = useMemo(() => {
     if (!selectedWatch) return null;
@@ -561,8 +593,8 @@ export function DoorToDoorPanel() {
 
     const mapsOutbound = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originLabel)}&destination=${encodeURIComponent(originIata + " Airport")}&travelmode=driving&dir_action=navigate`;
     const mapsInbound = destLabel ? `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(destIata + " Airport")}&destination=${encodeURIComponent(destLabel)}&travelmode=driving&dir_action=navigate` : null;
-    const blablacarOption = response?.options.find((option) => option.id === "option_blablacar_deeplink");
-    const gooptiOption = response?.options.find((option) => option.id === "option_goopti_deeplink");
+    const blablacarOption = response?.options.find((option) => option.id === "option_blablacar_deeplink" || option.sources.some((source) => source.provider === "blablacar_deeplink"));
+    const gooptiOption = response?.options.find((option) => option.id === "option_goopti_deeplink" || option.sources.some((source) => source.provider === "goopti_deeplink"));
 
     const blablacarUrl =
       blablacarOption?.deep_link?.url ||
@@ -578,10 +610,21 @@ export function DoorToDoorPanel() {
 
   const timelineNodes = useMemo<SegmentNode[]>(() => {
     if (!selectedWatch || !segmentLinks || !response) return [];
-    const groundLegs = selectedPlan?.legs.filter((leg) => leg.type === "ground") || [];
-    const outboundLeg = groundLegs[0];
-    const inboundLeg = groundLegs.length > 1 ? groundLegs[groundLegs.length - 1] : null;
-    const flightLeg = selectedPlan?.legs.find((leg) => leg.type === "flight") || null;
+    const legs = selectedPlan?.legs ?? [];
+    const flightLegIndex = legs.findIndex((leg) => leg.type === "flight");
+    const fallbackGroundLegs = legs.filter((leg) => leg.type === "ground");
+    const outboundLeg =
+      (flightLegIndex > 0 ? [...legs.slice(0, flightLegIndex)].reverse().find((leg) => leg.type === "ground") : null) ??
+      fallbackGroundLegs[0] ??
+      null;
+    const inboundLeg =
+      (flightLegIndex >= 0 ? legs.slice(flightLegIndex + 1).find((leg) => leg.type === "ground") : null) ??
+      (fallbackGroundLegs.length > 1 ? fallbackGroundLegs[fallbackGroundLegs.length - 1] : null);
+    const flightLeg = (flightLegIndex >= 0 ? legs[flightLegIndex] : null) ?? null;
+    const outboundBooking = outboundLeg?.booking_url || null;
+    const inboundBooking = inboundLeg?.booking_url || null;
+    const outboundProvider = outboundLeg?.provider || null;
+    const inboundProvider = inboundLeg?.provider || null;
 
     const nodes: SegmentNode[] = [
       {
@@ -590,9 +633,11 @@ export function DoorToDoorPanel() {
         route: `${origin.label} -> ${selectedWatch.origin_iata}`,
         timing: `${formatClock(outboundLeg?.departure_at, localeTag)} - ${formatClock(outboundLeg?.arrival_at, localeTag)}`,
         badge: formatDurationLabel(outboundLeg?.duration_minutes),
+        providerLabel: outboundProvider,
         actions: [
           { href: segmentLinks.mapsOutbound, label: t("doorToDoor.sections.openMapsShort"), ariaLabel: t("doorToDoor.sections.openGoogleMaps") },
-          ...(segmentLinks.blablacarUrl ? [{ href: segmentLinks.blablacarUrl, label: t("doorToDoor.sections.openBlaBlaCarShort"), ariaLabel: t("doorToDoor.sections.openBlaBlaCarAction") }] : []),
+          ...(outboundBooking ? [{ href: outboundBooking, label: t("doorToDoor.sections.openProvider"), ariaLabel: t("doorToDoor.sections.openProviderAction") }] : []),
+          ...(segmentLinks.blablacarUrl && !outboundBooking ? [{ href: segmentLinks.blablacarUrl, label: t("doorToDoor.sections.openBlaBlaCarShort"), ariaLabel: t("doorToDoor.sections.openBlaBlaCarAction") }] : []),
         ],
       },
       {
@@ -601,6 +646,7 @@ export function DoorToDoorPanel() {
         route: `${selectedWatch.origin_iata} -> ${selectedWatch.destination_iata}`,
         timing: `${formatClock(response.flight.departure_at, localeTag)} - ${formatClock(response.flight.arrival_at, localeTag)}`,
         badge: formatDurationLabel(flightLeg?.duration_minutes),
+        providerLabel: flightLeg?.provider || "flight_watch",
         actions: [],
       },
     ];
@@ -612,9 +658,11 @@ export function DoorToDoorPanel() {
         route: `${selectedWatch.destination_iata} -> ${finalDestination.label}`,
         timing: `${formatClock(inboundLeg?.departure_at, localeTag)} - ${formatClock(inboundLeg?.arrival_at, localeTag)}`,
         badge: formatDurationLabel(inboundLeg?.duration_minutes),
+        providerLabel: inboundProvider,
         actions: [
           ...(segmentLinks.mapsInbound ? [{ href: segmentLinks.mapsInbound, label: t("doorToDoor.sections.openMapsShort"), ariaLabel: t("doorToDoor.sections.openGoogleMaps") }] : []),
-          ...(segmentLinks.gooptiUrl ? [{ href: segmentLinks.gooptiUrl, label: t("doorToDoor.sections.openGoOptiShort"), ariaLabel: t("doorToDoor.sections.openGoOptiAction") }] : []),
+          ...(inboundBooking ? [{ href: inboundBooking, label: t("doorToDoor.sections.openProvider"), ariaLabel: t("doorToDoor.sections.openProviderAction") }] : []),
+          ...(segmentLinks.gooptiUrl && !inboundBooking ? [{ href: segmentLinks.gooptiUrl, label: t("doorToDoor.sections.openGoOptiShort"), ariaLabel: t("doorToDoor.sections.openGoOptiAction") }] : []),
         ],
       });
     }
@@ -694,6 +742,7 @@ export function DoorToDoorPanel() {
         },
       });
       setChosenOptionId(option.id);
+      await refreshHistory();
       notify({ tone: "success", title: t("doorToDoor.option.chosenSaved") });
     } catch {
       notify({ tone: "error", title: t("doorToDoor.option.chosenError") });
@@ -822,6 +871,7 @@ export function DoorToDoorPanel() {
                   </div>
                   <div className="d2d-segment-meta">
                     <span className="status-pill state-info">{node.badge}</span>
+                    {node.providerLabel ? <span className="status-pill info">{node.providerLabel}</span> : null}
                     {node.actions.length > 0 ? (
                       <>
                         {isMobile ? (
@@ -972,7 +1022,23 @@ export function DoorToDoorPanel() {
         </section>
       ) : null}
 
-      {response && response.options.length > 0 ? (
+      {response && hasNoRealCoverage ? (
+        <section className="notice notice-warning d2d-no-coverage">
+          <div>
+            <strong>{t("doorToDoor.states.noRealCoverageTitle")}</strong>
+            <p>{t("doorToDoor.states.noRealCoverageBody")}</p>
+            <p className="panel-note"><strong>{t("doorToDoor.sections.providersStatus")}:</strong> {t("doorToDoor.sections.providersMix", { enabled: providerStatusSummary.enabled, real: providerStatusSummary.realEnabled, estimate: providerStatusSummary.estimateEnabled })}</p>
+          </div>
+        </section>
+      ) : null}
+
+      {response && hasPartialCoverage ? (
+        <section className="notice notice-info">
+          <p>{t("doorToDoor.sections.partialCoverageBody")}</p>
+        </section>
+      ) : null}
+
+      {response && response.options.length > 0 && !hasNoCoverage ? (
         <>
           <section className="panel panel-soft d2d-chosen-trust">
             <div className="d2d-section-head">
