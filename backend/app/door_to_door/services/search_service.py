@@ -333,8 +333,6 @@ class DoorToDoorSearchService:
         )
 
     def _option_matches_modes(self, option: DoorToDoorOptionOut, preferences: DoorToDoorPreferences) -> bool:
-        if option.id == "option_blablacar_deeplink":
-            return True
         allowed_modes = self._allowed_ground_modes(preferences)
         if not allowed_modes:
             return False

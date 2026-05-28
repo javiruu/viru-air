@@ -41,10 +41,10 @@ def _auth_headers(client: TestClient, email: str = "door@viru.dev") -> dict[str,
     return {"Authorization": f"Bearer {token}"}
 
 
-def _create_watch(client: TestClient, headers: dict[str, str]) -> str:
+def _create_watch(client: TestClient, headers: dict[str, str], *, origin_iata: str = "AGP", destination_iata: str = "TSF") -> str:
     payload = {
-        "origin_iata": "AGP",
-        "destination_iata": "TSF",
+        "origin_iata": origin_iata,
+        "destination_iata": destination_iata,
         "travel_date_local": str(date.today() + timedelta(days=30)),
         "target_price": 60,
     }
@@ -170,7 +170,7 @@ def test_blablacar_deeplink_fallback_without_place_id_keeps_valid_url(client: Te
     assert any(warning["code"] == "BLABLACAR_DEEPLINK_PARTIAL" for warning in body["warnings"])
 
 
-def test_blablacar_remains_visible_when_rideshare_is_disabled(client: TestClient, monkeypatch) -> None:
+def test_blablacar_is_hidden_when_rideshare_is_disabled(client: TestClient, monkeypatch) -> None:
     _set_provider_env(monkeypatch, mock=False, real=True, scrapers=False)
     headers = _auth_headers(client, "deeplink-rideshare-off@viru.dev")
     watch_id = _create_watch(client, headers)
@@ -181,10 +181,10 @@ def test_blablacar_remains_visible_when_rideshare_is_disabled(client: TestClient
 
     assert response.status_code == 200, response.text
     body = response.json()
-    assert any(option["id"] == "option_blablacar_deeplink" for option in body["options"])
+    assert all(option["id"] != "option_blablacar_deeplink" for option in body["options"])
 
 
-def test_blablacar_remains_visible_when_public_transport_only_is_enabled(client: TestClient, monkeypatch) -> None:
+def test_blablacar_is_hidden_when_public_transport_only_is_enabled(client: TestClient, monkeypatch) -> None:
     _set_provider_env(monkeypatch, mock=False, real=True, scrapers=False)
     headers = _auth_headers(client, "deeplink-public-only@viru.dev")
     watch_id = _create_watch(client, headers)
@@ -195,7 +195,7 @@ def test_blablacar_remains_visible_when_public_transport_only_is_enabled(client:
 
     assert response.status_code == 200, response.text
     body = response.json()
-    assert any(option["id"] == "option_blablacar_deeplink" for option in body["options"])
+    assert all(option["id"] != "option_blablacar_deeplink" for option in body["options"])
 
 
 def test_provider_status_classifies_stubs_and_runtime_flags(client: TestClient, monkeypatch) -> None:
@@ -741,6 +741,86 @@ def test_suggestions_provider_error_still_includes_typed_fallback(client: TestCl
     payload = response.json()
     assert payload["meta"]["provider_status"] == "fallback_active"
     assert any(item["label"].lower() == query for item in payload["items"])
+
+
+def test_suggestions_prioritize_exact_match_and_context_country_for_mad(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(monkeypatch, mock=False, real=True, google_places=False, google_key=None)
+    headers = _auth_headers(client, "suggestions-context-mad@viru.dev")
+    watch_id = _create_watch(client, headers, origin_iata="MAD", destination_iata="LUX")
+    from app.door_to_door.providers import nominatim
+    from app.door_to_door.schemas import DoorToDoorSuggestionOut
+
+    async def _fake_suggest(self, query, *, limit=6, session_token=None, preferred_region_codes=None):  # noqa: ANN001
+        return [
+            DoorToDoorSuggestionOut(
+                id="almere",
+                type="city",
+                label="Almere",
+                subtitle="Flevoland, Países Bajos",
+                source_type="open_data",
+                lat=52.3508,
+                lng=5.2647,
+                place_id="osm:almere",
+            ),
+            DoorToDoorSuggestionOut(
+                id="almeria_es",
+                type="city",
+                label="Almería",
+                subtitle="Andalucía, España",
+                source_type="open_data",
+                lat=36.834,
+                lng=-2.463,
+                place_id="osm:almeria",
+            ),
+        ]
+
+    monkeypatch.setattr(nominatim.NominatimSuggestionsProvider, "suggest", _fake_suggest)
+    response = client.get(f"/api/v1/door-to-door/suggestions?q=almeria&field=origin&watch_id={watch_id}", headers=headers)
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["items"][0]["label"] == "Almería"
+    assert "España" in payload["items"][0]["subtitle"]
+
+
+def test_suggestions_deduplicate_same_city_with_multiple_place_ids(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(monkeypatch, mock=False, real=True, google_places=False, google_key=None)
+    headers = _auth_headers(client, "suggestions-dedupe@viru.dev")
+    from app.door_to_door.providers import nominatim
+    from app.door_to_door.schemas import DoorToDoorSuggestionOut
+
+    async def _fake_suggest(self, query, *, limit=6, session_token=None, preferred_region_codes=None):  # noqa: ANN001
+        return [
+            DoorToDoorSuggestionOut(
+                id="almeria_a",
+                type="city",
+                label="Almería",
+                subtitle="Andalucía, España",
+                source_type="open_data",
+                lat=36.8341,
+                lng=-2.4637,
+                place_id="osm:111",
+            ),
+            DoorToDoorSuggestionOut(
+                id="almeria_b",
+                type="city",
+                label="Almeria",
+                subtitle="Andalucía, España",
+                source_type="open_data",
+                lat=36.8340,
+                lng=-2.4636,
+                place_id="osm:222",
+            ),
+        ]
+
+    monkeypatch.setattr(nominatim.NominatimSuggestionsProvider, "suggest", _fake_suggest)
+    response = client.get("/api/v1/door-to-door/suggestions?q=almeria&field=origin", headers=headers)
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    almeria_items = [
+        item for item in payload["items"]
+        if item["source_type"] == "open_data" and item["label"].lower().startswith("almer")
+    ]
+    assert len(almeria_items) == 1
 
 
 def test_score_prefers_safer_route_when_buffer_is_low() -> None:
