@@ -31,6 +31,7 @@ class GooglePlacesSuggestionsProvider:
         self.enabled = self._flag("DOOR_TO_DOOR_ENABLE_GOOGLE_PLACES", False)
         self.timeout_seconds = float(os.getenv("DOOR_TO_DOOR_GOOGLE_PLACES_TIMEOUT_SECONDS", "4"))
         self.cache_ttl_seconds = int(os.getenv("DOOR_TO_DOOR_GOOGLE_PLACES_CACHE_TTL_SECONDS", "600"))
+        self.max_cache_entries = max(int(os.getenv("DOOR_TO_DOOR_GOOGLE_PLACES_CACHE_MAX_ENTRIES", "500")), 50)
         self._cache: dict[str, _CachedSuggestions] = {}
 
     async def suggest(
@@ -50,8 +51,9 @@ class GooglePlacesSuggestionsProvider:
         normalized_regions = tuple(sorted({code.strip().lower() for code in (included_region_codes or []) if code}))
         token_fragment = (session_token or "").strip()[:32]
         cache_key = f"{normalized.lower()}|{','.join(normalized_regions)}|{token_fragment}"
-        cached = self._cache.get(cache_key)
         now = datetime.now(tz=UTC)
+        self._prune_cache(now)
+        cached = self._cache.get(cache_key)
         if cached and cached.expires_at > now:
             return cached.items[:limit]
 
@@ -67,7 +69,21 @@ class GooglePlacesSuggestionsProvider:
                 items=suggestions,
                 expires_at=now + timedelta(seconds=self.cache_ttl_seconds),
             )
+            self._prune_cache(now)
         return suggestions
+
+    def _prune_cache(self, now: datetime) -> None:
+        if not self._cache:
+            return
+        expired_keys = [key for key, value in self._cache.items() if value.expires_at <= now]
+        for key in expired_keys:
+            self._cache.pop(key, None)
+        if len(self._cache) <= self.max_cache_entries:
+            return
+        overflow = len(self._cache) - self.max_cache_entries
+        keys_by_expiry = sorted(self._cache.keys(), key=lambda key: self._cache[key].expires_at)
+        for key in keys_by_expiry[:overflow]:
+            self._cache.pop(key, None)
 
     async def healthcheck(self) -> ProviderHealth:
         if not self.enabled:

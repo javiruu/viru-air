@@ -21,6 +21,12 @@ export const doorToDoorEs = {
     decisionSettings: "Ajustes de decisión",
     decisionMode: "Modo de decisión",
   },
+  autocomplete: {
+    loading: "Cargando sugerencias...",
+    fallbackResults: "Sin resultados del proveedor, mostrando fallback.",
+    noSuggestions: "No hay sugerencias para esta búsqueda.",
+    degraded: "Autocomplete degradado ({reason}).",
+  },
   defaults: {
     origin: "Almería",
     destination: "Treviso centro",
@@ -338,6 +344,12 @@ export const doorToDoorEn = {
     essentialsTitle: "Essentials",
     decisionSettings: "Decision settings",
     decisionMode: "Decision mode",
+  },
+  autocomplete: {
+    loading: "Loading suggestions...",
+    fallbackResults: "No provider results, showing fallback.",
+    noSuggestions: "No suggestions for this search.",
+    degraded: "Autocomplete degraded ({reason}).",
   },
   defaults: {
     origin: "Almería",

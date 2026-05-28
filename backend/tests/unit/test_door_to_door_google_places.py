@@ -183,3 +183,36 @@ def test_google_places_cache_key_changes_with_session_token(monkeypatch) -> None
     assert first
     assert second
     assert call_counter["count"] == 2
+
+
+def test_google_places_cache_prunes_entries_with_max_limit(monkeypatch) -> None:
+    monkeypatch.setenv("DOOR_TO_DOOR_ENABLE_GOOGLE_PLACES", "1")
+    monkeypatch.setenv("GOOGLE_MAPS_API_KEY", "fake-google-key")
+    monkeypatch.setenv("DOOR_TO_DOOR_GOOGLE_PLACES_CACHE_MAX_ENTRIES", "50")
+
+    def fake_post(*args, **kwargs):  # noqa: ANN002,ANN003
+        query = (kwargs.get("json") or {}).get("input", "unknown")
+        return _FakeResponse(
+            200,
+            {
+                "suggestions": [
+                    {
+                        "placePrediction": {
+                            "placeId": f"place_{query}",
+                            "text": {"text": str(query)},
+                            "structuredFormat": {
+                                "secondaryText": {"text": "Test region"}
+                            },
+                        }
+                    }
+                ]
+            },
+        )
+
+    monkeypatch.setattr("app.door_to_door.providers.google_places.requests.post", fake_post)
+
+    provider = GooglePlacesSuggestionsProvider()
+    for idx in range(60):
+        asyncio.run(provider.suggest(f"query-{idx}", limit=4))
+
+    assert len(provider._cache) <= provider.max_cache_entries
