@@ -148,6 +148,7 @@ function LocationInput({
   field: "origin" | "destination";
   watchId: string;
 }) {
+  const { t } = useI18n();
   const [focused, setFocused] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const sessionTokenRef = useRef<string>("");
@@ -265,12 +266,16 @@ function LocationInput({
           <ul id={listboxId} className="qs-autocomplete" role="listbox" aria-label={`${label}: sugerencias`}>
             {loading && suggestions.length === 0 ? (
               <li role="option" aria-selected={false} className="qs-autocomplete-item">
-                <span>Cargando sugerencias...</span>
+                <span>{t("doorToDoor.autocomplete.loading")}</span>
               </li>
             ) : null}
             {!loading && suggestions.length === 0 ? (
               <li role="option" aria-selected={false} className="qs-autocomplete-item">
-                <span>{meta.provider_status === "fallback_active" ? "Sin resultados del proveedor, mostrando fallback." : "No hay sugerencias para esta búsqueda."}</span>
+                <span>
+                  {meta.provider_status === "fallback_active"
+                    ? t("doorToDoor.autocomplete.fallbackResults")
+                    : t("doorToDoor.autocomplete.noSuggestions")}
+                </span>
               </li>
             ) : null}
             {suggestions.map((suggestion, index) => (
@@ -291,7 +296,9 @@ function LocationInput({
           </ul>
         ) : null}
         {focused && !loading && value.label.trim().length >= 2 && meta.provider_status !== "api_live" ? (
-          <p className="d2d-autocomplete-status">Autocomplete degradado ({meta.degraded_reason || "fallback"}).</p>
+          <p className="d2d-autocomplete-status">
+            {t("doorToDoor.autocomplete.degraded", { reason: meta.degraded_reason || "fallback" })}
+          </p>
         ) : null}
       </div>
     </label>
