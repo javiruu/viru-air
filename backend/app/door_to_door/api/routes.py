@@ -42,14 +42,9 @@ MADRID = ZoneInfo("Europe/Madrid")
 DEFAULT_FLIGHT_DURATION_MINUTES = 155
 
 SUGGESTIONS = [
-    DoorToDoorSuggestionOut(id="city_almeria", type="city", label="Almería", subtitle="Ciudad de salida frecuente", source_type="local_static", lat=36.834, lng=-2.463),
-    DoorToDoorSuggestionOut(id="station_almeria", type="station", label="Estación de Almería", subtitle="Tren y bus interurbano", source_type="local_static", lat=36.8402, lng=-2.4576),
-    DoorToDoorSuggestionOut(id="airport_agp", type="airport", label="Aeropuerto de Málaga AGP", subtitle="Terminal de salida", source_type="local_static", lat=36.6749, lng=-4.4991),
-    DoorToDoorSuggestionOut(id="airport_tsf", type="airport_only", label="Solo aeropuerto TSF", subtitle="Terminar al aterrizar, sin tramo terrestre", source_type="local_static", lat=45.6508, lng=12.1978),
-    DoorToDoorSuggestionOut(id="city_treviso", type="city", label="Treviso centro", subtitle="Centro urbano desde TSF", source_type="local_static", lat=45.6669, lng=12.243),
-    DoorToDoorSuggestionOut(id="city_venice", type="city", label="Venecia", subtitle="Destino final frecuente desde Treviso", source_type="local_static", lat=45.4408, lng=12.3155),
-    DoorToDoorSuggestionOut(id="city_padua", type="city", label="Padua", subtitle="Ciudad cercana conectada por tren", source_type="local_static", lat=45.4064, lng=11.8768),
-    DoorToDoorSuggestionOut(id="station_treviso", type="station", label="Treviso Centrale", subtitle="Estacion principal", source_type="local_static", lat=45.6595, lng=12.2451),
+    DoorToDoorSuggestionOut(id="seed_airport_only", type="airport_only", label="Solo aeropuerto", subtitle="Terminar al aterrizar sin tramo terrestre", source_type="local_static"),
+    DoorToDoorSuggestionOut(id="seed_station", type="station", label="Estación central", subtitle="Ejemplo de punto de transporte", source_type="local_static"),
+    DoorToDoorSuggestionOut(id="seed_city", type="city", label="Centro ciudad", subtitle="Ejemplo de destino urbano", source_type="local_static"),
 ]
 
 cache_service = DoorToDoorCacheService(ttl_seconds=300)
@@ -133,6 +128,7 @@ async def suggestions(
     current_user: User = Depends(get_current_user),
 ) -> DoorToDoorSuggestionsResponseOut:
     query = q.strip().lower()
+    typed_fallback = _typed_fallback_suggestion(q)
     static_items = (
         SUGGESTIONS
         if not query
@@ -144,10 +140,7 @@ async def suggestions(
         used_region_codes=[],
     )
     runtime = resolve_provider_runtime()
-    if runtime.google_places_provider is None:
-        return DoorToDoorSuggestionsResponseOut(items=static_items, meta=meta)
-
-    included_region_codes: list[str] = []
+    preferred_region_codes: list[str] = []
     if watch_id:
         watch = db.scalar(select(FlightWatch).where(FlightWatch.id == watch_id, FlightWatch.user_id == current_user.id))
         if watch:
@@ -156,44 +149,85 @@ async def suggestions(
             if airport:
                 country_code = country_code_from_airport(airport).strip().lower()
                 if country_code:
-                    included_region_codes = [country_code]
+                    preferred_region_codes = [country_code]
 
+    google_items: list[DoorToDoorSuggestionOut] = []
+    nominatim_items: list[DoorToDoorSuggestionOut] = []
+    google_failed = False
+    google_disabled = runtime.google_places_provider is None
+
+    if runtime.google_places_provider is not None:
+        try:
+            google_items = await runtime.google_places_provider.suggest(
+                q,
+                limit=8,
+                session_token=session_token,
+                preferred_region_codes=preferred_region_codes,
+            )
+        except Exception:
+            google_failed = True
+            logger.exception(
+                "door_to_door_suggestions_provider_error",
+                extra={
+                    "provider": "google_places",
+                    "field": field,
+                    "watch_id": watch_id,
+                    "query": q,
+                    "preferred_region_codes": preferred_region_codes,
+                },
+            )
+
+    should_use_nominatim = runtime.nominatim_provider is not None and (google_disabled or google_failed or not google_items)
     try:
-        google_items = await runtime.google_places_provider.suggest(
-            q,
-            limit=8,
-            session_token=session_token,
-            included_region_codes=included_region_codes,
-        )
+        if should_use_nominatim and runtime.nominatim_provider is not None:
+            nominatim_items = await runtime.nominatim_provider.suggest(
+                q,
+                limit=8,
+                session_token=session_token,
+                preferred_region_codes=preferred_region_codes,
+            )
     except Exception:
-        google_items = []
         logger.exception(
             "door_to_door_suggestions_provider_error",
             extra={
+                "provider": "nominatim",
                 "field": field,
                 "watch_id": watch_id,
                 "query": q,
-                "included_region_codes": included_region_codes,
+                "preferred_region_codes": preferred_region_codes,
             },
         )
+
+    if google_items:
+        meta = DoorToDoorSuggestionsMetaOut(
+            provider_status="api_live",
+            degraded_reason=None,
+            used_region_codes=preferred_region_codes,
+        )
+    elif nominatim_items:
+        meta = DoorToDoorSuggestionsMetaOut(
+            provider_status="fallback_active",
+            degraded_reason="google_unavailable_using_open_data",
+            used_region_codes=preferred_region_codes,
+        )
+    elif google_failed:
         meta = DoorToDoorSuggestionsMetaOut(
             provider_status="provider_error",
             degraded_reason="suggestions_fetch_failed",
-            used_region_codes=included_region_codes,
+            used_region_codes=preferred_region_codes,
         )
     else:
         meta = DoorToDoorSuggestionsMetaOut(
-            provider_status="api_live" if google_items else "fallback_active",
-            degraded_reason=None if google_items else "no_api_results",
-            used_region_codes=included_region_codes,
+            provider_status="fallback_active",
+            degraded_reason="no_results_available",
+            used_region_codes=preferred_region_codes,
         )
-
-    if not google_items:
-        return DoorToDoorSuggestionsResponseOut(items=static_items, meta=meta)
 
     merged: list[DoorToDoorSuggestionOut] = []
     seen: set[str] = set()
-    for item in [*google_items, *static_items]:
+    if typed_fallback:
+        static_items = [typed_fallback, *static_items]
+    for item in [*google_items, *nominatim_items, *static_items]:
         key = _suggestion_dedupe_key(item)
         if key in seen:
             continue
@@ -208,6 +242,19 @@ def _suggestion_dedupe_key(item: DoorToDoorSuggestionOut) -> str:
     normalized_label = item.label.strip().lower()
     normalized_subtitle = item.subtitle.strip().lower()
     return f"{item.type}:{normalized_label}:{normalized_subtitle}"
+
+
+def _typed_fallback_suggestion(raw_query: str) -> DoorToDoorSuggestionOut | None:
+    label = raw_query.strip()
+    if len(label) < 2:
+        return None
+    return DoorToDoorSuggestionOut(
+        id=f"typed_{label.lower().replace(' ', '_')[:48]}",
+        type="address",
+        label=label,
+        subtitle="Usar texto escrito (fallback local)",
+        source_type="local_static",
+    )
 
 
 @router.post("/search", response_model=DoorToDoorSearchResponse)

@@ -12,7 +12,7 @@ DoorToDoorLocationType = Literal["city", "address", "station", "saved_location",
 DoorToDoorSortBy = Literal["best_balance", "cheapest", "lowest_risk", "fastest", "fewest_changes"]
 DoorToDoorLuggage = Literal["backpack", "cabin", "checked"]
 DoorToDoorMode = Literal["bus", "train", "rideshare", "shuttle", "taxi", "car", "walking", "flight"]
-DoorToDoorSuggestionSourceType = Literal["local_static", "mock", "api"]
+DoorToDoorSuggestionSourceType = Literal["local_static", "mock", "api", "open_data"]
 DoorToDoorProviderStatusKind = Literal[
     "functional_api",
     "functional_mock",

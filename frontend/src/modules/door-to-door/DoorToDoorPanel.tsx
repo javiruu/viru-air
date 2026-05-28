@@ -108,16 +108,18 @@ function useSuggestionSearch(
       return;
     }
     let alive = true;
+    const controller = new AbortController();
     setLoading(true);
     const timeoutId = window.setTimeout(() => {
-      fetchDoorToDoorSuggestions(query, sessionToken, field, watchId || undefined)
+      fetchDoorToDoorSuggestions(query, sessionToken, field, watchId || undefined, controller.signal)
       .then((payload) => {
         if (!alive) return;
         setSuggestions(payload.items.slice(0, 8));
         setMeta(payload.meta);
       })
-      .catch(() => {
+      .catch((error) => {
         if (!alive) return;
+        if (error instanceof DOMException && error.name === "AbortError") return;
         setSuggestions([]);
         setMeta({ provider_status: "provider_error", degraded_reason: "suggestions_fetch_failed", used_region_codes: [] });
       })
@@ -127,6 +129,7 @@ function useSuggestionSearch(
     }, 180);
     return () => {
       alive = false;
+      controller.abort();
       window.clearTimeout(timeoutId);
     };
   }, [value, sessionToken, field, watchId]);
@@ -239,7 +242,13 @@ function LocationInput({
           id={id}
           className="qs-input qs-input-with-action"
           value={value.label}
-          onChange={(event) => onChange({ ...value, label: event.target.value, type: value.type || "city" })}
+          onChange={(event) => onChange({
+            type: value.type || "city",
+            label: event.target.value,
+            lat: null,
+            lng: null,
+            place_id: null,
+          })}
           onFocus={() => {
             setFocused(true);
             ensureSessionToken();
@@ -263,7 +272,7 @@ function LocationInput({
           <MapPin size={14} strokeWidth={2.5} />
         </button>
         {showAutocomplete ? (
-          <ul id={listboxId} className="qs-autocomplete" role="listbox" aria-label={`${label}: sugerencias`}>
+          <ul id={listboxId} className="qs-autocomplete" role="listbox" aria-label={t("doorToDoor.autocomplete.listboxAria", { label })}>
             {loading && suggestions.length === 0 ? (
               <li role="option" aria-selected={false} className="qs-autocomplete-item">
                 <span>{t("doorToDoor.autocomplete.loading")}</span>
@@ -297,7 +306,7 @@ function LocationInput({
         ) : null}
         {focused && !loading && value.label.trim().length >= 2 && meta.provider_status !== "api_live" ? (
           <p className="d2d-autocomplete-status">
-            {t("doorToDoor.autocomplete.degraded", { reason: meta.degraded_reason || "fallback" })}
+            {autocompleteStatusCopy(meta, t)}
           </p>
         ) : null}
       </div>
@@ -328,6 +337,10 @@ function formatDelta(value: number | null, unit = "") {
   return `${sign}${value}${unit}`;
 }
 
+function normalizeLabel(value: string) {
+  return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+}
+
 function deriveTrustTone(option: DoorToDoorOption | null): TrustTone {
   if (!option) return "warning";
   const confirmed = option.sources.filter(
@@ -346,6 +359,16 @@ function deriveTrustTone(option: DoorToDoorOption | null): TrustTone {
   ).length;
   if (confirmed > 0 && confirmed >= uncertain) return "success";
   return "warning";
+}
+
+function autocompleteStatusCopy(meta: DoorToDoorSuggestionsMeta, t: ReturnType<typeof useI18n>["t"]) {
+  if (meta.degraded_reason === "google_unavailable_using_open_data") {
+    return t("doorToDoor.autocomplete.degradedUsingOpenData");
+  }
+  if (meta.degraded_reason === "no_results_available") {
+    return t("doorToDoor.autocomplete.degradedNoResults");
+  }
+  return t("doorToDoor.autocomplete.degraded");
 }
 
 export function DoorToDoorPanel() {
@@ -376,6 +399,7 @@ export function DoorToDoorPanel() {
   const [savedPlaces, setSavedPlaces] = useState<DoorToDoorSavedPlace[]>([]);
   const [savedPlaceLabel, setSavedPlaceLabel] = useState("");
   const [savedPlaceNote, setSavedPlaceNote] = useState("");
+  const requestIdRef = useRef(0);
   const visibleSavedPlaces = useMemo(() => filterSavedPlacesForWatch(savedPlaces, selectedWatchId), [savedPlaces, selectedWatchId]);
 
   useEffect(() => {
@@ -453,6 +477,17 @@ export function DoorToDoorPanel() {
   }, [isMobile]);
 
   const selectedWatch = useMemo(() => watches.find((watch) => watch.id === selectedWatchId) || null, [watches, selectedWatchId]);
+  const isSubmitBlocked = status === "loading" || !selectedWatch;
+
+  useEffect(() => {
+    if (!selectedWatch) return;
+    setFinalDestination((current) => {
+      if (current.type !== "airport_only") return current;
+      const nextLabel = t("doorToDoor.defaults.airportOnly", { iata: selectedWatch.destination_iata || "TSF" });
+      if (current.label === nextLabel) return current;
+      return { ...current, label: nextLabel };
+    });
+  }, [selectedWatch, t]);
 
   const realResults = useMemo(() => response?.options.filter((o) => o.status === "real_result") ?? [], [response]);
   const realDeeplinks = useMemo(() => response?.options.filter((o) => o.status === "real_deeplink") ?? [], [response]);
@@ -590,8 +625,25 @@ export function DoorToDoorPanel() {
   const calculate = useCallback(async () => {
     if (!selectedWatch) {
       setStatus("empty");
+      setErrorMessage(t("doorToDoor.chooseWatchedRoute"));
       return;
     }
+    const normalizedOrigin = normalizeLabel(origin.label);
+    const normalizedDestination = normalizeLabel(finalDestination.label);
+    if (normalizedOrigin.length < 2 || normalizedDestination.length < 2) {
+      setStatus("empty");
+      setErrorMessage(t("doorToDoor.states.emptyBodyWithWatch"));
+      notify({ tone: "error", title: t("doorToDoor.states.emptyTitleWithWatch") });
+      return;
+    }
+    if (finalDestination.type !== "airport_only" && normalizedOrigin === normalizedDestination) {
+      setStatus("empty");
+      setErrorMessage(t("doorToDoor.states.emptyBodyWithWatch"));
+      notify({ tone: "error", title: t("doorToDoor.states.emptyTitleWithWatch") });
+      return;
+    }
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
     setStatus("loading");
     setErrorMessage("");
     try {
@@ -602,23 +654,28 @@ export function DoorToDoorPanel() {
         preferences,
         save_origin_as_default: saveOrigin,
       });
+      if (requestId !== requestIdRef.current) return;
       setResponse(data);
       setChosenOptionId(data.summary.chosen_option_id || "");
-      if (data.options.length === 0) {
+      const noCoverageWarning = data.warnings.some((warning) => warning.code === "NO_COVERAGE");
+      if (data.options.length === 0 || noCoverageWarning) {
         setStatus("no_coverage");
       } else if (data.warnings.length > 0) {
         setStatus("partial");
       } else {
         setStatus("success");
       }
+      setOpenActionsNodeId(null);
     } catch (error) {
+      if (requestId !== requestIdRef.current) return;
       setErrorMessage(error instanceof Error ? error.message : "Error inesperado");
       setStatus("error");
     }
-  }, [finalDestination, origin, preferences, saveOrigin, selectedWatch]);
+  }, [finalDestination, notify, origin, preferences, saveOrigin, selectedWatch, t]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
+    if (status === "loading") return;
     await calculate();
   }
 
@@ -668,6 +725,14 @@ export function DoorToDoorPanel() {
     const label = savedPlaceLabel.trim();
     const note = savedPlaceNote.trim();
     if (!label) return;
+    const duplicate = savedPlaces.some((item) => {
+      const sameScope = (item.watch_id || "") === (selectedWatchId || "");
+      return sameScope && normalizeLabel(item.label) === normalizeLabel(label);
+    });
+    if (duplicate) {
+      notify({ tone: "warning", title: t("doorToDoor.mapHub.savedPlaces.savedToast") });
+      return;
+    }
     const item: DoorToDoorSavedPlace = {
       id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
       label,
@@ -733,7 +798,7 @@ export function DoorToDoorPanel() {
             <input type="checkbox" checked={saveOrigin} onChange={(event) => setSaveOrigin(event.target.checked)} />
             {t("doorToDoor.form.saveOrigin")}
           </label>
-          <button className="btn-primary" type="submit" disabled={!selectedWatch || status === "loading"}>{t("doorToDoor.cta")}</button>
+          <button className="btn-primary" type="submit" disabled={isSubmitBlocked}>{t("doorToDoor.cta")}</button>
         </form>
       </section>
 

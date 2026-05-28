@@ -22,10 +22,13 @@ export const doorToDoorEs = {
     decisionMode: "Modo de decisión",
   },
   autocomplete: {
+    listboxAria: "{label}: sugerencias",
     loading: "Cargando sugerencias...",
-    fallbackResults: "Sin resultados del proveedor, mostrando fallback.",
+    fallbackResults: "Google no disponible, usando fallback real de mapas abiertos.",
     noSuggestions: "No hay sugerencias para esta búsqueda.",
-    degraded: "Autocomplete degradado ({reason}).",
+    degraded: "Autocomplete degradado.",
+    degradedUsingOpenData: "Google no disponible, usando fallback real de mapas abiertos.",
+    degradedNoResults: "No hay resultados para esta búsqueda.",
   },
   defaults: {
     origin: "Almería",
@@ -346,10 +349,13 @@ export const doorToDoorEn = {
     decisionMode: "Decision mode",
   },
   autocomplete: {
+    listboxAria: "{label}: suggestions",
     loading: "Loading suggestions...",
-    fallbackResults: "No provider results, showing fallback.",
+    fallbackResults: "Google is unavailable, using real open-map fallback.",
     noSuggestions: "No suggestions for this search.",
-    degraded: "Autocomplete degraded ({reason}).",
+    degraded: "Autocomplete degraded.",
+    degradedUsingOpenData: "Google is unavailable, using real open-map fallback.",
+    degradedNoResults: "No results found for this search.",
   },
   defaults: {
     origin: "Almería",
