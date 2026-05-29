@@ -181,15 +181,14 @@ test("DoorToDoorPanel includes no-coverage-real handling, provider status and wa
   assert.match(source, /noCoverageTitle/);
   assert.match(source, /providersStatus/);
   assert.match(source, /d2d-filters-collapse/);
-  assert.match(source, /open=\{!isMobile \|\| showAdvancedFilters\}/);
+  assert.match(source, /open=\{showAdvancedFilters\}/);
   const originIndex = source.indexOf("id=\"d2d-origin\"");
   const watchIndex = source.indexOf("id=\"d2d-watch\"");
   const finalIndex = source.indexOf("id=\"d2d-final\"");
   assert.ok(originIndex > -1 && watchIndex > -1 && finalIndex > -1);
   assert.ok(originIndex < watchIndex);
   assert.ok(watchIndex < finalIndex);
-  assert.match(source, /option_blablacar_deeplink/);
-  assert.match(source, /deep_link/);
+  assert.match(source, /confidence === "deeplink"/);
   assert.match(source, /comparatorTitle/);
   assert.match(source, /recommendedReasons/);
   assert.match(source, /quickBadgesByOption/);
@@ -205,10 +204,11 @@ test("DoorToDoorPanel includes no-coverage-real handling, provider status and wa
 test("DoorToDoorPanel includes vertical timeline, trust modal trigger, and collapsible history", () => {
   const source = fs.readFileSync(PANEL, "utf8");
   assert.match(source, /d2d-segment-timeline/);
-  assert.match(source, /status-pill state-info/);
-  assert.match(source, /openActionsNodeId/);
-  assert.match(source, /d2d-actions-toggle/);
-  assert.match(source, /moreActions/);
+  assert.match(source, /FlightSegment/);
+  assert.match(source, /GroundSegment/);
+  assert.match(source, /state-success-border/);
+  assert.match(source, /Ver ruta en Maps/);
+  assert.match(source, /leg\.confidence === "deeplink"/);
   assert.match(source, /trustModalTrigger/);
   assert.match(source, /aria-haspopup="dialog"/);
   assert.match(source, /d2d-trust-modal/);
@@ -369,14 +369,13 @@ test("Door-to-door styles include responsive radar and mobile decision layout ho
 
 test("DoorToDoorPanel route-stack supports provider fallback actions and partial coverage notices", () => {
   const source = fs.readFileSync(PANEL, "utf8");
-  assert.match(source, /openProviderAction/);
+  assert.match(source, /resolveMapsUrl/);
+  assert.match(source, /Ver ruta en Maps/);
   assert.match(source, /partialCoverageBody/);
   assert.match(source, /hasNoRealCoverage/);
   assert.match(source, /hasPartialCoverage/);
-  assert.match(source, /outboundLeg\?\.booking_url/);
-  assert.match(source, /inboundLeg\?\.booking_url/);
-  assert.match(source, /segmentLinks\.blablacarUrl && !outboundBooking/);
-  assert.match(source, /segmentLinks\.gooptiUrl && !inboundBooking/);
+  assert.match(source, /leg\.booking_url/);
+  assert.match(source, /leg\.actions \?\? \[\]/);
 });
 
 const gtfsOption: DoorToDoorOption = {
