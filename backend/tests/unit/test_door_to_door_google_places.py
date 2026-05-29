@@ -118,6 +118,25 @@ def test_google_places_suggestions_include_session_token_when_provided(monkeypat
     assert captured_body.get("sessionToken") == "session-123"
 
 
+def test_google_places_suggestions_include_region_codes_when_provided(monkeypatch) -> None:
+    monkeypatch.setenv("DOOR_TO_DOOR_ENABLE_GOOGLE_PLACES", "1")
+    monkeypatch.setenv("GOOGLE_MAPS_API_KEY", "fake-google-key")
+
+    captured_body: dict[str, object] = {}
+
+    def fake_post(*args, **kwargs):  # noqa: ANN002,ANN003
+        body = kwargs.get("json") or {}
+        captured_body.update(body)
+        return _FakeResponse(200, {"suggestions": []})
+
+    monkeypatch.setattr("app.door_to_door.providers.google_places.requests.post", fake_post)
+
+    provider = GooglePlacesSuggestionsProvider()
+    asyncio.run(provider.suggest("alme", limit=4, preferred_region_codes=["es", "pt"]))
+
+    assert captured_body.get("includedRegionCodes") == ["es", "pt"]
+
+
 def test_google_places_supports_query_prediction_shape(monkeypatch) -> None:
     monkeypatch.setenv("DOOR_TO_DOOR_ENABLE_GOOGLE_PLACES", "1")
     monkeypatch.setenv("GOOGLE_MAPS_API_KEY", "fake-google-key")

@@ -18932,6 +18932,23 @@ textarea::placeholder {
   font-size: 0.78rem;
 }
 
+.d2d-segment-warnings {
+  margin-top: 0.4rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.d2d-warning-text {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--warning-ink);
+  background: color-mix(in srgb, var(--warning-ink) 12%, transparent);
+  padding: 0.25rem 0.4rem;
+  border-radius: 6px;
+  display: inline-block;
+  width: fit-content;
+}
+
 .d2d-segment-meta {
   min-width: 0;
   display: grid;
@@ -18944,24 +18961,10 @@ textarea::placeholder {
 }
 
 .d2d-row-actions {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(4px);
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   min-width: 0;
-}
-
-.d2d-row-actions.is-open {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateY(0);
-}
-
-.d2d-segment-row:hover .d2d-row-actions,
-.d2d-segment-row:focus-within .d2d-row-actions {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateY(0);
 }
 
 .d2d-row-actions .btn-compact {
@@ -19001,13 +19004,13 @@ textarea::placeholder {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
 }
 
 .d2d-map-section p {
   margin: 0.25rem 0 0;
   color: var(--ink-muted);
-  font-size: 0.8rem;
+  font-size: 0.72rem;
 }
 
 .d2d-map-cards {
@@ -19044,12 +19047,12 @@ textarea::placeholder {
 }
 
 .d2d-map-card-head strong {
-  font-size: 0.84rem;
+  font-size: 0.76rem;
 }
 
 .d2d-map-card > p {
   margin: 0.3rem 0 0;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
 }
 
 .d2d-map-card-meta {
@@ -19059,11 +19062,11 @@ textarea::placeholder {
   margin-top: 0.4rem;
 }
 
-.d2d-map-card-meta span {
+.d2d-map-pill {
   border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
   border-radius: 999px;
   padding: 0.12rem 0.4rem;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: var(--ink-muted);
 }
 

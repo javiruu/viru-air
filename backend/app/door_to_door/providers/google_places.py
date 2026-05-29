@@ -62,6 +62,7 @@ class GooglePlacesSuggestionsProvider:
             normalized,
             limit,
             session_token,
+            normalized_regions,
         )
         if suggestions:
             self._cache[cache_key] = _CachedSuggestions(
@@ -114,11 +115,14 @@ class GooglePlacesSuggestionsProvider:
         query: str,
         limit: int,
         session_token: str | None = None,
+        preferred_region_codes: Sequence[str] | None = None,
     ) -> list[DoorToDoorSuggestionOut]:
         body: dict[str, object] = {
             "input": query,
             "languageCode": "es",
         }
+        if preferred_region_codes:
+            body["includedRegionCodes"] = list(preferred_region_codes)[:5]
         if session_token:
             body["sessionToken"] = session_token
 

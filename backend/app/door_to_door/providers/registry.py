@@ -1,10 +1,10 @@
-﻿import os
+import os
 from dataclasses import dataclass
 from typing import Callable
 
 from app.door_to_door.providers.base import DoorToDoorProvider
 from app.door_to_door.providers.deeplink_blablacar import BlaBlaCarDeepLinkProvider
-from app.door_to_door.providers.deeplink_goopti import GoOptiDeepLinkProvider
+from app.door_to_door.providers.deeplink_provider import DeeplinkDoorToDoorProvider
 from app.door_to_door.providers.deeplink_maps import GoogleMapsDeepLinkProvider
 from app.door_to_door.providers.google_places import GooglePlacesSuggestionsProvider
 from app.door_to_door.providers.google_routes import GoogleRoutesProvider
@@ -150,21 +150,21 @@ def resolve_provider_runtime() -> ProviderRuntime:
             supports_search=True,
             supports_booking_url=True,
             has_tests=True,
-            notes="Abre busqueda externa; precio y disponibilidad se confirman fuera de Viru.",
+            notes="Deeplink clasico para tramo origen -> aeropuerto de salida con compatibilidad contractual.",
             is_real=True,
             factory=BlaBlaCarDeepLinkProvider,
         ),
         ProviderDescriptor(
-            name="goopti_deeplink",
-            source_type="deeplink",
+            name="external_deeplink",
+            source_type="external_deeplink",
             base_status="functional_deeplink",
             production_ready=False,
             supports_search=True,
             supports_booking_url=True,
             has_tests=True,
-            notes="Abre busqueda externa; precio y disponibilidad se confirman fuera de Viru.",
+            notes="Provider unificado que genera acciones reales por tramo terrestre (Google Maps, BlaBlaCar, GoOpti).",
             is_real=True,
-            factory=GoOptiDeepLinkProvider,
+            factory=DeeplinkDoorToDoorProvider,
         ),
         ProviderDescriptor(
             name="google_places",

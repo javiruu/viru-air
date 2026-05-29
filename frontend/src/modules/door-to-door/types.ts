@@ -1,4 +1,4 @@
-﻿export type DoorToDoorLocationType = "city" | "address" | "station" | "saved_location" | "airport" | "airport_only";
+export type DoorToDoorLocationType = "city" | "address" | "station" | "saved_location" | "airport" | "airport_only";
 export type DoorToDoorConfidence = "live" | "cached" | "estimated" | "deeplink" | "unavailable";
 export type DoorToDoorRiskLevel = "low" | "medium" | "high" | "unknown";
 export type DoorToDoorSortBy = "best_balance" | "cheapest" | "lowest_risk" | "fastest" | "fewest_changes";
@@ -30,11 +30,24 @@ export type DoorToDoorPreferences = {
 export type DoorToDoorSource = {
   provider: string;
   source_provider: string;
-  source_type: "api" | "open_data" | "aggregator" | "deeplink" | "scraper" | "mock" | "maps" | "estimate";
+  source_type: "api" | "open_data" | "aggregator" | "deeplink" | "scraper" | "mock" | "maps" | "estimate" | "external_deeplink";
   confidence: DoorToDoorConfidence;
   checked_at: string;
   expires_at?: string | null;
   booking_url?: string | null;
+};
+
+export type DoorToDoorAction = {
+  id: string;
+  provider: "google_maps" | "blablacar" | "goopti" | "gtfs";
+  label: string;
+  url: string;
+  kind: "directions" | "provider_search" | "booking";
+  opens_external: boolean;
+  source_status: "external_search" | "real_result";
+  price_status: "external" | "confirmed" | "unavailable";
+  availability_status: "external" | "confirmed" | "unavailable";
+  trust_copy: string;
 };
 
 export type DoorToDoorLeg = {
@@ -52,6 +65,7 @@ export type DoorToDoorLeg = {
   booking_url?: string | null;
   source_type?: DoorToDoorSource["source_type"] | null;
   confidence?: DoorToDoorConfidence | null;
+  actions?: DoorToDoorAction[];
 };
 
 export type DoorToDoorOptionStatus = "real_result" | "real_deeplink" | "estimate_only";
@@ -146,7 +160,7 @@ export type DoorToDoorResponse = {
 export type DoorToDoorSuggestion = DoorToDoorLocation & {
   id: string;
   subtitle: string;
-  source_type: "local_static" | "mock" | "api";
+  source_type: "local_static" | "mock" | "api" | "open_data";
 };
 
 export type DoorToDoorSuggestionsMeta = {

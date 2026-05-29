@@ -60,10 +60,11 @@ type SegmentNode = {
   id: string;
   title: string;
   route: string;
-  timing: string;
-  badge: string;
-  providerLabel: string | null;
-  actions: Array<{ href: string; label: string; ariaLabel: string }>;
+  timing?: string;
+  badge?: string;
+  providerLabel?: string | null;
+  actions: Array<{ id: string; href: string; label: string; ariaLabel: string }>;
+  warnings?: string[];
 };
 
 type CapabilitySectionKey = "layers" | "alternatives" | "arrival" | "visual" | "saved";
@@ -584,33 +585,10 @@ export function DoorToDoorPanel() {
   const hasNoCoverage = warningCodes.has("NO_COVERAGE");
   const hasChosenPlan = Boolean(response?.summary.chosen_option_id);
 
-  const segmentLinks = useMemo(() => {
-    if (!selectedWatch) return null;
-    const originLabel = origin.label;
-    const destLabel = finalDestination.label;
-    const originIata = selectedWatch.origin_iata;
-    const destIata = selectedWatch.destination_iata;
-    const travelDate = selectedWatch.travel_date_local;
 
-    const mapsOutbound = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originLabel)}&destination=${encodeURIComponent(originIata + " Airport")}&travelmode=driving&dir_action=navigate`;
-    const mapsInbound = destLabel ? `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(destIata + " Airport")}&destination=${encodeURIComponent(destLabel)}&travelmode=driving&dir_action=navigate` : null;
-    const blablacarOption = response?.options.find((option) => option.id === "option_blablacar_deeplink" || option.sources.some((source) => source.provider === "blablacar_deeplink"));
-    const gooptiOption = response?.options.find((option) => option.id === "option_goopti_deeplink" || option.sources.some((source) => source.provider === "goopti_deeplink"));
-
-    const blablacarUrl =
-      blablacarOption?.deep_link?.url ||
-      blablacarOption?.sources.find((source) => source.provider === "blablacar_deeplink" && source.booking_url)?.booking_url ||
-      null;
-    const gooptiUrl =
-      gooptiOption?.deep_link?.url ||
-      gooptiOption?.sources.find((source) => source.provider === "goopti_deeplink" && source.booking_url)?.booking_url ||
-      (destLabel ? `https://www.goopti.com/es/?pickup=${encodeURIComponent("Aeropuerto de " + destIata)}&dropoff=${encodeURIComponent(destLabel)}&date=${travelDate || ""}` : null);
-
-    return { mapsOutbound, mapsInbound, blablacarUrl, gooptiUrl };
-  }, [selectedWatch, origin.label, finalDestination.label, response?.options]);
 
   const timelineNodes = useMemo<SegmentNode[]>(() => {
-    if (!selectedWatch || !segmentLinks || !response) return [];
+    if (!selectedWatch || !response) return [];
     const legs = selectedPlan?.legs ?? [];
     const flightLegIndex = legs.findIndex((leg) => leg.type === "flight");
     const fallbackGroundLegs = legs.filter((leg) => leg.type === "ground");
@@ -622,54 +600,83 @@ export function DoorToDoorPanel() {
       (flightLegIndex >= 0 ? legs.slice(flightLegIndex + 1).find((leg) => leg.type === "ground") : null) ??
       (fallbackGroundLegs.length > 1 ? fallbackGroundLegs[fallbackGroundLegs.length - 1] : null);
     const flightLeg = (flightLegIndex >= 0 ? legs[flightLegIndex] : null) ?? null;
-    const outboundBooking = outboundLeg?.booking_url || null;
-    const inboundBooking = inboundLeg?.booking_url || null;
     const outboundProvider = outboundLeg?.provider || null;
     const inboundProvider = inboundLeg?.provider || null;
 
-    const nodes: SegmentNode[] = [
-      {
-        id: "outbound",
-        title: t("doorToDoor.sections.segmentOutbound"),
-        route: `${origin.label} -> ${selectedWatch.origin_iata}`,
-        timing: `${formatClock(outboundLeg?.departure_at, localeTag)} - ${formatClock(outboundLeg?.arrival_at, localeTag)}`,
-        badge: formatDurationLabel(outboundLeg?.duration_minutes),
-        providerLabel: outboundProvider,
-        actions: [
-          { href: segmentLinks.mapsOutbound, label: t("doorToDoor.sections.openMapsShort"), ariaLabel: t("doorToDoor.sections.openGoogleMaps") },
-          ...(outboundBooking ? [{ href: outboundBooking, label: t("doorToDoor.sections.openProvider"), ariaLabel: t("doorToDoor.sections.openProviderAction") }] : []),
-          ...(segmentLinks.blablacarUrl && !outboundBooking ? [{ href: segmentLinks.blablacarUrl, label: t("doorToDoor.sections.openBlaBlaCarShort"), ariaLabel: t("doorToDoor.sections.openBlaBlaCarAction") }] : []),
-        ],
-      },
-      {
-        id: "flight",
-        title: t("doorToDoor.sections.segmentFlight"),
-        route: `${selectedWatch.origin_iata} -> ${selectedWatch.destination_iata}`,
-        timing: `${formatClock(response.flight.departure_at, localeTag)} - ${formatClock(response.flight.arrival_at, localeTag)}`,
-        badge: formatDurationLabel(flightLeg?.duration_minutes),
-        providerLabel: flightLeg?.provider || "flight_watch",
-        actions: [],
-      },
-    ];
-
-    if (finalDestination.type !== "airport_only") {
-      nodes.push({
-        id: "inbound",
-        title: t("doorToDoor.sections.segmentInbound"),
-        route: `${selectedWatch.destination_iata} -> ${finalDestination.label}`,
-        timing: `${formatClock(inboundLeg?.departure_at, localeTag)} - ${formatClock(inboundLeg?.arrival_at, localeTag)}`,
-        badge: formatDurationLabel(inboundLeg?.duration_minutes),
-        providerLabel: inboundProvider,
-        actions: [
-          ...(segmentLinks.mapsInbound ? [{ href: segmentLinks.mapsInbound, label: t("doorToDoor.sections.openMapsShort"), ariaLabel: t("doorToDoor.sections.openGoogleMaps") }] : []),
-          ...(inboundBooking ? [{ href: inboundBooking, label: t("doorToDoor.sections.openProvider"), ariaLabel: t("doorToDoor.sections.openProviderAction") }] : []),
-          ...(segmentLinks.gooptiUrl && !inboundBooking ? [{ href: segmentLinks.gooptiUrl, label: t("doorToDoor.sections.openGoOptiShort"), ariaLabel: t("doorToDoor.sections.openGoOptiAction") }] : []),
-        ],
-      });
+    // DEBUG: remove after verifying actions appear in browser
+    if (typeof window !== "undefined") {
+      console.log("[D2D] selectedPlan:", selectedPlan?.id, "status:", selectedPlan?.status);
+      console.log("[D2D] outboundLeg actions:", outboundLeg?.actions?.length, outboundLeg?.actions);
+      console.log("[D2D] inboundLeg actions:", inboundLeg?.actions?.length, inboundLeg?.actions);
     }
 
+    const mapActions = (leg: any) => {
+      if (!leg?.actions) return [];
+      return leg.actions.map((action: any) => ({
+        id: action.id,
+        href: action.url,
+        label: action.label,
+        ariaLabel: action.label,
+      }));
+    };
+
+    const hasExternalActions = (leg: any) => leg?.actions?.some((a: any) => a.price_status === "external" || a.availability_status === "external");
+
+        const outboundWarnings: string[] = [];
+        if (!outboundLeg?.departure_at) {
+          outboundWarnings.push(t("doorToDoor.sections.noScheduleConfirmed"));
+        }
+        if (mapActions(outboundLeg).length === 0) {
+          outboundWarnings.push(t("doorToDoor.sections.noExternalSearch"));
+        }
+
+        const flightWarnings: string[] = [];
+
+        const nodes: SegmentNode[] = [
+          {
+            id: "outbound",
+            title: t("doorToDoor.sections.segmentOutbound"),
+            route: `${origin.label} -> ${selectedWatch.origin_iata}`,
+            timing: outboundLeg?.departure_at && outboundLeg?.arrival_at ? `${formatClock(outboundLeg.departure_at, localeTag)} - ${formatClock(outboundLeg.arrival_at, localeTag)}` : undefined,
+            badge: outboundLeg?.duration_minutes ? formatDurationLabel(outboundLeg.duration_minutes) : undefined,
+            providerLabel: outboundProvider === "mock_multimodal" ? undefined : outboundProvider,
+            actions: mapActions(outboundLeg),
+            warnings: outboundWarnings,
+          },
+          {
+            id: "flight",
+            title: t("doorToDoor.sections.segmentFlight"),
+            route: `${selectedWatch.origin_iata} -> ${selectedWatch.destination_iata}`,
+            timing: response.flight.departure_at && response.flight.arrival_at ? `${formatClock(response.flight.departure_at, localeTag)} - ${formatClock(response.flight.arrival_at, localeTag)}` : undefined,
+            badge: flightLeg?.duration_minutes ? formatDurationLabel(flightLeg.duration_minutes) : undefined,
+            providerLabel: flightLeg?.provider || "flight_watch",
+            actions: [],
+            warnings: flightWarnings,
+          },
+        ];
+
+        if (finalDestination.type !== "airport_only") {
+          const inboundWarnings: string[] = [];
+          if (!inboundLeg?.departure_at) {
+            inboundWarnings.push(t("doorToDoor.sections.noScheduleConfirmed"));
+          }
+          if (mapActions(inboundLeg).length === 0) {
+            inboundWarnings.push(t("doorToDoor.sections.noExternalSearch"));
+          }
+          nodes.push({
+            id: "inbound",
+            title: t("doorToDoor.sections.segmentInbound"),
+            route: `${selectedWatch.destination_iata} -> ${finalDestination.label}`,
+            timing: inboundLeg?.departure_at && inboundLeg?.arrival_at ? `${formatClock(inboundLeg.departure_at, localeTag)} - ${formatClock(inboundLeg.arrival_at, localeTag)}` : undefined,
+            badge: inboundLeg?.duration_minutes ? formatDurationLabel(inboundLeg.duration_minutes) : undefined,
+            providerLabel: inboundProvider === "mock_multimodal" ? undefined : inboundProvider,
+            actions: mapActions(inboundLeg),
+            warnings: inboundWarnings,
+          });
+        }
+
     return nodes;
-  }, [selectedWatch, segmentLinks, response, selectedPlan, finalDestination.type, finalDestination.label, origin.label, t, localeTag]);
+  }, [selectedWatch, response, selectedPlan, finalDestination.type, finalDestination.label, origin.label, t, localeTag]);
 
   const calculate = useCallback(async () => {
     if (!selectedWatch) {
@@ -868,10 +875,17 @@ export function DoorToDoorPanel() {
                   <div className="d2d-segment-main">
                     <strong>{node.title}</strong>
                     <p className="d2d-segment-route">{node.route}</p>
-                    <p className="d2d-segment-time">{node.timing}</p>
+                    {node.timing && <p className="d2d-segment-time">{node.timing}</p>}
+                    {node.warnings && node.warnings.length > 0 && (
+                      <div className="d2d-segment-warnings">
+                        {node.warnings.map((w, i) => (
+                          <p key={i} className="d2d-warning-text">{w}</p>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="d2d-segment-meta">
-                    <span className="status-pill state-info">{node.badge}</span>
+                    {node.badge && <span className="status-pill state-info">{node.badge}</span>}
                     {node.providerLabel ? <span className="status-pill info">{node.providerLabel}</span> : null}
                     {node.actions.length > 0 ? (
                       <>
@@ -909,7 +923,7 @@ export function DoorToDoorPanel() {
         </div>
 
         <aside className="panel panel-soft d2d-settings-aside">
-          <details className="d2d-filters-collapse" open={!isMobile || showAdvancedFilters} onToggle={(event) => setShowAdvancedFilters((event.currentTarget as HTMLDetailsElement).open)}>
+          <details className="d2d-filters-collapse" open={showAdvancedFilters} onToggle={(event) => setShowAdvancedFilters((event.currentTarget as HTMLDetailsElement).open)}>
             <summary>
               <strong>{t("doorToDoor.form.decisionSettings")}</strong>
               <span>{t("doorToDoor.filters.collapseHint")}</span>
@@ -919,98 +933,7 @@ export function DoorToDoorPanel() {
         </aside>
       </section>
 
-      <section className="panel panel-soft d2d-map-hub" aria-label={t("doorToDoor.sections.coveragePanelTitle")}>
-        <div className="d2d-section-head">
-          <h2>{t("doorToDoor.sections.coveragePanelTitle")}</h2>
-          <span>{t("doorToDoor.sections.coveragePanelBody")}</span>
-        </div>
-        <details className="d2d-filters-collapse">
-          <summary>
-            <strong>{t("doorToDoor.sections.showCoveragePanelAction")}</strong>
-          </summary>
-          <p className="panel-note">{t("doorToDoor.mapHub.summary")}</p>
-          <div className="d2d-map-hub-grid">
-          <section className="d2d-map-section">
-            <header>
-              <h3><Layers3 size={16} aria-hidden="true" /> {t("doorToDoor.mapHub.sections.layers")}</h3>
-              <p>{t("doorToDoor.mapHub.sections.layersBody")}</p>
-            </header>
-            <div className="d2d-map-cards">{mapCapabilitiesBySection.layers.map(renderCapabilityCard)}</div>
-          </section>
 
-          <section className="d2d-map-section">
-            <header>
-              <h3><Route size={16} aria-hidden="true" /> {t("doorToDoor.mapHub.sections.alternatives")}</h3>
-              <p>{t("doorToDoor.mapHub.sections.alternativesBody")}</p>
-            </header>
-            <div className="d2d-map-cards">{mapCapabilitiesBySection.alternatives.map(renderCapabilityCard)}</div>
-          </section>
-
-          <section className="d2d-map-section">
-            <header>
-              <h3><Compass size={16} aria-hidden="true" /> {t("doorToDoor.mapHub.sections.arrival")}</h3>
-              <p>{t("doorToDoor.mapHub.sections.arrivalBody")}</p>
-            </header>
-            <div className="d2d-map-cards">{mapCapabilitiesBySection.arrival.map(renderCapabilityCard)}</div>
-          </section>
-
-          <section className="d2d-map-section">
-            <header>
-              <h3><Navigation size={16} aria-hidden="true" /> {t("doorToDoor.mapHub.sections.visual")}</h3>
-              <p>{t("doorToDoor.mapHub.sections.visualBody")}</p>
-            </header>
-            <div className="d2d-map-cards">{mapCapabilitiesBySection.visual.map(renderCapabilityCard)}</div>
-          </section>
-
-          <section className="d2d-map-section">
-            <header>
-              <h3><MapPin size={16} aria-hidden="true" /> {t("doorToDoor.mapHub.sections.saved")}</h3>
-              <p>{t("doorToDoor.mapHub.sections.savedBody")}</p>
-            </header>
-            <div className="d2d-map-cards">{mapCapabilitiesBySection.saved.map(renderCapabilityCard)}</div>
-            <div className="d2d-saved-places-manager">
-              <label className="field qs-label" htmlFor="d2d-saved-place-label">
-                <span>{t("doorToDoor.mapHub.savedPlaces.label")}</span>
-                <input
-                  id="d2d-saved-place-label"
-                  className="qs-input-neutral"
-                  value={savedPlaceLabel}
-                  onChange={(event) => setSavedPlaceLabel(event.target.value)}
-                  placeholder={t("doorToDoor.mapHub.savedPlaces.labelPlaceholder")}
-                />
-              </label>
-              <label className="field qs-label" htmlFor="d2d-saved-place-note">
-                <span>{t("doorToDoor.mapHub.savedPlaces.note")}</span>
-                <input
-                  id="d2d-saved-place-note"
-                  className="qs-input-neutral"
-                  value={savedPlaceNote}
-                  onChange={(event) => setSavedPlaceNote(event.target.value)}
-                  placeholder={t("doorToDoor.mapHub.savedPlaces.notePlaceholder")}
-                />
-              </label>
-              <button type="button" className="btn-secondary btn-compact" onClick={addSavedPlace} disabled={!savedPlaceLabel.trim()}>
-                {t("doorToDoor.mapHub.savedPlaces.add")}
-              </button>
-              <div className="d2d-saved-places-list">
-                {visibleSavedPlaces.length === 0 ? <p className="panel-note">{t("doorToDoor.mapHub.savedPlaces.empty")}</p> : null}
-                {visibleSavedPlaces.map((item) => (
-                  <article key={item.id} className="d2d-saved-place-item">
-                    <div>
-                      <strong>{item.label}</strong>
-                      {item.note ? <p>{item.note}</p> : null}
-                    </div>
-                    <button type="button" className="btn-ghost btn-compact" onClick={() => removeSavedPlace(item.id)}>
-                      {t("doorToDoor.mapHub.savedPlaces.remove")}
-                    </button>
-                  </article>
-                ))}
-              </div>
-            </div>
-          </section>
-          </div>
-        </details>
-      </section>
 
       {status === "empty" ? <DoorToDoorEmptyState hasWatch={Boolean(selectedWatch)} /> : null}
       {status === "loading" ? <DoorToDoorLoadingState /> : null}
@@ -1167,6 +1090,99 @@ export function DoorToDoorPanel() {
           ) : null}
         </>
       ) : null}
+
+      <section className="panel panel-soft d2d-map-hub" aria-label={t("doorToDoor.sections.coveragePanelTitle")}>
+        <div className="d2d-section-head">
+          <h2>{t("doorToDoor.sections.coveragePanelTitle")}</h2>
+          <span>{t("doorToDoor.sections.coveragePanelBody")}</span>
+        </div>
+        <details className="d2d-filters-collapse">
+          <summary>
+            <strong>{t("doorToDoor.sections.showCoveragePanelAction")}</strong>
+          </summary>
+          <p className="panel-note">{t("doorToDoor.mapHub.summary")}</p>
+          <div className="d2d-map-hub-grid">
+          <section className="d2d-map-section">
+            <header>
+              <h3><Layers3 size={16} aria-hidden="true" /> {t("doorToDoor.mapHub.sections.layers")}</h3>
+              <p>{t("doorToDoor.mapHub.sections.layersBody")}</p>
+            </header>
+            <div className="d2d-map-cards">{mapCapabilitiesBySection.layers.map(renderCapabilityCard)}</div>
+          </section>
+
+          <section className="d2d-map-section">
+            <header>
+              <h3><Route size={16} aria-hidden="true" /> {t("doorToDoor.mapHub.sections.alternatives")}</h3>
+              <p>{t("doorToDoor.mapHub.sections.alternativesBody")}</p>
+            </header>
+            <div className="d2d-map-cards">{mapCapabilitiesBySection.alternatives.map(renderCapabilityCard)}</div>
+          </section>
+
+          <section className="d2d-map-section">
+            <header>
+              <h3><Compass size={16} aria-hidden="true" /> {t("doorToDoor.mapHub.sections.arrival")}</h3>
+              <p>{t("doorToDoor.mapHub.sections.arrivalBody")}</p>
+            </header>
+            <div className="d2d-map-cards">{mapCapabilitiesBySection.arrival.map(renderCapabilityCard)}</div>
+          </section>
+
+          <section className="d2d-map-section">
+            <header>
+              <h3><Navigation size={16} aria-hidden="true" /> {t("doorToDoor.mapHub.sections.visual")}</h3>
+              <p>{t("doorToDoor.mapHub.sections.visualBody")}</p>
+            </header>
+            <div className="d2d-map-cards">{mapCapabilitiesBySection.visual.map(renderCapabilityCard)}</div>
+          </section>
+
+          <section className="d2d-map-section">
+            <header>
+              <h3><MapPin size={16} aria-hidden="true" /> {t("doorToDoor.mapHub.sections.saved")}</h3>
+              <p>{t("doorToDoor.mapHub.sections.savedBody")}</p>
+            </header>
+            <div className="d2d-map-cards">{mapCapabilitiesBySection.saved.map(renderCapabilityCard)}</div>
+            <div className="d2d-saved-places-manager">
+              <label className="field qs-label" htmlFor="d2d-saved-place-label">
+                <span>{t("doorToDoor.mapHub.savedPlaces.label")}</span>
+                <input
+                  id="d2d-saved-place-label"
+                  className="qs-input-neutral"
+                  value={savedPlaceLabel}
+                  onChange={(event) => setSavedPlaceLabel(event.target.value)}
+                  placeholder={t("doorToDoor.mapHub.savedPlaces.labelPlaceholder")}
+                />
+              </label>
+              <label className="field qs-label" htmlFor="d2d-saved-place-note">
+                <span>{t("doorToDoor.mapHub.savedPlaces.note")}</span>
+                <input
+                  id="d2d-saved-place-note"
+                  className="qs-input-neutral"
+                  value={savedPlaceNote}
+                  onChange={(event) => setSavedPlaceNote(event.target.value)}
+                  placeholder={t("doorToDoor.mapHub.savedPlaces.notePlaceholder")}
+                />
+              </label>
+              <button type="button" className="btn-secondary btn-compact" onClick={addSavedPlace} disabled={!savedPlaceLabel.trim()}>
+                {t("doorToDoor.mapHub.savedPlaces.add")}
+              </button>
+              <div className="d2d-saved-places-list">
+                {visibleSavedPlaces.length === 0 ? <p className="panel-note">{t("doorToDoor.mapHub.savedPlaces.empty")}</p> : null}
+                {visibleSavedPlaces.map((item) => (
+                  <article key={item.id} className="d2d-saved-place-item">
+                    <div>
+                      <strong>{item.label}</strong>
+                      {item.note ? <p>{item.note}</p> : null}
+                    </div>
+                    <button type="button" className="btn-ghost btn-compact" onClick={() => removeSavedPlace(item.id)}>
+                      {t("doorToDoor.mapHub.savedPlaces.remove")}
+                    </button>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+          </div>
+        </details>
+      </section>
 
       <section className="panel panel-soft d2d-history-panel">
         <div className="action-row d2d-history-action-row">
