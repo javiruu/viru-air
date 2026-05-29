@@ -1,6 +1,8 @@
 ﻿import json
 import logging
+import unicodedata
 from datetime import datetime, time, timedelta
+from math import asin, cos, radians, sin, sqrt
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -141,12 +143,14 @@ async def suggestions(
     )
     runtime = resolve_provider_runtime()
     preferred_region_codes: list[str] = []
+    context_airport = None
     if watch_id:
         watch = db.scalar(select(FlightWatch).where(FlightWatch.id == watch_id, FlightWatch.user_id == current_user.id))
         if watch:
             selected_iata = watch.origin_iata if field == "origin" else watch.destination_iata
             airport = get_airport(selected_iata)
             if airport:
+                context_airport = airport
                 country_code = country_code_from_airport(airport).strip().lower()
                 if country_code:
                     preferred_region_codes = [country_code]
@@ -224,24 +228,124 @@ async def suggestions(
         )
 
     merged: list[DoorToDoorSuggestionOut] = []
-    seen: set[str] = set()
+    seen_place_ids: set[str] = set()
+    seen_label_country: set[str] = set()
+    seen_coords: set[str] = set()
     if typed_fallback:
         static_items = [typed_fallback, *static_items]
     for item in [*google_items, *nominatim_items, *static_items]:
-        key = _suggestion_dedupe_key(item)
-        if key in seen:
+        if _is_duplicate_suggestion(item, seen_place_ids, seen_label_country, seen_coords):
             continue
-        seen.add(key)
         merged.append(item)
-    return DoorToDoorSuggestionsResponseOut(items=merged[:10], meta=meta)
+    ranked = _rank_suggestions(
+        merged,
+        query=q,
+        preferred_region_codes=preferred_region_codes,
+        context_airport=context_airport,
+    )
+    return DoorToDoorSuggestionsResponseOut(items=ranked[:10], meta=meta)
 
 
-def _suggestion_dedupe_key(item: DoorToDoorSuggestionOut) -> str:
+def _is_duplicate_suggestion(
+    item: DoorToDoorSuggestionOut,
+    seen_place_ids: set[str],
+    seen_label_country: set[str],
+    seen_coords: set[str],
+) -> bool:
     if item.place_id:
-        return f"place_id:{item.place_id.strip().lower()}"
-    normalized_label = item.label.strip().lower()
-    normalized_subtitle = item.subtitle.strip().lower()
-    return f"{item.type}:{normalized_label}:{normalized_subtitle}"
+        place_key = item.place_id.strip().lower()
+        if place_key in seen_place_ids:
+            return True
+        seen_place_ids.add(place_key)
+
+    label_country_key = f"{_normalize_text(item.label)}|{_extract_country_key(item)}"
+    if label_country_key in seen_label_country:
+        return True
+    seen_label_country.add(label_country_key)
+
+    if item.lat is not None and item.lng is not None:
+        coord_key = f"{round(item.lat, 3)}:{round(item.lng, 3)}"
+        if coord_key in seen_coords:
+            return True
+        seen_coords.add(coord_key)
+    return False
+
+
+def _normalize_text(value: str) -> str:
+    raw = value.strip().lower()
+    if not raw:
+        return ""
+    nfkd_form = unicodedata.normalize("NFKD", raw)
+    return "".join(ch for ch in nfkd_form if not unicodedata.combining(ch))
+
+
+def _extract_country_key(item: DoorToDoorSuggestionOut) -> str:
+    subtitle = item.subtitle.strip()
+    if not subtitle:
+        return ""
+    country = subtitle.split(",")[-1].strip()
+    normalized = _normalize_text(country)
+    if len(normalized) == 2 and normalized.isalpha():
+        return normalized
+    country_map = {
+        "espana": "es",
+        "spain": "es",
+        "luxembourg": "lu",
+        "luxemburgo": "lu",
+        "italia": "it",
+        "italy": "it",
+        "paises bajos": "nl",
+        "netherlands": "nl",
+    }
+    return country_map.get(normalized, normalized)
+
+
+def _rank_suggestions(
+    items: list[DoorToDoorSuggestionOut],
+    *,
+    query: str,
+    preferred_region_codes: list[str],
+    context_airport,
+) -> list[DoorToDoorSuggestionOut]:
+    normalized_query = _normalize_text(query)
+    preferred = {code.strip().lower() for code in preferred_region_codes if code}
+    type_weight = {
+        "city": 0,
+        "address": 1,
+        "airport": 2,
+        "station": 3,
+        "saved_location": 4,
+        "airport_only": 5,
+    }
+
+    def score(item: DoorToDoorSuggestionOut) -> tuple[int, int, int, int, int, str]:
+        label_normalized = _normalize_text(item.label)
+        exact_match = 0 if normalized_query and label_normalized == normalized_query else 1
+        starts_with = 0 if normalized_query and label_normalized.startswith(normalized_query) else 1
+        country_match = 0 if preferred and _extract_country_key(item) in preferred else 1
+        proximity_score = _distance_score(item, context_airport)
+        type_score = type_weight.get(item.type, 9)
+        return (exact_match, starts_with, country_match, proximity_score, type_score, label_normalized)
+
+    return sorted(items, key=score)
+
+
+def _distance_score(item: DoorToDoorSuggestionOut, airport) -> int:
+    if airport is None or item.lat is None or item.lng is None:
+        return 99999
+    distance_km = _haversine_km(airport.latitude, airport.longitude, item.lat, item.lng)
+    return int(distance_km)
+
+
+def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    earth_radius_km = 6371.0
+    d_lat = radians(lat2 - lat1)
+    d_lon = radians(lon2 - lon1)
+    lat1_rad = radians(lat1)
+    lat2_rad = radians(lat2)
+    a = sin(d_lat / 2) ** 2 + cos(lat1_rad) * cos(lat2_rad) * sin(d_lon / 2) ** 2
+    c = 2 * asin(sqrt(a))
+    return earth_radius_km * c
 
 
 def _typed_fallback_suggestion(raw_query: str) -> DoorToDoorSuggestionOut | None:

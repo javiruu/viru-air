@@ -1,9 +1,9 @@
-﻿from datetime import datetime
+from datetime import datetime
 from typing import Literal
 
 from pydantic import AliasChoices, BaseModel, Field, model_validator
 
-DoorToDoorSourceType = Literal["api", "open_data", "aggregator", "deeplink", "scraper", "mock", "estimate", "maps"]
+DoorToDoorSourceType = Literal["api", "open_data", "aggregator", "deeplink", "scraper", "mock", "estimate", "maps", "external_deeplink"]
 DoorToDoorOptionStatus = Literal["real_result", "real_deeplink", "estimate_only"]
 DoorToDoorDeepLinkKind = Literal["directions", "provider_search", "booking"]
 DoorToDoorConfidence = Literal["live", "cached", "estimated", "deeplink", "unavailable"]
@@ -91,6 +91,19 @@ class DoorToDoorSourceOut(BaseModel):
     booking_url: str | None = None
 
 
+class DoorToDoorActionOut(BaseModel):
+    id: str
+    provider: Literal["google_maps", "blablacar", "goopti", "gtfs"]
+    label: str
+    url: str
+    kind: Literal["directions", "provider_search", "booking"]
+    opens_external: bool = True
+    source_status: Literal["external_search", "real_result"]
+    price_status: Literal["external", "confirmed", "unavailable"]
+    availability_status: Literal["external", "confirmed", "unavailable"]
+    trust_copy: str
+
+
 class DoorToDoorLegOut(BaseModel):
     type: Literal["ground", "flight"]
     mode: DoorToDoorMode
@@ -106,6 +119,7 @@ class DoorToDoorLegOut(BaseModel):
     booking_url: str | None = None
     source_type: DoorToDoorSourceType | None = None
     confidence: DoorToDoorConfidence | None = None
+    actions: list[DoorToDoorActionOut] = Field(default_factory=list)
 
     model_config = {"populate_by_name": True}
 
