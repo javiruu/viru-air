@@ -2,7 +2,7 @@
 
 import React, { FormEvent, KeyboardEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
-import { Compass, ExternalLink, Layers3, MapPin, Navigation, Route, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Car, Compass, ExternalLink, Layers3, MapPin, Navigation, Plane, Route, ShieldAlert, ShieldCheck, TrainFront } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
@@ -24,6 +24,7 @@ import { getAlternativeDeltas, getDecisionBadges, getDecisionReasons, hasUncerta
 import { buildMapCapabilities, filterSavedPlacesForWatch } from "@/modules/door-to-door/mapHub";
 import type {
   DoorToDoorHistoryItem,
+  DoorToDoorLeg,
   DoorToDoorLocation,
   DoorToDoorMapCapability,
   DoorToDoorSavedPlace,
@@ -55,17 +56,6 @@ const DEFAULT_PREFERENCES: DoorToDoorPreferences = {
 };
 
 type TrustTone = "success" | "warning";
-
-type SegmentNode = {
-  id: string;
-  title: string;
-  route: string;
-  timing?: string;
-  badge?: string;
-  providerLabel?: string | null;
-  actions: Array<{ id: string; href: string; label: string; ariaLabel: string }>;
-  warnings?: string[];
-};
 
 type CapabilitySectionKey = "layers" | "alternatives" | "arrival" | "visual" | "saved";
 
@@ -386,6 +376,61 @@ function autocompleteStatusCopy(meta: DoorToDoorSuggestionsMeta, t: ReturnType<t
   return t("doorToDoor.autocomplete.degraded");
 }
 
+function resolveGroundIcon(mode: DoorToDoorLeg["mode"]) {
+  if (mode === "car" || mode === "taxi" || mode === "rideshare" || mode === "shuttle") {
+    return <Car size={16} aria-hidden="true" />;
+  }
+  return <TrainFront size={16} aria-hidden="true" />;
+}
+
+function resolveMapsUrl(leg: DoorToDoorLeg) {
+  if (leg.booking_url) return leg.booking_url;
+  const mapAction = (leg.actions ?? []).find((action) => action.provider === "google_maps");
+  return mapAction?.url ?? null;
+}
+
+function FlightSegment({ leg, localeTag }: { leg: DoorToDoorLeg; localeTag: string }) {
+  return (
+    <li className="list-row card state-success-border d2d-segment-row">
+      <div className="d2d-segment-main">
+        <strong>
+          <Plane size={16} aria-hidden="true" /> {leg.from} {"->"} {leg.to}
+        </strong>
+        <p className="d2d-segment-time">
+          {formatClock(leg.departure_at, localeTag)} - {formatClock(leg.arrival_at, localeTag)} · {formatDurationLabel(leg.duration_minutes)}
+        </p>
+      </div>
+    </li>
+  );
+}
+
+function GroundSegment({ leg, localeTag }: { leg: DoorToDoorLeg; localeTag: string }) {
+  const mapsUrl = resolveMapsUrl(leg);
+  const isDeepLink = leg.confidence === "deeplink";
+  return (
+    <li className="list-row panel-soft d2d-segment-row">
+      <div className="d2d-segment-main">
+        <strong>{resolveGroundIcon(leg.mode)} {leg.from} {"->"} {leg.to}</strong>
+        {!isDeepLink ? (
+          <p className="d2d-segment-time">
+            {formatClock(leg.departure_at, localeTag)} - {formatClock(leg.arrival_at, localeTag)}
+            {leg.duration_minutes != null ? ` · ${formatDurationLabel(leg.duration_minutes)}` : ""}
+            {leg.price_min != null ? ` · Desde ${leg.price_min} EUR` : ""}
+          </p>
+        ) : null}
+      </div>
+      <div className="d2d-segment-meta">
+        {isDeepLink && mapsUrl ? (
+          <a className="btn-secondary btn-compact" href={mapsUrl} target="_blank" rel="noreferrer">
+            <ExternalLink size={14} aria-hidden="true" />
+            <span>Ver ruta en Maps</span>
+          </a>
+        ) : null}
+      </div>
+    </li>
+  );
+}
+
 export function DoorToDoorPanel() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -409,7 +454,6 @@ export function DoorToDoorPanel() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showTrustModal, setShowTrustModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [openActionsNodeId, setOpenActionsNodeId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [savedPlaces, setSavedPlaces] = useState<DoorToDoorSavedPlace[]>([]);
   const [savedPlaceLabel, setSavedPlaceLabel] = useState("");
@@ -505,14 +549,9 @@ export function DoorToDoorPanel() {
   useEffect(() => {
     setResponse(null);
     setChosenOptionId("");
-    setOpenActionsNodeId(null);
     setErrorMessage("");
     setStatus("empty");
   }, [selectedWatchId]);
-
-  useEffect(() => {
-    if (!isMobile) setOpenActionsNodeId(null);
-  }, [isMobile]);
 
   const selectedWatch = useMemo(() => watches.find((watch) => watch.id === selectedWatchId) || null, [watches, selectedWatchId]);
   const isSubmitBlocked = status === "loading" || !selectedWatch;
@@ -587,96 +626,7 @@ export function DoorToDoorPanel() {
 
 
 
-  const timelineNodes = useMemo<SegmentNode[]>(() => {
-    if (!selectedWatch || !response) return [];
-    const legs = selectedPlan?.legs ?? [];
-    const flightLegIndex = legs.findIndex((leg) => leg.type === "flight");
-    const fallbackGroundLegs = legs.filter((leg) => leg.type === "ground");
-    const outboundLeg =
-      (flightLegIndex > 0 ? [...legs.slice(0, flightLegIndex)].reverse().find((leg) => leg.type === "ground") : null) ??
-      fallbackGroundLegs[0] ??
-      null;
-    const inboundLeg =
-      (flightLegIndex >= 0 ? legs.slice(flightLegIndex + 1).find((leg) => leg.type === "ground") : null) ??
-      (fallbackGroundLegs.length > 1 ? fallbackGroundLegs[fallbackGroundLegs.length - 1] : null);
-    const flightLeg = (flightLegIndex >= 0 ? legs[flightLegIndex] : null) ?? null;
-    const outboundProvider = outboundLeg?.provider || null;
-    const inboundProvider = inboundLeg?.provider || null;
-
-    // DEBUG: remove after verifying actions appear in browser
-    if (typeof window !== "undefined") {
-      console.log("[D2D] selectedPlan:", selectedPlan?.id, "status:", selectedPlan?.status);
-      console.log("[D2D] outboundLeg actions:", outboundLeg?.actions?.length, outboundLeg?.actions);
-      console.log("[D2D] inboundLeg actions:", inboundLeg?.actions?.length, inboundLeg?.actions);
-    }
-
-    const mapActions = (leg: any) => {
-      if (!leg?.actions) return [];
-      return leg.actions.map((action: any) => ({
-        id: action.id,
-        href: action.url,
-        label: action.label,
-        ariaLabel: action.label,
-      }));
-    };
-
-    const hasExternalActions = (leg: any) => leg?.actions?.some((a: any) => a.price_status === "external" || a.availability_status === "external");
-
-        const outboundWarnings: string[] = [];
-        if (!outboundLeg?.departure_at) {
-          outboundWarnings.push(t("doorToDoor.sections.noScheduleConfirmed"));
-        }
-        if (mapActions(outboundLeg).length === 0) {
-          outboundWarnings.push(t("doorToDoor.sections.noExternalSearch"));
-        }
-
-        const flightWarnings: string[] = [];
-
-        const nodes: SegmentNode[] = [
-          {
-            id: "outbound",
-            title: t("doorToDoor.sections.segmentOutbound"),
-            route: `${origin.label} -> ${selectedWatch.origin_iata}`,
-            timing: outboundLeg?.departure_at && outboundLeg?.arrival_at ? `${formatClock(outboundLeg.departure_at, localeTag)} - ${formatClock(outboundLeg.arrival_at, localeTag)}` : undefined,
-            badge: outboundLeg?.duration_minutes ? formatDurationLabel(outboundLeg.duration_minutes) : undefined,
-            providerLabel: outboundProvider === "mock_multimodal" ? undefined : outboundProvider,
-            actions: mapActions(outboundLeg),
-            warnings: outboundWarnings,
-          },
-          {
-            id: "flight",
-            title: t("doorToDoor.sections.segmentFlight"),
-            route: `${selectedWatch.origin_iata} -> ${selectedWatch.destination_iata}`,
-            timing: response.flight.departure_at && response.flight.arrival_at ? `${formatClock(response.flight.departure_at, localeTag)} - ${formatClock(response.flight.arrival_at, localeTag)}` : undefined,
-            badge: flightLeg?.duration_minutes ? formatDurationLabel(flightLeg.duration_minutes) : undefined,
-            providerLabel: flightLeg?.provider || "flight_watch",
-            actions: [],
-            warnings: flightWarnings,
-          },
-        ];
-
-        if (finalDestination.type !== "airport_only") {
-          const inboundWarnings: string[] = [];
-          if (!inboundLeg?.departure_at) {
-            inboundWarnings.push(t("doorToDoor.sections.noScheduleConfirmed"));
-          }
-          if (mapActions(inboundLeg).length === 0) {
-            inboundWarnings.push(t("doorToDoor.sections.noExternalSearch"));
-          }
-          nodes.push({
-            id: "inbound",
-            title: t("doorToDoor.sections.segmentInbound"),
-            route: `${selectedWatch.destination_iata} -> ${finalDestination.label}`,
-            timing: inboundLeg?.departure_at && inboundLeg?.arrival_at ? `${formatClock(inboundLeg.departure_at, localeTag)} - ${formatClock(inboundLeg.arrival_at, localeTag)}` : undefined,
-            badge: inboundLeg?.duration_minutes ? formatDurationLabel(inboundLeg.duration_minutes) : undefined,
-            providerLabel: inboundProvider === "mock_multimodal" ? undefined : inboundProvider,
-            actions: mapActions(inboundLeg),
-            warnings: inboundWarnings,
-          });
-        }
-
-    return nodes;
-  }, [selectedWatch, response, selectedPlan, finalDestination.type, finalDestination.label, origin.label, t, localeTag]);
+  const timelineLegs = selectedPlan?.legs ?? [];
 
   const calculate = useCallback(async () => {
     if (!selectedWatch) {
@@ -721,7 +671,6 @@ export function DoorToDoorPanel() {
       } else {
         setStatus("success");
       }
-      setOpenActionsNodeId(null);
     } catch (error) {
       if (requestId !== requestIdRef.current) return;
       setErrorMessage(error instanceof Error ? error.message : "Error inesperado");
@@ -867,57 +816,15 @@ export function DoorToDoorPanel() {
               <span className="status-pill warning">{t("doorToDoor.timeline.estimatedSchedule")}</span>
             ) : null}
           </div>
-          {timelineNodes.length === 0 ? <p className="panel-note">{t("doorToDoor.timeline.empty")}</p> : (
+          {timelineLegs.length === 0 ? <p className="panel-note">{t("doorToDoor.timeline.empty")}</p> : (
             <ol className="d2d-segment-timeline" aria-label={t("doorToDoor.timeline.title")}>
-              {timelineNodes.map((node) => (
-                <li key={node.id} className="list-row d2d-segment-row">
-                  <div className="d2d-segment-node" aria-hidden="true" />
-                  <div className="d2d-segment-main">
-                    <strong>{node.title}</strong>
-                    <p className="d2d-segment-route">{node.route}</p>
-                    {node.timing && <p className="d2d-segment-time">{node.timing}</p>}
-                    {node.warnings && node.warnings.length > 0 && (
-                      <div className="d2d-segment-warnings">
-                        {node.warnings.map((w, i) => (
-                          <p key={i} className="d2d-warning-text">{w}</p>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="d2d-segment-meta">
-                    {node.badge && <span className="status-pill state-info">{node.badge}</span>}
-                    {node.providerLabel ? <span className="status-pill info">{node.providerLabel}</span> : null}
-                    {node.actions.length > 0 ? (
-                      <>
-                        {isMobile ? (
-                          <button
-                            type="button"
-                            className="btn-ghost btn-compact d2d-actions-toggle"
-                            aria-expanded={openActionsNodeId === node.id}
-                            aria-controls={`d2d-actions-${node.id}`}
-                            onClick={() => setOpenActionsNodeId((current) => (current === node.id ? null : node.id))}
-                          >
-                            {t("doorToDoor.sections.moreActions")}
-                          </button>
-                        ) : null}
-                        <div
-                          id={`d2d-actions-${node.id}`}
-                          className={`row-actions d2d-row-actions ${isMobile && openActionsNodeId === node.id ? "is-open" : ""}`}
-                          role="group"
-                          aria-label={t("doorToDoor.sections.actionsTitle")}
-                        >
-                          {node.actions.map((action) => (
-                            <a key={`${node.id}-${action.href}`} className="btn-secondary btn-compact" href={action.href} target="_blank" rel="noreferrer" aria-label={action.ariaLabel}>
-                              <ExternalLink size={14} aria-hidden="true" />
-                              <span>{action.label}</span>
-                            </a>
-                          ))}
-                        </div>
-                      </>
-                    ) : null}
-                  </div>
-                </li>
-              ))}
+              {timelineLegs.map((leg, index) =>
+                leg.type === "flight" ? (
+                  <FlightSegment key={`${leg.type}-${leg.mode}-${index}`} leg={leg} localeTag={localeTag} />
+                ) : (
+                  <GroundSegment key={`${leg.type}-${leg.mode}-${index}`} leg={leg} localeTag={localeTag} />
+                ),
+              )}
             </ol>
           )}
         </div>
