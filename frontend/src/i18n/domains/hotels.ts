@@ -51,6 +51,7 @@
   selected: {
     title: "Hotel en foco",
     empty: "Selecciona un hotel para ver detalle rápido.",
+    lastCapture: "Última captura",
   },
   empty: {
     title: "Sin señal todavía",
@@ -120,6 +121,7 @@ export const hotelsEn = {
   selected: {
     title: "Focused hotel",
     empty: "Select a hotel to see quick detail.",
+    lastCapture: "Last capture",
   },
   empty: {
     title: "No signal yet",

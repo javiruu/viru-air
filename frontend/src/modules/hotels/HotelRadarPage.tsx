@@ -9,6 +9,7 @@ import {
   addHotelCompSetMember,
   createHotelCompSet,
   createHotelWatchlistItem,
+  getHotelDetail,
   getHotelCompSetDetail,
   getHotelRates,
   ingestHotelsMock,
@@ -18,10 +19,10 @@ import {
 import { HotelCompSetPanel, HotelEmptyState } from "./components/HotelCompSetPanel";
 import { HotelResultCard, HotelSearchPanel } from "./components/HotelSearchPanel";
 import { HotelParitySignal, HotelPriceTimeline, HotelProviderStatusPill } from "./components/HotelTimelineAndSignals";
-import type { HotelCompSetDetailOut, HotelCompSetOut, HotelRateOut, HotelSearchOut } from "./types";
+import type { HotelCompSetDetailOut, HotelCompSetOut, HotelDetailOut, HotelRateOut, HotelSearchOut } from "./types";
 
 export function HotelRadarPage() {
-  const { t } = useI18n();
+  const { t, localeTag } = useI18n();
   const { notify } = useNotificationCenter();
 
   const [query, setQuery] = useState("");
@@ -30,6 +31,8 @@ export function HotelRadarPage() {
   const [results, setResults] = useState<HotelSearchOut[]>([]);
   const [selectedHotelId, setSelectedHotelId] = useState<string | null>(null);
   const [rates, setRates] = useState<HotelRateOut[]>([]);
+  const [hotelDetail, setHotelDetail] = useState<HotelDetailOut | null>(null);
+  const [loadingRates, setLoadingRates] = useState(false);
   const [compSets, setCompSets] = useState<HotelCompSetOut[]>([]);
   const [selectedCompSet, setSelectedCompSet] = useState<HotelCompSetDetailOut | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -41,15 +44,19 @@ export function HotelRadarPage() {
     setCompSets(next);
   }
 
+  async function runSearch() {
+    const list = await searchHotels({ q: query || undefined, city: city || undefined, limit: 30 });
+    setResults(list);
+    if (!list.some((item) => item.id === selectedHotelId)) {
+      setSelectedHotelId(list[0]?.id ?? null);
+    }
+  }
+
   async function handleSearch() {
     setLoading(true);
     setErrorMessage(null);
     try {
-      const list = await searchHotels({ q: query || undefined, city: city || undefined, limit: 30 });
-      setResults(list);
-      if (!list.some((item) => item.id === selectedHotelId)) {
-        setSelectedHotelId(list[0]?.id ?? null);
-      }
+      await runSearch();
     } catch (error) {
       const message = error instanceof Error ? error.message : t("shared.errors.generic");
       setErrorMessage(message);
@@ -68,12 +75,13 @@ export function HotelRadarPage() {
         tone: "success",
         title: t("hotels.messages.ingestSuccess", { count: ingest.hotels_processed }),
       });
-      await handleSearch();
+      await runSearch();
       await refreshCompSets();
     } catch (error) {
       const message = error instanceof Error ? error.message : t("shared.errors.generic");
       setErrorMessage(message);
       notify({ tone: "error", title: message });
+    } finally {
       setLoading(false);
     }
   }
@@ -129,12 +137,21 @@ export function HotelRadarPage() {
 
   useEffect(() => {
     if (!selectedHotelId) {
+      setHotelDetail(null);
       setRates([]);
       return;
     }
-    getHotelRates(selectedHotelId)
-      .then(setRates)
-      .catch(() => setRates([]));
+    setLoadingRates(true);
+    Promise.all([getHotelDetail(selectedHotelId), getHotelRates(selectedHotelId)])
+      .then(([detail, nextRates]) => {
+        setHotelDetail(detail);
+        setRates(nextRates);
+      })
+      .catch(() => {
+        setHotelDetail(null);
+        setRates([]);
+      })
+      .finally(() => setLoadingRates(false));
   }, [selectedHotelId]);
 
   return (
@@ -195,10 +212,13 @@ export function HotelRadarPage() {
               <div className="section-gap-sm">
                 <strong>{selectedHotel.canonical_name}</strong>
                 <p className="panel-note">{selectedHotel.city}, {selectedHotel.country_code}</p>
+                {hotelDetail?.address ? <p className="panel-note">{hotelDetail.address}</p> : null}
+                {hotelDetail?.updated_at ? <p className="panel-note">{t("hotels.selected.lastCapture")}: {new Date(hotelDetail.updated_at).toLocaleString(localeTag)}</p> : null}
               </div>
             ) : (
               <p className="panel-note section-gap-sm">{t("hotels.selected.empty")}</p>
             )}
+            {loadingRates ? <p className="panel-note section-gap-sm">{t("shared.states.loading")}</p> : null}
           </section>
 
           <HotelParitySignal rates={rates} />
