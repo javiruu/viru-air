@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.hotels.ingestion import HotelIngestionService
 from app.hotels.normalization import HotelNormalizationService
+from app.hotels.parity import HotelParityService, ParitySignal
 from app.infrastructure.db.models import (
     HotelAlertRule,
     HotelCompSet,
@@ -212,3 +213,9 @@ def delete_alert_rule(db: Session, *, user_id: str, rule_id: str) -> None:
         raise PermissionError("not_allowed")
     db.delete(rule)
     db.commit()
+
+
+def get_hotel_parity(db: Session, *, hotel_id: str) -> list[ParitySignal]:
+    _ = get_hotel_or_404(db, hotel_id)
+    rates = list_hotel_rates(db, hotel_id=hotel_id, check_in=None, check_out=None)
+    return HotelParityService.compute_parity(rates)

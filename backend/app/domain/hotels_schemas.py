@@ -108,6 +108,21 @@ class HotelAlertRuleUpdateIn(BaseModel):
     threshold_percent: float | None = Field(default=None, ge=0, le=100)
     is_active: bool | None = None
 
+    @model_validator(mode="after")
+    def validate_threshold_combination(self):
+        effective_type = self.rule_type
+        if effective_type is None:
+            return self
+        if effective_type in {"price_below", "price_above"}:
+            if self.threshold_amount is None and self.threshold_percent is None:
+                raise ValueError("threshold_required_for_price_rule")
+        if effective_type == "parity_break":
+            if self.threshold_percent is None:
+                raise ValueError("threshold_percent_required_for_parity_break")
+            if self.threshold_amount is not None:
+                raise ValueError("threshold_amount_not_allowed_for_parity_break")
+        return self
+
 
 class HotelAlertRuleOut(BaseModel):
     id: str
@@ -123,6 +138,22 @@ class HotelIngestOut(BaseModel):
     hotels_processed: int
     rates_ingested: int
     ambiguous_matches: int
+
+
+class HotelParityOut(BaseModel):
+    check_in: Date
+    check_out: Date
+    guests: int
+    currency: str
+    provider_count: int
+    lowest_price: float | None = None
+    highest_price: float | None = None
+    average_price: float | None = None
+    spread_amount: float | None = None
+    spread_percent: float | None = None
+    is_parity_broken: bool = False
+    status: str
+    label: str
 
 
 class HotelSearchQueryIn(BaseModel):

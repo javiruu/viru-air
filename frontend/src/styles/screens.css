@@ -19548,6 +19548,36 @@ textarea::placeholder {
   border-style: dashed;
 }
 
+.hotel-parity-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.hotel-parity-metric {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 0.45rem 0.52rem;
+  display: grid;
+  gap: 0.15rem;
+  text-align: center;
+}
+
+.hotel-parity-metric span {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+  font-weight: 600;
+}
+
+.hotel-parity-metric strong {
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
 @media (max-width: 980px) {
   .hotel-search-grid,
   .hoteles-layout {
