@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.domain.schemas import (
+    HotelAlertEventOut,
     HotelAlertRuleCreateIn,
     HotelAlertRuleOut,
     HotelAlertRuleUpdateIn,
@@ -18,6 +19,7 @@ from app.domain.schemas import (
     HotelDetailOut,
     HotelIngestOut,
     HotelParityOut,
+    HotelProviderRunOut,
     HotelRateOut,
     HotelRatesQueryIn,
     HotelSearchOut,
@@ -445,4 +447,27 @@ def get_hotel_parity(
             label=s.label,
         )
         for s in signals
+    ]
+
+
+@router.get("/alert-events", response_model=list[HotelAlertEventOut])
+def list_alert_events(
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[HotelAlertEventOut]:
+    rows = hotels_service.list_hotel_alert_events(db, user_id=current_user.id, limit=limit, offset=offset)
+    return [
+        HotelAlertEventOut(
+            id=row.id,
+            rule_id=row.rule_id,
+            hotel_id=row.hotel_id,
+            provider_run_id=row.provider_run_id,
+            event_type=row.event_type,
+            message=row.message,
+            trigger_value=float(row.trigger_value) if row.trigger_value is not None else None,
+            created_at=row.created_at,
+        )
+        for row in rows
     ]

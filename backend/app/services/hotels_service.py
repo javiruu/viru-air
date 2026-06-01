@@ -4,14 +4,17 @@ from sqlalchemy import desc, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.time import utc_now_naive
 from app.hotels.ingestion import HotelIngestionService
 from app.hotels.normalization import HotelNormalizationService
 from app.hotels.parity import HotelParityService, ParitySignal
 from app.infrastructure.db.models import (
+    HotelAlertEvent,
     HotelAlertRule,
     HotelCompSet,
     HotelCompSetMember,
     HotelProperty,
+    HotelProviderRun,
     HotelRateSnapshot,
     HotelWatchlistItem,
 )
@@ -219,3 +222,134 @@ def get_hotel_parity(db: Session, *, hotel_id: str) -> list[ParitySignal]:
     _ = get_hotel_or_404(db, hotel_id)
     rates = list_hotel_rates(db, hotel_id=hotel_id, check_in=None, check_out=None)
     return HotelParityService.compute_parity(rates)
+
+
+def run_hotel_sweep(db: Session, *, provider: str = "mock") -> HotelProviderRun:
+    provider_run = HotelProviderRun(provider=provider, status="running")
+    db.add(provider_run)
+    db.flush()
+
+    try:
+        result = ingest_hotels_mock(db)
+        provider_run.items_processed = result.hotels_processed
+        provider_run.status = "completed"
+        db.flush()
+
+        evaluate_hotel_alerts(db, provider_run_id=provider_run.id)
+    except Exception as exc:
+        provider_run.status = "failed"
+        provider_run.error_message = str(exc)[:500]
+        db.flush()
+
+    provider_run.finished_at = utc_now_naive()
+    db.commit()
+    db.refresh(provider_run)
+    return provider_run
+
+
+def evaluate_hotel_alerts(db: Session, *, provider_run_id: str) -> list[HotelAlertEvent]:
+    rules = list(db.scalars(select(HotelAlertRule).where(HotelAlertRule.is_active == True)))
+    events: list[HotelAlertEvent] = []
+
+    for rule in rules:
+        rates = list_hotel_rates(db, hotel_id=rule.hotel_id, check_in=None, check_out=None)
+        if not rates:
+            continue
+
+        hotel = db.get(HotelProperty, rule.hotel_id)
+        hotel_name = hotel.canonical_name if hotel else rule.hotel_id
+
+        if rule.rule_type == "price_below":
+            amounts_f = [float(r.amount) for r in rates]
+            avg = sum(amounts_f) / len(amounts_f) if rule.threshold_percent is not None and len(amounts_f) > 0 else None
+            for rate in rates:
+                triggered = False
+                trigger_value = None
+                rate_f = float(rate.amount)
+                if rule.threshold_amount is not None and rate_f < float(rule.threshold_amount):
+                    triggered = True
+                    trigger_value = rate_f
+                if avg is not None and avg > 0 and ((avg - rate_f) / avg * 100) >= float(rule.threshold_percent):
+                    triggered = True
+                    trigger_value = rate_f
+                if triggered:
+                    events.append(
+                        HotelAlertEvent(
+                            rule_id=rule.id,
+                            hotel_id=rule.hotel_id,
+                            provider_run_id=provider_run_id,
+                            event_type="price_below",
+                            message=f"{hotel_name}: {rate.provider} @ {rate.currency} {rate.amount:.2f}",
+                            trigger_value=trigger_value,
+                        )
+                    )
+                    break
+
+        elif rule.rule_type == "price_above":
+            amounts_f = [float(r.amount) for r in rates]
+            avg = sum(amounts_f) / len(amounts_f) if rule.threshold_percent is not None and len(amounts_f) > 0 else None
+            for rate in rates:
+                triggered = False
+                trigger_value = None
+                rate_f = float(rate.amount)
+                if rule.threshold_amount is not None and rate_f > float(rule.threshold_amount):
+                    triggered = True
+                    trigger_value = rate_f
+                if avg is not None and avg > 0 and ((rate_f - avg) / avg * 100) >= float(rule.threshold_percent):
+                    triggered = True
+                    trigger_value = rate_f
+                if triggered:
+                    events.append(
+                        HotelAlertEvent(
+                            rule_id=rule.id,
+                            hotel_id=rule.hotel_id,
+                            provider_run_id=provider_run_id,
+                            event_type="price_above",
+                            message=f"{hotel_name}: {rate.provider} @ {rate.currency} {rate.amount:.2f}",
+                            trigger_value=trigger_value,
+                        )
+                    )
+                    break
+
+        elif rule.rule_type == "parity_break":
+            signals = HotelParityService.compute_parity(rates)
+            for signal in signals:
+                if signal.is_parity_broken and signal.spread_percent is not None:
+                    if rule.threshold_percent is None or signal.spread_percent >= rule.threshold_percent:
+                        events.append(
+                            HotelAlertEvent(
+                                rule_id=rule.id,
+                                hotel_id=rule.hotel_id,
+                                provider_run_id=provider_run_id,
+                                event_type="parity_break",
+                                message=f"{hotel_name}: spread {signal.spread_percent}% ({signal.lowest_price}-{signal.highest_price} {signal.currency})",
+                                trigger_value=signal.spread_percent,
+                            )
+                        )
+                        break
+
+    for event in events:
+        db.add(event)
+
+    if events:
+        db.flush()
+
+    return events
+
+
+def list_hotel_alert_events(
+    db: Session,
+    *,
+    user_id: str,
+    limit: int = 50,
+    offset: int = 0,
+) -> list[HotelAlertEvent]:
+    stmt = (
+        select(HotelAlertEvent)
+        .join(HotelAlertRule, HotelAlertEvent.rule_id == HotelAlertRule.id)
+        .where(HotelAlertRule.user_id == user_id)
+        .order_by(desc(HotelAlertEvent.created_at), desc(HotelAlertEvent.id))
+        .offset(offset)
+        .limit(limit)
+    )
+    return list(db.scalars(stmt))

@@ -156,6 +156,27 @@ class HotelParityOut(BaseModel):
     label: str
 
 
+class HotelProviderRunOut(BaseModel):
+    id: str
+    provider: str
+    started_at: datetime
+    finished_at: datetime | None = None
+    status: str
+    items_processed: int
+    error_message: str | None = None
+
+
+class HotelAlertEventOut(BaseModel):
+    id: str
+    rule_id: str
+    hotel_id: str
+    provider_run_id: str | None = None
+    event_type: str
+    message: str
+    trigger_value: float | None = None
+    created_at: datetime
+
+
 class HotelSearchQueryIn(BaseModel):
     q: str | None = Field(default=None, max_length=120)
     city: str | None = Field(default=None, max_length=100)

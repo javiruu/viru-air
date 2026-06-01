@@ -571,6 +571,7 @@ class RecommendationResponse(BaseModel):
 
 
 from app.domain.hotels_schemas import (
+    HotelAlertEventOut,
     HotelAlertRuleCreateIn,
     HotelAlertRuleOut,
     HotelAlertRuleUpdateIn,
@@ -582,6 +583,7 @@ from app.domain.hotels_schemas import (
     HotelDetailOut,
     HotelIngestOut,
     HotelParityOut,
+    HotelProviderRunOut,
     HotelRateOut,
     HotelRatesQueryIn,
     HotelSearchOut,
