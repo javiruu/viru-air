@@ -8,12 +8,17 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.hotels.contracts import HotelProviderAdapter
+from app.hotels.makcorps_provider import MakcorpsHotelProviderAdapter
 from app.hotels.mapping import HotelMappingService
 from app.hotels.mock_provider import MockHotelProviderAdapter
 from app.infrastructure.db.models import HotelProviderAlias, HotelRateSnapshot
 
 
 def resolve_hotel_provider() -> HotelProviderAdapter:
+    feature_enabled = os.getenv("HOTEL_FEATURE_ENABLED", "true").strip().lower() in {"1", "true", "yes"}
+    if not feature_enabled:
+        raise ValueError("HOTEL_FEATURE_ENABLED is false. Hotels module is disabled.")
+
     provider = os.getenv("HOTEL_PROVIDER", "mock").strip().lower()
     if provider == "mock":
         fixture_path = os.getenv("HOTEL_MOCK_FIXTURE_PATH")
@@ -21,7 +26,14 @@ def resolve_hotel_provider() -> HotelProviderAdapter:
         if adapter.is_enabled():
             return adapter
         raise ValueError("HOTEL_PROVIDER=mock is not enabled.")
-    raise ValueError(f"Unsupported hotel provider '{provider}'. Expected: mock")
+    if provider == "makcorps":
+        adapter = MakcorpsHotelProviderAdapter()
+        if adapter.is_enabled():
+            return adapter
+        raise ValueError(
+            "HOTEL_PROVIDER=makcorps is not enabled. Set MAKCORPS_API_KEY to activate."
+        )
+    raise ValueError(f"Unsupported hotel provider '{provider}'. Expected: mock, makcorps")
 
 
 @dataclass
