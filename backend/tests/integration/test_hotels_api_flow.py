@@ -30,6 +30,24 @@ def test_hotels_search_rejects_invalid_country_code(client: TestClient) -> None:
         headers=_auth(token),
     )
     assert response.status_code == 422
+    assert _error_code(response.json()) == "invalid_country_code"
+
+
+def test_hotels_collections_start_empty(client: TestClient) -> None:
+    token = register_and_token(client, email="hotels-empty-collections@viru.dev")
+    headers = _auth(token)
+
+    watchlist = client.get("/api/v1/hotels/watchlist", headers=headers)
+    assert watchlist.status_code == 200
+    assert watchlist.json() == []
+
+    comp_sets = client.get("/api/v1/hotels/comp-sets", headers=headers)
+    assert comp_sets.status_code == 200
+    assert comp_sets.json() == []
+
+    alert_rules = client.get("/api/v1/hotels/alert-rules", headers=headers)
+    assert alert_rules.status_code == 200
+    assert alert_rules.json() == []
 
 
 def test_hotels_ingest_mock_and_basic_flow(client: TestClient) -> None:
@@ -98,6 +116,11 @@ def test_hotels_comp_set_create_member_and_detail(client: TestClient) -> None:
     payload = detail.json()
     assert payload["id"] == comp_set_id
     assert len(payload["members"]) >= 1
+    member_id = payload["members"][0]["id"]
+
+    deleted = client.delete(f"/api/v1/hotels/comp-sets/{comp_set_id}/members/{member_id}", headers=headers)
+    assert deleted.status_code == 200
+    assert deleted.json()["status"] == "ok"
 
 
 def test_hotels_ownership_enforced_between_users(client: TestClient) -> None:
@@ -214,7 +237,7 @@ def test_hotels_rates_invalid_date_range_returns_422_with_semantic_detail(client
         params={"check_in": "2026-07-12", "check_out": "2026-07-10"},
     )
     assert response.status_code == 422
-    assert _error_code(response.json()) == "Value error, invalid_date_range"
+    assert _error_code(response.json()) == "invalid_date_range"
 
 
 def test_hotels_alert_rule_invalid_threshold_combination_returns_422(client: TestClient) -> None:
@@ -236,3 +259,30 @@ def test_hotels_alert_rule_invalid_threshold_combination_returns_422(client: Tes
         },
     )
     assert response.status_code == 422
+    assert _error_code(response.json()) == "threshold_percent_required_for_parity_break"
+
+
+def test_hotels_alert_rule_delete_returns_ok(client: TestClient) -> None:
+    token = register_and_token(client, email="hotels-alert-delete@viru.dev")
+    headers = _auth(token)
+
+    ingest = client.post("/api/v1/hotels/ingest/mock", headers=headers)
+    assert ingest.status_code == 200
+    hotel_id = client.get("/api/v1/hotels/search", headers=headers).json()[0]["id"]
+
+    created = client.post(
+        "/api/v1/hotels/alert-rules",
+        headers=headers,
+        json={
+            "hotel_id": hotel_id,
+            "rule_type": "price_above",
+            "threshold_amount": 220,
+            "is_active": True,
+        },
+    )
+    assert created.status_code == 200
+    rule_id = created.json()["id"]
+
+    deleted = client.delete(f"/api/v1/hotels/alert-rules/{rule_id}", headers=headers)
+    assert deleted.status_code == 200
+    assert deleted.json()["status"] == "ok"

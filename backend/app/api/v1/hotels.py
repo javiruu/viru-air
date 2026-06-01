@@ -1,4 +1,5 @@
-﻿from datetime import date as Date
+from datetime import date as Date
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import ValidationError
@@ -28,6 +29,22 @@ from app.infrastructure.db.session import get_db
 from app.services import hotels_service
 
 router = APIRouter()
+
+
+def _extract_validation_error_code(exc: ValidationError) -> str:
+    first_error = exc.errors()[0] if exc.errors() else {}
+    msg = first_error.get("msg")
+    if isinstance(msg, str) and msg:
+        prefix = "Value error, "
+        if msg.startswith(prefix):
+            return msg[len(prefix) :]
+        return msg
+    ctx = first_error.get("ctx")
+    if isinstance(ctx, dict):
+        err = ctx.get("error")
+        if isinstance(err, ValueError):
+            return str(err)
+    return "validation_error"
 
 
 def _raise_http_for_value_error(exc: ValueError) -> None:
@@ -71,9 +88,7 @@ def search_hotels(
             offset=offset,
         )
     except ValidationError as exc:
-        first_error = exc.errors()[0] if exc.errors() else {}
-        error_code = first_error.get("msg", "validation_error")
-        raise HTTPException(status_code=422, detail=error_code) from exc
+        raise HTTPException(status_code=422, detail=_extract_validation_error_code(exc)) from exc
 
     rows = hotels_service.search_hotels(
         db,
@@ -259,10 +274,15 @@ def list_alert_rules(
 
 @router.post("/alert-rules", response_model=HotelAlertRuleOut)
 def create_alert_rule(
-    payload: HotelAlertRuleCreateIn,
+    payload_raw: dict[str, Any],
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> HotelAlertRuleOut:
+    try:
+        payload = HotelAlertRuleCreateIn.model_validate(payload_raw)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=_extract_validation_error_code(exc)) from exc
+
     try:
         row = hotels_service.create_alert_rule(
             db,
@@ -288,10 +308,15 @@ def create_alert_rule(
 @router.patch("/alert-rules/{rule_id}", response_model=HotelAlertRuleOut)
 def patch_alert_rule(
     rule_id: str,
-    payload: HotelAlertRuleUpdateIn,
+    payload_raw: dict[str, Any],
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> HotelAlertRuleOut:
+    try:
+        payload = HotelAlertRuleUpdateIn.model_validate(payload_raw)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=_extract_validation_error_code(exc)) from exc
+
     try:
         row = hotels_service.update_alert_rule(
             db,
@@ -370,9 +395,8 @@ def get_hotel_rates(
     try:
         query = HotelRatesQueryIn(check_in=check_in, check_out=check_out)
     except ValidationError as exc:
-        first_error = exc.errors()[0] if exc.errors() else {}
-        error_code = first_error.get("msg", "validation_error")
-        raise HTTPException(status_code=422, detail=error_code) from exc
+        raise HTTPException(status_code=422, detail=_extract_validation_error_code(exc)) from exc
+
     rows = hotels_service.list_hotel_rates(db, hotel_id=hotel_id, check_in=query.check_in, check_out=query.check_out)
     return [
         HotelRateOut(
