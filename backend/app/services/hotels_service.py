@@ -230,7 +230,16 @@ def run_hotel_sweep(db: Session, *, provider: str = "mock") -> HotelProviderRun:
     db.flush()
 
     try:
-        result = ingest_hotels_mock(db)
+        if provider == "mock":
+            result = ingest_hotels_mock(db)
+        elif provider == "makcorps":
+            from app.hotels.ingestion import HotelIngestionService, resolve_hotel_provider
+
+            adapter = resolve_hotel_provider()
+            result = HotelIngestionService(db, provider=adapter).ingest()
+        else:
+            raise ValueError(f"Unsupported sweep provider: {provider}")
+
         provider_run.items_processed = result.hotels_processed
         provider_run.status = "completed"
         db.flush()
