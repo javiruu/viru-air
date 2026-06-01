@@ -1,0 +1,70 @@
+﻿{
+  "hotels": [
+    {
+      "provider_hotel_id": "mock-sol-001",
+      "name": "Hotel Sol Madrid",
+      "address": "Calle del Sol 10",
+      "city": "Madrid",
+      "country_code": "es",
+      "latitude": 40.4169,
+      "longitude": -3.7036,
+      "stars": 4,
+      "rates": [
+        {
+          "check_in": "2026-07-10",
+          "check_out": "2026-07-12",
+          "amount": 189.5,
+          "currency": "eur",
+          "guests": 2,
+          "room_label": "Doble estandar",
+          "meal_plan": "solo alojamiento",
+          "cancellation_policy": "flexible"
+        }
+      ]
+    },
+    {
+      "provider_hotel_id": "mock-luna-002",
+      "name": "Hotel Luna, Madrid",
+      "address": "Gran Via 22",
+      "city": "Madrid",
+      "country_code": "ES",
+      "latitude": 40.4171,
+      "longitude": -3.7035,
+      "stars": 4,
+      "rates": [
+        {
+          "check_in": "2026-07-10",
+          "check_out": "2026-07-12",
+          "amount": 210,
+          "currency": "EUR",
+          "guests": 2,
+          "room_label": "Doble superior",
+          "meal_plan": "desayuno",
+          "cancellation_policy": "no reembolsable"
+        }
+      ]
+    },
+    {
+      "provider_hotel_id": "mock-sol-003",
+      "name": "Hotel Sol Madrid",
+      "address": "Avenida Costera 5",
+      "city": "Malaga",
+      "country_code": "ES",
+      "latitude": 36.7202,
+      "longitude": -4.4203,
+      "stars": 3,
+      "rates": [
+        {
+          "check_in": "2026-07-10",
+          "check_out": "2026-07-12",
+          "amount": 99,
+          "currency": "EUR",
+          "guests": 2,
+          "room_label": "Doble",
+          "meal_plan": "solo alojamiento",
+          "cancellation_policy": "flexible"
+        }
+      ]
+    }
+  ]
+}

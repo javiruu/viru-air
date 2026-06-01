@@ -8,6 +8,7 @@ from app.api.v1 import (
     alerts,
     airports,
     auth,
+    hotels,
     notes,
     preferences,
     prices,
@@ -22,6 +23,7 @@ from app.api.v1 import (
 
 api_v1 = APIRouter()
 api_v1.include_router(auth.router, prefix="/auth", tags=["auth"])
+api_v1.include_router(hotels.router, prefix="/hotels", tags=["hotels"])
 api_v1.include_router(admin.router, prefix="/admin", tags=["admin"])
 api_v1.include_router(watchlist.router, prefix="/watchlist", tags=["watchlist"])
 api_v1.include_router(door_to_door.router, prefix="/door-to-door", tags=["door-to-door"])
