@@ -1,0 +1,668 @@
+Enfoque recomendado
+
+Objetivo realista: crear un módulo /hoteles o /hotel-radar para inteligencia hotelera MVP, sin reservas, sin pagos, sin scraping directo propio y sin romper el core de vuelos.
+
+MVP inicial:
+
+Catálogo interno de hoteles.
+Normalización básica de hoteles por proveedor.
+Watchlist hotelera.
+Comp Sets.
+Histórico de precios por hotel/proveedor.
+Alertas simples de bajada/subida/paridad.
+UI inicial tipo “Radar hotelero”, siguiendo la identidad Aviation Warm-Luxe de Viru.
+
+Fuera del MVP:
+
+Reservas reales.
+Pagos.
+Integración GDS completa.
+Sabre MCP.
+Google Hotel Center.
+NLP avanzado de reviews.
+White label.
+Power BI/Tableau/Snowflake.
+Scraping directo con proxies/CAPTCHAs.
+
+Eso queda para fases posteriores. El informe menciona todo eso, pero implementarlo junto sería una criatura de pantano arquitectónica.
+
+Plan de implementación adaptado a Codex
+Fase 0: Auditoría y contrato técnico antes de tocar código
+
+Objetivo: que Codex entienda el repo y deje escrita una mini-spec viva.
+
+Qué debe hacer Codex:
+
+Leer:
+README.md
+AGENTS.md
+backend/AGENTS.md
+frontend/AGENTS.md
+DESIGN.md
+docs/overview/project-overview.md
+docs de arquitectura/API si existen.
+Confirmar estructura real del backend y frontend.
+Crear un documento:
+docs/specs/hotels-intelligence-mvp.md
+Definir ahí:
+alcance MVP;
+fuera de alcance;
+modelos;
+endpoints;
+feature flag;
+riesgos;
+criterios de verificación.
+
+Regla para Codex: no implementar funcionalidad todavía. Solo documentación y decisiones.
+
+Prompt para Codex:
+
+Trabaja desde el root canónico de viru-tracker. Antes de tocar código, lee README.md, AGENTS.md, backend/AGENTS.md, frontend/AGENTS.md, DESIGN.md y docs/overview/project-overview.md.
+
+Objetivo: preparar una especificación MVP para una nueva vertical de inteligencia hotelera, sin reservas ni pagos, adaptada al producto actual de Viru Tracker.
+
+Crea docs/specs/hotels-intelligence-mvp.md con:
+1. Contexto del producto actual.
+2. Qué entra en el MVP hotelero.
+3. Qué queda fuera del MVP.
+4. Modelos backend propuestos.
+5. Endpoints propuestos.
+6. Feature flags y variables de entorno.
+7. Riesgos técnicos/comerciales.
+8. Plan de verificación por fase.
+
+No modifiques backend ni frontend todavía. No cambies rutas existentes. No añadas dependencias.
+Verifica con git diff que solo has tocado la documentación necesaria.
+Fase 1: Esqueleto backend del dominio hotelero
+
+Objetivo: meter la base de datos y servicios internos sin proveedor externo.
+
+Modelos mínimos:
+
+HotelProperty
+id
+canonical_name
+normalized_name
+address
+city
+country_code
+latitude
+longitude
+stars
+created_at
+updated_at
+HotelProviderAlias
+id
+hotel_id
+provider
+provider_hotel_id
+raw_name
+raw_address
+raw_payload
+confidence_score
+HotelRateSnapshot
+id
+hotel_id
+provider
+check_in
+check_out
+guests
+room_label
+meal_plan
+cancellation_policy
+currency
+amount
+collected_at
+HotelWatchlistItem
+id
+user_id
+hotel_id
+label
+created_at
+HotelCompSet
+id
+user_id
+name
+anchor_hotel_id
+created_at
+HotelCompSetMember
+id
+comp_set_id
+hotel_id
+HotelAlertRule
+id
+user_id
+hotel_id
+rule_type
+threshold_amount
+threshold_percent
+is_active
+
+Importante: no usar PostGIS todavía si el repo no lo tiene preparado. Guardar lat/lng como campos numéricos y dejar PostGIS como mejora posterior.
+
+Prompt para Codex:
+
+Implementa solo el esqueleto backend del módulo hotelero MVP.
+
+Restricciones:
+- No añadas proveedores externos todavía.
+- No hagas scraping.
+- No cambies funcionalidades existentes de vuelos.
+- Sigue la arquitectura actual del backend.
+- Usa SQLAlchemy/Alembic siguiendo el estilo existente.
+- Si hay patrones de models/schemas/services/repositorios ya existentes, imítalos.
+- Añade migración Alembic si corresponde.
+- Añade tests mínimos de modelos/servicios si el repo ya tiene patrón para ello.
+
+Modelos a crear:
+HotelProperty, HotelProviderAlias, HotelRateSnapshot, HotelWatchlistItem, HotelCompSet, HotelCompSetMember, HotelAlertRule.
+
+Verificación:
+- Ejecuta tests backend relevantes.
+- Ejecuta migración o validación equivalente según el repo.
+- Reporta archivos tocados, comandos ejecutados y resultado.
+Fase 2: Provider mock y normalización de datos
+
+Objetivo: construir el motor sin depender aún de Makcorps, StayAPI, Amadeus ni nadie.
+
+El documento insiste en normalización, desduplicación y hotel mapping porque un mismo hotel puede venir con nombres, habitaciones o coordenadas distintas . Por eso esta fase es crucial.
+
+Piezas a crear:
+
+Interfaz tipo HotelProviderAdapter.
+Adaptador mock.
+Fixtures JSON locales.
+Servicio de normalización:
+limpiar acentos;
+lowercase;
+quitar puntuación;
+colapsar espacios;
+comparar nombre;
+comparar ciudad;
+comparar coordenadas con tolerancia.
+Servicio de matching:
+devuelve confidence_score;
+si score alto, une con hotel existente;
+si score bajo, crea nuevo hotel;
+si score medio, marca como ambiguo.
+
+Regla: evitar dependencia nueva como rapidfuzz salvo que Codex justifique que ya existe o que merece la pena. Para MVP basta normalización determinista y score sencillo.
+
+Prompt para Codex:
+
+Añade la capa de proveedor mock para hoteles.
+
+Objetivo:
+- Poder ingerir hoteles y tarifas desde fixtures JSON locales.
+- Normalizar datos entrantes.
+- Crear o enlazar HotelProperty mediante un matching determinista simple.
+
+Restricciones:
+- No llamadas externas.
+- No nuevas dependencias salvo justificación clara.
+- No tocar módulos de vuelos.
+- El proveedor activo debe depender de una variable tipo HOTEL_PROVIDER=mock.
+- El módulo debe funcionar aunque no haya API keys.
+
+Implementa:
+1. Interfaz/contrato de proveedor hotelero.
+2. Mock provider con fixtures.
+3. Servicio de normalización.
+4. Servicio de hotel mapping básico.
+5. Tests unitarios para normalización y matching.
+
+Casos mínimos:
+- mismo hotel con mayúsculas/minúsculas distintas;
+- mismo hotel con acentos/puntuación distintos;
+- hoteles distintos con nombres parecidos pero coordenadas alejadas;
+- proveedor devuelve tarifa con moneda y fechas.
+
+Verifica con tests backend dirigidos.
+Fase 3: API interna MVP
+
+Objetivo: exponer datos hoteleros sin UI todavía.
+
+Endpoints orientativos:
+
+GET    /api/hotels/search
+GET    /api/hotels/{hotel_id}
+GET    /api/hotels/{hotel_id}/rates
+POST   /api/hotels/ingest/mock
+GET    /api/hotel-watchlist
+POST   /api/hotel-watchlist
+DELETE /api/hotel-watchlist/{item_id}
+
+GET    /api/hotel-comp-sets
+POST   /api/hotel-comp-sets
+GET    /api/hotel-comp-sets/{comp_set_id}
+POST   /api/hotel-comp-sets/{comp_set_id}/members
+DELETE /api/hotel-comp-sets/{comp_set_id}/members/{member_id}
+
+GET    /api/hotel-alert-rules
+POST   /api/hotel-alert-rules
+PATCH  /api/hotel-alert-rules/{rule_id}
+DELETE /api/hotel-alert-rules/{rule_id}
+
+Recomendación: si el repo usa otro naming, Codex debe seguirlo. No inventar arquitectura paralela.
+
+Prompt para Codex:
+
+Implementa endpoints internos para el módulo hotelero MVP usando el proveedor mock y los modelos ya creados.
+
+Restricciones:
+- Respeta auth/session si las rutas existentes lo usan.
+- No cambies contratos existentes.
+- No devuelvas raw_payload completo salvo en entorno debug/test.
+- Mantén respuestas Pydantic/serialización según estilo actual.
+- Estados de error consistentes con el backend actual.
+
+Endpoints mínimos:
+1. Buscar hoteles.
+2. Ver detalle de hotel.
+3. Ver histórico/tarifas de hotel.
+4. Ingesta mock para desarrollo.
+5. CRUD básico de watchlist hotelera.
+6. CRUD básico de Comp Sets.
+7. CRUD básico de reglas de alerta hotelera.
+
+Añade tests de API para:
+- búsqueda sin resultados;
+- ingesta mock;
+- creación de watchlist;
+- creación de comp set;
+- evitar acceso a datos de otro usuario si aplica auth.
+
+Verifica con pytest o el comando estándar del backend.
+Fase 4: UI inicial /hoteles o /hotel-radar
+
+Objetivo: una primera pantalla funcional, no un dashboard empresarial genérico.
+
+Viru tiene contrato visual cálido, animado, premium y aeronautico, con dark/light coherentes, y no debe caer en SaaS plano . La UI debe respetar tokens y patrones congelados como panel, panel-soft, page-header, status-pill, card, estados success|warning|error|info, etc. .
+
+Ruta recomendada: /hoteles si quieres español directo, o /hotel-radar si quieres marca más potente. Yo usaría visible en UI como Radar hotelero.
+
+Componentes:
+
+HotelRadarPage
+HotelSearchPanel
+HotelResultCard
+HotelPriceTimeline
+HotelCompSetPanel
+HotelParitySignal
+HotelEmptyState
+HotelProviderStatusPill
+
+Microcopy estilo Viru:
+
+“Radar hotelero”
+“Pulso de tarifa”
+“Comp set”
+“Señal de paridad”
+“Última captura”
+“Sin señal todavía”
+“Añadir a seguimiento”
+
+Diseño:
+
+No tabla gris infinita.
+No cards idénticas todas con el mismo peso.
+Hero compacto tipo “terminal de alojamiento”.
+Panel de búsqueda arriba.
+Columna principal con resultados.
+Lateral con Comp Set y alertas.
+Badges de proveedor y frescura de datos.
+Estado vacío con personalidad.
+
+Prompt para Codex:
+
+Crea la primera UI del módulo hotelero en frontend.
+
+Objetivo:
+- Añadir una ruta nueva para “Radar hotelero”.
+- Consumir los endpoints hoteleros mock.
+- Permitir buscar hoteles, ver resultados, añadir a seguimiento y ver Comp Set básico si ya existe API.
+- Mantener la identidad visual de Viru: cálida, premium, aeronautica, no SaaS genérico.
+
+Restricciones:
+- Lee DESIGN.md, frontend/AGENTS.md y docs/ui/UI_SYSTEM_V1.md antes de tocar UI.
+- Usa componentes/patrones existentes: panel, panel-soft, page-header, status-pill, card, etc.
+- No añadas librerías UI nuevas.
+- No cambies rutas existentes.
+- No rompas dashboard/watchlist/quick-search/alerts.
+- Textos visibles en español.
+- Verifica dark y light si el repo permite cambiar tema.
+
+Crear:
+1. Ruta nueva /hoteles o /hotel-radar según convención del repo.
+2. Página “Radar hotelero”.
+3. Panel de búsqueda.
+4. Cards de resultados.
+5. Estado vacío.
+6. Estado de error.
+7. Estado loading.
+8. Acción “Añadir a seguimiento”.
+
+Verificación:
+- npm run typecheck/build/lint según scripts existentes.
+- Browser real o Playwright si el repo lo tiene.
+- Capturas o evidencia visual de la ruta nueva en dark y light si posible.
+Fase 5: Histórico de precios y señales de paridad
+
+Objetivo: que el módulo empiece a aportar “inteligencia”, no solo listado.
+
+El informe marca la paridad y la comparación de precios como núcleo de la propuesta hotelera . Aquí conviene implementar señales simples:
+
+Señales MVP:
+
+lowest_price
+highest_price
+average_price
+spread_amount
+spread_percent
+provider_count
+is_parity_broken
+freshness_status
+
+Reglas iniciales:
+
+Si hay menos de 2 proveedores:
+  status = info
+  copy = "Señal limitada"
+
+Si spread_percent >= 10:
+  status = warning
+  copy = "Paridad tensionada"
+
+Si spread_percent >= 20:
+  status = error
+  copy = "Brecha fuerte"
+
+Si spread_percent < 10:
+  status = success
+  copy = "Paridad estable"
+
+Prompt para Codex:
+
+Añade cálculo de señales de paridad hotelera sobre HotelRateSnapshot.
+
+Objetivo:
+- Calcular resumen de precios por hotel y rango de fechas.
+- Exponerlo en API.
+- Mostrarlo en la UI del Radar hotelero.
+
+Implementa:
+1. Servicio backend HotelParityService.
+2. Endpoint o campo agregado en detalle de hotel.
+3. Tests unitarios para spread/paridad.
+4. UI con status-pill usando success/warning/error/info.
+5. Copy visible en español.
+
+Reglas:
+- No inventes datos si solo hay un proveedor.
+- Si hay un solo snapshot, mostrar “Señal limitada”.
+- No mostrar 0,00 € como diferencia si no hay comparación real.
+- Mantener semántica de estados del sistema UI.
+
+Verifica backend tests, frontend typecheck y ruta en navegador si posible.
+Fase 6: Barridos programados y alertas
+
+Objetivo: simular “portfolio sweeps” sin meter Kafka/Kubernetes/Celery si el repo aún no lo usa.
+
+El informe habla de cron jobs, colas y barridos de cartera para revisar competidores y disparar emails . Para Viru ahora, mejor empezar pequeño:
+
+MVP técnico:
+
+comando interno:
+python -m app.hotels.jobs.run_hotel_sweep
+tabla HotelProviderRun
+id
+provider
+started_at
+finished_at
+status
+items_processed
+error_message
+evaluación de alertas después del sweep.
+sin email real al principio:
+crear HotelAlertEvent
+mostrarlo en UI.
+email después, si ya hay infraestructura de email en Viru.
+
+Prompt para Codex:
+
+Implementa un sweep hotelero interno basado en proveedor mock.
+
+Objetivo:
+- Ejecutar una ingesta periódica manual por comando/script.
+- Registrar ejecución.
+- Evaluar reglas de alerta hotelera.
+- Crear eventos de alerta internos.
+
+Restricciones:
+- No añadas Celery/Kafka/Cron externo si el repo no lo usa ya.
+- No envíes emails reales todavía salvo que exista infraestructura clara y testeada.
+- El comando debe ser idempotente para fixtures mock.
+- No bloquear request/response paths con trabajo pesado.
+
+Crear:
+1. HotelProviderRun.
+2. HotelAlertEvent.
+3. Job/command run_hotel_sweep.
+4. Tests del job con mock provider.
+5. Endpoint para listar alert events si encaja con el patrón actual.
+
+Verificación:
+- Ejecutar comando manual.
+- Confirmar registros creados.
+- Tests backend.
+Fase 7: Primer proveedor real, detrás de feature flag
+
+Objetivo: conectar un único proveedor real, no cinco.
+
+El informe menciona Makcorps como API orientada a inteligencia de precios y StayAPI como capa que absorbe complejidad anti-bot y cambios de DOM . Para el primer proveedor yo elegiría Makcorps si el objetivo es precio/paridad, y dejaría StayAPI para cuando de verdad haga falta reputación, reviews o anti-bot gestionado.
+
+Variables:
+
+HOTEL_PROVIDER=mock|makcorps
+HOTEL_FEATURE_ENABLED=false
+MAKCORPS_API_KEY=
+MAKCORPS_BASE_URL=
+HOTEL_PROVIDER_TIMEOUT_SECONDS=10
+HOTEL_PROVIDER_MAX_RETRIES=2
+HOTEL_PROVIDER_CACHE_TTL_SECONDS=3600
+
+Reglas:
+
+Sin API key, el sistema cae a mock o desactiva proveedor real.
+No se commitean secretos.
+Timeouts obligatorios.
+Retry con backoff.
+Rate limit básico.
+Logging sin datos sensibles.
+Tests con responses fixtureadas, no llamadas reales.
+
+Prompt para Codex:
+
+Añade integración piloto con un proveedor hotelero real, empezando por Makcorps, detrás de feature flag.
+
+Antes de implementar:
+- Revisa la spec docs/specs/hotels-intelligence-mvp.md.
+- Revisa patrones existentes de providers/adapters en el backend.
+- No hagas llamadas reales en tests.
+
+Implementa:
+1. MakcorpsHotelProviderAdapter.
+2. Config por env vars.
+3. Timeout, retry y error handling.
+4. Normalización hacia el contrato interno.
+5. Tests con fixtures de respuesta.
+6. Documentación de variables en .env.example si el repo lo usa así.
+
+Restricciones:
+- No meter claves.
+- No scraping directo.
+- No cambiar proveedor por defecto: debe seguir mock o disabled.
+- Si falta API key, error claro o fallback controlado.
+- No bloquear UI si el proveedor falla.
+
+Verificación:
+- Tests backend con fixtures.
+- Validar que HOTEL_PROVIDER=mock sigue funcionando.
+- Validar que sin API key no rompe el arranque.
+Fase 8: Geoespacial ligero
+
+Objetivo: aportar contexto de ubicación sin montar PostGIS/mapas complejos todavía.
+
+El informe propone análisis geoespacial, proximidad a puntos de interés, walkability y análisis por vecindario . MVP:
+
+lat/lng guardadas;
+distancia aproximada por Haversine;
+filtro “hoteles cercanos”;
+Comp Set sugerido por radio;
+UI con lista y mini-resumen, no mapa obligatorio.
+
+Prompt para Codex:
+
+Añade capacidades geoespaciales ligeras al módulo hotelero.
+
+Objetivo:
+- Sugerir hoteles cercanos para Comp Sets usando lat/lng.
+- No introducir PostGIS todavía salvo que ya esté soportado claramente.
+- Usar cálculo Haversine en servicio backend.
+
+Implementa:
+1. Servicio HotelGeoService.
+2. Endpoint para sugerir competidores cercanos.
+3. Tests con coordenadas conocidas.
+4. UI en Comp Set para “Sugerencias cercanas”.
+
+Restricciones:
+- No añadir mapas/librerías nuevas en esta fase.
+- No usar APIs externas de ubicación todavía.
+- No bloquear la experiencia si faltan coordenadas.
+
+Verificación:
+- Tests backend.
+- UI muestra estado “Sin coordenadas suficientes” cuando aplique.
+Fase 9: Pulido de UI y QA visual
+
+Objetivo: que no parezca un módulo pegado desde otro producto.
+
+Codex debe revisar:
+
+Dark mode.
+Light mode.
+Responsive.
+Empty states.
+Loading.
+Error states.
+Focus visible.
+Sin overflow horizontal.
+Sin mezcla ES/EN.
+Sin cards repetitivas sin jerarquía.
+Sin “dashboard corporativo frío”.
+
+Prompt para Codex:
+
+Haz una pasada de QA visual y polish sobre la ruta del Radar hotelero.
+
+Restricciones:
+- No cambies lógica backend.
+- No rediseñes todo el producto.
+- No añadas librerías.
+- Respeta DESIGN.md, UI_SYSTEM_V1 y UI_CONTRACT_V1.
+- Mantén dark y light con la misma personalidad.
+- No conviertas la pantalla en dashboard SaaS genérico.
+
+Revisa:
+1. Jerarquía visual.
+2. Estados empty/loading/error/success.
+3. Responsive móvil.
+4. Focus visible.
+5. Copy en español.
+6. Consistencia con panel/card/status-pill existentes.
+7. Acciones principales y secundarias.
+
+Verificación:
+- Capturas de ruta completa.
+- Captura del componente principal.
+- Captura móvil si posible.
+- Typecheck/build/lint según scripts.
+Orden exacto que yo le daría a Codex
+
+No le mandes todo como una megaorden de 40 archivos. Mejor así:
+
+Codex tarea 1: crear spec hotels-intelligence-mvp.md.
+Codex tarea 2: modelos + migración.
+Codex tarea 3: mock provider + normalización + tests.
+Codex tarea 4: endpoints internos.
+Codex tarea 5: UI /hoteles.
+Codex tarea 6: señales de paridad.
+Codex tarea 7: sweep + alert events.
+Codex tarea 8: proveedor real detrás de flag.
+Codex tarea 9: geoespacial ligero.
+Codex tarea 10: QA visual y docs finales.
+
+Así cada fase deja una diff revisable y no una avalancha de código con cara de aeropuerto abandonado 🛬.
+
+Prompt maestro para iniciar todo en Codex
+
+Este sería el primer prompt, el bueno:
+
+Quiero incorporar una nueva vertical de inteligencia hotelera a Viru Tracker, pero de forma incremental, segura y adaptada al producto actual.
+
+Contexto:
+- Viru Tracker hoy es principalmente una plataforma de seguimiento de vuelos con watchlists, histórico de precios, alertas y quick search.
+- No quiero transformar todo el producto de golpe.
+- La nueva vertical debe llamarse visualmente “Radar hotelero” o similar.
+- El MVP debe cubrir búsqueda/listado interno de hoteles, watchlist hotelera, Comp Sets, histórico de precios, señales simples de paridad y alertas internas.
+- No quiero reservas, pagos, GDS completo, Sabre MCP, Google Hotel Center, NLP avanzado ni scraping directo en el MVP.
+- Primero debe funcionar con mock provider y fixtures. El proveedor real vendrá después detrás de feature flag.
+
+Instrucciones obligatorias:
+1. Trabaja desde el root canónico del repo.
+2. Lee README.md, AGENTS.md, backend/AGENTS.md, frontend/AGENTS.md, DESIGN.md y docs/overview/project-overview.md.
+3. No uses _publish_repo.
+4. No cambies rutas ni lógica existente de vuelos.
+5. No añadas dependencias salvo justificación clara.
+6. No añadas scraping directo ni claves secretas.
+7. No conviertas la UI en SaaS genérico.
+8. Respeta dark/light, tokens y componentes del sistema UI.
+9. Cada fase debe ser pequeña, verificable y con tests cuando aplique.
+10. No implementes todo ahora.
+
+Primera tarea:
+Crea docs/specs/hotels-intelligence-mvp.md con:
+- contexto;
+- alcance MVP;
+- fuera de alcance;
+- modelos propuestos;
+- endpoints propuestos;
+- feature flags/env vars;
+- fases de implementación;
+- riesgos;
+- criterios de verificación.
+
+No modifiques backend ni frontend todavía. Al final reporta archivos tocados y diff resumido.
+Criterio de aceptación final del módulo
+
+El módulo estará “bien metido” cuando:
+
+/hoteles carga sin romper vuelos.
+Hay provider mock funcionando.
+Se pueden ingerir fixtures.
+Hay hoteles normalizados.
+Se pueden crear watchlists hoteleras.
+Se pueden crear Comp Sets.
+Se ve histórico de tarifas.
+Se calcula señal de paridad sin inventar datos.
+Hay alert events internos.
+Los tests backend pasan.
+Frontend compila.
+La UI está verificada en dark/light.
+No hay secretos.
+No hay scraping directo.
+No hay dependencia innecesaria.
+El core actual de Viru sigue intacto.
+
+Mi recomendación clara: primero Fase 0 a Fase 5. Eso ya te da una demo real del “Radar hotelero”. Luego decides si merece la pena pagar/integrar Makcorps, StayAPI u otro proveedor. Ahí es donde el proyecto deja de ser una maqueta bonita y empieza a tener gasolina de datos real.

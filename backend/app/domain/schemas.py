@@ -568,3 +568,23 @@ class RecommendationResponse(BaseModel):
     query: dict
     items: list[dict]
     ai: RecommendationAiMeta
+
+
+from app.domain.hotels_schemas import (
+    HotelAlertRuleCreateIn,
+    HotelAlertRuleOut,
+    HotelAlertRuleUpdateIn,
+    HotelCompSetCreateIn,
+    HotelCompSetDetailOut,
+    HotelCompSetMemberCreateIn,
+    HotelCompSetMemberOut,
+    HotelCompSetOut,
+    HotelDetailOut,
+    HotelIngestOut,
+    HotelRateOut,
+    HotelRatesQueryIn,
+    HotelSearchOut,
+    HotelSearchQueryIn,
+    HotelWatchlistItemCreateIn,
+    HotelWatchlistItemOut,
+)

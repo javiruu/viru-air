@@ -98,6 +98,17 @@ Entradas vivas actualizadas:
 - `docs/adr/ADR-003-provider-adapter.md`
 - `docs/INDICE_UNICO.md`
 
+## Actualizacion manual 2026-06-01 (hotels intelligence mvp fase 0)
+
+Entradas vivas agregadas:
+
+- `docs/specs/hotels-intelligence-mvp.md`
+
+Entradas vivas actualizadas:
+
+- `docs/specs/README.md`
+- `docs/INDICE_UNICO.md`
+
 ## Tabla
 
 | Ruta actual | Tipo | Estado | Acci?n propuesta | Nueva ruta | Motivo | Fuente de verdad |

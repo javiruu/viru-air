@@ -116,6 +116,7 @@
 
 - [Specs activas](specs/README.md)
 - [Phase 1 Codex MVP](specs/phase1-codex.md)
+- [Hotels Intelligence MVP](specs/hotels-intelligence-mvp.md)
 
 ### QA
 

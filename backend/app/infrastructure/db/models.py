@@ -324,3 +324,98 @@ class Airport(Base):
     is_primary: Mapped[bool] = mapped_column(Boolean, default=False)
     source: Mapped[str] = mapped_column(String(50), default="ourairports")
 
+
+class HotelProperty(Base):
+    __tablename__ = "hotel_property"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    canonical_name: Mapped[str] = mapped_column(String(200))
+    normalized_name: Mapped[str] = mapped_column(String(200), index=True)
+    address: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    city: Mapped[str] = mapped_column(String(100), index=True)
+    country_code: Mapped[str] = mapped_column(String(2), index=True)
+    latitude: Mapped[float | None] = mapped_column(Numeric(10, 6), nullable=True)
+    longitude: Mapped[float | None] = mapped_column(Numeric(10, 6), nullable=True)
+    stars: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
+
+
+class HotelProviderAlias(Base):
+    __tablename__ = "hotel_provider_alias"
+    __table_args__ = (
+        UniqueConstraint("provider", "provider_hotel_id", name="uq_hotel_provider_alias_provider_hotel_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    hotel_id: Mapped[str] = mapped_column(ForeignKey("hotel_property.id"), index=True)
+    provider: Mapped[str] = mapped_column(String(40), index=True)
+    provider_hotel_id: Mapped[str] = mapped_column(String(120))
+    raw_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    raw_address: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    raw_payload: Mapped[str | None] = mapped_column(Text, nullable=True)
+    confidence_score: Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True)
+
+
+class HotelRateSnapshot(Base):
+    __tablename__ = "hotel_rate_snapshot"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    hotel_id: Mapped[str] = mapped_column(ForeignKey("hotel_property.id"), index=True)
+    provider: Mapped[str] = mapped_column(String(40), index=True)
+    check_in: Mapped[datetime.date] = mapped_column(Date, index=True)
+    check_out: Mapped[datetime.date] = mapped_column(Date, index=True)
+    guests: Mapped[int] = mapped_column(Integer, default=2)
+    room_label: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    meal_plan: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    cancellation_policy: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    currency: Mapped[str] = mapped_column(String(3), default="EUR")
+    amount: Mapped[float] = mapped_column(Numeric(10, 2))
+    collected_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, index=True)
+
+
+class HotelWatchlistItem(Base):
+    __tablename__ = "hotel_watchlist_item"
+    __table_args__ = (
+        UniqueConstraint("user_id", "hotel_id", name="uq_hotel_watchlist_item_user_hotel"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    hotel_id: Mapped[str] = mapped_column(ForeignKey("hotel_property.id"), index=True)
+    label: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+
+
+class HotelCompSet(Base):
+    __tablename__ = "hotel_comp_set"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    anchor_hotel_id: Mapped[str] = mapped_column(ForeignKey("hotel_property.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+
+
+class HotelCompSetMember(Base):
+    __tablename__ = "hotel_comp_set_member"
+    __table_args__ = (
+        UniqueConstraint("comp_set_id", "hotel_id", name="uq_hotel_comp_set_member_comp_hotel"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    comp_set_id: Mapped[str] = mapped_column(ForeignKey("hotel_comp_set.id"), index=True)
+    hotel_id: Mapped[str] = mapped_column(ForeignKey("hotel_property.id"), index=True)
+
+
+class HotelAlertRule(Base):
+    __tablename__ = "hotel_alert_rule"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    hotel_id: Mapped[str] = mapped_column(ForeignKey("hotel_property.id"), index=True)
+    rule_type: Mapped[str] = mapped_column(String(40))
+    threshold_amount: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    threshold_percent: Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
