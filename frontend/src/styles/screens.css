@@ -19423,3 +19423,134 @@ textarea::placeholder {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Hotels radar (Fase 4 MVP) */
+.hoteles-page {
+  display: grid;
+}
+
+.hoteles-header .page-title p {
+  margin: 0.25rem 0 0;
+  color: var(--ink-muted);
+}
+
+.hotel-search-panel {
+  background:
+    linear-gradient(130deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent 42%),
+    var(--panel-bg);
+}
+
+.hotel-search-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.hoteles-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.6fr);
+  gap: 1rem;
+}
+
+.hoteles-main-column,
+.hoteles-side-column {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.hotel-results-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.hotel-result-card {
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.hotel-result-card.is-active {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+  box-shadow: 0 16px 30px var(--shadow);
+}
+
+.hotel-result-main {
+  width: 100%;
+  border: 0;
+  text-align: left;
+  background: transparent;
+  color: var(--ink);
+  padding: 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.8rem;
+  cursor: pointer;
+}
+
+.hotel-result-main h3 {
+  margin: 0;
+}
+
+.hotel-result-main p {
+  margin: 0.2rem 0 0;
+  color: var(--ink-muted);
+}
+
+.hotel-result-actions {
+  padding: 0 0.85rem 0.8rem;
+}
+
+.hotel-timeline-list {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.hotel-rate-row {
+  align-items: flex-start;
+}
+
+.hotel-rate-right {
+  text-align: right;
+}
+
+.hotel-rate-right p {
+  margin: 0.2rem 0 0;
+}
+
+.hotel-comp-set-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.hotel-comp-set-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.hotel-comp-set-item {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 10px;
+  text-align: left;
+  padding: 0.45rem 0.62rem;
+  cursor: pointer;
+}
+
+.hotel-comp-set-item.is-active,
+.hotel-comp-set-item:hover {
+  border-color: color-mix(in srgb, var(--accent-2) 46%, var(--border));
+}
+
+.hotel-empty-state {
+  border-style: dashed;
+}
+
+@media (max-width: 980px) {
+  .hotel-search-grid,
+  .hoteles-layout {
+    grid-template-columns: 1fr;
+  }
+}

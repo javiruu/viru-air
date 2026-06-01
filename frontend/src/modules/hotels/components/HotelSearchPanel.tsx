@@ -1,0 +1,84 @@
+﻿"use client";
+
+import { useMemo } from "react";
+
+import { useI18n } from "@/i18n";
+
+import type { HotelSearchOut } from "../types";
+
+export function HotelSearchPanel({
+  query,
+  city,
+  loading,
+  onQueryChange,
+  onCityChange,
+  onSearch,
+  onIngest,
+}: {
+  query: string;
+  city: string;
+  loading: boolean;
+  onQueryChange: (value: string) => void;
+  onCityChange: (value: string) => void;
+  onSearch: () => void;
+  onIngest: () => void;
+}) {
+  const { t } = useI18n();
+  const disabled = useMemo(() => loading, [loading]);
+
+  return (
+    <section className="panel hotel-search-panel" aria-label={t("hotels.search.panelLabel")}>
+      <div className="panel-header">
+        <div>
+          <h2 className="panel-title">{t("hotels.search.title")}</h2>
+          <p className="panel-subtitle">{t("hotels.search.subtitle")}</p>
+        </div>
+        <span className="status-pill info">{t("hotels.provider.statusMock")}</span>
+      </div>
+      <div className="hotel-search-grid section-gap-sm">
+        <label className="field qs-label">
+          <span>{t("hotels.search.nameLabel")}</span>
+          <input className="qs-input-neutral" value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder={t("hotels.search.namePlaceholder")} />
+        </label>
+        <label className="field qs-label">
+          <span>{t("hotels.search.cityLabel")}</span>
+          <input className="qs-input-neutral" value={city} onChange={(event) => onCityChange(event.target.value)} placeholder={t("hotels.search.cityPlaceholder")} />
+        </label>
+      </div>
+      <div className="action-row section-gap-sm">
+        <button type="button" className="btn-primary" onClick={onSearch} disabled={disabled}>{loading ? t("shared.states.loading") : t("hotels.actions.search")}</button>
+        <button type="button" className="btn-secondary" onClick={onIngest} disabled={disabled}>{t("hotels.actions.loadMock")}</button>
+      </div>
+    </section>
+  );
+}
+
+export function HotelResultCard({
+  hotel,
+  isActive,
+  onSelect,
+  onAddWatch,
+}: {
+  hotel: HotelSearchOut;
+  isActive: boolean;
+  onSelect: (hotelId: string) => void;
+  onAddWatch: (hotelId: string) => void;
+}) {
+  const { t } = useI18n();
+
+  return (
+    <article className={`card hotel-result-card${isActive ? " is-active" : ""}`}>
+      <button type="button" className="hotel-result-main" onClick={() => onSelect(hotel.id)}>
+        <div>
+          <h3>{hotel.canonical_name}</h3>
+          <p>{hotel.city}, {hotel.country_code}</p>
+        </div>
+        <span className="status-pill info">{hotel.stars ? `${hotel.stars}?` : t("hotels.card.noStars")}</span>
+      </button>
+      <div className="row-actions hotel-result-actions">
+        <button type="button" className="btn-ghost btn-compact" onClick={() => onAddWatch(hotel.id)}>{t("hotels.actions.addToWatchlist")}</button>
+      </div>
+    </article>
+  );
+}
+
