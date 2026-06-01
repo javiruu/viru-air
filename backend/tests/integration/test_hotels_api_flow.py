@@ -262,6 +262,34 @@ def test_hotels_alert_rule_invalid_threshold_combination_returns_422(client: Tes
     assert _error_code(response.json()) == "threshold_percent_required_for_parity_break"
 
 
+def test_hotels_parity_returns_signal_after_ingest(client: TestClient) -> None:
+    token = register_and_token(client, email="hotels-parity@viru.dev")
+    headers = _auth(token)
+
+    ingest = client.post("/api/v1/hotels/ingest/mock", headers=headers)
+    assert ingest.status_code == 200
+    hotel_id = client.get("/api/v1/hotels/search", headers=headers).json()[0]["id"]
+
+    parity = client.get(f"/api/v1/hotels/{hotel_id}/parity", headers=headers)
+    assert parity.status_code == 200
+    signals = parity.json()
+    assert isinstance(signals, list)
+    assert len(signals) >= 1
+    assert signals[0]["provider_count"] >= 1
+    assert signals[0]["status"] in {"info", "success", "warning", "error"}
+    assert signals[0]["label"] in {"limited", "stable", "tensioned", "breach"}
+
+
+def test_hotels_parity_not_found_returns_404(client: TestClient) -> None:
+    token = register_and_token(client, email="hotels-parity-404@viru.dev")
+    headers = _auth(token)
+    fake_id = "00000000-0000-0000-0000-000000000000"
+
+    response = client.get(f"/api/v1/hotels/{fake_id}/parity", headers=headers)
+    assert response.status_code == 404
+    assert _error_code(response.json()) == "hotel_not_found"
+
+
 def test_hotels_alert_rule_delete_returns_ok(client: TestClient) -> None:
     token = register_and_token(client, email="hotels-alert-delete@viru.dev")
     headers = _auth(token)

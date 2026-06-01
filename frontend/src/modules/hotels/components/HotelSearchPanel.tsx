@@ -81,7 +81,7 @@ export function HotelResultCard({
           <h3>{hotel.canonical_name}</h3>
           <p>{hotel.city}, {hotel.country_code}</p>
         </div>
-        <span className="status-pill info">{hotel.stars ? `${hotel.stars}?` : t("hotels.card.noStars")}</span>
+        <span className="status-pill info">{hotel.stars ? `${hotel.stars}\u2605` : t("hotels.card.noStars")}</span>
       </button>
       <div className="row-actions hotel-result-actions">
         <button type="button" className="btn-ghost btn-compact" onClick={() => onAddWatch(hotel.id)}>{t("hotels.actions.addToWatchlist")}</button>

@@ -17,6 +17,7 @@ from app.domain.schemas import (
     HotelCompSetOut,
     HotelDetailOut,
     HotelIngestOut,
+    HotelParityOut,
     HotelRateOut,
     HotelRatesQueryIn,
     HotelSearchOut,
@@ -413,4 +414,35 @@ def get_hotel_rates(
             collected_at=row.collected_at,
         )
         for row in rows
+    ]
+
+
+@router.get("/{hotel_id}/parity", response_model=list[HotelParityOut])
+def get_hotel_parity(
+    hotel_id: str,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> list[HotelParityOut]:
+    try:
+        signals = hotels_service.get_hotel_parity(db, hotel_id=hotel_id)
+    except ValueError as exc:
+        _raise_http_for_value_error(exc)
+
+    return [
+        HotelParityOut(
+            check_in=s.check_in,
+            check_out=s.check_out,
+            guests=s.guests,
+            currency=s.currency,
+            provider_count=s.provider_count,
+            lowest_price=s.lowest_price,
+            highest_price=s.highest_price,
+            average_price=s.average_price,
+            spread_amount=s.spread_amount,
+            spread_percent=s.spread_percent,
+            is_parity_broken=s.is_parity_broken,
+            status=s.status,
+            label=s.label,
+        )
+        for s in signals
     ]

@@ -581,6 +581,7 @@ from app.domain.hotels_schemas import (
     HotelCompSetOut,
     HotelDetailOut,
     HotelIngestOut,
+    HotelParityOut,
     HotelRateOut,
     HotelRatesQueryIn,
     HotelSearchOut,
