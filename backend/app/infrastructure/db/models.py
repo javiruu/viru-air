@@ -419,3 +419,28 @@ class HotelAlertRule(Base):
     threshold_percent: Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
+
+class HotelProviderRun(Base):
+    __tablename__ = "hotel_provider_run"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    provider: Mapped[str] = mapped_column(String(40), index=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    status: Mapped[str] = mapped_column(String(20), default="running")
+    items_processed: Mapped[int] = mapped_column(Integer, default=0)
+    error_message: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+
+class HotelAlertEvent(Base):
+    __tablename__ = "hotel_alert_event"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    rule_id: Mapped[str] = mapped_column(ForeignKey("hotel_alert_rule.id"), index=True)
+    hotel_id: Mapped[str] = mapped_column(ForeignKey("hotel_property.id"), index=True)
+    provider_run_id: Mapped[str | None] = mapped_column(ForeignKey("hotel_provider_run.id"), nullable=True, index=True)
+    event_type: Mapped[str] = mapped_column(String(30))
+    message: Mapped[str] = mapped_column(Text)
+    trigger_value: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, index=True)
+
