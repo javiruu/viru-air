@@ -11,6 +11,16 @@ import type {
   HotelsApiError,
 } from "./types";
 
+export class HotelsRequestError extends Error implements HotelsApiError {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "HotelsRequestError";
+    this.status = status;
+  }
+}
+
 function queryString(params: Record<string, string | number | null | undefined>): string {
   const sp = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -24,10 +34,7 @@ function queryString(params: Record<string, string | number | null | undefined>)
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const result = await apiFetchWithStatus<T>(path, init);
   if (!result.ok) {
-    throw {
-      status: result.status,
-      message: result.error.message,
-    } satisfies HotelsApiError;
+    throw new HotelsRequestError(result.status, result.error.message);
   }
   return result.data;
 }

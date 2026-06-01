@@ -35,20 +35,28 @@ export function HotelSearchPanel({
         </div>
         <span className="status-pill info">{t("hotels.provider.statusMock")}</span>
       </div>
-      <div className="hotel-search-grid section-gap-sm">
-        <label className="field qs-label">
-          <span>{t("hotels.search.nameLabel")}</span>
-          <input className="qs-input-neutral" value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder={t("hotels.search.namePlaceholder")} />
-        </label>
-        <label className="field qs-label">
-          <span>{t("hotels.search.cityLabel")}</span>
-          <input className="qs-input-neutral" value={city} onChange={(event) => onCityChange(event.target.value)} placeholder={t("hotels.search.cityPlaceholder")} />
-        </label>
-      </div>
-      <div className="action-row section-gap-sm">
-        <button type="button" className="btn-primary" onClick={onSearch} disabled={disabled}>{loading ? t("shared.states.loading") : t("hotels.actions.search")}</button>
-        <button type="button" className="btn-secondary" onClick={onIngest} disabled={disabled}>{t("hotels.actions.loadMock")}</button>
-      </div>
+      <form
+        className="section-gap-sm"
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSearch();
+        }}
+      >
+        <div className="hotel-search-grid">
+          <label className="field qs-label">
+            <span>{t("hotels.search.nameLabel")}</span>
+            <input className="qs-input-neutral" value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder={t("hotels.search.namePlaceholder")} />
+          </label>
+          <label className="field qs-label">
+            <span>{t("hotels.search.cityLabel")}</span>
+            <input className="qs-input-neutral" value={city} onChange={(event) => onCityChange(event.target.value)} placeholder={t("hotels.search.cityPlaceholder")} />
+          </label>
+        </div>
+        <div className="action-row section-gap-sm">
+          <button type="submit" className="btn-primary" disabled={disabled}>{loading ? t("shared.states.loading") : t("hotels.actions.search")}</button>
+          <button type="button" className="btn-secondary" onClick={onIngest} disabled={disabled}>{t("hotels.actions.loadMock")}</button>
+        </div>
+      </form>
     </section>
   );
 }
