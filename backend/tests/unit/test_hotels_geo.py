@@ -123,6 +123,22 @@ def test_geo_service_returns_empty_when_no_candidates_match_radius() -> None:
         _close(db)
 
 
+def test_geo_service_filters_using_raw_distance_before_rounding() -> None:
+    db = _db()
+    try:
+        anchor = _hotel(db, name="Anchor", city="Madrid", latitude=0.0, longitude=0.0)
+        edge = _hotel(db, name="Edge", city="Madrid", latitude=0.0453, longitude=0.0)
+        comp_set = _comp_set(db, user_id="u1", anchor_hotel_id=anchor.id)
+
+        suggestions = HotelGeoService(db).suggest_for_comp_set(user_id="u1", comp_set_id=comp_set.id, radius_km=5, limit=6)
+
+        assert haversine_km(0.0, 0.0, 0.0453, 0.0) > 5
+        assert round(haversine_km(0.0, 0.0, 0.0453, 0.0), 1) == 5.0
+        assert edge.id not in [item.hotel_id for item in suggestions]
+    finally:
+        _close(db)
+
+
 def test_geo_service_requires_anchor_coordinates() -> None:
     db = _db()
     try:

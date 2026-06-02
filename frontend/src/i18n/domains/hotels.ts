@@ -51,6 +51,7 @@
     defaultName: "Comp set inicial",
     create: "Crear comp set",
     addSelected: "Añadir hotel seleccionado",
+    addSelectedDisabled: "El hotel en foco ya pertenece a este comp set.",
     addNearby: "Añadir al comp set",
     members: "Miembros",
     availableHotels: "Hoteles visibles",
@@ -79,6 +80,8 @@
     watchAdded: "Hotel añadido a seguimiento.",
     compSetCreated: "Comp set creado.",
     memberAdded: "Hotel añadido al comp set.",
+    memberAlreadyAdded: "Ese hotel ya forma parte del comp set.",
+    anchorCannotBeMember: "El hotel anchor ya define el comp set y no puede añadirse como miembro.",
   },
 };
 
@@ -135,6 +138,7 @@ export const hotelsEn = {
     defaultName: "Initial comp set",
     create: "Create comp set",
     addSelected: "Add selected hotel",
+    addSelectedDisabled: "The focused hotel already belongs to this comp set.",
     addNearby: "Add to comp set",
     members: "Members",
     availableHotels: "Visible hotels",
@@ -163,6 +167,8 @@ export const hotelsEn = {
     watchAdded: "Hotel added to watchlist.",
     compSetCreated: "Comp set created.",
     memberAdded: "Hotel added to comp set.",
+    memberAlreadyAdded: "That hotel is already part of the comp set.",
+    anchorCannotBeMember: "The anchor hotel already defines this comp set and cannot be added as a member.",
   },
 };
 

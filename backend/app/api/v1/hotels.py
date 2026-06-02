@@ -64,6 +64,7 @@ def _raise_http_for_value_error(exc: ValueError) -> None:
     if code in {
         "hotel_watchlist_item_already_exists",
         "hotel_comp_set_member_already_exists",
+        "hotel_comp_set_anchor_cannot_be_member",
     }:
         raise HTTPException(status_code=409, detail=code) from exc
     raise HTTPException(status_code=422, detail=code) from exc

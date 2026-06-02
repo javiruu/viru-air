@@ -241,6 +241,31 @@ def test_hotels_comp_set_nearby_suggestions_require_anchor_coordinates(client: T
     assert _error_code(response.json()) == "hotel_comp_set_anchor_missing_coordinates"
 
 
+def test_hotels_comp_set_rejects_anchor_as_member(client: TestClient) -> None:
+    token = register_and_token(client, email="hotels-comp-set-anchor-member@viru.dev")
+    headers = _auth(token)
+
+    ingest = client.post("/api/v1/hotels/ingest/mock", headers=headers)
+    assert ingest.status_code == 200
+    anchor_hotel_id = client.get("/api/v1/hotels/search", headers=headers).json()[0]["id"]
+
+    comp_create = client.post(
+        "/api/v1/hotels/comp-sets",
+        headers=headers,
+        json={"name": "Anchor guard", "anchor_hotel_id": anchor_hotel_id},
+    )
+    assert comp_create.status_code == 200
+    comp_set_id = comp_create.json()["id"]
+
+    response = client.post(
+        f"/api/v1/hotels/comp-sets/{comp_set_id}/members",
+        headers=headers,
+        json={"hotel_id": anchor_hotel_id},
+    )
+    assert response.status_code == 409
+    assert _error_code(response.json()) == "hotel_comp_set_anchor_cannot_be_member"
+
+
 def test_hotels_ownership_enforced_between_users(client: TestClient) -> None:
     token_a = register_and_token(client, email="hotels-owner-a@viru.dev")
     token_b = register_and_token(client, email="hotels-owner-b@viru.dev")
