@@ -44,6 +44,19 @@ export function HotelRadarPage() {
 
   const selectedHotel = useMemo(() => results.find((item) => item.id === selectedHotelId) ?? null, [results, selectedHotelId]);
 
+  function resolveHotelMessage(error: unknown): string {
+    if (error instanceof HotelsRequestError) {
+      if (error.message === "hotel_comp_set_member_already_exists") {
+        return t("hotels.messages.memberAlreadyAdded");
+      }
+      if (error.message === "hotel_comp_set_anchor_cannot_be_member") {
+        return t("hotels.messages.anchorCannotBeMember");
+      }
+      return error.message;
+    }
+    return error instanceof Error ? error.message : t("shared.errors.generic");
+  }
+
   async function refreshCompSets() {
     const next = await listHotelCompSets();
     setCompSets(next);
@@ -131,7 +144,7 @@ export function HotelRadarPage() {
       setSelectedCompSet(detail);
       notify({ tone: "success", title: t("hotels.messages.memberAdded") });
     } catch (error) {
-      const message = error instanceof Error ? error.message : t("shared.errors.generic");
+      const message = resolveHotelMessage(error);
       notify({ tone: "error", title: message });
     }
   }

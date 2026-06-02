@@ -151,8 +151,10 @@ def list_comp_set_members(db: Session, comp_set_id: str) -> list[HotelCompSetMem
 
 
 def add_comp_set_member(db: Session, *, user_id: str, comp_set_id: str, hotel_id: str) -> HotelCompSetMember:
-    _ = get_comp_set_or_404(db, user_id=user_id, comp_set_id=comp_set_id)
+    comp_set = get_comp_set_or_404(db, user_id=user_id, comp_set_id=comp_set_id)
     _ = get_hotel_or_404(db, hotel_id)
+    if hotel_id == comp_set.anchor_hotel_id:
+        raise ValueError("hotel_comp_set_anchor_cannot_be_member")
     member = HotelCompSetMember(comp_set_id=comp_set_id, hotel_id=hotel_id)
     db.add(member)
     try:

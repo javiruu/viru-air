@@ -28,6 +28,9 @@ export function HotelCompSetPanel({
   onAddMember: (compSetId: string, hotelId: string) => void;
 }) {
   const { t } = useI18n();
+  const selectedHotelAlreadyInCompSet = selectedCompSet
+    ? selectedHotelId === selectedCompSet.anchor_hotel_id || selectedCompSet.members.some((member) => member.hotel_id === selectedHotelId)
+    : false;
 
   return (
     <section className="panel panel-soft hotel-comp-set-panel">
@@ -60,12 +63,13 @@ export function HotelCompSetPanel({
             <button
               type="button"
               className="btn-ghost btn-compact"
-              disabled={!selectedHotelId}
+              disabled={!selectedHotelId || selectedHotelAlreadyInCompSet}
               onClick={() => selectedHotelId && onAddMember(selectedCompSet.id, selectedHotelId)}
             >
               {t("hotels.compSet.addSelected")}
             </button>
           </div>
+          {selectedHotelAlreadyInCompSet ? <p className="panel-note">{t("hotels.compSet.addSelectedDisabled")}</p> : null}
           <section className="hotel-nearby-suggestions section-gap-sm">
             <div className="panel-header">
               <h3 className="panel-title">{t("hotels.compSet.nearbyTitle")}</h3>

@@ -74,16 +74,13 @@ class HotelGeoService:
             if candidate.id in excluded_ids:
                 continue
 
-            distance = round(
-                haversine_km(
-                    anchor_lat,
-                    anchor_lng,
-                    float(candidate.latitude),
-                    float(candidate.longitude),
-                ),
-                1,
+            raw_distance = haversine_km(
+                anchor_lat,
+                anchor_lng,
+                float(candidate.latitude),
+                float(candidate.longitude),
             )
-            if distance > radius_km:
+            if raw_distance > radius_km:
                 continue
 
             suggestions.append(
@@ -93,7 +90,7 @@ class HotelGeoService:
                     city=candidate.city,
                     country_code=candidate.country_code,
                     stars=candidate.stars,
-                    distance_km=distance,
+                    distance_km=round(raw_distance, 1),
                 )
             )
 
