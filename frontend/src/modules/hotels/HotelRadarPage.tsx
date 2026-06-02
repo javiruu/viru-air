@@ -11,15 +11,17 @@ import {
   createHotelWatchlistItem,
   getHotelDetail,
   getHotelCompSetDetail,
+  getHotelNearbySuggestions,
   getHotelRates,
   ingestHotelsMock,
   listHotelCompSets,
   searchHotels,
+  HotelsRequestError,
 } from "./api";
 import { HotelCompSetPanel, HotelEmptyState } from "./components/HotelCompSetPanel";
 import { HotelResultCard, HotelSearchPanel } from "./components/HotelSearchPanel";
 import { HotelParitySignal, HotelPriceTimeline, HotelProviderStatusPill } from "./components/HotelTimelineAndSignals";
-import type { HotelCompSetDetailOut, HotelCompSetOut, HotelDetailOut, HotelRateOut, HotelSearchOut } from "./types";
+import type { HotelCompSetDetailOut, HotelCompSetOut, HotelDetailOut, HotelNearbySuggestionOut, HotelRateOut, HotelSearchOut } from "./types";
 
 export function HotelRadarPage() {
   const { t, localeTag } = useI18n();
@@ -35,6 +37,9 @@ export function HotelRadarPage() {
   const [loadingRates, setLoadingRates] = useState(false);
   const [compSets, setCompSets] = useState<HotelCompSetOut[]>([]);
   const [selectedCompSet, setSelectedCompSet] = useState<HotelCompSetDetailOut | null>(null);
+  const [nearbySuggestions, setNearbySuggestions] = useState<HotelNearbySuggestionOut[]>([]);
+  const [nearbyLoading, setNearbyLoading] = useState(false);
+  const [nearbyMessage, setNearbyMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const selectedHotel = useMemo(() => results.find((item) => item.id === selectedHotelId) ?? null, [results, selectedHotelId]);
@@ -154,6 +159,31 @@ export function HotelRadarPage() {
       .finally(() => setLoadingRates(false));
   }, [selectedHotelId]);
 
+  useEffect(() => {
+    if (!selectedCompSet) {
+      setNearbySuggestions([]);
+      setNearbyMessage(null);
+      setNearbyLoading(false);
+      return;
+    }
+
+    setNearbyLoading(true);
+    setNearbyMessage(null);
+    getHotelNearbySuggestions(selectedCompSet.id)
+      .then((items) => {
+        setNearbySuggestions(items);
+      })
+      .catch((error) => {
+        setNearbySuggestions([]);
+        if (error instanceof HotelsRequestError && error.status === 422) {
+          setNearbyMessage(t("hotels.compSet.nearbyMissingCoords"));
+          return;
+        }
+        setNearbyMessage(t("hotels.compSet.nearbyGenericError"));
+      })
+      .finally(() => setNearbyLoading(false));
+  }, [selectedCompSet, t]);
+
   return (
     <main className="shell hoteles-page" id="main-content">
       <header className="page-header hoteles-header">
@@ -228,6 +258,9 @@ export function HotelRadarPage() {
             selectedCompSet={selectedCompSet}
             hotels={results}
             selectedHotelId={selectedHotelId}
+            nearbySuggestions={nearbySuggestions}
+            nearbyLoading={nearbyLoading}
+            nearbyMessage={nearbyMessage}
             onCreateCompSet={handleCreateCompSet}
             onSelectCompSet={handleSelectCompSet}
             onAddMember={handleAddMember}

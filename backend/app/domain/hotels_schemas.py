@@ -79,6 +79,15 @@ class HotelCompSetDetailOut(BaseModel):
     members: list[HotelCompSetMemberOut]
 
 
+class HotelNearbySuggestionOut(BaseModel):
+    hotel_id: str
+    canonical_name: str
+    city: str
+    country_code: str
+    stars: int | None = None
+    distance_km: float
+
+
 HotelAlertRuleType = Literal["price_below", "price_above", "parity_break"]
 
 

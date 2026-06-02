@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from app.infrastructure.db.models import HotelCompSet, HotelProperty
 from app.infrastructure.db.session import get_db
 from app.main import app
 from app.services.hotels_service import run_hotel_sweep
@@ -142,6 +143,102 @@ def test_hotels_comp_set_create_member_and_detail(client: TestClient) -> None:
     deleted = client.delete(f"/api/v1/hotels/comp-sets/{comp_set_id}/members/{member_id}", headers=headers)
     assert deleted.status_code == 200
     assert deleted.json()["status"] == "ok"
+
+
+def test_hotels_comp_set_nearby_suggestions_returns_candidates(client: TestClient) -> None:
+    token = register_and_token(client, email="hotels-nearby@viru.dev")
+    headers = _auth(token)
+
+    ingest = client.post("/api/v1/hotels/ingest/mock", headers=headers)
+    assert ingest.status_code == 200
+    hotels = client.get("/api/v1/hotels/search", headers=headers).json()
+    anchor_hotel_id = hotels[0]["id"]
+
+    comp_create = client.post(
+        "/api/v1/hotels/comp-sets",
+        headers=headers,
+        json={"name": "Geo Madrid", "anchor_hotel_id": anchor_hotel_id},
+    )
+    assert comp_create.status_code == 200
+    comp_set_id = comp_create.json()["id"]
+
+    response = client.get(
+        f"/api/v1/hotels/comp-sets/{comp_set_id}/nearby-suggestions",
+        headers=headers,
+        params={"radius_km": 5, "limit": 6},
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert len(payload) >= 1
+    assert all(item["hotel_id"] != anchor_hotel_id for item in payload)
+    assert all(item["distance_km"] <= 5 for item in payload)
+
+
+def test_hotels_comp_set_nearby_suggestions_enforce_ownership(client: TestClient) -> None:
+    token_a = register_and_token(client, email="hotels-nearby-owner-a@viru.dev")
+    token_b = register_and_token(client, email="hotels-nearby-owner-b@viru.dev")
+    headers_a = _auth(token_a)
+    headers_b = _auth(token_b)
+
+    ingest = client.post("/api/v1/hotels/ingest/mock", headers=headers_a)
+    assert ingest.status_code == 200
+    hotel_id = client.get("/api/v1/hotels/search", headers=headers_a).json()[0]["id"]
+
+    comp_create = client.post(
+        "/api/v1/hotels/comp-sets",
+        headers=headers_a,
+        json={"name": "Owner A geo", "anchor_hotel_id": hotel_id},
+    )
+    assert comp_create.status_code == 200
+    comp_set_id = comp_create.json()["id"]
+
+    response = client.get(f"/api/v1/hotels/comp-sets/{comp_set_id}/nearby-suggestions", headers=headers_b)
+    assert response.status_code == 403
+
+
+def test_hotels_comp_set_nearby_suggestions_not_found_returns_404(client: TestClient) -> None:
+    token = register_and_token(client, email="hotels-nearby-404@viru.dev")
+    headers = _auth(token)
+    fake_id = "00000000-0000-0000-0000-000000000000"
+
+    response = client.get(f"/api/v1/hotels/comp-sets/{fake_id}/nearby-suggestions", headers=headers)
+    assert response.status_code == 404
+    assert _error_code(response.json()) == "hotel_comp_set_not_found"
+
+
+def test_hotels_comp_set_nearby_suggestions_require_anchor_coordinates(client: TestClient) -> None:
+    token = register_and_token(client, email="hotels-nearby-missing-coords@viru.dev")
+    headers = _auth(token)
+
+    ingest = client.post("/api/v1/hotels/ingest/mock", headers=headers)
+    assert ingest.status_code == 200
+    hotel_id = client.get("/api/v1/hotels/search", headers=headers).json()[0]["id"]
+
+    comp_create = client.post(
+        "/api/v1/hotels/comp-sets",
+        headers=headers,
+        json={"name": "Geo missing coords", "anchor_hotel_id": hotel_id},
+    )
+    assert comp_create.status_code == 200
+    comp_set_id = comp_create.json()["id"]
+
+    db, generator = _open_overridden_db()
+    try:
+        comp_set = db.get(HotelCompSet, comp_set_id)
+        anchor = db.get(HotelProperty, comp_set.anchor_hotel_id)
+        anchor.latitude = None
+        anchor.longitude = None
+        db.add(anchor)
+        db.commit()
+    finally:
+        try:
+            next(generator)
+        except StopIteration:
+            pass
+
+    response = client.get(f"/api/v1/hotels/comp-sets/{comp_set_id}/nearby-suggestions", headers=headers)
+    assert response.status_code == 422
+    assert _error_code(response.json()) == "hotel_comp_set_anchor_missing_coordinates"
 
 
 def test_hotels_ownership_enforced_between_users(client: TestClient) -> None:

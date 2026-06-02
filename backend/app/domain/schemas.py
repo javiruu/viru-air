@@ -579,6 +579,7 @@ from app.domain.hotels_schemas import (
     HotelCompSetDetailOut,
     HotelCompSetMemberCreateIn,
     HotelCompSetMemberOut,
+    HotelNearbySuggestionOut,
     HotelCompSetOut,
     HotelDetailOut,
     HotelIngestOut,

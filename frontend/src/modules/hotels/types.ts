@@ -53,6 +53,15 @@ export type HotelCompSetDetailOut = HotelCompSetOut & {
   members: HotelCompSetMemberOut[];
 };
 
+export type HotelNearbySuggestionOut = {
+  hotel_id: string;
+  canonical_name: string;
+  city: string;
+  country_code: string;
+  stars: number | null;
+  distance_km: number;
+};
+
 export type HotelIngestOut = {
   provider_id: string;
   hotels_processed: number;

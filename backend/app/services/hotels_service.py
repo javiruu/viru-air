@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
+from app.hotels.geo import HotelGeoService, HotelNearbySuggestion
 from app.hotels.ingestion import HotelIngestionService
 from app.hotels.normalization import HotelNormalizationService
 from app.hotels.parity import HotelParityService, ParitySignal
@@ -126,6 +127,23 @@ def get_comp_set_or_404(db: Session, *, user_id: str, comp_set_id: str) -> Hotel
     if comp_set.user_id != user_id:
         raise PermissionError("not_allowed")
     return comp_set
+
+
+def get_nearby_comp_set_suggestions(
+    db: Session,
+    *,
+    user_id: str,
+    comp_set_id: str,
+    radius_km: int = 5,
+    limit: int = 6,
+) -> list[HotelNearbySuggestion]:
+    service = HotelGeoService(db)
+    return service.suggest_for_comp_set(
+        user_id=user_id,
+        comp_set_id=comp_set_id,
+        radius_km=radius_km,
+        limit=limit,
+    )
 
 
 def list_comp_set_members(db: Session, comp_set_id: str) -> list[HotelCompSetMember]:

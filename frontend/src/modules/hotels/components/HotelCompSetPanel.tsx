@@ -2,13 +2,16 @@
 
 import { useI18n } from "@/i18n";
 
-import type { HotelCompSetDetailOut, HotelCompSetOut, HotelSearchOut } from "../types";
+import type { HotelCompSetDetailOut, HotelCompSetOut, HotelNearbySuggestionOut, HotelSearchOut } from "../types";
 
 export function HotelCompSetPanel({
   compSets,
   selectedCompSet,
   hotels,
   selectedHotelId,
+  nearbySuggestions,
+  nearbyLoading,
+  nearbyMessage,
   onCreateCompSet,
   onSelectCompSet,
   onAddMember,
@@ -17,6 +20,9 @@ export function HotelCompSetPanel({
   selectedCompSet: HotelCompSetDetailOut | null;
   hotels: HotelSearchOut[];
   selectedHotelId: string | null;
+  nearbySuggestions: HotelNearbySuggestionOut[];
+  nearbyLoading: boolean;
+  nearbyMessage: string | null;
   onCreateCompSet: (name: string, anchorHotelId: string) => void;
   onSelectCompSet: (compSetId: string) => void;
   onAddMember: (compSetId: string, hotelId: string) => void;
@@ -60,6 +66,42 @@ export function HotelCompSetPanel({
               {t("hotels.compSet.addSelected")}
             </button>
           </div>
+          <section className="hotel-nearby-suggestions section-gap-sm">
+            <div className="panel-header">
+              <h3 className="panel-title">{t("hotels.compSet.nearbyTitle")}</h3>
+              <span className="status-pill info">{nearbySuggestions.length}</span>
+            </div>
+            <p className="panel-note">{t("hotels.compSet.nearbyHint")}</p>
+            {nearbyLoading ? <p className="panel-note">{t("shared.states.loading")}</p> : null}
+            {nearbyMessage ? <p className="panel-note">{nearbyMessage}</p> : null}
+            {!nearbyLoading && !nearbyMessage ? (
+              <div className="hotel-nearby-list">
+                {nearbySuggestions.map((suggestion) => (
+                  <article key={suggestion.hotel_id} className="hotel-nearby-item">
+                    <div>
+                      <strong>{suggestion.canonical_name}</strong>
+                      <p className="panel-note">
+                        {suggestion.city}, {suggestion.country_code}
+                      </p>
+                    </div>
+                    <div className="hotel-nearby-actions">
+                      <span className="status-pill info">
+                        {t("hotels.compSet.nearbyDistance", { distance: suggestion.distance_km.toFixed(1) })}
+                      </span>
+                      <button
+                        type="button"
+                        className="btn-ghost btn-compact"
+                        onClick={() => onAddMember(selectedCompSet.id, suggestion.hotel_id)}
+                      >
+                        {t("hotels.compSet.addNearby")}
+                      </button>
+                    </div>
+                  </article>
+                ))}
+                {nearbySuggestions.length === 0 ? <p className="panel-note">{t("hotels.compSet.nearbyEmpty")}</p> : null}
+              </div>
+            ) : null}
+          </section>
         </div>
       ) : null}
       <div className="section-gap-sm">

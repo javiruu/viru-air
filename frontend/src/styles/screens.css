@@ -19544,6 +19544,41 @@ textarea::placeholder {
   border-color: color-mix(in srgb, var(--accent-2) 46%, var(--border));
 }
 
+.hotel-nearby-suggestions {
+  display: grid;
+  gap: 0.55rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+}
+
+.hotel-nearby-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.hotel-nearby-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(120deg, color-mix(in srgb, var(--accent-2) 6%, transparent), transparent 45%),
+    var(--surface);
+}
+
+.hotel-nearby-item p {
+  margin: 0.2rem 0 0;
+}
+
+.hotel-nearby-actions {
+  display: grid;
+  justify-items: end;
+  gap: 0.45rem;
+}
+
 .hotel-empty-state {
   border-style: dashed;
 }
@@ -19582,5 +19617,14 @@ textarea::placeholder {
   .hotel-search-grid,
   .hoteles-layout {
     grid-template-columns: 1fr;
+  }
+
+  .hotel-nearby-item {
+    flex-direction: column;
+  }
+
+  .hotel-nearby-actions {
+    width: 100%;
+    justify-items: start;
   }
 }

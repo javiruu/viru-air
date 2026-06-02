@@ -5,6 +5,7 @@ import type {
   HotelCompSetOut,
   HotelDetailOut,
   HotelIngestOut,
+  HotelNearbySuggestionOut,
   HotelRateOut,
   HotelSearchOut,
   HotelWatchlistItemOut,
@@ -96,5 +97,12 @@ export async function addHotelCompSetMember(compSetId: string, payload: { hotel_
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export async function getHotelNearbySuggestions(
+  compSetId: string,
+  params?: { radius_km?: number; limit?: number },
+): Promise<HotelNearbySuggestionOut[]> {
+  return request<HotelNearbySuggestionOut[]>(`/hotels/comp-sets/${compSetId}/nearby-suggestions${queryString(params || {})}`);
 }
 
