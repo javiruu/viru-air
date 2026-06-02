@@ -17,6 +17,12 @@ from app.infrastructure.db.models import (
 from app.services.hotels_service import evaluate_hotel_alerts, run_hotel_sweep
 
 
+@pytest.fixture(autouse=True)
+def _enable_hotels(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("HOTEL_FEATURE_ENABLED", "true")
+    monkeypatch.setenv("HOTEL_PROVIDER", "mock")
+
+
 @pytest.fixture()
 def db() -> Session:
     engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
