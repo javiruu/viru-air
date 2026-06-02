@@ -15,6 +15,7 @@ from app.domain.schemas import (
     HotelCompSetDetailOut,
     HotelCompSetMemberCreateIn,
     HotelCompSetMemberOut,
+    HotelNearbySuggestionOut,
     HotelCompSetOut,
     HotelDetailOut,
     HotelIngestOut,
@@ -212,6 +213,40 @@ def get_comp_set_detail(
         created_at=comp_set.created_at,
         members=[HotelCompSetMemberOut(id=m.id, comp_set_id=m.comp_set_id, hotel_id=m.hotel_id) for m in members],
     )
+
+
+@router.get("/comp-sets/{comp_set_id}/nearby-suggestions", response_model=list[HotelNearbySuggestionOut])
+def get_comp_set_nearby_suggestions(
+    comp_set_id: str,
+    radius_km: int = Query(default=5, ge=1, le=50),
+    limit: int = Query(default=6, ge=1, le=20),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[HotelNearbySuggestionOut]:
+    try:
+        suggestions = hotels_service.get_nearby_comp_set_suggestions(
+            db,
+            user_id=current_user.id,
+            comp_set_id=comp_set_id,
+            radius_km=radius_km,
+            limit=limit,
+        )
+    except ValueError as exc:
+        _raise_http_for_value_error(exc)
+    except PermissionError as exc:
+        _raise_http_for_permission_error(exc)
+
+    return [
+        HotelNearbySuggestionOut(
+            hotel_id=item.hotel_id,
+            canonical_name=item.canonical_name,
+            city=item.city,
+            country_code=item.country_code,
+            stars=item.stars,
+            distance_km=item.distance_km,
+        )
+        for item in suggestions
+    ]
 
 
 @router.post("/comp-sets/{comp_set_id}/members", response_model=HotelCompSetMemberOut)

@@ -77,6 +77,7 @@ Naming orientativo, sujeto al estilo final del backend:
 14. `POST /api/hotel-alert-rules`
 15. `PATCH /api/hotel-alert-rules/{rule_id}`
 16. `DELETE /api/hotel-alert-rules/{rule_id}`
+17. `GET /api/hotels/comp-sets/{comp_set_id}/nearby-suggestions`
 
 ## 6. Feature flags y variables de entorno iniciales
 
@@ -161,7 +162,7 @@ Checklist de estado:
 6. Fase 5: completada.
 7. Fase 6: completada.
 8. Fase 7: completada.
-9. Fase 8: pendiente.
+9. Fase 8: completada.
 10. Fase 9: pendiente.
 
 Evidencia concreta:
@@ -175,15 +176,16 @@ Evidencia concreta:
 5. Endpoints internos activos en `backend/app/api/v1/hotels.py`, incluida paridad y alert events.
 6. Ruta frontend activa: `/hoteles`.
 7. Config de proveedor real presente: `backend/app/hotels/makcorps_provider.py`.
-8. Verificacion focalizada de backend hoteles: `52 passed`.
+8. Verificacion focalizada de backend hoteles: `59 passed`.
 9. Verificacion frontend: `npm run build` OK.
 10. Correccion nucleo 2026-06-02: `GET /api/v1/hotels/alert-events` deja de colisionar con `GET /{hotel_id}` al declararse antes de las rutas dinamicas.
+11. Fase 8 activa: endpoint `GET /api/v1/hotels/comp-sets/{comp_set_id}/nearby-suggestions` y bloque UI de `Sugerencias cercanas` dentro del panel de comp set.
 
 Observaciones pendientes:
 
-1. Fase 8 geoespacial ligero sigue sin implementar.
-2. Fase 9 QA visual y polish final sigue pendiente como pasada separada.
+1. Fase 9 QA visual y polish final sigue pendiente como pasada separada.
 
 Siguiente paso propuesto (acotado):
 
 1. Mantener una sola fuente de verdad para la senal de paridad entre backend y frontend en una pasada posterior de endurecimiento.
+2. Revisar polish visual y responsive fino del bloque de sugerencias cercanas en Fase 9.

@@ -1,12 +1,12 @@
 ﻿from __future__ import annotations
 
 from dataclasses import dataclass
-from math import atan2, cos, radians, sin, sqrt
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.hotels.contracts import ProviderHotelRecord
+from app.hotels.geo import haversine_km
 from app.hotels.normalization import HotelNormalizationService
 from app.infrastructure.db.models import HotelProperty
 
@@ -93,7 +93,7 @@ class HotelMappingService:
             score += 0.20
 
         if record.latitude is not None and record.longitude is not None and candidate.latitude is not None and candidate.longitude is not None:
-            distance_km = self._haversine_km(record.latitude, record.longitude, float(candidate.latitude), float(candidate.longitude))
+            distance_km = haversine_km(record.latitude, record.longitude, float(candidate.latitude), float(candidate.longitude))
             if distance_km <= 0.30:
                 score += 0.15
             elif distance_km <= 1.00:
@@ -111,13 +111,4 @@ class HotelMappingService:
             return 0.0
         overlap = len(left_tokens.intersection(right_tokens))
         return overlap / max(len(left_tokens), len(right_tokens))
-
-    @staticmethod
-    def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-        earth_radius_km = 6371.0
-        dlat = radians(lat2 - lat1)
-        dlon = radians(lon2 - lon1)
-        a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
-        c = 2 * atan2(sqrt(a), sqrt(1 - a))
-        return earth_radius_km * c
 
