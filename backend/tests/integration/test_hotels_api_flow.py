@@ -1,6 +1,16 @@
-﻿from fastapi.testclient import TestClient
+import pytest
+from fastapi.testclient import TestClient
 
+from app.infrastructure.db.session import get_db
+from app.main import app
+from app.services.hotels_service import run_hotel_sweep
 from tests.helpers import register_and_token
+
+
+@pytest.fixture(autouse=True)
+def _enable_hotels(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("HOTEL_FEATURE_ENABLED", "true")
+    monkeypatch.setenv("HOTEL_PROVIDER", "mock")
 
 
 def _auth(token: str) -> dict[str, str]:
@@ -9,6 +19,13 @@ def _auth(token: str) -> dict[str, str]:
 
 def _error_code(payload: dict) -> str | None:
     return payload.get("detail") or payload.get("code")
+
+
+def _open_overridden_db():
+    override = app.dependency_overrides[get_db]
+    generator = override()
+    db = next(generator)
+    return db, generator
 
 
 def test_hotels_search_without_results_returns_empty_list(client: TestClient) -> None:
@@ -48,6 +65,10 @@ def test_hotels_collections_start_empty(client: TestClient) -> None:
     alert_rules = client.get("/api/v1/hotels/alert-rules", headers=headers)
     assert alert_rules.status_code == 200
     assert alert_rules.json() == []
+
+    alert_events = client.get("/api/v1/hotels/alert-events", headers=headers)
+    assert alert_events.status_code == 200
+    assert alert_events.json() == []
 
 
 def test_hotels_ingest_mock_and_basic_flow(client: TestClient) -> None:
@@ -314,3 +335,50 @@ def test_hotels_alert_rule_delete_returns_ok(client: TestClient) -> None:
     deleted = client.delete(f"/api/v1/hotels/alert-rules/{rule_id}", headers=headers)
     assert deleted.status_code == 200
     assert deleted.json()["status"] == "ok"
+
+
+def test_hotels_alert_events_route_is_not_captured_by_hotel_detail(client: TestClient) -> None:
+    token = register_and_token(client, email="hotels-alert-events-empty@viru.dev")
+    headers = _auth(token)
+
+    response = client.get("/api/v1/hotels/alert-events", headers=headers)
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_hotels_alert_events_lists_triggered_events_after_sweep(client: TestClient) -> None:
+    token = register_and_token(client, email="hotels-alert-events-populated@viru.dev")
+    headers = _auth(token)
+
+    ingest = client.post("/api/v1/hotels/ingest/mock", headers=headers)
+    assert ingest.status_code == 200
+    hotel_id = client.get("/api/v1/hotels/search", headers=headers).json()[0]["id"]
+
+    created = client.post(
+        "/api/v1/hotels/alert-rules",
+        headers=headers,
+        json={
+            "hotel_id": hotel_id,
+            "rule_type": "price_below",
+            "threshold_amount": 500,
+            "is_active": True,
+        },
+    )
+    assert created.status_code == 200
+
+    db, generator = _open_overridden_db()
+    try:
+        provider_run = run_hotel_sweep(db, provider="mock")
+        assert provider_run.status == "completed"
+    finally:
+        try:
+            next(generator)
+        except StopIteration:
+            pass
+
+    response = client.get("/api/v1/hotels/alert-events", headers=headers)
+    assert response.status_code == 200
+    payload = response.json()
+    assert len(payload) >= 1
+    assert any(item["hotel_id"] == hotel_id for item in payload)
+    assert any(item["event_type"] == "price_below" for item in payload)

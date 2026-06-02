@@ -15,7 +15,7 @@ from app.infrastructure.db.models import HotelProviderAlias, HotelRateSnapshot
 
 
 def resolve_hotel_provider() -> HotelProviderAdapter:
-    feature_enabled = os.getenv("HOTEL_FEATURE_ENABLED", "true").strip().lower() in {"1", "true", "yes"}
+    feature_enabled = os.getenv("HOTEL_FEATURE_ENABLED", "false").strip().lower() in {"1", "true", "yes"}
     if not feature_enabled:
         raise ValueError("HOTEL_FEATURE_ENABLED is false. Hotels module is disabled.")
 

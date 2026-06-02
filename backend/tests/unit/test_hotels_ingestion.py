@@ -24,13 +24,22 @@ def _close(db: Session) -> None:
     engine.dispose()
 
 
-def test_resolve_hotel_provider_uses_mock_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_resolve_hotel_provider_is_disabled_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("HOTEL_FEATURE_ENABLED", raising=False)
+    monkeypatch.delenv("HOTEL_PROVIDER", raising=False)
+    with pytest.raises(ValueError, match="HOTEL_FEATURE_ENABLED is false"):
+        resolve_hotel_provider()
+
+
+def test_resolve_hotel_provider_uses_mock_when_feature_enabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("HOTEL_FEATURE_ENABLED", "true")
     monkeypatch.delenv("HOTEL_PROVIDER", raising=False)
     provider = resolve_hotel_provider()
     assert provider.provider_id == "mock"
 
 
 def test_resolve_hotel_provider_rejects_unsupported(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("HOTEL_FEATURE_ENABLED", "true")
     monkeypatch.setenv("HOTEL_PROVIDER", "unknown")
     with pytest.raises(ValueError, match="Unsupported hotel provider"):
         resolve_hotel_provider()
@@ -38,6 +47,7 @@ def test_resolve_hotel_provider_rejects_unsupported(monkeypatch: pytest.MonkeyPa
 
 def test_ingestion_loads_fixtures_and_persists_aliases_and_rates(monkeypatch: pytest.MonkeyPatch) -> None:
     fixture_path = Path(__file__).resolve().parents[2] / "app" / "hotels" / "fixtures" / "mock_hotels.json"
+    monkeypatch.setenv("HOTEL_FEATURE_ENABLED", "true")
     monkeypatch.setenv("HOTEL_PROVIDER", "mock")
     monkeypatch.setenv("HOTEL_MOCK_FIXTURE_PATH", str(fixture_path))
 
@@ -90,6 +100,7 @@ def test_ingestion_rejects_invalid_currency_and_date_range(
     fixture_path = tmp_path / "invalid_hotels.json"
     fixture_path.write_text(json.dumps(fixture), encoding="utf-8")
 
+    monkeypatch.setenv("HOTEL_FEATURE_ENABLED", "true")
     monkeypatch.setenv("HOTEL_PROVIDER", "mock")
     monkeypatch.setenv("HOTEL_MOCK_FIXTURE_PATH", str(fixture_path))
 

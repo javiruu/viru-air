@@ -1,6 +1,6 @@
 Status: active
 Scope: hotel intelligence MVP definition
-Last reviewed: 2026-06-01
+Last reviewed: 2026-06-02
 Canonical source: docs/specs/hotels-intelligence-mvp.md
 Related: docs/overview/project-overview.md, docs/reference/backend/provider-integration-guide.md, docs/specs/phase1-codex.md
 
@@ -90,8 +90,9 @@ Minimo recomendado para despliegue incremental:
 
 Principio operativo:
 
-1. El modulo debe funcionar con provider `mock` y fixtures locales sin API keys.
-2. Providers reales se habilitan despues y detras de flag.
+1. El modulo queda desactivado por defecto hasta activacion explicita del entorno.
+2. Con `HOTEL_FEATURE_ENABLED=true`, el modulo debe funcionar con provider `mock` y fixtures locales sin API keys.
+3. Providers reales se habilitan despues y detras de flag.
 
 ## 7. Fases de implementacion (0->9)
 
@@ -148,26 +149,41 @@ Durante esta fase:
 
 ## 11. Observaciones de cumplimiento (auditoria rapida)
 
-Fecha de auditoria: 2026-06-01.
+Fecha de auditoria: 2026-06-02.
 
 Checklist de estado:
 
 1. Fase 0: completada.
-2. Fase 1: completada en esqueleto backend, con gap menor de cobertura.
+2. Fase 1: completada.
+3. Fase 2: completada.
+4. Fase 3: completada.
+5. Fase 4: completada.
+6. Fase 5: completada.
+7. Fase 6: completada.
+8. Fase 7: completada.
+9. Fase 8: pendiente.
+10. Fase 9: pendiente.
 
 Evidencia concreta:
 
-1. Migracion presente: `backend/alembic/versions/0017_hotels_domain_skeleton.py`.
-2. Siete modelos hoteleros presentes en `backend/app/infrastructure/db/models.py`:
+1. Migracion de dominio presente: `backend/alembic/versions/0017_hotels_domain_skeleton.py`.
+2. Migracion de sweeps/alert events presente: `backend/alembic/versions/0018_hotels_provider_run_and_alert_event.py`.
+3. Siete modelos hoteleros presentes en `backend/app/infrastructure/db/models.py`:
    `HotelProperty`, `HotelProviderAlias`, `HotelRateSnapshot`, `HotelWatchlistItem`,
    `HotelCompSet`, `HotelCompSetMember`, `HotelAlertRule`.
-3. Test unitario de hoteles pasando: `python -m pytest backend/tests/unit/test_hotels_models_constraints.py -q`
-   con resultado `3 passed`.
+4. Modelos operativos adicionales presentes: `HotelProviderRun` y `HotelAlertEvent`.
+5. Endpoints internos activos en `backend/app/api/v1/hotels.py`, incluida paridad y alert events.
+6. Ruta frontend activa: `/hoteles`.
+7. Config de proveedor real presente: `backend/app/hotels/makcorps_provider.py`.
+8. Verificacion focalizada de backend hoteles: `52 passed`.
+9. Verificacion frontend: `npm run build` OK.
+10. Correccion nucleo 2026-06-02: `GET /api/v1/hotels/alert-events` deja de colisionar con `GET /{hotel_id}` al declararse antes de las rutas dinamicas.
 
-Observacion pendiente (gap):
+Observaciones pendientes:
 
-1. Para cerrar Fase 1 con cobertura funcional mas alla de constraints de DB, falta ampliar pruebas de servicios base hoteleros.
+1. Fase 8 geoespacial ligero sigue sin implementar.
+2. Fase 9 QA visual y polish final sigue pendiente como pasada separada.
 
 Siguiente paso propuesto (acotado):
 
-1. Crear 1 test adicional de servicio hotelero base; si ese servicio aun no existe, dejar TODO explicito para Fase 2.
+1. Mantener una sola fuente de verdad para la senal de paridad entre backend y frontend en una pasada posterior de endurecimiento.
