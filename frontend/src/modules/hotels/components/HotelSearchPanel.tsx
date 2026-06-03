@@ -69,6 +69,9 @@ export function HotelResultCard({
   onSelect,
   onAddWatch,
   onRemoveWatch,
+  onTrackPrice,
+  trackedBusy,
+  hasTracking,
 }: {
   hotel: HotelSearchOut;
   isActive: boolean;
@@ -77,6 +80,9 @@ export function HotelResultCard({
   onSelect: (hotelId: string) => void;
   onAddWatch: (hotelId: string) => void;
   onRemoveWatch: (hotelId: string) => void;
+  onTrackPrice?: (hotelId: string) => void;
+  trackedBusy?: boolean;
+  hasTracking?: boolean;
 }) {
   const { t } = useI18n();
 
@@ -90,15 +96,31 @@ export function HotelResultCard({
         <span className="status-pill info">{hotel.stars ? `${hotel.stars}\u2605` : t("hotels.card.noStars")}</span>
       </button>
       <div className="row-actions hotel-result-actions">
-        <button
-          type="button"
-          className={`btn-ghost btn-compact${isInWatchlist ? " is-active" : ""}`}
-          onClick={() => (isInWatchlist ? onRemoveWatch(hotel.id) : onAddWatch(hotel.id))}
-          disabled={watchlistBusy}
-          aria-pressed={isInWatchlist}
-        >
-          {watchlistBusy ? t("shared.states.loading") : isInWatchlist ? t("hotels.actions.inWatchlist") : t("hotels.actions.addToWatchlist")}
-        </button>
+        {onTrackPrice ? (
+          <button
+            type="button"
+            className={`btn-primary btn-compact${hasTracking ? " is-active" : ""}`}
+            onClick={() => onTrackPrice(hotel.id)}
+            disabled={trackedBusy || hasTracking}
+            aria-pressed={hasTracking}
+          >
+            {trackedBusy
+              ? t("shared.states.loading")
+              : hasTracking
+                ? t("hotels.actions.trackingActive")
+                : t("hotels.actions.trackPrice")}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={`btn-ghost btn-compact${isInWatchlist ? " is-active" : ""}`}
+            onClick={() => (isInWatchlist ? onRemoveWatch(hotel.id) : onAddWatch(hotel.id))}
+            disabled={watchlistBusy}
+            aria-pressed={isInWatchlist}
+          >
+            {watchlistBusy ? t("shared.states.loading") : isInWatchlist ? t("hotels.actions.inWatchlist") : t("hotels.actions.addToWatchlist")}
+          </button>
+        )}
       </div>
     </article>
   );

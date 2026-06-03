@@ -118,3 +118,53 @@ export type HotelsApiError = {
   message: string;
 };
 
+export type HotelTrackedOfferOut = {
+  id: string;
+  user_id: string;
+  hotel_id: string;
+  area_label: string | null;
+  origin_query: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  radius_km: number | null;
+  check_in: string | null;
+  check_out: string | null;
+  guests: number;
+  room_label: string | null;
+  meal_plan: string | null;
+  cancellation_policy: string | null;
+  provider: string;
+  initial_price: number | null;
+  current_price: number | null;
+  target_price: number | null;
+  currency: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type HotelAreaSearchResultOut = {
+  hotel_id: string;
+  canonical_name: string;
+  city: string;
+  country_code: string;
+  stars: number | null;
+  distance_km: number;
+  lowest_price: number | null;
+  currency: string;
+  provider: string | null;
+  check_in: string;
+  check_out: string;
+  guests: number;
+  has_tracking: boolean;
+};
+
+export type HotelAreaResolveOut = {
+  area_label: string;
+  latitude: number;
+  longitude: number;
+  country_code: string;
+  confidence: string;
+  source: string;
+};
+
