@@ -31,7 +31,25 @@ Completado:
 
 Pendiente:
 
-1. QA visual final dark/light/responsive/focus/copy.
+1. Verificación visual manual en navegador real (dark/light/responsive/focus/copy).
+
+## Actualización 2026-06-03 (cierre Fase 9)
+
+Completado en esta pasada:
+
+1. Añadida función `deleteHotelCompSetMember` en el API frontend.
+2. Añadido `handleDeleteMember` en `HotelRadarPage`.
+3. Añadida sección de lista de miembros con botón "Quitar" en `HotelCompSetPanel`.
+4. Añadidas strings i18n para la sección de miembros (ES + EN).
+5. Añadido CSS para la sección de miembros del comp set.
+6. Añadido polish visual: hover/focus/transiciones en result cards y comp set items.
+7. Corregido `import datetime` faltante en `parity.py`.
+8. Creado `docs/qa/hotels-visual-qa.md` con el registro de cambios y checklist de verificación.
+
+Pendiente:
+
+1. Verificación visual manual en navegador real.
+2. `deleteHotelCompSet` (backend no expone DELETE de comp set entero).
 
 ## Orden recomendado de trabajo
 

@@ -146,6 +146,10 @@ export async function addHotelCompSetMember(compSetId: string, payload: { hotel_
   });
 }
 
+export async function deleteHotelCompSetMember(compSetId: string, memberId: string): Promise<void> {
+  await request<{ status: string }>(`/hotels/comp-sets/${compSetId}/members/${memberId}`, { method: "DELETE" });
+}
+
 export async function getHotelNearbySuggestions(
   compSetId: string,
   params?: { radius_km?: number; limit?: number },

@@ -18,6 +18,7 @@ export function HotelCompSetPanel({
   onCreateCompSet,
   onSelectCompSet,
   onAddMember,
+  onDeleteMember,
 }: {
   compSets: HotelCompSetOut[];
   selectedCompSet: HotelCompSetDetailOut | null;
@@ -32,6 +33,7 @@ export function HotelCompSetPanel({
   onCreateCompSet: (name: string, anchorHotelId: string) => void;
   onSelectCompSet: (compSetId: string) => void;
   onAddMember: (compSetId: string, hotelId: string) => void;
+  onDeleteMember: (compSetId: string, memberId: string) => void;
 }) {
   const { t } = useI18n();
   const selectedHotelAlreadyInCompSet = selectedCompSet
@@ -93,6 +95,36 @@ export function HotelCompSetPanel({
               {t("hotels.compSet.addSelected")}
             </button>
           </div>
+          <section className="hotel-comp-set-members-section section-gap-sm">
+            <div className="panel-header">
+              <h3 className="panel-title">{t("hotels.compSet.membersTitle")}</h3>
+              <span className="status-pill info">{selectedCompSet.members.length}</span>
+            </div>
+            {selectedCompSet.members.length === 0 ? (
+              <p className="panel-note">{t("hotels.compSet.membersEmpty")}</p>
+            ) : (
+              <div className="hotel-comp-set-member-list">
+                {selectedCompSet.members.map((member) => {
+                  const memberHotel = hotels.find((h) => h.id === member.hotel_id);
+                  return (
+                    <article key={member.id} className="list-row hotel-comp-set-member-item">
+                      <div className="hotel-comp-set-member-copy">
+                        <strong>{memberHotel?.canonical_name || member.hotel_id}</strong>
+                        {memberHotel ? <p className="panel-note">{memberHotel.city}, {memberHotel.country_code}</p> : null}
+                      </div>
+                      <button
+                        type="button"
+                        className="btn-ghost btn-compact"
+                        onClick={() => onDeleteMember(selectedCompSet.id, member.id)}
+                      >
+                        {t("hotels.compSet.removeMember")}
+                      </button>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </section>
           {selectedHotelAlreadyInCompSet ? <p className="panel-note">{t("hotels.compSet.addSelectedDisabled")}</p> : null}
           <section className="hotel-nearby-suggestions section-gap-sm">
             <div className="panel-header">
