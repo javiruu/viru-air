@@ -21,6 +21,22 @@ class MockHotelProviderAdapter(HotelProviderAdapter):
         payload = json.loads(self._fixture_path.read_text(encoding="utf-8-sig"))
         records: list[ProviderHotelRecord] = []
         for item in payload.get("hotels", []):
+            provider_hotel_id = str(item["provider_hotel_id"]).strip()
+            raw_name = str(item["name"]).strip()
+            city = str(item["city"]).strip()
+            country_code = str(item["country_code"]).strip().upper()
+
+            if not provider_hotel_id:
+                raise ValueError("Mock hotel fixture contains an empty provider_hotel_id.")
+            if not raw_name:
+                raise ValueError(f"Mock hotel fixture contains an empty name for provider_hotel_id={provider_hotel_id}")
+            if not city:
+                raise ValueError(f"Mock hotel fixture contains an empty city for provider_hotel_id={provider_hotel_id}")
+            if len(country_code) != 2 or not country_code.isalpha():
+                raise ValueError(
+                    f"Invalid country_code '{country_code}' for provider_hotel_id={provider_hotel_id}"
+                )
+
             rates: list[ProviderRateRecord] = []
             for rate in item.get("rates", []):
                 check_in = date.fromisoformat(rate["check_in"])
@@ -28,11 +44,11 @@ class MockHotelProviderAdapter(HotelProviderAdapter):
                 currency = str(rate.get("currency", "EUR")).strip().upper()
                 if len(currency) != 3 or not currency.isalpha():
                     raise ValueError(
-                        f"Invalid currency '{currency}' for provider_hotel_id={item.get('provider_hotel_id')}"
+                        f"Invalid currency '{currency}' for provider_hotel_id={provider_hotel_id}"
                     )
                 if check_out <= check_in:
                     raise ValueError(
-                        f"Invalid stay range for provider_hotel_id={item.get('provider_hotel_id')}: "
+                        f"Invalid stay range for provider_hotel_id={provider_hotel_id}: "
                         f"check_out ({check_out}) must be after check_in ({check_in})"
                     )
                 rates.append(
@@ -49,11 +65,11 @@ class MockHotelProviderAdapter(HotelProviderAdapter):
                 )
             records.append(
                 ProviderHotelRecord(
-                    provider_hotel_id=str(item["provider_hotel_id"]),
-                    raw_name=str(item["name"]),
-                    raw_address=item.get("address"),
-                    city=str(item["city"]),
-                    country_code=str(item["country_code"]).upper(),
+                    provider_hotel_id=provider_hotel_id,
+                    raw_name=raw_name,
+                    raw_address=(str(item["address"]).strip() if item.get("address") is not None else None) or None,
+                    city=city,
+                    country_code=country_code,
                     latitude=float(item["latitude"]) if item.get("latitude") is not None else None,
                     longitude=float(item["longitude"]) if item.get("longitude") is not None else None,
                     stars=int(item["stars"]) if item.get("stars") is not None else None,
