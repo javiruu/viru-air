@@ -19864,6 +19864,49 @@ textarea::placeholder {
   font-feature-settings: "tnum";
 }
 
+/* Comp set member list */
+.hotel-comp-set-members-section {
+  margin-top: 0.35rem;
+}
+
+.hotel-comp-set-member-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.hotel-comp-set-member-item {
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.hotel-comp-set-member-copy {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.hotel-comp-set-member-copy strong {
+  font-size: 0.88rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Result card hover polish */
+.hotel-result-card {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.hotel-result-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+  box-shadow: 0 8px 18px var(--shadow);
+  transform: translateY(-1px);
+}
+
+.hotel-result-card.is-active:hover {
+  transform: none;
+  box-shadow: 0 0 0 1px var(--accent) inset, 0 4px 12px var(--shadow);
+}
 @media (max-width: 980px) {
   .hotel-overview-strip,
   .hotel-search-grid,
@@ -19888,6 +19931,11 @@ textarea::placeholder {
 
   .hotel-nearby-item {
     flex-direction: column;
+  }
+  .hotel-comp-set-member-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
   }
 
   .hotel-nearby-actions {

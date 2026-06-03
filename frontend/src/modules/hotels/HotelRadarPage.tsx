@@ -11,6 +11,7 @@ import {
   createHotelCompSet,
   createHotelWatchlistItem,
   deleteHotelAlertRule,
+  deleteHotelCompSetMember,
   deleteHotelWatchlistItem,
   getHotelCompSetDetail,
   getHotelDetail,
@@ -344,6 +345,18 @@ export function HotelRadarPage() {
       const detail = await getHotelCompSetDetail(compSetId);
       setSelectedCompSet(detail);
       notify({ tone: "success", title: t("hotels.messages.memberAdded") });
+    } catch (error) {
+      const message = resolveHotelMessage(error, t);
+      notify({ tone: "error", title: message });
+    }
+  }
+
+  async function handleDeleteMember(compSetId: string, memberId: string) {
+    try {
+      await deleteHotelCompSetMember(compSetId, memberId);
+      const detail = await getHotelCompSetDetail(compSetId);
+      setSelectedCompSet(detail);
+      notify({ tone: "success", title: t("hotels.messages.memberRemoved") });
     } catch (error) {
       const message = resolveHotelMessage(error, t);
       notify({ tone: "error", title: message });
@@ -711,6 +724,7 @@ export function HotelRadarPage() {
             onCreateCompSet={handleCreateCompSet}
             onSelectCompSet={handleSelectCompSet}
             onAddMember={handleAddMember}
+            onDeleteMember={handleDeleteMember}
           />
         </aside>
       </section>
