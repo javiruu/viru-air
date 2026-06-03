@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 
@@ -9,19 +9,26 @@ import {
   addHotelCompSetMember,
   createHotelCompSet,
   createHotelWatchlistItem,
-  getHotelDetail,
   getHotelCompSetDetail,
+  getHotelDetail,
   getHotelNearbySuggestions,
   getHotelRates,
+  HotelsRequestError,
   ingestHotelsMock,
   listHotelCompSets,
   searchHotels,
-  HotelsRequestError,
 } from "./api";
 import { HotelCompSetPanel, HotelEmptyState } from "./components/HotelCompSetPanel";
 import { HotelResultCard, HotelSearchPanel } from "./components/HotelSearchPanel";
 import { HotelParitySignal, HotelPriceTimeline, HotelProviderStatusPill } from "./components/HotelTimelineAndSignals";
-import type { HotelCompSetDetailOut, HotelCompSetOut, HotelDetailOut, HotelNearbySuggestionOut, HotelRateOut, HotelSearchOut } from "./types";
+import type {
+  HotelCompSetDetailOut,
+  HotelCompSetOut,
+  HotelDetailOut,
+  HotelNearbySuggestionOut,
+  HotelRateOut,
+  HotelSearchOut,
+} from "./types";
 
 export function HotelRadarPage() {
   const { t, localeTag } = useI18n();
@@ -43,9 +50,17 @@ export function HotelRadarPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const selectedHotel = useMemo(() => results.find((item) => item.id === selectedHotelId) ?? null, [results, selectedHotelId]);
+  const selectedCompSetAnchor = useMemo(
+    () => results.find((item) => item.id === selectedCompSet?.anchor_hotel_id) ?? null,
+    [results, selectedCompSet],
+  );
+  const featureDisabled = Boolean(errorMessage && errorMessage.includes("HOTEL_FEATURE_ENABLED"));
 
   function resolveHotelMessage(error: unknown): string {
     if (error instanceof HotelsRequestError) {
+      if (error.message.includes("HOTEL_FEATURE_ENABLED")) {
+        return t("hotels.messages.featureDisabled");
+      }
       if (error.message === "hotel_comp_set_member_already_exists") {
         return t("hotels.messages.memberAlreadyAdded");
       }
@@ -53,6 +68,9 @@ export function HotelRadarPage() {
         return t("hotels.messages.anchorCannotBeMember");
       }
       return error.message;
+    }
+    if (error instanceof Error && error.message.includes("HOTEL_FEATURE_ENABLED")) {
+      return t("hotels.messages.featureDisabled");
     }
     return error instanceof Error ? error.message : t("shared.errors.generic");
   }
@@ -76,7 +94,7 @@ export function HotelRadarPage() {
     try {
       await runSearch();
     } catch (error) {
-      const message = error instanceof Error ? error.message : t("shared.errors.generic");
+      const message = resolveHotelMessage(error);
       setErrorMessage(message);
       notify({ tone: "error", title: message });
     } finally {
@@ -96,7 +114,7 @@ export function HotelRadarPage() {
       await runSearch();
       await refreshCompSets();
     } catch (error) {
-      const message = error instanceof Error ? error.message : t("shared.errors.generic");
+      const message = resolveHotelMessage(error);
       setErrorMessage(message);
       notify({ tone: "error", title: message });
     } finally {
@@ -209,6 +227,21 @@ export function HotelRadarPage() {
         </div>
       </header>
 
+      <section className="hotel-overview-strip section-gap-sm" aria-label={t("hotels.title")}>
+        <article className="hotel-overview-card">
+          <span>{t("hotels.overview.hotels")}</span>
+          <strong>{results.length}</strong>
+        </article>
+        <article className="hotel-overview-card">
+          <span>{t("hotels.overview.compSets")}</span>
+          <strong>{compSets.length}</strong>
+        </article>
+        <article className="hotel-overview-card">
+          <span>{t("hotels.overview.nearby")}</span>
+          <strong>{featureDisabled ? t("hotels.overview.limited") : nearbySuggestions.length}</strong>
+        </article>
+      </section>
+
       <HotelSearchPanel
         query={query}
         city={city}
@@ -219,11 +252,15 @@ export function HotelRadarPage() {
         onIngest={handleIngest}
       />
 
-      {errorMessage ? <section className="notice notice-error section-gap" role="status">{errorMessage}</section> : null}
+      {errorMessage ? (
+        <section className={`notice section-gap ${featureDisabled ? "notice-info hotel-disabled-notice" : "notice-error"}`} role="status">
+          {errorMessage}
+        </section>
+      ) : null}
 
       <section className="hoteles-layout section-gap">
         <div className="hoteles-main-column">
-          <section className="panel panel-soft">
+          <section className={`panel panel-soft hotel-results-panel${results.length === 0 ? " is-empty" : ""}`}>
             <div className="panel-header">
               <h2 className="panel-title">{t("hotels.results.title")}</h2>
               <span className="status-pill info">{results.length}</span>
@@ -252,9 +289,11 @@ export function HotelRadarPage() {
               <h2 className="panel-title">{t("hotels.selected.title")}</h2>
             </div>
             {selectedHotel ? (
-              <div className="section-gap-sm">
+              <div className="section-gap-sm hotel-selected-meta">
                 <strong>{selectedHotel.canonical_name}</strong>
-                <p className="panel-note">{selectedHotel.city}, {selectedHotel.country_code}</p>
+                <p className="panel-note hotel-selected-location">
+                  {selectedHotel.city}, {selectedHotel.country_code}
+                </p>
                 {hotelDetail?.address ? <p className="panel-note">{hotelDetail.address}</p> : null}
                 {hotelDetail?.updated_at ? <p className="panel-note">{t("hotels.selected.lastCapture")}: {new Date(hotelDetail.updated_at).toLocaleString(localeTag)}</p> : null}
               </div>
@@ -269,6 +308,7 @@ export function HotelRadarPage() {
           <HotelCompSetPanel
             compSets={compSets}
             selectedCompSet={selectedCompSet}
+            selectedCompSetAnchor={selectedCompSetAnchor}
             hotels={results}
             selectedHotelId={selectedHotelId}
             nearbySuggestions={nearbySuggestions}
@@ -283,4 +323,3 @@ export function HotelRadarPage() {
     </main>
   );
 }
-
