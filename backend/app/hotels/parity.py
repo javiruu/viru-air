@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 from dataclasses import dataclass
 
 from app.infrastructure.db.models import HotelRateSnapshot
