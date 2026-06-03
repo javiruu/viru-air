@@ -6,6 +6,7 @@ import type {
   HotelDetailOut,
   HotelIngestOut,
   HotelNearbySuggestionOut,
+  HotelParityOut,
   HotelRateOut,
   HotelSearchOut,
   HotelWatchlistItemOut,
@@ -60,6 +61,10 @@ export async function getHotelDetail(hotelId: string): Promise<HotelDetailOut> {
 
 export async function getHotelRates(hotelId: string, params?: { check_in?: string; check_out?: string }): Promise<HotelRateOut[]> {
   return request<HotelRateOut[]>(`/hotels/${hotelId}/rates${queryString(params || {})}`);
+}
+
+export async function getHotelParity(hotelId: string): Promise<HotelParityOut[]> {
+  return request<HotelParityOut[]>(`/hotels/${hotelId}/parity`);
 }
 
 export async function listHotelWatchlist(): Promise<HotelWatchlistItemOut[]> {

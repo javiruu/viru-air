@@ -4,7 +4,7 @@ import { useMemo } from "react";
 
 import { useI18n } from "@/i18n";
 
-import type { HotelRateOut } from "../types";
+import type { HotelParityOut, HotelRateOut } from "../types";
 
 function formatMoney(value: number, currency: string, localeTag: string): string {
   return new Intl.NumberFormat(localeTag, { style: "currency", currency, maximumFractionDigits: 0 }).format(value);
@@ -49,56 +49,48 @@ export function HotelProviderStatusPill({ rates }: { rates: HotelRateOut[] }) {
   return <span className={`status-pill ${hasRates ? "success" : "warning"}`}>{hasRates ? t("hotels.provider.active") : t("hotels.provider.noSignal")}</span>;
 }
 
-export function HotelParitySignal({ rates }: { rates: HotelRateOut[] }) {
+function resolveParityLabel(signal: HotelParityOut, t: ReturnType<typeof useI18n>["t"]): string {
+  if (signal.label === "stable") return t("hotels.parity.stable");
+  if (signal.label === "tensioned") return t("hotels.parity.tensioned");
+  if (signal.label === "breach") return t("hotels.parity.breach");
+  return t("hotels.parity.limited");
+}
+
+export function HotelParitySignal({
+  signals,
+  loading,
+  error,
+}: {
+  signals: HotelParityOut[];
+  loading: boolean;
+  error: string | null;
+}) {
   const { t, localeTag } = useI18n();
+  const signal = signals[0] ?? null;
 
-  const signal = useMemo(() => {
-    if (rates.length === 0) return null;
+  if (loading) {
+    return (
+      <section className="panel panel-soft hotel-parity-signal">
+        <div className="panel-header">
+          <h2 className="panel-title">{t("hotels.parity.title")}</h2>
+          <span className="status-pill info">{t("shared.states.loading")}</span>
+        </div>
+        <p className="panel-note section-gap-sm">{t("hotels.parity.loading")}</p>
+      </section>
+    );
+  }
 
-    // Group rates by stay parameters
-    const groups = new Map<string, { providers: Set<string>; amounts: number[]; check_in: string; check_out: string; guests: number; currency: string }>();
-    for (const rate of rates) {
-      const key = `${rate.check_in}|${rate.check_out}|${rate.guests}|${rate.currency}`;
-      if (!groups.has(key)) {
-        groups.set(key, {
-          providers: new Set(),
-          amounts: [],
-          check_in: rate.check_in,
-          check_out: rate.check_out,
-          guests: rate.guests,
-          currency: rate.currency,
-        });
-      }
-      const group = groups.get(key)!;
-      group.providers.add(rate.provider);
-      group.amounts.push(rate.amount);
-    }
-
-    // Use the most recent stay group
-    const entries = Array.from(groups.values());
-    entries.sort((a, b) => new Date(b.check_in).getTime() - new Date(a.check_in).getTime());
-    const group = entries[0];
-    const providerCount = group.providers.size;
-
-    if (providerCount < 2 || group.amounts.length < 2) {
-      return { status: "info" as const, label: t("hotels.parity.limited"), providerCount, detail: null };
-    }
-
-    const sorted = [...group.amounts].sort((a, b) => a - b);
-    const lowest = sorted[0];
-    const highest = sorted[sorted.length - 1];
-    const average = Math.round((group.amounts.reduce((sum, v) => sum + v, 0) / group.amounts.length) * 100) / 100;
-    const spreadAmount = Math.round((highest - lowest) * 100) / 100;
-    const spreadPercent = Math.round(((highest - lowest) / lowest) * 1000) / 10;
-
-    if (spreadPercent >= 20) {
-      return { status: "error" as const, label: t("hotels.parity.breach"), providerCount, detail: { lowest, highest, average, spreadAmount, spreadPercent, currency: group.currency } };
-    }
-    if (spreadPercent >= 10) {
-      return { status: "warning" as const, label: t("hotels.parity.tensioned"), providerCount, detail: { lowest, highest, average, spreadAmount, spreadPercent, currency: group.currency } };
-    }
-    return { status: "success" as const, label: t("hotels.parity.stable"), providerCount, detail: { lowest, highest, average, spreadAmount, spreadPercent, currency: group.currency } };
-  }, [rates, t]);
+  if (error) {
+    return (
+      <section className="panel panel-soft hotel-parity-signal">
+        <div className="panel-header">
+          <h2 className="panel-title">{t("hotels.parity.title")}</h2>
+          <span className="status-pill error">{t("hotels.parity.errorBadge")}</span>
+        </div>
+        <p className="panel-note section-gap-sm">{error}</p>
+      </section>
+    );
+  }
 
   if (!signal) {
     return (
@@ -107,40 +99,42 @@ export function HotelParitySignal({ rates }: { rates: HotelRateOut[] }) {
           <h2 className="panel-title">{t("hotels.parity.title")}</h2>
           <span className="status-pill info">{t("hotels.parity.limited")}</span>
         </div>
-        <p className="panel-note section-gap-sm">{t("hotels.parity.noRates")}</p>
+        <p className="panel-note section-gap-sm">{t("hotels.parity.empty")}</p>
       </section>
     );
   }
+
+  const translatedLabel = resolveParityLabel(signal, t);
 
   return (
     <section className="panel panel-soft hotel-parity-signal">
       <div className="panel-header">
         <h2 className="panel-title">{t("hotels.parity.title")}</h2>
-        <span className={`status-pill ${signal.status}`}>{signal.label}</span>
+        <span className={`status-pill ${signal.status}`}>{translatedLabel}</span>
       </div>
       <div className="section-gap-sm">
-        <p className="panel-note">{t("hotels.parity.providerCount", { count: signal.providerCount })}</p>
-        {signal.detail ? (
+        <p className="panel-note">{t("hotels.parity.providerCount", { count: signal.provider_count })}</p>
+        {signal.lowest_price !== null && signal.highest_price !== null && signal.spread_percent !== null ? (
           <div className="hotel-parity-metrics section-gap-sm">
             <div className="hotel-parity-metric">
               <span>{t("hotels.parity.lowest")}</span>
               <strong>
-                {new Intl.NumberFormat(localeTag, { style: "currency", currency: signal.detail.currency, maximumFractionDigits: 0 }).format(signal.detail.lowest)}
+                {new Intl.NumberFormat(localeTag, { style: "currency", currency: signal.currency, maximumFractionDigits: 0 }).format(signal.lowest_price)}
               </strong>
             </div>
             <div className="hotel-parity-metric">
               <span>{t("hotels.parity.highest")}</span>
               <strong>
-                {new Intl.NumberFormat(localeTag, { style: "currency", currency: signal.detail.currency, maximumFractionDigits: 0 }).format(signal.detail.highest)}
+                {new Intl.NumberFormat(localeTag, { style: "currency", currency: signal.currency, maximumFractionDigits: 0 }).format(signal.highest_price)}
               </strong>
             </div>
             <div className="hotel-parity-metric">
               <span>{t("hotels.parity.spread")}</span>
-              <strong>{signal.detail.spreadPercent}%</strong>
+              <strong>{signal.spread_percent}%</strong>
             </div>
           </div>
         ) : (
-          <p className="panel-note section-gap-sm">{t("hotels.parity.singleProvider")}</p>
+          <p className="panel-note section-gap-sm">{t("hotels.parity.limitedDetail")}</p>
         )}
       </div>
     </section>

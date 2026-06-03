@@ -36,6 +36,12 @@ export type HotelWatchlistItemOut = {
   created_at: string;
 };
 
+export type HotelWatchlistEntry = {
+  item: HotelWatchlistItemOut;
+  hotel: HotelDetailOut | null;
+  detailUnavailable: boolean;
+};
+
 export type HotelCompSetOut = {
   id: string;
   name: string;
@@ -67,6 +73,22 @@ export type HotelIngestOut = {
   hotels_processed: number;
   rates_ingested: number;
   ambiguous_matches: number;
+};
+
+export type HotelParityOut = {
+  check_in: string;
+  check_out: string;
+  guests: number;
+  currency: string;
+  provider_count: number;
+  lowest_price: number | null;
+  highest_price: number | null;
+  average_price: number | null;
+  spread_amount: number | null;
+  spread_percent: number | null;
+  is_parity_broken: boolean;
+  status: string;
+  label: string;
 };
 
 export type HotelsApiError = {

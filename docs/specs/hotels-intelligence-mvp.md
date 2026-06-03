@@ -1,6 +1,6 @@
 Status: active
 Scope: hotel intelligence MVP definition
-Last reviewed: 2026-06-02
+Last reviewed: 2026-06-03
 Canonical source: docs/specs/hotels-intelligence-mvp.md
 Related: docs/overview/project-overview.md, docs/reference/backend/provider-integration-guide.md, docs/specs/phase1-codex.md
 
@@ -150,7 +150,7 @@ Durante esta fase:
 
 ## 11. Observaciones de cumplimiento (auditoria rapida)
 
-Fecha de auditoria: 2026-06-02.
+Fecha de auditoria: 2026-06-03.
 
 Checklist de estado:
 
@@ -180,12 +180,16 @@ Evidencia concreta:
 9. Verificacion frontend: `npm run build` OK.
 10. Correccion nucleo 2026-06-02: `GET /api/v1/hotels/alert-events` deja de colisionar con `GET /{hotel_id}` al declararse antes de las rutas dinamicas.
 11. Fase 8 activa: endpoint `GET /api/v1/hotels/comp-sets/{comp_set_id}/nearby-suggestions` y bloque UI de `Sugerencias cercanas` dentro del panel de comp set.
+12. Correccion de cierre 2026-06-03: frontend consume `GET /api/v1/hotels/{hotel_id}/parity` como unica fuente de verdad de paridad.
+13. Correccion de cierre 2026-06-03: el hotel base del comp set se resuelve por `hotel_id` y ya no depende de seguir visible en `results`.
+14. Checklist viva de cierre agregada en `docs/qa/hotels-pending-closeout.md`.
 
 Observaciones pendientes:
 
 1. Fase 9 QA visual y polish final sigue pendiente como pasada separada.
+2. La watchlist hotelera visible y la UI minima de alertas siguen fuera del cierre actual.
 
 Siguiente paso propuesto (acotado):
 
-1. Mantener una sola fuente de verdad para la senal de paridad entre backend y frontend en una pasada posterior de endurecimiento.
+1. Completar watchlist hotelera visible y UI minima de alertas en la ruta `/hoteles`.
 2. Revisar polish visual y responsive fino del bloque de sugerencias cercanas en Fase 9.

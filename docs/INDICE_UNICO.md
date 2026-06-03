@@ -47,6 +47,7 @@
 - [README QA](qa/README.md)
 - [Frontend PR checklist](qa/acceptance-checklists/frontend-pr-checklist.md)
 - [Fase 0 limpieza conceptual](qa/fase-0-limpieza-conceptual-checklist.md)
+- [Cierre pendiente de `/hoteles`](qa/hotels-pending-closeout.md)
 - [Traceability matrix](qa/traceability-matrix.md)
 - [TestSprite catalog](qa/testsprite/testsprite-catalog.md)
 - [Auditoría de paleta dual](qa/visual/color-palette-audit.md)
@@ -121,6 +122,7 @@
 ### QA
 
 - [README QA](qa/README.md)
+- [Cierre pendiente de `/hoteles`](qa/hotels-pending-closeout.md)
 - [Visual QA](qa/visual/)
 - [Auditoría de paleta dual](qa/visual/color-palette-audit.md)
 - [Reportes QA](qa/reports/)

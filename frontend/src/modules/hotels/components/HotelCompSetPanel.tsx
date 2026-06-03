@@ -2,12 +2,14 @@
 
 import { useI18n } from "@/i18n";
 
-import type { HotelCompSetDetailOut, HotelCompSetOut, HotelNearbySuggestionOut, HotelSearchOut } from "../types";
+import type { HotelCompSetDetailOut, HotelCompSetOut, HotelDetailOut, HotelNearbySuggestionOut, HotelSearchOut } from "../types";
 
 export function HotelCompSetPanel({
   compSets,
   selectedCompSet,
-  selectedCompSetAnchor,
+  anchorDetail,
+  anchorLoading,
+  anchorError,
   hotels,
   selectedHotelId,
   nearbySuggestions,
@@ -19,7 +21,9 @@ export function HotelCompSetPanel({
 }: {
   compSets: HotelCompSetOut[];
   selectedCompSet: HotelCompSetDetailOut | null;
-  selectedCompSetAnchor: HotelSearchOut | null;
+  anchorDetail: HotelDetailOut | null;
+  anchorLoading: boolean;
+  anchorError: string | null;
   hotels: HotelSearchOut[];
   selectedHotelId: string | null;
   nearbySuggestions: HotelNearbySuggestionOut[];
@@ -69,11 +73,13 @@ export function HotelCompSetPanel({
             <div>
               <span className="hotel-comp-set-eyebrow">{t("hotels.compSet.activeLabel")}</span>
               <strong>{selectedCompSet.name}</strong>
-              {selectedCompSetAnchor ? (
+              {anchorDetail ? (
                 <p className="panel-note">
-                  {t("hotels.compSet.anchor")}: {selectedCompSetAnchor.canonical_name}
+                  {t("hotels.compSet.anchor")}: {anchorDetail.canonical_name} · {anchorDetail.city}, {anchorDetail.country_code}
                 </p>
               ) : null}
+              {anchorLoading ? <p className="panel-note">{t("hotels.compSet.anchorLoading")}</p> : null}
+              {anchorError ? <p className="panel-note">{anchorError}</p> : null}
             </div>
             <span className="status-pill info">{t("hotels.compSet.members")}: {selectedCompSet.members.length}</span>
           </div>
