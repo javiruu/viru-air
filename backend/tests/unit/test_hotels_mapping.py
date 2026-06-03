@@ -120,3 +120,40 @@ def test_mapping_medium_score_marks_ambiguous_without_auto_merge() -> None:
         assert result.confidence_score < HotelMappingService.HIGH_CONFIDENCE_THRESHOLD
     finally:
         _close(db)
+
+
+def test_mapping_high_score_tie_creates_new_ambiguous_hotel_instead_of_merging_first() -> None:
+    db = _db()
+    try:
+        first = HotelProperty(
+            canonical_name="Hotel Sol Madrid",
+            normalized_name="hotel sol madrid",
+            city="Madrid",
+            country_code="ES",
+        )
+        second = HotelProperty(
+            canonical_name="Hotel Sol Madrid",
+            normalized_name="hotel sol madrid",
+            city="Madrid",
+            country_code="ES",
+        )
+        db.add_all([first, second])
+        db.commit()
+
+        service = HotelMappingService(db)
+        result = service.map_or_create(
+            ProviderHotelRecord(
+                provider_hotel_id="mock-tie-001",
+                raw_name="Hotel Sol Madrid",
+                raw_address="Calle empate 1",
+                city="Madrid",
+                country_code="ES",
+            )
+        )
+
+        assert result.matched_existing is False
+        assert result.is_ambiguous is True
+        assert result.hotel.id not in {first.id, second.id}
+        assert result.confidence_score >= HotelMappingService.HIGH_CONFIDENCE_THRESHOLD
+    finally:
+        _close(db)

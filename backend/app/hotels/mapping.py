@@ -22,6 +22,7 @@ class HotelMappingResult:
 class HotelMappingService:
     HIGH_CONFIDENCE_THRESHOLD = 0.80
     MEDIUM_CONFIDENCE_THRESHOLD = 0.55
+    AMBIGUOUS_SCORE_MARGIN = 0.05
 
     def __init__(self, db: Session) -> None:
         self._db = db
@@ -37,13 +38,26 @@ class HotelMappingService:
 
         best_candidate: HotelProperty | None = None
         best_score = 0.0
+        second_best_score = 0.0
         for candidate in candidates:
             score = self._score_candidate(record, normalized_name, normalized_city, candidate)
             if score > best_score:
+                second_best_score = best_score
                 best_score = score
                 best_candidate = candidate
+            elif score > second_best_score:
+                second_best_score = score
 
-        if best_candidate is not None and best_score >= self.HIGH_CONFIDENCE_THRESHOLD:
+        has_ambiguous_runner_up = (
+            second_best_score >= self.MEDIUM_CONFIDENCE_THRESHOLD
+            and (best_score - second_best_score) <= self.AMBIGUOUS_SCORE_MARGIN
+        )
+
+        if (
+            best_candidate is not None
+            and best_score >= self.HIGH_CONFIDENCE_THRESHOLD
+            and not has_ambiguous_runner_up
+        ):
             return HotelMappingResult(
                 hotel=best_candidate,
                 confidence_score=best_score,
@@ -67,7 +81,9 @@ class HotelMappingService:
         return HotelMappingResult(
             hotel=created_hotel,
             confidence_score=best_score,
-            is_ambiguous=best_candidate is not None and best_score >= self.MEDIUM_CONFIDENCE_THRESHOLD,
+            is_ambiguous=best_candidate is not None and (
+                best_score >= self.MEDIUM_CONFIDENCE_THRESHOLD or has_ambiguous_runner_up
+            ),
             matched_existing=False,
         )
 
