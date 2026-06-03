@@ -1,6 +1,8 @@
 ﻿import { apiFetchWithStatus } from "@/modules/shared/api";
 
 import type {
+  HotelAlertEventOut,
+  HotelAlertRuleOut,
   HotelCompSetDetailOut,
   HotelCompSetOut,
   HotelDetailOut,
@@ -80,6 +82,46 @@ export async function createHotelWatchlistItem(payload: { hotel_id: string; labe
 
 export async function deleteHotelWatchlistItem(itemId: string): Promise<void> {
   await request<{ status: string }>(`/hotels/watchlist/${itemId}`, { method: "DELETE" });
+}
+
+export async function listHotelAlertRules(): Promise<HotelAlertRuleOut[]> {
+  return request<HotelAlertRuleOut[]>("/hotels/alert-rules");
+}
+
+export async function createHotelAlertRule(payload: {
+  hotel_id: string;
+  rule_type: "price_below" | "price_above" | "parity_break";
+  threshold_amount?: number | null;
+  threshold_percent?: number | null;
+  is_active?: boolean;
+}): Promise<HotelAlertRuleOut> {
+  return request<HotelAlertRuleOut>("/hotels/alert-rules", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateHotelAlertRule(
+  ruleId: string,
+  payload: {
+    rule_type?: "price_below" | "price_above" | "parity_break";
+    threshold_amount?: number | null;
+    threshold_percent?: number | null;
+    is_active?: boolean;
+  },
+): Promise<HotelAlertRuleOut> {
+  return request<HotelAlertRuleOut>(`/hotels/alert-rules/${ruleId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteHotelAlertRule(ruleId: string): Promise<void> {
+  await request<{ status: string }>(`/hotels/alert-rules/${ruleId}`, { method: "DELETE" });
+}
+
+export async function listHotelAlertEvents(params?: { hotel_id?: string; limit?: number; offset?: number }): Promise<HotelAlertEventOut[]> {
+  return request<HotelAlertEventOut[]>(`/hotels/alert-events${queryString(params || {})}`);
 }
 
 export async function listHotelCompSets(): Promise<HotelCompSetOut[]> {

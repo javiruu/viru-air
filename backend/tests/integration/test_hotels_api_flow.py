@@ -1,7 +1,9 @@
+from datetime import date
+
 import pytest
 from fastapi.testclient import TestClient
 
-from app.infrastructure.db.models import HotelCompSet, HotelProperty
+from app.infrastructure.db.models import HotelCompSet, HotelProperty, HotelRateSnapshot
 from app.infrastructure.db.session import get_db
 from app.main import app
 from app.services.hotels_service import run_hotel_sweep
@@ -70,6 +72,68 @@ def test_hotels_collections_start_empty(client: TestClient) -> None:
     alert_events = client.get("/api/v1/hotels/alert-events", headers=headers)
     assert alert_events.status_code == 200
     assert alert_events.json() == []
+
+
+def test_hotels_read_endpoints_do_not_depend_on_feature_flag_when_data_exists(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    token = register_and_token(client, email="hotels-read-feature-flag-off@viru.dev")
+    headers = _auth(token)
+    monkeypatch.setenv("HOTEL_FEATURE_ENABLED", "false")
+
+    db, generator = _open_overridden_db()
+    try:
+        hotel = HotelProperty(
+            canonical_name="Hotel Lectura Persistida",
+            normalized_name="hotel lectura persistida",
+            city="Madrid",
+            country_code="ES",
+            stars=4,
+        )
+        db.add(hotel)
+        db.flush()
+        db.add(
+            HotelRateSnapshot(
+                hotel_id=hotel.id,
+                provider="mock",
+                check_in=date(2026, 7, 1),
+                check_out=date(2026, 7, 3),
+                guests=2,
+                currency="EUR",
+                amount=120,
+            )
+        )
+        db.commit()
+        hotel_id = hotel.id
+    finally:
+        try:
+            next(generator)
+        except StopIteration:
+            pass
+
+    search = client.get("/api/v1/hotels/search", headers=headers)
+    assert search.status_code == 200
+    assert any(item["id"] == hotel_id for item in search.json())
+
+    detail = client.get(f"/api/v1/hotels/{hotel_id}", headers=headers)
+    assert detail.status_code == 200
+    assert detail.json()["id"] == hotel_id
+
+    rates = client.get(f"/api/v1/hotels/{hotel_id}/rates", headers=headers)
+    assert rates.status_code == 200
+    assert len(rates.json()) == 1
+
+
+def test_hotels_ingest_mock_fails_cleanly_when_feature_flag_is_disabled(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    token = register_and_token(client, email="hotels-ingest-feature-flag-off@viru.dev")
+    headers = _auth(token)
+    monkeypatch.setenv("HOTEL_FEATURE_ENABLED", "false")
+
+    response = client.post("/api/v1/hotels/ingest/mock", headers=headers)
+    assert response.status_code == 422
+    assert "HOTEL_FEATURE_ENABLED" in _error_code(response.json())
 
 
 def test_hotels_ingest_mock_and_basic_flow(client: TestClient) -> None:
@@ -504,3 +568,57 @@ def test_hotels_alert_events_lists_triggered_events_after_sweep(client: TestClie
     assert len(payload) >= 1
     assert any(item["hotel_id"] == hotel_id for item in payload)
     assert any(item["event_type"] == "price_below" for item in payload)
+
+
+def test_hotels_alert_events_can_be_filtered_by_hotel_id(client: TestClient) -> None:
+    token = register_and_token(client, email="hotels-alert-events-filtered@viru.dev")
+    headers = _auth(token)
+
+    ingest = client.post("/api/v1/hotels/ingest/mock", headers=headers)
+    assert ingest.status_code == 200
+
+    hotels = client.get("/api/v1/hotels/search", headers=headers).json()
+    assert len(hotels) >= 2
+    target_hotel_id = hotels[0]["id"]
+    other_hotel_id = hotels[1]["id"]
+
+    target_rule = client.post(
+        "/api/v1/hotels/alert-rules",
+        headers=headers,
+        json={
+            "hotel_id": target_hotel_id,
+            "rule_type": "price_below",
+            "threshold_amount": 500,
+            "is_active": True,
+        },
+    )
+    assert target_rule.status_code == 200
+
+    other_rule = client.post(
+        "/api/v1/hotels/alert-rules",
+        headers=headers,
+        json={
+            "hotel_id": other_hotel_id,
+            "rule_type": "price_below",
+            "threshold_amount": 500,
+            "is_active": True,
+        },
+    )
+    assert other_rule.status_code == 200
+
+    db, generator = _open_overridden_db()
+    try:
+        provider_run = run_hotel_sweep(db, provider="mock")
+        assert provider_run.status == "completed"
+    finally:
+        try:
+            next(generator)
+        except StopIteration:
+            pass
+
+    response = client.get(f"/api/v1/hotels/alert-events?hotel_id={target_hotel_id}", headers=headers)
+    assert response.status_code == 200
+    payload = response.json()
+    assert len(payload) >= 1
+    assert all(item["hotel_id"] == target_hotel_id for item in payload)
+    assert all(item["event_type"] == "price_below" for item in payload)

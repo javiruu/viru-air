@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
 
 import {
   addHotelCompSetMember,
+  createHotelAlertRule,
   createHotelCompSet,
   createHotelWatchlistItem,
+  deleteHotelAlertRule,
   deleteHotelWatchlistItem,
   getHotelCompSetDetail,
   getHotelDetail,
@@ -17,15 +19,22 @@ import {
   getHotelRates,
   HotelsRequestError,
   ingestHotelsMock,
+  listHotelAlertEvents,
+  listHotelAlertRules,
   listHotelCompSets,
   listHotelWatchlist,
   searchHotels,
+  updateHotelAlertRule,
 } from "./api";
+import { HotelAlertsPanel } from "./components/HotelAlertsPanel";
 import { HotelCompSetPanel, HotelEmptyState } from "./components/HotelCompSetPanel";
 import { HotelResultCard, HotelSearchPanel } from "./components/HotelSearchPanel";
 import { HotelParitySignal, HotelPriceTimeline, HotelProviderStatusPill } from "./components/HotelTimelineAndSignals";
 import { HotelWatchlistPanel } from "./components/HotelWatchlistPanel";
 import type {
+  HotelAlertEventOut,
+  HotelAlertRuleOut,
+  HotelAlertRuleType,
   HotelCompSetDetailOut,
   HotelCompSetOut,
   HotelDetailOut,
@@ -53,6 +62,15 @@ function resolveHotelMessage(error: unknown, t: ReturnType<typeof useI18n>["t"])
     }
     if (error.message === "hotel_watchlist_item_already_exists") {
       return t("hotels.messages.watchAlreadyAdded");
+    }
+    if (error.message === "threshold_required_for_price_rule") {
+      return t("hotels.alerts.validation.priceThresholdRequired");
+    }
+    if (error.message === "threshold_percent_required_for_parity_break") {
+      return t("hotels.alerts.validation.parityThresholdRequired");
+    }
+    if (error.message === "threshold_amount_not_allowed_for_parity_break") {
+      return t("hotels.alerts.validation.parityAmountNotAllowed");
     }
     return error.message;
   }
@@ -93,11 +111,27 @@ export function HotelRadarPage() {
   const [nearbySuggestions, setNearbySuggestions] = useState<HotelNearbySuggestionOut[]>([]);
   const [nearbyLoading, setNearbyLoading] = useState(false);
   const [nearbyMessage, setNearbyMessage] = useState<string | null>(null);
+  const [alertRules, setAlertRules] = useState<HotelAlertRuleOut[]>([]);
+  const [alertRulesLoading, setAlertRulesLoading] = useState(false);
+  const [alertRulesError, setAlertRulesError] = useState<string | null>(null);
+  const [alertEvents, setAlertEvents] = useState<HotelAlertEventOut[]>([]);
+  const [alertEventsLoading, setAlertEventsLoading] = useState(false);
+  const [alertEventsError, setAlertEventsError] = useState<string | null>(null);
+  const [alertCreateBusy, setAlertCreateBusy] = useState(false);
+  const [alertBusyRuleIds, setAlertBusyRuleIds] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const selectedHotel = useMemo(() => results.find((item) => item.id === selectedHotelId) ?? null, [results, selectedHotelId]);
   const featureDisabled = Boolean(errorMessage && errorMessage.includes("HOTEL_FEATURE_ENABLED"));
   const watchlistHotelIds = useMemo(() => watchlistItems.map((item) => item.hotel_id), [watchlistItems]);
+  const selectedHotelAlertRules = useMemo(
+    () => alertRules.filter((rule) => rule.hotel_id === selectedHotelId),
+    [alertRules, selectedHotelId],
+  );
+  const selectedHotelAlertEvents = useMemo(
+    () => alertEvents.filter((event) => event.hotel_id === selectedHotelId),
+    [alertEvents, selectedHotelId],
+  );
   const watchlistEntries = useMemo<HotelWatchlistEntry[]>(
     () =>
       watchlistItems.map((item) => ({
@@ -166,6 +200,43 @@ export function HotelRadarPage() {
   async function refreshCompSets() {
     const next = await listHotelCompSets();
     setCompSets(next);
+  }
+
+  const refreshAlertRules = useCallback(async () => {
+    setAlertRulesLoading(true);
+    setAlertRulesError(null);
+    try {
+      const items = await listHotelAlertRules();
+      setAlertRules(items);
+    } catch (error) {
+      setAlertRulesError(resolveHotelMessage(error, t) || t("hotels.alerts.loadRulesError"));
+    } finally {
+      setAlertRulesLoading(false);
+    }
+  }, [t]);
+
+  const refreshAlertEvents = useCallback(async (hotelId?: string | null) => {
+    setAlertEventsLoading(true);
+    setAlertEventsError(null);
+    try {
+      if (!hotelId) {
+        setAlertEvents([]);
+        return;
+      }
+      const items = await listHotelAlertEvents({ hotel_id: hotelId, limit: 50 });
+      setAlertEvents(items);
+    } catch (error) {
+      setAlertEventsError(resolveHotelMessage(error, t) || t("hotels.alerts.loadEventsError"));
+    } finally {
+      setAlertEventsLoading(false);
+    }
+  }, [t]);
+
+  function markAlertRuleBusy(ruleId: string, isBusy: boolean) {
+    setAlertBusyRuleIds((current) => {
+      if (isBusy) return current.includes(ruleId) ? current : [...current, ruleId];
+      return current.filter((item) => item !== ruleId);
+    });
   }
 
   async function runSearch() {
@@ -279,6 +350,56 @@ export function HotelRadarPage() {
     }
   }
 
+  async function handleCreateAlertRule(payload: {
+    hotel_id: string;
+    rule_type: HotelAlertRuleType;
+    threshold_amount: number | null;
+    threshold_percent: number | null;
+    is_active: boolean;
+  }): Promise<boolean> {
+    setAlertCreateBusy(true);
+    try {
+      await createHotelAlertRule(payload);
+      await refreshAlertRules();
+      notify({ tone: "success", title: t("hotels.messages.alertCreated") });
+      return true;
+    } catch (error) {
+      const message = resolveHotelMessage(error, t);
+      notify({ tone: "error", title: message });
+      return false;
+    } finally {
+      setAlertCreateBusy(false);
+    }
+  }
+
+  async function handleToggleAlertRule(ruleId: string, isActive: boolean) {
+    markAlertRuleBusy(ruleId, true);
+    try {
+      await updateHotelAlertRule(ruleId, { is_active: isActive });
+      await refreshAlertRules();
+      notify({ tone: "success", title: t("hotels.messages.alertUpdated") });
+    } catch (error) {
+      const message = resolveHotelMessage(error, t);
+      notify({ tone: "error", title: message });
+    } finally {
+      markAlertRuleBusy(ruleId, false);
+    }
+  }
+
+  async function handleDeleteAlertRule(ruleId: string) {
+    markAlertRuleBusy(ruleId, true);
+    try {
+      await deleteHotelAlertRule(ruleId);
+      await refreshAlertRules();
+      notify({ tone: "success", title: t("hotels.messages.alertDeleted") });
+    } catch (error) {
+      const message = resolveHotelMessage(error, t);
+      notify({ tone: "error", title: message });
+    } finally {
+      markAlertRuleBusy(ruleId, false);
+    }
+  }
+
   useEffect(() => {
     refreshCompSets().catch(() => undefined);
     let cancelled = false;
@@ -331,11 +452,16 @@ export function HotelRadarPage() {
     }
 
     loadInitialWatchlist().catch(() => undefined);
+    refreshAlertRules().catch(() => undefined);
 
     return () => {
       cancelled = true;
     };
-  }, [t]);
+  }, [refreshAlertRules, t]);
+
+  useEffect(() => {
+    refreshAlertEvents(selectedHotelId).catch(() => undefined);
+  }, [refreshAlertEvents, selectedHotelId]);
 
   useEffect(() => {
     if (!selectedHotelId) {
@@ -551,6 +677,25 @@ export function HotelRadarPage() {
           />
 
           <HotelParitySignal signals={paritySignals} loading={parityLoading} error={parityError} />
+
+          <HotelAlertsPanel
+            selectedHotel={selectedHotel}
+            rules={selectedHotelAlertRules}
+            rulesLoading={alertRulesLoading}
+            rulesError={alertRulesError}
+            events={selectedHotelAlertEvents}
+            eventsLoading={alertEventsLoading}
+            eventsError={alertEventsError}
+            createBusy={alertCreateBusy}
+            busyRuleIds={alertBusyRuleIds}
+            onCreateRule={handleCreateAlertRule}
+            onToggleRule={(ruleId, isActive) => {
+              void handleToggleAlertRule(ruleId, isActive);
+            }}
+            onDeleteRule={(ruleId) => {
+              void handleDeleteAlertRule(ruleId);
+            }}
+          />
 
           <HotelCompSetPanel
             compSets={compSets}

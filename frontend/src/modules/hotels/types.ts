@@ -42,6 +42,28 @@ export type HotelWatchlistEntry = {
   detailUnavailable: boolean;
 };
 
+export type HotelAlertRuleType = "price_below" | "price_above" | "parity_break";
+
+export type HotelAlertRuleOut = {
+  id: string;
+  hotel_id: string;
+  rule_type: HotelAlertRuleType;
+  threshold_amount: number | null;
+  threshold_percent: number | null;
+  is_active: boolean;
+};
+
+export type HotelAlertEventOut = {
+  id: string;
+  rule_id: string;
+  hotel_id: string;
+  provider_run_id: string | null;
+  event_type: string;
+  message: string;
+  trigger_value: number | null;
+  created_at: string;
+};
+
 export type HotelCompSetOut = {
   id: string;
   name: string;

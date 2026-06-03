@@ -19513,6 +19513,7 @@ textarea::placeholder {
 .hotel-results-panel.is-empty,
 .hotel-selected-summary,
 .hotel-watchlist-panel,
+.hotel-alerts-panel,
 .hotel-parity-signal,
 .hotel-comp-set-panel {
   background:
@@ -19546,6 +19547,7 @@ textarea::placeholder {
 
 .hotel-result-main:focus-visible,
 .hotel-comp-set-item:focus-visible,
+.hotel-alert-rule-actions .btn-ghost:focus-visible,
 .hotel-nearby-actions .btn-ghost:focus-visible {
   outline: 2px solid var(--border-focus);
   outline-offset: 2px;
@@ -19607,6 +19609,112 @@ textarea::placeholder {
 .hotel-watchlist-actions {
   display: flex;
   align-items: center;
+}
+
+.hotel-alerts-panel {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.hotel-alerts-form-block,
+.hotel-alerts-rules,
+.hotel-alerts-events {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.hotel-alerts-rules,
+.hotel-alerts-events {
+  padding-top: 0.35rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+}
+
+.hotel-alerts-block-head {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.hotel-alerts-block-head strong {
+  font-size: 0.95rem;
+}
+
+.hotel-alerts-form {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.hotel-alerts-thresholds {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.hotel-alerts-thresholds.is-parity-only {
+  grid-template-columns: 1fr;
+}
+
+.hotel-alert-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.hotel-alert-toggle input {
+  accent-color: var(--accent);
+}
+
+.hotel-alerts-validation {
+  color: color-mix(in srgb, var(--accent) 70%, var(--ink));
+}
+
+.hotel-alert-rule-list,
+.hotel-alert-events-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.hotel-alert-rule-item {
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.hotel-alert-rule-copy {
+  min-width: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.hotel-alert-rule-copy strong {
+  display: block;
+}
+
+.hotel-alert-rule-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.hotel-alert-rule-actions {
+  display: grid;
+  gap: 0.45rem;
+  justify-items: end;
+}
+
+.hotel-alert-event-item {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.7rem 0.78rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+  background:
+    linear-gradient(120deg, color-mix(in srgb, var(--accent) 6%, transparent), transparent 42%),
+    var(--surface);
+}
+
+.hotel-alert-event-item strong {
+  display: block;
 }
 
 .hotel-selected-meta {
@@ -19769,6 +19877,7 @@ textarea::placeholder {
 
   .hotel-search-panel .btn-primary,
   .hotel-search-panel .btn-secondary,
+  .hotel-alert-rule-actions .btn-ghost,
   .hotel-nearby-actions .btn-ghost {
     width: 100%;
   }
@@ -19784,6 +19893,15 @@ textarea::placeholder {
   .hotel-nearby-actions {
     width: 100%;
     justify-items: start;
+  }
+
+  .hotel-alerts-thresholds {
+    grid-template-columns: 1fr;
+  }
+
+  .hotel-alert-rule-actions {
+    width: 100%;
+    justify-items: stretch;
   }
 }
 
