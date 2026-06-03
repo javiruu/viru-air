@@ -1,6 +1,4 @@
 """Unit tests for MakcorpsHotelProviderAdapter with response fixtures."""
-
-import json
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -124,6 +122,12 @@ class TestMakcorpsProviderAdapter:
             result = adapter.fetch_hotels()
             assert result == []
 
+    def test_fetch_hotels_rejects_malformed_top_level_payload(self):
+        with patch("app.hotels.makcorps_provider._MAKCORPS_API_KEY", "sk-test"):
+            adapter = MakcorpsHotelProviderAdapter(session=_mock_session(json_payload=["bad-payload"]))
+            with pytest.raises(ValueError, match="payload is invalid"):
+                adapter.fetch_hotels()
+
     def test_fetch_hotels_handles_rates_without_dates(self):
         payload = {
             "data": [
@@ -144,6 +148,44 @@ class TestMakcorpsProviderAdapter:
             assert len(result) == 1
             assert len(result[0].rates) == 0
 
+    def test_fetch_hotels_discards_invalid_amounts_and_currency(self):
+        payload = {
+            "data": [
+                {
+                    "id": "mk-004",
+                    "name": "Broken Rates Hotel",
+                    "city": "Sevilla",
+                    "country_code": "ES",
+                    "rates": [
+                        {
+                            "check_in": "2026-07-01",
+                            "check_out": "2026-07-03",
+                            "amount": 0,
+                            "currency": "EUR",
+                        },
+                        {
+                            "check_in": "2026-07-01",
+                            "check_out": "2026-07-03",
+                            "amount": "oops",
+                            "currency": "EUR",
+                        },
+                        {
+                            "check_in": "2026-07-01",
+                            "check_out": "2026-07-03",
+                            "amount": 120,
+                            "currency": "EURO",
+                        },
+                    ],
+                }
+            ]
+        }
+        with patch("app.hotels.makcorps_provider._MAKCORPS_API_KEY", "sk-test"):
+            adapter = MakcorpsHotelProviderAdapter(session=_mock_session(json_payload=payload))
+            result = adapter.fetch_hotels()
+            assert len(result) == 1
+            assert result[0].provider_hotel_id == "mk-004"
+            assert result[0].rates == []
+
     def test_fetch_hotels_raises_without_api_key(self):
         with patch("app.hotels.makcorps_provider._MAKCORPS_API_KEY", ""):
             adapter = MakcorpsHotelProviderAdapter(session=_mock_session())
@@ -155,7 +197,13 @@ class TestMakcorpsProviderAdapter:
             "app.hotels.makcorps_provider._MAKCORPS_API_KEY", "sk-test"
         ):
             adapter = MakcorpsHotelProviderAdapter(session=_mock_session(status_code=500))
-            with pytest.raises(ValueError, match="request failed"):
+            with pytest.raises(ValueError, match="status 500"):
+                adapter.fetch_hotels()
+
+    def test_fetch_hotels_raises_on_429(self):
+        with patch("app.hotels.makcorps_provider._MAKCORPS_API_KEY", "sk-test"):
+            adapter = MakcorpsHotelProviderAdapter(session=_mock_session(status_code=429))
+            with pytest.raises(ValueError, match="status 429"):
                 adapter.fetch_hotels()
 
     def test_fetch_hotels_raises_on_timeout(self):
@@ -180,3 +228,18 @@ class TestMakcorpsProviderAdapter:
             result = adapter.fetch_hotels()
             assert len(result) == 1
             assert result[0].provider_hotel_id == "mk-valid"
+
+    def test_logs_never_expose_api_key(self, caplog: pytest.LogCaptureFixture):
+        secret = "sk-secret-never-log"
+        with patch("app.hotels.makcorps_provider._MAKCORPS_API_KEY", secret):
+            adapter = MakcorpsHotelProviderAdapter(session=_mock_session(status_code=500))
+            with pytest.raises(ValueError):
+                adapter.fetch_hotels()
+        assert secret not in caplog.text
+
+    def test_disabled_warning_never_exposes_bearer_value(self, caplog: pytest.LogCaptureFixture):
+        with patch("app.hotels.makcorps_provider._MAKCORPS_API_KEY", ""):
+            adapter = MakcorpsHotelProviderAdapter(session=_mock_session())
+            assert adapter.is_enabled() is False
+        assert "MAKCORPS_API_KEY" in caplog.text
+        assert "Bearer" not in caplog.text

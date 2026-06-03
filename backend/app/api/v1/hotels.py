@@ -120,7 +120,10 @@ def ingest_hotels_mock(
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
 ) -> HotelIngestOut:
-    result = hotels_service.ingest_hotels_mock(db)
+    try:
+        result = hotels_service.ingest_hotels_mock(db)
+    except ValueError as exc:
+        _raise_http_for_value_error(exc)
     return HotelIngestOut(
         provider_id=result.provider_id,
         hotels_processed=result.hotels_processed,
@@ -394,12 +397,19 @@ def delete_alert_rule(
 
 @router.get("/alert-events", response_model=list[HotelAlertEventOut])
 def list_alert_events(
+    hotel_id: str | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> list[HotelAlertEventOut]:
-    rows = hotels_service.list_hotel_alert_events(db, user_id=current_user.id, limit=limit, offset=offset)
+    rows = hotels_service.list_hotel_alert_events(
+        db,
+        user_id=current_user.id,
+        hotel_id=hotel_id,
+        limit=limit,
+        offset=offset,
+    )
     return [
         HotelAlertEventOut(
             id=row.id,

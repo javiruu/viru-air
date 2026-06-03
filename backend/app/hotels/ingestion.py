@@ -14,10 +14,13 @@ from app.hotels.mock_provider import MockHotelProviderAdapter
 from app.infrastructure.db.models import HotelProviderAlias, HotelRateSnapshot
 
 
+def is_hotel_provider_ingestion_enabled() -> bool:
+    return os.getenv("HOTEL_FEATURE_ENABLED", "false").strip().lower() in {"1", "true", "yes"}
+
+
 def resolve_hotel_provider() -> HotelProviderAdapter:
-    feature_enabled = os.getenv("HOTEL_FEATURE_ENABLED", "false").strip().lower() in {"1", "true", "yes"}
-    if not feature_enabled:
-        raise ValueError("HOTEL_FEATURE_ENABLED is false. Hotels module is disabled.")
+    if not is_hotel_provider_ingestion_enabled():
+        raise ValueError("HOTEL_FEATURE_ENABLED is false. Hotel provider ingestion and sweeps are disabled.")
 
     provider = os.getenv("HOTEL_PROVIDER", "mock").strip().lower()
     if provider == "mock":

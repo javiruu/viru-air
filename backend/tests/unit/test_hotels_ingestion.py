@@ -1,12 +1,15 @@
 ﻿from pathlib import Path
 import json
 
+from datetime import date
+
 import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.hotels.ingestion import HotelIngestionService, resolve_hotel_provider
-from app.infrastructure.db.models import Base, HotelProviderAlias, HotelRateSnapshot
+from app.infrastructure.db.models import Base, HotelProperty, HotelProviderAlias, HotelRateSnapshot
+from app.services.hotels_service import run_hotel_sweep
 
 
 def _db() -> Session:
@@ -27,7 +30,7 @@ def _close(db: Session) -> None:
 def test_resolve_hotel_provider_is_disabled_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("HOTEL_FEATURE_ENABLED", raising=False)
     monkeypatch.delenv("HOTEL_PROVIDER", raising=False)
-    with pytest.raises(ValueError, match="HOTEL_FEATURE_ENABLED is false"):
+    with pytest.raises(ValueError, match="ingestion and sweeps are disabled"):
         resolve_hotel_provider()
 
 
@@ -108,5 +111,54 @@ def test_ingestion_rejects_invalid_currency_and_date_range(
     try:
         with pytest.raises(ValueError, match="Invalid currency|Invalid stay range"):
             HotelIngestionService(db).ingest()
+    finally:
+        _close(db)
+
+
+def test_run_hotel_sweep_fails_cleanly_when_feature_flag_is_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("HOTEL_FEATURE_ENABLED", "false")
+    monkeypatch.setenv("HOTEL_PROVIDER", "mock")
+
+    db = _db()
+    try:
+        provider_run = run_hotel_sweep(db, provider="mock")
+        assert provider_run.status == "failed"
+        assert provider_run.error_message is not None
+        assert "HOTEL_FEATURE_ENABLED" in provider_run.error_message
+    finally:
+        _close(db)
+
+
+def test_read_paths_can_use_existing_data_even_when_feature_flag_is_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("HOTEL_FEATURE_ENABLED", "false")
+
+    db = _db()
+    try:
+        hotel = HotelProperty(
+            canonical_name="Hotel Persistido",
+            normalized_name="hotel persistido",
+            city="Madrid",
+            country_code="ES",
+            stars=4,
+        )
+        db.add(hotel)
+        db.flush()
+        db.add(
+            HotelRateSnapshot(
+                hotel_id=hotel.id,
+                provider="mock",
+                check_in=date(2026, 7, 1),
+                check_out=date(2026, 7, 3),
+                guests=2,
+                currency="EUR",
+                amount=150,
+            )
+        )
+        db.commit()
+
+        persisted_hotel = db.get(HotelProperty, hotel.id)
+        persisted_rates = db.scalars(select(HotelRateSnapshot).where(HotelRateSnapshot.hotel_id == hotel.id)).all()
+        assert persisted_hotel is not None
+        assert len(persisted_rates) == 1
     finally:
         _close(db)
