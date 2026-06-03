@@ -36,7 +36,8 @@ def search_hotels(
         stmt = stmt.where(HotelProperty.normalized_name.contains(normalized))
     if city:
         normalized_city = HotelNormalizationService.normalize_city(city)
-        stmt = stmt.where(HotelProperty.city.ilike(f"%{normalized_city}%"))
+        if normalized_city:
+            stmt = stmt.where(HotelProperty.normalized_city.contains(normalized_city))
     if country_code:
         stmt = stmt.where(HotelProperty.country_code == country_code)
     stmt = stmt.order_by(HotelProperty.canonical_name.asc()).offset(offset).limit(limit)
@@ -370,15 +371,12 @@ def list_hotel_alert_events(
     db: Session,
     *,
     user_id: str,
+    hotel_id: str | None = None,
     limit: int = 50,
     offset: int = 0,
 ) -> list[HotelAlertEvent]:
-    stmt = (
-        select(HotelAlertEvent)
-        .join(HotelAlertRule, HotelAlertEvent.rule_id == HotelAlertRule.id)
-        .where(HotelAlertRule.user_id == user_id)
-        .order_by(desc(HotelAlertEvent.created_at), desc(HotelAlertEvent.id))
-        .offset(offset)
-        .limit(limit)
-    )
+    stmt = select(HotelAlertEvent).join(HotelAlertRule, HotelAlertEvent.rule_id == HotelAlertRule.id).where(HotelAlertRule.user_id == user_id)
+    if hotel_id is not None:
+        stmt = stmt.where(HotelAlertEvent.hotel_id == hotel_id)
+    stmt = stmt.order_by(desc(HotelAlertEvent.created_at), desc(HotelAlertEvent.id)).offset(offset).limit(limit)
     return list(db.scalars(stmt))

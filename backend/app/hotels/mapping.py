@@ -70,6 +70,7 @@ class HotelMappingService:
             normalized_name=normalized_name,
             address=(record.raw_address or "").strip() or None,
             city=record.city.strip(),
+            normalized_city=normalized_city,
             country_code=country_code,
             latitude=record.latitude,
             longitude=record.longitude,
