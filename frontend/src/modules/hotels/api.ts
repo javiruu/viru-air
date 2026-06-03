@@ -3,6 +3,8 @@
 import type {
   HotelAlertEventOut,
   HotelAlertRuleOut,
+  HotelAreaResolveOut,
+  HotelAreaSearchResultOut,
   HotelCompSetDetailOut,
   HotelCompSetOut,
   HotelDetailOut,
@@ -11,6 +13,7 @@ import type {
   HotelParityOut,
   HotelRateOut,
   HotelSearchOut,
+  HotelTrackedOfferOut,
   HotelWatchlistItemOut,
   HotelsApiError,
 } from "./types";
@@ -25,7 +28,7 @@ export class HotelsRequestError extends Error implements HotelsApiError {
   }
 }
 
-function queryString(params: Record<string, string | number | null | undefined>): string {
+function queryString(params: Record<string, string | number | boolean | null | undefined>): string {
   const sp = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
     if (value === null || value === undefined || value === "") return;
@@ -157,3 +160,47 @@ export async function getHotelNearbySuggestions(
   return request<HotelNearbySuggestionOut[]>(`/hotels/comp-sets/${compSetId}/nearby-suggestions${queryString(params || {})}`);
 }
 
+export async function areaResolve(q: string): Promise<HotelAreaResolveOut> {
+  return request<HotelAreaResolveOut>(`/hotels/area-resolve${queryString({ q })}`);
+}
+
+export async function areaSearch(params: {
+  latitude: number;
+  longitude: number;
+  radius_km?: number;
+  check_in: string;
+  check_out: string;
+  guests?: number;
+  currency?: string;
+  min_stars?: number;
+  max_price?: number;
+  sort?: string;
+}): Promise<HotelAreaSearchResultOut[]> {
+  return request<HotelAreaSearchResultOut[]>(`/hotels/area-search${queryString(params)}`);
+}
+
+export async function listTrackedOffers(params?: { is_active?: boolean }): Promise<HotelTrackedOfferOut[]> {
+  return request<HotelTrackedOfferOut[]>(`/hotels/tracked-offers${queryString(params || {})}`);
+}
+
+export async function createTrackedOffer(payload: {
+  hotel_id: string;
+  area_label?: string | null;
+  check_in?: string | null;
+  check_out?: string | null;
+  guests?: number;
+  provider?: string;
+  initial_price?: number | null;
+  current_price?: number | null;
+  target_price?: number | null;
+  currency?: string;
+}): Promise<HotelTrackedOfferOut> {
+  return request<HotelTrackedOfferOut>("/hotels/tracked-offers", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteTrackedOffer(offerId: string): Promise<void> {
+  await request<{ status: string }>(`/hotels/tracked-offers/${offerId}`, { method: "DELETE" });
+}

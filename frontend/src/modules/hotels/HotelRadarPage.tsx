@@ -10,9 +10,11 @@ import {
   createHotelAlertRule,
   createHotelCompSet,
   createHotelWatchlistItem,
+  createTrackedOffer,
   deleteHotelAlertRule,
   deleteHotelCompSetMember,
   deleteHotelWatchlistItem,
+  deleteTrackedOffer,
   getHotelCompSetDetail,
   getHotelDetail,
   getHotelNearbySuggestions,
@@ -24,6 +26,7 @@ import {
   listHotelAlertRules,
   listHotelCompSets,
   listHotelWatchlist,
+  listTrackedOffers,
   searchHotels,
   updateHotelAlertRule,
 } from "./api";
@@ -31,6 +34,7 @@ import { HotelAlertsPanel } from "./components/HotelAlertsPanel";
 import { HotelCompSetPanel, HotelEmptyState } from "./components/HotelCompSetPanel";
 import { HotelResultCard, HotelSearchPanel } from "./components/HotelSearchPanel";
 import { HotelParitySignal, HotelPriceTimeline, HotelProviderStatusPill } from "./components/HotelTimelineAndSignals";
+import { HotelTrackedOffersPanel } from "./components/HotelTrackedOffersPanel";
 import { HotelWatchlistPanel } from "./components/HotelWatchlistPanel";
 import type {
   HotelAlertEventOut,
@@ -43,6 +47,7 @@ import type {
   HotelParityOut,
   HotelRateOut,
   HotelSearchOut,
+  HotelTrackedOfferOut,
   HotelWatchlistEntry,
   HotelWatchlistItemOut,
 } from "./types";
@@ -120,11 +125,17 @@ export function HotelRadarPage() {
   const [alertEventsError, setAlertEventsError] = useState<string | null>(null);
   const [alertCreateBusy, setAlertCreateBusy] = useState(false);
   const [alertBusyRuleIds, setAlertBusyRuleIds] = useState<string[]>([]);
+  const [trackedOffers, setTrackedOffers] = useState<HotelTrackedOfferOut[]>([]);
+  const [trackedOffersLoading, setTrackedOffersLoading] = useState(false);
+  const [trackedBusyOfferIds, setTrackedBusyOfferIds] = useState<string[]>([]);
+  const [trackedBusyHotelIds, setTrackedBusyHotelIds] = useState<string[]>([]);
+  const [collapsedPanels, setCollapsedPanels] = useState<Record<string, boolean>>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const selectedHotel = useMemo(() => results.find((item) => item.id === selectedHotelId) ?? null, [results, selectedHotelId]);
   const featureDisabled = Boolean(errorMessage && errorMessage.includes("HOTEL_FEATURE_ENABLED"));
   const watchlistHotelIds = useMemo(() => watchlistItems.map((item) => item.hotel_id), [watchlistItems]);
+  const trackedHotelIds = useMemo(() => trackedOffers.filter((o) => o.is_active).map((o) => o.hotel_id), [trackedOffers]);
   const selectedHotelAlertRules = useMemo(
     () => alertRules.filter((rule) => rule.hotel_id === selectedHotelId),
     [alertRules, selectedHotelId],
@@ -413,6 +424,56 @@ export function HotelRadarPage() {
     }
   }
 
+  async function refreshTrackedOffers() {
+    setTrackedOffersLoading(true);
+    try {
+      const offers = await listTrackedOffers();
+      setTrackedOffers(offers);
+    } catch {
+      // silently ignore — tracked offers are secondary
+    } finally {
+      setTrackedOffersLoading(false);
+    }
+  }
+
+  async function handleTrackPrice(hotelId: string) {
+    setTrackedBusyHotelIds((current) => [...current, hotelId]);
+    try {
+      const hotel = results.find((h) => h.id === hotelId);
+      await createTrackedOffer({
+        hotel_id: hotelId,
+        area_label: hotel?.city || undefined,
+        provider: "mock",
+        currency: "EUR",
+      });
+      await refreshTrackedOffers();
+      notify({ tone: "success", title: t("hotels.messages.trackedOfferCreated") });
+    } catch (error) {
+      const message = resolveHotelMessage(error, t);
+      notify({ tone: "error", title: message });
+    } finally {
+      setTrackedBusyHotelIds((current) => current.filter((id) => id !== hotelId));
+    }
+  }
+
+  async function handleStopTracking(offerId: string) {
+    setTrackedBusyOfferIds((current) => [...current, offerId]);
+    try {
+      await deleteTrackedOffer(offerId);
+      await refreshTrackedOffers();
+      notify({ tone: "success", title: t("hotels.messages.trackedOfferDeleted") });
+    } catch (error) {
+      const message = resolveHotelMessage(error, t);
+      notify({ tone: "error", title: message });
+    } finally {
+      setTrackedBusyOfferIds((current) => current.filter((id) => id !== offerId));
+    }
+  }
+
+  function toggleCollapse(key: string) {
+    setCollapsedPanels((current) => ({ ...current, [key]: !current[key] }));
+  }
+
   useEffect(() => {
     refreshCompSets().catch(() => undefined);
     let cancelled = false;
@@ -466,6 +527,7 @@ export function HotelRadarPage() {
 
     loadInitialWatchlist().catch(() => undefined);
     refreshAlertRules().catch(() => undefined);
+    refreshTrackedOffers().catch(() => undefined);
 
     return () => {
       cancelled = true;
@@ -601,12 +663,12 @@ export function HotelRadarPage() {
           <strong>{results.length}</strong>
         </article>
         <article className="hotel-overview-card">
-          <span>{t("hotels.overview.compSets")}</span>
-          <strong>{compSets.length}</strong>
+          <span>{t("hotels.overview.tracking")}</span>
+          <strong>{trackedOffers.filter((o) => o.is_active).length}</strong>
         </article>
         <article className="hotel-overview-card">
-          <span>{t("hotels.overview.nearby")}</span>
-          <strong>{featureDisabled ? t("hotels.overview.limited") : nearbySuggestions.length}</strong>
+          <span>{t("hotels.overview.watchlist")}</span>
+          <strong>{watchlistItems.length}</strong>
         </article>
       </section>
 
@@ -649,6 +711,9 @@ export function HotelRadarPage() {
                       void handleRemoveWatch(item.id, hotelId);
                     }
                   }}
+                  onTrackPrice={handleTrackPrice}
+                  trackedBusy={trackedBusyHotelIds.includes(hotel.id)}
+                  hasTracking={trackedHotelIds.includes(hotel.id)}
                 />
               ))}
               {results.length === 0 && !loading ? <HotelEmptyState /> : null}
@@ -656,27 +721,41 @@ export function HotelRadarPage() {
             </div>
           </section>
 
+          <HotelTrackedOffersPanel
+            offers={trackedOffers}
+            loading={trackedOffersLoading}
+            onStopTracking={(offerId) => {
+              void handleStopTracking(offerId);
+            }}
+            busyOfferIds={trackedBusyOfferIds}
+          />
+
           <HotelPriceTimeline rates={rates} />
         </div>
 
         <aside className="hoteles-side-column">
-          <section className="panel panel-soft hotel-selected-summary">
-            <div className="panel-header">
+          <section className={`panel panel-soft${collapsedPanels["detail"] ? " is-collapsed" : ""}`}>
+            <button type="button" className="panel-collapse-toggle" onClick={() => toggleCollapse("detail")} aria-expanded={!collapsedPanels["detail"]}>
               <h2 className="panel-title">{t("hotels.selected.title")}</h2>
-            </div>
-            {selectedHotel ? (
-              <div className="section-gap-sm hotel-selected-meta">
-                <strong>{selectedHotel.canonical_name}</strong>
-                <p className="panel-note hotel-selected-location">
-                  {selectedHotel.city}, {selectedHotel.country_code}
-                </p>
-                {hotelDetail?.address ? <p className="panel-note">{hotelDetail.address}</p> : null}
-                {hotelDetail?.updated_at ? <p className="panel-note">{t("hotels.selected.lastCapture")}: {new Date(hotelDetail.updated_at).toLocaleString(localeTag)}</p> : null}
-              </div>
-            ) : (
-              <p className="panel-note section-gap-sm">{t("hotels.selected.empty")}</p>
-            )}
-            {loadingRates ? <p className="panel-note section-gap-sm">{t("shared.states.loading")}</p> : null}
+              <span className="collapse-icon">{collapsedPanels["detail"] ? "+" : "−"}</span>
+            </button>
+            {!collapsedPanels["detail"] ? (
+              <>
+                {selectedHotel ? (
+                  <div className="section-gap-sm hotel-selected-meta">
+                    <strong>{selectedHotel.canonical_name}</strong>
+                    <p className="panel-note hotel-selected-location">
+                      {selectedHotel.city}, {selectedHotel.country_code}
+                    </p>
+                    {hotelDetail?.address ? <p className="panel-note">{hotelDetail.address}</p> : null}
+                    {hotelDetail?.updated_at ? <p className="panel-note">{t("hotels.selected.lastCapture")}: {new Date(hotelDetail.updated_at).toLocaleString(localeTag)}</p> : null}
+                  </div>
+                ) : (
+                  <p className="panel-note section-gap-sm">{t("hotels.selected.empty")}</p>
+                )}
+                {loadingRates ? <p className="panel-note section-gap-sm">{t("shared.states.loading")}</p> : null}
+              </>
+            ) : null}
           </section>
 
           <HotelWatchlistPanel
@@ -689,43 +768,65 @@ export function HotelRadarPage() {
             }}
           />
 
-          <HotelParitySignal signals={paritySignals} loading={parityLoading} error={parityError} />
+          <section className={`panel panel-soft${collapsedPanels["parity"] ? " is-collapsed" : ""}`}>
+            <button type="button" className="panel-collapse-toggle" onClick={() => toggleCollapse("parity")} aria-expanded={!collapsedPanels["parity"]}>
+              <h2 className="panel-title">{t("hotels.parity.title")}</h2>
+              <span className="collapse-icon">{collapsedPanels["parity"] ? "+" : "−"}</span>
+            </button>
+            {!collapsedPanels["parity"] ? <HotelParitySignal signals={paritySignals} loading={parityLoading} error={parityError} /> : null}
+          </section>
 
-          <HotelAlertsPanel
-            selectedHotel={selectedHotel}
-            rules={selectedHotelAlertRules}
-            rulesLoading={alertRulesLoading}
-            rulesError={alertRulesError}
-            events={selectedHotelAlertEvents}
-            eventsLoading={alertEventsLoading}
-            eventsError={alertEventsError}
-            createBusy={alertCreateBusy}
-            busyRuleIds={alertBusyRuleIds}
-            onCreateRule={handleCreateAlertRule}
-            onToggleRule={(ruleId, isActive) => {
-              void handleToggleAlertRule(ruleId, isActive);
-            }}
-            onDeleteRule={(ruleId) => {
-              void handleDeleteAlertRule(ruleId);
-            }}
-          />
+          <section className={`panel panel-soft${collapsedPanels["alerts"] ? " is-collapsed" : ""}`}>
+            <button type="button" className="panel-collapse-toggle" onClick={() => toggleCollapse("alerts")} aria-expanded={!collapsedPanels["alerts"]}>
+              <h2 className="panel-title">{t("hotels.alerts.title")}</h2>
+              <span className="collapse-icon">{collapsedPanels["alerts"] ? "+" : "−"}</span>
+            </button>
+            {!collapsedPanels["alerts"] ? (
+              <HotelAlertsPanel
+                selectedHotel={selectedHotel}
+                rules={selectedHotelAlertRules}
+                rulesLoading={alertRulesLoading}
+                rulesError={alertRulesError}
+                events={selectedHotelAlertEvents}
+                eventsLoading={alertEventsLoading}
+                eventsError={alertEventsError}
+                createBusy={alertCreateBusy}
+                busyRuleIds={alertBusyRuleIds}
+                onCreateRule={handleCreateAlertRule}
+                onToggleRule={(ruleId, isActive) => {
+                  void handleToggleAlertRule(ruleId, isActive);
+                }}
+                onDeleteRule={(ruleId) => {
+                  void handleDeleteAlertRule(ruleId);
+                }}
+              />
+            ) : null}
+          </section>
 
-          <HotelCompSetPanel
-            compSets={compSets}
-            selectedCompSet={selectedCompSet}
-            anchorDetail={compSetAnchorDetail}
-            anchorLoading={anchorLoading}
-            anchorError={anchorError}
-            hotels={results}
-            selectedHotelId={selectedHotelId}
-            nearbySuggestions={nearbySuggestions}
-            nearbyLoading={nearbyLoading}
-            nearbyMessage={nearbyMessage}
-            onCreateCompSet={handleCreateCompSet}
-            onSelectCompSet={handleSelectCompSet}
-            onAddMember={handleAddMember}
-            onDeleteMember={handleDeleteMember}
-          />
+          <section className={`panel panel-soft${collapsedPanels["compSet"] ? " is-collapsed" : ""}`}>
+            <button type="button" className="panel-collapse-toggle" onClick={() => toggleCollapse("compSet")} aria-expanded={!collapsedPanels["compSet"]}>
+              <h2 className="panel-title">{t("hotels.compSet.title")}</h2>
+              <span className="collapse-icon">{collapsedPanels["compSet"] ? "+" : "−"}</span>
+            </button>
+            {!collapsedPanels["compSet"] ? (
+              <HotelCompSetPanel
+                compSets={compSets}
+                selectedCompSet={selectedCompSet}
+                anchorDetail={compSetAnchorDetail}
+                anchorLoading={anchorLoading}
+                anchorError={anchorError}
+                hotels={results}
+                selectedHotelId={selectedHotelId}
+                nearbySuggestions={nearbySuggestions}
+                nearbyLoading={nearbyLoading}
+                nearbyMessage={nearbyMessage}
+                onCreateCompSet={handleCreateCompSet}
+                onSelectCompSet={handleSelectCompSet}
+                onAddMember={handleAddMember}
+                onDeleteMember={handleDeleteMember}
+              />
+            ) : null}
+          </section>
         </aside>
       </section>
     </main>
