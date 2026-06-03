@@ -1,11 +1,12 @@
 ﻿from __future__ import annotations
 
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
-from app.hotels.geo import HotelGeoService, HotelNearbySuggestion
+from app.hotels.geo import HotelGeoService, HotelNearbySuggestion, haversine_km
+from app.hotels.normalization import HotelNormalizationService
 from app.hotels.ingestion import HotelIngestionService
 from app.hotels.normalization import HotelNormalizationService
 from app.hotels.parity import HotelParityService, ParitySignal
@@ -17,6 +18,7 @@ from app.infrastructure.db.models import (
     HotelProperty,
     HotelProviderRun,
     HotelRateSnapshot,
+    HotelTrackedOffer,
     HotelWatchlistItem,
 )
 
@@ -379,4 +381,329 @@ def list_hotel_alert_events(
     if hotel_id is not None:
         stmt = stmt.where(HotelAlertEvent.hotel_id == hotel_id)
     stmt = stmt.order_by(desc(HotelAlertEvent.created_at), desc(HotelAlertEvent.id)).offset(offset).limit(limit)
+    return list(db.scalars(stmt))
+
+
+# ── HotelTrackedOffer ──────────────────────────────────────────────
+
+
+def create_tracked_offer(
+    db: Session,
+    *,
+    user_id: str,
+    hotel_id: str,
+    area_label: str | None = None,
+    origin_query: str | None = None,
+    latitude: float | None = None,
+    longitude: float | None = None,
+    radius_km: int | None = None,
+    check_in: object | None = None,
+    check_out: object | None = None,
+    guests: int = 2,
+    room_label: str | None = None,
+    meal_plan: str | None = None,
+    cancellation_policy: str | None = None,
+    provider: str = "mock",
+    initial_price: float | None = None,
+    current_price: float | None = None,
+    target_price: float | None = None,
+    currency: str = "EUR",
+) -> HotelTrackedOffer:
+    _ = get_hotel_or_404(db, hotel_id)
+
+    if initial_price is not None:
+        current = current_price if current_price is not None else initial_price
+    else:
+        current = current_price
+
+    offer = HotelTrackedOffer(
+        user_id=user_id,
+        hotel_id=hotel_id,
+        area_label=area_label,
+        origin_query=origin_query,
+        latitude=latitude,
+        longitude=longitude,
+        radius_km=radius_km,
+        check_in=check_in,
+        check_out=check_out,
+        guests=guests,
+        room_label=room_label,
+        meal_plan=meal_plan,
+        cancellation_policy=cancellation_policy,
+        provider=provider,
+        initial_price=initial_price,
+        current_price=current,
+        target_price=target_price,
+        currency=currency,
+    )
+    db.add(offer)
+    db.commit()
+    db.refresh(offer)
+    return offer
+
+
+def list_tracked_offers(
+    db: Session,
+    *,
+    user_id: str,
+    is_active: bool | None = None,
+) -> list[HotelTrackedOffer]:
+    stmt = select(HotelTrackedOffer).where(HotelTrackedOffer.user_id == user_id)
+    if is_active is not None:
+        stmt = stmt.where(HotelTrackedOffer.is_active == is_active)
+    stmt = stmt.order_by(desc(HotelTrackedOffer.created_at), desc(HotelTrackedOffer.id))
+    return list(db.scalars(stmt))
+
+
+def get_tracked_offer_or_404(db: Session, *, user_id: str, tracked_offer_id: str) -> HotelTrackedOffer:
+    offer = db.get(HotelTrackedOffer, tracked_offer_id)
+    if not offer:
+        raise ValueError("tracked_offer_not_found")
+    if offer.user_id != user_id:
+        raise PermissionError("not_allowed")
+    return offer
+
+
+def update_tracked_offer(
+    db: Session,
+    *,
+    user_id: str,
+    tracked_offer_id: str,
+    update_data: dict[str, object],
+) -> HotelTrackedOffer:
+    offer = get_tracked_offer_or_404(db, user_id=user_id, tracked_offer_id=tracked_offer_id)
+
+    allowed = {
+        "area_label",
+        "origin_query",
+        "latitude",
+        "longitude",
+        "radius_km",
+        "check_in",
+        "check_out",
+        "guests",
+        "room_label",
+        "meal_plan",
+        "cancellation_policy",
+        "provider",
+        "initial_price",
+        "current_price",
+        "target_price",
+        "currency",
+        "is_active",
+    }
+
+    for field, value in update_data.items():
+        if field in allowed:
+            setattr(offer, field, value)
+
+    db.add(offer)
+    db.commit()
+    db.refresh(offer)
+    return offer
+
+
+def delete_tracked_offer(db: Session, *, user_id: str, tracked_offer_id: str) -> None:
+    offer = get_tracked_offer_or_404(db, user_id=user_id, tracked_offer_id=tracked_offer_id)
+    db.delete(offer)
+    db.commit()
+
+
+def area_resolve(
+    db: Session,
+    *,
+    q: str,
+) -> dict[str, object]:
+    normalized = HotelNormalizationService.normalize_text(q)
+
+    # Find hotels whose normalized_city contains the query
+    hotels = list(
+        db.scalars(
+            select(HotelProperty).where(
+                HotelProperty.normalized_city.contains(normalized),
+                HotelProperty.latitude.is_not(None),
+                HotelProperty.longitude.is_not(None),
+            )
+        )
+    )
+
+    if not hotels:
+        raise ValueError("area_not_found")
+
+    # Compute centroid
+    lats = [float(h.latitude) for h in hotels]
+    lngs = [float(h.longitude) for h in hotels]
+    countries = {h.country_code for h in hotels}
+
+    avg_lat = sum(lats) / len(lats)
+    avg_lng = sum(lngs) / len(lngs)
+
+    # Determine confidence based on city convergence
+    if len(hotels) >= 3:
+        confidence = "high"
+    elif len(hotels) == 1:
+        confidence = "low"
+    else:
+        confidence = "medium"
+
+    # Build area label from the most common city
+    city_counts: dict[str, int] = {}
+    for h in hotels:
+        city_counts[h.city] = city_counts.get(h.city, 0) + 1
+    best_city = max(city_counts, key=city_counts.get)  # type: ignore[arg-type]
+
+    country_code = countries.pop() if len(countries) == 1 else "ES"
+
+    return {
+        "area_label": best_city,
+        "latitude": round(avg_lat, 4),
+        "longitude": round(avg_lng, 4),
+        "country_code": country_code,
+        "confidence": confidence,
+        "source": "internal",
+    }
+
+
+def area_search(
+    db: Session,
+    *,
+    latitude: float,
+    longitude: float,
+    radius_km: int,
+    check_in: object,
+    check_out: object,
+    guests: int,
+    currency: str,
+    min_stars: int | None = None,
+    max_price: float | None = None,
+    sort: str = "price",
+    user_id: str | None = None,
+) -> list[dict[str, object]]:
+    # Get all hotels with coordinates
+    hotels = list(
+        db.scalars(
+            select(HotelProperty).where(
+                HotelProperty.latitude.is_not(None),
+                HotelProperty.longitude.is_not(None),
+            )
+        )
+    )
+
+    # Filter by radius and min_stars
+    nearby: list[tuple[HotelProperty, float]] = []
+    for hotel in hotels:
+        if min_stars is not None and (hotel.stars is None or hotel.stars < min_stars):
+            continue
+        distance = haversine_km(
+            latitude, longitude,
+            float(hotel.latitude), float(hotel.longitude),
+        )
+        if distance <= radius_km:
+            nearby.append((hotel, round(distance, 1)))
+
+    if not nearby:
+        return []
+
+    nearby_hotel_ids = [h.id for h, _ in nearby]
+
+    # Get cheapest rate per hotel for the given criteria
+    rates_subq = (
+        select(
+            HotelRateSnapshot.hotel_id,
+            HotelRateSnapshot.provider,
+            HotelRateSnapshot.amount,
+            HotelRateSnapshot.currency,
+            func.row_number()
+            .over(
+                partition_by=HotelRateSnapshot.hotel_id,
+                order_by=HotelRateSnapshot.amount.asc(),
+            )
+            .label("rn"),
+        )
+        .where(
+            HotelRateSnapshot.hotel_id.in_(nearby_hotel_ids),
+            HotelRateSnapshot.check_in == check_in,
+            HotelRateSnapshot.check_out == check_out,
+            HotelRateSnapshot.guests == guests,
+            HotelRateSnapshot.currency == currency,
+        )
+        .subquery()
+    )
+
+    cheapest = db.execute(
+        select(
+            rates_subq.c.hotel_id,
+            rates_subq.c.provider,
+            rates_subq.c.amount,
+            rates_subq.c.currency,
+        ).where(rates_subq.c.rn == 1)
+    ).all()
+
+    price_map: dict[str, tuple[str, float, str]] = {}
+    for row in cheapest:
+        price_map[row.hotel_id] = (row.provider, float(row.amount), row.currency)
+
+    # Check tracked offers for this user
+    tracked_hotel_ids: set[str] = set()
+    if user_id:
+        tracked = db.scalars(
+            select(HotelTrackedOffer.hotel_id).where(
+                HotelTrackedOffer.user_id == user_id,
+                HotelTrackedOffer.is_active == True,
+                HotelTrackedOffer.hotel_id.in_(nearby_hotel_ids),
+            )
+        ).all()
+        tracked_hotel_ids = set(tracked)
+
+    # Build results
+    results: list[dict[str, object]] = []
+    for hotel, distance in nearby:
+        price_info = price_map.get(hotel.id)
+        if price_info:
+            provider, amount, curr = price_info
+            if max_price is not None and amount > max_price:
+                continue
+        else:
+            provider, amount, curr = None, None, currency
+
+        results.append({
+            "hotel_id": hotel.id,
+            "canonical_name": hotel.canonical_name,
+            "city": hotel.city,
+            "country_code": hotel.country_code,
+            "stars": hotel.stars,
+            "distance_km": distance,
+            "lowest_price": amount,
+            "currency": curr,
+            "provider": provider,
+            "check_in": check_in,
+            "check_out": check_out,
+            "guests": guests,
+            "has_tracking": hotel.id in tracked_hotel_ids,
+        })
+
+    # Sort
+    if sort == "price":
+        results.sort(key=lambda r: (r["lowest_price"] if r["lowest_price"] is not None else float("inf"), r["distance_km"]))
+    elif sort == "stars":
+        results.sort(key=lambda r: (-(r["stars"] or 0), r["distance_km"]))
+    else:  # distance
+        results.sort(key=lambda r: r["distance_km"])
+
+    return results
+
+
+def list_tracked_offer_snapshots(
+    db: Session,
+    *,
+    user_id: str,
+    tracked_offer_id: str,
+) -> list[HotelRateSnapshot]:
+    _ = get_tracked_offer_or_404(db, user_id=user_id, tracked_offer_id=tracked_offer_id)
+
+    stmt = (
+        select(HotelRateSnapshot)
+        .where(HotelRateSnapshot.tracked_offer_id == tracked_offer_id)
+        .order_by(desc(HotelRateSnapshot.collected_at), desc(HotelRateSnapshot.id))
+    )
     return list(db.scalars(stmt))

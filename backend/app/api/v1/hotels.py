@@ -11,6 +11,10 @@ from app.domain.schemas import (
     HotelAlertRuleCreateIn,
     HotelAlertRuleOut,
     HotelAlertRuleUpdateIn,
+    HotelAreaResolveOut,
+    HotelAreaResolveQueryIn,
+    HotelAreaSearchQueryIn,
+    HotelAreaSearchResultOut,
     HotelCompSetCreateIn,
     HotelCompSetDetailOut,
     HotelCompSetMemberCreateIn,
@@ -25,6 +29,9 @@ from app.domain.schemas import (
     HotelRatesQueryIn,
     HotelSearchOut,
     HotelSearchQueryIn,
+    HotelTrackedOfferCreateIn,
+    HotelTrackedOfferOut,
+    HotelTrackedOfferUpdateIn,
     HotelWatchlistItemCreateIn,
     HotelWatchlistItemOut,
 )
@@ -59,6 +66,8 @@ def _raise_http_for_value_error(exc: ValueError) -> None:
         "hotel_comp_set_not_found",
         "hotel_comp_set_member_not_found",
         "hotel_alert_rule_not_found",
+        "tracked_offer_not_found",
+        "area_not_found",
     }:
         raise HTTPException(status_code=404, detail=code) from exc
     if code in {
@@ -425,6 +434,329 @@ def list_alert_events(
     ]
 
 
+# ── Tracked Offers ─────────────────────────────────────────────────
+
+
+@router.get("/area-resolve", response_model=HotelAreaResolveOut)
+def area_resolve(
+    q: str = Query(min_length=1, max_length=120),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> HotelAreaResolveOut:
+    try:
+        _ = HotelAreaResolveQueryIn(q=q)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=_extract_validation_error_code(exc)) from exc
+
+    try:
+        result = hotels_service.area_resolve(db, q=q)
+    except ValueError as exc:
+        _raise_http_for_value_error(exc)
+
+    return HotelAreaResolveOut(
+        area_label=result["area_label"],
+        latitude=result["latitude"],
+        longitude=result["longitude"],
+        country_code=result["country_code"],
+        confidence=result["confidence"],
+        source=result["source"],
+    )
+
+
+@router.get("/area-search", response_model=list[HotelAreaSearchResultOut])
+def area_search(
+    latitude: float = Query(ge=-90, le=90),
+    longitude: float = Query(ge=-180, le=180),
+    radius_km: int = Query(default=5, ge=1, le=50),
+    check_in: Date = Query(),
+    check_out: Date = Query(),
+    guests: int = Query(default=2, ge=1, le=20),
+    currency: str = Query(default="EUR", max_length=3),
+    min_stars: int | None = Query(default=None, ge=1, le=5),
+    max_price: float | None = Query(default=None, ge=0),
+    sort: str = Query(default="price", max_length=10),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[HotelAreaSearchResultOut]:
+    try:
+        query = HotelAreaSearchQueryIn(
+            latitude=latitude,
+            longitude=longitude,
+            radius_km=radius_km,
+            check_in=check_in,
+            check_out=check_out,
+            guests=guests,
+            currency=currency,
+            min_stars=min_stars,
+            max_price=max_price,
+            sort=sort,
+        )
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=_extract_validation_error_code(exc)) from exc
+
+    results = hotels_service.area_search(
+        db,
+        latitude=query.latitude,
+        longitude=query.longitude,
+        radius_km=query.radius_km,
+        check_in=query.check_in,
+        check_out=query.check_out,
+        guests=query.guests,
+        currency=query.currency,
+        min_stars=query.min_stars,
+        max_price=query.max_price,
+        sort=query.sort,
+        user_id=current_user.id,
+    )
+    return [
+        HotelAreaSearchResultOut(
+            hotel_id=r["hotel_id"],
+            canonical_name=r["canonical_name"],
+            city=r["city"],
+            country_code=r["country_code"],
+            stars=r["stars"],
+            distance_km=r["distance_km"],
+            lowest_price=r["lowest_price"],
+            currency=r["currency"],
+            provider=r["provider"],
+            check_in=r["check_in"],
+            check_out=r["check_out"],
+            guests=r["guests"],
+            has_tracking=r["has_tracking"],
+        )
+        for r in results
+    ]
+
+
+@router.get("/tracked-offers", response_model=list[HotelTrackedOfferOut])
+def list_tracked_offers(
+    is_active: bool | None = Query(default=None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[HotelTrackedOfferOut]:
+    rows = hotels_service.list_tracked_offers(db, user_id=current_user.id, is_active=is_active)
+    return [
+        HotelTrackedOfferOut(
+            id=row.id,
+            user_id=row.user_id,
+            hotel_id=row.hotel_id,
+            area_label=row.area_label,
+            origin_query=row.origin_query,
+            latitude=float(row.latitude) if row.latitude is not None else None,
+            longitude=float(row.longitude) if row.longitude is not None else None,
+            radius_km=row.radius_km,
+            check_in=row.check_in,
+            check_out=row.check_out,
+            guests=row.guests,
+            room_label=row.room_label,
+            meal_plan=row.meal_plan,
+            cancellation_policy=row.cancellation_policy,
+            provider=row.provider,
+            initial_price=float(row.initial_price) if row.initial_price is not None else None,
+            current_price=float(row.current_price) if row.current_price is not None else None,
+            target_price=float(row.target_price) if row.target_price is not None else None,
+            currency=row.currency,
+            is_active=row.is_active,
+            created_at=row.created_at,
+            updated_at=row.updated_at,
+        )
+        for row in rows
+    ]
+
+
+@router.post("/tracked-offers", response_model=HotelTrackedOfferOut, status_code=201)
+def create_tracked_offer(
+    payload: HotelTrackedOfferCreateIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> HotelTrackedOfferOut:
+    try:
+        row = hotels_service.create_tracked_offer(
+            db,
+            user_id=current_user.id,
+            hotel_id=payload.hotel_id,
+            area_label=payload.area_label,
+            origin_query=payload.origin_query,
+            latitude=payload.latitude,
+            longitude=payload.longitude,
+            radius_km=payload.radius_km,
+            check_in=payload.check_in,
+            check_out=payload.check_out,
+            guests=payload.guests,
+            room_label=payload.room_label,
+            meal_plan=payload.meal_plan,
+            cancellation_policy=payload.cancellation_policy,
+            provider=payload.provider,
+            initial_price=payload.initial_price,
+            current_price=payload.current_price,
+            target_price=payload.target_price,
+            currency=payload.currency,
+        )
+    except ValueError as exc:
+        _raise_http_for_value_error(exc)
+    return HotelTrackedOfferOut(
+        id=row.id,
+        user_id=row.user_id,
+        hotel_id=row.hotel_id,
+        area_label=row.area_label,
+        origin_query=row.origin_query,
+        latitude=float(row.latitude) if row.latitude is not None else None,
+        longitude=float(row.longitude) if row.longitude is not None else None,
+        radius_km=row.radius_km,
+        check_in=row.check_in,
+        check_out=row.check_out,
+        guests=row.guests,
+        room_label=row.room_label,
+        meal_plan=row.meal_plan,
+        cancellation_policy=row.cancellation_policy,
+        provider=row.provider,
+        initial_price=float(row.initial_price) if row.initial_price is not None else None,
+        current_price=float(row.current_price) if row.current_price is not None else None,
+        target_price=float(row.target_price) if row.target_price is not None else None,
+        currency=row.currency,
+        is_active=row.is_active,
+        created_at=row.created_at,
+        updated_at=row.updated_at,
+    )
+
+
+@router.get("/tracked-offers/{tracked_offer_id}", response_model=HotelTrackedOfferOut)
+def get_tracked_offer(
+    tracked_offer_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> HotelTrackedOfferOut:
+    try:
+        row = hotels_service.get_tracked_offer_or_404(db, user_id=current_user.id, tracked_offer_id=tracked_offer_id)
+    except ValueError as exc:
+        _raise_http_for_value_error(exc)
+    except PermissionError as exc:
+        _raise_http_for_permission_error(exc)
+    return HotelTrackedOfferOut(
+        id=row.id,
+        user_id=row.user_id,
+        hotel_id=row.hotel_id,
+        area_label=row.area_label,
+        origin_query=row.origin_query,
+        latitude=float(row.latitude) if row.latitude is not None else None,
+        longitude=float(row.longitude) if row.longitude is not None else None,
+        radius_km=row.radius_km,
+        check_in=row.check_in,
+        check_out=row.check_out,
+        guests=row.guests,
+        room_label=row.room_label,
+        meal_plan=row.meal_plan,
+        cancellation_policy=row.cancellation_policy,
+        provider=row.provider,
+        initial_price=float(row.initial_price) if row.initial_price is not None else None,
+        current_price=float(row.current_price) if row.current_price is not None else None,
+        target_price=float(row.target_price) if row.target_price is not None else None,
+        currency=row.currency,
+        is_active=row.is_active,
+        created_at=row.created_at,
+        updated_at=row.updated_at,
+    )
+
+
+@router.patch("/tracked-offers/{tracked_offer_id}", response_model=HotelTrackedOfferOut)
+def update_tracked_offer(
+    tracked_offer_id: str,
+    payload_raw: dict[str, Any],
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> HotelTrackedOfferOut:
+    try:
+        payload = HotelTrackedOfferUpdateIn.model_validate(payload_raw)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=_extract_validation_error_code(exc)) from exc
+
+    try:
+        row = hotels_service.update_tracked_offer(
+            db,
+            user_id=current_user.id,
+            tracked_offer_id=tracked_offer_id,
+            update_data=payload.model_dump(exclude_unset=True),
+        )
+    except ValueError as exc:
+        _raise_http_for_value_error(exc)
+    except PermissionError as exc:
+        _raise_http_for_permission_error(exc)
+    return HotelTrackedOfferOut(
+        id=row.id,
+        user_id=row.user_id,
+        hotel_id=row.hotel_id,
+        area_label=row.area_label,
+        origin_query=row.origin_query,
+        latitude=float(row.latitude) if row.latitude is not None else None,
+        longitude=float(row.longitude) if row.longitude is not None else None,
+        radius_km=row.radius_km,
+        check_in=row.check_in,
+        check_out=row.check_out,
+        guests=row.guests,
+        room_label=row.room_label,
+        meal_plan=row.meal_plan,
+        cancellation_policy=row.cancellation_policy,
+        provider=row.provider,
+        initial_price=float(row.initial_price) if row.initial_price is not None else None,
+        current_price=float(row.current_price) if row.current_price is not None else None,
+        target_price=float(row.target_price) if row.target_price is not None else None,
+        currency=row.currency,
+        is_active=row.is_active,
+        created_at=row.created_at,
+        updated_at=row.updated_at,
+    )
+
+
+@router.delete("/tracked-offers/{tracked_offer_id}")
+def delete_tracked_offer(
+    tracked_offer_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict[str, str]:
+    try:
+        hotels_service.delete_tracked_offer(db, user_id=current_user.id, tracked_offer_id=tracked_offer_id)
+    except ValueError as exc:
+        _raise_http_for_value_error(exc)
+    except PermissionError as exc:
+        _raise_http_for_permission_error(exc)
+    return {"status": "ok"}
+
+
+@router.get("/tracked-offers/{tracked_offer_id}/snapshots", response_model=list[HotelRateOut])
+def get_tracked_offer_snapshots(
+    tracked_offer_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[HotelRateOut]:
+    try:
+        rows = hotels_service.list_tracked_offer_snapshots(db, user_id=current_user.id, tracked_offer_id=tracked_offer_id)
+    except ValueError as exc:
+        _raise_http_for_value_error(exc)
+    except PermissionError as exc:
+        _raise_http_for_permission_error(exc)
+    return [
+        HotelRateOut(
+            id=row.id,
+            hotel_id=row.hotel_id,
+            tracked_offer_id=row.tracked_offer_id,
+            provider_run_id=row.provider_run_id,
+            provider=row.provider,
+            check_in=row.check_in,
+            check_out=row.check_out,
+            guests=row.guests,
+            room_label=row.room_label,
+            meal_plan=row.meal_plan,
+            cancellation_policy=row.cancellation_policy,
+            currency=row.currency,
+            amount=float(row.amount),
+            availability_status=row.availability_status,
+            deep_link=row.deep_link,
+            collected_at=row.collected_at,
+        )
+        for row in rows
+    ]
+
+
 @router.get("/{hotel_id}", response_model=HotelDetailOut)
 def get_hotel_detail(
     hotel_id: str,
@@ -473,6 +805,9 @@ def get_hotel_rates(
     return [
         HotelRateOut(
             id=row.id,
+            hotel_id=row.hotel_id,
+            tracked_offer_id=row.tracked_offer_id,
+            provider_run_id=row.provider_run_id,
             provider=row.provider,
             check_in=row.check_in,
             check_out=row.check_out,
@@ -482,6 +817,8 @@ def get_hotel_rates(
             cancellation_policy=row.cancellation_policy,
             currency=row.currency,
             amount=float(row.amount),
+            availability_status=row.availability_status,
+            deep_link=row.deep_link,
             collected_at=row.collected_at,
         )
         for row in rows
