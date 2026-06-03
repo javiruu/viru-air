@@ -109,6 +109,17 @@ Entradas vivas actualizadas:
 - `docs/specs/README.md`
 - `docs/INDICE_UNICO.md`
 
+## Actualizacion manual 2026-06-03 (hotels closeout fase 0-2)
+
+Entradas vivas agregadas:
+
+- `docs/qa/hotels-pending-closeout.md`
+
+Entradas vivas actualizadas:
+
+- `docs/specs/hotels-intelligence-mvp.md`
+- `docs/INDICE_UNICO.md`
+
 ## Tabla
 
 | Ruta actual | Tipo | Estado | Acci?n propuesta | Nueva ruta | Motivo | Fuente de verdad |
@@ -243,6 +254,7 @@ Entradas vivas actualizadas:
 | docs/prompts/legacy/prompt-root-legacy.txt | prompt | hist?rico | conservar | docs/prompts/legacy/prompt-root-legacy.txt | Prompt legacy preservado | ninguna; material hist?rico |
 | docs/qa/README.md | QA | vivo | conservar | docs/qa/README.md | Navegaci?n y matriz reutilizable de QA | docs/qa/README.md |
 | docs/qa/acceptance-checklists/frontend-pr-checklist.md | QA | vivo | conservar | docs/qa/acceptance-checklists/frontend-pr-checklist.md | Checklist reutilizable de QA | docs/qa/acceptance-checklists/frontend-pr-checklist.md |
+| docs/qa/hotels-pending-closeout.md | QA | vivo | conservar | docs/qa/hotels-pending-closeout.md | Checklist viva de cierre operativo para `/hoteles` con deudas pendientes y checks | docs/qa/hotels-pending-closeout.md |
 | docs/qa/reports/quick-search-testsprite-strict-report-2026-04-23.md | QA | vivo | conservar | docs/qa/reports/quick-search-testsprite-strict-report-2026-04-23.md | Reporte activo y ligero, separado del hist?rico cerrado | docs/qa/reports/quick-search-testsprite-strict-report-2026-04-23.md |
 | docs/qa/testsprite/skillsprite-user-capabilities.md | QA | vivo | conservar | docs/qa/testsprite/skillsprite-user-capabilities.md | Referencia activa para TestSprite y QA funcional | docs/qa/testsprite/skillsprite-user-capabilities.md |
 | docs/qa/testsprite/testsprite-catalog.md | QA | vivo | conservar | docs/qa/testsprite/testsprite-catalog.md | Referencia activa para TestSprite y QA funcional | docs/qa/testsprite/testsprite-catalog.md |

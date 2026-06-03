@@ -64,13 +64,19 @@ export function HotelSearchPanel({
 export function HotelResultCard({
   hotel,
   isActive,
+  isInWatchlist,
+  watchlistBusy,
   onSelect,
   onAddWatch,
+  onRemoveWatch,
 }: {
   hotel: HotelSearchOut;
   isActive: boolean;
+  isInWatchlist: boolean;
+  watchlistBusy: boolean;
   onSelect: (hotelId: string) => void;
   onAddWatch: (hotelId: string) => void;
+  onRemoveWatch: (hotelId: string) => void;
 }) {
   const { t } = useI18n();
 
@@ -84,7 +90,15 @@ export function HotelResultCard({
         <span className="status-pill info">{hotel.stars ? `${hotel.stars}\u2605` : t("hotels.card.noStars")}</span>
       </button>
       <div className="row-actions hotel-result-actions">
-        <button type="button" className="btn-ghost btn-compact" onClick={() => onAddWatch(hotel.id)}>{t("hotels.actions.addToWatchlist")}</button>
+        <button
+          type="button"
+          className={`btn-ghost btn-compact${isInWatchlist ? " is-active" : ""}`}
+          onClick={() => (isInWatchlist ? onRemoveWatch(hotel.id) : onAddWatch(hotel.id))}
+          disabled={watchlistBusy}
+          aria-pressed={isInWatchlist}
+        >
+          {watchlistBusy ? t("shared.states.loading") : isInWatchlist ? t("hotels.actions.inWatchlist") : t("hotels.actions.addToWatchlist")}
+        </button>
       </div>
     </article>
   );

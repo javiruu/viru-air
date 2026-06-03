@@ -19512,6 +19512,7 @@ textarea::placeholder {
 
 .hotel-results-panel.is-empty,
 .hotel-selected-summary,
+.hotel-watchlist-panel,
 .hotel-parity-signal,
 .hotel-comp-set-panel {
   background:
@@ -19582,6 +19583,30 @@ textarea::placeholder {
 
 .hotel-selected-summary {
   overflow: hidden;
+}
+
+.hotel-watchlist-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.hotel-watchlist-item {
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.hotel-watchlist-copy {
+  min-width: 0;
+}
+
+.hotel-watchlist-copy strong {
+  display: block;
+  margin-bottom: 0.12rem;
+}
+
+.hotel-watchlist-actions {
+  display: flex;
+  align-items: center;
 }
 
 .hotel-selected-meta {
