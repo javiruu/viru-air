@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import date as date_type, datetime
+from typing import Optional
 
 from app.core.time import utc_now_naive
 from uuid import uuid4
@@ -363,6 +364,8 @@ class HotelRateSnapshot(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     hotel_id: Mapped[str] = mapped_column(ForeignKey("hotel_property.id"), index=True)
+    tracked_offer_id: Mapped[str | None] = mapped_column(ForeignKey("hotel_tracked_offer.id"), nullable=True, index=True)
+    provider_run_id: Mapped[str | None] = mapped_column(ForeignKey("hotel_provider_run.id"), nullable=True, index=True)
     provider: Mapped[str] = mapped_column(String(40), index=True)
     check_in: Mapped[datetime.date] = mapped_column(Date, index=True)
     check_out: Mapped[datetime.date] = mapped_column(Date, index=True)
@@ -372,6 +375,8 @@ class HotelRateSnapshot(Base):
     cancellation_policy: Mapped[str | None] = mapped_column(String(120), nullable=True)
     currency: Mapped[str] = mapped_column(String(3), default="EUR")
     amount: Mapped[float] = mapped_column(Numeric(10, 2))
+    availability_status: Mapped[str] = mapped_column(String(20), default="available")
+    deep_link: Mapped[str | None] = mapped_column(String(500), nullable=True)
     collected_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, index=True)
 
 
@@ -431,6 +436,33 @@ class HotelProviderRun(Base):
     status: Mapped[str] = mapped_column(String(20), default="running")
     items_processed: Mapped[int] = mapped_column(Integer, default=0)
     error_message: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+
+class HotelTrackedOffer(Base):
+    __tablename__ = "hotel_tracked_offer"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    hotel_id: Mapped[str] = mapped_column(ForeignKey("hotel_property.id"), index=True)
+    area_label: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    origin_query: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    latitude: Mapped[float | None] = mapped_column(Numeric(10, 6), nullable=True)
+    longitude: Mapped[float | None] = mapped_column(Numeric(10, 6), nullable=True)
+    radius_km: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    check_in: Mapped[Optional[date_type]] = mapped_column(Date, nullable=True)
+    check_out: Mapped[Optional[date_type]] = mapped_column(Date, nullable=True)
+    guests: Mapped[int] = mapped_column(Integer, default=2)
+    room_label: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    meal_plan: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    cancellation_policy: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    provider: Mapped[str] = mapped_column(String(40))
+    initial_price: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    current_price: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    target_price: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    currency: Mapped[str] = mapped_column(String(3), default="EUR")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
 
 
 class HotelAlertEvent(Base):

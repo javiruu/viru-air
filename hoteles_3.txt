@@ -1,0 +1,567 @@
+Plan de desarrollo en 10 fases para /hoteles
+Fase 1 — Redefinir producto y congelar dirección
+
+Objetivo: dejar por escrito que /hoteles ya no es “inteligencia hotelera B2B”, sino:
+
+/hoteles = comparador y tracker diario de precios hoteleros por zona, fechas y condiciones de estancia.
+
+Qué debe hacer Codex:
+
+Crear:
+
+docs/specs/hotels-product-direction.md
+
+Debe explicar:
+
+Qué será /hoteles.
+Qué NO será.
+Qué piezas actuales se conservan.
+Qué piezas se renombran.
+Flujo principal de usuario.
+Modelo de datos objetivo.
+Qué pasa con comp sets.
+Qué pasa con paridad.
+Qué pasa con Makcorps.
+Plan de migración.
+
+Criterio de aceptación:
+
+No toca backend.
+No toca frontend.
+Solo documentación.
+Queda claro que la prioridad es búsqueda por zona + tracking diario de precio.
+
+Prompt para Codex:
+
+Reorienta conceptualmente el módulo /hoteles.
+
+La intención real de /hoteles es crear un comparador y tracker diario de precios hoteleros tipo Trivago.
+
+El usuario debe poder buscar hoteles cerca de un área específica, con fechas, huéspedes y filtros básicos. La app muestra hoteles comparables por precio, proveedor y distancia. El usuario puede guardar una oferta o precio concreto para que Viru lo trackee cada día, igual que /watchlist hace con vuelos.
+
+Crea docs/specs/hotels-product-direction.md.
+
+No implementes código todavía.
+No borres lo existente.
+No toques backend/frontend.
+Fase 2 — Crear el modelo HotelTrackedOffer
+
+Objetivo: añadir la pieza que falta: un seguimiento real de precio hotelero.
+
+Ahora HotelWatchlistItem se queda corto porque guarda hotel_id, pero no guarda fechas, huéspedes, proveedor, precio inicial ni condiciones. Hay que crear una entidad nueva.
+
+Modelo propuesto:
+
+HotelTrackedOffer
+- id
+- user_id
+- hotel_id
+- area_label
+- origin_query
+- latitude
+- longitude
+- radius_km
+- check_in
+- check_out
+- guests
+- room_label
+- meal_plan
+- cancellation_policy
+- provider
+- initial_price
+- current_price
+- target_price
+- currency
+- is_active
+- created_at
+- updated_at
+
+Cambios backend:
+
+Modelo SQLAlchemy.
+Migración Alembic.
+Schemas Pydantic.
+Servicios CRUD básicos.
+Tests unitarios.
+
+Endpoints nuevos:
+
+GET    /api/v1/hotels/tracked-offers
+POST   /api/v1/hotels/tracked-offers
+GET    /api/v1/hotels/tracked-offers/{tracked_offer_id}
+PATCH  /api/v1/hotels/tracked-offers/{tracked_offer_id}
+DELETE /api/v1/hotels/tracked-offers/{tracked_offer_id}
+
+Criterio de aceptación:
+
+Se puede guardar una oferta concreta con fechas y precio.
+Cada seguimiento pertenece a un usuario.
+No se rompe HotelWatchlistItem todavía.
+
+Prompt para Codex:
+
+Añade el modelo HotelTrackedOffer para convertir /hoteles en un tracker real de precios hoteleros.
+
+No elimines HotelWatchlistItem todavía.
+
+Implementa:
+1. Modelo SQLAlchemy HotelTrackedOffer.
+2. Migración Alembic.
+3. Schemas Pydantic.
+4. Servicios CRUD.
+5. Endpoints /hotels/tracked-offers.
+6. Tests de ownership, creación, listado, update y borrado.
+
+El seguimiento debe guardar hotel_id, fechas, huéspedes, proveedor, precio inicial, precio actual, precio objetivo, moneda, zona/radio y estado activo.
+Fase 3 — Separar “oferta actual” de “snapshot histórico”
+
+Objetivo: que Viru pueda distinguir entre:
+
+precio encontrado ahora;
+precio guardado;
+precio capturado cada día.
+
+HotelRateSnapshot ya existe y es útil, pero debe conectarse mejor con HotelTrackedOffer.
+
+Cambios recomendados:
+
+Añadir a HotelRateSnapshot:
+
+tracked_offer_id nullable
+provider_run_id nullable
+availability_status
+deep_link nullable
+
+Reglas:
+
+Si el snapshot viene de una búsqueda normal, puede no tener tracked_offer_id.
+Si viene de una revisión diaria, debe tener tracked_offer_id.
+Mantener compatibilidad con snapshots antiguos.
+
+Criterio de aceptación:
+
+Los snapshots históricos pueden asociarse a un seguimiento.
+El histórico de un tracked offer se puede consultar sin mezclarlo con otros hoteles/fechas.
+
+Endpoint nuevo:
+
+GET /api/v1/hotels/tracked-offers/{tracked_offer_id}/snapshots
+
+Prompt para Codex:
+
+Evoluciona HotelRateSnapshot para soportar tracking diario de HotelTrackedOffer.
+
+Añade campos:
+- tracked_offer_id nullable
+- provider_run_id nullable
+- availability_status
+- deep_link nullable
+
+Implementa endpoint:
+GET /api/v1/hotels/tracked-offers/{tracked_offer_id}/snapshots
+
+Mantén compatibilidad con snapshots existentes.
+Añade tests de migración, creación y consulta por tracked_offer_id.
+Fase 4 — Búsqueda por área real
+
+Objetivo: convertir el buscador actual de “nombre + ciudad” en búsqueda tipo comparador.
+
+Ahora mismo falta la idea de:
+
+buscar cerca de esta zona
+
+Inputs nuevos:
+
+area_query
+latitude
+longitude
+radius_km
+check_in
+check_out
+guests
+currency
+min_stars
+max_price
+
+Endpoint recomendado:
+
+GET /api/v1/hotels/search
+
+Extendido con parámetros nuevos, o crear:
+
+GET /api/v1/hotels/area-search
+
+Yo recomiendo crear area-search para no ensuciar el endpoint actual.
+
+Output recomendado:
+
+hotel_id
+canonical_name
+city
+country_code
+stars
+distance_km
+lowest_price
+currency
+provider
+check_in
+check_out
+guests
+has_tracking
+
+Criterio de aceptación:
+
+Se puede buscar por coordenadas + radio.
+Los resultados se ordenan por precio o distancia.
+Si faltan coordenadas, devuelve error claro.
+No depende de comp sets.
+
+Prompt para Codex:
+
+Añade búsqueda hotelera por área para /hoteles.
+
+Crea endpoint:
+GET /api/v1/hotels/area-search
+
+Parámetros:
+- latitude
+- longitude
+- radius_km
+- check_in
+- check_out
+- guests
+- currency
+- min_stars opcional
+- max_price opcional
+- sort=price|distance|stars
+
+Debe devolver hoteles cercanos con distancia aproximada, precio más bajo disponible, proveedor y datos básicos.
+
+No uses comp sets para este flujo. Puedes reutilizar Haversine/HotelGeoService.
+Añade tests backend.
+Fase 5 — Resolver destino/zona desde texto
+
+Objetivo: que el usuario no tenga que meter lat/lng a mano.
+
+El flujo ideal es:
+
+Madrid Centro
+
+y Viru lo convierte en coordenadas.
+
+Primera versión simple:
+
+Si ya hay hoteles en esa ciudad, calcular centro aproximado.
+Si existe Nominatim o provider similar en el repo, usarlo detrás de flag.
+Si no hay geocoder, mantener modo mock con ciudades conocidas.
+
+Endpoint posible:
+
+GET /api/v1/hotels/area-resolve?q=Madrid Centro
+
+Respuesta:
+
+area_label
+latitude
+longitude
+country_code
+confidence
+source
+
+Criterio de aceptación:
+
+El frontend puede escribir una zona.
+Backend devuelve coordenadas.
+Si no puede resolver, error claro.
+Sin dependencia externa obligatoria en MVP.
+
+Prompt para Codex:
+
+Añade resolución básica de área para búsqueda hotelera.
+
+Crea:
+GET /api/v1/hotels/area-resolve?q=
+
+Primera versión:
+- resolver desde datos internos si hay hoteles en esa ciudad/zona;
+- usar mock resolver para ciudades de fixtures;
+- no añadir API externa obligatoria.
+
+Devuelve area_label, latitude, longitude, country_code, confidence y source.
+
+Añade tests para Madrid/Málaga/Córdoba si existen fixtures.
+Fase 6 — Reordenar UI como comparador tipo Trivago
+
+Objetivo: que /hoteles deje de parecer panel técnico y pase a parecer comparador.
+
+Nueva estructura UI:
+
+1. Buscador principal
+2. Resultados comparables
+3. Detalle del hotel seleccionado
+4. Botón “Trackear precio”
+5. Seguimientos activos
+6. Extras plegados: diferencia entre proveedores, hoteles cercanos, alertas avanzadas
+
+Cambios de copy:
+
+Ahora	Nuevo
+Radar hotelero	Hoteles / Rastreador hotelero
+Comp set	Hoteles cercanos
+Paridad	Diferencia entre proveedores
+Alert rules	Alertas de precio
+Alert events	Cambios detectados
+Sweep	Revisión diaria
+
+Criterio de aceptación:
+
+El usuario entiende la pantalla sin saber qué es “comp set”.
+El botón principal es “Trackear precio”.
+Paridad y comp sets no son protagonistas.
+
+Prompt para Codex:
+
+Reordena la UI de /hoteles para que funcione como comparador tipo Trivago + tracker de precios.
+
+Prioridad visual:
+1. Buscador por zona, fechas y huéspedes.
+2. Resultados con precio, proveedor, distancia y estrellas.
+3. Acción principal: “Trackear precio”.
+4. Seguimientos activos.
+5. Extras plegados/secundarios: diferencia entre proveedores, hoteles cercanos y alertas avanzadas.
+
+Renombra copy:
+- Comp set -> Hoteles cercanos / Comparativa de zona
+- Paridad -> Diferencia entre proveedores
+- Alert rules -> Alertas de precio
+- Alert events -> Cambios detectados
+- Sweep -> Revisión diaria
+
+No elimines funcionalidad existente; relega lo avanzado.
+Fase 7 — Guardar una oferta desde resultados
+
+Objetivo: que el usuario pueda pulsar “Trackear precio” en una card de resultado y crear un HotelTrackedOffer.
+
+Flujo:
+
+Usuario busca zona + fechas.
+Ve hoteles con precio.
+Pulsa “Trackear precio”.
+Se crea HotelTrackedOffer.
+Se guarda snapshot inicial.
+Aparece en “Seguimientos activos”.
+
+Datos que debe guardar:
+
+hotel_id
+area_label
+lat/lng/radius
+check_in/check_out
+guests
+provider
+initial_price
+current_price
+currency
+room_label
+meal_plan
+cancellation_policy
+
+Criterio de aceptación:
+
+Crear tracking desde una card.
+No crear duplicados exactos para mismo usuario/hotel/fechas/huéspedes/provider.
+Mostrar estado “Ya en seguimiento”.
+
+Prompt para Codex:
+
+Implementa el flujo “Trackear precio” desde los resultados de /hoteles.
+
+Al pulsar en una oferta:
+1. Crear HotelTrackedOffer.
+2. Guardar snapshot inicial asociado.
+3. Refrescar panel de seguimientos activos.
+4. Marcar resultado como “Ya en seguimiento”.
+
+Evita duplicados exactos por usuario + hotel + check_in + check_out + guests + provider.
+
+Añade tests backend y validación visual frontend.
+Fase 8 — Revisión diaria real de tracked offers
+
+Objetivo: que los sweeps dejen de revisar “hoteles en general” y pasen a revisar ofertas trackeadas concretas.
+
+Nuevo comportamiento de run_hotel_sweep:
+
+Buscar HotelTrackedOffer activos.
+Para cada tracked offer:
+consultar provider con mismas condiciones;
+guardar nuevo snapshot;
+actualizar current_price;
+calcular delta contra initial_price y snapshot anterior;
+crear eventos si hay cambios relevantes.
+Registrar HotelProviderRun.
+
+Criterio de aceptación:
+
+Un seguimiento activo recibe snapshots nuevos.
+Se actualiza current_price.
+Se puede ver evolución diaria.
+No se mezclan fechas distintas.
+
+Prompt para Codex:
+
+Reorienta run_hotel_sweep para revisar HotelTrackedOffer activos.
+
+Nuevo flujo:
+1. Listar HotelTrackedOffer activos.
+2. Consultar provider con las mismas condiciones guardadas.
+3. Crear HotelRateSnapshot asociado a tracked_offer_id.
+4. Actualizar current_price.
+5. Crear eventos de cambio si aplica.
+6. Registrar HotelProviderRun.
+
+Mantén compatibilidad con mock provider.
+Añade tests de sweep con tracked offers.
+Fase 9 — Alertas humanas de precio
+
+Objetivo: convertir alertas técnicas en algo entendible.
+
+Alertas visibles:
+
+Avísame si baja de X €
+Avísame si baja más de X %
+Avísame si sube más de X %
+Avísame si cambia el proveedor más barato
+Avísame si vuelve a estar disponible
+
+Internamente puedes mapear a:
+
+price_below
+price_above
+percentage_drop
+percentage_increase
+provider_changed
+availability_returned
+
+Qué hacer con parity_break:
+
+Mantenerlo como alerta avanzada, no como opción principal.
+
+Criterio de aceptación:
+
+Alertas se crean desde un tracked offer, no solo desde hotel.
+El usuario no ve nombres técnicos.
+Eventos se muestran como “Cambios detectados”.
+
+Prompt para Codex:
+
+Simplifica las alertas hoteleras para que funcionen sobre HotelTrackedOffer.
+
+UI visible:
+- Avísame si baja de X €
+- Avísame si baja más de X %
+- Avísame si sube más de X %
+- Avísame si cambia el proveedor más barato
+- Avísame si vuelve a estar disponible
+
+No mostrar “alert rules” ni “parity_break” como lenguaje principal.
+
+Internamente puedes mantener HotelAlertRule/Event si conviene, pero deben asociarse a tracked_offer_id cuando aplique.
+Añade tests.
+Fase 10 — QA final, limpieza conceptual y documentación
+
+Objetivo: dejar /hoteles cerrado como producto coherente.
+
+Revisión obligatoria:
+
+/hoteles busca por zona.
+Devuelve resultados tipo comparador.
+Se puede trackear una oferta.
+Se guarda snapshot inicial.
+El sweep genera snapshots diarios.
+Se ve histórico.
+Se ven cambios de precio.
+Las alertas son humanas.
+Comp sets/paridad quedan como extras.
+Dark/light/responsive correcto.
+
+Documentos a actualizar:
+
+docs/specs/hotels-product-direction.md
+docs/specs/hotels-intelligence-mvp.md
+docs/runbooks/hotels-sweeps.md
+docs/qa/hotels-visual-qa.md
+docs/qa/hotels-pending-closeout.md
+
+Checks:
+
+cd backend
+python -m pytest backend/tests/unit/test_hotels_ingestion.py backend/tests/unit/test_hotels_makcorps_provider.py backend/tests/integration/test_hotels_api_flow.py
+
+cd frontend
+npm run build
+
+Prompt para Codex:
+
+Cierra /hoteles como comparador y tracker diario de precios hoteleros.
+
+Verifica:
+1. Búsqueda por zona, fechas y huéspedes.
+2. Resultados con precio/proveedor/distancia.
+3. Crear HotelTrackedOffer desde resultado.
+4. Snapshot inicial.
+5. Sweep actualiza tracked offers.
+6. Histórico visible.
+7. Alertas humanas.
+8. Comp sets/paridad relegados como extras.
+9. Dark/light/responsive.
+10. Documentación actualizada.
+
+Actualiza docs y deja lista de deudas futuras.
+No mezcles cambios no relacionados.
+Orden de ejecución recomendado
+Fase 1  → Spec producto
+Fase 2  → HotelTrackedOffer
+Fase 3  → Snapshots asociados al tracking
+Fase 4  → Búsqueda por área
+Fase 5  → Resolver zona desde texto
+Fase 6  → UI comparador
+Fase 7  → Trackear precio desde resultados
+Fase 8  → Revisión diaria de tracked offers
+Fase 9  → Alertas humanas
+Fase 10 → QA final y documentación
+Lo que NO debe hacer Codex durante este plan
+No borrar comp sets.
+No borrar paridad.
+No borrar alertas existentes.
+No reescribir todo HotelRadarPage de golpe.
+No mezclar backend + rediseño visual + provider real en una sola fase.
+No prometer Makcorps como Trivago real si aún no acepta zona/fechas/huéspedes.
+No tratar HotelWatchlistItem como tracking final.
+Prompt maestro para iniciar
+Vamos a reconducir /hoteles.
+
+La visión correcta ya no es “inteligencia hotelera B2B”, sino un comparador y tracker diario de precios hoteleros tipo Trivago.
+
+El usuario busca hoteles cerca de un área específica, con fechas, huéspedes y filtros básicos. La app muestra resultados comparables por precio, proveedor y distancia. El usuario puede guardar una oferta concreta para que Viru trackee ese precio cada día, igual que /watchlist hace con vuelos.
+
+Primera tarea:
+Crear docs/specs/hotels-product-direction.md.
+
+No implementes código.
+No borres nada.
+No toques backend/frontend.
+No cambies modelos todavía.
+
+El documento debe incluir:
+1. Qué será /hoteles.
+2. Qué NO será.
+3. Qué piezas actuales se conservan.
+4. Qué piezas se renombran o relegan.
+5. Flujo UX principal.
+6. Modelo objetivo: HotelProperty, HotelRateSnapshot, HotelTrackedOffer, HotelProviderRun, HotelAlertRule/Event.
+7. Qué pasa con comp sets.
+8. Qué pasa con paridad.
+9. Qué pasa con Makcorps.
+10. Plan de migración en 10 fases.
+11. Riesgos.
+12. Criterios de aceptación.
