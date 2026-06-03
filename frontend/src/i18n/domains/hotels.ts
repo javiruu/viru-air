@@ -1,6 +1,12 @@
-﻿export const hotelsEs = {
+export const hotelsEs = {
   title: "Radar hotelero",
   subtitle: "Pulso de tarifa, comp set y señal de paridad en una sola cabina.",
+  overview: {
+    hotels: "Hoteles en radar",
+    compSets: "Comp sets activos",
+    nearby: "Sugerencias listas",
+    limited: "Señal limitada",
+  },
   actions: {
     search: "Buscar hoteles",
     loadMock: "Cargar fixture mock",
@@ -49,12 +55,14 @@
     title: "Comp set",
     badge: "Comparativa",
     defaultName: "Comp set inicial",
+    activeLabel: "Comp set en foco",
     create: "Crear comp set",
     addSelected: "Añadir hotel seleccionado",
     addSelectedDisabled: "El hotel en foco ya pertenece a este comp set.",
     addNearby: "Añadir al comp set",
     members: "Miembros",
     availableHotels: "Hoteles visibles",
+    anchor: "Hotel anchor",
     empty: "Aún no hay comp sets.",
     nearbyTitle: "Sugerencias cercanas",
     nearbyHint: "Hoteles próximos al anchor del comp set para ampliar la comparativa.",
@@ -82,12 +90,19 @@
     memberAdded: "Hotel añadido al comp set.",
     memberAlreadyAdded: "Ese hotel ya forma parte del comp set.",
     anchorCannotBeMember: "El hotel anchor ya define el comp set y no puede añadirse como miembro.",
+    featureDisabled: "Radar hotelero está desactivado en este entorno. Activa HOTEL_FEATURE_ENABLED para usar el proveedor y las capturas mock.",
   },
 };
 
 export const hotelsEn = {
   title: "Hotel radar",
   subtitle: "Fare pulse, comp set, and parity signal in one cockpit.",
+  overview: {
+    hotels: "Hotels on radar",
+    compSets: "Active comp sets",
+    nearby: "Nearby suggestions",
+    limited: "Limited signal",
+  },
   actions: {
     search: "Search hotels",
     loadMock: "Load mock fixture",
@@ -136,12 +151,14 @@ export const hotelsEn = {
     title: "Comp set",
     badge: "Comparison",
     defaultName: "Initial comp set",
+    activeLabel: "Focused comp set",
     create: "Create comp set",
     addSelected: "Add selected hotel",
     addSelectedDisabled: "The focused hotel already belongs to this comp set.",
     addNearby: "Add to comp set",
     members: "Members",
     availableHotels: "Visible hotels",
+    anchor: "Anchor hotel",
     empty: "No comp sets yet.",
     nearbyTitle: "Nearby suggestions",
     nearbyHint: "Hotels near the comp set anchor to expand the comparison set.",
@@ -169,6 +186,6 @@ export const hotelsEn = {
     memberAdded: "Hotel added to comp set.",
     memberAlreadyAdded: "That hotel is already part of the comp set.",
     anchorCannotBeMember: "The anchor hotel already defines this comp set and cannot be added as a member.",
+    featureDisabled: "Hotel radar is disabled in this environment. Enable HOTEL_FEATURE_ENABLED to use provider and mock captures.",
   },
 };
-

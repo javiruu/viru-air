@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useI18n } from "@/i18n";
 
@@ -7,6 +7,7 @@ import type { HotelCompSetDetailOut, HotelCompSetOut, HotelNearbySuggestionOut, 
 export function HotelCompSetPanel({
   compSets,
   selectedCompSet,
+  selectedCompSetAnchor,
   hotels,
   selectedHotelId,
   nearbySuggestions,
@@ -18,6 +19,7 @@ export function HotelCompSetPanel({
 }: {
   compSets: HotelCompSetOut[];
   selectedCompSet: HotelCompSetDetailOut | null;
+  selectedCompSetAnchor: HotelSearchOut | null;
   hotels: HotelSearchOut[];
   selectedHotelId: string | null;
   nearbySuggestions: HotelNearbySuggestionOut[];
@@ -50,15 +52,31 @@ export function HotelCompSetPanel({
       </div>
       <div className="hotel-comp-set-list section-gap-sm">
         {compSets.map((compSet) => (
-          <button key={compSet.id} type="button" className={`hotel-comp-set-item${selectedCompSet?.id === compSet.id ? " is-active" : ""}`} onClick={() => onSelectCompSet(compSet.id)}>
+          <button
+            key={compSet.id}
+            type="button"
+            className={`hotel-comp-set-item${selectedCompSet?.id === compSet.id ? " is-active" : ""}`}
+            onClick={() => onSelectCompSet(compSet.id)}
+          >
             {compSet.name}
           </button>
         ))}
         {compSets.length === 0 ? <p className="panel-note">{t("hotels.compSet.empty")}</p> : null}
       </div>
       {selectedCompSet ? (
-        <div className="section-gap-sm">
-          <p className="panel-note">{t("hotels.compSet.members")}: {selectedCompSet.members.length}</p>
+        <div className="section-gap-sm hotel-comp-set-active">
+          <div className="hotel-comp-set-summary">
+            <div>
+              <span className="hotel-comp-set-eyebrow">{t("hotels.compSet.activeLabel")}</span>
+              <strong>{selectedCompSet.name}</strong>
+              {selectedCompSetAnchor ? (
+                <p className="panel-note">
+                  {t("hotels.compSet.anchor")}: {selectedCompSetAnchor.canonical_name}
+                </p>
+              ) : null}
+            </div>
+            <span className="status-pill info">{t("hotels.compSet.members")}: {selectedCompSet.members.length}</span>
+          </div>
           <div className="hotel-comp-set-actions">
             <button
               type="button"
@@ -82,11 +100,12 @@ export function HotelCompSetPanel({
               <div className="hotel-nearby-list">
                 {nearbySuggestions.map((suggestion) => (
                   <article key={suggestion.hotel_id} className="hotel-nearby-item">
-                    <div>
+                    <div className="hotel-nearby-copy">
                       <strong>{suggestion.canonical_name}</strong>
                       <p className="panel-note">
                         {suggestion.city}, {suggestion.country_code}
                       </p>
+                      <p className="panel-note">{suggestion.stars ? `${suggestion.stars}\u2605` : t("hotels.card.noStars")}</p>
                     </div>
                     <div className="hotel-nearby-actions">
                       <span className="status-pill info">
@@ -124,4 +143,3 @@ export function HotelEmptyState() {
     </section>
   );
 }
-
