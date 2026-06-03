@@ -120,6 +120,18 @@ Entradas vivas actualizadas:
 - `docs/specs/hotels-intelligence-mvp.md`
 - `docs/INDICE_UNICO.md`
 
+## Actualizacion manual 2026-06-03 (hotels closeout fases 7 y 8)
+
+Entradas vivas agregadas:
+
+- `docs/runbooks/hotels-sweeps.md`
+
+Entradas vivas actualizadas:
+
+- `docs/INDICE_UNICO.md`
+- `docs/qa/hotels-pending-closeout.md`
+- `docs/specs/hotels-intelligence-mvp.md`
+
 ## Tabla
 
 | Ruta actual | Tipo | Estado | Acci?n propuesta | Nueva ruta | Motivo | Fuente de verdad |

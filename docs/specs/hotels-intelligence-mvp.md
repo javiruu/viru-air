@@ -91,9 +91,12 @@ Minimo recomendado para despliegue incremental:
 
 Principio operativo:
 
-1. El modulo queda desactivado por defecto hasta activacion explicita del entorno.
-2. Con `HOTEL_FEATURE_ENABLED=true`, el modulo debe funcionar con provider `mock` y fixtures locales sin API keys.
-3. Providers reales se habilitan despues y detras de flag.
+1. La ruta `/hoteles` y los endpoints de lectura pueden seguir disponibles si existen datos persistidos.
+2. `HOTEL_FEATURE_ENABLED` gobierna solo ingesta, providers y sweeps hoteleros.
+3. Con `HOTEL_FEATURE_ENABLED=true`, el modulo debe funcionar con provider `mock` y fixtures locales sin API keys.
+4. Providers reales se habilitan despues y detras de flag.
+5. `HOTEL_PROVIDER_CACHE_TTL_SECONDS` queda reservado para una futura cache de proveedor; en este MVP no activa cache en runtime.
+6. El piloto Makcorps usa de momento el endpoint fijo `/v1/hotels/pricing`; cualquier parametrizacion posterior requiere contrato explicito.
 
 ## 7. Fases de implementacion (0->9)
 
@@ -134,7 +137,7 @@ Verificacion minima por fase:
 5. Fase 4: typecheck/build/lint frontend + evidencia visual de ruta nueva.
 6. Fase 5: tests de paridad + validacion UI de estados.
 7. Fase 6: ejecucion de job manual + validacion de registros/eventos.
-8. Fase 7: tests con fixtures de provider real + fallback seguro sin API key.
+8. Fase 7: tests con fixtures de provider real + desactivacion segura sin API key.
 9. Fase 8: tests de distancia/sugerencias + estado sin coordenadas.
 10. Fase 9: checklist QA visual dark/light/responsive/focus/copy.
 
@@ -176,20 +179,23 @@ Evidencia concreta:
 5. Endpoints internos activos en `backend/app/api/v1/hotels.py`, incluida paridad y alert events.
 6. Ruta frontend activa: `/hoteles`.
 7. Config de proveedor real presente: `backend/app/hotels/makcorps_provider.py`.
-8. Verificacion focalizada de backend hoteles: `59 passed`.
-9. Verificacion frontend: `npm run build` OK.
-10. Correccion nucleo 2026-06-02: `GET /api/v1/hotels/alert-events` deja de colisionar con `GET /{hotel_id}` al declararse antes de las rutas dinamicas.
-11. Fase 8 activa: endpoint `GET /api/v1/hotels/comp-sets/{comp_set_id}/nearby-suggestions` y bloque UI de `Sugerencias cercanas` dentro del panel de comp set.
-12. Correccion de cierre 2026-06-03: frontend consume `GET /api/v1/hotels/{hotel_id}/parity` como unica fuente de verdad de paridad.
-13. Correccion de cierre 2026-06-03: el hotel base del comp set se resuelve por `hotel_id` y ya no depende de seguir visible en `results`.
-14. Checklist viva de cierre agregada en `docs/qa/hotels-pending-closeout.md`.
+8. Cierre de semantica 2026-06-03: `HOTEL_FEATURE_ENABLED` deja de implicar que `/hoteles` desaparece y pasa a gobernar solo ingesta, providers y sweeps.
+9. Cierre de endurecimiento 2026-06-03: Makcorps valida payloads vacios/malformados, descarta rates invalidos y no promete fallback automatico a mock ni cache activa inexistente.
+10. Verificacion focalizada de backend hoteles: `46 passed` con `python -m pytest backend/tests/unit/test_hotels_ingestion.py backend/tests/unit/test_hotels_makcorps_provider.py backend/tests/integration/test_hotels_api_flow.py`.
+11. Verificacion frontend: `npm run build` OK tras actualizar el copy de estados ligados al flag.
+12. Correccion nucleo 2026-06-02: `GET /api/v1/hotels/alert-events` deja de colisionar con `GET /{hotel_id}` al declararse antes de las rutas dinamicas.
+13. Fase 8 activa: endpoint `GET /api/v1/hotels/comp-sets/{comp_set_id}/nearby-suggestions` y bloque UI de `Sugerencias cercanas` dentro del panel de comp set.
+14. Correccion de cierre 2026-06-03: frontend consume `GET /api/v1/hotels/{hotel_id}/parity` como unica fuente de verdad de paridad.
+15. Correccion de cierre 2026-06-03: el hotel base del comp set se resuelve por `hotel_id` y ya no depende de seguir visible en `results`.
+16. Checklist viva de cierre agregada en `docs/qa/hotels-pending-closeout.md`.
+17. Cierre operativo 2026-06-03: sweeps hoteleros documentados en `docs/runbooks/hotels-sweeps.md`, con worker opcional separado y `HOTEL_SWEEP_ENABLED=false` por defecto.
+18. Cierre de busqueda 2026-06-03: `HotelProperty.normalized_city` respalda la busqueda por ciudad y corrige coincidencias con acentos y case-insensitive.
 
 Observaciones pendientes:
 
 1. Fase 9 QA visual y polish final sigue pendiente como pasada separada.
-2. La watchlist hotelera visible y la UI minima de alertas siguen fuera del cierre actual.
 
 Siguiente paso propuesto (acotado):
 
-1. Completar watchlist hotelera visible y UI minima de alertas en la ruta `/hoteles`.
-2. Revisar polish visual y responsive fino del bloque de sugerencias cercanas en Fase 9.
+1. Documentar sweeps hoteleros manuales y su ausencia de scheduler automatico.
+2. Revisar polish visual y responsive fino del bloque de sugerencias cercanas, watchlist y alertas en Fase 9.

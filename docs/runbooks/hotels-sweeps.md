@@ -1,0 +1,108 @@
+# Runbook Sweeps Hoteleros
+
+**Estado:** vivo  
+**Ultima revision:** 2026-06-03  
+**Fuente de verdad:** si  
+**Area:** runbooks
+
+## Resumen
+
+Los sweeps hoteleros existen hoy como proceso ejecutable bajo demanda o mediante un worker opcional separado. No forman parte del startup del API ni tienen scheduler automatico activado por defecto.
+
+## Que hace `run_hotel_sweep`
+
+`run_hotel_sweep(db, provider=...)` crea un `HotelProviderRun`, ejecuta la ingesta del provider indicado y, al terminar, evalua reglas activas para crear `HotelAlertEvent` cuando corresponda.
+
+Estados esperados de `HotelProviderRun`:
+
+1. `running` al iniciar.
+2. `completed` si la ingesta termina correctamente y se pudieron evaluar alertas.
+3. `failed` si la ingesta o el provider lanzan error; el mensaje queda resumido en `error_message`.
+
+## Comandos exactos
+
+Ejecucion manual de una pasada:
+
+```bash
+cd backend
+python -m app.worker.hotels_sweep --once --provider mock
+```
+
+Loop opcional con intervalo configurado:
+
+```bash
+cd backend
+python -m app.worker.hotels_sweep --loop --provider mock --sleep-seconds 3600
+```
+
+## Variables necesarias
+
+Minimas para sweep mock:
+
+1. `HOTEL_FEATURE_ENABLED=true`
+2. `HOTEL_SWEEP_ENABLED=true` solo si se usa el worker `app.worker.hotels_sweep`
+3. `HOTEL_PROVIDER=mock` o `--provider mock`
+
+Para Makcorps:
+
+1. `HOTEL_FEATURE_ENABLED=true`
+2. `HOTEL_SWEEP_ENABLED=true` si se usa el worker en loop o `main()`
+3. `HOTEL_PROVIDER=makcorps` o `--provider makcorps`
+4. `MAKCORPS_API_KEY` valido
+5. `HOTEL_PROVIDER_TIMEOUT_SECONDS`
+6. `HOTEL_PROVIDER_MAX_RETRIES`
+
+## Tablas afectadas
+
+El sweep toca estas tablas del dominio hoteles:
+
+1. `hotel_property`
+2. `hotel_provider_alias`
+3. `hotel_rate_snapshot`
+4. `hotel_provider_run`
+5. `hotel_alert_event`
+
+Tambien lee:
+
+1. `hotel_alert_rule`
+
+## Como verificar el resultado
+
+Checks minimos:
+
+1. Ejecutar un sweep manual.
+2. Confirmar que existe un `HotelProviderRun` nuevo con `provider`, `status`, `items_processed`, `started_at` y `finished_at`.
+3. Si habia reglas activas y rates compatibles, confirmar nuevos registros en `HotelAlertEvent`.
+
+Ejemplo rapido en shell SQL o cliente ORM:
+
+```sql
+SELECT provider, status, items_processed, error_message, started_at, finished_at
+FROM hotel_provider_run
+ORDER BY started_at DESC
+LIMIT 5;
+```
+
+```sql
+SELECT event_type, hotel_id, provider_run_id, created_at
+FROM hotel_alert_event
+ORDER BY created_at DESC
+LIMIT 10;
+```
+
+## Scheduler opcional
+
+Existe un worker separado en `app.worker.hotels_sweep` con estas variables:
+
+1. `HOTEL_SWEEP_ENABLED=false` por defecto.
+2. `HOTEL_SWEEP_INTERVAL_SECONDS=3600` por defecto.
+
+Ese worker:
+
+1. no se arranca solo con el API;
+2. no bloquea requests ni startup;
+3. puede ejecutarse `--once` o `--loop`.
+
+## Limitacion actual
+
+No hay scheduler automatico integrado en el arranque del backend. Si nadie ejecuta el comando manual ni levanta el worker opcional, no habra sweeps hoteleros nuevos.

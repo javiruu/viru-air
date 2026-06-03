@@ -101,6 +101,7 @@
 
 - [Runbooks operativos](runbooks/)
 - [Configuración de dominio gratuito (FreeDomain)](runbooks/runbook-free-domain-setup.md)
+- [Sweeps hoteleros](runbooks/hotels-sweeps.md)
 
 ### Plans
 

@@ -333,6 +333,7 @@ class HotelProperty(Base):
     normalized_name: Mapped[str] = mapped_column(String(200), index=True)
     address: Mapped[str | None] = mapped_column(String(255), nullable=True)
     city: Mapped[str] = mapped_column(String(100), index=True)
+    normalized_city: Mapped[str] = mapped_column(String(100), index=True, default="")
     country_code: Mapped[str] = mapped_column(String(2), index=True)
     latitude: Mapped[float | None] = mapped_column(Numeric(10, 6), nullable=True)
     longitude: Mapped[float | None] = mapped_column(Numeric(10, 6), nullable=True)
