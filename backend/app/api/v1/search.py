@@ -1901,6 +1901,7 @@ def quick_search(
         "ryanair_fares_failed_partial",
         "ryanair_unavailable_partial",
         "provider_error_partial",
+        "provider_timeout_partial",
     }
     pass_1_has_degradation = any(code in degradation_signal_codes for code in pass_1["warning_codes"])
 
@@ -2124,11 +2125,11 @@ def quick_search(
     provider_status_entries = execution_meta.get("provider_statuses", [])
     provider_total_outage = "provider_total_outage" in warning_codes_set or "ryanair_provider_unavailable_total" in warning_codes_set
     partial_results_served = bool(scoped_ranked_results) and bool(
-        warning_codes_set & {"provider_timeout_partial", "provider_error_partial"}
+        warning_codes_set & degradation_signal_codes
     )
     if provider_total_outage:
         provider_overall_status = "total_outage"
-    elif warning_codes_set & {"provider_timeout_partial", "provider_error_partial"}:
+    elif warning_codes_set & degradation_signal_codes:
         provider_overall_status = "partial_degraded"
     else:
         provider_overall_status = "ok"

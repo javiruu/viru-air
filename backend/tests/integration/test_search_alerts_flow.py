@@ -10,7 +10,7 @@ from tests.helpers import register_and_token
 
 
 class _FakeSearchProvider:
-    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000) -> list[ProviderFlight]:
+    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object) -> list[ProviderFlight]:
         if origin == "MAD" and destination == "DUB":
             return [
                 ProviderFlight(
@@ -29,7 +29,7 @@ class _PriceSequenceProvider:
         self._prices = prices
         self._index = 0
 
-    def get_flights(self, origin: str, destination: str, travel_date: str) -> list[ProviderFlight]:
+    def get_flights(self, origin: str, destination: str, travel_date: str, **kwargs: object) -> list[ProviderFlight]:
         value = self._prices[min(self._index, len(self._prices) - 1)]
         self._index += 1
         return [

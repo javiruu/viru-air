@@ -4,6 +4,7 @@ from typing import Callable
 
 from app.door_to_door.providers.base import DoorToDoorProvider
 from app.door_to_door.providers.deeplink_blablacar import BlaBlaCarDeepLinkProvider
+from app.door_to_door.providers.deeplink_goopti import GoOptiDeepLinkProvider
 from app.door_to_door.providers.deeplink_provider import DeeplinkDoorToDoorProvider
 from app.door_to_door.providers.deeplink_maps import GoogleMapsDeepLinkProvider
 from app.door_to_door.providers.google_places import GooglePlacesSuggestionsProvider
@@ -153,6 +154,18 @@ def resolve_provider_runtime() -> ProviderRuntime:
             notes="Deeplink clasico para tramo origen -> aeropuerto de salida con compatibilidad contractual.",
             is_real=True,
             factory=BlaBlaCarDeepLinkProvider,
+        ),
+        ProviderDescriptor(
+            name="goopti_deeplink",
+            source_type="deeplink",
+            base_status="functional_deeplink",
+            production_ready=False,
+            supports_search=True,
+            supports_booking_url=True,
+            has_tests=True,
+            notes="Deeplink clasico para tramo aeropuerto de llegada -> destino final.",
+            is_real=True,
+            factory=GoOptiDeepLinkProvider,
         ),
         ProviderDescriptor(
             name="external_deeplink",

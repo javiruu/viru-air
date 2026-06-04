@@ -109,7 +109,7 @@ class _ProviderDateRescue:
     def __init__(self, target_date: date) -> None:
         self._target = target_date
 
-    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000):
+    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         del timeout_ms
         query_date = date.fromisoformat(travel_date)
         if origin == "MAD" and destination == "BCN" and query_date == self._target + timedelta(days=1):
@@ -129,7 +129,7 @@ class _ProviderDateRescue:
 
 
 class _ProviderNearbyRescue:
-    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000):
+    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         del travel_date, timeout_ms
         if origin == "AGP" and destination == "LIS":
             return ProviderFetchResult(
@@ -148,13 +148,13 @@ class _ProviderNearbyRescue:
 
 
 class _ProviderNeverRecovers:
-    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000):
+    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         del origin, destination, travel_date, timeout_ms
         return ProviderFetchResult(flights=[], warnings=["ryanair_availability_failed_partial"])
 
 
 class _ProviderExactSuccess:
-    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000):
+    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         del travel_date, timeout_ms
         if origin == "MAD" and destination == "BCN":
             return ProviderFetchResult(

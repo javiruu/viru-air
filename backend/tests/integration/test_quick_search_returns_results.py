@@ -8,7 +8,7 @@ from app.domain.entities import ProviderFlight
 
 
 class _FakeQuickSearchProvider:
-    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000) -> list[ProviderFlight]:
+    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object) -> list[ProviderFlight]:
         if origin == "AGP" and destination == "DUB":
             return [
                 ProviderFlight(
