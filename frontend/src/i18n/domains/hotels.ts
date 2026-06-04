@@ -25,6 +25,16 @@ export const hotelsEs = {
     cityPlaceholder: "Madrid, Málaga…",
     areaLabel: "Zona",
     areaPlaceholder: "Madrid Centro",
+    nameMode: "Por nombre",
+    areaMode: "Por zona",
+    checkInLabel: "Entrada",
+    checkOutLabel: "Salida",
+    guestsLabel: "Huéspedes",
+    guestsOption: "{count} huésped",
+  },
+  area: {
+    resultsTitle: "Hoteles en {area}",
+    distanceKm: "{distance} km",
   },
   provider: {
     statusMock: "Proveedor mock",
@@ -227,6 +237,16 @@ export const hotelsEn = {
     cityPlaceholder: "Madrid, Málaga…",
     areaLabel: "Area",
     areaPlaceholder: "Madrid Center",
+    nameMode: "By name",
+    areaMode: "By area",
+    checkInLabel: "Check-in",
+    checkOutLabel: "Check-out",
+    guestsLabel: "Guests",
+    guestsOption: "{count} guest",
+  },
+  area: {
+    resultsTitle: "Hotels in {area}",
+    distanceKm: "{distance} km",
   },
   provider: {
     statusMock: "Mock provider",
