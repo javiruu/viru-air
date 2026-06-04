@@ -15,8 +15,8 @@ token.txt
 keys.txt
 *.pid
 
-# Cloudflare Tunnel local config (contains real tunnel IDs)
-infra/cloudflared-config.local.yml
+# DuckDNS local config (contains real token/domain values)
+infra/duckdns.local.env
 
 # Local databases
 viru.db

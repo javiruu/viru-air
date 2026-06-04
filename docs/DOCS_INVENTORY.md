@@ -132,6 +132,26 @@ Entradas vivas actualizadas:
 - `docs/qa/hotels-pending-closeout.md`
 - `docs/specs/hotels-intelligence-mvp.md`
 
+## Actualizacion manual 2026-06-04 (duckdns public domain rewrite)
+
+Entradas vivas agregadas:
+
+- `docs/runbooks/runbook-duckdns-public-domain.md`
+
+Entradas vivas actualizadas:
+
+- `docs/INDICE_UNICO.md`
+- `docs/DOCS_INVENTORY.md`
+- `VIRU_PANEL.bat`
+- `infra/Caddyfile`
+- `infra/docker-compose.prod.yml`
+
+Entradas vivas retiradas:
+
+- `docs/runbooks/runbook-free-domain-setup.md`
+- `infra/cloudflared-config.yml`
+- `scripts/setup-cloudflared.ps1`
+
 ## Tabla
 
 | Ruta actual | Tipo | Estado | Acci?n propuesta | Nueva ruta | Motivo | Fuente de verdad |
@@ -283,6 +303,7 @@ Entradas vivas actualizadas:
 | docs/reports/docs-sanitize-audit.md | historical | hist?rico | conservar | docs/reports/docs-sanitize-audit.md | Reporte de auditor?a y saneamiento documental | docs/reports/docs-sanitize-audit.md |
 | docs/runbooks/runbook-canary-rollback.md | runbook | vivo | conservar | docs/runbooks/runbook-canary-rollback.md | Runbook operativo activo | docs/runbooks/runbook-canary-rollback.md |
 | docs/runbooks/runbook-db-retention.md | runbook | vivo | conservar | docs/runbooks/runbook-db-retention.md | Runbook operativo activo | docs/runbooks/runbook-db-retention.md |
+| docs/runbooks/runbook-duckdns-public-domain.md | runbook | vivo | conservar | docs/runbooks/runbook-duckdns-public-domain.md | Runbook operativo activo para DuckDNS y publicacion temporal | docs/runbooks/runbook-duckdns-public-domain.md |
 | docs/runbooks/runbook-oom.md | runbook | vivo | conservar | docs/runbooks/runbook-oom.md | Runbook operativo activo | docs/runbooks/runbook-oom.md |
 | docs/runbooks/runbook-provider-degraded.md | runbook | vivo | conservar | docs/runbooks/runbook-provider-degraded.md | Runbook operativo activo | docs/runbooks/runbook-provider-degraded.md |
 | docs/runbooks/runbook-route-canonicalization.md | runbook | vivo | conservar | docs/runbooks/runbook-route-canonicalization.md | Runbook operativo activo | docs/runbooks/runbook-route-canonicalization.md |
@@ -424,11 +445,11 @@ Entradas vivas agregadas:
 - docs/qa/reports/2026-05-12-watchlist-w9-2-history-rescue.md
 
 
-## Actualizacion manual 2026-05-27 (FreeDomain domain setup)
+## Actualizacion manual 2026-05-27 (DuckDNS domain setup)
 
 Entradas vivas agregadas:
 
-- `docs/runbooks/runbook-free-domain-setup.md`
+- `docs/runbooks/runbook-duckdns-public-domain.md`
 - `infra/Caddyfile`
 - `infra/docker-compose.prod.yml`
 - `infra/.env.prod.example`

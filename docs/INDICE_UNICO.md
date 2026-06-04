@@ -100,7 +100,7 @@
 ### Runbooks
 
 - [Runbooks operativos](runbooks/)
-- [Configuración de dominio gratuito (FreeDomain)](runbooks/runbook-free-domain-setup.md)
+- [DuckDNS + publicacion temporal](runbooks/runbook-duckdns-public-domain.md)
 - [Sweeps hoteleros](runbooks/hotels-sweeps.md)
 
 ### Plans
