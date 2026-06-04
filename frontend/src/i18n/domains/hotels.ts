@@ -137,6 +137,7 @@ export const hotelsEs = {
     createTitle: "Nueva alerta",
     createHint: "Alerta para {hotel}.",
     createCta: "Crear alerta",
+    showAdvanced: "Avanzada",
     rulesTitle: "Alertas activas",
     rulesHint: "Recibirás un aviso cuando se cumpla la condición.",
     rulesNoHotel: "Selecciona un hotel para ver sus alertas.",
@@ -157,6 +158,7 @@ export const hotelsEs = {
     thresholdFallback: "Sin umbral",
     fields: {
       ruleType: "Tipo de alerta",
+      advancedRuleType: "Alerta avanzada",
       thresholdAmount: "Importe",
       thresholdAmountPlaceholder: "120",
       thresholdPercent: "Porcentaje",
@@ -349,6 +351,7 @@ export const hotelsEn = {
     createTitle: "New alert",
     createHint: "Alert for {hotel}.",
     createCta: "Create alert",
+    showAdvanced: "Advanced",
     rulesTitle: "Active alerts",
     rulesHint: "You'll be notified when the condition is met.",
     rulesNoHotel: "Select a hotel to view its alerts.",
@@ -369,6 +372,7 @@ export const hotelsEn = {
     thresholdFallback: "No threshold",
     fields: {
       ruleType: "Alert type",
+      advancedRuleType: "Advanced alert",
       thresholdAmount: "Amount",
       thresholdAmountPlaceholder: "120",
       thresholdPercent: "Percent",

@@ -118,7 +118,9 @@ export function HotelAlertsPanel({
   const { t, localeTag } = useI18n();
   const [draft, setDraft] = useState<AlertFormDraft>(DEFAULT_DRAFT);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const selectedHotelName = selectedHotel?.canonical_name ?? null;
+  const advancedRuleTypes: HotelAlertRuleType[] = ["parity_break"];
   const ruleTypeLabel = useMemo(
     () => ({
       price_below: t("hotels.alerts.ruleTypes.priceBelow"),
@@ -213,9 +215,45 @@ export function HotelAlertsPanel({
                 <option value="percentage_increase">{ruleTypeLabel.percentage_increase}</option>
                 <option value="provider_changed">{ruleTypeLabel.provider_changed}</option>
                 <option value="availability_returned">{ruleTypeLabel.availability_returned}</option>
-                <option value="parity_break">{ruleTypeLabel.parity_break}</option>
               </select>
             </label>
+
+            {/* ── Advanced: parity_break ── */}
+            {!showAdvanced ? (
+              <button
+                type="button"
+                className="hotel-alerts-advanced-toggle"
+                onClick={() => setShowAdvanced(true)}
+              >
+                {t("hotels.alerts.showAdvanced")}
+              </button>
+            ) : (
+              <>
+                <hr className="hotel-alerts-advanced-divider" />
+                <label className="field qs-label">
+                  <span>{t("hotels.alerts.fields.advancedRuleType")}</span>
+                  <select
+                    className="qs-input-neutral"
+                    value={draft.ruleType}
+                    onChange={(event) => {
+                      const nextRuleType = event.target.value as HotelAlertRuleType;
+                      setDraft((current) => ({
+                        ...current,
+                        ruleType: nextRuleType,
+                        thresholdAmount: (nextRuleType === "parity_break" || nextRuleType === "percentage_drop" || nextRuleType === "percentage_increase" || nextRuleType === "provider_changed" || nextRuleType === "availability_returned") ? "" : current.thresholdAmount,
+                        thresholdPercent: (nextRuleType === "provider_changed" || nextRuleType === "availability_returned") ? "" : current.thresholdPercent,
+                      }));
+                      setValidationMessage(null);
+                    }}
+                  >
+                    <option value="" disabled>—</option>
+                    {advancedRuleTypes.map((at) => (
+                      <option key={at} value={at}>{ruleTypeLabel[at]}</option>
+                    ))}
+                  </select>
+                </label>
+              </>
+            )}
 
             <div className={`hotel-alerts-thresholds${shouldShowAmount || shouldShowPercent ? "" : " is-no-thresholds"}`}>
               {shouldShowAmount ? (
