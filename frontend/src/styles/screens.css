@@ -20317,3 +20317,30 @@ textarea::placeholder {
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Hotel alerts advanced toggle ── */
+.hotel-alerts-advanced-toggle {
+  display: inline-flex;
+  border: none;
+  background: none;
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.2rem 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  opacity: 0.75;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.hotel-alerts-advanced-toggle:hover {
+  opacity: 1;
+  color: var(--ink);
+}
+
+.hotel-alerts-advanced-divider {
+  border: none;
+  border-top: 1px dashed var(--border);
+  margin: 0.15rem 0 0.5rem;
+}
