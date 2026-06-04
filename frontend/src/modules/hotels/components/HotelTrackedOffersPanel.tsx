@@ -1,25 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useI18n } from "@/i18n";
 
+import { formatDateShort, formatPrice } from "../format";
 import type { HotelTrackedOfferOut } from "../types";
-
-function formatDate(iso: string | null, localeTag: string): string {
-  if (!iso) return "—";
-  return new Intl.DateTimeFormat(localeTag, {
-    day: "2-digit",
-    month: "short",
-  }).format(new Date(iso));
-}
-
-function formatPrice(value: number | null, currency: string, localeTag: string): string {
-  if (value === null) return "—";
-  return new Intl.NumberFormat(localeTag, {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+import { HotelTrackedOfferSnapshots } from "./HotelTrackedOfferSnapshots";
 
 export function HotelTrackedOffersPanel({
   offers,
@@ -33,6 +19,11 @@ export function HotelTrackedOffersPanel({
   busyOfferIds: string[];
 }) {
   const { t, localeTag } = useI18n();
+  const [expandedSnapshots, setExpandedSnapshots] = useState<Record<string, boolean>>({});
+
+  function toggleSnapshots(offerId: string) {
+    setExpandedSnapshots((curr) => ({ ...curr, [offerId]: !curr[offerId] }));
+  }
 
   return (
     <section className="panel panel-soft hotel-tracked-offers-panel">
@@ -61,11 +52,19 @@ export function HotelTrackedOffersPanel({
                     <span className="status-pill info">{offer.provider}</span>
                   </div>
                   <div className="hotel-tracked-offer-dates panel-note">
-                    {formatDate(offer.check_in, localeTag)} → {formatDate(offer.check_out, localeTag)}
+                    {formatDateShort(offer.check_in, localeTag)} → {formatDateShort(offer.check_out, localeTag)}
                     {" · "}
                     {t("hotels.trackedOffers.guests", { count: offer.guests })}
                   </div>
                   <div className="hotel-tracked-offer-prices">
+                    {offer.initial_price !== null && offer.initial_price !== offer.current_price ? (
+                      <div className="hotel-tracked-offer-price-row">
+                        <span className="panel-note">{t("hotels.trackedOffers.initialPrice")}</span>
+                        <span className="panel-note">
+                          {formatPrice(offer.initial_price, offer.currency, localeTag)}
+                        </span>
+                      </div>
+                    ) : null}
                     <div className="hotel-tracked-offer-price-row">
                       <span className="panel-note">{t("hotels.trackedOffers.currentPrice")}</span>
                       <strong className="hotel-tracked-offer-price-value">
@@ -86,12 +85,25 @@ export function HotelTrackedOffersPanel({
                   <button
                     type="button"
                     className="btn-ghost btn-compact"
+                    onClick={() => toggleSnapshots(offer.id)}
+                  >
+                    {expandedSnapshots[offer.id]
+                      ? t("hotels.trackedOffers.hideHistory")
+                      : t("hotels.trackedOffers.viewHistory")}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-ghost btn-compact"
                     onClick={() => onStopTracking(offer.id)}
                     disabled={busy}
                   >
                     {busy ? t("shared.states.loading") : t("hotels.trackedOffers.stopTracking")}
                   </button>
                 </div>
+                <HotelTrackedOfferSnapshots
+                  offerId={offer.id}
+                  visible={expandedSnapshots[offer.id] ?? false}
+                />
               </article>
             );
           })}
