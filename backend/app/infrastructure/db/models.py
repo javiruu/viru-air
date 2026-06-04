@@ -420,9 +420,11 @@ class HotelAlertRule(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     hotel_id: Mapped[str] = mapped_column(ForeignKey("hotel_property.id"), index=True)
+    tracked_offer_id: Mapped[str | None] = mapped_column(ForeignKey("hotel_tracked_offer.id"), nullable=True, index=True)
     rule_type: Mapped[str] = mapped_column(String(40))
     threshold_amount: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
     threshold_percent: Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True)
+    compare_against: Mapped[str] = mapped_column(String(20), default="snapshot_previous")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
@@ -440,6 +442,12 @@ class HotelProviderRun(Base):
 
 class HotelTrackedOffer(Base):
     __tablename__ = "hotel_tracked_offer"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "hotel_id", "check_in", "check_out", "guests", "provider",
+            name="uq_hotel_tracked_offer_identity",
+        ),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
@@ -469,7 +477,7 @@ class HotelAlertEvent(Base):
     __tablename__ = "hotel_alert_event"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    rule_id: Mapped[str] = mapped_column(ForeignKey("hotel_alert_rule.id"), index=True)
+    rule_id: Mapped[str | None] = mapped_column(ForeignKey("hotel_alert_rule.id"), nullable=True, index=True)
     hotel_id: Mapped[str] = mapped_column(ForeignKey("hotel_property.id"), index=True)
     provider_run_id: Mapped[str | None] = mapped_column(ForeignKey("hotel_provider_run.id"), nullable=True, index=True)
     event_type: Mapped[str] = mapped_column(String(30))

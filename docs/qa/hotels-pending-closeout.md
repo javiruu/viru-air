@@ -1,7 +1,7 @@
 # Cierre pendiente de `/hoteles`
 
 **Estado:** vivo  
-**Ultima revision:** 2026-06-03  
+**Ultima revision:** 2026-06-04 (cierre Fase 10 — final)  
 **Fuente de verdad:** si  
 **Area:** QA
 
@@ -28,6 +28,35 @@ Completado:
 8. Cierre de Fase 4 de este closeout: la UI minima de alertas hoteleras ya existe en `/hoteles`, con reglas `price_below`, `price_above` y `parity_break`, listado de eventos recientes por hotel seleccionado y estados `loading` / `empty` / `error`.
 9. Cierre de Fase 5 de este closeout: `HOTEL_FEATURE_ENABLED` queda limitado a ingesta, providers y sweeps, sin apagar la lectura ni la navegacion de `/hoteles`.
 10. Cierre de Fase 6 de este closeout: Makcorps valida payloads/rates invalidos, no promete fallback automatico a mock y deja la TTL documentada como reserva futura.
+
+## Actualización 2026-06-04 (cierre Fase 10 — final)
+
+### Estado: 🟢 Cerrado
+
+El plan de 10 fases para reconducir /hoteles como comparador y tracker diario de precios hoteleros está completado.
+
+Fases completadas en esta iteración:
+
+11. **Fase 6**: UI reorganizada como comparador tipo Trivago con paneles colapsables y copy humano.
+12. **Fase 7**: Flujo "Trackear precio" desde resultados con snapshot inicial y prevención de duplicados (UniqueConstraint + IntegrityError).
+13. **Fase 8**: `run_hotel_sweep` modificado para revisar `HotelTrackedOffer` activos, crear snapshots vinculados, actualizar `current_price` y generar eventos de cambio de precio.
+14. **Fase 9**: Alertas humanas con 6 tipos visibles (baja/subida por €/%, cambio de proveedor, disponibilidad), `HotelAlertRule.tracked_offer_id`, `HotelAlertEvent.rule_id` nullable para eventos sweep.
+15. **Fase 10**: QA final — 132 tests backend, build frontend OK, 5 documentos actualizados, deudas futuras registradas.
+
+### Verificación final
+
+- `cd backend && python -m pytest` → **132 passed** (0 failures)
+- `cd frontend && npm run build` → **OK**
+- `cd frontend && npx tsc --noEmit` → **OK**
+
+### Deudas futuras registradas
+
+1. Provider real dinámico (Makcorps con zona/fechas/huéspedes).
+2. Scheduler automático de sweeps.
+3. Verificación visual manual en navegador real.
+4. `DELETE /comp-sets/{id}` no implementado.
+5. Geocoder externo para area-resolve.
+6. Alertas sobre `initial_price` además del snapshot anterior.
 
 Pendiente:
 

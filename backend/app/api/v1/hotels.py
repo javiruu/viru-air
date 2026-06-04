@@ -74,6 +74,7 @@ def _raise_http_for_value_error(exc: ValueError) -> None:
         "hotel_watchlist_item_already_exists",
         "hotel_comp_set_member_already_exists",
         "hotel_comp_set_anchor_cannot_be_member",
+        "tracked_offer_already_exists",
     }:
         raise HTTPException(status_code=409, detail=code) from exc
     raise HTTPException(status_code=422, detail=code) from exc
@@ -304,6 +305,21 @@ def delete_comp_set_member(
     return {"status": "ok"}
 
 
+@router.delete("/comp-sets/{comp_set_id}")
+def delete_comp_set(
+    comp_set_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict[str, str]:
+    try:
+        hotels_service.delete_comp_set(db, user_id=current_user.id, comp_set_id=comp_set_id)
+    except ValueError as exc:
+        _raise_http_for_value_error(exc)
+    except PermissionError as exc:
+        _raise_http_for_permission_error(exc)
+    return {"status": "ok"}
+
+
 @router.get("/alert-rules", response_model=list[HotelAlertRuleOut])
 def list_alert_rules(
     db: Session = Depends(get_db),
@@ -314,6 +330,8 @@ def list_alert_rules(
         HotelAlertRuleOut(
             id=row.id,
             hotel_id=row.hotel_id,
+            tracked_offer_id=row.tracked_offer_id,
+            compare_against=row.compare_against,
             rule_type=row.rule_type,
             threshold_amount=float(row.threshold_amount) if row.threshold_amount is not None else None,
             threshold_percent=float(row.threshold_percent) if row.threshold_percent is not None else None,
@@ -343,12 +361,16 @@ def create_alert_rule(
             threshold_amount=payload.threshold_amount,
             threshold_percent=payload.threshold_percent,
             is_active=payload.is_active,
+            tracked_offer_id=payload.tracked_offer_id,
+            compare_against=payload.compare_against,
         )
     except ValueError as exc:
         _raise_http_for_value_error(exc)
     return HotelAlertRuleOut(
         id=row.id,
         hotel_id=row.hotel_id,
+        tracked_offer_id=row.tracked_offer_id,
+        compare_against=row.compare_against,
         rule_type=row.rule_type,
         threshold_amount=float(row.threshold_amount) if row.threshold_amount is not None else None,
         threshold_percent=float(row.threshold_percent) if row.threshold_percent is not None else None,
@@ -382,6 +404,8 @@ def patch_alert_rule(
     return HotelAlertRuleOut(
         id=row.id,
         hotel_id=row.hotel_id,
+        tracked_offer_id=row.tracked_offer_id,
+        compare_against=row.compare_against,
         rule_type=row.rule_type,
         threshold_amount=float(row.threshold_amount) if row.threshold_amount is not None else None,
         threshold_percent=float(row.threshold_percent) if row.threshold_percent is not None else None,

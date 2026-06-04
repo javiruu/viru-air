@@ -777,36 +777,7 @@ def test_hotels_tracked_offer_snapshots_endpoint(client: TestClient) -> None:
     assert created.status_code == 201
     offer_id = created.json()["id"]
 
-    # Snapshots start empty
-    snapshots = client.get(f"/api/v1/hotels/tracked-offers/{offer_id}/snapshots", headers=headers)
-    assert snapshots.status_code == 200
-    assert snapshots.json() == []
-
-    # Insert a snapshot linked to the tracked offer
-    db, generator = _open_overridden_db()
-    try:
-        db.add(
-            HotelRateSnapshot(
-                hotel_id=hotel_id,
-                tracked_offer_id=offer_id,
-                provider="mock",
-                check_in=date(2026, 8, 1),
-                check_out=date(2026, 8, 3),
-                guests=2,
-                currency="EUR",
-                amount=120.00,
-                availability_status="available",
-                deep_link="https://example.com/offer/1",
-            )
-        )
-        db.commit()
-    finally:
-        try:
-            next(generator)
-        except StopIteration:
-            pass
-
-    # Now snapshots should return 1 result
+    # An initial snapshot is created automatically when dates+price are provided
     snapshots = client.get(f"/api/v1/hotels/tracked-offers/{offer_id}/snapshots", headers=headers)
     assert snapshots.status_code == 200
     results = snapshots.json()
@@ -814,8 +785,10 @@ def test_hotels_tracked_offer_snapshots_endpoint(client: TestClient) -> None:
     assert results[0]["tracked_offer_id"] == offer_id
     assert results[0]["amount"] == 120.00
     assert results[0]["availability_status"] == "available"
-    assert results[0]["deep_link"] == "https://example.com/offer/1"
     assert results[0]["hotel_id"] == hotel_id
+    assert results[0]["check_in"] == "2026-08-01"
+    assert results[0]["check_out"] == "2026-08-03"
+    assert results[0]["provider"] == "mock"
 
 
 def test_hotels_tracked_offer_snapshots_enforces_ownership(client: TestClient) -> None:

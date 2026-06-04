@@ -1,7 +1,7 @@
 # QA Visual `/hoteles` — Fase 9
 
 **Estado:** vivo  
-**Última revisión:** 2026-06-03  
+**Última revisión:** 2026-06-04 (cierre Fase 10)  
 **Fuente de verdad:** sí  
 **Área:** QA / Visual
 
@@ -76,6 +76,25 @@ Fase 9 de cierre visual y polish final del módulo `/hoteles`. Esta fase se ejec
 | `frontend/src/styles/screens.css` | CSS para sección de miembros, hover/focus polish en result cards y comp set items |
 | `backend/app/hotels/parity.py` | Añadido `import datetime` |
 | `docs/qa/hotels-visual-qa.md` | Este documento (creado) |
+
+## Actualización 2026-06-04 (cierre Fases 6-10)
+
+### Fase 6 — Reordenar UI como comparador
+- Layout reorganizado en columna principal (buscador → resultados → tracked offers → timeline) + sidebar con paneles colapsables.
+- Copy renombrado: "Comp set" → "Hoteles cercanos", "Paridad" → "Diferencia entre proveedores", "Watchlist" → "Seguimientos activos".
+- CSS para `.panel-collapse-toggle`, `.collapse-icon`, `.panel.is-collapsed`, `.hotel-tracked-offers-panel`.
+- Side column con `max-height` + `overflow-y: auto` para scroll independiente.
+
+### Fase 7 — Trackear precio desde resultados
+- Botón "Trackear precio" en `HotelResultCard` con estado `hasTracking`/`trackedBusy`.
+- Panel `HotelTrackedOffersPanel` con botón "Dejar de seguir".
+- `handleTrackPrice` envía fechas, huéspedes, provider y precio desde los rates cargados.
+
+### Fase 9 — Alertas humanas de precio
+- Dropdown de alertas con lenguaje humano: "Avísame si baja de X €", "Avísame si baja más de X %", etc.
+- 7 tipos de alerta en el selector.
+- Campos condicionales: importe solo para price_below/above, porcentaje para variaciones, sin umbrales para provider_changed/availability_returned.
+- Labels i18n actualizados (ES + EN).
 
 ## Limitaciones conocidas
 

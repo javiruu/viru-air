@@ -17,6 +17,9 @@ export type HotelDetailOut = HotelSearchOut & {
 
 export type HotelRateOut = {
   id: string;
+  hotel_id: string;
+  tracked_offer_id: string | null;
+  provider_run_id: string | null;
   provider: string;
   check_in: string;
   check_out: string;
@@ -26,6 +29,8 @@ export type HotelRateOut = {
   cancellation_policy: string | null;
   currency: string;
   amount: number;
+  availability_status: string;
+  deep_link: string | null;
   collected_at: string;
 };
 
@@ -42,20 +47,22 @@ export type HotelWatchlistEntry = {
   detailUnavailable: boolean;
 };
 
-export type HotelAlertRuleType = "price_below" | "price_above" | "parity_break";
+export type HotelAlertRuleType = "price_below" | "price_above" | "percentage_drop" | "percentage_increase" | "provider_changed" | "availability_returned" | "parity_break";
 
 export type HotelAlertRuleOut = {
   id: string;
   hotel_id: string;
+  tracked_offer_id: string | null;
   rule_type: HotelAlertRuleType;
   threshold_amount: number | null;
   threshold_percent: number | null;
+  compare_against: string;
   is_active: boolean;
 };
 
 export type HotelAlertEventOut = {
   id: string;
-  rule_id: string;
+  rule_id: string | null;
   hotel_id: string;
   provider_run_id: string | null;
   event_type: string;

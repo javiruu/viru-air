@@ -93,21 +93,35 @@ class HotelNearbySuggestionOut(BaseModel):
     distance_km: float
 
 
-HotelAlertRuleType = Literal["price_below", "price_above", "parity_break"]
+HotelAlertRuleType = Literal["price_below", "price_above", "percentage_drop", "percentage_increase", "provider_changed", "availability_returned", "parity_break"]
 
 
 class HotelAlertRuleCreateIn(BaseModel):
     hotel_id: str
+    tracked_offer_id: str | None = None
     rule_type: HotelAlertRuleType
     threshold_amount: float | None = Field(default=None, ge=0)
     threshold_percent: float | None = Field(default=None, ge=0, le=100)
+    compare_against: str = Field(default="snapshot_previous", max_length=20)
     is_active: bool = True
+
+    @field_validator("compare_against")
+    @classmethod
+    def validate_compare_against(cls, value: str) -> str:
+        if value not in {"snapshot_previous", "initial_price"}:
+            raise ValueError("invalid_compare_against")
+        return value
 
     @model_validator(mode="after")
     def validate_threshold_combination(self):
         if self.rule_type in {"price_below", "price_above"}:
             if self.threshold_amount is None and self.threshold_percent is None:
                 raise ValueError("threshold_required_for_price_rule")
+        if self.rule_type in {"percentage_drop", "percentage_increase"}:
+            if self.threshold_percent is None:
+                raise ValueError("threshold_percent_required_for_percentage_rule")
+            if self.threshold_amount is not None:
+                raise ValueError("threshold_amount_not_allowed_for_percentage_rule")
         if self.rule_type == "parity_break":
             if self.threshold_percent is None:
                 raise ValueError("threshold_percent_required_for_parity_break")
@@ -120,7 +134,15 @@ class HotelAlertRuleUpdateIn(BaseModel):
     rule_type: HotelAlertRuleType | None = None
     threshold_amount: float | None = Field(default=None, ge=0)
     threshold_percent: float | None = Field(default=None, ge=0, le=100)
+    compare_against: str | None = Field(default=None, max_length=20)
     is_active: bool | None = None
+
+    @field_validator("compare_against")
+    @classmethod
+    def validate_compare_against(cls, value: str | None) -> str | None:
+        if value is not None and value not in {"snapshot_previous", "initial_price"}:
+            raise ValueError("invalid_compare_against")
+        return value
 
     @model_validator(mode="after")
     def validate_threshold_combination(self):
@@ -130,6 +152,11 @@ class HotelAlertRuleUpdateIn(BaseModel):
         if effective_type in {"price_below", "price_above"}:
             if self.threshold_amount is None and self.threshold_percent is None:
                 raise ValueError("threshold_required_for_price_rule")
+        if effective_type in {"percentage_drop", "percentage_increase"}:
+            if self.threshold_percent is None:
+                raise ValueError("threshold_percent_required_for_percentage_rule")
+            if self.threshold_amount is not None:
+                raise ValueError("threshold_amount_not_allowed_for_percentage_rule")
         if effective_type == "parity_break":
             if self.threshold_percent is None:
                 raise ValueError("threshold_percent_required_for_parity_break")
@@ -141,9 +168,11 @@ class HotelAlertRuleUpdateIn(BaseModel):
 class HotelAlertRuleOut(BaseModel):
     id: str
     hotel_id: str
+    tracked_offer_id: str | None = None
     rule_type: HotelAlertRuleType
     threshold_amount: float | None = None
     threshold_percent: float | None = None
+    compare_against: str = "snapshot_previous"
     is_active: bool
 
 
@@ -182,7 +211,7 @@ class HotelProviderRunOut(BaseModel):
 
 class HotelAlertEventOut(BaseModel):
     id: str
-    rule_id: str
+    rule_id: str | None = None
     hotel_id: str
     provider_run_id: str | None = None
     event_type: str

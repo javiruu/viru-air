@@ -43,3 +43,20 @@ class HotelProviderAdapter(ABC):
     def fetch_hotels(self) -> list[ProviderHotelRecord]:
         raise NotImplementedError
 
+    def fetch_hotel_rates(
+        self,
+        hotel_id: str,
+        check_in: date,
+        check_out: date,
+        guests: int = 2,
+        currency: str = "EUR",
+    ) -> list[ProviderRateRecord]:
+        """Optional: fetch rates for a specific hotel with search parameters.
+
+        Providers that support parameterized search (e.g. Makcorps with date/guest filters)
+        should override this method. The default implementation returns an empty list,
+        which means the sweep will fall back to reusing unlinked snapshots from the
+        general ingestion pool.
+        """
+        return []
+
