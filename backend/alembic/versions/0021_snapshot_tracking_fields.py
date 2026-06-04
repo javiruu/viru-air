@@ -40,26 +40,29 @@ def upgrade() -> None:
 
     columns = _column_names(conn, "hotel_rate_snapshot")
 
-    if "tracked_offer_id" not in columns:
-        op.add_column(
-            "hotel_rate_snapshot",
-            sa.Column("tracked_offer_id", sa.String(length=36), sa.ForeignKey("hotel_tracked_offer.id"), nullable=True),
-        )
-    if "provider_run_id" not in columns:
-        op.add_column(
-            "hotel_rate_snapshot",
-            sa.Column("provider_run_id", sa.String(length=36), sa.ForeignKey("hotel_provider_run.id"), nullable=True),
-        )
-    if "availability_status" not in columns:
-        op.add_column(
-            "hotel_rate_snapshot",
-            sa.Column("availability_status", sa.String(length=20), nullable=False, server_default="available"),
-        )
-    if "deep_link" not in columns:
-        op.add_column(
-            "hotel_rate_snapshot",
-            sa.Column("deep_link", sa.String(length=500), nullable=True),
-        )
+    with op.batch_alter_table("hotel_rate_snapshot") as batch_op:
+        if "tracked_offer_id" not in columns:
+            batch_op.add_column(sa.Column("tracked_offer_id", sa.String(length=36), nullable=True))
+            batch_op.create_foreign_key(
+                "fk_hotel_rate_snapshot_tracked_offer",
+                "hotel_tracked_offer",
+                ["tracked_offer_id"],
+                ["id"],
+            )
+        if "provider_run_id" not in columns:
+            batch_op.add_column(sa.Column("provider_run_id", sa.String(length=36), nullable=True))
+            batch_op.create_foreign_key(
+                "fk_hotel_rate_snapshot_provider_run",
+                "hotel_provider_run",
+                ["provider_run_id"],
+                ["id"],
+            )
+        if "availability_status" not in columns:
+            batch_op.add_column(
+                sa.Column("availability_status", sa.String(length=20), nullable=False, server_default="available")
+            )
+        if "deep_link" not in columns:
+            batch_op.add_column(sa.Column("deep_link", sa.String(length=500), nullable=True))
 
     indexes = _index_names(conn, "hotel_rate_snapshot")
     if "ix_hotel_rate_snapshot_tracked_offer_id" not in indexes:
@@ -83,11 +86,14 @@ def downgrade() -> None:
     if "ix_hotel_rate_snapshot_tracked_offer_id" in indexes:
         op.drop_index("ix_hotel_rate_snapshot_tracked_offer_id", table_name="hotel_rate_snapshot")
 
-    if "deep_link" in columns:
-        op.drop_column("hotel_rate_snapshot", "deep_link")
-    if "availability_status" in columns:
-        op.drop_column("hotel_rate_snapshot", "availability_status")
-    if "provider_run_id" in columns:
-        op.drop_column("hotel_rate_snapshot", "provider_run_id")
-    if "tracked_offer_id" in columns:
-        op.drop_column("hotel_rate_snapshot", "tracked_offer_id")
+    with op.batch_alter_table("hotel_rate_snapshot") as batch_op:
+        if "deep_link" in columns:
+            batch_op.drop_column("deep_link")
+        if "availability_status" in columns:
+            batch_op.drop_column("availability_status")
+        if "provider_run_id" in columns:
+            batch_op.drop_constraint("fk_hotel_rate_snapshot_provider_run", type_="foreignkey")
+            batch_op.drop_column("provider_run_id")
+        if "tracked_offer_id" in columns:
+            batch_op.drop_constraint("fk_hotel_rate_snapshot_tracked_offer", type_="foreignkey")
+            batch_op.drop_column("tracked_offer_id")

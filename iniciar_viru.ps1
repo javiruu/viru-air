@@ -6,6 +6,7 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $runBackground = -not $Foreground
 $backendPython = Join-Path $root "backend\.venv\Scripts\python.exe"
+$backendAlembicIni = Join-Path $root "backend\alembic.ini"
 
 if (-not (Test-Path $backendPython)) {
   throw @"
@@ -44,8 +45,8 @@ function Set-ProcessEnvFromDotEnv {
     if ([string]::IsNullOrWhiteSpace($key)) {
       continue
     }
-    $value = $parts[1].Trim().Trim("'`\"")
-    Set-Item -Path ("Env:" + $key) -Value $value
+    $value = $parts[1].Trim().Trim("'`"")
+    Set-Item -Path "Env:$key" -Value $value
   }
 }
 
@@ -78,6 +79,19 @@ APP_ENV=local
 
 Set-ProcessEnvFromDotEnv -Path $backendEnvFile
 $env:JWT_SECRET = $jwtSecret
+
+Write-Host "Aplicando migraciones del backend antes del arranque..."
+$alembicArgs = @("-m", "alembic", "-c", $backendAlembicIni, "upgrade", "head")
+$alembic = Start-Process -FilePath $backendPython `
+  -ArgumentList $alembicArgs `
+  -WorkingDirectory (Join-Path $root "backend") `
+  -NoNewWindow `
+  -Wait `
+  -PassThru
+
+if ($alembic.ExitCode -ne 0) {
+  throw "Fallo al ejecutar migraciones Alembic (exit $($alembic.ExitCode))."
+}
 
 # Logs (timestamped, no overwrite)
 $logsDir = Join-Path $root "logs"
