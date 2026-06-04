@@ -330,5 +330,5 @@ export async function buildQuickSearchExpectedSignatures(
   if (signatures.some((signature) => signature === null)) {
     return null;
   }
-  return new Set(signatures);
+  return new Set(signatures.filter((signature): signature is string => signature !== null));
 }
