@@ -376,9 +376,11 @@ export function HotelRadarPage() {
 
   async function handleCreateAlertRule(payload: {
     hotel_id: string;
+    tracked_offer_id?: string | null;
     rule_type: HotelAlertRuleType;
     threshold_amount: number | null;
     threshold_percent: number | null;
+    compare_against?: string;
     is_active: boolean;
   }): Promise<boolean> {
     setAlertCreateBusy(true);
@@ -440,16 +442,28 @@ export function HotelRadarPage() {
     setTrackedBusyHotelIds((current) => [...current, hotelId]);
     try {
       const hotel = results.find((h) => h.id === hotelId);
+      // Enrich with dates and price from loaded rates if this hotel is selected
+      const hotelRates = hotelId === selectedHotelId ? rates : [];
+      const cheapest = hotelRates.length > 0
+        ? [...hotelRates].sort((a, b) => a.amount - b.amount)[0]
+        : null;
       await createTrackedOffer({
         hotel_id: hotelId,
         area_label: hotel?.city || undefined,
-        provider: "mock",
-        currency: "EUR",
+        provider: cheapest?.provider || "mock",
+        currency: cheapest?.currency || "EUR",
+        check_in: cheapest?.check_in || undefined,
+        check_out: cheapest?.check_out || undefined,
+        guests: cheapest?.guests || undefined,
+        initial_price: cheapest ? cheapest.amount : undefined,
       });
       await refreshTrackedOffers();
       notify({ tone: "success", title: t("hotels.messages.trackedOfferCreated") });
     } catch (error) {
       const message = resolveHotelMessage(error, t);
+      if (error instanceof HotelsRequestError && error.message === "tracked_offer_already_exists") {
+        await refreshTrackedOffers();
+      }
       notify({ tone: "error", title: message });
     } finally {
       setTrackedBusyHotelIds((current) => current.filter((id) => id !== hotelId));

@@ -105,6 +105,84 @@ class MakcorpsHotelProviderAdapter(HotelProviderAdapter):
             return False
         return True
 
+    def fetch_hotel_rates(
+        self,
+        hotel_id: str,
+        check_in: date,
+        check_out: date,
+        guests: int = 2,
+        currency: str = "EUR",
+    ) -> list[ProviderRateRecord]:
+        """Fetch rates for a specific hotel with search parameters."""
+        if not self.is_enabled():
+            return []
+
+        url = f"{_MAKCORPS_BASE_URL}/v1/hotels/{hotel_id}/pricing"
+        params: dict[str, str | int] = {
+            "check_in": check_in.isoformat(),
+            "check_out": check_out.isoformat(),
+            "guests": guests,
+            "currency": currency,
+        }
+        try:
+            response = self._session.get(url, params=params, timeout=_PROVIDER_TIMEOUT)
+            response.raise_for_status()
+            payload = response.json()
+        except Exception as exc:
+            logger.warning(
+                _log_payload(
+                    "makcorps_fetch_hotel_rates_failed",
+                    hotel_id=hotel_id,
+                    error=str(exc),
+                )
+            )
+            return []
+
+        return self._parse_rates(payload, check_in, check_out)
+
+    def _parse_rates(
+        self,
+        payload: dict[str, Any] | list[Any],
+        expected_check_in: date | None = None,
+        expected_check_out: date | None = None,
+    ) -> list[ProviderRateRecord]:
+        rates: list[ProviderRateRecord] = []
+
+        items = payload if isinstance(payload, list) else payload.get("rates") or payload.get("data") or []
+        if isinstance(items, dict):
+            items = [items]
+        if not isinstance(items, list):
+            return rates
+
+        for rate_item in items:
+            if not isinstance(rate_item, dict):
+                continue
+            check_in = _parse_date(rate_item.get("check_in")) or expected_check_in
+            check_out = _parse_date(rate_item.get("check_out")) or expected_check_out
+            if check_in is None or check_out is None:
+                continue
+            if check_out <= check_in:
+                continue
+            amount = _parse_positive_amount(rate_item.get("amount") or rate_item.get("price"))
+            if amount is None:
+                continue
+            currency = _normalize_currency(rate_item.get("currency"))
+            if not currency:
+                continue
+            rates.append(
+                ProviderRateRecord(
+                    check_in=check_in,
+                    check_out=check_out,
+                    amount=amount,
+                    currency=currency,
+                    guests=int(rate_item.get("guests") or 2),
+                    room_label=rate_item.get("room_label") or rate_item.get("room_type"),
+                    meal_plan=rate_item.get("meal_plan") or rate_item.get("board"),
+                    cancellation_policy=rate_item.get("cancellation_policy"),
+                )
+            )
+        return rates
+
     def fetch_hotels(self) -> list[ProviderHotelRecord]:
         if not self.is_enabled():
             raise ValueError(

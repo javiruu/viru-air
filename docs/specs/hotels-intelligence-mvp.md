@@ -166,7 +166,7 @@ Checklist de estado:
 7. Fase 6: completada.
 8. Fase 7: completada.
 9. Fase 8: completada.
-10. Fase 9: pendiente.
+10. Fase 9: completada.
 
 Evidencia concreta:
 
@@ -191,9 +191,11 @@ Evidencia concreta:
 17. Cierre operativo 2026-06-03: sweeps hoteleros documentados en `docs/runbooks/hotels-sweeps.md`, con worker opcional separado y `HOTEL_SWEEP_ENABLED=false` por defecto.
 18. Cierre de busqueda 2026-06-03: `HotelProperty.normalized_city` respalda la busqueda por ciudad y corrige coincidencias con acentos y case-insensitive.
 
+19. Cierre Phase 9-10 2026-06-04: plan de 10 fases completado. Alertas humanas implementadas (price_below, price_above, percentage_drop, percentage_increase, provider_changed, availability_returned) con UI en lenguaje humano. HotelAlertRule con tracked_offer_id opcional. evaluate_hotel_alerts delega a _evaluate_tracked_alert_rule para reglas vinculadas a tracked offers. list_hotel_alert_events incluye eventos sweep sin rule_id. 132 tests backend pasan. Build frontend OK. Documentación actualizada en 5 archivos.
+
 Observaciones pendientes:
 
-1. Fase 9 QA visual y polish final sigue pendiente como pasada separada.
+1. Verificación visual manual en navegador real (dark/light/responsive).
 
 Siguiente paso propuesto (acotado):
 

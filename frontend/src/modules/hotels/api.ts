@@ -93,9 +93,11 @@ export async function listHotelAlertRules(): Promise<HotelAlertRuleOut[]> {
 
 export async function createHotelAlertRule(payload: {
   hotel_id: string;
-  rule_type: "price_below" | "price_above" | "parity_break";
+  tracked_offer_id?: string | null;
+  rule_type: string;
   threshold_amount?: number | null;
   threshold_percent?: number | null;
+  compare_against?: string;
   is_active?: boolean;
 }): Promise<HotelAlertRuleOut> {
   return request<HotelAlertRuleOut>("/hotels/alert-rules", {
@@ -107,9 +109,10 @@ export async function createHotelAlertRule(payload: {
 export async function updateHotelAlertRule(
   ruleId: string,
   payload: {
-    rule_type?: "price_below" | "price_above" | "parity_break";
+    rule_type?: string;
     threshold_amount?: number | null;
     threshold_percent?: number | null;
+    compare_against?: string;
     is_active?: boolean;
   },
 ): Promise<HotelAlertRuleOut> {
@@ -153,6 +156,10 @@ export async function deleteHotelCompSetMember(compSetId: string, memberId: stri
   await request<{ status: string }>(`/hotels/comp-sets/${compSetId}/members/${memberId}`, { method: "DELETE" });
 }
 
+export async function deleteHotelCompSet(compSetId: string): Promise<void> {
+  await request<{ status: string }>(`/hotels/comp-sets/${compSetId}`, { method: "DELETE" });
+}
+
 export async function getHotelNearbySuggestions(
   compSetId: string,
   params?: { radius_km?: number; limit?: number },
@@ -186,9 +193,16 @@ export async function listTrackedOffers(params?: { is_active?: boolean }): Promi
 export async function createTrackedOffer(payload: {
   hotel_id: string;
   area_label?: string | null;
+  origin_query?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  radius_km?: number | null;
   check_in?: string | null;
   check_out?: string | null;
   guests?: number;
+  room_label?: string | null;
+  meal_plan?: string | null;
+  cancellation_policy?: string | null;
   provider?: string;
   initial_price?: number | null;
   current_price?: number | null;
@@ -203,4 +217,40 @@ export async function createTrackedOffer(payload: {
 
 export async function deleteTrackedOffer(offerId: string): Promise<void> {
   await request<{ status: string }>(`/hotels/tracked-offers/${offerId}`, { method: "DELETE" });
+}
+
+export async function getTrackedOffer(offerId: string): Promise<HotelTrackedOfferOut> {
+  return request<HotelTrackedOfferOut>(`/hotels/tracked-offers/${offerId}`);
+}
+
+export async function updateTrackedOffer(
+  offerId: string,
+  payload: {
+    area_label?: string | null;
+    origin_query?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    radius_km?: number | null;
+    check_in?: string | null;
+    check_out?: string | null;
+    guests?: number;
+    room_label?: string | null;
+    meal_plan?: string | null;
+    cancellation_policy?: string | null;
+    provider?: string;
+    initial_price?: number | null;
+    current_price?: number | null;
+    target_price?: number | null;
+    currency?: string;
+    is_active?: boolean;
+  },
+): Promise<HotelTrackedOfferOut> {
+  return request<HotelTrackedOfferOut>(`/hotels/tracked-offers/${offerId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getTrackedOfferSnapshots(offerId: string): Promise<HotelRateOut[]> {
+  return request<HotelRateOut[]>(`/hotels/tracked-offers/${offerId}/snapshots`);
 }

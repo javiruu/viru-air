@@ -1,7 +1,7 @@
 # Runbook Sweeps Hoteleros
 
 **Estado:** vivo  
-**Ultima revision:** 2026-06-03  
+**Ultima revision:** 2026-06-04 (cierre Fase 10)  
 **Fuente de verdad:** si  
 **Area:** runbooks
 
@@ -65,6 +65,27 @@ El sweep toca estas tablas del dominio hoteles:
 Tambien lee:
 
 1. `hotel_alert_rule`
+2. `hotel_tracked_offer`
+
+## Sweep de tracked offers (Fase 8)
+
+Desde la Fase 8, `run_hotel_sweep` tambien ejecuta `sweep_tracked_offers` despues de la ingesta general y la evaluacion de alertas.
+
+Que hace `sweep_tracked_offers`:
+
+1. Lista todos los `HotelTrackedOffer` activos con fechas.
+2. Para cada uno, busca el snapshot no vinculado mas barato que coincida (mismo hotel, fechas, huespedes, moneda).
+3. Crea un nuevo `HotelRateSnapshot` vinculado al `tracked_offer_id` y `provider_run_id`.
+4. Actualiza `current_price` en el tracked offer.
+5. Crea `HotelAlertEvent` si el precio cambio respecto al snapshot anterior (con direccion y porcentaje).
+
+La funcion retorna `{"offers_scanned": N, "snapshots_created": M}`.
+
+### Limitacion con mock provider
+
+El mock provider tiene datos estaticos. La ingesta deduplica por `(hotel_id, provider, check_in, check_out, guests, currency, amount)` exactos. Por tanto, ejecuciones sucesivas del sweep con mock no produciran snapshots nuevos para tracked offers.
+
+Con un provider real (Makcorps u otro), cada ejecucion deberia producir nuevos snapshots y actualizar `current_price`.
 
 ## Como verificar el resultado
 

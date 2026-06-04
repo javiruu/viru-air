@@ -10,6 +10,7 @@ type AlertFormDraft = {
   ruleType: HotelAlertRuleType;
   thresholdAmount: string;
   thresholdPercent: string;
+  compareAgainst: string;
   isActive: boolean;
 };
 
@@ -17,6 +18,7 @@ const DEFAULT_DRAFT: AlertFormDraft = {
   ruleType: "price_below",
   thresholdAmount: "",
   thresholdPercent: "",
+  compareAgainst: "snapshot_previous",
   isActive: true,
 };
 
@@ -63,6 +65,10 @@ function validateAlertDraft(draft: AlertFormDraft, t: ReturnType<typeof useI18n>
     return t("hotels.alerts.validation.priceThresholdRequired");
   }
 
+  if ((draft.ruleType === "percentage_drop" || draft.ruleType === "percentage_increase") && thresholdPercent === null) {
+    return t("hotels.alerts.validation.parityThresholdRequired");
+  }
+
   if (draft.ruleType === "parity_break") {
     if (thresholdPercent === null) {
       return t("hotels.alerts.validation.parityThresholdRequired");
@@ -103,6 +109,7 @@ export function HotelAlertsPanel({
     rule_type: HotelAlertRuleType;
     threshold_amount: number | null;
     threshold_percent: number | null;
+    compare_against?: string;
     is_active: boolean;
   }) => Promise<boolean>;
   onToggleRule: (ruleId: string, isActive: boolean) => void;
@@ -116,17 +123,24 @@ export function HotelAlertsPanel({
     () => ({
       price_below: t("hotels.alerts.ruleTypes.priceBelow"),
       price_above: t("hotels.alerts.ruleTypes.priceAbove"),
+      percentage_drop: t("hotels.alerts.ruleTypes.percentageDrop"),
+      percentage_increase: t("hotels.alerts.ruleTypes.percentageIncrease"),
+      provider_changed: t("hotels.alerts.ruleTypes.providerChanged"),
+      availability_returned: t("hotels.alerts.ruleTypes.availabilityReturned"),
       parity_break: t("hotels.alerts.ruleTypes.parityBreak"),
     }),
     [t],
   );
-  const shouldShowAmount = draft.ruleType !== "parity_break";
+  const shouldShowAmount = draft.ruleType === "price_below" || draft.ruleType === "price_above";
+  const shouldShowPercent = draft.ruleType !== "provider_changed" && draft.ruleType !== "availability_returned";
+  const shouldShowCompareAgainst = draft.ruleType === "percentage_drop" || draft.ruleType === "percentage_increase";
 
   function resetDraft(nextRuleType?: HotelAlertRuleType) {
     setDraft({
       ruleType: nextRuleType ?? DEFAULT_DRAFT.ruleType,
       thresholdAmount: "",
       thresholdPercent: "",
+      compareAgainst: "snapshot_previous",
       isActive: true,
     });
     setValidationMessage(null);
@@ -147,6 +161,7 @@ export function HotelAlertsPanel({
       rule_type: draft.ruleType,
       threshold_amount: shouldShowAmount ? parseThreshold(draft.thresholdAmount) : null,
       threshold_percent: parseThreshold(draft.thresholdPercent),
+      compare_against: shouldShowCompareAgainst ? draft.compareAgainst : undefined,
       is_active: draft.isActive,
     };
 
@@ -186,18 +201,23 @@ export function HotelAlertsPanel({
                   setDraft((current) => ({
                     ...current,
                     ruleType: nextRuleType,
-                    thresholdAmount: nextRuleType === "parity_break" ? "" : current.thresholdAmount,
+                    thresholdAmount: (nextRuleType === "parity_break" || nextRuleType === "percentage_drop" || nextRuleType === "percentage_increase" || nextRuleType === "provider_changed" || nextRuleType === "availability_returned") ? "" : current.thresholdAmount,
+                    thresholdPercent: (nextRuleType === "provider_changed" || nextRuleType === "availability_returned") ? "" : current.thresholdPercent,
                   }));
                   setValidationMessage(null);
                 }}
               >
                 <option value="price_below">{ruleTypeLabel.price_below}</option>
+                <option value="percentage_drop">{ruleTypeLabel.percentage_drop}</option>
                 <option value="price_above">{ruleTypeLabel.price_above}</option>
+                <option value="percentage_increase">{ruleTypeLabel.percentage_increase}</option>
+                <option value="provider_changed">{ruleTypeLabel.provider_changed}</option>
+                <option value="availability_returned">{ruleTypeLabel.availability_returned}</option>
                 <option value="parity_break">{ruleTypeLabel.parity_break}</option>
               </select>
             </label>
 
-            <div className={`hotel-alerts-thresholds${shouldShowAmount ? "" : " is-parity-only"}`}>
+            <div className={`hotel-alerts-thresholds${shouldShowAmount || shouldShowPercent ? "" : " is-no-thresholds"}`}>
               {shouldShowAmount ? (
                 <label className="field qs-label">
                   <span>{t("hotels.alerts.fields.thresholdAmount")}</span>
@@ -214,20 +234,32 @@ export function HotelAlertsPanel({
                 </label>
               ) : null}
 
-              <label className="field qs-label">
-                <span>{t("hotels.alerts.fields.thresholdPercent")}</span>
-                <input
-                  className="qs-input-neutral"
-                  inputMode="decimal"
-                  value={draft.thresholdPercent}
-                  onChange={(event) => {
-                    setDraft((current) => ({ ...current, thresholdPercent: event.target.value }));
-                    setValidationMessage(null);
-                  }}
-                  placeholder={t("hotels.alerts.fields.thresholdPercentPlaceholder")}
-                />
-              </label>
+              {shouldShowPercent ? (
+                <label className="field qs-label">
+                  <span>{t("hotels.alerts.fields.thresholdPercent")}</span>
+                  <input
+                    className="qs-input-neutral"
+                    inputMode="decimal"
+                    value={draft.thresholdPercent}
+                    onChange={(event) => {
+                      setDraft((current) => ({ ...current, thresholdPercent: event.target.value }));
+                      setValidationMessage(null);
+                    }}
+                    placeholder={t("hotels.alerts.fields.thresholdPercentPlaceholder")}
+                  />
+                </label>
+              ) : null}
             </div>
+
+            {shouldShowCompareAgainst ? (
+              <label className="field qs-label">
+                <span>{t("hotels.alerts.fields.compareAgainst")}</span>
+                <select className="qs-input-neutral" value={draft.compareAgainst} onChange={(event) => setDraft((current) => ({ ...current, compareAgainst: event.target.value }))}>
+                  <option value="snapshot_previous">{t("hotels.alerts.compareAgainstOptions.snapshotPrevious")}</option>
+                  <option value="initial_price">{t("hotels.alerts.compareAgainstOptions.initialPrice")}</option>
+                </select>
+              </label>
+            ) : null}
 
             <label className="hotel-alert-toggle">
               <input

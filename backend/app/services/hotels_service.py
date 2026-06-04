@@ -5,10 +5,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
+from app.hotels.contracts import ProviderRateRecord
 from app.hotels.geo import HotelGeoService, HotelNearbySuggestion, haversine_km
 from app.hotels.normalization import HotelNormalizationService
 from app.hotels.ingestion import HotelIngestionService
-from app.hotels.normalization import HotelNormalizationService
 from app.hotels.parity import HotelParityService, ParitySignal
 from app.infrastructure.db.models import (
     HotelAlertEvent,
@@ -178,6 +178,12 @@ def delete_comp_set_member(db: Session, *, user_id: str, comp_set_id: str, membe
     db.commit()
 
 
+def delete_comp_set(db: Session, *, user_id: str, comp_set_id: str) -> None:
+    comp_set = get_comp_set_or_404(db, user_id=user_id, comp_set_id=comp_set_id)
+    db.delete(comp_set)
+    db.commit()
+
+
 def list_alert_rules(db: Session, user_id: str) -> list[HotelAlertRule]:
     return list(db.scalars(select(HotelAlertRule).where(HotelAlertRule.user_id == user_id).order_by(HotelAlertRule.id.asc())))
 
@@ -191,14 +197,18 @@ def create_alert_rule(
     threshold_amount: float | None,
     threshold_percent: float | None,
     is_active: bool,
+    tracked_offer_id: str | None = None,
+    compare_against: str = "snapshot_previous",
 ) -> HotelAlertRule:
     _ = get_hotel_or_404(db, hotel_id)
     rule = HotelAlertRule(
         user_id=user_id,
         hotel_id=hotel_id,
+        tracked_offer_id=tracked_offer_id,
         rule_type=rule_type,
         threshold_amount=threshold_amount,
         threshold_percent=threshold_percent,
+        compare_against=compare_against,
         is_active=is_active,
     )
     db.add(rule)
@@ -221,7 +231,7 @@ def update_alert_rule(
         raise PermissionError("not_allowed")
 
     for field, value in update_data.items():
-        if field not in {"rule_type", "threshold_amount", "threshold_percent", "is_active"}:
+        if field not in {"rule_type", "threshold_amount", "threshold_percent", "compare_against", "is_active"}:
             continue
         setattr(rule, field, value)
 
@@ -252,6 +262,7 @@ def run_hotel_sweep(db: Session, *, provider: str = "mock") -> HotelProviderRun:
     db.add(provider_run)
     db.flush()
 
+    adapter = None
     try:
         if provider == "mock":
             result = ingest_hotels_mock(db)
@@ -268,6 +279,7 @@ def run_hotel_sweep(db: Session, *, provider: str = "mock") -> HotelProviderRun:
         db.flush()
 
         evaluate_hotel_alerts(db, provider_run_id=provider_run.id)
+        sweep_tracked_offers(db, provider_run_id=provider_run.id, provider_adapter=adapter)
     except Exception as exc:
         provider_run.status = "failed"
         provider_run.error_message = str(exc)[:500]
@@ -279,17 +291,200 @@ def run_hotel_sweep(db: Session, *, provider: str = "mock") -> HotelProviderRun:
     return provider_run
 
 
+def sweep_tracked_offers(
+    db: Session,
+    *,
+    provider_run_id: str,
+    provider_adapter: object | None = None,
+) -> dict[str, int]:
+    """Sweep active tracked offers: create snapshots from matching rates and update current_price.
+
+    For each active HotelTrackedOffer with check_in/check_out set, this function:
+    1. If a provider_adapter with fetch_hotel_rates is available, tries to fetch
+       targeted rates for the specific hotel/dates/guests/currency.
+    2. Otherwise, finds the cheapest matching HotelRateSnapshot from the general pool
+       (same hotel, dates, guests, currency, not yet linked to any tracked offer).
+    3. Creates a new snapshot linked to the tracked_offer_id and provider_run_id.
+    4. Updates current_price on the tracked offer.
+    5. Creates an alert event if the price changed from the previous snapshot.
+
+    Returns a dict with counts: {"offers_scanned": N, "snapshots_created": M}.
+    """
+    active_offers = list(
+        db.scalars(
+            select(HotelTrackedOffer).where(
+                HotelTrackedOffer.is_active == True,
+                HotelTrackedOffer.check_in.is_not(None),
+                HotelTrackedOffer.check_out.is_not(None),
+            )
+        )
+    )
+
+    offers_scanned = 0
+    snapshots_created = 0
+
+    for offer in active_offers:
+        offers_scanned += 1
+
+        if offer.check_in is None or offer.check_out is None:
+            continue
+
+        # Try fetching targeted rates from the provider adapter first
+        provider_rates: list[ProviderRateRecord] = []
+        if provider_adapter is not None and hasattr(provider_adapter, "fetch_hotel_rates"):
+            try:
+                provider_rates = provider_adapter.fetch_hotel_rates(
+                    hotel_id=offer.hotel_id,
+                    check_in=offer.check_in,
+                    check_out=offer.check_out,
+                    guests=offer.guests or 2,
+                    currency=offer.currency or "EUR",
+                )
+            except Exception:
+                provider_rates = []
+
+        # Determine the rate to use: provider rates first, then fallback to unlinked snapshots
+        if provider_rates:
+            # Use the cheapest rate from the provider
+            best = min(provider_rates, key=lambda r: r.amount)
+            rate_amount = best.amount
+            rate_provider = provider_adapter.provider_id if hasattr(provider_adapter, "provider_id") else "makcorps"
+            rate_room = best.room_label or offer.room_label
+            rate_meal = best.meal_plan or offer.meal_plan
+            rate_cancellation = best.cancellation_policy or offer.cancellation_policy
+            rate_check_in = best.check_in
+            rate_check_out = best.check_out
+            rate_currency = best.currency
+            rate_guests = best.guests
+            rate_availability = "available"
+            rate_deep_link = None
+        else:
+            # Fallback: find cheapest unlinked snapshot from general pool
+            cheapest = db.scalars(
+                select(HotelRateSnapshot)
+                .where(
+                    HotelRateSnapshot.hotel_id == offer.hotel_id,
+                    HotelRateSnapshot.check_in == offer.check_in,
+                    HotelRateSnapshot.check_out == offer.check_out,
+                    HotelRateSnapshot.guests == offer.guests,
+                    HotelRateSnapshot.currency == offer.currency,
+                    HotelRateSnapshot.tracked_offer_id.is_(None),
+                )
+                .order_by(HotelRateSnapshot.amount.asc())
+                .limit(1)
+            ).first()
+
+            if cheapest is None:
+                continue
+
+            rate_amount = float(cheapest.amount)
+            rate_provider = cheapest.provider
+            rate_room = cheapest.room_label or offer.room_label
+            rate_meal = cheapest.meal_plan or offer.meal_plan
+            rate_cancellation = cheapest.cancellation_policy or offer.cancellation_policy
+            rate_check_in = cheapest.check_in
+            rate_check_out = cheapest.check_out
+            rate_currency = cheapest.currency
+            rate_guests = cheapest.guests
+            rate_availability = cheapest.availability_status
+            rate_deep_link = cheapest.deep_link
+
+        # Determine previous price for delta tracking
+        previous_snapshot = db.scalars(
+            select(HotelRateSnapshot)
+            .where(HotelRateSnapshot.tracked_offer_id == offer.id)
+            .order_by(desc(HotelRateSnapshot.collected_at), desc(HotelRateSnapshot.id))
+            .limit(1)
+        ).first()
+
+        previous_price: float | None = None
+        if previous_snapshot is not None:
+            previous_price = float(previous_snapshot.amount)
+
+        # Create a new snapshot linked to this tracked offer
+        new_snapshot = HotelRateSnapshot(
+            hotel_id=offer.hotel_id,
+            tracked_offer_id=offer.id,
+            provider_run_id=provider_run_id,
+            provider=rate_provider,
+            check_in=rate_check_in,
+            check_out=rate_check_out,
+            guests=rate_guests,
+            room_label=rate_room,
+            meal_plan=rate_meal,
+            cancellation_policy=rate_cancellation,
+            currency=rate_currency,
+            amount=rate_amount,
+            availability_status=rate_availability,
+            deep_link=rate_deep_link,
+        )
+        db.add(new_snapshot)
+        snapshots_created += 1
+
+        # Update current_price on the tracked offer
+        new_price = rate_amount
+        offer.current_price = new_price
+        db.add(offer)
+
+        # Create alert event if price changed from previous
+        hotel = db.get(HotelProperty, offer.hotel_id)
+        hotel_name = hotel.canonical_name if hotel else offer.hotel_id
+
+        if previous_price is not None and previous_price != new_price:
+            delta = new_price - previous_price
+            pct = round((delta / previous_price) * 100, 1) if previous_price > 0 else 0.0
+            direction = "subió" if delta > 0 else "bajó"
+            event_type = "price_above" if delta > 0 else "price_below"
+
+            db.add(
+                HotelAlertEvent(
+                    hotel_id=offer.hotel_id,
+                    provider_run_id=provider_run_id,
+                    event_type=event_type,
+                    message=(
+                        f"{hotel_name}: {direction} de {previous_price:.2f} a {new_price:.2f} "
+                        f"{offer.currency} ({pct:+.1f}%)"
+                    ),
+                    trigger_value=new_price,
+                )
+            )
+
+    if snapshots_created > 0:
+        db.flush()
+
+    return {"offers_scanned": offers_scanned, "snapshots_created": snapshots_created}
+
+
 def evaluate_hotel_alerts(db: Session, *, provider_run_id: str) -> list[HotelAlertEvent]:
     rules = list(db.scalars(select(HotelAlertRule).where(HotelAlertRule.is_active == True)))
     events: list[HotelAlertEvent] = []
 
     for rule in rules:
+        hotel = db.get(HotelProperty, rule.hotel_id)
+        hotel_name = hotel.canonical_name if hotel else rule.hotel_id
+
+        # For tracked offer alerts, use tracked offer snapshots
+        if rule.tracked_offer_id is not None and rule.rule_type in {
+            "price_below", "price_above", "percentage_drop", "percentage_increase",
+            "provider_changed", "availability_returned",
+        }:
+            tracked_offer = db.get(HotelTrackedOffer, rule.tracked_offer_id)
+            if tracked_offer is None:
+                continue
+            snapshots = list_tracked_offer_snapshots(
+                db, user_id=tracked_offer.user_id, tracked_offer_id=tracked_offer.id
+            )
+            if not snapshots:
+                continue
+            _evaluate_tracked_alert_rule(
+                db, rule, snapshots, hotel_name, provider_run_id, events
+            )
+            continue
+
+        # Legacy: evaluate against all rates for the hotel
         rates = list_hotel_rates(db, hotel_id=rule.hotel_id, check_in=None, check_out=None)
         if not rates:
             continue
-
-        hotel = db.get(HotelProperty, rule.hotel_id)
-        hotel_name = hotel.canonical_name if hotel else rule.hotel_id
 
         if rule.rule_type == "price_below":
             amounts_f = [float(r.amount) for r in rates]
@@ -360,6 +555,12 @@ def evaluate_hotel_alerts(db: Session, *, provider_run_id: str) -> list[HotelAle
                         )
                         break
 
+        # New human rule types for non-tracked offers (fallback to legacy behavior)
+        elif rule.rule_type == "percentage_drop":
+            _evaluate_legacy_percentage_rule(db, rule, rates, hotel_name, provider_run_id, events, direction="drop")
+        elif rule.rule_type == "percentage_increase":
+            _evaluate_legacy_percentage_rule(db, rule, rates, hotel_name, provider_run_id, events, direction="increase")
+
     for event in events:
         db.add(event)
 
@@ -367,6 +568,161 @@ def evaluate_hotel_alerts(db: Session, *, provider_run_id: str) -> list[HotelAle
         db.flush()
 
     return events
+
+
+def _evaluate_tracked_alert_rule(
+    db: Session,
+    rule: HotelAlertRule,
+    snapshots: list[HotelRateSnapshot],
+    hotel_name: str,
+    provider_run_id: str,
+    events: list[HotelAlertEvent],
+) -> None:
+    """Evaluate a tracked-offer alert rule against its snapshots."""
+    latest = snapshots[0]
+    latest_amount = float(latest.amount)
+    previous: HotelRateSnapshot | None = snapshots[1] if len(snapshots) > 1 else None
+
+    # Determine the comparison baseline based on compare_against
+    compare_baseline: float | None = None
+    if rule.compare_against == "initial_price":
+        tracked_offer = db.get(HotelTrackedOffer, rule.tracked_offer_id) if rule.tracked_offer_id else None
+        if tracked_offer is not None and tracked_offer.initial_price is not None:
+            compare_baseline = float(tracked_offer.initial_price)
+    elif previous is not None:
+        compare_baseline = float(previous.amount)
+
+    if rule.rule_type == "price_below":
+        if rule.threshold_amount is not None and latest_amount < float(rule.threshold_amount):
+            events.append(
+                HotelAlertEvent(
+                    rule_id=rule.id,
+                    hotel_id=rule.hotel_id,
+                    provider_run_id=provider_run_id,
+                    event_type="price_below",
+                    message=f"{hotel_name}: bajó a {latest.currency} {latest_amount:.2f}",
+                    trigger_value=latest_amount,
+                )
+            )
+
+    elif rule.rule_type == "price_above":
+        if rule.threshold_amount is not None and latest_amount > float(rule.threshold_amount):
+            events.append(
+                HotelAlertEvent(
+                    rule_id=rule.id,
+                    hotel_id=rule.hotel_id,
+                    provider_run_id=provider_run_id,
+                    event_type="price_above",
+                    message=f"{hotel_name}: subió a {latest.currency} {latest_amount:.2f}",
+                    trigger_value=latest_amount,
+                )
+            )
+
+    elif rule.rule_type == "percentage_drop" and compare_baseline is not None:
+        if compare_baseline > 0:
+            pct = ((compare_baseline - latest_amount) / compare_baseline) * 100
+            if rule.threshold_percent is not None and pct >= float(rule.threshold_percent):
+                events.append(
+                    HotelAlertEvent(
+                        rule_id=rule.id,
+                        hotel_id=rule.hotel_id,
+                        provider_run_id=provider_run_id,
+                        event_type="percentage_drop",
+                        message=f"{hotel_name}: bajó {pct:.1f}% ({compare_baseline:.2f} → {latest_amount:.2f} {latest.currency})",
+                        trigger_value=pct,
+                    )
+                )
+
+    elif rule.rule_type == "percentage_increase" and compare_baseline is not None:
+        if compare_baseline > 0:
+            pct = ((latest_amount - compare_baseline) / compare_baseline) * 100
+            if rule.threshold_percent is not None and pct >= float(rule.threshold_percent):
+                events.append(
+                    HotelAlertEvent(
+                        rule_id=rule.id,
+                        hotel_id=rule.hotel_id,
+                        provider_run_id=provider_run_id,
+                        event_type="percentage_increase",
+                        message=f"{hotel_name}: subió {pct:.1f}% ({compare_baseline:.2f} → {latest_amount:.2f} {latest.currency})",
+                        trigger_value=pct,
+                    )
+                )
+
+    elif rule.rule_type == "provider_changed" and previous is not None:
+        if latest.provider != previous.provider:
+            events.append(
+                HotelAlertEvent(
+                    rule_id=rule.id,
+                    hotel_id=rule.hotel_id,
+                    provider_run_id=provider_run_id,
+                    event_type="provider_changed",
+                    message=f"{hotel_name}: el proveedor más barato cambió de {previous.provider} a {latest.provider}",
+                    trigger_value=latest_amount,
+                )
+            )
+
+    elif rule.rule_type == "availability_returned" and previous is not None:
+        if previous.availability_status == "unavailable" and latest.availability_status == "available":
+            events.append(
+                HotelAlertEvent(
+                    rule_id=rule.id,
+                    hotel_id=rule.hotel_id,
+                    provider_run_id=provider_run_id,
+                    event_type="availability_returned",
+                    message=f"{hotel_name}: vuelve a estar disponible a {latest.currency} {latest_amount:.2f}",
+                    trigger_value=latest_amount,
+                )
+            )
+
+
+def _evaluate_legacy_percentage_rule(
+    db: Session,
+    rule: HotelAlertRule,
+    rates: list[HotelRateSnapshot],
+    hotel_name: str,
+    provider_run_id: str,
+    events: list[HotelAlertEvent],
+    direction: str,
+) -> None:
+    """Legacy percentage rule evaluation against general hotel rates."""
+    if not rates:
+        return
+    amounts = sorted(float(r.amount) for r in rates)
+    lowest = amounts[0]
+    for rate in rates:
+        rate_f = float(rate.amount)
+        if direction == "drop":
+            baseline = max(amounts) if len(amounts) > 1 else lowest
+            if baseline > 0:
+                pct = ((baseline - rate_f) / baseline) * 100
+                if rule.threshold_percent is not None and pct >= float(rule.threshold_percent):
+                    events.append(
+                        HotelAlertEvent(
+                            rule_id=rule.id,
+                            hotel_id=rule.hotel_id,
+                            provider_run_id=provider_run_id,
+                            event_type="percentage_drop",
+                            message=f"{hotel_name}: spread {pct:.1f}% ({rate.currency} {rate.amount:.2f})",
+                            trigger_value=pct,
+                        )
+                    )
+                    break
+        else:
+            baseline = lowest
+            if baseline > 0:
+                pct = ((rate_f - baseline) / baseline) * 100
+                if rule.threshold_percent is not None and pct >= float(rule.threshold_percent):
+                    events.append(
+                        HotelAlertEvent(
+                            rule_id=rule.id,
+                            hotel_id=rule.hotel_id,
+                            provider_run_id=provider_run_id,
+                            event_type="percentage_increase",
+                            message=f"{hotel_name}: spread {pct:.1f}% ({rate.currency} {rate.amount:.2f})",
+                            trigger_value=pct,
+                        )
+                    )
+                    break
 
 
 def list_hotel_alert_events(
@@ -377,9 +733,22 @@ def list_hotel_alert_events(
     limit: int = 50,
     offset: int = 0,
 ) -> list[HotelAlertEvent]:
-    stmt = select(HotelAlertEvent).join(HotelAlertRule, HotelAlertEvent.rule_id == HotelAlertRule.id).where(HotelAlertRule.user_id == user_id)
+    # Include events from both alert rules and sweep-generated (rule_id is None)
+    rule_hotel_ids_query = select(HotelAlertRule.hotel_id).where(HotelAlertRule.user_id == user_id)
     if hotel_id is not None:
-        stmt = stmt.where(HotelAlertEvent.hotel_id == hotel_id)
+        rule_hotel_ids_query = rule_hotel_ids_query.where(HotelAlertRule.hotel_id == hotel_id)
+    allowed_hotel_ids = set(db.scalars(rule_hotel_ids_query).all())
+
+    # Also include tracked offer hotel IDs for sweep-generated events
+    tracked_hotel_ids_query = select(HotelTrackedOffer.hotel_id).where(HotelTrackedOffer.user_id == user_id)
+    if hotel_id is not None:
+        tracked_hotel_ids_query = tracked_hotel_ids_query.where(HotelTrackedOffer.hotel_id == hotel_id)
+    allowed_hotel_ids.update(db.scalars(tracked_hotel_ids_query).all())
+
+    if not allowed_hotel_ids:
+        return []
+
+    stmt = select(HotelAlertEvent).where(HotelAlertEvent.hotel_id.in_(allowed_hotel_ids))
     stmt = stmt.order_by(desc(HotelAlertEvent.created_at), desc(HotelAlertEvent.id)).offset(offset).limit(limit)
     return list(db.scalars(stmt))
 
@@ -437,6 +806,30 @@ def create_tracked_offer(
         currency=currency,
     )
     db.add(offer)
+    try:
+        db.flush()
+    except IntegrityError as exc:
+        db.rollback()
+        raise ValueError("tracked_offer_already_exists") from exc
+
+    # Create initial snapshot with the tracked offer reference
+    if check_in is not None and check_out is not None and current is not None:
+        snapshot = HotelRateSnapshot(
+            hotel_id=hotel_id,
+            tracked_offer_id=offer.id,
+            provider=provider,
+            check_in=check_in,
+            check_out=check_out,
+            guests=guests,
+            room_label=room_label,
+            meal_plan=meal_plan,
+            cancellation_policy=cancellation_policy,
+            currency=currency,
+            amount=current,
+            availability_status="available",
+        )
+        db.add(snapshot)
+
     db.commit()
     db.refresh(offer)
     return offer
@@ -528,6 +921,13 @@ def area_resolve(
     )
 
     if not hotels:
+        # Fallback to external geocoder if enabled
+        from app.hotels.geocoder import geocode_city
+
+        geocode_result = geocode_city(q)
+        if geocode_result is not None:
+            return geocode_result
+
         raise ValueError("area_not_found")
 
     # Compute centroid

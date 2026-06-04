@@ -1,9 +1,11 @@
 # Hotels Product Direction
 
 **Estado:** vivo  
-**Última revisión:** 2026-06-04  
+**Última revisión:** 2026-06-04 (cierre Fase 10)  
 **Fuente de verdad:** sí  
 **Área:** producto / hotels
+
+> 🟢 **Plan completado.** Las 10 fases definidas en este documento están implementadas, testeadas y verificadas. Ver sección 13 (Estado de implementación) para el detalle por fase.
 
 ## 1. Qué será /hoteles
 
@@ -158,16 +160,16 @@ HotelTrackedOffer 1→N HotelAlertRule
 
 | Fase | Descripción | Tipo |
 |---|---|---|
-| 1 | Redefinir producto y congelar dirección (este documento) | Docs |
-| 2 | Crear modelo HotelTrackedOffer + CRUD + endpoints | Backend |
-| 3 | Separar "oferta actual" de "snapshot histórico" (ampliar HotelRateSnapshot) | Backend |
-| 4 | Búsqueda por área real (lat/lng/radius) | Backend |
-| 5 | Resolver destino/zona desde texto | Backend |
-| 6 | Reordenar UI como comparador tipo Trivago | Frontend |
-| 7 | Guardar una oferta desde resultados | Full-stack |
-| 8 | Revisión diaria real de tracked offers | Backend |
-| 9 | Alertas humanas de precio | Full-stack |
-| 10 | QA final, limpieza conceptual y documentación | QA/Docs |
+| 1 | Redefinir producto y congelar dirección (este documento) | Docs | ✅ |
+| 2 | Crear modelo HotelTrackedOffer + CRUD + endpoints | Backend | ✅ |
+| 3 | Separar "oferta actual" de "snapshot histórico" (ampliar HotelRateSnapshot) | Backend | ✅ |
+| 4 | Búsqueda por área real (lat/lng/radius) | Backend | ✅ |
+| 5 | Resolver destino/zona desde texto | Backend | ✅ |
+| 6 | Reordenar UI como comparador tipo Trivago | Frontend | ✅ |
+| 7 | Guardar una oferta desde resultados | Full-stack | ✅ |
+| 8 | Revisión diaria real de tracked offers | Backend | ✅ |
+| 9 | Alertas humanas de precio | Full-stack | ✅ |
+| 10 | QA final, limpieza conceptual y documentación | QA/Docs | ✅ |
 
 ## 11. Riesgos
 
@@ -191,3 +193,29 @@ Al finalizar las 10 fases:
 9. Comp sets y paridad quedan como extras secundarios.
 10. Dark/light/responsive correcto.
 11. La documentación está actualizada.
+
+## 13. Estado de implementación (cierre Fase 10 — 2026-06-04)
+
+Todas las fases del plan están completadas:
+
+| Fase | Descripción | Evidencia |
+|---|---|---|
+| 1 | Spec producto | `docs/specs/hotels-product-direction.md` |
+| 2 | `HotelTrackedOffer` + CRUD | Modelo, migración 0020, 5 endpoints, tests |
+| 3 | Snapshots asociados | `HotelRateSnapshot` ampliado, endpoint `/tracked-offers/{id}/snapshots`, migración 0021 |
+| 4 | Búsqueda por área | `GET /area-search` con 10 params, Haversine, ordenación |
+| 5 | Resolver zona desde texto | `GET /area-resolve?q=`, centroide desde datos internos |
+| 6 | UI comparador | Layout reorganizado, paneles colapsables, copy humano |
+| 7 | Trackear precio desde resultados | Botón "Trackear precio", snapshot inicial, prevención de duplicados |
+| 8 | Sweep diario de tracked offers | `sweep_tracked_offers` integrado en `run_hotel_sweep`, actualización de `current_price`, eventos de cambio |
+| 9 | Alertas humanas | 6 tipos de alerta (baja/subida por €/%, proveedor, disponibilidad), UI con lenguaje humano |
+| 10 | QA final y documentación | 5 docs actualizados, 132 tests, build frontend OK |
+
+### Deudas futuras
+
+1. **Provider real dinámico**: Makcorps y futuros providers deben aceptar zona/fechas/huéspedes para que el sweep produzca snapshots nuevos en cada ejecución.
+2. **Scheduler automático**: Los sweeps se ejecutan manualmente o vía worker opcional. No hay scheduler integrado en el startup del API.
+3. **Verificación visual manual**: La QA visual en navegador real (dark/light/responsive) queda pendiente.
+4. **`DELETE /comp-sets/{id}`**: El backend no expone endpoint para eliminar un comp set entero.
+5. **Geocoder externo**: La resolución de área usa solo datos internos. Un geocoder como Nominatim podría mejorar la precisión para zonas sin hoteles en el catálogo.
+6. **Alertas sobre `initial_price`**: Las alertas de % comparan contra el snapshot anterior, no contra `initial_price`. Podría añadirse como opción.

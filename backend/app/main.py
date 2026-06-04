@@ -9,6 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
 from app.core.errors import ApiError, error_envelope, message_for_code
 from app.core.request_context import get_correlation_id, normalize_correlation_id, set_correlation_id
@@ -95,7 +96,75 @@ def _parse_cors_origins() -> list[str]:
     return default_origins
 
 
-app = FastAPI(title="Viru API", version="0.1.0")
+_hotel_sweep_enabled = os.getenv("HOTEL_SWEEP_ENABLED", "false").lower() in {"1", "true", "yes"}
+_hotel_sweep_interval = int(os.getenv("HOTEL_SWEEP_INTERVAL_SECONDS", "3600"))
+_hotel_sweep_provider = os.getenv("HOTEL_PROVIDER", "mock").strip() or "mock"
+
+_sweep_logger = logging.getLogger("app.sweep")
+
+
+def _start_sweep_loop(run_sweep_fn) -> None:
+    """Background thread: run hotel sweep periodically."""
+    import time as _time
+
+    from app.infrastructure.db.session import SessionLocal
+
+    _sweep_logger.info(
+        json.dumps(
+            {
+                "event": "hotel_sweep_scheduler_started",
+                "provider": _hotel_sweep_provider,
+                "interval_seconds": _hotel_sweep_interval,
+            },
+            ensure_ascii=False,
+        )
+    )
+
+    while True:
+        db = SessionLocal()
+        try:
+            provider_run = run_sweep_fn(db, provider=_hotel_sweep_provider)
+            _sweep_logger.info(
+                json.dumps(
+                    {
+                        "event": "hotel_sweep_cycle",
+                        "mode": "scheduled",
+                        "provider": _hotel_sweep_provider,
+                        "provider_run_id": provider_run.id,
+                        "status": provider_run.status,
+                        "items_processed": provider_run.items_processed,
+                    },
+                    ensure_ascii=False,
+                )
+            )
+        except Exception as exc:
+            _sweep_logger.error(
+                json.dumps(
+                    {
+                        "event": "hotel_sweep_failed",
+                        "provider": _hotel_sweep_provider,
+                        "error": str(exc)[:500],
+                    },
+                    ensure_ascii=False,
+                )
+            )
+        finally:
+            db.close()
+        _time.sleep(max(60, _hotel_sweep_interval))
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if _hotel_sweep_enabled:
+        import threading
+        from app.services.hotels_service import run_hotel_sweep
+
+        thread = threading.Thread(target=_start_sweep_loop, args=(run_hotel_sweep,), daemon=True, name="hotel-sweep")
+        thread.start()
+    yield
+
+
+app = FastAPI(title="Viru API", version="0.1.0", lifespan=lifespan)
 
 
 class AccessLogMiddleware:
