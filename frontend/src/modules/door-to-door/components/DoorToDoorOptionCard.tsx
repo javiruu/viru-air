@@ -14,6 +14,7 @@ function durationLabel(minutes: number | null | undefined) {
 export function DoorToDoorOptionCard({
   option,
   chosen,
+  isRecommended = false,
   compact = false,
   reasons = [],
   quickBadges = [],
@@ -22,6 +23,7 @@ export function DoorToDoorOptionCard({
 }: {
   option: DoorToDoorOption;
   chosen: boolean;
+  isRecommended?: boolean;
   compact?: boolean;
   reasons?: DecisionReason[];
   quickBadges?: DecisionBadge[];
@@ -51,7 +53,10 @@ export function DoorToDoorOptionCard({
   const durStr = durationLabel(option.total_duration_minutes);
 
   return (
-    <article className={`d2d-option-card ${isRealResult ? "is-real" : ""} ${isRealDeeplink ? "is-deeplink" : ""} ${isEstimate ? "is-estimate" : ""} ${chosen ? "is-chosen" : ""} ${compact ? "is-compact" : ""}`}>
+    <article className={`d2d-option-card ${isRealResult ? "is-real" : ""} ${isRealDeeplink ? "is-deeplink" : ""} ${isEstimate ? "is-estimate" : ""} ${chosen ? "is-chosen" : ""} ${isRecommended ? "is-recommended" : ""} ${compact ? "is-compact" : ""}`}>
+      {isRecommended ? (
+        <span className="d2d-recommended-star" aria-label={t("doorToDoor.option.recommended")}>★</span>
+      ) : null}
       <div className="d2d-option-main">
         <div className="d2d-option-head">
           <div>

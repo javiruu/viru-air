@@ -5,7 +5,10 @@ import { useI18n } from "@/i18n";
 export function DoorToDoorErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   const { t } = useI18n();
   return (
-    <section className="notice notice-error d2d-error-state" role="alert">
+    <section className="notice notice-error d2d-error-state d2d-state-enter" role="alert">
+      <div className="d2d-error-visual" aria-hidden="true">
+        <span className="d2d-error-icon">⚡</span>
+      </div>
       <div>
         <strong>{t("doorToDoor.states.errorTitle")}</strong>
         <p>{message || t("doorToDoor.states.errorBody")}</p>
