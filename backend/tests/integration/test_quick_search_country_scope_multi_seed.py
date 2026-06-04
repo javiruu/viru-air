@@ -74,7 +74,7 @@ def _fake_expand_search_sides(
 
 
 class _ProviderOnlySecondSeedPair:
-    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000):
+    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         del travel_date, timeout_ms
         if origin == "FCO" and destination == "MAD":
             return ProviderFetchResult(
@@ -96,7 +96,7 @@ class _ProviderDateRescueSecondSeed:
     def __init__(self, target: date) -> None:
         self._target = target
 
-    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000):
+    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         del timeout_ms
         query_date = date.fromisoformat(travel_date)
         if origin == "FCO" and destination == "MAD" and query_date == self._target + timedelta(days=1):
@@ -116,7 +116,7 @@ class _ProviderDateRescueSecondSeed:
 
 
 class _ProviderAlwaysEmptyPartial:
-    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000):
+    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         del origin, destination, travel_date, timeout_ms
         return ProviderFetchResult(flights=[], warnings=["ryanair_availability_failed_partial"])
 

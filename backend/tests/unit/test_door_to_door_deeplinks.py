@@ -291,9 +291,9 @@ async def test_goopti_max_price_no_filtra_deeplink_sin_precio():
 # ---------------------------------------------------------------------------
 
 def test_provider_status_clasifica_ambos_como_functional_deeplink():
+    from app.door_to_door.providers.deeplink_goopti import GoOptiDeepLinkProvider
     from app.door_to_door.providers.registry import (
         BlaBlaCarDeepLinkProvider,
-        GoOptiDeepLinkProvider,
         ProviderDescriptor,
         resolve_provider_runtime,
     )

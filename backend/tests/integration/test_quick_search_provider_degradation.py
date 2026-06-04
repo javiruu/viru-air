@@ -9,7 +9,7 @@ from app.services.quick_search_execution import _CACHE
 
 
 class _ProviderWithAvailabilityFailure:
-    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000):
+    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         if origin == "MAD" and destination == "DUB":
             return ProviderFetchResult(
                 flights=[
@@ -27,7 +27,7 @@ class _ProviderWithAvailabilityFailure:
 
 
 class _ProviderTotallyUnavailable:
-    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000):
+    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         raise ProviderSourceFetchError(
             warning_codes=[
                 "ryanair_availability_failed",
@@ -39,7 +39,7 @@ class _ProviderTotallyUnavailable:
 
 
 class _ProviderWithRepeatedPartialWarnings:
-    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000):
+    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         return ProviderFetchResult(
             flights=[],
             warnings=["ryanair_availability_failed_partial"],
