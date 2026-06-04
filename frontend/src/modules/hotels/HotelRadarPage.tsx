@@ -120,11 +120,28 @@ export function HotelRadarPage() {
       <HotelSearchPanel
         query={search.query}
         city={search.city}
+        searchMode={search.searchMode}
         loading={search.loading}
+        areaQuery={search.areaQuery}
+        areaSuggestions={search.areaSuggestions}
+        areaResolving={search.areaResolving}
+        areaResolved={search.areaResolved}
+        checkIn={search.checkIn}
+        checkOut={search.checkOut}
+        guests={search.guests}
+        areaResults={search.areaResults}
+        isAreaSearchActive={search.isAreaSearchActive}
         onQueryChange={search.setQuery}
         onCityChange={search.setCity}
+        onSearchModeChange={search.setSearchMode}
         onSearch={search.handleSearch}
         onIngest={search.handleIngest}
+        onAreaQueryChange={search.setAreaQuery}
+        onAreaResolve={search.handleAreaResolve}
+        onSelectArea={search.handleSelectArea}
+        onCheckInChange={search.setCheckIn}
+        onCheckOutChange={search.setCheckOut}
+        onGuestsChange={search.setGuests}
       />
 
       {search.errorMessage ? (
