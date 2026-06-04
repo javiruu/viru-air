@@ -1,7 +1,7 @@
 version: "3.9"
 # Production-oriented compose profile.
 # Override DOMAIN via .env or environment, e.g.:
-#   DOMAIN=virutracker.dpdns.org docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#   DOMAIN=virutracker.duckdns.org docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 services:
   caddy:
