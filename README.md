@@ -18,6 +18,7 @@ Backend:
 cd backend
 pip install -e .[dev]
 copy .env.example .env
+python -m alembic upgrade head
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -37,6 +38,7 @@ Variables recomendadas:
 Importante:
 
 - `JWT_SECRET` es obligatorio y no puede ser `change-me`.
+- `RUN_DB_INIT` no sustituye a Alembic; para un entorno limpio o tras cambios de esquema usa `python -m alembic upgrade head`.
 
 ## Documentación
 
