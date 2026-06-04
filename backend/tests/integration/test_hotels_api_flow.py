@@ -1088,3 +1088,66 @@ def test_hotels_alert_events_can_be_filtered_by_hotel_id(client: TestClient) -> 
     assert len(payload) >= 1
     assert all(item["hotel_id"] == target_hotel_id for item in payload)
     assert all(item["event_type"] == "price_below" for item in payload)
+
+
+# ── Comp Set Delete ─────────────────────────────────────────────────
+
+
+def test_hotels_comp_set_delete_returns_ok(client: TestClient) -> None:
+    token = register_and_token(client, email="hotels-comp-set-delete@viru.dev")
+    headers = _auth(token)
+
+    ingest = client.post("/api/v1/hotels/ingest/mock", headers=headers)
+    assert ingest.status_code == 200
+    hotels = client.get("/api/v1/hotels/search", headers=headers).json()
+    hotel_id = hotels[0]["id"]
+
+    created = client.post(
+        "/api/v1/hotels/comp-sets",
+        headers=headers,
+        json={"name": "To delete", "anchor_hotel_id": hotel_id},
+    )
+    assert created.status_code == 200
+    comp_set_id = created.json()["id"]
+
+    deleted = client.delete(f"/api/v1/hotels/comp-sets/{comp_set_id}", headers=headers)
+    assert deleted.status_code == 200
+    assert deleted.json()["status"] == "ok"
+
+    # Verify it's gone from the list
+    listed = client.get("/api/v1/hotels/comp-sets", headers=headers)
+    assert listed.status_code == 200
+    assert comp_set_id not in [cs["id"] for cs in listed.json()]
+
+    # Second delete returns 404
+    second_delete = client.delete(f"/api/v1/hotels/comp-sets/{comp_set_id}", headers=headers)
+    assert second_delete.status_code == 404
+    assert _error_code(second_delete.json()) == "hotel_comp_set_not_found"
+
+
+def test_hotels_comp_set_delete_ownership_enforced(client: TestClient) -> None:
+    token_a = register_and_token(client, email="hotels-cs-delete-owner-a@viru.dev")
+    token_b = register_and_token(client, email="hotels-cs-delete-owner-b@viru.dev")
+    headers_a = _auth(token_a)
+    headers_b = _auth(token_b)
+
+    ingest = client.post("/api/v1/hotels/ingest/mock", headers=headers_a)
+    assert ingest.status_code == 200
+    hotel_id = client.get("/api/v1/hotels/search", headers=headers_a).json()[0]["id"]
+
+    created = client.post(
+        "/api/v1/hotels/comp-sets",
+        headers=headers_a,
+        json={"name": "Mine", "anchor_hotel_id": hotel_id},
+    )
+    assert created.status_code == 200
+    comp_set_id = created.json()["id"]
+
+    # User B tries to delete user A's comp set
+    forbidden = client.delete(f"/api/v1/hotels/comp-sets/{comp_set_id}", headers=headers_b)
+    assert forbidden.status_code == 403
+
+    # Verify it still exists for user A
+    detail = client.get(f"/api/v1/hotels/comp-sets/{comp_set_id}", headers=headers_a)
+    assert detail.status_code == 200
+    assert detail.json()["id"] == comp_set_id
