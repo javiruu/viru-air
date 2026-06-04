@@ -93,11 +93,21 @@ function stableStringify(value: unknown): string {
   return `{${entries.join(",")}}`;
 }
 
-async function sha256Hex(input: string): Promise<string> {
-  const bytes = new TextEncoder().encode(input);
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  const hex = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
-  return hex;
+async function sha256Hex(input: string): Promise<string | null> {
+  const subtle = globalThis.crypto?.subtle;
+  if (subtle) {
+    const bytes = new TextEncoder().encode(input);
+    const digest = await subtle.digest("SHA-256", bytes);
+    const hex = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+    return hex;
+  }
+
+  if (typeof window === "undefined") {
+    const { createHash } = await import("node:crypto");
+    return createHash("sha256").update(input).digest("hex");
+  }
+
+  return null;
 }
 
 function clampInt(value: number, min: number, max: number, fallback: number): number {
@@ -277,7 +287,9 @@ type QuerySignatureInput = {
   winningStep: string;
 };
 
-export async function buildQuickSearchQuerySignature({ payload, winningStep }: QuerySignatureInput): Promise<string> {
+export async function buildQuickSearchQuerySignature(
+  { payload, winningStep }: QuerySignatureInput,
+): Promise<string | null> {
   const signaturePayload = {
     origin_seed_pool: payload.origin.seed_iata_list || [payload.origin.seed_iata],
     destination_seed_pool: payload.destination.seed_iata_list || [payload.destination.seed_iata],
@@ -297,6 +309,7 @@ export async function buildQuickSearchQuerySignature({ payload, winningStep }: Q
     winning_step: winningStep,
   };
   const hex = await sha256Hex(stableStringify(signaturePayload));
+  if (!hex) return null;
   return `qsig_${hex.slice(0, 24)}`;
 }
 
@@ -308,9 +321,14 @@ const QUICK_SEARCH_WINNING_STEPS = [
   "pass_5_rescue_time_window",
 ] as const;
 
-export async function buildQuickSearchExpectedSignatures(payload: QuickSearchCanonicalPayload): Promise<Set<string>> {
+export async function buildQuickSearchExpectedSignatures(
+  payload: QuickSearchCanonicalPayload,
+): Promise<Set<string> | null> {
   const signatures = await Promise.all(
     QUICK_SEARCH_WINNING_STEPS.map((step) => buildQuickSearchQuerySignature({ payload, winningStep: step })),
   );
+  if (signatures.some((signature) => signature === null)) {
+    return null;
+  }
   return new Set(signatures);
 }
