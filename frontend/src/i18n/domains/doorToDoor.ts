@@ -74,6 +74,11 @@ export const doorToDoorEs = {
     backpack: "Mochila",
     cabin: "Cabina",
     checked: "Maleta facturada",
+    presets: "Preajustes",
+    presetCheap: "Económico",
+    presetFast: "Rápido",
+    presetSafe: "Seguro",
+    showFilters: "Ajustar preferencias",
     publicOnly: "Solo transporte público",
     rideshare: "Permitir coche compartido",
     shuttle: "Permitir shuttle",
@@ -193,6 +198,9 @@ export const doorToDoorEs = {
       deletedToast: "Punto eliminado",
     },
   },
+  stickyBar: {
+    aria: "Barra de contexto del plan elegido",
+  },
   option: {
     recommended: "Recomendada",
     alternative: "Alternativa",
@@ -239,6 +247,7 @@ export const doorToDoorEs = {
       confidence: "Incluye fuentes con validación parcial y transparencia de límites.",
     },
     comparatorTitle: "Comparador rápido vs alternativas",
+    comparatorSubtitle: "{baseline} como referencia",
     compare: {
       price: "Precio",
       duration: "Tiempo",
@@ -294,6 +303,14 @@ export const doorToDoorEs = {
     groundOut: "Salida terrestre",
     flightSegment: "Vuelo",
     groundIn: "Llegada terrestre",
+    groundBus: "Bus",
+    groundTrain: "Tren",
+    groundCar: "Coche",
+    groundRideshare: "Coche compartido",
+    flightInfo: "Información del vuelo",
+    empty: "Calcula una ruta para ver el radar visual.",
+
+
   },
   watchSuggestion: {
     aria: "Sugerencia Puerta a puerta",
@@ -410,6 +427,11 @@ export const doorToDoorEn = {
     backpack: "Backpack",
     cabin: "Cabin",
     checked: "Checked bag",
+    presets: "Presets",
+    presetCheap: "Budget",
+    presetFast: "Fast",
+    presetSafe: "Safe",
+    showFilters: "Adjust preferences",
     publicOnly: "Public transport only",
     rideshare: "Allow rideshare",
     shuttle: "Allow shuttle",
@@ -529,6 +551,9 @@ export const doorToDoorEn = {
       deletedToast: "Point removed",
     },
   },
+  stickyBar: {
+    aria: "Plan context bar",
+  },
   option: {
     recommended: "Recommended",
     alternative: "Alternative",
@@ -575,6 +600,7 @@ export const doorToDoorEn = {
       confidence: "Includes partially validated sources with clear caveats.",
     },
     comparatorTitle: "Quick compare vs alternatives",
+    comparatorSubtitle: "{baseline} as baseline",
     compare: {
       price: "Price",
       duration: "Time",
@@ -630,6 +656,14 @@ export const doorToDoorEn = {
     groundOut: "Ground outbound",
     flightSegment: "Flight",
     groundIn: "Ground inbound",
+    groundBus: "Bus",
+    groundTrain: "Train",
+    groundCar: "Car",
+    groundRideshare: "Rideshare",
+    flightInfo: "Flight information",
+    empty: "Calculate a route to see the visual radar.",
+
+
   },
   watchSuggestion: {
     aria: "Door to door suggestion",
