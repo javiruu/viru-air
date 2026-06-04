@@ -15,7 +15,13 @@ from app.infrastructure.db.models import HotelProviderAlias, HotelRateSnapshot
 
 
 def is_hotel_provider_ingestion_enabled() -> bool:
-    return os.getenv("HOTEL_FEATURE_ENABLED", "false").strip().lower() in {"1", "true", "yes"}
+    raw_flag = os.getenv("HOTEL_FEATURE_ENABLED")
+    if raw_flag is not None:
+        return raw_flag.strip().lower() in {"1", "true", "yes"}
+
+    app_env = os.getenv("APP_ENV", "").strip().lower()
+    provider = os.getenv("HOTEL_PROVIDER", "mock").strip().lower()
+    return app_env in {"local", "development", "dev"} and provider == "mock"
 
 
 def resolve_hotel_provider() -> HotelProviderAdapter:

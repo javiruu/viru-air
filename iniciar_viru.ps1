@@ -20,6 +20,35 @@ Inicializalo con Python 3.14:
 $backendEnvFile = Join-Path $root "backend\.env"
 $jwtSecret = $null
 
+function Set-ProcessEnvFromDotEnv {
+  param(
+    [string]$Path
+  )
+
+  if (-not (Test-Path $Path)) {
+    return
+  }
+
+  foreach ($line in Get-Content $Path) {
+    if ([string]::IsNullOrWhiteSpace($line)) {
+      continue
+    }
+    if ($line.TrimStart().StartsWith("#")) {
+      continue
+    }
+    $parts = $line -split "=", 2
+    if ($parts.Count -ne 2) {
+      continue
+    }
+    $key = $parts[0].Trim()
+    if ([string]::IsNullOrWhiteSpace($key)) {
+      continue
+    }
+    $value = $parts[1].Trim().Trim("'`\"")
+    Set-Item -Path ("Env:" + $key) -Value $value
+  }
+}
+
 if (Test-Path $backendEnvFile) {
   foreach ($line in Get-Content $backendEnvFile) {
     if ($line -match "^\s*JWT_SECRET\s*=\s*(.+)\s*$") {
@@ -47,6 +76,7 @@ APP_ENV=local
   Write-Host "Se genero backend/.env con un JWT_SECRET seguro para desarrollo local."
 }
 
+Set-ProcessEnvFromDotEnv -Path $backendEnvFile
 $env:JWT_SECRET = $jwtSecret
 
 # Logs (timestamped, no overwrite)
