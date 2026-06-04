@@ -27,11 +27,22 @@ def _close(db: Session) -> None:
     engine.dispose()
 
 
-def test_resolve_hotel_provider_is_disabled_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_resolve_hotel_provider_is_disabled_by_default_outside_local_mock(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("HOTEL_FEATURE_ENABLED", raising=False)
     monkeypatch.delenv("HOTEL_PROVIDER", raising=False)
+    monkeypatch.setenv("APP_ENV", "production")
     with pytest.raises(ValueError, match="ingestion and sweeps are disabled"):
         resolve_hotel_provider()
+
+
+def test_resolve_hotel_provider_uses_mock_by_default_in_local_dev(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("HOTEL_FEATURE_ENABLED", raising=False)
+    monkeypatch.delenv("HOTEL_PROVIDER", raising=False)
+    monkeypatch.setenv("APP_ENV", "local")
+
+    provider = resolve_hotel_provider()
+
+    assert provider.provider_id == "mock"
 
 
 def test_resolve_hotel_provider_uses_mock_when_feature_enabled(monkeypatch: pytest.MonkeyPatch) -> None:
