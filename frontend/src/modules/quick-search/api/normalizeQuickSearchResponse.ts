@@ -33,6 +33,50 @@ function extractRankingScore(item: SearchResultRaw): number | null {
   return null;
 }
 
+function normalizeProviderStatus(
+  providerStatus: SearchResponseRaw["meta"] extends infer T
+    ? T extends { provider_status?: infer P }
+      ? P
+      : never
+    : never,
+) {
+  if (!providerStatus || typeof providerStatus !== "object") {
+    return providerStatus;
+  }
+  const overallStatus =
+    providerStatus.overall_status
+    ?? providerStatus.overall
+    ?? (providerStatus.total_outage
+      ? "total_outage"
+      : providerStatus.partial_results_served
+        ? "partial_degraded"
+        : "ok");
+
+  return {
+    ...providerStatus,
+    availability: providerStatus.availability ?? { status: "ok" as const },
+    fares: providerStatus.fares ?? { status: "ok" as const },
+    overall: overallStatus,
+    overall_status: overallStatus,
+    partial_results_served: Boolean(providerStatus.partial_results_served),
+    total_outage: Boolean(providerStatus.total_outage),
+    providers: Array.isArray(providerStatus.providers) ? providerStatus.providers : [],
+  };
+}
+
+export function collectQuickSearchWarningCodes(response: SearchResponseRaw): string[] {
+  const filterWarnings = Array.isArray(response.filters?.warnings)
+    ? response.filters.warnings.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    : [];
+  const structuredWarnings = Array.isArray(response.meta?.warnings_structured)
+    ? response.meta.warnings_structured
+        .map((item) => (item && typeof item.code === "string" ? item.code.trim() : ""))
+        .filter((item): item is string => item.length > 0)
+    : [];
+
+  return Array.from(new Set([...filterWarnings, ...structuredWarnings]));
+}
+
 export function normalizeQuickSearchResults(results: SearchResultRaw[]): SearchResult[] {
   return results.map((item, idx) => ({
     ...item,
@@ -65,6 +109,12 @@ export function normalizeQuickSearchResults(results: SearchResultRaw[]): SearchR
 export function normalizeQuickSearchResponse(response: SearchResponseRaw): SearchResponse {
   return {
     ...response,
+    meta: response.meta
+      ? {
+          ...response.meta,
+          provider_status: normalizeProviderStatus(response.meta.provider_status),
+        }
+      : response.meta,
     results: normalizeQuickSearchResults(response.results || []),
   };
 }

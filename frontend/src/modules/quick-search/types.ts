@@ -90,13 +90,24 @@ export type SearchResponseRaw = {
       destination_expanded_count?: number;
     };
     warnings?: Array<{ code: string; message: string }>;
+    warnings_structured?: Array<{ code: string; message?: string }>;
     provider_status?: {
       provider: string;
-      availability: { status: "ok" | "failed" };
-      fares: { status: "ok" | "failed" };
-      overall: "ok" | "partial_degraded" | "total_outage";
-      partial_results_served: boolean;
-      total_outage: boolean;
+      availability?: { status: "ok" | "failed" };
+      fares?: { status: "ok" | "failed" };
+      overall?: "ok" | "partial_degraded" | "total_outage";
+      overall_status?: "ok" | "partial_degraded" | "total_outage";
+      partial_results_served?: boolean;
+      total_outage?: boolean;
+      providers?: Array<{
+        id?: string;
+        status?: string;
+        degraded?: boolean;
+        errors?: number;
+        timeouts?: number;
+        results_count?: number;
+      }>;
+      legacy?: Record<string, unknown>;
     };
     pagination?: {
       page: number;

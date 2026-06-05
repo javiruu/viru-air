@@ -5,10 +5,13 @@ import os
 from typing import Any
 
 import requests
+from requests.adapters import HTTPAdapter
 
 from app.core.time import utc_now_naive
 from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError, ProviderWarning
 from app.infrastructure.providers.base import FlightProvider
+
+_PROVIDER_POOL_SIZE = 32
 
 
 class DuffelProvider(FlightProvider):
@@ -18,6 +21,9 @@ class DuffelProvider(FlightProvider):
         self.api_key = (api_key or os.getenv("DUFFEL_API_KEY", "")).strip()
         self.base_url = base_url.rstrip("/")
         self._session = requests.Session()
+        adapter = HTTPAdapter(pool_connections=_PROVIDER_POOL_SIZE, pool_maxsize=_PROVIDER_POOL_SIZE)
+        self._session.mount("https://", adapter)
+        self._session.mount("http://", adapter)
 
     def is_enabled(self) -> bool:
         return bool(self.api_key)

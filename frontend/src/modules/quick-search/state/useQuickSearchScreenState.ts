@@ -108,8 +108,10 @@ export function useQuickSearchScreenState({
       "ryanair_fares_failed_partial",
       "provider_timeout_partial",
       "provider_error_partial",
+      "provider_partial_results_served",
     ]);
     const criticalCodes = new Set([
+      "provider_total_outage",
       "ryanair_provider_unavailable_total",
       "ryanair_availability_failed",
       "ryanair_fares_failed",
@@ -188,14 +190,23 @@ export function useQuickSearchScreenState({
     return 24 * 60 - from + to;
   }, [departAfter, departBefore]);
 
-  const providerTotalOutage = filtersWarningCodes.includes("ryanair_provider_unavailable_total");
-  const providerPartialOutage = filtersWarningCodes.includes("ryanair_availability_failed_partial")
-    || filtersWarningCodes.includes("ryanair_fares_failed_partial")
-    || filtersWarningCodes.includes("ryanair_unavailable_partial");
   const providerStatus = searchMeta?.provider_status;
+  const providerOverallStatus = providerStatus?.overall_status ?? providerStatus?.overall;
+  const providerTotalOutage = filtersWarningCodes.includes("provider_total_outage")
+    || filtersWarningCodes.includes("ryanair_provider_unavailable_total")
+    || providerOverallStatus === "total_outage"
+    || Boolean(providerStatus?.total_outage);
+  const providerPartialOutage = filtersWarningCodes.includes("provider_partial_results_served")
+    || filtersWarningCodes.includes("provider_error_partial")
+    || filtersWarningCodes.includes("provider_timeout_partial")
+    || filtersWarningCodes.includes("ryanair_availability_failed_partial")
+    || filtersWarningCodes.includes("ryanair_fares_failed_partial")
+    || filtersWarningCodes.includes("ryanair_unavailable_partial")
+    || providerOverallStatus === "partial_degraded"
+    || Boolean(providerStatus?.partial_results_served);
   const providerPartialInlineNotice = useMemo(() => {
     if (!providerStatus) return null;
-    if (providerStatus.overall !== "partial_degraded") return null;
+    if ((providerStatus.overall_status ?? providerStatus.overall) !== "partial_degraded") return null;
     if (!providerStatus.partial_results_served) return null;
     const availabilityFailed = providerStatus.availability?.status === "failed";
     const faresFailed = providerStatus.fares?.status === "failed";
