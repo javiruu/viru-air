@@ -326,6 +326,7 @@ export function HotelRadarPage() {
                 onSelectCompSet={compSets.handleSelectCompSet}
                 onAddMember={compSets.handleAddMember}
                 onDeleteMember={compSets.handleDeleteMember}
+                onDeleteCompSet={compSets.handleDeleteCompSet}
               />
             ) : null}
           </section>

@@ -1,0 +1,144 @@
+# Correcciones post-cierre de `/hoteles` — Plan de implementación
+
+**Goal:** Corregir 8 gaps detectados en `/hoteles` tras el cierre de las 10 fases: integrar el buscador por área real, unificar watchlist/tracked-offers, añadir histórico de snapshots, refactorizar HotelRadarPage, implementar DELETE comp-set, y polish de alertas.
+
+**Architecture:** Backend FastAPI + SQLAlchemy. Frontend Next.js/TypeScript con módulos bajo `frontend/src/modules/hotels/`. CSS canónico en `frontend/src/styles/screens.css`. i18n en `frontend/src/i18n/domains/hotels.ts`. Testing backend con pytest, frontend con `npm run build` + `npx tsc --noEmit`.
+
+**Source of truth:** `docs/specs/hotels-intelligence-mvp.md`, `docs/qa/hotels-pending-closeout.md`, `AGENTS.md`
+
+---
+
+## Orden de ejecución
+
+Las fases están ordenadas por dependencias:
+1. **Fase A** — Backend independiente (DELETE comp-set)
+2. **Fase B** — Refactor estructural habilitador (extraer hooks)
+3. **Fase C** — Unificación de seguimientos (Watchlist → TrackedOffers + initial_price + snapshots)
+4. **Fase D** — Buscador por área real (area-search UI + area-resolve autocomplete)
+5. **Fase E** — Polish final (parity_break relegado, CSS, QA)
+
+---
+
+## Fase A: Backend — DELETE comp-set
+
+### Task A1: Añadir endpoint `DELETE /api/v1/hotels/comp-sets/{comp_set_id}`
+
+**Files:**
+- Modify: `backend/app/api/v1/hotels.py` (insertar entre las rutas de comp-set existentes)
+- Modify: `backend/app/services/hotels_service.py` (la función `delete_comp_set` ya existe)
+- Test: `backend/tests/integration/test_hotels_api_flow.py` (añadir tests)
+
+**Contexto:** El frontend ya tiene `deleteHotelCompSet` en `api.ts` que llama a `/hotels/comp-sets/${compSetId}` con método DELETE, y `delete_comp_set` ya existe en `hotels_service.py`. Solo falta exponer el endpoint.
+
+**Step 1: Añadir el endpoint en `hotels.py`**
+
+Insertar después de la ruta `DELETE /comp-sets/{comp_set_id}/members/{member_id}`:
+
+```python
+@router.delete("/comp-sets/{comp_set_id}")
+def delete_comp_set(
+    comp_set_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict[str, str]:
+    try:
+        hotels_service.delete_comp_set(db, user_id=current_user.id, comp_set_id=comp_set_id)
+    except ValueError as exc:
+        _raise_http_for_value_error(exc)
+    except PermissionError as exc:
+        _raise_http_for_permission_error(exc)
+    return {"status": "ok"}
+```
+
+**Step 2: Añadir tests de integración**
+
+- `test_hotels_comp_set_delete`: crea comp set, lo borra, verifica que desaparece, verifica 404 en segundo delete
+- `test_hotels_comp_set_delete_ownership`: verifica que un usuario B no puede borrar el comp set del usuario A (403)
+
+---
+
+## Fase B: Refactor estructural — Extraer hooks de HotelRadarPage
+
+**Contexto:** `HotelRadarPage.tsx` tiene ~530 líneas con ~30 variables de estado y 15+ handlers. Extraer 6 hooks personalizados manteniendo el comportamiento EXACTAMENTE igual.
+
+Hooks a crear:
+1. `useHotelSearch.ts` — query, city, loading, results, selectedHotelId, errorMessage, handleSearch, handleIngest
+2. `useHotelDetail.ts` — rates, hotelDetail, loadingRates, paritySignals, parityLoading, parityError
+3. `useHotelWatchlist.ts` — estado de watchlist + hydrate + handlers + busyHotelIds
+4. `useHotelCompSets.ts` — estado de comp sets + anchor + nearby + handlers
+5. `useHotelAlerts.ts` — alertRules, alertEvents, loading/error, busyRuleIds, handlers
+6. `useTrackedOffers.ts` — trackedOffers, loading, busyOfferIds, handleTrackPrice, handleStopTracking
+
+El page component debe quedar reducido a ~150 líneas de orquestación pura.
+
+---
+
+## Fase C: Unificación de seguimientos
+
+- **Task C1:** Cambiar título del WatchlistPanel: "Seguimientos activos" → "Hoteles guardados" (ES) / "Saved hotels" (EN)
+- **Task C2:** Añadir `initial_price` al panel de TrackedOffers (solo cuando sea distinto de current_price)
+- **Task C3:** Añadir botón "Ver historial" y nuevo componente `HotelTrackedOfferSnapshots.tsx` con lista de snapshots (fecha, precio, proveedor)
+
+---
+
+## Fase D: Buscador por área real
+
+Transforma el `HotelSearchPanel` de nombre+ciudad a zona+fechas+huéspedes.
+
+- **Task D1:** Rediseñar `HotelSearchPanel` con campos: areaQuery (autocomplete), radiusKm, checkIn/checkOut, guests
+- **Task D2:** Añadir lógica de `area-resolve` con debounce (400ms) en `useHotelSearch.ts`
+- **Task D3:** Conectar `area-search` al botón de búsqueda principal, mapeando resultados a `HotelSearchOut`
+- **Task D4:** CSS para nuevos grids (`.hotel-area-search-grid`, `.hotel-date-grid`, `.hotel-area-suggestions`)
+- Mantener el buscador legacy por nombre/ciudad como fallback colapsable
+
+---
+
+## Fase E: Polish final
+
+- **Task E1:** Relegar `parity_break` al final del `<select>` con separador "── Avanzado ──"
+- **Task E2:** Conectar `deleteHotelCompSet` en UI (handler en `useHotelCompSets.ts` + botón en `HotelCompSetPanel.tsx`)
+- **Task E3:** Limpiar i18n — quitar claves huérfanas
+- **Task E4:** QA final — tests backend + typecheck + build frontend
+
+---
+
+## Plan de commits
+
+| Commit | Fase | Mensaje |
+|--------|------|---------|
+| 1 | A | `feat(hotels): add DELETE /comp-sets/{id} endpoint with ownership check` |
+| 2 | B | `refactor(hotels): extract hooks from HotelRadarPage (6 hooks)` |
+| 3 | C | `feat(hotels): unify tracking UI — add initial_price, snapshots history, differentiate watchlist vs tracked-offers` |
+| 4 | D | `feat(hotels): integrate area-search into main search UI with area-resolve autocomplete` |
+| 5 | E | `chore(hotels): polish — relegate parity_break, wire delete comp-set, cleanup` |
+
+---
+
+## Archivos modificados (resumen)
+
+| Archivo | Fase | Tipo de cambio |
+|---------|------|----------------|
+| `backend/app/api/v1/hotels.py` | A | Añadir endpoint DELETE comp-set |
+| `backend/tests/integration/test_hotels_api_flow.py` | A | Añadir tests |
+| `frontend/src/modules/hotels/hooks/useHotelSearch.ts` | B | NUEVO — extraer lógica de búsqueda |
+| `frontend/src/modules/hotels/hooks/useHotelDetail.ts` | B | NUEVO — extraer lógica de detalle |
+| `frontend/src/modules/hotels/hooks/useHotelWatchlist.ts` | B | NUEVO — extraer lógica de watchlist |
+| `frontend/src/modules/hotels/hooks/useHotelCompSets.ts` | B | NUEVO — extraer lógica de comp sets |
+| `frontend/src/modules/hotels/hooks/useHotelAlerts.ts` | B | NUEVO — extraer lógica de alertas |
+| `frontend/src/modules/hotels/hooks/useTrackedOffers.ts` | B | NUEVO — extraer lógica de tracked offers |
+| `frontend/src/modules/hotels/HotelRadarPage.tsx` | B, D | Reescribir con hooks + integrar area-search |
+| `frontend/src/modules/hotels/components/HotelSearchPanel.tsx` | D | Rediseñar con área/fechas/huéspedes |
+| `frontend/src/modules/hotels/components/HotelTrackedOffersPanel.tsx` | C | Añadir initial_price + botón historial |
+| `frontend/src/modules/hotels/components/HotelTrackedOfferSnapshots.tsx` | C | NUEVO — panel de snapshots |
+| `frontend/src/modules/hotels/components/HotelAlertsPanel.tsx` | E | Relegar parity_break |
+| `frontend/src/i18n/domains/hotels.ts` | C, D, E | Nuevas claves i18n |
+| `frontend/src/styles/screens.css` | D | Estilos para área-search |
+
+---
+
+## Riesgos
+
+1. **Rotura de compatibilidad en HotelRadarPage**: Al extraer hooks, riesgo de cambiar comportamiento. Mitigación: extraer hook por hook, verificar typecheck tras cada uno.
+2. **area-search con mock provider**: El mock tiene datos estáticos con fechas fijas. Si el usuario elige fechas que no coinciden, no verá resultados. Mitigación: documentar en UI.
+3. **CSS responsiveness**: Los nuevos grids deben colapsar correctamente en móvil. Mitigación: verificar con @media queries.
+4. **Regresión en búsqueda legacy**: Mantener buscador por nombre/ciudad como pestaña o panel colapsable.

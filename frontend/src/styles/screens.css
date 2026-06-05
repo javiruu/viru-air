@@ -20081,6 +20081,172 @@ textarea::placeholder {
 }
 
 /* ══════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════
+   Hoteles — Area Search & Results
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Search mode tabs ─────────────────────────────────────────── */
+.hotel-search-mode-tabs {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.hotel-search-mode-tab {
+  flex: 1;
+  padding: 0.55rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.hotel-search-mode-tab:hover {
+  background: color-mix(in srgb, var(--surface-2) 80%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+}
+
+.hotel-search-mode-tab.is-active {
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--border));
+  color: var(--accent);
+}
+
+.hotel-search-mode-tab:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* ── Search grid ──────────────────────────────────────────────── */
+.hotel-search-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+  align-items: end;
+}
+
+.hotel-search-area-grid {
+  grid-template-columns: 2fr 1fr 1fr 0.85fr;
+}
+
+/* ── Area autocomplete ────────────────────────────────────────── */
+.hotel-area-autocomplete {
+  position: relative;
+}
+
+.hotel-area-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  z-index: 14;
+  max-height: 210px;
+  overflow-y: auto;
+  margin-top: 0.3rem;
+  list-style: none;
+  padding: 0.25rem;
+  box-shadow: 0 12px 28px var(--shadow);
+}
+
+.hotel-area-suggestion-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  background: none;
+  border: none;
+  border-radius: 10px;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms ease;
+  font: inherit;
+}
+
+.hotel-area-suggestion-item:hover,
+.hotel-area-suggestion-item:focus-visible {
+  background: color-mix(in srgb, var(--surface-2) 80%, transparent);
+  outline: none;
+}
+
+.hotel-area-spinner {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: hotel-spin 0.55s linear infinite;
+}
+
+@keyframes hotel-spin {
+  from {
+    transform: translateY(-50%) rotate(0deg);
+  }
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
+.hotel-area-resolved-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── Area results ─────────────────────────────────────────────── */
+.hotel-area-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.hotel-area-result-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.hotel-area-result-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.hotel-area-result-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 740px) {
+  .hotel-search-grid,
+  .hotel-search-area-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hotel-search-mode-tabs {
+    flex-direction: column;
+  }
+}
+
    Comprehensive reduced-motion (all d2d-* animations)
    ══════════════════════════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {
