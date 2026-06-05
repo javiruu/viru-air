@@ -80,6 +80,60 @@ APP_ENV=local
 Set-ProcessEnvFromDotEnv -Path $backendEnvFile
 $env:JWT_SECRET = $jwtSecret
 
+Write-Host "Validando cadena de migraciones Alembic..."
+$auditRaw = (& $backendPython -m app.infrastructure.db.alembic_audit --json) -join "`n"
+$auditExitCode = $LASTEXITCODE
+
+if ([string]::IsNullOrWhiteSpace($auditRaw)) {
+  throw "No se pudo obtener el diagnostico previo de Alembic."
+}
+
+try {
+  $audit = $auditRaw | ConvertFrom-Json -ErrorAction Stop
+} catch {
+  throw "No se pudo interpretar el diagnostico previo de Alembic: $auditRaw"
+}
+
+if ($audit.untracked_migration_files.Count -gt 0) {
+  Write-Host "Aviso: hay migraciones sin trackear en el repo:"
+  $audit.untracked_migration_files | ForEach-Object { Write-Host " - $_" }
+}
+
+if ($auditExitCode -eq 3) {
+  $missing = @($audit.missing_down_revisions)
+  $duplicates = @($audit.duplicate_revisions.PSObject.Properties.Name)
+  $missingFiles = @($audit.files_missing_identifiers)
+  throw @"
+Cadena de migraciones Alembic rota en el repo.
+missing_down_revisions: $($missing -join ', ')
+duplicate_revisions: $($duplicates -join ', ')
+files_missing_identifiers: $($missingFiles -join ', ')
+Revisa backend/alembic/versions antes de arrancar.
+"@
+}
+
+if ($auditExitCode -eq 2) {
+  $invalidRevisions = @($audit.db_state.invalid_revisions)
+  throw @"
+La base local tiene un alembic_version invalido para este repo.
+Revision(es) huerfana(s): $($invalidRevisions -join ', ')
+Esto suele significar que la DB local quedo apuntando a un ID antiguo o renombrado.
+Recuperacion local sugerida:
+  1. si no necesitas conservar datos, recrea backend/viru.db y vuelve a arrancar;
+  2. si necesitas conservarlos, corrige alembic_version para que apunte a una revision existente y valida con:
+     cd "$root\backend"
+     .\.venv\Scripts\python.exe -m alembic current
+"@
+}
+
+if ($auditExitCode -eq 4) {
+  throw "No se pudo inspeccionar el estado de la base para Alembic: $($audit.db_state.error)"
+}
+
+if ($auditExitCode -ne 0) {
+  throw "Fallo el diagnostico previo de Alembic (exit $auditExitCode)."
+}
+
 Write-Host "Aplicando migraciones del backend antes del arranque..."
 $alembicArgs = @("-m", "alembic", "-c", $backendAlembicIni, "upgrade", "head")
 $alembic = Start-Process -FilePath $backendPython `
