@@ -164,13 +164,41 @@ Entradas vivas actualizadas:
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
 
+## Actualizacion manual 2026-06-05 (hoteles post-cierre Fases A-E)
+
+Entradas vivas agregadas:
+
+- `HISTORY.md`
+- `cabinalimpia.txt`
+- `docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md`
+
+Entradas vivas actualizadas:
+
+- `docs/specs/hotels-intelligence-mvp.md`
+- `docs/qa/hotels-pending-closeout.md`
+- `docs/INDICE_UNICO.md`
+- `docs/DOCS_INVENTORY.md`
+- `frontend/src/styles/screens.css`
+- `frontend/src/modules/hotels/hooks/useHotelCompSets.ts`
+- `frontend/src/modules/hotels/components/HotelCompSetPanel.tsx`
+- `frontend/src/i18n/domains/hotels.ts`
+- `frontend/src/modules/hotels/HotelRadarPage.tsx`
+
+Entradas vivas retiradas:
+
+- `hoteles.txt`
+- `hoteles_2.txt`
+- `hoteles_3.txt`
+
 ## Tabla
 
 | Ruta actual | Tipo | Estado | Acci?n propuesta | Nueva ruta | Motivo | Fuente de verdad |
 |---|---|---|---|---|---|---|
 | .github/pull_request_template.md | unknown | revisar manualmente | revisar manualmente | .github/pull_request_template.md | Clasificaci?n no resuelta autom?ticamente | revisi?n manual requerida |
 | AGENTS.md | contexto IA | vivo | conservar | AGENTS.md | Contrato operativo principal para agentes | AGENTS.md |
+| cabinalimpia.txt | plan | vivo | conservar | cabinalimpia.txt | Plan consolidado de correcciones post-cierre del modulo /hoteles (Fases A-E) | cabinalimpia.txt |
 | DESIGN.md | contexto IA | vivo | conservar | DESIGN.md | Sistema de diseno para agentes con direccion visual calida, animada y de premium humano | DESIGN.md |
+| HISTORY.md | overview | vivo | conservar | HISTORY.md | Historial de cambios significativos del proyecto | HISTORY.md |
 | README.md | overview | vivo | conservar | README.md | Punto de entrada principal del repositorio | README.md |
 | .codex/skills/viru-tracker-ui/SKILL.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/SKILL.md | Skill de diseno incremental para Codex orientado a calidez, personalidad y claridad | .codex/skills/viru-tracker-ui/SKILL.md |
 | .codex/skills/viru-tracker-ui/references/product-context.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/references/product-context.md | Contexto de producto para tareas UI con enfoque cercano, calido y no generico | .codex/skills/viru-tracker-ui/references/product-context.md |
@@ -263,6 +291,7 @@ Entradas vivas actualizadas:
 | docs/overview/repo-map.md | overview | vivo | conservar | docs/overview/repo-map.md | Onboarding y mapa vivo del proyecto | docs/overview/repo-map.md |
 | docs/overview/start-here.md | overview | vivo | conservar | docs/overview/start-here.md | Onboarding y mapa vivo del proyecto | docs/overview/start-here.md |
 | docs/plans/README.md | plan | vivo | conservar | docs/plans/README.md | Gu?a de organizaci?n de planes | docs/plans/README.md |
+| docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md | plan | vivo | conservar | docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md | Plan de 5 fases (A-E) de correcciones post-cierre para el modulo /hoteles | docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md |
 | docs/plans/completed/2026-02-18-fusion-watchlist-historico-plan.md | plan | hist?rico | conservar | docs/plans/completed/2026-02-18-fusion-watchlist-historico-plan.md | Plan fechado ya completado o hist?rico | ninguna; material hist?rico |
 | docs/plans/completed/2026-02-19-account-interface-i18n-plan.md | plan | hist?rico | conservar | docs/plans/completed/2026-02-19-account-interface-i18n-plan.md | Plan fechado ya completado o hist?rico | ninguna; material hist?rico |
 | docs/plans/completed/2026-02-19-account-system-redesign-design.md | plan | hist?rico | conservar | docs/plans/completed/2026-02-19-account-system-redesign-design.md | Plan fechado ya completado o hist?rico | ninguna; material hist?rico |

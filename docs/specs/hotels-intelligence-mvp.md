@@ -197,7 +197,28 @@ Observaciones pendientes:
 
 1. Verificación visual manual en navegador real (dark/light/responsive).
 
+## 12. Fases post-cierre A-E (2026-06-05)
+
+Tras el cierre de las 10 fases originales, se ejecutaron 5 fases adicionales de correcciones y polish.
+El plan maestro esta en `docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md`.
+
+1. **Fase A — DELETE comp-set**: Ya existia endpoint y tests (184/184 pasan).
+2. **Fase B — Refactor hooks**: Ya completado. 6 hooks extraidos de HotelRadarPage.
+3. **Fase C — Unificar tracking**: Ya completado. initial_price, snapshots, diferenciacion watchlist/tracked.
+4. **Fase D — CSS area-search**: 165 lineas CSS nuevas en screens.css (tabs, autocomplete, spinner, grid responsive).
+5. **Fase E — Polish final**: deleteHotelCompSet conectado en UI, parity_break relegado a seccion avanzada, i18n sincronizado.
+
+Verificacion final:
+- Backend: 184/184 tests pasan.
+- Frontend: npx tsc --noEmit sin errores de hoteles.
+- Todos los cambios comiteados y pusheados a main.
+
+Observaciones pendientes:
+
+1. Verificacion visual manual en navegador real (dark/light/responsive).
+
 Siguiente paso propuesto (acotado):
 
-1. Documentar sweeps hoteleros manuales y su ausencia de scheduler automatico.
-2. Revisar polish visual y responsive fino del bloque de sugerencias cercanas, watchlist y alertas en Fase 9.
+1. Verificar visualmente en navegador el buscador por area y el boton de eliminar comparativa.
+2. Documentar sweeps hoteleros manuales y su ausencia de scheduler automatico.
+3. Revisar polish visual y responsive fino del bloque de sugerencias cercanas, watchlist y alertas en Fase 9.

@@ -171,3 +171,45 @@ Completado en esta pasada:
 4. `HOTEL_PROVIDER_CACHE_TTL_SECONDS` queda documentado como reservado para una fase futura, sin cache runtime activa.
 5. El parser Makcorps descarta rates con importe no positivo, moneda invalida o fechas invalidas, pero mantiene hoteles validos aunque se queden sin rates utilizables.
 6. La respuesta top-level malformada de Makcorps se trata como error controlado y los logs evitan exponer `MAKCORPS_API_KEY`.
+
+## Actualización 2026-06-05 (cierre Fases A-E — post-closeout hotel polish)
+
+### Estado: 🟢 Cerrado
+
+El plan de 5 fases adicionales definido en `docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md` y consolidado en `cabinalimpia.txt` está completado.
+
+Fases completadas en esta iteración:
+
+1. **Fase A — DELETE comp-set endpoint**: El endpoint `DELETE /api/v1/hotels/comp-sets/{comp_set_id}` ya existía en `hotels.py` con sus 2 tests de integración (`test_hotels_comp_set_delete_returns_ok` + `test_hotels_comp_set_delete_ownership_enforced`). Verificado: 184/184 tests backend pasan.
+2. **Fase B — Refactor hooks**: Los 6 hooks (`useHotelSearch`, `useHotelDetail`, `useHotelWatchlist`, `useHotelCompSets`, `useHotelAlerts`, `useTrackedOffers`) ya estaban extraídos de `HotelRadarPage.tsx` (~530 → 228 líneas).
+3. **Fase C — Unificar tracking UI**: `initial_price` visible en `HotelTrackedOffersPanel`, componente `HotelTrackedOfferSnapshots` con historial, watchlist vs tracked-offers diferenciados en i18n.
+4. **Fase D — CSS area-search**: 165 líneas de CSS en `screens.css`: tabs de modo (nombre/zona), grid responsivo, autocomplete con dropdown, spinner animado con `@keyframes hotel-spin`, badge de zona resuelta, lista de resultados de área.
+5. **Fase E — Polish final**: `parity_break` relegado a toggle "Avanzada" en `HotelAlertsPanel`. Conectado `deleteHotelCompSet` en hook, componente (botón "Eliminar comparativa") y página. 4 claves i18n añadidas (`compSetDeleted`/`deleteCompSet` ES+EN).
+
+### Verificación final
+
+- `cd backend && python -m pytest tests/unit/test_hotels_*.py tests/integration/test_hotels_*.py` → **184 passed** (0 failures)
+- `cd frontend && npx tsc --noEmit` → **0 errores de hoteles**
+- Commit: `2db8b25` en `main`, pushed a GitHub
+
+### Archivos modificados
+
+- `frontend/src/styles/screens.css` (+165 líneas CSS area-search)
+- `frontend/src/modules/hotels/hooks/useHotelCompSets.ts` (+17 líneas `handleDeleteCompSet`)
+- `frontend/src/modules/hotels/components/HotelCompSetPanel.tsx` (+9 líneas botón delete)
+- `frontend/src/i18n/domains/hotels.ts` (+4 claves i18n)
+- `frontend/src/modules/hotels/HotelRadarPage.tsx` (+1 línea cableado `onDeleteCompSet`)
+- `cabinalimpia.txt` (nuevo — plan consolidado)
+- `docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md` (nuevo)
+- `HISTORY.md` (nuevo)
+- `hoteles.txt`, `hoteles_2.txt`, `hoteles_3.txt` (eliminados — reemplazados por `cabinalimpia.txt` + plan en `docs/plans/`)
+
+### Deudas futuras actualizadas
+
+1. Provider real dinámico (Makcorps con zona/fechas/huéspedes).
+2. Scheduler automático de sweeps.
+3. Verificación visual manual en navegador real.
+4. Geocoder externo para area-resolve.
+5. Alertas sobre `initial_price` además del snapshot anterior.
+
+Nota: La deuda #4 anterior (`DELETE /comp-sets/{id}` no implementado) queda saldada en Fase E.
