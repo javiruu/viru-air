@@ -19,7 +19,7 @@ _NOMINATIM_USER_AGENT = os.getenv("NOMINATIM_USER_AGENT", "ViruTracker/1.0")
 
 
 def is_geocoder_enabled() -> bool:
-    return os.getenv("HOTEL_GEOCODER_ENABLED", "false").strip().lower() in {"1", "true", "yes"}
+    return os.getenv("HOTEL_GEOCODER_ENABLED", "true").strip().lower() in {"1", "true", "yes"}
 
 
 def geocode_city(query: str) -> dict[str, object] | None:

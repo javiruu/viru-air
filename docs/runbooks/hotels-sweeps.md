@@ -124,6 +124,74 @@ Ese worker:
 2. no bloquea requests ni startup;
 3. puede ejecutarse `--once` o `--loop`.
 
+### Estrategias de despliegue recomendadas
+
+**Opción A — Cron (recomendado para producción):**
+
+Programar una tarea cron que ejecute el worker `--once` cada hora:
+
+```bash
+# crontab -e
+0 * * * * cd /ruta/viru-tracker/backend && HOTEL_SWEEP_ENABLED=true python -m app.worker.hotels_sweep --once --provider makcorps >> logs/sweep.log 2>&1
+```
+
+Ventajas: simple, fiable, no consume recursos entre ejecuciones.
+
+**Opción B — Systemd service (recomendado para servidores Linux):**
+
+Crear un servicio systemd que ejecute el worker en `--loop`:
+
+```ini
+# /etc/systemd/system/viru-hotel-sweep.service
+[Unit]
+Description=Viru Tracker Hotel Sweep Worker
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/ruta/viru-tracker/backend
+Environment="HOTEL_SWEEP_ENABLED=true"
+Environment="HOTEL_PROVIDER=makcorps"
+Environment="MAKCORPS_API_KEY=..."
+ExecStart=python -m app.worker.hotels_sweep --loop --sleep-seconds 3600
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Ventajas: reinicio automático, logging vía journald, gestión nativa del SO.
+
+**Opción C — Docker Compose (entorno actual del proyecto):**
+
+Añadir el worker como servicio adicional en `docker-compose.yml`:
+
+```yaml
+hotel-sweep:
+  build:
+    context: .
+    dockerfile: infra/docker/backend.Dockerfile
+  command: python -m app.worker.hotels_sweep --loop --sleep-seconds 3600
+  environment:
+    - HOTEL_SWEEP_ENABLED=true
+    - HOTEL_PROVIDER=${HOTEL_PROVIDER:-mock}
+    - MAKCORPS_API_KEY=${MAKCORPS_API_KEY:-}
+  depends_on:
+    - backend
+```
+
+Ventajas: consistente con el resto de la infraestructura, mismo ciclo de despliegue.
+
+**Opción D — Loop manual (desarrollo/pruebas):**
+
+```bash
+cd backend
+HOTEL_SWEEP_ENABLED=true python -m app.worker.hotels_sweep --loop --provider mock --sleep-seconds 300
+```
+
+Ideal para desarrollo local con mock provider.
+
 ## Limitacion actual
 
 No hay scheduler automatico integrado en el arranque del backend. Si nadie ejecuta el comando manual ni levanta el worker opcional, no habra sweeps hoteleros nuevos.

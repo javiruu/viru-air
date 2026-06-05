@@ -31,6 +31,9 @@ export const hotelsEs = {
     checkOutLabel: "Salida",
     guestsLabel: "Huéspedes",
     guestsOption: "{count} huésped",
+    radiusLabel: "Radio",
+    radiusOption: "{value} km",
+    useProviderLabel: "Consultar precios en tiempo real",
   },
   area: {
     resultsTitle: "Hoteles en {area}",
@@ -247,6 +250,9 @@ export const hotelsEn = {
     checkOutLabel: "Check-out",
     guestsLabel: "Guests",
     guestsOption: "{count} guest",
+    radiusLabel: "Radius",
+    radiusOption: "{value} km",
+    useProviderLabel: "Fetch live prices",
   },
   area: {
     resultsTitle: "Hotels in {area}",
