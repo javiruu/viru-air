@@ -135,6 +135,25 @@ test("useQuickSearchScreenState exposes contextual inline partial notice from pr
   assert.equal(state.providerPartialInlineNotice, "providerPartialAvailabilityNotice");
 });
 
+test("useQuickSearchScreenState treats canonical provider outage signals as degraded even without legacy ryanair codes", () => {
+  const state = renderScreenState({
+    filtersWarningCodes: ["provider_total_outage"],
+    searchMeta: {
+      provider_status: {
+        provider: "duffel",
+        overall_status: "total_outage",
+        partial_results_served: false,
+        total_outage: true,
+      },
+    },
+  });
+
+  assert.equal(state.showDegradedState, true);
+  assert.equal(state.emptyStateMainTitle, "emptyStateProviderTitle");
+  assert.deepEqual(state.zeroResultCauses, ["emptyCauseProvider"]);
+  assert.deepEqual(state.groupedCriticalWarnings, [{ message: "provider_total_outage", count: 1 }]);
+});
+
 test("useQuickSearchScreenState derives zero-result causes and relax actions from visible constraints", () => {
   const collapsed = renderScreenState({
     strictFilters: true,

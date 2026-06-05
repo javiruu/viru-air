@@ -2192,13 +2192,16 @@ def quick_search(
     }
 
     logger.info(
-        "quick_search trace=%s results=%s planned_pairs=%s requested_units=%s rescue=%s winning_step=%s",
+        "quick_search trace=%s results=%s planned_pairs=%s requested_units=%s rescue=%s winning_step=%s warnings=%s provider_statuses=%s concurrency_limit=%s",
         query_trace_id,
         len(paginated_ranked_results),
         pair_plan_stats["total_pairs"],
         execution_meta.get("requested_units_count", 0),
         rescue_attempted,
         rescue_winning_step,
+        warnings,
+        execution_meta.get("provider_statuses", []),
+        canonical.execution.concurrency_limit,
     )
 
     debug_payload: dict[str, Any] | None = None

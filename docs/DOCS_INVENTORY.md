@@ -1,9 +1,9 @@
 # Inventario documental
 
 **Estado:** vivo  
-**?ltima revisi?n:** 2026-05-18  
-**Fuente de verdad:** s?  
-**?rea:** documentaci?n
+**Ultima revision:** 2026-06-05  
+**Fuente de verdad:** si  
+**Area:** documentacion
 
 ## Resumen
 
@@ -151,6 +151,18 @@ Entradas vivas retiradas:
 - `docs/runbooks/runbook-free-domain-setup.md`
 - `infra/cloudflared-config.yml`
 - `scripts/setup-cloudflared.ps1`
+
+## Actualizacion manual 2026-06-05 (watchlist + quick-search stabilization)
+
+Entradas vivas agregadas:
+
+- `docs/runbooks/runbook-watchlist-quick-search-stabilization.md`
+- `docs/qa/reports/2026-06-05-watchlist-quick-search-stabilization.md`
+
+Entradas vivas actualizadas:
+
+- `docs/INDICE_UNICO.md`
+- `docs/DOCS_INVENTORY.md`
 
 ## Tabla
 

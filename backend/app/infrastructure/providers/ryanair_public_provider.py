@@ -7,9 +7,12 @@ from typing import Any
 from app.core.time import utc_now_naive
 
 import requests
+from requests.adapters import HTTPAdapter
 
 from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderPrice, ProviderSourceFetchError, ProviderWarning
 from app.infrastructure.providers.base import FlightProvider
+
+_PROVIDER_POOL_SIZE = 32
 
 
 class RyanairPublicProvider(FlightProvider):
@@ -17,6 +20,9 @@ class RyanairPublicProvider(FlightProvider):
 
     def __init__(self) -> None:
         self._session = requests.Session()
+        adapter = HTTPAdapter(pool_connections=_PROVIDER_POOL_SIZE, pool_maxsize=_PROVIDER_POOL_SIZE)
+        self._session.mount("https://", adapter)
+        self._session.mount("http://", adapter)
 
     def is_enabled(self) -> bool:
         return True

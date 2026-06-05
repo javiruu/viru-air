@@ -106,8 +106,8 @@ export function WatchDetailPanel({
               {currentPriceStatus !== "ok" ? (
                 <span className="watch-detail-price-status">
                   {currentPriceStatus === "no-snapshot"
-                    ? t("watchlist.noDataLabel")
-                    : t("watchlist.noDataDetail")}
+                    ? t("watchlist.freshness.noDataLabel")
+                    : t("watchlist.freshness.noDataDetail")}
                 </span>
               ) : null}
             </strong>
@@ -189,5 +189,4 @@ export function WatchDetailPanel({
 // watchlist.summary.delta
 // watchlist.summary.count
 // confidence.level !== "none"
-
 

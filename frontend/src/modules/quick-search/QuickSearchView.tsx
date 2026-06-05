@@ -77,7 +77,7 @@ import {
   SummaryHighlightKey,
   ZeroResultRelaxAction,
 } from "@/modules/quick-search/types";
-import { normalizeQuickSearchResponse } from "@/modules/quick-search/responseNormalizer";
+import { collectQuickSearchWarningCodes, normalizeQuickSearchResponse } from "@/modules/quick-search/responseNormalizer";
 import { useQuickSearchMainState } from "@/modules/quick-search/state/useQuickSearchController";
 import { getQuickSearchVisualState } from "@/modules/quick-search/state/getQuickSearchVisualState";
 import { useQuickSearchLoadingFlow } from "@/modules/quick-search/state/useQuickSearchLoadingFlow";
@@ -1730,8 +1730,18 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             setLoaderResolvedTotalFlights(Math.max(0, data.meta.total_candidates));
           }
           setJobId(data.job_id || null);
-          setIsDegraded(Boolean(data.meta?.stale_data || data.results.find((item) => item.stale_data)));
-          const warningCodes = Array.isArray(data.filters?.warnings) ? data.filters.warnings : [];
+          const providerOverallStatus = data.meta?.provider_status?.overall_status ?? data.meta?.provider_status?.overall;
+          setIsDegraded(
+            Boolean(
+              data.meta?.stale_data
+              || data.results.find((item) => item.stale_data)
+              || providerOverallStatus === "partial_degraded"
+              || providerOverallStatus === "total_outage"
+              || data.meta?.provider_status?.partial_results_served
+              || data.meta?.provider_status?.total_outage,
+            ),
+          );
+          const warningCodes = collectQuickSearchWarningCodes(data);
           setFiltersWarningCodes(warningCodes);
           setFiltersNotice(warningCodes.map((item) => tWarn(item)));
           setProgress("client_done", 95);

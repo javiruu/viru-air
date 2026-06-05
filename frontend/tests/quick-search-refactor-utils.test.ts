@@ -9,7 +9,11 @@ import {
   buildQuickSearchQuerySignature,
   prepareQuickSearchRequest,
 } from "../src/modules/quick-search/api/buildQuickSearchRequest";
-import { normalizeQuickSearchResponse, normalizeQuickSearchResults } from "../src/modules/quick-search/responseNormalizer";
+import {
+  collectQuickSearchWarningCodes,
+  normalizeQuickSearchResponse,
+  normalizeQuickSearchResults,
+} from "../src/modules/quick-search/responseNormalizer";
 import { QuickSearchResultsList } from "../src/modules/quick-search/components/QuickSearchResultsList";
 
 test("toQuickSearchQuery keeps quick-search API contract shape", () => {
@@ -401,4 +405,45 @@ test("normalizeQuickSearchResponse keeps quick-search results renderable from ba
   assert.match(html, /LEI/);
   assert.match(html, /DUB/);
   assert.match(html, /EUR 55/);
+});
+
+test("collectQuickSearchWarningCodes dedupes filter warnings with canonical structured warnings", () => {
+  const warningCodes = collectQuickSearchWarningCodes({
+    meta: {
+      warnings_structured: [
+        { code: "provider_error_partial" },
+        { code: "provider_total_outage" },
+      ],
+    },
+    filters: {
+      warnings: ["provider_error_partial", "ryanair_availability_failed_partial"],
+    },
+    results: [],
+  });
+
+  assert.deepEqual(warningCodes, [
+    "provider_error_partial",
+    "ryanair_availability_failed_partial",
+    "provider_total_outage",
+  ]);
+});
+
+test("normalizeQuickSearchResponse normalizes provider_status compatibility fields", () => {
+  const response = normalizeQuickSearchResponse({
+    meta: {
+      provider_status: {
+        provider: "ryanair",
+        overall_status: "partial_degraded",
+        partial_results_served: true,
+      },
+    },
+    results: [],
+  });
+
+  assert.equal(response.meta?.provider_status?.overall, "partial_degraded");
+  assert.equal(response.meta?.provider_status?.overall_status, "partial_degraded");
+  assert.equal(response.meta?.provider_status?.availability?.status, "ok");
+  assert.equal(response.meta?.provider_status?.fares?.status, "ok");
+  assert.equal(response.meta?.provider_status?.partial_results_served, true);
+  assert.deepEqual(response.meta?.provider_status?.providers, []);
 });

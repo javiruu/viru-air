@@ -72,6 +72,14 @@ function renderInHost(root: Root, children: ReactNode) {
   root.render(<>{children}</>);
 }
 
+function runWhenMapStyleReady(map: MapLibreMap, action: () => void) {
+  if (map.isStyleLoaded()) {
+    action();
+    return;
+  }
+  map.once("load", action);
+}
+
 function useMapContext(): MapContextValue {
   const context = useContext(MapContext);
   if (!context) {
@@ -107,7 +115,9 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
 
     map.addControl(new maplibregl.AttributionControl({ compact: true }));
     mapRef.current = map;
-    setReadyMap(map);
+    runWhenMapStyleReady(map, () => {
+      setReadyMap(map);
+    });
 
     const onMoveEnd = () => {
       if (!onViewportChange) return;
@@ -124,9 +134,9 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
 
     return () => {
       map.off("moveend", onMoveEnd);
+      setReadyMap(null);
       map.remove();
       mapRef.current = null;
-      setReadyMap(null);
     };
   }, [center, currentStyles, fadeDuration, onViewportChange, viewport, zoom]);
 
@@ -158,10 +168,18 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
     () => ({
       map: mapRef.current,
       fitBounds(bounds, options) {
-        mapRef.current?.fitBounds(bounds, options);
+        const map = mapRef.current;
+        if (!map) return;
+        runWhenMapStyleReady(map, () => {
+          map.fitBounds(bounds, options);
+        });
       },
       easeTo(options) {
-        mapRef.current?.easeTo(options);
+        const map = mapRef.current;
+        if (!map) return;
+        runWhenMapStyleReady(map, () => {
+          map.easeTo(options);
+        });
       },
     }),
     [],

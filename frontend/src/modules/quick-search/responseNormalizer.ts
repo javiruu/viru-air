@@ -1,1 +1,5 @@
-export { normalizeQuickSearchResponse, normalizeQuickSearchResults } from "./api/normalizeQuickSearchResponse";
+export {
+  collectQuickSearchWarningCodes,
+  normalizeQuickSearchResponse,
+  normalizeQuickSearchResults,
+} from "./api/normalizeQuickSearchResponse";

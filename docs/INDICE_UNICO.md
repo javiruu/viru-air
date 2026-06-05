@@ -1,7 +1,7 @@
 ﻿# Índice Único de Documentación
 
 **Estado:** vivo  
-**Última revisión:** 2026-05-18  
+**Última revisión:** 2026-06-05  
 **Fuente de verdad:** sí  
 **Área:** documentación
 
@@ -45,6 +45,7 @@
 ### QA
 
 - [README QA](qa/README.md)
+- [Estabilización watchlist + quick-search](qa/reports/2026-06-05-watchlist-quick-search-stabilization.md)
 - [Frontend PR checklist](qa/acceptance-checklists/frontend-pr-checklist.md)
 - [Fase 0 limpieza conceptual](qa/fase-0-limpieza-conceptual-checklist.md)
 - [Cierre pendiente de `/hoteles`](qa/hotels-pending-closeout.md)
@@ -100,6 +101,7 @@
 ### Runbooks
 
 - [Runbooks operativos](runbooks/)
+- [Runbook de estabilización watchlist + quick-search](runbooks/runbook-watchlist-quick-search-stabilization.md)
 - [DuckDNS + publicacion temporal](runbooks/runbook-duckdns-public-domain.md)
 - [Sweeps hoteleros](runbooks/hotels-sweeps.md)
 
