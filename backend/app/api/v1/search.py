@@ -280,6 +280,7 @@ class QuickSearchSaveResultIn(BaseModel):
     destination_iata: str = Field(min_length=3, max_length=3)
     travel_date: dt.date
     price_total: float | None = Field(default=None, ge=0)
+    group_id: str | None = Field(default=None, max_length=36)
 
     @field_validator("origin_iata", "destination_iata")
     @classmethod
@@ -2516,6 +2517,7 @@ def save_result(
         destination_iata=payload.destination_iata,
         travel_date_local=payload.travel_date,
         target_price=payload.price_total,
+        group_id=payload.group_id,
     )
     db.add(watch)
     db.commit()
