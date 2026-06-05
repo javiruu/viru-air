@@ -19,6 +19,7 @@ export function HotelCompSetPanel({
   onSelectCompSet,
   onAddMember,
   onDeleteMember,
+  onDeleteCompSet,
 }: {
   compSets: HotelCompSetOut[];
   selectedCompSet: HotelCompSetDetailOut | null;
@@ -34,6 +35,7 @@ export function HotelCompSetPanel({
   onSelectCompSet: (compSetId: string) => void;
   onAddMember: (compSetId: string, hotelId: string) => void;
   onDeleteMember: (compSetId: string, memberId: string) => void;
+  onDeleteCompSet: (compSetId: string) => void;
 }) {
   const { t } = useI18n();
   const selectedHotelAlreadyInCompSet = selectedCompSet
@@ -93,6 +95,13 @@ export function HotelCompSetPanel({
               onClick={() => selectedHotelId && onAddMember(selectedCompSet.id, selectedHotelId)}
             >
               {t("hotels.compSet.addSelected")}
+            </button>
+            <button
+              type="button"
+              className="btn-ghost btn-compact hotel-comp-set-delete-btn"
+              onClick={() => onDeleteCompSet(selectedCompSet.id)}
+            >
+              {t("hotels.compSet.deleteCompSet")}
             </button>
           </div>
           <section className="hotel-comp-set-members-section section-gap-sm">

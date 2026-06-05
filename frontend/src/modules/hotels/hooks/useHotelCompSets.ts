@@ -6,6 +6,7 @@ import { useI18n } from "@/i18n";
 import {
   addHotelCompSetMember,
   createHotelCompSet,
+  deleteHotelCompSet,
   deleteHotelCompSetMember,
   getHotelCompSetDetail,
   getHotelDetail,
@@ -88,6 +89,21 @@ export function useHotelCompSets() {
       }
     },
     [notify, t],
+  );
+
+  const handleDeleteCompSet = useCallback(
+    async (compSetId: string) => {
+      try {
+        await deleteHotelCompSet(compSetId);
+        setSelectedCompSet(null);
+        await refreshCompSets();
+        notify({ tone: "success", title: t("hotels.messages.compSetDeleted") });
+      } catch (error) {
+        const message = resolveHotelMessage(error, t);
+        notify({ tone: "error", title: message });
+      }
+    },
+    [refreshCompSets, notify, t],
   );
 
   // Hydrate anchor detail when selectedCompSet changes
@@ -173,5 +189,6 @@ export function useHotelCompSets() {
     handleSelectCompSet,
     handleAddMember,
     handleDeleteMember,
+    handleDeleteCompSet,
   };
 }
