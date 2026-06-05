@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import app.api.v1.watchlist as watchlist_api
 from app.core.time import utc_now_naive
@@ -180,6 +180,13 @@ def test_batch_history_can_filter_by_captured_since(client: TestClient, monkeypa
 def test_prices_summary_returns_aggregates(client: TestClient, monkeypatch) -> None:
     monkeypatch.setattr(watchlist_api, "provider", _FakeProvider())
     monkeypatch.setattr(watchlist_api, "REFRESH_COOLDOWN_SECONDS", 0)
+    refresh_times = iter(
+        [
+            datetime(2026, 6, 5, 10, 15, 27, 111111),
+            datetime(2026, 6, 5, 10, 18, 9, 222222),
+        ]
+    )
+    monkeypatch.setattr(watchlist_api, "utc_now_naive", lambda: next(refresh_times))
 
     token = register_and_token(client, email="summary@viru.dev")
     headers = {"Authorization": f"Bearer {token}"}

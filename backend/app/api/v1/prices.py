@@ -10,6 +10,7 @@ from app.api.deps import get_current_user
 from app.domain.schemas import SnapshotBatchIn, SnapshotBatchOut, SnapshotOut
 from app.infrastructure.db.models import FlightWatch, PriceSnapshot, User
 from app.infrastructure.db.session import get_db
+from app.services.watchlist_snapshots import canonicalize_snapshot_rows
 
 router = APIRouter()
 
@@ -33,14 +34,19 @@ def history(
             .order_by(PriceSnapshot.captured_at_utc.desc(), PriceSnapshot.id.desc())
         )
     )
+    canonical_rows = sorted(
+        canonicalize_snapshot_rows(rows),
+        key=lambda row: row.captured_at_utc,
+        reverse=True,
+    )
     return [
         SnapshotOut(
-            captured_at_utc=r.captured_at_utc,
-            raw_price=float(r.raw_price),
-            raw_currency=r.raw_currency,
-            departure_time_local=r.departure_time_local,
+            captured_at_utc=row.captured_at_utc,
+            raw_price=row.raw_price,
+            raw_currency=row.raw_currency,
+            departure_time_local=row.departure_time_local,
         )
-        for r in rows
+        for row in canonical_rows
     ]
 
 
@@ -67,19 +73,11 @@ def history_batch(
     if not allowed_watch_ids:
         return []
 
-    count_stmt = select(func.count(PriceSnapshot.id)).where(PriceSnapshot.watch_id.in_(allowed_watch_ids))
-    if payload.captured_since_utc is not None:
-        count_stmt = count_stmt.where(PriceSnapshot.captured_at_utc >= payload.captured_since_utc)
-
-    total_rows = int(db.scalar(count_stmt) or 0)
-    if total_rows > payload.max_rows:
-        raise HTTPException(status_code=413, detail="batch_history_too_large")
-
     rows_stmt = select(PriceSnapshot).where(PriceSnapshot.watch_id.in_(allowed_watch_ids))
     if payload.captured_since_utc is not None:
         rows_stmt = rows_stmt.where(PriceSnapshot.captured_at_utc >= payload.captured_since_utc)
 
-    rows = list(
+    raw_rows = list(
         db.scalars(
             rows_stmt.order_by(
                 PriceSnapshot.watch_id.asc(),
@@ -88,15 +86,24 @@ def history_batch(
             )
         )
     )
+    canonical_rows = sorted(
+        canonicalize_snapshot_rows(raw_rows),
+        key=lambda row: (row.watch_id, row.captured_at_utc),
+        reverse=False,
+    )
+    canonical_rows.sort(key=lambda row: row.captured_at_utc, reverse=True)
+    canonical_rows.sort(key=lambda row: row.watch_id)
+    if len(canonical_rows) > payload.max_rows:
+        raise HTTPException(status_code=413, detail="batch_history_too_large")
     return [
         SnapshotBatchOut(
-            watch_id=r.watch_id,
-            captured_at_utc=r.captured_at_utc,
-            raw_price=float(r.raw_price),
-            raw_currency=r.raw_currency,
-            departure_time_local=r.departure_time_local,
+            watch_id=row.watch_id,
+            captured_at_utc=row.captured_at_utc,
+            raw_price=row.raw_price,
+            raw_currency=row.raw_currency,
+            departure_time_local=row.departure_time_local,
         )
-        for r in rows
+        for row in canonical_rows
     ]
 
 
@@ -119,7 +126,11 @@ def summary(
             .order_by(PriceSnapshot.captured_at_utc.asc(), PriceSnapshot.id.asc())
         )
     )
-    if not rows:
+    canonical_rows = sorted(
+        canonicalize_snapshot_rows(rows),
+        key=lambda row: row.captured_at_utc,
+    )
+    if not canonical_rows:
         return {
             "watch_id": watch_id,
             "count": 0,
@@ -130,7 +141,7 @@ def summary(
             "delta_pct": None,
         }
 
-    prices = [float(row.raw_price) for row in rows]
+    prices = [row.raw_price for row in canonical_rows]
     first = prices[0]
     latest = prices[-1]
     delta_pct = None if first == 0 else round(((latest - first) / first) * 100.0, 2)
@@ -169,12 +180,16 @@ def calendar(
     if to is not None:
         stmt = stmt.where(func.date(PriceSnapshot.captured_at_utc) <= to)
 
-    rows = list(db.scalars(stmt))
-    if not rows:
+    raw_rows = list(db.scalars(stmt))
+    canonical_rows = sorted(
+        canonicalize_snapshot_rows(raw_rows),
+        key=lambda row: row.captured_at_utc,
+    )
+    if not canonical_rows:
         return {"watch_id": watch_id, "currency": "EUR", "days": []}
 
-    by_day: dict[Date, list[PriceSnapshot]] = defaultdict(list)
-    for row in rows:
+    by_day = defaultdict(list)
+    for row in canonical_rows:
         by_day[row.captured_at_utc.date()].append(row)
 
     day_min_values: list[float] = []
@@ -215,7 +230,7 @@ def calendar(
         day["is_daily_min"] = day["min_price"] == overall_day_min
         day["is_daily_max"] = day["max_price"] == overall_day_max
 
-    return {"watch_id": watch_id, "currency": rows[-1].raw_currency, "days": day_stats}
+    return {"watch_id": watch_id, "currency": canonical_rows[-1].raw_currency, "days": day_stats}
 
 
 def _volatility_hint(prices: list[float]) -> str:
@@ -268,9 +283,13 @@ def compare(
         rows_stmt = rows_stmt.where(func.date(PriceSnapshot.captured_at_utc) >= from_)
     if to is not None:
         rows_stmt = rows_stmt.where(func.date(PriceSnapshot.captured_at_utc) <= to)
-    rows = list(db.scalars(rows_stmt))
+    raw_rows = list(db.scalars(rows_stmt))
+    rows = sorted(
+        canonicalize_snapshot_rows(raw_rows),
+        key=lambda row: (row.watch_id, row.captured_at_utc),
+    )
 
-    by_watch: dict[str, list[PriceSnapshot]] = defaultdict(list)
+    by_watch = defaultdict(list)
     for row in rows:
         by_watch[row.watch_id].append(row)
 
