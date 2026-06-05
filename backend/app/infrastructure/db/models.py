@@ -4,7 +4,7 @@ from typing import Optional
 from app.core.time import utc_now_naive
 from uuid import uuid4
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.domain.vocabulary import DELIVERY_STATUS_QUEUED, WATCH_STATUS_ACTIVE
@@ -29,6 +29,16 @@ class User(Base):
 
 class FlightWatch(Base):
     __tablename__ = "flight_watch"
+    __table_args__ = (
+        Index(
+            "uq_flight_watch_user_route_date",
+            "user_id",
+            "origin_iata",
+            "destination_iata",
+            "travel_date_local",
+            unique=True,
+        ),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
@@ -36,6 +46,7 @@ class FlightWatch(Base):
     destination_iata: Mapped[str] = mapped_column(String(3))
     travel_date_local: Mapped[datetime.date] = mapped_column(Date)
     target_price: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    group_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     status: Mapped[str] = mapped_column(String(20), default=WATCH_STATUS_ACTIVE)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
 
@@ -45,6 +56,9 @@ class FlightWatch(Base):
 
 class PriceSnapshot(Base):
     __tablename__ = "price_snapshot"
+    __table_args__ = (
+        Index("ix_price_snapshot_watch_captured", "watch_id", "captured_at_utc"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     watch_id: Mapped[str] = mapped_column(ForeignKey("flight_watch.id"), index=True)
@@ -60,6 +74,9 @@ class PriceSnapshot(Base):
 
 class AlertRule(Base):
     __tablename__ = "alert_rule"
+    __table_args__ = (
+        Index("ix_alert_rule_watch_enabled", "watch_id", "enabled"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     watch_id: Mapped[str] = mapped_column(ForeignKey("flight_watch.id"), index=True)
@@ -73,6 +90,9 @@ class AlertRule(Base):
 
 class NotificationEvent(Base):
     __tablename__ = "notification_event"
+    __table_args__ = (
+        Index("ix_notification_event_rule_created", "rule_id", "created_at"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     rule_id: Mapped[str] = mapped_column(ForeignKey("alert_rule.id"), index=True)
@@ -151,6 +171,9 @@ class UserProfile(Base):
 
 class UserSession(Base):
     __tablename__ = "user_session"
+    __table_args__ = (
+        Index("ix_user_session_user_active_last_seen", "user_id", "is_active", "last_seen"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
@@ -163,6 +186,9 @@ class UserSession(Base):
 
 class RefreshToken(Base):
     __tablename__ = "refresh_token"
+    __table_args__ = (
+        Index("ix_refresh_token_token_hash", "token_hash"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
@@ -177,6 +203,9 @@ class RefreshToken(Base):
 
 class PasswordResetToken(Base):
     __tablename__ = "password_reset_token"
+    __table_args__ = (
+        Index("ix_password_reset_token_token_hash", "token_hash"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
@@ -211,6 +240,9 @@ class UserPreferenceRegion(Base):
 
 class SecurityActivity(Base):
     __tablename__ = "security_activity"
+    __table_args__ = (
+        Index("ix_security_activity_user_created", "user_id", "created_at"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
@@ -243,6 +275,7 @@ class Suggestion(Base):
 class IdempotencyRecord(Base):
     __tablename__ = "idempotency_record"
     __table_args__ = (
+        Index("ix_idempotency_record_created_at", "created_at"),
         UniqueConstraint("user_id", "endpoint", "idempotency_key", name="uq_idempotency_user_endpoint_key"),
     )
 
