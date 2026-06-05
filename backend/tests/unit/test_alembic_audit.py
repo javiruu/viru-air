@@ -1,4 +1,9 @@
 from pathlib import Path
+import os
+import sqlite3
+import subprocess
+import sys
+import tempfile
 
 from app.infrastructure.db.alembic_audit import build_audit_payload, inspect_database_revision
 
@@ -16,7 +21,7 @@ def test_current_alembic_chain_has_no_missing_down_revisions() -> None:
     assert payload["missing_down_revisions"] == []
     assert payload["duplicate_revisions"] == {}
     assert payload["files_missing_identifiers"] == []
-    assert payload["heads"] == ["0026"]
+    assert payload["heads"] == ["0027"]
 
 
 def test_inspect_database_revision_flags_orphan_alembic_version(tmp_path: Path) -> None:
@@ -41,3 +46,42 @@ def test_inspect_database_revision_flags_orphan_alembic_version(tmp_path: Path) 
 
     assert db_state["status"] == "invalid_revision"
     assert db_state["invalid_revisions"] == ["0025_alert_rule_compare_against"]
+
+
+def test_clean_upgrade_keeps_alembic_check_green() -> None:
+    backend_root = Path(__file__).resolve().parents[2]
+    fd, db_path = tempfile.mkstemp(suffix="-alembic-clean.db", dir=backend_root)
+    os.close(fd)
+
+    env = os.environ.copy()
+    env["DB_URL"] = f"sqlite:///./{Path(db_path).name}"
+
+    try:
+        upgrade = subprocess.run(
+            [sys.executable, "-m", "alembic", "upgrade", "head"],
+            cwd=backend_root,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert upgrade.returncode == 0, upgrade.stderr
+
+        check = subprocess.run(
+            [sys.executable, "-m", "alembic", "check"],
+            cwd=backend_root,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert check.returncode == 0, check.stderr or check.stdout
+    finally:
+        try:
+            sqlite3.connect(db_path).close()
+        except sqlite3.Error:
+            pass
+        try:
+            os.remove(db_path)
+        except OSError:
+            pass
