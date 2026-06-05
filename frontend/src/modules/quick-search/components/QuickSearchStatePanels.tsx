@@ -31,6 +31,16 @@ export function QuickSearchStatePanels(props: Props) {
     );
   }
 
+  if (props.searchState === "loading") {
+    return (
+      <div className="qs-state qs-state-loading" aria-live="polite">
+        <h3>{props.t("loadingTitle")}</h3>
+        <p>{props.t("loadingText")}</p>
+        <span className="muted">{props.t("loadingSubcheckTitle")}</span>
+      </div>
+    );
+  }
+
   if (props.searchState === "rate") {
     return (
       <div className="qs-state qs-state-rate">

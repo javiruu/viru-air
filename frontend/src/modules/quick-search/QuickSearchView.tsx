@@ -81,6 +81,11 @@ import { collectQuickSearchWarningCodes, normalizeQuickSearchResponse } from "@/
 import { useQuickSearchMainState } from "@/modules/quick-search/state/useQuickSearchController";
 import { getQuickSearchVisualState } from "@/modules/quick-search/state/getQuickSearchVisualState";
 import { useQuickSearchLoadingFlow } from "@/modules/quick-search/state/useQuickSearchLoadingFlow";
+import { useQuickSearchSide } from "@/modules/quick-search/state/useQuickSearchSide";
+import { useSaveCombination } from "@/modules/quick-search/state/useSaveCombination";
+import { QuickSearchDualWorkspace } from "@/modules/quick-search/components/QuickSearchDualWorkspace";
+import { QuickSearchSidePanel } from "@/modules/quick-search/components/QuickSearchSidePanel";
+import { QuickSearchCombinedBanner } from "@/modules/quick-search/components/QuickSearchCombinedBanner";
 import { useQuickSearchScreenState } from "@/modules/quick-search/state/useQuickSearchScreenState";
 import { getPendingActionVisibility } from "@/modules/quick-search/state/pendingActionPolicy";
 import { getTranslatedCityName, getApiSearchQuery, matchesCityTranslation } from "@/modules/shared/cityTranslations";
@@ -492,6 +497,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     debugLastTickLogTsRef,
   } = useQuickSearchMainState(initialOrigin, initialDestination);
   const normalizedRadiusKm = clampQuickSearchRadius(radiusKm);
+
+  // ── Dual-mode hooks (Fase 6) ───────────────────────────────────────
+  const outboundSide = useQuickSearchSide("outbound");
+  const returnSide = useQuickSearchSide("return");
+  const saveCombination = useSaveCombination();
 
   const mergeSeedAirportEntries = useCallback((entries: AirportIataEntry[]) => {
     if (!Array.isArray(entries) || entries.length === 0) return;
@@ -996,6 +1006,22 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     const code = currency ?? searchMeta?.currency ?? "EUR";
     return formatCurrency(value, code, localeTag);
   };
+
+  // ── Per-side formatMoney (Fase 6) ────────────────────────────────────
+  const formatMoneyOutbound = useCallback(
+    (value: number, currency?: string) => {
+      const code = currency ?? outboundSide.searchMeta?.currency ?? "EUR";
+      return formatCurrency(value, code, localeTag);
+    },
+    [outboundSide.searchMeta?.currency, localeTag],
+  );
+  const formatMoneyReturn = useCallback(
+    (value: number, currency?: string) => {
+      const code = currency ?? returnSide.searchMeta?.currency ?? "EUR";
+      return formatCurrency(value, code, localeTag);
+    },
+    [returnSide.searchMeta?.currency, localeTag],
+  );
   const countryDisplayNames = useMemo(() => {
     try {
       return new Intl.DisplayNames([localeTag], { type: "region" });
@@ -1575,6 +1601,48 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       setSearchState("error");
       setSearchError(t("errorText"));
       setFieldErrors(nextFieldErrors);
+      return;
+    }
+
+    // ── Dual-mode: dispatch two independent searches in parallel (Fase 6) ──
+    if (isDualMode) {
+      setAppliedCriteriaSignature(currentCriteriaSignature);
+      setHasSearched(true);
+
+      const dNextExcludeOrigins = [...excludeOrigins];
+      const dNextExcludeDestinations = [...excludeDestinations];
+      parseIataList(excludeOriginInput).forEach((v: string) => { if (!dNextExcludeOrigins.includes(v)) dNextExcludeOrigins.push(v); });
+      parseIataList(excludeDestinationInput).forEach((v: string) => { if (!dNextExcludeDestinations.includes(v)) dNextExcludeDestinations.push(v); });
+      if (excludeOriginInput) setExcludeOriginInput("");
+      if (excludeDestinationInput) setExcludeDestinationInput("");
+
+      const dualBaseParams = {
+        originIata: origin,
+        destinationIata: destination,
+        travelDate,
+        flexDaysBefore: daysBefore,
+        flexDaysAfter: daysAfter,
+        radiusKm: normalizedRadiusKm,
+        includeStops,
+        includeNearbyOrigins,
+        includeNearbyDestinations,
+        departAfter: departAfter || undefined,
+        departBefore: departBefore || undefined,
+        maxStops,
+        excludeOrigins: dNextExcludeOrigins,
+        excludeDestinations: dNextExcludeDestinations,
+        strictFilters,
+      };
+
+      void Promise.all([
+        outboundSide.runSearch(dualBaseParams),
+        returnSide.runSearch({
+          ...dualBaseParams,
+          originIata: destination,
+          destinationIata: origin,
+          travelDate: returnDate,
+        }),
+      ]);
       return;
     }
 
@@ -2570,6 +2638,51 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const radiusActive = includeNearbyOrigins || includeNearbyDestinations;
   const hasInvalidRoute = !originValid || !destinationValid;
   const routeInputsValid = originValid && destinationValid;
+  // Dual-mode flag (Fase 6) ─ after routeInputsValid to avoid TDZ
+  const isDualMode = isReturn && !!returnDate && !!travelDate && routeInputsValid && !originCountryOnly && !destinationCountryOnly;
+
+  // ── Side state cleanup when exiting dual mode (Fase 6) ─────────────
+  const wasDualModeRef = useRef(isDualMode);
+  useEffect(() => {
+    if (wasDualModeRef.current && !isDualMode) {
+      outboundSide.reset();
+      returnSide.reset();
+      saveCombination.reset();
+    }
+    wasDualModeRef.current = isDualMode;
+  }, [isDualMode, outboundSide, returnSide, saveCombination]);
+
+  useEffect(() => {
+    if (saveCombination.status === "saved") {
+      notify({
+        tone: "success",
+        title: t("combinationSaved"),
+        actionLabel: t("viewWatchlist"),
+        onAction: saveCombination.navigateToWatchlist,
+        durationMs: 3200,
+      });
+      saveCombination.reset();
+      return;
+    }
+    if (saveCombination.status === "partial") {
+      notify({
+        tone: "warning",
+        title: t("combinationPartial"),
+        durationMs: 3600,
+      });
+      saveCombination.reset();
+      return;
+    }
+    if (saveCombination.status === "error") {
+      notify({
+        tone: "error",
+        title: t("combinationError"),
+        durationMs: 3600,
+      });
+      saveCombination.reset();
+    }
+  }, [notify, saveCombination, t]);
+
   // edited criteria signature drives the dirty-state check against last applied criteria
   const currentCriteriaSignature = useMemo(() => buildCriteriaSignature({
     origin,
@@ -4186,7 +4299,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         </QuickSearchSearchForm>
       </section>
 
-      {showResultsWorkspace ? (
+      {showResultsWorkspace && !isDualMode ? (
       <QuickSearchResultsWorkspace>
       <div id="qs-workspace-hint" className="qs-workspace-hint">
         {pageWorkspaceHint}
@@ -4667,14 +4780,290 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       ) : null}
 
       </QuickSearchResultsWorkspace>
-      ) : (
+      ) : !isDualMode ? (
         <section className="panel panel-soft section-gap-sm" aria-live="polite">
           <div className="panel-header">
             <h2>{t("searchReadyTitle")}</h2>
             <span className="muted">{t("searchReadyHint")}</span>
           </div>
         </section>
-      )}
+      ) : null}
+
+
+
+      {/* ── Dual-mode workspace (Fase 6) ── */}
+      {isDualMode && (outboundSide.searchState !== "idle" || returnSide.searchState !== "idle") ? (
+        <QuickSearchDualWorkspace ariaLabel="Round-trip results">
+          {/* ── Outbound panel ── */}
+          <QuickSearchSidePanel
+            side="outbound"
+            origin={originCountryOnly != null ? (originCountryOnly as CountryAirports).name : origin}
+            destination={destinationCountryOnly != null ? (destinationCountryOnly as CountryAirports).name : destination}
+            dateLabel={formatShortDate(travelDate)}
+            headerLabel={t("sideOutboundLabel")}
+            resultCount={outboundSide.searchState === "success" ? outboundSide.results.length : 0}
+            currentPage={outboundSide.searchState === "success" ? outboundSide.currentPage : undefined}
+            totalPages={outboundSide.searchMeta?.pagination?.total_pages}
+            pageSize={outboundSide.searchMeta?.pagination?.page_size}
+            totalResults={outboundSide.searchMeta?.pagination?.total_results}
+            onPageChange={outboundSide.searchState === "success" ? (page: number) => outboundSide.goToPage(page) : undefined}
+            locale={locale}
+          >
+            {outboundSide.searchState === "loading" || outboundSide.searchState === "error" || outboundSide.searchState === "empty" || outboundSide.searchState === "rate" ? (
+              <QuickSearchStatePanels
+                searchState={outboundSide.searchState}
+                rateLimitSeconds={outboundSide.rateLimitSeconds}
+                searchError={outboundSide.searchError}
+                emptyStateMainTitle={t("noResults")}
+                locale={locale}
+                zeroResultCauses={[]}
+                visibleZeroResultCauses={[]}
+                canExpandZeroResultCauses={false}
+                emptyCausesExpanded={false}
+                zeroResultActions={[]}
+                onToggleEmptyCauses={() => {}}
+                onRelaxAction={() => {}}
+                onRunSearch={() => outboundSide.goToPage(1)}
+                onEmptyCta={() => outboundSide.goToPage(1)}
+                t={t}
+              />
+            ) : outboundSide.searchState === "success" ? (
+              <QuickSearchResultsList
+                visibleResults={showHighRisk ? outboundSide.results : outboundSide.results.filter((r: SearchResult) => r.risk_label !== "high")}
+                compactView={compactView}
+                expandedRows={outboundSide.expandedRows}
+                openRowMenuId={null}
+                deeplinkUrl={outboundSide.deepLink?.url || outboundSide.deepLink?.fallback_url || localRyanairUrl}
+                hiddenHighRiskResults={showHighRisk ? [] : outboundSide.results.filter((r: SearchResult) => r.risk_label === "high")}
+                showHighRisk={showHighRisk}
+                origin={origin}
+                destination={destination}
+                radiusKm={radiusKm}
+                departAfter={departAfter}
+                departBefore={departBefore}
+                localeTag={localeTag}
+                weatherOrigin={outboundSide.weatherOrigin}
+                weatherDestination={outboundSide.weatherDestination}
+                getCopyPayload={getCopyPayload}
+                rowMenuTriggerRefs={rowMenuTriggerRefs}
+                t={t}
+                formatMoney={formatMoneyOutbound}
+                formatScore={formatScore}
+                formatRiskLabel={formatRiskLabel}
+                formatFreshness={formatFreshness}
+                formatMinutes={formatMinutes}
+                resultKey={resultKey}
+                getResultTags={getResultTags}
+                addToWatchlist={async (result: SearchResult) => {
+                  setMessage("");
+                  try {
+                    const response = await apiFetch<{ watch_id?: string; created_or_existing?: string }>("/search/save-result", {
+                      method: "POST",
+                      body: JSON.stringify({
+                        job_id: outboundSide.jobId,
+                        result_id: result.result_id ?? null,
+                        origin_iata: result.origin,
+                        destination_iata: result.destination,
+                        travel_date: result.travel_date,
+                        price_total: result.price_total ?? result.price,
+                        currency: result.currency,
+                        duration_total: result.duration_total_min ?? result.duration_total ?? null,
+                        stop_count: result.stop_count ?? null,
+                        risk_label: result.risk_label ?? null,
+                        minutes_buffer: result.minutes_buffer ?? null,
+                        distance_km_ground: result.distance_km_ground ?? null,
+                        ranking_score: result.ranking_score ?? null,
+                        freshness_ts: result.freshness_ts ?? null,
+                        deeplink_url: result.deeplink_url ?? outboundSide.deepLink?.url ?? outboundSide.deepLink?.fallback_url ?? localRyanairUrl ?? null,
+                        itinerary_type: result.itinerary_type ?? null,
+                      }),
+                    });
+                    if (response) {
+                      const isExisting = "created_or_existing" in response && response.created_or_existing === "existing";
+                      notify({
+                        tone: "success",
+                        title: t(isExisting ? "watchExists" : "watchAdded"),
+                        actionLabel: t("viewWatchlist"),
+                        onAction: () => router.push("/watchlist"),
+                        durationMs: 3200,
+                      });
+                    }
+                  } catch {
+                    setMessage(t("watchFailed"));
+                    setMessageType("error");
+                  }
+                }}
+                setExpandedRows={outboundSide.setExpandedRows}
+                setSelectedResultId={outboundSide.setSelectedResultId}
+                setOpenRowMenuId={() => {}}
+                setCopyModalPayload={setCopyModalPayload}
+                setCopyModalOpen={setCopyModalOpen}
+                closeRowMenu={() => {}}
+                onTrackOpenRyanair={trackOpenRyanair}
+                onToggleHighRisk={toggleHighRisk}
+                onTrackRowOverflow={trackRowOverflow}
+                onTrackCopyParams={trackCopyParams}
+              />
+            ) : null}
+          </QuickSearchSidePanel>
+
+          {/* ── Return panel ── */}
+          <QuickSearchSidePanel
+            side="return"
+            origin={destinationCountryOnly != null ? (destinationCountryOnly as CountryAirports).name : destination}
+            destination={originCountryOnly != null ? (originCountryOnly as CountryAirports).name : origin}
+            dateLabel={formatShortDate(returnDate)}
+            headerLabel={t("sideReturnLabel")}
+            resultCount={returnSide.searchState === "success" ? returnSide.results.length : 0}
+            currentPage={returnSide.searchState === "success" ? returnSide.currentPage : undefined}
+            totalPages={returnSide.searchMeta?.pagination?.total_pages}
+            pageSize={returnSide.searchMeta?.pagination?.page_size}
+            totalResults={returnSide.searchMeta?.pagination?.total_results}
+            onPageChange={returnSide.searchState === "success" ? (page: number) => returnSide.goToPage(page) : undefined}
+            locale={locale}
+          >
+            {returnSide.searchState === "loading" || returnSide.searchState === "error" || returnSide.searchState === "empty" || returnSide.searchState === "rate" ? (
+              <QuickSearchStatePanels
+                searchState={returnSide.searchState}
+                rateLimitSeconds={returnSide.rateLimitSeconds}
+                searchError={returnSide.searchError}
+                emptyStateMainTitle={t("noReturnResults")}
+                locale={locale}
+                zeroResultCauses={[]}
+                visibleZeroResultCauses={[]}
+                canExpandZeroResultCauses={false}
+                emptyCausesExpanded={false}
+                zeroResultActions={[]}
+                onToggleEmptyCauses={() => {}}
+                onRelaxAction={() => {}}
+                onRunSearch={() => returnSide.goToPage(1)}
+                onEmptyCta={() => returnSide.goToPage(1)}
+                t={t}
+              />
+            ) : returnSide.searchState === "success" ? (
+              <QuickSearchResultsList
+                visibleResults={showHighRisk ? returnSide.results : returnSide.results.filter((r: SearchResult) => r.risk_label !== "high")}
+                compactView={compactView}
+                expandedRows={returnSide.expandedRows}
+                openRowMenuId={null}
+                deeplinkUrl={returnSide.deepLink?.url || returnSide.deepLink?.fallback_url || localRyanairUrl}
+                hiddenHighRiskResults={showHighRisk ? [] : returnSide.results.filter((r: SearchResult) => r.risk_label === "high")}
+                showHighRisk={showHighRisk}
+                origin={destination}
+                destination={origin}
+                radiusKm={radiusKm}
+                departAfter={departAfter}
+                departBefore={departBefore}
+                localeTag={localeTag}
+                weatherOrigin={returnSide.weatherDestination}
+                weatherDestination={returnSide.weatherOrigin}
+                getCopyPayload={getCopyPayload}
+                rowMenuTriggerRefs={rowMenuTriggerRefs}
+                t={t}
+                formatMoney={formatMoneyReturn}
+                formatScore={formatScore}
+                formatRiskLabel={formatRiskLabel}
+                formatFreshness={formatFreshness}
+                formatMinutes={formatMinutes}
+                resultKey={resultKey}
+                getResultTags={getResultTags}
+                addToWatchlist={async (result: SearchResult) => {
+                  setMessage("");
+                  try {
+                    const response = await apiFetch<{ watch_id?: string; created_or_existing?: string }>("/search/save-result", {
+                      method: "POST",
+                      body: JSON.stringify({
+                        job_id: returnSide.jobId,
+                        result_id: result.result_id ?? null,
+                        origin_iata: result.origin,
+                        destination_iata: result.destination,
+                        travel_date: result.travel_date,
+                        price_total: result.price_total ?? result.price,
+                        currency: result.currency,
+                        duration_total: result.duration_total_min ?? result.duration_total ?? null,
+                        stop_count: result.stop_count ?? null,
+                        risk_label: result.risk_label ?? null,
+                        minutes_buffer: result.minutes_buffer ?? null,
+                        distance_km_ground: result.distance_km_ground ?? null,
+                        ranking_score: result.ranking_score ?? null,
+                        freshness_ts: result.freshness_ts ?? null,
+                        deeplink_url: result.deeplink_url ?? returnSide.deepLink?.url ?? returnSide.deepLink?.fallback_url ?? localRyanairUrl ?? null,
+                        itinerary_type: result.itinerary_type ?? null,
+                      }),
+                    });
+                    if (response) {
+                      const isExisting = "created_or_existing" in response && response.created_or_existing === "existing";
+                      notify({
+                        tone: "success",
+                        title: t(isExisting ? "watchExists" : "watchAdded"),
+                        actionLabel: t("viewWatchlist"),
+                        onAction: () => router.push("/watchlist"),
+                        durationMs: 3200,
+                      });
+                    }
+                  } catch {
+                    setMessage(t("watchFailed"));
+                    setMessageType("error");
+                  }
+                }}
+                setExpandedRows={returnSide.setExpandedRows}
+                setSelectedResultId={returnSide.setSelectedResultId}
+                setOpenRowMenuId={() => {}}
+                setCopyModalPayload={setCopyModalPayload}
+                setCopyModalOpen={setCopyModalOpen}
+                closeRowMenu={() => {}}
+                onTrackOpenRyanair={trackOpenRyanair}
+                onToggleHighRisk={toggleHighRisk}
+                onTrackRowOverflow={trackRowOverflow}
+                onTrackCopyParams={trackCopyParams}
+              />
+            ) : null}
+          </QuickSearchSidePanel>
+
+          {/* ── Combined banner ── */}
+          <QuickSearchCombinedBanner
+            combinedPrice={
+              (() => {
+                const ob = outboundSide.selectedResultId
+                  ? outboundSide.results.find((r, i) => resultKey(r, i) === outboundSide.selectedResultId)
+                  : outboundSide.results[0];
+                const rb = returnSide.selectedResultId
+                  ? returnSide.results.find((r, i) => resultKey(r, i) === returnSide.selectedResultId)
+                  : returnSide.results[0];
+                if (ob && rb) return (ob.price_total ?? ob.price ?? 0) + (rb.price_total ?? rb.price ?? 0);
+                return null;
+              })()
+            }
+            currency={(() => {
+              const ob = outboundSide.results[0];
+              const rb = returnSide.results[0];
+              return ob?.currency ?? rb?.currency ?? "EUR";
+            })()}
+            visible={outboundSide.searchState === "success" && returnSide.searchState === "success"}
+            onSave={() => {
+              const ob = outboundSide.selectedResultId
+                ? outboundSide.results.find((r, i) => resultKey(r, i) === outboundSide.selectedResultId)
+                : outboundSide.results[0];
+              const rb = returnSide.selectedResultId
+                ? returnSide.results.find((r, i) => resultKey(r, i) === returnSide.selectedResultId)
+                : returnSide.results[0];
+              if (!ob || !rb) {
+                notify({ tone: "info", title: t("combinationSelectBoth"), durationMs: 3000 });
+                return;
+              }
+              void saveCombination.saveCombination({
+                outbound: ob,
+                return: rb,
+                origin,
+                destination,
+                groupId: crypto.randomUUID(),
+              });
+            }}
+            saving={saveCombination.status === "saving"}
+            locale={locale}
+          />
+        </QuickSearchDualWorkspace>
+      ) : null}
 
       {airportPickerModal}
 

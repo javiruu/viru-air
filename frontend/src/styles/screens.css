@@ -2262,6 +2262,18 @@ h1 {
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
 }
 
+.qs-pagination-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted, rgba(128,128,128,0.4));
+  user-select: none;
+  pointer-events: none;
+}
+
 .qs-pagination-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
