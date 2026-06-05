@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.errors import error_envelope, message_for_code
 from app.core.idempotency import replay_if_exists, request_hash, store_response
-from app.domain.entities import ProviderFetchResult
+from app.domain.entities import ProviderFetchResult, ProviderFlight
 from app.domain.vocabulary import (
     WATCH_STATUS_ACTIVE,
     WATCH_STATUS_DELETED,
@@ -33,6 +33,7 @@ from app.domain.schemas import (
 from app.infrastructure.db.models import FlightWatch, PriceSnapshot, User
 from app.infrastructure.db.session import get_db
 from app.infrastructure.providers.flight_provider import MultiSourceFlightProvider
+from app.services.watchlist_snapshots import canonicalize_snapshot_rows, select_canonical_refresh_flight
 
 router = APIRouter()
 provider = MultiSourceFlightProvider()
@@ -298,11 +299,18 @@ def get_watch_detail(
     if not watch or watch.status == WATCH_STATUS_DELETED:
         raise HTTPException(status_code=404, detail="watch_not_found")
 
-    latest = db.scalar(
-        select(PriceSnapshot)
-        .where(PriceSnapshot.watch_id == watch.id)
-        .order_by(PriceSnapshot.captured_at_utc.desc(), PriceSnapshot.id.desc())
+    snapshot_rows = list(
+        db.scalars(
+            select(PriceSnapshot)
+            .where(PriceSnapshot.watch_id == watch.id)
+            .order_by(PriceSnapshot.captured_at_utc.asc(), PriceSnapshot.id.asc())
+        )
     )
+    canonical_snapshots = sorted(
+        canonicalize_snapshot_rows(snapshot_rows),
+        key=lambda snapshot: snapshot.captured_at_utc,
+    )
+    latest = canonical_snapshots[-1] if canonical_snapshots else None
     watchers_count = _count_watchers_by_route(
         db,
         {_watch_route_key(watch)},
@@ -321,7 +329,7 @@ def get_watch_detail(
             if latest is None
             else {
                 "captured_at_utc": latest.captured_at_utc,
-                "raw_price": float(latest.raw_price),
+                "raw_price": latest.raw_price,
                 "raw_currency": latest.raw_currency,
                 "departure_time_local": latest.departure_time_local,
             }
@@ -503,20 +511,22 @@ def _refresh_watch_now(db: Session, watch_id: str, current_user: User) -> JSONRe
         )
 
     flights = provider_result.flights if isinstance(provider_result, ProviderFetchResult) else provider_result
-    if not flights:
+    canonical_flight = select_canonical_refresh_flight(flights)
+    if canonical_flight is None:
         return JSONResponse(
             status_code=200,
             content={"status": "no_flights", "watch_id": watch.id},
         )
-    for flight in flights:
-        snapshot = PriceSnapshot(
-            watch_id=watch.id,
-            captured_at_utc=utc_now_naive(),
-            departure_time_local=flight.departure_time_local,
-            raw_price=flight.price,
-            raw_currency=flight.currency,
-            provider=flight.source,
-        )
-        db.add(snapshot)
+
+    refresh_captured_at_utc = utc_now_naive().replace(microsecond=0)
+    snapshot = PriceSnapshot(
+        watch_id=watch.id,
+        captured_at_utc=refresh_captured_at_utc,
+        departure_time_local=canonical_flight.departure_time_local,
+        raw_price=canonical_flight.price,
+        raw_currency=canonical_flight.currency,
+        provider=canonical_flight.source,
+    )
+    db.add(snapshot)
     db.commit()
     return None
