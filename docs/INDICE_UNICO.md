@@ -69,6 +69,7 @@
 - [Skill Viru Tracker UI](../.codex/skills/viru-tracker-ui/SKILL.md)
 - [Skill Taste Frontend](../.codex/skills/taste-skill/SKILL.md)
 - [Inventario documental](DOCS_INVENTORY.md)
+- [HISTORY.md](../HISTORY.md)
 
 ## Por área
 
@@ -121,6 +122,7 @@
 - [Specs activas](specs/README.md)
 - [Phase 1 Codex MVP](specs/phase1-codex.md)
 - [Hotels Intelligence MVP](specs/hotels-intelligence-mvp.md)
+- [Hoteles post-cierre Fases A-E](plans/2026-06-04-hoteles-correcciones-post-cierre.md)
 
 ### QA
 
