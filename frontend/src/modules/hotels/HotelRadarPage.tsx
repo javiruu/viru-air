@@ -142,6 +142,10 @@ export function HotelRadarPage() {
         onCheckInChange={search.setCheckIn}
         onCheckOutChange={search.setCheckOut}
         onGuestsChange={search.setGuests}
+        radiusKm={search.radiusKm}
+        onRadiusKmChange={search.setRadiusKm}
+        useProvider={search.useProvider}
+        onUseProviderChange={search.setUseProvider}
       />
 
       {search.errorMessage ? (

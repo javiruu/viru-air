@@ -77,6 +77,8 @@ export function useHotelSearch(onAfterIngest?: () => Promise<void>) {
   const [checkIn, setCheckIn] = useState(defaultCheckIn);
   const [checkOut, setCheckOut] = useState(defaultCheckOut);
   const [guests, setGuests] = useState(2);
+  const [radiusKm, setRadiusKm] = useState(10);
+  const [useProvider, setUseProvider] = useState(false);
   const [areaResults, setAreaResults] = useState<HotelAreaSearchResultOut[]>([]);
 
   // ── Shared ──────────────────────────────────────────────────────
@@ -112,10 +114,11 @@ export function useHotelSearch(onAfterIngest?: () => Promise<void>) {
         const list = await areaSearch({
           latitude: areaResolved.latitude,
           longitude: areaResolved.longitude,
-          radius_km: 10,
+          radius_km: radiusKm,
           check_in: checkIn,
           check_out: checkOut,
           guests,
+          use_provider: useProvider,
         });
         setAreaResults(list);
         const derived: HotelSearchOut[] = list.map((r) => ({
@@ -205,6 +208,10 @@ export function useHotelSearch(onAfterIngest?: () => Promise<void>) {
     setCheckOut,
     guests,
     setGuests,
+    radiusKm,
+    setRadiusKm,
+    useProvider,
+    setUseProvider,
     areaResults,
     isAreaSearchActive,
     loading,

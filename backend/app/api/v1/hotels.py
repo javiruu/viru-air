@@ -499,6 +499,7 @@ def area_search(
     min_stars: int | None = Query(default=None, ge=1, le=5),
     max_price: float | None = Query(default=None, ge=0),
     sort: str = Query(default="price", max_length=10),
+    use_provider: bool = Query(default=False),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> list[HotelAreaSearchResultOut]:
@@ -531,6 +532,7 @@ def area_search(
         max_price=query.max_price,
         sort=query.sort,
         user_id=current_user.id,
+        use_provider=use_provider,
     )
     return [
         HotelAreaSearchResultOut(

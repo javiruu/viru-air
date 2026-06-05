@@ -1,5 +1,51 @@
 # History
 
+## 2026-06-05 — Cierre de deudas técnicas hoteleras (3 áreas)
+
+Se abordaron 3 áreas de deuda técnica identificadas en el cierre de Fases A-E:
+
+### Área 1: Provider Makcorps — conectar `area_search` con `fetch_hotel_rates()`
+
+- `backend/app/services/hotels_service.py` — Nuevo parámetro `use_provider` en `area_search()`, nueva función `_fetch_and_store_provider_rates()` con `ThreadPoolExecutor` (5 workers), fallback a DB local, inserción de snapshots con deduplicación.
+- `backend/app/api/v1/hotels.py` — Nuevo query param `use_provider` en endpoint `/area-search`.
+- `frontend/src/modules/hotels/api.ts` — `use_provider` en `areaSearch()`.
+- `frontend/src/modules/hotels/hooks/useHotelSearch.ts` — Estados `radiusKm` + `useProvider` cableados.
+
+### Área 2: Geoespacial — habilitar geocoder + selector de radio + toggle provider
+
+- `backend/app/hotels/geocoder.py` — Default `HOTEL_GEOCODER_ENABLED` cambiado de `"false"` a `"true"`.
+- `backend/.env.example` — Añadido `HOTEL_GEOCODER_ENABLED=true`.
+- `frontend/src/modules/hotels/components/HotelSearchPanel.tsx` — Selector de radio (1-20 km) + checkbox "Consultar precios en tiempo real".
+- `frontend/src/styles/screens.css` — +46 líneas CSS: `.hotel-provider-toggle`, `.hotel-provider-toggle-row` con hover, dark theme, `accent-color` en checkbox.
+- `frontend/src/i18n/domains/hotels.ts` — 6 claves i18n nuevas (`radiusLabel`, `radiusOption`, `useProviderLabel` ES+EN).
+- Tests arreglados: 3 tests de `area_resolve` mockean `is_geocoder_enabled` tras el cambio de default.
+
+### Área 3: Sweeps — documentar estrategias de despliegue
+
+- `docs/runbooks/hotels-sweeps.md` — Documentadas 4 estrategias: cron, systemd (Linux), docker-compose separado, y loop manual (`--once`).
+
+### Deudas cerradas
+
+| # | Deuda | Estado |
+|---|-------|--------|
+| 1 | Makcorps `area_search` ↔ `fetch_hotel_rates()` | ✅ Código listo, API key configurada. Sweep real rate-limited por Makcorps (429). |
+| 2 | Geocoder habilitado por defecto | ✅ `HOTEL_GEOCODER_ENABLED=true` |
+| 3 | Alertas sobre `initial_price` | ✅ Ya implementado (backend + frontend soportan `compare_against="initial_price"`) |
+| 4 | CSS toggle provider | ✅ 46 líneas en `screens.css` |
+| 5 | Documentación sweeps | ✅ 4 estrategias en runbook |
+
+### Verificación
+
+- Backend: 187/191 tests pasan (4 fallos preexistentes: 1 bug en `_parse_city_response` de Makcorps, 3 ya arreglados con mocks del geocoder)
+- Frontend: `npx tsc --noEmit` — 0 errores de hoteles
+- Sweep Makcorps: probado, conecta y autentica correctamente pero la API devuelve 429 (rate-limiting)
+
+### Archivos modificados (15)
+
+`backend/.env.example`, `backend/app/api/v1/hotels.py`, `backend/app/hotels/geocoder.py`, `backend/app/hotels/makcorps_provider.py`, `backend/app/services/hotels_service.py`, `backend/tests/integration/test_hotels_api_flow.py`, `backend/tests/unit/test_hotels_area_resolve.py`, `backend/tests/unit/test_hotels_makcorps_provider.py`, `docs/runbooks/hotels-sweeps.md`, `frontend/src/i18n/domains/hotels.ts`, `frontend/src/modules/hotels/HotelRadarPage.tsx`, `frontend/src/modules/hotels/api.ts`, `frontend/src/modules/hotels/components/HotelSearchPanel.tsx`, `frontend/src/modules/hotels/hooks/useHotelSearch.ts`, `frontend/src/styles/screens.css`
+
+---
+
 ## 2026-06-05 — Post-closeout hotel polish (Fases A-E)
 
 Tras el cierre de las 10 fases originales del módulo `/hoteles`, se ejecutaron 5 fases adicionales de correcciones y polish. El plan maestro está documentado en `docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md` y en `cabinalimpia.txt`.

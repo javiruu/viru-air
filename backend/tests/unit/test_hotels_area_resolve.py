@@ -2,6 +2,7 @@
 
 import pytest
 from sqlalchemy import create_engine
+from unittest.mock import patch
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.infrastructure.db.models import Base, HotelProperty
@@ -127,8 +128,9 @@ def test_area_resolve_not_found_raises_error() -> None:
     try:
         _create_hotel(db, name="Hotel Sol", city="Madrid", lat=40.4169, lng=-3.7036)
 
-        with pytest.raises(ValueError, match="area_not_found"):
-            area_resolve(db, q="Tokyo")
+        with patch("app.hotels.geocoder.is_geocoder_enabled", return_value=False):
+            with pytest.raises(ValueError, match="area_not_found"):
+                area_resolve(db, q="Tokyo")
     finally:
         _close(db)
 
@@ -164,8 +166,9 @@ def test_area_resolve_ignores_hotels_without_coordinates() -> None:
 def test_area_resolve_empty_db_raises_error() -> None:
     db = _db()
     try:
-        with pytest.raises(ValueError, match="area_not_found"):
-            area_resolve(db, q="Madrid")
+        with patch("app.hotels.geocoder.is_geocoder_enabled", return_value=False):
+            with pytest.raises(ValueError, match="area_not_found"):
+                area_resolve(db, q="Madrid")
     finally:
         _close(db)
 

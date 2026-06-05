@@ -875,7 +875,8 @@ def test_hotels_area_resolve_malaga_after_ingest(client: TestClient) -> None:
     assert payload["country_code"] == "ES"
 
 
-def test_hotels_area_resolve_not_found_returns_404(client: TestClient) -> None:
+def test_hotels_area_resolve_not_found_returns_404(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("app.hotels.geocoder.is_geocoder_enabled", lambda: False)
     token = register_and_token(client, email="hotels-area-resolve-404@viru.dev")
     headers = _auth(token)
 

@@ -182,6 +182,7 @@ export async function areaSearch(params: {
   min_stars?: number;
   max_price?: number;
   sort?: string;
+  use_provider?: boolean;
 }): Promise<HotelAreaSearchResultOut[]> {
   return request<HotelAreaSearchResultOut[]>(`/hotels/area-search${queryString(params)}`);
 }

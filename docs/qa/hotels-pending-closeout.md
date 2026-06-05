@@ -1,7 +1,7 @@
 # Cierre pendiente de `/hoteles`
 
 **Estado:** vivo  
-**Ultima revision:** 2026-06-04 (cierre Fase 10 — final)  
+**Ultima revision:** 2026-06-05 (cierre deudas técnicas)  
 **Fuente de verdad:** si  
 **Area:** QA
 
@@ -213,3 +213,46 @@ Fases completadas en esta iteración:
 5. Alertas sobre `initial_price` además del snapshot anterior.
 
 Nota: La deuda #4 anterior (`DELETE /comp-sets/{id}` no implementado) queda saldada en Fase E.
+
+## Actualización 2026-06-05 (cierre deudas técnicas — 3 áreas)
+
+### Estado: 🟢 4/5 deudas cerradas
+
+Se abordaron las 3 áreas de deuda técnica identificadas tras el cierre de Fases A-E:
+
+**Área 1 — Provider Makcorps (`area_search` ↔ `fetch_hotel_rates()`):**
+- `hotels_service.py` — `_fetch_and_store_provider_rates()` con ThreadPoolExecutor (5 workers), fallback a DB, inserción de snapshots con deduplicación.
+- API endpoint `/area-search` — nuevo query param `use_provider`.
+- Frontend: checkbox "Consultar precios en tiempo real" en `HotelSearchPanel`.
+- API key configurada en `.env`. El sweep real con Makcorps conecta y autentica correctamente pero la API devuelve 429 (rate-limiting) en `/mapping`.
+
+**Área 2 — Geoespacial (geocoder + radio + toggle):**
+- `geocoder.py` — default `HOTEL_GEOCODER_ENABLED` cambiado a `true`.
+- `.env.example` — añadido `HOTEL_GEOCODER_ENABLED=true`.
+- Frontend: selector de radio (1-20 km), checkbox useProvider, 6 claves i18n.
+- CSS: 46 líneas `.hotel-provider-toggle` con dark theme y hover.
+- 3 tests de `area_resolve` arreglados con mocks de `is_geocoder_enabled`.
+
+**Área 3 — Sweeps (documentación):**
+- `docs/runbooks/hotels-sweeps.md` — 4 estrategias de despliegue documentadas.
+
+### Deudas cerradas
+
+| # | Deuda original | Estado |
+|---|---------------|--------|
+| 1 | Provider Makcorps dinámico | 🟢 Código listo. Sweep real rate-limited por Makcorps (429). |
+| 4 | Geocoder externo para area-resolve | 🟢 `HOTEL_GEOCODER_ENABLED=true` por defecto |
+| 5 | Alertas sobre `initial_price` | 🟢 Ya implementado (backend soporta `compare_against="initial_price"`, frontend lo expone) |
+| — | CSS toggle provider (nueva) | 🟢 46 líneas en `screens.css` |
+| — | Documentación sweeps (nueva) | 🟢 4 estrategias en runbook |
+
+### Pendiente
+
+1. Verificación visual manual en navegador real (dark/light/responsive/focus/copy).
+2. Resolver rate-limiting de Makcorps (429 en `/mapping`) para probar sweep real completo.
+
+### Deudas futuras actualizadas
+
+1. Resolver rate-limiting de Makcorps para sweep real.
+2. Scheduler automático de sweeps (cron/systemd/docker).
+3. Verificación visual manual en navegador real.

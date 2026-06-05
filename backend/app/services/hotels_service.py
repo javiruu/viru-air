@@ -1,5 +1,8 @@
 ﻿from __future__ import annotations
 
+import concurrent.futures
+import logging
+
 from sqlalchemy import desc, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -16,11 +19,14 @@ from app.infrastructure.db.models import (
     HotelCompSet,
     HotelCompSetMember,
     HotelProperty,
+    HotelProviderAlias,
     HotelProviderRun,
     HotelRateSnapshot,
     HotelTrackedOffer,
     HotelWatchlistItem,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def search_hotels(
@@ -978,6 +984,7 @@ def area_search(
     max_price: float | None = None,
     sort: str = "price",
     user_id: str | None = None,
+    use_provider: bool = False,
 ) -> list[dict[str, object]]:
     # Get all hotels with coordinates
     hotels = list(
@@ -1006,7 +1013,28 @@ def area_search(
 
     nearby_hotel_ids = [h.id for h, _ in nearby]
 
-    # Get cheapest rate per hotel for the given criteria
+    # ── External provider rate fetching (Makcorps) ─────────────────
+    provider_price_map: dict[str, tuple[str, float, str]] = {}
+    if use_provider:
+        try:
+            from app.hotels.ingestion import resolve_hotel_provider
+
+            adapter = resolve_hotel_provider()
+            if hasattr(adapter, "fetch_hotel_rates") and hasattr(adapter, "provider_id"):
+                _fetch_and_store_provider_rates(
+                    db=db,
+                    adapter=adapter,
+                    nearby_hotel_ids=nearby_hotel_ids,
+                    check_in=check_in,
+                    check_out=check_out,
+                    guests=guests,
+                    currency=currency,
+                    provider_price_map=provider_price_map,
+                )
+        except Exception as exc:
+            logger.warning("area_search provider fetch skipped: %s", exc)
+
+    # Get cheapest rate per hotel for the given criteria (DB fallback)
     rates_subq = (
         select(
             HotelRateSnapshot.hotel_id,
@@ -1042,6 +1070,9 @@ def area_search(
     price_map: dict[str, tuple[str, float, str]] = {}
     for row in cheapest:
         price_map[row.hotel_id] = (row.provider, float(row.amount), row.currency)
+
+    # Overlay provider rates (fresh external data takes priority over stale DB rates)
+    price_map.update(provider_price_map)
 
     # Check tracked offers for this user
     tracked_hotel_ids: set[str] = set()
@@ -1107,3 +1138,106 @@ def list_tracked_offer_snapshots(
         .order_by(desc(HotelRateSnapshot.collected_at), desc(HotelRateSnapshot.id))
     )
     return list(db.scalars(stmt))
+
+
+def _fetch_and_store_provider_rates(
+    *,
+    db: Session,
+    adapter: object,
+    nearby_hotel_ids: list[str],
+    check_in: object,
+    check_out: object,
+    guests: int,
+    currency: str,
+    provider_price_map: dict[str, tuple[str, float, str]],
+) -> None:
+    """Fetch fresh rates from an external provider for nearby hotels.
+
+    Runs API calls in parallel via ThreadPoolExecutor, then stores any new
+    rates as HotelRateSnapshot rows and populates provider_price_map with
+    the cheapest rate per hotel from the provider.
+    """
+    provider_id: str = getattr(adapter, "provider_id", "makcorps")
+
+    # Resolve provider-level hotel IDs via HotelProviderAlias
+    aliases = db.scalars(
+        select(HotelProviderAlias).where(
+            HotelProviderAlias.hotel_id.in_(nearby_hotel_ids),
+            HotelProviderAlias.provider == provider_id,
+        )
+    ).all()
+    alias_map: dict[str, str] = {a.hotel_id: a.provider_hotel_id for a in aliases}
+
+    if not alias_map:
+        return
+
+    def _fetch_one(hotel_id: str, provider_hotel_id: str) -> tuple[str, list[ProviderRateRecord]]:
+        try:
+            rates = adapter.fetch_hotel_rates(
+                hotel_id=provider_hotel_id,
+                check_in=check_in,
+                check_out=check_out,
+                guests=guests,
+                currency=currency,
+            )
+            return hotel_id, rates
+        except Exception:
+            return hotel_id, []
+
+    # Fetch in parallel (max 5 concurrent API calls)
+    fetched: list[tuple[str, list[ProviderRateRecord]]] = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {
+            executor.submit(_fetch_one, h_id, alias_map[h_id]): h_id
+            for h_id in nearby_hotel_ids
+            if h_id in alias_map
+        }
+        for future in concurrent.futures.as_completed(futures):
+            fetched.append(future.result())
+
+    # Store new rates and build provider price map
+    new_snapshots: list[HotelRateSnapshot] = []
+    for h_id, rates in fetched:
+        if not rates:
+            continue
+
+        # Check existing rates to avoid duplicates
+        existing = db.scalars(
+            select(HotelRateSnapshot).where(
+                HotelRateSnapshot.hotel_id == h_id,
+                HotelRateSnapshot.provider == provider_id,
+                HotelRateSnapshot.check_in == check_in,
+                HotelRateSnapshot.check_out == check_out,
+                HotelRateSnapshot.guests == guests,
+                HotelRateSnapshot.currency == currency,
+            )
+        ).all()
+        existing_keys = {(r.check_in, r.check_out, r.guests, r.currency, float(r.amount)) for r in existing}
+
+        for rate in rates:
+            key = (rate.check_in, rate.check_out, rate.guests, rate.currency, rate.amount)
+            if key not in existing_keys:
+                new_snapshots.append(
+                    HotelRateSnapshot(
+                        hotel_id=h_id,
+                        provider=provider_id,
+                        check_in=rate.check_in,
+                        check_out=rate.check_out,
+                        guests=rate.guests,
+                        room_label=rate.room_label,
+                        meal_plan=rate.meal_plan,
+                        cancellation_policy=rate.cancellation_policy,
+                        currency=rate.currency,
+                        amount=rate.amount,
+                        availability_status="available",
+                    )
+                )
+                existing_keys.add(key)
+
+        # Record cheapest provider rate for this hotel
+        cheapest = min(rates, key=lambda r: r.amount)
+        provider_price_map[h_id] = (provider_id, cheapest.amount, cheapest.currency)
+
+    if new_snapshots:
+        db.add_all(new_snapshots)
+        db.flush()

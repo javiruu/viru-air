@@ -20,6 +20,8 @@ export function HotelSearchPanel({
   guests,
   areaResults,
   isAreaSearchActive,
+  radiusKm,
+  useProvider,
   onQueryChange,
   onCityChange,
   onSearchModeChange,
@@ -31,6 +33,8 @@ export function HotelSearchPanel({
   onCheckInChange,
   onCheckOutChange,
   onGuestsChange,
+  onRadiusKmChange,
+  onUseProviderChange,
 }: {
   query: string;
   city: string;
@@ -45,6 +49,8 @@ export function HotelSearchPanel({
   guests: number;
   areaResults: HotelAreaSearchResultOut[];
   isAreaSearchActive: boolean;
+  radiusKm: number;
+  useProvider: boolean;
   onQueryChange: (value: string) => void;
   onCityChange: (value: string) => void;
   onSearchModeChange: (mode: "name" | "area") => void;
@@ -56,6 +62,8 @@ export function HotelSearchPanel({
   onCheckInChange: (value: string) => void;
   onCheckOutChange: (value: string) => void;
   onGuestsChange: (value: number) => void;
+  onRadiusKmChange: (value: number) => void;
+  onUseProviderChange: (value: boolean) => void;
 }) {
   const { t } = useI18n();
   const disabled = useMemo(() => loading, [loading]);
@@ -207,8 +215,36 @@ export function HotelSearchPanel({
                 ))}
               </select>
             </label>
+
+            <label className="field qs-label">
+              <span>{t("hotels.search.radiusLabel")}</span>
+              <select
+                className="qs-input-neutral"
+                value={radiusKm}
+                onChange={(event) => onRadiusKmChange(Number(event.target.value))}
+              >
+                {[1, 3, 5, 10, 20].map((km) => (
+                  <option key={km} value={km}>
+                    {t("hotels.search.radiusOption", { value: km })}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
         )}
+
+        {searchMode === "area" ? (
+          <label className="field qs-label hotel-provider-toggle section-gap-sm">
+            <span className="hotel-provider-toggle-row">
+              <input
+                type="checkbox"
+                checked={useProvider}
+                onChange={(event) => onUseProviderChange(event.target.checked)}
+              />
+              <span>{t("hotels.search.useProviderLabel")}</span>
+            </span>
+          </label>
+        ) : null}
 
         <div className="action-row section-gap-sm">
           <button type="submit" className="btn-primary" disabled={disabled || !canSearch}>
