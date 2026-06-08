@@ -12,48 +12,51 @@ router = APIRouter()
 def help_payload() -> dict:
     return {
         "title": "Centro de ayuda",
-        "status": {"state": "ok", "message": "Estado reportado por backend"},
+        "status": {
+            "state": "ok",
+            "message": "Empieza por un flujo principal y deja soporte o ajustes para cuando de verdad lo necesites.",
+        },
         "sections": [
             {
                 "title": "Empieza por el panel",
-                "body": "Dashboard resume tu estado actual y te deja abrir rapido cada modulo principal.",
+                "body": "Dashboard resume tu estado actual y te orienta hacia el siguiente paso con menos ruido.",
                 "cta_label": "Ir a Dashboard",
                 "cta_href": "/dashboard",
             },
             {
-                "title": "Gestiona rutas en Watchlist",
-                "body": "Watchlist centraliza rutas vigiladas, estado de precios, refresco y acciones por ruta.",
-                "cta_label": "Abrir Watchlist",
-                "cta_href": "/watchlist",
-            },
-            {
                 "title": "Busca oportunidades en Quick Search",
-                "body": "Quick Search te ayuda a explorar rutas y fechas con filtros y resultados accionables.",
+                "body": "Quick Search es el mejor punto de entrada cuando todavia estas explorando rutas y fechas.",
                 "cta_label": "Abrir Quick Search",
                 "cta_href": "/quick-search",
             },
             {
+                "title": "Gestiona rutas en Watchlist",
+                "body": "Watchlist tiene sentido cuando ya sabes que rutas quieres vigilar y revisar con frecuencia.",
+                "cta_label": "Abrir Watchlist",
+                "cta_href": "/watchlist",
+            },
+            {
                 "title": "Controla tus alertas",
-                "body": "En Alertas puedes activar, pausar y revisar reglas de seguimiento de precio.",
+                "body": "Alertas te sirve para guardar una regla y volver despues; no hace falta abrirlo antes de tener una ruta clara.",
                 "cta_label": "Ir a Alertas",
                 "cta_href": "/alerts",
             },
             {
                 "title": "Revisa recomendaciones",
-                "body": "Recomendaciones prioriza oportunidades visibles para decidir con menos ruido.",
+                "body": "Recomendaciones te da contexto extra cuando quieres comparar opciones sin perder el foco principal.",
                 "cta_label": "Ver Recomendaciones",
                 "cta_href": "/recomendaciones",
             },
             {
                 "title": "Ajusta preferencias",
-                "body": "Preferencias concentra busqueda, apariencia, idioma y ajustes de experiencia.",
+                "body": "Preferencias reune idioma, apariencia y ajustes personales, pero no es el primer paso del flujo.",
                 "cta_label": "Abrir Preferencias",
                 "cta_href": "/preferencias",
             },
             {
                 "title": "Soporte directo",
-                "body": "Para dudas, incidencias o mejoras, usa contacto, feedback o about us segun contexto.",
-                "cta_label": "Ir a Contacto",
+                "body": "Usa contacto o feedback solo cuando necesites ayuda concreta, incidencias o compartir una mejora.",
+                "cta_label": "Abrir contacto de soporte",
                 "cta_href": "/soporte/contacto",
             },
         ],
