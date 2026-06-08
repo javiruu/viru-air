@@ -84,6 +84,7 @@ import { useQuickSearchLoadingFlow } from "@/modules/quick-search/state/useQuick
 import { useQuickSearchSide } from "@/modules/quick-search/state/useQuickSearchSide";
 import { useSaveCombination } from "@/modules/quick-search/state/useSaveCombination";
 import { QuickSearchDualWorkspace } from "@/modules/quick-search/components/QuickSearchDualWorkspace";
+import { buildDualSearchParams, findCombinationResult } from "@/modules/quick-search/utils-dual";
 import { QuickSearchSidePanel } from "@/modules/quick-search/components/QuickSearchSidePanel";
 import { QuickSearchCombinedBanner } from "@/modules/quick-search/components/QuickSearchCombinedBanner";
 import { useQuickSearchScreenState } from "@/modules/quick-search/state/useQuickSearchScreenState";
@@ -272,8 +273,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const [appliedCriteriaSignature, setAppliedCriteriaSignature] = useState<string | null>(null);
   const [countrySearchInput, setCountrySearchInput] = useState("");
   const [calendarVisibleMonth, setCalendarVisibleMonth] = useState<string>(currentMonthIso);
+  const [calendarVisibleMonthReturn, setCalendarVisibleMonthReturn] = useState<string>(currentMonthIso);
   const [calendarHintsByKey, setCalendarHintsByKey] = useState<Record<string, CalendarHintsCacheEntry>>({});
+  const [calendarHintsByKeyReturn, setCalendarHintsByKeyReturn] = useState<Record<string, CalendarHintsCacheEntry>>({});
   const [calendarHintsLoadingKey, setCalendarHintsLoadingKey] = useState<string | null>(null);
+  const [calendarHintsLoadingKeyReturn, setCalendarHintsLoadingKeyReturn] = useState<string | null>(null);
   const initialOrigin = "";
   const initialDestination = "";
   const randomOriginPlaceholder = useMemo(
@@ -493,6 +497,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     debugLastTickLogTsRef,
   } = useQuickSearchMainState(initialOrigin, initialDestination);
   const normalizedRadiusKm = clampQuickSearchRadius(radiusKm);
+  const [returnDateTouched, setReturnDateTouched] = useState(false);
 
   // ── Dual-mode hooks (Fase 6) ───────────────────────────────────────
   const outboundSide = useQuickSearchSide("outbound");
@@ -1241,8 +1246,32 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   ]);
   const calendarHintsActive = calendarHintsRequestKey ? calendarHintsByKey[calendarHintsRequestKey] : undefined;
 
+  // ── Return-side calendar hints (Fase 4) ────────────────────────────
+  const calendarHintsScopeSignatureReturn = useMemo(() => {
+    // Invert IATA pair for return leg: destination → origin
+    const originScope = destinationCalendarHintPool.join(",");
+    const destinationScope = originCalendarHintPool.join(",");
+    return `o:${originScope}|d:${destinationScope}`;
+  }, [destinationCalendarHintPool, originCalendarHintPool]);
+  const calendarHintsRequestKeyReturn = useMemo(() => {
+    if (!calendarVisibleMonthReturn) return "";
+    if (!canRequestCalendarHints) return "";
+    return `${calendarVisibleMonthReturn}|${calendarHintsScopeSignatureReturn}|${calendarHintAggregationMode}|${calendarHintBucketMode}|${calendarHintGuidelineSignature}|${adults}`;
+  }, [
+    adults,
+    calendarHintAggregationMode,
+    calendarHintBucketMode,
+    calendarHintGuidelineSignature,
+    calendarHintsScopeSignatureReturn,
+    calendarVisibleMonthReturn,
+    canRequestCalendarHints,
+  ]);
+  const calendarHintsActiveReturn = calendarHintsRequestKeyReturn ? calendarHintsByKeyReturn[calendarHintsRequestKeyReturn] : undefined;
+
   useEffect(() => {
     setCalendarHintsByKey({});
+    setCalendarHintsByKeyReturn({});
+    setCalendarHintsLoadingKeyReturn(null);
     setCalendarHintsLoadingKey(null);
   }, [adults, calendarHintAggregationMode, calendarHintBucketMode, calendarHintGuidelineSignature, calendarHintsScopeSignature]);
 
@@ -1340,6 +1369,105 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     originCalendarHintPool,
     originCountryOnly,
   ]);
+
+  // ── Return-side calendar hints fetch (Fase 4) ──────────────────────
+  useEffect(() => {
+    if (!canRequestCalendarHints) return;
+    if (!isReturn) return;
+    if (!calendarVisibleMonthReturn) return;
+    if (!calendarHintsRequestKeyReturn) return;
+    if (calendarHintsByKeyReturn[calendarHintsRequestKeyReturn]) return;
+
+    const controller = new AbortController();
+    const requestedMonth = calendarVisibleMonthReturn;
+    const requestKey = calendarHintsRequestKeyReturn;
+    setCalendarHintsLoadingKeyReturn(requestKey);
+
+    apiFetchWithStatus<QuickSearchCalendarHintsResponse>("/search/quick/calendar-hints", {
+      method: "POST",
+      signal: controller.signal,
+      body: JSON.stringify({
+        // Invert IATA pair for return leg: destination → origin
+        origin_iata: destinationCountryOnly
+          ? destinationCalendarHintPool
+          : destinationCalendarHintPool[0] || destinationCode,
+        destination_iata: originCountryOnly
+          ? originCalendarHintPool
+          : originCalendarHintPool[0] || originCode,
+        month: requestedMonth,
+        adults,
+        aggregation_mode: calendarHintAggregationMode,
+        bucket_mode: calendarHintBucketMode,
+        guideline_thresholds: calendarHintBucketMode === "guidelines" ? calendarHintGuidelineThresholds : undefined,
+      }),
+    })
+      .then((result) => {
+        if (controller.signal.aborted) return;
+        if (!result.ok) {
+          logQuickSearchApiError("calendar_hints_return_failed", {
+            status: result.status,
+            error: result.error,
+            origin_iata: destinationCountryOnly ? destinationCalendarHintPool : destinationCode,
+            destination_iata: originCountryOnly ? originCalendarHintPool : originCode,
+            month: requestedMonth,
+            aggregation_mode: calendarHintAggregationMode,
+            bucket_mode: calendarHintBucketMode,
+            guideline_thresholds: calendarHintBucketMode === "guidelines" ? calendarHintGuidelineThresholds : undefined,
+          });
+          return;
+        }
+        const days = Array.isArray(result.data.days) ? result.data.days : [];
+        const hintsForMonth = days.reduce<Record<string, QuickSearchCalendarDayHint>>((acc, day) => {
+          if (!day?.date) return acc;
+          acc[day.date] = day;
+          return acc;
+        }, {});
+        const scopeMode = result.data.meta?.scope_mode || calendarHintsScopeMode;
+        setCalendarHintsByKeyReturn((prev) => ({
+          ...prev,
+          [requestKey]: {
+            dayHintsByIso: hintsForMonth,
+            scopeMode,
+          },
+        }));
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        logQuickSearchApiError("calendar_hints_return_exception", {
+          error,
+          origin_iata: destinationCountryOnly ? destinationCalendarHintPool : destinationCode,
+          destination_iata: originCountryOnly ? originCalendarHintPool : originCode,
+          month: requestedMonth,
+          aggregation_mode: calendarHintAggregationMode,
+          bucket_mode: calendarHintBucketMode,
+          guideline_thresholds: calendarHintBucketMode === "guidelines" ? calendarHintGuidelineThresholds : undefined,
+        });
+      })
+      .finally(() => {
+        if (controller.signal.aborted) return;
+        setCalendarHintsLoadingKeyReturn((current) => (current === requestKey ? null : current));
+      });
+
+    return () => controller.abort();
+  }, [
+    adults,
+    calendarHintAggregationMode,
+    calendarHintBucketMode,
+    calendarHintGuidelineThresholds,
+    calendarHintsByKeyReturn,
+    calendarHintsRequestKeyReturn,
+    calendarHintsScopeMode,
+    calendarVisibleMonthReturn,
+    canRequestCalendarHints,
+    destinationCode,
+    destinationCalendarHintPool,
+    destinationCountryOnly,
+    logQuickSearchApiError,
+    originCode,
+    originCalendarHintPool,
+    originCountryOnly,
+  ]);
+
 
   useEffect(() => {
     if (!travelDate || originCountryOnly || destinationCountryOnly || !originValid || !destinationValid) {
@@ -1585,12 +1713,14 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     }
     if (isReturn && !returnDate) {
       setSearchState("error");
+      setReturnDateTouched(true);
       setSearchError(t("selectReturn"));
       return;
     }
     if (isReturn && returnDate && returnDate < travelDate) {
       setSearchState("error");
       setSearchError(t("returnBefore"));
+      setReturnDateTouched(true);
       return;
     }
     if (Object.keys(nextFieldErrors).length > 0) {
@@ -1612,9 +1742,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       if (excludeOriginInput) setExcludeOriginInput("");
       if (excludeDestinationInput) setExcludeDestinationInput("");
 
-      const dualBaseParams = {
-        originIata: origin,
-        destinationIata: destination,
+      const dualBaseParams = buildDualSearchParams({
+        origin,
+        destination,
         travelDate,
         flexDaysBefore: daysBefore,
         flexDaysAfter: daysAfter,
@@ -1622,22 +1752,35 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         includeStops,
         includeNearbyOrigins,
         includeNearbyDestinations,
-        departAfter: departAfter || undefined,
-        departBefore: departBefore || undefined,
+        departAfter,
+        departBefore,
         maxStops,
         excludeOrigins: dNextExcludeOrigins,
         excludeDestinations: dNextExcludeDestinations,
         strictFilters,
-      };
+      });
 
       void Promise.all([
         outboundSide.runSearch(dualBaseParams),
-        returnSide.runSearch({
-          ...dualBaseParams,
-          originIata: destination,
-          destinationIata: origin,
-          travelDate: returnDate,
-        }),
+        returnSide.runSearch(
+          buildDualSearchParams({
+            origin: destination,
+            destination: origin,
+            travelDate: returnDate,
+            flexDaysBefore: daysBefore,
+            flexDaysAfter: daysAfter,
+            radiusKm: normalizedRadiusKm,
+            includeStops,
+            includeNearbyOrigins,
+            includeNearbyDestinations,
+            departAfter,
+            departBefore,
+            maxStops,
+            excludeOrigins: dNextExcludeOrigins,
+            excludeDestinations: dNextExcludeDestinations,
+            strictFilters,
+          }),
+        ),
       ]);
       return;
     }
@@ -4028,7 +4171,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         </div>
         <span className="sr-only" aria-live="polite">{autocompleteLiveText}</span>
 
-        <div className="qs-date-grid">
+        <div className={`qs-date-grid${isReturn ? " has-return" : ""}`}>
           <label className="date-field qs-label">
             <span>
               {t("dateLabel")}
@@ -4096,10 +4239,23 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 placeholder={t("placeholderDates")}
                 localeTag={localeTag}
                 variant="return"
+                dayHintsByIso={calendarHintsActiveReturn?.dayHintsByIso || {}}
+                hintsLoading={calendarHintsLoadingKeyReturn === calendarHintsRequestKeyReturn}
+                showCountryEstimateBadge={canRequestCalendarHints && hasCountryScopeForCalendarHints}
+                hintScopeMode={calendarHintsActiveReturn?.scopeMode || calendarHintsScopeMode}
+                onVisibleMonthChange={setCalendarVisibleMonthReturn}
                 min={travelDate || undefined}
-                onChange={setReturnDate}
+                invalid={(returnDateTouched && !returnDate) || Boolean(fieldErrors.return_date)}
+                onBlur={() => setReturnDateTouched(true)}
+                onChange={(value) => {
+                  setReturnDate(value);
+                  setCalendarVisibleMonthReturn(monthFromDateIso(value));
+                  setFieldErrors((prev) => ({ ...prev, return_date: undefined }));
+                }}
               />
-              {tripType === "round_trip_incomplete" ? (
+              {(returnDateTouched && !returnDate) || fieldErrors.return_date ? (
+                <small className="qs-error">{fieldErrors.return_date || t("selectReturn")}</small>
+              ) : tripType === "round_trip_incomplete" ? (
                 <small className="qs-search-hint qs-return-hint">{t("selectReturnHint")}</small>
               ) : null}
             </label>
@@ -4830,6 +4986,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               />
             ) : null}
           </QuickSearchSidePanel>
+          <div className="qs-dual-divider" />
 
           {/* ── Return panel ── */}
           <QuickSearchSidePanel
@@ -4960,12 +5117,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             })()}
             visible={outboundSide.searchState === "success" && returnSide.searchState === "success"}
             onSave={() => {
-              const ob = outboundSide.selectedResultId
-                ? outboundSide.results.find((r, i) => resultKey(r, i) === outboundSide.selectedResultId)
-                : outboundSide.results[0];
-              const rb = returnSide.selectedResultId
-                ? returnSide.results.find((r, i) => resultKey(r, i) === returnSide.selectedResultId)
-                : returnSide.results[0];
+              const ob = findCombinationResult(outboundSide.results, outboundSide.selectedResultId);
+              const rb = findCombinationResult(returnSide.results, returnSide.selectedResultId);
               if (!ob || !rb) {
                 notify({ tone: "info", title: t("combinationSelectBoth"), durationMs: 3000 });
                 return;

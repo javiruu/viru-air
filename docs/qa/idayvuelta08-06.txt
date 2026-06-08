@@ -1,0 +1,604 @@
+Plan Maestro de Cierre de Ida y Vuelta en /quick-search
+Archivo objetivo cuando se ejecute fuera de Plan Mode: docs/plans/2026-06-08-quick-search-roundtrip-stabilization.md
+
+Objetivo: dejar el flujo de ida y vuelta de /quick-search realmente terminado de extremo a extremo, con paridad visual y funcional entre salida y vuelta, resultados duales visibles, contrato frontend/backend claro, y cobertura suficiente para que no vuelva a romperse en silencio.
+
+Resultado esperado al cerrar este plan: un usuario puede activar Ida y vuelta, elegir ambas fechas con calendarios equivalentes, ver hints de precio en ambos lados, buscar ida y vuelta y obtener dos paneles visibles y utilizables con resultados independientes, paginación independiente, estados independientes y guardado de combinación coherente.
+
+Arquitectura elegida: mantener la arquitectura dual ya iniciada en el repo, basada en dos búsquedas independientes al mismo endpoint POST /api/v1/search/quick, una para ida y otra para vuelta invertida. No se introduce un endpoint round-trip nuevo en backend en esta fase. El trabajo consiste en cerrar wiring, layout, state orchestration, contrato y QA.
+
+Stack implicado: Next.js/React frontend, CSS existente de frontend/src/styles/*, FastAPI backend en backend/app/api/v1/search.py, tests frontend Node/test y tests backend pytest.
+
+1. Contexto real detectado en el repo
+1.1 Estado actual del flujo dual
+El repo ya contiene una implementación parcial del modo dual:
+
+frontend/src/modules/quick-search/QuickSearchView.tsx
+frontend/src/modules/quick-search/state/useQuickSearchSide.ts
+frontend/src/modules/quick-search/components/QuickSearchDualWorkspace.tsx
+frontend/src/modules/quick-search/components/QuickSearchSidePanel.tsx
+frontend/src/styles/quick-search-dual.css
+docs/specs/quick-search-dual-plan.md
+La decisión base ya tomada es correcta para este ciclo:
+
+ida = búsqueda origin -> destination con travelDate
+vuelta = búsqueda destination -> origin con returnDate
+cada lado mantiene estado independiente
+no hace falta rediseñar el backend core de quick-search para soportar ida y vuelta
+1.2 Hallazgos confirmados en el código actual
+Hay cuatro hallazgos principales que deben guiar toda la implementación:
+
+El datepicker de salida sí está cableado con dayHintsByIso, hintsLoading, hintScopeMode y onVisibleMonthChange, pero el de vuelta no.
+La rejilla .qs-date-grid está resuelta con grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)), lo que no garantiza una composición consistente para salida, toggle y vuelta.
+QuickSearchDualWorkspace define un grid de 1fr 1px 1fr, pero en QuickSearchView.tsx no se renderiza ningún divisor central entre ambos paneles.
+Si el grid tiene tres columnas y solo se montan dos hijos, el segundo panel cae en la columna central de 1px, lo que encaja directamente con el síntoma reportado de “los resultados de vuelta no cargan visualmente”.
+1.3 Hallazgos de contrato backend ya disponibles
+El backend ya ofrece lo necesario para terminar el flujo:
+
+POST /api/v1/search/quick
+POST /api/v1/search/quick/calendar-hints
+GET /api/v1/search/deeplink
+Además ya existe contrato documentado en:
+
+docs/reference/backend/quick-search-contract.md
+docs/reference/backend/quick-search-acceptance-checklist.md
+Y ya existen tests útiles de referencia:
+
+backend/tests/integration/test_quick_search_returns_results.py
+backend/tests/integration/test_quick_search_realistic_happy_path.py
+backend/tests/integration/test_quick_search_calendar_hints.py
+2. Problemas a resolver exactamente
+2.1 Calendario de vuelta sin colorimetría de precios
+Síntoma visible:
+
+el calendario de salida muestra buckets visuales típicos de barato/medio/caro
+el calendario de vuelta no muestra esos colores
+Causa probable ya confirmada en wiring:
+
+el QuickSearchDatePicker de salida recibe hints
+el QuickSearchDatePicker de vuelta no recibe hints ni ciclo de visible month
+Consecuencia:
+
+el componente de vuelta sí renderiza soporte visual para hints, pero nunca recibe datos para pintarlos
+2.2 Casilla Ida y vuelta visualmente desalineada
+Síntoma visible:
+
+la casilla central se ve desplazada y débilmente integrada entre los dos date pickers
+Causa probable:
+
+el layout de qs-date-grid está tratando tres piezas heterogéneas como si fueran columnas auto-fit equivalentes
+qs-check-inline intenta corregir con align-self: end, pero el layout base no está realmente diseñado para este caso
+el diseño cambia mucho cuando isReturn pasa de false a true, y la transición espacial no está controlada
+Consecuencia:
+
+el checkbox parece “metido entre medias” en lugar de ser una pieza deliberada del flujo
+2.3 Resultados de vuelta no visibles en modo dual
+Síntoma visible:
+
+la búsqueda parece disparar ida correctamente
+visualmente la vuelta no aparece o queda colapsada
+Causa más fuerte detectada:
+
+QuickSearchDualWorkspace espera tres columnas
+QuickSearchView.tsx renderiza dos paneles y ningún divisor
+el panel de vuelta queda colocado en la columna del centro de 1px
+Consecuencia:
+
+el pipeline de búsqueda de vuelta puede estar funcionando, pero el layout lo está ocultando o comprimiendo hasta hacerlo invisible
+2.4 Flujo dual aún híbrido entre arquitectura nueva y legacy
+Síntoma estructural:
+
+QuickSearchView.tsx sigue mezclando muchísimo estado y decisiones del flujo clásico con el dual
+hay riesgo de que una parte del comportamiento dual funcione “por coincidencia” y otra no
+Causa:
+
+la arquitectura useQuickSearchSide ya existe, pero no se ha terminado de consolidar como fuente de verdad del modo ida/vuelta
+falta separación clara entre:
+estado del formulario compartido
+parámetros por lado
+calendario por lado
+resultados por lado
+deep link por lado
+weather por lado
+QA por lado
+Consecuencia:
+
+el modo dual es frágil y difícil de mantener
+3. Objetivos funcionales cerrados
+Al finalizar la implementación, debe cumplirse todo lo siguiente:
+
+La activación de Ida y vuelta recoloca visualmente el bloque de fechas de forma limpia y estable.
+El calendario de vuelta muestra hints de precio con la misma semántica visual que la salida.
+El usuario puede navegar mes a mes en salida y vuelta sin perder coherencia en los hints.
+La fecha de vuelta sigue respetando min={travelDate}.
+La búsqueda dual dispara dos legs independientes, pero coordinados desde la misma acción de búsqueda.
+Los dos paneles duales son visibles simultáneamente en desktop.
+En móvil, ambos paneles siguen siendo accesibles y legibles.
+Ida y vuelta pueden tener estados distintos sin interferirse.
+La paginación de un lado no rompe el otro.
+El deep link sigue siendo correcto cuando aplica date_in.
+El guardado de combinación sigue funcionando sobre el dual ya existente.
+Dark y light mantienen la misma intención visual, sin degradar light a “SaaS blanco plano”.
+El sistema queda cubierto con tests de wiring, datepicker dual, workspace dual y backend reverse leg.
+4. Fase 1 — Baseline, reproducción y cartografía de fallos
+Objetivo
+Generar una baseline técnica y visual reproducible antes de tocar código.
+
+Archivos y zonas a inspeccionar
+frontend/src/modules/quick-search/QuickSearchView.tsx
+frontend/src/modules/quick-search/components/QuickSearchDatePicker.tsx
+frontend/src/styles/screens.css
+frontend/src/styles/quick-search-dual.css
+backend/app/api/v1/search.py
+Trabajo a realizar
+Levantar frontend y backend en local siguiendo docs/runbooks/runbook-watchlist-quick-search-stabilization.md.
+Reproducir los tres síntomas concretos:
+calendario de vuelta sin buckets
+checkbox de round-trip desalineado
+panel de vuelta no visible tras la búsqueda dual
+Capturar:
+ruta exacta
+viewport desktop
+viewport móvil
+dark mode
+light mode
+interacción exacta
+consola
+red
+payload de ida
+payload de vuelta
+Confirmar si la búsqueda de vuelta sí llega a backend y devuelve datos aunque no se vean.
+Evidencia esperada
+screenshots con estado previo
+dos requests /search/quick en modo dual
+evidencia de si existe respuesta válida de vuelta
+confirmación de si el bug visual del panel es puramente CSS/layout
+Criterio de salida
+Queda una matriz de diagnóstico corta y accionable con formato:
+
+síntoma
+capa responsable
+causa observada
+archivos a tocar
+verificación posterior prevista
+5. Fase 2 — Alinear la spec dual con el estado real del repo
+Objetivo
+Convertir la implementación parcial actual en una spec ejecutable y coherente para otra IA.
+
+Archivos implicados
+docs/specs/quick-search-dual-plan.md
+frontend/src/modules/quick-search/state/useQuickSearchSide.ts
+frontend/src/modules/quick-search/QuickSearchView.tsx
+Trabajo a realizar
+Tratar docs/specs/quick-search-dual-plan.md como antecedente útil, pero no como estado final fiable.
+Revisar qué partes del documento ya están implementadas y cuáles no.
+Dejar explícita la arquitectura que sí se va a conservar:
+useQuickSearchSide("outbound")
+useQuickSearchSide("return")
+QuickSearchDualWorkspace
+QuickSearchSidePanel
+Dejar explícito qué se descarta en esta fase:
+endpoint round-trip nuevo
+rediseño masivo de quick-search
+soporte dual completo de country-only si no queda bien resuelto
+Decisiones cerradas
+El dual seguirá siendo dos búsquedas independientes.
+El formulario principal seguirá siendo compartido.
+El calendario y los resultados tendrán separación por lado.
+El cierre del ciclo se hace sobre la ruta actual, no sobre una reescritura futura.
+Criterio de salida
+Existe una narrativa única y consistente del modo dual que otra IA pueda seguir sin tener que reinterpretar el código.
+
+6. Fase 3 — Rehacer qs-date-grid como layout semántico de ida/vuelta
+Objetivo
+Resolver de raíz el layout del bloque de fechas para que el checkbox y ambos calendarios vivan en una composición estable.
+
+Archivos a tocar
+frontend/src/styles/screens.css
+frontend/src/modules/quick-search/QuickSearchView.tsx
+Problema actual
+El grid auto-fit es demasiado genérico para una estructura que realmente tiene tres roles muy distintos:
+
+salida
+toggle de round-trip
+vuelta
+Cambio esperado
+Redefinir .qs-date-grid con una estructura explícita.
+
+Recomendación concreta
+En desktop:
+
+columna 1: salida
+columna 2: toggle round-trip
+columna 3: vuelta
+En móvil:
+
+fila 1: salida
+fila 2: toggle
+fila 3: vuelta
+Reglas visuales que deben cumplirse
+El checkbox debe quedar centrado respecto al eje visual de ambos campos.
+No debe parecer un “hueco sobrante”.
+La aparición del bloque de vuelta al marcar el toggle debe sentirse deliberada.
+La estructura debe aguantar labels largos y hints debajo sin romper alineación.
+La composición debe seguir el tono de Viru: clara, cálida, con intención, no genérica.
+Ajustes específicos a considerar
+evitar repeat(auto-fit, minmax(...)) para este caso concreto
+usar grid-template-areas o columnas explícitas
+revisar align-items, justify-self, min-width, padding-bottom
+revisar si qs-check-inline debe pasar a ser una variante específica del bloque dual y no una utilidad genérica
+Criterio de salida
+Con isReturn=false y isReturn=true, el bloque de fechas se ve estable, alineado y consistente en desktop y móvil.
+
+7. Fase 4 — Activar hints de precio en el calendario de vuelta
+Objetivo
+Llevar la vuelta a paridad funcional y visual con la salida en lo relativo a calendar-hints.
+
+Archivos a tocar
+frontend/src/modules/quick-search/QuickSearchView.tsx
+frontend/src/modules/quick-search/components/QuickSearchDatePicker.tsx
+frontend/tests/quick-search-calendar-hints-wiring.test.ts
+frontend/tests/quick-search-date-picker.test.tsx
+Estado actual confirmado
+Salida recibe:
+
+dayHintsByIso={calendarHintsActive?.dayHintsByIso || {}}
+hintsLoading={calendarHintsLoadingKey === calendarHintsRequestKey}
+showCountryEstimateBadge={...}
+hintScopeMode={...}
+onVisibleMonthChange={setCalendarVisibleMonth}
+Vuelta no recibe nada equivalente.
+
+Decisión de implementación
+Crear un contexto de hints por lado, no reutilizar ciegamente el mismo mes visible para ambos calendarios.
+
+Modelo recomendado
+estado separado para visible month de ida
+estado separado para visible month de vuelta
+request key separada por lado
+cache de hints separada por lado o con side en la key
+inversión del par IATA para vuelta:
+salida usa origin -> destination
+vuelta usa destination -> origin
+Aspectos que deben quedar bien cerrados
+min={travelDate} en vuelta no debe impedir hints
+navegar mes en la vuelta debe lanzar su request correspondiente
+si el usuario cambia origen/destino, se invalidan ambos caches de hints
+si cambia adults o preferencias de bucket, se invalidan ambos caches
+bucket_mode, aggregation_mode y guideline thresholds deben aplicarse igual
+el backend ya soporta esto; el trabajo principal es de wiring
+Tests frontend a añadir o actualizar
+comprobar que el datepicker de vuelta también recibe props de hints
+comprobar que el wiring contiene inversión de IATA para vuelta si así se decide en el controlador
+comprobar que un day hint low/mid/high/none puede renderizarse igual en variant="return"
+comprobar que el badge de scope se comporta igual en vuelta
+Criterio de salida
+Abrir el calendario de vuelta muestra exactamente la misma semántica visual de precio que la ida, con navegación mensual real y hints reales.
+
+8. Fase 5 — Endurecer QuickSearchDatePicker para uso dual real
+Objetivo
+Asegurar que el datepicker no es “salida con hacks para vuelta”, sino un componente realmente estable para ambos lados.
+
+Archivos a tocar
+frontend/src/modules/quick-search/components/QuickSearchDatePicker.tsx
+estilos relacionados en frontend/src/styles/screens.css
+Trabajo a realizar
+Revisar si variant necesita afectar más que el copy.
+Asegurar que la lógica de open, viewMonth, selectedDate, minDate y hints no asume un único flujo principal.
+Verificar que el pie del popover, labels y hint badges son correctos en ambos lados.
+Verificar si conviene exponer un prop más explícito para side context o month control, si el código queda más claro.
+Confirmar que dayHintsByIso y hintsLoading se aplican a cualquier variant, no solo outbound.
+Mantener la semántica actual de none/no_fare_data.
+Riesgos a vigilar
+reset involuntario del mes visible al abrir/cerrar
+mezcla de estado local y estado externo de visible month
+que la vuelta herede el mes de la salida sin querer
+regressión en placeholder y copy
+Tests a reforzar
+open state en return con hints low/high
+no-data marker en return
+navegación mensual en return
+minDate y disabled days en return
+equivalencia dark/light a revisar manualmente
+Criterio de salida
+El datepicker de vuelta es funcionalmente equivalente al de ida, no una versión degradada.
+
+9. Fase 6 — Consolidar la orquestación dual en QuickSearchView
+Objetivo
+Reducir fragilidad y hacer que el flujo dual se entienda y se mantenga.
+
+Archivos a tocar
+frontend/src/modules/quick-search/QuickSearchView.tsx
+potencial helper nuevo en frontend/src/modules/quick-search/*
+Problema actual
+La vista principal acumula demasiado conocimiento sobre:
+
+validación
+criterios
+payload
+ida
+vuelta
+calendar hints
+deep links
+weather
+mensajes
+UX de loader
+render dual
+Trabajo a realizar
+Extraer helpers pequeños y orientados a comportamiento, por ejemplo:
+
+builder de params base por lado
+helper que invierte origen/destino para vuelta
+helper de request context para calendar hints por lado
+helper de invalidación de hint caches
+helper de submit dual y paginación dual si aporta claridad
+Reglas
+no crear abstracciones genéricas vacías
+no montar una mini arquitectura nueva
+tocar solo lo necesario para claridad y seguridad de la implementación dual
+no romper solo ida
+Objetivos concretos
+el submit dual debe leerse claramente
+la vuelta debe usar las mismas reglas de filtros que la ida salvo inversión de ruta y fecha
+los resets al salir de dual mode deben seguir siendo correctos
+el código de deep link no debe depender implícitamente solo del flujo simple
+Criterio de salida
+El flujo dual queda expresado con menos duplicación peligrosa y menos lógica escondida en bloques grandes.
+
+10. Fase 7 — Corregir el QuickSearchDualWorkspace y visibilizar de verdad la vuelta
+Objetivo
+Arreglar el bug estructural que está ocultando o colapsando el panel de vuelta.
+
+Archivos a tocar
+frontend/src/modules/quick-search/components/QuickSearchDualWorkspace.tsx
+frontend/src/modules/quick-search/QuickSearchView.tsx
+frontend/src/styles/quick-search-dual.css
+Hallazgo crítico confirmado
+El CSS dual espera tres columnas:
+
+1fr
+1px
+1fr
+Pero el render actual monta:
+
+panel ida
+panel vuelta
+banner combinado
+No monta:
+
+div.qs-dual-divider
+Implementación recomendada
+Opción recomendada:
+
+renderizar explícitamente el divisor entre ambos paneles
+Estructura esperada:
+
+panel ida
+divisor
+panel vuelta
+banner combinado
+Alternativa aceptable
+eliminar la columna central del grid y resolver el divisor con pseudo-elemento del contenedor
+Requisitos de la solución
+el panel de vuelta debe caer en una columna ancha real
+el divisor debe seguir existiendo visualmente
+el layout debe seguir funcionando en responsive
+el banner combinado debe seguir ocupando grid-column: 1 / -1
+revisar si el body de cada panel necesita min-height, overflow-y, max-height o ajustes de padding para que la lista no parezca cortada
+Validaciones necesarias
+ida visible
+vuelta visible
+ambos headers visibles
+ambos cuerpos visibles
+banner combinado visible cuando ambos lados están en success
+dark y light
+viewport desktop ancho y viewport intermedio
+Criterio de salida
+Los dos paneles duales son visibles y utilizables tras una búsqueda completa.
+
+11. Fase 8 — Backend: auditoría de reverse leg, deep link y observabilidad dual
+Objetivo
+Asegurar que el backend no está devolviendo silenciosamente algo distinto a lo que el frontend necesita para la vuelta.
+
+Archivos a tocar o revisar
+backend/app/api/v1/search.py
+backend/tests/integration/test_quick_search_realistic_happy_path.py
+backend/tests/integration/test_quick_search_returns_results.py
+backend/tests/integration/test_quick_search_calendar_hints.py
+Trabajo a realizar
+Añadir un test explícito de reverse leg:
+ida AGP -> DUB
+vuelta DUB -> AGP
+Añadir test de calendar hints con el par invertido para simular vuelta.
+Verificar GET /api/v1/search/deeplink con date_in.
+Confirmar que el deeplink backend sigue validando correctamente:
+date_in >= date_out
+isReturn=true si hay vuelta
+Revisar que no falte metadato útil para diagnosticar legs duales, por ejemplo en logs o en query_trace_id.
+No hacer en esta fase
+no crear un endpoint agregado de ida+vuelta
+no cambiar el contrato canónico de /quick
+no introducir payload nuevo si no es estrictamente necesario
+Criterio de salida
+El backend queda explícitamente cubierto para el caso de vuelta invertida y no hay ambigüedad sobre el comportamiento esperado.
+
+12. Fase 9 — Test suite de regresión específica para ida/vuelta
+Objetivo
+Dejar pruebas suficientes para impedir que el flujo dual vuelva a degradarse.
+
+Frontend tests a cubrir
+frontend/tests/quick-search-calendar-hints-wiring.test.ts
+frontend/tests/quick-search-date-picker.test.tsx
+nuevo test para dual workspace o side panel si hace falta
+posible test de render estático o de source wiring para divisor dual
+Casos mínimos frontend
+el datepicker outbound sigue cableado como ahora
+el datepicker return también queda cableado con hints
+QuickSearchDatePicker renderiza hints de low, mid, high, none en variant="return"
+el layout dual renderiza un divisor explícito o equivalente
+el panel de vuelta no queda en columna colapsada
+el banner combinado solo aparece cuando ambos lados están en success
+la paginación por lado sigue siendo independiente
+Backend tests a cubrir
+reverse leg returns results
+calendar hints with reversed pair
+deeplink with date_in
+mantener passing los tests realistas ya existentes
+Criterio de salida
+Existe una red de regresión enfocada exactamente en los puntos que hoy están rotos.
+
+13. Fase 10 — QA manual real, documentación y entrega
+Objetivo
+Cerrar el ciclo con pruebas visibles y documentación útil para futuros agentes.
+
+Archivo a crear
+docs/plans/2026-06-08-quick-search-roundtrip-stabilization.md
+Documentación a revisar si cambia alcance o contrato
+docs/specs/quick-search-dual-plan.md
+docs/DOCS_INVENTORY.md
+docs/INDICE_UNICO.md
+Regla documental
+Si el nuevo plan se añade como documento vivo de trabajo, actualizar:
+
+docs/DOCS_INVENTORY.md
+docs/INDICE_UNICO.md
+QA manual obligatoria
+Ruta:
+
+/quick-search
+Interacción exacta:
+
+introducir origen y destino válidos
+seleccionar fecha de salida
+activar Ida y vuelta
+comprobar alineación de la casilla
+abrir calendario de salida
+comprobar buckets de color
+abrir calendario de vuelta
+comprobar buckets de color equivalentes
+seleccionar fecha de vuelta
+lanzar búsqueda
+comprobar que aparecen dos paneles
+comprobar que ambos contienen estados o resultados visibles
+comprobar paginación independiente si aplica
+repetir en dark
+repetir en light
+repetir en móvil o viewport estrecho
+Evidencia visual a guardar
+full page before/after desktop
+bloque de fecha before/after
+calendario salida abierto
+calendario vuelta abierto
+resultados duales visibles
+dark and light
+móvil si se tocó responsive
+Criterio de salida
+Otra IA o un humano puede retomar exactamente el estado del trabajo sin reinterpretar nada.
+
+14. Archivos candidatos principales
+Frontend core
+frontend/src/modules/quick-search/QuickSearchView.tsx
+frontend/src/modules/quick-search/components/QuickSearchDatePicker.tsx
+frontend/src/modules/quick-search/components/QuickSearchDualWorkspace.tsx
+frontend/src/modules/quick-search/components/QuickSearchSidePanel.tsx
+frontend/src/modules/quick-search/state/useQuickSearchSide.ts
+frontend/src/modules/shared/quickSearchCopy.ts
+Frontend styles
+frontend/src/styles/screens.css
+frontend/src/styles/quick-search-dual.css
+Frontend tests
+frontend/tests/quick-search-calendar-hints-wiring.test.ts
+frontend/tests/quick-search-date-picker.test.tsx
+frontend/tests/quick-search-screen-state.test.tsx
+nuevo test dual si hace falta
+Backend core
+backend/app/api/v1/search.py
+Backend tests
+backend/tests/integration/test_quick_search_returns_results.py
+backend/tests/integration/test_quick_search_realistic_happy_path.py
+backend/tests/integration/test_quick_search_calendar_hints.py
+Docs
+docs/plans/2026-06-08-quick-search-roundtrip-stabilization.md
+docs/specs/quick-search-dual-plan.md
+docs/DOCS_INVENTORY.md
+docs/INDICE_UNICO.md
+15. Riesgos y decisiones de contención
+Riesgo 1
+El modo dual está muy concentrado en QuickSearchView.tsx.
+
+Contención:
+
+extraer solo helpers mínimos de comportamiento
+no intentar una reescritura grande
+Riesgo 2
+El bug de vuelta “invisible” puede ocultar otro bug secundario de datos.
+
+Contención:
+
+primero arreglar layout
+luego validar si realmente ya había datos de vuelta llegando
+Riesgo 3
+Compartir la misma caché de hints entre ida y vuelta puede mezclar contextos.
+
+Contención:
+
+side-aware request keys
+side-aware visible month state
+Riesgo 4
+El soporte country-only en dual puede abrir más superficie de la que cabe en este ciclo.
+
+Contención:
+
+cerrar primero aeropuerto↔aeropuerto
+si country-scope dual no queda sólido, dejarlo explícitamente fuera del cierre de esta fase con UX clara
+Riesgo 5
+Se puede romper el flujo solo ida al limpiar el dual.
+
+Contención:
+
+mantener cobertura de solo ida
+no tocar más de lo necesario
+validar !isDualMode como flujo principal legado
+16. Comandos y verificaciones previstas
+Frontend
+cd C:\Users\javiru\Desktop\viru-tracker\frontend
+npm test -- --test-name-pattern="quick-search"
+npm run lint
+Backend
+cd C:\Users\javiru\Desktop\viru-tracker
+python -m pytest backend\tests\integration\test_quick_search_returns_results.py backend\tests\integration\test_quick_search_realistic_happy_path.py backend\tests\integration\test_quick_search_calendar_hints.py
+Verificación manual
+abrir http://127.0.0.1:3000/quick-search
+revisar red para:
+/api/v1/search/quick
+/api/v1/search/quick/calendar-hints
+/api/v1/search/deeplink
+17. Orden recomendado de ejecución para otra IA
+reproducir fallo y confirmar que vuelta sí recibe o no recibe datos
+corregir el workspace dual y renderizar divisor o quitar columna fantasma
+validar que vuelta se hace visible
+rehacer qs-date-grid y corregir alineación del toggle
+cablear calendar hints de vuelta con estado por lado
+endurecer QuickSearchDatePicker
+limpiar orquestación dual mínima en QuickSearchView
+añadir tests frontend
+añadir tests backend reverse leg y hints invertidos
+validar manualmente dark/light y desktop/móvil
+guardar documentación final del plan y del cierre
+18. Definición de terminado
+Este trabajo solo se considera terminado cuando se cumplen todos estos puntos:
+
+la casilla Ida y vuelta ya no se ve desalineada
+el calendario de vuelta pinta buckets de precio
+el panel de vuelta es visible en modo dual
+ida y vuelta muestran estados independientes correctos
+la búsqueda dual queda cubierta con tests
+el reverse leg queda cubierto en backend
+el flujo está verificado en UI real
+dark y light mantienen identidad
+queda documentado para futuras sesiones
+19. Suposiciones elegidas
+El backend actual de quick-search es suficiente y no se reemplaza.
+El problema principal de visibilidad de vuelta es de layout, no de endpoint.
+El objetivo de esta fase es estabilizar round-trip aeropuerto↔aeropuerto.
+Este plan está pensado para ser ejecutado por otra IA con acceso al repo, con cambios quirúrgicos y verificados, no con una reescritura total.

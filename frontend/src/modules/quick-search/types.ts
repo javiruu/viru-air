@@ -215,6 +215,7 @@ export type QuickSearchField =
   | "origin_iata"
   | "destination_iata"
   | "travel_date"
+  | "return_date"
   | "price_min"
   | "price_max"
   | "duration_max"
