@@ -973,7 +973,7 @@ test("F10: HISTORY.md records puerta-a-puerta F1-F10 completion", () => {
   const source = fs.readFileSync(historyPath, "utf8");
   assert.match(source, /puerta-a-puerta/);
   assert.match(source, /F1.*F10/);
-  assert.match(source, /56 tests/);
+  assert.match(source, /61 tests/);
   assert.match(source, /74 tests/);
 });
 
