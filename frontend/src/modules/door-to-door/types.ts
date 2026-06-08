@@ -108,14 +108,14 @@ export type DoorToDoorOption = {
   trust_copy?: string | null;
 };
 
-export type DecisionReasonKind = "price" | "buffer" | "transfers" | "duration" | "confidence";
+export type DecisionReasonKind = "price" | "buffer" | "tight_buffer" | "transfers" | "duration" | "confidence" | "completeness";
 
 export type DecisionReason = {
   kind: DecisionReasonKind;
   label: string;
 };
 
-export type DecisionBadgeKind = "fastest" | "longest_buffer" | "fewest_changes" | "best_estimated_price";
+export type DecisionBadgeKind = "fastest" | "longest_buffer" | "fewest_changes" | "best_estimated_price" | "most_complete";
 
 export type DecisionBadge = {
   kind: DecisionBadgeKind;

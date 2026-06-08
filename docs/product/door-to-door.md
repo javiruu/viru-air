@@ -1,7 +1,7 @@
 # Puerta a puerta
 
 **Estado:** vivo
-**Última revisión:** 2026-05-21
+**Última revisión:** 2026-06-08
 **Fuente de verdad:** sí
 **Área:** producto
 
@@ -17,20 +17,42 @@ La pregunta que responde no es solo “¿el vuelo es barato?”, sino:
 - cuántos cambios requiere;
 - qué fuentes y nivel de confianza sostienen cada dato.
 
+## Taxonomía de fuentes (V1.4)
+
+Cada dato en `/puerta-a-puerta` pertenece a una de estas categorías:
+
+| Categoría | `source_type` | `confidence` | ¿Precio? | ¿Horario? | ¿Booking? |
+|-----------|--------------|-------------|----------|-----------|-----------|
+| **Real (API)** | `api`, `maps` | `live`, `cached` | Parcial | Sí | No |
+| **Open data** | `open_data` | `cached` | No | Sí (feed público) | No |
+| **Deeplink** | `deeplink` | `deeplink` | No (externo) | No (estimado) | URL externa |
+| **Estimación** | `estimate`, `mock` | `estimated` | Estimado | Estimado | No |
+| **Scraper** | `scraper` | — | — | — | — |
+
+### Límites explícitos
+
+- `/puerta-a-puerta` **no confirma precios** en nombre del usuario.
+- **No hace scraping** activo por defecto.
+- **No reserva ni compra** billetes.
+- **No tiene cobertura geográfica** "Europa completa".
+- **No sustituye** a Google Maps, BlaBlaCar, GoOpti ni operadores de transporte.
+- GTFS/open data **solo funciona con feeds configurados explícitamente**.
+
 ## Entrada principal
 
 La feature vive como apartado privado en `/puerta-a-puerta` y puede recibir un vuelo contextual desde Watchlist con `?watchId=...`.
 
 En `/watchlist`, el detalle de ruta muestra una sugerencia contextual para abrir Puerta a puerta con el vuelo seleccionado.
 
-## Flujo V1.1
+## Flujo V1.4
 
 1. El usuario elige un vuelo guardado.
 2. Configura origen terrestre y destino final.
 3. Ajusta margen, pasajeros, equipaje, precio máximo y filtros esenciales.
 4. Calcula ruta completa.
-5. Revisa opción recomendada, alternativas, timeline, radar abstracto, fuente y confianza.
+5. Revisa en orden: timeline completo → opción recomendada → comparador de alternativas → fuentes y confianza → acciones externas (deeplinks) → mapa de capacidades → historial.
 6. Puede marcar una opción como elegida; al volver a calcular, Viru la recupera si sigue disponible.
+7. La opción recomendada incluye badges (más rápida, más completa, mejor precio estimado) y razones honestas (precio, margen, duración, confianza, completitud).
 
 ## Destino final
 
@@ -46,7 +68,7 @@ Cuando el destino es `solo aeropuerto`, la ruta termina en el aeropuerto de lleg
 
 ## Datos, filtros y confianza
 
-V1.2 queda en estado híbrido honesto:
+V1.4 mantiene el estado híbrido honesto:
 
 - mock normalizado para UX estable;
 - primer paso real parcial con providers deeplink (`blablacar_deeplink`, `goopti_deeplink`);
@@ -100,7 +122,7 @@ La UI debe mantener identidad Viru:
 
 ## Base parcial inspirada en Google Maps
 
-V1.3 incorpora un "Hub de capas y herramientas" dentro de `/puerta-a-puerta` para mantener una base completa parcial sin romper el foco actual de timeline + decision.
+V1.4 incorpora un "Hub de capas y herramientas" dentro de `/puerta-a-puerta` para mantener una base completa parcial sin romper el foco actual de timeline + decision.
 
 El hub organiza capacidades por bloques:
 

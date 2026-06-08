@@ -5072,6 +5072,7 @@ h1 {
 .compare-chart-line {
   stroke-width: 2.2;
   opacity: 0.85;
+  flex: none;
   transition: opacity 0.25s ease, stroke-width 0.25s ease;
 }
 
@@ -8271,6 +8272,7 @@ textarea::placeholder {
   display: inline-grid;
   place-items: center;
   opacity: 0.85;
+  flex: none;
   flex: 0 0 18px;
 }
 
@@ -12662,7 +12664,8 @@ textarea::placeholder {
 
 @keyframes trailPulse {
   0%   { opacity: 0.1; transform: scaleX(0.2); }
-  18%  { opacity: 0.85; transform: scaleX(1); }
+  18%  { opacity: 0.85;
+  flex: none; transform: scaleX(1); }
   75%  { opacity: 0.55; transform: scaleX(0.92); }
   100% { opacity: 0.08; transform: scaleX(0.2); }
 }
@@ -14555,6 +14558,7 @@ textarea::placeholder {
   100% {
     transform: translate3d(52px, -18px, 0) rotate(-12deg);
     opacity: 0.85;
+  flex: none;
   }
 }
 
@@ -19846,6 +19850,16 @@ textarea::placeholder {
   color: var(--ink-muted);
   line-height: 1.35;
   flex: 1;
+}
+
+.d2d-capability-reason {
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+  line-height: 1.35;
+  margin: 0.3rem 0 0;
+  font-style: italic;
+  opacity: 0.85;
+  flex: none;
 }
 
 /* ── Card icon row ──────────────────────────────────────── */

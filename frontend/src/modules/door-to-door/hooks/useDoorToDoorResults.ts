@@ -103,6 +103,28 @@ export function useDoorToDoorResults(
   const hasNoRealCoverage = warningCodes.has("NO_REAL_PROVIDER_COVERAGE");
   const hasPartialCoverage = warningCodes.has("PROVIDER_PARTIAL_COVERAGE");
   const hasNoCoverage = warningCodes.has("NO_COVERAGE");
+
+  // GTFS granular warnings
+  const hasGtfsFeedUnavailable = warningCodes.has("GTFS_FEED_UNAVAILABLE");
+  const hasGtfsNoNearbyStops = warningCodes.has("GTFS_NO_NEARBY_STOPS");
+  const hasGtfsNoServiceForDate = warningCodes.has("GTFS_NO_SERVICE_FOR_DATE");
+  const hasGtfsNoMatchingService = warningCodes.has("GTFS_NO_MATCHING_SERVICE");
+  const hasGtfsPartialCoverage = warningCodes.has("GTFS_PARTIAL_COVERAGE");
+  const hasGtfsPriceUnavailable = warningCodes.has("GTFS_PRICE_UNAVAILABLE");
+
+  const hasAnyGtfsWarning = hasGtfsFeedUnavailable || hasGtfsNoNearbyStops || hasGtfsNoServiceForDate || hasGtfsNoMatchingService || hasGtfsPartialCoverage || hasGtfsPriceUnavailable;
+
+  const gtfsWarningCodes: string[] = useMemo(() => {
+    const codes: string[] = [];
+    if (hasGtfsFeedUnavailable) codes.push("GTFS_FEED_UNAVAILABLE");
+    if (hasGtfsNoNearbyStops) codes.push("GTFS_NO_NEARBY_STOPS");
+    if (hasGtfsNoServiceForDate) codes.push("GTFS_NO_SERVICE_FOR_DATE");
+    if (hasGtfsNoMatchingService) codes.push("GTFS_NO_MATCHING_SERVICE");
+    if (hasGtfsPartialCoverage) codes.push("GTFS_PARTIAL_COVERAGE");
+    if (hasGtfsPriceUnavailable) codes.push("GTFS_PRICE_UNAVAILABLE");
+    return codes;
+  }, [hasGtfsFeedUnavailable, hasGtfsNoNearbyStops, hasGtfsNoServiceForDate, hasGtfsNoMatchingService, hasGtfsPartialCoverage, hasGtfsPriceUnavailable]);
+
   const hasChosenPlan = Boolean(response?.summary.chosen_option_id);
 
   const markChosen = useCallback(async (option: DoorToDoorOption) => {
@@ -141,6 +163,14 @@ export function useDoorToDoorResults(
     hasNoRealCoverage,
     hasPartialCoverage,
     hasNoCoverage,
+    hasGtfsFeedUnavailable,
+    hasGtfsNoNearbyStops,
+    hasGtfsNoServiceForDate,
+    hasGtfsNoMatchingService,
+    hasGtfsPartialCoverage,
+    hasGtfsPriceUnavailable,
+    hasAnyGtfsWarning,
+    gtfsWarningCodes,
     hasChosenPlan,
     markChosen,
   };

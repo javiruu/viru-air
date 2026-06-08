@@ -359,7 +359,7 @@ def test_provider_failure_does_not_break_search(client: TestClient, monkeypatch)
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["options"]
-    assert any(warning["code"] == "PARTIAL_PROVIDER_COVERAGE" for warning in body["warnings"])
+    assert any(warning["code"] == "PROVIDER_PARTIAL_COVERAGE" for warning in body["warnings"])
 
 
 def test_search_returns_api_option_when_google_routes_provider_is_simulated(client: TestClient, monkeypatch) -> None:
@@ -1016,6 +1016,44 @@ def test_history_returns_last_chosen_option_for_same_history_id(client: TestClie
     assert history_items
     target = next(item for item in history_items if item["id"] == history_id)
     assert target["chosen_option_id"] == second["id"]
+
+
+def test_search_response_includes_map_capabilities_with_all_canonical_keys(client: TestClient, monkeypatch) -> None:
+    _set_provider_env(monkeypatch, mock=True, real=False, scrapers=False)
+    headers = _auth_headers(client, "map-capabilities@viru.dev")
+    watch_id = _create_watch(client, headers)
+
+    response = client.post("/api/v1/door-to-door/search", json=_search_payload(watch_id), headers=headers)
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    capabilities = body.get("map_capabilities")
+    assert capabilities is not None
+
+    canonical_keys = {
+        "navigation", "traffic", "transit", "alternatives",
+        "street_view_preview", "saved_places", "nearby_pois",
+        "offline", "incidents", "eco_route",
+    }
+    assert set(capabilities.keys()) == canonical_keys
+
+    for key in canonical_keys:
+        cap = capabilities[key]
+        assert cap["state"] in ("available", "partial", "planned", "unavailable")
+        assert cap["source_type"] in (
+            "api", "open_data", "aggregator", "deeplink", "scraper",
+            "mock", "estimate", "maps", "external_deeplink", "none",
+        )
+        assert cap["confidence"] in ("live", "cached", "estimated", "deeplink", "unavailable")
+        assert "last_checked_at" in cap
+        # why_missing must be present (null when capability is available)
+        assert "why_missing" in cap
+
+    # With mock enabled and options present, alternatives should be available
+    assert capabilities["alternatives"]["state"] == "available"
+    # navigation depends on google_routes which is disabled here
+    assert capabilities["navigation"]["state"] == "planned"
+    assert capabilities["navigation"]["why_missing"] is not None
 
 
 def test_history_tolerates_corrupted_summary_json(client: TestClient, monkeypatch) -> None:

@@ -17,6 +17,12 @@ export function getDecisionBadges(options: DoorToDoorOption[]): Record<string, D
   addBadge(badges, byTransfers[0], { kind: "fewest_changes", label: "fewest_changes" });
   if (byPrice[0]) addBadge(badges, byPrice[0], { kind: "best_estimated_price", label: "best_estimated_price" });
 
+  // Most complete: option with highest data completeness score
+  const byCompleteness = [...options].sort((a, b) => getCompletenessScore(b) - getCompletenessScore(a));
+  if (byCompleteness[0] && getCompletenessScore(byCompleteness[0]) >= 2) {
+    addBadge(badges, byCompleteness[0], { kind: "most_complete", label: "most_complete" });
+  }
+
   return badges;
 }
 
@@ -52,6 +58,17 @@ export function getDecisionReasons(recommended: DoorToDoorOption, options: DoorT
 
   if (hasUncertainSources(recommended)) {
     reasons.push({ kind: "confidence", label: "confidence" });
+  }
+
+  // Completeness: recommended has more confirmed data than any alternative
+  const recCompleteness = getCompletenessScore(recommended);
+  const bestPeerCompleteness = Math.max(0, ...peers.map((p) => getCompletenessScore(p)));
+  if (recCompleteness > bestPeerCompleteness && recCompleteness >= 2) {
+    reasons.push({ kind: "completeness", label: "completeness" });
+  }
+
+  if (reasons.length === 0 && recommended.airport_buffer_minutes != null && recommended.airport_buffer_minutes < 90) {
+    reasons.push({ kind: "tight_buffer", label: "tight_buffer" });
   }
 
   return reasons.slice(0, 3);
@@ -119,4 +136,25 @@ function maxNumber(values: Array<number | null | undefined>): number | null {
   const filtered = values.filter((value): value is number => value != null);
   if (filtered.length === 0) return null;
   return Math.max(...filtered);
+}
+
+/** Rate data completeness: 1pt per confirmed source (api/maps/open_data), 1pt per non-null price, 1pt per leg with real schedule. Max ~6. */
+function getCompletenessScore(option: DoorToDoorOption): number {
+  let score = 0;
+  // Confirmed sources (real data, not deeplink/estimate/mock)
+  for (const source of option.sources) {
+    if (source.source_type === "api" || source.source_type === "maps" || source.source_type === "open_data") {
+      score += 1;
+    }
+  }
+  // Non-null price data
+  if (option.total_price_min != null) score += 1;
+  // Ground legs with real schedule
+  for (const leg of option.legs) {
+    if (leg.type === "ground" && leg.departure_at != null && leg.arrival_at != null) {
+      score += 1;
+      break; // One point for having at least one scheduled ground leg
+    }
+  }
+  return score;
 }
