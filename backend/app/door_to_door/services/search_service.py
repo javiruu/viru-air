@@ -1,6 +1,7 @@
 ﻿import json
 import logging
 from datetime import datetime, timedelta
+from typing import Literal
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -8,8 +9,11 @@ from sqlalchemy.orm import Session
 from app.core.time import utc_now_naive
 from app.door_to_door.providers.base import DoorToDoorProvider, DoorToDoorProviderQuery
 from app.door_to_door.schemas import (
+    DoorToDoorCapabilityState,
+    DoorToDoorConfidence,
     DoorToDoorFlightOut,
     DoorToDoorLegOut,
+    DoorToDoorMapCapabilityOut,
     DoorToDoorMode,
     DoorToDoorOptionOut,
     DoorToDoorPreferences,
@@ -18,6 +22,7 @@ from app.door_to_door.schemas import (
     DoorToDoorSearchResponse,
     DoorToDoorSortBy,
     DoorToDoorSourceOut,
+    DoorToDoorSourceType,
     DoorToDoorSummaryOut,
     DoorToDoorWarningOut,
 )
@@ -81,7 +86,7 @@ class DoorToDoorSearchService:
                 self._append_warning(
                     warnings,
                     DoorToDoorWarningOut(
-                        code="PARTIAL_PROVIDER_COVERAGE",
+                        code="PROVIDER_PARTIAL_COVERAGE",
                         provider=provider.provider_name,
                         message="Una fuente no ha respondido a tiempo. Te mostramos las opciones con datos suficientes.",
                     ),
@@ -144,13 +149,54 @@ class DoorToDoorSearchService:
         summary.history_id = history.id
         self._prune_old_history(db, user_id)
 
-        return DoorToDoorSearchResponse(flight=flight, summary=summary, options=options, warnings=warnings)
+        return DoorToDoorSearchResponse(flight=flight, summary=summary, options=options, warnings=warnings, map_capabilities=self._build_map_capabilities(checked_at, options, warnings))
 
     def _has_enabled_real_search_provider(self) -> bool:
         for item in self.provider_statuses:
             if item.enabled and item.source_type not in ("mock", "estimate") and item.supports_search:
                 return True
         return False
+
+    def _build_map_capabilities(
+        self,
+        checked_at: datetime,
+        options: list[DoorToDoorOptionOut],
+        warnings: list[DoorToDoorWarningOut],
+    ) -> dict[str, DoorToDoorMapCapabilityOut]:
+        provider_by_name = {item.name: item for item in self.provider_statuses}
+        has_google_routes = provider_by_name.get("google_routes", None)
+        has_google_routes_enabled = has_google_routes is not None and has_google_routes.enabled
+        has_google_places = provider_by_name.get("google_places", None)
+        has_google_places_enabled = has_google_places is not None and has_google_places.enabled
+        has_gtfs = provider_by_name.get("gtfs_transit", None)
+        has_gtfs_enabled = has_gtfs is not None and has_gtfs.enabled
+        has_deeplink = any(item.enabled and item.source_type in ("deeplink", "external_deeplink") for item in self.provider_statuses)
+
+        has_options = len(options) > 0
+
+        MapSourceType = DoorToDoorSourceType | Literal["none"]  # type: ignore[valid-type]
+
+        def _cap(state: DoorToDoorCapabilityState, source_type: MapSourceType, confidence: DoorToDoorConfidence, *, why_missing: str | None = None) -> DoorToDoorMapCapabilityOut:
+            return DoorToDoorMapCapabilityOut(
+                state=state,
+                source_type=source_type,
+                confidence=confidence,
+                last_checked_at=checked_at,
+                why_missing=why_missing,
+            )
+
+        return {
+            "navigation": _cap("available", "maps", "live") if has_google_routes_enabled else _cap("planned", "none", "unavailable", why_missing="google_routes_disabled"),
+            "traffic": _cap("partial", "maps", "cached", why_missing="live_traffic_not_wired") if has_google_routes_enabled else _cap("planned", "none", "unavailable", why_missing="traffic_layer_pending"),
+            "transit": _cap("partial", "open_data", "cached", why_missing="fares_and_booking_pending") if has_gtfs_enabled else _cap("planned", "none", "unavailable", why_missing="gtfs_provider_disabled"),
+            "alternatives": _cap("available", "api", "cached") if has_options else _cap("planned", "none", "unavailable", why_missing="route_candidates_pending"),
+            "street_view_preview": _cap("partial", "maps", "cached", why_missing="immersive_preview_pending") if has_google_routes_enabled else _cap("planned", "none", "unavailable", why_missing="street_view_not_connected"),
+            "saved_places": _cap("partial", "api", "cached", why_missing="shared_lists_pending"),
+            "nearby_pois": _cap("partial", "api", "live", why_missing="busy_times_and_parking_pending") if has_google_places_enabled else _cap("planned", "none", "unavailable", why_missing="google_places_disabled"),
+            "offline": _cap("planned", "none", "unavailable", why_missing="offline_cache_not_implemented"),
+            "incidents": _cap("partial", "maps", "cached", why_missing="incident_feed_pending") if has_google_routes_enabled else _cap("planned", "none", "unavailable", why_missing="incident_source_not_connected"),
+            "eco_route": _cap("partial", "maps" if has_google_routes_enabled else "deeplink", "cached", why_missing="eco_scoring_pending") if (has_deeplink or has_google_routes_enabled) else _cap("planned", "none", "unavailable", why_missing="eco_route_provider_pending"),
+        }
 
     def _apply_preferences(
         self,

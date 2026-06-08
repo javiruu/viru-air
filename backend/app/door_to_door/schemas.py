@@ -12,6 +12,19 @@ DoorToDoorSortBy = Literal["best_balance", "cheapest", "fastest", "fewest_change
 DoorToDoorLuggage = Literal["backpack", "cabin", "checked"]
 DoorToDoorMode = Literal["bus", "train", "rideshare", "shuttle", "taxi", "car", "walking", "flight"]
 DoorToDoorSuggestionSourceType = Literal["local_static", "mock", "api", "open_data"]
+DoorToDoorCapabilityState = Literal["available", "partial", "planned", "unavailable"]
+DoorToDoorCapabilityKey = Literal[
+    "navigation",
+    "traffic",
+    "transit",
+    "alternatives",
+    "street_view_preview",
+    "saved_places",
+    "nearby_pois",
+    "offline",
+    "incidents",
+    "eco_route",
+]
 DoorToDoorProviderStatusKind = Literal[
     "functional_api",
     "functional_mock",
@@ -176,11 +189,20 @@ class DoorToDoorWarningOut(BaseModel):
     provider: str | None = None
 
 
+class DoorToDoorMapCapabilityOut(BaseModel):
+    state: DoorToDoorCapabilityState
+    source_type: DoorToDoorSourceType | Literal["none"]
+    confidence: DoorToDoorConfidence
+    last_checked_at: datetime | None = None
+    why_missing: str | None = None
+
+
 class DoorToDoorSearchResponse(BaseModel):
     flight: DoorToDoorFlightOut
     summary: DoorToDoorSummaryOut
     options: list[DoorToDoorOptionOut]
     warnings: list[DoorToDoorWarningOut] = Field(default_factory=list)
+    map_capabilities: dict[DoorToDoorCapabilityKey, DoorToDoorMapCapabilityOut] | None = None
 
 
 class DoorToDoorSuggestionOut(BaseModel):

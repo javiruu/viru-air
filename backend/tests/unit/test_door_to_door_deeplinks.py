@@ -290,6 +290,67 @@ async def test_goopti_max_price_no_filtra_deeplink_sin_precio():
 # Provider status
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Fase 5: CTA honesty — no "Reservar" or misleading labels
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_blablacar_deeplink_label_is_honest_no_reservar():
+    provider = BlaBlaCarDeepLinkProvider()
+    results = await provider.search(_make_query())
+    option = results[0]
+    # deep_link label
+    assert option.deep_link is not None
+    assert "Buscar" in option.deep_link.label
+    assert "Reservar" not in option.deep_link.label
+    assert "reservar" not in option.deep_link.label.lower()
+    # option label
+    assert "Buscar" in option.label
+    assert "Reservar" not in option.label
+    # trust copy
+    assert option.trust_copy is not None
+    assert "fuera de Viru" in option.trust_copy
+
+
+@pytest.mark.asyncio
+async def test_goopti_deeplink_label_is_honest_no_reservar():
+    provider = GoOptiDeepLinkProvider()
+    results = await provider.search(_make_query())
+    option = results[0]
+    assert option.deep_link is not None
+    assert "Buscar" in option.deep_link.label
+    assert "Reservar" not in option.deep_link.label
+    assert "reservar" not in option.deep_link.label.lower()
+    assert option.trust_copy is not None
+    assert "fuera de Viru" in option.trust_copy
+
+
+@pytest.mark.asyncio
+async def test_google_maps_deeplink_label_is_honest():
+    from app.door_to_door.providers.deeplink_maps import GoogleMapsDeepLinkProvider
+    provider = GoogleMapsDeepLinkProvider()
+    results = await provider.search(_make_query())
+    assert len(results) >= 1
+    option = results[0]
+    assert option.deep_link is not None
+    assert "Abrir" in option.deep_link.label
+    assert "Google Maps" in option.deep_link.label
+    assert "Reservar" not in option.deep_link.label.lower()
+    assert "Comprar" not in option.deep_link.label
+    assert option.total_price_min is None
+
+
+@pytest.mark.asyncio
+async def test_external_deeplink_label_is_honest():
+    from app.door_to_door.providers.deeplink_provider import DeeplinkDoorToDoorProvider
+    provider = DeeplinkDoorToDoorProvider()
+    results = await provider.search(_make_query())
+    assert len(results) == 1
+    option = results[0]
+    assert "Reservar" not in option.label.lower()
+    assert "Comprar" not in option.label.lower()
+
+
 def test_provider_status_clasifica_ambos_como_functional_deeplink():
     from app.door_to_door.providers.deeplink_goopti import GoOptiDeepLinkProvider
     from app.door_to_door.providers.registry import (

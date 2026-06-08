@@ -103,6 +103,7 @@
 
 - [Runbooks operativos](runbooks/)
 - [Runbook de estabilización watchlist + quick-search](runbooks/runbook-watchlist-quick-search-stabilization.md)
+- [Runbook QA de puerta a puerta](runbooks/runbook-puerta-a-puerta-qa.md)
 - [DuckDNS + publicacion temporal](runbooks/runbook-duckdns-public-domain.md)
 - [Sweeps hoteleros](runbooks/hotels-sweeps.md)
 

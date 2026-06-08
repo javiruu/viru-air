@@ -45,7 +45,10 @@ export function DoorToDoorStickyBar({
     { id: "results", label: t("doorToDoor.sections.realResults") },
     { id: "timeline", label: t("doorToDoor.sections.tripSummary") },
     { id: "compare", label: t("doorToDoor.option.comparatorTitle") },
+    { id: "sources", label: t("doorToDoor.sections.sources") },
+    { id: "deeplinks", label: t("doorToDoor.sections.realDeeplinks") },
     { id: "maphub", label: t("doorToDoor.sections.coveragePanelTitle") },
+    { id: "history", label: t("doorToDoor.sections.history") },
   ];
 
   return (

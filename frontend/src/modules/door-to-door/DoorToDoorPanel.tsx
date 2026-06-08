@@ -37,21 +37,21 @@ function formatHistoryDate(value: string, localeTag: string) {
   return new Intl.DateTimeFormat(localeTag, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
 
-function formatClock(value: string | null | undefined, localeTag: string) {
-  if (!value) return "--:--";
+function formatClock(value: string | null | undefined, localeTag: string, fallback?: string) {
+  if (!value) return fallback ?? "--:--";
   return new Intl.DateTimeFormat(localeTag, { hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
 
-function formatDurationLabel(minutes: number | null | undefined) {
-  if (minutes == null) return "--";
+function formatDurationLabel(minutes: number | null | undefined, fallback?: string) {
+  if (minutes == null) return fallback ?? "--";
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   if (hours <= 0) return `${mins} min`;
   return `${hours}h ${String(mins).padStart(2, "0")}m`;
 }
 
-function formatDelta(value: number | null, unit = "") {
-  if (value == null) return "--";
+function formatDelta(value: number | null, unit = "", fallback?: string) {
+  if (value == null) return fallback ?? "--";
   const sign = value > 0 ? "+" : "";
   return `${sign}${value}${unit}`;
 }
@@ -308,7 +308,7 @@ function LocationInput({
   );
 }
 
-function FlightSegment({ leg, localeTag }: { leg: DoorToDoorLeg; localeTag: string }) {
+function FlightSegment({ leg, localeTag, scheduleFallback, durationFallback }: { leg: DoorToDoorLeg; localeTag: string; scheduleFallback: string; durationFallback: string }) {
   return (
     <article className="d2d-leg-card d2d-leg-flight">
       <div className="d2d-leg-card-inner">
@@ -317,7 +317,7 @@ function FlightSegment({ leg, localeTag }: { leg: DoorToDoorLeg; localeTag: stri
             <Plane size={16} aria-hidden="true" /> {leg.from} {"->"} {leg.to}
           </strong>
           <p className="d2d-segment-time">
-            {formatClock(leg.departure_at, localeTag)} - {formatClock(leg.arrival_at, localeTag)} · {formatDurationLabel(leg.duration_minutes)}
+            {formatClock(leg.departure_at, localeTag, scheduleFallback)} - {formatClock(leg.arrival_at, localeTag, scheduleFallback)} · {formatDurationLabel(leg.duration_minutes, durationFallback)}
           </p>
         </div>
       </div>
@@ -325,7 +325,7 @@ function FlightSegment({ leg, localeTag }: { leg: DoorToDoorLeg; localeTag: stri
   );
 }
 
-function GroundSegment({ leg, localeTag }: { leg: DoorToDoorLeg; localeTag: string }) {
+function GroundSegment({ leg, localeTag, scheduleFallback, durationFallback, viewInMapsLabel, fromPriceLabel }: { leg: DoorToDoorLeg; localeTag: string; scheduleFallback: string; durationFallback: string; viewInMapsLabel: string; fromPriceLabel: string }) {
   const mapsUrl = resolveMapsUrl(leg);
   const isDeepLink = leg.confidence === "deeplink";
   const modeClass = `d2d-leg-${leg.mode}`;
@@ -336,9 +336,9 @@ function GroundSegment({ leg, localeTag }: { leg: DoorToDoorLeg; localeTag: stri
           <strong>{resolveGroundIcon(leg.mode)} {leg.from} {"->"} {leg.to}</strong>
           {!isDeepLink ? (
             <p className="d2d-segment-time">
-              {formatClock(leg.departure_at, localeTag)} - {formatClock(leg.arrival_at, localeTag)}
-              {leg.duration_minutes != null ? ` · ${formatDurationLabel(leg.duration_minutes)}` : ""}
-              {leg.price_min != null ? ` · Desde ${leg.price_min} EUR` : ""}
+              {formatClock(leg.departure_at, localeTag, scheduleFallback)} - {formatClock(leg.arrival_at, localeTag, scheduleFallback)}
+              {leg.duration_minutes != null ? ` · ${formatDurationLabel(leg.duration_minutes, durationFallback)}` : ""}
+              {leg.price_min != null ? ` · ${fromPriceLabel.replace("{price}", String(leg.price_min))}` : ""}
             </p>
           ) : null}
         </div>
@@ -346,7 +346,7 @@ function GroundSegment({ leg, localeTag }: { leg: DoorToDoorLeg; localeTag: stri
           {isDeepLink && mapsUrl ? (
             <a className="btn-secondary btn-compact" href={mapsUrl} target="_blank" rel="noreferrer">
               <ExternalLink size={14} aria-hidden="true" />
-              <span>Ver ruta en Maps</span>
+              <span>{viewInMapsLabel}</span>
             </a>
           ) : null}
         </div>
@@ -505,9 +505,9 @@ export function DoorToDoorPanel() {
                 <li key={`${leg.type}-${leg.mode}-${index}`} className={`d2d-timeline-leg ${leg.type === "flight" ? "is-flight" : "is-ground"}`}>
                   {index > 0 ? <span className="d2d-timeline-connector" aria-hidden="true" /> : null}
                   {leg.type === "flight" ? (
-                    <FlightSegment leg={leg} localeTag={localeTag} />
+                    <FlightSegment leg={leg} localeTag={localeTag} scheduleFallback={t("doorToDoor.option.scheduleUnconfirmed")} durationFallback={t("doorToDoor.option.durationUnconfirmed")} />
                   ) : (
-                    <GroundSegment leg={leg} localeTag={localeTag} />
+                    <GroundSegment leg={leg} localeTag={localeTag} scheduleFallback={t("doorToDoor.option.scheduleUnconfirmed")} durationFallback={t("doorToDoor.option.durationUnconfirmed")} viewInMapsLabel={t("doorToDoor.option.viewRouteInMaps")} fromPriceLabel={t("doorToDoor.option.fromPriceEur")} />
                   )}
                 </li>
               ))}
@@ -563,6 +563,28 @@ export function DoorToDoorPanel() {
         </section>
       ) : null}
 
+      {search.response && results.hasAnyGtfsWarning ? (
+        <section className="notice notice-info d2d-gtfs-notice">
+          <div>
+            <strong>{t("doorToDoor.mapHub.cards.transit.title")}</strong>
+            <ul className="d2d-warning-list">
+              {results.gtfsWarningCodes.map((code) => {
+                const i18nKey: string = (() => {
+                  if (code === "GTFS_FEED_UNAVAILABLE") return "doorToDoor.gtfsWarnings.feedUnavailable";
+                  if (code === "GTFS_NO_NEARBY_STOPS") return "doorToDoor.gtfsWarnings.noNearbyStops";
+                  if (code === "GTFS_NO_SERVICE_FOR_DATE") return "doorToDoor.gtfsWarnings.noServiceForDate";
+                  if (code === "GTFS_NO_MATCHING_SERVICE") return "doorToDoor.gtfsWarnings.noMatchingService";
+                  if (code === "GTFS_PARTIAL_COVERAGE") return "doorToDoor.gtfsWarnings.partialCoverage";
+                  if (code === "GTFS_PRICE_UNAVAILABLE") return "doorToDoor.gtfsWarnings.priceUnavailable";
+                  return "";
+                })();
+                return i18nKey ? <li key={code}>{t(i18nKey as any)}</li> : null;
+              })}
+            </ul>
+          </div>
+        </section>
+      ) : null}
+
       {search.response && search.response.options.length > 0 && !results.hasNoCoverage ? (
         <>
           <div id="d2d-results-sentinel" aria-hidden="true" />
@@ -572,32 +594,6 @@ export function DoorToDoorPanel() {
             activeSection={activeSection}
             onSectionClick={scrollToSection}
           />
-          <section className="panel panel-soft d2d-chosen-trust">
-            <div className="d2d-section-head">
-              <h2>{t("doorToDoor.sections.sources")}</h2>
-              <button
-                type="button"
-                className={`status-pill ${results.trustTone}`}
-                onClick={() => setShowTrustModal(true)}
-                aria-haspopup="dialog"
-                aria-controls="d2d-trust-modal"
-                aria-label={t("doorToDoor.sections.trustModalTrigger")}
-              >
-                {results.trustTone === "success" ? <ShieldCheck size={14} aria-hidden="true" /> : <ShieldAlert size={14} aria-hidden="true" />}
-                <span>{results.trustTone === "success" ? t("doorToDoor.sections.trustConfirmed") : t("doorToDoor.sections.trustEstimated")}</span>
-              </button>
-            </div>
-            <p className="panel-note"><strong>{t("doorToDoor.sections.providersStatus")}:</strong> {t("doorToDoor.sections.providersMix", { enabled: mapHub.providerStatusSummary.enabled, real: mapHub.providerStatusSummary.realEnabled, estimate: mapHub.providerStatusSummary.estimateEnabled })}</p>
-            {results.hasChosenPlan && results.selectedPlan ? (
-              <p className="panel-note">
-                <strong>{results.selectedPlan.label}</strong>
-                {" · "}
-                {results.selectedPlan.total_price_min ?? "--"}-{results.selectedPlan.total_price_max ?? "--"} {results.selectedPlan.currency}
-              </p>
-            ) : (
-              <p className="panel-note">{t("doorToDoor.sections.chosenPlanHidden")}</p>
-            )}
-          </section>
 
           {results.realResults.length > 0 ? (
             <section className="d2d-results-section" id="d2d-section-results">
@@ -644,7 +640,7 @@ export function DoorToDoorPanel() {
                             />
                           </div>
                           <span className={`d2d-compare-delta ${delta.delta_price != null && delta.delta_price <= 0 ? "is-better" : "is-worse"}`}>
-                            {formatDelta(delta.delta_price, " €")}
+                            {formatDelta(delta.delta_price, " €", t("doorToDoor.option.deltaUnavailable"))}
                           </span>
                         </div>
                         {/* Duration */}
@@ -657,7 +653,7 @@ export function DoorToDoorPanel() {
                             />
                           </div>
                           <span className={`d2d-compare-delta ${delta.delta_duration_minutes != null && delta.delta_duration_minutes <= 0 ? "is-better" : "is-worse"}`}>
-                            {formatDelta(delta.delta_duration_minutes, "m")}
+                            {formatDelta(delta.delta_duration_minutes, "m", t("doorToDoor.option.deltaUnavailable"))}
                           </span>
                         </div>
                         {/* Buffer */}
@@ -670,7 +666,7 @@ export function DoorToDoorPanel() {
                             />
                           </div>
                           <span className={`d2d-compare-delta ${delta.delta_buffer_minutes != null && delta.delta_buffer_minutes >= 0 ? "is-better" : "is-worse"}`}>
-                            {formatDelta(delta.delta_buffer_minutes, "m")}
+                            {formatDelta(delta.delta_buffer_minutes, "m", t("doorToDoor.option.deltaUnavailable"))}
                           </span>
                         </div>
                         <div className="d2d-compare-bar-group">
@@ -682,7 +678,7 @@ export function DoorToDoorPanel() {
                             />
                           </div>
                           <span className={`d2d-compare-delta ${delta.delta_transfer_count != null && delta.delta_transfer_count <= 0 ? "is-better" : "is-worse"}`}>
-                            {formatDelta(delta.delta_transfer_count, "")}
+                            {formatDelta(delta.delta_transfer_count, "", t("doorToDoor.option.deltaUnavailable"))}
                           </span>
                         </div>
                       </div>
@@ -693,8 +689,37 @@ export function DoorToDoorPanel() {
             </section>
           ) : null}
 
+          <section id="d2d-section-sources" className="panel panel-soft d2d-chosen-trust">
+            <div className="d2d-section-head">
+              <h2>{t("doorToDoor.sections.sources")}</h2>
+              <button
+                type="button"
+                className={`status-pill ${results.trustTone}`}
+                onClick={() => setShowTrustModal(true)}
+                aria-haspopup="dialog"
+                aria-controls="d2d-trust-modal"
+                aria-label={t("doorToDoor.sections.trustModalTrigger")}
+              >
+                {results.trustTone === "success" ? <ShieldCheck size={14} aria-hidden="true" /> : <ShieldAlert size={14} aria-hidden="true" />}
+                <span>{results.trustTone === "success" ? t("doorToDoor.sections.trustConfirmed") : t("doorToDoor.sections.trustEstimated")}</span>
+              </button>
+            </div>
+            <p className="panel-note"><strong>{t("doorToDoor.sections.providersStatus")}:</strong> {t("doorToDoor.sections.providersMix", { enabled: mapHub.providerStatusSummary.enabled, real: mapHub.providerStatusSummary.realEnabled, estimate: mapHub.providerStatusSummary.estimateEnabled })}</p>
+            {results.hasChosenPlan && results.selectedPlan ? (
+              <p className="panel-note">
+                <strong>{results.selectedPlan.label}</strong>
+                {" · "}
+                {results.selectedPlan.total_price_min != null && results.selectedPlan.total_price_max != null
+                  ? <>{results.selectedPlan.total_price_min}-{results.selectedPlan.total_price_max} {results.selectedPlan.currency}</>
+                  : t("doorToDoor.option.noPrice")}
+              </p>
+            ) : (
+              <p className="panel-note">{t("doorToDoor.sections.chosenPlanHidden")}</p>
+            )}
+          </section>
+
           {results.realDeeplinks.length > 0 ? (
-            <section className="d2d-results-section">
+            <section id="d2d-section-deeplinks" className="d2d-results-section">
               <div className="d2d-section-head">
                 <h2>{t("doorToDoor.sections.realDeeplinks")}</h2>
                 <span className="status-pill info">{results.realDeeplinks.length}</span>
@@ -767,6 +792,9 @@ export function DoorToDoorPanel() {
                 </div>
                 <strong>{t(card.titleKey)}</strong>
                 <p>{t(card.descriptionKey)}</p>
+                {capability.state !== "available" && capability.why_missing ? (
+                  <p className="d2d-capability-reason">{t(`doorToDoor.mapHub.whyMissing.${capability.why_missing}` as any)}</p>
+                ) : null}
                 <span className={`status-pill ${capabilityStatusClass(capability.state)} d2d-capability-pill`}>
                   {t(`doorToDoor.mapHub.state.${capability.state}`)}
                 </span>
@@ -823,7 +851,7 @@ export function DoorToDoorPanel() {
         </div>
       </section>
 
-      <section className="panel panel-soft d2d-history-panel">
+      <section id="d2d-section-history" className="panel panel-soft d2d-history-panel">
         <div className="action-row d2d-history-action-row">
           <button type="button" className="btn-secondary" onClick={() => history.setShowHistory((current) => !current)} aria-expanded={history.showHistory} aria-controls="d2d-history-content">
             {history.showHistory ? t("doorToDoor.sections.hideHistoryAction") : t("doorToDoor.sections.showHistoryAction")}
@@ -837,7 +865,7 @@ export function DoorToDoorPanel() {
                 {history.history.map((item) => (
                   <article key={item.id}>
                     <strong>{item.origin_label} {"->"} {item.final_destination_label}</strong>
-                    <span>{formatHistoryDate(item.created_at, localeTag)} - {item.recommended_label || t("doorToDoor.history.noRecommendation")} - {item.total_price_min ?? "--"}-{item.total_price_max ?? "--"} EUR</span>
+                    <span>{formatHistoryDate(item.created_at, localeTag)} - {item.recommended_label || t("doorToDoor.history.noRecommendation")} - {item.total_price_min != null && item.total_price_max != null ? `${item.total_price_min}-${item.total_price_max} EUR` : t("doorToDoor.option.noPrice")}</span>
                     {item.chosen_option_id ? <em>{t("doorToDoor.history.chosen")}</em> : null}
                   </article>
                 ))}

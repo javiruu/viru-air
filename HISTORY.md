@@ -1,5 +1,40 @@
 # History
 
+## 2026-06-08 — Cierre del plan puerta-a-puerta (Fases F1–F10)
+
+Se completaron las 10 fases del plan aterrizado para evolucionar `/puerta-a-puerta` con foco en honestidad, contratos y utilidad incremental real. El plan maestro está en `docs/plans/2026-06-08-puerta-a-puerta-plan-aterrizado-real.md`.
+
+### Fases completadas
+
+| Fase | Descripción | Tests añadidos |
+|------|------------|----------------|
+| F1 | Auditoría quirúrgica | — |
+| F2 | Honestidad visual (sin `--:--`, sin precio falso) | +7 |
+| F3 | Consolidación del contrato (`map_capabilities`, warning codes) | +1 backend |
+| F4 | Caso core Watchlist (buffer riesgo, acciones por tramo) | +7 |
+| F5 | Acciones externas honestas (sin "Reservar"/"Comprar") | +3 |
+| F6 | Registry y fuentes explicables (16 claves whyMissing) | +2 |
+| F7 | GTFS/open data útil sin humo (6 warning codes, badge horario público) | +7 |
+| F8 | Composer y alternativas comparables (completeness scoring) | +6 |
+| F9 | UX de utilidad (reordenar pantalla, sticky bar con 7 secciones) | +7 |
+| F10 | QA, docs y rollout (runbook QA, taxonomía de fuentes, límites explícitos) | +5 |
+
+### Archivos modificados (15)
+
+`frontend/src/modules/door-to-door/DoorToDoorPanel.tsx`, `frontend/src/modules/door-to-door/components/DoorToDoorOptionCard.tsx`, `frontend/src/modules/door-to-door/components/DoorToDoorTimeline.tsx`, `frontend/src/modules/door-to-door/components/DoorToDoorStickyBar.tsx`, `frontend/src/modules/door-to-door/decision.ts`, `frontend/src/modules/door-to-door/types.ts`, `frontend/src/modules/door-to-door/hooks/useDoorToDoorResults.ts`, `frontend/src/i18n/domains/doorToDoor.ts`, `frontend/src/styles/screens.css`, `frontend/tests/door-to-door-v1.test.tsx`, `backend/app/door_to_door/services/search_service.py`, `backend/app/door_to_door/schemas.py`, `backend/tests/integration/test_door_to_door.py`, `backend/tests/unit/test_door_to_door_deeplinks.py`
+
+### Docs creados/actualizados
+
+`docs/runbooks/runbook-puerta-a-puerta-qa.md`, `docs/product/door-to-door.md`, `docs/reference/backend/door-to-door-contract.md`, `docs/INDICE_UNICO.md`, `docs/DOCS_INVENTORY.md`
+
+### Verificación final
+
+- Frontend: 61 tests ✅
+- Backend: 74 tests ✅
+- TypeScript: limpio
+
+---
+
 ## 2026-06-05 — Cierre de deudas técnicas hoteleras (3 áreas)
 
 Se abordaron 3 áreas de deuda técnica identificadas en el cierre de Fases A-E:

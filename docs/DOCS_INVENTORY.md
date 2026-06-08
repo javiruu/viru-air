@@ -157,6 +157,7 @@ Entradas vivas retiradas:
 Entradas vivas agregadas:
 
 - `docs/runbooks/runbook-watchlist-quick-search-stabilization.md`
+| docs/runbooks/runbook-puerta-a-puerta-qa.md | runbook | vivo | conservar | docs/runbooks/runbook-puerta-a-puerta-qa.md | Runbook QA especifico de /puerta-a-puerta con taxonomia de fuentes, checklist y comandos de test | docs/runbooks/runbook-puerta-a-puerta-qa.md |
 - `docs/qa/reports/2026-06-05-watchlist-quick-search-stabilization.md`
 
 Entradas vivas actualizadas:
@@ -170,6 +171,29 @@ Entradas vivas actualizadas:
 
 - `docs/ui/UI_CONTRACT_V1.md`
 - `docs/DOCS_INVENTORY.md`
+
+## Actualizacion manual 2026-06-08 (puerta-a-puerta plan aterrizado real)
+
+Entradas vivas agregadas:
+
+- `docs/plans/2026-06-08-puerta-a-puerta-plan-aterrizado-real.md`
+
+Entradas vivas actualizadas:
+
+- `docs/DOCS_INVENTORY.md`
+
+## Actualizacion manual 2026-06-08 (puerta-a-puerta F1-F10 cierre)
+
+Entradas vivas agregadas:
+
+- `docs/runbooks/runbook-puerta-a-puerta-qa.md`
+
+Entradas vivas actualizadas:
+
+- `docs/product/door-to-door.md`
+- `docs/INDICE_UNICO.md`
+- `docs/DOCS_INVENTORY.md`
+- `HISTORY.md`
 
 ## Actualizacion manual 2026-06-05 (hoteles post-cierre Fases A-E)
 
@@ -299,6 +323,7 @@ Entradas vivas retiradas:
 | docs/overview/start-here.md | overview | vivo | conservar | docs/overview/start-here.md | Onboarding y mapa vivo del proyecto | docs/overview/start-here.md |
 | docs/plans/README.md | plan | vivo | conservar | docs/plans/README.md | Gu?a de organizaci?n de planes | docs/plans/README.md |
 | docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md | plan | vivo | conservar | docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md | Plan de 5 fases (A-E) de correcciones post-cierre para el modulo /hoteles | docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md |
+| docs/plans/2026-06-08-puerta-a-puerta-plan-aterrizado-real.md | plan | vivo | conservar | docs/plans/2026-06-08-puerta-a-puerta-plan-aterrizado-real.md | Plan operativo aterrizado para evolucionar `/puerta-a-puerta` con foco en honestidad, contratos y utilidad incremental real | docs/plans/2026-06-08-puerta-a-puerta-plan-aterrizado-real.md |
 | docs/plans/completed/2026-02-18-fusion-watchlist-historico-plan.md | plan | hist?rico | conservar | docs/plans/completed/2026-02-18-fusion-watchlist-historico-plan.md | Plan fechado ya completado o hist?rico | ninguna; material hist?rico |
 | docs/plans/completed/2026-02-19-account-interface-i18n-plan.md | plan | hist?rico | conservar | docs/plans/completed/2026-02-19-account-interface-i18n-plan.md | Plan fechado ya completado o hist?rico | ninguna; material hist?rico |
 | docs/plans/completed/2026-02-19-account-system-redesign-design.md | plan | hist?rico | conservar | docs/plans/completed/2026-02-19-account-system-redesign-design.md | Plan fechado ya completado o hist?rico | ninguna; material hist?rico |

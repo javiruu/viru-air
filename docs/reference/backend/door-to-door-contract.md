@@ -1,7 +1,7 @@
 # Door-to-door API contract
 
 **Estado:** vivo
-**Última revisión:** 2026-05-21
+**Última revisión:** 2026-06-08
 **Fuente de verdad:** sí
 **Área:** backend
 
@@ -85,7 +85,7 @@ También acepta alias `watchId` en el payload para compatibilidad frontend.
 }
 ```
 
-`map_capabilities` es opcional para mantener compatibilidad con clientes antiguos. Si no llega en payload, frontend aplica fallback seguro (`planned`) por capacidad.
+`map_capabilities` se serializa desde el backend desde V1.3 con las 10 claves canónicas. El frontend lo usa como fuente primaria; si no llega en payload (clientes antiguos), aplica fallback seguro (`planned`) por capacidad.
 
 Claves canonicas de capacidades:
 

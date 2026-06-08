@@ -3,8 +3,8 @@ import React from "react";
 import { useI18n } from "@/i18n";
 import type { DoorToDoorFlight, DoorToDoorOption } from "@/modules/door-to-door/types";
 
-function shortTime(value?: string | null) {
-  if (!value) return "--";
+function shortTime(value?: string | null, fallback?: string) {
+  if (!value) return fallback ?? "--";
   return new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
 
@@ -26,7 +26,7 @@ export function DoorToDoorTimeline({ option, flight }: { option: DoorToDoorOptio
               <span className={`d2d-timeline-node d2d-mode-${leg.mode}`} aria-hidden="true" />
               <div>
                 <strong>{leg.from} → {leg.to}</strong>
-                <p>{leg.mode === "flight" ? t("doorToDoor.timeline.flight") : t("doorToDoor.timeline.ground")} · {leg.duration_minutes ?? "--"} min · {shortTime(leg.departure_at)} - {shortTime(leg.arrival_at)}</p>
+                <p>{leg.mode === "flight" ? t("doorToDoor.timeline.flight") : t("doorToDoor.timeline.ground")} · {leg.duration_minutes != null ? `${leg.duration_minutes} min` : t("doorToDoor.option.durationUnconfirmed")} · {shortTime(leg.departure_at, t("doorToDoor.option.scheduleUnconfirmed"))} - {shortTime(leg.arrival_at, t("doorToDoor.option.scheduleUnconfirmed"))}</p>
               </div>
             </li>
           ))}

@@ -1,5 +1,6 @@
 ﻿import React from "react";
 
+import { ExternalLink } from "lucide-react";
 import { useI18n } from "@/i18n";
 import type { DecisionBadge, DecisionReason, DoorToDoorOption } from "@/modules/door-to-door/types";
 
@@ -36,6 +37,11 @@ export function DoorToDoorOptionCard({
   const hasDuration = option.total_duration_minutes != null;
   const hasPrice = option.total_price_min != null && option.total_price_max != null;
   const hasGoogleRoutes = option.sources.some((source) => source.provider === "google_routes");
+  const hasGtfsSchedule = option.legs.some((leg) => leg.type === "ground" && leg.source_type === "open_data" && leg.provider === "gtfs_transit" && leg.departure_at != null && leg.arrival_at != null);
+  const isTightBuffer = option.airport_buffer_minutes != null && option.airport_buffer_minutes < 90;
+  const legActions = option.legs
+    .flatMap((leg) => (leg.actions ?? []).filter((a) => a.kind !== "directions"))
+    .slice(0, 4);
 
   function statusBadge() {
     if (isRealResult) return <span className="status-pill success d2d-badge">{t("doorToDoor.option.realResult")}</span>;
@@ -95,7 +101,13 @@ export function DoorToDoorOptionCard({
 
         <div className="d2d-option-meta">
           {hasGoogleRoutes ? <span className="status-pill info d2d-badge">{t("doorToDoor.option.realDuration")}</span> : null}
-          {hasDuration ? <span>{t("doorToDoor.option.buffer", { minutes: option.airport_buffer_minutes ?? "--" })}</span> : null}
+          {hasGtfsSchedule ? <span className="status-pill success d2d-badge">{t("doorToDoor.option.openDataSchedule")}</span> : null}
+          {hasDuration ? (
+            <span>
+              {t("doorToDoor.option.buffer", { minutes: option.airport_buffer_minutes != null ? option.airport_buffer_minutes : t("doorToDoor.option.bufferUnconfirmed") })}
+              {!compact && isTightBuffer ? <span className="status-pill warning d2d-badge" style={{ marginLeft: 6 }}>{t("doorToDoor.option.bufferRiskLabel")}</span> : null}
+            </span>
+          ) : null}
           <span>{t("doorToDoor.option.transfers", { count: option.transfer_count })}</span>
           {option.score != null ? <span>{t("doorToDoor.option.score", { score: option.score })}</span> : null}
           {hasPrice ? (
@@ -125,6 +137,18 @@ export function DoorToDoorOptionCard({
             return <span key={`${option.id}-${source.provider}`} className={`status-pill ${tone} d2d-badge`}>{sourceLabel}</span>;
           })}
         </div>
+        {/* Per-segment external actions */}
+        {!compact && legActions.length > 0 ? (
+          <div className="d2d-option-segment-actions">
+            <span className="panel-note">{t("doorToDoor.option.segmentActions")}</span>
+            {legActions.map((action) => (
+              <a key={action.id} className="btn-secondary btn-compact" href={action.url} target="_blank" rel="noreferrer">
+                <ExternalLink size={12} aria-hidden="true" /> {action.label}
+              </a>
+            ))}
+          </div>
+        ) : null}
+
       </div>
 
       {/* Actions */}
