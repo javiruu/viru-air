@@ -148,7 +148,6 @@ class GoOptiDeepLinkProvider(DoorToDoorProvider):
                 price_per_person_max=None,
                 currency="EUR",
                 total_duration_minutes=None,
-                risk_level="unknown",
                 score=None,
                 transfer_count=2,
                 airport_buffer_minutes=None,

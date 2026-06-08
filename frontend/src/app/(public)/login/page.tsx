@@ -104,6 +104,9 @@ function LoginContent() {
         password={password}
         error={error}
         fieldError={fieldError}
+        secondaryHref="/register"
+        secondaryIntro={t("public.auth.loginSwitchIntro")}
+        secondaryLabel={t("public.auth.loginSwitchAction")}
         t={t}
         onEmailChange={setEmail}
         onPasswordChange={setPassword}

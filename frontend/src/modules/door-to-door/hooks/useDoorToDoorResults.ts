@@ -115,7 +115,6 @@ export function useDoorToDoorResults(
         optionSummary: {
           total_price_min: option.total_price_min,
           total_price_max: option.total_price_max,
-          risk_level: option.risk_level,
           total_duration_minutes: option.total_duration_minutes,
         },
       });

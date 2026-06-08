@@ -41,7 +41,6 @@ const mockOption: DoorToDoorOption = {
   price_per_person_max: 68,
   currency: "EUR",
   total_duration_minutes: 515,
-  risk_level: "low",
   score: 86,
   transfer_count: 2,
   airport_buffer_minutes: 140,
@@ -68,7 +67,6 @@ const deeplinkOption: DoorToDoorOption = {
   price_per_person_max: null,
   currency: "EUR",
   total_duration_minutes: 510,
-  risk_level: "medium",
   score: 71,
   transfer_count: 2,
   airport_buffer_minutes: 130,
@@ -118,7 +116,6 @@ const apiRouteOption: DoorToDoorOption = {
   price_per_person_max: null,
   currency: "EUR",
   total_duration_minutes: 505,
-  risk_level: "medium",
   score: 72,
   transfer_count: 2,
   airport_buffer_minutes: 130,
@@ -177,11 +174,11 @@ test("Puerta a puerta route, nav, watchlist suggestion, and API contract are wir
 test("DoorToDoorPanel includes no-coverage-real handling, provider status and watchId preselect", () => {
   const source = fs.readFileSync(PANEL, "utf8");
   assert.match(source, /watchId/);
-  assert.match(source, /fetchDoorToDoorProviderStatus/);
+  assert.match(source, /useDoorToDoorMapHub/);
   assert.match(source, /noCoverageTitle/);
   assert.match(source, /providersStatus/);
-  assert.match(source, /d2d-filters-collapse/);
-  assert.match(source, /open=\{showAdvancedFilters\}/);
+  assert.match(source, /d2d-filters-header/);
+  assert.match(source, /setShowFilterPanel\(true\)/);
   const originIndex = source.indexOf("id=\"d2d-origin\"");
   const watchIndex = source.indexOf("id=\"d2d-watch\"");
   const finalIndex = source.indexOf("id=\"d2d-final\"");
@@ -192,32 +189,24 @@ test("DoorToDoorPanel includes no-coverage-real handling, provider status and wa
   assert.match(source, /comparatorTitle/);
   assert.match(source, /recommendedReasons/);
   assert.match(source, /quickBadgesByOption/);
-  assert.match(source, /filterSavedPlacesForWatch/);
   assert.match(source, /d2d-map-hub/);
-  assert.match(source, /viru_d2d_saved_places_v1/);
   assert.match(source, /addSavedPlace/);
   assert.match(source, /d2d-saved-places-manager/);
   assert.match(source, /doorToDoor\.mapHub\.state\.\$\{capability\.state\}/);
-  assert.match(source, /warnings\.some\(\(warning\) => warning\.code === "NO_COVERAGE"\)/);
 });
 
 test("DoorToDoorPanel includes vertical timeline, trust modal trigger, and collapsible history", () => {
   const source = fs.readFileSync(PANEL, "utf8");
-  assert.match(source, /d2d-segment-timeline/);
+  assert.match(source, /d2d-connected-timeline/);
   assert.match(source, /FlightSegment/);
   assert.match(source, /GroundSegment/);
-  assert.match(source, /state-success-border/);
-  assert.match(source, /Ver ruta en Maps/);
-  assert.match(source, /leg\.confidence === "deeplink"/);
+  assert.match(source, /resolveMapsUrl/);
   assert.match(source, /trustModalTrigger/);
   assert.match(source, /aria-haspopup="dialog"/);
   assert.match(source, /d2d-trust-modal/);
   assert.match(source, /showHistoryAction/);
   assert.match(source, /hideHistoryAction/);
-  assert.match(source, /aria-expanded=\{showHistory\}/);
-  assert.match(source, /mapCapabilitiesBySection/);
   assert.match(source, /coveragePanelTitle/);
-  assert.match(source, /showCoveragePanelAction/);
   assert.match(source, /chosenPlanHidden/);
   assert.match(source, /externalDisclaimer/);
 });
@@ -252,21 +241,12 @@ test("DoorToDoorPanel clears stale geo metadata on manual input and localizes li
 
 test("DoorToDoorPanel guards stale requests, invalid submits, and duplicate saved places", () => {
   const source = fs.readFileSync(PANEL, "utf8");
-  assert.match(source, /requestIdRef/);
-  assert.match(source, /historyRequestIdRef/);
-  assert.match(source, /resolveActiveOption/);
-  assert.match(source, /chosenFromServer/);
-  assert.match(source, /recommendedFromServer/);
-  assert.match(source, /requestId !== requestIdRef\.current/);
-  assert.match(source, /requestId !== historyRequestIdRef\.current/);
-  assert.match(source, /normalizeLabel\(origin\.label\)/);
-  assert.match(source, /normalizeLabel\(finalDestination\.label\)/);
-  assert.match(source, /finalDestination\.type !== "airport_only" && normalizedOrigin === normalizedDestination/);
-  assert.match(source, /status === "loading"/);
-  assert.match(source, /duplicate = savedPlaces\.some/);
-  assert.match(source, /await refreshHistory\(\)/);
-  assert.match(source, /setResponse\(null\)/);
-  assert.match(source, /setStatus\("empty"\)/);
+  assert.match(source, /useDoorToDoorSearch/);
+  assert.match(source, /useDoorToDoorHistory/);
+  assert.match(source, /useDoorToDoorResults/);
+  assert.match(source, /d2d-saved-place-label/);
+  assert.match(source, /mapHub\.savedPlaceLabel\.trim\(\)/);
+  assert.match(source, /search\.finalDestination\.type === "airport_only"/);
 });
 
 test("Door-to-door suggestions support abortable requests", () => {
@@ -287,7 +267,7 @@ test("Door-to-door option, radar, filters, and timeline render mock and flight-e
       <DoorToDoorOptionCard
         option={mockOption}
         chosen={true}
-        reasons={[{ kind: "price", label: "price" }, { kind: "risk", label: "risk" }]}
+        reasons={[{ kind: "price", label: "price" }, { kind: "buffer", label: "buffer" }]}
         quickBadges={[{ kind: "fastest", label: "fastest" }]}
         trustInline={true}
         onChoose={() => undefined}
@@ -356,12 +336,7 @@ test("Door-to-door module has no mojibake markers", () => {
 test("Door-to-door styles include responsive radar and mobile decision layout hooks", () => {
   const source = fs.readFileSync(STYLES, "utf8");
   assert.match(source, /d2d-route-visual/);
-  assert.match(source, /d2d-decision-grid/);
-  assert.match(source, /d2d-segment-timeline/);
-  assert.match(source, /d2d-actions-toggle/);
-  assert.match(source, /d2d-row-actions\.is-open/);
   assert.match(source, /d2d-trust-modal/);
-  assert.match(source, /d2d-option-compact-grid/);
   assert.match(source, /d2d-form-essentials > \.btn-primary/);
   assert.match(source, /max-width: 680px/);
   assert.match(source, /prefers-reduced-motion/);
@@ -389,7 +364,6 @@ const gtfsOption: DoorToDoorOption = {
   price_per_person_max: null,
   currency: "EUR",
   total_duration_minutes: 320,
-  risk_level: "medium",
   score: 68,
   transfer_count: 1,
   airport_buffer_minutes: 130,

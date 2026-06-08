@@ -367,9 +367,6 @@ class DoorToDoorSearchService:
             status_rank = status_order.get(item.status, 2)
             if sort_by == "cheapest":
                 return (status_rank, item.total_price_min is None, item.total_price_min or 10_000)
-            if sort_by == "lowest_risk":
-                risk_order = {"low": 0, "medium": 1, "unknown": 2, "high": 3}
-                return (status_rank, risk_order[item.risk_level], -(item.score or 0))
             if sort_by == "fastest":
                 has_duration = item.total_duration_minutes is None
                 return (status_rank, has_duration, item.total_duration_minutes or 999_999)
@@ -405,7 +402,6 @@ class DoorToDoorSearchService:
         summary_payload = {
             "recommended_option_id": summary.recommended_option_id,
             "cheapest_option_id": summary.cheapest_option_id,
-            "lowest_risk_option_id": summary.lowest_risk_option_id,
             "options_count": len(options),
             "recommended": recommended.model_dump(mode="json", by_alias=True) if recommended else None,
         }

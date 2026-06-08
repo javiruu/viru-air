@@ -328,7 +328,6 @@ When duplicates compete, the winner is selected by:
 | `soft_filters_weight` | soft | ranking | scales soft penalties | scales soft penalties | affects seed/deviation penalties |
 | `include_stops`, `max_stops` | unsupported (legacy_partial) | n/a | warning `strict_filter_not_enforceable` | warning `degraded_filter_application` | provider data not reliable in quick mode |
 | `duration_max_min` | unsupported | n/a | warning `strict_filter_not_enforceable` | warning `degraded_filter_application` | provider missing duration field |
-| `risk_allowed` | unsupported | n/a | warning `strict_filter_not_enforceable` | warning `degraded_filter_application` | risk model pending |
 
 ## Observability and debug
 - Every search emits `meta.query_trace_id`.

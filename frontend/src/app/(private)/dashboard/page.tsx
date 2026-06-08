@@ -20,7 +20,7 @@ type BackendBanner = {
   message: string;
 };
 
-type SuggestionBadgeType = "price" | "schedule" | "altAirport" | "risk";
+type SuggestionBadgeType = "price" | "schedule" | "altAirport";
 
 type DashboardSuggestion = {
   id: string;
@@ -491,7 +491,7 @@ export default function DashboardPage() {
                     {noteActiveId ? t("dashboard.notes.actions.saveChanges") : t("dashboard.notes.actions.save")}
                   </button>
                   {noteActiveId ? (
-                    <button className="btn-ghost" type="button" onClick={() => handleDeleteNote(noteActiveId)}>
+                    <button className="btn-danger" type="button" onClick={() => handleDeleteNote(noteActiveId)}>
                       {t("dashboard.notes.actions.delete")}
                     </button>
                   ) : null}

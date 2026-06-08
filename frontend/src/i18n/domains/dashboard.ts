@@ -90,12 +90,12 @@ export const dashboardEs = {
       price: "precio",
       schedule: "horario",
       altAirport: "aeropuerto alternativo",
-      risk: "riesgo escala",
+      buffer: "margen",
     },
     fallback: [
       {
         title: "Amplia 60 min la ventana de salida",
-        detail: "Podrías mejorar precio medio sin subir riesgo.",
+        detail: "Podrías mejorar precio medio manteniendo un margen parecido.",
         type: "horario",
       },
       {
@@ -105,12 +105,12 @@ export const dashboardEs = {
       },
     ],
     fallbackScheduleTitle: "Amplia 60 min la ventana de salida",
-    fallbackScheduleDetail: "Podrías mejorar precio medio sin subir riesgo.",
+    fallbackScheduleDetail: "Podrías mejorar precio medio manteniendo un margen parecido.",
     fallbackAirportTitle: "Evalúa aeropuerto alternativo",
     fallbackAirportDetail: "Salida cercana con mejor puntualidad y precio.",
     secondaryTitle: "{origin} → {destination}: ajusta filtros",
     secondaryDetailSchedule: "Permite 1 escala para abrir más opciones.",
-    secondaryDetailRisk: "Riesgo alto detectado en conexiones cortas.",
+    secondaryDetailConnections: "Conexiones cortas detectadas; revisa margen y cambios.",
     listItem: "{title}",
   },
   alerts: {
@@ -308,12 +308,12 @@ export const dashboardEn = {
       price: "price",
       schedule: "schedule",
       altAirport: "alt. airport",
-      risk: "risk",
+      buffer: "buffer",
     },
     fallback: [
       {
         title: "Extend departure window by 60 min",
-        detail: "You may improve the average price without raising risk.",
+        detail: "You may improve the average price while keeping a similar buffer.",
         type: "schedule",
       },
       {
@@ -323,12 +323,12 @@ export const dashboardEn = {
       },
     ],
     fallbackScheduleTitle: "Extend departure window by 60 min",
-    fallbackScheduleDetail: "You may improve the average price without raising risk.",
+    fallbackScheduleDetail: "You may improve the average price while keeping a similar buffer.",
     fallbackAirportTitle: "Evaluate an alternate airport",
     fallbackAirportDetail: "Nearby departure with better punctuality and price.",
     secondaryTitle: "{origin} → {destination}: adjust filters",
     secondaryDetailSchedule: "Allow 1 stop to open more options.",
-    secondaryDetailRisk: "High risk detected on short connections.",
+    secondaryDetailConnections: "Short connections detected; review buffer and transfers.",
     listItem: "{title}",
   },
   alerts: {

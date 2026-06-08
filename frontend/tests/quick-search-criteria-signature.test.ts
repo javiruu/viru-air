@@ -19,7 +19,6 @@ function createBaseInput(): CriteriaSignatureInput {
     includeStops: true,
     maxStops: 1,
     durationMax: "",
-    riskFilter: "all",
     radiusKm: 150,
     includeNearbyOrigins: false,
     includeNearbyDestinations: false,
@@ -49,4 +48,3 @@ test("criteria signature stays stable after applying exclusion draft tokens", ()
 
   assert.equal(preSubmit, postSubmit);
 });
-

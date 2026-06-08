@@ -30,7 +30,6 @@ export type SearchResultRaw = {
   duration_total?: number | null;
   duration_total_min?: number | null;
   stop_count?: number | null;
-  risk_label?: string | null;
   minutes_buffer?: number | null;
   distance_km_ground?: number | null;
   ranking_score?: number | null;

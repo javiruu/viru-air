@@ -10,9 +10,7 @@ type QuickSearchScreenStateArgs = {
   priceMin: string;
   priceMax: string;
   durationMax: string;
-  riskFilter: "all" | "low" | "medium" | "high";
-  sortBy: "ranking" | "price" | "duration" | "risk" | "freshness";
-  showHighRisk: boolean;
+  sortBy: "ranking" | "price" | "duration" | "freshness";
   filtersNotice: string[];
   filtersWarningCodes: string[];
   filtersMeta: SearchFilters | null;
@@ -39,9 +37,7 @@ export function useQuickSearchScreenState({
   priceMin,
   priceMax,
   durationMax,
-  riskFilter,
   sortBy,
-  showHighRisk,
   filtersNotice,
   filtersWarningCodes,
   filtersMeta,
@@ -63,34 +59,19 @@ export function useQuickSearchScreenState({
   tWarn,
 }: QuickSearchScreenStateArgs) {
   const normalizedResults = useMemo(() => normalizeQuickSearchResults(results), [results]);
-  const { visibleResults, hiddenHighRiskResults } = useMemo(() => {
+  const visibleResults = useMemo(() => {
     const min = parseNumericInput(priceMin, { min: 0 });
     const max = parseNumericInput(priceMax, { min: 0 });
     const durMax = parseNumericInput(durationMax, { min: 1 });
     let list = normalizedResults.filter((item) => {
-      if (riskFilter !== "all" && item.risk_label !== riskFilter) {
-        if (riskFilter !== "high" && item.risk_label === "high") return true;
-        return false;
-      }
       if (min !== null && item.price_total !== undefined && item.price_total < min) return false;
       if (max !== null && item.price_total !== undefined && item.price_total > max) return false;
       if (durMax !== null && item.duration_total_min != null && item.duration_total_min > durMax) return false;
       return true;
     });
-    const hiddenHighRisk = list.filter((item) => item.risk_label === "high" && riskFilter !== "high");
-    if (!showHighRisk && riskFilter !== "high") {
-      list = list.filter((item) => item.risk_label !== "high");
-    }
-    const riskScore = (label?: string | null) => {
-      if (label === "low") return 1;
-      if (label === "medium") return 2;
-      if (label === "high") return 3;
-      return 9;
-    };
     list = list.slice().sort((a, b) => {
       if (sortBy === "price") return (a.price_total ?? 0) - (b.price_total ?? 0);
       if (sortBy === "duration") return (a.duration_total ?? 99999) - (b.duration_total ?? 99999);
-      if (sortBy === "risk") return riskScore(a.risk_label) - riskScore(b.risk_label);
       if (sortBy === "freshness") {
         const aTs = a.freshness_ts ? new Date(a.freshness_ts).getTime() : 0;
         const bTs = b.freshness_ts ? new Date(b.freshness_ts).getTime() : 0;
@@ -98,8 +79,8 @@ export function useQuickSearchScreenState({
       }
       return (b.ranking_score ?? 0) - (a.ranking_score ?? 0);
     });
-    return { visibleResults: list, hiddenHighRiskResults: hiddenHighRisk };
-  }, [normalizedResults, priceMin, priceMax, durationMax, riskFilter, sortBy, showHighRisk]);
+    return list;
+  }, [normalizedResults, priceMin, priceMax, durationMax, sortBy]);
 
   const warningSeverity = useMemo(() => {
     const neutralCodes = new Set([
@@ -290,7 +271,6 @@ export function useQuickSearchScreenState({
   return {
     durationMaxNumber,
     visibleResults,
-    hiddenHighRiskResults,
     warningSeverity,
     groupedNeutralWarnings,
     groupedCriticalWarnings,

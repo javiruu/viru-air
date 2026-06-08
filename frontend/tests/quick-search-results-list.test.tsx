@@ -19,7 +19,6 @@ function buildResult(): SearchResult {
     source: "ryanair",
     duration_total: 95,
     duration_total_min: 95,
-    risk_label: "low",
     ranking_score: 0.84,
     freshness_ts: "2026-06-01T08:00:00Z",
     stale_data: false,
@@ -35,7 +34,6 @@ function t(key: string) {
     resultsColRoute: "Ruta",
     resultsColPrice: "Precio",
     resultsColDuration: "Duracion",
-    resultsColRisk: "Riesgo",
     resultsColFreshness: "Frescura",
     save: "Guardar",
     detailsToggle: "Ver detalle",
@@ -48,7 +46,6 @@ function t(key: string) {
     deepLink: "Abrir en Ryanair",
     detailsAlt: "Alternativos",
     detailsWindow: "Ventana",
-    detailsRisk: "Riesgo",
     detailsScore: "Score",
     detailsBuffer: "Buffer",
     scoreHint: "Heuristica",
@@ -66,8 +63,6 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
       expandedRows={{}}
       openRowMenuId={null}
       deeplinkUrl="https://www.ryanair.com/es/es/trip/flights/select?originIata=MAD&destinationIata=LIS&dateOut=2026-06-01&adults=1"
-      hiddenHighRiskResults={[]}
-      showHighRisk={false}
       origin="MAD"
       destination="DUB"
       radiusKm={150}
@@ -79,11 +74,10 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
       t={t}
       formatMoney={(value, currency) => `${currency || "EUR"} ${value}`}
       formatScore={(value) => value.toFixed(2)}
-      formatRiskLabel={(label) => label || "--"}
       formatFreshness={(value) => value || "--"}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
-      getResultTags={() => [{ key: "risk", label: "bajo riesgo", tone: "low" }]}
+      getResultTags={() => [{ key: "buffer", label: "margen amplio", tone: "low" }]}
       addToWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
@@ -92,7 +86,6 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
       setCopyModalOpen={() => undefined}
       closeRowMenu={() => undefined}
       onTrackOpenRyanair={() => undefined}
-      onToggleHighRisk={() => undefined}
       onTrackRowOverflow={() => undefined}
       onTrackCopyParams={() => undefined}
     />,
@@ -116,8 +109,6 @@ test("QuickSearchResultsList accepts official relative deeplink variants and rej
       expandedRows={{}}
       openRowMenuId={"res-1"}
       deeplinkUrl=""
-      hiddenHighRiskResults={[]}
-      showHighRisk={false}
       origin="MAD"
       destination="DUB"
       radiusKm={150}
@@ -129,11 +120,10 @@ test("QuickSearchResultsList accepts official relative deeplink variants and rej
       t={t}
       formatMoney={(value, currency) => `${currency || "EUR"} ${value}`}
       formatScore={(value) => value.toFixed(2)}
-      formatRiskLabel={(label) => label || "--"}
       formatFreshness={(value) => value || "--"}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
-      getResultTags={() => [{ key: "risk", label: "bajo riesgo", tone: "low" }]}
+      getResultTags={() => [{ key: "buffer", label: "margen amplio", tone: "low" }]}
       addToWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
@@ -142,7 +132,6 @@ test("QuickSearchResultsList accepts official relative deeplink variants and rej
       setCopyModalOpen={() => undefined}
       closeRowMenu={() => undefined}
       onTrackOpenRyanair={() => undefined}
-      onToggleHighRisk={() => undefined}
       onTrackRowOverflow={() => undefined}
       onTrackCopyParams={() => undefined}
     />,
@@ -157,8 +146,6 @@ test("QuickSearchResultsList accepts official relative deeplink variants and rej
       expandedRows={{}}
       openRowMenuId={"res-1"}
       deeplinkUrl=""
-      hiddenHighRiskResults={[]}
-      showHighRisk={false}
       origin="MAD"
       destination="DUB"
       radiusKm={150}
@@ -170,11 +157,10 @@ test("QuickSearchResultsList accepts official relative deeplink variants and rej
       t={t}
       formatMoney={(value, currency) => `${currency || "EUR"} ${value}`}
       formatScore={(value) => value.toFixed(2)}
-      formatRiskLabel={(label) => label || "--"}
       formatFreshness={(value) => value || "--"}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
-      getResultTags={() => [{ key: "risk", label: "bajo riesgo", tone: "low" }]}
+      getResultTags={() => [{ key: "buffer", label: "margen amplio", tone: "low" }]}
       addToWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
@@ -183,7 +169,6 @@ test("QuickSearchResultsList accepts official relative deeplink variants and rej
       setCopyModalOpen={() => undefined}
       closeRowMenu={() => undefined}
       onTrackOpenRyanair={() => undefined}
-      onToggleHighRisk={() => undefined}
       onTrackRowOverflow={() => undefined}
       onTrackCopyParams={() => undefined}
     />,

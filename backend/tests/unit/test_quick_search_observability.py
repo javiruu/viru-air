@@ -22,7 +22,6 @@ class QuickSearchObservabilityTests(unittest.TestCase):
                 "include_stops": True,
                 "max_stops": 1,
                 "duration_max_min": 240,
-                "risk_allowed": "low",
             },
             "execution": {"max_pairs": 4, "max_requests": 4, "timeout_ms": 2000, "concurrency_limit": 2},
         }

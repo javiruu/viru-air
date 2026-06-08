@@ -68,19 +68,19 @@ export default function HelpBase(props: HelpBaseProps) {
           ) : null}
           {props.context === "public" ? (
             <>
-              <Link className="btn-ghost" href="/login">
+              <Link className="btn-secondary" href="/login">
                 {props.publicLoginLabel ?? "Login"}
               </Link>
-              <Link className="btn-primary" href="/register">
+              <Link className="btn-ghost" href="/register">
                 {props.publicRegisterLabel ?? "Register"}
               </Link>
             </>
           ) : (
             <>
-              <Link className="btn-ghost" href="/soporte/feedback?type=bug">
+              <Link className="btn-secondary" href="/soporte/feedback?type=bug">
                 {props.privateFeedbackLabel ?? "Report issue"}
               </Link>
-              <Link className="btn-primary" href="/suggestions">
+              <Link className="btn-ghost" href="/suggestions">
                 {props.privateSuggestionsLabel ?? "Suggestions"}
               </Link>
             </>

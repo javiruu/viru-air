@@ -479,7 +479,7 @@ export default function PoliciesPage() {
 
       <div className="policies-floating">
         <a href="#policies-top" className="btn-ghost" aria-label="Subir al inicio">Subir</a>
-        <a href="#indice-navegable" className="btn-primary" aria-label="Ir al indice">Índice</a>
+        <a href="#indice-navegable" className="btn-ghost" aria-label="Ir al indice">Índice</a>
       </div>
     </main>
   );

@@ -68,7 +68,6 @@ También acepta alias `watchId` en el payload para compatibilidad frontend.
   "summary": {
     "recommended_option_id": "option_best",
     "cheapest_option_id": "option_cheap",
-    "lowest_risk_option_id": "option_safe",
     "history_id": "history_123",
     "chosen_option_id": null
   },

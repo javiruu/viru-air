@@ -21,7 +21,6 @@ Defenses:
 from datetime import datetime, timedelta
 
 from app.door_to_door.domain.models import ProviderHealth
-from app.door_to_door.domain.risk import calculate_risk_level
 from app.door_to_door.domain.scoring import score_itinerary
 from app.door_to_door.providers.base import DoorToDoorProvider, DoorToDoorProviderQuery
 from app.door_to_door.schemas import (
@@ -435,13 +434,11 @@ class GtfsTransitProvider(DoorToDoorProvider):
             else "Horario según feed público GTFS. Precio y compra no confirmados."
         )
 
-        risk = calculate_risk_level(airport_buffer, transfer_count, confidence)
         score = score_itinerary(
             price_midpoint=None,
             duration_minutes=total_duration,
             airport_buffer_minutes=airport_buffer,
             transfer_count=transfer_count,
-            risk_level=risk,
             confidence=confidence,
             uncomfortable_hour=outbound.departure_at.hour < 6 if outbound else False,
             luggage_penalty=0,
@@ -458,7 +455,6 @@ class GtfsTransitProvider(DoorToDoorProvider):
             price_per_person_max=None,
             currency="EUR",
             total_duration_minutes=total_duration,
-            risk_level=risk,
             score=score,
             transfer_count=transfer_count,
             airport_buffer_minutes=airport_buffer,

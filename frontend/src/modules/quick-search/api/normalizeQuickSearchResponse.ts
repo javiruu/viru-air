@@ -36,7 +36,7 @@ function extractRankingScore(item: SearchResultRaw): number | null {
 function normalizeProviderStatus(
   providerStatus: SearchResponseRaw["meta"] extends infer T
     ? T extends { provider_status?: infer P }
-      ? P
+      ? P | undefined
       : never
     : never,
 ) {
@@ -94,7 +94,6 @@ export function normalizeQuickSearchResults(results: SearchResultRaw[]): SearchR
     duration_total: toFiniteNumber(item.duration_total),
     duration_total_min: toFiniteNumber(item.duration_total_min, toFiniteNumber(item.duration_total)),
     stop_count: toFiniteNumber(item.stop_count),
-    risk_label: item.risk_label ?? null,
     minutes_buffer: toFiniteNumber(item.minutes_buffer),
     distance_km_ground: toFiniteNumber(item.distance_km_ground),
     ranking_score: extractRankingScore(item),

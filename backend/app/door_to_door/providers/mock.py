@@ -116,7 +116,6 @@ class MockDoorToDoorProvider(DoorToDoorProvider):
                 price_per_person_max=None,
                 currency="EUR",
                 total_duration_minutes=None,
-                risk_level="unknown",
                 score=None,
                 transfer_count=1 if airport_only else 2,
                 airport_buffer_minutes=prefs.min_airport_buffer_minutes,

@@ -6,7 +6,6 @@ from fastapi.testclient import TestClient
 from app.infrastructure.db.models import DoorToDoorSearchHistory, PriceSnapshot
 from app.infrastructure.db.session import get_db
 from app.main import app
-from app.door_to_door.domain.risk import calculate_risk_level
 from app.door_to_door.domain.scoring import score_itinerary
 from app.door_to_door.providers.base import DoorToDoorProvider, DoorToDoorProviderQuery
 from app.door_to_door.schemas import DoorToDoorOptionOut
@@ -393,7 +392,6 @@ def test_search_returns_api_option_when_google_routes_provider_is_simulated(clie
                 price_per_person_max=None,
                 currency="EUR",
                 total_duration_minutes=505,
-                risk_level="medium",
                 score=72,
                 transfer_count=2,
                 airport_buffer_minutes=130,
@@ -475,7 +473,6 @@ def test_deeplink_options_are_enriched_with_google_routes_metrics(client: TestCl
                 price_per_person_max=None,
                 currency="EUR",
                 total_duration_minutes=505,
-                risk_level="medium",
                 score=72,
                 transfer_count=2,
                 airport_buffer_minutes=130,
@@ -824,13 +821,13 @@ def test_suggestions_deduplicate_same_city_with_multiple_place_ids(client: TestC
 
 
 def test_score_prefers_safer_route_when_buffer_is_low() -> None:
-    safe = score_itinerary(55, 520, 150, 2, "low", "estimated")
-    risky = score_itinerary(30, 420, 65, 1, "high", "estimated")
-    assert safe > risky
+    high_buffer = score_itinerary(55, 420, 155, 2, "estimated")
+    low_buffer = score_itinerary(55, 420, 90, 2, "estimated")
+    assert high_buffer > low_buffer
 
 
-def test_high_risk_when_airport_buffer_under_90() -> None:
-    assert calculate_risk_level(89, 1, "estimated") == "high"
+def test_score_rewards_stronger_buffer() -> None:
+    assert score_itinerary(60, 420, 155, 2, "estimated") > score_itinerary(60, 420, 100, 2, "estimated")
 
 
 def _set_gtfs_env(monkeypatch, *, gtfs_enabled: bool, feeds_json: str = "") -> None:
@@ -912,7 +909,6 @@ def test_gtfs_with_mock_returns_open_data_option(client: TestClient, monkeypatch
                 price_per_person_max=None,
                 currency="EUR",
                 total_duration_minutes=320,
-                risk_level="medium",
                 score=68,
                 transfer_count=1,
                 airport_buffer_minutes=130,
@@ -1050,4 +1046,3 @@ def test_history_tolerates_corrupted_summary_json(client: TestClient, monkeypatc
     assert target["recommended_label"] is None
     assert target["total_price_min"] is None
     assert target["total_price_max"] is None
-    assert target["risk_level"] is None

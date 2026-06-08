@@ -99,6 +99,9 @@ function RegisterContent() {
         password={password}
         error={error}
         fieldError={fieldError}
+        secondaryHref="/login"
+        secondaryIntro={t("public.auth.registerSwitchIntro")}
+        secondaryLabel={t("public.auth.registerSwitchAction")}
         t={t}
         onEmailChange={setEmail}
         onPasswordChange={setPassword}

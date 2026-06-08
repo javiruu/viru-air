@@ -7,9 +7,8 @@ DoorToDoorSourceType = Literal["api", "open_data", "aggregator", "deeplink", "sc
 DoorToDoorOptionStatus = Literal["real_result", "real_deeplink", "estimate_only"]
 DoorToDoorDeepLinkKind = Literal["directions", "provider_search", "booking"]
 DoorToDoorConfidence = Literal["live", "cached", "estimated", "deeplink", "unavailable"]
-DoorToDoorRiskLevel = Literal["low", "medium", "high", "unknown"]
 DoorToDoorLocationType = Literal["city", "address", "station", "saved_location", "airport", "airport_only"]
-DoorToDoorSortBy = Literal["best_balance", "cheapest", "lowest_risk", "fastest", "fewest_changes"]
+DoorToDoorSortBy = Literal["best_balance", "cheapest", "fastest", "fewest_changes"]
 DoorToDoorLuggage = Literal["backpack", "cabin", "checked"]
 DoorToDoorMode = Literal["bus", "train", "rideshare", "shuttle", "taxi", "car", "walking", "flight"]
 DoorToDoorSuggestionSourceType = Literal["local_static", "mock", "api", "open_data"]
@@ -148,7 +147,6 @@ class DoorToDoorOptionOut(BaseModel):
     price_per_person_max: float | None = Field(default=None, ge=0)
     currency: str = "EUR"
     total_duration_minutes: int | None = Field(default=None, ge=0)
-    risk_level: DoorToDoorRiskLevel
     score: int | None = Field(default=None, ge=0, le=100)
     transfer_count: int = Field(ge=0)
     airport_buffer_minutes: int | None = Field(default=None, ge=0)
@@ -166,7 +164,6 @@ class DoorToDoorOptionOut(BaseModel):
 class DoorToDoorSummaryOut(BaseModel):
     recommended_option_id: str | None = None
     cheapest_option_id: str | None = None
-    lowest_risk_option_id: str | None = None
     fastest_option_id: str | None = None
     fewest_changes_option_id: str | None = None
     history_id: str | None = None
@@ -231,7 +228,6 @@ class DoorToDoorHistoryOut(BaseModel):
     recommended_label: str | None = None
     total_price_min: float | None = None
     total_price_max: float | None = None
-    risk_level: DoorToDoorRiskLevel | None = None
     chosen_option_id: str | None = None
 
 

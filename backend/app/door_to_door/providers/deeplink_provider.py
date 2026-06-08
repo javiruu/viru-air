@@ -130,7 +130,6 @@ class DeeplinkDoorToDoorProvider(DoorToDoorProvider):
                 description="Tramos terrestres con búsqueda externa. Sin precio ni horario confirmado en Viru.",
                 status="real_deeplink",
                 currency="EUR",
-                risk_level="unknown",
                 transfer_count=1 if airport_only else 2,
                 confidence="deeplink",
                 source_types=["external_deeplink"],

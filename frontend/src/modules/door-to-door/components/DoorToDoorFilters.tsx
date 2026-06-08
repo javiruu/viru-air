@@ -26,7 +26,6 @@ export function DoorToDoorFilters({
             <select className="qs-input-neutral" value={preferences.sort_by} onChange={(event) => patch({ sort_by: event.target.value as DoorToDoorSortBy })}>
               <option value="best_balance">{t("doorToDoor.filters.bestBalance")}</option>
               <option value="cheapest">{t("doorToDoor.filters.cheapest")}</option>
-              <option value="lowest_risk">{t("doorToDoor.filters.lowestRisk")}</option>
               <option value="fastest">{t("doorToDoor.filters.fastest")}</option>
               <option value="fewest_changes">{t("doorToDoor.filters.fewestChanges")}</option>
             </select>

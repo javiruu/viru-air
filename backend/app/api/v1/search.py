@@ -167,14 +167,6 @@ def _estimate_duration_minutes(origin: str, destination: str) -> int | None:
     return max(45, int(flight_hours * 60))
 
 
-def _risk_label_from_pair_category(category: str | None) -> str:
-    if category == "seed-seed":
-        return "low"
-    if category in {"seed-nearby", "nearby-seed"}:
-        return "medium"
-    return "high"
-
-
 class QuickSearchPayload(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -195,8 +187,6 @@ class QuickSearchPayload(BaseModel):
     max_stops: int | None = None
     duration_max_min: int | None = None
     duration_max: int | None = None
-    risk_allowed: str | None = None
-    risk_filter: str | None = None
     exclude_origins: str | list[str] | None = None
     exclude_destinations: str | list[str] | None = None
     strict_filters: bool | None = None
@@ -250,7 +240,6 @@ class QuickSearchConstraints(BaseModel):
     include_stops: bool | None = None
     max_stops: int | None = None
     duration_max_min: int | None = None
-    risk_allowed: str | None = None
     soft_filters_weight: float | None = None
 
 
@@ -978,15 +967,6 @@ def _normalize_quick_search_request(
                     if legacy_payload.duration_max_min is not None
                     else legacy_payload.duration_max
                 ),
-                "risk_allowed": (
-                    payload_dict.get("risk_allowed")
-                    if payload_dict.get("risk_allowed") is not None
-                    else payload_dict.get("risk_filter")
-                    if payload_dict.get("risk_filter") is not None
-                    else legacy_payload.risk_allowed
-                    if legacy_payload.risk_allowed is not None
-                    else legacy_payload.risk_filter
-                ),
                 "soft_filters_weight": (
                     query_overrides.get("soft_filters_weight")
                     if query_overrides.get("soft_filters_weight") is not None
@@ -1066,9 +1046,9 @@ def _normalize_quick_search_request(
     filter_support = {
         "hard_supported": ["strict_filters", "departure_window", "exclude_origins", "exclude_destinations"],
         "soft_supported": ["soft_filters_weight", "seed_distance_penalty", "pair_category_bias"],
-        "unsupported": ["include_stops", "max_stops", "duration_max_min", "risk_allowed"],
+        "unsupported": ["include_stops", "max_stops", "duration_max_min"],
         "legacy_partial": ["include_stops", "max_stops"],
-        "pending": ["stop-logic", "duration-filter", "risk-model"],
+        "pending": ["stop-logic", "duration-filter"],
         "seed_pool": {
             "cap": SEED_POOL_CAP,
             "origin_requested_count": len(origin_requested_candidates),
@@ -1533,7 +1513,6 @@ def quick_search(
     include_stops = bool(canonical.constraints.include_stops)
     max_stops = canonical.constraints.max_stops or 0
     duration_max_min = canonical.constraints.duration_max_min
-    risk_allowed = canonical.constraints.risk_allowed
     soft_filters_weight = canonical.constraints.soft_filters_weight if canonical.constraints.soft_filters_weight is not None else 0.6
 
     max_pairs_dynamic_base, max_requests_dynamic_base, budget_signals = _compute_dynamic_execution_budget(
@@ -1569,13 +1548,6 @@ def quick_search(
             _warn("strict_filter_not_enforceable", filter="duration_max_min")
         else:
             _warn("degraded_filter_application", filter="duration_max_min", mode="soft")
-
-    if risk_allowed not in (None, "", "all"):
-        _warn("unsupported_filter", filter="risk_allowed", value=risk_allowed)
-        if strict_filters:
-            _warn("strict_filter_not_enforceable", filter="risk_allowed")
-        else:
-            _warn("degraded_filter_application", filter="risk_allowed", mode="soft")
 
     exclude_origin_list = canonical.constraints.exclude_origins
     exclude_destination_list = canonical.constraints.exclude_destinations
@@ -2253,7 +2225,6 @@ def quick_search(
                 "include_stops": include_stops,
                 "max_stops": max_stops,
                 "duration_max_min": duration_max_min,
-                "risk_allowed": risk_allowed,
                 "soft_filters_weight": soft_filters_weight,
             },
             "execution": canonical.execution.model_dump(),
@@ -2440,7 +2411,6 @@ def quick_search(
                 "currency": item.flight.currency,
                 "source": item.flight.source,
                 "duration_total_min": _estimate_duration_minutes(item.origin, item.destination),
-                "risk_label": _risk_label_from_pair_category(item.pair_category),
                 "ranking_score": item.final_score,
                 "stale_data": False,
                 "freshness_ts": item.flight.captured_at.isoformat(),

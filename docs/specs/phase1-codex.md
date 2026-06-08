@@ -52,7 +52,7 @@ Congelar la ejecución de Fase 1 como cierre de MVP operativo y verificable, evi
 ## Riesgos aceptados en cierre Fase 1
 
 1. Pueden persistir casos acotados de `HTTP 200` con `results: []` en quick search bajo degradación de proveedor.
-2. `include_stops`, `max_stops`, `duration_max_min` y `risk_allowed` no tienen enforcement completo en todas las rutas.
+2. `include_stops`, `max_stops` y `duration_max_min` no tienen enforcement completo en todas las rutas.
 3. Persisten aliases legacy temporales en quick search hasta completar sunset controlado.
 
 ## Política de no-regresión

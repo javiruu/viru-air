@@ -68,12 +68,11 @@ Este documento enumera todo lo que puede hacer un usuario en Viru Tracker, separ
 - exclusiones por IATA
 - modo estricto/relajado
 - flexibilidad de fechas (`dias_antes`, `dias_despues`)
-- riesgo, precio, duracion y orden (segun evolucion UI en logs_ia)
+- precio, duracion y orden (segun evolucion UI en logs_ia)
 - Ver resultados enriquecidos con metadatos:
 - precio/currency
 - duracion
 - escalas
-- `risk_label`
 - `freshness_ts`
 - `stale_data` (modo degradado)
 - `ranking_score`

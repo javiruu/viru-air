@@ -91,7 +91,7 @@ export function DoorToDoorFilterPanel({
               <button
                 type="button"
                 className="btn-secondary btn-compact"
-                onClick={() => onChange({ ...DEFAULT_PREFERENCES, sort_by: "lowest_risk", min_airport_buffer_minutes: 180 })}
+                onClick={() => onChange({ ...DEFAULT_PREFERENCES, sort_by: "fewest_changes", min_airport_buffer_minutes: 180 })}
               >
                 {t("doorToDoor.filters.presetSafe")}
               </button>

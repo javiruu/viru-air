@@ -55,7 +55,6 @@ test("QuickSearchFilterConsole renders grouped summaries and active chips", () =
       priceMin=""
       priceMax="120"
       durationMax=""
-      riskFilter="all"
       sortBy="ranking"
       includeStops={false}
       maxStops={1}
@@ -74,12 +73,10 @@ test("QuickSearchFilterConsole renders grouped summaries and active chips", () =
       fieldErrors={{}}
       filtersCloseRef={{ current: null }}
       t={t as any}
-      formatRiskLabel={(value) => value || ""}
       setRadiusKm={noop}
       setPriceMin={noop}
       setPriceMax={noop}
       setDurationMax={noop}
-      setRiskFilter={noop}
       setSortBy={noop}
       setIncludeStops={noop}
       setMaxStops={noop}
@@ -116,7 +113,6 @@ test("QuickSearchFilterConsole renders grouped summaries and active chips", () =
   assert.match(html, /Consola/);
   assert.match(html, /Cobertura/);
   assert.match(html, /Resultados visibles/);
-  assert.match(html, /Precio maximo: 120/);
   assert.match(html, /Cambios sin aplicar/);
   assert.match(html, /data-ui="qs-filter-pending-apply-search"/);
   assert.match(html, /data-ui="qs-filter-console"/);

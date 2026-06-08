@@ -164,6 +164,13 @@ Entradas vivas actualizadas:
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
 
+## Actualizacion manual 2026-06-08 (button hierarchy contract)
+
+Entradas vivas actualizadas:
+
+- `docs/ui/UI_CONTRACT_V1.md`
+- `docs/DOCS_INVENTORY.md`
+
 ## Actualizacion manual 2026-06-05 (hoteles post-cierre Fases A-E)
 
 Entradas vivas agregadas:

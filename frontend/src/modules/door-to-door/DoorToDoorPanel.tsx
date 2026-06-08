@@ -673,17 +673,16 @@ export function DoorToDoorPanel() {
                             {formatDelta(delta.delta_buffer_minutes, "m")}
                           </span>
                         </div>
-                        {/* Risk */}
                         <div className="d2d-compare-bar-group">
-                          <span className="d2d-compare-bar-label">{t("doorToDoor.option.compare.risk")}</span>
+                          <span className="d2d-compare-bar-label">{t("doorToDoor.option.compare.transfers")}</span>
                           <div className="d2d-compare-bar-track">
                             <div
-                              className={`d2d-compare-bar-fill d2d-compare-risk-bar ${delta.risk_change === "better" ? "is-better" : delta.risk_change === "worse" ? "is-worse" : ""}`}
-                              style={{ width: delta.risk_change === "equal" ? "30%" : "70%" }}
+                              className={`d2d-compare-bar-fill ${delta.delta_transfer_count != null && delta.delta_transfer_count <= 0 ? "is-better" : "is-worse"}`}
+                              style={{ width: delta.delta_transfer_count != null ? `${Math.min(Math.abs(delta.delta_transfer_count) * 35, 100)}%` : "0%" }}
                             />
                           </div>
-                          <span className={`d2d-compare-delta ${delta.risk_change === "better" ? "is-better" : delta.risk_change === "worse" ? "is-worse" : ""}`}>
-                            {t(`doorToDoor.option.compareRisk.${delta.risk_change}`)}
+                          <span className={`d2d-compare-delta ${delta.delta_transfer_count != null && delta.delta_transfer_count <= 0 ? "is-better" : "is-worse"}`}>
+                            {formatDelta(delta.delta_transfer_count, "")}
                           </span>
                         </div>
                       </div>
@@ -838,7 +837,7 @@ export function DoorToDoorPanel() {
                 {history.history.map((item) => (
                   <article key={item.id}>
                     <strong>{item.origin_label} {"->"} {item.final_destination_label}</strong>
-                    <span>{formatHistoryDate(item.created_at, localeTag)} - {item.recommended_label || t("doorToDoor.history.noRecommendation")} - {item.total_price_min ?? "--"}-{item.total_price_max ?? "--"} EUR - {item.risk_level || "--"}</span>
+                    <span>{formatHistoryDate(item.created_at, localeTag)} - {item.recommended_label || t("doorToDoor.history.noRecommendation")} - {item.total_price_min ?? "--"}-{item.total_price_max ?? "--"} EUR</span>
                     {item.chosen_option_id ? <em>{t("doorToDoor.history.chosen")}</em> : null}
                   </article>
                 ))}

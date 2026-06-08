@@ -2,7 +2,6 @@
 
 import { useI18n } from "@/i18n";
 import type { DecisionBadge, DecisionReason, DoorToDoorOption } from "@/modules/door-to-door/types";
-import { DoorToDoorRiskPill } from "@/modules/door-to-door/components/DoorToDoorRiskPill";
 
 function durationLabel(minutes: number | null | undefined) {
   if (minutes == null) return null;
@@ -63,7 +62,6 @@ export function DoorToDoorOptionCard({
             {statusBadge()}
             <h3>{option.label}</h3>
           </div>
-          <DoorToDoorRiskPill risk={option.risk_level} />
         </div>
 
         <p>{option.description}</p>

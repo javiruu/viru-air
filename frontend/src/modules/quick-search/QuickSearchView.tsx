@@ -385,16 +385,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setPriceMax,
     durationMax,
     setDurationMax,
-    riskFilter,
-    setRiskFilter,
     sortBy,
     setSortBy,
     isDegraded,
     setIsDegraded,
     compactView,
     setCompactView,
-    showHighRisk,
-    setShowHighRisk,
     expandedRows,
     setExpandedRows,
     selectedResultId,
@@ -1884,7 +1880,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           currency: result.currency,
           duration_total: result.duration_total_min ?? result.duration_total ?? null,
           stop_count: result.stop_count ?? null,
-          risk_label: result.risk_label ?? null,
           minutes_buffer: result.minutes_buffer ?? null,
           distance_km_ground: result.distance_km_ground ?? null,
           ranking_score: result.ranking_score ?? null,
@@ -1907,7 +1902,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           destination: result.destination,
           travel_date: result.travel_date,
           source: result.source,
-          risk_label: result.risk_label ?? null,
         });
         notify({
           tone: "success",
@@ -2184,27 +2178,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setPrefBadge(true);
   }
 
-  const formatRiskLabel = useCallback((label?: string | null) => {
-    if (label === "low") return t("riskLow");
-    if (label === "medium") return t("riskMedium");
-    if (label === "high") return t("riskHigh");
-    return label || "";
-  }, [t]);
-
-  function getRiskTag(result: SearchResult): QuickSearchExplainTag | null {
-    if (!result.risk_label) return null;
-    const tone: QuickSearchTagTone = result.risk_label === "high"
-      ? "high"
-      : result.risk_label === "medium"
-        ? "med"
-        : "low";
-    return {
-      key: `risk-${result.risk_label}`,
-      label: formatRiskLabel(result.risk_label),
-      tone,
-    };
-  }
-
   function getItineraryTag(result: SearchResult): QuickSearchExplainTag {
     return {
       key: `itinerary-${result.itinerary_type || "direct"}`,
@@ -2229,19 +2202,17 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
   function getResultTags(result: SearchResult, mode: "normal" | "compact" | "expanded"): QuickSearchExplainTag[] {
     const itineraryTag = getItineraryTag(result);
-    const riskTag = getRiskTag(result);
     const freshnessTag = getFreshnessTag(result);
     if (mode === "compact") {
-      return [riskTag ?? itineraryTag];
+      return [itineraryTag];
     }
     if (mode === "expanded") {
       return [
         itineraryTag,
-        riskTag ?? { key: "risk-empty", label: `${t("resultsColRisk")}: --`, tone: "stale" },
         ...(freshnessTag ? [freshnessTag] : []),
       ].filter((tag): tag is QuickSearchExplainTag => Boolean(tag));
     }
-    return [itineraryTag, ...(riskTag ? [riskTag] : []), ...(freshnessTag ? [freshnessTag] : [])];
+    return [itineraryTag, ...(freshnessTag ? [freshnessTag] : [])];
   }
 
   function parseIataList(raw: string): string[] {
@@ -2311,9 +2282,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setPriceMin("");
     setPriceMax("");
     setDurationMax("");
-    setRiskFilter("all");
     setSortBy("ranking");
-  }, [setDurationMax, setPriceMax, setPriceMin, setRiskFilter, setSortBy]);
+  }, [setDurationMax, setPriceMax, setPriceMin, setSortBy]);
 
   const resetExperimentalFilters = useCallback(() => {
     setIncludeStops(false);
@@ -2699,7 +2669,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     includeStops,
     maxStops,
     durationMax,
-    riskFilter,
     radiusKm,
     includeNearbyOrigins,
     includeNearbyDestinations,
@@ -2728,7 +2697,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     includeStops,
     maxStops,
     durationMax,
-    riskFilter,
     radiusKm,
     includeNearbyOrigins,
     includeNearbyDestinations,
@@ -2908,7 +2876,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     ranking: t("sortRanking"),
     price: t("sortPrice"),
     duration: t("sortDuration"),
-    risk: t("sortRisk"),
     freshness: t("sortFreshness"),
   } as const;
   const originCountry = resolveInputCountryCode(originCountryOnly?.code, originSelectedCountryCode);
@@ -2917,7 +2884,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const {
     durationMaxNumber,
     visibleResults,
-    hiddenHighRiskResults,
     warningSeverity,
     groupedNeutralWarnings,
     groupedCriticalWarnings,
@@ -2935,9 +2901,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     priceMin,
     priceMax,
     durationMax,
-    riskFilter,
     sortBy,
-    showHighRisk,
     filtersNotice,
     filtersWarningCodes,
     filtersMeta,
@@ -2963,14 +2927,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const PAGE_SIZE = 10;
 
   const resultsSignature = useMemo(() => {
-    return `${priceMin}:${priceMax}:${durationMax}:${riskFilter}:${sortBy}:${showHighRisk}:${strictFilters}:${includeStops}:${radiusKm}:${departAfter}:${departBefore}:${daysBefore}:${daysAfter}:${origin}:${destination}:${travelDate}:${returnDate}:${isReturn}`;
+    return `${priceMin}:${priceMax}:${durationMax}:${sortBy}:${strictFilters}:${includeStops}:${radiusKm}:${departAfter}:${departBefore}:${daysBefore}:${daysAfter}:${origin}:${destination}:${travelDate}:${returnDate}:${isReturn}`;
   }, [
     priceMin,
     priceMax,
     durationMax,
-    riskFilter,
     sortBy,
-    showHighRisk,
     strictFilters,
     includeStops,
     radiusKm,
@@ -3123,13 +3085,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         onClear: () => setIncludeStops(false),
       });
     }
-    if (riskFilter !== "all") {
-      chips.push({
-        id: "risk",
-        label: `${t("riskAllowed")}: ${formatRiskLabel(riskFilter)}`,
-        onClear: () => setRiskFilter("all"),
-      });
-    }
     if (bufferMin) {
       chips.push({
         id: "buffer-min",
@@ -3168,11 +3123,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     strictFilters,
     includeStops,
     maxStops,
-    riskFilter,
     bufferMin,
     excludeOrigins,
     excludeDestinations,
-    formatRiskLabel,
     t,
     setDaysAfter,
     setDaysBefore,
@@ -3189,7 +3142,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setPriceMax,
     setPriceMin,
     setRadiusKm,
-    setRiskFilter,
     setStrictFilters,
   ]);
 
@@ -3204,9 +3156,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     if (strictFilters) {
       rows.push({ id: "strict", label: t("strictMode"), before: t("summaryStrictOn"), after: t("summaryStrictOff") });
     }
-    if (riskFilter !== "all") {
-      rows.push({ id: "risk", label: t("riskAllowed"), before: formatRiskLabel(riskFilter), after: t("riskAll") });
-    }
     if (priceMin) {
       rows.push({ id: "priceMin", label: t("priceMin"), before: priceMin, after: "â€”" });
     }
@@ -3214,7 +3163,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       rows.push({ id: "priceMax", label: t("priceMax"), before: priceMax, after: "â€”" });
     }
     return rows;
-  }, [strictFilters, riskFilter, priceMin, priceMax, t, formatRiskLabel]);
+  }, [strictFilters, priceMin, priceMax, t]);
 
   const openRelaxPreview = () => {
     setRelaxPreviewOpen(true);
@@ -3234,7 +3183,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
   const applyRelaxPreview = () => {
     setStrictFilters(false);
-    setRiskFilter("all");
     setPriceMin("");
     setPriceMax("");
     setRelaxPreviewOpen(false);
@@ -3408,7 +3356,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         duration_max_min: parseNumericInput(durationMax, { min: 1 }) ?? undefined,
         include_stops: includeStops,
         max_stops: includeStops ? maxStops : 0,
-        risk_allowed: result.risk_label || riskFilter,
         exclude_origins: excludeOrigins,
         exclude_destinations: excludeDestinations,
         strict_mode: strictFilters,
@@ -3437,7 +3384,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     durationMax,
     includeStops,
     maxStops,
-    riskFilter,
     excludeOrigins,
     excludeDestinations,
     strictFilters,
@@ -3557,10 +3503,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const toggleEmptyCauses = useCallback(() => {
     setEmptyCausesExpanded((prev) => !prev);
   }, [setEmptyCausesExpanded]);
-
-  const toggleHighRisk = useCallback(() => {
-    setShowHighRisk((prev) => !prev);
-  }, [setShowHighRisk]);
 
   const trackRowOverflow = useCallback((rowId: string) => {
     trackEvent("quicksearch_row_overflow_opened", { row_id: rowId });
@@ -4188,7 +4130,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           priceMin={priceMin}
           priceMax={priceMax}
           durationMax={durationMax}
-          riskFilter={riskFilter}
           sortBy={sortBy}
           includeStops={includeStops}
           maxStops={maxStops}
@@ -4207,12 +4148,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           fieldErrors={fieldErrors}
           filtersCloseRef={filtersCloseRef}
           t={t}
-          formatRiskLabel={formatRiskLabel}
           setRadiusKm={updateRadiusKm}
           setPriceMin={setPriceMin}
           setPriceMax={setPriceMax}
           setDurationMax={setDurationMax}
-          setRiskFilter={setRiskFilter}
           setSortBy={setSortBy}
           setIncludeStops={setIncludeStops}
           setMaxStops={setMaxStops}
@@ -4367,13 +4306,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                   name="sort_by"
                   autoComplete="off"
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as "ranking" | "price" | "duration" | "risk" | "freshness")}
+                  onChange={(e) => setSortBy(e.target.value as "ranking" | "price" | "duration" | "freshness")}
                   className="qs-input"
                 >
                   <option value="ranking">{t("sortRanking")}</option>
                   <option value="price">{t("sortPrice")}</option>
                   <option value="duration">{t("sortDuration")}</option>
-                  <option value="risk">{t("sortRisk")}</option>
                   <option value="freshness">{t("sortFreshness")}</option>
                 </select>
               </label>
@@ -4407,10 +4345,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                       <strong>{t("explainAltTitle")}</strong>
                       <p>{t("explainAlt")}</p>
                     </div>
-                    <div>
-                      <strong>{t("explainRiskTitle")}</strong>
-                      <p>{t("explainRisk")}</p>
-                    </div>
                   </div>
                   <div className="qs-explain-note">
                     <span>{t("detailsNote")}</span>
@@ -4419,7 +4353,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                     <div className="qs-explain-selected">
                       <strong>{selectedResult.origin} {" â†’ "} {selectedResult.destination}</strong>
                       <span>{t("score")}: {selectedResult.ranking_score ? formatScore(selectedResult.ranking_score) : "--"}</span>
-                      <span>{t("riskAllowed")}: {formatRiskLabel(selectedResult.risk_label)}</span>
                       <span>{t("freshnessLabel")} {formatFreshness(selectedResult.freshness_ts)}</span>
                     </div>
                   ) : null}
@@ -4540,8 +4473,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 expandedRows={expandedRows}
                 openRowMenuId={openRowMenuId}
                 deeplinkUrl={deeplinkUrl}
-                hiddenHighRiskResults={hiddenHighRiskResults}
-                showHighRisk={showHighRisk}
                 origin={origin}
                 destination={destination}
                 radiusKm={radiusKm}
@@ -4555,7 +4486,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 t={t}
                 formatMoney={formatMoney}
                 formatScore={formatScore}
-                formatRiskLabel={formatRiskLabel}
                 formatFreshness={formatFreshness}
                 formatMinutes={formatMinutes}
                 resultKey={resultKey}
@@ -4568,7 +4498,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 setCopyModalOpen={setCopyModalOpen}
                 closeRowMenu={closeRowMenu}
                 onTrackOpenRyanair={trackOpenRyanair}
-                onToggleHighRisk={toggleHighRisk}
                 onTrackRowOverflow={trackRowOverflow}
                 onTrackCopyParams={trackCopyParams}
               />
@@ -4829,13 +4758,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               />
             ) : outboundSide.searchState === "success" ? (
               <QuickSearchResultsList
-                visibleResults={showHighRisk ? outboundSide.results : outboundSide.results.filter((r: SearchResult) => r.risk_label !== "high")}
+                visibleResults={outboundSide.results}
                 compactView={compactView}
                 expandedRows={outboundSide.expandedRows}
                 openRowMenuId={null}
                 deeplinkUrl={outboundSide.deepLink?.url || outboundSide.deepLink?.fallback_url || localRyanairUrl}
-                hiddenHighRiskResults={showHighRisk ? [] : outboundSide.results.filter((r: SearchResult) => r.risk_label === "high")}
-                showHighRisk={showHighRisk}
                 origin={origin}
                 destination={destination}
                 radiusKm={radiusKm}
@@ -4849,7 +4776,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 t={t}
                 formatMoney={formatMoneyOutbound}
                 formatScore={formatScore}
-                formatRiskLabel={formatRiskLabel}
                 formatFreshness={formatFreshness}
                 formatMinutes={formatMinutes}
                 resultKey={resultKey}
@@ -4869,7 +4795,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                         currency: result.currency,
                         duration_total: result.duration_total_min ?? result.duration_total ?? null,
                         stop_count: result.stop_count ?? null,
-                        risk_label: result.risk_label ?? null,
                         minutes_buffer: result.minutes_buffer ?? null,
                         distance_km_ground: result.distance_km_ground ?? null,
                         ranking_score: result.ranking_score ?? null,
@@ -4900,7 +4825,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 setCopyModalOpen={setCopyModalOpen}
                 closeRowMenu={() => {}}
                 onTrackOpenRyanair={trackOpenRyanair}
-                onToggleHighRisk={toggleHighRisk}
                 onTrackRowOverflow={trackRowOverflow}
                 onTrackCopyParams={trackCopyParams}
               />
@@ -4942,13 +4866,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               />
             ) : returnSide.searchState === "success" ? (
               <QuickSearchResultsList
-                visibleResults={showHighRisk ? returnSide.results : returnSide.results.filter((r: SearchResult) => r.risk_label !== "high")}
+                visibleResults={returnSide.results}
                 compactView={compactView}
                 expandedRows={returnSide.expandedRows}
                 openRowMenuId={null}
                 deeplinkUrl={returnSide.deepLink?.url || returnSide.deepLink?.fallback_url || localRyanairUrl}
-                hiddenHighRiskResults={showHighRisk ? [] : returnSide.results.filter((r: SearchResult) => r.risk_label === "high")}
-                showHighRisk={showHighRisk}
                 origin={destination}
                 destination={origin}
                 radiusKm={radiusKm}
@@ -4962,7 +4884,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 t={t}
                 formatMoney={formatMoneyReturn}
                 formatScore={formatScore}
-                formatRiskLabel={formatRiskLabel}
                 formatFreshness={formatFreshness}
                 formatMinutes={formatMinutes}
                 resultKey={resultKey}
@@ -4982,7 +4903,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                         currency: result.currency,
                         duration_total: result.duration_total_min ?? result.duration_total ?? null,
                         stop_count: result.stop_count ?? null,
-                        risk_label: result.risk_label ?? null,
                         minutes_buffer: result.minutes_buffer ?? null,
                         distance_km_ground: result.distance_km_ground ?? null,
                         ranking_score: result.ranking_score ?? null,
@@ -5013,7 +4933,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 setCopyModalOpen={setCopyModalOpen}
                 closeRowMenu={() => {}}
                 onTrackOpenRyanair={trackOpenRyanair}
-                onToggleHighRisk={toggleHighRisk}
                 onTrackRowOverflow={trackRowOverflow}
                 onTrackCopyParams={trackCopyParams}
               />

@@ -1,7 +1,6 @@
 export type DoorToDoorLocationType = "city" | "address" | "station" | "saved_location" | "airport" | "airport_only";
 export type DoorToDoorConfidence = "live" | "cached" | "estimated" | "deeplink" | "unavailable";
-export type DoorToDoorRiskLevel = "low" | "medium" | "high" | "unknown";
-export type DoorToDoorSortBy = "best_balance" | "cheapest" | "lowest_risk" | "fastest" | "fewest_changes";
+export type DoorToDoorSortBy = "best_balance" | "cheapest" | "fastest" | "fewest_changes";
 export type DoorToDoorLuggage = "backpack" | "cabin" | "checked";
 
 export type DoorToDoorLocation = {
@@ -95,7 +94,6 @@ export type DoorToDoorOption = {
   price_per_person_max?: number | null;
   currency: string;
   total_duration_minutes?: number | null;
-  risk_level: DoorToDoorRiskLevel;
   score?: number | null;
   transfer_count: number;
   airport_buffer_minutes?: number | null;
@@ -110,14 +108,14 @@ export type DoorToDoorOption = {
   trust_copy?: string | null;
 };
 
-export type DecisionReasonKind = "price" | "buffer" | "risk" | "transfers" | "duration" | "confidence";
+export type DecisionReasonKind = "price" | "buffer" | "transfers" | "duration" | "confidence";
 
 export type DecisionReason = {
   kind: DecisionReasonKind;
   label: string;
 };
 
-export type DecisionBadgeKind = "fastest" | "lowest_risk" | "fewest_changes" | "best_estimated_price";
+export type DecisionBadgeKind = "fastest" | "longest_buffer" | "fewest_changes" | "best_estimated_price";
 
 export type DecisionBadge = {
   kind: DecisionBadgeKind;
@@ -130,7 +128,7 @@ export type OptionDeltaSummary = {
   delta_price: number | null;
   delta_duration_minutes: number | null;
   delta_buffer_minutes: number | null;
-  risk_change: "better" | "worse" | "equal";
+  delta_transfer_count: number | null;
 };
 
 export type DoorToDoorFlight = {
@@ -146,7 +144,6 @@ export type DoorToDoorResponse = {
   summary: {
     recommended_option_id?: string | null;
     cheapest_option_id?: string | null;
-    lowest_risk_option_id?: string | null;
     fastest_option_id?: string | null;
     fewest_changes_option_id?: string | null;
     history_id?: string | null;
@@ -197,7 +194,6 @@ export type DoorToDoorHistoryItem = {
   recommended_label?: string | null;
   total_price_min?: number | null;
   total_price_max?: number | null;
-  risk_level?: DoorToDoorRiskLevel | null;
   chosen_option_id?: string | null;
 };
 

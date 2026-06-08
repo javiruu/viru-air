@@ -32,6 +32,14 @@ Reglas minimas para mantener consistencia visual, coherencia de identidad calida
 - **PanelHeader:** titulo, subtitulo y accion clara.
 - **StatusPill:** tamano homogeneo y color semantico consistente.
 - **ActionRow:** CTA principal primero, secundarios ordenados.
+- **Jerarquia de botones:**
+  - `primary`: accion dominante para avanzar, confirmar o guardar.
+  - `secondary`: alternativa util del mismo flujo sin competir con el primario.
+  - `ghost`: volver, cancelar, cerrar, navegar, presets o acciones auxiliares.
+  - `danger`: borrar o destruir.
+  - `link-subtle` / `linkInline`: acciones informativas o exploratorias, nunca CTA dominantes.
+
+**Regla obligatoria:** no presentar mas de una accion primaria por panel, card, modal o bloque de decision.
 
 ## Semantica de estados
 Semantica unica en toda la UI:

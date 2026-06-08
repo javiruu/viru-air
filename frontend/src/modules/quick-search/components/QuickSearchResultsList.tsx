@@ -8,8 +8,6 @@ type Props = {
   expandedRows: Record<string, boolean>;
   openRowMenuId: string | null;
   deeplinkUrl: string;
-  hiddenHighRiskResults: SearchResult[];
-  showHighRisk: boolean;
   origin: string;
   destination: string;
   radiusKm: number;
@@ -23,7 +21,6 @@ type Props = {
   t: (key: any) => string;
   formatMoney: (value: number, currency?: string) => string;
   formatScore: (value: number) => string;
-  formatRiskLabel: (label?: string | null) => string;
   formatFreshness: (value?: string | null) => string;
   formatMinutes: (value?: number | null) => string;
   resultKey: (result: SearchResult, fallback: number) => string;
@@ -36,7 +33,6 @@ type Props = {
   setCopyModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   closeRowMenu: (targetId?: string | null) => void;
   onTrackOpenRyanair: () => void;
-  onToggleHighRisk: () => void;
   onTrackRowOverflow: (rowId: string) => void;
   onTrackCopyParams: (rowId: string) => void;
 };
@@ -87,7 +83,6 @@ function QuickSearchResultsListInner(props: Props) {
             const compactTag = props.getResultTags(r, "compact")[0];
             const departureCompact = r.departure_time_local || "--";
             const rowDurationLabel = r.duration_total_min ? `${r.duration_total_min} min` : "--";
-            const rowRiskLabel = r.risk_label ? props.formatRiskLabel(r.risk_label) : "--";
             const rowFreshnessLabel = r.stale_data
               ? props.t("freshnessStale")
               : r.freshness_ts
@@ -123,7 +118,6 @@ function QuickSearchResultsListInner(props: Props) {
                       </div>
                       <div className="qs-result-stats">
                         <span><strong>{props.t("resultsColDuration")}:</strong> {rowDurationLabel}</span>
-                        <span><strong>{props.t("resultsColRisk")}:</strong> {rowRiskLabel}</span>
                         <span><strong>{props.t("resultsColFreshness")}:</strong> {rowFreshnessLabel}</span>
                       </div>
                       <div className="qs-result-badges">
@@ -141,7 +135,7 @@ function QuickSearchResultsListInner(props: Props) {
                     {!props.compactView && r.ranking_score ? <span>{props.t("score")} {props.formatScore(r.ranking_score)}</span> : null}
                   </div>
                   <div className="qs-result-buttons">
-                    <button className="btn-primary qs-row-save" type="button" onClick={() => props.addToWatchlist(r)}>
+                    <button className="btn-secondary qs-row-save" type="button" onClick={() => props.addToWatchlist(r)}>
                       {props.t("save")}
                     </button>
                     {!props.compactView ? (
@@ -262,10 +256,6 @@ function QuickSearchResultsListInner(props: Props) {
                       <p>{props.departAfter} - {props.departBefore}</p>
                     </div>
                     <div>
-                      <strong>{props.t("detailsRisk")}</strong>
-                      <p>{props.formatRiskLabel(r.risk_label)} - {props.t("detailsBuffer")} {props.formatMinutes(r.minutes_buffer)}</p>
-                    </div>
-                    <div>
                       <strong>{props.t("detailsScore")}</strong>
                       <p>{props.t("scoreHint")} - {r.ranking_score ? props.formatScore(r.ranking_score) : "--"}</p>
                     </div>
@@ -293,14 +283,6 @@ function QuickSearchResultsListInner(props: Props) {
         </div>
       ) : null}
 
-      {props.hiddenHighRiskResults.length > 0 ? (
-        <div className="qs-hidden-risk">
-          <span>{props.t("riskHidden")}: {props.hiddenHighRiskResults.length}</span>
-          <button type="button" className="btn-ghost" onClick={props.onToggleHighRisk}>
-            {props.showHighRisk ? props.t("riskHideHidden") : props.t("riskShowHidden")}
-          </button>
-        </div>
-      ) : null}
     </>
   );
 }

@@ -287,7 +287,6 @@ test("testsprite ultra-strict: empty response must render explicit empty-state e
               include_stops: false,
               max_stops: 0,
               duration_max_min: null,
-              risk_allowed: null,
               soft_filters_weight: 0.6,
             },
             execution: { max_pairs: 12, max_requests: 120, timeout_ms: 8000, concurrency_limit: 6 },

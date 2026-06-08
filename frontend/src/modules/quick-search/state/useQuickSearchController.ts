@@ -81,8 +81,6 @@ export function useQuickSearchMainState(initialOrigin: string, initialDestinatio
     setPriceMax,
     durationMax,
     setDurationMax,
-    riskFilter,
-    setRiskFilter,
     sortBy,
     setSortBy,
     activePicker,
@@ -146,7 +144,6 @@ export function useQuickSearchMainState(initialOrigin: string, initialDestinatio
   const [rateLimitSeconds, setRateLimitSeconds] = useState(0);
   const [isDegraded, setIsDegraded] = useState(false);
   const [compactView, setCompactView] = useState(false);
-  const [showHighRisk, setShowHighRisk] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [selectedResultId, setSelectedResultId] = useState<string | null>(null);
 
@@ -230,7 +227,7 @@ export function useQuickSearchMainState(initialOrigin: string, initialDestinatio
     strictFilters, setStrictFilters, daysBefore, setDaysBefore,
     daysAfter, setDaysAfter, applyFlexReturn, setApplyFlexReturn,
     priceMin, setPriceMin, priceMax, setPriceMax, durationMax, setDurationMax,
-    riskFilter, setRiskFilter, sortBy, setSortBy,
+    sortBy, setSortBy,
     activePicker, setActivePicker, airportSearch, setAirportSearch,
     recentAirports, setRecentAirports, selectedCountry, setSelectedCountry,
     countrySelectionTouched, setCountrySelectionTouched,
@@ -252,7 +249,7 @@ export function useQuickSearchMainState(initialOrigin: string, initialDestinatio
     filtersMeta, setFiltersMeta, searchMeta, setSearchMeta,
     jobId, setJobId, searchState, setSearchState, searchError, setSearchError,
     rateLimitSeconds, setRateLimitSeconds, isDegraded, setIsDegraded,
-    compactView, setCompactView, showHighRisk, setShowHighRisk,
+    compactView, setCompactView,
     expandedRows, setExpandedRows, selectedResultId, setSelectedResultId,
     pref, setPref, regionPref, setRegionPref, prefBadge, setPrefBadge,
     deepLink, setDeepLink, deepLinkError, setDeepLinkError,

@@ -2474,12 +2474,6 @@ h1 {
   100% { opacity: 0.5; }
 }
 
-.qs-hidden-risk {
-  margin-top: 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-}
 
 .qs-pending-changes {
   margin: 0;
@@ -3363,11 +3357,6 @@ h1 {
   align-self: flex-start;
 }
 
-.chip-risk {
-  text-transform: uppercase;
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-}
 
 .chip-low {
   border-color: color-mix(in srgb, var(--qs-accent) 20%, var(--border));
@@ -6116,7 +6105,12 @@ h1 {
   text-decoration: none;
   font-weight: 600;
   letter-spacing: 0.01em;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
 }
 
@@ -6124,20 +6118,22 @@ h1 {
   background: linear-gradient(135deg, var(--color-accent-hover), var(--color-button-primary));
   color: var(--color-button-primary-text);
   border: 1px solid color-mix(in srgb, var(--color-button-primary) 52%, transparent);
-  box-shadow: var(--btn-shadow);
+  box-shadow:
+    0 14px 28px color-mix(in srgb, var(--color-button-primary) 24%, transparent),
+    var(--btn-shadow);
 }
 
 .btn-secondary {
-  background: var(--color-button-secondary);
+  background: color-mix(in srgb, var(--color-button-secondary) 86%, var(--color-surface) 14%);
   color: var(--color-button-secondary-text);
-  border: 1px solid var(--color-button-secondary-border);
-  box-shadow: var(--btn-shadow);
+  border: 1px solid color-mix(in srgb, var(--color-button-secondary-border) 88%, transparent);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--shadow) 72%, transparent);
 }
 
 .btn-ghost {
-  background: transparent;
+  background: color-mix(in srgb, var(--color-surface) 40%, transparent);
   color: var(--color-text-primary);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid color-mix(in srgb, var(--color-border-strong) 78%, transparent);
 }
 
 .btn-critical {
@@ -6156,13 +6152,25 @@ h1 {
 
 .btn-primary:hover,
 .btn-search:hover,
-.btn-secondary:hover,
-.btn-ghost:hover,
 .btn-critical:hover,
 .btn-danger:hover {
   transform: translateY(-1px);
   box-shadow: var(--btn-shadow-strong);
   border-color: rgba(217, 93, 57, 0.5);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 36%, var(--color-button-secondary-border));
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--shadow) 88%, transparent);
+  background: color-mix(in srgb, var(--color-button-secondary) 90%, var(--color-surface) 10%);
+}
+
+.btn-ghost:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--color-border-strong));
+  background: color-mix(in srgb, var(--color-surface) 72%, transparent);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--shadow) 48%, transparent);
 }
 
 .btn-primary:active,
@@ -9004,6 +9012,47 @@ textarea::placeholder {
   width: 100%;
 }
 
+.glass-signin-alt-actions {
+  margin-top: 0.45rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.45rem 0.7rem;
+}
+
+.glass-signin-alt-copy {
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+}
+
+.glass-signin-alt-link {
+  min-height: auto;
+  padding: 0.28rem 0.1rem;
+  border: none;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: none;
+}
+
+.glass-signin-alt-link:hover {
+  transform: none;
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: transparent;
+  box-shadow: none;
+}
+
+.glass-signin-alt-link:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
 .glass-signin-legal {
   margin: 0.85rem 0 0;
   color: var(--ink-muted);
@@ -9850,6 +9899,12 @@ textarea::placeholder {
 .link-subtle:hover {
   color: var(--ink);
   border-color: rgba(217, 93, 57, 0.4);
+}
+
+.link-subtle:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .dashboard-secondary {
@@ -11554,6 +11609,11 @@ textarea::placeholder {
   align-items: center;
   margin-top: 0.12rem;
   z-index: 1;
+}
+
+.module-actions > .btn-secondary,
+.module-actions > .btn-ghost {
+  min-width: fit-content;
 }
 
 .suggestions-card-content {
@@ -19279,9 +19339,6 @@ textarea::placeholder {
   background: var(--accent);
 }
 
-.d2d-compare-risk-bar {
-  opacity: 0.75;
-}
 
 .d2d-compare-delta {
   font-weight: 600;
@@ -20305,8 +20362,7 @@ textarea::placeholder {
   }
 }
 
-   Comprehensive reduced-motion (all d2d-* animations)
-   ══════════════════════════════════════════════════════════════ */
+/* Comprehensive reduced-motion (all d2d-* animations) */
 @media (prefers-reduced-motion: reduce) {
   /* Phase 10 additions */
   .d2d-chosen-trust,
