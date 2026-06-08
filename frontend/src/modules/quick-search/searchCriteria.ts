@@ -35,7 +35,6 @@ export type CriteriaSignatureInput = {
   includeStops: boolean;
   maxStops: number;
   durationMax: string;
-  riskFilter: string;
   radiusKm: number;
   includeNearbyOrigins: boolean;
   includeNearbyDestinations: boolean;

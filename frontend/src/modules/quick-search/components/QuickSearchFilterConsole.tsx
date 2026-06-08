@@ -21,8 +21,7 @@ type FilterConsoleProps = {
   priceMin: string;
   priceMax: string;
   durationMax: string;
-  riskFilter: "all" | "low" | "medium" | "high";
-  sortBy: "ranking" | "price" | "duration" | "risk" | "freshness";
+  sortBy: "ranking" | "price" | "duration" | "freshness";
   includeStops: boolean;
   maxStops: number;
   bufferMin: string;
@@ -40,13 +39,11 @@ type FilterConsoleProps = {
   fieldErrors: QuickSearchFieldErrors;
   filtersCloseRef: RefObject<HTMLButtonElement | null>;
   t: (key: QuickSearchCopyKey) => string;
-  formatRiskLabel: (label?: string | null) => string;
   setRadiusKm: (value: number) => void;
   setPriceMin: (value: string) => void;
   setPriceMax: (value: string) => void;
   setDurationMax: (value: string) => void;
-  setRiskFilter: (value: "all" | "low" | "medium" | "high") => void;
-  setSortBy: (value: "ranking" | "price" | "duration" | "risk" | "freshness") => void;
+  setSortBy: (value: "ranking" | "price" | "duration" | "freshness") => void;
   setIncludeStops: (value: boolean) => void;
   setMaxStops: (value: number) => void;
   setBufferMin: (value: string) => void;
@@ -103,7 +100,7 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
     : props.t("filterCoverageDirect");
   const rulesSummary = `${props.departAfter || "--"}-${props.departBefore || "--"}`;
   const visibleSummary =
-    props.priceMin || props.priceMax || props.durationMax || props.riskFilter !== "all"
+    props.priceMin || props.priceMax || props.durationMax
       ? props.t("filterVisibleCustom")
       : props.t("filterVisibleOpen");
   const experimentalSummary = props.includeStops ? props.t("filterExperimentalOn") : props.t("filterExperimentalOff");
@@ -420,36 +417,19 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
                 />
                 {props.fieldErrors.duration_max ? <small className="qs-error">{props.fieldErrors.duration_max}</small> : null}
               </label>
-              <label className="field">
-                {props.t("riskAllowed")}
-                <select
-                  name="risk_filter"
-                  autoComplete="off"
-                  value={props.riskFilter}
-                  onChange={(e) => props.setRiskFilter(e.target.value as "all" | "low" | "medium" | "high")}
-                  className="qs-input"
-                  data-ui="qs-filter-risk"
-                >
-                  <option value="all">{props.t("riskAll")}</option>
-                  <option value="low">{props.t("riskLow")}</option>
-                  <option value="medium">{props.t("riskMedium")}</option>
-                  <option value="high">{props.t("riskHigh")}</option>
-                </select>
-              </label>
               <label className="field qs-filter-wide">
                 {props.t("orderBy")}
                 <select
                   name="sort_by"
                   autoComplete="off"
                   value={props.sortBy}
-                  onChange={(e) => props.setSortBy(e.target.value as "ranking" | "price" | "duration" | "risk" | "freshness")}
+                  onChange={(e) => props.setSortBy(e.target.value as "ranking" | "price" | "duration" | "freshness")}
                   className="qs-input"
                   data-ui="qs-filter-sort"
                 >
                   <option value="ranking">{props.t("sortRanking")}</option>
                   <option value="price">{props.t("sortPrice")}</option>
                   <option value="duration">{props.t("sortDuration")}</option>
-                  <option value="risk">{props.t("sortRisk")}</option>
                   <option value="freshness">{props.t("sortFreshness")}</option>
                 </select>
               </label>
@@ -460,7 +440,7 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
             <div className="qs-filter-section-head">
               <div>
                 <span className="qs-filter-eyebrow">{props.t("filterPartialSupport")}</span>
-                <h3>Escalas y riesgo</h3>
+                <h3>{props.t("stopsTitle")}</h3>
                 <p>{props.t("stopsSubtitle")}</p>
               </div>
               <button type="button" className="btn-ghost btn-compact" onClick={props.onResetExperimental} data-ui="qs-filter-reset-experimental">
@@ -578,8 +558,8 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
           <strong>{visibleSummary}</strong>
           <SupportBadge>{props.t("filterAppliedToResults")}</SupportBadge>
         </button>
-        <button type="button" className="qs-filter-console-card" onClick={props.onOpenFilters} data-ui="qs-filter-card-stops-risk" aria-label="Escalas y riesgo">
-          <span>Escalas y riesgo</span>
+        <button type="button" className="qs-filter-console-card" onClick={props.onOpenFilters} data-ui="qs-filter-card-stops" aria-label={props.t("stopsTitle")}>
+          <span>{props.t("stopsTitle")}</span>
           <strong>{experimentalSummary}</strong>
           <SupportBadge tone="partial">{props.t("filterPartialSupport")}</SupportBadge>
         </button>
@@ -621,7 +601,6 @@ function areFilterConsolePropsEqual(prev: FilterConsoleProps, next: FilterConsol
     && prev.priceMin === next.priceMin
     && prev.priceMax === next.priceMax
     && prev.durationMax === next.durationMax
-    && prev.riskFilter === next.riskFilter
     && prev.sortBy === next.sortBy
     && prev.includeStops === next.includeStops
     && prev.maxStops === next.maxStops
@@ -640,12 +619,10 @@ function areFilterConsolePropsEqual(prev: FilterConsoleProps, next: FilterConsol
     && prev.fieldErrors === next.fieldErrors
     && prev.filtersCloseRef === next.filtersCloseRef
     && prev.t === next.t
-    && prev.formatRiskLabel === next.formatRiskLabel
     && prev.setRadiusKm === next.setRadiusKm
     && prev.setPriceMin === next.setPriceMin
     && prev.setPriceMax === next.setPriceMax
     && prev.setDurationMax === next.setDurationMax
-    && prev.setRiskFilter === next.setRiskFilter
     && prev.setSortBy === next.setSortBy
     && prev.setIncludeStops === next.setIncludeStops
     && prev.setMaxStops === next.setMaxStops

@@ -514,7 +514,6 @@ def _history_out(row: DoorToDoorSearchHistory, chosen_option_id: str | None, use
         recommended_label=recommended.get("label"),
         total_price_min=recommended.get("total_price_min"),
         total_price_max=recommended.get("total_price_max"),
-        risk_level=recommended.get("risk_level"),
         chosen_option_id=chosen_option_id,
     )
 

@@ -277,7 +277,7 @@ export default function HomePage() {
               </div>
               <div className="landing-close-actions">
                 <Link href="/login" className="btn-primary btn-layered">{t("public.landing.ctaEnter")}</Link>
-                <Link href="/register" className="btn-secondary">{t("public.landing.ctaCreate")}</Link>
+                <Link href="/register" className="btn-ghost">{t("public.landing.ctaCreate")}</Link>
                 <Link href="/policies" className="linkInline">{t("public.landing.policies")}</Link>
               </div>
             </div>

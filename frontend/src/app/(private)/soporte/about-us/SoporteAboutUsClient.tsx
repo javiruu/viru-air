@@ -27,7 +27,7 @@ export default function SoporteAboutUsClient() {
           <Link className="btn-ghost" href="/soporte/ayuda">
             {t("account.menu.help")}
           </Link>
-          <Link className="btn-primary" href="/dashboard">
+          <Link className="btn-ghost" href="/dashboard">
             {t("shared.actions.back")}
           </Link>
         </div>

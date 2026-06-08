@@ -434,11 +434,11 @@ export default function AlertsPage() {
             <p className="panel-note">{t("alerts.hero.subtitle")}</p>
           </div>
           <div className="alerts-hero-actions">
-            <button className="btn-primary" type="button" onClick={evaluateNow} disabled={isEvaluating}>
-              {isEvaluating ? t("alerts.form.buttonEvaluating") : t("alerts.form.buttonSimulate")}
-            </button>
-            <button className="btn-secondary" type="button" onClick={focusRuleForm}>
+            <button className="btn-primary" type="button" onClick={focusRuleForm}>
               {t("alerts.hero.createRule")}
+            </button>
+            <button className="btn-secondary" type="button" onClick={evaluateNow} disabled={isEvaluating}>
+              {isEvaluating ? t("alerts.form.buttonEvaluating") : t("alerts.form.buttonSimulate")}
             </button>
             <button className="btn-ghost" type="button" onClick={() => router.push("/dashboard")}>
               {t("alerts.hero.backToDashboard")}
@@ -516,7 +516,7 @@ export default function AlertsPage() {
             {t("alerts.form.quietHoursEnd")}
             <input value={quietHoursEnd} onChange={(event) => setQuietHoursEnd(event.target.value)} />
           </label>
-          <button className="btn-ghost" type="button" onClick={saveQuietHours}>
+          <button className="btn-secondary" type="button" onClick={saveQuietHours}>
             {t("alerts.form.buttonSave")}
           </button>
         </div>

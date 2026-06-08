@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent } from "react";
+import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { BadgeCheck, ShieldCheck, Sparkles } from "lucide-react";
 
@@ -14,6 +15,9 @@ type GlassSignInCardProps = {
   fieldError: { email?: string; password?: string };
   submitting?: boolean;
   t: TranslateFn;
+  secondaryHref?: string;
+  secondaryIntro?: string;
+  secondaryLabel?: string;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onForgotPassword?: () => void;
@@ -34,6 +38,9 @@ export function GlassSignInCard({
   fieldError,
   submitting = false,
   t,
+  secondaryHref,
+  secondaryIntro,
+  secondaryLabel,
   onEmailChange,
   onPasswordChange,
   onForgotPassword,
@@ -135,6 +142,15 @@ export function GlassSignInCard({
         <button type="submit" className="btn-primary glass-signin-submit" disabled={submitting}>
           {submitting ? t("shared.states.loading") : submitText}
         </button>
+
+        {secondaryHref && secondaryLabel ? (
+          <div className="glass-signin-alt-actions">
+            {secondaryIntro ? <span className="glass-signin-alt-copy">{secondaryIntro}</span> : null}
+            <Link href={secondaryHref} className="glass-signin-alt-link">
+              {secondaryLabel}
+            </Link>
+          </div>
+        ) : null}
       </form>
 
       <p className="glass-signin-legal">{t("public.auth.loginTermsNote")}</p>

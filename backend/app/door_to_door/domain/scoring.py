@@ -1,11 +1,4 @@
-﻿from app.door_to_door.schemas import DoorToDoorConfidence, DoorToDoorRiskLevel
-
-RISK_PENALTY: dict[DoorToDoorRiskLevel, int] = {
-    "low": 0,
-    "medium": 14,
-    "high": 34,
-    "unknown": 24,
-}
+from app.door_to_door.schemas import DoorToDoorConfidence
 
 CONFIDENCE_PENALTY: dict[DoorToDoorConfidence, int] = {
     "live": 0,
@@ -21,7 +14,6 @@ def score_itinerary(
     duration_minutes: int,
     airport_buffer_minutes: int | None,
     transfer_count: int,
-    risk_level: DoorToDoorRiskLevel,
     confidence: DoorToDoorConfidence,
     uncomfortable_hour: bool = False,
     luggage_penalty: int = 0,
@@ -38,7 +30,6 @@ def score_itinerary(
         - price_penalty
         - duration_penalty
         - transfer_penalty
-        - RISK_PENALTY[risk_level]
         - CONFIDENCE_PENALTY[confidence]
         - hour_penalty
         - luggage_penalty

@@ -41,7 +41,7 @@ Related: docs/INDICE_UNICO.md, docs/overview/current-state.md
 - [x] Debug payload gated by `APP_ENV=local` + `debug=true`
 
 ## Residual risks (known)
-- Provider data model still does not expose reliable stops/duration/risk for strict enforcement.
+- Provider data model still does not expose reliable stops/duration for strict enforcement.
 - Cache is in-memory only (single process scope).
 - End-to-end HTTP integration test is optional/skipped when fastapi test deps are unavailable.
 

@@ -10,7 +10,6 @@ from datetime import UTC, datetime, timedelta
 import requests
 
 from app.door_to_door.domain.models import ProviderHealth
-from app.door_to_door.domain.risk import calculate_risk_level
 from app.door_to_door.domain.scoring import score_itinerary
 from app.door_to_door.providers.base import DoorToDoorProvider, DoorToDoorProviderQuery
 from app.door_to_door.schemas import (
@@ -197,13 +196,11 @@ class GoogleRoutesProvider(DoorToDoorProvider):
         if inbound is not None:
             total_duration += inbound.duration_minutes
         transfer_count = 2 if inbound is not None else 1
-        risk = calculate_risk_level(airport_buffer, transfer_count, source_confidence)
         score = score_itinerary(
             price_midpoint=None,
             duration_minutes=total_duration,
             airport_buffer_minutes=airport_buffer,
             transfer_count=transfer_count,
-            risk_level=risk,
             confidence=source_confidence,
             uncomfortable_hour=outbound_departure.hour < 6,
             luggage_penalty=0,
@@ -226,7 +223,6 @@ class GoogleRoutesProvider(DoorToDoorProvider):
                 price_per_person_max=None,
                 currency="EUR",
                 total_duration_minutes=total_duration,
-                risk_level=risk,
                 score=score,
                 transfer_count=transfer_count,
                 airport_buffer_minutes=airport_buffer,

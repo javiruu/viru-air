@@ -235,12 +235,12 @@ export function SmartWatchListPanel({
               </button>
               <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkPause(selectedIds)}>{t("watchlist.bulk.pause")}</button>
               <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkResume(selectedIds)}>{t("watchlist.bulk.resume")}</button>
-              <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkDelete(selectedIds)}>{t("watchlist.bulk.delete")}</button>
+              <button type="button" className="btn-danger btn-compact" onClick={() => onBulkDelete(selectedIds)}>{t("watchlist.bulk.delete")}</button>
             </div>
           ) : null}
           <button
             type="button"
-            className={`btn-secondary btn-layered ${isCalendarSelectorOpen ? "is-active" : ""}`}
+            className={`btn-ghost btn-compact ${isCalendarSelectorOpen ? "is-active" : ""}`}
             onClick={onToggleCalendarSelector}
             aria-expanded={isCalendarSelectorOpen}
             aria-controls="watchlist-calendar-selector"

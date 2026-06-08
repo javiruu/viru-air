@@ -16,9 +16,7 @@ function renderScreenState(overrides: Partial<Parameters<typeof useQuickSearchSc
       priceMin: "",
       priceMax: "",
       durationMax: "",
-      riskFilter: "all",
       sortBy: "ranking",
-      showHighRisk: false,
       filtersNotice: [],
       filtersWarningCodes: [],
       filtersMeta: null,
@@ -60,7 +58,6 @@ function buildResult(overrides: Partial<SearchResult> = {}): SearchResult {
     source: "ryanair",
     duration_total: 120,
     duration_total_min: 120,
-    risk_label: "low",
     ranking_score: 0.91,
     stale_data: false,
     itinerary_type: "direct",
@@ -69,20 +66,18 @@ function buildResult(overrides: Partial<SearchResult> = {}): SearchResult {
   };
 }
 
-test("useQuickSearchScreenState exposes degraded state, groups warnings and hides high-risk results by default", () => {
+test("useQuickSearchScreenState exposes degraded state and groups warnings", () => {
   const state = renderScreenState({
     results: [
-      buildResult({ result_id: "low-1", risk_label: "low", ranking_score: 0.9 }),
-      buildResult({ result_id: "high-1", destination: "LIS", risk_label: "high", ranking_score: 0.95 }),
+      buildResult({ result_id: "res-1", ranking_score: 0.9 }),
+      buildResult({ result_id: "res-2", destination: "LIS", ranking_score: 0.95 }),
     ],
     filtersWarningCodes: ["ryanair_unavailable_partial", "provider_error_partial", "ryanair_provider_unavailable_total"],
     searchMeta: { stale_data: true },
   });
 
   assert.equal(state.showDegradedState, true);
-  assert.equal(state.visibleResults.length, 1);
-  assert.equal(state.visibleResults[0]?.result_id, "low-1");
-  assert.equal(state.hiddenHighRiskResults.length, 1);
+  assert.equal(state.visibleResults.length, 2);
   assert.deepEqual(state.groupedNeutralWarnings, [
     { message: "ryanair_unavailable_partial", count: 1 },
     { message: "provider_error_partial", count: 1 },
@@ -113,7 +108,7 @@ test("useQuickSearchScreenState surfaces partial provider outage without hiding 
   assert.equal(state.zeroResultCauses[0], "emptyCauseProvider");
   assert.deepEqual(
     state.zeroResultActions.map((action) => action.id),
-    ["disable_strict", "increase_duration"],
+    ["disable_strict", "increase_duration", "open_date_flex"],
   );
 });
 
@@ -174,7 +169,7 @@ test("useQuickSearchScreenState derives zero-result causes and relax actions fro
   assert.equal(collapsed.canExpandZeroResultCauses, true);
   assert.deepEqual(
     collapsed.zeroResultActions.map((action) => action.id),
-    ["disable_strict", "increase_duration", "open_radius_150", "clear_exclusions"],
+    ["disable_strict", "increase_duration", "open_radius_150", "open_date_flex", "clear_exclusions"],
   );
 
   const expanded = renderScreenState({
@@ -194,20 +189,19 @@ test("useQuickSearchScreenState derives zero-result causes and relax actions fro
   assert.equal(expanded.visibleZeroResultCauses.length, expanded.zeroResultCauses.length);
 });
 
-test("useQuickSearchScreenState applies visible result filters for price, duration and risk", () => {
+test("useQuickSearchScreenState applies visible result filters for price and duration", () => {
   const state = renderScreenState({
     results: [
-      buildResult({ result_id: "cheap-fast-low", price_total: 45, duration_total_min: 80, risk_label: "low" }),
-      buildResult({ result_id: "expensive-low", destination: "LIS", price_total: 170, duration_total_min: 85, risk_label: "low" }),
-      buildResult({ result_id: "slow-low", destination: "OPO", price_total: 60, duration_total_min: 220, risk_label: "low" }),
-      buildResult({ result_id: "medium-risk", destination: "STN", price_total: 50, duration_total_min: 90, risk_label: "medium" }),
+      buildResult({ result_id: "cheap-fast", price_total: 45, duration_total_min: 80 }),
+      buildResult({ result_id: "expensive", destination: "LIS", price_total: 170, duration_total_min: 85 }),
+      buildResult({ result_id: "slow", destination: "OPO", price_total: 60, duration_total_min: 220 }),
+      buildResult({ result_id: "second-fit", destination: "STN", price_total: 50, duration_total_min: 90 }),
     ],
     priceMax: "100",
     durationMax: "120",
-    riskFilter: "low",
   });
 
-  assert.deepEqual(state.visibleResults.map((item) => item.result_id), ["cheap-fast-low"]);
+  assert.deepEqual(state.visibleResults.map((item) => item.result_id), ["cheap-fast", "second-fit"]);
 });
 
 test("useQuickSearchScreenState groups sources defensively when raw source values are malformed", () => {

@@ -14,7 +14,7 @@ La pregunta que responde no es solo “¿el vuelo es barato?”, sino:
 - cuánto cuesta el viaje completo;
 - cuánto tarda;
 - cuánto margen queda antes del embarque;
-- qué riesgo operativo tiene;
+- cuántos cambios requiere;
 - qué fuentes y nivel de confianza sostienen cada dato.
 
 ## Entrada principal

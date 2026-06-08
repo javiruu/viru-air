@@ -146,7 +146,6 @@ class GoogleMapsDeepLinkProvider(DoorToDoorProvider):
                 price_per_person_max=None,
                 currency="EUR",
                 total_duration_minutes=None,
-                risk_level="unknown",
                 score=None,
                 transfer_count=0,
                 airport_buffer_minutes=None,

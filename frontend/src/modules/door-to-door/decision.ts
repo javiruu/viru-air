@@ -1,16 +1,9 @@
 import type { DecisionBadge, DecisionReason, DoorToDoorOption, OptionDeltaSummary } from "@/modules/door-to-door/types";
 
-const RISK_WEIGHT: Record<DoorToDoorOption["risk_level"], number> = {
-  low: 0,
-  medium: 1,
-  high: 2,
-  unknown: 3,
-};
-
 export function getDecisionBadges(options: DoorToDoorOption[]): Record<string, DecisionBadge[]> {
   if (options.length === 0) return {};
   const byDuration = [...options].sort((a, b) => compareNumber(a.total_duration_minutes, b.total_duration_minutes, a.id, b.id));
-  const byRisk = [...options].sort((a, b) => compareNumber(RISK_WEIGHT[a.risk_level], RISK_WEIGHT[b.risk_level], a.id, b.id));
+  const byBuffer = [...options].sort((a, b) => compareNumber(a.airport_buffer_minutes, b.airport_buffer_minutes, a.id, b.id, true));
   const byTransfers = [...options].sort((a, b) => compareNumber(a.transfer_count, b.transfer_count, a.id, b.id));
   const byPrice = [...options]
     .filter((option) => option.total_price_min != null)
@@ -20,7 +13,7 @@ export function getDecisionBadges(options: DoorToDoorOption[]): Record<string, D
   for (const option of options) badges[option.id] = [];
 
   addBadge(badges, byDuration[0], { kind: "fastest", label: "fastest" });
-  addBadge(badges, byRisk[0], { kind: "lowest_risk", label: "lowest_risk" });
+  addBadge(badges, byBuffer[0], { kind: "longest_buffer", label: "longest_buffer" });
   addBadge(badges, byTransfers[0], { kind: "fewest_changes", label: "fewest_changes" });
   if (byPrice[0]) addBadge(badges, byPrice[0], { kind: "best_estimated_price", label: "best_estimated_price" });
 
@@ -43,11 +36,6 @@ export function getDecisionReasons(recommended: DoorToDoorOption, options: DoorT
     if (bestBuffer != null && recommended.airport_buffer_minutes >= bestBuffer) {
       reasons.push({ kind: "buffer", label: "buffer" });
     }
-  }
-
-  const bestRisk = minNumber(peers.map((item) => RISK_WEIGHT[item.risk_level]));
-  if (bestRisk != null && RISK_WEIGHT[recommended.risk_level] <= bestRisk) {
-    reasons.push({ kind: "risk", label: "risk" });
   }
 
   const bestTransfers = minNumber(peers.map((item) => item.transfer_count));
@@ -80,7 +68,7 @@ export function getAlternativeDeltas(recommended: DoorToDoorOption, options: Doo
       delta_price: diff(option.total_price_min, recommended.total_price_min),
       delta_duration_minutes: diff(option.total_duration_minutes, recommended.total_duration_minutes),
       delta_buffer_minutes: diff(option.airport_buffer_minutes, recommended.airport_buffer_minutes),
-      risk_change: toRiskChange(option.risk_level, recommended.risk_level),
+      delta_transfer_count: diff(option.transfer_count, recommended.transfer_count),
     }));
 }
 
@@ -94,14 +82,6 @@ export function hasUncertainSources(option: DoorToDoorOption): boolean {
       source.confidence === "deeplink" ||
       source.confidence === "unavailable",
   );
-}
-
-function toRiskChange(optionRisk: DoorToDoorOption["risk_level"], recommendedRisk: DoorToDoorOption["risk_level"]): "better" | "worse" | "equal" {
-  const optionWeight = RISK_WEIGHT[optionRisk];
-  const recWeight = RISK_WEIGHT[recommendedRisk];
-  if (optionWeight < recWeight) return "better";
-  if (optionWeight > recWeight) return "worse";
-  return "equal";
 }
 
 function addBadge(store: Record<string, DecisionBadge[]>, option: DoorToDoorOption | undefined, badge: DecisionBadge) {

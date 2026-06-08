@@ -311,7 +311,7 @@ export function useDoorToDoorResults(
         optionSummary: {
           total_price_min: option.total_price_min,
           total_price_max: option.total_price_max,
-          risk_level: option.risk_level,
+          transfer_count: option.transfer_count,
           total_duration_minutes: option.total_duration_minutes,
         },
       });
@@ -1170,7 +1170,7 @@ Añadir botones de preset rápido en el slide-out:
     <button onClick={() => onChange({ ...DEFAULT_PREFERENCES, sort_by: "fastest" })}>
       {t("doorToDoor.filters.presetFast")}
     </button>
-    <button onClick={() => onChange({ ...DEFAULT_PREFERENCES, sort_by: "lowest_risk", min_airport_buffer_minutes: 180 })}>
+    <button onClick={() => onChange({ ...DEFAULT_PREFERENCES, sort_by: "fewest_changes", min_airport_buffer_minutes: 180 })}>
       {t("doorToDoor.filters.presetSafe")}
     </button>
   </div>

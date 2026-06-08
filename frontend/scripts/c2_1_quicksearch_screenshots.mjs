@@ -16,7 +16,6 @@ const baseResult = {
   currency: "EUR",
   ranking_score: 0.88,
   duration_total_min: 175,
-  risk_label: "low",
   source: "ryanair",
   stale_data: false,
   itinerary_type: "direct",
@@ -41,7 +40,7 @@ async function setupPage(page, scenario) {
       return;
     }
 
-    const results = scenario === "empty" ? [] : [baseResult, { ...baseResult, result_id: "res-2", destination: "LIS", risk_label: "medium" }];
+    const results = scenario === "empty" ? [] : [baseResult, { ...baseResult, result_id: "res-2", destination: "LIS" }];
     await route.fulfill({
       status: 200,
       contentType: "application/json",

@@ -83,7 +83,6 @@ function buildResult(overrides: Record<string, unknown> = {}) {
     source: "ryanair",
     duration_total: 125,
     duration_total_min: 125,
-    risk_label: "low",
     ranking_score: 0.91,
     stale_data: false,
     itinerary_type: "direct",

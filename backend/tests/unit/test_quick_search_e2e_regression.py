@@ -78,7 +78,6 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
         self.assertEqual(first["price_total"], 55)
         self.assertIsInstance(first["duration_total_min"], int)
         self.assertGreater(first["duration_total_min"], 0)
-        self.assertEqual(first["risk_label"], "low")
         self.assertIsInstance(first["freshness_ts"], str)
         self.assertEqual(first["ranking_score"], first["score"]["final_score"])
         self.assertFalse(first["stale_data"])
