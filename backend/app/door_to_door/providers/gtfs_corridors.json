@@ -50,24 +50,15 @@
     "origin_hint_lng": -4.42,
     "destination_airport": "AGP",
     "feed_ids": ["emt_malaga_nap"],
-    "status": "planned_blocked",
-    "verified_at": null,
-    "notes": "⚠️ Feed EMT Málaga requiere autenticación NAP (HTTP 401). URL fuente: nap.transportes.gob.es. Cubriría Málaga centro→AGP una vez resuelto el acceso.",
-    "activation_steps": [
-      "1. Regístrate en nap.transportes.gob.es",
-      "2. Ve a Account → InstruccionesAPI y genera tu API key",
-      "3. Configura GTFS_NAP_API_KEY=tu-key en tu .env",
-      "4. Ejecuta: cd backend && python -m app.door_to_door.tools.gtfs_probe --feed-id emt_malaga_nap",
-      "5. Verifica que las paradas cercanas a Málaga centro y AGP aparecen en el probe",
-      "6. Cambia status de planned_blocked a verified_limited en este archivo",
-      "7. Ejecuta tests: python -m pytest tests/unit/test_door_to_door_gtfs_transit.py -v"
-    ],
+    "status": "verified",
+    "verified_at": "2026-06-09",
+    "notes": "✅ ACTIVADO 2026-06-09 con NAP España. Header ApiKey + endpoint downloadLink/1494 + URL prefirmada. PROBE: 1 agencia (EMTMALAGA), 1.134 paradas, 48 rutas bus, 19.531 viajes, 564.152 stop_times. Ruta A probada: Parque-Pl.Marina→Aeropuerto-Llegadas (2026-07-15), 27-33 min, salidas 14:24-16:04.",
     "coverage": {
-      "nearby_stops": false,
-      "service_by_date": false,
-      "buffer_matching": false,
-      "both_legs": false,
-      "both_legs_note": "Feed bloqueado por autenticación NAP"
+      "nearby_stops": true,
+      "service_by_date": true,
+      "buffer_matching": true,
+      "both_legs": true,
+      "both_legs_note": "EMT Málaga cubre Málaga centro→AGP con paradas [5184] Parque-Pl.Marina y [3536] Aeropuerto-Llegadas."
     }
   },
   {
@@ -79,22 +70,15 @@
     "origin_hint_lng": -2.463,
     "destination_airport": "AGP",
     "feed_ids": ["ctan_andalucia_nap"],
-    "status": "planned_blocked",
-    "verified_at": null,
-    "notes": "⚠️ Feed Consorcios Transporte Andalucía requiere autenticación NAP (HTTP 401). Cubriría Almería→AGP y otras rutas regionales. Feed unificado de los 9 consorcios.",
-    "activation_steps": [
-      "1. Misma GTFS_NAP_API_KEY que EMT Málaga (clave única del NAP)",
-      "2. Ejecuta: cd backend && python -m app.door_to_door.tools.gtfs_probe --feed-id ctan_andalucia_nap",
-      "3. Verifica que las paradas cercanas a Almería y AGP aparecen en el probe",
-      "4. Cambia status de planned_blocked a verified_limited en este archivo",
-      "5. Ejecuta tests: python -m pytest tests/unit/test_door_to_door_gtfs_transit.py -v"
-    ],
+    "status": "verified_limited",
+    "verified_at": "2026-06-09",
+    "notes": "✅ ACTIVADO 2026-06-09 con NAP España. Misma ApiKey y downloadLink/1562 que EMT Málaga. PROBE: 9 agencias (CTMAS, CMTBC, CTAG, CTMAM, CTMCG...), 5.010 paradas, 478 rutas (476 bus + 2 ferry), 15.473 viajes, 309.722 stop_times. ⚠️ Sin viajes directos Almería→AGP en 2026-07-15 (es un feed regional unificado de 9 consorcios; la ruta directa puede requerir transbordo entre consorcios).",
     "coverage": {
-      "nearby_stops": false,
-      "service_by_date": false,
-      "buffer_matching": false,
+      "nearby_stops": true,
+      "service_by_date": "limited",
+      "buffer_matching": "indirect",
       "both_legs": false,
-      "both_legs_note": "Feed bloqueado por autenticación NAP"
+      "both_legs_note": "Feed cubre paradas en Almería y AGP pero la ruta directa puede requerir transbordo entre consorcios."
     }
   }
 ]
