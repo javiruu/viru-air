@@ -474,7 +474,13 @@ def test_provider_status_gtfs_disabled_without_feeds(monkeypatch):
     monkeypatch.setenv("DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS", "1")
     monkeypatch.setenv("DOOR_TO_DOOR_ENABLE_GTFS_TRANSIT", "1")
     monkeypatch.delenv("DOOR_TO_DOOR_GTFS_FEEDS_JSON", raising=False)
+    monkeypatch.delenv("DOOR_TO_DOOR_GTFS_FEEDS_FILE", raising=False)
     monkeypatch.delenv("GOOGLE_MAPS_API_KEY", raising=False)
+    # Suppress the default manifest fallback so _has_gtfs_feeds() returns False
+    monkeypatch.setattr(
+        "app.door_to_door.providers.registry.Path.exists",
+        lambda self: False,
+    )
 
     from app.door_to_door.providers.registry import resolve_provider_runtime
 

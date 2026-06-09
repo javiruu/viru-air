@@ -896,6 +896,12 @@ def test_gtfs_disabled_yields_no_change(client: TestClient, monkeypatch) -> None
 def test_gtfs_on_without_feeds_shows_disabled_status(client: TestClient, monkeypatch) -> None:
     _set_provider_env(monkeypatch, mock=False, real=True, scrapers=False)
     _set_gtfs_env(monkeypatch, gtfs_enabled=True, feeds_json="")
+    monkeypatch.delenv("DOOR_TO_DOOR_GTFS_FEEDS_FILE", raising=False)
+    # Suppress the default manifest fallback so _has_gtfs_feeds() returns False
+    monkeypatch.setattr(
+        "app.door_to_door.providers.registry.Path.exists",
+        lambda self: False,
+    )
     headers = _auth_headers(client, "gtfs-nofeed@viru.dev")
 
     response = client.get("/api/v1/door-to-door/providers/status", headers=headers)

@@ -29,8 +29,10 @@
     "source_type": "open_data",
     "attribution": "Empresa Malagueña de Transportes — vía NAP transportes.gob.es",
     "license_url": null,
+    "api_key_env": "GTFS_NAP_API_KEY",
+    "auth_header_name": "x-api-key",
     "enabled_by_default": false,
-    "notes": "⚠️ NAP requiere autenticación (HTTP 401). URL fuente confirmada por Transitland. Cubre Málaga centro→AGP. Requiere registro en nap.transportes.gob.es o API key."
+    "notes": "⚠️ NAP requiere autenticación (HTTP 401). URL fuente confirmada por Transitland. Cubre Málaga centro→AGP. Requiere registro en nap.transportes.gob.es → Account/InstruccionesAPI para obtener la API key, y configurarla en GTFS_NAP_API_KEY."
   },
   {
     "id": "ctan_andalucia_nap",
@@ -40,7 +42,9 @@
     "source_type": "open_data",
     "attribution": "Consorcios de Transporte de Andalucía — vía NAP transportes.gob.es",
     "license_url": null,
+    "api_key_env": "GTFS_NAP_API_KEY",
+    "auth_header_name": "x-api-key",
     "enabled_by_default": false,
-    "notes": "⚠️ NAP requiere autenticación (HTTP 401). Feed unificado de los 9 consorcios. URL fuente confirmada por Transitland (f-transporte~metropolitano~andalucía). Cubre Almería→Málaga/AGP. Requiere registro en nap.transportes.gob.es."
+    "notes": "⚠️ NAP requiere autenticación (HTTP 401). Feed unificado de los 9 consorcios. URL fuente confirmada por Transitland (f-transporte~metropolitano~andalucía). Cubre Almería→Málaga/AGP. Requiere registro en nap.transportes.gob.es → Account/InstruccionesAPI para obtener la API key, y configurarla en GTFS_NAP_API_KEY."
   }
 ]

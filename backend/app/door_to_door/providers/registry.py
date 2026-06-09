@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Callable
 
 from app.door_to_door.providers.base import DoorToDoorProvider
@@ -54,8 +55,22 @@ def _has_google_key() -> bool:
 
 
 def _has_gtfs_feeds() -> bool:
+    """Check whether GTFS feed descriptors are configured via any source.
+
+    Mirrors the priority order in gtfs_feed_service.load_feed_descriptors():
+    1. DOOR_TO_DOOR_GTFS_FEEDS_JSON env var (inline JSON)
+    2. DOOR_TO_DOOR_GTFS_FEEDS_FILE env var (path to JSON file)
+    3. Default manifest at providers/gtfs_feeds.json
+    """
     raw = os.getenv("DOOR_TO_DOOR_GTFS_FEEDS_JSON", "").strip()
-    return bool(raw)
+    if raw:
+        return True
+    file_path = os.getenv("DOOR_TO_DOOR_GTFS_FEEDS_FILE", "").strip()
+    if file_path and Path(file_path).exists():
+        return True
+    # Fallback: default manifest next to this module
+    default_manifest = Path(__file__).resolve().parent / "gtfs_feeds.json"
+    return default_manifest.exists()
 
 
 def resolve_provider_runtime() -> ProviderRuntime:
