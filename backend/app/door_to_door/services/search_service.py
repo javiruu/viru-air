@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
 from app.door_to_door.providers.base import DoorToDoorProvider, DoorToDoorProviderQuery
+from app.door_to_door.domain.scoring import score_itinerary
 from app.door_to_door.schemas import (
     DoorToDoorCapabilityState,
     DoorToDoorConfidence,
@@ -32,6 +33,21 @@ from app.infrastructure.db.models import DoorToDoorChosenOption, DoorToDoorSearc
 logger = logging.getLogger("app.door_to_door")
 
 GROUND_MODES: set[DoorToDoorMode] = {"bus", "train", "rideshare", "shuttle", "taxi", "car", "walking"}
+
+# Source quality tiers for arbitration (Fase 6).
+# Higher = better data. Used to prefer the best source per trip segment
+# and to boost scoring for options from higher-quality sources.
+SOURCE_QUALITY: dict[DoorToDoorSourceType, int] = {
+    "api": 5,
+    "open_data": 4,
+    "maps": 3,
+    "deeplink": 2,
+    "external_deeplink": 2,
+    "aggregator": 2,
+    "scraper": 1,
+    "mock": 0,
+    "estimate": 0,
+}
 
 
 class DoorToDoorSearchService:
@@ -62,6 +78,22 @@ class DoorToDoorSearchService:
             flight=flight,
             checked_at=checked_at,
         )
+
+        # Fase 9: structured log — search start
+        logger.info(
+            json.dumps(
+                {
+                    "event": "door_to_door_search_start",
+                    "user_id": user_id,
+                    "watch_id": request.flight_watch_id,
+                    "origin": request.origin.label,
+                    "destination": request.final_destination.label,
+                    "providers": [p.provider_name for p in self.providers],
+                },
+                ensure_ascii=False,
+            )
+        )
+
         warnings: list[DoorToDoorWarningOut] = list(bootstrap_warnings or [])
         options: list[DoorToDoorOptionOut] = []
         has_real_results = False
@@ -76,8 +108,24 @@ class DoorToDoorSearchService:
                         has_mock_results = True
                     else:
                         has_real_results = True
-                for warning in provider.consume_warnings():
+                provider_warnings = provider.consume_warnings()
+                for warning in provider_warnings:
                     self._append_warning(warnings, warning)
+
+                # Fase 9: structured log — per-provider result
+                logger.info(
+                    json.dumps(
+                        {
+                            "event": "door_to_door_provider_result",
+                            "user_id": user_id,
+                            "provider": provider.provider_name,
+                            "source_type": provider.source_type,
+                            "options_count": len(provider_options),
+                            "warnings": [w.code for w in provider_warnings],
+                        },
+                        ensure_ascii=False,
+                    )
+                )
             except Exception as exc:  # pragma: no cover - defensive log path
                 logger.warning(
                     json.dumps(
@@ -109,6 +157,10 @@ class DoorToDoorSearchService:
                     )
 
         options = self._enrich_deeplink_with_google_routes(options)
+        # Fase 6: compose cross-provider options (best outbound + best inbound)
+        composite = self._compose_cross_provider(options, flight, query)
+        if composite:
+            options.append(composite)
         options, filter_warnings = self._apply_preferences(options, request.preferences)
         warnings.extend(filter_warnings)
 
@@ -149,6 +201,23 @@ class DoorToDoorSearchService:
         options = self._sort_options(options, request.preferences.sort_by)
         summary = build_summary(options)
 
+        # Fase 9: structured log — search end
+        completions = [o.completeness for o in options]
+        logger.info(
+            json.dumps(
+                {
+                    "event": "door_to_door_search_end",
+                    "user_id": user_id,
+                    "total_options": len(options),
+                    "full": completions.count("full"),
+                    "partial_actionable": completions.count("partial_actionable"),
+                    "exploratory": completions.count("exploratory"),
+                    "warning_codes": [w.code for w in warnings],
+                },
+                ensure_ascii=False,
+            )
+        )
+
         chosen = db.scalar(
             select(DoorToDoorChosenOption)
             .where(
@@ -183,6 +252,8 @@ class DoorToDoorSearchService:
         has_google_routes_enabled = has_google_routes is not None and has_google_routes.enabled
         has_gtfs = provider_by_name.get("gtfs_transit", None)
         has_gtfs_enabled = has_gtfs is not None and has_gtfs.enabled
+        has_google_places = provider_by_name.get("google_places", None)
+        has_google_places_enabled = has_google_places is not None and has_google_places.enabled
 
         has_options = len(options) > 0
 
@@ -203,10 +274,11 @@ class DoorToDoorSearchService:
             "transit": _cap("partial", "open_data", "cached", why_missing="corridor_limited") if has_gtfs_enabled else _cap("planned", "none", "unavailable", why_missing="gtfs_provider_disabled"),
             "alternatives": _cap("available", "api", "cached") if has_options else _cap("planned", "none", "unavailable", why_missing="route_candidates_pending"),
             "saved_places": _cap("available", "api", "cached"),
-            # ── Capacidades sembradas, sin backend real (Fase 9: honestidad) ──
-            "traffic": _cap("planned", "none", "unavailable", why_missing="traffic_layer_pending"),
+            # ── Fase 7: capacidades activadas con backend real ──
+            "traffic": _cap("partial", "maps", "cached", why_missing="driving_only") if has_google_routes_enabled else _cap("planned", "none", "unavailable", why_missing="google_routes_disabled"),
+            "nearby_pois": _cap("partial", "maps", "cached", why_missing="search_endpoint_not_wired") if has_google_places_enabled else _cap("planned", "none", "unavailable", why_missing="google_places_disabled"),
+            # ── Capacidades sembradas, sin backend real ──
             "street_view_preview": _cap("planned", "none", "unavailable", why_missing="street_view_not_connected"),
-            "nearby_pois": _cap("planned", "none", "unavailable", why_missing="nearby_pois_pending"),
             "offline": _cap("planned", "none", "unavailable", why_missing="offline_cache_not_implemented"),
             "incidents": _cap("planned", "none", "unavailable", why_missing="incident_source_not_connected"),
             "eco_route": _cap("planned", "none", "unavailable", why_missing="eco_route_provider_pending"),
@@ -419,23 +491,216 @@ class DoorToDoorSearchService:
             allowed.add("car")
         return allowed
 
+    # ------------------------------------------------------------------
+    # Fase 6: cross-provider arbitration
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _leg_source_quality(leg: DoorToDoorLegOut) -> int:
+        """Rate a ground leg's source quality. Higher = better data.
+
+        Real data with duration and schedule from high-quality sources
+        scores highest. Deeplinks and estimates score lower.
+        """
+        if leg.type != "ground":
+            return -1
+        base = SOURCE_QUALITY.get(leg.source_type or "estimate", 0)
+        # Bonus for having concrete data (duration + schedule)
+        if leg.duration_minutes is not None:
+            base += 2
+        if leg.departure_at is not None and leg.arrival_at is not None:
+            base += 1
+        return base
+
+    @staticmethod
+    def _best_ground_leg(
+        legs: list[DoorToDoorLegOut],
+    ) -> DoorToDoorLegOut | None:
+        """Pick the best ground leg from a list by source quality."""
+        ground = [leg for leg in legs if leg.type == "ground"]
+        if not ground:
+            return None
+        ground.sort(key=lambda leg: DoorToDoorSearchService._leg_source_quality(leg), reverse=True)
+        return ground[0]
+
+    @staticmethod
+    def _extract_outbound_legs(options: list[DoorToDoorOptionOut]) -> list[DoorToDoorLegOut]:
+        """Extract outbound ground legs (before the flight) from all options."""
+        legs: list[DoorToDoorLegOut] = []
+        for option in options:
+            flight_idx = next((i for i, leg in enumerate(option.legs) if leg.type == "flight"), -1)
+            if flight_idx < 0:
+                continue
+            for i in range(flight_idx):
+                if option.legs[i].type == "ground":
+                    legs.append(option.legs[i])
+        return legs
+
+    @staticmethod
+    def _extract_inbound_legs(options: list[DoorToDoorOptionOut]) -> list[DoorToDoorLegOut]:
+        """Extract inbound ground legs (after the flight) from all options."""
+        legs: list[DoorToDoorLegOut] = []
+        for option in options:
+            flight_idx = next((i for i, leg in enumerate(option.legs) if leg.type == "flight"), -1)
+            if flight_idx < 0:
+                continue
+            for i in range(flight_idx + 1, len(option.legs)):
+                if option.legs[i].type == "ground":
+                    legs.append(option.legs[i])
+        return legs
+
+    def _compose_cross_provider(
+        self,
+        options: list[DoorToDoorOptionOut],
+        flight: DoorToDoorFlightOut,
+        query: DoorToDoorProviderQuery,
+    ) -> DoorToDoorOptionOut | None:
+        """Create a composite option using the best outbound and best inbound
+        ground legs, potentially from different providers.
+
+        Only creates a composite when both legs carry real data (source quality >= 2)
+        and at least one leg improves over what the best single-provider option offers.
+        """
+        if len(options) < 2:
+            return None
+
+        outbound_legs = self._extract_outbound_legs(options)
+        inbound_legs = self._extract_inbound_legs(options)
+        if not outbound_legs or not inbound_legs:
+            return None
+
+        best_outbound = self._best_ground_leg(outbound_legs)
+        best_inbound = self._best_ground_leg(inbound_legs)
+        if best_outbound is None or best_inbound is None:
+            return None
+
+        # Only compose if both legs have real data (quality >= sources like maps/deeplink)
+        out_quality = self._leg_source_quality(best_outbound)
+        in_quality = self._leg_source_quality(best_inbound)
+        if out_quality < 3 or in_quality < 3:
+            return None
+
+        # Check if the best single-provider option already has both these legs
+        # (avoid creating a duplicate composite)
+        best_option = max(options, key=lambda o: o.score or 0)
+        best_opt_outbound = self._best_ground_leg(
+            [leg for leg in best_option.legs if leg.type == "ground"],
+        )
+        best_opt_inbound = self._best_ground_leg(
+            [leg for leg in best_option.legs if leg.type == "ground"],
+        )
+
+        same_outbound = best_opt_outbound and best_outbound.provider == best_opt_outbound.provider
+        same_inbound = best_opt_inbound and best_inbound.provider == best_opt_inbound.provider
+        if same_outbound and same_inbound:
+            return None  # Best single option already has the best legs
+
+        # Build the composite option
+        flight_duration = int((flight.arrival_at - flight.departure_at).total_seconds() / 60)
+        airport_buffer = max(query.preferences.min_airport_buffer_minutes, 90)
+
+        # Collect unique sources from both legs
+        sources: list[DoorToDoorSourceOut] = []
+        source_types: list[DoorToDoorSourceType] = []
+        seen_providers: set[str] = set()
+        for leg in (best_outbound, best_inbound):
+            provider = leg.provider or "composite"
+            if provider not in seen_providers:
+                seen_providers.add(provider)
+                st = leg.source_type or "api"
+                sources.append(DoorToDoorSourceOut(
+                    provider=provider,
+                    source_provider=provider,
+                    source_type=st,
+                    confidence=leg.confidence or "estimated",
+                    checked_at=query.checked_at,
+                    expires_at=query.checked_at + timedelta(hours=6),
+                ))
+                if st not in source_types:
+                    source_types.append(st)
+
+        # Build legs: outbound ground → flight → inbound ground
+        legs: list[DoorToDoorLegOut] = [
+            best_outbound.model_copy(deep=True),
+            DoorToDoorLegOut(
+                type="flight",
+                mode="flight",
+                from_location=flight.origin_airport,
+                to_location=flight.destination_airport,
+                departure_at=flight.departure_at,
+                arrival_at=flight.arrival_at,
+                duration_minutes=flight_duration,
+                provider="flight_watch",
+                source_type="api",
+                confidence=flight.flight_time_confidence,
+            ),
+            best_inbound.model_copy(deep=True),
+        ]
+
+        ground_duration = (best_outbound.duration_minutes or 0) + (best_inbound.duration_minutes or 0)
+        total_duration = ground_duration + airport_buffer + flight_duration
+
+        # Score the composite (uses source_quality_bonus for best-of-breed legs)
+        score = score_itinerary(
+            price_midpoint=None,
+            duration_minutes=total_duration,
+            airport_buffer_minutes=airport_buffer,
+            transfer_count=2,
+            confidence="live",
+            completeness="full",
+            source_quality_bonus=8,  # Best-of-breed composition bonus
+        )
+
+        out_label = best_outbound.provider or ""
+        in_label = best_inbound.provider or ""
+
+        return DoorToDoorOptionOut(
+            id="option_composite_0",
+            label=f"Mejor combinacion ({out_label} + {in_label})",
+            description="Combinacion optima de fuentes: el mejor tramo de ida y de vuelta de distintos proveedores.",
+            status="real_result",
+            total_price_min=None,
+            total_price_max=None,
+            price_per_person_min=None,
+            price_per_person_max=None,
+            currency="EUR",
+            total_duration_minutes=total_duration,
+            score=score,
+            transfer_count=2,
+            airport_buffer_minutes=airport_buffer,
+            confidence="live",
+            source_types=source_types,
+            sources=sources,
+            legs=legs,
+            is_extended=False,
+            deep_link=None,
+            price=None,
+            trust_copy="Combinacion de los mejores datos disponibles de transporte publico. Sin precio confirmado.",
+        )
+
     def _sort_options(self, options: list[DoorToDoorOptionOut], sort_by: DoorToDoorSortBy) -> list[DoorToDoorOptionOut]:
-        # Primary: completeness rank, then status, then sort criteria
+        # Primary: completeness, then status, then source quality, then sort criteria
         completeness_order = {"full": 0, "partial_actionable": 1, "exploratory": 2}
         status_order = {"real_result": 0, "real_deeplink": 1, "estimate_only": 2}
+
+        def _source_quality_rank(item: DoorToDoorOptionOut) -> int:
+            """Best source type among the option's sources (lower = better rank)."""
+            best = max((SOURCE_QUALITY.get(st, 0) for st in item.source_types), default=0)
+            return -best  # negative so higher quality sorts first
 
         def _sort_key(item: DoorToDoorOptionOut):
             comp_rank = completeness_order.get(item.completeness, 2)
             status_rank = status_order.get(item.status, 2)
+            quality_rank = _source_quality_rank(item)
             if sort_by == "cheapest":
-                return (comp_rank, status_rank, item.total_price_min is None, item.total_price_min or 10_000)
+                return (comp_rank, status_rank, quality_rank, item.total_price_min is None, item.total_price_min or 10_000)
             if sort_by == "fastest":
                 has_duration = item.total_duration_minutes is None
-                return (comp_rank, status_rank, has_duration, item.total_duration_minutes or 999_999)
+                return (comp_rank, status_rank, quality_rank, has_duration, item.total_duration_minutes or 999_999)
             if sort_by == "fewest_changes":
-                return (comp_rank, status_rank, item.transfer_count, -(item.score or 0))
+                return (comp_rank, status_rank, quality_rank, item.transfer_count, -(item.score or 0))
             # best_balance: sort by score descending within completeness groups
-            return (comp_rank, -(item.score or 0))
+            return (comp_rank, status_rank, quality_rank, -(item.score or 0))
 
         return sorted(options, key=_sort_key)
 
@@ -488,6 +753,7 @@ class DoorToDoorSearchService:
                 select(DoorToDoorSearchHistory).where(
                     DoorToDoorSearchHistory.user_id == user_id,
                     DoorToDoorSearchHistory.created_at < cutoff,
+                    DoorToDoorSearchHistory.is_saved == False,  # noqa: E712 — never prune saved plans
                 )
             )
         )

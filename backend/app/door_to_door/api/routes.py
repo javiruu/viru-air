@@ -1,8 +1,10 @@
 ﻿import json
 import logging
+import os
 import unicodedata
 from datetime import datetime, time, timedelta
 from math import asin, cos, radians, sin, sqrt
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -15,12 +17,18 @@ from app.door_to_door.schemas import (
     DoorToDoorChosenOptionIn,
     DoorToDoorChosenOptionOut,
     DoorToDoorFlightOut,
+    DoorToDoorHealthOut,
     DoorToDoorHistoryOut,
+    DoorToDoorLocation,
+    DoorToDoorMapCapabilityOut,
+    DoorToDoorPreferences,
     DoorToDoorProviderStatusOut,
     DoorToDoorSavedLocationIn,
     DoorToDoorSavedLocationOut,
     DoorToDoorSavedPlaceIn,
     DoorToDoorSavedPlaceOut,
+    DoorToDoorSavedPlanOut,
+    DoorToDoorSavePlanIn,
     DoorToDoorSearchRequest,
     DoorToDoorSearchResponse,
     DoorToDoorSuggestionOut,
@@ -121,6 +129,103 @@ def _saved_location_out(location: DoorToDoorSavedLocation) -> DoorToDoorSavedLoc
 def providers_status() -> list[DoorToDoorProviderStatusOut]:
     runtime = resolve_provider_runtime()
     return runtime.statuses
+
+
+@router.get("/health", response_model=DoorToDoorHealthOut)
+def health() -> DoorToDoorHealthOut:
+    """Aggregated health: provider statuses + capability states in one view."""
+    runtime = resolve_provider_runtime()
+
+    # Build capability states using the same logic as _build_map_capabilities
+    has_google_routes = any(s.name == "google_routes" and s.enabled for s in runtime.statuses)
+    has_gtfs = any(s.name == "gtfs_transit" and s.enabled for s in runtime.statuses)
+    has_google_places = any(s.name == "google_places" and s.enabled for s in runtime.statuses)
+    has_navitia = any(s.name == "navitia" and s.enabled for s in runtime.statuses)
+
+    now = datetime.now(tz=MADRID)
+    capabilities: dict[str, DoorToDoorMapCapabilityOut] = {
+        "navigation": DoorToDoorMapCapabilityOut(
+            state="available" if has_google_routes else "planned",
+            source_type="maps" if has_google_routes else "none",
+            confidence="live" if has_google_routes else "unavailable",
+            last_checked_at=now,
+            why_missing=None if has_google_routes else "google_routes_disabled",
+        ),
+        "traffic": DoorToDoorMapCapabilityOut(
+            state="partial" if has_google_routes else "planned",
+            source_type="maps" if has_google_routes else "none",
+            confidence="cached" if has_google_routes else "unavailable",
+            last_checked_at=now,
+            why_missing="driving_only" if has_google_routes else "google_routes_disabled",
+        ),
+        "transit": DoorToDoorMapCapabilityOut(
+            state="partial" if (has_gtfs or has_navitia) else "planned",
+            source_type="open_data" if has_gtfs else ("api" if has_navitia else "none"),
+            confidence="cached" if (has_gtfs or has_navitia) else "unavailable",
+            last_checked_at=now,
+            why_missing="corridor_limited" if (has_gtfs or has_navitia) else "transit_provider_disabled",
+        ),
+        "alternatives": DoorToDoorMapCapabilityOut(
+            state="available" if has_google_routes else "planned",
+            source_type="api" if has_google_routes else "none",
+            confidence="cached" if has_google_routes else "unavailable",
+            last_checked_at=now,
+            why_missing=None if has_google_routes else "google_routes_disabled",
+        ),
+        "saved_places": DoorToDoorMapCapabilityOut(
+            state="available", source_type="api", confidence="cached", last_checked_at=now,
+        ),
+        "nearby_pois": DoorToDoorMapCapabilityOut(
+            state="partial" if has_google_places else "planned",
+            source_type="maps" if has_google_places else "none",
+            confidence="cached" if has_google_places else "unavailable",
+            last_checked_at=now,
+            why_missing="search_endpoint_not_wired" if has_google_places else "google_places_disabled",
+        ),
+        "street_view_preview": DoorToDoorMapCapabilityOut(
+            state="planned", source_type="none", confidence="unavailable",
+            last_checked_at=now, why_missing="street_view_not_connected",
+        ),
+        "offline": DoorToDoorMapCapabilityOut(
+            state="planned", source_type="none", confidence="unavailable",
+            last_checked_at=now, why_missing="offline_cache_not_implemented",
+        ),
+        "incidents": DoorToDoorMapCapabilityOut(
+            state="planned", source_type="none", confidence="unavailable",
+            last_checked_at=now, why_missing="incident_source_not_connected",
+        ),
+        "eco_route": DoorToDoorMapCapabilityOut(
+            state="planned", source_type="none", confidence="unavailable",
+            last_checked_at=now, why_missing="eco_route_provider_pending",
+        ),
+    }
+
+    # Count corridors
+    verified = 0
+    planned = 0
+    corridors_path = Path(__file__).resolve().parent.parent / "providers" / "gtfs_corridors.json"
+    try:
+        if corridors_path.exists():
+            corridors_raw = json.loads(corridors_path.read_text(encoding="utf-8"))
+            for c in corridors_raw:
+                status = c.get("status", "")
+                if status in ("verified", "verified_limited"):
+                    verified += 1
+                elif status == "planned_blocked":
+                    planned += 1
+    except (OSError, json.JSONDecodeError):
+        pass
+
+    enabled_search = [s.name for s in runtime.statuses if s.enabled and s.supports_search]
+
+    return DoorToDoorHealthOut(
+        app_env=os.getenv("APP_ENV", "local"),
+        providers=runtime.statuses,
+        capabilities=capabilities,
+        enabled_search_providers=enabled_search,
+        active_corridors_verified=verified,
+        active_corridors_planned=planned,
+    )
 
 
 @router.get("/suggestions", response_model=DoorToDoorSuggestionsResponseOut)
@@ -637,6 +742,178 @@ def delete_saved_place(
         db.commit()
     return {"status": "ok"}
 
+
+# ── Fase 8: Saved Plans ───────────────────────────────────────
+
+
+@router.put("/history/{history_id}/save", response_model=DoorToDoorSavedPlanOut)
+def save_plan(
+    history_id: str,
+    payload: DoorToDoorSavePlanIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> DoorToDoorSavedPlanOut:
+    history = db.scalar(
+        select(DoorToDoorSearchHistory).where(
+            DoorToDoorSearchHistory.id == history_id,
+            DoorToDoorSearchHistory.user_id == current_user.id,
+        )
+    )
+    if not history:
+        raise HTTPException(status_code=404, detail="door_to_door_history_not_found")
+
+    history.is_saved = True
+    history.label = payload.label
+    db.commit()
+    db.refresh(history)
+
+    chosen = db.scalar(
+        select(DoorToDoorChosenOption)
+        .where(
+            DoorToDoorChosenOption.user_id == current_user.id,
+            DoorToDoorChosenOption.history_id == history.id,
+        )
+        .order_by(DoorToDoorChosenOption.chosen_at.desc(), DoorToDoorChosenOption.id.desc())
+    )
+
+    origin = _safe_json_object(history.origin_json, field_name="origin_json", history_id=history.id, user_id=current_user.id)
+    dest = _safe_json_object(history.final_destination_json, field_name="final_destination_json", history_id=history.id, user_id=current_user.id)
+    summary = _safe_json_object(history.summary_json, field_name="summary_json", history_id=history.id, user_id=current_user.id)
+    recommended = summary.get("recommended") or {}
+
+    return DoorToDoorSavedPlanOut(
+        id=history.id,
+        label=history.label,
+        watch_id=history.watch_id,
+        origin_label=origin.get("label", "--"),
+        final_destination_label=dest.get("label", "--"),
+        created_at=history.created_at,
+        recommended_option_id=summary.get("recommended_option_id"),
+        recommended_label=recommended.get("label"),
+        total_price_min=recommended.get("total_price_min"),
+        total_price_max=recommended.get("total_price_max"),
+        chosen_option_id=chosen.option_id if chosen else None,
+    )
+
+
+@router.put("/history/{history_id}/unsave")
+def unsave_plan(
+    history_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict[str, str]:
+    history = db.scalar(
+        select(DoorToDoorSearchHistory).where(
+            DoorToDoorSearchHistory.id == history_id,
+            DoorToDoorSearchHistory.user_id == current_user.id,
+        )
+    )
+    if not history:
+        raise HTTPException(status_code=404, detail="door_to_door_history_not_found")
+
+    history.is_saved = False
+    db.commit()
+    return {"status": "ok"}
+
+
+@router.get("/plans", response_model=list[DoorToDoorSavedPlanOut])
+def list_plans(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[DoorToDoorSavedPlanOut]:
+    rows = list(
+        db.scalars(
+            select(DoorToDoorSearchHistory)
+            .where(
+                DoorToDoorSearchHistory.user_id == current_user.id,
+                DoorToDoorSearchHistory.is_saved == True,  # noqa: E712
+            )
+            .order_by(DoorToDoorSearchHistory.created_at.desc(), DoorToDoorSearchHistory.id.desc())
+            .limit(20)
+        )
+    )
+
+    history_ids = [row.id for row in rows]
+    chosen_rows = list(
+        db.scalars(
+            select(DoorToDoorChosenOption)
+            .where(
+                DoorToDoorChosenOption.user_id == current_user.id,
+                DoorToDoorChosenOption.history_id.in_(history_ids),
+            )
+            .order_by(DoorToDoorChosenOption.chosen_at.desc(), DoorToDoorChosenOption.id.desc())
+        )
+    ) if history_ids else []
+    chosen_by_history: dict[str, str] = {}
+    for item in chosen_rows:
+        if item.history_id and item.history_id not in chosen_by_history:
+            chosen_by_history[item.history_id] = item.option_id
+
+    result: list[DoorToDoorSavedPlanOut] = []
+    for row in rows:
+        origin = _safe_json_object(row.origin_json, field_name="origin_json", history_id=row.id, user_id=current_user.id)
+        dest = _safe_json_object(row.final_destination_json, field_name="final_destination_json", history_id=row.id, user_id=current_user.id)
+        summary = _safe_json_object(row.summary_json, field_name="summary_json", history_id=row.id, user_id=current_user.id)
+        recommended = summary.get("recommended") or {}
+        result.append(DoorToDoorSavedPlanOut(
+            id=row.id,
+            label=row.label,
+            watch_id=row.watch_id,
+            origin_label=origin.get("label", "--"),
+            final_destination_label=dest.get("label", "--"),
+            created_at=row.created_at,
+            recommended_option_id=summary.get("recommended_option_id"),
+            recommended_label=recommended.get("label"),
+            total_price_min=recommended.get("total_price_min"),
+            total_price_max=recommended.get("total_price_max"),
+            chosen_option_id=chosen_by_history.get(row.id),
+        ))
+    return result
+
+
+@router.post("/plans/{history_id}/rehydrate", response_model=DoorToDoorSearchResponse)
+async def rehydrate_plan(
+    history_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> DoorToDoorSearchResponse:
+    history = db.scalar(
+        select(DoorToDoorSearchHistory).where(
+            DoorToDoorSearchHistory.id == history_id,
+            DoorToDoorSearchHistory.user_id == current_user.id,
+        )
+    )
+    if not history:
+        raise HTTPException(status_code=404, detail="door_to_door_plan_not_found")
+
+    watch = _get_watch(db, current_user, history.watch_id)
+    flight, flight_warnings = _flight_context(db, watch)
+
+    origin_data = _safe_json_object(history.origin_json, field_name="origin_json", history_id=history.id, user_id=current_user.id)
+    dest_data = _safe_json_object(history.final_destination_json, field_name="final_destination_json", history_id=history.id, user_id=current_user.id)
+    prefs_data = _safe_json_object(history.preferences_json, field_name="preferences_json", history_id=history.id, user_id=current_user.id)
+
+    request = DoorToDoorSearchRequest(
+        flight_watch_id=history.watch_id,
+        origin=DoorToDoorLocation(**origin_data) if origin_data else DoorToDoorLocation(type="city", label="--"),
+        final_destination=DoorToDoorLocation(**dest_data) if dest_data else DoorToDoorLocation(type="city", label="--"),
+        preferences=DoorToDoorPreferences(**prefs_data) if prefs_data else DoorToDoorPreferences(),
+    )
+
+    runtime = resolve_provider_runtime()
+    service = DoorToDoorSearchService(
+        providers=runtime.providers,
+        provider_statuses=runtime.statuses,
+        mock_enabled=runtime.mock_enabled,
+    )
+    response = await service.search(
+        db=db,
+        user_id=current_user.id,
+        request=request,
+        flight=flight,
+        bootstrap_warnings=flight_warnings,
+    )
+    return response
 
 
 

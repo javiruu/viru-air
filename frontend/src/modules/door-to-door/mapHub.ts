@@ -24,6 +24,7 @@ export function buildMapCapabilities(response: DoorToDoorResponse | null, provid
   const input = response?.map_capabilities ?? {};
   const hasGoogleRoutes = providerByName.get("google_routes")?.enabled || false;
   const hasGtfsTransit = providerByName.get("gtfs_transit")?.enabled || false;
+  const hasGooglePlaces = providerByName.get("google_places")?.enabled || false;
 
   const defaults: Record<DoorToDoorMapCapabilityKey, Omit<DoorToDoorMapCapability, "key">> = {
     // ── Capacidades con valor real (Fase 9) ──
@@ -37,10 +38,15 @@ export function buildMapCapabilities(response: DoorToDoorResponse | null, provid
       ? { state: "available", source_type: "api", confidence: "cached", why_missing: null }
       : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "route_candidates_pending" },
     saved_places: { state: "available", source_type: "api", confidence: "cached", why_missing: null },
-    // ── Capacidades sembradas, sin backend real (Fase 9: honestidad) ──
-    traffic: { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "traffic_layer_pending" },
+    // ── Fase 7: capacidades activadas con backend real ──
+    traffic: hasGoogleRoutes
+      ? { state: "partial", source_type: "maps", confidence: "cached", why_missing: "driving_only" }
+      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "google_routes_disabled" },
+    nearby_pois: hasGooglePlaces
+      ? { state: "partial", source_type: "maps", confidence: "cached", why_missing: "search_endpoint_not_wired" }
+      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "google_places_disabled" },
+    // ── Capacidades sembradas, sin backend real ──
     street_view_preview: { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "street_view_not_connected" },
-    nearby_pois: { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "nearby_pois_pending" },
     offline: { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "offline_cache_not_implemented" },
     incidents: { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "incident_source_not_connected" },
     eco_route: { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "eco_route_provider_pending" },

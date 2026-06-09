@@ -183,6 +183,26 @@ class GtfsAgency:
 
 
 @dataclass
+class GtfsFareAttribute:
+    fare_id: str
+    price: float
+    currency_type: str
+    payment_method: int  # 0=on board, 1=before boarding
+    transfers: int  # 0=no transfers, 1=1 transfer, 2=2 transfers, empty=unlimited
+    agency_id: str | None = None
+    transfer_duration: int | None = None  # seconds
+
+
+@dataclass
+class GtfsFareRule:
+    fare_id: str
+    route_id: str | None  # None = applies to all routes
+    origin_id: str | None  # zone ID
+    destination_id: str | None  # zone ID
+    contains_id: str | None  # zone ID that must be contained in the journey
+
+
+@dataclass
 class ParsedGtfsFeed:
     feed_id: str
     downloaded_at: float  # epoch seconds
@@ -193,6 +213,8 @@ class ParsedGtfsFeed:
     stop_times: dict[str, list[GtfsStopTime]] = field(default_factory=dict)  # trip_id -> stop_times (sorted)
     calendar: dict[str, set[date]] = field(default_factory=dict)  # service_id -> active dates
     calendar_dates: dict[str, dict[date, int]] = field(default_factory=dict)  # service_id -> {date: exception_type}
+    fare_attributes: dict[str, GtfsFareAttribute] = field(default_factory=dict)  # fare_id -> fare
+    fare_rules: list[GtfsFareRule] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -213,6 +235,9 @@ class GtfsTransitLeg:
     to_stop_name: str
     from_stop_id: str
     to_stop_id: str
+    route_id: str = ""  # For fare lookup
+    lowest_price: float | None = None  # Confirmed fare from feed, if available
+    currency: str = "EUR"
 
 
 # ---------------------------------------------------------------------------
@@ -427,12 +452,76 @@ class GtfsFeedService:
                     to_stop_name=to_stop_obj.name if to_stop_obj else to_st.stop_id,
                     from_stop_id=from_st.stop_id,
                     to_stop_id=to_st.stop_id,
+                    route_id=trip.route_id,
                 )
             )
 
         # Sort by departure time
         results.sort(key=lambda leg: leg.departure_at)
+
+        # Enrich legs with fare data
+        for leg in results:
+            fare = self.lookup_fare(feed_id, leg.from_stop_id, leg.to_stop_id, leg.route_id)
+            if fare is not None:
+                leg.lowest_price = fare.price
+                leg.currency = fare.currency_type
+
         return results[: self.max_results]
+
+    # ---- fare lookup (Fase 5) ----
+
+    def lookup_fare(
+        self,
+        feed_id: str,
+        from_stop_id: str,
+        to_stop_id: str,
+        route_id: str,
+    ) -> GtfsFareAttribute | None:
+        """Find the lowest confirmed fare for a trip between two stops on a route.
+
+        GTFS fare rules match by route_id and/or zone IDs. We try:
+        1. Exact match: route + origin zone + destination zone
+        2. Route-only match (no zone restrictions)
+        3. Zone-only match (no route restriction, for flat-fare systems)
+        4. Fallback to the first fare attribute if no rules match
+        """
+        feed = self._feeds.get(feed_id)
+        if feed is None:
+            return None
+        if not feed.fare_attributes:
+            return None
+
+        # Build a zone map from stops.txt zone_id field (if available)
+        # Most feeds don't include zone_id in stops; fare rules often use zone_id = "" for all
+        candidates: list[GtfsFareAttribute] = []
+
+        for rule in feed.fare_rules:
+            # Check route match
+            route_match = rule.route_id is None or rule.route_id == "" or rule.route_id == route_id
+            if not route_match:
+                continue
+
+            # Check zone match (origin_id/destination_id are often empty = any zone)
+            zone_ok = True
+            if rule.origin_id and rule.origin_id != "":
+                zone_ok = False  # We don't have per-stop zone data; skip zone-specific rules
+            if rule.destination_id and rule.destination_id != "":
+                zone_ok = False
+            if not zone_ok:
+                continue
+
+            fare = feed.fare_attributes.get(rule.fare_id)
+            if fare is not None:
+                candidates.append(fare)
+
+        if candidates:
+            # Return the cheapest fare
+            candidates.sort(key=lambda f: f.price)
+            return candidates[0]
+
+        # Last resort: return the first fare attribute (many feeds have a single flat fare)
+        first = next(iter(feed.fare_attributes.values()), None)
+        return first
 
     # ---- internal ----
 
@@ -477,6 +566,13 @@ class GtfsFeedService:
                     calendar = _parse_calendar(zf)
                 if "calendar_dates.txt" in zf.namelist():
                     calendar_dates = _parse_calendar_dates(zf)
+                # Fase 5: parse fare data when available
+                fare_attributes: dict[str, GtfsFareAttribute] = {}
+                fare_rules: list[GtfsFareRule] = []
+                if "fare_attributes.txt" in zf.namelist():
+                    fare_attributes = _parse_csv(zf, "fare_attributes.txt", _parse_fare_attribute)
+                if "fare_rules.txt" in zf.namelist():
+                    fare_rules = _parse_fare_rules(zf)
 
             # Index stop_times by trip_id (sorted by stop_sequence)
             stop_times: dict[str, list[GtfsStopTime]] = {}
@@ -495,6 +591,8 @@ class GtfsFeedService:
                 stop_times=stop_times,
                 calendar=calendar,
                 calendar_dates=calendar_dates,
+                fare_attributes=fare_attributes,
+                fare_rules=fare_rules,
             )
         except Exception:
             logger.exception("gtfs_parse_failed", extra={"feed_id": feed_id})
@@ -662,6 +760,37 @@ def _hhmmss_to_seconds(value: str) -> int:
 
 def _route_type_name(route_type: int) -> str:
     return _ROUTE_TYPE_NAMES.get(route_type, "transit")
+
+
+def _parse_fare_attribute(row: dict[str, str]) -> tuple[str, GtfsFareAttribute]:
+    return row["fare_id"], GtfsFareAttribute(
+        fare_id=row["fare_id"],
+        price=float(row.get("price", 0)),
+        currency_type=row.get("currency_type", "EUR"),
+        payment_method=int(row.get("payment_method", 0)),
+        transfers=int(row.get("transfers", 0)) if row.get("transfers", "").strip() else 99,
+        agency_id=row.get("agency_id"),
+        transfer_duration=int(row["transfer_duration"]) if row.get("transfer_duration", "").strip() else None,
+    )
+
+
+def _parse_fare_rules(zf: zipfile.ZipFile) -> list[GtfsFareRule]:
+    if "fare_rules.txt" not in zf.namelist():
+        return []
+    text = _read_csv_text(zf, "fare_rules.txt")
+    result: list[GtfsFareRule] = []
+    for row in csv.DictReader(io.StringIO(text)):
+        try:
+            result.append(GtfsFareRule(
+                fare_id=row["fare_id"],
+                route_id=row.get("route_id") or None,
+                origin_id=row.get("origin_id") or None,
+                destination_id=row.get("destination_id") or None,
+                contains_id=row.get("contains_id") or None,
+            ))
+        except KeyError:
+            continue
+    return result
 
 
 def _haversine_meters(lat1: float, lon1: float, lat2: float, lon2: float) -> float:

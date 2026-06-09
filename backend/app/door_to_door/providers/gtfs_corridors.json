@@ -10,13 +10,14 @@
     "feed_ids": ["mom_treviso"],
     "status": "verified",
     "verified_at": "2026-05-22",
-    "notes": "Rutas MOM 101/103/6 conectan Treviso centro (PIAZZA DUOMO, TREVISO AUTOSTAZIONE) con parada TSF (MONCIA) en ~25-35 min. Cobertura calendar_dates: 2026-05-25 a 2026-08-31. ~10+ viajes entre 06:27-07:11 para fechas de julio. Funciona para vuelos con salida desde TSF.",
+    "notes": "Rutas MOM 101/103/6 conectan Treviso centro (PIAZZA DUOMO, TREVISO AUTOSTAZIONE) con parada TSF (MONCIA) en ~25-35 min. Cobertura calendar_dates: 2026-05-25 a 2026-08-31. ~10+ viajes entre 06:27-07:11 para fechas de julio. Bidireccional: funciona tanto para salidas desde TSF como para llegadas a TSF.",
+    "airport_search_terms": ["Treviso", "TSF", "aeroporto", "MONCIA"],
     "coverage": {
       "nearby_stops": true,
       "service_by_date": true,
       "buffer_matching": true,
-      "both_legs": false,
-      "both_legs_note": "Solo origen→TSF; el tramo TSF→destino depende de feeds en el área de llegada"
+      "both_legs": true,
+      "both_legs_note": "MOM Treviso cubre ambos sentidos: Treviso↔TSF. Paradas en TSF (MONCIA) y Treviso centro encontradas con búsqueda multi-término."
     }
   },
   {
@@ -30,13 +31,14 @@
     "feed_ids": ["actv_venice"],
     "status": "verified_limited",
     "verified_at": "2026-05-22",
-    "notes": "ACTV cubre Venezia↔aeropuerto Marco Polo. ⚠️ Ventana de calendario MUY corta: solo 2026-05-24 a 2026-06-06 (2 semanas). Fuera de ese rango = GTFS_NO_SERVICE_FOR_DATE. Requiere actualización frecuente del feed.",
+    "notes": "ACTV cubre Venezia↔aeropuerto Marco Polo. Bidireccional: funciona tanto para salidas desde VCE como para llegadas. ⚠️ Ventana de calendario MUY corta: solo 2026-05-24 a 2026-06-06 (2 semanas). Fuera de ese rango = GTFS_NO_SERVICE_FOR_DATE. Requiere actualización frecuente del feed.",
+    "airport_search_terms": ["Venecia", "Venezia", "VCE", "Marco Polo", "aeroporto"],
     "coverage": {
       "nearby_stops": true,
       "service_by_date": "limited_window",
       "buffer_matching": true,
-      "both_legs": false,
-      "both_legs_note": "Solo origen→VCE. Calendario limitado a 2 semanas."
+      "both_legs": true,
+      "both_legs_note": "ACTV cubre ambos sentidos Venezia↔VCE. Calendario limitado a 2 semanas aplica a ambos sentidos."
     }
   },
   {
@@ -50,7 +52,16 @@
     "feed_ids": ["emt_malaga_nap"],
     "status": "planned_blocked",
     "verified_at": null,
-    "notes": "⚠️ Feed EMT Málaga requiere autenticación NAP (HTTP 401). URL fuente: nap.transportes.gob.es. Cubriría Málaga centro→AGP una vez resuelto el acceso. Requiere registro en NAP o API key.",
+    "notes": "⚠️ Feed EMT Málaga requiere autenticación NAP (HTTP 401). URL fuente: nap.transportes.gob.es. Cubriría Málaga centro→AGP una vez resuelto el acceso.",
+    "activation_steps": [
+      "1. Regístrate en nap.transportes.gob.es",
+      "2. Ve a Account → InstruccionesAPI y genera tu API key",
+      "3. Configura GTFS_NAP_API_KEY=tu-key en tu .env",
+      "4. Ejecuta: cd backend && python -m app.door_to_door.tools.gtfs_probe --feed-id emt_malaga_nap",
+      "5. Verifica que las paradas cercanas a Málaga centro y AGP aparecen en el probe",
+      "6. Cambia status de planned_blocked a verified_limited en este archivo",
+      "7. Ejecuta tests: python -m pytest tests/unit/test_door_to_door_gtfs_transit.py -v"
+    ],
     "coverage": {
       "nearby_stops": false,
       "service_by_date": false,
@@ -70,7 +81,14 @@
     "feed_ids": ["ctan_andalucia_nap"],
     "status": "planned_blocked",
     "verified_at": null,
-    "notes": "⚠️ Feed Consorcios Transporte Andalucía requiere autenticación NAP (HTTP 401). Cubriría Almería→AGP y otras rutas regionales. Feed unificado de los 9 consorcios. Requiere registro en NAP.",
+    "notes": "⚠️ Feed Consorcios Transporte Andalucía requiere autenticación NAP (HTTP 401). Cubriría Almería→AGP y otras rutas regionales. Feed unificado de los 9 consorcios.",
+    "activation_steps": [
+      "1. Misma GTFS_NAP_API_KEY que EMT Málaga (clave única del NAP)",
+      "2. Ejecuta: cd backend && python -m app.door_to_door.tools.gtfs_probe --feed-id ctan_andalucia_nap",
+      "3. Verifica que las paradas cercanas a Almería y AGP aparecen en el probe",
+      "4. Cambia status de planned_blocked a verified_limited en este archivo",
+      "5. Ejecuta tests: python -m pytest tests/unit/test_door_to_door_gtfs_transit.py -v"
+    ],
     "coverage": {
       "nearby_stops": false,
       "service_by_date": false,

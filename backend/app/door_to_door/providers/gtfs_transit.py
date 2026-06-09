@@ -159,10 +159,8 @@ class GtfsTransitProvider(DoorToDoorProvider):
                     if not nearby_stops:
                         outbound_no_nearby_stops = True
 
-                    # Find airport-area stops
-                    airport_city = _city_for_airport(flight.origin_airport)
-                    airport_search = airport_city or flight.origin_airport
-                    airport_stops = _find_stops_by_name(feed, airport_search)
+                    # Find airport-area stops using multi-term search
+                    airport_stops = _find_airport_stops(feed, flight.origin_airport)
 
                     # Match trips from ALL origin stops to ALL airport stops
                     origin_ids = {s.stop_id for s in nearby_stops}
@@ -196,9 +194,8 @@ class GtfsTransitProvider(DoorToDoorProvider):
                     if not nearby_stops:
                         inbound_no_nearby_stops = True
 
-                    airport_city = _city_for_airport(flight.destination_airport)
-                    airport_search = airport_city or flight.destination_airport
-                    airport_stops = _find_stops_by_name(feed, airport_search)
+                    # Find airport-area stops using multi-term search
+                    airport_stops = _find_airport_stops(feed, flight.destination_airport)
 
                     airport_ids = {s.stop_id for s in airport_stops}
                     dest_ids = {s.stop_id for s in nearby_stops}
@@ -317,17 +314,17 @@ class GtfsTransitProvider(DoorToDoorProvider):
                 "La hora de llegada del vuelo es estimada. Verifica compatibilidad con el transporte público.",
             )
 
-        # Price warnings
-        self.push_warning(
-            "UNCONFIRMED_PRICE",
-            "El precio del transporte público no está disponible. Consulta tarifas en la web del operador.",
-            provider=self.provider_name,
-        )
-
-        if any(leg.mode == "bus" for leg in outbound_trips + inbound_trips):
+        # Fase 5: price warnings — only when fare data is missing
+        has_any_fare = any(t.lowest_price is not None for t in outbound_trips + inbound_trips)
+        if not has_any_fare:
+            self.push_warning(
+                "UNCONFIRMED_PRICE",
+                "El precio del transporte publico no esta disponible. Consulta tarifas en la web del operador.",
+                provider=self.provider_name,
+            )
             self.push_warning(
                 "GTFS_PRICE_UNAVAILABLE",
-                "Tarifas no incluidas; consulta precios con el operador de transporte público.",
+                "Tarifas no incluidas; consulta precios con el operador de transporte publico.",
                 provider=self.provider_name,
             )
 
@@ -424,8 +421,8 @@ class GtfsTransitProvider(DoorToDoorProvider):
                 departure_at=outbound.departure_at,
                 arrival_at=outbound.arrival_at,
                 duration_minutes=outbound.duration_minutes,
-                price_min=None,
-                price_max=None,
+                price_min=outbound.lowest_price,
+                price_max=outbound.lowest_price,
                 provider=self.provider_name,
                 booking_url=None,
                 source_type="open_data",
@@ -457,8 +454,8 @@ class GtfsTransitProvider(DoorToDoorProvider):
                 departure_at=inbound.departure_at,
                 arrival_at=inbound.arrival_at,
                 duration_minutes=inbound.duration_minutes,
-                price_min=None,
-                price_max=None,
+                price_min=inbound.lowest_price,
+                price_max=inbound.lowest_price,
                 provider=self.provider_name,
                 booking_url=None,
                 source_type="open_data",
@@ -478,15 +475,44 @@ class GtfsTransitProvider(DoorToDoorProvider):
             agency_name = inbound.agency_name
             route_name = inbound.route_name
 
-        label = f"Transporte público {route_name}" if route_name else "Ruta en transporte público"
-        description = (
-            f"{agency_name} · horario según feed público."
-            if agency_name
-            else "Horario según feed público GTFS. Precio y compra no confirmados."
-        )
+        # Fase 5: compute total price from confirmed GTFS fare data
+        # GTFS fare_attributes.price is per ticket (per person).
+        outbound_price = outbound.lowest_price if outbound else None
+        inbound_price = inbound.lowest_price if inbound else None
+        has_confirmed_price = outbound_price is not None or inbound_price is not None
+        passengers = query.preferences.passengers
+
+        if has_confirmed_price:
+            price_per_person = (outbound_price or 0) + (inbound_price or 0)
+            group_price = price_per_person * passengers
+            currency = outbound.currency if outbound and outbound.lowest_price else (
+                inbound.currency if inbound and inbound.lowest_price else "EUR"
+            )
+            price_obj = DoorToDoorPriceOut(amount=group_price, currency=currency, status="confirmed")
+            trust_copy = (
+                f"Horarios y tarifa segun feed oficial GTFS. Precio confirmado: {price_per_person:.2f} {currency}/pers."
+            )
+            description = (
+                f"{agency_name} · horario segun feed publico. Tarifa: {price_per_person:.2f} {currency}/pers."
+                if agency_name
+                else f"Horario segun feed publico GTFS. Tarifa confirmada: {price_per_person:.2f} {currency}/pers."
+            )
+        else:
+            price_per_person = None
+            group_price = None
+            currency = "EUR"
+            price_obj = DoorToDoorPriceOut(amount=None, currency=None, status="unavailable")
+            trust_copy = "Horarios de transporte publico segun feed oficial. Sin precio confirmado. Consulta tarifas con el operador."
+            description = (
+                f"{agency_name} · horario segun feed publico."
+                if agency_name
+                else "Horario segun feed publico GTFS. Precio y compra no confirmados."
+            )
+
+        label = f"Transporte publico {route_name}" if route_name else "Ruta en transporte publico"
 
         score = score_itinerary(
-            price_midpoint=None,
+            price_midpoint=price_per_person,
             duration_minutes=total_duration,
             airport_buffer_minutes=airport_buffer,
             transfer_count=transfer_count,
@@ -500,11 +526,11 @@ class GtfsTransitProvider(DoorToDoorProvider):
             label=label,
             description=description,
             status="real_result",
-            total_price_min=None,
-            total_price_max=None,
-            price_per_person_min=None,
-            price_per_person_max=None,
-            currency="EUR",
+            total_price_min=group_price,
+            total_price_max=group_price,
+            price_per_person_min=price_per_person,
+            price_per_person_max=price_per_person,
+            currency=currency,
             total_duration_minutes=total_duration,
             score=score,
             transfer_count=transfer_count,
@@ -515,8 +541,8 @@ class GtfsTransitProvider(DoorToDoorProvider):
             legs=legs,
             is_extended=not is_primary,
             deep_link=None,
-            price=DoorToDoorPriceOut(amount=None, currency=None, status="unavailable"),
-            trust_copy="Horarios de transporte público según feed oficial. Sin precio confirmado. Consulta tarifas con el operador.",
+            price=price_obj,
+            trust_copy=trust_copy,
         )
 
 
@@ -569,6 +595,23 @@ def _city_for_airport(iata: str) -> str | None:
     return mapping.get(iata.upper())
 
 
+def _airport_search_terms(iata: str) -> list[str]:
+    """Build a list of search terms to find airport-area stops in GTFS feeds.
+
+    Tries city name first, then IATA code, then common airport words in
+    several languages. Feeds use different naming conventions so casting
+    a wider net catches more stops.
+    """
+    terms: list[str] = []
+    city = _city_for_airport(iata)
+    if city:
+        terms.append(city)
+    terms.append(iata)
+    # Common airport words across languages
+    terms.extend(["aeroporto", "airport", "aeropuerto", "aeroport", "flughafen"])
+    return terms
+
+
 def _find_stops_by_name(feed: "ParsedGtfsFeed", query: str) -> list:  # noqa: F821
     """Find stops whose name contains the query string (case-insensitive, accent-insensitive)."""
     import unicodedata
@@ -583,6 +626,27 @@ def _find_stops_by_name(feed: "ParsedGtfsFeed", query: str) -> list:  # noqa: F8
     # Sort by name length (shorter = more likely airport/main station)
     results.sort(key=lambda s: len(s.name))
     return results[:10]
+
+
+def _find_airport_stops(feed: "ParsedGtfsFeed", iata: str) -> list:  # noqa: F821
+    """Find stops near an airport by trying multiple search terms.
+
+    Uses city name, IATA code, and common airport words to catch stops
+    regardless of the feed's naming convention. Deduplicates by stop_id
+    and sorts by name length (shorter names are more likely the main stop).
+    """
+    from app.door_to_door.services.gtfs_feed_service import ParsedGtfsFeed
+
+    terms = _airport_search_terms(iata)
+    seen: set[str] = set()
+    all_results: list = []
+    for term in terms:
+        for stop in _find_stops_by_name(feed, term):
+            if stop.stop_id not in seen:
+                seen.add(stop.stop_id)
+                all_results.append(stop)
+    all_results.sort(key=lambda s: len(s.name))
+    return all_results[:15]
 
 
 def _deduplicate_trips(trips: list[GtfsTransitLeg]) -> list[GtfsTransitLeg]:

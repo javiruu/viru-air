@@ -313,6 +313,9 @@ class DoorToDoorSearchHistory(Base):
     summary_json: Mapped[str] = mapped_column(Text)
     warnings_json: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, index=True)
+    # Fase 8: saved plans
+    is_saved: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    label: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
 
 class DoorToDoorSavedPlace(Base):
