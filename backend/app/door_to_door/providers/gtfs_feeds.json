@@ -25,26 +25,28 @@
     "id": "emt_malaga_nap",
     "name": "EMT Málaga — autobús urbano (NAP)",
     "region": "malaga",
-    "url": "https://nap.transportes.gob.es/api/Fichero/download/1293",
+    "url": "https://nap.transportes.gob.es/api/Fichero/downloadLink/1494",
     "source_type": "open_data",
     "attribution": "Empresa Malagueña de Transportes — vía NAP transportes.gob.es",
     "license_url": null,
     "api_key_env": "GTFS_NAP_API_KEY",
-    "auth_header_name": "x-api-key",
-    "enabled_by_default": false,
-    "notes": "⚠️ NAP probó 10 variantes de auth (x-api-key, X-Api-Key, Authorization Bearer, Authorization ApiKey, apikey, apiKey, api_key, query ?apikey=, ?apiKey=) el 2026-06-09 y TODAS devolvieron HTTP 401 'Api Key was not provided.' o HTTP 500. La key actual parece no válida o el método de auth del NAP cambió. Requiere verificar key en nap.transportes.gob.es o consultar documentación actualizada."
+    "auth_header_name": "ApiKey",
+    "response_format": "json_presigned",
+    "enabled_by_default": true,
+    "notes": "✅ VERIFICADO 2026-06-09. Header ApiKey + downloadLink/1494 (download/1293 obsoleto). El endpoint devuelve text/plain con URL prefirmada de S3. PROBE: 1 agencia (EMTMALAGA), 1.134 paradas, 48 rutas bus, 19.531 viajes, 564.152 stop_times. Ruta A: Parque-Pl.Marina→Aeropuerto-Llegadas, 27-33 min, salidas 14:24-16:04 (2026-07-15)."
   },
   {
     "id": "ctan_andalucia_nap",
     "name": "Red de Consorcios de Transporte de Andalucía (NAP)",
     "region": "andalucia",
-    "url": "https://nap.transportes.gob.es/api/Fichero/download/1562",
+    "url": "https://nap.transportes.gob.es/api/Fichero/downloadLink/1562",
     "source_type": "open_data",
     "attribution": "Consorcios de Transporte de Andalucía — vía NAP transportes.gob.es",
     "license_url": null,
     "api_key_env": "GTFS_NAP_API_KEY",
-    "auth_header_name": "x-api-key",
-    "enabled_by_default": false,
-    "notes": "⚠️ Misma situación que emt_malaga_nap. Probó 10 variantes de auth el 2026-06-09 y TODAS devolvieron HTTP 401/500. Requiere verificar la GTFS_NAP_API_KEY o el método de auth actual del NAP."
+    "auth_header_name": "ApiKey",
+    "response_format": "json_presigned",
+    "enabled_by_default": true,
+    "notes": "✅ VERIFICADO 2026-06-09. Misma ApiKey y formato que emt_malaga_nap. PROBE: 9 agencias (CTMAS, CMTBC, CTAG, CTMAM, CTMCG...), 5.010 paradas, 478 rutas (476 bus + 2 ferry), 15.473 viajes, 309.722 stop_times. ⚠️ Sin viajes directos Almería→AGP en 2026-07-15 (feed regional unificado; la ruta directa puede requerir transbordo)."
   }
 ]

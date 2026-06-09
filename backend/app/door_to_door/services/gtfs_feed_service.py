@@ -73,6 +73,10 @@ class GtfsFeedDescriptor:
     api_key_env: str | None = None
     auth_header_name: str | None = None
     auth_value_prefix: str = ""
+    # If "json_presigned", the response body is a JSON string containing a
+    # presigned URL to follow (e.g. NAP España /api/Fichero/downloadLink).
+    # When unset/None, the response body is the file itself.
+    response_format: str | None = None
 
 
 def load_feed_descriptors() -> list[GtfsFeedDescriptor]:
@@ -123,18 +127,19 @@ def _parse_descriptors_json(raw: str) -> list[GtfsFeedDescriptor]:
             continue
         descriptors.append(
             GtfsFeedDescriptor(
-                id=item["id"],
-                name=item.get("name", item["id"]),
-                region=item.get("region", ""),
-                url=item["url"],
-                source_type=item.get("source_type", "open_data"),
-                license_url=item.get("license_url"),
-                attribution=item.get("attribution"),
-                api_key_env=item.get("api_key_env"),
-                auth_header_name=item.get("auth_header_name"),
-                auth_value_prefix=item.get("auth_value_prefix", ""),
+                    id=item["id"],
+                    name=item.get("name", item["id"]),
+                    region=item.get("region", ""),
+                    url=item["url"],
+                    source_type=item.get("source_type", "open_data"),
+                    license_url=item.get("license_url"),
+                    attribution=item.get("attribution"),
+                    api_key_env=item.get("api_key_env"),
+                    auth_header_name=item.get("auth_header_name"),
+                    auth_value_prefix=item.get("auth_value_prefix", ""),
+                    response_format=item.get("response_format"),
+                )
             )
-        )
     return descriptors
 
 
@@ -549,6 +554,32 @@ class GtfsFeedService:
             follow_redirects=True,
         )
         resp.raise_for_status()
+        # Some endpoints (e.g. NAP España /api/Fichero/downloadLink/{id}) respond
+        # with the presigned URL as either:
+        #   - application/json wrapping a JSON string: "https://..."  (when Accept: application/json)
+        #   - text/plain with the URL directly:        https://...     (default Accept)
+        # The response_format=json_presigned flag enables the redirect; the body
+        # is then interpreted as the URL to follow to obtain the actual file.
+        if descriptor.response_format == "json_presigned":
+            body_text = resp.content.decode("utf-8", errors="replace").strip()
+            try:
+                presigned_url = json.loads(body_text)
+            except (json.JSONDecodeError, ValueError):
+                # Body is the URL directly (plain text)
+                presigned_url = body_text
+            if not isinstance(presigned_url, str) or not presigned_url:
+                logger.warning(
+                    "gtfs_presigned_url_invalid",
+                    extra={"feed_id": descriptor.id, "type": type(presigned_url).__name__},
+                )
+                return resp.content
+            resp2 = httpx.get(
+                presigned_url,
+                timeout=DEFAULT_DOWNLOAD_TIMEOUT,
+                follow_redirects=True,
+            )
+            resp2.raise_for_status()
+            return resp2.content
         return resp.content
 
     @staticmethod
