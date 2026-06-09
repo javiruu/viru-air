@@ -51,6 +51,10 @@ testsprite_tests/tmp/
 frontend/let
 backend/=*
 
+# Temporary agent artifacts
+.codex/tmp-*
+*.log
+
 # Editor / OS
 .vscode/
 .idea/
