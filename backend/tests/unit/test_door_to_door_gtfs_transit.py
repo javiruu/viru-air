@@ -1204,6 +1204,147 @@ async def test_nap_descriptor_parsed_from_json(monkeypatch):
     assert descriptors[0].api_key_env == "GTFS_NAP_API_KEY"
     assert descriptors[0].auth_header_name == "x-api-key"
     assert descriptors[0].auth_value_prefix == ""
+    # response_format defaults to None (direct zip body)
+    assert descriptors[0].response_format is None
+
+
+# ---------------------------------------------------------------------------
+# json_presigned response_format tests (NAP España downloadLink)
+# ---------------------------------------------------------------------------
+
+def _build_presigned_descriptor(response_format="json_presigned", auth_header_name="ApiKey") -> GtfsFeedDescriptor:
+    return GtfsFeedDescriptor(
+        id="emt_malaga_nap",
+        name="EMT Málaga (NAP)",
+        region="malaga",
+        url="https://nap.transportes.gob.es/api/Fichero/downloadLink/1494",
+        api_key_env="GTFS_NAP_API_KEY",
+        auth_header_name=auth_header_name,
+        response_format=response_format,
+    )
+
+
+def test_download_presigned_invalid_body_returns_content_unchanged(monkeypatch):
+    """If body is not parseable as URL, fall back to returning the original body (graceful)."""
+    monkeypatch.setenv("GTFS_NAP_API_KEY", "test-key")
+    desc = _build_presigned_descriptor()
+
+    class FakeResponse:
+        content = b"this is not a valid url or json"
+        @staticmethod
+        def raise_for_status() -> None:
+            pass
+
+    def fake_get(url, headers=None, **kwargs):
+        return FakeResponse()
+
+    with patch("httpx.get", side_effect=fake_get):
+        # Should not raise; returns the body as-is (caller will then fail to parse as zip)
+        result = GtfsFeedService._download(desc)
+
+    # Falls back to body text (the URL itself, since not JSON-wrapped)
+    assert result == b"this is not a valid url or json"
+
+
+def test_download_presigned_skips_when_response_format_not_set(monkeypatch):
+    """Default behavior (no response_format) returns the body as-is, not following redirects."""
+    monkeypatch.setenv("GTFS_NAP_API_KEY", "test-key")
+    desc = _build_presigned_descriptor(response_format=None)
+
+    call_count = 0
+
+    class FakeResponse:
+        content = b"PK\x03\x04direct-zip"
+        @staticmethod
+        def raise_for_status() -> None:
+            pass
+
+    def fake_get(url, headers=None, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        return FakeResponse()
+
+    with patch("httpx.get", side_effect=fake_get):
+        result = GtfsFeedService._download(desc)
+
+    # Only one call to httpx.get (no follow-up)
+    assert call_count == 1
+    assert result == b"PK\x03\x04direct-zip"
+
+
+def test_nap_descriptor_parsed_with_response_format(monkeypatch):
+    """Manifest entries with response_format are parsed correctly."""
+    manifest_json = json.dumps([
+        {
+            "id": "emt_malaga_nap",
+            "name": "EMT Málaga (NAP)",
+            "region": "malaga",
+            "url": "https://nap.transportes.gob.es/api/Fichero/downloadLink/1494",
+            "api_key_env": "GTFS_NAP_API_KEY",
+            "auth_header_name": "ApiKey",
+            "response_format": "json_presigned",
+        },
+        {
+            "id": "open_feed",
+            "name": "Open Feed",
+            "url": "https://example.com/gtfs.zip",
+        },
+    ])
+    monkeypatch.setenv("DOOR_TO_DOOR_GTFS_FEEDS_JSON", manifest_json)
+    monkeypatch.delenv("DOOR_TO_DOOR_GTFS_FEEDS_FILE", raising=False)
+
+    descriptors = load_feed_descriptors()
+    assert len(descriptors) == 2
+
+    nap = next(d for d in descriptors if d.id == "emt_malaga_nap")
+    assert nap.api_key_env == "GTFS_NAP_API_KEY"
+    assert nap.auth_header_name == "ApiKey"
+    assert nap.response_format == "json_presigned"
+
+    open_feed = next(d for d in descriptors if d.id == "open_feed")
+    assert open_feed.api_key_env is None
+    assert open_feed.auth_header_name is None
+    assert open_feed.response_format is None
+
+
+def test_nap_descriptor_preserves_auth_value_prefix_with_presigned(monkeypatch):
+    """response_format=json_presigned still respects auth_value_prefix (e.g. 'Bearer ')."""
+    monkeypatch.setenv("TEST_BEARER_KEY", "tok-xyz")
+    desc = GtfsFeedDescriptor(
+        id="custom_presigned",
+        name="Custom Presigned",
+        region="any",
+        url="https://example.com/api/file",
+        api_key_env="TEST_BEARER_KEY",
+        auth_header_name="Authorization",
+        auth_value_prefix="Bearer ",
+        response_format="json_presigned",
+    )
+
+    first_call_headers: dict[str, str] = {}
+
+    class FakeResponse1:
+        content = b"https://s3.example.com/custom.zip"
+        @staticmethod
+        def raise_for_status() -> None:
+            pass
+
+    class FakeResponse2:
+        content = b"PK\x03\x04custom-zip"
+        @staticmethod
+        def raise_for_status() -> None:
+            pass
+
+    def fake_get(url, headers=None, **kwargs):
+        if "Authorization" not in first_call_headers:
+            first_call_headers.update(headers or {})
+            return FakeResponse1()
+        return FakeResponse2()
+
+    with patch("httpx.get", side_effect=fake_get):
+        GtfsFeedService._download(desc)
+
+    assert first_call_headers.get("Authorization") == "Bearer tok-xyz"
 
 
 # ---------------------------------------------------------------------------
