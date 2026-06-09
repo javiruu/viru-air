@@ -57,6 +57,7 @@ test("buildQuickSearchQuerySignature degrades safely when Web Crypto is unavaila
       value: originalCrypto,
     });
     if (typeof originalWindow === "undefined") {
+      // @ts-expect-error TS2790 — delete on non-optional property used to clean up test env
       delete (globalThis as typeof globalThis & { window?: Window }).window;
     } else {
       Object.defineProperty(globalThis, "window", {

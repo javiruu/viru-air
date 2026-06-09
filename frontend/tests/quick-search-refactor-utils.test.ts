@@ -217,6 +217,7 @@ test("buildQuickSearchQuerySignature is deterministic and changes by winning ste
 
   assert.equal(exact, exactSecondTime);
   assert.notEqual(exact, nearby);
+  assert.ok(exact);
   assert.match(exact, /^qsig_[a-f0-9]{24}$/);
 });
 
@@ -240,8 +241,10 @@ test("buildQuickSearchExpectedSignatures contains all rescue v3 pass variants", 
   });
 
   const signatures = await buildQuickSearchExpectedSignatures(payload);
+  assert.ok(signatures);
   assert.equal(signatures.size, 5);
   const unknown = await buildQuickSearchQuerySignature({ payload, winningStep: "pass_unknown_custom" });
+  assert.ok(unknown);
   assert.equal(signatures.has(unknown), false);
 });
 
