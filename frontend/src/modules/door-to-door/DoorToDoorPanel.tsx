@@ -862,13 +862,33 @@ export function DoorToDoorPanel() {
             <div className="panel-header"><h2 className="panel-title">{t("doorToDoor.sections.history")}</h2></div>
             {history.history.length === 0 ? <p className="panel-note">{t("doorToDoor.sections.historyEmpty")}</p> : (
               <div className="d2d-history-list">
-                {history.history.map((item) => (
-                  <article key={item.id}>
-                    <strong>{item.origin_label} {"->"} {item.final_destination_label}</strong>
-                    <span>{formatHistoryDate(item.created_at, localeTag)} - {item.recommended_label || t("doorToDoor.history.noRecommendation")} - {item.total_price_min != null && item.total_price_max != null ? `${item.total_price_min}-${item.total_price_max} EUR` : t("doorToDoor.option.noPrice")}</span>
-                    {item.chosen_option_id ? <em>{t("doorToDoor.history.chosen")}</em> : null}
-                  </article>
-                ))}
+                {history.history.map((item) => {
+                  const canReuse = Boolean(item.origin && item.final_destination);
+                  function reuseSearch() {
+                    if (!canReuse) return;
+                    if (item.watch_id && item.watch_id !== search.selectedWatchId) {
+                      search.setSelectedWatchId(item.watch_id);
+                    }
+                    if (item.origin) search.setOrigin(item.origin);
+                    if (item.final_destination) search.setFinalDestination(item.final_destination);
+                    if (item.preferences) search.setPreferences(item.preferences);
+                    history.setShowHistory(false);
+                  }
+                  return (
+                    <article key={item.id} className={canReuse ? "d2d-history-item-reusable" : ""}>
+                      <div className="d2d-history-item-main">
+                        <strong>{item.origin_label} {"->"} {item.final_destination_label}</strong>
+                        <span>{formatHistoryDate(item.created_at, localeTag)} - {item.recommended_label || t("doorToDoor.history.noRecommendation")} - {item.total_price_min != null && item.total_price_max != null ? `${item.total_price_min}-${item.total_price_max} EUR` : t("doorToDoor.option.noPrice")}</span>
+                        {item.chosen_option_id ? <em>{t("doorToDoor.history.chosen")}</em> : null}
+                      </div>
+                      {canReuse ? (
+                        <button type="button" className="btn-secondary btn-compact" onClick={reuseSearch}>
+                          {t("doorToDoor.history.reuse")}
+                        </button>
+                      ) : null}
+                    </article>
+                  );
+                })}
               </div>
             )}
           </div>

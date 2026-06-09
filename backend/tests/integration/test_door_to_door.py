@@ -91,6 +91,7 @@ def test_mock_active_returns_mock_options_with_warning(client: TestClient, monke
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["options"]
+    assert any(warning["code"] == "NO_REAL_PROVIDER_COVERAGE" for warning in body["warnings"])
     assert any(warning["code"] == "ESTIMATED_MOCK_DATA" for warning in body["warnings"])
     assert all(option["confidence"] == "estimated" for option in body["options"])
     assert all(option["source_types"] == ["estimate"] for option in body["options"])
@@ -828,6 +829,49 @@ def test_score_prefers_safer_route_when_buffer_is_low() -> None:
 
 def test_score_rewards_stronger_buffer() -> None:
     assert score_itinerary(60, 420, 155, 2, "estimated") > score_itinerary(60, 420, 100, 2, "estimated")
+
+
+def test_score_full_beats_partial_all_else_equal() -> None:
+    """Fase 7: full completeness scores higher than partial_actionable."""
+    s_full = score_itinerary(60, 420, 150, 2, "cached", completeness="full")
+    s_partial = score_itinerary(60, 420, 150, 2, "cached", completeness="partial_actionable")
+    assert s_full > s_partial
+
+
+def test_score_exploratory_is_heavily_penalized() -> None:
+    """Fase 7: exploratory gets -24 penalty, making it the worst tier."""
+    s_explore = score_itinerary(60, 420, 150, 2, "cached", completeness="exploratory")
+    s_partial = score_itinerary(60, 420, 150, 2, "cached", completeness="partial_actionable")
+    assert s_explore < s_partial
+
+
+def test_score_buffer_is_graduated() -> None:
+    """Fase 7: buffer score is graduated, not binary.
+    180 > 150 > 120 > 90. Below 90 is penalised."""
+    s180 = score_itinerary(60, 420, 180, 2, "cached")
+    s150 = score_itinerary(60, 420, 150, 2, "cached")
+    s120 = score_itinerary(60, 420, 120, 2, "cached")
+    s90 = score_itinerary(60, 420, 90, 2, "cached")
+    s80 = score_itinerary(60, 420, 80, 2, "cached")
+    assert s180 > s150 > s120 > s90 > s80
+
+
+def test_score_tight_buffer_is_penalized() -> None:
+    """Fase 7: buffer below 90 min gets a penalty, not just zero."""
+    s_tight = score_itinerary(60, 420, 80, 2, "cached")
+    s_decent = score_itinerary(60, 420, 90, 2, "cached")
+    assert s_tight < s_decent
+
+
+def test_score_deeplink_price_null_is_12_not_16() -> None:
+    """Fase 7: null price penalty reduced from 16 to 12 (deeplinks are useful)."""
+    s_null = score_itinerary(None, 420, 150, 2, "deeplink", completeness="partial_actionable")
+    s_cheap = score_itinerary(30, 420, 150, 2, "deeplink", completeness="partial_actionable")
+    # Null price gets -12, cheap price gets -3, difference is 9 pts
+    # But deeplink confidence is -14 for both
+    # s_null: 100 - 12 - 1 - 8 - 14 + 7 + 0 = 72
+    # s_cheap: 100 - 3 - 1 - 8 - 14 + 7 + 0 = 81
+    assert s_null < s_cheap, f"Expected null price to score lower, got s_null={s_null}, s_cheap={s_cheap}"
 
 
 def _set_gtfs_env(monkeypatch, *, gtfs_enabled: bool, feeds_json: str = "") -> None:

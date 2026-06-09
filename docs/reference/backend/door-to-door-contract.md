@@ -1,11 +1,11 @@
 # Door-to-door API contract
 
 **Estado:** vivo
-**Última revisión:** 2026-06-08
+**Última revisión:** 2026-06-09
 **Fuente de verdad:** sí
 **Área:** backend
 
-> **V1.2** añade GTFS/open data transit provider (`gtfs_transit`) con `source_type=open_data` y `status=functional_open_data`.
+> **V1.5** (Junio 2026) completa el plan de 10 fases: scoring con completitud, corredores GTFS, saved places en backend, historial reutilizable, hub de capacidades honesto, QA matrix.
 
 ## Resumen
 
@@ -126,6 +126,8 @@ Warnings relevantes:
 - `GTFS_NO_MATCHING_SERVICE`: hay servicio en la fecha pero ningún viaje encaja en la ventana horaria, buffer de aeropuerto o duración máxima.
 - `GTFS_PARTIAL_COVERAGE`: el feed GTFS tiene datos pero solo cubre uno de los tramos (ida o vuelta), no ambos.
 - `GTFS_PRICE_UNAVAILABLE`: se encontraron horarios GTFS pero sin información de tarifa.
+- `GTFS_CORRIDOR_VERIFIED`: la ruta cae dentro de un corredor con cobertura verificada. Puede haber horarios reales si fecha y coordenadas coinciden.
+- `GTFS_CORRIDOR_PLANNED`: la ruta cae en un corredor planeado pero aún no activo (feeds requieren autenticación o configuración).
 
 ### Filtros y `NO_COVERAGE`
 
@@ -207,6 +209,7 @@ V1.1 incluye:
   - `DOOR_TO_DOOR_ENABLE_GTFS_TRANSIT`
   - `DOOR_TO_DOOR_GTFS_FEEDS_JSON` con al menos un feed configurado
   - `gtfs_transit`: consulta horarios reales desde feeds GTFS estáticos. Descarga, cachea y parsea archivos mínimos (`agency.txt`, `stops.txt`, `routes.txt`, `trips.txt`, `stop_times.txt`, `calendar.txt`/`calendar_dates.txt`). Devuelve opciones con `source_type="open_data"`, `confidence="cached"`/`"live"`, `provider="gtfs_transit"`, sin precio confirmado (`UNCONFIRMED_PRICE`). Respeta `allow_bus`, `allow_train`, `public_transport_only` y `airport_only`. No genera `booking_url`. Sin scraping. Sin login.
+  - Ver `docs/runbooks/runbook-gtfs-activacion.md` para el flujo completo de activación, diagnóstico y mantenimiento de feeds.
 - `google_routes` como primer provider API real para duración/distancia (sin precio confirmado), activable con:
   - `DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS`
   - `DOOR_TO_DOOR_ENABLE_GOOGLE_ROUTES`

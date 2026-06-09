@@ -34,6 +34,9 @@ export function DoorToDoorOptionCard({
   const isRealResult = option.status === "real_result";
   const isRealDeeplink = option.status === "real_deeplink";
   const isEstimate = option.status === "estimate_only";
+  const isFull = option.completeness === "full";
+  const isPartialActionable = option.completeness === "partial_actionable";
+  const isExploratory = option.completeness === "exploratory";
   const hasDuration = option.total_duration_minutes != null;
   const hasPrice = option.total_price_min != null && option.total_price_max != null;
   const hasGoogleRoutes = option.sources.some((source) => source.provider === "google_routes");
@@ -47,6 +50,12 @@ export function DoorToDoorOptionCard({
     if (isRealResult) return <span className="status-pill success d2d-badge">{t("doorToDoor.option.realResult")}</span>;
     if (isRealDeeplink) return <span className="status-pill info d2d-badge">{t("doorToDoor.option.realDeeplink")}</span>;
     return <span className="status-pill warning d2d-badge">{t("doorToDoor.option.estimateOnly")}</span>;
+  }
+
+  function completenessBadge() {
+    if (isFull) return <span className="status-pill success d2d-badge">{t("doorToDoor.option.completenessFull")}</span>;
+    if (isPartialActionable) return <span className="status-pill info d2d-badge">{t("doorToDoor.option.completenessPartial")}</span>;
+    return <span className="status-pill warning d2d-badge">{t("doorToDoor.option.completenessExploratory")}</span>;
   }
 
   function priceLabel() {
@@ -66,6 +75,7 @@ export function DoorToDoorOptionCard({
         <div className="d2d-option-head">
           <div>
             {statusBadge()}
+            {completenessBadge()}
             <h3>{option.label}</h3>
           </div>
         </div>

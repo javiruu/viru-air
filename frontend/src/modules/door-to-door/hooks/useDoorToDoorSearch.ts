@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
-import { fetchSavedDoorToDoorLocation, searchDoorToDoor } from "@/modules/door-to-door/api";
+import { fetchDoorToDoorHistory, fetchSavedDoorToDoorLocation, searchDoorToDoor } from "@/modules/door-to-door/api";
 import { DEFAULT_PREFERENCES } from "@/modules/door-to-door/constants";
 import type {
   DoorToDoorLocation,
@@ -64,7 +64,19 @@ export function useDoorToDoorSearch() {
       .catch(() => setWatches([]));
     fetchSavedDoorToDoorLocation()
       .then((saved) => {
-        if (saved) setOrigin({ type: saved.type, label: saved.label, lat: saved.lat, lng: saved.lng });
+        if (saved) {
+          setOrigin({ type: saved.type, label: saved.label, lat: saved.lat, lng: saved.lng });
+        } else {
+          // Fallback: pre-fill from last history for the first watch
+          fetchDoorToDoorHistory(watchIdParam || undefined)
+            .then((items) => {
+              const lastForWatch = items.find((item) => item.origin);
+              if (lastForWatch?.origin) setOrigin(lastForWatch.origin);
+              if (lastForWatch?.final_destination) setFinalDestination(lastForWatch.final_destination);
+              if (lastForWatch?.preferences) setPreferences(lastForWatch.preferences);
+            })
+            .catch(() => undefined);
+        }
       })
       .catch(() => undefined);
   }, [watchIdParam]);

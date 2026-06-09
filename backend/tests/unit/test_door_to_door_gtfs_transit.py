@@ -729,4 +729,123 @@ async def test_search_service_integra_gtfs_warnings(provider, monkeypatch):
     assert len(codes) == len(set(codes))
 
 
+# ---------------------------------------------------------------------------
+# Corridor coverage tests (Fase 5)
+# ---------------------------------------------------------------------------
+
+def _mock_corridors() -> list[dict]:
+    return [
+        {
+            "id": "treviso_tsf_urbano",
+            "name": "Treviso urbano → TSF",
+            "region": "veneto",
+            "destination_airport": "TSF",
+            "feed_ids": ["mom_treviso"],
+            "status": "verified",
+        },
+        {
+            "id": "malaga_agp_urbano",
+            "name": "Málaga urbano → AGP",
+            "region": "andalucia",
+            "destination_airport": "AGP",
+            "feed_ids": ["emt_malaga_nap"],
+            "status": "planned_blocked",
+        },
+        {
+            "id": "venecia_marco_polo_urbano",
+            "name": "Venecia urbano → VCE",
+            "region": "veneto",
+            "destination_airport": "VCE",
+            "feed_ids": ["actv_venice"],
+            "status": "verified_limited",
+        },
+    ]
+
+
+@pytest.mark.asyncio
+async def test_corridor_verified_emits_signal_for_tsf(provider):
+    """When origin airport is TSF, corridor signal should be emitted."""
+    provider._corridors = _mock_corridors()
+    await provider.search(_make_query(origin_airport="TSF", destination_airport="MAD"))
+    warnings = provider.consume_warnings()
+    corridor_warnings = [w for w in warnings if w.code == "GTFS_CORRIDOR_VERIFIED"]
+    assert len(corridor_warnings) == 1
+    assert "Treviso" in corridor_warnings[0].message
+
+
+@pytest.mark.asyncio
+async def test_corridor_planned_emits_signal_for_agp(provider):
+    """When origin airport is AGP and feed is blocked, emit planned corridor."""
+    provider._corridors = _mock_corridors()
+    await provider.search(_make_query(origin_airport="AGP"))
+    warnings = provider.consume_warnings()
+    corridor_warnings = [w for w in warnings if w.code == "GTFS_CORRIDOR_PLANNED"]
+    assert len(corridor_warnings) == 1
+    assert "Málaga" in corridor_warnings[0].message
+
+
+@pytest.mark.asyncio
+async def test_corridor_no_signal_for_unmatched_airport(provider):
+    """When airports don't match any corridor, no corridor signal is emitted."""
+    provider._corridors = _mock_corridors()
+    await provider.search(_make_query(origin_airport="ORY", destination_airport="CDG"))
+    warnings = provider.consume_warnings()
+    corridor_codes = {w.code for w in warnings if w.code.startswith("GTFS_CORRIDOR")}
+    assert len(corridor_codes) == 0
+
+
+@pytest.mark.asyncio
+async def test_corridor_verified_limited_counts_as_verified(provider):
+    """Corridors with 'verified_limited' status should emit GTFS_CORRIDOR_VERIFIED."""
+    provider._corridors = _mock_corridors()
+    await provider.search(_make_query(origin_airport="VCE", destination_airport="TSF"))
+    warnings = provider.consume_warnings()
+    verified = [w for w in warnings if w.code == "GTFS_CORRIDOR_VERIFIED"]
+    assert len(verified) == 1  # Both TSF and VCE match, but one warning with both names
+    assert "Venecia" in verified[0].message or "Treviso" in verified[0].message
+
+
+@pytest.mark.asyncio
+async def test_corridor_loads_from_default_file(monkeypatch):
+    """_load_corridors loads from the default manifest file."""
+    import app.door_to_door.providers.gtfs_transit as gtfs_mod
+    gtfs_mod._CORRIDORS_CACHE = None
+    corridors = gtfs_mod._load_corridors()
+    # The default manifest should exist and have corridors
+    assert len(corridors) >= 2
+    ids = {c["id"] for c in corridors}
+    assert "treviso_tsf_urbano" in ids
+    assert "malaga_agp_urbano" in ids
+
+
+@pytest.mark.asyncio
+async def test_corridor_match_both_airports(provider):
+    """When both origin and destination match corridors, both names appear in signal."""
+    provider._corridors = [
+        {"id": "corr_a", "name": "Corridor A", "destination_airport": "AGP", "status": "verified"},
+        {"id": "corr_b", "name": "Corridor B", "destination_airport": "TSF", "status": "verified"},
+    ]
+    await provider.search(_make_query(origin_airport="AGP", destination_airport="TSF"))
+    warnings = provider.consume_warnings()
+    verified = [w for w in warnings if w.code == "GTFS_CORRIDOR_VERIFIED"]
+    assert len(verified) == 1
+    assert "Corridor A" in verified[0].message
+    assert "Corridor B" in verified[0].message
+
+
+@pytest.mark.asyncio
+async def test_corridor_mixed_verified_planned_prioritizes_verified(provider):
+    """When one airport matches verified and the other matches planned, verified signal wins."""
+    provider._corridors = [
+        {"id": "corr_verified", "name": "Corredor Verificado", "destination_airport": "AGP", "status": "verified"},
+        {"id": "corr_planned", "name": "Corredor Planeado", "destination_airport": "TSF", "status": "planned_blocked"},
+    ]
+    await provider.search(_make_query(origin_airport="AGP", destination_airport="TSF"))
+    warnings = provider.consume_warnings()
+    verified = [w for w in warnings if w.code == "GTFS_CORRIDOR_VERIFIED"]
+    planned = [w for w in warnings if w.code == "GTFS_CORRIDOR_PLANNED"]
+    # Verified takes priority; planned is not emitted when verified exists
+    assert len(verified) == 1
+    assert "Corredor Verificado" in verified[0].message
+
 

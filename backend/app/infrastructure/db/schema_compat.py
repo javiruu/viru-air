@@ -50,6 +50,7 @@ def ensure_door_to_door_tables(engine: Engine) -> None:
         "door_to_door_saved_location",
         "door_to_door_search_history",
         "door_to_door_chosen_option",
+        "door_to_door_saved_place",
     }
     missing = [Base.metadata.tables[name] for name in table_names if name not in existing_tables]
     if missing:

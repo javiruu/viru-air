@@ -5,6 +5,7 @@ from pydantic import AliasChoices, BaseModel, Field, model_validator
 
 DoorToDoorSourceType = Literal["api", "open_data", "aggregator", "deeplink", "scraper", "mock", "estimate", "maps", "external_deeplink"]
 DoorToDoorOptionStatus = Literal["real_result", "real_deeplink", "estimate_only"]
+DoorToDoorCompleteness = Literal["full", "partial_actionable", "exploratory"]
 DoorToDoorDeepLinkKind = Literal["directions", "provider_search", "booking"]
 DoorToDoorConfidence = Literal["live", "cached", "estimated", "deeplink", "unavailable"]
 DoorToDoorLocationType = Literal["city", "address", "station", "saved_location", "airport", "airport_only"]
@@ -169,6 +170,7 @@ class DoorToDoorOptionOut(BaseModel):
     legs: list[DoorToDoorLegOut]
     is_recommended: bool = False
     is_extended: bool = False
+    completeness: DoorToDoorCompleteness = "exploratory"
     deep_link: DoorToDoorDeepLinkOut | None = None
     price: DoorToDoorPriceOut | None = None
     trust_copy: str | None = None
@@ -245,6 +247,9 @@ class DoorToDoorHistoryOut(BaseModel):
     watch_id: str
     origin_label: str
     final_destination_label: str
+    origin: dict | None = None
+    final_destination: dict | None = None
+    preferences: dict | None = None
     created_at: datetime
     recommended_option_id: str | None = None
     recommended_label: str | None = None
@@ -266,6 +271,20 @@ class DoorToDoorChosenOptionOut(BaseModel):
     option_id: str
     option_label: str
     chosen_at: datetime
+
+
+class DoorToDoorSavedPlaceIn(BaseModel):
+    label: str = Field(min_length=1, max_length=180)
+    note: str = Field(default="", max_length=280)
+    watch_id: str | None = Field(default=None, max_length=80)
+
+
+class DoorToDoorSavedPlaceOut(BaseModel):
+    id: str
+    label: str
+    note: str
+    watch_id: str | None = None
+    created_at: datetime
 
 
 class DoorToDoorProviderStatusOut(BaseModel):

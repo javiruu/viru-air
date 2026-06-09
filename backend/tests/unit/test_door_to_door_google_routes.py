@@ -168,6 +168,25 @@ def test_google_routes_logs_http_failures(monkeypatch, caplog) -> None:
     assert log_payload["provider"] == "google_routes"
 
 
+def test_google_routes_graceful_fallback_when_route_unavailable(monkeypatch) -> None:
+    """When the Google Routes API returns no routes, provider returns [] gracefully (no RuntimeError)."""
+    monkeypatch.setenv("DOOR_TO_DOOR_ENABLE_GOOGLE_ROUTES", "1")
+    monkeypatch.setenv("GOOGLE_MAPS_API_KEY", "fake-google-key")
+
+    def fake_post(*args, **kwargs):  # noqa: ANN002,ANN003
+        return _FakeResponse(200, {"routes": []})
+
+    monkeypatch.setattr("app.door_to_door.providers.google_routes.requests.post", fake_post)
+    provider = GoogleRoutesProvider()
+
+    results = asyncio.run(provider.search(_query()))
+
+    # Should return empty gracefully, not raise
+    assert results == []
+    warnings = provider.consume_warnings()
+    assert any(w.code == "GOOGLE_ROUTES_UNAVAILABLE" for w in warnings)
+
+
 def test_google_routes_logs_request_exceptions(monkeypatch, caplog) -> None:
     monkeypatch.setenv("DOOR_TO_DOOR_ENABLE_GOOGLE_ROUTES", "1")
     monkeypatch.setenv("GOOGLE_MAPS_API_KEY", "fake-google-key")
