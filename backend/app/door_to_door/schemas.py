@@ -264,6 +264,26 @@ class DoorToDoorChosenOptionIn(BaseModel):
     option_summary: dict = Field(default_factory=dict)
 
 
+# ── Fase 8: Saved Plans ──
+
+class DoorToDoorSavePlanIn(BaseModel):
+    label: str = Field(min_length=1, max_length=120)
+
+
+class DoorToDoorSavedPlanOut(BaseModel):
+    id: str
+    label: str | None = None
+    watch_id: str
+    origin_label: str
+    final_destination_label: str
+    created_at: datetime
+    recommended_option_id: str | None = None
+    recommended_label: str | None = None
+    total_price_min: float | None = None
+    total_price_max: float | None = None
+    chosen_option_id: str | None = None
+
+
 class DoorToDoorChosenOptionOut(BaseModel):
     id: str
     watch_id: str
@@ -297,3 +317,15 @@ class DoorToDoorProviderStatusOut(BaseModel):
     supports_booking_url: bool
     has_tests: bool
     notes: str | None = None
+
+
+# ── Fase 9: Observabilidad ──
+
+class DoorToDoorHealthOut(BaseModel):
+    """Aggregated health: providers + capabilities + environment in one view."""
+    app_env: str = "local"
+    providers: list[DoorToDoorProviderStatusOut] = Field(default_factory=list)
+    capabilities: dict[str, DoorToDoorMapCapabilityOut] = Field(default_factory=dict)
+    enabled_search_providers: list[str] = Field(default_factory=list)
+    active_corridors_verified: int = 0
+    active_corridors_planned: int = 0

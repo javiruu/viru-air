@@ -47,6 +47,7 @@ def score_itinerary(
     completeness: DoorToDoorCompleteness = "partial_actionable",
     uncomfortable_hour: bool = False,
     luggage_penalty: int = 0,
+    source_quality_bonus: int = 0,
 ) -> int:
     """Score an itinerary 0–100.
 
@@ -58,6 +59,7 @@ def score_itinerary(
       - buffer: graduated — rewards margin, penalises tight (< 90 min)
       - transfers: linear penalty per change
       - hour: small penalty for uncomfortable departure times
+      - source_quality_bonus: Fase 6 arbitration — bonus for higher-quality source data
     """
     # Completeness
     completeness_delta = COMPLETENESS_BONUS[completeness]
@@ -90,5 +92,6 @@ def score_itinerary(
         - luggage_penalty
         + buffer_delta
         + completeness_delta
+        + source_quality_bonus
     )
     return max(0, min(100, raw))

@@ -1,9 +1,12 @@
+import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
 from app.door_to_door.providers.base import DoorToDoorProvider
+
+logger = logging.getLogger(__name__)
 from app.door_to_door.providers.deeplink_blablacar import BlaBlaCarDeepLinkProvider
 from app.door_to_door.providers.deeplink_goopti import GoOptiDeepLinkProvider
 from app.door_to_door.providers.deeplink_provider import DeeplinkDoorToDoorProvider
@@ -12,6 +15,7 @@ from app.door_to_door.providers.google_places import GooglePlacesSuggestionsProv
 from app.door_to_door.providers.google_routes import GoogleRoutesProvider
 from app.door_to_door.providers.gtfs_transit import GtfsTransitProvider
 from app.door_to_door.providers.mock import MockDoorToDoorProvider
+from app.door_to_door.providers.navitia import NavitiaProvider
 from app.door_to_door.providers.nominatim import NominatimSuggestionsProvider
 from app.door_to_door.schemas import DoorToDoorProviderStatusOut, DoorToDoorSourceType
 
@@ -54,6 +58,10 @@ def _has_google_key() -> bool:
     return bool(os.getenv("GOOGLE_MAPS_API_KEY", "").strip())
 
 
+def _has_navitia_key() -> bool:
+    return bool(os.getenv("NAVITIA_API_KEY", "").strip())
+
+
 def _has_gtfs_feeds() -> bool:
     """Check whether GTFS feed descriptors are configured via any source.
 
@@ -73,6 +81,12 @@ def _has_gtfs_feeds() -> bool:
     return default_manifest.exists()
 
 
+def _is_non_local_env() -> bool:
+    """Return True when APP_ENV is staging or production (mock must be blocked)."""
+    app_env = os.getenv("APP_ENV", "local").strip().lower()
+    return app_env in {"staging", "production", "prod"}
+
+
 def resolve_provider_runtime() -> ProviderRuntime:
     mock_enabled = _env_flag("DOOR_TO_DOOR_ENABLE_MOCK_PROVIDER", False)
     real_enabled = _env_flag("DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS", False)
@@ -80,12 +94,24 @@ def resolve_provider_runtime() -> ProviderRuntime:
     google_routes_flag = _env_flag("DOOR_TO_DOOR_ENABLE_GOOGLE_ROUTES", False)
     google_places_flag = _env_flag("DOOR_TO_DOOR_ENABLE_GOOGLE_PLACES", False)
     gtfs_transit_flag = _env_flag("DOOR_TO_DOOR_ENABLE_GTFS_TRANSIT", False)
+    navitia_flag = _env_flag("DOOR_TO_DOOR_ENABLE_NAVITIA", False)
     has_google_key = _has_google_key()
     has_gtfs_feeds = _has_gtfs_feeds()
+
+    # Guard: block mock in staging/production
+    mock_flag_original = mock_enabled
+    if mock_enabled and _is_non_local_env():
+        app_env = os.getenv("APP_ENV", "local").strip().lower()
+        logger.warning(
+            "mock_blocked_non_local_env",
+            extra={"app_env": app_env, "flag": "DOOR_TO_DOOR_ENABLE_MOCK_PROVIDER"},
+        )
+        mock_enabled = False
 
     google_routes_enabled = real_enabled and google_routes_flag and has_google_key
     google_places_enabled = real_enabled and google_places_flag and has_google_key
     gtfs_transit_enabled = real_enabled and gtfs_transit_flag and has_gtfs_feeds
+    navitia_enabled = real_enabled and navitia_flag and _has_navitia_key()
 
     descriptors: list[ProviderDescriptor] = [
         ProviderDescriptor(
@@ -132,7 +158,11 @@ def resolve_provider_runtime() -> ProviderRuntime:
             supports_search=True,
             supports_booking_url=False,
             has_tests=True,
-            notes="Provider de estimacion orientativa. Solo se activa como fallback; nunca como recomendacion principal.",
+            notes=(
+                "Provider de estimacion orientativa. Solo se activa como fallback; nunca como recomendacion principal."
+                if not _is_non_local_env() or not mock_flag_original
+                else "Bloqueado: mock no permitido en APP_ENV=" + os.getenv("APP_ENV", "local").strip().lower() + ". Usa local_demo en entorno local."
+            ),
             is_mock=True,
             factory=MockDoorToDoorProvider,
         ),
@@ -226,12 +256,22 @@ def resolve_provider_runtime() -> ProviderRuntime:
         ProviderDescriptor(
             name="navitia",
             source_type="api",
-            base_status="pure_stub",
+            base_status="functional_api" if navitia_enabled else "disabled",
             production_ready=False,
-            supports_search=False,
+            supports_search=True,
             supports_booking_url=False,
-            has_tests=False,
-            notes="Stub de API de transporte publico.",
+            has_tests=True,
+            notes=(
+                "Horarios reales de transporte publico via Navitia API (cobertura ES/IT)."
+                if navitia_enabled
+                else (
+                    "Desactivado: falta NAVITIA_API_KEY."
+                    if real_enabled and navitia_flag and not _has_navitia_key()
+                    else "Desactivado: requiere DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS, DOOR_TO_DOOR_ENABLE_NAVITIA y NAVITIA_API_KEY."
+                )
+            ),
+            is_real=True,
+            factory=NavitiaProvider,
         ),
         ProviderDescriptor(
             name="amadeus_transfers",
@@ -341,13 +381,16 @@ def resolve_provider_runtime() -> ProviderRuntime:
         elif descriptor.name == "google_maps_deeplink":
             enabled = real_enabled
             status = "functional_maps" if enabled else "disabled"
-        elif descriptor.name == "google_routes" or descriptor.name == "gtfs_transit":
+        elif descriptor.name == "google_routes" or descriptor.name == "gtfs_transit" or descriptor.name == "navitia":
             enabled = (
                 google_routes_enabled
                 if descriptor.name == "google_routes"
-                else gtfs_transit_enabled
+                else gtfs_transit_enabled if descriptor.name == "gtfs_transit"
+                else navitia_enabled
             )
             if descriptor.name == "google_routes":
+                status = "functional_api" if enabled else "disabled"
+            elif descriptor.name == "navitia":
                 status = "functional_api" if enabled else "disabled"
             else:
                 status = "functional_open_data" if enabled else "disabled"
