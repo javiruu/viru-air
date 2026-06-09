@@ -32,7 +32,7 @@
     "api_key_env": "GTFS_NAP_API_KEY",
     "auth_header_name": "x-api-key",
     "enabled_by_default": false,
-    "notes": "⚠️ NAP requiere autenticación (HTTP 401). URL fuente confirmada por Transitland. Cubre Málaga centro→AGP. Requiere registro en nap.transportes.gob.es → Account/InstruccionesAPI para obtener la API key, y configurarla en GTFS_NAP_API_KEY."
+    "notes": "⚠️ NAP probó 10 variantes de auth (x-api-key, X-Api-Key, Authorization Bearer, Authorization ApiKey, apikey, apiKey, api_key, query ?apikey=, ?apiKey=) el 2026-06-09 y TODAS devolvieron HTTP 401 'Api Key was not provided.' o HTTP 500. La key actual parece no válida o el método de auth del NAP cambió. Requiere verificar key en nap.transportes.gob.es o consultar documentación actualizada."
   },
   {
     "id": "ctan_andalucia_nap",
@@ -45,6 +45,6 @@
     "api_key_env": "GTFS_NAP_API_KEY",
     "auth_header_name": "x-api-key",
     "enabled_by_default": false,
-    "notes": "⚠️ NAP requiere autenticación (HTTP 401). Feed unificado de los 9 consorcios. URL fuente confirmada por Transitland (f-transporte~metropolitano~andalucía). Cubre Almería→Málaga/AGP. Requiere registro en nap.transportes.gob.es → Account/InstruccionesAPI para obtener la API key, y configurarla en GTFS_NAP_API_KEY."
+    "notes": "⚠️ Misma situación que emt_malaga_nap. Probó 10 variantes de auth el 2026-06-09 y TODAS devolvieron HTTP 401/500. Requiere verificar la GTFS_NAP_API_KEY o el método de auth actual del NAP."
   }
 ]
