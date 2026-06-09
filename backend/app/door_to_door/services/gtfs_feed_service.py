@@ -70,6 +70,9 @@ class GtfsFeedDescriptor:
     source_type: str = "open_data"
     license_url: str | None = None
     attribution: str | None = None
+    api_key_env: str | None = None
+    auth_header_name: str | None = None
+    auth_value_prefix: str = ""
 
 
 def load_feed_descriptors() -> list[GtfsFeedDescriptor]:
@@ -127,6 +130,9 @@ def _parse_descriptors_json(raw: str) -> list[GtfsFeedDescriptor]:
                 source_type=item.get("source_type", "open_data"),
                 license_url=item.get("license_url"),
                 attribution=item.get("attribution"),
+                api_key_env=item.get("api_key_env"),
+                auth_header_name=item.get("auth_header_name"),
+                auth_value_prefix=item.get("auth_value_prefix", ""),
             )
         )
     return descriptors
@@ -251,7 +257,7 @@ class GtfsFeedService:
                     return feed
 
         try:
-            raw_bytes = self._download(descriptor.url)
+            raw_bytes = self._download(descriptor)
         except Exception:
             logger.warning("gtfs_download_failed", extra={"feed_id": descriptor.id, "url": descriptor.url})
             # Try stale cache
@@ -435,8 +441,24 @@ class GtfsFeedService:
         return self.cache_dir / f"{descriptor.id}_{name_hash}.zip"
 
     @staticmethod
-    def _download(url: str) -> bytes:
-        resp = httpx.get(url, timeout=DEFAULT_DOWNLOAD_TIMEOUT, follow_redirects=True)
+    def _download(descriptor: GtfsFeedDescriptor) -> bytes:
+        headers: dict[str, str] = {}
+        if descriptor.api_key_env and descriptor.auth_header_name:
+            api_key = os.getenv(descriptor.api_key_env, "")
+            if api_key:
+                value = f"{descriptor.auth_value_prefix}{api_key}"
+                headers[descriptor.auth_header_name] = value
+            else:
+                logger.debug(
+                    "gtfs_auth_key_missing",
+                    extra={"feed_id": descriptor.id, "env_var": descriptor.api_key_env},
+                )
+        resp = httpx.get(
+            descriptor.url,
+            headers=headers,
+            timeout=DEFAULT_DOWNLOAD_TIMEOUT,
+            follow_redirects=True,
+        )
         resp.raise_for_status()
         return resp.content
 
