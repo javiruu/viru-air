@@ -68,6 +68,7 @@ export type DoorToDoorLeg = {
 };
 
 export type DoorToDoorOptionStatus = "real_result" | "real_deeplink" | "estimate_only";
+export type DoorToDoorCompleteness = "full" | "partial_actionable" | "exploratory";
 export type DoorToDoorDeepLinkKind = "directions" | "provider_search" | "booking";
 
 export type DoorToDoorDeepLink = {
@@ -103,6 +104,7 @@ export type DoorToDoorOption = {
   legs: DoorToDoorLeg[];
   is_recommended: boolean;
   is_extended: boolean;
+  completeness: DoorToDoorCompleteness;
   deep_link?: DoorToDoorDeepLink | null;
   price?: DoorToDoorPrice | null;
   trust_copy?: string | null;
@@ -189,6 +191,9 @@ export type DoorToDoorHistoryItem = {
   watch_id: string;
   origin_label: string;
   final_destination_label: string;
+  origin?: DoorToDoorLocation | null;
+  final_destination?: DoorToDoorLocation | null;
+  preferences?: DoorToDoorPreferences | null;
   created_at: string;
   recommended_option_id?: string | null;
   recommended_label?: string | null;

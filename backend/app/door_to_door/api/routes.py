@@ -19,6 +19,8 @@ from app.door_to_door.schemas import (
     DoorToDoorProviderStatusOut,
     DoorToDoorSavedLocationIn,
     DoorToDoorSavedLocationOut,
+    DoorToDoorSavedPlaceIn,
+    DoorToDoorSavedPlaceOut,
     DoorToDoorSearchRequest,
     DoorToDoorSearchResponse,
     DoorToDoorSuggestionOut,
@@ -32,6 +34,7 @@ from app.infrastructure.airports_catalog import country_code_from_airport, get_a
 from app.infrastructure.db.models import (
     DoorToDoorChosenOption,
     DoorToDoorSavedLocation,
+    DoorToDoorSavedPlace,
     DoorToDoorSearchHistory,
     FlightWatch,
     PriceSnapshot,
@@ -502,6 +505,7 @@ def _history_out(row: DoorToDoorSearchHistory, chosen_option_id: str | None, use
     final_destination = _safe_json_object(
         row.final_destination_json, field_name="final_destination_json", history_id=row.id, user_id=user_id
     )
+    preferences = _safe_json_object(row.preferences_json, field_name="preferences_json", history_id=row.id, user_id=user_id)
     summary = _safe_json_object(row.summary_json, field_name="summary_json", history_id=row.id, user_id=user_id)
     recommended = summary.get("recommended") or {}
     return DoorToDoorHistoryOut(
@@ -509,6 +513,9 @@ def _history_out(row: DoorToDoorSearchHistory, chosen_option_id: str | None, use
         watch_id=row.watch_id,
         origin_label=origin.get("label", "--"),
         final_destination_label=final_destination.get("label", "--"),
+        origin=origin if origin else None,
+        final_destination=final_destination if final_destination else None,
+        preferences=preferences if preferences else None,
         created_at=row.created_at,
         recommended_option_id=summary.get("recommended_option_id"),
         recommended_label=recommended.get("label"),
@@ -552,6 +559,83 @@ def choose_option(
         option_label=chosen.option_label,
         chosen_at=chosen.chosen_at,
     )
+
+
+# ── Saved Places ──────────────────────────────────────────────
+
+
+@router.get("/saved-places", response_model=list[DoorToDoorSavedPlaceOut])
+def list_saved_places(
+    watch_id: str | None = Query(default=None, max_length=80),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[DoorToDoorSavedPlaceOut]:
+    query = select(DoorToDoorSavedPlace).where(DoorToDoorSavedPlace.user_id == current_user.id)
+    if watch_id:
+        query = query.where(
+            (DoorToDoorSavedPlace.watch_id == watch_id) | (DoorToDoorSavedPlace.watch_id.is_(None))
+        )
+    rows = list(db.scalars(query.order_by(DoorToDoorSavedPlace.created_at.desc()).limit(12)))
+    return [
+        DoorToDoorSavedPlaceOut(
+            id=row.id,
+            label=row.label,
+            note=row.note,
+            watch_id=row.watch_id,
+            created_at=row.created_at,
+        )
+        for row in rows
+    ]
+
+
+@router.post("/saved-places", response_model=DoorToDoorSavedPlaceOut, status_code=201)
+def create_saved_place(
+    payload: DoorToDoorSavedPlaceIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> DoorToDoorSavedPlaceOut:
+    duplicate = db.scalar(
+        select(DoorToDoorSavedPlace).where(
+            DoorToDoorSavedPlace.user_id == current_user.id,
+            DoorToDoorSavedPlace.label == payload.label,
+        )
+    )
+    if duplicate:
+        raise HTTPException(status_code=409, detail="duplicate_saved_place_label")
+    place = DoorToDoorSavedPlace(
+        user_id=current_user.id,
+        label=payload.label,
+        note=payload.note,
+        watch_id=payload.watch_id,
+    )
+    db.add(place)
+    db.commit()
+    db.refresh(place)
+    return DoorToDoorSavedPlaceOut(
+        id=place.id,
+        label=place.label,
+        note=place.note,
+        watch_id=place.watch_id,
+        created_at=place.created_at,
+    )
+
+
+@router.delete("/saved-places/{place_id}")
+def delete_saved_place(
+    place_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict[str, str]:
+    place = db.scalar(
+        select(DoorToDoorSavedPlace).where(
+            DoorToDoorSavedPlace.id == place_id,
+            DoorToDoorSavedPlace.user_id == current_user.id,
+        )
+    )
+    if place:
+        db.delete(place)
+        db.commit()
+    return {"status": "ok"}
 
 
 

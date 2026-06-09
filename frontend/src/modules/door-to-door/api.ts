@@ -5,6 +5,7 @@ import type {
   DoorToDoorPreferences,
   DoorToDoorResponse,
   DoorToDoorSavedLocation,
+  DoorToDoorSavedPlace,
   DoorToDoorSuggestionsResponse,
   DoorToDoorProviderStatus,
 } from "@/modules/door-to-door/types";
@@ -73,5 +74,27 @@ export function chooseDoorToDoorOption(input: {
       option_label: input.optionLabel,
       option_summary: input.optionSummary,
     }),
+  });
+}
+
+export function fetchDoorToDoorSavedPlaces(watchId?: string): Promise<DoorToDoorSavedPlace[]> {
+  const suffix = watchId ? `?watch_id=${encodeURIComponent(watchId)}` : "";
+  return apiFetch<DoorToDoorSavedPlace[]>(`/door-to-door/saved-places${suffix}`);
+}
+
+export function createDoorToDoorSavedPlace(input: {
+  label: string;
+  note: string;
+  watch_id: string | null;
+}): Promise<DoorToDoorSavedPlace> {
+  return apiFetch<DoorToDoorSavedPlace>("/door-to-door/saved-places", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function deleteDoorToDoorSavedPlace(placeId: string): Promise<{ status: string }> {
+  return apiFetch<{ status: string }>(`/door-to-door/saved-places/${encodeURIComponent(placeId)}`, {
+    method: "DELETE",
   });
 }

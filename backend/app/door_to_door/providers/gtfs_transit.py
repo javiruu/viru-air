@@ -10,6 +10,8 @@ Granular warnings:
 - GTFS_NO_MATCHING_SERVICE: service exists but no trips match the time window
 - GTFS_PARTIAL_COVERAGE: feed covers only some legs
 - GTFS_PRICE_UNAVAILABLE: schedules found but no fare data
+- GTFS_CORRIDOR_VERIFIED: search matches a verified corridor (informational)
+- GTFS_CORRIDOR_PLANNED: search falls in a planned/blocked corridor
 
 Defenses:
 - respect max_walk_radius from feed service
@@ -19,6 +21,8 @@ Defenses:
 """
 
 from datetime import datetime, timedelta
+import json
+from pathlib import Path
 
 from app.door_to_door.domain.models import ProviderHealth
 from app.door_to_door.domain.scoring import score_itinerary
@@ -54,6 +58,7 @@ class GtfsTransitProvider(DoorToDoorProvider):
         super().__init__()
         self._feed_service = feed_service or GtfsFeedService()
         self._descriptors = load_feed_descriptors()
+        self._corridors = _load_corridors()
         self._max_ground_duration = max_ground_duration_minutes
 
     async def healthcheck(self) -> ProviderHealth:
@@ -63,15 +68,51 @@ class GtfsTransitProvider(DoorToDoorProvider):
                 "disabled_no_feeds",
                 self.source_type,
                 "unavailable",
-                "No feeds declared. Set DOOR_TO_DOOR_GTFS_FEEDS_JSON.",
+                "No feeds declared. Set DOOR_TO_DOOR_GTFS_FEEDS_JSON with a valid manifest.",
             )
-        loaded = sum(1 for d in self._descriptors if self._feed_service._feeds.get(d.id))
+
+        # Per-feed status
+        feed_details: list[str] = []
+        loaded = 0
+        failed = 0
+        for descriptor in self._descriptors:
+            cached = self._feed_service._feeds.get(descriptor.id)
+            if cached:
+                loaded += 1
+                feed_details.append(
+                    f"✅ {descriptor.id} ({descriptor.region}): cargado, {len(cached.routes)} rutas, "
+                    f"{len(cached.stops)} paradas"
+                )
+            else:
+                failed += 1
+                feed_details.append(
+                    f"❌ {descriptor.id} ({descriptor.region}): no cargado — verifica URL y conectividad"
+                )
+
+        detail = f"Feeds: {loaded}/{len(self._descriptors)} cargados. " + "; ".join(feed_details[:5])
+
+        if loaded == 0:
+            return ProviderHealth(
+                self.provider_name,
+                "no_cached_data",
+                self.source_type,
+                "unavailable",
+                detail,
+            )
+        if failed > 0:
+            return ProviderHealth(
+                self.provider_name,
+                "degraded",
+                self.source_type,
+                "cached",
+                detail,
+            )
         return ProviderHealth(
             self.provider_name,
-            "ok" if loaded > 0 else "no_cached_data",
+            "ok",
             self.source_type,
-            "cached" if loaded > 0 else "unavailable",
-            f"Feeds declared: {len(self._descriptors)}; cached: {loaded}.",
+            "cached",
+            detail,
         )
 
     async def search(self, query: DoorToDoorProviderQuery) -> list[DoorToDoorOptionOut]:
@@ -100,7 +141,10 @@ class GtfsTransitProvider(DoorToDoorProvider):
         for descriptor in self._descriptors:
             feed = self._feed_service.load_feed(descriptor)
             if feed is None:
-                feed_warnings.append(f"Feed {descriptor.id} ({descriptor.name}) no disponible.")
+                feed_warnings.append(
+                f"Feed {descriptor.id} ({descriptor.name}) no disponible. "
+                f"Verifica que la URL es accesible: {descriptor.url}"
+            )
                 continue
             any_loaded = True
 
@@ -189,7 +233,9 @@ class GtfsTransitProvider(DoorToDoorProvider):
         if not any_loaded:
             self.push_warning(
                 "GTFS_FEED_UNAVAILABLE",
-                "Ningún feed GTFS pudo descargarse o parsearse para esta consulta.",
+                "Ningún feed GTFS pudo descargarse o parsearse. "
+                "Verifica conectividad, URLs en el manifest y el caché en "
+                f"{self._feed_service.cache_dir}.",
                 provider=self.provider_name,
             )
             return []
@@ -248,6 +294,8 @@ class GtfsTransitProvider(DoorToDoorProvider):
                 "restricciones (buffer de aeropuerto, duración máxima, ventana horaria).",
                 provider=self.provider_name,
             )
+            # Still emit corridor signals — geographic coverage is independent of trip matching
+            _emit_corridor_signals(self, flight)
             return []
 
         # 5. Partial coverage
@@ -258,6 +306,9 @@ class GtfsTransitProvider(DoorToDoorProvider):
                 f"Cobertura parcial: hay viajes disponibles para un tramo pero no para el tramo de {missing}.",
                 provider=self.provider_name,
             )
+
+        # 6. Corridor signals — inform whether this route falls in a known corridor
+        _emit_corridor_signals(self, flight)
 
         # Flight time estimated warning
         if flight.flight_time_confidence == "estimated":
@@ -544,3 +595,71 @@ def _deduplicate_trips(trips: list[GtfsTransitLeg]) -> list[GtfsTransitLeg]:
             seen.add(key)
             result.append(leg)
     return result
+
+
+# ── Corridor definitions ───────────────────────────────────────────
+
+_CORRIDORS_CACHE: list[dict] | None = None
+
+
+def _load_corridors() -> list[dict]:
+    """Load corridor definitions from the default manifest file. Cached in memory."""
+    global _CORRIDORS_CACHE
+    if _CORRIDORS_CACHE is not None:
+        return _CORRIDORS_CACHE
+    default_path = Path(__file__).resolve().parent / "gtfs_corridors.json"
+    try:
+        if default_path.exists():
+            raw = default_path.read_text(encoding="utf-8")
+            items = json.loads(raw)
+            if isinstance(items, list):
+                _CORRIDORS_CACHE = items
+                return items
+    except (OSError, json.JSONDecodeError):
+        pass
+    _CORRIDORS_CACHE = []
+    return []
+
+
+def _match_corridors(
+    corridors: list[dict],
+    origin_airport: str,
+    destination_airport: str,
+) -> list[dict]:
+    """Find corridors that match either the origin or destination airport."""
+    matched: list[dict] = []
+    origin_upper = origin_airport.upper()
+    dest_upper = destination_airport.upper()
+    for corridor in corridors:
+        airport = (corridor.get("destination_airport") or "").upper()
+        if airport == origin_upper or airport == dest_upper:
+            matched.append(corridor)
+    return matched
+
+
+def _emit_corridor_signals(provider: "GtfsTransitProvider", flight) -> None:
+    """Emit GTFS_CORRIDOR_VERIFIED or GTFS_CORRIDOR_PLANNED based on matched corridors."""
+    matched = _match_corridors(
+        provider._corridors,
+        flight.origin_airport,
+        flight.destination_airport,
+    )
+    verified_corridors = [c for c in matched if c.get("status") == "verified" or c.get("status") == "verified_limited"]
+    planned_corridors = [c for c in matched if c.get("status") == "planned_blocked"]
+
+    if verified_corridors:
+        names = ", ".join(c["name"] for c in verified_corridors[:2])
+        provider.push_warning(
+            "GTFS_CORRIDOR_VERIFIED",
+            f"Esta ruta cae dentro de corredores con cobertura verificada: {names}. "
+            "Es posible que haya horarios reales si la fecha y coordenadas coinciden.",
+            provider=provider.provider_name,
+        )
+    elif planned_corridors:
+        names = ", ".join(c["name"] for c in planned_corridors[:2])
+        provider.push_warning(
+            "GTFS_CORRIDOR_PLANNED",
+            f"Esta ruta cae en un corredor planeado pero aún no activo: {names}. "
+            "Los feeds necesarios requieren autenticación o configuración adicional.",
+            provider=provider.provider_name,
+        )

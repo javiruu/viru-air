@@ -1,10 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
-import { fetchDoorToDoorProviderStatus } from "@/modules/door-to-door/api";
+import {
+  createDoorToDoorSavedPlace,
+  deleteDoorToDoorSavedPlace,
+  fetchDoorToDoorProviderStatus,
+  fetchDoorToDoorSavedPlaces,
+} from "@/modules/door-to-door/api";
 import { buildMapCapabilities, filterSavedPlacesForWatch } from "@/modules/door-to-door/mapHub";
 import type {
   DoorToDoorProviderStatus,
@@ -32,22 +37,52 @@ export function useDoorToDoorMapHub(response: DoorToDoorResponse | null, selecte
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem("viru_d2d_saved_places_v1");
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as DoorToDoorSavedPlace[];
-      if (Array.isArray(parsed)) setSavedPlaces(parsed.slice(0, 12));
-    } catch {
-      setSavedPlaces([]);
-    }
+    fetchDoorToDoorSavedPlaces(selectedWatchId || undefined)
+      .then((items) => {
+        // If backend is empty, try migrating from localStorage one time
+        if (items.length === 0 && typeof window !== "undefined") {
+          try {
+            const raw = window.localStorage.getItem("viru_d2d_saved_places_v1");
+            if (raw) {
+              const parsed = JSON.parse(raw) as DoorToDoorSavedPlace[];
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                // Migrate each item to backend
+                Promise.all(
+                  parsed.map((item) =>
+                    createDoorToDoorSavedPlace({
+                      label: item.label,
+                      note: item.note || "",
+                      watch_id: item.watch_id || null,
+                    }).catch(() => null),
+                  ),
+                ).then(async () => {
+                  // Refetch first, then clear localStorage only on success
+                  try {
+                    const migrated = await fetchDoorToDoorSavedPlaces(selectedWatchId || undefined);
+                    if (migrated && migrated.length > 0) {
+                      window.localStorage.removeItem("viru_d2d_saved_places_v1");
+                    }
+                    setSavedPlaces((migrated || []).slice(0, 12));
+                  } catch {
+                    // Refetch failed — keep localStorage as safety net
+                    setSavedPlaces(parsed.slice(0, 12));
+                  }
+                }).catch(() => {
+                  // Migration failed — keep localStorage items visible
+                  setSavedPlaces(parsed.slice(0, 12));
+                });
+                return;
+              }
+            }
+          } catch {
+            // Ignore migration errors
+          }
+        }
+        setSavedPlaces(items.slice(0, 12));
+      })
+      .catch(() => setSavedPlaces([]));
     setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-    window.localStorage.setItem("viru_d2d_saved_places_v1", JSON.stringify(savedPlaces.slice(0, 12)));
-  }, [savedPlaces, mounted]);
+  }, [selectedWatchId]);
 
   const providerStatusSummary = useMemo(() => {
     const enabled = providerStatus.filter((p) => p.enabled);
@@ -66,7 +101,7 @@ export function useDoorToDoorMapHub(response: DoorToDoorResponse | null, selecte
     [savedPlaces, selectedWatchId],
   );
 
-  function addSavedPlace() {
+  const addSavedPlace = useCallback(async () => {
     const label = savedPlaceLabel.trim();
     const note = savedPlaceNote.trim();
     if (!label) return;
@@ -78,23 +113,30 @@ export function useDoorToDoorMapHub(response: DoorToDoorResponse | null, selecte
       notify({ tone: "warning", title: t("doorToDoor.mapHub.savedPlaces.savedToast") });
       return;
     }
-    const item: DoorToDoorSavedPlace = {
-      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      label,
-      note,
-      created_at: new Date().toISOString(),
-      watch_id: selectedWatchId || null,
-    };
-    setSavedPlaces((current) => [item, ...current].slice(0, 12));
-    setSavedPlaceLabel("");
-    setSavedPlaceNote("");
-    notify({ tone: "success", title: t("doorToDoor.mapHub.savedPlaces.savedToast") });
-  }
+    try {
+      const created = await createDoorToDoorSavedPlace({
+        label,
+        note,
+        watch_id: selectedWatchId || null,
+      });
+      setSavedPlaces((current) => [created, ...current].slice(0, 12));
+      setSavedPlaceLabel("");
+      setSavedPlaceNote("");
+      notify({ tone: "success", title: t("doorToDoor.mapHub.savedPlaces.savedToast") });
+    } catch {
+      notify({ tone: "error", title: t("doorToDoor.mapHub.savedPlaces.saveError") });
+    }
+  }, [savedPlaceLabel, savedPlaceNote, savedPlaces, selectedWatchId, notify, t]);
 
-  function removeSavedPlace(id: string) {
-    setSavedPlaces((current) => current.filter((item) => item.id !== id));
-    notify({ tone: "success", title: t("doorToDoor.mapHub.savedPlaces.deletedToast") });
-  }
+  const removeSavedPlace = useCallback(async (id: string) => {
+    try {
+      await deleteDoorToDoorSavedPlace(id);
+      setSavedPlaces((current) => current.filter((item) => item.id !== id));
+      notify({ tone: "success", title: t("doorToDoor.mapHub.savedPlaces.deletedToast") });
+    } catch {
+      notify({ tone: "error", title: t("doorToDoor.mapHub.savedPlaces.deleteError") });
+    }
+  }, [notify, t]);
 
   return {
     providerStatus,

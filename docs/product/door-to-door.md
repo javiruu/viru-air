@@ -1,7 +1,7 @@
 # Puerta a puerta
 
 **Estado:** vivo
-**Última revisión:** 2026-06-08
+**Última revisión:** 2026-06-09
 **Fuente de verdad:** sí
 **Área:** producto
 
@@ -70,7 +70,7 @@ Cuando el destino es `solo aeropuerto`, la ruta termina en el aeropuerto de lleg
 
 V1.4 mantiene el estado híbrido honesto:
 
-- mock normalizado para UX estable;
+- **mock desactivado por defecto** (solo se activa explícitamente con `DOOR_TO_DOOR_ENABLE_MOCK_PROVIDER=true` para desarrollo controlado, demos o fixtures de tests);
 - primer paso real parcial con providers deeplink (`blablacar_deeplink`, `goopti_deeplink`);
 - primer provider API real parcial (`google_routes`) para duración/distancia sin precio confirmado;
 - primer provider open_data parcial (`gtfs_transit`) para horarios reales de transporte público sin precio confirmado;
@@ -139,8 +139,24 @@ Cada capacidad declara estado y transparencia operacional:
 - `planned` (sembrado para fases siguientes);
 - `unavailable` (no disponible en entorno actual).
 
+### Estado real de capacidades (Junio 2026)
+
+| Capacidad | Estado | Fuente | Notas |
+|-----------|--------|--------|-------|
+| navigation | available | google_routes | Direcciones reales puerta-aeropuerto cuando Google Routes está activo |
+| transit | partial | gtfs_transit | Cobertura limitada a corredores verificados (TSF/Treviso, VCE/Venecia) |
+| alternatives | available | providers | Alternativas reales cuando hay resultados de búsqueda |
+| saved_places | available | backend API | Puntos guardados con persistencia en base de datos |
+| traffic | planned | — | Pendiente de fuente de tráfico en tiempo real |
+| street_view_preview | planned | — | Pendiente de implementar vista inmersiva |
+| nearby_pois | planned | — | Pendiente de implementar exploración de POIs |
+| offline | planned | — | Pendiente de caché offline |
+| incidents | planned | — | Pendiente de feed de incidencias |
+| eco_route | planned | — | Pendiente de scoring ecológico |
+
 La implementacion mantiene el enfoque hibrido honesto:
 
-- reutiliza providers reales existentes (`google_routes`, `google_places`, `gtfs_transit`, deeplinks externos);
+- reutiliza providers reales existentes (`google_routes`, `gtfs_transit`, deeplinks externos);
 - evita simular cobertura total;
-- muestra limites y pendientes de forma explicita por capacidad.
+- muestra limites y pendientes de forma explicita por capacidad;
+- 4 capacidades con valor real, 6 sembradas para fases futuras.

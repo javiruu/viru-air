@@ -138,22 +138,26 @@ function maxNumber(values: Array<number | null | undefined>): number | null {
   return Math.max(...filtered);
 }
 
-/** Rate data completeness: 1pt per confirmed source (api/maps/open_data), 1pt per non-null price, 1pt per leg with real schedule. Max ~6. */
+/** Rate data completeness using backend-assigned completeness field.
+ *  Falls back to manual scoring if completeness is missing (older API). */
 function getCompletenessScore(option: DoorToDoorOption): number {
+  if (option.completeness) {
+    if (option.completeness === "full") return 5;
+    if (option.completeness === "partial_actionable") return 2;
+    if (option.completeness === "exploratory") return 0;
+  }
+  // Fallback: manual scoring from sources and legs
   let score = 0;
-  // Confirmed sources (real data, not deeplink/estimate/mock)
   for (const source of option.sources) {
     if (source.source_type === "api" || source.source_type === "maps" || source.source_type === "open_data") {
       score += 1;
     }
   }
-  // Non-null price data
   if (option.total_price_min != null) score += 1;
-  // Ground legs with real schedule
   for (const leg of option.legs) {
     if (leg.type === "ground" && leg.departure_at != null && leg.arrival_at != null) {
       score += 1;
-      break; // One point for having at least one scheduled ground leg
+      break;
     }
   }
   return score;

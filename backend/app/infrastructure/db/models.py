@@ -315,6 +315,17 @@ class DoorToDoorSearchHistory(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, index=True)
 
 
+class DoorToDoorSavedPlace(Base):
+    __tablename__ = "door_to_door_saved_place"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    label: Mapped[str] = mapped_column(String(180))
+    note: Mapped[str] = mapped_column(String(280), default="")
+    watch_id: Mapped[str | None] = mapped_column(ForeignKey("flight_watch.id"), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+
+
 class DoorToDoorChosenOption(Base):
     __tablename__ = "door_to_door_chosen_option"
 

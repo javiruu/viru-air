@@ -64,11 +64,18 @@ class DoorToDoorSearchService:
         )
         warnings: list[DoorToDoorWarningOut] = list(bootstrap_warnings or [])
         options: list[DoorToDoorOptionOut] = []
+        has_real_results = False
+        has_mock_results = False
 
         for provider in self.providers:
             try:
                 provider_options = await provider.run_search(query)
                 options.extend(provider_options)
+                if provider_options:
+                    if provider.source_type in ("mock", "estimate"):
+                        has_mock_results = True
+                    else:
+                        has_real_results = True
                 for warning in provider.consume_warnings():
                     self._append_warning(warnings, warning)
             except Exception as exc:  # pragma: no cover - defensive log path
@@ -106,7 +113,15 @@ class DoorToDoorSearchService:
         warnings.extend(filter_warnings)
 
         if options:
-            if self.mock_enabled or any("estimate" in option.source_types or "mock" in option.source_types for option in options):
+            if has_mock_results:
+                if not has_real_results:
+                    self._append_warning(
+                        warnings,
+                        DoorToDoorWarningOut(
+                            code="NO_REAL_PROVIDER_COVERAGE",
+                            message="Sin cobertura real todavía: no hay providers reales activos para esta ruta.",
+                        ),
+                    )
                 self._append_warning(
                     warnings,
                     DoorToDoorWarningOut(
@@ -166,11 +181,8 @@ class DoorToDoorSearchService:
         provider_by_name = {item.name: item for item in self.provider_statuses}
         has_google_routes = provider_by_name.get("google_routes", None)
         has_google_routes_enabled = has_google_routes is not None and has_google_routes.enabled
-        has_google_places = provider_by_name.get("google_places", None)
-        has_google_places_enabled = has_google_places is not None and has_google_places.enabled
         has_gtfs = provider_by_name.get("gtfs_transit", None)
         has_gtfs_enabled = has_gtfs is not None and has_gtfs.enabled
-        has_deeplink = any(item.enabled and item.source_type in ("deeplink", "external_deeplink") for item in self.provider_statuses)
 
         has_options = len(options) > 0
 
@@ -186,16 +198,18 @@ class DoorToDoorSearchService:
             )
 
         return {
+            # ── Capacidades con valor real (Fase 9) ──
             "navigation": _cap("available", "maps", "live") if has_google_routes_enabled else _cap("planned", "none", "unavailable", why_missing="google_routes_disabled"),
-            "traffic": _cap("partial", "maps", "cached", why_missing="live_traffic_not_wired") if has_google_routes_enabled else _cap("planned", "none", "unavailable", why_missing="traffic_layer_pending"),
-            "transit": _cap("partial", "open_data", "cached", why_missing="fares_and_booking_pending") if has_gtfs_enabled else _cap("planned", "none", "unavailable", why_missing="gtfs_provider_disabled"),
+            "transit": _cap("partial", "open_data", "cached", why_missing="corridor_limited") if has_gtfs_enabled else _cap("planned", "none", "unavailable", why_missing="gtfs_provider_disabled"),
             "alternatives": _cap("available", "api", "cached") if has_options else _cap("planned", "none", "unavailable", why_missing="route_candidates_pending"),
-            "street_view_preview": _cap("partial", "maps", "cached", why_missing="immersive_preview_pending") if has_google_routes_enabled else _cap("planned", "none", "unavailable", why_missing="street_view_not_connected"),
-            "saved_places": _cap("partial", "api", "cached", why_missing="shared_lists_pending"),
-            "nearby_pois": _cap("partial", "api", "live", why_missing="busy_times_and_parking_pending") if has_google_places_enabled else _cap("planned", "none", "unavailable", why_missing="google_places_disabled"),
+            "saved_places": _cap("available", "api", "cached"),
+            # ── Capacidades sembradas, sin backend real (Fase 9: honestidad) ──
+            "traffic": _cap("planned", "none", "unavailable", why_missing="traffic_layer_pending"),
+            "street_view_preview": _cap("planned", "none", "unavailable", why_missing="street_view_not_connected"),
+            "nearby_pois": _cap("planned", "none", "unavailable", why_missing="nearby_pois_pending"),
             "offline": _cap("planned", "none", "unavailable", why_missing="offline_cache_not_implemented"),
-            "incidents": _cap("partial", "maps", "cached", why_missing="incident_feed_pending") if has_google_routes_enabled else _cap("planned", "none", "unavailable", why_missing="incident_source_not_connected"),
-            "eco_route": _cap("partial", "maps" if has_google_routes_enabled else "deeplink", "cached", why_missing="eco_scoring_pending") if (has_deeplink or has_google_routes_enabled) else _cap("planned", "none", "unavailable", why_missing="eco_route_provider_pending"),
+            "incidents": _cap("planned", "none", "unavailable", why_missing="incident_source_not_connected"),
+            "eco_route": _cap("planned", "none", "unavailable", why_missing="eco_route_provider_pending"),
         }
 
     def _apply_preferences(
@@ -406,20 +420,22 @@ class DoorToDoorSearchService:
         return allowed
 
     def _sort_options(self, options: list[DoorToDoorOptionOut], sort_by: DoorToDoorSortBy) -> list[DoorToDoorOptionOut]:
-        # Always put estimate_only last, then sort by the requested criteria
+        # Primary: completeness rank, then status, then sort criteria
+        completeness_order = {"full": 0, "partial_actionable": 1, "exploratory": 2}
         status_order = {"real_result": 0, "real_deeplink": 1, "estimate_only": 2}
 
         def _sort_key(item: DoorToDoorOptionOut):
+            comp_rank = completeness_order.get(item.completeness, 2)
             status_rank = status_order.get(item.status, 2)
             if sort_by == "cheapest":
-                return (status_rank, item.total_price_min is None, item.total_price_min or 10_000)
+                return (comp_rank, status_rank, item.total_price_min is None, item.total_price_min or 10_000)
             if sort_by == "fastest":
                 has_duration = item.total_duration_minutes is None
-                return (status_rank, has_duration, item.total_duration_minutes or 999_999)
+                return (comp_rank, status_rank, has_duration, item.total_duration_minutes or 999_999)
             if sort_by == "fewest_changes":
-                return (status_rank, item.transfer_count, -(item.score or 0))
-            # best_balance: sort by score descending within status groups
-            return (status_rank, -(item.score or 0))
+                return (comp_rank, status_rank, item.transfer_count, -(item.score or 0))
+            # best_balance: sort by score descending within completeness groups
+            return (comp_rank, -(item.score or 0))
 
         return sorted(options, key=_sort_key)
 

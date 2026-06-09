@@ -59,9 +59,7 @@ def _has_gtfs_feeds() -> bool:
 
 
 def resolve_provider_runtime() -> ProviderRuntime:
-    app_env = os.getenv("APP_ENV", "local").strip().lower()
-    mock_default = app_env in {"local", "dev", "development", "test"}
-    mock_enabled = _env_flag("DOOR_TO_DOOR_ENABLE_MOCK_PROVIDER", mock_default and app_env != "production")
+    mock_enabled = _env_flag("DOOR_TO_DOOR_ENABLE_MOCK_PROVIDER", False)
     real_enabled = _env_flag("DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS", False)
     scrapers_enabled = _env_flag("DOOR_TO_DOOR_ENABLE_SCRAPERS", False)
     google_routes_flag = _env_flag("DOOR_TO_DOOR_ENABLE_GOOGLE_ROUTES", False)

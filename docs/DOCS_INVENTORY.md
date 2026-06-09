@@ -182,6 +182,16 @@ Entradas vivas actualizadas:
 
 - `docs/DOCS_INVENTORY.md`
 
+## Actualizacion manual 2026-06-09 (puerta-a-puerta plan 10 fases activacion real)
+
+Entradas vivas agregadas:
+
+- `docs/plans/2026-06-09-puerta-a-puerta-plan-10-fases-activacion-real.md`
+
+Entradas vivas actualizadas:
+
+- `docs/DOCS_INVENTORY.md`
+
 ## Actualizacion manual 2026-06-08 (puerta-a-puerta F1-F10 cierre)
 
 Entradas vivas agregadas:
@@ -324,6 +334,7 @@ Entradas vivas retiradas:
 | docs/plans/README.md | plan | vivo | conservar | docs/plans/README.md | Gu?a de organizaci?n de planes | docs/plans/README.md |
 | docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md | plan | vivo | conservar | docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md | Plan de 5 fases (A-E) de correcciones post-cierre para el modulo /hoteles | docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md |
 | docs/plans/2026-06-08-puerta-a-puerta-plan-aterrizado-real.md | plan | vivo | conservar | docs/plans/2026-06-08-puerta-a-puerta-plan-aterrizado-real.md | Plan operativo aterrizado para evolucionar `/puerta-a-puerta` con foco en honestidad, contratos y utilidad incremental real | docs/plans/2026-06-08-puerta-a-puerta-plan-aterrizado-real.md |
+| docs/plans/2026-06-09-puerta-a-puerta-plan-10-fases-activacion-real.md | plan | vivo | conservar | docs/plans/2026-06-09-puerta-a-puerta-plan-10-fases-activacion-real.md | Plan de 10 fases centrado en activar capacidades reales de `/puerta-a-puerta` por valor, dependencias y cobertura util | docs/plans/2026-06-09-puerta-a-puerta-plan-10-fases-activacion-real.md |
 | docs/plans/completed/2026-02-18-fusion-watchlist-historico-plan.md | plan | hist?rico | conservar | docs/plans/completed/2026-02-18-fusion-watchlist-historico-plan.md | Plan fechado ya completado o hist?rico | ninguna; material hist?rico |
 | docs/plans/completed/2026-02-19-account-interface-i18n-plan.md | plan | hist?rico | conservar | docs/plans/completed/2026-02-19-account-interface-i18n-plan.md | Plan fechado ya completado o hist?rico | ninguna; material hist?rico |
 | docs/plans/completed/2026-02-19-account-system-redesign-design.md | plan | hist?rico | conservar | docs/plans/completed/2026-02-19-account-system-redesign-design.md | Plan fechado ya completado o hist?rico | ninguna; material hist?rico |
@@ -546,3 +557,17 @@ Entradas vivas agregadas:
 Entradas vivas actualizadas:
 
 - `docs/INDICE_UNICO.md`
+
+## Actualizacion manual 2026-06-09 (puerta-a-puerta F9+F10 cierre del plan)
+
+Entradas vivas agregadas:
+
+- `docs/qa/qa-puerta-a-puerta.md`
+- `backend/app/door_to_door/providers/gtfs_corridors.json`
+
+Entradas vivas actualizadas:
+
+- `docs/product/door-to-door.md`
+- `docs/reference/backend/door-to-door-contract.md`
+- `docs/runbooks/runbook-gtfs-activacion.md`
+- `docs/DOCS_INVENTORY.md`

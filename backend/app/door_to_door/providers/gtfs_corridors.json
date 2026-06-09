@@ -1,0 +1,82 @@
+[
+  {
+    "id": "treviso_tsf_urbano",
+    "name": "Treviso urbano → TSF",
+    "region": "veneto",
+    "origin_area": "Treviso centro / Treviso Autostazione",
+    "origin_hint_lat": 45.666,
+    "origin_hint_lng": 12.245,
+    "destination_airport": "TSF",
+    "feed_ids": ["mom_treviso"],
+    "status": "verified",
+    "verified_at": "2026-05-22",
+    "notes": "Rutas MOM 101/103/6 conectan Treviso centro (PIAZZA DUOMO, TREVISO AUTOSTAZIONE) con parada TSF (MONCIA) en ~25-35 min. Cobertura calendar_dates: 2026-05-25 a 2026-08-31. ~10+ viajes entre 06:27-07:11 para fechas de julio. Funciona para vuelos con salida desde TSF.",
+    "coverage": {
+      "nearby_stops": true,
+      "service_by_date": true,
+      "buffer_matching": true,
+      "both_legs": false,
+      "both_legs_note": "Solo origen→TSF; el tramo TSF→destino depende de feeds en el área de llegada"
+    }
+  },
+  {
+    "id": "venecia_marco_polo_urbano",
+    "name": "Venecia urbano → VCE (Marco Polo)",
+    "region": "veneto",
+    "origin_area": "Venezia / Mestre",
+    "origin_hint_lat": 45.44,
+    "origin_hint_lng": 12.32,
+    "destination_airport": "VCE",
+    "feed_ids": ["actv_venice"],
+    "status": "verified_limited",
+    "verified_at": "2026-05-22",
+    "notes": "ACTV cubre Venezia↔aeropuerto Marco Polo. ⚠️ Ventana de calendario MUY corta: solo 2026-05-24 a 2026-06-06 (2 semanas). Fuera de ese rango = GTFS_NO_SERVICE_FOR_DATE. Requiere actualización frecuente del feed.",
+    "coverage": {
+      "nearby_stops": true,
+      "service_by_date": "limited_window",
+      "buffer_matching": true,
+      "both_legs": false,
+      "both_legs_note": "Solo origen→VCE. Calendario limitado a 2 semanas."
+    }
+  },
+  {
+    "id": "malaga_agp_urbano",
+    "name": "Málaga urbano → AGP",
+    "region": "andalucia",
+    "origin_area": "Málaga centro / estación María Zambrano",
+    "origin_hint_lat": 36.72,
+    "origin_hint_lng": -4.42,
+    "destination_airport": "AGP",
+    "feed_ids": ["emt_malaga_nap"],
+    "status": "planned_blocked",
+    "verified_at": null,
+    "notes": "⚠️ Feed EMT Málaga requiere autenticación NAP (HTTP 401). URL fuente: nap.transportes.gob.es. Cubriría Málaga centro→AGP una vez resuelto el acceso. Requiere registro en NAP o API key.",
+    "coverage": {
+      "nearby_stops": false,
+      "service_by_date": false,
+      "buffer_matching": false,
+      "both_legs": false,
+      "both_legs_note": "Feed bloqueado por autenticación NAP"
+    }
+  },
+  {
+    "id": "almeria_agp_regional",
+    "name": "Almería → AGP (regional Andalucía)",
+    "region": "andalucia",
+    "origin_area": "Almería y corredor mediterráneo andaluz",
+    "origin_hint_lat": 36.834,
+    "origin_hint_lng": -2.463,
+    "destination_airport": "AGP",
+    "feed_ids": ["ctan_andalucia_nap"],
+    "status": "planned_blocked",
+    "verified_at": null,
+    "notes": "⚠️ Feed Consorcios Transporte Andalucía requiere autenticación NAP (HTTP 401). Cubriría Almería→AGP y otras rutas regionales. Feed unificado de los 9 consorcios. Requiere registro en NAP.",
+    "coverage": {
+      "nearby_stops": false,
+      "service_by_date": false,
+      "buffer_matching": false,
+      "both_legs": false,
+      "both_legs_note": "Feed bloqueado por autenticación NAP"
+    }
+  }
+]

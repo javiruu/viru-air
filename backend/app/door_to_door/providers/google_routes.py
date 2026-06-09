@@ -12,6 +12,7 @@ import requests
 from app.door_to_door.domain.models import ProviderHealth
 from app.door_to_door.domain.scoring import score_itinerary
 from app.door_to_door.providers.base import DoorToDoorProvider, DoorToDoorProviderQuery
+from app.door_to_door.providers.deeplink_builders import airport_label
 from app.door_to_door.schemas import (
     DoorToDoorConfidence,
     DoorToDoorLegOut,
@@ -25,14 +26,62 @@ GOOGLE_PLACE_DETAILS_ENDPOINT = "https://places.googleapis.com/v1/places/{place_
 logger = logging.getLogger("app.door_to_door.google_routes")
 AIRPORT_COORDS: dict[str, tuple[float, float]] = {
     "AGP": (36.675, -4.499),
+    "ALC": (38.282, -0.558),
+    "AMS": (52.308, 4.764),
+    "BCN": (41.297, 2.078),
+    "BGY": (45.674, 9.704),
+    "BIO": (43.301, -2.911),
+    "BRU": (50.901, 4.484),
+    "CDG": (49.010, 2.548),
+    "CRL": (50.459, 4.454),
+    "FCO": (41.800, 12.239),
+    "GRO": (41.901, 2.761),
+    "GRX": (37.189, -3.777),
+    "LEI": (36.844, -2.370),
+    "LGW": (51.153, -0.182),
+    "LTN": (51.875, -0.368),
+    "MAD": (40.472, -3.563),
+    "MXP": (45.631, 8.728),
+    "ORY": (48.723, 2.379),
+    "PMI": (39.552, 2.738),
+    "REU": (41.147, 1.167),
+    "STN": (51.885, 0.235),
+    "SVQ": (37.418, -5.899),
     "TSF": (45.651, 12.199),
+    "VCE": (45.505, 12.352),
+    "VLC": (39.489, -0.482),
+    "ZAZ": (41.666, -1.042),
 }
 LABEL_COORDS: dict[str, tuple[float, float]] = {
+    "aeropuerto de málaga": (36.675, -4.499),
+    "aeropuerto de treviso": (45.651, 12.199),
     "almeria": (36.834, -2.463),
     "almería": (36.834, -2.463),
+    "alicante": (38.346, -0.491),
+    "barcelona": (41.387, 2.169),
+    "bilbao": (43.263, -2.935),
+    "gerona": (41.980, 2.824),
+    "girona": (41.980, 2.824),
+    "granada": (37.177, -3.599),
+    "madrid": (40.417, -3.704),
+    "málaga": (36.720, -4.420),
+    "malaga": (36.720, -4.420),
+    "palma de mallorca": (39.570, 2.650),
+    "reus": (41.155, 1.108),
+    "sevilla": (37.389, -5.985),
+    "valencia": (39.470, -0.376),
+    "zaragoza": (41.649, -0.889),
     "treviso centro": (45.667, 12.243),
     "venecia": (45.441, 12.316),
     "padua": (45.406, 11.877),
+    "roma": (41.903, 12.496),
+    "milán": (45.464, 9.190),
+    "bérgamo": (45.698, 9.677),
+    "parís": (48.857, 2.352),
+    "londres": (51.507, -0.128),
+    "ámsterdam": (52.368, 4.904),
+    "bruselas": (50.850, 4.352),
+    "charleroi": (50.411, 4.444),
 }
 
 
@@ -92,7 +141,11 @@ class GoogleRoutesProvider(DoorToDoorProvider):
         )
 
         if outbound is None:
-            raise RuntimeError("google_routes_outbound_unavailable")
+            self.push_warning(
+                "GOOGLE_ROUTES_UNAVAILABLE",
+                "No hemos podido calcular rutas terrestres reales con Google en este momento.",
+            )
+            return []
 
         inbound: _RouteResult | None = None
         if query.final_destination.type != "airport_only":
@@ -121,7 +174,7 @@ class GoogleRoutesProvider(DoorToDoorProvider):
                 type="ground",
                 mode=self._map_mode(outbound.mode),
                 from_location=query.origin.label,
-                to_location=f"Aeropuerto de Málaga {query.flight.origin_airport}",
+                to_location=airport_label(query.flight.origin_airport),
                 departure_at=outbound_departure,
                 arrival_at=outbound_arrival,
                 duration_minutes=outbound.duration_minutes,
@@ -155,7 +208,7 @@ class GoogleRoutesProvider(DoorToDoorProvider):
                     DoorToDoorLegOut(
                         type="ground",
                         mode=self._map_mode(inbound.mode),
-                        from_location=f"Treviso Airport {query.flight.destination_airport}",
+                        from_location=airport_label(query.flight.destination_airport),
                         to_location=query.final_destination.label,
                         departure_at=inbound_departure,
                         arrival_at=inbound_arrival,
@@ -202,6 +255,7 @@ class GoogleRoutesProvider(DoorToDoorProvider):
             airport_buffer_minutes=airport_buffer,
             transfer_count=transfer_count,
             confidence=source_confidence,
+            completeness="full",  # google_routes always provides real duration/distance
             uncomfortable_hour=outbound_departure.hour < 6,
             luggage_penalty=0,
         )
