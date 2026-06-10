@@ -23,7 +23,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from app.api.deps import get_current_user
 from app.api.v1.airports import _validate_iata
 from app.infrastructure.db.models import FlightWatch, User
-from app.infrastructure.db.session import get_db
+from app.infrastructure.db.session import get_db, SessionLocal
 from app.infrastructure.airports_catalog import ExpandedAirportCandidate, get_airport, resolve_seed_airport
 from app.infrastructure.providers.flight_provider import MultiSourceFlightProvider
 from app.services.quick_search_dedupe import dedupe_ranked_results
@@ -1470,48 +1470,61 @@ def quick_search(
     if payload and isinstance(payload, dict):
         user_currency = str(payload.get("currency", "EUR")).upper().strip()
 
-    # L2 shared cache callables (capture db from Depends)
+    # L2 shared cache callables.
+    # Each callable creates its own DB session because these run inside
+    # ThreadPoolExecutor threads, and SQLAlchemy sessions are not thread-safe.
     def _make_shared_cache_get():
         if not QUICK_SEARCH_SHARED_CACHE_ENABLED:
             return None
         def _get(o: str, d: str, date, prov: str):
-            entry = get_fresh_entry(
-                db,
-                origin_iata=o,
-                destination_iata=d,
-                travel_date=date,
-                provider="multi",
-                source_hash=build_cache_source_hash(
-                    origin_iata=o, destination_iata=d,
-                    travel_date=date, provider="multi",
-                ),
-            )
-            if entry is None:
-                return None
-            return deserialize_fetch_result(entry.payload_json, entry.warnings_json)
+            cache_db = SessionLocal()
+            try:
+                entry = get_fresh_entry(
+                    cache_db,
+                    origin_iata=o,
+                    destination_iata=d,
+                    travel_date=date,
+                    provider="multi",
+                    source_hash=build_cache_source_hash(
+                        origin_iata=o, destination_iata=d,
+                        travel_date=date, provider="multi",
+                        currency=user_currency,
+                    ),
+                )
+                if entry is None:
+                    return None
+                return deserialize_fetch_result(entry.payload_json, entry.warnings_json)
+            finally:
+                cache_db.close()
         return _get
 
     def _make_shared_cache_set():
         if not QUICK_SEARCH_SHARED_CACHE_ENABLED:
             return None
         def _set(o: str, d: str, date, prov: str, result):
-            set_cache_entry(
-                db,
-                origin_iata=o,
-                destination_iata=d,
-                travel_date=date,
-                provider="multi",
-                source_hash=build_cache_source_hash(
-                    origin_iata=o, destination_iata=d,
-                    travel_date=date, provider="multi",
-                ),
-                category=classify_cache_result(
-                    flights=result.flights,
-                    warnings=result.warnings,
-                ),
-                payload_json=serialize_fetch_result(result)[0],
-                warnings_json=serialize_fetch_result(result)[1],
-            )
+            cache_db = SessionLocal()
+            try:
+                _payload, _warnings = serialize_fetch_result(result)
+                set_cache_entry(
+                    cache_db,
+                    origin_iata=o,
+                    destination_iata=d,
+                    travel_date=date,
+                    provider="multi",
+                    source_hash=build_cache_source_hash(
+                        origin_iata=o, destination_iata=d,
+                        travel_date=date, provider="multi",
+                        currency=user_currency,
+                    ),
+                    category=classify_cache_result(
+                        flights=result.flights,
+                        warnings=result.warnings,
+                    ),
+                    payload_json=_payload,
+                    warnings_json=_warnings,
+                )
+            finally:
+                cache_db.close()
         return _set
 
     shared_cache_get = _make_shared_cache_get()

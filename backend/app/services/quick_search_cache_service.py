@@ -222,6 +222,7 @@ def get_or_set_cache_entry(
     fetch_result: ProviderFetchResult,
     category: CacheResultCategory | None = None,
     provider_latency_ms: int | None = None,
+    currency: str = "EUR",
 ) -> tuple[ProviderFetchResult, bool]:
     """Read-through cache: return fresh entry if exists, otherwise persist and return.
 
@@ -232,6 +233,7 @@ def get_or_set_cache_entry(
         destination_iata=destination_iata,
         travel_date=travel_date,
         provider=provider,
+        currency=currency,
     )
     entry = get_fresh_entry(
         db,

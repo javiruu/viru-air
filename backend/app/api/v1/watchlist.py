@@ -512,6 +512,22 @@ def _refresh_watch_now(db: Session, watch_id: str, current_user: User) -> JSONRe
                 source_hash=source_hash,
             )
             if cached_entry is not None:
+                # If the cache says this route has zero flights, respect it
+                # and avoid an unnecessary provider call.
+                if cached_entry.status == "empty":
+                    logger.info(
+                        json.dumps({
+                            "event": "watch_refresh_cache_hit_empty",
+                            "watch_id": watch.id,
+                            "origin": watch.origin_iata,
+                            "destination": watch.destination_iata,
+                            "date": str(watch.travel_date_local),
+                        }, ensure_ascii=False)
+                    )
+                    return JSONResponse(
+                        status_code=200,
+                        content={"status": "no_flights", "watch_id": watch.id},
+                    )
                 cached_result = deserialize_fetch_result(
                     cached_entry.payload_json, cached_entry.warnings_json
                 )
