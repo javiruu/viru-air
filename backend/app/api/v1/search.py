@@ -41,7 +41,7 @@ from app.services.quick_search_cache_service import (
     get_fresh_entry,
     serialize_fetch_result,
     set_cache_entry,
-    prune_expired_entries,
+    prune_expired_entries_async,
 )
 
 router = APIRouter()
@@ -2256,14 +2256,10 @@ def quick_search(
         execution_meta.get("provider_calls", 0),
     )
 
-    # Fase 13: Lazy pruning of expired cache entries (probabilistic, ~10% of requests)
+    # Fase 13: Lazy pruning of expired cache entries (probabilistic, ~10% of requests).
+    # Runs in a daemon thread to avoid blocking the HTTP response TTFB.
     if QUICK_SEARCH_SHARED_CACHE_ENABLED and hash(query_trace_id) % 10 == 0:
-        try:
-            pruned = prune_expired_entries(db, batch_size=200)
-            if pruned > 0:
-                logger.debug("quick_search_cache_pruned trace=%s count=%d", query_trace_id, pruned)
-        except Exception:
-            pass
+        prune_expired_entries_async(batch_size=200)
 
     debug_payload: dict[str, Any] | None = None
     if debug_mode:
