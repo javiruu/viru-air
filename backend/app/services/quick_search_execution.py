@@ -48,13 +48,17 @@ def build_cache_source_hash(
     destination_iata: str,
     travel_date: dt.date | str,
     provider: str,
+    currency: str = "EUR",
 ) -> str:
     """Hash estable de la fuente de datos para deduplicacion de entradas cacheadas.
 
     Permite distinguir entradas cacheadas de la misma unidad exacta
     cuando difieren en parametros de consulta internos (e.g. currency).
+    El parametro currency evita que busquedas en USD reutilicen
+    resultados cacheados en EUR (y viceversa).
     """
     payload = {
+        "currency": str(currency).strip().upper(),
         "origin": str(origin_iata).strip().upper(),
         "destination": str(destination_iata).strip().upper(),
         "date": str(travel_date).strip() if not isinstance(travel_date, dt.date) else travel_date.isoformat(),
@@ -71,9 +75,10 @@ def classify_cache_result(
 ) -> CacheResultCategory:
     """Clasifica un resultado de fetch para determinar TTL de cache.
 
-    - ready: hay vuelos validos
-    - empty: sin vuelos (ni siquiera parciales)
-    - degraded: resultado parcial, warnings de provider, o errores recuperables
+    - ready: hay vuelos validos, sin degradacion
+    - empty: sin vuelos ni señales de outage/degradacion del provider
+    - degraded: resultado parcial, warnings de provider, errores recuperables,
+      o provider totalmente caido (incluso sin vuelos)
     """
     degradation_codes = {
         "provider_error_partial",
@@ -83,9 +88,21 @@ def classify_cache_result(
         "ryanair_fares_failed_partial",
         "ryanair_unavailable_partial",
     }
+    # Total outage codes: even with zero flights, cache briefly as "degraded"
+    # instead of "empty" to avoid 2h stale negative results.
+    outage_codes = {
+        "provider_total_outage",
+        "ryanair_provider_unavailable_total",
+        "ryanair_availability_failed",
+        "ryanair_fares_failed",
+    }
     has_degradation = any(code in degradation_codes for code in warnings)
+    has_outage = any(code in outage_codes for code in warnings)
     if flights:
-        return "degraded" if has_degradation else "ready"
+        return "degraded" if (has_degradation or has_outage) else "ready"
+    # No flights + outage/degradation → degraded (short TTL, provider may recover)
+    if has_degradation or has_outage:
+        return "degraded"
     return "empty"
 
 
@@ -344,34 +361,36 @@ def _fetch_with_cache(
             _FETCH_LOCKS[key] = key_lock
 
     with key_lock:
-        # Re-check L1 after acquiring lock — the previous holder may have
-        # populated the cache.
-        with _CACHE_LOCK:
-            cached_after_wait = _CACHE.get(key)
-            if cached_after_wait and now - cached_after_wait[0] <= _CACHE_TTL_SECONDS:
-                return cached_after_wait[1], "L1"
+        try:
+            # Re-check L1 after acquiring lock — the previous holder may have
+            # populated the cache.
+            with _CACHE_LOCK:
+                cached_after_wait = _CACHE.get(key)
+                if cached_after_wait and now - cached_after_wait[0] <= _CACHE_TTL_SECONDS:
+                    return cached_after_wait[1], "L1"
 
-        # MISS: fetch from provider
-        raw_result = fetch_flights(unit.origin_iata, unit.destination_iata, str(unit.travel_date), timeout_ms)
-        if isinstance(raw_result, ProviderFetchResult):
-            fetch_result = raw_result
-        else:
-            fetch_result = ProviderFetchResult(flights=raw_result, warnings=[])
+            # MISS: fetch from provider
+            raw_result = fetch_flights(unit.origin_iata, unit.destination_iata, str(unit.travel_date), timeout_ms)
+            if isinstance(raw_result, ProviderFetchResult):
+                fetch_result = raw_result
+            else:
+                fetch_result = ProviderFetchResult(flights=raw_result, warnings=[])
 
-        # Populate L1
-        with _CACHE_LOCK:
-            _CACHE[key] = (now, fetch_result)
+            # Populate L1
+            with _CACHE_LOCK:
+                _CACHE[key] = (now, fetch_result)
 
-        # Populate L2
-        if shared_cache_set is not None:
-            shared_cache_set(
-                unit.origin_iata, unit.destination_iata,
-                unit.travel_date, "multi", fetch_result,
-            )
-
-    # Cleanup: remove the per-key lock to avoid memory leak
-    with _FETCH_LOCKS_LOCK:
-        if key in _FETCH_LOCKS:
-            del _FETCH_LOCKS[key]
+            # Populate L2
+            if shared_cache_set is not None:
+                shared_cache_set(
+                    unit.origin_iata, unit.destination_iata,
+                    unit.travel_date, "multi", fetch_result,
+                )
+        finally:
+            # Cleanup: remove the per-key lock to avoid memory leak,
+            # even if fetch_flights() or L2 persist raises an exception.
+            with _FETCH_LOCKS_LOCK:
+                if key in _FETCH_LOCKS:
+                    del _FETCH_LOCKS[key]
 
     return fetch_result, "MISS"

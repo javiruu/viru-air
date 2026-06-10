@@ -274,11 +274,13 @@ class SharedCacheIntegrationTests(unittest.TestCase):
             "degraded",
         )
 
-    def test_classify_empty_results_have_no_flights(self):
+    def test_classify_empty_results_without_warnings_remain_empty(self):
         self.assertEqual(classify_cache_result(flights=[], warnings=[]), "empty")
+
+    def test_classify_empty_with_degradation_is_degraded(self):
         self.assertEqual(
             classify_cache_result(flights=[], warnings=["provider_error_partial"]),
-            "empty",
+            "degraded",
         )
 
     # ------------------------------------------------------------------
@@ -308,6 +310,27 @@ class SharedCacheIntegrationTests(unittest.TestCase):
             travel_date="2026-12-25", provider="duffel",
         )
         self.assertNotEqual(h1, h2)
+
+    def test_source_hash_differs_for_different_currencies(self):
+        """Different currencies must produce different hashes to prevent cross-currency cache poisoning."""
+        h_eur = build_cache_source_hash(
+            origin_iata="AGP", destination_iata="TSF",
+            travel_date="2026-12-25", provider="ryanair",
+            currency="EUR",
+        )
+        h_usd = build_cache_source_hash(
+            origin_iata="AGP", destination_iata="TSF",
+            travel_date="2026-12-25", provider="ryanair",
+            currency="USD",
+        )
+        h_gbp = build_cache_source_hash(
+            origin_iata="AGP", destination_iata="TSF",
+            travel_date="2026-12-25", provider="ryanair",
+            currency="GBP",
+        )
+        self.assertNotEqual(h_eur, h_usd)
+        self.assertNotEqual(h_eur, h_gbp)
+        self.assertNotEqual(h_usd, h_gbp)
 
     # ------------------------------------------------------------------
     # Nearby/flex: cache works for expanded units

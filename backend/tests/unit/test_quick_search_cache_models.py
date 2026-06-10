@@ -180,12 +180,17 @@ class TestClassifyCacheResult:
         category = classify_cache_result(flights=[], warnings=[])
         assert category == "empty"
 
-    def test_result_with_no_flights_but_warnings_is_empty(self):
+    def test_result_with_no_flights_but_warnings_is_degraded(self):
+        """Empty flights + provider degradation = degraded (not empty).
+        Provider degradation signals (timeout, errors) mean the provider
+        may recover soon, so we cache briefly as degraded (30min) instead
+        of empty (2h).
+        """
         category = classify_cache_result(
             flights=[],
             warnings=["provider_error_partial", "provider_timeout_partial"],
         )
-        assert category == "empty"
+        assert category == "degraded"
 
     def test_degraded_detects_ryanair_specific_codes(self):
         flights = [
