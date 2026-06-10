@@ -294,6 +294,28 @@ def prune_expired_entries(db: Session, *, batch_size: int = 200) -> int:
     return deleted
 
 
+def prune_expired_entries_async(*, batch_size: int = 200) -> None:
+    """Fire-and-forget pruning in a daemon thread.
+
+    Does not block the caller. Creates its own DB session internally.
+    Failures are logged but never propagated.
+    """
+    from app.infrastructure.db.session import SessionLocal
+
+    def _prune() -> None:
+        session = SessionLocal()
+        try:
+            deleted = prune_expired_entries(session, batch_size=batch_size)
+            if deleted > 0:
+                logger.debug("quick_search_cache_pruned_async count=%d", deleted)
+        except Exception:
+            logger.warning("quick_search_cache_prune_async_failed", exc_info=True)
+        finally:
+            session.close()
+
+    threading.Thread(target=_prune, daemon=True).start()
+
+
 def get_cache_stats(db: Session) -> dict[str, int]:
     """Return cache stats for observability."""
     from sqlalchemy import func
