@@ -329,6 +329,99 @@ When duplicates compete, the winner is selected by:
 | `include_stops`, `max_stops` | unsupported (legacy_partial) | n/a | warning `strict_filter_not_enforceable` | warning `degraded_filter_application` | provider data not reliable in quick mode |
 | `duration_max_min` | unsupported | n/a | warning `strict_filter_not_enforceable` | warning `degraded_filter_application` | provider missing duration field |
 
+## Shared cache (V2.1 — persistent cross-user cache)
+
+> **V2.1** (Junio 2026) introduce cache compartida persistente en BD como fuente de verdad.
+
+### Semántica de cache compartida
+
+La cache compartida opera sobre **unidades exactas** `(origin_iata, destination_iata, travel_date, provider)`, NO sobre el payload completo de la respuesta final al usuario.
+
+**Diferencias clave entre los tres conceptos de reutilización:**
+
+| Concepto | Clave | Alcance | Persistencia | Usuarios |
+|---|---|---|---|---|
+| **Unidad exacta cacheable** (`unit_cache_key`) | `(origin, destination, date, provider)` | Resultado crudo de un provider para una ruta-fecha concreta | 24h (ready), 2h (empty), 30min (degraded) | Cross-user (sin identidad de usuario) |
+| **Respuesta final recompuesta** | `query_signature` (qsig_*) | Payload completo del endpoint tras ranking, dedupe y paginación | No se cachea como payload bruto canónico | N/A (se recompone desde unidades) |
+| **Snapshots de watchlist** | `(watch_id, captured_at_utc)` | Precio canónico para un watch concreto | Indefinida (histórico) | Single-user (asociado a FlightWatch) |
+
+### TTL por categoría de resultado
+
+- `ready`: **24h** (86400s) — resultados con vuelos válidos
+- `empty`: **2h** (7200s) — búsqueda sin vuelos encontrados
+- `degraded`: **30min** (1800s) — resultados parciales o con errores de provider
+- `pending`: **60s** (timeout de trabajo) — unidad en progreso por otra request concurrente
+
+### Cache key canonicalization
+
+- `origin_iata`: uppercase, trimmed, validated IATA
+- `destination_iata`: uppercase, trimmed, validated IATA  
+- `travel_date`: ISO 8601 date string (YYYY-MM-DD)
+- `provider`: lowercase provider id (e.g. `ryanair`, `duffel`)
+
+La **cache compartida es cross-user pero NO almacena identidad de usuario**. La tabla `quick_search_cache_entry` no tiene FK a `users`.
+
+### Reutilización para búsquedas ampliadas
+
+Cuando una búsqueda usa `include_nearby` o `flex`, el backend:
+1. Descompone la búsqueda en unidades exactas `(origin, destination, date, provider)`
+2. Consulta la cache compartida para cada unidad
+3. Solo llama al provider para las unidades no cacheadas o expiradas
+4. Recompone la respuesta final (ranking, dedupe, paginación) desde las unidades resueltas
+
+### Feature flags
+
+- `QUICK_SEARCH_SHARED_CACHE_ENABLED=true` — activa la cache persistente
+- `QUICK_SEARCH_SHARED_CACHE_READY_TTL_SECONDS=86400`
+- `QUICK_SEARCH_SHARED_CACHE_EMPTY_TTL_SECONDS=7200`
+- `QUICK_SEARCH_SHARED_CACHE_DEGRADED_TTL_SECONDS=1800`
+- `QUICK_SEARCH_SHARED_CACHE_USE_MEMORY_HOT_LAYER=true` — mantiene capa en memoria como L1
+
+Con el flag `QUICK_SEARCH_SHARED_CACHE_ENABLED=false`, el sistema usa exclusivamente la cache en memoria actual (TTL 300s) sin tocar la tabla persistente.
+
+### Observabilidad de cache
+
+Contadores expuestos en `meta.pipeline_counters`:
+- `shared_cache_hits`: aciertos en cache persistente
+- `shared_cache_misses`: fallos que requirieron fetch real
+- `shared_cache_stale_count`: entradas expiradas encontradas
+- `provider_calls_avoided`: llamadas a provider evitadas gracias a la cache
+
+### Siguiente paso: Redis como hot layer
+
+La arquitectura está diseñada para que Redis pueda añadirse como capa L1 (caliente) sin cambiar la fuente de verdad (BD). La cache en BD seguiría siendo el contrato canónico; Redis sería una aceleración con TTL más corto.
+
+## Implementation status (Junio 2026)
+
+La cache compartida persistente (V2.1) está implementada con las siguientes piezas:
+
+| Componente | Archivo | Estado |
+|---|---|---|
+| Modelo DB | `backend/app/infrastructure/db/models.py` → `QuickSearchCacheEntry` | ✅ vivo |
+| Migración | `backend/alembic/versions/0030_add_quick_search_shared_cache.py` | ✅ aplicada |
+| Servicio de cache | `backend/app/services/quick_search_cache_service.py` | ✅ vivo |
+| Canonicalización | `backend/app/services/quick_search_execution.py` → `build_unit_cache_key`, `build_cache_source_hash`, `classify_cache_result` | ✅ vivo |
+| Integración execution | `backend/app/services/quick_search_execution.py` → `execute_plan` + `_fetch_with_cache` (L1→L2→provider) | ✅ vivo |
+| Anti-stampede | `backend/app/services/quick_search_execution.py` → per-key `threading.Lock` en `_fetch_with_cache` | ✅ vivo |
+| Integración watchlist | `backend/app/api/v1/watchlist.py` → `_refresh_watch_now` consulta y persiste cache | ✅ vivo |
+| Wiring endpoint | `backend/app/api/v1/search.py` → callables `shared_cache_get/set` + pruning | ✅ vivo |
+| Feature flags | `backend/.env.example` → 5 env vars `QUICK_SEARCH_SHARED_CACHE_*` | ✅ vivo |
+| Observabilidad | `pipeline_counters.l1_cache_hits`, `pipeline_counters.l2_cache_hits`, `provider_calls` en logs | ✅ vivo |
+| Limpieza | `prune_expired_entries` llamado en ~10% de requests | ✅ vivo |
+| Tests | `backend/tests/unit/test_quick_search_cache_models.py` (17 tests), `test_quick_search_shared_cache.py` (12 tests) | ✅ vivo |
+
+### Activación
+
+```bash
+QUICK_SEARCH_SHARED_CACHE_ENABLED=true
+```
+
+Con el flag en `false`, el sistema usa exclusivamente la cache en memoria actual (L1, TTL 300s).
+
+### Siguiente paso: Redis como hot layer
+
+La arquitectura está diseñada para añadir Redis como capa L1 (caliente) sin cambiar la fuente de verdad (BD). La cache en BD sigue siendo el contrato canónico; Redis sería una aceleración con TTL más corto.
+
 ## Observability and debug
 - Every search emits `meta.query_trace_id`.
 - Phase timings are exposed in `meta.pipeline_metrics`.

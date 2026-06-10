@@ -27,10 +27,22 @@ from app.infrastructure.db.session import get_db
 from app.infrastructure.airports_catalog import ExpandedAirportCandidate, get_airport, resolve_seed_airport
 from app.infrastructure.providers.flight_provider import MultiSourceFlightProvider
 from app.services.quick_search_dedupe import dedupe_ranked_results
-from app.services.quick_search_execution import build_execution_plan, execute_plan
+from app.services.quick_search_execution import (
+    build_cache_source_hash,
+    classify_cache_result,
+    build_execution_plan,
+    execute_plan,
+)
 from app.services.quick_search_expansion import SideExpansionResult, SideExpansionSummary, expand_search_sides
 from app.services.quick_search_planner import PairPlanItem, build_pair_plan
 from app.services.quick_search_ranking import rank_quick_search_results
+from app.services.quick_search_cache_service import (
+    deserialize_fetch_result,
+    get_fresh_entry,
+    serialize_fetch_result,
+    set_cache_entry,
+    prune_expired_entries,
+)
 
 router = APIRouter()
 provider = MultiSourceFlightProvider()
@@ -38,6 +50,7 @@ logger = logging.getLogger(__name__)
 SEED_POOL_CAP = 8
 QUICK_SEARCH_MAX_PAIRS_CAP = 400
 QUICK_SEARCH_MAX_REQUESTS_CAP = 3000
+QUICK_SEARCH_SHARED_CACHE_ENABLED = os.getenv("QUICK_SEARCH_SHARED_CACHE_ENABLED", "false").strip().lower() == "true"
 CALENDAR_HINTS_CACHE_TTL_SECONDS = 600
 _CALENDAR_HINTS_CACHE_LOCK = threading.Lock()
 _CALENDAR_HINTS_CACHE: dict[tuple[str, str, int, str, str, str], tuple[float, dict[str, Any]]] = {}
@@ -1405,6 +1418,7 @@ def quick_search(
     page: int | None = Query(default=None, ge=1),
     page_size: int | None = Query(default=None, ge=1, le=100),
     debug: bool = Query(default=False),
+    db: Session = Depends(get_db),
 ) -> dict:
     query_trace_id = f"qs_{uuid.uuid4().hex[:12]}"
     is_debug_allowed = os.getenv("APP_ENV", "local") == "local"
@@ -1455,6 +1469,53 @@ def quick_search(
     user_currency = "EUR"
     if payload and isinstance(payload, dict):
         user_currency = str(payload.get("currency", "EUR")).upper().strip()
+
+    # L2 shared cache callables (capture db from Depends)
+    def _make_shared_cache_get():
+        if not QUICK_SEARCH_SHARED_CACHE_ENABLED:
+            return None
+        def _get(o: str, d: str, date, prov: str):
+            entry = get_fresh_entry(
+                db,
+                origin_iata=o,
+                destination_iata=d,
+                travel_date=date,
+                provider="multi",
+                source_hash=build_cache_source_hash(
+                    origin_iata=o, destination_iata=d,
+                    travel_date=date, provider="multi",
+                ),
+            )
+            if entry is None:
+                return None
+            return deserialize_fetch_result(entry.payload_json, entry.warnings_json)
+        return _get
+
+    def _make_shared_cache_set():
+        if not QUICK_SEARCH_SHARED_CACHE_ENABLED:
+            return None
+        def _set(o: str, d: str, date, prov: str, result):
+            set_cache_entry(
+                db,
+                origin_iata=o,
+                destination_iata=d,
+                travel_date=date,
+                provider="multi",
+                source_hash=build_cache_source_hash(
+                    origin_iata=o, destination_iata=d,
+                    travel_date=date, provider="multi",
+                ),
+                category=classify_cache_result(
+                    flights=result.flights,
+                    warnings=result.warnings,
+                ),
+                payload_json=serialize_fetch_result(result)[0],
+                warnings_json=serialize_fetch_result(result)[1],
+            )
+        return _set
+
+    shared_cache_get = _make_shared_cache_get()
+    shared_cache_set = _make_shared_cache_set()
         
     try:
         canonical, origin_list, destination_list, filter_contract = _normalize_quick_search_request(
@@ -1760,6 +1821,8 @@ def quick_search(
             concurrency_limit=canonical.execution.concurrency_limit,
             timeout_ms=canonical.execution.timeout_ms,
             fetch_flights=lambda o, d, date_str, timeout: provider.get_flights(o, d, date_str, timeout_ms=timeout, currency=user_currency),
+            shared_cache_get=shared_cache_get,
+            shared_cache_set=shared_cache_set,
         )
         _phase_add("provider_fetch_ms", int((time.perf_counter() - started) * 1000))
 
@@ -2165,7 +2228,7 @@ def quick_search(
     }
 
     logger.info(
-        "quick_search trace=%s results=%s planned_pairs=%s requested_units=%s rescue=%s winning_step=%s warnings=%s provider_statuses=%s concurrency_limit=%s",
+        "quick_search trace=%s results=%s planned_pairs=%s requested_units=%s rescue=%s winning_step=%s warnings=%s provider_statuses=%s concurrency_limit=%s l1_hits=%s l2_hits=%s provider_calls=%s",
         query_trace_id,
         len(paginated_ranked_results),
         pair_plan_stats["total_pairs"],
@@ -2175,7 +2238,19 @@ def quick_search(
         warnings,
         execution_meta.get("provider_statuses", []),
         canonical.execution.concurrency_limit,
+        execution_meta.get("l1_cache_hits", 0),
+        execution_meta.get("l2_cache_hits", 0),
+        execution_meta.get("provider_calls", 0),
     )
+
+    # Fase 13: Lazy pruning of expired cache entries (probabilistic, ~10% of requests)
+    if QUICK_SEARCH_SHARED_CACHE_ENABLED and hash(query_trace_id) % 10 == 0:
+        try:
+            pruned = prune_expired_entries(db, batch_size=200)
+            if pruned > 0:
+                logger.debug("quick_search_cache_pruned trace=%s count=%d", query_trace_id, pruned)
+        except Exception:
+            pass
 
     debug_payload: dict[str, Any] | None = None
     if debug_mode:
@@ -2349,6 +2424,8 @@ def quick_search(
                 "timeout_count": execution_meta.get("timed_out_units_count", 0),
                 "cache_hits": execution_meta.get("cache_hits", 0),
                 "cache_misses": execution_meta.get("cache_misses", 0),
+                "l1_cache_hits": execution_meta.get("l1_cache_hits", 0),
+                "l2_cache_hits": execution_meta.get("l2_cache_hits", 0),
                 "final_results_count": total_results_count,
                 "paginated_results_count": len(paginated_ranked_results),
             },
