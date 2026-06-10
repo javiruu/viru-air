@@ -236,6 +236,16 @@ Entradas vivas actualizadas:
 
 - `docs/DOCS_INVENTORY.md`
 
+## Actualizacion manual 2026-06-10 (Redis hot layer design plan)
+
+Entradas vivas agregadas:
+
+- `docs/plans/2026-06-10-redis-hot-layer-plan.md`
+
+Entradas vivas actualizadas:
+
+- `docs/DOCS_INVENTORY.md`
+
 ## Actualizacion manual 2026-06-10 (quick-search shared cache implementation complete)
 
 Entradas vivas agregadas:
@@ -411,6 +421,7 @@ Entradas vivas retiradas:
 | docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md | plan | vivo | conservar | docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md | Roadmap de 10 fases adicionales para expandir cobertura, pricing real, orquestación avanzada y rollout por mercados | docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md |
 | docs/plans/2026-06-09-puerta-a-puerta-plan-10-fases-activacion-real.md | plan | vivo | conservar | docs/plans/2026-06-09-puerta-a-puerta-plan-10-fases-activacion-real.md | Plan de 10 fases centrado en activar capacidades reales de `/puerta-a-puerta` por valor, dependencias y cobertura util | docs/plans/2026-06-09-puerta-a-puerta-plan-10-fases-activacion-real.md |
 | docs/plans/2026-06-10-quick-search-shared-cache-implementation.md | plan | vivo | conservar | docs/plans/2026-06-10-quick-search-shared-cache-implementation.md | Plan de implementacion en 15 fases para una cache compartida, persistente y cross-user de quick-search con recomposicion por unidades exactas | docs/plans/2026-06-10-quick-search-shared-cache-implementation.md |
+| docs/plans/2026-06-10-redis-hot-layer-plan.md | plan | vivo | conservar | docs/plans/2026-06-10-redis-hot-layer-plan.md | Plan de diseno en 7 fases para anadir Redis como hot layer opcional sobre la cache persistente DB sin cambiar el contrato actual | docs/plans/2026-06-10-redis-hot-layer-plan.md |
 | docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md | plan | vivo | conservar | docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md | Roadmap de las siguientes 10 fases para expandir la activacion real del modulo tras el checkpoint actual | docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md |
 | docs/plans/completed/2026-02-18-fusion-watchlist-historico-plan.md | plan | hist?rico | conservar | docs/plans/completed/2026-02-18-fusion-watchlist-historico-plan.md | Plan fechado ya completado o hist?rico | ninguna; material hist?rico |
 | docs/plans/completed/2026-02-19-account-interface-i18n-plan.md | plan | hist?rico | conservar | docs/plans/completed/2026-02-19-account-interface-i18n-plan.md | Plan fechado ya completado o hist?rico | ninguna; material hist?rico |
