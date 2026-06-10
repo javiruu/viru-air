@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import ThemeToggle from "@/modules/shared/ThemeToggle";
 import { Skeleton, SkeletonPanel } from "@/modules/shared/Skeleton";
 import { apiFetchWithStatus } from "@/modules/shared/api";
 import { clearToken, hasToken } from "@/modules/shared/auth";
@@ -64,21 +63,7 @@ export default function PruebaLandingPage() {
       </video>
       <div className="landing-prueba-overlay" aria-hidden="true" />
 
-      <header className="landing-prueba-cinema-header landing-stage">
-        <div className="landing-brand">
-          <span className="landing-dot" aria-hidden="true" />
-          <div>
-            <div className="landing-kicker">Viru Tracker</div>
-            <p className="landing-tagline">{t("public.landing.brandTagline")}</p>
-          </div>
-        </div>
-        <div className="landing-actions">
-          <Link href="/policies" className="linkInline">{t("public.landing.policies")}</Link>
-          <ThemeToggle />
-        </div>
-      </header>
-
-      <section className="landing-prueba-cinema-body landing-stage landing-stage-delay">
+<section className="landing-prueba-cinema-body landing-stage landing-stage-delay">
         <p className="landing-prueba-kicker">flight intelligence</p>
         <h1>{t("public.landing.heroTitle")}</h1>
         <p className="landing-claim">{t("public.landing.heroClaim")}</p>

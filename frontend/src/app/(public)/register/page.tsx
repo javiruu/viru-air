@@ -8,7 +8,6 @@ import { useNotificationCenter } from "@/components/components/notifications/not
 import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
 import { AuthOut, clearToken, hasToken, saveToken } from "@/modules/shared/auth";
 import { resolvePostAuthUrl } from "@/modules/shared/navigation";
-import ThemeToggle from "@/modules/shared/ThemeToggle";
 import { SkeletonForm } from "@/modules/shared/Skeleton";
 import { useI18n } from "@/i18n";
 
@@ -91,7 +90,6 @@ function RegisterContent() {
         <button className="btn-ghost" type="button" onClick={() => router.push("/")}>
           {t("shared.actions.back")}
         </button>
-        <ThemeToggle />
       </div>
       <GlassSignInCard
         variant="register"

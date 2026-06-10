@@ -1,7 +1,6 @@
 ﻿export const publicEs = {
   landing: {
     checkingSession: "Verificando sesión…",
-    brandTagline: "Flight intelligence cálido para seguir rutas con criterio.",
     policies: "Políticas",
     heroEyebrow: "Radar personal de rutas",
     heroTitle: "No es otro buscador: es tu cabina de decisión para volar mejor.",
@@ -180,7 +179,6 @@
 export const publicEn = {
   landing: {
     checkingSession: "Checking session…",
-    brandTagline: "Warm flight intelligence to track routes with real judgment.",
     policies: "Policies",
     heroEyebrow: "Personal route radar",
     heroTitle: "Not another flight search: your decision cockpit for smarter booking.",

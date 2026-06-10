@@ -4,9 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import ThemeToggle from "@/modules/shared/ThemeToggle";
 import { Skeleton, SkeletonPanel } from "@/modules/shared/Skeleton";
-import ViruFooterBlock from "@/modules/shared/ViruFooterBlock";
 import { apiFetchWithStatus } from "@/modules/shared/api";
 import { clearToken, hasToken } from "@/modules/shared/auth";
 import { useI18n } from "@/i18n";
@@ -65,20 +63,6 @@ export default function HomePage() {
   return (
     <>
       <main className="landing-shell-full" id="main-content">
-        <header className="landing-header landing-inner">
-          <div className="landing-brand">
-            <span className="landing-dot" aria-hidden="true" />
-            <div>
-              <div className="landing-kicker">Viru Tracker</div>
-              <p className="landing-tagline">{t("public.landing.brandTagline")}</p>
-            </div>
-          </div>
-          <div className="landing-actions">
-            <Link href="/policies" className="linkInline">{t("public.landing.policies")}</Link>
-            <ThemeToggle />
-          </div>
-        </header>
-
         <section className="landing-fullband landing-fullband-hero landing-stage">
           <div className="landing-inner landing-inner-wide">
             <div className="landing-hero-v2">
@@ -308,7 +292,6 @@ export default function HomePage() {
           </div>
         </section>
       </main>
-      <ViruFooterBlock variant="landing" />
     </>
   );
 }

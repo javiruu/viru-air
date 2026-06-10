@@ -4,7 +4,6 @@ import { FormEvent, Suspense, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { GlassForgotPasswordCard } from "@/components/components/forms/glass-forgot-password";
-import ThemeToggle from "@/modules/shared/ThemeToggle";
 import { SkeletonForm } from "@/modules/shared/Skeleton";
 import { useI18n } from "@/i18n";
 import { submitForgotPassword } from "@/modules/shared/forgot-password";
@@ -48,7 +47,6 @@ function ForgotPasswordContent() {
         <button className="btn-ghost" type="button" onClick={() => router.push("/login")}>
           {t("shared.actions.back")}
         </button>
-        <ThemeToggle />
       </div>
       <GlassForgotPasswordCard
         email={email}
