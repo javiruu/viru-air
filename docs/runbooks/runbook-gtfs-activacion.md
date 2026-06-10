@@ -124,8 +124,45 @@ Cada corredor representa una ruta geográfica concreta donde GTFS puede (o podr�
 
 | Corredor | Aeropuerto | Feeds | Estado | Bloqueo |
 |----------|-----------|-------|--------|---------|
-| Málaga urbano → AGP | AGP | EMT Málaga (NAP) | ❌ planeado | HTTP 401 — requiere registro en nap.transportes.gob.es |
-| Almería → AGP regional | AGP | CTAN Andalucía (NAP) | ❌ planeado | HTTP 401 — requiere registro en NAP |
+| Málaga urbano → AGP | AGP | EMT Málaga (NAP) | ❌ planeado | HTTP 401 — requiere `GTFS_NAP_API_KEY` configurada |
+| Almería → AGP regional | AGP | CTAN Andalucía (NAP) | ❌ planeado | HTTP 401 — requiere `GTFS_NAP_API_KEY` configurada |
+
+### Activación de feeds NAP España
+
+Los feeds de EMT Málaga y CTAN Andalucía están alojados en el National Access Point español (`nap.transportes.gob.es`). Requieren una API key para descargarse. El plumbing de autenticación ya está implementado: solo falta la key.
+
+#### Paso a paso para activar
+
+1. **Registrarse en el NAP**: ve a [nap.transportes.gob.es](https://nap.transportes.gob.es) y crea una cuenta.
+2. **Generar API key**: ve a **Account → InstruccionesAPI** y genera tu clave.
+3. **Configurar la key en `.env`**:
+   ```bash
+   GTFS_NAP_API_KEY=tu-clave-aqui
+   ```
+4. **Verificar la descarga con el probe**:
+   ```bash
+   cd backend
+   python -m app.door_to_door.tools.gtfs_probe --feed-id emt_malaga_nap
+   python -m app.door_to_door.tools.gtfs_probe --feed-id ctan_andalucia_nap
+   ```
+   El probe mostrará número de rutas, paradas, viajes y cobertura de fechas.
+5. **Verificar paradas cercanas a AGP**: confirma que el probe encuentra paradas cerca de Málaga centro (36.72, -4.42) y del aeropuerto AGP (36.675, -4.499).
+6. **Activar los corredores**: edita `backend/app/door_to_door/providers/gtfs_corridors.json` y cambia:
+   - `malaga_agp_urbano.status`: `"planned_blocked"` → `"verified_limited"`
+   - `almeria_agp_regional.status`: `"planned_blocked"` → `"verified_limited"`
+   - Actualiza `verified_at` con la fecha actual y `coverage` con los valores reales del probe.
+7. **Ejecutar tests**:
+   ```bash
+   python -m pytest tests/unit/test_door_to_door_gtfs_transit.py -v
+   ```
+8. **Verificar en la API**: con el backend corriendo, busca una ruta Málaga→AGP y confirma que aparecen opciones GTFS con `source_type: "open_data"`.
+
+#### Notas importantes
+
+- La misma `GTFS_NAP_API_KEY` sirve para ambos feeds (EMT Málaga y CTAN Andalucía).
+- Si el NAP cambia su método de autenticación (ej. de `x-api-key` a `Authorization: Bearer`), ajusta `auth_header_name` y `auth_value_prefix` en `gtfs_feeds.json`.
+- Los feeds NAP suelen tener cobertura de varios meses; verifica las fechas con el probe.
+- Si un feed devuelve HTTP 403 en vez de 401, la key puede ser válida pero sin permisos para ese recurso específico.
 
 ### Cómo interpretar las señales de corredor
 

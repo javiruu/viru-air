@@ -109,6 +109,10 @@ const NON_FATAL_QS_SCOPES = new Set<string>([
   "destination_suggestions_failed",
   "origin_code_validation_failed",
   "destination_code_validation_failed",
+  "calendar_hints_failed",
+  "calendar_hints_exception",
+  "calendar_hints_return_failed",
+  "calendar_hints_return_exception",
 ]);
 const EMPTY_SEARCH_VALIDATION_MESSAGE = "Please enter a search";
 const RYANAIR_TOP_CITIES = [
@@ -164,6 +168,13 @@ type CalendarHintsCacheEntry = {
   dayHintsByIso: Record<string, QuickSearchCalendarDayHint>;
   scopeMode: QuickSearchCalendarScopeMode;
 };
+
+function buildEmptyCalendarHintsCacheEntry(scopeMode: QuickSearchCalendarScopeMode): CalendarHintsCacheEntry {
+  return {
+    dayHintsByIso: {},
+    scopeMode,
+  };
+}
 
 function currentMonthIso(): string {
   const now = new Date();
@@ -1306,6 +1317,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       .then((result) => {
         if (controller.signal.aborted) return;
         if (!result.ok) {
+          setCalendarHintsByKey((prev) => ({
+            ...prev,
+            [requestKey]: buildEmptyCalendarHintsCacheEntry(calendarHintsScopeMode),
+          }));
           logQuickSearchApiError("calendar_hints_failed", {
             status: result.status,
             error: result.error,
@@ -1335,6 +1350,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       })
       .catch((error) => {
         if (controller.signal.aborted) return;
+        setCalendarHintsByKey((prev) => ({
+          ...prev,
+          [requestKey]: buildEmptyCalendarHintsCacheEntry(calendarHintsScopeMode),
+        }));
         logQuickSearchApiError("calendar_hints_exception", {
           error,
           origin_iata: originCountryOnly ? originCalendarHintPool : originCode,
@@ -1404,6 +1423,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       .then((result) => {
         if (controller.signal.aborted) return;
         if (!result.ok) {
+          setCalendarHintsByKeyReturn((prev) => ({
+            ...prev,
+            [requestKey]: buildEmptyCalendarHintsCacheEntry(calendarHintsScopeMode),
+          }));
           logQuickSearchApiError("calendar_hints_return_failed", {
             status: result.status,
             error: result.error,
@@ -1433,6 +1456,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       })
       .catch((error) => {
         if (controller.signal.aborted) return;
+        setCalendarHintsByKeyReturn((prev) => ({
+          ...prev,
+          [requestKey]: buildEmptyCalendarHintsCacheEntry(calendarHintsScopeMode),
+        }));
         logQuickSearchApiError("calendar_hints_return_exception", {
           error,
           origin_iata: destinationCountryOnly ? destinationCalendarHintPool : destinationCode,
