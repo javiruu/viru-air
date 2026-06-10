@@ -182,6 +182,20 @@ Entradas vivas actualizadas:
 
 - `docs/DOCS_INVENTORY.md`
 
+## Actualizacion manual 2026-06-09 (perfiles de activacion Fase 1)
+
+Entradas vivas agregadas:
+
+- `docs/runbooks/runbook-activation-profiles.md`
+- `docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md`
+
+Entradas vivas actualizadas:
+
+- `docs/reference/backend/door-to-door-contract.md` (V1.6 — perfiles de activacion, blindaje anti-mock)
+- `backend/.env.example` (perfil local_real rotulado, secciones comentadas para otros perfiles)
+- `backend/app/door_to_door/providers/registry.py` (guard anti-mock en staging/prod)
+- `docs/DOCS_INVENTORY.md`
+
 ## Actualizacion manual 2026-06-09 (puerta-a-puerta plan 10 fases activacion real)
 
 Entradas vivas agregadas:
@@ -190,6 +204,56 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
+- `docs/DOCS_INVENTORY.md`
+
+## Actualizacion manual 2026-06-09 (puerta-a-puerta siguientes 10 fases)
+
+Entradas vivas agregadas:
+
+- `docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md`
+
+Entradas vivas actualizadas:
+
+- `docs/DOCS_INVENTORY.md`
+
+## Actualizacion manual 2026-06-10 (sticky navbar scroll-state rollout)
+
+Entradas vivas agregadas:
+
+- `docs/plans/2026-06-10-sticky-navbar-scroll-state-rollout.md`
+
+Entradas vivas actualizadas:
+
+- `docs/DOCS_INVENTORY.md`
+
+## Actualizacion manual 2026-06-10 (quick-search shared cache implementation plan)
+
+Entradas vivas agregadas:
+
+- `docs/plans/2026-06-10-quick-search-shared-cache-implementation.md`
+
+Entradas vivas actualizadas:
+
+- `docs/DOCS_INVENTORY.md`
+
+## Actualizacion manual 2026-06-10 (quick-search shared cache implementation complete)
+
+Entradas vivas agregadas:
+
+- `backend/app/services/quick_search_cache_service.py`
+- `backend/alembic/versions/0030_add_quick_search_shared_cache.py`
+- `backend/tests/unit/test_quick_search_cache_models.py`
+- `backend/tests/unit/test_quick_search_shared_cache.py`
+
+Entradas vivas actualizadas:
+
+- `docs/reference/backend/quick-search-contract.md` (V2.1 — shared cache section + implementation status)
+- `docs/engineering/backend.md` (shared cache mention)
+- `backend/app/services/quick_search_execution.py` (canonicalization + L1→L2→provider cascade + anti-stampede)
+- `backend/app/infrastructure/db/models.py` (QuickSearchCacheEntry model)
+- `backend/app/api/v1/search.py` (L2 wiring + pruning + observability)
+- `backend/app/api/v1/watchlist.py` (shared cache in _refresh_watch_now)
+- `backend/.env.example` (5 QUICK_SEARCH_SHARED_CACHE_* env vars)
 - `docs/DOCS_INVENTORY.md`
 
 ## Actualizacion manual 2026-06-08 (puerta-a-puerta F1-F10 cierre)
@@ -334,7 +398,10 @@ Entradas vivas retiradas:
 | docs/plans/README.md | plan | vivo | conservar | docs/plans/README.md | Gu?a de organizaci?n de planes | docs/plans/README.md |
 | docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md | plan | vivo | conservar | docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md | Plan de 5 fases (A-E) de correcciones post-cierre para el modulo /hoteles | docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md |
 | docs/plans/2026-06-08-puerta-a-puerta-plan-aterrizado-real.md | plan | vivo | conservar | docs/plans/2026-06-08-puerta-a-puerta-plan-aterrizado-real.md | Plan operativo aterrizado para evolucionar `/puerta-a-puerta` con foco en honestidad, contratos y utilidad incremental real | docs/plans/2026-06-08-puerta-a-puerta-plan-aterrizado-real.md |
+| docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md | plan | vivo | conservar | docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md | Roadmap de 10 fases adicionales para expandir cobertura, pricing real, orquestación avanzada y rollout por mercados | docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md |
 | docs/plans/2026-06-09-puerta-a-puerta-plan-10-fases-activacion-real.md | plan | vivo | conservar | docs/plans/2026-06-09-puerta-a-puerta-plan-10-fases-activacion-real.md | Plan de 10 fases centrado en activar capacidades reales de `/puerta-a-puerta` por valor, dependencias y cobertura util | docs/plans/2026-06-09-puerta-a-puerta-plan-10-fases-activacion-real.md |
+| docs/plans/2026-06-10-quick-search-shared-cache-implementation.md | plan | vivo | conservar | docs/plans/2026-06-10-quick-search-shared-cache-implementation.md | Plan de implementacion en 15 fases para una cache compartida, persistente y cross-user de quick-search con recomposicion por unidades exactas | docs/plans/2026-06-10-quick-search-shared-cache-implementation.md |
+| docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md | plan | vivo | conservar | docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md | Roadmap de las siguientes 10 fases para expandir la activacion real del modulo tras el checkpoint actual | docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md |
 | docs/plans/completed/2026-02-18-fusion-watchlist-historico-plan.md | plan | hist?rico | conservar | docs/plans/completed/2026-02-18-fusion-watchlist-historico-plan.md | Plan fechado ya completado o hist?rico | ninguna; material hist?rico |
 | docs/plans/completed/2026-02-19-account-interface-i18n-plan.md | plan | hist?rico | conservar | docs/plans/completed/2026-02-19-account-interface-i18n-plan.md | Plan fechado ya completado o hist?rico | ninguna; material hist?rico |
 | docs/plans/completed/2026-02-19-account-system-redesign-design.md | plan | hist?rico | conservar | docs/plans/completed/2026-02-19-account-system-redesign-design.md | Plan fechado ya completado o hist?rico | ninguna; material hist?rico |
@@ -385,6 +452,7 @@ Entradas vivas retiradas:
 | docs/reference/final-report-template.md | overview | vivo | conservar | docs/reference/final-report-template.md | Referencia t?cnica o de proceso activa | docs/reference/final-report-template.md |
 | docs/reference/quick-search-weather-policy.md | product | vivo | conservar | docs/reference/quick-search-weather-policy.md | Pol?tica funcional activa de quick search | docs/reference/quick-search-weather-policy.md |
 | docs/reports/docs-sanitize-audit.md | historical | hist?rico | conservar | docs/reports/docs-sanitize-audit.md | Reporte de auditor?a y saneamiento documental | docs/reports/docs-sanitize-audit.md |
+| docs/runbooks/runbook-activation-profiles.md | runbook | vivo | conservar | docs/runbooks/runbook-activation-profiles.md | Perfiles canónicos de activación por entorno (local_demo, local_real, staging_safe, prod_gradual) con matriz de flags y blindaje anti-mock | docs/runbooks/runbook-activation-profiles.md |
 | docs/runbooks/runbook-canary-rollback.md | runbook | vivo | conservar | docs/runbooks/runbook-canary-rollback.md | Runbook operativo activo | docs/runbooks/runbook-canary-rollback.md |
 | docs/runbooks/runbook-db-retention.md | runbook | vivo | conservar | docs/runbooks/runbook-db-retention.md | Runbook operativo activo | docs/runbooks/runbook-db-retention.md |
 | docs/runbooks/runbook-duckdns-public-domain.md | runbook | vivo | conservar | docs/runbooks/runbook-duckdns-public-domain.md | Runbook operativo activo para DuckDNS y publicacion temporal | docs/runbooks/runbook-duckdns-public-domain.md |

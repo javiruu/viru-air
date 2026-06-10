@@ -34,11 +34,22 @@ from app.infrastructure.db.models import FlightWatch, PriceSnapshot, User
 from app.infrastructure.db.session import get_db
 from app.infrastructure.providers.flight_provider import MultiSourceFlightProvider
 from app.services.watchlist_snapshots import canonicalize_snapshot_rows, select_canonical_refresh_flight
+from app.services.quick_search_cache_service import (
+    get_fresh_entry,
+    set_cache_entry,
+    serialize_fetch_result,
+    deserialize_fetch_result,
+)
+from app.services.quick_search_execution import (
+    classify_cache_result,
+    build_cache_source_hash,
+)
 
 router = APIRouter()
 provider = MultiSourceFlightProvider()
 logger = logging.getLogger("app.watchlist")
 REFRESH_COOLDOWN_SECONDS = max(0, int(os.getenv("WATCH_REFRESH_COOLDOWN_SECONDS", "60")))
+WATCH_SHARED_CACHE_ENABLED = os.getenv("QUICK_SEARCH_SHARED_CACHE_ENABLED", "false").strip().lower() == "true"
 
 WatchRouteKey = tuple[str, str, Date]
 
@@ -484,6 +495,53 @@ def _refresh_watch_now(db: Session, watch_id: str, current_user: User) -> JSONRe
                 return response
 
     try:
+        # Check shared cache before hitting provider (cross-user cache reuse)
+        if WATCH_SHARED_CACHE_ENABLED:
+            source_hash = build_cache_source_hash(
+                origin_iata=watch.origin_iata,
+                destination_iata=watch.destination_iata,
+                travel_date=str(watch.travel_date_local),
+                provider="multi",
+            )
+            cached_entry = get_fresh_entry(
+                db,
+                origin_iata=watch.origin_iata,
+                destination_iata=watch.destination_iata,
+                travel_date=str(watch.travel_date_local),
+                provider="multi",
+                source_hash=source_hash,
+            )
+            if cached_entry is not None:
+                cached_result = deserialize_fetch_result(
+                    cached_entry.payload_json, cached_entry.warnings_json
+                )
+                if cached_result.flights:
+                    canonical_flight = select_canonical_refresh_flight(cached_result.flights)
+                    if canonical_flight is not None:
+                        refresh_captured_at_utc = utc_now_naive().replace(microsecond=0)
+                        snapshot = PriceSnapshot(
+                            watch_id=watch.id,
+                            captured_at_utc=refresh_captured_at_utc,
+                            departure_time_local=canonical_flight.departure_time_local,
+                            raw_price=canonical_flight.price,
+                            raw_currency=canonical_flight.currency,
+                            provider=canonical_flight.source,
+                        )
+                        db.add(snapshot)
+                        db.commit()
+                        logger.info(
+                            json.dumps({
+                                "event": "watch_refresh_cache_hit",
+                                "watch_id": watch.id,
+                                "origin": watch.origin_iata,
+                                "destination": watch.destination_iata,
+                                "date": str(watch.travel_date_local),
+                                "price": float(canonical_flight.price),
+                                "cache_status": cached_entry.status,
+                            }, ensure_ascii=False)
+                        )
+                        return None
+
         provider_result = provider.get_flights(
             watch.origin_iata, watch.destination_iata, str(watch.travel_date_local)
         )
@@ -511,6 +569,58 @@ def _refresh_watch_now(db: Session, watch_id: str, current_user: User) -> JSONRe
         )
 
     flights = provider_result.flights if isinstance(provider_result, ProviderFetchResult) else provider_result
+
+    # Persist to shared cache after successful fetch
+    if WATCH_SHARED_CACHE_ENABLED and flights:
+        provider_warnings = (
+            provider_result.warnings
+            if isinstance(provider_result, ProviderFetchResult)
+            else []
+        )
+        payload_json, warnings_json = serialize_fetch_result(
+            ProviderFetchResult(flights=flights, warnings=provider_warnings)
+        )
+        category = classify_cache_result(flights=flights, warnings=provider_warnings)
+        source_hash = build_cache_source_hash(
+            origin_iata=watch.origin_iata,
+            destination_iata=watch.destination_iata,
+            travel_date=str(watch.travel_date_local),
+            provider="multi",
+        )
+        try:
+            set_cache_entry(
+                db,
+                origin_iata=watch.origin_iata,
+                destination_iata=watch.destination_iata,
+                travel_date=str(watch.travel_date_local),
+                provider="multi",
+                source_hash=source_hash,
+                category=category,
+                payload_json=payload_json,
+                warnings_json=warnings_json,
+            )
+            logger.debug(
+                json.dumps({
+                    "event": "watch_refresh_cache_persisted",
+                    "watch_id": watch.id,
+                    "origin": watch.origin_iata,
+                    "destination": watch.destination_iata,
+                    "date": str(watch.travel_date_local),
+                    "category": category,
+                    "flights_count": len(flights),
+                }, ensure_ascii=False)
+            )
+        except Exception:
+            logger.warning(
+                json.dumps(
+                    {
+                        "event": "watch_refresh_cache_persist_failed",
+                        "watch_id": watch.id,
+                    },
+                    ensure_ascii=False,
+                )
+            )
+
     canonical_flight = select_canonical_refresh_flight(flights)
     if canonical_flight is None:
         return JSONResponse(

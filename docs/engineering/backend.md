@@ -25,6 +25,7 @@ Esto evita acoplar `quick-search`, `watchlist` y `recommendations` a un provider
 
 - Stack base verificado: Python 3.12+, FastAPI, SQLAlchemy, Alembic.
 - Punto de entrada: `backend/app/main.py`.
+- **Cache compartida persistente (V2.1):** `quick_search_cache_service.py` + `QuickSearchCacheEntry` en BD. Reutiliza resultados de provider entre usuarios con TTL por categoría (ready=24h, empty=2h, degraded=30min). Activada con `QUICK_SEARCH_SHARED_CACHE_ENABLED=true`. Ver contrato en [Quick Search contract](../reference/backend/quick-search-contract.md).
 - Endpoints operativos visibles:
   - `/health`
   - `/ready`

@@ -520,6 +520,43 @@ class HotelTrackedOffer(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
 
 
+class QuickSearchCacheEntry(Base):
+    """Cache compartida persistente para quick-search (V2.1).
+
+    Almacena resultados de provider por unidad exacta (origin, destination, date, provider).
+    Cross-user: no tiene FK a users. La reutilizacion es anonima entre usuarios.
+    """
+    __tablename__ = "quick_search_cache_entry"
+    __table_args__ = (
+        UniqueConstraint(
+            "origin_iata",
+            "destination_iata",
+            "travel_date",
+            "provider",
+            "source_hash",
+            name="uq_quick_search_cache_unit",
+        ),
+        Index("ix_qs_cache_lookup", "origin_iata", "destination_iata", "travel_date", "provider"),
+        Index("ix_qs_cache_expires", "expires_at_utc"),
+        Index("ix_qs_cache_status", "status"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    origin_iata: Mapped[str] = mapped_column(String(3))
+    destination_iata: Mapped[str] = mapped_column(String(3))
+    travel_date: Mapped[datetime.date] = mapped_column(Date)
+    provider: Mapped[str] = mapped_column(String(40))
+    status: Mapped[str] = mapped_column(String(20), default="ready")
+    ttl_seconds: Mapped[int] = mapped_column(Integer, default=86400)
+    expires_at_utc: Mapped[datetime] = mapped_column(DateTime, index=True)
+    captured_at_utc: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    last_accessed_at_utc: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    payload_json: Mapped[str] = mapped_column(Text)
+    warnings_json: Mapped[str] = mapped_column(Text, default="[]")
+    source_hash: Mapped[str] = mapped_column(String(64))
+    provider_latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+
 class HotelAlertEvent(Base):
     __tablename__ = "hotel_alert_event"
 
