@@ -11,7 +11,7 @@ const fallbackFiles = [
   "app/loading.tsx",
   "app/(private)/loading.tsx",
   "app/(public)/loading.tsx",
-  "app/page.tsx",
+  "app/(public)/page.tsx",
   "app/(public)/login/page.tsx",
   "app/(public)/register/page.tsx",
   "app/(public)/forgot-password/page.tsx",
