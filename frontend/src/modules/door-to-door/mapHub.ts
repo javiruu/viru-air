@@ -48,7 +48,9 @@ export function buildMapCapabilities(response: DoorToDoorResponse | null, provid
     // ── Capacidades sembradas, sin backend real ──
     street_view_preview: { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "street_view_not_connected" },
     offline: { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "offline_cache_not_implemented" },
-    incidents: { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "incident_source_not_connected" },
+    incidents: hasGoogleRoutes
+      ? { state: "partial", source_type: "maps", confidence: "cached", why_missing: "incident_source_limited" }
+      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "incident_source_not_connected" },
     eco_route: { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "eco_route_provider_pending" },
   };
 
