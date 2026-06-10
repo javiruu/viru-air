@@ -279,13 +279,20 @@ def prune_expired_entries(db: Session, *, batch_size: int = 200) -> int:
     """Delete expired cache entries. Returns count of deleted rows.
 
     Thread-safe: protected by _DB_LOCK.
+    Uses a subquery because SQLAlchemy Delete does not support .limit().
     """
     now = utc_now_naive()
     with _DB_LOCK:
-        result = db.execute(
-            delete(QuickSearchCacheEntry)
+        subquery = (
+            select(QuickSearchCacheEntry.id)
             .where(QuickSearchCacheEntry.expires_at_utc <= now)
             .limit(batch_size)
+            .scalar_subquery()
+        )
+        result = db.execute(
+            delete(QuickSearchCacheEntry).where(
+                QuickSearchCacheEntry.id.in_(subquery)
+            )
         )
         db.commit()
     deleted = result.rowcount
