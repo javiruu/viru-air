@@ -256,6 +256,16 @@ Entradas vivas actualizadas:
 - `backend/.env.example` (5 QUICK_SEARCH_SHARED_CACHE_* env vars)
 - `docs/DOCS_INVENTORY.md`
 
+## Actualizacion manual 2026-06-10 (quick-search shared cache review plan)
+
+Entradas vivas agregadas:
+
+- `docs/plans/2026-06-10-quick-search-shared-cache-review-plan.md`
+
+Entradas vivas actualizadas:
+
+- `docs/DOCS_INVENTORY.md`
+
 ## Actualizacion manual 2026-06-08 (puerta-a-puerta F1-F10 cierre)
 
 Entradas vivas agregadas:
