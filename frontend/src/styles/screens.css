@@ -281,7 +281,8 @@ h1 {
   .private-account-anchor {
     gap: 0.65rem;
     min-height: 48px;
-    padding: 7px 12px;
+    padding-block: 7px;
+    padding-inline: 12px;
   }
 }
 
@@ -290,45 +291,12 @@ h1 {
   gap: 2rem;
 }
 
-.landing-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-}
-
-.landing-brand {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-}
-
 .landing-dot {
   width: 14px;
   height: 14px;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, #f6cdb6, var(--accent));
   box-shadow: 0 0 0 6px rgba(217, 93, 57, 0.12);
-}
-
-.landing-kicker {
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-size: 0.72rem;
-  color: var(--ink-muted);
-}
-
-.landing-tagline {
-  margin: 0.25rem 0 0;
-  font-size: 0.95rem;
-  color: var(--ink);
-}
-
-.landing-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
 }
 
 .linkInline {
@@ -1111,33 +1079,6 @@ h1 {
     linear-gradient(160deg, rgba(8, 10, 11, 0.36), rgba(8, 10, 11, 0.84) 62%);
 }
 
-.landing-prueba-cinema-header,
-.landing-prueba-cinema-body {
-  position: relative;
-  z-index: 2;
-}
-
-.landing-prueba-cinema-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.9rem;
-  border: 1px solid rgba(245, 234, 214, 0.24);
-  border-radius: 14px;
-  padding: 0.9rem 1rem;
-  backdrop-filter: blur(10px);
-  background: rgba(10, 12, 13, 0.38);
-}
-
-.landing-prueba-cinema .landing-kicker,
-.landing-prueba-cinema .landing-tagline,
-.landing-prueba-cinema .linkInline,
-.landing-prueba-cinema .landing-cta-note,
-.landing-prueba-cinema .landing-prueba-kicker,
-.landing-prueba-cinema .landing-prueba-body {
-  color: #f5ead6;
-}
-
 .landing-prueba-cinema .landing-dot {
   box-shadow: 0 0 0 6px rgba(255, 176, 0, 0.2);
 }
@@ -1180,11 +1121,6 @@ h1 {
 @media (max-width: 760px) {
   .landing-prueba-cinema {
     padding: 0.75rem;
-  }
-
-  .landing-prueba-cinema-header {
-    flex-direction: column;
-    align-items: flex-start;
   }
 
   .landing-prueba-cinema-body {
@@ -9108,29 +9044,10 @@ textarea::placeholder {
 }
 
 
+/* Sticky/morph base lives in .shell-header (components.css).
+   Keep only the private-layout composition overrides here. */
 .private-account-anchor {
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.9rem;
-  width: 100%;
-  padding: 8px 14px;
   min-height: 52px;
-  box-sizing: border-box;
-  background: var(--bg);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-  transform: translateY(0);
-  opacity: 1;
-  transition:
-    opacity 180ms cubic-bezier(0.2, 0, 0, 1),
-    transform 180ms cubic-bezier(0.2, 0, 0, 1);
-}
-
-.private-account-anchor.is-leaving {
-  opacity: 0.82;
-  transform: translateY(-6px);
 }
 
 .private-account-controls {
@@ -9144,16 +9061,7 @@ textarea::placeholder {
   padding-top: 0;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .private-account-anchor {
-    transition: none;
-  }
-
-  .private-account-anchor.is-leaving {
-    opacity: 1;
-    transform: none;
-  }
-}
+/* Reduced-motion handling is centralized in .shell-header (components.css). */
 
 .private-theme-toggle {
   border-radius: 14px;
@@ -13019,7 +12927,7 @@ textarea::placeholder {
   }
 
   .private-account-anchor {
-    top: 0;
+    top: var(--shell-header-top);
     padding: 0.55rem 0.75rem;
     flex-wrap: wrap;
     align-items: flex-start;
@@ -17499,13 +17407,6 @@ textarea::placeholder {
 .landing-fullband .landing-inner {
   position: relative;
   z-index: 1;
-}
-
-.landing-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
 }
 
 .landing-eyebrow {
