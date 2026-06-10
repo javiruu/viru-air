@@ -10,8 +10,10 @@
 
 ---
 
-**Estado:** activo  
+**Estado:** completado ✅  
 **Fecha:** 2026-06-10  
+**Fecha de cierre:** 2026-06-10  
+**Commits:** 5f10a25, 0113e4d, 148cd0c, dbb5de4, dc1aaf3, 37ddc00  
 **Autor:** Codex  
 **Area:** plan  
 **Fuente de verdad:** no; plan operativo de implementacion apoyado en codigo, docs vivas y estado real del backend

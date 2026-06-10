@@ -1,5 +1,68 @@
 # History
 
+## 2026-06-10 — Quick-search shared persistent cache (Fases 1–15 + auditoría + fixes)
+
+Se implementó una cache compartida persistente (cross-user, DB-backed) para `quick-search` que reutiliza resultados de tracking de vuelos entre usuarios, con TTL por categoría de resultado y bloqueo anti-stampede. El plan maestro está en `docs/plans/2026-06-10-quick-search-shared-cache-implementation.md`.
+
+### Fases completadas (15/15)
+
+| Fase | Descripción | Estado |
+|------|------------|--------|
+| F1 | Contrato de cache compartida (quick-search-contract.md V2.1) | ✅ |
+| F2 | Canonicalización de claves (`build_unit_cache_key`, `build_cache_source_hash`, `classify_cache_result`) | ✅ |
+| F3 | Modelo persistente `QuickSearchCacheEntry` + migración 0030 + índices | ✅ |
+| F4 | Servicio `quick_search_cache_service.py` (get/set/prune/serialize con `_DB_LOCK`) | ✅ |
+| F5 | Serialización/deserialización de `ProviderFetchResult` ↔ JSON | ✅ |
+| F6 | Integración read-through/write-through en `_fetch_with_cache` (L1→L2→provider) | ✅ |
+| F7 | Reutilización para búsquedas ampliadas (nearby/flex comparten espacio de claves L2) | ✅ |
+| F8 | Anti-stampede con `_FETCH_LOCKS` per-key + try/finally | ✅ |
+| F9 | Política de TTL diferenciado: ready=24h, empty=2h, degraded=30min + outage→degraded | ✅ |
+| F10 | Integración con watchlist (`_refresh_watch_now` consulta y puebla cache compartida) | ✅ |
+| F11 | Feature flags (`QUICK_SEARCH_SHARED_CACHE_ENABLED` + 4 env vars de TTL) | ✅ |
+| F12 | Observabilidad (l1_hits/l2_hits/provider_calls en logs y pipeline_counters) | ✅ |
+| F13 | Pruning probabilístico (~10% requests) con daemon thread asíncrono | ✅ |
+| F14 | QA de regresión (30 tests unitarios + 13 tests de integración de cache) | ✅ |
+| F15 | Documentación final (contrato, backend.md, DOCS_INVENTORY, HISTORY) | ✅ |
+
+### Auditoría de 9 fases y 5 fixes
+
+Tras la implementación, se ejecutó una auditoría exhaustiva (`docs/plans/2026-06-10-quick-search-shared-cache-review-plan.md`) que encontró y corrigió 5 issues:
+
+| ID | Severidad | Fix |
+|----|-----------|-----|
+| H1 | CRÍTICA | Sesiones SQLAlchemy por thread (`SessionLocal()`) en vez de compartir `db` |
+| H2 | ALTA | Lock cleanup en `try/finally` — evita fuga de memoria si `fetch_flights()` lanza excepción |
+| H3 | ALTA | Outages totales ahora se cachean como `degraded` (30min) en vez de `empty` (2h) |
+| H4 | MEDIA | Watchlist respeta entradas `empty` del cache en vez de re-pegar al provider |
+| R3.4 | MEDIA | `build_cache_source_hash` incluye `currency` para evitar cross-currency poisoning |
+| H5 | MEDIA | Pruning asíncrono con daemon thread (`prune_expired_entries_async`) |
+
+### Archivos creados (5)
+
+`backend/app/services/quick_search_cache_service.py`, `backend/alembic/versions/0030_add_quick_search_shared_cache.py`, `backend/tests/unit/test_quick_search_cache_models.py`, `backend/tests/unit/test_quick_search_shared_cache.py`, `backend/alembic/versions/5f465bd665fa_add_missing_indexes_for_quick_search_.py`
+
+### Archivos modificados (10)
+
+`backend/.env.example`, `backend/app/api/v1/search.py`, `backend/app/api/v1/watchlist.py`, `backend/app/infrastructure/db/models.py`, `backend/app/services/quick_search_execution.py`, `backend/alembic/script.py.mako`, `backend/tests/unit/test_quick_search_cache_models.py`, `backend/tests/unit/test_quick_search_shared_cache.py`, `backend/tests/unit/test_alembic_audit.py`, `backend/tests/unit/test_quick_search_execution.py`
+
+### Docs actualizados
+
+`docs/reference/backend/quick-search-contract.md`, `docs/engineering/backend.md`, `docs/DOCS_INVENTORY.md`, `docs/plans/2026-06-10-quick-search-shared-cache-review-plan.md` (nuevo)
+
+### Verificación final
+
+- Backend unit tests: 425/426 pasan (1 fallo pre-existente en hoteles Makcorps)
+- Cache tests: 51/51 ✅
+- Alembic audit: 3/3 ✅
+- `alembic check`: limpio (sin operaciones pendientes)
+- Feature-flagged: `QUICK_SEARCH_SHARED_CACHE_ENABLED=false` por defecto
+
+### Commits
+
+`5f10a25` feat: quick-search shared persistent cache · `0113e4d` chore: pending changes · `148cd0c` docs: review plan · `dbb5de4` fix: audit findings · `dc1aaf3` perf: async pruning · `37ddc00` chore: missing indexes migration
+
+---
+
 ## 2026-06-08 — Cierre del plan puerta-a-puerta (Fases F1–F10)
 
 Se completaron las 10 fases del plan aterrizado para evolucionar `/puerta-a-puerta` con foco en honestidad, contratos y utilidad incremental real. El plan maestro está en `docs/plans/2026-06-08-puerta-a-puerta-plan-aterrizado-real.md`.
