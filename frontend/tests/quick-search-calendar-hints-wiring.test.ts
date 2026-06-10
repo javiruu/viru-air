@@ -26,3 +26,12 @@ test("outbound date picker is wired with hints props and visible-month callback"
   assert.match(source, /hintScopeMode=\{calendarHintsActive\?\.scopeMode \|\| calendarHintsScopeMode\}/);
   assert.match(source, /onVisibleMonthChange=\{setCalendarVisibleMonth\}/);
 });
+
+test("calendar hints failures are treated as non-fatal and cached as empty state", () => {
+  const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
+  assert.match(source, /"calendar_hints_failed"/);
+  assert.match(source, /"calendar_hints_exception"/);
+  assert.match(source, /"calendar_hints_return_failed"/);
+  assert.match(source, /"calendar_hints_return_exception"/);
+  assert.match(source, /buildEmptyCalendarHintsCacheEntry\(calendarHintsScopeMode\)/);
+});

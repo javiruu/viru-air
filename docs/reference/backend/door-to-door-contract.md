@@ -5,6 +5,7 @@
 **Fuente de verdad:** sí
 **Área:** backend
 
+> **V1.6** (Junio 2026) añade perfiles de activación canónicos por entorno y blindaje anti-mock en staging/prod.
 > **V1.5** (Junio 2026) completa el plan de 10 fases: scoring con completitud, corredores GTFS, saved places en backend, historial reutilizable, hub de capacidades honesto, QA matrix.
 
 ## Resumen
@@ -200,6 +201,12 @@ La interfaz común de providers vive en `app.door_to_door.providers.base.DoorToD
 
 V1.1 incluye:
 
+- 4 perfiles canónicos de activación por entorno documentados en `docs/runbooks/runbook-activation-profiles.md`:
+  - `local_demo`: solo mock, para demostraciones.
+  - `local_real` (default en `.env.example`): deeplinks + GTFS open data, sin APIs que requieran key.
+  - `staging_safe`: igual que local_real + Google Routes/Places con API key. Mock bloqueado.
+  - `prod_gradual`: producción con rollout controlado. Mock y scrapers bloqueados.
+- Blindaje anti-mock: `DOOR_TO_DOOR_ENABLE_MOCK_PROVIDER=true` se fuerza a `false` cuando `APP_ENV` es `staging`, `production` o `prod`. El registry emite warning `mock_blocked_non_local_env` y el descriptor muestra el bloqueo en `notes`.
 - mock provider configurable por flag (`DOOR_TO_DOOR_ENABLE_MOCK_PROVIDER`);
 - deeplink providers funcionales para primer paso real parcial (`blablacar_deeplink`, `goopti_deeplink`) bajo `DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS`;
   - `blablacar_deeplink`: genera URL de búsqueda en BlaBlaCar con origen, ciudad del aeropuerto de salida y fecha del vuelo. No confirma precio ni disponibilidad. Respeta `allow_rideshare`.
