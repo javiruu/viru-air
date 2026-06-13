@@ -1023,8 +1023,58 @@ python -m pytest tests/integration/test_door_to_door.py tests/unit/test_door_to_
 
 ### Siguiente fase recomendada
 
-Fase 18: refactor acotado de `QuickSearchView.tsx` por responsabilidad, manteniendo
-tests existentes pasando y sin cambio visual accidental.
+Fase 21: revisar modelo de tramo y campos falsos (`--:--`, `0,00`) en puerta a puerta.
+
+## Fases 18-19 completadas
+
+### Que cambio
+
+- Extraccion de `weatherUtils.ts` (weatherLabel, WeatherFetchError, isWeatherRangeSupported,
+  fetchWeather) y `airportSuggestions.ts` (normalizeText, buildAirportSuggestions,
+  mergeAirportSuggestions) desde `QuickSearchView.tsx`.
+- Eliminacion de funciones inline duplicadas y codigo huérfano de
+  mergeAirportSuggestions.
+- Fix de bug preexistente TDZ: `const { locale, localeTag, t, tWarn } = copy` donde
+  `copy` nunca se declaro → `const { ... } = getQuickSearchCopy()`.
+- Fix de bug preexistente TDZ: `useEffect` referenciando `isDualMode` antes de su
+  declaracion → movido `useEffect` despues de la declaracion.
+
+### Archivos tocados
+
+- `frontend/src/modules/quick-search/QuickSearchView.tsx`
+- `frontend/src/modules/quick-search/airportSuggestions.ts` (nuevo)
+- `frontend/src/modules/quick-search/weatherUtils.ts` (nuevo)
+
+### Verificacion ejecutada
+
+- 66 quick-search tests pasan sin regresiones
+- 0 errores lint nuevos
+- Build tiene errores TDZ preexistentes (airportsByCountry, airportsByIata,
+  logQuickSearchApiError, debugLog) no introducidos por estos cambios
+
+## Fase 20 completada
+
+### Que cambio
+
+- Auditoria completa de providers puerta a puerta desde el registry:
+  - 5 providers reales (google_routes, gtfs_transit, navitia, google_maps_deeplink, google_places)
+  - 3 providers deeplink (blablacar, goopti, external unified)
+  - 6 stubs puros (opentripplanner, amadeus_transfers, mozio, omio, distribusion, rome2rio)
+  - 1 mock (mock_multimodal, bloqueado en staging/prod)
+  - 4 scrapers base-only sin parser (blablacar, goopti, alsa, renfe)
+- Tests: 21 source-code assertions en `quick-search-d2d-provider-audit.test.ts`
+  cubriendo registry structure, mock blocking, feature flags, API keys,
+  classification, base provider contract y frontend contract awareness.
+
+### Archivos tocados
+
+- `frontend/tests/quick-search-d2d-provider-audit.test.ts` (nuevo)
+
+### Verificacion ejecutada
+
+- 21/21 tests de auditoria D2D pasan
+- 37 tests de regresion pasan sin fallos
+- 0 errores lint nuevos
 
 ## Fases 11-15 completadas
 
