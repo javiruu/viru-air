@@ -99,7 +99,9 @@ Codigo inspeccionado de forma selectiva:
 
 - Repo canonico confirmado: `C:\Users\javiru\Desktop\viru-tracker`.
 - Rama actual: `main`.
-- Estado inicial: worktree limpio.
+- Estado inicial de esta iteracion: repo valido en `main`, con cambios locales
+  documentales ya presentes en `docs/prompts/codex-travel-roadmap-50-fases.md`
+  antes de cerrar las Fases 1-5.
 - Workflow vigente: commit directo a `main` y push cuando el usuario pida cambios
   reales completados.
 - `_publish_repo` no debe usarse.
@@ -307,6 +309,326 @@ Cada fase debe cerrar con este minimo:
 | 4 | Revisar `docs/reference/done-checklist.md` para fases largas. | Diff breve, sin duplicar `AGENTS.md`. |
 | 5 | Clasificar deuda tecnica visible sin borrar nada. | Checklist: eliminar seguro, requiere test, requiere usuario, no tocar. |
 
+#### Desarrollo ampliado de las Fases 1-5
+
+Las fases 1-5 forman el arranque operativo del viaje. No buscan "hacer producto"
+todavia: buscan ordenar el terreno, separar hechos de ruido y dejar una base que
+permita ejecutar despues cambios pequenos, verificables y publicables sin volver
+a improvisar el contexto en cada sesion.
+
+### Fase 1 - Baseline del viaje y estado real del repo
+
+**Objetivo real**
+
+Dejar una foto util del estado actual de Viru Tracker para futuras sesiones:
+repositorio canonico, areas de producto activas, deuda visible, riesgos
+transversales, comandos de verificacion relevantes y limites de autonomia.
+
+**Por que existe ahora**
+
+El repo ya no esta en fase de arranque. Tiene Quick Search, Watchlist, Alertas,
+Puerta a puerta y Hoteles con distintos niveles de madurez. Sin un baseline
+actualizado, un agente nuevo puede tratar piezas consolidadas como si hubiera que
+rehacerlas desde cero o puede leer planes viejos como si siguieran pendientes.
+
+**Incluye**
+
+- lectura selectiva de `AGENTS.md`, `docs/`, contratos vivos y areas de producto;
+- comprobacion del repo canonico y del workflow real de commit/push;
+- mapa resumido de superficies activas, deuda visible y riesgos.
+
+**No incluye**
+
+- ejecutar cambios de producto;
+- normalizar toda la documentacion historica;
+- corregir contradicciones no verificadas en caliente.
+
+**Entregables esperados**
+
+- este roadmap actualizado como baseline de viaje;
+- inventario narrativo de producto, arquitectura, deuda y riesgos;
+- siguiente fase recomendada ya priorizada.
+
+**Fuentes y dependencias a revisar**
+
+- `AGENTS.md`
+- `DESIGN.md`
+- `docs/README.md`
+- `docs/INDICE_UNICO.md`
+- `docs/DOCS_INVENTORY.md`
+- `docs/reference/codex-operating-contract.md`
+- docs vivas por dominio segun el area que aparezca como activa
+
+**Cierre y verificacion minima**
+
+- `git status` desde la raiz canonica;
+- lectura/documentacion suficiente para sostener el mapa del repo sin suposiciones
+  mayores;
+- diff documental acotado;
+- evidencia explicita de que no se tocaron contratos ni codigo.
+
+### Fase 2 - Auditoria de drift documental vivo
+
+**Objetivo real**
+
+Localizar contradicciones entre documentacion viva, planes cerrados y estado real
+del codigo antes de seguir implementando sobre premisas antiguas.
+
+**Por que existe ahora**
+
+Quick Search, cache compartida, planes de puerta a puerta y cierres de hoteles ya
+tienen varias capas de documentacion. Algunas fueron escritas en momentos
+distintos y pueden seguir describiendo riesgos ya cerrados o estados intermedios
+que hoy inducen a error.
+
+**Incluye**
+
+- comparar contratos vivos con checklists y planes recientes;
+- buscar docs que sigan llamando pendiente a algo ya completado;
+- identificar rutas legacy, referencias duplicadas o fuentes movidas;
+- preferir siempre la fuente viva sobre historicos o prompts viejos.
+
+**No incluye**
+
+- reescritura masiva de `docs/`;
+- limpiar el inventario entero por estilo o encoding;
+- usar archivos historicos no presentes en el workspace como fuente primaria.
+
+**Entregables esperados**
+
+- lista corta de conflictos documentales con fuente preferida;
+- clasificacion por severidad: bloquea implementacion, confunde QA o solo requiere
+  saneamiento futuro;
+- recomendacion de que conflictos corregir primero y cuales dejar para una fase
+  documental dedicada.
+
+**Fuentes y dependencias a revisar**
+
+- `docs/reference/backend/quick-search-contract.md`
+- `docs/reference/backend/quick-search-acceptance-checklist.md`
+- `docs/plans/2026-06-08-quick-search-roundtrip-stabilization.md`
+- `docs/plans/2026-06-10-quick-search-shared-cache-review-plan.md`
+- `docs/specs/hotels-intelligence-mvp.md`
+- `docs/qa/hotels-pending-closeout.md`
+- `docs/DOCS_INVENTORY.md`
+
+**Cierre y verificacion minima**
+
+- tabla o lista de conflictos con fuente preferida claramente indicada;
+- ningun cambio documental correctivo sin evidencia local suficiente;
+- reporte expreso de rutas historicas fantasma o referencias no resolubles si
+  aparecen.
+
+**Conflictos confirmados en esta iteracion**
+
+| Conflicto | Fuente preferida | Severidad | Decision |
+|---|---|---|---|
+| `docs/reference/backend/quick-search-acceptance-checklist.md` seguia declarando cache solo en memoria | `docs/reference/backend/quick-search-contract.md` V2.1 | bloquea implementacion | corregir ahora |
+| `docs/qa/hotels-pending-closeout.md` seguia listando `DELETE /comp-sets/{id}` como deuda abierta en una seccion ya superada | `docs/qa/hotels-pending-closeout.md` seccion 2026-06-05 Fase E | confunde QA | corregir ahora |
+| `docs/specs/hotels-intelligence-mvp.md` seguia proponiendo documentar sweeps manuales como siguiente paso pese a quedar ya cerrados en runbook y closeout | `docs/runbooks/hotels-sweeps.md` y `docs/qa/hotels-pending-closeout.md` | confunde QA | corregir ahora |
+| texto con encoding irregular en `docs/DOCS_INVENTORY.md` y algunos runbooks heredados | fuente viva puntual por documento | saneamiento futuro | no corregir en masa en estas fases |
+
+### Fase 3 - Matriz QA fiable por area
+
+**Objetivo real**
+
+Consolidar una matriz minima de comandos y checks que sirva para verificar cambios
+por superficie sin depender de memoria de sesion ni de comandos heredados dudosos.
+
+**Por que existe ahora**
+
+El repo mezcla frontend, backend, flows visibles y runbooks por dominio. Hay
+comandos historicos, wrappers rotos o pruebas muy especificas; sin una matriz
+fiable, el riesgo es validar mal o perder tiempo con checks que ya no representan
+la realidad.
+
+**Incluye**
+
+- distinguir comandos canonicos de comandos heredados o rotos;
+- asociar cada area con una salida minima verificable;
+- dejar claro cuando un flujo visible requiere browser/manual review ademas de
+  tests de terminal.
+
+**No incluye**
+
+- crear una infraestructura nueva de test;
+- prometer cobertura total de todas las rutas privadas;
+- marcar build/lint como prueba suficiente de una correccion visible.
+
+**Entregables esperados**
+
+- matriz por area: frontend, backend, Quick Search, puerta a puerta, hoteles,
+  watchlist/alertas y documentacion;
+- nota de bloqueos reales del entorno, por ejemplo wrappers o binarios ausentes;
+- criterio operativo de "comando canónico", "comando heredado" y "requiere
+  validacion humana".
+
+**Fuentes y dependencias a revisar**
+
+- `docs/qa/README.md`
+- `docs/runbooks/runbook-watchlist-quick-search-stabilization.md`
+- `docs/runbooks/runbook-puerta-a-puerta-qa.md`
+- `frontend/package.json`
+- `backend/pyproject.toml`
+- scripts de guard o release si entran en el cierre real
+
+**Cierre y verificacion minima**
+
+- ejecutar o contrastar al menos un subconjunto pequeno de comandos por familia;
+- documentar bloqueos del entorno en vez de ocultarlos;
+- dejar por escrito que evidencia minima debe quedar para cambios de UI, contrato o
+  backend.
+
+**Matriz resultante de esta fase**
+
+- Fuente viva creada: `docs/qa/qa-command-matrix.md`.
+- Checks contrastados en esta iteracion:
+  - `cd frontend && npm run lint`
+  - `cd C:\Users\javiru\Desktop\viru-tracker && python -m pytest backend\tests\unit\test_quick_search_cache_models.py -q`
+  - `cd backend && python -m pytest tests/unit/test_door_to_door_deeplinks.py -q`
+- Hallazgos reales:
+  - `npm run lint` funciona, pero arroja warnings preexistentes en hoteles y
+    quick-search.
+  - los tests focalizados de cache quick-search y deeplinks de puerta a puerta
+    pasan.
+  - `rg` no estuvo disponible en esta sesion; se uso PowerShell como fallback.
+
+### Fase 4 - Revisar `done-checklist` para fases largas
+
+**Objetivo real**
+
+Ajustar la checklist de cierre para que sirva en tareas largas o multipaso sin
+duplicar reglas ya presentes en `AGENTS.md` ni rebajar el umbral de evidencia.
+
+**Por que existe ahora**
+
+La checklist actual es util para cierres de codigo, pero las fases largas del
+roadmap necesitan separar mejor investigacion, implementacion, validacion humana y
+publicacion final. Si no se hace, es facil confundir "analizado" con "terminado".
+
+**Incluye**
+
+- revisar si la checklist distingue bien investigado, verificado y publicado;
+- decidir que evidencia minima exigir para UI, backend y tareas documentales;
+- aclarar cuando una fase puede cerrarse localmente y cuando debe esperar
+  validacion humana o push real.
+
+**No incluye**
+
+- reescribir `AGENTS.md`;
+- crear un proceso burocratico nuevo;
+- obligar a que toda fase larga termine en commit si su objetivo era solo auditoria.
+
+**Entregables esperados**
+
+- diff breve y justificado en `docs/reference/done-checklist.md` si realmente hace
+  falta;
+- criterio claro para separar "investigado", "parchado", "verificado" y
+  "publicado";
+- recomendacion de uso de la checklist dentro de este roadmap.
+
+**Fuentes y dependencias a revisar**
+
+- `docs/reference/done-checklist.md`
+- `AGENTS.md`
+- `docs/reference/codex-operating-contract.md`
+- `docs/qa/README.md`
+
+**Cierre y verificacion minima**
+
+- checklist revisada contra las reglas del repo, sin contradicciones nuevas;
+- diff pequeno si hay cambio, o decision explicita de no tocarla si ya cumple;
+- explicacion de cuando pedir validacion humana en flujos visibles o sensibles.
+
+**Decision aplicada en esta iteracion**
+
+- `docs/reference/done-checklist.md` se ajusta para separar `investigado`,
+  `parchado`, `verificado` y `publicado`.
+- La validacion humana en navegador sigue siendo obligatoria para cambios UI
+  visibles, pero no se exige como gate de cierre para estas cinco fases porque el
+  alcance aqui es documental/procesal.
+
+### Fase 5 - Clasificar deuda tecnica visible sin borrar nada
+
+**Objetivo real**
+
+Transformar la deuda visible detectada en un backlog operativo corto y accionable,
+separando lo que puede atacarse ya de lo que requiere contrato, QA previo o
+permiso explicito del usuario.
+
+**Por que existe ahora**
+
+La deuda ya esta a la vista, pero mezclada: archivos grandes, drift documental,
+providers parciales, QA visual pendiente, logs locales y riesgos de coste externo.
+Sin clasificacion, todo parece igual de urgente y se mezclan arreglos seguros con
+cambios que podrian abrir mas frente del necesario.
+
+**Incluye**
+
+- agrupar deuda por categoria operativa;
+- identificar deudas seguras para parches pequenos;
+- marcar dependencias duras: contrato, provider real, secretos, browser QA, aprobacion
+  del usuario.
+
+**No incluye**
+
+- borrar archivos heredados por limpieza estetica;
+- meter refactors grandes en nombre de la deuda;
+- asumir que todo warning o TODO debe resolverse ya.
+
+**Entregables esperados**
+
+- clasificacion con categorias minimas:
+  - seguro atacar;
+  - requiere contrato;
+  - requiere QA primero;
+  - requiere permiso del usuario;
+  - no tocar todavia;
+- priorizacion inicial para las siguientes fases de ejecucion.
+
+**Fuentes y dependencias a revisar**
+
+- secciones de deuda y riesgos de este mismo roadmap;
+- `docs/product/*` y `docs/specs/*` en las areas con mayor gap;
+- superficies grandes o sensibles ya detectadas, como `QuickSearchView.tsx`,
+  providers de puerta a puerta y QA visual de hoteles.
+
+**Cierre y verificacion minima**
+
+- clasificacion trazable a archivos, contratos o flujos reales;
+- ninguna accion destructiva ejecutada durante la clasificacion;
+- backlog resultante pequeno y util, no una lista enciclopedica.
+
+**Clasificacion inicial resultante**
+
+### Seguro atacar
+
+- `frontend/src/modules/quick-search/QuickSearchView.tsx`: deuda de tamano y
+  responsabilidades, apta para refactor acotado con tests existentes.
+- drift documental puntual de quick-search cuando exista fuente viva clara.
+
+### Requiere contrato
+
+- providers parciales de `/puerta-a-puerta` y cualquier ajuste que cambie
+  semantica de cobertura, confianza, precio o booking.
+
+### Requiere QA primero
+
+- verificacion visual pendiente de `/hoteles` en dark/light/responsive/focus/copy.
+- pulidos visibles de quick-search, watchlist y puerta a puerta.
+
+### Requiere permiso del usuario
+
+- activacion de APIs con coste, providers reales adicionales, scheduler real de
+  sweeps o cambios que impliquen claves/consumo externo.
+
+### No tocar todavia
+
+- warnings/lint preexistentes ajenos al alcance de una fase documental.
+- logs y artefactos locales visibles en raiz o entorno cuando no formen parte del
+  problema.
+- saneamiento masivo de encoding en `docs/DOCS_INVENTORY.md` y archivos historicos.
+
 ### Bloque B - Quick Search como prioridad
 
 | Fase | Objetivo | Verificacion minima |
@@ -465,7 +787,7 @@ python -m pytest tests/integration/test_door_to_door.py tests/unit/test_door_to_
 - Crear PR/branch en vez de commit directo a `main`.
 - Publicar un roadmap externo o promesa de producto.
 
-## Fase 1 completada
+## Fases 1-5 completadas
 
 ### Que cambio
 
@@ -473,22 +795,33 @@ python -m pytest tests/integration/test_door_to_door.py tests/unit/test_door_to_
 - Se ajusto el plan original de 50 fases al estado real detectado el 2026-06-13.
 - Se marco expresamente que muchas piezas ya existen y deben auditarse antes de
   reconstruirse.
+- Se cerraron las Fases 2-5 con correcciones documentales puntuales, matriz QA
+  viva, checklist de cierre endurecida y clasificacion operativa de deuda.
 
-### Archivos tocados previstos
+### Archivos tocados
 
 - `docs/prompts/codex-travel-roadmap-50-fases.md`
-- `docs/prompts/README.md`
+- `docs/reference/backend/quick-search-acceptance-checklist.md`
+- `docs/specs/hotels-intelligence-mvp.md`
+- `docs/qa/hotels-pending-closeout.md`
+- `docs/qa/qa-command-matrix.md`
+- `docs/reference/done-checklist.md`
+- `docs/qa/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
 
-### Verificacion prevista de esta fase
+### Verificacion ejecutada
 
 - `git status`
-- revision de diff documental
+- revision de diff documental acotado a docs y checklists
 - comprobacion de rutas de docs referenciadas
-- sin cambios de logica
+- `cd frontend && npm run lint`
+- `cd C:\Users\javiru\Desktop\viru-tracker && python -m pytest backend\tests\unit\test_quick_search_cache_models.py -q`
+- `cd backend && python -m pytest tests/unit/test_door_to_door_deeplinks.py -q`
+- sin cambios de logica ni de contrato runtime
 
 ### Siguiente fase recomendada
 
-Fase 2: auditar drift documental vivo, empezando por Quick Search cache y los
-planes ya cerrados que todavia pueden leerse como pendientes.
+Fase 6: auditoria profunda de `/quick-search`, empezando por gaps duales reales,
+deuda de `QuickSearchView.tsx` y validacion de features ya parcialmente
+implementadas antes de ampliar producto.

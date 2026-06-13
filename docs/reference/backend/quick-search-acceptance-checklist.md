@@ -42,7 +42,8 @@ Related: docs/INDICE_UNICO.md, docs/overview/current-state.md
 
 ## Residual risks (known)
 - Provider data model still does not expose reliable stops/duration for strict enforcement.
-- Cache is in-memory only (single process scope).
+- Shared cache is now persistent in DB (V2.1), but still depends on correct flag
+  activation, TTL tuning and follow-up QA before broader production confidence.
 - End-to-end HTTP integration test is optional/skipped when fastapi test deps are unavailable.
 
 

@@ -54,9 +54,8 @@ Fases completadas en esta iteración:
 1. Provider real dinámico (Makcorps con zona/fechas/huéspedes).
 2. Scheduler automático de sweeps.
 3. Verificación visual manual en navegador real.
-4. `DELETE /comp-sets/{id}` no implementado.
-5. Geocoder externo para area-resolve.
-6. Alertas sobre `initial_price` además del snapshot anterior.
+4. Geocoder externo para area-resolve.
+5. Alertas sobre `initial_price` además del snapshot anterior.
 
 Pendiente:
 
@@ -78,7 +77,7 @@ Completado en esta pasada:
 Pendiente:
 
 1. Verificación visual manual en navegador real.
-2. `deleteHotelCompSet` (backend no expone DELETE de comp set entero).
+2. Nota histórica: en este punto `deleteHotelCompSet` todavía no estaba expuesto como cierre completo; quedó saldado más adelante en Fase E.
 
 ## Orden recomendado de trabajo
 
