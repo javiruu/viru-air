@@ -98,6 +98,8 @@ import { useQuickSearchScreenState } from "@/modules/quick-search/state/useQuick
 import { QuickSearchSideViewControls } from "@/modules/quick-search/components/QuickSearchSideViewControls";
 import { getPendingActionVisibility } from "@/modules/quick-search/state/pendingActionPolicy";
 import { getTranslatedCityName, getApiSearchQuery, matchesCityTranslation } from "@/modules/shared/cityTranslations";
+import { buildAirportSuggestions, mergeAirportSuggestions, normalizeText } from "@/modules/quick-search/airportSuggestions";
+import { fetchWeather as fetchWeatherApi, isWeatherRangeSupported as isWeatherRangeSupportedCheck, WeatherFetchError } from "@/modules/quick-search/weatherUtils";
 
 const RELAX_HIGHLIGHT_BY_ACTION: Record<ZeroResultRelaxAction, Exclude<SummaryHighlightKey, null>> = {
   disable_strict: "strict",
@@ -210,65 +212,6 @@ function resolveCountryName(code: string): string {
   } catch {
     return normalized;
   }
-}
-
-function normalizeText(text: string): string {
-  if (!text) return "";
-  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-}
-
-function buildAirportSuggestions(airports: AirportIataEntry[], value: string, limit = 6, locale = "en") {
-  const q = normalizeText(value.trim());
-  if (!q) return [];
-  const out: Array<{ iata: string; name: string }> = [];
-  const seen = new Set<string>();
-  for (const airport of airports) {
-    if (out.length >= limit) break;
-    const originalName = airport.municipality || airport.name;
-    const nIata = normalizeText(airport.iata);
-    if (nIata.startsWith(q) || matchesCityTranslation(originalName, value)) {
-      out.push({
-        iata: airport.iata,
-        name: getTranslatedCityName(originalName, locale),
-      });
-      seen.add(airport.iata);
-    }
-  }
-  if (out.length < limit) {
-    for (const airport of airports) {
-      if (out.length >= limit) break;
-      if (seen.has(airport.iata)) continue;
-      const originalName = airport.municipality || airport.name;
-      const hay = normalizeText(`${airport.name} ${airport.municipality}`);
-      if (hay.includes(q) || matchesCityTranslation(originalName, value)) {
-        out.push({
-          iata: airport.iata,
-          name: getTranslatedCityName(originalName, locale),
-        });
-        seen.add(airport.iata);
-      }
-    }
-  }
-  return out;
-}
-
-function mergeAirportSuggestions(
-  recentSuggestions: Array<{ iata: string; name: string }>,
-  apiSuggestions: Array<{ iata: string; name: string }>,
-  limit = 6,
-) {
-  const out: Array<{ iata: string; name: string }> = [];
-  const seen = new Set<string>();
-
-  for (const suggestion of [...recentSuggestions, ...apiSuggestions]) {
-    const key = suggestion.iata.trim().toUpperCase();
-    if (!key || seen.has(key)) continue;
-    seen.add(key);
-    out.push({ iata: key, name: suggestion.name });
-    if (out.length >= limit) break;
-  }
-
-  return out;
 }
 
 function getPageNumbers(current: number, total: number) {
@@ -1248,89 +1191,14 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     return countryByCode.get(entry.country_code) || null;
   }, [airportsByIata, countryByCode]);
 
-  function weatherLabel(code: number): string {
-    if (code === 0) return t("weatherClear");
-    if (code === 1 || code === 2) return t("weatherMostlyClear");
-    if (code === 3) return t("weatherCloudy");
-    if (code >= 45 && code <= 48) return t("weatherFog");
-    if (code >= 51 && code <= 57) return t("weatherDrizzle");
-    if (code >= 61 && code <= 67) return t("weatherRain");
-    if (code >= 71 && code <= 77) return t("weatherSnow");
-    if (code >= 80 && code <= 82) return t("weatherShowers");
-    if (code >= 95) return t("weatherStorm");
-    return t("weatherVariable");
-  }
+  // weatherLabel imported from @/modules/quick-search/weatherUtils
 
-  type WeatherFetchErrorCode = "out_of_range" | "provider_error";
+  // WeatherFetchError imported from @/modules/quick-search/weatherUtils
 
-  class WeatherFetchError extends Error {
-    code: WeatherFetchErrorCode;
+  // isWeatherRangeSupported imported from @/modules/quick-search/weatherUtils
 
-    constructor(code: WeatherFetchErrorCode, message: string) {
-      super(message);
-      this.code = code;
-    }
-  }
-
-  function isWeatherRangeSupported(start: string, end: string): boolean {
-    const startDate = new Date(`${start}T00:00:00Z`);
-    const endDate = new Date(`${end}T00:00:00Z`);
-    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return false;
-
-    const today = new Date();
-    const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
-    const maxDate = new Date(todayUtc);
-    maxDate.setUTCDate(maxDate.getUTCDate() + 14);
-
-    return startDate >= todayUtc && endDate <= maxDate;
-  }
-
-  async function fetchWeather(iata: string, start: string, end: string): Promise<WeatherReport | null> {
-    const meta = getAirportMeta(iata);
-    if (!meta) return null;
-
-    if (!isWeatherRangeSupported(start, end)) {
-      throw new WeatherFetchError("out_of_range", "weather_out_of_range");
-    }
-
-    const params = new URLSearchParams({
-      latitude: String(meta.latitude),
-      longitude: String(meta.longitude),
-      daily: "weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
-      timezone: "auto",
-      start_date: start,
-      end_date: end,
-    });
-    const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`);
-    if (!res.ok) {
-      const reasonRaw = await res.text().catch(() => "");
-      const isRange400 = res.status === 400 && reasonRaw.toLowerCase().includes("out of allowed range");
-      if (isRange400) {
-        throw new WeatherFetchError("out_of_range", "weather_out_of_range");
-      }
-      throw new WeatherFetchError("provider_error", `weather_provider_${res.status}`);
-    }
-    const data = await res.json();
-    const times: string[] = data?.daily?.time || [];
-    const maxTemps: number[] = data?.daily?.temperature_2m_max || [];
-    const minTemps: number[] = data?.daily?.temperature_2m_min || [];
-    const precip: number[] = data?.daily?.precipitation_probability_max || [];
-    const codes: number[] = data?.daily?.weathercode || [];
-    const days: WeatherDay[] = times.map((time: string, idx: number) => ({
-      date: time,
-      tempMax: Number(maxTemps[idx] ?? 0),
-      tempMin: Number(minTemps[idx] ?? 0),
-      precipProb: Number.isFinite(precip[idx]) ? precip[idx] : null,
-      description: weatherLabel(Number(codes[idx] ?? 0)),
-    }));
-    return {
-      iata: meta.iata,
-      name: meta.name,
-      city: meta.city,
-      country: meta.country,
-      days,
-    };
-  }
+  // fetchWeather imported from @/modules/quick-search/weatherUtils
+  const fetchWeather = (iata: string, start: string, end: string) => fetchWeatherApi(iata, start, end, t);
 
   async function onSubmit(event: FormEvent, options?: { page?: number }) {
     event.preventDefault();
