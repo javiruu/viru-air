@@ -6,7 +6,7 @@ Fase 6: introduces completeness as a first-class signal per option.
 - exploratory: no ground leg has real data — informational only
 """
 
-from app.door_to_door.schemas import DoorToDoorCompleteness, DoorToDoorOptionOut, DoorToDoorSummaryOut
+from app.door_to_door.schemas import DoorToDoorOptionOut, DoorToDoorSummaryOut
 
 
 _REAL_SOURCE_TYPES = {"api", "maps", "open_data"}

@@ -319,7 +319,7 @@ def sweep_tracked_offers(
     active_offers = list(
         db.scalars(
             select(HotelTrackedOffer).where(
-                HotelTrackedOffer.is_active == True,
+                HotelTrackedOffer.is_active.is_(True),
                 HotelTrackedOffer.check_in.is_not(None),
                 HotelTrackedOffer.check_out.is_not(None),
             )
@@ -462,7 +462,7 @@ def sweep_tracked_offers(
 
 
 def evaluate_hotel_alerts(db: Session, *, provider_run_id: str) -> list[HotelAlertEvent]:
-    rules = list(db.scalars(select(HotelAlertRule).where(HotelAlertRule.is_active == True)))
+    rules = list(db.scalars(select(HotelAlertRule).where(HotelAlertRule.is_active.is_(True))))
     events: list[HotelAlertEvent] = []
 
     for rule in rules:
@@ -1080,7 +1080,7 @@ def area_search(
         tracked = db.scalars(
             select(HotelTrackedOffer.hotel_id).where(
                 HotelTrackedOffer.user_id == user_id,
-                HotelTrackedOffer.is_active == True,
+                HotelTrackedOffer.is_active.is_(True),
                 HotelTrackedOffer.hotel_id.in_(nearby_hotel_ids),
             )
         ).all()

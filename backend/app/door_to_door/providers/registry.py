@@ -7,17 +7,17 @@ from typing import Callable
 from app.door_to_door.providers.base import DoorToDoorProvider
 
 logger = logging.getLogger(__name__)
-from app.door_to_door.providers.deeplink_blablacar import BlaBlaCarDeepLinkProvider
-from app.door_to_door.providers.deeplink_goopti import GoOptiDeepLinkProvider
-from app.door_to_door.providers.deeplink_provider import DeeplinkDoorToDoorProvider
-from app.door_to_door.providers.deeplink_maps import GoogleMapsDeepLinkProvider
-from app.door_to_door.providers.google_places import GooglePlacesSuggestionsProvider
-from app.door_to_door.providers.google_routes import GoogleRoutesProvider
-from app.door_to_door.providers.gtfs_transit import GtfsTransitProvider
-from app.door_to_door.providers.mock import MockDoorToDoorProvider
-from app.door_to_door.providers.navitia import NavitiaProvider
-from app.door_to_door.providers.nominatim import NominatimSuggestionsProvider
-from app.door_to_door.schemas import DoorToDoorProviderStatusOut, DoorToDoorSourceType
+from app.door_to_door.providers.deeplink_blablacar import BlaBlaCarDeepLinkProvider  # noqa: E402
+from app.door_to_door.providers.deeplink_goopti import GoOptiDeepLinkProvider  # noqa: E402
+from app.door_to_door.providers.deeplink_provider import DeeplinkDoorToDoorProvider  # noqa: E402
+from app.door_to_door.providers.deeplink_maps import GoogleMapsDeepLinkProvider  # noqa: E402
+from app.door_to_door.providers.google_places import GooglePlacesSuggestionsProvider  # noqa: E402
+from app.door_to_door.providers.google_routes import GoogleRoutesProvider  # noqa: E402
+from app.door_to_door.providers.gtfs_transit import GtfsTransitProvider  # noqa: E402
+from app.door_to_door.providers.mock import MockDoorToDoorProvider  # noqa: E402
+from app.door_to_door.providers.navitia import NavitiaProvider  # noqa: E402
+from app.door_to_door.providers.nominatim import NominatimSuggestionsProvider  # noqa: E402
+from app.door_to_door.schemas import DoorToDoorProviderStatusOut, DoorToDoorSourceType  # noqa: E402
 
 
 @dataclass(frozen=True)

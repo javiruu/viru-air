@@ -16,14 +16,19 @@ from __future__ import annotations
 
 import logging
 import os
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import redis as _redis_mod
+    Redis = _redis_mod.Redis
 
 logger = logging.getLogger(__name__)
 
-_redis_client: "Redis | None" = None  # type: ignore[name-defined]
+_redis_client: Redis | None = None
 _redis_checked: bool = False
 
 
-def get_redis() -> "Redis | None":  # type: ignore[name-defined]
+def get_redis() -> Redis | None:
     """Return a Redis client if configured and reachable, or None.
 
     The connection is established once (lazy singleton). If the first

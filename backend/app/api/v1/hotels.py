@@ -24,7 +24,6 @@ from app.domain.schemas import (
     HotelDetailOut,
     HotelIngestOut,
     HotelParityOut,
-    HotelProviderRunOut,
     HotelRateOut,
     HotelRatesQueryIn,
     HotelSearchOut,

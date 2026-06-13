@@ -20,7 +20,6 @@ Outputs a readable summary:
 """
 
 import argparse
-import json
 import sys
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -112,7 +111,7 @@ def probe_feed_stats(feed_service: GtfsFeedService, descriptor: GtfsFeedDescript
         print("  [FAIL] STATUS: FAILED TO LOAD")
         return {"status": "failed", "feed": None}
 
-    print(f"  [OK] STATUS: LOADED")
+    print("  [OK] STATUS: LOADED")
     print(f"  Downloaded: {datetime.fromtimestamp(feed.downloaded_at, tz=timezone.utc).isoformat()}")
     print(f"  Agencies:   {len(feed.agencies)}")
     for aid, agency in list(feed.agencies.items())[:5]:
@@ -134,13 +133,13 @@ def probe_feed_stats(feed_service: GtfsFeedService, descriptor: GtfsFeedDescript
 
     # Sample agencies
     if feed.agencies:
-        print(f"\n  Sample agencies:")
+        print("\n  Sample agencies:")
         for aid, agency in list(feed.agencies.items())[:5]:
             print(f"    [{aid}] {agency.name}")
 
     # Sample stops
     if feed.stops:
-        print(f"\n  Sample stops:")
+        print("\n  Sample stops:")
         for sid, stop in list(feed.stops.items())[:5]:
             print(f"    [{sid}] {stop.name}  ({stop.lat:.4f}, {stop.lon:.4f})")
 

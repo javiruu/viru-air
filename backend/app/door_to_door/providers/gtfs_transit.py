@@ -20,7 +20,7 @@ Defenses:
 - skip inbound when final_destination.type == "airport_only"
 """
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 import json
 from pathlib import Path
 
@@ -121,7 +121,6 @@ class GtfsTransitProvider(DoorToDoorProvider):
 
         flight = query.flight
         prefs = query.preferences
-        checked_at = query.checked_at
 
         # Determine which legs to search
         search_outbound = True  # origin -> departure airport
@@ -616,7 +615,6 @@ def _find_stops_by_name(feed: "ParsedGtfsFeed", query: str) -> list:  # noqa: F8
     """Find stops whose name contains the query string (case-insensitive, accent-insensitive)."""
     import unicodedata
 
-    from app.door_to_door.services.gtfs_feed_service import ParsedGtfsFeed
 
     def _normalize(s: str) -> str:
         return unicodedata.normalize("NFKD", s.lower()).encode("ascii", errors="ignore").decode()
@@ -635,7 +633,6 @@ def _find_airport_stops(feed: "ParsedGtfsFeed", iata: str) -> list:  # noqa: F82
     regardless of the feed's naming convention. Deduplicates by stop_id
     and sorts by name length (shorter names are more likely the main stop).
     """
-    from app.door_to_door.services.gtfs_feed_service import ParsedGtfsFeed
 
     terms = _airport_search_terms(iata)
     seen: set[str] = set()

@@ -1,14 +1,13 @@
 """Unit tests for quick-search shared cache model and key canonicalization (Phase 2-3)."""
 import datetime as dt
 
-import pytest
 
 from app.services.quick_search_execution import (
     build_cache_source_hash,
     build_unit_cache_key,
     classify_cache_result,
 )
-from app.domain.entities import ProviderFlight, ProviderFetchResult
+from app.domain.entities import ProviderFlight
 
 
 # ---------------------------------------------------------------------------
