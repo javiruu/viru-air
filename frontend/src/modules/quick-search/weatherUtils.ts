@@ -1,5 +1,6 @@
 import { getAirportMeta } from "@/modules/shared/airports";
 import type { WeatherDay, WeatherReport } from "@/modules/quick-search/types";
+import type { QuickSearchCopyKey } from "@/modules/shared/quickSearchCopy";
 
 // ── Weather code → human label ───────────────────────────────────────
 
@@ -21,7 +22,7 @@ export function weatherLabel(code: number): string {
  * from quickSearchCopy. Used inside `fetchWeather` so the component's locale
  * is respected.
  */
-export function weatherLabelLocalized(code: number, t: (key: string) => string): string {
+export function weatherLabelLocalized(code: number, t: (key: QuickSearchCopyKey) => string): string {
   if (code === 0) return t("weatherClear");
   if (code === 1 || code === 2) return t("weatherMostlyClear");
   if (code === 3) return t("weatherCloudy");
@@ -68,7 +69,7 @@ export async function fetchWeather(
   iata: string,
   start: string,
   end: string,
-  t: (key: string) => string,
+  t: (key: QuickSearchCopyKey) => string,
 ): Promise<WeatherReport | null> {
   const meta = getAirportMeta(iata);
   if (!meta) return null;

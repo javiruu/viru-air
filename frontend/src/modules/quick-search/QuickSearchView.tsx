@@ -1322,7 +1322,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   // isWeatherRangeSupported imported from @/modules/quick-search/weatherUtils
 
   // fetchWeather imported from @/modules/quick-search/weatherUtils
-  const fetchWeather = (iata: string, start: string, end: string) => fetchWeatherApi(iata, start, end, t as unknown as (key: string) => string);
+  const fetchWeather = (iata: string, start: string, end: string) => fetchWeatherApi(iata, start, end, t);
 
   const closeExplainPopover = useCallback(() => {
     setIsExplainOpen(false);
