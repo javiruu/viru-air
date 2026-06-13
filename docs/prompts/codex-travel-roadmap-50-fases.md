@@ -1023,5 +1023,57 @@ python -m pytest tests/integration/test_door_to_door.py tests/unit/test_door_to_
 
 ### Siguiente fase recomendada
 
-Fase 11: mejorar loading, empty y error por lado en dual mode, manteniendo la misma
-disciplina de pruebas focalizadas y verificacion visual en `/quick-search`.
+Fase 18: refactor acotado de `QuickSearchView.tsx` por responsabilidad, manteniendo
+tests existentes pasando y sin cambio visual accidental.
+
+## Fases 11-15 completadas
+
+### Que cambio
+
+- Per-side `emptyCausesExpanded` state con toggle y reset al salir de dual mode.
+- `handleDualRelaxAction` con early return para `increase_duration` (view-only) y
+  params deduplicados con `sideOrigin`/`sideDest`/`sideDate`.
+- Precio combinado retorna `null` (no `0`) cuando falta precio de un lado.
+- `buildReturnFallbackUrl` con ruta invertida (destination→origin, returnDate).
+- `fetchDeepLink` acepta `dateIn` opcional para deep links duales correctos.
+- Weather explícitamente `null` en modo dual (no fetch per-side, contract explícito).
+- Tests: 22 source-code assertions en `quick-search-dual-phases-11-15.test.ts`.
+
+### Archivos tocados
+
+- `frontend/src/modules/quick-search/QuickSearchView.tsx`
+- `frontend/src/modules/quick-search/state/useQuickSearchSide.ts`
+- `frontend/tests/quick-search-dual-phases-11-15.test.ts`
+
+### Verificacion ejecutada
+
+- 22/22 tests nuevos pasan
+- 66 quick-search tests pasan sin regresiones
+- 0 errores lint nuevos
+
+## Fases 16-17 completadas
+
+### Que cambio
+
+- Auditoría del sistema AI de recomendación: badge inline (no overlay),
+  razón solo cuando no está vacía, aria-label para accesibilidad,
+  `qs-result-row-ai` CSS class para distinción visual.
+- Verificación de que solo un resultado es preferido (`min()` en heuristic).
+- Tests de scoring heurístico (price, duration, distance, stale penalty).
+- Tests de fallback chain (missing key, OpenAI error, invalid ID).
+- Tests de i18n keys ES/EN (`aiPreferredPrice`, `aiPreferredAria`, `aiPreferredReasonLabel`).
+
+### Archivos tocados
+
+- `frontend/tests/quick-search-ai-recommendation-audit.test.ts`
+
+### Verificacion ejecutada
+
+- 15/15 tests de auditoría AI pasan
+- 66 quick-search tests pasan sin regresiones
+- 0 errores lint nuevos
+
+### Siguiente fase recomendada
+
+Fase 18: refactor acotado de `QuickSearchView.tsx` por responsabilidad, manteniendo
+tests existentes pasando y sin cambio visual accidental.
