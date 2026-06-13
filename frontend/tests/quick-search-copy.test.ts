@@ -49,4 +49,7 @@ test("quick search copy exposes state microcopy in es", () => {
   assert.equal(t("flexCustomSummary"), "Personalizado · -{before} / +{after} dias");
   assert.equal(t("aiPreferredPrice"), "Precio recomendado");
   assert.equal(t("aiPreferredAria"), "Resultado preferido por IA");
+  assert.equal(t("swapRoute"), "Intercambiar ruta");
+  assert.equal(t("recentAutocompleteLabel"), "Recientes guardados");
+  assert.equal(t("sideViewControlsSubtitle"), "Estos filtros solo cambian este panel.");
 });

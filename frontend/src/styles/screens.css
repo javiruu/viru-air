@@ -7135,16 +7135,44 @@ textarea::placeholder {
   box-shadow: 0 0 10px var(--qs-route-glow);
 }
 
-.qs-route-plane {
-  width: 18px;
-  height: 18px;
+.qs-route-swap {
+  position: relative;
+  z-index: 1;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  background: color-mix(in srgb, var(--surface) 88%, var(--surface-2));
   color: var(--qs-route-line);
-  transition: transform 0.16s ease, color 0.16s ease;
+  box-shadow: 0 10px 20px var(--shadow);
+  transition:
+    transform 0.16s ease,
+    color 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
-.qs-route:hover .qs-route-plane {
-  transform: translateX(6px);
-  color: rgba(94, 114, 132, 0.7);
+.qs-route-swap svg {
+  width: 18px;
+  height: 18px;
+}
+
+.qs-route:hover .qs-route-swap {
+  transform: rotate(8deg) scale(1.02);
+  color: color-mix(in srgb, var(--accent) 55%, var(--qs-route-line));
+  border-color: color-mix(in srgb, var(--accent) 44%, var(--border));
+}
+
+.qs-route-swap:focus-visible {
+  outline: 3px solid var(--qs-focus-outline);
+  outline-offset: 3px;
+}
+
+.qs-route-swap:active {
+  transform: scale(0.98);
 }
 
 .route-pulse .qs-route-line::before {
@@ -7333,6 +7361,15 @@ textarea::placeholder {
 .qs-autocomplete-item span {
   color: var(--qs-text-secondary);
   font-size: 0.82rem;
+}
+
+.qs-autocomplete-group-label {
+  padding: 0.5rem 0.9rem 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--qs-text-secondary);
 }
 
 .qs-autocomplete-item:hover,
@@ -12984,6 +13021,12 @@ textarea::placeholder {
   }
 
   .qs-route-line {
+    width: auto;
+    height: auto;
+    margin: -0.15rem 0 0.4rem;
+  }
+
+  .qs-route-line::before {
     display: none;
   }
 

@@ -236,6 +236,7 @@ export type QuickSearchExplainTag = { key: string; label: string; tone: QuickSea
 export type QuickSearchTripType = "one_way" | "round_trip" | "round_trip_incomplete";
 export type QuickSearchLoadingPhase = "idle" | "requesting" | "response_parsed" | "client_done" | "committed";
 export type QuickSearchLoadingSubcheckStatus = "pending" | "active" | "done";
+export type QuickSearchSortBy = "ranking" | "price" | "duration" | "freshness";
 export type ZeroResultRelaxAction =
   | "disable_strict"
   | "increase_duration"
@@ -243,6 +244,12 @@ export type ZeroResultRelaxAction =
   | "clear_exclusions"
   | "open_date_flex";
 export type SummaryHighlightKey = "strict" | "duration" | "radius" | "exclusions" | "date_flex" | null;
+export type QuickSearchVisibleFiltersState = {
+  priceMin: string;
+  priceMax: string;
+  durationMax: string;
+  sortBy: QuickSearchSortBy;
+};
 
 export type RelaxUndoPayload =
   | { action: "disable_strict"; strictFilters: boolean }

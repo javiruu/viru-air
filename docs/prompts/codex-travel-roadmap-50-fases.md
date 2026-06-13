@@ -635,7 +635,7 @@ cambios que podrian abrir mas frente del necesario.
 |---|---|---|
 | 6 | Auditoria profunda de `/quick-search` actual. | Tests existentes, mapa de estado, gaps duales confirmados. |
 | 7 | Boton accesible para invertir origen/destino. | Test de estado/form, teclado, mobile, sin reset de filtros. |
-| 8 | Busquedas recientes en autocomplete. | Helper localStorage testeado, dedupe, limite 5-10, fallback sin storage. |
+| 8 | Busquedas recientes en autocomplete. | Helper localStorage testeado, dedupe, limite 6, fallback sin storage. |
 | 9 | Endurecer estado independiente ida/vuelta ya existente. | Tests `quick-search-dual-regression` y backend reverse leg. |
 | 10 | Completar filtros/orden/paginacion propios por lado. | Cambiar ida no altera vuelta; filtrar vuelta no altera ida. |
 | 11 | Mejorar loading/empty/error por lado. | Estados por side, copy ES, no solapes, dark/light. |
@@ -647,6 +647,163 @@ cambios que podrian abrir mas frente del necesario.
 | 17 | UI de recomendacion con explicacion honesta. | Badge no agresivo, no oculta resultados, screenshots. |
 | 18 | Refactor acotado de `QuickSearchView.tsx` por responsabilidad. | Tests existentes pasan; sin cambio visual accidental. |
 | 19 | QA completo de Quick Search. | Frontend targeted tests, backend targeted tests, browser/manual review. |
+
+#### Desarrollo ampliado de las Fases 6-10
+
+Estas fases se ejecutan de forma literal sobre `/quick-search`, no como reescritura
+teorica. El principio operativo es aprovechar lo ya construido, auditar de verdad que
+sirve y cerrar los huecos concretos que seguian abiertos en round-trip y dual mode.
+El resultado esperado no era "rediseñar Quick Search", sino dejar un bloque 6-10
+cerrado con evidencia real de codigo, tests y decisiones documentadas.
+
+### Fase 6 - Auditoria profunda de `/quick-search`
+
+**Objetivo real**
+
+Inspeccionar contrato, tests y estado actual antes de tocar UX. Esta fase sirve para
+decidir que partes del dual mode estaban realmente listas, cuales eran parciales y que
+quedaba vivo en 7-10.
+
+**Fuentes contrastadas**
+
+- `docs/product/quick-search.md`
+- `docs/reference/backend/quick-search-contract.md`
+- `docs/reference/backend/quick-search-acceptance-checklist.md`
+- `docs/plans/2026-06-08-quick-search-roundtrip-stabilization.md`
+- `docs/plans/2026-06-10-quick-search-shared-cache-review-plan.md`
+- `frontend/src/modules/quick-search/QuickSearchView.tsx`
+- `frontend/src/modules/quick-search/state/useQuickSearchScreenState.ts`
+- `frontend/src/modules/quick-search/state/useQuickSearchSide.ts`
+- componentes duales y tests `frontend/tests/*quick-search*`
+- guards backend `backend/tests/integration/test_quick_search_dual_reverse_leg.py`
+- guards backend `backend/tests/unit/test_quick_search_execution.py`
+
+**Hallazgos concretos**
+
+- La Fase 7 seguia pendiente: no existia un control explicito para invertir origen y
+  destino en el bloque principal.
+- La Fase 8 estaba parcial: `recentAirports` existia como persistencia para picker
+  modal, pero no alimentaba el autocomplete inline principal.
+- La Fase 9 estaba parcial: el backend y `useQuickSearchSide` ya ofrecian estado por
+  lado, pero `QuickSearchView.tsx` seguia mezclando demasiado estado monolitico y
+  derivaciones globales incluso en render dual.
+- La Fase 10 estaba parcial: la paginacion backend por lado ya existia, pero los
+  filtros y el orden visible seguian anclados al estado simple/global.
+
+**Decision de ejecucion**
+
+Se adopta ejecucion literal: cerrar 6-10 sobre lo existente, sin borrar dual mode ni
+rehacer contrato backend. Se permiten helpers y componentes locales si reducen
+acoplamiento y mejoran verificabilidad.
+
+**Cierre de fase**
+
+La auditoria se considera cerrada porque produjo un mapa de gaps accionable y porque
+los hallazgos se ejecutaron inmediatamente en las Fases 7-10 de esta misma iteracion.
+
+**Comandos realmente ejecutados para esta fase**
+
+```powershell
+git status --short
+```
+
+```powershell
+cd C:\Users\javiru\Desktop\viru-tracker\frontend
+npm test -- tests/quick-search-dual-regression.test.tsx tests/quick-search-screen-state.test.tsx
+```
+
+```powershell
+cd C:\Users\javiru\Desktop\viru-tracker\backend
+python -m pytest tests/integration/test_quick_search_dual_reverse_leg.py tests/unit/test_quick_search_execution.py -q
+```
+
+### Fase 7 - Boton accesible para invertir origen/destino
+
+**Implementacion real**
+
+- Se reemplazo el adorno central de ruta por un boton real de swap en
+  `QuickSearchView.tsx`.
+- El swap intercambia:
+  - `origin` y `destination`
+  - `originCountryOnly` y `destinationCountryOnly`
+  - `originSelectedCountryCode` y `destinationSelectedCountryCode`
+- No resetea fechas, adultos, filtros visibles ni modo ida/vuelta.
+- Limpia estado efimero de autocomplete, touched y errores de origen/destino.
+- No dispara auto-submit: deja la pantalla en estado de cambios pendientes, igual que
+  una edicion manual.
+- Se anadio copy ES/EN y `aria-label` especificos para la accion.
+
+**Verificacion minima cerrada**
+
+- tests focalizados de quick-search frontend en verde;
+- lint frontend sin errores nuevos;
+- control accesible presente en el markup y visible tambien en viewport estrecho.
+
+### Fase 8 - Busquedas recientes en autocomplete
+
+**Implementacion real**
+
+- Se extrajo la persistencia de recientes a `recentAirports.ts`, con lectura/escritura
+  segura frente a ausencia o error de `localStorage`.
+- Se mantuvo dedupe y limite en `6`, alineado con el picker modal existente.
+- El autocomplete inline de origen y destino ahora muestra recientes cuando:
+  - el input esta enfocado y vacio;
+  - el texto actual coincide con recientes guardados.
+- Los recientes se enriquecen con nombre/IATA usando `airportsByIata`; si no existe
+  metadata, se muestra al menos el codigo IATA.
+- Picker modal e inline comparten la misma fuente de recientes; no quedan dos
+  implementaciones separadas.
+
+**Verificacion minima cerrada**
+
+- helper testeado para dedupe, limite, persistencia, fallback y enriquecimiento;
+- regresiones frontend en verde;
+- sin cambios de contrato backend.
+
+### Fase 9 - Endurecer estado independiente ida/vuelta
+
+**Implementacion real**
+
+- Se mantuvo `useQuickSearchSide` como nucleo del estado remoto por lado.
+- Se redujo la dependencia del render dual respecto al estado compartido de
+  `QuickSearchView`.
+- Se cablearon estados derivados por lado para:
+  - resultados visibles;
+  - metadata de busqueda;
+  - warnings;
+  - paginacion actual;
+  - seleccion y resumen de combinacion en modo dual.
+- Se reforzo la limpieza al salir de dual mode para evitar residuos cruzados de filtros
+  visibles y estado de panel ida/vuelta.
+
+**Verificacion minima cerrada**
+
+- `tests/quick-search-dual-regression.test.tsx` actualizado y en verde;
+- `backend/tests/integration/test_quick_search_dual_reverse_leg.py` en verde;
+- `backend/tests/unit/test_quick_search_execution.py` en verde.
+
+### Fase 10 - Filtros, orden y paginacion propios por lado
+
+**Implementacion real**
+
+- Se anadio estado de vista por lado para:
+  - `priceMin`
+  - `priceMax`
+  - `durationMax`
+  - `sortBy`
+- Ese estado vive en frontend y no cambia el payload de `/api/v1/search/quick`.
+- Se extrajo la logica derivada de filtrado/orden a
+  `state/quickSearchVisibleResults.ts`.
+- Se creo un componente local `QuickSearchSideViewControls` y se renderiza dentro de
+  cada `QuickSearchSidePanel`.
+- En dual mode, cada panel aplica sus filtros, orden y paginacion visibles de forma
+  independiente. Cambiar ida no altera vuelta y viceversa.
+
+**Verificacion minima cerrada**
+
+- tests del helper de resultados visibles en verde;
+- regresiones duales en verde;
+- lint frontend sin errores nuevos.
 
 ### Bloque C - Puerta a puerta
 
@@ -820,8 +977,51 @@ python -m pytest tests/integration/test_door_to_door.py tests/unit/test_door_to_
 - `cd backend && python -m pytest tests/unit/test_door_to_door_deeplinks.py -q`
 - sin cambios de logica ni de contrato runtime
 
+## Fases 6-10 completadas
+
+### Que cambio
+
+- Se ejecuto la auditoria real de `/quick-search` y se documento la decision de
+  completar literalmente las Fases 6-10 sobre la implementacion existente.
+- Se incorporo un boton accesible para invertir origen/destino sin resetear fechas,
+  adultos ni filtros visibles.
+- Se unifico la fuente de aeropuertos recientes para picker modal y autocomplete
+  inline, con helper seguro de persistencia.
+- Se endurecio el render dual para depender de estado y resultados visibles por lado,
+  reduciendo acoplamientos de `QuickSearchView.tsx`.
+- Se completaron controles de filtros/orden por panel en dual mode sin cambiar el
+  contrato backend de quick-search.
+
+### Archivos tocados
+
+- `docs/prompts/codex-travel-roadmap-50-fases.md`
+- `frontend/src/modules/quick-search/QuickSearchView.tsx`
+- `frontend/src/modules/quick-search/recentAirports.ts`
+- `frontend/src/modules/quick-search/types.ts`
+- `frontend/src/modules/quick-search/state/quickSearchVisibleResults.ts`
+- `frontend/src/modules/quick-search/state/useQuickSearchScreenState.ts`
+- `frontend/src/modules/quick-search/components/QuickSearchSideViewControls.tsx`
+- `frontend/src/modules/shared/quickSearchCopy.ts`
+- `frontend/src/styles/screens.css`
+- `frontend/src/styles/quick-search-dual.css`
+- `frontend/tests/quick-search-copy.test.ts`
+- `frontend/tests/quick-search-dual-regression.test.tsx`
+- `frontend/tests/quick-search-recent-airports.test.ts`
+- `frontend/tests/quick-search-visible-results.test.ts`
+
+### Verificacion ejecutada
+
+- `cd frontend && npm test -- tests/quick-search-dual-regression.test.tsx tests/quick-search-screen-state.test.tsx tests/quick-search-copy.test.ts tests/quick-search-recent-airports.test.ts tests/quick-search-visible-results.test.ts`
+- `cd frontend && npm run lint`
+- `cd backend && python -m pytest tests/integration/test_quick_search_dual_reverse_leg.py tests/unit/test_quick_search_execution.py -q`
+
+**Hallazgos de verificacion**
+
+- Los tests frontend focalizados de quick-search pasan.
+- Los guards backend de quick-search dual pasan.
+- `npm run lint` queda limpio de errores; persisten warnings preexistentes en hoteles.
+
 ### Siguiente fase recomendada
 
-Fase 6: auditoria profunda de `/quick-search`, empezando por gaps duales reales,
-deuda de `QuickSearchView.tsx` y validacion de features ya parcialmente
-implementadas antes de ampliar producto.
+Fase 11: mejorar loading, empty y error por lado en dual mode, manteniendo la misma
+disciplina de pruebas focalizadas y verificacion visual en `/quick-search`.

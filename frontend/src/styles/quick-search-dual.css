@@ -117,6 +117,45 @@
   min-height: 0;
 }
 
+.qs-dual-view-controls {
+  display: grid;
+  gap: 0.8rem;
+  padding: 0.85rem 0.95rem;
+  margin-bottom: 0.9rem;
+  border: 1px solid var(--color-border-subtle, rgba(128,128,128,0.14));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface, rgba(255,255,255,0.04)) 92%, transparent);
+}
+
+.qs-dual-view-controls__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.qs-dual-view-controls__head strong {
+  display: block;
+  font-size: 0.86rem;
+}
+
+.qs-dual-view-controls__head p {
+  margin: 0.18rem 0 0;
+  font-size: 0.78rem;
+  color: var(--color-text-secondary, rgba(128,128,128,0.72));
+}
+
+.qs-dual-view-controls__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.qs-dual-view-controls .field {
+  display: grid;
+  gap: 0.35rem;
+}
+
 /* ── Panel footer (pagination) ──────────────────────────────────────── */
 
 .qs-dual-panel__footer {
@@ -348,6 +387,10 @@
 
   .qs-dual-panel--return {
     padding-left: 16px;
+  }
+
+  .qs-dual-view-controls__grid {
+    grid-template-columns: 1fr;
   }
 
   .qs-dual-panel__header {

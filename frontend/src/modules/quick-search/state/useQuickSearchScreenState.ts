@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 
-import { normalizeQuickSearchResults } from "@/modules/quick-search/api/normalizeQuickSearchResponse";
-import { parseNumericInput } from "@/modules/quick-search/searchCriteria";
 import { QuickSearchCopyKey } from "@/modules/shared/quickSearchCopy";
 import { SearchFilters, SearchResponse, SearchResult, ZeroResultRelaxAction } from "@/modules/quick-search/types";
+import { deriveQuickSearchVisibleResults } from "@/modules/quick-search/state/quickSearchVisibleResults";
+import { parseNumericInput } from "@/modules/quick-search/searchCriteria";
 
 type QuickSearchScreenStateArgs = {
   results: SearchResult[];
@@ -58,29 +58,15 @@ export function useQuickSearchScreenState({
   t,
   tWarn,
 }: QuickSearchScreenStateArgs) {
-  const normalizedResults = useMemo(() => normalizeQuickSearchResults(results), [results]);
   const visibleResults = useMemo(() => {
-    const min = parseNumericInput(priceMin, { min: 0 });
-    const max = parseNumericInput(priceMax, { min: 0 });
-    const durMax = parseNumericInput(durationMax, { min: 1 });
-    let list = normalizedResults.filter((item) => {
-      if (min !== null && item.price_total !== undefined && item.price_total < min) return false;
-      if (max !== null && item.price_total !== undefined && item.price_total > max) return false;
-      if (durMax !== null && item.duration_total_min != null && item.duration_total_min > durMax) return false;
-      return true;
+    return deriveQuickSearchVisibleResults({
+      results,
+      priceMin,
+      priceMax,
+      durationMax,
+      sortBy,
     });
-    list = list.slice().sort((a, b) => {
-      if (sortBy === "price") return (a.price_total ?? 0) - (b.price_total ?? 0);
-      if (sortBy === "duration") return (a.duration_total ?? 99999) - (b.duration_total ?? 99999);
-      if (sortBy === "freshness") {
-        const aTs = a.freshness_ts ? new Date(a.freshness_ts).getTime() : 0;
-        const bTs = b.freshness_ts ? new Date(b.freshness_ts).getTime() : 0;
-        return bTs - aTs;
-      }
-      return (b.ranking_score ?? 0) - (a.ranking_score ?? 0);
-    });
-    return list;
-  }, [normalizedResults, priceMin, priceMax, durationMax, sortBy]);
+  }, [results, priceMin, priceMax, durationMax, sortBy]);
 
   const warningSeverity = useMemo(() => {
     const neutralCodes = new Set([
