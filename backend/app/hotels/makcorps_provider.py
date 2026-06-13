@@ -365,6 +365,8 @@ class MakcorpsHotelProviderAdapter(HotelProviderAdapter):
         """
         records: list[ProviderHotelRecord] = []
 
+        if not isinstance(payload, dict):
+            return records
         items = payload.get("hotels") or payload.get("data") or []
         if isinstance(items, dict):
             items = [items]
