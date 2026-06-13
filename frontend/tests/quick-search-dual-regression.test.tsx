@@ -186,6 +186,14 @@ test("dual workspace renders qs-dual-divider between outbound and return panels"
   );
 });
 
+test("quick-search route renders an explicit swap button", () => {
+  const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
+
+  assert.match(source, /swapRouteInputs/);
+  assert.match(source, /className="qs-route-swap"/);
+  assert.match(source, /aria-label=\{t\("swapRouteAria"\)\}/);
+});
+
 test("QuickSearchDualWorkspace uses 3-column grid from CSS", () => {
   const dualCssPath = path.join(
     process.cwd(),
@@ -261,6 +269,18 @@ test("outbound and return panels have independent pagination", () => {
   );
 });
 
+test("dual workspace renders per-side view controls and independent state", () => {
+  const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
+
+  assert.match(source, /outboundViewState/);
+  assert.match(source, /returnViewState/);
+  assert.match(source, /<QuickSearchSideViewControls/);
+  assert.match(source, /title=\{t\("sideViewControlsOutboundTitle"\)\}/);
+  assert.match(source, /title=\{t\("sideViewControlsReturnTitle"\)\}/);
+  assert.match(source, /outboundPanelState\.visibleResults/);
+  assert.match(source, /returnPanelState\.visibleResults/);
+});
+
 // ── 5. Combined banner conditional rendering ─────────────────────────
 
 test("QuickSearchCombinedBanner is imported and rendered in dual workspace", () => {
@@ -297,12 +317,12 @@ test("save combination callback uses findCombinationResult helper", () => {
 
   assert.match(
     source,
-    /findCombinationResult\(outboundSide\.results,\s*outboundSide\.selectedResultId\)/,
+    /findCombinationResult\(outboundPanelState\.visibleResults,\s*outboundSide\.selectedResultId\)/,
     "save callback missing findCombinationResult for outbound",
   );
   assert.match(
     source,
-    /findCombinationResult\(returnSide\.results,\s*returnSide\.selectedResultId\)/,
+    /findCombinationResult\(returnPanelState\.visibleResults,\s*returnSide\.selectedResultId\)/,
     "save callback missing findCombinationResult for return",
   );
   assert.match(

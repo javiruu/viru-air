@@ -26,6 +26,12 @@ import {
   QUICK_SEARCH_RADIUS_DEFAULT,
 } from "@/modules/quick-search/filterUtils";
 import { resolveQuickSearchPreferenceDefaults } from "@/modules/quick-search/preferences";
+import {
+  buildRecentAirportSuggestions,
+  readRecentAirports,
+  rememberRecentAirport,
+  writeRecentAirports,
+} from "@/modules/quick-search/recentAirports";
 const QuickSearchLoadingProgress = dynamic(() =>
   import("@/modules/quick-search/components/QuickSearchLoadingProgress").then((m) => m.QuickSearchLoadingProgress),
   { ssr: false },
@@ -68,6 +74,7 @@ import {
   QuickSearchMode,
   QuickSearchTagTone,
   QuickSearchTripType,
+  QuickSearchVisibleFiltersState,
   RegionPref,
   SearchResult,
   SearchResponse,
@@ -88,6 +95,7 @@ import { buildDualSearchParams, findCombinationResult } from "@/modules/quick-se
 import { QuickSearchSidePanel } from "@/modules/quick-search/components/QuickSearchSidePanel";
 import { QuickSearchCombinedBanner } from "@/modules/quick-search/components/QuickSearchCombinedBanner";
 import { useQuickSearchScreenState } from "@/modules/quick-search/state/useQuickSearchScreenState";
+import { QuickSearchSideViewControls } from "@/modules/quick-search/components/QuickSearchSideViewControls";
 import { getPendingActionVisibility } from "@/modules/quick-search/state/pendingActionPolicy";
 import { getTranslatedCityName, getApiSearchQuery, matchesCityTranslation } from "@/modules/shared/cityTranslations";
 
@@ -241,6 +249,25 @@ function buildAirportSuggestions(airports: AirportIataEntry[], value: string, li
       }
     }
   }
+  return out;
+}
+
+function mergeAirportSuggestions(
+  recentSuggestions: Array<{ iata: string; name: string }>,
+  apiSuggestions: Array<{ iata: string; name: string }>,
+  limit = 6,
+) {
+  const out: Array<{ iata: string; name: string }> = [];
+  const seen = new Set<string>();
+
+  for (const suggestion of [...recentSuggestions, ...apiSuggestions]) {
+    const key = suggestion.iata.trim().toUpperCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push({ iata: key, name: suggestion.name });
+    if (out.length >= limit) break;
+  }
+
   return out;
 }
 
@@ -514,6 +541,24 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const outboundSide = useQuickSearchSide("outbound");
   const returnSide = useQuickSearchSide("return");
   const saveCombination = useSaveCombination();
+  const defaultSideViewState = useMemo<QuickSearchVisibleFiltersState>(() => ({
+    priceMin: "",
+    priceMax: "",
+    durationMax: "",
+    sortBy: "ranking",
+  }), []);
+  const [outboundViewState, setOutboundViewState] = useState<QuickSearchVisibleFiltersState>(() => ({
+    priceMin: "",
+    priceMax: "",
+    durationMax: "",
+    sortBy: "ranking",
+  }));
+  const [returnViewState, setReturnViewState] = useState<QuickSearchVisibleFiltersState>(() => ({
+    priceMin: "",
+    priceMax: "",
+    durationMax: "",
+    sortBy: "ranking",
+  }));
 
   const mergeSeedAirportEntries = useCallback((entries: AirportIataEntry[]) => {
     if (!Array.isArray(entries) || entries.length === 0) return;
@@ -673,43 +718,57 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
   useEffect(() => {
     const value = origin.trim();
+    const recentSuggestions = buildRecentAirportSuggestions(recentAirports, airportsByIata, value, 6);
     if (!value) {
-      setOriginSuggestions([]);
+      setOriginSuggestions(recentSuggestions);
       return;
     }
     const timeout = window.setTimeout(() => {
       const apiQuery = getApiSearchQuery(value);
       fetchSeedAirports({ q: apiQuery, limit: 6 })
         .then((data) => {
-          setOriginSuggestions(buildAirportSuggestions(data.items || [], value, 6, pref?.language || "en"));
+          setOriginSuggestions(
+            mergeAirportSuggestions(
+              recentSuggestions,
+              buildAirportSuggestions(data.items || [], value, 6, pref?.language || "en"),
+              6,
+            ),
+          );
         })
         .catch((error) => {
-          setOriginSuggestions([]);
+          setOriginSuggestions(recentSuggestions);
           logQuickSearchApiError("origin_suggestions_failed", { error, value });
         });
     }, 120);
     return () => window.clearTimeout(timeout);
-  }, [origin, pref?.language, fetchSeedAirports, logQuickSearchApiError]);
+  }, [origin, recentAirports, airportsByIata, pref?.language, fetchSeedAirports, logQuickSearchApiError]);
 
   useEffect(() => {
     const value = destination.trim();
+    const recentSuggestions = buildRecentAirportSuggestions(recentAirports, airportsByIata, value, 6);
     if (!value) {
-      setDestinationSuggestions([]);
+      setDestinationSuggestions(recentSuggestions);
       return;
     }
     const timeout = window.setTimeout(() => {
       const apiQuery = getApiSearchQuery(value);
       fetchSeedAirports({ q: apiQuery, limit: 6 })
         .then((data) => {
-          setDestinationSuggestions(buildAirportSuggestions(data.items || [], value, 6, pref?.language || "en"));
+          setDestinationSuggestions(
+            mergeAirportSuggestions(
+              recentSuggestions,
+              buildAirportSuggestions(data.items || [], value, 6, pref?.language || "en"),
+              6,
+            ),
+          );
         })
         .catch((error) => {
-          setDestinationSuggestions([]);
+          setDestinationSuggestions(recentSuggestions);
           logQuickSearchApiError("destination_suggestions_failed", { error, value });
         });
     }, 120);
     return () => window.clearTimeout(timeout);
-  }, [destination, pref?.language, fetchSeedAirports, logQuickSearchApiError]);
+  }, [destination, recentAirports, airportsByIata, pref?.language, fetchSeedAirports, logQuickSearchApiError]);
 
   useEffect(() => {
     const code = origin.trim().toUpperCase();
@@ -794,17 +853,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const raw = window.localStorage.getItem("viru_recent_airports");
-    if (!raw) return;
-    try {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        setRecentAirports(parsed.filter((item) => typeof item === "string"));
-      }
-    } catch {
-      setRecentAirports([]);
-    }
+    const storage = typeof window !== "undefined" ? window.localStorage : null;
+    setRecentAirports(readRecentAirports(storage));
   }, [setRecentAirports]);
 
   useEffect(() => {
@@ -1383,6 +1433,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     destinationCode,
     destinationCalendarHintPool,
     destinationCountryOnly,
+    isReturn,
     logQuickSearchApiError,
     originCode,
     originCalendarHintPool,
@@ -1489,6 +1540,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     destinationCode,
     destinationCalendarHintPool,
     destinationCountryOnly,
+    isReturn,
     logQuickSearchApiError,
     originCode,
     originCalendarHintPool,
@@ -2141,6 +2193,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     return all;
   }, [fetchSeedAirports]);
 
+  const rememberAirportSelection = useCallback((iata: string) => {
+    const storage = typeof window !== "undefined" ? window.localStorage : null;
+    const next = writeRecentAirports(rememberRecentAirport(recentAirports, iata), storage);
+    setRecentAirports(next);
+  }, [recentAirports, setRecentAirports]);
+
   function selectAirport(iata: string) {
     setAirportSelectionTouched(true);
     const entry = airportsByIata.get(iata.trim().toUpperCase());
@@ -2154,11 +2212,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       setDestinationCountryOnly(null);
       setDestinationSelectedCountryCode(countryCode);
     }
-    if (typeof window !== "undefined") {
-      const next = [iata, ...recentAirports.filter((item) => item !== iata)].slice(0, 6);
-      setRecentAirports(next);
-      window.localStorage.setItem("viru_recent_airports", JSON.stringify(next));
-    }
+    rememberAirportSelection(iata);
     closePickerWithFocusReturn();
   }
 
@@ -2292,12 +2346,63 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       setDestinationTouched(true);
       setFieldErrors((prev) => ({ ...prev, destination_iata: undefined }));
     }
+    rememberAirportSelection(iata);
     setActiveAutocompleteField(null);
     setActiveAutocompleteIndex(-1);
     if (submitAfterSelect && typeof window !== "undefined") {
       window.requestAnimationFrame(() => formRef.current?.requestSubmit());
     }
   }
+
+  const swapRouteInputs = useCallback(() => {
+    const nextOrigin = destination;
+    const nextDestination = origin;
+    const nextOriginCountryOnly = destinationCountryOnly;
+    const nextDestinationCountryOnly = originCountryOnly;
+    const nextOriginSelectedCountryCode = destinationSelectedCountryCode;
+    const nextDestinationSelectedCountryCode = originSelectedCountryCode;
+
+    setOrigin(nextOrigin);
+    setDestination(nextDestination);
+    setOriginCountryOnly(nextOriginCountryOnly);
+    setDestinationCountryOnly(nextDestinationCountryOnly);
+    setOriginSelectedCountryCode(nextOriginSelectedCountryCode);
+    setDestinationSelectedCountryCode(nextDestinationSelectedCountryCode);
+    setFieldErrors((prev) => ({
+      ...prev,
+      origin_iata: undefined,
+      destination_iata: undefined,
+    }));
+    setOriginTouched(false);
+    setDestinationTouched(false);
+    setOriginSuggestions([]);
+    setDestinationSuggestions([]);
+    setActiveAutocompleteField(null);
+    setActiveAutocompleteIndex(-1);
+    setRoutePulse(true);
+    if (typeof window !== "undefined") {
+      window.setTimeout(() => setRoutePulse(false), 140);
+    }
+  }, [
+    destination,
+    origin,
+    destinationCountryOnly,
+    originCountryOnly,
+    destinationSelectedCountryCode,
+    originSelectedCountryCode,
+    setOrigin,
+    setDestination,
+    setOriginCountryOnly,
+    setDestinationCountryOnly,
+    setOriginSelectedCountryCode,
+    setDestinationSelectedCountryCode,
+    setFieldErrors,
+    setOriginTouched,
+    setDestinationTouched,
+    setActiveAutocompleteField,
+    setActiveAutocompleteIndex,
+    setRoutePulse,
+  ]);
 
   function formatShortDate(value: string): string {
     if (!value) return "";
@@ -2806,9 +2911,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       outboundSide.reset();
       returnSide.reset();
       saveCombination.reset();
+      setOutboundViewState(defaultSideViewState);
+      setReturnViewState(defaultSideViewState);
     }
     wasDualModeRef.current = isDualMode;
-  }, [isDualMode, outboundSide, returnSide, saveCombination]);
+  }, [defaultSideViewState, isDualMode, outboundSide, returnSide, saveCombination]);
 
   useEffect(() => {
     if (saveCombination.status === "saved") {
@@ -3107,6 +3214,70 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     daysBefore,
     daysAfter,
     emptyCausesExpanded,
+    t,
+    tWarn,
+  });
+  const updateOutboundViewState = useCallback((patch: Partial<QuickSearchVisibleFiltersState>) => {
+    setOutboundViewState((prev) => ({ ...prev, ...patch }));
+  }, []);
+  const updateReturnViewState = useCallback((patch: Partial<QuickSearchVisibleFiltersState>) => {
+    setReturnViewState((prev) => ({ ...prev, ...patch }));
+  }, []);
+  const resetOutboundViewState = useCallback(() => {
+    setOutboundViewState(defaultSideViewState);
+  }, [defaultSideViewState]);
+  const resetReturnViewState = useCallback(() => {
+    setReturnViewState(defaultSideViewState);
+  }, [defaultSideViewState]);
+  const outboundPanelState = useQuickSearchScreenState({
+    results: outboundSide.results,
+    priceMin: outboundViewState.priceMin,
+    priceMax: outboundViewState.priceMax,
+    durationMax: outboundViewState.durationMax,
+    sortBy: outboundViewState.sortBy,
+    filtersNotice: outboundSide.filtersNotice,
+    filtersWarningCodes: outboundSide.filtersWarningCodes,
+    filtersMeta: outboundSide.filtersMeta,
+    isDegraded: outboundSide.isDegraded,
+    searchMeta: outboundSide.searchMeta,
+    weatherMessage: outboundSide.weatherMessage,
+    strictFilters,
+    includeStops,
+    radiusActive,
+    radiusKm,
+    excludeOriginsCount: excludeOrigins.length,
+    excludeDestinationsCount: excludeDestinations.length,
+    departAfter,
+    departBefore,
+    daysBefore,
+    daysAfter,
+    emptyCausesExpanded: false,
+    t,
+    tWarn,
+  });
+  const returnPanelState = useQuickSearchScreenState({
+    results: returnSide.results,
+    priceMin: returnViewState.priceMin,
+    priceMax: returnViewState.priceMax,
+    durationMax: returnViewState.durationMax,
+    sortBy: returnViewState.sortBy,
+    filtersNotice: returnSide.filtersNotice,
+    filtersWarningCodes: returnSide.filtersWarningCodes,
+    filtersMeta: returnSide.filtersMeta,
+    isDegraded: returnSide.isDegraded,
+    searchMeta: returnSide.searchMeta,
+    weatherMessage: returnSide.weatherMessage,
+    strictFilters,
+    includeStops,
+    radiusActive,
+    radiusKm,
+    excludeOriginsCount: excludeOrigins.length,
+    excludeDestinationsCount: excludeDestinations.length,
+    departAfter,
+    departBefore,
+    daysBefore,
+    daysAfter,
+    emptyCausesExpanded: false,
     t,
     tWarn,
   });
@@ -3863,6 +4034,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 </button>
                 {activeAutocompleteField === "origin" && originSuggestions.length > 0 ? (
                   <ul className="qs-autocomplete" id="origin-suggestions" role="listbox">
+                    {!origin.trim() ? (
+                      <li className="qs-autocomplete-group-label">{t("recentAutocompleteLabel")}</li>
+                    ) : null}
                     {originSuggestions.map((suggestion, index) => {
                       const isActive = index === activeAutocompleteIndex;
                       return (
@@ -3903,19 +4077,25 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             </label>
           </div>
 
-          <div className="qs-route-line" aria-hidden="true">
-            <span className="qs-route-plane">
+          <div className="qs-route-line">
+            <button
+              type="button"
+              className="qs-route-swap"
+              onClick={swapRouteInputs}
+              aria-label={t("swapRouteAria")}
+              title={t("swapRoute")}
+            >
               <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
                 <path
-                  d="M3 13l18-6-6 18-2.2-7.2L3 13z"
+                  d="M7 7h10m0 0-3-3m3 3-3 3M17 17H7m0 0 3 3m-3-3 3-3"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinejoin="round"
+                  strokeWidth="1.7"
                   strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
               </svg>
-            </span>
+            </button>
           </div>
 
           <div className="qs-route-card">
@@ -4040,6 +4220,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 </button>
                 {activeAutocompleteField === "destination" && destinationSuggestions.length > 0 ? (
                   <ul className="qs-autocomplete" id="destination-suggestions" role="listbox">
+                    {!destination.trim() ? (
+                      <li className="qs-autocomplete-group-label">{t("recentAutocompleteLabel")}</li>
+                    ) : null}
                     {destinationSuggestions.map((suggestion, index) => {
                       const isActive = index === activeAutocompleteIndex;
                       return (
@@ -4931,7 +5114,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             destination={destinationCountryOnly != null ? (destinationCountryOnly as CountryAirports).name : destination}
             dateLabel={formatShortDate(travelDate)}
             headerLabel={t("sideOutboundLabel")}
-            resultCount={outboundSide.searchState === "success" ? outboundSide.results.length : 0}
+            resultCount={outboundSide.searchState === "success" ? outboundPanelState.visibleResults.length : 0}
             currentPage={outboundSide.searchState === "success" ? outboundSide.currentPage : undefined}
             totalPages={outboundSide.searchMeta?.pagination?.total_pages}
             pageSize={outboundSide.searchMeta?.pagination?.page_size}
@@ -4939,18 +5122,28 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             onPageChange={outboundSide.searchState === "success" ? (page: number) => outboundSide.goToPage(page) : undefined}
             locale={locale}
           >
-            {outboundSide.searchState === "loading" || outboundSide.searchState === "error" || outboundSide.searchState === "empty" || outboundSide.searchState === "rate" ? (
+            {outboundSide.searchState === "success" ? (
+              <QuickSearchSideViewControls
+                title={t("sideViewControlsOutboundTitle")}
+                subtitle={t("sideViewControlsSubtitle")}
+                state={outboundViewState}
+                t={t}
+                onChange={updateOutboundViewState}
+                onReset={resetOutboundViewState}
+              />
+            ) : null}
+            {outboundSide.searchState === "loading" || outboundSide.searchState === "error" || outboundSide.searchState === "empty" || outboundSide.searchState === "rate" || (outboundSide.searchState === "success" && outboundPanelState.visibleResults.length === 0) ? (
               <QuickSearchStatePanels
-                searchState={outboundSide.searchState}
+                searchState={outboundSide.searchState === "success" ? "empty" : outboundSide.searchState}
                 rateLimitSeconds={outboundSide.rateLimitSeconds}
                 searchError={outboundSide.searchError}
-                emptyStateMainTitle={t("noResults")}
+                emptyStateMainTitle={outboundPanelState.emptyStateMainTitle}
                 locale={locale}
-                zeroResultCauses={[]}
-                visibleZeroResultCauses={[]}
-                canExpandZeroResultCauses={false}
+                zeroResultCauses={outboundPanelState.zeroResultCauses}
+                visibleZeroResultCauses={outboundPanelState.visibleZeroResultCauses}
+                canExpandZeroResultCauses={outboundPanelState.canExpandZeroResultCauses}
                 emptyCausesExpanded={false}
-                zeroResultActions={[]}
+                zeroResultActions={outboundPanelState.zeroResultActions}
                 onToggleEmptyCauses={() => {}}
                 onRelaxAction={() => {}}
                 onRunSearch={() => outboundSide.goToPage(1)}
@@ -4959,7 +5152,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               />
             ) : outboundSide.searchState === "success" ? (
               <QuickSearchResultsList
-                visibleResults={outboundSide.results}
+                visibleResults={outboundPanelState.visibleResults}
                 compactView={compactView}
                 expandedRows={outboundSide.expandedRows}
                 openRowMenuId={null}
@@ -5040,7 +5233,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             destination={originCountryOnly != null ? (originCountryOnly as CountryAirports).name : origin}
             dateLabel={formatShortDate(returnDate)}
             headerLabel={t("sideReturnLabel")}
-            resultCount={returnSide.searchState === "success" ? returnSide.results.length : 0}
+            resultCount={returnSide.searchState === "success" ? returnPanelState.visibleResults.length : 0}
             currentPage={returnSide.searchState === "success" ? returnSide.currentPage : undefined}
             totalPages={returnSide.searchMeta?.pagination?.total_pages}
             pageSize={returnSide.searchMeta?.pagination?.page_size}
@@ -5048,18 +5241,28 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             onPageChange={returnSide.searchState === "success" ? (page: number) => returnSide.goToPage(page) : undefined}
             locale={locale}
           >
-            {returnSide.searchState === "loading" || returnSide.searchState === "error" || returnSide.searchState === "empty" || returnSide.searchState === "rate" ? (
+            {returnSide.searchState === "success" ? (
+              <QuickSearchSideViewControls
+                title={t("sideViewControlsReturnTitle")}
+                subtitle={t("sideViewControlsSubtitle")}
+                state={returnViewState}
+                t={t}
+                onChange={updateReturnViewState}
+                onReset={resetReturnViewState}
+              />
+            ) : null}
+            {returnSide.searchState === "loading" || returnSide.searchState === "error" || returnSide.searchState === "empty" || returnSide.searchState === "rate" || (returnSide.searchState === "success" && returnPanelState.visibleResults.length === 0) ? (
               <QuickSearchStatePanels
-                searchState={returnSide.searchState}
+                searchState={returnSide.searchState === "success" ? "empty" : returnSide.searchState}
                 rateLimitSeconds={returnSide.rateLimitSeconds}
                 searchError={returnSide.searchError}
-                emptyStateMainTitle={t("noReturnResults")}
+                emptyStateMainTitle={returnPanelState.emptyStateMainTitle}
                 locale={locale}
-                zeroResultCauses={[]}
-                visibleZeroResultCauses={[]}
-                canExpandZeroResultCauses={false}
+                zeroResultCauses={returnPanelState.zeroResultCauses}
+                visibleZeroResultCauses={returnPanelState.visibleZeroResultCauses}
+                canExpandZeroResultCauses={returnPanelState.canExpandZeroResultCauses}
                 emptyCausesExpanded={false}
-                zeroResultActions={[]}
+                zeroResultActions={returnPanelState.zeroResultActions}
                 onToggleEmptyCauses={() => {}}
                 onRelaxAction={() => {}}
                 onRunSearch={() => returnSide.goToPage(1)}
@@ -5068,7 +5271,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               />
             ) : returnSide.searchState === "success" ? (
               <QuickSearchResultsList
-                visibleResults={returnSide.results}
+                visibleResults={returnPanelState.visibleResults}
                 compactView={compactView}
                 expandedRows={returnSide.expandedRows}
                 openRowMenuId={null}
@@ -5146,24 +5349,24 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             combinedPrice={
               (() => {
                 const ob = outboundSide.selectedResultId
-                  ? outboundSide.results.find((r, i) => resultKey(r, i) === outboundSide.selectedResultId)
-                  : outboundSide.results[0];
+                  ? outboundPanelState.visibleResults.find((r, i) => resultKey(r, i) === outboundSide.selectedResultId)
+                  : outboundPanelState.visibleResults[0];
                 const rb = returnSide.selectedResultId
-                  ? returnSide.results.find((r, i) => resultKey(r, i) === returnSide.selectedResultId)
-                  : returnSide.results[0];
+                  ? returnPanelState.visibleResults.find((r, i) => resultKey(r, i) === returnSide.selectedResultId)
+                  : returnPanelState.visibleResults[0];
                 if (ob && rb) return (ob.price_total ?? ob.price ?? 0) + (rb.price_total ?? rb.price ?? 0);
                 return null;
               })()
             }
             currency={(() => {
-              const ob = outboundSide.results[0];
-              const rb = returnSide.results[0];
+              const ob = outboundPanelState.visibleResults[0];
+              const rb = returnPanelState.visibleResults[0];
               return ob?.currency ?? rb?.currency ?? "EUR";
             })()}
             visible={outboundSide.searchState === "success" && returnSide.searchState === "success"}
             onSave={() => {
-              const ob = findCombinationResult(outboundSide.results, outboundSide.selectedResultId);
-              const rb = findCombinationResult(returnSide.results, returnSide.selectedResultId);
+              const ob = findCombinationResult(outboundPanelState.visibleResults, outboundSide.selectedResultId);
+              const rb = findCombinationResult(returnPanelState.visibleResults, returnSide.selectedResultId);
               if (!ob || !rb) {
                 notify({ tone: "info", title: t("combinationSelectBoth"), durationMs: 3000 });
                 return;
