@@ -318,7 +318,6 @@ class MakcorpsHotelProviderAdapter(HotelProviderAdapter):
             )
 
         # Default dates: next week, 7-night stay
-        from datetime import timedelta
 
         today = date.today()
         cin = check_in or (today + timedelta(days=7))

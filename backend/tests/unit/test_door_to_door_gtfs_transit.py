@@ -2,7 +2,6 @@
 
 import io
 import json
-import os
 import tempfile
 import zipfile
 from datetime import date, datetime, timedelta, timezone
@@ -17,7 +16,6 @@ from app.door_to_door.schemas import (
     DoorToDoorFlightOut,
     DoorToDoorLocation,
     DoorToDoorPreferences,
-    DoorToDoorOptionOut,
 )
 from app.door_to_door.services.gtfs_feed_service import (
     GtfsFeedDescriptor,
@@ -525,7 +523,6 @@ async def test_provider_healthcheck_disabled_no_feeds(monkeypatch):
 # ---------------------------------------------------------------------------
 
 def test_provider_status_clasifica_gtfs_como_functional_open_data(monkeypatch):
-    import os
     monkeypatch.setenv("APP_ENV", "test")
     monkeypatch.setenv("DOOR_TO_DOOR_ENABLE_MOCK_PROVIDER", "0")
     monkeypatch.setenv("DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS", "1")
@@ -630,7 +627,7 @@ async def test_provider_emite_no_service_for_date(provider):
     """When feed has stops but no service on the target date, emit GTFS_NO_SERVICE_FOR_DATE."""
     # Use a Saturday (July 18, 2026), but our fixture only has weekday service
     saturday = datetime(2026, 7, 18, 14, 20, tzinfo=timezone(timedelta(hours=2)))
-    results = await provider.search(_make_query(
+    _results = await provider.search(_make_query(
         departure_at=saturday,
         arrival_at=saturday + timedelta(hours=1, minutes=15),
     ))
@@ -692,7 +689,7 @@ async def test_provider_emite_partial_coverage(provider):
     """When only one leg has trips, emit GTFS_PARTIAL_COVERAGE."""
     # Use fixture where only outbound trips exist but inbound destination
     # coordinates are far away → no inbound trips
-    results = await provider.search(_make_query(
+    _results = await provider.search(_make_query(
         final_lat=40.4168,  # Far from the Andalusia feed
         final_lng=-3.7038,
         final_label="Madrid (sin cobertura)",
@@ -778,7 +775,7 @@ async def test_provider_emite_feed_unavailable(monkeypatch, feed_service):
 @pytest.mark.asyncio
 async def test_provider_warning_code_especifico(provider):
     """Each failure mode emits the correct warning code."""
-    results = await provider.search(_make_query())
+    _results = await provider.search(_make_query())
     warnings = provider.consume_warnings()
     codes = {w.code for w in warnings}
 
@@ -811,11 +808,10 @@ async def test_provider_load_descriptors_from_file(monkeypatch, tmp_path):
 @pytest.mark.asyncio
 async def test_search_service_integra_gtfs_warnings(provider, monkeypatch):
     """Search service collects and deduplicates GTFS warnings."""
-    from app.door_to_door.services.search_service import DoorToDoorSearchService
 
     # We just verify the provider can be wrapped without errors
     # The search service integration is tested in integration tests
-    result = await provider.search(_make_query())
+    _result = await provider.search(_make_query())
     warnings = provider.consume_warnings()
     # Warnings should be deduplicated by code+provider
     codes = [w.code for w in warnings]
@@ -937,7 +933,7 @@ async def test_corridor_mixed_verified_planned_prioritizes_verified(provider):
     await provider.search(_make_query(origin_airport="AGP", destination_airport="TSF"))
     warnings = provider.consume_warnings()
     verified = [w for w in warnings if w.code == "GTFS_CORRIDOR_VERIFIED"]
-    planned = [w for w in warnings if w.code == "GTFS_CORRIDOR_PLANNED"]
+    _planned = [w for w in warnings if w.code == "GTFS_CORRIDOR_PLANNED"]
     # Verified takes priority; planned is not emitted when verified exists
     assert len(verified) == 1
     assert "Corredor Verificado" in verified[0].message

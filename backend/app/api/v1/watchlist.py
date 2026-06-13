@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.errors import error_envelope, message_for_code
 from app.core.idempotency import replay_if_exists, request_hash, store_response
-from app.domain.entities import ProviderFetchResult, ProviderFlight
+from app.domain.entities import ProviderFetchResult
 from app.domain.vocabulary import (
     WATCH_STATUS_ACTIVE,
     WATCH_STATUS_DELETED,

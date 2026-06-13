@@ -12,7 +12,6 @@ from app.infrastructure.db.models import (
     Base,
     HotelProperty,
     HotelRateSnapshot,
-    HotelTrackedOffer,
     User,
 )
 from app.services.hotels_service import (

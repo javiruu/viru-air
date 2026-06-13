@@ -1,12 +1,11 @@
 """Unit tests for HotelTrackedOffer CRUD operations and snapshot tracking."""
 
-from datetime import date, datetime
+from datetime import date
 
 import pytest
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.core.time import utc_now_naive
 from app.infrastructure.db.models import (
     Base,
     HotelProperty,

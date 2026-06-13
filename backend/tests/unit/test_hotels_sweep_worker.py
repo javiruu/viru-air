@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from sqlalchemy import create_engine, select
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from app.infrastructure.db.models import Base, HotelProviderRun
 from app.worker import hotels_sweep as hotels_sweep_worker

@@ -7,7 +7,6 @@ and BlaBlaCar place_ids when resolvable.
 Run with:  python -m pytest tests/test_deeplink_actions.py -v
 """
 import pytest
-import asyncio
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 

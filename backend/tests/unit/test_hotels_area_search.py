@@ -2,15 +2,13 @@
 
 from datetime import date
 
-import pytest
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.infrastructure.db.models import (
     Base,
     HotelProperty,
     HotelRateSnapshot,
-    HotelTrackedOffer,
 )
 from app.services.hotels_service import area_search, create_tracked_offer
 
@@ -346,7 +344,7 @@ def test_area_search_has_tracking_flag() -> None:
 def test_area_search_hotel_without_rates_shows_no_price() -> None:
     db = _db()
     try:
-        h1 = _create_hotel(db, name="No Rates Hotel", lat=40.4168, lng=-3.7038)
+        _h1 = _create_hotel(db, name="No Rates Hotel", lat=40.4168, lng=-3.7038)
 
         results = area_search(
             db,

@@ -352,10 +352,7 @@ async def test_external_deeplink_label_is_honest():
 
 
 def test_provider_status_clasifica_ambos_como_functional_deeplink():
-    from app.door_to_door.providers.deeplink_goopti import GoOptiDeepLinkProvider
     from app.door_to_door.providers.registry import (
-        BlaBlaCarDeepLinkProvider,
-        ProviderDescriptor,
         resolve_provider_runtime,
     )
     import os

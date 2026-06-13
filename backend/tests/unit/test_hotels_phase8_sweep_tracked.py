@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import date
 
-import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -14,12 +13,10 @@ from app.infrastructure.db.models import (
     HotelProperty,
     HotelProviderRun,
     HotelRateSnapshot,
-    HotelTrackedOffer,
     User,
 )
 from app.services.hotels_service import (
     create_tracked_offer,
-    run_hotel_sweep,
     sweep_tracked_offers,
 )
 
@@ -163,7 +160,7 @@ class TestSweepTrackedOffers:
             user = _create_user(db)
             hotel = _create_hotel(db)
 
-            offer = create_tracked_offer(
+            _offer = create_tracked_offer(
                 db,
                 user_id=user.id,
                 hotel_id=hotel.id,
@@ -209,7 +206,7 @@ class TestSweepTrackedOffers:
             user = _create_user(db)
             hotel = _create_hotel(db)
 
-            offer = create_tracked_offer(
+            _offer = create_tracked_offer(
                 db,
                 user_id=user.id,
                 hotel_id=hotel.id,

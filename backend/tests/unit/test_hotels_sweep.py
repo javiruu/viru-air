@@ -1,6 +1,6 @@
 """Unit tests for hotel alert evaluation logic."""
 
-from datetime import date, datetime
+from datetime import date
 
 import pytest
 from sqlalchemy import create_engine
@@ -8,10 +8,8 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.infrastructure.db.models import (
     Base,
-    HotelAlertEvent,
     HotelAlertRule,
     HotelProperty,
-    HotelProviderRun,
     HotelRateSnapshot,
 )
 from app.services.hotels_service import evaluate_hotel_alerts, run_hotel_sweep

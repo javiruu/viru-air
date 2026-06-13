@@ -570,7 +570,8 @@ class RecommendationResponse(BaseModel):
     ai: RecommendationAiMeta
 
 
-from app.domain.hotels_schemas import (
+# -- Re-exports from hotels_schemas (consumed by api/v1/hotels.py and tests) --
+from app.domain.hotels_schemas import (  # noqa: E402, F401
     HotelAlertEventOut,
     HotelAlertRuleCreateIn,
     HotelAlertRuleOut,

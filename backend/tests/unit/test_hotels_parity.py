@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import datetime
-from decimal import Decimal
 
-import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.hotels.parity import HotelParityService, ParitySignal
+from app.hotels.parity import HotelParityService
 from app.infrastructure.db.models import Base, HotelRateSnapshot
 
 

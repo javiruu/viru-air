@@ -4,7 +4,6 @@ Consolidates external actions per leg (Google Maps, BlaBlaCar, GoOpti) into
 a single actionable option.  No fake prices, no fake schedules.
 """
 
-from datetime import timedelta
 
 from app.door_to_door.domain.models import ProviderHealth
 from app.door_to_door.providers.base import DoorToDoorProvider, DoorToDoorProviderQuery
@@ -18,7 +17,6 @@ from app.door_to_door.schemas import (
     DoorToDoorDeepLinkOut,
     DoorToDoorLegOut,
     DoorToDoorOptionOut,
-    DoorToDoorPriceOut,
     DoorToDoorSourceOut,
 )
 
