@@ -3281,6 +3281,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     t,
     tWarn,
   });
+  const dualCombinationVisible =
+    outboundSide.searchState === "success"
+    && returnSide.searchState === "success"
+    && outboundPanelState.visibleResults.length > 0
+    && returnPanelState.visibleResults.length > 0;
 
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
@@ -5363,7 +5368,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               const rb = returnPanelState.visibleResults[0];
               return ob?.currency ?? rb?.currency ?? "EUR";
             })()}
-            visible={outboundSide.searchState === "success" && returnSide.searchState === "success"}
+            visible={dualCombinationVisible}
             onSave={() => {
               const ob = findCombinationResult(outboundPanelState.visibleResults, outboundSide.selectedResultId);
               const rb = findCombinationResult(returnPanelState.visibleResults, returnSide.selectedResultId);
