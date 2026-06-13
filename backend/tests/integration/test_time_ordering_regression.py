@@ -80,7 +80,7 @@ def test_history_and_alert_events_keep_descending_order(client: TestClient, monk
             json={"watch_id": watch_id},
         )
         assert evaluated.status_code == 200
-        sleep(0.01)
+        sleep(1.1)
 
     history = client.get(f"/api/v1/prices/history?watch_id={watch_id}", headers=headers)
     assert history.status_code == 200
