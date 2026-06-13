@@ -506,13 +506,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const [outboundEmptyCausesExpanded, setOutboundEmptyCausesExpanded] = useState(false);
   const [returnEmptyCausesExpanded, setReturnEmptyCausesExpanded] = useState(false);
   // Reset per-side empty causes when exiting dual mode
-  useEffect(() => {
-    if (!isDualMode) {
-      setOutboundEmptyCausesExpanded(false);
-      setReturnEmptyCausesExpanded(false);
-    }
-  }, [isDualMode]);
-
   // ── Per-side relax action handler (Fase 11) ────────────────────────
   const handleDualRelaxAction = useCallback(
     (action: ZeroResultRelaxAction, side: "outbound" | "return") => {
@@ -574,7 +567,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       setRadiusKm, setExcludeOrigins, setExcludeDestinations, setExcludeOriginInput,
       setExcludeDestinationInput, setDaysBefore, setDaysAfter,
     ],
-  );  const { locale, localeTag, t, tWarn } = copy;
+  );  const { locale, localeTag, t, tWarn } = getQuickSearchCopy();
   const [flexCustomPanelOpen, setFlexCustomPanelOpen] = useState(false);
   const isRecommendations = mode === "recommendations";
   const pageTitle = isRecommendations ? t("titleRecommendations") : t("title");
@@ -2390,6 +2383,14 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const routeInputsValid = originValid && destinationValid;
   // Dual-mode flag (Fase 6) ─ after routeInputsValid to avoid TDZ
   const isDualMode = isReturn && !!returnDate && !!travelDate && routeInputsValid && !originCountryOnly && !destinationCountryOnly;
+
+  // ── Per-side emptyCausesExpanded reset on dual mode exit (Fase 11) ──
+  useEffect(() => {
+    if (!isDualMode) {
+      setOutboundEmptyCausesExpanded(false);
+      setReturnEmptyCausesExpanded(false);
+    }
+  }, [isDualMode]);
 
   // ── Side state cleanup when exiting dual mode (Fase 6) ─────────────
   const wasDualModeRef = useRef(isDualMode);
