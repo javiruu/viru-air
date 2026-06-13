@@ -296,6 +296,9 @@ test("QuickSearchCombinedBanner is imported and rendered in dual workspace", () 
     /<QuickSearchCombinedBanner/,
     "QuickSearchCombinedBanner not rendered",
   );
+  assert.match(source, /const dualCombinationVisible =/);
+  assert.match(source, /outboundPanelState\.visibleResults\.length > 0/);
+  assert.match(source, /returnPanelState\.visibleResults\.length > 0/);
 });
 
 test("combined banner receives combined price and per‑side formatMoney", () => {
