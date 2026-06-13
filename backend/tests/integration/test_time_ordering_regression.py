@@ -71,7 +71,9 @@ def test_history_and_alert_events_keep_descending_order(client: TestClient, monk
     )
     assert create_threshold_rule.status_code == 200
 
-    for _ in range(3):
+    for i in range(3):
+        if i > 0:
+            sleep(1.1)
         refreshed = client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers)
         assert refreshed.status_code == 200
         evaluated = client.post(
@@ -80,7 +82,6 @@ def test_history_and_alert_events_keep_descending_order(client: TestClient, monk
             json={"watch_id": watch_id},
         )
         assert evaluated.status_code == 200
-        sleep(1.1)
 
     history = client.get(f"/api/v1/prices/history?watch_id={watch_id}", headers=headers)
     assert history.status_code == 200
