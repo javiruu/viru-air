@@ -15,9 +15,20 @@ Entradas vivas agregadas:
 
 - `docs/prompts/codex-travel-roadmap-50-fases.md`
 
+## Actualizacion manual 2026-06-13 (fases 1-5 del roadmap)
+
+Entradas vivas agregadas:
+
+- `docs/qa/qa-command-matrix.md`
+
 Entradas vivas actualizadas:
 
-- `docs/prompts/README.md`
+- `docs/prompts/codex-travel-roadmap-50-fases.md`
+- `docs/reference/backend/quick-search-acceptance-checklist.md`
+- `docs/specs/hotels-intelligence-mvp.md`
+- `docs/qa/hotels-pending-closeout.md`
+- `docs/reference/done-checklist.md`
+- `docs/qa/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
 

@@ -18,6 +18,7 @@
 ## Lectura recomendada
 
 - [Frontend PR checklist](acceptance-checklists/frontend-pr-checklist.md)
+- [Matriz QA por área](qa-command-matrix.md)
 - [Traceability matrix](traceability-matrix.md)
 - [Runbook UI captures](../runbooks/runbook-ui-captures.md)
 

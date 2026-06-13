@@ -47,6 +47,7 @@
 - [README QA](qa/README.md)
 - [Estabilización watchlist + quick-search](qa/reports/2026-06-05-watchlist-quick-search-stabilization.md)
 - [Frontend PR checklist](qa/acceptance-checklists/frontend-pr-checklist.md)
+- [Matriz QA por area](qa/qa-command-matrix.md)
 - [Fase 0 limpieza conceptual](qa/fase-0-limpieza-conceptual-checklist.md)
 - [Cierre pendiente de `/hoteles`](qa/hotels-pending-closeout.md)
 - [Traceability matrix](qa/traceability-matrix.md)
@@ -130,6 +131,7 @@
 
 - [README QA](qa/README.md)
 - [Cierre pendiente de `/hoteles`](qa/hotels-pending-closeout.md)
+- [Matriz QA por area](qa/qa-command-matrix.md)
 - [Visual QA](qa/visual/)
 - [Auditoría de paleta dual](qa/visual/color-palette-audit.md)
 - [Reportes QA](qa/reports/)

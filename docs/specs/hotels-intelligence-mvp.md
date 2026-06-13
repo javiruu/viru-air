@@ -220,5 +220,5 @@ Observaciones pendientes:
 Siguiente paso propuesto (acotado):
 
 1. Verificar visualmente en navegador el buscador por area y el boton de eliminar comparativa.
-2. Documentar sweeps hoteleros manuales y su ausencia de scheduler automatico.
-3. Revisar polish visual y responsive fino del bloque de sugerencias cercanas, watchlist y alertas en Fase 9.
+2. Revisar polish visual y responsive fino del bloque de sugerencias cercanas, watchlist y alertas ya cerrados tecnicamente.
+3. Resolver el siguiente gap operativo real solo si entra en alcance futuro: validacion visual manual completa o rate-limiting del provider real.
