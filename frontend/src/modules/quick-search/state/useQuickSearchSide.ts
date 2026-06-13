@@ -273,6 +273,7 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
       originIata: string;
       destinationIata: string;
       dateOut: string;
+      dateIn?: string;
       adults: number;
       locale: "es" | "en";
     }) => {
@@ -285,6 +286,9 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
       query.set("origin_iata", params.originIata);
       query.set("destination_iata", params.destinationIata);
       query.set("date_out", params.dateOut);
+      if (params.dateIn) {
+        query.set("date_in", params.dateIn);
+      }
       query.set("adults", String(params.adults));
       query.set("teens", "0");
       query.set("children", "0");

@@ -559,496 +559,79 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     durationMax: "",
     sortBy: "ranking",
   }));
-
-  const mergeSeedAirportEntries = useCallback((entries: AirportIataEntry[]) => {
-    if (!Array.isArray(entries) || entries.length === 0) return;
-    setSeedAirports((prev) => {
-      const byIata = new Map(prev.map((item) => [item.iata, item]));
-      for (const entry of entries) {
-        if (!entry?.iata) continue;
-        byIata.set(entry.iata, entry);
-      }
-      return Array.from(byIata.values());
-    });
-  }, []);
-
-  const airportsByCountry = useMemo(() => {
-    const next = new Map<string, AirportIataEntry[]>();
-    for (const airport of seedAirports) {
-      const key = airport.country_code || "";
-      const list = next.get(key) || [];
-      list.push(airport);
-      next.set(key, list);
-    }
-    return next;
-  }, [seedAirports]);
-
-  const airportsByIata = useMemo(() => {
-    const next = new Map<string, AirportIataEntry>();
-    for (const airport of seedAirports) {
-      next.set(airport.iata, airport);
-    }
-    return next;
-  }, [seedAirports]);
-
-  const debugLog = useCallback((message: string) => {
-    if (process.env.NODE_ENV === "production" || typeof window === "undefined") return;
-    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
-    if (debugEpochRef.current === null) {
-      debugEpochRef.current = now;
-    }
-    const ts = Math.max(0, Math.round(now - debugEpochRef.current));
-    // eslint-disable-next-line no-console
-    console.debug(`[qs] ${message} ts=${ts}ms`);
-  }, [debugEpochRef]);
-
-  const logQuickSearchApiError = useCallback((scope: string, meta: Record<string, unknown>) => {
-    if (typeof window === "undefined") return;
-    const nonFatal = NON_FATAL_QS_SCOPES.has(scope);
-    if (process.env.NODE_ENV === "production") {
-      // eslint-disable-next-line no-console
-      console.warn(`[qs] ${scope}`, meta);
-      return;
-    }
-    if (nonFatal) {
-      // eslint-disable-next-line no-console
-      console.warn(`[qs] ${scope}`, meta);
-      return;
-    }
-    // eslint-disable-next-line no-console
-    console.error(`[qs] ${scope}`, meta);
-  }, []);
-
-  const fetchSeedAirports = useCallback(async (params: {
-    q?: string;
-    country_code?: string;
-    limit?: number;
-    offset?: number;
-  }) => {
-    const search = new URLSearchParams();
-    if (params.q) search.set("q", params.q);
-    if (params.country_code) search.set("country_code", params.country_code);
-    if (params.limit) search.set("limit", String(params.limit));
-    if (params.offset) search.set("offset", String(params.offset));
-    const query = search.toString();
-    const data = await apiFetch<QuickSearchSeedAirportResponse>(`/airports/seeds${query ? `?${query}` : ""}`);
-    const items = Array.isArray(data?.items) ? data.items : [];
-    mergeSeedAirportEntries(items);
-    return data;
-  }, [mergeSeedAirportEntries]);
-
-  const fetchSeedCountriesFromSeeds = useCallback(async (): Promise<QuickSearchCountrySeed[]> => {
-    const byCode = new Map<string, number>();
-    const pageLimit = 500;
-    let offset = 0;
-    let guard = 0;
-
-    while (guard < 20) {
-      guard += 1;
-      const data = await fetchSeedAirports({ limit: pageLimit, offset });
-      const items = Array.isArray(data?.items) ? data.items : [];
-      for (const airport of items) {
-        const code = (airport.country_code || "").trim().toUpperCase();
-        if (!code) continue;
-        byCode.set(code, (byCode.get(code) || 0) + 1);
-      }
-
-      const nextOffset = typeof data?.next_offset === "number" ? data.next_offset : null;
-      if (nextOffset !== null && nextOffset > offset) {
-        offset = nextOffset;
-        continue;
-      }
-
-      const total = typeof data?.total === "number" ? data.total : null;
-      if (total !== null && offset + items.length < total && items.length > 0) {
-        offset += items.length;
-        continue;
-      }
-      break;
-    }
-
-    return Array.from(byCode.entries())
-      .map(([code, airport_count]) => ({
-        code,
-        name: resolveCountryName(code),
-        airport_count,
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [fetchSeedAirports]);
-
+  // ── Per-side emptyCausesExpanded (Fase 11) ──────────────────────────
+  const [outboundEmptyCausesExpanded, setOutboundEmptyCausesExpanded] = useState(false);
+  const [returnEmptyCausesExpanded, setReturnEmptyCausesExpanded] = useState(false);
+  // Reset per-side empty causes when exiting dual mode
   useEffect(() => {
-    let cancelled = false;
-    apiFetch<QuickSearchCountrySeedResponse>("/airports/countries")
-      .then((data) => {
-        if (cancelled) return;
-        setSeedCountries(Array.isArray(data?.items) ? data.items : []);
-      })
-      .catch(async (error) => {
-        try {
-          const fallbackItems = await fetchSeedCountriesFromSeeds();
-          if (cancelled) return;
-          setSeedCountries(fallbackItems);
-          logQuickSearchApiError("seed_countries_fallback_used", {
-            countries: fallbackItems.length,
-          });
-        } catch (fallbackError) {
-          if (cancelled) return;
-          setSeedCountries([]);
-          logQuickSearchApiError("seed_countries_failed", { error, fallbackError });
-        }
+    if (!isDualMode) {
+      setOutboundEmptyCausesExpanded(false);
+      setReturnEmptyCausesExpanded(false);
+    }
+  }, [isDualMode]);
+
+  // ── Per-side relax action handler (Fase 11) ────────────────────────
+  const handleDualRelaxAction = useCallback(
+    (action: ZeroResultRelaxAction, side: "outbound" | "return") => {
+      // View-only filter change: just update state, no re-search needed
+      if (action === "increase_duration") {
+        setDurationMax((prev) => {
+          const current = Number(prev) || 0;
+          return String(Math.max(current + 60, 180));
+        });
+        return;
+      }
+
+      // Search-level filter changes: update state and re-run the search
+      if (action === "disable_strict") setStrictFilters(false);
+      if (action === "open_radius_150") {
+        setIncludeNearbyOrigins(true);
+        setIncludeNearbyDestinations(true);
+        setRadiusKm(150);
+      }
+      if (action === "clear_exclusions") {
+        setExcludeOrigins([]);
+        setExcludeDestinations([]);
+        setExcludeOriginInput("");
+        setExcludeDestinationInput("");
+      }
+      if (action === "open_date_flex") {
+        setDaysBefore(2);
+        setDaysAfter(2);
+      }
+
+      // Compute side-specific origin/destination/date (return leg is inverted)
+      const sideOrigin = side === "outbound" ? origin : destination;
+      const sideDest = side === "outbound" ? destination : origin;
+      const sideDate = side === "outbound" ? travelDate : returnDate;
+      const targetSide = side === "outbound" ? outboundSide : returnSide;
+
+      const sideParams = buildDualSearchParams({
+        origin: sideOrigin,
+        destination: sideDest,
+        travelDate: sideDate,
+        flexDaysBefore: action === "open_date_flex" ? 2 : daysBefore,
+        flexDaysAfter: action === "open_date_flex" ? 2 : daysAfter,
+        radiusKm: action === "open_radius_150" ? 150 : normalizedRadiusKm,
+        includeStops,
+        includeNearbyOrigins: action === "open_radius_150" ? true : includeNearbyOrigins,
+        includeNearbyDestinations: action === "open_radius_150" ? true : includeNearbyDestinations,
+        departAfter, departBefore, maxStops,
+        excludeOrigins: action === "clear_exclusions" ? [] : excludeOrigins,
+        excludeDestinations: action === "clear_exclusions" ? [] : excludeDestinations,
+        strictFilters: action === "disable_strict" ? false : strictFilters,
       });
-    return () => {
-      cancelled = true;
-    };
-  }, [fetchSeedCountriesFromSeeds, logQuickSearchApiError]);
-
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all([
-      fetchSeedAirports({ q: "MAD", limit: 6 }),
-      fetchSeedAirports({ q: "DUB", limit: 6 }),
-    ]).catch((error) => {
-      if (cancelled) return;
-      logQuickSearchApiError("seed_bootstrap_failed", { error });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [fetchSeedAirports, logQuickSearchApiError]);
-
-  useEffect(() => {
-    const value = origin.trim();
-    const recentSuggestions = buildRecentAirportSuggestions(recentAirports, airportsByIata, value, 6);
-    if (!value) {
-      setOriginSuggestions(recentSuggestions);
-      return;
-    }
-    const timeout = window.setTimeout(() => {
-      const apiQuery = getApiSearchQuery(value);
-      fetchSeedAirports({ q: apiQuery, limit: 6 })
-        .then((data) => {
-          setOriginSuggestions(
-            mergeAirportSuggestions(
-              recentSuggestions,
-              buildAirportSuggestions(data.items || [], value, 6, pref?.language || "en"),
-              6,
-            ),
-          );
-        })
-        .catch((error) => {
-          setOriginSuggestions(recentSuggestions);
-          logQuickSearchApiError("origin_suggestions_failed", { error, value });
-        });
-    }, 120);
-    return () => window.clearTimeout(timeout);
-  }, [origin, recentAirports, airportsByIata, pref?.language, fetchSeedAirports, logQuickSearchApiError]);
-
-  useEffect(() => {
-    const value = destination.trim();
-    const recentSuggestions = buildRecentAirportSuggestions(recentAirports, airportsByIata, value, 6);
-    if (!value) {
-      setDestinationSuggestions(recentSuggestions);
-      return;
-    }
-    const timeout = window.setTimeout(() => {
-      const apiQuery = getApiSearchQuery(value);
-      fetchSeedAirports({ q: apiQuery, limit: 6 })
-        .then((data) => {
-          setDestinationSuggestions(
-            mergeAirportSuggestions(
-              recentSuggestions,
-              buildAirportSuggestions(data.items || [], value, 6, pref?.language || "en"),
-              6,
-            ),
-          );
-        })
-        .catch((error) => {
-          setDestinationSuggestions(recentSuggestions);
-          logQuickSearchApiError("destination_suggestions_failed", { error, value });
-        });
-    }, 120);
-    return () => window.clearTimeout(timeout);
-  }, [destination, recentAirports, airportsByIata, pref?.language, fetchSeedAirports, logQuickSearchApiError]);
-
-  useEffect(() => {
-    const code = origin.trim().toUpperCase();
-    if (code.length !== 3 || airportsByIata.has(code)) return;
-    fetchSeedAirports({ q: code, limit: 6 }).catch((error) => {
-      logQuickSearchApiError("origin_code_validation_failed", { error, code });
-    });
-  }, [origin, airportsByIata, fetchSeedAirports, logQuickSearchApiError]);
-
-  useEffect(() => {
-    const code = destination.trim().toUpperCase();
-    if (code.length !== 3 || airportsByIata.has(code)) return;
-    fetchSeedAirports({ q: code, limit: 6 }).catch((error) => {
-      logQuickSearchApiError("destination_code_validation_failed", { error, code });
-    });
-  }, [destination, airportsByIata, fetchSeedAirports, logQuickSearchApiError]);
-
-  useEffect(() => {
-    setRoutePulse(true);
-    const timeout = window.setTimeout(() => setRoutePulse(false), 140);
-    return () => window.clearTimeout(timeout);
-  }, [origin, destination, setRoutePulse]);
-
-  useQuickSearchLoadingFlow({
-    searchState,
-    showLoader,
-    loadingVisualHold,
-    targetProgress,
-    displayProgress,
-    prefersReducedMotion,
-    setShowLoader,
-    setShowBoarding,
-    setLoadingVisualHold,
-    setDisplayProgress,
-    setLoadingPhase,
-    setTargetProgress,
-    activeLoadingRequestRef,
-    prevSearchStateRef,
-    requestIdRef,
-    progressRafRef,
-    animFromRef,
-    animToRef,
-    animStartTsRef,
-    animDurationMsRef,
-    lastTargetRef,
-    isAnimatingRef,
-    displayProgressRef,
-    commitRafRef,
-    boardingThresholdTimerRef,
-    takeoffHoldTimerRef,
-    loadingStartRef,
-    hideTimeoutRef,
-    debugLastTickLogTsRef,
-    debugLog,
-  });
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return;
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const apply = () => setPrefersReducedMotion(media.matches);
-    apply();
-    if (media.addEventListener) {
-      media.addEventListener("change", apply);
-      return () => media.removeEventListener("change", apply);
-    }
-    media.addListener(apply);
-    return () => media.removeListener(apply);
-  }, [setPrefersReducedMotion]);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return;
-    const media = window.matchMedia("(max-width: 900px)");
-    const apply = () => setIsMobileViewport(media.matches);
-    apply();
-    if (media.addEventListener) {
-      media.addEventListener("change", apply);
-      return () => media.removeEventListener("change", apply);
-    }
-    media.addListener(apply);
-    return () => media.removeListener(apply);
-  }, [setIsMobileViewport]);
-
-
-  useEffect(() => {
-    const storage = typeof window !== "undefined" ? window.localStorage : null;
-    setRecentAirports(readRecentAirports(storage));
-  }, [setRecentAirports]);
-
-  useEffect(() => {
-    if (rateLimitSeconds <= 0) return;
-    const timer = window.setInterval(() => {
-      setRateLimitSeconds((prev) => Math.max(0, prev - 1));
-    }, 1000);
-    return () => window.clearInterval(timer);
-  }, [rateLimitSeconds, setRateLimitSeconds]);
-
-  useEffect(() => {
-    if (searchState === "empty") {
-      if (!zeroResultsTracked.current) {
-        trackEvent("quicksearch_zero_results_shown", {
-          strict_filters: strictFilters,
-          include_stops: includeStops,
-          max_stops: includeStops ? maxStops : 0,
-          duration_max: durationMax ? Number(durationMax) : null,
-          depart_after: departAfter || null,
-          depart_before: departBefore || null,
-          radius_km: normalizedRadiusKm,
-          exclude_origins_count: excludeOrigins.length,
-          exclude_destinations_count: excludeDestinations.length,
-        });
-        trackEvent("quicksearch_empty_shown", {
-          strict_filters: strictFilters,
-          include_stops: includeStops,
-          radius_km: normalizedRadiusKm,
-        });
-        zeroResultsTracked.current = true;
-      }
-      return;
-    }
-    zeroResultsTracked.current = false;
-  }, [
-    searchState,
-    strictFilters,
-    includeStops,
-    maxStops,
-    durationMax,
-    departAfter,
-    departBefore,
-    includeNearbyOrigins,
-    includeNearbyDestinations,
-    normalizedRadiusKm,
-    excludeOrigins.length,
-    excludeDestinations.length,
-    zeroResultsTracked,
-  ]);
-
-  useEffect(() => {
-    if (searchState === "idle") {
-      if (!idleStateTracked.current) {
-        trackEvent("quicksearch_idle_shown", { mode });
-        idleStateTracked.current = true;
-      }
-      return;
-    }
-    idleStateTracked.current = false;
-  }, [searchState, mode, idleStateTracked]);
-
-  useEffect(() => {
-    if (!headrowRemovedTrackedRef.current) {
-      trackEvent("quicksearch_results_headrow_removed", { mode });
-      headrowRemovedTrackedRef.current = true;
-    }
-  }, [mode, headrowRemovedTrackedRef]);
-
-  useEffect(() => {
-    const derivedTripType = getTripTypeLabel(isReturn, returnDate);
-    if (derivedTripType === "round_trip_incomplete") {
-      if (!tripTypeIncompleteTrackedRef.current) {
-        trackEvent("quicksearch_triptype_incomplete_shown", { is_return: isReturn, has_return_date: Boolean(returnDate) });
-        tripTypeIncompleteTrackedRef.current = true;
-      }
-      return;
-    }
-    tripTypeIncompleteTrackedRef.current = false;
-  }, [isReturn, returnDate, tripTypeIncompleteTrackedRef]);
-
-  useEffect(() => {
-    return () => {
-      if (autocompleteBlurTimer.current) {
-        window.clearTimeout(autocompleteBlurTimer.current);
-      }
-    };
-  }, [autocompleteBlurTimer]);
-
-  useEffect(() => {
-    if (!hasSearched) return;
-    if (!resultsToolbarRef.current) return;
-    resultsToolbarRef.current.focus();
-  }, [hasSearched, resultsToolbarRef]);
-
-  useEffect(() => {
-    if (!summaryHighlightKey) return;
-    const timer = window.setTimeout(() => setSummaryHighlightKey(null), 800);
-    return () => window.clearTimeout(timer);
-  }, [summaryHighlightKey, setSummaryHighlightKey]);
-
-  useEffect(() => {
-    if (searchState !== "empty" && emptyCausesExpanded) {
-      setEmptyCausesExpanded(false);
-    }
-  }, [searchState, emptyCausesExpanded, setEmptyCausesExpanded]);
-
-  const closeExplainPopover = useCallback(() => {
-    setIsExplainOpen(false);
-    if (explainPopoverRef.current) {
-      explainPopoverRef.current.open = false;
-    }
-    if (typeof window !== "undefined") {
-      window.requestAnimationFrame(() => {
-        explainTriggerRef.current?.focus();
-      });
-    }
-  }, [explainPopoverRef, explainTriggerRef, setIsExplainOpen]);
-
-  const closeFiltersDrawer = useCallback(() => {
-    setIsFiltersOpen(false);
-    if (typeof window !== "undefined") {
-      window.requestAnimationFrame(() => {
-        filtersToggleRef.current?.focus();
-      });
-    }
-  }, [filtersToggleRef, setIsFiltersOpen]);
-
-  const closeRowMenu = useCallback((targetId?: string | null) => {
-    setOpenRowMenuId((prev) => {
-      const idToClose = targetId ?? prev;
-      if (!idToClose) return prev;
-      if (typeof window !== "undefined") {
-        window.requestAnimationFrame(() => {
-          rowMenuTriggerRefs.current[idToClose]?.focus();
-        });
-      }
-      return prev === idToClose ? null : prev;
-    });
-  }, [rowMenuTriggerRefs, setOpenRowMenuId]);
-
-  useEffect(() => {
-    if (!isFiltersOpen) return;
-    if (typeof window === "undefined") return;
-    window.requestAnimationFrame(() => {
-      filtersCloseRef.current?.focus();
-    });
-  }, [isFiltersOpen, filtersCloseRef]);
-
-  useEffect(() => {
-    if (!isFiltersOpen) return;
-    if (typeof window === "undefined") return;
-
-    const body = document.body;
-    const docEl = document.documentElement;
-    const scrollY = window.scrollY;
-
-    const prevBodyOverflow = body.style.overflow;
-    const prevBodyPosition = body.style.position;
-    const prevBodyTop = body.style.top;
-    const prevBodyWidth = body.style.width;
-    const prevBodyOverscroll = body.style.overscrollBehavior;
-    const prevDocOverscroll = docEl.style.overscrollBehavior;
-
-    body.style.overflow = "hidden";
-    body.style.position = "fixed";
-    body.style.top = `-${scrollY}px`;
-    body.style.width = "100%";
-    body.style.overscrollBehavior = "contain";
-    docEl.style.overscrollBehavior = "contain";
-
-    return () => {
-      body.style.overflow = prevBodyOverflow;
-      body.style.position = prevBodyPosition;
-      body.style.top = prevBodyTop;
-      body.style.width = prevBodyWidth;
-      body.style.overscrollBehavior = prevBodyOverscroll;
-      docEl.style.overscrollBehavior = prevDocOverscroll;
-      window.scrollTo(0, scrollY);
-    };
-  }, [isFiltersOpen]);
-
-  useEffect(() => {
-    if (!activePicker) return;
-    if (typeof window === "undefined") return;
-    window.requestAnimationFrame(() => {
-      airportSearchInputRef.current?.focus();
-    });
-  }, [activePicker, airportSearchInputRef]);
-
-  const copy = useMemo(
-    () => getQuickSearchCopy(regionPref?.language ?? pref?.language),
-    [regionPref?.language, pref?.language],
-  );
-  const { locale, localeTag, t, tWarn } = copy;
+      void targetSide.runSearch(sideParams);
+    }, [
+      outboundSide, returnSide, origin, destination, travelDate, returnDate,
+      daysBefore, daysAfter, normalizedRadiusKm, includeStops,
+      includeNearbyOrigins, includeNearbyDestinations, departAfter, departBefore,
+      maxStops, excludeOrigins, excludeDestinations, strictFilters,
+      setStrictFilters, setDurationMax, setIncludeNearbyOrigins, setIncludeNearbyDestinations,
+      setRadiusKm, setExcludeOrigins, setExcludeDestinations, setExcludeOriginInput,
+      setExcludeDestinationInput, setDaysBefore, setDaysAfter,
+    ],
+  );  const { locale, localeTag, t, tWarn } = copy;
   const [flexCustomPanelOpen, setFlexCustomPanelOpen] = useState(false);
   const isRecommendations = mode === "recommendations";
   const pageTitle = isRecommendations ? t("titleRecommendations") : t("title");
@@ -1203,6 +786,42 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     });
     return `https://www.ryanair.com/es/es/trip/flights/select?${params.toString()}`;
   }, [adults, destination, destinationCountryOnly, isReturn, origin, originCountryOnly, returnDate, travelDate]);
+
+  // ── Fallback Ryanair URL for return leg in dual mode (Fase 13) ──────
+  const buildReturnFallbackUrl = useCallback(() => {
+    if (!returnDate || originCountryOnly || destinationCountryOnly) return "";
+    const originMac = IATA_TO_MAC[origin] || "";
+    const destinationMac = IATA_TO_MAC[destination] || "";
+    const params = new URLSearchParams({
+      adults: String(adults),
+      teens: "0",
+      children: "0",
+      infants: "0",
+      dateOut: returnDate,
+      dateIn: "",
+      isConnectedFlight: "false",
+      discount: "0",
+      promoCode: "",
+      isReturn: "false",
+      originIata: destination,
+      destinationIata: origin,
+      originMac: destinationMac,
+      destinationMac: originMac,
+      tpAdults: String(adults),
+      tpTeens: "0",
+      tpChildren: "0",
+      tpInfants: "0",
+      tpStartDate: returnDate,
+      tpEndDate: "",
+      tpDiscount: "0",
+      tpPromoCode: "",
+      tpOriginIata: destination,
+      tpDestinationIata: origin,
+      tpOriginMac: destinationMac,
+      tpDestinationMac: originMac,
+    });
+    return `https://www.ryanair.com/es/es/trip/flights/select?${params.toString()}`;
+  }, [adults, destination, destinationCountryOnly, origin, originCountryOnly, returnDate]);
 
   const originCode = origin.trim().toUpperCase();
   const destinationCode = destination.trim().toUpperCase();
@@ -5147,10 +4766,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 zeroResultCauses={outboundPanelState.zeroResultCauses}
                 visibleZeroResultCauses={outboundPanelState.visibleZeroResultCauses}
                 canExpandZeroResultCauses={outboundPanelState.canExpandZeroResultCauses}
-                emptyCausesExpanded={false}
+                emptyCausesExpanded={outboundEmptyCausesExpanded}
                 zeroResultActions={outboundPanelState.zeroResultActions}
-                onToggleEmptyCauses={() => {}}
-                onRelaxAction={() => {}}
+                onToggleEmptyCauses={() => setOutboundEmptyCausesExpanded((prev) => !prev)}
+                onRelaxAction={(action) => { void handleDualRelaxAction(action, "outbound"); }}
                 onRunSearch={() => outboundSide.goToPage(1)}
                 onEmptyCta={() => outboundSide.goToPage(1)}
                 t={t}
@@ -5266,10 +4885,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 zeroResultCauses={returnPanelState.zeroResultCauses}
                 visibleZeroResultCauses={returnPanelState.visibleZeroResultCauses}
                 canExpandZeroResultCauses={returnPanelState.canExpandZeroResultCauses}
-                emptyCausesExpanded={false}
+                emptyCausesExpanded={returnEmptyCausesExpanded}
                 zeroResultActions={returnPanelState.zeroResultActions}
-                onToggleEmptyCauses={() => {}}
-                onRelaxAction={() => {}}
+                onToggleEmptyCauses={() => setReturnEmptyCausesExpanded((prev) => !prev)}
+                onRelaxAction={(action) => { void handleDualRelaxAction(action, "return"); }}
                 onRunSearch={() => returnSide.goToPage(1)}
                 onEmptyCta={() => returnSide.goToPage(1)}
                 t={t}
@@ -5280,15 +4899,15 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 compactView={compactView}
                 expandedRows={returnSide.expandedRows}
                 openRowMenuId={null}
-                deeplinkUrl={returnSide.deepLink?.url || returnSide.deepLink?.fallback_url || localRyanairUrl}
+                deeplinkUrl={returnSide.deepLink?.url || returnSide.deepLink?.fallback_url || buildReturnFallbackUrl()}
                 origin={destination}
                 destination={origin}
                 radiusKm={radiusKm}
                 departAfter={departAfter}
                 departBefore={departBefore}
                 localeTag={localeTag}
-                weatherOrigin={returnSide.weatherDestination}
-                weatherDestination={returnSide.weatherOrigin}
+                weatherOrigin={null} /* Phase 14: weather not fetched in dual mode */
+                weatherDestination={null} /* Phase 14: weather not fetched in dual mode */
                 getCopyPayload={getCopyPayload}
                 rowMenuTriggerRefs={rowMenuTriggerRefs}
                 t={t}
@@ -5359,7 +4978,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 const rb = returnSide.selectedResultId
                   ? returnPanelState.visibleResults.find((r, i) => resultKey(r, i) === returnSide.selectedResultId)
                   : returnPanelState.visibleResults[0];
-                if (ob && rb) return (ob.price_total ?? ob.price ?? 0) + (rb.price_total ?? rb.price ?? 0);
+                if (ob && rb) {
+                  const obPrice = ob.price_total ?? ob.price;
+                  const rbPrice = rb.price_total ?? rb.price;
+                  if (obPrice == null || rbPrice == null) return null;
+                  return obPrice + rbPrice;
+                }
                 return null;
               })()
             }
