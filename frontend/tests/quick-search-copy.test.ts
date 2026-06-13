@@ -47,4 +47,6 @@ test("quick search copy exposes state microcopy in es", () => {
   assert.equal(t("flexTitle"), "Que margen tienes con la fecha?");
   assert.equal(t("flexPresetCustom"), "Personalizar");
   assert.equal(t("flexCustomSummary"), "Personalizado · -{before} / +{after} dias");
+  assert.equal(t("aiPreferredPrice"), "Precio recomendado");
+  assert.equal(t("aiPreferredAria"), "Resultado preferido por IA");
 });

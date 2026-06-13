@@ -80,7 +80,7 @@ function QuickSearchResultsListInner(props: Props) {
                 : "";
             const expanded = Boolean(props.expandedRows[rowId]);
             const detailsId = `details-${rowId}`;
-            const compactTag = props.getResultTags(r, "compact")[0];
+            const compactTags = props.getResultTags(r, "compact");
             const departureCompact = r.departure_time_local || "--";
             const rowDurationLabel = r.duration_total_min ? `${r.duration_total_min} min` : "--";
             const rowFreshnessLabel = r.stale_data
@@ -88,8 +88,12 @@ function QuickSearchResultsListInner(props: Props) {
               : r.freshness_ts
                 ? props.formatFreshness(r.freshness_ts)
                 : "--";
+            const aiReason = typeof r.ai_preferred_reason === "string" ? r.ai_preferred_reason.trim() : "";
             return (
-              <article key={rowId} className={`qs-result-row ${expanded ? "expanded" : ""} ${props.compactView ? "qs-result-row-compact" : ""}`}>
+              <article
+                key={rowId}
+                className={`qs-result-row ${expanded ? "expanded" : ""} ${props.compactView ? "qs-result-row-compact" : ""} ${r.ai_preferred ? "qs-result-row-ai" : ""}`}
+              >
                 <div className="qs-result-main">
                   {props.compactView ? (
                     <>
@@ -101,7 +105,15 @@ function QuickSearchResultsListInner(props: Props) {
                         <span>{departureCompact}</span>
                       </div>
                       <div className="qs-result-badges">
-                        <span className={`qs-tag qs-tag-${compactTag.tone}`}>{compactTag.label}</span>
+                        {compactTags.map((tag) => (
+                          <span
+                            key={`${rowId}-${tag.key}`}
+                            className={`qs-tag qs-tag-${tag.tone}`}
+                            aria-label={tag.key === "ai-preferred" ? props.t("aiPreferredAria") : undefined}
+                          >
+                            {tag.label}
+                          </span>
+                        ))}
                       </div>
                     </>
                   ) : (
@@ -122,9 +134,20 @@ function QuickSearchResultsListInner(props: Props) {
                       </div>
                       <div className="qs-result-badges">
                         {props.getResultTags(r, "normal").map((tag) => (
-                          <span key={`${rowId}-${tag.key}`} className={`qs-tag qs-tag-${tag.tone}`}>{tag.label}</span>
+                          <span
+                            key={`${rowId}-${tag.key}`}
+                            className={`qs-tag qs-tag-${tag.tone}`}
+                            aria-label={tag.key === "ai-preferred" ? props.t("aiPreferredAria") : undefined}
+                          >
+                            {tag.label}
+                          </span>
                         ))}
                       </div>
+                      {r.ai_preferred && aiReason ? (
+                        <p className="qs-result-ai-reason">
+                          <strong>{props.t("aiPreferredReasonLabel")}:</strong> {aiReason}
+                        </p>
+                      ) : null}
                     </>
                   )}
                 </div>
@@ -238,7 +261,13 @@ function QuickSearchResultsListInner(props: Props) {
                   <div className="qs-result-details" id={detailsId}>
                     <div className="qs-result-detail-tags">
                       {props.getResultTags(r, "expanded").map((tag) => (
-                        <span key={`${detailsId}-${tag.key}`} className={`qs-tag qs-tag-${tag.tone}`}>{tag.label}</span>
+                        <span
+                          key={`${detailsId}-${tag.key}`}
+                          className={`qs-tag qs-tag-${tag.tone}`}
+                          aria-label={tag.key === "ai-preferred" ? props.t("aiPreferredAria") : undefined}
+                        >
+                          {tag.label}
+                        </span>
                       ))}
                       {r.minutes_buffer !== null && r.minutes_buffer !== undefined ? (
                         <span className="qs-tag qs-tag-fresh">{props.t("detailsBuffer")} {r.minutes_buffer} min</span>
@@ -259,6 +288,12 @@ function QuickSearchResultsListInner(props: Props) {
                       <strong>{props.t("detailsScore")}</strong>
                       <p>{props.t("scoreHint")} - {r.ranking_score ? props.formatScore(r.ranking_score) : "--"}</p>
                     </div>
+                    {r.ai_preferred && aiReason ? (
+                      <div>
+                        <strong>{props.t("aiPreferredReasonLabel")}</strong>
+                        <p>{aiReason}</p>
+                      </div>
+                    ) : null}
                     <div>
                       <strong>{props.t("source")}</strong>
                       <p>{(r.source || "").trim() || props.t("sourceUnknown")}</p>

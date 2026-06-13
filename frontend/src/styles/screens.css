@@ -3030,6 +3030,13 @@ h1 {
   border-bottom: none;
 }
 
+.qs-result-row-ai {
+  position: relative;
+  box-shadow:
+    inset 3px 0 0 color-mix(in srgb, var(--color-accent) 58%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
 .qs-result-main {
   display: grid;
   gap: 0.35rem;
@@ -3118,6 +3125,23 @@ h1 {
   border-color: var(--color-border-strong);
 }
 
+.qs-tag-ai {
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  color: var(--color-accent-strong);
+  border-color: color-mix(in srgb, var(--color-accent) 42%, transparent);
+}
+
+.qs-result-ai-reason {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+.qs-result-ai-reason strong {
+  color: var(--color-text-primary);
+}
+
 .qs-result-detail-tags {
   display: flex;
   flex-wrap: wrap;
@@ -3154,6 +3178,12 @@ h1 {
 .qs-result-row-compact {
   gap: 0.85rem;
   padding: 0.75rem;
+}
+
+.qs-result-row-compact.qs-result-row-ai {
+  box-shadow:
+    inset 3px 0 0 color-mix(in srgb, var(--color-accent) 58%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--color-accent) 12%, transparent);
 }
 
 .qs-result-meta-compact {

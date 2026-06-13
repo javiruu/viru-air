@@ -5,11 +5,13 @@ from unittest.mock import patch
 try:
     from app.api.v1.search import quick_search
     from app.domain.entities import ProviderFetchResult, ProviderFlight
+    from app.services.quick_search_ai_preference import QuickSearchAiPreferenceResult
     from app.services.quick_search_execution import _CACHE
 except Exception:  # pragma: no cover
     quick_search = None
     ProviderFetchResult = None
     ProviderFlight = None
+    QuickSearchAiPreferenceResult = None
     _CACHE = None
 
 
@@ -23,7 +25,7 @@ def _flight(price: float, dep: str, source: str = "test-provider", currency: str
     )
 
 
-@unittest.skipIf(quick_search is None or ProviderFlight is None, "fastapi app deps not available")
+@unittest.skipIf(quick_search is None or ProviderFlight is None or QuickSearchAiPreferenceResult is None, "fastapi app deps not available")
 class QuickSearchE2ERegressionTests(unittest.TestCase):
     def setUp(self):
         if _CACHE is not None:
@@ -292,6 +294,44 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
         self.assertIn("providers", provider_status)
         self.assertIn("overall_status", provider_status)
         self.assertIsInstance(provider_status["providers"], list)
+
+    def test_ai_preference_marks_single_result_without_reordering(self):
+        payload = self._payload(
+            origin={"seed_iata": "LEI", "include_nearby": True, "radius_km": 260, "max_candidates": 3},
+            execution={"max_pairs": 6, "max_requests": 6, "timeout_ms": 3000, "concurrency_limit": 2},
+        )
+
+        def fake_fetch(origin: str, destination: str, date: str, timeout_ms: int, currency: str = "EUR"):
+            if origin == "LEI":
+                return [_flight(55, "09:00")]
+            return [_flight(49, "11:00")]
+
+        def fake_ai_preference(results, *, query_context):
+            return QuickSearchAiPreferenceResult(
+                enabled=True,
+                source="ai",
+                preferred_result_id=results[1]["result_id"],
+                fallback_used=False,
+                reason="Precio recomendado por equilibrio.",
+                failure_reason=None,
+            )
+
+        with (
+            patch("app.api.v1.search.provider.get_flights", side_effect=fake_fetch),
+            patch(
+                "app.api.v1.search.select_quick_search_ai_preference",
+                side_effect=fake_ai_preference,
+            ),
+        ):
+            result = self._call_quick_search(payload)
+
+        self.assertGreaterEqual(len(result["results"]), 2)
+        self.assertEqual(result["results"][0]["origin"], "LEI")
+        preferred = [item for item in result["results"] if item["ai_preferred"]]
+        self.assertEqual(len(preferred), 1)
+        self.assertEqual(preferred[0]["result_id"], result["results"][1]["result_id"])
+        self.assertEqual(preferred[0]["ai_preferred_reason"], "Precio recomendado por equilibrio.")
+        self.assertEqual(result["meta"]["ai_preference"]["preferred_result_id"], result["results"][1]["result_id"])
 
 
 if __name__ == "__main__":
