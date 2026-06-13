@@ -112,6 +112,7 @@ const RELAX_HIGHLIGHT_BY_ACTION: Record<ZeroResultRelaxAction, Exclude<SummaryHi
 const IATA_TO_MAC: Record<string, string> = {
   BRU: "BRL",
 };
+
 const NON_FATAL_QS_SCOPES = new Set<string>([
   "seed_countries_fallback_used",
   "seed_bootstrap_failed",
@@ -567,7 +568,39 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       setRadiusKm, setExcludeOrigins, setExcludeDestinations, setExcludeOriginInput,
       setExcludeDestinationInput, setDaysBefore, setDaysAfter,
     ],
-  );  const { locale, localeTag, t, tWarn } = getQuickSearchCopy();
+  );  const copy = useMemo(
+    () => getQuickSearchCopy(regionPref?.language ?? pref?.language),
+    [regionPref?.language, pref?.language],
+  );
+  const { locale, localeTag, t, tWarn } = copy;
+  const debugLog = useCallback((message: string) => {
+    if (process.env.NODE_ENV === "production" || typeof window === "undefined") return;
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    if (debugEpochRef.current === null) {
+      debugEpochRef.current = now;
+    }
+    const ts = Math.max(0, Math.round(now - debugEpochRef.current));
+    // eslint-disable-next-line no-console
+    console.debug(`[qs] ${message} ts=${ts}ms`);
+  }, [debugEpochRef]);
+
+  const logQuickSearchApiError = useCallback((scope: string, meta: Record<string, unknown>) => {
+    if (typeof window === "undefined") return;
+    const nonFatal = NON_FATAL_QS_SCOPES.has(scope);
+    if (process.env.NODE_ENV === "production") {
+      // eslint-disable-next-line no-console
+      console.warn(`[qs] ${scope}`, meta);
+      return;
+    }
+    if (nonFatal) {
+      // eslint-disable-next-line no-console
+      console.warn(`[qs] ${scope}`, meta);
+      return;
+    }
+    // eslint-disable-next-line no-console
+    console.error(`[qs] ${scope}`, meta);
+  }, []);
+
   const [flexCustomPanelOpen, setFlexCustomPanelOpen] = useState(false);
   const isRecommendations = mode === "recommendations";
   const pageTitle = isRecommendations ? t("titleRecommendations") : t("title");
@@ -610,6 +643,104 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       return null;
     }
   }, [localeTag]);
+
+  const mergeSeedAirportEntries = useCallback((entries: AirportIataEntry[]) => {
+    if (!Array.isArray(entries) || entries.length === 0) return;
+    setSeedAirports((prev) => {
+      const byIata = new Map(prev.map((item) => [item.iata, item]));
+      for (const entry of entries) {
+        if (!entry?.iata) continue;
+        byIata.set(entry.iata, entry);
+      }
+      return Array.from(byIata.values());
+    });
+  }, []);
+
+  const fetchSeedAirports = useCallback(async (params: {
+    q?: string;
+    country_code?: string;
+    limit?: number;
+    offset?: number;
+  }) => {
+    const search = new URLSearchParams();
+    if (params.q) search.set("q", params.q);
+    if (params.country_code) search.set("country_code", params.country_code);
+    if (params.limit) search.set("limit", String(params.limit));
+    if (params.offset) search.set("offset", String(params.offset));
+    const query = search.toString();
+    type QuickSearchSeedAirportResponse = { items?: AirportIataEntry[]; total?: number; next_offset?: number };
+    const data = await apiFetch<QuickSearchSeedAirportResponse>(`/airports/seeds${query ? `?${query}` : ""}`);
+    const items = Array.isArray(data?.items) ? data.items : [];
+    mergeSeedAirportEntries(items);
+    return data;
+  }, [mergeSeedAirportEntries]);
+
+  const fetchSeedCountriesFromSeeds = useCallback(async (): Promise<Array<{ code: string; name: string; airport_count: number }>> => {
+    const byCode = new Map<string, number>();
+    const pageLimit = 500;
+    let offset = 0;
+    let guard = 0;
+
+    while (guard < 20) {
+      guard += 1;
+      const data = await fetchSeedAirports({ limit: pageLimit, offset });
+      const items = Array.isArray(data?.items) ? data.items : [];
+      for (const airport of items) {
+        const code = (airport.country_code || "").trim().toUpperCase();
+        if (!code) continue;
+        byCode.set(code, (byCode.get(code) || 0) + 1);
+      }
+      const nextOffset = typeof data?.next_offset === "number" ? data.next_offset : null;
+      if (nextOffset !== null && nextOffset > offset) {
+        offset = nextOffset;
+        continue;
+      }
+      const total = typeof data?.total === "number" ? data.total : null;
+      if (total !== null && offset + items.length < total && items.length > 0) {
+        offset += items.length;
+        continue;
+      }
+      break;
+    }
+
+    const resolveCountryName = (code: string): string => {
+      try {
+        const locale = typeof navigator !== "undefined" && navigator.language ? navigator.language : "en";
+        const display = new Intl.DisplayNames([locale], { type: "region" });
+        return display.of(code) || code;
+      } catch {
+        return code;
+      }
+    };
+
+    return Array.from(byCode.entries())
+      .map(([code, airport_count]) => ({
+        code,
+        name: resolveCountryName(code),
+        airport_count,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [fetchSeedAirports]);
+
+  const airportsByCountry = useMemo(() => {
+    const next = new Map<string, AirportIataEntry[]>();
+    for (const airport of seedAirports) {
+      const key = airport.country_code || "";
+      const list = next.get(key) || [];
+      list.push(airport);
+      next.set(key, list);
+    }
+    return next;
+  }, [seedAirports]);
+
+  const airportsByIata = useMemo(() => {
+    const next = new Map<string, AirportIataEntry>();
+    for (const airport of seedAirports) {
+      next.set(airport.iata, airport);
+    }
+    return next;
+  }, [seedAirports]);
+
   const countryOptions = useMemo(() => {
     const list = seedCountries.map((country) => ({
       code: country.code,
@@ -1191,7 +1322,41 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   // isWeatherRangeSupported imported from @/modules/quick-search/weatherUtils
 
   // fetchWeather imported from @/modules/quick-search/weatherUtils
-  const fetchWeather = (iata: string, start: string, end: string) => fetchWeatherApi(iata, start, end, t);
+  const fetchWeather = (iata: string, start: string, end: string) => fetchWeatherApi(iata, start, end, t as unknown as (key: string) => string);
+
+  const closeExplainPopover = useCallback(() => {
+    setIsExplainOpen(false);
+    if (explainPopoverRef.current) {
+      explainPopoverRef.current.open = false;
+    }
+    if (typeof window !== "undefined") {
+      window.requestAnimationFrame(() => {
+        explainTriggerRef.current?.focus();
+      });
+    }
+  }, [explainPopoverRef, explainTriggerRef, setIsExplainOpen]);
+
+  const closeFiltersDrawer = useCallback(() => {
+    setIsFiltersOpen(false);
+    if (typeof window !== "undefined") {
+      window.requestAnimationFrame(() => {
+        filtersToggleRef.current?.focus();
+      });
+    }
+  }, [filtersToggleRef, setIsFiltersOpen]);
+
+  const closeRowMenu = useCallback((targetId?: string | null) => {
+    setOpenRowMenuId((prev) => {
+      const idToClose = targetId ?? prev;
+      if (!idToClose) return prev;
+      if (typeof window !== "undefined") {
+        window.requestAnimationFrame(() => {
+          rowMenuTriggerRefs.current[idToClose]?.focus();
+        });
+      }
+      return prev === idToClose ? null : prev;
+    });
+  }, [rowMenuTriggerRefs, setOpenRowMenuId]);
 
   async function onSubmit(event: FormEvent, options?: { page?: number }) {
     event.preventDefault();
@@ -1437,7 +1602,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       setIsLoading(true);
       const originWeatherIata = originCountryOnly ? "" : originCode;
       const destinationWeatherIata = destinationCountryOnly ? "" : destinationCode;
-      const weatherRangeSupported = range.length > 0 && isWeatherRangeSupported(range[0], range[range.length - 1]);
+      const weatherRangeSupported = range.length > 0 && isWeatherRangeSupportedCheck(range[0], range[range.length - 1]);
       if (!weatherRangeSupported && (originWeatherIata || destinationWeatherIata)) {
         setWeatherMessage(t("weatherUnavailableRange"));
       }
