@@ -1,3 +1,4 @@
+from time import sleep
 import os
 import tempfile
 from datetime import UTC, date, datetime, timedelta
@@ -95,6 +96,7 @@ def _create_alert_events(client: TestClient, *, email: str) -> str:
         },
     )
     client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers)
+    sleep(1.1)
     client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers)
     evaluate = client.post("/api/v1/alerts/evaluate", headers=headers, json={"watch_id": watch_id})
     assert evaluate.status_code == 200
