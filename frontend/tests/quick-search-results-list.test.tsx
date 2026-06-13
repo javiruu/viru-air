@@ -51,6 +51,9 @@ function t(key: string) {
     scoreHint: "Heuristica",
     summaryRadius: "Radio",
     sourceUnknown: "Fuente desconocida",
+    aiPreferredPrice: "Precio recomendado",
+    aiPreferredAria: "Resultado preferido por IA",
+    aiPreferredReasonLabel: "Motivo recomendado",
   };
   return copy[key] || key;
 }
@@ -175,4 +178,170 @@ test("QuickSearchResultsList accepts official relative deeplink variants and rej
   );
 
   assert.doesNotMatch(htmlWithLandingOnly, /Abrir en Ryanair/);
+});
+
+test("QuickSearchResultsList renders ai preferred tag and reason", () => {
+  const html = renderToStaticMarkup(
+    <QuickSearchResultsList
+      visibleResults={[{ ...buildResult(), ai_preferred: true, ai_preferred_reason: "Precio recomendado por equilibrio." }]}
+      compactView={false}
+      expandedRows={{}}
+      openRowMenuId={null}
+      deeplinkUrl="https://www.ryanair.com/es/es/trip/flights/select?originIata=MAD&destinationIata=LIS&dateOut=2026-06-01&adults=1"
+      origin="MAD"
+      destination="LIS"
+      radiusKm={150}
+      departAfter="07:00"
+      departBefore="22:00"
+      localeTag="es"
+      getCopyPayload={() => "payload"}
+      rowMenuTriggerRefs={{ current: {} }}
+      t={t}
+      formatMoney={(value, currency) => `${currency || "EUR"} ${value}`}
+      formatScore={(value) => value.toFixed(2)}
+      formatFreshness={(value) => value || "--"}
+      formatMinutes={(value) => `${value ?? 0} min`}
+      resultKey={(result) => result.result_id || "fallback"}
+      getResultTags={() => [{ key: "ai-preferred", label: "Precio recomendado", tone: "ai" }]}
+      addToWatchlist={() => undefined}
+      setExpandedRows={() => undefined}
+      setSelectedResultId={() => undefined}
+      setOpenRowMenuId={() => undefined}
+      setCopyModalPayload={() => undefined}
+      setCopyModalOpen={() => undefined}
+      closeRowMenu={() => undefined}
+      onTrackOpenRyanair={() => undefined}
+      onTrackRowOverflow={() => undefined}
+      onTrackCopyParams={() => undefined}
+    />,
+  );
+
+  assert.match(html, /Precio recomendado/);
+  assert.match(html, /Motivo recomendado/);
+  assert.match(html, /Precio recomendado por equilibrio/);
+  assert.match(html, /Resultado preferido por IA/);
+  assert.match(html, /qs-result-row-ai/);
+});
+
+test("QuickSearchResultsList keeps ai and itinerary tags in compact view", () => {
+  const html = renderToStaticMarkup(
+    <QuickSearchResultsList
+      visibleResults={[{ ...buildResult(), ai_preferred: true }]}
+      compactView={true}
+      expandedRows={{}}
+      openRowMenuId={null}
+      deeplinkUrl="https://www.ryanair.com/es/es/trip/flights/select?originIata=MAD&destinationIata=LIS&dateOut=2026-06-01&adults=1"
+      origin="MAD"
+      destination="LIS"
+      radiusKm={150}
+      departAfter="07:00"
+      departBefore="22:00"
+      localeTag="es"
+      getCopyPayload={() => "payload"}
+      rowMenuTriggerRefs={{ current: {} }}
+      t={t}
+      formatMoney={(value, currency) => `${currency || "EUR"} ${value}`}
+      formatScore={(value) => value.toFixed(2)}
+      formatFreshness={(value) => value || "--"}
+      formatMinutes={(value) => `${value ?? 0} min`}
+      resultKey={(result) => result.result_id || "fallback"}
+      getResultTags={() => [
+        { key: "ai-preferred", label: "Precio recomendado", tone: "ai" },
+        { key: "itinerary-direct", label: "Directo", tone: "fresh" },
+      ]}
+      addToWatchlist={() => undefined}
+      setExpandedRows={() => undefined}
+      setSelectedResultId={() => undefined}
+      setOpenRowMenuId={() => undefined}
+      setCopyModalPayload={() => undefined}
+      setCopyModalOpen={() => undefined}
+      closeRowMenu={() => undefined}
+      onTrackOpenRyanair={() => undefined}
+      onTrackRowOverflow={() => undefined}
+      onTrackCopyParams={() => undefined}
+    />,
+  );
+
+  assert.match(html, /Precio recomendado/);
+  assert.match(html, /Directo/);
+  assert.match(html, /Resultado preferido por IA/);
+});
+
+test("QuickSearchResultsList shows ai reason in expanded details", () => {
+  const html = renderToStaticMarkup(
+    <QuickSearchResultsList
+      visibleResults={[{ ...buildResult(), ai_preferred: true, ai_preferred_reason: "Mas barato sin sacrificar frescura." }]}
+      compactView={false}
+      expandedRows={{ "res-1": true }}
+      openRowMenuId={null}
+      deeplinkUrl="https://www.ryanair.com/es/es/trip/flights/select?originIata=MAD&destinationIata=LIS&dateOut=2026-06-01&adults=1"
+      origin="MAD"
+      destination="LIS"
+      radiusKm={150}
+      departAfter="07:00"
+      departBefore="22:00"
+      localeTag="es"
+      getCopyPayload={() => "payload"}
+      rowMenuTriggerRefs={{ current: {} }}
+      t={t}
+      formatMoney={(value, currency) => `${currency || "EUR"} ${value}`}
+      formatScore={(value) => value.toFixed(2)}
+      formatFreshness={(value) => value || "--"}
+      formatMinutes={(value) => `${value ?? 0} min`}
+      resultKey={(result) => result.result_id || "fallback"}
+      getResultTags={() => [{ key: "ai-preferred", label: "Precio recomendado", tone: "ai" }]}
+      addToWatchlist={() => undefined}
+      setExpandedRows={() => undefined}
+      setSelectedResultId={() => undefined}
+      setOpenRowMenuId={() => undefined}
+      setCopyModalPayload={() => undefined}
+      setCopyModalOpen={() => undefined}
+      closeRowMenu={() => undefined}
+      onTrackOpenRyanair={() => undefined}
+      onTrackRowOverflow={() => undefined}
+      onTrackCopyParams={() => undefined}
+    />,
+  );
+
+  assert.match(html, /details-res-1/);
+  assert.match(html, /Mas barato sin sacrificar frescura/);
+});
+
+test("QuickSearchResultsList omits empty ai reason copy", () => {
+  const html = renderToStaticMarkup(
+    <QuickSearchResultsList
+      visibleResults={[{ ...buildResult(), ai_preferred: true, ai_preferred_reason: "   " }]}
+      compactView={false}
+      expandedRows={{}}
+      openRowMenuId={null}
+      deeplinkUrl="https://www.ryanair.com/es/es/trip/flights/select?originIata=MAD&destinationIata=LIS&dateOut=2026-06-01&adults=1"
+      origin="MAD"
+      destination="LIS"
+      radiusKm={150}
+      departAfter="07:00"
+      departBefore="22:00"
+      localeTag="es"
+      getCopyPayload={() => "payload"}
+      rowMenuTriggerRefs={{ current: {} }}
+      t={t}
+      formatMoney={(value, currency) => `${currency || "EUR"} ${value}`}
+      formatScore={(value) => value.toFixed(2)}
+      formatFreshness={(value) => value || "--"}
+      formatMinutes={(value) => `${value ?? 0} min`}
+      resultKey={(result) => result.result_id || "fallback"}
+      getResultTags={() => [{ key: "ai-preferred", label: "Precio recomendado", tone: "ai" }]}
+      addToWatchlist={() => undefined}
+      setExpandedRows={() => undefined}
+      setSelectedResultId={() => undefined}
+      setOpenRowMenuId={() => undefined}
+      setCopyModalPayload={() => undefined}
+      setCopyModalOpen={() => undefined}
+      closeRowMenu={() => undefined}
+      onTrackOpenRyanair={() => undefined}
+      onTrackRowOverflow={() => undefined}
+      onTrackCopyParams={() => undefined}
+    />,
+  );
+
+  assert.doesNotMatch(html, /Motivo recomendado/);
 });

@@ -109,6 +109,20 @@ The endpoint still returns `query`, `filters`, `results` and now adds:
 - `meta.legacy_aliases_used`
 - `meta.filter_support`
 - `meta.pair_counts`
+- `meta.ai_preference`
+
+### AI preferred result
+- `meta.ai_preference`:
+  - `enabled`: `boolean`
+  - `source`: `ai | heuristic`
+  - `preferred_result_id`: `string | null`
+  - `fallback_used`: `boolean`
+- `results[]` may include:
+  - `ai_preferred`: `boolean`
+  - `ai_preferred_reason`: `string | null`
+- At most one result per response may arrive with `ai_preferred=true`.
+- The preferred result is selected from the already ranked and paginated response set; the backend does not reorder `results[]`.
+- If OpenAI is unavailable, times out, or returns invalid output, backend falls back to a deterministic heuristic and exposes that through `meta.ai_preference.source="heuristic"` plus `fallback_used=true`.
 
 ## Provider status (multi-provider compatible)
 

@@ -35,6 +35,7 @@ from app.services.quick_search_execution import (
 )
 from app.services.quick_search_expansion import SideExpansionResult, SideExpansionSummary, expand_search_sides
 from app.services.quick_search_planner import PairPlanItem, build_pair_plan
+from app.services.quick_search_ai_preference import select_quick_search_ai_preference
 from app.services.quick_search_ranking import rank_quick_search_results
 from app.services.quick_search_cache_service import (
     deserialize_fetch_result,
@@ -2240,10 +2241,63 @@ def quick_search(
         },
     }
 
+    serialized_results = [
+        {
+            "result_id": f"{item.origin}-{item.destination}-{item.travel_date}-{pagination_start + idx}",
+            "origin": item.origin,
+            "destination": item.destination,
+            "travel_date": str(item.travel_date),
+            "departure_time_local": item.flight.departure_time_local,
+            "price": item.flight.price,
+            "price_total": item.flight.price,
+            "currency": item.flight.currency,
+            "source": item.flight.source,
+            "duration_total_min": _estimate_duration_minutes(item.origin, item.destination),
+            "ranking_score": item.final_score,
+            "stale_data": False,
+            "freshness_ts": item.flight.captured_at.isoformat(),
+            "itinerary_type": "direct",
+            "legs": [],
+            "score": item.score_breakdown,
+            "origin_seed_iata": item.origin_seed_iata,
+            "destination_seed_iata": item.destination_seed_iata,
+            "origin_iata_used": item.origin,
+            "destination_iata_used": item.destination,
+            "origin_is_seed": item.origin_is_seed,
+            "destination_is_seed": item.destination_is_seed,
+            "origin_distance_from_seed_km": item.origin_distance_from_seed_km,
+            "destination_distance_from_seed_km": item.destination_distance_from_seed_km,
+            "pair_category": item.pair_category,
+            "discovery_explanation": item.discovery_explanation,
+            "query_trace_id": query_trace_id,
+            "selected_from_pair_id": f"{item.origin}->{item.destination}",
+            "candidate_reason": "seed" if item.origin_is_seed and item.destination_is_seed else "expanded",
+            "ai_preferred": False,
+            "ai_preferred_reason": None,
+        }
+        for idx, item in enumerate(paginated_ranked_results)
+    ]
+    ai_preference = select_quick_search_ai_preference(
+        serialized_results,
+        query_context={
+            "origin_seed_pool": signature_origin_seed_pool,
+            "destination_seed_pool": signature_destination_seed_pool,
+            "travel_date": str(travel_date_value),
+            "winning_step": selected_pass["step"],
+            "strict_filters": strict_filters,
+        },
+    )
+    if ai_preference.enabled and ai_preference.preferred_result_id:
+        for item in serialized_results:
+            if item["result_id"] == ai_preference.preferred_result_id:
+                item["ai_preferred"] = True
+                item["ai_preferred_reason"] = ai_preference.reason
+                break
+
     logger.info(
-        "quick_search trace=%s results=%s planned_pairs=%s requested_units=%s rescue=%s winning_step=%s warnings=%s provider_statuses=%s concurrency_limit=%s l1_hits=%s l2_hits=%s provider_calls=%s",
+        "quick_search trace=%s results=%s planned_pairs=%s requested_units=%s rescue=%s winning_step=%s warnings=%s provider_statuses=%s concurrency_limit=%s l1_hits=%s l2_hits=%s provider_calls=%s ai_source=%s ai_preferred_result_id=%s ai_fallback=%s ai_failure_reason=%s",
         query_trace_id,
-        len(paginated_ranked_results),
+        len(serialized_results),
         pair_plan_stats["total_pairs"],
         execution_meta.get("requested_units_count", 0),
         rescue_attempted,
@@ -2254,6 +2308,10 @@ def quick_search(
         execution_meta.get("l1_cache_hits", 0),
         execution_meta.get("l2_cache_hits", 0),
         execution_meta.get("provider_calls", 0),
+        ai_preference.source,
+        ai_preference.preferred_result_id,
+        ai_preference.fallback_used,
+        ai_preference.failure_reason,
     )
 
     # Fase 13: Lazy pruning of expired cache entries (probabilistic, ~10% of requests).
@@ -2289,6 +2347,13 @@ def quick_search(
             },
             "query_signature": query_signature,
             "planned_route_scope": planned_route_scope,
+            "ai_preference": {
+                "enabled": ai_preference.enabled,
+                "source": ai_preference.source,
+                "preferred_result_id": ai_preference.preferred_result_id,
+                "fallback_used": ai_preference.fallback_used,
+                "failure_reason": ai_preference.failure_reason,
+            },
         }
 
     return {
@@ -2457,6 +2522,12 @@ def quick_search(
                 "soft_filters_applied": ["seed_distance_penalty", "pair_category_bias", "soft_filters_weight"],
             },
             "provider_status": provider_status,
+            "ai_preference": {
+                "enabled": ai_preference.enabled,
+                "source": ai_preference.source,
+                "preferred_result_id": ai_preference.preferred_result_id,
+                "fallback_used": ai_preference.fallback_used,
+            },
             "warnings_structured": warnings_structured,
             "ranking": {
                 "version": "quick_ranking.v1",
@@ -2485,40 +2556,7 @@ def quick_search(
             "warnings": ui_warning_codes,
             "discarded": max(0, len(combined) - len(flights_after_filters)) + out_of_scope_discarded,
         },
-        "results": [
-            {
-                "result_id": f"{item.origin}-{item.destination}-{item.travel_date}-{pagination_start + idx}",
-                "origin": item.origin,
-                "destination": item.destination,
-                "travel_date": str(item.travel_date),
-                "departure_time_local": item.flight.departure_time_local,
-                "price": item.flight.price,
-                "price_total": item.flight.price,
-                "currency": item.flight.currency,
-                "source": item.flight.source,
-                "duration_total_min": _estimate_duration_minutes(item.origin, item.destination),
-                "ranking_score": item.final_score,
-                "stale_data": False,
-                "freshness_ts": item.flight.captured_at.isoformat(),
-                "itinerary_type": "direct",
-                "legs": [],
-                "score": item.score_breakdown,
-                "origin_seed_iata": item.origin_seed_iata,
-                "destination_seed_iata": item.destination_seed_iata,
-                "origin_iata_used": item.origin,
-                "destination_iata_used": item.destination,
-                "origin_is_seed": item.origin_is_seed,
-                "destination_is_seed": item.destination_is_seed,
-                "origin_distance_from_seed_km": item.origin_distance_from_seed_km,
-                "destination_distance_from_seed_km": item.destination_distance_from_seed_km,
-                "pair_category": item.pair_category,
-                "discovery_explanation": item.discovery_explanation,
-                "query_trace_id": query_trace_id,
-                "selected_from_pair_id": f"{item.origin}->{item.destination}",
-                "candidate_reason": "seed" if item.origin_is_seed and item.destination_is_seed else "expanded",
-            }
-            for idx, item in enumerate(paginated_ranked_results)
-        ],
+        "results": serialized_results,
     }
 
 

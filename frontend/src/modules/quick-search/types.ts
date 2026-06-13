@@ -36,6 +36,8 @@ export type SearchResultRaw = {
   score?: QuickSearchScoreBreakdown | number | null;
   freshness_ts?: string | null;
   stale_data?: boolean;
+  ai_preferred?: boolean;
+  ai_preferred_reason?: string | null;
   deeplink_url?: string | null;
   itinerary_type?: string | null;
   legs?: QuickSearchLeg[];
@@ -107,6 +109,12 @@ export type SearchResponseRaw = {
         results_count?: number;
       }>;
       legacy?: Record<string, unknown>;
+    };
+    ai_preference?: {
+      enabled?: boolean;
+      source?: "ai" | "heuristic";
+      preferred_result_id?: string | null;
+      fallback_used?: boolean;
     };
     pagination?: {
       page: number;
@@ -223,7 +231,7 @@ export type QuickSearchField =
 export type QuickSearchFieldErrors = Partial<Record<QuickSearchField, string>>;
 export type QuickSearchAutocompleteField = "origin" | "destination";
 export type QuickSearchMode = "quick-search" | "recommendations";
-export type QuickSearchTagTone = "low" | "med" | "high" | "fresh" | "stale";
+export type QuickSearchTagTone = "low" | "med" | "high" | "fresh" | "stale" | "ai";
 export type QuickSearchExplainTag = { key: string; label: string; tone: QuickSearchTagTone };
 export type QuickSearchTripType = "one_way" | "round_trip" | "round_trip_incomplete";
 export type QuickSearchLoadingPhase = "idle" | "requesting" | "response_parsed" | "client_done" | "committed";

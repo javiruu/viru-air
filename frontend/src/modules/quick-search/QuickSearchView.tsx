@@ -2370,19 +2370,37 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     return null;
   }
 
+  function getAiPreferredTag(result: SearchResult): QuickSearchExplainTag | null {
+    if (!result.ai_preferred) return null;
+    return {
+      key: "ai-preferred",
+      label: t("aiPreferredPrice"),
+      tone: "ai",
+    };
+  }
+
   function getResultTags(result: SearchResult, mode: "normal" | "compact" | "expanded"): QuickSearchExplainTag[] {
+    const aiPreferredTag = getAiPreferredTag(result);
     const itineraryTag = getItineraryTag(result);
     const freshnessTag = getFreshnessTag(result);
     if (mode === "compact") {
-      return [itineraryTag];
+      return [
+        ...(aiPreferredTag ? [aiPreferredTag] : []),
+        itineraryTag,
+      ];
     }
     if (mode === "expanded") {
       return [
+        ...(aiPreferredTag ? [aiPreferredTag] : []),
         itineraryTag,
         ...(freshnessTag ? [freshnessTag] : []),
       ].filter((tag): tag is QuickSearchExplainTag => Boolean(tag));
     }
-    return [itineraryTag, ...(freshnessTag ? [freshnessTag] : [])];
+    return [
+      ...(aiPreferredTag ? [aiPreferredTag] : []),
+      itineraryTag,
+      ...(freshnessTag ? [freshnessTag] : []),
+    ];
   }
 
   function parseIataList(raw: string): string[] {

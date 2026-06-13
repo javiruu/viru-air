@@ -99,6 +99,8 @@ export function normalizeQuickSearchResults(results: SearchResultRaw[]): SearchR
     ranking_score: extractRankingScore(item),
     freshness_ts: toOptionalString(item.freshness_ts),
     stale_data: Boolean(item.stale_data),
+    ai_preferred: Boolean(item.ai_preferred),
+    ai_preferred_reason: toOptionalString(item.ai_preferred_reason),
     deeplink_url: toOptionalString(item.deeplink_url),
     itinerary_type: item.itinerary_type ?? (item.stop_count && item.stop_count > 0 ? "self_connect" : "direct"),
     legs: item.legs ?? item.segments?.legs ?? [],
