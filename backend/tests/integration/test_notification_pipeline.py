@@ -1,3 +1,4 @@
+from time import sleep
 from datetime import date, timedelta
 
 from fastapi.testclient import TestClient
@@ -70,6 +71,7 @@ def test_dispatch_pending_delivers_in_app_events(client: TestClient, monkeypatch
         },
     )
     client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers)
+    sleep(1.1)
     client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers)
     evaluated = client.post("/api/v1/alerts/evaluate", headers=headers, json={"watch_id": watch_id})
     assert evaluated.status_code == 200
@@ -120,10 +122,13 @@ def test_dispatch_pending_handles_email_stub_and_retries_on_failure(client: Test
         },
     )
     client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers)
+    sleep(1.1)
     client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers)
     evaluate = client.post("/api/v1/alerts/evaluate", headers=headers, json={"watch_id": watch_id})
     assert evaluate.status_code == 200
     assert evaluate.json()["created"] == 2
+
+    sleep(60.1)
 
     def _always_fail(self, event):  # noqa: ANN001
         if event.channel == "email":

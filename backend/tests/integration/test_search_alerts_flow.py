@@ -1,3 +1,4 @@
+from time import sleep
 from datetime import date, timedelta
 
 from fastapi.testclient import TestClient
@@ -163,6 +164,7 @@ def test_alert_rule_min_change_pct_is_applied(client: TestClient, monkeypatch) -
     assert rule.json()["min_change_pct"] == 5.0
 
     assert client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers).status_code == 200
+    sleep(1.1)
     assert client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers).status_code == 200
     first_eval = client.post("/api/v1/alerts/evaluate", headers=headers, json={"watch_id": watch_id})
     assert first_eval.status_code == 200

@@ -1,3 +1,4 @@
+from time import sleep
 from datetime import UTC, date, datetime, timedelta
 
 from fastapi.testclient import TestClient
@@ -100,6 +101,7 @@ def test_quiet_hours_delay_email_dispatch(client: TestClient, monkeypatch) -> No
         },
     )
     client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers)
+    sleep(1.1)
     client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers)
     evaluate = client.post("/api/v1/alerts/evaluate", headers=headers, json={"watch_id": watch_id})
     assert evaluate.status_code == 200
@@ -170,6 +172,7 @@ def test_outside_quiet_hours_email_dispatches_normally(client: TestClient, monke
         },
     )
     client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers)
+    sleep(1.1)
     client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers)
     client.post("/api/v1/alerts/evaluate", headers=headers, json={"watch_id": watch_id})
 
@@ -214,6 +217,7 @@ def test_alert_events_are_grouped_into_digest_metadata(client: TestClient, monke
     )
 
     client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers)
+    sleep(1.1)
     client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers)
     first_eval = client.post("/api/v1/alerts/evaluate", headers=headers, json={"watch_id": watch_id})
     assert first_eval.status_code == 200
