@@ -1,7 +1,7 @@
 ﻿# Prompts y Contexto IA
 
 **Estado:** vivo  
-**Última revisión:** 2026-05-11  
+**Última revisión:** 2026-06-13
 **Fuente de verdad:** sí  
 **Área:** contexto IA
 
@@ -18,6 +18,7 @@ Esta carpeta separa el material operativo de agentes del histórico de prompts s
 
 ## Contenido actual
 
+- `codex-travel-roadmap-50-fases.md`: roadmap operativo para agentes durante el ciclo de viaje; no sustituye a contratos vivos.
 - `legacy/prompt-root-legacy.txt`: prompt antiguo movido desde la raíz.
 
 ## Qué no hacer

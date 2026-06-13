@@ -9,6 +9,18 @@
 
 Inventario completo de documentos `.md` y `.txt` relevantes del repositorio tras el saneamiento documental. Excluye dependencias, cach?s, builds, entornos virtuales, `_publish_repo` y otras salidas generadas masivas.
 
+## Actualizacion manual 2026-06-13 (roadmap de viaje 50 fases)
+
+Entradas vivas agregadas:
+
+- `docs/prompts/codex-travel-roadmap-50-fases.md`
+
+Entradas vivas actualizadas:
+
+- `docs/prompts/README.md`
+- `docs/INDICE_UNICO.md`
+- `docs/DOCS_INVENTORY.md`
+
 ## Actualizacion manual 2026-05-11 (Fase 0)
 
 Entradas vivas agregadas:
@@ -455,6 +467,7 @@ Entradas vivas retiradas:
 | docs/product/quick-search.md | product | vivo | conservar | docs/product/quick-search.md | Resumen funcional vivo por ?rea de producto | docs/product/quick-search.md |
 | docs/product/watchlist.md | product | vivo | conservar | docs/product/watchlist.md | Resumen funcional vivo por ?rea de producto | docs/product/watchlist.md |
 | docs/prompts/README.md | contexto IA | vivo | conservar | docs/prompts/README.md | Gu?a de organizaci?n de prompts y contexto IA | docs/prompts/README.md |
+| docs/prompts/codex-travel-roadmap-50-fases.md | contexto IA | vivo | conservar | docs/prompts/codex-travel-roadmap-50-fases.md | Roadmap operativo de 50 fases para agentes durante el ciclo de viaje; no sustituye contratos vivos | docs/prompts/codex-travel-roadmap-50-fases.md |
 | docs/prompts/legacy/prompt-root-legacy.txt | prompt | hist?rico | conservar | docs/prompts/legacy/prompt-root-legacy.txt | Prompt legacy preservado | ninguna; material hist?rico |
 | docs/qa/README.md | QA | vivo | conservar | docs/qa/README.md | Navegaci?n y matriz reutilizable de QA | docs/qa/README.md |
 | docs/qa/acceptance-checklists/frontend-pr-checklist.md | QA | vivo | conservar | docs/qa/acceptance-checklists/frontend-pr-checklist.md | Checklist reutilizable de QA | docs/qa/acceptance-checklists/frontend-pr-checklist.md |
