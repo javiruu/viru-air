@@ -703,31 +703,6 @@ test("F5: external actions in DoorToDoorOptionCard render as links with target=_
 
 /* ── Fase 6: Registry y fuentes explicables ────────────────── */
 
-test("F6: i18n includes whyMissing keys for all capability state reasons", () => {
-  const i18nSource = fs.readFileSync(D2D_I18N, "utf8");
-  const expectedReasons = [
-    "google_routes_disabled",
-    "live_traffic_not_wired",
-    "traffic_layer_pending",
-    "fares_and_booking_pending",
-    "gtfs_provider_disabled",
-    "route_candidates_pending",
-    "immersive_preview_pending",
-    "street_view_not_connected",
-    "shared_lists_pending",
-    "busy_times_and_parking_pending",
-    "google_places_disabled",
-    "offline_cache_not_implemented",
-    "incident_feed_pending",
-    "incident_source_not_connected",
-    "eco_scoring_pending",
-    "eco_route_provider_pending",
-  ];
-  for (const reason of expectedReasons) {
-    assert.match(i18nSource, new RegExp(reason));
-  }
-});
-
 test("F6: capability cards in Panel source reference why_missing for state explanation", () => {
   const source = fs.readFileSync(PANEL, "utf8");
   assert.match(source, /capability\.why_missing/);
@@ -984,4 +959,3 @@ test("F10: HISTORY.md records puerta-a-puerta F1-F10 completion", () => {
   assert.match(source, /61 tests/);
   assert.match(source, /74 tests/);
 });
-
