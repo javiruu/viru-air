@@ -15,6 +15,19 @@ Entradas vivas agregadas:
 
 - `docs/prompts/codex-travel-roadmap-50-fases.md`
 
+## Actualizacion manual 2026-06-14 (fare memory fases 21-25)
+
+Entradas vivas agregadas:
+
+- `docs/specs/viru-fare-memory.md`
+- `docs/plans/2026-06-14-fare-memory-cache-audit.md`
+
+Entradas vivas actualizadas:
+
+- `docs/reference/backend/quick-search-contract.md`
+- `docs/specs/README.md`
+- `docs/INDICE_UNICO.md`
+
 ## Actualizacion manual 2026-06-13 (fases 1-5 del roadmap)
 
 Entradas vivas agregadas:

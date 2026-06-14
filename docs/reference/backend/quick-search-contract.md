@@ -124,6 +124,50 @@ The endpoint still returns `query`, `filters`, `results` and now adds:
 - The preferred result is selected from the already ranked and paginated response set; the backend does not reorder `results[]`.
 - If OpenAI is unavailable, times out, or returns invalid output, backend falls back to a deterministic heuristic and exposes that through `meta.ai_preference.source="heuristic"` plus `fallback_used=true`.
 
+## Freshness envelope (Fare Memory canonical contract)
+
+> Estado: definido en backend como contrato canonico preparatorio desde 2026-06-14. La integracion visible por defecto en `results[]` puede activarse por fases posteriores, pero cualquier implementacion nueva debe respetar este shape.
+
+Per-result freshness payload:
+
+```json
+{
+  "freshness": {
+    "status": "fresh",
+    "observed_at": "2026-06-14T10:15:00Z",
+    "expires_at": "2026-06-14T12:15:00Z",
+    "age_seconds": 420,
+    "confidence_score": 0.91,
+    "source": "provider_cache",
+    "requires_revalidation": false,
+    "validation_status": "revalidated"
+  }
+}
+```
+
+Canonical rules:
+
+- `status` allowed values:
+  - `fresh`
+  - `warm`
+  - `stale`
+  - `expired`
+  - `negative_fresh`
+  - `negative_stale`
+  - `provider_error_fresh`
+  - `provider_error_stale`
+- `price` missing must stay `null`, never `0`.
+- `duration_total_min` missing must stay `null`, never `0`.
+- If the value comes from cache, `source` must say so.
+- If the backend knows the price is historical only, it must not serialize it as `fresh`.
+- Provider failure must remain distinguishable from `no_results`.
+
+Implementation note:
+
+- Helper module: `backend/app/services/fare_memory.py`
+- Canonical builder: `build_freshness_payload(...)`
+- Fingerprints defined in the same module are preparatory for Fare Memory phases 24-25 and are not a replacement for `query_signature`.
+
 ## Provider status (multi-provider compatible)
 
 `meta.provider_status` keeps legacy compatibility and now includes aggregated provider state:
