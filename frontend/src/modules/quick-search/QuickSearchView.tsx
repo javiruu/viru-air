@@ -585,6 +585,39 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     console.debug(`[qs] ${message} ts=${ts}ms`);
   }, [debugEpochRef]);
 
+  useQuickSearchLoadingFlow({
+    searchState,
+    showLoader,
+    loadingVisualHold,
+    targetProgress,
+    displayProgress,
+    prefersReducedMotion,
+    setShowLoader,
+    setShowBoarding,
+    setLoadingVisualHold,
+    setDisplayProgress,
+    setLoadingPhase,
+    setTargetProgress,
+    activeLoadingRequestRef,
+    prevSearchStateRef,
+    requestIdRef,
+    progressRafRef,
+    animFromRef,
+    animToRef,
+    animStartTsRef,
+    animDurationMsRef,
+    lastTargetRef,
+    isAnimatingRef,
+    displayProgressRef,
+    commitRafRef,
+    boardingThresholdTimerRef,
+    takeoffHoldTimerRef,
+    loadingStartRef,
+    hideTimeoutRef,
+    debugLastTickLogTsRef,
+    debugLog,
+  });
+
   const logQuickSearchApiError = useCallback((scope: string, meta: Record<string, unknown>) => {
     if (typeof window === "undefined") return;
     const nonFatal = NON_FATAL_QS_SCOPES.has(scope);
@@ -4624,23 +4657,25 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             </div>
           ) : null}
 
-          <QuickSearchStatePanels
-            searchState={panelSearchState}
-            rateLimitSeconds={rateLimitSeconds}
-            searchError={searchError}
-            emptyStateMainTitle={emptyStateMainTitle}
-            locale={locale}
-            zeroResultCauses={zeroResultCauses}
-            visibleZeroResultCauses={visibleZeroResultCauses}
-            canExpandZeroResultCauses={canExpandZeroResultCauses}
-            emptyCausesExpanded={emptyCausesExpanded}
+          {!isVisualLoading ? (
+            <QuickSearchStatePanels
+              searchState={panelSearchState}
+              rateLimitSeconds={rateLimitSeconds}
+              searchError={searchError}
+              emptyStateMainTitle={emptyStateMainTitle}
+              locale={locale}
+              zeroResultCauses={zeroResultCauses}
+              visibleZeroResultCauses={visibleZeroResultCauses}
+              canExpandZeroResultCauses={canExpandZeroResultCauses}
+              emptyCausesExpanded={emptyCausesExpanded}
               zeroResultActions={zeroResultActions}
-            onToggleEmptyCauses={toggleEmptyCauses}
-            onRelaxAction={onZeroResultRelaxAction}
-            onRunSearch={runSearch}
-            onEmptyCta={openRelaxPreview}
-            t={t}
-          />
+              onToggleEmptyCauses={toggleEmptyCauses}
+              onRelaxAction={onZeroResultRelaxAction}
+              onRunSearch={runSearch}
+              onEmptyCta={openRelaxPreview}
+              t={t}
+            />
+          ) : null}
           {showResultsList ? (
             <>
               <QuickSearchResultsList
