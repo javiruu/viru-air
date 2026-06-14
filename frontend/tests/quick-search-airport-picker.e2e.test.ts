@@ -4,14 +4,45 @@ import test from "node:test";
 import { chromium } from "playwright";
 
 const BASE_URL = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
+const API_BASE = process.env.E2E_API_BASE_URL || "http://127.0.0.1:8000/api/v1";
+
+async function createSessionToken() {
+  try {
+    const email = `codex-e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
+    const password = "Test123456!";
+    const response = await fetch(`${API_BASE}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!response.ok) return null;
+    const auth = await response.json() as { access_token?: string };
+    return auth.access_token ?? null;
+  } catch {
+    return null;
+  }
+}
 
 test("quick-search airport picker opens before search and can be dismissed", async (t) => {
   const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage({ viewport: { width: 1366, height: 900 } });
+  const context = await browser.newContext({ viewport: { width: 1366, height: 900 } });
 
   try {
+    const token = await createSessionToken();
+    if (!token) {
+      t.skip(`Quick-Search auth session could not be created against ${API_BASE}.`);
+      return;
+    }
+    await context.addInitScript((value) => {
+      window.localStorage.setItem("viru_token", value);
+    }, token);
+    const page = await context.newPage();
+
     try {
-      await page.goto(`${BASE_URL}/quick-search`, { waitUntil: "domcontentloaded", timeout: 15000 });
+      await Promise.all([
+        page.waitForResponse((response) => response.url().includes("/api/v1/airports/seeds") && response.status() === 200, { timeout: 30000 }),
+        page.goto(`${BASE_URL}/quick-search`, { waitUntil: "networkidle", timeout: 30000 }),
+      ]);
     } catch {
       t.skip(`Quick-Search not reachable at ${BASE_URL}. Start frontend and retry.`);
       return;

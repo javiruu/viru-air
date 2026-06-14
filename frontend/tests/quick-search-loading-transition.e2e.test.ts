@@ -203,7 +203,7 @@ test("quick-search shows a visible loading state before a fast final empty respo
     const loadingState = page.locator(".qs-state-loading");
     const emptyState = page.locator(".qs-state-empty");
     const readyPanel = page.locator(".qs-ready");
-    const statusTitle = page.locator(".qs-command-stage__status-copy strong").first();
+    const stageTitle = page.locator(".qs-results-stagehead__copy h2").first();
 
     await loadingState.waitFor({ state: "visible", timeout: 10000 });
     assert.equal(await readyPanel.isVisible().catch(() => false), false);
@@ -213,8 +213,9 @@ test("quick-search shows a visible loading state before a fast final empty respo
 
     assert.equal(await emptyState.isVisible(), true);
     assert.equal(await readyPanel.isVisible().catch(() => false), false);
-    assert.notEqual(await statusTitle.textContent(), "Listo para explorar");
-    assert.notEqual(await statusTitle.textContent(), "Listo para buscar");
+    await stageTitle.waitFor({ state: "visible", timeout: 10000 });
+    assert.notEqual(await stageTitle.textContent(), "Listo para explorar");
+    assert.notEqual(await stageTitle.textContent(), "Listo para buscar");
   } finally {
     await browser.close();
   }
@@ -259,7 +260,7 @@ test("quick-search final success state does not surface ready copy after a fast 
     const loadingState = page.locator(".qs-state-loading");
     const resultsToolbar = page.locator(".qs-results-toolbar");
     const readyPanel = page.locator(".qs-ready");
-    const statusBadge = page.locator(".qs-command-stage__status-badge").first();
+    const stageTitle = page.locator(".qs-results-stagehead__copy h2").first();
 
     await loadingState.waitFor({ state: "visible", timeout: 10000 });
     await loadingState.waitFor({ state: "hidden", timeout: 10000 });
@@ -267,8 +268,9 @@ test("quick-search final success state does not surface ready copy after a fast 
 
     assert.equal(await resultsToolbar.isVisible(), true);
     assert.equal(await readyPanel.isVisible().catch(() => false), false);
-    assert.notEqual(await statusBadge.textContent(), "Listo para buscar");
-    assert.notEqual(await statusBadge.textContent(), "Listo para explorar");
+    await stageTitle.waitFor({ state: "visible", timeout: 10000 });
+    assert.notEqual(await stageTitle.textContent(), "Listo para buscar");
+    assert.notEqual(await stageTitle.textContent(), "Listo para explorar");
   } finally {
     await browser.close();
   }
