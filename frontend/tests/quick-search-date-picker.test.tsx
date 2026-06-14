@@ -50,10 +50,11 @@ test("QuickSearchDatePicker renders open calendar grid with selected day", () =>
   assert.match(html, /Vuelta/);
   assert.match(html, /junio de 2026/i);
   assert.match(html, /qs-date-popover__grid/);
-  assert.match(html, /qs-date-day is-selected/);
+  assert.match(html, /qs-date-day[^"]*is-selected/);
   assert.match(html, /data-date="2026-06-14"/);
   assert.match(html, /Fecha seleccionada/);
   assert.match(html, /Vuelta elegida/);
+  assert.match(html, /hint-low/);
 });
 
 test("QuickSearchDatePicker renders no-data marker with compact tooltip", () => {
@@ -100,5 +101,5 @@ test("QuickSearchDatePicker renders country estimate badge when scope is country
   );
 
   assert.match(html, /qs-date-popover__hint-scope-badge/);
-  assert.match(html, /Estimacion pais/);
+  assert.match(html, /Estimaci(?:ó|o)n pa(?:í|i)s/);
 });

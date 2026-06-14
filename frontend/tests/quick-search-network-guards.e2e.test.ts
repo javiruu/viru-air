@@ -163,6 +163,55 @@ test("quick-search keeps supported AGP to DUB requests below 400", async (t) => 
   }
 });
 
+test("quick-search loads calendar hints and updates the selected date in the trigger", async (t) => {
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+
+  try {
+    const setup = await openQuickSearch(context);
+    if (!setup) {
+      t.skip(`Quick-Search not reachable at ${BASE_URL}. Start frontend/backend and retry.`);
+      return;
+    }
+
+    const { page, originInput, destinationInput, datePicker } = setup;
+    const calendarHintResponses: Array<{ status: number; body: string }> = [];
+    page.on("response", async (response) => {
+      if (!response.url().includes("/api/v1/search/quick/calendar-hints")) return;
+      let body = "";
+      try {
+        body = await response.text();
+      } catch {
+        body = "";
+      }
+      calendarHintResponses.push({ status: response.status(), body });
+    });
+
+    await originInput.fill("AGP");
+    await destinationInput.fill("DUB");
+    await datePicker.locator(".qs-date-trigger").click();
+    await page.waitForTimeout(1800);
+
+    const hintCount = await page.locator(
+      ".qs-date-popover .hint-low, .qs-date-popover .hint-mid, .qs-date-popover .hint-high, .qs-date-popover .is-no-price-data",
+    ).count();
+    assert.ok(hintCount > 0);
+
+    await page.locator(".qs-date-popover .qs-date-day:not(.is-disabled):not(.is-outside)").first().click();
+
+    const hiddenValue = await page.locator('input[name="travel_date"]').inputValue();
+    const triggerText = await datePicker.locator(".qs-date-trigger__value").textContent();
+
+    assert.match(hiddenValue, /^\d{4}-\d{2}-\d{2}$/);
+    assert.ok((triggerText || "").trim().length > 0);
+    assert.ok(calendarHintResponses.length >= 1);
+    assert.equal(calendarHintResponses.every((item) => item.status < 400), true);
+    assert.equal(calendarHintResponses.some((item) => /"bucket":"(?:low|mid|high|none)"/.test(item.body)), true);
+  } finally {
+    await browser.close();
+  }
+});
+
 test("quick-search selects an origin suggestion with the mouse and closes the dropdown", async (t) => {
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ viewport: { width: 1366, height: 900 } });

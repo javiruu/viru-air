@@ -27,7 +27,6 @@ import {
 } from "@/modules/quick-search/filterUtils";
 import { resolveQuickSearchPreferenceDefaults } from "@/modules/quick-search/preferences";
 import {
-  buildRecentAirportSuggestions,
   readRecentAirports,
   rememberRecentAirport,
   writeRecentAirports,
@@ -97,8 +96,8 @@ import { QuickSearchCombinedBanner } from "@/modules/quick-search/components/Qui
 import { useQuickSearchScreenState } from "@/modules/quick-search/state/useQuickSearchScreenState";
 import { QuickSearchSideViewControls } from "@/modules/quick-search/components/QuickSearchSideViewControls";
 import { getPendingActionVisibility } from "@/modules/quick-search/state/pendingActionPolicy";
-import { getTranslatedCityName, getApiSearchQuery, matchesCityTranslation } from "@/modules/shared/cityTranslations";
-import { buildAirportSuggestions, mergeAirportSuggestions, normalizeText } from "@/modules/quick-search/airportSuggestions";
+import { getApiSearchQuery } from "@/modules/shared/cityTranslations";
+import { buildAirportSuggestions, normalizeText } from "@/modules/quick-search/airportSuggestions";
 import { fetchWeather as fetchWeatherApi, isWeatherRangeSupported as isWeatherRangeSupportedCheck, WeatherFetchError } from "@/modules/quick-search/weatherUtils";
 
 const RELAX_HIGHLIGHT_BY_ACTION: Record<ZeroResultRelaxAction, Exclude<SummaryHighlightKey, null>> = {
@@ -262,6 +261,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const [calendarHintsLoadingKeyReturn, setCalendarHintsLoadingKeyReturn] = useState<string | null>(null);
   const initialOrigin = "";
   const initialDestination = "";
+  const originCodeLookupRef = useRef<string | null>(null);
+  const destinationCodeLookupRef = useRef<string | null>(null);
   const randomOriginPlaceholder = useMemo(
     () => RYANAIR_TOP_CITIES[Math.floor(Math.random() * RYANAIR_TOP_CITIES.length)],
     [],
@@ -722,6 +723,46 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [fetchSeedAirports]);
 
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch<QuickSearchCountrySeedResponse>("/airports/countries")
+      .then((data) => {
+        if (cancelled) return;
+        setSeedCountries(Array.isArray(data?.items) ? data.items : []);
+      })
+      .catch(async (error) => {
+        try {
+          const fallbackItems = await fetchSeedCountriesFromSeeds();
+          if (cancelled) return;
+          setSeedCountries(fallbackItems);
+          logQuickSearchApiError("seed_countries_fallback_used", {
+            countries: fallbackItems.length,
+          });
+        } catch (fallbackError) {
+          if (cancelled) return;
+          setSeedCountries([]);
+          logQuickSearchApiError("seed_countries_failed", { error, fallbackError });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchSeedCountriesFromSeeds, logQuickSearchApiError]);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([
+      fetchSeedAirports({ q: "MAD", limit: 6 }),
+      fetchSeedAirports({ q: "DUB", limit: 6 }),
+    ]).catch((error) => {
+      if (cancelled) return;
+      logQuickSearchApiError("seed_bootstrap_failed", { error });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchSeedAirports, logQuickSearchApiError]);
+
   const airportsByCountry = useMemo(() => {
     const next = new Map<string, AirportIataEntry[]>();
     for (const airport of seedAirports) {
@@ -775,6 +816,99 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       setSelectedCountry(next);
     }
   }, [countryByCode, selectedCountry, setSelectedCountry]);
+
+  useEffect(() => {
+    const storage = typeof window !== "undefined" ? window.localStorage : null;
+    setRecentAirports(readRecentAirports(storage));
+  }, [setRecentAirports]);
+
+  const fetchAutocompleteSuggestions = useCallback(async (value: string) => {
+    const query = value.trim();
+    if (!query) return [];
+
+    const candidates = Array.from(new Set([getApiSearchQuery(query), query]));
+    for (const candidate of candidates) {
+      const data = await fetchSeedAirports({ q: candidate, limit: 6 });
+      const suggestions = buildAirportSuggestions(data.items || [], query, 6, pref?.language || "en");
+      if (suggestions.length > 0) {
+        return suggestions;
+      }
+    }
+
+    return [];
+  }, [fetchSeedAirports, pref?.language]);
+
+  useEffect(() => {
+    const value = origin.trim();
+    if (!value) {
+      setOriginSuggestions([]);
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      fetchAutocompleteSuggestions(value)
+        .then((suggestions) => {
+          setOriginSuggestions(suggestions);
+        })
+        .catch((error) => {
+          setOriginSuggestions([]);
+          logQuickSearchApiError("origin_suggestions_failed", { error, value });
+        });
+    }, 120);
+    return () => window.clearTimeout(timeout);
+  }, [fetchAutocompleteSuggestions, logQuickSearchApiError, origin]);
+
+  useEffect(() => {
+    const value = destination.trim();
+    if (!value) {
+      setDestinationSuggestions([]);
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      fetchAutocompleteSuggestions(value)
+        .then((suggestions) => {
+          setDestinationSuggestions(suggestions);
+        })
+        .catch((error) => {
+          setDestinationSuggestions([]);
+          logQuickSearchApiError("destination_suggestions_failed", { error, value });
+        });
+    }, 120);
+    return () => window.clearTimeout(timeout);
+  }, [destination, fetchAutocompleteSuggestions, logQuickSearchApiError]);
+
+  useEffect(() => {
+    const code = origin.trim().toUpperCase();
+    if (code.length !== 3) {
+      originCodeLookupRef.current = null;
+      return;
+    }
+    if (airportsByIata.has(code)) {
+      originCodeLookupRef.current = null;
+      return;
+    }
+    if (originCodeLookupRef.current === code) return;
+    originCodeLookupRef.current = code;
+    fetchSeedAirports({ q: code, limit: 6 }).catch((error) => {
+      logQuickSearchApiError("origin_code_validation_failed", { error, code });
+    });
+  }, [origin, airportsByIata, fetchSeedAirports, logQuickSearchApiError]);
+
+  useEffect(() => {
+    const code = destination.trim().toUpperCase();
+    if (code.length !== 3) {
+      destinationCodeLookupRef.current = null;
+      return;
+    }
+    if (airportsByIata.has(code)) {
+      destinationCodeLookupRef.current = null;
+      return;
+    }
+    if (destinationCodeLookupRef.current === code) return;
+    destinationCodeLookupRef.current = code;
+    fetchSeedAirports({ q: code, limit: 6 }).catch((error) => {
+      logQuickSearchApiError("destination_code_validation_failed", { error, code });
+    });
+  }, [destination, airportsByIata, fetchSeedAirports, logQuickSearchApiError]);
 
   useEffect(() => {
     apiFetch<Pref>("/preferences/search")
