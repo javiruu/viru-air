@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildMapCapabilities, filterSavedPlacesForWatch } from "../src/modules/door-to-door/mapHub";
+import { doorToDoorEn, doorToDoorEs } from "../src/i18n/domains/doorToDoor";
 import type { DoorToDoorProviderStatus, DoorToDoorResponse, DoorToDoorSavedPlace } from "../src/modules/door-to-door/types";
 
 function makeProvider(overrides: Partial<DoorToDoorProviderStatus>): DoorToDoorProviderStatus {
@@ -100,4 +101,52 @@ test("filterSavedPlacesForWatch with empty watch shows global items only", () =>
     filterSavedPlacesForWatch(savedPlaces, "").map((item) => item.id),
     ["g"],
   );
+});
+
+test("buildMapCapabilities only emits whyMissing reasons covered by ES and EN i18n", () => {
+  const scenarios = [
+    buildMapCapabilities(
+      makeResponse(),
+      [
+        makeProvider({ name: "google_routes", enabled: true, status: "functional_maps", source_type: "maps", production_ready: true, supports_search: true }),
+        makeProvider({ name: "gtfs_transit", enabled: true, status: "functional", source_type: "open_data", production_ready: true, supports_search: true }),
+        makeProvider({ name: "google_places", enabled: true, status: "functional_maps", source_type: "maps", production_ready: true, supports_search: true }),
+      ],
+    ),
+    buildMapCapabilities(makeResponse(), []),
+    buildMapCapabilities(
+      makeResponse({
+        options: [
+          {
+            id: "opt-1",
+            label: "Option",
+            description: "Mock option",
+            status: "estimate_only",
+            total_price_min: 10,
+            total_price_max: 20,
+            currency: "EUR",
+            total_duration_minutes: 60,
+            score: 50,
+            confidence: "estimated",
+            source_types: ["estimate"],
+            sources: [],
+            legs: [],
+          },
+        ],
+      }),
+      [],
+    ),
+  ];
+
+  const emittedReasons = new Set(
+    scenarios
+      .flat()
+      .map((item) => item.why_missing)
+      .filter((value): value is string => Boolean(value)),
+  );
+
+  for (const reason of emittedReasons) {
+    assert.ok(doorToDoorEs.mapHub.whyMissing[reason as keyof typeof doorToDoorEs.mapHub.whyMissing], `Missing ES translation for ${reason}`);
+    assert.ok(doorToDoorEn.mapHub.whyMissing[reason as keyof typeof doorToDoorEn.mapHub.whyMissing], `Missing EN translation for ${reason}`);
+  }
 });
