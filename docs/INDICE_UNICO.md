@@ -112,6 +112,7 @@
 ### Plans
 
 - [Planes de trabajo](plans/README.md)
+- [Auditoria cache Fare Memory F21](plans/2026-06-14-fare-memory-cache-audit.md)
 - [Planes completados](plans/completed/)
 
 ### ADRs
@@ -125,6 +126,7 @@
 - [Specs activas](specs/README.md)
 - [Phase 1 Codex MVP](specs/phase1-codex.md)
 - [Hotels Intelligence MVP](specs/hotels-intelligence-mvp.md)
+- [Viru Fare Memory](specs/viru-fare-memory.md)
 - [Hoteles post-cierre Fases A-E](plans/2026-06-04-hoteles-correcciones-post-cierre.md)
 
 ### QA

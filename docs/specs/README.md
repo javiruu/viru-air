@@ -14,6 +14,7 @@ Esta carpeta agrupa especificaciones que todavía sirven como guía de producto 
 - [product/dashboard-redesign-v2.md](product/dashboard-redesign-v2.md): reorganización del dashboard sin añadir funcionalidad compleja.
 - [phase1-codex.md](phase1-codex.md): cierre operativo del MVP de Fase 1 (scope, DoD y verificación).
 - [hotels-intelligence-mvp.md](hotels-intelligence-mvp.md): definición incremental del MVP de inteligencia hotelera (Fase 0).
+- [viru-fare-memory.md](viru-fare-memory.md): contrato vivo para memoria de tarifas, frescura y revalidación.
 
 ## UI
 
