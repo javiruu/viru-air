@@ -73,7 +73,8 @@ def test_negative_cache_entry_roundtrip_for_provider_timeout() -> None:
 
         assert entry is not None
         assert entry.reason == "provider_timeout"
-        assert entry.retry_after_at == retry_after
+        assert entry.retry_after_at is not None
+        assert entry.retry_after_at >= entry.observed_at
         result = resolve_negative_cache_result(entry)
         assert result.flights == []
         assert result.warnings == ["provider_timeout_partial"]
@@ -103,5 +104,68 @@ def test_expired_negative_cache_entry_returns_none() -> None:
         db.commit()
 
         assert get_fresh_negative_cache_entry(db, negative_fingerprint=fingerprint) is None
+    finally:
+        db.close()
+
+
+def test_provider_backoff_escalates_on_consecutive_failures() -> None:
+    db = _db()
+    try:
+        fingerprint = build_negative_cache_fingerprint(
+            origin_iata="LEI",
+            destination_iata="DUB",
+            travel_date=dt.date(2026, 6, 15),
+            provider="multi",
+        )
+        first = set_negative_cache_entry(
+            db,
+            negative_fingerprint=fingerprint,
+            scope="route_date_provider",
+            reason="provider_timeout",
+            provider="multi",
+            canonical_request_json='{"origin":"LEI","destination":"DUB"}',
+        )
+        second = set_negative_cache_entry(
+            db,
+            negative_fingerprint=fingerprint,
+            scope="route_date_provider",
+            reason="provider_timeout",
+            provider="multi",
+            canonical_request_json='{"origin":"LEI","destination":"DUB"}',
+        )
+
+        first_window = int((first.retry_after_at - first.observed_at).total_seconds()) if first.retry_after_at else 0
+        second_window = int((second.retry_after_at - second.observed_at).total_seconds()) if second.retry_after_at else 0
+
+        assert second_window > first_window
+        assert second.reason == "provider_timeout"
+        assert second.retry_after_at is not None
+    finally:
+        db.close()
+
+
+def test_rate_limited_negative_cache_returns_explicit_warning() -> None:
+    db = _db()
+    try:
+        fingerprint = build_negative_cache_fingerprint(
+            origin_iata="LEI",
+            destination_iata="DUB",
+            travel_date=dt.date(2026, 6, 15),
+            provider="multi",
+        )
+        entry = set_negative_cache_entry(
+            db,
+            negative_fingerprint=fingerprint,
+            scope="route_date_provider",
+            reason="rate_limited",
+            provider="multi",
+            canonical_request_json='{"origin":"LEI","destination":"DUB"}',
+        )
+
+        result = resolve_negative_cache_result(entry)
+
+        assert result.flights == []
+        assert "provider_rate_limited" in result.warnings
+        assert "provider_timeout_partial" in result.warnings
     finally:
         db.close()

@@ -42,6 +42,7 @@ _EMPTY_TTL = int(os.getenv("QUICK_SEARCH_SHARED_CACHE_EMPTY_TTL_SECONDS", "7200"
 _DEGRADED_TTL = int(os.getenv("QUICK_SEARCH_SHARED_CACHE_DEGRADED_TTL_SECONDS", "1800"))
 _NEGATIVE_TTL = int(os.getenv("QUICK_SEARCH_NEGATIVE_CACHE_TTL_SECONDS", "1800"))
 _PROVIDER_ERROR_TTL = int(os.getenv("QUICK_SEARCH_NEGATIVE_PROVIDER_ERROR_TTL_SECONDS", "600"))
+_PROVIDER_ERROR_BACKOFF_MAX_TTL = int(os.getenv("QUICK_SEARCH_NEGATIVE_PROVIDER_ERROR_MAX_TTL_SECONDS", "3600"))
 
 _TTL_BY_CATEGORY: dict[CacheResultCategory, int] = {
     "ready": _READY_TTL,
@@ -207,6 +208,51 @@ def _negative_ttl_for_reason(reason: str) -> int:
     return _PROVIDER_ERROR_TTL if reason in provider_error_reasons else _NEGATIVE_TTL
 
 
+def _is_provider_backoff_reason(reason: str) -> bool:
+    return reason in {
+        "provider_timeout",
+        "provider_error",
+        "provider_total_outage",
+        "rate_limited",
+    }
+
+
+def _deterministic_backoff_jitter_seconds(*, negative_fingerprint: str, reason: str) -> int:
+    seed = f"{negative_fingerprint}:{reason}"
+    return sum(ord(ch) for ch in seed) % 31
+
+
+def _resolve_provider_backoff_seconds(
+    *,
+    existing_entry: QuickSearchNegativeCacheEntry | None,
+    negative_fingerprint: str,
+    reason: str,
+    now: dt.datetime,
+    requested_retry_after_at: dt.datetime | None,
+) -> int:
+    base_seconds = max(60, _negative_ttl_for_reason(reason))
+    if requested_retry_after_at is not None:
+        requested_seconds = max(60, int((requested_retry_after_at - now).total_seconds()))
+        base_seconds = max(base_seconds, requested_seconds)
+
+    if existing_entry is None or existing_entry.reason != reason:
+        return min(_PROVIDER_ERROR_BACKOFF_MAX_TTL, base_seconds + _deterministic_backoff_jitter_seconds(
+            negative_fingerprint=negative_fingerprint,
+            reason=reason,
+        ))
+
+    previous_until = existing_entry.retry_after_at or existing_entry.expires_at
+    previous_window_seconds = max(60, int((previous_until - existing_entry.observed_at).total_seconds()))
+    escalated = min(_PROVIDER_ERROR_BACKOFF_MAX_TTL, max(base_seconds, previous_window_seconds * 2))
+    return min(
+        _PROVIDER_ERROR_BACKOFF_MAX_TTL,
+        escalated + _deterministic_backoff_jitter_seconds(
+            negative_fingerprint=negative_fingerprint,
+            reason=reason,
+        ),
+    )
+
+
 def _negative_freshness_status_for_reason(reason: str) -> str:
     provider_error_reasons = {
         "provider_timeout",
@@ -222,7 +268,7 @@ def _negative_result_for_reason(reason: str) -> ProviderFetchResult:
         "provider_timeout": ["provider_timeout_partial"],
         "provider_error": ["provider_error_partial"],
         "provider_total_outage": ["provider_total_outage"],
-        "rate_limited": ["provider_timeout_partial"],
+        "rate_limited": ["provider_rate_limited", "provider_timeout_partial"],
     }
     return ProviderFetchResult(flights=[], warnings=warning_map.get(reason, []))
 
@@ -515,7 +561,24 @@ def set_negative_cache_entry(
     retry_after_at: dt.datetime | None = None,
 ) -> QuickSearchNegativeCacheEntry:
     now = utc_now_naive()
-    ttl = max(60, _negative_ttl_for_reason(reason))
+    existing_entry: QuickSearchNegativeCacheEntry | None = None
+    if _is_provider_backoff_reason(reason):
+        existing_entry = db.scalar(
+            select(QuickSearchNegativeCacheEntry)
+            .where(QuickSearchNegativeCacheEntry.negative_fingerprint == negative_fingerprint)
+            .order_by(QuickSearchNegativeCacheEntry.expires_at.desc())
+            .limit(1)
+        )
+        ttl = _resolve_provider_backoff_seconds(
+            existing_entry=existing_entry,
+            negative_fingerprint=negative_fingerprint,
+            reason=reason,
+            now=now,
+            requested_retry_after_at=retry_after_at,
+        )
+        retry_after_at = now + dt.timedelta(seconds=ttl)
+    else:
+        ttl = max(60, _negative_ttl_for_reason(reason))
     expires_at = now + dt.timedelta(seconds=ttl)
     freshness_status = _negative_freshness_status_for_reason(reason)
 

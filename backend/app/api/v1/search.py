@@ -1578,6 +1578,9 @@ def quick_search(
                 warning_codes = set(result.warnings or [])
                 if "provider_total_outage" in warning_codes or "ryanair_provider_unavailable_total" in warning_codes:
                     reason = "provider_total_outage"
+                elif "provider_rate_limited" in warning_codes:
+                    reason = "rate_limited"
+                    retry_after_at = utc_now_naive() + dt.timedelta(minutes=15)
                 elif "provider_timeout_partial" in warning_codes:
                     reason = "provider_timeout"
                     retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
