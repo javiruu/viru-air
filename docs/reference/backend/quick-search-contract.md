@@ -494,10 +494,13 @@ Con el flag `QUICK_SEARCH_SHARED_CACHE_ENABLED=false`, el sistema usa exclusivam
 ### Observabilidad de cache
 
 Contadores expuestos en `meta.pipeline_counters`:
-- `shared_cache_hits`: aciertos en cache persistente
-- `shared_cache_misses`: fallos que requirieron fetch real
-- `shared_cache_stale_count`: entradas expiradas encontradas
-- `provider_calls_avoided`: llamadas a provider evitadas gracias a la cache
+- `cache_hits` / `cache_misses`: reuse efectivo frente a fetch real
+- `l1_cache_hits` / `l2_cache_hits` / `negative_cache_hits`: desglose por capa/tipo
+- `cache_hit_rate` / `cache_miss_rate` / `negative_cache_hit_rate`: tasas derivadas por request
+- `provider_calls_avoided`: llamadas a provider evitadas gracias a L1/L2/negative cache o exact-search cache
+- `stale_served_count`: resultados devueltos con `requires_revalidation=true`
+- `avg_price_age_seconds`: antiguedad media de precios devueltos en la pagina actual
+- `provider_error_rate`: ratio de fallos sobre llamadas reales a provider
 
 ### Siguiente paso: Redis como hot layer
 

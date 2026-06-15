@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 from sqlalchemy import desc, select
@@ -13,6 +14,7 @@ from app.services.watchlist_snapshots import select_canonical_refresh_flight
 
 _ALERT_REVALIDATION_TIMEOUT_MS = 8000
 _provider = MultiSourceFlightProvider()
+logger = logging.getLogger(__name__)
 
 
 def create_rule(db: Session, payload: AlertRuleIn) -> AlertRule:
@@ -184,6 +186,7 @@ def evaluate_rules_for_watch(
         if not attempt_revalidation:
             return []
 
+        stale_snapshot_price = float(latest.raw_price)
         revalidated_snapshot, revalidation_error = _revalidate_latest_snapshot(
             db,
             watch=watch,
@@ -191,6 +194,11 @@ def evaluate_rules_for_watch(
         )
         if revalidated_snapshot is None:
             if revalidation_error == "provider_error":
+                logger.warning(
+                    "alert_revalidation_failed watch_id=%s revalidation_success_count=0 "
+                    "revalidation_price_changed_count=0 provider_error_count=1",
+                    watch_id,
+                )
                 for rule in rules:
                     if not rule.enabled:
                         continue
@@ -212,6 +220,13 @@ def evaluate_rules_for_watch(
                         db.refresh(event)
             return created
 
+        revalidated_price = float(revalidated_snapshot.raw_price)
+        logger.info(
+            "alert_revalidation_completed watch_id=%s revalidation_success_count=1 "
+            "revalidation_price_changed_count=%d provider_error_count=0",
+            watch_id,
+            int(revalidated_price != stale_snapshot_price),
+        )
         previous = latest
         latest = revalidated_snapshot
 

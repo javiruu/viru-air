@@ -346,6 +346,8 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             self.assertTrue(result["meta"]["search_cache"]["exact_hit"])
             self.assertTrue(result["meta"]["execution"]["exact_search_cache_hit"])
             self.assertEqual(result["meta"]["search_cache"]["freshness"]["status"], "fresh")
+            self.assertEqual(result["meta"]["pipeline_counters"]["cache_hit_rate"], 1.0)
+            self.assertEqual(result["meta"]["pipeline_counters"]["provider_calls_avoided"], 1)
         finally:
             db.close()
             engine.dispose()
@@ -406,6 +408,8 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
         self.assertTrue(result["results"][0]["stale_data"])
         self.assertEqual(result["meta"]["search_cache"]["freshness"]["status"], "warm")
         self.assertTrue(result["meta"]["search_cache"]["requires_revalidation"])
+        self.assertEqual(result["meta"]["pipeline_counters"]["stale_served_count"], 1)
+        self.assertGreaterEqual(result["meta"]["pipeline_counters"]["avg_price_age_seconds"], 0.0)
 
     def test_provider_status_exposes_aggregated_shape(self):
         payload = self._payload()
