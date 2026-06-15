@@ -171,6 +171,13 @@ Primera integracion real desde la Fase 28:
 | resultado negativo | 15-60 min |
 | error de provider | 5-15 min + backoff |
 
+Implementacion actual desde Fase 32:
+
+- los resultados `ready` de quick search usan TTL dinamico por `travel_date`;
+- `empty`, `degraded`, `negative_*` y `provider_error_*` mantienen TTL base separados;
+- providers tecnicos de test como `mock` o `fixture` quedan capados a una ventana corta para no contaminar comportamiento de produccion;
+- una salida con `travel_date` pasada no debe serializarse como `fresh`.
+
 ## Regla de verdad temporal
 
 Un TTL largo no convierte un precio en precio confirmado. Solo autoriza a Viru a reutilizar memoria con semantica explicita de frescura.

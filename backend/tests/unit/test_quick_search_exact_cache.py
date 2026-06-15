@@ -60,11 +60,12 @@ def test_exact_search_cache_roundtrip_persists_response_payload() -> None:
 def test_exact_search_cache_freshness_can_degrade_to_warm() -> None:
     db = _db()
     try:
+        travel_date = dt.date(2030, 6, 14)
         entry = set_exact_search_cache_entry(
             db,
             origin_iata="LEI",
             destination_iata="DUB",
-            travel_date=dt.date(2026, 6, 14),
+            travel_date=travel_date,
             search_fingerprint="fsm_search_456",
             canonical_request_json="{}",
             provider_set_json='["multi"]',
