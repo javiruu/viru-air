@@ -282,6 +282,28 @@ Eventos estructurados esperados:
 - `fare_memory_boot_warmup_dry_run`
 - `fare_memory_boot_warmup_scheduled`
 
+## Volatilidad basica (Fare Memory Fase 40)
+
+Backend expone calculo tecnico de volatilidad basica para historicos de oferta y de ruta. No es una prediccion de precio.
+
+Metricas canonicas:
+
+- `changes_count`
+- `changes_per_day`
+- `average_delta_abs`
+- `max_delta_abs`
+- `average_time_between_changes_seconds`
+- `dominant_direction_recent`: `up | down | mixed | flat | insufficient_data`
+- `observation_count`
+- `sufficient_observations`
+- `volatility_score`
+
+Reglas:
+
+- con menos de 3 observaciones, el backend devuelve `status=insufficient_data`;
+- `volatility_score` solo existe cuando hay observaciones suficientes;
+- `dominant_direction_recent` describe el sesgo reciente del historico, no una promesa futura.
+
 Behavioral rules:
 
 - Enqueue is idempotent for active duplicates: the backend reuses an existing `queued`/`running` job with the same `(job_type, target_type, target_fingerprint, provider)`.
