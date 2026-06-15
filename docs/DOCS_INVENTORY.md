@@ -34,6 +34,12 @@ Entradas vivas actualizadas:
 
 - `docs/specs/viru-fare-memory.md`
 
+## Actualizacion manual 2026-06-15 (fare memory fase 27)
+
+Entradas vivas actualizadas:
+
+- `docs/reference/backend/quick-search-contract.md`
+
 ## Actualizacion manual 2026-06-13 (fases 1-5 del roadmap)
 
 Entradas vivas agregadas:

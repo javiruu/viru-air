@@ -38,12 +38,17 @@ from app.services.quick_search_planner import PairPlanItem, build_pair_plan
 from app.services.quick_search_ai_preference import select_quick_search_ai_preference
 from app.services.quick_search_ranking import rank_quick_search_results
 from app.services.quick_search_cache_service import (
+    build_effective_freshness,
     deserialize_fetch_result,
+    deserialize_exact_search_payload,
+    get_exact_search_cache_entry,
     get_fresh_entry,
     serialize_fetch_result,
+    set_exact_search_cache_entry,
     set_cache_entry,
     prune_expired_entries_async,
 )
+from app.services.fare_memory import build_search_fingerprint
 
 router = APIRouter()
 provider = MultiSourceFlightProvider()
@@ -1572,6 +1577,42 @@ def quick_search(
     _phase_end("request_normalization_ms", started)
 
     travel_date_value = canonical.travel.date
+    search_fingerprint = build_search_fingerprint(
+        canonical,
+        currency=user_currency,
+        provider_set=["multi"],
+    )
+
+    if QUICK_SEARCH_SHARED_CACHE_ENABLED:
+        exact_cache_entry = get_exact_search_cache_entry(
+            db,
+            origin_iata=canonical.origin.seed_iata,
+            destination_iata=canonical.destination.seed_iata,
+            travel_date=travel_date_value,
+            search_fingerprint=search_fingerprint,
+        )
+        if exact_cache_entry is not None:
+            exact_payload = deserialize_exact_search_payload(exact_cache_entry.payload_json)
+            exact_freshness = build_effective_freshness(exact_cache_entry)
+            meta = exact_payload.setdefault("meta", {})
+            meta["query_trace_id"] = query_trace_id
+            meta["search_fingerprint"] = search_fingerprint
+            execution_meta = meta.setdefault("execution", {})
+            execution_meta["exact_search_cache_hit"] = True
+            execution_meta["provider_calls"] = 0
+            execution_meta["cache_misses"] = 0
+            execution_meta["l1_cache_hits"] = 0
+            execution_meta["l2_cache_hits"] = 0
+            execution_meta["cache_hits"] = max(1, int(execution_meta.get("cache_hits", 0)))
+            meta["search_cache"] = {
+                "exact_hit": True,
+                "search_fingerprint": search_fingerprint,
+                "freshness": exact_freshness,
+                "requires_revalidation": bool(exact_freshness["requires_revalidation"]),
+                "provider": "search_exact",
+            }
+            return exact_payload
+
     origin_seed_pool = list(origin_list)
     destination_seed_pool = list(destination_list)
     requested_days_before = canonical.travel.flex_before
@@ -2356,7 +2397,7 @@ def quick_search(
             },
         }
 
-    return {
+    response_payload = {
         "query": {
             "origin": canonical.origin.model_dump(),
             "destination": canonical.destination.model_dump(),
@@ -2558,6 +2599,59 @@ def quick_search(
         },
         "results": serialized_results,
     }
+
+    response_payload["meta"]["search_fingerprint"] = search_fingerprint
+    response_payload["meta"]["search_cache"] = {
+        "exact_hit": False,
+        "search_fingerprint": search_fingerprint,
+        "freshness": None,
+        "requires_revalidation": False,
+        "provider": "search_exact",
+    }
+
+    if QUICK_SEARCH_SHARED_CACHE_ENABLED:
+        exact_cache_category = "empty"
+        if serialized_results:
+            provider_warning_codes = {
+                "provider_error_partial",
+                "provider_timeout_partial",
+                "provider_partial_results_served",
+                "provider_total_outage",
+                "ryanair_availability_failed_partial",
+                "ryanair_fares_failed_partial",
+                "ryanair_unavailable_partial",
+                "ryanair_provider_unavailable_total",
+                "ryanair_availability_failed",
+                "ryanair_fares_failed",
+            }
+            exact_cache_category = "degraded" if any(code in provider_warning_codes for code in warnings) else "ready"
+        elif any(
+            code in {
+                "provider_error_partial",
+                "provider_timeout_partial",
+                "provider_total_outage",
+                "ryanair_provider_unavailable_total",
+                "ryanair_availability_failed",
+                "ryanair_fares_failed",
+            }
+            for code in warnings
+        ):
+            exact_cache_category = "degraded"
+
+        set_exact_search_cache_entry(
+            db,
+            origin_iata=canonical.origin.seed_iata,
+            destination_iata=canonical.destination.seed_iata,
+            travel_date=travel_date_value,
+            search_fingerprint=search_fingerprint,
+            canonical_request_json=json.dumps(canonical.model_dump(mode="json"), ensure_ascii=False),
+            provider_set_json=json.dumps(["multi"], ensure_ascii=False),
+            response_payload=response_payload,
+            category=exact_cache_category,
+            confidence_score=0.95 if exact_cache_category == "ready" else 0.72 if exact_cache_category == "empty" else 0.4,
+        )
+
+    return response_payload
 
 
 @router.post("/save-result")

@@ -110,6 +110,8 @@ The endpoint still returns `query`, `filters`, `results` and now adds:
 - `meta.filter_support`
 - `meta.pair_counts`
 - `meta.ai_preference`
+- `meta.search_fingerprint`
+- `meta.search_cache`
 
 ### AI preferred result
 - `meta.ai_preference`:
@@ -167,6 +169,38 @@ Implementation note:
 - Helper module: `backend/app/services/fare_memory.py`
 - Canonical builder: `build_freshness_payload(...)`
 - Fingerprints defined in the same module are preparatory for Fare Memory phases 24-25 and are not a replacement for `query_signature`.
+
+## Exact search cache metadata (Fare Memory Fase 27)
+
+Quick Search may expose exact-search cache metadata at `meta.search_cache`:
+
+```json
+{
+  "search_fingerprint": "fsm_search_...",
+  "search_cache": {
+    "exact_hit": true,
+    "search_fingerprint": "fsm_search_...",
+    "freshness": {
+      "status": "fresh",
+      "observed_at": "2026-06-15T10:00:00Z",
+      "expires_at": "2026-06-15T11:00:00Z",
+      "age_seconds": 30,
+      "confidence_score": 0.95,
+      "source": "provider_cache",
+      "requires_revalidation": false,
+      "validation_status": "revalidated"
+    },
+    "requires_revalidation": false,
+    "provider": "search_exact"
+  }
+}
+```
+
+Rules:
+
+- `exact_hit=true` means the full response payload was served from exact-search cache.
+- `exact_hit=false` means the backend resolved the request normally and persisted the final payload for future exact reuse.
+- `query_signature` remains the public observability signature; `search_fingerprint` is the canonical Fare Memory identity key for exact search reuse.
 
 ## Provider status (multi-provider compatible)
 
