@@ -2,15 +2,20 @@ import datetime as dt
 import unittest
 from unittest.mock import patch
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 try:
     from app.api.v1.search import quick_search
     from app.domain.entities import ProviderFetchResult, ProviderFlight
+    from app.infrastructure.db.models import Base
     from app.services.quick_search_ai_preference import QuickSearchAiPreferenceResult
     from app.services.quick_search_execution import _CACHE
 except Exception:  # pragma: no cover
     quick_search = None
     ProviderFetchResult = None
     ProviderFlight = None
+    Base = None
     QuickSearchAiPreferenceResult = None
     _CACHE = None
 
@@ -23,6 +28,13 @@ def _flight(price: float, dep: str, source: str = "test-provider", currency: str
         captured_at=dt.datetime.now(dt.UTC).replace(tzinfo=None),
         source=source,
     )
+
+
+def _db_session():
+    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    Base.metadata.create_all(bind=engine)
+    TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    return engine, TestingSessionLocal, TestingSessionLocal()
 
 
 @unittest.skipIf(quick_search is None or ProviderFlight is None or QuickSearchAiPreferenceResult is None, "fastapi app deps not available")
@@ -42,7 +54,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
         payload.update(overrides)
         return payload
 
-    def _call_quick_search(self, payload, debug=True, page=None, page_size=None):
+    def _call_quick_search(self, payload, debug=True, page=None, page_size=None, db=None):
         return quick_search(
             payload=payload,
             origin_iata=None,
@@ -64,6 +76,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             page=page,
             page_size=page_size,
             debug=debug,
+            db=db,
         )
 
     def test_seed_only_base_flow(self):
@@ -81,10 +94,16 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
         self.assertIsInstance(first["duration_total_min"], int)
         self.assertGreater(first["duration_total_min"], 0)
         self.assertIsInstance(first["freshness_ts"], str)
+        self.assertEqual(first["freshness"]["status"], "fresh")
+        self.assertFalse(first["freshness"]["requires_revalidation"])
+        self.assertEqual(first["freshness"]["validation_status"], "revalidated")
         self.assertEqual(first["ranking_score"], first["score"]["final_score"])
         self.assertFalse(first["stale_data"])
         self.assertEqual(first["itinerary_type"], "direct")
         self.assertEqual(first["legs"], [])
+        self.assertFalse(result["meta"]["search_cache"]["exact_hit"])
+        self.assertIsNotNone(result["meta"]["search_cache"]["freshness"])
+        self.assertFalse(result["meta"]["search_cache"]["requires_revalidation"])
 
     def test_origin_nearby_expansion_is_real(self):
         payload = self._payload(origin={"seed_iata": "LEI", "include_nearby": True, "radius_km": 260, "max_candidates": 4})
@@ -299,30 +318,37 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             },
         )()
 
-        with (
-            patch("app.api.v1.search.QUICK_SEARCH_SHARED_CACHE_ENABLED", True),
-            patch("app.api.v1.search.get_exact_search_cache_entry", return_value=cached_entry),
-            patch(
-                "app.api.v1.search.build_effective_freshness",
-                return_value={
-                    "status": "fresh",
-                    "observed_at": "2026-06-15T10:00:00Z",
-                    "expires_at": "2026-06-15T11:00:00Z",
-                    "age_seconds": 30,
-                    "confidence_score": 0.95,
-                    "source": "provider_cache",
-                    "requires_revalidation": False,
-                    "validation_status": "revalidated",
-                },
-            ),
-            patch("app.api.v1.search.provider.get_flights") as provider_get_flights,
-        ):
-            result = self._call_quick_search(payload)
+        engine, testing_session_local, db = _db_session()
+        try:
+            with (
+                patch("app.api.v1.search.QUICK_SEARCH_SHARED_CACHE_ENABLED", True),
+                patch("app.api.v1.search.SessionLocal", testing_session_local),
+                patch("app.api.v1.search.get_exact_search_cache_entry", return_value=cached_entry),
+                patch(
+                    "app.api.v1.search.build_effective_freshness",
+                    return_value={
+                        "status": "fresh",
+                        "observed_at": "2026-06-15T10:00:00Z",
+                        "expires_at": "2026-06-15T11:00:00Z",
+                        "age_seconds": 30,
+                        "confidence_score": 0.95,
+                        "source": "provider_cache",
+                        "requires_revalidation": False,
+                        "validation_status": "revalidated",
+                    },
+                ),
+                patch("app.api.v1.search.provider.get_flights") as provider_get_flights,
+            ):
+                result = self._call_quick_search(payload, db=db)
 
-        provider_get_flights.assert_not_called()
-        self.assertEqual(result["results"][0]["price_total"], 44)
-        self.assertTrue(result["meta"]["search_cache"]["exact_hit"])
-        self.assertTrue(result["meta"]["execution"]["exact_search_cache_hit"])
+            provider_get_flights.assert_not_called()
+            self.assertEqual(result["results"][0]["price_total"], 44)
+            self.assertTrue(result["meta"]["search_cache"]["exact_hit"])
+            self.assertTrue(result["meta"]["execution"]["exact_search_cache_hit"])
+            self.assertEqual(result["meta"]["search_cache"]["freshness"]["status"], "fresh")
+        finally:
+            db.close()
+            engine.dispose()
 
     def test_exact_search_cache_miss_persists_final_payload(self):
         payload = self._payload(
@@ -331,17 +357,55 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             execution={"max_pairs": 1, "max_requests": 1, "timeout_ms": 3000, "concurrency_limit": 1},
         )
 
-        with (
-            patch("app.api.v1.search.QUICK_SEARCH_SHARED_CACHE_ENABLED", True),
-            patch("app.api.v1.search.get_exact_search_cache_entry", return_value=None),
-            patch("app.api.v1.search.set_exact_search_cache_entry") as set_exact_cache,
-            patch("app.api.v1.search.provider.get_flights", return_value=[_flight(55, "10:00")]),
-        ):
+        engine, testing_session_local, db = _db_session()
+        try:
+            with (
+                patch("app.api.v1.search.QUICK_SEARCH_SHARED_CACHE_ENABLED", True),
+                patch("app.api.v1.search.SessionLocal", testing_session_local),
+                patch("app.api.v1.search.get_exact_search_cache_entry", return_value=None),
+                patch("app.api.v1.search.set_exact_search_cache_entry") as set_exact_cache,
+                patch(
+                    "app.api.v1.search.build_effective_freshness",
+                    return_value={
+                        "status": "fresh",
+                        "observed_at": "2026-06-15T10:00:00Z",
+                        "expires_at": "2026-06-15T11:00:00Z",
+                        "age_seconds": 30,
+                        "confidence_score": 0.95,
+                        "source": "provider_cache",
+                        "requires_revalidation": False,
+                        "validation_status": "revalidated",
+                    },
+                ),
+                patch("app.api.v1.search.provider.get_flights", return_value=[_flight(55, "10:00")]),
+            ):
+                result = self._call_quick_search(payload, db=db)
+
+            set_exact_cache.assert_called_once()
+            self.assertFalse(result["meta"]["search_cache"]["exact_hit"])
+            self.assertEqual(result["meta"]["search_cache"]["search_fingerprint"][:11], "fsm_search_")
+            self.assertEqual(result["meta"]["search_cache"]["freshness"]["status"], "fresh")
+        finally:
+            db.close()
+            engine.dispose()
+
+    def test_partial_provider_results_are_marked_warm_for_revalidation(self):
+        payload = self._payload()
+
+        def fake_fetch(origin: str, destination: str, date: str, timeout_ms: int, currency: str = "EUR"):
+            return ProviderFetchResult(
+                flights=[_flight(77, "14:20", source="duffel-offers")],
+                warnings=["ryanair_fares_failed_partial"],
+            )
+
+        with patch("app.api.v1.search.provider.get_flights", side_effect=fake_fetch):
             result = self._call_quick_search(payload)
 
-        set_exact_cache.assert_called_once()
-        self.assertFalse(result["meta"]["search_cache"]["exact_hit"])
-        self.assertEqual(result["meta"]["search_cache"]["search_fingerprint"][:11], "fsm_search_")
+        self.assertEqual(result["results"][0]["freshness"]["status"], "warm")
+        self.assertTrue(result["results"][0]["freshness"]["requires_revalidation"])
+        self.assertTrue(result["results"][0]["stale_data"])
+        self.assertEqual(result["meta"]["search_cache"]["freshness"]["status"], "warm")
+        self.assertTrue(result["meta"]["search_cache"]["requires_revalidation"])
 
     def test_provider_status_exposes_aggregated_shape(self):
         payload = self._payload()
