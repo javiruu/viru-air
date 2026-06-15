@@ -52,6 +52,7 @@ export function WatchDetailPanel({
     locale: localeTag,
     lastUpdatedAt: detail?.latest_snapshot?.captured_at_utc,
     freshnessState: detail?.latest_snapshot ? "observing" : null,
+    observationCount: summary?.count ?? 0,
   });
 
   const latestSnapshot = detail?.latest_snapshot ?? null;
@@ -123,6 +124,7 @@ export function WatchDetailPanel({
           <div className="watch-detail-metric">
             <span>{t("watchlist.detail.freshnessLabel")}</span>
             <strong>{freshness.fullText}</strong>
+            {freshness.observationNote ? <small className="panel-note">{freshness.observationNote}</small> : null}
           </div>
         </div>
       </div>
@@ -189,4 +191,3 @@ export function WatchDetailPanel({
 // watchlist.summary.delta
 // watchlist.summary.count
 // confidence.level !== "none"
-

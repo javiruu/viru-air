@@ -24,6 +24,9 @@ type Props = {
   formatMinutes: (value?: number | null) => string;
   resultKey: (result: SearchResult, fallback: number) => string;
   getResultTags: (result: SearchResult, mode: "normal" | "compact" | "expanded") => Array<{ key: string; label: string; tone: string }>;
+  canRefreshPrice: (result: SearchResult) => boolean;
+  refreshingResultId: string | null;
+  refreshPrice: (result: SearchResult) => void;
   addToWatchlist: (result: SearchResult) => void;
   setExpandedRows: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   setSelectedResultId: React.Dispatch<React.SetStateAction<string | null>>;
@@ -83,6 +86,8 @@ function QuickSearchResultsListInner(props: Props) {
             const departureCompact = r.departure_time_local || "--";
             const rowDurationLabel = r.duration_total_min ? `${r.duration_total_min} min` : "--";
             const aiReason = typeof r.ai_preferred_reason === "string" ? r.ai_preferred_reason.trim() : "";
+            const canRefreshPrice = props.canRefreshPrice(r);
+            const isRefreshingPrice = props.refreshingResultId === rowId;
             return (
               <article
                 key={rowId}
@@ -154,6 +159,17 @@ function QuickSearchResultsListInner(props: Props) {
                     <button className="btn-secondary qs-row-save" type="button" onClick={() => props.addToWatchlist(r)}>
                       {props.t("save")}
                     </button>
+                    {canRefreshPrice ? (
+                      <button
+                        className="btn-ghost qs-row-refresh"
+                        type="button"
+                        disabled={isRefreshingPrice}
+                        aria-busy={isRefreshingPrice}
+                        onClick={() => props.refreshPrice(r)}
+                      >
+                        {isRefreshingPrice ? props.t("refreshPriceLoading") : props.t("refreshPrice")}
+                      </button>
+                    ) : null}
                     {!props.compactView ? (
                       <button
                         type="button"
@@ -230,6 +246,21 @@ function QuickSearchResultsListInner(props: Props) {
                           >
                             {props.t("deepLinkAlt")}
                           </button>
+                          {canRefreshPrice ? (
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="qs-row-menu-item"
+                              disabled={isRefreshingPrice}
+                              aria-busy={isRefreshingPrice}
+                              onClick={() => {
+                                props.refreshPrice(r);
+                                props.setOpenRowMenuId(null);
+                              }}
+                            >
+                              {isRefreshingPrice ? props.t("refreshPriceLoading") : props.t("refreshPrice")}
+                            </button>
+                          ) : null}
                           {rowLink ? (
                             <a
                               role="menuitem"

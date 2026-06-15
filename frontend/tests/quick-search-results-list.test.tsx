@@ -54,6 +54,8 @@ function t(key: string) {
     aiPreferredPrice: "Precio recomendado",
     aiPreferredAria: "Resultado preferido por IA",
     aiPreferredReasonLabel: "Motivo recomendado",
+    refreshPrice: "Actualizar precio",
+    refreshPriceLoading: "Actualizando precio...",
   };
   return copy[key] || key;
 }
@@ -83,6 +85,9 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
         { key: "buffer", label: "margen amplio", tone: "low" },
         { key: "freshness-fresh", label: "Verificado 4 min", tone: "fresh" },
       ]}
+      canRefreshPrice={() => true}
+      refreshingResultId={null}
+      refreshPrice={() => undefined}
       addToWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
@@ -101,6 +106,7 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
   assert.match(html, /Alternativa/);
   assert.match(html, /EUR 39/);
   assert.match(html, /Guardar/);
+  assert.match(html, /Actualizar precio/);
   assert.match(html, /Ver detalle/);
   assert.match(html, /Abrir en Ryanair/);
   assert.match(html, /Verificado 4 min/);
@@ -130,6 +136,9 @@ test("QuickSearchResultsList accepts official relative deeplink variants and rej
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
       getResultTags={() => [{ key: "buffer", label: "margen amplio", tone: "low" }]}
+      canRefreshPrice={() => false}
+      refreshingResultId={null}
+      refreshPrice={() => undefined}
       addToWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
@@ -166,6 +175,9 @@ test("QuickSearchResultsList accepts official relative deeplink variants and rej
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
       getResultTags={() => [{ key: "buffer", label: "margen amplio", tone: "low" }]}
+      canRefreshPrice={() => false}
+      refreshingResultId={null}
+      refreshPrice={() => undefined}
       addToWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
@@ -207,6 +219,9 @@ test("QuickSearchResultsList renders ai preferred tag and reason", () => {
         { key: "ai-preferred", label: "Precio recomendado", tone: "ai" },
         { key: "freshness-fresh", label: "Verificado 4 min", tone: "fresh" },
       ]}
+      canRefreshPrice={() => true}
+      refreshingResultId={null}
+      refreshPrice={() => undefined}
       addToWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
@@ -253,6 +268,9 @@ test("QuickSearchResultsList keeps ai and itinerary tags in compact view", () =>
         { key: "itinerary-direct", label: "Directo", tone: "fresh" },
         { key: "freshness-warm", label: "Visto 38 min", tone: "med" },
       ]}
+      canRefreshPrice={() => true}
+      refreshingResultId={null}
+      refreshPrice={() => undefined}
       addToWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
@@ -297,6 +315,9 @@ test("QuickSearchResultsList shows ai reason in expanded details", () => {
         { key: "ai-preferred", label: "Precio recomendado", tone: "ai" },
         { key: "freshness-stale", label: "Precio historico", tone: "stale" },
       ]}
+      canRefreshPrice={() => true}
+      refreshingResultId={"res-1"}
+      refreshPrice={() => undefined}
       addToWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
@@ -313,6 +334,7 @@ test("QuickSearchResultsList shows ai reason in expanded details", () => {
   assert.match(html, /details-res-1/);
   assert.match(html, /Mas barato sin sacrificar frescura/);
   assert.match(html, /Precio historico/);
+  assert.match(html, /Actualizando precio/);
 });
 
 test("QuickSearchResultsList omits empty ai reason copy", () => {
@@ -337,6 +359,9 @@ test("QuickSearchResultsList omits empty ai reason copy", () => {
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
       getResultTags={() => [{ key: "ai-preferred", label: "Precio recomendado", tone: "ai" }]}
+      canRefreshPrice={() => false}
+      refreshingResultId={null}
+      refreshPrice={() => undefined}
       addToWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}

@@ -482,6 +482,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   } = useQuickSearchMainState(initialOrigin, initialDestination);
   const normalizedRadiusKm = clampQuickSearchRadius(radiusKm);
   const [returnDateTouched, setReturnDateTouched] = useState(false);
+  const [refreshingResultId, setRefreshingResultId] = useState<string | null>(null);
 
   // ── Dual-mode hooks (Fase 6) ───────────────────────────────────────
   const outboundSide = useQuickSearchSide("outbound");
@@ -1904,29 +1905,91 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     }
   }
 
+  async function saveQuickSearchResult(result: SearchResult, fallbackDeepLinkUrl?: string | null) {
+    return apiFetch<{ watch_id?: string; created_or_existing?: string }>("/search/save-result", {
+      method: "POST",
+      body: JSON.stringify({
+        job_id: jobId,
+        result_id: result.result_id ?? null,
+        origin_iata: result.origin,
+        destination_iata: result.destination,
+        travel_date: result.travel_date,
+        price_total: result.price_total ?? result.price,
+        currency: result.currency,
+        duration_total: result.duration_total_min ?? result.duration_total ?? null,
+        stop_count: result.stop_count ?? null,
+        minutes_buffer: result.minutes_buffer ?? null,
+        distance_km_ground: result.distance_km_ground ?? null,
+        ranking_score: result.ranking_score ?? null,
+        freshness_ts: result.freshness_ts ?? null,
+        deeplink_url: result.deeplink_url ?? fallbackDeepLinkUrl ?? null,
+        itinerary_type: result.itinerary_type ?? null,
+      }),
+    });
+  }
+
+  function canRefreshPrice(result: SearchResult) {
+    const status = result.freshness?.status ?? null;
+    return Boolean(result.origin && result.destination && result.travel_date) && (
+      Boolean(result.freshness?.requires_revalidation)
+      || result.stale_data
+      || status === "provider_error_fresh"
+      || status === "negative_fresh"
+      || status === null
+    );
+  }
+
+  async function refreshQuickSearchResult(result: SearchResult) {
+    const rowId = resultKey(result, 0);
+    setRefreshingResultId(rowId);
+    setMessage("");
+    try {
+      const watchResponse = await saveQuickSearchResult(result, deeplinkUrl);
+      const watchId = watchResponse.watch_id;
+      if (!watchId) {
+        notify({ tone: "error", title: t("refreshPriceError"), durationMs: 3200 });
+        return;
+      }
+
+      const refreshResponse = await apiFetchWithStatus<{
+        status: string;
+        watch_id: string;
+        stale_data?: boolean;
+        provider_status?: string;
+      }>(`/watchlist/${watchId}/refresh-now`, { method: "POST" });
+
+      if (!refreshResponse.ok) {
+        if (refreshResponse.status === 429) {
+          notify({ tone: "info", title: t("refreshPriceRateLimited"), durationMs: 3200 });
+          return;
+        }
+        notify({ tone: "error", title: t("refreshPriceError"), durationMs: 3200 });
+        return;
+      }
+
+      if (refreshResponse.data.status === "no_flights") {
+        notify({ tone: "info", title: t("refreshPriceNoFlights"), durationMs: 3200 });
+        return;
+      }
+
+      if (refreshResponse.data.provider_status === "degraded" || refreshResponse.data.stale_data) {
+        notify({ tone: "warning", title: t("refreshPriceProviderError"), durationMs: 3200 });
+        return;
+      }
+
+      await onSubmit({ preventDefault: () => {} } as FormEvent, { page: 1 });
+      notify({ tone: "success", title: t("refreshPriceSuccess"), durationMs: 3200 });
+    } catch {
+      notify({ tone: "error", title: t("refreshPriceError"), durationMs: 3200 });
+    } finally {
+      setRefreshingResultId((current) => (current === rowId ? null : current));
+    }
+  }
+
   async function addToWatchlist(result: SearchResult) {
     setMessage("");
     try {
-      const response = await apiFetch<{ watch_id?: string; created_or_existing?: string }>("/search/save-result", {
-        method: "POST",
-        body: JSON.stringify({
-          job_id: jobId,
-          result_id: result.result_id ?? null,
-          origin_iata: result.origin,
-          destination_iata: result.destination,
-          travel_date: result.travel_date,
-          price_total: result.price_total ?? result.price,
-          currency: result.currency,
-          duration_total: result.duration_total_min ?? result.duration_total ?? null,
-          stop_count: result.stop_count ?? null,
-          minutes_buffer: result.minutes_buffer ?? null,
-          distance_km_ground: result.distance_km_ground ?? null,
-          ranking_score: result.ranking_score ?? null,
-          freshness_ts: result.freshness_ts ?? null,
-          deeplink_url: result.deeplink_url ?? deeplinkUrl ?? null,
-          itinerary_type: result.itinerary_type ?? null,
-        }),
-      });
+      const response = await saveQuickSearchResult(result, deeplinkUrl);
       if (response.created_or_existing === "existing") {
         notify({
           tone: "success",
@@ -4721,6 +4784,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 formatMinutes={formatMinutes}
                 resultKey={resultKey}
                 getResultTags={getResultTags}
+                canRefreshPrice={canRefreshPrice}
+                refreshingResultId={refreshingResultId}
+                refreshPrice={refreshQuickSearchResult}
                 addToWatchlist={addToWatchlist}
                 setExpandedRows={setExpandedRows}
                 setSelectedResultId={setSelectedResultId}
@@ -5020,6 +5086,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 formatMinutes={formatMinutes}
                 resultKey={resultKey}
                 getResultTags={getResultTags}
+                canRefreshPrice={canRefreshPrice}
+                refreshingResultId={refreshingResultId}
+                refreshPrice={refreshQuickSearchResult}
                 addToWatchlist={async (result: SearchResult) => {
                   setMessage("");
                   try {
@@ -5138,6 +5207,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 formatMinutes={formatMinutes}
                 resultKey={resultKey}
                 getResultTags={getResultTags}
+                canRefreshPrice={canRefreshPrice}
+                refreshingResultId={refreshingResultId}
+                refreshPrice={refreshQuickSearchResult}
                 addToWatchlist={async (result: SearchResult) => {
                   setMessage("");
                   try {

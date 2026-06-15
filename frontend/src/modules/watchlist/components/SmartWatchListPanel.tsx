@@ -474,7 +474,8 @@ export function SmartWatchListPanel({
                   {routeHealthLabel}
                 </span>
                 <span className="watch-meta-chip">{t("watchlist.detail.latestSnapshot")} {safeDateTime(meta?.latest?.capturedAt, localeTag)}</span>
-                <span className="watch-meta-chip watch-meta-chip--freshness">{t("watchlist.detail.freshness")} {freshness.fullText}</span>
+                <span className="watch-meta-chip watch-meta-chip--freshness">{t("watchlist.detail.freshness")} {freshness.label}</span>
+                <span className="watch-note">{freshness.detail}</span>
                 <span className="watch-note">
                   {watchersCount === 0
                     ? t("watchlist.smartList.noOtherWatchers")
