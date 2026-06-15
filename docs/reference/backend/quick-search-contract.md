@@ -303,6 +303,7 @@ Reglas:
 - con menos de 3 observaciones, el backend devuelve `status=insufficient_data`;
 - `volatility_score` solo existe cuando hay observaciones suficientes;
 - `dominant_direction_recent` describe el sesgo reciente del historico, no una promesa futura.
+- el scheduler de `boot_warmup` puede usar `volatility_score` para bajar prioridad numerica y refrescar antes rutas tecnicamente mas movidas.
 
 Behavioral rules:
 

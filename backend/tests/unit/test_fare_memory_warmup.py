@@ -91,6 +91,16 @@ def _seed_snapshot(
     return snapshot
 
 
+def _seed_route_history(
+    db: Session,
+    *,
+    watch_id: str,
+    prices: list[tuple[dt.datetime, float]],
+) -> None:
+    for captured_at, price in prices:
+        _seed_snapshot(db, watch_id=watch_id, captured_at=captured_at, price=price, is_stale=False)
+
+
 def test_build_boot_warmup_candidate_report_prioritizes_active_alert_threshold_routes() -> None:
     db = _db()
     try:
@@ -332,6 +342,101 @@ def test_schedule_boot_warmup_jobs_skips_existing_active_route_lock(caplog) -> N
         assert payload["skipped_due_lock_count"] == 1
         assert payload["jobs"][0]["job_id"] == existing_job.id
         assert payload["jobs"][0]["status"] == "duplicate_locked"
+    finally:
+        db.close()
+        db._test_engine.dispose()  # type: ignore[attr-defined]
+
+
+def test_boot_warmup_candidates_prioritize_recently_volatile_routes() -> None:
+    db = _db()
+    try:
+        user = _seed_user(db, "warmup-volatility@example.com")
+        volatile_watch = _seed_watch(
+            db,
+            user_id=user.id,
+            origin="LEI",
+            destination="DUB",
+            travel_date=dt.date(2026, 6, 25),
+        )
+        stable_watch = _seed_watch(
+            db,
+            user_id=user.id,
+            origin="AGP",
+            destination="FCO",
+            travel_date=dt.date(2026, 6, 25),
+        )
+        _seed_alert(db, watch_id=volatile_watch.id, threshold_value=300.0)
+        _seed_alert(db, watch_id=stable_watch.id, threshold_value=300.0)
+        _seed_route_history(
+            db,
+            watch_id=volatile_watch.id,
+            prices=[
+                (dt.datetime(2026, 6, 16, 8, 0), 100.0),
+                (dt.datetime(2026, 6, 16, 12, 0), 135.0),
+                (dt.datetime(2026, 6, 16, 16, 0), 105.0),
+                (dt.datetime(2026, 6, 17, 8, 0), 150.0),
+            ],
+        )
+        _seed_route_history(
+            db,
+            watch_id=stable_watch.id,
+            prices=[
+                (dt.datetime(2026, 6, 16, 8, 0), 119.0),
+                (dt.datetime(2026, 6, 17, 8, 0), 120.0),
+                (dt.datetime(2026, 6, 18, 8, 0), 119.0),
+            ],
+        )
+
+        report = build_boot_warmup_candidate_report(
+            db,
+            now=dt.datetime(2026, 6, 18, 10, 0),
+            limit=5,
+        )
+        candidates = report["candidates"]
+
+        assert [candidate["watch_id"] for candidate in candidates][:2] == [volatile_watch.id, stable_watch.id]
+        assert candidates[0]["priority"] < candidates[1]["priority"]
+        assert candidates[0]["volatility_score"] is not None
+        assert candidates[0]["volatility_score"] > candidates[1]["volatility_score"]
+        assert "recently_volatile_route" in candidates[0]["reasons"]
+    finally:
+        db.close()
+        db._test_engine.dispose()  # type: ignore[attr-defined]
+
+
+def test_boot_warmup_candidates_keep_uncertain_routes_honest() -> None:
+    db = _db()
+    try:
+        user = _seed_user(db, "warmup-volatility-insufficient@example.com")
+        sparse_watch = _seed_watch(
+            db,
+            user_id=user.id,
+            origin="SVQ",
+            destination="LIS",
+            travel_date=dt.date(2026, 6, 26),
+        )
+        _seed_alert(db, watch_id=sparse_watch.id, threshold_value=90.0)
+        _seed_route_history(
+            db,
+            watch_id=sparse_watch.id,
+            prices=[
+                (dt.datetime(2026, 6, 16, 8, 0), 88.0),
+                (dt.datetime(2026, 6, 17, 8, 0), 92.0),
+            ],
+        )
+
+        report = build_boot_warmup_candidate_report(
+            db,
+            now=dt.datetime(2026, 6, 18, 10, 0),
+            limit=5,
+        )
+        candidate = report["candidates"][0]
+
+        assert candidate["watch_id"] == sparse_watch.id
+        assert candidate["volatility_status"] == "insufficient_data"
+        assert candidate["volatility_score"] is None
+        assert "recently_volatile_route" not in candidate["reasons"]
+        assert "volatility_insufficient_data" in candidate["reasons"]
     finally:
         db.close()
         db._test_engine.dispose()  # type: ignore[attr-defined]
