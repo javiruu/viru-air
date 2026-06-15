@@ -6,6 +6,12 @@ import json
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.infrastructure.db.models import FlightOfferCacheEntry, FlightPriceObservation
+from app.services.quick_search_ranking import RankedResult
+
 
 FRESHNESS_STATUSES = {
     "fresh",
@@ -225,6 +231,122 @@ def build_offer_fingerprint(
         algorithm_version=algorithm_version,
     )
     return _fingerprint("fsm_offer", payload)
+
+
+def _departure_datetime_for_ranked_result(item: RankedResult) -> dt.datetime:
+    departure_time_local = (item.flight.departure_time_local or "").strip()
+    if departure_time_local:
+        parts = departure_time_local.split(":")
+        if len(parts) >= 2:
+            try:
+                hour = int(parts[0])
+                minute = int(parts[1])
+                if 0 <= hour <= 23 and 0 <= minute <= 59:
+                    return dt.datetime.combine(item.travel_date, dt.time(hour=hour, minute=minute))
+            except ValueError:
+                pass
+    return dt.datetime.combine(item.travel_date, dt.time.min)
+
+
+def build_ranked_result_offer_payload(item: RankedResult) -> dict[str, Any]:
+    return {
+        "provider": item.flight.source,
+        "carrier": None,
+        "flight_number": None,
+        "origin_airport": item.origin,
+        "destination_airport": item.destination,
+        "departure_at": _departure_datetime_for_ranked_result(item),
+        "arrival_at": None,
+        "duration_minutes": None,
+        "stops_count": 0,
+        "source_kind": "provider",
+    }
+
+
+def persist_ranked_result_observations(
+    db: Session,
+    *,
+    ranked_results: Sequence[RankedResult],
+    search_cache_entry_id: str | None,
+    observed_at: dt.datetime,
+    expires_at: dt.datetime | None,
+    freshness_status: str,
+    confidence_score: float | None,
+    validation_status: str,
+) -> dict[str, int]:
+    created_offers = 0
+    created_observations = 0
+
+    for item in ranked_results:
+        offer_payload = build_ranked_result_offer_payload(item)
+        offer_fingerprint = build_offer_fingerprint(offer_payload, source_kind="provider")
+        offer = db.scalar(
+            select(FlightOfferCacheEntry)
+            .where(FlightOfferCacheEntry.offer_fingerprint == offer_fingerprint)
+            .limit(1)
+        )
+        if offer is None:
+            offer = FlightOfferCacheEntry(
+                offer_fingerprint=offer_fingerprint,
+                provider=str(offer_payload["provider"]).strip().lower(),
+                carrier=offer_payload["carrier"],
+                flight_number=offer_payload["flight_number"],
+                origin_airport=str(offer_payload["origin_airport"]).strip().upper(),
+                destination_airport=str(offer_payload["destination_airport"]).strip().upper(),
+                departure_at=offer_payload["departure_at"],
+                arrival_at=offer_payload["arrival_at"],
+                duration_minutes=offer_payload["duration_minutes"],
+                stops_count=int(offer_payload["stops_count"] or 0),
+                source_kind=str(offer_payload["source_kind"]).strip().lower() or "provider",
+            )
+            db.add(offer)
+            db.flush()
+            created_offers += 1
+
+        previous_observation = db.scalar(
+            select(FlightPriceObservation)
+            .where(FlightPriceObservation.offer_id == offer.id)
+            .order_by(FlightPriceObservation.observed_at.desc(), FlightPriceObservation.id.desc())
+            .limit(1)
+        )
+
+        price_amount = float(item.flight.price)
+        price_changed_since_last_seen = False
+        delta_abs: float | None = None
+        delta_pct: float | None = None
+
+        if previous_observation is not None and previous_observation.price_amount is not None:
+            previous_price = float(previous_observation.price_amount)
+            delta_abs = round(price_amount - previous_price, 2)
+            price_changed_since_last_seen = abs(delta_abs) > 0.0001
+            if previous_price != 0:
+                delta_pct = round(delta_abs / previous_price, 4)
+
+        observation = FlightPriceObservation(
+            offer_id=offer.id,
+            search_cache_entry_id=search_cache_entry_id,
+            provider=str(item.flight.source).strip().lower(),
+            price_amount=price_amount,
+            currency=str(item.flight.currency or "EUR").strip().upper(),
+            observed_at=observed_at,
+            expires_at=expires_at,
+            freshness_status=freshness_status,
+            confidence_score=confidence_score,
+            validation_status=validation_status,
+            price_changed_since_last_seen=price_changed_since_last_seen,
+            delta_abs=delta_abs,
+            delta_pct=delta_pct,
+        )
+        db.add(observation)
+        created_observations += 1
+
+    if created_offers or created_observations:
+        db.commit()
+
+    return {
+        "offers_created": created_offers,
+        "observations_created": created_observations,
+    }
 
 
 def build_freshness_payload(
