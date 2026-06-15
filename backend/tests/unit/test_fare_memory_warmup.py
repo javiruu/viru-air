@@ -7,7 +7,12 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.domain.vocabulary import WATCH_STATUS_PAUSED
 from app.infrastructure.db.models import AlertRule, Base, FlightWatch, PriceSnapshot, RevalidationJob, User
-from app.services.fare_memory_warmup import build_boot_warmup_candidate_report, log_boot_warmup_dry_run
+from app.services.fare_memory_warmup import (
+    build_boot_warmup_candidate_report,
+    log_boot_warmup_dry_run,
+    log_scheduled_boot_warmup_jobs,
+    schedule_boot_warmup_jobs,
+)
 
 
 def _db() -> Session:
@@ -194,6 +199,139 @@ def test_log_boot_warmup_dry_run_emits_report_without_creating_jobs(caplog) -> N
         assert payload["event"] == "fare_memory_boot_warmup_dry_run"
         assert payload["candidate_count"] == 1
         assert payload["candidates"][0]["watch_id"] == watch.id
+    finally:
+        db.close()
+        db._test_engine.dispose()  # type: ignore[attr-defined]
+
+
+class _DeterministicRandom:
+    def __init__(self, values: list[int]) -> None:
+        self._values = list(values)
+
+    def randint(self, minimum: int, maximum: int) -> int:
+        value = self._values.pop(0)
+        assert minimum <= value <= maximum
+        return value
+
+
+def test_schedule_boot_warmup_jobs_respects_rate_limit_and_jitter() -> None:
+    db = _db()
+    try:
+        user = _seed_user(db, "warmup-schedule@example.com")
+        watch_a = _seed_watch(
+            db,
+            user_id=user.id,
+            origin="LEI",
+            destination="DUB",
+            travel_date=dt.date(2026, 6, 21),
+        )
+        watch_b = _seed_watch(
+            db,
+            user_id=user.id,
+            origin="AGP",
+            destination="FCO",
+            travel_date=dt.date(2026, 6, 22),
+        )
+        _seed_watch(
+            db,
+            user_id=user.id,
+            origin="BCN",
+            destination="LIS",
+            travel_date=dt.date(2026, 6, 23),
+        )
+        _seed_alert(db, watch_id=watch_a.id, threshold_value=95.0)
+        _seed_alert(db, watch_id=watch_b.id, threshold_value=80.0)
+        _seed_snapshot(
+            db,
+            watch_id=watch_a.id,
+            captured_at=dt.datetime(2026, 6, 16, 9, 0),
+            price=94.0,
+            is_stale=True,
+        )
+        _seed_snapshot(
+            db,
+            watch_id=watch_b.id,
+            captured_at=dt.datetime(2026, 6, 16, 9, 10),
+            price=79.0,
+            is_stale=False,
+        )
+
+        report = schedule_boot_warmup_jobs(
+            db,
+            now=dt.datetime(2026, 6, 16, 10, 0),
+            limit=3,
+            provider_rate_limit_per_minute=2,
+            jitter_seconds=30,
+            rng=_DeterministicRandom([7, 19]),
+        )
+
+        jobs = db.execute(select(RevalidationJob).order_by(RevalidationJob.priority.asc(), RevalidationJob.id.asc())).scalars().all()
+
+        assert report["event"] == "fare_memory_boot_warmup_scheduled"
+        assert report["candidate_count"] == 2
+        assert report["total_candidate_count"] == 3
+        assert report["warmup_jobs_skipped_due_rate_limit"] == 1
+        assert report["enqueued_job_count"] == 2
+        assert len(jobs) == 2
+        assert {job.job_type for job in jobs} == {"boot_warmup"}
+        assert min(job.scheduled_at for job in jobs) >= dt.datetime(2026, 6, 16, 10, 0)
+        assert max(job.scheduled_at for job in jobs) <= dt.datetime(2026, 6, 16, 10, 0, 30)
+    finally:
+        db.close()
+        db._test_engine.dispose()  # type: ignore[attr-defined]
+
+
+def test_schedule_boot_warmup_jobs_skips_existing_active_route_lock(caplog) -> None:
+    db = _db()
+    try:
+        user = _seed_user(db, "warmup-lock@example.com")
+        watch = _seed_watch(
+            db,
+            user_id=user.id,
+            origin="SVQ",
+            destination="FCO",
+            travel_date=dt.date(2026, 6, 24),
+        )
+        _seed_alert(db, watch_id=watch.id, threshold_value=90.0)
+        _seed_snapshot(
+            db,
+            watch_id=watch.id,
+            captured_at=dt.datetime(2026, 6, 16, 9, 30),
+            price=88.0,
+            is_stale=True,
+        )
+        existing_job = RevalidationJob(
+            job_type="manual",
+            target_type="route",
+            target_fingerprint="route:SVQ:FCO:2026-06-24",
+            provider="multi",
+            priority=10,
+            status="queued",
+            scheduled_at=dt.datetime(2026, 6, 16, 10, 5),
+        )
+        db.add(existing_job)
+        db.commit()
+        db.refresh(existing_job)
+
+        with caplog.at_level(logging.INFO, logger="app.fare_memory.warmup"):
+            report = log_scheduled_boot_warmup_jobs(
+                db,
+                now=dt.datetime(2026, 6, 16, 10, 0),
+                limit=5,
+                provider_rate_limit_per_minute=5,
+                jitter_seconds=30,
+                rng=_DeterministicRandom([0]),
+            )
+
+        jobs = db.execute(select(RevalidationJob)).scalars().all()
+        payload = json.loads(caplog.records[-1].message)
+
+        assert len(jobs) == 1
+        assert report["enqueued_job_count"] == 0
+        assert report["skipped_due_lock_count"] == 1
+        assert payload["skipped_due_lock_count"] == 1
+        assert payload["jobs"][0]["job_id"] == existing_job.id
+        assert payload["jobs"][0]["status"] == "duplicate_locked"
     finally:
         db.close()
         db._test_engine.dispose()  # type: ignore[attr-defined]
