@@ -2,6 +2,7 @@
 import logging
 import os
 from datetime import date as Date, timedelta
+from uuid import uuid4
 
 from app.core.time import utc_now_naive
 
@@ -44,6 +45,13 @@ from app.services.quick_search_execution import (
     classify_cache_result,
     build_cache_source_hash,
 )
+from app.services.fare_memory_config import FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE
+from app.services.revalidation_jobs import (
+    claim_revalidation_job,
+    complete_revalidation_job,
+    enqueue_revalidation_job,
+    fail_revalidation_job,
+)
 
 router = APIRouter()
 provider = MultiSourceFlightProvider()
@@ -56,6 +64,14 @@ WatchRouteKey = tuple[str, str, Date]
 
 def _watch_route_key(watch: FlightWatch) -> WatchRouteKey:
     return (watch.origin_iata, watch.destination_iata, watch.travel_date_local)
+
+
+def _watch_revalidation_target_fingerprint(watch: FlightWatch) -> str:
+    return f"route:{watch.origin_iata}:{watch.destination_iata}:{watch.travel_date_local.isoformat()}"
+
+
+def _manual_revalidation_retry_after_seconds() -> int:
+    return max(1, int(60 / max(1, FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE)))
 
 
 def _count_watchers_by_route(
@@ -494,6 +510,59 @@ def _refresh_watch_now(db: Session, watch_id: str, current_user: User) -> JSONRe
                 response.headers["Retry-After"] = str(retry_after)
                 return response
 
+    revalidation_job, created = enqueue_revalidation_job(
+        db,
+        job_type="manual",
+        target_type="route",
+        target_fingerprint=_watch_revalidation_target_fingerprint(watch),
+        provider="multi",
+        priority=20,
+        payload={"watch_id": watch.id, "user_id": current_user.id},
+    )
+    if not created:
+        retry_after = _manual_revalidation_retry_after_seconds()
+        logger.info(
+            json.dumps(
+                {
+                    "event": "watch_refresh_revalidation_deduped",
+                    "user_id": current_user.id,
+                    "watch_id": watch.id,
+                    "job_id": revalidation_job.id,
+                    "retry_after_sec": retry_after,
+                },
+                ensure_ascii=False,
+            )
+        )
+        response = JSONResponse(
+            status_code=429,
+            content=error_envelope(
+                status=429,
+                code="revalidation_already_in_progress",
+                message=message_for_code("revalidation_already_in_progress"),
+                details=[{"job_id": revalidation_job.id}],
+                retry_after_sec=retry_after,
+            ),
+        )
+        response.headers["Retry-After"] = str(retry_after)
+        return response
+
+    lock_token = str(uuid4())
+    claimed_job = claim_revalidation_job(db, job_id=revalidation_job.id, lock_token=lock_token)
+    if claimed_job is None:
+        retry_after = _manual_revalidation_retry_after_seconds()
+        response = JSONResponse(
+            status_code=429,
+            content=error_envelope(
+                status=429,
+                code="revalidation_already_in_progress",
+                message=message_for_code("revalidation_already_in_progress"),
+                details=[{"job_id": revalidation_job.id}],
+                retry_after_sec=retry_after,
+            ),
+        )
+        response.headers["Retry-After"] = str(retry_after)
+        return response
+
     try:
         # Check shared cache before hitting provider (cross-user cache reuse)
         if WATCH_SHARED_CACHE_ENABLED:
@@ -523,6 +592,12 @@ def _refresh_watch_now(db: Session, watch_id: str, current_user: User) -> JSONRe
                             "destination": watch.destination_iata,
                             "date": str(watch.travel_date_local),
                         }, ensure_ascii=False)
+                    )
+                    complete_revalidation_job(
+                        db,
+                        job_id=revalidation_job.id,
+                        lock_token=lock_token,
+                        final_status="skipped",
                     )
                     return JSONResponse(
                         status_code=200,
@@ -556,12 +631,23 @@ def _refresh_watch_now(db: Session, watch_id: str, current_user: User) -> JSONRe
                                 "cache_status": cached_entry.status,
                             }, ensure_ascii=False)
                         )
+                        complete_revalidation_job(
+                            db,
+                            job_id=revalidation_job.id,
+                            lock_token=lock_token,
+                        )
                         return None
 
         provider_result = provider.get_flights(
             watch.origin_iata, watch.destination_iata, str(watch.travel_date_local)
         )
     except Exception as exc:
+        fail_revalidation_job(
+            db,
+            job_id=revalidation_job.id,
+            lock_token=lock_token,
+            error_code="provider_error",
+        )
         logger.warning(
             json.dumps(
                 {
@@ -639,6 +725,12 @@ def _refresh_watch_now(db: Session, watch_id: str, current_user: User) -> JSONRe
 
     canonical_flight = select_canonical_refresh_flight(flights)
     if canonical_flight is None:
+        complete_revalidation_job(
+            db,
+            job_id=revalidation_job.id,
+            lock_token=lock_token,
+            final_status="skipped",
+        )
         return JSONResponse(
             status_code=200,
             content={"status": "no_flights", "watch_id": watch.id},
@@ -655,4 +747,9 @@ def _refresh_watch_now(db: Session, watch_id: str, current_user: User) -> JSONRe
     )
     db.add(snapshot)
     db.commit()
+    complete_revalidation_job(
+        db,
+        job_id=revalidation_job.id,
+        lock_token=lock_token,
+    )
     return None

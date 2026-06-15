@@ -33,6 +33,10 @@ Esto evita acoplar `quick-search`, `watchlist` y `recommendations` a un provider
   - `POST /api/v1/watchlist/refresh-bulk`
   - `POST /api/v1/watchlist/status-bulk`
   - `POST /api/v1/watchlist/delete-bulk`
+- Refresh manual de watchlist:
+  - `POST /api/v1/watchlist/{watch_id}/refresh-now`
+  - desde 2026-06-16 usa `RevalidationJob` para deduplicar revalidaciones activas por ruta y evitar dobles llamadas al provider.
+  - si ya hay una revalidacion manual activa para la misma ruta, responde `429` con `code=revalidation_already_in_progress` y `Retry-After`.
 - Dominio documentado con mayor detalle en:
   - [Quick Search contract](../reference/backend/quick-search-contract.md)
   - [Quick Search acceptance checklist](../reference/backend/quick-search-acceptance-checklist.md)
