@@ -546,7 +546,11 @@ class QuickSearchCacheEntry(Base):
     destination_iata: Mapped[str] = mapped_column(String(3))
     travel_date: Mapped[datetime.date] = mapped_column(Date)
     provider: Mapped[str] = mapped_column(String(40))
+    search_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    canonical_request_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    provider_set_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="ready")
+    freshness_status: Mapped[str] = mapped_column(String(32), default="fresh", index=True)
     ttl_seconds: Mapped[int] = mapped_column(Integer, default=86400)
     expires_at_utc: Mapped[datetime] = mapped_column(DateTime, index=True)
     captured_at_utc: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
@@ -555,6 +559,89 @@ class QuickSearchCacheEntry(Base):
     warnings_json: Mapped[str] = mapped_column(Text, default="[]")
     source_hash: Mapped[str] = mapped_column(String(64))
     provider_latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    result_count: Mapped[int] = mapped_column(Integer, default=0)
+    confidence_score: Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True)
+
+
+class FlightOfferCacheEntry(Base):
+    __tablename__ = "flight_offer_cache_entry"
+    __table_args__ = (
+        UniqueConstraint("offer_fingerprint", name="uq_flight_offer_cache_fingerprint"),
+        Index("ix_flight_offer_cache_route", "origin_airport", "destination_airport", "departure_at"),
+        Index("ix_flight_offer_cache_provider", "provider", "departure_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    offer_fingerprint: Mapped[str] = mapped_column(String(64))
+    provider: Mapped[str] = mapped_column(String(40), index=True)
+    carrier: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    flight_number: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    origin_airport: Mapped[str] = mapped_column(String(3))
+    destination_airport: Mapped[str] = mapped_column(String(3))
+    departure_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    arrival_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    duration_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    stops_count: Mapped[int] = mapped_column(Integer, default=0)
+    booking_url_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    deeplink_signature: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    source_kind: Mapped[str] = mapped_column(String(24), default="provider")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
+
+
+class FlightPriceObservation(Base):
+    __tablename__ = "flight_price_observation"
+    __table_args__ = (
+        Index("ix_flight_price_observation_offer_observed", "offer_id", "observed_at"),
+        Index("ix_flight_price_observation_expires", "expires_at"),
+        Index("ix_flight_price_observation_freshness", "freshness_status"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    offer_id: Mapped[str] = mapped_column(ForeignKey("flight_offer_cache_entry.id"), index=True)
+    search_cache_entry_id: Mapped[str | None] = mapped_column(
+        ForeignKey("quick_search_cache_entry.id"),
+        nullable=True,
+        index=True,
+    )
+    provider: Mapped[str] = mapped_column(String(40), index=True)
+    price_amount: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    currency: Mapped[str] = mapped_column(String(3), default="EUR")
+    fare_family: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    baggage_included: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    seats_left: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    observed_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, index=True)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    freshness_status: Mapped[str] = mapped_column(String(32), default="fresh")
+    confidence_score: Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True)
+    validation_status: Mapped[str] = mapped_column(String(32), default="observed")
+    price_changed_since_last_seen: Mapped[bool] = mapped_column(Boolean, default=False)
+    delta_abs: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    delta_pct: Mapped[float | None] = mapped_column(Numeric(8, 4), nullable=True)
+
+
+class QuickSearchNegativeCacheEntry(Base):
+    __tablename__ = "quick_search_negative_cache_entry"
+    __table_args__ = (
+        UniqueConstraint("negative_fingerprint", name="uq_qs_negative_cache_fingerprint"),
+        Index("ix_qs_negative_cache_expires", "expires_at"),
+        Index("ix_qs_negative_cache_provider", "provider", "expires_at"),
+        Index("ix_qs_negative_cache_freshness", "freshness_status"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    negative_fingerprint: Mapped[str] = mapped_column(String(64))
+    scope: Mapped[str] = mapped_column(String(32))
+    reason: Mapped[str] = mapped_column(String(64))
+    provider: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    canonical_request_json: Mapped[str] = mapped_column(Text)
+    observed_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime)
+    freshness_status: Mapped[str] = mapped_column(String(32), default="negative_fresh")
+    retry_after_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    hit_count: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
 
 
 class HotelAlertEvent(Base):
