@@ -233,6 +233,7 @@ Requisitos minimos:
 
 - no deben dispararse solo por snapshots viejos;
 - deberan revalidar segun frescura.
+- implementacion actual: si el ultimo `PriceSnapshot` de una watch esta marcado como `is_stale`, la evaluacion de alertas intenta una revalidacion puntual antes de disparar reglas; si el provider falla, se crea un evento honesto y no se dispara una alerta de precio como si estuviera confirmada.
 
 ### Historico
 

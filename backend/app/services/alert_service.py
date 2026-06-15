@@ -1,13 +1,18 @@
-﻿from datetime import timedelta
-
-from app.core.time import as_utc_aware, utc_now, utc_now_naive
+from datetime import timedelta
 
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
+from app.core.time import as_utc_aware, utc_now, utc_now_naive
+from app.domain.entities import ProviderFetchResult
 from app.domain.schemas import AlertRuleIn, AlertRuleUpdateIn
 from app.domain.vocabulary import DELIVERY_STATUS_QUEUED
 from app.infrastructure.db.models import AlertRule, FlightWatch, NotificationEvent, PriceSnapshot
+from app.infrastructure.providers.flight_provider import MultiSourceFlightProvider
+from app.services.watchlist_snapshots import select_canonical_refresh_flight
+
+_ALERT_REVALIDATION_TIMEOUT_MS = 8000
+_provider = MultiSourceFlightProvider()
 
 
 def create_rule(db: Session, payload: AlertRuleIn) -> AlertRule:
@@ -78,7 +83,95 @@ def _cooldown_active(db: Session, rule_id: str, cooldown_minutes: int) -> bool:
     return utc_now() < cutoff
 
 
-def evaluate_rules_for_watch(db: Session, watch_id: str) -> list[NotificationEvent]:
+def _build_deduped_event(
+    db: Session,
+    *,
+    watch_id: str,
+    rule_id: str,
+    channel: str,
+    group_reason: str,
+    message: str,
+) -> NotificationEvent:
+    group_bucket = utc_now_naive().strftime("%Y%m%d%H%M")
+    dedupe_key = f"{watch_id}:{rule_id}:{group_reason}:{channel}:{group_bucket}"
+    existing = db.scalar(
+        select(NotificationEvent)
+        .where(NotificationEvent.dedupe_key == dedupe_key)
+        .order_by(desc(NotificationEvent.created_at), desc(NotificationEvent.id))
+        .limit(1)
+    )
+    if existing:
+        existing.grouped_count = max(1, existing.grouped_count) + 1
+        existing.is_digest = existing.grouped_count > 1
+        existing.group_reason = group_reason
+        existing.message = f"Resumen de {existing.grouped_count} avisos ({group_reason})."
+        db.add(existing)
+        return existing
+
+    event = NotificationEvent(
+        rule_id=rule_id,
+        channel=channel,
+        delivery_status=DELIVERY_STATUS_QUEUED,
+        attempts=0,
+        next_attempt_at=utc_now_naive(),
+        dedupe_key=dedupe_key,
+        group_key=f"{watch_id}:{rule_id}:{group_reason}:{group_bucket}",
+        group_reason=group_reason,
+        is_digest=False,
+        grouped_count=1,
+        message=message,
+    )
+    db.add(event)
+    return event
+
+
+def _revalidate_latest_snapshot(
+    db: Session,
+    *,
+    watch: FlightWatch,
+    provider_client: MultiSourceFlightProvider | None = None,
+) -> tuple[PriceSnapshot | None, str | None]:
+    provider_client = provider_client or _provider
+    try:
+        provider_result = provider_client.get_flights(
+            watch.origin_iata,
+            watch.destination_iata,
+            str(watch.travel_date_local),
+            timeout_ms=_ALERT_REVALIDATION_TIMEOUT_MS,
+        )
+    except Exception:
+        return None, "provider_error"
+
+    flights = provider_result.flights if isinstance(provider_result, ProviderFetchResult) else provider_result
+    canonical_flight = select_canonical_refresh_flight(flights)
+    if canonical_flight is None:
+        return None, "no_flights"
+
+    snapshot = PriceSnapshot(
+        watch_id=watch.id,
+        captured_at_utc=utc_now_naive().replace(microsecond=0),
+        departure_time_local=canonical_flight.departure_time_local,
+        raw_price=canonical_flight.price,
+        raw_currency=canonical_flight.currency,
+        provider=canonical_flight.source,
+        is_stale=False,
+    )
+    db.add(snapshot)
+    db.flush()
+    return snapshot, None
+
+
+def evaluate_rules_for_watch(
+    db: Session,
+    watch_id: str,
+    *,
+    attempt_revalidation: bool = True,
+    provider_client: MultiSourceFlightProvider | None = None,
+) -> list[NotificationEvent]:
+    watch = db.get(FlightWatch, watch_id)
+    if watch is None:
+        return []
+
     snapshots = _latest_snapshots(db, watch_id)
     if not snapshots:
         return []
@@ -86,6 +179,41 @@ def evaluate_rules_for_watch(db: Session, watch_id: str) -> list[NotificationEve
     previous = snapshots[1] if len(snapshots) > 1 else None
     rules = list_rules(db, watch_id)
     created: list[NotificationEvent] = []
+
+    if latest.is_stale:
+        if not attempt_revalidation:
+            return []
+
+        revalidated_snapshot, revalidation_error = _revalidate_latest_snapshot(
+            db,
+            watch=watch,
+            provider_client=provider_client,
+        )
+        if revalidated_snapshot is None:
+            if revalidation_error == "provider_error":
+                for rule in rules:
+                    if not rule.enabled:
+                        continue
+                    if _cooldown_active(db, rule.id, rule.cooldown_minutes):
+                        continue
+                    created.append(
+                        _build_deduped_event(
+                            db,
+                            watch_id=watch_id,
+                            rule_id=rule.id,
+                            channel="in_app",
+                            group_reason="revalidation_failed",
+                            message="No disparamos la alerta: no pudimos revalidar el precio actual.",
+                        )
+                    )
+                if created:
+                    db.commit()
+                    for event in created:
+                        db.refresh(event)
+            return created
+
+        previous = latest
+        latest = revalidated_snapshot
 
     for rule in rules:
         if not rule.enabled:
@@ -138,39 +266,16 @@ def evaluate_rules_for_watch(db: Session, watch_id: str) -> list[NotificationEve
             channels.append("email")
 
         for channel in channels:
-            group_reason = rule.rule_type
-            group_bucket = utc_now_naive().strftime("%Y%m%d%H%M")
-            dedupe_key = f"{watch_id}:{rule.id}:{group_reason}:{channel}:{group_bucket}"
-            existing = db.scalar(
-                select(NotificationEvent)
-                .where(NotificationEvent.dedupe_key == dedupe_key)
-                .order_by(desc(NotificationEvent.created_at), desc(NotificationEvent.id))
-                .limit(1)
+            created.append(
+                _build_deduped_event(
+                    db,
+                    watch_id=watch_id,
+                    rule_id=rule.id,
+                    channel=channel,
+                    group_reason=rule.rule_type,
+                    message=message,
+                )
             )
-            if existing:
-                existing.grouped_count = max(1, existing.grouped_count) + 1
-                existing.is_digest = existing.grouped_count > 1
-                existing.group_reason = group_reason
-                existing.message = f"Resumen de {existing.grouped_count} avisos ({group_reason})."
-                db.add(existing)
-                created.append(existing)
-                continue
-
-            event = NotificationEvent(
-                rule_id=rule.id,
-                channel=channel,
-                delivery_status=DELIVERY_STATUS_QUEUED,
-                attempts=0,
-                next_attempt_at=utc_now_naive(),
-                dedupe_key=dedupe_key,
-                group_key=f"{watch_id}:{rule.id}:{group_reason}:{group_bucket}",
-                group_reason=group_reason,
-                is_digest=False,
-                grouped_count=1,
-                message=message,
-            )
-            db.add(event)
-            created.append(event)
 
     if created:
         db.commit()
