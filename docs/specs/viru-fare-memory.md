@@ -146,6 +146,12 @@ Campos minimos esperados:
 - `retry_after_at`
 - `hit_count`
 
+Primera integracion real desde la Fase 28:
+
+- `no_availability` evita repetir una ruta sin vuelos durante una ventana corta reutilizable;
+- `provider_timeout`, `provider_error` y `provider_total_outage` aplican backoff mas corto y conservan warnings canonicos;
+- la ausencia por provider no debe presentarse como ausencia silenciosa de mercado.
+
 ## TTL inicial recomendado
 
 | Antelacion salida | TTL |

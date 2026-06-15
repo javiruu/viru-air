@@ -424,6 +424,64 @@ class SharedCacheIntegrationTests(unittest.TestCase):
         self.assertIsNotNone(cached)
         self.assertIn("provider_timeout_partial", cached.warnings)
 
+    def test_negative_cache_hit_skips_provider_call(self):
+        pairs = [self._pair("AGP", "TSF")]
+        dates = [dt.date(2026, 12, 25)]
+        plan = build_execution_plan(pairs, dates, max_requests=5)
+
+        calls = {"n": 0}
+
+        def fake_fetch(origin, destination, date_str, timeout_ms):
+            calls["n"] += 1
+            return ProviderFetchResult(
+                flights=[self._make_flight(origin, destination)],
+                warnings=[],
+            )
+
+        def negative_get(origin, destination, date, provider):
+            return ProviderFetchResult(flights=[], warnings=[])
+
+        rows, meta, warnings = execute_plan(
+            plan,
+            concurrency_limit=2,
+            timeout_ms=3000,
+            fetch_flights=fake_fetch,
+            negative_cache_get=negative_get,
+        )
+
+        self.assertEqual(rows, [])
+        self.assertEqual(warnings, [])
+        self.assertEqual(calls["n"], 0)
+        self.assertEqual(meta["negative_cache_hits"], 1)
+        self.assertEqual(meta["provider_calls"], 0)
+
+    def test_negative_cache_provider_error_backoff_skips_provider_and_preserves_warning(self):
+        pairs = [self._pair("AGP", "TSF")]
+        dates = [dt.date(2026, 12, 25)]
+        plan = build_execution_plan(pairs, dates, max_requests=5)
+
+        calls = {"n": 0}
+
+        def fake_fetch(origin, destination, date_str, timeout_ms):
+            calls["n"] += 1
+            return ProviderFetchResult(flights=[self._make_flight(origin, destination)], warnings=[])
+
+        def negative_get(origin, destination, date, provider):
+            return ProviderFetchResult(flights=[], warnings=["provider_timeout_partial"])
+
+        rows, meta, warnings = execute_plan(
+            plan,
+            concurrency_limit=2,
+            timeout_ms=3000,
+            fetch_flights=fake_fetch,
+            negative_cache_get=negative_get,
+        )
+
+        self.assertEqual(rows, [])
+        self.assertEqual(calls["n"], 0)
+        self.assertEqual(meta["negative_cache_hits"], 1)
+        self.assertIn("provider_timeout_partial", warnings)
+
 
 if __name__ == "__main__":
     unittest.main()

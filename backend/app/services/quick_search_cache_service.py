@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
 from app.domain.entities import ProviderFetchResult, ProviderFlight
-from app.infrastructure.db.models import QuickSearchCacheEntry
+from app.infrastructure.db.models import QuickSearchCacheEntry, QuickSearchNegativeCacheEntry
 from app.services.fare_memory import build_freshness_payload
 from app.services.quick_search_execution import (
     CacheResultCategory,
@@ -40,6 +40,8 @@ _DB_LOCK = threading.Lock()
 _READY_TTL = int(os.getenv("QUICK_SEARCH_SHARED_CACHE_READY_TTL_SECONDS", "86400"))
 _EMPTY_TTL = int(os.getenv("QUICK_SEARCH_SHARED_CACHE_EMPTY_TTL_SECONDS", "7200"))
 _DEGRADED_TTL = int(os.getenv("QUICK_SEARCH_SHARED_CACHE_DEGRADED_TTL_SECONDS", "1800"))
+_NEGATIVE_TTL = int(os.getenv("QUICK_SEARCH_NEGATIVE_CACHE_TTL_SECONDS", "1800"))
+_PROVIDER_ERROR_TTL = int(os.getenv("QUICK_SEARCH_NEGATIVE_PROVIDER_ERROR_TTL_SECONDS", "600"))
 
 _TTL_BY_CATEGORY: dict[CacheResultCategory, int] = {
     "ready": _READY_TTL,
@@ -122,6 +124,53 @@ def deserialize_exact_search_payload(payload_json: str) -> dict[str, Any]:
 
 def _ttl_for_category(category: CacheResultCategory) -> int:
     return max(60, _TTL_BY_CATEGORY.get(category, _READY_TTL))
+
+
+def build_negative_cache_fingerprint(
+    *,
+    origin_iata: str,
+    destination_iata: str,
+    travel_date: dt.date | str,
+    provider: str,
+    currency: str = "EUR",
+) -> str:
+    return build_cache_source_hash(
+        origin_iata=origin_iata,
+        destination_iata=destination_iata,
+        travel_date=travel_date,
+        provider=provider,
+        currency=currency,
+    ).replace("qs_", "qsn_")
+
+
+def _negative_ttl_for_reason(reason: str) -> int:
+    provider_error_reasons = {
+        "provider_timeout",
+        "provider_error",
+        "provider_total_outage",
+        "rate_limited",
+    }
+    return _PROVIDER_ERROR_TTL if reason in provider_error_reasons else _NEGATIVE_TTL
+
+
+def _negative_freshness_status_for_reason(reason: str) -> str:
+    provider_error_reasons = {
+        "provider_timeout",
+        "provider_error",
+        "provider_total_outage",
+        "rate_limited",
+    }
+    return "provider_error_fresh" if reason in provider_error_reasons else "negative_fresh"
+
+
+def _negative_result_for_reason(reason: str) -> ProviderFetchResult:
+    warning_map = {
+        "provider_timeout": ["provider_timeout_partial"],
+        "provider_error": ["provider_error_partial"],
+        "provider_total_outage": ["provider_total_outage"],
+        "rate_limited": ["provider_timeout_partial"],
+    }
+    return ProviderFetchResult(flights=[], warnings=warning_map.get(reason, []))
 
 
 def build_effective_freshness(entry: QuickSearchCacheEntry, *, now: dt.datetime | None = None) -> dict[str, Any]:
@@ -368,6 +417,75 @@ def get_or_set_cache_entry(
         origin_iata, destination_iata, travel_date, provider, category,
     )
     return fetch_result, False
+
+
+def get_fresh_negative_cache_entry(
+    db: Session,
+    *,
+    negative_fingerprint: str,
+) -> QuickSearchNegativeCacheEntry | None:
+    now = utc_now_naive()
+    stmt = (
+        select(QuickSearchNegativeCacheEntry)
+        .where(
+            QuickSearchNegativeCacheEntry.negative_fingerprint == negative_fingerprint,
+            QuickSearchNegativeCacheEntry.expires_at > now,
+        )
+        .order_by(QuickSearchNegativeCacheEntry.expires_at.desc())
+        .limit(1)
+    )
+    with _DB_LOCK:
+        entry = db.scalar(stmt)
+        if entry:
+            entry.hit_count = int(entry.hit_count or 0) + 1
+            db.commit()
+            db.refresh(entry)
+    return entry
+
+
+def set_negative_cache_entry(
+    db: Session,
+    *,
+    negative_fingerprint: str,
+    scope: str,
+    reason: str,
+    provider: str | None,
+    canonical_request_json: str,
+    retry_after_at: dt.datetime | None = None,
+) -> QuickSearchNegativeCacheEntry:
+    now = utc_now_naive()
+    ttl = max(60, _negative_ttl_for_reason(reason))
+    expires_at = now + dt.timedelta(seconds=ttl)
+    freshness_status = _negative_freshness_status_for_reason(reason)
+
+    with _DB_LOCK:
+        db.execute(
+            delete(QuickSearchNegativeCacheEntry).where(
+                QuickSearchNegativeCacheEntry.negative_fingerprint == negative_fingerprint,
+            )
+        )
+        entry = QuickSearchNegativeCacheEntry(
+            negative_fingerprint=negative_fingerprint,
+            scope=scope,
+            reason=reason,
+            provider=provider,
+            canonical_request_json=canonical_request_json,
+            observed_at=now,
+            expires_at=expires_at,
+            freshness_status=freshness_status,
+            retry_after_at=retry_after_at,
+            hit_count=0,
+            created_at=now,
+            updated_at=now,
+        )
+        db.add(entry)
+        db.commit()
+        db.refresh(entry)
+    return entry
+
+
+def resolve_negative_cache_result(entry: QuickSearchNegativeCacheEntry) -> ProviderFetchResult:
+    return _negative_result_for_reason(entry.reason)
 
 
 def prune_expired_entries(db: Session, *, batch_size: int = 200) -> int:

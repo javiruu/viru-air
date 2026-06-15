@@ -39,11 +39,15 @@ from app.services.quick_search_ai_preference import select_quick_search_ai_prefe
 from app.services.quick_search_ranking import rank_quick_search_results
 from app.services.quick_search_cache_service import (
     build_effective_freshness,
+    build_negative_cache_fingerprint,
     deserialize_fetch_result,
     deserialize_exact_search_payload,
     get_exact_search_cache_entry,
     get_fresh_entry,
+    get_fresh_negative_cache_entry,
+    resolve_negative_cache_result,
     serialize_fetch_result,
+    set_negative_cache_entry,
     set_exact_search_cache_entry,
     set_cache_entry,
     prune_expired_entries_async,
@@ -1533,8 +1537,83 @@ def quick_search(
                 cache_db.close()
         return _set
 
+    def _make_negative_cache_get():
+        if not QUICK_SEARCH_SHARED_CACHE_ENABLED:
+            return None
+        def _get(o: str, d: str, date, prov: str):
+            cache_db = SessionLocal()
+            try:
+                fingerprint = build_negative_cache_fingerprint(
+                    origin_iata=o,
+                    destination_iata=d,
+                    travel_date=date,
+                    provider="multi",
+                    currency=user_currency,
+                )
+                entry = get_fresh_negative_cache_entry(
+                    cache_db,
+                    negative_fingerprint=fingerprint,
+                )
+                if entry is None:
+                    return None
+                return resolve_negative_cache_result(entry)
+            finally:
+                cache_db.close()
+        return _get
+
+    def _make_negative_cache_set():
+        if not QUICK_SEARCH_SHARED_CACHE_ENABLED:
+            return None
+        def _set(o: str, d: str, date, prov: str, result):
+            cache_db = SessionLocal()
+            try:
+                reason = "no_availability"
+                retry_after_at = None
+                warning_codes = set(result.warnings or [])
+                if "provider_total_outage" in warning_codes or "ryanair_provider_unavailable_total" in warning_codes:
+                    reason = "provider_total_outage"
+                elif "provider_timeout_partial" in warning_codes:
+                    reason = "provider_timeout"
+                    retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
+                elif "provider_error_partial" in warning_codes:
+                    reason = "provider_error"
+                    retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
+                elif "ryanair_availability_failed" in warning_codes or "ryanair_fares_failed" in warning_codes:
+                    reason = "provider_error"
+                    retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
+
+                set_negative_cache_entry(
+                    cache_db,
+                    negative_fingerprint=build_negative_cache_fingerprint(
+                        origin_iata=o,
+                        destination_iata=d,
+                        travel_date=date,
+                        provider="multi",
+                        currency=user_currency,
+                    ),
+                    scope="route_date_provider",
+                    reason=reason,
+                    provider="multi",
+                    canonical_request_json=json.dumps(
+                        {
+                            "origin_iata": o,
+                            "destination_iata": d,
+                            "travel_date": str(date),
+                            "provider": "multi",
+                            "currency": user_currency,
+                        },
+                        ensure_ascii=False,
+                    ),
+                    retry_after_at=retry_after_at,
+                )
+            finally:
+                cache_db.close()
+        return _set
+
     shared_cache_get = _make_shared_cache_get()
     shared_cache_set = _make_shared_cache_set()
+    negative_cache_get = _make_negative_cache_get()
+    negative_cache_set = _make_negative_cache_set()
         
     try:
         canonical, origin_list, destination_list, filter_contract = _normalize_quick_search_request(
@@ -1878,6 +1957,8 @@ def quick_search(
             fetch_flights=lambda o, d, date_str, timeout: provider.get_flights(o, d, date_str, timeout_ms=timeout, currency=user_currency),
             shared_cache_get=shared_cache_get,
             shared_cache_set=shared_cache_set,
+            negative_cache_get=negative_cache_get,
+            negative_cache_set=negative_cache_set,
         )
         _phase_add("provider_fetch_ms", int((time.perf_counter() - started) * 1000))
 
@@ -2541,6 +2622,7 @@ def quick_search(
                 "cache_misses": execution_meta.get("cache_misses", 0),
                 "l1_cache_hits": execution_meta.get("l1_cache_hits", 0),
                 "l2_cache_hits": execution_meta.get("l2_cache_hits", 0),
+                "negative_cache_hits": execution_meta.get("negative_cache_hits", 0),
                 "final_results_count": total_results_count,
                 "paginated_results_count": len(paginated_ranked_results),
             },

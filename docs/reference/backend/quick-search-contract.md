@@ -223,6 +223,20 @@ Warnings canónicos esperados en `meta.warnings_structured`:
 - `provider_total_outage`
 - `provider_partial_results_served`
 
+## Negative cache (Fare Memory Fase 28)
+
+Quick Search maintains a dedicated negative cache for route-date-provider units when the system learns that retrying immediately has low value.
+
+Current intent:
+
+- `no_availability` -> returns empty result without provider call for a short reusable window.
+- `provider_timeout` / `provider_error` / `provider_total_outage` -> returns no flights plus canonical warning codes and applies shorter backoff.
+
+Behavioral rule:
+
+- `provider_error` is not serialized as silent `no_results`.
+- `meta.pipeline_counters.negative_cache_hits` tracks dedicated negative-cache reuse separately from `l1_cache_hits` and `l2_cache_hits`.
+
 ## Monthly calendar hints (`POST /api/v1/search/quick/calendar-hints`)
 
 Fast monthly endpoint for `/quick-search` datepicker heat hints.

@@ -213,6 +213,8 @@ def execute_plan(
     fetch_flights: Callable[[str, str, str, int], list[ProviderFlight] | ProviderFetchResult],
     shared_cache_get: Callable[[str, str, dt.date | str, str], ProviderFetchResult | None] | None = None,
     shared_cache_set: Callable[[str, str, dt.date | str, str, ProviderFetchResult], None] | None = None,
+    negative_cache_get: Callable[[str, str, dt.date | str, str], ProviderFetchResult | None] | None = None,
+    negative_cache_set: Callable[[str, str, dt.date | str, str, ProviderFetchResult], None] | None = None,
 ) -> tuple[list[tuple[str, str, dt.date, ProviderFlight]], dict[str, Any], list[str]]:
     timeout_ms = max(1000, timeout_ms)
     concurrency = max(1, concurrency_limit)
@@ -223,6 +225,7 @@ def execute_plan(
     cache_misses = 0
     l1_cache_hits = 0
     l2_cache_hits = 0
+    negative_cache_hits = 0
     provider_calls = 0
     timed_out_units_count = 0
     provider_failures = 0
@@ -234,6 +237,7 @@ def execute_plan(
             executor.submit(
                 _fetch_with_cache, unit, timeout_ms, fetch_flights,
                 shared_cache_get, shared_cache_set,
+                negative_cache_get, negative_cache_set,
             ): unit
             for unit in plan.units
         }
@@ -247,6 +251,9 @@ def execute_plan(
                 elif cache_hit_type == "L2":
                     cache_hits += 1
                     l2_cache_hits += 1
+                elif cache_hit_type == "NEGATIVE":
+                    cache_hits += 1
+                    negative_cache_hits += 1
                 else:
                     provider_calls += 1
                     cache_misses += 1
@@ -302,6 +309,7 @@ def execute_plan(
         "cache_misses": cache_misses,
         "l1_cache_hits": l1_cache_hits,
         "l2_cache_hits": l2_cache_hits,
+        "negative_cache_hits": negative_cache_hits,
         "timed_out_units_count": timed_out_units_count,
         "provider_failures": provider_failures,
         "concurrency_limit": concurrency,
@@ -322,6 +330,8 @@ def _fetch_with_cache(
     fetch_flights: Callable[[str, str, str, int], list[ProviderFlight] | ProviderFetchResult],
     shared_cache_get: Callable[[str, str, dt.date | str, str], ProviderFetchResult | None] | None = None,
     shared_cache_set: Callable[[str, str, dt.date | str, str, ProviderFetchResult], None] | None = None,
+    negative_cache_get: Callable[[str, str, dt.date | str, str], ProviderFetchResult | None] | None = None,
+    negative_cache_set: Callable[[str, str, dt.date | str, str, ProviderFetchResult], None] | None = None,
 ) -> tuple[ProviderFetchResult, str]:
     """Fetch with multi-level cache: L1 (memory) -> L2 (persistent) -> provider.
 
@@ -350,6 +360,14 @@ def _fetch_with_cache(
             with _CACHE_LOCK:
                 _CACHE[key] = (now, l2_result)
             return l2_result, "L2"
+
+    if negative_cache_get is not None:
+        negative_result = negative_cache_get(
+            unit.origin_iata, unit.destination_iata,
+            unit.travel_date, "multi",
+        )
+        if negative_result is not None:
+            return negative_result, "NEGATIVE"
 
     # Anti-stampede: acquire per-key lock before hitting provider.
     # If another thread is already fetching this key, wait for it to
@@ -383,6 +401,11 @@ def _fetch_with_cache(
             # Populate L2
             if shared_cache_set is not None:
                 shared_cache_set(
+                    unit.origin_iata, unit.destination_iata,
+                    unit.travel_date, "multi", fetch_result,
+                )
+            if negative_cache_set is not None and not fetch_result.flights:
+                negative_cache_set(
                     unit.origin_iata, unit.destination_iata,
                     unit.travel_date, "multi", fetch_result,
                 )
