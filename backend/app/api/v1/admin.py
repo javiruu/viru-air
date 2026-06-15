@@ -28,6 +28,7 @@ from app.infrastructure.db.models import (
     UxEvent,
 )
 from app.infrastructure.db.session import get_db
+from app.services.fare_memory_observability import build_fare_memory_health_snapshot
 
 router = APIRouter()
 pwd = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
@@ -336,6 +337,11 @@ def product_health(db: Session = Depends(get_db), _: User = Depends(require_admi
             "last_alert_execution": last_alert_execution.isoformat() if last_alert_execution else None,
         },
     }
+
+
+@router.get("/fare-memory-health")
+def fare_memory_health(db: Session = Depends(get_db), _: User = Depends(require_admin)) -> dict:
+    return build_fare_memory_health_snapshot(db)
 
 
 @router.get("/product-metrics", response_model=AdminProductMetricsOut)
