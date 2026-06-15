@@ -38,6 +38,11 @@ from app.services.quick_search_expansion import SideExpansionResult, SideExpansi
 from app.services.quick_search_planner import PairPlanItem, build_pair_plan
 from app.services.quick_search_ai_preference import select_quick_search_ai_preference
 from app.services.quick_search_ranking import rank_quick_search_results
+from app.services.fare_memory_config import (
+    FARE_MEMORY_NEGATIVE_CACHE_ENABLED,
+    FARE_MEMORY_OFFER_CACHE_ENABLED,
+    FARE_MEMORY_SEARCH_CACHE_ENABLED,
+)
 from app.services.quick_search_cache_service import (
     build_effective_freshness,
     build_negative_cache_fingerprint,
@@ -1627,7 +1632,7 @@ def quick_search(
         return _set
 
     def _make_negative_cache_get():
-        if not shared_cache_enabled:
+        if not shared_cache_enabled or not FARE_MEMORY_NEGATIVE_CACHE_ENABLED:
             return None
         def _get(o: str, d: str, date, prov: str):
             cache_db = SessionLocal()
@@ -1651,7 +1656,7 @@ def quick_search(
         return _get
 
     def _make_negative_cache_set():
-        if not shared_cache_enabled:
+        if not shared_cache_enabled or not FARE_MEMORY_NEGATIVE_CACHE_ENABLED:
             return None
         def _set(o: str, d: str, date, prov: str, result):
             cache_db = SessionLocal()
@@ -1754,7 +1759,7 @@ def quick_search(
         provider_set=["multi"],
     )
 
-    if shared_cache_enabled:
+    if shared_cache_enabled and FARE_MEMORY_SEARCH_CACHE_ENABLED:
         exact_cache_entry = get_exact_search_cache_entry(
             db,
             origin_iata=canonical.origin.seed_iata,
@@ -2835,7 +2840,7 @@ def quick_search(
     }
 
     exact_cache_entry = None
-    if shared_cache_enabled:
+    if shared_cache_enabled and FARE_MEMORY_SEARCH_CACHE_ENABLED:
         exact_cache_entry = set_exact_search_cache_entry(
             db,
             origin_iata=canonical.origin.seed_iata,
@@ -2854,7 +2859,7 @@ def quick_search(
 
     _enrich_pipeline_counters(response_payload)
 
-    if scoped_ranked_results and _supports_db_session(db):
+    if scoped_ranked_results and _supports_db_session(db) and FARE_MEMORY_OFFER_CACHE_ENABLED:
         observation_observed_at = exact_cache_entry.captured_at_utc if exact_cache_entry is not None else utc_now_naive()
         observation_expires_at = exact_cache_entry.expires_at_utc if exact_cache_entry is not None else None
         observation_freshness_status = "fresh" if exact_cache_category == "ready" else "warm"

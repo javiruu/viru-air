@@ -391,6 +391,68 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             db.close()
             engine.dispose()
 
+    def test_fare_memory_flags_can_disable_new_layers_without_breaking_search(self):
+        payload = self._payload(
+            origin={"seed_iata": "LEI", "include_nearby": False, "radius_km": 250, "max_candidates": 1},
+            destination={"seed_iata": "DUB", "include_nearby": False, "radius_km": 250, "max_candidates": 1},
+            execution={"max_pairs": 1, "max_requests": 1, "timeout_ms": 3000, "concurrency_limit": 1},
+        )
+
+        engine, testing_session_local, db = _db_session()
+        try:
+            execute_plan_calls = []
+
+            def fake_execute_plan(*args, **kwargs):
+                execute_plan_calls.append(kwargs)
+                return (
+                    [("LEI", "DUB", dt.date(2026, 6, 14), _flight(55, "10:00"))],
+                    {
+                        "provider_calls": 1,
+                        "cache_hits": 0,
+                        "cache_misses": 1,
+                        "l1_cache_hits": 0,
+                        "l2_cache_hits": 0,
+                        "negative_cache_hits": 0,
+                        "provider_failures": 0,
+                        "requested_units_count": 1,
+                        "executed_pairs_count": 1,
+                        "skipped_pairs_count": 0,
+                        "timed_out_units_count": 0,
+                        "provider_statuses": [],
+                        "warnings_structured_events": [],
+                    },
+                    [],
+                )
+
+            with (
+                patch("app.api.v1.search.QUICK_SEARCH_SHARED_CACHE_ENABLED", True),
+                patch("app.api.v1.search.FARE_MEMORY_SEARCH_CACHE_ENABLED", False),
+                patch("app.api.v1.search.FARE_MEMORY_NEGATIVE_CACHE_ENABLED", False),
+                patch("app.api.v1.search.FARE_MEMORY_OFFER_CACHE_ENABLED", False),
+                patch("app.api.v1.search.SessionLocal", testing_session_local),
+                patch("app.api.v1.search.get_exact_search_cache_entry") as exact_get,
+                patch("app.api.v1.search.set_exact_search_cache_entry") as exact_set,
+                patch("app.api.v1.search.get_fresh_negative_cache_entry") as negative_get,
+                patch("app.api.v1.search.set_negative_cache_entry") as negative_set,
+                patch("app.api.v1.search.persist_ranked_result_observations") as persist_observations,
+                patch("app.api.v1.search.execute_plan", side_effect=fake_execute_plan),
+            ):
+                result = self._call_quick_search(payload, db=db)
+
+            exact_get.assert_not_called()
+            exact_set.assert_not_called()
+            negative_get.assert_not_called()
+            negative_set.assert_not_called()
+            persist_observations.assert_not_called()
+            self.assertEqual(len(execute_plan_calls), 1)
+            self.assertIsNone(execute_plan_calls[0]["negative_cache_get"])
+            self.assertIsNone(execute_plan_calls[0]["negative_cache_set"])
+            self.assertEqual(len(result["results"]), 1)
+            self.assertFalse(result["meta"]["search_cache"]["exact_hit"])
+        finally:
+            db.close()
+            engine.dispose()
+
     def test_partial_provider_results_are_marked_warm_for_revalidation(self):
         payload = self._payload()
 
