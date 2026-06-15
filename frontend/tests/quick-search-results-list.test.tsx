@@ -77,7 +77,7 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
       t={t}
       formatMoney={(value, currency) => `${currency || "EUR"} ${value}`}
       formatScore={(value) => value.toFixed(2)}
-      formatFreshness={(value) => value || "--"}
+      getFreshnessLabel={() => "Precio verificado hace 4 min"}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
       getResultTags={() => [{ key: "buffer", label: "margen amplio", tone: "low" }]}
@@ -101,6 +101,7 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
   assert.match(html, /Guardar/);
   assert.match(html, /Ver detalle/);
   assert.match(html, /Abrir en Ryanair/);
+  assert.match(html, /Precio verificado hace 4 min/);
   assert.match(html, /trip\/flights\/select/);
 });
 
@@ -123,7 +124,7 @@ test("QuickSearchResultsList accepts official relative deeplink variants and rej
       t={t}
       formatMoney={(value, currency) => `${currency || "EUR"} ${value}`}
       formatScore={(value) => value.toFixed(2)}
-      formatFreshness={(value) => value || "--"}
+      getFreshnessLabel={() => "Precio verificado hace 4 min"}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
       getResultTags={() => [{ key: "buffer", label: "margen amplio", tone: "low" }]}
@@ -160,7 +161,7 @@ test("QuickSearchResultsList accepts official relative deeplink variants and rej
       t={t}
       formatMoney={(value, currency) => `${currency || "EUR"} ${value}`}
       formatScore={(value) => value.toFixed(2)}
-      formatFreshness={(value) => value || "--"}
+      getFreshnessLabel={() => "Precio verificado hace 4 min"}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
       getResultTags={() => [{ key: "buffer", label: "margen amplio", tone: "low" }]}
@@ -199,7 +200,7 @@ test("QuickSearchResultsList renders ai preferred tag and reason", () => {
       t={t}
       formatMoney={(value, currency) => `${currency || "EUR"} ${value}`}
       formatScore={(value) => value.toFixed(2)}
-      formatFreshness={(value) => value || "--"}
+      getFreshnessLabel={() => "Precio verificado hace 4 min"}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
       getResultTags={() => [{ key: "ai-preferred", label: "Precio recomendado", tone: "ai" }]}
@@ -242,7 +243,7 @@ test("QuickSearchResultsList keeps ai and itinerary tags in compact view", () =>
       t={t}
       formatMoney={(value, currency) => `${currency || "EUR"} ${value}`}
       formatScore={(value) => value.toFixed(2)}
-      formatFreshness={(value) => value || "--"}
+      getFreshnessLabel={() => "Precio verificado hace 4 min"}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
       getResultTags={() => [
@@ -286,7 +287,7 @@ test("QuickSearchResultsList shows ai reason in expanded details", () => {
       t={t}
       formatMoney={(value, currency) => `${currency || "EUR"} ${value}`}
       formatScore={(value) => value.toFixed(2)}
-      formatFreshness={(value) => value || "--"}
+      getFreshnessLabel={() => "Precio historico. Puede haber cambiado."}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
       getResultTags={() => [{ key: "ai-preferred", label: "Precio recomendado", tone: "ai" }]}
@@ -305,6 +306,7 @@ test("QuickSearchResultsList shows ai reason in expanded details", () => {
 
   assert.match(html, /details-res-1/);
   assert.match(html, /Mas barato sin sacrificar frescura/);
+  assert.match(html, /Precio historico\. Puede haber cambiado\./);
 });
 
 test("QuickSearchResultsList omits empty ai reason copy", () => {
@@ -326,7 +328,7 @@ test("QuickSearchResultsList omits empty ai reason copy", () => {
       t={t}
       formatMoney={(value, currency) => `${currency || "EUR"} ${value}`}
       formatScore={(value) => value.toFixed(2)}
-      formatFreshness={(value) => value || "--"}
+      getFreshnessLabel={() => "Precio verificado hace 4 min"}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
       getResultTags={() => [{ key: "ai-preferred", label: "Precio recomendado", tone: "ai" }]}

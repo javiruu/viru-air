@@ -381,7 +381,7 @@ test("normalizeQuickSearchResponse keeps quick-search results renderable from ba
       t: (key: string) => key,
       formatMoney: (value: number, currency?: string) => `${currency || "EUR"} ${value}`,
       formatScore: (value: number) => value.toFixed(2),
-      formatFreshness: (value?: string | null) => value || "--",
+      getFreshnessLabel: () => "Precio verificado hace 4 min",
       formatMinutes: (value?: number | null) => `${value ?? 0} min`,
       resultKey: (result: { result_id?: string | null }) => result.result_id || "fallback",
       getResultTags: () => [],
@@ -445,4 +445,41 @@ test("normalizeQuickSearchResponse normalizes provider_status compatibility fiel
   assert.equal(response.meta?.provider_status?.fares?.status, "ok");
   assert.equal(response.meta?.provider_status?.partial_results_served, true);
   assert.deepEqual(response.meta?.provider_status?.providers, []);
+});
+
+test("normalizeQuickSearchResponse maps search_cache freshness into legacy-compatible fields", () => {
+  const response = normalizeQuickSearchResponse({
+    meta: {
+      search_cache: {
+        exact_hit: true,
+        freshness: {
+          status: "provider_error_stale",
+          observed_at: "2026-06-01T08:00:00Z",
+          requires_revalidation: true,
+        },
+      },
+    },
+    results: [
+      {
+        origin: "MAD",
+        destination: "LIS",
+        travel_date: "2026-06-01",
+        departure_time_local: "09:30",
+        price: 39,
+        currency: "EUR",
+        source: "ryanair",
+        freshness: {
+          status: "warm",
+          observed_at: "2026-06-01T08:15:00Z",
+        },
+      },
+    ],
+  });
+
+  assert.equal(response.meta?.freshness_ts, "2026-06-01T08:00:00Z");
+  assert.equal(response.meta?.stale_data, true);
+  assert.equal(response.meta?.search_cache?.freshness?.status, "provider_error_stale");
+  assert.equal(response.results[0]?.freshness_ts, "2026-06-01T08:15:00Z");
+  assert.equal(response.results[0]?.stale_data, false);
+  assert.equal(response.results[0]?.freshness?.status, "warm");
 });
