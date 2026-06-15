@@ -122,7 +122,61 @@ def deserialize_exact_search_payload(payload_json: str) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def _ttl_for_category(category: CacheResultCategory) -> int:
+def _normalize_reference_now(now: dt.datetime | None = None) -> dt.datetime:
+    reference_now = now or utc_now_naive()
+    if reference_now.tzinfo:
+        return reference_now.astimezone(dt.UTC).replace(tzinfo=None)
+    return reference_now
+
+
+def _normalize_travel_date(value: dt.date | str) -> dt.date:
+    if isinstance(value, dt.date):
+        return value
+    return dt.date.fromisoformat(str(value))
+
+
+def resolve_ready_cache_ttl_seconds(
+    *,
+    travel_date: dt.date | str,
+    provider: str,
+    now: dt.datetime | None = None,
+) -> int:
+    reference_now = _normalize_reference_now(now)
+    departure_date = _normalize_travel_date(travel_date)
+    days_until_departure = (departure_date - reference_now.date()).days
+
+    if days_until_departure < 0:
+        return 60
+    if days_until_departure > 90:
+        ttl = 12 * 60 * 60
+    elif days_until_departure >= 60:
+        ttl = 8 * 60 * 60
+    elif days_until_departure >= 30:
+        ttl = 4 * 60 * 60
+    elif days_until_departure >= 14:
+        ttl = 2 * 60 * 60
+    elif days_until_departure >= 3:
+        ttl = 45 * 60
+    elif days_until_departure >= 1:
+        ttl = 15 * 60
+    else:
+        ttl = 5 * 60
+
+    provider_id = str(provider).strip().lower()
+    if provider_id in {"manual", "mock", "fixture"}:
+        return min(ttl, 15 * 60)
+    return ttl
+
+
+def _ttl_for_category(
+    category: CacheResultCategory,
+    *,
+    travel_date: dt.date | str,
+    provider: str,
+    now: dt.datetime | None = None,
+) -> int:
+    if category == "ready":
+        return max(60, resolve_ready_cache_ttl_seconds(travel_date=travel_date, provider=provider, now=now))
     return max(60, _TTL_BY_CATEGORY.get(category, _READY_TTL))
 
 
@@ -174,11 +228,13 @@ def _negative_result_for_reason(reason: str) -> ProviderFetchResult:
 
 
 def build_effective_freshness(entry: QuickSearchCacheEntry, *, now: dt.datetime | None = None) -> dict[str, Any]:
-    reference_now = now or utc_now_naive()
+    reference_now = _normalize_reference_now(now)
     ttl_seconds = max(1, int(entry.ttl_seconds or 0))
     age_seconds = max(0, int((reference_now - entry.captured_at_utc).total_seconds()))
 
-    if entry.status == "ready":
+    if entry.status == "ready" and entry.travel_date < reference_now.date():
+        status = "expired"
+    elif entry.status == "ready":
         status = "warm" if age_seconds >= ttl_seconds // 2 else "fresh"
     elif entry.status == "empty":
         status = "negative_stale" if age_seconds >= ttl_seconds // 2 else "negative_fresh"
@@ -251,14 +307,19 @@ def set_cache_entry(
     provider_latency_ms: int | None = None,
 ) -> QuickSearchCacheEntry:
     """Persist a cache entry. Uses upsert semantics via unique constraint."""
-    ttl = _ttl_for_category(category)
     now = utc_now_naive()
-    expires_at = now + dt.timedelta(seconds=ttl)
 
     if isinstance(travel_date, str):
         travel_date_obj = dt.date.fromisoformat(travel_date)
     else:
         travel_date_obj = travel_date
+    ttl = _ttl_for_category(
+        category,
+        travel_date=travel_date_obj,
+        provider=provider,
+        now=now,
+    )
+    expires_at = now + dt.timedelta(seconds=ttl)
 
     with _DB_LOCK:
         # Delete existing entry for the same unique key before inserting
