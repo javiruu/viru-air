@@ -53,7 +53,7 @@ from app.services.quick_search_cache_service import (
     set_cache_entry,
     prune_expired_entries_async,
 )
-from app.services.fare_memory import build_search_fingerprint, persist_ranked_result_observations
+from app.services.fare_memory import build_freshness_payload, build_search_fingerprint, persist_ranked_result_observations
 
 router = APIRouter()
 provider = MultiSourceFlightProvider()
@@ -79,6 +79,10 @@ _UI_WARNING_CRITICAL_CODES: set[str] = {
     "ryanair_fares_failed",
     "provider_total_outage",
 }
+
+
+def _supports_db_session(value: Any) -> bool:
+    return all(hasattr(value, attr) for attr in ("scalar", "add", "commit"))
 _UI_WARNING_PARTIAL_CODES: set[str] = {
     "ryanair_unavailable_partial",
     "ryanair_availability_failed_partial",
@@ -1480,12 +1484,13 @@ def quick_search(
     user_currency = "EUR"
     if payload and isinstance(payload, dict):
         user_currency = str(payload.get("currency", "EUR")).upper().strip()
+    shared_cache_enabled = QUICK_SEARCH_SHARED_CACHE_ENABLED and _supports_db_session(db)
 
     # L2 shared cache callables.
     # Each callable creates its own DB session because these run inside
     # ThreadPoolExecutor threads, and SQLAlchemy sessions are not thread-safe.
     def _make_shared_cache_get():
-        if not QUICK_SEARCH_SHARED_CACHE_ENABLED:
+        if not shared_cache_enabled:
             return None
         def _get(o: str, d: str, date, prov: str):
             cache_db = SessionLocal()
@@ -1510,7 +1515,7 @@ def quick_search(
         return _get
 
     def _make_shared_cache_set():
-        if not QUICK_SEARCH_SHARED_CACHE_ENABLED:
+        if not shared_cache_enabled:
             return None
         def _set(o: str, d: str, date, prov: str, result):
             cache_db = SessionLocal()
@@ -1539,7 +1544,7 @@ def quick_search(
         return _set
 
     def _make_negative_cache_get():
-        if not QUICK_SEARCH_SHARED_CACHE_ENABLED:
+        if not shared_cache_enabled:
             return None
         def _get(o: str, d: str, date, prov: str):
             cache_db = SessionLocal()
@@ -1563,7 +1568,7 @@ def quick_search(
         return _get
 
     def _make_negative_cache_set():
-        if not QUICK_SEARCH_SHARED_CACHE_ENABLED:
+        if not shared_cache_enabled:
             return None
         def _set(o: str, d: str, date, prov: str, result):
             cache_db = SessionLocal()
@@ -1663,7 +1668,7 @@ def quick_search(
         provider_set=["multi"],
     )
 
-    if QUICK_SEARCH_SHARED_CACHE_ENABLED:
+    if shared_cache_enabled:
         exact_cache_entry = get_exact_search_cache_entry(
             db,
             origin_iata=canonical.origin.seed_iata,
@@ -2364,42 +2369,83 @@ def quick_search(
         },
     }
 
-    serialized_results = [
-        {
-            "result_id": f"{item.origin}-{item.destination}-{item.travel_date}-{pagination_start + idx}",
-            "origin": item.origin,
-            "destination": item.destination,
-            "travel_date": str(item.travel_date),
-            "departure_time_local": item.flight.departure_time_local,
-            "price": item.flight.price,
-            "price_total": item.flight.price,
-            "currency": item.flight.currency,
-            "source": item.flight.source,
-            "duration_total_min": _estimate_duration_minutes(item.origin, item.destination),
-            "ranking_score": item.final_score,
-            "stale_data": False,
-            "freshness_ts": item.flight.captured_at.isoformat(),
-            "itinerary_type": "direct",
-            "legs": [],
-            "score": item.score_breakdown,
-            "origin_seed_iata": item.origin_seed_iata,
-            "destination_seed_iata": item.destination_seed_iata,
-            "origin_iata_used": item.origin,
-            "destination_iata_used": item.destination,
-            "origin_is_seed": item.origin_is_seed,
-            "destination_is_seed": item.destination_is_seed,
-            "origin_distance_from_seed_km": item.origin_distance_from_seed_km,
-            "destination_distance_from_seed_km": item.destination_distance_from_seed_km,
-            "pair_category": item.pair_category,
-            "discovery_explanation": item.discovery_explanation,
-            "query_trace_id": query_trace_id,
-            "selected_from_pair_id": f"{item.origin}->{item.destination}",
-            "candidate_reason": "seed" if item.origin_is_seed and item.destination_is_seed else "expanded",
-            "ai_preferred": False,
-            "ai_preferred_reason": None,
-        }
-        for idx, item in enumerate(paginated_ranked_results)
-    ]
+    provider_warning_codes = {
+        "provider_error_partial",
+        "provider_timeout_partial",
+        "provider_partial_results_served",
+        "provider_total_outage",
+        "ryanair_availability_failed_partial",
+        "ryanair_fares_failed_partial",
+        "ryanair_unavailable_partial",
+        "ryanair_provider_unavailable_total",
+        "ryanair_availability_failed",
+        "ryanair_fares_failed",
+    }
+    outage_warning_codes = {
+        "provider_error_partial",
+        "provider_timeout_partial",
+        "provider_total_outage",
+        "ryanair_provider_unavailable_total",
+        "ryanair_availability_failed",
+        "ryanair_fares_failed",
+    }
+    exact_cache_category = "empty"
+    if paginated_ranked_results:
+        exact_cache_category = "degraded" if any(code in provider_warning_codes for code in warnings) else "ready"
+    elif any(code in outage_warning_codes for code in warnings):
+        exact_cache_category = "degraded"
+
+    result_freshness_status = "fresh" if exact_cache_category == "ready" else "warm"
+    result_validation_status = "revalidated" if exact_cache_category == "ready" else "provider_partial"
+    result_confidence_score = 0.95 if exact_cache_category == "ready" else 0.4
+
+    serialized_results: list[dict[str, Any]] = []
+    for idx, item in enumerate(paginated_ranked_results):
+        item_freshness = build_freshness_payload(
+            status=result_freshness_status,
+            observed_at=item.flight.captured_at,
+            expires_at=None,
+            source="provider_live",
+            now=utc_now_naive(),
+            confidence_score=result_confidence_score,
+            validation_status=result_validation_status,
+        )
+        serialized_results.append(
+            {
+                "result_id": f"{item.origin}-{item.destination}-{item.travel_date}-{pagination_start + idx}",
+                "origin": item.origin,
+                "destination": item.destination,
+                "travel_date": str(item.travel_date),
+                "departure_time_local": item.flight.departure_time_local,
+                "price": item.flight.price,
+                "price_total": item.flight.price,
+                "currency": item.flight.currency,
+                "source": item.flight.source,
+                "duration_total_min": _estimate_duration_minutes(item.origin, item.destination),
+                "ranking_score": item.final_score,
+                "stale_data": bool(item_freshness["requires_revalidation"]),
+                "freshness_ts": item.flight.captured_at.isoformat(),
+                "freshness": item_freshness,
+                "itinerary_type": "direct",
+                "legs": [],
+                "score": item.score_breakdown,
+                "origin_seed_iata": item.origin_seed_iata,
+                "destination_seed_iata": item.destination_seed_iata,
+                "origin_iata_used": item.origin,
+                "destination_iata_used": item.destination,
+                "origin_is_seed": item.origin_is_seed,
+                "destination_is_seed": item.destination_is_seed,
+                "origin_distance_from_seed_km": item.origin_distance_from_seed_km,
+                "destination_distance_from_seed_km": item.destination_distance_from_seed_km,
+                "pair_category": item.pair_category,
+                "discovery_explanation": item.discovery_explanation,
+                "query_trace_id": query_trace_id,
+                "selected_from_pair_id": f"{item.origin}->{item.destination}",
+                "candidate_reason": "seed" if item.origin_is_seed and item.destination_is_seed else "expanded",
+                "ai_preferred": False,
+                "ai_preferred_reason": None,
+            }
+        )
     ai_preference = select_quick_search_ai_preference(
         serialized_results,
         query_context={
@@ -2439,7 +2485,7 @@ def quick_search(
 
     # Fase 13: Lazy pruning of expired cache entries (probabilistic, ~10% of requests).
     # Runs in a daemon thread to avoid blocking the HTTP response TTFB.
-    if QUICK_SEARCH_SHARED_CACHE_ENABLED and hash(query_trace_id) % 10 == 0:
+    if shared_cache_enabled and hash(query_trace_id) % 10 == 0:
         prune_expired_entries_async(batch_size=200)
 
     debug_payload: dict[str, Any] | None = None
@@ -2684,42 +2730,25 @@ def quick_search(
     }
 
     response_payload["meta"]["search_fingerprint"] = search_fingerprint
+    live_search_cache_freshness = build_freshness_payload(
+        status=result_freshness_status,
+        observed_at=utc_now_naive(),
+        expires_at=None,
+        source="search_live",
+        now=utc_now_naive(),
+        confidence_score=0.95 if exact_cache_category == "ready" else 0.72 if exact_cache_category == "empty" else 0.4,
+        validation_status="revalidated" if exact_cache_category == "ready" else "provider_partial",
+    )
     response_payload["meta"]["search_cache"] = {
         "exact_hit": False,
         "search_fingerprint": search_fingerprint,
-        "freshness": None,
-        "requires_revalidation": False,
+        "freshness": live_search_cache_freshness,
+        "requires_revalidation": bool(live_search_cache_freshness["requires_revalidation"]),
         "provider": "search_exact",
     }
 
-    provider_warning_codes = {
-        "provider_error_partial",
-        "provider_timeout_partial",
-        "provider_partial_results_served",
-        "provider_total_outage",
-        "ryanair_availability_failed_partial",
-        "ryanair_fares_failed_partial",
-        "ryanair_unavailable_partial",
-        "ryanair_provider_unavailable_total",
-        "ryanair_availability_failed",
-        "ryanair_fares_failed",
-    }
-    outage_warning_codes = {
-        "provider_error_partial",
-        "provider_timeout_partial",
-        "provider_total_outage",
-        "ryanair_provider_unavailable_total",
-        "ryanair_availability_failed",
-        "ryanair_fares_failed",
-    }
-    exact_cache_category = "empty"
-    if serialized_results:
-        exact_cache_category = "degraded" if any(code in provider_warning_codes for code in warnings) else "ready"
-    elif any(code in outage_warning_codes for code in warnings):
-        exact_cache_category = "degraded"
-
     exact_cache_entry = None
-    if QUICK_SEARCH_SHARED_CACHE_ENABLED:
+    if shared_cache_enabled:
         exact_cache_entry = set_exact_search_cache_entry(
             db,
             origin_iata=canonical.origin.seed_iata,
@@ -2732,8 +2761,11 @@ def quick_search(
             category=exact_cache_category,
             confidence_score=0.95 if exact_cache_category == "ready" else 0.72 if exact_cache_category == "empty" else 0.4,
         )
+        exact_cache_freshness = build_effective_freshness(exact_cache_entry)
+        response_payload["meta"]["search_cache"]["freshness"] = exact_cache_freshness
+        response_payload["meta"]["search_cache"]["requires_revalidation"] = bool(exact_cache_freshness["requires_revalidation"])
 
-    if scoped_ranked_results:
+    if scoped_ranked_results and _supports_db_session(db):
         observation_observed_at = exact_cache_entry.captured_at_utc if exact_cache_entry is not None else utc_now_naive()
         observation_expires_at = exact_cache_entry.expires_at_utc if exact_cache_entry is not None else None
         observation_freshness_status = "fresh" if exact_cache_category == "ready" else "warm"

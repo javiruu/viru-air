@@ -128,7 +128,7 @@ The endpoint still returns `query`, `filters`, `results` and now adds:
 
 ## Freshness envelope (Fare Memory canonical contract)
 
-> Estado: definido en backend como contrato canonico preparatorio desde 2026-06-14. La integracion visible por defecto en `results[]` puede activarse por fases posteriores, pero cualquier implementacion nueva debe respetar este shape.
+> Estado: definido en backend como contrato canonico desde 2026-06-14. Desde 2026-06-15 Quick Search expone este bloque en `results[]` y en `meta.search_cache.freshness`.
 
 Per-result freshness payload:
 
@@ -161,6 +161,10 @@ Canonical rules:
 - `price` missing must stay `null`, never `0`.
 - `duration_total_min` missing must stay `null`, never `0`.
 - If the value comes from cache, `source` must say so.
+- Current live sources:
+  - `provider_live` for results built in the current search response
+  - `provider_cache` for freshness derived from exact-search cache metadata
+  - `search_live` for the final response before an exact-search cache hit exists
 - If the backend knows the price is historical only, it must not serialize it as `fresh`.
 - Provider failure must remain distinguishable from `no_results`.
 
