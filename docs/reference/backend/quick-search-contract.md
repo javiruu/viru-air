@@ -305,6 +305,23 @@ Reglas:
 - `dominant_direction_recent` describe el sesgo reciente del historico, no una promesa futura.
 - el scheduler de `boot_warmup` puede usar `volatility_score` para bajar prioridad numerica y refrescar antes rutas tecnicamente mas movidas.
 
+## Observabilidad tecnica (Fare Memory Fase 42)
+
+Si existe auth admin, backend expone `GET /api/v1/admin/fare-memory-health` como snapshot tecnico agregado.
+
+Bloques esperados:
+
+- `search_cache`
+- `negative_cache`
+- `offer_memory`
+- `revalidation_jobs`
+
+Reglas:
+
+- solo contadores agregados y estados operativos;
+- no devuelve `payload_json`, `canonical_request_json` ni datos por usuario;
+- pensado para soporte/operacion, no para UI publica.
+
 Behavioral rules:
 
 - Enqueue is idempotent for active duplicates: the backend reuses an existing `queued`/`running` job with the same `(job_type, target_type, target_fingerprint, provider)`.

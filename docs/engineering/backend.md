@@ -49,6 +49,10 @@ Esto evita acoplar `quick-search`, `watchlist` y `recommendations` a un provider
   - soporta historico por oferta (`FlightPriceObservation`) y por ruta (`PriceSnapshot` agrupado por origen/destino/fecha).
   - si hay menos de 3 observaciones devuelve `status=insufficient_data` y no finge score predictivo.
   - desde 2026-06-16 el boot warmup usa esa señal para adelantar rutas que han cambiado varias veces recientemente, pero solo como prioridad tecnica de refresco.
+- Observabilidad tecnica de Fare Memory:
+  - endpoint admin: `GET /api/v1/admin/fare-memory-health`.
+  - devuelve contadores agregados de `search_cache`, `negative_cache`, `offer_memory` y `revalidation_jobs`.
+  - no expone payloads cacheados, fingerprints completos de requests ni datos por usuario.
 - Dominio documentado con mayor detalle en:
   - [Quick Search contract](../reference/backend/quick-search-contract.md)
   - [Quick Search acceptance checklist](../reference/backend/quick-search-acceptance-checklist.md)
