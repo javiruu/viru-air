@@ -37,6 +37,11 @@ Esto evita acoplar `quick-search`, `watchlist` y `recommendations` a un provider
   - `POST /api/v1/watchlist/{watch_id}/refresh-now`
   - desde 2026-06-16 usa `RevalidationJob` para deduplicar revalidaciones activas por ruta y evitar dobles llamadas al provider.
   - si ya hay una revalidacion manual activa para la misma ruta, responde `429` con `code=revalidation_already_in_progress` y `Retry-After`.
+- Boot warmup de Fare Memory:
+  - `FARE_MEMORY_BOOT_WARMUP_ENABLED=false` por defecto.
+  - cuando se activa, el backend ejecuta solo un `dry-run` al arrancar y emite el evento estructurado `fare_memory_boot_warmup_dry_run`.
+  - el reporte incluye candidatos priorizados, limite aplicado y cuantos se omiten por cupo.
+  - en esta fase no crea `RevalidationJob` ni llama a providers; sirve para validar la seleccion antes del warmup real.
 - Dominio documentado con mayor detalle en:
   - [Quick Search contract](../reference/backend/quick-search-contract.md)
   - [Quick Search acceptance checklist](../reference/backend/quick-search-acceptance-checklist.md)

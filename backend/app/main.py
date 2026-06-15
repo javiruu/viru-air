@@ -20,6 +20,9 @@ from app.infrastructure.db import models  # noqa: F401
 from app.infrastructure.db.schema_compat import ensure_door_to_door_tables, ensure_search_preference_columns
 from app.infrastructure.db.seed import ensure_seed_users
 from app.infrastructure.db.session import Base, engine
+from app.infrastructure.db.session import SessionLocal
+from app.services.fare_memory_config import FARE_MEMORY_BOOT_WARMUP_ENABLED, FARE_MEMORY_MAX_BOOT_JOBS
+from app.services.fare_memory_warmup import log_boot_warmup_dry_run
 
 configure_logging()
 
@@ -101,6 +104,7 @@ _hotel_sweep_interval = int(os.getenv("HOTEL_SWEEP_INTERVAL_SECONDS", "3600"))
 _hotel_sweep_provider = os.getenv("HOTEL_PROVIDER", "mock").strip() or "mock"
 
 _sweep_logger = logging.getLogger("app.sweep")
+_warmup_logger = logging.getLogger("app.fare_memory.warmup")
 
 
 def _start_sweep_loop(run_sweep_fn) -> None:
@@ -161,6 +165,23 @@ async def lifespan(app: FastAPI):
 
         thread = threading.Thread(target=_start_sweep_loop, args=(run_hotel_sweep,), daemon=True, name="hotel-sweep")
         thread.start()
+    if FARE_MEMORY_BOOT_WARMUP_ENABLED:
+        db = SessionLocal()
+        try:
+            log_boot_warmup_dry_run(db, limit=FARE_MEMORY_MAX_BOOT_JOBS)
+        except Exception as exc:
+            _warmup_logger.error(
+                json.dumps(
+                    {
+                        "event": "fare_memory_boot_warmup_dry_run_failed",
+                        "limit": FARE_MEMORY_MAX_BOOT_JOBS,
+                        "error": str(exc)[:500],
+                    },
+                    ensure_ascii=False,
+                )
+            )
+        finally:
+            db.close()
     yield
 
 
