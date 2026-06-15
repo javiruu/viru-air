@@ -43,6 +43,11 @@ Esto evita acoplar `quick-search`, `watchlist` y `recommendations` a un provider
   - cuando se activa, el backend agenda `RevalidationJob` de tipo `boot_warmup` solo para watchlists activas y emite el evento estructurado `fare_memory_boot_warmup_scheduled`.
   - el scheduler respeta `FARE_MEMORY_MAX_BOOT_JOBS`, recorta por `FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE` y evita duplicados si ya existe una revalidacion activa de la misma ruta/provider.
   - en startup no llama al provider directamente; solo deja jobs en cola con `scheduled_at` jitterizado para evitar estampidas.
+- Volatilidad basica de Fare Memory:
+  - servicio: `backend/app/services/fare_memory_volatility.py`.
+  - calcula `changes_per_day`, `average_delta_abs`, `max_delta_abs`, `average_time_between_changes_seconds`, `dominant_direction_recent` y `volatility_score`.
+  - soporta historico por oferta (`FlightPriceObservation`) y por ruta (`PriceSnapshot` agrupado por origen/destino/fecha).
+  - si hay menos de 3 observaciones devuelve `status=insufficient_data` y no finge score predictivo.
 - Dominio documentado con mayor detalle en:
   - [Quick Search contract](../reference/backend/quick-search-contract.md)
   - [Quick Search acceptance checklist](../reference/backend/quick-search-acceptance-checklist.md)
