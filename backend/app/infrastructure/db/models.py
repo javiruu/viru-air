@@ -644,6 +644,33 @@ class QuickSearchNegativeCacheEntry(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
 
 
+class RevalidationJob(Base):
+    __tablename__ = "revalidation_job"
+    __table_args__ = (
+        Index("ix_revalidation_job_due", "status", "scheduled_at", "priority"),
+        Index("ix_revalidation_job_target", "target_type", "target_fingerprint", "provider", "status"),
+        Index("ix_revalidation_job_lock_token", "lock_token"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    job_type: Mapped[str] = mapped_column(String(32), index=True)
+    target_type: Mapped[str] = mapped_column(String(16), index=True)
+    target_fingerprint: Mapped[str] = mapped_column(String(64), index=True)
+    provider: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    priority: Mapped[int] = mapped_column(Integer, default=100)
+    status: Mapped[str] = mapped_column(String(16), default="queued", index=True)
+    scheduled_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, index=True)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    lock_token: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    lock_acquired_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    attempt_count: Mapped[int] = mapped_column(Integer, default=0)
+    last_error_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    payload_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
+
+
 class HotelAlertEvent(Base):
     __tablename__ = "hotel_alert_event"
 

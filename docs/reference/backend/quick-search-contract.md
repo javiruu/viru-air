@@ -245,6 +245,32 @@ Behavioral rule:
 - `provider_error` is not serialized as silent `no_results`.
 - `meta.pipeline_counters.negative_cache_hits` tracks dedicated negative-cache reuse separately from `l1_cache_hits` and `l2_cache_hits`.
 
+## Revalidation job model (Fare Memory Fase 36)
+
+Backend now defines a persistent `revalidation_job` queue model for safe batch refreshes and manual refresh flows.
+
+Canonical fields:
+
+- `job_type`: `manual | watchlist | alert_threshold | boot_warmup | popular_search`
+- `target_type`: `search | offer | route`
+- `target_fingerprint`
+- `provider`
+- `priority`
+- `status`: `queued | running | done | skipped | failed`
+- `scheduled_at`
+- `started_at`
+- `finished_at`
+- `lock_token`
+- `attempt_count`
+- `last_error_code`
+
+Behavioral rules:
+
+- Enqueue is idempotent for active duplicates: the backend reuses an existing `queued`/`running` job with the same `(job_type, target_type, target_fingerprint, provider)`.
+- Claiming a job upgrades `status` from `queued` to `running`, assigns `lock_token`, and increments `attempt_count`.
+- Completing or failing a job requires the same `lock_token` that claimed it.
+- Once a job reaches `done`, `skipped`, or `failed`, a new job for the same target may be enqueued later.
+
 ## Monthly calendar hints (`POST /api/v1/search/quick/calendar-hints`)
 
 Fast monthly endpoint for `/quick-search` datepicker heat hints.
