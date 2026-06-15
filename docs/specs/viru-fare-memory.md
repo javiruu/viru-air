@@ -114,6 +114,11 @@ Campos minimos esperados:
 
 Historico de precio ligado a una oferta.
 
+Decision actual de implementacion:
+
+- si una misma oferta reaparece en otra busqueda con el mismo precio, Viru guarda una nueva observacion igualmente para conservar la linea temporal de avistamientos;
+- `price_changed_since_last_seen` solo se activa cuando el importe cambia frente a la observacion anterior de esa oferta.
+
 Campos minimos esperados:
 
 - `offer_id`

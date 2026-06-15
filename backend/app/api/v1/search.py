@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import ApiError, message_for_code
 from app.core.idempotency import replay_if_exists, request_hash, store_response
+from app.core.time import utc_now_naive
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from app.api.deps import get_current_user
@@ -52,7 +53,7 @@ from app.services.quick_search_cache_service import (
     set_cache_entry,
     prune_expired_entries_async,
 )
-from app.services.fare_memory import build_search_fingerprint
+from app.services.fare_memory import build_search_fingerprint, persist_ranked_result_observations
 
 router = APIRouter()
 provider = MultiSourceFlightProvider()
@@ -2691,36 +2692,35 @@ def quick_search(
         "provider": "search_exact",
     }
 
-    if QUICK_SEARCH_SHARED_CACHE_ENABLED:
-        exact_cache_category = "empty"
-        if serialized_results:
-            provider_warning_codes = {
-                "provider_error_partial",
-                "provider_timeout_partial",
-                "provider_partial_results_served",
-                "provider_total_outage",
-                "ryanair_availability_failed_partial",
-                "ryanair_fares_failed_partial",
-                "ryanair_unavailable_partial",
-                "ryanair_provider_unavailable_total",
-                "ryanair_availability_failed",
-                "ryanair_fares_failed",
-            }
-            exact_cache_category = "degraded" if any(code in provider_warning_codes for code in warnings) else "ready"
-        elif any(
-            code in {
-                "provider_error_partial",
-                "provider_timeout_partial",
-                "provider_total_outage",
-                "ryanair_provider_unavailable_total",
-                "ryanair_availability_failed",
-                "ryanair_fares_failed",
-            }
-            for code in warnings
-        ):
-            exact_cache_category = "degraded"
+    provider_warning_codes = {
+        "provider_error_partial",
+        "provider_timeout_partial",
+        "provider_partial_results_served",
+        "provider_total_outage",
+        "ryanair_availability_failed_partial",
+        "ryanair_fares_failed_partial",
+        "ryanair_unavailable_partial",
+        "ryanair_provider_unavailable_total",
+        "ryanair_availability_failed",
+        "ryanair_fares_failed",
+    }
+    outage_warning_codes = {
+        "provider_error_partial",
+        "provider_timeout_partial",
+        "provider_total_outage",
+        "ryanair_provider_unavailable_total",
+        "ryanair_availability_failed",
+        "ryanair_fares_failed",
+    }
+    exact_cache_category = "empty"
+    if serialized_results:
+        exact_cache_category = "degraded" if any(code in provider_warning_codes for code in warnings) else "ready"
+    elif any(code in outage_warning_codes for code in warnings):
+        exact_cache_category = "degraded"
 
-        set_exact_search_cache_entry(
+    exact_cache_entry = None
+    if QUICK_SEARCH_SHARED_CACHE_ENABLED:
+        exact_cache_entry = set_exact_search_cache_entry(
             db,
             origin_iata=canonical.origin.seed_iata,
             destination_iata=canonical.destination.seed_iata,
@@ -2731,6 +2731,23 @@ def quick_search(
             response_payload=response_payload,
             category=exact_cache_category,
             confidence_score=0.95 if exact_cache_category == "ready" else 0.72 if exact_cache_category == "empty" else 0.4,
+        )
+
+    if scoped_ranked_results:
+        observation_observed_at = exact_cache_entry.captured_at_utc if exact_cache_entry is not None else utc_now_naive()
+        observation_expires_at = exact_cache_entry.expires_at_utc if exact_cache_entry is not None else None
+        observation_freshness_status = "fresh" if exact_cache_category == "ready" else "warm"
+        observation_confidence_score = 0.95 if exact_cache_category == "ready" else 0.4
+        observation_validation_status = "revalidated" if exact_cache_category == "ready" else "provider_partial"
+        persist_ranked_result_observations(
+            db,
+            ranked_results=scoped_ranked_results,
+            search_cache_entry_id=exact_cache_entry.id if exact_cache_entry is not None else None,
+            observed_at=observation_observed_at,
+            expires_at=observation_expires_at,
+            freshness_status=observation_freshness_status,
+            confidence_score=observation_confidence_score,
+            validation_status=observation_validation_status,
         )
 
     return response_payload
