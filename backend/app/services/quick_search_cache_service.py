@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from app.core.time import utc_now_naive
 from app.domain.entities import ProviderFetchResult, ProviderFlight
 from app.infrastructure.db.models import QuickSearchCacheEntry
+from app.services.fare_memory import build_freshness_payload
 from app.services.quick_search_execution import (
     CacheResultCategory,
     build_cache_source_hash,
@@ -44,6 +45,12 @@ _TTL_BY_CATEGORY: dict[CacheResultCategory, int] = {
     "ready": _READY_TTL,
     "empty": _EMPTY_TTL,
     "degraded": _DEGRADED_TTL,
+}
+
+_CATEGORY_SOURCE = {
+    "ready": "provider_cache",
+    "empty": "negative_cache",
+    "degraded": "provider_cache",
 }
 
 # ---------------------------------------------------------------------------
@@ -100,6 +107,14 @@ def deserialize_fetch_result(payload_json: str, warnings_json: str) -> ProviderF
     return ProviderFetchResult(flights=flights, warnings=warnings)
 
 
+def serialize_exact_search_payload(payload: dict[str, Any]) -> str:
+    return json.dumps(payload, ensure_ascii=False)
+
+
+def deserialize_exact_search_payload(payload_json: str) -> dict[str, Any]:
+    return json.loads(payload_json)
+
+
 # ---------------------------------------------------------------------------
 # Cache service operations
 # ---------------------------------------------------------------------------
@@ -107,6 +122,29 @@ def deserialize_fetch_result(payload_json: str, warnings_json: str) -> ProviderF
 
 def _ttl_for_category(category: CacheResultCategory) -> int:
     return max(60, _TTL_BY_CATEGORY.get(category, _READY_TTL))
+
+
+def build_effective_freshness(entry: QuickSearchCacheEntry, *, now: dt.datetime | None = None) -> dict[str, Any]:
+    reference_now = now or utc_now_naive()
+    ttl_seconds = max(1, int(entry.ttl_seconds or 0))
+    age_seconds = max(0, int((reference_now - entry.captured_at_utc).total_seconds()))
+
+    if entry.status == "ready":
+        status = "warm" if age_seconds >= ttl_seconds // 2 else "fresh"
+    elif entry.status == "empty":
+        status = "negative_stale" if age_seconds >= ttl_seconds // 2 else "negative_fresh"
+    else:
+        status = "provider_error_stale" if age_seconds >= ttl_seconds // 2 else "provider_error_fresh"
+
+    return build_freshness_payload(
+        status=status,
+        observed_at=entry.captured_at_utc,
+        expires_at=entry.expires_at_utc,
+        source=_CATEGORY_SOURCE.get(entry.status, "provider_cache"),
+        now=reference_now,
+        confidence_score=float(entry.confidence_score) if entry.confidence_score is not None else None,
+        validation_status="revalidated" if status == "fresh" else "observed",
+    )
 
 
 def get_fresh_entry(
@@ -206,6 +244,63 @@ def set_cache_entry(
             source_hash=source_hash,
             provider_latency_ms=provider_latency_ms,
         )
+        db.add(entry)
+        db.commit()
+        db.refresh(entry)
+    return entry
+
+
+def get_exact_search_cache_entry(
+    db: Session,
+    *,
+    origin_iata: str,
+    destination_iata: str,
+    travel_date: dt.date | str,
+    search_fingerprint: str,
+) -> QuickSearchCacheEntry | None:
+    return get_fresh_entry(
+        db,
+        origin_iata=origin_iata,
+        destination_iata=destination_iata,
+        travel_date=travel_date,
+        provider="search_exact",
+        source_hash=search_fingerprint,
+    )
+
+
+def set_exact_search_cache_entry(
+    db: Session,
+    *,
+    origin_iata: str,
+    destination_iata: str,
+    travel_date: dt.date | str,
+    search_fingerprint: str,
+    canonical_request_json: str,
+    provider_set_json: str,
+    response_payload: dict[str, Any],
+    category: CacheResultCategory,
+    confidence_score: float | None = None,
+) -> QuickSearchCacheEntry:
+    payload_json = serialize_exact_search_payload(response_payload)
+    result_count = len(response_payload.get("results", [])) if isinstance(response_payload.get("results"), list) else 0
+    entry = set_cache_entry(
+        db,
+        origin_iata=origin_iata,
+        destination_iata=destination_iata,
+        travel_date=travel_date,
+        provider="search_exact",
+        source_hash=search_fingerprint,
+        category=category,
+        payload_json=payload_json,
+        warnings_json="[]",
+    )
+    with _DB_LOCK:
+        entry.search_fingerprint = search_fingerprint
+        entry.canonical_request_json = canonical_request_json
+        entry.provider_set_json = provider_set_json
+        entry.result_count = result_count
+        entry.confidence_score = confidence_score
+        entry.freshness_status = build_effective_freshness(entry)["status"]
         db.add(entry)
         db.commit()
         db.refresh(entry)

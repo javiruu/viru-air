@@ -285,6 +285,64 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
         self.assertGreaterEqual(second["meta"]["execution"]["cache_hits"], 1)
         self.assertEqual(first["results"][0]["price_total"], second["results"][0]["price_total"])
 
+    def test_exact_search_cache_hit_returns_cached_payload_without_provider_call(self):
+        payload = self._payload(
+            origin={"seed_iata": "LEI", "include_nearby": False, "radius_km": 250, "max_candidates": 1},
+            destination={"seed_iata": "DUB", "include_nearby": False, "radius_km": 250, "max_candidates": 1},
+            execution={"max_pairs": 1, "max_requests": 1, "timeout_ms": 3000, "concurrency_limit": 1},
+        )
+        cached_entry = type(
+            "Entry",
+            (),
+            {
+                "payload_json": '{"meta":{"query_signature":"qsig_cached","execution":{"cache_hits":0}},"results":[{"result_id":"cached-1","price_total":44}]}',
+            },
+        )()
+
+        with (
+            patch("app.api.v1.search.QUICK_SEARCH_SHARED_CACHE_ENABLED", True),
+            patch("app.api.v1.search.get_exact_search_cache_entry", return_value=cached_entry),
+            patch(
+                "app.api.v1.search.build_effective_freshness",
+                return_value={
+                    "status": "fresh",
+                    "observed_at": "2026-06-15T10:00:00Z",
+                    "expires_at": "2026-06-15T11:00:00Z",
+                    "age_seconds": 30,
+                    "confidence_score": 0.95,
+                    "source": "provider_cache",
+                    "requires_revalidation": False,
+                    "validation_status": "revalidated",
+                },
+            ),
+            patch("app.api.v1.search.provider.get_flights") as provider_get_flights,
+        ):
+            result = self._call_quick_search(payload)
+
+        provider_get_flights.assert_not_called()
+        self.assertEqual(result["results"][0]["price_total"], 44)
+        self.assertTrue(result["meta"]["search_cache"]["exact_hit"])
+        self.assertTrue(result["meta"]["execution"]["exact_search_cache_hit"])
+
+    def test_exact_search_cache_miss_persists_final_payload(self):
+        payload = self._payload(
+            origin={"seed_iata": "LEI", "include_nearby": False, "radius_km": 250, "max_candidates": 1},
+            destination={"seed_iata": "DUB", "include_nearby": False, "radius_km": 250, "max_candidates": 1},
+            execution={"max_pairs": 1, "max_requests": 1, "timeout_ms": 3000, "concurrency_limit": 1},
+        )
+
+        with (
+            patch("app.api.v1.search.QUICK_SEARCH_SHARED_CACHE_ENABLED", True),
+            patch("app.api.v1.search.get_exact_search_cache_entry", return_value=None),
+            patch("app.api.v1.search.set_exact_search_cache_entry") as set_exact_cache,
+            patch("app.api.v1.search.provider.get_flights", return_value=[_flight(55, "10:00")]),
+        ):
+            result = self._call_quick_search(payload)
+
+        set_exact_cache.assert_called_once()
+        self.assertFalse(result["meta"]["search_cache"]["exact_hit"])
+        self.assertEqual(result["meta"]["search_cache"]["search_fingerprint"][:11], "fsm_search_")
+
     def test_provider_status_exposes_aggregated_shape(self):
         payload = self._payload()
         with patch("app.api.v1.search.provider.get_flights", return_value=[_flight(80, "12:10")]):
