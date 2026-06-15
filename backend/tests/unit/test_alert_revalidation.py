@@ -1,4 +1,5 @@
 import datetime as dt
+import logging
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
@@ -209,6 +210,58 @@ def test_provider_failure_creates_honest_revalidation_event() -> None:
         assert events[0].rule_id == rule.id
         assert events[0].group_reason == "revalidation_failed"
         assert "no pudimos revalidar" in events[0].message.lower()
+    finally:
+        db.close()
+        db._test_engine.dispose()  # type: ignore[attr-defined]
+
+
+def test_revalidation_success_logs_metrics(caplog) -> None:
+    db = _db()
+    try:
+        _, watch, _ = _seed_watch_with_rule(db, threshold_value=50.0)
+        _seed_snapshot(
+            db,
+            watch_id=watch.id,
+            price=55.0,
+            captured_at=dt.datetime(2026, 7, 20, 8, 0),
+            is_stale=True,
+        )
+
+        with caplog.at_level(logging.INFO, logger="app.services.alert_service"):
+            evaluate_rules_for_watch(
+                db,
+                watch.id,
+                provider_client=_ProviderStub(flights=[_flight(price=45.0)]),
+            )
+
+        assert "revalidation_success_count=1" in caplog.text
+        assert "revalidation_price_changed_count=1" in caplog.text
+    finally:
+        db.close()
+        db._test_engine.dispose()  # type: ignore[attr-defined]
+
+
+def test_revalidation_failure_logs_provider_error_metrics(caplog) -> None:
+    db = _db()
+    try:
+        _, watch, _ = _seed_watch_with_rule(db, threshold_value=50.0)
+        _seed_snapshot(
+            db,
+            watch_id=watch.id,
+            price=45.0,
+            captured_at=dt.datetime(2026, 7, 20, 8, 0),
+            is_stale=True,
+        )
+
+        with caplog.at_level(logging.WARNING, logger="app.services.alert_service"):
+            evaluate_rules_for_watch(
+                db,
+                watch.id,
+                provider_client=_ProviderStub(error=RuntimeError("provider unavailable")),
+            )
+
+        assert "revalidation_success_count=0" in caplog.text
+        assert "provider_error_count=1" in caplog.text
     finally:
         db.close()
         db._test_engine.dispose()  # type: ignore[attr-defined]

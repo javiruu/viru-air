@@ -128,6 +128,89 @@ def _stable_json_dumps(value: Any) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
 
 
+def _metric_ratio(numerator: int, denominator: int) -> float:
+    if denominator <= 0:
+        return 0.0
+    return round(float(numerator) / float(denominator), 4)
+
+
+def _to_optional_float(value: Any) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _collect_result_freshness_metrics(results: list[dict[str, Any]]) -> tuple[int, float]:
+    stale_served_count = 0
+    age_samples: list[float] = []
+
+    for item in results:
+        freshness = item.get("freshness")
+        if not isinstance(freshness, dict):
+            continue
+        if (
+            bool(item.get("stale_data"))
+            or bool(freshness.get("requires_revalidation"))
+            or freshness.get("status") in {"warm", "stale"}
+        ):
+            stale_served_count += 1
+        age_seconds = _to_optional_float(freshness.get("age_seconds"))
+        if age_seconds is not None:
+            age_samples.append(age_seconds)
+
+    avg_price_age_seconds = round(sum(age_samples) / len(age_samples), 2) if age_samples else 0.0
+    return stale_served_count, avg_price_age_seconds
+
+
+def _enrich_pipeline_counters(response_payload: dict[str, Any]) -> None:
+    meta = response_payload.setdefault("meta", {})
+    execution_meta = meta.setdefault("execution", {})
+    pipeline_counters = meta.setdefault("pipeline_counters", {})
+    results = [item for item in response_payload.get("results", []) if isinstance(item, dict)]
+    search_cache = meta.get("search_cache")
+    exact_search_cache_hit = bool(isinstance(search_cache, dict) and search_cache.get("exact_hit"))
+
+    cache_hits = int(execution_meta.get("cache_hits", pipeline_counters.get("cache_hits", 0)) or 0)
+    if exact_search_cache_hit and cache_hits < 1:
+        cache_hits = 1
+        execution_meta["cache_hits"] = 1
+    cache_misses = int(execution_meta.get("cache_misses", pipeline_counters.get("cache_misses", 0)) or 0)
+    l1_cache_hits = int(execution_meta.get("l1_cache_hits", pipeline_counters.get("l1_cache_hits", 0)) or 0)
+    l2_cache_hits = int(execution_meta.get("l2_cache_hits", pipeline_counters.get("l2_cache_hits", 0)) or 0)
+    negative_cache_hits = int(
+        execution_meta.get("negative_cache_hits", pipeline_counters.get("negative_cache_hits", 0)) or 0
+    )
+    provider_calls = int(execution_meta.get("provider_calls", 0) or 0)
+    provider_failures = int(
+        execution_meta.get("provider_failures", pipeline_counters.get("provider_failures_count", 0)) or 0
+    )
+    stale_served_count, avg_price_age_seconds = _collect_result_freshness_metrics(results)
+    total_cache_lookups = cache_hits + cache_misses
+
+    pipeline_counters.update(
+        {
+            "cache_hits": cache_hits,
+            "cache_misses": cache_misses,
+            "l1_cache_hits": l1_cache_hits,
+            "l2_cache_hits": l2_cache_hits,
+            "negative_cache_hits": negative_cache_hits,
+            "provider_failures_count": provider_failures,
+            "final_results_count": int(pipeline_counters.get("final_results_count", len(results)) or len(results)),
+            "paginated_results_count": int(
+                pipeline_counters.get("paginated_results_count", len(results)) or len(results)
+            ),
+            "cache_hit_rate": _metric_ratio(cache_hits, total_cache_lookups),
+            "cache_miss_rate": _metric_ratio(cache_misses, total_cache_lookups),
+            "negative_cache_hit_rate": _metric_ratio(negative_cache_hits, total_cache_lookups),
+            "provider_calls_avoided": cache_hits,
+            "stale_served_count": stale_served_count,
+            "avg_price_age_seconds": avg_price_age_seconds,
+            "provider_error_rate": _metric_ratio(provider_failures, provider_calls),
+        }
+    )
+
+
 def _build_query_signature(
     *,
     origin_seed_pool: list[str],
@@ -1699,6 +1782,7 @@ def quick_search(
                 "requires_revalidation": bool(exact_freshness["requires_revalidation"]),
                 "provider": "search_exact",
             }
+            _enrich_pipeline_counters(exact_payload)
             return exact_payload
 
     origin_seed_pool = list(origin_list)
@@ -2767,6 +2851,8 @@ def quick_search(
         exact_cache_freshness = build_effective_freshness(exact_cache_entry)
         response_payload["meta"]["search_cache"]["freshness"] = exact_cache_freshness
         response_payload["meta"]["search_cache"]["requires_revalidation"] = bool(exact_cache_freshness["requires_revalidation"])
+
+    _enrich_pipeline_counters(response_payload)
 
     if scoped_ranked_results and _supports_db_session(db):
         observation_observed_at = exact_cache_entry.captured_at_utc if exact_cache_entry is not None else utc_now_naive()

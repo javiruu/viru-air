@@ -38,6 +38,12 @@ class QuickSearchObservabilityTests(unittest.TestCase):
         self.assertIn("pipeline_counters", data["meta"])
         self.assertIn("warnings_structured", data["meta"])
         self.assertIn("execution", data["meta"])
+        self.assertIn("cache_hit_rate", data["meta"]["pipeline_counters"])
+        self.assertIn("negative_cache_hit_rate", data["meta"]["pipeline_counters"])
+        self.assertIn("provider_calls_avoided", data["meta"]["pipeline_counters"])
+        self.assertIn("stale_served_count", data["meta"]["pipeline_counters"])
+        self.assertIn("avg_price_age_seconds", data["meta"]["pipeline_counters"])
+        self.assertIn("provider_error_rate", data["meta"]["pipeline_counters"])
         codes = {w.get("code") for w in data["meta"].get("warnings_structured", [])}
         self.assertIn("unsupported_filter", codes)
         self.assertIn("strict_filter_not_enforceable", codes)
