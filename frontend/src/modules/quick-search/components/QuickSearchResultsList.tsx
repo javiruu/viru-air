@@ -21,7 +21,7 @@ type Props = {
   t: (key: any) => string;
   formatMoney: (value: number, currency?: string) => string;
   formatScore: (value: number) => string;
-  formatFreshness: (value?: string | null) => string;
+  getFreshnessLabel: (result: SearchResult) => string;
   formatMinutes: (value?: number | null) => string;
   resultKey: (result: SearchResult, fallback: number) => string;
   getResultTags: (result: SearchResult, mode: "normal" | "compact" | "expanded") => Array<{ key: string; label: string; tone: string }>;
@@ -83,11 +83,7 @@ function QuickSearchResultsListInner(props: Props) {
             const compactTags = props.getResultTags(r, "compact");
             const departureCompact = r.departure_time_local || "--";
             const rowDurationLabel = r.duration_total_min ? `${r.duration_total_min} min` : "--";
-            const rowFreshnessLabel = r.stale_data
-              ? props.t("freshnessStale")
-              : r.freshness_ts
-                ? props.formatFreshness(r.freshness_ts)
-                : "--";
+            const rowFreshnessLabel = props.getFreshnessLabel(r);
             const aiReason = typeof r.ai_preferred_reason === "string" ? r.ai_preferred_reason.trim() : "";
             return (
               <article

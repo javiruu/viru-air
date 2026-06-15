@@ -1,4 +1,11 @@
-import { SearchResponse, SearchResponseRaw, SearchResult, SearchResultRaw } from "@/modules/quick-search/types";
+import {
+  QuickSearchFreshness,
+  QuickSearchFreshnessStatus,
+  SearchResponse,
+  SearchResponseRaw,
+  SearchResult,
+  SearchResultRaw,
+} from "@/modules/quick-search/types";
 
 function toFiniteNumber(value: unknown, fallback: number | null = null): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -17,6 +24,76 @@ function toOptionalString(value: unknown, fallback: string | null = null): strin
 function toRequiredString(value: unknown, fallback: string): string {
   if (typeof value === "string" && value.trim()) return value;
   return fallback;
+}
+
+function toOptionalBoolean(value: unknown, fallback = false): boolean {
+  if (typeof value === "boolean") return value;
+  return fallback;
+}
+
+function toFreshnessStatus(value: unknown): QuickSearchFreshnessStatus | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toLowerCase();
+  switch (normalized) {
+    case "fresh":
+    case "warm":
+    case "stale":
+    case "expired":
+    case "negative_fresh":
+    case "negative_stale":
+    case "provider_error_fresh":
+    case "provider_error_stale":
+      return normalized;
+    default:
+      return null;
+  }
+}
+
+function isFreshnessStale(status: QuickSearchFreshnessStatus | null | undefined): boolean {
+  return status === "stale"
+    || status === "expired"
+    || status === "negative_stale"
+    || status === "provider_error_stale";
+}
+
+function normalizeFreshness(value: unknown): QuickSearchFreshness | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const raw = value as Record<string, unknown>;
+  const status = toFreshnessStatus(raw.status);
+  const observedAt = toOptionalString(raw.observed_at);
+  const expiresAt = toOptionalString(raw.expires_at);
+  const ageSeconds = toFiniteNumber(raw.age_seconds);
+  const confidenceScore = toFiniteNumber(raw.confidence_score);
+  const source = toOptionalString(raw.source);
+  const requiresRevalidation = toOptionalBoolean(raw.requires_revalidation);
+  const validationStatus = toOptionalString(raw.validation_status);
+
+  if (
+    status === null
+    && observedAt === null
+    && expiresAt === null
+    && ageSeconds === null
+    && confidenceScore === null
+    && source === null
+    && requiresRevalidation === false
+    && validationStatus === null
+  ) {
+    return null;
+  }
+
+  return {
+    status,
+    observed_at: observedAt,
+    expires_at: expiresAt,
+    age_seconds: ageSeconds,
+    confidence_score: confidenceScore,
+    source,
+    requires_revalidation: requiresRevalidation,
+    validation_status: validationStatus,
+  };
 }
 
 function extractRankingScore(item: SearchResultRaw): number | null {
@@ -78,41 +155,64 @@ export function collectQuickSearchWarningCodes(response: SearchResponseRaw): str
 }
 
 export function normalizeQuickSearchResults(results: SearchResultRaw[]): SearchResult[] {
-  return results.map((item, idx) => ({
-    ...item,
-    result_id:
-      toOptionalString(item.result_id) ??
-      `${toRequiredString(item.origin, "UNK")}-${toRequiredString(item.destination, "UNK")}-${toRequiredString(item.travel_date, "unknown-date")}-${idx}`,
-    origin: toRequiredString(item.origin, "UNK"),
-    destination: toRequiredString(item.destination, "UNK"),
-    travel_date: toRequiredString(item.travel_date, ""),
-    departure_time_local: toOptionalString(item.departure_time_local),
-    price: toFiniteNumber(item.price, 0) ?? 0,
-    price_total: toFiniteNumber(item.price_total, toFiniteNumber(item.price, 0) ?? 0) ?? 0,
-    currency: toRequiredString(item.currency, "EUR"),
-    source: toRequiredString(item.source, ""),
-    duration_total: toFiniteNumber(item.duration_total),
-    duration_total_min: toFiniteNumber(item.duration_total_min, toFiniteNumber(item.duration_total)),
-    stop_count: toFiniteNumber(item.stop_count),
-    minutes_buffer: toFiniteNumber(item.minutes_buffer),
-    distance_km_ground: toFiniteNumber(item.distance_km_ground),
-    ranking_score: extractRankingScore(item),
-    freshness_ts: toOptionalString(item.freshness_ts),
-    stale_data: Boolean(item.stale_data),
-    ai_preferred: Boolean(item.ai_preferred),
-    ai_preferred_reason: toOptionalString(item.ai_preferred_reason),
-    deeplink_url: toOptionalString(item.deeplink_url),
-    itinerary_type: item.itinerary_type ?? (item.stop_count && item.stop_count > 0 ? "self_connect" : "direct"),
-    legs: item.legs ?? item.segments?.legs ?? [],
-  }));
+  return results.map((item, idx) => {
+    const normalizedFreshness = normalizeFreshness(item.freshness);
+
+    return {
+      ...item,
+      freshness: normalizedFreshness,
+      result_id:
+        toOptionalString(item.result_id) ??
+        `${toRequiredString(item.origin, "UNK")}-${toRequiredString(item.destination, "UNK")}-${toRequiredString(item.travel_date, "unknown-date")}-${idx}`,
+      origin: toRequiredString(item.origin, "UNK"),
+      destination: toRequiredString(item.destination, "UNK"),
+      travel_date: toRequiredString(item.travel_date, ""),
+      departure_time_local: toOptionalString(item.departure_time_local),
+      price: toFiniteNumber(item.price, 0) ?? 0,
+      price_total: toFiniteNumber(item.price_total, toFiniteNumber(item.price, 0) ?? 0) ?? 0,
+      currency: toRequiredString(item.currency, "EUR"),
+      source: toRequiredString(item.source, ""),
+      duration_total: toFiniteNumber(item.duration_total),
+      duration_total_min: toFiniteNumber(item.duration_total_min, toFiniteNumber(item.duration_total)),
+      stop_count: toFiniteNumber(item.stop_count),
+      minutes_buffer: toFiniteNumber(item.minutes_buffer),
+      distance_km_ground: toFiniteNumber(item.distance_km_ground),
+      ranking_score: extractRankingScore(item),
+      freshness_ts: toOptionalString(item.freshness_ts) ?? normalizedFreshness?.observed_at ?? null,
+      stale_data: Boolean(item.stale_data) || isFreshnessStale(normalizedFreshness?.status),
+      ai_preferred: Boolean(item.ai_preferred),
+      ai_preferred_reason: toOptionalString(item.ai_preferred_reason),
+      deeplink_url: toOptionalString(item.deeplink_url),
+      itinerary_type: item.itinerary_type ?? (item.stop_count && item.stop_count > 0 ? "self_connect" : "direct"),
+      legs: item.legs ?? item.segments?.legs ?? [],
+    };
+  });
 }
 
 export function normalizeQuickSearchResponse(response: SearchResponseRaw): SearchResponse {
+  const normalizedSearchCacheFreshness = normalizeFreshness(response.meta?.search_cache?.freshness);
+  const normalizedMetaFreshnessTs =
+    toOptionalString(response.meta?.freshness_ts) ?? normalizedSearchCacheFreshness?.observed_at ?? null;
+  const normalizedMetaStaleData =
+    Boolean(response.meta?.stale_data) || isFreshnessStale(normalizedSearchCacheFreshness?.status);
+
   return {
     ...response,
     meta: response.meta
       ? {
           ...response.meta,
+          freshness_ts: normalizedMetaFreshnessTs,
+          stale_data: normalizedMetaStaleData,
+          search_cache: response.meta.search_cache
+            ? {
+                ...response.meta.search_cache,
+                exact_hit: toOptionalBoolean(response.meta.search_cache.exact_hit),
+                search_fingerprint: toOptionalString(response.meta.search_cache.search_fingerprint),
+                provider: toOptionalString(response.meta.search_cache.provider),
+                requires_revalidation: toOptionalBoolean(response.meta.search_cache.requires_revalidation),
+                freshness: normalizedSearchCacheFreshness,
+              }
+            : response.meta.search_cache,
           provider_status: normalizeProviderStatus(response.meta.provider_status),
         }
       : response.meta,

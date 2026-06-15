@@ -84,6 +84,7 @@ import {
   ZeroResultRelaxAction,
 } from "@/modules/quick-search/types";
 import { collectQuickSearchWarningCodes, normalizeQuickSearchResponse } from "@/modules/quick-search/responseNormalizer";
+import { getQuickSearchFreshnessPresentation } from "@/modules/quick-search/freshnessPresentation";
 import { useQuickSearchMainState } from "@/modules/quick-search/state/useQuickSearchController";
 import { getQuickSearchVisualState } from "@/modules/quick-search/state/getQuickSearchVisualState";
 import { useQuickSearchLoadingFlow } from "@/modules/quick-search/state/useQuickSearchLoadingFlow";
@@ -1832,6 +1833,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           setIsDegraded(
             Boolean(
               data.meta?.stale_data
+              || data.meta?.search_cache?.freshness?.status === "stale"
+              || data.meta?.search_cache?.freshness?.status === "expired"
+              || data.meta?.search_cache?.freshness?.status === "negative_stale"
+              || data.meta?.search_cache?.freshness?.status === "provider_error_stale"
               || data.results.find((item) => item.stale_data)
               || providerOverallStatus === "partial_degraded"
               || providerOverallStatus === "total_outage"
@@ -2274,17 +2279,17 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   }
 
   function getFreshnessTag(result: SearchResult): QuickSearchExplainTag | null {
-    if (result.stale_data) {
-      return { key: "freshness-stale", label: t("stale"), tone: "stale" };
-    }
-    if (result.freshness_ts) {
-      return {
-        key: "freshness-live",
-        label: `${t("freshnessLabel")} ${formatFreshness(result.freshness_ts)}`,
-        tone: "fresh",
-      };
-    }
-    return null;
+    const freshness = getQuickSearchFreshnessPresentation({
+      freshness: result.freshness,
+      freshnessTs: result.freshness_ts,
+      staleData: result.stale_data,
+    });
+    if (freshness.isUnavailable) return null;
+    return {
+      key: `freshness-${freshness.status}`,
+      label: freshness.shortLabel,
+      tone: freshness.tone === "stale" ? "stale" : freshness.tone === "fresh" ? "fresh" : "med",
+    };
   }
 
   function getAiPreferredTag(result: SearchResult): QuickSearchExplainTag | null {
@@ -2442,6 +2447,20 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     if (Number.isNaN(parsed.getTime())) return null;
     return parsed.toLocaleTimeString(localeTag, { hour: "2-digit", minute: "2-digit" });
   }
+
+  function getFreshnessLabel(result: SearchResult) {
+    return getQuickSearchFreshnessPresentation({
+      freshness: result.freshness,
+      freshnessTs: result.freshness_ts,
+      staleData: result.stale_data,
+    }).label;
+  }
+
+  const globalFreshness = getQuickSearchFreshnessPresentation({
+    freshness: searchMeta?.search_cache?.freshness,
+    freshnessTs: searchMeta?.freshness_ts,
+    staleData: searchMeta?.stale_data,
+  });
 
   function mapFieldValidationMessage(field: QuickSearchField, message: string): string {
     const normalized = message.toLowerCase();
@@ -3179,12 +3198,13 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
   useEffect(() => {
     if (!hasSearched) return;
-    const freshnessMode = searchMeta?.freshness_ts ? "timestamp" : "unavailable";
-    const key = `${jobId || "nojob"}:${freshnessMode}:${searchMeta?.freshness_ts || "none"}`;
+    const freshnessMode = globalFreshness.isUnavailable ? "unavailable" : globalFreshness.status;
+    const freshnessObservedAt = globalFreshness.observedAt || "none";
+    const key = `${jobId || "nojob"}:${freshnessMode}:${freshnessObservedAt}`;
     if (freshnessShownKeyRef.current === key) return;
     trackEvent("quicksearch_freshness_global_shown", { mode: freshnessMode });
     freshnessShownKeyRef.current = key;
-  }, [hasSearched, jobId, searchMeta?.freshness_ts, freshnessShownKeyRef]);
+  }, [globalFreshness.isUnavailable, globalFreshness.observedAt, globalFreshness.status, hasSearched, jobId, freshnessShownKeyRef]);
 
   const activeChips = useMemo(() => {
     const chips: Array<{ id: string; label: string; onClear: () => void }> = [];
@@ -4483,9 +4503,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               {searchMeta?.truncated ? <span className="chip chip-warn">{t("truncated")}</span> : null}
               {hasSearched ? (
                 <span className="qs-freshness-global">
-                  {searchMeta?.freshness_ts ? (
+                  {!globalFreshness.isUnavailable ? (
                     <span>
-                      {t("freshnessLabel")} {formatFreshness(searchMeta.freshness_ts)}
+                      {globalFreshness.label}
                     </span>
                   ) : (
                     <span className="qs-freshness-global-unknown">
@@ -4562,7 +4582,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                     <div className="qs-explain-selected">
                       <strong>{selectedResult.origin} {" â†’ "} {selectedResult.destination}</strong>
                       <span>{t("score")}: {selectedResult.ranking_score ? formatScore(selectedResult.ranking_score) : "--"}</span>
-                      <span>{t("freshnessLabel")} {formatFreshness(selectedResult.freshness_ts)}</span>
+                      <span>{getFreshnessLabel(selectedResult)}</span>
                     </div>
                   ) : null}
                 </div>
@@ -4697,7 +4717,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 t={t}
                 formatMoney={formatMoney}
                 formatScore={formatScore}
-                formatFreshness={formatFreshness}
+                getFreshnessLabel={getFreshnessLabel}
                 formatMinutes={formatMinutes}
                 resultKey={resultKey}
                 getResultTags={getResultTags}
@@ -4805,8 +4825,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 <strong>{showDegradedState ? t("degradedBadge") : t("searchReadyTitle")}</strong>
                 <p>
                   {showDegradedState ? t("degradedHint") : t("searchReadyHint")}
-                  {formatFreshnessTime(searchMeta?.freshness_ts) ? (
-                    <span> Â· {t("lastData")}: {formatFreshnessTime(searchMeta?.freshness_ts)}</span>
+                  {formatFreshnessTime(globalFreshness.observedAt) ? (
+                    <span> Â· {t("lastData")}: {formatFreshnessTime(globalFreshness.observedAt)}</span>
                   ) : null}
                 </p>
               </section>
@@ -4997,7 +5017,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 t={t}
                 formatMoney={formatMoneyOutbound}
                 formatScore={formatScore}
-                formatFreshness={formatFreshness}
+                getFreshnessLabel={getFreshnessLabel}
                 formatMinutes={formatMinutes}
                 resultKey={resultKey}
                 getResultTags={getResultTags}
@@ -5116,7 +5136,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 t={t}
                 formatMoney={formatMoneyReturn}
                 formatScore={formatScore}
-                formatFreshness={formatFreshness}
+                getFreshnessLabel={getFreshnessLabel}
                 formatMinutes={formatMinutes}
                 resultKey={resultKey}
                 getResultTags={getResultTags}

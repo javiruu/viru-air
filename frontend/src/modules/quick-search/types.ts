@@ -17,6 +17,27 @@ export type QuickSearchScoreBreakdown = {
   soft_filters_weight_applied?: number | null;
 };
 
+export type QuickSearchFreshnessStatus =
+  | "fresh"
+  | "warm"
+  | "stale"
+  | "expired"
+  | "negative_fresh"
+  | "negative_stale"
+  | "provider_error_fresh"
+  | "provider_error_stale";
+
+export type QuickSearchFreshness = {
+  status?: QuickSearchFreshnessStatus | null;
+  observed_at?: string | null;
+  expires_at?: string | null;
+  age_seconds?: number | null;
+  confidence_score?: number | null;
+  source?: string | null;
+  requires_revalidation?: boolean;
+  validation_status?: string | null;
+};
+
 export type SearchResultRaw = {
   result_id?: string | null;
   origin: string;
@@ -36,6 +57,7 @@ export type SearchResultRaw = {
   score?: QuickSearchScoreBreakdown | number | null;
   freshness_ts?: string | null;
   stale_data?: boolean;
+  freshness?: QuickSearchFreshness | null;
   ai_preferred?: boolean;
   ai_preferred_reason?: string | null;
   deeplink_url?: string | null;
@@ -67,6 +89,13 @@ export type SearchResponseRaw = {
     timezone?: string;
     stale_data?: boolean;
     freshness_ts?: string | null;
+    search_cache?: {
+      exact_hit?: boolean;
+      search_fingerprint?: string | null;
+      provider?: string | null;
+      requires_revalidation?: boolean;
+      freshness?: QuickSearchFreshness | null;
+    };
     total_candidates?: number;
     returned?: number;
     truncated?: boolean;
