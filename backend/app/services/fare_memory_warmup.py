@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.core.time import utc_now_naive
 from app.domain.vocabulary import WATCH_STATUS_ACTIVE
 from app.infrastructure.db.models import AlertRule, FlightWatch, PriceSnapshot, RevalidationJob
+from app.services.fare_memory_volatility import build_route_volatility_report
 from app.services.revalidation_jobs import ACTIVE_REVALIDATION_JOB_STATUSES, enqueue_revalidation_job
 
 logger = logging.getLogger("app.fare_memory.warmup")
@@ -34,6 +35,8 @@ class BootWarmupCandidate:
     latest_snapshot_age_seconds: int | None
     latest_snapshot_is_stale: bool
     departure_in_days: int
+    volatility_score: float | None
+    volatility_status: str
     near_threshold: bool
     threshold_distance_ratio: float | None
     reasons: list[str]
@@ -202,6 +205,7 @@ def _compute_boot_warmup_candidates(
 ) -> list[BootWarmupCandidate]:
     latest_snapshot_by_watch = _latest_snapshot_by_watch(db)
     alerts_by_watch = _enabled_alerts_by_watch(db)
+    volatility_by_route: dict[str, dict[str, object]] = {}
 
     candidates: list[BootWarmupCandidate] = []
     watches = db.scalars(
@@ -213,11 +217,22 @@ def _compute_boot_warmup_candidates(
     for watch in watches:
         latest_snapshot = latest_snapshot_by_watch.get(watch.id)
         alerts = alerts_by_watch.get(watch.id, [])
+        route_key = _watch_route_key(watch)
+        volatility_report = volatility_by_route.get(route_key)
+        if volatility_report is None:
+            volatility_report = build_route_volatility_report(
+                db,
+                origin_iata=watch.origin_iata,
+                destination_iata=watch.destination_iata,
+                travel_date_local=watch.travel_date_local,
+            )
+            volatility_by_route[route_key] = volatility_report
         candidates.append(
             _build_candidate(
                 watch=watch,
                 alerts=alerts,
                 latest_snapshot=latest_snapshot,
+                volatility_report=volatility_report,
                 now=now,
             )
         )
@@ -266,6 +281,7 @@ def _build_candidate(
     watch: FlightWatch,
     alerts: list[AlertRule],
     latest_snapshot: PriceSnapshot | None,
+    volatility_report: dict[str, object],
     now: datetime,
 ) -> BootWarmupCandidate:
     latest_price = float(latest_snapshot.raw_price) if latest_snapshot is not None else None
@@ -274,6 +290,8 @@ def _build_candidate(
     departure_in_days = max(0, _days_until_departure(watch.travel_date_local, now=now))
     threshold_distance_ratio = _nearest_threshold_distance_ratio(alerts, latest_price)
     near_threshold = threshold_distance_ratio is not None and threshold_distance_ratio <= _WARMUP_THRESHOLD_NEAR_RATIO
+    volatility_score = float(volatility_report["volatility_score"]) if volatility_report.get("volatility_score") is not None else None
+    volatility_status = str(volatility_report.get("status") or "insufficient_data")
 
     reasons: list[str] = []
     priority = 500
@@ -294,6 +312,13 @@ def _build_candidate(
     if latest_snapshot is None:
         priority -= 40
         reasons.append("missing_snapshot")
+    if volatility_score is not None:
+        volatility_bonus = _volatility_priority_bonus(volatility_score)
+        if volatility_bonus > 0:
+            priority -= volatility_bonus
+            reasons.append("recently_volatile_route")
+    elif volatility_status == "insufficient_data":
+        reasons.append("volatility_insufficient_data")
 
     return BootWarmupCandidate(
         watch_id=watch.id,
@@ -307,6 +332,8 @@ def _build_candidate(
         latest_snapshot_age_seconds=latest_snapshot_age_seconds,
         latest_snapshot_is_stale=bool(latest_snapshot.is_stale) if latest_snapshot is not None else False,
         departure_in_days=departure_in_days,
+        volatility_score=volatility_score,
+        volatility_status=volatility_status,
         near_threshold=near_threshold,
         threshold_distance_ratio=threshold_distance_ratio,
         reasons=reasons or ["active_watch"],
@@ -346,6 +373,20 @@ def _route_target_fingerprint(candidate: BootWarmupCandidate) -> str:
     return (
         f"route:{candidate.origin_iata}:{candidate.destination_iata}:{candidate.travel_date_local}"
     )
+
+
+def _watch_route_key(watch: FlightWatch) -> str:
+    return f"{watch.origin_iata.upper()}:{watch.destination_iata.upper()}:{watch.travel_date_local.isoformat()}"
+
+
+def _volatility_priority_bonus(volatility_score: float) -> int:
+    if volatility_score >= 0.75:
+        return 90
+    if volatility_score >= 0.5:
+        return 55
+    if volatility_score >= 0.3:
+        return 25
+    return 0
 
 
 def _find_active_revalidation_job(

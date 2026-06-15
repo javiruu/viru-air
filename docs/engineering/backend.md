@@ -48,6 +48,7 @@ Esto evita acoplar `quick-search`, `watchlist` y `recommendations` a un provider
   - calcula `changes_per_day`, `average_delta_abs`, `max_delta_abs`, `average_time_between_changes_seconds`, `dominant_direction_recent` y `volatility_score`.
   - soporta historico por oferta (`FlightPriceObservation`) y por ruta (`PriceSnapshot` agrupado por origen/destino/fecha).
   - si hay menos de 3 observaciones devuelve `status=insufficient_data` y no finge score predictivo.
+  - desde 2026-06-16 el boot warmup usa esa señal para adelantar rutas que han cambiado varias veces recientemente, pero solo como prioridad tecnica de refresco.
 - Dominio documentado con mayor detalle en:
   - [Quick Search contract](../reference/backend/quick-search-contract.md)
   - [Quick Search acceptance checklist](../reference/backend/quick-search-acceptance-checklist.md)
