@@ -2309,6 +2309,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       return [
         ...(aiPreferredTag ? [aiPreferredTag] : []),
         itineraryTag,
+        ...(freshnessTag ? [freshnessTag] : []),
       ];
     }
     if (mode === "expanded") {
@@ -4717,7 +4718,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 t={t}
                 formatMoney={formatMoney}
                 formatScore={formatScore}
-                getFreshnessLabel={getFreshnessLabel}
                 formatMinutes={formatMinutes}
                 resultKey={resultKey}
                 getResultTags={getResultTags}
@@ -5017,7 +5017,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 t={t}
                 formatMoney={formatMoneyOutbound}
                 formatScore={formatScore}
-                getFreshnessLabel={getFreshnessLabel}
                 formatMinutes={formatMinutes}
                 resultKey={resultKey}
                 getResultTags={getResultTags}
@@ -5136,7 +5135,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 t={t}
                 formatMoney={formatMoneyReturn}
                 formatScore={formatScore}
-                getFreshnessLabel={getFreshnessLabel}
                 formatMinutes={formatMinutes}
                 resultKey={resultKey}
                 getResultTags={getResultTags}

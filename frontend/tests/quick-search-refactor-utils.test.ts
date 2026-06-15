@@ -381,7 +381,6 @@ test("normalizeQuickSearchResponse keeps quick-search results renderable from ba
       t: (key: string) => key,
       formatMoney: (value: number, currency?: string) => `${currency || "EUR"} ${value}`,
       formatScore: (value: number) => value.toFixed(2),
-      getFreshnessLabel: () => "Precio verificado hace 4 min",
       formatMinutes: (value?: number | null) => `${value ?? 0} min`,
       resultKey: (result: { result_id?: string | null }) => result.result_id || "fallback",
       getResultTags: () => [],
