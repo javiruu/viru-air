@@ -39,9 +39,10 @@ Esto evita acoplar `quick-search`, `watchlist` y `recommendations` a un provider
   - si ya hay una revalidacion manual activa para la misma ruta, responde `429` con `code=revalidation_already_in_progress` y `Retry-After`.
 - Boot warmup de Fare Memory:
   - `FARE_MEMORY_BOOT_WARMUP_ENABLED=false` por defecto.
-  - cuando se activa, el backend ejecuta solo un `dry-run` al arrancar y emite el evento estructurado `fare_memory_boot_warmup_dry_run`.
-  - el reporte incluye candidatos priorizados, limite aplicado y cuantos se omiten por cupo.
-  - en esta fase no crea `RevalidationJob` ni llama a providers; sirve para validar la seleccion antes del warmup real.
+  - `FARE_MEMORY_BOOT_WARMUP_JITTER_SECONDS=30` define el retraso aleatorio maximo por job al arrancar.
+  - cuando se activa, el backend agenda `RevalidationJob` de tipo `boot_warmup` solo para watchlists activas y emite el evento estructurado `fare_memory_boot_warmup_scheduled`.
+  - el scheduler respeta `FARE_MEMORY_MAX_BOOT_JOBS`, recorta por `FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE` y evita duplicados si ya existe una revalidacion activa de la misma ruta/provider.
+  - en startup no llama al provider directamente; solo deja jobs en cola con `scheduled_at` jitterizado para evitar estampidas.
 - Dominio documentado con mayor detalle en:
   - [Quick Search contract](../reference/backend/quick-search-contract.md)
   - [Quick Search acceptance checklist](../reference/backend/quick-search-acceptance-checklist.md)

@@ -21,8 +21,13 @@ from app.infrastructure.db.schema_compat import ensure_door_to_door_tables, ensu
 from app.infrastructure.db.seed import ensure_seed_users
 from app.infrastructure.db.session import Base, engine
 from app.infrastructure.db.session import SessionLocal
-from app.services.fare_memory_config import FARE_MEMORY_BOOT_WARMUP_ENABLED, FARE_MEMORY_MAX_BOOT_JOBS
-from app.services.fare_memory_warmup import log_boot_warmup_dry_run
+from app.services.fare_memory_config import (
+    FARE_MEMORY_BOOT_WARMUP_ENABLED,
+    FARE_MEMORY_BOOT_WARMUP_JITTER_SECONDS,
+    FARE_MEMORY_MAX_BOOT_JOBS,
+    FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE,
+)
+from app.services.fare_memory_warmup import log_scheduled_boot_warmup_jobs
 
 configure_logging()
 
@@ -168,13 +173,20 @@ async def lifespan(app: FastAPI):
     if FARE_MEMORY_BOOT_WARMUP_ENABLED:
         db = SessionLocal()
         try:
-            log_boot_warmup_dry_run(db, limit=FARE_MEMORY_MAX_BOOT_JOBS)
+            log_scheduled_boot_warmup_jobs(
+                db,
+                limit=FARE_MEMORY_MAX_BOOT_JOBS,
+                provider_rate_limit_per_minute=FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE,
+                jitter_seconds=FARE_MEMORY_BOOT_WARMUP_JITTER_SECONDS,
+            )
         except Exception as exc:
             _warmup_logger.error(
                 json.dumps(
                     {
-                        "event": "fare_memory_boot_warmup_dry_run_failed",
+                        "event": "fare_memory_boot_warmup_schedule_failed",
                         "limit": FARE_MEMORY_MAX_BOOT_JOBS,
+                        "provider_rate_limit_per_minute": FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE,
+                        "jitter_seconds": FARE_MEMORY_BOOT_WARMUP_JITTER_SECONDS,
                         "error": str(exc)[:500],
                     },
                     ensure_ascii=False,

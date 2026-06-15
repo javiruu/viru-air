@@ -264,6 +264,24 @@ Canonical fields:
 - `attempt_count`
 - `last_error_code`
 
+## Boot warmup controlado (Fare Memory Fases 38-39)
+
+El arranque puede preparar revalidaciones de forma controlada si `FARE_MEMORY_BOOT_WARMUP_ENABLED=true`.
+
+Reglas activas:
+
+- selecciona solo watchlists activas y usa la prioridad calculada por `fare_memory_warmup.py`;
+- agenda jobs `boot_warmup` sobre `target_type=route`;
+- aplica `FARE_MEMORY_MAX_BOOT_JOBS` y tambien recorta por `FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE`;
+- usa `FARE_MEMORY_BOOT_WARMUP_JITTER_SECONDS` para desplazar `scheduled_at` y repartir carga en el primer minuto;
+- si ya existe un `RevalidationJob` activo para la misma ruta/provider, no agenda duplicado;
+- el startup no llama providers directamente: solo deja cola persistente para ejecucion posterior.
+
+Eventos estructurados esperados:
+
+- `fare_memory_boot_warmup_dry_run`
+- `fare_memory_boot_warmup_scheduled`
+
 Behavioral rules:
 
 - Enqueue is idempotent for active duplicates: the backend reuses an existing `queued`/`running` job with the same `(job_type, target_type, target_fingerprint, provider)`.

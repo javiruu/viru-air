@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import json
 import logging
+import random
 from dataclasses import asdict, dataclass
-from datetime import date as date_type, datetime
+from datetime import date as date_type, datetime, timedelta
 from decimal import Decimal
 
 from sqlalchemy import select
@@ -11,7 +12,8 @@ from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
 from app.domain.vocabulary import WATCH_STATUS_ACTIVE
-from app.infrastructure.db.models import AlertRule, FlightWatch, PriceSnapshot
+from app.infrastructure.db.models import AlertRule, FlightWatch, PriceSnapshot, RevalidationJob
+from app.services.revalidation_jobs import ACTIVE_REVALIDATION_JOB_STATUSES, enqueue_revalidation_job
 
 logger = logging.getLogger("app.fare_memory.warmup")
 
@@ -66,6 +68,129 @@ def log_boot_warmup_dry_run(
     limit: int = 25,
 ) -> dict[str, object]:
     report = build_boot_warmup_candidate_report(db, now=now, limit=limit)
+    logger.info(json.dumps(report, ensure_ascii=False, sort_keys=True))
+    return report
+
+
+def schedule_boot_warmup_jobs(
+    db: Session,
+    *,
+    now: datetime | None = None,
+    limit: int = 25,
+    provider_rate_limit_per_minute: int = 60,
+    jitter_seconds: int = 30,
+    provider: str = "multi",
+    rng: random.Random | None = None,
+) -> dict[str, object]:
+    reference_now = now or utc_now_naive()
+    computed_candidates = _compute_boot_warmup_candidates(db, now=reference_now)
+    allowed_job_count = max(0, min(int(limit), max(0, int(provider_rate_limit_per_minute))))
+    selected_candidates = computed_candidates[:allowed_job_count]
+    skipped_due_rate_limit = max(0, len(computed_candidates) - len(selected_candidates))
+    random_source = rng or random.Random()
+    queued_jobs: list[dict[str, object]] = []
+    enqueued_job_count = 0
+    skipped_due_lock_count = 0
+
+    for candidate in selected_candidates:
+        target_fingerprint = _route_target_fingerprint(candidate)
+        active_job = _find_active_revalidation_job(
+            db,
+            target_type="route",
+            target_fingerprint=target_fingerprint,
+            provider=provider,
+        )
+        if active_job is not None:
+            skipped_due_lock_count += 1
+            queued_jobs.append(
+                {
+                    "watch_id": candidate.watch_id,
+                    "job_id": active_job.id,
+                    "scheduled_at": active_job.scheduled_at.isoformat(),
+                    "target_fingerprint": target_fingerprint,
+                    "status": "duplicate_locked",
+                }
+            )
+            continue
+
+        jitter_offset_seconds = random_source.randint(0, max(0, int(jitter_seconds)))
+        scheduled_at = reference_now + timedelta(seconds=jitter_offset_seconds)
+        job, created = enqueue_revalidation_job(
+            db,
+            job_type="boot_warmup",
+            target_type="route",
+            target_fingerprint=target_fingerprint,
+            provider=provider,
+            priority=candidate.priority,
+            scheduled_at=scheduled_at,
+            payload={
+                "watch_id": candidate.watch_id,
+                "origin_iata": candidate.origin_iata,
+                "destination_iata": candidate.destination_iata,
+                "travel_date_local": candidate.travel_date_local,
+                "reasons": candidate.reasons,
+            },
+        )
+        if created:
+            enqueued_job_count += 1
+            queued_jobs.append(
+                {
+                    "watch_id": candidate.watch_id,
+                    "job_id": job.id,
+                    "scheduled_at": job.scheduled_at.isoformat(),
+                    "target_fingerprint": job.target_fingerprint,
+                    "status": job.status,
+                }
+            )
+            continue
+
+        skipped_due_lock_count += 1
+        queued_jobs.append(
+            {
+                "watch_id": candidate.watch_id,
+                "job_id": job.id,
+                "scheduled_at": job.scheduled_at.isoformat(),
+                "target_fingerprint": job.target_fingerprint,
+                "status": "duplicate_locked",
+            }
+        )
+
+    return {
+        "event": "fare_memory_boot_warmup_scheduled",
+        "mode": "controlled",
+        "enabled": True,
+        "candidate_count": len(selected_candidates),
+        "total_candidate_count": len(computed_candidates),
+        "limit": int(limit),
+        "provider_rate_limit_per_minute": int(provider_rate_limit_per_minute),
+        "jitter_seconds": max(0, int(jitter_seconds)),
+        "enqueued_job_count": enqueued_job_count,
+        "skipped_due_lock_count": skipped_due_lock_count,
+        "warmup_jobs_skipped_due_rate_limit": skipped_due_rate_limit,
+        "generated_at": reference_now.isoformat(),
+        "jobs": queued_jobs,
+    }
+
+
+def log_scheduled_boot_warmup_jobs(
+    db: Session,
+    *,
+    now: datetime | None = None,
+    limit: int = 25,
+    provider_rate_limit_per_minute: int = 60,
+    jitter_seconds: int = 30,
+    provider: str = "multi",
+    rng: random.Random | None = None,
+) -> dict[str, object]:
+    report = schedule_boot_warmup_jobs(
+        db,
+        now=now,
+        limit=limit,
+        provider_rate_limit_per_minute=provider_rate_limit_per_minute,
+        jitter_seconds=jitter_seconds,
+        provider=provider,
+        rng=rng,
+    )
     logger.info(json.dumps(report, ensure_ascii=False, sort_keys=True))
     return report
 
@@ -215,3 +340,27 @@ def _nearest_threshold_distance_ratio(alerts: list[AlertRule], latest_price: flo
     if not candidate_ratios:
         return None
     return min(candidate_ratios)
+
+
+def _route_target_fingerprint(candidate: BootWarmupCandidate) -> str:
+    return (
+        f"route:{candidate.origin_iata}:{candidate.destination_iata}:{candidate.travel_date_local}"
+    )
+
+
+def _find_active_revalidation_job(
+    db: Session,
+    *,
+    target_type: str,
+    target_fingerprint: str,
+    provider: str | None,
+) -> RevalidationJob | None:
+    return db.scalar(
+        select(RevalidationJob)
+        .where(RevalidationJob.target_type == target_type)
+        .where(RevalidationJob.target_fingerprint == target_fingerprint)
+        .where(RevalidationJob.provider == provider)
+        .where(RevalidationJob.status.in_(tuple(ACTIVE_REVALIDATION_JOB_STATUSES)))
+        .order_by(RevalidationJob.created_at.desc(), RevalidationJob.id.desc())
+        .limit(1)
+    )
