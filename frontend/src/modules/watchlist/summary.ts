@@ -1,4 +1,4 @@
-import { formatRelativeTime } from "@/modules/shared/format";
+import { getQuickSearchFreshnessPresentation } from "@/modules/quick-search/freshnessPresentation";
 
 type RefreshBulkResponse = {
   status: string;
@@ -71,6 +71,7 @@ export type FreshnessPresentation = {
   label: string;
   detail: string;
   fullText: string;
+  observationNote?: string | null;
 };
 
 export function getFreshnessPresentation(args: {
@@ -78,33 +79,40 @@ export function getFreshnessPresentation(args: {
   locale: string;
   lastUpdatedAt?: string | null;
   freshnessState?: string | null;
+  observationCount?: number | null;
   now?: Date;
 }): FreshnessPresentation {
-  const { t, locale, lastUpdatedAt, freshnessState, now } = args;
+  const { t, lastUpdatedAt, observationCount, now } = args;
   if (!lastUpdatedAt) {
     const label = t("watchlist.freshness.noDataLabel");
     const detail = t("watchlist.freshness.noDataDetail");
-    return { label, detail, fullText: `${label} · ${detail}` };
+    return { label, detail, fullText: `${label} · ${detail}`, observationNote: null };
   }
 
   const date = new Date(lastUpdatedAt);
   if (Number.isNaN(date.getTime())) {
     const label = t("watchlist.freshness.noDataLabel");
     const detail = t("watchlist.freshness.noDataDetail");
-    return { label, detail, fullText: `${label} · ${detail}` };
+    return { label, detail, fullText: `${label} · ${detail}`, observationNote: null };
   }
 
   const nowMs = now?.getTime() ?? Date.now();
   const diffHours = Math.max(0, (nowMs - date.getTime()) / (1000 * 60 * 60));
-  const relativeTime = formatRelativeTime(date, locale);
+  const semantic = getQuickSearchFreshnessPresentation({
+    freshness: {
+      status: diffHours >= 24 ? "stale" : diffHours >= 1 ? "warm" : "fresh",
+      observed_at: lastUpdatedAt,
+    },
+    now: nowMs,
+  });
+  const observationNote = observationCount != null && observationCount <= 1
+    ? t("watchlist.freshness.insufficientDataDetail")
+    : null;
 
-  if (diffHours > 24) {
-    const label = t("watchlist.freshness.needsReviewLabel");
-    const detail = t("watchlist.freshness.lastUpdatedAgo", { time: relativeTime });
-    return { label, detail, fullText: `${label} · ${detail}` };
-  }
-
-  const label = freshnessState ? t("watchlist.freshness.observingLabel") : t("watchlist.freshness.observedLabel");
-  const detail = t("watchlist.freshness.updatedAgo", { time: relativeTime });
-  return { label, detail, fullText: `${label} · ${detail}` };
+  return {
+    label: semantic.shortLabel,
+    detail: semantic.label,
+    fullText: semantic.label,
+    observationNote,
+  };
 }

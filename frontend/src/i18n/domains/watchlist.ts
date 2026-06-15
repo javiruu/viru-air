@@ -174,6 +174,7 @@ export const watchlistEs = {
   freshness: {
     noDataLabel: "Sin datos todavía",
     noDataDetail: "actualiza para crear el primer snapshot",
+    insufficientDataDetail: "Pocas observaciones todavía.",
     needsReviewLabel: "Necesita revisión",
     lastUpdatedAgo: "{time}",
     updatedAgo: "{time}",
@@ -481,6 +482,7 @@ export const watchlistEn = {
   freshness: {
     noDataLabel: "No data yet",
     noDataDetail: "refresh to create the first snapshot",
+    insufficientDataDetail: "There are still too few observations.",
     needsReviewLabel: "Needs review",
     lastUpdatedAgo: "{time} ago",
     updatedAgo: "{time} ago",

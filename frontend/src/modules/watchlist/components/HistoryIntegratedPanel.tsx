@@ -8,6 +8,7 @@ import { useEffect, useRef } from "react";
 import { useI18n } from "@/i18n";
 import { formatCurrency } from "@/modules/shared/format";
 import { formatDateTime } from "@/modules/watchlist/presentation";
+import { getFreshnessPresentation } from "@/modules/watchlist/summary";
 
 type ViewMode = "chart" | "calendar";
 
@@ -184,6 +185,15 @@ export function HistoryIntegratedPanel({
           new Date(point.capturedAt).getTime() > new Date(latest.capturedAt).getTime() ? point : latest,
         )
       : null;
+  const selectedPointFreshness = selectedPointData
+    ? getFreshnessPresentation({
+        t,
+        locale: localeTag,
+        lastUpdatedAt: selectedPointData.capturedAt,
+        freshnessState: "observing",
+        observationCount: chartPointCount,
+      })
+    : null;
   const hoveredRatioX = hoverPoint
     ? Math.min(1, Math.max(0, (hoverPoint.x - chartViewBox.x) / chartViewBox.width))
     : 0;
@@ -301,7 +311,11 @@ export function HistoryIntegratedPanel({
                   <span>{formatDateTime(selectedPointData.capturedAt, localeTag)}</span>
                   <span>{selectedPointData.date}</span>
                   {selectedPointData.departureTime ? <span>{t("watchlist.history.departureAt", { value: selectedPointData.departureTime })}</span> : null}
+                  {selectedPointFreshness ? <span>{selectedPointFreshness.label}</span> : null}
                 </div>
+                {selectedPointFreshness?.observationNote ? (
+                  <p className="panel-note">{selectedPointFreshness.observationNote}</p>
+                ) : null}
               </div>
             ) : (
               <div className="history-detail-empty">

@@ -14,12 +14,10 @@ const FORBIDDEN_EN_COPY = ["Back", "Flight Watchlist", "Add flight", "Quick star
 
 test("W9.2: frescura no genera 'hace hace'", () => {
   const summary = fs.readFileSync(SUMMARY, "utf8");
-  const format = fs.readFileSync(FORMAT, "utf8");
   const i18n = fs.readFileSync(I18N, "utf8");
 
-  assert.match(format, /new Intl\.RelativeTimeFormat/);
-  assert.match(summary, /watchlist\.freshness\.updatedAgo/);
-  assert.match(summary, /watchlist\.freshness\.lastUpdatedAgo/);
+  assert.match(summary, /getQuickSearchFreshnessPresentation/);
+  assert.match(summary, /semantic\.label/);
   assert.match(i18n, /lastUpdatedAgo:\s*"\{time\}"/);
   assert.match(i18n, /updatedAgo:\s*"\{time\}"/);
 });

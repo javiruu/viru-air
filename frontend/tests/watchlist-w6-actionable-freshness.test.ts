@@ -6,17 +6,17 @@ import test from "node:test";
 const SUMMARY_FILE = path.join(process.cwd(), "src", "modules", "watchlist", "summary.ts");
 const SMART_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "SmartWatchListPanel.tsx");
 const DETAIL_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");
+const HISTORY_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "HistoryIntegratedPanel.tsx");
 const WATCHLIST_I18N = path.join(process.cwd(), "src", "i18n", "domains", "watchlist.ts");
 const WATCHLIST_PAGE = path.join(process.cwd(), "src", "app", "(private)", "watchlist", "page.tsx");
 
 const FORBIDDEN_EN_COPY = ["Back", "Flight Watchlist", "Add flight", "Quick start", "Last update", "Min", "Max"];
 
-test("W6: helper de frescura devuelve tiempo accionable en reciente y antiguo", () => {
+test("W6: helper de frescura reutiliza estados semanticos de fresh/warm/stale", () => {
   const source = fs.readFileSync(SUMMARY_FILE, "utf8");
   assert.match(source, /function getFreshnessPresentation/);
-  assert.match(source, /watchlist\.freshness\.updatedAgo/);
-  assert.match(source, /watchlist\.freshness\.lastUpdatedAgo/);
-  assert.match(source, /if \(diffHours > 24\)/);
+  assert.match(source, /getQuickSearchFreshnessPresentation/);
+  assert.match(source, /status: diffHours >= 24 \? "stale" : diffHours >= 1 \? "warm" : "fresh"/);
 });
 
 test("W6: helper de frescura cubre caso sin timestamp ni snapshot", () => {
@@ -29,7 +29,8 @@ test("W6: helper de frescura cubre caso sin timestamp ni snapshot", () => {
 test("W6: lista muestra frescura accionable y no deja En observacion aislado", () => {
   const source = fs.readFileSync(SMART_PANEL, "utf8");
   assert.match(source, /getFreshnessPresentation/);
-  assert.match(source, /freshness\.fullText/);
+  assert.match(source, /freshness\.label/);
+  assert.match(source, /freshness\.detail/);
 });
 
 test("W6: detalle usa una sola linea de frescura y evita duplicidad absurda", () => {
@@ -37,17 +38,23 @@ test("W6: detalle usa una sola linea de frescura y evita duplicidad absurda", ()
   assert.match(source, /getFreshnessPresentation/);
   assert.match(source, /watchlist\.detail\.freshness/);
   assert.match(source, /freshness\.fullText/);
+  assert.match(source, /freshness\.observationNote/);
   assert.doesNotMatch(source, /watchlist\.detail\.lastUpdateRelative/);
+});
+
+test("W6: historico integra la frescura del punto seleccionado con aviso de pocas observaciones", () => {
+  const source = fs.readFileSync(HISTORY_PANEL, "utf8");
+  assert.match(source, /selectedPointFreshness/);
+  assert.match(source, /getFreshnessPresentation/);
+  assert.match(source, /selectedPointFreshness\.label/);
+  assert.match(source, /selectedPointFreshness\?\.observationNote/);
 });
 
 test("W6: i18n agrega copy de frescura accionable en ES", () => {
   const source = fs.readFileSync(WATCHLIST_I18N, "utf8");
   assert.match(source, /noDataLabel:\s*"/);
   assert.match(source, /noDataDetail:\s*"actualiza para crear el primer snapshot"/);
-  assert.match(source, /needsReviewLabel:\s*"/);
-  assert.match(source, /lastUpdatedAgo:\s*"\{time\}"/);
-  assert.match(source, /updatedAgo:\s*"\{time\}"/);
-  assert.match(source, /observingLabel:\s*"/);
+  assert.match(source, /insufficientDataDetail:\s*"Pocas observaciones todav[ií]a\."?/);
 });
 
 test("W6: watchlist mantiene bloqueo de copy EN", () => {

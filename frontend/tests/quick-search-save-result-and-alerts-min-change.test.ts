@@ -14,11 +14,23 @@ test("quick search save uses save-result without fallback manual create", () => 
   assert.doesNotMatch(source, /await apiFetch\("\/watchlist", \{\s*method: "POST"/);
 });
 
+test("quick search refresh price reuses watchlist refresh-now flow with rate-limit handling", () => {
+  const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
+  assert.match(source, /apiFetchWithStatus<\{\s*status: string;/);
+  assert.match(source, /`\/watchlist\/\$\{watchId\}\/refresh-now`/);
+  assert.match(source, /refreshResponse\.status === 429/);
+  assert.match(source, /refreshPriceRateLimited/);
+  assert.match(source, /refreshPriceSuccess/);
+});
+
 test("quick search save result copies are aligned to created\/existing\/error", () => {
   const source = fs.readFileSync(QUICK_SEARCH_COPY, "utf8");
   assert.match(source, /watchAdded: "Guardado en Watchlist"/);
   assert.match(source, /watchExists: "Ya estaba en Watchlist"/);
   assert.match(source, /watchFailed: "No se pudo guardar"/);
+  assert.match(source, /refreshPrice: "Actualizar precio"/);
+  assert.match(source, /refreshPriceLoading: "Actualizando precio\.\.\."?/);
+  assert.match(source, /refreshPriceRateLimited: "Demasiadas consultas seguidas\. Reintentamos luego\."/);
 });
 
 test("alerts includes min_change_pct in create and update payloads and active rows", () => {
