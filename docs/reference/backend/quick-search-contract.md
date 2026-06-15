@@ -205,6 +205,7 @@ Rules:
 - `exact_hit=true` means the full response payload was served from exact-search cache.
 - `exact_hit=false` means the backend resolved the request normally and persisted the final payload for future exact reuse.
 - `query_signature` remains the public observability signature; `search_fingerprint` is the canonical Fare Memory identity key for exact search reuse.
+- `FARE_MEMORY_SEARCH_CACHE_ENABLED=false` disables exact-search persistence/reuse without breaking live quick-search execution.
 
 ## Provider status (multi-provider compatible)
 
@@ -230,6 +231,7 @@ Warnings canónicos esperados en `meta.warnings_structured`:
 ## Negative cache (Fare Memory Fase 28)
 
 Quick Search maintains a dedicated negative cache for route-date-provider units when the system learns that retrying immediately has low value.
+This layer can be disabled with `FARE_MEMORY_NEGATIVE_CACHE_ENABLED=false` while keeping the normal provider path active.
 
 Current intent:
 
@@ -488,6 +490,13 @@ Cuando una búsqueda usa `include_nearby` o `flex`, el backend:
 - `QUICK_SEARCH_SHARED_CACHE_EMPTY_TTL_SECONDS=7200`
 - `QUICK_SEARCH_SHARED_CACHE_DEGRADED_TTL_SECONDS=1800`
 - `QUICK_SEARCH_SHARED_CACHE_USE_MEMORY_HOT_LAYER=true` — mantiene capa en memoria como L1
+- `FARE_MEMORY_ENABLED=true` — master switch para capas Fare Memory sin romper Quick Search
+- `FARE_MEMORY_SEARCH_CACHE_ENABLED=true` — activa cache exacta por `search_fingerprint`
+- `FARE_MEMORY_OFFER_CACHE_ENABLED=true` — activa persistencia de observaciones por oferta
+- `FARE_MEMORY_NEGATIVE_CACHE_ENABLED=true` — activa negative cache persistente
+- `FARE_MEMORY_BOOT_WARMUP_ENABLED=false`
+- `FARE_MEMORY_MAX_BOOT_JOBS=25`
+- `FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE=60`
 
 Con el flag `QUICK_SEARCH_SHARED_CACHE_ENABLED=false`, el sistema usa exclusivamente la cache en memoria actual (TTL 300s) sin tocar la tabla persistente.
 
