@@ -28,6 +28,12 @@ Entradas vivas actualizadas:
 - `docs/specs/README.md`
 - `docs/INDICE_UNICO.md`
 
+## Actualizacion manual 2026-06-15 (fare memory fase 26)
+
+Entradas vivas actualizadas:
+
+- `docs/specs/viru-fare-memory.md`
+
 ## Actualizacion manual 2026-06-13 (fases 1-5 del roadmap)
 
 Entradas vivas agregadas:

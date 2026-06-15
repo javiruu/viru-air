@@ -47,6 +47,13 @@ Esta spec define:
 
 La fuente de verdad actual para cache compartida es `QuickSearchCacheEntry` y su servicio asociado en backend. Fare Memory debe extender esta base o construir sobre ella de forma aditiva. Queda prohibido crear una segunda cache paralela con semantica duplicada.
 
+Persistencia base disponible desde la Fase 26:
+
+- `quick_search_cache_entry` extendida con campos de fingerprint, frescura y confianza;
+- `flight_offer_cache_entry` para identidad de oferta;
+- `flight_price_observation` para historico de observaciones;
+- `quick_search_negative_cache_entry` para ausencias y fallos reutilizables.
+
 ## Modelo mental
 
 Fare Memory separa cuatro niveles:
