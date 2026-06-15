@@ -98,6 +98,33 @@ def claim_next_revalidation_job(
     return None
 
 
+def claim_revalidation_job(
+    db: Session,
+    *,
+    job_id: str,
+    lock_token: str,
+    now=None,
+) -> RevalidationJob | None:
+    reference_now = now or utc_now_naive()
+    claimed = db.execute(
+        update(RevalidationJob)
+        .where(RevalidationJob.id == job_id)
+        .where(RevalidationJob.status == "queued")
+        .values(
+            status="running",
+            lock_token=lock_token,
+            lock_acquired_at=reference_now,
+            started_at=reference_now,
+            attempt_count=RevalidationJob.attempt_count + 1,
+        )
+    )
+    if claimed.rowcount != 1:
+        db.rollback()
+        return None
+    db.commit()
+    return db.get(RevalidationJob, job_id)
+
+
 def complete_revalidation_job(
     db: Session,
     *,
