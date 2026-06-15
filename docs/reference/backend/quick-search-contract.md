@@ -235,6 +235,8 @@ Current intent:
 
 - `no_availability` -> returns empty result without provider call for a short reusable window.
 - `provider_timeout` / `provider_error` / `provider_total_outage` -> returns no flights plus canonical warning codes and applies shorter backoff.
+- repeated provider failures for the same route-date-provider fingerprint increase the backoff window and move `retry_after_at` forward.
+- `rate_limited` returns warning metadata and must remain distinguishable from silent `no_results`.
 
 Behavioral rule:
 
