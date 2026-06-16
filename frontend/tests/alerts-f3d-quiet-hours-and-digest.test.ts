@@ -31,10 +31,22 @@ test("alerts page includes cockpit hero and cross-module flow links", () => {
   assert.match(source, /alerts\.flow\.goDashboard/);
 });
 
-test("spanish alerts copy includes grouped and quiet hours messaging", () => {
+test("alerts page integrates selected watch freshness before promising threshold behavior", () => {
+  const source = fs.readFileSync(ALERTS_PAGE, "utf8");
+  assert.match(source, /getFreshnessPresentation/);
+  assert.match(source, /apiFetch<WatchDetail>\(`\/watchlist\/\$\{selectedWatchId\}`\)/);
+  assert.match(source, /apiFetch<PriceSummary>\(`\/prices\/summary\?watch_id=\$\{selectedWatchId\}`\)/);
+  assert.match(source, /alerts\.form\.freshnessLabel/);
+  assert.match(source, /selectedWatchFreshnessGuidance/);
+  assert.match(source, /selectedWatchFreshness\?\.observationNote/);
+});
+
+test("spanish alerts copy includes grouped, quiet hours and freshness messaging", () => {
   const source = fs.readFileSync(ALERTS_I18N, "utf8");
   assert.match(source, /groupedLabel: "Agrupada"/);
   assert.match(source, /quietHoursPending: "Pendiente hasta que terminen tus horas tranquilas"/);
   assert.match(source, /kicker: "Cabina de señales"/);
   assert.match(source, /quietHoursSaved: "Horas tranquilas actualizadas\."/);
+  assert.match(source, /freshnessLabel: "Señal actual"/);
+  assert.match(source, /freshnessStale: "Precio histórico\. Guardamos la regla, pero conviene revalidar antes de decidir\."/);
 });

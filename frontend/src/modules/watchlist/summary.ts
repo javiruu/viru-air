@@ -68,6 +68,7 @@ export function getHistoryConfidence(snapshotCount: number): HistoryConfidence {
 type Translator = (key: string, params?: Record<string, string | number>) => string;
 
 export type FreshnessPresentation = {
+  state: "no_data" | "fresh" | "warm" | "stale";
   label: string;
   detail: string;
   fullText: string;
@@ -86,21 +87,22 @@ export function getFreshnessPresentation(args: {
   if (!lastUpdatedAt) {
     const label = t("watchlist.freshness.noDataLabel");
     const detail = t("watchlist.freshness.noDataDetail");
-    return { label, detail, fullText: `${label} · ${detail}`, observationNote: null };
+    return { state: "no_data", label, detail, fullText: `${label} · ${detail}`, observationNote: null };
   }
 
   const date = new Date(lastUpdatedAt);
   if (Number.isNaN(date.getTime())) {
     const label = t("watchlist.freshness.noDataLabel");
     const detail = t("watchlist.freshness.noDataDetail");
-    return { label, detail, fullText: `${label} · ${detail}`, observationNote: null };
+    return { state: "no_data", label, detail, fullText: `${label} · ${detail}`, observationNote: null };
   }
 
   const nowMs = now?.getTime() ?? Date.now();
   const diffHours = Math.max(0, (nowMs - date.getTime()) / (1000 * 60 * 60));
+  const state = diffHours >= 24 ? "stale" : diffHours >= 1 ? "warm" : "fresh";
   const semantic = getQuickSearchFreshnessPresentation({
     freshness: {
-      status: diffHours >= 24 ? "stale" : diffHours >= 1 ? "warm" : "fresh",
+      status: state,
       observed_at: lastUpdatedAt,
     },
     now: nowMs,
@@ -110,6 +112,7 @@ export function getFreshnessPresentation(args: {
     : null;
 
   return {
+    state,
     label: semantic.shortLabel,
     detail: semantic.label,
     fullText: semantic.label,
