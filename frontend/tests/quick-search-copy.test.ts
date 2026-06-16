@@ -6,7 +6,7 @@ import { getQuickSearchCopy } from "../src/modules/shared/quickSearchCopy";
 test("quick search copy defaults to es", () => {
   const { locale, t } = getQuickSearchCopy(undefined);
   assert.equal(locale, "es");
-  assert.equal(t("title"), "Búsqueda rápida");
+  assert.equal(t("swapRoute"), "Intercambiar ruta");
 });
 
 test("quick search copy resolves en locale", () => {
@@ -29,7 +29,7 @@ test("quick search copy includes precise partial-provider warnings", () => {
 
   assert.equal(
     es.tWarn("ryanair_availability_failed_partial"),
-    "No pudimos confirmar toda la disponibilidad de Ryanair; mostramos tarifas directas que si respondieron.",
+    "No pudimos confirmar toda la disponibilidad de Ryanair; te mostramos solo lo que si respondio.",
   );
   assert.equal(
     en.tWarn("ryanair_fares_failed_partial"),
@@ -46,10 +46,13 @@ test("quick search copy exposes state microcopy in es", () => {
   assert.equal(t("loadingSubcheckTitle"), "Comprobaciones en curso");
   assert.equal(t("flexTitle"), "Que margen tienes con la fecha?");
   assert.equal(t("flexPresetCustom"), "Personalizar");
-  assert.equal(t("flexCustomSummary"), "Personalizado · -{before} / +{after} dias");
-  assert.equal(t("aiPreferredPrice"), "Precio recomendado");
+  assert.equal(t("flexCustomSummary"), "Fecha flexible: {before} dias antes y {after} dias despues");
+  assert.equal(t("aiPreferredPrice"), "Mejor opcion encontrada");
   assert.equal(t("aiPreferredAria"), "Resultado preferido por IA");
   assert.equal(t("swapRoute"), "Intercambiar ruta");
   assert.equal(t("recentAutocompleteLabel"), "Recientes guardados");
   assert.equal(t("sideViewControlsSubtitle"), "Estos filtros solo cambian este panel.");
+  assert.equal(t("roundTripToggleHint"), "Activalo cuando quieras ver ida y vuelta en dos paneles coordinados.");
+  assert.equal(t("passengersBaseFareHint"), "La busqueda rapida sigue mostrando precio orientativo base; el numero de adultos si viaja a aperturas y deep-links.");
+  assert.equal(t("returnResetAfterOutboundChange"), "Hemos limpiado la vuelta para que puedas elegir una nueva fecha coherente.");
 });

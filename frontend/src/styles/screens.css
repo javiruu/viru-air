@@ -7891,6 +7891,21 @@ textarea::placeholder {
   padding-bottom: 0.1rem;
 }
 
+.qs-roundtrip-toggle {
+  align-items: flex-start;
+  padding-top: 0.2rem;
+}
+
+.qs-roundtrip-copy {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.qs-roundtrip-copy strong {
+  font-size: 0.95rem;
+  line-height: 1.1;
+}
+
 @media (max-width: 900px) {
   .qs-date-grid,
   .qs-date-grid.has-return {
@@ -7976,6 +7991,11 @@ textarea::placeholder {
   gap: 0.35rem;
 }
 
+.qs-passengers-copy,
+.qs-passengers-note {
+  max-width: 68ch;
+}
+
 .qs-stepper {
   display: inline-flex;
   align-items: center;
@@ -8017,9 +8037,22 @@ textarea::placeholder {
 }
 
 .qs-stepper-value {
-  min-width: 24px;
+  min-width: 108px;
   text-align: center;
   font-weight: 700;
+  display: grid;
+  gap: 0.08rem;
+}
+
+.qs-stepper-value strong {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.qs-stepper-value small {
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+  line-height: 1.2;
 }
 
 .qs-actions {
