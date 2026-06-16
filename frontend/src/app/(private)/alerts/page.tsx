@@ -11,6 +11,8 @@ import { getDeliveryStateCopy, getNotificationChannelCopy } from "@/modules/aler
 import { apiFetch } from "@/modules/shared/api";
 import { formatCurrency, formatRelativeTime } from "@/modules/shared/format";
 import { getDeliveryStatusMeta, getWatchStatusMeta } from "@/modules/shared/statusCatalog";
+import { getFreshnessPresentation } from "@/modules/watchlist/summary";
+import type { PriceSummary, WatchDetail } from "@/modules/watchlist/types";
 
 type Watch = {
   id: string;
@@ -73,6 +75,8 @@ export default function AlertsPage() {
   const [selectedWatchId, setSelectedWatchId] = useState("");
   const [rules, setRules] = useState<AlertRule[]>([]);
   const [events, setEvents] = useState<AlertEvent[]>([]);
+  const [selectedWatchDetail, setSelectedWatchDetail] = useState<WatchDetail | null>(null);
+  const [selectedWatchSummary, setSelectedWatchSummary] = useState<PriceSummary | null>(null);
   const [ruleType, setRuleType] = useState("threshold_low");
   const [thresholdValue, setThresholdValue] = useState("");
   const [notifyEveryChange, setNotifyEveryChange] = useState(false);
@@ -184,27 +188,67 @@ export default function AlertsPage() {
     if (!selectedWatchId) {
       setRules([]);
       setEvents([]);
+      setSelectedWatchDetail(null);
+      setSelectedWatchSummary(null);
       return;
     }
+
+    let isMounted = true;
 
     Promise.all([
       apiFetch<AlertRule[]>(`/alerts/rules?watch_id=${selectedWatchId}`),
       apiFetch<AlertEvent[]>(`/alerts/events?watch_id=${selectedWatchId}&limit=50`),
+      apiFetch<WatchDetail>(`/watchlist/${selectedWatchId}`),
+      apiFetch<PriceSummary>(`/prices/summary?watch_id=${selectedWatchId}`),
     ])
-      .then(([ruleRows, eventRows]) => {
+      .then(([ruleRows, eventRows, watchDetail, watchSummary]) => {
+        if (!isMounted) return;
         setRules(ruleRows);
         setEvents(eventRows);
+        setSelectedWatchDetail(watchDetail);
+        setSelectedWatchSummary(watchSummary);
       })
       .catch(() => {
+        if (!isMounted) return;
+        setSelectedWatchDetail(null);
+        setSelectedWatchSummary(null);
         setStatus("error");
         setMessage(t("alerts.messages.rulesLoadError"));
       });
+    return () => {
+      isMounted = false;
+    };
   }, [selectedWatchId, t]);
 
   const selectedWatch = useMemo(
     () => watches.find((w) => w.id === selectedWatchId) || null,
     [watches, selectedWatchId],
   );
+
+  const selectedWatchFreshness = useMemo(() => {
+    if (!selectedWatch) return null;
+    return getFreshnessPresentation({
+      t,
+      locale: localeTag,
+      lastUpdatedAt: selectedWatchDetail?.latest_snapshot?.captured_at_utc,
+      freshnessState: selectedWatchDetail?.latest_snapshot ? "observing" : null,
+      observationCount: selectedWatchSummary?.count ?? 0,
+    });
+  }, [localeTag, selectedWatch, selectedWatchDetail, selectedWatchSummary, t]);
+
+  const selectedWatchFreshnessGuidance = useMemo(() => {
+    if (!selectedWatchFreshness) return null;
+    switch (selectedWatchFreshness.state) {
+      case "fresh":
+        return t("alerts.form.freshnessFresh");
+      case "warm":
+        return t("alerts.form.freshnessWarm");
+      case "stale":
+        return t("alerts.form.freshnessStale");
+      default:
+        return t("alerts.form.freshnessNoData");
+    }
+  }, [selectedWatchFreshness, t]);
 
   const summary = useMemo(() => {
     const active = rules.filter((rule) => rule.enabled).length;
@@ -530,9 +574,16 @@ export default function AlertsPage() {
             <p className="panel-subtitle">{t("alerts.form.subtitle")}</p>
           </div>
           {selectedWatch ? (
-            <span className="alert-chip">
-              {selectedWatch.origin_iata} {" ? "} {selectedWatch.destination_iata} · {selectedWatch.travel_date_local}
-            </span>
+            <div className="stack" style={{ alignItems: "flex-end", gap: "0.35rem" }}>
+              <span className="alert-chip">
+                {selectedWatch.origin_iata} {" ? "} {selectedWatch.destination_iata} · {selectedWatch.travel_date_local}
+              </span>
+              {selectedWatchFreshness ? (
+                <span className="panel-note">
+                  {t("alerts.form.freshnessLabel")} · {selectedWatchFreshness.fullText}
+                </span>
+              ) : null}
+            </div>
           ) : null}
         </div>
 
@@ -646,6 +697,17 @@ export default function AlertsPage() {
           <div className="alert-preview">
             <strong>{t("alerts.form.previewLabel")}</strong> {previewText}
           </div>
+          {selectedWatchFreshnessGuidance ? (
+            <div className={`notice notice-compact ${
+              selectedWatchFreshness?.state === "fresh" ? "notice-info" : "notice-warning"
+            }`}>
+              <strong>{t("alerts.form.freshnessLabel")}</strong>
+              <p>
+                {selectedWatchFreshnessGuidance}
+                {selectedWatchFreshness?.observationNote ? ` ${selectedWatchFreshness.observationNote}` : ""}
+              </p>
+            </div>
+          ) : null}
 
           <div className="row-actions">
             <button className="btn-primary" type="submit" disabled={status === "sending"}>

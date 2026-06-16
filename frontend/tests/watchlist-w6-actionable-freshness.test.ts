@@ -16,7 +16,8 @@ test("W6: helper de frescura reutiliza estados semanticos de fresh/warm/stale", 
   const source = fs.readFileSync(SUMMARY_FILE, "utf8");
   assert.match(source, /function getFreshnessPresentation/);
   assert.match(source, /getQuickSearchFreshnessPresentation/);
-  assert.match(source, /status: diffHours >= 24 \? "stale" : diffHours >= 1 \? "warm" : "fresh"/);
+  assert.match(source, /const state = diffHours >= 24 \? "stale" : diffHours >= 1 \? "warm" : "fresh"/);
+  assert.match(source, /status: state/);
 });
 
 test("W6: helper de frescura cubre caso sin timestamp ni snapshot", () => {
