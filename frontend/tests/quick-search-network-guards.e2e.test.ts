@@ -290,3 +290,48 @@ test("quick-search blocks empty route submission with validation feedback", asyn
     await browser.close();
   }
 });
+
+test("quick-search keeps round trip and adult count aligned in deeplink requests", async (t) => {
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+
+  try {
+    const setup = await openQuickSearch(context);
+    if (!setup) {
+      t.skip(`Quick-Search not reachable at ${BASE_URL}. Start frontend/backend and retry.`);
+      return;
+    }
+
+    const { page, originInput, destinationInput, datePicker, trackedRequests } = setup;
+    await originInput.fill("AGP");
+    await destinationInput.fill("DUB");
+    await selectFirstAvailableDate(page, datePicker);
+
+    await page.locator('input[name="is_return"]').check({ force: true });
+    const returnDatePicker = page.locator('[data-ui="qs-date-picker-v2"]').nth(1);
+    await returnDatePicker.waitFor({ state: "visible", timeout: 10000 });
+    await selectFirstAvailableDate(page, returnDatePicker);
+
+    const passengerButtons = page.locator(".qs-passengers .qs-stepper button");
+    await passengerButtons.nth(1).click();
+    await page.waitForTimeout(1200);
+
+    const latestDeepLinkRequest = [...trackedRequests]
+      .reverse()
+      .find((url) => url.includes("/api/v1/search/deeplink"));
+    assert.ok(latestDeepLinkRequest, "expected at least one deeplink request");
+
+    const parsed = new URL(latestDeepLinkRequest as string);
+    assert.equal(parsed.searchParams.get("adults"), "2");
+    assert.match(parsed.searchParams.get("date_in") || "", /^\d{4}-\d{2}-\d{2}$/);
+
+    const searchButton = page.getByRole("button", { name: "Buscar" });
+    assert.equal(await searchButton.isDisabled(), false);
+
+    await page.locator('input[name="is_return"]').uncheck({ force: true });
+    await returnDatePicker.waitFor({ state: "hidden", timeout: 10000 });
+    assert.equal(await searchButton.isDisabled(), false);
+  } finally {
+    await browser.close();
+  }
+});
