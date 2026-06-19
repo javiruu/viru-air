@@ -48,6 +48,29 @@ test("decision reasons prioritize price, buffer, and transfers when recommendati
   assert.deepEqual(reasons.map((item) => item.kind), ["price", "buffer", "transfers"]);
 });
 
+test("decision reasons keep tight_buffer visible when recommendation is risky", () => {
+  const recommended = buildOption({
+    id: "r",
+    label: "R",
+    total_price_min: 70,
+    total_duration_minutes: 260,
+    airport_buffer_minutes: 75,
+    transfer_count: 1,
+    is_recommended: true,
+  });
+  const alt = buildOption({
+    id: "x",
+    label: "X",
+    total_price_min: 90,
+    total_duration_minutes: 290,
+    airport_buffer_minutes: 130,
+    transfer_count: 2,
+  });
+
+  const reasons = getDecisionReasons(recommended, [recommended, alt]);
+  assert.ok(reasons.some((item) => item.kind === "tight_buffer"));
+});
+
 test("decision reasons include confidence cue for deeplink/estimate data", () => {
   const recommended = buildOption({
     id: "r",
@@ -73,4 +96,15 @@ test("alternative deltas compare against recommendation with null-safe fields", 
   assert.equal(deltas[0].delta_duration_minutes, -20);
   assert.equal(deltas[0].delta_buffer_minutes, -20);
   assert.equal(deltas[0].delta_transfer_count, 2);
+});
+
+test("alternative deltas rank safer options ahead of tight-buffer options with inflated raw score", () => {
+  const recommended = buildOption({ id: "r", label: "R", total_price_min: 80, total_duration_minutes: 300, airport_buffer_minutes: 120, transfer_count: 1, score: 90 });
+  const riskyAlt = buildOption({ id: "risk", label: "Risky", total_price_min: 70, total_duration_minutes: 250, airport_buffer_minutes: 50, transfer_count: 1, score: 88 });
+  const safeAlt = buildOption({ id: "safe", label: "Safe", total_price_min: 92, total_duration_minutes: 285, airport_buffer_minutes: 125, transfer_count: 2, score: 84 });
+
+  const deltas = getAlternativeDeltas(recommended, [recommended, riskyAlt, safeAlt]);
+  assert.equal(deltas.length, 2);
+  assert.equal(deltas[0].option_id, "safe");
+  assert.equal(deltas[1].option_id, "risk");
 });
