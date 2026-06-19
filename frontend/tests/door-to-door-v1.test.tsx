@@ -482,6 +482,14 @@ const nullPriceOption: DoorToDoorOption = {
   legs: [{ type: "ground", mode: "rideshare", from: "A", to: "B", duration_minutes: 200, provider: "blablacar", source_type: "deeplink", confidence: "deeplink" }],
 };
 
+const zeroPriceOption: DoorToDoorOption = {
+  ...nullPriceOption,
+  id: "option_zero_price",
+  description: "OpciÃ³n con precio 0 que no debe pasar por confirmado.",
+  total_price_min: 0,
+  total_price_max: 0,
+};
+
 const nullScheduleOption: DoorToDoorOption = {
   id: "option_null_schedule",
   label: "Ruta sin horario",
@@ -517,6 +525,7 @@ test("F2: null departure/arrival does not render --:--", () => {
   const html = renderToStaticMarkup(<DoorToDoorTimeline option={nullScheduleOption} flight={flight} />);
   assert.doesNotMatch(html, /--:--/);
   assert.match(html, /Horario no confirmado|Schedule not confirmed/i);
+  assert.doesNotMatch(html, /Horario no confirmado\s*-\s*Horario no confirmado|Schedule not confirmed\s*-\s*Schedule not confirmed/i);
 });
 
 test("F2: null duration on timeline shows honest copy instead of --", () => {
@@ -529,6 +538,14 @@ test("F2: deeplink option renders external disclosure badge", () => {
   const html = renderToStaticMarkup(<DoorToDoorOptionCard option={deeplinkOption} chosen={false} onChoose={() => undefined} />);
   assert.match(html, /Búsqueda externa|External search/i);
   assert.match(html, /Abrir proveedor|Open provider/i);
+  assert.match(html, /Este enlace abre el proveedor|This link opens the provider/i);
+});
+
+test("F2: zero total price is treated as unconfirmed instead of confirmed fare", () => {
+  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={zeroPriceOption} chosen={false} onChoose={() => undefined} />);
+  assert.doesNotMatch(html, /desde 0\b|from 0\b/i);
+  assert.doesNotMatch(html, /0,00|0\.00/);
+  assert.match(html, /El precio se confirma fuera de Viru|Price is confirmed outside Viru/i);
 });
 
 test("F2: GTFS/open data does not promise price or booking", () => {
