@@ -1,5 +1,7 @@
 import type { DecisionBadge, DecisionReason, DoorToDoorOption, OptionDeltaSummary } from "@/modules/door-to-door/types";
 
+const TIGHT_BUFFER_THRESHOLD_MINUTES = 90;
+
 export function getDecisionBadges(options: DoorToDoorOption[]): Record<string, DecisionBadge[]> {
   if (options.length === 0) return {};
   const byDuration = [...options].sort((a, b) => compareNumber(a.total_duration_minutes, b.total_duration_minutes, a.id, b.id));
@@ -29,6 +31,7 @@ export function getDecisionBadges(options: DoorToDoorOption[]): Record<string, D
 export function getDecisionReasons(recommended: DoorToDoorOption, options: DoorToDoorOption[]): DecisionReason[] {
   const peers = options.filter((item) => item.id !== recommended.id);
   const reasons: DecisionReason[] = [];
+  const recommendedHasTightBuffer = hasTightBuffer(recommended);
 
   if (recommended.total_price_min != null && peers.some((item) => item.total_price_min != null)) {
     const bestOther = minNumber(peers.map((item) => item.total_price_min));
@@ -42,6 +45,10 @@ export function getDecisionReasons(recommended: DoorToDoorOption, options: DoorT
     if (bestBuffer != null && recommended.airport_buffer_minutes >= bestBuffer) {
       reasons.push({ kind: "buffer", label: "buffer" });
     }
+  }
+
+  if (recommendedHasTightBuffer) {
+    reasons.push({ kind: "tight_buffer", label: "tight_buffer" });
   }
 
   const bestTransfers = minNumber(peers.map((item) => item.transfer_count));
@@ -67,17 +74,17 @@ export function getDecisionReasons(recommended: DoorToDoorOption, options: DoorT
     reasons.push({ kind: "completeness", label: "completeness" });
   }
 
-  if (reasons.length === 0 && recommended.airport_buffer_minutes != null && recommended.airport_buffer_minutes < 90) {
+  if (reasons.length === 0 && recommendedHasTightBuffer) {
     reasons.push({ kind: "tight_buffer", label: "tight_buffer" });
   }
 
-  return reasons.slice(0, 3);
+  return uniqueReasons(reasons).slice(0, 3);
 }
 
 export function getAlternativeDeltas(recommended: DoorToDoorOption, options: DoorToDoorOption[]): OptionDeltaSummary[] {
   return options
     .filter((item) => item.id !== recommended.id)
-    .sort((a, b) => compareNumber(a.score, b.score, a.id, b.id, true))
+    .sort((a, b) => compareNumber(getDecisionScore(a), getDecisionScore(b), a.id, b.id, true))
     .slice(0, 2)
     .map((option) => ({
       option_id: option.id,
@@ -99,6 +106,32 @@ export function hasUncertainSources(option: DoorToDoorOption): boolean {
       source.confidence === "deeplink" ||
       source.confidence === "unavailable",
   );
+}
+
+function hasTightBuffer(option: DoorToDoorOption): boolean {
+  return option.airport_buffer_minutes != null && option.airport_buffer_minutes < TIGHT_BUFFER_THRESHOLD_MINUTES;
+}
+
+function getDecisionScore(option: DoorToDoorOption): number | null {
+  if (option.score == null) return null;
+  return option.score - getBufferRiskPenalty(option.airport_buffer_minutes);
+}
+
+function getBufferRiskPenalty(bufferMinutes: number | null | undefined): number {
+  if (bufferMinutes == null || bufferMinutes >= TIGHT_BUFFER_THRESHOLD_MINUTES) return 0;
+  if (bufferMinutes < 45) return 30;
+  if (bufferMinutes < 60) return 20;
+  if (bufferMinutes < 75) return 12;
+  return 8;
+}
+
+function uniqueReasons(reasons: DecisionReason[]): DecisionReason[] {
+  const seen = new Set<string>();
+  return reasons.filter((reason) => {
+    if (seen.has(reason.kind)) return false;
+    seen.add(reason.kind);
+    return true;
+  });
 }
 
 function addBadge(store: Record<string, DecisionBadge[]>, option: DoorToDoorOption | undefined, badge: DecisionBadge) {
