@@ -18,6 +18,17 @@ Cada modo representa una combinación de providers activos y debe verificarse in
 | **Sin cobertura real** | Solo mock desactivado | `NO_REAL_PROVIDER_COVERAGE` o `NO_COVERAGE` | Panel de "sin cobertura" |
 | **Watch con vuelo guardado** | Cualquiera | Vuelo contextual del watchlist, flight_time_confidence según snapshot | `FLIGHT_TIME_ESTIMATED` si no hay horario real |
 
+## Cierre integral fase 55 (Junio 2026)
+
+Cobertura mínima considerada suficiente para cerrar el módulo tras las fases 49–55:
+
+- Tests frontend de render y honestidad de copy
+- Tests frontend de scoring y margen ajustado
+- Tests backend de integración door-to-door
+- Tests backend GTFS/deeplinks/cache/fallback
+- Browser QA real en dark/light y desktop/mobile
+- Runbook actualizado con límites y repetición del flujo
+
 ## Verificaciones por modo
 
 ### Modo: Solo deeplink
@@ -66,6 +77,14 @@ Cada modo representa una combinación de providers activos y debe verificarse in
 - [ ] `flight_time_confidence` es `estimated` si no hay horario completo
 - [ ] El formulario muestra IATA del watch seleccionado
 - [ ] `airport_only` usa el IATA de destino del watch
+
+## Limitaciones que QA debe recordar
+
+- `real_deeplink` no equivale a booking integrado ni a precio confirmado.
+- GTFS `open_data` puede aportar horario real sin aportar precio real.
+- `NO_COVERAGE` puede ser una respuesta correcta si el entorno no tiene providers suficientes.
+- En móvil, la sticky bar puede requerir scroll horizontal para recorrer las siete secciones.
+- La evidencia visual automática depende del binario local de Playwright/Chromium.
 
 ## Observabilidad mínima
 
