@@ -77,10 +77,20 @@ function resolveGroundIcon(mode: DoorToDoorLeg["mode"]) {
   return <TrainFront size={16} aria-hidden="true" />;
 }
 
+function resolveExternalUrl(url: string | null | undefined) {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 function resolveMapsUrl(leg: DoorToDoorLeg) {
-  if (leg.booking_url) return leg.booking_url;
+  if (leg.booking_url) return resolveExternalUrl(leg.booking_url);
   const mapAction = (leg.actions ?? []).find((action) => action.provider === "google_maps");
-  return mapAction?.url ?? null;
+  return resolveExternalUrl(mapAction?.url);
 }
 
 /* ── Sub‑components ────────────────────────────────────────── */

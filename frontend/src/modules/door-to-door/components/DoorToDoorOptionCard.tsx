@@ -2,7 +2,7 @@
 
 import { ExternalLink } from "lucide-react";
 import { useI18n } from "@/i18n";
-import type { DecisionBadge, DecisionReason, DoorToDoorOption } from "@/modules/door-to-door/types";
+import type { DecisionBadge, DecisionReason, DoorToDoorAction, DoorToDoorOption } from "@/modules/door-to-door/types";
 
 function durationLabel(minutes: number | null | undefined) {
   if (minutes == null) return null;
@@ -13,6 +13,16 @@ function durationLabel(minutes: number | null | undefined) {
 
 function hasConfirmedPrice(min: number | null | undefined, max: number | null | undefined) {
   return min != null && max != null && min > 0 && max > 0;
+}
+
+function resolveExternalUrl(url: string | null | undefined) {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? url : null;
+  } catch {
+    return null;
+  }
 }
 
 export function DoorToDoorOptionCard({
@@ -48,6 +58,8 @@ export function DoorToDoorOptionCard({
   const isTightBuffer = option.airport_buffer_minutes != null && option.airport_buffer_minutes < 90;
   const legActions = option.legs
     .flatMap((leg) => (leg.actions ?? []).filter((a) => a.kind !== "directions"))
+    .map((action) => ({ action, href: resolveExternalUrl(action.url) }))
+    .filter((entry) => entry.href)
     .slice(0, 4);
   const transparencyNote =
     isRealDeeplink
@@ -57,6 +69,25 @@ export function DoorToDoorOptionCard({
         : isPartialActionable
           ? t("doorToDoor.sections.partialCoverageBody")
           : null;
+  const primarySource = option.sources.find((source) => source.booking_url) ?? option.sources[0] ?? null;
+  const primaryActionHref = option.deep_link
+    ? resolveExternalUrl(option.deep_link.url)
+    : resolveExternalUrl(primarySource?.booking_url);
+
+  function actionLabel(action: DoorToDoorAction) {
+    if (action.provider === "blablacar") return t("doorToDoor.option.openBlaBlaCar");
+    if (action.provider === "goopti") return t("doorToDoor.option.openGoOpti");
+    if (action.provider === "gtfs") return t("doorToDoor.sections.openPublicTransport");
+    return t("doorToDoor.option.viewRouteInMaps");
+  }
+
+  function primaryActionLabel() {
+    if (!option.deep_link) return t("doorToDoor.option.openBooking");
+    if (primarySource?.provider?.includes("blablacar")) return t("doorToDoor.option.openBlaBlaCar");
+    if (primarySource?.provider?.includes("goopti")) return t("doorToDoor.option.openGoOpti");
+    if (option.deep_link.kind === "directions") return t("doorToDoor.option.viewRouteInMaps");
+    return t("doorToDoor.option.openBooking");
+  }
 
   function statusBadge() {
     if (isRealResult) return <span className="status-pill success d2d-badge">{t("doorToDoor.option.realResult")}</span>;
@@ -167,9 +198,9 @@ export function DoorToDoorOptionCard({
         {!compact && legActions.length > 0 ? (
           <div className="d2d-option-segment-actions">
             <span className="panel-note">{t("doorToDoor.option.segmentActions")}</span>
-            {legActions.map((action) => (
-              <a key={action.id} className="btn-secondary btn-compact" href={action.url} target="_blank" rel="noreferrer">
-                <ExternalLink size={12} aria-hidden="true" /> {action.label}
+            {legActions.map(({ action, href }) => (
+              <a key={action.id} className="btn-secondary btn-compact" href={href!} target="_blank" rel="noreferrer">
+                <ExternalLink size={12} aria-hidden="true" /> {actionLabel(action)}
               </a>
             ))}
           </div>
@@ -179,13 +210,9 @@ export function DoorToDoorOptionCard({
 
       {/* Actions */}
       <div className="d2d-option-actions">
-        {option.deep_link ? (
-          <a className="btn-secondary btn-compact" href={option.deep_link.url} target="_blank" rel="noreferrer">
-            {option.deep_link.label}
-          </a>
-        ) : option.sources.some((s) => s.booking_url) ? (
-          <a className="btn-secondary btn-compact" href={option.sources.find((s) => s.booking_url)!.booking_url!} target="_blank" rel="noreferrer">
-            {t("doorToDoor.option.openBooking")}
+        {primaryActionHref ? (
+          <a className="btn-secondary btn-compact" href={primaryActionHref} target="_blank" rel="noreferrer">
+            {primaryActionLabel()}
           </a>
         ) : null}
         {!isEstimate ? (
