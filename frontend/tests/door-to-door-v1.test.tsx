@@ -635,6 +635,45 @@ const optionWithLegActions: DoorToDoorOption = {
   ],
 };
 
+const optionWithUnsafeExternalActions: DoorToDoorOption = {
+  ...optionWithLegActions,
+  id: "option_with_unsafe_external_actions",
+  label: "Ruta con enlaces inseguros",
+  sources: [
+    {
+      provider: "blablacar_deeplink",
+      source_provider: "blablacar",
+      source_type: "deeplink",
+      confidence: "deeplink",
+      checked_at: "2026-05-20T10:00:00+02:00",
+      booking_url: "javascript:alert('xss')",
+    },
+  ],
+  deep_link: {
+    url: "data:text/html,evil",
+    label: "Comprar ahora",
+    kind: "booking",
+    opens_external: true,
+  },
+  legs: [
+    {
+      type: "ground",
+      mode: "rideshare",
+      from: "A",
+      to: "B",
+      duration_minutes: 200,
+      provider: "blablacar",
+      source_type: "deeplink",
+      confidence: "deeplink",
+      actions: [
+        { id: "unsafe_1", provider: "blablacar", label: "Comprar ya", url: "javascript:alert('xss')", kind: "provider_search", opens_external: true, source_status: "external_search", price_status: "external", availability_status: "external", trust_copy: "Precio fuera" },
+        { id: "safe_1", provider: "blablacar", label: "Comprar ya", url: "https://www.blablacar.es/search?from=A&to=B", kind: "provider_search", opens_external: true, source_status: "external_search", price_status: "external", availability_status: "external", trust_copy: "Precio fuera" },
+      ],
+    },
+    { type: "flight", mode: "flight", from: "AGP", to: "TSF", duration_minutes: 155, provider: "flight_watch", source_type: "api", confidence: "estimated" },
+  ],
+};
+
 test("F4: tight buffer (< 90 min) shows risk indicator in option card", () => {
   const html = renderToStaticMarkup(<DoorToDoorOptionCard option={tightBufferOption} chosen={false} onChoose={() => undefined} isRecommended={true} reasons={[{ kind: "tight_buffer", label: "tight_buffer" }]} />);
   assert.match(html, /Margen ajustado|Tight buffer/i);
@@ -649,7 +688,7 @@ test("F4: tight buffer reason appears in decision reasons", () => {
 test("F4: leg actions are rendered in option card", () => {
   const html = renderToStaticMarkup(<DoorToDoorOptionCard option={optionWithLegActions} chosen={false} onChoose={() => undefined} />);
   assert.match(html, /Acciones por tramo|Actions by segment/i);
-  assert.match(html, /Buscar en BlaBlaCar/);
+  assert.match(html, /Abrir BlaBlaCar|Open BlaBlaCar/i);
   assert.match(html, /blablacar\.es\/search/);
 });
 
@@ -716,6 +755,20 @@ test("F5: external actions in DoorToDoorOptionCard render as links with target=_
   const externalLinks = html.match(/target="_blank"/g);
   assert.ok(externalLinks && externalLinks.length >= 1);
   assert.match(html, /rel="noreferrer"/);
+});
+
+test("F5: external actions ignore unsafe urls and normalize misleading CTA copy", () => {
+  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={optionWithUnsafeExternalActions} chosen={false} onChoose={() => undefined} />);
+  assert.doesNotMatch(html, /javascript:|data:text\/html/i);
+  assert.doesNotMatch(html, /Comprar ahora|Comprar ya/i);
+  assert.match(html, /Abrir BlaBlaCar|Open BlaBlaCar/i);
+});
+
+test("F5: panel source sanitizes external map urls before rendering links", () => {
+  const source = fs.readFileSync(PANEL, "utf8");
+  assert.match(source, /function resolveExternalUrl/);
+  assert.match(source, /parsed\.protocol === "http:" \|\| parsed\.protocol === "https:"/);
+  assert.match(source, /resolveExternalUrl\(leg\.booking_url\)/);
 });
 
 /* ── Fase 6: Registry y fuentes explicables ────────────────── */
