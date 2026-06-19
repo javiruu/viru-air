@@ -12,10 +12,10 @@ Verificar que el módulo `/puerta-a-puerta` funciona correctamente tras cambios,
 ## Comandos de verificación rápida
 
 ```bash
-# Frontend (56 tests estructurales + render)
+# Frontend (suite estructural + render)
 cd frontend && node --import tsx --test tests/door-to-door-v1.test.tsx
 
-# Backend (74 tests: integración + unitarios GTFS + deeplinks)
+# Backend (integración + unitarios GTFS + deeplinks)
 cd backend && python -m pytest \
   tests/integration/test_door_to_door.py \
   tests/unit/test_door_to_door_gtfs_transit.py \
@@ -58,6 +58,47 @@ cd frontend && npx tsc --noEmit
 - [ ] Sección `d2d-gtfs-notice` renderiza warnings GTFS con i18n
 - [ ] Badge "horario público" / "public schedule" en OptionCard para tramos GTFS
 - [ ] Tests backend cubren los 6 warning codes GTFS
+- [ ] `GtfsFeedService` reutiliza cache en memoria dentro del TTL
+- [ ] Si la descarga falla pero existe ZIP local, se usa cache rancio sin romper la búsqueda
+- [ ] ZIP inválido o feed sin ficheros requeridos no se trata como resultado válido
+- [ ] Feeds con auth (`api_key_env`, `auth_header_name`, `response_format=json_presigned`) tienen caso cubierto en tests
+
+## GTFS: cache, feeds y errores
+
+### Variables y rutas que conviene comprobar
+
+```bash
+# Cache local de feeds GTFS
+echo %DOOR_TO_DOOR_GTFS_CACHE_DIR%
+
+# TTL de cache (segundos)
+echo %DOOR_TO_DOOR_GTFS_CACHE_TTL_SECONDS%
+
+# Manifest inline o por fichero
+echo %DOOR_TO_DOOR_GTFS_FEEDS_JSON%
+echo %DOOR_TO_DOOR_GTFS_FEEDS_FILE%
+
+# Feeds con autenticación tipo NAP
+echo %GTFS_NAP_API_KEY%
+```
+
+### Qué debe verificarse cuando tocamos GTFS
+
+1. Si el feed descarga bien, el proveedor devuelve horarios `open_data` sin inventar compra.
+2. Si el feed falla pero hay ZIP previo en cache, la búsqueda no cae y se usa el fallback local.
+3. Si el ZIP está corrupto o le faltan ficheros GTFS mínimos, el feed se rechaza.
+4. Si no hay paradas cercanas o no hay servicio en fecha, el warning debe ser específico.
+5. Si el corredor está `planned_blocked`, debe salir `GTFS_CORRIDOR_PLANNED` y no aparentar cobertura real.
+
+### Comandos útiles para iterar solo GTFS
+
+```bash
+# Solo unitarios GTFS
+cd backend && python -m pytest tests/unit/test_door_to_door_gtfs_transit.py -q
+
+# Subgrupo de cache / fallback / auth
+cd backend && python -m pytest tests/unit/test_door_to_door_gtfs_transit.py -k "cache or stale or auth or presigned" -q
+```
 
 ### F8 — Composer
 - [ ] `getCompletenessScore` puntúa opciones por fuentes confirmadas
