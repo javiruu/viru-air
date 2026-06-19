@@ -375,6 +375,59 @@ def test_feed_service_returns_empty_on_missing_feed(feed_service):
     assert stops == []
 
 
+def test_feed_service_reuses_in_memory_cache_within_ttl(monkeypatch, tmp_path, gtfs_zip):
+    desc = _build_feed_descriptor()
+    svc = GtfsFeedService(cache_dir=tmp_path, cache_ttl_seconds=3600)
+    download_calls = 0
+
+    def fake_download(_descriptor: GtfsFeedDescriptor) -> bytes:
+        nonlocal download_calls
+        download_calls += 1
+        return gtfs_zip
+
+    monkeypatch.setattr(GtfsFeedService, "_download", staticmethod(fake_download))
+
+    first = svc.load_feed(desc)
+    second = svc.load_feed(desc)
+
+    assert first is not None
+    assert second is first
+    assert download_calls == 1
+
+
+def test_feed_service_falls_back_to_stale_cache_on_download_error(monkeypatch, tmp_path, gtfs_zip):
+    desc = _build_feed_descriptor()
+    svc = GtfsFeedService(cache_dir=tmp_path, cache_ttl_seconds=0)
+    cached_path = svc._cache_path(desc)
+    cached_path.write_bytes(gtfs_zip)
+
+    def failing_download(_descriptor: GtfsFeedDescriptor) -> bytes:
+        raise RuntimeError("network down")
+
+    monkeypatch.setattr(GtfsFeedService, "_download", staticmethod(failing_download))
+
+    feed = svc.load_feed(desc)
+
+    assert feed is not None
+    assert feed.feed_id == desc.id
+    assert desc.id in svc._feeds
+
+
+def test_feed_service_returns_none_for_bad_zip(monkeypatch, tmp_path):
+    desc = _build_feed_descriptor()
+    svc = GtfsFeedService(cache_dir=tmp_path, cache_ttl_seconds=3600)
+
+    monkeypatch.setattr(
+        GtfsFeedService,
+        "_download",
+        staticmethod(lambda _descriptor: b"not-a-zip"),
+    )
+
+    feed = svc.load_feed(desc)
+
+    assert feed is None
+
+
 def test_load_feed_descriptors_from_env(monkeypatch):
     monkeypatch.setenv("DOOR_TO_DOOR_GTFS_FEEDS_JSON", json.dumps([
         {"id": "ctan", "name": "CTAN", "url": "https://ctan.es/gtfs.zip"},
@@ -1583,5 +1636,4 @@ async def test_provider_sin_fares_sigue_sin_precios(provider):
     for option in results:
         assert option.total_price_min is None
         assert option.total_price_max is None
-
 
