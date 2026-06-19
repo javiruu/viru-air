@@ -1,7 +1,7 @@
 # Runbook QA — `/puerta-a-puerta`
 
 **Estado:** vivo
-**Última revisión:** 2026-06-08
+**Última revisión:** 2026-06-20
 **Fuente de verdad:** sí
 **Área:** QA / runbooks
 
@@ -15,6 +15,9 @@ Verificar que el módulo `/puerta-a-puerta` funciona correctamente tras cambios,
 # Frontend (suite estructural + render)
 cd frontend && node --import tsx --test tests/door-to-door-v1.test.tsx
 
+# Frontend (scoring / decisión)
+cd frontend && node --import tsx --test tests/door-to-door-decision.test.ts
+
 # Backend (integración + unitarios GTFS + deeplinks)
 cd backend && python -m pytest \
   tests/integration/test_door_to_door.py \
@@ -22,11 +25,22 @@ cd backend && python -m pytest \
   tests/unit/test_door_to_door_deeplinks.py \
   -q
 
+# Browser QA visual (dark/light + desktop/mobile)
+cd frontend && node scripts/qa_door_to_door_phase54.mjs
+
 # Typecheck frontend
 cd frontend && npx tsc --noEmit
 ```
 
 ## Checklist de estados por fase (F1–F9)
+
+## Cierre fase 54–55
+
+- [ ] `frontend/scripts/qa_door_to_door_phase54.mjs` pasa en dark/light y desktop/mobile
+- [ ] La sticky bar aparece tras superar `#d2d-results-sentinel`
+- [ ] La timeline muestra legs reales sin placeholders falsos
+- [ ] El hero móvil no rompe el titular palabra por palabra
+- [ ] El runbook deja explícitas las limitaciones vigentes del módulo
 
 ### F2 — Honestidad visual
 - [ ] `null price` no pinta `0,00 EUR`
@@ -153,3 +167,23 @@ Para cambios de UI, validar en navegador real:
    - Badges y pills legibles
    - CTAs externos con target=_blank
    - GTFS warnings visibles si aplica
+   - Hero superior legible en móvil y sticky bar funcional al bajar
+
+## Evidencia mínima recomendada
+
+- Full page dark desktop
+- Full page light desktop
+- Full page dark mobile
+- Full page light mobile
+- Crop de timeline
+- Crop de sticky bar
+
+El script `frontend/scripts/qa_door_to_door_phase54.mjs` guarda esta evidencia en `docs/qa/evidence/door-to-door-2026-06-20-phase54/`.
+
+## Limitaciones conocidas (Junio 2026)
+
+- La cobertura GTFS sigue siendo explícitamente de corredores configurados; no debe venderse como cobertura general.
+- Los deeplinks siguen siendo acciones externas: precio, horario final y disponibilidad se confirman fuera de Viru.
+- La sticky bar móvil usa navegación horizontal; esto es intencional mientras existan siete secciones.
+- La validación visual automática depende de tener Chromium de Playwright disponible localmente.
+- El typecheck global del frontend puede seguir fallando por problemas ajenos a `/puerta-a-puerta`; no usar ese resultado como único criterio de cierre del módulo.
