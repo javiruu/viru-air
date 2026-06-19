@@ -8,6 +8,11 @@ function shortTime(value?: string | null, fallback?: string) {
   return new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
 
+function timeRangeLabel(departureAt: string | null | undefined, arrivalAt: string | null | undefined, fallback: string) {
+  if (!departureAt || !arrivalAt) return fallback;
+  return `${shortTime(departureAt)} - ${shortTime(arrivalAt)}`;
+}
+
 export function DoorToDoorTimeline({ option, flight }: { option: DoorToDoorOption | null; flight?: DoorToDoorFlight | null }) {
   const { t } = useI18n();
   const legs = option?.legs ?? [];
@@ -25,8 +30,14 @@ export function DoorToDoorTimeline({ option, flight }: { option: DoorToDoorOptio
             <li key={`${leg.type}-${leg.mode}-${index}`}>
               <span className={`d2d-timeline-node d2d-mode-${leg.mode}`} aria-hidden="true" />
               <div>
-                <strong>{leg.from} → {leg.to}</strong>
-                <p>{leg.mode === "flight" ? t("doorToDoor.timeline.flight") : t("doorToDoor.timeline.ground")} · {leg.duration_minutes != null ? `${leg.duration_minutes} min` : t("doorToDoor.option.durationUnconfirmed")} · {shortTime(leg.departure_at, t("doorToDoor.option.scheduleUnconfirmed"))} - {shortTime(leg.arrival_at, t("doorToDoor.option.scheduleUnconfirmed"))}</p>
+                <strong>{leg.from} {"->"} {leg.to}</strong>
+                <p>
+                  {leg.mode === "flight" ? t("doorToDoor.timeline.flight") : t("doorToDoor.timeline.ground")}
+                  {" · "}
+                  {leg.duration_minutes != null ? `${leg.duration_minutes} min` : t("doorToDoor.option.durationUnconfirmed")}
+                  {" · "}
+                  {timeRangeLabel(leg.departure_at, leg.arrival_at, t("doorToDoor.option.scheduleUnconfirmed"))}
+                </p>
               </div>
             </li>
           ))}

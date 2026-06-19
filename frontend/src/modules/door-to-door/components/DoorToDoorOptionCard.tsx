@@ -11,6 +11,10 @@ function durationLabel(minutes: number | null | undefined) {
   return `${hours}h${String(mins).padStart(2, "0")}`;
 }
 
+function hasConfirmedPrice(min: number | null | undefined, max: number | null | undefined) {
+  return min != null && max != null && min > 0 && max > 0;
+}
+
 export function DoorToDoorOptionCard({
   option,
   chosen,
@@ -38,13 +42,21 @@ export function DoorToDoorOptionCard({
   const isPartialActionable = option.completeness === "partial_actionable";
   const isExploratory = option.completeness === "exploratory";
   const hasDuration = option.total_duration_minutes != null;
-  const hasPrice = option.total_price_min != null && option.total_price_max != null;
+  const hasPrice = hasConfirmedPrice(option.total_price_min, option.total_price_max);
   const hasGoogleRoutes = option.sources.some((source) => source.provider === "google_routes");
   const hasGtfsSchedule = option.legs.some((leg) => leg.type === "ground" && leg.source_type === "open_data" && leg.provider === "gtfs_transit" && leg.departure_at != null && leg.arrival_at != null);
   const isTightBuffer = option.airport_buffer_minutes != null && option.airport_buffer_minutes < 90;
   const legActions = option.legs
     .flatMap((leg) => (leg.actions ?? []).filter((a) => a.kind !== "directions"))
     .slice(0, 4);
+  const transparencyNote =
+    isRealDeeplink
+      ? t("doorToDoor.sections.limitedComparisonBody")
+      : isEstimate || isExploratory
+        ? t("doorToDoor.sections.estimateExplanation")
+        : isPartialActionable
+          ? t("doorToDoor.sections.partialCoverageBody")
+          : null;
 
   function statusBadge() {
     if (isRealResult) return <span className="status-pill success d2d-badge">{t("doorToDoor.option.realResult")}</span>;
@@ -59,9 +71,11 @@ export function DoorToDoorOptionCard({
   }
 
   function priceLabel() {
-    if (option.total_price_min == null || option.total_price_max == null) return t("doorToDoor.option.noPrice");
-    if (option.total_price_min === option.total_price_max) return t("doorToDoor.option.fromPrice", { price: option.total_price_min, currency: option.currency });
-    return t("doorToDoor.option.estimatedRange", { min: option.total_price_min, max: option.total_price_max, currency: option.currency });
+    if (!hasConfirmedPrice(option.total_price_min, option.total_price_max)) return t("doorToDoor.option.noPrice");
+    const minPrice = option.total_price_min!;
+    const maxPrice = option.total_price_max!;
+    if (minPrice === maxPrice) return t("doorToDoor.option.fromPrice", { price: minPrice, currency: option.currency });
+    return t("doorToDoor.option.estimatedRange", { min: minPrice, max: maxPrice, currency: option.currency });
   }
 
   const durStr = durationLabel(option.total_duration_minutes);
@@ -87,6 +101,8 @@ export function DoorToDoorOptionCard({
         ) : option.trust_copy ? (
           <p className="d2d-option-trust-note">{option.trust_copy}</p>
         ) : null}
+
+        {transparencyNote ? <p className="panel-note">{transparencyNote}</p> : null}
 
         {quickBadges.length > 0 ? (
           <div className="d2d-option-quick-badges" aria-label={t("doorToDoor.option.quickBadges")}>

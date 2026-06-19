@@ -38,12 +38,12 @@ function formatHistoryDate(value: string, localeTag: string) {
 }
 
 function formatClock(value: string | null | undefined, localeTag: string, fallback?: string) {
-  if (!value) return fallback ?? "--:--";
+  if (!value) return fallback ?? "—";
   return new Intl.DateTimeFormat(localeTag, { hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
 
 function formatDurationLabel(minutes: number | null | undefined, fallback?: string) {
-  if (minutes == null) return fallback ?? "--";
+  if (minutes == null) return fallback ?? "—";
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   if (hours <= 0) return `${mins} min`;
@@ -54,6 +54,10 @@ function formatDelta(value: number | null, unit = "", fallback?: string) {
   if (value == null) return fallback ?? "--";
   const sign = value > 0 ? "+" : "";
   return `${sign}${value}${unit}`;
+}
+
+function hasMeaningfulPrice(value: number | null | undefined) {
+  return value != null && Number.isFinite(value) && value > 0;
 }
 
 function autocompleteStatusCopy(meta: DoorToDoorSuggestionsMeta, t: ReturnType<typeof useI18n>["t"]) {
@@ -709,7 +713,7 @@ export function DoorToDoorPanel() {
               <p className="panel-note">
                 <strong>{results.selectedPlan.label}</strong>
                 {" · "}
-                {results.selectedPlan.total_price_min != null && results.selectedPlan.total_price_max != null
+                {hasMeaningfulPrice(results.selectedPlan.total_price_min) && hasMeaningfulPrice(results.selectedPlan.total_price_max)
                   ? <>{results.selectedPlan.total_price_min}-{results.selectedPlan.total_price_max} {results.selectedPlan.currency}</>
                   : t("doorToDoor.option.noPrice")}
               </p>
@@ -878,7 +882,7 @@ export function DoorToDoorPanel() {
                     <article key={item.id} className={canReuse ? "d2d-history-item-reusable" : ""}>
                       <div className="d2d-history-item-main">
                         <strong>{item.origin_label} {"->"} {item.final_destination_label}</strong>
-                        <span>{formatHistoryDate(item.created_at, localeTag)} - {item.recommended_label || t("doorToDoor.history.noRecommendation")} - {item.total_price_min != null && item.total_price_max != null ? `${item.total_price_min}-${item.total_price_max} EUR` : t("doorToDoor.option.noPrice")}</span>
+                        <span>{formatHistoryDate(item.created_at, localeTag)} - {item.recommended_label || t("doorToDoor.history.noRecommendation")} - {hasMeaningfulPrice(item.total_price_min) && hasMeaningfulPrice(item.total_price_max) ? `${item.total_price_min}-${item.total_price_max} EUR` : t("doorToDoor.option.noPrice")}</span>
                         {item.chosen_option_id ? <em>{t("doorToDoor.history.chosen")}</em> : null}
                       </div>
                       {canReuse ? (
