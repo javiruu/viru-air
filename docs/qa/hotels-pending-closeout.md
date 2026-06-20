@@ -30,6 +30,25 @@ Checklist viva de cierre para el modulo `/hoteles`.
 1. `POST /api/v1/hotels/ingest/mock` devuelve `HOTEL_FEATURE_ENABLED is false` en este entorno local.
 2. Esta fase no reabre esa deuda: la QA visual se cerro sobre datos ya consultables del radar.
 
+## Actualizacion 2026-06-21 (cierre Fase 58)
+
+### Resultado
+
+1. El scheduler hotelero deja de estar acoplado al `lifespan` del API.
+2. El worker `backend/app/worker/hotels_sweep.py` queda como via operativa canonica para sweeps `--once` y `--loop`.
+3. El runbook vuelve a coincidir con el comportamiento real del codigo.
+
+### Cierre tecnico
+
+1. `backend/app/main.py` ya no arranca hilos de sweep en startup.
+2. `docs/runbooks/hotels-sweeps.md` aclara que `HOTEL_SWEEP_ENABLED` solo gobierna el worker.
+3. Se anade regresion minima para asegurar que el API no vuelve a exponer el scheduler hotelero desde `app.main`.
+
+### Verificacion
+
+1. `cd backend && python -m pytest tests/unit/test_hotels_sweep_worker.py tests/unit/test_hotels_scheduler_contract.py -q`
+2. `cd backend && python -m pytest tests/unit/test_hotels_sweep.py tests/unit/test_hotels_phase8_sweep_tracked.py -q`
+
 Este documento corrige la auditoria previa: el backend hotelero y la ruta `/hoteles` existian, pero quedaban dos deudas funcionales en frontend antes de poder considerar cerradas las fases de closeout aqui definidas:
 
 1. La senal de paridad se recalculaba en cliente en vez de usar backend como fuente de verdad.

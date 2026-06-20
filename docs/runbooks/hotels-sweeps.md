@@ -46,7 +46,7 @@ Minimas para sweep mock:
 Para Makcorps:
 
 1. `HOTEL_FEATURE_ENABLED=true`
-2. `HOTEL_SWEEP_ENABLED=true` si se usa el worker en loop o `main()`
+2. `HOTEL_SWEEP_ENABLED=true` si se usa el worker en `--once` o `--loop`
 3. `HOTEL_PROVIDER=makcorps` o `--provider makcorps`
 4. `MAKCORPS_API_KEY` valido
 5. `HOTEL_PROVIDER_TIMEOUT_SECONDS`
@@ -123,6 +123,16 @@ Ese worker:
 1. no se arranca solo con el API;
 2. no bloquea requests ni startup;
 3. puede ejecutarse `--once` o `--loop`.
+
+## Contrato operativo actual
+
+Desde la revision de Fase 58, el backend HTTP ya no intenta lanzar sweeps hoteleros en su `lifespan`.
+
+Implicaciones:
+
+1. `uvicorn app.main:app` no inicia scheduler hotelero.
+2. `HOTEL_SWEEP_ENABLED` solo gobierna el worker `app.worker.hotels_sweep`.
+3. Si nadie ejecuta el worker o el comando manual, no habra sweeps nuevos.
 
 ### Estrategias de despliegue recomendadas
 
