@@ -8,6 +8,7 @@ const HOTELS_PAGE = path.join(process.cwd(), "src", "modules", "hotels", "HotelR
 const HOTELS_SEARCH = path.join(process.cwd(), "src", "modules", "hotels", "components", "HotelSearchPanel.tsx");
 const HOTELS_SIGNALS = path.join(process.cwd(), "src", "modules", "hotels", "components", "HotelTimelineAndSignals.tsx");
 const HOTELS_I18N = path.join(process.cwd(), "src", "i18n", "domains", "hotels.ts");
+const SCREENS_CSS = path.join(process.cwd(), "src", "styles", "screens.css");
 
 test("H56: /hoteles route stays wired to HotelRadarPage", () => {
   const source = fs.readFileSync(HOTELS_ROUTE, "utf8");
@@ -59,4 +60,22 @@ test("H56: provider and parity states remain signal-focused instead of booking-f
   assert.match(i18n, /noSignal: "Sin señal todavía"/);
   assert.match(i18n, /limited: "Señal limitada"|limited: "SeÃ±al limitada"/);
   assert.doesNotMatch(i18n, /Book now|Reserva ahora|Comprar ahora/);
+});
+
+test("H57: hotel result cards keep both tracking and watchlist actions visible", () => {
+  const source = fs.readFileSync(HOTELS_SEARCH, "utf8");
+
+  assert.match(source, /t\("hotels\.actions\.trackPrice"\)/);
+  assert.match(source, /t\("hotels\.actions\.trackingActive"\)/);
+  assert.match(source, /t\("hotels\.actions\.addToWatchlist"\)/);
+  assert.match(source, /t\("hotels\.actions\.inWatchlist"\)/);
+  assert.ok(source.indexOf('t("hotels.actions.addToWatchlist")') > source.indexOf('t("hotels.actions.trackPrice")'));
+});
+
+test("H57: weather promo card styles stay scoped instead of overriding every .card", () => {
+  const css = fs.readFileSync(SCREENS_CSS, "utf8");
+
+  assert.match(css, /\.cardm > \.card \{/);
+  assert.match(css, /:root\[data-theme="dark"\] \.cardm > \.card \{/);
+  assert.doesNotMatch(css, /\n\.card \{\n  position: relative;\n  width: 240px;\n  height: 130px;/);
 });

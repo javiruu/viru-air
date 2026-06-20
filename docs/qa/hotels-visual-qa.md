@@ -1,103 +1,98 @@
-# QA Visual `/hoteles` — Fase 9
+# QA visual `/hoteles`
 
 **Estado:** vivo  
-**Última revisión:** 2026-06-04 (cierre Fase 10)  
-**Fuente de verdad:** sí  
-**Área:** QA / Visual
+**Ultima revision:** 2026-06-20 (cierre Fase 57)  
+**Fuente de verdad:** si  
+**Area:** QA / Visual
 
 ## Resumen
 
-Fase 9 de cierre visual y polish final del módulo `/hoteles`. Esta fase se ejecutó después de cerrar las deudas funcionales (paridad backend, anchor robusto, watchlist visible, alertas, feature flag, Makcorps, sweeps, búsqueda con acentos).
+Registro vivo de verificacion visual real del modulo `/hoteles`.
 
-## Cambios realizados en Fase 9
+El objetivo de esta fase era cerrar la deuda pendiente de dark/light/responsive y del flujo principal del radar hotelero con evidencia reproducible, no solo con revision de codigo.
 
-### 1. Lista de miembros del Comp Set con botón de eliminar
-- Se añadió `deleteHotelCompSetMember` en `frontend/src/modules/hotels/api.ts`.
-- Se añadió `handleDeleteMember` en `HotelRadarPage.tsx`.
-- Se añadió la sección de lista de miembros en `HotelCompSetPanel.tsx` con:
-  - Nombre del hotel miembro y ciudad/país.
-  - Botón "Quitar" para eliminar miembros.
-  - Estados empty/loading.
-- Strings i18n añadidas (ES + EN): `membersTitle`, `membersEmpty`, `removeMember`, `memberRemoved`.
+## Fase 57 cerrada
 
-### 2. CSS para la sección de miembros
-- Clases nuevas en `screens.css`:
-  - `.hotel-comp-set-members-section`
-  - `.hotel-comp-set-member-list`
-  - `.hotel-comp-set-member-item`
-  - `.hotel-comp-set-member-copy`
-- Layout grid con gap consistente, alineación centrada, y truncado de nombres largos.
+### Entorno usado
 
-### 3. Polish visual de tarjetas de resultados
-- Transiciones suaves en `.hotel-result-card` (border-color, box-shadow, transform).
-- Hover: elevación sutil (translateY -1px), borde con acento, sombra.
-- Estado activo (`is-active`): sin desplazamiento en hover, sombra inset con acento.
-- Anillos de foco visibles (`focus-visible`) en:
-  - `.hotel-result-main`
-  - `.hotel-comp-set-item`
-  - `.hotel-alert-rule-actions .btn-ghost`
-  - `.hotel-nearby-actions .btn-ghost`
+- Frontend local: `http://127.0.0.1:3000`
+- Backend local: `http://127.0.0.1:8000/api/v1`
+- Runner: `frontend/scripts/qa_hotels_phase57.mjs`
+- Evidencia local: `docs/qa/evidence/hotels-2026-06-20-phase57/report.json`
 
-### 4. Corrección de code smell en backend
-- `backend/app/hotels/parity.py`: añadido `import datetime` para anotaciones de tipo.
+### Escenarios verificados
 
-## Verificaciones
+- `desktop-dark`
+- `desktop-light`
+- `mobile-dark`
+- `mobile-light`
 
-### Build y tests
-- ✅ `npm run build` frontend — OK
-- ✅ 46/46 tests backend de hoteles — OK
+Cada escenario genero capturas `full`, `results` y `sidebar`.
 
-### Verificaciones visuales (código)
-- ✅ Jerarquía visual: layout principal + sidebar con secciones agrupadas
-- ✅ Spacing consistente con tokens del UI System
-- ✅ Focus visible en botones y elementos interactivos
-- ✅ Estados: loading, empty, error, success con copy en español
-- ✅ Hover states con transiciones suaves
-- ✅ Dark/light compatibles vía tokens CSS variables compartidos
-- ✅ Responsive: media queries a 980px y 680px para mobile/tablet
+## Flujo validado
 
-### Pendiente de verificación manual en navegador
-- [ ] Abrir `/hoteles` en navegador real
-- [ ] Revisar dark mode y light mode
-- [ ] Revisar responsive (desktop, tablet, móvil)
-- [ ] Probar flujo completo: buscar → seleccionar → ver paridad → crear alerta → comp set → añadir/quitar miembros → watchlist
-- [ ] Confirmar focus visible en todos los controles interactivos
-- [ ] Confirmar que no hay overflow horizontal en viewports estrechos
-- [ ] Revisar copy consistente en español sin mezcla ES/EN
+1. Buscar hoteles por ciudad (`Madrid`).
+2. Seleccionar hotel desde resultados.
+3. Crear tracked offer.
+4. Anadir a seguimiento.
+5. Crear alerta de precio.
+6. Crear comparativa.
+7. Anadir sugerencia cercana cuando aparece disponible.
 
-## Archivos tocados en Fase 9
+## Evidencia obtenida
 
-| Archivo | Cambio |
-|---------|--------|
-| `frontend/src/modules/hotels/api.ts` | Añadido `deleteHotelCompSetMember` |
-| `frontend/src/modules/hotels/HotelRadarPage.tsx` | Añadido `handleDeleteMember`, import de `deleteHotelCompSetMember` |
-| `frontend/src/modules/hotels/components/HotelCompSetPanel.tsx` | Sección de lista de miembros con botón "Quitar", prop `onDeleteMember` |
-| `frontend/src/i18n/domains/hotels.ts` | Strings i18n: `membersTitle`, `membersEmpty`, `removeMember`, `memberRemoved` (ES+EN) |
-| `frontend/src/styles/screens.css` | CSS para sección de miembros, hover/focus polish en result cards y comp set items |
-| `backend/app/hotels/parity.py` | Añadido `import datetime` |
-| `docs/qa/hotels-visual-qa.md` | Este documento (creado) |
+### Resultado funcional
 
-## Actualización 2026-06-04 (cierre Fases 6-10)
+- `resultCount >= 1` en los 4 escenarios.
+- `trackedOfferCount = 1` tras la accion de tracking.
+- `watchlistCount = 1` tras anadir a seguimiento.
+- `alertRuleCount = 1` tras crear alerta.
+- `compSetVisible = true` tras crear comparativa.
 
-### Fase 6 — Reordenar UI como comparador
-- Layout reorganizado en columna principal (buscador → resultados → tracked offers → timeline) + sidebar con paneles colapsables.
-- Copy renombrado: "Comp set" → "Hoteles cercanos", "Paridad" → "Diferencia entre proveedores", "Watchlist" → "Seguimientos activos".
-- CSS para `.panel-collapse-toggle`, `.collapse-icon`, `.panel.is-collapsed`, `.hotel-tracked-offers-panel`.
-- Side column con `max-height` + `overflow-y: auto` para scroll independiente.
+### Resultado visual
 
-### Fase 7 — Trackear precio desde resultados
-- Botón "Trackear precio" en `HotelResultCard` con estado `hasTracking`/`trackedBusy`.
-- Panel `HotelTrackedOffersPanel` con botón "Dejar de seguir".
-- `handleTrackPrice` envía fechas, huéspedes, provider y precio desde los rates cargados.
+- Sin overflow horizontal en desktop ni mobile.
+- Resultados y sidebar visibles despues de la interaccion real.
+- Dark y light se renderizan con la misma estructura y sin errores de consola.
+- El CTA de watchlist vuelve a ser clicable junto al CTA de tracking en las cards de resultados.
 
-### Fase 9 — Alertas humanas de precio
-- Dropdown de alertas con lenguaje humano: "Avísame si baja de X €", "Avísame si baja más de X %", etc.
-- 7 tipos de alerta en el selector.
-- Campos condicionales: importe solo para price_below/above, porcentaje para variaciones, sin umbrales para provider_changed/availability_returned.
-- Labels i18n actualizados (ES + EN).
+## Correcciones necesarias para cerrar la fase
 
-## Limitaciones conocidas
+### 1. CTA de watchlist oculto cuando existia tracking
 
-1. La verificación visual en navegador real queda pendiente (no se pudo levantar el entorno dev en esta sesión).
-2. Los nombres de hoteles en la lista de miembros se resuelven desde `results` (búsqueda actual); si un miembro se añadió en una búsqueda anterior que ya no lo incluye, se muestra el `hotel_id` crudo como fallback.
-3. No se añadió `deleteHotelCompSet` (eliminar comp set entero) — el backend no expone ese endpoint.
+- Archivo: `frontend/src/modules/hotels/components/HotelSearchPanel.tsx`
+- Problema: al pasar `onTrackPrice`, la card dejaba de renderizar la accion de watchlist.
+- Cierre: la card muestra ambas acciones a la vez.
+
+### 2. Override global de `.card` contaminando el layout
+
+- Archivo: `frontend/src/styles/screens.css`
+- Problema: un bloque visual de weather reutilizaba `.card` de forma global con `width` y `height` fijos, deformando las cards de hoteles y bloqueando clicks reales.
+- Cierre: esas reglas quedaron acotadas a `.cardm > .card`.
+
+### 3. Runner visual alineado con el flujo real
+
+- Archivo: `frontend/scripts/qa_hotels_phase57.mjs`
+- Cierre:
+  - scroll previo a CTAs fuera de viewport;
+  - espera explicita de `POST` para alertas y comp sets;
+  - desactivacion de pointer events de notificaciones durante la automatizacion;
+  - omision de `ingest/mock` en este entorno para no depender de una feature flag desactivada.
+
+## Nota de entorno
+
+- `POST /api/v1/hotels/ingest/mock` devuelve `HOTEL_FEATURE_ENABLED is false` en este entorno local.
+- La Fase 57 no cambia ese comportamiento.
+- La verificacion visual se ejecuto sobre datos ya consultables del entorno y el flujo principal del radar, no sobre la ruta de ingesta mock.
+
+## Verificaciones ejecutadas
+
+- `cd frontend && node --import tsx --test tests/hotels-f56-audit.test.ts`
+- `cd frontend && node scripts/qa_hotels_phase57.mjs`
+
+## Estado final de esta deuda
+
+- Verificacion visual real: cerrada.
+- Responsive dark/light: cerrado.
+- Flujo principal del radar hotelero: cerrado.
+- Riesgo restante no cubierto por esta fase: disponibilidad real de ingesta mock/proveedor cuando `HOTEL_FEATURE_ENABLED` esta desactivado en el entorno.
