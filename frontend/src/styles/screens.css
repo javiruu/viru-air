@@ -12121,7 +12121,7 @@ textarea::placeholder {
   justify-items: center;
 }
 
-.card {
+.cardm > .card {
   position: relative;
   width: 240px;
   height: 130px;
@@ -12134,7 +12134,7 @@ textarea::placeholder {
   box-shadow: 0 14px 28px var(--shadow);
 }
 
-:root[data-theme="dark"] .card {
+:root[data-theme="dark"] .cardm > .card {
   background: var(--surface-2);
 }
 
@@ -12172,18 +12172,18 @@ textarea::placeholder {
   border: 1px solid var(--border);
 }
 
-.card:hover {
+.cardm > .card:hover {
   background-color: var(--surface-3);
   cursor: pointer;
 }
 
-.card:hover + .card2 {
+.cardm > .card:hover + .card2 {
   height: 260px;
   border-bottom-left-radius: 0px;
   border-bottom-right-radius: 0px;
 }
 
-.card:hover + .card2 .lower {
+.cardm > .card:hover + .card2 .lower {
   top: 16.2em;
 }
 

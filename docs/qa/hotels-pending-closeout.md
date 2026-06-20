@@ -9,6 +9,27 @@
 
 Checklist viva de cierre para el modulo `/hoteles`.
 
+## Actualizacion 2026-06-20 (cierre Fase 57)
+
+### Resultado
+
+1. La verificacion visual real de `/hoteles` queda cerrada.
+2. Se validaron `desktop-dark`, `desktop-light`, `mobile-dark` y `mobile-light`.
+3. El flujo real cubierto fue: buscar hotel, seleccionar, trackear precio, anadir a seguimiento, crear alerta y crear comparativa.
+4. No se detecto overflow horizontal en los cuatro escenarios.
+5. La evidencia local queda en `docs/qa/evidence/hotels-2026-06-20-phase57/report.json`.
+
+### Hallazgos resueltos durante la fase
+
+1. La card de resultados ocultaba el CTA de watchlist cuando existia CTA de tracking.
+2. Un override global de `.card` en `screens.css` estaba deformando cards y bloqueando clicks reales.
+3. El runner de QA quedo ajustado al flujo real y al entorno actual.
+
+### Nota de entorno
+
+1. `POST /api/v1/hotels/ingest/mock` devuelve `HOTEL_FEATURE_ENABLED is false` en este entorno local.
+2. Esta fase no reabre esa deuda: la QA visual se cerro sobre datos ya consultables del radar.
+
 Este documento corrige la auditoria previa: el backend hotelero y la ruta `/hoteles` existian, pero quedaban dos deudas funcionales en frontend antes de poder considerar cerradas las fases de closeout aqui definidas:
 
 1. La senal de paridad se recalculaba en cliente en vez de usar backend como fuente de verdad.

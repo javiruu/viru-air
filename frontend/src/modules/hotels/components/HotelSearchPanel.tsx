@@ -350,17 +350,16 @@ export function HotelResultCard({
                 ? t("hotels.actions.trackingActive")
                 : t("hotels.actions.trackPrice")}
           </button>
-        ) : (
-          <button
-            type="button"
-            className={`btn-ghost btn-compact${isInWatchlist ? " is-active" : ""}`}
-            onClick={() => (isInWatchlist ? onRemoveWatch(hotel.id) : onAddWatch(hotel.id))}
-            disabled={watchlistBusy}
-            aria-pressed={isInWatchlist}
-          >
-            {watchlistBusy ? t("shared.states.loading") : isInWatchlist ? t("hotels.actions.inWatchlist") : t("hotels.actions.addToWatchlist")}
-          </button>
-        )}
+        ) : null}
+        <button
+          type="button"
+          className={`btn-ghost btn-compact${isInWatchlist ? " is-active" : ""}`}
+          onClick={() => (isInWatchlist ? onRemoveWatch(hotel.id) : onAddWatch(hotel.id))}
+          disabled={watchlistBusy}
+          aria-pressed={isInWatchlist}
+        >
+          {watchlistBusy ? t("shared.states.loading") : isInWatchlist ? t("hotels.actions.inWatchlist") : t("hotels.actions.addToWatchlist")}
+        </button>
       </div>
     </article>
   );
