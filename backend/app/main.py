@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import time
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
@@ -104,72 +103,11 @@ def _parse_cors_origins() -> list[str]:
     return default_origins
 
 
-_hotel_sweep_enabled = os.getenv("HOTEL_SWEEP_ENABLED", "false").lower() in {"1", "true", "yes"}
-_hotel_sweep_interval = int(os.getenv("HOTEL_SWEEP_INTERVAL_SECONDS", "3600"))
-_hotel_sweep_provider = os.getenv("HOTEL_PROVIDER", "mock").strip() or "mock"
-
-_sweep_logger = logging.getLogger("app.sweep")
 _warmup_logger = logging.getLogger("app.fare_memory.warmup")
-
-
-def _start_sweep_loop(run_sweep_fn) -> None:
-    """Background thread: run hotel sweep periodically."""
-    import time as _time
-
-    from app.infrastructure.db.session import SessionLocal
-
-    _sweep_logger.info(
-        json.dumps(
-            {
-                "event": "hotel_sweep_scheduler_started",
-                "provider": _hotel_sweep_provider,
-                "interval_seconds": _hotel_sweep_interval,
-            },
-            ensure_ascii=False,
-        )
-    )
-
-    while True:
-        db = SessionLocal()
-        try:
-            provider_run = run_sweep_fn(db, provider=_hotel_sweep_provider)
-            _sweep_logger.info(
-                json.dumps(
-                    {
-                        "event": "hotel_sweep_cycle",
-                        "mode": "scheduled",
-                        "provider": _hotel_sweep_provider,
-                        "provider_run_id": provider_run.id,
-                        "status": provider_run.status,
-                        "items_processed": provider_run.items_processed,
-                    },
-                    ensure_ascii=False,
-                )
-            )
-        except Exception as exc:
-            _sweep_logger.error(
-                json.dumps(
-                    {
-                        "event": "hotel_sweep_failed",
-                        "provider": _hotel_sweep_provider,
-                        "error": str(exc)[:500],
-                    },
-                    ensure_ascii=False,
-                )
-            )
-        finally:
-            db.close()
-        _time.sleep(max(60, _hotel_sweep_interval))
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if _hotel_sweep_enabled:
-        import threading
-        from app.services.hotels_service import run_hotel_sweep
-
-        thread = threading.Thread(target=_start_sweep_loop, args=(run_hotel_sweep,), daemon=True, name="hotel-sweep")
-        thread.start()
     if FARE_MEMORY_BOOT_WARMUP_ENABLED:
         db = SessionLocal()
         try:
