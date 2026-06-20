@@ -1,7 +1,7 @@
 # Cierre pendiente de `/hoteles`
 
 **Estado:** vivo  
-**Ultima revision:** 2026-06-05 (cierre deudas técnicas)  
+**Ultima revision:** 2026-06-20 (auditoria post-cierre)  
 **Fuente de verdad:** si  
 **Area:** QA
 
@@ -13,6 +13,34 @@ Este documento corrige la auditoria previa: el backend hotelero y la ruta `/hote
 
 1. La senal de paridad se recalculaba en cliente en vez de usar backend como fuente de verdad.
 2. El hotel base del comp set dependia de seguir visible dentro de los resultados de busqueda.
+
+## Actualizacion 2026-06-20 (auditoria post-cierre Fase 56)
+
+### Resultado del contraste spec -> code -> tests
+
+1. El alcance del spec sigue alineado con el codigo real: `/hoteles` continua siendo comparador y tracker, no booking engine.
+2. La ruta privada `frontend/src/app/(private)/hoteles/page.tsx` sigue cableada a `HotelRadarPage`.
+3. La composicion principal real del radar sigue siendo:
+   - buscador;
+   - resultados;
+   - tracked offers;
+   - timeline;
+   - sidebar con detalle, watchlist, paridad, alertas y comp set.
+4. El backend mantiene cobertura amplia de dominio y API:
+   - `tests/unit/test_hotels_*.py`
+   - `tests/integration/test_hotels_*.py`
+5. Se detecta un hueco de cobertura frontend: habia validacion visual/documental, pero no una prueba estructural minima del radar principal. Queda cubierto con `frontend/tests/hotels-f56-audit.test.ts`.
+
+### Pendientes reales tras la auditoria
+
+1. Verificacion visual manual en navegador real sigue pendiente y pasa a ser el foco de la Fase 57.
+2. El provider real Makcorps sigue teniendo el riesgo operativo ya documentado de rate-limiting; no bloquea esta auditoria, pero tampoco debe maquillarse como flujo estable universal.
+3. Scheduler y sweeps quedan como trabajo operativo posterior (Fase 58), no como deuda encubierta de cierre del radar base.
+
+### Verificacion de auditoria ejecutada
+
+1. `cd frontend && node --import tsx --test tests/hotels-f56-audit.test.ts`
+2. `cd backend && python -m pytest tests/unit/test_hotels_*.py tests/integration/test_hotels_*.py -q`
 
 ## Estado actual
 
