@@ -18218,6 +18218,322 @@ textarea::placeholder {
   }
 }
 
+/* Landing conversion restructure — stronger narrative, fewer competing blocks */
+.landing-conv-hero-grid {
+  gap: clamp(1rem, 2vw, 1.4rem);
+  align-items: stretch;
+}
+
+.landing-conv-copy {
+  gap: 0.85rem;
+}
+
+.landing-conv-copy h1 {
+  text-wrap: balance;
+  max-width: 12ch;
+}
+
+.landing-conv-copy .landing-body,
+.landing-proof-copy-v2 p,
+.landing-decision-heading p,
+.landing-close-copy p {
+  text-wrap: pretty;
+}
+
+.landing-hero-link {
+  font-size: 0.9rem;
+}
+
+.landing-conv-trust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.1rem;
+}
+
+.landing-conv-trust span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0.28rem 0.72rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  border: 1px solid color-mix(in srgb, var(--landing-flight-strip-border) 78%, transparent);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--shadow-strong) 8%, transparent);
+  font-size: 0.8rem;
+  color: color-mix(in srgb, var(--ink) 92%, var(--accent) 8%);
+}
+
+.landing-conv-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.2rem;
+}
+
+.landing-metric-v2--hero {
+  min-height: 96px;
+  box-shadow:
+    0 14px 26px color-mix(in srgb, var(--shadow-strong) 8%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.landing-metric-v2--hero strong,
+.landing-proof-metrics strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.landing-conv-demo {
+  border-radius: 24px;
+  padding: 1.05rem;
+  background:
+    linear-gradient(165deg, color-mix(in srgb, var(--landing-terminal-glass) 92%, transparent), color-mix(in srgb, var(--surface) 86%, transparent));
+  box-shadow:
+    0 24px 42px color-mix(in srgb, var(--shadow-strong) 16%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--landing-runway-light) 28%, transparent);
+}
+
+.landing-demo-stack {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.landing-demo-card {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.72rem;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--landing-flight-strip-border) 82%, transparent);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--shadow-strong) 8%, transparent);
+}
+
+.landing-demo-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.landing-demo-card-header strong {
+  font-size: 0.84rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+}
+
+.demo-calendar-grid-v3 {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.28rem;
+  padding: 0.55rem;
+}
+
+.landing-signal-foot--elevated {
+  justify-content: space-between;
+}
+
+.landing-proof-cred {
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  align-items: start;
+  padding: 1.15rem;
+}
+
+.landing-proof-copy-v2 h2,
+.landing-decision-heading h2,
+.landing-close-copy h2 {
+  text-wrap: balance;
+}
+
+.landing-proof-grid-v2 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  grid-column: 1 / -1;
+}
+
+.landing-proof-card {
+  min-height: 150px;
+}
+
+.landing-conv-decision {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 0.7rem;
+}
+
+.landing-decision-heading {
+  align-items: flex-end;
+}
+
+.landing-decision-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.16fr) minmax(320px, 0.84fr);
+  gap: 0.9rem;
+}
+
+.landing-decision-story {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 22px;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--surface) 92%, transparent), color-mix(in srgb, var(--surface-2) 82%, transparent));
+  box-shadow: 0 20px 38px color-mix(in srgb, var(--shadow-strong) 10%, transparent);
+}
+
+.landing-steps-grid-v3 {
+  margin-top: 0;
+}
+
+.landing-steps-grid-v3::before {
+  top: 1.05rem;
+}
+
+.landing-steps-grid-v3 .landing-step-v2 {
+  min-height: 170px;
+  transition-property: transform, box-shadow, border-color, background-color;
+  transition-duration: 0.22s;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.landing-steps-grid-v3 .landing-step-v2:hover {
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--shadow-strong) 10%, transparent);
+}
+
+.landing-decision-support {
+  grid-template-columns: 1fr;
+}
+
+.landing-cap-card--cta {
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 60%),
+    color-mix(in srgb, var(--surface) 88%, transparent);
+}
+
+.landing-cap-card--cta .btn-secondary {
+  margin-top: 0.35rem;
+  min-height: 40px;
+}
+
+.landing-close-cta-v2 {
+  gap: 1.2rem;
+  align-items: center;
+}
+
+.landing-close-copy {
+  display: grid;
+  gap: 0.3rem;
+  max-width: 60ch;
+}
+
+.landing-close-proof {
+  margin: 0.35rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.landing-close-proof li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  color: var(--ink-muted);
+}
+
+.landing-close-proof li::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  margin-top: 0.35rem;
+  border-radius: 50%;
+  background: var(--landing-runway-light);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--landing-runway-light) 20%, transparent);
+  flex: 0 0 auto;
+}
+
+.landing-cap-card,
+.landing-metric-v2,
+.landing-step-v2,
+.landing-demo-card,
+.landing-conv-trust span,
+.landing-close-cta-v2,
+.landing-proof-cred,
+.landing-decision-story {
+  transition-property: transform, box-shadow, border-color, background-color, opacity;
+  transition-duration: 0.22s;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.landing-cap-card:active,
+.landing-metric-v2:active,
+.landing-step-v2:active,
+.landing-demo-card:active {
+  transform: scale(0.96);
+}
+
+.landing-metric-v2:hover,
+.landing-demo-card:hover,
+.landing-proof-cred:hover,
+.landing-close-cta-v2:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 32px color-mix(in srgb, var(--shadow-strong) 12%, transparent);
+}
+
+@media (max-width: 1100px) {
+  .landing-conv-metrics-row,
+  .landing-proof-grid-v2,
+  .landing-decision-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-proof-cred {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .landing-conv-trust,
+  .landing-cta-row,
+  .landing-demo-card-header,
+  .landing-signal-foot--elevated {
+    align-items: flex-start;
+  }
+
+  .landing-conv-metrics-row,
+  .landing-proof-grid-v2 {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-conv-demo,
+  .landing-proof-cred,
+  .landing-decision-story,
+  .landing-close-cta-v2 {
+    padding: 0.9rem;
+  }
+
+  .landing-close-cta-v2 {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-cap-card,
+  .landing-metric-v2,
+  .landing-step-v2,
+  .landing-demo-card,
+  .landing-conv-trust span,
+  .landing-close-cta-v2,
+  .landing-proof-cred,
+  .landing-decision-story {
+    transition: none;
+    transform: none;
+  }
+}
+
 /* Puerta a puerta V1 */
 .d2d-page {
   max-width: 1380px;
@@ -20619,3 +20935,4 @@ textarea::placeholder {
     transition: none;
   }
 }
+
