@@ -41,9 +41,11 @@ from app.services.revalidation_jobs import (
     find_active_revalidation_job,
 )
 from app.services.watchlist_revalidation import (
+    WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS,
     process_revalidation_job,
     route_fingerprint,
 )
+from app.services.watchlist_refresh_policy import evaluate_route_freshness, latest_snapshot_by_watch_ids
 
 router = APIRouter()
 provider = MultiSourceFlightProvider()
@@ -465,12 +467,15 @@ def _refresh_watch_now(db: Session, watch_id: str, current_user: User) -> JSONRe
     if watch.status == WATCH_STATUS_PAUSED:
         raise HTTPException(status_code=409, detail="watch_paused")
 
+    latest_snapshot = latest_snapshot_by_watch_ids(db, [watch.id]).get(watch.id)
+    route_freshness = evaluate_route_freshness(
+        watches=[watch],
+        latest_snapshot_by_watch={watch.id: latest_snapshot} if latest_snapshot is not None else {},
+        now=utc_now_naive(),
+        max_age_seconds=WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS,
+    )
+
     if REFRESH_COOLDOWN_SECONDS > 0:
-        latest_snapshot = db.scalar(
-            select(PriceSnapshot)
-            .where(PriceSnapshot.watch_id == watch.id)
-            .order_by(PriceSnapshot.captured_at_utc.desc(), PriceSnapshot.id.desc())
-        )
         if latest_snapshot:
             current_utc = utc_now_naive()
             earliest_next_refresh = latest_snapshot.captured_at_utc + timedelta(seconds=REFRESH_COOLDOWN_SECONDS)
@@ -541,7 +546,12 @@ def _refresh_watch_now(db: Session, watch_id: str, current_user: User) -> JSONRe
         target_fingerprint=_watch_revalidation_target_fingerprint(watch),
         provider="multi",
         priority=20,
-        payload={"watch_id": watch.id, "user_id": current_user.id},
+        payload={
+            "watch_id": watch.id,
+            "user_id": current_user.id,
+            "freshness_state": route_freshness.state,
+            "oldest_snapshot_age_seconds": route_freshness.oldest_snapshot_age_seconds,
+        },
     )
     if not created:
         retry_after = _manual_revalidation_retry_after_seconds()

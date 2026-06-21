@@ -177,20 +177,16 @@ export default function WatchlistPage() {
             watchSort={view.watchSort}
             hasSearchFilter={derived.hasSearchFilter}
             selectedWatchId={view.selectedWatchId}
-            refreshingWatchId={actions.refreshingWatchId}
             onSearchChange={view.setWatchSearch}
             onSortChange={view.setWatchSort}
             onClearSearch={() => view.setWatchSearch("")}
             onSelectWatch={handleSelectWatch}
-            onRefreshWatch={actions.refresh}
             onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
             onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
             onDeleteWatch={actions.deleteWatch}
             onBulkPause={(ids) => actions.bulkUpdateStatus(ids, "paused")}
             onBulkResume={(ids) => actions.bulkUpdateStatus(ids, "active")}
             onBulkDelete={actions.bulkDelete}
-            onBulkRefresh={actions.bulkRefresh}
-            isRefreshingBulk={actions.isRefreshingBulk}
             isLoading={actions.isLoadingWatchlist}
             listErrorMessage={actions.listErrorMessage}
             onRetryLoad={actions.load}
@@ -216,7 +212,6 @@ export default function WatchlistPage() {
             detail={actions.selectedWatchDetail}
             summary={actions.selectedWatchSummary}
             isLoading={actions.isLoadingSelectedWatchDetail}
-            onRefreshWatch={actions.refresh}
             onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
             onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
           />

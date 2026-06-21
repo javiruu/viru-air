@@ -2,16 +2,10 @@ import { translate } from "@/i18n";
 import { getToken, hasToken } from "@/modules/shared/auth";
 
 const RAW_API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1").trim();
-const DEV_LOCAL_API_ORIGIN = (process.env.NEXT_PUBLIC_LOCAL_API_ORIGIN || "http://127.0.0.1:8000").trim();
 
 export function resolveApiBase(rawBase: string): string {
   if (typeof window === "undefined") return rawBase;
   if (rawBase.startsWith("/")) {
-    const currentHost = window.location.hostname;
-    const isLocalHost = currentHost === "localhost" || currentHost === "127.0.0.1";
-    if (process.env.NODE_ENV === "development" && isLocalHost && rawBase.startsWith("/api/")) {
-      return `${DEV_LOCAL_API_ORIGIN.replace(/\/$/, "")}${rawBase}`.replace(/\/$/, "");
-    }
     return rawBase.replace(/\/$/, "");
   }
   try {

@@ -17,9 +17,7 @@ type UseWatchlistMutationsInput = {
   selectedDates: string[];
   setMessage: (value: string) => void;
   setMessageType: (value: MessageType) => void;
-  setRefreshingWatchId: (value: string | null | ((current: string | null) => string | null)) => void;
   setIsRefreshingFiltered: (value: boolean) => void;
-  setIsRefreshingBulk: (value: boolean) => void;
 };
 
 export function useWatchlistMutations({
@@ -31,32 +29,14 @@ export function useWatchlistMutations({
   selectedDates,
   setMessage,
   setMessageType,
-  setRefreshingWatchId,
   setIsRefreshingFiltered,
-  setIsRefreshingBulk,
 }: UseWatchlistMutationsInput) {
-  async function refresh(id: string): Promise<void> {
-    setRefreshingWatchId(id);
-    try {
-      await apiFetch<{ status: string }>(`/watchlist/${id}/refresh-now`, { method: "POST" });
-      void trackUxEvent("watchlist_refresh", { scope: "single" });
-      await load();
-      setMessage(t("watchlist.messages.refreshLaunched"));
-      setMessageType("success");
-    } catch {
-      setMessage(t("watchlist.messages.refreshError"));
-      setMessageType("error");
-    } finally {
-      setRefreshingWatchId((current) => (current === id ? null : current));
-    }
-  }
-
   async function refreshFiltered(): Promise<void> {
     setMessage("");
     const targets = filterWatchesBySelection(items, selectedOrigin, selectedDestination, selectedDates);
 
     if (targets.length === 0) {
-      setMessage(t("watchlist.messages.noFlightsForFilteredRefresh"));
+      setMessage(t("watchlist.messages.noFlightsForFilteredUpdate"));
       setMessageType("error");
       return;
     }
@@ -76,7 +56,7 @@ export function useWatchlistMutations({
       void trackUxEvent("watchlist_refresh", { scope: "filtered", count: targets.length });
       await load();
       setMessage(
-        t("watchlist.messages.bulkRefreshSummary", {
+        t("watchlist.messages.bulkUpdateSummary", {
           updated: summary.updated,
           skippedCooldown: summary.skippedCooldown,
           skippedPaused: summary.skippedPaused,
@@ -86,7 +66,7 @@ export function useWatchlistMutations({
       );
       setMessageType("success");
     } catch {
-      setMessage(t("watchlist.messages.filteredRefreshError"));
+      setMessage(t("watchlist.messages.filteredUpdateError"));
       setMessageType("error");
     } finally {
       setIsRefreshingFiltered(false);
@@ -174,46 +154,11 @@ export function useWatchlistMutations({
     }
   }
 
-  async function bulkRefresh(ids: string[]): Promise<void> {
-    if (ids.length === 0) return;
-    setIsRefreshingBulk(true);
-    try {
-      const response = await apiFetch<{
-        status: string;
-        requested: number;
-        refreshed: string[];
-        failed: Array<{ watch_id: string; code: string }>;
-      }>("/watchlist/refresh-bulk", {
-        method: "POST",
-        body: JSON.stringify({ watch_ids: ids }),
-      });
-      const summary = summarizeRefreshBulkResult(response);
-      await load();
-      setMessage(
-        t("watchlist.messages.bulkRefreshSummary", {
-          updated: summary.updated,
-          skippedCooldown: summary.skippedCooldown,
-          skippedPaused: summary.skippedPaused,
-          failed: summary.failed,
-          degradedOrStale: summary.degradedOrStale,
-        }),
-      );
-      setMessageType("success");
-    } catch {
-      setMessage(t("watchlist.messages.selectionRefreshError"));
-      setMessageType("error");
-    } finally {
-      setIsRefreshingBulk(false);
-    }
-  }
-
   return {
-    refresh,
     refreshFiltered,
     updateWatchStatus,
     deleteWatch,
     bulkUpdateStatus,
     bulkDelete,
-    bulkRefresh,
   };
 }

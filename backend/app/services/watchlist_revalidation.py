@@ -30,6 +30,7 @@ from app.services.revalidation_jobs import (
     fail_revalidation_job,
     find_active_revalidation_job,
 )
+from app.services.watchlist_refresh_policy import evaluate_route_freshness, latest_snapshot_by_watch_ids
 from app.services.watchlist_snapshots import select_canonical_refresh_flight
 
 logger = logging.getLogger("app.watchlist")
@@ -87,19 +88,20 @@ def enqueue_startup_refresh_jobs(
     for watch in active_watches:
         routes.setdefault((watch.origin_iata, watch.destination_iata, watch.travel_date_local), []).append(watch)
 
-    latest_snapshot_by_watch = _latest_snapshot_by_watch_ids(db, [watch.id for watch in active_watches])
+    latest_snapshot_by_watch = latest_snapshot_by_watch_ids(db, [watch.id for watch in active_watches])
     enqueued_count = 0
     skipped_due_lock_count = 0
     stale_route_count = 0
     jobs: list[dict[str, object]] = []
 
     for route_key, watches in routes.items():
-        reason, oldest_snapshot_age_seconds = _startup_refresh_reason(
+        freshness = evaluate_route_freshness(
             watches=watches,
             latest_snapshot_by_watch=latest_snapshot_by_watch,
             now=reference_now,
+            max_age_seconds=WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS,
         )
-        if reason is None:
+        if not freshness.needs_refresh:
             continue
 
         stale_route_count += 1
@@ -118,7 +120,7 @@ def enqueue_startup_refresh_jobs(
                     "target_fingerprint": target_fingerprint,
                     "job_id": active_job.id,
                     "status": "duplicate_locked",
-                    "reason": reason,
+                    "reason": freshness.state,
                     "watch_count": len(watches),
                 }
             )
@@ -136,8 +138,8 @@ def enqueue_startup_refresh_jobs(
                 "origin_iata": origin_iata,
                 "destination_iata": destination_iata,
                 "travel_date_local": travel_date_local.isoformat(),
-                "reason": reason,
-                "oldest_snapshot_age_seconds": oldest_snapshot_age_seconds,
+                "reason": freshness.state,
+                "oldest_snapshot_age_seconds": freshness.oldest_snapshot_age_seconds,
                 "watch_count": len(watches),
             },
         )
@@ -150,7 +152,7 @@ def enqueue_startup_refresh_jobs(
                 "target_fingerprint": target_fingerprint,
                 "job_id": job.id,
                 "status": job.status if created else "duplicate_locked",
-                "reason": reason,
+                "reason": freshness.state,
                 "watch_count": len(watches),
             }
         )
@@ -494,39 +496,3 @@ def _persist_shared_cache_entry(
                 ensure_ascii=False,
             )
         )
-
-
-def _latest_snapshot_by_watch_ids(db: Session, watch_ids: list[str]) -> dict[str, PriceSnapshot]:
-    if not watch_ids:
-        return {}
-    rows = db.scalars(
-        select(PriceSnapshot)
-        .where(PriceSnapshot.watch_id.in_(watch_ids))
-        .order_by(
-            PriceSnapshot.watch_id.asc(),
-            PriceSnapshot.captured_at_utc.desc(),
-            PriceSnapshot.id.desc(),
-        )
-    ).all()
-    latest_by_watch: dict[str, PriceSnapshot] = {}
-    for snapshot in rows:
-        latest_by_watch.setdefault(snapshot.watch_id, snapshot)
-    return latest_by_watch
-
-
-def _startup_refresh_reason(
-    *,
-    watches: list[FlightWatch],
-    latest_snapshot_by_watch: dict[str, PriceSnapshot],
-    now: datetime,
-) -> tuple[str | None, int | None]:
-    oldest_snapshot_age_seconds = 0
-    for watch in watches:
-        latest_snapshot = latest_snapshot_by_watch.get(watch.id)
-        if latest_snapshot is None:
-            return "missing_snapshot", None
-        snapshot_age_seconds = max(0, int((now - latest_snapshot.captured_at_utc).total_seconds()))
-        oldest_snapshot_age_seconds = max(oldest_snapshot_age_seconds, snapshot_age_seconds)
-        if snapshot_age_seconds > WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS:
-            return "snapshot_expired", oldest_snapshot_age_seconds
-    return None, oldest_snapshot_age_seconds

@@ -60,20 +60,16 @@ type SmartWatchListPanelProps = {
   watchSort: ListSort;
   hasSearchFilter: boolean;
   selectedWatchId: string;
-  refreshingWatchId: string | null;
   onSearchChange: (value: string) => void;
   onSortChange: (value: ListSort) => void;
   onClearSearch: () => void;
   onSelectWatch: (watch: WatchItem) => void;
-  onRefreshWatch: (watchId: string) => void;
   onPauseWatch: (watchId: string) => void;
   onResumeWatch: (watchId: string) => void;
   onDeleteWatch: (watchId: string) => void;
   onBulkPause: (watchIds: string[]) => void;
   onBulkResume: (watchIds: string[]) => void;
   onBulkDelete: (watchIds: string[]) => void;
-  onBulkRefresh: (watchIds: string[]) => void;
-  isRefreshingBulk: boolean;
   isLoading: boolean;
   listErrorMessage: string;
   onRetryLoad: () => void;
@@ -101,20 +97,16 @@ export function SmartWatchListPanel({
   watchSort,
   hasSearchFilter,
   selectedWatchId,
-  refreshingWatchId,
   onSearchChange,
   onSortChange,
   onClearSearch,
   onSelectWatch,
-  onRefreshWatch,
   onPauseWatch,
   onResumeWatch,
   onDeleteWatch,
   onBulkPause,
   onBulkResume,
   onBulkDelete,
-  onBulkRefresh,
-  isRefreshingBulk,
   isLoading,
   listErrorMessage,
   onRetryLoad,
@@ -230,9 +222,6 @@ export function SmartWatchListPanel({
           {hasSelection ? (
             <div className="alert-actions watch-bulk-toolbar" role="toolbar" aria-label={t("watchlist.bulk.toolbarAriaLabel")} data-testid="watchlist-bulk-toolbar">
               <span className="watch-smart-meta">{t("watchlist.bulk.selectedCount", { count: selectionCount })}</span>
-              <button type="button" className="btn-secondary btn-compact" onClick={() => onBulkRefresh(selectedIds)} disabled={isRefreshingBulk}>
-                {isRefreshingBulk ? t("watchlist.bulk.refreshing") : t("watchlist.bulk.refreshSelected")}
-              </button>
               <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkPause(selectedIds)}>{t("watchlist.bulk.pause")}</button>
               <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkResume(selectedIds)}>{t("watchlist.bulk.resume")}</button>
               <button type="button" className="btn-danger btn-compact" onClick={() => onBulkDelete(selectedIds)}>{t("watchlist.bulk.delete")}</button>
@@ -519,18 +508,6 @@ export function SmartWatchListPanel({
                 </div>
               ) : null}
               <div className="watch-row-actions">
-                <button
-                  className="btn-secondary"
-                  type="button"
-                  disabled={refreshingWatchId === watch.id}
-                  aria-busy={refreshingWatchId === watch.id}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onRefreshWatch(watch.id);
-                  }}
-                >
-                  {refreshingWatchId === watch.id ? t("watchlist.smartList.updating") : t("watchlist.smartList.refresh")}
-                </button>
                 <div className="alert-actions">
                   {watch.status === "paused" ? (
                     <button className="btn-ghost btn-compact" type="button" onClick={(e) => { e.stopPropagation(); onResumeWatch(watch.id); }}>
