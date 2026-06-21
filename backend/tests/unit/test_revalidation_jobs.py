@@ -93,6 +93,7 @@ def test_complete_revalidation_job_requires_matching_lock_token() -> None:
             target_type="route",
             target_fingerprint="route_lei_dub_2026-06-16",
             provider="multi",
+            scheduled_at=dt.datetime(2026, 6, 16, 10, 59),
         )
         claim_next_revalidation_job(db, lock_token="worker-a", now=dt.datetime(2026, 6, 16, 11, 0))
 
@@ -128,6 +129,7 @@ def test_failed_job_can_be_reenqueued_after_terminal_state() -> None:
             target_type="offer",
             target_fingerprint="fsm_offer_999",
             provider="duffel",
+            scheduled_at=dt.datetime(2026, 6, 16, 11, 59),
         )
         claim_next_revalidation_job(db, lock_token="worker-a", now=dt.datetime(2026, 6, 16, 12, 0))
         failed = fail_revalidation_job(

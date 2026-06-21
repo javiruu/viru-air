@@ -1,7 +1,9 @@
+import asyncio
 import json
 import logging
 import os
 import time
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
@@ -9,7 +11,6 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
 
 from app.core.errors import ApiError, error_envelope, message_for_code
 from app.core.request_context import get_correlation_id, normalize_correlation_id, set_correlation_id
@@ -28,6 +29,11 @@ from app.services.fare_memory_config import (
     FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE,
 )
 from app.services.fare_memory_warmup import log_scheduled_boot_warmup_jobs
+from app.services.watchlist_revalidation import (
+    WATCHLIST_STARTUP_REFRESH_ENABLED,
+    log_enqueued_startup_refresh_jobs,
+    process_due_route_revalidation_jobs,
+)
 
 configure_logging()
 
@@ -105,10 +111,16 @@ def _parse_cors_origins() -> list[str]:
 
 
 _warmup_logger = logging.getLogger("app.fare_memory.warmup")
+_watchlist_startup_logger = logging.getLogger("app.watchlist")
+
+
+async def _run_startup_route_revalidation_jobs() -> None:
+    await asyncio.to_thread(process_due_route_revalidation_jobs, SessionLocal)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    startup_route_task = None
     if FARE_MEMORY_BOOT_WARMUP_ENABLED:
         db = SessionLocal()
         try:
@@ -133,7 +145,31 @@ async def lifespan(app: FastAPI):
             )
         finally:
             db.close()
+    if WATCHLIST_STARTUP_REFRESH_ENABLED:
+        db = SessionLocal()
+        try:
+            log_enqueued_startup_refresh_jobs(db)
+        except Exception as exc:
+            _watchlist_startup_logger.error(
+                json.dumps(
+                    {
+                        "event": "watchlist_startup_refresh_schedule_failed",
+                        "max_age_seconds": os.getenv("WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS", "86400"),
+                        "error": str(exc)[:500],
+                    },
+                    ensure_ascii=False,
+                )
+            )
+        finally:
+            db.close()
+    if WATCHLIST_STARTUP_REFRESH_ENABLED or FARE_MEMORY_BOOT_WARMUP_ENABLED:
+        startup_route_task = asyncio.create_task(_run_startup_route_revalidation_jobs())
+        app.state.startup_route_revalidation_task = startup_route_task
     yield
+    if startup_route_task is not None:
+        startup_route_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await startup_route_task
 
 
 app = FastAPI(title="Viru API", version="0.1.0", lifespan=lifespan)

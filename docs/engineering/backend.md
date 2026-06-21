@@ -37,6 +37,13 @@ Esto evita acoplar `quick-search`, `watchlist` y `recommendations` a un provider
   - `POST /api/v1/watchlist/{watch_id}/refresh-now`
   - desde 2026-06-16 usa `RevalidationJob` para deduplicar revalidaciones activas por ruta y evitar dobles llamadas al provider.
   - si ya hay una revalidacion manual activa para la misma ruta, responde `429` con `code=revalidation_already_in_progress` y `Retry-After`.
+  - desde 2026-06-21, la revalidacion se ejecuta por ruta compartida y persiste snapshots nuevos para todos los `FlightWatch` activos de esa misma ruta.
+- Startup refresh automatico de watchlist:
+  - `WATCHLIST_STARTUP_REFRESH_ENABLED=true` por defecto.
+  - `WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS=86400` define cuando una ruta activa se considera vencida al arrancar.
+  - en startup, el backend revisa la edad del ultimo `PriceSnapshot` de cada ruta activa compartida; si falta snapshot o alguna copia de esa ruta supera el umbral, encola `RevalidationJob` de tipo `startup_refresh`.
+  - el arranque no bloquea `ready`: un worker background drena jobs due de tipo `startup_refresh`, `boot_warmup` y `manual` con `target_type=route`.
+  - una sola revalidacion por ruta actualiza snapshots para todos los usuarios que tengan ese watch activo.
 - Boot warmup de Fare Memory:
   - `FARE_MEMORY_BOOT_WARMUP_ENABLED=false` por defecto.
   - `FARE_MEMORY_BOOT_WARMUP_JITTER_SECONDS=30` define el retraso aleatorio maximo por job al arrancar.

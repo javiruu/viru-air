@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.infrastructure.db.session import Base, get_db
 from app.main import app
+import app.main as main_module
 
 
 @pytest.fixture()
@@ -29,13 +30,20 @@ def client() -> Generator[TestClient, None, None]:
             db.close()
 
     app.dependency_overrides[get_db] = override_get_db
+    original_watchlist_startup_refresh_enabled = main_module.WATCHLIST_STARTUP_REFRESH_ENABLED
+    original_fare_memory_boot_warmup_enabled = main_module.FARE_MEMORY_BOOT_WARMUP_ENABLED
+    main_module.WATCHLIST_STARTUP_REFRESH_ENABLED = False
+    main_module.FARE_MEMORY_BOOT_WARMUP_ENABLED = False
 
-    with TestClient(app) as test_client:
-        yield test_client
-
-    app.dependency_overrides.clear()
-    engine.dispose()
     try:
-        os.remove(path)
-    except PermissionError:
-        pass
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        main_module.WATCHLIST_STARTUP_REFRESH_ENABLED = original_watchlist_startup_refresh_enabled
+        main_module.FARE_MEMORY_BOOT_WARMUP_ENABLED = original_fare_memory_boot_warmup_enabled
+        app.dependency_overrides.clear()
+        engine.dispose()
+        try:
+            os.remove(path)
+        except PermissionError:
+            pass
