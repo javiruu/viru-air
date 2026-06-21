@@ -26,7 +26,7 @@ test("H56: HotelRadarPage keeps the post-close composition and section order", (
   assert.match(source, /<HotelParitySignal/);
   assert.match(source, /<HotelAlertsPanel/);
   assert.match(source, /<HotelCompSetPanel/);
-  assert.match(source, /<HotelProviderStatusPill rates=\{detail\.rates\} \/>/);
+  assert.match(source, /<HotelProviderStatusPill rates=\{detail\.rates\} signal=\{latestParitySignal\} \/>/);
 
   assert.ok(source.indexOf("<HotelTrackedOffersPanel") > source.indexOf('className={`panel panel-soft hotel-results-panel'));
   assert.ok(source.indexOf("<HotelPriceTimeline") > source.indexOf("<HotelTrackedOffersPanel"));
@@ -34,7 +34,7 @@ test("H56: HotelRadarPage keeps the post-close composition and section order", (
   assert.match(source, /onDeleteCompSet=\{compSets\.handleDeleteCompSet\}/);
 });
 
-test("H56: Hotel search keeps area mode and explicit live-provider toggle", () => {
+test("H56: Hotel search keeps area mode and explicit provider-signal toggle", () => {
   const source = fs.readFileSync(HOTELS_SEARCH, "utf8");
 
   assert.match(source, /searchMode: "name" \| "area"/);
@@ -45,20 +45,19 @@ test("H56: Hotel search keeps area mode and explicit live-provider toggle", () =
   assert.match(source, /useProvider/);
   assert.match(source, /hotel-provider-toggle/);
   assert.match(source, /t\("hotels\.search\.useProviderLabel"\)/);
+  assert.match(source, /providerHintOn/);
+  assert.match(source, /providerHintOff/);
 });
 
-test("H56: provider and parity states remain signal-focused instead of booking-focused", () => {
+test("H56-H61: provider and parity states remain signal-focused instead of booking-focused", () => {
   const source = fs.readFileSync(HOTELS_SIGNALS, "utf8");
   const i18n = fs.readFileSync(HOTELS_I18N, "utf8");
 
-  assert.match(source, /t\("hotels\.provider\.active"\)/);
-  assert.match(source, /t\("hotels\.provider\.noSignal"\)/);
-  assert.match(source, /t\("hotels\.parity\.limited"\)/);
-  assert.match(source, /t\("hotels\.parity\.limitedDetail"\)/);
-
-  assert.match(i18n, /statusMock: "Proveedor mock"/);
-  assert.match(i18n, /noSignal: "Sin señal todavía"/);
-  assert.match(i18n, /limited: "Señal limitada"|limited: "SeÃ±al limitada"/);
+  assert.match(source, /assessHotelSignal/);
+  assert.match(i18n, /statusMock: "Modo demo"/);
+  assert.match(i18n, /noObservations:/);
+  assert.match(i18n, /insufficientData:/);
+  assert.match(i18n, /limited: "Señal limitada"/);
   assert.doesNotMatch(i18n, /Book now|Reserva ahora|Comprar ahora/);
 });
 
@@ -78,4 +77,16 @@ test("H57: weather promo card styles stay scoped instead of overriding every .ca
   assert.match(css, /\.cardm > \.card \{/);
   assert.match(css, /:root\[data-theme="dark"\] \.cardm > \.card \{/);
   assert.doesNotMatch(css, /\n\.card \{\n  position: relative;\n  width: 240px;\n  height: 130px;/);
+});
+
+test("H59-H60: hotel radar includes honest provider context and responsive hotel blocks", () => {
+  const page = fs.readFileSync(HOTELS_PAGE, "utf8");
+  const css = fs.readFileSync(SCREENS_CSS, "utf8");
+
+  assert.match(page, /hotel-provider-context/);
+  assert.match(page, /providerHintOn/);
+  assert.match(css, /\.hotel-tracked-offer-item \{/);
+  assert.match(css, /\.hotel-comp-set-item \{/);
+  assert.match(css, /\.hotel-nearby-item \{/);
+  assert.match(css, /\.hotel-provider-context \{/);
 });

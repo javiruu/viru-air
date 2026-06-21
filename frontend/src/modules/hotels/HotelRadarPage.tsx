@@ -54,6 +54,7 @@ export function HotelRadarPage() {
     () => alerts.alertEvents.filter((event) => event.hotel_id === search.selectedHotelId),
     [alerts.alertEvents, search.selectedHotelId],
   );
+  const latestParitySignal = detail.paritySignals[0] ?? null;
 
   function toggleCollapse(key: string) {
     setCollapsedPanels((current) => ({ ...current, [key]: !current[key] }));
@@ -97,8 +98,11 @@ export function HotelRadarPage() {
           <h1>{t("hotels.title")}</h1>
           <p>{t("hotels.subtitle")}</p>
         </div>
-        <div className="page-actions">
-          <HotelProviderStatusPill rates={detail.rates} />
+        <div className="page-actions hotel-provider-context">
+          <HotelProviderStatusPill rates={detail.rates} signal={latestParitySignal} />
+          <p className="panel-note hotel-provider-context-note">
+            {t(search.useProvider ? "hotels.search.providerHintOn" : "hotels.search.providerHintOff")}
+          </p>
         </div>
       </header>
 
@@ -266,6 +270,7 @@ export function HotelRadarPage() {
             {!collapsedPanels["parity"] ? (
               <HotelParitySignal
                 signals={detail.paritySignals}
+                rates={detail.rates}
                 loading={detail.parityLoading}
                 error={detail.parityError}
               />

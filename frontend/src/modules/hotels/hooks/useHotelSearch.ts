@@ -142,7 +142,7 @@ export function useHotelSearch(onAfterIngest?: () => Promise<void>) {
     } finally {
       setLoading(false);
     }
-  }, [runSearch, t, notify, searchMode, areaResolved, checkIn, checkOut, guests, selectedHotelId]);
+  }, [runSearch, t, notify, searchMode, areaResolved, checkIn, checkOut, guests, radiusKm, useProvider, selectedHotelId]);
 
   const handleIngest = useCallback(async () => {
     setLoading(true);

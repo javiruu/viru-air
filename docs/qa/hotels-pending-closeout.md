@@ -1,13 +1,32 @@
 # Cierre pendiente de `/hoteles`
 
 **Estado:** vivo  
-**Ultima revision:** 2026-06-20 (auditoria post-cierre)  
+**Ultima revision:** 2026-06-21 (cierre Fases 59-61)  
 **Fuente de verdad:** si  
 **Area:** QA
 
 ## Resumen
 
 Checklist viva de cierre para el modulo `/hoteles`.
+
+## Actualizacion 2026-06-21 (cierre Fases 59-61)
+
+### Resultado
+
+1. El copy visible deja de insinuar una disponibilidad live universal del proveedor.
+2. Los bloques de seguimiento, comparativa y hoteles cercanos quedan adaptados a mobile y ancho intermedio con estilos propios.
+3. La UI diferencia ya entre sin observaciones, senal limitada y comparativa puntuable.
+
+### Cierre tecnico
+
+1. Se centraliza una evaluacion de senal en `frontend/src/modules/hotels/signalAssessment.ts`.
+2. `HotelProviderStatusPill` y `HotelParitySignal` dejan de inferir estados de forma dispersa.
+3. Se amplian tests frontend para copy honesto, responsive hooks y scoring con datos insuficientes.
+
+### Verificacion
+
+1. `cd frontend && node --import tsx --test tests/hotels-f56-audit.test.ts tests/hotels-signal-assessment.test.ts`
+2. `cd frontend && npm run build`
 
 ## Actualizacion 2026-06-20 (cierre Fase 57)
 

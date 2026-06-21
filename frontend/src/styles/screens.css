@@ -20392,6 +20392,19 @@ textarea::placeholder {
   flex-shrink: 0;
 }
 
+.hotel-provider-toggle-note,
+.hotel-provider-context-note {
+  display: block;
+  margin-top: 0.45rem;
+  max-width: 44rem;
+}
+
+.hotel-provider-context {
+  display: grid;
+  justify-items: end;
+  gap: 0.4rem;
+}
+
 :root[data-theme="dark"] .hotel-provider-toggle-row {
   border-color: var(--border);
   background: color-mix(in srgb, var(--surface) 90%, var(--surface-2) 10%);
@@ -20402,6 +20415,128 @@ textarea::placeholder {
   border-color: color-mix(in srgb, var(--accent) 44%, var(--border));
   background: color-mix(in srgb, var(--surface-2) 86%, var(--surface) 14%);
 }
+
+.hotel-tracked-offers-list,
+.hotel-comp-set-member-list,
+.hotel-nearby-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.hotel-tracked-offer-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.9rem;
+}
+
+.hotel-tracked-offer-copy {
+  min-width: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.hotel-tracked-offer-header,
+.hotel-tracked-offer-price-row,
+.hotel-comp-set-summary,
+.hotel-nearby-item,
+.hotel-comp-set-member-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.hotel-tracked-offer-prices {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.hotel-tracked-offer-price-row {
+  flex-wrap: wrap;
+}
+
+.hotel-tracked-offer-price-value {
+  font-size: 1.05rem;
+}
+
+.hotel-tracked-offer-actions,
+.hotel-comp-set-actions,
+.hotel-nearby-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.hotel-tracked-offer-actions {
+  flex-direction: column;
+}
+
+.hotel-tracked-offer-snapshots {
+  grid-column: 1 / -1;
+}
+
+.hotel-comp-set-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.hotel-comp-set-item {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  padding: 0.45rem 0.85rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+.hotel-comp-set-item:hover,
+.hotel-comp-set-item:focus-visible,
+.hotel-comp-set-item.is-active {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+  background: color-mix(in srgb, var(--surface-2) 82%, var(--surface));
+}
+
+.hotel-comp-set-item:hover {
+  transform: translateY(-1px);
+}
+
+.hotel-comp-set-active {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.hotel-comp-set-summary {
+  flex-wrap: wrap;
+}
+
+.hotel-comp-set-eyebrow {
+  display: inline-flex;
+  margin-bottom: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.hotel-nearby-item {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.8rem 0.95rem;
+  background: color-mix(in srgb, var(--surface) 92%, var(--surface-2));
+}
+
+.hotel-nearby-copy {
+  display: grid;
+  gap: 0.2rem;
+}
 /* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 740px) {
   .hotel-search-grid,
@@ -20411,6 +20546,40 @@ textarea::placeholder {
 
   .hotel-search-mode-tabs {
     flex-direction: column;
+  }
+
+  .hotel-provider-context {
+    justify-items: start;
+  }
+
+  .hotel-tracked-offer-header,
+  .hotel-nearby-item,
+  .hotel-comp-set-member-item,
+  .hotel-comp-set-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hotel-tracked-offer-actions,
+  .hotel-nearby-actions,
+  .hotel-comp-set-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .hotel-tracked-offer-actions {
+    flex-direction: row;
+  }
+}
+
+@media (max-width: 980px) {
+  .hotel-tracked-offer-item {
+    grid-template-columns: 1fr;
+  }
+
+  .hotel-tracked-offer-actions {
+    flex-direction: row;
+    justify-content: flex-start;
   }
 }
 

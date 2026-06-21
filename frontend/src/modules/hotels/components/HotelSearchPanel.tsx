@@ -160,7 +160,11 @@ export function HotelSearchPanel({
                 {areaSuggestions.length > 0 ? (
                   <ul className="hotel-area-suggestions" role="listbox">
                     {areaSuggestions.map((suggestion) => (
-                      <li key={`${suggestion.latitude}-${suggestion.longitude}`} role="option">
+                      <li
+                        key={`${suggestion.latitude}-${suggestion.longitude}`}
+                        role="option"
+                        aria-selected={false}
+                      >
                         <button
                           type="button"
                           className="hotel-area-suggestion-item"
@@ -242,6 +246,9 @@ export function HotelSearchPanel({
                 onChange={(event) => onUseProviderChange(event.target.checked)}
               />
               <span>{t("hotels.search.useProviderLabel")}</span>
+            </span>
+            <span className="panel-note hotel-provider-toggle-note">
+              {t(useProvider ? "hotels.search.providerHintOn" : "hotels.search.providerHintOff")}
             </span>
           </label>
         ) : null}

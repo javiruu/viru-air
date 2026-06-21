@@ -4,6 +4,7 @@ import { useMemo } from "react";
 
 import { useI18n } from "@/i18n";
 
+import { assessHotelSignal } from "../signalAssessment";
 import type { HotelParityOut, HotelRateOut } from "../types";
 
 function formatMoney(value: number, currency: string, localeTag: string): string {
@@ -43,10 +44,16 @@ export function HotelPriceTimeline({ rates }: { rates: HotelRateOut[] }) {
   );
 }
 
-export function HotelProviderStatusPill({ rates }: { rates: HotelRateOut[] }) {
+export function HotelProviderStatusPill({
+  rates,
+  signal,
+}: {
+  rates: HotelRateOut[];
+  signal?: HotelParityOut | null;
+}) {
   const { t } = useI18n();
-  const hasRates = rates.length > 0;
-  return <span className={`status-pill ${hasRates ? "success" : "warning"}`}>{hasRates ? t("hotels.provider.active") : t("hotels.provider.noSignal")}</span>;
+  const assessment = assessHotelSignal(rates, signal ?? null);
+  return <span className={`status-pill ${assessment.status}`}>{t(assessment.providerLabelKey)}</span>;
 }
 
 function resolveParityLabel(signal: HotelParityOut, t: ReturnType<typeof useI18n>["t"]): string {
@@ -58,15 +65,18 @@ function resolveParityLabel(signal: HotelParityOut, t: ReturnType<typeof useI18n
 
 export function HotelParitySignal({
   signals,
+  rates,
   loading,
   error,
 }: {
   signals: HotelParityOut[];
+  rates: HotelRateOut[];
   loading: boolean;
   error: string | null;
 }) {
   const { t, localeTag } = useI18n();
   const signal = signals[0] ?? null;
+  const assessment = assessHotelSignal(rates, signal);
 
   if (loading) {
     return (
@@ -97,24 +107,27 @@ export function HotelParitySignal({
       <section className="panel panel-soft hotel-parity-signal">
         <div className="panel-header">
           <h2 className="panel-title">{t("hotels.parity.title")}</h2>
-          <span className="status-pill info">{t("hotels.parity.limited")}</span>
+          <span className={`status-pill ${assessment.status}`}>{t(assessment.parityBadgeKey)}</span>
         </div>
-        <p className="panel-note section-gap-sm">{t("hotels.parity.empty")}</p>
+        <p className="panel-note section-gap-sm">{t(assessment.detailKey)}</p>
       </section>
     );
   }
 
   const translatedLabel = resolveParityLabel(signal, t);
+  const canScore = assessment.level === "scored";
 
   return (
     <section className="panel panel-soft hotel-parity-signal">
       <div className="panel-header">
         <h2 className="panel-title">{t("hotels.parity.title")}</h2>
-        <span className={`status-pill ${signal.status}`}>{translatedLabel}</span>
+        <span className={`status-pill ${canScore ? signal.status : assessment.status}`}>
+          {canScore ? translatedLabel : t(assessment.parityBadgeKey)}
+        </span>
       </div>
       <div className="section-gap-sm">
         <p className="panel-note">{t("hotels.parity.providerCount", { count: signal.provider_count })}</p>
-        {signal.lowest_price !== null && signal.highest_price !== null && signal.spread_percent !== null ? (
+        {canScore && signal.lowest_price !== null && signal.highest_price !== null && signal.spread_percent !== null ? (
           <div className="hotel-parity-metrics section-gap-sm">
             <div className="hotel-parity-metric">
               <span>{t("hotels.parity.lowest")}</span>
@@ -134,7 +147,7 @@ export function HotelParitySignal({
             </div>
           </div>
         ) : (
-          <p className="panel-note section-gap-sm">{t("hotels.parity.limitedDetail")}</p>
+          <p className="panel-note section-gap-sm">{t(assessment.detailKey)}</p>
         )}
       </div>
     </section>
