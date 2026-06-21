@@ -54,9 +54,32 @@ def enqueue_revalidation_job(
     return job, True
 
 
-def build_due_revalidation_job_query(*, now=None) -> Select[tuple[RevalidationJob]]:
+def find_active_revalidation_job(
+    db: Session,
+    *,
+    target_type: str,
+    target_fingerprint: str,
+    provider: str | None,
+) -> RevalidationJob | None:
+    return db.scalar(
+        select(RevalidationJob)
+        .where(RevalidationJob.target_type == target_type)
+        .where(RevalidationJob.target_fingerprint == target_fingerprint)
+        .where(RevalidationJob.provider == provider)
+        .where(RevalidationJob.status.in_(tuple(ACTIVE_REVALIDATION_JOB_STATUSES)))
+        .order_by(RevalidationJob.created_at.desc(), RevalidationJob.id.desc())
+        .limit(1)
+    )
+
+
+def build_due_revalidation_job_query(
+    *,
+    now=None,
+    job_types: tuple[str, ...] | None = None,
+    target_types: tuple[str, ...] | None = None,
+) -> Select[tuple[RevalidationJob]]:
     reference_now = now or utc_now_naive()
-    return (
+    query = (
         select(RevalidationJob)
         .where(RevalidationJob.status == "queued")
         .where(RevalidationJob.scheduled_at <= reference_now)
@@ -67,6 +90,11 @@ def build_due_revalidation_job_query(*, now=None) -> Select[tuple[RevalidationJo
             RevalidationJob.id.asc(),
         )
     )
+    if job_types:
+        query = query.where(RevalidationJob.job_type.in_(job_types))
+    if target_types:
+        query = query.where(RevalidationJob.target_type.in_(target_types))
+    return query
 
 
 def claim_next_revalidation_job(
@@ -74,9 +102,17 @@ def claim_next_revalidation_job(
     *,
     lock_token: str,
     now=None,
+    job_types: tuple[str, ...] | None = None,
+    target_types: tuple[str, ...] | None = None,
 ) -> RevalidationJob | None:
     reference_now = now or utc_now_naive()
-    candidates = db.scalars(build_due_revalidation_job_query(now=reference_now).limit(10)).all()
+    candidates = db.scalars(
+        build_due_revalidation_job_query(
+            now=reference_now,
+            job_types=job_types,
+            target_types=target_types,
+        ).limit(10)
+    ).all()
     for candidate in candidates:
         claimed = db.execute(
             update(RevalidationJob)
