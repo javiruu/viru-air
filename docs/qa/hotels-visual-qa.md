@@ -1,7 +1,7 @@
 # QA visual `/hoteles`
 
 **Estado:** vivo  
-**Ultima revision:** 2026-06-20 (cierre Fase 57)  
+**Ultima revision:** 2026-06-21 (cierre Fases 59-61)  
 **Fuente de verdad:** si  
 **Area:** QA / Visual
 
@@ -10,6 +10,20 @@
 Registro vivo de verificacion visual real del modulo `/hoteles`.
 
 El objetivo de esta fase era cerrar la deuda pendiente de dark/light/responsive y del flujo principal del radar hotelero con evidencia reproducible, no solo con revision de codigo.
+
+## Fases 59-61 cerradas
+
+### Ajustes aplicados
+
+1. Copy de proveedor reescrito para no prometer disponibilidad en vivo cuando la vista solo tiene contexto guardado o demo.
+2. `tracked offers`, `comp set` y sugerencias cercanas reciben layout responsive dedicado en vez de depender de `list-row` generico.
+3. La lectura de paridad y proveedor usa una evaluacion comun de senal para distinguir sin observaciones, senal limitada y comparativa puntuable.
+
+### Evidencia esperada de cierre
+
+1. El encabezado y el toggle de proveedor explican con honestidad que la vista no confirma booking en vivo.
+2. En anchos intermedios y moviles las acciones de tracked offers y comp set ya no quedan forzadas a una sola fila rigida.
+3. Cuando no hay observaciones, la UI muestra estado insuficiente en vez de aparentar una comparativa lista.
 
 ## Fase 57 cerrada
 
@@ -88,6 +102,7 @@ Cada escenario genero capturas `full`, `results` y `sidebar`.
 ## Verificaciones ejecutadas
 
 - `cd frontend && node --import tsx --test tests/hotels-f56-audit.test.ts`
+- `cd frontend && node --import tsx --test tests/hotels-signal-assessment.test.ts`
 - `cd frontend && node scripts/qa_hotels_phase57.mjs`
 
 ## Estado final de esta deuda
