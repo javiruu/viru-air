@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const path = require("path");
+const localApiOrigin = (process.env.NEXT_PUBLIC_LOCAL_API_ORIGIN || "http://127.0.0.1:8000").replace(/\/$/, "");
 
 const nextConfig = {
   reactStrictMode: true,
@@ -7,7 +8,7 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "http://127.0.0.1:8000/api/:path*",
+        destination: `${localApiOrigin}/api/:path*`,
       },
     ];
   },

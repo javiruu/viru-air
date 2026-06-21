@@ -47,9 +47,7 @@ export function useWatchlistActions({
   const [messageType, setMessageType] = useState<MessageType>("error");
   const [showAdd, setShowAdd] = useState(false);
   const [activePicker, setActivePicker] = useState<PickerField | null>(null);
-  const [refreshingWatchId, setRefreshingWatchId] = useState<string | null>(null);
   const [isRefreshingFiltered, setIsRefreshingFiltered] = useState(false);
-  const [isRefreshingBulk, setIsRefreshingBulk] = useState(false);
   const [isLoadingWatchlist, setIsLoadingWatchlist] = useState(true);
   const [isLoadingHistoryInitial, setIsLoadingHistoryInitial] = useState(true);
   const [selectedWatchDetail, setSelectedWatchDetail] = useState<WatchDetail | null>(null);
@@ -115,7 +113,7 @@ export function useWatchlistActions({
     setIsLoadingSelectedWatchDetail,
   });
 
-  const { refresh, refreshFiltered, updateWatchStatus, deleteWatch, bulkUpdateStatus, bulkDelete, bulkRefresh } =
+  const { refreshFiltered, updateWatchStatus, deleteWatch, bulkUpdateStatus, bulkDelete } =
     useWatchlistMutations({
       t,
       load,
@@ -125,9 +123,7 @@ export function useWatchlistActions({
       selectedDates,
       setMessage,
       setMessageType,
-      setRefreshingWatchId,
       setIsRefreshingFiltered,
-      setIsRefreshingBulk,
     });
 
   const { onSubmit, openPicker, clearSelection, selectAirport } = useWatchlistForm({
@@ -162,9 +158,7 @@ export function useWatchlistActions({
     messageType,
     showAdd,
     activePicker,
-    refreshingWatchId,
     isRefreshingFiltered,
-    isRefreshingBulk,
     isLoadingWatchlist,
     isLoadingHistoryInitial,
     selectedWatchDetail,
@@ -183,13 +177,11 @@ export function useWatchlistActions({
     setSelectedCountry,
     load,
     onSubmit,
-    refresh,
     refreshFiltered,
     updateWatchStatus,
     deleteWatch,
     bulkUpdateStatus,
     bulkDelete,
-    bulkRefresh,
     openPicker,
     clearSelection,
     selectAirport,

@@ -18,17 +18,17 @@ test("W3: bulk actions toolbar is contextual and hidden when selection is empty"
   assert.match(source, /data-testid="watchlist-bulk-toolbar"/);
   assert.match(source, /role="toolbar"/);
   assert.match(source, /watchlist\.bulk\.toolbarAriaLabel/);
-  assert.match(source, /watchlist\.bulk\.refreshSelected/);
+  assert.doesNotMatch(source, /watchlist\.bulk\.refreshSelected/);
 });
 
-test("W3: bulk toolbar exposes count and allowed actions only with explicit bulk selection", () => {
+test("W3: bulk toolbar exposes only lifecycle actions with explicit bulk selection", () => {
   const source = fs.readFileSync(SMART_PANEL, "utf8");
 
   assert.match(source, /watchlist\.bulk\.selectedCount/);
-  assert.match(source, /onBulkRefresh\(selectedIds\)/);
   assert.match(source, /onBulkPause\(selectedIds\)/);
   assert.match(source, /onBulkResume\(selectedIds\)/);
   assert.match(source, /onBulkDelete\(selectedIds\)/);
+  assert.doesNotMatch(source, /onBulkRefresh\(selectedIds\)/);
 });
 
 test("W3: compare selection remains independent from bulk actions", () => {
@@ -41,18 +41,18 @@ test("W3: compare selection remains independent from bulk actions", () => {
   assert.doesNotMatch(compareSource, /onBulkDelete|onBulkPause|onBulkResume/);
 });
 
-test("W3: row and detail actions stay available", () => {
+test("W3: row and detail actions keep lifecycle controls without manual refresh affordances", () => {
   const smartSource = fs.readFileSync(SMART_PANEL, "utf8");
   const detailSource = fs.readFileSync(DETAIL_PANEL, "utf8");
 
-  assert.match(smartSource, /onRefreshWatch\(watch\.id\)/);
   assert.match(smartSource, /onPauseWatch\(watch\.id\)/);
   assert.match(smartSource, /onResumeWatch\(watch\.id\)/);
   assert.match(smartSource, /onDeleteWatch\(watch\.id\)/);
+  assert.doesNotMatch(smartSource, /onRefreshWatch\(watch\.id\)/);
 
-  assert.match(detailSource, /watchlist\.detail\.actions\.refresh/);
   assert.match(detailSource, /watchlist\.detail\.actions\.pause/);
   assert.match(detailSource, /watchlist\.detail\.actions\.resume/);
+  assert.doesNotMatch(detailSource, /watchlist\.detail\.actions\.refresh/);
 });
 
 test("W3: watchlist route source keeps forbidden EN literals blocked", () => {
