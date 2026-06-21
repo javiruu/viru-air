@@ -23,6 +23,7 @@ class CorrelationIdFilter(logging.Filter):
 def configure_logging() -> None:
     level = logging.DEBUG if os.getenv("APP_ENV", "local") == "local" else logging.INFO
     log_file = os.getenv("LOG_FILE") or _default_log_file()
+    logging.raiseExceptions = False
     formatter = logging.Formatter(
         '{"ts":"%(asctime)s","level":"%(levelname)s","logger":"%(name)s","correlation_id":"%(correlation_id)s","message":"%(message)s"}',
         datefmt="%Y-%m-%dT%H:%M:%S%z",

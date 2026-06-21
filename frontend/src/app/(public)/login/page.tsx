@@ -5,8 +5,9 @@ import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 
 import { GlassSignInCard } from "@/components/components/forms/glass-sign-in";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
-import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
-import { AuthOut, clearToken, hasToken, saveAuthTokens } from "@/modules/shared/auth";
+import { apiFetchWithStatus } from "@/modules/shared/api";
+import { clearToken, hasToken, saveAuthTokens } from "@/modules/shared/auth";
+import { submitLogin } from "@/modules/shared/login-submit";
 import { resolvePostAuthUrl } from "@/modules/shared/navigation";
 import { SkeletonForm } from "@/modules/shared/Skeleton";
 import { useI18n } from "@/i18n";
@@ -61,33 +62,31 @@ function LoginContent() {
       return;
     }
     setFieldError({});
-    try {
-      const data = await apiFetch<AuthOut>("/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ email: normalizedEmail, password }),
-      });
-      saveAuthTokens(data);
+    const result = await submitLogin(normalizedEmail, password);
+    if (result.kind === "success") {
+      saveAuthTokens(result.data);
       notify({
         tone: "success",
         title: t("public.auth.loginSuccess"),
         description: t("shared.notifications.loginSuccessBody"),
       });
       router.push(returnUrl);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "";
-      const networkLike =
-        message.includes("Failed to fetch") ||
-        message.includes("NetworkError") ||
-        message.includes("ERR_FAILED") ||
-        message.includes("CORS");
-      const nextError = t(networkLike ? "public.auth.loginNetworkError" : "public.auth.loginError");
-      setError(nextError);
-      notify({
-        tone: "error",
-        title: t("shared.notices.error"),
-        description: nextError,
-      });
+      return;
     }
+
+    const nextError = t(
+      result.kind === "invalid_credentials"
+        ? "public.auth.loginError"
+        : result.kind === "network_error"
+          ? "public.auth.loginNetworkError"
+          : "public.auth.loginServerError",
+    );
+    setError(nextError);
+    notify({
+      tone: "error",
+      title: t("shared.notices.error"),
+      description: nextError,
+    });
   }
 
   return (

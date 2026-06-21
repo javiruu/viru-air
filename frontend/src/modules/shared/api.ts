@@ -310,8 +310,16 @@ export async function apiFetchWithStatus<T>(
 
   if (!response.ok) {
     const rawText = await response.text();
+    let parsed: unknown = null;
+    try {
+      parsed = rawText ? JSON.parse(rawText) : null;
+    } catch {
+      parsed = null;
+    }
+    const topLevelEnvelope = extractTopLevelErrorEnvelope(parsed);
     const detailCode = parseDetailCode(rawText);
-    if (response.status === 401 && isExpiredSessionCode(detailCode)) {
+    const authCode = topLevelEnvelope?.code || detailCode;
+    if (response.status === 401 && isExpiredSessionCode(authCode)) {
       clearStoredToken();
       return {
         ok: false,
@@ -319,32 +327,27 @@ export async function apiFetchWithStatus<T>(
         headers: response.headers,
         error: {
           status: response.status,
-          code: "INVALID_TOKEN",
+          code: authCode || "INVALID_TOKEN",
           message: translate("shared.errors.sessionExpired"),
         },
       };
     }
     if (response.status === 401) {
-      const authEntryMessage = isAuthEntryPath(path) && rawText.trim().length > 0 ? rawText : undefined;
+      const authEntryMessage = topLevelEnvelope?.message || (isAuthEntryPath(path) && rawText.trim().length > 0 ? rawText : undefined);
       return {
         ok: false,
         status: response.status,
         headers: response.headers,
         error: {
           status: response.status,
-          code: "UNAUTHORIZED",
+          code: authCode || "UNAUTHORIZED",
           message: authEntryMessage || translate("shared.errors.sessionRequired"),
+          details: topLevelEnvelope?.details,
+          correlation_id: topLevelEnvelope?.correlation_id || response.headers.get("x-correlation-id") || undefined,
         },
       };
     }
-    let parsed: unknown = null;
-    try {
-      parsed = rawText ? JSON.parse(rawText) : null;
-    } catch {
-      parsed = null;
-    }
     const parsedObj = parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
-    const topLevelEnvelope = extractTopLevelErrorEnvelope(parsed);
     const errorObj =
       parsed && typeof parsed === "object" && "error" in (parsed as Record<string, unknown>)
         ? (parsed as { error?: Record<string, unknown> }).error || {}
