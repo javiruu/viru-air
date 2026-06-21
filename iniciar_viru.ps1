@@ -5,18 +5,225 @@
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $runBackground = -not $Foreground
+$backendDir = Join-Path $root "backend"
 $backendPython = Join-Path $root "backend\.venv\Scripts\python.exe"
 $backendAlembicIni = Join-Path $root "backend\alembic.ini"
 
-if (-not (Test-Path $backendPython)) {
-  throw @"
+function Invoke-PythonCommand {
+  param(
+    [Parameter(Mandatory)]
+    [pscustomobject]$Candidate,
+    [Parameter(Mandatory)]
+    [string[]]$Arguments,
+    [switch]$CaptureOutput,
+    [switch]$AllowFailure,
+    [string]$WorkingDirectory = $root
+  )
+
+  $allArgs = @($Candidate.PrefixArgs) + $Arguments
+  if ($CaptureOutput) {
+    $output = & $Candidate.FilePath @allArgs 2>&1
+    $exitCode = $LASTEXITCODE
+    if (-not $AllowFailure -and $exitCode -ne 0) {
+      throw "Fallo al ejecutar $($Candidate.DisplayName) (exit $exitCode)."
+    }
+    return [pscustomobject]@{
+      Output = @($output)
+      ExitCode = $exitCode
+    }
+  }
+
+  $process = Start-Process -FilePath $Candidate.FilePath `
+    -ArgumentList $allArgs `
+    -WorkingDirectory $WorkingDirectory `
+    -NoNewWindow `
+    -Wait `
+    -PassThru
+
+  if (-not $AllowFailure -and $process.ExitCode -ne 0) {
+    throw "Fallo al ejecutar $($Candidate.DisplayName) (exit $($process.ExitCode))."
+  }
+
+  return $process.ExitCode
+}
+
+function Get-PythonVersionInfo {
+  param(
+    [Parameter(Mandatory)]
+    [pscustomobject]$Candidate
+  )
+
+  $result = Invoke-PythonCommand -Candidate $Candidate `
+    -Arguments @("-c", "import sys; print(f'{sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]}')") `
+    -CaptureOutput `
+    -AllowFailure
+
+  if ($result.ExitCode -ne 0 -or $result.Output.Count -eq 0) {
+    return $null
+  }
+
+  $rawVersion = ($result.Output[-1].ToString()).Trim()
+  try {
+    $version = [version]$rawVersion
+  } catch {
+    return $null
+  }
+
+  return [pscustomobject]@{
+    Version = $version
+    RawVersion = $rawVersion
+  }
+}
+
+function Get-AvailablePythonCandidates {
+  $candidates = @()
+  $repoPython = Join-Path $root "Python\pythoncore-3.14-64\python.exe"
+  if (Test-Path $repoPython) {
+    $candidates += [pscustomobject]@{
+      DisplayName = "Python 3.14 embebido del repo"
+      FilePath = $repoPython
+      PrefixArgs = @()
+    }
+  }
+
+  if (Get-Command py -ErrorAction SilentlyContinue) {
+    $candidates += [pscustomobject]@{
+      DisplayName = "Python Launcher py -3.14"
+      FilePath = "py"
+      PrefixArgs = @("-3.14")
+    }
+    $candidates += [pscustomobject]@{
+      DisplayName = "Python Launcher py -3.13"
+      FilePath = "py"
+      PrefixArgs = @("-3.13")
+    }
+    $candidates += [pscustomobject]@{
+      DisplayName = "Python Launcher py -3.12"
+      FilePath = "py"
+      PrefixArgs = @("-3.12")
+    }
+  }
+
+  if (Get-Command python -ErrorAction SilentlyContinue) {
+    $candidates += [pscustomobject]@{
+      DisplayName = "python en PATH"
+      FilePath = "python"
+      PrefixArgs = @()
+    }
+  }
+
+  return $candidates
+}
+
+function Resolve-BackendBootstrapPython {
+  $minimumVersion = [version]"3.12.0"
+
+  foreach ($candidate in Get-AvailablePythonCandidates) {
+    $versionInfo = Get-PythonVersionInfo -Candidate $candidate
+    if ($null -eq $versionInfo) {
+      continue
+    }
+
+    if ($versionInfo.Version -ge $minimumVersion) {
+      return [pscustomobject]@{
+        Candidate = $candidate
+        Version = $versionInfo.Version
+        RawVersion = $versionInfo.RawVersion
+      }
+    }
+  }
+
+  return $null
+}
+
+function Read-YesNoPrompt {
+  param(
+    [Parameter(Mandatory)]
+    [string]$Prompt
+  )
+
+  while ($true) {
+    $answer = (Read-Host $Prompt).Trim().ToUpperInvariant()
+    if ($answer -eq "S") {
+      return $true
+    }
+    if ($answer -eq "N") {
+      return $false
+    }
+    Write-Host "Respuesta no valida. Escribe S o N."
+  }
+}
+
+function Ensure-BackendVirtualEnv {
+  if (Test-Path $backendPython) {
+    return
+  }
+
+  $bootstrap = Resolve-BackendBootstrapPython
+  if ($null -eq $bootstrap) {
+    throw @"
 No existe el entorno virtual del backend en: $backendPython
-Inicializalo con Python 3.14:
-  cd "$root\backend"
+Y no se encontro un Python compatible (>=3.12) para crearlo automaticamente.
+Opciones sugeridas:
+  1. instala Python 3.14 o 3.12;
+  2. o usa el runtime embebido del repo en $root\Python\pythoncore-3.14-64\python.exe;
+  3. luego ejecuta manualmente:
+     cd "$backendDir"
+     py -3.14 -m venv .venv
+     .\.venv\Scripts\python.exe -m pip install -e .[dev]
+"@
+  }
+
+  Write-Host "No existe el entorno virtual del backend en: $backendPython"
+  Write-Host "Se puede reparar automaticamente con: $($bootstrap.Candidate.DisplayName) ($($bootstrap.RawVersion))"
+  Write-Host "Acciones:"
+  Write-Host "  1. crear backend/.venv"
+  Write-Host "  2. instalar dependencias del backend con -e .[dev]"
+
+  if (-not (Read-YesNoPrompt -Prompt "Quieres que VIRU lo repare ahora? [S/N]")) {
+    throw @"
+Arranque cancelado por el usuario.
+Recuperacion manual:
+  cd "$backendDir"
   py -3.14 -m venv .venv
   .\.venv\Scripts\python.exe -m pip install -e .[dev]
 "@
+  }
+
+  Write-Host "Creando backend/.venv con $($bootstrap.Candidate.DisplayName) ($($bootstrap.RawVersion))..."
+  Invoke-PythonCommand -Candidate $bootstrap.Candidate -Arguments @("-m", "venv", ".venv") -WorkingDirectory $backendDir | Out-Null
+
+  if (-not (Test-Path $backendPython)) {
+    throw @"
+La creacion del entorno virtual finalizo, pero no aparecio: $backendPython
+Recuperacion manual sugerida:
+  cd "$backendDir"
+  py -3.14 -m venv .venv
+"@
+  }
+
+  Write-Host "Instalando dependencias del backend en el entorno virtual..."
+  $venvPython = [pscustomobject]@{
+    DisplayName = "backend\\.venv\\Scripts\\python.exe"
+    FilePath = $backendPython
+    PrefixArgs = @()
+  }
+  Invoke-PythonCommand -Candidate $venvPython -Arguments @("-m", "pip", "install", "-e", ".[dev]") -WorkingDirectory $backendDir | Out-Null
+
+  if (-not (Test-Path $backendPython)) {
+    throw @"
+Se completo el bootstrap, pero el Python del entorno virtual sigue sin estar disponible en:
+$backendPython
+Recuperacion manual sugerida:
+  cd "$backendDir"
+  .\.venv\Scripts\python.exe -m pip install -e .[dev]
+"@
+  }
+
+  Write-Host "Entorno virtual del backend reparado correctamente."
 }
+
+Ensure-BackendVirtualEnv
 
 $backendEnvFile = Join-Path $root "backend\.env"
 $jwtSecret = $null
@@ -138,7 +345,7 @@ Write-Host "Aplicando migraciones del backend antes del arranque..."
 $alembicArgs = @("-m", "alembic", "-c", $backendAlembicIni, "upgrade", "head")
 $alembic = Start-Process -FilePath $backendPython `
   -ArgumentList $alembicArgs `
-  -WorkingDirectory (Join-Path $root "backend") `
+  -WorkingDirectory $backendDir `
   -NoNewWindow `
   -Wait `
   -PassThru
