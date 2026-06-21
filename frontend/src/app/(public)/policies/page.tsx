@@ -103,7 +103,7 @@ export default function PoliciesPage() {
           <li>Las alertas y recomendaciones son orientativas, nunca asesoramiento financiero.</li>
           <li>Puedes solicitar eliminación, portabilidad y acceso desde tu cuenta o soporte.</li>
           <li>No compartimos credenciales ni tokens con terceros.</li>
-          <li>En modo degradado reducimos consultas y marcamos frescura de forma visible.</li>
+          <li>Si el proveedor falla, reducimos consultas y mostramos cuando se comprobo el ultimo dato.</li>
           <li>El contenido de políticas se revisa periodicamente y refleja el estado operativo documentado.</li>
         </ul>
       </section>
@@ -148,7 +148,7 @@ export default function PoliciesPage() {
             </p>
             <p>
               Ejemplo: si el proveedor no responde en un momento puntual, mostramos el ultimo dato confirmado con
-              su marca de frescura. Esto evita datos inventados o silencios confusos.
+              la hora de su ultima comprobacion. Esto evita datos inventados o silencios confusos.
             </p>
           </section>
 
@@ -162,8 +162,8 @@ export default function PoliciesPage() {
               controla inventario. Tampoco garantiza disponibilidad, cupos o precio final en el checkout.
             </p>
             <p>
-              En modo degradado reducimos llamadas a proveedores y priorizamos estabilidad. En ese estado veras
-              etiquetas de frescura y posibles retrasos en actualizaciónes.
+              Cuando solo podemos ofrecer resultados parciales reducimos llamadas al proveedor y priorizamos
+              estabilidad. En ese estado veras cuando se comprobo el ultimo dato y posibles retrasos de actualizacion.
             </p>
           </section>
 
@@ -182,7 +182,7 @@ export default function PoliciesPage() {
               <li><strong>Prediccion:</strong> proyeccion con nivel de confianza variable.</li>
             </ul>
             <p>
-              Si el proveedor no responde, mostramos el ultimo dato confirmado con la marca de frescura y evitamos
+              Si el proveedor no responde, mostramos el ultimo dato confirmado con su ultima comprobacion y evitamos
               mezclarlo con valores nuevos.
             </p>
           </section>
@@ -404,11 +404,11 @@ export default function PoliciesPage() {
               </details>
               <details>
                 <summary>¿Por que veo precios desactualizados?</summary>
-                <p>Si el proveedor no responde, mostramos el ultimo dato con marca de frescura.</p>
+                <p>Si el proveedor no responde, mostramos el ultimo dato confirmado con la hora de su ultima comprobacion.</p>
               </details>
               <details>
-                <summary>¿Que significa &quot;modo degradado&quot;?</summary>
-                <p>Reducimos consultas para mantener estabilidad y avisamos en la interfaz.</p>
+                <summary>¿Que significa que veas resultados parciales?</summary>
+                <p>Que el proveedor no ha respondido del todo. Mantenemos lo ya confirmado y te avisamos en la interfaz.</p>
               </details>
               <details>
                 <summary>¿Puedo borrar mi cuenta?</summary>
@@ -468,7 +468,7 @@ export default function PoliciesPage() {
             </p>
             <ul>
               <li>Herramienta informativa, sin garantía de precio.</li>
-              <li>Marca de frescura cuando falta proveedor.</li>
+              <li>Indicacion visible de cuando se comprobo el ultimo dato si falta proveedor.</li>
               <li>Alertas orientativas y configurables.</li>
               <li>Derecho a borrado y portabilidad.</li>
               <li>Eventos técnicos para seguridad.</li>

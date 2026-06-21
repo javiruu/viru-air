@@ -47,6 +47,21 @@ Entradas vivas actualizadas:
 - `docs/reference/backend/quick-search-contract.md`
 - `docs/specs/viru-fare-memory.md`
 
+## Actualizacion manual 2026-06-16 (humanizacion de lenguaje visible)
+
+Entradas vivas agregadas:
+
+- `docs/reference/ui-visible-language-guide.md`
+
+Entradas vivas actualizadas:
+
+- `docs/reference/product-language-map.md`
+- `docs/ui/UI_CONTRACT_V1.md`
+- `docs/INDICE_UNICO.md`
+- `docs/specs/policies/policies-page-acceptance-checklist.md`
+- `docs/specs/policies/policies-page-copy-deck-es.md`
+- `docs/specs/policies/policies-page-rewrite.md`
+
 ## Actualizacion manual 2026-06-13 (fases 1-5 del roadmap)
 
 Entradas vivas agregadas:
@@ -528,6 +543,7 @@ Entradas vivas retiradas:
 | docs/reference/feature-flags.md | unknown | vivo | conservar | docs/reference/feature-flags.md | Referencia activa de feature flags | docs/reference/feature-flags.md |
 | docs/reference/final-report-template.md | overview | vivo | conservar | docs/reference/final-report-template.md | Referencia t?cnica o de proceso activa | docs/reference/final-report-template.md |
 | docs/reference/quick-search-weather-policy.md | product | vivo | conservar | docs/reference/quick-search-weather-policy.md | Pol?tica funcional activa de quick search | docs/reference/quick-search-weather-policy.md |
+| docs/reference/ui-visible-language-guide.md | reference | vivo | conservar | docs/reference/ui-visible-language-guide.md | Guia canonica para humanizar lenguaje visible sin tocar labels de producto, contratos ni nombres internos | docs/reference/ui-visible-language-guide.md |
 | docs/reports/docs-sanitize-audit.md | historical | hist?rico | conservar | docs/reports/docs-sanitize-audit.md | Reporte de auditor?a y saneamiento documental | docs/reports/docs-sanitize-audit.md |
 | docs/runbooks/runbook-activation-profiles.md | runbook | vivo | conservar | docs/runbooks/runbook-activation-profiles.md | Perfiles canónicos de activación por entorno (local_demo, local_real, staging_safe, prod_gradual) con matriz de flags y blindaje anti-mock | docs/runbooks/runbook-activation-profiles.md |
 | docs/runbooks/runbook-canary-rollback.md | runbook | vivo | conservar | docs/runbooks/runbook-canary-rollback.md | Runbook operativo activo | docs/runbooks/runbook-canary-rollback.md |

@@ -47,10 +47,10 @@ Related: docs/specs/README.md, docs/INDICE_UNICO.md
 - Contacto legal / soporte privacidad
 
 ## Microcopys de ejemplo
-- “Si el proveedor no responde, mostramos el ultimo dato confirmado con su marca de frescura.”
+- “Si el proveedor no responde, mostramos el ultimo dato confirmado con la hora de su ultima comprobacion.”
 - “Las recomendaciones son orientativas, no asesoramiento financiero.”
 - “Puedes solicitar eliminacion desde tu cuenta o soporte.”
-- “Modo degradado: reducimos consultas para mantener estabilidad.”
+- “Resultados parciales: reducimos consultas para mantener estabilidad.”
 - “Dato observado, estimado y prediccion se muestran diferenciados.”
 
 ## Derechos (labels)
@@ -64,7 +64,7 @@ Related: docs/specs/README.md, docs/INDICE_UNICO.md
 ## FAQ (titulos)
 - ¿Viru garantiza el precio que veo?
 - ¿Por que veo precios desactualizados?
-- ¿Que significa “modo degradado”?
+- ¿Que significa que vea resultados parciales?
 - ¿Puedo borrar mi cuenta?
 - ¿Viru comparte mis credenciales?
 - ¿Las alertas son automaticas?

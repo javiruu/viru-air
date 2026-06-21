@@ -8,12 +8,12 @@ Related: docs/specs/README.md, docs/INDICE_UNICO.md
 # Resumen ejecutivo (TL;DR)
 
 - Viru es informativo: no garantiza precios finales ni disponibilidad.
-- Las fuentes externas pueden fallar o cambiar; mostramos el ultimo dato confirmado con marca de frescura.
+- Las fuentes externas pueden fallar o cambiar; mostramos el ultimo dato confirmado con su ultima comprobacion.
 - Guardamos solo datos necesarios para operar tu watchlist, alertas y preferencias.
 - Las alertas y recomendaciones son orientativas, no asesoramiento financiero.
 - Puedes solicitar acceso, portabilidad o eliminacion desde tu cuenta o soporte.
 - No compartimos credenciales ni tokens con terceros.
-- En modo degradado reducimos consultas y avisamos de frescura.
+- Si solo hay resultados parciales reducimos consultas y avisamos cuando se comprobo el ultimo dato.
 - Las politicas por pais se versionan y revisan editorialmente.
 
 ---
@@ -30,7 +30,7 @@ Viru muestra datos de precios observados y sus cambios en el tiempo. El precio f
 - promociones activas,
 - condiciones del proveedor en el momento de compra.
 
-Ejemplo: si el proveedor no responde, veras el ultimo dato confirmado y su marca de frescura.  
+Ejemplo: si el proveedor no responde, veras el ultimo dato confirmado y la hora de su ultima comprobacion.  
 Nunca inventamos valores ni “rellenamos” silencios con supuestos sin aviso.
 
 ---
@@ -47,15 +47,15 @@ Viru no gestiona:
 - tickets,
 - facturacion.
 
-En modo degradado reducimos llamadas a proveedores para mantener estabilidad y seguridad.  
-Veras indicadores de frescura y tiempos de actualizacion ampliados.
+Cuando solo hay resultados parciales reducimos llamadas a proveedores para mantener estabilidad y seguridad.  
+Veras cuando se comprobo el ultimo dato y tiempos de actualizacion ampliados.
 
 ---
 
 ## C) Datos de proveedor y calidad del dato
 
 ### En simple
-Los datos vienen de fuentes externas y pueden variar. Indicamos el tipo de dato y su frescura.
+Los datos vienen de fuentes externas y pueden variar. Indicamos el tipo de dato y cuando se comprobo por ultima vez.
 
 ### En detalle
 Usamos tres categorias:
@@ -229,10 +229,10 @@ Soporte general: soporte@viru.app
 No. El precio final se confirma en el proveedor.
 
 2) ¿Que pasa si el proveedor no responde?  
-Mostramos el ultimo dato confirmado con marca de frescura.
+Mostramos el ultimo dato confirmado con su ultima comprobacion.
 
-3) ¿Que significa “modo degradado”?  
-Reducimos consultas para mantener estabilidad y seguridad.
+3) ¿Que significa que vea resultados parciales?  
+Que el proveedor no respondio del todo. Mantenemos lo ya confirmado y avisamos en la interfaz.
 
 4) ¿Puedo borrar mi cuenta?  
 Si, desde tu cuenta o soporte.

@@ -105,7 +105,7 @@
       hotelsRadar: "Radar hotelero",
       alerts: "Alertas",
       opportunities: "Oportunidades",
-      productFeedback: "Feedback de producto",
+      productFeedback: "Enviar opinion",
       profile: "Perfil",
       security: "Seguridad",
       preferences: "Preferencias",
