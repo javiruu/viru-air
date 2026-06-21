@@ -32,7 +32,7 @@ export const PRODUCT_VOCAB = {
     legacy: "/preferences",
   },
   feedback: {
-    label: "Feedback de producto",
+    label: "Enviar opinion",
     route: "/soporte/feedback?type=idea",
     api: "/api/v1/support/feedback",
     entity: "SupportFeedback",

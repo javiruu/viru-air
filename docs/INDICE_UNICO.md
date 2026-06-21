@@ -30,6 +30,7 @@
 - [Frontend](engineering/frontend.md)
 - [UI System](ui/UI_SYSTEM_V1.md)
 - [UI Contract](ui/UI_CONTRACT_V1.md)
+- [Guia de lenguaje visible humanizado](reference/ui-visible-language-guide.md)
 - [Estética UI (dark + light)](ui/estetica.md)
 - [Specs activas](specs/README.md)
 
@@ -40,6 +41,7 @@
 - [Watchlist](product/watchlist.md)
 - [Puerta a puerta](product/door-to-door.md)
 - [Product language map](reference/product-language-map.md)
+- [Guia de lenguaje visible humanizado](reference/ui-visible-language-guide.md)
 - [Policies Page](product/policies-page.md)
 
 ### QA

@@ -1,7 +1,7 @@
 # Product Language Map (Fase 0)
 
 **Estado:** vivo  
-**Ultima revision:** 2026-05-11  
+**Ultima revision:** 2026-06-16  
 **Fuente de verdad:** si  
 **Area:** reference
 
@@ -31,3 +31,16 @@ Congelar el vocabulario visible de Viru Tracker y su traduccion operativa entre 
 ## Regla de uso
 
 Todo copy visible, navegacion y QA de rutas privadas debe usar este mapa como referencia base para evitar duplicidad conceptual.
+
+## Politica complementaria de lenguaje visible
+
+- Guia operativa: `docs/reference/ui-visible-language-guide.md`
+- Este mapa congela labels de producto, rutas y entidades.
+- La guia de lenguaje visible gobierna como hablar de estados, filtros, ayudas, mensajes y CTAs.
+
+## Labels de producto congelados
+
+- `Watchlist` se conserva como label visible de producto.
+- `Quick Search` se conserva como label visible de producto.
+- `Historico` sigue integrado dentro de `Watchlist`.
+- `Feedback de producto` sigue siendo el destino conceptual del modulo legacy, aunque el copy visible puede humanizarse a `Enviar opinion` segun contexto.

@@ -77,6 +77,24 @@ Todo componente debe mantener en **dark y light**:
 3. Repetir terminos del glosario.
 4. En errores, indicar siguiente accion cuando aplique.
 5. Tono cercano y humano, no infantil.
+6. Evitar jerga tecnica visible cuando exista una alternativa mas clara para usuario medio.
+7. Si el sistema esta parcial o desactualizado, explicar que pasa y que puede hacer la persona.
+
+## Politica de lenguaje visible
+- Guia canonica: `docs/reference/ui-visible-language-guide.md`.
+- Mantener lenguaje visible humano en estados, filtros, ayudas, pills, banners y CTAs.
+- Los nombres internos, enums, contratos API y logs pueden conservar terminologia tecnica.
+- Labels de producto congelados:
+  - `Watchlist` se conserva como nombre visible.
+  - `Quick Search` se conserva como nombre visible salvo decision explicita aparte.
+
+## Terminos a evitar en UI visible
+- `modo degradado` -> preferir `resultados parciales` o `ultimo dato confirmado`
+- `frescura` -> preferir `ultima comprobacion` o `comprobado hace`
+- `score` -> preferir `valoracion`, `mejor opcion` o copy explicativo
+- `heuristico` -> preferir `orden inteligente` o `criterio automatico`
+- `strict` -> preferir `modo estricto`
+- `workspace` -> preferir `panel`, `espacio de busqueda` o `espacio privado`
 
 ## Glosario UI (ES)
 - Terminos: Panel, Seguimiento, Busqueda rapida, Alerta, Historico, Comparativa, Preferencias, Ayuda, Vuelo, Terminal.

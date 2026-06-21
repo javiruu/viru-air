@@ -79,7 +79,7 @@
     stepTrends: "Observa tendencias",
     stepTrendsBody: "Histórico visual y comparativas.",
     stepAlerts: "Activa alertas",
-    stepAlertsBody: "Umbrales claros con estado de frescura.",
+    stepAlertsBody: "Umbrales claros con indicacion de cuando se comprobo el precio.",
     stepBuy: "Compra en Ryanair",
     stepBuyBody: "Deep-link directo con un click.",
     closeEyebrow: "Empieza hoy",

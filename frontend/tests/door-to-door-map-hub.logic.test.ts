@@ -19,7 +19,7 @@ function makeProvider(overrides: Partial<DoorToDoorProviderStatus>): DoorToDoorP
   };
 }
 
-function makeResponse(overrides: Partial<DoorToDoorResponse>): DoorToDoorResponse {
+function makeResponse(overrides: Partial<DoorToDoorResponse> = {}): DoorToDoorResponse {
   return {
     flight: {
       origin_airport: "AGP",
@@ -109,7 +109,7 @@ test("buildMapCapabilities only emits whyMissing reasons covered by ES and EN i1
       makeResponse(),
       [
         makeProvider({ name: "google_routes", enabled: true, status: "functional_maps", source_type: "maps", production_ready: true, supports_search: true }),
-        makeProvider({ name: "gtfs_transit", enabled: true, status: "functional", source_type: "open_data", production_ready: true, supports_search: true }),
+        makeProvider({ name: "gtfs_transit", enabled: true, status: "functional_open_data", source_type: "open_data", production_ready: true, supports_search: true }),
         makeProvider({ name: "google_places", enabled: true, status: "functional_maps", source_type: "maps", production_ready: true, supports_search: true }),
       ],
     ),
@@ -127,10 +127,14 @@ test("buildMapCapabilities only emits whyMissing reasons covered by ES and EN i1
             currency: "EUR",
             total_duration_minutes: 60,
             score: 50,
+            transfer_count: 0,
             confidence: "estimated",
             source_types: ["estimate"],
             sources: [],
             legs: [],
+            is_recommended: false,
+            is_extended: false,
+            completeness: "exploratory",
           },
         ],
       }),

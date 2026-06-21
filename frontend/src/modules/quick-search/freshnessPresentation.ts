@@ -69,8 +69,8 @@ export function getQuickSearchFreshnessPresentation({
     case "warm":
       return {
         status,
-        label: relative ? `Visto hace ${relative}. Revalida antes de decidir.` : "Revalida antes de decidir.",
-        shortLabel: relative ? `Visto ${relative}` : "Revalida antes de decidir",
+        label: relative ? `Comprobado hace ${relative}. Actualiza antes de decidir.` : "Actualiza antes de decidir.",
+        shortLabel: relative ? `Comprobado ${relative}` : "Actualiza antes de decidir",
         tone: "warn",
         observedAt,
         isStaleLike: false,
@@ -90,7 +90,7 @@ export function getQuickSearchFreshnessPresentation({
     case "negative_fresh":
       return {
         status,
-        label: "Sin resultados visto hace poco.",
+        label: "Sin resultados comprobados hace poco.",
         shortLabel: "Sin resultados reciente",
         tone: "neutral",
         observedAt,
@@ -130,7 +130,7 @@ export function getQuickSearchFreshnessPresentation({
     default:
       return {
         status: "unknown",
-        label: "Frescura no disponible",
+        label: "Ultima comprobacion no disponible",
         shortLabel: "Sin referencia reciente",
         tone: "neutral",
         observedAt,

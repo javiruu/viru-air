@@ -80,7 +80,7 @@ export const dashboardEs = {
   },
   ftue: {
     title: "Primeros pasos",
-    body: "Aqui ves un resumen de actividad y accesos rapidos del workspace.",
+    body: "Aqui ves tu resumen de actividad y los accesos rapidos del panel.",
     confirm: "Entendido",
   },
   suggestions: {

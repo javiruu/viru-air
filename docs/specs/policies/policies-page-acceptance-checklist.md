@@ -18,14 +18,14 @@ Related: docs/specs/README.md, docs/INDICE_UNICO.md
 - [ ] CTA final con 3 acciones
 - [ ] Contenido menciona: herramienta informativa sin garantia
 - [ ] Menciona fuentes externas pueden fallar
-- [ ] Menciona ultimo dato confirmado con marca de frescura
+- [ ] Menciona ultimo dato confirmado con hora o marca de ultima comprobacion
 - [ ] Menciona alertas no son asesoramiento financiero
 - [ ] Menciona no compartir credenciales/tokens
 - [ ] Menciona derecho a eliminar datos desde cuenta/soporte
 - [ ] Menciona politica de versiones y revision por pais
 - [ ] Menciona diferencia entre observado, estimado, prediccion
 - [ ] Menciona eventos registrados para seguridad/calidad
-- [ ] Menciona modo degradado del sistema
+- [ ] Menciona resultados parciales o falta de respuesta del proveedor
 
 ## UX / UI
 - [ ] Layout de lectura con ancho de linea comodo
