@@ -8,6 +8,8 @@ $runBackground = -not $Foreground
 $backendDir = Join-Path $root "backend"
 $backendPython = Join-Path $root "backend\.venv\Scripts\python.exe"
 $backendAlembicIni = Join-Path $root "backend\alembic.ini"
+$backendDbPath = Join-Path $backendDir "viru.db"
+$backendDbUrl = "sqlite:///$($backendDbPath.Replace('\', '/'))"
 
 function Invoke-PythonCommand {
   param(
@@ -154,6 +156,43 @@ function Read-YesNoPrompt {
   }
 }
 
+function Stop-ProcessTree {
+  param(
+    [Parameter(Mandatory)]
+    [int]$ProcessId
+  )
+
+  $children = Get-CimInstance Win32_Process -Filter "ParentProcessId = $ProcessId" -ErrorAction SilentlyContinue
+  foreach ($child in @($children)) {
+    Stop-ProcessTree -ProcessId $child.ProcessId
+  }
+
+  try {
+    Stop-Process -Id $ProcessId -Force -ErrorAction SilentlyContinue
+  } catch {}
+}
+
+function Wait-HttpOk {
+  param(
+    [Parameter(Mandatory)]
+    [string]$Url,
+    [int]$Attempts = 20,
+    [int]$DelaySeconds = 1
+  )
+
+  for ($i = 0; $i -lt $Attempts; $i++) {
+    try {
+      $response = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 5
+      if ($response.StatusCode -eq 200) {
+        return $response
+      }
+    } catch {}
+    Start-Sleep -Seconds $DelaySeconds
+  }
+
+  throw "Healthcheck fallido para $Url"
+}
+
 function Ensure-BackendVirtualEnv {
   if (Test-Path $backendPython) {
     return
@@ -286,6 +325,7 @@ APP_ENV=local
 
 Set-ProcessEnvFromDotEnv -Path $backendEnvFile
 $env:JWT_SECRET = $jwtSecret
+$env:DB_URL = $backendDbUrl
 
 Write-Host "Validando cadena de migraciones Alembic..."
 $auditRaw = (& $backendPython -m app.infrastructure.db.alembic_audit --json) -join "`n"
@@ -359,7 +399,9 @@ $logsDir = Join-Path $root "logs"
 New-Item -ItemType Directory -Force -Path $logsDir | Out-Null
 $ts = Get-Date -Format "yyyyMMdd-HHmmss-fff"
 $backendLog = Join-Path $logsDir "backend-$ts.log"
+$backendErrLog = Join-Path $logsDir "backend-$ts.err.log"
 $frontendLog = Join-Path $logsDir "frontend-$ts.log"
+$frontendErrLog = Join-Path $logsDir "frontend-$ts.err.log"
 $frontendBuildDir = Join-Path $root "frontend\.next"
 
 # Mata procesos previos en 3000/8000 para evitar conflictos
@@ -367,7 +409,7 @@ $ports = @(3000, 8000)
 foreach ($p in $ports) {
   $conns = Get-NetTCPConnection -LocalPort $p -State Listen -ErrorAction SilentlyContinue
   foreach ($c in $conns) {
-    try { Stop-Process -Id $c.OwningProcess -Force -ErrorAction SilentlyContinue } catch {}
+    Stop-ProcessTree -ProcessId $c.OwningProcess
   }
 }
 
@@ -377,14 +419,24 @@ if (Test-Path $frontendBuildDir) {
 }
 
 if ($runBackground) {
-  # Backend (modo background con logs)
-  cmd /c "cd /d `"$root\backend`" && start /B `"`" `"$backendPython`" -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload > `"$backendLog`" 2>&1" | Out-Null
+  $env:LOG_FILE = $backendLog
+  Start-Process -FilePath $backendPython `
+    -ArgumentList @("-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000", "--reload") `
+    -WorkingDirectory $backendDir `
+    -RedirectStandardOutput $backendLog `
+    -RedirectStandardError $backendErrLog `
+    -WindowStyle Hidden | Out-Null
 
-  # Frontend (modo background con logs)
-  cmd /c "cd /d `"$root\frontend`" && set NEXT_PUBLIC_API_URL=/api/v1 && start /B npm run dev > `"$frontendLog`" 2>&1" | Out-Null
+  $env:NEXT_PUBLIC_API_URL = "/api/v1"
+  Start-Process -FilePath "cmd.exe" `
+    -ArgumentList @("/c", "npm run dev") `
+    -WorkingDirectory (Join-Path $root "frontend") `
+    -RedirectStandardOutput $frontendLog `
+    -RedirectStandardError $frontendErrLog `
+    -WindowStyle Hidden | Out-Null
 } else {
   # Backend (modo foreground en nueva ventana)
-  $backendCmd = "title Viru Backend && cd /d `"$root\backend`" && `"$backendPython`" -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload"
+  $backendCmd = "title Viru Backend && cd /d `"$root\backend`" && set LOG_FILE=$backendLog && set DB_URL=$backendDbUrl && `"$backendPython`" -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload"
   Start-Process -FilePath "cmd.exe" -ArgumentList "/k", $backendCmd | Out-Null
 
   # Frontend (modo foreground en nueva ventana)
@@ -392,14 +444,17 @@ if ($runBackground) {
   Start-Process -FilePath "cmd.exe" -ArgumentList "/k", $frontendCmd | Out-Null
 }
 
-Start-Sleep -Seconds 8
-
 try {
-  $api = Invoke-WebRequest -Uri "http://127.0.0.1:8000/health" -UseBasicParsing -TimeoutSec 10
-  $web = Invoke-WebRequest -Uri "http://127.0.0.1:3000" -UseBasicParsing -TimeoutSec 10
+  $api = Wait-HttpOk -Url "http://127.0.0.1:8000/health" -Attempts 25 -DelaySeconds 1
+  $web = Wait-HttpOk -Url "http://127.0.0.1:3000" -Attempts 25 -DelaySeconds 1
   Write-Host "Backend:" $api.StatusCode
   Write-Host "Frontend:" $web.StatusCode
+  Write-Host "DB_URL:" $backendDbUrl
+  Write-Host "Backend log:" $backendLog
+  Write-Host "Backend err log:" $backendErrLog
+  Write-Host "Frontend log:" $frontendLog
+  Write-Host "Frontend err log:" $frontendErrLog
   Write-Host "Abre: http://localhost:3000"
 } catch {
-  Write-Host "Servicios arrancados, pero aun calentando. Abre: http://localhost:3000 en 10-20s"
+  throw "Arranque incompleto. Revisa $backendLog, $backendErrLog, $frontendLog y $frontendErrLog. Detalle: $($_.Exception.Message)"
 }

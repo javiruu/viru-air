@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import time
+import traceback
 from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, HTTPException, Request
@@ -48,6 +49,7 @@ if run_seed_users:
     ensure_seed_users()
 
 logger = logging.getLogger("app.access")
+app_logger = logging.getLogger("app.main")
 
 
 def _sanitize_request_body(body):
@@ -77,6 +79,21 @@ async def _safe_request_body(request: Request):
     except Exception:
         return body.decode("utf-8", errors="replace")[:2000]
     return _sanitize_request_body(parsed)
+
+
+def _scope_headers(scope) -> dict[str, str]:
+    headers: dict[str, str] = {}
+    for raw_key, raw_value in scope.get("headers", []):
+        try:
+            key = raw_key.decode("latin-1").lower()
+        except Exception:
+            continue
+        try:
+            value = raw_value.decode("latin-1")
+        except Exception:
+            value = "<unparseable>"
+        headers[key] = value
+    return headers
 
 
 def _parse_cors_origins() -> list[str]:
@@ -196,24 +213,27 @@ class AccessLogMiddleware:
         try:
             await self.app(scope, receive, send_wrapper)
         finally:
-            elapsed_ms = int((time.perf_counter() - start) * 1000)
-            headers = {k.decode(): v.decode() for k, v in scope.get("headers", [])}
-            log_payload = {
-                "event": "http",
-                "correlation_id": get_correlation_id() or headers.get("x-correlation-id") or "-",
-                "method": scope.get("method"),
-                "path": scope.get("path"),
-                "status": status_code or 500,
-                "elapsed_ms": elapsed_ms,
-                "client": scope.get("client")[0] if scope.get("client") else None,
-                "origin": headers.get("origin"),
-                "referer": headers.get("referer"),
-                "user_agent": headers.get("user-agent"),
-                "content_type": headers.get("content-type"),
-                "ac_request_method": headers.get("access-control-request-method"),
-                "ac_request_headers": headers.get("access-control-request-headers"),
-            }
-            logger.info(json.dumps(log_payload, ensure_ascii=False))
+            try:
+                elapsed_ms = int((time.perf_counter() - start) * 1000)
+                headers = _scope_headers(scope)
+                log_payload = {
+                    "event": "http",
+                    "correlation_id": get_correlation_id() or headers.get("x-correlation-id") or "-",
+                    "method": scope.get("method"),
+                    "path": scope.get("path"),
+                    "status": status_code or 500,
+                    "elapsed_ms": elapsed_ms,
+                    "client": scope.get("client")[0] if scope.get("client") else None,
+                    "origin": headers.get("origin"),
+                    "referer": headers.get("referer"),
+                    "user_agent": headers.get("user-agent"),
+                    "content_type": headers.get("content-type"),
+                    "ac_request_method": headers.get("access-control-request-method"),
+                    "ac_request_headers": headers.get("access-control-request-headers"),
+                }
+                logger.info(json.dumps(log_payload, ensure_ascii=False))
+            except Exception:
+                app_logger.exception("access_log_emit_failed")
 _env_regex = os.getenv("CORS_ALLOW_ORIGIN_REGEX")
 if _env_regex is None:
     _allow_origin_regex: str | None = (
@@ -318,6 +338,38 @@ async def api_error_handler(request: Request, exc: ApiError):
         retry_after_sec=exc.retry_after_sec,
     )
     return JSONResponse(status_code=exc.status, content=envelope)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    safe_body = await _safe_request_body(request)
+    app_logger.error(
+        json.dumps(
+            {
+                "event": "unhandled_exception",
+                "correlation_id": get_correlation_id() or getattr(request.state, "correlation_id", "") or "-",
+                "path": request.url.path,
+                "method": request.method,
+                "query": dict(request.query_params),
+                "body": safe_body,
+                "exception_type": type(exc).__name__,
+                "error": str(exc)[:1000],
+                "traceback": traceback.format_exc(limit=25),
+            },
+            ensure_ascii=False,
+        )
+    )
+    envelope = error_envelope(
+        status=500,
+        code="internal_server_error",
+        message="Internal server error.",
+        details=[],
+    )
+    response = JSONResponse(status_code=500, content=envelope)
+    correlation_id = get_correlation_id() or getattr(request.state, "correlation_id", "")
+    if correlation_id:
+        response.headers["x-correlation-id"] = correlation_id
+    return response
 
 
 @app.middleware("http")
