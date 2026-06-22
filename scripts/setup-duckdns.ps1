@@ -6,6 +6,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "ops-common.ps1")
 
 function Normalize-DuckDomain {
   param([string]$RawDomain)
@@ -17,34 +18,8 @@ function Normalize-DuckDomain {
   return $trimmed
 }
 
-function Read-DotEnv {
-  param([string]$Path)
-
-  $values = @{}
-  if (-not (Test-Path $Path)) {
-    return $values
-  }
-
-  foreach ($line in Get-Content -Path $Path) {
-    $trimmed = $line.Trim()
-    if (-not $trimmed -or $trimmed.StartsWith("#")) {
-      continue
-    }
-
-    $parts = $trimmed -split "=", 2
-    if ($parts.Count -eq 2) {
-      $values[$parts[0].Trim()] = $parts[1].Trim()
-    }
-  }
-
-  return $values
-}
-
-$repoRoot = Split-Path -Parent $PSScriptRoot
-$logsDir = Join-Path $repoRoot "logs"
-if (-not (Test-Path $logsDir)) {
-  New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
-}
+$repoRoot = Get-RepoRoot
+$logsDir = Get-LogsDir
 
 $existingConfig = Read-DotEnv -Path $ConfigPath
 $normalizedDomain = Normalize-DuckDomain -RawDomain $Domain
@@ -95,10 +70,38 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "Tarea programada: $taskName (cada $UpdateEveryMinutes minutos)"
 
-& $updateScript -ConfigPath $ConfigPath
+$updateSucceeded = $true
+try {
+  & $updateScript -ConfigPath $ConfigPath
+  if ($LASTEXITCODE -ne 0) {
+    $updateSucceeded = $false
+  }
+} catch {
+  $updateSucceeded = $false
+  Write-Warn ("El update inicial DuckDNS fallo: " + $_.Exception.Message)
+}
+
+Write-Host ""
+Write-Host "Chequeo de publicacion estable:"
+$preflightScript = Join-Path $PSScriptRoot "public-domain-preflight.ps1"
+& $preflightScript
+$preflightOk = ($LASTEXITCODE -eq 0)
+
+if ($updateSucceeded -and $preflightOk) {
+  Write-Host ""
+  Write-Host "Preflight OK. Intentando arrancar Caddy..."
+  $caddyScript = Join-Path $PSScriptRoot "caddy-start.ps1"
+  & $caddyScript
+  if ($LASTEXITCODE -ne 0) {
+    Write-Warn "DuckDNS quedo configurado, pero Caddy no pudo arrancar automaticamente."
+  }
+} else {
+  Write-Host ""
+  Write-Warn "No arranque Caddy automaticamente porque el update DuckDNS o el preflight no quedaron listos."
+}
 
 Write-Host ""
 Write-Host "Setup DuckDNS completado."
-Write-Host "1. Ajusta DOMAIN=$fqdn en tus envs de despliegue."
-Write-Host "2. Usa Caddy para el dominio estable."
+Write-Host "1. Ajusta DOMAIN=$fqdn en infra/.env si aun no coincide."
+Write-Host "2. Usa CADDY STATUS / START desde el panel para la publicacion estable."
 Write-Host "3. Usa PUBLICAR RAPIDO solo para URLs temporales."

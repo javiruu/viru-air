@@ -3,29 +3,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-
-function Read-DotEnv {
-  param([string]$Path)
-
-  if (-not (Test-Path $Path)) {
-    throw "Config no encontrada: $Path. Ejecuta scripts/setup-duckdns.ps1 primero."
-  }
-
-  $values = @{}
-  foreach ($line in Get-Content -Path $Path) {
-    $trimmed = $line.Trim()
-    if (-not $trimmed -or $trimmed.StartsWith("#")) {
-      continue
-    }
-
-    $parts = $trimmed -split "=", 2
-    if ($parts.Count -eq 2) {
-      $values[$parts[0].Trim()] = $parts[1].Trim()
-    }
-  }
-
-  return $values
-}
+. (Join-Path $PSScriptRoot "ops-common.ps1")
 
 $config = Read-DotEnv -Path $ConfigPath
 $domain = $config["DUCKDNS_DOMAIN"]
@@ -42,9 +20,9 @@ if (-not $updateUrl) {
 }
 
 if (-not $logPath) {
-  $logPath = Join-Path (Split-Path -Parent $PSScriptRoot) "logs\duckdns-update.log"
+  $logPath = Join-Path (Get-LogsDir) "duckdns-update.log"
 } elseif (-not [System.IO.Path]::IsPathRooted($logPath)) {
-  $logPath = Join-Path (Split-Path -Parent $PSScriptRoot) $logPath
+  $logPath = Join-Path (Get-RepoRoot) $logPath
 }
 
 $logDir = Split-Path -Parent $logPath
@@ -52,14 +30,36 @@ if (-not (Test-Path $logDir)) {
   New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 }
 
-$response = Invoke-WebRequest -Uri $updateUrl -UseBasicParsing
-$result = $response.Content.Trim()
 $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-$logLine = "$timestamp`t$result`t$domain"
-Add-Content -Path $logPath -Value $logLine -Encoding ASCII
 
-if ($result -notmatch "^(OK|KO)$") {
-  throw "Respuesta inesperada de DuckDNS: $result"
+try {
+  $response = Invoke-WebRequest -Uri $updateUrl -UseBasicParsing -TimeoutSec 20
+  $content = $response.Content
+  if ($content -is [byte[]]) {
+    $content = [System.Text.Encoding]::UTF8.GetString($content)
+  }
+  $result = [string]$content
+  $result = $result.Trim()
+} catch {
+  $result = "ERROR"
+  $errorMessage = $_.Exception.Message
+  Add-Content -Path $logPath -Value "$timestamp`t$result`t$errorMessage" -Encoding ASCII
+  Write-Fail ("DuckDNS update: ERROR - $errorMessage")
+  exit 1
 }
 
-Write-Host "DuckDNS update: $result"
+if ($result -notmatch "^(OK|KO)$") {
+  Add-Content -Path $logPath -Value "$timestamp`tUNEXPECTED`t$result" -Encoding ASCII
+  Write-Fail ("DuckDNS update: respuesta inesperada - $result")
+  exit 1
+}
+
+Add-Content -Path $logPath -Value "$timestamp`t$result`t$domain" -Encoding ASCII
+
+if ($result -eq "OK") {
+  Write-Ok "DuckDNS update: OK"
+  exit 0
+}
+
+Write-Fail "DuckDNS update: KO"
+exit 1

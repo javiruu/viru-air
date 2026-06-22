@@ -1,7 +1,7 @@
 # Runbook: DuckDNS + publicacion temporal
 
 **Estado:** vivo  
-**Ultima revision:** 2026-06-04  
+**Ultima revision:** 2026-06-22  
 **Fuente de verdad:** si  
 **Area:** runbooks
 
@@ -40,6 +40,8 @@ Ese setup:
 2. Registra la tarea programada `ViruTracker-DuckDNS`.
 3. Fuerza una actualizacion inicial contra DuckDNS.
 4. Deja el log en `logs/duckdns-update.log`.
+5. Lanza un preflight de publicacion estable.
+6. Intenta arrancar Caddy automaticamente solo si `infra/.env`, `DOMAIN`, DNS, puertos `80/443` y compose estan listos.
 
 Puedes revisar el estado en cualquier momento:
 
@@ -69,6 +71,20 @@ cd infra
 DOMAIN=virutracker.duckdns.org docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
+Validar prerequisitos antes de levantar Caddy:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\public-domain-preflight.ps1
+```
+
+Gestionar Caddy desde scripts:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\caddy-start.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\caddy-status.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\caddy-stop.ps1
+```
+
 ### 4. Verificar
 
 ```bash
@@ -85,6 +101,15 @@ DOMAIN=api.virutracker.duckdns.org
 CORS_ALLOW_ORIGINS=https://virutracker.duckdns.org
 ```
 
+### 5. Activar o pausar DuckDNS
+
+Mantener la config local pero pausar o reactivar la tarea programada:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\duckdns-disable.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\duckdns-enable.ps1
+```
+
 ## Modo B: Publico temporal
 
 Ideal para compartir una instancia local desde laptop sin abrir puertos ni exigir un dominio estable.
@@ -97,7 +122,11 @@ VIRU_PANEL.bat
   Opcion 4: PUBLICO TEMPORAL START
   Opcion 5: PUBLICO TEMPORAL STATUS
   Opcion 6: PUBLICO TEMPORAL STOP
-  Opcion E: PUBLICAR RAPIDO
+  Opcion G: PREFLIGHT PUBLICACION ESTABLE
+  Opcion H: CADDY START
+  Opcion I: CADDY STATUS
+  Opcion J: CADDY STOP
+  Opcion K: PUBLICAR RAPIDO
 ```
 
 ### Flujo manual
@@ -117,8 +146,10 @@ El script usa `localhost.run` y devuelve una URL efimera. No sustituye el domini
 | Problema | Solucion |
 |---|---|
 | DuckDNS responde `KO` | Verifica `DUCKDNS_DOMAIN` y `DUCKDNS_TOKEN` en `infra/duckdns.local.env` |
+| DuckDNS esta pausado | Reactiva la tarea con `scripts/duckdns-enable.ps1` o la opcion `C` del panel |
 | La tarea no aparece | Reejecuta `scripts/setup-duckdns.ps1` con una PowerShell con permisos normales del usuario |
-| El dominio no resuelve | Espera unos minutos y revisa `scripts/duckdns-status.ps1` |
+| El dominio no resuelve | Espera unos minutos y revisa `scripts/duckdns-status.ps1` o `scripts/public-domain-preflight.ps1` |
+| Caddy no arranca | Revisa `infra/.env`, `DOMAIN`, `docker compose`, y ejecuta `scripts/public-domain-preflight.ps1` |
 | Caddy no emite TLS | Asegura que `80/443` estan abiertos y que el registro A ya apunta a tu IP publica |
 | No sale URL temporal | Comprueba que `ssh` este disponible y revisa `logs/public_temp_tunnel*.log` |
 | La URL temporal responde mal | Verifica antes que frontend/backend locales esten vivos en `3000/8000` |
