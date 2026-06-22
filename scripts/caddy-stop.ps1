@@ -3,25 +3,30 @@
 Write-Section "CADDY STOP"
 $status = Get-CaddyRuntimeStatus
 
-if (-not $status.DockerAvailable) {
-  Write-Fail "docker compose no esta disponible."
+if (-not $status.Installed) {
+  Write-Fail "caddy no esta instalado en esta maquina."
   exit 1
 }
 
-if (-not $status.Exists) {
-  Write-Info "Caddy aun no estaba creado."
+if (-not $status.HasPidFile) {
+  Write-Info "Caddy aun no estaba arrancado desde este panel."
   exit 0
 }
 
 if (-not $status.Running) {
-  Write-Info ("Caddy ya estaba parado (estado $($status.State)).")
+  $paths = Get-CaddyManagedPaths
+  if (Test-Path $paths.PidFile) {
+    Remove-Item $paths.PidFile -Force -ErrorAction SilentlyContinue
+  }
+  Write-Info "Caddy ya estaba parado; limpie el PID guardado."
   exit 0
 }
 
 try {
-  $result = Invoke-DockerCompose -Arguments ((Get-DockerComposeBaseArgs) + @("stop", "caddy"))
-  foreach ($line in $result.Output) {
-    Write-Info ($line.ToString())
+  $paths = Get-CaddyManagedPaths
+  Stop-Process -Id $status.ProcessId -Force -ErrorAction Stop
+  if (Test-Path $paths.PidFile) {
+    Remove-Item $paths.PidFile -Force -ErrorAction SilentlyContinue
   }
   Write-Ok "Caddy detenido."
   exit 0

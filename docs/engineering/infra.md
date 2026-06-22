@@ -12,7 +12,7 @@ La documentación viva confirma una capa `infra/` con soporte para despliegue, w
 ## Contenido principal
 
 - La raíz del repo y `docs/overview/current-state.md` mencionan:
-  - Docker local
+  - Caddy nativo + DuckDNS para publicación estable en Windows
   - CI/CD base
   - manifiestos Kubernetes
 - Runbooks operativos detectados:

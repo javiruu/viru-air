@@ -8,13 +8,16 @@ if ($duck.ContainsKey("DUCKDNS_FQDN")) {
   Write-Info ("infra/.env sincronizado: " + $envInfo.Path)
 }
 
-if (-not (Ensure-DockerComposeReady)) {
-  Write-Fail "No pude dejar Docker Compose operativo automaticamente en esta maquina."
+$caddyCli = $null
+try {
+  $caddyCli = Ensure-CaddyInstalled
+} catch {
+  Write-Fail $_.Exception.Message
   exit 1
 }
 
 $caddyStatus = Get-CaddyRuntimeStatus
-if ($caddyStatus.Running) {
+if ($caddyStatus.Healthy) {
   Write-Ok "Caddy ya esta corriendo."
   if ($caddyStatus.PublishedPorts.Count -gt 0) {
     Write-Info ("Puertos publicados: $($caddyStatus.PublishedPorts -join ', ')")
@@ -30,17 +33,31 @@ if (-not $preflight.Ready) {
 }
 
 try {
-  $result = Invoke-DockerCompose -Arguments ((Get-DockerComposeBaseArgs) + @("up", "-d", "caddy"))
-  foreach ($line in $result.Output) {
-    Write-Info ($line.ToString())
-  }
+  $paths = Get-CaddyManagedPaths
+  if (Test-Path $paths.OutLog) { Remove-Item $paths.OutLog -Force -ErrorAction SilentlyContinue }
+  if (Test-Path $paths.ErrLog) { Remove-Item $paths.ErrLog -Force -ErrorAction SilentlyContinue }
+  if (Test-Path $paths.PidFile) { Remove-Item $paths.PidFile -Force -ErrorAction SilentlyContinue }
+  Unblock-File -Path $caddyCli -ErrorAction SilentlyContinue
+
+  $domain = (Read-DotEnv -Path (Get-InfraEnvPath))["DOMAIN"]
+  $configPath = Join-Path (Get-InfraDir) "Caddyfile"
+  $command = "`$env:DOMAIN='$domain'; & '$caddyCli' run --config '$configPath' --adapter caddyfile"
+  $proc = Start-Process -FilePath "powershell.exe" `
+    -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", $command) `
+    -RedirectStandardOutput $paths.OutLog `
+    -RedirectStandardError $paths.ErrLog `
+    -WindowStyle Hidden `
+    -PassThru
+
+  Set-Content -Path $paths.PidFile -Value $proc.Id -Encoding ASCII
+  Start-Sleep -Seconds 4
 } catch {
   Write-Fail $_.Exception.Message
   exit 1
 }
 
 $postStatus = Get-CaddyRuntimeStatus
-if ($postStatus.Running) {
+if ($postStatus.Healthy) {
   Write-Ok "Caddy arrancado correctamente."
   if ($postStatus.PublishedPorts.Count -gt 0) {
     Write-Info ("Puertos publicados: $($postStatus.PublishedPorts -join ', ')")
@@ -48,5 +65,5 @@ if ($postStatus.Running) {
   exit 0
 }
 
-Write-Fail "Docker compose termino, pero Caddy no quedo corriendo."
+Write-Fail "Caddy no quedo corriendo correctamente. Revisa logs/caddy.err.log."
 exit 1

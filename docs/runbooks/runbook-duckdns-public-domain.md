@@ -11,12 +11,12 @@ La historia operativa oficial para exponer `viru-tracker` queda separada en dos 
 
 | Modo | Cuando usarlo | URL publica |
 |---|---|---|
-| `DuckDNS + Caddy` | dominio estable, VPS o servidor con puertos abiertos | `https://tu-subdominio.duckdns.org` |
+| `DuckDNS + Caddy nativo` | dominio estable en Windows con frontend/backend locales | `https://tu-subdominio.duckdns.org` |
 | `Publico temporal` | laptop, demos rapidas, IP dinamica o CGNAT | URL efimera |
 
 `DuckDNS` es el dominio canonico. El modo temporal no intenta fingir ese dominio: solo abre una URL efimera mientras el frontend corre en local.
 
-## Modo A: DuckDNS + Caddy
+## Modo A: DuckDNS + Caddy nativo
 
 Ideal para despliegue estable con IP publica y puertos `80/443` accesibles.
 
@@ -38,12 +38,11 @@ Ese setup:
 
 1. Escribe `infra/duckdns.local.env`.
 2. Genera o sincroniza `infra/.env` con `DOMAIN`, `NEXT_PUBLIC_API_URL`, `JWT_SECRET` y `APP_ENV`.
-2. Registra la tarea programada `ViruTracker-DuckDNS`.
-3. Fuerza una actualizacion inicial contra DuckDNS.
-4. Deja el log en `logs/duckdns-update.log`.
-5. Lanza un preflight de publicacion estable.
-6. Intenta preparar Docker Desktop / `docker compose` automaticamente.
-7. Intenta arrancar Caddy automaticamente solo si `infra/.env`, `DOMAIN`, DNS, puertos `80/443` y compose estan listos.
+3. Registra la tarea programada `ViruTracker-DuckDNS`.
+4. Fuerza una actualizacion inicial contra DuckDNS.
+5. Deja el log en `logs/duckdns-update.log`.
+6. Lanza un preflight de publicacion estable.
+7. Intenta instalar/arrancar `Caddy` nativo automaticamente solo si frontend, backend, `DOMAIN`, DNS y puertos `80/443` estan listos.
 
 Puedes revisar el estado en cualquier momento:
 
@@ -51,7 +50,7 @@ Puedes revisar el estado en cualquier momento:
 powershell -ExecutionPolicy Bypass -File .\scripts\duckdns-status.ps1
 ```
 
-### 3. Levantar Caddy con el dominio estable
+### 3. Levantar Caddy nativo con el dominio estable
 
 ```bash
 cp infra/.env.prod.example infra/.env
@@ -66,20 +65,13 @@ JWT_SECRET=<genera-un-valor-seguro>
 APP_ENV=production
 ```
 
-Desplegar:
-
-```bash
-cd infra
-DOMAIN=virutracker.duckdns.org docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-```
-
 Validar prerequisitos antes de levantar Caddy:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\public-domain-preflight.ps1
 ```
 
-Gestionar Caddy desde scripts:
+Iniciar `frontend` y `backend` localmente, luego gestionar Caddy desde scripts:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\caddy-start.ps1
@@ -151,10 +143,10 @@ El script usa `localhost.run` y devuelve una URL efimera. No sustituye el domini
 | DuckDNS esta pausado | Reactiva la tarea con `scripts/duckdns-enable.ps1` o la opcion `C` del panel |
 | La tarea no aparece | Reejecuta `scripts/setup-duckdns.ps1` con una PowerShell con permisos normales del usuario |
 | El dominio no resuelve | Espera unos minutos y revisa `scripts/duckdns-status.ps1` o `scripts/public-domain-preflight.ps1` |
-| Docker no estaba instalado | El setup intenta instalar Docker Desktop con `winget` automaticamente |
-| Docker Desktop muestra `Welcome` | Completa una sola vez el onboarding inicial; hasta entonces el daemon no arrancara y el preflight lo marcara como bloqueado |
-| Caddy no arranca | Revisa `infra/.env`, `DOMAIN`, `docker compose`, y ejecuta `scripts/public-domain-preflight.ps1` |
+| Caddy no estaba instalado | `scripts/caddy-start.ps1` intenta instalarlo con `winget` automaticamente |
+| Caddy no arranca | Revisa `infra/.env`, `DOMAIN`, frontend/backend locales y ejecuta `scripts/public-domain-preflight.ps1` |
 | Caddy no emite TLS | Asegura que `80/443` estan abiertos y que el registro A ya apunta a tu IP publica |
+| El dominio sigue sin responder desde fuera | Verifica firewall/router/NAT. En Windows, abrir `80/443` requiere permisos de administrador |
 | No sale URL temporal | Comprueba que `ssh` este disponible y revisa `logs/public_temp_tunnel*.log` |
 | La URL temporal responde mal | Verifica antes que frontend/backend locales esten vivos en `3000/8000` |
 
@@ -162,4 +154,4 @@ El script usa `localhost.run` y devuelve una URL efimera. No sustituye el domini
 
 - [Duck DNS install](https://www.duckdns.org/install.jsp)
 - [Duck DNS](https://www.duckdns.org/)
-- [Caddy Docker Docs](https://caddyserver.com/docs/running#docker)
+- [Caddy Docs](https://caddyserver.com/docs/)

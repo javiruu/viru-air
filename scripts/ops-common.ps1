@@ -120,7 +120,32 @@ function Ensure-InfraEnv {
     $values["CORS_ALLOW_ORIGIN_REGEX"] = $existing["CORS_ALLOW_ORIGIN_REGEX"]
   }
 
-  Write-DotEnvFile -Path $envPath -Values $values
+  $needsWrite = $true
+  if ($existedBefore) {
+    $expectedLines = @(
+      "# Auto-generated local production env for viru-tracker."
+      "DOMAIN=$($values['DOMAIN'])"
+      "NEXT_PUBLIC_API_URL=$($values['NEXT_PUBLIC_API_URL'])"
+      "JWT_SECRET=$($values['JWT_SECRET'])"
+      "APP_ENV=$($values['APP_ENV'])"
+    )
+    if ($values.ContainsKey("CORS_ALLOW_ORIGINS") -and $values["CORS_ALLOW_ORIGINS"]) {
+      $expectedLines += "CORS_ALLOW_ORIGINS=$($values['CORS_ALLOW_ORIGINS'])"
+    }
+    if ($values.ContainsKey("CORS_ALLOW_ORIGIN_REGEX") -and $values["CORS_ALLOW_ORIGIN_REGEX"]) {
+      $expectedLines += "CORS_ALLOW_ORIGIN_REGEX=$($values['CORS_ALLOW_ORIGIN_REGEX'])"
+    }
+    try {
+      $currentContent = Get-Content -Path $envPath -ErrorAction Stop
+      if ((@($currentContent) -join "`n") -eq ($expectedLines -join "`n")) {
+        $needsWrite = $false
+      }
+    } catch {}
+  }
+
+  if ($needsWrite) {
+    Write-DotEnvFile -Path $envPath -Values $values
+  }
   return [pscustomobject]@{
     Path = $envPath
     Domain = $values["DOMAIN"]
@@ -413,19 +438,19 @@ function Invoke-CommandWithTimeout {
     Remove-Item $stderrPath -Force -ErrorAction SilentlyContinue
   }
 }
-
-function Get-DockerCliCandidates {
+function Get-CaddyCliCandidates {
   $candidates = @()
-  if (Test-CommandAvailable -CommandName "docker") {
-    $cmd = Get-Command docker -ErrorAction SilentlyContinue
+  if (Test-CommandAvailable -CommandName "caddy") {
+    $cmd = Get-Command caddy -ErrorAction SilentlyContinue
     if ($cmd) {
       $candidates += $cmd.Source
     }
   }
 
   $defaultPaths = @(
-    "C:\Program Files\Docker\Docker\resources\bin\docker.exe",
-    "C:\Program Files\Docker\Docker\resources\docker-cli.exe"
+    "C:\Program Files\Caddy\caddy.exe",
+    "C:\Program Files\caddy\caddy.exe",
+    (Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Packages\CaddyServer.Caddy_Microsoft.Winget.Source_8wekyb3d8bbwe\caddy.exe")
   )
 
   foreach ($path in $defaultPaths) {
@@ -437,8 +462,8 @@ function Get-DockerCliCandidates {
   return $candidates
 }
 
-function Get-PreferredDockerCliPath {
-  $candidates = @(Get-DockerCliCandidates)
+function Get-PreferredCaddyCliPath {
+  $candidates = @(Get-CaddyCliCandidates)
   foreach ($candidate in $candidates) {
     $path = [string]$candidate
     if ($path) {
@@ -448,238 +473,70 @@ function Get-PreferredDockerCliPath {
   return $null
 }
 
-function Get-DockerDesktopExecutable {
-  $paths = @(
-    "C:\Program Files\Docker\Docker\Docker Desktop.exe",
-    "C:\Program Files\Docker\Docker Desktop.exe"
-  )
-
-  foreach ($path in $paths) {
-    if (Test-Path $path) {
-      return $path
-    }
-  }
-
-  return $null
-}
-
-function Test-DockerDesktopWelcomeOpen {
-  $windows = @(Get-Process -Name "Docker Desktop" -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle -like "Welcome*" })
-  return ($windows.Count -gt 0)
-}
-
-function Test-DockerCliAvailable {
-  $candidates = Get-DockerCliCandidates
-  foreach ($candidate in $candidates) {
-    $candidatePath = [string]$candidate
-    if (-not $candidatePath) {
-      continue
-    }
-    $result = Invoke-CommandWithTimeout -FilePath $candidatePath -Arguments @("compose", "version") -TimeoutSeconds 10
-    if (-not $result.TimedOut -and $result.ExitCode -eq 0) {
-      if (-not ($env:PATH -split ";" | Where-Object { $_ -eq (Split-Path -Parent $candidatePath) })) {
-        $env:PATH = (Split-Path -Parent $candidatePath) + ";" + $env:PATH
-      }
-      Set-Alias -Name docker -Value $candidatePath -Scope Script
-      return $true
-    }
-  }
-  return $false
-}
-
-function Test-DockerDaemonAvailable {
-  $dockerCli = Get-PreferredDockerCliPath
-  if (-not $dockerCli) {
-    return $false
-  }
-
-  $result = Invoke-CommandWithTimeout -FilePath $dockerCli -Arguments @("info") -TimeoutSeconds 10
-  if ($result.TimedOut) {
-    return $false
-  }
-  return ($result.ExitCode -eq 0)
-}
-
-function Test-DockerComposeAvailable {
-  return ((Test-DockerCliAvailable) -and (Test-DockerDaemonAvailable))
-}
-
-function Wait-ForDockerDaemon {
-  param([int]$TimeoutSeconds = 180)
-
-  $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
-  do {
-    if (Test-DockerComposeAvailable) {
-      return $true
-    }
-    if (Test-DockerDesktopWelcomeOpen) {
-      return $false
-    }
-    Start-Sleep -Seconds 3
-  } while ((Get-Date) -lt $deadline)
-
-  return $false
-}
-
-function Start-DockerDesktopIfInstalled {
-  $dockerDesktop = Get-DockerDesktopExecutable
-  if (-not $dockerDesktop) {
-    return $false
-  }
-
-  if (Test-DockerDesktopWelcomeOpen) {
-    return $false
-  }
-
-  $running = Get-Process -Name "Docker Desktop" -ErrorAction SilentlyContinue
-  if (-not $running) {
-    Start-Process -FilePath $dockerDesktop -WindowStyle Hidden | Out-Null
-  }
-
-  return (Wait-ForDockerDaemon -TimeoutSeconds 180)
-}
-
-function Install-DockerDesktopIfMissing {
-  if (Test-DockerComposeAvailable) {
-    return $true
-  }
-
-  if (Start-DockerDesktopIfInstalled) {
-    return $true
+function Ensure-CaddyInstalled {
+  $caddyCli = Get-PreferredCaddyCliPath
+  if ($caddyCli) {
+    return $caddyCli
   }
 
   if (-not (Test-CommandAvailable -CommandName "winget")) {
-    return $false
+    throw "caddy no esta instalado y winget no esta disponible para instalarlo automaticamente."
   }
 
-  $logPath = Join-Path (Get-LogsDir) "docker-desktop-install.log"
-  $stderrPath = Join-Path (Get-LogsDir) "docker-desktop-install.err.log"
-  if (Test-Path $logPath) {
-    Remove-Item $logPath -Force -ErrorAction SilentlyContinue
-  }
-  if (Test-Path $stderrPath) {
-    Remove-Item $stderrPath -Force -ErrorAction SilentlyContinue
-  }
+  Write-Info "Instalando Caddy automaticamente con winget..."
+  $result = Invoke-CommandWithTimeout -FilePath "winget.exe" -Arguments @(
+    "install",
+    "-e",
+    "--id", "CaddyServer.Caddy",
+    "--accept-package-agreements",
+    "--accept-source-agreements",
+    "--disable-interactivity"
+  ) -TimeoutSeconds 300
 
-  $proc = Start-Process -FilePath "winget.exe" `
-    -ArgumentList @(
-      "install",
-      "-e",
-      "--id", "Docker.DockerDesktop",
-      "--accept-package-agreements",
-      "--accept-source-agreements",
-      "--disable-interactivity"
-    ) `
-    -RedirectStandardOutput $logPath `
-    -RedirectStandardError $stderrPath `
-    -PassThru
-
-  if (-not $proc.WaitForExit(300000)) {
-    Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
-    Write-Warn "La instalacion automatica de Docker Desktop no termino en 5 minutos. Puede requerir permisos de administrador o una confirmacion de Windows."
-    return $false
+  $caddyCli = Get-PreferredCaddyCliPath
+  if ($caddyCli) {
+    return $caddyCli
   }
 
-  if ($proc.ExitCode -ne 0) {
-    $installOutput = @()
-    if (Test-Path $logPath) { $installOutput += Get-Content -Path $logPath -Tail 80 }
-    if (Test-Path $stderrPath) { $installOutput += Get-Content -Path $stderrPath -Tail 80 }
-    $installOutput = if ($installOutput.Count -gt 0) { ($installOutput | Out-String).Trim() } else { "sin log" }
-    Write-Warn ("No pude instalar Docker Desktop automaticamente con winget: " + $installOutput)
-    return $false
+  if ($result.TimedOut -or $result.ExitCode -ne 0) {
+    $detail = if ($result.Output.Count -gt 0) { ($result.Output | Out-String).Trim() } else { "sin detalle" }
+    throw "No pude instalar Caddy automaticamente: $detail"
   }
 
-  return (Start-DockerDesktopIfInstalled)
+  $caddyCli = Get-PreferredCaddyCliPath
+  if (-not $caddyCli) {
+    throw "winget termino, pero no encuentro caddy.exe en esta maquina."
+  }
+
+  return $caddyCli
 }
 
-function Ensure-DockerComposeReady {
-  if (Test-DockerComposeAvailable) {
-    return $true
-  }
-
-  if (Test-DockerDesktopWelcomeOpen) {
-    Write-Warn "Docker Desktop esta instalado pero sigue en la pantalla inicial 'Welcome'. Hasta completar ese onboarding, el daemon no arranca."
-    return $false
-  }
-
-  if (Start-DockerDesktopIfInstalled) {
-    return $true
-  }
-
-  $installed = Install-DockerDesktopIfMissing
-  if ($installed) {
-    return $true
-  }
-
-  if (Test-DockerDesktopWelcomeOpen) {
-    Write-Warn "Docker Desktop esta instalado pero sigue en la pantalla inicial 'Welcome'. Hasta completar ese onboarding, el daemon no arranca."
-  }
-
-  return $false
-}
-
-function Get-DockerComposeBaseArgs {
-  $infraDir = Get-InfraDir
-  $envPath = Get-InfraEnvPath
-  $args = @()
-  if (Test-Path $envPath) {
-    $args += @("--env-file", $envPath)
-  }
-  $args += @(
-    "-f", (Join-Path $infraDir "docker-compose.yml"),
-    "-f", (Join-Path $infraDir "docker-compose.prod.yml")
-  )
-  return $args
-}
-
-function Invoke-DockerCompose {
-  param(
-    [Parameter(Mandatory)][string[]]$Arguments,
-    [switch]$AllowFailure
-  )
-
-  $dockerCli = Get-PreferredDockerCliPath
-  if (-not $dockerCli) {
-    throw "No encuentro el binario docker en esta maquina."
-  }
-
-  $output = & $dockerCli compose @Arguments 2>&1
-  $exitCode = $LASTEXITCODE
-  if (-not $AllowFailure -and $exitCode -ne 0) {
-    throw "docker compose fallo (exit $exitCode): $($output -join [Environment]::NewLine)"
-  }
-
+function Get-CaddyManagedPaths {
+  $logsDir = Get-LogsDir
   return [pscustomobject]@{
-    Output = @($output)
-    ExitCode = $exitCode
+    PidFile = Join-Path $logsDir "caddy.pid"
+    OutLog = Join-Path $logsDir "caddy.out.log"
+    ErrLog = Join-Path $logsDir "caddy.err.log"
   }
 }
 
-function Get-ComposeServices {
-  if (-not (Test-DockerComposeAvailable)) {
-    return @()
-  }
-
-  $result = Invoke-DockerCompose -Arguments ((Get-DockerComposeBaseArgs) + @("config", "--services")) -AllowFailure
-  if ($result.ExitCode -ne 0) {
-    return @()
-  }
-
-  return @($result.Output | ForEach-Object { $_.ToString().Trim() } | Where-Object { $_ })
+function Get-CaddyListeningProcesses {
+  $portStates = @(Get-PortListeners -Ports @(80, 443) | Where-Object { $_.Listening })
+  return @($portStates | Where-Object { $_.ProcessName -eq "caddy" })
 }
 
 function Get-CaddyRuntimeStatus {
   $status = [ordered]@{
-    DockerAvailable = (Test-DockerComposeAvailable)
+    Installed = [bool](Get-PreferredCaddyCliPath)
     InfraEnvExists = (Test-Path (Get-InfraEnvPath))
     Domain = $null
-    ServiceDefined = $false
-    ContainerId = $null
-    Exists = $false
-    Running = $false
-    State = "unknown"
-    PublishedPorts = @()
     DomainMatchesDuckDns = $null
+    Running = $false
+    ProcessId = $null
+    ProcessName = $null
+    HasPidFile = $false
+    PublishedPorts = @()
+    Healthy = $false
   }
 
   $infraEnv = Read-DotEnv -Path (Get-InfraEnvPath) -AllowMissing
@@ -692,48 +549,34 @@ function Get-CaddyRuntimeStatus {
     $status.DomainMatchesDuckDns = ($duck["DUCKDNS_FQDN"] -eq $status.Domain)
   }
 
-  if (-not $status.DockerAvailable) {
-    return [pscustomobject]$status
+  $paths = Get-CaddyManagedPaths
+  $state = Get-ManagedProcessState -PidFile $paths.PidFile -Label "Caddy"
+  $status.HasPidFile = $state.HasPidFile
+  $status.Running = $state.IsRunning
+  $status.ProcessId = $state.ProcessId
+  $status.ProcessName = $state.ProcessName
+
+  $portStates = @(Get-PortListeners -Ports @(80, 443) | Where-Object { $_.Listening })
+  foreach ($portState in $portStates) {
+    if ($status.ProcessId -and $portState.ProcessId -eq $status.ProcessId) {
+      $status.PublishedPorts += $portState.Port
+    }
   }
 
-  $services = Get-ComposeServices
-  $status.ServiceDefined = ($services -contains "caddy")
-  if (-not $status.ServiceDefined) {
-    $status.State = "service_missing"
-    return [pscustomobject]$status
-  }
-
-  $idResult = Invoke-DockerCompose -Arguments ((Get-DockerComposeBaseArgs) + @("ps", "-a", "-q", "caddy")) -AllowFailure
-  $containerId = ($idResult.Output | ForEach-Object { $_.ToString().Trim() } | Where-Object { $_ } | Select-Object -First 1)
-  if (-not $containerId) {
-    $status.State = "not_created"
-    return [pscustomobject]$status
-  }
-
-  $status.ContainerId = $containerId
-  $status.Exists = $true
-
-  $dockerCli = Get-PreferredDockerCliPath
-  $stateOutput = (& $dockerCli inspect --format '{{.State.Status}}' $containerId 2>$null)
-  if ($LASTEXITCODE -eq 0) {
-    $stateText = ($stateOutput | Select-Object -First 1).ToString().Trim()
-    $status.State = $stateText
-    $status.Running = ($stateText -eq "running")
-  }
-
-  $portsOutput = (& $dockerCli inspect --format '{{json .NetworkSettings.Ports}}' $containerId 2>$null)
-  if ($LASTEXITCODE -eq 0 -and $portsOutput) {
-    try {
-      $portsJson = ($portsOutput | Select-Object -First 1).ToString()
-      $portsMap = $portsJson | ConvertFrom-Json
-      foreach ($prop in $portsMap.PSObject.Properties) {
-        if ($null -ne $prop.Value) {
-          $status.PublishedPorts += $prop.Name
-        }
+  if ($status.PublishedPorts.Count -eq 0) {
+    $caddyListeners = @(Get-CaddyListeningProcesses)
+    if ($caddyListeners.Count -gt 0) {
+      $status.Running = $true
+      $status.ProcessId = $caddyListeners[0].ProcessId
+      $status.ProcessName = $caddyListeners[0].ProcessName
+      $status.PublishedPorts = @($caddyListeners | Select-Object -ExpandProperty Port -Unique)
+      if (-not $status.HasPidFile) {
+        $status.HasPidFile = $true
       }
-    } catch {}
+    }
   }
 
+  $status.Healthy = ($status.Running -and $status.PublishedPorts.Count -gt 0)
   return [pscustomobject]$status
 }
 
@@ -809,32 +652,33 @@ function Get-PublicDomainPreflight {
     $checks += [pscustomobject]@{ Name = "DNS"; Status = "fail"; Message = "No hay dominio efectivo para comprobar DNS." }
   }
 
-  if (-not (Test-DockerComposeAvailable)) {
-    $ready = $false
-    if ((Get-PreferredDockerCliPath) -or (Test-DockerDesktopWelcomeOpen)) {
-      if (Test-DockerDesktopWelcomeOpen) {
-        $checks += [pscustomobject]@{ Name = "Docker Compose"; Status = "fail"; Message = "Docker Desktop esta en la pantalla inicial 'Welcome' y el daemon aun no arranco." }
-      } else {
-        $checks += [pscustomobject]@{ Name = "Docker Compose"; Status = "fail"; Message = "docker compose existe, pero el daemon de Docker Desktop aun no responde." }
-      }
-    } else {
-      $checks += [pscustomobject]@{ Name = "Docker Compose"; Status = "fail"; Message = "docker compose no esta disponible en PATH." }
-    }
+  $frontendLocal = @(Get-PortListeners -Ports @(3000) | Where-Object { $_.Listening })
+  $backendLocal = @(Get-PortListeners -Ports @(8000) | Where-Object { $_.Listening })
+  if ($frontendLocal.Count -gt 0) {
+    $checks += [pscustomobject]@{ Name = "Frontend local"; Status = "ok"; Message = "Frontend local activo en 3000." }
   } else {
-    $checks += [pscustomobject]@{ Name = "Docker Compose"; Status = "ok"; Message = "docker compose esta disponible." }
-    $services = Get-ComposeServices
-    $required = @("caddy", "backend", "frontend")
-    $missing = @($required | Where-Object { $services -notcontains $_ })
-    if ($missing.Count -gt 0) {
-      $ready = $false
-      $checks += [pscustomobject]@{ Name = "Compose"; Status = "fail"; Message = "Faltan servicios en compose: $($missing -join ', ')." }
-    } else {
-      $checks += [pscustomobject]@{ Name = "Compose"; Status = "ok"; Message = "Servicios esperados presentes: $($required -join ', ')." }
-    }
+    $ready = $false
+    $checks += [pscustomobject]@{ Name = "Frontend local"; Status = "fail"; Message = "El frontend local no esta escuchando en 3000." }
+  }
+
+  if ($backendLocal.Count -gt 0) {
+    $checks += [pscustomobject]@{ Name = "Backend local"; Status = "ok"; Message = "Backend local activo en 8000." }
+  } else {
+    $ready = $false
+    $checks += [pscustomobject]@{ Name = "Backend local"; Status = "fail"; Message = "El backend local no esta escuchando en 8000." }
+  }
+
+  if (Get-PreferredCaddyCliPath) {
+    $checks += [pscustomobject]@{ Name = "Caddy"; Status = "ok"; Message = "Caddy nativo esta instalado." }
+  } elseif (Test-CommandAvailable -CommandName "winget") {
+    $checks += [pscustomobject]@{ Name = "Caddy"; Status = "warn"; Message = "Caddy no esta instalado todavia, pero se puede instalar automaticamente con winget." }
+  } else {
+    $ready = $false
+    $checks += [pscustomobject]@{ Name = "Caddy"; Status = "fail"; Message = "Caddy no esta instalado y winget no esta disponible." }
   }
 
   $portStates = Get-PortListeners -Ports @(80, 443)
-  if ($caddyStatus.Running) {
+  if ($caddyStatus.Healthy) {
     $checks += [pscustomobject]@{ Name = "Puertos 80/443"; Status = "ok"; Message = "Caddy ya esta corriendo y publica: $($caddyStatus.PublishedPorts -join ', ')." }
   } else {
     $busyPorts = @($portStates | Where-Object { $_.Listening })

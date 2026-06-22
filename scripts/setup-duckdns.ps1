@@ -93,18 +93,6 @@ $preflightScript = Join-Path $PSScriptRoot "public-domain-preflight.ps1"
 & $preflightScript
 $preflightOk = ($LASTEXITCODE -eq 0)
 
-if (-not (Test-DockerComposeAvailable)) {
-  Write-Host ""
-  Write-Host "Intentando preparar Docker Compose automaticamente..."
-  if (Ensure-DockerComposeReady) {
-    Write-Host "Docker Compose listo."
-    & $preflightScript
-    $preflightOk = ($LASTEXITCODE -eq 0)
-  } else {
-    Write-Warn "No pude dejar Docker Compose listo automaticamente."
-  }
-}
-
 if ($updateSucceeded -and $preflightOk) {
   Write-Host ""
   Write-Host "Preflight OK. Intentando arrancar Caddy..."

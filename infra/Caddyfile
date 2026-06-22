@@ -1,14 +1,16 @@
-# Caddy reverse proxy for viru-tracker (server/production deployments).
+# Caddy reverse proxy for viru-tracker on native Windows.
 # Usage: set DOMAIN env var, e.g. DOMAIN=virutracker.duckdns.org
-# Caddy will auto-provision TLS via Let's Encrypt when a valid public domain is used.
+# Caddy auto-provisions TLS via Let's Encrypt when a valid public domain is used.
 #
 # For stable public domains, pair Caddy with DuckDNS + the local updater task.
-# For laptop / dynamic-IP temporary sharing, use the public temporary mode in VIRU_PANEL.bat.
+# Frontend and backend run as normal local processes on ports 3000/8000.
 
 {$DOMAIN:localhost} {
+	# Backend (FastAPI)
+	reverse_proxy /api/* 127.0.0.1:8000
+
 	# Frontend (Next.js)
-	reverse_proxy /api/* viru-backend:8000
-	reverse_proxy /* viru-frontend:3000
+	reverse_proxy /* 127.0.0.1:3000
 
 	# Security headers
 	header {
