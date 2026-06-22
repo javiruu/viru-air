@@ -3,76 +3,99 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "ops-common.ps1")
 
-function Read-DotEnv {
-  param([string]$Path)
+Write-Section "DUCKDNS STATUS"
 
-  if (-not (Test-Path $Path)) {
-    throw "Config no encontrada: $Path. Ejecuta scripts/setup-duckdns.ps1 primero."
-  }
-
-  $values = @{}
-  foreach ($line in Get-Content -Path $Path) {
-    $trimmed = $line.Trim()
-    if (-not $trimmed -or $trimmed.StartsWith("#")) {
-      continue
-    }
-
-    $parts = $trimmed -split "=", 2
-    if ($parts.Count -eq 2) {
-      $values[$parts[0].Trim()] = $parts[1].Trim()
-    }
-  }
-
-  return $values
+if (-not (Test-Path $ConfigPath)) {
+  Write-Fail "Config no encontrada: $ConfigPath"
+  exit 1
 }
 
 $config = Read-DotEnv -Path $ConfigPath
 $fqdn = $config["DUCKDNS_FQDN"]
 $domain = $config["DUCKDNS_DOMAIN"]
-$taskName = $config["DUCKDNS_TASK_NAME"]
-$logPath = $config["DUCKDNS_LOG_PATH"]
+$taskName = if ($config.ContainsKey("DUCKDNS_TASK_NAME")) { $config["DUCKDNS_TASK_NAME"] } else { "ViruTracker-DuckDNS" }
+$logPath = if ($config.ContainsKey("DUCKDNS_LOG_PATH")) { $config["DUCKDNS_LOG_PATH"] } else { "logs/duckdns-update.log" }
 
-if (-not $fqdn) {
+if (-not $fqdn -and $domain) {
   $fqdn = "$domain.duckdns.org"
 }
 
-if (-not $logPath) {
-  $logPath = Join-Path (Split-Path -Parent $PSScriptRoot) "logs\duckdns-update.log"
-} elseif (-not [System.IO.Path]::IsPathRooted($logPath)) {
-  $logPath = Join-Path (Split-Path -Parent $PSScriptRoot) $logPath
+if (-not [System.IO.Path]::IsPathRooted($logPath)) {
+  $logPath = Join-Path (Get-RepoRoot) $logPath
 }
 
-Write-Host "DuckDNS domain: $fqdn"
-Write-Host "Config path:    $ConfigPath"
-Write-Host "Log path:       $logPath"
+Write-Info "DuckDNS domain: $fqdn"
+Write-Info "Config path:    $ConfigPath"
+Write-Info "Log path:       $logPath"
 
-if ($taskName) {
-  $taskQuery = schtasks /Query /TN $taskName 2>$null
-  if ($LASTEXITCODE -eq 0) {
-    Write-Host "Scheduled task: OK ($taskName)"
+$taskInfo = Get-ScheduledTaskInfo -TaskName $taskName
+if ($taskInfo.Present) {
+  if ($taskInfo.Enabled) {
+    Write-Ok "Scheduled task: OK ($taskName)"
   } else {
-    Write-Host "Scheduled task: MISSING ($taskName)"
+    Write-Warn "Scheduled task: DISABLED ($taskName)"
+  }
+} else {
+  Write-Fail "Scheduled task: MISSING ($taskName)"
+}
+
+$dnsRows = @(Get-DnsARecords -Name $fqdn)
+if ($dnsRows.Count -gt 0) {
+  Write-Ok "DNS A records:  $($dnsRows -join ', ')"
+} else {
+  Write-Warn "DNS A records:  not resolved yet"
+}
+
+$lastLog = Get-LastTabLogEntry -Path $logPath
+if ($lastLog) {
+  if ($lastLog.Result -eq "OK") {
+    Write-Ok "Ultimo update:  OK ($($lastLog.Timestamp))"
+  } else {
+    Write-Warn "Ultimo update:  $($lastLog.Result) ($($lastLog.Timestamp))"
+  }
+} else {
+  Write-Warn "Ultimo update:  sin registros todavia"
+}
+
+$portStates = Get-PortListeners -Ports @(80, 443)
+foreach ($state in $portStates | Sort-Object Port) {
+  if ($state.Listening) {
+    Write-Warn (Format-PortLine -PortState $state)
+  } else {
+    Write-Ok (Format-PortLine -PortState $state)
   }
 }
 
-try {
-  $dnsRows = Resolve-DnsName -Name $fqdn -Type A -ErrorAction Stop |
-    Where-Object { $_.IPAddress } |
-    Select-Object -ExpandProperty IPAddress
-  if ($dnsRows) {
-    Write-Host "DNS A records:  $($dnsRows -join ', ')"
+$infraEnv = Read-DotEnv -Path (Get-InfraEnvPath) -AllowMissing
+if ($infraEnv.ContainsKey("DOMAIN")) {
+  Write-Info "infra/.env DOMAIN: $($infraEnv['DOMAIN'])"
+}
+
+$caddy = Get-CaddyRuntimeStatus
+if (-not $caddy.DockerAvailable) {
+  Write-Warn "Caddy status: docker compose no disponible."
+} elseif (-not $caddy.ServiceDefined) {
+  Write-Warn "Caddy status: servicio caddy no definido."
+} elseif (-not $caddy.Exists) {
+  Write-Warn "Caddy status: contenedor aun no creado."
+} elseif ($caddy.Running) {
+  Write-Ok "Caddy status: corriendo."
+} else {
+  Write-Warn "Caddy status: creado pero parado ($($caddy.State))."
+}
+
+if ($null -ne $caddy.DomainMatchesDuckDns) {
+  if ($caddy.DomainMatchesDuckDns) {
+    Write-Ok "DOMAIN coincide con DuckDNS."
   } else {
-    Write-Host "DNS A records:  none detected"
+    Write-Fail "DOMAIN no coincide con DuckDNS."
   }
-} catch {
-  Write-Host "DNS A records:  not resolved yet"
 }
 
 if (Test-Path $logPath) {
-  Write-Host ""
-  Write-Host "Ultimas lineas DuckDNS:"
+  Write-Info ""
+  Write-Info "Ultimas lineas DuckDNS:"
   Get-Content -Path $logPath -Tail 5
-} else {
-  Write-Host "Log:            sin actualizaciones todavia"
 }

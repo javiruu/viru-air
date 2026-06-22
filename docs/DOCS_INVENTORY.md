@@ -47,6 +47,12 @@ Entradas vivas actualizadas:
 - `docs/reference/backend/quick-search-contract.md`
 - `docs/specs/viru-fare-memory.md`
 
+## Actualizacion manual 2026-06-22 (panel operativo DuckDNS + Caddy)
+
+Entradas vivas actualizadas:
+
+- `docs/runbooks/runbook-duckdns-public-domain.md`
+
 ## Actualizacion manual 2026-06-16 (humanizacion de lenguaje visible)
 
 Entradas vivas agregadas:
