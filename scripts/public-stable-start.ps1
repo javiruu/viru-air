@@ -60,6 +60,25 @@ function Convert-ToFriendlyCheck {
         $message = $message.Replace("Hay conflictos en", "Los puertos 80/443 estan ocupados por")
       }
     }
+    "UPnP" {
+      $message = $message.Replace("UPnP visible en el router:", "Router con UPnP detectado:")
+      $message = $message.Replace("El router expone UPnP, pero no hay reenvios activos para 80/443.", "El router soporta UPnP, pero aun no hay reenvios activos para 80/443.")
+    }
+    "IP publica" {
+      $message = $message.Replace("IP publica detectada:", "IP publica detectada:")
+    }
+    "Topologia de red" {
+      if ($Check.Status -eq "fail") {
+        $message = "Hay doble NAT: este router sale a otra red privada antes de Internet, asi que DuckDNS no puede llegar directamente hasta tu PC."
+      }
+    }
+    "TLS" {
+      if ($Check.Status -eq "fail") {
+        $message = "HTTPS aun no esta listo porque el certificado publico no ha podido emitirse."
+      } elseif ($Check.Status -eq "ok") {
+        $message = "HTTPS listo."
+      }
+    }
   }
 
   return [pscustomobject]@{
@@ -102,6 +121,8 @@ function Get-BlockingHint {
       "Caddy" { return "Siguiente paso: revisa si winget esta disponible o instala el servicio web estable manualmente." }
       "infra/.env" { return "Siguiente paso: vuelve a ejecutar DUCKDNS SETUP para regenerar la configuracion local." }
       "DOMAIN" { return "Siguiente paso: vuelve a ejecutar DUCKDNS SETUP para sincronizar el dominio web." }
+      "Topologia de red" { return "Siguiente paso: abre tambien 80/443 en el router aguas arriba o confirma con tu operador si estas bajo CGNAT." }
+      "TLS" { return "Siguiente paso: deja libres 80/443 hacia este PC y vuelve a publicar para que HTTPS pueda emitir el certificado." }
     }
   }
 
@@ -137,6 +158,18 @@ $duck = Read-DotEnv -Path (Get-DuckDnsConfigPath) -AllowMissing
 if ($duck.ContainsKey("DUCKDNS_FQDN")) {
   $envInfo = Ensure-InfraEnv -Domain $duck["DUCKDNS_FQDN"]
   Write-Info ("Dominio estable sincronizado en: " + $envInfo.Path)
+}
+
+$upnp = Ensure-UpnpPortMappings -Ports @(80, 443)
+if ($upnp.Supported) {
+  foreach ($change in $upnp.Changes) {
+    switch ($change.Action) {
+      "added" { Write-Ok $change.Message }
+      "ok" { Write-Info $change.Message }
+      "conflict" { Write-Warn $change.Message }
+      default { Write-Warn $change.Message }
+    }
+  }
 }
 
 $currentStatus = Get-CaddyRuntimeStatus

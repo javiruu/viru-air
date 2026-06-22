@@ -24,6 +24,211 @@ function Get-InfraEnvPath {
   return (Join-Path (Get-InfraDir) ".env")
 }
 
+function Test-IsPrivateIPv4 {
+  param([string]$IpAddress)
+
+  if (-not $IpAddress) {
+    return $false
+  }
+
+  return (
+    $IpAddress -match '^10\.' -or
+    $IpAddress -match '^192\.168\.' -or
+    $IpAddress -match '^172\.(1[6-9]|2[0-9]|3[0-1])\.' -or
+    $IpAddress -match '^100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\.'
+  )
+}
+
+function Get-PreferredLocalIPv4 {
+  try {
+    $defaultRoute = Get-NetRoute -DestinationPrefix "0.0.0.0/0" -ErrorAction Stop |
+      Sort-Object RouteMetric, InterfaceMetric |
+      Select-Object -First 1
+    if ($defaultRoute) {
+      $ip = Get-NetIPAddress -AddressFamily IPv4 -InterfaceIndex $defaultRoute.InterfaceIndex -ErrorAction SilentlyContinue |
+        Where-Object { $_.IPAddress -and $_.IPAddress -notlike "169.254.*" } |
+        Select-Object -First 1 -ExpandProperty IPAddress
+      if ($ip) {
+        return $ip
+      }
+    }
+  } catch {}
+
+  return Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+    Where-Object { $_.IPAddress -match '^\d+\.\d+\.\d+\.\d+$' -and $_.IPAddress -notlike "127.*" -and $_.IPAddress -notlike "169.254.*" } |
+    Select-Object -First 1 -ExpandProperty IPAddress
+}
+
+function Get-PublicIpv4Address {
+  $providers = @(
+    "https://api.ipify.org",
+    "https://ipv4.icanhazip.com"
+  )
+
+  foreach ($provider in $providers) {
+    try {
+      $response = Invoke-WebRequest -UseBasicParsing -Uri $provider -TimeoutSec 10
+      $ip = ([string]$response.Content).Trim()
+      if ($ip -match '^\d+\.\d+\.\d+\.\d+$') {
+        return $ip
+      }
+    } catch {}
+  }
+
+  return $null
+}
+
+function Get-UpnpPortMappingCollection {
+  try {
+    $nat = New-Object -ComObject HNetCfg.NATUPnP
+    return $nat.StaticPortMappingCollection
+  } catch {
+    return $null
+  }
+}
+
+function Get-UpnpPortMappings {
+  param([int[]]$Ports = @(80, 443))
+
+  $collection = Get-UpnpPortMappingCollection
+  if ($null -eq $collection) {
+    return @()
+  }
+
+  $results = @()
+  foreach ($item in $collection) {
+    if ($Ports -notcontains [int]$item.ExternalPort) {
+      continue
+    }
+
+    $results += [pscustomobject]@{
+      Protocol = [string]$item.Protocol
+      ExternalPort = [int]$item.ExternalPort
+      InternalPort = [int]$item.InternalPort
+      InternalClient = [string]$item.InternalClient
+      ExternalIPAddress = [string]$item.ExternalIPAddress
+      Enabled = [bool]$item.Enabled
+      Description = [string]$item.Description
+    }
+  }
+
+  return $results
+}
+
+function Ensure-UpnpPortMappings {
+  param(
+    [int[]]$Ports = @(80, 443),
+    [string]$InternalClient = (Get-PreferredLocalIPv4)
+  )
+
+  $collection = Get-UpnpPortMappingCollection
+  if ($null -eq $collection) {
+    return [pscustomobject]@{
+      Supported = $false
+      LocalIp = $InternalClient
+      ExternalIp = $null
+      Changes = @()
+    }
+  }
+
+  $changes = @()
+  $externalIp = $null
+  foreach ($port in $Ports) {
+    $mapping = @(
+      Get-UpnpPortMappings -Ports @($port) |
+        Where-Object { $_.Protocol -eq "TCP" -and $_.ExternalPort -eq $port }
+    ) | Select-Object -First 1
+
+    if ($mapping) {
+      $externalIp = [string]$mapping.ExternalIPAddress
+      if ($mapping.InternalClient -eq $InternalClient -and [int]$mapping.InternalPort -eq $port -and $mapping.Enabled) {
+        $changes += [pscustomobject]@{ Port = $port; Action = "ok"; Message = ("UPnP ya reenviaba TCP/{0} a {1}:{2}." -f $port, $InternalClient, $port) }
+      } else {
+        $changes += [pscustomobject]@{ Port = $port; Action = "conflict"; Message = ("UPnP ya usa TCP/{0} hacia {1}:{2}." -f $port, $mapping.InternalClient, $mapping.InternalPort) }
+      }
+      continue
+    }
+
+    try {
+      $created = $collection.Add([int]$port, [string]"TCP", [int]$port, [string]$InternalClient, [bool]$true, [string]("ViruTracker TCP/{0}" -f $port))
+      $externalIp = if ($created) { [string]$created.ExternalIPAddress } else { $externalIp }
+      $changes += [pscustomobject]@{ Port = $port; Action = "added"; Message = ("UPnP ha creado TCP/{0} -> {1}:{2}." -f $port, $InternalClient, $port) }
+    } catch {
+      $changes += [pscustomobject]@{ Port = $port; Action = "error"; Message = ("No pude crear el reenvio UPnP para TCP/{0}: {1}" -f $port, $_.Exception.Message) }
+    }
+  }
+
+  return [pscustomobject]@{
+    Supported = $true
+    LocalIp = $InternalClient
+    ExternalIp = $externalIp
+    Changes = $changes
+  }
+}
+
+function Get-NetworkEdgeStatus {
+  $localIp = Get-PreferredLocalIPv4
+  $publicIp = Get-PublicIpv4Address
+  $upnpMappings = @(Get-UpnpPortMappings -Ports @(80, 443) | Where-Object { $_.Protocol -eq "TCP" })
+  $upnpExternalIp = $null
+  if ($upnpMappings.Count -gt 0) {
+    $upnpExternalIp = $upnpMappings[0].ExternalIPAddress
+  }
+
+  $doubleNat = $false
+  if ($publicIp -and $upnpExternalIp -and $upnpExternalIp -ne $publicIp -and (Test-IsPrivateIPv4 -IpAddress $upnpExternalIp)) {
+    $doubleNat = $true
+  }
+
+  return [pscustomobject]@{
+    LocalIp = $localIp
+    PublicIp = $publicIp
+    UpnpMappings = $upnpMappings
+    UpnpExternalIp = $upnpExternalIp
+    UpnpSupported = ($null -ne (Get-UpnpPortMappingCollection))
+    DoubleNatDetected = $doubleNat
+  }
+}
+
+function Test-LocalTlsHandshake {
+  param(
+    [Parameter(Mandatory)][string]$ServerName,
+    [string]$Address = "127.0.0.1",
+    [int]$Port = 443
+  )
+
+  $tcp = $null
+  $stream = $null
+  $ssl = $null
+  try {
+    $tcp = New-Object System.Net.Sockets.TcpClient
+    $async = $tcp.BeginConnect($Address, $Port, $null, $null)
+    if (-not $async.AsyncWaitHandle.WaitOne(5000)) {
+      throw "timeout"
+    }
+    $tcp.EndConnect($async)
+    $stream = $tcp.GetStream()
+    $ssl = New-Object System.Net.Security.SslStream($stream, $false, ({ $true }))
+    $ssl.AuthenticateAsClient($ServerName)
+    $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2 $ssl.RemoteCertificate
+    return [pscustomobject]@{
+      Success = $true
+      Subject = $cert.Subject
+      Issuer = $cert.Issuer
+      NotAfter = $cert.NotAfter
+    }
+  } catch {
+    return [pscustomobject]@{
+      Success = $false
+      Error = $_.Exception.Message
+    }
+  } finally {
+    if ($ssl) { $ssl.Dispose() }
+    if ($stream) { $stream.Dispose() }
+    if ($tcp) { $tcp.Dispose() }
+  }
+}
+
 function New-UrlSafeSecret {
   param([int]$Bytes = 48)
 
@@ -536,6 +741,8 @@ function Get-CaddyRuntimeStatus {
     ProcessName = $null
     HasPidFile = $false
     PublishedPorts = @()
+    TlsReady = $false
+    TlsDetail = $null
     Healthy = $false
   }
 
@@ -576,7 +783,13 @@ function Get-CaddyRuntimeStatus {
     }
   }
 
-  $status.Healthy = ($status.Running -and $status.PublishedPorts.Count -gt 0)
+  if ($status.Domain -and $status.Running -and ($status.PublishedPorts -contains 443)) {
+    $tls = Test-LocalTlsHandshake -ServerName $status.Domain
+    $status.TlsReady = $tls.Success
+    $status.TlsDetail = $tls
+  }
+
+  $status.Healthy = ($status.Running -and $status.PublishedPorts.Count -gt 0 -and $status.TlsReady)
   return [pscustomobject]$status
 }
 
@@ -592,6 +805,7 @@ function Get-PublicDomainPreflight {
   $taskName = if ($duckConfig.ContainsKey("DUCKDNS_TASK_NAME")) { $duckConfig["DUCKDNS_TASK_NAME"] } else { "ViruTracker-DuckDNS" }
   $taskInfo = Get-ScheduledTaskInfo -TaskName $taskName
   $caddyStatus = Get-CaddyRuntimeStatus
+  $edgeStatus = Get-NetworkEdgeStatus
 
   if (-not (Test-Path (Get-InfraEnvPath))) {
     $ready = $false
@@ -682,13 +896,53 @@ function Get-PublicDomainPreflight {
     $checks += [pscustomobject]@{ Name = "Puertos 80/443"; Status = "ok"; Message = "Caddy ya esta corriendo y publica: $($caddyStatus.PublishedPorts -join ', ')." }
   } else {
     $busyPorts = @($portStates | Where-Object { $_.Listening })
-    if ($busyPorts.Count -gt 0) {
+    $busyByCaddy = @($busyPorts | Where-Object { $_.ProcessName -eq "caddy" })
+    $busyByOthers = @($busyPorts | Where-Object { $_.ProcessName -ne "caddy" })
+    if ($busyByOthers.Count -gt 0) {
       $ready = $false
-      $busySummary = $busyPorts | ForEach-Object { "puerto $($_.Port) por PID $($_.ProcessId) ($($_.ProcessName))" }
+      $busySummary = $busyByOthers | ForEach-Object { "puerto $($_.Port) por PID $($_.ProcessId) ($($_.ProcessName))" }
       $checks += [pscustomobject]@{ Name = "Puertos 80/443"; Status = "fail"; Message = "Hay conflictos en $($busySummary -join '; ')." }
+    } elseif ($busyByCaddy.Count -gt 0) {
+      $caddyPorts = @($busyByCaddy.Port | Sort-Object -Unique)
+      $checks += [pscustomobject]@{ Name = "Puertos 80/443"; Status = "ok"; Message = "Caddy ya esta escuchando en: $($caddyPorts -join ', ')." }
     } else {
       $checks += [pscustomobject]@{ Name = "Puertos 80/443"; Status = "ok"; Message = "Puertos 80 y 443 libres para Caddy." }
     }
+  }
+
+  if ($edgeStatus.UpnpSupported) {
+    if ($edgeStatus.UpnpMappings.Count -gt 0) {
+      $mappingSummary = $edgeStatus.UpnpMappings |
+        Where-Object { $_.Protocol -eq "TCP" } |
+        Sort-Object ExternalPort |
+        ForEach-Object { "TCP/$($_.ExternalPort) -> $($_.InternalClient):$($_.InternalPort)" }
+      $checks += [pscustomobject]@{ Name = "UPnP"; Status = "ok"; Message = "UPnP visible en el router: $($mappingSummary -join '; ')." }
+    } else {
+      $checks += [pscustomobject]@{ Name = "UPnP"; Status = "warn"; Message = "El router expone UPnP, pero no hay reenvios activos para 80/443." }
+    }
+  } else {
+    $checks += [pscustomobject]@{ Name = "UPnP"; Status = "warn"; Message = "No he podido consultar UPnP en este entorno." }
+  }
+
+  if ($edgeStatus.PublicIp) {
+    $checks += [pscustomobject]@{ Name = "IP publica"; Status = "ok"; Message = "IP publica detectada: $($edgeStatus.PublicIp)." }
+  } else {
+    $checks += [pscustomobject]@{ Name = "IP publica"; Status = "warn"; Message = "No he podido confirmar la IP publica actual." }
+  }
+
+  if ($edgeStatus.DoubleNatDetected) {
+    $ready = $false
+    $checks += [pscustomobject]@{ Name = "Topologia de red"; Status = "fail"; Message = "Hay doble NAT: UPnP ve como externa $($edgeStatus.UpnpExternalIp), pero la IP publica real es $($edgeStatus.PublicIp)." }
+  } elseif ($edgeStatus.UpnpExternalIp) {
+    $checks += [pscustomobject]@{ Name = "Topologia de red"; Status = "ok"; Message = "La IP externa visible por UPnP coincide con la red esperada: $($edgeStatus.UpnpExternalIp)." }
+  }
+
+  if ($caddyStatus.Running -and -not $caddyStatus.TlsReady) {
+    $ready = $false
+    $tlsDetail = if ($caddyStatus.TlsDetail -and $caddyStatus.TlsDetail.Error) { $caddyStatus.TlsDetail.Error } else { "handshake TLS no disponible todavia" }
+    $checks += [pscustomobject]@{ Name = "TLS"; Status = "fail"; Message = "Caddy esta escuchando, pero HTTPS aun no esta listo: $tlsDetail." }
+  } elseif ($caddyStatus.TlsReady) {
+    $checks += [pscustomobject]@{ Name = "TLS"; Status = "ok"; Message = "HTTPS local listo para $domain." }
   }
 
   return [pscustomobject]@{
@@ -699,6 +953,7 @@ function Get-PublicDomainPreflight {
     DnsRecords = $dnsRecords
     LastDuckUpdate = $lastDuckUpdate
     CaddyStatus = $caddyStatus
+    EdgeStatus = $edgeStatus
     Checks = $checks
   }
 }
