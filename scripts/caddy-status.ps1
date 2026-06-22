@@ -3,8 +3,8 @@
 Write-Section "CADDY STATUS"
 $status = Get-CaddyRuntimeStatus
 
-if (-not $status.DockerAvailable) {
-  Write-Fail "docker compose no esta disponible."
+if (-not $status.Installed) {
+  Write-Fail "caddy no esta instalado en esta maquina."
   exit 1
 }
 
@@ -16,25 +16,20 @@ if ($status.Domain) {
   Write-Info ("DOMAIN actual: $($status.Domain)")
 }
 
-if (-not $status.ServiceDefined) {
-  Write-Fail "El servicio caddy no esta definido en los compose de infra."
-  exit 1
-}
-
-if (-not $status.Exists) {
-  Write-Warn "El contenedor de Caddy aun no fue creado."
+if (-not $status.HasPidFile) {
+  Write-Warn "Caddy aun no fue arrancado desde este panel."
   exit 1
 }
 
 if ($status.Running) {
-  Write-Ok ("Caddy corriendo (container $($status.ContainerId), estado $($status.State)).")
+  Write-Ok ("Caddy corriendo (PID $($status.ProcessId), proceso $($status.ProcessName)).")
   if ($status.PublishedPorts.Count -gt 0) {
     Write-Ok ("Puertos publicados: $($status.PublishedPorts -join ', ')")
   } else {
     Write-Warn "Caddy corre, pero no detecte puertos publicados."
   }
 } else {
-  Write-Warn ("Contenedor de Caddy existe, pero esta en estado '$($status.State)'.")
+  Write-Warn "Habia un PID guardado para Caddy, pero el proceso ya no esta vivo."
 }
 
 if ($null -ne $status.DomainMatchesDuckDns) {
@@ -45,5 +40,5 @@ if ($null -ne $status.DomainMatchesDuckDns) {
   }
 }
 
-if ($status.Running) { exit 0 }
+if ($status.Healthy) { exit 0 }
 exit 1

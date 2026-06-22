@@ -74,16 +74,14 @@ if ($infraEnv.ContainsKey("DOMAIN")) {
 }
 
 $caddy = Get-CaddyRuntimeStatus
-if (-not $caddy.DockerAvailable) {
-  Write-Warn "Caddy status: docker compose no disponible."
-} elseif (-not $caddy.ServiceDefined) {
-  Write-Warn "Caddy status: servicio caddy no definido."
-} elseif (-not $caddy.Exists) {
-  Write-Warn "Caddy status: contenedor aun no creado."
-} elseif ($caddy.Running) {
+if (-not $caddy.Installed) {
+  Write-Warn "Caddy status: caddy no instalado."
+} elseif (-not $caddy.HasPidFile) {
+  Write-Warn "Caddy status: aun no arrancado desde el panel."
+} elseif ($caddy.Healthy) {
   Write-Ok "Caddy status: corriendo."
 } else {
-  Write-Warn "Caddy status: creado pero parado ($($caddy.State))."
+  Write-Warn "Caddy status: PID guardado, pero proceso/puertos no saludables."
 }
 
 if ($null -ne $caddy.DomainMatchesDuckDns) {
