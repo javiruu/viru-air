@@ -636,6 +636,65 @@ function Get-CaddyAcmeFailureDiagnostic {
   }
 }
 
+function Test-LocalStableHttpReachability {
+  param([string]$Domain)
+
+  if (-not $Domain) {
+    return [pscustomobject]@{
+      Success = $false
+      StatusCode = $null
+      Server = $null
+      Location = $null
+      Error = "No hay dominio para probar HTTP local."
+    }
+  }
+
+  try {
+    $response = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1/" -Headers @{ Host = $Domain } -MaximumRedirection 0 -TimeoutSec 10
+    return [pscustomobject]@{
+      Success = $true
+      StatusCode = [int]$response.StatusCode
+      Server = [string]$response.Headers["Server"]
+      Location = [string]$response.Headers["Location"]
+      Error = $null
+    }
+  } catch {
+    $httpResponse = $_.Exception.Response
+    if ($httpResponse) {
+      return [pscustomobject]@{
+        Success = $true
+        StatusCode = [int]$httpResponse.StatusCode.value__
+        Server = [string]$httpResponse.Headers["Server"]
+        Location = [string]$httpResponse.Headers["Location"]
+        Error = $_.Exception.Message
+      }
+    }
+
+    return [pscustomobject]@{
+      Success = $false
+      StatusCode = $null
+      Server = $null
+      Location = $null
+      Error = $_.Exception.Message
+    }
+  }
+}
+
+function Get-LocalFirewallHttpEvidence {
+  $rules = @()
+  try {
+    $rules = @(Get-NetFirewallRule -Enabled True -Direction Inbound -Action Allow -ErrorAction Stop |
+      Where-Object { $_.DisplayName -match 'caddy|80|443|http|https|viru' })
+  } catch {
+    $rules = @()
+  }
+
+  return [pscustomobject]@{
+    AllowRules = $rules
+    HasAllowEvidence = ($rules.Count -gt 0)
+  }
+}
+
 function Get-StablePublishNetworkDiagnosis {
   param(
     [Parameter(Mandatory)]$EdgeStatus,
@@ -649,6 +708,8 @@ function Get-StablePublishNetworkDiagnosis {
   $current = if ($PSBoundParameters.ContainsKey("CurrentNetworkOverride") -and $null -ne $CurrentNetworkOverride) { $CurrentNetworkOverride } else { Get-CurrentNetworkContext }
   $profilesState = if ($PSBoundParameters.ContainsKey("ProfilesStateOverride")) { $ProfilesStateOverride } else { Read-PublicStableNetworkProfiles -AllowMissing }
   $acme = if ($PSBoundParameters.ContainsKey("AcmeOverride")) { $AcmeOverride } else { Get-CaddyAcmeFailureDiagnostic }
+  $localHttp = Test-LocalStableHttpReachability -Domain $Domain
+  $localFirewall = Get-LocalFirewallHttpEvidence
   $currentMode = Get-StableNetworkMode -CurrentNetwork $current -EdgeStatus $EdgeStatus
   $detectedMatch = Select-BestStableNetworkProfile -ProfilesState $profilesState -CurrentNetwork $current -EdgeStatus $EdgeStatus -Domain $Domain
   $detectedProfile = if ($detectedMatch) { $detectedMatch.Profile } else { $null }
@@ -697,6 +758,12 @@ function Get-StablePublishNetworkDiagnosis {
   if ($mappedTargetIp) {
     $details += "Los reenvios visibles apuntan a: $mappedTargetIp"
   }
+  if ($localHttp.Success -and $localHttp.StatusCode) {
+    $details += "HTTP local responde en 127.0.0.1:$($localHttp.StatusCode)"
+  }
+  if ($localFirewall.HasAllowEvidence) {
+    $details += "Firewall local con reglas de entrada para HTTP/HTTPS"
+  }
 
   if ($manualProfileMismatch) {
     $caseCode = "MANUAL_PROFILE_MISMATCH"
@@ -710,7 +777,9 @@ function Get-StablePublishNetworkDiagnosis {
     $caseCode = "PROFILE_DETECTED"
     $summary = "Perfil de red detectado: $($detectedProfile.label)."
     if ($acme -and $acme.HasTimeout) {
-      if ($detectedProfile.mode -eq "direct_router") {
+      if ($localHttp.Success -and $localFirewall.HasAllowEvidence) {
+        $nextStep = "Caddy ya responde en local y el firewall parece abierto. El bloqueo casi seguro esta en el router o en el operador: revisa que TCP 80 y 443 apunten a $($current.LocalIp) y que tu conexion acepte entrada por esos puertos."
+      } elseif ($detectedProfile.mode -eq "direct_router") {
         $nextStep = "Revisa que el router actual tenga TCP 80 y 443 apuntando a $($current.LocalIp) y que el firewall de Windows permita esos puertos."
       } elseif ($detectedProfile.mode -eq "double_nat") {
         $nextStep = "Revisa la cadena completa: router principal 80/443 hacia el router intermedio y router intermedio 80/443 hacia $($current.LocalIp)."
@@ -742,6 +811,10 @@ function Get-StablePublishNetworkDiagnosis {
     $caseCode = "CGNAT_OR_PRIVATE_NAT"
     $summary = "La ruta publica sigue sin llegar a este PC y puede haber CG-NAT o una NAT privada aguas arriba."
     $nextStep = "Confirma con tu operador si la IP publica es realmente enrutable o si estas bajo CG-NAT."
+  } elseif ($acme -and $acme.HasTimeout -and $localHttp.Success -and $localFirewall.HasAllowEvidence) {
+    $caseCode = "UPSTREAM_ROUTE_BLOCKED"
+    $summary = "Caddy responde localmente y el firewall de Windows parece abierto, pero Let''s Encrypt no consigue entrar desde Internet."
+    $nextStep = "El bloqueo casi seguro esta en el router o en el operador. Revisa que TCP 80 y 443 apunten a $($current.LocalIp) y que tu conexion no este filtrando puertos entrantes."
   }
 
   return [pscustomobject]@{
@@ -759,6 +832,8 @@ function Get-StablePublishNetworkDiagnosis {
     MappedTargetIp = $mappedTargetIp
     TcpMappings = $tcpMappings
     Acme = $acme
+    LocalHttp = $localHttp
+    LocalFirewall = $localFirewall
     CaseCode = $caseCode
     Summary = $summary
     NextStep = $nextStep
