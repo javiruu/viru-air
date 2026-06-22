@@ -60,6 +60,12 @@ Set-Content -Path $ConfigPath -Value $configContent -Encoding ASCII
 Write-Host "Config escrita en: $ConfigPath"
 Write-Host "Dominio canonico:  https://$fqdn"
 
+$infraEnv = Ensure-InfraEnv -Domain $fqdn
+Write-Host "infra/.env listo:   $($infraEnv.Path)"
+if ($infraEnv.JwtGenerated) {
+  Write-Host "JWT_SECRET:         generado automaticamente"
+}
+
 $updateScript = Join-Path $PSScriptRoot "duckdns-update.ps1"
 $taskCommand = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$updateScript`" -ConfigPath `"$ConfigPath`""
 
@@ -86,6 +92,18 @@ Write-Host "Chequeo de publicacion estable:"
 $preflightScript = Join-Path $PSScriptRoot "public-domain-preflight.ps1"
 & $preflightScript
 $preflightOk = ($LASTEXITCODE -eq 0)
+
+if (-not (Test-DockerComposeAvailable)) {
+  Write-Host ""
+  Write-Host "Intentando preparar Docker Compose automaticamente..."
+  if (Ensure-DockerComposeReady) {
+    Write-Host "Docker Compose listo."
+    & $preflightScript
+    $preflightOk = ($LASTEXITCODE -eq 0)
+  } else {
+    Write-Warn "No pude dejar Docker Compose listo automaticamente."
+  }
+}
 
 if ($updateSucceeded -and $preflightOk) {
   Write-Host ""

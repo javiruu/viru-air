@@ -2,6 +2,17 @@
 
 Write-Section "CADDY START"
 
+$duck = Read-DotEnv -Path (Get-DuckDnsConfigPath) -AllowMissing
+if ($duck.ContainsKey("DUCKDNS_FQDN")) {
+  $envInfo = Ensure-InfraEnv -Domain $duck["DUCKDNS_FQDN"]
+  Write-Info ("infra/.env sincronizado: " + $envInfo.Path)
+}
+
+if (-not (Ensure-DockerComposeReady)) {
+  Write-Fail "No pude dejar Docker Compose operativo automaticamente en esta maquina."
+  exit 1
+}
+
 $caddyStatus = Get-CaddyRuntimeStatus
 if ($caddyStatus.Running) {
   Write-Ok "Caddy ya esta corriendo."
