@@ -108,16 +108,24 @@ if ($networkDiagnosis.Current.Gateway) {
   Write-Info "Gateway actual:          $($networkDiagnosis.Current.Gateway)"
 }
 
-if ($networkDiagnosis.Expectation.ExpectedLocalIp) {
-  Write-Info "IP esperada para publicar: $($networkDiagnosis.Expectation.ExpectedLocalIp)"
+if ($networkDiagnosis.DetectedProfile) {
+  Write-Info "Perfil de red detectado: $($networkDiagnosis.DetectedProfile.label)"
+} elseif ($networkDiagnosis.IsNewNetwork) {
+  Write-Warn "Perfil de red:           red nueva detectada"
 }
 
-if ($networkDiagnosis.Expectation.ExpectedGateway) {
-  Write-Info "Gateway esperado:        $($networkDiagnosis.Expectation.ExpectedGateway)"
+if ($networkDiagnosis.ActiveProfileId -and $networkDiagnosis.ActiveProfileId -ne "auto" -and $networkDiagnosis.ActiveProfile) {
+  Write-Info "Perfil activo manual:    $($networkDiagnosis.ActiveProfile.label)"
+} else {
+  Write-Info "Perfil activo manual:    auto"
 }
 
-if ($networkDiagnosis.Expectation.MatchedProfile -and $networkDiagnosis.Expectation.MatchedProfile.label) {
-  Write-Info "Perfil de red activo:    $($networkDiagnosis.Expectation.MatchedProfile.label)"
+if ($networkDiagnosis.CurrentMode -eq "double_nat") {
+  Write-Info "Modo de red:             router intermedio"
+} elseif ($networkDiagnosis.CurrentMode -eq "direct_router") {
+  Write-Info "Modo de red:             router directo"
+} else {
+  Write-Info "Modo de red:             sin clasificar"
 }
 
 if ($networkDiagnosis.Summary) {
