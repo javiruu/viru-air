@@ -1,6 +1,11 @@
-. (Join-Path $PSScriptRoot "ops-common.ps1")
+param(
+  [switch]$SaveCurrentNetworkProfile,
+  [string]$ProfileLabel,
+  [switch]$SetActive
+)
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "ops-common.ps1")
 
 function Show-Line {
   param(
@@ -82,16 +87,24 @@ if ($networkDiagnosis.Current.Gateway) {
   Write-Info ("Router actual: $($networkDiagnosis.Current.Gateway)")
 }
 
-if ($networkDiagnosis.Expectation.ExpectedLocalIp) {
-  Write-Info ("IP esperada:   $($networkDiagnosis.Expectation.ExpectedLocalIp)")
+if ($networkDiagnosis.DetectedProfile) {
+  Write-Info ("Perfil de red: $($networkDiagnosis.DetectedProfile.label)")
+} elseif ($networkDiagnosis.IsNewNetwork) {
+  Write-Warn "Perfil de red: red nueva detectada"
 }
 
-if ($networkDiagnosis.Expectation.ExpectedGateway) {
-  Write-Info ("Router esperado: $($networkDiagnosis.Expectation.ExpectedGateway)")
+if ($networkDiagnosis.ActiveProfileId -and $networkDiagnosis.ActiveProfileId -ne "auto" -and $networkDiagnosis.ActiveProfile) {
+  Write-Info ("Perfil activo: $($networkDiagnosis.ActiveProfile.label)")
+} else {
+  Write-Info ("Perfil activo: auto")
 }
 
-if ($networkDiagnosis.Expectation.MatchedProfile -and $networkDiagnosis.Expectation.MatchedProfile.label) {
-  Write-Info ("Perfil activo:  $($networkDiagnosis.Expectation.MatchedProfile.label)")
+if ($networkDiagnosis.CurrentMode -eq "double_nat") {
+  Write-Info "Modo de red:   router intermedio"
+} elseif ($networkDiagnosis.CurrentMode -eq "direct_router") {
+  Write-Info "Modo de red:   router directo"
+} else {
+  Write-Info "Modo de red:   sin clasificar"
 }
 
 if ($status.Healthy) {
@@ -147,9 +160,26 @@ if ($networkDiagnosis -and $networkDiagnosis.NextStep) {
   Write-Info $networkDiagnosis.NextStep
 }
 
+if ($SaveCurrentNetworkProfile) {
+  if (-not $publicDomain) {
+    Write-Fail "No puedo guardar el perfil porque aun no hay dominio estable configurado."
+    exit 1
+  }
+
+  try {
+    $saveResult = Save-PublicStableNetworkProfile -Domain $publicDomain -CurrentNetwork $networkDiagnosis.Current -EdgeStatus $edge -Label $ProfileLabel -SetActive:$SetActive
+    Write-Info ("Perfil guardado en: " + $saveResult.Path)
+    Write-Ok ("Perfil guardado: " + $saveResult.Profile.label)
+    if ($SetActive) {
+      Write-Info ("Perfil activo nuevo: " + $saveResult.Profile.id)
+    }
+  } catch {
+    Write-Fail $_.Exception.Message
+    exit 1
+  }
+}
+
 if ($status.Healthy) {
-  $savePath = Save-PublicStableNetworkState -Domain $publicDomain -CurrentNetwork $networkDiagnosis.Current -EdgeStatus $edge
-  Write-Info ("Perfil de red estable guardado en: " + $savePath)
   Write-Ok "La web estable esta publicada y lista para entrar desde fuera."
   exit 0
 }

@@ -29,10 +29,14 @@ echo E. DUCKDNS DISABLE
 echo F. Ver logs DuckDNS updater
 echo G. Forzar update DuckDNS
 echo H. PUBLICAR RAPIDO (local + URL temporal)
+echo I. GUARDAR ESTA RED COMO PERFIL WEB ESTABLE
+echo J. VER PERFILES WEB ESTABLE
 echo ----------------------------------------
 echo 0. Salir
 echo.
-choice /C 1234567890ABCDEFGH /N /M "Opcion: "
+choice /C 1234567890ABCDEFGHIJ /N /M "Opcion: "
+if errorlevel 20 goto stable_profiles
+if errorlevel 19 goto stable_profile_save
 if errorlevel 18 goto public_quick_start
 if errorlevel 17 goto duckdns_force_update
 if errorlevel 16 goto duckdns_logs
@@ -120,4 +124,12 @@ goto menu
 
 :public_quick_start
 powershell -ExecutionPolicy Bypass -File "%~dp0scripts\iniciar_viru_publico.ps1"
+goto menu
+
+:stable_profile_save
+powershell -ExecutionPolicy Bypass -File "%~dp0scripts\public-stable-profile-save.ps1"
+goto menu
+
+:stable_profiles
+powershell -ExecutionPolicy Bypass -File "%~dp0scripts\public-stable-profiles.ps1"
 goto menu

@@ -24,8 +24,16 @@ function Get-InfraEnvPath {
   return (Join-Path (Get-InfraDir) ".env")
 }
 
-function Get-PublicStableNetworkStatePath {
+function Get-PublicStableNetworkProfilesPath {
+  return (Join-Path (Get-InfraDir) "public-stable-network-profiles.json")
+}
+
+function Get-LegacyPublicStableNetworkStatePath {
   return (Join-Path (Get-InfraDir) "public-stable-network-state.json")
+}
+
+function Get-PublicStableNetworkStatePath {
+  return (Get-PublicStableNetworkProfilesPath)
 }
 
 function Test-IsPrivateIPv4 {
@@ -116,144 +124,481 @@ function Test-SameIpv4SubnetHint {
   return $false
 }
 
-function Read-PublicStableNetworkState {
+function Get-ObjectPropertyValue {
+  param(
+    $Object,
+    [Parameter(Mandatory)][string]$Name,
+    $Default = $null
+  )
+
+  if ($null -eq $Object) {
+    return $Default
+  }
+
+  $property = $Object.PSObject.Properties[$Name]
+  if ($property) {
+    return $property.Value
+  }
+
+  return $Default
+}
+
+function New-EmptyPublicStableNetworkProfilesState {
+  return [pscustomobject]@{
+    schemaVersion = 3
+    activeProfileId = "auto"
+    profiles = @()
+  }
+}
+
+function Normalize-StableNetworkProfile {
+  param([Parameter(Mandatory)]$Profile)
+
+  $profileIdValue = Get-ObjectPropertyValue -Object $Profile -Name "id"
+  $legacyProfileIdValue = Get-ObjectPropertyValue -Object $Profile -Name "profileId"
+  $expectedPcIpValue = Get-ObjectPropertyValue -Object $Profile -Name "expectedPcIp"
+  $expectedLocalIpValue = Get-ObjectPropertyValue -Object $Profile -Name "expectedLocalIp"
+  $expectedGatewayValue = Get-ObjectPropertyValue -Object $Profile -Name "expectedGateway"
+  $expectedSubnetHintValue = Get-ObjectPropertyValue -Object $Profile -Name "expectedSubnetHint"
+  $intermediateRouterIpValue = Get-ObjectPropertyValue -Object $Profile -Name "intermediateRouterIp"
+  $expectedUpnpExternalIpValue = Get-ObjectPropertyValue -Object $Profile -Name "expectedUpnpExternalIp"
+
+  $id = if ($profileIdValue) { [string]$profileIdValue } elseif ($legacyProfileIdValue) { [string]$legacyProfileIdValue } else { $null }
+  if (-not $id) {
+    $id = [guid]::NewGuid().ToString("N")
+  }
+
+  $expectedPcIp = if ($expectedPcIpValue) { [string]$expectedPcIpValue } elseif ($expectedLocalIpValue) { [string]$expectedLocalIpValue } else { $null }
+  $expectedGateway = if ($expectedGatewayValue) { [string]$expectedGatewayValue } else { $null }
+  $expectedSubnetHint = if ($expectedSubnetHintValue) { [string]$expectedSubnetHintValue } else {
+    if ($expectedPcIp -match '^(\d+\.\d+\.\d+)\.\d+$') { "$($Matches[1]).x" } else { $null }
+  }
+  $intermediateRouterIp = if ($intermediateRouterIpValue) { [string]$intermediateRouterIpValue } elseif ($expectedUpnpExternalIpValue) { [string]$expectedUpnpExternalIpValue } else { $null }
+
+  return [pscustomobject]@{
+    id = $id
+    label = if (Get-ObjectPropertyValue -Object $Profile -Name "label") { [string](Get-ObjectPropertyValue -Object $Profile -Name "label") } else { $id }
+    domain = if (Get-ObjectPropertyValue -Object $Profile -Name "domain") { [string](Get-ObjectPropertyValue -Object $Profile -Name "domain") } else { $null }
+    expectedPcIp = $expectedPcIp
+    expectedGateway = $expectedGateway
+    expectedInterfaceAlias = if (Get-ObjectPropertyValue -Object $Profile -Name "expectedInterfaceAlias") { [string](Get-ObjectPropertyValue -Object $Profile -Name "expectedInterfaceAlias") } else { $null }
+    expectedSubnetHint = $expectedSubnetHint
+    upstreamRouterIp = if (Get-ObjectPropertyValue -Object $Profile -Name "upstreamRouterIp") { [string](Get-ObjectPropertyValue -Object $Profile -Name "upstreamRouterIp") } else { $null }
+    intermediateRouterIp = $intermediateRouterIp
+    expectedPublicIp = if (Get-ObjectPropertyValue -Object $Profile -Name "expectedPublicIp") { [string](Get-ObjectPropertyValue -Object $Profile -Name "expectedPublicIp") } else { $null }
+    expectedUpnpMappings = @((Get-ObjectPropertyValue -Object $Profile -Name "expectedUpnpMappings" -Default @()))
+    mode = if (Get-ObjectPropertyValue -Object $Profile -Name "mode") { [string](Get-ObjectPropertyValue -Object $Profile -Name "mode") } else { "unknown" }
+    notes = if (Get-ObjectPropertyValue -Object $Profile -Name "notes") { [string](Get-ObjectPropertyValue -Object $Profile -Name "notes") } else { $null }
+    createdAt = if (Get-ObjectPropertyValue -Object $Profile -Name "createdAt") { [string](Get-ObjectPropertyValue -Object $Profile -Name "createdAt") } elseif (Get-ObjectPropertyValue -Object $Profile -Name "savedAt") { [string](Get-ObjectPropertyValue -Object $Profile -Name "savedAt") } else { $null }
+    lastSeenAt = if (Get-ObjectPropertyValue -Object $Profile -Name "lastSeenAt") { [string](Get-ObjectPropertyValue -Object $Profile -Name "lastSeenAt") } elseif (Get-ObjectPropertyValue -Object $Profile -Name "savedAt") { [string](Get-ObjectPropertyValue -Object $Profile -Name "savedAt") } else { $null }
+    lastSeenPublicIp = if (Get-ObjectPropertyValue -Object $Profile -Name "lastSeenPublicIp") { [string](Get-ObjectPropertyValue -Object $Profile -Name "lastSeenPublicIp") } elseif (Get-ObjectPropertyValue -Object $Profile -Name "expectedPublicIp") { [string](Get-ObjectPropertyValue -Object $Profile -Name "expectedPublicIp") } else { $null }
+    lastSeenUpnpExternalIp = if (Get-ObjectPropertyValue -Object $Profile -Name "lastSeenUpnpExternalIp") { [string](Get-ObjectPropertyValue -Object $Profile -Name "lastSeenUpnpExternalIp") } elseif ($expectedUpnpExternalIpValue) { [string]$expectedUpnpExternalIpValue } else { $null }
+    lastSeenInterfaceAlias = if (Get-ObjectPropertyValue -Object $Profile -Name "lastSeenInterfaceAlias") { [string](Get-ObjectPropertyValue -Object $Profile -Name "lastSeenInterfaceAlias") } elseif (Get-ObjectPropertyValue -Object $Profile -Name "expectedInterfaceAlias") { [string](Get-ObjectPropertyValue -Object $Profile -Name "expectedInterfaceAlias") } else { $null }
+    lastSeenSubnetHint = if (Get-ObjectPropertyValue -Object $Profile -Name "lastSeenSubnetHint") { [string](Get-ObjectPropertyValue -Object $Profile -Name "lastSeenSubnetHint") } else { $expectedSubnetHint }
+  }
+}
+
+function Convert-LegacyStableNetworkStateToProfilesState {
+  param([Parameter(Mandatory)]$LegacyState)
+
+  $profile = Normalize-StableNetworkProfile -Profile ([pscustomobject]@{
+    id = if (Get-ObjectPropertyValue -Object $LegacyState -Name "profileId") { Get-ObjectPropertyValue -Object $LegacyState -Name "profileId" } else { "legacy-default" }
+    label = if (Get-ObjectPropertyValue -Object $LegacyState -Name "domain") { "legacy-$(Get-ObjectPropertyValue -Object $LegacyState -Name 'domain')" } else { "legacy-default" }
+    domain = Get-ObjectPropertyValue -Object $LegacyState -Name "domain"
+    expectedPcIp = Get-ObjectPropertyValue -Object $LegacyState -Name "expectedLocalIp"
+    expectedGateway = Get-ObjectPropertyValue -Object $LegacyState -Name "expectedGateway"
+    expectedInterfaceAlias = Get-ObjectPropertyValue -Object $LegacyState -Name "expectedInterfaceAlias"
+    expectedSubnetHint = Get-ObjectPropertyValue -Object $LegacyState -Name "expectedSubnetHint"
+    expectedPublicIp = Get-ObjectPropertyValue -Object $LegacyState -Name "expectedPublicIp"
+    intermediateRouterIp = Get-ObjectPropertyValue -Object $LegacyState -Name "expectedUpnpExternalIp"
+    expectedUpnpMappings = Get-ObjectPropertyValue -Object $LegacyState -Name "expectedUpnpMappings" -Default @()
+    createdAt = Get-ObjectPropertyValue -Object $LegacyState -Name "savedAt"
+    lastSeenAt = Get-ObjectPropertyValue -Object $LegacyState -Name "savedAt"
+    mode = if (Get-ObjectPropertyValue -Object $LegacyState -Name "expectedUpnpExternalIp") { "double_nat" } else { "unknown" }
+    notes = "Importado automaticamente desde el formato antiguo."
+  })
+
+  return [pscustomobject]@{
+    schemaVersion = 3
+    activeProfileId = "auto"
+    profiles = @($profile)
+  }
+}
+
+function Read-RawStableNetworkProfilesFile {
   param([switch]$AllowMissing)
 
-  $path = Get-PublicStableNetworkStatePath
-  if (-not (Test-Path $path)) {
+  $profilesPath = Get-PublicStableNetworkProfilesPath
+  $legacyPath = Get-LegacyPublicStableNetworkStatePath
+  $sourcePath = $null
+
+  if (Test-Path $profilesPath) {
+    $sourcePath = $profilesPath
+  } elseif (Test-Path $legacyPath) {
+    $sourcePath = $legacyPath
+  }
+
+  if (-not $sourcePath) {
     if ($AllowMissing) {
       return $null
     }
-    throw "No existe el estado de red estable en $path"
+    throw "No existe la configuracion de perfiles de red estable."
   }
 
   try {
-    $raw = Get-Content -Path $path -Raw -ErrorAction Stop
+    $raw = Get-Content -Path $sourcePath -Raw -ErrorAction Stop
     if (-not $raw.Trim()) {
       return $null
     }
-
-    $parsed = ($raw | ConvertFrom-Json -ErrorAction Stop)
+    return ($raw | ConvertFrom-Json -ErrorAction Stop)
   } catch {
+    return $null
+  }
+}
+
+function Read-PublicStableNetworkProfiles {
+  param([switch]$AllowMissing)
+
+  $parsed = Read-RawStableNetworkProfilesFile -AllowMissing:$AllowMissing
+  if (-not $parsed) {
     return $null
   }
 
   if ($parsed.PSObject.Properties.Name -contains "profiles") {
-    return $parsed
+    $profiles = @()
+    foreach ($profile in @($parsed.profiles)) {
+      $profiles += (Normalize-StableNetworkProfile -Profile $profile)
+    }
+
+    return [pscustomobject]@{
+      schemaVersion = if ($parsed.schemaVersion) { [int]$parsed.schemaVersion } else { 3 }
+      activeProfileId = if ($parsed.activeProfileId) { [string]$parsed.activeProfileId } else { "auto" }
+      profiles = $profiles
+    }
   }
 
-  return [pscustomobject]@{
-    schemaVersion = 2
-    activeProfileId = "legacy-default"
-    profiles = @(
-      [pscustomobject]@{
-        profileId = "legacy-default"
-        label = if ($parsed.domain) { "legacy-$($parsed.domain)" } else { "legacy-default" }
-        savedAt = $parsed.savedAt
-        domain = $parsed.domain
-        expectedLocalIp = $parsed.expectedLocalIp
-        expectedGateway = $parsed.expectedGateway
-        expectedInterfaceAlias = $parsed.expectedInterfaceAlias
-        expectedSubnetHint = $parsed.expectedSubnetHint
-        expectedPublicIp = $parsed.expectedPublicIp
-        expectedUpnpExternalIp = $parsed.expectedUpnpExternalIp
-        expectedUpnpMappings = $parsed.expectedUpnpMappings
-      }
-    )
-  }
+  return (Convert-LegacyStableNetworkStateToProfilesState -LegacyState $parsed)
 }
 
-function Write-PublicStableNetworkState {
+function Write-PublicStableNetworkProfiles {
   param([Parameter(Mandatory)]$State)
 
-  $path = Get-PublicStableNetworkStatePath
-  $json = $State | ConvertTo-Json -Depth 6
+  $normalizedProfiles = @()
+  foreach ($profile in @($State.profiles)) {
+    $normalizedProfiles += (Normalize-StableNetworkProfile -Profile $profile)
+  }
+
+  $normalizedState = [pscustomobject]@{
+    schemaVersion = 3
+    activeProfileId = if ($State.activeProfileId) { [string]$State.activeProfileId } else { "auto" }
+    profiles = $normalizedProfiles
+  }
+
+  $path = Get-PublicStableNetworkProfilesPath
+  $json = $normalizedState | ConvertTo-Json -Depth 8
   Set-Content -Path $path -Value $json -Encoding ASCII
   return $path
 }
 
-function Get-NetworkProfileId {
-  param(
-    [Parameter(Mandatory)]$CurrentNetwork,
-    [Parameter(Mandatory)]$EdgeStatus
-  )
-
-  $ifacePart = if ($CurrentNetwork.InterfaceAlias) { $CurrentNetwork.InterfaceAlias } else { "unknown-iface" }
-  $gatewayPart = if ($CurrentNetwork.Gateway) { $CurrentNetwork.Gateway } else { "unknown-gateway" }
-  $subnetPart = if ($CurrentNetwork.SubnetHint) { $CurrentNetwork.SubnetHint } else { "unknown-subnet" }
-  $upnpPart = if ($EdgeStatus.UpnpExternalIp) { $EdgeStatus.UpnpExternalIp } else { "no-upnp-external" }
-
-  $parts = @(
-    $ifacePart,
-    $gatewayPart,
-    $subnetPart,
-    $upnpPart
-  )
-
-  return (($parts -join "|") -replace '[^A-Za-z0-9\.\-\|]', '_')
+function Read-PublicStableNetworkState {
+  param([switch]$AllowMissing)
+  return (Read-PublicStableNetworkProfiles -AllowMissing:$AllowMissing)
 }
 
-function Get-NetworkProfileLabel {
+function Write-PublicStableNetworkState {
+  param([Parameter(Mandatory)]$State)
+  return (Write-PublicStableNetworkProfiles -State $State)
+}
+
+function Get-StableNetworkMode {
   param(
     [Parameter(Mandatory)]$CurrentNetwork,
     [Parameter(Mandatory)]$EdgeStatus
   )
 
-  $iface = if ($CurrentNetwork.InterfaceAlias) { $CurrentNetwork.InterfaceAlias } else { "red" }
-  $gateway = if ($CurrentNetwork.Gateway) { $CurrentNetwork.Gateway } else { "sin-gateway" }
-  if ($EdgeStatus.UpnpExternalIp) {
-    return "$iface $gateway via $($EdgeStatus.UpnpExternalIp)"
+  if ($EdgeStatus.UpnpExternalIp -and (Test-IsPrivateIPv4 -IpAddress $EdgeStatus.UpnpExternalIp) -and $CurrentNetwork.LocalIp -and -not (Test-SameIpv4SubnetHint -LeftIp $CurrentNetwork.LocalIp -RightIp $EdgeStatus.UpnpExternalIp)) {
+    return "double_nat"
   }
-  return "$iface $gateway"
+
+  if ($CurrentNetwork.LocalIp -and $CurrentNetwork.Gateway -and (Test-SameIpv4SubnetHint -LeftIp $CurrentNetwork.LocalIp -RightIp $CurrentNetwork.Gateway)) {
+    return "direct_router"
+  }
+
+  return "unknown"
+}
+
+function New-StableNetworkProfileId {
+  param(
+    [Parameter(Mandatory)]$CurrentNetwork,
+    [Parameter(Mandatory)]$EdgeStatus,
+    [string]$Label
+  )
+
+  $base = if ($Label) { $Label } elseif ($CurrentNetwork.SubnetHint) { $CurrentNetwork.SubnetHint } elseif ($CurrentNetwork.LocalIp) { $CurrentNetwork.LocalIp } else { "red" }
+  $gateway = if ($CurrentNetwork.Gateway) { $CurrentNetwork.Gateway } else { "sin-gateway" }
+  $mode = Get-StableNetworkMode -CurrentNetwork $CurrentNetwork -EdgeStatus $EdgeStatus
+  return ((($base + "-" + $gateway + "-" + $mode).ToLowerInvariant()) -replace '[^a-z0-9\.\-]', '-')
+}
+
+function Get-DefaultStableNetworkProfileLabel {
+  param(
+    [Parameter(Mandatory)]$CurrentNetwork,
+    [Parameter(Mandatory)]$EdgeStatus
+  )
+
+  $mode = Get-StableNetworkMode -CurrentNetwork $CurrentNetwork -EdgeStatus $EdgeStatus
+  switch ($mode) {
+    "direct_router" {
+      if ($CurrentNetwork.SubnetHint) {
+        return "Red $($CurrentNetwork.SubnetHint) directa"
+      }
+      return "Red directa"
+    }
+    "double_nat" {
+      if ($CurrentNetwork.SubnetHint) {
+        return "Red $($CurrentNetwork.SubnetHint) con router intermedio"
+      }
+      return "Red con router intermedio"
+    }
+    default {
+      if ($CurrentNetwork.SubnetHint) {
+        return "Red $($CurrentNetwork.SubnetHint)"
+      }
+      return "Red nueva"
+    }
+  }
+}
+
+function New-StableNetworkProfileFromCurrentNetwork {
+  param(
+    [Parameter(Mandatory)][string]$Domain,
+    [Parameter(Mandatory)]$CurrentNetwork,
+    [Parameter(Mandatory)]$EdgeStatus,
+    [string]$Label,
+    [string]$ProfileId,
+    [string]$Notes
+  )
+
+  $timestamp = (Get-Date).ToString("s")
+  $mode = Get-StableNetworkMode -CurrentNetwork $CurrentNetwork -EdgeStatus $EdgeStatus
+  $tcpMappings = @($EdgeStatus.UpnpMappings | Where-Object { $_.Protocol -eq "TCP" -and $_.ExternalPort -in @(80, 443) })
+  $resolvedLabel = if ($Label) { $Label } else { Get-DefaultStableNetworkProfileLabel -CurrentNetwork $CurrentNetwork -EdgeStatus $EdgeStatus }
+  $resolvedId = if ($ProfileId) { $ProfileId } else { New-StableNetworkProfileId -CurrentNetwork $CurrentNetwork -EdgeStatus $EdgeStatus -Label $resolvedLabel }
+
+  return [pscustomobject]@{
+    id = $resolvedId
+    label = $resolvedLabel
+    domain = $Domain
+    expectedPcIp = $CurrentNetwork.LocalIp
+    expectedGateway = $CurrentNetwork.Gateway
+    expectedInterfaceAlias = $CurrentNetwork.InterfaceAlias
+    expectedSubnetHint = $CurrentNetwork.SubnetHint
+    upstreamRouterIp = $null
+    intermediateRouterIp = if ($mode -eq "double_nat") { $EdgeStatus.UpnpExternalIp } else { $null }
+    expectedPublicIp = $EdgeStatus.PublicIp
+    expectedUpnpMappings = @($tcpMappings | ForEach-Object {
+      [pscustomobject]@{
+        protocol = (Get-ObjectPropertyValue -Object $_ -Name "Protocol")
+        externalPort = (Get-ObjectPropertyValue -Object $_ -Name "ExternalPort")
+        internalPort = (Get-ObjectPropertyValue -Object $_ -Name "InternalPort")
+        internalClient = (Get-ObjectPropertyValue -Object $_ -Name "InternalClient")
+        externalIPAddress = (Get-ObjectPropertyValue -Object $_ -Name "ExternalIPAddress")
+        description = (Get-ObjectPropertyValue -Object $_ -Name "Description")
+      }
+    })
+    mode = $mode
+    notes = $Notes
+    createdAt = $timestamp
+    lastSeenAt = $timestamp
+    lastSeenPublicIp = $EdgeStatus.PublicIp
+    lastSeenUpnpExternalIp = $EdgeStatus.UpnpExternalIp
+    lastSeenInterfaceAlias = $CurrentNetwork.InterfaceAlias
+    lastSeenSubnetHint = $CurrentNetwork.SubnetHint
+  }
+}
+
+function Get-StableNetworkProfileById {
+  param(
+    $ProfilesState,
+    [string]$ProfileId
+  )
+
+  if (-not $ProfilesState -or -not $ProfileId) {
+    return $null
+  }
+
+  foreach ($profile in @($ProfilesState.profiles)) {
+    $normalized = Normalize-StableNetworkProfile -Profile $profile
+    if ($normalized.id -eq $ProfileId) {
+      return $normalized
+    }
+  }
+
+  return $null
+}
+
+function Test-StableNetworkProfileMatch {
+  param(
+    [Parameter(Mandatory)]$Profile,
+    [Parameter(Mandatory)]$CurrentNetwork,
+    [Parameter(Mandatory)]$EdgeStatus,
+    [string]$Domain
+  )
+
+  $currentMode = Get-StableNetworkMode -CurrentNetwork $CurrentNetwork -EdgeStatus $EdgeStatus
+  $score = 0
+  $hasIdentity = $false
+
+  if ($Profile.domain) {
+    if ($Domain -and $Profile.domain -eq $Domain) {
+      $score += 2
+    } elseif ($Domain) {
+      return [pscustomobject]@{ IsMatch = $false; Score = 0; CurrentMode = $currentMode }
+    }
+  }
+
+  if ($Profile.expectedPcIp) {
+    $hasIdentity = $true
+    if ($CurrentNetwork.LocalIp -and $Profile.expectedPcIp -eq $CurrentNetwork.LocalIp) {
+      $score += 6
+    } else {
+      return [pscustomobject]@{ IsMatch = $false; Score = 0; CurrentMode = $currentMode }
+    }
+  }
+
+  if ($Profile.expectedGateway) {
+    $hasIdentity = $true
+    if ($CurrentNetwork.Gateway -and $Profile.expectedGateway -eq $CurrentNetwork.Gateway) {
+      $score += 5
+    } else {
+      return [pscustomobject]@{ IsMatch = $false; Score = 0; CurrentMode = $currentMode }
+    }
+  }
+
+  if ($Profile.expectedSubnetHint) {
+    $hasIdentity = $true
+    if ($CurrentNetwork.SubnetHint -and $Profile.expectedSubnetHint -eq $CurrentNetwork.SubnetHint) {
+      $score += 3
+    } elseif ($Profile.expectedPcIp -and $CurrentNetwork.LocalIp -and (Test-SameIpv4SubnetHint -LeftIp $Profile.expectedPcIp -RightIp $CurrentNetwork.LocalIp)) {
+      $score += 2
+    } else {
+      return [pscustomobject]@{ IsMatch = $false; Score = 0; CurrentMode = $currentMode }
+    }
+  }
+
+  if ($Profile.intermediateRouterIp) {
+    $hasIdentity = $true
+    if ($EdgeStatus.UpnpExternalIp -and $Profile.intermediateRouterIp -eq $EdgeStatus.UpnpExternalIp) {
+      $score += 4
+    }
+  }
+
+  if ($Profile.mode -and $Profile.mode -ne "unknown" -and $Profile.mode -eq $currentMode) {
+    $score += 2
+  }
+
+  if ($Profile.expectedPublicIp -and $EdgeStatus.PublicIp -and $Profile.expectedPublicIp -eq $EdgeStatus.PublicIp) {
+    $score += 1
+  }
+
+  return [pscustomobject]@{
+    IsMatch = ($hasIdentity -and $score -gt 0)
+    Score = $score
+    CurrentMode = $currentMode
+  }
 }
 
 function Select-BestStableNetworkProfile {
   param(
-    $KnownState,
+    $ProfilesState,
     [Parameter(Mandatory)]$CurrentNetwork,
-    [Parameter(Mandatory)]$EdgeStatus
+    [Parameter(Mandatory)]$EdgeStatus,
+    [string]$Domain
   )
 
-  if (-not $KnownState -or -not $KnownState.profiles) {
+  if (-not $ProfilesState -or -not $ProfilesState.profiles) {
     return $null
   }
 
   $best = $null
-  foreach ($profile in @($KnownState.profiles)) {
-    $score = 0
-    if ($profile.expectedGateway -and $CurrentNetwork.Gateway -and $profile.expectedGateway -eq $CurrentNetwork.Gateway) {
-      $score += 6
-    }
-    if ($profile.expectedUpnpExternalIp -and $EdgeStatus.UpnpExternalIp -and $profile.expectedUpnpExternalIp -eq $EdgeStatus.UpnpExternalIp) {
-      $score += 5
-    }
-    if ($profile.expectedSubnetHint -and $CurrentNetwork.SubnetHint -and $profile.expectedSubnetHint -eq $CurrentNetwork.SubnetHint) {
-      $score += 4
-    }
-    if ($profile.expectedInterfaceAlias -and $CurrentNetwork.InterfaceAlias -and $profile.expectedInterfaceAlias -eq $CurrentNetwork.InterfaceAlias) {
-      $score += 3
-    }
-    if ($profile.expectedPublicIp -and $EdgeStatus.PublicIp -and $profile.expectedPublicIp -eq $EdgeStatus.PublicIp) {
-      $score += 2
-    }
-    if ($profile.expectedLocalIp -and $CurrentNetwork.LocalIp -and $profile.expectedLocalIp -eq $CurrentNetwork.LocalIp) {
-      $score += 1
-    }
-
-    if ($score -le 0) {
+  foreach ($profile in @($ProfilesState.profiles)) {
+    $normalizedProfile = Normalize-StableNetworkProfile -Profile $profile
+    $result = Test-StableNetworkProfileMatch -Profile $normalizedProfile -CurrentNetwork $CurrentNetwork -EdgeStatus $EdgeStatus -Domain $Domain
+    if (-not $result.IsMatch) {
       continue
     }
 
     $candidate = [pscustomobject]@{
-      Profile = $profile
-      Score = $score
+      Profile = $normalizedProfile
+      Score = $result.Score
+      CurrentMode = $result.CurrentMode
     }
+
     if (-not $best -or $candidate.Score -gt $best.Score) {
       $best = $candidate
     }
   }
 
   return $best
+}
+
+function Set-ActivePublicStableNetworkProfile {
+  param([Parameter(Mandatory)][string]$ProfileId)
+
+  $state = Read-PublicStableNetworkProfiles -AllowMissing
+  if (-not $state) {
+    $state = New-EmptyPublicStableNetworkProfilesState
+  }
+
+  if ($ProfileId -ne "auto" -and -not (Get-StableNetworkProfileById -ProfilesState $state -ProfileId $ProfileId)) {
+    throw "No existe el perfil $ProfileId."
+  }
+
+  $state.activeProfileId = $ProfileId
+  return (Write-PublicStableNetworkProfiles -State $state)
+}
+
+function Save-PublicStableNetworkProfile {
+  param(
+    [Parameter(Mandatory)][string]$Domain,
+    [Parameter(Mandatory)]$CurrentNetwork,
+    [Parameter(Mandatory)]$EdgeStatus,
+    [string]$Label,
+    [string]$ProfileId,
+    [string]$Notes,
+    [switch]$SetActive,
+    [switch]$UpdateExisting
+  )
+
+  $state = Read-PublicStableNetworkProfiles -AllowMissing
+  if (-not $state) {
+    $state = New-EmptyPublicStableNetworkProfilesState
+  }
+
+  $newProfile = New-StableNetworkProfileFromCurrentNetwork -Domain $Domain -CurrentNetwork $CurrentNetwork -EdgeStatus $EdgeStatus -Label $Label -ProfileId $ProfileId -Notes $Notes
+  $existing = Get-StableNetworkProfileById -ProfilesState $state -ProfileId $newProfile.id
+  if ($existing -and -not $UpdateExisting) {
+    throw "Ya existe un perfil con id $($newProfile.id). Usa otro nombre o activa la actualizacion explicita."
+  }
+
+  $profiles = New-Object System.Collections.ArrayList
+  foreach ($profile in @($state.profiles)) {
+    if ($profile.id -ne $newProfile.id) {
+      [void]$profiles.Add($profile)
+    }
+  }
+  [void]$profiles.Add($newProfile)
+  $state.profiles = @($profiles)
+  if ($SetActive) {
+    $state.activeProfileId = $newProfile.id
+  }
+
+  $path = Write-PublicStableNetworkProfiles -State $state
+  return [pscustomobject]@{
+    Path = $path
+    Profile = $newProfile
+    ReplacedExisting = [bool]$existing
+  }
 }
 
 function Save-PublicStableNetworkState {
@@ -263,53 +608,8 @@ function Save-PublicStableNetworkState {
     [Parameter(Mandatory)]$EdgeStatus
   )
 
-  $state = Read-PublicStableNetworkState -AllowMissing
-  if (-not $state) {
-    $state = [pscustomobject]@{
-      schemaVersion = 2
-      activeProfileId = $null
-      profiles = @()
-    }
-  }
-
-  $tcpMappings = @($EdgeStatus.UpnpMappings | Where-Object { $_.Protocol -eq "TCP" -and $_.ExternalPort -in @(80, 443) })
-  $profileId = Get-NetworkProfileId -CurrentNetwork $CurrentNetwork -EdgeStatus $EdgeStatus
-  $profile = [pscustomobject]@{
-    profileId = $profileId
-    label = Get-NetworkProfileLabel -CurrentNetwork $CurrentNetwork -EdgeStatus $EdgeStatus
-    savedAt = (Get-Date).ToString("s")
-    domain = $Domain
-    expectedLocalIp = $CurrentNetwork.LocalIp
-    expectedGateway = $CurrentNetwork.Gateway
-    expectedInterfaceAlias = $CurrentNetwork.InterfaceAlias
-    expectedSubnetHint = $CurrentNetwork.SubnetHint
-    expectedPublicIp = $EdgeStatus.PublicIp
-    expectedUpnpExternalIp = $EdgeStatus.UpnpExternalIp
-    expectedUpnpMappings = @($tcpMappings | ForEach-Object {
-      [pscustomobject]@{
-        protocol = $_.Protocol
-        externalPort = $_.ExternalPort
-        internalPort = $_.InternalPort
-        internalClient = $_.InternalClient
-        externalIPAddress = $_.ExternalIPAddress
-        description = $_.Description
-      }
-    })
-  }
-
-  $profiles = New-Object System.Collections.ArrayList
-  foreach ($existing in @($state.profiles)) {
-    if ($existing.profileId -ne $profileId) {
-      [void]$profiles.Add($existing)
-    }
-  }
-  [void]$profiles.Add($profile)
-  $state.profiles = @($profiles)
-  $state.activeProfileId = $profileId
-
-  $path = Write-PublicStableNetworkState -State $state
-
-  return $path
+  $result = Save-PublicStableNetworkProfile -Domain $Domain -CurrentNetwork $CurrentNetwork -EdgeStatus $EdgeStatus -SetActive -UpdateExisting
+  return $result.Path
 }
 
 function Get-CaddyAcmeFailureDiagnostic {
@@ -336,129 +636,129 @@ function Get-CaddyAcmeFailureDiagnostic {
   }
 }
 
-function Get-StableNetworkExpectation {
-  param(
-    [Parameter(Mandatory)]$EdgeStatus,
-    $KnownState,
-    [Parameter(Mandatory)]$CurrentNetwork
-  )
-
-  $tcpMappings = @($EdgeStatus.UpnpMappings | Where-Object { $_.Protocol -eq "TCP" -and $_.ExternalPort -in @(80, 443) })
-  $mappedTarget = $null
-  if ($tcpMappings.Count -gt 0) {
-    $uniqueTargets = @($tcpMappings | Select-Object -ExpandProperty InternalClient -Unique)
-    if ($uniqueTargets.Count -eq 1) {
-      $mappedTarget = $uniqueTargets[0]
-    }
-  }
-
-  $match = Select-BestStableNetworkProfile -KnownState $KnownState -CurrentNetwork $CurrentNetwork -EdgeStatus $EdgeStatus
-  $matchedProfile = if ($match) { $match.Profile } else { $null }
-
-  return [pscustomobject]@{
-    MatchedProfile = $matchedProfile
-    MatchedProfileScore = if ($match) { $match.Score } else { 0 }
-    ProfilesCount = if ($KnownState -and $KnownState.profiles) { @($KnownState.profiles).Count } else { 0 }
-    ExpectedLocalIp = if ($matchedProfile -and $matchedProfile.expectedLocalIp) { [string]$matchedProfile.expectedLocalIp } else { $mappedTarget }
-    ExpectedGateway = if ($matchedProfile -and $matchedProfile.expectedGateway) { [string]$matchedProfile.expectedGateway } else { $null }
-    ExpectedInterfaceAlias = if ($matchedProfile -and $matchedProfile.expectedInterfaceAlias) { [string]$matchedProfile.expectedInterfaceAlias } else { $null }
-    ExpectedSubnetHint = if ($matchedProfile -and $matchedProfile.expectedSubnetHint) { [string]$matchedProfile.expectedSubnetHint } else {
-      if ($mappedTarget -match '^(\d+\.\d+\.\d+)\.\d+$') { "$($Matches[1]).x" } else { $null }
-    }
-    ExpectedUpnpExternalIp = if ($matchedProfile -and $matchedProfile.expectedUpnpExternalIp) { [string]$matchedProfile.expectedUpnpExternalIp } else { $EdgeStatus.UpnpExternalIp }
-    MappedTargetIp = $mappedTarget
-    TcpMappings = $tcpMappings
-  }
-}
-
 function Get-StablePublishNetworkDiagnosis {
   param(
     [Parameter(Mandatory)]$EdgeStatus,
     [Parameter(Mandatory)]$CaddyStatus,
-    [string]$Domain
+    [string]$Domain,
+    $CurrentNetworkOverride,
+    $ProfilesStateOverride,
+    $AcmeOverride
   )
 
-  $current = Get-CurrentNetworkContext
-  $knownState = Read-PublicStableNetworkState -AllowMissing
-  $expectation = Get-StableNetworkExpectation -EdgeStatus $EdgeStatus -KnownState $knownState -CurrentNetwork $current
-  $acme = Get-CaddyAcmeFailureDiagnostic
+  $current = if ($PSBoundParameters.ContainsKey("CurrentNetworkOverride") -and $null -ne $CurrentNetworkOverride) { $CurrentNetworkOverride } else { Get-CurrentNetworkContext }
+  $profilesState = if ($PSBoundParameters.ContainsKey("ProfilesStateOverride")) { $ProfilesStateOverride } else { Read-PublicStableNetworkProfiles -AllowMissing }
+  $acme = if ($PSBoundParameters.ContainsKey("AcmeOverride")) { $AcmeOverride } else { Get-CaddyAcmeFailureDiagnostic }
+  $currentMode = Get-StableNetworkMode -CurrentNetwork $current -EdgeStatus $EdgeStatus
+  $detectedMatch = Select-BestStableNetworkProfile -ProfilesState $profilesState -CurrentNetwork $current -EdgeStatus $EdgeStatus -Domain $Domain
+  $detectedProfile = if ($detectedMatch) { $detectedMatch.Profile } else { $null }
+  $activeProfileId = if ($profilesState -and $profilesState.activeProfileId) { [string]$profilesState.activeProfileId } else { "auto" }
+  $activeProfile = if ($activeProfileId -and $activeProfileId -ne "auto") { Get-StableNetworkProfileById -ProfilesState $profilesState -ProfileId $activeProfileId } else { $null }
+  $activeProfileMatch = $null
+  if ($activeProfile) {
+    $activeProfileMatch = Test-StableNetworkProfileMatch -Profile $activeProfile -CurrentNetwork $current -EdgeStatus $EdgeStatus -Domain $Domain
+  }
 
-  $currentIp = $current.LocalIp
-  $expectedIp = $expectation.ExpectedLocalIp
-  $currentGateway = $current.Gateway
-  $expectedGateway = $expectation.ExpectedGateway
-  $gatewayChanged = [bool]($expectedGateway -and $currentGateway -and $expectedGateway -ne $currentGateway)
-  $ipChanged = [bool]($expectedIp -and $currentIp -and $expectedIp -ne $currentIp)
-  $interfaceChanged = [bool]($expectation.ExpectedInterfaceAlias -and $current.InterfaceAlias -and $expectation.ExpectedInterfaceAlias -ne $current.InterfaceAlias)
-  $subnetChanged = [bool]($expectation.ExpectedSubnetHint -and $current.SubnetHint -and $expectation.ExpectedSubnetHint -ne $current.SubnetHint)
+  $tcpMappings = @($EdgeStatus.UpnpMappings | Where-Object { $_.Protocol -eq "TCP" -and $_.ExternalPort -in @(80, 443) })
+  $mappedTargetIp = $null
+  $uniqueTargets = @($tcpMappings | Select-Object -ExpandProperty InternalClient -Unique)
+  if ($uniqueTargets.Count -eq 1) {
+    $mappedTargetIp = $uniqueTargets[0]
+  }
 
-  $changedWifi = ($ipChanged -or $gatewayChanged -or $interfaceChanged -or $subnetChanged)
+  $publicRouteHitsCurrentPc = [bool]($current.LocalIp -and $mappedTargetIp -and $mappedTargetIp -eq $current.LocalIp)
+  $publicRouteEvidence = ($publicRouteHitsCurrentPc -or $CaddyStatus.TlsReady -or ($acme -and $acme.HasTimeout))
+  $manualProfileMismatch = [bool]($activeProfileId -ne "auto" -and $activeProfile -and (-not $activeProfileMatch -or -not $activeProfileMatch.IsMatch))
+  $isNewNetwork = (-not $detectedProfile)
   $caseCode = $null
   $summary = $null
   $nextStep = $null
   $details = @()
 
-  if ($currentIp) {
-    $details += "Este PC esta ahora en $currentIp"
+  if ($current.LocalIp) {
+    $details += "IP de este PC: $($current.LocalIp)"
   }
-  if ($currentGateway) {
-    $details += "Gateway actual: $currentGateway"
+  if ($current.Gateway) {
+    $details += "Router actual: $($current.Gateway)"
   }
-  if ($expectedIp) {
-    $details += "IP esperada para publicar: $expectedIp"
+  if ($detectedProfile) {
+    $details += "Perfil de red detectado: $($detectedProfile.label)"
   }
-  if ($expectedGateway) {
-    $details += "Gateway esperado: $expectedGateway"
+  if ($activeProfile) {
+    $details += "Perfil activo configurado: $($activeProfile.label)"
   }
-  if ($expectation.ExpectedUpnpExternalIp) {
-    $details += "Router intermedio esperado: $($expectation.ExpectedUpnpExternalIp)"
+  if ($currentMode -eq "double_nat") {
+    $details += "Modo detectado: red con router intermedio"
+  } elseif ($currentMode -eq "direct_router") {
+    $details += "Modo detectado: router directo"
+  } else {
+    $details += "Modo detectado: red sin clasificar todavia"
   }
-  if ($expectation.MatchedProfile -and $expectation.MatchedProfile.label) {
-    $details += "Perfil conocido detectado: $($expectation.MatchedProfile.label)"
+  if ($mappedTargetIp) {
+    $details += "Los reenvios visibles apuntan a: $mappedTargetIp"
   }
 
-  if ($changedWifi) {
-    $caseCode = "C"
-    $summary = "La web estable no puede publicarse porque este PC ya no esta en la red donde estaban abiertos los puertos."
-    if ($expectation.ExpectedUpnpExternalIp -and $currentIp -and (Test-SameIpv4SubnetHint -LeftIp $currentIp -RightIp $expectation.ExpectedUpnpExternalIp)) {
-      $nextStep = "Parece que ahora estas en el Wi-Fi del router aguas arriba. Vuelve al Wi-Fi del TP-Link Mesh o cambia el Port Forwarding del router DIGI para apuntar a $currentIp."
-    } elseif ($expectedIp) {
-      $nextStep = "Las reglas actuales probablemente apuntan a $expectedIp, pero este PC ahora esta en $currentIp. Vuelve al Wi-Fi correcto o actualiza el Port Forwarding a la IP actual."
+  if ($manualProfileMismatch) {
+    $caseCode = "MANUAL_PROFILE_MISMATCH"
+    $summary = "El perfil activo manual no coincide con la red actual."
+    if ($detectedProfile) {
+      $nextStep = "Ahora mismo encaja mejor el perfil '$($detectedProfile.label)'. Cambia el perfil activo a ese o vuelve a modo auto."
     } else {
-      $nextStep = "Parece que has cambiado de Wi-Fi o de router de salida. Vuelve a la red desde la que se abrieron los puertos o actualiza el Port Forwarding."
+      $nextStep = "Cambia a modo auto, activa otro perfil o guarda esta red actual como perfil nuevo."
+    }
+  } elseif ($detectedProfile) {
+    $caseCode = "PROFILE_DETECTED"
+    $summary = "Perfil de red detectado: $($detectedProfile.label)."
+    if ($acme -and $acme.HasTimeout) {
+      if ($detectedProfile.mode -eq "direct_router") {
+        $nextStep = "Revisa que el router actual tenga TCP 80 y 443 apuntando a $($current.LocalIp) y que el firewall de Windows permita esos puertos."
+      } elseif ($detectedProfile.mode -eq "double_nat") {
+        $nextStep = "Revisa la cadena completa: router principal 80/443 hacia el router intermedio y router intermedio 80/443 hacia $($current.LocalIp)."
+      } else {
+        $nextStep = "La app esta bien, pero Internet todavia no entra por 80/443 hasta este PC. Revisa el Port Forwarding hacia $($current.LocalIp)."
+      }
+    } elseif ($publicRouteHitsCurrentPc -and -not $CaddyStatus.TlsReady) {
+      $nextStep = "Los reenvios visibles ya apuntan a esta IP. Si HTTPS aun falla, revisa el firewall local o espera a que termine de emitirse el certificado."
+    }
+  } elseif ($isNewNetwork) {
+    $caseCode = "NEW_NETWORK"
+    $summary = "Red nueva detectada. Esta red aun no esta guardada como perfil web estable."
+    if ($current.LocalIp -and -not $publicRouteEvidence) {
+      $nextStep = "Puedes usar esta red, pero primero configura el Port Forwarding hacia $($current.LocalIp) y luego guarda esta red como perfil."
+    } elseif ($publicRouteHitsCurrentPc) {
+      $nextStep = "Esta red parece viable y los reenvios visibles ya apuntan a esta IP. Guardala como perfil para no repetir este aviso."
+    } else {
+      $nextStep = "Si quieres usar esta red como publicacion estable, guarda un perfil nuevo y revisa que 80/443 lleguen hasta esta IP."
     }
   } elseif ($EdgeStatus.DoubleNatDetected -and $CaddyStatus.Running -and -not $CaddyStatus.TlsReady) {
-    $caseCode = "B"
-    $summary = "Hay doble NAT y Caddy intenta publicar, pero las reglas del router aguas arriba aun no dejan pasar 80/443 hasta este PC."
-    $nextStep = if ($expectation.ExpectedUpnpExternalIp) {
-      "Abre TCP 80 y 443 en el router aguas arriba para reenviar hacia $($expectation.ExpectedUpnpExternalIp), o pon el router intermedio en modo bridge/AP."
+    $caseCode = "UPSTREAM_ROUTE_BLOCKED"
+    $summary = "La app esta bien, pero Internet todavia no llega a este PC por 80/443."
+    $nextStep = if ($EdgeStatus.UpnpExternalIp) {
+      "Revisa el router aguas arriba para que reenvie 80/443 hacia $($EdgeStatus.UpnpExternalIp) y desde ahi hasta la IP actual del PC."
     } else {
-      "Abre TCP 80 y 443 en el router aguas arriba hasta el router intermedio o evita la doble NAT."
+      "Revisa la cadena de Port Forwarding completa hasta la IP actual del PC."
     }
-  } elseif ($EdgeStatus.DoubleNatDetected -and $CaddyStatus.TlsReady) {
-    $caseCode = "A"
-    $summary = "Hay doble NAT conocido, pero la ruta actual parece coherente."
-    $nextStep = "No hace falta cambiar la red mientras la IP del PC y el router intermedio se mantengan igual."
-  } elseif ($expectation.ProfilesCount -gt 0 -and -not $expectation.MatchedProfile) {
-    $caseCode = "C"
-    $summary = "La red actual no coincide con ninguno de los perfiles de publicacion guardados."
-    $nextStep = "Vuelve a una de las redes donde ya funcionaba la publicacion o republica desde esta Wi-Fi para guardar un perfil nuevo."
   } elseif ($EdgeStatus.UpnpExternalIp -and (Test-IsPrivateIPv4 -IpAddress $EdgeStatus.UpnpExternalIp) -and $acme -and $acme.HasTimeout) {
-    $caseCode = "D"
+    $caseCode = "CGNAT_OR_PRIVATE_NAT"
     $summary = "La ruta publica sigue sin llegar a este PC y puede haber CG-NAT o una NAT privada aguas arriba."
     $nextStep = "Confirma con tu operador si la IP publica es realmente enrutable o si estas bajo CG-NAT."
   }
 
   return [pscustomobject]@{
     Current = $current
-    KnownState = $knownState
-    Expectation = $expectation
+    ProfilesState = $profilesState
+    ProfilesCount = if ($profilesState -and $profilesState.profiles) { @($profilesState.profiles).Count } else { 0 }
+    ActiveProfileId = $activeProfileId
+    ActiveProfile = $activeProfile
+    DetectedProfile = $detectedProfile
+    CurrentMode = $currentMode
+    IsNewNetwork = $isNewNetwork
+    ManualProfileMismatch = $manualProfileMismatch
+    PublicRouteHitsCurrentPc = $publicRouteHitsCurrentPc
+    PublicRouteEvidence = $publicRouteEvidence
+    MappedTargetIp = $mappedTargetIp
+    TcpMappings = $tcpMappings
     Acme = $acme
-    ChangedWifi = $changedWifi
-    IpChanged = $ipChanged
-    GatewayChanged = $gatewayChanged
-    InterfaceChanged = $interfaceChanged
-    SubnetChanged = $subnetChanged
     CaseCode = $caseCode
     Summary = $summary
     NextStep = $nextStep
@@ -1339,10 +1639,9 @@ function Get-PublicDomainPreflight {
   }
 
   if ($edgeStatus.DoubleNatDetected) {
-    $ready = $false
-    $checks += [pscustomobject]@{ Name = "Topologia de red"; Status = "fail"; Message = "Hay doble NAT: UPnP ve como externa $($edgeStatus.UpnpExternalIp), pero la IP publica real es $($edgeStatus.PublicIp)." }
+    $checks += [pscustomobject]@{ Name = "Topologia de red"; Status = "warn"; Message = "Hay un router intermedio: UPnP ve como externa $($edgeStatus.UpnpExternalIp), mientras la IP publica real es $($edgeStatus.PublicIp)." }
   } elseif ($edgeStatus.UpnpExternalIp) {
-    $checks += [pscustomobject]@{ Name = "Topologia de red"; Status = "ok"; Message = "La IP externa visible por UPnP coincide con la red esperada: $($edgeStatus.UpnpExternalIp)." }
+    $checks += [pscustomobject]@{ Name = "Topologia de red"; Status = "ok"; Message = "La red expone UPnP con salida por $($edgeStatus.UpnpExternalIp)." }
   }
 
   if ($caddyStatus.Running -and -not $caddyStatus.TlsReady) {
@@ -1361,17 +1660,25 @@ function Get-PublicDomainPreflight {
     $checks += [pscustomobject]@{ Name = "Gateway actual"; Status = "ok"; Message = "Gateway actual: $($networkDiagnosis.Current.Gateway)." }
   }
 
-  if ($networkDiagnosis.ChangedWifi) {
+  if ($networkDiagnosis.DetectedProfile) {
+    $checks += [pscustomobject]@{ Name = "Perfil de red"; Status = "ok"; Message = "Perfil de red detectado: $($networkDiagnosis.DetectedProfile.label)." }
+  } elseif ($networkDiagnosis.IsNewNetwork) {
+    $checks += [pscustomobject]@{ Name = "Perfil de red"; Status = "warn"; Message = "Red nueva detectada. Esta red aun no esta guardada como perfil web estable." }
+  }
+
+  if ($networkDiagnosis.ManualProfileMismatch) {
     $ready = $false
-    $checks += [pscustomobject]@{ Name = "Cambio de Wi-Fi"; Status = "fail"; Message = $networkDiagnosis.Summary }
-  } elseif ($networkDiagnosis.CaseCode -eq "B") {
+    $checks += [pscustomobject]@{ Name = "Perfil activo"; Status = "fail"; Message = $networkDiagnosis.Summary }
+  }
+
+  if ($networkDiagnosis.CaseCode -eq "UPSTREAM_ROUTE_BLOCKED") {
     $ready = $false
-    $checks += [pscustomobject]@{ Name = "Router aguas arriba"; Status = "fail"; Message = $networkDiagnosis.Summary }
-  } elseif ($networkDiagnosis.CaseCode -eq "D") {
+    $checks += [pscustomobject]@{ Name = "Llegada publica"; Status = "fail"; Message = $networkDiagnosis.Summary }
+  } elseif ($networkDiagnosis.CaseCode -eq "CGNAT_OR_PRIVATE_NAT") {
     $ready = $false
-    $checks += [pscustomobject]@{ Name = "CG-NAT"; Status = "fail"; Message = $networkDiagnosis.Summary }
-  } elseif ($networkDiagnosis.CaseCode -eq "A") {
-    $checks += [pscustomobject]@{ Name = "Topologia conocida"; Status = "ok"; Message = $networkDiagnosis.Summary }
+    $checks += [pscustomobject]@{ Name = "Llegada publica"; Status = "fail"; Message = $networkDiagnosis.Summary }
+  } elseif ($networkDiagnosis.CaseCode -eq "PROFILE_DETECTED" -or $networkDiagnosis.CaseCode -eq "NEW_NETWORK") {
+    $checks += [pscustomobject]@{ Name = "Llegada publica"; Status = "warn"; Message = if ($networkDiagnosis.NextStep) { $networkDiagnosis.NextStep } else { "Todavia no hay confirmacion completa de la llegada publica por 80/443." } }
   }
 
   return [pscustomobject]@{
