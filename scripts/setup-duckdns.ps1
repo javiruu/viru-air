@@ -88,26 +88,22 @@ try {
 }
 
 Write-Host ""
-Write-Host "Chequeo de publicacion estable:"
-$preflightScript = Join-Path $PSScriptRoot "public-domain-preflight.ps1"
-& $preflightScript
-$preflightOk = ($LASTEXITCODE -eq 0)
+Write-Host "Comprobando si la web estable puede quedar lista..."
 
-if ($updateSucceeded -and $preflightOk) {
-  Write-Host ""
-  Write-Host "Preflight OK. Intentando arrancar Caddy..."
-  $caddyScript = Join-Path $PSScriptRoot "caddy-start.ps1"
-  & $caddyScript
+if ($updateSucceeded) {
+  $stableScript = Join-Path $PSScriptRoot "public-stable-start.ps1"
+  & $stableScript -AutoMode
   if ($LASTEXITCODE -ne 0) {
-    Write-Warn "DuckDNS quedo configurado, pero Caddy no pudo arrancar automaticamente."
+    Write-Host ""
+    Write-Warn "DuckDNS quedo configurado, pero la web estable aun no ha podido quedarse activa."
   }
 } else {
   Write-Host ""
-  Write-Warn "No arranque Caddy automaticamente porque el update DuckDNS o el preflight no quedaron listos."
+  Write-Warn "DuckDNS quedo configurado, pero el dominio aun no pudo actualizarse correctamente."
 }
 
 Write-Host ""
 Write-Host "Setup DuckDNS completado."
-Write-Host "1. Ajusta DOMAIN=$fqdn en infra/.env si aun no coincide."
-Write-Host "2. Usa CADDY STATUS / START desde el panel para la publicacion estable."
+Write-Host "1. El dominio queda guardado en infra/duckdns.local.env."
+Write-Host "2. Usa ESTADO WEB ESTABLE en el panel para comprobar si ya ha quedado publicada."
 Write-Host "3. Usa PUBLICAR RAPIDO solo para URLs temporales."

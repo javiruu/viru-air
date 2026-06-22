@@ -1,4 +1,4 @@
-# Runbook: DuckDNS + publicacion temporal
+# Runbook: dominio estable + publicacion temporal
 
 **Estado:** vivo  
 **Ultima revision:** 2026-06-22  
@@ -11,12 +11,12 @@ La historia operativa oficial para exponer `viru-tracker` queda separada en dos 
 
 | Modo | Cuando usarlo | URL publica |
 |---|---|---|
-| `DuckDNS + Caddy nativo` | dominio estable en Windows con frontend/backend locales | `https://tu-subdominio.duckdns.org` |
+| `Dominio estable con DuckDNS` | dominio estable en Windows con frontend/backend locales | `https://tu-subdominio.duckdns.org` |
 | `Publico temporal` | laptop, demos rapidas, IP dinamica o CGNAT | URL efimera |
 
 `DuckDNS` es el dominio canonico. El modo temporal no intenta fingir ese dominio: solo abre una URL efimera mientras el frontend corre en local.
 
-## Modo A: DuckDNS + Caddy nativo
+## Modo A: dominio estable con DuckDNS
 
 Ideal para despliegue estable con IP publica y puertos `80/443` accesibles.
 
@@ -41,8 +41,8 @@ Ese setup:
 3. Registra la tarea programada `ViruTracker-DuckDNS`.
 4. Fuerza una actualizacion inicial contra DuckDNS.
 5. Deja el log en `logs/duckdns-update.log`.
-6. Lanza un preflight de publicacion estable.
-7. Intenta instalar/arrancar `Caddy` nativo automaticamente solo si frontend, backend, `DOMAIN`, DNS y puertos `80/443` estan listos.
+6. Revisa en segundo plano si el dominio, DNS, servicios locales y puertos publicos estan listos.
+7. Intenta instalar/arrancar automaticamente el servicio web estable solo si todo lo anterior esta listo.
 
 Puedes revisar el estado en cualquier momento:
 
@@ -50,7 +50,7 @@ Puedes revisar el estado en cualquier momento:
 powershell -ExecutionPolicy Bypass -File .\scripts\duckdns-status.ps1
 ```
 
-### 3. Levantar Caddy nativo con el dominio estable
+### 3. Publicar la web estable
 
 ```bash
 cp infra/.env.prod.example infra/.env
@@ -65,15 +65,27 @@ JWT_SECRET=<genera-un-valor-seguro>
 APP_ENV=production
 ```
 
-Validar prerequisitos antes de levantar Caddy:
+Con el panel simplificado, la forma recomendada es:
+
+```text
+VIRU_PANEL.bat
+  Opcion 4: PUBLICAR WEB ESTABLE
+  Opcion 5: ESTADO WEB ESTABLE
+  Opcion 6: DETENER WEB ESTABLE
+```
+
+La opcion `PUBLICAR WEB ESTABLE` revisa y usa internamente:
+
+- dominio configurado;
+- resolucion DNS;
+- frontend y backend locales;
+- puertos `80/443`;
+- servicio web estable.
+
+Si prefieres hacerlo desde terminal o necesitas diagnostico tecnico:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\public-domain-preflight.ps1
-```
-
-Iniciar `frontend` y `backend` localmente, luego gestionar Caddy desde scripts:
-
-```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\caddy-start.ps1
 powershell -ExecutionPolicy Bypass -File .\scripts\caddy-status.ps1
 powershell -ExecutionPolicy Bypass -File .\scripts\caddy-stop.ps1
@@ -113,14 +125,13 @@ Ideal para compartir una instancia local desde laptop sin abrir puertos ni exigi
 ```text
 VIRU_PANEL.bat
   Opcion 1: Iniciar VIRU
-  Opcion 4: PUBLICO TEMPORAL START
-  Opcion 5: PUBLICO TEMPORAL STATUS
-  Opcion 6: PUBLICO TEMPORAL STOP
-  Opcion G: PREFLIGHT PUBLICACION ESTABLE
-  Opcion H: CADDY START
-  Opcion I: CADDY STATUS
-  Opcion J: CADDY STOP
-  Opcion K: PUBLICAR RAPIDO
+  Opcion 4: PUBLICAR WEB ESTABLE
+  Opcion 5: ESTADO WEB ESTABLE
+  Opcion 6: DETENER WEB ESTABLE
+  Opcion 7: PUBLICO TEMPORAL START
+  Opcion 8: PUBLICO TEMPORAL STATUS
+  Opcion 9: PUBLICO TEMPORAL STOP
+  Opcion H: PUBLICAR RAPIDO
 ```
 
 ### Flujo manual
@@ -142,9 +153,9 @@ El script usa `localhost.run` y devuelve una URL efimera. No sustituye el domini
 | DuckDNS responde `KO` | Verifica `DUCKDNS_DOMAIN` y `DUCKDNS_TOKEN` en `infra/duckdns.local.env` |
 | DuckDNS esta pausado | Reactiva la tarea con `scripts/duckdns-enable.ps1` o la opcion `C` del panel |
 | La tarea no aparece | Reejecuta `scripts/setup-duckdns.ps1` con una PowerShell con permisos normales del usuario |
-| El dominio no resuelve | Espera unos minutos y revisa `scripts/duckdns-status.ps1` o `scripts/public-domain-preflight.ps1` |
-| Caddy no estaba instalado | `scripts/caddy-start.ps1` intenta instalarlo con `winget` automaticamente |
-| Caddy no arranca | Revisa `infra/.env`, `DOMAIN`, frontend/backend locales y ejecuta `scripts/public-domain-preflight.ps1` |
+| El dominio no resuelve | Espera unos minutos y revisa `scripts/duckdns-status.ps1` o la opcion `ESTADO WEB ESTABLE` |
+| El servicio web estable no estaba instalado | `scripts/caddy-start.ps1` o la opcion `PUBLICAR WEB ESTABLE` intentan instalarlo con `winget` automaticamente |
+| La web estable no arranca | Revisa `infra/.env`, `DOMAIN`, frontend/backend locales y usa `scripts/public-domain-preflight.ps1` si necesitas diagnostico tecnico |
 | Caddy no emite TLS | Asegura que `80/443` estan abiertos y que el registro A ya apunta a tu IP publica |
 | El dominio sigue sin responder desde fuera | Verifica firewall/router/NAT. En Windows, abrir `80/443` requiere permisos de administrador |
 | No sale URL temporal | Comprueba que `ssh` este disponible y revisa `logs/public_temp_tunnel*.log` |

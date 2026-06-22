@@ -26,37 +26,37 @@ if (-not [System.IO.Path]::IsPathRooted($logPath)) {
   $logPath = Join-Path (Get-RepoRoot) $logPath
 }
 
-Write-Info "DuckDNS domain: $fqdn"
-Write-Info "Config path:    $ConfigPath"
-Write-Info "Log path:       $logPath"
+Write-Info "Dominio DuckDNS: $fqdn"
+Write-Info "Config path:     $ConfigPath"
+Write-Info "Log path:        $logPath"
 
 $taskInfo = Get-ScheduledTaskInfo -TaskName $taskName
 if ($taskInfo.Present) {
   if ($taskInfo.Enabled) {
-    Write-Ok "Scheduled task: OK ($taskName)"
+    Write-Ok "Actualizacion automatica: activa ($taskName)"
   } else {
-    Write-Warn "Scheduled task: DISABLED ($taskName)"
+    Write-Warn "Actualizacion automatica: pausada ($taskName)"
   }
 } else {
-  Write-Fail "Scheduled task: MISSING ($taskName)"
+  Write-Fail "Actualizacion automatica: falta la tarea $taskName"
 }
 
 $dnsRows = @(Get-DnsARecords -Name $fqdn)
 if ($dnsRows.Count -gt 0) {
-  Write-Ok "DNS A records:  $($dnsRows -join ', ')"
+  Write-Ok "DNS activo:              $($dnsRows -join ', ')"
 } else {
-  Write-Warn "DNS A records:  not resolved yet"
+  Write-Warn "DNS activo:              aun no resuelve"
 }
 
 $lastLog = Get-LastTabLogEntry -Path $logPath
 if ($lastLog) {
   if ($lastLog.Result -eq "OK") {
-    Write-Ok "Ultimo update:  OK ($($lastLog.Timestamp))"
+    Write-Ok "Ultimo update:           OK ($($lastLog.Timestamp))"
   } else {
-    Write-Warn "Ultimo update:  $($lastLog.Result) ($($lastLog.Timestamp))"
+    Write-Warn "Ultimo update:           $($lastLog.Result) ($($lastLog.Timestamp))"
   }
 } else {
-  Write-Warn "Ultimo update:  sin registros todavia"
+  Write-Warn "Ultimo update:           sin registros todavia"
 }
 
 $portStates = Get-PortListeners -Ports @(80, 443)
@@ -70,25 +70,25 @@ foreach ($state in $portStates | Sort-Object Port) {
 
 $infraEnv = Read-DotEnv -Path (Get-InfraEnvPath) -AllowMissing
 if ($infraEnv.ContainsKey("DOMAIN")) {
-  Write-Info "infra/.env DOMAIN: $($infraEnv['DOMAIN'])"
+  Write-Info "Dominio web estable:     $($infraEnv['DOMAIN'])"
 }
 
 $caddy = Get-CaddyRuntimeStatus
 if (-not $caddy.Installed) {
-  Write-Warn "Caddy status: caddy no instalado."
+  Write-Warn "Web estable:             falta el servicio web de entrada."
 } elseif (-not $caddy.HasPidFile) {
-  Write-Warn "Caddy status: aun no arrancado desde el panel."
+  Write-Warn "Web estable:             aun no levantada."
 } elseif ($caddy.Healthy) {
-  Write-Ok "Caddy status: corriendo."
+  Write-Ok "Web estable:             activa."
 } else {
-  Write-Warn "Caddy status: PID guardado, pero proceso/puertos no saludables."
+  Write-Warn "Web estable:             PID guardado, pero proceso o puertos no saludables."
 }
 
 if ($null -ne $caddy.DomainMatchesDuckDns) {
   if ($caddy.DomainMatchesDuckDns) {
-    Write-Ok "DOMAIN coincide con DuckDNS."
+    Write-Ok "Dominio web:             coincide con DuckDNS."
   } else {
-    Write-Fail "DOMAIN no coincide con DuckDNS."
+    Write-Fail "Dominio web:             no coincide con DuckDNS."
   }
 }
 
