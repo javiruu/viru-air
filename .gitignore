@@ -17,6 +17,7 @@ keys.txt
 
 # DuckDNS local config (contains real token/domain values)
 infra/duckdns.local.env
+infra/public-stable-network-state.json
 
 # Local databases
 viru.db

@@ -23,6 +23,7 @@ $infra = Read-DotEnv -Path (Get-InfraEnvPath) -AllowMissing
 $status = Get-CaddyRuntimeStatus
 $preflight = Get-PublicDomainPreflight
 $edge = $preflight.EdgeStatus
+$networkDiagnosis = $preflight.NetworkDiagnosis
 
 $publicDomain = if ($infra.ContainsKey("DOMAIN") -and $infra["DOMAIN"]) { $infra["DOMAIN"] } elseif ($duck.ContainsKey("DUCKDNS_FQDN")) { $duck["DUCKDNS_FQDN"] } else { $null }
 if ($publicDomain) {
@@ -73,6 +74,26 @@ if ($edge.DoubleNatDetected) {
   Write-Ok "Topologia:     sin doble NAT evidente en UPnP"
 }
 
+if ($networkDiagnosis.Current.LocalIp) {
+  Write-Info ("IP del PC:     $($networkDiagnosis.Current.LocalIp)")
+}
+
+if ($networkDiagnosis.Current.Gateway) {
+  Write-Info ("Router actual: $($networkDiagnosis.Current.Gateway)")
+}
+
+if ($networkDiagnosis.Expectation.ExpectedLocalIp) {
+  Write-Info ("IP esperada:   $($networkDiagnosis.Expectation.ExpectedLocalIp)")
+}
+
+if ($networkDiagnosis.Expectation.ExpectedGateway) {
+  Write-Info ("Router esperado: $($networkDiagnosis.Expectation.ExpectedGateway)")
+}
+
+if ($networkDiagnosis.Expectation.MatchedProfile -and $networkDiagnosis.Expectation.MatchedProfile.label) {
+  Write-Info ("Perfil activo:  $($networkDiagnosis.Expectation.MatchedProfile.label)")
+}
+
 if ($status.Healthy) {
   Write-Ok "Web estable:  activa"
   Write-Info ("Puertos:      " + ($status.PublishedPorts -join ", "))
@@ -115,7 +136,20 @@ if ($busyPorts.Count -gt 0) {
 }
 
 Write-Host ""
+if ($networkDiagnosis -and $networkDiagnosis.Summary) {
+  if ($networkDiagnosis.CaseCode -eq "A") {
+    Write-Ok $networkDiagnosis.Summary
+  } else {
+    Write-Warn $networkDiagnosis.Summary
+  }
+}
+if ($networkDiagnosis -and $networkDiagnosis.NextStep) {
+  Write-Info $networkDiagnosis.NextStep
+}
+
 if ($status.Healthy) {
+  $savePath = Save-PublicStableNetworkState -Domain $publicDomain -CurrentNetwork $networkDiagnosis.Current -EdgeStatus $edge
+  Write-Info ("Perfil de red estable guardado en: " + $savePath)
   Write-Ok "La web estable esta publicada y lista para entrar desde fuera."
   exit 0
 }

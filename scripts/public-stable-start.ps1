@@ -79,6 +79,24 @@ function Convert-ToFriendlyCheck {
         $message = "HTTPS listo."
       }
     }
+    "Red actual" {
+      $message = $message.Replace("Este PC esta ahora en", "Este PC esta ahora en")
+    }
+    "Gateway actual" {
+      $message = $message.Replace("Gateway actual:", "Router de salida actual:")
+    }
+    "Cambio de Wi-Fi" {
+      $message = "Parece que has cambiado de red Wi-Fi o de router de salida."
+    }
+    "Router aguas arriba" {
+      $message = "La ruta publica sigue cortada en el router aguas arriba antes de llegar a este PC."
+    }
+    "CG-NAT" {
+      $message = "Podria haber CG-NAT o una NAT privada del operador por encima de tu router."
+    }
+    "Topologia conocida" {
+      $message = "La ruta de red conocida sigue pareciendo coherente."
+    }
   }
 
   return [pscustomobject]@{
@@ -123,6 +141,9 @@ function Get-BlockingHint {
       "DOMAIN" { return "Siguiente paso: vuelve a ejecutar DUCKDNS SETUP para sincronizar el dominio web." }
       "Topologia de red" { return "Siguiente paso: abre tambien 80/443 en el router aguas arriba o confirma con tu operador si estas bajo CGNAT." }
       "TLS" { return "Siguiente paso: deja libres 80/443 hacia este PC y vuelve a publicar para que HTTPS pueda emitir el certificado." }
+      "Cambio de Wi-Fi" { return "Siguiente paso: vuelve al Wi-Fi del TP-Link Mesh o cambia el Port Forwarding para apuntar a la IP actual del PC." }
+      "Router aguas arriba" { return "Siguiente paso: abre TCP 80 y 443 en el router aguas arriba hacia el router intermedio o hacia este PC, segun la red que quieras usar." }
+      "CG-NAT" { return "Siguiente paso: confirma con tu operador si estas bajo CG-NAT o si la IP publica no es realmente enrutable." }
     }
   }
 
@@ -187,11 +208,29 @@ Write-Info "Revisando dominio, DNS, servicios locales y puertos publicos..."
 $preflight = Get-PublicDomainPreflight
 Write-FriendlyChecksReport -Checks $preflight.Checks
 
+$networkDiagnosis = $preflight.NetworkDiagnosis
+if ($networkDiagnosis -and $networkDiagnosis.Details.Count -gt 0) {
+  Write-Host ""
+  foreach ($detail in $networkDiagnosis.Details) {
+    Write-Info $detail
+  }
+}
+
+if ($networkDiagnosis -and -not $networkDiagnosis.ChangedWifi -and $preflight.EdgeStatus.UpnpMappings.Count -gt 0 -and $preflight.Domain) {
+  $savePath = Save-PublicStableNetworkState -Domain $preflight.Domain -CurrentNetwork $networkDiagnosis.Current -EdgeStatus $preflight.EdgeStatus
+  Write-Info ("Perfil de red actualizado en: " + $savePath)
+}
+
 if (-not $preflight.Ready) {
   Write-Host ""
   Write-Warn "La web estable aun no esta lista para publicarse."
+  $hasSpecificNetworkStep = $false
+  if ($networkDiagnosis -and $networkDiagnosis.NextStep) {
+    Write-Info $networkDiagnosis.NextStep
+    $hasSpecificNetworkStep = $true
+  }
   $hint = Get-BlockingHint -Checks $preflight.Checks
-  if ($hint) {
+  if ($hint -and -not $hasSpecificNetworkStep) {
     Write-Info $hint
   }
   exit 1
@@ -215,6 +254,11 @@ try {
 $postStatus = Get-CaddyRuntimeStatus
 if ($postStatus.Healthy) {
   $publicUrl = if ($postStatus.Domain) { "https://$($postStatus.Domain)" } else { "https://$($preflight.DuckDnsFqdn)" }
+  $postDiagnosis = Get-StablePublishNetworkDiagnosis -EdgeStatus (Get-NetworkEdgeStatus) -CaddyStatus $postStatus -Domain $postStatus.Domain
+  if (-not $postDiagnosis.ChangedWifi) {
+    $savePath = Save-PublicStableNetworkState -Domain $postStatus.Domain -CurrentNetwork $postDiagnosis.Current -EdgeStatus (Get-NetworkEdgeStatus)
+    Write-Info ("Perfil de red estable guardado en: " + $savePath)
+  }
   Write-Host ""
   Write-Ok ("Web estable publicada en $publicUrl")
   if ($postStatus.PublishedPorts.Count -gt 0) {

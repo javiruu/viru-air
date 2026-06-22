@@ -75,6 +75,7 @@ if ($infraEnv.ContainsKey("DOMAIN")) {
 
 $caddy = Get-CaddyRuntimeStatus
 $edge = Get-NetworkEdgeStatus
+$networkDiagnosis = Get-StablePublishNetworkDiagnosis -EdgeStatus $edge -CaddyStatus $caddy -Domain $infraEnv["DOMAIN"]
 if (-not $caddy.Installed) {
   Write-Warn "Web estable:             falta el servicio web de entrada."
 } elseif (-not $caddy.HasPidFile) {
@@ -97,6 +98,38 @@ if ($edge.UpnpExternalIp) {
 
 if ($edge.DoubleNatDetected) {
   Write-Fail "Topologia de red:        doble NAT detectado."
+}
+
+if ($networkDiagnosis.Current.LocalIp) {
+  Write-Info "IP actual del PC:        $($networkDiagnosis.Current.LocalIp)"
+}
+
+if ($networkDiagnosis.Current.Gateway) {
+  Write-Info "Gateway actual:          $($networkDiagnosis.Current.Gateway)"
+}
+
+if ($networkDiagnosis.Expectation.ExpectedLocalIp) {
+  Write-Info "IP esperada para publicar: $($networkDiagnosis.Expectation.ExpectedLocalIp)"
+}
+
+if ($networkDiagnosis.Expectation.ExpectedGateway) {
+  Write-Info "Gateway esperado:        $($networkDiagnosis.Expectation.ExpectedGateway)"
+}
+
+if ($networkDiagnosis.Expectation.MatchedProfile -and $networkDiagnosis.Expectation.MatchedProfile.label) {
+  Write-Info "Perfil de red activo:    $($networkDiagnosis.Expectation.MatchedProfile.label)"
+}
+
+if ($networkDiagnosis.Summary) {
+  if ($networkDiagnosis.CaseCode -eq "A") {
+    Write-Ok "Diagnostico humano:      $($networkDiagnosis.Summary)"
+  } else {
+    Write-Warn "Diagnostico humano:      $($networkDiagnosis.Summary)"
+  }
+}
+
+if ($networkDiagnosis.NextStep) {
+  Write-Info "Siguiente paso:          $($networkDiagnosis.NextStep)"
 }
 
 if ($null -ne $caddy.DomainMatchesDuckDns) {
