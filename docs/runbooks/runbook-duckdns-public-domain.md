@@ -37,11 +37,13 @@ powershell -ExecutionPolicy Bypass -File .\scripts\setup-duckdns.ps1 -Domain vir
 Ese setup:
 
 1. Escribe `infra/duckdns.local.env`.
+2. Genera o sincroniza `infra/.env` con `DOMAIN`, `NEXT_PUBLIC_API_URL`, `JWT_SECRET` y `APP_ENV`.
 2. Registra la tarea programada `ViruTracker-DuckDNS`.
 3. Fuerza una actualizacion inicial contra DuckDNS.
 4. Deja el log en `logs/duckdns-update.log`.
 5. Lanza un preflight de publicacion estable.
-6. Intenta arrancar Caddy automaticamente solo si `infra/.env`, `DOMAIN`, DNS, puertos `80/443` y compose estan listos.
+6. Intenta preparar Docker Desktop / `docker compose` automaticamente.
+7. Intenta arrancar Caddy automaticamente solo si `infra/.env`, `DOMAIN`, DNS, puertos `80/443` y compose estan listos.
 
 Puedes revisar el estado en cualquier momento:
 
@@ -149,6 +151,8 @@ El script usa `localhost.run` y devuelve una URL efimera. No sustituye el domini
 | DuckDNS esta pausado | Reactiva la tarea con `scripts/duckdns-enable.ps1` o la opcion `C` del panel |
 | La tarea no aparece | Reejecuta `scripts/setup-duckdns.ps1` con una PowerShell con permisos normales del usuario |
 | El dominio no resuelve | Espera unos minutos y revisa `scripts/duckdns-status.ps1` o `scripts/public-domain-preflight.ps1` |
+| Docker no estaba instalado | El setup intenta instalar Docker Desktop con `winget` automaticamente |
+| Docker Desktop muestra `Welcome` | Completa una sola vez el onboarding inicial; hasta entonces el daemon no arrancara y el preflight lo marcara como bloqueado |
 | Caddy no arranca | Revisa `infra/.env`, `DOMAIN`, `docker compose`, y ejecuta `scripts/public-domain-preflight.ps1` |
 | Caddy no emite TLS | Asegura que `80/443` estan abiertos y que el registro A ya apunta a tu IP publica |
 | No sale URL temporal | Comprueba que `ssh` este disponible y revisa `logs/public_temp_tunnel*.log` |

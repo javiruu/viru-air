@@ -24,6 +24,20 @@ function Get-InfraEnvPath {
   return (Join-Path (Get-InfraDir) ".env")
 }
 
+function New-UrlSafeSecret {
+  param([int]$Bytes = 48)
+
+  $buffer = New-Object byte[] $Bytes
+  $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+  try {
+    $rng.GetBytes($buffer)
+  } finally {
+    $rng.Dispose()
+  }
+
+  return [Convert]::ToBase64String($buffer).TrimEnd("=").Replace("+", "-").Replace("/", "_")
+}
+
 function Read-DotEnv {
   param(
     [Parameter(Mandatory)]
@@ -58,6 +72,61 @@ function Read-DotEnv {
   }
 
   return $values
+}
+
+function Write-DotEnvFile {
+  param(
+    [Parameter(Mandatory)][string]$Path,
+    [Parameter(Mandatory)][hashtable]$Values
+  )
+
+  $lines = @(
+    "# Auto-generated local production env for viru-tracker."
+    "DOMAIN=$($Values['DOMAIN'])"
+    "NEXT_PUBLIC_API_URL=$($Values['NEXT_PUBLIC_API_URL'])"
+    "JWT_SECRET=$($Values['JWT_SECRET'])"
+    "APP_ENV=$($Values['APP_ENV'])"
+  )
+
+  if ($Values.ContainsKey("CORS_ALLOW_ORIGINS") -and $Values["CORS_ALLOW_ORIGINS"]) {
+    $lines += "CORS_ALLOW_ORIGINS=$($Values['CORS_ALLOW_ORIGINS'])"
+  }
+
+  if ($Values.ContainsKey("CORS_ALLOW_ORIGIN_REGEX") -and $Values["CORS_ALLOW_ORIGIN_REGEX"]) {
+    $lines += "CORS_ALLOW_ORIGIN_REGEX=$($Values['CORS_ALLOW_ORIGIN_REGEX'])"
+  }
+
+  Set-Content -Path $Path -Value $lines -Encoding ASCII
+}
+
+function Ensure-InfraEnv {
+  param([Parameter(Mandatory)][string]$Domain)
+
+  $envPath = Get-InfraEnvPath
+  $existedBefore = Test-Path $envPath
+  $existing = Read-DotEnv -Path $envPath -AllowMissing
+
+  $values = @{
+    DOMAIN = $Domain
+    NEXT_PUBLIC_API_URL = if ($existing.ContainsKey("NEXT_PUBLIC_API_URL") -and $existing["NEXT_PUBLIC_API_URL"]) { $existing["NEXT_PUBLIC_API_URL"] } else { "/api/v1" }
+    JWT_SECRET = if ($existing.ContainsKey("JWT_SECRET") -and $existing["JWT_SECRET"] -and $existing["JWT_SECRET"] -ne "change-me-to-a-strong-random-value" -and $existing["JWT_SECRET"] -ne "change-me") { $existing["JWT_SECRET"] } else { New-UrlSafeSecret }
+    APP_ENV = if ($existing.ContainsKey("APP_ENV") -and $existing["APP_ENV"]) { $existing["APP_ENV"] } else { "production" }
+  }
+
+  if ($existing.ContainsKey("CORS_ALLOW_ORIGINS")) {
+    $values["CORS_ALLOW_ORIGINS"] = $existing["CORS_ALLOW_ORIGINS"]
+  }
+  if ($existing.ContainsKey("CORS_ALLOW_ORIGIN_REGEX")) {
+    $values["CORS_ALLOW_ORIGIN_REGEX"] = $existing["CORS_ALLOW_ORIGIN_REGEX"]
+  }
+
+  Write-DotEnvFile -Path $envPath -Values $values
+  return [pscustomobject]@{
+    Path = $envPath
+    Domain = $values["DOMAIN"]
+    JwtGenerated = (-not $existing.ContainsKey("JWT_SECRET") -or -not $existing["JWT_SECRET"] -or $existing["JWT_SECRET"] -eq "change-me-to-a-strong-random-value" -or $existing["JWT_SECRET"] -eq "change-me")
+    WasCreated = (-not $existedBefore)
+  }
 }
 
 function Write-Section {
@@ -302,13 +371,251 @@ function Get-LastTabLogEntry {
   }
 }
 
-function Test-DockerComposeAvailable {
-  if (-not (Test-CommandAvailable -CommandName "docker")) {
+function Invoke-CommandWithTimeout {
+  param(
+    [Parameter(Mandatory)][string]$FilePath,
+    [Parameter(Mandatory)][string[]]$Arguments,
+    [int]$TimeoutSeconds = 10
+  )
+
+  $tempBase = Join-Path (Get-LogsDir) ("cmd-" + [guid]::NewGuid().ToString("N"))
+  $stdoutPath = "$tempBase.out.log"
+  $stderrPath = "$tempBase.err.log"
+
+  try {
+    $proc = Start-Process -FilePath $FilePath `
+      -ArgumentList $Arguments `
+      -RedirectStandardOutput $stdoutPath `
+      -RedirectStandardError $stderrPath `
+      -PassThru `
+      -WindowStyle Hidden
+
+    if (-not $proc.WaitForExit($TimeoutSeconds * 1000)) {
+      Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+      return [pscustomobject]@{
+        TimedOut = $true
+        ExitCode = 124
+        Output = @()
+      }
+    }
+
+    $output = @()
+    if (Test-Path $stdoutPath) { $output += Get-Content -Path $stdoutPath -ErrorAction SilentlyContinue }
+    if (Test-Path $stderrPath) { $output += Get-Content -Path $stderrPath -ErrorAction SilentlyContinue }
+
+    return [pscustomobject]@{
+      TimedOut = $false
+      ExitCode = $proc.ExitCode
+      Output = $output
+    }
+  } finally {
+    Remove-Item $stdoutPath -Force -ErrorAction SilentlyContinue
+    Remove-Item $stderrPath -Force -ErrorAction SilentlyContinue
+  }
+}
+
+function Get-DockerCliCandidates {
+  $candidates = @()
+  if (Test-CommandAvailable -CommandName "docker") {
+    $cmd = Get-Command docker -ErrorAction SilentlyContinue
+    if ($cmd) {
+      $candidates += $cmd.Source
+    }
+  }
+
+  $defaultPaths = @(
+    "C:\Program Files\Docker\Docker\resources\bin\docker.exe",
+    "C:\Program Files\Docker\Docker\resources\docker-cli.exe"
+  )
+
+  foreach ($path in $defaultPaths) {
+    if ((Test-Path $path) -and $candidates -notcontains $path) {
+      $candidates += $path
+    }
+  }
+
+  return $candidates
+}
+
+function Get-PreferredDockerCliPath {
+  $candidates = @(Get-DockerCliCandidates)
+  foreach ($candidate in $candidates) {
+    $path = [string]$candidate
+    if ($path) {
+      return $path
+    }
+  }
+  return $null
+}
+
+function Get-DockerDesktopExecutable {
+  $paths = @(
+    "C:\Program Files\Docker\Docker\Docker Desktop.exe",
+    "C:\Program Files\Docker\Docker Desktop.exe"
+  )
+
+  foreach ($path in $paths) {
+    if (Test-Path $path) {
+      return $path
+    }
+  }
+
+  return $null
+}
+
+function Test-DockerDesktopWelcomeOpen {
+  $windows = @(Get-Process -Name "Docker Desktop" -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle -like "Welcome*" })
+  return ($windows.Count -gt 0)
+}
+
+function Test-DockerCliAvailable {
+  $candidates = Get-DockerCliCandidates
+  foreach ($candidate in $candidates) {
+    $candidatePath = [string]$candidate
+    if (-not $candidatePath) {
+      continue
+    }
+    $result = Invoke-CommandWithTimeout -FilePath $candidatePath -Arguments @("compose", "version") -TimeoutSeconds 10
+    if (-not $result.TimedOut -and $result.ExitCode -eq 0) {
+      if (-not ($env:PATH -split ";" | Where-Object { $_ -eq (Split-Path -Parent $candidatePath) })) {
+        $env:PATH = (Split-Path -Parent $candidatePath) + ";" + $env:PATH
+      }
+      Set-Alias -Name docker -Value $candidatePath -Scope Script
+      return $true
+    }
+  }
+  return $false
+}
+
+function Test-DockerDaemonAvailable {
+  $dockerCli = Get-PreferredDockerCliPath
+  if (-not $dockerCli) {
     return $false
   }
 
-  $null = & docker compose version 2>$null
-  return ($LASTEXITCODE -eq 0)
+  $result = Invoke-CommandWithTimeout -FilePath $dockerCli -Arguments @("info") -TimeoutSeconds 10
+  if ($result.TimedOut) {
+    return $false
+  }
+  return ($result.ExitCode -eq 0)
+}
+
+function Test-DockerComposeAvailable {
+  return ((Test-DockerCliAvailable) -and (Test-DockerDaemonAvailable))
+}
+
+function Wait-ForDockerDaemon {
+  param([int]$TimeoutSeconds = 180)
+
+  $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+  do {
+    if (Test-DockerComposeAvailable) {
+      return $true
+    }
+    if (Test-DockerDesktopWelcomeOpen) {
+      return $false
+    }
+    Start-Sleep -Seconds 3
+  } while ((Get-Date) -lt $deadline)
+
+  return $false
+}
+
+function Start-DockerDesktopIfInstalled {
+  $dockerDesktop = Get-DockerDesktopExecutable
+  if (-not $dockerDesktop) {
+    return $false
+  }
+
+  if (Test-DockerDesktopWelcomeOpen) {
+    return $false
+  }
+
+  $running = Get-Process -Name "Docker Desktop" -ErrorAction SilentlyContinue
+  if (-not $running) {
+    Start-Process -FilePath $dockerDesktop -WindowStyle Hidden | Out-Null
+  }
+
+  return (Wait-ForDockerDaemon -TimeoutSeconds 180)
+}
+
+function Install-DockerDesktopIfMissing {
+  if (Test-DockerComposeAvailable) {
+    return $true
+  }
+
+  if (Start-DockerDesktopIfInstalled) {
+    return $true
+  }
+
+  if (-not (Test-CommandAvailable -CommandName "winget")) {
+    return $false
+  }
+
+  $logPath = Join-Path (Get-LogsDir) "docker-desktop-install.log"
+  $stderrPath = Join-Path (Get-LogsDir) "docker-desktop-install.err.log"
+  if (Test-Path $logPath) {
+    Remove-Item $logPath -Force -ErrorAction SilentlyContinue
+  }
+  if (Test-Path $stderrPath) {
+    Remove-Item $stderrPath -Force -ErrorAction SilentlyContinue
+  }
+
+  $proc = Start-Process -FilePath "winget.exe" `
+    -ArgumentList @(
+      "install",
+      "-e",
+      "--id", "Docker.DockerDesktop",
+      "--accept-package-agreements",
+      "--accept-source-agreements",
+      "--disable-interactivity"
+    ) `
+    -RedirectStandardOutput $logPath `
+    -RedirectStandardError $stderrPath `
+    -PassThru
+
+  if (-not $proc.WaitForExit(300000)) {
+    Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+    Write-Warn "La instalacion automatica de Docker Desktop no termino en 5 minutos. Puede requerir permisos de administrador o una confirmacion de Windows."
+    return $false
+  }
+
+  if ($proc.ExitCode -ne 0) {
+    $installOutput = @()
+    if (Test-Path $logPath) { $installOutput += Get-Content -Path $logPath -Tail 80 }
+    if (Test-Path $stderrPath) { $installOutput += Get-Content -Path $stderrPath -Tail 80 }
+    $installOutput = if ($installOutput.Count -gt 0) { ($installOutput | Out-String).Trim() } else { "sin log" }
+    Write-Warn ("No pude instalar Docker Desktop automaticamente con winget: " + $installOutput)
+    return $false
+  }
+
+  return (Start-DockerDesktopIfInstalled)
+}
+
+function Ensure-DockerComposeReady {
+  if (Test-DockerComposeAvailable) {
+    return $true
+  }
+
+  if (Test-DockerDesktopWelcomeOpen) {
+    Write-Warn "Docker Desktop esta instalado pero sigue en la pantalla inicial 'Welcome'. Hasta completar ese onboarding, el daemon no arranca."
+    return $false
+  }
+
+  if (Start-DockerDesktopIfInstalled) {
+    return $true
+  }
+
+  $installed = Install-DockerDesktopIfMissing
+  if ($installed) {
+    return $true
+  }
+
+  if (Test-DockerDesktopWelcomeOpen) {
+    Write-Warn "Docker Desktop esta instalado pero sigue en la pantalla inicial 'Welcome'. Hasta completar ese onboarding, el daemon no arranca."
+  }
+
+  return $false
 }
 
 function Get-DockerComposeBaseArgs {
@@ -331,7 +638,12 @@ function Invoke-DockerCompose {
     [switch]$AllowFailure
   )
 
-  $output = & docker compose @Arguments 2>&1
+  $dockerCli = Get-PreferredDockerCliPath
+  if (-not $dockerCli) {
+    throw "No encuentro el binario docker en esta maquina."
+  }
+
+  $output = & $dockerCli compose @Arguments 2>&1
   $exitCode = $LASTEXITCODE
   if (-not $AllowFailure -and $exitCode -ne 0) {
     throw "docker compose fallo (exit $exitCode): $($output -join [Environment]::NewLine)"
@@ -401,14 +713,15 @@ function Get-CaddyRuntimeStatus {
   $status.ContainerId = $containerId
   $status.Exists = $true
 
-  $stateOutput = (& docker inspect --format '{{.State.Status}}' $containerId 2>$null)
+  $dockerCli = Get-PreferredDockerCliPath
+  $stateOutput = (& $dockerCli inspect --format '{{.State.Status}}' $containerId 2>$null)
   if ($LASTEXITCODE -eq 0) {
     $stateText = ($stateOutput | Select-Object -First 1).ToString().Trim()
     $status.State = $stateText
     $status.Running = ($stateText -eq "running")
   }
 
-  $portsOutput = (& docker inspect --format '{{json .NetworkSettings.Ports}}' $containerId 2>$null)
+  $portsOutput = (& $dockerCli inspect --format '{{json .NetworkSettings.Ports}}' $containerId 2>$null)
   if ($LASTEXITCODE -eq 0 -and $portsOutput) {
     try {
       $portsJson = ($portsOutput | Select-Object -First 1).ToString()
@@ -498,7 +811,15 @@ function Get-PublicDomainPreflight {
 
   if (-not (Test-DockerComposeAvailable)) {
     $ready = $false
-    $checks += [pscustomobject]@{ Name = "Docker Compose"; Status = "fail"; Message = "docker compose no esta disponible en PATH." }
+    if ((Get-PreferredDockerCliPath) -or (Test-DockerDesktopWelcomeOpen)) {
+      if (Test-DockerDesktopWelcomeOpen) {
+        $checks += [pscustomobject]@{ Name = "Docker Compose"; Status = "fail"; Message = "Docker Desktop esta en la pantalla inicial 'Welcome' y el daemon aun no arranco." }
+      } else {
+        $checks += [pscustomobject]@{ Name = "Docker Compose"; Status = "fail"; Message = "docker compose existe, pero el daemon de Docker Desktop aun no responde." }
+      }
+    } else {
+      $checks += [pscustomobject]@{ Name = "Docker Compose"; Status = "fail"; Message = "docker compose no esta disponible en PATH." }
+    }
   } else {
     $checks += [pscustomobject]@{ Name = "Docker Compose"; Status = "ok"; Message = "docker compose esta disponible." }
     $services = Get-ComposeServices
