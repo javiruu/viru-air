@@ -22,6 +22,7 @@ $duck = Read-DotEnv -Path (Get-DuckDnsConfigPath) -AllowMissing
 $infra = Read-DotEnv -Path (Get-InfraEnvPath) -AllowMissing
 $status = Get-CaddyRuntimeStatus
 $preflight = Get-PublicDomainPreflight
+$edge = $preflight.EdgeStatus
 
 $publicDomain = if ($infra.ContainsKey("DOMAIN") -and $infra["DOMAIN"]) { $infra["DOMAIN"] } elseif ($duck.ContainsKey("DUCKDNS_FQDN")) { $duck["DUCKDNS_FQDN"] } else { $null }
 if ($publicDomain) {
@@ -58,15 +59,37 @@ if ($taskInfo.Present -and $taskInfo.Enabled) {
   Write-Fail "DuckDNS auto: no existe la tarea automatica"
 }
 
+if ($edge.PublicIp) {
+  Write-Info ("IP publica:    $($edge.PublicIp)")
+}
+
+if ($edge.UpnpExternalIp) {
+  Write-Info ("UPnP externa:  $($edge.UpnpExternalIp)")
+}
+
+if ($edge.DoubleNatDetected) {
+  Write-Fail "Topologia:     doble NAT detectado"
+} elseif ($edge.UpnpSupported) {
+  Write-Ok "Topologia:     sin doble NAT evidente en UPnP"
+}
+
 if ($status.Healthy) {
   Write-Ok "Web estable:  activa"
   Write-Info ("Puertos:      " + ($status.PublishedPorts -join ", "))
+} elseif ($status.HasPidFile -and $status.Running -and -not $status.TlsReady) {
+  Write-Warn "Web estable:  el proceso esta vivo, pero HTTPS aun no esta listo."
 } elseif ($status.HasPidFile -and $status.Running) {
   Write-Warn "Web estable:  el proceso esta vivo, pero no detecte los puertos 80/443 publicados."
 } elseif ($status.HasPidFile) {
   Write-Warn "Web estable:  habia un PID guardado, pero el proceso ya no sigue vivo."
 } else {
   Write-Warn "Web estable:  aun no esta levantada."
+}
+
+if ($status.TlsReady) {
+  Write-Ok "TLS:          certificado o handshake HTTPS listos"
+} elseif ($status.TlsDetail -and $status.TlsDetail.Error) {
+  Write-Warn ("TLS:          " + $status.TlsDetail.Error)
 }
 
 $frontendOk = @($preflight.Checks | Where-Object { $_.Name -eq "Frontend local" -and $_.Status -eq "ok" }).Count -gt 0

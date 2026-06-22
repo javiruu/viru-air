@@ -74,14 +74,29 @@ if ($infraEnv.ContainsKey("DOMAIN")) {
 }
 
 $caddy = Get-CaddyRuntimeStatus
+$edge = Get-NetworkEdgeStatus
 if (-not $caddy.Installed) {
   Write-Warn "Web estable:             falta el servicio web de entrada."
 } elseif (-not $caddy.HasPidFile) {
   Write-Warn "Web estable:             aun no levantada."
 } elseif ($caddy.Healthy) {
   Write-Ok "Web estable:             activa."
+} elseif ($caddy.Running -and -not $caddy.TlsReady) {
+  Write-Warn "Web estable:             Caddy corre, pero HTTPS aun no esta listo."
 } else {
   Write-Warn "Web estable:             PID guardado, pero proceso o puertos no saludables."
+}
+
+if ($edge.PublicIp) {
+  Write-Info "IP publica actual:       $($edge.PublicIp)"
+}
+
+if ($edge.UpnpExternalIp) {
+  Write-Info "UPnP IP externa:         $($edge.UpnpExternalIp)"
+}
+
+if ($edge.DoubleNatDetected) {
+  Write-Fail "Topologia de red:        doble NAT detectado."
 }
 
 if ($null -ne $caddy.DomainMatchesDuckDns) {
