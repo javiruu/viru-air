@@ -47,10 +47,11 @@ Entradas vivas actualizadas:
 - `docs/reference/backend/quick-search-contract.md`
 - `docs/specs/viru-fare-memory.md`
 
-## Actualizacion manual 2026-06-22 (panel operativo DuckDNS + Caddy)
+## Actualizacion manual 2026-06-22 (panel simplificado de publicacion)
 
 Entradas vivas actualizadas:
 
+- `docs/DOCS_INVENTORY.md`
 - `docs/runbooks/runbook-duckdns-public-domain.md`
 
 ## Actualizacion manual 2026-06-16 (humanizacion de lenguaje visible)
@@ -554,7 +555,7 @@ Entradas vivas retiradas:
 | docs/runbooks/runbook-activation-profiles.md | runbook | vivo | conservar | docs/runbooks/runbook-activation-profiles.md | Perfiles canónicos de activación por entorno (local_demo, local_real, staging_safe, prod_gradual) con matriz de flags y blindaje anti-mock | docs/runbooks/runbook-activation-profiles.md |
 | docs/runbooks/runbook-canary-rollback.md | runbook | vivo | conservar | docs/runbooks/runbook-canary-rollback.md | Runbook operativo activo | docs/runbooks/runbook-canary-rollback.md |
 | docs/runbooks/runbook-db-retention.md | runbook | vivo | conservar | docs/runbooks/runbook-db-retention.md | Runbook operativo activo | docs/runbooks/runbook-db-retention.md |
-| docs/runbooks/runbook-duckdns-public-domain.md | runbook | vivo | conservar | docs/runbooks/runbook-duckdns-public-domain.md | Runbook operativo activo para DuckDNS y publicacion temporal | docs/runbooks/runbook-duckdns-public-domain.md |
+| docs/runbooks/runbook-duckdns-public-domain.md | runbook | vivo | conservar | docs/runbooks/runbook-duckdns-public-domain.md | Runbook operativo activo para dominio estable y publicacion temporal | docs/runbooks/runbook-duckdns-public-domain.md |
 | docs/runbooks/runbook-oom.md | runbook | vivo | conservar | docs/runbooks/runbook-oom.md | Runbook operativo activo | docs/runbooks/runbook-oom.md |
 | docs/runbooks/runbook-provider-degraded.md | runbook | vivo | conservar | docs/runbooks/runbook-provider-degraded.md | Runbook operativo activo | docs/runbooks/runbook-provider-degraded.md |
 | docs/runbooks/runbook-route-canonicalization.md | runbook | vivo | conservar | docs/runbooks/runbook-route-canonicalization.md | Runbook operativo activo | docs/runbooks/runbook-route-canonicalization.md |
@@ -582,19 +583,6 @@ Entradas vivas retiradas:
 | fases/_extraido_txt/FASE_8_Testing_Viru.txt | historical | duplicado | eliminar candidato | docs/archive/fases/transcripts/FASE_8_Testing_Viru.txt | Transcripci?n duplicada ya preservada en archive | docs/archive/fases/transcripts/FASE_8_Testing_Viru.txt |
 | fases/_extraido_txt/FASE_9_Documentacion_Tecnica_Extensa_Viru.txt | historical | duplicado | eliminar candidato | docs/archive/fases/transcripts/FASE_9_Documentacion_Tecnica_Extensa_Viru.txt | Transcripci?n duplicada ya preservada en archive | docs/archive/fases/transcripts/FASE_9_Documentacion_Tecnica_Extensa_Viru.txt |
 | fases/_extraido_txt/INDICE_MAESTRO_VIRU_IA_NAVEGACION.txt | historical | duplicado | eliminar candidato | docs/archive/fases/transcripts/INDICE_MAESTRO_VIRU_IA_NAVEGACION.txt | Transcripci?n duplicada ya preservada en archive | docs/archive/fases/transcripts/INDICE_MAESTRO_VIRU_IA_NAVEGACION.txt |
-| skills/remodex/AGENTS.md | unknown | revisar manualmente | revisar manualmente | skills/remodex/AGENTS.md | Documentaci?n externa o ajena al producto; no fuente de verdad de Viru | externo/no aplica |
-| skills/remodex/CLAUDE.md | unknown | revisar manualmente | revisar manualmente | skills/remodex/CLAUDE.md | Documentaci?n externa o ajena al producto; no fuente de verdad de Viru | externo/no aplica |
-| skills/remodex/CONTRIBUTING.md | unknown | revisar manualmente | revisar manualmente | skills/remodex/CONTRIBUTING.md | Documentaci?n externa o ajena al producto; no fuente de verdad de Viru | externo/no aplica |
-| skills/remodex/Docs/RECAP-local-first-cleanup.md | unknown | obsoleto | eliminar candidato | skills/remodex/Docs/RECAP-local-first-cleanup.md | Documento externo vac?o sin valor verificable | ninguna |
-| skills/remodex/Docs/RECAP-review-finding-fixes.md | unknown | revisar manualmente | revisar manualmente | skills/remodex/Docs/RECAP-review-finding-fixes.md | Documentaci?n externa o ajena al producto; no fuente de verdad de Viru | externo/no aplica |
-| skills/remodex/Docs/RECAP-windows-codex-launch.md | unknown | revisar manualmente | revisar manualmente | skills/remodex/Docs/RECAP-windows-codex-launch.md | Documentaci?n externa o ajena al producto; no fuente de verdad de Viru | externo/no aplica |
-| skills/remodex/Docs/self-hosting.md | unknown | revisar manualmente | revisar manualmente | skills/remodex/Docs/self-hosting.md | Documentaci?n externa o ajena al producto; no fuente de verdad de Viru | externo/no aplica |
-| skills/remodex/Legal/PRIVACY_POLICY.md | unknown | revisar manualmente | revisar manualmente | skills/remodex/Legal/PRIVACY_POLICY.md | Documentaci?n externa o ajena al producto; no fuente de verdad de Viru | externo/no aplica |
-| skills/remodex/Legal/TERMS_OF_USE.md | unknown | revisar manualmente | revisar manualmente | skills/remodex/Legal/TERMS_OF_USE.md | Documentaci?n externa o ajena al producto; no fuente de verdad de Viru | externo/no aplica |
-| skills/remodex/README.md | unknown | revisar manualmente | revisar manualmente | skills/remodex/README.md | Documentaci?n externa o ajena al producto; no fuente de verdad de Viru | externo/no aplica |
-| skills/remodex/SELF_HOSTING_MODEL.md | unknown | revisar manualmente | revisar manualmente | skills/remodex/SELF_HOSTING_MODEL.md | Documentaci?n externa o ajena al producto; no fuente de verdad de Viru | externo/no aplica |
-| skills/remodex/phodex-bridge/README.md | unknown | revisar manualmente | revisar manualmente | skills/remodex/phodex-bridge/README.md | Documentaci?n externa o ajena al producto; no fuente de verdad de Viru | externo/no aplica |
-| skills/remodex/relay/README.md | unknown | revisar manualmente | revisar manualmente | skills/remodex/relay/README.md | Documentaci?n externa o ajena al producto; no fuente de verdad de Viru | externo/no aplica |
 | skills/viru-tracker-context/SKILL.md | contexto IA | vivo | conservar | skills/viru-tracker-context/SKILL.md | Contexto reusable para agentes dentro de Viru | skills/viru-tracker-context/SKILL.md |
 | skills/viru-tracker-context/references/operating-rules.md | contexto IA | vivo | conservar | skills/viru-tracker-context/references/operating-rules.md | Contexto reusable para agentes dentro de Viru | skills/viru-tracker-context/references/operating-rules.md |
 | skills/viru-tracker-context/references/project-context.md | contexto IA | vivo | conservar | skills/viru-tracker-context/references/project-context.md | Contexto reusable para agentes dentro de Viru | skills/viru-tracker-context/references/project-context.md |
