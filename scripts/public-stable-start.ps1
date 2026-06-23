@@ -19,6 +19,15 @@ if (-not $local.FrontendReady -or -not $local.BackendReady) {
 Write-Ok "Frontend local activo en 3000."
 Write-Ok "Backend local activo en 8000."
 
+$install = Ensure-CloudflaredInstalled
+if ($install.Changed) {
+  Write-Ok $install.Message
+} elseif (-not $install.Installed) {
+  Write-Fail $install.Message
+  Write-Info "Siguiente paso: instala cloudflared o usa Tailscale Funnel como alternativa."
+  exit 1
+}
+
 $stable = Get-StableTunnelStatus
 if ($stable.ActiveProvider -and $stable.Ready -and $stable.PublicUrl) {
   Write-Ok ("La web estable ya esta activa con " + $stable.ActiveProvider + ": " + $stable.PublicUrl)
@@ -34,6 +43,9 @@ Write-Info "Intentando abrir la web estable con Cloudflare Tunnel..."
 $cloudflare = Start-CloudflareTunnel
 if ($cloudflare.Ready -and $cloudflare.PublicUrl) {
   Write-Ok ("Cloudflare Tunnel activo: " + $cloudflare.PublicUrl)
+  if ($cloudflare.Version) {
+    Write-Info ("Version: " + $cloudflare.Version)
+  }
   if ($cloudflare.Mode -eq "quick") {
     Write-Info "Ahora mismo estas usando una URL temporal de Cloudflare. Si luego quieres un dominio propio, prepara un tunel named en infra/cloudflare-tunnel.local.yml."
   } else {

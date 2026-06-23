@@ -37,9 +37,11 @@ Entradas vivas agregadas:
 - `scripts/cloudflare-tunnel-start.ps1`
 - `scripts/cloudflare-tunnel-status.ps1`
 - `scripts/cloudflare-tunnel-stop.ps1`
+- `scripts/cloudflare-tunnel-setup.ps1`
 - `scripts/tailscale-funnel-start.ps1`
 - `scripts/tailscale-funnel-status.ps1`
 - `scripts/tailscale-funnel-stop.ps1`
+- `scripts/tailscale-funnel-setup.ps1`
 - `scripts/stable-tunnel-logs.ps1`
 
 Entradas vivas actualizadas:

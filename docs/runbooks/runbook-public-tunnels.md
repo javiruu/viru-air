@@ -40,6 +40,23 @@ VIRU_PANEL.bat
 
 ## Cloudflare Tunnel
 
+### Preparacion automatizada
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\cloudflare-tunnel-setup.ps1 -InstallIfMissing
+```
+
+Si ya tienes el tunnel creado en Cloudflare, puedes dejar preparada la config local de una vez:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\cloudflare-tunnel-setup.ps1 `
+  -InstallIfMissing `
+  -Domain virutracker.example.com `
+  -TunnelId <tu-tunnel-id-o-nombre> `
+  -Hostname virutracker.example.com `
+  -CredentialsFile C:\Users\TU_USUARIO\.cloudflared\<tu-tunnel>.json
+```
+
 ### Modo rapido
 
 Si `cloudflared` esta instalado pero todavia no has preparado un tunel named, el panel puede abrir un quick tunnel:
@@ -77,6 +94,14 @@ Mensajes esperados:
 - `Falta asociar hostname/dominio`
 
 ## Tailscale Funnel
+
+### Preparacion automatizada
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\tailscale-funnel-setup.ps1 -InstallIfMissing
+```
+
+Eso deja Tailscale instalado cuando sea posible. El login final puede seguir abriendo el flujo interactivo de Tailscale, asi que en algunos equipos todavia hara falta completar `tailscale up`.
 
 Si prefieres Tailscale:
 

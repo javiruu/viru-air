@@ -4,6 +4,14 @@ $ErrorActionPreference = "Stop"
 
 Write-Section "TAILSCALE FUNNEL"
 
+$install = Ensure-TailscaleInstalled
+if ($install.Changed) {
+  Write-Ok $install.Message
+} elseif (-not $install.Installed) {
+  Write-Fail $install.Message
+  exit 1
+}
+
 $local = Get-LocalAppStatus
 if (-not $local.FrontendReady -or -not $local.BackendReady) {
   if (-not $local.FrontendReady) {
@@ -19,6 +27,8 @@ if (-not $local.FrontendReady -or -not $local.BackendReady) {
 $result = Start-TailscaleFunnel
 if ($result.Ready) {
   Write-Ok ("Tailscale Funnel activo: " + $result.PublicUrl)
+  $versionText = if ($result.Version) { $result.Version } else { "desconocida" }
+  Write-Info ("Version: " + $versionText)
   exit 0
 }
 
