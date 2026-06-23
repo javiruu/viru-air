@@ -56,6 +56,20 @@ Entradas vivas actualizadas:
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
 
+## Actualizacion manual 2026-06-23 (panel de publicacion unificado con dos URLs)
+
+Entradas vivas actualizadas:
+
+- `VIRU_PANEL.bat`
+- `scripts/ops-common.ps1`
+- `scripts/public-stable-start.ps1`
+- `scripts/public-stable-status.ps1`
+- `scripts/public-stable-stop.ps1`
+- `scripts/stable-tunnel-logs.ps1`
+- `docs/runbooks/runbook-public-tunnels.md`
+- `docs/INDICE_UNICO.md`
+- `docs/DOCS_INVENTORY.md`
+
 Entradas vivas retiradas:
 
 - `docs/runbooks/runbook-duckdns-public-domain.md`

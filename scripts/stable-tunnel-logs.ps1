@@ -2,7 +2,7 @@
 
 $ErrorActionPreference = "Stop"
 
-Write-Section "LOGS DE TUNELES"
+Write-Section "LOGS DE PUBLICACION WEB"
 
 $stable = Get-StableTunnelStatus
 $shown = $false

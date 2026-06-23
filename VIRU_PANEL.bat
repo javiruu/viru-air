@@ -10,23 +10,16 @@ echo ================================
 echo 1. Iniciar VIRU (foreground)
 echo 2. Detener VIRU
 echo 3. Estado local (3000 / 8000)
-echo 4. PUBLICAR WEB ESTABLE
-echo 5. ESTADO WEB ESTABLE
-echo 6. DETENER WEB ESTABLE
-echo 7. USAR TAILSCALE FUNNEL
-echo 8. ESTADO TAILSCALE FUNNEL
-echo 9. DETENER TAILSCALE FUNNEL
-echo ----------------------------------------
-echo A. Ver logs del tunel
+echo 4. PUBLICAR WEB
+echo 5. ESTADO WEB PUBLICA
+echo 6. DETENER WEB PUBLICA
+echo 7. VER LOGS PUBLICACION
 echo ----------------------------------------
 echo 0. Salir
 echo.
-choice /C 1234567890A /N /M "Opcion: "
-if errorlevel 11 goto tunnel_logs
-if errorlevel 10 goto :eof
-if errorlevel 9 goto tailscale_stop
-if errorlevel 8 goto tailscale_status
-if errorlevel 7 goto tailscale_start
+choice /C 12345670 /N /M "Opcion: "
+if errorlevel 8 goto :eof
+if errorlevel 7 goto tunnel_logs
 if errorlevel 6 goto public_stable_stop
 if errorlevel 5 goto public_stable_status
 if errorlevel 4 goto public_stable_start
@@ -58,18 +51,6 @@ goto menu
 
 :public_stable_stop
 powershell -ExecutionPolicy Bypass -File "%~dp0scripts\public-stable-stop.ps1"
-goto menu
-
-:tailscale_start
-powershell -ExecutionPolicy Bypass -File "%~dp0scripts\tailscale-funnel-start.ps1"
-goto menu
-
-:tailscale_status
-powershell -ExecutionPolicy Bypass -File "%~dp0scripts\tailscale-funnel-status.ps1"
-goto menu
-
-:tailscale_stop
-powershell -ExecutionPolicy Bypass -File "%~dp0scripts\tailscale-funnel-stop.ps1"
 goto menu
 
 :tunnel_logs

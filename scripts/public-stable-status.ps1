@@ -2,7 +2,7 @@
 
 $ErrorActionPreference = "Stop"
 
-Write-Section "ESTADO WEB ESTABLE"
+Write-Section "ESTADO WEB PUBLICA"
 
 $local = Get-LocalAppStatus
 $stable = Get-StableTunnelStatus
@@ -22,15 +22,18 @@ if ($local.BackendReady) {
 }
 
 if ($stable.ActiveProvider) {
-  Write-Ok ("Proveedor activo: " + $stable.ActiveProvider)
+  Write-Ok ("Tuneles activos: " + $stable.ActiveProvider)
 } else {
-  Write-Warn "Proveedor activo: ninguno"
+  Write-Warn "Tuneles activos: ninguno"
 }
 
-if ($stable.PublicUrl) {
-  Write-Ok ("URL publica: " + $stable.PublicUrl)
+if ($stable.PublicUrls -and $stable.PublicUrls.Count -gt 0) {
+  Write-Ok "URLs publicas detectadas:"
+  foreach ($url in $stable.PublicUrls) {
+    Write-Ok ("  " + $url)
+  }
 } else {
-  Write-Warn "URL publica: aun no detectada"
+  Write-Warn "URLs publicas: aun no detectadas"
 }
 
 if ($cloudflare.Installed) {
@@ -40,6 +43,9 @@ if ($cloudflare.Installed) {
   if ($cloudflare.Running) {
     $cloudflareLabel = if ($cloudflare.Mode -eq "named") { "Cloudflare Tunnel activo (dominio propio)." } else { "Cloudflare Tunnel activo (URL temporal)." }
     Write-Ok $cloudflareLabel
+    if ($cloudflare.PublicUrl) {
+      Write-Info ("Cloudflare URL: " + $cloudflare.PublicUrl)
+    }
   } else {
     Write-Warn "Cloudflare Tunnel no esta activo ahora mismo."
   }
@@ -53,6 +59,9 @@ if ($tailscale.Installed) {
   }
   if ($tailscale.Running) {
     Write-Ok "Tailscale Funnel activo."
+    if ($tailscale.PublicUrl) {
+      Write-Info ("Tailscale URL: " + $tailscale.PublicUrl)
+    }
   } else {
     Write-Warn "Tailscale Funnel no esta activo ahora mismo."
   }
