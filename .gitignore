@@ -15,10 +15,10 @@ token.txt
 keys.txt
 *.pid
 
-# DuckDNS local config (contains real token/domain values)
+# Local tunnel config
+infra/cloudflare-tunnel.local.yml
+infra/cloudflare-tunnel.local.yaml
 infra/duckdns.local.env
-infra/public-stable-network-state.json
-infra/public-stable-network-profiles.json
 
 # Local databases
 viru.db

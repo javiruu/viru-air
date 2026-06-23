@@ -1,8 +1,8 @@
 ﻿# Índice Único de Documentación
 
-**Estado:** vivo  
+**Estado:** vivo
 **Última revisión:** 2026-06-13
-**Fuente de verdad:** sí  
+**Fuente de verdad:** sí
 **Área:** documentación
 
 ## Por rol
@@ -108,7 +108,7 @@
 - [Runbooks operativos](runbooks/)
 - [Runbook de estabilización watchlist + quick-search](runbooks/runbook-watchlist-quick-search-stabilization.md)
 - [Runbook QA de puerta a puerta](runbooks/runbook-puerta-a-puerta-qa.md)
-- [Dominio estable + publicacion temporal](runbooks/runbook-duckdns-public-domain.md)
+- [Publicacion web por tuneles](runbooks/runbook-public-tunnels.md)
 - [Sweeps hoteleros](runbooks/hotels-sweeps.md)
 
 ### Plans

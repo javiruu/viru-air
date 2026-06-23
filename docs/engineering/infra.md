@@ -1,8 +1,8 @@
 ﻿# Infra
 
-**Estado:** vivo  
-**Última revisión:** 2026-05-11  
-**Fuente de verdad:** no  
+**Estado:** vivo
+**Última revisión:** 2026-06-23
+**Fuente de verdad:** no
 **Área:** engineering
 
 ## Resumen
@@ -12,12 +12,14 @@ La documentación viva confirma una capa `infra/` con soporte para despliegue, w
 ## Contenido principal
 
 - La raíz del repo y `docs/overview/current-state.md` mencionan:
-  - Caddy nativo + DuckDNS para publicación estable en Windows
+  - Cloudflare Tunnel como camino principal de publicación estable desde local
+  - Tailscale Funnel como alternativa estable soportada
   - CI/CD base
   - manifiestos Kubernetes
 - Runbooks operativos detectados:
   - [Canary y rollback](../runbooks/runbook-canary-rollback.md)
   - [OOM](../runbooks/runbook-oom.md)
+  - [Publicacion web por tuneles](../runbooks/runbook-public-tunnels.md)
 
 ## Nota
 
