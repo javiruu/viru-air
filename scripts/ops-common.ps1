@@ -446,6 +446,43 @@ function Find-UrlsInObject {
   return @($urls | Select-Object -Unique)
 }
 
+function Convert-HostPortToHttpsUrl {
+  param([string]$HostPort)
+
+  if (-not $HostPort) {
+    return $null
+  }
+
+  $trimmed = $HostPort.Trim()
+  if (-not $trimmed) {
+    return $null
+  }
+
+  if ($trimmed -like "https://*" -or $trimmed -like "http://*") {
+    return $trimmed
+  }
+
+  if ($trimmed -match '^\[(.+)\]:(\d+)$') {
+    $hostName = $Matches[1]
+    $port = [int]$Matches[2]
+    if ($port -eq 443) {
+      return "https://[$hostName]"
+    }
+    return "https://[$hostName]:$port"
+  }
+
+  if ($trimmed -match '^([^:]+):(\d+)$') {
+    $hostName = $Matches[1]
+    $port = [int]$Matches[2]
+    if ($port -eq 443) {
+      return "https://$hostName"
+    }
+    return "https://$hostName`:$port"
+  }
+
+  return "https://$trimmed"
+}
+
 function Get-CloudflaredCliPath {
   $candidates = @()
   if (Test-CommandAvailable -CommandName "cloudflared") {
@@ -605,7 +642,14 @@ function Get-CloudflareQuickTunnelUrl {
     return $quickUrl[0]
   }
 
-  $genericUrl = @($urls | Select-Object -Last 1)
+  $genericUrl = @(
+    $urls |
+      Where-Object {
+        $_ -notlike "https://developers.cloudflare.com/*" -and
+        $_ -notlike "https://www.cloudflare.com/*"
+      } |
+      Select-Object -Last 1
+  )
   if ($genericUrl.Count -gt 0) {
     return $genericUrl[0]
   }
@@ -852,7 +896,47 @@ function Get-TailscaleFunnelStatus {
   $urls = @()
   if ($funnelResult.Json) {
     $urls += Find-UrlsInObject -Value $funnelResult.Json
+    foreach ($webPropertyName in @("Web", "AllowFunnel")) {
+      $rootProperty = $funnelResult.Json.PSObject.Properties[$webPropertyName]
+      if (-not $rootProperty) {
+        continue
+      }
+
+      foreach ($rootEntry in $rootProperty.Value.PSObject.Properties) {
+        $url = Convert-HostPortToHttpsUrl -HostPort $rootEntry.Name
+        if ($url) {
+          $urls += $url
+        }
+      }
+    }
+
+    foreach ($scopeName in @("Foreground", "Background")) {
+      $scopeProperty = $funnelResult.Json.PSObject.Properties[$scopeName]
+      if (-not $scopeProperty) {
+        continue
+      }
+
+      $scope = $scopeProperty.Value
+      if (-not $scope) {
+        continue
+      }
+
+      foreach ($entry in $scope.PSObject.Properties) {
+        $web = $entry.Value.Web
+        if (-not $web) {
+          continue
+        }
+
+        foreach ($webEntry in $web.PSObject.Properties) {
+          $url = Convert-HostPortToHttpsUrl -HostPort $webEntry.Name
+          if ($url) {
+            $urls += $url
+          }
+        }
+      }
+    }
   }
+  $urls = @($urls | Where-Object { $_ } | Select-Object -Unique)
 
   $blockingReason = $null
   $nextStep = $null
@@ -885,6 +969,7 @@ function Get-TailscaleFunnelStatus {
     ProcessName = "tailscaled"
     BackendState = $backendState
     DnsName = $dnsName
+    PublicUrls = $urls
     PublicUrl = if ($urls.Count -gt 0) { $urls[0] } else { $null }
     Ready = [bool]($funnelResult.Success -and $urls.Count -gt 0)
     BlockingReason = $blockingReason
@@ -898,6 +983,10 @@ function Get-TailscaleFunnelStatus {
 function Start-TailscaleFunnel {
   $status = Get-TailscaleFunnelStatus
   if (-not $status.Installed) {
+    return $status
+  }
+
+  if ($status.Ready) {
     return $status
   }
 
@@ -915,10 +1004,11 @@ function Start-TailscaleFunnel {
   $current = Get-TailscaleFunnelStatus
   if ($current.Ready) {
     Write-StableTunnelState -State ([pscustomobject]@{
-      Provider = "tailscale"
+      Provider = "combined"
       StartedAt = (Get-Date).ToString("s")
       Mode = "funnel"
-      PublicUrl = $current.PublicUrl
+      Providers = @("tailscale")
+      PublicUrls = $current.PublicUrls
     }) | Out-Null
   }
 
@@ -956,20 +1046,32 @@ function Get-StableTunnelStatus {
   $tailscale = Get-TailscaleFunnelStatus
   $state = Read-StableTunnelState
 
-  $activeProvider = $null
-  $active = $null
+  $readyProviders = @()
   if ($cloudflare.Ready) {
-    $activeProvider = "cloudflare"
-    $active = $cloudflare
-  } elseif ($tailscale.Ready) {
-    $activeProvider = "tailscale"
-    $active = $tailscale
-  } elseif ($state -and $state.Provider -eq "cloudflare") {
-    $activeProvider = "cloudflare"
-    $active = $cloudflare
-  } elseif ($state -and $state.Provider -eq "tailscale") {
-    $activeProvider = "tailscale"
-    $active = $tailscale
+    $readyProviders += "cloudflare"
+  }
+  if ($tailscale.Ready) {
+    $readyProviders += "tailscale"
+  }
+
+  $publicUrls = @()
+  if ($cloudflare.Ready -and $cloudflare.PublicUrl) {
+    $publicUrls += $cloudflare.PublicUrl
+  }
+  if ($tailscale.Ready -and $tailscale.PublicUrls) {
+    $publicUrls += $tailscale.PublicUrls
+  } elseif ($tailscale.Ready -and $tailscale.PublicUrl) {
+    $publicUrls += $tailscale.PublicUrl
+  }
+  $publicUrls = @($publicUrls | Where-Object { $_ } | Select-Object -Unique)
+
+  $activeProvider = $null
+  if ($readyProviders.Count -gt 0) {
+    $activeProvider = ($readyProviders -join "+")
+  } elseif ($state -and $state.Providers) {
+    $activeProvider = (($state.Providers | Where-Object { $_ }) -join "+")
+  } elseif ($state -and $state.Provider) {
+    $activeProvider = [string]$state.Provider
   }
 
   $summary = $null
@@ -980,17 +1082,20 @@ function Get-StableTunnelStatus {
   } elseif (-not $localApp.BackendReady) {
     $summary = "El backend local no esta levantado."
     $nextStep = "Inicia VIRU localmente antes de abrir un tunel."
-  } elseif ($cloudflare.Ready) {
-    $summary = "Cloudflare Tunnel esta activo."
+  } elseif ($readyProviders.Count -eq 2) {
+    $summary = "Cloudflare y Tailscale estan publicando la web ahora mismo."
     if ($cloudflare.Mode -eq "quick") {
-      $nextStep = "Si quieres dominio propio, prepara infra/cloudflare-tunnel.local.yml y vuelve a publicar."
+      $nextStep = "Cloudflare esta en quick tunnel. Si algun dia quieres dominio propio, prepara infra/cloudflare-tunnel.local.yml."
     }
+  } elseif ($cloudflare.Ready) {
+    $summary = "La web publica esta arriba por Cloudflare."
+    $nextStep = if ($tailscale.NextStep) { $tailscale.NextStep } else { "Si tambien quieres la URL de Tailscale, activa Funnel desde este mismo flujo." }
   } elseif ($tailscale.Ready) {
-    $summary = "Tailscale Funnel esta activo."
-    $nextStep = "Puedes dejarlo asi o volver a Cloudflare Tunnel cuando quieras dominio gestionado por Cloudflare."
+    $summary = "La web publica esta arriba por Tailscale."
+    $nextStep = if ($cloudflare.NextStep) { $cloudflare.NextStep } else { "Si tambien quieres la URL de Cloudflare, vuelve a publicar con cloudflared instalado." }
   } elseif ($cloudflare.Installed) {
-    $summary = "Cloudflare Tunnel es la via estable recomendada y aun no esta activo."
-    $nextStep = if ($cloudflare.NextStep) { $cloudflare.NextStep } else { "Arranca PUBLICAR WEB ESTABLE para abrir el tunel." }
+    $summary = "Todavia no hay ninguna URL publica lista."
+    $nextStep = if ($cloudflare.NextStep) { $cloudflare.NextStep } else { "Arranca PUBLICAR WEB para abrir los tuneles." }
   } elseif ($tailscale.Installed) {
     $summary = "Cloudflare no esta disponible en esta maquina y Tailscale queda como alternativa."
     $nextStep = if ($tailscale.NextStep) { $tailscale.NextStep } else { "Arranca Tailscale Funnel desde el panel." }
@@ -1004,9 +1109,11 @@ function Get-StableTunnelStatus {
     Cloudflare = $cloudflare
     Tailscale = $tailscale
     ActiveProvider = $activeProvider
-    Active = $active
-    Ready = [bool]($active -and $active.Ready)
-    PublicUrl = if ($active) { $active.PublicUrl } else { $null }
+    Active = if ($cloudflare.Ready) { $cloudflare } elseif ($tailscale.Ready) { $tailscale } else { $null }
+    ReadyProviders = $readyProviders
+    Ready = [bool]($readyProviders.Count -gt 0)
+    PublicUrls = $publicUrls
+    PublicUrl = if ($publicUrls.Count -gt 0) { $publicUrls[0] } else { $null }
     Summary = $summary
     NextStep = $nextStep
   }
@@ -1017,9 +1124,18 @@ function Stop-StableTunnel {
   $tailscale = Stop-TailscaleFunnel
   Clear-StableTunnelState
 
+  $stoppedProviders = @()
+  if ($cloudflare.WasRunning -or $cloudflare.HadPidFile) {
+    $stoppedProviders += "cloudflare"
+  }
+  if ($tailscale.WasRunning) {
+    $stoppedProviders += "tailscale"
+  }
+
   return [pscustomobject]@{
     Cloudflare = $cloudflare
     Tailscale = $tailscale
-    StoppedProvider = if ($cloudflare.WasRunning -or $cloudflare.HadPidFile) { "cloudflare" } elseif ($tailscale.WasRunning) { "tailscale" } else { $null }
+    StoppedProviders = $stoppedProviders
+    StoppedProvider = if ($stoppedProviders.Count -gt 0) { ($stoppedProviders -join "+") } else { $null }
   }
 }

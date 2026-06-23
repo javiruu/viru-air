@@ -11,32 +11,31 @@ La historia operativa oficial para exponer `viru-tracker` desde un PC local pasa
 
 | Camino | Cuando usarlo | URL publica |
 |---|---|---|
-| `Cloudflare Tunnel` | camino estable principal | URL publica de Cloudflare o dominio propio |
-| `Tailscale Funnel` | alternativa estable cuando ya usas Tailscale | URL publica de Tailscale |
+| `Cloudflare Tunnel` | primer proveedor que intenta el panel | URL publica de Cloudflare o dominio propio |
+| `Tailscale Funnel` | segundo proveedor que intenta el panel | URL publica de Tailscale |
 
 La operativa visible ya no depende de IP publica domestica, puertos `80/443`, routers, UPnP ni DuckDNS.
+El flujo simplificado intenta dejar las dos URLs activas a la vez cuando el equipo lo permite.
 
 ## Flujo recomendado desde el panel
 
 ```text
 VIRU_PANEL.bat
-  Opcion 4: PUBLICAR WEB ESTABLE
-  Opcion 5: ESTADO WEB ESTABLE
-  Opcion 6: DETENER WEB ESTABLE
-  Opcion 7: USAR TAILSCALE FUNNEL
-  Opcion 8: ESTADO TAILSCALE FUNNEL
-  Opcion 9: DETENER TAILSCALE FUNNEL
-  Opcion A: Ver logs del tunel
+  Opcion 4: PUBLICAR WEB
+  Opcion 5: ESTADO WEB PUBLICA
+  Opcion 6: DETENER WEB PUBLICA
+  Opcion 7: VER LOGS PUBLICACION
 ```
 
-`PUBLICAR WEB ESTABLE` intenta abrir la web con `Cloudflare Tunnel` por defecto.
+`PUBLICAR WEB` comprueba la app local, intenta `Cloudflare Tunnel`, intenta `Tailscale Funnel` y devuelve todas las URLs que queden disponibles en ese momento.
 
 ## Requisitos locales
 
 - frontend vivo en `3000`
 - backend vivo en `8000`
-- `cloudflared` instalado para la ruta principal
-- `tailscale` instalado y con sesion iniciada si quieres usar la alternativa Funnel
+- `cloudflared` instalado o instalable por `winget`
+- `tailscale` instalado o instalable por `winget`
+- sesion iniciada en Tailscale para que Funnel pueda quedar listo
 
 ## Cloudflare Tunnel
 
@@ -103,7 +102,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\tailscale-funnel-setup.ps1 -I
 
 Eso deja Tailscale instalado cuando sea posible. El login final puede seguir abriendo el flujo interactivo de Tailscale, asi que en algunos equipos todavia hara falta completar `tailscale up`.
 
-Si prefieres Tailscale:
+Si prefieres revisar solo Tailscale:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\tailscale-funnel-start.ps1
@@ -124,18 +123,19 @@ Mensajes esperados:
 powershell -ExecutionPolicy Bypass -File .\scripts\stable-tunnel-logs.ps1
 ```
 
-Los logs se guardan en `logs/` y el panel muestra automaticamente el proveedor activo, la URL publica y el siguiente paso humano.
+Los logs se guardan en `logs/` y el panel muestra automaticamente las URLs publicas disponibles y el siguiente paso humano cuando falte alguna.
 
 ## Troubleshooting
 
 | Problema | Solucion |
 |---|---|
 | Frontend o backend no aparecen | Inicia VIRU localmente antes de abrir el tunel |
-| `cloudflared` no esta instalado | Instala Cloudflare Tunnel y repite `PUBLICAR WEB ESTABLE` |
+| `cloudflared` no esta instalado | Instala Cloudflare Tunnel o deja que el script lo intente por `winget`, luego repite `PUBLICAR WEB` |
 | Cloudflare abre quick tunnel pero quieres dominio propio | Crea un tunel named y añade `infra/cloudflare-tunnel.local.yml` |
 | Tailscale no aparece | Instala Tailscale en el equipo |
 | Tailscale aparece pero Funnel no abre | Inicia sesion y revisa `tailscale funnel status --json` |
-| No ves URL publica | Mira `scripts/stable-tunnel-logs.ps1` o la opcion `Ver logs del tunel` |
+| Solo aparece una de las dos URLs | La otra no ha quedado lista todavia; usa `ESTADO WEB PUBLICA` para ver el siguiente paso concreto |
+| No ves ninguna URL publica | Mira `scripts/stable-tunnel-logs.ps1` o la opcion `VER LOGS PUBLICACION` |
 
 ## Referencias
 

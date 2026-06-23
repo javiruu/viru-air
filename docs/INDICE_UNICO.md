@@ -1,7 +1,7 @@
 ﻿# Índice Único de Documentación
 
 **Estado:** vivo
-**Última revisión:** 2026-06-13
+**Última revisión:** 2026-06-23
 **Fuente de verdad:** sí
 **Área:** documentación
 
