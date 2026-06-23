@@ -804,7 +804,20 @@ function Invoke-TailscaleJsonCommand {
     }
   }
 
-  $result = Invoke-CommandWithTimeout -FilePath $cliPath -Arguments $Arguments -TimeoutSeconds 15
+  try {
+    $output = & $cliPath @Arguments 2>&1
+    $exitCode = $LASTEXITCODE
+  } catch {
+    $output = @($_.Exception.Message)
+    $exitCode = 1
+  }
+
+  $result = [pscustomobject]@{
+    TimedOut = $false
+    ExitCode = $exitCode
+    Output = @($output)
+  }
+
   $json = $null
   if (-not $result.TimedOut -and $result.ExitCode -eq 0) {
     try {
@@ -840,9 +853,6 @@ function Get-TailscaleFunnelStatus {
   if ($funnelResult.Json) {
     $urls += Find-UrlsInObject -Value $funnelResult.Json
   }
-  if ($urls.Count -eq 0 -and $dnsName) {
-    $urls += "https://$dnsName"
-  }
 
   $blockingReason = $null
   $nextStep = $null
@@ -859,8 +869,8 @@ function Get-TailscaleFunnelStatus {
     $blockingReason = "Tailscale esta conectado, pero Funnel aun no esta listo."
     $nextStep = "Tailscale esta conectado, pero Funnel aun no esta listo. Revisa permisos y vuelve a ejecutar el start."
   } elseif ($urls.Count -eq 0) {
-    $blockingReason = "Funnel parece activo, pero no he podido detectar la URL publica."
-    $nextStep = "Funnel parece configurado, pero no he podido detectar la URL publica."
+    $blockingReason = "Tailscale esta conectado, pero Funnel publico aun no esta activado."
+    $nextStep = "Vuelve a lanzar Tailscale Funnel o revisa si tu tailnet permite Funnel publico."
   }
 
   return [pscustomobject]@{
