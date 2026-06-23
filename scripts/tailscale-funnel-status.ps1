@@ -15,6 +15,15 @@ if (-not $status.Installed) {
 }
 
 Write-Ok "Tailscale instalado."
+if ($status.Version) {
+  Write-Info ("Version: " + $status.Version)
+}
+if ($status.BackendState) {
+  Write-Info ("Backend state: " + $status.BackendState)
+}
+if ($status.DnsName) {
+  Write-Info ("DNS name: " + $status.DnsName)
+}
 
 if ($status.Running) {
   Write-Ok "Funnel activo."

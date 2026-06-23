@@ -34,6 +34,9 @@ if ($stable.PublicUrl) {
 }
 
 if ($cloudflare.Installed) {
+  if ($cloudflare.Version) {
+    Write-Info ("Cloudflare version: " + $cloudflare.Version)
+  }
   if ($cloudflare.Running) {
     $cloudflareLabel = if ($cloudflare.Mode -eq "named") { "Cloudflare Tunnel activo (dominio propio)." } else { "Cloudflare Tunnel activo (URL temporal)." }
     Write-Ok $cloudflareLabel
@@ -45,6 +48,9 @@ if ($cloudflare.Installed) {
 }
 
 if ($tailscale.Installed) {
+  if ($tailscale.Version) {
+    Write-Info ("Tailscale version: " + $tailscale.Version)
+  }
   if ($tailscale.Running) {
     Write-Ok "Tailscale Funnel activo."
   } else {

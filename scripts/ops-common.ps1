@@ -20,6 +20,10 @@ function Get-InfraEnvPath {
   return (Join-Path (Get-InfraDir) ".env")
 }
 
+function Get-InfraEnvTemplatePath {
+  return (Join-Path (Get-InfraDir) ".env.prod.example")
+}
+
 function Get-StableTunnelStatePath {
   return (Join-Path (Get-LogsDir) "stable-tunnel-state.json")
 }
@@ -79,6 +83,53 @@ function Read-DotEnv {
   }
 
   return $values
+}
+
+function Set-DotEnvValue {
+  param(
+    [Parameter(Mandatory)][string]$Path,
+    [Parameter(Mandatory)][string]$Key,
+    [Parameter(Mandatory)][string]$Value
+  )
+
+  $lines = @()
+  if (Test-Path $Path) {
+    $lines = @(Get-Content -Path $Path -ErrorAction Stop)
+  }
+
+  $updated = $false
+  for ($i = 0; $i -lt $lines.Count; $i++) {
+    if ($lines[$i] -match "^\s*$([regex]::Escape($Key))=") {
+      $lines[$i] = "$Key=$Value"
+      $updated = $true
+      break
+    }
+  }
+
+  if (-not $updated) {
+    $lines += "$Key=$Value"
+  }
+
+  Set-Content -Path $Path -Value $lines -Encoding ASCII
+}
+
+function Ensure-StableTunnelEnv {
+  param([string]$Domain)
+
+  $envPath = Get-InfraEnvPath
+  if (-not (Test-Path $envPath)) {
+    $templatePath = Get-InfraEnvTemplatePath
+    if (-not (Test-Path $templatePath)) {
+      throw "Falta la plantilla infra/.env.prod.example para preparar infra/.env."
+    }
+    Copy-Item -Path $templatePath -Destination $envPath -Force
+  }
+
+  if ($Domain) {
+    Set-DotEnvValue -Path $envPath -Key "DOMAIN" -Value $Domain
+  }
+
+  return $envPath
 }
 
 function Get-ManagedProcessState {
@@ -157,6 +208,78 @@ function Stop-ManagedProcess {
 function Test-CommandAvailable {
   param([Parameter(Mandatory)][string]$CommandName)
   return [bool](Get-Command $CommandName -ErrorAction SilentlyContinue)
+}
+
+function Get-CommandVersionText {
+  param(
+    [Parameter(Mandatory)][string]$FilePath,
+    [string[]]$Arguments = @("--version"),
+    [int]$TimeoutSeconds = 10
+  )
+
+  try {
+    $direct = & $FilePath @Arguments 2>&1
+    if ($direct) {
+      $directText = (($direct | Select-Object -First 1) -join " ").Trim()
+      if ($directText) {
+        return $directText
+      }
+    }
+  } catch {}
+
+  $result = Invoke-CommandWithTimeout -FilePath $FilePath -Arguments $Arguments -TimeoutSeconds $TimeoutSeconds
+  if ($result.TimedOut -or $result.ExitCode -ne 0 -or $result.Output.Count -eq 0) {
+    return $null
+  }
+
+  return (($result.Output -join " ").Trim())
+}
+
+function Test-WingetAvailable {
+  return (Test-CommandAvailable -CommandName "winget")
+}
+
+function Install-WingetPackageIfMissing {
+  param(
+    [Parameter(Mandatory)][string]$DisplayName,
+    [Parameter(Mandatory)][string]$PackageId,
+    [Parameter(Mandatory)][scriptblock]$DetectScript
+  )
+
+  if (& $DetectScript) {
+    return [pscustomobject]@{
+      Installed = $true
+      Changed = $false
+      Message = "$DisplayName ya estaba instalado."
+      Output = @()
+      ExitCode = 0
+      TimedOut = $false
+    }
+  }
+
+  if (-not (Test-WingetAvailable)) {
+    return [pscustomobject]@{
+      Installed = $false
+      Changed = $false
+      Message = "winget no esta disponible para instalar $DisplayName automaticamente."
+      Output = @()
+      ExitCode = 127
+      TimedOut = $false
+    }
+  }
+
+  $winget = (Get-Command winget -ErrorAction SilentlyContinue).Source
+  $result = Invoke-CommandWithTimeout -FilePath $winget -Arguments @("install", "--id", $PackageId, "--accept-package-agreements", "--accept-source-agreements", "--silent") -TimeoutSeconds 240
+
+  $installedNow = (& $DetectScript)
+  return [pscustomobject]@{
+    Installed = [bool]$installedNow
+    Changed = [bool]$installedNow
+    Message = if ($installedNow) { "$DisplayName instalado automaticamente." } else { "No pude instalar $DisplayName automaticamente." }
+    Output = $result.Output
+    ExitCode = $result.ExitCode
+    TimedOut = $result.TimedOut
+  }
 }
 
 function Get-PortListeners {
@@ -346,6 +469,19 @@ function Get-CloudflaredCliPath {
   return ($candidates | Select-Object -First 1)
 }
 
+function Ensure-CloudflaredInstalled {
+  $install = Install-WingetPackageIfMissing -DisplayName "cloudflared" -PackageId "Cloudflare.cloudflared" -DetectScript { [bool](Get-CloudflaredCliPath) }
+  $cliPath = Get-CloudflaredCliPath
+
+  return [pscustomobject]@{
+    Installed = [bool]$cliPath
+    Changed = $install.Changed
+    CliPath = $cliPath
+    Message = if ($cliPath) { $install.Message } else { "Cloudflare Tunnel no esta instalado en este equipo." }
+    Output = $install.Output
+  }
+}
+
 function Get-CloudflareTunnelPaths {
   $logsDir = Get-LogsDir
   return [pscustomobject]@{
@@ -377,6 +513,22 @@ function Get-CloudflareTunnelAuthCertPath {
   return (Join-Path $env:USERPROFILE ".cloudflared\cert.pem")
 }
 
+function Get-CloudflareTunnelCredentialsFileFromConfig {
+  param([string]$ConfigPath)
+
+  if (-not $ConfigPath -or -not (Test-Path $ConfigPath)) {
+    return $null
+  }
+
+  foreach ($line in Get-Content -Path $ConfigPath -ErrorAction SilentlyContinue) {
+    if ($line -match '^\s*credentials-file:\s*("?)([^"#]+)\1') {
+      return $Matches[2].Trim()
+    }
+  }
+
+  return $null
+}
+
 function Get-CloudflareTunnelConfigInfo {
   $configPath = Get-CloudflareTunnelConfigPath
   if (-not $configPath) {
@@ -384,11 +536,13 @@ function Get-CloudflareTunnelConfigInfo {
       ConfigPath = $null
       TunnelIdOrName = $null
       Hostname = $null
+      CredentialsFile = $null
     }
   }
 
   $tunnelId = $null
   $hostname = $null
+  $credentialsFile = $null
   foreach ($line in Get-Content -Path $configPath -ErrorAction SilentlyContinue) {
     if (-not $tunnelId -and $line -match '^\s*tunnel:\s*("?)([^"#]+)\1') {
       $tunnelId = $Matches[2].Trim()
@@ -396,13 +550,39 @@ function Get-CloudflareTunnelConfigInfo {
     if (-not $hostname -and $line -match '^\s*hostname:\s*("?)([^"#]+)\1') {
       $hostname = $Matches[2].Trim()
     }
+    if (-not $credentialsFile -and $line -match '^\s*credentials-file:\s*("?)([^"#]+)\1') {
+      $credentialsFile = $Matches[2].Trim()
+    }
   }
 
   return [pscustomobject]@{
     ConfigPath = $configPath
     TunnelIdOrName = $tunnelId
     Hostname = $hostname
+    CredentialsFile = $credentialsFile
   }
+}
+
+function Write-CloudflareTunnelConfig {
+  param(
+    [Parameter(Mandatory)][string]$TunnelIdOrName,
+    [Parameter(Mandatory)][string]$Hostname,
+    [Parameter(Mandatory)][string]$CredentialsFile,
+    [string]$ServiceUrl = "http://127.0.0.1:3000"
+  )
+
+  $configPath = Join-Path (Get-InfraDir) "cloudflare-tunnel.local.yml"
+  $lines = @(
+    "tunnel: $TunnelIdOrName",
+    "credentials-file: $CredentialsFile",
+    "",
+    "ingress:",
+    "  - hostname: $Hostname",
+    "    service: $ServiceUrl",
+    "  - service: http_status:404"
+  )
+  Set-Content -Path $configPath -Value $lines -Encoding ASCII
+  return $configPath
 }
 
 function Get-CloudflareQuickTunnelUrl {
@@ -441,19 +621,27 @@ function Get-CloudflareTunnelStatus {
   $mode = if ($config.ConfigPath) { "named" } else { "quick" }
   $publicUrl = if ($mode -eq "named" -and $config.Hostname) { "https://$($config.Hostname)" } else { Get-CloudflareQuickTunnelUrl }
   $authCertPath = Get-CloudflareTunnelAuthCertPath
-  $namedConfigReady = [bool]($config.ConfigPath -and (Test-Path $authCertPath))
+  $credentialsFileExists = [bool]($config.CredentialsFile -and (Test-Path $config.CredentialsFile))
+  $namedConfigReady = [bool]($config.ConfigPath -and $config.TunnelIdOrName -and $config.Hostname -and $credentialsFileExists)
+  $version = if ($cliPath) { Get-CommandVersionText -FilePath $cliPath -Arguments @("--version") } else { $null }
 
   $blockingReason = $null
   $nextStep = $null
   if (-not $cliPath) {
     $blockingReason = "Cloudflare Tunnel no esta instalado en este equipo."
     $nextStep = "Instala cloudflared para publicar con Cloudflare Tunnel."
-  } elseif ($mode -eq "named" -and -not (Test-Path $authCertPath)) {
+  } elseif ($mode -eq "named" -and -not (Test-Path $authCertPath) -and -not $credentialsFileExists) {
     $blockingReason = "Cloudflare Tunnel no esta autorizado todavia para usar el tunel configurado."
     $nextStep = "Falta autenticar cloudflared. Ejecuta 'cloudflared tunnel login' y vuelve a intentarlo."
+  } elseif ($mode -eq "named" -and -not $config.TunnelIdOrName) {
+    $blockingReason = "La configuracion local de Cloudflare existe, pero falta el identificador del tunel."
+    $nextStep = "Anade 'tunnel:' a infra/cloudflare-tunnel.local.yml."
   } elseif ($mode -eq "named" -and -not $config.Hostname) {
     $blockingReason = "La configuracion local de Cloudflare existe, pero falta asociar el hostname del tunel."
     $nextStep = "La configuracion local existe, pero falta 'hostname:' en el ingress del tunnel."
+  } elseif ($mode -eq "named" -and -not $credentialsFileExists) {
+    $blockingReason = "La configuracion local de Cloudflare existe, pero falta el credentials-file del tunel."
+    $nextStep = "Descarga el credentials-file del tunel y apunta a el desde infra/cloudflare-tunnel.local.yml."
   } elseif ($mode -eq "quick" -and -not $state.IsRunning) {
     $nextStep = "Si quieres dominio propio, crea infra/cloudflare-tunnel.local.yml. Si no, puedes arrancar un quick tunnel desde el panel."
   }
@@ -463,6 +651,7 @@ function Get-CloudflareTunnelStatus {
     DisplayName = "Cloudflare Tunnel"
     Installed = [bool]$cliPath
     CliPath = $cliPath
+    Version = $version
     Mode = $mode
     Running = $state.IsRunning
     HasPidFile = $state.HasPidFile
@@ -471,6 +660,10 @@ function Get-CloudflareTunnelStatus {
     ConfigPath = $config.ConfigPath
     TunnelIdOrName = $config.TunnelIdOrName
     Hostname = $config.Hostname
+    CredentialsFile = $config.CredentialsFile
+    CredentialsFileExists = $credentialsFileExists
+    AuthCertPath = $authCertPath
+    AuthCertExists = (Test-Path $authCertPath)
     PublicUrl = $publicUrl
     Ready = [bool]($state.IsRunning -and $publicUrl)
     BlockingReason = $blockingReason
@@ -575,6 +768,19 @@ function Get-TailscaleCliPath {
   return ($candidates | Select-Object -First 1)
 }
 
+function Ensure-TailscaleInstalled {
+  $install = Install-WingetPackageIfMissing -DisplayName "Tailscale" -PackageId "Tailscale.Tailscale" -DetectScript { [bool](Get-TailscaleCliPath) }
+  $cliPath = Get-TailscaleCliPath
+
+  return [pscustomobject]@{
+    Installed = [bool]$cliPath
+    Changed = $install.Changed
+    CliPath = $cliPath
+    Message = if ($cliPath) { $install.Message } else { "Tailscale no esta instalado en este equipo." }
+    Output = $install.Output
+  }
+}
+
 function Get-TailscaleFunnelPaths {
   $logsDir = Get-LogsDir
   return [pscustomobject]@{
@@ -618,6 +824,7 @@ function Invoke-TailscaleJsonCommand {
 function Get-TailscaleFunnelStatus {
   $cliPath = Get-TailscaleCliPath
   $paths = Get-TailscaleFunnelPaths
+  $version = if ($cliPath) { Get-CommandVersionText -FilePath $cliPath -Arguments @("version") } else { $null }
   $statusResult = Invoke-TailscaleJsonCommand -Arguments @("status", "--json")
   $backendState = $null
   $dnsName = $null
@@ -661,6 +868,7 @@ function Get-TailscaleFunnelStatus {
     DisplayName = "Tailscale Funnel"
     Installed = [bool]$cliPath
     CliPath = $cliPath
+    Version = $version
     Running = [bool]($funnelResult.Success -and $urls.Count -gt 0)
     HasPidFile = $false
     ProcessId = $null
@@ -680,6 +888,10 @@ function Get-TailscaleFunnelStatus {
 function Start-TailscaleFunnel {
   $status = Get-TailscaleFunnelStatus
   if (-not $status.Installed) {
+    return $status
+  }
+
+  if ($status.BackendState -and $status.BackendState -ne "Running") {
     return $status
   }
 
