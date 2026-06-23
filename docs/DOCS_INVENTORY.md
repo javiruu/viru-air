@@ -1,8 +1,8 @@
 # Inventario documental
 
-**Estado:** vivo  
-**Ultima revision:** 2026-06-05  
-**Fuente de verdad:** si  
+**Estado:** vivo
+**Ultima revision:** 2026-06-05
+**Fuente de verdad:** si
 **Area:** documentacion
 
 ## Resumen
@@ -28,6 +28,57 @@ Entradas vivas actualizadas:
 - `docs/specs/README.md`
 - `docs/INDICE_UNICO.md`
 
+## Actualizacion manual 2026-06-23 (pivot de publicacion a tuneles)
+
+Entradas vivas agregadas:
+
+- `docs/runbooks/runbook-public-tunnels.md`
+- `infra/cloudflare-tunnel.example.yml`
+- `scripts/cloudflare-tunnel-start.ps1`
+- `scripts/cloudflare-tunnel-status.ps1`
+- `scripts/cloudflare-tunnel-stop.ps1`
+- `scripts/tailscale-funnel-start.ps1`
+- `scripts/tailscale-funnel-status.ps1`
+- `scripts/tailscale-funnel-stop.ps1`
+- `scripts/stable-tunnel-logs.ps1`
+
+Entradas vivas actualizadas:
+
+- `VIRU_PANEL.bat`
+- `scripts/ops-common.ps1`
+- `scripts/public-stable-start.ps1`
+- `scripts/public-stable-status.ps1`
+- `scripts/public-stable-stop.ps1`
+- `docs/engineering/infra.md`
+- `docs/overview/repo-map.md`
+- `docs/INDICE_UNICO.md`
+- `docs/DOCS_INVENTORY.md`
+
+Entradas vivas retiradas:
+
+- `docs/runbooks/runbook-duckdns-public-domain.md`
+- `infra/Caddyfile`
+- `infra/duckdns.env.example`
+- `infra/public-stable-network-profiles.json`
+- `infra/public-stable-network-state.json`
+- `scripts/caddy-start.ps1`
+- `scripts/caddy-status.ps1`
+- `scripts/caddy-stop.ps1`
+- `scripts/duckdns-disable.ps1`
+- `scripts/duckdns-enable.ps1`
+- `scripts/duckdns-status.ps1`
+- `scripts/duckdns-update.ps1`
+- `scripts/iniciar_viru_publico.ps1`
+- `scripts/public-domain-preflight.ps1`
+- `scripts/public-stable-profile-save.ps1`
+- `scripts/public-stable-profiles.ps1`
+- `scripts/public-stable-profiles-selftest.ps1`
+- `scripts/public-temp-logs.ps1`
+- `scripts/public-temp-start.ps1`
+- `scripts/public-temp-status.ps1`
+- `scripts/public-temp-stop.ps1`
+- `scripts/setup-duckdns.ps1`
+
 ## Actualizacion manual 2026-06-15 (fare memory fase 26)
 
 Entradas vivas actualizadas:
@@ -52,7 +103,7 @@ Entradas vivas actualizadas:
 Entradas vivas actualizadas:
 
 - `docs/DOCS_INVENTORY.md`
-- `docs/runbooks/runbook-duckdns-public-domain.md`
+- `docs/runbooks/runbook-public-tunnels.md`
 
 ## Actualizacion manual 2026-06-16 (humanizacion de lenguaje visible)
 
@@ -555,7 +606,7 @@ Entradas vivas retiradas:
 | docs/runbooks/runbook-activation-profiles.md | runbook | vivo | conservar | docs/runbooks/runbook-activation-profiles.md | Perfiles canónicos de activación por entorno (local_demo, local_real, staging_safe, prod_gradual) con matriz de flags y blindaje anti-mock | docs/runbooks/runbook-activation-profiles.md |
 | docs/runbooks/runbook-canary-rollback.md | runbook | vivo | conservar | docs/runbooks/runbook-canary-rollback.md | Runbook operativo activo | docs/runbooks/runbook-canary-rollback.md |
 | docs/runbooks/runbook-db-retention.md | runbook | vivo | conservar | docs/runbooks/runbook-db-retention.md | Runbook operativo activo | docs/runbooks/runbook-db-retention.md |
-| docs/runbooks/runbook-duckdns-public-domain.md | runbook | vivo | conservar | docs/runbooks/runbook-duckdns-public-domain.md | Runbook operativo activo para dominio estable y publicacion temporal | docs/runbooks/runbook-duckdns-public-domain.md |
+| docs/runbooks/runbook-public-tunnels.md | runbook | vivo | conservar | docs/runbooks/runbook-public-tunnels.md | Runbook operativo activo para la publicacion web mediante Cloudflare Tunnel y Tailscale Funnel | docs/runbooks/runbook-public-tunnels.md |
 | docs/runbooks/runbook-oom.md | runbook | vivo | conservar | docs/runbooks/runbook-oom.md | Runbook operativo activo | docs/runbooks/runbook-oom.md |
 | docs/runbooks/runbook-provider-degraded.md | runbook | vivo | conservar | docs/runbooks/runbook-provider-degraded.md | Runbook operativo activo | docs/runbooks/runbook-provider-degraded.md |
 | docs/runbooks/runbook-route-canonicalization.md | runbook | vivo | conservar | docs/runbooks/runbook-route-canonicalization.md | Runbook operativo activo | docs/runbooks/runbook-route-canonicalization.md |

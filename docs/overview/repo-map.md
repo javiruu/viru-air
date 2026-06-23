@@ -11,7 +11,7 @@ Related: docs/INDICE_UNICO.md, README.md
 
 - `backend/`: API, dominio, infraestructura y tests del backend.
 - `frontend/`: aplicación Next.js, módulos de producto, estilos y tests frontend.
-- `infra/`: Caddy, workflows y manifests.
+- `infra/`: configuracion de despliegue, ejemplos de tuneles, workflows y manifests.
 - `scripts/`: utilidades de soporte del repo.
 - `testsprite_tests/`: tests y artefactos del flujo Testsprite; los reportes documentales se han archivado en `docs/archive/tooling/`.
 
