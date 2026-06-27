@@ -63,6 +63,7 @@ export default function WatchlistPage() {
   );
   const isLoadingHistory = Boolean(derived.selectedWatch && actions.isLoadingHistoryInitial && !hasHistoryData);
   const isRefreshingHistory = Boolean(actions.isRefreshingFiltered && hasHistoryData);
+  const hasNotices = Boolean(watchlistHint.visible || derived.lastUpdatedGlobal || actions.message);
   const handleSelectWatch = (watch: Parameters<typeof selectWatch>[0]) => {
     selectWatch(watch);
     notify({ tone: "success", title: t("watchlist.messages.flightSelected") });
@@ -76,50 +77,54 @@ export default function WatchlistPage() {
 
   return (
     <main className="shell watchlist-page" id="main-content">
-      <div className="page-header watchlist-header">
+      <div className="page-header watchlist-header watchlist-page-header-shell">
         <div className="watchlist-header-left">
-          <button className="btn-ghost" type="button" onClick={() => router.push("/dashboard")}>
+          <button className="btn-ghost watchlist-back-link" type="button" onClick={() => router.push("/dashboard")}>
             {t("shared.actions.back")}
           </button>
         </div>
-        <div className="page-title">
+        <div className="page-title watchlist-page-title">
           <h1>{t("watchlist.title")}</h1>
           <p>{t("watchlist.subtitle")}</p>
         </div>
         <div className="page-actions watchlist-header-right">
-          <button className="btn-primary" type="button" onClick={() => actions.setShowAdd(true)}>
+          <button className="btn-primary watchlist-add-cta" type="button" onClick={() => actions.setShowAdd(true)}>
             {t("watchlist.addFlight")}
           </button>
         </div>
       </div>
 
-      {watchlistHint.visible ? (
-        <section className="notice notice-compact notice-info section-gap" role="status" aria-live="polite">
-          <div>
-            <strong>{t("watchlist.quickStartTitle")}</strong>
-            <p>{t("watchlist.quickStartBody")}</p>
-          </div>
-          <div className="notice-actions">
-            <button type="button" className="btn-ghost btn-compact" onClick={watchlistHint.dismiss}>
-              {t("watchlist.quickStartConfirm")}
-            </button>
-          </div>
-        </section>
-      ) : null}
+      {hasNotices ? (
+        <div className="watchlist-notice-stack section-gap">
+          {watchlistHint.visible ? (
+            <section className="notice notice-compact notice-info watchlist-notice watchlist-notice--hint" role="status" aria-live="polite">
+              <div>
+                <strong>{t("watchlist.quickStartTitle")}</strong>
+                <p>{t("watchlist.quickStartBody")}</p>
+              </div>
+              <div className="notice-actions">
+                <button type="button" className="btn-ghost btn-compact" onClick={watchlistHint.dismiss}>
+                  {t("watchlist.quickStartConfirm")}
+                </button>
+              </div>
+            </section>
+          ) : null}
 
-      {derived.lastUpdatedGlobal ? (
-        <div className="notice notice-info section-gap" role="status" aria-live="polite">
-          {t("watchlist.lastUpdate", { value: derived.lastUpdatedGlobal })}
-        </div>
-      ) : null}
+          {derived.lastUpdatedGlobal ? (
+            <div className="notice notice-compact notice-info watchlist-notice watchlist-notice--freshness" role="status" aria-live="polite">
+              {t("watchlist.lastUpdate", { value: derived.lastUpdatedGlobal })}
+            </div>
+          ) : null}
 
-      {actions.message ? (
-        <div
-          className={`notice section-gap ${actions.messageType === "success" ? "notice-success" : "notice-error"}`}
-          role="status"
-          aria-live="polite"
-        >
-          {actions.message}
+          {actions.message ? (
+            <div
+              className={`notice notice-compact watchlist-notice watchlist-notice--message ${actions.messageType === "success" ? "notice-success" : "notice-error"}`}
+              role="status"
+              aria-live="polite"
+            >
+              {actions.message}
+            </div>
+          ) : null}
         </div>
       ) : null}
 

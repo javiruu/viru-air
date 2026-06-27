@@ -20936,3 +20936,364 @@ textarea::placeholder {
   }
 }
 
+/* Watchlist polish — incremental hierarchy and tactility */
+.watchlist-page {
+  position: relative;
+}
+
+.watchlist-page-header-shell {
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
+  border-radius: calc(var(--radius-xl) - 2px);
+  background:
+    radial-gradient(circle at 12% 18%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 34%),
+    radial-gradient(circle at 88% 12%, color-mix(in srgb, var(--accent-2) 10%, transparent), transparent 28%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface) 94%, transparent), color-mix(in srgb, var(--surface-2) 82%, transparent));
+  box-shadow:
+    0 18px 38px color-mix(in srgb, var(--shadow-strong) 12%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.watchlist-page-title {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.watchlist-page-title h1,
+.watchlist-page .panel-title {
+  text-wrap: balance;
+}
+
+.watchlist-page-title p {
+  text-wrap: pretty;
+}
+
+.watchlist-back-link,
+.watchlist-add-cta {
+  min-height: 42px;
+}
+
+.watchlist-back-link {
+  border-color: color-mix(in srgb, var(--border) 82%, transparent);
+  background: color-mix(in srgb, var(--surface) 84%, var(--surface-2));
+}
+
+.watchlist-add-cta {
+  box-shadow:
+    0 16px 28px color-mix(in srgb, var(--accent) 20%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.watchlist-notice-stack {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.watchlist-notice {
+  margin: 0;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--shadow-strong) 8%, transparent);
+}
+
+.watchlist-notice strong,
+.watchlist-notice p {
+  margin: 0;
+}
+
+.watchlist-notice--hint {
+  align-items: center;
+}
+
+.watchlist-notice--freshness,
+.watchlist-notice--message {
+  padding-inline: 0.9rem;
+}
+
+.watchlist-cockpit-grid {
+  gap: 1.1rem;
+}
+
+.watchlist-area > .panel {
+  border-radius: calc(var(--radius-lg) + 2px);
+  border-color: color-mix(in srgb, var(--border) 70%, transparent);
+  box-shadow:
+    0 16px 34px color-mix(in srgb, var(--shadow-strong) 10%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.watch-smart-panel {
+  gap: 0.9rem;
+}
+
+.watch-smart-panel-header {
+  gap: 0.9rem;
+}
+
+.watch-smart-count-pill,
+.watch-smart-meta,
+.watch-route-code,
+.watch-date,
+.watch-inline-price,
+.watch-meta-chip,
+.watch-price,
+.price-drop-badge,
+.watch-detail-metric > strong,
+.watch-detail-operational-item,
+.compare-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.watch-smart-tools {
+  gap: 0.65rem;
+  align-items: stretch;
+}
+
+.watch-smart-tool-group {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.55rem;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.watch-smart-tool-group--filters {
+  flex: 1 1 360px;
+  flex-wrap: wrap;
+}
+
+.watch-smart-tool-group--selection {
+  margin-left: auto;
+}
+
+.watch-smart-tool-group--calendar {
+  margin-left: auto;
+}
+
+.watch-smart-search input,
+.watch-smart-sort select,
+.watch-smart-calendar-toggle {
+  min-height: 42px;
+}
+
+.watch-smart-search input,
+.watch-smart-sort select {
+  box-shadow:
+    0 8px 20px color-mix(in srgb, var(--shadow) 8%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition-property: border-color, background-color, box-shadow, transform;
+  transition-duration: 0.22s;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.watch-smart-search input:focus,
+.watch-smart-sort select:focus {
+  border-color: color-mix(in srgb, var(--accent) 56%, var(--border));
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent),
+    0 10px 24px color-mix(in srgb, var(--shadow-strong) 10%, transparent);
+  outline: none;
+}
+
+.watch-bulk-toolbar {
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.watch-row {
+  padding: 0.82rem 0.85rem;
+  border-color: color-mix(in srgb, var(--border) 54%, transparent);
+  background:
+    linear-gradient(150deg, color-mix(in srgb, var(--surface) 94%, transparent), color-mix(in srgb, var(--surface-2) 76%, transparent));
+  box-shadow:
+    0 10px 22px color-mix(in srgb, var(--shadow-strong) 7%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition-property: transform, box-shadow, background-color, border-color;
+  transition-duration: 0.24s;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  will-change: transform;
+}
+
+.watch-row:hover {
+  transform: translateX(3px);
+  box-shadow:
+    0 16px 28px color-mix(in srgb, var(--shadow-strong) 12%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.watch-row:active {
+  transform: translateX(2px) scale(0.96);
+}
+
+.watch-row[data-selected="true"] {
+  border-color: color-mix(in srgb, var(--accent-2) 44%, var(--border));
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--surface) 86%, transparent), color-mix(in srgb, var(--accent-2) 8%, var(--surface-2)));
+  box-shadow:
+    0 18px 30px color-mix(in srgb, var(--shadow-strong) 12%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--accent-2) 22%, transparent);
+}
+
+.watch-route {
+  gap: 0.5rem;
+}
+
+.watch-route-code {
+  letter-spacing: 0.01em;
+}
+
+.watch-meta {
+  gap: 0.42rem;
+}
+
+.watch-meta-chip {
+  background: color-mix(in srgb, var(--surface) 78%, var(--surface-2));
+}
+
+.watch-note {
+  max-width: 58ch;
+}
+
+.watch-price-area {
+  gap: 0.55rem;
+}
+
+.watch-row-actions .alert-actions > .btn-compact,
+.watch-bulk-toolbar > .btn-compact,
+.watch-detail-actions > .btn-compact {
+  min-height: 40px;
+}
+
+.watch-detail-panel {
+  gap: 0.82rem;
+}
+
+.watch-detail-title-block {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.watch-detail-hero {
+  padding: 0.8rem 0.85rem;
+  border-radius: 18px;
+  border-color: color-mix(in srgb, var(--border) 74%, transparent);
+  box-shadow:
+    0 12px 24px color-mix(in srgb, var(--shadow-strong) 8%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.watch-detail-hero-status {
+  min-height: 32px;
+}
+
+.watch-detail-block--primary {
+  padding: 0.25rem 0;
+}
+
+.watch-detail-metric {
+  border-radius: 16px;
+  min-height: 64px;
+  box-shadow:
+    0 10px 20px color-mix(in srgb, var(--shadow-strong) 6%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.watch-detail-metric--primary {
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--surface) 84%, transparent), color-mix(in srgb, var(--accent) 8%, var(--surface-2)));
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+}
+
+.watch-detail-operational-item {
+  padding: 0.45rem 0.55rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+}
+
+.watch-detail-confidence,
+.compare-panel,
+.watch-map-panel {
+  box-shadow:
+    0 14px 28px color-mix(in srgb, var(--shadow-strong) 9%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.watch-detail-empty-state {
+  border-radius: 18px;
+  padding: 0.95rem;
+}
+
+.history-panel .panel-header,
+.watch-map-panel .panel-header,
+.compare-panel .panel-header {
+  align-items: flex-start;
+}
+
+.watch-map-panel {
+  border-radius: calc(var(--radius-lg) + 2px);
+}
+
+.compare-panel {
+  border-radius: calc(var(--radius-lg) + 2px);
+}
+
+.compare-panel .compare-selector {
+  margin-top: 0.2rem;
+}
+
+.compare-option {
+  min-height: 44px;
+  border-radius: 14px;
+  transition-property: transform, box-shadow, border-color, background-color;
+  transition-duration: 0.22s;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.compare-option:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--shadow-strong) 8%, transparent);
+}
+
+.compare-option:active {
+  transform: scale(0.96);
+}
+
+@media (max-width: 1120px) {
+  .watch-smart-tool-group--selection,
+  .watch-smart-tool-group--calendar {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .watchlist-page-header-shell {
+    padding: 0.85rem;
+  }
+
+  .watch-smart-tool-group {
+    width: 100%;
+  }
+
+  .watch-smart-tool-group--filters {
+    flex: 1 1 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .watchlist-page-header-shell,
+  .watchlist-notice,
+  .watch-smart-search input,
+  .watch-smart-sort select,
+  .watch-row,
+  .compare-option {
+    transition: none;
+    animation: none;
+    transform: none;
+    will-change: auto;
+  }
+}

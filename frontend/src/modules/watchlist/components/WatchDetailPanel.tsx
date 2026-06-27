@@ -28,9 +28,11 @@ export function WatchDetailPanel({
 
   if (!selectedWatch) {
     return (
-      <section className="panel panel-soft section-gap watch-detail-panel">
+      <section className="panel panel-soft section-gap watch-detail-panel watch-detail-panel--empty">
         <header className="watch-detail-header">
-          <h2 className="panel-title">{t("watchlist.detail.title")}</h2>
+          <div className="watch-detail-title-block">
+            <h2 className="panel-title">{t("watchlist.detail.title")}</h2>
+          </div>
         </header>
         <div className="watch-detail-empty-state">
           <strong>{t("watchlist.detail.emptyTitle")}</strong>
@@ -81,7 +83,7 @@ export function WatchDetailPanel({
   return (
     <section className="panel panel-soft section-gap watch-detail-panel">
       <header className="watch-detail-header">
-        <div>
+        <div className="watch-detail-title-block">
           <h2 className="panel-title">{t("watchlist.detail.title")}</h2>
         </div>
         {isLoading ? <Skeleton variant="pill" width={112} height={18} /> : null}
@@ -90,15 +92,15 @@ export function WatchDetailPanel({
       <div className="watch-detail-hero">
         <div className="watch-detail-route">
           <strong>{focus.origin_iata} {"→"} {focus.destination_iata}</strong>
-          <span className="panel-note">{focus.travel_date_local}</span>
+          <span className="panel-note tabular-nums">{focus.travel_date_local}</span>
         </div>
-        <span className={`status-pill ${status.tone}`}>{status.label}</span>
+        <span className={`status-pill watch-detail-hero-status ${status.tone}`}>{status.label}</span>
       </div>
 
-      <div className="watch-detail-block">
+      <div className="watch-detail-block watch-detail-block--primary">
         <h3 className="watch-detail-block-title">{t("watchlist.detail.mainReadingTitle")}</h3>
         <div className="watch-detail-metrics">
-          <div className="watch-detail-metric">
+          <div className="watch-detail-metric watch-detail-metric--primary">
             <span>{t("watchlist.detail.currentPriceLabel")}</span>
             <strong>
               {currentPriceValue}
@@ -130,15 +132,15 @@ export function WatchDetailPanel({
       <div className="watch-detail-block">
         <h3 className="watch-detail-block-title">{t("watchlist.detail.operational.title")}</h3>
         <div className="watch-detail-operational">
-          <span>{t("watchlist.detail.latestSnapshot")} {latestSnapshot ? safeDateTime(latestSnapshot.captured_at_utc, localeTag) : "--"}</span>
-          <span>{t("watchlist.summary.count")} {summaryData ? summaryData.count : "--"}</span>
-          <span>{t("watchlist.summary.delta")} {summaryData?.delta_pct == null ? "--" : formatPercent(summaryData.delta_pct, localeTag)}</span>
-          <span>{t("watchlist.detail.operational.trend")} {trendText}</span>
+          <span className="watch-detail-operational-item tabular-nums">{t("watchlist.detail.latestSnapshot")} {latestSnapshot ? safeDateTime(latestSnapshot.captured_at_utc, localeTag) : "--"}</span>
+          <span className="watch-detail-operational-item tabular-nums">{t("watchlist.summary.count")} {summaryData ? summaryData.count : "--"}</span>
+          <span className="watch-detail-operational-item tabular-nums">{t("watchlist.summary.delta")} {summaryData?.delta_pct == null ? "--" : formatPercent(summaryData.delta_pct, localeTag)}</span>
+          <span className="watch-detail-operational-item">{t("watchlist.detail.operational.trend")} {trendText}</span>
         </div>
       </div>
 
       {summaryData ? (
-        <div className="notice notice-info notice-compact history-confidence-notice" role="status" aria-live="polite">
+        <div className="notice notice-info notice-compact history-confidence-notice watch-detail-confidence" role="status" aria-live="polite">
           <strong>{confidence.titleKey ? t(confidence.titleKey) : t("watchlist.detail.interpretation.title")}</strong>
           <p>{confidence.messageKey ? t(confidence.messageKey) : interpretationText}</p>
         </div>
