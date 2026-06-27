@@ -32,7 +32,7 @@
 ## Documentation map
 
 - `README.md`: repo entrypoint.
-- `docs/overview/start-here.md`: fastest re-entry path.
+- `docs/README.md`: fastest doc re-entry path.
 - `docs/overview/current-state.md`: active stack and module map.
 - `docs/overview/repo-map.md`: folder-level navigation.
 - `docs/reference/codex-operating-contract.md`: adapted operating rules for Codex.

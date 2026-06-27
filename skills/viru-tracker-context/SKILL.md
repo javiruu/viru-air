@@ -1,6 +1,6 @@
 ---
 name: viru-tracker-context
-description: Reusable operating and onboarding context for Viru Tracker. Use when Codex is working in the Viru Tracker repo and needs to re-onboard quickly, identify which docs are canonical, translate older Paperclip-style process rules into the current Codex workflow, or gather stable project context before editing, reviewing, or publishing changes.
+description: Reusable operating and onboarding context for Viru Tracker. Use when Codex is working in the Viru Tracker repo and needs to re-onboard quickly, identify which docs are canonical, translate older Paperclip-style process rules into the current Codex workflow, or gather stable project context before editing, verifying, or publishing changes.
 ---
 
 # Viru Tracker Context
@@ -12,7 +12,7 @@ Use this skill to rebuild working context quickly in the Viru Tracker repo witho
 ## Quick Start
 
 1. Open `AGENTS.md`.
-2. Open `README.md`, `docs/overview/start-here.md`, `docs/overview/current-state.md`, and `docs/overview/repo-map.md`.
+2. Open `README.md`, `docs/README.md`, `docs/overview/current-state.md`, and `docs/overview/repo-map.md`.
 3. Open `docs/reference/codex-operating-contract.md` if you need the persistent operating policy.
 4. Branch by area:
    - Backend or quick-search: `docs/reference/README.md` and `docs/reference/backend/`.
@@ -26,7 +26,7 @@ Use this skill to rebuild working context quickly in the Viru Tracker repo witho
 - Keep one canonical source per rule or contract; prefer linking over copying.
 - Do not propose broad product or visual redesigns without explicit direction.
 - When behavior, contracts, auth, data, infra, or user-visible risk is involved, prepare summary, key files, risks, rollback, and manual validation notes before publication.
-- Use the GitHub publishing skill for repo publication flows.
+- Use the canonical repo workflow: verify locally, then commit directo a `main` y push solo cuando el usuario pida un cambio real completado.
 
 ## References
 

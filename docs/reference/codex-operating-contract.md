@@ -2,7 +2,7 @@ Status: reference
 Scope: persistent operating contract for Codex sessions in Viru Tracker
 Last reviewed: 2026-04-16
 Canonical source: docs/reference/codex-operating-contract.md
-Related: docs/reference/README.md, docs/overview/start-here.md, AGENTS.md
+Related: docs/reference/README.md, docs/overview/current-state.md, docs/overview/repo-map.md, AGENTS.md
 
 ---
 # Codex Operating Contract
@@ -17,7 +17,7 @@ Condensar el conocimiento operativo estable extraido del master document externo
 - `docs/reference/codex-operating-contract.md`: politica operativa adaptada a Codex.
 - `docs/overview/`: reentrada rapida, estado actual y mapa del repo.
 - `docs/reference/`, `docs/specs/`, `docs/ui/`, `docs/runbooks/`, `docs/qa/`: verdad de dominio, tecnica, UX y operacion.
-- `docs/plans/` y `docs/changelog/`: referencia historica util.
+- `docs/plans/` y `HISTORY.md`: referencia historica util.
 - `docs/archive/`: ultimo recurso para reconstruir intencion historica, nunca primera parada.
 
 ## Source-of-truth hierarchy
@@ -27,7 +27,7 @@ Condensar el conocimiento operativo estable extraido del master document externo
 3. Este documento para politica operativa persistente de Codex.
 4. `docs/overview/` para reenganche y navegacion.
 5. `docs/reference/`, `docs/specs/`, `docs/ui/`, `docs/runbooks/` y `docs/qa/` para verdad funcional.
-6. `docs/plans/` y `docs/changelog/` para contexto historico cercano.
+6. `docs/plans/` y `HISTORY.md` para contexto historico cercano.
 7. `docs/archive/` solo cuando los documentos vivos no explican una decision.
 
 ## Reglas estables adoptadas
@@ -52,7 +52,7 @@ Condensar el conocimiento operativo estable extraido del master document externo
 | CTO / Head of Product Design | ADRs, specs, UI docs y razonamiento tecnico | criterios tecnicos y de UX |
 | Implementation agent | Codex en el workspace | cambios locales y evidencia |
 | Quality Gatekeeper | pasada explicita de review antes de publicar | detectar riesgos, regresiones y test manual |
-| Git & Repo Manager | skill de GitHub / paso de publicacion | higiene de branch, PR y merge |
+| Git & Repo Manager | flujo Git del repo canonico | higiene de staging, commit y push cuando el usuario pida un cambio real completado |
 | Human validator | usuario | validacion manual o en servidor cuando aplique |
 
 ## Flujo adaptado de review y publicacion
@@ -62,7 +62,7 @@ Condensar el conocimiento operativo estable extraido del master document externo
 3. Preparar un review packet minimo: resumen, archivos clave, riesgos, rollback y test manual propuesto.
 4. Revisar el cambio con foco en contratos, regresiones y huecos de evidencia.
 5. Pedir o registrar validacion humana cuando el cambio toque comportamiento real, datos, auth, infra o riesgos visibles para usuarios.
-6. Publicar mediante la skill de GitHub correspondiente, no como area de borrador sin validar.
+6. Publicar desde el repo canonico con `commit` directo a `main` por defecto; usar branch, PR o skill de GitHub solo si el usuario lo pide.
 7. Si cambia la fuente de verdad, actualizarla dentro del repo.
 
 ## Cuando exigir validacion manual humana
@@ -78,7 +78,7 @@ Condensar el conocimiento operativo estable extraido del master document externo
 - `COMPANY.md`, `TEAM.md`, `tasks/` y el arbol de compania de Paperclip.
 - El org chart como estructura del repo.
 - Budgets, heartbeats y activity logging como sistema formal dentro del repo.
-- `HISTORY.md` como log obligatorio separado mientras la trazabilidad viva ya se apoya en GitHub y `docs/changelog/`.
+- `HISTORY.md` como log obligatorio separado en cada cambio pequeno; aqui se actualiza solo cuando el impacto lo justifica.
 - Fases de import y bootstrap exclusivas de Paperclip.
 
 ## Matriz Word -> Codex
@@ -86,11 +86,11 @@ Condensar el conocimiento operativo estable extraido del master document externo
 | Bloque del Word | Decision | Destino en Viru Tracker |
 |---|---|---|
 | Principios no negociables | Adoptar | `AGENTS.md` + este documento |
-| Regla de remote GitHub | Adaptar | este documento + PR template + skill de GitHub |
+| Regla de remote GitHub | Adaptar | este documento + workflow Git real del repo |
 | Estructura de package y archivos Paperclip | Solo referencia | no se porta literal; se mapea a `docs/`, `AGENTS.md` y la skill global |
 | Source-of-truth hierarchy | Adoptar | este documento + `AGENTS.md` |
 | Org chart, autoridad y escalado | Adaptar | mapeo de roles y flujo de review/publicacion |
-| Engineering pipeline, gatekeeper y repo manager | Adaptar | este documento + `.github/pull_request_template.md` |
+| Engineering pipeline, gatekeeper y repo manager | Adaptar | este documento + workflow Git del repo canonico |
 | Skills, rutinas y heartbeats | Adaptar | skill global reusable y regla de skills pequenas |
 | Budgets y niveles de autonomia | Solo referencia | se retiene como principio de cautela, no como capa formal |
 | Connectors, secrets y plugins | Adoptar | este documento y practica operativa del repo |

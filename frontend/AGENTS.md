@@ -12,7 +12,8 @@ Frontend work must produce user-visible results that are:
 
 - clear;
 - controlled;
-- sober;
+- warm;
+- close;
 - distinctive;
 - responsive;
 - verified in the real UI when applicable.
@@ -33,13 +34,13 @@ Preserve:
 - rhythm;
 - useful density;
 - visual intention;
-- premium restraint;
-- editorial composition;
+- premium warmth;
+- editorial energy when it helps, never as a colder default;
 - controlled asymmetry where it helps;
 - strong grouping;
 - clear information priority.
 
-The UI should feel intentional, calm, structured, elegant, not noisy, not empty, and not generic.
+The UI should feel intentional, warm, structured, elegant, alive, not noisy, not empty, and not generic.
 
 Simplicity means reducing friction and unnecessary logic, not removing character.
 
@@ -99,7 +100,7 @@ When the user asks to copy, adapt, or take inspiration from an outside UI/refere
 
 Treat references as structural inspiration, not literal clones.
 
-If the reference has strong personality, Viru should retain an equivalent level of intention while staying sober and controlled.
+If the reference has strong personality, Viru should retain an equivalent level of intention while staying warm, controlled, and close rather than drifting into a colder or more austere tone.
 
 ---
 
@@ -113,7 +114,7 @@ Prefer:
 - meaningful density;
 - strong empty, loading, error, and success states;
 - readable typography;
-- restrained contrast;
+- contrast guided by warmth and clarity, not visual austerity;
 - consistent alignment;
 - responsive layouts that still feel designed;
 - motion only when it clarifies state or improves perceived quality.
