@@ -1,4 +1,4 @@
-﻿# Índice Único de Documentación
+# Índice Único de Documentación
 
 **Estado:** vivo
 **Última revisión:** 2026-06-23
@@ -69,7 +69,6 @@
 - [Design System para agentes](../DESIGN.md)
 - [Codex operating contract](reference/codex-operating-contract.md)
 - [Prompts y contexto IA](prompts/README.md)
-- [Roadmap de viaje 50 fases](prompts/codex-travel-roadmap-50-fases.md)
 - [Skill Viru Tracker UI](../.codex/skills/viru-tracker-ui/SKILL.md)
 - [Skill Taste Frontend](../.codex/skills/taste-skill/SKILL.md)
 - [Inventario documental](DOCS_INVENTORY.md)

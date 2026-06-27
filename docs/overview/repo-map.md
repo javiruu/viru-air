@@ -1,4 +1,4 @@
-﻿Status: canonical
+Status: canonical
 Scope: maintainer orientation and repo re-entry
 Last reviewed: 2026-04-15
 Canonical source: docs/overview/repo-map.md
@@ -26,7 +26,7 @@ Related: docs/INDICE_UNICO.md, README.md
 - `docs/qa/`: checklists y referencias QA reutilizables.
 - `docs/checks/`: comprobaciones manuales acotadas.
 - `docs/plans/`: diseños y planes históricos todavía útiles como referencia.
-- `docs/changelog/`: consolidado de cambios.
+- `HISTORY.md`: historial resumido de cambios relevantes cuando el impacto lo justifica.
 
 ## Archivo histórico
 
@@ -39,7 +39,6 @@ Related: docs/INDICE_UNICO.md, README.md
 ## Qué esperar en la raíz
 
 La raíz debería quedar ligera: `README.md`, `AGENTS.md`, scripts de arranque y configuración del repo. Las specs y documentación de trabajo ya no deberían vivir ahí.
-
 
 
 

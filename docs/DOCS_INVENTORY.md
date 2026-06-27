@@ -1,13 +1,24 @@
 # Inventario documental
 
 **Estado:** vivo
-**Ultima revision:** 2026-06-05
+**Ultima revision:** 2026-06-27
 **Fuente de verdad:** si
 **Area:** documentacion
 
 ## Resumen
 
 Inventario completo de documentos `.md` y `.txt` relevantes del repositorio tras el saneamiento documental. Excluye dependencias, cach?s, builds, entornos virtuales, `_publish_repo` y otras salidas generadas masivas.
+## Actualizacion manual 2026-06-27 (saneamiento minimo para LazyCodex)
+
+Entradas vivas actualizadas:
+
+- `docs/reference/codex-operating-contract.md`
+- `skills/viru-tracker-context/SKILL.md`
+- `skills/viru-tracker-context/references/project-context.md`
+- `docs/overview/repo-map.md`
+- `frontend/AGENTS.md`
+- `docs/INDICE_UNICO.md`
+- `docs/DOCS_INVENTORY.md`
 
 ## Actualizacion manual 2026-06-13 (roadmap de viaje 50 fases)
 
