@@ -9,6 +9,7 @@ try:
     from app.api.v1.search import quick_search
     from app.domain.entities import ProviderFetchResult, ProviderFlight
     from app.infrastructure.db.models import Base
+    from app.infrastructure.providers.orchestrator import FlightSearchOrchestrator
     from app.services.quick_search_ai_preference import QuickSearchAiPreferenceResult
     from app.services.quick_search_execution import _CACHE
 except Exception:  # pragma: no cover
@@ -16,6 +17,7 @@ except Exception:  # pragma: no cover
     ProviderFetchResult = None
     ProviderFlight = None
     Base = None
+    FlightSearchOrchestrator = None
     QuickSearchAiPreferenceResult = None
     _CACHE = None
 
@@ -482,6 +484,36 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
         self.assertIn("providers", provider_status)
         self.assertIn("overall_status", provider_status)
         self.assertIsInstance(provider_status["providers"], list)
+
+    def test_provider_status_lists_wizzair_without_breaking_ryanair_legacy_fields(self):
+        payload = self._payload()
+        with patch.dict(
+            "os.environ",
+            {
+                "FLIGHT_PROVIDER_ORDER": "ryanair,wizzair",
+                "FLIGHT_PROVIDER_DUFFEL_ENABLED": "false",
+                "FLIGHT_PROVIDER_RYANAIR_ENABLED": "true",
+                "FLIGHT_PROVIDER_WIZZAIR_ENABLED": "true",
+            },
+            clear=False,
+        ):
+            provider_instance = FlightSearchOrchestrator()
+
+        with (
+            patch.object(
+                provider_instance,
+                "get_flights",
+                return_value=[_flight(80, "12:10", source="ryanair-public-fares")],
+            ),
+            patch("app.api.v1.search.provider", provider_instance),
+        ):
+            result = self._call_quick_search(payload)
+
+        provider_status = result["meta"]["provider_status"]
+        self.assertEqual([item["id"] for item in provider_status["providers"]], ["ryanair", "wizzair"])
+        self.assertEqual(provider_status["overall_status"], "ok")
+        self.assertEqual(provider_status["provider"], "ryanair")
+        self.assertEqual(provider_status["legacy"]["provider"], "ryanair")
 
     def test_ai_preference_marks_single_result_without_reordering(self):
         payload = self._payload(
