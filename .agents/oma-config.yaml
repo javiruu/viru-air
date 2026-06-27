@@ -1,0 +1,15 @@
+language: en
+model_preset: viru-codex-antigravity
+
+custom_presets:
+  viru-codex-antigravity:
+    extends: codex
+    description: "Codex for heavy implementation, Antigravity for lighter support roles"
+    agent_defaults:
+      pm: { model: antigravity/gemini-3.5-flash }
+      docs: { model: antigravity/gemini-3.5-flash }
+      explore: { model: antigravity/gemini-3.5-flash }
+
+  viru-antigravity-fallback:
+    extends: antigravity
+    description: "Fallback preset when Codex quota is exhausted"
