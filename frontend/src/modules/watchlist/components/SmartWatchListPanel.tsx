@@ -159,84 +159,90 @@ export function SmartWatchListPanel({
   };
 
   return (
-    <section className="panel panel-soft section-gap">
-      <div className="panel-header">
+    <section className="panel panel-soft section-gap watch-smart-panel">
+      <div className="panel-header watch-smart-panel-header">
         <div className="watch-smart-header-copy">
           <h2 className="panel-title">{t("watchlist.smartList.heading")}</h2>
           <div className="watch-smart-counts muted" role="status" aria-live="polite">
-            <span className="watch-smart-count-pill">{t("watchlist.smartList.activeCount", { count: activeCount })}</span>
-            <span className="watch-smart-count-pill">{t("watchlist.smartList.pausedCount", { count: pausedCount })}</span>
-            <span className="watch-smart-count-pill">{t("watchlist.smartList.totalCount", { count: items.length })}</span>
-            {lastUpdatedGlobal ? <span>{t("watchlist.lastUpdateInline", { value: lastUpdatedGlobal })}</span> : null}
+            <span className="watch-smart-count-pill tabular-nums">{t("watchlist.smartList.activeCount", { count: activeCount })}</span>
+            <span className="watch-smart-count-pill tabular-nums">{t("watchlist.smartList.pausedCount", { count: pausedCount })}</span>
+            <span className="watch-smart-count-pill tabular-nums">{t("watchlist.smartList.totalCount", { count: items.length })}</span>
+            {lastUpdatedGlobal ? <span className="tabular-nums">{t("watchlist.lastUpdateInline", { value: lastUpdatedGlobal })}</span> : null}
           </div>
           {items.length > 0 ? (
-            <span className="watch-smart-meta">
+            <span className="watch-smart-meta tabular-nums">
               {t("watchlist.smartList.showingCount", { shown: smartListItems.length, total: items.length })}
             </span>
           ) : null}
         </div>
         <div className="watch-smart-tools">
-          <label className="watch-smart-search" htmlFor="watch-smart-search">
-            {t("watchlist.smartList.search")}
-            <input
-              id="watch-smart-search"
-              name="watch_smart_search"
-              autoComplete="off"
-              value={watchSearch}
-              onChange={(event) => {
+          <div className="watch-smart-tool-group watch-smart-tool-group--filters">
+            <label className="watch-smart-search" htmlFor="watch-smart-search">
+              {t("watchlist.smartList.search")}
+              <input
+                id="watch-smart-search"
+                name="watch_smart_search"
+                autoComplete="off"
+                value={watchSearch}
+                onChange={(event) => {
+                  setCurrentPage(1);
+                  onSearchChange(event.target.value);
+                }}
+                placeholder={t("watchlist.smartList.searchPlaceholder")}
+              />
+            </label>
+            <label className="watch-smart-sort" htmlFor="watch-smart-sort">
+              {t("watchlist.smartList.sort")}
+              <select
+                id="watch-smart-sort"
+                name="watch_smart_sort"
+                autoComplete="off"
+                value={watchSort}
+                onChange={(event) => {
+                  setCurrentPage(1);
+                  onSortChange(event.target.value as ListSort);
+                }}
+              >
+                <option value="freshness">{t("watchlist.smartList.sortFreshness")}</option>
+                <option value="price_asc">{t("watchlist.smartList.sortPriceAsc")}</option>
+                <option value="price_desc">{t("watchlist.smartList.sortPriceDesc")}</option>
+                <option value="delta">{t("watchlist.smartList.sortDelta")}</option>
+              </select>
+            </label>
+            <button
+              type="button"
+              className="btn-ghost btn-compact watch-smart-reset"
+              onClick={() => {
                 setCurrentPage(1);
-                onSearchChange(event.target.value);
+                onClearSearch();
               }}
-              placeholder={t("watchlist.smartList.searchPlaceholder")}
-            />
-          </label>
-          <label className="watch-smart-sort" htmlFor="watch-smart-sort">
-            {t("watchlist.smartList.sort")}
-            <select
-              id="watch-smart-sort"
-              name="watch_smart_sort"
-              autoComplete="off"
-              value={watchSort}
-              onChange={(event) => {
-                setCurrentPage(1);
-                onSortChange(event.target.value as ListSort);
-              }}
+              disabled={!hasSearchFilter}
             >
-              <option value="freshness">{t("watchlist.smartList.sortFreshness")}</option>
-              <option value="price_asc">{t("watchlist.smartList.sortPriceAsc")}</option>
-              <option value="price_desc">{t("watchlist.smartList.sortPriceDesc")}</option>
-              <option value="delta">{t("watchlist.smartList.sortDelta")}</option>
-            </select>
-          </label>
-          <button
-            type="button"
-            className="btn-ghost btn-compact watch-smart-reset"
-            onClick={() => {
-              setCurrentPage(1);
-              onClearSearch();
-            }}
-            disabled={!hasSearchFilter}
-          >
-            {t("watchlist.smartList.clearSearch")}
-          </button>
+              {t("watchlist.smartList.clearSearch")}
+            </button>
+          </div>
           {hasSelection ? (
-            <div className="alert-actions watch-bulk-toolbar" role="toolbar" aria-label={t("watchlist.bulk.toolbarAriaLabel")} data-testid="watchlist-bulk-toolbar">
-              <span className="watch-smart-meta">{t("watchlist.bulk.selectedCount", { count: selectionCount })}</span>
-              <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkPause(selectedIds)}>{t("watchlist.bulk.pause")}</button>
-              <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkResume(selectedIds)}>{t("watchlist.bulk.resume")}</button>
-              <button type="button" className="btn-danger btn-compact" onClick={() => onBulkDelete(selectedIds)}>{t("watchlist.bulk.delete")}</button>
+            <div className="watch-smart-tool-group watch-smart-tool-group--selection">
+              <div className="alert-actions watch-bulk-toolbar" role="toolbar" aria-label={t("watchlist.bulk.toolbarAriaLabel")} data-testid="watchlist-bulk-toolbar">
+                <span className="watch-smart-meta tabular-nums">{t("watchlist.bulk.selectedCount", { count: selectionCount })}</span>
+                <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkPause(selectedIds)}>{t("watchlist.bulk.pause")}</button>
+                <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkResume(selectedIds)}>{t("watchlist.bulk.resume")}</button>
+                <button type="button" className="btn-danger btn-compact" onClick={() => onBulkDelete(selectedIds)}>{t("watchlist.bulk.delete")}</button>
+              </div>
             </div>
           ) : null}
-          <button
-            type="button"
-            className={`btn-ghost btn-compact ${isCalendarSelectorOpen ? "is-active" : ""}`}
-            onClick={onToggleCalendarSelector}
-            aria-expanded={isCalendarSelectorOpen}
-            aria-controls="watchlist-calendar-selector"
-            disabled={calendarSelectorFlightsByDay.size === 0}
-          >
-            {t("watchlist.history.viewCalendar")}
-          </button>
+          <div className="watch-smart-tool-group watch-smart-tool-group--calendar">
+            <button
+              type="button"
+              className={`btn-ghost btn-compact watch-smart-calendar-toggle ${isCalendarSelectorOpen ? "is-active" : ""}`}
+              onClick={onToggleCalendarSelector}
+              aria-expanded={isCalendarSelectorOpen}
+              aria-controls="watchlist-calendar-selector"
+              disabled={calendarSelectorFlightsByDay.size === 0}
+            >
+              {t("watchlist.history.viewCalendar")}
+            </button>
+          </div>
         </div>
       </div>
       {isCalendarSelectorOpen ? (
@@ -418,6 +424,7 @@ export function SmartWatchListPanel({
           <article
             key={watch.id}
             className={`list-row watch-row ${selectedWatchId === watch.id ? "watch-selected" : ""}`}
+            data-selected={selectedWatchId === watch.id ? "true" : "false"}
             onClick={() => onSelectWatch(watch)}
             role="button"
             tabIndex={0}
@@ -449,12 +456,12 @@ export function SmartWatchListPanel({
                   aria-label={t("watchlist.smartList.selectCheckboxAria", {
                     origin: watch.origin_iata,
                     destination: watch.destination_iata,
-                  })}
+                    })}
                 />
-                <strong>{watch.origin_iata}{" → "}{watch.destination_iata}</strong>
-                <span className="watch-date">{watch.travel_date_local}</span>
+                <strong className="watch-route-code">{watch.origin_iata}{" → "}{watch.destination_iata}</strong>
+                <span className="watch-date tabular-nums">{watch.travel_date_local}</span>
                 <span className={`status-pill ${watchStatus.tone}`}>{watchStatus.label}</span>
-                <strong className="watch-inline-price">
+                <strong className="watch-inline-price tabular-nums">
                   {meta?.latest ? formatCurrency(meta.latest.price, meta.latest.currency, localeTag) : "--"}
                 </strong>
               </div>
@@ -462,8 +469,8 @@ export function SmartWatchListPanel({
                 <span className={`status-pill ${trend === "up" ? "error" : trend === "down" ? "success" : "warning"}`}>
                   {routeHealthLabel}
                 </span>
-                <span className="watch-meta-chip">{t("watchlist.detail.latestSnapshot")} {safeDateTime(meta?.latest?.capturedAt, localeTag)}</span>
-                <span className="watch-meta-chip watch-meta-chip--freshness">{t("watchlist.detail.freshness")} {freshness.label}</span>
+                <span className="watch-meta-chip tabular-nums">{t("watchlist.detail.latestSnapshot")} {safeDateTime(meta?.latest?.capturedAt, localeTag)}</span>
+                <span className="watch-meta-chip watch-meta-chip--freshness tabular-nums">{t("watchlist.detail.freshness")} {freshness.label}</span>
                 <span className="watch-note">{freshness.detail}</span>
                 <span className="watch-note">
                   {watchersCount === 0
@@ -474,7 +481,7 @@ export function SmartWatchListPanel({
               </div>
             </div>
             <div className="watch-price-area">
-              <div className="watch-price">
+              <div className="watch-price tabular-nums">
                 <span className="watch-price-caption">{t("watchlist.smartList.currentPrice")}</span>
                 <span className={`trend-chip trend-${trend}`}>
                   <span className="trend-icon" aria-hidden="true">
@@ -495,7 +502,7 @@ export function SmartWatchListPanel({
               {hasMeaningfulDrop || isBestPrice ? (
                 <div className="watch-price-badges">
                   {hasMeaningfulDrop ? (
-                    <span className="price-drop-badge">
+                    <span className="price-drop-badge tabular-nums">
                       <svg viewBox="0 0 16 16" className="price-drop-icon" aria-hidden="true">
                         <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
