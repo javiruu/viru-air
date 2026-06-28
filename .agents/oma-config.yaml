@@ -13,3 +13,11 @@ custom_presets:
   viru-antigravity-fallback:
     extends: antigravity
     description: "Fallback preset when Codex quota is exhausted"
+vendors:
+  - claude
+  - codex
+  - copilot
+  - cursor
+  - grok
+  - qwen
+  - zcode

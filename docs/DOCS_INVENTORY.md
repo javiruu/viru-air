@@ -8,6 +8,7 @@
 ## Resumen
 
 Inventario completo de documentos `.md` y `.txt` relevantes del repositorio tras el saneamiento documental. Excluye dependencias, cach?s, builds, entornos virtuales, `_publish_repo` y otras salidas generadas masivas.
+
 ## Actualizacion manual 2026-06-27 (saneamiento minimo para LazyCodex)
 
 Entradas vivas actualizadas:
