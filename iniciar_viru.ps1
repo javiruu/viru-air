@@ -1,4 +1,4 @@
-﻿param(
+param(
   [switch]$Foreground
 )
 
@@ -328,8 +328,10 @@ $env:JWT_SECRET = $jwtSecret
 $env:DB_URL = $backendDbUrl
 
 Write-Host "Validando cadena de migraciones Alembic..."
+Push-Location $backendDir
 $auditRaw = (& $backendPython -m app.infrastructure.db.alembic_audit --json) -join "`n"
 $auditExitCode = $LASTEXITCODE
+Pop-Location
 
 if ([string]::IsNullOrWhiteSpace($auditRaw)) {
   throw "No se pudo obtener el diagnostico previo de Alembic."
