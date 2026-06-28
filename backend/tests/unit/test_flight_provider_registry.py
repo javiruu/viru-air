@@ -22,3 +22,26 @@ def test_registry_registers_wizzair_when_enabled_and_ordered(monkeypatch):
     providers = registry.resolve_enabled_providers()
 
     assert [provider.provider_id for provider in providers] == ["ryanair", "wizzair"]
+
+
+def test_registry_accepts_wizz_air_order_aliases(monkeypatch):
+    monkeypatch.setenv("FLIGHT_PROVIDER_ORDER", "ryanair,wizz_air,wizz-air,wizz air,wizz")
+    monkeypatch.setenv("FLIGHT_PROVIDER_RYANAIR_ENABLED", "false")
+    monkeypatch.setenv("FLIGHT_PROVIDER_WIZZ_AIR_ENABLED", "true")
+    monkeypatch.setenv("FLIGHT_PROVIDER_DUFFEL_ENABLED", "false")
+
+    registry = FlightProviderRegistry()
+    providers = registry.resolve_enabled_providers()
+
+    assert [provider.provider_id for provider in providers] == ["wizzair"]
+
+
+def test_registry_respects_wizz_air_enabled_alias(monkeypatch):
+    monkeypatch.setenv("FLIGHT_PROVIDER_ORDER", "wizz_air")
+    monkeypatch.delenv("FLIGHT_PROVIDER_WIZZAIR_ENABLED", raising=False)
+    monkeypatch.setenv("FLIGHT_PROVIDER_WIZZ_AIR_ENABLED", "false")
+
+    registry = FlightProviderRegistry()
+    providers = registry.resolve_enabled_providers()
+
+    assert providers == []

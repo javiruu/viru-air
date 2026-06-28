@@ -27,6 +27,13 @@ test("outbound date picker is wired with hints props and visible-month callback"
   assert.match(source, /onVisibleMonthChange=\{setCalendarVisibleMonth\}/);
 });
 
+test("outbound date picker cannot submit days before today", () => {
+  const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
+  assert.match(source, /function currentDateIso\(\): string/);
+  assert.match(source, /const minTravelDate = useMemo\(\(\) => currentDateIso\(\), \[\]\)/);
+  assert.match(source, /name="travel_date"[\s\S]*?min=\{minTravelDate\}/);
+});
+
 test("calendar hints failures are treated as non-fatal and cached as empty state", () => {
   const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
   assert.match(source, /"calendar_hints_failed"/);

@@ -234,6 +234,13 @@ function currentMonthIso(): string {
   return `${now.getFullYear()}-${month}`;
 }
 
+function currentDateIso(): string {
+  const now = new Date();
+  const month = `${now.getMonth() + 1}`.padStart(2, "0");
+  const day = `${now.getDate()}`.padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
 function monthFromDateIso(dateIso: string): string {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateIso)) {
     return currentMonthIso();
@@ -522,6 +529,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     debugLastTickLogTsRef,
   } = useQuickSearchMainState(initialOrigin, initialDestination);
   const normalizedRadiusKm = clampQuickSearchRadius(radiusKm);
+  const minTravelDate = useMemo(() => currentDateIso(), []);
   const [returnDateTouched, setReturnDateTouched] = useState(false);
   const [refreshingResultId, setRefreshingResultId] = useState<string | null>(null);
 
@@ -4374,6 +4382,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               placeholder={t("placeholderDates")}
               localeTag={localeTag}
               variant="outbound"
+              min={minTravelDate}
               dayHintsByIso={calendarHintsActive?.dayHintsByIso || {}}
               hintsLoading={calendarHintsLoadingKey === calendarHintsRequestKey}
               showCountryEstimateBadge={canRequestCalendarHints && hasCountryScopeForCalendarHints}
