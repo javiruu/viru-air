@@ -18,6 +18,7 @@ class ProviderFlight:
     departure_time_local: str | None
     captured_at: datetime
     source: str = "ryanair-public"
+    deeplink_url: str | None = None
 
 
 @dataclass

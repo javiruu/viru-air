@@ -843,7 +843,7 @@ def _matches_time_window(
         return True
     dep_minutes = _time_to_minutes(departure)
     if dep_minutes is None:
-        return False
+        return True
     after_minutes = _time_to_minutes(after_value)
     before_minutes = _time_to_minutes(before_value)
     if after_minutes is None and before_minutes is None:
@@ -2518,6 +2518,7 @@ def quick_search(
                 "stale_data": bool(item_freshness["requires_revalidation"]),
                 "freshness_ts": item.flight.captured_at.isoformat(),
                 "freshness": item_freshness,
+                "deeplink_url": item.flight.deeplink_url,
                 "itinerary_type": "direct",
                 "legs": [],
                 "score": item.score_breakdown,

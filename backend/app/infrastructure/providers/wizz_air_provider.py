@@ -49,7 +49,7 @@ class WizzAirProvider(FlightProvider):
                 severity="error",
             ) from exc
 
-        flights = self._extract_matching_flights(body, travel_date=travel_date, fallback_currency=currency)
+        flights = self._extract_matching_flights(body, origin=origin, destination=destination, travel_date=travel_date, fallback_currency=currency)
         warnings_structured: list[ProviderWarning] = []
         if not flights:
             warnings_structured.append(
@@ -96,6 +96,8 @@ class WizzAirProvider(FlightProvider):
         self,
         payload: dict[str, Any],
         *,
+        origin: str,
+        destination: str,
         travel_date: str,
         fallback_currency: str,
     ) -> list[ProviderFlight]:
@@ -127,6 +129,7 @@ class WizzAirProvider(FlightProvider):
                     departure_time_local=None,
                     captured_at=utc_now_naive(),
                     source="wizzair-farechart",
+                    deeplink_url=f"https://www.wizzair.com/es-es/booking/select-flight/{origin}/{destination}/{travel_date}/null/1/0/0/null"
                 )
             )
         return flights
