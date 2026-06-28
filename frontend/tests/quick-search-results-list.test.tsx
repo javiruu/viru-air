@@ -43,7 +43,7 @@ function t(key: string) {
     freshnessStale: "Desactualizado",
     score: "Score",
     deepLinkAlt: "Copiar parametros",
-    deepLink: "Abrir en Ryanair",
+    deepLink: "Abrir vuelo",
     detailsAlt: "Alternativos",
     detailsWindow: "Ventana",
     detailsScore: "Score",
@@ -108,7 +108,8 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
   assert.match(html, /Guardar/);
   assert.match(html, /Actualizar precio/);
   assert.match(html, /Ver detalle/);
-  assert.match(html, /Abrir en Ryanair/);
+  assert.match(html, /Abrir vuelo/);
+  assert.match(html, /Ryanair/);
   assert.match(html, /Verificado 4 min/);
   assert.doesNotMatch(html, /Frescura:/);
   assert.match(html, /trip\/flights\/select/);
@@ -152,7 +153,7 @@ test("QuickSearchResultsList accepts official relative deeplink variants and rej
     />,
   );
 
-  assert.match(htmlWithRelativeLink, /Abrir en Ryanair/);
+  assert.match(htmlWithRelativeLink, /Abrir vuelo/);
 
   const htmlWithLandingOnly = renderToStaticMarkup(
     <QuickSearchResultsList
@@ -191,7 +192,50 @@ test("QuickSearchResultsList accepts official relative deeplink variants and rej
     />,
   );
 
-  assert.doesNotMatch(htmlWithLandingOnly, /Abrir en Ryanair/);
+  assert.doesNotMatch(htmlWithLandingOnly, /Abrir vuelo/);
+});
+
+test("QuickSearchResultsList renders Wizz Air branding and avoids Ryanair fallback links", () => {
+  const html = renderToStaticMarkup(
+    <QuickSearchResultsList
+      visibleResults={[{ ...buildResult(), source: "wizzair-farechart", deeplink_url: null }]}
+      compactView={false}
+      expandedRows={{ "res-1": true }}
+      openRowMenuId={null}
+      deeplinkUrl="https://www.ryanair.com/es/es/trip/flights/select?originIata=MAD&destinationIata=LIS&dateOut=2026-06-01&adults=1"
+      origin="MAD"
+      destination="LIS"
+      radiusKm={150}
+      departAfter="07:00"
+      departBefore="22:00"
+      localeTag="es"
+      getCopyPayload={() => "payload"}
+      rowMenuTriggerRefs={{ current: {} }}
+      t={t}
+      formatMoney={(value, currency) => `${currency || "EUR"} ${value}`}
+      formatScore={(value) => value.toFixed(2)}
+      formatMinutes={(value) => `${value ?? 0} min`}
+      resultKey={(result) => result.result_id || "fallback"}
+      getResultTags={() => [{ key: "freshness-fresh", label: "Verificado 4 min", tone: "fresh" }]}
+      canRefreshPrice={() => false}
+      refreshingResultId={null}
+      refreshPrice={() => undefined}
+      addToWatchlist={() => undefined}
+      setExpandedRows={() => undefined}
+      setSelectedResultId={() => undefined}
+      setOpenRowMenuId={() => undefined}
+      setCopyModalPayload={() => undefined}
+      setCopyModalOpen={() => undefined}
+      closeRowMenu={() => undefined}
+      onTrackOpenRyanair={() => undefined}
+      onTrackRowOverflow={() => undefined}
+      onTrackCopyParams={() => undefined}
+    />,
+  );
+
+  assert.match(html, /Wizz Air/);
+  assert.match(html, /wizzair-farechart/);
+  assert.doesNotMatch(html, /Abrir vuelo/);
 });
 
 test("QuickSearchResultsList renders ai preferred tag and reason", () => {

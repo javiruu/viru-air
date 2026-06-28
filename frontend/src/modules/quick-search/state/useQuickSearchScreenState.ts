@@ -4,6 +4,7 @@ import { QuickSearchCopyKey } from "@/modules/shared/quickSearchCopy";
 import { SearchFilters, SearchResponse, SearchResult, ZeroResultRelaxAction } from "@/modules/quick-search/types";
 import { deriveQuickSearchVisibleResults } from "@/modules/quick-search/state/quickSearchVisibleResults";
 import { parseNumericInput } from "@/modules/quick-search/searchCriteria";
+import { resolveQuickSearchProviderPresentation } from "@/modules/quick-search/providerPresentation";
 
 type QuickSearchScreenStateArgs = {
   results: SearchResult[];
@@ -126,16 +127,22 @@ export function useQuickSearchScreenState({
   }, [warningSeverity.critical]);
 
   const sourcesSummary = useMemo(() => {
-    const grouped = new Map<string, number>();
+    const grouped = new Map<string, { id: string; label: string; count: number }>();
     visibleResults.forEach((item) => {
-      const source =
-        typeof item.source === "string" && item.source.trim()
-          ? item.source.trim()
-          : t("sourceUnknown");
-      grouped.set(source, (grouped.get(source) || 0) + 1);
+      const provider = resolveQuickSearchProviderPresentation(item.source, t("sourceUnknown"));
+      const current = grouped.get(provider.label);
+      if (current) {
+        current.count += 1;
+        return;
+      }
+      grouped.set(provider.label, {
+        id: provider.id,
+        label: provider.label,
+        count: 1,
+      });
     });
-    const entries = Array.from(grouped.entries()).sort((a, b) => b[1] - a[1]);
-    const preview = entries.slice(0, 2).map(([source, count]) => `${source} (${count})`).join(", ");
+    const entries = Array.from(grouped.values()).sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+    const preview = entries.slice(0, 2).map((entry) => `${entry.label} (${entry.count})`).join(", ");
     return {
       entries,
       preview,
