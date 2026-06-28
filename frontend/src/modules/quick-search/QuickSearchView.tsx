@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
+import type { ApiError } from "@/modules/shared/api";
 import { getAirportMeta } from "@/modules/shared/airports";
 import { getQuickSearchCopy } from "@/modules/shared/quickSearchCopy";
 import { useFtueHint } from "@/lib/ftue";
@@ -186,6 +187,45 @@ function buildEmptyCalendarHintsCacheEntry(scopeMode: QuickSearchCalendarScopeMo
     dayHintsByIso: {},
     scopeMode,
   };
+}
+
+async function apiFetchWithRetry<T>(
+  path: string,
+  init?: RequestInit,
+  options?: { timeoutMs?: number; maxRetries?: number },
+): Promise<
+  | { ok: true; data: T; status: number; headers: Headers }
+  | { ok: false; error: ApiError; status: number; headers: Headers }
+> {
+  const maxRetries = options?.maxRetries ?? 2;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    if (init?.signal && (init.signal as AbortSignal).aborted) {
+      return {
+        ok: false,
+        status: 0,
+        headers: new Headers(),
+        error: { status: 0, code: "ABORTED", message: "" },
+      };
+    }
+    if (attempt > 0) {
+      await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt - 1)));
+      if (init?.signal && (init.signal as AbortSignal).aborted) {
+        return {
+          ok: false,
+          status: 0,
+          headers: new Headers(),
+          error: { status: 0, code: "ABORTED", message: "" },
+        };
+      }
+    }
+    const result = await apiFetchWithStatus<T>(path, init, options);
+    if (result.ok) return result;
+    if (result.status >= 500 && result.status < 600 && attempt < maxRetries) {
+      continue;
+    }
+    return result;
+  }
+  throw new Error("apiFetchWithRetry unreachable");
 }
 
 function currentMonthIso(): string {
@@ -1203,7 +1243,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     const requestKey = calendarHintsRequestKey;
     setCalendarHintsLoadingKey(requestKey);
 
-    apiFetchWithStatus<QuickSearchCalendarHintsResponse>("/search/quick/calendar-hints", {
+    apiFetchWithRetry<QuickSearchCalendarHintsResponse>("/search/quick/calendar-hints", {
       method: "POST",
       signal: controller.signal,
       body: JSON.stringify({
@@ -1219,7 +1259,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         bucket_mode: calendarHintBucketMode,
         guideline_thresholds: calendarHintBucketMode === "guidelines" ? calendarHintGuidelineThresholds : undefined,
       }),
-    })
+    }, { maxRetries: 2 })
       .then((result) => {
         if (controller.signal.aborted) return;
         if (!result.ok) {
@@ -1309,7 +1349,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     const requestKey = calendarHintsRequestKeyReturn;
     setCalendarHintsLoadingKeyReturn(requestKey);
 
-    apiFetchWithStatus<QuickSearchCalendarHintsResponse>("/search/quick/calendar-hints", {
+    apiFetchWithRetry<QuickSearchCalendarHintsResponse>("/search/quick/calendar-hints", {
       method: "POST",
       signal: controller.signal,
       body: JSON.stringify({
@@ -1326,7 +1366,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         bucket_mode: calendarHintBucketMode,
         guideline_thresholds: calendarHintBucketMode === "guidelines" ? calendarHintGuidelineThresholds : undefined,
       }),
-    })
+    }, { maxRetries: 2 })
       .then((result) => {
         if (controller.signal.aborted) return;
         if (!result.ok) {
