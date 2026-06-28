@@ -5,14 +5,23 @@ from datetime import datetime
 from typing import Any
 
 import requests
+import ssl
 from requests.adapters import HTTPAdapter
 
 from app.core.time import utc_now_naive
 from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError, ProviderWarning
 from app.infrastructure.providers.base import FlightProvider
+import threading
+from collections import defaultdict
 
 _PROVIDER_POOL_SIZE = 32
 
+class TLSAdapter(HTTPAdapter):
+    def init_poolmanager(self, *args, **kwargs):
+        ctx = ssl.create_default_context()
+        ctx.set_ciphers('DEFAULT@SECLEVEL=1')
+        kwargs['ssl_context'] = ctx
+        super().init_poolmanager(*args, **kwargs)
 
 class WizzAirProvider(FlightProvider):
     provider_id = "wizzair"
@@ -26,9 +35,12 @@ class WizzAirProvider(FlightProvider):
         self.base_url = (base_url or os.getenv("WIZZAIR_BASE_URL", "https://be.wizzair.com/29.4.0/Api")).rstrip("/")
         self.day_interval = max(3, int(day_interval or os.getenv("WIZZAIR_FARECHART_DAY_INTERVAL", "9")))
         self._session = requests.Session()
-        adapter = HTTPAdapter(pool_connections=_PROVIDER_POOL_SIZE, pool_maxsize=_PROVIDER_POOL_SIZE)
+        adapter = TLSAdapter(pool_connections=_PROVIDER_POOL_SIZE, pool_maxsize=_PROVIDER_POOL_SIZE)
         self._session.mount("https://", adapter)
         self._session.mount("http://", adapter)
+        self._cache_lock = threading.Lock()
+        self._cache: dict[tuple[str, str, str], list[ProviderFlight]] = {}
+        self._global_fetch_lock = threading.Lock()
 
     def is_enabled(self) -> bool:
         return True
@@ -39,17 +51,45 @@ class WizzAirProvider(FlightProvider):
         origin = origin.upper().strip()
         destination = destination.upper().strip()
 
-        try:
-            body = self._fetch_farechart(origin, destination, travel_date, timeout_ms=timeout_ms)
-        except requests.RequestException as exc:
-            raise ProviderSourceFetchError(
-                warning_codes=["wizzair_provider_unavailable_total", "provider_total_outage"],
-                message=f"Wizz Air provider unavailable for {origin}->{destination} on {travel_date}",
-                provider_id=self.provider_id,
-                severity="error",
-            ) from exc
+        cache_key = (origin, destination, travel_date)
+        with self._cache_lock:
+            if cache_key in self._cache:
+                flights = self._cache[cache_key]
+                return ProviderFetchResult(flights=flights, warnings=[], warnings_structured=[])
 
-        flights = self._extract_matching_flights(body, origin=origin, destination=destination, travel_date=travel_date, fallback_currency=currency)
+        # Obtain a global lock to completely serialize network requests to Wizz Air
+        # This prevents 400 Bad Request (InvalidProtocol) caused by concurrent fetches
+        with self._global_fetch_lock:
+            # Check cache again inside the lock
+            with self._cache_lock:
+                if cache_key in self._cache:
+                    flights = self._cache[cache_key]
+                    return ProviderFetchResult(flights=flights, warnings=[], warnings_structured=[])
+
+            try:
+                body = self._fetch_farechart(origin, destination, travel_date, timeout_ms=timeout_ms)
+            except requests.RequestException as exc:
+                raise ProviderSourceFetchError(
+                    warning_codes=["wizzair_provider_unavailable_total", "provider_total_outage"],
+                    message=f"Wizz Air provider unavailable for {origin}->{destination} on {travel_date}",
+                    provider_id=self.provider_id,
+                    severity="error",
+                ) from exc
+
+            # Parse all flights from the response to cache them
+            all_parsed_flights = self._extract_all_flights(body, origin=origin, destination=destination, fallback_currency=currency)
+            
+            with self._cache_lock:
+                # Cache everything returned by this fetch
+                for parsed_date, flight_list in all_parsed_flights.items():
+                    self._cache[(origin, destination, parsed_date)] = flight_list
+                
+                # If the requested date wasn't in the response, cache it as empty so we don't refetch
+                if cache_key not in self._cache:
+                    self._cache[cache_key] = []
+                    
+                flights = self._cache[cache_key]
+
         warnings_structured: list[ProviderWarning] = []
         if not flights:
             warnings_structured.append(
@@ -92,19 +132,18 @@ class WizzAirProvider(FlightProvider):
         response.raise_for_status()
         return response.json()
 
-    def _extract_matching_flights(
+    def _extract_all_flights(
         self,
         payload: dict[str, Any],
         *,
         origin: str,
         destination: str,
-        travel_date: str,
         fallback_currency: str,
-    ) -> list[ProviderFlight]:
-        flights: list[ProviderFlight] = []
+    ) -> dict[str, list[ProviderFlight]]:
+        flights_by_date: dict[str, list[ProviderFlight]] = defaultdict(list)
         for item in payload.get("outboundFlights") or []:
             item_date = self._to_iso_date(item.get("date"))
-            if item_date != travel_date:
+            if not item_date:
                 continue
 
             price = item.get("price") or {}
@@ -114,25 +153,29 @@ class WizzAirProvider(FlightProvider):
                 amount = price.get("amount")
             if currency is None:
                 currency = price.get("currencyCode") or fallback_currency
-            if amount is None:
+            
+            if item.get("priceType") == "noData" or amount is None:
                 continue
 
             try:
                 normalized_amount = float(amount)
             except (TypeError, ValueError):
                 continue
+                
+            if normalized_amount <= 0.0:
+                continue
 
-            flights.append(
+            flights_by_date[item_date].append(
                 ProviderFlight(
                     price=normalized_amount,
                     currency=str(currency).upper(),
                     departure_time_local=None,
                     captured_at=utc_now_naive(),
                     source="wizzair-farechart",
-                    deeplink_url=f"https://www.wizzair.com/es-es/booking/select-flight/{origin}/{destination}/{travel_date}/null/1/0/0/null"
+                    deeplink_url=f"https://www.wizzair.com/es-es/booking/select-flight/{origin}/{destination}/{item_date}/null/1/0/0/null"
                 )
             )
-        return flights
+        return dict(flights_by_date)
 
     def _to_iso_date(self, value: Any) -> str | None:
         if not value:
