@@ -212,8 +212,24 @@ test("useQuickSearchScreenState groups sources defensively when raw source value
     ],
   });
 
-  assert.deepEqual(state.sourcesSummary.entries, [["sourceUnknown", 2]]);
+  assert.deepEqual(state.sourcesSummary.entries, [{ id: "unknown", label: "sourceUnknown", count: 2 }]);
   assert.equal(state.sourcesSummary.preview, "sourceUnknown (2)");
+});
+
+test("useQuickSearchScreenState groups multiple raw sources into provider-level labels", () => {
+  const state = renderScreenState({
+    results: [
+      buildResult({ result_id: "ry-1", source: "ryanair-public-fares" }),
+      buildResult({ result_id: "ry-2", destination: "LIS", source: "ryanair-public-fares" }),
+      buildResult({ result_id: "wz-1", destination: "BCN", source: "wizzair-farechart" }),
+    ],
+  });
+
+  assert.deepEqual(state.sourcesSummary.entries, [
+    { id: "ryanair", label: "Ryanair", count: 2 },
+    { id: "wizzair", label: "Wizz Air", count: 1 },
+  ]);
+  assert.equal(state.sourcesSummary.preview, "Ryanair (2), Wizz Air (1)");
 });
 
 test("getQuickSearchVisualState keeps loading dominant while the visual hold is active", () => {

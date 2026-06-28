@@ -1,6 +1,8 @@
 import React, { memo } from "react";
 
 import { SearchResult } from "@/modules/quick-search/types";
+import { QuickSearchProviderBadge } from "@/modules/quick-search/components/QuickSearchProviderBadge";
+import { resolveQuickSearchProviderPresentation } from "@/modules/quick-search/providerPresentation";
 
 type Props = {
   visibleResults: SearchResult[];
@@ -68,6 +70,27 @@ function isOfficialRyanairFlightDeepLink(value: string | null | undefined): bool
   }
 }
 
+function isOfficialWizzAirDeepLink(value: string | null | undefined): boolean {
+  if (!value) return false;
+  try {
+    const parsed = new URL(value, "https://www.wizzair.com");
+    const host = parsed.hostname.toLowerCase();
+    return host === "wizzair.com" || host.endsWith(".wizzair.com");
+  } catch {
+    return false;
+  }
+}
+
+function isGenericHttpLink(value: string | null | undefined): boolean {
+  if (!value) return false;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function QuickSearchResultsListInner(props: Props) {
   return (
     <>
@@ -75,17 +98,23 @@ function QuickSearchResultsListInner(props: Props) {
         <div className={`qs-results-list ${props.compactView ? "compact" : ""}`}>
           {props.visibleResults.map((r, idx) => {
             const rowId = props.resultKey(r, idx);
-            const rowLink = isOfficialRyanairFlightDeepLink(r.deeplink_url)
-              ? r.deeplink_url
-              : isOfficialRyanairFlightDeepLink(props.deeplinkUrl)
-                ? props.deeplinkUrl
-                : "";
+            const provider = resolveQuickSearchProviderPresentation(r.source, props.t("sourceUnknown"));
+            const rowLink = provider.id === "ryanair"
+              ? (isOfficialRyanairFlightDeepLink(r.deeplink_url)
+                  ? r.deeplink_url
+                  : isOfficialRyanairFlightDeepLink(props.deeplinkUrl)
+                    ? props.deeplinkUrl
+                    : "")
+              : provider.id === "wizzair"
+                ? (isOfficialWizzAirDeepLink(r.deeplink_url) ? r.deeplink_url : "")
+                : (isGenericHttpLink(r.deeplink_url) ? r.deeplink_url ?? "" : "");
             const expanded = Boolean(props.expandedRows[rowId]);
             const detailsId = `details-${rowId}`;
             const compactTags = props.getResultTags(r, "compact");
             const departureCompact = r.departure_time_local || "--";
             const rowDurationLabel = r.duration_total_min ? `${r.duration_total_min} min` : "--";
             const aiReason = typeof r.ai_preferred_reason === "string" ? r.ai_preferred_reason.trim() : "";
+            const rawSourceLabel = typeof r.source === "string" ? r.source.trim() : "";
             const canRefreshPrice = props.canRefreshPrice(r);
             const isRefreshingPrice = props.refreshingResultId === rowId;
             return (
@@ -104,6 +133,7 @@ function QuickSearchResultsListInner(props: Props) {
                         <span>{departureCompact}</span>
                       </div>
                       <div className="qs-result-badges">
+                        <QuickSearchProviderBadge source={r.source} unknownLabel={props.t("sourceUnknown")} />
                         {compactTags.map((tag) => (
                           <span
                             key={`${rowId}-${tag.key}`}
@@ -131,6 +161,7 @@ function QuickSearchResultsListInner(props: Props) {
                         <span><strong>{props.t("resultsColDuration")}:</strong> {rowDurationLabel}</span>
                       </div>
                       <div className="qs-result-badges">
+                        <QuickSearchProviderBadge source={r.source} unknownLabel={props.t("sourceUnknown")} />
                         {props.getResultTags(r, "normal").map((tag) => (
                           <span
                             key={`${rowId}-${tag.key}`}
@@ -320,7 +351,12 @@ function QuickSearchResultsListInner(props: Props) {
                     ) : null}
                     <div>
                       <strong>{props.t("source")}</strong>
-                      <p>{(r.source || "").trim() || props.t("sourceUnknown")}</p>
+                      <div className="qs-result-source-block">
+                        <QuickSearchProviderBadge source={r.source} unknownLabel={props.t("sourceUnknown")} />
+                        {rawSourceLabel && rawSourceLabel !== provider.label ? (
+                          <p className="qs-result-source-raw">{rawSourceLabel}</p>
+                        ) : null}
+                      </div>
                     </div>
                     {r.legs && r.legs.length > 0 ? (
                       <div className="qs-legs">

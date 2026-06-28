@@ -94,6 +94,7 @@ import { QuickSearchDualWorkspace } from "@/modules/quick-search/components/Quic
 import { buildDualSearchParams, findCombinationResult } from "@/modules/quick-search/utils-dual";
 import { QuickSearchSidePanel } from "@/modules/quick-search/components/QuickSearchSidePanel";
 import { QuickSearchCombinedBanner } from "@/modules/quick-search/components/QuickSearchCombinedBanner";
+import { QuickSearchProviderBadge } from "@/modules/quick-search/components/QuickSearchProviderBadge";
 import { useQuickSearchScreenState } from "@/modules/quick-search/state/useQuickSearchScreenState";
 import { QuickSearchSideViewControls } from "@/modules/quick-search/components/QuickSearchSideViewControls";
 import { getPendingActionVisibility } from "@/modules/quick-search/state/pendingActionPolicy";
@@ -3258,7 +3259,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
   useEffect(() => {
     if (!hasSearched || sourcesSummary.entries.length === 0) return;
-    const key = `${jobId || "nojob"}:${sourcesSummary.entries.map(([source, count]) => `${source}:${count}`).join("|")}`;
+    const key = `${jobId || "nojob"}:${sourcesSummary.entries.map((entry) => `${entry.label}:${entry.count}`).join("|")}`;
     if (sourcesShownKeyRef.current === key) return;
     trackEvent("quicksearch_sources_aggregated_shown", {
       sources_count: sourcesSummary.entries.length,
@@ -5005,10 +5006,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                   <div className="panel panel-soft qs-sources-panel">
                     <strong>{t("sourcesDetailTitle")}</strong>
                     <ul>
-                      {sourcesSummary.entries.map(([source, count]) => (
-                        <li key={`${source}-${count}`}>
-                          <span>{source}</span>
-                          <strong>{count}</strong>
+                      {sourcesSummary.entries.map((entry) => (
+                        <li key={`${entry.id}-${entry.label}-${entry.count}`}>
+                          <QuickSearchProviderBadge source={entry.label} unknownLabel={t("sourceUnknown")} />
+                          <strong>{entry.count}</strong>
                         </li>
                       ))}
                     </ul>

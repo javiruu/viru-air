@@ -16,6 +16,7 @@ test("quick search copy resolves en locale", () => {
   assert.equal(t("ariaFiltersToggle"), "Active settings ({count})");
   assert.equal(t("ariaRemoveFilter"), "Remove filter {value}");
   assert.equal(t("loadingSubcheckFlight"), "Searching flight {route}");
+  assert.equal(t("deepLink"), "Open flight");
 });
 
 test("quick search warning fallback returns code", () => {
@@ -55,4 +56,5 @@ test("quick search copy exposes state microcopy in es", () => {
   assert.equal(t("roundTripToggleHint"), "Activalo cuando quieras ver ida y vuelta en dos paneles coordinados.");
   assert.equal(t("passengersBaseFareHint"), "La busqueda rapida sigue mostrando precio orientativo base; el numero de adultos si viaja a aperturas y deep-links.");
   assert.equal(t("returnResetAfterOutboundChange"), "Hemos limpiado la vuelta para que puedas elegir una nueva fecha coherente.");
+  assert.equal(t("deepLink"), "Abrir vuelo");
 });

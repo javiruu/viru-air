@@ -3014,6 +3014,7 @@ h1 {
 .qs-sources-panel li {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 0.7rem;
   color: var(--color-text-primary);
 }
@@ -3093,6 +3094,53 @@ h1 {
   font-size: 0.76rem;
   font-weight: 600;
   line-height: 1.25;
+}
+
+.qs-provider-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  background: color-mix(in srgb, var(--panel) 82%, white 18%);
+  padding: 0.24rem 0.58rem 0.24rem 0.28rem;
+  color: var(--color-text-primary);
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.qs-provider-badge-logo {
+  width: 1.2rem;
+  height: 1.2rem;
+  flex: 0 0 auto;
+}
+
+.qs-provider-badge--ryanair {
+  border-color: color-mix(in srgb, #123A83 44%, var(--border));
+  background: color-mix(in srgb, #123A83 10%, var(--panel));
+}
+
+.qs-provider-badge--wizzair {
+  border-color: color-mix(in srgb, #C2187A 40%, var(--border));
+  background: color-mix(in srgb, #C2187A 9%, var(--panel));
+}
+
+.qs-provider-badge--duffel {
+  border-color: color-mix(in srgb, #111827 34%, var(--border));
+  background: color-mix(in srgb, #111827 7%, var(--panel));
+}
+
+.qs-result-source-block {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.qs-result-source-raw {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
 }
 
 .qs-tag-low {
