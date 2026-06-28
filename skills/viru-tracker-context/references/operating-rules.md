@@ -20,7 +20,7 @@ Use this reference when you need the compact process model extracted from the Vi
 3. `docs/reference/codex-operating-contract.md`
 4. `docs/overview/`
 5. Domain docs in `reference/specs/ui/runbooks/qa`
-6. `docs/plans/` and `docs/changelog/`
+6. `docs/plans/` and `HISTORY.md`
 7. `docs/archive/`
 
 ## Review and publication model
@@ -30,7 +30,7 @@ Use this reference when you need the compact process model extracted from the Vi
 3. Prepare a compact review packet with summary, key files, risks, rollback, and manual validation notes.
 4. Review for regressions and contract drift.
 5. Record human validation when auth, data, infra, connectors, or user-visible risk is involved.
-6. Publish through the GitHub flow rather than treating remote GitHub as a draft area.
+6. Publish from the canonical repo with direct commits to `main` by default; use PR / GitHub flow only if the user explicitly asks for it.
 
 ## Word sections worth adopting
 
