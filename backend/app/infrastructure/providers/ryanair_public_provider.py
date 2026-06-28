@@ -6,7 +6,14 @@ from typing import Any
 
 from app.core.time import utc_now_naive
 
-import requests
+import time
+import random
+try:
+    from curl_cffi import requests
+    from curl_cffi.requests.errors import RequestsError
+except ImportError:
+    import requests
+    from requests.exceptions import RequestException as RequestsError
 from requests.adapters import HTTPAdapter
 
 from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderPrice, ProviderSourceFetchError, ProviderWarning
@@ -19,10 +26,13 @@ class RyanairPublicProvider(FlightProvider):
     provider_id = "ryanair"
 
     def __init__(self) -> None:
-        self._session = requests.Session()
-        adapter = HTTPAdapter(pool_connections=_PROVIDER_POOL_SIZE, pool_maxsize=_PROVIDER_POOL_SIZE)
-        self._session.mount("https://", adapter)
-        self._session.mount("http://", adapter)
+        try:
+            self._session = requests.Session(impersonate="chrome110")
+        except TypeError:
+            self._session = requests.Session()
+            adapter = HTTPAdapter(pool_connections=_PROVIDER_POOL_SIZE, pool_maxsize=_PROVIDER_POOL_SIZE)
+            self._session.mount("https://", adapter)
+            self._session.mount("http://", adapter)
 
     def is_enabled(self) -> bool:
         return True
@@ -38,14 +48,14 @@ class RyanairPublicProvider(FlightProvider):
 
         try:
             availability = self._fetch_availability(origin, destination, travel_date, timeout_ms=timeout_ms, currency=currency)
-        except requests.RequestException:
+        except RequestsError:
             availability = []
             availability_error = True
             warnings.append("ryanair_availability_failed_partial")
 
         try:
             fares = self._fetch_one_way_fares(origin, destination, travel_date, timeout_ms=timeout_ms, currency=currency)
-        except requests.RequestException:
+        except RequestsError:
             fares = []
             fares_error = True
             warnings.append("ryanair_fares_failed_partial")
@@ -177,6 +187,7 @@ class RyanairPublicProvider(FlightProvider):
         return unique
 
     def _get_json(self, url: str, *, timeout_ms: int = 12000) -> dict[str, Any]:
+        time.sleep(random.uniform(0.1, 0.4))
         resp = self._session.get(
             url,
             timeout=max(1, timeout_ms / 1000),

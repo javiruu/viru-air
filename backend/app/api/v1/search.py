@@ -1375,7 +1375,7 @@ def quick_search_calendar_hints(
         )
         anchor_rows, anchor_execution_meta, anchor_warnings = execute_plan(
             anchor_execution_plan,
-            concurrency_limit=6,
+            concurrency_limit=3,
             timeout_ms=5000,
             fetch_flights=lambda origin, destination, travel_date, timeout_ms: provider.get_flights(
                 origin,
@@ -1424,7 +1424,7 @@ def quick_search_calendar_hints(
     )
     full_rows, full_execution_meta, full_warnings = execute_plan(
         full_month_execution_plan,
-        concurrency_limit=6,
+        concurrency_limit=3,
         timeout_ms=6000,
         fetch_flights=lambda origin, destination, travel_date, timeout_ms: provider.get_flights(
             origin,
