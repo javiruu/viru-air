@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 
 from app.infrastructure.providers.base import FlightProvider
 from app.infrastructure.providers.duffel_provider import DuffelProvider
@@ -15,9 +16,41 @@ def _env_enabled(name: str, default: bool = True) -> bool:
     return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
+_PROVIDER_ALIASES = {
+    "duffel": "duffel",
+    "ryanair": "ryanair",
+    "ryan_air": "ryanair",
+    "wizz": "wizzair",
+    "wizzair": "wizzair",
+    "wizz_air": "wizzair",
+}
+
+_PROVIDER_ENABLED_FLAGS = {
+    "duffel": ("FLIGHT_PROVIDER_DUFFEL_ENABLED",),
+    "ryanair": ("FLIGHT_PROVIDER_RYANAIR_ENABLED", "FLIGHT_PROVIDER_RYAN_AIR_ENABLED"),
+    "wizzair": (
+        "FLIGHT_PROVIDER_WIZZAIR_ENABLED",
+        "FLIGHT_PROVIDER_WIZZ_AIR_ENABLED",
+        "FLIGHT_PROVIDER_WIZZ_ENABLED",
+    ),
+}
+
+
+def _normalize_provider_id(value: str) -> str:
+    key = value.strip().lower().replace("-", "_").replace(" ", "_")
+    return _PROVIDER_ALIASES.get(key, key)
+
+
+def _provider_enabled(provider_id: str) -> bool:
+    for flag_name in _PROVIDER_ENABLED_FLAGS.get(provider_id, (f"FLIGHT_PROVIDER_{provider_id.upper()}_ENABLED",)):
+        if os.getenv(flag_name) is not None:
+            return _env_enabled(flag_name, default=True)
+    return True
+
+
 class FlightProviderRegistry:
     def __init__(self) -> None:
-        self._provider_factories: dict[str, callable] = {
+        self._provider_factories: dict[str, Callable[[], FlightProvider]] = {
             "ryanair": RyanairPublicProvider,
             "wizzair": WizzAirProvider,
             "duffel": DuffelProvider,
@@ -25,17 +58,20 @@ class FlightProviderRegistry:
 
     def resolve_enabled_providers(self) -> list[FlightProvider]:
         ordered = [
-            item.strip().lower()
+            _normalize_provider_id(item)
             for item in os.getenv("FLIGHT_PROVIDER_ORDER", "ryanair,wizzair,duffel").split(",")
             if item.strip()
         ]
         providers: list[FlightProvider] = []
+        seen: set[str] = set()
         for provider_id in ordered:
+            if provider_id in seen:
+                continue
+            seen.add(provider_id)
             factory = self._provider_factories.get(provider_id)
             if factory is None:
                 continue
-            flag_name = f"FLIGHT_PROVIDER_{provider_id.upper()}_ENABLED"
-            if not _env_enabled(flag_name, default=True):
+            if not _provider_enabled(provider_id):
                 continue
             provider = factory()
             if provider.is_enabled():
