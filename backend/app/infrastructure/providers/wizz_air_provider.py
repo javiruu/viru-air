@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime
-from typing import Any
-
-import requests
+import time
+import random
+try:
+    from curl_cffi import requests
+    from curl_cffi.requests.errors import RequestsError
+except ImportError:
+    import requests
+    from requests.exceptions import RequestException as RequestsError
 import ssl
 from requests.adapters import HTTPAdapter
 
@@ -34,10 +38,13 @@ class WizzAirProvider(FlightProvider):
     ) -> None:
         self.base_url = (base_url or os.getenv("WIZZAIR_BASE_URL", "https://be.wizzair.com/29.4.0/Api")).rstrip("/")
         self.day_interval = max(3, int(day_interval or os.getenv("WIZZAIR_FARECHART_DAY_INTERVAL", "9")))
-        self._session = requests.Session()
-        adapter = TLSAdapter(pool_connections=_PROVIDER_POOL_SIZE, pool_maxsize=_PROVIDER_POOL_SIZE)
-        self._session.mount("https://", adapter)
-        self._session.mount("http://", adapter)
+        try:
+            self._session = requests.Session(impersonate="chrome110")
+        except TypeError:
+            self._session = requests.Session()
+            adapter = TLSAdapter(pool_connections=_PROVIDER_POOL_SIZE, pool_maxsize=_PROVIDER_POOL_SIZE)
+            self._session.mount("https://", adapter)
+            self._session.mount("http://", adapter)
         self._cache_lock = threading.Lock()
         self._cache: dict[tuple[str, str, str], list[ProviderFlight]] = {}
         self._global_fetch_lock = threading.Lock()
@@ -68,7 +75,7 @@ class WizzAirProvider(FlightProvider):
 
             try:
                 body = self._fetch_farechart(origin, destination, travel_date, timeout_ms=timeout_ms)
-            except requests.RequestException as exc:
+            except RequestsError as exc:
                 raise ProviderSourceFetchError(
                     warning_codes=["wizzair_provider_unavailable_total", "provider_total_outage"],
                     message=f"Wizz Air provider unavailable for {origin}->{destination} on {travel_date}",
@@ -101,25 +108,29 @@ class WizzAirProvider(FlightProvider):
             )
         return ProviderFetchResult(flights=flights, warnings=[], warnings_structured=warnings_structured)
 
-    def _fetch_farechart(self, origin: str, destination: str, travel_date: str, *, timeout_ms: int) -> dict[str, Any]:
+    def _fetch_farechart(
+        self, origin: str, destination: str, travel_date: str, *, timeout_ms: int
+    ) -> dict[str, Any]:
         url = f"{self.base_url}/asset/farechart"
+        payload = {
+            "isRescueFare": False,
+            "adultCount": 1,
+            "childCount": 0,
+            "dayInterval": self.day_interval,
+            "wdc": False,
+            "isFlightChange": False,
+            "flightList": [
+                {
+                    "departureStation": origin,
+                    "arrivalStation": destination,
+                    "date": f"{travel_date}T00:00:00",
+                }
+            ],
+        }
+        time.sleep(random.uniform(0.1, 0.4))
         response = self._session.post(
             url,
-            json={
-                "isRescueFare": False,
-                "adultCount": 1,
-                "childCount": 0,
-                "dayInterval": self.day_interval,
-                "wdc": False,
-                "isFlightChange": False,
-                "flightList": [
-                    {
-                        "departureStation": origin,
-                        "arrivalStation": destination,
-                        "date": f"{travel_date}T00:00:00",
-                    }
-                ],
-            },
+            json=payload,
             timeout=max(2.0, timeout_ms / 1000),
             headers={
                 "User-Agent": "Mozilla/5.0",
