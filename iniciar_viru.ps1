@@ -415,19 +415,27 @@ foreach ($p in $ports) {
   }
 }
 
-# Evita errores de chunks huérfanos de Next al reusar builds parciales.
-if (Test-Path $frontendBuildDir) {
-  Remove-Item -LiteralPath $frontendBuildDir -Recurse -Force -ErrorAction SilentlyContinue
-}
+  # Evita errores de chunks huérfanos de Next al reusar builds parciales.
+  if (Test-Path $frontendBuildDir) {
+    Remove-Item -LiteralPath $frontendBuildDir -Recurse -Force -ErrorAction SilentlyContinue
+  }
 
-if ($runBackground) {
-  $env:LOG_FILE = $backendLog
-  Start-Process -FilePath $backendPython `
-    -ArgumentList @("-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000", "--reload") `
-    -WorkingDirectory $backendDir `
-    -RedirectStandardOutput $backendLog `
-    -RedirectStandardError $backendErrLog `
-    -WindowStyle Hidden | Out-Null
+  $uvicornWorkers = if ($env:UVICORN_WORKERS) { [int]$env:UVICORN_WORKERS } else { 1 }
+  if ($uvicornWorkers -le 0) { $uvicornWorkers = 1 }
+
+  if ($runBackground) {
+    $env:LOG_FILE = $backendLog
+    $uvicornArgs = if ($uvicornWorkers -gt 1) {
+      @("-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000", "--workers", $uvicornWorkers)
+    } else {
+      @("-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000", "--reload")
+    }
+    Start-Process -FilePath $backendPython `
+      -ArgumentList $uvicornArgs `
+      -WorkingDirectory $backendDir `
+      -RedirectStandardOutput $backendLog `
+      -RedirectStandardError $backendErrLog `
+      -WindowStyle Hidden | Out-Null
 
   $env:NEXT_PUBLIC_API_URL = "/api/v1"
   Start-Process -FilePath "cmd.exe" `
@@ -435,10 +443,11 @@ if ($runBackground) {
     -WorkingDirectory (Join-Path $root "frontend") `
     -RedirectStandardOutput $frontendLog `
     -RedirectStandardError $frontendErrLog `
-    -WindowStyle Hidden | Out-Null
-} else {
-  # Backend (modo foreground en nueva ventana)
-  $backendCmd = "title Viru Backend && cd /d `"$root\backend`" && set LOG_FILE=$backendLog && set DB_URL=$backendDbUrl && `"$backendPython`" -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload"
+      -WindowStyle Hidden | Out-Null  } else {
+    # Backend (modo foreground en nueva ventana)
+    $uvicornReloadArg = if ($uvicornWorkers -gt 1) { "" } else { "--reload" }
+    $uvicornWorkersArg = if ($uvicornWorkers -gt 1) { "--workers $uvicornWorkers" } else { "" }
+    $backendCmd = "title Viru Backend && cd /d `"$root\backend`" && set LOG_FILE=$backendLog && set DB_URL=$backendDbUrl && `"$backendPython`" -m uvicorn app.main:app --host 127.0.0.1 --port 8000 $uvicornReloadArg $uvicornWorkersArg"
   Start-Process -FilePath "cmd.exe" -ArgumentList "/k", $backendCmd | Out-Null
 
   # Frontend (modo foreground en nueva ventana)
@@ -446,12 +455,14 @@ if ($runBackground) {
   Start-Process -FilePath "cmd.exe" -ArgumentList "/k", $frontendCmd | Out-Null
 }
 
-try {
-  $api = Wait-HttpOk -Url "http://127.0.0.1:8000/health" -Attempts 25 -DelaySeconds 1
-  $web = Wait-HttpOk -Url "http://127.0.0.1:3000" -Attempts 25 -DelaySeconds 1
-  Write-Host "Backend:" $api.StatusCode
-  Write-Host "Frontend:" $web.StatusCode
-  Write-Host "DB_URL:" $backendDbUrl
+try {    $api = Wait-HttpOk -Url "http://127.0.0.1:8000/health" -Attempts 25 -DelaySeconds 1
+    $web = Wait-HttpOk -Url "http://127.0.0.1:3000" -Attempts 25 -DelaySeconds 1
+    Write-Host "Backend:" $api.StatusCode
+    Write-Host "Frontend:" $web.StatusCode
+    Write-Host "Estabilizando backend tras arranque (3s)..."
+    Start-Sleep -Seconds 3
+    Write-Host "Backend estabilizado."
+    Write-Host "DB_URL:" $backendDbUrl
   Write-Host "Backend log:" $backendLog
   Write-Host "Backend err log:" $backendErrLog
   Write-Host "Frontend log:" $frontendLog

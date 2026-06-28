@@ -16,7 +16,7 @@ foreach ($port in 3000, 8000) {
       $stopped += $listener
       Write-Ok ("Detenido PID $($listener.ProcessId) ($($listener.ProcessName)) que escuchaba en $port.")
     } catch {
-      Write-Fail ("No pude detener PID $($listener.ProcessId) en puerto $port: $($_.Exception.Message)")
+      Write-Fail ("No pude detener PID $($listener.ProcessId) en puerto ${port}: $($_.Exception.Message)")
       exit 1
     }
   }
