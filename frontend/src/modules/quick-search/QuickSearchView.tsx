@@ -117,6 +117,7 @@ import { useQuickSearchMainState } from "@/modules/quick-search/state/useQuickSe
 import { getQuickSearchVisualState } from "@/modules/quick-search/state/getQuickSearchVisualState";
 import { useQuickSearchLoadingFlow } from "@/modules/quick-search/state/useQuickSearchLoadingFlow";
 import { useQuickSearchSide } from "@/modules/quick-search/state/useQuickSearchSide";
+import { useQuickSearchWatchlist } from "@/modules/quick-search/state/useQuickSearchWatchlist";
 import { useSaveCombination } from "@/modules/quick-search/state/useSaveCombination";
 import { QuickSearchDualWorkspace } from "@/modules/quick-search/components/QuickSearchDualWorkspace";
 import { buildDualSearchParams, findCombinationResult } from "@/modules/quick-search/utils-dual";
@@ -564,6 +565,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const [returnDateTouched, setReturnDateTouched] = useState(false);
   const [refreshingResultId, setRefreshingResultId] = useState<string | null>(null);
   const [providerSearchStatuses, setProviderSearchStatuses] = useState<ProviderSearchStatus[]>([]);
+  const { isInWatchlist, markAsSaved } = useQuickSearchWatchlist();
+
 
   // ── Dual-mode hooks (Fase 6) ───────────────────────────────────────
   const outboundSide = useQuickSearchSide("outbound");
@@ -2118,12 +2121,14 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           durationMs: 3200,
         });
       } else {
+          markAsSaved(result);
         trackEvent("quicksearch_watchlist_added", {
           origin: result.origin,
           destination: result.destination,
           travel_date: result.travel_date,
           source: result.source,
         });
+        markAsSaved(result);
         notify({
           tone: "success",
           title: t("watchAdded"),
@@ -4966,6 +4971,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 resultKey={resultKey}
                 getResultTags={getResultTags}
                 canRefreshPrice={canRefreshPrice}
+                isInWatchlist={isInWatchlist}
                 refreshingResultId={refreshingResultId}
                 refreshPrice={refreshQuickSearchResult}
                 addToWatchlist={addToWatchlist}
@@ -5269,6 +5275,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 getResultTags={getResultTags}
                 canRefreshPrice={canRefreshPrice}
                 refreshingResultId={refreshingResultId}
+                isInWatchlist={isInWatchlist}
                 refreshPrice={refreshQuickSearchResult}
                 addToWatchlist={async (result: SearchResult) => {
                   setMessage("");
@@ -5391,6 +5398,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 canRefreshPrice={canRefreshPrice}
                 refreshingResultId={refreshingResultId}
                 refreshPrice={refreshQuickSearchResult}
+                isInWatchlist={isInWatchlist}
                 addToWatchlist={async (result: SearchResult) => {
                   setMessage("");
                   try {
