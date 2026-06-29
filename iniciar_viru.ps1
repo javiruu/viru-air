@@ -138,6 +138,52 @@ function Resolve-BackendBootstrapPython {
   return $null
 }
 
+function Test-FrontendTooling {
+  $nodeOk = Get-Command node -ErrorAction SilentlyContinue
+  $npmOk = Get-Command npm -ErrorAction SilentlyContinue
+
+  if (-not $nodeOk) {
+    throw @"
+No se encontro Node.js en el PATH.
+Es necesario para arrancar el frontend de VIRU.
+Instalacion sugerida: https://nodejs.org/
+"@
+  }
+
+  if (-not $npmOk) {
+    throw @"
+No se encontro npm en el PATH.
+npm deberia venir con Node.js. Revisa tu instalacion.
+"@
+  }
+
+  try {
+    $nodeVersion = & node --version 2>&1 | ForEach-Object { $_.ToString().Trim() } | Select-Object -Last 1
+    $npmVersion = & npm --version 2>&1 | ForEach-Object { $_.ToString().Trim() } | Select-Object -Last 1
+  } catch {
+    $nodeVersion = "desconocida"
+    $npmVersion = "desconocida"
+  }
+
+  $frontendNodeModules = Join-Path $root "frontend\node_modules"
+  if (-not (Test-Path $frontendNodeModules)) {
+    Write-Host "No se encontraron dependencias del frontend (frontend/node_modules)."
+    Write-Host "Ejecutando npm install en frontend/..."
+    Push-Location (Join-Path $root "frontend")
+    try {
+      & npm install 2>&1 | Out-Host
+      if ($LASTEXITCODE -ne 0) {
+        throw "npm install fallo con exit code $LASTEXITCODE."
+      }
+    } finally {
+      Pop-Location
+    }
+    Write-Host "Dependencias del frontend instaladas correctamente."
+  }
+
+  Write-Host "Frontend tooling: node $nodeVersion, npm $npmVersion"
+}
+
 function Read-YesNoPrompt {
   param(
     [Parameter(Mandatory)]
@@ -326,6 +372,7 @@ APP_ENV=local
 Set-ProcessEnvFromDotEnv -Path $backendEnvFile
 $env:JWT_SECRET = $jwtSecret
 $env:DB_URL = $backendDbUrl
+$env:PYTHONUNBUFFERED = "1"
 
 Write-Host "Validando cadena de migraciones Alembic..."
 Push-Location $backendDir
@@ -415,27 +462,34 @@ foreach ($p in $ports) {
   }
 }
 
-  # Evita errores de chunks huérfanos de Next al reusar builds parciales.
+# next dev maneja su propio cache incremental. Solo limpiamos si hay sennal de
+# compilacion corrupta (entorno CI). En desarrollo local esto acelera el arranque.
+if ($env:CI -or $env:NEXT_CLEAN_CACHE) {
   if (Test-Path $frontendBuildDir) {
     Remove-Item -LiteralPath $frontendBuildDir -Recurse -Force -ErrorAction SilentlyContinue
+    Write-Host "Cache de Next.js limpiado forzadamente (CI o NEXT_CLEAN_CACHE)."
   }
+}
 
-  $uvicornWorkers = if ($env:UVICORN_WORKERS) { [int]$env:UVICORN_WORKERS } else { 1 }
-  if ($uvicornWorkers -le 0) { $uvicornWorkers = 1 }
+$uvicornWorkers = if ($env:UVICORN_WORKERS) { [int]$env:UVICORN_WORKERS } else { 1 }
+if ($uvicornWorkers -le 0) { $uvicornWorkers = 1 }
 
-  if ($runBackground) {
-    $env:LOG_FILE = $backendLog
-    $uvicornArgs = if ($uvicornWorkers -gt 1) {
-      @("-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000", "--workers", $uvicornWorkers)
-    } else {
-      @("-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000", "--reload")
-    }
-    Start-Process -FilePath $backendPython `
-      -ArgumentList $uvicornArgs `
-      -WorkingDirectory $backendDir `
-      -RedirectStandardOutput $backendLog `
-      -RedirectStandardError $backendErrLog `
-      -WindowStyle Hidden | Out-Null
+Test-FrontendTooling
+
+if ($runBackground) {
+  $env:LOG_FILE = $backendLog
+  $uvicornArgs = if ($uvicornWorkers -gt 1) {
+    @("-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000", "--workers", $uvicornWorkers)
+  } else {
+    @("-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000", "--reload")
+  }
+  Start-Process -FilePath $backendPython `
+    -ArgumentList $uvicornArgs `
+    -WorkingDirectory $backendDir `
+    -RedirectStandardOutput $backendLog `
+    -RedirectStandardError $backendErrLog `
+    -PassThru `
+    -WindowStyle Hidden | Out-Null
 
   $env:NEXT_PUBLIC_API_URL = "/api/v1"
   Start-Process -FilePath "cmd.exe" `
@@ -443,11 +497,12 @@ foreach ($p in $ports) {
     -WorkingDirectory (Join-Path $root "frontend") `
     -RedirectStandardOutput $frontendLog `
     -RedirectStandardError $frontendErrLog `
-      -WindowStyle Hidden | Out-Null  } else {
-    # Backend (modo foreground en nueva ventana)
-    $uvicornReloadArg = if ($uvicornWorkers -gt 1) { "" } else { "--reload" }
-    $uvicornWorkersArg = if ($uvicornWorkers -gt 1) { "--workers $uvicornWorkers" } else { "" }
-    $backendCmd = "title Viru Backend && cd /d `"$root\backend`" && set LOG_FILE=$backendLog && set DB_URL=$backendDbUrl && `"$backendPython`" -m uvicorn app.main:app --host 127.0.0.1 --port 8000 $uvicornReloadArg $uvicornWorkersArg"
+    -WindowStyle Hidden | Out-Null
+} else {
+  # Backend (modo foreground en nueva ventana)
+  $uvicornReloadArg = if ($uvicornWorkers -gt 1) { "" } else { "--reload" }
+  $uvicornWorkersArg = if ($uvicornWorkers -gt 1) { "--workers $uvicornWorkers" } else { "" }
+  $backendCmd = "title Viru Backend && cd /d `"$root\backend`" && set LOG_FILE=$backendLog && set DB_URL=$backendDbUrl && `"$backendPython`" -m uvicorn app.main:app --host 127.0.0.1 --port 8000 $uvicornReloadArg $uvicornWorkersArg"
   Start-Process -FilePath "cmd.exe" -ArgumentList "/k", $backendCmd | Out-Null
 
   # Frontend (modo foreground en nueva ventana)
@@ -455,14 +510,20 @@ foreach ($p in $ports) {
   Start-Process -FilePath "cmd.exe" -ArgumentList "/k", $frontendCmd | Out-Null
 }
 
-try {    $api = Wait-HttpOk -Url "http://127.0.0.1:8000/health" -Attempts 25 -DelaySeconds 1
-    $web = Wait-HttpOk -Url "http://127.0.0.1:3000" -Attempts 25 -DelaySeconds 1
-    Write-Host "Backend:" $api.StatusCode
-    Write-Host "Frontend:" $web.StatusCode
-    Write-Host "Estabilizando backend tras arranque (3s)..."
-    Start-Sleep -Seconds 3
-    Write-Host "Backend estabilizado."
-    Write-Host "DB_URL:" $backendDbUrl
+try {
+  Write-Host "Esperando a que el backend responda en :8000/health ..."
+  $api = Wait-HttpOk -Url "http://127.0.0.1:8000/health" -Attempts 25 -DelaySeconds 1
+  Write-Host "Backend listo (status $($api.StatusCode))."
+
+  Write-Host "Esperando a que el frontend compile y responda en :3000 ..."
+  Write-Host "(La primera compilacion de Next.js puede tardar hasta 60s)"
+  $web = Wait-HttpOk -Url "http://127.0.0.1:3000" -Attempts 60 -DelaySeconds 1
+  Write-Host "Frontend listo (status $($web.StatusCode))."
+
+  Write-Host "Estabilizando backend tras arranque (3s)..."
+  Start-Sleep -Seconds 3
+  Write-Host "Backend estabilizado."
+  Write-Host "DB_URL:" $backendDbUrl
   Write-Host "Backend log:" $backendLog
   Write-Host "Backend err log:" $backendErrLog
   Write-Host "Frontend log:" $frontendLog
