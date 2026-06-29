@@ -129,6 +129,7 @@ import { QuickSearchSideViewControls } from "@/modules/quick-search/components/Q
 import { getPendingActionVisibility } from "@/modules/quick-search/state/pendingActionPolicy";
 import { getApiSearchQuery } from "@/modules/shared/cityTranslations";
 import { buildAirportSuggestions, normalizeText } from "@/modules/quick-search/airportSuggestions";
+import { INITIAL_PROVIDER_SEARCH_STATUSES } from "@/modules/quick-search/providerPresentation";
 import { fetchWeather as fetchWeatherApi, isWeatherRangeSupported as isWeatherRangeSupportedCheck, WeatherFetchError } from "@/modules/quick-search/weatherUtils";
 
 const RELAX_HIGHLIGHT_BY_ACTION: Record<ZeroResultRelaxAction, Exclude<SummaryHighlightKey, null>> = {
@@ -1788,11 +1789,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setLoadingVisualHold(false);
     setDisplayProgress(0);
     setProgress("requesting", 30);
-    setProviderSearchStatuses([
-      { id: "ryanair", label: "Ryanair", status: "searching" },
-      { id: "wizzair", label: "Wizz Air", status: "searching" },
-      { id: "duffel", label: "Duffel", status: "searching" },
-    ]);
+    setProviderSearchStatuses(INITIAL_PROVIDER_SEARCH_STATUSES);
     const nextExcludeOrigins = [...excludeOrigins];
     const nextExcludeDestinations = [...excludeDestinations];
     parseIataList(excludeOriginInput).forEach((value) => {

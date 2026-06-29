@@ -1,5 +1,16 @@
 export type QuickSearchProviderId = "ryanair" | "wizzair" | "duffel" | "unknown";
 
+/** Initial provider search statuses shown during quick-search loading. */
+export const INITIAL_PROVIDER_SEARCH_STATUSES: Array<{
+  id: string;
+  label: string;
+  status: "searching";
+}> = [
+  { id: "ryanair", label: "Ryanair", status: "searching" },
+  { id: "wizzair", label: "Wizz Air", status: "searching" },
+  { id: "duffel", label: "Duffel", status: "searching" },
+] as const;
+
 export type QuickSearchProviderPresentation = {
   id: QuickSearchProviderId;
   label: string;
