@@ -21,7 +21,7 @@ class QuickSearchRankingTests(unittest.TestCase):
             pair_reason=reason,
         )
 
-    def _flight(self, price: float, dep: str = "10:00"):
+    def _flight(self, price: object, dep: str = "10:00"):
         return ProviderFlight(
             price=price,
             currency="EUR",
@@ -106,15 +106,12 @@ class QuickSearchRankingTests(unittest.TestCase):
         pairs = [
             self._pair("LEI", "DUB", reason="seed-seed", origin_seed=True, destination_seed=True, od_km=0, dd_km=0),
         ]
-        invalid_price_flight = ProviderFlight(
-            price="not-a-price",
-            currency="EUR",
-            departure_time_local="10:00",
-            captured_at=dt.datetime.now(dt.UTC).replace(tzinfo=None),
-            source="test",
-        )
         rows = [
-            ("LEI", "DUB", dt.date(2026, 6, 1), invalid_price_flight),
+            ("LEI", "DUB", dt.date(2026, 6, 1), self._flight("not-a-price", dep="10:00")),
+            ("LEI", "DUB", dt.date(2026, 6, 1), self._flight(None, dep="10:10")),
+            ("LEI", "DUB", dt.date(2026, 6, 1), self._flight(float("nan"), dep="10:20")),
+            ("LEI", "DUB", dt.date(2026, 6, 1), self._flight(float("inf"), dep="10:30")),
+            ("LEI", "DUB", dt.date(2026, 6, 1), self._flight(float("-inf"), dep="10:40")),
             ("LEI", "DUB", dt.date(2026, 6, 1), self._flight(90, dep="11:00")),
         ]
 
