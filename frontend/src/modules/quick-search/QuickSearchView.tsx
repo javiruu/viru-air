@@ -78,6 +78,7 @@ import {
   buildQuickSearchExpectedSignatures,
   prepareQuickSearchRequest,
 } from "@/modules/quick-search/api/buildQuickSearchRequest";
+import { buildQuickSearchSaveResultPayload } from "@/modules/quick-search/api/buildSaveResultPayload";
 import { QuickSearchDatePicker } from "@/modules/quick-search/components/QuickSearchDatePicker";
 import { QuickSearchFilterConsole } from "@/modules/quick-search/components/QuickSearchFilterConsole";
 import { QuickSearchResultsWorkspace } from "@/modules/quick-search/components/QuickSearchResultsWorkspace";
@@ -2030,26 +2031,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   async function saveQuickSearchResult(result: SearchResult, fallbackDeepLinkUrl?: string | null) {
     return apiFetch<{ watch_id?: string; created_or_existing?: string }>("/search/save-result", {
       method: "POST",
-      body: JSON.stringify({
-        job_id: jobId,
-        result_id: result.result_id ?? null,
-        origin_iata: result.origin,
-        destination_iata: result.destination,
-        travel_date: result.travel_date,
-        price_total: result.price_total ?? result.price,
-        currency: result.currency,
-        freshness_status: result.freshness?.status ?? null,
-        requires_revalidation: result.freshness?.requires_revalidation ?? result.stale_data ?? null,
-        validation_status: result.freshness?.validation_status ?? null,
-        duration_total: result.duration_total_min ?? result.duration_total ?? null,
-        stop_count: result.stop_count ?? null,
-        minutes_buffer: result.minutes_buffer ?? null,
-        distance_km_ground: result.distance_km_ground ?? null,
-        ranking_score: result.ranking_score ?? null,
-        freshness_ts: result.freshness_ts ?? null,
-        deeplink_url: result.deeplink_url ?? fallbackDeepLinkUrl ?? null,
-        itinerary_type: result.itinerary_type ?? null,
-      }),
+      body: JSON.stringify(buildQuickSearchSaveResultPayload(result, { jobId, fallbackDeepLinkUrl })),
     });
   }
 
@@ -5285,26 +5267,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                   try {
                     const response = await apiFetch<{ watch_id?: string; created_or_existing?: string }>("/search/save-result", {
                       method: "POST",
-                      body: JSON.stringify({
-                        job_id: outboundSide.jobId,
-                        result_id: result.result_id ?? null,
-                        origin_iata: result.origin,
-                        destination_iata: result.destination,
-                        travel_date: result.travel_date,
-                        price_total: result.price_total ?? result.price,
-                        currency: result.currency,
-                        freshness_status: result.freshness?.status ?? null,
-                        requires_revalidation: result.freshness?.requires_revalidation ?? result.stale_data ?? null,
-                        validation_status: result.freshness?.validation_status ?? null,
-                        duration_total: result.duration_total_min ?? result.duration_total ?? null,
-                        stop_count: result.stop_count ?? null,
-                        minutes_buffer: result.minutes_buffer ?? null,
-                        distance_km_ground: result.distance_km_ground ?? null,
-                        ranking_score: result.ranking_score ?? null,
-                        freshness_ts: result.freshness_ts ?? null,
-                        deeplink_url: result.deeplink_url ?? outboundSide.deepLink?.url ?? outboundSide.deepLink?.fallback_url ?? localRyanairUrl ?? null,
-                        itinerary_type: result.itinerary_type ?? null,
-                      }),
+                      body: JSON.stringify(buildQuickSearchSaveResultPayload(result, {
+                        jobId: outboundSide.jobId,
+                        fallbackDeepLinkUrl: outboundSide.deepLink?.url ?? outboundSide.deepLink?.fallback_url ?? localRyanairUrl ?? null,
+                      })),
                     });
                     if (response) {
                       const isExisting = "created_or_existing" in response && response.created_or_existing === "existing";
@@ -5410,26 +5376,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                   try {
                     const response = await apiFetch<{ watch_id?: string; created_or_existing?: string }>("/search/save-result", {
                       method: "POST",
-                      body: JSON.stringify({
-                        job_id: returnSide.jobId,
-                        result_id: result.result_id ?? null,
-                        origin_iata: result.origin,
-                        destination_iata: result.destination,
-                        travel_date: result.travel_date,
-                        price_total: result.price_total ?? result.price,
-                        currency: result.currency,
-                        freshness_status: result.freshness?.status ?? null,
-                        requires_revalidation: result.freshness?.requires_revalidation ?? result.stale_data ?? null,
-                        validation_status: result.freshness?.validation_status ?? null,
-                        duration_total: result.duration_total_min ?? result.duration_total ?? null,
-                        stop_count: result.stop_count ?? null,
-                        minutes_buffer: result.minutes_buffer ?? null,
-                        distance_km_ground: result.distance_km_ground ?? null,
-                        ranking_score: result.ranking_score ?? null,
-                        freshness_ts: result.freshness_ts ?? null,
-                        deeplink_url: result.deeplink_url ?? returnSide.deepLink?.url ?? returnSide.deepLink?.fallback_url ?? localRyanairUrl ?? null,
-                        itinerary_type: result.itinerary_type ?? null,
-                      }),
+                      body: JSON.stringify(buildQuickSearchSaveResultPayload(result, {
+                        jobId: returnSide.jobId,
+                        fallbackDeepLinkUrl: returnSide.deepLink?.url ?? returnSide.deepLink?.fallback_url ?? localRyanairUrl ?? null,
+                      })),
                     });
                     if (response) {
                       const isExisting = "created_or_existing" in response && response.created_or_existing === "existing";

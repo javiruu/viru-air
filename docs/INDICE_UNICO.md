@@ -120,6 +120,7 @@
 - [ADR-001](adr/ADR-001-monolito-modular.md)
 - [ADR-002](adr/ADR-002-stack-base.md)
 - [ADR-003](adr/ADR-003-provider-adapter.md)
+- [ADR-004](adr/ADR-004-flight-tracking-hub.md)
 
 ### Specs
 

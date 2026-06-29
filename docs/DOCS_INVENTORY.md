@@ -9,6 +9,18 @@
 
 Inventario completo de documentos `.md` y `.txt` relevantes del repositorio tras el saneamiento documental. Excluye dependencias, cach?s, builds, entornos virtuales, `_publish_repo` y otras salidas generadas masivas.
 
+## Actualizacion manual 2026-06-30 (Flight Tracking Hub)
+
+Entradas vivas agregadas:
+
+- `docs/adr/ADR-004-flight-tracking-hub.md`
+
+Entradas vivas actualizadas:
+
+- `docs/INDICE_UNICO.md`
+- `docs/engineering/backend.md`
+- `docs/DOCS_INVENTORY.md`
+
 ## Actualizacion manual 2026-06-27 (saneamiento minimo para LazyCodex)
 
 Entradas vivas actualizadas:

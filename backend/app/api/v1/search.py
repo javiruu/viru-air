@@ -25,7 +25,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from app.api.deps import get_current_user
 from app.api.v1.airports import _validate_iata
 from app.domain.entities import ProviderFetchResult
-from app.infrastructure.db.models import FlightWatch, PriceSnapshot, User
+from app.infrastructure.db.models import FlightWatch, User
 from app.infrastructure.db.session import get_db, SessionLocal
 from app.infrastructure.airports_catalog import ExpandedAirportCandidate, get_airport, resolve_seed_airport
 from app.infrastructure.providers.flight_provider import MultiSourceFlightProvider
@@ -61,8 +61,7 @@ from app.services.quick_search_cache_service import (
     prune_expired_entries_async,
 )
 from app.services.fare_memory import build_freshness_payload, build_search_fingerprint, persist_ranked_result_observations
-from app.services.revalidation_jobs import enqueue_revalidation_job
-from app.services.watchlist_revalidation import route_fingerprint
+from app.services.quick_search_save_result_observation import handle_saved_result_observation
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -171,62 +170,6 @@ def _resolve_negative_cache_write_policy(result: ProviderFetchResult) -> tuple[s
         reason = "provider_error"
         retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
     return reason, retry_after_at
-
-
-def _seed_watch_snapshot_from_saved_result(db: Session, watch: FlightWatch, payload: "QuickSearchSaveResultIn") -> None:
-    if payload.price_total is None:
-        return
-    db.add(
-        PriceSnapshot(
-            watch_id=watch.id,
-            raw_price=payload.price_total,
-            raw_currency=payload.currency,
-            provider="quick-search",
-            is_stale=False,
-        )
-    )
-
-
-def _saved_result_requires_revalidation(payload: "QuickSearchSaveResultIn") -> bool:
-    revalidation_statuses = {
-        "warm",
-        "stale",
-        "expired",
-        "negative_fresh",
-        "negative_stale",
-        "provider_error_fresh",
-        "provider_error_stale",
-    }
-    return payload.freshness_status in revalidation_statuses or payload.requires_revalidation is True
-
-
-def _enqueue_saved_result_revalidation(db: Session, watch: FlightWatch, payload: "QuickSearchSaveResultIn") -> None:
-    enqueue_revalidation_job(
-        db,
-        job_type="manual",
-        target_type="route",
-        target_fingerprint=route_fingerprint(
-            watch.origin_iata,
-            watch.destination_iata,
-            watch.travel_date_local,
-        ),
-        provider="multi",
-        priority=20,
-        payload={
-            "watch_id": watch.id,
-            "user_id": watch.user_id,
-            "reason": "saved_result_requires_revalidation",
-            "freshness_status": payload.freshness_status,
-            "validation_status": payload.validation_status,
-        },
-    )
-
-
-def _handle_saved_result_observation(db: Session, watch: FlightWatch, payload: "QuickSearchSaveResultIn") -> None:
-    if _saved_result_requires_revalidation(payload):
-        _enqueue_saved_result_revalidation(db, watch, payload)
-        return
-    _seed_watch_snapshot_from_saved_result(db, watch, payload)
 
 
 def _build_fare_memory_cache_callbacks(*, shared_cache_enabled: bool, user_currency: str) -> FareMemoryCacheCallbacks:
@@ -3073,7 +3016,7 @@ def save_result(
         )
     )
     if existing:
-        _handle_saved_result_observation(db, existing, payload)
+        handle_saved_result_observation(db, existing, payload)
         body = {"watch_id": existing.id, "created_or_existing": "existing"}
         store_response(
             db,
@@ -3098,7 +3041,7 @@ def save_result(
     )
     db.add(watch)
     db.flush()
-    _handle_saved_result_observation(db, watch, payload)
+    handle_saved_result_observation(db, watch, payload)
     body = {"watch_id": watch.id, "created_or_existing": "created"}
     store_response(
         db,
