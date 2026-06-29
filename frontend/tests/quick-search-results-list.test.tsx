@@ -88,6 +88,7 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
       canRefreshPrice={() => true}
       refreshingResultId={null}
       refreshPrice={() => undefined}
+      isInWatchlist={() => false}
       addToWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
@@ -140,6 +141,7 @@ test("QuickSearchResultsList accepts official relative deeplink variants and rej
       canRefreshPrice={() => false}
       refreshingResultId={null}
       refreshPrice={() => undefined}
+      isInWatchlist={() => false}
       addToWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
@@ -179,6 +181,7 @@ test("QuickSearchResultsList accepts official relative deeplink variants and rej
       canRefreshPrice={() => false}
       refreshingResultId={null}
       refreshPrice={() => undefined}
+      isInWatchlist={() => false}
       addToWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
@@ -220,6 +223,7 @@ test("QuickSearchResultsList renders Wizz Air branding and avoids Ryanair fallba
       canRefreshPrice={() => false}
       refreshingResultId={null}
       refreshPrice={() => undefined}
+      isInWatchlist={() => false}
       addToWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
@@ -266,6 +270,7 @@ test("QuickSearchResultsList renders ai preferred tag and reason", () => {
       canRefreshPrice={() => true}
       refreshingResultId={null}
       refreshPrice={() => undefined}
+      isInWatchlist={() => false}
       addToWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
@@ -315,6 +320,7 @@ test("QuickSearchResultsList keeps ai and itinerary tags in compact view", () =>
       canRefreshPrice={() => true}
       refreshingResultId={null}
       refreshPrice={() => undefined}
+      isInWatchlist={() => false}
       addToWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
@@ -362,6 +368,7 @@ test("QuickSearchResultsList shows ai reason in expanded details", () => {
       canRefreshPrice={() => true}
       refreshingResultId={"res-1"}
       refreshPrice={() => undefined}
+      isInWatchlist={() => false}
       addToWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
@@ -406,6 +413,7 @@ test("QuickSearchResultsList omits empty ai reason copy", () => {
       canRefreshPrice={() => false}
       refreshingResultId={null}
       refreshPrice={() => undefined}
+      isInWatchlist={() => false}
       addToWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}

@@ -3269,6 +3269,57 @@ h1 {
 .qs-row-save {
   min-height: 36px;
 }
+.qs-row-saved {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent-2) 38%, var(--border));
+  background: color-mix(in srgb, var(--accent-2) 10%, var(--surface));
+  color: color-mix(in srgb, var(--accent-2) 85%, var(--ink-muted));
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: default;
+  opacity: 0.88;
+  transition: opacity 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  pointer-events: none;
+  user-select: none;
+}
+
+.qs-row-saved::before {
+  content: "✓";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--accent-2);
+  color: var(--accent-ink);
+  font-size: 0.6rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.qs-row-saved:hover {
+  opacity: 1;
+  border-color: color-mix(in srgb, var(--accent-2) 52%, var(--border));
+  background: color-mix(in srgb, var(--accent-2) 14%, var(--surface));
+}
+
+.qs-result-row-compact .qs-row-saved {
+  min-height: 32px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.76rem;
+}
+
+.qs-result-row-compact .qs-row-saved::before {
+  width: 0.85rem;
+  height: 0.85rem;
+  font-size: 0.45rem;
+}
 
 .qs-result-details-link {
   border: none;

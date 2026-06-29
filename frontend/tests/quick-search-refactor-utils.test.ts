@@ -387,6 +387,7 @@ test("normalizeQuickSearchResponse keeps quick-search results renderable from ba
       canRefreshPrice: () => false,
       refreshingResultId: null,
       refreshPrice: () => undefined,
+      isInWatchlist: () => false,
       addToWatchlist: () => undefined,
       setExpandedRows: () => undefined,
       setSelectedResultId: () => undefined,
