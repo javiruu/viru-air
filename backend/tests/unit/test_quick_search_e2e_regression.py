@@ -39,6 +39,28 @@ def _db_session():
     return engine, TestingSessionLocal, TestingSessionLocal()
 
 
+class _FakeProvider:
+    def __init__(self, *, return_value=None, side_effect=None, provider_ids=None):
+        self.return_value = return_value
+        self.side_effect = side_effect
+        self._provider_ids = provider_ids or ["ryanair", "wizzair"]
+        self.get_flights_calls = 0
+
+    def get_flights(self, origin: str, destination: str, date: str, timeout_ms: int, currency: str = "EUR"):
+        self.get_flights_calls += 1
+        if self.side_effect is not None:
+            return self.side_effect(origin, destination, date, timeout_ms, currency)
+        return self.return_value
+
+    def provider_ids(self) -> list[str]:
+        return list(self._provider_ids)
+
+
+def _patch_request_provider(*, return_value=None, side_effect=None, provider_ids=None):
+    fake_provider = _FakeProvider(return_value=return_value, side_effect=side_effect, provider_ids=provider_ids)
+    return patch("app.api.v1.search._build_request_provider", return_value=fake_provider)
+
+
 @unittest.skipIf(quick_search is None or ProviderFlight is None or QuickSearchAiPreferenceResult is None, "fastapi app deps not available")
 class QuickSearchE2ERegressionTests(unittest.TestCase):
     def setUp(self):
@@ -83,7 +105,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
 
     def test_seed_only_base_flow(self):
         payload = self._payload()
-        with patch("app.api.v1.search.provider.get_flights", return_value=[_flight(55, "10:00")]):
+        with _patch_request_provider(return_value=[_flight(55, "10:00")]):
             result = self._call_quick_search(payload)
 
         self.assertEqual(result["meta"]["query_trace_id"][:3], "qs_")
@@ -117,7 +139,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
                 return [_flight(58, "09:45")]
             return []
 
-        with patch("app.api.v1.search.provider.get_flights", side_effect=fake_fetch):
+        with _patch_request_provider(side_effect=fake_fetch):
             result = self._call_quick_search(payload)
 
         expanded_origins = result["query"]["expanded_origins"]
@@ -132,7 +154,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             execution={"max_pairs": 8, "max_requests": 8, "timeout_ms": 3000, "concurrency_limit": 2},
         )
 
-        with patch("app.api.v1.search.provider.get_flights", return_value=[_flight(70, "11:00")]):
+        with _patch_request_provider(return_value=[_flight(70, "11:00")]):
             result = self._call_quick_search(payload)
 
         categories = {item["pair_reason"] for item in result["meta"]["planned_pairs"]}
@@ -149,7 +171,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
                 return [_flight(58, "10:00")]
             return []
 
-        with patch("app.api.v1.search.provider.get_flights", side_effect=fake_fetch):
+        with _patch_request_provider(side_effect=fake_fetch):
             result = self._call_quick_search(payload)
 
         self.assertGreaterEqual(len(result["results"]), 1)
@@ -164,7 +186,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             travel={"date": "2026-06-14", "flex_before": 1, "flex_after": 1},
             execution={"max_pairs": 10, "max_requests": 2, "timeout_ms": 3000, "concurrency_limit": 2},
         )
-        with patch("app.api.v1.search.provider.get_flights", return_value=[_flight(90, "12:00")]):
+        with _patch_request_provider(return_value=[_flight(90, "12:00")]):
             result = self._call_quick_search(payload)
 
         warning_codes = {w["code"] for w in result["meta"]["warnings_structured"]}
@@ -184,7 +206,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
                 raise TimeoutError("provider timeout")
             return [_flight(72, "13:00")]
 
-        with patch("app.api.v1.search.provider.get_flights", side_effect=fake_fetch):
+        with _patch_request_provider(side_effect=fake_fetch):
             result = self._call_quick_search(payload)
 
         warning_codes = {w["code"] for w in result["meta"]["warnings_structured"]}
@@ -198,7 +220,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             execution={"max_pairs": 12, "max_requests": 48, "timeout_ms": 3000, "concurrency_limit": 2},
             pagination={"page": 2, "page_size": 2},
         )
-        with patch("app.api.v1.search.provider.get_flights", return_value=[_flight(60, "10:00")]):
+        with _patch_request_provider(return_value=[_flight(60, "10:00")]):
             result = self._call_quick_search(payload)
         pagination = result["meta"]["pagination"]
         self.assertEqual(pagination["page"], 2)
@@ -214,7 +236,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             execution={"max_pairs": 12, "max_requests": 48, "timeout_ms": 3000, "concurrency_limit": 2},
             pagination={"page": 999, "page_size": 3},
         )
-        with patch("app.api.v1.search.provider.get_flights", return_value=[_flight(65, "11:00")]):
+        with _patch_request_provider(return_value=[_flight(65, "11:00")]):
             result = self._call_quick_search(payload)
         pagination = result["meta"]["pagination"]
         self.assertEqual(pagination["page"], pagination["total_pages"])
@@ -233,7 +255,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
                 ],
             )
 
-        with patch("app.api.v1.search.provider.get_flights", side_effect=fake_fetch):
+        with _patch_request_provider(side_effect=fake_fetch):
             result = self._call_quick_search(payload)
 
         codes = [item["code"] for item in result["meta"]["warnings_structured"]]
@@ -254,7 +276,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
                 raise TimeoutError("provider timeout")
             return [_flight(91, "07:40", source="ryanair-public-fares")]
 
-        with patch("app.api.v1.search.provider.get_flights", side_effect=fake_fetch):
+        with _patch_request_provider(side_effect=fake_fetch):
             result = self._call_quick_search(payload)
 
         self.assertGreaterEqual(len(result["results"]), 1)
@@ -270,8 +292,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             execution={"max_pairs": 1, "max_requests": 1, "timeout_ms": 3000, "concurrency_limit": 1},
         )
 
-        with patch(
-            "app.api.v1.search.provider.get_flights",
+        with _patch_request_provider(
             return_value=[
                 _flight(120, "10:15", source="ryanair-public-fares", currency="EUR"),
                 _flight(120, "10:15", source="duffel-offers", currency="USD"),
@@ -297,7 +318,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             calls["count"] += 1
             return [_flight(66, "16:10", source="duffel-offers")]
 
-        with patch("app.api.v1.search.provider.get_flights", side_effect=fake_fetch):
+        with _patch_request_provider(side_effect=fake_fetch):
             first = self._call_quick_search(payload)
             second = self._call_quick_search(payload)
 
@@ -321,6 +342,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
         )()
 
         engine, testing_session_local, db = _db_session()
+        fake_provider = _FakeProvider(return_value=[])
         try:
             with (
                 patch("app.api.v1.search.QUICK_SEARCH_SHARED_CACHE_ENABLED", True),
@@ -339,11 +361,11 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
                         "validation_status": "revalidated",
                     },
                 ),
-                patch("app.api.v1.search.provider.get_flights") as provider_get_flights,
+                patch("app.api.v1.search._build_request_provider", return_value=fake_provider),
             ):
                 result = self._call_quick_search(payload, db=db)
 
-            provider_get_flights.assert_not_called()
+            self.assertEqual(fake_provider.get_flights_calls, 0)
             self.assertEqual(result["results"][0]["price_total"], 44)
             self.assertTrue(result["meta"]["search_cache"]["exact_hit"])
             self.assertTrue(result["meta"]["execution"]["exact_search_cache_hit"])
@@ -381,7 +403,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
                         "validation_status": "revalidated",
                     },
                 ),
-                patch("app.api.v1.search.provider.get_flights", return_value=[_flight(55, "10:00")]),
+                _patch_request_provider(return_value=[_flight(55, "10:00")]),
             ):
                 result = self._call_quick_search(payload, db=db)
 
@@ -464,7 +486,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
                 warnings=["ryanair_fares_failed_partial"],
             )
 
-        with patch("app.api.v1.search.provider.get_flights", side_effect=fake_fetch):
+        with _patch_request_provider(side_effect=fake_fetch):
             result = self._call_quick_search(payload)
 
         self.assertEqual(result["results"][0]["freshness"]["status"], "warm")
@@ -477,7 +499,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
 
     def test_provider_status_exposes_aggregated_shape(self):
         payload = self._payload()
-        with patch("app.api.v1.search.provider.get_flights", return_value=[_flight(80, "12:10")]):
+        with _patch_request_provider(return_value=[_flight(80, "12:10")]):
             result = self._call_quick_search(payload)
 
         provider_status = result["meta"]["provider_status"]
@@ -505,7 +527,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
                 "get_flights",
                 return_value=[_flight(80, "12:10", source="ryanair-public-fares")],
             ),
-            patch("app.api.v1.search.provider", provider_instance),
+            patch("app.api.v1.search._build_request_provider", return_value=provider_instance),
         ):
             result = self._call_quick_search(payload)
 
@@ -537,7 +559,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             )
 
         with (
-            patch("app.api.v1.search.provider.get_flights", side_effect=fake_fetch),
+            _patch_request_provider(side_effect=fake_fetch),
             patch(
                 "app.api.v1.search.select_quick_search_ai_preference",
                 side_effect=fake_ai_preference,
