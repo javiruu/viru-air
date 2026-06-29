@@ -671,7 +671,24 @@ def test_suggestions_send_destination_country_code_from_selected_watch(client: T
 def test_suggestions_keep_local_static_when_google_places_disabled(client: TestClient, monkeypatch) -> None:
     _set_provider_env(monkeypatch, mock=False, real=True, google_places=False, google_key=None)
     headers = _auth_headers(client, "google-places-off@viru.dev")
+    from app.door_to_door.providers import nominatim
+    from app.door_to_door.schemas import DoorToDoorSuggestionOut
 
+    async def _fake_suggest(self, query, *, limit=6, session_token=None, preferred_region_codes=None):  # noqa: ANN001
+        return [
+            DoorToDoorSuggestionOut(
+                id="osm:treviso",
+                type="city",
+                label="Treviso",
+                subtitle="Veneto, Italia",
+                source_type="open_data",
+                lat=45.6669,
+                lng=12.243,
+                place_id="osm:treviso",
+            )
+        ]
+
+    monkeypatch.setattr(nominatim.NominatimSuggestionsProvider, "suggest", _fake_suggest)
     response = client.get("/api/v1/door-to-door/suggestions?q=tre", headers=headers)
     assert response.status_code == 200, response.text
     payload = response.json()

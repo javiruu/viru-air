@@ -69,8 +69,8 @@ export function getQuickSearchFreshnessPresentation({
     case "warm":
       return {
         status,
-        label: relative ? `Comprobado hace ${relative}. Actualiza antes de decidir.` : "Actualiza antes de decidir.",
-        shortLabel: relative ? `Comprobado ${relative}` : "Actualiza antes de decidir",
+        label: relative ? `Visto hace ${relative}. Revalida antes de decidir.` : "Revalida antes de decidir.",
+        shortLabel: relative ? `Visto ${relative}` : "Revalida antes de decidir",
         tone: "warn",
         observedAt,
         isStaleLike: false,
