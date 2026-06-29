@@ -24,6 +24,9 @@ class _FakeSearchProvider:
             ]
         return []
 
+    def provider_ids(self) -> list[str]:
+        return ["fake-search-provider"]
+
 
 class _PriceSequenceProvider:
     def __init__(self, prices: list[float]) -> None:
@@ -45,7 +48,7 @@ class _PriceSequenceProvider:
 
 
 def test_quick_search_and_alert_rule(client: TestClient, monkeypatch) -> None:
-    monkeypatch.setattr(search_api, "provider", _FakeSearchProvider())
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: _FakeSearchProvider())
 
     token = register_and_token(client)
     headers = {"Authorization": f"Bearer {token}"}
@@ -93,7 +96,7 @@ def test_quick_search_and_alert_rule(client: TestClient, monkeypatch) -> None:
 
 
 def test_search_save_result_creates_or_reuses_watch(client: TestClient, monkeypatch) -> None:
-    monkeypatch.setattr(search_api, "provider", _FakeSearchProvider())
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: _FakeSearchProvider())
 
     token = register_and_token(client, email="save-result@viru.dev")
     headers = {"Authorization": f"Bearer {token}"}
