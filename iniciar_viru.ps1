@@ -202,6 +202,79 @@ function Read-YesNoPrompt {
   }
 }
 
+function Test-VenvPythonRunnable {
+  <#
+    .SYNOPSIS
+    Verifica que el Python del entorno virtual realmente ejecuta codigo.
+    Test-Path no basta: el binario puede existir pero estar corrupto.
+  #>
+  if (-not (Test-Path $backendPython)) {
+    return $false
+  }
+
+  try {
+    $result = & $backendPython -c "import sys; print(sys.version_info[0])" 2>&1
+    if ($LASTEXITCODE -ne 0) {
+      return $false
+    }
+    $line = ($result | Select-Object -Last 1).ToString().Trim()
+    return [int]::TryParse($line, [ref]$null)
+  } catch {
+    return $false
+  }
+}
+
+function Ensure-VenvPythonRunnable {
+  <#
+    .SYNOPSIS
+    Si el venv Python existe pero no funciona, ofrece reconstruirlo.
+  #>
+  if (Test-VenvPythonRunnable) {
+    return
+  }
+
+  Write-Host ""
+  Write-Host "ATENCION: El Python del entorno virtual esta presente pero no funciona." -ForegroundColor Yellow
+  Write-Host "  $backendPython" -ForegroundColor Gray
+  Write-Host ""
+  Write-Host "Esto suele ocurrir cuando:"
+  Write-Host "  - El entorno virtual quedo incompleto (pip install interrumpido)"
+  Write-Host "  - Se movio o elimino el Python base que se uso para crearlo"
+  Write-Host "  - El binario python.exe esta corrupto"
+  Write-Host ""
+
+  if (-not (Read-YesNoPrompt -Prompt "Quieres que VIRU elimine y regenere el entorno virtual? [S/N]")) {
+    throw @"
+No se puede continuar sin un Python funcional en el entorno virtual.
+Recuperacion manual:
+  rmdir /s "$backendDir\.venv"
+  cd "$backendDir"
+  py -3.14 -m venv .venv
+  .\.venv\Scripts\python.exe -m pip install -e .[dev]
+"@
+  }
+
+  Write-Host "Eliminando entorno virtual corrupto..."
+  Remove-Item -LiteralPath (Join-Path $backendDir ".venv") -Recurse -Force -ErrorAction SilentlyContinue
+
+  # Forzar recreacion: borrar cualquier marcador de que existe
+  Ensure-BackendVirtualEnv
+
+  Write-Host "Verificando que el nuevo entorno virtual funciona..."
+  if (-not (Test-VenvPythonRunnable)) {
+    throw @"
+No se pudo recrear el entorno virtual automaticamente.
+Prueba la recuperacion manual:
+  rmdir /s "$backendDir\.venv"
+  cd "$backendDir"
+  py -3.14 -m venv .venv
+  .\.venv\Scripts\python.exe -m pip install -e .[dev]
+"@
+  }
+
+  Write-Host "Entorno virtual regenerado correctamente." -ForegroundColor Green
+}
+
 function Stop-ProcessTree {
   param(
     [Parameter(Mandatory)]
@@ -309,6 +382,7 @@ Recuperacion manual sugerida:
 }
 
 Ensure-BackendVirtualEnv
+Ensure-VenvPythonRunnable
 
 $backendEnvFile = Join-Path $root "backend\.env"
 $jwtSecret = $null
@@ -376,18 +450,40 @@ $env:PYTHONUNBUFFERED = "1"
 
 Write-Host "Validando cadena de migraciones Alembic..."
 Push-Location $backendDir
-$auditRaw = (& $backendPython -m app.infrastructure.db.alembic_audit --json) -join "`n"
-$auditExitCode = $LASTEXITCODE
+try {
+  $auditRaw = (& $backendPython -m app.infrastructure.db.alembic_audit --json 2>$null) -join "`n"
+  $auditExitCode = $LASTEXITCODE
+} catch {
+  $auditRaw = $null
+  $auditExitCode = 999
+}
 Pop-Location
 
 if ([string]::IsNullOrWhiteSpace($auditRaw)) {
-  throw "No se pudo obtener el diagnostico previo de Alembic."
+  throw @"
+No se pudo ejecutar la auditoria de migraciones Alembic en:
+  $backendPython -m app.infrastructure.db.alembic_audit --json
+
+Causas posibles:
+  1. El entorno virtual de Python (.venv) esta incompleto o corrupto
+  2. Faltan dependencias del backend (corre pip install -e .[dev])
+  3. Hay un error de importacion en el modulo alembic_audit
+
+Accion sugerida (desde la raiz del repo):
+  cd "$backendDir"
+  .\.venv\Scripts\python.exe -m pip install -e .[dev]
+
+Si el problema persiste, regenera el .venv:
+  rmdir /s "$backendDir\.venv"
+  py -3.14 -m venv .venv
+  .\.venv\Scripts\python.exe -m pip install -e .[dev]
+"@
 }
 
 try {
   $audit = $auditRaw | ConvertFrom-Json -ErrorAction Stop
 } catch {
-  throw "No se pudo interpretar el diagnostico previo de Alembic: $auditRaw"
+  throw "No se pudo interpretar el diagnostico previo de Alembic. Detalle: $auditRaw"
 }
 
 if ($audit.untracked_migration_files.Count -gt 0) {
