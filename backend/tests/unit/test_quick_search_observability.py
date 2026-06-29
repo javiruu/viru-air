@@ -9,6 +9,14 @@ except Exception:  # pragma: no cover
     app = None
 
 
+class _FakeProvider:
+    def get_flights(self, origin: str, destination: str, date: str, timeout_ms: int, currency: str = "EUR"):
+        return []
+
+    def provider_ids(self) -> list[str]:
+        return ["ryanair", "wizzair"]
+
+
 @unittest.skipIf(TestClient is None or app is None, "fastapi test dependencies not available")
 class QuickSearchObservabilityTests(unittest.TestCase):
     def test_query_trace_and_debug_metadata_present(self):
@@ -26,7 +34,7 @@ class QuickSearchObservabilityTests(unittest.TestCase):
             "execution": {"max_pairs": 4, "max_requests": 4, "timeout_ms": 2000, "concurrency_limit": 2},
         }
 
-        with patch("app.api.v1.search.provider.get_flights", return_value=[]):
+        with patch("app.api.v1.search._build_request_provider", return_value=_FakeProvider()):
             response = client.post("/api/v1/search/quick?debug=true", json=payload)
 
         self.assertEqual(response.status_code, 200)

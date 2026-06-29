@@ -17,6 +17,7 @@ from app.services.quick_search_planner import PairPlanItem
 # ---------------------------------------------------------------------------
 
 CacheUnitKey = tuple[str, str, str, str]
+MemoryCacheKey = tuple[str, str, str, str]
 CacheResultCategory = str  # "ready" | "empty" | "degraded"
 
 
@@ -123,14 +124,14 @@ class ExecutionPlan:
 
 
 _CACHE_LOCK = threading.Lock()
-_CACHE: dict[tuple[str, str, str], tuple[float, ProviderFetchResult]] = {}
+_CACHE: dict[MemoryCacheKey, tuple[float, ProviderFetchResult]] = {}
 _CACHE_TTL_SECONDS = 300
 
 # Anti-stampede: per-key locks to prevent duplicate concurrent provider calls
 # within a single execute_plan(). Multiple ExecutionUnits may share the same
 # (origin, destination, date) tuple; this ensures only one fetches from the
 # provider while others wait and reuse the result from L1.
-_FETCH_LOCKS: dict[tuple[str, str, str], threading.Lock] = {}
+_FETCH_LOCKS: dict[MemoryCacheKey, threading.Lock] = {}
 _FETCH_LOCKS_LOCK = threading.Lock()
 
 
@@ -215,6 +216,7 @@ def execute_plan(
     shared_cache_set: Callable[[str, str, dt.date | str, str, ProviderFetchResult], None] | None = None,
     negative_cache_get: Callable[[str, str, dt.date | str, str], ProviderFetchResult | None] | None = None,
     negative_cache_set: Callable[[str, str, dt.date | str, str, ProviderFetchResult], None] | None = None,
+    cache_provider_id: str = "multi",
 ) -> tuple[list[tuple[str, str, dt.date, ProviderFlight]], dict[str, Any], list[str]]:
     timeout_ms = max(1000, timeout_ms)
     concurrency = max(1, concurrency_limit)
@@ -238,6 +240,7 @@ def execute_plan(
                 _fetch_with_cache, unit, timeout_ms, fetch_flights,
                 shared_cache_get, shared_cache_set,
                 negative_cache_get, negative_cache_set,
+                cache_provider_id,
             ): unit
             for unit in plan.units
         }
@@ -332,6 +335,7 @@ def _fetch_with_cache(
     shared_cache_set: Callable[[str, str, dt.date | str, str, ProviderFetchResult], None] | None = None,
     negative_cache_get: Callable[[str, str, dt.date | str, str], ProviderFetchResult | None] | None = None,
     negative_cache_set: Callable[[str, str, dt.date | str, str, ProviderFetchResult], None] | None = None,
+    cache_provider_id: str = "multi",
 ) -> tuple[ProviderFetchResult, str]:
     """Fetch with multi-level cache: L1 (memory) -> L2 (persistent) -> provider.
 
@@ -340,7 +344,8 @@ def _fetch_with_cache(
     Anti-stampede: per-key locks prevent duplicate concurrent provider calls
     for the same (origin, destination, date) within a single execute_plan().
     """
-    key = (unit.origin_iata, unit.destination_iata, str(unit.travel_date))
+    provider_key = str(cache_provider_id).strip().lower() or "multi"
+    key = (unit.origin_iata, unit.destination_iata, str(unit.travel_date), provider_key)
     now = time.time()
 
     # L1: in-memory hot cache (300s TTL)
@@ -353,7 +358,7 @@ def _fetch_with_cache(
     if shared_cache_get is not None:
         l2_result = shared_cache_get(
             unit.origin_iata, unit.destination_iata,
-            unit.travel_date, "multi",
+            unit.travel_date, provider_key,
         )
         if l2_result is not None:
             # Populate L1 from L2
@@ -364,7 +369,7 @@ def _fetch_with_cache(
     if negative_cache_get is not None:
         negative_result = negative_cache_get(
             unit.origin_iata, unit.destination_iata,
-            unit.travel_date, "multi",
+            unit.travel_date, provider_key,
         )
         if negative_result is not None:
             return negative_result, "NEGATIVE"
@@ -402,12 +407,12 @@ def _fetch_with_cache(
             if shared_cache_set is not None:
                 shared_cache_set(
                     unit.origin_iata, unit.destination_iata,
-                    unit.travel_date, "multi", fetch_result,
+                    unit.travel_date, provider_key, fetch_result,
                 )
             if negative_cache_set is not None and not fetch_result.flights:
                 negative_cache_set(
                     unit.origin_iata, unit.destination_iata,
-                    unit.travel_date, "multi", fetch_result,
+                    unit.travel_date, provider_key, fetch_result,
                 )
         finally:
             # Cleanup: remove the per-key lock to avoid memory leak,

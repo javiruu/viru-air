@@ -61,7 +61,6 @@ from app.services.quick_search_cache_service import (
 from app.services.fare_memory import build_freshness_payload, build_search_fingerprint, persist_ranked_result_observations
 
 router = APIRouter()
-provider = MultiSourceFlightProvider()
 logger = logging.getLogger(__name__)
 SEED_POOL_CAP = 8
 QUICK_SEARCH_MAX_PAIRS_CAP = 400
@@ -69,9 +68,18 @@ QUICK_SEARCH_MAX_REQUESTS_CAP = 3000
 QUICK_SEARCH_SHARED_CACHE_ENABLED = os.getenv("QUICK_SEARCH_SHARED_CACHE_ENABLED", "false").strip().lower() == "true"
 CALENDAR_HINTS_CACHE_TTL_SECONDS = 600
 _CALENDAR_HINTS_CACHE_LOCK = threading.Lock()
-_CALENDAR_HINTS_CACHE: dict[tuple[str, str, int, str, str, str], tuple[float, dict[str, Any]]] = {}
+_CALENDAR_HINTS_CACHE: dict[tuple[str, str, int, str, str, str, str], tuple[float, dict[str, Any]]] = {}
 CALENDAR_HINTS_GUIDELINE_DEFAULT_LOW_MAX = 90.0
 CALENDAR_HINTS_GUIDELINE_DEFAULT_MID_MAX = 150.0
+
+
+def _build_request_provider() -> MultiSourceFlightProvider:
+    return MultiSourceFlightProvider()
+
+
+def _provider_cache_id(provider_ids: list[str]) -> str:
+    cleaned = [item.strip().lower() for item in provider_ids if item.strip()]
+    return "multi:" + ",".join(cleaned or ["none"])
 
 _WARNING_CODE_ALIASES: dict[str, str] = {
     "provider_timeout_parcial": "provider_timeout_partial",
@@ -746,7 +754,7 @@ def _to_pair_plan_items(pairs: list[tuple[str, str]]) -> list[PairPlanItem]:
     return items
 
 
-def _calendar_hints_cache_get(cache_key: tuple[str, str, int, str, str, str]) -> dict[str, Any] | None:
+def _calendar_hints_cache_get(cache_key: tuple[str, str, int, str, str, str, str]) -> dict[str, Any] | None:
     now = time.time()
     with _CALENDAR_HINTS_CACHE_LOCK:
         cached = _CALENDAR_HINTS_CACHE.get(cache_key)
@@ -759,7 +767,7 @@ def _calendar_hints_cache_get(cache_key: tuple[str, str, int, str, str, str]) ->
         return payload
 
 
-def _calendar_hints_cache_set(cache_key: tuple[str, str, int, str, str, str], payload: dict[str, Any]) -> None:
+def _calendar_hints_cache_set(cache_key: tuple[str, str, int, str, str, str, str], payload: dict[str, Any]) -> None:
     with _CALENDAR_HINTS_CACHE_LOCK:
         _CALENDAR_HINTS_CACHE[cache_key] = (time.time(), payload)
 
@@ -1323,6 +1331,9 @@ def quick_search_calendar_hints(
         if guideline_thresholds_effective
         else bucket_mode_effective
     )
+    request_provider = _build_request_provider()
+    provider_ids = request_provider.provider_ids()
+    provider_cache_id = _provider_cache_id(provider_ids)
     cache_key = (
         cache_scope_signature,
         payload.month,
@@ -1330,6 +1341,7 @@ def quick_search_calendar_hints(
         cache_currency,
         aggregation_mode_effective,
         cache_bucket_signature,
+        provider_cache_id,
     )
     cached_payload = _calendar_hints_cache_get(cache_key)
     if cached_payload:
@@ -1382,12 +1394,13 @@ def quick_search_calendar_hints(
             anchor_execution_plan,
             concurrency_limit=3,
             timeout_ms=5000,
-            fetch_flights=lambda origin, destination, travel_date, timeout_ms: provider.get_flights(
+            fetch_flights=lambda origin, destination, travel_date, timeout_ms: request_provider.get_flights(
                 origin,
                 destination,
                 travel_date,
                 timeout_ms,
             ),
+            cache_provider_id=provider_cache_id,
         )
         anchor_pair_prices_by_day, anchor_currency = _build_pair_day_prices(anchor_rows)
         origin_ranked_adaptive = _rank_airport_pool_adaptive(
@@ -1431,12 +1444,13 @@ def quick_search_calendar_hints(
         full_month_execution_plan,
         concurrency_limit=3,
         timeout_ms=6000,
-        fetch_flights=lambda origin, destination, travel_date, timeout_ms: provider.get_flights(
+        fetch_flights=lambda origin, destination, travel_date, timeout_ms: request_provider.get_flights(
             origin,
             destination,
             travel_date,
             timeout_ms,
         ),
+        cache_provider_id=provider_cache_id,
     )
     pair_prices_by_day, response_currency = _build_pair_day_prices(full_rows)
     day_aggregated_prices = _aggregate_day_prices(
@@ -1498,6 +1512,8 @@ def quick_search_calendar_hints(
             "aggregation_mode": aggregation_mode_effective,
             "bucket_mode": bucket_mode_effective,
             "guideline_thresholds_effective": guideline_thresholds_effective,
+            "provider_set": provider_ids,
+            "provider_cache_id": provider_cache_id,
         },
     }
     _calendar_hints_cache_set(cache_key, response_payload)
@@ -1578,6 +1594,9 @@ def quick_search(
     if payload and isinstance(payload, dict):
         user_currency = str(payload.get("currency", "EUR")).upper().strip()
     shared_cache_enabled = QUICK_SEARCH_SHARED_CACHE_ENABLED and _supports_db_session(db)
+    request_provider = _build_request_provider()
+    provider_ids = request_provider.provider_ids()
+    provider_cache_id = _provider_cache_id(provider_ids)
 
     # L2 shared cache callables.
     # Each callable creates its own DB session because these run inside
@@ -1593,10 +1612,10 @@ def quick_search(
                     origin_iata=o,
                     destination_iata=d,
                     travel_date=date,
-                    provider="multi",
+                    provider=prov,
                     source_hash=build_cache_source_hash(
                         origin_iata=o, destination_iata=d,
-                        travel_date=date, provider="multi",
+                        travel_date=date, provider=prov,
                         currency=user_currency,
                     ),
                 )
@@ -1619,10 +1638,10 @@ def quick_search(
                     origin_iata=o,
                     destination_iata=d,
                     travel_date=date,
-                    provider="multi",
+                    provider=prov,
                     source_hash=build_cache_source_hash(
                         origin_iata=o, destination_iata=d,
-                        travel_date=date, provider="multi",
+                        travel_date=date, provider=prov,
                         currency=user_currency,
                     ),
                     category=classify_cache_result(
@@ -1646,7 +1665,7 @@ def quick_search(
                     origin_iata=o,
                     destination_iata=d,
                     travel_date=date,
-                    provider="multi",
+                    provider=prov,
                     currency=user_currency,
                 )
                 entry = get_fresh_negative_cache_entry(
@@ -1690,18 +1709,18 @@ def quick_search(
                         origin_iata=o,
                         destination_iata=d,
                         travel_date=date,
-                        provider="multi",
+                        provider=prov,
                         currency=user_currency,
                     ),
                     scope="route_date_provider",
                     reason=reason,
-                    provider="multi",
+                    provider=prov,
                     canonical_request_json=json.dumps(
                         {
                             "origin_iata": o,
                             "destination_iata": d,
                             "travel_date": str(date),
-                            "provider": "multi",
+                            "provider": prov,
                             "currency": user_currency,
                         },
                         ensure_ascii=False,
@@ -1761,7 +1780,7 @@ def quick_search(
     search_fingerprint = build_search_fingerprint(
         canonical,
         currency=user_currency,
-        provider_set=["multi"],
+        provider_set=provider_ids,
     )
 
     if shared_cache_enabled and FARE_MEMORY_SEARCH_CACHE_ENABLED:
@@ -1785,12 +1804,15 @@ def quick_search(
             execution_meta["l1_cache_hits"] = 0
             execution_meta["l2_cache_hits"] = 0
             execution_meta["cache_hits"] = max(1, int(execution_meta.get("cache_hits", 0)))
+            execution_meta["provider_set"] = provider_ids
+            execution_meta["provider_cache_id"] = provider_cache_id
             meta["search_cache"] = {
                 "exact_hit": True,
                 "search_fingerprint": search_fingerprint,
                 "freshness": exact_freshness,
                 "requires_revalidation": bool(exact_freshness["requires_revalidation"]),
                 "provider": "search_exact",
+                "provider_set": provider_ids,
             }
             _enrich_pipeline_counters(exact_payload)
             return exact_payload
@@ -2053,16 +2075,34 @@ def quick_search(
         _phase_add("execution_planning_ms", int((time.perf_counter() - started) * 1000))
 
         started = _phase_start()
+        logger.info(
+            "quick_search_provider_fetch_start trace=%s step=%s provider_set=%s units=%s concurrency_limit=%s timeout_ms=%s",
+            query_trace_id,
+            step,
+            provider_ids,
+            len(execution_plan.units),
+            canonical.execution.concurrency_limit,
+            canonical.execution.timeout_ms,
+        )
         combined, execution_meta, execution_warnings = execute_plan(
             execution_plan,
             concurrency_limit=canonical.execution.concurrency_limit,
             timeout_ms=canonical.execution.timeout_ms,
-            fetch_flights=lambda o, d, date_str, timeout: provider.get_flights(o, d, date_str, timeout_ms=timeout, currency=user_currency),
+            fetch_flights=lambda o, d, date_str, timeout: request_provider.get_flights(
+                o,
+                d,
+                date_str,
+                timeout_ms=timeout,
+                currency=user_currency,
+            ),
             shared_cache_get=shared_cache_get,
             shared_cache_set=shared_cache_set,
             negative_cache_get=negative_cache_get,
             negative_cache_set=negative_cache_set,
+            cache_provider_id=provider_cache_id,
         )
+        execution_meta["provider_set"] = provider_ids
+        execution_meta["provider_cache_id"] = provider_cache_id
         _phase_add("provider_fetch_ms", int((time.perf_counter() - started) * 1000))
 
         normalized_execution_warnings = _normalize_warning_codes(execution_warnings)
@@ -2419,7 +2459,7 @@ def quick_search(
         }
         for item in provider_status_entries
     ]
-    known_provider_ids = provider.provider_ids() if hasattr(provider, "provider_ids") else []
+    known_provider_ids = provider_ids
     known_ids_set = {item.get("id") for item in providers_aggregated}
     for provider_id in known_provider_ids:
         if provider_id in known_ids_set:
@@ -2828,6 +2868,8 @@ def quick_search(
     }
 
     response_payload["meta"]["search_fingerprint"] = search_fingerprint
+    response_payload["meta"]["provider_set"] = provider_ids
+    response_payload["meta"]["provider_cache_id"] = provider_cache_id
     live_search_cache_freshness = build_freshness_payload(
         status=result_freshness_status,
         observed_at=utc_now_naive(),
@@ -2843,6 +2885,7 @@ def quick_search(
         "freshness": live_search_cache_freshness,
         "requires_revalidation": bool(live_search_cache_freshness["requires_revalidation"]),
         "provider": "search_exact",
+        "provider_set": provider_ids,
     }
 
     exact_cache_entry = None
@@ -2854,7 +2897,7 @@ def quick_search(
             travel_date=travel_date_value,
             search_fingerprint=search_fingerprint,
             canonical_request_json=json.dumps(canonical.model_dump(mode="json"), ensure_ascii=False),
-            provider_set_json=json.dumps(["multi"], ensure_ascii=False),
+            provider_set_json=json.dumps(provider_ids, ensure_ascii=False),
             response_payload=response_payload,
             category=exact_cache_category,
             confidence_score=0.95 if exact_cache_category == "ready" else 0.72 if exact_cache_category == "empty" else 0.4,

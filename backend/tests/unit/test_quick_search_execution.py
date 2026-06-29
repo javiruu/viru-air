@@ -64,6 +64,93 @@ class QuickSearchExecutionTests(unittest.TestCase):
         self.assertEqual(meta2["cache_hits"], 1)
         self.assertEqual(meta2["cache_misses"], 0)
 
+    def test_execute_plan_separates_l1_cache_by_provider_signature(self):
+        pairs = [self._pair("MAD", "BUD", 0.0, "seed-seed")]
+        dates = [dt.date(2030, 2, 11)]
+        plan = build_execution_plan(pairs, dates, max_requests=5)
+
+        calls = {"n": 0}
+
+        def fake_fetch(origin: str, destination: str, date_str: str, timeout_ms: int):
+            calls["n"] += 1
+            return [
+                ProviderFlight(
+                    price=70.0 + calls["n"],
+                    currency="EUR",
+                    departure_time_local="09:00",
+                    captured_at=dt.datetime.now(dt.UTC).replace(tzinfo=None),
+                    source=f"provider-set-{calls['n']}",
+                )
+            ]
+
+        rows1, meta1, _ = execute_plan(
+            plan,
+            concurrency_limit=2,
+            timeout_ms=3000,
+            fetch_flights=fake_fetch,
+            cache_provider_id="multi:ryanair",
+        )
+        rows2, meta2, _ = execute_plan(
+            plan,
+            concurrency_limit=2,
+            timeout_ms=3000,
+            fetch_flights=fake_fetch,
+            cache_provider_id="multi:ryanair,wizzair",
+        )
+
+        self.assertEqual(calls["n"], 2)
+        self.assertEqual(rows1[0][3].price, 71.0)
+        self.assertEqual(rows2[0][3].price, 72.0)
+        self.assertEqual(meta1["cache_misses"], 1)
+        self.assertEqual(meta2["cache_misses"], 1)
+
+    def test_execute_plan_forwards_provider_signature_to_shared_cache(self):
+        pairs = [self._pair("MAD", "BUD", 0.0, "seed-seed")]
+        dates = [dt.date(2030, 2, 12)]
+        plan = build_execution_plan(pairs, dates, max_requests=5)
+        provider_signature = "multi:ryanair,wizzair"
+        seen_get: list[str] = []
+        seen_set: list[str] = []
+
+        def fake_fetch(origin: str, destination: str, date_str: str, timeout_ms: int):
+            return [
+                ProviderFlight(
+                    price=79.99,
+                    currency="EUR",
+                    departure_time_local="10:30",
+                    captured_at=dt.datetime.now(dt.UTC).replace(tzinfo=None),
+                    source="wizzair-farechart",
+                )
+            ]
+
+        def shared_cache_get(origin: str, destination: str, travel_date: dt.date | str, provider: str):
+            seen_get.append(provider)
+            return None
+
+        def shared_cache_set(
+            origin: str,
+            destination: str,
+            travel_date: dt.date | str,
+            provider: str,
+            result: ProviderFetchResult,
+        ) -> None:
+            seen_set.append(provider)
+
+        rows, meta, _ = execute_plan(
+            plan,
+            concurrency_limit=2,
+            timeout_ms=3000,
+            fetch_flights=fake_fetch,
+            shared_cache_get=shared_cache_get,
+            shared_cache_set=shared_cache_set,
+            cache_provider_id=provider_signature,
+        )
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(meta["cache_misses"], 1)
+        self.assertEqual(seen_get, [provider_signature])
+        self.assertEqual(seen_set, [provider_signature])
+
     def test_execute_plan_timeout_does_not_break_all(self):
         pairs = [
             self._pair("LEI", "DUB", 0.0, "seed-seed"),
