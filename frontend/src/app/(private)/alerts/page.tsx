@@ -745,9 +745,25 @@ export default function AlertsPage() {
         </div>
 
         {filteredRules.length === 0 ? (
-          <p className="panel-note">
-            {segmentFilter === "all" ? t("alerts.list.emptyAll") : t("alerts.list.emptySegment")}
-          </p>
+          <div className="alerts-empty-state alerts-empty-state--rules">
+            <div className="alerts-empty-radar" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
+            <div className="alerts-empty-copy">
+              <strong>{segmentFilter === "all" ? t("alerts.list.emptyAll") : t("alerts.list.emptySegment")}</strong>
+              <p>{segmentFilter === "all" ? t("alerts.list.emptyAllBody") : t("alerts.list.emptySegmentBody")}</p>
+              <div className="alerts-empty-steps" aria-label={t("alerts.list.emptyStepsLabel")}>
+                <span>{t("alerts.list.emptyStepFlight")}</span>
+                <span>{t("alerts.list.emptyStepRule")}</span>
+                <span>{t("alerts.list.emptyStepSimulate")}</span>
+              </div>
+            </div>
+            <button className="btn-secondary btn-compact" type="button" onClick={focusRuleForm}>
+              {t("alerts.list.emptyCta")}
+            </button>
+          </div>
         ) : (
           filteredRules.map((rule) => {
             const watchStatus = getWatchStatusMeta(rule.enabled ? "active" : "paused", t);
@@ -801,7 +817,25 @@ export default function AlertsPage() {
         </div>
 
         {events.length === 0 ? (
-          <p className="panel-note">{t("alerts.history.empty")}</p>
+          <div className="alerts-empty-state alerts-empty-state--history">
+            <div className="alerts-empty-radar" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
+            <div className="alerts-empty-copy">
+              <strong>{t("alerts.history.empty")}</strong>
+              <p>{t("alerts.history.emptyBody")}</p>
+              <div className="alerts-empty-steps" aria-label={t("alerts.history.emptyStepsLabel")}>
+                <span>{t("alerts.history.emptyStepWatching")}</span>
+                <span>{t("alerts.history.emptyStepEvaluate")}</span>
+                <span>{t("alerts.history.emptyStepDelivery")}</span>
+              </div>
+            </div>
+            <button className="btn-secondary btn-compact" type="button" onClick={evaluateNow} disabled={isEvaluating || !selectedWatchId}>
+              {isEvaluating ? t("alerts.form.buttonEvaluating") : t("alerts.form.buttonSimulate")}
+            </button>
+          </div>
         ) : (
           events.map((eventItem) => {
             const delivery = getDeliveryStatusMeta(eventItem.delivery_status, t);

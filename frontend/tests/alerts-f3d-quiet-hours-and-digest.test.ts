@@ -31,6 +31,17 @@ test("alerts page includes cockpit hero and cross-module flow links", () => {
   assert.match(source, /alerts\.flow\.goDashboard/);
 });
 
+test("alerts empty states provide an actionable monitoring path", () => {
+  const pageSource = fs.readFileSync(ALERTS_PAGE, "utf8");
+  const copySource = fs.readFileSync(ALERTS_I18N, "utf8");
+  assert.match(pageSource, /alerts-empty-state--rules/);
+  assert.match(pageSource, /alerts-empty-state--history/);
+  assert.match(pageSource, /alerts\.list\.emptyStepFlight/);
+  assert.match(pageSource, /alerts\.history\.emptyStepDelivery/);
+  assert.match(copySource, /emptyAllBody: "Elige una ruta, define sensibilidad y deja que Viru vigile sin ruido de fondo\."/);
+  assert.match(copySource, /emptyBody: "Cuando una regla detecte movimiento, este panel guardará la señal, el canal y el estado de entrega\."/);
+});
+
 test("alerts page integrates selected watch freshness before promising threshold behavior", () => {
   const source = fs.readFileSync(ALERTS_PAGE, "utf8");
   assert.match(source, /getFreshnessPresentation/);
