@@ -25,7 +25,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from app.api.deps import get_current_user
 from app.api.v1.airports import _validate_iata
 from app.domain.entities import ProviderFetchResult
-from app.infrastructure.db.models import FlightWatch, User
+from app.infrastructure.db.models import FlightWatch, PriceSnapshot, User
 from app.infrastructure.db.session import get_db, SessionLocal
 from app.infrastructure.airports_catalog import ExpandedAirportCandidate, get_airport, resolve_seed_airport
 from app.infrastructure.providers.flight_provider import MultiSourceFlightProvider
@@ -169,6 +169,20 @@ def _resolve_negative_cache_write_policy(result: ProviderFetchResult) -> tuple[s
         reason = "provider_error"
         retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
     return reason, retry_after_at
+
+
+def _seed_watch_snapshot_from_saved_result(db: Session, watch: FlightWatch, payload: "QuickSearchSaveResultIn") -> None:
+    if payload.price_total is None:
+        return
+    db.add(
+        PriceSnapshot(
+            watch_id=watch.id,
+            raw_price=payload.price_total,
+            raw_currency=payload.currency,
+            provider="quick-search",
+            is_stale=False,
+        )
+    )
 
 
 def _build_fare_memory_cache_callbacks(*, shared_cache_enabled: bool, user_currency: str) -> FareMemoryCacheCallbacks:
@@ -557,12 +571,18 @@ class QuickSearchSaveResultIn(BaseModel):
     destination_iata: str = Field(min_length=3, max_length=3)
     travel_date: dt.date
     price_total: float | None = Field(default=None, ge=0)
+    currency: str = Field(default="EUR", min_length=3, max_length=3)
     group_id: str | None = Field(default=None, max_length=36)
 
     @field_validator("origin_iata", "destination_iata")
     @classmethod
     def validate_save_iata(cls, value: str) -> str:
         return _validate_iata(value)
+
+    @field_validator("currency", mode="before")
+    @classmethod
+    def normalize_currency(cls, value: str) -> str:
+        return str(value).upper().strip()
 
 
 class QuickSearchGuidelineThresholdsIn(BaseModel):
@@ -3006,6 +3026,7 @@ def save_result(
         )
     )
     if existing:
+        _seed_watch_snapshot_from_saved_result(db, existing, payload)
         body = {"watch_id": existing.id, "created_or_existing": "existing"}
         store_response(
             db,
@@ -3016,6 +3037,8 @@ def save_result(
             response_status=200,
             response_body=body,
         )
+        if not idempotency_key:
+            db.commit()
         return body
 
     watch = FlightWatch(
@@ -3027,8 +3050,8 @@ def save_result(
         group_id=payload.group_id,
     )
     db.add(watch)
-    db.commit()
-    db.refresh(watch)
+    db.flush()
+    _seed_watch_snapshot_from_saved_result(db, watch, payload)
     body = {"watch_id": watch.id, "created_or_existing": "created"}
     store_response(
         db,
@@ -3039,4 +3062,7 @@ def save_result(
         response_status=200,
         response_body=body,
     )
+    if not idempotency_key:
+        db.commit()
+    db.refresh(watch)
     return body

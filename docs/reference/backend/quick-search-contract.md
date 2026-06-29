@@ -488,6 +488,13 @@ Compatibility/extended fields still returned:
 Defensive client note:
 - Clients should still normalize missing optional fields such as `duration_total_min`, `legs` or `ranking_score` for backward compatibility with older responses.
 
+### Save result behavior (`POST /api/v1/search/save-result`)
+
+- Request accepts the observed route/date fields plus `price_total` and optional `currency`.
+- When `price_total` is present, saving a quick-search result to watchlist also writes an immediate `PriceSnapshot` with provider `quick-search`.
+- If the watch already exists for the user/route/date, the endpoint reuses that watch and still records the newly observed price as a fresh snapshot.
+- Idempotency replay returns the stored response without writing duplicate snapshots.
+
 ## Ranking (current)
 Final result ranking uses a multi-factor score:
 - `price_component` (relative to cheapest candidate in current result set)

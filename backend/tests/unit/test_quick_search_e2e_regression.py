@@ -2,29 +2,34 @@ import datetime as dt
 import unittest
 from unittest.mock import patch
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
 try:
     from app.api.v1.search import (
         _CALENDAR_HINTS_CACHE,
         QuickSearchCalendarHintsIn,
+        QuickSearchSaveResultIn,
         quick_search,
         quick_search_calendar_hints,
+        save_result,
     )
     from app.domain.entities import ProviderFetchResult, ProviderFlight
-    from app.infrastructure.db.models import Base
+    from app.infrastructure.db.models import Base, PriceSnapshot
     from app.infrastructure.providers.orchestrator import FlightSearchOrchestrator
     from app.services.quick_search_ai_preference import QuickSearchAiPreferenceResult
     from app.services.quick_search_execution import _CACHE
 except Exception:  # pragma: no cover
     _CALENDAR_HINTS_CACHE = None
     QuickSearchCalendarHintsIn = None
+    QuickSearchSaveResultIn = None
     quick_search = None
     quick_search_calendar_hints = None
+    save_result = None
     ProviderFetchResult = None
     ProviderFlight = None
     Base = None
+    PriceSnapshot = None
     FlightSearchOrchestrator = None
     QuickSearchAiPreferenceResult = None
     _CACHE = None
@@ -73,7 +78,10 @@ def _patch_request_provider(*, return_value=None, side_effect=None, provider_ids
     quick_search is None
     or quick_search_calendar_hints is None
     or QuickSearchCalendarHintsIn is None
+    or QuickSearchSaveResultIn is None
+    or save_result is None
     or ProviderFlight is None
+    or PriceSnapshot is None
     or QuickSearchAiPreferenceResult is None,
     "fastapi app deps not available",
 )
@@ -390,6 +398,70 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             self.assertEqual(result["meta"]["execution"]["cache_hits"], 1)
             self.assertEqual(result["meta"]["execution"]["l2_cache_hits"], 1)
             self.assertEqual(result["meta"]["execution"]["provider_calls"], 0)
+        finally:
+            db.close()
+            engine.dispose()
+
+    def test_save_result_seeds_watchlist_snapshot_from_observed_price(self):
+        engine, _testing_session_local, db = _db_session()
+        current_user = type("CurrentUser", (), {"id": "user-quick-save"})()
+        first_payload = QuickSearchSaveResultIn(
+            origin_iata="LEI",
+            destination_iata="DUB",
+            travel_date=dt.date(2026, 6, 14),
+            price_total=52.5,
+            currency="usd",
+        )
+        second_payload = QuickSearchSaveResultIn(
+            origin_iata="LEI",
+            destination_iata="DUB",
+            travel_date=dt.date(2026, 6, 14),
+            price_total=49.0,
+            currency="EUR",
+        )
+
+        try:
+            created = save_result(
+                payload=first_payload,
+                idempotency_key=None,
+                db=db,
+                current_user=current_user,
+            )
+            existing = save_result(
+                payload=second_payload,
+                idempotency_key=None,
+                db=db,
+                current_user=current_user,
+            )
+            idempotent = save_result(
+                payload=second_payload,
+                idempotency_key="save-result-price-observed",
+                db=db,
+                current_user=current_user,
+            )
+            replayed = save_result(
+                payload=second_payload,
+                idempotency_key="save-result-price-observed",
+                db=db,
+                current_user=current_user,
+            )
+            snapshots = db.scalars(
+                select(PriceSnapshot)
+                .where(PriceSnapshot.watch_id == created["watch_id"])
+                .order_by(PriceSnapshot.captured_at_utc.asc(), PriceSnapshot.id.asc())
+            ).all()
+
+            self.assertEqual(created["created_or_existing"], "created")
+            self.assertEqual(existing["created_or_existing"], "existing")
+            self.assertEqual(existing["watch_id"], created["watch_id"])
+            self.assertEqual(idempotent, replayed)
+            self.assertEqual(len(snapshots), 3)
+            self.assertEqual(float(snapshots[0].raw_price), 52.5)
+            self.assertEqual(snapshots[0].raw_currency, "USD")
+            self.assertEqual(snapshots[0].provider, "quick-search")
+            self.assertFalse(snapshots[0].is_stale)
+            self.assertEqual(float(snapshots[1].raw_price), 49.0)
+            self.assertEqual(float(snapshots[2].raw_price), 49.0)
         finally:
             db.close()
             engine.dispose()
