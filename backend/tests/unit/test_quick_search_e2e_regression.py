@@ -15,7 +15,7 @@ try:
         save_result,
     )
     from app.domain.entities import ProviderFetchResult, ProviderFlight
-    from app.infrastructure.db.models import Base, PriceSnapshot
+    from app.infrastructure.db.models import Base, PriceSnapshot, RevalidationJob
     from app.infrastructure.providers.orchestrator import FlightSearchOrchestrator
     from app.services.quick_search_ai_preference import QuickSearchAiPreferenceResult
     from app.services.quick_search_execution import _CACHE
@@ -30,6 +30,7 @@ except Exception:  # pragma: no cover
     ProviderFlight = None
     Base = None
     PriceSnapshot = None
+    RevalidationJob = None
     FlightSearchOrchestrator = None
     QuickSearchAiPreferenceResult = None
     _CACHE = None
@@ -82,6 +83,7 @@ def _patch_request_provider(*, return_value=None, side_effect=None, provider_ids
     or save_result is None
     or ProviderFlight is None
     or PriceSnapshot is None
+    or RevalidationJob is None
     or QuickSearchAiPreferenceResult is None,
     "fastapi app deps not available",
 )
@@ -418,6 +420,19 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             travel_date=dt.date(2026, 6, 14),
             price_total=49.0,
             currency="EUR",
+            freshness_status="fresh",
+            requires_revalidation=False,
+            validation_status="revalidated",
+        )
+        stale_payload = QuickSearchSaveResultIn(
+            origin_iata="LEI",
+            destination_iata="DUB",
+            travel_date=dt.date(2026, 6, 14),
+            price_total=47.0,
+            currency="EUR",
+            freshness_status="warm",
+            requires_revalidation=False,
+            validation_status="seen",
         )
 
         try:
@@ -445,15 +460,27 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
                 db=db,
                 current_user=current_user,
             )
+            stale_saved = save_result(
+                payload=stale_payload,
+                idempotency_key=None,
+                db=db,
+                current_user=current_user,
+            )
             snapshots = db.scalars(
                 select(PriceSnapshot)
                 .where(PriceSnapshot.watch_id == created["watch_id"])
                 .order_by(PriceSnapshot.captured_at_utc.asc(), PriceSnapshot.id.asc())
             ).all()
+            jobs = db.scalars(
+                select(RevalidationJob).where(
+                    RevalidationJob.target_fingerprint == "route:LEI:DUB:2026-06-14",
+                )
+            ).all()
 
             self.assertEqual(created["created_or_existing"], "created")
             self.assertEqual(existing["created_or_existing"], "existing")
             self.assertEqual(existing["watch_id"], created["watch_id"])
+            self.assertEqual(stale_saved["watch_id"], created["watch_id"])
             self.assertEqual(idempotent, replayed)
             self.assertEqual(len(snapshots), 3)
             self.assertEqual(float(snapshots[0].raw_price), 52.5)
@@ -462,6 +489,10 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             self.assertFalse(snapshots[0].is_stale)
             self.assertEqual(float(snapshots[1].raw_price), 49.0)
             self.assertEqual(float(snapshots[2].raw_price), 49.0)
+            self.assertEqual(len(jobs), 1)
+            self.assertEqual(jobs[0].job_type, "manual")
+            self.assertEqual(jobs[0].target_type, "route")
+            self.assertEqual(jobs[0].provider, "multi")
         finally:
             db.close()
             engine.dispose()

@@ -61,6 +61,8 @@ from app.services.quick_search_cache_service import (
     prune_expired_entries_async,
 )
 from app.services.fare_memory import build_freshness_payload, build_search_fingerprint, persist_ranked_result_observations
+from app.services.revalidation_jobs import enqueue_revalidation_job
+from app.services.watchlist_revalidation import route_fingerprint
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -183,6 +185,48 @@ def _seed_watch_snapshot_from_saved_result(db: Session, watch: FlightWatch, payl
             is_stale=False,
         )
     )
+
+
+def _saved_result_requires_revalidation(payload: "QuickSearchSaveResultIn") -> bool:
+    revalidation_statuses = {
+        "warm",
+        "stale",
+        "expired",
+        "negative_fresh",
+        "negative_stale",
+        "provider_error_fresh",
+        "provider_error_stale",
+    }
+    return payload.freshness_status in revalidation_statuses or payload.requires_revalidation is True
+
+
+def _enqueue_saved_result_revalidation(db: Session, watch: FlightWatch, payload: "QuickSearchSaveResultIn") -> None:
+    enqueue_revalidation_job(
+        db,
+        job_type="manual",
+        target_type="route",
+        target_fingerprint=route_fingerprint(
+            watch.origin_iata,
+            watch.destination_iata,
+            watch.travel_date_local,
+        ),
+        provider="multi",
+        priority=20,
+        payload={
+            "watch_id": watch.id,
+            "user_id": watch.user_id,
+            "reason": "saved_result_requires_revalidation",
+            "freshness_status": payload.freshness_status,
+            "validation_status": payload.validation_status,
+        },
+    )
+
+
+def _handle_saved_result_observation(db: Session, watch: FlightWatch, payload: "QuickSearchSaveResultIn") -> None:
+    if _saved_result_requires_revalidation(payload):
+        _enqueue_saved_result_revalidation(db, watch, payload)
+        return
+    _seed_watch_snapshot_from_saved_result(db, watch, payload)
 
 
 def _build_fare_memory_cache_callbacks(*, shared_cache_enabled: bool, user_currency: str) -> FareMemoryCacheCallbacks:
@@ -572,6 +616,9 @@ class QuickSearchSaveResultIn(BaseModel):
     travel_date: dt.date
     price_total: float | None = Field(default=None, ge=0)
     currency: str = Field(default="EUR", min_length=3, max_length=3)
+    freshness_status: str | None = Field(default=None, max_length=40)
+    requires_revalidation: bool | None = None
+    validation_status: str | None = Field(default=None, max_length=40)
     group_id: str | None = Field(default=None, max_length=36)
 
     @field_validator("origin_iata", "destination_iata")
@@ -3026,7 +3073,7 @@ def save_result(
         )
     )
     if existing:
-        _seed_watch_snapshot_from_saved_result(db, existing, payload)
+        _handle_saved_result_observation(db, existing, payload)
         body = {"watch_id": existing.id, "created_or_existing": "existing"}
         store_response(
             db,
@@ -3051,7 +3098,7 @@ def save_result(
     )
     db.add(watch)
     db.flush()
-    _seed_watch_snapshot_from_saved_result(db, watch, payload)
+    _handle_saved_result_observation(db, watch, payload)
     body = {"watch_id": watch.id, "created_or_existing": "created"}
     store_response(
         db,

@@ -490,9 +490,11 @@ Defensive client note:
 
 ### Save result behavior (`POST /api/v1/search/save-result`)
 
-- Request accepts the observed route/date fields plus `price_total` and optional `currency`.
-- When `price_total` is present, saving a quick-search result to watchlist also writes an immediate `PriceSnapshot` with provider `quick-search`.
-- If the watch already exists for the user/route/date, the endpoint reuses that watch and still records the newly observed price as a fresh snapshot.
+- Request accepts the observed route/date fields plus `price_total`, optional `currency`, and optional freshness fields (`freshness_status`, `requires_revalidation`, `validation_status`).
+- When `price_total` is present and the result is fresh, saving a quick-search result to watchlist writes an immediate `PriceSnapshot` with provider `quick-search`.
+- If the result is `warm`, `stale`, `expired`, negative, provider-error, or explicitly `requires_revalidation=true`, the endpoint saves/reuses the watch and enqueues a route revalidation job instead of writing a fresh snapshot from uncertain data.
+- If the watch already exists for the user/route/date, the endpoint reuses that watch and applies the same freshness-aware snapshot/revalidation policy.
+- Older clients that omit freshness fields keep backward compatibility: a provided `price_total` is treated as an observed fresh snapshot.
 - Idempotency replay returns the stored response without writing duplicate snapshots.
 
 ## Ranking (current)
