@@ -183,6 +183,8 @@ def test_prices_summary_returns_aggregates(client: TestClient, monkeypatch) -> N
     refresh_times = iter(
         [
             datetime(2026, 6, 5, 10, 15, 27, 111111),
+            datetime(2026, 6, 5, 10, 15, 27, 111111),
+            datetime(2026, 6, 5, 10, 18, 9, 222222),
             datetime(2026, 6, 5, 10, 18, 9, 222222),
         ]
     )

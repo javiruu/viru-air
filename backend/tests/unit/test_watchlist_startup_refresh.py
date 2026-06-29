@@ -239,7 +239,7 @@ def test_server_startup_refreshes_stale_watchlist_routes_automatically(monkeypat
             destination="DUB",
             travel_date=travel_date,
         )
-        watch_b = _seed_watch(
+        _seed_watch(
             seed_db,
             user_id=owner_b.id,
             origin="AGP",

@@ -168,7 +168,7 @@ export const watchlistEs = {
   },
   freshness: {
     noDataLabel: "Sin datos todavía",
-    noDataDetail: "Viru crearÃ¡ el primer snapshot automÃ¡ticamente.",
+    noDataDetail: "actualiza para crear el primer snapshot",
     insufficientDataDetail: "Pocas observaciones todavía.",
     needsReviewLabel: "Necesita revisión",
     lastUpdatedAgo: "{time}",
@@ -280,7 +280,7 @@ export const watchlistEs = {
     createError: "No se pudo crear vuelo",
     noFlightsForFilteredUpdate: "No hay vuelos disponibles con los filtros actuales.",
     bulkUpdateSummary:
-      "ActualizaciÃ³n automÃ¡tica: {updated} rutas al dÃ­a, {skippedCooldown} omitidas por cooldown, {skippedPaused} pausadas, {failed} fallidas, {degradedOrStale} degradadas/stale.",
+      "Actualización automática: {updated} rutas al día, {skippedCooldown} omitidas por cooldown, {skippedPaused} pausadas, {failed} fallidas, {degradedOrStale} degradadas/stale.",
     bulkPartialError: "{failed} de {total} no se pudieron actualizar.",
     noFlightsAvailable: "No hay vuelos disponibles para esta ruta y fecha.",
     travelDateInPast: "La fecha de viaje no puede ser en el pasado.",
@@ -597,5 +597,4 @@ export const watchlistEn = {
     selectDateBeforeAirports: "Select a date before choosing airports.",
   },
 };
-
 

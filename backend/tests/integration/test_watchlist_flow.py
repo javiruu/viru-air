@@ -343,6 +343,8 @@ def test_watchlist_refreshes_at_different_times_create_two_history_points(client
     refresh_times = iter(
         [
             datetime(2026, 6, 5, 10, 15, 27, 123456),
+            datetime(2026, 6, 5, 10, 15, 27, 123456),
+            datetime(2026, 6, 5, 10, 18, 9, 654321),
             datetime(2026, 6, 5, 10, 18, 9, 654321),
         ]
     )
