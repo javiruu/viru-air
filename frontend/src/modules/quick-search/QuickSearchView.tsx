@@ -123,6 +123,7 @@ import { buildDualSearchParams, findCombinationResult } from "@/modules/quick-se
 import { QuickSearchSidePanel } from "@/modules/quick-search/components/QuickSearchSidePanel";
 import { QuickSearchCombinedBanner } from "@/modules/quick-search/components/QuickSearchCombinedBanner";
 import { QuickSearchProviderBadge } from "@/modules/quick-search/components/QuickSearchProviderBadge";
+import type { ProviderSearchStatus } from "@/modules/quick-search/components/QuickSearchLoadingProgress";
 import { useQuickSearchScreenState } from "@/modules/quick-search/state/useQuickSearchScreenState";
 import { QuickSearchSideViewControls } from "@/modules/quick-search/components/QuickSearchSideViewControls";
 import { getPendingActionVisibility } from "@/modules/quick-search/state/pendingActionPolicy";
@@ -561,6 +562,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [returnDateTouched, setReturnDateTouched] = useState(false);
   const [refreshingResultId, setRefreshingResultId] = useState<string | null>(null);
+  const [providerSearchStatuses, setProviderSearchStatuses] = useState<ProviderSearchStatus[]>([]);
 
   // ── Dual-mode hooks (Fase 6) ───────────────────────────────────────
   const outboundSide = useQuickSearchSide("outbound");
@@ -1786,6 +1788,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setLoadingVisualHold(false);
     setDisplayProgress(0);
     setProgress("requesting", 30);
+    setProviderSearchStatuses([
+      { id: "ryanair", label: "Ryanair", status: "searching" },
+      { id: "wizzair", label: "Wizz Air", status: "searching" },
+      { id: "duffel", label: "Duffel", status: "searching" },
+    ]);
     const nextExcludeOrigins = [...excludeOrigins];
     const nextExcludeDestinations = [...excludeDestinations];
     parseIataList(excludeOriginInput).forEach((value) => {
@@ -1923,6 +1930,25 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             setLoaderResolvedTotalFlights(Math.max(0, data.meta.total_candidates));
           }
           setJobId(data.job_id || null);
+          const rawProviderStatuses = data.meta?.provider_status?.providers;
+          if (rawProviderStatuses && rawProviderStatuses.length > 0) {
+            setProviderSearchStatuses(
+              rawProviderStatuses.map((p: { id?: string; status?: string; degraded?: boolean; errors?: number; results_count?: number }) => {
+                let badgeStatus: ProviderSearchStatus["status"] = "found";
+                if (p.degraded || (p.errors && p.errors > 0) || p.status === "failed") badgeStatus = "error";
+                else if (p.status === "ok" || (p.results_count && p.results_count > 0)) badgeStatus = "found";
+                const label = p.id
+                  ? p.id.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())
+                  : "Unknown";
+                return { id: p.id || "unknown", label, status: badgeStatus, resultsCount: p.results_count };
+              }),
+            );
+          } else {
+            // No per-provider data, mark all as found (search completed)
+            setProviderSearchStatuses((prev) =>
+              prev.map((p) => ({ ...p, status: "found" as ProviderSearchStatus["status"] })),
+            );
+          }
           const providerOverallStatus = data.meta?.provider_status?.overall_status ?? data.meta?.provider_status?.overall;
           setIsDegraded(
             Boolean(
@@ -1976,11 +2002,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 detail: error.message?.slice(0, 120) || "validation_error",
               });
             }
-            setSearchState("error");
-            setSearchError(Object.keys(validationErrors).length > 0 ? t("errorText") : t("searchFailed"));
-          }
-          setHasSearched(true);
-      }
+          setSearchState("error");
+          setSearchError(Object.keys(validationErrors).length > 0 ? t("errorText") : t("searchFailed"));
+        }
+        setProviderSearchStatuses([]);
+        setHasSearched(true);
+    }
     } catch (error) {
       if (!isCurrentRequest()) return;
       logQuickSearchApiError("quick_search_unhandled_exception", {
@@ -1990,6 +2017,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       setProgress("client_done", 95);
       setSearchState("error");
       setSearchError(t("searchFailed"));
+      setProviderSearchStatuses([]);
       setHasSearched(true);
     } finally {
       if (isCurrentRequest()) {
@@ -4860,6 +4888,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             loadingTotalText={loadingTotalText}
             loadingProgressText={loadingProgressText}
             loadingScopeText={loadingScopeText}
+            providerStatuses={providerSearchStatuses}
           />
           {relaxPreviewOpen ? (
             <section className="panel panel-soft section-gap-sm" aria-live="polite">
