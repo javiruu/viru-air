@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import math
 from dataclasses import dataclass
 
 from app.domain.entities import ProviderFlight
@@ -24,6 +25,22 @@ class RankedResult:
     pair_category: str
     discovery_explanation: str
 
+    @property
+    def price_value(self) -> float:
+        return _valid_price_value(self.flight) or 0.0
+
+
+def _valid_price_value(flight: ProviderFlight) -> float | None:
+    try:
+        price_value = float(flight.price)
+    except (TypeError, ValueError):
+        return None
+
+    if not math.isfinite(price_value):
+        return None
+
+    return max(0.0, price_value)
+
 
 def rank_quick_search_results(
     rows: list[tuple[str, str, dt.date, ProviderFlight]],
@@ -39,12 +56,22 @@ def rank_quick_search_results(
         return []
 
     pair_by_key = {(pair.origin_iata, pair.destination_iata): pair for pair in planned_pairs}
-    min_price = min(max(0.0, float(row[3].price)) for row in rows)
+    priced_rows: list[tuple[str, str, dt.date, ProviderFlight, float]] = []
+    for origin, destination, travel_date, flight in rows:
+        price_value = _valid_price_value(flight)
+        if price_value is None:
+            continue
+        priced_rows.append((origin, destination, travel_date, flight, price_value))
+
+    if not priced_rows:
+        return []
+
+    min_price = min(row[4] for row in priced_rows)
 
     ranked: list[RankedResult] = []
     soft_weight_factor = max(0.0, min(2.0, soft_filters_weight)) / 0.6
 
-    for origin, destination, travel_date, flight in rows:
+    for origin, destination, travel_date, flight, price_value in priced_rows:
         pair = pair_by_key.get((origin, destination))
         if pair is None:
             continue
@@ -62,7 +89,6 @@ def rank_quick_search_results(
                 if flight_duration > duration_max_min:
                     continue
 
-        price_value = max(0.0, float(flight.price))
         price_component = price_value - min_price
 
         origin_seed_penalty = (0.0 if pair.origin_is_seed else 12.0) * soft_weight_factor
@@ -124,7 +150,7 @@ def rank_quick_search_results(
     ranked.sort(
         key=lambda item: (
             item.final_score,
-            item.flight.price,
+            item.price_value,
             item.score_breakdown["distance_penalty_total"],
             str(item.travel_date),
             item.flight.departure_time_local or "99:99",

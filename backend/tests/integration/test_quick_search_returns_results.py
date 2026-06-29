@@ -22,6 +22,28 @@ class _FakeQuickSearchProvider:
         return []
 
 
+class _MalformedPriceQuickSearchProvider:
+    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object) -> list[ProviderFlight]:
+        if origin == "AGP" and destination == "DUB":
+            return [
+                ProviderFlight(
+                    price="not-a-price",
+                    currency="EUR",
+                    departure_time_local="08:40",
+                    captured_at=utc_now_naive(),
+                    source="malformed-provider",
+                ),
+                ProviderFlight(
+                    price=39.99,
+                    currency="EUR",
+                    departure_time_local="09:40",
+                    captured_at=utc_now_naive(),
+                    source="fake-quick-search-provider",
+                ),
+            ]
+        return []
+
+
 def test_quick_search_valid_route_returns_at_least_one_result(client: TestClient, monkeypatch) -> None:
     monkeypatch.setattr(search_api, "provider", _FakeQuickSearchProvider())
 
@@ -45,3 +67,23 @@ def test_quick_search_valid_route_returns_at_least_one_result(client: TestClient
     assert first["travel_date"] == travel_date
     assert first["price_total"] == 39.99
     assert first["source"] == "fake-quick-search-provider"
+
+
+def test_quick_search_skips_malformed_provider_prices(client: TestClient, monkeypatch) -> None:
+    monkeypatch.setattr(search_api, "provider", _MalformedPriceQuickSearchProvider())
+
+    travel_date = str(date.today() + timedelta(days=21))
+    response = client.post(
+        "/api/v1/search/quick",
+        json={
+            "origin": {"seed_iata": "AGP", "include_nearby": False, "radius_km": 150, "max_candidates": 6},
+            "destination": {"seed_iata": "DUB", "include_nearby": False, "radius_km": 150, "max_candidates": 6},
+            "travel": {"date": travel_date, "flex_before": 0, "flex_after": 0},
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert len(payload["results"]) == 1
+    assert payload["results"][0]["price_total"] == 39.99
+    assert payload["results"][0]["source"] == "fake-quick-search-provider"
