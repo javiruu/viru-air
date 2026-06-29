@@ -12,6 +12,11 @@ function t(key: string) {
     searchReadyTitle: "Listo para explorar",
     searchReadyText: "Introduce una ruta y pulsa Buscar",
     searchReadyHint: "Puedes ampliar con alternativos",
+    stateIdleKicker: "Panel listo",
+    stateLoadingKicker: "Comprobando rutas",
+    stateEmptyKicker: "Terminal sin coincidencias",
+    stateErrorKicker: "Ruta interrumpida",
+    stateRateKicker: "Espera protegida",
     rateLimitTitle: "Demasiadas peticiones",
     rateLimitText: "Espera un momento",
     stateRateHint: "Protegemos el servicio",
@@ -56,6 +61,9 @@ test("QuickSearchStatePanels renders empty state causes and relax actions", () =
   );
 
   assert.match(html, /0 resultados con estos filtros/);
+  assert.match(html, /Terminal sin coincidencias/);
+  assert.match(html, /qs-state-visual-empty/);
+  assert.match(html, /qs-button-icon/);
   assert.match(html, /Causas probables/);
   assert.match(html, /Strict activo/);
   assert.match(html, /Desactivar strict/);
@@ -85,6 +93,8 @@ test("QuickSearchStatePanels renders retry affordance for error state", () => {
   );
 
   assert.match(html, /Algo fallo/);
+  assert.match(html, /Ruta interrumpida/);
+  assert.match(html, /qs-state-visual-error/);
   assert.match(html, /backend exploded/);
   assert.match(html, /Reintentar/);
 });
