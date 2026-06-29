@@ -38,6 +38,10 @@ function buildWatchlistPayload(result: SearchResult, groupId: string) {
     destination_iata: result.destination,
     travel_date: result.travel_date,
     price_total: result.price_total ?? result.price,
+    currency: result.currency,
+    freshness_status: result.freshness?.status ?? null,
+    requires_revalidation: result.freshness?.requires_revalidation ?? result.stale_data ?? null,
+    validation_status: result.freshness?.validation_status ?? null,
     group_id: groupId,
   };
 }
