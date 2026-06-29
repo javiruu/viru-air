@@ -19,6 +19,7 @@ try:
     from app.infrastructure.providers.orchestrator import FlightSearchOrchestrator
     from app.services.quick_search_ai_preference import QuickSearchAiPreferenceResult
     from app.services.quick_search_execution import _CACHE
+    from app.services.watchlist_revalidation import process_due_route_revalidation_jobs
 except Exception:  # pragma: no cover
     _CALENDAR_HINTS_CACHE = None
     QuickSearchCalendarHintsIn = None
@@ -34,6 +35,7 @@ except Exception:  # pragma: no cover
     FlightSearchOrchestrator = None
     QuickSearchAiPreferenceResult = None
     _CACHE = None
+    process_due_route_revalidation_jobs = None
 
 
 def _flight(price: float, dep: str, source: str = "test-provider", currency: str = "EUR") -> ProviderFlight:
@@ -75,6 +77,14 @@ def _patch_request_provider(*, return_value=None, side_effect=None, provider_ids
     return patch("app.api.v1.search._build_request_provider", return_value=fake_provider)
 
 
+class _RouteRefreshProvider:
+    def get_flights(self, origin: str, destination: str, travel_date: str):
+        return [_flight(63.0, "10:15", source="route-refresh-test")]
+
+    def provider_ids(self) -> list[str]:
+        return ["route-refresh-test"]
+
+
 @unittest.skipIf(
     quick_search is None
     or quick_search_calendar_hints is None
@@ -84,7 +94,8 @@ def _patch_request_provider(*, return_value=None, side_effect=None, provider_ids
     or ProviderFlight is None
     or PriceSnapshot is None
     or RevalidationJob is None
-    or QuickSearchAiPreferenceResult is None,
+    or QuickSearchAiPreferenceResult is None
+    or process_due_route_revalidation_jobs is None,
     "fastapi app deps not available",
 )
 class QuickSearchE2ERegressionTests(unittest.TestCase):
@@ -460,18 +471,35 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
                 db=db,
                 current_user=current_user,
             )
-            stale_saved = save_result(
-                payload=stale_payload,
-                idempotency_key=None,
-                db=db,
-                current_user=current_user,
-            )
-            snapshots = db.scalars(
+            with self.assertLogs("app.quick_search.save_result", level="INFO") as logs:
+                stale_saved = save_result(
+                    payload=stale_payload,
+                    idempotency_key=None,
+                    db=db,
+                    current_user=current_user,
+                )
+            snapshots_before_worker = db.scalars(
                 select(PriceSnapshot)
                 .where(PriceSnapshot.watch_id == created["watch_id"])
                 .order_by(PriceSnapshot.captured_at_utc.asc(), PriceSnapshot.id.asc())
             ).all()
-            jobs = db.scalars(
+            jobs_before_worker = db.scalars(
+                select(RevalidationJob).where(
+                    RevalidationJob.target_fingerprint == "route:LEI:DUB:2026-06-14",
+                )
+            ).all()
+            worker_report = process_due_route_revalidation_jobs(
+                _testing_session_local,
+                max_jobs=1,
+                provider_client=_RouteRefreshProvider(),
+            )
+            db.expire_all()
+            snapshots_after_worker = db.scalars(
+                select(PriceSnapshot)
+                .where(PriceSnapshot.watch_id == created["watch_id"])
+                .order_by(PriceSnapshot.captured_at_utc.asc(), PriceSnapshot.id.asc())
+            ).all()
+            jobs_after_worker = db.scalars(
                 select(RevalidationJob).where(
                     RevalidationJob.target_fingerprint == "route:LEI:DUB:2026-06-14",
                 )
@@ -482,17 +510,31 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             self.assertEqual(existing["watch_id"], created["watch_id"])
             self.assertEqual(stale_saved["watch_id"], created["watch_id"])
             self.assertEqual(idempotent, replayed)
-            self.assertEqual(len(snapshots), 3)
-            self.assertEqual(float(snapshots[0].raw_price), 52.5)
-            self.assertEqual(snapshots[0].raw_currency, "USD")
-            self.assertEqual(snapshots[0].provider, "quick-search")
-            self.assertFalse(snapshots[0].is_stale)
-            self.assertEqual(float(snapshots[1].raw_price), 49.0)
-            self.assertEqual(float(snapshots[2].raw_price), 49.0)
-            self.assertEqual(len(jobs), 1)
-            self.assertEqual(jobs[0].job_type, "manual")
-            self.assertEqual(jobs[0].target_type, "route")
-            self.assertEqual(jobs[0].provider, "multi")
+            self.assertIn("quick_search_save_result_revalidation_enqueued", "\n".join(logs.output))
+            self.assertIn('"created": true', "\n".join(logs.output))
+            self.assertEqual(len(snapshots_before_worker), 3)
+            self.assertEqual(float(snapshots_before_worker[0].raw_price), 52.5)
+            self.assertEqual(snapshots_before_worker[0].raw_currency, "USD")
+            self.assertEqual(snapshots_before_worker[0].provider, "quick-search")
+            self.assertFalse(snapshots_before_worker[0].is_stale)
+            self.assertEqual(float(snapshots_before_worker[1].raw_price), 49.0)
+            self.assertEqual(float(snapshots_before_worker[2].raw_price), 49.0)
+            self.assertEqual(len(jobs_before_worker), 1)
+            self.assertEqual(jobs_before_worker[0].job_type, "manual")
+            self.assertEqual(jobs_before_worker[0].target_type, "route")
+            self.assertEqual(jobs_before_worker[0].provider, "multi")
+            self.assertEqual(worker_report["processed_job_count"], 1)
+            self.assertEqual(worker_report["refreshed_job_count"], 1)
+            self.assertEqual(len(snapshots_after_worker), 4)
+            refreshed_snapshots = [
+                snapshot
+                for snapshot in snapshots_after_worker
+                if snapshot.provider == "route-refresh-test"
+            ]
+            self.assertEqual(len(refreshed_snapshots), 1)
+            self.assertEqual(float(refreshed_snapshots[0].raw_price), 63.0)
+            self.assertEqual(len(jobs_after_worker), 1)
+            self.assertEqual(jobs_after_worker[0].status, "done")
         finally:
             db.close()
             engine.dispose()

@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { apiFetch } from "@/modules/shared/api";
+import { buildQuickSearchSaveResultPayload } from "@/modules/quick-search/api/buildSaveResultPayload";
 import type { SearchResult } from "@/modules/quick-search/types";
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -30,22 +31,6 @@ type SaveCombinationState = {
   messageKey: string | null;
 };
 
-// ── Helper ────────────────────────────────────────────────────────────
-
-function buildWatchlistPayload(result: SearchResult, groupId: string) {
-  return {
-    origin_iata: result.origin,
-    destination_iata: result.destination,
-    travel_date: result.travel_date,
-    price_total: result.price_total ?? result.price,
-    currency: result.currency,
-    freshness_status: result.freshness?.status ?? null,
-    requires_revalidation: result.freshness?.requires_revalidation ?? result.stale_data ?? null,
-    validation_status: result.freshness?.validation_status ?? null,
-    group_id: groupId,
-  };
-}
-
 // ── Hook ──────────────────────────────────────────────────────────────
 
 export function useSaveCombination() {
@@ -66,11 +51,11 @@ export function useSaveCombination() {
       const [outboundResult, returnResult] = await Promise.allSettled([
         apiFetch<SaveResult>("/search/save-result", {
           method: "POST",
-          body: JSON.stringify(buildWatchlistPayload(params.outbound, params.groupId)),
+          body: JSON.stringify(buildQuickSearchSaveResultPayload(params.outbound, { groupId: params.groupId })),
         }),
         apiFetch<SaveResult>("/search/save-result", {
           method: "POST",
-          body: JSON.stringify(buildWatchlistPayload(params.return, params.groupId)),
+          body: JSON.stringify(buildQuickSearchSaveResultPayload(params.return, { groupId: params.groupId })),
         }),
       ]);
 

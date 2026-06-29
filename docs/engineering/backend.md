@@ -60,6 +60,11 @@ Esto evita acoplar `quick-search`, `watchlist` y `recommendations` a un provider
   - endpoint admin: `GET /api/v1/admin/fare-memory-health`.
   - devuelve contadores agregados de `search_cache`, `negative_cache`, `offer_memory` y `revalidation_jobs`.
   - no expone payloads cacheados, fingerprints completos de requests ni datos por usuario.
+- Flight Tracking Hub:
+  - decision vigente: [ADR-004 Flight Tracking Hub](../adr/ADR-004-flight-tracking-hub.md).
+  - `execute_plan` centraliza tracking de unidades exactas para Quick Search y calendar hints.
+  - Fare Memory conserva memoria operativa compartida; `PriceSnapshot` conserva historico visible por usuario.
+  - guardar en watchlist siembra snapshot solo con resultados `fresh`; resultados `warm`, `stale`, `expired`, negativos o errores encolan `RevalidationJob` de ruta.
 - Dominio documentado con mayor detalle en:
   - [Quick Search contract](../reference/backend/quick-search-contract.md)
   - [Quick Search acceptance checklist](../reference/backend/quick-search-acceptance-checklist.md)
