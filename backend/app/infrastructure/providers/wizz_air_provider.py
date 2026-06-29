@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import logging
 import os
-import time
 import random
+import threading
+import time
+from collections import defaultdict
 from datetime import datetime
 from typing import Any
 try:
@@ -17,8 +20,8 @@ from requests.adapters import HTTPAdapter
 from app.core.time import utc_now_naive
 from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError, ProviderWarning
 from app.infrastructure.providers.base import FlightProvider
-import threading
-from collections import defaultdict
+
+logger = logging.getLogger(__name__)
 
 _PROVIDER_POOL_SIZE = 32
 
@@ -49,7 +52,13 @@ class WizzAirProvider(FlightProvider):
             self._session.mount("http://", adapter)
         self._cache_lock = threading.Lock()
         self._cache: dict[tuple[str, str, str], list[ProviderFlight]] = {}
-        self._global_fetch_lock = threading.Lock()
+        # Per-route locks: prevent duplicate Wizz Air requests only for the SAME route.
+        # Different routes (e.g. MAD->BCN vs MAD->DUB) can fetch in parallel.
+        # This avoids the 400 Bad Request (InvalidProtocol) from Wizz Air's API
+        # when multiple requests hit the same route simultaneously, while still
+        # allowing full concurrency across different routes.
+        self._route_locks: dict[tuple[str, str], threading.Lock] = {}
+        self._route_locks_lock = threading.Lock()
 
     def is_enabled(self) -> bool:
         return True
@@ -61,23 +70,46 @@ class WizzAirProvider(FlightProvider):
         destination = destination.upper().strip()
 
         cache_key = (origin, destination, travel_date)
+        route_key = (origin, destination)
+
+        # ── Cache check: fast path, no route lock needed ──
         with self._cache_lock:
             if cache_key in self._cache:
                 flights = self._cache[cache_key]
+                logger.debug(
+                    "wizzair_cache_hit route=%s->%s date=%s flights=%s",
+                    origin, destination, travel_date, len(flights),
+                )
                 return ProviderFetchResult(flights=flights, warnings=[], warnings_structured=[])
 
-        # Obtain a global lock to completely serialize network requests to Wizz Air
-        # This prevents 400 Bad Request (InvalidProtocol) caused by concurrent fetches
-        with self._global_fetch_lock:
-            # Check cache again inside the lock
+        # ── Per-route lock: only serialize same-origin/destination fetches ──
+        with self._route_locks_lock:
+            route_lock = self._route_locks.get(route_key)
+            if route_lock is None:
+                route_lock = threading.Lock()
+                self._route_locks[route_key] = route_lock
+
+        with route_lock:
+            # Double-check cache inside the lock (another thread may have populated it)
             with self._cache_lock:
                 if cache_key in self._cache:
                     flights = self._cache[cache_key]
                     return ProviderFetchResult(flights=flights, warnings=[], warnings_structured=[])
 
+            # ── Fetch from Wizz Air API ──
+            logger.info(
+                "wizzair_fetch_start route=%s->%s date=%s timeout_ms=%s",
+                origin, destination, travel_date, timeout_ms,
+            )
+            t0 = time.perf_counter()
             try:
                 body = self._fetch_farechart(origin, destination, travel_date, timeout_ms=timeout_ms)
             except RequestsError as exc:
+                elapsed = int((time.perf_counter() - t0) * 1000)
+                logger.warning(
+                    "wizzair_fetch_failed route=%s->%s date=%s elapsed_ms=%s error=%s",
+                    origin, destination, travel_date, elapsed, str(exc)[:120],
+                )
                 raise ProviderSourceFetchError(
                     warning_codes=["wizzair_provider_unavailable_total", "provider_total_outage"],
                     message=f"Wizz Air provider unavailable for {origin}->{destination} on {travel_date}",
@@ -85,18 +117,20 @@ class WizzAirProvider(FlightProvider):
                     severity="error",
                 ) from exc
 
-            # Parse all flights from the response to cache them
+            elapsed = int((time.perf_counter() - t0) * 1000)
+            logger.info(
+                "wizzair_fetch_done route=%s->%s date=%s elapsed_ms=%s",
+                origin, destination, travel_date, elapsed,
+            )
+
+            # Parse and cache all flights from the response
             all_parsed_flights = self._extract_all_flights(body, origin=origin, destination=destination, fallback_currency=currency)
             
             with self._cache_lock:
-                # Cache everything returned by this fetch
                 for parsed_date, flight_list in all_parsed_flights.items():
                     self._cache[(origin, destination, parsed_date)] = flight_list
-                
-                # If the requested date wasn't in the response, cache it as empty so we don't refetch
                 if cache_key not in self._cache:
                     self._cache[cache_key] = []
-                    
                 flights = self._cache[cache_key]
 
         warnings_structured: list[ProviderWarning] = []
