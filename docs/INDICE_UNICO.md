@@ -47,14 +47,14 @@
 ### QA
 
 - [README QA](qa/README.md)
-- [Estabilización watchlist + quick-search](qa/reports/2026-06-05-watchlist-quick-search-stabilization.md)
+- [Estabilización watchlist + quick-search (archivado)](archive/qa-reports/2026-06-05-watchlist-quick-search-stabilization.md)
 - [Frontend PR checklist](qa/acceptance-checklists/frontend-pr-checklist.md)
 - [Matriz QA por area](qa/qa-command-matrix.md)
 - [Fase 0 limpieza conceptual](qa/fase-0-limpieza-conceptual-checklist.md)
 - [Cierre pendiente de `/hoteles`](qa/hotels-pending-closeout.md)
 - [Traceability matrix](qa/traceability-matrix.md)
 - [TestSprite catalog](qa/testsprite/testsprite-catalog.md)
-- [Auditoría de paleta dual](qa/visual/color-palette-audit.md)
+- [Auditoría de paleta dual (archivada)](archive/qa-visual/color-palette-audit.md)
 
 ### DevOps
 
@@ -134,9 +134,9 @@
 - [README QA](qa/README.md)
 - [Cierre pendiente de `/hoteles`](qa/hotels-pending-closeout.md)
 - [Matriz QA por area](qa/qa-command-matrix.md)
-- [Visual QA](qa/visual/)
-- [Auditoría de paleta dual](qa/visual/color-palette-audit.md)
-- [Reportes QA](qa/reports/)
+- [Visual QA (archivado)](archive/qa-visual/)
+- [Auditoría de paleta dual (archivada)](archive/qa-visual/color-palette-audit.md)
+- [Reportes QA (archivados)](archive/qa-reports/)
 
 ### Prompts
 
