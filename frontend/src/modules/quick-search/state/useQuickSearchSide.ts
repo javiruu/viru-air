@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 
-import { apiFetchWithStatus } from "@/modules/shared/api";
+import { apiFetchWithStatus, LONG_RUNNING_API_BASE } from "@/modules/shared/api";
 import {
   buildQuickSearchCanonicalPayload,
   prepareQuickSearchRequest,
@@ -188,7 +188,7 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
         const result = await apiFetchWithStatus<SearchResponseRaw>("/search/quick", {
           method: "POST",
           body: JSON.stringify(canonicalPayload),
-        });
+        }, { apiBase: LONG_RUNNING_API_BASE });
 
         if (!isCurrentRequest()) return;
 

@@ -17,6 +17,13 @@ test("quick-search requests monthly calendar hints from backend", () => {
   assert.match(source, /destination_iata:\s*destinationCountryOnly/);
 });
 
+test("quick-search long-running requests bypass the local Next proxy", () => {
+  const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
+  assert.match(source, /LONG_RUNNING_API_BASE/);
+  assert.match(source, /\/search\/quick\/calendar-hints[\s\S]*?apiBase:\s*LONG_RUNNING_API_BASE/);
+  assert.match(source, /apiFetchWithStatus<SearchResponseRaw>\("\/search\/quick"[\s\S]*?apiBase:\s*LONG_RUNNING_API_BASE/);
+});
+
 test("outbound date picker is wired with hints props and visible-month callback", () => {
   const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
   assert.match(source, /name="travel_date"/);

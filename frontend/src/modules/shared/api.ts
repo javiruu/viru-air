@@ -2,6 +2,7 @@ import { translate } from "@/i18n";
 import { getToken, hasToken } from "@/modules/shared/auth";
 
 const RAW_API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1").trim();
+const RAW_LOCAL_API_ORIGIN = (process.env.NEXT_PUBLIC_LOCAL_API_ORIGIN || "http://127.0.0.1:8000").trim();
 
 export function resolveApiBase(rawBase: string): string {
   if (typeof window === "undefined") return rawBase;
@@ -46,6 +47,33 @@ export function resolveApiBase(rawBase: string): string {
 }
 
 const API_BASE = resolveApiBase(RAW_API_BASE);
+
+function withApiVersion(origin: string): string {
+  return `${origin.replace(/\/$/, "")}/api/v1`;
+}
+
+export function resolveLongRunningApiBase(rawBase: string, localApiOrigin: string = RAW_LOCAL_API_ORIGIN): string {
+  const apiBase = resolveApiBase(rawBase);
+  if (typeof window === "undefined") return apiBase;
+  if (!rawBase.trim().startsWith("/") || !localApiOrigin.trim()) return apiBase;
+
+  try {
+    const target = new URL(localApiOrigin);
+    const currentHost = window.location.hostname;
+    const currentProtocol = window.location.protocol;
+    const isLocalPage = currentHost === "localhost" || currentHost === "127.0.0.1";
+    const isLocalApi = target.hostname === "localhost" || target.hostname === "127.0.0.1";
+
+    if (!isLocalPage || !isLocalApi) return apiBase;
+    if (currentProtocol === "https:" && target.protocol === "http:") return apiBase;
+
+    return withApiVersion(target.toString());
+  } catch {
+    return apiBase;
+  }
+}
+
+export const LONG_RUNNING_API_BASE = resolveLongRunningApiBase(RAW_API_BASE);
 
 function authHeaders(): HeadersInit {
   const token = getToken();
@@ -244,7 +272,7 @@ function extractTopLevelErrorEnvelope(parsed: unknown): ParsedErrorEnvelope | nu
 export async function apiFetchWithStatus<T>(
   path: string,
   init?: RequestInit,
-  options?: { timeoutMs?: number },
+  options?: { timeoutMs?: number; apiBase?: string },
 ): Promise<
   | { ok: true; data: T; status: number; headers: Headers }
   | { ok: false; error: ApiError; status: number; headers: Headers }
@@ -271,7 +299,7 @@ export async function apiFetchWithStatus<T>(
     : null;
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}${path}`, {
+    response = await fetch(`${options?.apiBase ?? API_BASE}${path}`, {
       ...init,
       signal: controller?.signal,
       headers: mergedHeaders,
