@@ -1,7 +1,7 @@
 ﻿# Planes de trabajo
 
 **Estado:** vivo  
-**Última revisión:** 2026-05-11  
+**Última revisión:** 2026-06-29  
 **Fuente de verdad:** sí  
 **Área:** plan
 
@@ -11,8 +11,6 @@ Esta carpeta separa los planes de trabajo del resto de la documentación viva.
 
 ## Estructura
 
-- `completed/`: planes históricos o ya ejecutados.
+- `active/`: planes vigentes con roadmap operativo.
 
-## Nota
-
-> TODO: crear `active/` cuando exista un plan vigente que deba mantenerse como referencia operativa actual.
+> Los planes completados se archivan directamente.

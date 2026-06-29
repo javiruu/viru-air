@@ -250,15 +250,15 @@ export function MapRoute({
   useEffect(() => {
     if (!map) return;
     const addOrUpdate = () => {
-      const data = {
+      const data: GeoJSON.FeatureCollection = {
         type: "FeatureCollection",
         features: [{ type: "Feature", geometry: { type: "LineString", coordinates }, properties: {} }],
-      } as const;
+      };
       const existing = map.getSource(sourceId) as maplibregl.GeoJSONSource | undefined;
       if (existing) {
-        existing.setData(data as any);
+        existing.setData(data);
       } else {
-        map.addSource(sourceId, { type: "geojson", data: data as any });
+        map.addSource(sourceId, { type: "geojson", data });
       }
       if (!map.getLayer(layerId)) {
         map.addLayer({
