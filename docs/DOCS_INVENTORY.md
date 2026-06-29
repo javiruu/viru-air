@@ -180,7 +180,7 @@ Entradas vivas agregadas:
 - `docs/specs/phase1-codex.md`
 - `docs/reference/quick-search-legacy-alias-sunset.md`
 - `skills/phase1-mvp/SKILL.md`
-- `docs/qa/reports/2026-05-12-fase1-cumplimiento.md`
+- `docs/archive/qa-reports/2026-05-12-fase1-cumplimiento.md`
 - `backend/tests/unit/test_airports_endpoints.py`
 
 ## Actualizacion manual 2026-05-14 (design skill viru-tracker-ui)
@@ -207,7 +207,7 @@ Entradas vivas actualizadas:
 - `docs/ui/estetica.md`
 - `docs/ui/UI_SYSTEM_V1.md`
 - `docs/ui/UI_CONTRACT_V1.md`
-- `docs/qa/visual/color-palette-audit.md`
+- `docs/archive/qa-visual/color-palette-audit.md`
 
 ## Actualizacion manual 2026-05-18 (warm identity rewrite for Viru)
 
@@ -219,7 +219,7 @@ Entradas vivas actualizadas:
 - `docs/ui/estetica.md`
 - `docs/ui/UI_SYSTEM_V1.md`
 - `docs/ui/UI_CONTRACT_V1.md`
-- `docs/qa/visual/color-palette-audit.md`
+- `docs/archive/qa-visual/color-palette-audit.md`
 - `.codex/skills/viru-tracker-ui/SKILL.md`
 - `.codex/skills/viru-tracker-ui/references/product-context.md`
 - `.codex/skills/viru-tracker-ui/references/visual-direction.md`
@@ -235,7 +235,7 @@ Entradas vivas actualizadas:
 - `docs/ui/UI_CONTRACT_V1.md`
 - `docs/ui/UI_SYSTEM_V1.md`
 - `docs/ui/UI_VISUAL_QA_CHECKLIST.md`
-- `docs/qa/visual/color-palette-audit.md`
+- `docs/archive/qa-visual/color-palette-audit.md`
 - `.codex/skills/viru-tracker-ui/SKILL.md`
 - `.codex/skills/viru-tracker-ui/references/visual-direction.md`
 - `.codex/skills/viru-tracker-ui/references/qa-checklist.md`
@@ -314,7 +314,7 @@ Entradas vivas agregadas:
 
 - `docs/runbooks/runbook-watchlist-quick-search-stabilization.md`
 | docs/runbooks/runbook-puerta-a-puerta-qa.md | runbook | vivo | conservar | docs/runbooks/runbook-puerta-a-puerta-qa.md | Runbook QA especifico de /puerta-a-puerta con taxonomia de fuentes, checklist y comandos de test | docs/runbooks/runbook-puerta-a-puerta-qa.md |
-- `docs/qa/reports/2026-06-05-watchlist-quick-search-stabilization.md`
+- `docs/archive/qa-reports/2026-06-05-watchlist-quick-search-stabilization.md`
 
 Entradas vivas actualizadas:
 
@@ -450,7 +450,7 @@ Entradas vivas actualizadas:
 Entradas vivas agregadas:
 
 - `HISTORY.md`
-- `cabinalimpia.txt`
+- `docs/archive/plans/cabinalimpia.txt`
 - `docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md`
 
 Entradas vivas actualizadas:
@@ -477,7 +477,7 @@ Entradas vivas retiradas:
 |---|---|---|---|---|---|---|
 | .github/pull_request_template.md | unknown | revisar manualmente | revisar manualmente | .github/pull_request_template.md | Clasificaci?n no resuelta autom?ticamente | revisi?n manual requerida |
 | AGENTS.md | contexto IA | vivo | conservar | AGENTS.md | Contrato operativo principal para agentes | AGENTS.md |
-| cabinalimpia.txt | plan | vivo | conservar | cabinalimpia.txt | Plan consolidado de correcciones post-cierre del modulo /hoteles (Fases A-E) | cabinalimpia.txt |
+| docs/archive/plans/cabinalimpia.txt | plan | archivado | conservar | docs/archive/plans/cabinalimpia.txt | Plan consolidado de correcciones post-cierre del modulo /hoteles (Fases A-E) | cabinalimpia.txt |
 | DESIGN.md | contexto IA | vivo | conservar | DESIGN.md | Sistema de diseno para agentes con direccion visual calida, animada y de premium humano | DESIGN.md |
 | HISTORY.md | overview | vivo | conservar | HISTORY.md | Historial de cambios significativos del proyecto | HISTORY.md |
 | README.md | overview | vivo | conservar | README.md | Punto de entrada principal del repositorio | README.md |
@@ -589,11 +589,11 @@ Entradas vivas retiradas:
 | docs/qa/README.md | QA | vivo | conservar | docs/qa/README.md | Navegaci?n y matriz reutilizable de QA | docs/qa/README.md |
 | docs/qa/acceptance-checklists/frontend-pr-checklist.md | QA | vivo | conservar | docs/qa/acceptance-checklists/frontend-pr-checklist.md | Checklist reutilizable de QA | docs/qa/acceptance-checklists/frontend-pr-checklist.md |
 | docs/qa/hotels-pending-closeout.md | QA | vivo | conservar | docs/qa/hotels-pending-closeout.md | Checklist viva de cierre operativo para `/hoteles` con deudas pendientes y checks | docs/qa/hotels-pending-closeout.md |
-| docs/qa/reports/quick-search-testsprite-strict-report-2026-04-23.md | QA | vivo | conservar | docs/qa/reports/quick-search-testsprite-strict-report-2026-04-23.md | Reporte activo y ligero, separado del hist?rico cerrado | docs/qa/reports/quick-search-testsprite-strict-report-2026-04-23.md |
+| docs/archive/qa-reports/quick-search-testsprite-strict-report-2026-04-23.md | QA | archivado | conservar | docs/archive/qa-reports/quick-search-testsprite-strict-report-2026-04-23.md | Reporte activo y ligero, separado del hist?rico cerrado | docs/qa/reports/quick-search-testsprite-strict-report-2026-04-23.md |
 | docs/qa/testsprite/skillsprite-user-capabilities.md | QA | vivo | conservar | docs/qa/testsprite/skillsprite-user-capabilities.md | Referencia activa para TestSprite y QA funcional | docs/qa/testsprite/skillsprite-user-capabilities.md |
 | docs/qa/testsprite/testsprite-catalog.md | QA | vivo | conservar | docs/qa/testsprite/testsprite-catalog.md | Referencia activa para TestSprite y QA funcional | docs/qa/testsprite/testsprite-catalog.md |
 | docs/qa/traceability-matrix.md | QA | vivo | conservar | docs/qa/traceability-matrix.md | Navegaci?n y matriz reutilizable de QA | docs/qa/traceability-matrix.md |
-| docs/qa/visual/color-palette-audit.md | QA | vivo | conservar | docs/qa/visual/color-palette-audit.md | Auditoria canonica de paleta dual dark/light con enfoque de calidez y claridad visual | docs/qa/visual/color-palette-audit.md |
+| docs/archive/qa-visual/color-palette-audit.md | QA | archivado | conservar | docs/archive/qa-visual/color-palette-audit.md | Auditoria canonica de paleta dual dark/light con enfoque de calidez y claridad visual | docs/qa/visual/color-palette-audit.md |
 | docs/reference/README.md | overview | vivo | conservar | docs/reference/README.md | Referencia t?cnica o de proceso activa | docs/reference/README.md |
 | docs/reference/backend/quick-search-acceptance-checklist.md | backend | vivo | conservar | docs/reference/backend/quick-search-acceptance-checklist.md | Referencia t?cnica backend can?nica | docs/reference/backend/quick-search-acceptance-checklist.md |
 | docs/reference/backend/quick-search-contract.md | backend | vivo | conservar | docs/reference/backend/quick-search-contract.md | Referencia t?cnica backend can?nica | docs/reference/backend/quick-search-contract.md |
@@ -603,7 +603,7 @@ Entradas vivas retiradas:
 | docs/reference/final-report-template.md | overview | vivo | conservar | docs/reference/final-report-template.md | Referencia t?cnica o de proceso activa | docs/reference/final-report-template.md |
 | docs/reference/quick-search-weather-policy.md | product | vivo | conservar | docs/reference/quick-search-weather-policy.md | Pol?tica funcional activa de quick search | docs/reference/quick-search-weather-policy.md |
 | docs/reference/ui-visible-language-guide.md | reference | vivo | conservar | docs/reference/ui-visible-language-guide.md | Guia canonica para humanizar lenguaje visible sin tocar labels de producto, contratos ni nombres internos | docs/reference/ui-visible-language-guide.md |
-| docs/reports/docs-sanitize-audit.md | historical | hist?rico | conservar | docs/reports/docs-sanitize-audit.md | Reporte de auditor?a y saneamiento documental | docs/reports/docs-sanitize-audit.md |
+| docs/archive/reports/docs-sanitize-audit.md | historical | hist?rico | conservar | docs/archive/reports/docs-sanitize-audit.md | Reporte de auditor?a y saneamiento documental | docs/reports/docs-sanitize-audit.md |
 | docs/runbooks/runbook-activation-profiles.md | runbook | vivo | conservar | docs/runbooks/runbook-activation-profiles.md | Perfiles canónicos de activación por entorno (local_demo, local_real, staging_safe, prod_gradual) con matriz de flags y blindaje anti-mock | docs/runbooks/runbook-activation-profiles.md |
 | docs/runbooks/runbook-canary-rollback.md | runbook | vivo | conservar | docs/runbooks/runbook-canary-rollback.md | Runbook operativo activo | docs/runbooks/runbook-canary-rollback.md |
 | docs/runbooks/runbook-db-retention.md | runbook | vivo | conservar | docs/runbooks/runbook-db-retention.md | Runbook operativo activo | docs/runbooks/runbook-db-retention.md |
@@ -651,75 +651,75 @@ Entradas vivas agregadas:
 
 Entradas vivas agregadas:
 
-- `docs/qa/reports/2026-05-12-release-closure.md`
+- `docs/archive/qa-reports/2026-05-12-release-closure.md`
 
 Entradas vivas actualizadas:
 
-- `docs/qa/reports/2026-05-12-fases-0-3-audit.md`
+- `docs/archive/qa-reports/2026-05-12-fases-0-3-audit.md`
 - `docs/overview/current-state.md`
 
 ## Actualizacion manual 2026-05-12 (watchlist W0 baseline)
 
 Entradas vivas agregadas:
 
-- `docs/qa/reports/2026-05-12-watchlist-w0-baseline.md`
-- `docs/qa/screenshots/watchlist-w0-baseline.png`
+- `docs/archive/qa-reports/2026-05-12-watchlist-w0-baseline.md`
+- `docs/archive/qa-screenshots/watchlist-w0-baseline.png`
 
 ## Actualizacion manual 2026-05-13 (watchlist W1 layout)
 
 Entradas vivas agregadas:
 
-- `docs/qa/reports/2026-05-12-watchlist-w1-layout.md`
+- `docs/archive/qa-reports/2026-05-12-watchlist-w1-layout.md`
 
 ## Actualizacion manual 2026-05-13 (watchlist W2 single route selection)
 
 Entradas vivas agregadas:
 
-- docs/qa/reports/2026-05-12-watchlist-w2-single-route-selection.md
+- docs/archive/qa-reports/2026-05-12-watchlist-w2-single-route-selection.md
 
 
 ## Actualizacion manual 2026-05-13 (watchlist W3 contextual actions)
 
 Entradas vivas agregadas:
 
-- docs/qa/reports/2026-05-12-watchlist-w3-contextual-actions.md
+- docs/archive/qa-reports/2026-05-12-watchlist-w3-contextual-actions.md
 
 ## Actualizacion manual 2026-05-13 (watchlist W4 routes heading)
 
 Entradas vivas agregadas:
 
-- docs/qa/reports/2026-05-12-watchlist-w4-routes-heading.md
+- docs/archive/qa-reports/2026-05-12-watchlist-w4-routes-heading.md
 
 ## Actualizacion manual 2026-05-13 (watchlist W5 history confidence)
 
 Entradas vivas agregadas:
 
-- docs/qa/reports/2026-05-12-watchlist-w5-history-confidence.md
+- docs/archive/qa-reports/2026-05-12-watchlist-w5-history-confidence.md
 
 ## Actualizacion manual 2026-05-13 (watchlist W6 actionable freshness)
 
 Entradas vivas agregadas:
 
-- docs/qa/reports/2026-05-12-watchlist-w6-actionable-freshness.md
+- docs/archive/qa-reports/2026-05-12-watchlist-w6-actionable-freshness.md
 
 ## Actualizacion manual 2026-05-13 (watchlist W7 map empty state)
 
 Entradas vivas agregadas:
 
-- docs/qa/reports/2026-05-12-watchlist-w7-map-empty-state.md
+- docs/archive/qa-reports/2026-05-12-watchlist-w7-map-empty-state.md
 
 
 ## Actualizacion manual 2026-05-13 (watchlist W8 reactive compare)
 
 Entradas vivas agregadas:
 
-- docs/qa/reports/2026-05-12-watchlist-w8-reactive-compare.md
+- docs/archive/qa-reports/2026-05-12-watchlist-w8-reactive-compare.md
 
 ## Actualizacion manual 2026-05-13 (watchlist W9 final polish)
 
 Entradas vivas agregadas:
 
-- docs/qa/reports/2026-05-12-watchlist-w9-final-polish.md
+- docs/archive/qa-reports/2026-05-12-watchlist-w9-final-polish.md
 - docs/qa/screenshots/watchlist-w9-final.png
 
 
@@ -727,13 +727,13 @@ Entradas vivas agregadas:
 
 Entradas vivas agregadas:
 
-- docs/qa/reports/2026-05-12-watchlist-w9-1-final-remedy.md
+- docs/archive/qa-reports/2026-05-12-watchlist-w9-1-final-remedy.md
 
 ## Actualizacion manual 2026-05-13 (watchlist W9.2 history rescue)
 
 Entradas vivas agregadas:
 
-- docs/qa/reports/2026-05-12-watchlist-w9-2-history-rescue.md
+- docs/archive/qa-reports/2026-05-12-watchlist-w9-2-history-rescue.md
 
 
 ## Actualizacion manual 2026-05-27 (DuckDNS domain setup)
