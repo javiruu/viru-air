@@ -6,14 +6,22 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 try:
-    from app.api.v1.search import quick_search
+    from app.api.v1.search import (
+        _CALENDAR_HINTS_CACHE,
+        QuickSearchCalendarHintsIn,
+        quick_search,
+        quick_search_calendar_hints,
+    )
     from app.domain.entities import ProviderFetchResult, ProviderFlight
     from app.infrastructure.db.models import Base
     from app.infrastructure.providers.orchestrator import FlightSearchOrchestrator
     from app.services.quick_search_ai_preference import QuickSearchAiPreferenceResult
     from app.services.quick_search_execution import _CACHE
 except Exception:  # pragma: no cover
+    _CALENDAR_HINTS_CACHE = None
+    QuickSearchCalendarHintsIn = None
     quick_search = None
+    quick_search_calendar_hints = None
     ProviderFetchResult = None
     ProviderFlight = None
     Base = None
@@ -61,11 +69,20 @@ def _patch_request_provider(*, return_value=None, side_effect=None, provider_ids
     return patch("app.api.v1.search._build_request_provider", return_value=fake_provider)
 
 
-@unittest.skipIf(quick_search is None or ProviderFlight is None or QuickSearchAiPreferenceResult is None, "fastapi app deps not available")
+@unittest.skipIf(
+    quick_search is None
+    or quick_search_calendar_hints is None
+    or QuickSearchCalendarHintsIn is None
+    or ProviderFlight is None
+    or QuickSearchAiPreferenceResult is None,
+    "fastapi app deps not available",
+)
 class QuickSearchE2ERegressionTests(unittest.TestCase):
     def setUp(self):
         if _CACHE is not None:
             _CACHE.clear()
+        if _CALENDAR_HINTS_CACHE is not None:
+            _CALENDAR_HINTS_CACHE.clear()
 
     def _payload(self, **overrides):
         payload = {
@@ -326,6 +343,56 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
         self.assertEqual(first["meta"]["execution"]["cache_hits"], 0)
         self.assertGreaterEqual(second["meta"]["execution"]["cache_hits"], 1)
         self.assertEqual(first["results"][0]["price_total"], second["results"][0]["price_total"])
+
+    def test_calendar_hints_uses_shared_fare_memory_callbacks_when_enabled(self):
+        payload = QuickSearchCalendarHintsIn(
+            origin_iata="LEI",
+            destination_iata="DUB",
+            month="2026-06",
+            aggregation_mode="fixed_route",
+        )
+        engine, testing_session_local, db = _db_session()
+        execute_plan_calls = []
+
+        def fake_execute_plan(*args, **kwargs):
+            execute_plan_calls.append(kwargs)
+            return (
+                [("LEI", "DUB", dt.date(2026, 6, 14), _flight(52, "08:30"))],
+                {
+                    "provider_calls": 0,
+                    "cache_hits": 1,
+                    "cache_misses": 0,
+                    "l1_cache_hits": 0,
+                    "l2_cache_hits": 1,
+                    "negative_cache_hits": 0,
+                    "provider_failures": 0,
+                    "timed_out_units_count": 0,
+                },
+                [],
+            )
+
+        try:
+            with (
+                patch("app.api.v1.search.QUICK_SEARCH_SHARED_CACHE_ENABLED", True),
+                patch("app.api.v1.search.FARE_MEMORY_NEGATIVE_CACHE_ENABLED", True),
+                patch("app.api.v1.search.SessionLocal", testing_session_local),
+                patch("app.api.v1.search.execute_plan", side_effect=fake_execute_plan),
+                _patch_request_provider(return_value=[]),
+            ):
+                result = quick_search_calendar_hints(payload=payload, db=db)
+
+            self.assertEqual(len(execute_plan_calls), 1)
+            call_kwargs = execute_plan_calls[0]
+            self.assertIsNotNone(call_kwargs["shared_cache_get"])
+            self.assertIsNotNone(call_kwargs["shared_cache_set"])
+            self.assertIsNotNone(call_kwargs["negative_cache_get"])
+            self.assertIsNotNone(call_kwargs["negative_cache_set"])
+            self.assertEqual(result["meta"]["execution"]["cache_hits"], 1)
+            self.assertEqual(result["meta"]["execution"]["l2_cache_hits"], 1)
+            self.assertEqual(result["meta"]["execution"]["provider_calls"], 0)
+        finally:
+            db.close()
+            engine.dispose()
 
     def test_exact_search_cache_hit_returns_cached_payload_without_provider_call(self):
         payload = self._payload(
