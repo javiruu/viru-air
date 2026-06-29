@@ -592,7 +592,7 @@ export function DoorToDoorPanel() {
                   if (code === "GTFS_PRICE_UNAVAILABLE") return "doorToDoor.gtfsWarnings.priceUnavailable";
                   return "";
                 })();
-                return i18nKey ? <li key={code}>{t(i18nKey as any)}</li> : null;
+                return i18nKey ? <li key={code}>{t(i18nKey)}</li> : null;
               })}
             </ul>
           </div>
@@ -807,7 +807,7 @@ export function DoorToDoorPanel() {
                 <strong>{t(card.titleKey)}</strong>
                 <p>{t(card.descriptionKey)}</p>
                 {capability.state !== "available" && capability.why_missing ? (
-                  <p className="d2d-capability-reason">{t(`doorToDoor.mapHub.whyMissing.${capability.why_missing}` as any)}</p>
+                  <p className="d2d-capability-reason">{t(`doorToDoor.mapHub.whyMissing.${capability.why_missing}`)}</p>
                 ) : null}
                 <span className={`status-pill ${capabilityStatusClass(capability.state)} d2d-capability-pill`}>
                   {t(`doorToDoor.mapHub.state.${capability.state}`)}
