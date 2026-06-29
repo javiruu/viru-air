@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+import logging
+
 from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError, ProviderWarning
 from app.infrastructure.providers.base import FlightProvider
 from app.infrastructure.providers.registry import FlightProviderRegistry
+
+
+logger = logging.getLogger(__name__)
 
 
 class FlightSearchOrchestrator:
@@ -44,6 +49,22 @@ class FlightSearchOrchestrator:
                         )
                         for code in exc.warning_codes
                     ]
+                )
+            except Exception as exc:
+                logger.warning(
+                    "flight_provider_unexpected_error provider=%s error_type=%s",
+                    provider.provider_id,
+                    type(exc).__name__,
+                    exc_info=True,
+                )
+                warnings.append("provider_error_partial")
+                warnings_structured.append(
+                    ProviderWarning(
+                        code="provider_error_partial",
+                        provider=provider.provider_id,
+                        severity="warning",
+                        meta={"error_type": type(exc).__name__},
+                    )
                 )
 
         return ProviderFetchResult(
