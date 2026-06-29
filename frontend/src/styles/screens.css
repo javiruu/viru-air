@@ -4864,12 +4864,43 @@ h1 {
 }
 
 .empty-guide {
+  position: relative;
+  overflow: hidden;
   display: grid;
   gap: 0.8rem;
-  padding: 0.8rem;
-  border-radius: 14px;
-  border: 1px dashed color-mix(in srgb, var(--border) 78%, transparent);
-  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  padding: 0.95rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  background:
+    radial-gradient(circle at 8% 12%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 42%),
+    linear-gradient(135deg, color-mix(in srgb, var(--surface) 92%, transparent), color-mix(in srgb, var(--surface-2) 84%, transparent));
+}
+
+.empty-guide::before {
+  content: "";
+  position: absolute;
+  right: 0.9rem;
+  top: 0.85rem;
+  width: 68px;
+  height: 68px;
+  border: 1px solid color-mix(in srgb, var(--accent-2) 30%, var(--border));
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--accent) 16%, transparent) 0 10%, transparent 11%),
+    repeating-radial-gradient(circle, transparent 0 13px, color-mix(in srgb, var(--accent-2) 18%, transparent) 14px 15px);
+  opacity: 0.76;
+  pointer-events: none;
+}
+
+.empty-guide .panel-note {
+  max-width: 58ch;
+  margin: 0;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.empty-guide .btn-primary {
+  justify-self: start;
 }
 
 .watch-empty-search {
@@ -4892,18 +4923,33 @@ h1 {
 
 .empty-steps {
   display: grid;
-  gap: 0.4rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
   font-size: 0.85rem;
   color: var(--ink-muted);
 }
 
+.empty-steps div {
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+  background: color-mix(in srgb, var(--surface) 84%, transparent);
+}
+
 .empty-steps strong {
+  display: block;
   color: var(--ink);
 }
 
 .empty-steps span {
   display: block;
   font-size: 0.82rem;
+}
+
+@media (max-width: 740px) {
+  .empty-steps {
+    grid-template-columns: 1fr;
+  }
 }
 
 .compare-panel {
