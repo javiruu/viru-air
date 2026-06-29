@@ -26,6 +26,11 @@ viru.db
 *.sqlite
 *.sqlite3
 *.sqlite*
+*.dump
+*.dmp
+
+# Python runtime (accidental commit)
+Python/
 
 # Caches and generated output
 .gtfs_cache/
