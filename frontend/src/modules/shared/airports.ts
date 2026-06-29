@@ -704,11 +704,20 @@ export function getAirportMeta(iata: string): AirportMeta | null {
   return AIRPORT_META[code] || null;
 }
 
+type AirportSeedItem = {
+  iata: string;
+  name: string;
+  municipality: string;
+  country_code: string;
+  latitude: number;
+  longitude: number;
+};
+
 import { apiFetchWithStatus } from "@/modules/shared/api";
 
 export async function searchAirportsAsync(query: string): Promise<AirportMeta[]> {
   if (!query || query.trim().length < 2) return [];
-  const response = await apiFetchWithStatus<{ items: any[] }>(`/airports/seeds?q=${encodeURIComponent(query)}`);
+  const response = await apiFetchWithStatus<{ items: AirportSeedItem[] }>(`/airports/seeds?q=${encodeURIComponent(query)}`);
   if (!response.ok) return [];
   return response.data.items.map(item => ({
     iata: item.iata,

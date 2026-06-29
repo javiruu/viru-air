@@ -1,7 +1,7 @@
 # Estado actual
 
 **Estado:** vivo  
-**Ultima revision:** 2026-05-12  
+**Ultima revision:** 2026-06-29  
 **Fuente de verdad:** si  
 **Area:** overview
 
@@ -14,6 +14,8 @@
 - `/recomendaciones`
 - `/preferencias`
 - `/soporte/ayuda`
+- `/puerta-a-puerta` — modulo activo de transporte terrestre multi-proveedor
+- `/hoteles` — exploracion hotelera con comp-sets
 
 ## Alias legacy activos
 
@@ -30,23 +32,65 @@
 - `/api/v1/recommendations`
 - `/api/v1/preferences`
 - `/api/v1/support/feedback`
+- `/api/v1/door-to-door` — busqueda multi-proveedor (GTFS, APIs REST)
+- `/api/v1/airports` — seeds, sugerencias, paises
+- `/api/v1/search/quick` — busqueda rapida con cache L1/L2/Provider
+- `/api/v1/search/quick/calendar-hints` — precios estimados por mes
+- `/api/v1/search/deeplink` — generacion de enlaces a aerolineas
 
-## Estado semantico de Fase 0
+## Publicacion
 
-- `Quick Search` sigue como modulo de descubrimiento tecnico.
-- `Watchlist` sigue como centro operativo con historico integrado.
-- `Alertas` mantiene reglas, cooldown e historial.
-- `Oportunidades` es la etiqueta visible de `/recomendaciones`.
-- `Suggestions` deja de ser modulo core y queda como alias legacy hacia feedback de producto.
+- **Cloudflare Tunnel** como via principal de exposicion publica
+- **Tailscale Funnel** como failover/bypass
+- Panel unificado `VIRU_PANEL.bat` con estado, inicio/parada de ambos túneles
+- Sin dependencia de DuckDNS ni Caddy
 
-## Estado de cierre por fases (2026-05-12)
+## Modulos activos
 
-- F0: done.
-- F1: done (producto basico).
-- F2: done (producto basico).
-- F3A: done.
-- F3B: done.
-- F3C: done.
-- F3C.2: done.
-- F3D: done.
-- F3 global: partial por alcance (postponed no bloqueante).
+### Quick Search (estabilizado)
+
+- Busqueda rapida de vuelos con cache compartida persistente (L1 local + L2 DB + provider)
+- Calendar hints con precios estimados por mes
+- Proveedores: Ryanair, Wizz Air, Duffel (API)
+- Indicador visual de estado por proveedor durante la busqueda
+- Logging en tiempo real de actividad por provider
+
+### Watchlist (estable)
+
+- Centro operativo con historico de precios integrado
+- Refresco automatico y manual de precios
+- Watchlist unificada con migracion de rutas
+
+### Puerta a puerta (activo)
+
+- Transporte terrestre multi-proveedor (datos GTFS + APIs REST)
+- Perfiles de activacion (local_demo, local_real, staging_safe, prod_gradual)
+- Blindaje anti-mock en entornos productivos
+- Metricas de cobertura real
+
+### Hoteles (en cierre)
+
+- Exploracion con comparativa de comp-sets
+- Fases A-E de correcciones post-cierre en progreso
+
+## Estado de arquitectura reciente
+
+### Backend
+
+- Providers ejecutados en paralelo via ThreadPoolExecutor (antes secuencial)
+- Wizz Air: locks por ruta en vez de lock global (elimina serializacion entre rutas)
+- Caché quick-search: L1 en memoria + L2 en DB compartida + anti-stampede
+- Door-to-door: GTFS corridors + providers Ors/OpenTripPlanner con fallback
+
+### Frontend
+
+- SVGs de aerolineas centralizados en `src/icons/` como componentes reutilizables
+- Indicador visual de estado por proveedor durante busqueda
+- Humanizacion de lenguaje visible (microcopys mas cercanos y claros)
+- Migracion a iconos corporativos reales (Simple Icons)
+
+### Infraestructura
+
+- Cloudflare Tunnel como via principal de exposicion
+- Tailscale Funnel como failover
+- Sin dependencia de DuckDNS/Caddy
