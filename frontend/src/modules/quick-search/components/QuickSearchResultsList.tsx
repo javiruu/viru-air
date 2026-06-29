@@ -3,6 +3,7 @@ import React, { memo } from "react";
 import { SearchResult } from "@/modules/quick-search/types";
 import { QuickSearchProviderBadge } from "@/modules/quick-search/components/QuickSearchProviderBadge";
 import { resolveQuickSearchProviderPresentation } from "@/modules/quick-search/providerPresentation";
+import type { QuickSearchCopyKey } from "@/modules/shared/quickSearchCopy";
 
 type Props = {
   visibleResults: SearchResult[];
@@ -20,7 +21,7 @@ type Props = {
   weatherDestination?: unknown;
   getCopyPayload: (result: SearchResult) => string;
   rowMenuTriggerRefs: React.MutableRefObject<Record<string, HTMLButtonElement | null>>;
-  t: (key: any) => string;
+  t: (key: QuickSearchCopyKey) => string;
   formatMoney: (value: number, currency?: string) => string;
   formatScore: (value: number) => string;
   formatMinutes: (value?: number | null) => string;

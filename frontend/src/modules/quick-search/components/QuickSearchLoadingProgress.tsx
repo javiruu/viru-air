@@ -145,9 +145,9 @@ export function QuickSearchLoadingProgress(props: Props) {
             className="qs-boarding-passengers"
             data-no-marker="true"
             style={{
-              ["--qs-board-step" as any]: props.boardedCount,
+              "--qs-board-step": props.boardedCount,
               visibility: props.showBoarding ? "visible" : "hidden",
-            }}
+            } as React.CSSProperties}
           >
             {Array.from({ length: props.boardingPassengers }).map((_, idx) => {
               const isHidden = !props.showBoarding || idx < props.boardedCount;

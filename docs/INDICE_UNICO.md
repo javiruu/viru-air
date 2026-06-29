@@ -1,7 +1,7 @@
 # Índice Único de Documentación
 
 **Estado:** vivo
-**Última revisión:** 2026-06-23
+**Última revisión:** 2026-06-29
 **Fuente de verdad:** sí
 **Área:** documentación
 
@@ -114,7 +114,6 @@
 
 - [Planes de trabajo](plans/README.md)
 - [Auditoria cache Fare Memory F21](plans/2026-06-14-fare-memory-cache-audit.md)
-- [Planes completados](plans/completed/)
 
 ### ADRs
 

@@ -9,7 +9,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { ZeroResultRelaxAction } from "@/modules/quick-search/types";
+import type { ZeroResultRelaxAction } from "@/modules/quick-search/types";
+import type { QuickSearchCopyKey } from "@/modules/shared/quickSearchCopy";
 
 type StateTone = "idle" | "loading" | "empty" | "error" | "rate";
 
@@ -42,7 +43,7 @@ type Props = {
   onRelaxAction: (action: ZeroResultRelaxAction) => void;
   onRunSearch: () => void;
   onEmptyCta: () => void;
-  t: (key: any) => string;
+  t: (key: QuickSearchCopyKey) => string;
 };
 
 export function QuickSearchStatePanels(props: Props) {

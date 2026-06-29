@@ -36,6 +36,8 @@ venv/
 .next/
 .next_broken_*/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 __pycache__/
 logs/
 logs_ia/

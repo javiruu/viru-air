@@ -1,42 +1,58 @@
 ﻿# Resumen de Arquitectura
 
 **Estado:** vivo  
-**Última revisión:** 2026-05-11  
+**Última revisión:** 2026-06-29  
 **Fuente de verdad:** sí  
 **Área:** overview
 
 ## Resumen
 
-La arquitectura visible del repo es la de un monorepo con backend, frontend, infra y documentación consolidada. La fuente verificable para las decisiones base sigue estando en los ADRs y en la documentación técnica activa.
+Monorepo con backend (FastAPI), frontend (Next.js), infraestructura de túneles y documentación consolidada.
 
-## Contenido principal
+## Backend
 
-- Backend:
-  - API bajo `backend/app/`
-  - punto de entrada en `backend/app/main.py`
-  - prefijo principal `/api/v1`
-- Frontend:
-  - aplicación Next.js en `frontend/`
-  - contrato visual documentado en `docs/ui/`
-- Infra:
-  - composición local, workflows y manifiestos bajo `infra/`
-- Operación:
-  - runbooks en `docs/runbooks/`
-- QA:
-  - checklists y evidencia activa en `docs/qa/`
+- **Framework:** FastAPI + SQLAlchemy + Alembic
+- **Entrada:** `backend/app/main.py` con prefijo `/api/v1`
+- **Base de datos:** PostgreSQL (producción), SQLite (desarrollo local)
+- **Arquitectura de providers:** `FlightSearchOrchestrator` ejecuta providers en paralelo via `ThreadPoolExecutor`. Cada provider (Ryanair, Wizz Air, Duffel) implementa `FlightProvider` interface. Wizz Air usa per-route locks para evitar serialización entre rutas distintas.
+- **Caché de búsqueda:** Tres niveles → L1 (memoria local), L2 (DB compartida entre usuarios), Provider (API live). Anti-stampede con lock por firma de búsqueda.
+- **Door-to-door:** Providers de transporte terrestre con datos GTFS + APIs REST (ORS, OpenTripPlanner). Perfiles de activación con blindaje anti-mock.
+
+## Frontend
+
+- **Framework:** Next.js + React + TypeScript
+- **Rutas:** App Router con layout privado y auth
+- **Estado:** Hooks locales con useReducer + useState, sin librería de estado global
+- **SVGs corporativos:** Centralizados en `src/icons/` como componentes React (RyanairIcon, WizzAirIcon, GenericProviderIcon)
+- **Estilos:** CSS modules + variables CSS con sistema dual dark/light (Aviation Dark-Luxe)
+- **i18n:** Sistema propio con archivos por dominio y locale
+
+## Infraestructura
+
+- **Publicación principal:** Cloudflare Tunnel
+- **Failover:** Tailscale Funnel
+- **Panel unificado:** `VIRU_PANEL.bat` con estado y control de ambos túneles
+
+## Documentación
+
+- `docs/overview/` — reentrada y estado actual
+- `docs/adr/` — 3 ADRs vigentes
+- `docs/reference/` — contratos API activos
+- `docs/specs/` — especificaciones vivas
+- `docs/ui/` — sistema visual y contrato UI
+- `docs/runbooks/` — operación y respuesta
+- `docs/qa/` — checklists, reportes y evidencia
+- `docs/plans/` — planes activos y completados
 
 ## Decisiones base
 
-- [ADR-001](../adr/ADR-001-monolito-modular.md)
-- [ADR-002](../adr/ADR-002-stack-base.md)
-- [ADR-003](../adr/ADR-003-provider-adapter.md)
-
-## Nota
-
-> TODO: completar con más detalle si se consolida una fuente técnica única sobre base de datos, observabilidad e integraciones. Durante este saneamiento no se ha encontrado una sola fuente canónica suficiente para ampliar más sin deducir de más.
+- [ADR-001](../adr/ADR-001-monolito-modular.md) — monolito modular
+- [ADR-002](../adr/ADR-002-stack-base.md) — stack base (FastAPI, Next.js, SQLAlchemy)
+- [ADR-003](../adr/ADR-003-provider-adapter.md) — patrón adapter para providers
 
 ## Relacionado
 
 - [Overview del proyecto](project-overview.md)
 - [Estado actual](current-state.md)
+- [Backend engineering](../engineering/backend.md)
 - [Reference](../reference/README.md)
