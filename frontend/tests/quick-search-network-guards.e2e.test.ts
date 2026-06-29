@@ -189,12 +189,16 @@ test("quick-search loads calendar hints and updates the selected date in the tri
 
     await originInput.fill("AGP");
     await destinationInput.fill("DUB");
+    const calendarHintsResponsePromise = page.waitForResponse(
+      (response) => response.url().includes("/api/v1/search/quick/calendar-hints") && response.status() < 400,
+      { timeout: 20000 },
+    );
     await datePicker.locator(".qs-date-trigger").click();
-    await page.waitForTimeout(1800);
+    await calendarHintsResponsePromise;
 
-    const hintCount = await page.locator(
-      ".qs-date-popover .hint-low, .qs-date-popover .hint-mid, .qs-date-popover .hint-high, .qs-date-popover .is-no-price-data",
-    ).count();
+    const calendarHintSelector = ".qs-date-popover .hint-low, .qs-date-popover .hint-mid, .qs-date-popover .hint-high, .qs-date-popover .is-no-price-data";
+    await page.waitForFunction((selector) => document.querySelectorAll(selector).length > 0, calendarHintSelector, { timeout: 10000 });
+    const hintCount = await page.locator(calendarHintSelector).count();
     assert.ok(hintCount > 0);
 
     await page.locator(".qs-date-popover .qs-date-day:not(.is-disabled):not(.is-outside)").first().click();

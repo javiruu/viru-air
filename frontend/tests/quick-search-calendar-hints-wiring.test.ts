@@ -34,6 +34,21 @@ test("outbound date picker cannot submit days before today", () => {
   assert.match(source, /name="travel_date"[\s\S]*?min=\{minTravelDate\}/);
 });
 
+test("quick-search submit is locked before async request preparation", () => {
+  const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
+  assert.match(source, /const searchSubmitInFlightRef = useRef\(false\)/);
+  assert.match(source, /if \(searchSubmitInFlightRef\.current\) return/);
+  assert.match(source, /searchSubmitInFlightRef\.current = true/);
+  assert.match(source, /disabled=\{!isReady \|\| !routeInputsValid \|\| isSubmitting \|\| isLoading\}/);
+});
+
+test("quick-search dynamic chunks retry transient Fast Refresh load failures", () => {
+  const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
+  assert.match(source, /function isTransientChunkLoadError\(error: unknown\): boolean/);
+  assert.match(source, /function retryQuickSearchChunk<T>\(loader: \(\) => Promise<T>\): Promise<T>/);
+  assert.match(source, /retryQuickSearchChunk\(\(\) =>\s*import\("@\/modules\/quick-search\/components\/QuickSearchResultsList"\)/);
+});
+
 test("calendar hints failures are treated as non-fatal and cached as empty state", () => {
   const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
   assert.match(source, /"calendar_hints_failed"/);

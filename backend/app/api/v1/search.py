@@ -637,7 +637,12 @@ def _build_pair_day_prices(
         response_currency = str(flight.currency or response_currency).upper()
         pair_key = (origin_iata, destination_iata)
         by_day = pair_prices.setdefault(pair_key, {})
-        price = float(flight.price)
+        try:
+            price = float(flight.price)
+        except (TypeError, ValueError):
+            continue
+        if not math.isfinite(price):
+            continue
         current = by_day.get(travel_date)
         if current is None or price < current:
             by_day[travel_date] = price

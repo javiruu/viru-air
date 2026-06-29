@@ -33,6 +33,16 @@ class _CalendarHintsProvider:
         return []
 
 
+class _MalformedCalendarHintFlight:
+    price = "not-a-price"
+    currency = "EUR"
+
+
+class _CalendarHintsInvalidPriceProvider:
+    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000):
+        return [_MalformedCalendarHintFlight()]
+
+
 def test_quick_search_calendar_hints_returns_month_with_buckets_and_cache(client: TestClient, monkeypatch) -> None:
     _CACHE.clear()
     with search_api._CALENDAR_HINTS_CACHE_LOCK:
@@ -197,3 +207,26 @@ def test_quick_search_calendar_hints_supports_guideline_bucket_mode(client: Test
         "mid_max": 220.0,
         "currency": "EUR",
     }
+
+
+def test_quick_search_calendar_hints_skips_invalid_provider_prices(client: TestClient, monkeypatch) -> None:
+    _CACHE.clear()
+    with search_api._CALENDAR_HINTS_CACHE_LOCK:
+        search_api._CALENDAR_HINTS_CACHE.clear()
+
+    monkeypatch.setattr(search_api, "provider", _CalendarHintsInvalidPriceProvider())
+
+    response = client.post(
+        "/api/v1/search/quick/calendar-hints",
+        json={
+            "origin_iata": "MAD",
+            "destination_iata": "DUB",
+            "month": "2030-06",
+            "adults": 1,
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["days"]) == 30
+    assert all(day["min_price"] is None for day in data["days"])

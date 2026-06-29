@@ -32,19 +32,46 @@ import {
   rememberRecentAirport,
   writeRecentAirports,
 } from "@/modules/quick-search/recentAirports";
+
+function isTransientChunkLoadError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return /ChunkLoadError|Loading chunk|Failed to fetch dynamically imported module/i.test(error.message);
+}
+
+function retryQuickSearchChunk<T>(loader: () => Promise<T>): Promise<T> {
+  return loader().catch((error: unknown) => {
+    if (!isTransientChunkLoadError(error)) {
+      throw error;
+    }
+    return new Promise<T>((resolve, reject) => {
+      setTimeout(() => {
+        loader().then(resolve).catch(reject);
+      }, 250);
+    });
+  });
+}
+
 const QuickSearchLoadingProgress = dynamic(() =>
-  import("@/modules/quick-search/components/QuickSearchLoadingProgress").then((m) => m.QuickSearchLoadingProgress),
+  retryQuickSearchChunk(() =>
+    import("@/modules/quick-search/components/QuickSearchLoadingProgress")
+  ).then((m) => m.QuickSearchLoadingProgress),
   { ssr: false },
 );
 const QuickSearchResultsList = dynamic(() =>
-  import("@/modules/quick-search/components/QuickSearchResultsList").then((m) => m.QuickSearchResultsList),
+  retryQuickSearchChunk(() =>
+    import("@/modules/quick-search/components/QuickSearchResultsList")
+  ).then((m) => m.QuickSearchResultsList),
   { ssr: false },
 );
 const QuickSearchSearchForm = dynamic(() =>
-  import("@/modules/quick-search/components/QuickSearchSearchForm").then((m) => m.QuickSearchSearchForm),
+  retryQuickSearchChunk(() =>
+    import("@/modules/quick-search/components/QuickSearchSearchForm")
+  ).then((m) => m.QuickSearchSearchForm),
 );
 const QuickSearchStatePanels = dynamic(() =>
-  import("@/modules/quick-search/components/QuickSearchStatePanels").then((m) => m.QuickSearchStatePanels),
+  retryQuickSearchChunk(() =>
+    import("@/modules/quick-search/components/QuickSearchStatePanels")
+  ).then((m) => m.QuickSearchStatePanels),
 );
 import {
   buildQuickSearchCanonicalPayload,
@@ -528,8 +555,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     debugEpochRef,
     debugLastTickLogTsRef,
   } = useQuickSearchMainState(initialOrigin, initialDestination);
+  const searchSubmitInFlightRef = useRef(false);
   const normalizedRadiusKm = clampQuickSearchRadius(radiusKm);
   const minTravelDate = useMemo(() => currentDateIso(), []);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [returnDateTouched, setReturnDateTouched] = useState(false);
   const [refreshingResultId, setRefreshingResultId] = useState<string | null>(null);
 
@@ -1578,6 +1607,13 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
   async function onSubmit(event: FormEvent, options?: { page?: number }) {
     event.preventDefault();
+    if (searchSubmitInFlightRef.current) return;
+    searchSubmitInFlightRef.current = true;
+    setIsSubmitting(true);
+    const releaseSearchSubmit = () => {
+      searchSubmitInFlightRef.current = false;
+      setIsSubmitting(false);
+    };
     const startedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
     requestIdRef.current += 1;
     const requestId = requestIdRef.current;
@@ -1612,6 +1648,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
     if (!originHasValue && !destinationHasValue) {
       onEmptySearchValidation();
+      releaseSearchSubmit();
       return;
     }
     if (!travelDate) {
@@ -1619,6 +1656,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       setSearchError(t("errorText"));
       setDateTouched(true);
       setFieldErrors({ travel_date: t("selectOutbound") });
+      releaseSearchSubmit();
       return;
     }
     const ensureSeedCode = async (code: string) => {
@@ -1651,24 +1689,28 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         origin_iata: !originValidNow ? t("iataInvalid") : undefined,
         destination_iata: !destinationValidNow ? t("iataInvalid") : undefined,
       });
+      releaseSearchSubmit();
       return;
     }
     if (isReturn && !returnDate) {
       setSearchState("error");
       setReturnDateTouched(true);
       setSearchError(t("selectReturn"));
+      releaseSearchSubmit();
       return;
     }
     if (isReturn && returnDate && returnDate < travelDate) {
       setSearchState("error");
       setSearchError(t("returnBefore"));
       setReturnDateTouched(true);
+      releaseSearchSubmit();
       return;
     }
     if (Object.keys(nextFieldErrors).length > 0) {
       setSearchState("error");
       setSearchError(t("errorText"));
       setFieldErrors(nextFieldErrors);
+      releaseSearchSubmit();
       return;
     }
 
@@ -1724,6 +1766,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           }),
         ),
       ]);
+      releaseSearchSubmit();
       return;
     }
 
@@ -1811,11 +1854,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       trackEvent("quicksearch_contract_blocked", {
         issues: preparedRequest.issues.map((issue) => issue.code).join(","),
       });
+      releaseSearchSubmit();
       return;
     }
     const canonicalPayload = buildQuickSearchCanonicalPayload(preparedRequest.params);
-    expectedQuerySignaturesRef.current = await buildQuickSearchExpectedSignatures(canonicalPayload);
     try {
+      expectedQuerySignaturesRef.current = await buildQuickSearchExpectedSignatures(canonicalPayload);
       if (!isCurrentRequest()) return;
       setIsLoading(true);
       const originWeatherIata = originCountryOnly ? "" : originCode;
@@ -1951,6 +1995,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       if (isCurrentRequest()) {
         setIsLoading(false);
       }
+      releaseSearchSubmit();
     }
   }
 
@@ -4589,7 +4634,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
         <div className="qs-actions">
           <div className="qs-search-cta">
-            <button className="btn-search" type="submit" disabled={!isReady || !routeInputsValid}>
+            <button className="btn-search" type="submit" disabled={!isReady || !routeInputsValid || isSubmitting || isLoading}>
               {isLoading ? t("loadingAria") : t("search")}
             </button>
             {!isReady && searchDisabledHint ? (
