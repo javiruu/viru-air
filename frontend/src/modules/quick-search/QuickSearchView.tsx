@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
-import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
+import { apiFetch, apiFetchWithStatus, LONG_RUNNING_API_BASE } from "@/modules/shared/api";
 import type { ApiError } from "@/modules/shared/api";
 import { getAirportMeta } from "@/modules/shared/airports";
 import { getQuickSearchCopy } from "@/modules/shared/quickSearchCopy";
@@ -219,7 +219,7 @@ function buildEmptyCalendarHintsCacheEntry(scopeMode: QuickSearchCalendarScopeMo
 async function apiFetchWithRetry<T>(
   path: string,
   init?: RequestInit,
-  options?: { timeoutMs?: number; maxRetries?: number },
+  options?: { timeoutMs?: number; maxRetries?: number; apiBase?: string },
 ): Promise<
   | { ok: true; data: T; status: number; headers: Headers }
   | { ok: false; error: ApiError; status: number; headers: Headers }
@@ -1296,7 +1296,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         bucket_mode: calendarHintBucketMode,
         guideline_thresholds: calendarHintBucketMode === "guidelines" ? calendarHintGuidelineThresholds : undefined,
       }),
-    }, { maxRetries: 2 })
+    }, { maxRetries: 2, apiBase: LONG_RUNNING_API_BASE })
       .then((result) => {
         if (controller.signal.aborted) return;
         if (!result.ok) {
@@ -1403,7 +1403,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         bucket_mode: calendarHintBucketMode,
         guideline_thresholds: calendarHintBucketMode === "guidelines" ? calendarHintGuidelineThresholds : undefined,
       }),
-    }, { maxRetries: 2 })
+    }, { maxRetries: 2, apiBase: LONG_RUNNING_API_BASE })
       .then((result) => {
         if (controller.signal.aborted) return;
         if (!result.ok) {
@@ -1897,7 +1897,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       const searchResult = await apiFetchWithStatus<SearchResponseRaw>("/search/quick", {
         method: "POST",
         body: JSON.stringify(canonicalPayload),
-      });
+      }, { apiBase: LONG_RUNNING_API_BASE });
       if (!isCurrentRequest()) return;
       setProgress("response_parsed", 80);
       if (searchResult.ok) {
