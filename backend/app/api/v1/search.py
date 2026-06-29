@@ -1,5 +1,5 @@
-import datetime as dt
 import calendar as calendar_lib
+import datetime as dt
 import hashlib
 import json
 import logging
@@ -10,7 +10,8 @@ import re
 import threading
 import time
 import uuid
-from typing import Any, Literal
+from dataclasses import dataclass
+from typing import Any, Callable, Literal
 
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, Query
 from sqlalchemy import select
@@ -23,6 +24,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from app.api.deps import get_current_user
 from app.api.v1.airports import _validate_iata
+from app.domain.entities import ProviderFetchResult
 from app.infrastructure.db.models import FlightWatch, User
 from app.infrastructure.db.session import get_db, SessionLocal
 from app.infrastructure.airports_catalog import ExpandedAirportCandidate, get_airport, resolve_seed_airport
@@ -71,6 +73,17 @@ _CALENDAR_HINTS_CACHE_LOCK = threading.Lock()
 _CALENDAR_HINTS_CACHE: dict[tuple[str, str, int, str, str, str, str], tuple[float, dict[str, Any]]] = {}
 CALENDAR_HINTS_GUIDELINE_DEFAULT_LOW_MAX = 90.0
 CALENDAR_HINTS_GUIDELINE_DEFAULT_MID_MAX = 150.0
+
+SharedCacheGet = Callable[[str, str, dt.date | str, str], ProviderFetchResult | None]
+SharedCacheSet = Callable[[str, str, dt.date | str, str, ProviderFetchResult], None]
+
+
+@dataclass(frozen=True, slots=True)
+class FareMemoryCacheCallbacks:
+    shared_cache_get: SharedCacheGet | None
+    shared_cache_set: SharedCacheSet | None
+    negative_cache_get: SharedCacheGet | None
+    negative_cache_set: SharedCacheSet | None
 
 
 def _build_request_provider() -> MultiSourceFlightProvider:
@@ -137,6 +150,139 @@ def _filter_ui_warning_codes(codes: list[str]) -> list[str]:
     return visible
 
 
+def _resolve_negative_cache_write_policy(result: ProviderFetchResult) -> tuple[str, dt.datetime | None]:
+    reason = "no_availability"
+    retry_after_at = None
+    warning_codes = set(result.warnings or [])
+    if "provider_total_outage" in warning_codes or "ryanair_provider_unavailable_total" in warning_codes:
+        reason = "provider_total_outage"
+    elif "provider_rate_limited" in warning_codes:
+        reason = "rate_limited"
+        retry_after_at = utc_now_naive() + dt.timedelta(minutes=15)
+    elif "provider_timeout_partial" in warning_codes:
+        reason = "provider_timeout"
+        retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
+    elif "provider_error_partial" in warning_codes:
+        reason = "provider_error"
+        retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
+    elif "ryanair_availability_failed" in warning_codes or "ryanair_fares_failed" in warning_codes:
+        reason = "provider_error"
+        retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
+    return reason, retry_after_at
+
+
+def _build_fare_memory_cache_callbacks(*, shared_cache_enabled: bool, user_currency: str) -> FareMemoryCacheCallbacks:
+    if not shared_cache_enabled:
+        return FareMemoryCacheCallbacks(
+            shared_cache_get=None,
+            shared_cache_set=None,
+            negative_cache_get=None,
+            negative_cache_set=None,
+        )
+
+    def _shared_get(o: str, d: str, date: dt.date | str, prov: str) -> ProviderFetchResult | None:
+        with SessionLocal() as cache_db:
+            entry = get_fresh_entry(
+                cache_db,
+                origin_iata=o,
+                destination_iata=d,
+                travel_date=date,
+                provider=prov,
+                source_hash=build_cache_source_hash(
+                    origin_iata=o,
+                    destination_iata=d,
+                    travel_date=date,
+                    provider=prov,
+                    currency=user_currency,
+                ),
+            )
+            if entry is None:
+                return None
+            return deserialize_fetch_result(entry.payload_json, entry.warnings_json)
+
+    def _shared_set(o: str, d: str, date: dt.date | str, prov: str, result: ProviderFetchResult) -> None:
+        with SessionLocal() as cache_db:
+            payload_json, warnings_json = serialize_fetch_result(result)
+            set_cache_entry(
+                cache_db,
+                origin_iata=o,
+                destination_iata=d,
+                travel_date=date,
+                provider=prov,
+                source_hash=build_cache_source_hash(
+                    origin_iata=o,
+                    destination_iata=d,
+                    travel_date=date,
+                    provider=prov,
+                    currency=user_currency,
+                ),
+                category=classify_cache_result(
+                    flights=result.flights,
+                    warnings=result.warnings,
+                ),
+                payload_json=payload_json,
+                warnings_json=warnings_json,
+            )
+
+    negative_cache_get = None
+    negative_cache_set = None
+    if FARE_MEMORY_NEGATIVE_CACHE_ENABLED:
+        def _negative_get(o: str, d: str, date: dt.date | str, prov: str) -> ProviderFetchResult | None:
+            with SessionLocal() as cache_db:
+                fingerprint = build_negative_cache_fingerprint(
+                    origin_iata=o,
+                    destination_iata=d,
+                    travel_date=date,
+                    provider=prov,
+                    currency=user_currency,
+                )
+                entry = get_fresh_negative_cache_entry(
+                    cache_db,
+                    negative_fingerprint=fingerprint,
+                )
+                if entry is None:
+                    return None
+                return resolve_negative_cache_result(entry)
+
+        def _negative_set(o: str, d: str, date: dt.date | str, prov: str, result: ProviderFetchResult) -> None:
+            reason, retry_after_at = _resolve_negative_cache_write_policy(result)
+            with SessionLocal() as cache_db:
+                set_negative_cache_entry(
+                    cache_db,
+                    negative_fingerprint=build_negative_cache_fingerprint(
+                        origin_iata=o,
+                        destination_iata=d,
+                        travel_date=date,
+                        provider=prov,
+                        currency=user_currency,
+                    ),
+                    scope="route_date_provider",
+                    reason=reason,
+                    provider=prov,
+                    canonical_request_json=json.dumps(
+                        {
+                            "origin_iata": o,
+                            "destination_iata": d,
+                            "travel_date": str(date),
+                            "provider": prov,
+                            "currency": user_currency,
+                        },
+                        ensure_ascii=False,
+                    ),
+                    retry_after_at=retry_after_at,
+                )
+
+        negative_cache_get = _negative_get
+        negative_cache_set = _negative_set
+
+    return FareMemoryCacheCallbacks(
+        shared_cache_get=_shared_get,
+        shared_cache_set=_shared_set,
+        negative_cache_get=negative_cache_get,
+        negative_cache_set=negative_cache_set,
+    )
+
+
 def _stable_json_dumps(value: Any) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
 
@@ -174,6 +320,24 @@ def _collect_result_freshness_metrics(results: list[dict[str, Any]]) -> tuple[in
 
     avg_price_age_seconds = round(sum(age_samples) / len(age_samples), 2) if age_samples else 0.0
     return stale_served_count, avg_price_age_seconds
+
+
+def _combine_execution_cache_counters(*metas: dict[str, Any]) -> dict[str, int]:
+    keys = (
+        "provider_calls",
+        "cache_hits",
+        "cache_misses",
+        "l1_cache_hits",
+        "l2_cache_hits",
+        "negative_cache_hits",
+        "provider_failures",
+        "timed_out_units_count",
+    )
+    combined: dict[str, int] = {}
+    for key in keys:
+        combined[key] = sum(int(meta.get(key, 0) or 0) for meta in metas)
+    combined["provider_calls_avoided"] = combined["cache_hits"]
+    return combined
 
 
 def _enrich_pipeline_counters(response_payload: dict[str, Any]) -> None:
@@ -1302,6 +1466,7 @@ def deeplink(
 @router.post("/quick/calendar-hints")
 def quick_search_calendar_hints(
     payload: QuickSearchCalendarHintsIn = Body(...),
+    db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     month_dates = _build_month_dates(payload.month)
     if not month_dates:
@@ -1334,6 +1499,10 @@ def quick_search_calendar_hints(
     request_provider = _build_request_provider()
     provider_ids = request_provider.provider_ids()
     provider_cache_id = _provider_cache_id(provider_ids)
+    cache_callbacks = _build_fare_memory_cache_callbacks(
+        shared_cache_enabled=QUICK_SEARCH_SHARED_CACHE_ENABLED and _supports_db_session(db),
+        user_currency=cache_currency,
+    )
     cache_key = (
         cache_scope_signature,
         payload.month,
@@ -1400,6 +1569,10 @@ def quick_search_calendar_hints(
                 travel_date,
                 timeout_ms,
             ),
+            shared_cache_get=cache_callbacks.shared_cache_get,
+            shared_cache_set=cache_callbacks.shared_cache_set,
+            negative_cache_get=cache_callbacks.negative_cache_get,
+            negative_cache_set=cache_callbacks.negative_cache_set,
             cache_provider_id=provider_cache_id,
         )
         anchor_pair_prices_by_day, anchor_currency = _build_pair_day_prices(anchor_rows)
@@ -1450,6 +1623,10 @@ def quick_search_calendar_hints(
             travel_date,
             timeout_ms,
         ),
+        shared_cache_get=cache_callbacks.shared_cache_get,
+        shared_cache_set=cache_callbacks.shared_cache_set,
+        negative_cache_get=cache_callbacks.negative_cache_get,
+        negative_cache_set=cache_callbacks.negative_cache_set,
         cache_provider_id=provider_cache_id,
     )
     pair_prices_by_day, response_currency = _build_pair_day_prices(full_rows)
@@ -1514,6 +1691,7 @@ def quick_search_calendar_hints(
             "guideline_thresholds_effective": guideline_thresholds_effective,
             "provider_set": provider_ids,
             "provider_cache_id": provider_cache_id,
+            "execution": _combine_execution_cache_counters(anchor_execution_meta, full_execution_meta),
         },
     }
     _calendar_hints_cache_set(cache_key, response_payload)
@@ -1598,143 +1776,10 @@ def quick_search(
     provider_ids = request_provider.provider_ids()
     provider_cache_id = _provider_cache_id(provider_ids)
 
-    # L2 shared cache callables.
-    # Each callable creates its own DB session because these run inside
-    # ThreadPoolExecutor threads, and SQLAlchemy sessions are not thread-safe.
-    def _make_shared_cache_get():
-        if not shared_cache_enabled:
-            return None
-        def _get(o: str, d: str, date, prov: str):
-            cache_db = SessionLocal()
-            try:
-                entry = get_fresh_entry(
-                    cache_db,
-                    origin_iata=o,
-                    destination_iata=d,
-                    travel_date=date,
-                    provider=prov,
-                    source_hash=build_cache_source_hash(
-                        origin_iata=o, destination_iata=d,
-                        travel_date=date, provider=prov,
-                        currency=user_currency,
-                    ),
-                )
-                if entry is None:
-                    return None
-                return deserialize_fetch_result(entry.payload_json, entry.warnings_json)
-            finally:
-                cache_db.close()
-        return _get
-
-    def _make_shared_cache_set():
-        if not shared_cache_enabled:
-            return None
-        def _set(o: str, d: str, date, prov: str, result):
-            cache_db = SessionLocal()
-            try:
-                _payload, _warnings = serialize_fetch_result(result)
-                set_cache_entry(
-                    cache_db,
-                    origin_iata=o,
-                    destination_iata=d,
-                    travel_date=date,
-                    provider=prov,
-                    source_hash=build_cache_source_hash(
-                        origin_iata=o, destination_iata=d,
-                        travel_date=date, provider=prov,
-                        currency=user_currency,
-                    ),
-                    category=classify_cache_result(
-                        flights=result.flights,
-                        warnings=result.warnings,
-                    ),
-                    payload_json=_payload,
-                    warnings_json=_warnings,
-                )
-            finally:
-                cache_db.close()
-        return _set
-
-    def _make_negative_cache_get():
-        if not shared_cache_enabled or not FARE_MEMORY_NEGATIVE_CACHE_ENABLED:
-            return None
-        def _get(o: str, d: str, date, prov: str):
-            cache_db = SessionLocal()
-            try:
-                fingerprint = build_negative_cache_fingerprint(
-                    origin_iata=o,
-                    destination_iata=d,
-                    travel_date=date,
-                    provider=prov,
-                    currency=user_currency,
-                )
-                entry = get_fresh_negative_cache_entry(
-                    cache_db,
-                    negative_fingerprint=fingerprint,
-                )
-                if entry is None:
-                    return None
-                return resolve_negative_cache_result(entry)
-            finally:
-                cache_db.close()
-        return _get
-
-    def _make_negative_cache_set():
-        if not shared_cache_enabled or not FARE_MEMORY_NEGATIVE_CACHE_ENABLED:
-            return None
-        def _set(o: str, d: str, date, prov: str, result):
-            cache_db = SessionLocal()
-            try:
-                reason = "no_availability"
-                retry_after_at = None
-                warning_codes = set(result.warnings or [])
-                if "provider_total_outage" in warning_codes or "ryanair_provider_unavailable_total" in warning_codes:
-                    reason = "provider_total_outage"
-                elif "provider_rate_limited" in warning_codes:
-                    reason = "rate_limited"
-                    retry_after_at = utc_now_naive() + dt.timedelta(minutes=15)
-                elif "provider_timeout_partial" in warning_codes:
-                    reason = "provider_timeout"
-                    retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
-                elif "provider_error_partial" in warning_codes:
-                    reason = "provider_error"
-                    retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
-                elif "ryanair_availability_failed" in warning_codes or "ryanair_fares_failed" in warning_codes:
-                    reason = "provider_error"
-                    retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
-
-                set_negative_cache_entry(
-                    cache_db,
-                    negative_fingerprint=build_negative_cache_fingerprint(
-                        origin_iata=o,
-                        destination_iata=d,
-                        travel_date=date,
-                        provider=prov,
-                        currency=user_currency,
-                    ),
-                    scope="route_date_provider",
-                    reason=reason,
-                    provider=prov,
-                    canonical_request_json=json.dumps(
-                        {
-                            "origin_iata": o,
-                            "destination_iata": d,
-                            "travel_date": str(date),
-                            "provider": prov,
-                            "currency": user_currency,
-                        },
-                        ensure_ascii=False,
-                    ),
-                    retry_after_at=retry_after_at,
-                )
-            finally:
-                cache_db.close()
-        return _set
-
-    shared_cache_get = _make_shared_cache_get()
-    shared_cache_set = _make_shared_cache_set()
-    negative_cache_get = _make_negative_cache_get()
-    negative_cache_set = _make_negative_cache_set()
+    cache_callbacks = _build_fare_memory_cache_callbacks(
+        shared_cache_enabled=shared_cache_enabled,
+        user_currency=user_currency,
+    )
         
     try:
         canonical, origin_list, destination_list, filter_contract = _normalize_quick_search_request(
@@ -2095,10 +2140,10 @@ def quick_search(
                 timeout_ms=timeout,
                 currency=user_currency,
             ),
-            shared_cache_get=shared_cache_get,
-            shared_cache_set=shared_cache_set,
-            negative_cache_get=negative_cache_get,
-            negative_cache_set=negative_cache_set,
+            shared_cache_get=cache_callbacks.shared_cache_get,
+            shared_cache_set=cache_callbacks.shared_cache_set,
+            negative_cache_get=cache_callbacks.negative_cache_get,
+            negative_cache_set=cache_callbacks.negative_cache_set,
             cache_provider_id=provider_cache_id,
         )
         execution_meta["provider_set"] = provider_ids
