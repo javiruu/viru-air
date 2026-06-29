@@ -102,6 +102,27 @@ class QuickSearchRankingTests(unittest.TestCase):
         self.assertEqual(ranked[0].flight.departure_time_local, "10:00")
         self.assertIn("final_score", ranked[0].score_breakdown)
 
+    def test_invalid_prices_are_skipped_before_ranking(self):
+        pairs = [
+            self._pair("LEI", "DUB", reason="seed-seed", origin_seed=True, destination_seed=True, od_km=0, dd_km=0),
+        ]
+        invalid_price_flight = ProviderFlight(
+            price="not-a-price",
+            currency="EUR",
+            departure_time_local="10:00",
+            captured_at=dt.datetime.now(dt.UTC).replace(tzinfo=None),
+            source="test",
+        )
+        rows = [
+            ("LEI", "DUB", dt.date(2026, 6, 1), invalid_price_flight),
+            ("LEI", "DUB", dt.date(2026, 6, 1), self._flight(90, dep="11:00")),
+        ]
+
+        ranked = rank_quick_search_results(rows, pairs)
+
+        self.assertEqual(len(ranked), 1)
+        self.assertEqual(ranked[0].flight.price, 90)
+
 
 if __name__ == "__main__":
     unittest.main()
