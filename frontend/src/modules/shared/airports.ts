@@ -594,7 +594,7 @@ export const AIRPORT_META: Record<string, AirportMeta> = {
   NAP: { iata: "NAP", name: "Naples International Airport", city: "Napoli", country: "Italia", latitude: 40.886002, longitude: 14.2908 },
   NCE: { iata: "NCE", name: "Nice-Côte d'Azur Airport", city: "Nice, Alpes-Maritimes", country: "Francia", latitude: 43.658401, longitude: 7.21587 },
   NCL: { iata: "NCL", name: "Newcastle International Airport", city: "Newcastle upon Tyne, Tyne and Wear", country: "Reino Unido", latitude: 55.037958, longitude: -1.689577 },
-  NDR: { iata: "NDR", name: "Nador Al Aaroui International Airport", city: "Al Aaroui", country: "Marruecos", latitude: 34.9888, longitude: -3.02821 },
+  NDR: { iata: "NDR", name: "Nador Al Aaroui International Airport", city: "Nador", country: "Marruecos", latitude: 34.9888, longitude: -3.02821 },
   NOC: { iata: "NOC", name: "Ireland West Airport Knock", city: "Charlestown", country: "Irlanda", latitude: 53.910439, longitude: -8.817002 },
   NQY: { iata: "NQY", name: "Cornwall Airport Newquay", city: "Newquay", country: "Reino Unido", latitude: 50.440601, longitude: -4.99541 },
   NRN: { iata: "NRN", name: "Weeze (Niederrhein) Airport", city: "Weeze", country: "Alemania", latitude: 51.601362, longitude: 6.141228 },
