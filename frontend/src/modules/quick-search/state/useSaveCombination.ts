@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { apiFetch } from "@/modules/shared/api";
 import { buildQuickSearchSaveResultPayload } from "@/modules/quick-search/api/buildSaveResultPayload";
+import { buildWatchlistUrl } from "@/modules/shared/useRouteState";
 import type { SearchResult } from "@/modules/quick-search/types";
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -81,14 +82,23 @@ export function useSaveCombination() {
     [],
   );
 
-  const navigateToWatchlist = useCallback(() => {
-    router.push("/watchlist");
+  const navigateToWatchlistWithContext = useCallback((
+    origin?: string,
+    destination?: string,
+    travelDate?: string,
+  ) => {
+    const url = buildWatchlistUrl({
+      origin: origin || "",
+      destination: destination || "",
+      travelDate: travelDate || "",
+    });
+    router.push(url);
   }, [router]);
 
   return {
     ...state,
     saveCombination,
     reset,
-    navigateToWatchlist,
+    navigateToWatchlistWithContext,
   };
 }

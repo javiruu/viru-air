@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetch, apiFetchWithStatus, LONG_RUNNING_API_BASE } from "@/modules/shared/api";
@@ -133,6 +133,7 @@ import { getApiSearchQuery } from "@/modules/shared/cityTranslations";
 import { buildAirportSuggestions, normalizeText } from "@/modules/quick-search/airportSuggestions";
 import { INITIAL_PROVIDER_SEARCH_STATUSES } from "@/modules/quick-search/providerPresentation";
 import { fetchWeather as fetchWeatherApi, isWeatherRangeSupported as isWeatherRangeSupportedCheck, WeatherFetchError } from "@/modules/quick-search/weatherUtils";
+import { buildWatchlistUrl, buildQuickSearchSearchParams, readQuickSearchUrlState } from "@/modules/shared/useRouteState";
 
 const RELAX_HIGHLIGHT_BY_ACTION: Record<ZeroResultRelaxAction, Exclude<SummaryHighlightKey, null>> = {
   disable_strict: "strict",
@@ -568,6 +569,55 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const [providerSearchStatuses, setProviderSearchStatuses] = useState<ProviderSearchStatus[]>([]);
   const { isInWatchlist, markAsSaved } = useQuickSearchWatchlist();
 
+  // ── URL state: read search params on mount (Fase URL State) ────────
+  const searchParams = useSearchParams();
+  const hasRestoredUrlState = useRef(false);
+  useEffect(() => {
+    if (hasRestoredUrlState.current) return;
+    hasRestoredUrlState.current = true;
+    const state = readQuickSearchUrlState(searchParams);
+    if (state.origin) setOrigin(state.origin);
+    if (state.destination) setDestination(state.destination);
+    if (state.travelDate) setTravelDate(state.travelDate);
+    if (state.returnDate) setReturnDate(state.returnDate);
+    if (state.isReturn) setIsReturn(true);
+    if (state.adults !== 1) setAdults(state.adults);
+    if (state.flexBefore) { setDaysBefore(state.flexBefore); }
+    if (state.flexAfter) { setDaysAfter(state.flexAfter); }
+    if (state.radius !== 150) setRadiusKm(state.radius);
+    if (!state.strict) setStrictFilters(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  // ── URL state: persist form state to URL on change (Fase URL State) ─
+  const qsUrlRef = useRef("");
+  const qsUrlTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!hasRestoredUrlState.current) return;
+    // Debounce 300ms: avoid router.replace on every keystroke
+    if (qsUrlTimeoutRef.current) clearTimeout(qsUrlTimeoutRef.current);
+    qsUrlTimeoutRef.current = setTimeout(() => {
+      const qs = buildQuickSearchSearchParams({
+        origin,
+        destination,
+        travelDate,
+        returnDate,
+        isReturn,
+        adults,
+        flexBefore: daysBefore,
+        flexAfter: daysAfter,
+        radius: radiusKm,
+        strict: strictFilters,
+      });
+      if (qs === qsUrlRef.current) return;
+      qsUrlRef.current = qs;
+      const url = `/quick-search${qs ? `?${qs}` : ""}`;
+      router.replace(url, { scroll: false });
+    }, 300);
+    return () => {
+      if (qsUrlTimeoutRef.current) clearTimeout(qsUrlTimeoutRef.current);
+    };
+  }, [origin, destination, travelDate, returnDate, isReturn, adults, daysBefore, daysAfter, radiusKm, strictFilters, router]);
 
   // ── Dual-mode hooks (Fase 6) ───────────────────────────────────────
   const outboundSide = useQuickSearchSide("outbound");
@@ -2093,6 +2143,15 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     }
   }
 
+  function navigateToWatchlistWithContext(origin?: string, destination?: string, travelDate?: string) {
+    const url = buildWatchlistUrl({
+      origin: origin || "",
+      destination: destination || "",
+      travelDate: travelDate || "",
+    });
+    router.push(url);
+  }
+
   async function addToWatchlist(result: SearchResult) {
     setMessage("");
     try {
@@ -2102,7 +2161,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           tone: "success",
           title: t("watchExists"),
           actionLabel: t("viewWatchlist"),
-          onAction: () => router.push("/watchlist"),
+          onAction: () => navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date),
           durationMs: 3200,
         });
       } else {
@@ -2118,7 +2177,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           tone: "success",
           title: t("watchAdded"),
           actionLabel: t("viewWatchlist"),
-          onAction: () => router.push("/watchlist"),
+          onAction: () => navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date),
           durationMs: 3200,
         });
       }
@@ -2936,7 +2995,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         tone: "success",
         title: t("combinationSaved"),
         actionLabel: t("viewWatchlist"),
-        onAction: saveCombination.navigateToWatchlist,
+        onAction: () => navigateToWatchlistWithContext(origin, destination, travelDate),
         durationMs: 3200,
       });
       saveCombination.reset();
@@ -5278,7 +5337,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                         tone: "success",
                         title: t(isExisting ? "watchExists" : "watchAdded"),
                         actionLabel: t("viewWatchlist"),
-                        onAction: () => router.push("/watchlist"),
+                        onAction: () => navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date),
                         durationMs: 3200,
                       });
                     }
@@ -5387,7 +5446,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                         tone: "success",
                         title: t(isExisting ? "watchExists" : "watchAdded"),
                         actionLabel: t("viewWatchlist"),
-                        onAction: () => router.push("/watchlist"),
+                        onAction: () => navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date),
                         durationMs: 3200,
                       });
                     }
