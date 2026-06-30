@@ -1,11 +1,14 @@
 import React from "react";
 
 import { resolveQuickSearchProviderPresentation } from "@/modules/quick-search/providerPresentation";
-import { RyanairIcon, WizzAirIcon, DuffelIcon, GenericProviderIcon } from "@/icons";
+import { RyanairIcon, VuelingIcon, WizzAirIcon, DuffelIcon, GenericProviderIcon } from "@/icons";
 
-function ProviderLogo({ providerId }: { providerId: "ryanair" | "wizzair" | "duffel" | "unknown" }) {
+function ProviderLogo({ providerId }: { providerId: "ryanair" | "vueling" | "wizzair" | "duffel" | "unknown" }) {
   if (providerId === "ryanair") {
     return <RyanairIcon className="qs-provider-badge-logo" size={24} />;
+  }
+  if (providerId === "vueling") {
+    return <VuelingIcon className="qs-provider-badge-logo" size={24} />;
   }
   if (providerId === "wizzair") {
     return <WizzAirIcon className="qs-provider-badge-logo" size={24} />;
