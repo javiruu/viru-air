@@ -1,7 +1,10 @@
 ﻿"use client";
 
-import { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
+
+import { readWatchlistNavigationParams, buildWatchlistViewSearchParams } from "@/modules/shared/useRouteState";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
@@ -57,6 +60,53 @@ export default function WatchlistPage() {
     chartPad: CHART_PAD,
     lineColors: LINE_COLORS,
   });
+
+  // ── URL state: read navigation params on mount to auto-select flight ─
+  const searchParams = useSearchParams();
+  const hasAppliedUrlState = useRef(false);
+  useEffect(() => {
+    if (hasAppliedUrlState.current || actions.items.length === 0) return;
+    hasAppliedUrlState.current = true;
+    const nav = readWatchlistNavigationParams(searchParams);
+    if (nav.origin && nav.destination) {
+      const match = actions.items.find(
+        (item) =>
+          item.origin_iata === nav.origin &&
+          item.destination_iata === nav.destination &&
+          (!nav.travelDate || item.travel_date_local === nav.travelDate),
+      );
+      if (match) {
+        selectWatch(match);
+      }
+    }
+  }, [searchParams, actions.items, selectWatch]);
+
+  // ── URL state: persist selection to URL on change ──────────────────
+  const prevSelectionRef = useRef({ origin: "", destination: "", travelDate: "" });
+  useEffect(() => {
+    if (!hasAppliedUrlState.current) return;
+    const current = derived.selectedWatch;
+    const prev = prevSelectionRef.current;
+    const origin = current?.origin_iata || "";
+    const destination = current?.destination_iata || "";
+    const travelDate = current?.travel_date_local || "";
+    if (
+      origin === prev.origin &&
+      destination === prev.destination &&
+      travelDate === prev.travelDate
+    ) return;
+    prevSelectionRef.current = { origin, destination, travelDate };
+    const qs = buildWatchlistViewSearchParams({
+      origin,
+      destination,
+      travelDate,
+      view: view.viewMode !== "chart" ? view.viewMode : undefined,
+      range: view.rangeWindow !== "30" ? (view.rangeWindow as "30" | "all") : undefined,
+    });
+    const url = `/watchlist${qs ? `?${qs}` : ""}`;
+    router.replace(url, { scroll: false });
+  }, [derived.selectedWatch, view.viewMode, view.rangeWindow, router]);
+
   const hasHistoryData = Boolean(
     (derived.chartModel?.some((serie) => serie.points.length > 0) ?? false) ||
       Object.keys(derived.calendarEvents).length > 0,
