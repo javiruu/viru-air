@@ -47,12 +47,12 @@ def test_registry_respects_wizz_air_enabled_alias(monkeypatch):
     assert providers == []
 
 
-def test_registry_registers_vueling_when_configured(monkeypatch):
+def test_registry_registers_vueling_without_api_credentials(monkeypatch):
     monkeypatch.setenv("FLIGHT_PROVIDER_ORDER", "ryanair,vy,vueling")
     monkeypatch.setenv("FLIGHT_PROVIDER_RYANAIR_ENABLED", "false")
     monkeypatch.setenv("FLIGHT_PROVIDER_VUELING_ENABLED", "true")
-    monkeypatch.setenv("VUELING_FLIGHTCALENDAR_TOKEN", "token")
-    monkeypatch.setenv("VUELING_FLIGHTCALENDAR_PRICES_URL", "https://example.test/prices")
+    monkeypatch.delenv("VUELING_FLIGHTCALENDAR_TOKEN", raising=False)
+    monkeypatch.delenv("VUELING_FLIGHTCALENDAR_PRICES_URL", raising=False)
 
     registry = FlightProviderRegistry()
     providers = registry.resolve_enabled_providers()

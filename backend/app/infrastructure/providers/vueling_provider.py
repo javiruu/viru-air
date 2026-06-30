@@ -1,73 +1,79 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime
 import os
+import random
+import time
+from typing import Final
 from urllib.parse import urlencode
 
-import requests
+try:
+    from curl_cffi import requests
+    from curl_cffi.requests.errors import RequestsError
+except ImportError:
+    import requests
+    from requests.exceptions import RequestException as RequestsError
 from requests.adapters import HTTPAdapter
 
 from app.core.time import utc_now_naive
 from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError, ProviderWarning
 from app.infrastructure.providers.base import FlightProvider
 
-_PROVIDER_POOL_SIZE = 32
-_DEFAULT_BOOKING_URL = "https://tickets.vueling.com/booking/flightSearch"
+_DEFAULT_BASE_URL: Final = "https://ams.vueling.com"
+_DEFAULT_BOOKING_URL: Final = "https://tickets.vueling.com/booking/flightSearch"
+_DEFAULT_PROFILE_ID: Final = "e8ffa738-cb67-4a02-b501-9bfd975a4b65"
+_FLIGHT_TYPE_ONE_WAY: Final = "ONE_WAY"
+_MONTHS_RANGE: Final = 17
+_PROVIDER_POOL_SIZE: Final = 32
+
+
+@dataclass(frozen=True, slots=True)
+class _VuelingSearch:
+    origin: str
+    destination: str
+    travel_date: str
+    currency: str
 
 
 class VuelingProvider(FlightProvider):
     provider_id = "vueling"
 
-    def __init__(
-        self,
-        api_token: str | None = None,
-        *,
-        prices_url: str | None = None,
-        product_class: str | None = None,
-    ) -> None:
-        self.api_token = (api_token or os.getenv("VUELING_FLIGHTCALENDAR_TOKEN", "")).strip()
-        self.prices_url = (
-            prices_url or os.getenv("VUELING_FLIGHTCALENDAR_PRICES_URL", "")
-        ).strip()
-        self.product_class = (product_class or os.getenv("VUELING_PRODUCT_CLASS", "BA")).strip().upper()
-        self._session = requests.Session()
-        adapter = HTTPAdapter(pool_connections=_PROVIDER_POOL_SIZE, pool_maxsize=_PROVIDER_POOL_SIZE)
-        self._session.mount("https://", adapter)
-        self._session.mount("http://", adapter)
+    def __init__(self, *, base_url: str | None = None, profile_id: str | None = None) -> None:
+        self.base_url = (base_url or os.getenv("VUELING_BASE_URL", _DEFAULT_BASE_URL)).strip().rstrip("/")
+        self.profile_id = (profile_id or os.getenv("VUELING_PROFILE_ID", _DEFAULT_PROFILE_ID)).strip()
+        try:
+            self._session = requests.Session(impersonate="chrome110")
+        except TypeError:
+            self._session = requests.Session()
+            adapter = HTTPAdapter(pool_connections=_PROVIDER_POOL_SIZE, pool_maxsize=_PROVIDER_POOL_SIZE)
+            self._session.mount("https://", adapter)
+            self._session.mount("http://", adapter)
 
     def is_enabled(self) -> bool:
-        return bool(self.api_token and self.prices_url)
+        return bool(self.base_url and self.profile_id)
 
     def get_flights(
         self, origin: str, destination: str, travel_date: str, timeout_ms: int = 12000, currency: str = "EUR"
     ) -> ProviderFetchResult:
-        if not self.is_enabled():
-            raise ProviderSourceFetchError(
-                warning_codes=["vueling_not_configured"],
-                message="Vueling provider is not configured",
-                provider_id=self.provider_id,
-                severity="warning",
-            )
-
-        origin = origin.upper().strip()
-        destination = destination.upper().strip()
+        search = _VuelingSearch(
+            origin=origin.upper().strip(),
+            destination=destination.upper().strip(),
+            travel_date=travel_date,
+            currency=currency.upper().strip(),
+        )
         try:
-            body = self._fetch_calendar_prices(travel_date, timeout_ms=timeout_ms)
-        except requests.RequestException as exc:
+            token = self._get_anonymous_token(timeout_ms=timeout_ms)
+            payload = self._fetch_public_availability(search, token, timeout_ms=timeout_ms)
+        except RequestsError as exc:
             raise ProviderSourceFetchError(
                 warning_codes=["vueling_provider_unavailable_total", "provider_total_outage"],
-                message=f"Vueling provider unavailable for {origin}->{destination} on {travel_date}",
+                message=f"Vueling provider unavailable for {search.origin}->{search.destination} on {search.travel_date}",
                 provider_id=self.provider_id,
                 severity="error",
             ) from exc
 
-        flights = self._extract_flights(
-            body,
-            origin=origin,
-            destination=destination,
-            travel_date=travel_date,
-            fallback_currency=currency,
-        )
+        flights = self._extract_flights(payload, search)
         warnings_structured: list[ProviderWarning] = []
         if not flights:
             warnings_structured.append(
@@ -75,125 +81,120 @@ class VuelingProvider(FlightProvider):
             )
         return ProviderFetchResult(flights=flights, warnings=[], warnings_structured=warnings_structured)
 
-    def _fetch_calendar_prices(self, travel_date: str, *, timeout_ms: int) -> dict:
-        parsed_date = datetime.fromisoformat(travel_date).strftime("%Y%m%d")
-        response = self._session.get(
-            self.prices_url,
-            params={"startDate": parsed_date, "numDays": "1", "productClass": self.product_class},
-            timeout=max(2.0, timeout_ms / 1000),
-            headers={"Authorization": self.api_token, "Accept": "application/json"},
+    def _get_anonymous_token(self, *, timeout_ms: int) -> str:
+        payload = self._post_json(
+            f"{self.base_url}/asm/v1/Auth",
+            json_body={"profileId": self.profile_id},
+            timeout_ms=timeout_ms,
         )
+        token = payload.get("accessToken") if isinstance(payload, dict) else None
+        if not token:
+            raise ProviderSourceFetchError(
+                warning_codes=["vueling_provider_unavailable_total", "provider_total_outage"],
+                message="Vueling anonymous session did not return an access token",
+                provider_id=self.provider_id,
+                severity="error",
+            )
+        return str(token)
+
+    def _fetch_public_availability(self, search: _VuelingSearch, token: str, *, timeout_ms: int) -> list:
+        parsed_date = datetime.fromisoformat(search.travel_date)
+        payload = self._post_json(
+            f"{self.base_url}/avy/v3/AvailabilityServices/allFlights",
+            json_body={
+                "originCode": search.origin,
+                "destinationCode": search.destination,
+                "year": parsed_date.year,
+                "month": parsed_date.month,
+                "currencyCode": search.currency,
+                "monthsRange": _MONTHS_RANGE,
+                "flightType": _FLIGHT_TYPE_ONE_WAY,
+            },
+            timeout_ms=timeout_ms,
+            token=token,
+        )
+        return payload if isinstance(payload, list) else []
+
+    def _post_json(self, url: str, *, json_body: dict, timeout_ms: int, token: str | None = None):
+        time.sleep(random.uniform(0.1, 0.4))
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "application/json, text/plain, */*",
+            "Content-Type": "application/json",
+            "Origin": "https://tickets.vueling.com",
+            "Referer": "https://tickets.vueling.com/",
+        }
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        response = self._session.post(url, json=json_body, timeout=max(2.0, timeout_ms / 1000), headers=headers)
         response.raise_for_status()
         return response.json()
 
-    def _extract_flights(
-        self,
-        payload: dict,
-        *,
-        origin: str,
-        destination: str,
-        travel_date: str,
-        fallback_currency: str,
-    ) -> list[ProviderFlight]:
+    def _extract_flights(self, payload: list, search: _VuelingSearch) -> list[ProviderFlight]:
         flights: list[ProviderFlight] = []
-        for day in payload.get("Result") or payload.get("result") or []:
-            for item in day.get("Items") or day.get("items") or []:
-                flight = self._flight_from_item(
-                    str(item),
-                    origin=origin,
-                    destination=destination,
-                    travel_date=travel_date,
-                    fallback_currency=fallback_currency,
-                )
-                if flight is not None:
-                    flights.append(flight)
+        for item in payload:
+            if not isinstance(item, dict):
+                continue
+            flight = self._flight_from_item(item, search)
+            if flight is not None:
+                flights.append(flight)
         return flights
 
-    def _flight_from_item(
-        self,
-        item: str,
-        *,
-        origin: str,
-        destination: str,
-        travel_date: str,
-        fallback_currency: str,
-    ) -> ProviderFlight | None:
-        if "~" not in item:
+    def _flight_from_item(self, item: dict, search: _VuelingSearch) -> ProviderFlight | None:
+        if item.get("departureStation", "").upper() != search.origin:
             return None
-        general_raw, segments_raw = item.split("~", 1)
-        general = general_raw.split(";")
-        segments = [segment.split(";") for segment in segments_raw.split("^") if segment]
-        if len(general) < 3 or not segments:
+        if item.get("arrivalStation", "").upper() != search.destination:
             return None
-        if any(len(segment) < 5 for segment in segments):
-            return None
-        if segments[0][2].upper() != origin or segments[-1][4].upper() != destination:
-            return None
-        departure_raw = segments[0][3]
-        if self._to_iso_date(departure_raw) != travel_date:
+        if item.get("isAvailableDay") is False or item.get("isInvalidPrice") is True:
             return None
 
-        amount = self._price_from_item(general, segments)
+        departure_raw = str(item.get("departureDate") or "")
+        if self._to_iso_date(departure_raw) != search.travel_date:
+            return None
+        amount = self._positive_float(item.get("price"))
         if amount is None:
             return None
 
         return ProviderFlight(
             price=amount,
-            currency=(general[0] or fallback_currency).upper(),
+            currency=str(item.get("currency") or search.currency).upper(),
             departure_time_local=self._to_time(departure_raw),
             captured_at=utc_now_naive(),
-            source="vueling-flight-calendar",
-            deeplink_url=self._build_deeplink(origin, destination, travel_date, general[0] or fallback_currency),
+            source="vueling-public-availability",
+            deeplink_url=self._build_deeplink(search),
         )
 
-    def _price_from_item(self, general: list[str], segments: list[list[str]]) -> float | None:
-        if len(segments[0]) == 9:
-            return self._positive_float(general[2])
-
-        segment_total = 0.0
-        for segment in segments:
-            if len(segment) < 10:
-                return None
-            amount = self._positive_float(segment[7])
-            if amount is None:
-                return None
-            segment_total += amount
-
-        connection_fee = self._positive_float(general[2]) or 0.0
-        total = segment_total + connection_fee
-        return total if total > 0.0 else None
-
-    def _build_deeplink(self, origin: str, destination: str, travel_date: str, currency: str) -> str:
+    def _build_deeplink(self, search: _VuelingSearch) -> str:
         params = {
-            "o": origin,
-            "d": destination,
-            "dd": travel_date,
+            "o": search.origin,
+            "d": search.destination,
+            "dd": search.travel_date,
             "rd": "",
             "adt": "1",
             "chd": "0",
             "inf": "0",
             "extraseat": "0",
             "c": "en-GB",
-            "cur": currency.upper(),
+            "cur": search.currency,
             "dt": "",
         }
         return f"{_DEFAULT_BOOKING_URL}?{urlencode(params)}"
 
     def _to_iso_date(self, value: str) -> str | None:
         try:
-            return datetime.strptime(value, "%d/%m/%Y %H:%M:%S").date().isoformat()
+            return datetime.fromisoformat(value.replace("Z", "+00:00")).date().isoformat()
         except ValueError:
             return None
 
     def _to_time(self, value: str) -> str | None:
         try:
-            return datetime.strptime(value, "%d/%m/%Y %H:%M:%S").strftime("%H:%M")
+            return datetime.fromisoformat(value.replace("Z", "+00:00")).strftime("%H:%M")
         except ValueError:
             return None
 
-    def _positive_float(self, value: str) -> float | None:
+    def _positive_float(self, value) -> float | None:
         try:
             amount = float(value)
-        except ValueError:
+        except (TypeError, ValueError):
             return None
         return amount if amount > 0.0 else None

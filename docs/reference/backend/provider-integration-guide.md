@@ -36,6 +36,7 @@ Implementar `FlightProvider` con:
   - `FLIGHT_PROVIDER_ORDER` (default: `ryanair,vueling,wizzair,duffel`)
   - `FLIGHT_PROVIDER_<ID>_ENABLED` (default: true)
   - Providers con credenciales propias pueden estar en el orden por defecto y no activarse si `is_enabled()` devuelve `false`.
+  - Providers públicos como `ryanair` y `vueling` no requieren API key.
 - El `FlightSearchOrchestrator` se encarga de:
   - ejecutar providers habilitados;
   - consolidar vuelos;
@@ -45,7 +46,7 @@ Implementar `FlightProvider` con:
 ## Providers activos
 
 - `ryanair`: provider público sin credenciales.
-- `vueling`: provider FlightCalendar oficial. Requiere `VUELING_FLIGHTCALENDAR_TOKEN` y `VUELING_FLIGHTCALENDAR_PRICES_URL`; soporta alias `vy`.
+- `vueling`: provider público sin credenciales. Crea sesión anónima contra `asm/v1/Auth`, consulta `avy/v3/AvailabilityServices/allFlights` y soporta alias `vy`.
 - `wizzair`: provider FareChart público/configurable.
 - `duffel`: provider API con `DUFFEL_API_KEY`.
 
