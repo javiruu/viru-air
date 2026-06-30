@@ -1,5 +1,13 @@
 # History
 
+## 2026-06-30 — Watchlist startup refresh completo sin puntos planos
+
+- El startup refresh de watchlist ahora encola todas las rutas activas compartidas al abrir el servidor, no solo las que superan `WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS`.
+- La revalidacion por ruta sigue actualizando todos los watches activos de todos los usuarios, pero no persiste nuevos `PriceSnapshot` cuando el precio y la moneda no cambiaron y el dato anterior no era stale.
+- Verificacion focalizada: `python -m pytest backend/tests/unit/test_watchlist_startup_refresh_regression.py -q` -> 2 passed.
+
+---
+
 ## 2026-06-10 — Quick-search shared persistent cache (Fases 1–15 + auditoría + fixes)
 
 Se implementó una cache compartida persistente (cross-user, DB-backed) para `quick-search` que reutiliza resultados de tracking de vuelos entre usuarios, con TTL por categoría de resultado y bloqueo anti-stampede. El plan maestro está en `docs/plans/2026-06-10-quick-search-shared-cache-implementation.md`.
