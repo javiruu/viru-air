@@ -1,11 +1,11 @@
 # History
 
-## 2026-06-30 — Vueling como provider de vuelos configurable
+## 2026-06-30 — Vueling como provider público sin API key
 
 - Quick Search puede cargar `vueling`/`vy` como provider adicional mediante `FlightProviderRegistry`.
-- El provider usa FlightCalendar oficial cuando existen `VUELING_FLIGHTCALENDAR_TOKEN` y `VUELING_FLIGHTCALENDAR_PRICES_URL`; sin credenciales no se activa, igual que otros providers configurables.
-- Los resultados Vueling mapean precio, moneda, hora local, source `vueling-flight-calendar` y deeplink oficial de búsqueda.
-- Verificacion: provider + registry + orquestador + quick-search cercano -> 47 passed.
+- El provider crea una sesión anónima pública contra Vueling y consulta `avy/v3/AvailabilityServices/allFlights`, igual que Ryanair opera contra endpoints públicos sin API key.
+- Los resultados Vueling mapean precio, moneda, hora local, source `vueling-public-availability` y deeplink oficial de búsqueda.
+- Verificacion: provider + registry + orquestador + quick-search cercano -> 48 passed; smoke real Vueling BCN->ORY devolvio precio sin API key.
 
 ---
 
