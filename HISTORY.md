@@ -1,5 +1,14 @@
 # History
 
+## 2026-06-30 — Panel local autorepara dependencias backend corruptas
+
+- `iniciar_viru.ps1` ahora captura la salida real de la auditoria Alembic, detecta instalaciones Python incompletas o corruptas y repara `backend/.venv` una vez antes de abortar.
+- El fallback cubre el caso de pip con metadata rota (`uninstall-no-record-file` / `RECORD` ausente) usando `--ignore-installed`.
+- El auditor Alembic ya no falla en import-time si SQLAlchemy esta roto; devuelve un diagnostico JSON `db_error` para que el panel pueda actuar.
+- Verificacion: arranque real con `iniciar_viru.ps1 -Foreground` reparo el venv, aplico migraciones y dejo backend/frontend en status 200; `python -m pytest backend/tests/unit/test_alembic_audit.py` -> 4 passed.
+
+---
+
 ## 2026-06-30 — Watchlist startup refresh completo sin puntos planos
 
 - El startup refresh de watchlist ahora encola todas las rutas activas compartidas al abrir el servidor, no solo las que superan `WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS`.

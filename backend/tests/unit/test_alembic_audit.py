@@ -1,4 +1,5 @@
 from pathlib import Path
+import builtins
 import os
 import sqlite3
 import subprocess
@@ -46,6 +47,22 @@ def test_inspect_database_revision_flags_orphan_alembic_version(tmp_path: Path) 
 
     assert db_state["status"] == "invalid_revision"
     assert db_state["invalid_revisions"] == ["0025_alert_rule_compare_against"]
+
+
+def test_inspect_database_revision_reports_broken_sqlalchemy_import(monkeypatch) -> None:
+    real_import = builtins.__import__
+
+    def fail_sqlalchemy_import(name, *args, **kwargs):
+        if name == "sqlalchemy" or name.startswith("sqlalchemy."):
+            raise ImportError("broken SQLAlchemy install")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fail_sqlalchemy_import)
+
+    db_state = inspect_database_revision("sqlite:///:memory:", [])
+
+    assert db_state["status"] == "db_error"
+    assert db_state["error"] == "sqlalchemy_unavailable: broken SQLAlchemy install"
 
 
 def test_clean_upgrade_keeps_alembic_check_green() -> None:

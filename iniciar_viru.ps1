@@ -24,8 +24,16 @@ function Invoke-PythonCommand {
 
   $allArgs = @($Candidate.PrefixArgs) + $Arguments
   if ($CaptureOutput) {
-    $output = & $Candidate.FilePath @allArgs 2>&1
-    $exitCode = $LASTEXITCODE
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    Push-Location $WorkingDirectory
+    try {
+      $output = & $Candidate.FilePath @allArgs 2>&1
+      $exitCode = $LASTEXITCODE
+    } finally {
+      Pop-Location
+      $ErrorActionPreference = $previousErrorActionPreference
+    }
     if (-not $AllowFailure -and $exitCode -ne 0) {
       throw "Fallo al ejecutar $($Candidate.DisplayName) (exit $exitCode)."
     }
@@ -381,6 +389,86 @@ Recuperacion manual sugerida:
   Write-Host "Entorno virtual del backend reparado correctamente."
 }
 
+function Install-BackendDependencies {
+  Write-Host "Reparando dependencias del backend en el entorno virtual..."
+  $venvPython = [pscustomobject]@{
+    DisplayName = "backend\\.venv\\Scripts\\python.exe"
+    FilePath = $backendPython
+    PrefixArgs = @()
+  }
+
+  $repair = Invoke-PythonCommand -Candidate $venvPython `
+    -Arguments @("-m", "pip", "install", "--upgrade", "--force-reinstall", "-e", ".[dev]") `
+    -WorkingDirectory $backendDir `
+    -CaptureOutput `
+    -AllowFailure
+
+  if ($repair.ExitCode -ne 0) {
+    $repairOutput = ($repair.Output | ForEach-Object { $_.ToString() }) -join "`n"
+    if ($repairOutput -notmatch "(?i)(uninstall-no-record-file|RECORD file)") {
+      throw "No se pudieron reparar las dependencias del backend. Detalle: $repairOutput"
+    }
+
+    Write-Host "Pip no pudo desinstalar una dependencia corrupta; reinstalando por encima con --ignore-installed." -ForegroundColor Yellow
+    Invoke-PythonCommand -Candidate $venvPython `
+      -Arguments @("-m", "pip", "install", "--ignore-installed", "-e", ".[dev]") `
+      -WorkingDirectory $backendDir | Out-Null
+  }
+
+  Write-Host "Dependencias del backend reparadas correctamente."
+}
+
+function Invoke-AlembicAudit {
+  Push-Location $backendDir
+  try {
+    $output = @(& $backendPython -m app.infrastructure.db.alembic_audit --json 2>&1)
+    $exitCode = $LASTEXITCODE
+  } catch {
+    $output = @($_.Exception.Message)
+    $exitCode = 999
+  } finally {
+    Pop-Location
+  }
+
+  $lines = @($output | ForEach-Object { $_.ToString() })
+  $jsonLine = $null
+  foreach ($line in $lines) {
+    $trimmed = $line.TrimStart()
+    if ($trimmed.StartsWith("{")) {
+      $jsonLine = $line
+      break
+    }
+  }
+
+  return [pscustomobject]@{
+    Json = $jsonLine
+    Output = ($lines -join "`n")
+    ExitCode = $exitCode
+  }
+}
+
+function Test-AlembicAuditNeedsDependencyRepair {
+  param(
+    [Parameter(Mandatory)]
+    [pscustomobject]$Result
+  )
+
+  if ($Result.Output -match "(?i)(ImportError|ModuleNotFoundError|No module named|cannot import name|sqlalchemy_unavailable|Package\(s\) not found|invalid literal for int\(\) with base 10)") {
+    return $true
+  }
+
+  if (-not [string]::IsNullOrWhiteSpace($Result.Json)) {
+    try {
+      $payload = $Result.Json | ConvertFrom-Json -ErrorAction Stop
+      return ($payload.db_state.status -eq "db_error" -and $payload.db_state.error -match "(?i)(sqlalchemy|alembic|ImportError|ModuleNotFoundError|No module named|cannot import name)")
+    } catch {
+      return $false
+    }
+  }
+
+  return $false
+}
+
 Ensure-BackendVirtualEnv
 Ensure-VenvPythonRunnable
 
@@ -449,20 +537,25 @@ $env:DB_URL = $backendDbUrl
 $env:PYTHONUNBUFFERED = "1"
 
 Write-Host "Validando cadena de migraciones Alembic..."
-Push-Location $backendDir
-try {
-  $auditRaw = (& $backendPython -m app.infrastructure.db.alembic_audit --json 2>$null) -join "`n"
-  $auditExitCode = $LASTEXITCODE
-} catch {
-  $auditRaw = $null
-  $auditExitCode = 999
+$auditResult = Invoke-AlembicAudit
+
+if (Test-AlembicAuditNeedsDependencyRepair -Result $auditResult) {
+  Write-Host "La auditoria detecto dependencias Python incompletas o corruptas." -ForegroundColor Yellow
+  Write-Host "VIRU intentara repararlas una vez y reintentar la auditoria."
+  Install-BackendDependencies
+  $auditResult = Invoke-AlembicAudit
 }
-Pop-Location
+
+$auditRaw = $auditResult.Json
+$auditExitCode = $auditResult.ExitCode
 
 if ([string]::IsNullOrWhiteSpace($auditRaw)) {
   throw @"
 No se pudo ejecutar la auditoria de migraciones Alembic en:
   $backendPython -m app.infrastructure.db.alembic_audit --json
+
+Salida capturada:
+$($auditResult.Output)
 
 Causas posibles:
   1. El entorno virtual de Python (.venv) esta incompleto o corrupto
