@@ -1,8 +1,9 @@
 import React, { memo } from "react";
 
-import { SearchResult } from "@/modules/quick-search/types";
+import type { SearchResult } from "@/modules/quick-search/types";
 import { QuickSearchProviderBadge } from "@/modules/quick-search/components/QuickSearchProviderBadge";
 import { resolveQuickSearchProviderPresentation } from "@/modules/quick-search/providerPresentation";
+import { getAirportMeta } from "@/modules/shared/airports";
 import type { QuickSearchCopyKey } from "@/modules/shared/quickSearchCopy";
 
 type Props = {
@@ -93,6 +94,21 @@ function isGenericHttpLink(value: string | null | undefined): boolean {
   }
 }
 
+function getRouteAirportLabel(iata: string): { city: string; code: string; hasCity: boolean } {
+  const code = iata.trim().toUpperCase();
+  const city = getAirportMeta(code)?.city.trim() || code;
+  return { city, code, hasCity: city !== code };
+}
+
+function renderRouteAirport(label: { city: string; code: string; hasCity: boolean }) {
+  return (
+    <span className="qs-result-route-airport">
+      <span>{label.city}</span>
+      {label.hasCity ? <span className="qs-result-route-code">({label.code})</span> : null}
+    </span>
+  );
+}
+
 function QuickSearchResultsListInner(props: Props) {
   return (
     <>
@@ -119,6 +135,8 @@ function QuickSearchResultsListInner(props: Props) {
             const rawSourceLabel = typeof r.source === "string" ? r.source.trim() : "";
             const canRefreshPrice = props.canRefreshPrice(r);
             const isRefreshingPrice = props.refreshingResultId === rowId;
+            const originLabel = getRouteAirportLabel(r.origin);
+            const destinationLabel = getRouteAirportLabel(r.destination);
             return (
               <article
                 key={rowId}
@@ -128,7 +146,11 @@ function QuickSearchResultsListInner(props: Props) {
                   {props.compactView ? (
                     <>
                       <div className="qs-result-route">
-                        <strong>{r.origin}{" → "}{r.destination}</strong>
+                        <strong>
+                          {renderRouteAirport(originLabel)}
+                          <span className="qs-result-route-arrow">{" → "}</span>
+                          {renderRouteAirport(destinationLabel)}
+                        </strong>
                         {(r.origin !== props.origin || r.destination !== props.destination) ? <span className="chip">{props.t("alternative")}</span> : null}
                       </div>
                       <div className="qs-result-meta qs-result-meta-compact">
@@ -151,7 +173,11 @@ function QuickSearchResultsListInner(props: Props) {
                     <>
                       <span className="qs-result-kicker">{props.t("resultsColRoute")}</span>
                       <div className="qs-result-route">
-                        <strong>{r.origin}{" → "}{r.destination}</strong>
+                        <strong>
+                          {renderRouteAirport(originLabel)}
+                          <span className="qs-result-route-arrow">{" → "}</span>
+                          {renderRouteAirport(destinationLabel)}
+                        </strong>
                         {(r.origin !== props.origin || r.destination !== props.destination) ? <span className="chip">{props.t("alternative")}</span> : null}
                       </div>
                       <div className="qs-result-meta">

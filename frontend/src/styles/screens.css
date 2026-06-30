@@ -16429,6 +16429,25 @@ textarea::placeholder {
   font-size: 1.05rem;
 }
 
+.qs-result-route-airport {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.24rem;
+  min-width: 0;
+}
+
+.qs-result-route-code {
+  color: var(--ink-muted);
+  font-size: 0.82em;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.qs-result-route-arrow {
+  color: var(--ink-muted);
+  font-weight: 800;
+}
+
 .qs-result-stats,
 .qs-result-badges {
   gap: 0.4rem 0.6rem;

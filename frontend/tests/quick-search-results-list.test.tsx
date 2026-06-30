@@ -9,8 +9,8 @@ import type { SearchResult } from "../src/modules/quick-search/types";
 function buildResult(): SearchResult {
   return {
     result_id: "res-1",
-    origin: "MAD",
-    destination: "LIS",
+    origin: "NDR",
+    destination: "BVA",
     travel_date: "2026-06-01",
     departure_time_local: "09:15",
     price: 39,
@@ -102,8 +102,10 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
     />,
   );
 
-  assert.match(html, /MAD/);
-  assert.match(html, /LIS/);
+  assert.match(html, /Nador/);
+  assert.match(html, /\(NDR\)/);
+  assert.match(html, /Beauvais/);
+  assert.match(html, /\(BVA\)/);
   assert.match(html, /Alternativa/);
   assert.match(html, /EUR 39/);
   assert.match(html, /Guardar/);
