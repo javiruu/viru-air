@@ -38,6 +38,8 @@ class _VuelingSearch:
 
 class VuelingProvider(FlightProvider):
     provider_id = "vueling"
+    _cached_token: str | None = None
+    _token_expires_at: float = 0.0
 
     def __init__(self, *, base_url: str | None = None, profile_id: str | None = None) -> None:
         self.base_url = (base_url or os.getenv("VUELING_BASE_URL", _DEFAULT_BASE_URL)).strip().rstrip("/")
@@ -53,6 +55,15 @@ class VuelingProvider(FlightProvider):
     def is_enabled(self) -> bool:
         return bool(self.base_url and self.profile_id)
 
+    def _get_token_or_cached(self, *, timeout_ms: int) -> str:
+        now = time.time()
+        if self._cached_token and now < self._token_expires_at - 60:
+            return self._cached_token
+        token = self._fetch_anonymous_token(timeout_ms=timeout_ms)
+        self._cached_token = token
+        self._token_expires_at = now + 1200
+        return token
+
     def get_flights(
         self, origin: str, destination: str, travel_date: str, timeout_ms: int = 12000, currency: str = "EUR"
     ) -> ProviderFetchResult:
@@ -63,7 +74,7 @@ class VuelingProvider(FlightProvider):
             currency=currency.upper().strip(),
         )
         try:
-            token = self._get_anonymous_token(timeout_ms=timeout_ms)
+            token = self._get_token_or_cached(timeout_ms=timeout_ms)
             payload = self._fetch_public_availability(search, token, timeout_ms=timeout_ms)
         except RequestsError as exc:
             raise ProviderSourceFetchError(
@@ -81,7 +92,7 @@ class VuelingProvider(FlightProvider):
             )
         return ProviderFetchResult(flights=flights, warnings=[], warnings_structured=warnings_structured)
 
-    def _get_anonymous_token(self, *, timeout_ms: int) -> str:
+    def _fetch_anonymous_token(self, *, timeout_ms: int) -> str:
         payload = self._post_json(
             f"{self.base_url}/asm/v1/Auth",
             json_body={"profileId": self.profile_id},

@@ -51,10 +51,10 @@ def test_registry_registers_vueling_without_api_credentials(monkeypatch):
     monkeypatch.setenv("FLIGHT_PROVIDER_ORDER", "ryanair,vy,vueling")
     monkeypatch.setenv("FLIGHT_PROVIDER_RYANAIR_ENABLED", "false")
     monkeypatch.setenv("FLIGHT_PROVIDER_VUELING_ENABLED", "true")
-    monkeypatch.delenv("VUELING_FLIGHTCALENDAR_TOKEN", raising=False)
-    monkeypatch.delenv("VUELING_FLIGHTCALENDAR_PRICES_URL", raising=False)
 
     registry = FlightProviderRegistry()
     providers = registry.resolve_enabled_providers()
 
     assert [provider.provider_id for provider in providers] == ["vueling"]
+
+

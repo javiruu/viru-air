@@ -1,4 +1,4 @@
-export type QuickSearchProviderId = "ryanair" | "wizzair" | "duffel" | "unknown";
+export type QuickSearchProviderId = "ryanair" | "vueling" | "wizzair" | "duffel" | "unknown";
 
 /** Initial provider search statuses shown during quick-search loading. */
 export const INITIAL_PROVIDER_SEARCH_STATUSES: Array<{
@@ -7,6 +7,7 @@ export const INITIAL_PROVIDER_SEARCH_STATUSES: Array<{
   status: "searching";
 }> = [
   { id: "ryanair", label: "Ryanair", status: "searching" },
+  { id: "vueling", label: "Vueling", status: "searching" },
   { id: "wizzair", label: "Wizz Air", status: "searching" },
   { id: "duffel", label: "Duffel", status: "searching" },
 ] as const;
@@ -42,6 +43,13 @@ export function resolveQuickSearchProviderPresentation(
     return {
       id: "ryanair",
       label: "Ryanair",
+      rawSource,
+    };
+  }
+  if (normalized.includes("vueling")) {
+    return {
+      id: "vueling",
+      label: "Vueling",
       rawSource,
     };
   }

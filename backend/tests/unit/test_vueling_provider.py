@@ -17,9 +17,6 @@ class _FakeResponse:
 
 
 def test_provider_is_enabled_without_api_credentials(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("VUELING_FLIGHTCALENDAR_TOKEN", raising=False)
-    monkeypatch.delenv("VUELING_FLIGHTCALENDAR_PRICES_URL", raising=False)
-
     provider = VuelingProvider()
 
     assert provider.is_enabled() is True
