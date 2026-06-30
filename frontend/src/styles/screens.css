@@ -7582,6 +7582,23 @@ textarea::placeholder {
   box-shadow: 0 18px 30px rgba(31, 29, 26, 0.14);
 }
 
+.qs-autocomplete-recents {
+  max-height: 9.75rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--qs-input-border-strong) 56%, transparent) transparent;
+}
+
+.qs-autocomplete-recents::-webkit-scrollbar {
+  width: 7px;
+}
+
+.qs-autocomplete-recents::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--qs-input-border-strong) 48%, transparent);
+}
+
 .qs-autocomplete-item {
   width: 100%;
   display: flex;
@@ -7596,6 +7613,47 @@ textarea::placeholder {
   text-align: left;
   font: inherit;
   cursor: pointer;
+}
+
+.qs-recent-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.qs-recent-row .qs-autocomplete-item {
+  min-width: 0;
+  min-height: 2.55rem;
+}
+
+.qs-recent-remove {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: color-mix(in srgb, var(--qs-text-secondary) 78%, var(--ink));
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.qs-recent-remove svg {
+  width: 15px;
+  height: 15px;
+}
+
+.qs-recent-remove:hover,
+.qs-recent-remove:focus-visible {
+  outline: none;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--ink);
+}
+
+.qs-recent-remove:active {
+  transform: scale(0.96);
 }
 
 .qs-autocomplete-item strong {

@@ -66,6 +66,11 @@ export function rememberRecentAirport(current: string[], iata: string, limit = R
   return dedupeRecentAirports([normalizeIata(iata), ...current], limit);
 }
 
+export function forgetRecentAirport(current: string[], iata: string, limit = RECENT_AIRPORTS_LIMIT): string[] {
+  const target = normalizeIata(iata);
+  return dedupeRecentAirports(current.filter((item) => normalizeIata(item) !== target), limit);
+}
+
 export function buildRecentAirportSuggestions(
   recentAirports: string[],
   airportsByIata: Map<string, AirportIataEntry>,

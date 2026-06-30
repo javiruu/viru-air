@@ -28,6 +28,8 @@ import {
 } from "@/modules/quick-search/filterUtils";
 import { resolveQuickSearchPreferenceDefaults } from "@/modules/quick-search/preferences";
 import {
+  buildRecentAirportSuggestions,
+  forgetRecentAirport,
   readRecentAirports,
   rememberRecentAirport,
   writeRecentAirports,
@@ -1007,6 +1009,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
     return [];
   }, [fetchSeedAirports, pref?.language]);
+
+  const recentAirportSuggestions = useMemo(
+    () => buildRecentAirportSuggestions(recentAirports, airportsByIata, ""),
+    [airportsByIata, recentAirports],
+  );
 
   useEffect(() => {
     const value = origin.trim();
@@ -2247,6 +2254,13 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setRecentAirports(next);
   }, [recentAirports, setRecentAirports]);
 
+  const removeRecentAirportSelection = useCallback((iata: string) => {
+    const storage = typeof window !== "undefined" ? window.localStorage : null;
+    const next = writeRecentAirports(forgetRecentAirport(recentAirports, iata), storage);
+    setRecentAirports(next);
+    setActiveAutocompleteIndex(-1);
+  }, [recentAirports, setActiveAutocompleteIndex, setRecentAirports]);
+
   function selectAirport(iata: string) {
     setAirportSelectionTouched(true);
     const entry = airportsByIata.get(iata.trim().toUpperCase());
@@ -2946,10 +2960,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       </section>
     </div>
   ) : null;
+  const originVisibleSuggestions = origin.trim() ? originSuggestions : recentAirportSuggestions;
+  const destinationVisibleSuggestions = destination.trim() ? destinationSuggestions : recentAirportSuggestions;
   const activeSuggestions = activeAutocompleteField === "origin"
-    ? originSuggestions
+    ? originVisibleSuggestions
     : activeAutocompleteField === "destination"
-      ? destinationSuggestions
+      ? destinationVisibleSuggestions
       : [];
   const activeSuggestionId =
     activeAutocompleteField && activeAutocompleteIndex >= 0 && activeAutocompleteIndex < activeSuggestions.length
@@ -4045,26 +4061,26 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                     setOriginCountryOnly(null);
                     setOriginSelectedCountryCode(null);
                     setFieldErrors((prev) => ({ ...prev, origin_iata: undefined }));
-                    setActiveAutocompleteField(nextValue.trim() ? "origin" : null);
+                    setActiveAutocompleteField("origin");
                     setActiveAutocompleteIndex(-1);
                   }}
                   onKeyDown={(event) => {
                     if (event.key === "ArrowDown") {
                       event.preventDefault();
-                      if (originSuggestions.length === 0) return;
+                      if (originVisibleSuggestions.length === 0) return;
                       setActiveAutocompleteField("origin");
                       setActiveAutocompleteIndex((prev) => {
                         if (prev < 0) return 0;
-                        return (prev + 1) % originSuggestions.length;
+                        return (prev + 1) % originVisibleSuggestions.length;
                       });
                       return;
                     }
                     if (event.key === "ArrowUp") {
                       event.preventDefault();
-                      if (originSuggestions.length === 0) return;
+                      if (originVisibleSuggestions.length === 0) return;
                       setActiveAutocompleteField("origin");
                       setActiveAutocompleteIndex((prev) => {
-                        if (prev <= 0) return originSuggestions.length - 1;
+                        if (prev <= 0) return originVisibleSuggestions.length - 1;
                         return prev - 1;
                       });
                       return;
@@ -4076,8 +4092,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                     }
                     if (event.key === "Enter") {
                       const selected = activeAutocompleteField === "origin" && activeAutocompleteIndex >= 0
-                        ? originSuggestions[activeAutocompleteIndex]
-                        : originSuggestions[0] || null;
+                        ? originVisibleSuggestions[activeAutocompleteIndex]
+                        : originVisibleSuggestions[0] || null;
                       if (selected) {
                         event.preventDefault();
                         selectAutocompleteSuggestion("origin", selected.iata, true);
@@ -4116,25 +4132,50 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                     <circle cx="12" cy="9" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
                   </svg>
                 </button>
-                {activeAutocompleteField === "origin" && originSuggestions.length > 0 ? (
-                  <ul className="qs-autocomplete" id="origin-suggestions" role="listbox">
+                {activeAutocompleteField === "origin" && originVisibleSuggestions.length > 0 ? (
+                  <ul
+                    className={!origin.trim() ? "qs-autocomplete qs-autocomplete-recents" : "qs-autocomplete"}
+                    id="origin-suggestions"
+                    role="listbox"
+                  >
                     {!origin.trim() ? (
                       <li className="qs-autocomplete-group-label">{t("recentAutocompleteLabel")}</li>
                     ) : null}
-                    {originSuggestions.map((suggestion, index) => {
+                    {originVisibleSuggestions.map((suggestion, index) => {
                       const isActive = index === activeAutocompleteIndex;
                       return (
                         <li key={`origin-${suggestion.iata}`} role="option" aria-selected={isActive}>
-                          <button
-                            id={`origin-suggestion-${suggestion.iata}`}
-                            type="button"
-                            className={isActive ? "qs-autocomplete-item active" : "qs-autocomplete-item"}
-                            onMouseDown={(event) => event.preventDefault()}
-                            onClick={() => selectAutocompleteSuggestion("origin", suggestion.iata)}
-                          >
-                            <strong>{suggestion.iata}</strong>
-                            <span>{suggestion.name}</span>
-                          </button>
+                          <div className={!origin.trim() ? "qs-recent-row" : undefined}>
+                            <button
+                              id={`origin-suggestion-${suggestion.iata}`}
+                              type="button"
+                              className={isActive ? "qs-autocomplete-item active" : "qs-autocomplete-item"}
+                              onMouseDown={(event) => event.preventDefault()}
+                              onClick={() => selectAutocompleteSuggestion("origin", suggestion.iata)}
+                            >
+                              <strong>{suggestion.iata}</strong>
+                              <span>{suggestion.name}</span>
+                            </button>
+                            {!origin.trim() ? (
+                              <button
+                                type="button"
+                                className="qs-recent-remove"
+                                aria-label={t("removeRecentAirportAria").replace("{iata}", suggestion.iata)}
+                                onMouseDown={(event) => event.preventDefault()}
+                                onClick={() => removeRecentAirportSelection(suggestion.iata)}
+                              >
+                                <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+                                  <path
+                                    d="M7 7l10 10M17 7 7 17"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.8"
+                                    strokeLinecap="round"
+                                  />
+                                </svg>
+                              </button>
+                            ) : null}
+                          </div>
                         </li>
                       );
                     })}
@@ -4231,26 +4272,26 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                     setDestinationCountryOnly(null);
                     setDestinationSelectedCountryCode(null);
                     setFieldErrors((prev) => ({ ...prev, destination_iata: undefined }));
-                    setActiveAutocompleteField(nextValue.trim() ? "destination" : null);
+                    setActiveAutocompleteField("destination");
                     setActiveAutocompleteIndex(-1);
                   }}
                   onKeyDown={(event) => {
                     if (event.key === "ArrowDown") {
                       event.preventDefault();
-                      if (destinationSuggestions.length === 0) return;
+                      if (destinationVisibleSuggestions.length === 0) return;
                       setActiveAutocompleteField("destination");
                       setActiveAutocompleteIndex((prev) => {
                         if (prev < 0) return 0;
-                        return (prev + 1) % destinationSuggestions.length;
+                        return (prev + 1) % destinationVisibleSuggestions.length;
                       });
                       return;
                     }
                     if (event.key === "ArrowUp") {
                       event.preventDefault();
-                      if (destinationSuggestions.length === 0) return;
+                      if (destinationVisibleSuggestions.length === 0) return;
                       setActiveAutocompleteField("destination");
                       setActiveAutocompleteIndex((prev) => {
-                        if (prev <= 0) return destinationSuggestions.length - 1;
+                        if (prev <= 0) return destinationVisibleSuggestions.length - 1;
                         return prev - 1;
                       });
                       return;
@@ -4262,8 +4303,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                     }
                     if (event.key === "Enter") {
                       const selected = activeAutocompleteField === "destination" && activeAutocompleteIndex >= 0
-                        ? destinationSuggestions[activeAutocompleteIndex]
-                        : destinationSuggestions[0] || null;
+                        ? destinationVisibleSuggestions[activeAutocompleteIndex]
+                        : destinationVisibleSuggestions[0] || null;
                       if (selected) {
                         event.preventDefault();
                         selectAutocompleteSuggestion("destination", selected.iata, true);
@@ -4302,25 +4343,50 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                     <circle cx="12" cy="9" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
                   </svg>
                 </button>
-                {activeAutocompleteField === "destination" && destinationSuggestions.length > 0 ? (
-                  <ul className="qs-autocomplete" id="destination-suggestions" role="listbox">
+                {activeAutocompleteField === "destination" && destinationVisibleSuggestions.length > 0 ? (
+                  <ul
+                    className={!destination.trim() ? "qs-autocomplete qs-autocomplete-recents" : "qs-autocomplete"}
+                    id="destination-suggestions"
+                    role="listbox"
+                  >
                     {!destination.trim() ? (
                       <li className="qs-autocomplete-group-label">{t("recentAutocompleteLabel")}</li>
                     ) : null}
-                    {destinationSuggestions.map((suggestion, index) => {
+                    {destinationVisibleSuggestions.map((suggestion, index) => {
                       const isActive = index === activeAutocompleteIndex;
                       return (
                         <li key={`destination-${suggestion.iata}`} role="option" aria-selected={isActive}>
-                          <button
-                            id={`destination-suggestion-${suggestion.iata}`}
-                            type="button"
-                            className={isActive ? "qs-autocomplete-item active" : "qs-autocomplete-item"}
-                            onMouseDown={(event) => event.preventDefault()}
-                            onClick={() => selectAutocompleteSuggestion("destination", suggestion.iata)}
-                          >
-                            <strong>{suggestion.iata}</strong>
-                            <span>{suggestion.name}</span>
-                          </button>
+                          <div className={!destination.trim() ? "qs-recent-row" : undefined}>
+                            <button
+                              id={`destination-suggestion-${suggestion.iata}`}
+                              type="button"
+                              className={isActive ? "qs-autocomplete-item active" : "qs-autocomplete-item"}
+                              onMouseDown={(event) => event.preventDefault()}
+                              onClick={() => selectAutocompleteSuggestion("destination", suggestion.iata)}
+                            >
+                              <strong>{suggestion.iata}</strong>
+                              <span>{suggestion.name}</span>
+                            </button>
+                            {!destination.trim() ? (
+                              <button
+                                type="button"
+                                className="qs-recent-remove"
+                                aria-label={t("removeRecentAirportAria").replace("{iata}", suggestion.iata)}
+                                onMouseDown={(event) => event.preventDefault()}
+                                onClick={() => removeRecentAirportSelection(suggestion.iata)}
+                              >
+                                <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+                                  <path
+                                    d="M7 7l10 10M17 7 7 17"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.8"
+                                    strokeLinecap="round"
+                                  />
+                                </svg>
+                              </button>
+                            ) : null}
+                          </div>
                         </li>
                       );
                     })}
