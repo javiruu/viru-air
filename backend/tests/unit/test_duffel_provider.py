@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from app.domain.entities import ProviderSourceFetchError
@@ -15,12 +17,25 @@ class _FakeResponse:
         return self._payload
 
 
+class _InvalidJsonResponse(_FakeResponse):
+    def __init__(self) -> None:
+        super().__init__({})
+
+    def json(self) -> dict:
+        raise json.JSONDecodeError("Expecting value", "", 0)
+
+
 class _FakeSession:
     def __init__(self, payload: dict) -> None:
         self.payload = payload
 
     def post(self, *args, **kwargs) -> _FakeResponse:
         return _FakeResponse(self.payload)
+
+
+class _InvalidJsonSession:
+    def post(self, *args, **kwargs) -> _InvalidJsonResponse:
+        return _InvalidJsonResponse()
 
 
 def test_get_flights_raises_when_duffel_not_configured() -> None:
@@ -55,3 +70,15 @@ def test_get_flights_maps_offers_to_provider_flights() -> None:
     assert result.flights[0].currency == "EUR"
     assert result.flights[0].departure_time_local == "09:10"
     assert result.flights[0].source == "duffel-offers"
+
+
+def test_get_flights_raises_when_duffel_returns_non_json() -> None:
+    provider = DuffelProvider(api_key="duffel_test_key")
+    provider._session = _InvalidJsonSession()
+
+    with pytest.raises(ProviderSourceFetchError) as exc_info:
+        provider.get_flights("MAD", "JFK", "2026-06-14")
+
+    assert exc_info.value.provider_id == "duffel"
+    assert "duffel_provider_unavailable_total" in exc_info.value.warning_codes
+    assert "provider_total_outage" in exc_info.value.warning_codes

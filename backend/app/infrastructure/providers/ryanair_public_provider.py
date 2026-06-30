@@ -48,14 +48,14 @@ class RyanairPublicProvider(FlightProvider):
 
         try:
             availability = self._fetch_availability(origin, destination, travel_date, timeout_ms=timeout_ms, currency=currency)
-        except RequestsError:
+        except (RequestsError, ValueError):
             availability = []
             availability_error = True
             warnings.append("ryanair_availability_failed_partial")
 
         try:
             fares = self._fetch_one_way_fares(origin, destination, travel_date, timeout_ms=timeout_ms, currency=currency)
-        except RequestsError:
+        except (RequestsError, ValueError):
             fares = []
             fares_error = True
             warnings.append("ryanair_fares_failed_partial")

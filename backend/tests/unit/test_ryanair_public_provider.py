@@ -1,16 +1,30 @@
+import json
+
 import pytest
-import requests
 
 from app.core.time import utc_now_naive
 from app.domain.entities import ProviderFlight, ProviderSourceFetchError
-from app.infrastructure.providers.ryanair_public_provider import RyanairPublicProvider
+from app.infrastructure.providers.ryanair_public_provider import RequestsError, RyanairPublicProvider
+
+
+class _InvalidJsonResponse:
+    def raise_for_status(self) -> None:
+        return None
+
+    def json(self):
+        raise json.JSONDecodeError("Expecting value", "", 0)
+
+
+class _InvalidJsonSession:
+    def get(self, *args, **kwargs) -> _InvalidJsonResponse:
+        return _InvalidJsonResponse()
 
 
 def test_get_flights_falls_back_to_fares_when_availability_fails(monkeypatch: pytest.MonkeyPatch) -> None:
     provider = RyanairPublicProvider()
 
     def fake_availability(origin: str, destination: str, travel_date: str, *, timeout_ms: int, currency: str):
-        raise requests.HTTPError("409 conflict")
+        raise RequestsError("409 conflict")
 
     def fake_fares(origin: str, destination: str, travel_date: str, *, timeout_ms: int, currency: str):
         return [
@@ -37,10 +51,23 @@ def test_get_flights_raises_when_both_sources_fail(monkeypatch: pytest.MonkeyPat
     provider = RyanairPublicProvider()
 
     def fail(*args, **kwargs):
-        raise requests.Timeout("timeout")
+        raise RequestsError("timeout")
 
     monkeypatch.setattr(provider, "_fetch_availability", fail)
     monkeypatch.setattr(provider, "_fetch_one_way_fares", fail)
+
+    with pytest.raises(ProviderSourceFetchError) as exc_info:
+        provider.get_flights("MAD", "DUB", "2026-06-14")
+
+    assert "ryanair_availability_failed" in exc_info.value.warning_codes
+    assert "ryanair_fares_failed" in exc_info.value.warning_codes
+    assert "ryanair_provider_unavailable_total" in exc_info.value.warning_codes
+    assert "provider_total_outage" in exc_info.value.warning_codes
+
+
+def test_get_flights_raises_when_ryanair_sources_return_non_json() -> None:
+    provider = RyanairPublicProvider()
+    provider._session = _InvalidJsonSession()
 
     with pytest.raises(ProviderSourceFetchError) as exc_info:
         provider.get_flights("MAD", "DUB", "2026-06-14")
