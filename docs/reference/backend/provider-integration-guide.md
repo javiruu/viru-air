@@ -33,13 +33,21 @@ Implementar `FlightProvider` con:
 
 - Registrar la clase en `FlightProviderRegistry`.
 - Controlar habilitación por env:
-  - `FLIGHT_PROVIDER_ORDER` (default: `ryanair,duffel`)
+  - `FLIGHT_PROVIDER_ORDER` (default: `ryanair,vueling,wizzair,duffel`)
   - `FLIGHT_PROVIDER_<ID>_ENABLED` (default: true)
+  - Providers con credenciales propias pueden estar en el orden por defecto y no activarse si `is_enabled()` devuelve `false`.
 - El `FlightSearchOrchestrator` se encarga de:
   - ejecutar providers habilitados;
   - consolidar vuelos;
   - deduplicar resultados;
   - normalizar warnings estructurados y legacy.
+
+## Providers activos
+
+- `ryanair`: provider público sin credenciales.
+- `vueling`: provider FlightCalendar oficial. Requiere `VUELING_FLIGHTCALENDAR_TOKEN` y `VUELING_FLIGHTCALENDAR_PRICES_URL`; soporta alias `vy`.
+- `wizzair`: provider FareChart público/configurable.
+- `duffel`: provider API con `DUFFEL_API_KEY`.
 
 ## Warnings canónicos recomendados
 
