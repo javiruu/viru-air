@@ -10,9 +10,6 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import create_engine, inspect, text
-from sqlalchemy.exc import SQLAlchemyError
-
 
 def _literal_value(node: ast.expr) -> str | list[str] | None:
     if isinstance(node, ast.Constant):
@@ -135,6 +132,12 @@ def detect_untracked_migration_files(backend_root: Path) -> list[str]:
 
 
 def inspect_database_revision(db_url: str, known_revisions: Iterable[str]) -> dict[str, Any]:
+    try:
+        from sqlalchemy import create_engine, inspect, text
+        from sqlalchemy.exc import SQLAlchemyError
+    except (ImportError, AttributeError) as exc:
+        return {"status": "db_error", "db_url": db_url, "error": f"sqlalchemy_unavailable: {exc}"}
+
     engine = create_engine(db_url)
     known_revision_set = set(known_revisions)
     try:
