@@ -139,7 +139,16 @@ class VuelingProvider(FlightProvider):
             headers["Authorization"] = f"Bearer {token}"
         response = self._session.post(url, json=json_body, timeout=max(2.0, timeout_ms / 1000), headers=headers)
         response.raise_for_status()
-        return response.json()
+        try:
+            return response.json()
+        except ValueError as exc:
+            raise ProviderSourceFetchError(
+                warning_codes=["vueling_provider_unavailable_total", "provider_total_outage"],
+                message="Vueling provider returned a non-JSON response",
+                provider_id=self.provider_id,
+                severity="error",
+                meta={"reason": "invalid_json"},
+            ) from exc
 
     def _extract_flights(self, payload: list, search: _VuelingSearch) -> list[ProviderFlight]:
         flights: list[ProviderFlight] = []

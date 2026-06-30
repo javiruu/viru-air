@@ -1,8 +1,9 @@
+import json
+
 import pytest
-import requests
 
 from app.domain.entities import ProviderSourceFetchError
-from app.infrastructure.providers.vueling_provider import VuelingProvider
+from app.infrastructure.providers.vueling_provider import RequestsError, VuelingProvider
 
 
 class _FakeResponse:
@@ -14,6 +15,14 @@ class _FakeResponse:
 
     def json(self):
         return self._payload
+
+
+class _InvalidJsonResponse(_FakeResponse):
+    def __init__(self) -> None:
+        super().__init__(None)
+
+    def json(self):
+        raise json.JSONDecodeError("Expecting value", "", 0)
 
 
 def test_provider_is_enabled_without_api_credentials(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -160,12 +169,32 @@ def test_get_flights_raises_canonical_outage_when_request_fails(
     provider = VuelingProvider()
 
     def fake_post(*args, **kwargs):
-        raise requests.Timeout("timeout")
+        raise RequestsError("timeout")
 
     monkeypatch.setattr(provider._session, "post", fake_post)
 
     with pytest.raises(ProviderSourceFetchError) as exc_info:
         provider.get_flights("BCN", "ORY", "2026-07-14")
+
+    assert exc_info.value.provider_id == "vueling"
+    assert "vueling_provider_unavailable_total" in exc_info.value.warning_codes
+    assert "provider_total_outage" in exc_info.value.warning_codes
+
+
+def test_get_flights_raises_canonical_outage_when_availability_response_is_not_json(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider = VuelingProvider()
+
+    def fake_post(url: str, *, json, timeout: float, headers):
+        if url.endswith("/asm/v1/Auth"):
+            return _FakeResponse({"tokenType": "Bearer", "accessToken": "anonymous-token"})
+        return _InvalidJsonResponse()
+
+    monkeypatch.setattr(provider._session, "post", fake_post)
+
+    with pytest.raises(ProviderSourceFetchError) as exc_info:
+        provider.get_flights("LEI", "BZR", "2026-07-28")
 
     assert exc_info.value.provider_id == "vueling"
     assert "vueling_provider_unavailable_total" in exc_info.value.warning_codes
