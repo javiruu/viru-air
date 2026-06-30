@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from app.core.time import utc_now_naive
 from app.domain.entities import ProviderFetchResult
 from app.domain.vocabulary import WATCH_STATUS_ACTIVE
-from app.infrastructure.db.models import FlightWatch, PriceSnapshot, RevalidationJob
+from app.infrastructure.db.models import FlightWatch, RevalidationJob
 from app.infrastructure.providers.flight_provider import MultiSourceFlightProvider
 from app.services.quick_search_cache_service import (
     deserialize_fetch_result,
@@ -31,7 +31,10 @@ from app.services.revalidation_jobs import (
     find_active_revalidation_job,
 )
 from app.services.watchlist_refresh_policy import evaluate_route_freshness, latest_snapshot_by_watch_ids
-from app.services.watchlist_snapshots import select_canonical_refresh_flight
+from app.services.watchlist_snapshots import (
+    persist_changed_snapshots_for_watches,
+    select_canonical_refresh_flight,
+)
 
 logger = logging.getLogger("app.watchlist")
 
@@ -101,10 +104,8 @@ def enqueue_startup_refresh_jobs(
             now=reference_now,
             max_age_seconds=WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS,
         )
-        if not freshness.needs_refresh:
-            continue
-
-        stale_route_count += 1
+        if freshness.needs_refresh:
+            stale_route_count += 1
         origin_iata, destination_iata, travel_date_local = route_key
         target_fingerprint = route_fingerprint(origin_iata, destination_iata, travel_date_local)
         active_job = find_active_revalidation_job(
@@ -132,7 +133,7 @@ def enqueue_startup_refresh_jobs(
             target_type="route",
             target_fingerprint=target_fingerprint,
             provider=provider_name,
-            priority=15,
+            priority=15 if freshness.needs_refresh else 25,
             scheduled_at=reference_now,
             payload={
                 "origin_iata": origin_iata,
@@ -316,11 +317,11 @@ def revalidate_route(
         fetch_result = deserialize_fetch_result(cached_result.payload_json, cached_result.warnings_json)
         canonical_flight = select_canonical_refresh_flight(fetch_result.flights)
         if canonical_flight is not None:
-            _persist_snapshots_for_watches(
+            persisted_snapshot_count = persist_changed_snapshots_for_watches(
                 db,
                 watches=active_watches,
                 canonical_flight=canonical_flight,
-                now_provider=now_provider,
+                captured_at_utc=now_provider().replace(microsecond=0),
             )
             logger.info(
                 json.dumps(
@@ -331,6 +332,7 @@ def revalidate_route(
                         "date": travel_date_local.isoformat(),
                         "watch_count": len(active_watches),
                         "price": float(canonical_flight.price),
+                        "persisted_snapshot_count": persisted_snapshot_count,
                     },
                     ensure_ascii=False,
                 )
@@ -380,11 +382,11 @@ def revalidate_route(
     if canonical_flight is None:
         return RouteRevalidationResult(status="no_flights", watch_count=len(active_watches), source="provider")
 
-    _persist_snapshots_for_watches(
+    persisted_snapshot_count = persist_changed_snapshots_for_watches(
         db,
         watches=active_watches,
         canonical_flight=canonical_flight,
-        now_provider=now_provider,
+        captured_at_utc=now_provider().replace(microsecond=0),
     )
     logger.info(
         json.dumps(
@@ -395,36 +397,12 @@ def revalidate_route(
                 "date": travel_date_local.isoformat(),
                 "watch_count": len(active_watches),
                 "price": float(canonical_flight.price),
+                "persisted_snapshot_count": persisted_snapshot_count,
             },
             ensure_ascii=False,
         )
     )
     return RouteRevalidationResult(status="refreshed", watch_count=len(active_watches), source="provider")
-
-
-def _persist_snapshots_for_watches(
-    db: Session,
-    *,
-    watches: list[FlightWatch],
-    canonical_flight,
-    now_provider=utc_now_naive,
-) -> None:
-    captured_at_utc = now_provider().replace(microsecond=0)
-    db.add_all(
-        [
-            PriceSnapshot(
-                watch_id=watch.id,
-                captured_at_utc=captured_at_utc,
-                departure_time_local=canonical_flight.departure_time_local,
-                raw_price=canonical_flight.price,
-                raw_currency=canonical_flight.currency,
-                provider=canonical_flight.source,
-            )
-            for watch in watches
-        ]
-    )
-    db.commit()
-
 
 def _get_cached_refresh_result(
     db: Session,

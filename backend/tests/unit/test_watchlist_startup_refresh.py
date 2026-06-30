@@ -150,12 +150,13 @@ def test_enqueue_startup_refresh_jobs_deduplicates_shared_route_and_selects_stal
 
         assert report["evaluated_route_count"] == 2
         assert report["stale_route_count"] == 1
-        assert report["enqueued_job_count"] == 1
-        assert len(jobs) == 1
+        assert report["enqueued_job_count"] == 2
+        assert len(jobs) == 2
         assert jobs[0].job_type == "startup_refresh"
         assert jobs[0].target_fingerprint == f"route:MAD:DUB:{travel_date.isoformat()}"
         assert report["jobs"][0]["watch_count"] == 2
         assert report["jobs"][0]["reason"] == "snapshot_expired"
+        assert report["jobs"][1]["reason"] == "fresh"
     finally:
         db.close()
         db._test_engine.dispose()  # type: ignore[attr-defined]
