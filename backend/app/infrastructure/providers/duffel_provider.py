@@ -68,7 +68,7 @@ class DuffelProvider(FlightProvider):
             )
             resp.raise_for_status()
             body = resp.json()
-        except requests.RequestException as exc:
+        except (requests.RequestException, ValueError) as exc:
             raise ProviderSourceFetchError(
                 warning_codes=["duffel_provider_unavailable_total", "provider_total_outage"],
                 message=f"Duffel provider unavailable for {origin}->{destination} on {travel_date}",

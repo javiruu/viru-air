@@ -104,7 +104,7 @@ class WizzAirProvider(FlightProvider):
             t0 = time.perf_counter()
             try:
                 body = self._fetch_farechart(origin, destination, travel_date, timeout_ms=timeout_ms)
-            except RequestsError as exc:
+            except (RequestsError, ValueError) as exc:
                 elapsed = int((time.perf_counter() - t0) * 1000)
                 logger.warning(
                     "wizzair_fetch_failed route=%s->%s date=%s elapsed_ms=%s error=%s",
