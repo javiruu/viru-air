@@ -1,5 +1,14 @@
 # History
 
+## 2026-06-30 — Vueling como provider de vuelos configurable
+
+- Quick Search puede cargar `vueling`/`vy` como provider adicional mediante `FlightProviderRegistry`.
+- El provider usa FlightCalendar oficial cuando existen `VUELING_FLIGHTCALENDAR_TOKEN` y `VUELING_FLIGHTCALENDAR_PRICES_URL`; sin credenciales no se activa, igual que otros providers configurables.
+- Los resultados Vueling mapean precio, moneda, hora local, source `vueling-flight-calendar` y deeplink oficial de búsqueda.
+- Verificacion: provider + registry + orquestador + quick-search cercano -> 47 passed.
+
+---
+
 ## 2026-06-30 — Panel local autorepara dependencias backend corruptas
 
 - `iniciar_viru.ps1` ahora captura la salida real de la auditoria Alembic, detecta instalaciones Python incompletas o corruptas y repara `backend/.venv` una vez antes de abortar.
