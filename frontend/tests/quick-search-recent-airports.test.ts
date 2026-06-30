@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildRecentAirportSuggestions,
   dedupeRecentAirports,
+  forgetRecentAirport,
   readRecentAirports,
   rememberRecentAirport,
   writeRecentAirports,
@@ -41,6 +42,13 @@ test("rememberRecentAirport moves latest selection to the front", () => {
   assert.deepEqual(
     rememberRecentAirport(["MAD", "BCN", "LIS"], "bcn"),
     ["BCN", "MAD", "LIS"],
+  );
+});
+
+test("forgetRecentAirport removes one normalized recent without disturbing the rest", () => {
+  assert.deepEqual(
+    forgetRecentAirport(["MAD", "bcn", "LIS", "MAD"], "BCN"),
+    ["MAD", "LIS"],
   );
 });
 
