@@ -240,26 +240,12 @@ export function useQuickSearchScreenState({
   const zeroResultActions = useMemo(() => {
     if (providerTotalOutage) return [];
     const actions: Array<{ id: ZeroResultRelaxAction; label: string }> = [];
-    if (strictFilters) actions.push({ id: "disable_strict", label: t("emptyActionDisableStrict") });
-    if (durationMaxNumber !== null) actions.push({ id: "increase_duration", label: t("emptyActionIncreaseDuration") });
-    if (!radiusActive || radiusKm < 150) actions.push({ id: "open_radius_150", label: t("emptyActionOpenRadius") });
-    if (daysBefore < 2 || daysAfter < 2) actions.push({ id: "open_date_flex", label: t("emptyActionDateFlex") });
-    if (excludeOriginsCount > 0 || excludeDestinationsCount > 0) {
-      actions.push({ id: "clear_exclusions", label: t("emptyActionClearExclusions") });
-    }
+    actions.push({ id: "try_plus_1_day", label: t("emptyActionTryPlus1Day") });
+    actions.push({ id: "open_nearby", label: t("emptyActionOpenNearby") });
+    actions.push({ id: "max_coverage", label: t("emptyActionMaxCoverage") });
+    actions.push({ id: "open_more_options", label: t("emptyActionMoreOptions") });
     return actions;
-  }, [
-    strictFilters,
-    durationMaxNumber,
-    radiusActive,
-    radiusKm,
-    daysBefore,
-    daysAfter,
-    excludeOriginsCount,
-    excludeDestinationsCount,
-    providerTotalOutage,
-    t,
-  ]);
+  }, [providerTotalOutage, t]);
 
   return {
     durationMaxNumber,

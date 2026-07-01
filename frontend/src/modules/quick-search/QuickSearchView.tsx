@@ -85,7 +85,6 @@ import {
 } from "@/modules/quick-search/api/buildQuickSearchRequest";
 import { buildQuickSearchSaveResultPayload } from "@/modules/quick-search/api/buildSaveResultPayload";
 import { QuickSearchDatePicker } from "@/modules/quick-search/components/QuickSearchDatePicker";
-import { QuickSearchFilterConsole } from "@/modules/quick-search/components/QuickSearchFilterConsole";
 import { QuickSearchResultsWorkspace } from "@/modules/quick-search/components/QuickSearchResultsWorkspace";
 import { QuickSearchSummaryChips, type QuickSearchSummaryChip } from "@/modules/quick-search/components/QuickSearchSummaryChips";
 import { QuickSearchAdvancedDrawer } from "@/modules/quick-search/components/QuickSearchAdvancedDrawer";
@@ -150,6 +149,10 @@ const RELAX_HIGHLIGHT_BY_ACTION: Record<ZeroResultRelaxAction, Exclude<SummaryHi
   open_radius_150: "radius",
   clear_exclusions: "exclusions",
   open_date_flex: "date_flex",
+  try_plus_1_day: "date_flex",
+  open_nearby: "radius",
+  max_coverage: "radius",
+  open_more_options: "advanced",
 };
 
 const IATA_TO_MAC: Record<string, string> = {
@@ -3733,19 +3736,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     activeChips.forEach((chip) => chip.onClear());
   }, [activeChips]);
 
-  const filterConsoleHasErrors = Boolean(
-    fieldErrors.price_min || fieldErrors.price_max || fieldErrors.duration_max || fieldErrors.buffer_min,
-  );
-  const shouldAutoExpandFilterConsole = filterConsoleHasErrors || (prefBadge && activeChips.length >= 3);
-  const [isFilterConsoleExpanded, setIsFilterConsoleExpanded] = useState(false);
-  useEffect(() => {
-    if (shouldAutoExpandFilterConsole) {
-      setIsFilterConsoleExpanded(true);
-    }
-  }, [shouldAutoExpandFilterConsole]);
-  const toggleFilterConsoleExpanded = useCallback(() => {
-    setIsFilterConsoleExpanded((value) => !value);
-  }, []);
 
   const [relaxPreviewOpen, setRelaxPreviewOpen] = useState(false);
 
@@ -3806,11 +3796,15 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       setIncludeNearbyOrigins(undoPayload.includeNearbyOrigins);
       setIncludeNearbyDestinations(undoPayload.includeNearbyDestinations);
       setRadiusKm(undoPayload.radiusKm);
-    } else if (undoPayload.action === "open_date_flex") {
+    } else if (undoPayload.action === "open_date_flex" || undoPayload.action === "try_plus_1_day") {
       setDaysBefore(undoPayload.daysBefore);
       setDaysAfter(undoPayload.daysAfter);
       setApplyFlexReturn(undoPayload.applyFlexReturn);
-    } else {
+    } else if (undoPayload.action === "open_nearby" || undoPayload.action === "max_coverage") {
+      setIncludeNearbyOrigins(undoPayload.includeNearbyOrigins);
+      setIncludeNearbyDestinations(undoPayload.includeNearbyDestinations);
+      setRadiusKm(undoPayload.radiusKm);
+    } else if (undoPayload.action === "clear_exclusions") {
       setExcludeOrigins(undoPayload.excludeOrigins);
       setExcludeDestinations(undoPayload.excludeDestinations);
       setExcludeOriginInput(undoPayload.excludeOriginInput);
@@ -3840,12 +3834,16 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const onZeroResultRelaxAction = useCallback((action: ZeroResultRelaxAction) => {
     trackEvent("quicksearch_zero_results_relax_clicked", { action });
     const actionLabelMap: Record<ZeroResultRelaxAction, string> = {
-      disable_strict: t("emptyActionDisableStrict"),
-      increase_duration: t("emptyActionIncreaseDuration"),
-      open_radius_150: t("emptyActionOpenRadius"),
-      clear_exclusions: t("emptyActionClearExclusions"),
-      open_date_flex: t("emptyActionDateFlex"),
-    };
+        disable_strict: t("emptyActionDisableStrict"),
+        increase_duration: t("emptyActionIncreaseDuration"),
+        open_radius_150: t("emptyActionOpenRadius"),
+        clear_exclusions: t("emptyActionClearExclusions"),
+        open_date_flex: t("emptyActionDateFlex"),
+        try_plus_1_day: t("emptyActionTryPlus1Day"),
+        open_nearby: t("emptyActionOpenNearby"),
+        max_coverage: t("emptyActionMaxCoverage"),
+        open_more_options: t("emptyActionMoreOptions"),
+      };
 
     if (action === "disable_strict") {
       relaxUndoRef.current = { action, strictFilters };
@@ -3855,37 +3853,37 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       relaxUndoRef.current = { action, durationMax };
       setDurationMax(String(durationMaxNumber + 60));
     } else if (action === "open_radius_150") {
-      relaxUndoRef.current = {
-        action,
-        includeNearbyOrigins,
-        includeNearbyDestinations,
-        radiusKm,
-      };
+      relaxUndoRef.current = { action, includeNearbyOrigins, includeNearbyDestinations, radiusKm };
       setIncludeNearbyOrigins(true);
       setIncludeNearbyDestinations(true);
       setRadiusKm(150);
     } else if (action === "open_date_flex") {
-      relaxUndoRef.current = {
-        action,
-        daysBefore,
-        daysAfter,
-        applyFlexReturn,
-      };
+      relaxUndoRef.current = { action, daysBefore, daysAfter, applyFlexReturn };
       setDaysBefore(Math.max(2, daysBefore));
       setDaysAfter(Math.max(2, daysAfter));
       setApplyFlexReturn(true);
-    } else {
-      relaxUndoRef.current = {
-        action,
-        excludeOrigins,
-        excludeDestinations,
-        excludeOriginInput,
-        excludeDestinationInput,
-      };
+    } else if (action === "clear_exclusions") {
+      relaxUndoRef.current = { action, excludeOrigins, excludeDestinations, excludeOriginInput, excludeDestinationInput };
       setExcludeOrigins([]);
       setExcludeDestinations([]);
       setExcludeOriginInput("");
       setExcludeDestinationInput("");
+    } else if (action === "try_plus_1_day") {
+      relaxUndoRef.current = { action, daysBefore, daysAfter, applyFlexReturn };
+      setDaysBefore(1);
+      setDaysAfter(1);
+    } else if (action === "open_nearby") {
+      relaxUndoRef.current = { action, includeNearbyOrigins, includeNearbyDestinations, radiusKm };
+      setIncludeNearbyOrigins(true);
+      setIncludeNearbyDestinations(true);
+    } else if (action === "max_coverage") {
+      relaxUndoRef.current = { action, includeNearbyOrigins, includeNearbyDestinations, radiusKm };
+      setIncludeNearbyOrigins(true);
+      setIncludeNearbyDestinations(true);
+      setRadiusKm(250);
+    } else if (action === "open_more_options") {
+      setIsAdvancedOpen(true);
+      return; // UI action only
     }
 
     setSummaryHighlightKey(RELAX_HIGHLIGHT_BY_ACTION[action]);
@@ -4856,63 +4854,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         </div>
         <span className="sr-only" aria-live="polite">{autocompleteLiveText}</span>
 
-        <QuickSearchFilterConsole
-          activeChips={activeChips}
-          activeFiltersCount={activeChips.length}
-          appliedFiltersCount={hasSearched ? activeChips.length : 0}
-          pendingSearchChanges={pendingActionVisibility.consoleAction}
-          isFiltersOpen={isFiltersOpen}
-          isCollapsed={!isFilterConsoleExpanded}
-          radiusActive={radiusActive}
-          radiusKm={radiusKm}
-          includeStops={includeStops}
-          maxStops={maxStops}
-          bufferMin={bufferMin}
-          includeNearbyOrigins={includeNearbyOrigins}
-          includeNearbyDestinations={includeNearbyDestinations}
-          departAfter={departAfter}
-          departBefore={departBefore}
-          strictFilters={strictFilters}
-          excludeOrigins={excludeOrigins}
-          excludeDestinations={excludeDestinations}
-          excludeOriginInput={excludeOriginInput}
-          excludeDestinationInput={excludeDestinationInput}
-          prefAvailable={Boolean(pref)}
-          prefBadge={prefBadge}
-          fieldErrors={fieldErrors}
-          filtersCloseRef={filtersCloseRef}
-          t={t}
-          setRadiusKm={updateRadiusKm}
-          setIncludeStops={setIncludeStops}
-          setMaxStops={setMaxStops}
-          setBufferMin={setBufferMin}
-          setIncludeNearbyOrigins={setIncludeNearbyOrigins}
-          setIncludeNearbyDestinations={setIncludeNearbyDestinations}
-          setDepartAfter={setDepartAfter}
-          setDepartBefore={setDepartBefore}
-          setStrictFilters={setStrictFilters}
-          setExcludeOrigins={setExcludeOrigins}
-          setExcludeDestinations={setExcludeDestinations}
-          setExcludeOriginInput={setExcludeOriginInput}
-          setExcludeDestinationInput={setExcludeDestinationInput}
-          addExcludeOrigin={commitExcludeOriginInput}
-          addExcludeDestination={commitExcludeDestinationInput}
-          removeExcludeOrigin={removeExcludeOriginChip}
-          removeExcludeDestination={removeExcludeDestinationChip}
-          onOpenFilters={openFiltersFromConsole}
-          onCloseFilters={closeFiltersDrawer}
-          onToggleCollapsed={toggleFilterConsoleExpanded}
-          onApplyAndSearch={runSearch}
-          onApplyPreferences={applyPreferences}
-          onClearAllFilters={clearAllFilters}
-          onResetCoverage={resetCoverageFilters}
-          onResetTiming={resetTimingFilters}
-          onResetExperimental={resetExperimentalFilters}
-          onPresetDirect={applyDirectCoveragePreset}
-          onPresetOriginNearby={applyOriginNearbyPreset}
-          onPresetBothNearby={applyBothNearbyPreset}
-          onPresetRegional={applyRegionalCoveragePreset}
-        />
+        
 
         <QuickSearchAdvancedDrawer
           isOpen={isAdvancedOpen}
