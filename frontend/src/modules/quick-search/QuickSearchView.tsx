@@ -89,6 +89,7 @@ import { QuickSearchFilterConsole } from "@/modules/quick-search/components/Quic
 import { QuickSearchResultsWorkspace } from "@/modules/quick-search/components/QuickSearchResultsWorkspace";
 import { QuickSearchSummaryChips, type QuickSearchSummaryChip } from "@/modules/quick-search/components/QuickSearchSummaryChips";
 import { QuickSearchAdvancedDrawer } from "@/modules/quick-search/components/QuickSearchAdvancedDrawer";
+import { QuickSearchNearbyBand } from "@/modules/quick-search/components/QuickSearchNearbyBand";
 
 import { QuickSearchPostFilters } from "@/modules/quick-search/components/QuickSearchPostFilters";import {
   AirportIataEntry,
@@ -4551,6 +4552,174 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             </label>
           </div>
         </div>
+        
+        <QuickSearchNearbyBand
+          includeNearbyOrigins={includeNearbyOrigins}
+          includeNearbyDestinations={includeNearbyDestinations}
+          radiusKm={radiusKm}
+          t={t}
+          setIncludeNearbyOrigins={setIncludeNearbyOrigins}
+          setIncludeNearbyDestinations={setIncludeNearbyDestinations}
+          setRadiusKm={updateRadiusKm}
+        />
+<div className="qs-passengers">
+          <span>{t("passengers")}</span>
+          <small className="qs-search-hint qs-passengers-copy">{t("passengersHint")}</small>
+          <div className="qs-stepper" aria-label={t("passengersStepperAria").replace("{count}", String(adults))}>
+            <button
+              type="button"
+              aria-label={t("passengersStepperDecrease")}
+              onClick={() => changeAdults(-1)}
+              disabled={adults <= 1}
+            >
+              -
+            </button>
+            <span className="qs-stepper-value" aria-live="polite">
+              <strong>{adults}</strong>
+              <small>{passengersSummaryLabel}</small>
+            </span>
+            <button
+              type="button"
+              aria-label={t("passengersStepperIncrease")}
+              onClick={() => changeAdults(1)}
+              disabled={adults >= 9}
+            >
+              +
+            </button>
+          </div>
+          <small className="qs-search-hint qs-passengers-note">{t("passengersBaseFareHint")}</small>
+        </div>
+
+        <div className={`qs-date-grid${isReturn ? " has-return" : ""}`}>
+          <label className="date-field qs-label">
+            <span>
+              {t("dateLabel")}
+              <span className="qs-tip" data-tip={t("dateTip")} tabIndex={0} role="note" aria-label={t("dateTip")}>
+                <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.8" />
+                  <path d="M12 16.2v.2M9.8 9.2a2.2 2.2 0 1 1 3.3 1.9c-.8.5-1.1.9-1.1 1.8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              </span>
+            </span>
+            <QuickSearchDatePicker
+              name="travel_date"
+              label={t("dateLabel")}
+              value={travelDate}
+              placeholder={t("placeholderDates")}
+              localeTag={localeTag}
+              variant="outbound"
+              min={minTravelDate}
+              dayHintsByIso={calendarHintsActive?.dayHintsByIso || {}}
+              hintsLoading={calendarHintsLoadingKey === calendarHintsRequestKey}
+              showCountryEstimateBadge={canRequestCalendarHints && hasCountryScopeForCalendarHints}
+              hintScopeMode={calendarHintsActive?.scopeMode || calendarHintsScopeMode}
+              onVisibleMonthChange={setCalendarVisibleMonth}
+              invalid={(dateTouched && !travelDate) || Boolean(fieldErrors.travel_date)}
+              onBlur={() => setDateTouched(true)}
+              onChange={(value) => {
+                setTravelDate(value);
+                setCalendarVisibleMonth(monthFromDateIso(value));
+                if (isReturn && returnDate && value && returnDate < value) {
+                  setReturnDate("");
+                  setReturnDateTouched(true);
+                  setCalendarVisibleMonthReturn(monthFromDateIso(value));
+                  setFieldErrors((prev) => ({
+                    ...prev,
+                    travel_date: undefined,
+                    return_date: t("returnResetAfterOutboundChange"),
+                  }));
+                  return;
+                }
+                setFieldErrors((prev) => ({
+                  ...prev,
+                  travel_date: undefined,
+                  ...(prev.return_date ? { return_date: undefined } : {}),
+                }));
+              }}
+            />
+            {(dateTouched && !travelDate) || fieldErrors.travel_date ? (
+              <small className="qs-error">{fieldErrors.travel_date || t("selectOutbound")}</small>
+            ) : null}
+          </label>
+
+          <label className="qs-check qs-check-inline qs-roundtrip-toggle">
+            <input
+              type="checkbox"
+              name="is_return"
+              checked={isReturn}
+              onChange={(e) => {
+                const nextChecked = e.target.checked;
+                setIsReturn(nextChecked);
+                setReturnDateTouched(false);
+                setSearchError((current) => (
+                  current === t("selectReturn") || current === t("returnBefore") ? null : current
+                ));
+                if (!nextChecked) {
+                  setReturnDate("");
+                  setApplyFlexReturn(false);
+                  setFieldErrors((prev) => ({ ...prev, return_date: undefined }));
+                  return;
+                }
+                setFieldErrors((prev) => ({ ...prev, return_date: undefined }));
+              }}
+            />
+            <span className="qs-check-ui" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+                <path
+                  d="M5.5 12.5 10 17l8.5-9"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+            <span className="qs-roundtrip-copy">
+              <strong>{t("roundTrip")}</strong>
+              <small className="qs-search-hint">{roundTripHelperCopy}</small>
+            </span>
+          </label>
+
+          {isReturn ? (
+            <label className="date-field qs-label">
+              <span>{t("returnLabel")}</span>
+              <QuickSearchDatePicker
+                name="return_date"
+                label={t("returnLabel")}
+                value={returnDate}
+                placeholder={t("placeholderDates")}
+                localeTag={localeTag}
+                variant="return"
+                dayHintsByIso={calendarHintsActiveReturn?.dayHintsByIso || {}}
+                hintsLoading={calendarHintsLoadingKeyReturn === calendarHintsRequestKeyReturn}
+                showCountryEstimateBadge={canRequestCalendarHints && hasCountryScopeForCalendarHints}
+                hintScopeMode={calendarHintsActiveReturn?.scopeMode || calendarHintsScopeMode}
+                onVisibleMonthChange={setCalendarVisibleMonthReturn}
+                min={travelDate || undefined}
+                invalid={(returnDateTouched && !returnDate) || Boolean(fieldErrors.return_date) || returnDateInvalid}
+                onBlur={() => setReturnDateTouched(true)}
+                onChange={(value) => {
+                  setReturnDate(value);
+                  setCalendarVisibleMonthReturn(monthFromDateIso(value));
+                  setReturnDateTouched(true);
+                  setFieldErrors((prev) => ({
+                    ...prev,
+                    return_date: value && travelDate && value < travelDate ? t("returnBefore") : undefined,
+                  }));
+                }}
+              />
+              {(returnDateTouched && !returnDate) || fieldErrors.return_date || returnDateInvalid ? (
+                <small className="qs-error">
+                  {fieldErrors.return_date || (returnDateInvalid ? t("returnBefore") : t("selectReturn"))}
+                </small>
+              ) : tripType === "round_trip_incomplete" ? (
+                <small className="qs-search-hint qs-return-hint">{t("selectReturnHint")}</small>
+              ) : null}
+            </label>
+          ) : null}
+        </div>
+
         <div className="qs-flex-row">
           <div className="qs-flex-control">
             <div className="qs-flex-header">
@@ -4687,164 +4856,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         </div>
         <span className="sr-only" aria-live="polite">{autocompleteLiveText}</span>
 
-        <div className={`qs-date-grid${isReturn ? " has-return" : ""}`}>
-          <label className="date-field qs-label">
-            <span>
-              {t("dateLabel")}
-              <span className="qs-tip" data-tip={t("dateTip")} tabIndex={0} role="note" aria-label={t("dateTip")}>
-                <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                  <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.8" />
-                  <path d="M12 16.2v.2M9.8 9.2a2.2 2.2 0 1 1 3.3 1.9c-.8.5-1.1.9-1.1 1.8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
-              </span>
-            </span>
-            <QuickSearchDatePicker
-              name="travel_date"
-              label={t("dateLabel")}
-              value={travelDate}
-              placeholder={t("placeholderDates")}
-              localeTag={localeTag}
-              variant="outbound"
-              min={minTravelDate}
-              dayHintsByIso={calendarHintsActive?.dayHintsByIso || {}}
-              hintsLoading={calendarHintsLoadingKey === calendarHintsRequestKey}
-              showCountryEstimateBadge={canRequestCalendarHints && hasCountryScopeForCalendarHints}
-              hintScopeMode={calendarHintsActive?.scopeMode || calendarHintsScopeMode}
-              onVisibleMonthChange={setCalendarVisibleMonth}
-              invalid={(dateTouched && !travelDate) || Boolean(fieldErrors.travel_date)}
-              onBlur={() => setDateTouched(true)}
-              onChange={(value) => {
-                setTravelDate(value);
-                setCalendarVisibleMonth(monthFromDateIso(value));
-                if (isReturn && returnDate && value && returnDate < value) {
-                  setReturnDate("");
-                  setReturnDateTouched(true);
-                  setCalendarVisibleMonthReturn(monthFromDateIso(value));
-                  setFieldErrors((prev) => ({
-                    ...prev,
-                    travel_date: undefined,
-                    return_date: t("returnResetAfterOutboundChange"),
-                  }));
-                  return;
-                }
-                setFieldErrors((prev) => ({
-                  ...prev,
-                  travel_date: undefined,
-                  ...(prev.return_date ? { return_date: undefined } : {}),
-                }));
-              }}
-            />
-            {(dateTouched && !travelDate) || fieldErrors.travel_date ? (
-              <small className="qs-error">{fieldErrors.travel_date || t("selectOutbound")}</small>
-            ) : null}
-          </label>
-
-          <label className="qs-check qs-check-inline qs-roundtrip-toggle">
-            <input
-              type="checkbox"
-              name="is_return"
-              checked={isReturn}
-              onChange={(e) => {
-                const nextChecked = e.target.checked;
-                setIsReturn(nextChecked);
-                setReturnDateTouched(false);
-                setSearchError((current) => (
-                  current === t("selectReturn") || current === t("returnBefore") ? null : current
-                ));
-                if (!nextChecked) {
-                  setReturnDate("");
-                  setApplyFlexReturn(false);
-                  setFieldErrors((prev) => ({ ...prev, return_date: undefined }));
-                  return;
-                }
-                setFieldErrors((prev) => ({ ...prev, return_date: undefined }));
-              }}
-            />
-            <span className="qs-check-ui" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                <path
-                  d="M5.5 12.5 10 17l8.5-9"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-            <span className="qs-roundtrip-copy">
-              <strong>{t("roundTrip")}</strong>
-              <small className="qs-search-hint">{roundTripHelperCopy}</small>
-            </span>
-          </label>
-
-          {isReturn ? (
-            <label className="date-field qs-label">
-              <span>{t("returnLabel")}</span>
-              <QuickSearchDatePicker
-                name="return_date"
-                label={t("returnLabel")}
-                value={returnDate}
-                placeholder={t("placeholderDates")}
-                localeTag={localeTag}
-                variant="return"
-                dayHintsByIso={calendarHintsActiveReturn?.dayHintsByIso || {}}
-                hintsLoading={calendarHintsLoadingKeyReturn === calendarHintsRequestKeyReturn}
-                showCountryEstimateBadge={canRequestCalendarHints && hasCountryScopeForCalendarHints}
-                hintScopeMode={calendarHintsActiveReturn?.scopeMode || calendarHintsScopeMode}
-                onVisibleMonthChange={setCalendarVisibleMonthReturn}
-                min={travelDate || undefined}
-                invalid={(returnDateTouched && !returnDate) || Boolean(fieldErrors.return_date) || returnDateInvalid}
-                onBlur={() => setReturnDateTouched(true)}
-                onChange={(value) => {
-                  setReturnDate(value);
-                  setCalendarVisibleMonthReturn(monthFromDateIso(value));
-                  setReturnDateTouched(true);
-                  setFieldErrors((prev) => ({
-                    ...prev,
-                    return_date: value && travelDate && value < travelDate ? t("returnBefore") : undefined,
-                  }));
-                }}
-              />
-              {(returnDateTouched && !returnDate) || fieldErrors.return_date || returnDateInvalid ? (
-                <small className="qs-error">
-                  {fieldErrors.return_date || (returnDateInvalid ? t("returnBefore") : t("selectReturn"))}
-                </small>
-              ) : tripType === "round_trip_incomplete" ? (
-                <small className="qs-search-hint qs-return-hint">{t("selectReturnHint")}</small>
-              ) : null}
-            </label>
-          ) : null}
-        </div>
-
-        <div className="qs-passengers">
-          <span>{t("passengers")}</span>
-          <small className="qs-search-hint qs-passengers-copy">{t("passengersHint")}</small>
-          <div className="qs-stepper" aria-label={t("passengersStepperAria").replace("{count}", String(adults))}>
-            <button
-              type="button"
-              aria-label={t("passengersStepperDecrease")}
-              onClick={() => changeAdults(-1)}
-              disabled={adults <= 1}
-            >
-              -
-            </button>
-            <span className="qs-stepper-value" aria-live="polite">
-              <strong>{adults}</strong>
-              <small>{passengersSummaryLabel}</small>
-            </span>
-            <button
-              type="button"
-              aria-label={t("passengersStepperIncrease")}
-              onClick={() => changeAdults(1)}
-              disabled={adults >= 9}
-            >
-              +
-            </button>
-          </div>
-          <small className="qs-search-hint qs-passengers-note">{t("passengersBaseFareHint")}</small>
-        </div>
-
         <QuickSearchFilterConsole
           activeChips={activeChips}
           activeFiltersCount={activeChips.length}
@@ -4910,6 +4921,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           departAfter={departAfter}
           departBefore={departBefore}
           strictFilters={strictFilters}
+          includeStops={includeStops}
+          maxStops={maxStops}
+          bufferMin={bufferMin}
           excludeOrigins={excludeOrigins}
           excludeDestinations={excludeDestinations}
           excludeOriginInput={excludeOriginInput}
@@ -4919,6 +4933,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           setDepartAfter={setDepartAfter}
           setDepartBefore={setDepartBefore}
           setStrictFilters={setStrictFilters}
+          setIncludeStops={setIncludeStops}
+          setMaxStops={setMaxStops}
+          setBufferMin={setBufferMin}
           setExcludeOriginInput={setExcludeOriginInput}
           setExcludeDestinationInput={setExcludeDestinationInput}
           addExcludeOrigin={commitExcludeOriginInput}
