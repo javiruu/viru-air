@@ -87,6 +87,7 @@ import { buildQuickSearchSaveResultPayload } from "@/modules/quick-search/api/bu
 import { QuickSearchDatePicker } from "@/modules/quick-search/components/QuickSearchDatePicker";
 import { QuickSearchFilterConsole } from "@/modules/quick-search/components/QuickSearchFilterConsole";
 import { QuickSearchResultsWorkspace } from "@/modules/quick-search/components/QuickSearchResultsWorkspace";
+import { QuickSearchSummaryChips, type QuickSearchSummaryChip } from "@/modules/quick-search/components/QuickSearchSummaryChips";
 import {
   AirportIataEntry,
   CountryAirports,
@@ -3192,6 +3193,83 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     plusThree: t("flexPresetThree"),
     customTemplate: t("flexCustomSummary"),
   });
+  const compactSummaryChips = useMemo<QuickSearchSummaryChip[]>(() => {
+    const chips: QuickSearchSummaryChip[] = [];
+    const routeLabel = origin.trim() && destination.trim()
+      ? `${origin.trim().toUpperCase()} -> ${destination.trim().toUpperCase()}`
+      : `${summaryOriginLabel} -> ${summaryDestinationLabel}`;
+    chips.push({
+      id: "route",
+      label: `${t("summaryRouteExact")}: ${routeLabel}`,
+      tone: "route",
+    });
+    if (includeNearbyOrigins) {
+      chips.push({ id: "nearby-origin", label: t("summaryNearbyOrigin"), tone: "search" });
+    }
+    if (includeNearbyDestinations) {
+      chips.push({ id: "nearby-destination", label: t("summaryNearbyDestination"), tone: "search" });
+    }
+    if (radiusActive) {
+      chips.push({
+        id: "radius",
+        label: t("summaryDistanceUpTo").replace("{km}", String(radiusKm)),
+        tone: "search",
+      });
+    }
+    if (travelDate) {
+      chips.push({ id: "date", label: `${t("summaryExactDateChip")}: ${summaryDate}`, tone: "route" });
+    }
+    if (daysBefore > 0 || daysAfter > 0) {
+      if (daysBefore === daysAfter) {
+        chips.push({
+          id: "date-flex",
+          label: t("summaryFlexChip").replace("{days}", `+/-${daysBefore}`),
+          tone: "search",
+        });
+      } else {
+        chips.push({
+          id: "date-flex-custom",
+          label: t("summaryFlexCustomChip").replace("{before}", String(daysBefore)).replace("{after}", String(daysAfter)),
+          tone: "search",
+        });
+      }
+    }
+    chips.push({ id: "passengers", label: passengersSummaryLabel, tone: "route" });
+    if (includeStops) {
+      chips.push({ id: "separate-flights", label: t("summarySeparateFlights"), tone: "advanced" });
+    }
+    if (!strictFilters) {
+      chips.push({ id: "incomplete-info", label: t("summaryIncompleteInfo"), tone: "advanced" });
+    }
+    const avoidedIata = Array.from(new Set([...excludeOrigins, ...excludeDestinations])).join(", ");
+    if (avoidedIata) {
+      chips.push({
+        id: "avoids",
+        label: t("summaryAvoids").replace("{iata}", avoidedIata),
+        tone: "result",
+      });
+    }
+    return chips;
+  }, [
+    origin,
+    destination,
+    summaryOriginLabel,
+    summaryDestinationLabel,
+    includeNearbyOrigins,
+    includeNearbyDestinations,
+    radiusActive,
+    radiusKm,
+    daysBefore,
+    daysAfter,
+    travelDate,
+    summaryDate,
+    passengersSummaryLabel,
+    includeStops,
+    strictFilters,
+    excludeOrigins,
+    excludeDestinations,
+    t,
+  ]);
   const effectiveFlexCustomPanelOpen = flexCustomPanelOpen || flexPreset === "custom";
   const flexHelperText = effectiveFlexCustomPanelOpen
     ? t("flexHelperCustom")
@@ -4871,6 +4949,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           </div>
           ) : null}
         </div>
+        <QuickSearchSummaryChips title={t("quickSummaryTitle")} chips={compactSummaryChips} />
         </QuickSearchSearchForm>
       </section>
 
