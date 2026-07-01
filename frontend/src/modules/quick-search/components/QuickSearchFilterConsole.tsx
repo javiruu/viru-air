@@ -100,12 +100,11 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
   const coverageSummary = props.radiusActive
     ? `${props.radiusKm} km`
     : props.t("filterCoverageDirect");
-  const rulesSummary = `${props.departAfter || "--"}-${props.departBefore || "--"}`;
+  const rulesSummary = `${props.departAfter || "--"}-${props.departBefore || "--"} · ${props.includeStops ? props.t("filterExperimentalOn") : props.t("filterExperimentalOff")}`;
   const visibleSummary =
     props.priceMin || props.priceMax || props.durationMax
       ? props.t("filterVisibleCustom")
       : props.t("filterVisibleOpen");
-  const experimentalSummary = props.includeStops ? props.t("filterExperimentalOn") : props.t("filterExperimentalOff");
   const consoleSubtitle = props.radiusActive ? props.t("filterConsoleSubtitleFlex") : props.t("filterConsoleSubtitleExact");
 
   const drawer = (
@@ -147,8 +146,8 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
             <div className="qs-filter-section-head">
               <div>
                 <span className="qs-filter-eyebrow">{props.t("filterAppliedOnSearch")}</span>
-                <h3>{props.t("coverageTitle")}</h3>
-                <p>{props.t("coverageBody")}</p>
+                <h3>Dónde puede buscar Viru</h3>
+                <p>Amplía la búsqueda a aeropuertos cercanos o excluye los que no te interesen.</p>
               </div>
               <div className="qs-filter-section-actions">
                 {props.prefBadge ? <span className="badge badge-control">{props.t("appliedPref")}</span> : null}
@@ -307,12 +306,14 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
             <div className="qs-filter-section-head">
               <div>
                 <span className="qs-filter-eyebrow">{props.t("filterAppliedOnSearch")}</span>
-                <h3>{props.t("tripRulesTitle")}</h3>
-                <p>{props.t("tripRulesBody")}</p>
+                <h3>Qué vuelos te valen</h3>
+                <p>Horarios, escalas y cómo de estricta es la búsqueda.</p>
               </div>
-              <button type="button" className="btn-ghost btn-compact" onClick={props.onResetTiming} data-ui="qs-filter-reset-timing">
-                {props.t("resetGroup")}
-              </button>
+              <div className="qs-filter-section-actions">
+                <button type="button" className="btn-ghost btn-compact" onClick={() => { props.onResetTiming(); props.onResetExperimental(); }} data-ui="qs-filter-reset-rules">
+                  {props.t("resetGroup")}
+                </button>
+              </div>
             </div>
             <div className="qs-filter-grid">
               <label className="field">
@@ -353,16 +354,66 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
                 </span>
                 {props.t("strictMode")}
               </label>
+              <hr className="qs-filter-divider" />
+              <label className="qs-check" data-ui="qs-filter-include-stops">
+                <input
+                  type="checkbox"
+                  name="include_stops"
+                  checked={props.includeStops}
+                  onChange={(e) => props.setIncludeStops(e.target.checked)}
+                />
+                <span className="qs-check-ui" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+                    <path d="M5.5 12.5 10 17l8.5-9" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+                {props.t("includeStops")}
+              </label>
+              <label className="field">
+                {props.t("maxStops")}
+                <select
+                  name="max_stops"
+                  autoComplete="off"
+                  value={props.maxStops}
+                  onChange={(e) => props.setMaxStops(Number(e.target.value))}
+                  className="qs-input"
+                  disabled={!props.includeStops}
+                  data-ui="qs-filter-max-stops"
+                >
+                  <option value={1}>{props.t("stopsOne")}</option>
+                  <option value={2}>{props.t("stopsTwo")}</option>
+                </select>
+              </label>
+              <label className="field">
+                {props.t("bufferMin")}
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  name="buffer_min"
+                  autoComplete="off"
+                  value={props.bufferMin}
+                  onChange={(e) => props.setBufferMin(e.target.value)}
+                  placeholder="45"
+                  className="qs-input"
+                  disabled={!props.includeStops}
+                  aria-invalid={Boolean(props.fieldErrors.buffer_min)}
+                  data-ui="qs-filter-buffer-min"
+                />
+                {props.fieldErrors.buffer_min ? <small className="qs-error">{props.fieldErrors.buffer_min}</small> : null}
+                <small className="muted">{props.t("bufferMinHint")}</small>
+              </label>
             </div>
             {!props.strictFilters ? <div className="qs-warning">{props.t("strictWarning")}</div> : null}
+            <div className="qs-warning qs-warning-warm">{props.t("selfConnectWarning")}</div>
           </section>
 
           <section className="qs-filter-group qs-filter-group-guided" data-ui="qs-filter-visible-results">
             <div className="qs-filter-section-head">
               <div>
                 <span className="qs-filter-eyebrow">{props.t("filterAppliedToResults")}</span>
-                <h3>{props.t("visibleResultsTitle")}</h3>
-                <p>{props.t("visibleResultsBody")}</p>
+                <h3>Cómo ver resultados</h3>
+                <p>Ordena y filtra los vuelos encontrados.</p>
               </div>
               <button type="button" className="btn-ghost btn-compact" onClick={props.onResetVisible} data-ui="qs-filter-reset-visible">
                 {props.t("resetGroup")}
@@ -438,70 +489,6 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
               </label>
             </div>
           </section>
-
-          <section className="qs-filter-group qs-filter-group-guided qs-filter-group-partial" data-ui="qs-filter-experimental">
-            <div className="qs-filter-section-head">
-              <div>
-                <span className="qs-filter-eyebrow">{props.t("filterPartialSupport")}</span>
-                <h3>{props.t("stopsTitle")}</h3>
-                <p>{props.t("stopsSubtitle")}</p>
-              </div>
-              <button type="button" className="btn-ghost btn-compact" onClick={props.onResetExperimental} data-ui="qs-filter-reset-experimental">
-                {props.t("resetGroup")}
-              </button>
-            </div>
-            <div className="qs-filter-grid">
-              <label className="qs-check" data-ui="qs-filter-include-stops">
-                <input
-                  type="checkbox"
-                  name="include_stops"
-                  checked={props.includeStops}
-                  onChange={(e) => props.setIncludeStops(e.target.checked)}
-                />
-                <span className="qs-check-ui" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                    <path d="M5.5 12.5 10 17l8.5-9" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                {props.t("includeStops")}
-              </label>
-              <label className="field">
-                {props.t("maxStops")}
-                <select
-                  name="max_stops"
-                  autoComplete="off"
-                  value={props.maxStops}
-                  onChange={(e) => props.setMaxStops(Number(e.target.value))}
-                  className="qs-input"
-                  disabled={!props.includeStops}
-                  data-ui="qs-filter-max-stops"
-                >
-                  <option value={1}>{props.t("stopsOne")}</option>
-                  <option value={2}>{props.t("stopsTwo")}</option>
-                </select>
-              </label>
-              <label className="field">
-                {props.t("bufferMin")}
-                <input
-                  type="number"
-                  min={0}
-                  step={1}
-                  name="buffer_min"
-                  autoComplete="off"
-                  value={props.bufferMin}
-                  onChange={(e) => props.setBufferMin(e.target.value)}
-                  placeholder="45"
-                  className="qs-input"
-                  disabled={!props.includeStops}
-                  aria-invalid={Boolean(props.fieldErrors.buffer_min)}
-                  data-ui="qs-filter-buffer-min"
-                />
-                {props.fieldErrors.buffer_min ? <small className="qs-error">{props.fieldErrors.buffer_min}</small> : null}
-                <small className="muted">{props.t("bufferMinHint")}</small>
-              </label>
-            </div>
-            <div className="qs-warning qs-warning-warm">{props.t("selfConnectWarning")}</div>
-          </section>
         </div>
 
         <div className="qs-filter-actions">
@@ -555,25 +542,20 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
       </div>
 
       {!props.isCollapsed ? <div className="qs-filter-console-grid">
-        <button type="button" className="qs-filter-console-card" onClick={props.onOpenFilters} data-ui="qs-filter-card-coverage" aria-label={props.t("coverageTitle")}>
-          <span>{props.t("coverageTitle")}</span>
+        <button type="button" className="qs-filter-console-card" onClick={props.onOpenFilters} data-ui="qs-filter-card-coverage" aria-label="Dónde puede buscar Viru">
+          <span>Dónde puede buscar Viru</span>
           <strong>{coverageSummary}</strong>
           <SupportBadge tone="live">{props.t("filterAppliedOnSearch")}</SupportBadge>
         </button>
-        <button type="button" className="qs-filter-console-card" onClick={props.onOpenFilters} data-ui="qs-filter-card-rules" aria-label={props.t("tripRulesTitle")}>
-          <span>{props.t("tripRulesTitle")}</span>
+        <button type="button" className="qs-filter-console-card" onClick={props.onOpenFilters} data-ui="qs-filter-card-rules" aria-label="Qué vuelos te valen">
+          <span>Qué vuelos te valen</span>
           <strong>{rulesSummary}</strong>
           <SupportBadge tone="live">{props.strictFilters ? props.t("summaryStrictOn") : props.t("summaryStrictOff")}</SupportBadge>
         </button>
-        <button type="button" className="qs-filter-console-card" onClick={props.onOpenFilters} data-ui="qs-filter-card-visible" aria-label={props.t("visibleResultsTitle")}>
-          <span>{props.t("visibleResultsTitle")}</span>
+        <button type="button" className="qs-filter-console-card" onClick={props.onOpenFilters} data-ui="qs-filter-card-visible" aria-label="Cómo ver resultados">
+          <span>Cómo ver resultados</span>
           <strong>{visibleSummary}</strong>
           <SupportBadge>{props.t("filterAppliedToResults")}</SupportBadge>
-        </button>
-        <button type="button" className="qs-filter-console-card" onClick={props.onOpenFilters} data-ui="qs-filter-card-stops" aria-label={props.t("stopsTitle")}>
-          <span>{props.t("stopsTitle")}</span>
-          <strong>{experimentalSummary}</strong>
-          <SupportBadge tone="partial">{props.t("filterPartialSupport")}</SupportBadge>
         </button>
       </div> : null}
 
