@@ -208,6 +208,59 @@ Rules:
 
 ---
 
+## Frontend component guidance: shadcn/ui
+
+shadcn/ui is a known, preferred option for reusable frontend primitives in Viru Tracker, especially when the user explicitly asks for "shadcn", "shadcn/ui", "usa cosas de shadcn", "utiliza shadcn", or similar wording. It is not the design authority for Viru Tracker, and it must not override the product identity, existing design contract, or local component patterns by default.
+
+Current repo state:
+
+- Frontend app root: `/frontend`.
+- Stack: Next.js 15, React 19, TypeScript, custom CSS modules/files under `/frontend/src/styles`.
+- Package manager: npm, with `/frontend/package-lock.json`.
+- Alias: `@/*` maps to `/frontend/src/*`.
+- shadcn/ui is not currently initialized: no `/frontend/components.json` was present when this guidance was written.
+- `/frontend/src/components/ui` exists, but currently contains project UI such as `map.tsx`; do not assume it is a shadcn-generated component library.
+- No shared `/frontend/src/lib/utils.ts` or `cn` helper was present when this guidance was written.
+- Tailwind was not configured when this guidance was written; no Tailwind config or Tailwind dependency was present in `/frontend/package.json`.
+
+Usage rules:
+
+- When the user explicitly asks for shadcn/ui, use shadcn/ui components where they fit the requested UI.
+- When creating new frontend, consider shadcn/ui for common primitives before hand-rolling another generic button/input/dialog pattern.
+- Prefer existing Viru Tracker components and established local patterns before adding new shadcn/ui components.
+- Do not force shadcn/ui if a project-specific component already fits better, if the requested change is small, or if adding shadcn would create excessive setup or visual churn.
+- Do not run a mass migration to shadcn/ui without an explicit task asking for that migration.
+- Do not replace existing UI only to "normalize" it to shadcn/ui.
+- Keep Viru Tracker's warm aeronautical identity, dual-theme direction, motion character, spacing rhythm, and existing visual hierarchy.
+- If a needed shadcn/ui component is missing, add it with the official shadcn CLI from `/frontend` using npm.
+- If shadcn/ui must be initialized for a task, initialize it minimally and verify the generated paths, aliases, Tailwind setup, tokens, and `cn` helper before using generated imports.
+
+Good shadcn/ui candidates:
+
+- Buttons, inputs, textareas, checkboxes, radios, switches, selects, tabs, badges, alerts, skeletons, simple cards, dialogs, sheets, dropdown menus, popovers, tooltips, toasts, and simple forms.
+
+Do not force shadcn/ui for:
+
+- Highly specific Viru Tracker surfaces, already-designed layouts, aviation/radar/route visuals, map components, timeline and fare intelligence views, custom empty states, complex domain flows, or logic-heavy components already encapsulated in the app.
+
+Command examples:
+
+```bash
+cd frontend
+npm exec shadcn@latest -- init
+npm exec shadcn@latest -- add button input card dialog sheet dropdown-menu select tabs badge alert skeleton form
+```
+
+Style guardrails:
+
+- Use Tailwind together with shadcn/ui when shadcn is introduced for a task.
+- Preserve existing project tokens and CSS variables when they exist; adapt shadcn components to Viru's tokens instead of hardcoding a new palette.
+- Avoid hardcoding new colors, radii, shadows, or base spacing unless the task truly requires it.
+- Do not introduce global visual changes as a side effect of adding one component.
+- Do not change themes, radius, base colors, global CSS, or the overall design system unless the user explicitly asks for that scope.
+
+---
+
 ## Verification standard
 
 Use the smallest set of checks that can prove the change safely.
