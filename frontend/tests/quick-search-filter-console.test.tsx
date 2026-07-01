@@ -9,6 +9,10 @@ const copy: Record<string, string> = {
   filterConsoleEyebrow: "Control",
   filterConsoleTitle: "Consola",
   filterConsoleSubtitle: "Ajusta filtros",
+  filterConsoleSubtitleExact: "Modo exacto",
+  filterConsoleSubtitleFlex: "Mirando cercanos",
+  filterConsoleToggleOpen: "Ver ajustes",
+  filterConsoleToggleClose: "Ocultar ajustes",
   filterCountLabel: "activos",
   toolbarFilters: "Filtros",
   coverageTitle: "Cobertura",
@@ -50,6 +54,7 @@ test("QuickSearchFilterConsole renders grouped summaries and active chips", () =
       appliedFiltersCount={1}
       pendingSearchChanges={true}
       isFiltersOpen={false}
+      isCollapsed={false}
       radiusActive={true}
       radiusKm={150}
       priceMin=""
@@ -96,6 +101,7 @@ test("QuickSearchFilterConsole renders grouped summaries and active chips", () =
       removeExcludeDestination={noop}
       onOpenFilters={noop}
       onCloseFilters={noop}
+      onToggleCollapsed={noop}
       onApplyAndSearch={noop}
       onApplyPreferences={noop}
       onClearAllFilters={noop}
@@ -111,6 +117,7 @@ test("QuickSearchFilterConsole renders grouped summaries and active chips", () =
   );
 
   assert.match(html, /Consola/);
+  assert.match(html, /Ocultar ajustes/);
   assert.match(html, /Cobertura/);
   assert.match(html, /Resultados visibles/);
   assert.match(html, /Cambios sin aplicar/);

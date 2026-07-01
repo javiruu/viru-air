@@ -16,6 +16,7 @@ type FilterConsoleProps = {
   appliedFiltersCount: number;
   pendingSearchChanges: boolean;
   isFiltersOpen: boolean;
+  isCollapsed: boolean;
   radiusActive: boolean;
   radiusKm: number;
   priceMin: string;
@@ -62,6 +63,7 @@ type FilterConsoleProps = {
   removeExcludeDestination: (iata: string) => void;
   onOpenFilters: () => void;
   onCloseFilters: () => void;
+  onToggleCollapsed: () => void;
   onApplyAndSearch: () => void;
   onApplyPreferences: () => void;
   onClearAllFilters: () => void;
@@ -104,6 +106,7 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
       ? props.t("filterVisibleCustom")
       : props.t("filterVisibleOpen");
   const experimentalSummary = props.includeStops ? props.t("filterExperimentalOn") : props.t("filterExperimentalOff");
+  const consoleSubtitle = props.radiusActive ? props.t("filterConsoleSubtitleFlex") : props.t("filterConsoleSubtitleExact");
 
   const drawer = (
     <>
@@ -519,12 +522,12 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
   );
 
   return (
-    <section className="panel panel-soft qs-filter-console" data-ui="qs-filter-console">
+    <section className={`panel panel-soft qs-filter-console ${props.isCollapsed ? "is-collapsed" : ""}`} data-ui="qs-filter-console">
       <div className="qs-filter-console-head">
         <div>
           <span className="qs-filter-eyebrow">{props.t("filterConsoleEyebrow")}</span>
           <h3>{props.t("filterConsoleTitle")}</h3>
-          <p>{props.t("filterConsoleSubtitle")}</p>
+          <p>{consoleSubtitle}</p>
         </div>
         <div className="qs-filter-console-actions">
           <span className="qs-filter-count" data-ui="qs-filter-count">
@@ -536,13 +539,22 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
               {props.t("resetAll")}
             </button>
           ) : null}
+          <button
+            type="button"
+            className="btn-ghost btn-compact"
+            aria-expanded={!props.isCollapsed}
+            onClick={props.onToggleCollapsed}
+            data-ui="qs-filter-console-toggle"
+          >
+            {props.isCollapsed ? props.t("filterConsoleToggleOpen") : props.t("filterConsoleToggleClose")}
+          </button>
           <button type="button" className="btn-ghost btn-compact" onClick={props.onOpenFilters} data-ui="qs-filter-open">
             {props.t("toolbarFilters")}
           </button>
         </div>
       </div>
 
-      <div className="qs-filter-console-grid">
+      {!props.isCollapsed ? <div className="qs-filter-console-grid">
         <button type="button" className="qs-filter-console-card" onClick={props.onOpenFilters} data-ui="qs-filter-card-coverage" aria-label={props.t("coverageTitle")}>
           <span>{props.t("coverageTitle")}</span>
           <strong>{coverageSummary}</strong>
@@ -563,14 +575,14 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
           <strong>{experimentalSummary}</strong>
           <SupportBadge tone="partial">{props.t("filterPartialSupport")}</SupportBadge>
         </button>
-      </div>
+      </div> : null}
 
-      <div className="qs-filter-mode-legend" aria-live="polite">
+      {!props.isCollapsed ? <div className="qs-filter-mode-legend" aria-live="polite">
         <span className="qs-filter-mode-chip">{props.t("filterAppliedOnSearch")}</span>
         <span className="qs-filter-mode-chip">{props.t("filterAppliedToResults")}</span>
-      </div>
+      </div> : null}
 
-      {props.pendingSearchChanges ? (
+      {!props.isCollapsed && props.pendingSearchChanges ? (
         <div className="qs-filter-pending" role="status" aria-live="polite" data-ui="qs-filter-pending">
           <div>
             <strong>{props.t("pendingChangesTitle")}</strong>
@@ -596,6 +608,7 @@ function areFilterConsolePropsEqual(prev: FilterConsoleProps, next: FilterConsol
     && prev.appliedFiltersCount === next.appliedFiltersCount
     && prev.pendingSearchChanges === next.pendingSearchChanges
     && prev.isFiltersOpen === next.isFiltersOpen
+    && prev.isCollapsed === next.isCollapsed
     && prev.radiusActive === next.radiusActive
     && prev.radiusKm === next.radiusKm
     && prev.priceMin === next.priceMin
@@ -642,6 +655,7 @@ function areFilterConsolePropsEqual(prev: FilterConsoleProps, next: FilterConsol
     && prev.removeExcludeDestination === next.removeExcludeDestination
     && prev.onOpenFilters === next.onOpenFilters
     && prev.onCloseFilters === next.onCloseFilters
+    && prev.onToggleCollapsed === next.onToggleCollapsed
     && prev.onApplyAndSearch === next.onApplyAndSearch
     && prev.onApplyPreferences === next.onApplyPreferences
     && prev.onClearAllFilters === next.onClearAllFilters

@@ -3734,6 +3734,20 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     activeChips.forEach((chip) => chip.onClear());
   }, [activeChips]);
 
+  const filterConsoleHasErrors = Boolean(
+    fieldErrors.price_min || fieldErrors.price_max || fieldErrors.duration_max || fieldErrors.buffer_min,
+  );
+  const shouldAutoExpandFilterConsole = filterConsoleHasErrors || (prefBadge && activeChips.length >= 3);
+  const [isFilterConsoleExpanded, setIsFilterConsoleExpanded] = useState(false);
+  useEffect(() => {
+    if (shouldAutoExpandFilterConsole) {
+      setIsFilterConsoleExpanded(true);
+    }
+  }, [shouldAutoExpandFilterConsole]);
+  const toggleFilterConsoleExpanded = useCallback(() => {
+    setIsFilterConsoleExpanded((value) => !value);
+  }, []);
+
   const [relaxPreviewOpen, setRelaxPreviewOpen] = useState(false);
 
   const relaxPreviewChanges = useMemo(() => {
@@ -4839,6 +4853,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           appliedFiltersCount={hasSearched ? activeChips.length : 0}
           pendingSearchChanges={pendingActionVisibility.consoleAction}
           isFiltersOpen={isFiltersOpen}
+          isCollapsed={!isFilterConsoleExpanded}
           radiusActive={radiusActive}
           radiusKm={radiusKm}
           priceMin={priceMin}
@@ -4885,6 +4900,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           removeExcludeDestination={removeExcludeDestinationChip}
           onOpenFilters={openFiltersFromConsole}
           onCloseFilters={closeFiltersDrawer}
+          onToggleCollapsed={toggleFilterConsoleExpanded}
           onApplyAndSearch={runSearch}
           onApplyPreferences={applyPreferences}
           onClearAllFilters={clearAllFilters}

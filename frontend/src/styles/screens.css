@@ -17200,6 +17200,10 @@ textarea::placeholder {
     inset 0 1px 0 rgba(255, 255, 255, 0.48);
 }
 
+.qs-filter-console.is-collapsed {
+  gap: 0.38rem;
+}
+
 .qs-filter-console-head,
 .qs-filter-section-head,
 .qs-filter-pending,
