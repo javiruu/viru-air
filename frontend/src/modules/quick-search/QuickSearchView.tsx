@@ -4560,9 +4560,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           setIncludeNearbyDestinations={setIncludeNearbyDestinations}
           setRadiusKm={updateRadiusKm}
         />
-<div className="qs-passengers">
-          <span>{t("passengers")}</span>
-          <small className="qs-search-hint qs-passengers-copy">{t("passengersHint")}</small>
+        <div className="qs-passengers">
+          <div className="qs-passengers-copy">
+            <span className="qs-passengers-title">{t("passengers")}</span>
+            <small className="qs-search-hint">{t("passengersHint")}</small>
+          </div>
           <div className="qs-stepper" aria-label={t("passengersStepperAria").replace("{count}", String(adults))}>
             <button
               type="button"
