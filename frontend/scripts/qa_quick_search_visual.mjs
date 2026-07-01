@@ -59,7 +59,7 @@ try {
     await waitForStableQuickSearch(page);
 
     const pageFileName = `snapshots_quick-search-${vp.name}.png`;
-    const panelFileName = `snapshots_quick-search-filters-${vp.name}.png`;
+    const panelFileName = `snapshots_quick-search-advanced-${vp.name}.png`;
     const pageTarget = path.join(qaDir, pageFileName);
     const panelTarget = path.join(qaDir, panelFileName);
     const pickerVisible = await page.locator('[data-ui="qs-date-picker-v2"]').first().count();
@@ -74,31 +74,38 @@ try {
       resultsVisible = await page.locator(".qs-result-row").count();
     }
 
-    const openFilters = page.locator('[data-ui="qs-filter-open"]').first();
-    await openFilters.click();
-    const drawer = page.locator('[data-ui="qs-filter-drawer"]');
+    const openAdvanced = page.locator('[data-ui="qs-summary-chips-more"]').first();
+    await openAdvanced.click();
+    const drawer = page.locator('[data-ui="qs-advanced-drawer"]');
     await drawer.waitFor({ state: "visible", timeout: 10000 });
     await page.waitForTimeout(220);
+    const includeStops = drawer.locator('[data-ui="qs-filter-include-stops"] input').first();
+    if (!(await includeStops.isChecked())) {
+      await drawer.locator('[data-ui="qs-filter-include-stops"]').first().click();
+      await page.waitForTimeout(120);
+    }
 
     const panelMetrics = await page.evaluate(() => {
-      const drawer = document.querySelector('[data-ui="qs-filter-drawer"]');
+      const drawer = document.querySelector('[data-ui="qs-advanced-drawer"]');
       const close = drawer?.querySelector(".qs-filters-close");
-      const priceMin = drawer?.querySelector('[data-ui="qs-filter-price-min"]');
-      const priceMax = drawer?.querySelector('[data-ui="qs-filter-price-max"]');
-      const durationMax = drawer?.querySelector('[data-ui="qs-filter-duration-max"]');
-      const risk = drawer?.querySelector('[data-ui="qs-filter-risk"]');
-      const sort = drawer?.querySelector('[data-ui="qs-filter-sort"]');
+      const includeStops = drawer?.querySelector('[data-ui="qs-filter-include-stops"] input');
       const maxStops = drawer?.querySelector('[data-ui="qs-filter-max-stops"]');
-      const resetVisible = drawer?.querySelector('[data-ui="qs-filter-reset-visible"]');
-      const activeBadge = document.querySelector('[data-ui="qs-filter-count"]');
-      if (!drawer || !close || !priceMin || !priceMax || !durationMax || !risk || !sort || !maxStops || !resetVisible || !activeBadge) {
+      const bufferMin = drawer?.querySelector('[data-ui="qs-filter-buffer-min"]');
+      const excludeOrigins = drawer?.querySelector('[data-ui="qs-filter-exclude-origins"]');
+      const excludeDestinations = drawer?.querySelector('[data-ui="qs-filter-exclude-destinations"]');
+      const departAfter = drawer?.querySelector('[data-ui="qs-filter-depart-after"]');
+      const departBefore = drawer?.querySelector('[data-ui="qs-filter-depart-before"]');
+      const strict = drawer?.querySelector('[data-ui="qs-filter-strict"] input');
+      const resetVisible = drawer?.querySelector('[data-ui="qs-filter-reset-advanced"]');
+      const summaryPanel = document.querySelector('[data-ui="qs-summary-chips"]');
+      if (!drawer || !close || !includeStops || !maxStops || !bufferMin || !excludeOrigins || !excludeDestinations || !departAfter || !departBefore || !strict || !resetVisible || !summaryPanel) {
         return { ok: false };
       }
       const viewportW = window.innerWidth;
       const viewportH = window.innerHeight;
       const dr = drawer.getBoundingClientRect();
       const cr = close.getBoundingClientRect();
-      const controls = [priceMin, priceMax, durationMax, risk, sort].map((el) => {
+      const controls = [maxStops, bufferMin, excludeOrigins, excludeDestinations, departAfter, departBefore].map((el) => {
         const r = el.getBoundingClientRect();
         return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, height: r.height };
       });
@@ -110,10 +117,7 @@ try {
         }
       }
       const drawerStyle = window.getComputedStyle(drawer);
-      const badgeStyle = window.getComputedStyle(activeBadge);
-      const maxStopsDisabled = maxStops.hasAttribute("disabled");
-      const riskText = risk.tagName === "SELECT" ? risk.options[risk.selectedIndex]?.text ?? "" : "";
-      const sortText = sort.tagName === "SELECT" ? sort.options[sort.selectedIndex]?.text ?? "" : "";
+      const summaryStyle = window.getComputedStyle(summaryPanel);
       return {
         ok: true,
         drawerFullyVisible: dr.left >= 0 && dr.top >= 0 && dr.right <= viewportW && dr.bottom <= viewportH,
@@ -125,34 +129,33 @@ try {
         controlsAnyTooNarrow: controls.some((c) => c.width < 120),
         contentBottomReachable: resetVisible.getBoundingClientRect().bottom <= dr.bottom + 1,
         focusOutlineVisible: true,
-        maxStopsDisabled,
-        activeBadgeVisible: badgeStyle.visibility !== "hidden" && badgeStyle.opacity !== "0",
-        riskText,
-        sortText,
+        includeStopsChecked: includeStops.checked,
+        strictChecked: strict.checked,
+        summaryPanelVisible: summaryStyle.visibility !== "hidden" && summaryStyle.opacity !== "0",
       };
     });
 
-    await page.locator('[data-ui="qs-filter-price-min"]').first().focus();
+    await page.locator('[data-ui="qs-filter-buffer-min"]').first().focus();
     const focusVisible = await page.evaluate(() => {
-      const drawer = document.querySelector('[data-ui="qs-filter-drawer"]');
-      const input = drawer?.querySelector('[data-ui="qs-filter-price-min"]');
+      const drawer = document.querySelector('[data-ui="qs-advanced-drawer"]');
+      const input = drawer?.querySelector('[data-ui="qs-filter-buffer-min"]');
       if (!drawer || !input) return false;
       const dr = drawer.getBoundingClientRect();
       const ir = input.getBoundingClientRect();
       return ir.left >= dr.left && ir.right <= dr.right && ir.top >= dr.top && ir.bottom <= dr.bottom;
     });
 
-    await page.locator('[data-ui="qs-filter-drawer"]').evaluate((el) => {
+    await page.locator('[data-ui="qs-advanced-drawer"]').evaluate((el) => {
       el.scrollTop = el.scrollHeight;
     });
     await page.waitForTimeout(120);
     const bottomReachableAfterScroll = await page.evaluate(() => {
-      const drawer = document.querySelector('[data-ui="qs-filter-drawer"]');
-      const apply = drawer?.querySelector('[data-ui="qs-filter-apply-preferences"]');
-      if (!drawer || !apply) return false;
+      const drawer = document.querySelector('[data-ui="qs-advanced-drawer"]');
+      const reset = drawer?.querySelector('[data-ui="qs-filter-reset-advanced"]');
+      if (!drawer || !reset) return false;
       const dr = drawer.getBoundingClientRect();
-      const ar = apply.getBoundingClientRect();
-      return ar.bottom <= dr.bottom + 2;
+      const rr = reset.getBoundingClientRect();
+      return rr.bottom <= dr.bottom + 2;
     });
 
     let previousPageHash = null;

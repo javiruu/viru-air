@@ -2190,14 +2190,14 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     }
   }
 
-  function navigateToWatchlistWithContext(origin?: string, destination?: string, travelDate?: string) {
+  const navigateToWatchlistWithContext = useCallback((origin?: string, destination?: string, travelDate?: string) => {
     const url = buildWatchlistUrl({
       origin: origin || "",
       destination: destination || "",
       travelDate: travelDate || "",
     });
     router.push(url);
-  }
+  }, [router]);
 
   async function addToWatchlist(result: SearchResult) {
     setMessage("");
@@ -3078,7 +3078,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       });
       saveCombination.reset();
     }
-  }, [notify, saveCombination, t]);
+  }, [destination, navigateToWatchlistWithContext, notify, origin, saveCombination, t, travelDate]);
 
   // edited criteria signature drives the dirty-state check against last applied criteria
   const currentCriteriaSignature = useMemo(() => buildCriteriaSignature({
