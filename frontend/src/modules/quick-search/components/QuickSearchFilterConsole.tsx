@@ -93,7 +93,6 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
   const coverageSummary = props.radiusActive
     ? `${props.radiusKm} km`
     : props.t("filterCoverageDirect");
-  const rulesSummary = `${props.departAfter || "--"}-${props.departBefore || "--"} · ${props.includeStops ? props.t("filterExperimentalOn") : props.t("filterExperimentalOff")}`;
   const consoleSubtitle = props.radiusActive ? props.t("filterConsoleSubtitleFlex") : props.t("filterConsoleSubtitleExact");
 
   const drawer = (
@@ -163,133 +162,6 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
                 <span>{props.t("filterPresetRegionalHint")}</span>
               </button>
             </div>
-            <div className="qs-filter-grid">
-              <label className="qs-check" data-ui="qs-filter-nearby-origin">
-                <input
-                  type="checkbox"
-                  name="include_nearby_origins"
-                  checked={props.includeNearbyOrigins}
-                  onChange={(e) => props.setIncludeNearbyOrigins(e.target.checked)}
-                />
-                <span className="qs-check-ui" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                    <path d="M5.5 12.5 10 17l8.5-9" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                {props.t("nearbyOrigins")}
-              </label>
-              <label className="qs-check" data-ui="qs-filter-nearby-destination">
-                <input
-                  type="checkbox"
-                  name="include_nearby_destinations"
-                  checked={props.includeNearbyDestinations}
-                  onChange={(e) => props.setIncludeNearbyDestinations(e.target.checked)}
-                />
-                <span className="qs-check-ui" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                    <path d="M5.5 12.5 10 17l8.5-9" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                {props.t("nearbyDestinations")}
-              </label>
-              <label className="field qs-filter-wide">
-                {props.t("radiusLabel")}
-                <div className="qs-range">
-                  <input
-                    type="range"
-                    name="radius_km_range"
-                    min={10}
-                    max={500}
-                    step={10}
-                    value={props.radiusKm}
-                    onChange={(e) => props.setRadiusKm(Number(e.target.value))}
-                    disabled={!props.radiusActive}
-                    data-ui="qs-filter-radius-range"
-                  />
-                  <input
-                    name="radius_km"
-                    type="number"
-                    min={10}
-                    max={500}
-                    step={10}
-                    autoComplete="off"
-                    value={props.radiusKm}
-                    onChange={(e) => props.setRadiusKm(Number(e.target.value))}
-                    className="qs-input"
-                    disabled={!props.radiusActive}
-                    data-ui="qs-filter-radius-input"
-                  />
-                </div>
-                <small className="muted">{props.radiusActive ? props.t("radiusHint") : props.t("radiusInactive")}</small>
-              </label>
-            </div>
-          </section>
-
-          <section className="qs-filter-group qs-filter-group-guided" data-ui="qs-filter-timing">
-            <div className="qs-filter-section-head">
-              <div>
-                <span className="qs-filter-eyebrow">{props.t("filterAppliedOnSearch")}</span>
-                <h3>Qué vuelos te valen</h3>
-                <p>Horarios, escalas y cómo de estricta es la búsqueda.</p>
-              </div>
-              <div className="qs-filter-section-actions">
-                <button type="button" className="btn-ghost btn-compact" onClick={() => { props.onResetTiming(); props.onResetExperimental(); }} data-ui="qs-filter-reset-rules">
-                  {props.t("resetGroup")}
-                </button>
-              </div>
-            </div>
-            <div className="qs-filter-grid">
-              <label className="qs-check" data-ui="qs-filter-include-stops">
-                <input
-                  type="checkbox"
-                  name="include_stops"
-                  checked={props.includeStops}
-                  onChange={(e) => props.setIncludeStops(e.target.checked)}
-                />
-                <span className="qs-check-ui" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                    <path d="M5.5 12.5 10 17l8.5-9" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                {props.t("includeStops")}
-              </label>
-              <label className="field">
-                {props.t("maxStops")}
-                <select
-                  name="max_stops"
-                  autoComplete="off"
-                  value={props.maxStops}
-                  onChange={(e) => props.setMaxStops(Number(e.target.value))}
-                  className="qs-input"
-                  disabled={!props.includeStops}
-                  data-ui="qs-filter-max-stops"
-                >
-                  <option value={1}>{props.t("stopsOne")}</option>
-                  <option value={2}>{props.t("stopsTwo")}</option>
-                </select>
-              </label>
-              <label className="field">
-                {props.t("bufferMin")}
-                <input
-                  type="number"
-                  min={0}
-                  step={1}
-                  name="buffer_min"
-                  autoComplete="off"
-                  value={props.bufferMin}
-                  onChange={(e) => props.setBufferMin(e.target.value)}
-                  placeholder="45"
-                  className="qs-input"
-                  disabled={!props.includeStops}
-                  aria-invalid={Boolean(props.fieldErrors.buffer_min)}
-                  data-ui="qs-filter-buffer-min"
-                />
-                {props.fieldErrors.buffer_min ? <small className="qs-error">{props.fieldErrors.buffer_min}</small> : null}
-                <small className="muted">{props.t("bufferMinHint")}</small>
-              </label>
-            </div>
-            {!props.strictFilters ? <div className="qs-warning">{props.t("strictWarning")}</div> : null}
-            <div className="qs-warning qs-warning-warm">{props.t("selfConnectWarning")}</div>
           </section>
         </div>
 
@@ -348,11 +220,6 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
           <span>Dónde puede buscar Viru</span>
           <strong>{coverageSummary}</strong>
           <SupportBadge tone="live">{props.t("filterAppliedOnSearch")}</SupportBadge>
-        </button>
-        <button type="button" className="qs-filter-console-card" onClick={props.onOpenFilters} data-ui="qs-filter-card-rules" aria-label="Qué vuelos te valen">
-          <span>Qué vuelos te valen</span>
-          <strong>{rulesSummary}</strong>
-          <SupportBadge tone="live">{props.strictFilters ? props.t("summaryStrictOn") : props.t("summaryStrictOff")}</SupportBadge>
         </button>
       </div> : null}
 

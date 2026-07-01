@@ -18,6 +18,9 @@ type AdvancedDrawerProps = {
   departAfter: string;
   departBefore: string;
   strictFilters: boolean;
+  includeStops: boolean;
+  maxStops: number;
+  bufferMin: string;
   excludeOrigins: string[];
   excludeDestinations: string[];
   excludeOriginInput: string;
@@ -28,6 +31,9 @@ type AdvancedDrawerProps = {
   setDepartAfter: (value: string) => void;
   setDepartBefore: (value: string) => void;
   setStrictFilters: (value: boolean) => void;
+  setIncludeStops: (value: boolean) => void;
+  setMaxStops: (value: number) => void;
+  setBufferMin: (value: string) => void;
   setExcludeOriginInput: (value: string) => void;
   setExcludeDestinationInput: (value: string) => void;
   addExcludeOrigin: () => void;
@@ -91,6 +97,71 @@ function QuickSearchAdvancedDrawerInner(props: AdvancedDrawerProps) {
 
         <div className="qs-filter-console-drawer">
           
+          <section className="qs-filter-group qs-filter-group-guided" data-ui="qs-filter-stops">
+            <div className="qs-filter-section-head">
+              <div>
+                <span className="qs-filter-eyebrow">{props.t("filterAppliedOnSearch")}</span>
+                <h3>Combinar vuelos separados</h3>
+                <p>Viru puede unir vuelos que no van en la misma reserva. Puede salir más barato, pero la conexión corre por tu cuenta.</p>
+              </div>
+            </div>
+            <div className="qs-filter-grid">
+              <label className="qs-check qs-filter-wide" data-ui="qs-filter-include-stops">
+                <input
+                  type="checkbox"
+                  name="include_stops"
+                  checked={props.includeStops}
+                  onChange={(e) => props.setIncludeStops(e.target.checked)}
+                />
+                <span className="qs-check-ui" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+                    <path d="M5.5 12.5 10 17l8.5-9" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+                {props.t("includeStops")}
+              </label>
+              {props.includeStops && (
+                <>
+                  <label className="field">
+                    {props.t("maxStops")}
+                    <select
+                      name="max_stops"
+                      value={props.maxStops}
+                      onChange={(e) => props.setMaxStops(Number(e.target.value))}
+                      className="qs-input"
+                      data-ui="qs-filter-max-stops"
+                    >
+                      <option value={1}>{props.t("stopsOne")}</option>
+                      <option value={2}>{props.t("stopsTwo")}</option>
+                    </select>
+                  </label>
+                  <label className="field">
+                    {props.t("bufferMin")}
+                    <input
+                      type="number"
+                      name="buffer_min"
+                      autoComplete="off"
+                      min="30"
+                      max="1440"
+                      value={props.bufferMin}
+                      onChange={(e) => props.setBufferMin(e.target.value)}
+                      placeholder="45"
+                      className="qs-input"
+                      aria-invalid={Boolean(props.fieldErrors.buffer_min)}
+                      data-ui="qs-filter-buffer-min"
+                    />
+                    {props.fieldErrors.buffer_min ? <small className="qs-error">{props.fieldErrors.buffer_min}</small> : null}
+                  </label>
+                </>
+              )}
+            </div>
+            {props.includeStops && (
+              <div className="qs-warning">
+                Revisa bien el margen. Si el primer vuelo se retrasa, la segunda reserva puede no estar protegida.
+              </div>
+            )}
+          </section>
+
           <section className="qs-filter-group qs-filter-group-guided" data-ui="qs-filter-exclusions">
             <div className="qs-filter-section-head">
               <div>
@@ -245,6 +316,9 @@ function areAdvancedDrawerPropsEqual(prev: AdvancedDrawerProps, next: AdvancedDr
     && prev.departAfter === next.departAfter
     && prev.departBefore === next.departBefore
     && prev.strictFilters === next.strictFilters
+    && prev.includeStops === next.includeStops
+    && prev.maxStops === next.maxStops
+    && prev.bufferMin === next.bufferMin
     && prev.excludeOrigins === next.excludeOrigins
     && prev.excludeDestinations === next.excludeDestinations
     && prev.excludeOriginInput === next.excludeOriginInput
