@@ -9,6 +9,19 @@
 
 Inventario completo de documentos `.md` y `.txt` relevantes del repositorio tras el saneamiento documental. Excluye dependencias, cach?s, builds, entornos virtuales, `_publish_repo` y otras salidas generadas masivas.
 
+## Actualizacion manual 2026-07-01 (plan Quick Search ajustes activos)
+
+Entradas vivas agregadas:
+
+- `docs/plans/active/2026-07-01-plan-20-fases-quick-search-ajustes.md`
+- `docs/plans/active/2026-07-01-quick-search-ajustes-fase-01-inventario.md`
+
+Entradas vivas actualizadas:
+
+- `docs/plans/README.md`
+- `docs/INDICE_UNICO.md`
+- `docs/DOCS_INVENTORY.md`
+
 ## Actualizacion manual 2026-06-30 (Flight Tracking Hub)
 
 Entradas vivas agregadas:
