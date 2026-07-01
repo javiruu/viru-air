@@ -88,7 +88,8 @@ import { QuickSearchDatePicker } from "@/modules/quick-search/components/QuickSe
 import { QuickSearchFilterConsole } from "@/modules/quick-search/components/QuickSearchFilterConsole";
 import { QuickSearchResultsWorkspace } from "@/modules/quick-search/components/QuickSearchResultsWorkspace";
 import { QuickSearchSummaryChips, type QuickSearchSummaryChip } from "@/modules/quick-search/components/QuickSearchSummaryChips";
-import {
+
+import { QuickSearchPostFilters } from "@/modules/quick-search/components/QuickSearchPostFilters";import {
   AirportIataEntry,
   CountryAirports,
   DeepLinkResponse,
@@ -2676,12 +2677,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setStrictFilters(true);
   }, [setDepartAfter, setDepartBefore, setStrictFilters]);
 
-  const resetVisibleFilters = useCallback(() => {
-    setPriceMin("");
-    setPriceMax("");
-    setDurationMax("");
-    setSortBy("ranking");
-  }, [setDurationMax, setPriceMax, setPriceMin, setSortBy]);
 
   const resetExperimentalFilters = useCallback(() => {
     setIncludeStops(false);
@@ -4856,10 +4851,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           isCollapsed={!isFilterConsoleExpanded}
           radiusActive={radiusActive}
           radiusKm={radiusKm}
-          priceMin={priceMin}
-          priceMax={priceMax}
-          durationMax={durationMax}
-          sortBy={sortBy}
           includeStops={includeStops}
           maxStops={maxStops}
           bufferMin={bufferMin}
@@ -4878,10 +4869,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           filtersCloseRef={filtersCloseRef}
           t={t}
           setRadiusKm={updateRadiusKm}
-          setPriceMin={setPriceMin}
-          setPriceMax={setPriceMax}
-          setDurationMax={setDurationMax}
-          setSortBy={setSortBy}
           setIncludeStops={setIncludeStops}
           setMaxStops={setMaxStops}
           setBufferMin={setBufferMin}
@@ -4906,7 +4893,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           onClearAllFilters={clearAllFilters}
           onResetCoverage={resetCoverageFilters}
           onResetTiming={resetTimingFilters}
-          onResetVisible={resetVisibleFilters}
           onResetExperimental={resetExperimentalFilters}
           onPresetDirect={applyDirectCoveragePreset}
           onPresetOriginNearby={applyOriginNearbyPreset}
@@ -5201,6 +5187,19 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           ) : null}
           {showResultsList ? (
             <>
+              <QuickSearchPostFilters
+                visible={searchState === "success" && visibleResults.length > 0}
+                priceMin={priceMin}
+                priceMax={priceMax}
+                durationMax={durationMax}
+                sortBy={sortBy}
+                fieldErrors={fieldErrors}
+                t={t}
+                setPriceMin={setPriceMin}
+                setPriceMax={setPriceMax}
+                setDurationMax={setDurationMax}
+                setSortBy={setSortBy}
+              />
               <QuickSearchResultsList
                 visibleResults={visibleResults}
                 compactView={compactView}
