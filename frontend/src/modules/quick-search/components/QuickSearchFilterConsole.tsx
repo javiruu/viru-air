@@ -19,10 +19,7 @@ type FilterConsoleProps = {
   isCollapsed: boolean;
   radiusActive: boolean;
   radiusKm: number;
-  priceMin: string;
-  priceMax: string;
-  durationMax: string;
-  sortBy: "ranking" | "price" | "duration" | "freshness";
+
   includeStops: boolean;
   maxStops: number;
   bufferMin: string;
@@ -41,10 +38,7 @@ type FilterConsoleProps = {
   filtersCloseRef: RefObject<HTMLButtonElement | null>;
   t: (key: QuickSearchCopyKey) => string;
   setRadiusKm: (value: number) => void;
-  setPriceMin: (value: string) => void;
-  setPriceMax: (value: string) => void;
-  setDurationMax: (value: string) => void;
-  setSortBy: (value: "ranking" | "price" | "duration" | "freshness") => void;
+
   setIncludeStops: (value: boolean) => void;
   setMaxStops: (value: number) => void;
   setBufferMin: (value: string) => void;
@@ -69,7 +63,6 @@ type FilterConsoleProps = {
   onClearAllFilters: () => void;
   onResetCoverage: () => void;
   onResetTiming: () => void;
-  onResetVisible: () => void;
   onResetExperimental: () => void;
   onPresetDirect: () => void;
   onPresetOriginNearby: () => void;
@@ -101,10 +94,6 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
     ? `${props.radiusKm} km`
     : props.t("filterCoverageDirect");
   const rulesSummary = `${props.departAfter || "--"}-${props.departBefore || "--"} · ${props.includeStops ? props.t("filterExperimentalOn") : props.t("filterExperimentalOff")}`;
-  const visibleSummary =
-    props.priceMin || props.priceMax || props.durationMax
-      ? props.t("filterVisibleCustom")
-      : props.t("filterVisibleOpen");
   const consoleSubtitle = props.radiusActive ? props.t("filterConsoleSubtitleFlex") : props.t("filterConsoleSubtitleExact");
 
   const drawer = (
@@ -407,88 +396,6 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
             {!props.strictFilters ? <div className="qs-warning">{props.t("strictWarning")}</div> : null}
             <div className="qs-warning qs-warning-warm">{props.t("selfConnectWarning")}</div>
           </section>
-
-          <section className="qs-filter-group qs-filter-group-guided" data-ui="qs-filter-visible-results">
-            <div className="qs-filter-section-head">
-              <div>
-                <span className="qs-filter-eyebrow">{props.t("filterAppliedToResults")}</span>
-                <h3>Cómo ver resultados</h3>
-                <p>Ordena y filtra los vuelos encontrados.</p>
-              </div>
-              <button type="button" className="btn-ghost btn-compact" onClick={props.onResetVisible} data-ui="qs-filter-reset-visible">
-                {props.t("resetGroup")}
-              </button>
-            </div>
-            <div className="qs-filter-grid">
-              <label className="field">
-                {props.t("priceMin")}
-                <input
-                  type="number"
-                  min={0}
-                  step={1}
-                  name="price_min"
-                  autoComplete="off"
-                  value={props.priceMin}
-                  onChange={(e) => props.setPriceMin(e.target.value)}
-                  placeholder="10"
-                  className="qs-input"
-                  aria-invalid={Boolean(props.fieldErrors.price_min)}
-                  data-ui="qs-filter-price-min"
-                />
-                {props.fieldErrors.price_min ? <small className="qs-error">{props.fieldErrors.price_min}</small> : null}
-              </label>
-              <label className="field">
-                {props.t("priceMax")}
-                <input
-                  type="number"
-                  min={0}
-                  step={1}
-                  name="price_max"
-                  autoComplete="off"
-                  value={props.priceMax}
-                  onChange={(e) => props.setPriceMax(e.target.value)}
-                  placeholder="120"
-                  className="qs-input"
-                  aria-invalid={Boolean(props.fieldErrors.price_max)}
-                  data-ui="qs-filter-price-max"
-                />
-                {props.fieldErrors.price_max ? <small className="qs-error">{props.fieldErrors.price_max}</small> : null}
-              </label>
-              <label className="field">
-                {props.t("durationMax")}
-                <input
-                  type="number"
-                  min={1}
-                  step={1}
-                  name="duration_max"
-                  autoComplete="off"
-                  value={props.durationMax}
-                  onChange={(e) => props.setDurationMax(e.target.value)}
-                  placeholder="240"
-                  className="qs-input"
-                  aria-invalid={Boolean(props.fieldErrors.duration_max)}
-                  data-ui="qs-filter-duration-max"
-                />
-                {props.fieldErrors.duration_max ? <small className="qs-error">{props.fieldErrors.duration_max}</small> : null}
-              </label>
-              <label className="field qs-filter-wide">
-                {props.t("orderBy")}
-                <select
-                  name="sort_by"
-                  autoComplete="off"
-                  value={props.sortBy}
-                  onChange={(e) => props.setSortBy(e.target.value as "ranking" | "price" | "duration" | "freshness")}
-                  className="qs-input"
-                  data-ui="qs-filter-sort"
-                >
-                  <option value="ranking">{props.t("sortRanking")}</option>
-                  <option value="price">{props.t("sortPrice")}</option>
-                  <option value="duration">{props.t("sortDuration")}</option>
-                  <option value="freshness">{props.t("sortFreshness")}</option>
-                </select>
-              </label>
-            </div>
-          </section>
         </div>
 
         <div className="qs-filter-actions">
@@ -552,11 +459,6 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
           <strong>{rulesSummary}</strong>
           <SupportBadge tone="live">{props.strictFilters ? props.t("summaryStrictOn") : props.t("summaryStrictOff")}</SupportBadge>
         </button>
-        <button type="button" className="qs-filter-console-card" onClick={props.onOpenFilters} data-ui="qs-filter-card-visible" aria-label="Cómo ver resultados">
-          <span>Cómo ver resultados</span>
-          <strong>{visibleSummary}</strong>
-          <SupportBadge>{props.t("filterAppliedToResults")}</SupportBadge>
-        </button>
       </div> : null}
 
       {!props.isCollapsed ? <div className="qs-filter-mode-legend" aria-live="polite">
@@ -593,10 +495,6 @@ function areFilterConsolePropsEqual(prev: FilterConsoleProps, next: FilterConsol
     && prev.isCollapsed === next.isCollapsed
     && prev.radiusActive === next.radiusActive
     && prev.radiusKm === next.radiusKm
-    && prev.priceMin === next.priceMin
-    && prev.priceMax === next.priceMax
-    && prev.durationMax === next.durationMax
-    && prev.sortBy === next.sortBy
     && prev.includeStops === next.includeStops
     && prev.maxStops === next.maxStops
     && prev.bufferMin === next.bufferMin
@@ -615,10 +513,6 @@ function areFilterConsolePropsEqual(prev: FilterConsoleProps, next: FilterConsol
     && prev.filtersCloseRef === next.filtersCloseRef
     && prev.t === next.t
     && prev.setRadiusKm === next.setRadiusKm
-    && prev.setPriceMin === next.setPriceMin
-    && prev.setPriceMax === next.setPriceMax
-    && prev.setDurationMax === next.setDurationMax
-    && prev.setSortBy === next.setSortBy
     && prev.setIncludeStops === next.setIncludeStops
     && prev.setMaxStops === next.setMaxStops
     && prev.setBufferMin === next.setBufferMin
@@ -643,7 +537,6 @@ function areFilterConsolePropsEqual(prev: FilterConsoleProps, next: FilterConsol
     && prev.onClearAllFilters === next.onClearAllFilters
     && prev.onResetCoverage === next.onResetCoverage
     && prev.onResetTiming === next.onResetTiming
-    && prev.onResetVisible === next.onResetVisible
     && prev.onResetExperimental === next.onResetExperimental
     && prev.onPresetDirect === next.onPresetDirect
     && prev.onPresetOriginNearby === next.onPresetOriginNearby

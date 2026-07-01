@@ -57,10 +57,6 @@ test("QuickSearchFilterConsole renders grouped summaries and active chips", () =
       isCollapsed={false}
       radiusActive={true}
       radiusKm={150}
-      priceMin=""
-      priceMax="120"
-      durationMax=""
-      sortBy="ranking"
       includeStops={false}
       maxStops={1}
       bufferMin=""
@@ -79,10 +75,6 @@ test("QuickSearchFilterConsole renders grouped summaries and active chips", () =
       filtersCloseRef={{ current: null }}
       t={t as any}
       setRadiusKm={noop}
-      setPriceMin={noop}
-      setPriceMax={noop}
-      setDurationMax={noop}
-      setSortBy={noop}
       setIncludeStops={noop}
       setMaxStops={noop}
       setBufferMin={noop}
@@ -107,7 +99,6 @@ test("QuickSearchFilterConsole renders grouped summaries and active chips", () =
       onClearAllFilters={noop}
       onResetCoverage={noop}
       onResetTiming={noop}
-      onResetVisible={noop}
       onResetExperimental={noop}
       onPresetDirect={noop}
       onPresetOriginNearby={noop}
@@ -118,8 +109,8 @@ test("QuickSearchFilterConsole renders grouped summaries and active chips", () =
 
   assert.match(html, /Consola/);
   assert.match(html, /Ocultar ajustes/);
-  assert.match(html, /Cobertura/);
-  assert.match(html, /Resultados visibles/);
+  assert.match(html, /Dónde puede buscar Viru/);
+  assert.match(html, /Qué vuelos te valen/);
   assert.match(html, /Cambios sin aplicar/);
   assert.match(html, /data-ui="qs-filter-pending-apply-search"/);
   assert.match(html, /data-ui="qs-filter-console"/);
