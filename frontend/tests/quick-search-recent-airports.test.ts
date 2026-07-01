@@ -5,9 +5,13 @@ import {
   buildRecentAirportSuggestions,
   dedupeRecentAirports,
   forgetRecentAirport,
+  migrateRecentAirports,
   readRecentAirports,
   rememberRecentAirport,
   writeRecentAirports,
+  RECENT_AIRPORTS_STORAGE_KEY,
+  RECENT_AIRPORTS_ORIGIN_KEY,
+  RECENT_AIRPORTS_DESTINATION_KEY,
 } from "../src/modules/quick-search/recentAirports";
 import type { AirportIataEntry } from "../src/modules/quick-search/types";
 
@@ -33,6 +37,7 @@ test("readRecentAirports is safe against invalid storage payloads", () => {
   const invalidStorage = {
     getItem: () => "{not-json",
     setItem: () => undefined,
+    removeItem: () => undefined,
   };
 
   assert.deepEqual(readRecentAirports(invalidStorage), []);
@@ -59,6 +64,7 @@ test("writeRecentAirports persists normalized recents", () => {
     setItem: (_key: string, value: string) => {
       stored = value;
     },
+    removeItem: () => undefined,
   };
 
   const next = writeRecentAirports(["mad", "BCN", "MAD"], storage);
@@ -79,4 +85,47 @@ test("buildRecentAirportSuggestions returns enriched recents and matches by city
 test("buildRecentAirportSuggestions falls back to IATA when airport metadata is missing", () => {
   const suggestions = buildRecentAirportSuggestions(["LIS"], new Map(), "");
   assert.deepEqual(suggestions, [{ iata: "LIS", name: "LIS" }]);
+});
+
+test("migrateRecentAirports returns null when old key is absent", () => {
+  const storage = { getItem: () => null, setItem: () => undefined, removeItem: () => undefined };
+  assert.equal(migrateRecentAirports(storage), null);
+});
+
+test("migrateRecentAirports returns null on invalid old payload", () => {
+  const storage = { getItem: () => "{invalid", setItem: () => undefined, removeItem: () => undefined };
+  assert.equal(migrateRecentAirports(storage), null);
+});
+
+test("migrateRecentAirports splits items alternating between origin and destination", () => {
+  let stored: Record<string, string> = {
+    [RECENT_AIRPORTS_STORAGE_KEY]: JSON.stringify(["MAD", "BCN", "AGP", "LIS"]),
+  };
+  const storage = {
+    getItem: (key: string) => stored[key] ?? null,
+    setItem: (key: string, value: string) => { stored[key] = value; },
+    removeItem: (key: string) => { delete stored[key]; },
+  };
+
+  const result = migrateRecentAirports(storage);
+  assert.deepEqual(result, { origin: ["MAD", "AGP"], destination: ["BCN", "LIS"] });
+
+  // Old key removed
+  assert.equal(stored[RECENT_AIRPORTS_STORAGE_KEY], undefined);
+  // New keys written
+  assert.equal(stored[RECENT_AIRPORTS_ORIGIN_KEY], JSON.stringify(["MAD", "AGP"]));
+  assert.equal(stored[RECENT_AIRPORTS_DESTINATION_KEY], JSON.stringify(["BCN", "LIS"]));
+});
+
+test("migrateRecentAirports returns null when old payload is empty array", () => {
+  let stored: Record<string, string> = {
+    [RECENT_AIRPORTS_STORAGE_KEY]: JSON.stringify([]),
+  };
+  const storage = {
+    getItem: (key: string) => stored[key] ?? null,
+    setItem: (_key: string, _value: string) => undefined,
+    removeItem: (_key: string) => undefined,
+  };
+
+  assert.equal(migrateRecentAirports(storage), null);
 });

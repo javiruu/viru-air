@@ -30,8 +30,11 @@ import { resolveQuickSearchPreferenceDefaults } from "@/modules/quick-search/pre
 import {
   buildRecentAirportSuggestions,
   forgetRecentAirport,
+  migrateRecentAirports,
   readRecentAirports,
   rememberRecentAirport,
+  RECENT_AIRPORTS_ORIGIN_KEY,
+  RECENT_AIRPORTS_DESTINATION_KEY,
   writeRecentAirports,
 } from "@/modules/quick-search/recentAirports";
 
@@ -403,8 +406,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setActivePicker,
     airportSearch,
     setAirportSearch,
-    recentAirports,
-    setRecentAirports,
+    originRecentAirports,
+    setOriginRecentAirports,
+    destinationRecentAirports,
+    setDestinationRecentAirports,
     originCountryOnly,
     setOriginCountryOnly,
     destinationCountryOnly,
@@ -989,10 +994,31 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     }
   }, [countryByCode, selectedCountry, setSelectedCountry]);
 
+  // ── Migrate old shared key + load per-field recents on mount ─────
   useEffect(() => {
     const storage = typeof window !== "undefined" ? window.localStorage : null;
-    setRecentAirports(readRecentAirports(storage));
-  }, [setRecentAirports]);
+    // One-time migration: split old shared key into field-specific keys
+    migrateRecentAirports(storage);
+    setOriginRecentAirports(readRecentAirports(storage, RECENT_AIRPORTS_ORIGIN_KEY));
+    setDestinationRecentAirports(readRecentAirports(storage, RECENT_AIRPORTS_DESTINATION_KEY));
+  }, [setOriginRecentAirports, setDestinationRecentAirports]);
+
+  // ── Fetch seed metadata for recent airports so names display ─────
+  // All unique IATA codes across both lists get looked up so that
+  // buildRecentAirportSuggestions can resolve municipality names.
+  useEffect(() => {
+    const allRecent = [...originRecentAirports, ...destinationRecentAirports];
+    const missing = allRecent.filter((iata) => !airportsByIata.has(iata));
+    if (missing.length === 0) return;
+    // Deduplicate and fire one lookup per unique code
+    const seen = new Set<string>();
+    for (const iata of missing) {
+      const norm = iata.trim().toUpperCase();
+      if (!norm || seen.has(norm)) continue;
+      seen.add(norm);
+      fetchSeedAirports({ q: norm, limit: 6 }).catch(() => {});
+    }
+  }, [airportsByIata, originRecentAirports, destinationRecentAirports, fetchSeedAirports]);
 
   const fetchAutocompleteSuggestions = useCallback(async (value: string) => {
     const query = value.trim();
@@ -1010,9 +1036,14 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     return [];
   }, [fetchSeedAirports, pref?.language]);
 
-  const recentAirportSuggestions = useMemo(
-    () => buildRecentAirportSuggestions(recentAirports, airportsByIata, ""),
-    [airportsByIata, recentAirports],
+  const originRecentAirportSuggestions = useMemo(
+    () => buildRecentAirportSuggestions(originRecentAirports, airportsByIata, ""),
+    [airportsByIata, originRecentAirports],
+  );
+
+  const destinationRecentAirportSuggestions = useMemo(
+    () => buildRecentAirportSuggestions(destinationRecentAirports, airportsByIata, ""),
+    [airportsByIata, destinationRecentAirports],
   );
 
   useEffect(() => {
@@ -2248,18 +2279,28 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     return all;
   }, [fetchSeedAirports]);
 
-  const rememberAirportSelection = useCallback((iata: string) => {
+  const rememberAirportSelection = useCallback((field: QuickSearchAutocompleteField, iata: string) => {
     const storage = typeof window !== "undefined" ? window.localStorage : null;
-    const next = writeRecentAirports(rememberRecentAirport(recentAirports, iata), storage);
-    setRecentAirports(next);
-  }, [recentAirports, setRecentAirports]);
+    if (field === "origin") {
+      const next = writeRecentAirports(rememberRecentAirport(originRecentAirports, iata), storage, undefined, RECENT_AIRPORTS_ORIGIN_KEY);
+      setOriginRecentAirports(next);
+    } else {
+      const next = writeRecentAirports(rememberRecentAirport(destinationRecentAirports, iata), storage, undefined, RECENT_AIRPORTS_DESTINATION_KEY);
+      setDestinationRecentAirports(next);
+    }
+  }, [originRecentAirports, setOriginRecentAirports, destinationRecentAirports, setDestinationRecentAirports]);
 
-  const removeRecentAirportSelection = useCallback((iata: string) => {
+  const removeRecentAirportSelection = useCallback((field: QuickSearchAutocompleteField, iata: string) => {
     const storage = typeof window !== "undefined" ? window.localStorage : null;
-    const next = writeRecentAirports(forgetRecentAirport(recentAirports, iata), storage);
-    setRecentAirports(next);
+    if (field === "origin") {
+      const next = writeRecentAirports(forgetRecentAirport(originRecentAirports, iata), storage, undefined, RECENT_AIRPORTS_ORIGIN_KEY);
+      setOriginRecentAirports(next);
+    } else {
+      const next = writeRecentAirports(forgetRecentAirport(destinationRecentAirports, iata), storage, undefined, RECENT_AIRPORTS_DESTINATION_KEY);
+      setDestinationRecentAirports(next);
+    }
     setActiveAutocompleteIndex(-1);
-  }, [recentAirports, setActiveAutocompleteIndex, setRecentAirports]);
+  }, [originRecentAirports, setOriginRecentAirports, destinationRecentAirports, setDestinationRecentAirports, setActiveAutocompleteIndex]);
 
   function selectAirport(iata: string) {
     setAirportSelectionTouched(true);
@@ -2274,7 +2315,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       setDestinationCountryOnly(null);
       setDestinationSelectedCountryCode(countryCode);
     }
-    rememberAirportSelection(iata);
+    rememberAirportSelection(activePicker === "origin" ? "origin" : "destination", iata);
     closePickerWithFocusReturn();
   }
 
@@ -2408,7 +2449,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       setDestinationTouched(true);
       setFieldErrors((prev) => ({ ...prev, destination_iata: undefined }));
     }
-    rememberAirportSelection(iata);
+    rememberAirportSelection(field, iata);
     setActiveAutocompleteField(null);
     setActiveAutocompleteIndex(-1);
     if (submitAfterSelect && typeof window !== "undefined") {
@@ -2923,11 +2964,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 aria-label={t("pickSearch")}
               />
             </div>
-            {recentAirports.length > 0 ? (
+            {(activePicker === "origin" ? originRecentAirports : destinationRecentAirports).length > 0 ? (
               <div className="airport-recent qs-airport-modal__recents">
                 <span className="qs-airport-modal__recents-label">{t("pickRecent")}</span>
                 <div className="airport-recent-grid">
-                  {recentAirports.map((iata) => (
+                  {(activePicker === "origin" ? originRecentAirports : destinationRecentAirports).map((iata) => (
                     <button key={`recent-${iata}`} type="button" className="qs-airport-modal__recent-chip" onClick={() => selectAirport(iata)}>
                       {iata}
                     </button>
@@ -2960,8 +3001,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       </section>
     </div>
   ) : null;
-  const originVisibleSuggestions = origin.trim() ? originSuggestions : recentAirportSuggestions;
-  const destinationVisibleSuggestions = destination.trim() ? destinationSuggestions : recentAirportSuggestions;
+  const originVisibleSuggestions = origin.trim() ? originSuggestions : originRecentAirportSuggestions;
+  const destinationVisibleSuggestions = destination.trim() ? destinationSuggestions : destinationRecentAirportSuggestions;
   const activeSuggestions = activeAutocompleteField === "origin"
     ? originVisibleSuggestions
     : activeAutocompleteField === "destination"
@@ -4162,7 +4203,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                                 className="qs-recent-remove"
                                 aria-label={t("removeRecentAirportAria").replace("{iata}", suggestion.iata)}
                                 onMouseDown={(event) => event.preventDefault()}
-                                onClick={() => removeRecentAirportSelection(suggestion.iata)}
+                                onClick={() => removeRecentAirportSelection("origin", suggestion.iata)}
                               >
                                 <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
                                   <path
@@ -4373,7 +4414,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                                 className="qs-recent-remove"
                                 aria-label={t("removeRecentAirportAria").replace("{iata}", suggestion.iata)}
                                 onMouseDown={(event) => event.preventDefault()}
-                                onClick={() => removeRecentAirportSelection(suggestion.iata)}
+                                onClick={() => removeRecentAirportSelection("destination", suggestion.iata)}
                               >
                                 <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
                                   <path

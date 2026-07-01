@@ -60,7 +60,8 @@ export function useQuickSearchFormState(initialOrigin: string, initialDestinatio
   // ── Airport picker ──
   const [activePicker, setActivePicker] = useState<"origin" | "destination" | null>(null);
   const [airportSearch, setAirportSearch] = useState("");
-  const [recentAirports, setRecentAirports] = useState<string[]>([]);
+  const [originRecentAirports, setOriginRecentAirports] = useState<string[]>([]);
+  const [destinationRecentAirports, setDestinationRecentAirports] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<CountryAirports | null>(null);
   const [countrySelectionTouched, setCountrySelectionTouched] = useState(false);
   const [airportSelectionTouched, setAirportSelectionTouched] = useState(false);
@@ -170,8 +171,10 @@ export function useQuickSearchFormState(initialOrigin: string, initialDestinatio
     setActivePicker,
     airportSearch,
     setAirportSearch,
-    recentAirports,
-    setRecentAirports,
+    originRecentAirports,
+    setOriginRecentAirports,
+    destinationRecentAirports,
+    setDestinationRecentAirports,
     selectedCountry,
     setSelectedCountry,
     countrySelectionTouched,
