@@ -1,4 +1,5 @@
 import React, { memo } from "react";
+import { Slider } from "@/components/ui/slider";
 import { QuickSearchCopyKey } from "@/modules/shared/quickSearchCopy";
 
 type QuickSearchNearbyBandProps = {
@@ -13,6 +14,12 @@ type QuickSearchNearbyBandProps = {
 
 export const QuickSearchNearbyBand = memo(function QuickSearchNearbyBand(props: QuickSearchNearbyBandProps) {
   const isAnyNearby = props.includeNearbyOrigins || props.includeNearbyDestinations;
+  const handleRadiusChange = (values: number[]) => {
+    const nextRadius = values[0];
+    if (typeof nextRadius === "number") {
+      props.setRadiusKm(nextRadius);
+    }
+  };
 
   return (
     <div className="qs-nearby-band" data-ui="qs-nearby-band">
@@ -42,16 +49,17 @@ export const QuickSearchNearbyBand = memo(function QuickSearchNearbyBand(props: 
         
         {isAnyNearby && (
           <div className="qs-nearby-distance">
-            <span>Distancia máxima:</span>
-            <select
-              value={props.radiusKm}
-              onChange={(e) => props.setRadiusKm(Number(e.target.value))}
-              className="qs-input qs-input-compact"
-            >
-              {[50, 100, 150, 200, 250, 300, 400, 500].map((d) => (
-                <option key={d} value={d}>{d} km</option>
-              ))}
-            </select>
+            <span className="qs-nearby-distance-label">Distancia máxima</span>
+            <Slider
+              aria-label="Distancia máxima en kilómetros"
+              className="qs-nearby-slider"
+              min={50}
+              max={500}
+              step={50}
+              value={[props.radiusKm]}
+              onValueChange={handleRadiusChange}
+            />
+            <span className="qs-nearby-distance-value">{props.radiusKm} km</span>
           </div>
         )}
       </div>
