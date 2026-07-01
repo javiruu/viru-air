@@ -1,0 +1,151 @@
+{
+  "generatedAt": "2026-07-01T13:41:32.972Z",
+  "baseUrl": "http://127.0.0.1:3000",
+  "targetPath": "/quick-search",
+  "auth": {
+    "attempted": true,
+    "success": true,
+    "loginUrlDetected": true,
+    "tokenFound": true,
+    "usingDefaultSeedCreds": true
+  },
+  "snapshots": [
+    {
+      "viewport": {
+        "name": "mobile360",
+        "width": 360,
+        "height": 780
+      },
+      "file": "docs\\qa\\snapshots_quick-search-mobile360.png",
+      "panelFile": "docs\\qa\\snapshots_quick-search-filters-mobile360.png",
+      "pickerV2Visible": true,
+      "resultsVisible": 0,
+      "detailsButtons": 0,
+      "weatherDetailsVisible": 0,
+      "panelChecks": {
+        "ok": false,
+        "focusVisible": true,
+        "bottomReachableAfterScroll": true
+      },
+      "previousHash": null,
+      "currentHash": "a7ce47023fc898e05f1288fabb85dceb1f3c9f75c421e1625004211952aac115",
+      "changed": true
+    },
+    {
+      "viewport": {
+        "name": "mobile390",
+        "width": 390,
+        "height": 844
+      },
+      "file": "docs\\qa\\snapshots_quick-search-mobile390.png",
+      "panelFile": "docs\\qa\\snapshots_quick-search-filters-mobile390.png",
+      "pickerV2Visible": true,
+      "resultsVisible": 0,
+      "detailsButtons": 0,
+      "weatherDetailsVisible": 0,
+      "panelChecks": {
+        "ok": false,
+        "focusVisible": true,
+        "bottomReachableAfterScroll": true
+      },
+      "previousHash": null,
+      "currentHash": "b7590edf732a3d7866f098523f6f07b9a265bf804de03853b9883680540773de",
+      "changed": true
+    },
+    {
+      "viewport": {
+        "name": "tablet768",
+        "width": 768,
+        "height": 1024
+      },
+      "file": "docs\\qa\\snapshots_quick-search-tablet768.png",
+      "panelFile": "docs\\qa\\snapshots_quick-search-filters-tablet768.png",
+      "pickerV2Visible": true,
+      "resultsVisible": 0,
+      "detailsButtons": 0,
+      "weatherDetailsVisible": 0,
+      "panelChecks": {
+        "ok": false,
+        "focusVisible": true,
+        "bottomReachableAfterScroll": true
+      },
+      "previousHash": null,
+      "currentHash": "2516ce57104817977e14ea4151157880bdbc7fb9c4b1f09d71f8282eb1893e78",
+      "changed": true
+    },
+    {
+      "viewport": {
+        "name": "tablet1024",
+        "width": 1024,
+        "height": 900
+      },
+      "file": "docs\\qa\\snapshots_quick-search-tablet1024.png",
+      "panelFile": "docs\\qa\\snapshots_quick-search-filters-tablet1024.png",
+      "pickerV2Visible": true,
+      "resultsVisible": 0,
+      "detailsButtons": 0,
+      "weatherDetailsVisible": 0,
+      "panelChecks": {
+        "ok": false,
+        "focusVisible": true,
+        "bottomReachableAfterScroll": true
+      },
+      "previousHash": null,
+      "currentHash": "2930e02f207437a155ef81128eeae00a993fd33ebc653cdb60de4547cd1cdb0a",
+      "changed": true
+    },
+    {
+      "viewport": {
+        "name": "desktop1440",
+        "width": 1440,
+        "height": 900
+      },
+      "file": "docs\\qa\\snapshots_quick-search-desktop1440.png",
+      "panelFile": "docs\\qa\\snapshots_quick-search-filters-desktop1440.png",
+      "pickerV2Visible": true,
+      "resultsVisible": 0,
+      "detailsButtons": 0,
+      "weatherDetailsVisible": 0,
+      "panelChecks": {
+        "ok": false,
+        "focusVisible": true,
+        "bottomReachableAfterScroll": true
+      },
+      "previousHash": null,
+      "currentHash": "ed237989912057e7bd770e9c09d53329a910773401e01041ac12cb66612f8657",
+      "changed": true
+    }
+  ],
+  "failures": [
+    {
+      "viewport": "mobile360",
+      "reasons": [
+        "panel-dom-missing"
+      ]
+    },
+    {
+      "viewport": "mobile390",
+      "reasons": [
+        "panel-dom-missing"
+      ]
+    },
+    {
+      "viewport": "tablet768",
+      "reasons": [
+        "panel-dom-missing"
+      ]
+    },
+    {
+      "viewport": "tablet1024",
+      "reasons": [
+        "panel-dom-missing"
+      ]
+    },
+    {
+      "viewport": "desktop1440",
+      "reasons": [
+        "panel-dom-missing"
+      ]
+    }
+  ]
+}

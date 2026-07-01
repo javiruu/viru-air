@@ -113,6 +113,8 @@
 ### Plans
 
 - [Planes de trabajo](plans/README.md)
+- [Plan progresivo de 20 fases — Quick Search + Ajustes activos](plans/active/2026-07-01-plan-20-fases-quick-search-ajustes.md)
+- [Quick Search ajustes — Fase 1 inventario](plans/active/2026-07-01-quick-search-ajustes-fase-01-inventario.md)
 - [Auditoria cache Fare Memory F21](plans/2026-06-14-fare-memory-cache-audit.md)
 
 ### ADRs
