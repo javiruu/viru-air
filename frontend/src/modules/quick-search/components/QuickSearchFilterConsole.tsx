@@ -304,8 +304,8 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
             <div className="qs-filter-section-head">
               <div>
                 <span className="qs-filter-eyebrow">{props.t("filterAppliedOnSearch")}</span>
-                <h3>Reglas del viaje</h3>
-                <p>Define qué resultados son aceptables para ti.</p>
+                <h3>{props.t("tripRulesTitle")}</h3>
+                <p>{props.t("tripRulesBody")}</p>
               </div>
               <button type="button" className="btn-ghost btn-compact" onClick={props.onResetTiming} data-ui="qs-filter-reset-timing">
                 {props.t("resetGroup")}
@@ -548,8 +548,8 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
           <strong>{coverageSummary}</strong>
           <SupportBadge tone="live">{props.t("filterAppliedOnSearch")}</SupportBadge>
         </button>
-        <button type="button" className="qs-filter-console-card" onClick={props.onOpenFilters} data-ui="qs-filter-card-rules" aria-label="Reglas del viaje">
-          <span>Reglas del viaje</span>
+        <button type="button" className="qs-filter-console-card" onClick={props.onOpenFilters} data-ui="qs-filter-card-rules" aria-label={props.t("tripRulesTitle")}>
+          <span>{props.t("tripRulesTitle")}</span>
           <strong>{rulesSummary}</strong>
           <SupportBadge tone="live">{props.strictFilters ? props.t("summaryStrictOn") : props.t("summaryStrictOff")}</SupportBadge>
         </button>
