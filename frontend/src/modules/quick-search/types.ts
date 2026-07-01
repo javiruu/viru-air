@@ -271,8 +271,12 @@ export type ZeroResultRelaxAction =
   | "increase_duration"
   | "open_radius_150"
   | "clear_exclusions"
-  | "open_date_flex";
-export type SummaryHighlightKey = "strict" | "duration" | "radius" | "exclusions" | "date_flex" | null;
+  | "open_date_flex"
+  | "try_plus_1_day"
+  | "open_nearby"
+  | "max_coverage"
+  | "open_more_options";
+export type SummaryHighlightKey = "strict" | "duration" | "radius" | "exclusions" | "date_flex" | "advanced" | null;
 export type QuickSearchVisibleFiltersState = {
   priceMin: string;
   priceMax: string;
@@ -301,9 +305,27 @@ export type RelaxUndoPayload =
       daysBefore: number;
       daysAfter: number;
       applyFlexReturn: boolean;
+    }
+  | {
+      action: "try_plus_1_day";
+      daysBefore: number;
+      daysAfter: number;
+      applyFlexReturn: boolean;
+    }
+  | {
+      action: "open_nearby";
+      includeNearbyOrigins: boolean;
+      includeNearbyDestinations: boolean;
+      radiusKm: number;
+    }
+  | {
+      action: "max_coverage";
+      includeNearbyOrigins: boolean;
+      includeNearbyDestinations: boolean;
+      radiusKm: number;
     };
 
-export type AirportIataEntry = {
+  export type AirportIataEntry = {
   iata: string;
   name: string;
   municipality: string;
