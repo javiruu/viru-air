@@ -1,9 +1,12 @@
 import type { AirportIataEntry } from "@/modules/quick-search/types";
 
+/** @deprecated Use field-specific keys instead. */
 export const RECENT_AIRPORTS_STORAGE_KEY = "viru_recent_airports";
+export const RECENT_AIRPORTS_ORIGIN_KEY = "viru_recent_airports_origin";
+export const RECENT_AIRPORTS_DESTINATION_KEY = "viru_recent_airports_destination";
 const RECENT_AIRPORTS_LIMIT = 6;
 
-type StorageLike = Pick<Storage, "getItem" | "setItem">;
+type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 export type QuickSearchRecentAirportSuggestion = {
   iata: string;
@@ -40,9 +43,9 @@ export function dedupeRecentAirports(items: string[], limit = RECENT_AIRPORTS_LI
   return next;
 }
 
-export function readRecentAirports(storage?: StorageLike | null): string[] {
+export function readRecentAirports(storage?: StorageLike | null, key = RECENT_AIRPORTS_STORAGE_KEY): string[] {
   try {
-    const raw = storage?.getItem(RECENT_AIRPORTS_STORAGE_KEY);
+    const raw = storage?.getItem(key);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -52,10 +55,10 @@ export function readRecentAirports(storage?: StorageLike | null): string[] {
   }
 }
 
-export function writeRecentAirports(items: string[], storage?: StorageLike | null, limit = RECENT_AIRPORTS_LIMIT): string[] {
+export function writeRecentAirports(items: string[], storage?: StorageLike | null, limit = RECENT_AIRPORTS_LIMIT, key = RECENT_AIRPORTS_STORAGE_KEY): string[] {
   const next = dedupeRecentAirports(items, limit);
   try {
-    storage?.setItem(RECENT_AIRPORTS_STORAGE_KEY, JSON.stringify(next));
+    storage?.setItem(key, JSON.stringify(next));
   } catch {
     // Ignore storage write failures; UI can still use in-memory recents.
   }
@@ -69,6 +72,47 @@ export function rememberRecentAirport(current: string[], iata: string, limit = R
 export function forgetRecentAirport(current: string[], iata: string, limit = RECENT_AIRPORTS_LIMIT): string[] {
   const target = normalizeIata(iata);
   return dedupeRecentAirports(current.filter((item) => normalizeIata(item) !== target), limit);
+}
+
+/**
+ * Migrate from the deprecated single-key format to field-specific keys.
+ *
+ * Reads the old {@link RECENT_AIRPORTS_STORAGE_KEY} (`viru_recent_airports`),
+ * splits its items alternating (even indices → origin, odd → destination),
+ * writes both field-specific keys, removes the old key, and returns the
+ * migrated lists. Returns `null` when no migration is necessary.
+ */
+export function migrateRecentAirports(storage?: StorageLike | null): { origin: string[]; destination: string[] } | null {
+  try {
+    const raw = storage?.getItem(RECENT_AIRPORTS_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) return null;
+
+    const normalized = dedupeRecentAirports(parsed.filter((item): item is string => typeof item === "string"));
+    if (normalized.length === 0) return null;
+
+    const origin: string[] = [];
+    const destination: string[] = [];
+
+    for (let i = 0; i < normalized.length; i++) {
+      if (i % 2 === 0) {
+        origin.push(normalized[i]);
+      } else {
+        destination.push(normalized[i]);
+      }
+    }
+
+    // Write to new per-field keys
+    storage?.setItem(RECENT_AIRPORTS_ORIGIN_KEY, JSON.stringify(origin));
+    storage?.setItem(RECENT_AIRPORTS_DESTINATION_KEY, JSON.stringify(destination));
+    // Remove old key
+    storage?.removeItem(RECENT_AIRPORTS_STORAGE_KEY);
+
+    return { origin, destination };
+  } catch {
+    return null;
+  }
 }
 
 export function buildRecentAirportSuggestions(
