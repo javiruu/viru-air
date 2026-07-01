@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-01T13:41:32.972Z",
+  "generatedAt": "2026-07-01T19:23:46.112Z",
   "baseUrl": "http://127.0.0.1:3000",
   "targetPath": "/quick-search",
   "auth": {
@@ -17,18 +17,30 @@
         "height": 780
       },
       "file": "docs\\qa\\snapshots_quick-search-mobile360.png",
-      "panelFile": "docs\\qa\\snapshots_quick-search-filters-mobile360.png",
+      "panelFile": "docs\\qa\\snapshots_quick-search-advanced-mobile360.png",
       "pickerV2Visible": true,
       "resultsVisible": 0,
       "detailsButtons": 0,
       "weatherDetailsVisible": 0,
       "panelChecks": {
-        "ok": false,
+        "ok": true,
+        "drawerFullyVisible": true,
+        "closeFullyVisible": true,
+        "hasVerticalScroll": true,
+        "overflowYAuto": true,
+        "controlsOverlapCount": 0,
+        "controlsMinWidth": 281.1875,
+        "controlsAnyTooNarrow": false,
+        "contentBottomReachable": true,
+        "focusOutlineVisible": true,
+        "includeStopsChecked": true,
+        "strictChecked": true,
+        "summaryPanelVisible": true,
         "focusVisible": true,
         "bottomReachableAfterScroll": true
       },
-      "previousHash": null,
-      "currentHash": "a7ce47023fc898e05f1288fabb85dceb1f3c9f75c421e1625004211952aac115",
+      "previousHash": "0042f1dd3d451ae0ef3b62af29e2e8f3c0984f070d4e7de066c8a5408fd4e735",
+      "currentHash": "11fb6d946a98d12570b62670c0f81493d3b02589f725023e161426cc466c4267",
       "changed": true
     },
     {
@@ -38,18 +50,30 @@
         "height": 844
       },
       "file": "docs\\qa\\snapshots_quick-search-mobile390.png",
-      "panelFile": "docs\\qa\\snapshots_quick-search-filters-mobile390.png",
+      "panelFile": "docs\\qa\\snapshots_quick-search-advanced-mobile390.png",
       "pickerV2Visible": true,
       "resultsVisible": 0,
       "detailsButtons": 0,
       "weatherDetailsVisible": 0,
       "panelChecks": {
-        "ok": false,
+        "ok": true,
+        "drawerFullyVisible": true,
+        "closeFullyVisible": true,
+        "hasVerticalScroll": true,
+        "overflowYAuto": true,
+        "controlsOverlapCount": 0,
+        "controlsMinWidth": 311.1875,
+        "controlsAnyTooNarrow": false,
+        "contentBottomReachable": true,
+        "focusOutlineVisible": true,
+        "includeStopsChecked": true,
+        "strictChecked": true,
+        "summaryPanelVisible": true,
         "focusVisible": true,
         "bottomReachableAfterScroll": true
       },
-      "previousHash": null,
-      "currentHash": "b7590edf732a3d7866f098523f6f07b9a265bf804de03853b9883680540773de",
+      "previousHash": "3620b4222d4a641c6e1b2cc46b1ef06b8893c885f3348721bb27d48b639af51c",
+      "currentHash": "54ad8304851b0e55352c68f38567b7d1bd6366976532b67edb8d0295857f1245",
       "changed": true
     },
     {
@@ -59,18 +83,30 @@
         "height": 1024
       },
       "file": "docs\\qa\\snapshots_quick-search-tablet768.png",
-      "panelFile": "docs\\qa\\snapshots_quick-search-filters-tablet768.png",
+      "panelFile": "docs\\qa\\snapshots_quick-search-advanced-tablet768.png",
       "pickerV2Visible": true,
       "resultsVisible": 0,
       "detailsButtons": 0,
       "weatherDetailsVisible": 0,
       "panelChecks": {
-        "ok": false,
+        "ok": true,
+        "drawerFullyVisible": true,
+        "closeFullyVisible": true,
+        "hasVerticalScroll": true,
+        "overflowYAuto": true,
+        "controlsOverlapCount": 0,
+        "controlsMinWidth": 441,
+        "controlsAnyTooNarrow": false,
+        "contentBottomReachable": true,
+        "focusOutlineVisible": true,
+        "includeStopsChecked": true,
+        "strictChecked": true,
+        "summaryPanelVisible": true,
         "focusVisible": true,
         "bottomReachableAfterScroll": true
       },
-      "previousHash": null,
-      "currentHash": "2516ce57104817977e14ea4151157880bdbc7fb9c4b1f09d71f8282eb1893e78",
+      "previousHash": "43bd397581044be507782e4da5b034312414f42d34e17da9f19f5a8e8e59be10",
+      "currentHash": "69005aeb7f950189af894b8dc3fc03765674fb74763cf4dae8d7446582b0ea6d",
       "changed": true
     },
     {
@@ -80,18 +116,30 @@
         "height": 900
       },
       "file": "docs\\qa\\snapshots_quick-search-tablet1024.png",
-      "panelFile": "docs\\qa\\snapshots_quick-search-filters-tablet1024.png",
+      "panelFile": "docs\\qa\\snapshots_quick-search-advanced-tablet1024.png",
       "pickerV2Visible": true,
       "resultsVisible": 0,
       "detailsButtons": 0,
       "weatherDetailsVisible": 0,
       "panelChecks": {
-        "ok": false,
+        "ok": true,
+        "drawerFullyVisible": true,
+        "closeFullyVisible": true,
+        "hasVerticalScroll": true,
+        "overflowYAuto": true,
+        "controlsOverlapCount": 0,
+        "controlsMinWidth": 165.03125,
+        "controlsAnyTooNarrow": false,
+        "contentBottomReachable": true,
+        "focusOutlineVisible": true,
+        "includeStopsChecked": true,
+        "strictChecked": true,
+        "summaryPanelVisible": true,
         "focusVisible": true,
         "bottomReachableAfterScroll": true
       },
-      "previousHash": null,
-      "currentHash": "2930e02f207437a155ef81128eeae00a993fd33ebc653cdb60de4547cd1cdb0a",
+      "previousHash": "81e7adc8e670428b9521594a842c42e3958e51be8495cb4718c119a5eedd48e2",
+      "currentHash": "f6005fe80d1e448451c63478d8e975f8b3e4ff69c1977563c41428f64b7ffba7",
       "changed": true
     },
     {
@@ -101,51 +149,32 @@
         "height": 900
       },
       "file": "docs\\qa\\snapshots_quick-search-desktop1440.png",
-      "panelFile": "docs\\qa\\snapshots_quick-search-filters-desktop1440.png",
+      "panelFile": "docs\\qa\\snapshots_quick-search-advanced-desktop1440.png",
       "pickerV2Visible": true,
       "resultsVisible": 0,
       "detailsButtons": 0,
       "weatherDetailsVisible": 0,
       "panelChecks": {
-        "ok": false,
+        "ok": true,
+        "drawerFullyVisible": true,
+        "closeFullyVisible": true,
+        "hasVerticalScroll": true,
+        "overflowYAuto": true,
+        "controlsOverlapCount": 0,
+        "controlsMinWidth": 163.75,
+        "controlsAnyTooNarrow": false,
+        "contentBottomReachable": true,
+        "focusOutlineVisible": true,
+        "includeStopsChecked": true,
+        "strictChecked": true,
+        "summaryPanelVisible": true,
         "focusVisible": true,
         "bottomReachableAfterScroll": true
       },
-      "previousHash": null,
-      "currentHash": "ed237989912057e7bd770e9c09d53329a910773401e01041ac12cb66612f8657",
+      "previousHash": "9efcb6c95ca647544b7d8598be7a0280504446d3f1cb8b610c60eb949f8a99d9",
+      "currentHash": "b3be198f3aac0e840c6592533a13a4dc9e1a4cd527fef49b5098b3f8e7549149",
       "changed": true
     }
   ],
-  "failures": [
-    {
-      "viewport": "mobile360",
-      "reasons": [
-        "panel-dom-missing"
-      ]
-    },
-    {
-      "viewport": "mobile390",
-      "reasons": [
-        "panel-dom-missing"
-      ]
-    },
-    {
-      "viewport": "tablet768",
-      "reasons": [
-        "panel-dom-missing"
-      ]
-    },
-    {
-      "viewport": "tablet1024",
-      "reasons": [
-        "panel-dom-missing"
-      ]
-    },
-    {
-      "viewport": "desktop1440",
-      "reasons": [
-        "panel-dom-missing"
-      ]
-    }
-  ]
+  "failures": []
 }
