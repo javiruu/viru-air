@@ -8368,15 +8368,25 @@ textarea::placeholder {
 .qs-search-cta {
   display: grid;
   gap: 0.35rem;
+  min-width: min(100%, 13.5rem);
 }
 
 .qs-search-cta .btn-search {
-  min-height: 44px;
+  min-height: 48px;
+  justify-content: center;
+  padding-inline: 1.35rem;
+  font-weight: 850;
+  line-height: 1.2;
 }
 
 .qs-search-hint {
   font-size: 0.8rem;
   color: var(--ink-muted);
+}
+
+.qs-search-cta-hint {
+  max-width: 18rem;
+  line-height: 1.35;
 }
 
 .qs-return-hint {
@@ -16259,6 +16269,10 @@ textarea::placeholder {
   transition-property: transform, border-color, background-color, color, box-shadow;
   transition-duration: 160ms;
   transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.quick-search-shell .qs-search-cta .btn-search {
+  min-height: 48px;
 }
 
 .quick-search-shell .btn-primary:active,

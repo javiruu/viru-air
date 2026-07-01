@@ -3153,6 +3153,13 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     rateLimitSeconds === 0 &&
     !isLoading,
   );
+  const searchCtaHint = isLoading || isSubmitting
+    ? t("searchHintLoading")
+    : !isReady
+      ? searchDisabledHint
+      : radiusActive
+        ? t("searchHintReadyNearby")
+        : t("searchHintReadyExact");
   const summaryMissingBadges = [
     !origin.trim() && !originCountryOnly ? t("summaryMissingOrigin") : null,
     !destination.trim() && !destinationCountryOnly ? t("summaryMissingDestination") : null,
@@ -4818,8 +4825,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             <button className="btn-search" type="submit" disabled={!isReady || !routeInputsValid || isSubmitting || isLoading}>
               {isLoading ? t("loadingAria") : t("search")}
             </button>
-            {!isReady && searchDisabledHint ? (
-              <small className="qs-search-hint">{searchDisabledHint}</small>
+            {searchCtaHint ? (
+              <small className="qs-search-hint qs-search-cta-hint">{searchCtaHint}</small>
             ) : null}
           </div>
           <div className="qs-summary">
