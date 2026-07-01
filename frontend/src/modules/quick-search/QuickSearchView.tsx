@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
@@ -88,6 +88,7 @@ import { QuickSearchDatePicker } from "@/modules/quick-search/components/QuickSe
 import { QuickSearchFilterConsole } from "@/modules/quick-search/components/QuickSearchFilterConsole";
 import { QuickSearchResultsWorkspace } from "@/modules/quick-search/components/QuickSearchResultsWorkspace";
 import { QuickSearchSummaryChips, type QuickSearchSummaryChip } from "@/modules/quick-search/components/QuickSearchSummaryChips";
+import { QuickSearchAdvancedDrawer } from "@/modules/quick-search/components/QuickSearchAdvancedDrawer";
 
 import { QuickSearchPostFilters } from "@/modules/quick-search/components/QuickSearchPostFilters";import {
   AirportIataEntry,
@@ -359,6 +360,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     () => RYANAIR_TOP_CITIES[Math.floor(Math.random() * RYANAIR_TOP_CITIES.length)],
     [],
   );
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const advancedCloseRef = useRef<HTMLButtonElement>(null);
   const {
     origin,
     setOrigin,
@@ -4900,6 +4903,42 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           onPresetRegional={applyRegionalCoveragePreset}
         />
 
+        <QuickSearchAdvancedDrawer
+          isOpen={isAdvancedOpen}
+          onClose={() => setIsAdvancedOpen(false)}
+          closeRef={advancedCloseRef}
+          departAfter={departAfter}
+          departBefore={departBefore}
+          strictFilters={strictFilters}
+          excludeOrigins={excludeOrigins}
+          excludeDestinations={excludeDestinations}
+          excludeOriginInput={excludeOriginInput}
+          excludeDestinationInput={excludeDestinationInput}
+          fieldErrors={fieldErrors}
+          t={t}
+          setDepartAfter={setDepartAfter}
+          setDepartBefore={setDepartBefore}
+          setStrictFilters={setStrictFilters}
+          setExcludeOriginInput={setExcludeOriginInput}
+          setExcludeDestinationInput={setExcludeDestinationInput}
+          addExcludeOrigin={commitExcludeOriginInput}
+          addExcludeDestination={commitExcludeDestinationInput}
+          removeExcludeOrigin={removeExcludeOriginChip}
+          removeExcludeDestination={removeExcludeDestinationChip}
+          onClearAll={() => {
+            setDepartAfter("");
+            setDepartBefore("");
+            setStrictFilters(true);
+            setExcludeOrigins([]);
+            setExcludeDestinations([]);
+          }}
+          pendingSearchChanges={pendingActionVisibility.consoleAction}
+          onApplyAndSearch={() => {
+            setIsAdvancedOpen(false);
+            runSearch();
+          }}
+        />
+
         <div className="qs-actions">
           <div className="qs-search-cta">
             <button className="btn-search" type="submit" disabled={!isReady || !routeInputsValid || isSubmitting || isLoading}>
@@ -4951,7 +4990,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           </div>
           ) : null}
         </div>
-        <QuickSearchSummaryChips title={t("quickSummaryTitle")} chips={compactSummaryChips} />
+        <QuickSearchSummaryChips 
+          title={t("quickSummaryTitle")} 
+          chips={compactSummaryChips} 
+          onOpenAdvanced={() => setIsAdvancedOpen(true)}
+          moreOptionsLabel={t("moreOptions")}
+        />
         </QuickSearchSearchForm>
       </section>
 

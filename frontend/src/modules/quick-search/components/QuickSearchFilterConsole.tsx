@@ -222,72 +222,6 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
                 </div>
                 <small className="muted">{props.radiusActive ? props.t("radiusHint") : props.t("radiusInactive")}</small>
               </label>
-              <div className="field">
-                <span>{props.t("excludeOrigins")}</span>
-                <div className="qs-chip-input">
-                  {props.excludeOrigins.map((iata) => (
-                    <button
-                      key={`origin-${iata}`}
-                      type="button"
-                      className="qs-chip"
-                      onClick={() => props.removeExcludeOrigin(iata)}
-                      aria-label={props.t("ariaRemoveFilter").replace("{value}", iata)}
-                    >
-                      <span>{iata}</span>
-                      <QuickSearchCloseIcon />
-                    </button>
-                  ))}
-                  <input
-                    name="exclude_origins"
-                    autoComplete="off"
-                    value={props.excludeOriginInput}
-                    onChange={(e) => props.setExcludeOriginInput(e.target.value.toUpperCase())}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === "," || e.key === " ") {
-                        e.preventDefault();
-                        props.addExcludeOrigin();
-                      }
-                    }}
-                    onBlur={props.addExcludeOrigin}
-                    placeholder="MAD, BCN"
-                    className="qs-input"
-                    data-ui="qs-filter-exclude-origins"
-                  />
-                </div>
-              </div>
-              <div className="field">
-                <span>{props.t("excludeDestinations")}</span>
-                <div className="qs-chip-input">
-                  {props.excludeDestinations.map((iata) => (
-                    <button
-                      key={`dest-${iata}`}
-                      type="button"
-                      className="qs-chip"
-                      onClick={() => props.removeExcludeDestination(iata)}
-                      aria-label={props.t("ariaRemoveFilter").replace("{value}", iata)}
-                    >
-                      <span>{iata}</span>
-                      <QuickSearchCloseIcon />
-                    </button>
-                  ))}
-                  <input
-                    name="exclude_destinations"
-                    autoComplete="off"
-                    value={props.excludeDestinationInput}
-                    onChange={(e) => props.setExcludeDestinationInput(e.target.value.toUpperCase())}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === "," || e.key === " ") {
-                        e.preventDefault();
-                        props.addExcludeDestination();
-                      }
-                    }}
-                    onBlur={props.addExcludeDestination}
-                    placeholder="DUB, LIS"
-                    className="qs-input"
-                    data-ui="qs-filter-exclude-destinations"
-                  />
-                </div>
-              </div>
             </div>
           </section>
 
@@ -305,45 +239,6 @@ function QuickSearchFilterConsoleInner(props: FilterConsoleProps) {
               </div>
             </div>
             <div className="qs-filter-grid">
-              <label className="field">
-                {props.t("departAfter")}
-                <input
-                  type="time"
-                  name="depart_after"
-                  autoComplete="off"
-                  value={props.departAfter}
-                  onChange={(e) => props.setDepartAfter(e.target.value)}
-                  className="qs-input"
-                  data-ui="qs-filter-depart-after"
-                />
-              </label>
-              <label className="field">
-                {props.t("departBefore")}
-                <input
-                  type="time"
-                  name="depart_before"
-                  autoComplete="off"
-                  value={props.departBefore}
-                  onChange={(e) => props.setDepartBefore(e.target.value)}
-                  className="qs-input"
-                  data-ui="qs-filter-depart-before"
-                />
-              </label>
-              <label className="qs-check qs-filter-wide" data-ui="qs-filter-strict">
-                <input
-                  type="checkbox"
-                  name="strict_filters"
-                  checked={props.strictFilters}
-                  onChange={(e) => props.setStrictFilters(e.target.checked)}
-                />
-                <span className="qs-check-ui" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                    <path d="M5.5 12.5 10 17l8.5-9" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                {props.t("strictMode")}
-              </label>
-              <hr className="qs-filter-divider" />
               <label className="qs-check" data-ui="qs-filter-include-stops">
                 <input
                   type="checkbox"
