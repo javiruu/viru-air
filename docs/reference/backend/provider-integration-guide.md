@@ -1,6 +1,6 @@
 Status: reference
 Scope: backend provider architecture and onboarding
-Last reviewed: 2026-05-26
+Last reviewed: 2026-07-02
 Canonical source: docs/reference/backend/provider-integration-guide.md
 Related: docs/engineering/backend.md, docs/reference/backend/quick-search-contract.md
 
@@ -33,7 +33,7 @@ Implementar `FlightProvider` con:
 
 - Registrar la clase en `FlightProviderRegistry`.
 - Controlar habilitación por env:
-  - `FLIGHT_PROVIDER_ORDER` (default: `ryanair,vueling,wizzair,duffel`)
+  - `FLIGHT_PROVIDER_ORDER` (default: `ryanair,vueling,wizzair,easyjet,duffel`)
   - `FLIGHT_PROVIDER_<ID>_ENABLED` (default: true)
   - Providers con credenciales propias pueden estar en el orden por defecto y no activarse si `is_enabled()` devuelve `false`.
   - Providers públicos como `ryanair` y `vueling` no requieren API key.
@@ -48,6 +48,7 @@ Implementar `FlightProvider` con:
 - `ryanair`: provider público sin credenciales.
 - `vueling`: provider público sin credenciales. Crea sesión anónima contra `asm/v1/Auth`, consulta `avy/v3/AvailabilityServices/allFlights` y soporta alias `vy`.
 - `wizzair`: provider FareChart público/configurable.
+- `easyjet`: provider público sin credenciales. Consulta `ejavailability/api/v16/availability/query`, soporta alias `easy_jet`/`ezj` y genera deeplink oficial.
 - `duffel`: provider API con `DUFFEL_API_KEY`.
 
 ## Warnings canónicos recomendados

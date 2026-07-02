@@ -1,7 +1,7 @@
 # Estado actual
 
 **Estado:** vivo  
-**Ultima revision:** 2026-06-29  
+**Ultima revision:** 2026-07-02
 **Fuente de verdad:** si  
 **Area:** overview
 
@@ -51,7 +51,7 @@
 
 - Busqueda rapida de vuelos con cache compartida persistente (L1 local + L2 DB + provider)
 - Calendar hints con precios estimados por mes
-- Proveedores: Ryanair, Wizz Air, Duffel (API)
+- Proveedores: Ryanair, Vueling, Wizz Air, easyJet, Duffel (API)
 - Indicador visual de estado por proveedor durante la busqueda
 - Logging en tiempo real de actividad por provider
 

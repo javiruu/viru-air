@@ -1,9 +1,13 @@
 import React from "react";
 
 import { resolveQuickSearchProviderPresentation } from "@/modules/quick-search/providerPresentation";
-import { RyanairIcon, VuelingIcon, WizzAirIcon, DuffelIcon, GenericProviderIcon } from "@/icons";
+import { RyanairIcon, VuelingIcon, WizzAirIcon, EasyJetIcon, DuffelIcon, GenericProviderIcon } from "@/icons";
 
-function ProviderLogo({ providerId }: { providerId: "ryanair" | "vueling" | "wizzair" | "duffel" | "unknown" }) {
+function ProviderLogo({
+  providerId,
+}: {
+  providerId: "ryanair" | "vueling" | "wizzair" | "easyjet" | "duffel" | "unknown";
+}) {
   if (providerId === "ryanair") {
     return <RyanairIcon className="qs-provider-badge-logo" size={24} />;
   }
@@ -12,6 +16,9 @@ function ProviderLogo({ providerId }: { providerId: "ryanair" | "vueling" | "wiz
   }
   if (providerId === "wizzair") {
     return <WizzAirIcon className="qs-provider-badge-logo" size={24} />;
+  }
+  if (providerId === "easyjet") {
+    return <EasyJetIcon className="qs-provider-badge-logo" size={24} />;
   }
   if (providerId === "duffel") {
     return <DuffelIcon className="qs-provider-badge-logo" size={24} />;

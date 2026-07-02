@@ -1,5 +1,6 @@
 from app.infrastructure.providers.base import FlightProvider
 from app.infrastructure.providers.duffel_provider import DuffelProvider
+from app.infrastructure.providers.easyjet_provider import EasyJetProvider
 from app.infrastructure.providers.flight_provider import MultiSourceFlightProvider
 from app.infrastructure.providers.orchestrator import FlightSearchOrchestrator
 from app.infrastructure.providers.registry import FlightProviderRegistry
@@ -14,4 +15,5 @@ __all__ = [
     "RyanairPublicProvider",
     "VuelingProvider",
     "DuffelProvider",
+    "EasyJetProvider",
 ]
