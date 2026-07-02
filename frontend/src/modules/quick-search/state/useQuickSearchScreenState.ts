@@ -33,6 +33,30 @@ type QuickSearchScreenStateArgs = {
   tWarn: (key: string) => string;
 };
 
+const PROVIDER_TOTAL_OUTAGE_CODES = new Set([
+  "provider_total_outage",
+  "ryanair_provider_unavailable_total",
+  "vueling_provider_unavailable_total",
+  "wizzair_provider_unavailable_total",
+  "easyjet_provider_unavailable_total",
+  "duffel_provider_unavailable_total",
+]);
+
+const PROVIDER_PARTIAL_OUTAGE_CODES = new Set([
+  "ryanair_unavailable_partial",
+  "ryanair_availability_failed_partial",
+  "ryanair_fares_failed_partial",
+  "provider_timeout_partial",
+  "provider_error_partial",
+  "provider_partial_results_served",
+]);
+
+const PROVIDER_CRITICAL_WARNING_CODES = new Set([
+  ...PROVIDER_TOTAL_OUTAGE_CODES,
+  "ryanair_availability_failed",
+  "ryanair_fares_failed",
+]);
+
 export function useQuickSearchScreenState({
   results,
   priceMin,
@@ -70,20 +94,6 @@ export function useQuickSearchScreenState({
   }, [results, priceMin, priceMax, durationMax, sortBy]);
 
   const warningSeverity = useMemo(() => {
-    const neutralCodes = new Set([
-      "ryanair_unavailable_partial",
-      "ryanair_availability_failed_partial",
-      "ryanair_fares_failed_partial",
-      "provider_timeout_partial",
-      "provider_error_partial",
-      "provider_partial_results_served",
-    ]);
-    const criticalCodes = new Set([
-      "provider_total_outage",
-      "ryanair_provider_unavailable_total",
-      "ryanair_availability_failed",
-      "ryanair_fares_failed",
-    ]);
     const sourceCodesOrNotices = filtersWarningCodes.length > 0 ? filtersWarningCodes : filtersNotice;
     const neutral: string[] = [];
     const critical: string[] = [];
@@ -97,11 +107,11 @@ export function useQuickSearchScreenState({
         return;
       }
       const code = codeOrNotice;
-      if (criticalCodes.has(code)) {
+      if (PROVIDER_CRITICAL_WARNING_CODES.has(code)) {
         critical.push(tWarn(code));
         return;
       }
-      if (neutralCodes.has(code)) {
+      if (PROVIDER_PARTIAL_OUTAGE_CODES.has(code)) {
         neutral.push(tWarn(code));
         return;
       }
@@ -166,16 +176,10 @@ export function useQuickSearchScreenState({
 
   const providerStatus = searchMeta?.provider_status;
   const providerOverallStatus = providerStatus?.overall_status ?? providerStatus?.overall;
-  const providerTotalOutage = filtersWarningCodes.includes("provider_total_outage")
-    || filtersWarningCodes.includes("ryanair_provider_unavailable_total")
+  const providerTotalOutage = filtersWarningCodes.some((code) => PROVIDER_TOTAL_OUTAGE_CODES.has(code))
     || providerOverallStatus === "total_outage"
     || Boolean(providerStatus?.total_outage);
-  const providerPartialOutage = filtersWarningCodes.includes("provider_partial_results_served")
-    || filtersWarningCodes.includes("provider_error_partial")
-    || filtersWarningCodes.includes("provider_timeout_partial")
-    || filtersWarningCodes.includes("ryanair_availability_failed_partial")
-    || filtersWarningCodes.includes("ryanair_fares_failed_partial")
-    || filtersWarningCodes.includes("ryanair_unavailable_partial")
+  const providerPartialOutage = filtersWarningCodes.some((code) => PROVIDER_PARTIAL_OUTAGE_CODES.has(code))
     || providerOverallStatus === "partial_degraded"
     || Boolean(providerStatus?.partial_results_served);
   const providerPartialInlineNotice = useMemo(() => {

@@ -2,7 +2,7 @@ import datetime as dt
 import unittest
 
 from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError
-from app.services.quick_search_execution import _CACHE, build_execution_plan, execute_plan
+from app.services.quick_search_execution import _CACHE, build_execution_plan, classify_cache_result, execute_plan
 from app.services.quick_search_planner import PairPlanItem
 
 
@@ -234,6 +234,14 @@ class QuickSearchExecutionTests(unittest.TestCase):
         self.assertEqual(rows, [])
         self.assertEqual(meta["provider_failures"], 1)
         self.assertIn("ryanair_provider_unavailable_total", warnings)
+
+    def test_classify_cache_result_treats_easyjet_outage_as_degraded(self):
+        category = classify_cache_result(
+            flights=[],
+            warnings=["easyjet_provider_unavailable_total"],
+        )
+
+        self.assertEqual(category, "degraded")
 
 
 if __name__ == "__main__":

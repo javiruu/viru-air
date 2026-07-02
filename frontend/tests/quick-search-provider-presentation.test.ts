@@ -10,11 +10,13 @@ import {
 } from "../src/modules/quick-search/providerPresentation";
 
 test("resolveQuickSearchProviderPresentation recognizes easyJet sources", () => {
-  const provider = resolveQuickSearchProviderPresentation("easyjet-public-availability");
+  for (const source of ["easyjet-public-availability", "easy-jet-public", "easy_jet", "ezj-feed", "EZY availability", "U2 fares"]) {
+    const provider = resolveQuickSearchProviderPresentation(source);
 
-  assert.equal(provider.id, "easyjet");
-  assert.equal(provider.label, "easyJet");
-  assert.equal(provider.rawSource, "easyjet-public-availability");
+    assert.equal(provider.id, "easyjet");
+    assert.equal(provider.label, "easyJet");
+    assert.equal(provider.rawSource, source);
+  }
 });
 
 test("INITIAL_PROVIDER_SEARCH_STATUSES includes easyJet in provider lane", () => {

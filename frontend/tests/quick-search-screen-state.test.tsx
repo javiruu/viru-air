@@ -96,6 +96,18 @@ test("useQuickSearchScreenState prioritizes provider outage copy when no results
   assert.deepEqual(state.zeroResultActions, []);
 });
 
+test("useQuickSearchScreenState treats easyJet outage codes as provider outages", () => {
+  const state = renderScreenState({
+    filtersWarningCodes: ["easyjet_provider_unavailable_total"],
+  });
+
+  assert.equal(state.showDegradedState, true);
+  assert.equal(state.emptyStateMainTitle, "emptyStateProviderTitle");
+  assert.deepEqual(state.zeroResultCauses, ["emptyCauseProvider"]);
+  assert.deepEqual(state.groupedCriticalWarnings, [{ message: "easyjet_provider_unavailable_total", count: 1 }]);
+  assert.deepEqual(state.zeroResultActions, []);
+});
+
 test("useQuickSearchScreenState surfaces partial provider outage without hiding relax options", () => {
   const state = renderScreenState({
     filtersWarningCodes: ["ryanair_availability_failed_partial"],
@@ -108,7 +120,7 @@ test("useQuickSearchScreenState surfaces partial provider outage without hiding 
   assert.equal(state.zeroResultCauses[0], "emptyCauseProvider");
   assert.deepEqual(
     state.zeroResultActions.map((action) => action.id),
-    ["disable_strict", "increase_duration", "open_date_flex"],
+    ["try_plus_1_day", "open_nearby", "max_coverage", "open_more_options"],
   );
 });
 
@@ -169,7 +181,7 @@ test("useQuickSearchScreenState derives zero-result causes and relax actions fro
   assert.equal(collapsed.canExpandZeroResultCauses, true);
   assert.deepEqual(
     collapsed.zeroResultActions.map((action) => action.id),
-    ["disable_strict", "increase_duration", "open_radius_150", "open_date_flex", "clear_exclusions"],
+    ["try_plus_1_day", "open_nearby", "max_coverage", "open_more_options"],
   );
 
   const expanded = renderScreenState({

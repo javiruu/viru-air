@@ -414,6 +414,10 @@ export const QUICK_SEARCH_COPY = {
       ryanair_availability_failed: "La consulta completa de Ryanair no respondio.",
       ryanair_fares_failed: "La consulta rapida de tarifas de Ryanair no respondio.",
       ryanair_provider_unavailable_total: "Ryanair no respondio y no pudimos confirmar vuelos en este momento.",
+      vueling_provider_unavailable_total: "Vueling no respondio y no pudimos confirmar vuelos en este momento.",
+      wizzair_provider_unavailable_total: "Wizz Air no respondio y no pudimos confirmar vuelos en este momento.",
+      easyjet_provider_unavailable_total: "easyJet no respondio y no pudimos confirmar vuelos en este momento.",
+      duffel_provider_unavailable_total: "Duffel no respondio y no pudimos confirmar vuelos en este momento.",
     },
   },
   en: {
@@ -827,6 +831,10 @@ export const QUICK_SEARCH_COPY = {
       ryanair_availability_failed: "Ryanair full availability did not respond.",
       ryanair_fares_failed: "Ryanair fare lookup did not respond.",
       ryanair_provider_unavailable_total: "Ryanair did not respond and we could not confirm flights right now.",
+      vueling_provider_unavailable_total: "Vueling did not respond and we could not confirm flights right now.",
+      wizzair_provider_unavailable_total: "Wizz Air did not respond and we could not confirm flights right now.",
+      easyjet_provider_unavailable_total: "easyJet did not respond and we could not confirm flights right now.",
+      duffel_provider_unavailable_total: "Duffel did not respond and we could not confirm flights right now.",
     },
   },
 } as const;

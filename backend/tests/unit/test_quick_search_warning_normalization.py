@@ -29,6 +29,7 @@ def test_filter_ui_warning_codes_keeps_only_provider_critical_and_partial() -> N
         [
             "ryanair_unavailable_parcial",
             "provider_timeout_parcial",
+            "easyjet_provider_unavailable_total",
             "ryanair_provider_unavailable_total",
             "rescue_mode_applied",
             "limite_combinaciones_alternativas",
@@ -38,5 +39,6 @@ def test_filter_ui_warning_codes_keeps_only_provider_critical_and_partial() -> N
     assert filtered == [
         "ryanair_unavailable_partial",
         "provider_timeout_partial",
+        "easyjet_provider_unavailable_total",
         "ryanair_provider_unavailable_total",
     ]

@@ -20,6 +20,20 @@ CacheUnitKey = tuple[str, str, str, str]
 MemoryCacheKey = tuple[str, str, str, str]
 CacheResultCategory = str  # "ready" | "empty" | "degraded"
 
+_PROVIDER_TOTAL_OUTAGE_CODES = {
+    "provider_total_outage",
+    "ryanair_provider_unavailable_total",
+    "vueling_provider_unavailable_total",
+    "wizzair_provider_unavailable_total",
+    "easyjet_provider_unavailable_total",
+    "duffel_provider_unavailable_total",
+}
+
+_PROVIDER_ERROR_CODES = {
+    "ryanair_availability_failed",
+    "ryanair_fares_failed",
+}
+
 
 def build_unit_cache_key(
     *,
@@ -91,12 +105,7 @@ def classify_cache_result(
     }
     # Total outage codes: even with zero flights, cache briefly as "degraded"
     # instead of "empty" to avoid 2h stale negative results.
-    outage_codes = {
-        "provider_total_outage",
-        "ryanair_provider_unavailable_total",
-        "ryanair_availability_failed",
-        "ryanair_fares_failed",
-    }
+    outage_codes = _PROVIDER_TOTAL_OUTAGE_CODES | _PROVIDER_ERROR_CODES
     has_degradation = any(code in degradation_codes for code in warnings)
     has_outage = any(code in outage_codes for code in warnings)
     if flights:
