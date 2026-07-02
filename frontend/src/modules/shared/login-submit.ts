@@ -1,4 +1,4 @@
-import { AuthOut } from "@/modules/shared/auth";
+import type { AuthOut } from "@/modules/shared/auth";
 import { apiFetchWithStatus } from "@/modules/shared/api";
 
 export type LoginSubmitResult =

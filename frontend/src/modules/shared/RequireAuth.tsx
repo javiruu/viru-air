@@ -6,7 +6,14 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetchWithStatus } from "@/modules/shared/api";
-import { clearToken, hasToken } from "@/modules/shared/auth";
+import {
+  DASHBOARD_DEMO_ACCOUNT,
+  clearToken,
+  hasToken,
+  isDashboardLoginRequired,
+  saveAuthTokens,
+} from "@/modules/shared/auth";
+import { submitLogin } from "@/modules/shared/login-submit";
 import { buildLoginRedirect, currentPathWithSearch } from "@/modules/shared/navigation";
 import { Skeleton, SkeletonPanel } from "@/modules/shared/Skeleton";
 import { persistLocale, useI18n } from "@/i18n";
@@ -29,17 +36,42 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
 
     async function validateSession() {
       if (!hasToken()) {
-        if (!notifiedRef.current) {
-          notify({
-            tone: "warning",
-            title: t("shared.notifications.sessionRequiredTitle"),
-            description: t("shared.errors.sessionRequired"),
-          });
-          notifiedRef.current = true;
+        const canUseDashboardDemoAccount = pathname === "/dashboard" && !isDashboardLoginRequired();
+        if (canUseDashboardDemoAccount) {
+          const loginResult = await submitLogin(DASHBOARD_DEMO_ACCOUNT.email, DASHBOARD_DEMO_ACCOUNT.password);
+          if (!active) return;
+          if (loginResult.kind === "success") {
+            saveAuthTokens(loginResult.data);
+            notify({
+              tone: "success",
+              title: t("shared.notifications.dashboardAutoLoginTitle"),
+              description: t("shared.notifications.dashboardAutoLoginBody"),
+              durationMs: 2800,
+            });
+          } else {
+            notify({
+              tone: "warning",
+              title: t("shared.notifications.dashboardAutoLoginFailedTitle"),
+              description: t("shared.errors.sessionRequired"),
+            });
+            notifiedRef.current = true;
+            setState("redirecting");
+            router.replace(loginRedirect);
+            return;
+          }
+        } else {
+          if (!notifiedRef.current) {
+            notify({
+              tone: "warning",
+              title: t("shared.notifications.sessionRequiredTitle"),
+              description: t("shared.errors.sessionRequired"),
+            });
+            notifiedRef.current = true;
+          }
+          setState("redirecting");
+          router.replace(loginRedirect);
+          return;
         }
-        setState("redirecting");
-        router.replace(loginRedirect);
-        return;
       }
       const meResult = await apiFetchWithStatus<Me>("/auth/me", undefined, { timeoutMs: 7000 });
       if (meResult.ok) {
