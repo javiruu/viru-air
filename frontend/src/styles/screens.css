@@ -1909,6 +1909,60 @@ h1 {
   animation: qs-fade-in 0.3s ease forwards;
 }
 
+button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
+  background:
+    radial-gradient(circle at 76% 18%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 34%),
+    color-mix(in srgb, var(--ink) 48%, transparent);
+  -webkit-backdrop-filter: blur(7px) saturate(112%);
+  backdrop-filter: blur(7px) saturate(112%);
+}
+
+#qs-advanced-drawer.qs-filters-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100dvh;
+  min-height: 100dvh;
+  padding: 0;
+  overflow: hidden;
+  border-left-color: color-mix(in srgb, var(--accent) 20%, var(--border));
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 28%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface) 96%, white 4%),
+      color-mix(in srgb, var(--surface-2) 88%, var(--surface) 12%)
+    );
+  box-shadow: -28px 0 56px color-mix(in srgb, var(--shadow-strong) 42%, transparent);
+}
+
+#qs-advanced-drawer .qs-filter-console-drawer {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+
+#qs-advanced-drawer .qs-filter-actions {
+  position: relative;
+  bottom: auto;
+  background: color-mix(in srgb, var(--surface) 84%, transparent);
+  -webkit-backdrop-filter: blur(12px) saturate(116%);
+  backdrop-filter: blur(12px) saturate(116%);
+}
+
+#qs-advanced-drawer .qs-filters-close {
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+@media (min-width: 1024px) {
+  #qs-advanced-drawer.qs-filters-panel {
+    width: min(720px, calc(100vw / 0.75));
+    height: calc(100dvh / 0.75);
+    min-height: calc(100dvh / 0.75);
+  }
+}
+
 .qs-results-panel {
   min-height: 420px;
   background:
@@ -8729,6 +8783,7 @@ textarea::placeholder {
 .qs-summary-chips-list {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.42rem;
 }
 
@@ -8767,6 +8822,37 @@ textarea::placeholder {
 .qs-summary-chip-compact-result {
   border-color: color-mix(in srgb, var(--state-warning-border) 72%, var(--border));
   background: color-mix(in srgb, var(--state-warning-bg) 72%, var(--surface));
+}
+
+.qs-summary-chips-more {
+  flex: 0 0 auto;
+  min-height: 32px;
+  max-width: 100%;
+  padding: 0.32rem 0.74rem;
+  border-radius: 999px;
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 88%, white 12%), color-mix(in srgb, var(--surface-2) 72%, var(--surface) 28%));
+  color: var(--ink);
+  font-size: 0.76rem;
+  font-weight: 800;
+  line-height: 1.12;
+  white-space: nowrap;
+  box-shadow:
+    0 8px 16px color-mix(in srgb, var(--shadow) 30%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58);
+}
+
+.qs-summary-chips-more:hover {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--border));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 82%, white 18%), color-mix(in srgb, var(--surface-2) 82%, var(--surface) 18%));
+}
+
+.qs-summary-chips-more .qs-inline-icon {
+  width: 0.86rem;
+  height: 0.86rem;
+  flex: none;
 }
 
 @keyframes qsSummaryHighlight {
@@ -18030,6 +18116,37 @@ textarea::placeholder {
   border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
   background: color-mix(in srgb, var(--color-surface) 90%, var(--color-surface-elevated) 10%);
   box-shadow: 0 16px 30px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme="dark"] button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
+  background:
+    radial-gradient(circle at 76% 18%, color-mix(in srgb, var(--color-accent) 18%, transparent), transparent 34%),
+    color-mix(in srgb, #060807 62%, transparent);
+}
+
+:root[data-theme="dark"] #qs-advanced-drawer {
+  border-left-color: color-mix(in srgb, var(--color-accent) 28%, var(--color-border));
+  background:
+    radial-gradient(circle at 100% 0%, rgba(224, 123, 86, 0.12), transparent 32%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-surface-elevated) 88%, var(--color-surface) 12%),
+      color-mix(in srgb, var(--color-surface) 92%, #101513 8%)
+    );
+  box-shadow: -30px 0 58px rgba(0, 0, 0, 0.56);
+}
+
+:root[data-theme="dark"] #qs-advanced-drawer .qs-filter-actions {
+  background: color-mix(in srgb, var(--color-surface) 78%, transparent);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-summary-chips-more {
+  border-color: color-mix(in srgb, var(--color-accent) 34%, var(--color-border));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-surface) 82%, #ffffff 6%), color-mix(in srgb, var(--color-surface-elevated) 82%, var(--color-surface) 18%));
+  box-shadow:
+    0 10px 18px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 :root[data-theme="dark"] .quick-search-shell .btn-search:disabled {
