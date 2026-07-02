@@ -3177,7 +3177,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const summaryDate = travelDate ? formatShortDate(travelDate) : "--";
   const summaryOriginLabel = originCountryOnly ? originCountryOnly.name : (origin || "---");
   const summaryDestinationLabel = destinationCountryOnly ? destinationCountryOnly.name : (destination || "---");
-  const summaryTrip = `${summaryOriginLabel} â†’ ${summaryDestinationLabel}`;
+  const summaryTrip = `${summaryOriginLabel} -> ${summaryDestinationLabel}`;
   const summaryTripTypeLabel = tripType === "one_way"
     ? t("summaryOneWay")
     : tripType === "round_trip"
@@ -3200,6 +3200,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     plusThree: t("flexPresetThree"),
     customTemplate: t("flexCustomSummary"),
   });
+  const summaryDurationValue = parseNumericInput(durationMax, { min: 1 });
+  const summaryDuration = summaryDurationValue !== null && Number.isFinite(summaryDurationValue)
+    ? `${t("summaryDurationMax")} ${summaryDurationValue} min`
+    : t("summaryDurationOpen");
   const compactSummaryChips = useMemo<QuickSearchSummaryChip[]>(() => {
     const chips: QuickSearchSummaryChip[] = [];
     const routeLabel = origin.trim() && destination.trim()
@@ -3221,6 +3225,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         id: "radius",
         label: t("summaryDistanceUpTo").replace("{km}", String(radiusKm)),
         tone: "search",
+        emphasis: summaryHighlightKey === "radius",
       });
     }
     if (travelDate) {
@@ -3241,19 +3246,33 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         });
       }
     }
+    if (durationMax) {
+      chips.push({
+        id: "duration",
+        label: summaryDuration,
+        tone: "search",
+        emphasis: summaryHighlightKey === "duration",
+      });
+    }
     chips.push({ id: "passengers", label: passengersSummaryLabel, tone: "route" });
     if (includeStops) {
       chips.push({ id: "separate-flights", label: t("summarySeparateFlights"), tone: "advanced" });
     }
     if (!strictFilters) {
-      chips.push({ id: "incomplete-info", label: t("summaryIncompleteInfo"), tone: "advanced" });
+      chips.push({
+        id: "strict",
+        label: t("summaryIncompleteInfo"),
+        tone: "advanced",
+        emphasis: summaryHighlightKey === "strict",
+      });
     }
     const avoidedIata = Array.from(new Set([...excludeOrigins, ...excludeDestinations])).join(", ");
     if (avoidedIata) {
       chips.push({
-        id: "avoids",
+        id: "exclusions",
         label: t("summaryAvoids").replace("{iata}", avoidedIata),
         tone: "result",
+        emphasis: summaryHighlightKey === "exclusions",
       });
     }
     return chips;
@@ -3268,6 +3287,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     radiusKm,
     daysBefore,
     daysAfter,
+    durationMax,
+    summaryDuration,
     travelDate,
     summaryDate,
     passengersSummaryLabel,
@@ -3275,6 +3296,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     strictFilters,
     excludeOrigins,
     excludeDestinations,
+    summaryHighlightKey,
     t,
   ]);
   const effectiveFlexCustomPanelOpen = flexCustomPanelOpen || flexPreset === "custom";
@@ -3283,7 +3305,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     : flexPreset === "exact"
       ? t("flexHelperExact")
       : t("flexHelperFlexible");
-  const summaryStrict = strictFilters ? t("summaryStrictOn") : t("summaryStrictOff");
   const loadingPhaseLabel = loadingPhase === "requesting"
     ? t("loadingPhaseRequesting")
     : loadingPhase === "response_parsed"
@@ -3388,12 +3409,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       };
     });
   }, [loadingSubcheckRoutes, loadingSubcheckActiveIndex, t]);
-  const summaryDurationValue = parseNumericInput(durationMax, { min: 1 });
-  const summaryDuration = summaryDurationValue !== null && Number.isFinite(summaryDurationValue)
-    ? `${t("summaryDurationMax")} ${summaryDurationValue} min`
-    : t("summaryDurationOpen");
-  const summaryRadius = `${t("summaryRadius")} ${radiusKm} km`;
-  const summaryExclusions = `${t("summaryExclusions")} ${excludeOrigins.length + excludeDestinations.length}`;
   const sortLabel = {
     ranking: t("sortRanking"),
     price: t("sortPrice"),
@@ -4910,32 +4925,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               <small className="qs-search-hint qs-search-cta-hint">{searchCtaHint}</small>
             ) : null}
           </div>
-          <div className="qs-summary">
-            <strong>{summaryTrip}</strong>
-            <span>{summaryMeta}</span>
-            <div className="qs-summary-detail-row">
-              <span className={`qs-summary-chip ${summaryHighlightKey === "strict" ? "qs-summary-chip-highlight" : ""}`}>
-                {summaryStrict}
-              </span>
-              <span className={`qs-summary-chip ${summaryHighlightKey === "duration" ? "qs-summary-chip-highlight" : ""}`}>
-                {summaryDuration}
-              </span>
-              <span className={`qs-summary-chip ${summaryHighlightKey === "radius" ? "qs-summary-chip-highlight" : ""}`}>
-                {summaryRadius}
-              </span>
-              <span className={`qs-summary-chip ${summaryHighlightKey === "exclusions" ? "qs-summary-chip-highlight" : ""}`}>
-                {summaryExclusions}
-              </span>
-            </div>
-            <span>{summaryFlex}</span>
-            {summaryMissingBadges.length > 0 ? (
-              <div className="qs-summary-missing">
-                {summaryMissingBadges.map((badge) => (
-                  <span key={badge} className="qs-summary-missing-badge">{badge}</span>
-                ))}
-              </div>
-            ) : null}
-          </div>
           {isIdleVisualState ? (
           <div className="qs-ready" aria-live="polite">
             <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
@@ -4953,8 +4942,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           ) : null}
         </div>
         <QuickSearchSummaryChips 
-          title={t("quickSummaryTitle")} 
+          title={t("quickSummaryTitle")}
+          headline={summaryTrip}
+          caption={summaryMeta}
           chips={compactSummaryChips} 
+          missingBadges={summaryMissingBadges}
           onOpenAdvanced={() => setIsAdvancedOpen(true)}
           moreOptionsLabel={t("moreOptions")}
         />
@@ -4971,22 +4963,14 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         <section className="panel panel-soft qs-results-panel">
           {showResultsStagehead ? (
           <div className="qs-results-stagehead">
-            <div className="qs-results-stagehead__copy">
-              <span className="qs-results-stagehead__eyebrow">{t("searchSummaryTitle")}</span>
+            <div className="qs-results-stagehead__status">
+              <span className="qs-results-stagehead__eyebrow">{t("results")}</span>
               <h2>{resultsStageTitle}</h2>
-              <p>
-                {executedCriteria
-                  ? `${executedCriteria.route} - ${executedCriteria.dateLabel}`
-                  : `${summaryTrip} - ${summaryMeta}`}
-              </p>
+              <p>{hasSearched ? `${t("orderedBy")} ${sortLabel[sortBy]}` : pageWorkspaceHint}</p>
             </div>
-            <div className="qs-results-stagehead__meta">
-              <span className="qs-summary-chip">{summaryFlex}</span>
-              <span className="qs-summary-chip">{showDegradedState ? t("degradedBadge") : summaryStrict}</span>
-              {pendingSearchChanges ? (
-                <span className="qs-summary-chip qs-results-stagehead__chip-warning">{t("pendingChangesTitle")}</span>
-              ) : null}
-            </div>
+            {pendingSearchChanges ? (
+              <span className="qs-results-stagehead__pending">{t("pendingChangesTitle")}</span>
+            ) : null}
           </div>
           ) : null}
           {showResultsToolbar ? (
