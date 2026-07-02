@@ -16,6 +16,11 @@ import { formatCurrency, formatNumber } from "@/modules/shared/format";
 import { buildDateRange } from "@/modules/quick-search/utils";
 import { buildCriteriaSignature, parseNumericInput } from "@/modules/quick-search/searchCriteria";
 import {
+  QUICK_SEARCH_PROVIDER_ERROR_WARNING_CODES,
+  QUICK_SEARCH_PROVIDER_PARTIAL_INLINE_WARNING_CODES,
+  QUICK_SEARCH_PROVIDER_TOTAL_OUTAGE_WARNING_CODES,
+} from "@/modules/quick-search/quick-search-warning-codes";
+import {
   clampQuickSearchFlexDays,
   formatQuickSearchFlexSummary,
   getQuickSearchFlexPreset,
@@ -3546,13 +3551,13 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const explainChipLabel = showDegradedState ? t("degradedChip") : t("toolbarExplain");
   const warningGroupedTitle = t("warningsGroupedTitle");
   const warningProblemTitle = t("warningProblemTitle");
+  const providerPartialInlineMessages = QUICK_SEARCH_PROVIDER_PARTIAL_INLINE_WARNING_CODES.map((code) => tWarn(code));
+  const providerTotalWarningMessages = [
+    ...QUICK_SEARCH_PROVIDER_TOTAL_OUTAGE_WARNING_CODES,
+    ...QUICK_SEARCH_PROVIDER_ERROR_WARNING_CODES,
+  ].map((code) => tWarn(code));
   const providerPartialWarnings = groupedNeutralWarnings.filter((group) =>
-    [
-      tWarn("ryanair_unavailable_partial"),
-      tWarn("ryanair_unavailable_parcial"),
-      tWarn("ryanair_availability_failed_partial"),
-      tWarn("ryanair_fares_failed_partial"),
-    ].includes(group.message),
+    providerPartialInlineMessages.includes(group.message),
   );
   const providerPartialInlineText = providerPartialInlineNotice
     ?? (
@@ -3561,11 +3566,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         : ""
     );
   const providerTotalWarnings = groupedCriticalWarnings.filter((group) =>
-    [
-      tWarn("ryanair_provider_unavailable_total"),
-      tWarn("ryanair_availability_failed"),
-      tWarn("ryanair_fares_failed"),
-    ].includes(group.message),
+    providerTotalWarningMessages.includes(group.message),
   );
 
   useEffect(() => {
