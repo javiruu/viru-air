@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.infrastructure.db.session import SessionLocal, engine
 from app.infrastructure.db.models import Airport, Base
-from sqlalchemy import select, delete
+from sqlalchemy import delete
 
 def seed_airports():
     master_path = Path(__file__).resolve().parents[1] / "data" / "airports_master.json"

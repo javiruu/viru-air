@@ -3,9 +3,9 @@
 ## 2026-07-02 — easyJet conectado a Quick Search
 
 - Quick Search registra `easyjet` como provider público sin API key dentro de `FlightProviderRegistry`, con aliases `easy_jet`, `easy-jet`, `ezj`, `ezy` y `u2`.
-- El provider consulta `ejavailability/api/v16/availability/query`, mapea `AvailableFlights` a `ProviderFlight`, emite warnings canónicos y genera deeplinks oficiales de easyJet.
+- El provider consulta `ejavailability/api/v16/availability/query`, mapea `AvailableFlights` a `ProviderFlight`, usa Flight Connections/Dohop como fallback para conexiones con escala, emite warnings canónicos y genera deeplinks oficiales de easyJet.
 - El carril visual de proveedores reconoce fuentes `easyjet`, `easy-jet`, `easy_jet`, `ezj`, `ezy` y `u2` como `easyJet`, y muestra su icono corporativo.
-- Verificacion: provider + registry + presentación frontend pasan en tests focalizados; smoke real del endpoint desde esta máquina devuelve 403 de Akamai, tratado como outage canónico.
+- Verificacion: provider + registry + presentación frontend pasan en tests focalizados; smoke real de easyJet directo devuelve 403 de Akamai y Flight Connections devuelve 403 de Datadome desde esta máquina, ambos tratados como outage canónico salvo configuración operativa de bypass.
 
 ## 2026-06-30 — Vueling como provider público sin API key
 
