@@ -20,6 +20,12 @@ export const dashboardEs = {
     hardMessage: "Algunas funciones pueden tardar. Reintentar.",
     retry: "Reintentar",
   },
+  access: {
+    title: "Acceso dashboard",
+    loginRequired: "Login necesario",
+    demoMode: "Demo automatica con user@viru.local",
+    ariaLabel: "Permitir entrada automatica al dashboard",
+  },
   kpi: {
     userTitle: "Usuario activo",
     userNote: "Conectado",
@@ -237,6 +243,12 @@ export const dashboardEn = {
     warmMessage: "Some features may take a bit longer temporarily.",
     hardMessage: "Some features may take a bit longer. Retry.",
     retry: "Retry",
+  },
+  access: {
+    title: "Dashboard access",
+    loginRequired: "Sign-in required",
+    demoMode: "Demo auto-entry with user@viru.local",
+    ariaLabel: "Allow automatic dashboard entry",
   },
   kpi: {
     userTitle: "Active user",

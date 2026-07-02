@@ -8,6 +8,7 @@ import { getDashboardFeaturedNews } from "@/data/dashboardNews";
 import { useI18n } from "@/i18n";
 import { useFtueHint } from "@/lib/ftue";
 import { trackUxEvent } from "@/lib/uxTracking";
+import { DashboardAccessSwitch } from "@/modules/dashboard/dashboard-access-switch";
 import { apiFetch } from "@/modules/shared/api";
 import { trackEvent } from "@/modules/shared/analytics";
 
@@ -243,6 +244,7 @@ export default function DashboardPage() {
               <div className="dashboard-hero-title">
                 <h2>{t("dashboard.hero.title")}</h2>
                 <p className="dashboard-hero-status">{heroStatus}</p>
+                <DashboardAccessSwitch />
               </div>
               <div className="dashboard-hero-highlight">
                 {watches.length === 0 ? (
