@@ -4,25 +4,40 @@ export type QuickSearchSummaryChip = {
   id: string;
   label: string;
   tone?: "route" | "search" | "result" | "advanced";
+  emphasis?: boolean;
 };
 
 type QuickSearchSummaryChipsProps = {
   title: string;
+  headline: string;
+  caption: string;
   chips: QuickSearchSummaryChip[];
+  missingBadges?: string[];
   onOpenAdvanced?: () => void;
   moreOptionsLabel?: string;
 };
 
 export function QuickSearchSummaryChips(props: QuickSearchSummaryChipsProps) {
-  const { title, chips } = props;
+  const { title, headline, caption, chips, missingBadges = [] } = props;
   if (chips.length === 0) return null;
 
   return (
     <section className="qs-summary-chips-panel" aria-label={title} data-ui="qs-summary-chips">
-      <span className="qs-summary-chips-title">{title}</span>
+      <div className="qs-summary-chips-head">
+        <span className="qs-summary-chips-title">{title}</span>
+        <strong>{headline}</strong>
+        <p>{caption}</p>
+      </div>
       <div className="qs-summary-chips-list">
         {chips.map((chip) => (
-          <span key={chip.id} className={`qs-summary-chip-compact qs-summary-chip-compact-${chip.tone ?? "search"}`}>
+          <span
+            key={chip.id}
+            className={[
+              "qs-summary-chip-compact",
+              `qs-summary-chip-compact-${chip.tone ?? "search"}`,
+              chip.emphasis ? "qs-summary-chip-compact-highlight" : "",
+            ].filter(Boolean).join(" ")}
+          >
             {chip.label}
           </span>
         ))}
@@ -47,6 +62,13 @@ export function QuickSearchSummaryChips(props: QuickSearchSummaryChipsProps) {
           </button>
         ) : null}
       </div>
+      {missingBadges.length > 0 ? (
+        <div className="qs-summary-missing">
+          {missingBadges.map((badge) => (
+            <span key={badge} className="qs-summary-missing-badge">{badge}</span>
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }

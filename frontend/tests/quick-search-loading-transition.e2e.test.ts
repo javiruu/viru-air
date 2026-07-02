@@ -203,7 +203,7 @@ test("quick-search shows a visible loading state before a fast final empty respo
     const loadingState = page.locator(".qs-state-loading");
     const emptyState = page.locator(".qs-state-empty");
     const readyPanel = page.locator(".qs-ready");
-    const stageTitle = page.locator(".qs-results-stagehead__copy h2").first();
+    const stageTitle = page.locator(".qs-results-stagehead__status h2").first();
 
     await loadingState.waitFor({ state: "visible", timeout: 10000 });
     assert.equal(await readyPanel.isVisible().catch(() => false), false);
@@ -260,7 +260,7 @@ test("quick-search final success state does not surface ready copy after a fast 
     const loadingState = page.locator(".qs-state-loading");
     const resultsToolbar = page.locator(".qs-results-toolbar");
     const readyPanel = page.locator(".qs-ready");
-    const stageTitle = page.locator(".qs-results-stagehead__copy h2").first();
+    const stageTitle = page.locator(".qs-results-stagehead__status h2").first();
 
     await loadingState.waitFor({ state: "visible", timeout: 10000 });
     await loadingState.waitFor({ state: "hidden", timeout: 10000 });
