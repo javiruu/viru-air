@@ -10,6 +10,7 @@ from typing import Any, Callable
 
 from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError, ProviderWarning
 from app.services.quick_search_planner import PairPlanItem
+from app.services.quick_search_warning_codes import PROVIDER_OUTAGE_WARNING_CODES, PROVIDER_PARTIAL_DEGRADATION_CODES
 
 
 # ---------------------------------------------------------------------------
@@ -19,20 +20,6 @@ from app.services.quick_search_planner import PairPlanItem
 CacheUnitKey = tuple[str, str, str, str]
 MemoryCacheKey = tuple[str, str, str, str]
 CacheResultCategory = str  # "ready" | "empty" | "degraded"
-
-_PROVIDER_TOTAL_OUTAGE_CODES = {
-    "provider_total_outage",
-    "ryanair_provider_unavailable_total",
-    "vueling_provider_unavailable_total",
-    "wizzair_provider_unavailable_total",
-    "easyjet_provider_unavailable_total",
-    "duffel_provider_unavailable_total",
-}
-
-_PROVIDER_ERROR_CODES = {
-    "ryanair_availability_failed",
-    "ryanair_fares_failed",
-}
 
 
 def build_unit_cache_key(
@@ -95,19 +82,8 @@ def classify_cache_result(
     - degraded: resultado parcial, warnings de provider, errores recuperables,
       o provider totalmente caido (incluso sin vuelos)
     """
-    degradation_codes = {
-        "provider_error_partial",
-        "provider_timeout_partial",
-        "provider_partial_results_served",
-        "ryanair_availability_failed_partial",
-        "ryanair_fares_failed_partial",
-        "ryanair_unavailable_partial",
-    }
-    # Total outage codes: even with zero flights, cache briefly as "degraded"
-    # instead of "empty" to avoid 2h stale negative results.
-    outage_codes = _PROVIDER_TOTAL_OUTAGE_CODES | _PROVIDER_ERROR_CODES
-    has_degradation = any(code in degradation_codes for code in warnings)
-    has_outage = any(code in outage_codes for code in warnings)
+    has_degradation = any(code in PROVIDER_PARTIAL_DEGRADATION_CODES for code in warnings)
+    has_outage = any(code in PROVIDER_OUTAGE_WARNING_CODES for code in warnings)
     if flights:
         return "degraded" if (has_degradation or has_outage) else "ready"
     # No flights + outage/degradation → degraded (short TTL, provider may recover)

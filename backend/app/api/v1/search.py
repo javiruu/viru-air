@@ -40,6 +40,15 @@ from app.services.quick_search_expansion import SideExpansionResult, SideExpansi
 from app.services.quick_search_planner import PairPlanItem, build_pair_plan
 from app.services.quick_search_ai_preference import select_quick_search_ai_preference
 from app.services.quick_search_ranking import rank_quick_search_results
+from app.services.quick_search_warning_codes import (
+    PROVIDER_ERROR_CODES,
+    PROVIDER_OUTAGE_WARNING_CODES,
+    PROVIDER_TOTAL_OUTAGE_CODES,
+    PROVIDER_WARNING_CODES,
+    UI_WARNING_CRITICAL_CODES,
+    UI_WARNING_PARTIAL_CODES,
+    normalize_warning_code,
+)
 from app.services.fare_memory_config import (
     FARE_MEMORY_NEGATIVE_CACHE_ENABLED,
     FARE_MEMORY_OFFER_CACHE_ENABLED,
@@ -95,43 +104,12 @@ def _provider_cache_id(provider_ids: list[str]) -> str:
     cleaned = [item.strip().lower() for item in provider_ids if item.strip()]
     return "multi:" + ",".join(cleaned or ["none"])
 
-_WARNING_CODE_ALIASES: dict[str, str] = {
-    "provider_timeout_parcial": "provider_timeout_partial",
-    "ryanair_unavailable_parcial": "ryanair_unavailable_partial",
-    "provider_total_outage": "provider_total_outage",
-}
-_PROVIDER_TOTAL_OUTAGE_CODES: set[str] = {
-    "provider_total_outage",
-    "ryanair_provider_unavailable_total",
-    "vueling_provider_unavailable_total",
-    "wizzair_provider_unavailable_total",
-    "easyjet_provider_unavailable_total",
-    "duffel_provider_unavailable_total",
-}
-_PROVIDER_ERROR_CODES: set[str] = {
-    "ryanair_availability_failed",
-    "ryanair_fares_failed",
-}
-_UI_WARNING_CRITICAL_CODES: set[str] = {
-    *_PROVIDER_TOTAL_OUTAGE_CODES,
-    *_PROVIDER_ERROR_CODES,
-}
-
-
 def _supports_db_session(value: Any) -> bool:
     return all(hasattr(value, attr) for attr in ("scalar", "add", "commit"))
-_UI_WARNING_PARTIAL_CODES: set[str] = {
-    "ryanair_unavailable_partial",
-    "ryanair_availability_failed_partial",
-    "ryanair_fares_failed_partial",
-    "provider_timeout_partial",
-    "provider_error_partial",
-    "provider_partial_results_served",
-}
 
 
 def _normalize_warning_code(code: str) -> str:
-    return _WARNING_CODE_ALIASES.get(code, code)
+    return normalize_warning_code(code)
 
 
 def _normalize_warning_codes(codes: list[str]) -> list[str]:
@@ -155,7 +133,7 @@ def _filter_ui_warning_codes(codes: list[str]) -> list[str]:
     visible: list[str] = []
     for raw_code in codes:
         code = _normalize_warning_code(raw_code)
-        if code in _UI_WARNING_CRITICAL_CODES or code in _UI_WARNING_PARTIAL_CODES:
+        if code in UI_WARNING_CRITICAL_CODES or code in UI_WARNING_PARTIAL_CODES:
             if code not in visible:
                 visible.append(code)
     return visible
@@ -165,7 +143,7 @@ def _resolve_negative_cache_write_policy(result: ProviderFetchResult) -> tuple[s
     reason = "no_availability"
     retry_after_at = None
     warning_codes = set(result.warnings or [])
-    if warning_codes & _PROVIDER_TOTAL_OUTAGE_CODES:
+    if warning_codes & PROVIDER_TOTAL_OUTAGE_CODES:
         reason = "provider_total_outage"
     elif "provider_rate_limited" in warning_codes:
         reason = "rate_limited"
@@ -176,7 +154,7 @@ def _resolve_negative_cache_write_policy(result: ProviderFetchResult) -> tuple[s
     elif "provider_error_partial" in warning_codes:
         reason = "provider_error"
         retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
-    elif warning_codes & _PROVIDER_ERROR_CODES:
+    elif warning_codes & PROVIDER_ERROR_CODES:
         reason = "provider_error"
         retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
     return reason, retry_after_at
@@ -2503,7 +2481,7 @@ def quick_search(
 
     warning_codes_set = set(warnings)
     provider_status_entries = execution_meta.get("provider_statuses", [])
-    provider_total_outage = bool(warning_codes_set & _PROVIDER_TOTAL_OUTAGE_CODES)
+    provider_total_outage = bool(warning_codes_set & PROVIDER_TOTAL_OUTAGE_CODES)
     partial_results_served = bool(scoped_ranked_results) and bool(
         warning_codes_set & degradation_signal_codes
     )
@@ -2571,22 +2549,10 @@ def quick_search(
         },
     }
 
-    provider_warning_codes = {
-        "provider_error_partial",
-        "provider_timeout_partial",
-        "provider_partial_results_served",
-        "ryanair_availability_failed_partial",
-        "ryanair_fares_failed_partial",
-        "ryanair_unavailable_partial",
-    } | _PROVIDER_TOTAL_OUTAGE_CODES | _PROVIDER_ERROR_CODES
-    outage_warning_codes = {
-        "provider_error_partial",
-        "provider_timeout_partial",
-    } | _PROVIDER_TOTAL_OUTAGE_CODES | _PROVIDER_ERROR_CODES
     exact_cache_category = "empty"
     if paginated_ranked_results:
-        exact_cache_category = "degraded" if any(code in provider_warning_codes for code in warnings) else "ready"
-    elif any(code in outage_warning_codes for code in warnings):
+        exact_cache_category = "degraded" if any(code in PROVIDER_WARNING_CODES for code in warnings) else "ready"
+    elif any(code in PROVIDER_OUTAGE_WARNING_CODES for code in warnings):
         exact_cache_category = "degraded"
 
     result_freshness_status = "fresh" if exact_cache_category == "ready" else "warm"

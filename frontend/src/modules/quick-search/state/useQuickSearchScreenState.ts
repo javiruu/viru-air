@@ -5,6 +5,11 @@ import { SearchFilters, SearchResponse, SearchResult, ZeroResultRelaxAction } fr
 import { deriveQuickSearchVisibleResults } from "@/modules/quick-search/state/quickSearchVisibleResults";
 import { parseNumericInput } from "@/modules/quick-search/searchCriteria";
 import { resolveQuickSearchProviderPresentation } from "@/modules/quick-search/providerPresentation";
+import {
+  QUICK_SEARCH_PROVIDER_ERROR_WARNING_CODES,
+  QUICK_SEARCH_PROVIDER_PARTIAL_WARNING_CODES,
+  QUICK_SEARCH_PROVIDER_TOTAL_OUTAGE_WARNING_CODES,
+} from "@/modules/quick-search/quick-search-warning-codes";
 
 type QuickSearchScreenStateArgs = {
   results: SearchResult[];
@@ -33,28 +38,12 @@ type QuickSearchScreenStateArgs = {
   tWarn: (key: string) => string;
 };
 
-const PROVIDER_TOTAL_OUTAGE_CODES = new Set([
-  "provider_total_outage",
-  "ryanair_provider_unavailable_total",
-  "vueling_provider_unavailable_total",
-  "wizzair_provider_unavailable_total",
-  "easyjet_provider_unavailable_total",
-  "duffel_provider_unavailable_total",
-]);
-
-const PROVIDER_PARTIAL_OUTAGE_CODES = new Set([
-  "ryanair_unavailable_partial",
-  "ryanair_availability_failed_partial",
-  "ryanair_fares_failed_partial",
-  "provider_timeout_partial",
-  "provider_error_partial",
-  "provider_partial_results_served",
-]);
+const PROVIDER_TOTAL_OUTAGE_CODES = new Set<string>(QUICK_SEARCH_PROVIDER_TOTAL_OUTAGE_WARNING_CODES);
+const PROVIDER_PARTIAL_OUTAGE_CODES = new Set<string>(QUICK_SEARCH_PROVIDER_PARTIAL_WARNING_CODES);
 
 const PROVIDER_CRITICAL_WARNING_CODES = new Set([
   ...PROVIDER_TOTAL_OUTAGE_CODES,
-  "ryanair_availability_failed",
-  "ryanair_fares_failed",
+  ...QUICK_SEARCH_PROVIDER_ERROR_WARNING_CODES,
 ]);
 
 export function useQuickSearchScreenState({
