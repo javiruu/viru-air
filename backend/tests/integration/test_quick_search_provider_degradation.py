@@ -9,6 +9,10 @@ from app.services.quick_search_execution import _CACHE
 
 
 class _ProviderWithAvailabilityFailure:
+    @staticmethod
+    def provider_ids() -> list[str]:
+        return ["ryanair"]
+
     def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         if origin == "MAD" and destination == "DUB":
             return ProviderFetchResult(
@@ -27,6 +31,10 @@ class _ProviderWithAvailabilityFailure:
 
 
 class _ProviderTotallyUnavailable:
+    @staticmethod
+    def provider_ids() -> list[str]:
+        return ["ryanair"]
+
     def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         raise ProviderSourceFetchError(
             warning_codes=[
@@ -38,7 +46,26 @@ class _ProviderTotallyUnavailable:
         )
 
 
+class _EasyJetProviderTotallyUnavailable:
+    @staticmethod
+    def provider_ids() -> list[str]:
+        return ["easyjet"]
+
+    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
+        raise ProviderSourceFetchError(
+            provider_id="easyjet",
+            warning_codes=[
+                "easyjet_provider_unavailable_total",
+            ],
+            message="easyJet unavailable",
+        )
+
+
 class _ProviderWithRepeatedPartialWarnings:
+    @staticmethod
+    def provider_ids() -> list[str]:
+        return ["ryanair"]
+
     def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         return ProviderFetchResult(
             flights=[],
@@ -46,9 +73,13 @@ class _ProviderWithRepeatedPartialWarnings:
         )
 
 
+def _patch_request_provider(monkeypatch, request_provider) -> None:
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: request_provider)
+
+
 def test_quick_search_returns_results_when_availability_degrades(client: TestClient, monkeypatch) -> None:
     _CACHE.clear()
-    monkeypatch.setattr(search_api, "provider", _ProviderWithAvailabilityFailure())
+    _patch_request_provider(monkeypatch, _ProviderWithAvailabilityFailure())
 
     travel_date = str(date.today() + timedelta(days=21))
     response = client.post(
@@ -76,7 +107,7 @@ def test_quick_search_returns_results_when_availability_degrades(client: TestCli
 
 def test_quick_search_exposes_total_provider_outage(client: TestClient, monkeypatch) -> None:
     _CACHE.clear()
-    monkeypatch.setattr(search_api, "provider", _ProviderTotallyUnavailable())
+    _patch_request_provider(monkeypatch, _ProviderTotallyUnavailable())
 
     travel_date = str(date.today() + timedelta(days=21))
     response = client.post(
@@ -104,9 +135,35 @@ def test_quick_search_exposes_total_provider_outage(client: TestClient, monkeypa
     assert any(item["code"] == "ryanair_provider_unavailable_total" for item in payload["meta"]["warnings_structured"])
 
 
+def test_quick_search_exposes_easyjet_total_provider_outage(client: TestClient, monkeypatch) -> None:
+    _CACHE.clear()
+    _patch_request_provider(monkeypatch, _EasyJetProviderTotallyUnavailable())
+
+    travel_date = str(date.today() + timedelta(days=21))
+    response = client.post(
+        "/api/v1/search/quick",
+        json={
+            "origin": {"seed_iata": "MAD", "include_nearby": False, "radius_km": 150, "max_candidates": 6},
+            "destination": {"seed_iata": "MXP", "include_nearby": False, "radius_km": 150, "max_candidates": 6},
+            "travel": {"date": travel_date, "flex_before": 0, "flex_after": 0},
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+
+    assert payload["results"] == []
+    assert "easyjet_provider_unavailable_total" in payload["filters"]["warnings"]
+    assert payload["meta"]["provider_status"]["overall"] == "total_outage"
+    assert payload["meta"]["provider_status"]["total_outage"] is True
+    assert payload["meta"]["provider_status"]["providers"] == [
+        {"id": "easyjet", "status": "degraded", "degraded": True, "errors": 1, "timeouts": 0, "results_count": 0}
+    ]
+
+
 def test_quick_search_dedupes_repeated_partial_warnings(client: TestClient, monkeypatch) -> None:
     _CACHE.clear()
-    monkeypatch.setattr(search_api, "provider", _ProviderWithRepeatedPartialWarnings())
+    _patch_request_provider(monkeypatch, _ProviderWithRepeatedPartialWarnings())
 
     travel_date = str(date.today() + timedelta(days=21))
     response = client.post(

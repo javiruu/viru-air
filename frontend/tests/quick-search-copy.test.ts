@@ -37,6 +37,14 @@ test("quick search copy includes precise partial-provider warnings", () => {
     "Some Ryanair fare checks failed; showing results confirmed by availability.",
   );
   assert.equal(es.tWarn("ryanair_unavailable_partial"), "Algunas combinaciones no pudieron consultarse.");
+  assert.equal(
+    es.tWarn("easyjet_provider_unavailable_total"),
+    "easyJet no respondio y no pudimos confirmar vuelos en este momento.",
+  );
+  assert.equal(
+    en.tWarn("easyjet_provider_unavailable_total"),
+    "easyJet did not respond and we could not confirm flights right now.",
+  );
 });
 
 test("quick search copy exposes state microcopy in es", () => {
@@ -54,7 +62,7 @@ test("quick search copy exposes state microcopy in es", () => {
   assert.equal(t("recentAutocompleteLabel"), "Recientes guardados");
   assert.equal(t("sideViewControlsSubtitle"), "Estos filtros solo cambian este panel.");
   assert.equal(t("roundTripToggleHint"), "Activalo cuando quieras ver ida y vuelta en dos paneles coordinados.");
-  assert.equal(t("passengersBaseFareHint"), "La busqueda rapida sigue mostrando precio orientativo base; el numero de adultos si viaja a aperturas y deep-links.");
+  assert.equal(t("passengersBaseFareHint"), "Precio base orientativo.");
   assert.equal(t("returnResetAfterOutboundChange"), "Hemos limpiado la vuelta para que puedas elegir una nueva fecha coherente.");
   assert.equal(t("deepLink"), "Abrir vuelo");
 });

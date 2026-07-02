@@ -100,11 +100,21 @@ _WARNING_CODE_ALIASES: dict[str, str] = {
     "ryanair_unavailable_parcial": "ryanair_unavailable_partial",
     "provider_total_outage": "provider_total_outage",
 }
-_UI_WARNING_CRITICAL_CODES: set[str] = {
+_PROVIDER_TOTAL_OUTAGE_CODES: set[str] = {
+    "provider_total_outage",
     "ryanair_provider_unavailable_total",
+    "vueling_provider_unavailable_total",
+    "wizzair_provider_unavailable_total",
+    "easyjet_provider_unavailable_total",
+    "duffel_provider_unavailable_total",
+}
+_PROVIDER_ERROR_CODES: set[str] = {
     "ryanair_availability_failed",
     "ryanair_fares_failed",
-    "provider_total_outage",
+}
+_UI_WARNING_CRITICAL_CODES: set[str] = {
+    *_PROVIDER_TOTAL_OUTAGE_CODES,
+    *_PROVIDER_ERROR_CODES,
 }
 
 
@@ -155,7 +165,7 @@ def _resolve_negative_cache_write_policy(result: ProviderFetchResult) -> tuple[s
     reason = "no_availability"
     retry_after_at = None
     warning_codes = set(result.warnings or [])
-    if "provider_total_outage" in warning_codes or "ryanair_provider_unavailable_total" in warning_codes:
+    if warning_codes & _PROVIDER_TOTAL_OUTAGE_CODES:
         reason = "provider_total_outage"
     elif "provider_rate_limited" in warning_codes:
         reason = "rate_limited"
@@ -166,7 +176,7 @@ def _resolve_negative_cache_write_policy(result: ProviderFetchResult) -> tuple[s
     elif "provider_error_partial" in warning_codes:
         reason = "provider_error"
         retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
-    elif "ryanair_availability_failed" in warning_codes or "ryanair_fares_failed" in warning_codes:
+    elif warning_codes & _PROVIDER_ERROR_CODES:
         reason = "provider_error"
         retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
     return reason, retry_after_at
@@ -2493,7 +2503,7 @@ def quick_search(
 
     warning_codes_set = set(warnings)
     provider_status_entries = execution_meta.get("provider_statuses", [])
-    provider_total_outage = "provider_total_outage" in warning_codes_set or "ryanair_provider_unavailable_total" in warning_codes_set
+    provider_total_outage = bool(warning_codes_set & _PROVIDER_TOTAL_OUTAGE_CODES)
     partial_results_served = bool(scoped_ranked_results) and bool(
         warning_codes_set & degradation_signal_codes
     )
@@ -2565,22 +2575,14 @@ def quick_search(
         "provider_error_partial",
         "provider_timeout_partial",
         "provider_partial_results_served",
-        "provider_total_outage",
         "ryanair_availability_failed_partial",
         "ryanair_fares_failed_partial",
         "ryanair_unavailable_partial",
-        "ryanair_provider_unavailable_total",
-        "ryanair_availability_failed",
-        "ryanair_fares_failed",
-    }
+    } | _PROVIDER_TOTAL_OUTAGE_CODES | _PROVIDER_ERROR_CODES
     outage_warning_codes = {
         "provider_error_partial",
         "provider_timeout_partial",
-        "provider_total_outage",
-        "ryanair_provider_unavailable_total",
-        "ryanair_availability_failed",
-        "ryanair_fares_failed",
-    }
+    } | _PROVIDER_TOTAL_OUTAGE_CODES | _PROVIDER_ERROR_CODES
     exact_cache_category = "empty"
     if paginated_ranked_results:
         exact_cache_category = "degraded" if any(code in provider_warning_codes for code in warnings) else "ready"
