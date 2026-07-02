@@ -38,6 +38,16 @@ class _FakeSession:
         return _FakeResponse(self.payload)
 
 
+class _QueuedSession:
+    def __init__(self, payloads: list[dict]) -> None:
+        self.payloads = payloads
+        self.calls: list[tuple[str, dict[str, str]]] = []
+
+    def get(self, url: str, *, params: dict[str, str], timeout: float, headers: dict[str, str]):
+        self.calls.append((url, params))
+        return _FakeResponse(self.payloads.pop(0))
+
+
 class _InvalidJsonSession:
     def get(self, *args, **kwargs) -> _InvalidJsonResponse:
         return _InvalidJsonResponse()
@@ -108,6 +118,61 @@ def test_get_flights_returns_empty_result_warning() -> None:
     assert result.warnings_structured is not None
     assert result.warnings_structured[0].code == "provider_empty_result"
     assert result.warnings_structured[0].provider == "easyjet"
+
+
+def test_get_flights_maps_easyjet_flight_connections_when_public_availability_is_empty() -> None:
+    provider = EasyJetProvider()
+    session = _QueuedSession(
+        [
+            {"AvailableFlights": []},
+            {
+                "data": {
+                    "boundSearch": {
+                        "offers": [
+                            {
+                                "pricePerPerson": 392.68,
+                                "currency": "EUR",
+                                "transferURL": "https://flightconnections.easyjet.com/es/checkout/demo",
+                                "itinerary": {
+                                    "outbound": [
+                                        {
+                                            "origin": {"code": "BLQ"},
+                                            "destination": {"code": "BER"},
+                                            "departure": "2026-07-04T13:15:00+02:00",
+                                            "arrival": "2026-07-04T22:50:00+02:00",
+                                            "legs": [
+                                                {
+                                                    "origin": {"code": "BLQ"},
+                                                    "destination": {"code": "OLB"},
+                                                },
+                                                {
+                                                    "origin": {"code": "OLB"},
+                                                    "destination": {"code": "BER"},
+                                                },
+                                            ],
+                                        }
+                                    ]
+                                },
+                            }
+                        ]
+                    }
+                }
+            },
+        ]
+    )
+    provider._session = session
+
+    result = provider.get_flights("BLQ", "BER", "2026-07-04")
+
+    assert len(result.flights) == 1
+    flight = result.flights[0]
+    assert flight.price == 392.68
+    assert flight.currency == "EUR"
+    assert flight.departure_time_local == "13:15"
+    assert flight.source == "easyjet-flight-connections"
+    assert flight.deeplink_url == "https://flightconnections.easyjet.com/es/checkout/demo"
+    assert session.calls[1][0] == "https://flightconnections.easyjet.com/api/graphql"
+    assert session.calls[1][1]["variables"].startswith('{"departureDateString": "2026-07-04"')
 
 
 def test_get_flights_ignores_unavailable_or_invalid_fares() -> None:

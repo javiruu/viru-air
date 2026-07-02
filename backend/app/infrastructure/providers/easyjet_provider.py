@@ -2,12 +2,10 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from datetime import datetime
 import os
 import random
 import time
 from typing import Final
-from urllib.parse import urlencode
 
 try:
     from curl_cffi import requests
@@ -17,14 +15,24 @@ except ImportError:
     from requests.exceptions import RequestException as RequestsError
 from requests.adapters import HTTPAdapter
 
-from app.core.time import utc_now_naive
-from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError, ProviderWarning
+from app.domain.entities import ProviderFetchResult, ProviderSourceFetchError, ProviderWarning
 from app.infrastructure.providers.base import FlightProvider
-
-type JsonValue = None | bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"]
+from app.infrastructure.providers.easyjet_flight_connections import (
+    EasyJetFlightConnectionsSearch,
+    build_flight_connections_params,
+    extract_flight_connections_flights,
+)
+from app.infrastructure.providers.easyjet_public_availability import (
+    EasyJetPublicAvailabilitySearch,
+    JsonValue,
+    build_public_availability_params,
+    extract_public_availability_flights,
+)
 
 _DEFAULT_BASE_URL: Final = "https://www.easyjet.com"
+_DEFAULT_FLIGHT_CONNECTIONS_URL: Final = "https://flightconnections.easyjet.com"
 _DEFAULT_LANGUAGE_CODE: Final = "EN"
+_DEFAULT_RESIDENCY: Final = "ES"
 _PROVIDER_POOL_SIZE: Final = 32
 
 
@@ -41,9 +49,17 @@ class EasyJetProvider(FlightProvider):
 
     def __init__(self, *, base_url: str | None = None, language_code: str | None = None) -> None:
         self.base_url = (base_url or os.getenv("EASYJET_BASE_URL", _DEFAULT_BASE_URL)).strip().rstrip("/")
+        self.flight_connections_url = os.getenv(
+            "EASYJET_FLIGHT_CONNECTIONS_URL", _DEFAULT_FLIGHT_CONNECTIONS_URL
+        ).strip().rstrip("/")
+        self.flight_connections_bypass_secret = (
+            os.getenv("EASYJET_FLIGHT_CONNECTIONS_BYPASS_SECRET")
+            or os.getenv("DATADOME_BYPASS_SECRET", "")
+        ).strip()
         self.language_code = (
             language_code or os.getenv("EASYJET_LANGUAGE_CODE", _DEFAULT_LANGUAGE_CODE)
         ).strip().upper()
+        self.residency = os.getenv("EASYJET_RESIDENCY", _DEFAULT_RESIDENCY).strip().upper()
         try:
             self._session = requests.Session(impersonate="chrome110")
         except TypeError:
@@ -53,7 +69,7 @@ class EasyJetProvider(FlightProvider):
             self._session.mount("http://", adapter)
 
     def is_enabled(self) -> bool:
-        return bool(self.base_url and self.language_code)
+        return bool(self.base_url and self.flight_connections_url and self.language_code and self.residency)
 
     def get_flights(
         self, origin: str, destination: str, travel_date: str, timeout_ms: int = 12000, currency: str = "EUR"
@@ -64,17 +80,31 @@ class EasyJetProvider(FlightProvider):
             travel_date=travel_date,
             currency=currency.upper().strip(),
         )
+        source_error: Exception | None = None
         try:
             payload = self._fetch_public_availability(search, timeout_ms=timeout_ms)
-        except (RequestsError, ValueError) as exc:
+            flights = extract_public_availability_flights(payload, self._to_public_availability_search(search))
+        except (RequestsError, ValueError, ProviderSourceFetchError) as exc:
+            source_error = exc
+            flights = []
+
+        if not flights:
+            try:
+                connections_payload = self._fetch_flight_connections(search, timeout_ms=timeout_ms)
+                flights = extract_flight_connections_flights(
+                    connections_payload, self._to_flight_connections_search(search)
+                )
+            except (RequestsError, ValueError, ProviderSourceFetchError) as exc:
+                source_error = exc
+
+        if source_error is not None and not flights:
             raise ProviderSourceFetchError(
                 warning_codes=["easyjet_provider_unavailable_total", "provider_total_outage"],
                 message=f"easyJet provider unavailable for {search.origin}->{search.destination} on {search.travel_date}",
                 provider_id=self.provider_id,
                 severity="error",
-            ) from exc
+            ) from source_error
 
-        flights = self._extract_flights(payload, search)
         warnings_structured: list[ProviderWarning] = []
         if not flights:
             warnings_structured.append(
@@ -85,7 +115,7 @@ class EasyJetProvider(FlightProvider):
     def _fetch_public_availability(self, search: _EasyJetSearch, *, timeout_ms: int) -> Mapping[str, JsonValue]:
         response = self._session.get(
             f"{self.base_url}/ejavailability/api/v16/availability/query",
-            params=self._build_query_params(search),
+            params=build_public_availability_params(self._to_public_availability_search(search)),
             timeout=max(2.0, timeout_ms / 1000),
             headers={
                 "User-Agent": "Mozilla/5.0",
@@ -108,126 +138,44 @@ class EasyJetProvider(FlightProvider):
             ) from exc
         return payload if isinstance(payload, dict) else {}
 
-    def _build_query_params(self, search: _EasyJetSearch) -> dict[str, str]:
-        return {
-            "AdditionalSeats": "0",
-            "AdultSeats": "1",
-            "ArrivalIata": search.destination,
-            "ChildSeats": "0",
-            "DepartureIata": search.origin,
-            "IncludeAdminFees": "true",
-            "IncludeFlexiFares": "false",
-            "IncludeLowestFareSeats": "true",
-            "IncludePrices": "true",
-            "Infants": "0",
-            "IsTransfer": "false",
-            "LanguageCode": self.language_code,
-            "MaxDepartureDate": search.travel_date,
-            "MaxReturnDate": search.travel_date,
-            "MinDepartureDate": search.travel_date,
-            "MinReturnDate": search.travel_date,
-        }
-
-    def _extract_flights(
-        self, payload: Mapping[str, JsonValue], search: _EasyJetSearch
-    ) -> list[ProviderFlight]:
-        raw_flights = payload.get("AvailableFlights")
-        if not isinstance(raw_flights, list):
-            return []
-        flights: list[ProviderFlight] = []
-        for item in raw_flights:
-            if not isinstance(item, dict):
-                continue
-            flight = self._flight_from_item(item, search)
-            if flight is not None:
-                flights.append(flight)
-        return flights
-
-    def _flight_from_item(
-        self, item: Mapping[str, JsonValue], search: _EasyJetSearch
-    ) -> ProviderFlight | None:
-        if self._normalized_text(item.get("DepartureIata")) != search.origin:
-            return None
-        if self._normalized_text(item.get("ArrivalIata")) != search.destination:
-            return None
-
-        departure_raw = self._text_or_empty(item.get("LocalDepartureTime"))
-        if self._to_iso_date(departure_raw) != search.travel_date:
-            return None
-
-        amount = self._lowest_adult_price(item.get("FlightFares"))
-        if amount is None:
-            return None
-
-        return ProviderFlight(
-            price=amount,
+    def _to_public_availability_search(self, search: _EasyJetSearch) -> EasyJetPublicAvailabilitySearch:
+        return EasyJetPublicAvailabilitySearch(
+            origin=search.origin,
+            destination=search.destination,
+            travel_date=search.travel_date,
             currency=search.currency,
-            departure_time_local=self._to_time(departure_raw),
-            captured_at=utc_now_naive(),
-            source="easyjet-public-availability",
-            deeplink_url=self._build_deeplink(search),
+            language=self.language_code,
+            base_url=self.base_url,
         )
 
-    def _lowest_adult_price(self, raw_fares: JsonValue) -> float | None:
-        if not isinstance(raw_fares, list):
-            return None
-        prices: list[float] = []
-        for raw_fare in raw_fares:
-            if not isinstance(raw_fare, dict):
-                continue
-            seats_available = raw_fare.get("SeatsAvailable")
-            if isinstance(seats_available, int) and seats_available <= 0:
-                continue
-            raw_price = self._adult_price_from_fare(raw_fare)
-            amount = self._positive_float(raw_price)
-            if amount is not None:
-                prices.append(amount)
-        return min(prices) if prices else None
-
-    def _adult_price_from_fare(self, fare: Mapping[str, JsonValue]) -> JsonValue:
-        raw_prices = fare.get("Prices")
-        if not isinstance(raw_prices, dict):
-            return None
-        raw_adult = raw_prices.get("Adult")
-        if not isinstance(raw_adult, dict):
-            return None
-        return raw_adult.get("Price")
-
-    def _build_deeplink(self, search: _EasyJetSearch) -> str:
-        params = {
-            "lang": self.language_code,
-            "dep": search.origin,
-            "dest": search.destination,
-            "dd": search.travel_date,
-            "apax": "1",
-            "cpax": "0",
-            "ipax": "0",
-            "isOneWay": "on",
-            "pid": "www.easyjet.com",
+    def _fetch_flight_connections(self, search: _EasyJetSearch, *, timeout_ms: int) -> Mapping[str, JsonValue]:
+        flight_connections_search = self._to_flight_connections_search(search)
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "application/json, text/plain, */*",
+            "Origin": self.flight_connections_url,
+            "Referer": f"{self.flight_connections_url}/{self.language_code.lower()}/search",
         }
-        return f"{self.base_url}/deeplink?{urlencode(params)}"
+        if self.flight_connections_bypass_secret:
+            headers["X-Dohop-Bypass"] = self.flight_connections_bypass_secret
+        response = self._session.get(
+            f"{self.flight_connections_url}/api/graphql",
+            params=build_flight_connections_params(flight_connections_search),
+            timeout=max(2.0, timeout_ms / 1000),
+            headers=headers,
+        )
+        time.sleep(random.uniform(0.1, 0.4))
+        response.raise_for_status()
+        payload = response.json()
+        return payload if isinstance(payload, dict) else {}
 
-    def _normalized_text(self, value: JsonValue) -> str:
-        return self._text_or_empty(value).upper().strip()
-
-    def _text_or_empty(self, value: JsonValue) -> str:
-        return value if isinstance(value, str) else ""
-
-    def _to_iso_date(self, value: str) -> str | None:
-        try:
-            return datetime.fromisoformat(value.replace("Z", "+00:00")).date().isoformat()
-        except ValueError:
-            return None
-
-    def _to_time(self, value: str) -> str | None:
-        try:
-            return datetime.fromisoformat(value.replace("Z", "+00:00")).strftime("%H:%M")
-        except ValueError:
-            return None
-
-    def _positive_float(self, value: JsonValue) -> float | None:
-        try:
-            amount = float(value)
-        except (TypeError, ValueError):
-            return None
-        return amount if amount > 0.0 else None
+    def _to_flight_connections_search(self, search: _EasyJetSearch) -> EasyJetFlightConnectionsSearch:
+        return EasyJetFlightConnectionsSearch(
+            origin=search.origin,
+            destination=search.destination,
+            travel_date=search.travel_date,
+            currency=search.currency,
+            language=self.language_code,
+            residency=self.residency,
+            base_url=self.flight_connections_url,
+        )

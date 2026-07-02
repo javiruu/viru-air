@@ -48,7 +48,7 @@ Implementar `FlightProvider` con:
 - `ryanair`: provider público sin credenciales.
 - `vueling`: provider público sin credenciales. Crea sesión anónima contra `asm/v1/Auth`, consulta `avy/v3/AvailabilityServices/allFlights` y soporta alias `vy`.
 - `wizzair`: provider FareChart público/configurable.
-- `easyjet`: provider público sin credenciales. Consulta `ejavailability/api/v16/availability/query`, soporta alias `easy_jet`/`easy-jet`/`ezj`/`ezy`/`u2` y genera deeplink oficial.
+- `easyjet`: provider público sin credenciales. Consulta `ejavailability/api/v16/availability/query` y usa `flightconnections.easyjet.com/api/graphql` como fallback para resultados Dohop/Flight Connections con escala. Soporta alias `easy_jet`/`easy-jet`/`ezj`/`ezy`/`u2` y genera deeplinks oficiales. Si Dohop/Datadome bloquea el backend, expone `provider_total_outage`; si existe token operativo, `EASYJET_FLIGHT_CONNECTIONS_BYPASS_SECRET` envía `X-Dohop-Bypass`.
 - `duffel`: provider API con `DUFFEL_API_KEY`.
 
 ## Warnings canónicos recomendados
