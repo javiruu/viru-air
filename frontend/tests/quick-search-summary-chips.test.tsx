@@ -19,6 +19,8 @@ test("QuickSearchSummaryChips renders compact relevant chips", () => {
         { id: "avoids", label: "Evita BCN", tone: "result" },
       ]}
       missingBadges={["Falta vuelta"]}
+      onOpenAdvanced={() => undefined}
+      moreOptionsLabel="Más opciones"
     />,
   );
 
@@ -33,6 +35,9 @@ test("QuickSearchSummaryChips renders compact relevant chips", () => {
   assert.match(html, /Vuelos separados/);
   assert.match(html, /Evita BCN/);
   assert.match(html, /Falta vuelta/);
+  assert.match(html, /aria-haspopup="dialog"/);
+  assert.match(html, /aria-controls="qs-advanced-drawer"/);
+  assert.match(html, /Más opciones/);
   assert.doesNotMatch(html, /0 ajustes/);
 });
 

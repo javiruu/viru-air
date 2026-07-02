@@ -46,6 +46,8 @@ export function QuickSearchSummaryChips(props: QuickSearchSummaryChipsProps) {
             type="button"
             className="btn-ghost btn-compact qs-summary-chips-more"
             onClick={props.onOpenAdvanced}
+            aria-haspopup="dialog"
+            aria-controls="qs-advanced-drawer"
             data-ui="qs-summary-chips-more"
           >
             <svg className="qs-inline-icon" viewBox="0 0 24 24" aria-hidden="true" width="16" height="16">
