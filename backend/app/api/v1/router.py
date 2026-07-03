@@ -10,6 +10,7 @@ from app.api.v1 import (
     auth,
     hotels,
     notes,
+    notifications,
     preferences,
     prices,
     public,
@@ -34,6 +35,7 @@ api_v1.include_router(alerts.router, prefix="/alerts", tags=["alerts"])
 api_v1.include_router(preferences.router, prefix="/preferences", tags=["preferences"])
 api_v1.include_router(suggestions.router, prefix="/suggestions", tags=["suggestions"])
 api_v1.include_router(notes.router, prefix="/notes", tags=["notes"])
+api_v1.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
 api_v1.include_router(account.router, prefix="/account", tags=["account"])
 api_v1.include_router(support.router, prefix="/support", tags=["support"])
 api_v1.include_router(public.router, prefix="/public", tags=["public"])

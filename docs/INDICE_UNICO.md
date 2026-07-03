@@ -22,6 +22,7 @@
 - [Quick Search contract](reference/backend/quick-search-contract.md)
 - [Provider integration guide](reference/backend/provider-integration-guide.md)
 - [Door-to-door API contract](reference/backend/door-to-door-contract.md)
+- [Notifications contract](reference/backend/notifications-contract.md)
 - [Quick Search acceptance checklist](reference/backend/quick-search-acceptance-checklist.md)
 - [Quick Search legacy alias sunset](reference/quick-search-legacy-alias-sunset.md)
 
@@ -40,6 +41,7 @@
 - [Quick Search](product/quick-search.md)
 - [Watchlist](product/watchlist.md)
 - [Puerta a puerta](product/door-to-door.md)
+- [Centro de notificaciones persistente](product/notifications.md)
 - [Product language map](reference/product-language-map.md)
 - [Guia de lenguaje visible humanizado](reference/ui-visible-language-guide.md)
 - [Policies Page](product/policies-page.md)
@@ -90,6 +92,7 @@
 - [Quick Search](product/quick-search.md)
 - [Watchlist](product/watchlist.md)
 - [Puerta a puerta](product/door-to-door.md)
+- [Centro de notificaciones persistente](product/notifications.md)
 - [Policies Page](product/policies-page.md)
 
 ### Engineering

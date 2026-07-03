@@ -15,7 +15,11 @@ from app.core.request_diagnostics import AccessLogMiddleware
 from app.api.v1.router import api_v1
 from app.core.logging import configure_logging
 from app.infrastructure.db import models  # noqa: F401
-from app.infrastructure.db.schema_compat import ensure_door_to_door_tables, ensure_search_preference_columns
+from app.infrastructure.db.schema_compat import (
+    ensure_door_to_door_tables,
+    ensure_notification_state_table,
+    ensure_search_preference_columns,
+)
 from app.infrastructure.db.seed import ensure_seed_users
 from app.infrastructure.db.session import Base, engine
 from app.infrastructure.db.session import SessionLocal
@@ -41,6 +45,7 @@ if run_db_init:
     Base.metadata.create_all(bind=engine)
 ensure_search_preference_columns(engine)
 ensure_door_to_door_tables(engine)
+ensure_notification_state_table(engine)
 if run_seed_users:
     ensure_seed_users()
 
