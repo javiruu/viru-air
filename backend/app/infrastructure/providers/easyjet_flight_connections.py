@@ -8,7 +8,7 @@ from typing import Final
 from urllib.parse import urlencode
 
 from app.core.time import utc_now_naive
-from app.domain.entities import ProviderFlight
+from app.domain.entities import ProviderFlight, ProviderSourceFetchError
 
 type JsonValue = None | bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"]
 
@@ -97,9 +97,17 @@ def build_flight_connections_params(search: EasyJetFlightConnectionsSearch) -> d
 def extract_flight_connections_flights(
     payload: Mapping[str, JsonValue], search: EasyJetFlightConnectionsSearch
 ) -> list[ProviderFlight]:
-    data = _object(payload.get("data"))
-    bound_search = _object(data.get("boundSearch")) if data else None
-    raw_offers = bound_search.get("offers") if bound_search else None
+    raw_errors = payload.get("errors")
+    if isinstance(raw_errors, list) and raw_errors:
+        raise ProviderSourceFetchError(
+            warning_codes=["easyjet_flight_connections_graphql_error"],
+            message="easyJet Flight Connections returned GraphQL errors",
+            provider_id="easyjet",
+            severity="error",
+            meta={"reason": "graphql_errors"},
+        )
+
+    raw_offers = _offers_from_payload(payload)
     if not isinstance(raw_offers, list):
         return []
 
@@ -133,7 +141,7 @@ def _flight_from_offer(
     if route is None or not _route_matches(route, search):
         return None
 
-    departure_raw = _text(route.get("departure"))
+    departure_raw = _route_departure(route)
     if _to_iso_date(departure_raw) != search.travel_date:
         return None
 
@@ -144,7 +152,7 @@ def _flight_from_offer(
         return None
 
     currency = _text(offer.get("currency")).upper().strip() or search.currency
-    deeplink = _text(offer.get("transferURL")) or build_flight_connections_deeplink(search)
+    deeplink = _offer_deeplink(offer, search)
     return ProviderFlight(
         price=amount,
         currency=currency,
@@ -153,6 +161,18 @@ def _flight_from_offer(
         source="easyjet-flight-connections",
         deeplink_url=deeplink,
     )
+
+
+def _offers_from_payload(payload: Mapping[str, JsonValue]) -> list[JsonValue] | None:
+    data = _object(payload.get("data"))
+    if data is None:
+        return None
+    for key in ("boundSearch", "search"):
+        section = _object(data.get(key))
+        raw_offers = section.get("offers") if section else None
+        if isinstance(raw_offers, list):
+            return raw_offers
+    return None
 
 
 def _first_outbound_route(offer: Mapping[str, JsonValue]) -> Mapping[str, JsonValue] | None:
@@ -164,6 +184,26 @@ def _first_outbound_route(offer: Mapping[str, JsonValue]) -> Mapping[str, JsonVa
         if isinstance(route, dict):
             return route
     return None
+
+
+def _route_departure(route: Mapping[str, JsonValue]) -> str:
+    departure = _text(route.get("departure"))
+    if departure:
+        return departure
+    legs = route.get("legs")
+    if not isinstance(legs, list) or not legs:
+        return ""
+    first_leg = legs[0] if isinstance(legs[0], dict) else None
+    return _text(first_leg.get("departure")) if first_leg is not None else ""
+
+
+def _offer_deeplink(offer: Mapping[str, JsonValue], search: EasyJetFlightConnectionsSearch) -> str:
+    return (
+        _text(offer.get("transferURL"))
+        or _text(offer.get("transferUrl"))
+        or _text(offer.get("transfer_url"))
+        or build_flight_connections_deeplink(search)
+    )
 
 
 def _route_matches(route: Mapping[str, JsonValue], search: EasyJetFlightConnectionsSearch) -> bool:
