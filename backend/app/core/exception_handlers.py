@@ -23,7 +23,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     if isinstance(body, dict):
         body = sanitize_request_body(body)
 
-    safe_errors = jsonable_encoder(exc.errors())
+    safe_errors = sanitize_request_body(jsonable_encoder(exc.errors()))
     logger.error(
         json.dumps(
             {
