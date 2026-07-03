@@ -1,5 +1,11 @@
 # History
 
+## 2026-07-03 — easyJet Flight Connections más compatible
+
+- El fallback Dohop/Flight Connections de easyJet acepta payloads `data.search.offers` además de `data.boundSearch.offers`, lee la salida desde el primer tramo cuando la ruta no trae `departure` y admite `transferUrl`/`transfer_url`.
+- Los errores GraphQL de Flight Connections ya no se confunden con un resultado vacío: se elevan como outage canónico del provider para que Quick Search no esconda bloqueos operativos.
+- Verificacion: `uv run ruff check .`, `uv run pytest tests/unit -q` -> 543 passed, degradación de providers -> 19 passed; smoke real BLQ->BER sigue bloqueado por EasyJet/Dohop desde backend y devuelve outage canónico.
+
 ## 2026-07-02 — easyJet conectado a Quick Search
 
 - Quick Search registra `easyjet` como provider público sin API key dentro de `FlightProviderRegistry`, con aliases `easy_jet`, `easy-jet`, `ezj`, `ezy` y `u2`.

@@ -100,6 +100,7 @@ def test_get_flights_maps_easyjet_public_availability() -> None:
     assert flight.deeplink_url is not None
     assert "easyjet.com/deeplink" in flight.deeplink_url
     assert result.warnings_structured == []
+    assert len(session.calls) == 1
     assert session.calls[0][0] == "https://www.easyjet.com/ejavailability/api/v16/availability/query"
     assert session.calls[0][1]["DepartureIata"] == "LTN"
     assert session.calls[0][1]["ArrivalIata"] == "CDG"
