@@ -2,19 +2,15 @@ import asyncio
 import json
 import logging
 import os
-import time
-import traceback
 from contextlib import asynccontextmanager, suppress
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.encoders import jsonable_encoder
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import SQLAlchemyError
 
-from app.core.errors import ApiError, error_envelope, message_for_code
-from app.core.request_context import get_correlation_id, normalize_correlation_id, set_correlation_id
+from app.core.exception_handlers import register_exception_handlers
+from app.core.request_context import normalize_correlation_id, set_correlation_id
+from app.core.request_diagnostics import AccessLogMiddleware
 
 from app.api.v1.router import api_v1
 from app.core.logging import configure_logging
@@ -47,54 +43,6 @@ ensure_search_preference_columns(engine)
 ensure_door_to_door_tables(engine)
 if run_seed_users:
     ensure_seed_users()
-
-logger = logging.getLogger("app.access")
-app_logger = logging.getLogger("app.main")
-
-
-def _sanitize_request_body(body):
-    if isinstance(body, dict):
-        sanitized = {}
-        for key, value in body.items():
-            key_lower = key.lower()
-            if "password" in key_lower or "token" in key_lower:
-                sanitized[key] = "***"
-            else:
-                sanitized[key] = _sanitize_request_body(value)
-        return sanitized
-    if isinstance(body, list):
-        return [_sanitize_request_body(item) for item in body]
-    return body
-
-
-async def _safe_request_body(request: Request):
-    try:
-        body = await request.body()
-    except Exception:
-        return None
-    if not body:
-        return None
-    try:
-        parsed = json.loads(body)
-    except Exception:
-        return body.decode("utf-8", errors="replace")[:2000]
-    return _sanitize_request_body(parsed)
-
-
-def _scope_headers(scope) -> dict[str, str]:
-    headers: dict[str, str] = {}
-    for raw_key, raw_value in scope.get("headers", []):
-        try:
-            key = raw_key.decode("latin-1").lower()
-        except Exception:
-            continue
-        try:
-            value = raw_value.decode("latin-1")
-        except Exception:
-            value = "<unparseable>"
-        headers[key] = value
-    return headers
-
 
 def _parse_cors_origins() -> list[str]:
     default_origins = [
@@ -147,7 +95,7 @@ async def lifespan(app: FastAPI):
                 provider_rate_limit_per_minute=FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE,
                 jitter_seconds=FARE_MEMORY_BOOT_WARMUP_JITTER_SECONDS,
             )
-        except Exception as exc:
+        except (SQLAlchemyError, TypeError, ValueError) as exc:
             _warmup_logger.error(
                 json.dumps(
                     {
@@ -166,7 +114,7 @@ async def lifespan(app: FastAPI):
         db = SessionLocal()
         try:
             log_enqueued_startup_refresh_jobs(db)
-        except Exception as exc:
+        except (SQLAlchemyError, TypeError, ValueError) as exc:
             _watchlist_startup_logger.error(
                 json.dumps(
                     {
@@ -192,48 +140,6 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Viru API", version="0.1.0", lifespan=lifespan)
 
 
-class AccessLogMiddleware:
-    def __init__(self, app: FastAPI) -> None:
-        self.app = app
-
-    async def __call__(self, scope, receive, send):
-        if scope["type"] != "http":
-            await self.app(scope, receive, send)
-            return
-
-        start = time.perf_counter()
-        status_code = None
-
-        async def send_wrapper(message):
-            nonlocal status_code
-            if message["type"] == "http.response.start":
-                status_code = message.get("status")
-            await send(message)
-
-        try:
-            await self.app(scope, receive, send_wrapper)
-        finally:
-            try:
-                elapsed_ms = int((time.perf_counter() - start) * 1000)
-                headers = _scope_headers(scope)
-                log_payload = {
-                    "event": "http",
-                    "correlation_id": get_correlation_id() or headers.get("x-correlation-id") or "-",
-                    "method": scope.get("method"),
-                    "path": scope.get("path"),
-                    "status": status_code or 500,
-                    "elapsed_ms": elapsed_ms,
-                    "client": scope.get("client")[0] if scope.get("client") else None,
-                    "origin": headers.get("origin"),
-                    "referer": headers.get("referer"),
-                    "user_agent": headers.get("user-agent"),
-                    "content_type": headers.get("content-type"),
-                    "ac_request_method": headers.get("access-control-request-method"),
-                    "ac_request_headers": headers.get("access-control-request-headers"),
-                }
-                logger.info(json.dumps(log_payload, ensure_ascii=False))
-            except Exception:
-                app_logger.exception("access_log_emit_failed")
 _env_regex = os.getenv("CORS_ALLOW_ORIGIN_REGEX")
 if _env_regex is None:
     _allow_origin_regex: str | None = (
@@ -254,122 +160,7 @@ app.add_middleware(
 )
 app.add_middleware(AccessLogMiddleware)
 app.include_router(api_v1, prefix="/api/v1")
-
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    body = exc.body
-    if isinstance(body, dict) and "password" in body:
-        body = {**body, "password": "***"}
-
-    safe_errors = jsonable_encoder(exc.errors())
-    logger.error(
-        json.dumps(
-            {
-                "event": "validation_error",
-                "path": request.url.path,
-                "method": request.method,
-                "errors": safe_errors,
-                "body": body,
-            },
-            ensure_ascii=False,
-        )
-    )
-    envelope = error_envelope(
-        status=HTTP_422_UNPROCESSABLE_CONTENT,
-        code="validation_error",
-        message=message_for_code("validation_error"),
-        details=safe_errors,
-    )
-    return JSONResponse(status_code=HTTP_422_UNPROCESSABLE_CONTENT, content=envelope)
-
-
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    safe_body = await _safe_request_body(request)
-    if isinstance(exc.detail, str):
-        code = exc.detail
-        details = []
-    elif isinstance(exc.detail, list):
-        code = "validation_error"
-        details = exc.detail
-    elif isinstance(exc.detail, dict):
-        code = str(exc.detail.get("code") or "request_failed")
-        raw_details = exc.detail.get("details", [])
-        if isinstance(raw_details, (list, dict)):
-            details = raw_details
-        else:
-            details = [{"detail": raw_details}]
-    else:
-        code = "request_failed"
-        details = []
-    logger.warning(
-        json.dumps(
-            {
-                "event": "http_exception",
-                "correlation_id": get_correlation_id() or getattr(request.state, "correlation_id", "") or "-",
-                "path": request.url.path,
-                "method": request.method,
-                "query": dict(request.query_params),
-                "status": exc.status_code,
-                "code": code,
-                "detail": exc.detail,
-                "body": safe_body,
-            },
-            ensure_ascii=False,
-        )
-    )
-    envelope = error_envelope(
-        status=exc.status_code,
-        code=code,
-        message=str(exc.detail.get("message")) if isinstance(exc.detail, dict) and exc.detail.get("message") else message_for_code(code, fallback="Request failed."),
-        details=details,
-    )
-    return JSONResponse(status_code=exc.status_code, content=envelope)
-
-
-@app.exception_handler(ApiError)
-async def api_error_handler(request: Request, exc: ApiError):
-    envelope = error_envelope(
-        status=exc.status,
-        code=exc.code,
-        message=exc.message,
-        details=exc.details,
-        retry_after_sec=exc.retry_after_sec,
-    )
-    return JSONResponse(status_code=exc.status, content=envelope)
-
-
-@app.exception_handler(Exception)
-async def unhandled_exception_handler(request: Request, exc: Exception):
-    safe_body = await _safe_request_body(request)
-    app_logger.error(
-        json.dumps(
-            {
-                "event": "unhandled_exception",
-                "correlation_id": get_correlation_id() or getattr(request.state, "correlation_id", "") or "-",
-                "path": request.url.path,
-                "method": request.method,
-                "query": dict(request.query_params),
-                "body": safe_body,
-                "exception_type": type(exc).__name__,
-                "error": str(exc)[:1000],
-                "traceback": traceback.format_exc(limit=25),
-            },
-            ensure_ascii=False,
-        )
-    )
-    envelope = error_envelope(
-        status=500,
-        code="internal_server_error",
-        message="Internal server error.",
-        details=[],
-    )
-    response = JSONResponse(status_code=500, content=envelope)
-    correlation_id = get_correlation_id() or getattr(request.state, "correlation_id", "")
-    if correlation_id:
-        response.headers["x-correlation-id"] = correlation_id
-    return response
+register_exception_handlers(app)
 
 
 @app.middleware("http")
