@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Skeleton, SkeletonPanel } from "@/modules/shared/Skeleton";
 import { apiFetchWithStatus } from "@/modules/shared/api";
 import { clearToken, hasToken } from "@/modules/shared/auth";
+import { isDashboardDemoAccessEnabled } from "@/modules/shared/dashboard-demo-session";
 import { useI18n } from "@/i18n";
 
 type LandingState = "checking" | "public";
@@ -60,6 +61,9 @@ export default function HomePage() {
     );
   }
 
+  const authEntryHref = isDashboardDemoAccessEnabled() ? "/dashboard" : "/login";
+  const registerHref = isDashboardDemoAccessEnabled() ? "/dashboard" : "/register";
+
   return (
     <>
       <main className="landing-shell-full" id="main-content">
@@ -83,8 +87,8 @@ export default function HomePage() {
                   <li>{t("public.landing.heroPointAlerts")}</li>
                 </ul>
                 <div className="landing-cta-row">
-                  <Link href="/login" className="btn-primary btn-layered">{t("public.landing.ctaEnter")}</Link>
-                  <Link href="/register" className="btn-secondary">{t("public.landing.ctaCreate")}</Link>
+                  <Link href={authEntryHref} className="btn-primary btn-layered">{t("public.landing.ctaEnter")}</Link>
+                  <Link href={registerHref} className="btn-secondary">{t("public.landing.ctaCreate")}</Link>
                   <Link href="/policies" className="linkInline landing-hero-link">{t("public.landing.policies")}</Link>
                 </div>
                 <p className="landing-cta-note">{t("public.landing.ctaSupport")}</p>
@@ -300,7 +304,7 @@ export default function HomePage() {
               <article className="landing-cap-card landing-cap-card--cta">
                 <h3>{t("public.landing.whyQuickSearch")}</h3>
                 <p>{t("public.landing.whyQuickSearchBody")}</p>
-                <Link href="/register" className="btn-secondary">{t("public.landing.ctaCreate")}</Link>
+                <Link href={registerHref} className="btn-secondary">{t("public.landing.ctaCreate")}</Link>
               </article>
             </div>
           </div>
@@ -320,8 +324,8 @@ export default function HomePage() {
                 </ul>
               </div>
               <div className="landing-close-actions">
-                <Link href="/login" className="btn-primary btn-layered">{t("public.landing.ctaEnter")}</Link>
-                <Link href="/register" className="btn-ghost">{t("public.landing.ctaCreate")}</Link>
+                <Link href={authEntryHref} className="btn-primary btn-layered">{t("public.landing.ctaEnter")}</Link>
+                <Link href={registerHref} className="btn-ghost">{t("public.landing.ctaCreate")}</Link>
                 <Link href="/policies" className="linkInline">{t("public.landing.policies")}</Link>
               </div>
             </div>

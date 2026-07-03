@@ -6,7 +6,9 @@ import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import { GlassSignInCard } from "@/components/components/forms/glass-sign-in";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
-import { AuthOut, clearToken, hasToken, saveToken } from "@/modules/shared/auth";
+import type { AuthOut } from "@/modules/shared/auth";
+import { clearToken, hasToken, saveToken } from "@/modules/shared/auth";
+import { isDashboardDemoAccessEnabled, signInDashboardDemoAccount } from "@/modules/shared/dashboard-demo-session";
 import { resolvePostAuthUrl } from "@/modules/shared/navigation";
 import { SkeletonForm } from "@/modules/shared/Skeleton";
 import { useI18n } from "@/i18n";
@@ -20,6 +22,7 @@ function RegisterContent() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [fieldError, setFieldError] = useState<{ email?: string; password?: string }>({});
+  const [entryState, setEntryState] = useState<"checking" | "ready">("checking");
 
   const returnUrl = useMemo(() => {
     return resolvePostAuthUrl(searchParams?.get("returnUrl"));
@@ -27,9 +30,26 @@ function RegisterContent() {
 
   useEffect(() => {
     let active = true;
-    if (!hasToken()) return;
+    async function checkEntryRoute() {
+      if (!hasToken()) {
+        if (isDashboardDemoAccessEnabled()) {
+          const didSignIn = await signInDashboardDemoAccount();
+          if (!active) return;
+          if (didSignIn) {
+            router.replace("/dashboard");
+            return;
+          }
+          notify({
+            tone: "warning",
+            title: t("shared.notifications.dashboardAutoLoginFailedTitle"),
+            description: t("shared.errors.sessionRequired"),
+          });
+        }
+        if (active) setEntryState("ready");
+        return;
+      }
 
-    apiFetchWithStatus<{ id: string }>("/auth/me").then((result) => {
+      const result = await apiFetchWithStatus<{ id: string }>("/auth/me");
       if (!active) return;
       if (result.ok) {
         router.replace("/dashboard");
@@ -38,12 +58,15 @@ function RegisterContent() {
       if (result.status === 401) {
         clearToken();
       }
-    });
+      if (active) setEntryState("ready");
+    }
+
+    checkEntryRoute();
 
     return () => {
       active = false;
     };
-  }, [router]);
+  }, [notify, router, t]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -82,6 +105,14 @@ function RegisterContent() {
         description: message,
       });
     }
+  }
+
+  if (entryState === "checking") {
+    return (
+      <main className="shell" id="main-content">
+        <SkeletonForm className="air-loader-section" ariaLabel={t("public.auth.registerLoading")} />
+      </main>
+    );
   }
 
   return (
