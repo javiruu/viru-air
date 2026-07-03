@@ -3,6 +3,7 @@
 import { useI18n } from "@/i18n";
 import { formatCurrency, formatRelativeTime } from "@/modules/shared/format";
 import { getAirportMeta } from "@/modules/shared/airports";
+import { buildWatchlistChartModel } from "@/modules/watchlist/chartModel";
 import { monthDays, toIsoMonth } from "@/modules/watchlist/dateUtils";
 import { formatDateTime } from "@/modules/watchlist/presentation";
 import { buildWatchProviderCoverage } from "@/modules/watchlist/providerCoverage";
@@ -240,40 +241,13 @@ export function useWatchlistDerived({
   }, [groupedByDateFull, selectedDates]);
 
   const chartModel = useMemo(() => {
-    const dateKeys = selectedDates.filter((date) => (groupedByDate[date] || []).length > 0);
-    if (dateKeys.length === 0) return null;
-    const points = dateKeys.flatMap((date) => groupedByDate[date]);
-    const minX = Math.min(...points.map((point) => new Date(point.capturedAt).getTime()));
-    const maxX = Math.max(...points.map((point) => new Date(point.capturedAt).getTime()));
-    const minYRaw = Math.min(...points.map((point) => point.price));
-    const maxYRaw = Math.max(...points.map((point) => point.price));
-    const minY = minYRaw === maxYRaw ? minYRaw - 1 : minYRaw;
-    const maxY = minYRaw === maxYRaw ? maxYRaw + 1 : maxYRaw;
-
-    const xSpan = Math.max(1, maxX - minX);
-    const ySpan = Math.max(1, maxY - minY);
-    const innerW = chartWidth - chartPad.left - chartPad.right;
-    const innerH = chartHeight - chartPad.top - chartPad.bottom;
-
-    const mapX = (value: number) => chartPad.left + ((value - minX) / xSpan) * innerW;
-    const mapY = (value: number) => chartPad.top + innerH - ((value - minY) / ySpan) * innerH;
-
-    return dateKeys.map((date, index) => {
-      const rows = groupedByDate[date]
-        .slice()
-        .sort((a, b) => new Date(a.capturedAt).getTime() - new Date(b.capturedAt).getTime());
-      const color = lineColors[index % lineColors.length];
-      const pointsMapped = rows.map((row) => ({
-        ...row,
-        x: mapX(new Date(row.capturedAt).getTime()),
-        y: mapY(row.price),
-      }));
-      return {
-        date,
-        color,
-        path: pointsMapped.map((point) => `${point.x},${point.y}`).join(" "),
-        points: pointsMapped,
-      };
+    return buildWatchlistChartModel({
+      groupedByDate,
+      selectedDates,
+      chartHeight,
+      chartWidth,
+      chartPad,
+      lineColors,
     });
   }, [groupedByDate, selectedDates, chartHeight, chartWidth, chartPad, lineColors]);
 
