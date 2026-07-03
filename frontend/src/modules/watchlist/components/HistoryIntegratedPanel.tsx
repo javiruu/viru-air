@@ -7,6 +7,7 @@ import { useEffect, useRef } from "react";
 
 import { useI18n } from "@/i18n";
 import { formatCurrency } from "@/modules/shared/format";
+import type { WatchlistChartSerie } from "@/modules/watchlist/chartModel";
 import { formatDateTime } from "@/modules/watchlist/presentation";
 import { getFreshnessPresentation } from "@/modules/watchlist/summary";
 
@@ -18,22 +19,6 @@ type SelectedWatch = {
   travel_date_local: string;
   status: string;
 } | null;
-
-type ChartPoint = {
-  capturedAt: string;
-  price: number;
-  currency: string;
-  departureTime: string | null;
-  x: number;
-  y: number;
-};
-
-type ChartSerie = {
-  date: string;
-  color: string;
-  path: string;
-  points: ChartPoint[];
-};
 
 type SelectedPointData = {
   capturedAt: string;
@@ -77,7 +62,7 @@ type HistoryIntegratedPanelProps = {
   selectedPoint: string;
   chartIsCompact: boolean;
   chartHeight: number;
-  chartModel: ChartSerie[] | null;
+  chartModel: WatchlistChartSerie[] | null;
   selectedPointData: SelectedPointData;
   hoverPoint: HoverPoint;
   visibleMonth: string;
@@ -402,7 +387,15 @@ export function HistoryIntegratedPanel({
               ) : null}
               {chartModel?.map((serie) => (
                 <g key={serie.date}>
-                  <polyline fill="none" stroke={serie.color} strokeWidth={chartPointCount < 4 ? 3.4 : 2.8} points={serie.path} />
+                  {serie.areaPoints ? <polygon className="history-area" fill={serie.color} points={serie.areaPoints} /> : null}
+                  <polyline
+                    fill="none"
+                    stroke={serie.color}
+                    strokeWidth={chartPointCount < 4 ? 3.4 : 2.8}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    points={serie.path}
+                  />
                   {serie.points.map((point) => (
                     <circle
                       key={`${serie.date}-${point.capturedAt}`}

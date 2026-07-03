@@ -5724,6 +5724,11 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   stroke-width: 0.6;
 }
 
+.history-area {
+  opacity: 0.09;
+  pointer-events: none;
+}
+
 .history-line {
   fill: none;
   stroke: var(--accent-2);
