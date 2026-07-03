@@ -6,14 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetchWithStatus } from "@/modules/shared/api";
-import {
-  DASHBOARD_DEMO_ACCOUNT,
-  clearToken,
-  hasToken,
-  isDashboardLoginRequired,
-  saveAuthTokens,
-} from "@/modules/shared/auth";
-import { submitLogin } from "@/modules/shared/login-submit";
+import { clearToken, hasToken } from "@/modules/shared/auth";
+import { isDashboardDemoAccessEnabled, signInDashboardDemoAccount } from "@/modules/shared/dashboard-demo-session";
 import { buildLoginRedirect, currentPathWithSearch } from "@/modules/shared/navigation";
 import { Skeleton, SkeletonPanel } from "@/modules/shared/Skeleton";
 import { persistLocale, useI18n } from "@/i18n";
@@ -36,12 +30,11 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
 
     async function validateSession() {
       if (!hasToken()) {
-        const canUseDashboardDemoAccount = pathname === "/dashboard" && !isDashboardLoginRequired();
+        const canUseDashboardDemoAccount = pathname === "/dashboard" && isDashboardDemoAccessEnabled();
         if (canUseDashboardDemoAccount) {
-          const loginResult = await submitLogin(DASHBOARD_DEMO_ACCOUNT.email, DASHBOARD_DEMO_ACCOUNT.password);
+          const didSignIn = await signInDashboardDemoAccount();
           if (!active) return;
-          if (loginResult.kind === "success") {
-            saveAuthTokens(loginResult.data);
+          if (didSignIn) {
             notify({
               tone: "success",
               title: t("shared.notifications.dashboardAutoLoginTitle"),
