@@ -55,3 +55,10 @@ def ensure_door_to_door_tables(engine: Engine) -> None:
     missing = [Base.metadata.tables[name] for name in table_names if name not in existing_tables]
     if missing:
         Base.metadata.create_all(bind=engine, tables=missing)
+
+
+def ensure_notification_state_table(engine: Engine) -> None:
+    inspector = inspect(engine)
+    existing_tables = set(inspector.get_table_names())
+    if "user_notification_state" not in existing_tables:
+        Base.metadata.create_all(bind=engine, tables=[Base.metadata.tables["user_notification_state"]])

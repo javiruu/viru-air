@@ -1,5 +1,11 @@
 # History
 
+## 2026-07-03 — Centro de notificaciones persistente
+
+- Nueva pantalla privada `/notifications` con bandeja persistente para senales de precio, seguridad, digest y workers, con resumen, filtros, acciones de apertura y marcado de lectura.
+- Nuevo contrato backend `/api/v1/notifications` que agrega `notification_event` y `security_activity` sin duplicar el pipeline existente, mas estado de lectura por usuario en `user_notification_state`.
+- Verificacion: test de integracion del inbox, migracion Alembic hasta `head`, lint backend focalizado, tests de navegacion frontend, `tsc`, `npm run build` y QA Playwright light/dark sobre `/notifications`.
+
 ## 2026-07-03 — easyJet Flight Connections más compatible
 
 - El fallback Dohop/Flight Connections de easyJet acepta payloads `data.search.offers` además de `data.boundSearch.offers`, lee la salida desde el primer tramo cuando la ruta no trae `departure` y admite `transferUrl`/`transfer_url`.

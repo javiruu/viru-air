@@ -4524,6 +4524,195 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   }
 }
 
+.notifications-page {
+  animation: section-enter 0.28s ease both;
+}
+
+.notifications-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1.1fr);
+  gap: 1.25rem;
+  align-items: stretch;
+  background:
+    radial-gradient(circle at 8% 12%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 32%),
+    linear-gradient(145deg, color-mix(in srgb, var(--color-surface) 92%, var(--panel-bg) 8%), color-mix(in srgb, var(--color-surface-elevated) 82%, var(--color-surface) 18%));
+}
+
+.notifications-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.notifications-summary-card {
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 0.85rem;
+  background: color-mix(in srgb, var(--panel-bg) 86%, transparent);
+}
+
+.notifications-summary-card span {
+  display: block;
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+}
+
+.notifications-summary-card strong {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--ink);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(1.45rem, 3vw, 2.1rem);
+  line-height: 1;
+}
+
+.notifications-filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.notifications-filter {
+  gap: 0.45rem;
+}
+
+.notifications-filter span {
+  min-width: 1.55rem;
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--ink);
+  font-family: "IBM Plex Mono", "IBM Plex Sans", monospace;
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.notifications-filter.is-active {
+  border-color: color-mix(in srgb, var(--accent) 52%, var(--color-border));
+  background: color-mix(in srgb, var(--accent) 14%, var(--panel-bg));
+}
+
+.notifications-empty {
+  display: grid;
+  place-items: center;
+  gap: 0.65rem;
+  min-height: 260px;
+  border: 1px dashed color-mix(in srgb, var(--color-border-strong) 78%, transparent);
+  border-radius: 18px;
+  padding: 2rem;
+  text-align: center;
+  background: color-mix(in srgb, var(--panel-bg) 76%, transparent);
+}
+
+.notifications-empty p {
+  max-width: 48ch;
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.notifications-radar {
+  width: 84px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--color-border));
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--accent) 24%, transparent) 0 9%, transparent 10%),
+    repeating-radial-gradient(circle, color-mix(in srgb, var(--accent) 22%, transparent) 0 1px, transparent 1px 18px);
+  box-shadow: 0 0 38px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.notifications-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.notifications-row.is-unread {
+  border-color: color-mix(in srgb, var(--accent) 46%, var(--color-border));
+  background: color-mix(in srgb, var(--accent) 8%, var(--panel-bg));
+}
+
+.notifications-row-icon {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel-bg) 84%, transparent);
+}
+
+.notifications-row-icon.success {
+  color: var(--state-success-text);
+}
+
+.notifications-row-icon.warning {
+  color: var(--state-warning-text);
+}
+
+.notifications-row-icon.error {
+  color: var(--state-error-text);
+}
+
+.notifications-row-icon.info {
+  color: var(--state-info-text);
+}
+
+.notifications-row-main {
+  min-width: 0;
+}
+
+.notifications-row-title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.notifications-row-main p {
+  margin: 0.35rem 0 0;
+  color: var(--ink-muted);
+}
+
+.notifications-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.5rem;
+  color: var(--ink-muted);
+  font-family: "IBM Plex Mono", "IBM Plex Sans", monospace;
+  font-size: 0.78rem;
+}
+
+.notifications-row-meta span {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.12rem 0.48rem;
+}
+
+.notifications-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+@media (max-width: 760px) {
+  .notifications-hero,
+  .notifications-row {
+    grid-template-columns: 1fr;
+  }
+
+  .notifications-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .notifications-row-actions {
+    justify-content: flex-start;
+  }
+}
+
 .history-summary--compact {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

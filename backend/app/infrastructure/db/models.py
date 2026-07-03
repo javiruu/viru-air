@@ -111,6 +111,25 @@ class NotificationEvent(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
 
 
+class UserNotificationState(Base):
+    __tablename__ = "user_notification_state"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "source_type",
+            "source_id",
+            name="uq_user_notification_state_source",
+        ),
+        Index("ix_user_notification_state_user_read", "user_id", "read_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    source_type: Mapped[str] = mapped_column(String(40))
+    source_id: Mapped[str] = mapped_column(String(36), index=True)
+    read_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+
+
 class UxEvent(Base):
     __tablename__ = "ux_event"
 

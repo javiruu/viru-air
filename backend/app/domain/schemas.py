@@ -288,6 +288,35 @@ class NotificationEventOut(BaseModel):
     created_at: str
 
 
+class NotificationInboxItemOut(BaseModel):
+    id: str
+    source_type: Literal["alert_event", "security_activity"]
+    source_id: str
+    category: Literal["price", "security", "digest", "worker"]
+    tone: Literal["success", "warning", "error", "info"]
+    title: str
+    body: str
+    route_label: str | None = None
+    action_href: str | None = None
+    created_at: datetime
+    read_at: datetime | None = None
+    is_read: bool
+
+
+class NotificationInboxSummaryOut(BaseModel):
+    total: int
+    unread: int
+    price: int
+    security: int
+    digest: int
+    worker: int
+
+
+class NotificationInboxOut(BaseModel):
+    items: list[NotificationInboxItemOut]
+    summary: NotificationInboxSummaryOut
+
+
 class DispatchPendingOut(BaseModel):
     processed: int
     delivered: int

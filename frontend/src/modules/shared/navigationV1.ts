@@ -5,6 +5,7 @@ export const NAV_V1_PRIVATE = [
   { href: "/quick-search", labelKey: "shared.footer.links.quickSearch" },
   { href: "/hoteles", labelKey: "shared.footer.links.hotelsRadar" },
   { href: "/alerts", labelKey: "shared.footer.links.alerts" },
+  { href: "/notifications", labelKey: "shared.footer.links.notifications" },
   { href: "/recomendaciones", labelKey: "shared.footer.links.opportunities" },
   { href: "/preferencias", labelKey: "shared.footer.links.preferences" },
   { href: "/soporte/ayuda", labelKey: "shared.footer.links.help" },
