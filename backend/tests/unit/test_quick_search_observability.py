@@ -4,9 +4,12 @@ from unittest.mock import patch
 try:
     from fastapi.testclient import TestClient
     from app.main import app
+    from app.domain.entities import ProviderFetchResult, ProviderWarning
 except Exception:  # pragma: no cover
     TestClient = None
     app = None
+    ProviderFetchResult = None
+    ProviderWarning = None
 
 
 class _FakeProvider:
@@ -55,6 +58,58 @@ class QuickSearchObservabilityTests(unittest.TestCase):
         codes = {w.get("code") for w in data["meta"].get("warnings_structured", [])}
         self.assertIn("unsupported_filter", codes)
         self.assertIn("strict_filter_not_enforceable", codes)
+
+    @unittest.skipIf(
+        ProviderFetchResult is None or ProviderWarning is None,
+        "provider entity dependencies not available",
+    )
+    def test_provider_status_errors_feed_pipeline_counters(self):
+        class _EasyJetOutageProvider:
+            def get_flights(
+                self,
+                origin: str,
+                destination: str,
+                date: str,
+                timeout_ms: int,
+                currency: str = "EUR",
+            ):
+                return ProviderFetchResult(
+                    flights=[],
+                    warnings=["easyjet_provider_unavailable_total", "provider_total_outage"],
+                    warnings_structured=[
+                        ProviderWarning(
+                            code="provider_total_outage",
+                            provider="easyjet",
+                            severity="error",
+                        )
+                    ],
+                )
+
+            def provider_ids(self) -> list[str]:
+                return ["easyjet"]
+
+        payload = {
+            "origin": {"seed_iata": "BLQ", "include_nearby": False, "radius_km": 150},
+            "destination": {"seed_iata": "BER", "include_nearby": False, "radius_km": 150},
+            "travel": {"date": "2026-07-04"},
+            "constraints": {"strict_filters": True},
+            "execution": {"max_pairs": 1, "max_requests": 1, "timeout_ms": 2000, "concurrency_limit": 1},
+        }
+
+        client = TestClient(app)
+        with patch("app.api.v1.search._build_request_provider", return_value=_EasyJetOutageProvider()):
+            response = client.post("/api/v1/search/quick?debug=true", json=payload)
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        provider_status = data["meta"]["provider_status"]
+        counters = data["meta"]["pipeline_counters"]
+        self.assertEqual(provider_status["overall_status"], "total_outage")
+        self.assertEqual(provider_status["providers"][0]["id"], "easyjet")
+        self.assertEqual(provider_status["providers"][0]["errors"], 1)
+        self.assertEqual(counters["provider_calls"], 1)
+        self.assertEqual(counters["provider_failures_count"], 1)
+        self.assertEqual(counters["provider_error_rate"], 1.0)
 
 
 if __name__ == "__main__":
