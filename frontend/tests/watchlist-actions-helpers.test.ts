@@ -31,6 +31,7 @@ test("mapSnapshotsToHistoryRows maps only snapshots linked to existing watch ids
       raw_price: 100,
       raw_currency: "EUR",
       departure_time_local: "10:00",
+      provider: "easyjet-public",
     },
     {
       watch_id: "missing",
@@ -46,6 +47,7 @@ test("mapSnapshotsToHistoryRows maps only snapshots linked to existing watch ids
   assert.equal(rows[0].watchId, "w1");
   assert.equal(rows[0].origin, "MAD");
   assert.equal(rows[0].destination, "DUB");
+  assert.equal(rows[0].provider, "easyjet-public");
 });
 
 test("mapSnapshotsToHistoryRows collapses same-refresh legacy snapshots to one canonical point", () => {
@@ -56,6 +58,7 @@ test("mapSnapshotsToHistoryRows collapses same-refresh legacy snapshots to one c
       raw_price: 120,
       raw_currency: "EUR",
       departure_time_local: "10:00",
+      provider: "vueling-public",
     },
     {
       watch_id: "w1",
@@ -63,6 +66,7 @@ test("mapSnapshotsToHistoryRows collapses same-refresh legacy snapshots to one c
       raw_price: 99,
       raw_currency: "EUR",
       departure_time_local: "12:00",
+      provider: "wizzair-public",
     },
     {
       watch_id: "w1",
@@ -70,6 +74,7 @@ test("mapSnapshotsToHistoryRows collapses same-refresh legacy snapshots to one c
       raw_price: 101,
       raw_currency: "EUR",
       departure_time_local: "08:30",
+      provider: "ryanair-public",
     },
     {
       watch_id: "w1",
@@ -77,6 +82,7 @@ test("mapSnapshotsToHistoryRows collapses same-refresh legacy snapshots to one c
       raw_price: 88,
       raw_currency: "EUR",
       departure_time_local: "09:45",
+      provider: "easyjet-public",
     },
   ];
 
@@ -85,8 +91,10 @@ test("mapSnapshotsToHistoryRows collapses same-refresh legacy snapshots to one c
   assert.equal(rows[0].price, 99);
   assert.equal(rows[0].capturedAt, "2026-05-01T10:00:00.654321");
   assert.equal(rows[0].departureTime, "12:00");
+  assert.equal(rows[0].provider, "wizzair-public");
   assert.equal(rows[1].price, 88);
   assert.equal(rows[1].capturedAt, "2026-05-01T10:05:00.000001");
+  assert.equal(rows[1].provider, "easyjet-public");
 });
 
 test("filterWatchesBySelection filters by origin, destination and optional dates", () => {

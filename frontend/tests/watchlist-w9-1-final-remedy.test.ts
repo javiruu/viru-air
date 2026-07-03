@@ -8,6 +8,7 @@ const SMART_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "com
 const DETAIL_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");
 const HISTORY_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "HistoryIntegratedPanel.tsx");
 const COMPARE_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "ComparePanels.tsx");
+const PROVIDER_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchProviderCoveragePanel.tsx");
 const WATCHLIST_I18N = path.join(process.cwd(), "src", "i18n", "domains", "watchlist.ts");
 
 const FORBIDDEN_EN_COPY = ["Back", "Flight Watchlist", "Add flight", "Quick start", "Last update", "Min", "Max"];
@@ -19,11 +20,26 @@ test("W9.1: watchlist keeps main surfaces and removes detail calendar table", ()
   assert.match(page, /<HistoryIntegratedPanel/);
   assert.match(page, /<ComparePanels/);
   assert.match(page, /<WatchlistMapDecisionPanel/);
+  assert.match(page, /<WatchProviderCoveragePanel/);
 
   assert.doesNotMatch(detail, /Calendario/);
   assert.doesNotMatch(detail, /Los precios son orientativos y dependen de la frescura del proveedor\./);
   assert.doesNotMatch(detail, /Día|Mín|Máx|Media|Capturas|Señal/);
   assert.doesNotMatch(detail, /prices\/calendar/);
+});
+
+test("W9.1: watchlist exposes multi-provider coverage without fake per-route claims", () => {
+  const providerPanel = fs.readFileSync(PROVIDER_PANEL, "utf8");
+  const smart = fs.readFileSync(SMART_PANEL, "utf8");
+  const detail = fs.readFileSync(DETAIL_PANEL, "utf8");
+  const i18n = fs.readFileSync(WATCHLIST_I18N, "utf8");
+
+  assert.match(providerPanel, /provider\.status === "observed"/);
+  assert.match(providerPanel, /providerCoverage\.pendingSummary/);
+  assert.match(smart, /resolveProviderPresentation/);
+  assert.match(smart, /providerCoverage\.rowSource/);
+  assert.match(detail, /providerCoverage\.detailSource/);
+  assert.match(i18n, /Cobertura de búsqueda/);
 });
 
 test("W9.1: route separators use arrows and never question marks", () => {

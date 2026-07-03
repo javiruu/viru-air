@@ -15,6 +15,7 @@ import { ComparePanels } from "@/modules/watchlist/components/ComparePanels";
 import { HistoryIntegratedPanel } from "@/modules/watchlist/components/HistoryIntegratedPanel";
 import { SmartWatchListPanel } from "@/modules/watchlist/components/SmartWatchListPanel";
 import { WatchDetailPanel } from "@/modules/watchlist/components/WatchDetailPanel";
+import { WatchProviderCoveragePanel } from "@/modules/watchlist/components/WatchProviderCoveragePanel";
 import { monthLabel } from "@/modules/watchlist/dateUtils";
 import { useWatchlistController } from "@/modules/watchlist/useWatchlistController";
 import { Skeleton, SkeletonPanel } from "@/modules/shared/Skeleton";
@@ -177,6 +178,8 @@ export default function WatchlistPage() {
           ) : null}
         </div>
       ) : null}
+
+      <WatchProviderCoveragePanel coverage={derived.providerCoverage} />
 
       <section className="watchlist-cockpit-grid section-gap">
         <div className="watchlist-area watchlist-area-history">

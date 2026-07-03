@@ -352,6 +352,7 @@ def get_watch_detail(
                 "raw_price": latest.raw_price,
                 "raw_currency": latest.raw_currency,
                 "departure_time_local": latest.departure_time_local,
+                "provider": latest.provider,
             }
         ),
     )

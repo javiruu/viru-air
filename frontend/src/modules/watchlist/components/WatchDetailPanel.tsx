@@ -2,6 +2,7 @@ import { useI18n } from "@/i18n";
 import { formatCurrency, formatPercent } from "@/modules/shared/format";
 import { getWatchStatusMeta } from "@/modules/shared/statusCatalog";
 import { DoorToDoorWatchlistSuggestion } from "@/modules/door-to-door/components/DoorToDoorWatchlistSuggestion";
+import { resolveProviderPresentation } from "@/modules/shared/providerPresentation";
 import { safeDateTime } from "@/modules/watchlist/presentation";
 import { getFreshnessPresentation, getHistoryConfidence, hasPriceSummaryData } from "@/modules/watchlist/summary";
 import type { PriceSummary, Watch, WatchDetail } from "@/modules/watchlist/types";
@@ -56,6 +57,10 @@ export function WatchDetailPanel({
   });
 
   const latestSnapshot = detail?.latest_snapshot ?? null;
+  const latestProvider = resolveProviderPresentation(
+    latestSnapshot?.provider,
+    t("watchlist.providerCoverage.unknown"),
+  );
   const currency = latestSnapshot?.raw_currency ?? "EUR";
   const hasSnapshotPrice = latestSnapshot && latestSnapshot.raw_price != null && latestSnapshot.raw_price >= 0;
   const currentPriceValue = hasSnapshotPrice ? formatCurrency(latestSnapshot.raw_price, currency, localeTag) : "--";
@@ -133,6 +138,9 @@ export function WatchDetailPanel({
         <h3 className="watch-detail-block-title">{t("watchlist.detail.operational.title")}</h3>
         <div className="watch-detail-operational">
           <span className="watch-detail-operational-item tabular-nums">{t("watchlist.detail.latestSnapshot")} {latestSnapshot ? safeDateTime(latestSnapshot.captured_at_utc, localeTag) : "--"}</span>
+          <span className={`watch-detail-operational-item watch-provider-chip watch-provider-chip--${latestProvider.id}`}>
+            {t("watchlist.providerCoverage.detailSource", { provider: latestProvider.label })}
+          </span>
           <span className="watch-detail-operational-item tabular-nums">{t("watchlist.summary.count")} {summaryData ? summaryData.count : "--"}</span>
           <span className="watch-detail-operational-item tabular-nums">{t("watchlist.summary.delta")} {summaryData?.delta_pct == null ? "--" : formatPercent(summaryData.delta_pct, localeTag)}</span>
           <span className="watch-detail-operational-item">{t("watchlist.detail.operational.trend")} {trendText}</span>

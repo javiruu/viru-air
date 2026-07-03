@@ -45,6 +45,7 @@ def history(
             raw_price=row.raw_price,
             raw_currency=row.raw_currency,
             departure_time_local=row.departure_time_local,
+            provider=row.provider,
         )
         for row in canonical_rows
     ]
@@ -102,6 +103,7 @@ def history_batch(
             raw_price=row.raw_price,
             raw_currency=row.raw_currency,
             departure_time_local=row.departure_time_local,
+            provider=row.provider,
         )
         for row in canonical_rows
     ]

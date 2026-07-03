@@ -5,6 +5,7 @@ import { formatCurrency, formatRelativeTime } from "@/modules/shared/format";
 import { getAirportMeta } from "@/modules/shared/airports";
 import { monthDays, toIsoMonth } from "@/modules/watchlist/dateUtils";
 import { formatDateTime } from "@/modules/watchlist/presentation";
+import { buildWatchProviderCoverage } from "@/modules/watchlist/providerCoverage";
 import type {
   CalendarSelectorFlight,
   HistoryRow,
@@ -101,6 +102,7 @@ export function useWatchlistDerived({
     }, 0);
     return latest ? formatRelativeTime(new Date(latest).toISOString(), localeTag) : "";
   }, [historyRows, localeTag]);
+  const providerCoverage = useMemo(() => buildWatchProviderCoverage(historyRows), [historyRows]);
 
   const allOrigins = useMemo(() => Array.from(new Set(items.map((watch) => watch.origin_iata))).sort(), [items]);
 
@@ -545,6 +547,7 @@ export function useWatchlistDerived({
   return {
     watchMeta,
     lastUpdatedGlobal,
+    providerCoverage,
     allOrigins,
     allDestinations,
     allTravelDates,

@@ -6,6 +6,7 @@ import { getWatchStatusMeta } from "@/modules/shared/statusCatalog";
 import { monthLabel } from "@/modules/watchlist/dateUtils";
 import { safeDateTime } from "@/modules/watchlist/presentation";
 import { getFreshnessPresentation } from "@/modules/watchlist/summary";
+import { resolveProviderPresentation } from "@/modules/shared/providerPresentation";
 import type { CalendarSelectorFlight } from "@/modules/watchlist/types";
 
 type ListSort = "freshness" | "price_asc" | "price_desc" | "delta";
@@ -42,6 +43,7 @@ type WatchMetaEntry = {
     capturedAt: string;
     price: number;
     currency: string;
+    provider: string | null;
   } | null;
   previous: {
     price: number;
@@ -419,6 +421,10 @@ export function SmartWatchListPanel({
         const hasMeaningfulDrop = priceDropAmount != null && priceDropPercent != null && priceDropPercent > 0;
         const isBestPrice =
           meta?.latest && meta?.min != null && meta.latest.price <= meta.min && meta?.max != null && meta.max > meta.min;
+        const provider = resolveProviderPresentation(
+          meta?.latest?.provider,
+          t("watchlist.providerCoverage.unknown"),
+        );
 
         return (
           <article
@@ -471,6 +477,9 @@ export function SmartWatchListPanel({
                 </span>
                 <span className="watch-meta-chip tabular-nums">{t("watchlist.detail.latestSnapshot")} {safeDateTime(meta?.latest?.capturedAt, localeTag)}</span>
                 <span className="watch-meta-chip watch-meta-chip--freshness tabular-nums">{t("watchlist.detail.freshness")} {freshness.label}</span>
+                <span className={`watch-provider-chip watch-provider-chip--${provider.id}`}>
+                  {t("watchlist.providerCoverage.rowSource", { provider: provider.label })}
+                </span>
                 <span className="watch-note">{freshness.detail}</span>
                 <span className="watch-note">
                   {watchersCount === 0
