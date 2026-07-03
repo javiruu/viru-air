@@ -336,6 +336,17 @@ def _enrich_pipeline_counters(response_payload: dict[str, Any]) -> None:
     results = [item for item in response_payload.get("results", []) if isinstance(item, dict)]
     search_cache = meta.get("search_cache")
     exact_search_cache_hit = bool(isinstance(search_cache, dict) and search_cache.get("exact_hit"))
+    provider_status = meta.get("provider_status")
+    provider_status_items = (
+        provider_status.get("providers", [])
+        if isinstance(provider_status, dict) and isinstance(provider_status.get("providers"), list)
+        else []
+    )
+    provider_status_error_count = sum(
+        int(item.get("errors", 0) or 0) + int(item.get("timeouts", 0) or 0)
+        for item in provider_status_items
+        if isinstance(item, dict)
+    )
 
     cache_hits = int(execution_meta.get("cache_hits", pipeline_counters.get("cache_hits", 0)) or 0)
     if exact_search_cache_hit and cache_hits < 1:
@@ -348,14 +359,17 @@ def _enrich_pipeline_counters(response_payload: dict[str, Any]) -> None:
         execution_meta.get("negative_cache_hits", pipeline_counters.get("negative_cache_hits", 0)) or 0
     )
     provider_calls = int(execution_meta.get("provider_calls", 0) or 0)
-    provider_failures = int(
-        execution_meta.get("provider_failures", pipeline_counters.get("provider_failures_count", 0)) or 0
+    provider_failures = max(
+        int(execution_meta.get("provider_failures", pipeline_counters.get("provider_failures_count", 0)) or 0),
+        provider_status_error_count,
     )
     stale_served_count, avg_price_age_seconds = _collect_result_freshness_metrics(results)
     total_cache_lookups = cache_hits + cache_misses
+    provider_error_denominator = max(provider_calls, provider_failures)
 
     pipeline_counters.update(
         {
+            "provider_calls": provider_calls,
             "cache_hits": cache_hits,
             "cache_misses": cache_misses,
             "l1_cache_hits": l1_cache_hits,
@@ -372,7 +386,7 @@ def _enrich_pipeline_counters(response_payload: dict[str, Any]) -> None:
             "provider_calls_avoided": cache_hits,
             "stale_served_count": stale_served_count,
             "avg_price_age_seconds": avg_price_age_seconds,
-            "provider_error_rate": _metric_ratio(provider_failures, provider_calls),
+            "provider_error_rate": _metric_ratio(provider_failures, provider_error_denominator),
         }
     )
 
