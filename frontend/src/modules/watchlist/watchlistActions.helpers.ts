@@ -15,7 +15,11 @@ function compareSnapshotPriority(
   }
   const candidateDeparture = candidate.departure_time_local ?? "99:99";
   const currentDeparture = current.departure_time_local ?? "99:99";
-  return candidateDeparture.localeCompare(currentDeparture);
+  const departureOrder = candidateDeparture.localeCompare(currentDeparture);
+  if (departureOrder !== 0) return departureOrder;
+  const candidateProvider = candidate.provider ?? "";
+  const currentProvider = current.provider ?? "";
+  return candidateProvider.localeCompare(currentProvider);
 }
 
 export function mapSnapshotsToHistoryRows(
@@ -44,6 +48,7 @@ export function mapSnapshotsToHistoryRows(
         price: snapshot.raw_price,
         currency: snapshot.raw_currency,
         departureTime: snapshot.departure_time_local,
+        provider: snapshot.provider ?? null,
       };
     })
     .filter((row): row is HistoryRow => Boolean(row));

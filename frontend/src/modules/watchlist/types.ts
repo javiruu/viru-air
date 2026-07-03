@@ -13,6 +13,7 @@ export type Snapshot = {
   raw_price: number;
   raw_currency: string;
   departure_time_local: string | null;
+  provider?: string | null;
 };
 
 export type WatchDetail = {
@@ -84,6 +85,7 @@ export type HistoryRow = {
   price: number;
   currency: string;
   departureTime: string | null;
+  provider: string | null;
 };
 
 export type ViewMode = "chart" | "calendar";

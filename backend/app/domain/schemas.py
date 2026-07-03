@@ -171,6 +171,7 @@ class SnapshotOut(BaseModel):
     raw_price: float
     raw_currency: str
     departure_time_local: str | None = None
+    provider: str | None = None
 
 
 class SnapshotBatchIn(BaseModel):
@@ -197,6 +198,7 @@ class SnapshotBatchOut(BaseModel):
     raw_price: float
     raw_currency: str
     departure_time_local: str | None = None
+    provider: str | None = None
 
 
 class WatchRefreshBulkIn(BaseModel):

@@ -81,6 +81,7 @@ def test_batch_history_mixed_watch_ids_returns_only_owned(client: TestClient, mo
     payload = response.json()
     assert len(payload) >= 1
     assert {item["watch_id"] for item in payload} == {owned_watch_id}
+    assert payload[0]["provider"] == "fake-provider"
 
 
 def test_batch_history_duplicate_watch_ids_do_not_duplicate_rows(client: TestClient, monkeypatch) -> None:
