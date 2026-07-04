@@ -8,6 +8,12 @@ import { getDashboardFeaturedNews } from "@/data/dashboardNews";
 import { useI18n } from "@/i18n";
 import { useFtueHint } from "@/lib/ftue";
 import { trackUxEvent } from "@/lib/uxTracking";
+import { DashboardContextCards } from "@/modules/dashboard/DashboardContextCards";
+import {
+  dismissFoundForYouKey,
+  getFoundForYouSuggestion,
+  loadDismissedFoundForYouKey,
+} from "@/modules/dashboard/found-for-you";
 import { DashboardNextActionCard } from "@/modules/dashboard/DashboardNextActionCard";
 import { DashboardAccessSwitch } from "@/modules/dashboard/dashboard-access-switch";
 import {
@@ -15,6 +21,11 @@ import {
   type DashboardHistoryRow,
   type DashboardNotificationSummary,
 } from "@/modules/dashboard/next-best-action";
+import {
+  dismissResumeSearchSnapshot,
+  loadResumeSearchSnapshot,
+  type ResumeSearchSnapshot,
+} from "@/modules/quick-search/resume-search";
 import { apiFetch } from "@/modules/shared/api";
 import { trackEvent } from "@/modules/shared/analytics";
 
@@ -51,6 +62,8 @@ export default function DashboardPage() {
   const [me, setMe] = useState<Me | null>(null);
   const [notificationSummary, setNotificationSummary] = useState<DashboardNotificationSummary | null>(null);
   const [previousSeenActionKey, setPreviousSeenActionKey] = useState<string | null>(null);
+  const [resumeSnapshot, setResumeSnapshot] = useState<ResumeSearchSnapshot | null>(null);
+  const [dismissedFoundKey, setDismissedFoundKey] = useState<string | null>(null);
   const [watches, setWatches] = useState<Watch[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [backendBanner, setBackendBanner] = useState<BackendBanner | null>(null);
@@ -63,6 +76,8 @@ export default function DashboardPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     setPreviousSeenActionKey(window.localStorage.getItem("viru_dashboard_seen_action"));
+    setResumeSnapshot(loadResumeSearchSnapshot());
+    setDismissedFoundKey(loadDismissedFoundForYouKey());
   }, []);
   const [noteDraft, setNoteDraft] = useState({ title: "", body: "" });
   const [noteActiveId, setNoteActiveId] = useState<string | null>(null);
@@ -279,10 +294,30 @@ export default function DashboardPage() {
   );
   const heroStatus = t("dashboard.hero.status", { count: watches.length, activity: activityLabel });
   const featuredNews = useMemo(() => getDashboardFeaturedNews(localeTag), [localeTag]);
+  const foundForYou = useMemo(
+    () =>
+      getFoundForYouSuggestion({
+        watches,
+        historyRows,
+        resumeSnapshot,
+        dismissedKey: dismissedFoundKey,
+      }),
+    [dismissedFoundKey, historyRows, resumeSnapshot, watches],
+  );
   const rememberSeenAction = useCallback((actionKey: string) => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem("viru_dashboard_seen_action", actionKey);
   }, []);
+  const handleDismissFound = useCallback(() => {
+    if (!foundForYou) return;
+    dismissFoundForYouKey(foundForYou.key);
+    setDismissedFoundKey(foundForYou.key);
+  }, [foundForYou]);
+  const handleDismissResume = useCallback(() => {
+    if (!resumeSnapshot) return;
+    dismissResumeSearchSnapshot(resumeSnapshot.key);
+    setResumeSnapshot(null);
+  }, [resumeSnapshot]);
 
   useEffect(() => {
     rememberSeenAction(nextBestAction.key);
@@ -409,6 +444,15 @@ export default function DashboardPage() {
           </div>
         </section>
       ) : null}
+
+      <DashboardContextCards
+        foundForYou={foundForYou}
+        locale={localeTag}
+        onDismissFound={handleDismissFound}
+        onDismissResume={handleDismissResume}
+        resumeSnapshot={resumeSnapshot}
+        t={t}
+      />
 
       <section className="dashboard-section">
         <div className="dashboard-section-head">

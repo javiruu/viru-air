@@ -53,6 +53,21 @@ export const dashboardEs = {
       calm: "En calma",
     },
   },
+  foundForYou: {
+    title: "Viru encontro algo para ti",
+    messageMatchedCountry: "Has estado mirando {country} desde {origin}. He visto {route} por {price}, y esta si merece una mirada.",
+    messageGeneric: "He visto una pista buena para ti: {route} por {price}.",
+    reasonMatchedCountry: "Encaja con tus rutas recientes hacia {country}.",
+    reasonGeneric: "No te lo ensenaria si no pareciera interesante.",
+    primaryAction: "Ver vuelo",
+    secondaryAction: "No me interesa",
+  },
+  resumeSearch: {
+    title: "Donde estabas",
+    savedAt: "Guardado {relative}",
+    primaryAction: "Retomar busqueda",
+    secondaryAction: "Descartar",
+  },
   banner: {
     title: "Disponibilidad parcial",
     warmMessage: "Algunas funciones pueden tardar temporalmente.",
@@ -315,6 +330,21 @@ export const dashboardEn = {
       start: "Start",
       calm: "Calm",
     },
+  },
+  foundForYou: {
+    title: "Viru found something for you",
+    messageMatchedCountry: "You have been checking {country} from {origin}. I spotted {route} at {price}, and this one is worth a look.",
+    messageGeneric: "I found a promising lead for you: {route} at {price}.",
+    reasonMatchedCountry: "It lines up with the routes you have been checking in {country}.",
+    reasonGeneric: "I would not show this if it did not look genuinely interesting.",
+    primaryAction: "View flight",
+    secondaryAction: "Not interested",
+  },
+  resumeSearch: {
+    title: "Where you left off",
+    savedAt: "Saved {relative}",
+    primaryAction: "Resume search",
+    secondaryAction: "Dismiss",
   },
   banner: {
     title: "Partial availability",

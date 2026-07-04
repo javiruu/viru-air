@@ -1,5 +1,12 @@
 # History
 
+## 2026-07-04 â€” Dashboard con descubrimiento ocasional y continuidad de busqueda
+
+- El dashboard suma dos bloques contextuales y opcionales: `Viru encontro algo para ti`, que solo aparece con una oportunidad realmente alineada y barata, y `Donde estabas`, que recupera la ultima busqueda retomable del usuario.
+- Quick Search guarda una unica busqueda util en `localStorage`, restaura ruta, fechas, ida/vuelta, flexibilidad, radio, cercanos, exclusiones y filtros visibles, y muestra una confirmacion suave al retomar.
+- La restauracion ya no se degrada cuando cargan las preferencias del usuario: los defaults de `/preferences/search` dejan de sobrescribir un snapshot retomado.
+- Verificacion focalizada: `npm test -- tests/dashboard-next-best-action.test.ts tests/dashboard-found-for-you.test.ts tests/quick-search-resume-search.test.ts tests/watchlist-refresh-affordances.test.ts tests/watchlist-w6-actionable-freshness.test.ts tests/quick-search-form-contract.test.ts tests/quick-search-visible-results.test.ts` -> 29 passed; `npm run build` OK; Playwright con mocks sobre `/dashboard` y `/quick-search?resume=1` en claro/oscuro y desktop/mobile.
+
 ## 2026-07-04 — Dashboard con siguiente mejor accion prioritaria
 
 - El hero superior del dashboard ya no muestra una oportunidad placeholder: ahora prioriza una unica `Siguiente mejor accion` basada en senales reales de watchlist, historico de precios y alertas sin leer.
