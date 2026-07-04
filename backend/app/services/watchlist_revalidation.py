@@ -43,7 +43,7 @@ WATCHLIST_STARTUP_REFRESH_ENABLED = (
     os.getenv("WATCHLIST_STARTUP_REFRESH_ENABLED", "true").strip().lower() in {"1", "true", "yes"}
 )
 WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS = max(
-    0, int(os.getenv("WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS", "86400"))
+    0, int(os.getenv("WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS", "14400"))
 )
 
 STARTUP_REFRESH_JOB_TYPE = "startup_refresh"
@@ -108,6 +108,18 @@ def enqueue_startup_refresh_jobs(
             stale_route_count += 1
         origin_iata, destination_iata, travel_date_local = route_key
         target_fingerprint = route_fingerprint(origin_iata, destination_iata, travel_date_local)
+        if not freshness.needs_refresh:
+            jobs.append(
+                {
+                    "target_fingerprint": target_fingerprint,
+                    "job_id": None,
+                    "status": "fresh_skipped",
+                    "reason": freshness.state,
+                    "watch_count": len(watches),
+                }
+            )
+            continue
+
         active_job = find_active_revalidation_job(
             db,
             target_type="route",

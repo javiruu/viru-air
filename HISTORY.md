@@ -1,5 +1,12 @@
 # History
 
+## 2026-07-04 — Watchlist startup refresh con ventana de 4 horas
+
+- El startup refresh de watchlist ya no encola rutas revisadas hace menos de 4 horas; las marca en el reporte interno como `fresh_skipped` sin llamar al proveedor ni crear `RevalidationJob`.
+- Las rutas sin snapshot o con precio revisado hace 4 horas o mas siguen entrando en la cola de arranque, con deduplicacion por ruta compartida.
+- `WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS` queda alineado en codigo y `.env.example` con el nuevo valor por defecto de 14.400 segundos.
+- Verificacion focalizada: `python -m pytest backend/tests/unit/test_watchlist_manual_revalidation.py backend/tests/unit/test_watchlist_refresh_policy.py backend/tests/unit/test_watchlist_startup_refresh.py backend/tests/unit/test_watchlist_startup_refresh_regression.py` -> 13 passed.
+
 ## 2026-07-03 — Centro de notificaciones persistente
 
 - Nueva pantalla privada `/notifications` con bandeja persistente para senales de precio, seguridad, digest y workers, con resumen, filtros, acciones de apertura y marcado de lectura.

@@ -79,7 +79,7 @@ def _seed_snapshot(
     return snapshot
 
 
-def test_startup_refresh_enqueues_fresh_routes_on_each_server_open() -> None:
+def test_startup_refresh_skips_routes_checked_less_than_four_hours_ago() -> None:
     engine, testing_session_local = _session_factory()
     db = testing_session_local()
     try:
@@ -98,8 +98,36 @@ def test_startup_refresh_enqueues_fresh_routes_on_each_server_open() -> None:
 
         assert report["evaluated_route_count"] == 1
         assert report["stale_route_count"] == 0
-        assert report["enqueued_job_count"] == 1
+        assert report["enqueued_job_count"] == 0
         assert report["jobs"][0]["reason"] == "fresh"
+        assert report["jobs"][0]["status"] == "fresh_skipped"
+        assert len(jobs) == 0
+    finally:
+        db.close()
+        engine.dispose()
+
+
+def test_startup_refresh_enqueues_routes_checked_four_hours_ago() -> None:
+    engine, testing_session_local = _session_factory()
+    db = testing_session_local()
+    try:
+        reference_now = dt.datetime(2026, 6, 30, 10, 0)
+        owner = _seed_user(db, "startup-four-hours@example.com")
+        watch = _seed_watch(db, user_id=owner.id, travel_date=reference_now.date() + dt.timedelta(days=30))
+        _seed_snapshot(
+            db,
+            watch_id=watch.id,
+            captured_at=reference_now - dt.timedelta(hours=4),
+            price=61.0,
+        )
+
+        report = enqueue_startup_refresh_jobs(db, now=reference_now)
+        jobs = db.execute(select(RevalidationJob)).scalars().all()
+
+        assert report["evaluated_route_count"] == 1
+        assert report["stale_route_count"] == 1
+        assert report["enqueued_job_count"] == 1
+        assert report["jobs"][0]["reason"] == "snapshot_expired"
         assert len(jobs) == 1
         assert jobs[0].job_type == "startup_refresh"
     finally:

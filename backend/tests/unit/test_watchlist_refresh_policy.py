@@ -44,3 +44,19 @@ def test_evaluate_route_freshness_marks_expired_and_fresh_routes() -> None:
     assert fresh.state == "fresh"
     assert fresh.needs_refresh is False
     assert fresh.oldest_snapshot_age_seconds == 3600
+
+
+def test_evaluate_route_freshness_expires_at_four_hours() -> None:
+    watch = SimpleNamespace(id="watch-1")
+    snapshot = SimpleNamespace(captured_at_utc=dt.datetime(2026, 6, 21, 8, 0, 0))
+
+    result = evaluate_route_freshness(
+        watches=[watch],
+        latest_snapshot_by_watch={watch.id: snapshot},
+        now=dt.datetime(2026, 6, 21, 12, 0, 0),
+        max_age_seconds=14_400,
+    )
+
+    assert result.state == "snapshot_expired"
+    assert result.needs_refresh is True
+    assert result.oldest_snapshot_age_seconds == 14_400
