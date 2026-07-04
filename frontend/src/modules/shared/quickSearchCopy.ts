@@ -79,6 +79,15 @@ export const QUICK_SEARCH_COPY = {
     searchReadyTitle: "Listo para explorar",
     searchReadyText: "Introduce una ruta y pulsa Buscar vuelos para ver oportunidades.",
     searchReadyHint: "Puedes ampliar con aeropuertos cercanos y +/- dias si no hay resultados.",
+    resumeSummaryRoute: "Te quedaste mirando {route}.",
+    resumeSummaryRoundTrip: "Te quedaste a medias con {route} ida y vuelta.",
+    resumeDetailFlexNearby: "Fechas flexibles y aeropuertos cercanos listos para retomar.",
+    resumeDetailFlex: "Fechas flexibles listas para retomar.",
+    resumeDetailNearby: "Aeropuertos cercanos y ajustes listos para retomar.",
+    resumeDetailResults: "Habia {count} resultados y tus filtros siguen guardados.",
+    resumeDetailBasic: "Tus ajustes siguen guardados para retomar.",
+    resumeRestoredTitle: "Listo, seguimos desde donde lo dejaste.",
+    resumeRestoredBody: "He recuperado tus ajustes.",
     quickLookTitle: "Primer vistazo",
     quickLookBody: "Configura ruta, fecha y filtros, y luego pulsa Buscar vuelos para ver oportunidades.",
     quickLookAcknowledge: "Entendido",
@@ -498,6 +507,15 @@ export const QUICK_SEARCH_COPY = {
     searchReadyTitle: "Ready to explore",
     searchReadyText: "Enter a route and press Search flights to see opportunities.",
     searchReadyHint: "Expand with nearby airports and +/- days if no results.",
+    resumeSummaryRoute: "You left off with {route}.",
+    resumeSummaryRoundTrip: "You left {route} half-done as a round trip.",
+    resumeDetailFlexNearby: "Flexible dates and nearby airports are ready to resume.",
+    resumeDetailFlex: "Flexible dates are ready to resume.",
+    resumeDetailNearby: "Nearby airports and your filters are ready to resume.",
+    resumeDetailResults: "There were {count} results and your filters are still saved.",
+    resumeDetailBasic: "Your search settings are still saved.",
+    resumeRestoredTitle: "Done, we picked up where you left off.",
+    resumeRestoredBody: "Your settings are back in place.",
     quickLookTitle: "Quick start",
     quickLookBody: "Set route, dates, and filters, then press Search flights to explore opportunities.",
     quickLookAcknowledge: "Got it",
@@ -852,7 +870,16 @@ export function getQuickSearchCopy(raw?: string | null) {
   const locale = resolveQuickSearchLocale(raw);
   const copy = QUICK_SEARCH_COPY[locale];
   const fallback = QUICK_SEARCH_COPY.es;
-  const t = (key: QuickSearchCopyKey): string => copy[key] ?? fallback[key] ?? String(key);
+  const t = (
+    key: QuickSearchCopyKey,
+    params?: Readonly<Record<string, string | number>>,
+  ): string => {
+    const template = copy[key] ?? fallback[key] ?? String(key);
+    if (!params) return template;
+    return Object.entries(params).reduce<string>((message, [paramKey, value]) => {
+      return message.replaceAll(`{${paramKey}}`, String(value));
+    }, template);
+  };
   const warnings = copy.warnings as Record<keyof QuickSearchWarnings, string>;
   const fallbackWarnings = fallback.warnings as Record<keyof QuickSearchWarnings, string>;
   const tWarn = (code: string): string => {

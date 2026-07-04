@@ -146,6 +146,11 @@ import { getApiSearchQuery } from "@/modules/shared/cityTranslations";
 import { buildAirportSuggestions, normalizeText } from "@/modules/quick-search/airportSuggestions";
 import { INITIAL_PROVIDER_SEARCH_STATUSES } from "@/modules/quick-search/providerPresentation";
 import { fetchWeather as fetchWeatherApi, isWeatherRangeSupported as isWeatherRangeSupportedCheck, WeatherFetchError } from "@/modules/quick-search/weatherUtils";
+import {
+  buildResumeSearchSnapshot,
+  loadResumeSearchSnapshot,
+  saveResumeSearchSnapshot,
+} from "@/modules/quick-search/resume-search";
 import { buildWatchlistUrl, buildQuickSearchSearchParams, readQuickSearchUrlState } from "@/modules/shared/useRouteState";
 
 const RELAX_HIGHLIGHT_BY_ACTION: Record<ZeroResultRelaxAction, Exclude<SummaryHighlightKey, null>> = {
@@ -586,6 +591,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const minTravelDate = useMemo(() => currentDateIso(), []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [returnDateTouched, setReturnDateTouched] = useState(false);
+  const [resumeWasRestored, setResumeWasRestored] = useState(false);
   const [refreshingResultId, setRefreshingResultId] = useState<string | null>(null);
   const [providerSearchStatuses, setProviderSearchStatuses] = useState<ProviderSearchStatus[]>([]);
   const { isInWatchlist, markAsSaved } = useQuickSearchWatchlist();
@@ -593,9 +599,40 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   // ── URL state: read search params on mount (Fase URL State) ────────
   const searchParams = useSearchParams();
   const hasRestoredUrlState = useRef(false);
+  const hasRestoredResumeSnapshot = useRef(false);
   useEffect(() => {
     if (hasRestoredUrlState.current) return;
     hasRestoredUrlState.current = true;
+    const shouldRestoreResume = searchParams.get("resume") === "1";
+    const resumeSnapshot = shouldRestoreResume ? loadResumeSearchSnapshot() : null;
+    if (resumeSnapshot) {
+      hasRestoredResumeSnapshot.current = true;
+      setOrigin(resumeSnapshot.origin);
+      setDestination(resumeSnapshot.destination);
+      setTravelDate(resumeSnapshot.travelDate);
+      setReturnDate(resumeSnapshot.returnDate);
+      setIsReturn(resumeSnapshot.isReturn);
+      setAdults(resumeSnapshot.adults);
+      setDaysBefore(resumeSnapshot.daysBefore);
+      setDaysAfter(resumeSnapshot.daysAfter);
+      setRadiusKm(resumeSnapshot.radiusKm);
+      setStrictFilters(resumeSnapshot.strictFilters);
+      setDepartAfter(resumeSnapshot.departAfter);
+      setDepartBefore(resumeSnapshot.departBefore);
+      setIncludeStops(resumeSnapshot.includeStops);
+      setMaxStops(resumeSnapshot.maxStops);
+      setBufferMin(resumeSnapshot.bufferMin);
+      setIncludeNearbyOrigins(resumeSnapshot.includeNearbyOrigins);
+      setIncludeNearbyDestinations(resumeSnapshot.includeNearbyDestinations);
+      setExcludeOrigins(resumeSnapshot.excludeOrigins);
+      setExcludeDestinations(resumeSnapshot.excludeDestinations);
+      setPriceMin(resumeSnapshot.priceMin);
+      setPriceMax(resumeSnapshot.priceMax);
+      setDurationMax(resumeSnapshot.durationMax);
+      setSortBy(resumeSnapshot.sortBy);
+      setResumeWasRestored(true);
+      return;
+    }
     const state = readQuickSearchUrlState(searchParams);
     if (state.origin) setOrigin(state.origin);
     if (state.destination) setDestination(state.destination);
@@ -727,11 +764,38 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       setRadiusKm, setExcludeOrigins, setExcludeDestinations, setExcludeOriginInput,
       setExcludeDestinationInput, setDaysBefore, setDaysAfter,
     ],
-  );  const copy = useMemo(
+  );
+  const copy = useMemo(
     () => getQuickSearchCopy(regionPref?.language ?? pref?.language),
     [regionPref?.language, pref?.language],
   );
   const { locale, localeTag, t, tWarn } = copy;
+  const resumableRouteLabel = useMemo(() => {
+    if (!origin || !destination) return "";
+    return `${origin} -> ${destination}`;
+  }, [destination, origin]);
+  const resumableDetail = useMemo(() => {
+    if ((daysBefore > 0 || daysAfter > 0) && (includeNearbyOrigins || includeNearbyDestinations)) {
+      return t("resumeDetailFlexNearby");
+    }
+    if (daysBefore > 0 || daysAfter > 0) {
+      return t("resumeDetailFlex");
+    }
+    if (includeNearbyOrigins || includeNearbyDestinations) {
+      return t("resumeDetailNearby");
+    }
+    if (results.length > 0) {
+      return t("resumeDetailResults", { count: results.length });
+    }
+    return t("resumeDetailBasic");
+  }, [daysAfter, daysBefore, includeNearbyDestinations, includeNearbyOrigins, results.length, t]);
+  const resumableSummary = useMemo(() => {
+    if (!resumableRouteLabel) return "";
+    if (isReturn) {
+      return t("resumeSummaryRoundTrip", { route: resumableRouteLabel });
+    }
+    return t("resumeSummaryRoute", { route: resumableRouteLabel });
+  }, [isReturn, resumableRouteLabel, t]);
   const debugLog = useCallback((message: string) => {
     if (process.env.NODE_ENV === "production" || typeof window === "undefined") return;
     const now = typeof performance !== "undefined" ? performance.now() : Date.now();
@@ -742,6 +806,77 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     // eslint-disable-next-line no-console
     console.debug(`[qs] ${message} ts=${ts}ms`);
   }, [debugEpochRef]);
+
+  useEffect(() => {
+    if (!resumeWasRestored) return;
+    notify({
+      tone: "info",
+      title: t("resumeRestoredTitle"),
+      description: t("resumeRestoredBody"),
+      durationMs: 3600,
+    });
+    setResumeWasRestored(false);
+  }, [notify, resumeWasRestored, t]);
+
+  useEffect(() => {
+    if (!hasRestoredUrlState.current) return;
+    const snapshot = buildResumeSearchSnapshot({
+      origin,
+      destination,
+      travelDate,
+      returnDate,
+      isReturn,
+      adults,
+      daysBefore,
+      daysAfter,
+      radiusKm,
+      strictFilters,
+      departAfter,
+      departBefore,
+      includeStops,
+      maxStops,
+      bufferMin,
+      includeNearbyOrigins,
+      includeNearbyDestinations,
+      excludeOrigins,
+      excludeDestinations,
+      priceMin,
+      priceMax,
+      durationMax,
+      sortBy,
+      resultsCount: results.length,
+      summary: resumableSummary,
+      detail: resumableDetail,
+    });
+    saveResumeSearchSnapshot(snapshot);
+  }, [
+    adults,
+    bufferMin,
+    daysAfter,
+    daysBefore,
+    departAfter,
+    departBefore,
+    destination,
+    durationMax,
+    excludeDestinations,
+    excludeOrigins,
+    includeNearbyDestinations,
+    includeNearbyOrigins,
+    includeStops,
+    isReturn,
+    maxStops,
+    origin,
+    priceMax,
+    priceMin,
+    radiusKm,
+    results.length,
+    resumableDetail,
+    resumableSummary,
+    returnDate,
+    sortBy,
+    strictFilters,
+    travelDate,
+  ]);
 
   useQuickSearchLoadingFlow({
     searchState,
@@ -1145,6 +1280,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         };
         const defaults = resolveQuickSearchPreferenceDefaults(normalized);
         setPref(normalized);
+        if (hasRestoredResumeSnapshot.current) {
+          setPrefBadge(true);
+          return;
+        }
         setRadiusKm(defaults.radiusKm);
         setIncludeStops(defaults.includeStops);
         setDepartAfter(defaults.departAfter);

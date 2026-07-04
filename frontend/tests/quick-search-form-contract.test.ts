@@ -34,3 +34,12 @@ test("quick-search passenger stepper exposes adult-specific accessibility copy",
   assert.match(source, /passengersStepperIncrease/);
   assert.match(source, /passengersStepperAria/);
 });
+
+test("quick-search does not let preference defaults overwrite a restored resume snapshot", () => {
+  const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
+
+  assert.match(source, /const hasRestoredResumeSnapshot = useRef\(false\);/);
+  assert.match(source, /hasRestoredResumeSnapshot\.current = true;/);
+  assert.match(source, /if \(hasRestoredResumeSnapshot\.current\) \{/);
+  assert.match(source, /setPrefBadge\(true\);/);
+});

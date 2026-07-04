@@ -10586,6 +10586,68 @@ textarea::placeholder {
   flex-wrap: wrap;
 }
 
+.dashboard-context-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  margin-bottom: 1.25rem;
+}
+
+.dashboard-context-card {
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  padding: 1rem 1.1rem;
+  display: grid;
+  gap: 0.9rem;
+  box-shadow: 0 16px 32px var(--shadow-soft);
+}
+
+.dashboard-context-card-found {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--color-warning-bg) 34%, transparent), transparent 62%),
+    color-mix(in srgb, var(--surface) 94%, transparent);
+}
+
+.dashboard-context-card-resume {
+  border-color: color-mix(in srgb, var(--color-info-border) 54%, var(--border));
+}
+
+.dashboard-context-copy {
+  display: grid;
+  gap: 0.42rem;
+}
+
+.dashboard-context-copy strong {
+  font-size: 0.98rem;
+  line-height: 1.35;
+}
+
+.dashboard-context-copy p,
+.dashboard-context-meta {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.88rem;
+}
+
+.dashboard-context-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dashboard-muted-tone);
+}
+
+.dashboard-context-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
 .hero-opportunity,
 .hero-empty {
   border-radius: 16px;
@@ -13913,6 +13975,15 @@ textarea::placeholder {
   }
 
   .dashboard-next-action-meta .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .dashboard-context-actions {
+    align-items: stretch;
+  }
+
+  .dashboard-context-actions .btn-secondary {
     width: 100%;
     justify-content: center;
   }
