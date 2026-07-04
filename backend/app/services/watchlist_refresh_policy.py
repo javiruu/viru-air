@@ -54,7 +54,7 @@ def evaluate_route_freshness(
             return RouteFreshnessEvaluation(state="missing_snapshot", oldest_snapshot_age_seconds=None)
         snapshot_age_seconds = max(0, int((now - latest_snapshot.captured_at_utc).total_seconds()))
         oldest_snapshot_age_seconds = max(oldest_snapshot_age_seconds, snapshot_age_seconds)
-        if snapshot_age_seconds > max_age_seconds:
+        if snapshot_age_seconds >= max_age_seconds:
             return RouteFreshnessEvaluation(
                 state="snapshot_expired",
                 oldest_snapshot_age_seconds=oldest_snapshot_age_seconds,
