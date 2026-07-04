@@ -1,5 +1,12 @@
 # History
 
+## 2026-07-04 — Dashboard con siguiente mejor accion prioritaria
+
+- El hero superior del dashboard ya no muestra una oportunidad placeholder: ahora prioriza una unica `Siguiente mejor accion` basada en senales reales de watchlist, historico de precios y alertas sin leer.
+- La prioridad actual favorece bajadas fuertes, nuevos minimos, mejor precio mensual, alertas pendientes, rutas stale y estados tranquilos/onboarding cuando no hay nada fuerte que mirar.
+- El dashboard recuerda la ultima accion debil ya vista para no reciclarla siempre si existe otra pista mejor disponible.
+- Verificacion focalizada: `npm test -- tests/dashboard-next-best-action.test.ts tests/watchlist-refresh-affordances.test.ts tests/watchlist-w6-actionable-freshness.test.ts tests/quick-search-form-contract.test.ts tests/quick-search-visible-results.test.ts` -> 22 passed; `npm run build` OK.
+
 ## 2026-07-04 — Watchlist startup refresh con ventana de 4 horas
 
 - El startup refresh de watchlist ya no encola rutas revisadas hace menos de 4 horas; las marca en el reporte interno como `fresh_skipped` sin llamar al proveedor ni crear `RevalidationJob`.
