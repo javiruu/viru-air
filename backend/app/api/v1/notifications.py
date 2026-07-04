@@ -2,11 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
-from app.domain.schemas import NotificationInboxOut
+from app.domain.schemas import NotificationInboxOut, NotificationInboxSummaryOut
 from app.infrastructure.db.models import User
 from app.infrastructure.db.session import get_db
 from app.services.notification_inbox import (
     InboxItem,
+    SourceRef,
     list_notification_inbox,
     mark_all_notifications_read,
     mark_notification_read,
@@ -55,6 +56,15 @@ def get_notifications(
     }
 
 
+@router.get("/summary", response_model=NotificationInboxSummaryOut)
+def get_notifications_summary(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict[str, int]:
+    items = list_notification_inbox(db, user_id=current_user.id, limit=200)
+    return _summary(items)
+
+
 @router.post("/{source_type}/{source_id}/read")
 def mark_read(
     source_type: str,
@@ -65,8 +75,7 @@ def mark_read(
     read_at = mark_notification_read(
         db,
         user_id=current_user.id,
-        source_type=source_type,
-        source_id=source_id,
+        ref=SourceRef(source_type, source_id),
     )
     if read_at is None:
         raise HTTPException(status_code=404, detail="notification_not_found")

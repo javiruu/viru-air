@@ -16174,6 +16174,9 @@ textarea::placeholder {
 }
 
 .private-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   flex: 0 0 auto;
   font-size: 0.86rem;
   font-weight: 600;
@@ -16202,6 +16205,22 @@ textarea::placeholder {
   border-color: color-mix(in srgb, var(--color-accent) 52%, transparent);
   background: color-mix(in srgb, var(--accent) 14%, var(--surface));
   box-shadow: 0 8px 14px rgba(31, 29, 26, 0.08);
+}
+
+.private-nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  color: var(--state-warning-text);
+  background: color-mix(in srgb, var(--state-warning-bg) 92%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--state-warning-border) 70%, transparent);
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .account-profile-shell {

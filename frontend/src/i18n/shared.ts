@@ -49,6 +49,7 @@
     changeTheme: "Cambiar tema",
     changeLanguage: "Cambiar idioma",
     mainNavigation: "Navegación principal",
+    notificationsUnread: "{count} señales sin leer",
   },
   loader: {
     flightLabel: "cargando vuelo",
@@ -196,6 +197,7 @@ export const sharedEn = {
     changeTheme: "Change theme",
     changeLanguage: "Change language",
     mainNavigation: "Main navigation",
+    notificationsUnread: "{count} unread signals",
   },
   loader: {
     flightLabel: "loading flight",

@@ -12,7 +12,7 @@ import { formatRelativeTime } from "@/modules/shared/format";
 type NotificationCategory = "price" | "security" | "digest" | "worker";
 type NotificationFilter = "all" | "unread" | NotificationCategory;
 type NotificationTone = "success" | "warning" | "error" | "info";
-type NotificationSourceType = "alert_event" | "security_activity";
+type NotificationSourceType = "alert_event" | "hotel_alert_event" | "security_activity";
 
 type NotificationInboxItem = {
   id: string;
