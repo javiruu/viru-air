@@ -290,7 +290,7 @@ class NotificationEventOut(BaseModel):
 
 class NotificationInboxItemOut(BaseModel):
     id: str
-    source_type: Literal["alert_event", "security_activity"]
+    source_type: Literal["alert_event", "hotel_alert_event", "security_activity"]
     source_id: str
     category: Literal["price", "security", "digest", "worker"]
     tone: Literal["success", "warning", "error", "info"]

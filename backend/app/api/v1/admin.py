@@ -26,6 +26,7 @@ from app.infrastructure.db.models import (
     User,
     UserPreference,
     UxEvent,
+    UserNotificationState,
 )
 from app.infrastructure.db.session import get_db
 from app.services.fare_memory_observability import build_fare_memory_health_snapshot
@@ -37,6 +38,14 @@ pwd = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 def _delete_watch(db: Session, watch_id: str) -> None:
     rule_ids = db.scalars(select(AlertRule.id).where(AlertRule.watch_id == watch_id)).all()
     if rule_ids:
+        event_ids = db.scalars(select(NotificationEvent.id).where(NotificationEvent.rule_id.in_(rule_ids))).all()
+        if event_ids:
+            db.execute(
+                delete(UserNotificationState).where(
+                    UserNotificationState.source_type == "alert_event",
+                    UserNotificationState.source_id.in_(event_ids),
+                )
+            )
         db.execute(delete(NotificationEvent).where(NotificationEvent.rule_id.in_(rule_ids)))
         db.execute(delete(AlertRule).where(AlertRule.id.in_(rule_ids)))
     db.execute(delete(PriceSnapshot).where(PriceSnapshot.watch_id == watch_id))

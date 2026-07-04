@@ -18,6 +18,8 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
+- `docs/product/notifications.md`
+- `docs/reference/backend/notifications-contract.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
 - `HISTORY.md`

@@ -1,136 +1,106 @@
-from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import desc, select
+from sqlalchemy import desc, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
 from app.infrastructure.db.models import (
     AlertRule,
     FlightWatch,
+    HotelAlertEvent,
+    HotelAlertRule,
+    HotelProperty,
+    HotelTrackedOffer,
     NotificationEvent,
     SecurityActivity,
     UserNotificationState,
 )
-
-SOURCE_ALERT_EVENT = "alert_event"
-SOURCE_SECURITY_ACTIVITY = "security_activity"
-READABLE_SOURCES = {SOURCE_ALERT_EVENT, SOURCE_SECURITY_ACTIVITY}
-
-
-@dataclass(frozen=True, slots=True)
-class InboxItem:
-    id: str
-    source_type: str
-    source_id: str
-    category: str
-    tone: str
-    title: str
-    body: str
-    route_label: str | None
-    action_href: str | None
-    created_at: datetime
-    read_at: datetime | None
-
-    @property
-    def is_read(self) -> bool:
-        return self.read_at is not None
+from app.services.notification_inbox_sources import (
+    READABLE_SOURCES,
+    SOURCE_ALERT_EVENT,
+    SOURCE_HOTEL_ALERT_EVENT,
+    SOURCE_SECURITY_ACTIVITY,
+    InboxItem,
+    SourceRef,
+    alert_item,
+    alert_ref,
+    hotel_alert_item,
+    hotel_alert_ref,
+    security_item,
+    security_ref,
+)
 
 
 def _state_map(
     db: Session,
     *,
     user_id: str,
-    source_refs: list[tuple[str, str]],
-) -> dict[tuple[str, str], datetime]:
+    source_refs: list[SourceRef],
+) -> dict[SourceRef, datetime]:
     if not source_refs:
         return {}
     wanted = set(source_refs)
     rows = db.scalars(
         select(UserNotificationState).where(
             UserNotificationState.user_id == user_id,
-            UserNotificationState.source_type.in_({source_type for source_type, _ in source_refs}),
-            UserNotificationState.source_id.in_({source_id for _, source_id in source_refs}),
+            UserNotificationState.source_type.in_({ref.source_type for ref in source_refs}),
+            UserNotificationState.source_id.in_({ref.source_id for ref in source_refs}),
         )
     ).all()
     return {
-        (row.source_type, row.source_id): row.read_at
+        SourceRef(row.source_type, row.source_id): row.read_at
         for row in rows
-        if (row.source_type, row.source_id) in wanted
+        if SourceRef(row.source_type, row.source_id) in wanted
     }
-
-
-def _alert_category(event: NotificationEvent) -> str:
-    if event.delivery_status in {"failed", "error"} or event.group_reason == "revalidation_failed":
-        return "worker"
-    if event.is_digest or event.grouped_count > 1:
-        return "digest"
-    return "price"
-
-
-def _alert_tone(event: NotificationEvent) -> str:
-    if event.delivery_status in {"failed", "error"}:
-        return "error"
-    if event.delivery_status == "queued":
-        return "warning"
-    if event.is_digest or event.grouped_count > 1:
-        return "info"
-    return "success"
-
-
-def _alert_title(event: NotificationEvent, category: str) -> str:
-    if category == "worker":
-        return "Worker de señales necesita atención"
-    if category == "digest":
-        return "Resumen de señales agrupadas"
-    return "Movimiento de precio detectado"
-
-
-def _security_title(event_type: str) -> str:
-    titles = {
-        "register": "Cuenta creada",
-        "login": "Nuevo acceso a tu cuenta",
-        "refresh": "Sesión renovada",
-        "close_all_sessions": "Sesiones cerradas",
-        "password_change": "Contraseña actualizada",
-        "forgot_password_requested": "Recuperación solicitada",
-        "password_reset": "Contraseña restablecida",
-    }
-    return titles.get(event_type, "Actividad de seguridad")
-
-
-def _security_body(activity: SecurityActivity) -> str:
-    if activity.ip:
-        return f"Actividad registrada desde {activity.ip}."
-    return "Actividad registrada en tu cuenta."
 
 
 def _source_belongs_to_user(
     db: Session,
     *,
     user_id: str,
-    source_type: str,
-    source_id: str,
+    ref: SourceRef,
 ) -> bool:
-    if source_type == SOURCE_SECURITY_ACTIVITY:
+    if ref.source_type == SOURCE_SECURITY_ACTIVITY:
         return (
             db.scalar(
                 select(SecurityActivity.id).where(
-                    SecurityActivity.id == source_id,
+                    SecurityActivity.id == ref.source_id,
                     SecurityActivity.user_id == user_id,
                 )
             )
             is not None
         )
-    if source_type == SOURCE_ALERT_EVENT:
+    if ref.source_type == SOURCE_ALERT_EVENT:
         return (
             db.scalar(
                 select(NotificationEvent.id)
                 .join(AlertRule, NotificationEvent.rule_id == AlertRule.id)
                 .join(FlightWatch, AlertRule.watch_id == FlightWatch.id)
                 .where(
-                    NotificationEvent.id == source_id,
+                    NotificationEvent.id == ref.source_id,
                     FlightWatch.user_id == user_id,
+                )
+            )
+            is not None
+        )
+    if ref.source_type == SOURCE_HOTEL_ALERT_EVENT:
+        rule_owned = db.scalar(
+            select(HotelAlertEvent.id)
+            .join(HotelAlertRule, HotelAlertEvent.rule_id == HotelAlertRule.id)
+            .where(
+                HotelAlertEvent.id == ref.source_id,
+                HotelAlertRule.user_id == user_id,
+            )
+        )
+        if rule_owned is not None:
+            return True
+        return (
+            db.scalar(
+                select(HotelAlertEvent.id)
+                .join(HotelTrackedOffer, HotelAlertEvent.hotel_id == HotelTrackedOffer.hotel_id)
+                .where(
+                    HotelAlertEvent.id == ref.source_id,
+                    HotelTrackedOffer.user_id == user_id,
                 )
             )
             is not None
@@ -141,6 +111,9 @@ def _source_belongs_to_user(
 def list_notification_inbox(db: Session, *, user_id: str, limit: int = 80) -> list[InboxItem]:
     bounded_limit = min(max(limit, 1), 200)
     security_limit = min(bounded_limit, 20)
+    hotel_limit = min(bounded_limit, 40)
+    rule_hotel_ids = select(HotelAlertRule.hotel_id).where(HotelAlertRule.user_id == user_id)
+    tracked_hotel_ids = select(HotelTrackedOffer.hotel_id).where(HotelTrackedOffer.user_id == user_id)
     alert_rows = list(
         db.execute(
             select(NotificationEvent, AlertRule, FlightWatch)
@@ -159,48 +132,36 @@ def list_notification_inbox(db: Session, *, user_id: str, limit: int = 80) -> li
             .limit(security_limit)
         ).all()
     )
-    refs = [
-        (SOURCE_ALERT_EVENT, event.id)
-        for event, _, _ in alert_rows
-    ] + [(SOURCE_SECURITY_ACTIVITY, activity.id) for activity in security_rows]
+    hotel_rows = list(
+        db.execute(
+            select(HotelAlertEvent, HotelProperty)
+            .join(HotelProperty, HotelAlertEvent.hotel_id == HotelProperty.id)
+            .where(
+                or_(
+                    HotelAlertEvent.hotel_id.in_(rule_hotel_ids),
+                    HotelAlertEvent.hotel_id.in_(tracked_hotel_ids),
+                )
+            )
+            .order_by(desc(HotelAlertEvent.created_at), desc(HotelAlertEvent.id))
+            .limit(hotel_limit)
+        ).all()
+    )
+    refs = (
+        [alert_ref(event) for event, _, _ in alert_rows]
+        + [hotel_alert_ref(event) for event, _ in hotel_rows]
+        + [security_ref(activity) for activity in security_rows]
+    )
     states = _state_map(db, user_id=user_id, source_refs=refs)
 
     items: list[InboxItem] = []
     for event, _, watch in alert_rows:
-        category = _alert_category(event)
-        route_label = f"{watch.origin_iata} -> {watch.destination_iata}"
-        items.append(
-            InboxItem(
-                id=f"{SOURCE_ALERT_EVENT}:{event.id}",
-                source_type=SOURCE_ALERT_EVENT,
-                source_id=event.id,
-                category=category,
-                tone=_alert_tone(event),
-                title=_alert_title(event, category),
-                body=event.message,
-                route_label=route_label,
-                action_href=f"/alerts?watch_id={watch.id}",
-                created_at=event.created_at,
-                read_at=states.get((SOURCE_ALERT_EVENT, event.id)),
-            )
-        )
+        items.append(alert_item(event, watch, states.get(alert_ref(event))))
+
+    for event, hotel in hotel_rows:
+        items.append(hotel_alert_item(event, hotel, states.get(hotel_alert_ref(event))))
 
     for activity in security_rows:
-        items.append(
-            InboxItem(
-                id=f"{SOURCE_SECURITY_ACTIVITY}:{activity.id}",
-                source_type=SOURCE_SECURITY_ACTIVITY,
-                source_id=activity.id,
-                category="security",
-                tone="info",
-                title=_security_title(activity.event_type),
-                body=_security_body(activity),
-                route_label=None,
-                action_href="/cuenta/seguridad",
-                created_at=activity.created_at,
-                read_at=states.get((SOURCE_SECURITY_ACTIVITY, activity.id)),
-            )
-        )
+        items.append(security_item(activity, states.get(security_ref(activity))))
 
     return sorted(items, key=lambda item: (item.created_at, item.id), reverse=True)[:bounded_limit]
 
@@ -209,19 +170,18 @@ def mark_notification_read(
     db: Session,
     *,
     user_id: str,
-    source_type: str,
-    source_id: str,
+    ref: SourceRef,
 ) -> datetime | None:
-    if source_type not in READABLE_SOURCES:
+    if ref.source_type not in READABLE_SOURCES:
         return None
-    if not _source_belongs_to_user(db, user_id=user_id, source_type=source_type, source_id=source_id):
+    if not _source_belongs_to_user(db, user_id=user_id, ref=ref):
         return None
     now = utc_now_naive()
     existing = db.scalar(
         select(UserNotificationState).where(
             UserNotificationState.user_id == user_id,
-            UserNotificationState.source_type == source_type,
-            UserNotificationState.source_id == source_id,
+            UserNotificationState.source_type == ref.source_type,
+            UserNotificationState.source_id == ref.source_id,
         )
     )
     if existing:
@@ -230,8 +190,8 @@ def mark_notification_read(
         db.add(
             UserNotificationState(
                 user_id=user_id,
-                source_type=source_type,
-                source_id=source_id,
+                source_type=ref.source_type,
+                source_id=ref.source_id,
                 read_at=now,
             )
         )
@@ -246,7 +206,6 @@ def mark_all_notifications_read(db: Session, *, user_id: str) -> int:
         mark_notification_read(
             db,
             user_id=user_id,
-            source_type=item.source_type,
-            source_id=item.source_id,
+            ref=SourceRef(item.source_type, item.source_id),
         )
     return len(unread_items)

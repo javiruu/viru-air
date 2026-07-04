@@ -12,6 +12,7 @@
 La bandeja existe para senales que no deben perderse:
 
 - cambios de precio de alertas;
+- senales hoteleras del radar de hoteles;
 - actividad de seguridad;
 - digest de alertas agrupadas;
 - incidencias de workers o entregas fallidas.
@@ -24,6 +25,7 @@ La pantalla privada `/notifications` muestra:
 - filtros por categoria y estado sin leer;
 - lista cronologica de senales con titulo, descripcion, hora relativa, ruta cuando aplica y accion de apertura;
 - acciones para marcar una senal como leida o marcar toda la bandeja como leida;
+- contador de senales sin leer en la navegacion privada;
 - enlace directo a `/alerts` para ajustar alertas de precio.
 
 La identidad visual sigue el contrato dual-theme de Viru: clara y oscura con el mismo tono calido/aeronautico, sin convertir la bandeja en un panel SaaS generico.
@@ -39,6 +41,7 @@ La identidad visual sigue el contrato dual-theme de Viru: clara y oscura con el 
 La bandeja no introduce un pipeline paralelo. Agrega fuentes existentes y les suma estado de lectura:
 
 - `notification_event`: eventos emitidos por alertas, digests y workers.
+- `hotel_alert_event`: eventos emitidos por reglas hoteleras o hoteles trackeados por el usuario.
 - `security_activity`: actividad sensible de cuenta.
 
 El contrato tecnico de endpoints, tipos y persistencia esta en `docs/reference/backend/notifications-contract.md`.

@@ -11,6 +11,12 @@ from app.domain.schemas import PasswordChangeIn, ProfileUpdateIn
 from app.infrastructure.db.models import (
     AlertRule,
     FlightWatch,
+    HotelAlertEvent,
+    HotelAlertRule,
+    HotelCompSet,
+    HotelCompSetMember,
+    HotelTrackedOffer,
+    HotelWatchlistItem,
     NotificationEvent,
     PriceSnapshot,
     SecurityActivity,
@@ -23,6 +29,7 @@ from app.infrastructure.db.models import (
     UserPreferenceAppearance,
     UserPreferenceRegion,
     UserProfile,
+    UserNotificationState,
     UserSession,
 )
 from app.infrastructure.db.session import get_db
@@ -175,12 +182,24 @@ def delete_account(
         db.execute(delete(PriceSnapshot).where(PriceSnapshot.watch_id.in_(watch_ids)))
         db.execute(delete(FlightWatch).where(FlightWatch.id.in_(watch_ids)))
 
+    hotel_rule_ids = db.scalars(select(HotelAlertRule.id).where(HotelAlertRule.user_id == current_user.id)).all()
+    if hotel_rule_ids:
+        db.execute(delete(HotelAlertEvent).where(HotelAlertEvent.rule_id.in_(hotel_rule_ids)))
+        db.execute(delete(HotelAlertRule).where(HotelAlertRule.id.in_(hotel_rule_ids)))
+    comp_set_ids = db.scalars(select(HotelCompSet.id).where(HotelCompSet.user_id == current_user.id)).all()
+    if comp_set_ids:
+        db.execute(delete(HotelCompSetMember).where(HotelCompSetMember.comp_set_id.in_(comp_set_ids)))
+        db.execute(delete(HotelCompSet).where(HotelCompSet.id.in_(comp_set_ids)))
+    db.execute(delete(HotelTrackedOffer).where(HotelTrackedOffer.user_id == current_user.id))
+    db.execute(delete(HotelWatchlistItem).where(HotelWatchlistItem.user_id == current_user.id))
+
     db.execute(delete(UserNote).where(UserNote.user_id == current_user.id))
     db.execute(delete(Suggestion).where(Suggestion.user_id == current_user.id))
     db.execute(delete(UserPreference).where(UserPreference.user_id == current_user.id))
     db.execute(delete(UserPreferenceAppearance).where(UserPreferenceAppearance.user_id == current_user.id))
     db.execute(delete(UserPreferenceRegion).where(UserPreferenceRegion.user_id == current_user.id))
     db.execute(delete(UserProfile).where(UserProfile.user_id == current_user.id))
+    db.execute(delete(UserNotificationState).where(UserNotificationState.user_id == current_user.id))
     db.execute(delete(UserSession).where(UserSession.user_id == current_user.id))
     db.execute(delete(SecurityActivity).where(SecurityActivity.user_id == current_user.id))
     db.execute(delete(SupportFeedback).where(SupportFeedback.user_id == current_user.id))
