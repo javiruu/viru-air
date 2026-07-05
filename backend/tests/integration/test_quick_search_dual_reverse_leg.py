@@ -22,6 +22,9 @@ from tests.helpers import register_and_token
 class _ReverseLegProvider:
     """Returns flights for BOTH directions: AGP→DUB AND DUB→AGP."""
 
+    def provider_ids(self) -> list[str]:
+        return ["fake"]
+
     def get_flights(
         self,
         origin: str,
@@ -53,6 +56,9 @@ class _CalendarHintsInvertedProvider:
     """Returns flights for DUB→MAD, simulating an inverted calendar-hints
     request for the return leg."""
 
+    def provider_ids(self) -> list[str]:
+        return ["fake"]
+
     def get_flights(
         self,
         origin: str,
@@ -81,7 +87,8 @@ class _CalendarHintsInvertedProvider:
 
 def test_quick_search_reverse_leg_agp_to_dub(client: TestClient, monkeypatch) -> None:
     """Ida: AGP → DUB must return results."""
-    monkeypatch.setattr(search_api, "provider", _ReverseLegProvider())
+    fake_provider = _ReverseLegProvider()
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
 
     travel_date = str(date.today() + timedelta(days=21))
     response = client.post(
@@ -105,7 +112,8 @@ def test_quick_search_reverse_leg_agp_to_dub(client: TestClient, monkeypatch) ->
 
 def test_quick_search_reverse_leg_dub_to_agp(client: TestClient, monkeypatch) -> None:
     """Vuelta: DUB → AGP (inverted IATA) must also return results."""
-    monkeypatch.setattr(search_api, "provider", _ReverseLegProvider())
+    fake_provider = _ReverseLegProvider()
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
 
     travel_date = str(date.today() + timedelta(days=28))
     response = client.post(
@@ -129,7 +137,8 @@ def test_quick_search_reverse_leg_dub_to_agp(client: TestClient, monkeypatch) ->
 
 def test_quick_search_reverse_leg_different_results(client: TestClient, monkeypatch) -> None:
     """Ida and vuelta should return different prices (different direction, different provider results)."""
-    monkeypatch.setattr(search_api, "provider", _ReverseLegProvider())
+    fake_provider = _ReverseLegProvider()
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
 
     outbound_date = str(date.today() + timedelta(days=21))
     return_date = str(date.today() + timedelta(days=28))
@@ -172,7 +181,8 @@ def test_calendar_hints_inverted_iata_for_return_leg(client: TestClient, monkeyp
     with search_api._CALENDAR_HINTS_CACHE_LOCK:
         search_api._CALENDAR_HINTS_CACHE.clear()
 
-    monkeypatch.setattr(search_api, "provider", _CalendarHintsInvertedProvider())
+    fake_provider = _CalendarHintsInvertedProvider()
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
 
     payload = {
         "origin_iata": "DUB",
@@ -211,6 +221,9 @@ def test_calendar_hints_inverted_country_scope(client: TestClient, monkeypatch) 
     # The _CalendarHintsInvertedProvider only handles DUB-MAD, but country-scope
     # will create pairs like DUB-MAD, DUB-BCN, DUB-AGP. We'll use a broader provider.
     class _CountryScopeInvertedProvider:
+        def provider_ids(self) -> list[str]:
+            return ["fake"]
+
         def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
             day = int(travel_date.split("-")[2])
             if origin == "DUB" and destination in {"MAD", "BCN", "AGP"} and day in {5, 10, 15}:
@@ -225,7 +238,8 @@ def test_calendar_hints_inverted_country_scope(client: TestClient, monkeypatch) 
                 ]
             return []
 
-    monkeypatch.setattr(search_api, "provider", _CountryScopeInvertedProvider())
+    fake_provider = _CountryScopeInvertedProvider()
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
 
     payload = {
         "origin_iata": ["DUB"],
@@ -333,6 +347,9 @@ def test_save_result_with_group_id(client: TestClient, monkeypatch) -> None:
     headers = {"Authorization": f"Bearer {token}"}
 
     class _SingleFlightProvider:
+        def provider_ids(self) -> list[str]:
+            return ["fake"]
+
         def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
             return [
                 ProviderFlight(
@@ -344,7 +361,8 @@ def test_save_result_with_group_id(client: TestClient, monkeypatch) -> None:
                 )
             ]
 
-    monkeypatch.setattr(search_api, "provider", _SingleFlightProvider())
+    fake_provider = _SingleFlightProvider()
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
 
     travel_date = str(date.today() + timedelta(days=21))
     search_response = client.post(
@@ -385,6 +403,9 @@ def test_save_result_reverse_leg_with_same_group_id(client: TestClient, monkeypa
     headers = {"Authorization": f"Bearer {token}"}
 
     class _DualSaveProvider:
+        def provider_ids(self) -> list[str]:
+            return ["fake"]
+
         def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
             return [
                 ProviderFlight(
@@ -396,7 +417,8 @@ def test_save_result_reverse_leg_with_same_group_id(client: TestClient, monkeypa
                 )
             ]
 
-    monkeypatch.setattr(search_api, "provider", _DualSaveProvider())
+    fake_provider = _DualSaveProvider()
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
 
     outbound_date = str(date.today() + timedelta(days=21))
     return_date = str(date.today() + timedelta(days=28))

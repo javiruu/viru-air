@@ -74,6 +74,9 @@ def _fake_expand_search_sides(
 
 
 class _ProviderOnlySecondSeedPair:
+    def provider_ids(self) -> list[str]:
+        return ["fake"]
+
     def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         del travel_date, timeout_ms
         if origin == "FCO" and destination == "MAD":
@@ -96,6 +99,9 @@ class _ProviderDateRescueSecondSeed:
     def __init__(self, target: date) -> None:
         self._target = target
 
+    def provider_ids(self) -> list[str]:
+        return ["fake"]
+
     def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         del timeout_ms
         query_date = date.fromisoformat(travel_date)
@@ -116,6 +122,9 @@ class _ProviderDateRescueSecondSeed:
 
 
 class _ProviderAlwaysEmptyPartial:
+    def provider_ids(self) -> list[str]:
+        return ["fake"]
+
     def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         del origin, destination, travel_date, timeout_ms
         return ProviderFetchResult(flights=[], warnings=["ryanair_availability_failed_partial"])
@@ -151,7 +160,8 @@ def _payload(travel_date_iso: str) -> dict:
 def test_country_scope_multi_seed_returns_results_from_secondary_seed(client, monkeypatch) -> None:
     _CACHE.clear()
     travel_date_iso = str(date.today() + timedelta(days=30))
-    monkeypatch.setattr(search_api, "provider", _ProviderOnlySecondSeedPair())
+    fake_provider = _ProviderOnlySecondSeedPair()
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
     monkeypatch.setattr(search_api, "expand_search_sides", _fake_expand_search_sides)
 
     response = client.post("/api/v1/search/quick", json=_payload(travel_date_iso))
@@ -170,7 +180,8 @@ def test_country_scope_multi_seed_returns_results_from_secondary_seed(client, mo
 def test_country_scope_multi_seed_rescue_finds_results(client, monkeypatch) -> None:
     _CACHE.clear()
     target = date.today() + timedelta(days=30)
-    monkeypatch.setattr(search_api, "provider", _ProviderDateRescueSecondSeed(target))
+    fake_provider = _ProviderDateRescueSecondSeed(target)
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
     monkeypatch.setattr(search_api, "expand_search_sides", _fake_expand_search_sides)
 
     response = client.post("/api/v1/search/quick", json=_payload(str(target)))
@@ -186,7 +197,8 @@ def test_country_scope_multi_seed_rescue_finds_results(client, monkeypatch) -> N
 def test_country_scope_multi_seed_exhausted_keeps_empty_with_metadata(client, monkeypatch) -> None:
     _CACHE.clear()
     target = date.today() + timedelta(days=30)
-    monkeypatch.setattr(search_api, "provider", _ProviderAlwaysEmptyPartial())
+    fake_provider = _ProviderAlwaysEmptyPartial()
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
     monkeypatch.setattr(search_api, "expand_search_sides", _fake_expand_search_sides)
 
     response = client.post("/api/v1/search/quick", json=_payload(str(target)))
@@ -202,6 +214,9 @@ def test_country_scope_multi_seed_exhausted_keeps_empty_with_metadata(client, mo
 
 
 class _ProviderNoDegradationAlwaysEmpty:
+    def provider_ids(self) -> list[str]:
+        return ["fake"]
+
     def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000):
         del origin, destination, travel_date, timeout_ms
         return ProviderFetchResult(flights=[], warnings=[])
@@ -210,7 +225,8 @@ class _ProviderNoDegradationAlwaysEmpty:
 def test_country_scope_empty_without_degradation_triggers_rescue(client, monkeypatch) -> None:
     _CACHE.clear()
     travel_date_iso = str(date.today() + timedelta(days=30))
-    monkeypatch.setattr(search_api, "provider", _ProviderNoDegradationAlwaysEmpty())
+    fake_provider = _ProviderNoDegradationAlwaysEmpty()
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
     monkeypatch.setattr(search_api, "expand_search_sides", _fake_expand_search_sides)
 
     response = client.post("/api/v1/search/quick", json=_payload(travel_date_iso))
@@ -227,7 +243,8 @@ def test_country_scope_empty_without_degradation_triggers_rescue(client, monkeyp
 def test_country_scope_query_signature_changes_across_route_directions(client, monkeypatch) -> None:
     _CACHE.clear()
     travel_date_iso = str(date.today() + timedelta(days=30))
-    monkeypatch.setattr(search_api, "provider", _ProviderOnlySecondSeedPair())
+    fake_provider = _ProviderOnlySecondSeedPair()
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
     monkeypatch.setattr(search_api, "expand_search_sides", _fake_expand_search_sides)
 
     first = client.post("/api/v1/search/quick", json=_payload(travel_date_iso))
@@ -271,7 +288,8 @@ def _make_ranked_result(origin: str, destination: str, travel_date_iso: str, sou
 def test_country_scope_discards_out_of_scope_results(client, monkeypatch) -> None:
     _CACHE.clear()
     travel_date_iso = str(date.today() + timedelta(days=30))
-    monkeypatch.setattr(search_api, "provider", _ProviderOnlySecondSeedPair())
+    fake_provider = _ProviderOnlySecondSeedPair()
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
     monkeypatch.setattr(search_api, "expand_search_sides", _fake_expand_search_sides)
 
     original_dedupe = search_api.dedupe_ranked_results

@@ -97,7 +97,6 @@ def _probe_once(target: str, impersonate: str, *, timeout_s: float = 8.0) -> dic
                     "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
                 },
             )
-            body = response.text or "" if hasattr(response, "text") else ""
         except Exception as exc:
             return {
                 "impersonate": impersonate,
