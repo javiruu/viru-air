@@ -28,6 +28,7 @@ from app.infrastructure.providers.easyjet_public_availability import (
     build_public_availability_params,
     extract_public_availability_flights,
 )
+from app.infrastructure.providers._captcha import WafRule, detect_captcha_kind
 
 _DEFAULT_BASE_URL: Final = "https://www.easyjet.com"
 _DEFAULT_FLIGHT_CONNECTIONS_URL: Final = "https://flightconnections.easyjet.com"
@@ -45,6 +46,34 @@ class _EasyJetSearch:
     destination: str
     travel_date: str
     currency: str
+
+
+# Rules specific to easyJet's WAF mix (Datadome + Dohop, with Akamai
+# fallback). Order: specific captcha/HTML first, generic deny last.
+#
+# `datadome_captcha` fires on either path: a Datadome-tagged 403 *or* an HTML
+# challenge page that mentions Datadome markers. Datadome cookies are per
+# domain, so a fresh cookie-less request is frequently served a JS-driven
+# challenge page (HTML body, status 200) rather than a 403; both branches
+# look for the same DOM strings.
+_EASYJET_WAF_RULES: Final[dict[str, WafRule]] = {
+    "datadome_captcha": lambda status, text: (
+        status == 403
+        and ("datadome" in text or "dd_block" in text or "captcha-delivery.com" in text)
+    )
+    or (
+        "<html" in text
+        and (
+            "datadome" in text
+            or "dd_block" in text
+            or "captcha" in text
+            or "challenge" in text
+        )
+    ),
+    "akamai_blocked": lambda status, text: status == 403
+    and ("access denied" in text or "request rejected" in text),
+}
+
 
 
 class EasyJetProvider(FlightProvider):
@@ -102,7 +131,13 @@ class EasyJetProvider(FlightProvider):
         try:
             payload = self._fetch_public_availability(search, timeout_ms=timeout_ms)
             flights = extract_public_availability_flights(payload, self._to_public_availability_search(search))
-        except (RequestsError, ValueError, ProviderSourceFetchError) as exc:
+        except ProviderSourceFetchError:
+            # Captcha / source-specific failures: propagate unchanged so the
+            # orchestrator sees the rich captcha warning_codes the helper
+            # produced. The flight connections fallback would just hit the
+            # same WAF on the same IP, so don't fall through.
+            raise
+        except (RequestsError, ValueError) as exc:
             source_error = exc
             flights = []
 
@@ -113,26 +148,17 @@ class EasyJetProvider(FlightProvider):
                 flights = extract_flight_connections_flights(
                     connections_payload, self._to_flight_connections_search(search)
                 )
-            except (RequestsError, ValueError, ProviderSourceFetchError) as exc:
+            except ProviderSourceFetchError:
+                raise
+            except (RequestsError, ValueError) as exc:
                 source_error = exc
 
         if source_error is not None and not flights:
-            provider_warning_codes = [
-                "easyjet_provider_unavailable_total",
-                "provider_total_outage",
-            ]
-            if isinstance(source_error, ProviderSourceFetchError):
-                provider_warning_codes = [
-                    *source_error.warning_codes,
-                    "easyjet_provider_unavailable_total",
-                    "provider_total_outage",
-                ]
             raise ProviderSourceFetchError(
-                warning_codes=provider_warning_codes,
+                warning_codes=["easyjet_provider_unavailable_total", "provider_total_outage"],
                 message=f"easyJet provider unavailable for {search.origin}->{search.destination} on {search.travel_date}",
                 provider_id=self.provider_id,
                 severity="error",
-                meta=getattr(source_error, "meta", None),
             ) from source_error
 
         warnings_structured: list[ProviderWarning] = []
@@ -165,7 +191,7 @@ class EasyJetProvider(FlightProvider):
                 "sec-fetch-dest": "empty",
             },
         )
-        captcha_kind = self._looks_like_captcha(response)
+        captcha_kind = detect_captcha_kind(response, rules=_EASYJET_WAF_RULES)
         if captcha_kind:
             raise ProviderSourceFetchError(
                 warning_codes=[
@@ -229,7 +255,7 @@ class EasyJetProvider(FlightProvider):
             timeout=max(2.0, timeout_ms / 1000),
             headers=headers,
         )
-        captcha_kind = self._looks_like_captcha(response)
+        captcha_kind = detect_captcha_kind(response, rules=_EASYJET_WAF_RULES)
         if captcha_kind:
             raise ProviderSourceFetchError(
                 warning_codes=[
@@ -245,35 +271,6 @@ class EasyJetProvider(FlightProvider):
         response.raise_for_status()
         payload = response.json()
         return payload if isinstance(payload, dict) else {}
-
-    @staticmethod
-    def _looks_like_captcha(response: Any) -> str | None:
-        """Best-effort detection of Datadome / Dohop bot challenges.
-
-        Datadome cookies earn over a normal navigation, so a fresh cookie-less
-        request is frequently served a `<script>document.cookie=...` challenge
-        page or a 403 with `dd_block_*` markers. Dohop leans on Datadome too,
-        so the same fingerprint applies to flightconnections.easyjet.com.
-        """
-        status = getattr(response, "status_code", None)
-        try:
-            text = response.text or ""
-        except Exception:
-            text = ""
-        lowered = text.lower()
-        if status == 403:
-            if "datadome" in lowered or "dd_block" in lowered or "captcha-delivery.com" in lowered:
-                return "datadome_captcha"
-            if "access denied" in lowered or "request rejected" in lowered:
-                return "akamai_blocked"
-        if "<html" in lowered and (
-            "datadome" in lowered
-            or "dd_block" in lowered
-            or "captcha" in lowered
-            or "challenge" in lowered
-        ):
-            return "datadome_captcha"
-        return None
 
     def _warm_session(self, base_url: str, *, referer_path: str = "", kind: str = "marketing") -> None:
         """Best-effort warmup to acquire Datadome cookies.
