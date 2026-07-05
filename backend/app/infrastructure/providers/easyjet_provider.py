@@ -142,7 +142,7 @@ class EasyJetProvider(FlightProvider):
             flights = []
 
         if not flights:
-            self._warm_session(self.flight_connections_url, referer_path=f"/{self.language_code.lower()}/search", kind="flightconnections")
+            self._warm_session(self.flight_connections_url, referer_path=f"/{self.language_code.lower()}/", kind="flightconnections")
             try:
                 connections_payload = self._fetch_flight_connections(search, timeout_ms=timeout_ms)
                 flights = extract_flight_connections_flights(
@@ -182,7 +182,7 @@ class EasyJetProvider(FlightProvider):
                 "Accept": "application/json, text/plain, */*",
                 "Accept-Language": f"{self.language_code.lower()}-{self.residency},{self.language_code.lower()};q=0.9,en;q=0.8",
                 "Origin": self.base_url,
-                "Referer": f"{self.base_url}/{self.language_code.lower()}/buy/flights",
+                "Referer": f"{self.base_url}/{self.language_code.lower()}/",
                 "sec-ch-ua": _CHROME131_UA_SIG,
                 "sec-ch-ua-mobile": "?0",
                 "sec-ch-ua-platform": '"Windows"',
@@ -234,7 +234,7 @@ class EasyJetProvider(FlightProvider):
             "Accept": "application/json, text/plain, */*",
             "Accept-Language": f"{self.language_code.lower()}-{self.residency},{self.language_code.lower()};q=0.9,en;q=0.8",
             "Origin": self.flight_connections_url,
-            "Referer": f"{self.flight_connections_url}/{self.language_code.lower()}/search",
+            "Referer": f"{self.flight_connections_url}/{self.language_code.lower()}/",
             "sec-ch-ua": _CHROME131_UA_SIG,
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"Windows"',

@@ -9,12 +9,20 @@ imported. These tests pin that contract via simple monkeypatching of
 from __future__ import annotations
 
 import sys
+from http.cookiejar import Cookie
 from types import ModuleType, SimpleNamespace
-import typing
+from typing import Any
 
 import pytest
 
 from app.infrastructure.providers import _browser_warmup
+from app.infrastructure.providers._browser_warmup import HarvestedCookie
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# harvest_cookies_with_browser: Playwright is missing or Chromium-binary
+# missing → ``None`` (no crash). Dwell time is 2500ms (Akamai sensor).
+# ─────────────────────────────────────────────────────────────────────────
 
 
 def test_harvest_returns_none_when_playwright_is_not_installed(
@@ -27,33 +35,114 @@ def test_harvest_returns_none_when_playwright_is_not_installed(
     assert _browser_warmup.harvest_cookies_with_browser("https://example.com") is None
 
 
-def test_merge_cookies_into_session_sets_jar_entries() -> None:
-    """Every cookie in the mapping is written into the session cookie jar."""
-    jar: dict[str, str] = {}
+def test_sensor_dwell_constant_is_long_enough_for_akamai_sensor() -> None:
+    """Akamai's sensor JS needs at least 1.5s of telemetry to stamp ``_abck``.
+
+    Anything below 1500ms lets the WAF reject the WAF-token as stale on the
+    next request. The constant must stay >= 1500.
+    """
+    assert _browser_warmup._SENSOR_DWELL_MS >= 1500
+
+
+def test_harvest_returns_none_when_chromium_launch_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """If Playwright is importable but the Chromium binary is missing, soft-fail.
+
+    Simulates ``p.chromium.launch(...)`` raising an exception (the typical
+    "Executable doesn't exist" error when ``playwright install chromium``
+    hasn't been run).
+    """
+    fake_pw = SimpleNamespace(
+        chromium=SimpleNamespace(
+            launch=lambda headless: (_ for _ in ()).throw(
+                RuntimeError("Executable doesn't exist")
+            )
+        )
+    )
+
+    class _FakeCM:
+        def __enter__(self) -> Any:
+            return fake_pw
+
+        def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> bool:
+            return False
+
+    module = ModuleType("playwright.sync_api")
+    module.sync_playwright = lambda: _FakeCM()  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "playwright", ModuleType("playwright"))
+    monkeypatch.setitem(sys.modules, "playwright.sync_api", module)
+
+    assert _browser_warmup.harvest_cookies_with_browser("https://example.com") is None
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# merge_cookies_into_session: builds domain-aware stdlib ``Cookie`` objects
+# so curl_cffi's stdlib jar keeps each cookie under the Playwright-reported
+# domain. RFC 6265 strict-matching then actually sends them on later requests.
+# ─────────────────────────────────────────────────────────────────────────
+
+
+def test_merge_cookies_into_session_sets_stdlib_cookies_with_domain() -> None:
+    """Each HarvestedCookie becomes a stdlib http.cookiejar.Cookie with the
+    supplied domain + path. The jar correctly rejects empty-domain entries
+    in production; this test confirms we don't fall back to that bad shape.
+    """
+    seen: list[Cookie] = []
 
     class _Jar:
-        def set(self, name: str, value: str) -> None:
-            jar[name] = value
+        def set_cookie(self, cookie: Cookie) -> None:
+            seen.append(cookie)
 
     class _Session:
         cookies = _Jar()
 
-    _browser_warmup.merge_cookies_into_session(_Session(), {"datadome": "abc", "_abck": "xyz"})
-    assert jar == {"datadome": "abc", "_abck": "xyz"}
+    cookies = [
+        HarvestedCookie(name="datadome", value="abc", domain=".easyjet.com", path="/", secure=False),
+        HarvestedCookie(name="_abck", value="xyz", domain=".iberia.com", path="/", secure=False),
+    ]
+    _browser_warmup.merge_cookies_into_session(_Session(), cookies)
+
+    by_name = {c.name: c for c in seen}
+    assert by_name["datadome"].domain == ".easyjet.com"
+    assert by_name["datadome"].domain_initial_dot is True
+    assert by_name["_abck"].domain == ".iberia.com"
+    assert by_name["_abck"].domain_initial_dot is True
 
 
-def test_merge_cookies_into_session_handles_none_and_missing_jar() -> None:
-    """No-op resilience: missing/None maps and sessions without a jar."""
+def test_merge_cookies_into_session_uses_requests_set_shortcut_when_available() -> None:
+    """``requests.cookies.RequestsCookieJar.set(name, value)`` is still hit
+    first; only on failed shortcut do we fall through to Cookie+set_cookie.
+    """
+    seen: dict[str, str] = {}
+
+    class _Jar:
+        def set(self, name: str, value: str) -> None:  # noqa: D401 - shortcut
+            seen[name] = value
+
+    class _Session:
+        cookies = _Jar()
+
+    cookies = [
+        HarvestedCookie(name="datadome", value="abc", domain=".easyjet.com", path="/"),
+    ]
+    _browser_warmup.merge_cookies_into_session(_Session(), cookies)
+    assert seen == {"datadome": "abc"}
+
+
+def test_merge_cookies_into_session_handles_none_and_empty_inputs() -> None:
+    """No-op resilience: None or empty list does nothing."""
 
     class _SessionNoJar:
         pass
 
     _browser_warmup.merge_cookies_into_session(_SessionNoJar(), None)
-    _browser_warmup.merge_cookies_into_session(_SessionNoJar(), {})
-    _browser_warmup.merge_cookies_into_session(_SessionNoJar(), {"x": "y"})
+    _browser_warmup.merge_cookies_into_session(_SessionNoJar(), [])
 
 
-def test_merge_cookies_into_session_swallows_jar_errors(caplog: pytest.LogCaptureFixture) -> None:
+def test_merge_cookies_into_session_swallows_jar_errors(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """A jar that throws is logged at DEBUG and does not crash the helper."""
 
     class _BrokenJar:
@@ -64,7 +153,33 @@ def test_merge_cookies_into_session_swallows_jar_errors(caplog: pytest.LogCaptur
         cookies = _BrokenJar()
 
     caplog.set_level("DEBUG", logger="app.infrastructure.providers._browser_warmup")
-    _browser_warmup.merge_cookies_into_session(_Session(), {"x": "y"})  # no raise
+    _browser_warmup.merge_cookies_into_session(
+        _Session(),
+        [HarvestedCookie(name="x", value="y", domain="example.com", path="/")],
+    )  # no raise
+
+
+def test_merge_cookies_from_mapping_is_a_test_only_back_compat_helper() -> None:
+    """The mapping shim exists for tests that don't need full domain info.
+
+    It must coexist with the slow path so test fixtures and the production
+    path don't fight over which one is canonical.
+    """
+    seen: dict[str, str] = {}
+
+    class _Jar:
+        def set(self, name: str, value: str) -> None:
+            seen[name] = value
+
+    _browser_warmup.merge_cookies_from_mapping(SimpleNamespace(cookies=_Jar()), {"a": "1", "b": "2"})
+    assert seen == {"a": "1", "b": "2"}
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Iberia + easyJet env-gate: opt-in cookie harvest is exercised only when
+# the env var is set. Idempotent marker prevents respawning Playwright per
+# request.
+# ─────────────────────────────────────────────────────────────────────────
 
 
 def test_iberia_provider_skips_browser_warmup_when_env_not_set(
@@ -77,7 +192,9 @@ def test_iberia_provider_skips_browser_warmup_when_env_not_set(
 
     calls: list[tuple[str, str]] = []
 
-    def fake_harvest(url: str, *, referer_path: str = "", timeout_ms: int = 15000):
+    def fake_harvest(
+        url: str, *, referer_path: str = "", timeout_ms: int = 15000
+    ) -> list[HarvestedCookie] | None:
         calls.append((url, referer_path))
         return None
 
@@ -108,10 +225,15 @@ def test_iberia_provider_invokes_browser_warmup_when_env_set(
     from app.infrastructure.providers.iberia_provider import IberiaProvider
 
     calls: list[tuple[str, str]] = []
+    harvested = [
+        HarvestedCookie(name="_abck", value="fresh-token", domain=".iberia.com", path="/"),
+    ]
 
-    def fake_harvest(url: str, *, referer_path: str = "", timeout_ms: int = 15000):
+    def fake_harvest(
+        url: str, *, referer_path: str = "", timeout_ms: int = 15000
+    ) -> list[HarvestedCookie] | None:
         calls.append((url, referer_path))
-        return {"_abck": "fresh-token"}
+        return harvested
 
     monkeypatch.setattr(
         "app.infrastructure.providers._browser_warmup.harvest_cookies_with_browser",
@@ -143,7 +265,9 @@ def test_easyjet_provider_skips_browser_warmup_when_env_not_set(
 
     calls: list[tuple[str, str]] = []
 
-    def fake_harvest(url: str, *, referer_path: str = "", timeout_ms: int = 15000):
+    def fake_harvest(
+        url: str, *, referer_path: str = "", timeout_ms: int = 15000
+    ) -> list[HarvestedCookie] | None:
         calls.append((url, referer_path))
         return None
 
@@ -168,10 +292,12 @@ def test_easyjet_provider_invokes_browser_warmup_when_env_set(
 
     recorded: dict[str, object] = {}
 
-    def fake_harvest(url: str, *, referer_path: str = "", timeout_ms: int = 15000):
+    def fake_harvest(
+        url: str, *, referer_path: str = "", timeout_ms: int = 15000
+    ) -> list[HarvestedCookie] | None:
         recorded["url"] = url
         recorded["referer_path"] = referer_path
-        return {"datadome": "fresh"}
+        return [HarvestedCookie(name="datadome", value="fresh", domain=".easyjet.com", path="/")]
 
     monkeypatch.setattr(
         "app.infrastructure.providers._browser_warmup.harvest_cookies_with_browser",
@@ -179,7 +305,7 @@ def test_easyjet_provider_invokes_browser_warmup_when_env_set(
     )
     monkeypatch.setattr(
         "app.infrastructure.providers._browser_warmup.merge_cookies_into_session",
-        lambda session, cookies: recorded.setdefault("merged", list(cookies or {})),
+        lambda session, cookies: recorded.setdefault("merged", [c.name for c in cookies or []]),
     )
 
     provider = EasyJetProvider()
@@ -188,35 +314,3 @@ def test_easyjet_provider_invokes_browser_warmup_when_env_set(
     assert recorded["url"] == "https://www.easyjet.com"
     assert recorded["referer_path"] == "/en/"
     assert recorded["merged"] == ["datadome"]
-
-
-def test_harvest_returns_none_when_chromium_launch_fails(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """If Playwright is importable but the Chromium binary is missing, soft-fail.
-
-    Simulates `p.chromium.launch(...)` raising an exception (the typical
-    "Executable doesn't exist" error when `playwright install chromium`
-    hasn't been run).
-    """
-    fake_pw = SimpleNamespace(
-        chromium=SimpleNamespace(
-            launch=lambda headless: (_ for _ in ()).throw(
-                RuntimeError("Executable doesn't exist")
-            )
-        )
-    )
-    fake_sync = lambda: (_ for _ in ()).throw(RuntimeError("not used"))  # noqa: ARG005 - sig
-    # We need sync_playwright() to return a context manager whose __enter__
-    # yields the fake_pw object.
-    class _FakeCM:
-        def __enter__(self): return fake_pw
-        def __exit__(self, exc_type, exc, tb): return False
-    fake_sync = lambda: _FakeCM()
-
-    module = ModuleType("playwright.sync_api")
-    module.sync_playwright = fake_sync  # type: ignore[attr-defined]
-    monkeypatch.setitem(sys.modules, "playwright", ModuleType("playwright"))
-    monkeypatch.setitem(sys.modules, "playwright.sync_api", module)
-
-    assert _browser_warmup.harvest_cookies_with_browser("https://example.com") is None

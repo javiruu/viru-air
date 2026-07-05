@@ -1,14 +1,22 @@
 """Optional headless-browser warmup for Akamai/Datadome anti-bot.
 
-When the env flag `USE_BROWSER_WARMUP=1` is set on a provider, the warmup
-helper will spawn a headless Chromium via Playwright, navigate to the
-provider's marketing URL, wait for the JS sensor to set its cookies (Datadome
-sets `datadome`, Akamai sets `_abck` / `bm_sz`), and return those cookies for
-the caller to merge into its HTTP session.
+When the env flag ``IBERIA_USE_BROWSER_WARMUP=1`` or
+``EASYJET_USE_BROWSER_WARMUP=1`` is set on a provider, the warmup helper
+will spawn a headless Chromium via Playwright, navigate to the provider's
+marketing URL, wait for the JS sensor to set its cookies (Datadome sets
+``datadome``, Akamai sets ``_abck`` / ``bm_sz``), and return those cookies
+for the caller to merge into its HTTP session.
+
+The cookies are returned with full domain / path so the merge can build
+real ``http.cookiejar.Cookie`` objects. Empirically, Akamai/Datadome issue
+domain-scoped tokens (e.g. ``.iberia.com``, ``www.easyjet.com``) and the
+stdlib jar's RFC 6265 domain-matching rejects cookies added with an empty
+domain on send. Build Cookie with explicit domain from the Playwright
+context.
 
 Playwright is imported lazily and optionally: the project does not depend on
 it at install time. If the package is missing or the Chromium binary isn't
-downloaded, the call must fail soft (returning `None`) so the rest of the
+downloaded, the call must fail soft (returning ``None``) so the rest of the
 warmup path falls back to curl_cffi best-effort.
 
 Install (out-of-band, only when this path is turned on):
@@ -19,11 +27,61 @@ Install (out-of-band, only when this path is turned on):
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 from http.cookiejar import Cookie
 import logging
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True, slots=True)
+class HarvestedCookie:
+    """One cookie harvested from Playwright, with the fields needed to
+    rebuild it on a stdlib ``http.cookiejar.Cookie`` for curl_cffi.
+
+    ``secure`` defaults to True because Akamai / Datadome WAF tokens are
+    only ever stamped on the HTTPS path; if Playwright's ``cookies()``
+    report omits the flag, defaulting to True keeps the cookie in the
+    right slot for the subsequent API calls.
+
+    ``expires`` is normalized to ``None`` for the values Playwright
+    reports as session cookies (``-1``, ``0``, or absent), so the stdlib
+    jar sets ``discard=True`` instead of getting confused by ``-1``.
+    """
+
+    name: str
+    value: str
+    domain: str
+    path: str
+    secure: bool = True
+    expires: int | None = None
+
+    @classmethod
+    def from_playwright_entry(cls, entry: Mapping[str, object]) -> "HarvestedCookie | None":
+        """Normalize a Playwright ``context.cookies()[i]`` entry.
+
+        Returns ``None`` for entries that don't have a non-empty string
+        name+value (catches ``name=None``, ``value=None``, and the
+        ``name=""`` case Playwright emits after cookie deletion). Without
+        this filter, an empty-name cookie would be stamped into the jar as
+        ``domain="" + name=""`` and the stdlib jar would silently fail to
+        match it on subsequent sends.
+        """
+        name = entry.get("name")
+        value = entry.get("value")
+        if not (isinstance(name, str) and isinstance(value, str) and name and value):
+            return None
+        domain = entry.get("domain") or ""
+        path = entry.get("path") or "/"
+        secure = bool(entry.get("secure", True))
+        raw_expires = entry.get("expires")
+        # Playwright reports -1 (or omits) for session cookies; stdlib
+        # jar expects ``None`` for those and rejects ``-1``.
+        expires: int | None = None
+        if isinstance(raw_expires, (int, float)) and raw_expires > 0:
+            expires = int(raw_expires)
+        return cls(name=name, value=value, domain=domain, path=path, secure=secure, expires=expires)
 
 
 def _import_playwright() -> Any:
@@ -36,24 +94,34 @@ def _import_playwright() -> Any:
     return sync_playwright
 
 
+# Akamai's sensor obfuscation script obfuscates a sensor JS payload that
+# collects mouse/window events and only stamps a valid ``_abck`` cookie
+# once enough telemetry has accumulated. Datadome performs a similar dance
+# with its own sensor JS. Empirically, 500ms is too short; WAF tokens are
+# not yet stable on the first poll. 2500ms is the target observed in
+# cloudscraper + nodriver reference runs.
+_SENSOR_DWELL_MS: int = 2500
+
+
 def harvest_cookies_with_browser(
     target_url: str,
     *,
     referer_path: str = "",
     timeout_ms: int = 15000,
-) -> Mapping[str, str] | None:
+) -> list[HarvestedCookie] | None:
     """Drive a headless Chromium to ``target_url`` and return harvested cookies.
 
     Returns ``None`` on any failure (Playwright missing, Chromium missing,
-    target unreachable). The cookies are mapped to a flat ``str -> str`` dict
-    for direct injection into a requests/curl_cffi session cookie jar.
+    target unreachable). Each cookie is returned with full domain / path so
+    the merge path can build a domain-aware ``http.cookiejar.Cookie`` capabale
+    of passing the RFC 6265 strict domain-match check on subsequent sends.
     """
     sync_playwright = _import_playwright()
     if sync_playwright is None:
         return None
 
     full_url = f"{target_url}{referer_path}"
-    cookies: dict[str, str] = {}
+    harvested: list[HarvestedCookie] = []
     try:
         with sync_playwright() as p:
             try:
@@ -69,41 +137,92 @@ def harvest_cookies_with_browser(
                 context.set_default_timeout(timeout_ms)
                 page = context.new_page()
                 page.goto(full_url, wait_until="domcontentloaded", timeout=timeout_ms)
-                # Give the JS sensor a few hundred ms to push its cookies.
-                page.wait_for_timeout(500)
-                playwright_cookies = context.cookies()
+                # Akamai's sensor JS needs ≥1.5s of telemetry to stamp a
+                # stable ``_abck``; Datadome similar. Don't poll early.
+                page.wait_for_timeout(_SENSOR_DWELL_MS)
+                record = context.cookies()
+                for entry in record:
+                    cookie = HarvestedCookie.from_playwright_entry(entry)
+                    if cookie is not None:
+                        harvested.append(cookie)
             finally:
                 try:
                     browser.close()
                 except Exception:  # noqa: BLE001 - best effort
                     pass
-        for entry in playwright_cookies:
-            name = entry.get("name")
-            value = entry.get("value")
-            if isinstance(name, str) and isinstance(value, str):
-                cookies[name] = value
     except Exception as exc:  # noqa: BLE001 - top safety net
         logger.info("Browser warmup failed (%s): %s", type(exc).__name__, exc)
         return None
-    return cookies
+    return harvested
 
 
-def merge_cookies_into_session(session: Any, cookies: Mapping[str, str] | None) -> None:
-    """Copy a cookie mapping into a requests/curl_cffi session cookie jar.
+def merge_cookies_into_session(session: Any, cookies: list[HarvestedCookie] | None) -> None:
+    """Copy harvested cookies into the session cookie jar with their proper domain.
 
-    Works for both stdlib :class:`http.cookiejar.CookieJar` (the type used by
-    ``curl_cffi``) and ``requests.cookies.RequestsCookieJar`` (used by the
-    ``requests``-shaped sessions we run in tests):
+    Always constructs ``http.cookiejar.Cookie`` explicitly so the stdlib jar
+    (used by curl_cffi) keeps each cookie under its real domain. RFC 6265
+    strict-matching then sends those cookies on subsequent requests to
+    matching hosts, which is what Akamai / Datadome require to recognise the
+    replay as legit.
 
-    - If the jar exposes a ``set(name, value)`` shorthand (requests-style) we
-      use it directly and skip the heavier Cookie construction.
-    - Otherwise we build a fully populated ``http.cookiejar.Cookie`` and call
-      ``jar.set_cookie(cookie)``, which works on the stdlib jar and on
-      RequestsCookieJar alike.
+    The dual-shape shortcut is preserved for testing: requests-style
+    ``RequestsCookieJar.set(name, value)`` is still tried first for callers
+    that build sessions with that surface; on a failed shortcut (curl_cffi's
+    stdlib jar) the path falls back to stdlib Cookie + ``set_cookie``.
+    """
+    if not cookies:
+        return
+    jar = getattr(session, "cookies", None)
+    if jar is None:
+        return
+    try:
+        for entry in cookies:
+            if hasattr(jar, "set") and callable(getattr(jar, "set", None)):
+                try:
+                    jar.set(entry.name, entry.value)  # type: ignore[attr-defined]
+                    continue
+                except TypeError:
+                    # Some jars don't accept the 2-arg shortcut; fall through
+                    # to the stdlib-style path below.
+                    pass
+            cookie = Cookie(
+                version=0,
+                name=entry.name,
+                value=entry.value,
+                port=None,
+                port_specified=False,
+                domain=entry.domain,
+                domain_specified=bool(entry.domain),
+                domain_initial_dot=entry.domain.startswith("."),
+                path=entry.path or "/",
+                path_specified=bool(entry.path),
+                secure=entry.secure,
+                expires=entry.expires,
+                discard=entry.expires is None,
+                comment=None,
+                comment_url=None,
+                rest={},
+                rfc2109=False,
+            )
+            jar.set_cookie(cookie)
+    except Exception as exc:  # noqa: BLE001 - last-resort safety net
+        logger.debug("merge_cookies_into_session skipped: %s", exc)
 
-    This avoids silently no-op'ing the merge when the surface differs, which
-    would otherwise see Playwright spin up correctly and then lose every
-    harvested cookie to a swallowed ``AttributeError``.
+
+def merge_cookies_from_mapping(session: Any, cookies: Mapping[str, str] | None) -> None:
+    """TESTS-ONLY — DO NOT CALL FROM PRODUCTION CODE.
+
+    Accepts a flat ``name → value`` mapping (which is what the legacy
+    helper returned) and pushes it into the session jar via the requests-
+    style ``set`` shortcut. The cookies are stamped with empty domain, so
+    they will NOT survive RFC 6265 domain matching on real curls — they
+    only round-trip inside ``requests.testing`` rigs.
+
+    Production paths must always go through
+    :func:`harvest_cookies_with_browser` + :func:`merge_cookies_into_session`
+    so each cookie carries its real Playwright-reported ``domain``. This
+    shim exists to keep unit fixtures happy without forcing every test to
+    construct ``HarvestedCookie`` entries by hand.
     """
     if not cookies:
         return
@@ -113,32 +232,6 @@ def merge_cookies_into_session(session: Any, cookies: Mapping[str, str] | None) 
     try:
         for name, value in cookies.items():
             if hasattr(jar, "set") and callable(getattr(jar, "set", None)):
-                try:
-                    jar.set(name, value)  # type: ignore[attr-defined]
-                    continue
-                except TypeError:
-                    # Some jars don't accept the 2-arg shortcut; fall through
-                    # to the stdlib-style path below.
-                    pass
-            cookie = Cookie(
-                version=0,
-                name=name,
-                value=value,
-                port=None,
-                port_specified=False,
-                domain="",
-                domain_specified=False,
-                domain_initial_dot=False,
-                path="/",
-                path_specified=True,
-                secure=False,
-                expires=None,
-                discard=True,
-                comment=None,
-                comment_url=None,
-                rest={},
-                rfc2109=False,
-            )
-            jar.set_cookie(cookie)
+                jar.set(name, value)  # type: ignore[attr-defined]
     except Exception as exc:  # noqa: BLE001 - last-resort safety net
-        logger.debug("merge_cookies_into_session skipped: %s", exc)
+        logger.debug("merge_cookies_from_mapping skipped: %s", exc)
