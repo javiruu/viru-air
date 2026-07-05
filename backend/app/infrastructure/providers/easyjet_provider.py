@@ -309,6 +309,39 @@ class EasyJetProvider(FlightProvider):
         except Exception:
             pass
         setattr(self, marker, True)
+        if os.getenv("EASYJET_USE_BROWSER_WARMUP") in {"1", "true", "yes", "on"}:
+            self._browser_warmup(base_url, referer_path=referer_path, kind=kind)
+
+    def _browser_warmup(self, base_url: str, *, referer_path: str, kind: str = "marketing") -> None:
+        """Opt-in Playwright warmup layered on top of the curl warmup.
+
+        Mirror of ``IberiaProvider._browser_warmup`` with a ``kind`` discriminator
+        (Datadome cookies are per-domain, so each warm site needs its own pass).
+        Self-gated on ``EASYJET_USE_BROWSER_WARMUP`` so direct callers (tests,
+        future code paths) are a no-op when the operator hasn't enabled the
+        headless path. Failures (Playwright missing, Chromium binary missing,
+        target unreachable) are swallowed so the curl warmup and the eventual
+        availability call keep working with whatever they have. Cookies
+        harvested from the headless navigation are merged into the curl_cffi
+        session's jar.
+        """
+        if os.getenv("EASYJET_USE_BROWSER_WARMUP") not in {"1", "true", "yes", "on"}:
+            return
+        # Idempotent on the per-kind marker so a future direct caller can't
+        # respawn Playwright per request.
+        browser_marker = f"_warmed_browser_{kind}"
+        if getattr(self, browser_marker, False):
+            return
+        try:
+            from app.infrastructure.providers._browser_warmup import (
+                harvest_cookies_with_browser,
+                merge_cookies_into_session,
+            )
+        except ImportError:
+            return
+        cookies = harvest_cookies_with_browser(base_url, referer_path=referer_path)
+        merge_cookies_into_session(self._session, cookies)
+        setattr(self, browser_marker, True)
 
     def _to_flight_connections_search(self, search: _EasyJetSearch) -> EasyJetFlightConnectionsSearch:
         return EasyJetFlightConnectionsSearch(

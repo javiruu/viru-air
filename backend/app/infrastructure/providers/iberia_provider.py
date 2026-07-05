@@ -186,6 +186,11 @@ class IberiaProvider(FlightProvider):
         during the first navigation to iberia.com. Errors are swallowed: a
         failed warmup is a soft failure, and the actual availability call still
         surfaces the real outcome.
+
+        When ``IBERIA_USE_BROWSER_WARMUP=1`` is set, an optional Playwright
+        headless navigation is layered on top of the curl warmup so we can
+        harvest the JS-set sensor cookies (Akamai's bot manager requires the
+        _abck / bm_sz tokens that only real browser JS execution produces).
         """
         if self._warmed:
             return
@@ -215,6 +220,31 @@ class IberiaProvider(FlightProvider):
         except Exception:
             pass
         self._warmed = True
+        if os.getenv("IBERIA_USE_BROWSER_WARMUP") in {"1", "true", "yes", "on"}:
+            self._browser_warmup(base_url, referer_path=referer_path)
+
+    def _browser_warmup(self, base_url: str, *, referer_path: str) -> None:
+        """Opt-in Playwright warmup layered on top of the curl warmup.
+
+        Self-gated on ``IBERIA_USE_BROWSER_WARMUP`` so direct callers (tests,
+        future code paths) are a no-op when the operator hasn't enabled the
+        headless path. Failures (Playwright missing, Chromium binary missing,
+        target unreachable) are swallowed so the curl warmup and the eventual
+        availability call keep working with whatever they have. Cookies
+        harvested from the headless navigation are merged into the curl_cffi
+        session's jar.
+        """
+        if os.getenv("IBERIA_USE_BROWSER_WARMUP") not in {"1", "true", "yes", "on"}:
+            return
+        try:
+            from app.infrastructure.providers._browser_warmup import (
+                harvest_cookies_with_browser,
+                merge_cookies_into_session,
+            )
+        except ImportError:
+            return
+        cookies = harvest_cookies_with_browser(base_url, referer_path=referer_path)
+        merge_cookies_into_session(self._session, cookies)
 
     def _availability_url(self) -> str:
         path = self.availability_path if self.availability_path.startswith("/") else f"/{self.availability_path}"
