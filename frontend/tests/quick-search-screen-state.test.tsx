@@ -246,7 +246,7 @@ test("useQuickSearchScreenState groups multiple raw sources into provider-level 
       buildResult({ result_id: "ry-1", source: "ryanair-public-fares" }),
       buildResult({ result_id: "ry-2", destination: "LIS", source: "ryanair-public-fares" }),
       buildResult({ result_id: "wz-1", destination: "BCN", source: "wizzair-farechart" }),
-      buildResult({ result_id: "ib-1", destination: "JFK", source: "iberia-ndc-airshopping" }),
+      buildResult({ result_id: "ib-1", destination: "JFK", source: "iberia-public-availability" }),
     ],
   });
 

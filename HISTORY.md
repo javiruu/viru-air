@@ -1,10 +1,10 @@
 # History
 
-## 2026-07-05 - Iberia como provider configurable de vuelos
+## 2026-07-05 - Iberia como provider publico de vuelos
 
-- Quick Search registra `iberia`/`ib`/`iberia_ndc` en `FlightProviderRegistry`, dentro del orden por defecto, sin activarlo si faltan credenciales NDC.
-- Nuevo adapter `IberiaProvider` preparado para AirShopping NDC: construye la request, mapea ofertas XML a `ProviderFlight`, emite `iberia_provider_unavailable_total`/`provider_total_outage` y expone `source=iberia-ndc-airshopping`.
-- El frontend reconoce fuentes Iberia en badges, carril de providers, resumen de fuentes, warnings y cobertura de Watchlist mediante el catalogo compartido.
+- Quick Search registra `iberia`/`ib`/`iberia_ndc` en `FlightProviderRegistry`, dentro del orden por defecto, sin exigir credenciales privadas.
+- `IberiaProvider` usa el contrato publico de la web de booking de Iberia (`/flights/` + `ibisservices.iberia.com/api/sse-avm/rs/v2/availability`), emite `iberia_provider_unavailable_total`/`provider_total_outage` cuando Akamai o la respuesta publica bloquean la consulta backend y expone `source=iberia-public-availability`.
+- El frontend reconoce fuentes Iberia publicas e historicas en badges, carril de providers, resumen de fuentes, warnings y cobertura de Watchlist mediante el catalogo compartido.
 
 ## 2026-07-04 â€” Dashboard con descubrimiento ocasional y continuidad de busqueda
 

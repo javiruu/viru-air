@@ -20,7 +20,7 @@ test("resolveQuickSearchProviderPresentation recognizes easyJet sources", () => 
 });
 
 test("resolveQuickSearchProviderPresentation recognizes Iberia sources", () => {
-  for (const source of ["iberia-ndc-airshopping", "Iberia NDC", "IB fares"]) {
+  for (const source of ["iberia-public-availability", "Iberia availability", "iberia-ndc-airshopping", "IB fares"]) {
     const provider = resolveQuickSearchProviderPresentation(source);
 
     assert.equal(provider.id, "iberia");
@@ -48,7 +48,7 @@ test("QuickSearchProviderBadge renders easyJet as a branded provider", () => {
 
 test("QuickSearchProviderBadge renders Iberia as a branded provider", () => {
   const html = renderToStaticMarkup(
-    React.createElement(QuickSearchProviderBadge, { source: "iberia-ndc-airshopping" }),
+    React.createElement(QuickSearchProviderBadge, { source: "iberia-public-availability" }),
   );
 
   assert.match(html, /qs-provider-badge--iberia/);
