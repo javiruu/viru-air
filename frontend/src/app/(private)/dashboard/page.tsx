@@ -293,6 +293,27 @@ export default function DashboardPage() {
     [historyRows, notificationSummary, previousSeenActionKey, watches],
   );
   const heroStatus = t("dashboard.hero.status", { count: watches.length, activity: activityLabel });
+  // #10 Seasonal eyebrow: jun-aug = summer, dec-feb = winter, otherwise festive (semana santa + navidad heuristic otherwise neutral)
+  const seasonModeKey = useMemo(() => {
+    const month = new Date().getMonth();
+    if (month >= 5 && month <= 7) return "summer" as const;
+    if (month === 11 || month === 0 || month === 1) return "winter" as const;
+    return "festive" as const;
+  }, []);
+  // #8 Good day to fly: nearest upcoming watch in the next 3 days
+  const upcomingWatch = useMemo(() => {
+    if (watches.length === 0) return null;
+    const now = Date.now();
+    const limit = now + 3 * 24 * 60 * 60 * 1000;
+    return watches.find((watch) => {
+      const stamp = new Date(watch.travel_date_local).getTime();
+      return Number.isFinite(stamp) && stamp >= now && stamp <= limit;
+    }) ?? null;
+  }, [watches]);
+  // #9 Latest note draft: body without title means a half-written note worth resuming
+  const draftNote = useMemo(() => {
+    return notes.find((note) => note.body && !note.title) ?? null;
+  }, [notes]);
   const featuredNews = useMemo(() => getDashboardFeaturedNews(localeTag), [localeTag]);
   const foundForYou = useMemo(
     () =>
@@ -331,8 +352,45 @@ export default function DashboardPage() {
             <div className="dashboard-hero-content">
               <div className="dashboard-hero-title">
                 <h2>{t("dashboard.hero.title")}</h2>
-                <p className="dashboard-hero-status">{heroStatus}</p>
+                <p className="dashboard-hero-status">
+                  <span className="dashboard-season-eyebrow" aria-label={t("dashboard.hero.seasonEyebrowLabel")}>
+                    {t(`dashboard.hero.seasonEyebrow.${seasonModeKey}` as const)}
+                  </span>
+                  {heroStatus}
+                </p>
                 <DashboardAccessSwitch />
+                <div className="dashboard-hero-pills">
+                  {draftNote ? (
+                    <button
+                      type="button"
+                      className="latest-note-pill"
+                      onClick={() => {
+                        handleSelectNote(draftNote);
+                        if (typeof window !== "undefined") {
+                          document.querySelector(".notes-board")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                        }
+                      }}
+                      aria-label={t("dashboard.hero.latestNoteAria", { preview: draftNote.body.slice(0, 60) })}
+                    >
+                      {t("dashboard.hero.latestNotePill")}
+                    </button>
+                  ) : null}
+                  {upcomingWatch ? (
+                    <div className="good-day-to-fly" role="status">
+                      <span>
+                        {t("dashboard.hero.goodDayToFly", {
+                          route: `${upcomingWatch.origin_iata} → ${upcomingWatch.destination_iata}`,
+                        })}
+                      </span>
+                      <Link
+                    href="/watchlist"
+                        onClick={() => trackEvent("dashboard_good_day_to_fly_click", { routeId: upcomingWatch.id })}
+                      >
+                        {t("dashboard.hero.goodDayToFlyCta")}
+                      </Link>
+                    </div>
+                  ) : null}
+                </div>
               </div>
               <div className="dashboard-hero-highlight">
                 <DashboardNextActionCard

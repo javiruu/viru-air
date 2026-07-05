@@ -438,3 +438,69 @@ test("qs-date-grid has conditional has-return modifier", () => {
     ".has-return must use 1fr auto 1fr for 3 columns",
   );
 });
+
+test("dual workspace hover wiring is scoped to round-trip panels", () => {
+  const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
+
+  assert.match(
+    source,
+    /const \[dualHoverSide, setDualHoverSide\] = useState<"outbound" \| "return" \| null>\(null\);/,
+    "dual hover state missing from QuickSearchView",
+  );
+  assert.match(
+    source,
+    /<QuickSearchDualWorkspace ariaLabel="Round-trip results" hoveredSide=\{dualHoverSide\}>/,
+    "dual workspace missing hoveredSide wiring",
+  );
+  assert.match(
+    source,
+    /onHoverStart=\{\(\) => setDualHoverSide\("outbound"\)\}/,
+    "outbound panel missing hover start wiring",
+  );
+  assert.match(
+    source,
+    /onHoverStart=\{\(\) => setDualHoverSide\("return"\)\}/,
+    "return panel missing hover start wiring",
+  );
+  assert.match(
+    source,
+    /onHoverEnd=\{\(\) => setDualHoverSide\(null\)\}/,
+    "dual hover state must reset on hover end",
+  );
+});
+
+test("dual workspace hover styles only apply on hover-capable desktop viewports", () => {
+  const dualCssPath = path.join(
+    process.cwd(),
+    "src",
+    "styles",
+    "quick-search-dual.css",
+  );
+  const css = fs.readFileSync(dualCssPath, "utf8");
+
+  assert.match(
+    css,
+    /@media \(min-width: 900px\) and \(hover: hover\) and \(pointer: fine\)/,
+    "hover effect must be limited to desktop hover-capable devices",
+  );
+  assert.match(
+    css,
+    /data-hovered-side="outbound"\]\s+\.qs-dual-panel--return/,
+    "outbound hover must dim the return panel",
+  );
+  assert.match(
+    css,
+    /data-hovered-side="return"\]\s+\.qs-dual-panel--outbound/,
+    "return hover must dim the outbound panel",
+  );
+  assert.match(
+    css,
+    /opacity:\s*0\.74/,
+    "dimmed panel opacity must stay legible",
+  );
+  assert.match(
+    css,
+    /transition:\s*\n\s*opacity 180ms ease,/,
+    "dual panel hover needs a smooth opacity transition",
+  );
+});

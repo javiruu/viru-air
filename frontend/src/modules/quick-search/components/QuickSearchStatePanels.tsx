@@ -43,7 +43,7 @@ type Props = {
   onRelaxAction: (action: ZeroResultRelaxAction) => void;
   onRunSearch: () => void;
   onEmptyCta: () => void;
-  t: (key: QuickSearchCopyKey) => string;
+  t: (key: QuickSearchCopyKey, params?: Readonly<Record<string, string | number>>) => string;
 };
 
 export function QuickSearchStatePanels(props: Props) {
@@ -116,6 +116,7 @@ export function QuickSearchStatePanels(props: Props) {
           <span className="qs-state-kicker">{props.t("stateEmptyKicker")}</span>
           <h3 className="qs-empty-title">{props.emptyStateMainTitle}</h3>
           <p>{props.t("emptyText")}</p>
+          <p className="qs-empty-calendar-fallback muted">{props.t("emptyCalendarFallback")}</p>
           <span className="muted">{props.t("stateEmptyHint")}</span>
           <button type="button" className="btn-search qs-empty-primary-cta" onClick={props.onEmptyCta}>
             <SlidersHorizontal className="qs-button-icon" aria-hidden="true" />
@@ -143,6 +144,11 @@ export function QuickSearchStatePanels(props: Props) {
           ) : null}
           {props.zeroResultActions.length > 0 ? (
             <div className="qs-empty-actions">
+              {props.zeroResultActions.length === 1 ? (
+                <p className="qs-empty-softline">
+                  {props.t("emptySoftline", { action: props.zeroResultActions[0].label })}
+                </p>
+              ) : null}
               <span className="muted">{props.t("emptyRelaxActionsTitle")}</span>
               {props.zeroResultActions.map((action) => (
                 <button key={action.id} type="button" className="btn-ghost" onClick={() => props.onRelaxAction(action.id)}>
