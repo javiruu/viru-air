@@ -29,6 +29,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 from http.cookiejar import Cookie
+import json
 import logging
 from typing import Any
 
@@ -154,6 +155,122 @@ def harvest_cookies_with_browser(
         logger.info("Browser warmup failed (%s): %s", type(exc).__name__, exc)
         return None
     return harvested
+
+
+@dataclass(frozen=True, slots=True)
+class BrowserResponse:
+    """Minimal duck-typed response shim that the captcha helper can read.
+
+    Built from Playwright's ``APIResponse`` so the provider's existing
+    ``detect_captcha_kind(response, rules=...)`` works without depending on
+    ``curl_cffi.Response``. ``.text``, ``.status_code`` and ``.json()`` are
+    enough for the captcha rule sweep + the downstream
+    ``ProviderSourceFetchError`` path.
+    """
+
+    status_code: int
+    body_text: str
+
+    @property
+    def text(self) -> str:  # captcha helper reads ``.text``
+        return self.body_text
+
+    @property
+    def ok(self) -> bool:
+        return 200 <= self.status_code < 400
+
+    def json(self) -> object:
+        return json.loads(self.body_text)
+
+
+def request_via_browser(
+    method: str,
+    url: str,
+    *,
+    json_body: Mapping[str, object] | None = None,
+    headers: Mapping[str, str] | None = None,
+    timeout_ms: int = 15000,
+    warmup_url: str | None = None,
+    warmup_referer_path: str = "",
+) -> BrowserResponse | None:
+    """Run an HTTP request through real Chromium and return a ``BrowserResponse``.
+
+    Goes through real Chromium's TLS / HTTP/2 stack so Akamai bot-manager
+    sees a TLS JA4 + frame order + header order + cookie set that's
+    indistinguishable from a real browser tab — instead of a ``curl_cffi``
+    impersonation profile the bot-manager has long since catalogued.
+
+    ``warmup_url`` is the contract that turns this from "real stack, cold
+    cookies" into "real stack, sensor cookies already attached". When
+    supplied, the helper navigates there *on the same context* the API call
+    then runs through; Akamai's sensor JS executes during that navigation
+    and stamps ``_abck`` / ``bm_sz`` (Datadome stamps ``datadome``) on the
+    context cookie jar, so the subsequent ``request.fetch`` carries them on
+    exactly the HTTP/2 connection the JS sensor's telemetry was generated
+    for. Without the warmup navigation the request goes through Chromium's
+    networking but with no sensor cookies — Akamai bot-manager still 403s in
+    that case. ``warmup_referer_path`` is appended to ``warmup_url`` when
+    non-empty so providers can keep using their per-language landing pages.
+
+    Returns ``None`` whenever Playwright can't service the request
+    (Playwright missing, Chromium binary missing, launch failure, request
+    exception, warmup-nav failure). The provider must keep its curl_cffi
+    fallback intact so a ``None`` here means "use the curl path".
+    """
+    sync_playwright = _import_playwright()
+    if sync_playwright is None:
+        return None
+
+    try:
+        with sync_playwright() as p:
+            try:
+                browser = p.chromium.launch(headless=True)
+            except Exception as exc:  # noqa: BLE001 - want broad catch
+                logger.info("Chromium binary not installed (%s); falling back", type(exc).__name__)
+                return None
+            try:
+                context = browser.new_context(
+                    viewport={"width": 1280, "height": 800},
+                    locale="en-GB",
+                )
+                context.set_default_timeout(timeout_ms)
+                if warmup_url:
+                    try:
+                        page = context.new_page()
+                        target = (
+                            f"{warmup_url.rstrip('/')}{warmup_referer_path}"
+                            if warmup_referer_path
+                            else warmup_url
+                        )
+                        page.goto(target, wait_until="domcontentloaded", timeout=timeout_ms)
+                        # Sensor JS needs the same dwell window the standalone
+                        # ``harvest_cookies_with_browser`` uses; without it the
+                        # ``_abck`` we want to send on the API call isn't ready
+                        # yet (Akamai rotates it once ≥1.5s of telemetry lands).
+                        page.wait_for_timeout(_SENSOR_DWELL_MS)
+                    except Exception as exc:  # noqa: BLE001 - warmup is best-effort
+                        logger.info(
+                            "Browser warmup nav failed (%s): %s",
+                            type(exc).__name__,
+                            exc,
+                        )
+                request = context.request
+                response = request.fetch(
+                    url,
+                    method=method.upper(),
+                    headers=dict(headers or {}),
+                    data=json.dumps(dict(json_body)) if json_body is not None else None,
+                    timeout=max(1.0, timeout_ms / 1000),
+                )
+                return BrowserResponse(status_code=response.status, body_text=response.text() or "")
+            finally:
+                try:
+                    browser.close()
+                except Exception:  # noqa: BLE001 - best effort
+                    pass
+    except Exception as exc:  # noqa: BLE001 - top safety net
+        logger.info("Browser request failed (%s): %s", type(exc).__name__, exc)
+        return None
 
 
 def merge_cookies_into_session(session: Any, cookies: list[HarvestedCookie] | None) -> None:

@@ -184,10 +184,9 @@ class EasyJetProvider(FlightProvider):
         # Chrome UA, sec-ch-* and sec-fetch-* with the matching TLS fingerprint;
         # overriding those breaks the pairing (Datadome flagged the barebones
         # "Mozilla/5.0" we used before this fix as a confident bot signature).
-        response = self._session.get(
+        response = self._post_with_optional_browser(
             f"{self.base_url}/ejavailability/api/v16/availability/query",
             params=build_public_availability_params(self._to_public_availability_search(search)),
-            timeout=max(2.0, timeout_ms / 1000),
             headers={
                 "Accept": "application/json, text/plain, */*",
                 "Accept-Language": f"{self.language_code.lower()}-{self.residency},{self.language_code.lower()};q=0.9,en;q=0.8",
@@ -200,6 +199,9 @@ class EasyJetProvider(FlightProvider):
                 "sec-fetch-site": "same-origin",
                 "sec-fetch-dest": "empty",
             },
+            timeout_ms=timeout_ms,
+            warmup_url=self.base_url,
+            warmup_referer_path=f"/{self.language_code.lower()}/",
         )
         captcha_kind = detect_captcha_kind(response, rules=_EASYJET_WAF_RULES)
         if captcha_kind:
@@ -259,11 +261,13 @@ class EasyJetProvider(FlightProvider):
         # query + JSON-encoded variables sent as URL params trips Dohop's WAF on
         # URI length / pattern rules. POST keeps the same payload contract but
         # inside the body where WAFs handle it gracefully.
-        response = self._session.post(
+        response = self._post_with_optional_browser(
             f"{self.flight_connections_url}/api/graphql",
-            json=build_flight_connections_params(flight_connections_search),
-            timeout=max(2.0, timeout_ms / 1000),
+            json_body=build_flight_connections_params(flight_connections_search),
             headers=headers,
+            timeout_ms=timeout_ms,
+            warmup_url=self.flight_connections_url,
+            warmup_referer_path=f"/{self.language_code.lower()}/",
         )
         captcha_kind = detect_captcha_kind(response, rules=_EASYJET_WAF_RULES)
         if captcha_kind:
@@ -352,6 +356,66 @@ class EasyJetProvider(FlightProvider):
         cookies = harvest_cookies_with_browser(base_url, referer_path=referer_path)
         merge_cookies_into_session(self._session, cookies)
         setattr(self, browser_marker, True)
+
+    def _post_with_optional_browser(
+        self,
+        url: str,
+        *,
+        params: Mapping[str, Any] | None = None,
+        json_body: Mapping[str, Any] | None = None,
+        headers: Mapping[str, str],
+        timeout_ms: int,
+        warmup_url: str | None = None,
+        warmup_referer_path: str = "",
+    ) -> Any:
+        """Opt-in Playwright-direct GET/POST path; falls back to curl_cffi.
+
+        Activated by ``EASYJET_USE_BROWSER_POST=1``. The public availability
+        call is a GET-with-query-params; the flight connections call is a
+        POST. Both go through the same wrapper. ``warmup_url`` lets each
+        callsite pick its own sensor-cookie domain (Datadome cookies are
+        domain-scoped), so the marketing path warms ``easyjet.com`` and the
+        flight-connections path warms ``flightconnections.easyjet.com``.
+        """
+        method = "POST" if json_body is not None else "GET"
+        if os.getenv("EASYJET_USE_BROWSER_POST") not in {"1", "true", "yes", "on"}:
+            return self._dispatch_session(method, url, params=params, json_body=json_body, headers=headers, timeout_ms=timeout_ms)
+        try:
+            from app.infrastructure.providers._browser_warmup import request_via_browser
+        except ImportError:
+            return self._dispatch_session(method, url, params=params, json_body=json_body, headers=headers, timeout_ms=timeout_ms)
+        br = request_via_browser(
+            method,
+            url,
+            json_body=json_body,
+            headers=headers,
+            timeout_ms=timeout_ms,
+            warmup_url=warmup_url,
+            warmup_referer_path=warmup_referer_path,
+        )
+        if br is not None:
+            return br
+        return self._dispatch_session(method, url, params=params, json_body=json_body, headers=headers, timeout_ms=timeout_ms)
+
+    def _dispatch_session(
+        self,
+        method: str,
+        url: str,
+        *,
+        params: Mapping[str, Any] | None,
+        json_body: Mapping[str, Any] | None,
+        headers: Mapping[str, str],
+        timeout_ms: int,
+    ) -> Any:
+        if method == "POST":
+            return self._session.post(
+                url, json=dict(json_body) if json_body else None,
+                headers=dict(headers), timeout=max(2.0, timeout_ms / 1000),
+            )
+        return self._session.get(
+            url, params=dict(params) if params else None,
+            headers=dict(headers), timeout=max(2.0, timeout_ms / 1000),
+        )
 
     def _to_flight_connections_search(self, search: _EasyJetSearch) -> EasyJetFlightConnectionsSearch:
         return EasyJetFlightConnectionsSearch(
