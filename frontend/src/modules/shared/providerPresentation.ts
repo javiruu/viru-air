@@ -3,6 +3,7 @@ const PROVIDER_PRESENTATIONS = [
   { id: "vueling", label: "Vueling", aliases: ["vueling"] },
   { id: "wizzair", label: "Wizz Air", aliases: ["wizzair", "wizz air", "wizz"] },
   { id: "easyjet", label: "easyJet", aliases: ["easyjet", "easy jet", "ezj", "ezy", "u2"] },
+  { id: "iberia", label: "Iberia", aliases: ["iberia", "iberia ndc", "iberia airshopping", "ib"] },
   { id: "duffel", label: "Duffel", aliases: ["duffel"] },
 ] as const;
 

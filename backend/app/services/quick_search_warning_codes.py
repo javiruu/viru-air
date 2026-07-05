@@ -15,6 +15,7 @@ PROVIDER_TOTAL_OUTAGE_CODES: Final[frozenset[str]] = frozenset(
         "vueling_provider_unavailable_total",
         "wizzair_provider_unavailable_total",
         "easyjet_provider_unavailable_total",
+        "iberia_provider_unavailable_total",
         "duffel_provider_unavailable_total",
     }
 )

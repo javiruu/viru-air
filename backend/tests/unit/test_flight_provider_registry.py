@@ -67,3 +67,28 @@ def test_registry_registers_easyjet_without_api_credentials(monkeypatch):
     providers = registry.resolve_enabled_providers()
 
     assert [provider.provider_id for provider in providers] == ["easyjet"]
+
+
+def test_registry_registers_iberia_when_credentials_are_configured(monkeypatch):
+    monkeypatch.setenv("FLIGHT_PROVIDER_ORDER", "ryanair,iberia,ib,iberia-ndc")
+    monkeypatch.setenv("FLIGHT_PROVIDER_RYANAIR_ENABLED", "false")
+    monkeypatch.setenv("FLIGHT_PROVIDER_IBERIA_ENABLED", "true")
+    monkeypatch.setenv("IBERIA_NDC_BASE_URL", "https://ndc.example.test")
+    monkeypatch.setenv("IBERIA_NDC_API_KEY", "iberia-test-key")
+
+    registry = FlightProviderRegistry()
+    providers = registry.resolve_enabled_providers()
+
+    assert [provider.provider_id for provider in providers] == ["iberia"]
+
+
+def test_registry_skips_iberia_without_credentials(monkeypatch):
+    monkeypatch.setenv("FLIGHT_PROVIDER_ORDER", "iberia")
+    monkeypatch.setenv("FLIGHT_PROVIDER_IBERIA_ENABLED", "true")
+    monkeypatch.delenv("IBERIA_NDC_BASE_URL", raising=False)
+    monkeypatch.delenv("IBERIA_NDC_API_KEY", raising=False)
+
+    registry = FlightProviderRegistry()
+    providers = registry.resolve_enabled_providers()
+
+    assert providers == []
