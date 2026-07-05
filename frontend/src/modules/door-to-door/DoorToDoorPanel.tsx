@@ -1,8 +1,8 @@
 "use client";
 
-import React, { FormEvent, KeyboardEvent, useCallback, useEffect, useId, useRef, useState } from "react";
+import React, { FormEvent, KeyboardEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
-import { Car, ExternalLink, MapPin, Plane, ShieldAlert, ShieldCheck, TrainFront } from "lucide-react";
+import { AlertTriangle, Car, ExternalLink, MapPin, Plane, ShieldAlert, ShieldCheck, TrainFront } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { useI18n } from "@/i18n";
@@ -422,7 +422,29 @@ export function DoorToDoorPanel() {
 
   /* ── Derived data ──────────────────────────────────────── */
   const hasEstimates = results.estimateOptions.length > 0;
-  const attemptedRoute = `${search.origin.label || "-"} -> ${search.selectedWatch?.origin_iata || "AGP"} -> ${search.selectedWatch?.destination_iata || "TSF"} -> ${search.finalDestination.label || "-"}`;
+  const knownRouteCount = useMemo(
+    () => (search.selectedWatchId
+      ? history.history.filter((item) => typeof item.watch_id === "string" && item.watch_id === search.selectedWatchId).length
+      : 0),
+    [history.history, search.selectedWatchId],
+  );
+  const attemptedRoute = useMemo(
+    () => `${search.origin.label || "-"} -> ${search.selectedWatch?.origin_iata || "AGP"} -> ${search.selectedWatch?.destination_iata || "TSF"} -> ${search.finalDestination.label || "-"}`,
+    [search.origin.label, search.selectedWatch?.origin_iata, search.selectedWatch?.destination_iata, search.finalDestination.label],
+  );
+  // Resolve timezone AFTER mount to avoid SSR hydration mismatch (server vs client may differ).
+  const [userTimeZone, setUserTimeZone] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof Intl === "undefined") {
+      setUserTimeZone("UTC");
+      return;
+    }
+    try {
+      setUserTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
+    } catch {
+      setUserTimeZone("UTC");
+    }
+  }, []);
   const timelineLegs = results.selectedPlan?.legs ?? [];
 
   const capabilityStatusClass = useCallback((state: DoorToDoorMapCapability["state"]) => {
@@ -478,6 +500,20 @@ export function DoorToDoorPanel() {
         <form className="panel panel-soft d2d-form d2d-form-essentials" onSubmit={onSubmit}>
           <div className="d2d-section-head d2d-essentials-head">
             <h2>{t("doorToDoor.form.essentialsTitle")}</h2>
+            {userTimeZone ? (
+              <span className="d2d-timezone-pill" aria-label={t("doorToDoor.form.timezoneAria")}>
+                {t("doorToDoor.form.timezonePill", { zone: userTimeZone })}
+              </span>
+            ) : null}
+            {knownRouteCount > 1 ? (
+              <span
+                className="d2d-known-route-tag"
+                title={t("doorToDoor.form.knownRouteTooltip", { count: knownRouteCount })}
+                aria-label={t("doorToDoor.form.knownRouteTooltip", { count: knownRouteCount })}
+              >
+                {t("doorToDoor.form.knownRouteTag")}
+              </span>
+            ) : null}
           </div>
           <LocationInput id="d2d-origin" label={t("doorToDoor.form.origin")} value={search.origin} onChange={search.setOrigin} field="origin" watchId={search.selectedWatchId} />
           <label className="field qs-label" htmlFor="d2d-watch">
@@ -756,19 +792,28 @@ export function DoorToDoorPanel() {
           ) : null}
 
           {hasEstimates ? (
-            <section className="panel panel-soft d2d-estimate-section">
+            <section
+              className="panel panel-soft d2d-estimate-section d2d-estimate-section--distinct"
+              aria-label={t("doorToDoor.sections.estimateOnly")}
+            >
               <div className="d2d-section-head">
-                <h2>{t("doorToDoor.sections.estimateOnly")}</h2>
+                <h2>
+                  <AlertTriangle size={14} aria-hidden="true" />
+                  <span>{t("doorToDoor.sections.estimateOnly")}</span>
+                </h2>
                 <span className="status-pill warning">{t("doorToDoor.sections.trustEstimated")}</span>
               </div>
-              <p className="panel-note">{t("doorToDoor.sections.estimateExplanation")}</p>
+              <p className="d2d-estimate-preamble panel-note">
+                <strong>{t("doorToDoor.sections.estimatePreambleTitle")}</strong>{" "}
+                {t("doorToDoor.sections.estimateExplanation")}
+              </p>
               <div className="d2d-options-stack">
                 {results.estimateOptions.map((option) => (
                   <DoorToDoorOptionCard
                     key={option.id}
                     option={option}
                     chosen={option.id === results.chosenOptionId}
-                    isRecommended={option.id === results.recommendedOption?.id}
+                    isRecommended={false}
                     quickBadges={results.quickBadgesByOption[option.id] ?? []}
                     onChoose={() => results.markChosen(option)}
                   />

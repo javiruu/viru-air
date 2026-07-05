@@ -33,6 +33,11 @@ class ProviderDescriptor:
     is_mock: bool = False
     is_real: bool = False
     is_scraper: bool = False
+    # Key-less providers construct external URLs (Google Maps directions,
+    # BlaBlaCar/GoOpti search links) without external HTTP calls or API keys.
+    # Always enabled — they are the user's guaranteed "real out" action,
+    # even in empty deployments, because the link itself is the value.
+    is_keyless: bool = False
     factory: Callable[[], DoorToDoorProvider] | None = None
 
 
@@ -137,17 +142,16 @@ def resolve_provider_runtime() -> ProviderRuntime:
         ProviderDescriptor(
             name="google_maps_deeplink",
             source_type="maps",
-            base_status="functional_maps" if real_enabled else "disabled",
+            base_status="functional_maps",
             production_ready=True,
             supports_search=True,
             supports_booking_url=True,
             has_tests=False,
             notes=(
-                "Genera enlaces de navegacion real en Google Maps sin API key."
-                if real_enabled
-                else "Desactivado: requiere DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS."
+                "Genera enlaces de navegacion real en Google Maps sin API key. Siempre activo."
             ),
             is_real=True,
+            is_keyless=True,
             factory=GoogleMapsDeepLinkProvider,
         ),
         ProviderDescriptor(
@@ -194,8 +198,9 @@ def resolve_provider_runtime() -> ProviderRuntime:
             supports_search=True,
             supports_booking_url=True,
             has_tests=True,
-            notes="Deeplink clasico para tramo origen -> aeropuerto de salida con compatibilidad contractual.",
+            notes="Deeplink clasico para tramo origen -> aeropuerto de salida con compatibilidad contractual. Siempre activo.",
             is_real=True,
+            is_keyless=True,
             factory=BlaBlaCarDeepLinkProvider,
         ),
         ProviderDescriptor(
@@ -206,8 +211,9 @@ def resolve_provider_runtime() -> ProviderRuntime:
             supports_search=True,
             supports_booking_url=True,
             has_tests=True,
-            notes="Deeplink clasico para tramo aeropuerto de llegada -> destino final.",
+            notes="Deeplink clasico para tramo aeropuerto de llegada -> destino final. Siempre activo.",
             is_real=True,
+            is_keyless=True,
             factory=GoOptiDeepLinkProvider,
         ),
         ProviderDescriptor(
@@ -218,8 +224,9 @@ def resolve_provider_runtime() -> ProviderRuntime:
             supports_search=True,
             supports_booking_url=True,
             has_tests=True,
-            notes="Provider unificado que genera acciones reales por tramo terrestre (Google Maps, BlaBlaCar, GoOpti).",
+            notes="Provider unificado que genera acciones reales por tramo terrestre (Google Maps, BlaBlaCar, GoOpti). Siempre activo.",
             is_real=True,
+            is_keyless=True,
             factory=DeeplinkDoorToDoorProvider,
         ),
         ProviderDescriptor(
@@ -375,12 +382,15 @@ def resolve_provider_runtime() -> ProviderRuntime:
         enabled = False
         status = descriptor.base_status
         supports_search = descriptor.supports_search
-        if descriptor.is_mock:
+        # Key-less deeplink providers are unconditionally enabled — see is_keyless on
+        # ProviderDescriptor. They construct real external URLs without any secret or
+        # network call, so they are the user's guaranteed "real out" action.
+        if descriptor.is_keyless:
+            enabled = True
+            status = descriptor.base_status
+        elif descriptor.is_mock:
             enabled = mock_enabled
             status = descriptor.base_status if enabled else "disabled"
-        elif descriptor.name == "google_maps_deeplink":
-            enabled = real_enabled
-            status = "functional_maps" if enabled else "disabled"
         elif descriptor.name == "google_routes" or descriptor.name == "gtfs_transit" or descriptor.name == "navitia":
             enabled = (
                 google_routes_enabled
