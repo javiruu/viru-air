@@ -1,5 +1,6 @@
 ﻿import { apiFetch } from "@/modules/shared/api";
 import type {
+  DoorToDoorCorridorsResponse,
   DoorToDoorHistoryItem,
   DoorToDoorLocation,
   DoorToDoorPreferences,
@@ -26,6 +27,10 @@ export function fetchDoorToDoorSuggestions(
 
 export function fetchDoorToDoorProviderStatus(): Promise<DoorToDoorProviderStatus[]> {
   return apiFetch<DoorToDoorProviderStatus[]>("/door-to-door/providers/status");
+}
+
+export function fetchDoorToDoorCorridors(): Promise<DoorToDoorCorridorsResponse> {
+  return apiFetch<DoorToDoorCorridorsResponse>("/door-to-door/corridors");
 }
 
 export function fetchSavedDoorToDoorLocation(): Promise<DoorToDoorSavedLocation | null> {

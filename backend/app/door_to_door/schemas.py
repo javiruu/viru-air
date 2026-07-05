@@ -329,3 +329,44 @@ class DoorToDoorHealthOut(BaseModel):
     enabled_search_providers: list[str] = Field(default_factory=list)
     active_corridors_verified: int = 0
     active_corridors_planned: int = 0
+
+
+# ── Fase: coverage transparency ──
+
+
+DoorToDoorCorridorStatus = Literal["verified", "verified_limited", "planned_blocked"]
+
+
+class DoorToDoorCorridorOut(BaseModel):
+    """Public-facing summary of a verified or planned real-data corridor.
+
+    Curated fields only — full operational `notes` (which mention feed URLs,
+    operator accounts, and partial-window warnings) are summarised into a
+    short `notes_preview` so we don't leak infrastructure details to clients.
+    """
+
+    id: str
+    name: str
+    region: str
+    origin_area: str
+    destination_airport: str
+    status: DoorToDoorCorridorStatus
+    verified_at: str | None = None
+    notes_preview: str = ""
+    both_legs: bool = False
+    coverage_has_nearby_stops: bool = False
+    coverage_service_by_date: bool | Literal["limited_window", "limited"] = False
+    airport_search_terms: list[str] = Field(default_factory=list)
+
+
+class DoorToDoorCorridorsOut(BaseModel):
+    """List of corridors the product currently advertises real data for.
+
+    Includes both `verified`/`verified_limited` corridors and any
+    `planned_blocked` that we still want to surface as "in-flight" so users
+    understand what is and is not actionable today.
+    """
+
+    items: list[DoorToDoorCorridorOut] = Field(default_factory=list)
+    verified_count: int = 0
+    planned_count: int = 0

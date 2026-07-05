@@ -1123,6 +1123,83 @@ def test_search_response_includes_map_capabilities_with_all_canonical_keys(clien
     assert capabilities["navigation"]["why_missing"] is not None
 
 
+def test_corridors_endpoint_returns_curated_manifest(client: TestClient, monkeypatch) -> None:
+    """The /corridors endpoint serves a curated, public-safe list of all
+    real-data corridors (verified + planned_blocked) so the frontend empty
+    state can answer 'Where we have real data right now' without leaking
+    feed URLs or operator account details.
+    """
+    _set_provider_env(monkeypatch, mock=False, real=True, scrapers=False)
+    headers = _auth_headers(client, "corridors@viru.dev")
+
+    response = client.get("/api/v1/door-to-door/corridors", headers=headers)
+    assert response.status_code == 200, response.text
+    body = response.json()
+
+    # Shape: list of curated items + counts.
+    assert "items" in body and isinstance(body["items"], list)
+    assert "verified_count" in body and "planned_count" in body
+    assert body["verified_count"] >= 2  # Treviso + Málaga are verified
+    assert body["verified_count"] + body["planned_count"] == len(body["items"])
+
+    # Required curated fields on every item.
+    required_fields = {
+        "id", "name", "region", "origin_area", "destination_airport",
+        "status", "verified_at", "notes_preview",
+        "both_legs", "coverage_has_nearby_stops",
+        "coverage_service_by_date", "airport_search_terms",
+    }
+    for item in body["items"]:
+        assert required_fields.issubset(item.keys()), f"missing fields in {item}"
+        assert item["status"] in ("verified", "verified_limited", "planned_blocked")
+        assert isinstance(item["airport_search_terms"], list)
+
+    # Known corridors present (Treviso + Málaga verified, Venecia verified_limited).
+    by_id = {item["id"]: item for item in body["items"]}
+    assert "treviso_tsf_urbano" in by_id
+    assert by_id["treviso_tsf_urbano"]["destination_airport"] == "TSF"
+    assert by_id["treviso_tsf_urbano"]["both_legs"] is True
+    assert "malaga_agp_urbano" in by_id
+    assert by_id["malaga_agp_urbano"]["destination_airport"] == "AGP"
+    assert by_id["malaga_agp_urbano"]["both_legs"] is True
+
+    # notes_preview is sanitized: at most 181 chars (180 + trailing ellipsis) and never a feed URL.
+    for item in body["items"]:
+        assert len(item["notes_preview"]) <= 181
+        assert ".zip" not in item["notes_preview"]
+        assert "downloadLink" not in item["notes_preview"]
+
+
+def test_corridors_endpoint_handles_missing_manifest_gracefully(client: TestClient, monkeypatch) -> None:
+    """When the manifest cannot be loaded (missing/unreadable), the endpoint
+    must return an empty list + zero counts instead of 500. The frontend
+    treats an empty list as 'no verified data right now' and falls back to
+    the existing deeplink behavior — so availability of this endpoint must
+    never abort the boot path.
+    """
+    from pathlib import Path
+
+    _set_provider_env(monkeypatch, mock=False, real=True, scrapers=False)
+    headers = _auth_headers(client, "corridors-missing@viru.dev")
+
+    # Force Path.exists to return False for the corridors manifest only.
+    original_exists = Path.exists
+
+    def _selective_exists(self):  # noqa: ANN001
+        if "gtfs_corridors.json" in str(self):
+            return False
+        return original_exists(self)
+
+    monkeypatch.setattr(Path, "exists", _selective_exists)
+
+    response = client.get("/api/v1/door-to-door/corridors", headers=headers)
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["items"] == []
+    assert body["verified_count"] == 0
+    assert body["planned_count"] == 0
+
+
 def test_history_tolerates_corrupted_summary_json(client: TestClient, monkeypatch) -> None:
     _set_provider_env(monkeypatch, mock=True, real=False, scrapers=False)
     headers = _auth_headers(client, "history-corrupt-json@viru.dev")

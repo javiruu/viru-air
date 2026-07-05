@@ -247,3 +247,26 @@ export type DoorToDoorMapCapability = {
   last_checked_at?: string | null;
   why_missing?: string | null;
 };
+
+export type DoorToDoorCorridorStatus = "verified" | "verified_limited" | "planned_blocked";
+
+export type DoorToDoorCorridor = {
+  id: string;
+  name: string;
+  region: string;
+  origin_area: string;
+  destination_airport: string;
+  status: DoorToDoorCorridorStatus;
+  verified_at: string | null;
+  notes_preview: string;
+  both_legs: boolean;
+  coverage_has_nearby_stops: boolean;
+  coverage_service_by_date: boolean | "limited_window" | "limited";
+  airport_search_terms: string[];
+};
+
+export type DoorToDoorCorridorsResponse = {
+  items: DoorToDoorCorridor[];
+  verified_count: number;
+  planned_count: number;
+};

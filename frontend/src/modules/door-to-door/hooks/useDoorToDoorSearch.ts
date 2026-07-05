@@ -5,9 +5,15 @@ import { useSearchParams } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
-import { fetchDoorToDoorHistory, fetchSavedDoorToDoorLocation, searchDoorToDoor } from "@/modules/door-to-door/api";
+import {
+  fetchDoorToDoorCorridors,
+  fetchDoorToDoorHistory,
+  fetchSavedDoorToDoorLocation,
+  searchDoorToDoor,
+} from "@/modules/door-to-door/api";
 import { DEFAULT_PREFERENCES } from "@/modules/door-to-door/constants";
 import type {
+  DoorToDoorCorridor,
   DoorToDoorLocation,
   DoorToDoorPreferences,
   DoorToDoorResponse,
@@ -43,6 +49,8 @@ export function useDoorToDoorSearch() {
   const [status, setStatus] = useState<"empty" | "loading" | "success" | "partial" | "error" | "no_coverage">("empty");
   const [response, setResponse] = useState<DoorToDoorResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [corridors, setCorridors] = useState<DoorToDoorCorridor[]>([]);
+  const [corridorsLoaded, setCorridorsLoaded] = useState(false);
   const requestIdRef = useRef(0);
 
   const selectedWatch = useMemo(
@@ -80,6 +88,26 @@ export function useDoorToDoorSearch() {
       })
       .catch(() => undefined);
   }, [watchIdParam]);
+
+  // Prefetch the verified-corridor list once so the empty state can answer
+  // "Where do we have real data?" without forcing the user to run a search.
+  useEffect(() => {
+    let cancelled = false;
+    fetchDoorToDoorCorridors()
+      .then((data) => {
+        if (cancelled) return;
+        setCorridors(data.items);
+        setCorridorsLoaded(true);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // A failed fetch is non-fatal; empty state simply won't show the list.
+        setCorridorsLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     setOrigin((current) => (current.label ? current : defaultOrigin));
@@ -171,5 +199,7 @@ export function useDoorToDoorSearch() {
     errorMessage,
     calculate,
     isSubmitBlocked,
+    corridors,
+    corridorsLoaded,
   };
 }

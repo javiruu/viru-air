@@ -582,7 +582,13 @@ export function DoorToDoorPanel() {
 
 
 
-      {search.status === "empty" ? <DoorToDoorEmptyState hasWatch={Boolean(search.selectedWatch)} /> : null}
+      {search.status === "empty" ? (
+        <DoorToDoorEmptyState
+          hasWatch={Boolean(search.selectedWatch)}
+          corridors={search.corridors}
+          corridorsLoaded={search.corridorsLoaded}
+        />
+      ) : null}
       {search.status === "loading" ? <DoorToDoorLoadingState /> : null}
       {search.status === "error" ? <DoorToDoorErrorState message={search.errorMessage} onRetry={search.calculate} /> : null}
       {search.status === "no_coverage" ? (
