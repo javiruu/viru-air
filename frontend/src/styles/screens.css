@@ -12696,6 +12696,18 @@ textarea::placeholder {
   z-index: 1;
 }
 
+.module-inline-status {
+  margin: -0.18rem 0 0;
+  color: var(--dashboard-muted-tone);
+  font-size: 0.86rem;
+  line-height: 1.42;
+  z-index: 1;
+}
+
+.module-inline-status-warning {
+  color: color-mix(in srgb, var(--color-warning-text) 78%, var(--ink));
+}
+
 .module-actions {
   display: flex;
   gap: 0.56rem;
