@@ -8,41 +8,26 @@ import { getDashboardFeaturedNews } from "@/data/dashboardNews";
 import { useI18n } from "@/i18n";
 import { useFtueHint } from "@/lib/ftue";
 import { trackUxEvent } from "@/lib/uxTracking";
-import { DashboardContextCards } from "@/modules/dashboard/DashboardContextCards";
-import {
-  dismissFoundForYouKey,
-  getFoundForYouSuggestion,
-  loadDismissedFoundForYouKey,
-} from "@/modules/dashboard/found-for-you";
-import { DashboardNextActionCard } from "@/modules/dashboard/DashboardNextActionCard";
 import { DashboardAccessSwitch } from "@/modules/dashboard/dashboard-access-switch";
-import {
-  pickDashboardNextBestAction,
-  type DashboardHistoryRow,
-  type DashboardNotificationSummary,
-} from "@/modules/dashboard/next-best-action";
-import {
-  dismissResumeSearchSnapshot,
-  loadResumeSearchSnapshot,
-  type ResumeSearchSnapshot,
-} from "@/modules/quick-search/resume-search";
 import { apiFetch } from "@/modules/shared/api";
 import { trackEvent } from "@/modules/shared/analytics";
 
 type Me = { id: string; email: string; locale: string; is_admin: boolean };
-type Watch = {
-  id: string;
-  origin_iata: string;
-  destination_iata: string;
-  travel_date_local: string;
-  target_price?: number | null;
-  status: string;
-};
+type Watch = { id: string; origin_iata: string; destination_iata: string; status: string };
 type Note = { id: string; title: string; body: string; created_at: string; updated_at: string };
 
 type BackendBanner = {
   severity: "warning" | "error";
   message: string;
+};
+
+type DashboardNotificationSummary = {
+  total: number;
+  unread: number;
+  price: number;
+  security: number;
+  digest: number;
+  worker: number;
 };
 
 type SuggestionBadgeType = "price" | "schedule" | "altAirport";
@@ -57,13 +42,9 @@ type DashboardSuggestion = {
 };
 
 export default function DashboardPage() {
-  const [historyRows, setHistoryRows] = useState<DashboardHistoryRow[]>([]);
   const { t, localeTag } = useI18n();
   const [me, setMe] = useState<Me | null>(null);
   const [notificationSummary, setNotificationSummary] = useState<DashboardNotificationSummary | null>(null);
-  const [previousSeenActionKey, setPreviousSeenActionKey] = useState<string | null>(null);
-  const [resumeSnapshot, setResumeSnapshot] = useState<ResumeSearchSnapshot | null>(null);
-  const [dismissedFoundKey, setDismissedFoundKey] = useState<string | null>(null);
   const [watches, setWatches] = useState<Watch[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [backendBanner, setBackendBanner] = useState<BackendBanner | null>(null);
@@ -71,13 +52,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     void trackUxEvent("dashboard_view");
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    setPreviousSeenActionKey(window.localStorage.getItem("viru_dashboard_seen_action"));
-    setResumeSnapshot(loadResumeSearchSnapshot());
-    setDismissedFoundKey(loadDismissedFoundForYouKey());
   }, []);
   const [noteDraft, setNoteDraft] = useState({ title: "", body: "" });
   const [noteActiveId, setNoteActiveId] = useState<string | null>(null);
@@ -95,22 +69,9 @@ export default function DashboardPage() {
       setWatches(watchData);
       setNotes(noteData);
       setBackendBanner(null);
-      const [historyResult, notificationResult] = await Promise.allSettled([
-        watchData.length > 0
-          ? apiFetch<DashboardHistoryRow[]>("/prices/history/batch", {
-              method: "POST",
-              body: JSON.stringify({
-                watch_ids: watchData.map((watch) => watch.id),
-                max_rows: 5000,
-              }),
-            })
-          : Promise.resolve([]),
-        apiFetch<DashboardNotificationSummary>("/notifications/summary"),
-      ]);
-      setHistoryRows(historyResult.status === "fulfilled" ? historyResult.value : []);
-      setNotificationSummary(notificationResult.status === "fulfilled" ? notificationResult.value : null);
+      const notificationData = await apiFetch<DashboardNotificationSummary>("/notifications/summary").catch(() => null);
+      setNotificationSummary(notificationData);
     } catch {
-      setHistoryRows([]);
       setNotificationSummary(null);
       const fallback = t("dashboard.banner.warmMessage");
       setBackendBanner({
@@ -283,46 +244,10 @@ export default function DashboardPage() {
   const hasPersonalSuggestions = watches.length > 0 || notes.length >= 2;
   const locale = me?.locale?.toUpperCase() || "ES";
   const unreadAlertsCount = notificationSummary?.unread ?? 0;
-  const nextBestAction = useMemo(
-    () =>
-      pickDashboardNextBestAction({
-        watches,
-        historyRows,
-        notificationSummary: null,
-        seenActionKey: previousSeenActionKey,
-      }),
-    [historyRows, previousSeenActionKey, watches],
-  );
+  const hasOpportunity = Boolean(topSuggestion);
   const heroStatus = t("dashboard.hero.status", { count: watches.length, activity: activityLabel });
+  const heroCtaHref = "/quick-search";
   const featuredNews = useMemo(() => getDashboardFeaturedNews(localeTag), [localeTag]);
-  const foundForYou = useMemo(
-    () =>
-      getFoundForYouSuggestion({
-        watches,
-        historyRows,
-        resumeSnapshot,
-        dismissedKey: dismissedFoundKey,
-      }),
-    [dismissedFoundKey, historyRows, resumeSnapshot, watches],
-  );
-  const rememberSeenAction = useCallback((actionKey: string) => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem("viru_dashboard_seen_action", actionKey);
-  }, []);
-  const handleDismissFound = useCallback(() => {
-    if (!foundForYou) return;
-    dismissFoundForYouKey(foundForYou.key);
-    setDismissedFoundKey(foundForYou.key);
-  }, [foundForYou]);
-  const handleDismissResume = useCallback(() => {
-    if (!resumeSnapshot) return;
-    dismissResumeSearchSnapshot(resumeSnapshot.key);
-    setResumeSnapshot(null);
-  }, [resumeSnapshot]);
-
-  useEffect(() => {
-    rememberSeenAction(nextBestAction.key);
-  }, [nextBestAction.key, rememberSeenAction]);
 
   return (
     <main className="shell dashboard-shell" id="main-content">
@@ -336,18 +261,45 @@ export default function DashboardPage() {
                 <DashboardAccessSwitch />
               </div>
               <div className="dashboard-hero-highlight">
-                <DashboardNextActionCard
-                  action={nextBestAction}
-                  locale={localeTag}
-                  onAction={(action) => {
-                    trackEvent("dashboard_next_action_click", {
-                      area: "dashboard",
-                      source: "hero",
-                      kind: action.kind,
-                    });
-                  }}
-                  t={t}
-                />
+                {watches.length === 0 ? (
+                  <div className="hero-empty">
+                    <strong>{t("dashboard.hero.onboardingTitle")}</strong>
+                    <p>{t("dashboard.hero.onboardingBody")}</p>
+                  </div>
+                ) : hasOpportunity && topSuggestion ? (
+                  <div className="hero-opportunity">
+                    <div>
+                      <span className="hero-label">{t("dashboard.hero.opportunityRouteLabel")}</span>
+                      <strong>{topSuggestion.title}</strong>
+                      <p>{topSuggestion.detail}</p>
+                    </div>
+                    <div className="hero-opportunity-metrics">
+                      <div>
+                        <span className="hero-label">{t("dashboard.hero.opportunityPriceLabel")}</span>
+                        <strong>{t("dashboard.hero.opportunityValueUnknown")}</strong>
+                      </div>
+                      <div>
+                        <span className="hero-label">{t("dashboard.hero.opportunityDeltaLabel")}</span>
+                        <strong>{t("dashboard.hero.opportunityValueUnknown")}</strong>
+                      </div>
+                      <span className="status-pill success">{t("dashboard.hero.opportunityBadge")}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="hero-empty">
+                    <strong>{t("dashboard.hero.noOpportunityTitle")}</strong>
+                    <p>{t("dashboard.hero.noOpportunityBody")}</p>
+                  </div>
+                )}
+              </div>
+              <div className="dashboard-hero-actions">
+                <Link
+                  href={heroCtaHref}
+                  className="btn-primary"
+                  onClick={() => trackEvent("dashboard_click_hero_cta", { area: "dashboard", source: "hero" })}
+                >
+                  {t("dashboard.hero.ctaExplore")}
+                </Link>
               </div>
             </div>
             <div className="dashboard-hero-side">
@@ -450,15 +402,6 @@ export default function DashboardPage() {
           </div>
         </section>
       ) : null}
-
-      <DashboardContextCards
-        foundForYou={foundForYou}
-        locale={localeTag}
-        onDismissFound={handleDismissFound}
-        onDismissResume={handleDismissResume}
-        resumeSnapshot={resumeSnapshot}
-        t={t}
-      />
 
       <section className="dashboard-section">
         <div className="dashboard-section-head">
