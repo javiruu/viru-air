@@ -29,6 +29,7 @@ from app.infrastructure.providers.easyjet_public_availability import (
     extract_public_availability_flights,
 )
 from app.infrastructure.providers._captcha import WafRule, detect_captcha_kind
+from app.infrastructure.providers._session_factory import build_session_kwargs
 
 _DEFAULT_BASE_URL: Final = "https://www.easyjet.com"
 _DEFAULT_FLIGHT_CONNECTIONS_URL: Final = "https://flightconnections.easyjet.com"
@@ -102,8 +103,17 @@ class EasyJetProvider(FlightProvider):
             impersonate or os.getenv(_IMPERSONATE_ENV_VAR, _DEFAULT_IMPERSONATE)
         ).strip() or _DEFAULT_IMPERSONATE
         try:
-            self._session = requests.Session(impersonate=impersonate_version)
+            session_kwargs = build_session_kwargs(
+                impersonate_env=_IMPERSONATE_ENV_VAR,
+                extra_fp_env="EASYJET_EXTRA_FP",
+                proxy_env="EASYJET_PROXY",
+                ja3_env="EASYJET_JA3",
+            )
+            session_kwargs["impersonate"] = impersonate_version
+            self._session = requests.Session(**session_kwargs)
         except TypeError:
+            # stdlib ``requests`` (test doubles / curl_cffi import failure):
+            # drop curl_cffi-only kwargs and fall back to a vanilla pool.
             self._session = requests.Session()
             adapter = HTTPAdapter(pool_connections=_PROVIDER_POOL_SIZE, pool_maxsize=_PROVIDER_POOL_SIZE)
             self._session.mount("https://", adapter)

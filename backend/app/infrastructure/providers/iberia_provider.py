@@ -22,6 +22,7 @@ from app.infrastructure.providers.iberia_public_availability import (
     extract_public_availability_flights,
 )
 from app.infrastructure.providers._captcha import WafRule, detect_captcha_kind
+from app.infrastructure.providers._session_factory import build_session_kwargs
 
 _DEFAULT_BASE_URL: Final = "https://www.iberia.com"
 _DEFAULT_API_BASE_URL: Final = "https://ibisservices.iberia.com/api"
@@ -81,8 +82,18 @@ class IberiaProvider(FlightProvider):
             impersonate or os.getenv(_IMPERSONATE_ENV_VAR, _DEFAULT_IMPERSONATE)
         ).strip() or _DEFAULT_IMPERSONATE
         try:
-            self._session = requests.Session(impersonate=impersonate_version)
+            session_kwargs = build_session_kwargs(
+                impersonate_env=_IMPERSONATE_ENV_VAR,
+                extra_fp_env="IBERIA_EXTRA_FP",
+                proxy_env="IBERIA_PROXY",
+                ja3_env="IBERIA_JA3",
+            )
+            # Honour the explicit ``impersonate`` ctor kwarg over the env var.
+            session_kwargs["impersonate"] = impersonate_version
+            self._session = requests.Session(**session_kwargs)
         except TypeError:
+            # stdlib ``requests`` (test doubles / curl_cffi import failure):
+            # drop curl_cffi-only kwargs and fall back to a vanilla pool.
             self._session = requests.Session()
             adapter = HTTPAdapter(pool_connections=_PROVIDER_POOL_SIZE, pool_maxsize=_PROVIDER_POOL_SIZE)
             self._session.mount("https://", adapter)
