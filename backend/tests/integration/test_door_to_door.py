@@ -1266,3 +1266,99 @@ def test_history_tolerates_corrupted_summary_json(client: TestClient, monkeypatc
     assert target["recommended_label"] is None
     assert target["total_price_min"] is None
     assert target["total_price_max"] is None
+
+
+# ── Fase 12: Eco-route ──
+
+
+def test_eco_route_enrichment_populates_co2_on_search_response(client: TestClient, monkeypatch) -> None:
+    """Eco route: search response surfaces per-leg co2_kg and per-option total_co2_kg.
+
+    With mock enabled, legs from the mock provider carry distance data, so
+    every option with measurable legs must surface a non-null total_co2_kg
+    and the per-leg co2_kg values must sum to the option total.
+    """
+    _set_provider_env(monkeypatch, mock=True, real=False, scrapers=False)
+    headers = _auth_headers(client, "eco-enrich@viru.dev")
+    watch_id = _create_watch(client, headers)
+
+    response = client.post("/api/v1/door-to-door/search", json=_search_payload(watch_id), headers=headers)
+    assert response.status_code == 200, response.text
+    body = response.json()
+
+    # Any leg (ground OR flight) with distance/duration seeds the estimate.
+    # The mock provider\'s flight legs carry duration_minutes, so this catches
+    # the estimate options even when their ground legs are duration-less.
+    options_with_measurable_legs = [
+        opt for opt in body["options"]
+        if any(
+            leg.get("distance_meters") is not None or leg.get("duration_minutes") is not None
+            for leg in opt["legs"]
+        )
+    ]
+    assert options_with_measurable_legs, "expected at least one option with a measurable leg"
+    for opt in options_with_measurable_legs:
+        assert opt["total_co2_kg"] is not None, f"option {opt['id']} missing total_co2_kg"
+        leg_sum = sum(leg.get("co2_kg") or 0 for leg in opt["legs"])
+        assert abs(opt["total_co2_kg"] - leg_sum) < 0.005, \
+            f"total {opt['total_co2_kg']} != sum of legs {leg_sum} on {opt['id']}"
+        # At least one leg with our estimate must surface co2_kg so the
+        # total is sourced from a real per-leg computation (no defaults).
+        estimated_legs = [leg for leg in opt["legs"] if leg.get("co2_kg") is not None]
+        assert estimated_legs, f"option {opt['id']} has total_co2_kg but no per-leg estimate"
+
+
+def test_eco_route_sort_by_lowest_emissions_ascends(client: TestClient, monkeypatch) -> None:
+    """Eco route sort: lowest_emissions must order options ascending by total_co2_kg.
+
+    Options whose total_co2_kg is None (we could not estimate any leg) sink
+    to the bottom so users only see ranked rows we can actually estimate.
+    """
+    _set_provider_env(monkeypatch, mock=True, real=False, scrapers=False)
+    headers = _auth_headers(client, "eco-sort@viru.dev")
+    watch_id = _create_watch(client, headers)
+
+    payload = _search_payload(watch_id)
+    payload["preferences"]["sort_by"] = "lowest_emissions"
+
+    response = client.post("/api/v1/door-to-door/search", json=payload, headers=headers)
+    assert response.status_code == 200, response.text
+    body = response.json()
+
+    co2_values = [opt.get("total_co2_kg") for opt in body["options"]]
+    # End-to-end contract: every None-valued entry sits AT THE END of the list
+    # (estimatable options first), and the estimatable prefix is ordered ascending.
+    last_numeric_index = max(
+        (i for i, value in enumerate(co2_values) if value is not None),
+        default=-1,
+    )
+    if last_numeric_index >= 0:
+        for index in range(last_numeric_index + 1, len(co2_values)):
+            assert co2_values[index] is None, (
+                f"lowest_emissions must sink None totals to the tail; "
+                f"found non-None at index {index}: {co2_values}"
+            )
+        for prev, current in zip(co2_values[: last_numeric_index + 1], co2_values[1 : last_numeric_index + 2]):
+            if prev is None or current is None:
+                continue
+            assert prev <= current, f"lowest_emissions not ascending: {co2_values}"
+
+
+def test_eco_route_map_capability_flips_to_available_with_options(client: TestClient, monkeypatch) -> None:
+    """Eco route capability: when search returns options, eco_route must be available.
+
+    source_type='estimate' and confidence='estimated' keep the trust contract
+    honest: orientation figures, not audited values.
+    """
+    _set_provider_env(monkeypatch, mock=True, real=False, scrapers=False)
+    headers = _auth_headers(client, "eco-cap@viru.dev")
+    watch_id = _create_watch(client, headers)
+
+    response = client.post("/api/v1/door-to-door/search", json=_search_payload(watch_id), headers=headers)
+    assert response.status_code == 200, response.text
+    body = response.json()
+    eco = body["map_capabilities"]["eco_route"]
+    assert eco["state"] == "available"
+    assert eco["source_type"] == "estimate"
+    assert eco["confidence"] == "estimated"
+    assert eco["why_missing"] is None

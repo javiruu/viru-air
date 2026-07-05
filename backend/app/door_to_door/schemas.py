@@ -9,7 +9,7 @@ DoorToDoorCompleteness = Literal["full", "partial_actionable", "exploratory"]
 DoorToDoorDeepLinkKind = Literal["directions", "provider_search", "booking"]
 DoorToDoorConfidence = Literal["live", "cached", "estimated", "deeplink", "unavailable"]
 DoorToDoorLocationType = Literal["city", "address", "station", "saved_location", "airport", "airport_only"]
-DoorToDoorSortBy = Literal["best_balance", "cheapest", "fastest", "fewest_changes"]
+DoorToDoorSortBy = Literal["best_balance", "cheapest", "fastest", "fewest_changes", "lowest_emissions"]
 DoorToDoorLuggage = Literal["backpack", "cabin", "checked"]
 DoorToDoorMode = Literal["bus", "train", "rideshare", "shuttle", "taxi", "car", "walking", "flight"]
 DoorToDoorSuggestionSourceType = Literal["local_static", "mock", "api", "open_data"]
@@ -132,6 +132,7 @@ class DoorToDoorLegOut(BaseModel):
     booking_url: str | None = None
     source_type: DoorToDoorSourceType | None = None
     confidence: DoorToDoorConfidence | None = None
+    co2_kg: float | None = Field(default=None, ge=0)
     actions: list[DoorToDoorActionOut] = Field(default_factory=list)
 
     model_config = {"populate_by_name": True}
@@ -171,6 +172,7 @@ class DoorToDoorOptionOut(BaseModel):
     is_recommended: bool = False
     is_extended: bool = False
     completeness: DoorToDoorCompleteness = "exploratory"
+    total_co2_kg: float | None = Field(default=None, ge=0)
     deep_link: DoorToDoorDeepLinkOut | None = None
     price: DoorToDoorPriceOut | None = None
     trust_copy: str | None = None
