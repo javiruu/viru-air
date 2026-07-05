@@ -79,10 +79,15 @@ test("watchlist i18n exposes trendPercentDelta in es + en", () => {
   assert.match(en, /trendPercentDelta: ".*% vs periodo anterior"/, "missing ES copy");
 });
 
-test("Dashboard page keeps unread alerts out of the hero and exposes them inside the alerts card", () => {
+test("Dashboard page restores the historical quick-search hero and keeps unread alerts inside the alerts card", () => {
   const source = read("app/(private)/dashboard/page.tsx");
+  assert.match(source, /const heroCtaHref = ["']\/quick-search["']/, "hero CTA must point to quick search");
+  assert.match(source, /dashboard_click_hero_cta/, "missing historical hero CTA tracking");
+  assert.match(source, /dashboard-hero-actions/, "missing historical hero actions block");
+  assert.match(source, /hero-empty/, "missing historical hero empty state");
+  assert.match(source, /hero-opportunity/, "missing historical hero opportunity state");
+  assert.doesNotMatch(source, /DashboardNextActionCard/, "next-best-action card must not replace the hero quick-search CTA");
   assert.match(source, /const unreadAlertsCount = notificationSummary\?\.unread \?\? 0/, "missing compact unread count");
-  assert.match(source, /notificationSummary:\s*null/, "hero next-best action must not promote unread alerts");
   assert.match(source, /unreadAlertsCount\s*>\s*0/, "missing unread count guard");
   assert.match(source, /module-inline-status module-inline-status-warning/, "unread alert copy should live as compact card text");
   assert.doesNotMatch(source, /unread-alerts-banner/, "legacy custom class must be gone");
@@ -94,7 +99,8 @@ test("Dashboard page keeps unread alerts out of the hero and exposes them inside
     "missing title i18n lookup with count",
   );
   const heroSection = source.slice(source.indexOf("<section className=\"dashboard-hero-state\""), source.indexOf("<section className=\"dashboard-section dashboard-section-manage\""));
-  assert.doesNotMatch(heroSection, /unreadAlertsCount|dashboard\.nextAction\.messages\.unreadAlerts/, "hero must not render unread-alerts copy");
+  assert.match(heroSection, /href=\{heroCtaHref\}/, "hero must render the quick-search CTA");
+  assert.doesNotMatch(heroSection, /unreadAlertsCount|dashboard\.nextAction\.messages\.unreadAlerts|DashboardNextActionCard/, "hero must not render unread alerts or next-best-action");
 });
 
 test("dashboard i18n keeps the pre-existing unreadAlerts / viewAlerts copy (no new keys added)", () => {
