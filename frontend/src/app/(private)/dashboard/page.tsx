@@ -282,15 +282,16 @@ export default function DashboardPage() {
 
   const hasPersonalSuggestions = watches.length > 0 || notes.length >= 2;
   const locale = me?.locale?.toUpperCase() || "ES";
+  const unreadAlertsCount = notificationSummary?.unread ?? 0;
   const nextBestAction = useMemo(
     () =>
       pickDashboardNextBestAction({
         watches,
         historyRows,
-        notificationSummary,
+        notificationSummary: null,
         seenActionKey: previousSeenActionKey,
       }),
-    [historyRows, notificationSummary, previousSeenActionKey, watches],
+    [historyRows, previousSeenActionKey, watches],
   );
   const heroStatus = t("dashboard.hero.status", { count: watches.length, activity: activityLabel });
   const featuredNews = useMemo(() => getDashboardFeaturedNews(localeTag), [localeTag]);
@@ -397,6 +398,11 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <p className="module-desc">{t("dashboard.modules.alerts.desc")}</p>
+                {unreadAlertsCount > 0 ? (
+                  <p className="module-inline-status module-inline-status-warning">
+                    {t("dashboard.nextAction.messages.unreadAlerts", { count: unreadAlertsCount })}
+                  </p>
+                ) : null}
                 <div className="module-actions">
                   <Link
                     href="/alerts"
@@ -441,33 +447,6 @@ export default function DashboardPage() {
             <button type="button" className="btn-secondary btn-compact" onClick={loadDashboard}>
               {t("dashboard.banner.retry")}
             </button>
-          </div>
-        </section>
-      ) : null}
-
-      {notificationSummary && notificationSummary.unread > 0 && nextBestAction?.kind !== "unread_alerts" ? (
-        <section
-          className="notice notice-compact notice-info section-gap"
-          role="status"
-          aria-live="polite"
-        >
-          <div>
-            <strong>{t("dashboard.nextAction.messages.unreadAlerts", { count: notificationSummary.unread })}</strong>
-            <p>{t("dashboard.nextAction.reasons.unreadAlerts")}</p>
-          </div>
-          <div className="notice-actions">
-            <Link
-              href="/notifications"
-              className="btn-secondary btn-compact"
-              onClick={() =>
-                trackEvent("dashboard_unread_alerts_banner_click", {
-                  area: "dashboard",
-                  count: notificationSummary.unread,
-                })
-              }
-            >
-              {t("dashboard.nextAction.actions.viewAlerts")}
-            </Link>
           </div>
         </section>
       ) : null}

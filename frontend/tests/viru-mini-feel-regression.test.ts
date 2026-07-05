@@ -79,22 +79,22 @@ test("watchlist i18n exposes trendPercentDelta in es + en", () => {
   assert.match(en, /trendPercentDelta: ".*% vs periodo anterior"/, "missing ES copy");
 });
 
-// ── Dashboard unread-alerts banner (reuses pre-existing nextAction keys) ──
-test("Dashboard page exposes a small unread-alerts banner when notificationSummary.unread > 0 AND next-best action isn't already showing it", () => {
+test("Dashboard page keeps unread alerts out of the hero and exposes them inside the alerts card", () => {
   const source = read("app/(private)/dashboard/page.tsx");
-  assert.match(source, /notificationSummary\s*&&/, "missing notificationSummary guard");
-  assert.match(source, /notificationSummary\.unread\s*>\s*0/, "missing unread > 0 guard");
-  assert.match(source, /nextBestAction\?\.kind\s*!==\s*["']unread_alerts["']/, "missing nextBestAction short-circuit");
-  assert.match(source, /className="[^"]*\bnotice\b[^"]*\bnotice-info\b[^"]*\bsection-gap\b[^"]*"/, "banner must reuse the standard notice pattern");
+  assert.match(source, /const unreadAlertsCount = notificationSummary\?\.unread \?\? 0/, "missing compact unread count");
+  assert.match(source, /notificationSummary:\s*null/, "hero next-best action must not promote unread alerts");
+  assert.match(source, /unreadAlertsCount\s*>\s*0/, "missing unread count guard");
+  assert.match(source, /module-inline-status module-inline-status-warning/, "unread alert copy should live as compact card text");
   assert.doesNotMatch(source, /unread-alerts-banner/, "legacy custom class must be gone");
   assert.doesNotMatch(source, /data-testid="dashboard-unread-alerts-banner"/, "unused testid must be gone");
+  assert.doesNotMatch(source, /dashboard_unread_alerts_banner_click/, "banner tracking should be gone");
   assert.match(
     source,
-    /t\(\s*["']dashboard\.nextAction\.messages\.unreadAlerts["']\s*,\s*\{\s*count:\s*notificationSummary\.unread\s*\}/,
+    /t\(\s*["']dashboard\.nextAction\.messages\.unreadAlerts["']\s*,\s*\{\s*count:\s*unreadAlertsCount\s*\}/,
     "missing title i18n lookup with count",
   );
-  assert.match(source, /t\(\s*["']dashboard\.nextAction\.reasons\.unreadAlerts["']\s*\)/, "missing body i18n lookup");
-  assert.match(source, /t\(\s*["']dashboard\.nextAction\.actions\.viewAlerts["']\s*\)/, "missing CTA i18n lookup");
+  const heroSection = source.slice(source.indexOf("<section className=\"dashboard-hero-state\""), source.indexOf("<section className=\"dashboard-section dashboard-section-manage\""));
+  assert.doesNotMatch(heroSection, /unreadAlertsCount|dashboard\.nextAction\.messages\.unreadAlerts/, "hero must not render unread-alerts copy");
 });
 
 test("dashboard i18n keeps the pre-existing unreadAlerts / viewAlerts copy (no new keys added)", () => {
