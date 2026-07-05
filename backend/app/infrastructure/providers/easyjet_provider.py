@@ -113,18 +113,21 @@ class EasyJetProvider(FlightProvider):
         return ProviderFetchResult(flights=flights, warnings=[], warnings_structured=warnings_structured)
 
     def _fetch_public_availability(self, search: _EasyJetSearch, *, timeout_ms: int) -> Mapping[str, JsonValue]:
+        time.sleep(random.uniform(0.1, 0.4))
+        # NOTE: do NOT set User-Agent here. curl_cffi's impersonate="chrome110"
+        # already pairs a realistic Chrome UA with the matching TLS fingerprint;
+        # overriding it with a barebones "Mozilla/5.0" breaks the pairing and
+        # makes Datadome flag the request as a bot.
         response = self._session.get(
             f"{self.base_url}/ejavailability/api/v16/availability/query",
             params=build_public_availability_params(self._to_public_availability_search(search)),
             timeout=max(2.0, timeout_ms / 1000),
             headers={
-                "User-Agent": "Mozilla/5.0",
                 "Accept": "application/json, text/plain, */*",
                 "Origin": self.base_url,
                 "Referer": f"{self.base_url}/en/buy/flights",
             },
         )
-        time.sleep(random.uniform(0.1, 0.4))
         response.raise_for_status()
         try:
             payload = response.json()
@@ -150,8 +153,8 @@ class EasyJetProvider(FlightProvider):
 
     def _fetch_flight_connections(self, search: _EasyJetSearch, *, timeout_ms: int) -> Mapping[str, JsonValue]:
         flight_connections_search = self._to_flight_connections_search(search)
+        time.sleep(random.uniform(0.1, 0.4))
         headers = {
-            "User-Agent": "Mozilla/5.0",
             "Accept": "application/json, text/plain, */*",
             "Origin": self.flight_connections_url,
             "Referer": f"{self.flight_connections_url}/{self.language_code.lower()}/search",
@@ -164,7 +167,6 @@ class EasyJetProvider(FlightProvider):
             timeout=max(2.0, timeout_ms / 1000),
             headers=headers,
         )
-        time.sleep(random.uniform(0.1, 0.4))
         response.raise_for_status()
         payload = response.json()
         return payload if isinstance(payload, dict) else {}

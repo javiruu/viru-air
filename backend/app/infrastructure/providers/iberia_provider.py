@@ -90,12 +90,15 @@ class IberiaProvider(FlightProvider):
         self, search: IberiaPublicAvailabilitySearch, *, timeout_ms: int
     ) -> Mapping[str, Any]:
         time.sleep(random.uniform(0.1, 0.4))
+        # NOTE: keep headers minimal here so curl_cffi's impersonate="chrome110" TLS
+        # fingerprint stays compatible with the HTTP headers it injects. Overriding
+        # User-Agent with a barebones "Mozilla/5.0" caused the request to be flagged
+        # by Iberia's WAF as a bot (mismatch against Chrome 110's TLS JA3).
         response = self._session.post(
             self._availability_url(),
             json=build_public_availability_request(search),
             timeout=max(2.0, timeout_ms / 1000),
             headers={
-                "User-Agent": "Mozilla/5.0",
                 "Accept": "application/json, text/plain, */*",
                 "Content-Type": "application/json",
                 "Origin": self.base_url,
