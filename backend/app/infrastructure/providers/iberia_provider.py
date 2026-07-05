@@ -90,6 +90,7 @@ class IberiaProvider(FlightProvider):
         # Sessions reuse cookies across calls, so the warm-up marker sticks for
         # the lifetime of the provider (matches ThreadPoolExecutor lifespan).
         self._warmed = False
+        self._warmed_browser = False
 
     def is_enabled(self) -> bool:
         return bool(self.base_url and self.api_base_url and self.authorization and self.market and self.language)
@@ -139,7 +140,7 @@ class IberiaProvider(FlightProvider):
                 "Content-Type": "application/json",
                 "Accept-Language": f"{self.language}-{self.market},{self.language};q=0.9,en;q=0.8",
                 "Origin": self.base_url,
-                "Referer": f"{self.base_url}/flights/",
+                "Referer": f"{self.base_url}/",
                 "Authorization": self.authorization,
                 "language": self.language,
                 "market": self.market,
@@ -228,13 +229,21 @@ class IberiaProvider(FlightProvider):
 
         Self-gated on ``IBERIA_USE_BROWSER_WARMUP`` so direct callers (tests,
         future code paths) are a no-op when the operator hasn't enabled the
-        headless path. Failures (Playwright missing, Chromium binary missing,
-        target unreachable) are swallowed so the curl warmup and the eventual
+        headless path. Idempotent on ``_warmed_browser`` so a future direct
+        caller can't respawn Playwright per request — Akamai's sensor JS is
+        expensive and the cookie it stamps is reusable until it expires.
+
+        Failures (Playwright missing, Chromium binary missing, target
+        unreachable) are swallowed so the curl warmup and the eventual
         availability call keep working with whatever they have. Cookies
-        harvested from the headless navigation are merged into the curl_cffi
-        session's jar.
+        harvested from the headless navigation are domain-aware
+        (``http.cookiejar.Cookie`` with the Playwright-reported domain) so
+        curl_cffi's stdlib jar keeps them in the right slot and sends them
+        on subsequent matching requests.
         """
         if os.getenv("IBERIA_USE_BROWSER_WARMUP") not in {"1", "true", "yes", "on"}:
+            return
+        if self._warmed_browser:
             return
         try:
             from app.infrastructure.providers._browser_warmup import (
@@ -245,6 +254,7 @@ class IberiaProvider(FlightProvider):
             return
         cookies = harvest_cookies_with_browser(base_url, referer_path=referer_path)
         merge_cookies_into_session(self._session, cookies)
+        self._warmed_browser = True
 
     def _availability_url(self) -> str:
         path = self.availability_path if self.availability_path.startswith("/") else f"/{self.availability_path}"
