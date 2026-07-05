@@ -221,7 +221,7 @@ class DoorToDoorSearchService:
         # capability card. Has no side effects on provider ordering once we
         # have completed arbitration, so it runs at the tail of the merge
         # pipeline just before scoring/sorting.
-        options = self._enrich_eco_route(options)
+        options = self._enrich_eco_route(options, passengers=request.preferences.passengers)
         # Fase 6: compose cross-provider options (best outbound + best inbound)
         composite = self._compose_cross_provider(options, flight, query)
         if composite:
@@ -389,10 +389,15 @@ class DoorToDoorSearchService:
 
         return filtered, warnings
 
-    def _enrich_eco_route(self, options: list[DoorToDoorOptionOut]) -> list[DoorToDoorOptionOut]:
+    def _enrich_eco_route(
+        self,
+        options: list[DoorToDoorOptionOut],
+        *,
+        passengers: int = 1,
+    ) -> list[DoorToDoorOptionOut]:
         """Estimate per-leg and per-option CO2e in kg based on distance or duration.
 
-        Priority per leg:
+        Per-leg math (per passenger):
         1. `distance_meters` when known — direct km × factor.
         2. `duration_minutes` × mode-average km/h fallback — used when providers
            only emit schedule data (e.g. GTFS `cached` flights, deeplink-only
@@ -400,16 +405,31 @@ class DoorToDoorSearchService:
         3. Skip — too little info to be honest. We refuse to surface a 0 kg
            estimate that would falsely look clean.
 
-        The per-option total is the sum of legs we could estimate. If at least
-        one leg in the itinerary was estimated, we surface the total; otherwise
-        we leave `total_co2_kg=None` so the FE doesn't see a precise-by-zero
-        number that means "we know it's zero".
+        Per-option total scales with `passengers` so a 4-pax trip reports the
+        full party footprint, not a single-pax slice. `leg.co2_kg` stays per
+        passenger — the legs sum to a per-pax subtotal, multiplied at the
+        option boundary — so analytics can show both breakdowns cheaply.
+
+        We surface two complementary boundaries on the option:
+          * `co2_per_pax_kg` = leg_sum_per_pax (single-passenger footprint)
+          * `total_co2_kg` = co2_per_pax_kg × passengers (full-party footprint)
+        Both default to None so callers that never asked for an eco estimate
+        see no change in payload shape.
+
+        If at least one leg was estimable, we surface both fields; otherwise
+        both stay None so the FE doesn't render a precise-by-zero number
+        that means "we know it's zero".
         """
         if not options:
             return options
+        # Pydantic `DoorToDoorPreferences.passengers = ge=1, le=9` already
+        # clamps the value, so we trust the input here. Defense-in-depth
+        # `max(1, int(...))` was redundant and hid clamp changes from the
+        # caller — dropped it.
+        party = int(passengers)
         enriched: list[DoorToDoorOptionOut] = []
         for option in options:
-            leg_total_kg = 0.0
+            leg_total_per_pax_kg = 0.0
             estimated_any = False
             new_legs: list[DoorToDoorLegOut] = []
             for leg in option.legs:
@@ -418,17 +438,27 @@ class DoorToDoorSearchService:
                     new_legs.append(leg.model_copy())
                     continue
                 estimated_any = True
-                leg_total_kg += kg
+                leg_total_per_pax_kg += kg
                 new_legs.append(leg.model_copy(update={"co2_kg": round(kg, 3)}))
-            total = round(leg_total_kg, 3) if estimated_any else None
-            enriched.append(option.model_copy(update={"legs": new_legs, "total_co2_kg": total}))
+            if estimated_any:
+                # Round to 2 decimals: orientation figures, not audited, and
+                # it dampens cumulative floating-point drift when a 4-pax
+                # trip multiplies a multi-leg per-pax subtotal.
+                co2_per_pax = round(leg_total_per_pax_kg, 2)
+                total = round(co2_per_pax * party, 2)
+            else:
+                co2_per_pax = None
+                total = None
+            enriched.append(
+                option.model_copy(
+                    update={
+                        "legs": new_legs,
+                        "total_co2_kg": total,
+                        "co2_per_pax_kg": co2_per_pax,
+                    }
+                )
+            )
         return enriched
-
-        # NOTE: legs are copied with model_copy(update={"co2_kg": ...}) rather than
-        # a bare model_copy() so the existing `actions` list is preserved by reference
-        # (Pydantic shallow-copies the parent, leaving nested lists shared). Update-only
-        # mode keeps the per-leg copy explicit and avoids hidden aliasing if downstream
-        # code ever mutates a leg's actions list.
 
     @staticmethod
     def _estimate_leg_co2_kg(leg: DoorToDoorLegOut) -> float | None:
