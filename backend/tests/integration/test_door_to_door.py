@@ -82,6 +82,10 @@ def _open_test_db_session():
 
 
 def test_mock_active_returns_mock_options_with_warning(client: TestClient, monkeypatch) -> None:
+    """With mock on, the mock provider still surfaces estimated options.
+    Key-less deeplinks (commit 8d96da2) are also always-on, so the
+    response now mixes mock options with deeplink fallback options.
+    """
     _set_provider_env(monkeypatch, mock=True, real=False, scrapers=False)
     headers = _auth_headers(client)
     watch_id = _create_watch(client, headers)
@@ -91,13 +95,31 @@ def test_mock_active_returns_mock_options_with_warning(client: TestClient, monke
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["options"]
-    assert any(warning["code"] == "NO_REAL_PROVIDER_COVERAGE" for warning in body["warnings"])
     assert any(warning["code"] == "ESTIMATED_MOCK_DATA" for warning in body["warnings"])
-    assert all(option["confidence"] == "estimated" for option in body["options"])
-    assert all(option["source_types"] == ["estimate"] for option in body["options"])
+
+    # Mock options retain the old source_types=["estimate"] + estimated confidence contract.
+    mock_options = [option for option in body["options"] if option["source_types"] == ["estimate"]]
+    assert mock_options, "expected at least one mock option with source_types=['estimate']"
+    assert all(option["confidence"] == "estimated" for option in mock_options)
+
+    # Key-less deeplinks also surface as clickable external fallbacks.
+    # They may emit source_type "deeplink", "maps", or "external_deeplink".
+    deeplink_options = [
+        option
+        for option in body["options"]
+        if any(st in {"deeplink", "maps", "external_deeplink"} for st in option["source_types"])
+    ]
+    assert deeplink_options, "expected deeplink fallback options to surface even with mock enabled"
 
 
-def test_mock_disabled_without_real_returns_no_coverage(client: TestClient, monkeypatch) -> None:
+def test_mock_disabled_without_real_falls_back_to_deeplinks(client: TestClient, monkeypatch) -> None:
+    """Without mock and without any real API keys, the response no longer
+    returns an empty list. Key-less deeplinks (commit 8d96da2) are the
+    user's guaranteed "real out" action: they always surface as clickable
+    external fallback options, even when there is no real or mock
+    provider coverage. This test replaces the pre-deeplinks "no coverage"
+    path that asserted body["options"] == [].
+    """
     _set_provider_env(monkeypatch, mock=False, real=False, scrapers=False)
     headers = _auth_headers(client, "no-real@viru.dev")
     watch_id = _create_watch(client, headers)
@@ -106,9 +128,18 @@ def test_mock_disabled_without_real_returns_no_coverage(client: TestClient, monk
 
     assert response.status_code == 200, response.text
     body = response.json()
-    assert body["options"] == []
-    assert any(warning["code"] == "NO_REAL_PROVIDER_COVERAGE" for warning in body["warnings"])
-    assert any(warning["code"] == "NO_COVERAGE" for warning in body["warnings"])
+    assert body["options"], "expected deeplink options to surface without real or mock providers"
+    # Key-less deeplinks use a few source_type values: "deeplink" (BlaBlaCar,
+    # GoOpti), "maps" (Google Maps directions), "external_deeplink" (other
+    # external links). All count as the user's guaranteed fallback action.
+    deeplink_source_types = {"deeplink", "maps", "external_deeplink"}
+    assert all(
+        any(st in deeplink_source_types for st in option["source_types"])
+        for option in body["options"]
+    ), body["options"]
+    # Deeplinks are by design price-less (the user books on the external site).
+    assert all(option["total_price_min"] is None for option in body["options"])
+    assert all(option["total_price_max"] is None for option in body["options"])
 
 
 def test_deeplink_provider_returns_booking_url_without_price(client: TestClient, monkeypatch) -> None:
@@ -316,12 +347,19 @@ def test_airport_only_omits_arrival_ground_leg(client: TestClient, monkeypatch) 
 
 
 def test_source_metadata_is_present(client: TestClient, monkeypatch) -> None:
+    """Find the estimate option explicitly. With key-less deeplinks
+    always-on (commit 8d96da2), the response mixes mock options
+    (source_type=estimate) with deeplink options (source_type=deeplink);
+    pinning options[0] would now point to a deeplink.
+    """
     _set_provider_env(monkeypatch, mock=True, real=False, scrapers=False)
     headers = _auth_headers(client, "source@viru.dev")
     watch_id = _create_watch(client, headers)
 
     body = client.post("/api/v1/door-to-door/search", json=_search_payload(watch_id), headers=headers).json()
-    source = body["options"][0]["sources"][0]
+    estimate_options = [opt for opt in body["options"] if "estimate" in opt["source_types"]]
+    assert estimate_options, "expected at least one mock/estimate option in response"
+    source = estimate_options[0]["sources"][0]
 
     assert source["provider"]
     assert source["source_provider"]

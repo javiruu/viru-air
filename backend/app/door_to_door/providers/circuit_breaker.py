@@ -24,7 +24,7 @@ import asyncio
 import logging
 import threading
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Awaitable, Callable, TypeVar
 
 logger = logging.getLogger("app.door_to_door.circuit_breaker")
@@ -69,7 +69,13 @@ class _CircuitState:
 
     def trip(self, *, now_monotonic: float, threshold: int) -> None:
         self.consecutive_failures += 1
-        if self.opened_at_monotonic is None and self.consecutive_failures >= threshold:
+        if self.consecutive_failures >= threshold:
+            # Re-arm the recovery window on EVERY trip. This handles two
+            # cases uniformly: (a) the first trip from closed state, and
+            # (b) a failed half-open probe — otherwise a persistently
+            # failing provider would be probed every recovery_seconds
+            # forever (thrashing). The success path still resets the
+            # counter + opened_at via `reset()`.
             self.opened_at_monotonic = now_monotonic
 
     def half_open(self, *, now_monotonic: float, recovery_seconds: float) -> bool:
