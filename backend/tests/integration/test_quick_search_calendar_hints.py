@@ -10,6 +10,9 @@ class _CalendarHintsProvider:
     def __init__(self) -> None:
         self.calls = 0
 
+    def provider_ids(self) -> list[str]:
+        return ["fake"]
+
     def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000):
         self.calls += 1
         day = int(travel_date.split("-")[2])
@@ -39,6 +42,9 @@ class _MalformedCalendarHintFlight:
 
 
 class _CalendarHintsInvalidPriceProvider:
+    def provider_ids(self) -> list[str]:
+        return ["fake"]
+
     def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000):
         return [_MalformedCalendarHintFlight()]
 
@@ -49,7 +55,7 @@ def test_quick_search_calendar_hints_returns_month_with_buckets_and_cache(client
         search_api._CALENDAR_HINTS_CACHE.clear()
 
     fake_provider = _CalendarHintsProvider()
-    monkeypatch.setattr(search_api, "provider", fake_provider)
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
 
     payload = {
         "origin_iata": "MAD",
@@ -93,7 +99,7 @@ def test_quick_search_calendar_hints_country_scope_supports_aggregation_modes(cl
         search_api._CALENDAR_HINTS_CACHE.clear()
 
     fake_provider = _CalendarHintsProvider()
-    monkeypatch.setattr(search_api, "provider", fake_provider)
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
 
     base_payload = {
         "origin_iata": ["MAD", "BCN", "AGP"],
@@ -167,7 +173,7 @@ def test_quick_search_calendar_hints_supports_guideline_bucket_mode(client: Test
         search_api._CALENDAR_HINTS_CACHE.clear()
 
     fake_provider = _CalendarHintsProvider()
-    monkeypatch.setattr(search_api, "provider", fake_provider)
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
 
     base_payload = {
         "origin_iata": "MAD",
@@ -214,7 +220,8 @@ def test_quick_search_calendar_hints_skips_invalid_provider_prices(client: TestC
     with search_api._CALENDAR_HINTS_CACHE_LOCK:
         search_api._CALENDAR_HINTS_CACHE.clear()
 
-    monkeypatch.setattr(search_api, "provider", _CalendarHintsInvalidPriceProvider())
+    fake_provider = _CalendarHintsInvalidPriceProvider()
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
 
     response = client.post(
         "/api/v1/search/quick/calendar-hints",

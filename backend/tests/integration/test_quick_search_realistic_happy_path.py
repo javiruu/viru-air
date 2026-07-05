@@ -9,6 +9,9 @@ from tests.helpers import register_and_token
 
 
 class _FakeRealisticQuickSearchProvider:
+    def provider_ids(self) -> list[str]:
+        return ["fake"]
+
     def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object) -> list[ProviderFlight]:
         if origin == "AGP" and destination == "DUB":
             return [
@@ -31,7 +34,8 @@ class _FakeRealisticQuickSearchProvider:
 
 
 def test_quick_search_realistic_happy_path_returns_results(client: TestClient, monkeypatch) -> None:
-    monkeypatch.setattr(search_api, "provider", _FakeRealisticQuickSearchProvider())
+    fake_provider = _FakeRealisticQuickSearchProvider()
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
 
     token = register_and_token(client, email="realistic-quick-search@viru.dev")
     headers = {"Authorization": f"Bearer {token}"}

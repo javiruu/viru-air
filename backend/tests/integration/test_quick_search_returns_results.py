@@ -8,6 +8,9 @@ from app.domain.entities import ProviderFlight
 
 
 class _FakeQuickSearchProvider:
+    def provider_ids(self) -> list[str]:
+        return ["fake"]
+
     def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object) -> list[ProviderFlight]:
         if origin == "AGP" and destination == "DUB":
             return [
@@ -23,6 +26,9 @@ class _FakeQuickSearchProvider:
 
 
 class _MalformedPriceQuickSearchProvider:
+    def provider_ids(self) -> list[str]:
+        return ["fake"]
+
     def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object) -> list[ProviderFlight]:
         if origin == "AGP" and destination == "DUB":
             return [
@@ -45,7 +51,8 @@ class _MalformedPriceQuickSearchProvider:
 
 
 def test_quick_search_valid_route_returns_at_least_one_result(client: TestClient, monkeypatch) -> None:
-    monkeypatch.setattr(search_api, "provider", _FakeQuickSearchProvider())
+    fake_provider = _FakeQuickSearchProvider()
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
 
     travel_date = str(date.today() + timedelta(days=21))
     response = client.post(
@@ -70,7 +77,8 @@ def test_quick_search_valid_route_returns_at_least_one_result(client: TestClient
 
 
 def test_quick_search_skips_malformed_provider_prices(client: TestClient, monkeypatch) -> None:
-    monkeypatch.setattr(search_api, "provider", _MalformedPriceQuickSearchProvider())
+    fake_provider = _MalformedPriceQuickSearchProvider()
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
 
     travel_date = str(date.today() + timedelta(days=21))
     response = client.post(

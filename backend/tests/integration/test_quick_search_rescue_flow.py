@@ -109,6 +109,9 @@ class _ProviderDateRescue:
     def __init__(self, target_date: date) -> None:
         self._target = target_date
 
+    def provider_ids(self) -> list[str]:
+        return ["fake"]
+
     def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         del timeout_ms
         query_date = date.fromisoformat(travel_date)
@@ -129,6 +132,9 @@ class _ProviderDateRescue:
 
 
 class _ProviderNearbyRescue:
+    def provider_ids(self) -> list[str]:
+        return ["fake"]
+
     def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         del travel_date, timeout_ms
         if origin == "AGP" and destination == "LIS":
@@ -148,12 +154,18 @@ class _ProviderNearbyRescue:
 
 
 class _ProviderNeverRecovers:
+    def provider_ids(self) -> list[str]:
+        return ["fake"]
+
     def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         del origin, destination, travel_date, timeout_ms
         return ProviderFetchResult(flights=[], warnings=["ryanair_availability_failed_partial"])
 
 
 class _ProviderExactSuccess:
+    def provider_ids(self) -> list[str]:
+        return ["fake"]
+
     def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         del travel_date, timeout_ms
         if origin == "MAD" and destination == "BCN":
@@ -175,7 +187,8 @@ class _ProviderExactSuccess:
 def test_quick_search_rescue_date_finds_results(client: TestClient, monkeypatch) -> None:
     _CACHE.clear()
     target_date = date.today() + timedelta(days=21)
-    monkeypatch.setattr(search_api, "provider", _ProviderDateRescue(target_date))
+    fake_provider = _ProviderDateRescue(target_date)
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
     monkeypatch.setattr(search_api, "expand_search_sides", _fake_expand_search_sides)
 
     response = client.post("/api/v1/search/quick", json=_base_payload(str(target_date)))
@@ -196,7 +209,8 @@ def test_quick_search_rescue_date_finds_results(client: TestClient, monkeypatch)
 def test_quick_search_rescue_nearby_finds_results(client: TestClient, monkeypatch) -> None:
     _CACHE.clear()
     target_date = date.today() + timedelta(days=21)
-    monkeypatch.setattr(search_api, "provider", _ProviderNearbyRescue())
+    fake_provider = _ProviderNearbyRescue()
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
     monkeypatch.setattr(search_api, "expand_search_sides", _fake_expand_search_sides)
 
     response = client.post("/api/v1/search/quick", json=_base_payload(str(target_date)))
@@ -214,7 +228,8 @@ def test_quick_search_rescue_nearby_finds_results(client: TestClient, monkeypatc
 def test_quick_search_rescue_exhausted_keeps_empty_results(client: TestClient, monkeypatch) -> None:
     _CACHE.clear()
     target_date = date.today() + timedelta(days=21)
-    monkeypatch.setattr(search_api, "provider", _ProviderNeverRecovers())
+    fake_provider = _ProviderNeverRecovers()
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
     monkeypatch.setattr(search_api, "expand_search_sides", _fake_expand_search_sides)
 
     response = client.post("/api/v1/search/quick", json=_base_payload(str(target_date)))
@@ -236,7 +251,8 @@ def test_quick_search_rescue_exhausted_keeps_empty_results(client: TestClient, m
 def test_quick_search_exact_success_does_not_trigger_rescue(client: TestClient, monkeypatch) -> None:
     _CACHE.clear()
     target_date = date.today() + timedelta(days=21)
-    monkeypatch.setattr(search_api, "provider", _ProviderExactSuccess())
+    fake_provider = _ProviderExactSuccess()
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: fake_provider)
     monkeypatch.setattr(search_api, "expand_search_sides", _fake_expand_search_sides)
 
     response = client.post("/api/v1/search/quick", json=_base_payload(str(target_date)))
