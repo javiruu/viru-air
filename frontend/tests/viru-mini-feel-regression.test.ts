@@ -79,27 +79,30 @@ test("watchlist i18n exposes trendPercentDelta in es + en", () => {
   assert.match(en, /trendPercentDelta: ".*% vs periodo anterior"/, "missing ES copy");
 });
 
-// ── #8/#9/#10 Dashboard mini feel (eyebrow + buen día + última nota) ──
-test("Dashboard page wires season eyebrow + good day + latest note pill", () => {
+// ── Dashboard unread-alerts banner (reuses pre-existing nextAction keys) ──
+test("Dashboard page exposes a small unread-alerts banner when notificationSummary.unread > 0 AND next-best action isn't already showing it", () => {
   const source = read("app/(private)/dashboard/page.tsx");
-  assert.match(source, /seasonModeKey/, "missing seasonal eyebrow state");
-  assert.match(source, /upcomingWatch/, "missing good-day-to-fly data");
-  assert.match(source, /draftNote/, "missing latest-note pill data");
-  assert.match(source, /dashboard-season-eyebrow/, "missing season eyebrow class");
-  assert.match(source, /good-day-to-fly/, "missing good day block class");
-  assert.match(source, /latest-note-pill/, "missing latest note pill class");
-  assert.match(source, /dashboard\.hero\.seasonEyebrow/, "missing i18n eyebrow lookup");
+  assert.match(source, /notificationSummary\s*&&/, "missing notificationSummary guard");
+  assert.match(source, /notificationSummary\.unread\s*>\s*0/, "missing unread > 0 guard");
+  assert.match(source, /nextBestAction\?\.kind\s*!==\s*["']unread_alerts["']/, "missing nextBestAction short-circuit");
+  assert.match(source, /className="[^"]*\bnotice\b[^"]*\bnotice-info\b[^"]*\bsection-gap\b[^"]*"/, "banner must reuse the standard notice pattern");
+  assert.doesNotMatch(source, /unread-alerts-banner/, "legacy custom class must be gone");
+  assert.doesNotMatch(source, /data-testid="dashboard-unread-alerts-banner"/, "unused testid must be gone");
+  assert.match(
+    source,
+    /t\(\s*["']dashboard\.nextAction\.messages\.unreadAlerts["']\s*,\s*\{\s*count:\s*notificationSummary\.unread\s*\}/,
+    "missing title i18n lookup with count",
+  );
+  assert.match(source, /t\(\s*["']dashboard\.nextAction\.reasons\.unreadAlerts["']\s*\)/, "missing body i18n lookup");
+  assert.match(source, /t\(\s*["']dashboard\.nextAction\.actions\.viewAlerts["']\s*\)/, "missing CTA i18n lookup");
 });
 
-test("dashboard hero seasonal i18n exists in es + en", () => {
-  const en = read("i18n/domains/dashboard.ts");
-  assert.match(en, /seasonEyebrow: \{/, "missing season eyebrow structured key");
-  assert.match(en, /summer: "(?:☀️ )?Modo veraniego"/, "missing ES summer copy");
-  assert.match(en, /summer: "(?:☀️ )?Summer mode"/, "missing EN summer copy");
-  assert.match(en, /winter: "(?:❄️ )?Modo invierno"/, "missing ES winter copy");
-  assert.match(en, /festive: "(?:🎉 )?Modo festivo"/, "missing ES festive copy");
-  assert.match(en, /goodDayToFly:/, "missing good-day-to-fly copy");
-  assert.match(en, /latestNotePill:/, "missing latest-note pill copy");
+test("dashboard i18n keeps the pre-existing unreadAlerts / viewAlerts copy (no new keys added)", () => {
+  const i18n = read("i18n/domains/dashboard.ts");
+  assert.match(i18n, /unreadAlerts:\s*"Tienes \{count\} alertas sin leer\."/, "missing ES unreadAlerts copy");
+  assert.match(i18n, /unreadAlerts:\s*"You have \{count\} unread alerts\."/, "missing EN unreadAlerts copy");
+  assert.match(i18n, /viewAlerts:\s*"Ver alertas"/, "missing ES viewAlerts CTA");
+  assert.match(i18n, /viewAlerts:\s*"View alerts"/, "missing EN viewAlerts CTA");
 });
 
 // ── #11/#12 Door-to-Door timezone pill + known-route tag ──────────────
@@ -123,15 +126,12 @@ test("doorToDoor i18n exposes timezone + known-route copy in es + en", () => {
 });
 
 // ── Cross-cutting CSS surface check ───────────────────────────────────
-test("components.css exposes every mini-feel surface class", () => {
+test("components.css exposes every mini-feel surface class still in use", () => {
   const css = read("styles/components.css");
   for (const cls of [
     "qs-empty-softline",
     "qs-empty-calendar-fallback",
     "trend-chip-percent",
-    "dashboard-season-eyebrow",
-    "good-day-to-fly",
-    "latest-note-pill",
     "d2d-timezone-pill",
     "d2d-known-route-tag",
     "@keyframes routeSwapFlightPath",
