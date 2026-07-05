@@ -142,27 +142,31 @@ class IberiaProvider(FlightProvider):
         # Overriding those headers with bare values breaks the pairing and lets
         # Akamai flag the request as a bot (same anti-bot pattern that blocked
         # easyJet before its warmup + UA fix).
-        response = self._session.post(
+        # Build the headers dict once so the curl path and the optional
+        # ``request_via_browser`` path share the exact same outbound signal.
+        post_headers = {
+            "Accept": "application/json, text/plain, */*",
+            "Content-Type": "application/json",
+            "Accept-Language": f"{self.language}-{self.market},{self.language};q=0.9,en;q=0.8",
+            "Origin": self.base_url,
+            "Referer": f"{self.base_url}/",
+            "Authorization": self.authorization,
+            "language": self.language,
+            "market": self.market,
+            "sec-ch-ua": _CHROME131_UA_SIG,
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "sec-fetch-dest": "empty",
+            "priority": "u=1, i",
+        }
+
+        response = self._post_with_optional_browser(
             self._availability_url(),
-            json=build_public_availability_request(search),
-            timeout=max(2.0, timeout_ms / 1000),
-            headers={
-                "Accept": "application/json, text/plain, */*",
-                "Content-Type": "application/json",
-                "Accept-Language": f"{self.language}-{self.market},{self.language};q=0.9,en;q=0.8",
-                "Origin": self.base_url,
-                "Referer": f"{self.base_url}/",
-                "Authorization": self.authorization,
-                "language": self.language,
-                "market": self.market,
-                "sec-ch-ua": _CHROME131_UA_SIG,
-                "sec-ch-ua-mobile": "?0",
-                "sec-ch-ua-platform": '"Windows"',
-                "sec-fetch-mode": "cors",
-                "sec-fetch-site": "same-origin",
-                "sec-fetch-dest": "empty",
-                "priority": "u=1, i",
-            },
+            json_body=build_public_availability_request(search),
+            headers=post_headers,
+            timeout_ms=timeout_ms,
         )
         captcha_kind = detect_captcha_kind(response, rules=_IBERIA_WAF_RULES)
         if captcha_kind:
@@ -266,6 +270,50 @@ class IberiaProvider(FlightProvider):
         cookies = harvest_cookies_with_browser(base_url, referer_path=referer_path)
         merge_cookies_into_session(self._session, cookies)
         self._warmed_browser = True
+
+    def _post_with_optional_browser(
+        self,
+        url: str,
+        *,
+        json_body: Mapping[str, Any],
+        headers: Mapping[str, str],
+        timeout_ms: int,
+    ) -> Any:
+        """Opt-in Playwright-direct POST path; falls back to curl_cffi.
+
+        Activated by ``IBERIA_USE_BROWSER_POST=1``. When the env flag is on
+        and the helper succeeds, the response object comes from a real
+        Chromium HTTP/2 stack with the freshly sensor-cooked ``_abck``
+        cookie on the same context — Akamai bot-manager can't distinguish
+        this from a real browser tab. Any failure (Playwright missing,
+        Chromium binary missing, request exception, gate off) falls through
+        to ``self._session.post`` (curl_cffi impersonate), keeping the
+        provider's runtime shape unchanged.
+        """
+        if os.getenv("IBERIA_USE_BROWSER_POST") not in {"1", "true", "yes", "on"}:
+            return self._session.post(
+                url, json=dict(json_body), headers=dict(headers), timeout=max(2.0, timeout_ms / 1000)
+            )
+        try:
+            from app.infrastructure.providers._browser_warmup import request_via_browser
+        except ImportError:
+            return self._session.post(
+                url, json=dict(json_body), headers=dict(headers), timeout=max(2.0, timeout_ms / 1000)
+            )
+        br = request_via_browser(
+            "POST",
+            url,
+            json_body=dict(json_body),
+            headers=dict(headers),
+            timeout_ms=timeout_ms,
+            warmup_url=self.base_url,
+            warmup_referer_path="/",
+        )
+        if br is not None:
+            return br
+        return self._session.post(
+            url, json=dict(json_body), headers=dict(headers), timeout=max(2.0, timeout_ms / 1000)
+        )
 
     def _availability_url(self) -> str:
         path = self.availability_path if self.availability_path.startswith("/") else f"/{self.availability_path}"
