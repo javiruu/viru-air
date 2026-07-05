@@ -842,3 +842,147 @@
     padding: 0 1rem;
   }
 }
+
+/* ── Viru mini-feel suite ────────────────────────────────────────── */
+/* #1 Swap O/D flight-path — additive next to .route-pulse */
+@media (prefers-reduced-motion: no-preference) {
+  .route-pulse .qs-route-line {
+    animation: routeSwapFlightPath 620ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+}
+@keyframes routeSwapFlightPath {
+  0%   { transform: scaleX(1);    opacity: 1;    }
+  50%  { transform: scaleX(0.16); opacity: 0.38; }
+  100% { transform: scaleX(1);    opacity: 1;    }
+}
+
+/* #2/#3 Empty-state inline softline + honest static calendar copy */
+.qs-empty-softline {
+  font-size: 0.85rem;
+  margin: 0.25rem 0 0.55rem;
+  color: var(--text-secondary, rgba(170, 180, 200, 0.78));
+  line-height: 1.42;
+  max-width: 56ch;
+}
+.qs-empty-calendar-fallback {
+  margin: -0.2rem 0 1rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.005em;
+  opacity: 0.82;
+}
+
+/* #5 Watchlist price-delta percent — sits inside .trend-chip */
+.trend-chip-percent {
+  display: inline-block;
+  margin-left: 0.32rem;
+  padding: 0.05rem 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.86;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  letter-spacing: 0.01em;
+}
+.trend-chip.trend-down .trend-chip-percent { color: #1f8f5d; }
+.trend-chip.trend-up   .trend-chip-percent { color: #b46a2a; }
+
+/* #8/#9/#10 Dashboard hero pills container + seasonal eyebrow + buen día + última nota */
+.dashboard-hero-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.55rem;
+}
+@keyframes popScale {
+  0%   { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 0.86; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .trend-chip-percent { animation: popScale 300ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+}
+.dashboard-season-eyebrow {
+  display: inline-block;
+  margin-right: 0.55rem;
+  padding: 0.14rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent, #f0a85e) 14%, transparent);
+  color: color-mix(in srgb, var(--accent, #f0a85e) 80%, var(--ink, #1b1f24));
+  vertical-align: middle;
+}
+.good-day-to-fly {
+  margin: 0;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.82rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-raised, rgba(255,255,255,0.04)) 75%, var(--accent, #f0a85e) 8%);
+  border: 1px solid color-mix(in srgb, var(--border, rgba(128,128,128,0.18)) 70%, var(--accent, #f0a85e) 30%);
+  color: var(--ink, currentColor);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: max-content;
+}
+.good-day-to-fly a {
+  color: color-mix(in srgb, var(--accent, #f0a85e) 70%, var(--ink, #1b1f24));
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.latest-note-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  margin: 0;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.74rem;
+  border-radius: 999px;
+  background: var(--surface-2, rgba(255,255,255,0.04));
+  border: 1px dashed color-mix(in srgb, var(--border, rgba(128,128,128,0.22)) 70%, var(--ink, #1b1f24) 30%);
+  color: var(--text-secondary, rgba(170, 180, 200, 0.78));
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+.latest-note-pill:hover {
+  background: var(--surface-raised, rgba(255,255,255,0.06));
+  color: var(--ink, currentColor);
+  border-color: color-mix(in srgb, var(--border, rgba(128,128,128,0.22)) 50%, var(--accent, #f0a85e) 50%);
+}
+
+/* #11/#12 Door-to-Door timezone pill (desktop) + known-route tag */
+.d2d-timezone-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0.5rem;
+  padding: 0.18rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  border-radius: 6px;
+  background: var(--surface-2, rgba(255,255,255,0.04));
+  color: var(--text-secondary, rgba(170, 180, 200, 0.78));
+  border: 1px solid color-mix(in srgb, var(--border, rgba(128,128,128,0.22)) 80%, transparent);
+  letter-spacing: 0.01em;
+}
+@media (max-width: 980px) {
+  .d2d-timezone-pill { display: none; }
+}
+.d2d-known-route-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: 0.5rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-raised, rgba(255,255,255,0.04)) 78%, var(--accent-2, #6aa6ff) 22%);
+  color: color-mix(in srgb, var(--accent-2, #6aa6ff) 35%, var(--ink, #1b1f24));
+  border: 1px solid color-mix(in srgb, var(--border, rgba(128,128,128,0.22)) 60%, var(--accent-2, #6aa6ff) 40%);
+  letter-spacing: 0.01em;
+}

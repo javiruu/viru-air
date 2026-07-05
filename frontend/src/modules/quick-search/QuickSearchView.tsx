@@ -699,6 +699,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     durationMax: "",
     sortBy: "ranking",
   }));
+  const [dualHoverSide, setDualHoverSide] = useState<"outbound" | "return" | null>(null);
   // ── Per-side emptyCausesExpanded (Fase 11) ──────────────────────────
   const [outboundEmptyCausesExpanded, setOutboundEmptyCausesExpanded] = useState(false);
   const [returnEmptyCausesExpanded, setReturnEmptyCausesExpanded] = useState(false);
@@ -3175,6 +3176,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   // ── Per-side emptyCausesExpanded reset on dual mode exit (Fase 11) ──
   useEffect(() => {
     if (!isDualMode) {
+      setDualHoverSide(null);
       setOutboundEmptyCausesExpanded(false);
       setReturnEmptyCausesExpanded(false);
     }
@@ -5587,7 +5589,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
       {/* ── Dual-mode workspace (Fase 6) ── */}
       {isDualMode && (outboundSide.searchState !== "idle" || returnSide.searchState !== "idle") ? (
-        <QuickSearchDualWorkspace ariaLabel="Round-trip results">
+        <QuickSearchDualWorkspace ariaLabel="Round-trip results" hoveredSide={dualHoverSide}>
           {/* ── Outbound panel ── */}
           <QuickSearchSidePanel
             side="outbound"
@@ -5602,6 +5604,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             totalResults={outboundSide.searchMeta?.pagination?.total_results}
             onPageChange={outboundSide.searchState === "success" ? (page: number) => outboundSide.goToPage(page) : undefined}
             locale={locale}
+            onHoverStart={() => setDualHoverSide("outbound")}
+            onHoverEnd={() => setDualHoverSide(null)}
           >
             {outboundSide.searchState === "success" ? (
               <QuickSearchSideViewControls
@@ -5711,6 +5715,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             totalResults={returnSide.searchMeta?.pagination?.total_results}
             onPageChange={returnSide.searchState === "success" ? (page: number) => returnSide.goToPage(page) : undefined}
             locale={locale}
+            onHoverStart={() => setDualHoverSide("return")}
+            onHoverEnd={() => setDualHoverSide(null)}
           >
             {returnSide.searchState === "success" ? (
               <QuickSearchSideViewControls

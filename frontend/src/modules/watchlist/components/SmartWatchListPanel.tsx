@@ -418,6 +418,15 @@ export function SmartWatchListPanel({
           priceDropAmount != null && meta?.previous && meta.previous.price > 0
             ? Math.round((priceDropAmount / meta.previous.price) * 100)
             : null;
+        const percentDeltaRaw =
+          meta?.previous && meta.previous.price > 0 && meta?.latest
+            ? Math.round(((meta.latest.price - meta.previous.price) / meta.previous.price) * 100)
+            : null;
+        const trendPercentLabel = percentDeltaRaw != null && percentDeltaRaw !== 0
+          ? t("watchlist.smartList.trendPercentDelta", {
+              value: `${percentDeltaRaw > 0 ? "+" : ""}${percentDeltaRaw}`,
+            })
+          : "";
         const hasMeaningfulDrop = priceDropAmount != null && priceDropPercent != null && priceDropPercent > 0;
         const isBestPrice =
           meta?.latest && meta?.min != null && meta.latest.price <= meta.min && meta?.max != null && meta.max > meta.min;
@@ -506,6 +515,11 @@ export function SmartWatchListPanel({
                     </svg>
                   </span>
                   {deltaLabel}
+                  {trendPercentLabel ? (
+                    <span className="trend-chip-percent" aria-label={trendPercentLabel}>
+                      {trendPercentLabel}
+                    </span>
+                  ) : null}
                 </span>
               </div>
               {hasMeaningfulDrop || isBestPrice ? (

@@ -29,6 +29,8 @@ type Props = {
   onPageChange?: (page: number) => void;
   /** Locale for i18n. */
   locale?: QuickSearchLocale;
+  onHoverStart?: () => void;
+  onHoverEnd?: () => void;
 };
 
 /**
@@ -53,6 +55,8 @@ export function QuickSearchSidePanel({
   totalResults,
   onPageChange,
   locale,
+  onHoverStart,
+  onHoverEnd,
 }: Props) {
   const isOutbound = side === "outbound";
 
@@ -61,6 +65,8 @@ export function QuickSearchSidePanel({
       className={`qs-dual-panel qs-dual-panel--${side}${collapsed ? " qs-dual-panel--collapsed" : ""}`}
       role="region"
       aria-label={headerLabel}
+      onMouseEnter={onHoverStart}
+      onMouseLeave={onHoverEnd}
     >
       {/* Header */}
       <header

@@ -6,6 +6,7 @@ type Props = {
   children: ReactNode;
   /** i18n aria-label for the workspace. Defaults to "Round‑trip results" in English. */
   ariaLabel?: string;
+  hoveredSide?: "outbound" | "return" | null;
 };
 
 /**
@@ -14,9 +15,18 @@ type Props = {
  * On desktop (≥900px) renders a two‑column grid with a central divider.
  * On mobile (<900px) renders stacked, collapsible panels.
  */
-export function QuickSearchDualWorkspace({ children, ariaLabel = "Round‑trip results" }: Props) {
+export function QuickSearchDualWorkspace({
+  children,
+  ariaLabel = "Round‑trip results",
+  hoveredSide = null,
+}: Props) {
   return (
-    <section className="qs-dual-workspace" role="region" aria-label={ariaLabel}>
+    <section
+      className="qs-dual-workspace"
+      role="region"
+      aria-label={ariaLabel}
+      data-hovered-side={hoveredSide ?? undefined}
+    >
       {children}
     </section>
   );

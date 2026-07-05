@@ -85,3 +85,4 @@ Thumbs.db
 .kiro/
 .zcode/
 .codex-temp/
+frontend/tests/artifacts/
