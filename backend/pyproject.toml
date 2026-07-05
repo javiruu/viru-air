@@ -29,6 +29,9 @@ dev = [
   "ruff>=0.8.2",
   "mypy>=1.13.0"
 ]
+browser = [
+  "playwright>=1.48.0"
+]
 redis = [
   "redis>=5.0"
 ]
@@ -36,9 +39,16 @@ redis = [
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+markers = [
+    "integration: marks tests that touch external services (live network).",
+    "network: marks tests that perform outbound HTTP.",
+]
+
 
 [tool.ruff]
 line-length = 100
 
+
 [tool.setuptools]
 packages = ["app"]
+
