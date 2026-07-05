@@ -1,6 +1,7 @@
 ﻿import json
 import logging
 import os
+import re
 import unicodedata
 from datetime import datetime, time, timedelta
 from math import asin, cos, radians, sin, sqrt
@@ -16,6 +17,8 @@ from app.door_to_door.providers.registry import resolve_provider_runtime
 from app.door_to_door.schemas import (
     DoorToDoorChosenOptionIn,
     DoorToDoorChosenOptionOut,
+    DoorToDoorCorridorOut,
+    DoorToDoorCorridorsOut,
     DoorToDoorFlightOut,
     DoorToDoorHealthOut,
     DoorToDoorHistoryOut,
@@ -129,6 +132,114 @@ def _saved_location_out(location: DoorToDoorSavedLocation) -> DoorToDoorSavedLoc
 def providers_status() -> list[DoorToDoorProviderStatusOut]:
     runtime = resolve_provider_runtime()
     return runtime.statuses
+
+
+# ── Corridor notes sanitisation ───────────────────────────────
+# Operational notes in gtfs_corridors.json sometimes contain feed URLs,
+# operator endpoints, and per-feed numeric probes (e.g. "downloadLink/1494",
+# "1.134 paradas, 48 rutas bus"). None of that is useful for end users but
+# all of it is sensitive infra detail. We strip those tokens before the
+# 180-char preview so the public schema stays honest.
+_NOTE_REDACT_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"https?://\S+"), "[enlace]"),
+    (re.compile(r"downloadLink\s*/\s*\d+", re.IGNORECASE), "[endpoint]"),
+    (re.compile(r"\b\d[\d.,]*\s+(paradas|rutas|viajes|stop_times|agencias?)\b", re.IGNORECASE), r"[N \1]"),
+    (re.compile(r"\b(ApiKey|API\s*Key|Authorization\s*Header|X-ApiKey)\b", re.IGNORECASE), "[clave]"),
+    (re.compile(r"\.zip\b", re.IGNORECASE), "[archivo]"),
+    (re.compile(r"Header\s+", re.IGNORECASE), ""),
+)
+
+
+def _sanitize_notes(raw_notes: str) -> str:
+    cleaned = raw_notes
+    for pattern, replacement in _NOTE_REDACT_PATTERNS:
+        cleaned = pattern.sub(replacement, cleaned)
+    # Collapse whitespace introduced by redactions and trim.
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned
+
+
+def _build_corridor_out(raw: dict) -> DoorToDoorCorridorOut:
+    """Curate a raw corridor dict from gtfs_corridors.json into the public schema.
+
+    Strips operational tokens (feed URLs, API endpoints, account details,
+    per-feed numeric probes) from `notes` BEFORE truncating to 180 chars so
+    we don't leak infrastructure specifics to clients while still telling
+    users what works and where the limits are.
+    """
+    coverage = raw.get("coverage") if isinstance(raw.get("coverage"), dict) else {}
+    raw_notes = str(raw.get("notes") or "").strip()
+    sanitized = _sanitize_notes(raw_notes)
+    notes_preview = sanitized[:180].rstrip()
+    if len(sanitized) > 180:
+        notes_preview += "…"
+    service_by_date = coverage.get("service_by_date")
+    if not isinstance(service_by_date, bool):
+        # Accept only the documented string tokens; anything else folds to False.
+        if service_by_date in {"limited_window", "limited"}:
+            service_by_date_typed: bool | str = service_by_date
+        else:
+            service_by_date_typed = False
+    else:
+        service_by_date_typed = service_by_date
+    return DoorToDoorCorridorOut(
+        id=str(raw.get("id") or ""),
+        name=str(raw.get("name") or raw.get("id") or ""),
+        region=str(raw.get("region") or ""),
+        origin_area=str(raw.get("origin_area") or ""),
+        destination_airport=str(raw.get("destination_airport") or "").upper(),
+        status=raw.get("status") or "planned_blocked",  # type: ignore[arg-type]
+        verified_at=str(raw.get("verified_at") or "") or None,
+        notes_preview=notes_preview,
+        both_legs=bool(coverage.get("both_legs")),
+        coverage_has_nearby_stops=bool(coverage.get("nearby_stops")),
+        coverage_service_by_date=service_by_date_typed,
+        airport_search_terms=[str(t) for t in (raw.get("airport_search_terms") or []) if t],
+    )
+
+
+def _load_corridors_public() -> tuple[list[DoorToDoorCorridorOut], int, int]:
+    """Read gtfs_corridors.json and return curated corridor list + counts."""
+    corridors_path = Path(__file__).resolve().parent.parent / "providers" / "gtfs_corridors.json"
+    items: list[DoorToDoorCorridorOut] = []
+    verified_count = 0
+    planned_count = 0
+    try:
+        if corridors_path.exists():
+            corridors_raw = json.loads(corridors_path.read_text(encoding="utf-8"))
+        else:
+            corridors_raw = []
+    except (OSError, json.JSONDecodeError):
+        corridors_raw = []
+    for raw in corridors_raw or []:
+        if not isinstance(raw, dict):
+            continue
+        status = str(raw.get("status") or "")
+        if status in {"verified", "verified_limited"}:
+            verified_count += 1
+        elif status == "planned_blocked":
+            planned_count += 1
+        else:
+            # Unknown statuses are treated as planned_blocked for transparency.
+            planned_count += 1
+        items.append(_build_corridor_out(raw))
+    return items, verified_count, planned_count
+
+
+@router.get("/corridors", response_model=DoorToDoorCorridorsOut)
+def corridors() -> DoorToDoorCorridorsOut:
+    """Public list of real-data corridors (verified + planned).
+
+    Powers the empty-state "Where we have real data" transparency surface
+    so users know in advance whether their trip will benefit from real
+    transit schedules vs. fall back to deeplinks/estimates.
+    """
+    items, verified_count, planned_count = _load_corridors_public()
+    return DoorToDoorCorridorsOut(
+        items=items,
+        verified_count=verified_count,
+        planned_count=planned_count,
+    )
 
 
 @router.get("/health", response_model=DoorToDoorHealthOut)
