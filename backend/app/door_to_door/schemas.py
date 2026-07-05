@@ -173,6 +173,7 @@ class DoorToDoorOptionOut(BaseModel):
     is_extended: bool = False
     completeness: DoorToDoorCompleteness = "exploratory"
     total_co2_kg: float | None = Field(default=None, ge=0)
+    co2_per_pax_kg: float | None = Field(default=None, ge=0)
     deep_link: DoorToDoorDeepLinkOut | None = None
     price: DoorToDoorPriceOut | None = None
     trust_copy: str | None = None

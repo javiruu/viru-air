@@ -1362,3 +1362,63 @@ def test_eco_route_map_capability_flips_to_available_with_options(client: TestCl
     assert eco["source_type"] == "estimate"
     assert eco["confidence"] == "estimated"
     assert eco["why_missing"] is None
+
+
+def test_eco_route_total_scales_with_passengers(client: TestClient, monkeypatch) -> None:
+    """Per-passenger CO2: total_co2_kg scales linearly with preferences.passengers.
+
+    leg.co2_kg stays per-pax (math stays clean per leg); the option's
+    total_co2_kg = sum_of_legs * passengers for the full party footprint.
+    Two users (1 vs 4 pax) on the same mock estimate legs must produce:
+      - identical per-leg co2_kg sums (per-pax math is shared)
+      - 4-pax total = 2 × 2-pax total (linear scaling of the option boundary)
+    """
+    _set_provider_env(monkeypatch, mock=True, real=False, scrapers=False)
+    headers_two = _auth_headers(client, "eco-party2@viru.dev")
+    headers_four = _auth_headers(client, "eco-party4@viru.dev")
+    watch_two = _create_watch(client, headers_two)
+    watch_four = _create_watch(client, headers_four)
+
+    payload_two = _search_payload(watch_two)
+    payload_two["preferences"]["passengers"] = 2
+    payload_four = _search_payload(watch_four)
+    payload_four["preferences"]["passengers"] = 4
+
+    res_two = client.post("/api/v1/door-to-door/search", json=payload_two, headers=headers_two).json()
+    res_four = client.post("/api/v1/door-to-door/search", json=payload_four, headers=headers_four).json()
+
+    opt_two = next((opt for opt in res_two["options"] if opt["total_co2_kg"] is not None), None)
+    opt_four = next((opt for opt in res_four["options"] if opt["total_co2_kg"] is not None), None)
+    assert opt_two is not None and opt_four is not None, "expected at least one estimatable option in each response"
+
+    # Per-pax math identical across both searches (same mock legs).
+    leg_sum_two = sum(leg.get("co2_kg") or 0 for leg in opt_two["legs"])
+    leg_sum_four = sum(leg.get("co2_kg") or 0 for leg in opt_four["legs"])
+    assert abs(leg_sum_two - leg_sum_four) < 0.005, (
+        f"per-leg sums must match (per-pax math): 2-pax {leg_sum_two} vs 4-pax {leg_sum_four}"
+    )
+
+    # co2_per_pax_kg mirrors the per-leg sum so analytics/history can
+    # reconstruct the per-passenger breakdown without re-running the search.
+    assert opt_two["co2_per_pax_kg"] is not None, "co2_per_pax_kg missing on 2-pax option"
+    assert opt_four["co2_per_pax_kg"] is not None, "co2_per_pax_kg missing on 4-pax option"
+    assert abs(opt_two["co2_per_pax_kg"] - leg_sum_two) < 0.01, (
+        f"co2_per_pax_kg {opt_two['co2_per_pax_kg']} != leg sum {leg_sum_two}"
+    )
+    assert abs(opt_two["co2_per_pax_kg"] - opt_four["co2_per_pax_kg"]) < 0.01, (
+        f"co2_per_pax_kg must be invariant to passengers: "
+        f"2-pax {opt_two['co2_per_pax_kg']} vs 4-pax {opt_four['co2_per_pax_kg']}"
+    )
+
+    # Option boundary scales linearly with passengers, AND equals
+    # co2_per_pax_kg * passengers.
+    expected_four = opt_two["total_co2_kg"] * 2
+    assert abs(opt_four["total_co2_kg"] - expected_four) < 0.01, (
+        f"4-pax total {opt_four['total_co2_kg']} != 2x of 2-pax {opt_two['total_co2_kg']}"
+    )
+    assert abs(opt_two["total_co2_kg"] - opt_two["co2_per_pax_kg"] * 2) < 0.01, (
+        f"2-pax total {opt_two['total_co2_kg']} != co2_per_pax_kg x 2"
+    )
+    assert abs(opt_four["total_co2_kg"] - opt_four["co2_per_pax_kg"] * 4) < 0.01, (
+        f"4-pax total {opt_four['total_co2_kg']} != co2_per_pax_kg x 4"
+    )
