@@ -6,6 +6,7 @@ from collections.abc import Callable
 from app.infrastructure.providers.base import FlightProvider
 from app.infrastructure.providers.duffel_provider import DuffelProvider
 from app.infrastructure.providers.easyjet_provider import EasyJetProvider
+from app.infrastructure.providers.iberia_provider import IberiaProvider
 from app.infrastructure.providers.ryanair_public_provider import RyanairPublicProvider
 from app.infrastructure.providers.vueling_provider import VuelingProvider
 from app.infrastructure.providers.wizz_air_provider import WizzAirProvider
@@ -24,6 +25,9 @@ _PROVIDER_ALIASES = {
     "easyjet": "easyjet",
     "ezy": "easyjet",
     "ezj": "easyjet",
+    "ib": "iberia",
+    "iberia": "iberia",
+    "iberia_ndc": "iberia",
     "u2": "easyjet",
     "ryanair": "ryanair",
     "ryan_air": "ryanair",
@@ -37,6 +41,7 @@ _PROVIDER_ALIASES = {
 _PROVIDER_ENABLED_FLAGS = {
     "duffel": ("FLIGHT_PROVIDER_DUFFEL_ENABLED",),
     "easyjet": ("FLIGHT_PROVIDER_EASYJET_ENABLED", "FLIGHT_PROVIDER_EASY_JET_ENABLED"),
+    "iberia": ("FLIGHT_PROVIDER_IBERIA_ENABLED", "FLIGHT_PROVIDER_IB_ENABLED"),
     "ryanair": ("FLIGHT_PROVIDER_RYANAIR_ENABLED", "FLIGHT_PROVIDER_RYAN_AIR_ENABLED"),
     "vueling": ("FLIGHT_PROVIDER_VUELING_ENABLED", "FLIGHT_PROVIDER_VY_ENABLED"),
     "wizzair": (
@@ -66,13 +71,14 @@ class FlightProviderRegistry:
             "vueling": VuelingProvider,
             "wizzair": WizzAirProvider,
             "easyjet": EasyJetProvider,
+            "iberia": IberiaProvider,
             "duffel": DuffelProvider,
         }
 
     def resolve_enabled_providers(self) -> list[FlightProvider]:
         ordered = [
             _normalize_provider_id(item)
-            for item in os.getenv("FLIGHT_PROVIDER_ORDER", "ryanair,vueling,wizzair,easyjet,duffel").split(",")
+            for item in os.getenv("FLIGHT_PROVIDER_ORDER", "ryanair,vueling,wizzair,easyjet,iberia,duffel").split(",")
             if item.strip()
         ]
         providers: list[FlightProvider] = []

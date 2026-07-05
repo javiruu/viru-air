@@ -1,5 +1,11 @@
 # History
 
+## 2026-07-05 - Iberia como provider configurable de vuelos
+
+- Quick Search registra `iberia`/`ib`/`iberia_ndc` en `FlightProviderRegistry`, dentro del orden por defecto, sin activarlo si faltan credenciales NDC.
+- Nuevo adapter `IberiaProvider` preparado para AirShopping NDC: construye la request, mapea ofertas XML a `ProviderFlight`, emite `iberia_provider_unavailable_total`/`provider_total_outage` y expone `source=iberia-ndc-airshopping`.
+- El frontend reconoce fuentes Iberia en badges, carril de providers, resumen de fuentes, warnings y cobertura de Watchlist mediante el catalogo compartido.
+
 ## 2026-07-04 â€” Dashboard con descubrimiento ocasional y continuidad de busqueda
 
 - El dashboard suma dos bloques contextuales y opcionales: `Viru encontro algo para ti`, que solo aparece con una oportunidad realmente alineada y barata, y `Donde estabas`, que recupera la ultima busqueda retomable del usuario.

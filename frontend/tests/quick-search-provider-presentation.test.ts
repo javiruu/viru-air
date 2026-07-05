@@ -19,10 +19,20 @@ test("resolveQuickSearchProviderPresentation recognizes easyJet sources", () => 
   }
 });
 
+test("resolveQuickSearchProviderPresentation recognizes Iberia sources", () => {
+  for (const source of ["iberia-ndc-airshopping", "Iberia NDC", "IB fares"]) {
+    const provider = resolveQuickSearchProviderPresentation(source);
+
+    assert.equal(provider.id, "iberia");
+    assert.equal(provider.label, "Iberia");
+    assert.equal(provider.rawSource, source);
+  }
+});
+
 test("INITIAL_PROVIDER_SEARCH_STATUSES includes easyJet in provider lane", () => {
   assert.deepEqual(
     INITIAL_PROVIDER_SEARCH_STATUSES.map((provider) => provider.id),
-    ["ryanair", "vueling", "wizzair", "easyjet", "duffel"],
+    ["ryanair", "vueling", "wizzair", "easyjet", "iberia", "duffel"],
   );
 });
 
@@ -34,4 +44,14 @@ test("QuickSearchProviderBadge renders easyJet as a branded provider", () => {
   assert.match(html, /qs-provider-badge--easyjet/);
   assert.match(html, /easyJet/);
   assert.match(html, /#FF6600/);
+});
+
+test("QuickSearchProviderBadge renders Iberia as a branded provider", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(QuickSearchProviderBadge, { source: "iberia-ndc-airshopping" }),
+  );
+
+  assert.match(html, /qs-provider-badge--iberia/);
+  assert.match(html, /Iberia/);
+  assert.match(html, /#D71920/);
 });

@@ -33,7 +33,7 @@ Implementar `FlightProvider` con:
 
 - Registrar la clase en `FlightProviderRegistry`.
 - Controlar habilitación por env:
-  - `FLIGHT_PROVIDER_ORDER` (default: `ryanair,vueling,wizzair,easyjet,duffel`)
+  - `FLIGHT_PROVIDER_ORDER` (default: `ryanair,vueling,wizzair,easyjet,iberia,duffel`)
   - `FLIGHT_PROVIDER_<ID>_ENABLED` (default: true)
   - Providers con credenciales propias pueden estar en el orden por defecto y no activarse si `is_enabled()` devuelve `false`.
   - Providers públicos como `ryanair` y `vueling` no requieren API key.
@@ -49,6 +49,7 @@ Implementar `FlightProvider` con:
 - `vueling`: provider público sin credenciales. Crea sesión anónima contra `asm/v1/Auth`, consulta `avy/v3/AvailabilityServices/allFlights` y soporta alias `vy`.
 - `wizzair`: provider FareChart público/configurable.
 - `easyjet`: provider público sin credenciales. Consulta `ejavailability/api/v16/availability/query` y usa `flightconnections.easyjet.com/api/graphql` como fallback para resultados Dohop/Flight Connections con escala. Soporta alias `easy_jet`/`easy-jet`/`ezj`/`ezy`/`u2` y genera deeplinks oficiales. Si Dohop/Datadome bloquea el backend, expone `provider_total_outage`; si existe token operativo, `EASYJET_FLIGHT_CONNECTIONS_BYPASS_SECRET` envía `X-Dohop-Bypass`.
+- `iberia`: provider NDC oficial/configurable. Requiere `IBERIA_NDC_BASE_URL` + `IBERIA_NDC_API_KEY`, soporta aliases `ib`/`iberia_ndc`, consulta AirShopping y queda desactivado si faltan credenciales.
 - `duffel`: provider API con `DUFFEL_API_KEY`.
 
 ## Warnings canónicos recomendados

@@ -108,6 +108,18 @@ test("useQuickSearchScreenState treats easyJet outage codes as provider outages"
   assert.deepEqual(state.zeroResultActions, []);
 });
 
+test("useQuickSearchScreenState treats Iberia outage codes as provider outages", () => {
+  const state = renderScreenState({
+    filtersWarningCodes: ["iberia_provider_unavailable_total"],
+  });
+
+  assert.equal(state.showDegradedState, true);
+  assert.equal(state.emptyStateMainTitle, "emptyStateProviderTitle");
+  assert.deepEqual(state.zeroResultCauses, ["emptyCauseProvider"]);
+  assert.deepEqual(state.groupedCriticalWarnings, [{ message: "iberia_provider_unavailable_total", count: 1 }]);
+  assert.deepEqual(state.zeroResultActions, []);
+});
+
 test("useQuickSearchScreenState surfaces partial provider outage without hiding relax options", () => {
   const state = renderScreenState({
     filtersWarningCodes: ["ryanair_availability_failed_partial"],
@@ -234,14 +246,16 @@ test("useQuickSearchScreenState groups multiple raw sources into provider-level 
       buildResult({ result_id: "ry-1", source: "ryanair-public-fares" }),
       buildResult({ result_id: "ry-2", destination: "LIS", source: "ryanair-public-fares" }),
       buildResult({ result_id: "wz-1", destination: "BCN", source: "wizzair-farechart" }),
+      buildResult({ result_id: "ib-1", destination: "JFK", source: "iberia-ndc-airshopping" }),
     ],
   });
 
   assert.deepEqual(state.sourcesSummary.entries, [
     { id: "ryanair", label: "Ryanair", count: 2 },
+    { id: "iberia", label: "Iberia", count: 1 },
     { id: "wizzair", label: "Wizz Air", count: 1 },
   ]);
-  assert.equal(state.sourcesSummary.preview, "Ryanair (2), Wizz Air (1)");
+  assert.equal(state.sourcesSummary.preview, "Ryanair (2), Iberia (1)");
 });
 
 test("getQuickSearchVisualState keeps loading dominant while the visual hold is active", () => {

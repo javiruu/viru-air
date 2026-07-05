@@ -3184,6 +3184,11 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   background: color-mix(in srgb, #111827 7%, var(--panel));
 }
 
+.qs-provider-badge--iberia {
+  border-color: color-mix(in srgb, #D71920 42%, var(--border));
+  background: color-mix(in srgb, #D71920 8%, var(--panel));
+}
+
 .qs-result-source-block {
   display: grid;
   gap: 0.45rem;

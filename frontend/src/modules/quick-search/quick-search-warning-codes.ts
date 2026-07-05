@@ -4,6 +4,7 @@ export const QUICK_SEARCH_PROVIDER_TOTAL_OUTAGE_WARNING_CODES = [
   "vueling_provider_unavailable_total",
   "wizzair_provider_unavailable_total",
   "easyjet_provider_unavailable_total",
+  "iberia_provider_unavailable_total",
   "duffel_provider_unavailable_total",
 ] as const;
 
