@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
 import os
 import random
 import time
-from typing import Any, Final
+from typing import Final
 
 try:
     from curl_cffi import requests
@@ -18,17 +17,32 @@ from requests.adapters import HTTPAdapter
 from app.domain.entities import ProviderFetchResult, ProviderSourceFetchError, ProviderWarning
 from app.infrastructure.providers.base import FlightProvider
 from app.infrastructure.providers.easyjet_flight_connections import (
-    EasyJetFlightConnectionsSearch,
     build_flight_connections_params,
     extract_flight_connections_flights,
 )
 from app.infrastructure.providers.easyjet_public_availability import (
-    EasyJetPublicAvailabilitySearch,
     JsonValue,
     build_public_availability_params,
     extract_public_availability_flights,
 )
-from app.infrastructure.providers._captcha import WafRule, detect_captcha_kind
+from app.infrastructure.providers._browser_warmup import (
+    warm_session_with_browser,
+)
+from app.infrastructure.providers._captcha import detect_captcha_kind
+from app.infrastructure.providers._easyjet_provider_support import (
+    EASYJET_WAF_RULES,
+    EasyJetSearch,
+    flight_connections_headers,
+    normalize_search,
+    public_availability_headers,
+    raise_invalid_json,
+    raise_provider_unavailable,
+    raise_waf_challenge,
+    request_with_optional_browser,
+    to_flight_connections_search,
+    to_public_availability_search,
+    warmup_headers,
+)
 from app.infrastructure.providers._session_factory import build_session_kwargs
 
 _DEFAULT_BASE_URL: Final = "https://www.easyjet.com"
@@ -37,44 +51,8 @@ _DEFAULT_LANGUAGE_CODE: Final = "EN"
 _DEFAULT_RESIDENCY: Final = "ES"
 _DEFAULT_IMPERSONATE: Final = "chrome131"
 _IMPERSONATE_ENV_VAR: Final = "EASYJET_IMPERSONATE"
-_CHROME131_UA_SIG: Final = '"Chromium";v="131", "Not_A Brand";v="24", "Google Chrome";v="131"'
 _PROVIDER_POOL_SIZE: Final = 32
-
-
-@dataclass(frozen=True, slots=True)
-class _EasyJetSearch:
-    origin: str
-    destination: str
-    travel_date: str
-    currency: str
-
-
-# Rules specific to easyJet's WAF mix (Datadome + Dohop, with Akamai
-# fallback). Order: specific captcha/HTML first, generic deny last.
-#
-# `datadome_captcha` fires on either path: a Datadome-tagged 403 *or* an HTML
-# challenge page that mentions Datadome markers. Datadome cookies are per
-# domain, so a fresh cookie-less request is frequently served a JS-driven
-# challenge page (HTML body, status 200) rather than a 403; both branches
-# look for the same DOM strings.
-_EASYJET_WAF_RULES: Final[dict[str, WafRule]] = {
-    "datadome_captcha": lambda status, text: (
-        status == 403
-        and ("datadome" in text or "dd_block" in text or "captcha-delivery.com" in text)
-    )
-    or (
-        "<html" in text
-        and (
-            "datadome" in text
-            or "dd_block" in text
-            or "captcha" in text
-            or "challenge" in text
-        )
-    ),
-    "akamai_blocked": lambda status, text: status == 403
-    and ("access denied" in text or "request rejected" in text),
-}
-
+_EASYJET_WAF_RULES = EASYJET_WAF_RULES
 
 
 class EasyJetProvider(FlightProvider):
@@ -126,21 +104,19 @@ class EasyJetProvider(FlightProvider):
     def get_flights(
         self, origin: str, destination: str, travel_date: str, timeout_ms: int = 12000, currency: str = "EUR"
     ) -> ProviderFetchResult:
-        search = _EasyJetSearch(
-            origin=origin.upper().strip(),
-            destination=destination.upper().strip(),
-            travel_date=travel_date,
-            currency=currency.upper().strip(),
-        )
-        # Warm up BOTH domains: easyjet.com for the public availability endpoint
-        # and flightconnections.easyjet.com (Dohop) for the GraphQL fallback.
-        # Datadome cookies are domain-scoped, so each endpoint wants its own
-        # preflight hit before its real API call.
+        search = normalize_search(origin, destination, travel_date, currency)
         self._warm_session(self.base_url, referer_path=f"/{self.language_code.lower()}/", kind="marketing")
         source_error: Exception | None = None
         try:
             payload = self._fetch_public_availability(search, timeout_ms=timeout_ms)
-            flights = extract_public_availability_flights(payload, self._to_public_availability_search(search))
+            flights = extract_public_availability_flights(
+                payload,
+                to_public_availability_search(
+                    search,
+                    language_code=self.language_code,
+                    base_url=self.base_url,
+                ),
+            )
         except ProviderSourceFetchError:
             # Captcha / source-specific failures: propagate unchanged so the
             # orchestrator sees the rich captcha warning_codes the helper
@@ -156,20 +132,26 @@ class EasyJetProvider(FlightProvider):
             try:
                 connections_payload = self._fetch_flight_connections(search, timeout_ms=timeout_ms)
                 flights = extract_flight_connections_flights(
-                    connections_payload, self._to_flight_connections_search(search)
+                    connections_payload,
+                    to_flight_connections_search(
+                        search,
+                        language_code=self.language_code,
+                        residency=self.residency,
+                        base_url=self.flight_connections_url,
+                    ),
                 )
-            except ProviderSourceFetchError:
-                raise
+            except ProviderSourceFetchError as exc:
+                if any(
+                    code.startswith("easyjet_flight_connections_captcha_")
+                    for code in exc.warning_codes
+                ):
+                    raise
+                source_error = exc
             except (RequestsError, ValueError) as exc:
                 source_error = exc
 
         if source_error is not None and not flights:
-            raise ProviderSourceFetchError(
-                warning_codes=["easyjet_provider_unavailable_total", "provider_total_outage"],
-                message=f"easyJet provider unavailable for {search.origin}->{search.destination} on {search.travel_date}",
-                provider_id=self.provider_id,
-                severity="error",
-            ) from source_error
+            raise_provider_unavailable(search, source_error)
 
         warnings_structured: list[ProviderWarning] = []
         if not flights:
@@ -178,90 +160,56 @@ class EasyJetProvider(FlightProvider):
             )
         return ProviderFetchResult(flights=flights, warnings=[], warnings_structured=warnings_structured)
 
-    def _fetch_public_availability(self, search: _EasyJetSearch, *, timeout_ms: int) -> Mapping[str, JsonValue]:
+    def _fetch_public_availability(self, search: EasyJetSearch, *, timeout_ms: int) -> Mapping[str, JsonValue]:
         time.sleep(random.uniform(0.1, 0.4))
-        # NOTE: keep headers minimal. curl_cffi's impersonation pairs a realistic
-        # Chrome UA, sec-ch-* and sec-fetch-* with the matching TLS fingerprint;
-        # overriding those breaks the pairing (Datadome flagged the barebones
-        # "Mozilla/5.0" we used before this fix as a confident bot signature).
-        response = self._post_with_optional_browser(
+        response = request_with_optional_browser(
+            self._session,
+            "GET",
             f"{self.base_url}/ejavailability/api/v16/availability/query",
-            params=build_public_availability_params(self._to_public_availability_search(search)),
-            headers={
-                "Accept": "application/json, text/plain, */*",
-                "Accept-Language": f"{self.language_code.lower()}-{self.residency},{self.language_code.lower()};q=0.9,en;q=0.8",
-                "Origin": self.base_url,
-                "Referer": f"{self.base_url}/{self.language_code.lower()}/",
-                "sec-ch-ua": _CHROME131_UA_SIG,
-                "sec-ch-ua-mobile": "?0",
-                "sec-ch-ua-platform": '"Windows"',
-                "sec-fetch-mode": "cors",
-                "sec-fetch-site": "same-origin",
-                "sec-fetch-dest": "empty",
-            },
+            params=build_public_availability_params(
+                to_public_availability_search(
+                    search,
+                    language_code=self.language_code,
+                    base_url=self.base_url,
+                )
+            ),
+            headers=public_availability_headers(self.base_url, self.language_code, self.residency),
             timeout_ms=timeout_ms,
             warmup_url=self.base_url,
             warmup_referer_path=f"/{self.language_code.lower()}/",
         )
-        captcha_kind = detect_captcha_kind(response, rules=_EASYJET_WAF_RULES)
+        captcha_kind = detect_captcha_kind(response, rules=EASYJET_WAF_RULES)
         if captcha_kind:
-            raise ProviderSourceFetchError(
-                warning_codes=[
-                    f"easyjet_provider_captcha_{captcha_kind}",
-                    "easyjet_provider_unavailable_total",
-                    "provider_total_outage",
-                ],
-                message=f"easyJet WAF returned a bot challenge ({captcha_kind}) for {search.origin}->{search.destination} on {search.travel_date}",
-                provider_id=self.provider_id,
-                severity="error",
-                meta={"reason": captcha_kind},
+            raise_waf_challenge(
+                search=search,
+                captcha_kind=captcha_kind,
+                warning_prefix="easyjet_provider_captcha",
+                message_subject="easyJet",
             )
         response.raise_for_status()
         try:
             payload = response.json()
         except ValueError as exc:
-            raise ProviderSourceFetchError(
-                warning_codes=["easyjet_provider_unavailable_total", "provider_total_outage"],
-                message="easyJet provider returned a non-JSON response",
-                provider_id=self.provider_id,
-                severity="error",
-                meta={"reason": "invalid_json"},
-            ) from exc
+            raise_invalid_json(exc)
         return payload if isinstance(payload, dict) else {}
 
-    def _to_public_availability_search(self, search: _EasyJetSearch) -> EasyJetPublicAvailabilitySearch:
-        return EasyJetPublicAvailabilitySearch(
-            origin=search.origin,
-            destination=search.destination,
-            travel_date=search.travel_date,
-            currency=search.currency,
-            language=self.language_code,
-            base_url=self.base_url,
+    def _fetch_flight_connections(self, search: EasyJetSearch, *, timeout_ms: int) -> Mapping[str, JsonValue]:
+        flight_connections_search = to_flight_connections_search(
+            search,
+            language_code=self.language_code,
+            residency=self.residency,
+            base_url=self.flight_connections_url,
         )
-
-    def _fetch_flight_connections(self, search: _EasyJetSearch, *, timeout_ms: int) -> Mapping[str, JsonValue]:
-        flight_connections_search = self._to_flight_connections_search(search)
         time.sleep(random.uniform(0.1, 0.4))
-        headers = {
-            "Accept": "application/json, text/plain, */*",
-            "Accept-Language": f"{self.language_code.lower()}-{self.residency},{self.language_code.lower()};q=0.9,en;q=0.8",
-            "Origin": self.flight_connections_url,
-            "Referer": f"{self.flight_connections_url}/{self.language_code.lower()}/",
-            "sec-ch-ua": _CHROME131_UA_SIG,
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": '"Windows"',
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-origin",
-            "sec-fetch-dest": "empty",
-            "content-type": "application/json",
-        }
-        if self.flight_connections_bypass_secret:
-            headers["X-Dohop-Bypass"] = self.flight_connections_bypass_secret
-        # Switched from GET (params-as-query) to POST (json body): a 2KB GraphQL
-        # query + JSON-encoded variables sent as URL params trips Dohop's WAF on
-        # URI length / pattern rules. POST keeps the same payload contract but
-        # inside the body where WAFs handle it gracefully.
-        response = self._post_with_optional_browser(
+        headers = flight_connections_headers(
+            self.flight_connections_url,
+            self.language_code,
+            self.residency,
+            self.flight_connections_bypass_secret,
+        )
+        response = request_with_optional_browser(
+            self._session,
+            "POST",
             f"{self.flight_connections_url}/api/graphql",
             json_body=build_flight_connections_params(flight_connections_search),
             headers=headers,
@@ -269,31 +217,19 @@ class EasyJetProvider(FlightProvider):
             warmup_url=self.flight_connections_url,
             warmup_referer_path=f"/{self.language_code.lower()}/",
         )
-        captcha_kind = detect_captcha_kind(response, rules=_EASYJET_WAF_RULES)
+        captcha_kind = detect_captcha_kind(response, rules=EASYJET_WAF_RULES)
         if captcha_kind:
-            raise ProviderSourceFetchError(
-                warning_codes=[
-                    f"easyjet_flight_connections_captcha_{captcha_kind}",
-                    "easyjet_provider_unavailable_total",
-                    "provider_total_outage",
-                ],
-                message=f"easyJet Flight Connections WAF returned a bot challenge ({captcha_kind}) for {search.origin}->{search.destination} on {search.travel_date}",
-                provider_id=self.provider_id,
-                severity="error",
-                meta={"reason": captcha_kind},
+            raise_waf_challenge(
+                search=search,
+                captcha_kind=captcha_kind,
+                warning_prefix="easyjet_flight_connections_captcha",
+                message_subject="easyJet Flight Connections",
             )
         response.raise_for_status()
         payload = response.json()
         return payload if isinstance(payload, dict) else {}
 
     def _warm_session(self, base_url: str, *, referer_path: str = "", kind: str = "marketing") -> None:
-        """Best-effort warmup to acquire Datadome cookies.
-
-        Each domain has its own Datadome set-up, so we mark the session warmed
-        per-kind. Errors are swallowed: failed warmups are silent, and the
-        follow-up availability / GraphQL call still surfaces the real outcome
-        (with a captcha_kind label if Datadome returns a challenge).
-        """
         marker = f"_warmed_{kind}"
         if getattr(self, marker, False):
             return
@@ -307,123 +243,21 @@ class EasyJetProvider(FlightProvider):
             session_get(
                 f"{base_url}{referer_path}",
                 timeout=2.0,
-                headers={
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                    "Accept-Language": f"{self.language_code.lower()}-{self.residency},{self.language_code.lower()};q=0.9,en;q=0.8",
-                    "sec-ch-ua": _CHROME131_UA_SIG,
-                    "sec-ch-ua-mobile": "?0",
-                    "sec-ch-ua-platform": '"Windows"',
-                    "sec-fetch-mode": "navigate",
-                    "sec-fetch-site": "none",
-                    "sec-fetch-dest": "document",
-                    "sec-fetch-user": "?1",
-                    "upgrade-insecure-requests": "1",
-                },
+                headers=warmup_headers(self.language_code, self.residency),
             )
         except Exception:
             pass
         setattr(self, marker, True)
-        if os.getenv("EASYJET_USE_BROWSER_WARMUP") in {"1", "true", "yes", "on"}:
-            self._browser_warmup(base_url, referer_path=referer_path, kind=kind)
+        self._browser_warmup(base_url, referer_path=referer_path, kind=kind)
 
     def _browser_warmup(self, base_url: str, *, referer_path: str, kind: str = "marketing") -> None:
-        """Opt-in Playwright warmup layered on top of the curl warmup.
-
-        Mirror of ``IberiaProvider._browser_warmup`` with a ``kind`` discriminator
-        (Datadome cookies are per-domain, so each warm site needs its own pass).
-        Self-gated on ``EASYJET_USE_BROWSER_WARMUP`` so direct callers (tests,
-        future code paths) are a no-op when the operator hasn't enabled the
-        headless path. Failures (Playwright missing, Chromium binary missing,
-        target unreachable) are swallowed so the curl warmup and the eventual
-        availability call keep working with whatever they have. Cookies
-        harvested from the headless navigation are merged into the curl_cffi
-        session's jar.
-        """
-        if os.getenv("EASYJET_USE_BROWSER_WARMUP") not in {"1", "true", "yes", "on"}:
-            return
-        # Idempotent on the per-kind marker so a future direct caller can't
-        # respawn Playwright per request.
         browser_marker = f"_warmed_browser_{kind}"
         if getattr(self, browser_marker, False):
             return
-        try:
-            from app.infrastructure.providers._browser_warmup import (
-                harvest_cookies_with_browser,
-                merge_cookies_into_session,
-            )
-        except ImportError:
-            return
-        cookies = harvest_cookies_with_browser(base_url, referer_path=referer_path)
-        merge_cookies_into_session(self._session, cookies)
-        setattr(self, browser_marker, True)
-
-    def _post_with_optional_browser(
-        self,
-        url: str,
-        *,
-        params: Mapping[str, Any] | None = None,
-        json_body: Mapping[str, Any] | None = None,
-        headers: Mapping[str, str],
-        timeout_ms: int,
-        warmup_url: str | None = None,
-        warmup_referer_path: str = "",
-    ) -> Any:
-        """Opt-in Playwright-direct GET/POST path; falls back to curl_cffi.
-
-        Activated by ``EASYJET_USE_BROWSER_POST=1``. The public availability
-        call is a GET-with-query-params; the flight connections call is a
-        POST. Both go through the same wrapper. ``warmup_url`` lets each
-        callsite pick its own sensor-cookie domain (Datadome cookies are
-        domain-scoped), so the marketing path warms ``easyjet.com`` and the
-        flight-connections path warms ``flightconnections.easyjet.com``.
-        """
-        method = "POST" if json_body is not None else "GET"
-        if os.getenv("EASYJET_USE_BROWSER_POST") not in {"1", "true", "yes", "on"}:
-            return self._dispatch_session(method, url, params=params, json_body=json_body, headers=headers, timeout_ms=timeout_ms)
-        try:
-            from app.infrastructure.providers._browser_warmup import request_via_browser
-        except ImportError:
-            return self._dispatch_session(method, url, params=params, json_body=json_body, headers=headers, timeout_ms=timeout_ms)
-        br = request_via_browser(
-            method,
-            url,
-            json_body=json_body,
-            headers=headers,
-            timeout_ms=timeout_ms,
-            warmup_url=warmup_url,
-            warmup_referer_path=warmup_referer_path,
-        )
-        if br is not None:
-            return br
-        return self._dispatch_session(method, url, params=params, json_body=json_body, headers=headers, timeout_ms=timeout_ms)
-
-    def _dispatch_session(
-        self,
-        method: str,
-        url: str,
-        *,
-        params: Mapping[str, Any] | None,
-        json_body: Mapping[str, Any] | None,
-        headers: Mapping[str, str],
-        timeout_ms: int,
-    ) -> Any:
-        if method == "POST":
-            return self._session.post(
-                url, json=dict(json_body) if json_body else None,
-                headers=dict(headers), timeout=max(2.0, timeout_ms / 1000),
-            )
-        return self._session.get(
-            url, params=dict(params) if params else None,
-            headers=dict(headers), timeout=max(2.0, timeout_ms / 1000),
-        )
-
-    def _to_flight_connections_search(self, search: _EasyJetSearch) -> EasyJetFlightConnectionsSearch:
-        return EasyJetFlightConnectionsSearch(
-            origin=search.origin,
-            destination=search.destination,
-            travel_date=search.travel_date,
-            currency=search.currency,
-            language=self.language_code,
-            residency=self.residency,
-            base_url=self.flight_connections_url,
-        )
+        if warm_session_with_browser(
+            self._session,
+            env_var="EASYJET_USE_BROWSER_WARMUP",
+            base_url=base_url,
+            referer_path=referer_path,
+        ):
+            setattr(self, browser_marker, True)

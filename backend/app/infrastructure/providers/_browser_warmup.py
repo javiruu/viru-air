@@ -1,92 +1,39 @@
-"""Optional headless-browser warmup for Akamai/Datadome anti-bot.
-
-When the env flag ``IBERIA_USE_BROWSER_WARMUP=1`` or
-``EASYJET_USE_BROWSER_WARMUP=1`` is set on a provider, the warmup helper
-will spawn a headless Chromium via Playwright, navigate to the provider's
-marketing URL, wait for the JS sensor to set its cookies (Datadome sets
-``datadome``, Akamai sets ``_abck`` / ``bm_sz``), and return those cookies
-for the caller to merge into its HTTP session.
-
-The cookies are returned with full domain / path so the merge can build
-real ``http.cookiejar.Cookie`` objects. Empirically, Akamai/Datadome issue
-domain-scoped tokens (e.g. ``.iberia.com``, ``www.easyjet.com``) and the
-stdlib jar's RFC 6265 domain-matching rejects cookies added with an empty
-domain on send. Build Cookie with explicit domain from the Playwright
-context.
-
-Playwright is imported lazily and optionally: the project does not depend on
-it at install time. If the package is missing or the Chromium binary isn't
-downloaded, the call must fail soft (returning ``None``) so the rest of the
-warmup path falls back to curl_cffi best-effort.
-
-Install (out-of-band, only when this path is turned on):
-    uv pip install playwright
-    playwright install chromium
-"""
-
 from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from http.cookiejar import Cookie
 import json
 import logging
-from typing import Any
+import os
+from typing import Any, Final
+
+from app.infrastructure.providers._browser_cookies import (
+    HarvestedCookie,
+    merge_cookies_from_mapping,
+    merge_cookies_into_session,
+)
 
 logger = logging.getLogger(__name__)
 
+__all__ = (
+    "BrowserResponse",
+    "HarvestedCookie",
+    "browser_warmup_enabled",
+    "harvest_cookies_with_browser",
+    "merge_cookies_from_mapping",
+    "merge_cookies_into_session",
+    "request_via_browser",
+    "request_via_browser_when_enabled",
+    "warm_session_with_browser",
+)
 
-@dataclass(frozen=True, slots=True)
-class HarvestedCookie:
-    """One cookie harvested from Playwright, with the fields needed to
-    rebuild it on a stdlib ``http.cookiejar.Cookie`` for curl_cffi.
+_ENABLED_FLAG_VALUES: Final[frozenset[str]] = frozenset({"1", "true", "yes", "on"})
 
-    ``secure`` defaults to True because Akamai / Datadome WAF tokens are
-    only ever stamped on the HTTPS path; if Playwright's ``cookies()``
-    report omits the flag, defaulting to True keeps the cookie in the
-    right slot for the subsequent API calls.
 
-    ``expires`` is normalized to ``None`` for the values Playwright
-    reports as session cookies (``-1``, ``0``, or absent), so the stdlib
-    jar sets ``discard=True`` instead of getting confused by ``-1``.
-    """
-
-    name: str
-    value: str
-    domain: str
-    path: str
-    secure: bool = True
-    expires: int | None = None
-
-    @classmethod
-    def from_playwright_entry(cls, entry: Mapping[str, object]) -> "HarvestedCookie | None":
-        """Normalize a Playwright ``context.cookies()[i]`` entry.
-
-        Returns ``None`` for entries that don't have a non-empty string
-        name+value (catches ``name=None``, ``value=None``, and the
-        ``name=""`` case Playwright emits after cookie deletion). Without
-        this filter, an empty-name cookie would be stamped into the jar as
-        ``domain="" + name=""`` and the stdlib jar would silently fail to
-        match it on subsequent sends.
-        """
-        name = entry.get("name")
-        value = entry.get("value")
-        if not (isinstance(name, str) and isinstance(value, str) and name and value):
-            return None
-        domain = entry.get("domain") or ""
-        path = entry.get("path") or "/"
-        secure = bool(entry.get("secure", True))
-        raw_expires = entry.get("expires")
-        # Playwright reports -1 (or omits) for session cookies; stdlib
-        # jar expects ``None`` for those and rejects ``-1``.
-        expires: int | None = None
-        if isinstance(raw_expires, (int, float)) and raw_expires > 0:
-            expires = int(raw_expires)
-        return cls(name=name, value=value, domain=domain, path=path, secure=secure, expires=expires)
-
+def browser_warmup_enabled(env_var: str) -> bool:
+    return os.getenv(env_var, "").strip().lower() in _ENABLED_FLAG_VALUES
 
 def _import_playwright() -> Any:
-    """Late-bound Playwright import; returns None when not installed."""
     try:
         from playwright.sync_api import sync_playwright  # type: ignore[import-not-found]
     except ImportError:
@@ -95,12 +42,6 @@ def _import_playwright() -> Any:
     return sync_playwright
 
 
-# Akamai's sensor obfuscation script obfuscates a sensor JS payload that
-# collects mouse/window events and only stamps a valid ``_abck`` cookie
-# once enough telemetry has accumulated. Datadome performs a similar dance
-# with its own sensor JS. Empirically, 500ms is too short; WAF tokens are
-# not yet stable on the first poll. 2500ms is the target observed in
-# cloudscraper + nodriver reference runs.
 _SENSOR_DWELL_MS: int = 2500
 
 
@@ -110,13 +51,6 @@ def harvest_cookies_with_browser(
     referer_path: str = "",
     timeout_ms: int = 15000,
 ) -> list[HarvestedCookie] | None:
-    """Drive a headless Chromium to ``target_url`` and return harvested cookies.
-
-    Returns ``None`` on any failure (Playwright missing, Chromium missing,
-    target unreachable). Each cookie is returned with full domain / path so
-    the merge path can build a domain-aware ``http.cookiejar.Cookie`` capabale
-    of passing the RFC 6265 strict domain-match check on subsequent sends.
-    """
     sync_playwright = _import_playwright()
     if sync_playwright is None:
         return None
@@ -159,15 +93,6 @@ def harvest_cookies_with_browser(
 
 @dataclass(frozen=True, slots=True)
 class BrowserResponse:
-    """Minimal duck-typed response shim that the captcha helper can read.
-
-    Built from Playwright's ``APIResponse`` so the provider's existing
-    ``detect_captcha_kind(response, rules=...)`` works without depending on
-    ``curl_cffi.Response``. ``.text``, ``.status_code`` and ``.json()`` are
-    enough for the captcha rule sweep + the downstream
-    ``ProviderSourceFetchError`` path.
-    """
-
     status_code: int
     body_text: str
 
@@ -193,30 +118,6 @@ def request_via_browser(
     warmup_url: str | None = None,
     warmup_referer_path: str = "",
 ) -> BrowserResponse | None:
-    """Run an HTTP request through real Chromium and return a ``BrowserResponse``.
-
-    Goes through real Chromium's TLS / HTTP/2 stack so Akamai bot-manager
-    sees a TLS JA4 + frame order + header order + cookie set that's
-    indistinguishable from a real browser tab — instead of a ``curl_cffi``
-    impersonation profile the bot-manager has long since catalogued.
-
-    ``warmup_url`` is the contract that turns this from "real stack, cold
-    cookies" into "real stack, sensor cookies already attached". When
-    supplied, the helper navigates there *on the same context* the API call
-    then runs through; Akamai's sensor JS executes during that navigation
-    and stamps ``_abck`` / ``bm_sz`` (Datadome stamps ``datadome``) on the
-    context cookie jar, so the subsequent ``request.fetch`` carries them on
-    exactly the HTTP/2 connection the JS sensor's telemetry was generated
-    for. Without the warmup navigation the request goes through Chromium's
-    networking but with no sensor cookies — Akamai bot-manager still 403s in
-    that case. ``warmup_referer_path`` is appended to ``warmup_url`` when
-    non-empty so providers can keep using their per-language landing pages.
-
-    Returns ``None`` whenever Playwright can't service the request
-    (Playwright missing, Chromium binary missing, launch failure, request
-    exception, warmup-nav failure). The provider must keep its curl_cffi
-    fallback intact so a ``None`` here means "use the curl path".
-    """
     sync_playwright = _import_playwright()
     if sync_playwright is None:
         return None
@@ -273,82 +174,39 @@ def request_via_browser(
         return None
 
 
-def merge_cookies_into_session(session: Any, cookies: list[HarvestedCookie] | None) -> None:
-    """Copy harvested cookies into the session cookie jar with their proper domain.
-
-    Always constructs ``http.cookiejar.Cookie`` explicitly so the stdlib jar
-    (used by curl_cffi) keeps each cookie under its real domain. RFC 6265
-    strict-matching then sends those cookies on subsequent requests to
-    matching hosts, which is what Akamai / Datadome require to recognise the
-    replay as legit.
-
-    The dual-shape shortcut is preserved for testing: requests-style
-    ``RequestsCookieJar.set(name, value)`` is still tried first for callers
-    that build sessions with that surface; on a failed shortcut (curl_cffi's
-    stdlib jar) the path falls back to stdlib Cookie + ``set_cookie``.
-    """
-    if not cookies:
-        return
-    jar = getattr(session, "cookies", None)
-    if jar is None:
-        return
-    try:
-        for entry in cookies:
-            if hasattr(jar, "set") and callable(getattr(jar, "set", None)):
-                try:
-                    jar.set(entry.name, entry.value)  # type: ignore[attr-defined]
-                    continue
-                except TypeError:
-                    # Some jars don't accept the 2-arg shortcut; fall through
-                    # to the stdlib-style path below.
-                    pass
-            cookie = Cookie(
-                version=0,
-                name=entry.name,
-                value=entry.value,
-                port=None,
-                port_specified=False,
-                domain=entry.domain,
-                domain_specified=bool(entry.domain),
-                domain_initial_dot=entry.domain.startswith("."),
-                path=entry.path or "/",
-                path_specified=bool(entry.path),
-                secure=entry.secure,
-                expires=entry.expires,
-                discard=entry.expires is None,
-                comment=None,
-                comment_url=None,
-                rest={},
-                rfc2109=False,
-            )
-            jar.set_cookie(cookie)
-    except Exception as exc:  # noqa: BLE001 - last-resort safety net
-        logger.debug("merge_cookies_into_session skipped: %s", exc)
+def warm_session_with_browser(
+    session: Any,
+    *,
+    env_var: str,
+    base_url: str,
+    referer_path: str = "",
+) -> bool:
+    if not browser_warmup_enabled(env_var):
+        return False
+    cookies = harvest_cookies_with_browser(base_url, referer_path=referer_path)
+    merge_cookies_into_session(session, cookies)
+    return True
 
 
-def merge_cookies_from_mapping(session: Any, cookies: Mapping[str, str] | None) -> None:
-    """TESTS-ONLY — DO NOT CALL FROM PRODUCTION CODE.
-
-    Accepts a flat ``name → value`` mapping (which is what the legacy
-    helper returned) and pushes it into the session jar via the requests-
-    style ``set`` shortcut. The cookies are stamped with empty domain, so
-    they will NOT survive RFC 6265 domain matching on real curls — they
-    only round-trip inside ``requests.testing`` rigs.
-
-    Production paths must always go through
-    :func:`harvest_cookies_with_browser` + :func:`merge_cookies_into_session`
-    so each cookie carries its real Playwright-reported ``domain``. This
-    shim exists to keep unit fixtures happy without forcing every test to
-    construct ``HarvestedCookie`` entries by hand.
-    """
-    if not cookies:
-        return
-    jar = getattr(session, "cookies", None)
-    if jar is None:
-        return
-    try:
-        for name, value in cookies.items():
-            if hasattr(jar, "set") and callable(getattr(jar, "set", None)):
-                jar.set(name, value)  # type: ignore[attr-defined]
-    except Exception as exc:  # noqa: BLE001 - last-resort safety net
-        logger.debug("merge_cookies_from_mapping skipped: %s", exc)
+def request_via_browser_when_enabled(
+    env_var: str,
+    method: str,
+    url: str,
+    *,
+    json_body: Mapping[str, object] | None = None,
+    headers: Mapping[str, str] | None = None,
+    timeout_ms: int = 15000,
+    warmup_url: str | None = None,
+    warmup_referer_path: str = "",
+) -> BrowserResponse | None:
+    if not browser_warmup_enabled(env_var):
+        return None
+    return request_via_browser(
+        method,
+        url,
+        json_body=json_body,
+        headers=headers,
+        timeout_ms=timeout_ms,
+        warmup_url=warmup_url,
+        warmup_referer_path=warmup_referer_path,
+    )

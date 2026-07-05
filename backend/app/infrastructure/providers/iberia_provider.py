@@ -21,6 +21,10 @@ from app.infrastructure.providers.iberia_public_availability import (
     build_public_availability_request,
     extract_public_availability_flights,
 )
+from app.infrastructure.providers._browser_warmup import (
+    request_via_browser_when_enabled,
+    warm_session_with_browser,
+)
 from app.infrastructure.providers._captcha import WafRule, detect_captcha_kind
 from app.infrastructure.providers._session_factory import build_session_kwargs
 
@@ -236,40 +240,18 @@ class IberiaProvider(FlightProvider):
         except Exception:
             pass
         self._warmed = True
-        if os.getenv("IBERIA_USE_BROWSER_WARMUP") in {"1", "true", "yes", "on"}:
-            self._browser_warmup(base_url, referer_path=referer_path)
+        self._browser_warmup(base_url, referer_path=referer_path)
 
     def _browser_warmup(self, base_url: str, *, referer_path: str) -> None:
-        """Opt-in Playwright warmup layered on top of the curl warmup.
-
-        Self-gated on ``IBERIA_USE_BROWSER_WARMUP`` so direct callers (tests,
-        future code paths) are a no-op when the operator hasn't enabled the
-        headless path. Idempotent on ``_warmed_browser`` so a future direct
-        caller can't respawn Playwright per request — Akamai's sensor JS is
-        expensive and the cookie it stamps is reusable until it expires.
-
-        Failures (Playwright missing, Chromium binary missing, target
-        unreachable) are swallowed so the curl warmup and the eventual
-        availability call keep working with whatever they have. Cookies
-        harvested from the headless navigation are domain-aware
-        (``http.cookiejar.Cookie`` with the Playwright-reported domain) so
-        curl_cffi's stdlib jar keeps them in the right slot and sends them
-        on subsequent matching requests.
-        """
-        if os.getenv("IBERIA_USE_BROWSER_WARMUP") not in {"1", "true", "yes", "on"}:
-            return
         if self._warmed_browser:
             return
-        try:
-            from app.infrastructure.providers._browser_warmup import (
-                harvest_cookies_with_browser,
-                merge_cookies_into_session,
-            )
-        except ImportError:
-            return
-        cookies = harvest_cookies_with_browser(base_url, referer_path=referer_path)
-        merge_cookies_into_session(self._session, cookies)
-        self._warmed_browser = True
+        if warm_session_with_browser(
+            self._session,
+            env_var="IBERIA_USE_BROWSER_WARMUP",
+            base_url=base_url,
+            referer_path=referer_path,
+        ):
+            self._warmed_browser = True
 
     def _post_with_optional_browser(
         self,
@@ -279,28 +261,8 @@ class IberiaProvider(FlightProvider):
         headers: Mapping[str, str],
         timeout_ms: int,
     ) -> Any:
-        """Opt-in Playwright-direct POST path; falls back to curl_cffi.
-
-        Activated by ``IBERIA_USE_BROWSER_POST=1``. When the env flag is on
-        and the helper succeeds, the response object comes from a real
-        Chromium HTTP/2 stack with the freshly sensor-cooked ``_abck``
-        cookie on the same context — Akamai bot-manager can't distinguish
-        this from a real browser tab. Any failure (Playwright missing,
-        Chromium binary missing, request exception, gate off) falls through
-        to ``self._session.post`` (curl_cffi impersonate), keeping the
-        provider's runtime shape unchanged.
-        """
-        if os.getenv("IBERIA_USE_BROWSER_POST") not in {"1", "true", "yes", "on"}:
-            return self._session.post(
-                url, json=dict(json_body), headers=dict(headers), timeout=max(2.0, timeout_ms / 1000)
-            )
-        try:
-            from app.infrastructure.providers._browser_warmup import request_via_browser
-        except ImportError:
-            return self._session.post(
-                url, json=dict(json_body), headers=dict(headers), timeout=max(2.0, timeout_ms / 1000)
-            )
-        br = request_via_browser(
+        br = request_via_browser_when_enabled(
+            "IBERIA_USE_BROWSER_POST",
             "POST",
             url,
             json_body=dict(json_body),
