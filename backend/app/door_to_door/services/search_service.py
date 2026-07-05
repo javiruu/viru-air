@@ -55,6 +55,34 @@ SOURCE_QUALITY: dict[DoorToDoorSourceType, int] = {
     "estimate": 0,
 }
 
+# Eco-route (Fase 12): per-mode carbon-dioxide estimate, expressed in kg CO2e
+# per passenger-kilometer. Values are conservative public averages — meant to
+# give users an honest relative-comparison signal, not a certified footprint.
+# Walking and any zero-distance supplemental legs contribute zero.
+CO2_KG_PER_KM: dict[DoorToDoorMode, float] = {
+    "flight": 0.255,
+    "car": 0.171,
+    "taxi": 0.171,
+    "rideshare": 0.080,
+    "shuttle": 0.150,
+    "bus": 0.103,
+    "train": 0.041,
+    "walking": 0.0,
+}
+
+# Fallback speeds when only duration is known (used to infer km from minutes).
+# Conservative averages tuned for short-haul door-to-door legs.
+AVG_KMH_INFERENCE: dict[DoorToDoorMode, float] = {
+    "flight": 800.0,
+    "car": 80.0,
+    "taxi": 80.0,
+    "rideshare": 80.0,
+    "shuttle": 60.0,
+    "bus": 50.0,
+    "train": 100.0,
+    "walking": 5.0,
+}
+
 
 class DoorToDoorSearchService:
     def __init__(
@@ -186,6 +214,14 @@ class DoorToDoorSearchService:
                     )
 
         options = self._enrich_deeplink_with_google_routes(options)
+
+        # Fase 12: eco-route enrichment. Pylons computed locally from
+        # distance / duration + mode; per-leg and per-option totals are
+        # surfaced honestly with `confidence='estimated'` via the eco_route
+        # capability card. Has no side effects on provider ordering once we
+        # have completed arbitration, so it runs at the tail of the merge
+        # pipeline just before scoring/sorting.
+        options = self._enrich_eco_route(options)
         # Fase 6: compose cross-provider options (best outbound + best inbound)
         composite = self._compose_cross_provider(options, flight, query)
         if composite:
@@ -310,7 +346,7 @@ class DoorToDoorSearchService:
             "street_view_preview": _cap("planned", "none", "unavailable", why_missing="street_view_not_connected"),
             "offline": _cap("planned", "none", "unavailable", why_missing="offline_cache_not_implemented"),
             "incidents": _cap("planned", "none", "unavailable", why_missing="incident_source_not_connected"),
-            "eco_route": _cap("planned", "none", "unavailable", why_missing="eco_route_provider_pending"),
+            "eco_route": _cap("available", "estimate", "estimated") if has_options else _cap("planned", "none", "unavailable", why_missing="route_candidates_pending"),
         }
 
     def _apply_preferences(
@@ -352,6 +388,67 @@ class DoorToDoorSearchService:
                 )
 
         return filtered, warnings
+
+    def _enrich_eco_route(self, options: list[DoorToDoorOptionOut]) -> list[DoorToDoorOptionOut]:
+        """Estimate per-leg and per-option CO2e in kg based on distance or duration.
+
+        Priority per leg:
+        1. `distance_meters` when known — direct km × factor.
+        2. `duration_minutes` × mode-average km/h fallback — used when providers
+           only emit schedule data (e.g. GTFS `cached` flights, deeplink-only
+           legs without a `distance_meters`).
+        3. Skip — too little info to be honest. We refuse to surface a 0 kg
+           estimate that would falsely look clean.
+
+        The per-option total is the sum of legs we could estimate. If at least
+        one leg in the itinerary was estimated, we surface the total; otherwise
+        we leave `total_co2_kg=None` so the FE doesn't see a precise-by-zero
+        number that means "we know it's zero".
+        """
+        if not options:
+            return options
+        enriched: list[DoorToDoorOptionOut] = []
+        for option in options:
+            leg_total_kg = 0.0
+            estimated_any = False
+            new_legs: list[DoorToDoorLegOut] = []
+            for leg in option.legs:
+                kg = self._estimate_leg_co2_kg(leg)
+                if kg is None:
+                    new_legs.append(leg.model_copy())
+                    continue
+                estimated_any = True
+                leg_total_kg += kg
+                new_legs.append(leg.model_copy(update={"co2_kg": round(kg, 3)}))
+            total = round(leg_total_kg, 3) if estimated_any else None
+            enriched.append(option.model_copy(update={"legs": new_legs, "total_co2_kg": total}))
+        return enriched
+
+        # NOTE: legs are copied with model_copy(update={"co2_kg": ...}) rather than
+        # a bare model_copy() so the existing `actions` list is preserved by reference
+        # (Pydantic shallow-copies the parent, leaving nested lists shared). Update-only
+        # mode keeps the per-leg copy explicit and avoids hidden aliasing if downstream
+        # code ever mutates a leg's actions list.
+
+    @staticmethod
+    def _estimate_leg_co2_kg(leg: DoorToDoorLegOut) -> float | None:
+        """Return kg CO2e for a leg, or None if there's not enough data."""
+        if leg.co2_kg is not None:
+            return leg.co2_kg
+        factor = CO2_KG_PER_KM.get(leg.mode)
+        if factor is None:
+            return None
+        km: float | None = None
+        if leg.distance_meters is not None and leg.distance_meters > 0:
+            km = leg.distance_meters / 1000.0
+        elif leg.duration_minutes is not None and leg.duration_minutes > 0:
+            speed = AVG_KMH_INFERENCE.get(leg.mode)
+            if speed is None or speed <= 0:
+                return None
+            km = (leg.duration_minutes / 60.0) * speed
+        if km is None or km <= 0:
+            return None
+        return km * factor
 
     def _enrich_deeplink_with_google_routes(self, options: list[DoorToDoorOptionOut]) -> list[DoorToDoorOptionOut]:
         reference_option = next(
@@ -728,6 +825,18 @@ class DoorToDoorSearchService:
                 return (comp_rank, status_rank, quality_rank, has_duration, item.total_duration_minutes or 999_999)
             if sort_by == "fewest_changes":
                 return (comp_rank, status_rank, quality_rank, item.transfer_count, -(item.score or 0))
+            if sort_by == "lowest_emissions":
+                # Eco route: missing totals (None) sink to the bottom so users
+                # see only options we could actually estimate. `float('inf')`
+                # keeps the intent explicit (always larger than any finite kg).
+                has_total = item.total_co2_kg is None
+                return (
+                    comp_rank,
+                    status_rank,
+                    quality_rank,
+                    has_total,
+                    item.total_co2_kg if item.total_co2_kg is not None else float("inf"),
+                )
             # best_balance: sort by score descending within completeness groups
             return (comp_rank, status_rank, quality_rank, -(item.score or 0))
 
