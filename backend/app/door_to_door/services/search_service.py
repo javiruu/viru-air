@@ -7,7 +7,13 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
+from functools import partial
+
 from app.door_to_door.providers.base import DoorToDoorProvider, DoorToDoorProviderQuery
+from app.door_to_door.providers.circuit_breaker import (
+    ProviderCircuitBreaker,
+    default_circuit_breaker,
+)
 from app.door_to_door.domain.scoring import score_itinerary
 from app.door_to_door.schemas import (
     DoorToDoorCapabilityState,
@@ -56,10 +62,14 @@ class DoorToDoorSearchService:
         providers: list[DoorToDoorProvider] | None = None,
         provider_statuses: list[DoorToDoorProviderStatusOut] | None = None,
         mock_enabled: bool = False,
+        circuit_breaker: ProviderCircuitBreaker | None = None,
     ) -> None:
         self.providers = providers or []
         self.provider_statuses = provider_statuses or []
         self.mock_enabled = mock_enabled
+        # Share the process-wide singleton so trips survive between requests.
+        # Tests can inject a stub via the kwarg.
+        self.circuit_breaker = circuit_breaker or default_circuit_breaker()
 
     async def search(
         self,
@@ -101,7 +111,26 @@ class DoorToDoorSearchService:
 
         for provider in self.providers:
             try:
-                provider_options = await provider.run_search(query)
+                # functools.partial binds `query` once and avoids late-binding of
+                # `provider` if this loop ever runs concurrently.
+                provider_options = await self.circuit_breaker.run(
+                    provider.provider_name,
+                    partial(provider.run_search, query),
+                )
+                if provider_options is None:
+                    # Circuit breaker is open: skip this provider without raising.
+                    self._append_warning(
+                        warnings,
+                        DoorToDoorWarningOut(
+                            code="PROVIDER_CIRCUIT_OPEN",
+                            provider=provider.provider_name,
+                            message=(
+                                f"Proveedor '{provider.provider_name}' omitido por circuit breaker. "
+                                "Se reintentará tras la ventana de recuperación."
+                            ),
+                        ),
+                    )
+                    continue
                 options.extend(provider_options)
                 if provider_options:
                     if provider.source_type in ("mock", "estimate"):
