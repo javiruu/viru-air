@@ -37,6 +37,17 @@ class _FakeSession:
         self.calls.append((url, params))
         return _FakeResponse(self.payload)
 
+    def post(self, url: str, *, json, timeout: float, headers: dict[str, str]):
+        # After the GET → POST switch for the flight connections fallback, any
+        # test that drives only the public availability path also implicitly
+        # falls through to a flight-connections POST (when public_avail returns
+        # empty / errors). We mirror `get` so the fallback sees the same payload
+        # or hits the same exception as the test author intended.
+        if self.exc is not None:
+            raise self.exc
+        self.calls.append((url, json))
+        return _FakeResponse(self.payload)
+
 
 class _QueuedSession:
     def __init__(self, payloads: list[dict]) -> None:
@@ -47,10 +58,29 @@ class _QueuedSession:
         self.calls.append((url, params))
         return _FakeResponse(self.payloads.pop(0))
 
+    def post(self, url: str, *, json, timeout: float, headers: dict[str, str]):
+        # The flight connections fallback now POSTs the same query/variables dict
+        # as a JSON body (avoids long-URI WAF heuristics on Dohop's edge).
+        self.calls.append((url, json))
+        return _FakeResponse(self.payloads.pop(0))
+
 
 class _InvalidJsonSession:
     def get(self, *args, **kwargs) -> _InvalidJsonResponse:
         return _InvalidJsonResponse()
+
+    def post(self, *args, **kwargs) -> _InvalidJsonResponse:
+        return _InvalidJsonResponse()
+
+
+def _skip_warmup(provider: EasyJetProvider) -> None:
+    """Tests mock `_session` so the warmup `get` would consume queue payloads.
+
+    Setting both warmed markers short-circuits the warmup helpers and keeps the
+    recorded call sequence predictable for the assertions below.
+    """
+    provider._warmed_marketing = True
+    provider._warmed_flightconnections = True
 
 
 def test_get_flights_maps_easyjet_public_availability() -> None:
@@ -88,6 +118,7 @@ def test_get_flights_maps_easyjet_public_availability() -> None:
         }
     )
     provider._session = session
+    _skip_warmup(provider)
 
     result = provider.get_flights("ltn", "cdg", "2026-07-14", currency="eur")
 
@@ -111,6 +142,7 @@ def test_get_flights_maps_easyjet_public_availability() -> None:
 def test_get_flights_returns_empty_result_warning() -> None:
     provider = EasyJetProvider()
     provider._session = _FakeSession({"AvailableFlights": []})
+    _skip_warmup(provider)
 
     result = provider.get_flights("LGW", "BCN", "2026-07-14")
 
@@ -162,6 +194,7 @@ def test_get_flights_maps_easyjet_flight_connections_when_public_availability_is
         ]
     )
     provider._session = session
+    _skip_warmup(provider)
 
     result = provider.get_flights("BLQ", "BER", "2026-07-04")
 
@@ -196,6 +229,7 @@ def test_get_flights_ignores_unavailable_or_invalid_fares() -> None:
             ]
         }
     )
+    _skip_warmup(provider)
 
     result = provider.get_flights("LGW", "BCN", "2026-07-14")
 
@@ -207,6 +241,7 @@ def test_get_flights_ignores_unavailable_or_invalid_fares() -> None:
 def test_get_flights_raises_canonical_outage_when_request_fails() -> None:
     provider = EasyJetProvider()
     provider._session = _FakeSession(exc=RequestsError("blocked"))
+    _skip_warmup(provider)
 
     with pytest.raises(ProviderSourceFetchError) as exc_info:
         provider.get_flights("LGW", "BCN", "2026-07-14")
@@ -219,6 +254,7 @@ def test_get_flights_raises_canonical_outage_when_request_fails() -> None:
 def test_get_flights_raises_canonical_outage_when_response_is_not_json() -> None:
     provider = EasyJetProvider()
     provider._session = _InvalidJsonSession()
+    _skip_warmup(provider)
 
     with pytest.raises(ProviderSourceFetchError) as exc_info:
         provider.get_flights("LGW", "BCN", "2026-07-14")
