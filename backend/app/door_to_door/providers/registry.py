@@ -15,6 +15,7 @@ from app.door_to_door.providers.google_places import GooglePlacesSuggestionsProv
 from app.door_to_door.providers.google_routes import GoogleRoutesProvider  # noqa: E402
 from app.door_to_door.providers.gtfs_transit import GtfsTransitProvider  # noqa: E402
 from app.door_to_door.providers.mock import MockDoorToDoorProvider  # noqa: E402
+from app.door_to_door.providers.mozio import MozioDeepLinkProvider  # noqa: E402
 from app.door_to_door.providers.navitia import NavitiaProvider  # noqa: E402
 from app.door_to_door.providers.nominatim import NominatimSuggestionsProvider  # noqa: E402
 from app.door_to_door.schemas import DoorToDoorProviderStatusOut, DoorToDoorSourceType  # noqa: E402
@@ -291,14 +292,20 @@ def resolve_provider_runtime() -> ProviderRuntime:
             notes="Stub API de transfers.",
         ),
         ProviderDescriptor(
-            name="mozio",
-            source_type="aggregator",
-            base_status="pure_stub",
+            name="mozio_deeplink",
+            source_type="deeplink",
+            base_status="functional_deeplink",
             production_ready=False,
-            supports_search=False,
-            supports_booking_url=False,
-            has_tests=False,
-            notes="Stub partner API.",
+            supports_search=True,
+            supports_booking_url=True,
+            has_tests=True,
+            notes=(
+                "Deeplink global de transfers entre origen/destino y aeropuertos via Mozio. "
+                "Sin API key. Siempre activo."
+            ),
+            is_real=True,
+            is_keyless=True,
+            factory=MozioDeepLinkProvider,
         ),
         ProviderDescriptor(
             name="omio",

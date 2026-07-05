@@ -6,6 +6,7 @@ import pytest
 
 from app.door_to_door.providers.deeplink_blablacar import BlaBlaCarDeepLinkProvider
 from app.door_to_door.providers.deeplink_goopti import GoOptiDeepLinkProvider
+from app.door_to_door.providers.mozio import MozioDeepLinkProvider
 from app.door_to_door.providers.base import DoorToDoorProviderQuery
 from app.door_to_door.schemas import (
     DoorToDoorFlightOut,
@@ -380,3 +381,141 @@ def test_provider_status_clasifica_ambos_como_functional_deeplink():
     assert statuses["goopti_deeplink"].supports_search is True
     assert statuses["goopti_deeplink"].supports_booking_url is True
     assert statuses["goopti_deeplink"].has_tests is True
+
+    assert statuses["mozio_deeplink"].enabled is True
+    assert statuses["mozio_deeplink"].status == "functional_deeplink"
+    assert statuses["mozio_deeplink"].source_type == "deeplink"
+    assert statuses["mozio_deeplink"].supports_search is True
+    assert statuses["mozio_deeplink"].supports_booking_url is True
+    assert statuses["mozio_deeplink"].has_tests is True
+
+
+# ---------------------------------------------------------------------------
+# MozioDeepLinkProvider
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_mozio_generates_booking_url_with_origin_dest_date():
+    provider = MozioDeepLinkProvider()
+    query = _make_query()
+    results = await provider.search(query)
+    assert len(results) == 1
+    option = results[0]
+    assert option.id == "option_mozio_deeplink"
+    assert option.total_price_min is None
+    assert option.total_price_max is None
+    assert option.confidence == "deeplink"
+    assert option.source_types == ["deeplink", "api"]
+    # Two ground shuttle legs + flight = 3 legs for full trip.
+    assert len(option.legs) == 3
+    assert option.legs[0].mode == "shuttle"
+    assert option.legs[0].provider == "mozio"
+    assert option.legs[2].mode == "shuttle"
+    assert option.legs[2].provider == "mozio"
+
+    mozio_source = next(s for s in option.sources if s.provider == "mozio_deeplink")
+    booking_url = mozio_source.booking_url
+    assert booking_url is not None
+    assert booking_url.startswith("https://www.mozio.com/search?")
+    assert "start_name=Almer%C3%ADa" in booking_url
+    assert "end_name=Treviso+centro" in booking_url
+    assert query.flight.arrival_at.date().isoformat() in booking_url
+    # 1 pax is implicitly Mozio's default, so we omit num_passengers
+    # to match GoOpti's style — only explicit when > 1.
+    assert "num_passengers" not in (booking_url or "")
+
+
+@pytest.mark.asyncio
+async def test_mozio_no_inventa_precio():
+    provider = MozioDeepLinkProvider()
+    results = await provider.search(_make_query())
+    option = results[0]
+    assert option.total_price_min is None
+    assert option.total_price_max is None
+    assert option.price_per_person_min is None
+    assert option.price_per_person_max is None
+    for leg in option.legs:
+        assert leg.price_min is None
+        assert leg.price_max is None
+
+
+@pytest.mark.asyncio
+async def test_mozio_passengers_scales_in_url():
+    provider = MozioDeepLinkProvider()
+    results = await provider.search(_make_query(passengers=4))
+    option = results[0]
+    mozio_source = next(s for s in option.sources if s.provider == "mozio_deeplink")
+    assert "num_passengers=4" in (mozio_source.booking_url or "")
+
+
+@pytest.mark.asyncio
+async def test_mozio_airport_only_collapses_to_two_legs():
+    provider = MozioDeepLinkProvider()
+    results = await provider.search(
+        _make_query(final_type="airport_only", final_label="Solo aeropuerto TSF")
+    )
+    assert len(results) == 1
+    option = results[0]
+    # Only outbound ground leg + flight leg, no second ground.
+    assert len(option.legs) == 2
+    mozio_source = next(s for s in option.sources if s.provider == "mozio_deeplink")
+    booking_url = mozio_source.booking_url
+    assert "Aeropuerto" in (booking_url or "")
+    # When airport-only, we point end_name to the destination airport city.
+    assert "Treviso" in (booking_url or "") or "TSF" in (booking_url or "")
+
+
+@pytest.mark.asyncio
+async def test_mozio_emite_warning_unconfirmed_price():
+    provider = MozioDeepLinkProvider()
+    await provider.search(_make_query())
+    warnings = provider.consume_warnings()
+    assert any(w.code == "UNCONFIRMED_PRICE" for w in warnings)
+
+
+@pytest.mark.asyncio
+async def test_mozio_emite_flight_time_estimated_warning():
+    provider = MozioDeepLinkProvider()
+    await provider.search(_make_query(flight_time_confidence="estimated"))
+    warnings = provider.consume_warnings()
+    assert any(w.code == "FLIGHT_TIME_ESTIMATED" for w in warnings)
+
+
+@pytest.mark.asyncio
+async def test_mozio_deeplink_label_is_honest_no_reservar():
+    provider = MozioDeepLinkProvider()
+    results = await provider.search(_make_query())
+    option = results[0]
+    assert option.deep_link is not None
+    assert "Buscar" in option.deep_link.label
+    assert "Reservar" not in option.deep_link.label
+    assert "reservar" not in option.deep_link.label.lower()
+    assert "Buscar" in option.label
+    assert "Reservar" not in option.label
+    assert option.trust_copy is not None
+    assert "fuera de Viru" in option.trust_copy
+
+
+def test_mozio_provider_status_is_keyless_functional_deeplink():
+    from app.door_to_door.providers.registry import resolve_provider_runtime
+
+    import os
+
+    os.environ["APP_ENV"] = "test"
+    os.environ["DOOR_TO_DOOR_ENABLE_MOCK_PROVIDER"] = "0"
+    os.environ["DOOR_TO_DOOR_ENABLE_REAL_PROVIDERS"] = "1"
+    os.environ["DOOR_TO_DOOR_ENABLE_SCRAPERS"] = "0"
+    os.environ.pop("GOOGLE_MAPS_API_KEY", None)
+
+    runtime = resolve_provider_runtime()
+    statuses = {s.name: s for s in runtime.statuses}
+
+    assert statuses["mozio_deeplink"].enabled is True
+    assert statuses["mozio_deeplink"].status == "functional_deeplink"
+    assert statuses["mozio_deeplink"].source_type == "deeplink"
+    assert statuses["mozio_deeplink"].supports_search is True
+    assert statuses["mozio_deeplink"].supports_booking_url is True
+    assert statuses["mozio_deeplink"].has_tests is True
+    # Keyless deeplink is always enabled regardless of real/scrapers flags.
+    assert statuses["mozio_deeplink"].enabled is True

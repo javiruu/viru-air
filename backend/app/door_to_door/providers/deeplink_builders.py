@@ -211,3 +211,50 @@ def build_goopti_action(
         availability_status="external",
         trust_copy="Precio, horario y plazas se confirman fuera de Viru.",
     )
+
+
+def build_mozio_action(
+    origin_label: str,
+    destination_label: str,
+    date_str: str,
+    passengers: int,
+    action_id: str,
+    *,
+    origin_coords: tuple[float, float] | None = None,
+    destination_coords: tuple[float, float] | None = None,
+) -> DoorToDoorActionOut:
+    """Build a Mozio global airport transfer search deeplink.
+
+    Mozio is a keyless aggregator: its public search URL accepts origin +
+    destination + ride_date + num_passengers and (optionally) lat/lng for
+    both endpoints. We surface this without any API key while staying
+    honest — prices, schedules, and availability are confirmed on
+    mozio.com, not in Viru.
+    """
+    params: dict[str, str] = {
+        "start_name": origin_label,
+        "end_name": destination_label,
+    }
+    if date_str:
+        params["ride_date"] = date_str
+    params["num_passengers"] = str(max(1, int(passengers)))
+    if origin_coords:
+        params["start_lat"] = f"{origin_coords[0]:.6f}"
+        params["start_lng"] = f"{origin_coords[1]:.6f}"
+    if destination_coords:
+        params["end_lat"] = f"{destination_coords[0]:.6f}"
+        params["end_lng"] = f"{destination_coords[1]:.6f}"
+
+    url = f"https://www.mozio.com/search?{urlencode(params)}"
+    return DoorToDoorActionOut(
+        id=action_id,
+        provider="mozio",
+        label="Buscar transfer en Mozio",
+        url=url,
+        kind="provider_search",
+        opens_external=True,
+        source_status="external_search",
+        price_status="external",
+        availability_status="external",
+        trust_copy="Precio, horario y transfers se confirman fuera de Viru.",
+    )
