@@ -21,6 +21,7 @@ from app.infrastructure.providers.iberia_public_availability import (
     build_public_availability_request,
     extract_public_availability_flights,
 )
+from app.infrastructure.providers._captcha import WafRule, detect_captcha_kind
 
 _DEFAULT_BASE_URL: Final = "https://www.iberia.com"
 _DEFAULT_API_BASE_URL: Final = "https://ibisservices.iberia.com/api"
@@ -32,6 +33,25 @@ _DEFAULT_IMPERSONATE: Final = "chrome131"
 _IMPERSONATE_ENV_VAR: Final = "IBERIA_IMPERSONATE"
 _CHROME131_UA_SIG: Final = '"Chromium";v="131", "Not_A Brand";v="24", "Google Chrome";v="131"'
 _PROVIDER_POOL_SIZE: Final = 32
+
+
+# Each rule: kind -> predicate(status, lowered_text). Order matters: put the
+# specific captcha kinds before the generic akamai_blocked deny page so the
+# richer signal wins.
+#
+# Iberia's WAF is Akamai (sensor cookies _abck / bm_sz). The earlier code
+# carried a datadome_captcha branch as a defensive remainder, but in practice
+# every Iberia challenge body that mentions Datadome also mentions "captcha",
+# so the akamai_captcha rule above always wins first. We keep the rule set
+# intentionally tight to avoid dead branches.
+_IBERIA_WAF_RULES: Final[dict[str, WafRule]] = {
+    "akamai_captcha": lambda status, text: status == 403
+    and ("captcha" in text or "_abck" in text),
+    "akamai_blocked": lambda status, text: status == 403
+    and ("access denied" in text or "request rejected" in text),
+    "html_captcha": lambda status, text: "<html" in text
+    and ("captcha" in text or "challenge" in text),
+}
 
 
 class IberiaProvider(FlightProvider):
@@ -81,7 +101,11 @@ class IberiaProvider(FlightProvider):
         self._warm_session(self.base_url, referer_path="/")
         try:
             payload = self._fetch_public_availability(search, timeout_ms=timeout_ms)
-        except (RequestsError, ValueError, ProviderSourceFetchError) as exc:
+        except ProviderSourceFetchError:
+            # Captcha / source-specific failures: propagate unchanged so the
+            # orchestrator sees the rich warning_codes the helper produced.
+            raise
+        except (RequestsError, ValueError) as exc:
             raise ProviderSourceFetchError(
                 warning_codes=["iberia_provider_unavailable_total", "provider_total_outage"],
                 message=f"Iberia public provider unavailable for {search.origin}->{search.destination} on {search.travel_date}",
@@ -128,7 +152,7 @@ class IberiaProvider(FlightProvider):
                 "priority": "u=1, i",
             },
         )
-        captcha_kind = self._looks_like_captcha(response)
+        captcha_kind = detect_captcha_kind(response, rules=_IBERIA_WAF_RULES)
         if captcha_kind:
             raise ProviderSourceFetchError(
                 warning_codes=[
@@ -153,33 +177,6 @@ class IberiaProvider(FlightProvider):
                 meta={"reason": "invalid_json"},
             ) from exc
         return payload if isinstance(payload, dict) else {}
-
-    @staticmethod
-    def _looks_like_captcha(response: Any) -> str | None:
-        """Best-effort detection of Akamai/Datadome bot challenges.
-
-        A real browser impersonation should generally avoid these, but when the
-        warmup cookies are stale or the IP gets scored higher, the server may
-        serve a challenge page or HTML instead of the JSON payload. We label
-        these distinctly so the orchestrator's logs can tell captcha from a
-        genuine transport failure.
-        """
-        status = getattr(response, "status_code", None)
-        try:
-            text = response.text or ""
-        except Exception:
-            text = ""
-        lowered = text.lower()
-        if status == 403:
-            if "captcha" in lowered or "_abck" in lowered:
-                return "akamai_captcha"
-            if "datadome" in lowered or "blocked" in lowered and "captcha-delivery.com" in lowered:
-                return "datadome_captcha"
-            if "access denied" in lowered or "request rejected" in lowered:
-                return "akamai_blocked"
-        if "<html" in lowered and ("captcha" in lowered or "challenge" in lowered):
-            return "html_captcha"
-        return None
 
     def _warm_session(self, base_url: str, *, referer_path: str = "") -> None:
         """Best-effort warmup to acquire WAF cookies (Akamai _abck / bm_sz).
