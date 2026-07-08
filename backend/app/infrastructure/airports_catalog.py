@@ -255,7 +255,8 @@ def list_seed_airports(
     return page, total, next_offset
 
 
-def list_seed_countries() -> list[dict[str, object]]:
+def _build_seed_countries() -> list[dict[str, object]]:
+    """Build the seed countries list from the in-memory airport catalog."""
     counters: dict[str, int] = {}
     names: dict[str, str] = {}
     for airport in AIRPORTS:
@@ -272,6 +273,14 @@ def list_seed_countries() -> list[dict[str, object]]:
     ]
     rows.sort(key=lambda item: (str(item["name"]), str(item["code"])))
     return rows
+
+
+# Cache at module level: AIRPORTS is loaded once and never changes at runtime.
+_SEED_COUNTRIES: list[dict[str, object]] = _build_seed_countries()
+
+
+def list_seed_countries() -> list[dict[str, object]]:
+    return _SEED_COUNTRIES
 
 
 def resolve_seed_airport(iata: str) -> Airport:

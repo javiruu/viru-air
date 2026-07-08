@@ -333,9 +333,6 @@ def get_fresh_entry(
     )
     with _DB_LOCK:
         entry = db.scalar(stmt)
-        if entry:
-            entry.last_accessed_at_utc = now
-            db.commit()
     return entry
 
 
@@ -616,26 +613,47 @@ def prune_expired_entries(db: Session, *, batch_size: int = 200) -> int:
     """Delete expired cache entries. Returns count of deleted rows.
 
     Thread-safe: protected by _DB_LOCK.
+    Prunes both positive (QuickSearchCacheEntry) and negative
+    (QuickSearchNegativeCacheEntry) expired entries.
     Uses a subquery because SQLAlchemy Delete does not support .limit().
     """
     now = utc_now_naive()
     with _DB_LOCK:
-        subquery = (
+        # Prune expired positive cache entries
+        pos_subquery = (
             select(QuickSearchCacheEntry.id)
             .where(QuickSearchCacheEntry.expires_at_utc <= now)
             .limit(batch_size)
             .scalar_subquery()
         )
-        result = db.execute(
+        pos_result = db.execute(
             delete(QuickSearchCacheEntry).where(
-                QuickSearchCacheEntry.id.in_(subquery)
+                QuickSearchCacheEntry.id.in_(pos_subquery)
             )
         )
+
+        # Prune expired negative cache entries
+        neg_subquery = (
+            select(QuickSearchNegativeCacheEntry.id)
+            .where(QuickSearchNegativeCacheEntry.expires_at <= now)
+            .limit(batch_size)
+            .scalar_subquery()
+        )
+        neg_result = db.execute(
+            delete(QuickSearchNegativeCacheEntry).where(
+                QuickSearchNegativeCacheEntry.id.in_(neg_subquery)
+            )
+        )
+
         db.commit()
-    deleted = result.rowcount
-    if deleted > 0:
-        logger.info("quick_search_cache_pruned count=%d", deleted)
-    return deleted
+    pos_deleted = pos_result.rowcount
+    neg_deleted = neg_result.rowcount
+    total = pos_deleted + neg_deleted
+    if total > 0:
+        logger.info(
+            "quick_search_cache_pruned positive=%d negative=%d", pos_deleted, neg_deleted
+        )
+    return total
 
 
 def prune_expired_entries_async(*, batch_size: int = 200) -> None:

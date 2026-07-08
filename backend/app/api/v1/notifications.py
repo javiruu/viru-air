@@ -8,6 +8,7 @@ from app.infrastructure.db.session import get_db
 from app.services.notification_inbox import (
     InboxItem,
     SourceRef,
+    count_notification_summary,
     list_notification_inbox,
     mark_all_notifications_read,
     mark_notification_read,
@@ -61,8 +62,7 @@ def get_notifications_summary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict[str, int]:
-    items = list_notification_inbox(db, user_id=current_user.id, limit=200)
-    return _summary(items)
+    return count_notification_summary(db, user_id=current_user.id)
 
 
 @router.post("/{source_type}/{source_id}/read")

@@ -5,12 +5,10 @@ import { type KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useRef, u
 import { useRouter } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
-import { apiFetchWithStatus } from "@/modules/shared/api";
+import { useAuth } from "@/modules/shared/AuthProvider";
 import { clearToken } from "@/modules/shared/auth";
 import { buildAccountMenuGroups } from "@/modules/shared/accountMenuConfig";
-import { persistLocale, useI18n } from "@/i18n";
-
-type Me = { id: string; email: string; locale: string; is_admin: boolean };
+import { useI18n } from "@/i18n";
 
 function getInitials(value: string): string {
   const clean = value.trim();
@@ -25,27 +23,10 @@ export default function AccountMenu() {
   const router = useRouter();
   const { t } = useI18n();
   const { notify } = useNotificationCenter();
+  const { user: me } = useAuth();
   const [open, setOpen] = useState(false);
-  const [me, setMe] = useState<Me | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
-
-  useEffect(() => {
-    apiFetchWithStatus<Me>("/auth/me").then((result) => {
-      if (!result.ok) {
-        if (result.status === 401) {
-          clearToken();
-        }
-        setMe(null);
-        return;
-      }
-      const data = result.data;
-      setMe(data);
-      if (data?.locale) {
-        persistLocale(data.locale === "en" ? "en" : "es");
-      }
-    });
-  }, []);
 
   useEffect(() => {
     function onDocPointerDown(event: PointerEvent) {

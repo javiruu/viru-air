@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetchWithStatus } from "@/modules/shared/api";
+import { AuthProvider, type AuthUser } from "@/modules/shared/AuthProvider";
 import { clearToken, hasToken } from "@/modules/shared/auth";
 import { isDashboardDemoAccessEnabled, signInDashboardDemoAccount } from "@/modules/shared/dashboard-demo-session";
 import { buildLoginRedirect, currentPathWithSearch } from "@/modules/shared/navigation";
@@ -13,7 +14,7 @@ import { Skeleton, SkeletonPanel } from "@/modules/shared/Skeleton";
 import { persistLocale, useI18n } from "@/i18n";
 
 type GateState = "checking" | "authed" | "redirecting";
-type Me = { locale?: string | null };
+type Me = { id?: string; email?: string; locale?: string | null; is_admin?: boolean };
 
 export default function RequireAuth({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
   const { t } = useI18n();
   const { notify } = useNotificationCenter();
   const [state, setState] = useState<GateState>("checking");
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const notifiedRef = useRef(false);
 
   useEffect(() => {
@@ -72,7 +74,10 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
         if (me?.locale) {
           persistLocale(me.locale === "en" ? "en" : "es");
         }
-        if (active) setState("authed");
+        if (active) {
+          setAuthUser({ id: me.id ?? "", email: me.email ?? "", locale: me.locale ?? "es", is_admin: me.is_admin ?? false });
+          setState("authed");
+        }
         return;
       }
 
@@ -109,5 +114,5 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
     );
   }
 
-  return <>{children}</>;
+  return <AuthProvider user={authUser}>{children}</AuthProvider>;
 }
