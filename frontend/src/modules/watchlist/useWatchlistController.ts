@@ -61,8 +61,12 @@ export function useWatchlistController({
       setSelectedDestination(watch.destination_iata);
       setSelectedDates([watch.travel_date_local]);
       setSelectedPoint("");
+      if (watch.group_id) {
+        const groupWatchIds = items.filter((item) => item.group_id === watch.group_id).map((item) => item.id).slice(0, 4);
+        setCompareIds(groupWatchIds);
+      }
     },
-    [setSelectedDestination, setSelectedDates, setSelectedOrigin, setSelectedPoint, setSelectedWatchId],
+    [items, setCompareIds, setSelectedDestination, setSelectedDates, setSelectedOrigin, setSelectedPoint, setSelectedWatchId],
   );
 
   const selectWatchById = useCallback(

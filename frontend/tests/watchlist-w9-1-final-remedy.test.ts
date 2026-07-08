@@ -20,7 +20,7 @@ test("W9.1: watchlist keeps main surfaces and removes detail calendar table", ()
   assert.match(page, /<HistoryIntegratedPanel/);
   assert.match(page, /<ComparePanels/);
   assert.match(page, /<WatchlistMapDecisionPanel/);
-  assert.match(page, /<WatchProviderCoveragePanel/);
+  assert.doesNotMatch(page, /<WatchProviderCoveragePanel/);
 
   assert.doesNotMatch(detail, /Calendario/);
   assert.doesNotMatch(detail, /Los precios son orientativos y dependen de la frescura del proveedor\./);

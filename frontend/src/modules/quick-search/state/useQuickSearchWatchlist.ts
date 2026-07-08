@@ -4,6 +4,7 @@ import { apiFetch } from "@/modules/shared/api";
 import type { SearchResult } from "@/modules/quick-search/types";
 
 export type WatchlistItemBrief = {
+  id: string;
   origin_iata: string;
   destination_iata: string;
   travel_date_local: string;
@@ -32,22 +33,22 @@ export function buildWatchKeyFromResult(result: SearchResult): string {
  * "Guardar" for flights already saved to the watchlist.
  */
 export function useQuickSearchWatchlist() {
-  const [watchedKeys, setWatchedKeys] = useState<Set<string>>(new Set());
+  const [watchedByKey, setWatchedByKey] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
     let cancelled = false;
     apiFetch<WatchlistItemBrief[]>("/watchlist")
       .then((items) => {
         if (cancelled) return;
-        const keys = new Set<string>();
+        const nextWatchedByKey = new Map<string, string>();
         if (Array.isArray(items)) {
           for (const item of items) {
-            if (item.origin_iata && item.destination_iata && item.travel_date_local) {
-              keys.add(buildWatchKey(item.origin_iata, item.destination_iata, item.travel_date_local));
+            if (item.id && item.origin_iata && item.destination_iata && item.travel_date_local) {
+              nextWatchedByKey.set(buildWatchKey(item.origin_iata, item.destination_iata, item.travel_date_local), item.id);
             }
           }
         }
-        setWatchedKeys(keys);
+        setWatchedByKey(nextWatchedByKey);
       })
       .catch(() => {
         // Silently fail — the watchlist may not be available yet
@@ -61,24 +62,34 @@ export function useQuickSearchWatchlist() {
 
   const isInWatchlist = useCallback(
     (result: SearchResult): boolean => {
-      return watchedKeys.has(buildWatchKeyFromResult(result));
+      return watchedByKey.has(buildWatchKeyFromResult(result));
     },
-    [watchedKeys],
+    [watchedByKey],
+  );
+
+  const getWatchId = useCallback(
+    (result: SearchResult): string => {
+      return watchedByKey.get(buildWatchKeyFromResult(result)) ?? "";
+    },
+    [watchedByKey],
   );
 
   const markAsSaved = useCallback(
-    (result: SearchResult) => {
+    (result: SearchResult, watchId?: string | null) => {
       const key = buildWatchKeyFromResult(result);
-      if (!watchedKeys.has(key)) {
-        setWatchedKeys((prev) => {
-          const next = new Set(prev);
-          next.add(key);
-          return next;
-        });
-      }
+      setWatchedByKey((prev) => {
+        if (prev.get(key) === watchId || (!watchId && prev.has(key))) return prev;
+        const next = new Map(prev);
+        if (watchId) {
+          next.set(key, watchId);
+        } else if (!next.has(key)) {
+          next.set(key, "");
+        }
+        return next;
+      });
     },
-    [watchedKeys],
+    [],
   );
 
-  return { isInWatchlist, markAsSaved };
+  return { isInWatchlist, getWatchId, markAsSaved };
 }

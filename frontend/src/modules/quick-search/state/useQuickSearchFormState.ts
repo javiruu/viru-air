@@ -55,7 +55,7 @@ export function useQuickSearchFormState(initialOrigin: string, initialDestinatio
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
   const [durationMax, setDurationMax] = useState("");
-  const [sortBy, setSortBy] = useState<"ranking" | "price" | "duration" | "freshness">("ranking");
+  const [sortBy, setSortBy] = useState<"ranking" | "price" | "duration" | "freshness">("price");
 
   // ── Airport picker ──
   const [activePicker, setActivePicker] = useState<"origin" | "destination" | null>(null);

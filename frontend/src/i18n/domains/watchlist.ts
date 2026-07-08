@@ -70,6 +70,16 @@ export const watchlistEs = {
   quickStartBody: "Guarda vuelos aquí para seguir cambios de precio y horario.",
   quickStartConfirm: "Entendido",
   lastUpdate: "Última comprobación automática: {value}",
+  combinations: {
+    ariaLabel: "Combinaciones ida y vuelta guardadas",
+    kicker: "Viajes guardados",
+    title: "Ida y vuelta",
+    count: "{count} combinaciones",
+    roundTrip: "Ida y vuelta",
+    outbound: "Ida",
+    return: "Vuelta",
+    totalPending: "Precio pendiente",
+  },
   bulk: {
     toolbarAriaLabel: "Acciones masivas de watchlist",
     selectedCount: {
@@ -177,6 +187,8 @@ export const watchlistEs = {
       sufficient: "Hay suficientes capturas para interpretar tendencia.",
     },
     actions: {
+      refreshPrice: "Actualizar precio",
+      refreshingPrice: "Actualizando...",
       pause: "Pausar",
       resume: "Reanudar",
     },
@@ -310,6 +322,10 @@ export const watchlistEs = {
     flightsResumed: "Vuelos reanudados.",
     flightsDeleted: "Vuelos eliminados.",
     selectDateBeforeAirports: "Selecciona fecha antes de elegir aeropuertos.",
+    selectedPriceSame: "El precio es el mismo.",
+    selectedPriceUpdated: "Precio actualizado.",
+    selectedRefreshNoFlights: "Ahora mismo no hay vuelos para esta ruta.",
+    selectedRefreshError: "No se pudo actualizar el precio.",
   },
 };
 
@@ -385,6 +401,16 @@ export const watchlistEn = {
   quickStartBody: "Save flights here to track schedule and price changes.",
   quickStartConfirm: "Got it",
   lastUpdate: "Last automatic check: {value}",
+  combinations: {
+    ariaLabel: "Saved round-trip combinations",
+    kicker: "Saved trips",
+    title: "Round trips",
+    count: "{count} combinations",
+    roundTrip: "Round trip",
+    outbound: "Outbound",
+    return: "Return",
+    totalPending: "Price pending",
+  },
   bulk: {
     toolbarAriaLabel: "Watchlist bulk actions",
     selectedCount: {
@@ -492,6 +518,8 @@ export const watchlistEn = {
       sufficient: "There are enough captures to interpret trend.",
     },
     actions: {
+      refreshPrice: "Refresh price",
+      refreshingPrice: "Refreshing...",
       pause: "Pause",
       resume: "Resume",
     },
@@ -625,6 +653,10 @@ export const watchlistEn = {
     flightsResumed: "Flights resumed.",
     flightsDeleted: "Flights deleted.",
     selectDateBeforeAirports: "Select a date before choosing airports.",
+    selectedPriceSame: "The price is the same.",
+    selectedPriceUpdated: "Price updated.",
+    selectedRefreshNoFlights: "There are no flights for this route right now.",
+    selectedRefreshError: "Price could not be refreshed.",
   },
 };
 

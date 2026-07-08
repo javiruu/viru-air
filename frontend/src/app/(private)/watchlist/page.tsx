@@ -15,7 +15,7 @@ import { ComparePanels } from "@/modules/watchlist/components/ComparePanels";
 import { HistoryIntegratedPanel } from "@/modules/watchlist/components/HistoryIntegratedPanel";
 import { SmartWatchListPanel } from "@/modules/watchlist/components/SmartWatchListPanel";
 import { WatchDetailPanel } from "@/modules/watchlist/components/WatchDetailPanel";
-import { WatchProviderCoveragePanel } from "@/modules/watchlist/components/WatchProviderCoveragePanel";
+import { WatchlistCombinationPanel } from "@/modules/watchlist/components/WatchlistCombinationPanel";
 import { monthLabel } from "@/modules/watchlist/dateUtils";
 import { useWatchlistController } from "@/modules/watchlist/useWatchlistController";
 import { Skeleton, SkeletonPanel } from "@/modules/shared/Skeleton";
@@ -69,6 +69,13 @@ export default function WatchlistPage() {
     if (hasAppliedUrlState.current || actions.items.length === 0) return;
     hasAppliedUrlState.current = true;
     const nav = readWatchlistNavigationParams(searchParams);
+    if (nav.watchId) {
+      const match = actions.items.find((item) => item.id === nav.watchId);
+      if (match) {
+        selectWatch(match);
+        return;
+      }
+    }
     if (nav.origin && nav.destination) {
       const match = actions.items.find(
         (item) =>
@@ -83,7 +90,7 @@ export default function WatchlistPage() {
   }, [searchParams, actions.items, selectWatch]);
 
   // ── URL state: persist selection to URL on change ──────────────────
-  const prevSelectionRef = useRef({ origin: "", destination: "", travelDate: "" });
+  const prevSelectionRef = useRef({ watchId: "", origin: "", destination: "", travelDate: "" });
   useEffect(() => {
     if (!hasAppliedUrlState.current) return;
     const current = derived.selectedWatch;
@@ -91,13 +98,16 @@ export default function WatchlistPage() {
     const origin = current?.origin_iata || "";
     const destination = current?.destination_iata || "";
     const travelDate = current?.travel_date_local || "";
+    const watchId = current?.id || "";
     if (
+      watchId === prev.watchId &&
       origin === prev.origin &&
       destination === prev.destination &&
       travelDate === prev.travelDate
     ) return;
-    prevSelectionRef.current = { origin, destination, travelDate };
+    prevSelectionRef.current = { watchId, origin, destination, travelDate };
     const qs = buildWatchlistViewSearchParams({
+      watchId,
       origin,
       destination,
       travelDate,
@@ -124,6 +134,24 @@ export default function WatchlistPage() {
     if (!watchExists) return;
     selectWatchById(watchId);
     notify({ tone: "success", title: t("watchlist.messages.flightSelected") });
+  };
+  const handleRefreshSelectedWatch = async (watchId: string) => {
+    try {
+      const result = await actions.refreshSelectedWatch(watchId);
+      notify({
+        tone: result === "same" ? "info" : result === "no_flights" ? "warning" : "success",
+        title: t(
+          result === "same"
+            ? "watchlist.messages.selectedPriceSame"
+            : result === "no_flights"
+              ? "watchlist.messages.selectedRefreshNoFlights"
+              : "watchlist.messages.selectedPriceUpdated",
+        ),
+        durationMs: 3200,
+      });
+    } catch {
+      notify({ tone: "error", title: t("watchlist.messages.selectedRefreshError"), durationMs: 3200 });
+    }
   };
 
   return (
@@ -178,8 +206,6 @@ export default function WatchlistPage() {
           ) : null}
         </div>
       ) : null}
-
-      <WatchProviderCoveragePanel coverage={derived.providerCoverage} />
 
       <section className="watchlist-cockpit-grid section-gap">
         <div className="watchlist-area watchlist-area-history">
@@ -265,11 +291,18 @@ export default function WatchlistPage() {
         </div>
 
         <div className="watchlist-area watchlist-area-detail">
+          <WatchlistCombinationPanel
+            groups={derived.combinationGroups}
+            selectedWatchId={view.selectedWatchId}
+            onSelectWatchById={handleSelectWatchById}
+          />
           <WatchDetailPanel
             selectedWatch={derived.selectedWatch}
             detail={actions.selectedWatchDetail}
             summary={actions.selectedWatchSummary}
             isLoading={actions.isLoadingSelectedWatchDetail}
+            isRefreshing={actions.isRefreshingSelectedWatch}
+            onRefreshWatch={(watchId) => { void handleRefreshSelectedWatch(watchId); }}
             onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
             onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
           />

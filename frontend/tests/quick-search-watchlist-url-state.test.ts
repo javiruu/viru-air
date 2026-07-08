@@ -6,6 +6,7 @@ import {
   sanitizeIata,
   sanitizeIsoDate,
   sanitizeIsoMonth,
+  sanitizeWatchId,
   sanitizePositiveInt,
   sanitizeClampedInt,
   sanitizeFlag,
@@ -26,6 +27,7 @@ import {
   WL_PARAM_ORIGIN,
   WL_PARAM_DESTINATION,
   WL_PARAM_TRAVEL_DATE,
+  WL_PARAM_WATCH_ID,
   WL_PARAM_VIEW,
   WL_PARAM_RANGE,
   QS_PARAM_ORIGIN,
@@ -68,6 +70,18 @@ test("sanitizeIsoDate rejects invalid dates", () => {
   assert.equal(sanitizeIsoDate("2026/07/15"), "");
   assert.equal(sanitizeIsoDate("2026-13-01"), "2026-13-01"); // validates format, not calendar
   assert.equal(sanitizeIsoDate(null), "");
+});
+
+test("sanitizeWatchId accepts URL-safe ids", () => {
+  assert.equal(sanitizeWatchId("watch_12345"), "watch_12345");
+  assert.equal(sanitizeWatchId("abc-def_123"), "abc-def_123");
+});
+
+test("sanitizeWatchId rejects unsafe ids", () => {
+  assert.equal(sanitizeWatchId(""), "");
+  assert.equal(sanitizeWatchId("abc"), "");
+  assert.equal(sanitizeWatchId("bad/id"), "");
+  assert.equal(sanitizeWatchId(null), "");
 });
 
 test("sanitizeIsoMonth accepts valid ISO months", () => {
@@ -158,6 +172,16 @@ test("buildWatchlistUrl builds URL with valid params", () => {
   assert.equal(url, "/watchlist?origin=MAD&destination=DUB&travelDate=2026-07-15");
 });
 
+test("buildWatchlistUrl includes watchId before route params", () => {
+  const url = buildWatchlistUrl({
+    origin: "MAD",
+    destination: "DUB",
+    travelDate: "2026-07-15",
+    watchId: "watch_12345",
+  });
+  assert.equal(url, "/watchlist?watchId=watch_12345&origin=MAD&destination=DUB&travelDate=2026-07-15");
+});
+
 test("buildWatchlistUrl sanitizes lowercase and whitespace", () => {
   const url = buildWatchlistUrl({
     origin: "  mad ",
@@ -203,6 +227,18 @@ test("readWatchlistNavigationParams reads valid params", () => {
     origin: "MAD",
     destination: "DUB",
     travelDate: "2026-07-15",
+    watchId: "",
+  });
+});
+
+test("readWatchlistNavigationParams reads watchId", () => {
+  const sp = new URLSearchParams("?watchId=watch_12345&origin=MAD&destination=DUB&travelDate=2026-07-15");
+  const nav = readWatchlistNavigationParams(sp);
+  assert.deepEqual(nav, {
+    origin: "MAD",
+    destination: "DUB",
+    travelDate: "2026-07-15",
+    watchId: "watch_12345",
   });
 });
 
@@ -213,6 +249,7 @@ test("readWatchlistNavigationParams sanitizes invalid params", () => {
     origin: "",
     destination: "",
     travelDate: "",
+    watchId: "",
   });
 });
 
@@ -223,6 +260,7 @@ test("readWatchlistNavigationParams returns empty for missing params", () => {
     origin: "",
     destination: "",
     travelDate: "",
+    watchId: "",
   });
 });
 
@@ -233,6 +271,7 @@ test("readWatchlistNavigationParams handles empty URLSearchParams", () => {
     origin: "",
     destination: "",
     travelDate: "",
+    watchId: "",
   });
 });
 
@@ -266,10 +305,11 @@ test("buildWatchlistViewSearchParams includes non-default values", () => {
     origin: "MAD",
     destination: "DUB",
     travelDate: "2026-07-15",
+    watchId: "watch_12345",
     view: "calendar",
     range: "all",
   });
-  assert.equal(qs, "origin=MAD&destination=DUB&travelDate=2026-07-15&view=calendar&range=all");
+  assert.equal(qs, "watchId=watch_12345&origin=MAD&destination=DUB&travelDate=2026-07-15&view=calendar&range=all");
 });
 
 test("buildWatchlistViewSearchParams returns empty for all defaults", () => {
@@ -463,6 +503,10 @@ test("QuickSearch and Watchlist share same destination param name", () => {
 
 test("QuickSearch and Watchlist share same travelDate param name", () => {
   assert.equal(QS_PARAM_TRAVEL_DATE, WL_PARAM_TRAVEL_DATE);
+});
+
+test("Watchlist has a dedicated watchId param", () => {
+  assert.equal(WL_PARAM_WATCH_ID, "watchId");
 });
 
 // ─── Edge cases ───────────────────────────────────────────────────

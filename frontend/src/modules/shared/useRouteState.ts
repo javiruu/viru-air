@@ -18,6 +18,7 @@ export const PARAM_TRAVEL_DATE = "travelDate";
 export const WL_PARAM_ORIGIN = PARAM_ORIGIN;
 export const WL_PARAM_DESTINATION = PARAM_DESTINATION;
 export const WL_PARAM_TRAVEL_DATE = PARAM_TRAVEL_DATE;
+export const WL_PARAM_WATCH_ID = "watchId";
 export const WL_PARAM_VIEW = "view";
 export const WL_PARAM_RANGE = "range";
 
@@ -46,6 +47,12 @@ export function sanitizeIsoDate(raw: string | null | undefined): string {
   if (!raw) return "";
   const trimmed = raw.trim();
   return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : "";
+}
+
+export function sanitizeWatchId(raw: string | null | undefined): string {
+  if (!raw) return "";
+  const trimmed = raw.trim();
+  return /^[A-Za-z0-9_-]{6,80}$/.test(trimmed) ? trimmed : "";
 }
 
 /** Validates an ISO month string (YYYY-MM), returns it or empty string. */
@@ -114,6 +121,7 @@ export type QuickSearchWatchlistNav = {
   origin: string;
   destination: string;
   travelDate: string;
+  watchId?: string;
 };
 
 /**
@@ -125,7 +133,9 @@ export function buildWatchlistUrl(params: QuickSearchWatchlistNav): string {
   const origin = sanitizeIata(params.origin);
   const destination = sanitizeIata(params.destination);
   const travelDate = sanitizeIsoDate(params.travelDate);
+  const watchId = sanitizeWatchId(params.watchId);
 
+  if (watchId) search.set(WL_PARAM_WATCH_ID, watchId);
   if (origin) search.set(WL_PARAM_ORIGIN, origin);
   if (destination) search.set(WL_PARAM_DESTINATION, destination);
   if (travelDate) search.set(WL_PARAM_TRAVEL_DATE, travelDate);
@@ -145,6 +155,7 @@ export function readWatchlistNavigationParams(
     origin: sanitizeIata(sp.get(WL_PARAM_ORIGIN)),
     destination: sanitizeIata(sp.get(WL_PARAM_DESTINATION)),
     travelDate: sanitizeIsoDate(sp.get(WL_PARAM_TRAVEL_DATE)),
+    watchId: sanitizeWatchId(sp.get(WL_PARAM_WATCH_ID)),
   };
 }
 
@@ -168,6 +179,7 @@ export function buildWatchlistViewSearchParams(params: {
   origin?: string;
   destination?: string;
   travelDate?: string;
+  watchId?: string;
   view?: "chart" | "calendar";
   range?: "30" | "all";
 }): string {
@@ -176,7 +188,9 @@ export function buildWatchlistViewSearchParams(params: {
   const origin = params.origin ? sanitizeIata(params.origin) : "";
   const destination = params.destination ? sanitizeIata(params.destination) : "";
   const travelDate = params.travelDate ? sanitizeIsoDate(params.travelDate) : "";
+  const watchId = params.watchId ? sanitizeWatchId(params.watchId) : "";
 
+  if (watchId) search.set(WL_PARAM_WATCH_ID, watchId);
   if (origin) search.set(WL_PARAM_ORIGIN, origin);
   if (destination) search.set(WL_PARAM_DESTINATION, destination);
   if (travelDate) search.set(WL_PARAM_TRAVEL_DATE, travelDate);

@@ -125,12 +125,18 @@ def test_search_save_result_creates_or_reuses_watch(client: TestClient, monkeypa
             "destination_iata": "DUB",
             "travel_date": travel_date,
             "price_total": 39.5,
+            "group_id": "round_trip_existing",
         },
     )
     assert second.status_code == 200
     second_payload = second.json()
     assert second_payload["created_or_existing"] == "existing"
     assert second_payload["watch_id"] == first_payload["watch_id"]
+
+    watches = client.get("/api/v1/watchlist", headers=headers)
+    assert watches.status_code == 200
+    saved_watch = next(item for item in watches.json() if item["id"] == first_payload["watch_id"])
+    assert saved_watch["group_id"] == "round_trip_existing"
 
 
 def test_alert_rule_min_change_pct_is_applied(client: TestClient, monkeypatch) -> None:
