@@ -1,6 +1,7 @@
 import React, { memo } from "react";
 
 import type { SearchResult } from "@/modules/quick-search/types";
+import { getOfficialRyanairFlightDeepLink, isGenericHttpLink, isOfficialWizzAirDeepLink } from "@/modules/quick-search/api/quickSearchDeepLinks";
 import { QuickSearchProviderBadge } from "@/modules/quick-search/components/QuickSearchProviderBadge";
 import { resolveQuickSearchProviderPresentation } from "@/modules/quick-search/providerPresentation";
 import { getAirportMeta } from "@/modules/shared/airports";
@@ -44,56 +45,6 @@ type Props = {
   onTrackRowOverflow: (rowId: string) => void;
   onTrackCopyParams: (rowId: string) => void;
 };
-
-function isOfficialRyanairFlightDeepLink(value: string | null | undefined): boolean {
-  if (!value) return false;
-  try {
-    const parsed = new URL(value, "https://www.ryanair.com");
-    const host = parsed.hostname.toLowerCase();
-    const isRyanairHost = host === "ryanair.com" || host.endsWith(".ryanair.com");
-    const isFlightSelectPath = parsed.pathname.toLowerCase().includes("/trip/flights/select");
-    const queryMap = new Map<string, string>();
-    for (const [key, raw] of parsed.searchParams.entries()) {
-      queryMap.set(key.toLowerCase(), raw);
-    }
-    const pick = (...keys: string[]) => {
-      for (const key of keys) {
-        const value = queryMap.get(key.toLowerCase());
-        if (value) return value;
-      }
-      return "";
-    };
-    const origin = pick("originIata", "origin_iata", "tpOriginIata");
-    const destination = pick("destinationIata", "destination_iata", "tpDestinationIata");
-    const dateOut = pick("dateOut", "date_out", "tpStartDate");
-    const hasRouteParams = Boolean(origin && destination);
-    const hasDateOut = Boolean(dateOut);
-    return isRyanairHost && isFlightSelectPath && hasRouteParams && hasDateOut;
-  } catch {
-    return false;
-  }
-}
-
-function isOfficialWizzAirDeepLink(value: string | null | undefined): boolean {
-  if (!value) return false;
-  try {
-    const parsed = new URL(value, "https://www.wizzair.com");
-    const host = parsed.hostname.toLowerCase();
-    return host === "wizzair.com" || host.endsWith(".wizzair.com");
-  } catch {
-    return false;
-  }
-}
-
-function isGenericHttpLink(value: string | null | undefined): boolean {
-  if (!value) return false;
-  try {
-    const parsed = new URL(value);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
 
 function getRouteAirportLabel(iata: string): { city: string; code: string; hasCity: boolean } {
   const code = iata.trim().toUpperCase();
@@ -154,12 +105,10 @@ function QuickSearchResultsListInner(props: Props) {
           {props.visibleResults.map((r, idx) => {
             const rowId = props.resultKey(r, idx);
             const provider = resolveQuickSearchProviderPresentation(r.source, props.t("sourceUnknown"));
+            const ryanairResultLink = getOfficialRyanairFlightDeepLink(r.deeplink_url);
+            const ryanairFallbackLink = getOfficialRyanairFlightDeepLink(props.deeplinkUrl);
             const rowLink = provider.id === "ryanair"
-              ? (isOfficialRyanairFlightDeepLink(r.deeplink_url)
-                  ? r.deeplink_url
-                  : isOfficialRyanairFlightDeepLink(props.deeplinkUrl)
-                    ? props.deeplinkUrl
-                    : "")
+              ? (ryanairResultLink || ryanairFallbackLink)
               : provider.id === "wizzair"
                 ? (isOfficialWizzAirDeepLink(r.deeplink_url) ? r.deeplink_url : "")
                 : (isGenericHttpLink(r.deeplink_url) ? r.deeplink_url ?? "" : "");
