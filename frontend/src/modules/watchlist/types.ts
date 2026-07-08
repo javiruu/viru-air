@@ -6,6 +6,7 @@
   target_price?: number | null;
   status: string;
   watchers_count?: number | null;
+  group_id?: string | null;
 };
 
 export type Snapshot = {
@@ -24,6 +25,7 @@ export type WatchDetail = {
   target_price?: number | null;
   status: string;
   watchers_count?: number | null;
+  group_id?: string | null;
   latest_snapshot: Snapshot | null;
 };
 
@@ -145,4 +147,22 @@ export type CalendarSelectorFlight = {
   latestPrice: number | null;
   latestCurrency: string;
   latestCapturedAt: string | null;
+};
+
+export type WatchCombinationLeg = {
+  id: string;
+  origin: string;
+  destination: string;
+  travelDate: string;
+  status: string;
+  latestPrice: number | null;
+  latestCurrency: string;
+  latestCapturedAt: string | null;
+};
+
+export type WatchCombinationGroup = {
+  groupId: string;
+  legs: WatchCombinationLeg[];
+  totalLatestPrice: number | null;
+  currency: string;
 };

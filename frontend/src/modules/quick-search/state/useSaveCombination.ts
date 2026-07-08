@@ -28,8 +28,10 @@ type SaveResult = {
 
 type SaveCombinationState = {
   status: "idle" | "saving" | "saved" | "error" | "partial";
-  /** i18n key suffix for the parent to translate (e.g. "combinationError", "combinationPartial"). */
   messageKey: string | null;
+  outboundWatchId: string;
+  returnWatchId: string;
+  groupId: string;
 };
 
 // ── Hook ──────────────────────────────────────────────────────────────
@@ -39,15 +41,18 @@ export function useSaveCombination() {
   const [state, setState] = useState<SaveCombinationState>({
     status: "idle",
     messageKey: null,
+    outboundWatchId: "",
+    returnWatchId: "",
+    groupId: "",
   });
 
   const reset = useCallback(() => {
-    setState({ status: "idle", messageKey: null });
+    setState({ status: "idle", messageKey: null, outboundWatchId: "", returnWatchId: "", groupId: "" });
   }, []);
 
   const saveCombination = useCallback(
     async (params: SaveCombinationParams) => {
-      setState({ status: "saving", messageKey: null });
+      setState({ status: "saving", messageKey: null, outboundWatchId: "", returnWatchId: "", groupId: params.groupId });
 
       const [outboundResult, returnResult] = await Promise.allSettled([
         apiFetch<SaveResult>("/search/save-result", {
@@ -64,18 +69,26 @@ export function useSaveCombination() {
         outboundResult.status === "fulfilled" && outboundResult.value;
       const returnOk =
         returnResult.status === "fulfilled" && returnResult.value;
+      const outboundWatchId = outboundOk ? outboundResult.value.watch_id ?? "" : "";
+      const returnWatchId = returnOk ? returnResult.value.watch_id ?? "" : "";
 
       if (outboundOk && returnOk) {
-        setState({ status: "saved", messageKey: null });
+        setState({ status: "saved", messageKey: null, outboundWatchId, returnWatchId, groupId: params.groupId });
       } else if (outboundOk || returnOk) {
         setState({
           status: "partial",
           messageKey: "combinationPartial",
+          outboundWatchId,
+          returnWatchId,
+          groupId: params.groupId,
         });
       } else {
         setState({
           status: "error",
           messageKey: "combinationError",
+          outboundWatchId: "",
+          returnWatchId: "",
+          groupId: params.groupId,
         });
       }
     },
@@ -86,11 +99,13 @@ export function useSaveCombination() {
     origin?: string,
     destination?: string,
     travelDate?: string,
+    watchId?: string,
   ) => {
     const url = buildWatchlistUrl({
       origin: origin || "",
       destination: destination || "",
       travelDate: travelDate || "",
+      watchId: watchId || "",
     });
     router.push(url);
   }, [router]);

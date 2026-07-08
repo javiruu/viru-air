@@ -594,7 +594,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const [resumeWasRestored, setResumeWasRestored] = useState(false);
   const [refreshingResultId, setRefreshingResultId] = useState<string | null>(null);
   const [providerSearchStatuses, setProviderSearchStatuses] = useState<ProviderSearchStatus[]>([]);
-  const { isInWatchlist, markAsSaved } = useQuickSearchWatchlist();
+  const { isInWatchlist, getWatchId, markAsSaved } = useQuickSearchWatchlist();
 
   // ── URL state: read search params on mount (Fase URL State) ────────
   const searchParams = useSearchParams();
@@ -681,23 +681,24 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const outboundSide = useQuickSearchSide("outbound");
   const returnSide = useQuickSearchSide("return");
   const saveCombination = useSaveCombination();
+  const pendingCombinationResultsRef = useRef<{ outbound: SearchResult; return: SearchResult } | null>(null);
   const defaultSideViewState = useMemo<QuickSearchVisibleFiltersState>(() => ({
     priceMin: "",
     priceMax: "",
     durationMax: "",
-    sortBy: "ranking",
+    sortBy: "price",
   }), []);
   const [outboundViewState, setOutboundViewState] = useState<QuickSearchVisibleFiltersState>(() => ({
     priceMin: "",
     priceMax: "",
     durationMax: "",
-    sortBy: "ranking",
+    sortBy: "price",
   }));
   const [returnViewState, setReturnViewState] = useState<QuickSearchVisibleFiltersState>(() => ({
     priceMin: "",
     priceMax: "",
     durationMax: "",
-    sortBy: "ranking",
+    sortBy: "price",
   }));
   const [dualHoverSide, setDualHoverSide] = useState<"outbound" | "return" | null>(null);
   // ── Per-side emptyCausesExpanded (Fase 11) ──────────────────────────
@@ -2335,41 +2336,45 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     }
   }
 
-  const navigateToWatchlistWithContext = useCallback((origin?: string, destination?: string, travelDate?: string) => {
+  const navigateToWatchlistWithContext = useCallback((origin?: string, destination?: string, travelDate?: string, watchId?: string) => {
     const url = buildWatchlistUrl({
       origin: origin || "",
       destination: destination || "",
       travelDate: travelDate || "",
+      watchId: watchId || "",
     });
     router.push(url);
   }, [router]);
+
+  const viewResultInWatchlist = useCallback((result: SearchResult) => {
+    navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date, getWatchId(result));
+  }, [getWatchId, navigateToWatchlistWithContext]);
 
   async function addToWatchlist(result: SearchResult) {
     setMessage("");
     try {
       const response = await saveQuickSearchResult(result, deeplinkUrl);
+      markAsSaved(result, response.watch_id);
       if (response.created_or_existing === "existing") {
         notify({
           tone: "success",
           title: t("watchExists"),
           actionLabel: t("viewWatchlist"),
-          onAction: () => navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date),
+          onAction: () => navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date, response.watch_id),
           durationMs: 3200,
         });
       } else {
-          markAsSaved(result);
         trackEvent("quicksearch_watchlist_added", {
           origin: result.origin,
           destination: result.destination,
           travel_date: result.travel_date,
           source: result.source,
         });
-        markAsSaved(result);
         notify({
           tone: "success",
           title: t("watchAdded"),
           actionLabel: t("viewWatchlist"),
-          onAction: () => navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date),
+          onAction: () => navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date, response.watch_id),
           durationMs: 3200,
         });
       }
@@ -3197,13 +3202,17 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
   useEffect(() => {
     if (saveCombination.status === "saved") {
+      const savedResults = pendingCombinationResultsRef.current;
+      if (savedResults?.outbound) markAsSaved(savedResults.outbound, saveCombination.outboundWatchId);
+      if (savedResults?.return) markAsSaved(savedResults.return, saveCombination.returnWatchId);
       notify({
         tone: "success",
         title: t("combinationSaved"),
         actionLabel: t("viewWatchlist"),
-        onAction: () => navigateToWatchlistWithContext(origin, destination, travelDate),
+        onAction: () => navigateToWatchlistWithContext(origin, destination, travelDate, saveCombination.outboundWatchId),
         durationMs: 3200,
       });
+      pendingCombinationResultsRef.current = null;
       saveCombination.reset();
       return;
     }
@@ -3213,6 +3222,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         title: t("combinationPartial"),
         durationMs: 3600,
       });
+      pendingCombinationResultsRef.current = null;
       saveCombination.reset();
       return;
     }
@@ -3222,9 +3232,19 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         title: t("combinationError"),
         durationMs: 3600,
       });
+      pendingCombinationResultsRef.current = null;
       saveCombination.reset();
     }
-  }, [destination, navigateToWatchlistWithContext, notify, origin, saveCombination, t, travelDate]);
+  }, [
+    destination,
+    markAsSaved,
+    navigateToWatchlistWithContext,
+    notify,
+    origin,
+    saveCombination,
+    t,
+    travelDate,
+  ]);
 
   // edited criteria signature drives the dirty-state check against last applied criteria
   const currentCriteriaSignature = useMemo(() => buildCriteriaSignature({
@@ -5358,6 +5378,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 refreshingResultId={refreshingResultId}
                 refreshPrice={refreshQuickSearchResult}
                 addToWatchlist={addToWatchlist}
+                viewInWatchlist={viewResultInWatchlist}
                 setExpandedRows={setExpandedRows}
                 setSelectedResultId={setSelectedResultId}
                 setOpenRowMenuId={setOpenRowMenuId}
@@ -5662,6 +5683,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 refreshingResultId={refreshingResultId}
                 isInWatchlist={isInWatchlist}
                 refreshPrice={refreshQuickSearchResult}
+                viewInWatchlist={viewResultInWatchlist}
                 addToWatchlist={async (result: SearchResult) => {
                   setMessage("");
                   try {
@@ -5673,12 +5695,13 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                       })),
                     });
                     if (response) {
+                      markAsSaved(result, response.watch_id);
                       const isExisting = "created_or_existing" in response && response.created_or_existing === "existing";
                       notify({
                         tone: "success",
                         title: t(isExisting ? "watchExists" : "watchAdded"),
                         actionLabel: t("viewWatchlist"),
-                        onAction: () => navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date),
+                        onAction: () => navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date, response.watch_id),
                         durationMs: 3200,
                       });
                     }
@@ -5773,6 +5796,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 refreshingResultId={refreshingResultId}
                 refreshPrice={refreshQuickSearchResult}
                 isInWatchlist={isInWatchlist}
+                viewInWatchlist={viewResultInWatchlist}
                 addToWatchlist={async (result: SearchResult) => {
                   setMessage("");
                   try {
@@ -5784,12 +5808,13 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                       })),
                     });
                     if (response) {
+                      markAsSaved(result, response.watch_id);
                       const isExisting = "created_or_existing" in response && response.created_or_existing === "existing";
                       notify({
                         tone: "success",
                         title: t(isExisting ? "watchExists" : "watchAdded"),
                         actionLabel: t("viewWatchlist"),
-                        onAction: () => navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date),
+                        onAction: () => navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date, response.watch_id),
                         durationMs: 3200,
                       });
                     }
@@ -5843,6 +5868,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 notify({ tone: "info", title: t("combinationSelectBoth"), durationMs: 3000 });
                 return;
               }
+              pendingCombinationResultsRef.current = { outbound: ob, return: rb };
               void saveCombination.saveCombination({
                 outbound: ob,
                 return: rb,

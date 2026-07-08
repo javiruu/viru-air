@@ -33,6 +33,7 @@ type Props = {
   refreshPrice: (result: SearchResult) => void;
   isInWatchlist: (result: SearchResult) => boolean;
   addToWatchlist: (result: SearchResult) => void;
+  viewInWatchlist: (result: SearchResult) => void;
   setExpandedRows: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   setSelectedResultId: React.Dispatch<React.SetStateAction<string | null>>;
   setOpenRowMenuId: React.Dispatch<React.SetStateAction<string | null>>;
@@ -216,25 +217,14 @@ function QuickSearchResultsListInner(props: Props) {
                   </div>
                   <div className="qs-result-buttons">
                     {props.isInWatchlist(r) ? (
-                      <button className="btn-ghost qs-row-saved" type="button" disabled>
-                        {props.t("watchAlreadyInList")}
+                      <button className="btn-ghost qs-row-saved" type="button" onClick={() => props.viewInWatchlist(r)}>
+                        {props.t("viewWatchlist")}
                       </button>
                     ) : (
                       <button className="btn-secondary qs-row-save" type="button" onClick={() => props.addToWatchlist(r)}>
                         {props.t("save")}
                       </button>
                     )}
-                    {canRefreshPrice ? (
-                      <button
-                        className="btn-ghost qs-row-refresh"
-                        type="button"
-                        disabled={isRefreshingPrice}
-                        aria-busy={isRefreshingPrice}
-                        onClick={() => props.refreshPrice(r)}
-                      >
-                        {isRefreshingPrice ? props.t("refreshPriceLoading") : props.t("refreshPrice")}
-                      </button>
-                    ) : null}
                     {!props.compactView ? (
                       <button
                         type="button"

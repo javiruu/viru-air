@@ -2998,6 +2998,8 @@ def save_result(
         )
     )
     if existing:
+        if payload.group_id and existing.group_id != payload.group_id:
+            existing.group_id = payload.group_id
         handle_saved_result_observation(db, existing, payload)
         body = {"watch_id": existing.id, "created_or_existing": "existing"}
         store_response(

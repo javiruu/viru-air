@@ -56,6 +56,7 @@ function t(key: string) {
     aiPreferredReasonLabel: "Motivo recomendado",
     refreshPrice: "Actualizar precio",
     refreshPriceLoading: "Actualizando precio...",
+    viewWatchlist: "Ver Watchlist",
   };
   return copy[key] || key;
 }
@@ -90,6 +91,7 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
       refreshPrice={() => undefined}
       isInWatchlist={() => false}
       addToWatchlist={() => undefined}
+      viewInWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
       setOpenRowMenuId={() => undefined}
@@ -109,7 +111,7 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
   assert.match(html, /Alternativa/);
   assert.match(html, /EUR 39/);
   assert.match(html, /Guardar/);
-  assert.match(html, /Actualizar precio/);
+  assert.doesNotMatch(html, /Actualizar precio/);
   assert.match(html, /Ver detalle/);
   assert.match(html, /Abrir vuelo/);
   assert.match(html, /Ryanair/);
@@ -145,6 +147,7 @@ test("QuickSearchResultsList accepts official relative deeplink variants and rej
       refreshPrice={() => undefined}
       isInWatchlist={() => false}
       addToWatchlist={() => undefined}
+      viewInWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
       setOpenRowMenuId={() => undefined}
@@ -185,6 +188,7 @@ test("QuickSearchResultsList accepts official relative deeplink variants and rej
       refreshPrice={() => undefined}
       isInWatchlist={() => false}
       addToWatchlist={() => undefined}
+      viewInWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
       setOpenRowMenuId={() => undefined}
@@ -198,6 +202,50 @@ test("QuickSearchResultsList accepts official relative deeplink variants and rej
   );
 
   assert.doesNotMatch(htmlWithLandingOnly, /Abrir vuelo/);
+});
+
+test("QuickSearchResultsList turns saved rows into a watchlist link action", () => {
+  const html = renderToStaticMarkup(
+    <QuickSearchResultsList
+      visibleResults={[buildResult()]}
+      compactView={false}
+      expandedRows={{}}
+      openRowMenuId={null}
+      deeplinkUrl=""
+      origin="NDR"
+      destination="BVA"
+      radiusKm={150}
+      departAfter="07:00"
+      departBefore="22:00"
+      localeTag="es"
+      getCopyPayload={() => "payload"}
+      rowMenuTriggerRefs={{ current: {} }}
+      t={t}
+      formatMoney={(value, currency) => `${currency || "EUR"} ${value}`}
+      formatScore={(value) => value.toFixed(2)}
+      formatMinutes={(value) => `${value ?? 0} min`}
+      resultKey={(result) => result.result_id || "fallback"}
+      getResultTags={() => []}
+      canRefreshPrice={() => false}
+      refreshingResultId={null}
+      refreshPrice={() => undefined}
+      isInWatchlist={() => true}
+      addToWatchlist={() => undefined}
+      viewInWatchlist={() => undefined}
+      setExpandedRows={() => undefined}
+      setSelectedResultId={() => undefined}
+      setOpenRowMenuId={() => undefined}
+      setCopyModalPayload={() => undefined}
+      setCopyModalOpen={() => undefined}
+      closeRowMenu={() => undefined}
+      onTrackOpenRyanair={() => undefined}
+      onTrackRowOverflow={() => undefined}
+      onTrackCopyParams={() => undefined}
+    />,
+  );
+
+  assert.match(html, /Ver Watchlist/);
+  assert.doesNotMatch(html, /Guardar/);
 });
 
 test("QuickSearchResultsList renders Wizz Air branding and avoids Ryanair fallback links", () => {
@@ -227,6 +275,7 @@ test("QuickSearchResultsList renders Wizz Air branding and avoids Ryanair fallba
       refreshPrice={() => undefined}
       isInWatchlist={() => false}
       addToWatchlist={() => undefined}
+      viewInWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
       setOpenRowMenuId={() => undefined}
@@ -274,6 +323,7 @@ test("QuickSearchResultsList renders ai preferred tag and reason", () => {
       refreshPrice={() => undefined}
       isInWatchlist={() => false}
       addToWatchlist={() => undefined}
+      viewInWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
       setOpenRowMenuId={() => undefined}
@@ -324,6 +374,7 @@ test("QuickSearchResultsList keeps ai and itinerary tags in compact view", () =>
       refreshPrice={() => undefined}
       isInWatchlist={() => false}
       addToWatchlist={() => undefined}
+      viewInWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
       setOpenRowMenuId={() => undefined}
@@ -372,6 +423,7 @@ test("QuickSearchResultsList shows ai reason in expanded details", () => {
       refreshPrice={() => undefined}
       isInWatchlist={() => false}
       addToWatchlist={() => undefined}
+      viewInWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
       setOpenRowMenuId={() => undefined}
@@ -387,7 +439,7 @@ test("QuickSearchResultsList shows ai reason in expanded details", () => {
   assert.match(html, /details-res-1/);
   assert.match(html, /Mas barato sin sacrificar frescura/);
   assert.match(html, /Precio historico/);
-  assert.match(html, /Actualizando precio/);
+  assert.doesNotMatch(html, /Actualizando precio/);
 });
 
 test("QuickSearchResultsList omits empty ai reason copy", () => {
@@ -417,6 +469,7 @@ test("QuickSearchResultsList omits empty ai reason copy", () => {
       refreshPrice={() => undefined}
       isInWatchlist={() => false}
       addToWatchlist={() => undefined}
+      viewInWatchlist={() => undefined}
       setExpandedRows={() => undefined}
       setSelectedResultId={() => undefined}
       setOpenRowMenuId={() => undefined}

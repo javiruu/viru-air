@@ -17,6 +17,7 @@ import type {
   WatchMapInsight,
   WatchMapMode,
   WatchMapRouteView,
+  WatchCombinationGroup,
 } from "@/modules/watchlist/types";
 
 type WatchMetaEntry = {
@@ -161,6 +162,50 @@ export function useWatchlistDerived({
     () => items.find((item) => item.id === selectedWatchId) || null,
     [items, selectedWatchId],
   );
+
+  const combinationGroups = useMemo<WatchCombinationGroup[]>(() => {
+    const grouped = new Map<string, Watch[]>();
+    items.forEach((watch) => {
+      if (!watch.group_id) return;
+      const current = grouped.get(watch.group_id) ?? [];
+      current.push(watch);
+      grouped.set(watch.group_id, current);
+    });
+
+    return Array.from(grouped.entries())
+      .map(([groupId, watches]) => {
+        const legs = watches
+          .slice()
+          .sort((a, b) => a.travel_date_local.localeCompare(b.travel_date_local) || a.origin_iata.localeCompare(b.origin_iata))
+          .map((watch) => {
+            const meta = watchMeta.get(watch.id);
+            return {
+              id: watch.id,
+              origin: watch.origin_iata,
+              destination: watch.destination_iata,
+              travelDate: watch.travel_date_local,
+              status: watch.status,
+              latestPrice: meta?.latest?.price ?? null,
+              latestCurrency: meta?.latest?.currency ?? "EUR",
+              latestCapturedAt: meta?.latest?.capturedAt ?? null,
+            };
+          });
+        const pricedLegs = legs.filter((leg) => leg.latestPrice != null);
+        const currencies = new Set(pricedLegs.map((leg) => leg.latestCurrency));
+        const totalLatestPrice =
+          legs.length > 1 && pricedLegs.length === legs.length && currencies.size === 1
+            ? pricedLegs.reduce((acc, leg) => acc + (leg.latestPrice ?? 0), 0)
+            : null;
+        return {
+          groupId,
+          legs,
+          totalLatestPrice,
+          currency: pricedLegs[0]?.latestCurrency ?? "EUR",
+        };
+      })
+      .filter((group) => group.legs.length > 1)
+      .sort((a, b) => a.legs[0].travelDate.localeCompare(b.legs[0].travelDate));
+  }, [items, watchMeta]);
 
   const filteredRows = useMemo(
     () =>
@@ -528,6 +573,7 @@ export function useWatchlistDerived({
     smartListItems,
     hasSearchFilter,
     selectedWatch,
+    combinationGroups,
     filteredRows,
     chartRows,
     chartIsCompact,

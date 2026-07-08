@@ -20,48 +20,14 @@ export function QuickSearchSideViewControls({ title, subtitle, state, t, onChang
           <strong>{title}</strong>
           <p>{subtitle}</p>
         </div>
-        <button type="button" className="btn-ghost btn-compact" onClick={onReset}>
-          {t("resetGroup")}
-        </button>
+        {state.sortBy !== "price" ? (
+          <button type="button" className="btn-ghost btn-compact" onClick={onReset}>
+            {t("resetGroup")}
+          </button>
+        ) : null}
       </div>
 
       <div className="qs-dual-view-controls__grid">
-        <label className="field">
-          {t("priceMin")}
-          <input
-            type="number"
-            min={0}
-            step={1}
-            value={state.priceMin}
-            onChange={(event) => onChange({ priceMin: event.target.value })}
-            className="qs-input"
-          />
-        </label>
-
-        <label className="field">
-          {t("priceMax")}
-          <input
-            type="number"
-            min={0}
-            step={1}
-            value={state.priceMax}
-            onChange={(event) => onChange({ priceMax: event.target.value })}
-            className="qs-input"
-          />
-        </label>
-
-        <label className="field">
-          {t("durationMax")}
-          <input
-            type="number"
-            min={1}
-            step={1}
-            value={state.durationMax}
-            onChange={(event) => onChange({ durationMax: event.target.value })}
-            className="qs-input"
-          />
-        </label>
-
         <label className="field">
           {t("orderBy")}
           <select

@@ -67,6 +67,19 @@ def _manual_revalidation_retry_after_seconds() -> int:
     return max(1, int(60 / max(1, FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE)))
 
 
+def _watch_out(watch: FlightWatch, watchers_count: int = 0) -> WatchOut:
+    return WatchOut(
+        id=watch.id,
+        origin_iata=watch.origin_iata,
+        destination_iata=watch.destination_iata,
+        travel_date_local=watch.travel_date_local,
+        target_price=float(watch.target_price) if watch.target_price else None,
+        status=watch.status,
+        watchers_count=watchers_count,
+        group_id=watch.group_id,
+    )
+
+
 def _count_watchers_by_route(
     db: Session,
     route_keys: set[WatchRouteKey],
@@ -153,15 +166,7 @@ def create_watch(
             ).get(
                 _watch_route_key(existing), 0
             )
-            return WatchOut(
-                id=existing.id,
-                origin_iata=existing.origin_iata,
-                destination_iata=existing.destination_iata,
-                travel_date_local=existing.travel_date_local,
-                target_price=float(existing.target_price) if existing.target_price else None,
-                status=existing.status,
-                watchers_count=watchers_count,
-            )
+            return _watch_out(existing, watchers_count)
         raise HTTPException(status_code=409, detail="watch_already_exists")
 
     watch = FlightWatch(
@@ -191,6 +196,7 @@ def create_watch(
         "target_price": float(watch.target_price) if watch.target_price else None,
         "status": watch.status,
         "watchers_count": watchers_count,
+        "group_id": watch.group_id,
     }
     store_response(
         db,
@@ -222,15 +228,7 @@ def list_watches(
         current_user_id=current_user.id,
     )
     return [
-        WatchOut(
-            id=w.id,
-            origin_iata=w.origin_iata,
-            destination_iata=w.destination_iata,
-            travel_date_local=w.travel_date_local,
-            target_price=float(w.target_price) if w.target_price else None,
-            status=w.status,
-            watchers_count=watchers_count_by_route.get(_watch_route_key(w), 0),
-        )
+        _watch_out(w, watchers_count_by_route.get(_watch_route_key(w), 0))
         for w in watches
     ]
 
@@ -344,6 +342,7 @@ def get_watch_detail(
         target_price=float(watch.target_price) if watch.target_price else None,
         status=watch.status,
         watchers_count=watchers_count,
+        group_id=watch.group_id,
         latest_snapshot=(
             None
             if latest is None
@@ -381,15 +380,7 @@ def update_watch(
         {_watch_route_key(watch)},
         current_user_id=current_user.id,
     ).get(_watch_route_key(watch), 0)
-    return WatchOut(
-        id=watch.id,
-        origin_iata=watch.origin_iata,
-        destination_iata=watch.destination_iata,
-        travel_date_local=watch.travel_date_local,
-        target_price=float(watch.target_price) if watch.target_price else None,
-        status=watch.status,
-        watchers_count=watchers_count,
-    )
+    return _watch_out(watch, watchers_count)
 
 
 @router.delete("/{watch_id}")
