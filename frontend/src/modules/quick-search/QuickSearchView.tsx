@@ -302,6 +302,22 @@ function monthFromDateIso(dateIso: string): string {
   return dateIso.slice(0, 7);
 }
 
+let _cachedDisplayNames: Intl.DisplayNames | null = null;
+let _cachedDisplayNamesLocale = "";
+
+function _getDisplayNames(): Intl.DisplayNames | null {
+  if (typeof Intl === "undefined" || typeof Intl.DisplayNames !== "function") return null;
+  const locale = typeof navigator !== "undefined" && navigator.language ? navigator.language : "en";
+  if (_cachedDisplayNames && _cachedDisplayNamesLocale === locale) return _cachedDisplayNames;
+  try {
+    _cachedDisplayNames = new Intl.DisplayNames([locale], { type: "region" });
+    _cachedDisplayNamesLocale = locale;
+    return _cachedDisplayNames;
+  } catch {
+    return null;
+  }
+}
+
 function resolveCountryName(code: string): string {
   const normalized = code.trim().toUpperCase();
   if (!normalized) return "";
@@ -1032,10 +1048,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       break;
     }
 
-    const resolveCountryName = (code: string): string => {
+    const resolveCountryNameCached = (code: string): string => {
+      const display = _getDisplayNames();
+      if (!display) return code;
       try {
-        const locale = typeof navigator !== "undefined" && navigator.language ? navigator.language : "en";
-        const display = new Intl.DisplayNames([locale], { type: "region" });
         return display.of(code) || code;
       } catch {
         return code;
@@ -1045,7 +1061,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     return Array.from(byCode.entries())
       .map(([code, airport_count]) => ({
         code,
-        name: resolveCountryName(code),
+        name: resolveCountryNameCached(code),
         airport_count,
       }))
       .sort((a, b) => a.name.localeCompare(b.name));

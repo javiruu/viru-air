@@ -79,6 +79,7 @@ QUICK_SEARCH_MAX_PAIRS_CAP = 400
 QUICK_SEARCH_MAX_REQUESTS_CAP = 3000
 QUICK_SEARCH_SHARED_CACHE_ENABLED = os.getenv("QUICK_SEARCH_SHARED_CACHE_ENABLED", "false").strip().lower() == "true"
 CALENDAR_HINTS_CACHE_TTL_SECONDS = 600
+CALENDAR_HINTS_CACHE_MAX_SIZE = 500
 _CALENDAR_HINTS_CACHE_LOCK = threading.Lock()
 _CALENDAR_HINTS_CACHE: dict[tuple[str, str, int, str, str, str, str], tuple[float, dict[str, Any]]] = {}
 CALENDAR_HINTS_GUIDELINE_DEFAULT_LOW_MAX = 90.0
@@ -945,6 +946,10 @@ def _calendar_hints_cache_get(cache_key: tuple[str, str, int, str, str, str, str
 
 def _calendar_hints_cache_set(cache_key: tuple[str, str, int, str, str, str, str], payload: dict[str, Any]) -> None:
     with _CALENDAR_HINTS_CACHE_LOCK:
+        # Evict oldest entries (FIFO) if at capacity
+        while len(_CALENDAR_HINTS_CACHE) >= CALENDAR_HINTS_CACHE_MAX_SIZE:
+            oldest_key = next(iter(_CALENDAR_HINTS_CACHE))
+            _CALENDAR_HINTS_CACHE.pop(oldest_key, None)
         _CALENDAR_HINTS_CACHE[cache_key] = (time.time(), payload)
 
 
