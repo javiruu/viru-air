@@ -117,6 +117,35 @@ function formatLegClock(value: string | null | undefined, localeTag: string): st
   return timestamp.toLocaleTimeString(localeTag, { hour: "2-digit", minute: "2-digit" });
 }
 
+function getFiniteMinutes(value: number | null | undefined): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function getResultDurationMinutes(result: SearchResult): number | null {
+  return getFiniteMinutes(result.duration_total_min) ?? getFiniteMinutes(result.duration_total);
+}
+
+function addMinutesToClock(clock: string | null | undefined, minutes: number | null): string | null {
+  if (!clock || minutes === null) return null;
+  const match = clock.trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const clockMinutes = Number(match[2]);
+  if (!Number.isInteger(hours) || !Number.isInteger(clockMinutes) || hours > 23 || clockMinutes > 59) return null;
+  const totalMinutes = (hours * 60 + clockMinutes + minutes) % (24 * 60);
+  const arrivalMinutes = totalMinutes < 0 ? totalMinutes + 24 * 60 : totalMinutes;
+  const arrivalHours = Math.floor(arrivalMinutes / 60);
+  return `${String(arrivalHours).padStart(2, "0")}:${String(arrivalMinutes % 60).padStart(2, "0")}`;
+}
+
+function getLegDurationMinutes(depTs: string | null | undefined, arrTs: string | null | undefined): number | null {
+  if (!depTs || !arrTs) return null;
+  const depTime = new Date(depTs).getTime();
+  const arrTime = new Date(arrTs).getTime();
+  if (Number.isNaN(depTime) || Number.isNaN(arrTime) || arrTime < depTime) return null;
+  return Math.round((arrTime - depTime) / 60000);
+}
+
 function QuickSearchResultsListInner(props: Props) {
   return (
     <>
@@ -145,8 +174,10 @@ function QuickSearchResultsListInner(props: Props) {
             const destinationLabel = getRouteAirportLabel(r.destination);
             const firstLeg = r.legs?.[0];
             const lastLeg = r.legs?.length ? r.legs[r.legs.length - 1] : undefined;
+            const totalDurationMinutes = getResultDurationMinutes(r);
             const departureClock = r.departure_time_local || formatLegClock(firstLeg?.dep_ts, props.localeTag);
-            const arrivalClock = formatLegClock(lastLeg?.arr_ts, props.localeTag);
+            const arrivalClock = formatLegClock(lastLeg?.arr_ts, props.localeTag) ?? addMinutesToClock(departureClock, totalDurationMinutes);
+            const flightTimeLabel = totalDurationMinutes !== null ? props.formatMinutes(totalDurationMinutes) : null;
             return (
               <article
                 key={rowId}
@@ -166,6 +197,7 @@ function QuickSearchResultsListInner(props: Props) {
                       <div className="qs-result-meta qs-result-meta-compact">
                         <span>{props.t("weatherDepart")} {departureClock || "--"}</span>
                         {arrivalClock ? <span>{props.t("weatherArrive")} {arrivalClock}</span> : null}
+                        {flightTimeLabel ? <span>{props.t("flightTime")} {flightTimeLabel}</span> : null}
                       </div>
                       <div className="qs-result-badges">
                         <QuickSearchProviderBadge source={r.source} unknownLabel={props.t("sourceUnknown")} />
@@ -195,6 +227,7 @@ function QuickSearchResultsListInner(props: Props) {
                         <span>{r.travel_date}</span>
                         {departureClock ? <span><strong>{props.t("weatherDepart")}:</strong> {departureClock}</span> : null}
                         {arrivalClock ? <span><strong>{props.t("weatherArrive")}:</strong> {arrivalClock}</span> : null}
+                        {flightTimeLabel ? <span><strong>{props.t("flightTime")}:</strong> {flightTimeLabel}</span> : null}
                         {r.distance_km_ground ? <span>{" - "}{r.distance_km_ground} km</span> : null}
                       </div>
                       <div className="qs-result-badges">
@@ -390,13 +423,22 @@ function QuickSearchResultsListInner(props: Props) {
                     {r.legs && r.legs.length > 0 ? (
                       <div className="qs-legs">
                         <strong>{props.t("detailsLegs")}</strong>
-                        {r.legs.map((leg, legIdx) => (
-                          <div key={`${rowId}-leg-${legIdx}`} className="qs-leg-row">
-                            <span>{leg.origin_iata} {" → "} {leg.destination_iata}</span>
-                            <span>{new Date(leg.dep_ts).toLocaleTimeString(props.localeTag, { hour: "2-digit", minute: "2-digit" })}</span>
-                            <span>{new Date(leg.arr_ts).toLocaleTimeString(props.localeTag, { hour: "2-digit", minute: "2-digit" })}</span>
-                          </div>
-                        ))}
+                        {r.legs.map((leg, legIdx) => {
+                          const legDepartureClock = formatLegClock(leg.dep_ts, props.localeTag);
+                          const legArrivalClock = formatLegClock(leg.arr_ts, props.localeTag);
+                          const legDurationMinutes = getLegDurationMinutes(leg.dep_ts, leg.arr_ts);
+                          const legFlightTimeLabel = legDurationMinutes !== null ? props.formatMinutes(legDurationMinutes) : null;
+                          return (
+                            <div key={`${rowId}-leg-${legIdx}`} className="qs-leg-row">
+                              <span>{leg.origin_iata} {" → "} {leg.destination_iata}</span>
+                              <span>{props.t("weatherDepart")} {legDepartureClock || "--"}</span>
+                              <span>
+                                {props.t("weatherArrive")} {legArrivalClock || "--"}
+                                {legFlightTimeLabel ? ` · ${props.t("flightTime")} ${legFlightTimeLabel}` : ""}
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
                     ) : null}
                   </div>
