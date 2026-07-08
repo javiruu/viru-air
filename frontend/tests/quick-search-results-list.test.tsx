@@ -185,7 +185,7 @@ test("QuickSearchResultsList derives arrival and flight time when legs are missi
   assert.match(html, /95 min/);
 });
 
-test("QuickSearchResultsList accepts official relative deeplink variants and rejects landing pages", () => {
+test("QuickSearchResultsList canonicalizes Ryanair deeplinks and rejects landing pages", () => {
   const htmlWithRelativeLink = renderToStaticMarkup(
     <QuickSearchResultsList
       visibleResults={[{ ...buildResult(), deeplink_url: "/es/es/trip/flights/select?origin_iata=MAD&destination_iata=LIS&date_out=2026-06-01&adults=1" }]}
@@ -226,6 +226,61 @@ test("QuickSearchResultsList accepts official relative deeplink variants and rej
   );
 
   assert.match(htmlWithRelativeLink, /Abrir vuelo/);
+  assert.match(htmlWithRelativeLink, /href="https:\/\/www\.ryanair\.com\/es\/es\/trip\/flights\/select\?/);
+  assert.match(htmlWithRelativeLink, /originIata=MAD/);
+  assert.match(htmlWithRelativeLink, /destinationIata=LIS/);
+  assert.match(htmlWithRelativeLink, /dateOut=2026-06-01/);
+  assert.match(htmlWithRelativeLink, /tpOriginIata=MAD/);
+  assert.doesNotMatch(htmlWithRelativeLink, /href="\/es\/es\/trip\/flights\/select/);
+  assert.doesNotMatch(htmlWithRelativeLink, /origin_iata=/);
+  assert.doesNotMatch(htmlWithRelativeLink, /date_out=/);
+
+  const htmlWithAbsoluteInternalParams = renderToStaticMarkup(
+    <QuickSearchResultsList
+      visibleResults={[{ ...buildResult(), deeplink_url: "https://www.ryanair.com/es/es/trip/flights/select?origin_iata=AGP&destination_iata=DUB&date_out=2026-06-02&adults=2" }]}
+      compactView={false}
+      expandedRows={{}}
+      openRowMenuId={null}
+      deeplinkUrl=""
+      origin="AGP"
+      destination="DUB"
+      radiusKm={150}
+      departAfter="07:00"
+      departBefore="22:00"
+      localeTag="es"
+      getCopyPayload={() => "payload"}
+      rowMenuTriggerRefs={{ current: {} }}
+      t={t}
+      formatMoney={(value, currency) => `${currency || "EUR"} ${value}`}
+      formatScore={(value) => value.toFixed(2)}
+      formatMinutes={(value) => `${value ?? 0} min`}
+      resultKey={(result) => result.result_id || "fallback"}
+      getResultTags={() => []}
+      canRefreshPrice={() => false}
+      refreshingResultId={null}
+      refreshPrice={() => undefined}
+      isInWatchlist={() => false}
+      addToWatchlist={() => undefined}
+      viewInWatchlist={() => undefined}
+      setExpandedRows={() => undefined}
+      setSelectedResultId={() => undefined}
+      setOpenRowMenuId={() => undefined}
+      setCopyModalPayload={() => undefined}
+      setCopyModalOpen={() => undefined}
+      closeRowMenu={() => undefined}
+      onTrackOpenRyanair={() => undefined}
+      onTrackRowOverflow={() => undefined}
+      onTrackCopyParams={() => undefined}
+    />,
+  );
+
+  assert.match(htmlWithAbsoluteInternalParams, /href="https:\/\/www\.ryanair\.com\/es\/es\/trip\/flights\/select\?/);
+  assert.match(htmlWithAbsoluteInternalParams, /originIata=AGP/);
+  assert.match(htmlWithAbsoluteInternalParams, /destinationIata=DUB/);
+  assert.match(htmlWithAbsoluteInternalParams, /dateOut=2026-06-02/);
+  assert.match(htmlWithAbsoluteInternalParams, /adults=2/);
+  assert.doesNotMatch(htmlWithAbsoluteInternalParams, /origin_iata=/);
+  assert.doesNotMatch(htmlWithAbsoluteInternalParams, /date_out=/);
 
   const htmlWithLandingOnly = renderToStaticMarkup(
     <QuickSearchResultsList
