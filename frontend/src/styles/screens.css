@@ -10437,7 +10437,8 @@ textarea::placeholder {
 .dashboard-hero-title h2 {
   margin: 0;
   font-family: "Playfair Display", serif;
-  font-size: 1.78rem;
+  font-size: clamp(2.18rem, 4vw, 3.1rem);
+  line-height: 1.02;
 }
 
 .dashboard-hero-status {
