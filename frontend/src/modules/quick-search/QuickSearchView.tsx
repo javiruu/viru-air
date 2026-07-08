@@ -95,7 +95,7 @@ import { QuickSearchSummaryChips, type QuickSearchSummaryChip } from "@/modules/
 import { QuickSearchAdvancedDrawer } from "@/modules/quick-search/components/QuickSearchAdvancedDrawer";
 import { QuickSearchNearbyBand } from "@/modules/quick-search/components/QuickSearchNearbyBand";
 
-import { QuickSearchPostFilters } from "@/modules/quick-search/components/QuickSearchPostFilters";import {
+import {
   AirportIataEntry,
   CountryAirports,
   DeepLinkResponse,
@@ -5338,19 +5338,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           ) : null}
           {showResultsList ? (
             <>
-              <QuickSearchPostFilters
-                visible={searchState === "success" && visibleResults.length > 0}
-                priceMin={priceMin}
-                priceMax={priceMax}
-                durationMax={durationMax}
-                sortBy={sortBy}
-                fieldErrors={fieldErrors}
-                t={t}
-                setPriceMin={setPriceMin}
-                setPriceMax={setPriceMax}
-                setDurationMax={setDurationMax}
-                setSortBy={setSortBy}
-              />
               <QuickSearchResultsList
                 visibleResults={visibleResults}
                 compactView={compactView}

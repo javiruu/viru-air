@@ -23,7 +23,14 @@ function buildResult(): SearchResult {
     freshness_ts: "2026-06-01T08:00:00Z",
     stale_data: false,
     itinerary_type: "direct",
-    legs: [],
+    legs: [
+      {
+        origin_iata: "NDR",
+        destination_iata: "BVA",
+        dep_ts: "2026-06-01T09:15:00",
+        arr_ts: "2026-06-01T10:50:00",
+      },
+    ],
     deeplink_url: "https://www.ryanair.com/es/es",
   };
 }
@@ -48,6 +55,8 @@ function t(key: string) {
     detailsWindow: "Ventana",
     detailsScore: "Score",
     detailsBuffer: "Buffer",
+    weatherDepart: "Salida",
+    weatherArrive: "Llegada",
     scoreHint: "Heuristica",
     summaryRadius: "Radio",
     sourceUnknown: "Fuente desconocida",
@@ -110,6 +119,10 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
   assert.match(html, /\(BVA\)/);
   assert.match(html, /Alternativa/);
   assert.match(html, /EUR 39/);
+  assert.match(html, /Salida/);
+  assert.match(html, /09:15/);
+  assert.match(html, /Llegada/);
+  assert.match(html, /10:50/);
   assert.match(html, /Guardar/);
   assert.doesNotMatch(html, /Actualizar precio/);
   assert.match(html, /Ver detalle/);
@@ -117,6 +130,7 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
   assert.match(html, /Ryanair/);
   assert.match(html, /Verificado 4 min/);
   assert.doesNotMatch(html, /Frescura:/);
+  assert.doesNotMatch(html, /Duracion:/);
   assert.match(html, /trip\/flights\/select/);
 });
 

@@ -110,6 +110,13 @@ function renderRouteAirport(label: { city: string; code: string; hasCity: boolea
   );
 }
 
+function formatLegClock(value: string | null | undefined, localeTag: string): string | null {
+  if (!value) return null;
+  const timestamp = new Date(value);
+  if (Number.isNaN(timestamp.getTime())) return null;
+  return timestamp.toLocaleTimeString(localeTag, { hour: "2-digit", minute: "2-digit" });
+}
+
 function QuickSearchResultsListInner(props: Props) {
   return (
     <>
@@ -130,14 +137,16 @@ function QuickSearchResultsListInner(props: Props) {
             const expanded = Boolean(props.expandedRows[rowId]);
             const detailsId = `details-${rowId}`;
             const compactTags = props.getResultTags(r, "compact");
-            const departureCompact = r.departure_time_local || "--";
-            const rowDurationLabel = r.duration_total_min ? `${r.duration_total_min} min` : "--";
             const aiReason = typeof r.ai_preferred_reason === "string" ? r.ai_preferred_reason.trim() : "";
             const rawSourceLabel = typeof r.source === "string" ? r.source.trim() : "";
             const canRefreshPrice = props.canRefreshPrice(r);
             const isRefreshingPrice = props.refreshingResultId === rowId;
             const originLabel = getRouteAirportLabel(r.origin);
             const destinationLabel = getRouteAirportLabel(r.destination);
+            const firstLeg = r.legs?.[0];
+            const lastLeg = r.legs?.length ? r.legs[r.legs.length - 1] : undefined;
+            const departureClock = r.departure_time_local || formatLegClock(firstLeg?.dep_ts, props.localeTag);
+            const arrivalClock = formatLegClock(lastLeg?.arr_ts, props.localeTag);
             return (
               <article
                 key={rowId}
@@ -155,7 +164,8 @@ function QuickSearchResultsListInner(props: Props) {
                         {(r.origin !== props.origin || r.destination !== props.destination) ? <span className="chip">{props.t("alternative")}</span> : null}
                       </div>
                       <div className="qs-result-meta qs-result-meta-compact">
-                        <span>{departureCompact}</span>
+                        <span>{props.t("weatherDepart")} {departureClock || "--"}</span>
+                        {arrivalClock ? <span>{props.t("weatherArrive")} {arrivalClock}</span> : null}
                       </div>
                       <div className="qs-result-badges">
                         <QuickSearchProviderBadge source={r.source} unknownLabel={props.t("sourceUnknown")} />
@@ -183,11 +193,9 @@ function QuickSearchResultsListInner(props: Props) {
                       </div>
                       <div className="qs-result-meta">
                         <span>{r.travel_date}</span>
-                        {r.departure_time_local ? <span>{" - "}{r.departure_time_local}</span> : null}
+                        {departureClock ? <span><strong>{props.t("weatherDepart")}:</strong> {departureClock}</span> : null}
+                        {arrivalClock ? <span><strong>{props.t("weatherArrive")}:</strong> {arrivalClock}</span> : null}
                         {r.distance_km_ground ? <span>{" - "}{r.distance_km_ground} km</span> : null}
-                      </div>
-                      <div className="qs-result-stats">
-                        <span><strong>{props.t("resultsColDuration")}:</strong> {rowDurationLabel}</span>
                       </div>
                       <div className="qs-result-badges">
                         <QuickSearchProviderBadge source={r.source} unknownLabel={props.t("sourceUnknown")} />
@@ -350,9 +358,6 @@ function QuickSearchResultsListInner(props: Props) {
                       ))}
                       {r.minutes_buffer !== null && r.minutes_buffer !== undefined ? (
                         <span className="qs-tag qs-tag-fresh">{props.t("detailsBuffer")} {r.minutes_buffer} min</span>
-                      ) : null}
-                      {r.duration_total_min !== null && r.duration_total_min !== undefined ? (
-                        <span className="qs-tag qs-tag-fresh">{props.t("resultsColDuration")}: {r.duration_total_min} min</span>
                       ) : null}
                     </div>
                     <div>
