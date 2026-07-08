@@ -55,8 +55,11 @@ function t(key: string) {
     detailsWindow: "Ventana",
     detailsScore: "Score",
     detailsBuffer: "Buffer",
+    detailsLegs: "Tramos",
+    source: "Fuente",
     weatherDepart: "Salida",
     weatherArrive: "Llegada",
+    flightTime: "Vuelo",
     scoreHint: "Heuristica",
     summaryRadius: "Radio",
     sourceUnknown: "Fuente desconocida",
@@ -132,6 +135,54 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
   assert.doesNotMatch(html, /Frescura:/);
   assert.doesNotMatch(html, /Duracion:/);
   assert.match(html, /trip\/flights\/select/);
+});
+
+test("QuickSearchResultsList derives arrival and flight time when legs are missing", () => {
+  const html = renderToStaticMarkup(
+    <QuickSearchResultsList
+      visibleResults={[{ ...buildResult(), legs: [] }]}
+      compactView={false}
+      expandedRows={{}}
+      openRowMenuId={null}
+      deeplinkUrl=""
+      origin="NDR"
+      destination="BVA"
+      radiusKm={150}
+      departAfter="07:00"
+      departBefore="22:00"
+      localeTag="es"
+      getCopyPayload={() => "payload"}
+      rowMenuTriggerRefs={{ current: {} }}
+      t={t}
+      formatMoney={(value, currency) => `${currency || "EUR"} ${value}`}
+      formatScore={(value) => value.toFixed(2)}
+      formatMinutes={(value) => `${value ?? 0} min`}
+      resultKey={(result) => result.result_id || "fallback"}
+      getResultTags={() => []}
+      canRefreshPrice={() => false}
+      refreshingResultId={null}
+      refreshPrice={() => undefined}
+      isInWatchlist={() => false}
+      addToWatchlist={() => undefined}
+      viewInWatchlist={() => undefined}
+      setExpandedRows={() => undefined}
+      setSelectedResultId={() => undefined}
+      setOpenRowMenuId={() => undefined}
+      setCopyModalPayload={() => undefined}
+      setCopyModalOpen={() => undefined}
+      closeRowMenu={() => undefined}
+      onTrackOpenRyanair={() => undefined}
+      onTrackRowOverflow={() => undefined}
+      onTrackCopyParams={() => undefined}
+    />,
+  );
+
+  assert.match(html, /Salida/);
+  assert.match(html, /09:15/);
+  assert.match(html, /Llegada/);
+  assert.match(html, /10:50/);
+  assert.match(html, /Vuelo/);
+  assert.match(html, /95 min/);
 });
 
 test("QuickSearchResultsList accepts official relative deeplink variants and rejects landing pages", () => {
@@ -304,6 +355,13 @@ test("QuickSearchResultsList renders Wizz Air branding and avoids Ryanair fallba
 
   assert.match(html, /Wizz Air/);
   assert.match(html, /wizzair-farechart/);
+  assert.match(html, /Tramos/);
+  assert.match(html, /Salida/);
+  assert.match(html, /09:15/);
+  assert.match(html, /Llegada/);
+  assert.match(html, /10:50/);
+  assert.match(html, /Vuelo/);
+  assert.match(html, /95 min/);
   assert.doesNotMatch(html, /Abrir vuelo/);
 });
 
