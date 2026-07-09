@@ -11,7 +11,14 @@ import threading
 import time
 import unittest
 
+from sqlalchemy import create_engine, select
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import Session, sessionmaker
+
+from app.core.time import utc_now_naive
 from app.domain.entities import ProviderFetchResult, ProviderFlight
+from app.infrastructure.db.models import Base, QuickSearchCacheEntry, QuickSearchNegativeCacheEntry
+from app.services.quick_search_cache_service import prune_expired_entries
 from app.services.quick_search_execution import (
     _CACHE,
     _FETCH_LOCKS,
@@ -52,6 +59,13 @@ class SharedCacheIntegrationTests(unittest.TestCase):
             captured_at=dt.datetime(2026, 6, 10, 12, 0),
             source=f"{origin}-{destination}-test",
         )
+
+    def _db(self) -> tuple[Session, Engine]:
+        engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+        Base.metadata.create_all(bind=engine)
+        TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+        session = TestingSessionLocal()
+        return session, engine
 
     # ------------------------------------------------------------------
     # L2 cache read-through (cross-user reuse)
@@ -481,6 +495,75 @@ class SharedCacheIntegrationTests(unittest.TestCase):
         self.assertEqual(calls["n"], 0)
         self.assertEqual(meta["negative_cache_hits"], 1)
         self.assertIn("provider_timeout_partial", warnings)
+
+    def test_pruning_removes_only_expired_positive_and_negative_entries(self):
+        db, engine = self._db()
+        now = utc_now_naive()
+        try:
+            db.add_all(
+                [
+                    QuickSearchCacheEntry(
+                        origin_iata="AGP",
+                        destination_iata="TSF",
+                        travel_date=dt.date(2026, 12, 25),
+                        provider="multi",
+                        status="ready",
+                        ttl_seconds=60,
+                        expires_at_utc=now - dt.timedelta(seconds=1),
+                        captured_at_utc=now - dt.timedelta(minutes=2),
+                        last_accessed_at_utc=now - dt.timedelta(minutes=2),
+                        payload_json='{"flights":[]}',
+                        warnings_json="[]",
+                        source_hash="qs_expired_positive",
+                    ),
+                    QuickSearchCacheEntry(
+                        origin_iata="AGP",
+                        destination_iata="DUB",
+                        travel_date=dt.date(2026, 12, 25),
+                        provider="multi",
+                        status="ready",
+                        ttl_seconds=3600,
+                        expires_at_utc=now + dt.timedelta(hours=1),
+                        captured_at_utc=now,
+                        last_accessed_at_utc=now,
+                        payload_json='{"flights":[]}',
+                        warnings_json="[]",
+                        source_hash="qs_fresh_positive",
+                    ),
+                    QuickSearchNegativeCacheEntry(
+                        negative_fingerprint="qsn_expired",
+                        scope="provider_unit",
+                        reason="no_availability",
+                        provider="multi",
+                        canonical_request_json="{}",
+                        observed_at=now - dt.timedelta(minutes=2),
+                        expires_at=now - dt.timedelta(seconds=1),
+                        freshness_status="negative_fresh",
+                    ),
+                    QuickSearchNegativeCacheEntry(
+                        negative_fingerprint="qsn_fresh",
+                        scope="provider_unit",
+                        reason="provider_timeout",
+                        provider="multi",
+                        canonical_request_json="{}",
+                        observed_at=now,
+                        expires_at=now + dt.timedelta(minutes=10),
+                        freshness_status="provider_error_fresh",
+                    ),
+                ]
+            )
+            db.commit()
+
+            deleted = prune_expired_entries(db, batch_size=50)
+
+            positive_hashes = set(db.scalars(select(QuickSearchCacheEntry.source_hash)).all())
+            negative_hashes = set(db.scalars(select(QuickSearchNegativeCacheEntry.negative_fingerprint)).all())
+            self.assertEqual(deleted, 2)
+            self.assertEqual(positive_hashes, {"qs_fresh_positive"})
+            self.assertEqual(negative_hashes, {"qsn_fresh"})
+        finally:
+            db.close()
+            engine.dispose()
 
 
 if __name__ == "__main__":
