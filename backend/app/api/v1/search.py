@@ -142,7 +142,7 @@ def _filter_ui_warning_codes(codes: list[str]) -> list[str]:
 
 
 def _resolve_negative_cache_write_policy(result: ProviderFetchResult) -> tuple[str, dt.datetime | None]:
-    reason = "no_availability"
+    reason = "no_results"
     retry_after_at = None
     warning_codes = set(result.warnings or [])
     if warning_codes & PROVIDER_TOTAL_OUTAGE_CODES:
@@ -152,12 +152,12 @@ def _resolve_negative_cache_write_policy(result: ProviderFetchResult) -> tuple[s
         retry_after_at = utc_now_naive() + dt.timedelta(minutes=15)
     elif "provider_timeout_partial" in warning_codes:
         reason = "provider_timeout"
-        retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
+        retry_after_at = utc_now_naive() + dt.timedelta(minutes=5)
     elif "provider_error_partial" in warning_codes:
-        reason = "provider_error"
+        reason = "provider_partial_degraded"
         retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
     elif warning_codes & PROVIDER_ERROR_CODES:
-        reason = "provider_error"
+        reason = "provider_partial_degraded"
         retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
     return reason, retry_after_at
 

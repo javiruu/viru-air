@@ -26,6 +26,12 @@ from app.services.quick_search_execution import (
     build_unit_cache_key,
     classify_cache_result,
 )
+from app.services.quick_search_negative_cache_policy import (
+    is_provider_backoff_reason,
+    negative_freshness_status_for_reason,
+    negative_result_for_reason,
+    negative_ttl_for_reason,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -199,22 +205,15 @@ def build_negative_cache_fingerprint(
 
 
 def _negative_ttl_for_reason(reason: str) -> int:
-    provider_error_reasons = {
-        "provider_timeout",
-        "provider_error",
-        "provider_total_outage",
-        "rate_limited",
-    }
-    return _PROVIDER_ERROR_TTL if reason in provider_error_reasons else _NEGATIVE_TTL
+    return negative_ttl_for_reason(
+        reason,
+        default_negative_ttl=_NEGATIVE_TTL,
+        default_provider_error_ttl=_PROVIDER_ERROR_TTL,
+    )
 
 
 def _is_provider_backoff_reason(reason: str) -> bool:
-    return reason in {
-        "provider_timeout",
-        "provider_error",
-        "provider_total_outage",
-        "rate_limited",
-    }
+    return is_provider_backoff_reason(reason)
 
 
 def _deterministic_backoff_jitter_seconds(*, negative_fingerprint: str, reason: str) -> int:
@@ -254,23 +253,11 @@ def _resolve_provider_backoff_seconds(
 
 
 def _negative_freshness_status_for_reason(reason: str) -> str:
-    provider_error_reasons = {
-        "provider_timeout",
-        "provider_error",
-        "provider_total_outage",
-        "rate_limited",
-    }
-    return "provider_error_fresh" if reason in provider_error_reasons else "negative_fresh"
+    return negative_freshness_status_for_reason(reason)
 
 
 def _negative_result_for_reason(reason: str) -> ProviderFetchResult:
-    warning_map = {
-        "provider_timeout": ["provider_timeout_partial"],
-        "provider_error": ["provider_error_partial"],
-        "provider_total_outage": ["provider_total_outage"],
-        "rate_limited": ["provider_rate_limited", "provider_timeout_partial"],
-    }
-    return ProviderFetchResult(flights=[], warnings=warning_map.get(reason, []))
+    return negative_result_for_reason(reason)
 
 
 def build_effective_freshness(entry: QuickSearchCacheEntry, *, now: dt.datetime | None = None) -> dict[str, Any]:
