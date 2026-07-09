@@ -350,6 +350,7 @@ test("QuickSearchResultsList turns saved rows into a watchlist link action", () 
       refreshingResultId={null}
       refreshPrice={() => undefined}
       isInWatchlist={() => true}
+      getWatchlistHref={() => "/watchlist?watchId=watch_123&origin=NDR&destination=BVA&travelDate=2026-06-01"}
       addToWatchlist={() => undefined}
       viewInWatchlist={() => undefined}
       setExpandedRows={() => undefined}
@@ -365,6 +366,7 @@ test("QuickSearchResultsList turns saved rows into a watchlist link action", () 
   );
 
   assert.match(html, /Ver Watchlist/);
+  assert.match(html, /href="\/watchlist\?watchId=watch_123&amp;origin=NDR&amp;destination=BVA&amp;travelDate=2026-06-01"/);
   assert.doesNotMatch(html, /Guardar/);
 });
 

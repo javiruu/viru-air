@@ -33,6 +33,7 @@ type Props = {
   refreshingResultId: string | null;
   refreshPrice: (result: SearchResult) => void;
   isInWatchlist: (result: SearchResult) => boolean;
+  getWatchlistHref?: (result: SearchResult) => string;
   addToWatchlist: (result: SearchResult) => void;
   viewInWatchlist: (result: SearchResult) => void;
   setExpandedRows: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
@@ -127,6 +128,7 @@ function QuickSearchResultsListInner(props: Props) {
             const departureClock = r.departure_time_local || formatLegClock(firstLeg?.dep_ts, props.localeTag);
             const arrivalClock = formatLegClock(lastLeg?.arr_ts, props.localeTag) ?? addMinutesToClock(departureClock, totalDurationMinutes);
             const flightTimeLabel = totalDurationMinutes !== null ? props.formatMinutes(totalDurationMinutes) : null;
+            const watchlistHref = props.getWatchlistHref?.(r) || "/watchlist";
             return (
               <article
                 key={rowId}
@@ -207,9 +209,10 @@ function QuickSearchResultsListInner(props: Props) {
                   </div>
                   <div className="qs-result-buttons">
                     {props.isInWatchlist(r) ? (
-                      <button className="btn-ghost qs-row-saved" type="button" onClick={() => props.viewInWatchlist(r)}>
+                      <a className="btn-ghost qs-row-saved" href={watchlistHref} onClick={() => props.viewInWatchlist(r)}>
+                        <span className="qs-row-saved-indicator" aria-hidden="true" />
                         {props.t("viewWatchlist")}
-                      </button>
+                      </a>
                     ) : (
                       <button className="btn-secondary qs-row-save" type="button" onClick={() => props.addToWatchlist(r)}>
                         {props.t("save")}
