@@ -75,6 +75,17 @@ def persist_backfill_snapshots_for_watch(
     watch: FlightWatch,
     observations: Sequence[BackfillObservation],
 ) -> int:
+    inserted = add_backfill_snapshots_for_watch(db, watch, observations)
+    if inserted:
+        db.commit()
+    return inserted
+
+
+def add_backfill_snapshots_for_watch(
+    db: Session,
+    watch: FlightWatch,
+    observations: Sequence[BackfillObservation],
+) -> int:
     if not observations:
         return 0
 
@@ -106,7 +117,6 @@ def persist_backfill_snapshots_for_watch(
     if not snapshots:
         return 0
     db.add_all(snapshots)
-    db.commit()
     return len(snapshots)
 
 
