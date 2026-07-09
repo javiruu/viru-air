@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Callable
+from typing import Final
 
 from app.infrastructure.providers.base import FlightProvider
 from app.infrastructure.providers.duffel_provider import DuffelProvider
@@ -51,6 +52,17 @@ _PROVIDER_ENABLED_FLAGS = {
     ),
 }
 
+_DEFAULT_PROVIDER_ORDER: Final = "ryanair,vueling"
+_NON_CORE_PROVIDERS_OPT_IN_FLAG: Final = "FLIGHT_PROVIDER_NON_CORE_ENABLED"
+_PROVIDER_ENABLED_BY_DEFAULT: Final = {
+    "ryanair": True,
+    "vueling": True,
+    "wizzair": False,
+    "easyjet": False,
+    "iberia": False,
+    "duffel": False,
+}
+
 
 def _normalize_provider_id(value: str) -> str:
     key = value.strip().lower().replace("-", "_").replace(" ", "_")
@@ -58,10 +70,13 @@ def _normalize_provider_id(value: str) -> str:
 
 
 def _provider_enabled(provider_id: str) -> bool:
+    default_enabled = _PROVIDER_ENABLED_BY_DEFAULT.get(provider_id, False)
+    if not default_enabled and not _env_enabled(_NON_CORE_PROVIDERS_OPT_IN_FLAG, default=False):
+        return False
     for flag_name in _PROVIDER_ENABLED_FLAGS.get(provider_id, (f"FLIGHT_PROVIDER_{provider_id.upper()}_ENABLED",)):
         if os.getenv(flag_name) is not None:
-            return _env_enabled(flag_name, default=True)
-    return True
+            return _env_enabled(flag_name, default=default_enabled)
+    return default_enabled
 
 
 class FlightProviderRegistry:
@@ -78,7 +93,7 @@ class FlightProviderRegistry:
     def resolve_enabled_providers(self) -> list[FlightProvider]:
         ordered = [
             _normalize_provider_id(item)
-            for item in os.getenv("FLIGHT_PROVIDER_ORDER", "ryanair,vueling,wizzair,easyjet,iberia,duffel").split(",")
+            for item in os.getenv("FLIGHT_PROVIDER_ORDER", _DEFAULT_PROVIDER_ORDER).split(",")
             if item.strip()
         ]
         providers: list[FlightProvider] = []

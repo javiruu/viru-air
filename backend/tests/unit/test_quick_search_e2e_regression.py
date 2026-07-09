@@ -725,6 +725,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             "os.environ",
             {
                 "FLIGHT_PROVIDER_ORDER": "ryanair,wizzair",
+                "FLIGHT_PROVIDER_NON_CORE_ENABLED": "true",
                 "FLIGHT_PROVIDER_DUFFEL_ENABLED": "false",
                 "FLIGHT_PROVIDER_RYANAIR_ENABLED": "true",
                 "FLIGHT_PROVIDER_WIZZAIR_ENABLED": "true",
