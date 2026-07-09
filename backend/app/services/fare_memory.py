@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.infrastructure.db.models import FlightOfferCacheEntry, FlightPriceObservation
-from app.services.fare_memory_flight_instances import build_flight_instance_fingerprint
+from app.services.fare_memory_flight_instances import build_flight_instance_fingerprint, derive_carrier_code
 from app.services.quick_search_ranking import RankedResult
 
 
@@ -254,7 +254,7 @@ def build_ranked_result_offer_payload(item: RankedResult) -> dict[str, Any]:
     return {
         "provider": item.flight.source,
         "carrier": None,
-        "carrier_code": None,
+        "carrier_code": derive_carrier_code(item.flight.source),
         "flight_number": None,
         "origin_airport": item.origin,
         "destination_airport": item.destination,

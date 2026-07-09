@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.domain.entities import ProviderFlight
 from app.infrastructure.db.models import FlightOfferCacheEntry, FlightPriceObservation
 from app.services.fare_memory import build_offer_fingerprint
-from app.services.fare_memory_flight_instances import build_flight_instance_fingerprint
+from app.services.fare_memory_flight_instances import build_flight_instance_fingerprint, derive_carrier_code
 
 
 ProviderFlightRow = tuple[str, str, dt.date, ProviderFlight]
@@ -159,7 +159,7 @@ def _build_provider_offer_payload(row: ProviderFlightRow) -> ProviderOfferPayloa
     return {
         "provider": provider,
         "carrier": None,
-        "carrier_code": None,
+        "carrier_code": derive_carrier_code(provider),
         "flight_number": None,
         "origin_airport": origin_code,
         "destination_airport": destination_code,

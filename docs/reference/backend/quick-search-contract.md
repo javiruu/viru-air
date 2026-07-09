@@ -171,8 +171,10 @@ Canonical rules:
 Implementation note:
 
 - Helper module: `backend/app/services/fare_memory.py`
+- Flight instance helper module: `backend/app/services/fare_memory_flight_instances.py`
 - Canonical builder: `build_freshness_payload(...)`
 - Fingerprints defined in the same module are preparatory for Fare Memory phases 24-25 and are not a replacement for `query_signature`.
+- `carrier_code` convention for persisted flight instances: explicit provider carrier wins; Ryanair maps to `FR`; Vueling maps to `VY`; unknown providers fall back to the normalized provider id.
 
 ## Exact search cache metadata (Fare Memory Fase 27)
 

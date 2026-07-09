@@ -119,8 +119,10 @@ Identidad estable de una oferta sin incluir precio en el fingerprint.
 Campos minimos esperados:
 
 - `offer_fingerprint`
+- `flight_instance_fingerprint`
 - `provider`
 - `carrier`
+- `carrier_code`
 - `flight_number` si existe
 - `origin_airport`
 - `destination_airport`
@@ -128,6 +130,13 @@ Campos minimos esperados:
 - `arrival_at`
 - `stops_count`
 - `source_kind`
+
+Convencion actual de `carrier_code` derivado:
+
+- si el provider entrega un carrier explicito, se normaliza en mayusculas y se usa como fuente primaria;
+- Ryanair se persiste como `FR`;
+- Vueling se persiste como `VY`;
+- si el provider no es conocido y no hay carrier explicito, se usa el `provider` normalizado en mayusculas como fallback estable.
 
 ### Price Observations
 
