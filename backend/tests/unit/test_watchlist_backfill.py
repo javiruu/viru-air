@@ -3,8 +3,8 @@ import datetime as dt
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.infrastructure.db.models import Base, FlightOfferCacheEntry, FlightPriceObservation, FlightWatch, User
-from app.services.watchlist_backfill import find_backfill_observations_for_watch
+from app.infrastructure.db.models import Base, FlightOfferCacheEntry, FlightPriceObservation, FlightWatch, PriceSnapshot, User
+from app.services.watchlist_backfill import find_backfill_observations_for_watch, persist_backfill_snapshots_for_watch
 
 
 def _db() -> Session:
@@ -167,5 +167,58 @@ def test_find_backfill_observations_excludes_future_observed_and_null_price() ->
         )
 
         assert result == []
+    finally:
+        db.close()
+
+
+def test_persist_backfill_snapshots_for_watch_writes_stale_historical_snapshots() -> None:
+    db = _db()
+    try:
+        user = _seed_user(db)
+        watch = _seed_watch(db, user_id=user.id)
+        offer = _seed_offer(db)
+        _seed_observation(db, offer_id=offer.id, observed_at=dt.datetime(2026, 7, 19, 8, 0), price=49.99)
+        observations = find_backfill_observations_for_watch(
+            db,
+            watch,
+            now=dt.datetime(2026, 7, 19, 12, 0),
+        )
+
+        inserted = persist_backfill_snapshots_for_watch(db, watch, observations)
+
+        snapshots = db.scalars(select(PriceSnapshot)).all()
+        assert inserted == 1
+        assert len(snapshots) == 1
+        assert snapshots[0].watch_id == watch.id
+        assert snapshots[0].captured_at_utc == dt.datetime(2026, 7, 19, 8, 0)
+        assert float(snapshots[0].raw_price) == 49.99
+        assert snapshots[0].raw_currency == "EUR"
+        assert snapshots[0].provider == "historical_backfill"
+        assert snapshots[0].departure_time_local == "10:15"
+        assert snapshots[0].is_stale is True
+    finally:
+        db.close()
+
+
+def test_persist_backfill_snapshots_for_watch_is_idempotent() -> None:
+    db = _db()
+    try:
+        user = _seed_user(db)
+        watch = _seed_watch(db, user_id=user.id)
+        offer = _seed_offer(db)
+        _seed_observation(db, offer_id=offer.id, observed_at=dt.datetime(2026, 7, 19, 8, 0), price=49.99)
+        observations = find_backfill_observations_for_watch(
+            db,
+            watch,
+            now=dt.datetime(2026, 7, 19, 12, 0),
+        )
+
+        first_inserted = persist_backfill_snapshots_for_watch(db, watch, observations)
+        second_inserted = persist_backfill_snapshots_for_watch(db, watch, observations)
+
+        snapshot_count = db.scalar(select(func.count(PriceSnapshot.id)))
+        assert first_inserted == 1
+        assert second_inserted == 0
+        assert snapshot_count == 1
     finally:
         db.close()
