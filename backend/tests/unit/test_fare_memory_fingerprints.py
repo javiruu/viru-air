@@ -7,6 +7,7 @@ from app.services.fare_memory import (
     canonicalize_offer_fingerprint_payload,
     canonicalize_search_fingerprint_payload,
 )
+from app.services.quick_search_execution import build_cache_source_hash, build_unit_cache_key
 
 
 def _canonical_request(**payload_overrides):
@@ -89,6 +90,32 @@ def test_search_fingerprint_changes_when_provider_set_changes() -> None:
     )
 
 
+def test_search_fingerprint_ignores_provider_and_seed_pool_order() -> None:
+    first = _canonical_request(
+        origin={
+            "seed_iata": "FCO",
+            "seed_iata_list": ["CIA", "FCO", "MXP"],
+            "include_nearby": True,
+            "radius_km": 180,
+            "max_candidates": 6,
+        }
+    )
+    second = _canonical_request(
+        origin={
+            "seed_iata": "fco",
+            "seed_iata_list": ["mxp", "cia", "fco"],
+            "include_nearby": True,
+            "radius_km": 180,
+            "max_candidates": 6,
+        }
+    )
+
+    assert build_search_fingerprint(first, provider_set=["vueling", "ryanair"]) == build_search_fingerprint(
+        second,
+        provider_set=["ryanair", "vueling"],
+    )
+
+
 def test_search_fingerprint_ignores_locale_unless_it_affects_data() -> None:
     canonical = _canonical_request()
     base = build_search_fingerprint(canonical, locale="es", locale_affects_data=False)
@@ -113,6 +140,78 @@ def test_search_payload_normalization_sorts_seed_pools() -> None:
     payload = canonicalize_search_fingerprint_payload(canonical)
 
     assert payload["origin"]["seed_pool"] == ["CIA", "FCO", "MXP"]
+
+
+def test_cache_source_hash_is_stable_for_same_route_provider_and_currency() -> None:
+    first = build_cache_source_hash(
+        origin_iata=" agp ",
+        destination_iata="dub",
+        travel_date=dt.date(2026, 7, 20),
+        provider="Ryanair",
+        currency="eur",
+    )
+    second = build_cache_source_hash(
+        origin_iata="AGP",
+        destination_iata="DUB",
+        travel_date="2026-07-20",
+        provider="ryanair",
+        currency="EUR",
+    )
+
+    assert first == second
+
+
+def test_cache_source_hash_changes_when_currency_changes() -> None:
+    eur = build_cache_source_hash(
+        origin_iata="AGP",
+        destination_iata="DUB",
+        travel_date="2026-07-20",
+        provider="ryanair",
+        currency="EUR",
+    )
+    usd = build_cache_source_hash(
+        origin_iata="AGP",
+        destination_iata="DUB",
+        travel_date="2026-07-20",
+        provider="ryanair",
+        currency="USD",
+    )
+
+    assert eur != usd
+
+
+def test_expanded_nearby_routes_get_their_own_unit_keys() -> None:
+    seed_route = build_unit_cache_key(
+        origin_iata="AGP",
+        destination_iata="DUB",
+        travel_date="2026-07-20",
+        provider="ryanair",
+    )
+    nearby_route = build_unit_cache_key(
+        origin_iata="GRX",
+        destination_iata="DUB",
+        travel_date="2026-07-20",
+        provider="ryanair",
+    )
+
+    assert seed_route != nearby_route
+
+
+def test_round_trip_legs_can_be_cached_as_separate_units() -> None:
+    outbound = build_unit_cache_key(
+        origin_iata="AGP",
+        destination_iata="DUB",
+        travel_date="2026-07-20",
+        provider="ryanair",
+    )
+    inbound = build_unit_cache_key(
+        origin_iata="DUB",
+        destination_iata="AGP",
+        travel_date="2026-07-27",
+        provider="ryanair",
+    )
+
+    assert outbound != inbound
 
 
 def test_offer_fingerprint_ignores_price_changes() -> None:
