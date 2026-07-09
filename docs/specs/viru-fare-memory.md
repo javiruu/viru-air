@@ -102,6 +102,13 @@ Desde la Fase 22, `GET /api/v1/watchlist/{watch_id}` expone tambien `price_histo
 - cada punto incluye `is_stale` y `source_kind`;
 - el detalle limita la serie a `WATCH_DETAIL_PRICE_HISTORY_LIMIT` puntos, con valor por defecto `500`.
 
+Desde la Fase 23, la grafica de watchlist integra `price_history` del detalle seleccionado:
+
+- los puntos historicos pueden aparecer antes de la creacion de la watch;
+- los puntos con `source_kind="historical_backfill"` se muestran como puntos discretos de historico;
+- el tooltip explica que Viru ya habia observado esos precios antes de anadir el seguimiento;
+- no se anade una tarjeta informativa permanente ni se cambia la lista general.
+
 ## Estados canonicos de frescura
 
 | Estado | Significado | Uso |

@@ -1,8 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { filterWatchesBySelection, mapSnapshotsToHistoryRows } from "@/modules/watchlist/watchlistActions.helpers";
-import type { Snapshot, Watch } from "@/modules/watchlist/types";
+import {
+  filterWatchesBySelection,
+  mapSnapshotsToHistoryRows,
+  mergeWatchDetailPriceHistoryRows,
+} from "@/modules/watchlist/watchlistActions.helpers";
+import type { HistoryRow, Snapshot, WatchDetail, Watch } from "@/modules/watchlist/types";
 
 const WATCHES: Watch[] = [
   {
@@ -95,6 +99,54 @@ test("mapSnapshotsToHistoryRows collapses same-refresh legacy snapshots to one c
   assert.equal(rows[1].price, 88);
   assert.equal(rows[1].capturedAt, "2026-05-01T10:05:00.000001");
   assert.equal(rows[1].provider, "easyjet-public");
+});
+
+test("mergeWatchDetailPriceHistoryRows adds selected watch backfill points without duplicating current history", () => {
+  const rows: HistoryRow[] = [
+    {
+      watchId: "w1",
+      origin: "MAD",
+      destination: "DUB",
+      travelDate: "2026-07-10",
+      capturedAt: "2026-05-02T10:00:00Z",
+      price: 88,
+      currency: "EUR",
+      departureTime: "09:45",
+      provider: "easyjet-public",
+    },
+  ];
+  const detail: WatchDetail = {
+    ...WATCHES[0],
+    latest_snapshot: null,
+    price_history: [
+      {
+        captured_at_utc: "2026-05-01T10:00:00Z",
+        raw_price: 99,
+        raw_currency: "EUR",
+        departure_time_local: "12:00",
+        provider: "historical_backfill",
+        is_stale: true,
+        source_kind: "historical_backfill",
+      },
+      {
+        captured_at_utc: "2026-05-02T10:00:00.123456",
+        raw_price: 90,
+        raw_currency: "EUR",
+        departure_time_local: "10:00",
+        provider: "historical_backfill",
+        is_stale: true,
+        source_kind: "historical_backfill",
+      },
+    ],
+  };
+
+  const merged = mergeWatchDetailPriceHistoryRows(rows, detail);
+  const backfill = merged.find((row) => row.sourceKind === "historical_backfill");
+
+  assert.equal(merged.length, 2);
+  assert.equal(merged.filter((row) => row.capturedAt.startsWith("2026-05-02T10:00:00")).length, 1);
+  assert.equal(backfill?.isStale, true);
+  assert.equal(backfill?.capturedAt, "2026-05-01T10:00:00Z");
 });
 
 test("filterWatchesBySelection filters by origin, destination and optional dates", () => {

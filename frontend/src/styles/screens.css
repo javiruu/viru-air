@@ -5871,6 +5871,10 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   cursor: grabbing;
 }
 
+.history-point--backfill {
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 34%, transparent));
+}
+
 .history-zoom-toolbar {
   display: flex;
   justify-content: flex-end;
@@ -5960,6 +5964,12 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   display: grid;
   gap: 0.15rem;
   pointer-events: none;
+}
+
+.history-tooltip-note {
+  margin-top: 0.2rem;
+  color: var(--ink-muted);
+  max-width: 220px;
 }
 
 .history-heatmap {
