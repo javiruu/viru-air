@@ -1,0 +1,107 @@
+import datetime as dt
+
+import pytest
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import Session, sessionmaker
+
+from app.domain.entities import ProviderFlight
+from app.infrastructure.db.models import Base, FlightOfferCacheEntry, FlightPriceObservation
+from app.services.fare_memory_provider_observations import (
+    ObservationPersistenceContext,
+    ProviderFlightRow,
+    persist_provider_flight_observations,
+)
+
+
+@pytest.fixture()
+def db() -> Session:
+    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    Base.metadata.create_all(bind=engine)
+    session = TestingSessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
+        engine.dispose()
+
+
+def test_provider_observations_persist_all_raw_results_before_visible_limit(db: Session) -> None:
+    travel_date = dt.date(2026, 7, 20)
+    provider_rows = [
+        _provider_row(travel_date=travel_date, departure_time_local=f"0{hour}:15", price=40.0 + hour)
+        for hour in range(5)
+    ]
+    visible_results = provider_rows[:2]
+
+    summary = persist_provider_flight_observations(
+        db,
+        provider_flights=provider_rows,
+        context=_context(),
+    )
+
+    offers = db.scalars(select(FlightOfferCacheEntry)).all()
+    observations = db.scalars(select(FlightPriceObservation)).all()
+    assert len(visible_results) == 2
+    assert summary["offers_created"] == 5
+    assert summary["observations_created"] == 5
+    assert len(offers) == 5
+    assert len(observations) == 5
+
+
+def test_provider_observations_skip_incomplete_provider_rows(db: Session) -> None:
+    travel_date = dt.date(2026, 7, 20)
+    rows = [
+        _provider_row(travel_date=travel_date, source=""),
+        ("LE", "FCO", travel_date, _flight(source="ryanair")),
+        _provider_row(travel_date=travel_date, source="ryanair"),
+    ]
+
+    summary = persist_provider_flight_observations(
+        db,
+        provider_flights=rows,
+        context=_context(),
+    )
+
+    assert summary["offers_created"] == 1
+    assert summary["observations_created"] == 1
+    assert summary["skipped_incomplete"] == 2
+    price_amount = db.scalar(select(FlightPriceObservation.price_amount))
+    assert price_amount is not None
+    assert float(price_amount) == pytest.approx(49.99)
+
+
+def _context() -> ObservationPersistenceContext:
+    return ObservationPersistenceContext(
+        search_cache_entry_id=None,
+        observed_at=dt.datetime(2026, 7, 20, 8, 0),
+        expires_at=dt.datetime(2026, 7, 20, 12, 0),
+        freshness_status="fresh",
+        confidence_score=0.95,
+        validation_status="revalidated",
+    )
+
+
+def _provider_row(
+    *,
+    travel_date: dt.date,
+    departure_time_local: str = "10:15",
+    price: float = 49.99,
+    source: str = "ryanair",
+) -> ProviderFlightRow:
+    return ("LEI", "FCO", travel_date, _flight(departure_time_local=departure_time_local, price=price, source=source))
+
+
+def _flight(
+    *,
+    departure_time_local: str = "10:15",
+    price: float = 49.99,
+    source: str = "ryanair",
+) -> ProviderFlight:
+    return ProviderFlight(
+        price=price,
+        currency="EUR",
+        departure_time_local=departure_time_local,
+        captured_at=dt.datetime(2026, 7, 20, 8, 0),
+        source=source,
+    )

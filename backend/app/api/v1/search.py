@@ -69,7 +69,8 @@ from app.services.quick_search_cache_service import (
     set_cache_entry,
     prune_expired_entries_async,
 )
-from app.services.fare_memory import build_freshness_payload, build_search_fingerprint, persist_ranked_result_observations
+from app.services.fare_memory import build_freshness_payload, build_search_fingerprint
+from app.services.fare_memory_provider_observations import ObservationPersistenceContext, persist_provider_flight_observations
 from app.services.quick_search_save_result_observation import handle_saved_result_observation
 
 router = APIRouter()
@@ -2950,21 +2951,23 @@ def quick_search(
 
     _enrich_pipeline_counters(response_payload)
 
-    if scoped_ranked_results and _supports_db_session(db) and FARE_MEMORY_OFFER_CACHE_ENABLED:
+    if combined and _supports_db_session(db) and FARE_MEMORY_OFFER_CACHE_ENABLED:
         observation_observed_at = exact_cache_entry.captured_at_utc if exact_cache_entry is not None else utc_now_naive()
         observation_expires_at = exact_cache_entry.expires_at_utc if exact_cache_entry is not None else None
         observation_freshness_status = "fresh" if exact_cache_category == "ready" else "warm"
         observation_confidence_score = 0.95 if exact_cache_category == "ready" else 0.4
         observation_validation_status = "revalidated" if exact_cache_category == "ready" else "provider_partial"
-        persist_ranked_result_observations(
+        persist_provider_flight_observations(
             db,
-            ranked_results=scoped_ranked_results,
-            search_cache_entry_id=exact_cache_entry.id if exact_cache_entry is not None else None,
-            observed_at=observation_observed_at,
-            expires_at=observation_expires_at,
-            freshness_status=observation_freshness_status,
-            confidence_score=observation_confidence_score,
-            validation_status=observation_validation_status,
+            provider_flights=combined,
+            context=ObservationPersistenceContext(
+                search_cache_entry_id=exact_cache_entry.id if exact_cache_entry is not None else None,
+                observed_at=observation_observed_at,
+                expires_at=observation_expires_at,
+                freshness_status=observation_freshness_status,
+                confidence_score=observation_confidence_score,
+                validation_status=observation_validation_status,
+            ),
         )
 
     return response_payload

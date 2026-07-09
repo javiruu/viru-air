@@ -670,7 +670,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
                 patch("app.api.v1.search.set_exact_search_cache_entry") as exact_set,
                 patch("app.api.v1.search.get_fresh_negative_cache_entry") as negative_get,
                 patch("app.api.v1.search.set_negative_cache_entry") as negative_set,
-                patch("app.api.v1.search.persist_ranked_result_observations") as persist_observations,
+                patch("app.api.v1.search.persist_provider_flight_observations") as persist_observations,
                 patch("app.api.v1.search.execute_plan", side_effect=fake_execute_plan),
             ):
                 result = self._call_quick_search(payload, db=db)
@@ -685,6 +685,55 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             self.assertIsNone(execute_plan_calls[0]["negative_cache_set"])
             self.assertEqual(len(result["results"]), 1)
             self.assertFalse(result["meta"]["search_cache"]["exact_hit"])
+        finally:
+            db.close()
+            engine.dispose()
+
+    def test_fare_memory_persists_raw_provider_results_before_pagination(self):
+        payload = self._payload(
+            execution={"max_pairs": 1, "max_requests": 1, "timeout_ms": 3000, "concurrency_limit": 1},
+            page_size=2,
+        )
+        engine, testing_session_local, db = _db_session()
+        try:
+            raw_rows = [
+                ("LEI", "DUB", dt.date(2026, 6, 14), _flight(55 + index, f"0{index}:15"))
+                for index in range(5)
+            ]
+
+            def fake_execute_plan(*args, **kwargs):
+                return (
+                    raw_rows,
+                    {
+                        "provider_calls": 1,
+                        "cache_hits": 0,
+                        "cache_misses": 1,
+                        "l1_cache_hits": 0,
+                        "l2_cache_hits": 0,
+                        "negative_cache_hits": 0,
+                        "provider_failures": 0,
+                        "requested_units_count": 1,
+                        "executed_pairs_count": 1,
+                        "skipped_pairs_count": 0,
+                        "timed_out_units_count": 0,
+                        "provider_statuses": [],
+                        "warnings_structured_events": [],
+                    },
+                    [],
+                )
+
+            with (
+                patch("app.api.v1.search.QUICK_SEARCH_SHARED_CACHE_ENABLED", True),
+                patch("app.api.v1.search.FARE_MEMORY_SEARCH_CACHE_ENABLED", False),
+                patch("app.api.v1.search.FARE_MEMORY_OFFER_CACHE_ENABLED", True),
+                patch("app.api.v1.search.SessionLocal", testing_session_local),
+                patch("app.api.v1.search.persist_provider_flight_observations") as persist_observations,
+                patch("app.api.v1.search.execute_plan", side_effect=fake_execute_plan),
+            ):
+                result = self._call_quick_search(payload, page_size=2, db=db)
+
+            self.assertEqual(len(result["results"]), 2)
+            self.assertEqual(len(persist_observations.call_args.kwargs["provider_flights"]), 5)
         finally:
             db.close()
             engine.dispose()
