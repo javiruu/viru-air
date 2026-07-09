@@ -32,6 +32,21 @@
 - No interpretar "funcional" como dashboard corporativo frio.
 - No interpretar "minimal" como ausencia de personalidad.
 
+## 2.2) Firma de lujo silencioso (Quiet Luxury) — capa de refinamiento
+La identidad "Aviation Warm-Luxe" gana una segunda capa: **lujo silencioso**. No sustituye los principios ni los tokens; los refine.
+
+1. **Menos ornamento, mas ritmo.** Cada componente debe poder explicarse con tipografia, jerarquia y aire; los bordes y sombras son complemento, no protagonista.
+2. **Densidad util, no densidad abarrotada.** Quitar lo repetido, agrupar lo relacionado, dejar respirar entre grupos. Una pantalla limpia transmite mas control que una pantalla llena.
+3. **Detalles deliberados, no uniformes.** Permitir asimetria y momentos diferenciados; las superficies planas se reservan para zonas de descanso visual en zonas de alta densidad.
+4. **Bordes mas finos, sombras mas largas.** Reducir el grosor visual de las lineas y ampliar la dispersion suave para alejarse de la "caja corporativa".
+5. **Movimiento sobrio y consistente.** Curvas suaves, duraciones cortas, finales firmes. Evitar cualquier animacion que parezca decorativa sin proposito.
+
+Reglas de proteccion:
+- Mantener paleta dual (`#121212`, `#FFFFFF`, `#FFB000`, `#10B981`, `#50BFE6`, `#FF6464`).
+- Mantener Playfair Display + IBM Plex Sans como duo tipografico base.
+- Mantener los tokens congelados de `UI_SYSTEM_V1.md`; aqui solo se refine la aplicacion.
+- Cualquier token nuevo debe pasar por `tokens.css` antes de usarse en componentes.
+
 ## 3) Paleta y tokens canonicos
 **Paleta de referencia dual:**
 - **Dark canvas:** `#121212`
