@@ -235,8 +235,10 @@ This layer can be disabled with `FARE_MEMORY_NEGATIVE_CACHE_ENABLED=false` while
 
 Current intent:
 
-- `no_availability` -> returns empty result without provider call for a short reusable window.
-- `provider_timeout` / `provider_error` / `provider_total_outage` -> returns no flights plus canonical warning codes and applies shorter backoff.
+- `no_results` -> returns empty result without provider call for a short reusable window.
+- `invalid_price` -> short-lived negative entry for malformed provider fare data.
+- `unsupported_route` -> longer-lived route-date-provider negative entry when the route is known unsupported.
+- `provider_timeout` / `provider_partial_degraded` / `provider_total_outage` -> returns no flights plus canonical warning codes and applies short backoff.
 - repeated provider failures for the same route-date-provider fingerprint increase the backoff window and move `retry_after_at` forward.
 - `rate_limited` returns warning metadata and must remain distinguishable from silent `no_results`.
 
@@ -599,10 +601,16 @@ Contadores expuestos en `meta.pipeline_counters`:
 - `cache_hits` / `cache_misses`: reuse efectivo frente a fetch real
 - `l1_cache_hits` / `l2_cache_hits` / `negative_cache_hits`: desglose por capa/tipo
 - `cache_hit_rate` / `cache_miss_rate` / `negative_cache_hit_rate`: tasas derivadas por request
-- `provider_calls_avoided`: llamadas a provider evitadas gracias a L1/L2/negative cache o exact-search cache
-- `stale_served_count`: resultados devueltos con `requires_revalidation=true`
-- `avg_price_age_seconds`: antiguedad media de precios devueltos en la pagina actual
-- `provider_error_rate`: ratio de fallos sobre llamadas reales a provider
+- `provider_calls_avoided`: igual a `cache_hits`; mide unidades resueltas por L1/L2/negative cache o exact-search cache sin llamar al provider
+- `stale_served_count`: resultados devueltos con `stale_data=true`, `requires_revalidation=true` o `freshness.status` cálido/caducado
+- `avg_price_age_seconds`: antiguedad media de precios devueltos en la pagina actual, calculada desde `results[].freshness.age_seconds`
+- `provider_error_rate`: ratio de fallos/timeouts sobre llamadas reales o fallos agregados de provider
+
+Interpretación operativa:
+
+- Primera búsqueda live sin cache: `provider_calls=1`, `cache_misses=1`, `provider_calls_avoided=0`.
+- Repetición con hit L1/L2: `provider_calls=0`, `cache_hits=1`, `provider_calls_avoided=1`.
+- Ruta servida desde negative cache: `negative_cache_hits=1`, `provider_calls=0`, `provider_calls_avoided=1`.
 
 ### Siguiente paso: Redis como hot layer
 
