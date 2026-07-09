@@ -152,7 +152,7 @@ Decision actual de implementacion:
 
 - si una misma oferta reaparece en otra busqueda con el mismo precio, Viru guarda una nueva observacion igualmente para conservar la linea temporal de avistamientos;
 - `price_changed_since_last_seen` solo se activa cuando el importe cambia frente a la observacion anterior de esa oferta.
-- si la misma oferta, provider, moneda y precio se observa de nuevo dentro de 30 segundos, se omite como duplicado reciente para evitar inflar historial por reintentos inmediatos.
+- si la misma oferta, provider, moneda y precio se observa de nuevo dentro de 10 minutos, se omite como duplicado reciente para evitar inflar historial por reintentos inmediatos.
 
 Campos minimos esperados:
 
