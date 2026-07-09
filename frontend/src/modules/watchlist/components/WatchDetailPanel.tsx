@@ -13,8 +13,6 @@ type WatchDetailPanelProps = {
   detail: WatchDetail | null;
   summary: PriceSummary | null;
   isLoading: boolean;
-  isRefreshing: boolean;
-  onRefreshWatch: (watchId: string) => void;
   onPauseWatch: (watchId: string) => void;
   onResumeWatch: (watchId: string) => void;
 };
@@ -24,8 +22,6 @@ export function WatchDetailPanel({
   detail,
   summary,
   isLoading,
-  isRefreshing,
-  onRefreshWatch,
   onPauseWatch,
   onResumeWatch,
 }: WatchDetailPanelProps) {
@@ -171,15 +167,6 @@ export function WatchDetailPanel({
       <DoorToDoorWatchlistSuggestion watch={focus} />
 
       <div className="alert-actions watch-detail-actions">
-        <button
-          className="btn-ghost btn-compact"
-          type="button"
-          disabled={isRefreshing}
-          aria-busy={isRefreshing}
-          onClick={() => onRefreshWatch(focus.id)}
-        >
-          {isRefreshing ? t("watchlist.detail.actions.refreshingPrice") : t("watchlist.detail.actions.refreshPrice")}
-        </button>
         {focus.status === "paused" ? (
           <button className="btn-ghost btn-compact" type="button" onClick={() => onResumeWatch(focus.id)}>
             {t("watchlist.detail.actions.resume")}

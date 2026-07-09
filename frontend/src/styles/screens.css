@@ -8502,9 +8502,14 @@ textarea::placeholder {
 }
 
 .qs-check input {
-  position: absolute;
+  position: relative;
+  z-index: 1;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  margin: 0 calc(-34px - 0.6rem) 0 0;
   opacity: 0;
-  pointer-events: none;
+  cursor: pointer;
 }
 
 .qs-check-ui {
@@ -8516,6 +8521,7 @@ textarea::placeholder {
   place-items: center;
   color: var(--qs-placeholder);
   background: var(--surface-2);
+  pointer-events: none;
   transition:
     transform 0.16s ease,
     border-color 0.16s ease,

@@ -292,6 +292,16 @@ def resolve_provider_runtime() -> ProviderRuntime:
             notes="Stub API de transfers.",
         ),
         ProviderDescriptor(
+            name="mozio",
+            source_type="aggregator",
+            base_status="deeplink_stub",
+            production_ready=False,
+            supports_search=False,
+            supports_booking_url=False,
+            has_tests=False,
+            notes="Placeholder de integracion Mozio API/B2B; la salida keyless activa vive en mozio_deeplink.",
+        ),
+        ProviderDescriptor(
             name="mozio_deeplink",
             source_type="deeplink",
             base_status="functional_deeplink",

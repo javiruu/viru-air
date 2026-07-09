@@ -48,7 +48,6 @@ export function useWatchlistActions({
   const [showAdd, setShowAdd] = useState(false);
   const [activePicker, setActivePicker] = useState<PickerField | null>(null);
   const [isRefreshingFiltered, setIsRefreshingFiltered] = useState(false);
-  const [isRefreshingSelectedWatch, setIsRefreshingSelectedWatch] = useState(false);
   const [isLoadingWatchlist, setIsLoadingWatchlist] = useState(true);
   const [isLoadingHistoryInitial, setIsLoadingHistoryInitial] = useState(true);
   const [selectedWatchDetail, setSelectedWatchDetail] = useState<WatchDetail | null>(null);
@@ -114,7 +113,7 @@ export function useWatchlistActions({
     setIsLoadingSelectedWatchDetail,
   });
 
-  const { refreshFiltered, refreshSelectedWatch, updateWatchStatus, deleteWatch, bulkUpdateStatus, bulkDelete } =
+  const { refreshFiltered, updateWatchStatus, deleteWatch, bulkUpdateStatus, bulkDelete } =
     useWatchlistMutations({
       t,
       load,
@@ -122,7 +121,6 @@ export function useWatchlistActions({
       selectedOrigin,
       selectedDestination,
       selectedDates,
-      setIsRefreshingSelectedWatch,
       setMessage,
       setMessageType,
       setIsRefreshingFiltered,
@@ -161,7 +159,6 @@ export function useWatchlistActions({
     showAdd,
     activePicker,
     isRefreshingFiltered,
-    isRefreshingSelectedWatch,
     isLoadingWatchlist,
     isLoadingHistoryInitial,
     selectedWatchDetail,
@@ -181,7 +178,6 @@ export function useWatchlistActions({
     load,
     onSubmit,
     refreshFiltered,
-    refreshSelectedWatch,
     updateWatchStatus,
     deleteWatch,
     bulkUpdateStatus,

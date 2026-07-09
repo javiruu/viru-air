@@ -3148,7 +3148,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             </div>
             {selectedCountry ? (
               <div className="qs-airport-modal__country-action">
-                <button type="button" className="qs-airport-modal__use-country" onClick={() => void selectCountryOnly(selectedCountry)}>
+                <button type="button" className="btn-secondary btn-compact qs-airport-modal__use-country" onClick={() => void selectCountryOnly(selectedCountry)}>
                   {renderFlag(selectedCountry.code)}
                   <span>{t("pickCountryOnly").replace("{country}", selectedCountry.name)}</span>
                 </button>

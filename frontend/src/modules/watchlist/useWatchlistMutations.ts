@@ -1,13 +1,12 @@
 import { trackUxEvent } from "@/lib/uxTracking";
 import { apiFetch } from "@/modules/shared/api";
 import { summarizeRefreshBulkResult } from "@/modules/watchlist/summary";
-import { filterWatchesBySelection, mapSnapshotsToHistoryRows } from "@/modules/watchlist/watchlistActions.helpers";
-import type { HistoryRow, Snapshot, Watch } from "@/modules/watchlist/types";
+import { filterWatchesBySelection } from "@/modules/watchlist/watchlistActions.helpers";
+import type { Watch } from "@/modules/watchlist/types";
 
 type MessageType = "error" | "success";
 
 type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
-export type SelectedRefreshResult = "updated" | "same" | "no_flights";
 
 type UseWatchlistMutationsInput = {
   t: TranslateFn;
@@ -16,7 +15,6 @@ type UseWatchlistMutationsInput = {
   selectedOrigin: string;
   selectedDestination: string;
   selectedDates: string[];
-  setIsRefreshingSelectedWatch: (value: boolean) => void;
   setMessage: (value: string) => void;
   setMessageType: (value: MessageType) => void;
   setIsRefreshingFiltered: (value: boolean) => void;
@@ -29,7 +27,6 @@ export function useWatchlistMutations({
   selectedOrigin,
   selectedDestination,
   selectedDates,
-  setIsRefreshingSelectedWatch,
   setMessage,
   setMessageType,
   setIsRefreshingFiltered,
@@ -73,52 +70,6 @@ export function useWatchlistMutations({
       setMessageType("error");
     } finally {
       setIsRefreshingFiltered(false);
-    }
-  }
-
-  async function loadWatchHistoryRows(watchId: string): Promise<HistoryRow[]> {
-    const watch = items.find((item) => item.id === watchId);
-    if (!watch) return [];
-    const snapshots = await apiFetch<Array<Snapshot & { watch_id: string }>>("/prices/history/batch", {
-      method: "POST",
-      body: JSON.stringify({ watch_ids: [watchId] }),
-    });
-    return mapSnapshotsToHistoryRows([watch], snapshots)
-      .sort((a, b) => new Date(b.capturedAt).getTime() - new Date(a.capturedAt).getTime());
-  }
-
-  async function refreshSelectedWatch(watchId: string): Promise<SelectedRefreshResult> {
-    setMessage("");
-    setIsRefreshingSelectedWatch(true);
-    try {
-      const beforeRows = await loadWatchHistoryRows(watchId);
-      const beforeLatestPrice = beforeRows[0]?.price ?? null;
-      const response = await apiFetch<{ status: string; watch_id: string; stale_data?: boolean; provider_status?: string }>(
-        `/watchlist/${watchId}/refresh-now`,
-        { method: "POST" },
-      );
-      await load();
-      if (response.status === "no_flights") {
-        setMessage(t("watchlist.messages.selectedRefreshNoFlights"));
-        setMessageType("error");
-        return "no_flights";
-      }
-      const afterRows = await loadWatchHistoryRows(watchId);
-      const afterLatestPrice = afterRows[0]?.price ?? null;
-      if (beforeLatestPrice != null && afterLatestPrice === beforeLatestPrice) {
-        setMessage(t("watchlist.messages.selectedPriceSame"));
-        setMessageType("success");
-        return "same";
-      }
-      setMessage(t("watchlist.messages.selectedPriceUpdated"));
-      setMessageType("success");
-      return "updated";
-    } catch (error) {
-      setMessage(t("watchlist.messages.selectedRefreshError"));
-      setMessageType("error");
-      throw error;
-    } finally {
-      setIsRefreshingSelectedWatch(false);
     }
   }
 
@@ -205,7 +156,6 @@ export function useWatchlistMutations({
 
   return {
     refreshFiltered,
-    refreshSelectedWatch,
     updateWatchStatus,
     deleteWatch,
     bulkUpdateStatus,
