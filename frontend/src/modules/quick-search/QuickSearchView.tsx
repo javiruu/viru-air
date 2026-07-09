@@ -3056,6 +3056,22 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       cancelled = true;
     };
   }, [activePicker, selectedCountry?.code, airportSearch, fetchSeedAirports, logQuickSearchApiError]);
+
+  useEffect(() => {
+    if (!activePicker) return;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [activePicker]);
+
   const filteredCountryAirports = countryAirports;
   const airportPickerModal = activePicker ? (
     <div className="airport-modal-overlay" onClick={closePicker}>
