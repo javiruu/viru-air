@@ -1,5 +1,6 @@
 import type { FormEventHandler } from "react";
 import { useI18n } from "@/i18n";
+import { useEscapeClose } from "@/modules/shared/useEscapeClose";
 
 type PickerField = "origin" | "destination";
 
@@ -33,6 +34,7 @@ export function AddWatchModal({
   onOpenPicker,
 }: AddWatchModalProps) {
   const { t } = useI18n();
+  useEscapeClose(onClose, isOpen);
   if (!isOpen) return null;
 
   return (
