@@ -241,18 +241,25 @@ Estado de rollout actual:
 
 Flags relevantes:
 
-| Flag | Valor recomendado por defecto | Uso |
-|---|---:|---|
-| `QUICK_SEARCH_SHARED_CACHE_ENABLED` | `false` | Activar reutilizacion compartida de Quick Search solo en entornos controlados |
-| `FARE_MEMORY_ENABLED` | `true` | Habilitar el dominio general de memoria de precios |
-| `FARE_MEMORY_SEARCH_CACHE_ENABLED` | `true` | Permitir escritura/lectura de search cache |
-| `FARE_MEMORY_OFFER_CACHE_ENABLED` | `true` | Permitir memoria de ofertas y observaciones |
-| `FARE_MEMORY_NEGATIVE_CACHE_ENABLED` | `true` | Permitir cache de ausencias/fallos |
-| `FARE_MEMORY_BOOT_WARMUP_ENABLED` | `false` | Evitar trabajo automatico al arrancar hasta canary explicito |
-| `FARE_MEMORY_MAX_BOOT_JOBS` | `25` | Limitar carga maxima de warmup cuando se active |
-| `FARE_MEMORY_BOOT_WARMUP_JITTER_SECONDS` | `30` | Distribuir arranques para evitar stampede |
-| `FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE` | `60` | Limitar llamadas por provider |
-| `WATCHLIST_STARTUP_REFRESH_ENABLED` | `true` | Mantener refresh de watchlist existente bajo su politica actual |
+| Flag | Default | Uso | Riesgo | Recomendacion |
+|---|---:|---|---|---|
+| `QUICK_SEARCH_SHARED_CACHE_ENABLED` | `false` | Activa reutilizacion persistente de Quick Search en `search.py` | Servir memoria compartida sin observar frescura | Mantener off en prod hasta canary con metricas |
+| `QUICK_SEARCH_SHARED_CACHE_READY_TTL_SECONDS` | `86400` | TTL base legacy para resultados `ready`; la politica dinamica puede acortarlo por fecha | TTL demasiado largo si se usa sin freshness | Conservar como fallback, no como verdad de precio |
+| `QUICK_SEARCH_SHARED_CACHE_EMPTY_TTL_SECONDS` | `7200` | TTL base para respuestas vacias | Ocultar recuperacion de proveedor si se abusa | Mantener menor que ready |
+| `QUICK_SEARCH_SHARED_CACHE_DEGRADED_TTL_SECONDS` | `1800` | TTL base para resultados degradados | Repetir degradacion como si fuera estable | Mantener corto |
+| `QUICK_SEARCH_NEGATIVE_CACHE_TTL_SECONDS` | `1800` | TTL de ausencias reutilizables | Convertir ausencia reciente en ausencia de mercado | Mostrar warnings y permitir reintento cuando expire |
+| `QUICK_SEARCH_NEGATIVE_PROVIDER_ERROR_TTL_SECONDS` | `600` | TTL inicial de errores de provider | Bucles de retry o bloqueo excesivo | Mantener corto con backoff |
+| `QUICK_SEARCH_NEGATIVE_PROVIDER_ERROR_MAX_TTL_SECONDS` | `3600` | Techo de backoff para errores de provider | Silenciar demasiado tiempo un provider recuperado | No subir sin datos operativos |
+| `FARE_MEMORY_ENABLED` | `true` | Master switch del dominio Fare Memory | Apagarlo desactiva subcapas aunque sus flags esten true | Usar para rollback amplio |
+| `FARE_MEMORY_SEARCH_CACHE_ENABLED` | `true` | Permite escritura/lectura de cache exacta por `search_fingerprint` | Duplicar cache si se usa fuera de la base compartida | Mantener aditivo sobre `QuickSearchCacheEntry` |
+| `FARE_MEMORY_OFFER_CACHE_ENABLED` | `true` | Permite persistir ofertas y observaciones | Guardar datos personales por error | Mantener sin `user_id` |
+| `FARE_MEMORY_NEGATIVE_CACHE_ENABLED` | `true` | Permite negative cache persistente | Tratar error como ausencia silenciosa | Conservar reason/warnings canonicos |
+| `FARE_MEMORY_BOOT_WARMUP_ENABLED` | `false` | Agenda warmup al arrancar | Coste/stampede al boot | Mantener off salvo canary |
+| `FARE_MEMORY_MAX_BOOT_JOBS` | `25` | Limita jobs de warmup | Sobrecarga si se sube sin rate limit | Ajustar junto a rate limit |
+| `FARE_MEMORY_BOOT_WARMUP_JITTER_SECONDS` | `30` | Distribuye jobs al arrancar | Picos si es 0 en multi-worker | Mantener jitter en entornos compartidos |
+| `FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE` | `60` | Recorta jobs por provider | Saturar provider si sube demasiado | Cambiar solo con observabilidad |
+| `WATCHLIST_STARTUP_REFRESH_ENABLED` | `true` | Mantiene refresh de watchlist existente | Llamadas al arranque si hay muchas rutas | Mantener dedupe por `RevalidationJob` |
+| `WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS` | `14400` | Umbral de stale para priorizar startup refresh | Documentacion desalineada rompe expectativas | Fuente actual: `backend/.env.example` |
 
 Fases de rollout:
 

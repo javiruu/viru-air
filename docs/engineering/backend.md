@@ -41,7 +41,7 @@ Esto evita acoplar `quick-search`, `watchlist` y `recommendations` a un provider
 - Startup refresh automatico de watchlist:
   - `WATCHLIST_STARTUP_REFRESH_ENABLED=true` por defecto.
   - en startup, el backend encola `RevalidationJob` de tipo `startup_refresh` para cada ruta activa compartida.
-  - `WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS=86400` define cuando una ruta activa se considera vencida al arrancar; el umbral se usa para prioridad y observabilidad, no para saltarse rutas activas.
+  - `WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS=14400` define cuando una ruta activa se considera vencida al arrancar; el umbral se usa para prioridad y observabilidad, no para saltarse rutas activas.
   - el arranque no bloquea `ready`: un worker background drena jobs due de tipo `startup_refresh`, `boot_warmup` y `manual` con `target_type=route`.
   - una sola revalidacion por ruta comprueba todos los watches activos de esa ruta y persiste snapshots por usuario solo cuando falta dato, el dato previo era stale o el precio/currency cambio; asi se evita llenar el historico con puntos repetidos al abrir el servidor varias veces.
 - Boot warmup de Fare Memory:
