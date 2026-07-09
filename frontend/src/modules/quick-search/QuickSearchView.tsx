@@ -152,6 +152,7 @@ import {
   saveResumeSearchSnapshot,
 } from "@/modules/quick-search/resume-search";
 import { buildWatchlistUrl, buildQuickSearchSearchParams, readQuickSearchUrlState } from "@/modules/shared/useRouteState";
+import { useEscapeClose } from "@/modules/shared/useEscapeClose";
 
 const RELAX_HIGHLIGHT_BY_ACTION: Record<ZeroResultRelaxAction, Exclude<SummaryHighlightKey, null>> = {
   disable_strict: "strict",
@@ -2560,6 +2561,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     closeRowMenu,
     setCopyModalOpen,
   ]);
+
+  // Escape closes the share/deeplink copy modal. The master handler above
+  // does the same; this hook subscription is idempotent and lets us
+  // progressively migrate each surface to its own Escape subscription.
+  const closeCopyModal = useCallback(() => setCopyModalOpen(false), [setCopyModalOpen]);
+  useEscapeClose(closeCopyModal, copyModalOpen);
 
   function onFieldFocus() {
     if (blurTimer.current) {

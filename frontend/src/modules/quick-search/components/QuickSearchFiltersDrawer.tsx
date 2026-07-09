@@ -1,5 +1,7 @@
 import { ReactNode, RefObject } from "react";
 
+import { useEscapeClose } from "@/modules/shared/useEscapeClose";
+
 type Props = {
   open: boolean;
   title: string;
@@ -19,6 +21,7 @@ export function QuickSearchFiltersDrawer({
   onClose,
   children,
 }: Props) {
+  useEscapeClose(onClose, open);
   if (!open) return null;
 
   return (

@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 
 import { QuickSearchFieldErrors } from "@/modules/quick-search/types";
 import { QuickSearchCopyKey } from "@/modules/shared/quickSearchCopy";
+import { useEscapeClose } from "@/modules/shared/useEscapeClose";
 
 type ActiveChip = {
   id: string;
@@ -60,6 +61,7 @@ function QuickSearchCloseIcon() {
 }
 
 function QuickSearchAdvancedDrawerInner(props: AdvancedDrawerProps) {
+  useEscapeClose(props.onClose, props.isOpen);
   if (!props.isOpen) return null;
 
   const drawer = (
