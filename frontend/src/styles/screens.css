@@ -13271,6 +13271,10 @@ textarea::placeholder {
 .cardm > .card:hover {
   background-color: var(--surface-3);
   cursor: pointer;
+.cardm > .card:focus-visible {
+  outline: 3px solid var(--color-input-focus);
+  outline-offset: 2px;
+}
 }
 
 .cardm > .card:hover + .card2 {
