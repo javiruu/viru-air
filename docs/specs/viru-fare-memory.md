@@ -29,6 +29,7 @@ Esta spec define:
 - los estados canonicos de frescura;
 - el contrato logico de search cache, offer cache, price observations y negative cache;
 - la politica inicial de TTL;
+- la politica de retencion y pruning;
 - las reglas de revalidacion;
 - el warmup de arranque;
 - las metricas minimas;
@@ -243,6 +244,25 @@ Implementacion actual desde Fase 32:
 ## Regla de verdad temporal
 
 Un TTL largo no convierte un precio en precio confirmado. Solo autoriza a Viru a reutilizar memoria con semantica explicita de frescura.
+
+## Politica de retencion y pruning
+
+La retencion distingue memoria global reutilizable de historico personal. El pruning debe empezar en modo dry-run y reportar conteos por tabla antes de borrar filas.
+
+### Memoria global
+
+| Tabla | Criterio de pruning | Regla de seguridad |
+|---|---|---|
+| `QuickSearchCacheEntry` | borrar entradas cuya `travel_date` ya paso | no usar como historico de usuario |
+| `QuickSearchNegativeCacheEntry` | borrar entradas expiradas por `expires_at` o `retry_after_at` vencido | conservar solo mientras evite bucles de retry honestamente |
+| `FlightPriceObservation` | borrar observaciones cuya salida/oferta ya ocurrio y no alimenten una watch viva | no borrar si aun puede explicar un `PriceSnapshot` personal vigente |
+| `FlightOfferCacheEntry` | borrar ofertas sin observaciones vivas o con `departure_at` pasado | borrar despues de sus observaciones dependientes o en la misma unidad transaccional |
+
+### Watchlist personal
+
+- `PriceSnapshot` se conserva como historico del usuario mientras el producto mantenga historico personal visible.
+- Si una `FlightWatch` queda historica, expirada o pausada por salida pasada, no debe seguir generando refresh automatico.
+- El pruning global no debe eliminar ni reescribir snapshots personales ya materializados como `historical_backfill`.
 
 ## Revalidacion
 
