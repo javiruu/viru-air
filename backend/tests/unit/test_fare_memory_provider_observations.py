@@ -74,6 +74,47 @@ def test_provider_observations_skip_incomplete_provider_rows(db: Session) -> Non
     assert float(price_amount) == pytest.approx(49.99)
 
 
+def test_provider_observations_skip_same_price_seen_again_within_seconds(db: Session) -> None:
+    travel_date = dt.date(2026, 7, 20)
+    row = _provider_row(travel_date=travel_date)
+    first_summary = persist_provider_flight_observations(
+        db,
+        provider_flights=[row],
+        context=_context(observed_at=dt.datetime(2026, 7, 20, 8, 0, 0)),
+    )
+    second_summary = persist_provider_flight_observations(
+        db,
+        provider_flights=[row],
+        context=_context(observed_at=dt.datetime(2026, 7, 20, 8, 0, 10)),
+    )
+
+    observations = db.scalars(select(FlightPriceObservation)).all()
+    assert first_summary["observations_created"] == 1
+    assert second_summary["observations_created"] == 0
+    assert second_summary["skipped_recent_duplicates"] == 1
+    assert len(observations) == 1
+
+
+def test_provider_observations_append_same_price_after_dedupe_window(db: Session) -> None:
+    travel_date = dt.date(2026, 7, 20)
+    row = _provider_row(travel_date=travel_date)
+    persist_provider_flight_observations(
+        db,
+        provider_flights=[row],
+        context=_context(observed_at=dt.datetime(2026, 7, 20, 8, 0, 0)),
+    )
+    second_summary = persist_provider_flight_observations(
+        db,
+        provider_flights=[row],
+        context=_context(observed_at=dt.datetime(2026, 7, 20, 8, 0, 31)),
+    )
+
+    observations = db.scalars(select(FlightPriceObservation)).all()
+    assert second_summary["observations_created"] == 1
+    assert second_summary["skipped_recent_duplicates"] == 0
+    assert len(observations) == 2
+
+
 @pytest.mark.parametrize(
     ("source", "expected_carrier_code"),
     [
@@ -99,10 +140,11 @@ def test_provider_observations_derives_stable_carrier_code(
     assert carrier_code == expected_carrier_code
 
 
-def _context() -> ObservationPersistenceContext:
+def _context(*, observed_at: dt.datetime | None = None) -> ObservationPersistenceContext:
+    observed_at_value = observed_at or dt.datetime(2026, 7, 20, 8, 0)
     return ObservationPersistenceContext(
         search_cache_entry_id=None,
-        observed_at=dt.datetime(2026, 7, 20, 8, 0),
+        observed_at=observed_at_value,
         expires_at=dt.datetime(2026, 7, 20, 12, 0),
         freshness_status="fresh",
         confidence_score=0.95,
