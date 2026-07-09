@@ -14,11 +14,13 @@ echo 4. PUBLICAR WEB
 echo 5. ESTADO WEB PUBLICA
 echo 6. DETENER WEB PUBLICA
 echo 7. VER LOGS PUBLICACION
+echo 8. Reiniciar VIRU
 echo ----------------------------------------
 echo 0. Salir
 echo.
-choice /C 12345670 /N /M "Opcion: "
-if errorlevel 8 goto :eof
+choice /C 123456780 /N /M "Opcion: "
+if errorlevel 9 goto :eof
+if errorlevel 8 goto restart
 if errorlevel 7 goto tunnel_logs
 if errorlevel 6 goto public_stable_stop
 if errorlevel 5 goto public_stable_status
@@ -39,6 +41,12 @@ goto menu
 
 :status
 powershell -ExecutionPolicy Bypass -File "%~dp0scripts\viru-local-status.ps1"
+goto menu
+
+:restart
+powershell -ExecutionPolicy Bypass -File "%~dp0scripts\viru-local-stop.ps1"
+if errorlevel 1 goto menu
+powershell -ExecutionPolicy Bypass -File "%~dp0iniciar_viru.ps1" -Foreground
 goto menu
 
 :public_stable_start
