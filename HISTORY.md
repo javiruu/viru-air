@@ -1,5 +1,33 @@
 # History
 
+## 2026-07-09 — Refinamiento estetico: capa de "lujo silencioso" sobre Aviation Warm-Luxe
+
+Sin tocar el freeze de `UI_SYSTEM_V1` ni los tokens congelados, se anade una segunda capa de refinamiento a la identidad visual de Viru Tracker para elevarla hacia "lujo silencioso" sin perder calidez, cercania ni la personalidad aeronautica.
+
+### Documentacion
+- `DESIGN.md` — Nueva seccion 2.2 "Firma de lujo silencioso (Quiet Luxury) — capa de refinamiento" con 5 principios accionables: tipografia y aire hacen el trabajo, densidad util, detalles deliberados, bordes finos y sombras extensas, movimiento sobrio. Reglas de proteccion explicitas (mantener paleta dual, Playfair + Plex Sans, tokens congelados).
+- `docs/ui/estetica.md` — Nueva subseccion "Firma de lujo silencioso" con 7 detalles concretos (bordes finos translucidos, sombras extensas, pills como marbetes, subtitulos con tracking editorial, listas que respiran, encabezados con separacion limpia, movimiento sobrio) y parrafo de proteccion contra SaaS plano.
+
+### Estilos (`frontend/src/styles/components.css`)
+Micro-cambios quirurgicos en clases compartidas del sistema v1:
+
+- `.panel` — Border translucido (`color-mix(border 86%)`) + sombra multicapa (inset highlight sobre `surface`, sombra amplia de dispersion `-20px`, sombra blanda `-10px`) en lugar de la sombra unica `0 18px 36px`.
+- `.list-row` — Padding vertical `0.35rem → 0.55rem`; borde `dashed → solid` translucido (`border 78%`); transicion `cubic-bezier(0.2, 0, 0, 1)` 180ms; hover opcional solo cuando la fila contiene `button, a` (`.list-row:not(.list-row-static):has(button, a):hover`).
+- `.panel-header` — Border-bottom mas suave (`border 70%`) y padding `0.45rem → 0.55rem` para evitar el "corte brusco".
+- `.status-pill` — Peso tipografico `700 → 600`; padding lateral `0.55rem → 0.68rem`; background translucido; sombra suave solo en dark theme.
+- `.panel-subtitle` — Margin `0.25rem → 0.32rem`; `letter-spacing: 0.005em`; `line-height: 1.52`; `max-width: 56ch` para respiracion editorial.
+
+### Proteccion del contrato
+- Tokens congelados (`--panel-bg`, `--border`, `--surface`, `--surface-2`, `--shadow`, `--ink`, `--ink-muted`, `--space-panel-padding`) intactos.
+- Dual theme dark/light preservado (cero HEX fijos nuevos en el codigo tocado).
+- Sin cambios en `tokens.css`, `screens.css`, `base.css`, `globals.css`, ni en layouts/grid/responsive.
+- Sin nuevas dependencias.
+
+### Verificacion
+- `npm run lint` en frontend: sin warnings ni errores.
+- `npm run build`: pendiente de verificacion visual en navegador por el usuario.
+- El frontend consume este CSS en todas las pantallas via `globals.css` `@import './components.css';`.
+
 ## 2026-07-05 - Iberia como provider publico de vuelos
 
 - Quick Search registra `iberia`/`ib`/`iberia_ndc` en `FlightProviderRegistry`, dentro del orden por defecto, sin exigir credenciales privadas.

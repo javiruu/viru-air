@@ -51,3 +51,16 @@ Fuente de verdad: docs/ui/estetica.md
 - Tipografia, spacing y componentes sin desalineaciones entre temas.
 - Animaciones suaves y funcionales que aporten claridad, delight y continuidad.
 - El resultado final no puede percibirse como sobrio, frio o corporativo como tono dominante.
+
+## Firma de lujo silencioso (capa de refinamiento)
+No sustituye la base dual: la eleva con detalles mas deliberados. Los detalles que aportan lujo silencioso sin perder calidez son:
+
+- **Bordes finos y translucidos.** Reemplazar lineas punteadas o rigidas por solidos ultra-delgados con `color-mix(in srgb, var(--border) NN%, transparent)`; transmite instrumento de precision, no ticket de compra.
+- **Sombras mas extensas y mas suaves.** Reducir el peso central y dispersar la sombra para que los paneles "floten" sin parecer sacados de una plantilla.
+- **Pills como marbetes, no como insignias.** Reducir peso tipografico de 700 a 600, dar un pequeno respiro lateral, y conservar bordes finos.
+- **Subtitulos con tracking editorial.** `letter-spacing` sutil y `max-width` definido para que el cuerpo secundario respire como una nota de a bordo.
+- **Listas que respiran como un itinerario.** Aumentar el `padding-block` entre filas y sustituir la separacion punteada por una linea solida y discreta.
+- **Encabezados con separacion limpia.** Suavizar el `border-bottom` de `.panel-header` para que no parezca un corte brusco, sino un marcador de seccion.
+- **Movimiento sobrio.** Curvas `cubic-bezier(0.2, 0, 0, 1)` y duracion ~180-220 ms en transiciones de hover y focus; nada de rebotes teatrales.
+
+El lujo silencioso en Viru nunca debe confundirse con minimalismo frio ni con flat design SaaS: aqui siempre hay una pista visual calida (acento `#FFB000`, microcopy vivo o detalle aeronautico sutil) que mantiene la identidad.
