@@ -189,8 +189,14 @@
 
 .panel-soft {
   background: var(--surface);
-  border-color: rgba(217, 205, 187, 0.7);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, color-mix(in srgb, var(--accent) 4%, transparent));
   box-shadow: none;
+}
+
+/* Panel secundario plano: light usa borde suave (70%) con un pequeno toque calido del acento
+   para preservar el caracter cremoso-cabin del legado; dark mantiene tono discreto (76%). */
+:root[data-theme="dark"] .panel-soft {
+  border-color: color-mix(in srgb, var(--border) 76%, transparent);
 }
 
 .panel-title {
@@ -304,10 +310,18 @@
 }
 
 .card {
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
   border-radius: 14px;
   background: var(--surface);
-  box-shadow: 0 8px 20px var(--shadow);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--surface) 60%, transparent) inset,
+    0 16px 32px -16px color-mix(in srgb, var(--shadow) 75%, transparent),
+    0 4px 10px -8px color-mix(in srgb, var(--shadow) 50%, transparent);
+}
+
+/* Card mas pequena que .panel: shadow proporcionalmente mas ligero. Light 78% / dark 86%. */
+:root[data-theme="dark"] .card {
+  border-color: color-mix(in srgb, var(--border) 86%, transparent);
 }
 
 .panel-header {
