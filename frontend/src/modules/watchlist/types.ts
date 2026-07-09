@@ -91,6 +91,8 @@ export type HistoryRow = {
   currency: string;
   departureTime: string | null;
   provider: string | null;
+  isStale?: boolean;
+  sourceKind?: string;
 };
 
 export type ViewMode = "chart" | "calendar";
@@ -106,6 +108,8 @@ export type HoverPoint = {
   currency: string;
   departureTime: string | null;
   color: string;
+  isStale?: boolean;
+  sourceKind?: string;
 };
 
 export type CompatibleResponse = {

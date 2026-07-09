@@ -1,6 +1,7 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 import type { Watch } from "@/modules/watchlist/types";
+import { mergeWatchDetailPriceHistoryRows } from "@/modules/watchlist/watchlistActions.helpers";
 import { useChartHover } from "@/modules/watchlist/useChartHover";
 import { useChartViewport } from "@/modules/watchlist/useChartViewport";
 import { useWatchlistActions } from "@/modules/watchlist/useWatchlistActions";
@@ -78,9 +79,14 @@ export function useWatchlistController({
     [items, selectWatch],
   );
 
+  const enrichedHistoryRows = useMemo(
+    () => mergeWatchDetailPriceHistoryRows(actions.historyRows, actions.selectedWatchDetail),
+    [actions.historyRows, actions.selectedWatchDetail],
+  );
+
   const derived = useWatchlistDerived({
     items: actions.items,
-    historyRows: actions.historyRows,
+    historyRows: enrichedHistoryRows,
     selectedOrigin: view.selectedOrigin,
     selectedDestination: view.selectedDestination,
     selectedDates: view.selectedDates,

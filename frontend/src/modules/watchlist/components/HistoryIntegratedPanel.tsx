@@ -26,6 +26,7 @@ type SelectedPointData = {
   price: number;
   currency: string;
   departureTime: string | null;
+  sourceKind?: string;
 } | null;
 
 type HoverPoint = {
@@ -37,6 +38,8 @@ type HoverPoint = {
   currency: string;
   departureTime: string | null;
   color: string;
+  sourceKind?: string;
+  isStale?: boolean;
 } | null;
 
 type CalendarEvent = {
@@ -396,19 +399,24 @@ export function HistoryIntegratedPanel({
                     strokeLinejoin="round"
                     points={serie.path}
                   />
-                  {serie.points.map((point) => (
-                    <circle
-                      key={`${serie.date}-${point.capturedAt}`}
-                      cx={point.x}
-                      cy={point.y}
-                      r={selectedPoint === point.capturedAt ? 6.4 : chartPointCount < 4 ? 5 : 4.3}
-                      fill={serie.color}
-                      stroke={selectedPoint === point.capturedAt ? "var(--color-text-primary)" : "var(--color-surface)"}
-                      strokeWidth={selectedPoint === point.capturedAt ? 2 : 1}
-                    >
-                      <title>{`${serie.date} - ${formatDateTime(point.capturedAt, localeTag)} - ${formatCurrency(point.price, point.currency, localeTag)}`}</title>
-                    </circle>
-                  ))}
+                  {serie.points.map((point) => {
+                    const isBackfillPoint = point.sourceKind === "historical_backfill";
+                    return (
+                      <circle
+                        key={`${serie.date}-${point.capturedAt}`}
+                        className={isBackfillPoint ? "history-point history-point--backfill" : "history-point"}
+                        cx={point.x}
+                        cy={point.y}
+                        r={selectedPoint === point.capturedAt ? 6.4 : chartPointCount < 4 ? 5 : 4.3}
+                        fill={isBackfillPoint ? "var(--panel-bg)" : serie.color}
+                        stroke={selectedPoint === point.capturedAt ? "var(--color-text-primary)" : serie.color}
+                        strokeDasharray={isBackfillPoint ? "3 3" : undefined}
+                        strokeWidth={selectedPoint === point.capturedAt ? 2 : isBackfillPoint ? 1.8 : 1}
+                      >
+                        <title>{`${serie.date} - ${formatDateTime(point.capturedAt, localeTag)} - ${formatCurrency(point.price, point.currency, localeTag)}${isBackfillPoint ? ` - ${t("watchlist.history.backfillTooltip")}` : ""}`}</title>
+                      </circle>
+                    );
+                  })}
                 </g>
               ))}
             </svg>
@@ -431,6 +439,9 @@ export function HistoryIntegratedPanel({
               <strong>{formatCurrency(hoverPoint.price, hoverPoint.currency, localeTag)}</strong>
               <span>{formatDateTime(hoverPoint.capturedAt, localeTag)}</span>
               {hoverPoint.departureTime ? <span>{t("watchlist.history.departureAt", { value: hoverPoint.departureTime })}</span> : null}
+              {hoverPoint.sourceKind === "historical_backfill" ? (
+                <span className="history-tooltip-note">{t("watchlist.history.backfillTooltip")}</span>
+              ) : null}
             </div>
           ) : null}
           <div className="history-legend">
