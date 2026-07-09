@@ -13,6 +13,7 @@ from app.domain.entities import ProviderFlight
 from app.infrastructure.db.models import FlightOfferCacheEntry, FlightPriceObservation
 from app.services.fare_memory import build_offer_fingerprint
 from app.services.fare_memory_flight_instances import build_flight_instance_fingerprint, derive_carrier_code
+from app.services.fare_memory_observation_dedupe import ObservationCandidate, is_recent_duplicate_observation
 
 
 ProviderFlightRow = tuple[str, str, dt.date, ProviderFlight]
@@ -54,6 +55,7 @@ def persist_provider_flight_observations(
     created_observations = 0
     skipped_incomplete = 0
     skipped_duplicate_offers = 0
+    skipped_recent_duplicates = 0
     seen_offer_fingerprints: set[str] = set()
 
     for row in provider_flights:
@@ -103,6 +105,17 @@ def persist_provider_flight_observations(
             .limit(1)
         )
         price_amount = float(row[3].price)
+        currency = str(row[3].currency or "EUR").strip().upper()
+        candidate = ObservationCandidate(
+            provider=offer_payload["provider"],
+            price_amount=price_amount,
+            currency=currency,
+            observed_at=context.observed_at,
+        )
+        if is_recent_duplicate_observation(previous_observation, candidate):
+            skipped_recent_duplicates += 1
+            continue
+
         price_changed_since_last_seen = False
         delta_abs: float | None = None
         delta_pct: float | None = None
@@ -120,7 +133,7 @@ def persist_provider_flight_observations(
                 search_cache_entry_id=context.search_cache_entry_id,
                 provider=offer_payload["provider"],
                 price_amount=price_amount,
-                currency=str(row[3].currency or "EUR").strip().upper(),
+                currency=currency,
                 observed_at=context.observed_at,
                 expires_at=context.expires_at,
                 freshness_status=context.freshness_status,
@@ -141,6 +154,7 @@ def persist_provider_flight_observations(
         "observations_created": created_observations,
         "skipped_incomplete": skipped_incomplete,
         "skipped_duplicate_offers": skipped_duplicate_offers,
+        "skipped_recent_duplicates": skipped_recent_duplicates,
     }
 
 
