@@ -47,6 +47,9 @@ def test_provider_observations_persist_all_raw_results_before_visible_limit(db: 
     assert summary["observations_created"] == 5
     assert len(offers) == 5
     assert len(observations) == 5
+    flight_instance_fingerprints = {offer.flight_instance_fingerprint for offer in offers}
+    assert None not in flight_instance_fingerprints
+    assert len(flight_instance_fingerprints) == 5
 
 
 def test_provider_observations_skip_incomplete_provider_rows(db: Session) -> None:

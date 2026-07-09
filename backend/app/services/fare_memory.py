@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.infrastructure.db.models import FlightOfferCacheEntry, FlightPriceObservation
+from app.services.fare_memory_flight_instances import build_flight_instance_fingerprint
 from app.services.quick_search_ranking import RankedResult
 
 
@@ -249,14 +250,18 @@ def _departure_datetime_for_ranked_result(item: RankedResult) -> dt.datetime:
 
 
 def build_ranked_result_offer_payload(item: RankedResult) -> dict[str, Any]:
+    departure_time_local = (item.flight.departure_time_local or "").strip() or None
     return {
         "provider": item.flight.source,
         "carrier": None,
+        "carrier_code": None,
         "flight_number": None,
         "origin_airport": item.origin,
         "destination_airport": item.destination,
         "departure_at": _departure_datetime_for_ranked_result(item),
         "arrival_at": None,
+        "departure_time_local": departure_time_local,
+        "arrival_time_local": None,
         "duration_minutes": None,
         "stops_count": 0,
         "source_kind": "provider",
@@ -280,6 +285,7 @@ def persist_ranked_result_observations(
     for item in ranked_results:
         offer_payload = build_ranked_result_offer_payload(item)
         offer_fingerprint = build_offer_fingerprint(offer_payload, source_kind="provider")
+        flight_instance_fingerprint = build_flight_instance_fingerprint(offer_payload)
         offer = db.scalar(
             select(FlightOfferCacheEntry)
             .where(FlightOfferCacheEntry.offer_fingerprint == offer_fingerprint)
@@ -288,13 +294,17 @@ def persist_ranked_result_observations(
         if offer is None:
             offer = FlightOfferCacheEntry(
                 offer_fingerprint=offer_fingerprint,
+                flight_instance_fingerprint=flight_instance_fingerprint,
                 provider=str(offer_payload["provider"]).strip().lower(),
                 carrier=offer_payload["carrier"],
+                carrier_code=offer_payload["carrier_code"],
                 flight_number=offer_payload["flight_number"],
                 origin_airport=str(offer_payload["origin_airport"]).strip().upper(),
                 destination_airport=str(offer_payload["destination_airport"]).strip().upper(),
                 departure_at=offer_payload["departure_at"],
                 arrival_at=offer_payload["arrival_at"],
+                departure_time_local=offer_payload["departure_time_local"],
+                arrival_time_local=offer_payload["arrival_time_local"],
                 duration_minutes=offer_payload["duration_minutes"],
                 stops_count=int(offer_payload["stops_count"] or 0),
                 source_kind=str(offer_payload["source_kind"]).strip().lower() or "provider",
