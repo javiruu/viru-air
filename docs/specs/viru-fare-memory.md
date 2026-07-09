@@ -1,7 +1,7 @@
 # Viru Fare Memory
 
 **Estado:** vivo  
-**Ultima revision:** 2026-06-14  
+**Ultima revision:** 2026-07-09
 **Fuente de verdad:** si  
 **Area:** backend / quick-search / watchlist / pricing intelligence
 
@@ -54,6 +54,13 @@ Persistencia base disponible desde la Fase 26:
 - `flight_price_observation` para historico de observaciones;
 - `quick_search_negative_cache_entry` para ausencias y fallos reutilizables.
 
+Decision de privacidad actual:
+
+- las tablas globales de memoria (`QuickSearchCacheEntry`, `FlightOfferCacheEntry`, `FlightPriceObservation`, `QuickSearchNegativeCacheEntry`) no deben guardar `user_id`;
+- la personalizacion vive en `FlightWatch`, `PriceSnapshot`, reglas de alerta y preferencias de usuario;
+- una busqueda personal puede alimentar memoria global solo con datos tecnicos de ruta/provider/precio, nunca con identidad de usuario, email, token, target price privado o notas personales;
+- cualquier backfill desde memoria global a watchlist debe crear datos personales nuevos en el dominio de watchlist, no enlazar usuarios a entradas globales reutilizables.
+
 ## Modelo mental
 
 Fare Memory separa cuatro niveles:
@@ -62,6 +69,18 @@ Fare Memory separa cuatro niveles:
 2. **Resultado de busqueda**: la respuesta observada para esa busqueda en un momento concreto.
 3. **Oferta**: el vuelo o itinerario normalizado que puede reaparecer en varias busquedas.
 4. **Observacion de precio**: el precio visto para una oferta en un instante concreto.
+
+## Capas de cache y memoria
+
+| Capa | Tabla / dominio | Pregunta que responde | Privacidad |
+|---|---|---|---|
+| Request cache | `QuickSearchCacheEntry` | Si una busqueda canonica por provider sigue siendo reutilizable | Global, sin usuario |
+| Negative cache | `QuickSearchNegativeCacheEntry` | Si una ausencia o fallo reciente evita repetir una llamada | Global, sin usuario |
+| Offer memory | `FlightOfferCacheEntry` + `FlightPriceObservation` | Que oferta/precio ha visto Viru y cuando | Global, sin usuario |
+| Watchlist snapshots | `FlightWatch` + `PriceSnapshot` | Que sigue un usuario y que historico personal ve | Personal, con usuario |
+| Revalidation jobs | `RevalidationJob` | Que rutas deben refrescarse sin bloquear la UI | Operacional; no debe exponer usuario salvo que el caso lo requiera y este justificado |
+
+La regla practica es: cache global para hechos tecnicos reutilizables; watchlist para intencion personal.
 
 ## Estados canonicos de frescura
 
@@ -210,6 +229,38 @@ Requisitos minimos:
 - backoff;
 - lock anti-duplicado;
 - flag off por defecto.
+
+## Rollout y flags
+
+Estado de rollout actual:
+
+- la memoria durable existe y puede usarse por capas, pero la activacion debe ser gradual;
+- el warmup de arranque permanece desactivado por defecto;
+- Redis se considera una capa opcional futura, no una dependencia obligatoria de la memoria durable;
+- cualquier activacion que aumente llamadas a providers debe tener limite, backoff y verificacion explicita.
+
+Flags relevantes:
+
+| Flag | Valor recomendado por defecto | Uso |
+|---|---:|---|
+| `QUICK_SEARCH_SHARED_CACHE_ENABLED` | `false` | Activar reutilizacion compartida de Quick Search solo en entornos controlados |
+| `FARE_MEMORY_ENABLED` | `true` | Habilitar el dominio general de memoria de precios |
+| `FARE_MEMORY_SEARCH_CACHE_ENABLED` | `true` | Permitir escritura/lectura de search cache |
+| `FARE_MEMORY_OFFER_CACHE_ENABLED` | `true` | Permitir memoria de ofertas y observaciones |
+| `FARE_MEMORY_NEGATIVE_CACHE_ENABLED` | `true` | Permitir cache de ausencias/fallos |
+| `FARE_MEMORY_BOOT_WARMUP_ENABLED` | `false` | Evitar trabajo automatico al arrancar hasta canary explicito |
+| `FARE_MEMORY_MAX_BOOT_JOBS` | `25` | Limitar carga maxima de warmup cuando se active |
+| `FARE_MEMORY_BOOT_WARMUP_JITTER_SECONDS` | `30` | Distribuir arranques para evitar stampede |
+| `FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE` | `60` | Limitar llamadas por provider |
+| `WATCHLIST_STARTUP_REFRESH_ENABLED` | `true` | Mantener refresh de watchlist existente bajo su politica actual |
+
+Fases de rollout:
+
+1. Baseline y contratos verdes sin cambiar runtime.
+2. Activacion en tests con fixtures y providers controlados.
+3. Dev/local con cache compartida y metricas visibles.
+4. Canary de bajo volumen con logs de hit/miss y errores de provider.
+5. Produccion gradual solo si no sube el error rate ni se degrada la verdad de frescura.
 
 ## Metricas minimas
 

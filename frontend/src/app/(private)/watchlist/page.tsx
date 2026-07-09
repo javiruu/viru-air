@@ -135,24 +135,6 @@ export default function WatchlistPage() {
     selectWatchById(watchId);
     notify({ tone: "success", title: t("watchlist.messages.flightSelected") });
   };
-  const handleRefreshSelectedWatch = async (watchId: string) => {
-    try {
-      const result = await actions.refreshSelectedWatch(watchId);
-      notify({
-        tone: result === "same" ? "info" : result === "no_flights" ? "warning" : "success",
-        title: t(
-          result === "same"
-            ? "watchlist.messages.selectedPriceSame"
-            : result === "no_flights"
-              ? "watchlist.messages.selectedRefreshNoFlights"
-              : "watchlist.messages.selectedPriceUpdated",
-        ),
-        durationMs: 3200,
-      });
-    } catch {
-      notify({ tone: "error", title: t("watchlist.messages.selectedRefreshError"), durationMs: 3200 });
-    }
-  };
 
   return (
     <main className="shell watchlist-page" id="main-content">
@@ -301,8 +283,6 @@ export default function WatchlistPage() {
             detail={actions.selectedWatchDetail}
             summary={actions.selectedWatchSummary}
             isLoading={actions.isLoadingSelectedWatchDetail}
-            isRefreshing={actions.isRefreshingSelectedWatch}
-            onRefreshWatch={(watchId) => { void handleRefreshSelectedWatch(watchId); }}
             onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
             onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
           />
