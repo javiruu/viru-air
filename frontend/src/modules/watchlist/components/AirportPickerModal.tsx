@@ -49,6 +49,21 @@ export function AirportPickerModal({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  useEffect(() => {
+    if (!activePicker) return;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [activePicker]);
+
   if (!activePicker) return null;
 
   const displayAirports = searchQuery.trim().length >= 2 
