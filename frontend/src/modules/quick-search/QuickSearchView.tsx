@@ -3,11 +3,13 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Download } from "lucide-react";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetch, apiFetchWithStatus, LONG_RUNNING_API_BASE } from "@/modules/shared/api";
 import type { ApiError } from "@/modules/shared/api";
 import { getAirportMeta } from "@/modules/shared/airports";
+import { buildJsonExportFilename, downloadJson } from "@/modules/shared/jsonExport";
 import { getQuickSearchCopy } from "@/modules/shared/quickSearchCopy";
 import { useFtueHint } from "@/lib/ftue";
 import { trackUxEvent } from "@/lib/uxTracking";
@@ -87,8 +89,14 @@ import {
   buildQuickSearchCanonicalPayload,
   buildQuickSearchExpectedSignatures,
   prepareQuickSearchRequest,
+  type QuickSearchCanonicalPayload,
 } from "@/modules/quick-search/api/buildQuickSearchRequest";
 import { buildQuickSearchSaveResultPayload } from "@/modules/quick-search/api/buildSaveResultPayload";
+import {
+  buildQuickSearchExportPagePayload,
+  buildQuickSearchExportPayload,
+  type QuickSearchExportCriteria,
+} from "@/modules/quick-search/exportQuickSearchJson";
 import { QuickSearchDatePicker } from "@/modules/quick-search/components/QuickSearchDatePicker";
 import { QuickSearchResultsWorkspace } from "@/modules/quick-search/components/QuickSearchResultsWorkspace";
 import { QuickSearchSummaryChips, type QuickSearchSummaryChip } from "@/modules/quick-search/components/QuickSearchSummaryChips";
@@ -605,9 +613,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     debugLastTickLogTsRef,
   } = useQuickSearchMainState(initialOrigin, initialDestination);
   const searchSubmitInFlightRef = useRef(false);
+  const lastQuickSearchPayloadRef = useRef<QuickSearchCanonicalPayload | null>(null);
   const normalizedRadiusKm = clampQuickSearchRadius(radiusKm);
   const minTravelDate = useMemo(() => currentDateIso(), []);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isExportingQuickSearch, setIsExportingQuickSearch] = useState(false);
   const [returnDateTouched, setReturnDateTouched] = useState(false);
   const [resumeWasRestored, setResumeWasRestored] = useState(false);
   const [refreshingResultId, setRefreshingResultId] = useState<string | null>(null);
@@ -2046,6 +2056,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setFiltersWarningCodes([]);
     setFiltersMeta(null);
     setSearchMeta(null);
+    lastQuickSearchPayloadRef.current = null;
     setLoaderResolvedTotalFlights(null);
     setJobId(null);
     setIsDegraded(false);
@@ -2172,6 +2183,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       setProgress("response_parsed", 80);
       if (searchResult.ok) {
           const data: SearchResponse = normalizeQuickSearchResponse(searchResult.data);
+          lastQuickSearchPayloadRef.current = canonicalPayload;
           const responseSignature = data.meta?.query_signature;
           const expectedSignatures = expectedQuerySignaturesRef.current;
           if (
@@ -2287,6 +2299,123 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         setIsLoading(false);
       }
       releaseSearchSubmit();
+    }
+  }
+
+  async function handleExportQuickSearch() {
+    const basePayload = lastQuickSearchPayloadRef.current;
+    if (!basePayload || totalResults === 0 || isExportingQuickSearch) return;
+
+    setIsExportingQuickSearch(true);
+    try {
+      const collectedResults: SearchResult[] = [];
+      let exportMeta: SearchResponse["meta"] | null = null;
+      let exportFilters = filtersMeta;
+      let exportJobId = jobId;
+      let pagesFetched = 0;
+      let totalPagesForExport = 1;
+
+      for (let page = 1; page <= totalPagesForExport; page += 1) {
+        const pagePayload = buildQuickSearchExportPagePayload(basePayload, page, sortBy);
+        const response = await apiFetchWithStatus<SearchResponseRaw>("/search/quick", {
+          method: "POST",
+          body: JSON.stringify(pagePayload),
+        }, { apiBase: LONG_RUNNING_API_BASE });
+        if (!response.ok) {
+          logQuickSearchApiError("quick_search_export_failed", {
+            status: response.status,
+            error: response.error,
+            page,
+          });
+          setMessage(t("quickExportError"));
+          setMessageType("error");
+          notify({ tone: "error", title: t("quickExportError") });
+          return;
+        }
+
+        const pageData = normalizeQuickSearchResponse(response.data);
+        pagesFetched += 1;
+        collectedResults.push(...pageData.results);
+        if (page === 1) {
+          exportMeta = pageData.meta ?? null;
+          exportFilters = pageData.filters ?? null;
+          exportJobId = pageData.job_id ?? null;
+          totalPagesForExport = Math.max(1, Number(pageData.meta?.pagination?.total_pages || 1));
+        }
+      }
+
+      const exportedAt = new Date().toISOString();
+      const originScope = originCountryOnly
+        ? originCountryOnly.airports.map((airport) => airport.iata)
+        : originCode ? [originCode] : [];
+      const destinationScope = destinationCountryOnly
+        ? destinationCountryOnly.airports.map((airport) => airport.iata)
+        : destinationCode ? [destinationCode] : [];
+      const criteria: QuickSearchExportCriteria = {
+        origin,
+        destination,
+        origin_scope_iata: originScope,
+        destination_scope_iata: destinationScope,
+        travel_date: travelDate,
+        return_date: isReturn ? returnDate || null : null,
+        trip_type: isReturn ? "round_trip" : "one_way",
+        adults,
+        departure_window: {
+          after: departAfter || null,
+          before: departBefore || null,
+        },
+        flexibility: {
+          days_before: daysBefore,
+          days_after: daysAfter,
+          apply_to_return: applyFlexReturn,
+        },
+        route_scope: {
+          include_nearby_origins: includeNearbyOrigins,
+          include_nearby_destinations: includeNearbyDestinations,
+          radius_km: normalizedRadiusKm,
+        },
+        constraints: {
+          include_stops: includeStops,
+          max_stops: includeStops ? maxStops : 0,
+          buffer_min: bufferMin.trim() || null,
+          strict_filters: strictFilters,
+          exclude_origins: excludeOrigins,
+          exclude_destinations: excludeDestinations,
+        },
+        visible_filters: {
+          price_min: priceMin.trim() || null,
+          price_max: priceMax.trim() || null,
+          duration_max: durationMax.trim() || null,
+          sort_by: sortBy,
+        },
+      };
+      const payload = buildQuickSearchExportPayload({
+        exportedAt,
+        criteria,
+        results: collectedResults,
+        meta: exportMeta,
+        filters: exportFilters,
+        jobId: exportJobId,
+        pagesFetched,
+      });
+      downloadJson(buildJsonExportFilename("viru-quick-search", exportedAt), payload);
+      notify({
+        tone: "success",
+        title: t("quickExportSuccess", { count: payload.search.result_count }),
+      });
+      trackEvent("quicksearch_export_json_downloaded", {
+        result_count: payload.search.result_count,
+        pages_fetched: pagesFetched,
+      });
+    } catch (error) {
+      logQuickSearchApiError("quick_search_export_exception", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      setMessage(t("quickExportError"));
+      setMessageType("error");
+      notify({ tone: "error", title: t("quickExportError") });
+    } finally {
+      setIsExportingQuickSearch(false);
     }
   }
 
@@ -3779,6 +3908,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const activePage = Math.min(Math.max(1, currentPage), totalPages);
   const pageSize = Math.max(1, Number(backendPagination?.page_size || PAGE_SIZE));
   const totalResults = Math.max(0, Number(backendPagination?.total_results || visibleResults.length));
+  const canExportQuickSearch = Boolean(lastQuickSearchPayloadRef.current)
+    && searchState === "success"
+    && totalResults > 0
+    && !isLoading
+    && !isExportingQuickSearch;
 
   const explainChipLabel = showDegradedState ? t("degradedChip") : t("toolbarExplain");
   const warningGroupedTitle = t("warningsGroupedTitle");
@@ -5247,6 +5381,18 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                   <option value="freshness">{t("sortFreshness")}</option>
                 </select>
               </label>
+              <button
+                type="button"
+                className="btn-ghost qs-export-json"
+                onClick={() => {
+                  void handleExportQuickSearch();
+                }}
+                disabled={!canExportQuickSearch}
+                aria-label={t("quickExportJsonAria")}
+              >
+                <Download className="qs-inline-icon" aria-hidden="true" />
+                {isExportingQuickSearch ? t("quickExportingJson") : t("quickExportJson")}
+              </button>
               <details
                 className="qs-explain-popover qs-how-order"
                 ref={explainPopoverRef}

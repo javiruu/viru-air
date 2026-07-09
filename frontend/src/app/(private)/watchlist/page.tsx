@@ -3,7 +3,9 @@
 import { useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
+import { Download } from "lucide-react";
 
+import { buildJsonExportFilename, downloadJson } from "@/modules/shared/jsonExport";
 import { readWatchlistNavigationParams, buildWatchlistViewSearchParams } from "@/modules/shared/useRouteState";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
@@ -17,6 +19,7 @@ import { SmartWatchListPanel } from "@/modules/watchlist/components/SmartWatchLi
 import { WatchDetailPanel } from "@/modules/watchlist/components/WatchDetailPanel";
 import { WatchlistCombinationPanel } from "@/modules/watchlist/components/WatchlistCombinationPanel";
 import { monthLabel } from "@/modules/watchlist/dateUtils";
+import { buildWatchlistExportPayload } from "@/modules/watchlist/exportWatchlistJson";
 import { useWatchlistController } from "@/modules/watchlist/useWatchlistController";
 import { Skeleton, SkeletonPanel } from "@/modules/shared/Skeleton";
 
@@ -135,6 +138,24 @@ export default function WatchlistPage() {
     selectWatchById(watchId);
     notify({ tone: "success", title: t("watchlist.messages.flightSelected") });
   };
+  const canExportWatchlist = actions.items.length > 0 && !actions.isLoadingWatchlist;
+  const handleExportWatchlist = () => {
+    if (!canExportWatchlist) return;
+    const exportedAt = new Date().toISOString();
+    const payload = buildWatchlistExportPayload({
+      items: actions.items,
+      historyRows: actions.historyRows,
+      exportedAt,
+    });
+    downloadJson(buildJsonExportFilename("viru-watchlist", exportedAt), payload);
+    notify({
+      tone: "success",
+      title: t("watchlist.export.success", {
+        count: payload.totals.flights,
+        snapshots: payload.totals.snapshots,
+      }),
+    });
+  };
 
   return (
     <main className="shell watchlist-page" id="main-content">
@@ -149,6 +170,16 @@ export default function WatchlistPage() {
           <p>{t("watchlist.subtitle")}</p>
         </div>
         <div className="page-actions watchlist-header-right">
+          <button
+            className="btn-ghost watchlist-export-cta"
+            type="button"
+            onClick={handleExportWatchlist}
+            disabled={!canExportWatchlist}
+            aria-label={t("watchlist.export.ariaLabel")}
+          >
+            <Download className="qs-inline-icon" aria-hidden="true" />
+            {t("watchlist.export.button")}
+          </button>
           <button className="btn-primary watchlist-add-cta" type="button" onClick={() => actions.setShowAdd(true)}>
             {t("watchlist.addFlight")}
           </button>
