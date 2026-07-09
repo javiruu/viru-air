@@ -516,6 +516,31 @@
   cursor: pointer;
 }
 
+/* WCAG 2.5.5 Target Size (Enhanced): amplia el hit-area de controles compactos
+   (.row-actions, .panel-actions children y el dismiss de notification 28x28)
+   a un minimo de 44x44 sin alterar visual. El ::after transparente, posicionado
+   absolute centrado, captura clicks en el area extendida y los propaga al
+   elemento padre (que mantiene sus handlers originales). */
+.row-actions > *,
+.panel-actions > *,
+.notification-card-dismiss {
+  position: relative;
+}
+
+.row-actions > *::after,
+.panel-actions > *::after,
+.notification-card-dismiss::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+  background: transparent;
+  pointer-events: auto;
+}
+
 .notification-card-dismiss:hover,
 .notification-card-dismiss:focus-visible {
   border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
