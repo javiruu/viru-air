@@ -1,3 +1,5 @@
+import type { QuickSearchSortBy } from "@/modules/quick-search/types";
+
 export type QuickSearchQueryParams = {
   origin_iata: string | string[];
   destination_iata: string | string[];
@@ -18,6 +20,7 @@ export type QuickSearchQueryParams = {
   soft_filters_weight: number;
   page?: number;
   page_size?: number;
+  sort_by?: QuickSearchSortBy;
 };
 
 export type QuickSearchContractIssueCode =
@@ -80,6 +83,7 @@ export type QuickSearchCanonicalPayload = {
   pagination: {
     page: number;
     page_size: number;
+    sort_by: QuickSearchSortBy;
   };
 };
 
@@ -144,6 +148,7 @@ export function prepareQuickSearchRequest(input: QuickSearchQueryParams): QuickS
       : 0.6,
     depart_after: input.depart_after || undefined,
     depart_before: input.depart_before || undefined,
+    sort_by: input.sort_by ?? "ranking",
   };
 
   if (!normalized.include_stops) {
@@ -201,6 +206,7 @@ export function toQuickSearchQuery(params: QuickSearchQueryParams): string {
   query.set("soft_filters_weight", String(params.soft_filters_weight));
   if (params.page) query.set("page", String(params.page));
   if (params.page_size) query.set("page_size", String(params.page_size));
+  if (params.sort_by) query.set("sort_by", params.sort_by);
   return query.toString();
 }
 
@@ -265,6 +271,7 @@ export function buildQuickSearchCanonicalPayload(params: QuickSearchQueryParams)
     pagination: {
       page: clampInt(params.page ?? 1, 1, 9999, 1),
       page_size: clampInt(params.page_size ?? 10, 1, 100, 10),
+      sort_by: params.sort_by ?? "ranking",
     },
     execution: wideSearchMode
       ? {

@@ -460,6 +460,42 @@ def _estimate_duration_minutes(origin: str, destination: str) -> int | None:
     return max(45, int(flight_hours * 60))
 
 
+def _sort_quick_search_results(results: list[Any], sort_by: str) -> list[Any]:
+    if sort_by == "price":
+        return sorted(
+            results,
+            key=lambda item: (
+                item.price_value is None,
+                float(item.price_value) if item.price_value is not None else math.inf,
+                -float(item.final_score or 0),
+                str(item.travel_date),
+                item.flight.departure_time_local or "",
+            ),
+        )
+    if sort_by == "duration":
+        return sorted(
+            results,
+            key=lambda item: (
+                _estimate_duration_minutes(item.origin, item.destination) is None,
+                _estimate_duration_minutes(item.origin, item.destination) or math.inf,
+                float(item.price_value) if item.price_value is not None else math.inf,
+                -float(item.final_score or 0),
+                str(item.travel_date),
+            ),
+        )
+    if sort_by == "freshness":
+        return sorted(
+            results,
+            key=lambda item: (
+                -item.flight.captured_at.timestamp(),
+                float(item.price_value) if item.price_value is not None else math.inf,
+                -float(item.final_score or 0),
+                str(item.travel_date),
+            ),
+        )
+    return list(results)
+
+
 class QuickSearchPayload(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -489,6 +525,7 @@ class QuickSearchPayload(BaseModel):
     flex_days_after: int | None = None
     dias_antes: int | None = None
     dias_despues: int | None = None
+    sort_by: Literal["ranking", "price", "duration", "freshness"] | None = None
 
 
 class QuickSearchSide(BaseModel):
@@ -546,6 +583,7 @@ class QuickSearchExecution(BaseModel):
 class QuickSearchPagination(BaseModel):
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=10, ge=1, le=100)
+    sort_by: Literal["ranking", "price", "duration", "freshness"] = "ranking"
 
 
 class QuickSearchCanonicalRequest(BaseModel):
@@ -1155,6 +1193,9 @@ def _normalize_quick_search_request(
         if query_overrides.get("page_size") is not None:
             canonical_dict["pagination"] = {**(canonical_dict.get("pagination") or {}), "page_size": query_overrides["page_size"]}
             legacy_aliases_used.append("query.page_size")
+        if query_overrides.get("sort_by") is not None:
+            canonical_dict["pagination"] = {**(canonical_dict.get("pagination") or {}), "sort_by": query_overrides["sort_by"]}
+            legacy_aliases_used.append("query.sort_by")
     else:
         origin_value = query_overrides.get("origin_iata") or legacy_payload.origin_iata
         destination_value = query_overrides.get("destination_iata") or legacy_payload.destination_iata
@@ -1295,6 +1336,15 @@ def _normalize_quick_search_request(
                     query_overrides.get("page_size")
                     if query_overrides.get("page_size") is not None
                     else payload_dict.get("page_size", 10)
+                ),
+                "sort_by": (
+                    query_overrides.get("sort_by")
+                    if query_overrides.get("sort_by") is not None
+                    else payload_dict.get("sort_by")
+                    if payload_dict.get("sort_by") is not None
+                    else legacy_payload.sort_by
+                    if legacy_payload.sort_by is not None
+                    else "ranking"
                 ),
             },
         }
@@ -1737,6 +1787,7 @@ def quick_search(
     flex_days_after: int | None = Query(default=None),
     page: int | None = Query(default=None, ge=1),
     page_size: int | None = Query(default=None, ge=1, le=100),
+    sort_by: Literal["ranking", "price", "duration", "freshness"] | None = Query(default=None),
     debug: bool = Query(default=False),
     db: Session = Depends(get_db),
 ) -> dict:
@@ -1784,6 +1835,7 @@ def quick_search(
         "flex_days_after": flex_days_after,
         "page": page,
         "page_size": page_size,
+        "sort_by": sort_by,
     }
     
     user_currency = "EUR"
@@ -2440,14 +2492,16 @@ def quick_search(
         for item in deduped.results
         if item.origin in origin_scope_iata and item.destination in destination_scope_iata
     ]
-    total_results_count = len(scoped_ranked_results)
+    pagination_sort_by = canonical.pagination.sort_by
+    sorted_scoped_results = _sort_quick_search_results(scoped_ranked_results, pagination_sort_by)
+    total_results_count = len(sorted_scoped_results)
     pagination_page = max(1, int(canonical.pagination.page))
     pagination_page_size = max(1, int(canonical.pagination.page_size))
     pagination_total_pages = max(1, math.ceil(total_results_count / pagination_page_size)) if total_results_count > 0 else 1
     pagination_page_effective = min(pagination_page, pagination_total_pages)
     pagination_start = (pagination_page_effective - 1) * pagination_page_size
     pagination_end = pagination_start + pagination_page_size
-    paginated_ranked_results = scoped_ranked_results[pagination_start:pagination_end]
+    paginated_ranked_results = sorted_scoped_results[pagination_start:pagination_end]
     out_of_scope_discarded = max(0, len(deduped.results) - len(scoped_ranked_results))
     if out_of_scope_discarded > 0:
         warnings.append("result_out_of_scope_discarded")
@@ -2857,6 +2911,7 @@ def quick_search(
             "pagination": {
                 "page": pagination_page_effective,
                 "page_size": pagination_page_size,
+                "sort_by": pagination_sort_by,
                 "total_results": total_results_count,
                 "total_pages": pagination_total_pages,
                 "has_next": pagination_page_effective < pagination_total_pages,

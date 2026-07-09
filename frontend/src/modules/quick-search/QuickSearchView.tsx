@@ -113,6 +113,7 @@ import {
   QuickSearchLoadingPhase,
   QuickSearchLoadingSubcheckStatus,
   QuickSearchMode,
+  QuickSearchSortBy,
   QuickSearchTagTone,
   QuickSearchTripType,
   QuickSearchVisibleFiltersState,
@@ -1872,7 +1873,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     });
   }, [rowMenuTriggerRefs, setOpenRowMenuId]);
 
-  async function onSubmit(event: FormEvent, options?: { page?: number }) {
+  async function onSubmit(event: FormEvent, options?: { page?: number; sortBy?: QuickSearchSortBy }) {
     event.preventDefault();
     if (searchSubmitInFlightRef.current) return;
     searchSubmitInFlightRef.current = true;
@@ -2091,6 +2092,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       soft_filters_weight: 0.6,
       page: options?.page ?? 1,
       page_size: PAGE_SIZE,
+      sort_by: options?.sortBy ?? sortBy,
     };
     const originScopeCount = Array.isArray(payload.origin_iata) ? payload.origin_iata.length : 1;
     const destinationScopeCount = Array.isArray(payload.destination_iata) ? payload.destination_iata.length : 1;
@@ -4306,10 +4308,18 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     void onSubmit({ preventDefault: () => {} } as FormEvent, { page: 1 });
   };
 
+  const handleSortChange = (nextSortBy: QuickSearchSortBy) => {
+    setSortBy(nextSortBy);
+    setCurrentPage(1);
+    if (hasSearched && !isDualMode) {
+      void onSubmit({ preventDefault: () => {} } as FormEvent, { page: 1, sortBy: nextSortBy });
+    }
+  };
+
   const goToPage = (nextPage: number) => {
     const bounded = Math.min(totalPages, Math.max(1, nextPage));
     setCurrentPage(bounded);
-    void onSubmit({ preventDefault: () => {} } as FormEvent, { page: bounded });
+    void onSubmit({ preventDefault: () => {} } as FormEvent, { page: bounded, sortBy });
     const el = document.querySelector(".qs-results-panel");
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -5228,7 +5238,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                   name="sort_by"
                   autoComplete="off"
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as "ranking" | "price" | "duration" | "freshness")}
+                  onChange={(e) => handleSortChange(e.target.value as QuickSearchSortBy)}
                   className="qs-input"
                 >
                   <option value="ranking">{t("sortRanking")}</option>

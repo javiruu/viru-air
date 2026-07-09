@@ -165,6 +165,7 @@ test("buildQuickSearchCanonicalPayload maps frontend request into contract v2 bo
   assert.equal(payload.constraints.strict_filters, false);
   assert.equal(payload.pagination.page, 1);
   assert.equal(payload.pagination.page_size, 10);
+  assert.equal(payload.pagination.sort_by, "ranking");
 });
 
 test("buildQuickSearchCanonicalPayload dedupes and normalizes seed_iata_list", () => {
