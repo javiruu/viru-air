@@ -2363,9 +2363,24 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     router.push(url);
   }, [router]);
 
+  const getResultWatchlistHref = useCallback((result: SearchResult): string => {
+    return buildWatchlistUrl({
+      origin: result.origin,
+      destination: result.destination,
+      travelDate: result.travel_date,
+      watchId: getWatchId(result),
+    });
+  }, [getWatchId]);
+
   const viewResultInWatchlist = useCallback((result: SearchResult) => {
-    navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date, getWatchId(result));
-  }, [getWatchId, navigateToWatchlistWithContext]);
+    const watchId = getWatchId(result);
+    trackEvent("quicksearch_watchlist_view_clicked", {
+      origin: result.origin,
+      destination: result.destination,
+      travel_date: result.travel_date,
+      has_watch_id: Boolean(watchId),
+    });
+  }, [getWatchId]);
 
   async function addToWatchlist(result: SearchResult) {
     setMessage("");
@@ -5385,6 +5400,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 getResultTags={getResultTags}
                 canRefreshPrice={canRefreshPrice}
                 isInWatchlist={isInWatchlist}
+                getWatchlistHref={getResultWatchlistHref}
                 refreshingResultId={refreshingResultId}
                 refreshPrice={refreshQuickSearchResult}
                 addToWatchlist={addToWatchlist}
@@ -5692,6 +5708,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 canRefreshPrice={canRefreshPrice}
                 refreshingResultId={refreshingResultId}
                 isInWatchlist={isInWatchlist}
+                getWatchlistHref={getResultWatchlistHref}
                 refreshPrice={refreshQuickSearchResult}
                 viewInWatchlist={viewResultInWatchlist}
                 addToWatchlist={async (result: SearchResult) => {
@@ -5806,6 +5823,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 refreshingResultId={refreshingResultId}
                 refreshPrice={refreshQuickSearchResult}
                 isInWatchlist={isInWatchlist}
+                getWatchlistHref={getResultWatchlistHref}
                 viewInWatchlist={viewResultInWatchlist}
                 addToWatchlist={async (result: SearchResult) => {
                   setMessage("");
