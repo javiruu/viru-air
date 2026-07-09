@@ -34,12 +34,16 @@ from app.infrastructure.db.models import FlightWatch, PriceSnapshot, User
 from app.infrastructure.db.session import get_db
 from app.infrastructure.providers.flight_provider import MultiSourceFlightProvider
 from app.services.watchlist_snapshots import canonicalize_snapshot_rows
-from app.services.fare_memory_config import FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE
+from app.services.fare_memory_config import (
+    FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE,
+    FARE_MEMORY_WATCHLIST_BACKFILL_ENABLED,
+)
 from app.services.revalidation_jobs import (
     claim_revalidation_job,
     enqueue_revalidation_job,
     find_active_revalidation_job,
 )
+from app.services.watchlist_backfill import find_backfill_observations_for_watch, persist_backfill_snapshots_for_watch
 from app.services.watchlist_revalidation import (
     WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS,
     process_revalidation_job,
@@ -183,6 +187,21 @@ def create_watch(
         db.rollback()
         raise HTTPException(status_code=409, detail="watch_already_exists") from exc
     db.refresh(watch)
+    if FARE_MEMORY_WATCHLIST_BACKFILL_ENABLED:
+        try:
+            backfill_observations = find_backfill_observations_for_watch(db, watch)
+            persist_backfill_snapshots_for_watch(db, watch, backfill_observations)
+        except Exception:
+            db.rollback()
+            logger.exception(
+                "watchlist_backfill_failed",
+                extra={
+                    "watch_id": watch.id,
+                    "origin_iata": watch.origin_iata,
+                    "destination_iata": watch.destination_iata,
+                    "travel_date_local": str(watch.travel_date_local),
+                },
+            )
     watchers_count = _count_watchers_by_route(
         db,
         {_watch_route_key(watch)},

@@ -2,10 +2,12 @@ from datetime import date, datetime, timedelta
 
 from app.core.time import utc_now_naive
 from fastapi.testclient import TestClient
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 
 import app.api.v1.watchlist as watchlist_api
 from app.domain.entities import ProviderFetchResult, ProviderFlight
-from app.infrastructure.db.models import PriceSnapshot
+from app.infrastructure.db.models import FlightOfferCacheEntry, FlightPriceObservation, PriceSnapshot
 from app.infrastructure.db.session import get_db
 from app.main import app
 from tests.helpers import register_and_token
@@ -97,6 +99,60 @@ def _close_test_db_session(generator) -> None:
         pass
 
 
+def _seed_global_fare_observation(
+    *,
+    origin: str,
+    destination: str,
+    travel_date: date,
+    price: float = 49.99,
+) -> None:
+    db, db_generator = _open_test_db_session()
+    try:
+        observed_at = utc_now_naive() - timedelta(hours=2)
+        departure_at = datetime.combine(travel_date, datetime.min.time()).replace(hour=10, minute=15)
+        offer = FlightOfferCacheEntry(
+            offer_fingerprint=(
+                f"integration_backfill_{origin}_{destination}_{travel_date.isoformat()}_"
+                f"{price}_{int(observed_at.timestamp())}"
+            ),
+            flight_instance_fingerprint=f"integration_flight_{origin}_{destination}_{travel_date.isoformat()}",
+            provider="ryanair-public-fares",
+            carrier_code="FR",
+            origin_airport=origin,
+            destination_airport=destination,
+            departure_at=departure_at,
+            departure_time_local="10:15",
+            source_kind="provider",
+        )
+        db.add(offer)
+        db.commit()
+        db.refresh(offer)
+        db.add(
+            FlightPriceObservation(
+                offer_id=offer.id,
+                provider="ryanair-public-fares",
+                price_amount=price,
+                currency="EUR",
+                observed_at=observed_at,
+                freshness_status="fresh",
+                validation_status="observed",
+            )
+        )
+        db.commit()
+    finally:
+        db.close()
+        _close_test_db_session(db_generator)
+
+
+def _snapshots_for_watch(watch_id: str) -> list[PriceSnapshot]:
+    db, db_generator = _open_test_db_session()
+    try:
+        return list(db.scalars(select(PriceSnapshot).where(PriceSnapshot.watch_id == watch_id)).all())
+    finally:
+        db.close()
+        _close_test_db_session(db_generator)
+
+
 def test_watchlist_create_list_and_refresh(client: TestClient, monkeypatch) -> None:
     monkeypatch.setattr(watchlist_api, "provider", _FakeProvider())
     monkeypatch.setattr(watchlist_api, "REFRESH_COOLDOWN_SECONDS", 0)
@@ -134,6 +190,128 @@ def test_watchlist_create_list_and_refresh(client: TestClient, monkeypatch) -> N
     assert detail.json()["id"] == watch_id
     assert detail.json()["latest_snapshot"] is not None
     assert detail.json()["watchers_count"] == 0
+
+
+def test_watchlist_create_backfills_historical_snapshots_when_enabled(
+    client: TestClient,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(watchlist_api, "FARE_MEMORY_WATCHLIST_BACKFILL_ENABLED", True)
+    travel_date = date.today() + timedelta(days=32)
+    _seed_global_fare_observation(
+        origin="LEI",
+        destination="DUB",
+        travel_date=travel_date,
+        price=48.75,
+    )
+    token = register_and_token(client, email="watch-backfill-on@viru.dev")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    create = client.post(
+        "/api/v1/watchlist",
+        headers=headers,
+        json={
+            "origin_iata": "LEI",
+            "destination_iata": "DUB",
+            "travel_date_local": str(travel_date),
+            "target_price": 45,
+        },
+    )
+
+    assert create.status_code == 200
+    snapshots = _snapshots_for_watch(create.json()["id"])
+    assert len(snapshots) == 1
+    assert float(snapshots[0].raw_price) == 48.75
+    assert snapshots[0].raw_currency == "EUR"
+    assert snapshots[0].provider == "historical_backfill"
+    assert snapshots[0].departure_time_local == "10:15"
+    assert snapshots[0].is_stale is True
+
+
+def test_watchlist_create_does_not_backfill_when_flag_is_off(client: TestClient, monkeypatch) -> None:
+    monkeypatch.setattr(watchlist_api, "FARE_MEMORY_WATCHLIST_BACKFILL_ENABLED", False)
+    travel_date = date.today() + timedelta(days=33)
+    _seed_global_fare_observation(
+        origin="GRX",
+        destination="DUB",
+        travel_date=travel_date,
+        price=52.1,
+    )
+    token = register_and_token(client, email="watch-backfill-off@viru.dev")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    create = client.post(
+        "/api/v1/watchlist",
+        headers=headers,
+        json={
+            "origin_iata": "GRX",
+            "destination_iata": "DUB",
+            "travel_date_local": str(travel_date),
+            "target_price": 50,
+        },
+    )
+
+    assert create.status_code == 200
+    assert _snapshots_for_watch(create.json()["id"]) == []
+
+
+def test_watchlist_create_backfill_is_idempotent_with_replayed_request(
+    client: TestClient,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(watchlist_api, "FARE_MEMORY_WATCHLIST_BACKFILL_ENABLED", True)
+    travel_date = date.today() + timedelta(days=34)
+    _seed_global_fare_observation(
+        origin="ALC",
+        destination="FCO",
+        travel_date=travel_date,
+        price=62.25,
+    )
+    token = register_and_token(client, email="watch-backfill-idempotent@viru.dev")
+    headers = {"Authorization": f"Bearer {token}", "Idempotency-Key": "watch-backfill-idem-1"}
+    payload = {
+        "origin_iata": "ALC",
+        "destination_iata": "FCO",
+        "travel_date_local": str(travel_date),
+        "target_price": 60,
+    }
+
+    first = client.post("/api/v1/watchlist", headers=headers, json=payload)
+    second = client.post("/api/v1/watchlist", headers=headers, json=payload)
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert first.json()["id"] == second.json()["id"]
+    assert second.headers.get("x-idempotency-replayed") == "true"
+    snapshots = _snapshots_for_watch(first.json()["id"])
+    assert len(snapshots) == 1
+    assert float(snapshots[0].raw_price) == 62.25
+
+
+def test_watchlist_create_continues_when_backfill_fails(client: TestClient, monkeypatch) -> None:
+    def raise_backfill_error(*_args, **_kwargs):
+        raise SQLAlchemyError("forced backfill failure")
+
+    monkeypatch.setattr(watchlist_api, "FARE_MEMORY_WATCHLIST_BACKFILL_ENABLED", True)
+    monkeypatch.setattr(watchlist_api, "find_backfill_observations_for_watch", raise_backfill_error)
+    travel_date = date.today() + timedelta(days=35)
+    token = register_and_token(client, email="watch-backfill-error@viru.dev")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    create = client.post(
+        "/api/v1/watchlist",
+        headers=headers,
+        json={
+            "origin_iata": "VLC",
+            "destination_iata": "DUB",
+            "travel_date_local": str(travel_date),
+            "target_price": 40,
+        },
+    )
+
+    assert create.status_code == 200
+    assert create.json()["origin_iata"] == "VLC"
+    assert _snapshots_for_watch(create.json()["id"]) == []
 
 
 def test_watchlist_list_exposes_watchers_count_per_route(client: TestClient, monkeypatch) -> None:

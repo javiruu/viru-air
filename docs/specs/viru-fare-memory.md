@@ -1,7 +1,7 @@
 # Viru Fare Memory
 
 **Estado:** vivo  
-**Ultima revision:** 2026-07-09
+**Ultima revision:** 2026-07-10
 **Fuente de verdad:** si  
 **Area:** backend / quick-search / watchlist / pricing intelligence
 
@@ -81,6 +81,18 @@ Fare Memory separa cuatro niveles:
 | Revalidation jobs | `RevalidationJob` | Que rutas deben refrescarse sin bloquear la UI | Operacional; no debe exponer usuario salvo que el caso lo requiera y este justificado |
 
 La regla practica es: cache global para hechos tecnicos reutilizables; watchlist para intencion personal.
+
+### Backfill de Watchlist
+
+Desde la Fase 21, la creacion de una watch puede poblar `PriceSnapshot` con observaciones globales previas cuando `FARE_MEMORY_WATCHLIST_BACKFILL_ENABLED=true`.
+
+Reglas actuales:
+
+- el flag esta desactivado por defecto;
+- el backfill busca observaciones globales por ruta y fecha de salida sin usar `user_id`;
+- cada snapshot historico se persiste con `provider="historical_backfill"` e `is_stale=true`;
+- la insercion es idempotente por watch, instante capturado, precio, moneda y hora local de salida;
+- si el backfill falla, la creacion de la watch continua y el error queda registrado en logs.
 
 ## Estados canonicos de frescura
 

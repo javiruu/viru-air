@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 import datetime as dt
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
-from app.infrastructure.db.models import FlightOfferCacheEntry, FlightPriceObservation, FlightWatch
+from app.infrastructure.db.models import FlightOfferCacheEntry, FlightPriceObservation, FlightWatch, PriceSnapshot
+
+
+_BACKFILL_PROVIDER = "historical_backfill"
 
 
 @dataclass(frozen=True, slots=True)
@@ -64,3 +68,75 @@ def find_backfill_observations_for_watch(
         )
         for observation, offer in rows
     ]
+
+
+def persist_backfill_snapshots_for_watch(
+    db: Session,
+    watch: FlightWatch,
+    observations: Sequence[BackfillObservation],
+) -> int:
+    if not observations:
+        return 0
+
+    existing_keys = _existing_backfill_snapshot_keys(db, watch.id)
+    snapshots: list[PriceSnapshot] = []
+    for observation in observations:
+        captured_at_utc = observation.observed_at.replace(microsecond=0)
+        key = _snapshot_key(
+            captured_at_utc=captured_at_utc,
+            raw_price=observation.price_amount,
+            raw_currency=observation.currency,
+            departure_time_local=observation.departure_time_local,
+        )
+        if key in existing_keys:
+            continue
+        existing_keys.add(key)
+        snapshots.append(
+            PriceSnapshot(
+                watch_id=watch.id,
+                captured_at_utc=captured_at_utc,
+                departure_time_local=observation.departure_time_local,
+                raw_price=observation.price_amount,
+                raw_currency=observation.currency,
+                provider=_BACKFILL_PROVIDER,
+                is_stale=True,
+            )
+        )
+
+    if not snapshots:
+        return 0
+    db.add_all(snapshots)
+    db.commit()
+    return len(snapshots)
+
+
+def _existing_backfill_snapshot_keys(db: Session, watch_id: str) -> set[tuple[dt.datetime, float, str, str | None]]:
+    snapshots = db.scalars(
+        select(PriceSnapshot)
+        .where(PriceSnapshot.watch_id == watch_id)
+        .where(PriceSnapshot.provider == _BACKFILL_PROVIDER)
+    ).all()
+    return {
+        _snapshot_key(
+            captured_at_utc=snapshot.captured_at_utc.replace(microsecond=0),
+            raw_price=float(snapshot.raw_price),
+            raw_currency=snapshot.raw_currency,
+            departure_time_local=snapshot.departure_time_local,
+        )
+        for snapshot in snapshots
+    }
+
+
+def _snapshot_key(
+    *,
+    captured_at_utc: dt.datetime,
+    raw_price: float,
+    raw_currency: str,
+    departure_time_local: str | None,
+) -> tuple[dt.datetime, float, str, str | None]:
+    return (
+        captured_at_utc,
+        round(float(raw_price), 2),
+        raw_currency.strip().upper(),
+        departure_time_local,
+    )
