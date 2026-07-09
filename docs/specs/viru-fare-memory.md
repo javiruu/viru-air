@@ -308,7 +308,8 @@ Fases de rollout:
 ### Watchlist
 
 - seguira usando `PriceSnapshot` en la fase actual;
-- mas adelante podra enlazar snapshots con observaciones de oferta.
+- `watchlist_backfill.py` calcula observaciones globales candidatas para una watch sin escribir en base de datos;
+- mas adelante podra convertir esos candidatos en snapshots personales de forma idempotente.
 
 ### Alertas
 
