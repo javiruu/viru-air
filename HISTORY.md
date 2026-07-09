@@ -1,5 +1,12 @@
 # History
 
+## 2026-07-09 — Quick Search limita providers activos a Ryanair y Vueling
+
+- `FlightProviderRegistry` ya no activa por defecto WizzAir, easyJet, Iberia ni Duffel; el orden por defecto queda en `ryanair,vueling`.
+- Los providers no core siguen disponibles como opt-in explícito mediante `FLIGHT_PROVIDER_NON_CORE_ENABLED=true` + `FLIGHT_PROVIDER_ORDER` + `FLIGHT_PROVIDER_<ID>_ENABLED=true`, para no borrar integraciones mientras estén inestables ni reactivar configuraciones antiguas por accidente.
+- `backend/.env.example` y la guía de integración de providers quedan alineadas con el nuevo comportamiento.
+- Verificación focalizada: reproducción backend `SDR -> FCO` con cercanos en ambos lados devolvió HTTP 200 con providers `ryanair,vueling`, 2 resultados y expansión `SDR,VIT` / `FCO,CIA,PEG`; `python -m pytest tests/unit/test_flight_provider_registry.py tests/unit/test_flight_provider_orchestrator.py` -> 12 passed; `python -m pytest tests/integration/test_quick_search_provider_degradation.py tests/unit/test_quick_search_e2e_regression.py` -> 25 passed; `ruff` OK.
+
 ## 2026-07-09 — Refinamiento estetico: capa de "lujo silencioso" sobre Aviation Warm-Luxe
 
 Sin tocar el freeze de `UI_SYSTEM_V1` ni los tokens congelados, se anade una segunda capa de refinamiento a la identidad visual de Viru Tracker para elevarla hacia "lujo silencioso" sin perder calidez, cercania ni la personalidad aeronautica.

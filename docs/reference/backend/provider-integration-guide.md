@@ -33,24 +33,26 @@ Implementar `FlightProvider` con:
 
 - Registrar la clase en `FlightProviderRegistry`.
 - Controlar habilitación por env:
-  - `FLIGHT_PROVIDER_ORDER` (default: `ryanair,vueling,wizzair,easyjet,iberia,duffel`)
-  - `FLIGHT_PROVIDER_<ID>_ENABLED` (default: true)
-  - Providers con credenciales propias pueden estar en el orden por defecto y no activarse si `is_enabled()` devuelve `false`.
-  - Providers públicos como `ryanair`, `vueling`, `easyjet` e `iberia` no requieren API key privada.
+  - `FLIGHT_PROVIDER_ORDER` (default: `ryanair,vueling`)
+  - `FLIGHT_PROVIDER_<ID>_ENABLED` (default: true solo para `ryanair` y `vueling`; false para el resto)
+  - `FLIGHT_PROVIDER_NON_CORE_ENABLED=false` por defecto bloquea providers fuera de `ryanair`/`vueling`, incluso si un `.env` antiguo conserva `FLIGHT_PROVIDER_<ID>_ENABLED=true`.
+  - Providers fuera de `ryanair`/`vueling` quedan opt-in con `FLIGHT_PROVIDER_NON_CORE_ENABLED=true` hasta que vuelvan a ser operativos de forma estable.
+  - Providers con credenciales propias pueden figurar en `FLIGHT_PROVIDER_ORDER` y no activarse si `is_enabled()` devuelve `false`.
+  - Providers públicos como `ryanair`, `vueling`, `easyjet` e `iberia` no requieren API key privada, pero solo Ryanair/Vueling están activos por defecto.
 - El `FlightSearchOrchestrator` se encarga de:
   - ejecutar providers habilitados;
   - consolidar vuelos;
   - deduplicar resultados;
   - normalizar warnings estructurados y legacy.
 
-## Providers activos
+## Providers disponibles
 
 - `ryanair`: provider público sin credenciales.
 - `vueling`: provider público sin credenciales. Crea sesión anónima contra `asm/v1/Auth`, consulta `avy/v3/AvailabilityServices/allFlights` y soporta alias `vy`.
-- `wizzair`: provider FareChart público/configurable.
-- `easyjet`: provider público sin credenciales. Consulta `ejavailability/api/v16/availability/query` y usa `flightconnections.easyjet.com/api/graphql` como fallback para resultados Dohop/Flight Connections con escala. Soporta alias `easy_jet`/`easy-jet`/`ezj`/`ezy`/`u2` y genera deeplinks oficiales. Si Dohop/Datadome bloquea el backend, expone `provider_total_outage`; si existe token operativo, `EASYJET_FLIGHT_CONNECTIONS_BYPASS_SECRET` envía `X-Dohop-Bypass`.
-- `iberia`: provider público sin credenciales privadas. Reutiliza el contrato de la web de booking (`/flights/` + `ibisservices.iberia.com/api/sse-avm/rs/v2/availability`), soporta aliases `ib`/`iberia_ndc` por compatibilidad y genera deeplinks oficiales. Si el edge público/Akamai bloquea la consulta backend, expone `iberia_provider_unavailable_total` + `provider_total_outage`.
-- `duffel`: provider API con `DUFFEL_API_KEY`.
+- `wizzair`: provider FareChart público/configurable; opt-in explícito.
+- `easyjet`: provider público sin credenciales; opt-in explícito. Consulta `ejavailability/api/v16/availability/query` y usa `flightconnections.easyjet.com/api/graphql` como fallback para resultados Dohop/Flight Connections con escala. Soporta alias `easy_jet`/`easy-jet`/`ezj`/`ezy`/`u2` y genera deeplinks oficiales. Si Dohop/Datadome bloquea el backend, expone `provider_total_outage`; si existe token operativo, `EASYJET_FLIGHT_CONNECTIONS_BYPASS_SECRET` envía `X-Dohop-Bypass`.
+- `iberia`: provider público sin credenciales privadas; opt-in explícito. Reutiliza el contrato de la web de booking (`/flights/` + `ibisservices.iberia.com/api/sse-avm/rs/v2/availability`), soporta aliases `ib`/`iberia_ndc` por compatibilidad y genera deeplinks oficiales. Si el edge público/Akamai bloquea la consulta backend, expone `iberia_provider_unavailable_total` + `provider_total_outage`.
+- `duffel`: provider API con `DUFFEL_API_KEY`; opt-in explícito.
 
 ## Warnings canónicos recomendados
 

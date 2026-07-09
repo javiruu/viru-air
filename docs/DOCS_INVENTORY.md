@@ -9,6 +9,14 @@
 
 Inventario completo de documentos `.md` y `.txt` relevantes del repositorio tras el saneamiento documental. Excluye dependencias, cach?s, builds, entornos virtuales, `_publish_repo` y otras salidas generadas masivas.
 
+## Actualizacion manual 2026-07-09 (providers activos Quick Search)
+
+Entradas vivas actualizadas:
+
+- `docs/reference/backend/provider-integration-guide.md`
+- `docs/DOCS_INVENTORY.md`
+- `HISTORY.md`
+
 ## Actualizacion manual 2026-07-03 (centro de notificaciones persistente)
 
 Entradas vivas agregadas:
