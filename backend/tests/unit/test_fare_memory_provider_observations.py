@@ -74,6 +74,31 @@ def test_provider_observations_skip_incomplete_provider_rows(db: Session) -> Non
     assert float(price_amount) == pytest.approx(49.99)
 
 
+@pytest.mark.parametrize(
+    ("source", "expected_carrier_code"),
+    [
+        ("ryanair-public-fares", "FR"),
+        ("vueling-public-availability", "VY"),
+        ("mystery-provider", "MYSTERY-PROVIDER"),
+    ],
+)
+def test_provider_observations_derives_stable_carrier_code(
+    db: Session,
+    source: str,
+    expected_carrier_code: str,
+) -> None:
+    travel_date = dt.date(2026, 7, 20)
+
+    persist_provider_flight_observations(
+        db,
+        provider_flights=[_provider_row(travel_date=travel_date, source=source)],
+        context=_context(),
+    )
+
+    carrier_code = db.scalar(select(FlightOfferCacheEntry.carrier_code))
+    assert carrier_code == expected_carrier_code
+
+
 def _context() -> ObservationPersistenceContext:
     return ObservationPersistenceContext(
         search_cache_entry_id=None,

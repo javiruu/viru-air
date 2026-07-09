@@ -7,6 +7,12 @@ from collections.abc import Mapping
 from typing import Any, TypedDict
 
 
+_PROVIDER_CARRIER_CODE_BY_PREFIX = {
+    "ryanair": "FR",
+    "vueling": "VY",
+}
+
+
 class FlightSegmentIdentityPayload(TypedDict):
     carrier_code: str | None
     flight_number: str | None
@@ -59,7 +65,7 @@ def canonicalize_flight_instance_fingerprint_payload(
 
     return {
         "algorithm_version": algorithm_version,
-        "carrier_code": _normalized_upper(data.get("carrier_code") or data.get("carrier")),
+        "carrier_code": derive_carrier_code(data.get("provider"), data.get("carrier_code") or data.get("carrier")),
         "flight_number": _normalized_upper(data.get("flight_number")),
         "origin_airport": _normalized_upper(data.get("origin_airport") or data.get("origin")),
         "destination_airport": _normalized_upper(data.get("destination_airport") or data.get("destination")),
@@ -70,6 +76,22 @@ def canonicalize_flight_instance_fingerprint_payload(
         "stops_count": int(stops_count or 0),
         "segments": segments,
     }
+
+
+def derive_carrier_code(provider: Any, carrier: Any = None) -> str | None:
+    explicit_carrier = _normalized_upper(carrier)
+    if explicit_carrier:
+        return explicit_carrier
+
+    provider_id = _normalized_text(provider)
+    if provider_id is None:
+        return None
+
+    normalized_provider = provider_id.lower()
+    for provider_prefix, carrier_code in _PROVIDER_CARRIER_CODE_BY_PREFIX.items():
+        if normalized_provider == provider_prefix or normalized_provider.startswith(f"{provider_prefix}-"):
+            return carrier_code
+    return provider_id.upper()
 
 
 def build_flight_instance_fingerprint(
