@@ -148,6 +148,7 @@ export type SearchResponseRaw = {
     pagination?: {
       page: number;
       page_size: number;
+      sort_by?: QuickSearchSortBy;
       total_results: number;
       total_pages: number;
       has_next: boolean;

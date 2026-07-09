@@ -116,7 +116,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
         payload.update(overrides)
         return payload
 
-    def _call_quick_search(self, payload, debug=True, page=None, page_size=None, db=None):
+    def _call_quick_search(self, payload, debug=True, page=None, page_size=None, sort_by=None, db=None):
         return quick_search(
             payload=payload,
             origin_iata=None,
@@ -137,6 +137,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             flex_days_after=None,
             page=page,
             page_size=page_size,
+            sort_by=sort_by,
             debug=debug,
             db=db,
         )
@@ -266,6 +267,50 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
         self.assertGreaterEqual(pagination["total_results"], len(result["results"]))
         self.assertGreaterEqual(pagination["total_pages"], 1)
         self.assertLessEqual(len(result["results"]), 2)
+
+    def test_price_sort_is_applied_before_pagination(self):
+        origins = ["LEI", "AGP", "ALC", "SVQ"]
+        destinations = ["BGY", "BLQ", "FCO"]
+        route_prices = {
+            (origin, destination): float((idx + 1) * 10)
+            for idx, (origin, destination) in enumerate(
+                (origin, destination)
+                for origin in origins
+                for destination in destinations
+            )
+        }
+        payload = self._payload(
+            origin={
+                "seed_iata": origins[0],
+                "seed_iata_list": origins,
+                "include_nearby": False,
+                "radius_km": 250,
+                "max_candidates": 6,
+            },
+            destination={
+                "seed_iata": destinations[0],
+                "seed_iata_list": destinations,
+                "include_nearby": False,
+                "radius_km": 250,
+                "max_candidates": 6,
+            },
+            execution={"max_pairs": 12, "max_requests": 24, "timeout_ms": 3000, "concurrency_limit": 4},
+            pagination={"page": 2, "page_size": 10, "sort_by": "price"},
+        )
+
+        def fake_fetch(origin: str, destination: str, date: str, timeout_ms: int, currency: str = "EUR"):
+            return [_flight(route_prices[(origin, destination)], "10:00")]
+
+        with _patch_request_provider(side_effect=fake_fetch):
+            result = self._call_quick_search(payload)
+
+        pagination = result["meta"]["pagination"]
+        prices = [item["price_total"] for item in result["results"]]
+        self.assertEqual(pagination["page"], 2)
+        self.assertEqual(pagination["page_size"], 10)
+        self.assertEqual(pagination["sort_by"], "price")
+        self.assertEqual(pagination["total_results"], 12)
+        self.assertEqual(prices, [110.0, 120.0])
 
     def test_pagination_out_of_range_clamps_to_last_page(self):
         payload = self._payload(
