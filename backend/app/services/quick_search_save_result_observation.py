@@ -7,7 +7,9 @@ from typing import Protocol
 from sqlalchemy.orm import Session
 
 from app.infrastructure.db.models import FlightWatch, PriceSnapshot
+from app.services.fare_memory_config import FARE_MEMORY_WATCHLIST_BACKFILL_ENABLED
 from app.services.revalidation_jobs import enqueue_revalidation_job
+from app.services.watchlist_backfill import add_backfill_snapshots_for_watch, find_backfill_observations_for_watch
 from app.services.watchlist_revalidation import route_fingerprint
 
 logger = logging.getLogger("app.quick_search.save_result")
@@ -27,9 +29,11 @@ def handle_saved_result_observation(
     payload: SavedQuickSearchResultPayload,
 ) -> None:
     if _saved_result_requires_revalidation(payload):
+        _add_saved_result_backfill_snapshots(db, watch)
         _enqueue_saved_result_revalidation(db, watch, payload)
         return
     _seed_watch_snapshot_from_saved_result(db, watch, payload)
+    _add_saved_result_backfill_snapshots(db, watch)
 
 
 def _seed_watch_snapshot_from_saved_result(
@@ -61,6 +65,13 @@ def _saved_result_requires_revalidation(payload: SavedQuickSearchResultPayload) 
         "provider_error_stale",
     }
     return payload.freshness_status in revalidation_statuses or payload.requires_revalidation is True
+
+
+def _add_saved_result_backfill_snapshots(db: Session, watch: FlightWatch) -> None:
+    if not FARE_MEMORY_WATCHLIST_BACKFILL_ENABLED:
+        return
+    observations = find_backfill_observations_for_watch(db, watch)
+    add_backfill_snapshots_for_watch(db, watch, observations)
 
 
 def _enqueue_saved_result_revalidation(

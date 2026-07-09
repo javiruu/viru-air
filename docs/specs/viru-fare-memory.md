@@ -336,7 +336,8 @@ Fases de rollout:
 
 - seguira usando `PriceSnapshot` en la fase actual;
 - `watchlist_backfill.py` calcula observaciones globales candidatas para una watch sin escribir en base de datos;
-- mas adelante podra convertir esos candidatos en snapshots personales de forma idempotente.
+- `persist_backfill_snapshots_for_watch` convierte esos candidatos en snapshots personales `historical_backfill` de forma idempotente;
+- al guardar un resultado de quick search, `handle_saved_result_observation` reutiliza ese backfill si `FARE_MEMORY_WATCHLIST_BACKFILL_ENABLED=true`: los resultados fresh conservan el snapshot actual y suman historico previo; los resultados stale/warm encolan revalidacion y no pierden historico heredado.
 
 ### Alertas
 
