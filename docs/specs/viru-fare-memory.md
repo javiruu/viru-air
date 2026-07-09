@@ -138,6 +138,12 @@ Convencion actual de `carrier_code` derivado:
 - Vueling se persiste como `VY`;
 - si el provider no es conocido y no hay carrier explicito, se usa el `provider` normalizado en mayusculas como fallback estable.
 
+Decision actual sobre `flight_number` en providers publicos:
+
+- Ryanair: los parsers actuales no exponen un numero de vuelo real ni hay fixture local vigente que lo demuestre con los endpoints ya usados;
+- Vueling: el fixture actual trae `flightID` y `carrierCode`, pero `flightID` no esta tratado todavia como contrato de numero de vuelo fiable;
+- hasta verificar esos campos con evidencia suficiente, `flight_number` permanece nullable y la identidad estable de salida se apoya en `flight_instance_fingerprint`.
+
 ### Price Observations
 
 Historico de precio ligado a una oferta.
