@@ -516,19 +516,21 @@
   cursor: pointer;
 }
 
-/* WCAG 2.5.5 Target Size (Enhanced): amplia el hit-area de controles compactos
-   (.row-actions, .panel-actions children y el dismiss de notification 28x28)
-   a un minimo de 44x44 sin alterar visual. El ::after transparente, posicionado
-   absolute centrado, captura clicks en el area extendida y los propaga al
-   elemento padre (que mantiene sus handlers originales). */
-.row-actions > *,
-.panel-actions > *,
+/* WCAG 2.5.5 Target Size (Enhanced): amplia el hit-area del dismiss de notification
+   (compacto 28x28) a 44x44 sin alterar visual. El ::after transparente, posicionado
+   absolute centrado, captura clicks en el area extendida (+8px en cada lado) y
+   los propaga al elemento padre (que mantiene sus handlers originales).
+
+   Por que solo el dismiss: aplicar la misma tecnica a .row-actions > * /
+   .panel-actions > * introduce riesgo de regresion en :hover de los botones
+   hijos cuando usan :hover para border-color o background. El dismiss es
+   el unico boton de 28x28 que precisa expansion real; el resto de los controles
+   en .row-actions / .panel-actions ya cumplen o superan 44x44 tras el sistema
+   de diseno v1. */
 .notification-card-dismiss {
   position: relative;
 }
 
-.row-actions > *::after,
-.panel-actions > *::after,
 .notification-card-dismiss::after {
   content: "";
   position: absolute;
