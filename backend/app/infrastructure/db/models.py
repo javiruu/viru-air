@@ -588,17 +588,22 @@ class FlightOfferCacheEntry(Base):
         UniqueConstraint("offer_fingerprint", name="uq_flight_offer_cache_fingerprint"),
         Index("ix_flight_offer_cache_route", "origin_airport", "destination_airport", "departure_at"),
         Index("ix_flight_offer_cache_provider", "provider", "departure_at"),
+        Index("ix_flight_offer_cache_instance", "flight_instance_fingerprint"),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     offer_fingerprint: Mapped[str] = mapped_column(String(64))
+    flight_instance_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
     provider: Mapped[str] = mapped_column(String(40), index=True)
     carrier: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    carrier_code: Mapped[str | None] = mapped_column(String(16), nullable=True)
     flight_number: Mapped[str | None] = mapped_column(String(32), nullable=True)
     origin_airport: Mapped[str] = mapped_column(String(3))
     destination_airport: Mapped[str] = mapped_column(String(3))
     departure_at: Mapped[datetime] = mapped_column(DateTime, index=True)
     arrival_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    departure_time_local: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    arrival_time_local: Mapped[str | None] = mapped_column(String(16), nullable=True)
     duration_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     stops_count: Mapped[int] = mapped_column(Integer, default=0)
     booking_url_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)

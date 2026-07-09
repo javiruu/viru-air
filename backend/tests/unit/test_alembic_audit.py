@@ -22,7 +22,7 @@ def test_current_alembic_chain_has_no_missing_down_revisions() -> None:
     assert payload["missing_down_revisions"] == []
     assert payload["duplicate_revisions"] == {}
     assert payload["files_missing_identifiers"] == []
-    assert payload["heads"] == ["0031_add_user_notification_state"]
+    assert payload["heads"] == ["0032_add_flight_instance_fingerprint"]
 
 
 def test_inspect_database_revision_flags_orphan_alembic_version(tmp_path: Path) -> None:

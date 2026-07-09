@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.domain.entities import ProviderFlight
 from app.infrastructure.db.models import FlightOfferCacheEntry, FlightPriceObservation
 from app.services.fare_memory import build_offer_fingerprint
+from app.services.fare_memory_flight_instances import build_flight_instance_fingerprint
 
 
 ProviderFlightRow = tuple[str, str, dt.date, ProviderFlight]
@@ -30,11 +31,14 @@ class ObservationPersistenceContext:
 class ProviderOfferPayload(TypedDict):
     provider: str
     carrier: str | None
+    carrier_code: str | None
     flight_number: str | None
     origin_airport: str
     destination_airport: str
     departure_at: dt.datetime
     arrival_at: dt.datetime | None
+    departure_time_local: str | None
+    arrival_time_local: str | None
     duration_minutes: int | None
     stops_count: int
     source_kind: str
@@ -59,6 +63,7 @@ def persist_provider_flight_observations(
             continue
 
         offer_fingerprint = build_offer_fingerprint(offer_payload, source_kind="provider")
+        flight_instance_fingerprint = build_flight_instance_fingerprint(offer_payload)
         if offer_fingerprint in seen_offer_fingerprints:
             skipped_duplicate_offers += 1
             continue
@@ -72,13 +77,17 @@ def persist_provider_flight_observations(
         if offer is None:
             offer = FlightOfferCacheEntry(
                 offer_fingerprint=offer_fingerprint,
+                flight_instance_fingerprint=flight_instance_fingerprint,
                 provider=offer_payload["provider"],
                 carrier=offer_payload["carrier"],
+                carrier_code=offer_payload["carrier_code"],
                 flight_number=offer_payload["flight_number"],
                 origin_airport=offer_payload["origin_airport"],
                 destination_airport=offer_payload["destination_airport"],
                 departure_at=offer_payload["departure_at"],
                 arrival_at=offer_payload["arrival_at"],
+                departure_time_local=offer_payload["departure_time_local"],
+                arrival_time_local=offer_payload["arrival_time_local"],
                 duration_minutes=offer_payload["duration_minutes"],
                 stops_count=offer_payload["stops_count"],
                 source_kind=offer_payload["source_kind"],
@@ -150,11 +159,14 @@ def _build_provider_offer_payload(row: ProviderFlightRow) -> ProviderOfferPayloa
     return {
         "provider": provider,
         "carrier": None,
+        "carrier_code": None,
         "flight_number": None,
         "origin_airport": origin_code,
         "destination_airport": destination_code,
         "departure_at": _departure_datetime(travel_date, flight.departure_time_local),
         "arrival_at": None,
+        "departure_time_local": (flight.departure_time_local or "").strip() or None,
+        "arrival_time_local": None,
         "duration_minutes": None,
         "stops_count": 0,
         "source_kind": "provider",

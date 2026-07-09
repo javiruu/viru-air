@@ -2,11 +2,13 @@ import datetime as dt
 
 from app.api.v1.search import _normalize_quick_search_request
 from app.services.fare_memory import (
+    build_flight_instance_fingerprint,
     build_offer_fingerprint,
     build_search_fingerprint,
     canonicalize_offer_fingerprint_payload,
     canonicalize_search_fingerprint_payload,
 )
+from app.services.fare_memory_flight_instances import canonicalize_flight_instance_fingerprint_payload
 from app.services.quick_search_execution import build_cache_source_hash, build_unit_cache_key
 
 
@@ -303,3 +305,50 @@ def test_offer_payload_carries_source_kind_and_provider_ids() -> None:
 
     assert payload["source_kind"] == "deeplink"
     assert payload["provider_ids"] == ["abc123", "deeplink-1", "urlhash-1"]
+
+
+def test_flight_instance_fingerprint_groups_same_departure_when_price_changes() -> None:
+    offer = {
+        "provider": "ryanair",
+        "carrier": "FR",
+        "flight_number": "FR1234",
+        "origin_airport": "LEI",
+        "destination_airport": "FCO",
+        "departure_at": "2026-07-20T10:15:00Z",
+        "arrival_at": "2026-07-20T12:45:00Z",
+        "stops_count": 0,
+        "price_amount": 49.99,
+        "currency": "EUR",
+    }
+    repriced = dict(offer, price_amount=119.99, currency="USD", provider_offer_id="provider-id-2")
+
+    assert build_flight_instance_fingerprint(offer) == build_flight_instance_fingerprint(repriced)
+
+
+def test_flight_instance_fingerprint_changes_when_departure_changes() -> None:
+    first = {
+        "carrier": "FR",
+        "flight_number": "FR1234",
+        "origin_airport": "LEI",
+        "destination_airport": "FCO",
+        "departure_at": "2026-07-20T10:15:00Z",
+        "arrival_at": "2026-07-20T12:45:00Z",
+    }
+    second = dict(first, departure_at="2026-07-20T11:15:00Z")
+
+    assert build_flight_instance_fingerprint(first) != build_flight_instance_fingerprint(second)
+
+
+def test_flight_instance_payload_does_not_invent_missing_flight_number() -> None:
+    payload = canonicalize_flight_instance_fingerprint_payload(
+        {
+            "provider": "duffel",
+            "carrier": "IB",
+            "origin_airport": "LEI",
+            "destination_airport": "MAD",
+            "departure_at": "2026-07-20T10:15:00Z",
+        }
+    )
+
+    assert payload["flight_number"] is None
+    assert payload["carrier_code"] == "IB"

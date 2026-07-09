@@ -123,6 +123,35 @@ def test_flight_offer_cache_entry_requires_unique_fingerprint(db: Session) -> No
     db.rollback()
 
 
+def test_flight_offer_cache_entry_persists_optional_flight_instance_fields(db: Session) -> None:
+    offer = FlightOfferCacheEntry(
+        offer_fingerprint="fsm_offer_instance_fields",
+        flight_instance_fingerprint="fsm_flight_abc123",
+        provider="ryanair",
+        carrier="FR",
+        carrier_code="FR",
+        flight_number="FR1234",
+        origin_airport="LEI",
+        destination_airport="FCO",
+        departure_at=dt.datetime(2026, 7, 20, 10, 15),
+        arrival_at=dt.datetime(2026, 7, 20, 12, 45),
+        departure_time_local="10:15",
+        arrival_time_local="12:45",
+        duration_minutes=150,
+        stops_count=0,
+        source_kind="provider",
+    )
+    db.add(offer)
+    db.commit()
+
+    persisted = db.get(FlightOfferCacheEntry, offer.id)
+    assert persisted is not None
+    assert persisted.flight_instance_fingerprint == "fsm_flight_abc123"
+    assert persisted.carrier_code == "FR"
+    assert persisted.departure_time_local == "10:15"
+    assert persisted.arrival_time_local == "12:45"
+
+
 def test_flight_price_observation_can_link_offer_and_search_cache(db: Session) -> None:
     search_cache = _seed_search_cache(db)
     offer = FlightOfferCacheEntry(
