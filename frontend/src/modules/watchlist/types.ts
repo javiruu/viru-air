@@ -15,6 +15,8 @@ export type Snapshot = {
   raw_currency: string;
   departure_time_local: string | null;
   provider?: string | null;
+  is_stale?: boolean;
+  source_kind?: string;
 };
 
 export type WatchDetail = {
@@ -27,6 +29,7 @@ export type WatchDetail = {
   watchers_count?: number | null;
   group_id?: string | null;
   latest_snapshot: Snapshot | null;
+  price_history?: Snapshot[];
 };
 
 export type PriceSummary = {

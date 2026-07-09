@@ -177,6 +177,7 @@ def test_watchlist_create_list_and_refresh(client: TestClient, monkeypatch) -> N
     assert listing.status_code == 200
     assert len(listing.json()) == 1
     assert listing.json()[0]["watchers_count"] == 0
+    assert "price_history" not in listing.json()[0]
 
     refresh = client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers)
     assert refresh.status_code == 200
@@ -189,6 +190,8 @@ def test_watchlist_create_list_and_refresh(client: TestClient, monkeypatch) -> N
     assert detail.status_code == 200
     assert detail.json()["id"] == watch_id
     assert detail.json()["latest_snapshot"] is not None
+    assert len(detail.json()["price_history"]) == 1
+    assert detail.json()["price_history"][0]["raw_price"] == 44.0
     assert detail.json()["watchers_count"] == 0
 
 
@@ -226,6 +229,11 @@ def test_watchlist_create_backfills_historical_snapshots_when_enabled(
     assert snapshots[0].provider == "historical_backfill"
     assert snapshots[0].departure_time_local == "10:15"
     assert snapshots[0].is_stale is True
+    detail = client.get(f"/api/v1/watchlist/{create.json()['id']}", headers=headers)
+    assert detail.status_code == 200
+    assert detail.json()["price_history"][0]["provider"] == "historical_backfill"
+    assert detail.json()["price_history"][0]["source_kind"] == "historical_backfill"
+    assert detail.json()["price_history"][0]["is_stale"] is True
 
 
 def test_watchlist_create_does_not_backfill_when_flag_is_off(client: TestClient, monkeypatch) -> None:
@@ -485,6 +493,9 @@ def test_watchlist_collapses_legacy_same_second_snapshots_across_read_endpoints(
     assert detail.status_code == 200
     assert detail.json()["latest_snapshot"]["captured_at_utc"].startswith("2026-06-05T10:17:03")
     assert detail.json()["latest_snapshot"]["raw_price"] == 460.5
+    assert [item["raw_price"] for item in detail.json()["price_history"]] == [473.68, 460.5]
+    assert [item["source_kind"] for item in detail.json()["price_history"]] == ["provider", "provider"]
+    assert [item["is_stale"] for item in detail.json()["price_history"]] == [False, False]
 
     history = client.get(f"/api/v1/prices/history?watch_id={watch_id}", headers=headers)
     assert history.status_code == 200

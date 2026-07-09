@@ -94,6 +94,14 @@ Reglas actuales:
 - la insercion es idempotente por watch, instante capturado, precio, moneda y hora local de salida;
 - si el backfill falla, la creacion de la watch continua y el error queda registrado en logs.
 
+Desde la Fase 22, `GET /api/v1/watchlist/{watch_id}` expone tambien `price_history`:
+
+- es un campo aditivo del detalle, no aparece en la lista general de watchlist;
+- mantiene `latest_snapshot` sin cambiar;
+- devuelve snapshots canonicos en orden ascendente por `captured_at_utc`;
+- cada punto incluye `is_stale` y `source_kind`;
+- el detalle limita la serie a `WATCH_DETAIL_PRICE_HISTORY_LIMIT` puntos, con valor por defecto `500`.
+
 ## Estados canonicos de frescura
 
 | Estado | Significado | Uso |

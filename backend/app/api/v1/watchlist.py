@@ -26,6 +26,7 @@ from app.domain.schemas import (
     WatchDeleteBulkIn,
     WatchDetailOut,
     WatchOut,
+    WatchPriceHistoryOut,
     WatchRefreshBulkIn,
     WatchStatusBulkIn,
     WatchUpdateIn,
@@ -55,6 +56,7 @@ router = APIRouter()
 provider = MultiSourceFlightProvider()
 logger = logging.getLogger("app.watchlist")
 REFRESH_COOLDOWN_SECONDS = max(0, int(os.getenv("WATCH_REFRESH_COOLDOWN_SECONDS", "60")))
+WATCH_DETAIL_PRICE_HISTORY_LIMIT = max(1, int(os.getenv("WATCH_DETAIL_PRICE_HISTORY_LIMIT", "500")))
 
 WatchRouteKey = tuple[str, str, Date]
 
@@ -69,6 +71,12 @@ def _watch_revalidation_target_fingerprint(watch: FlightWatch) -> str:
 
 def _manual_revalidation_retry_after_seconds() -> int:
     return max(1, int(60 / max(1, FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE)))
+
+
+def _snapshot_source_kind(provider_name: str | None) -> str:
+    if provider_name == "historical_backfill":
+        return "historical_backfill"
+    return "provider"
 
 
 def _watch_out(watch: FlightWatch, watchers_count: int = 0) -> WatchOut:
@@ -340,7 +348,8 @@ def get_watch_detail(
         db.scalars(
             select(PriceSnapshot)
             .where(PriceSnapshot.watch_id == watch.id)
-            .order_by(PriceSnapshot.captured_at_utc.asc(), PriceSnapshot.id.asc())
+            .order_by(PriceSnapshot.captured_at_utc.desc(), PriceSnapshot.id.desc())
+            .limit(WATCH_DETAIL_PRICE_HISTORY_LIMIT)
         )
     )
     canonical_snapshots = sorted(
@@ -373,6 +382,18 @@ def get_watch_detail(
                 "provider": latest.provider,
             }
         ),
+        price_history=[
+            WatchPriceHistoryOut(
+                captured_at_utc=snapshot.captured_at_utc,
+                raw_price=snapshot.raw_price,
+                raw_currency=snapshot.raw_currency,
+                departure_time_local=snapshot.departure_time_local,
+                provider=snapshot.provider,
+                is_stale=snapshot.is_stale,
+                source_kind=_snapshot_source_kind(snapshot.provider),
+            )
+            for snapshot in canonical_snapshots
+        ],
     )
 
 
