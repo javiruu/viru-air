@@ -86,3 +86,8 @@ Thumbs.db
 .zcode/
 .codex-temp/
 frontend/tests/artifacts/
+
+# Windows NUL device: stray files named "nul" can appear when shell
+# commands redirect with 2>nul on Windows shells (used in some test scripts).
+# Ignore them so they never accidentally enter the repo.
+nul
