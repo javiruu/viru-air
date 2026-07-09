@@ -7,7 +7,7 @@ from typing import Final
 from app.infrastructure.db.models import FlightPriceObservation
 
 
-RECENT_OBSERVATION_DEDUPE_WINDOW: Final = dt.timedelta(seconds=30)
+RECENT_OBSERVATION_DEDUPE_WINDOW: Final = dt.timedelta(minutes=10)
 
 
 @dataclass(frozen=True, slots=True)

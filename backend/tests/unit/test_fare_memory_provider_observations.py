@@ -74,7 +74,7 @@ def test_provider_observations_skip_incomplete_provider_rows(db: Session) -> Non
     assert float(price_amount) == pytest.approx(49.99)
 
 
-def test_provider_observations_skip_same_price_seen_again_within_seconds(db: Session) -> None:
+def test_provider_observations_skip_same_price_seen_again_within_short_window(db: Session) -> None:
     travel_date = dt.date(2026, 7, 20)
     row = _provider_row(travel_date=travel_date)
     first_summary = persist_provider_flight_observations(
@@ -85,7 +85,7 @@ def test_provider_observations_skip_same_price_seen_again_within_seconds(db: Ses
     second_summary = persist_provider_flight_observations(
         db,
         provider_flights=[row],
-        context=_context(observed_at=dt.datetime(2026, 7, 20, 8, 0, 10)),
+        context=_context(observed_at=dt.datetime(2026, 7, 20, 8, 1, 0)),
     )
 
     observations = db.scalars(select(FlightPriceObservation)).all()
@@ -95,7 +95,7 @@ def test_provider_observations_skip_same_price_seen_again_within_seconds(db: Ses
     assert len(observations) == 1
 
 
-def test_provider_observations_append_same_price_after_dedupe_window(db: Session) -> None:
+def test_provider_observations_append_same_price_after_six_hours(db: Session) -> None:
     travel_date = dt.date(2026, 7, 20)
     row = _provider_row(travel_date=travel_date)
     persist_provider_flight_observations(
@@ -106,13 +106,37 @@ def test_provider_observations_append_same_price_after_dedupe_window(db: Session
     second_summary = persist_provider_flight_observations(
         db,
         provider_flights=[row],
-        context=_context(observed_at=dt.datetime(2026, 7, 20, 8, 0, 31)),
+        context=_context(observed_at=dt.datetime(2026, 7, 20, 14, 0, 0)),
     )
 
     observations = db.scalars(select(FlightPriceObservation)).all()
     assert second_summary["observations_created"] == 1
     assert second_summary["skipped_recent_duplicates"] == 0
     assert len(observations) == 2
+
+
+def test_provider_observations_append_changed_price_inside_dedupe_window(db: Session) -> None:
+    travel_date = dt.date(2026, 7, 20)
+    first_row = _provider_row(travel_date=travel_date, price=49.99)
+    second_row = _provider_row(travel_date=travel_date, price=59.99)
+    persist_provider_flight_observations(
+        db,
+        provider_flights=[first_row],
+        context=_context(observed_at=dt.datetime(2026, 7, 20, 8, 0, 0)),
+    )
+    second_summary = persist_provider_flight_observations(
+        db,
+        provider_flights=[second_row],
+        context=_context(observed_at=dt.datetime(2026, 7, 20, 8, 1, 0)),
+    )
+
+    observations = db.scalars(
+        select(FlightPriceObservation).order_by(FlightPriceObservation.observed_at.asc())
+    ).all()
+    assert second_summary["observations_created"] == 1
+    assert second_summary["skipped_recent_duplicates"] == 0
+    assert len(observations) == 2
+    assert observations[1].price_changed_since_last_seen is True
 
 
 @pytest.mark.parametrize(
