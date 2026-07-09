@@ -145,6 +145,7 @@ class WatchOut(BaseModel):
 
 class WatchDetailOut(WatchOut):
     latest_snapshot: "SnapshotOut | None" = None
+    price_history: list["WatchPriceHistoryOut"] = Field(default_factory=list)
 
 
 class WatchUpdateIn(BaseModel):
@@ -173,6 +174,11 @@ class SnapshotOut(BaseModel):
     raw_currency: str
     departure_time_local: str | None = None
     provider: str | None = None
+
+
+class WatchPriceHistoryOut(SnapshotOut):
+    is_stale: bool = False
+    source_kind: str = "provider"
 
 
 class SnapshotBatchIn(BaseModel):
