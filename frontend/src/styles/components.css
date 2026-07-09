@@ -172,13 +172,19 @@
 
 .panel {
   background: var(--panel-bg);
-  border: 1px solid color-mix(in srgb, var(--border) 86%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
   border-radius: var(--radius-lg);
   padding: var(--space-panel-padding);
   box-shadow:
     0 1px 0 color-mix(in srgb, var(--surface) 60%, transparent) inset,
     0 22px 44px -20px color-mix(in srgb, var(--shadow) 80%, transparent),
     0 6px 14px -10px color-mix(in srgb, var(--shadow) 55%, transparent);
+}
+
+/* Light theme usa borde mas visible (78%) para evitar perdida de jerarquia sobre
+   fondos claros; dark mantiene el borde mas sutil (86%) para coherencia cinematografica. */
+:root[data-theme="dark"] .panel {
+  border-color: color-mix(in srgb, var(--border) 86%, transparent);
 }
 
 .panel-soft {
@@ -254,8 +260,14 @@
   margin-bottom: 0;
 }
 
-/* Hover opcional: solo se activa cuando la fila es interactiva (enlace/boton dentro)
-   para no duplicar feedback con acciones internas. */
+/* Hover universal (fallback sin :has()): funciona en todos los navegadores.
+   Alpha 12% para no duplicar feedback con acciones internas. */
+.list-row:hover {
+  background: color-mix(in srgb, var(--surface-2) 12%, transparent);
+}
+
+/* Enhancement para filas interactivas (boton o enlace dentro): fondo mas rico.
+   :has() requiere navegadores modernos (Chrome 105+, Firefox 121+, Safari 15.4+). */
 .list-row:not(.list-row-static):has(button, a):hover {
   background: color-mix(in srgb, var(--surface-2) 24%, transparent);
 }
