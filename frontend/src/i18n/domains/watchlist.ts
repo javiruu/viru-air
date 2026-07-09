@@ -2,6 +2,11 @@ export const watchlistEs = {
   title: "Watchlist",
   subtitle: "Vigila, compara y decide desde una sola vista.",
   addFlight: "Añadir vuelo",
+  export: {
+    button: "Exportar JSON",
+    ariaLabel: "Exportar todos los vuelos guardados con sus snapshots en JSON",
+    success: "JSON listo: {count} vuelos y {snapshots} snapshots.",
+  },
   lastUpdateInline: "Última comprobación automática {value}",
   providerCoverage: {
     ariaLabel: "Cobertura de proveedores en Watchlist",
@@ -333,6 +338,11 @@ export const watchlistEn = {
   title: "Watchlist",
   subtitle: "Monitor, compare, and decide from one view.",
   addFlight: "Add flight",
+  export: {
+    button: "Export JSON",
+    ariaLabel: "Export all saved flights with their snapshots as JSON",
+    success: "JSON ready: {count} flights and {snapshots} snapshots.",
+  },
   lastUpdateInline: "Last automatic check {value}",
   providerCoverage: {
     ariaLabel: "Watchlist provider coverage",
