@@ -320,6 +320,12 @@ Implementacion actual desde Fase 29:
 - los errores esperados se registran como eventos estructurados y no detienen el proceso;
 - shutdown cancela la task del worker junto con las otras tareas background.
 
+Implementacion actual desde Fase 30:
+
+- `enqueue_revalidation_job` deduplica jobs activos por `job_type`, `target_type`, `target_fingerprint`, `provider` y `status in queued/running`;
+- jobs terminales (`done`, `skipped`, `failed`) no bloquean un reencolado posterior;
+- un retry ya encolado tras fallo se reutiliza y no crea un tercer job duplicado.
+
 ## Rollout y flags
 
 Estado de rollout actual:
