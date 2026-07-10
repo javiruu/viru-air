@@ -12,6 +12,8 @@ NEGATIVE_REASON_TTL_SECONDS: Final[dict[str, int]] = {
     "provider_timeout": 5 * 60,
     "provider_total_outage": 3 * 60,
     "provider_partial_degraded": 10 * 60,
+    "provider_waf_challenge": 2 * 60,
+    "provider_schema_changed": 5 * 60,
     "unsupported_route": 12 * 60 * 60,
     "rate_limited": 5 * 60,
 }
@@ -22,6 +24,8 @@ PROVIDER_BACKOFF_REASONS: Final[frozenset[str]] = frozenset(
         "provider_error",
         "provider_total_outage",
         "provider_partial_degraded",
+        "provider_waf_challenge",
+        "provider_schema_changed",
         "rate_limited",
     }
 )
@@ -33,6 +37,8 @@ NEGATIVE_REASON_WARNINGS: Final[dict[str, list[str]]] = {
     "provider_error": ["provider_error_partial"],
     "provider_total_outage": ["provider_total_outage"],
     "provider_partial_degraded": ["provider_error_partial"],
+    "provider_waf_challenge": ["provider_waf_challenge"],
+    "provider_schema_changed": ["provider_schema_changed"],
     "rate_limited": ["provider_rate_limited", "provider_timeout_partial"],
 }
 

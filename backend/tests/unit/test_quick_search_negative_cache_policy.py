@@ -4,7 +4,6 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.api.v1.search import _resolve_negative_cache_write_policy
 from app.domain.entities import ProviderFetchResult
 from app.infrastructure.db.models import Base
 from app.services.quick_search_cache_service import (
@@ -12,6 +11,7 @@ from app.services.quick_search_cache_service import (
     resolve_negative_cache_result,
     set_negative_cache_entry,
 )
+from app.services.quick_search_negative_cache_write_policy import resolve_negative_cache_write_policy
 
 
 @pytest.fixture()
@@ -36,6 +36,8 @@ def db() -> Session:
         ("provider_timeout", 300, 330, "provider_error_fresh", ["provider_timeout_partial"]),
         ("provider_total_outage", 180, 210, "provider_error_fresh", ["provider_total_outage"]),
         ("provider_partial_degraded", 600, 630, "provider_error_fresh", ["provider_error_partial"]),
+        ("provider_waf_challenge", 120, 150, "provider_error_fresh", ["provider_waf_challenge"]),
+        ("provider_schema_changed", 300, 330, "provider_error_fresh", ["provider_schema_changed"]),
     ],
 )
 def test_negative_cache_reason_policy_sets_professional_ttl(
@@ -90,6 +92,10 @@ def test_negative_cache_hit_increments_counter_and_stale_entry_misses(db: Sessio
         (["provider_total_outage"], "provider_total_outage"),
         (["provider_error_partial"], "provider_partial_degraded"),
         (["ryanair_fares_failed"], "provider_partial_degraded"),
+        (["invalid_price"], "invalid_price"),
+        (["iberia_provider_captcha_akamai_blocked"], "provider_waf_challenge"),
+        (["easyjet_flight_connections_captcha_datadome_captcha"], "provider_waf_challenge"),
+        (["provider_schema_changed"], "provider_schema_changed"),
     ],
 )
 def test_quick_search_negative_write_policy_uses_minimum_reason_codes(
@@ -97,5 +103,20 @@ def test_quick_search_negative_write_policy_uses_minimum_reason_codes(
     reason: str,
 ) -> None:
     result = ProviderFetchResult(flights=[], warnings=warnings)
-    resolved_reason, _retry_after_at = _resolve_negative_cache_write_policy(result)
+    resolved_reason, _retry_after_at = resolve_negative_cache_write_policy(result)
     assert resolved_reason == reason
+
+
+@pytest.mark.parametrize(
+    "warnings",
+    [
+        ["provider_total_outage", "iberia_provider_captcha_akamai_blocked"],
+        ["provider_error_partial", "provider_schema_changed"],
+    ],
+)
+def test_dangerous_provider_errors_are_not_written_as_empty_routes(warnings: list[str]) -> None:
+    result = ProviderFetchResult(flights=[], warnings=warnings)
+    resolved_reason, retry_after_at = resolve_negative_cache_write_policy(result)
+
+    assert resolved_reason != "no_results"
+    assert retry_after_at is not None
