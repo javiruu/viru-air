@@ -78,6 +78,14 @@ _CATEGORY_SOURCE = {
 # ---------------------------------------------------------------------------
 
 
+def _serialize_travel_date(value: dt.date | str | None) -> str | None:
+    if isinstance(value, dt.date):
+        return value.isoformat()
+    if value is None:
+        return None
+    return str(value)
+
+
 def serialize_flights(flights: list[ProviderFlight]) -> list[dict[str, Any]]:
     """Serialize ProviderFlight list to JSON-safe dicts."""
     return [
@@ -87,6 +95,14 @@ def serialize_flights(flights: list[ProviderFlight]) -> list[dict[str, Any]]:
             "departure_time_local": f.departure_time_local,
             "captured_at": f.captured_at.isoformat() if f.captured_at else None,
             "source": str(f.source),
+            "provider": f.provider,
+            "origin_iata": f.origin_iata,
+            "destination_iata": f.destination_iata,
+            "travel_date": _serialize_travel_date(f.travel_date),
+            "deeplink": f.deeplink_url,
+            "deeplink_url": f.deeplink_url,
+            "carrier_code": f.carrier_code,
+            "flight_number": f.flight_number,
         }
         for f in flights
     ]
@@ -105,6 +121,13 @@ def deserialize_flights(raw: list[dict[str, Any]]) -> list[ProviderFlight]:
                 departure_time_local=item.get("departure_time_local"),
                 captured_at=captured_at,
                 source=str(item.get("source", "ryanair-public")),
+                provider=item.get("provider"),
+                origin_iata=item.get("origin_iata"),
+                destination_iata=item.get("destination_iata"),
+                travel_date=item.get("travel_date"),
+                deeplink_url=item.get("deeplink_url") or item.get("deeplink"),
+                carrier_code=item.get("carrier_code"),
+                flight_number=item.get("flight_number"),
             )
         )
     return flights

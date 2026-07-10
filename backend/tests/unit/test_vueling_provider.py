@@ -101,6 +101,12 @@ def test_get_flights_uses_anonymous_public_availability(monkeypatch: pytest.Monk
     assert flight.currency == "EUR"
     assert flight.departure_time_local == "18:45"
     assert flight.source == "vueling-public-availability"
+    assert flight.provider == "vueling"
+    assert flight.origin_iata == "BCN"
+    assert flight.destination_iata == "ORY"
+    assert flight.travel_date == "2026-07-14"
+    assert flight.carrier_code == "VY"
+    assert flight.flight_number is None
     assert flight.deeplink_url is not None
     assert "booking/flightSearch" in flight.deeplink_url
     assert result.warnings_structured == []

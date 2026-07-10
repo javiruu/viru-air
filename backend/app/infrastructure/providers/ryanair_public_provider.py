@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict
 from datetime import datetime
 from typing import Any
+from urllib.parse import urlencode
 
 from app.core.time import utc_now_naive
 
@@ -118,6 +119,7 @@ class RyanairPublicProvider(FlightProvider):
         data = self._get_json(url, timeout_ms=timeout_ms)
         fares = data.get("fares") or []
         flights: list[ProviderFlight] = []
+        deeplink_url = self._build_deeplink(origin, destination, travel_date, currency)
         for fare in fares:
             outbound = fare.get("outbound") or {}
             price = (outbound.get("price") or {}).get("value")
@@ -131,6 +133,13 @@ class RyanairPublicProvider(FlightProvider):
                     departure_time_local=self._to_time(dep),
                     captured_at=utc_now_naive(),
                     source="ryanair-public-fares",
+                    provider=self.provider_id,
+                    origin_iata=origin,
+                    destination_iata=destination,
+                    travel_date=travel_date,
+                    deeplink_url=deeplink_url,
+                    carrier_code="FR",
+                    flight_number=self._normalize_flight_number(outbound.get("flightNumber")),
                 )
             )
         return flights
@@ -154,6 +163,7 @@ class RyanairPublicProvider(FlightProvider):
         data = self._get_json(url, timeout_ms=timeout_ms)
         trips = data.get("trips") or []
         flights: list[ProviderFlight] = []
+        deeplink_url = self._build_deeplink(origin, destination, travel_date, currency)
         for trip in trips:
             for flight in trip.get("flights") or []:
                 regular = flight.get("regularFare") or {}
@@ -171,6 +181,13 @@ class RyanairPublicProvider(FlightProvider):
                         departure_time_local=self._to_time(departure),
                         captured_at=utc_now_naive(),
                         source="ryanair-public-availability",
+                        provider=self.provider_id,
+                        origin_iata=origin,
+                        destination_iata=destination,
+                        travel_date=travel_date,
+                        deeplink_url=deeplink_url,
+                        carrier_code="FR",
+                        flight_number=self._normalize_flight_number(flight.get("flightNumber")),
                     )
                 )
         return flights
@@ -207,6 +224,25 @@ class RyanairPublicProvider(FlightProvider):
             return parsed.strftime("%H:%M")
         except ValueError:
             return None
+
+    def _normalize_flight_number(self, value: Any) -> str | None:
+        normalized = str(value or "").strip().upper()
+        return normalized or None
+
+    def _build_deeplink(self, origin: str, destination: str, travel_date: str, currency: str) -> str:
+        params = {
+            "adults": "1",
+            "teens": "0",
+            "children": "0",
+            "infants": "0",
+            "dateOut": travel_date,
+            "dateIn": "",
+            "isReturn": "false",
+            "originIata": origin,
+            "destinationIata": destination,
+            "currency": currency,
+        }
+        return f"https://www.ryanair.com/es-es/trip/flights/select?{urlencode(params)}"
 
     def debug_payload(self, origin: str, destination: str, travel_date: str, currency: str = "EUR") -> dict[str, Any]:
         result = self.get_flights(origin, destination, travel_date, currency=currency)

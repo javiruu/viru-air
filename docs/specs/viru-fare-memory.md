@@ -168,9 +168,25 @@ Convencion actual de `carrier_code` derivado:
 
 Decision actual sobre `flight_number` en providers publicos:
 
-- Ryanair: los parsers actuales no exponen un numero de vuelo real ni hay fixture local vigente que lo demuestre con los endpoints ya usados;
-- Vueling: el fixture actual trae `flightID` y `carrierCode`, pero `flightID` no esta tratado todavia como contrato de numero de vuelo fiable;
+- Ryanair: availability persiste `flightNumber` cuando el endpoint lo entrega; fares lo mantiene nullable cuando no existe evidencia en la respuesta;
+- Vueling: persiste `flightNumber` solo si el endpoint lo entrega explicitamente; `flightID` no se promociona a numero de vuelo fiable;
 - hasta verificar esos campos con evidencia suficiente, `flight_number` permanece nullable y la identidad estable de salida se apoya en `flight_instance_fingerprint`.
+
+Contrato minimo normalizado en `ProviderFlight` desde Fase 37:
+
+- `provider`
+- `origin_iata`
+- `destination_iata`
+- `travel_date`
+- `departure_time_local`
+- `price`
+- `currency`
+- `source`
+- `deeplink_url` cuando existe; la cache tambien serializa alias `deeplink`
+- `carrier_code`
+- `flight_number` nullable
+
+Ryanair y Vueling rellenan este contrato en sus parsers publicos. La cache compartida de quick search serializa estos campos y deserializa payloads antiguos sin los campos nuevos.
 
 ### Price Observations
 
