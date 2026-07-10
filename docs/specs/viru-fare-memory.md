@@ -301,7 +301,8 @@ Implementacion actual desde Fase 27:
 - `FARE_MEMORY_RETENTION_ENABLED=false` mantiene el pruning automatico apagado por defecto;
 - si se activa, el arranque agenda una tarea background y responde sin esperar a que termine;
 - la tarea usa un `RevalidationJob` diario con id deterministico para evitar ejecuciones duplicadas entre workers;
-- `FARE_MEMORY_RETENTION_BATCH_SIZE` controla el tamano de batches del pruning automatico.
+- `FARE_MEMORY_RETENTION_BATCH_SIZE` controla el tamano de batches del pruning automatico;
+- durante shutdown, el lifespan espera brevemente el cierre de esta tarea one-shot para no dejar el `RevalidationJob` diario en estado `running`.
 
 ## Revalidacion
 
@@ -469,6 +470,13 @@ Fases de rollout:
 - `revalidation_price_changed_count`
 - `provider_error_rate`
 - `avg_price_age_seconds`
+
+Implementacion actual desde Fase 39:
+
+- `provider_health_stats` agrega en memoria local metricas por `provider_id`;
+- cada ejecucion del orquestador registra llamadas, exitos, timeouts, WAF/captcha, precio invalido, ausencia real de resultados, schema drift, outages, errores y latencia media;
+- las muestras no guardan ruta, fecha, pasajero, usuario, payloads, precios ni tokens;
+- las metricas son locales al proceso y diagnosticas; no sustituyen logs, trazas externas ni almacenamiento durable.
 
 ## Impacto por area
 
