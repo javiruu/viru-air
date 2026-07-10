@@ -366,12 +366,20 @@ Implementacion actual desde Fase 35:
 - errores de Redis durante read/write hacen fallback silencioso a DB/in-process;
 - `QUICK_SEARCH_REDIS_TTL_SECONDS` queda capado por el TTL restante de la entrada DB.
 
+Implementacion actual desde Fase 36:
+
+- `qs:lock:{cache_key}` usa `SET NX EX` como lock distribuido opcional cuando Redis esta operativo;
+- si Redis concede el lock, el proceso consulta provider y libera con token via script atomico;
+- si Redis indica lock ocupado, la request espera cache L2/negative antes de intentar provider;
+- si Redis no esta disponible, se conserva fallback al lease DB `quick_search_provider_lock`;
+- `provider_singleflight_avoided_calls` contabiliza llamadas evitadas tras esperar single-flight.
+
 Riesgo actual:
 
 - `_DB_LOCK` en `quick_search_cache_service` solo protege dentro de un proceso Python; no coordina multiples workers ni pods;
 - `RevalidationJob` ya da dedupe persistente para jobs activos y es la base correcta para coordinacion cross-process;
 - `QuickSearchCacheEntry` tiene upsert atomico por constraint para SQLite/PostgreSQL;
-- `quick_search_provider_lock` reduce duplicados cross-process, pero no sustituye rate limits ni backoff de provider;
+- Redis SETNX y `quick_search_provider_lock` reducen duplicados cross-process, pero no sustituyen rate limits ni backoff de provider;
 - Redis acelera hits compartidos cuando esta disponible, pero no debe tratarse como requisito actual para Fare Memory.
 
 Recomendacion:

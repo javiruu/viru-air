@@ -11,6 +11,11 @@ from sqlalchemy.orm import Session
 from app.core.time import utc_now_naive
 from app.infrastructure.db.models import QuickSearchProviderLock
 from app.services.quick_search_execution import build_cache_source_hash
+from app.services.quick_search_redis_lock import (
+    RedisLockClient,
+    acquire_redis_provider_lock,
+    release_redis_provider_lock,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,6 +52,7 @@ def acquire_quick_search_provider_lock(
     currency: str = "EUR",
     lock_ttl_seconds: int = 30,
     now: dt.datetime | None = None,
+    redis_client: RedisLockClient | None = None,
 ) -> QuickSearchProviderLease | None:
     reference_now = now or utc_now_naive()
     ttl = max(1, int(lock_ttl_seconds))
@@ -59,6 +65,24 @@ def acquire_quick_search_provider_lock(
         currency=currency,
     )
     lock_token = uuid.uuid4().hex
+    redis_attempt = acquire_redis_provider_lock(
+        lock_key=lock_key,
+        ttl_seconds=ttl,
+        redis_client=redis_client,
+    )
+    match redis_attempt.status:
+        case "acquired":
+            if redis_attempt.lock_token is None:
+                return None
+            return QuickSearchProviderLease(
+                lock_key=lock_key,
+                lock_token=redis_attempt.lock_token,
+                expires_at=expires_at,
+            )
+        case "busy":
+            return None
+        case "unavailable":
+            pass
 
     if _try_insert_lock(
         db,
@@ -92,7 +116,15 @@ def acquire_quick_search_provider_lock(
     return QuickSearchProviderLease(lock_key=lock_key, lock_token=lock_token, expires_at=expires_at)
 
 
-def release_quick_search_provider_lock(db: Session, *, lock_token: str) -> bool:
+def release_quick_search_provider_lock(
+    db: Session,
+    *,
+    lock_token: str,
+    redis_client: RedisLockClient | None = None,
+) -> bool:
+    redis_released = release_redis_provider_lock(lock_token=lock_token, redis_client=redis_client)
+    if redis_released is not None:
+        return redis_released
     released = db.execute(
         delete(QuickSearchProviderLock).where(QuickSearchProviderLock.lock_token == lock_token)
     )

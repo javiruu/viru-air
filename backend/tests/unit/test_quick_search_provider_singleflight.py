@@ -151,6 +151,8 @@ def test_execute_plan_waits_for_l2_when_singleflight_lock_is_held() -> None:
 
     def shared_cache_get(origin: str, destination: str, travel_date: dt.date | str, provider: str):
         calls["shared_get"] += 1
+        if calls["shared_get"] == 1:
+            return None
         return cached_result
 
     rows, meta, warnings = execute_plan(
@@ -178,5 +180,6 @@ def test_execute_plan_waits_for_l2_when_singleflight_lock_is_held() -> None:
     assert calls["shared_get"] >= 1
     assert meta["l2_cache_hits"] == 1
     assert meta["provider_calls"] == 0
+    assert meta["provider_singleflight_avoided_calls"] == 1
     assert warnings == []
     assert rows[0][3].source == "singleflight-cache"

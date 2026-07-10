@@ -218,6 +218,7 @@ def execute_plan(
     l2_cache_hits = 0
     negative_cache_hits = 0
     provider_calls = 0
+    provider_singleflight_avoided_calls = 0
     timed_out_units_count = 0
     provider_failures = 0
     provider_stats: dict[str, dict[str, Any]] = {}
@@ -238,6 +239,9 @@ def execute_plan(
             unit = futures[future]
             try:
                 fetch_result, cache_hit_type = future.result()
+                if cache_hit_type.startswith("SINGLEFLIGHT_"):
+                    provider_singleflight_avoided_calls += 1
+                    cache_hit_type = cache_hit_type.removeprefix("SINGLEFLIGHT_")
                 if cache_hit_type == "L1":
                     cache_hits += 1
                     l1_cache_hits += 1
@@ -298,6 +302,7 @@ def execute_plan(
         "planned_units": len(plan.units),
         "executed_units": len(plan.units),
         "provider_calls": provider_calls,
+        "provider_singleflight_avoided_calls": provider_singleflight_avoided_calls,
         "cache_hits": cache_hits,
         "cache_misses": cache_misses,
         "l1_cache_hits": l1_cache_hits,
@@ -458,7 +463,7 @@ def _wait_for_singleflight_result(
         with _CACHE_LOCK:
             cached = _CACHE.get(key)
             if cached and now - cached[0] <= _CACHE_TTL_SECONDS:
-                return cached[1], "L1", None
+                return cached[1], "SINGLEFLIGHT_L1", None
         if shared_cache_get is not None:
             l2_result = shared_cache_get(
                 unit.origin_iata,
@@ -469,7 +474,7 @@ def _wait_for_singleflight_result(
             if l2_result is not None:
                 with _CACHE_LOCK:
                     _CACHE[key] = (now, l2_result)
-                return l2_result, "L2", None
+                return l2_result, "SINGLEFLIGHT_L2", None
         if negative_cache_get is not None:
             negative_result = negative_cache_get(
                 unit.origin_iata,
@@ -478,7 +483,7 @@ def _wait_for_singleflight_result(
                 provider_key,
             )
             if negative_result is not None:
-                return negative_result, "NEGATIVE", None
+                return negative_result, "SINGLEFLIGHT_NEGATIVE", None
         lease_token = provider_singleflight_acquire(
             unit.origin_iata,
             unit.destination_iata,
