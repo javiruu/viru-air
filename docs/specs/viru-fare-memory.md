@@ -271,6 +271,13 @@ Implementacion actual desde Fase 26:
 - los logs incluyen tabla, criterio, candidatos, borrados y batches;
 - los logs no imprimen `payload_json` ni `canonical_request_json`.
 
+Implementacion actual desde Fase 27:
+
+- `FARE_MEMORY_RETENTION_ENABLED=false` mantiene el pruning automatico apagado por defecto;
+- si se activa, el arranque agenda una tarea background y responde sin esperar a que termine;
+- la tarea usa un `RevalidationJob` diario con id deterministico para evitar ejecuciones duplicadas entre workers;
+- `FARE_MEMORY_RETENTION_BATCH_SIZE` controla el tamano de batches del pruning automatico.
+
 ## Revalidacion
 
 Viru debe intentar revalidar cuando el dato no sea `fresh` y el flujo implique una decision sensible, por ejemplo:
@@ -327,6 +334,8 @@ Flags relevantes:
 | `FARE_MEMORY_BOOT_WARMUP_ENABLED` | `false` | Agenda warmup al arrancar | Coste/stampede al boot | Mantener off salvo canary |
 | `FARE_MEMORY_MAX_BOOT_JOBS` | `25` | Limita jobs de warmup | Sobrecarga si se sube sin rate limit | Ajustar junto a rate limit |
 | `FARE_MEMORY_BOOT_WARMUP_JITTER_SECONDS` | `30` | Distribuye jobs al arrancar | Picos si es 0 en multi-worker | Mantener jitter en entornos compartidos |
+| `FARE_MEMORY_RETENTION_ENABLED` | `false` | Activa pruning automatico de Fare Memory al arranque | Borrado no deseado si se activa sin dry-run previo | Activar solo tras revisar `--fare-memory --dry-run` |
+| `FARE_MEMORY_RETENTION_BATCH_SIZE` | `500` | Limita filas por batch en pruning automatico | Transacciones grandes si sube demasiado | Mantener moderado y medir duracion |
 | `FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE` | `60` | Recorta jobs por provider | Saturar provider si sube demasiado | Cambiar solo con observabilidad |
 | `WATCHLIST_STARTUP_REFRESH_ENABLED` | `true` | Mantiene refresh de watchlist existente | Llamadas al arranque si hay muchas rutas | Mantener dedupe por `RevalidationJob` |
 | `WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS` | `14400` | Umbral de stale para priorizar startup refresh | Documentacion desalineada rompe expectativas | Fuente actual: `backend/.env.example` |

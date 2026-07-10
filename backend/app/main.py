@@ -28,7 +28,10 @@ from app.services.fare_memory_config import (
     FARE_MEMORY_BOOT_WARMUP_JITTER_SECONDS,
     FARE_MEMORY_MAX_BOOT_JOBS,
     FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE,
+    FARE_MEMORY_RETENTION_BATCH_SIZE,
+    FARE_MEMORY_RETENTION_ENABLED,
 )
+from app.services.fare_memory_retention_job import run_startup_fare_memory_retention
 from app.services.fare_memory_warmup import log_scheduled_boot_warmup_jobs
 from app.services.watchlist_revalidation import (
     WATCHLIST_STARTUP_REFRESH_ENABLED,
@@ -81,6 +84,7 @@ def _parse_cors_origins() -> list[str]:
 
 
 _warmup_logger = logging.getLogger("app.fare_memory.warmup")
+_retention_logger = logging.getLogger("app.fare_memory.retention")
 _watchlist_startup_logger = logging.getLogger("app.watchlist")
 
 
@@ -88,9 +92,41 @@ async def _run_startup_route_revalidation_jobs() -> None:
     await asyncio.to_thread(process_due_route_revalidation_jobs, SessionLocal)
 
 
+async def _run_startup_fare_memory_retention_job() -> None:
+    try:
+        report = await asyncio.to_thread(
+            run_startup_fare_memory_retention,
+            SessionLocal,
+            batch_size=FARE_MEMORY_RETENTION_BATCH_SIZE,
+        )
+    except (SQLAlchemyError, TypeError, ValueError) as exc:
+        _retention_logger.error(
+            json.dumps(
+                {
+                    "event": "fare_memory_retention_failed",
+                    "batch_size": FARE_MEMORY_RETENTION_BATCH_SIZE,
+                    "error": str(exc)[:500],
+                },
+                ensure_ascii=False,
+            )
+        )
+        return
+    _retention_logger.info(
+        json.dumps(
+            {
+                "event": "fare_memory_retention_completed",
+                **report,
+            },
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+    )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     startup_route_task = None
+    retention_task = None
     if FARE_MEMORY_BOOT_WARMUP_ENABLED:
         db = SessionLocal()
         try:
@@ -135,7 +171,14 @@ async def lifespan(app: FastAPI):
     if WATCHLIST_STARTUP_REFRESH_ENABLED or FARE_MEMORY_BOOT_WARMUP_ENABLED:
         startup_route_task = asyncio.create_task(_run_startup_route_revalidation_jobs())
         app.state.startup_route_revalidation_task = startup_route_task
+    if FARE_MEMORY_RETENTION_ENABLED:
+        retention_task = asyncio.create_task(_run_startup_fare_memory_retention_job())
+        app.state.fare_memory_retention_task = retention_task
     yield
+    if retention_task is not None:
+        retention_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await retention_task
     if startup_route_task is not None:
         startup_route_task.cancel()
         with suppress(asyncio.CancelledError):
