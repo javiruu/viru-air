@@ -313,6 +313,13 @@ Implementacion actual desde Fase 28:
 - el corte se aplica antes de calcular prioridad, frescura, volatilidad o encolar `RevalidationJob`;
 - el orden de prioridad existente se conserva para rutas futuras o del mismo dia.
 
+Implementacion actual desde Fase 29:
+
+- `FARE_MEMORY_REVALIDATION_WORKER_ENABLED=false` mantiene apagado el worker periodico por defecto;
+- si se activa, el worker procesa jobs de revalidacion de rutas en batches y duerme entre iteraciones;
+- los errores esperados se registran como eventos estructurados y no detienen el proceso;
+- shutdown cancela la task del worker junto con las otras tareas background.
+
 ## Rollout y flags
 
 Estado de rollout actual:
@@ -342,6 +349,9 @@ Flags relevantes:
 | `FARE_MEMORY_BOOT_WARMUP_JITTER_SECONDS` | `30` | Distribuye jobs al arrancar | Picos si es 0 en multi-worker | Mantener jitter en entornos compartidos |
 | `FARE_MEMORY_RETENTION_ENABLED` | `false` | Activa pruning automatico de Fare Memory al arranque | Borrado no deseado si se activa sin dry-run previo | Activar solo tras revisar `--fare-memory --dry-run` |
 | `FARE_MEMORY_RETENTION_BATCH_SIZE` | `500` | Limita filas por batch en pruning automatico | Transacciones grandes si sube demasiado | Mantener moderado y medir duracion |
+| `FARE_MEMORY_REVALIDATION_WORKER_ENABLED` | `false` | Activa worker periodico para jobs de revalidacion | Llamadas continuas a providers si se activa sin control | Mantener off salvo canary |
+| `FARE_MEMORY_REVALIDATION_WORKER_INTERVAL_SECONDS` | `60` | Intervalo entre iteraciones del worker | Polling excesivo si baja demasiado | Ajustar con metricas de cola |
+| `FARE_MEMORY_REVALIDATION_WORKER_BATCH_SIZE` | `20` | Jobs maximos por iteracion | Picos de provider si sube demasiado | Ajustar junto a rate limit |
 | `FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE` | `60` | Recorta jobs por provider | Saturar provider si sube demasiado | Cambiar solo con observabilidad |
 | `WATCHLIST_STARTUP_REFRESH_ENABLED` | `true` | Mantiene refresh de watchlist existente | Llamadas al arranque si hay muchas rutas | Mantener dedupe por `RevalidationJob` |
 | `WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS` | `14400` | Umbral de stale para priorizar startup refresh | Documentacion desalineada rompe expectativas | Fuente actual: `backend/.env.example` |
