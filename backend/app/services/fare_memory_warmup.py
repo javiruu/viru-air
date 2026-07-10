@@ -211,6 +211,7 @@ def _compute_boot_warmup_candidates(
     watches = db.scalars(
         select(FlightWatch)
         .where(FlightWatch.status == WATCH_STATUS_ACTIVE)
+        .where(FlightWatch.travel_date_local >= now.date())
         .order_by(FlightWatch.travel_date_local.asc(), FlightWatch.created_at.asc(), FlightWatch.id.asc())
     ).all()
 
