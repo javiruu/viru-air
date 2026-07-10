@@ -264,6 +264,13 @@ La retencion distingue memoria global reutilizable de historico personal. El pru
 - Si una `FlightWatch` queda historica, expirada o pausada por salida pasada, no debe seguir generando refresh automatico.
 - El pruning global no debe eliminar ni reescribir snapshots personales ya materializados como `historical_backfill`.
 
+Implementacion actual desde Fase 26:
+
+- `python backend/scripts/db_retention.py --fare-memory --dry-run` reporta candidatos agregados sin borrar filas;
+- `python backend/scripts/db_retention.py --fare-memory --apply` borra en batches las filas candidatas;
+- los logs incluyen tabla, criterio, candidatos, borrados y batches;
+- los logs no imprimen `payload_json` ni `canonical_request_json`.
+
 ## Revalidacion
 
 Viru debe intentar revalidar cuando el dato no sea `fresh` y el flujo implique una decision sensible, por ejemplo:

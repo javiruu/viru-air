@@ -5,34 +5,25 @@ import json
 import os
 import sys
 import time
-from dataclasses import dataclass
-from datetime import timedelta
 from pathlib import Path
 from typing import Any
 from urllib import request
 
-from sqlalchemy import delete, func, select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
 
-from app.core.time import utc_now_naive
-from app.infrastructure.db.models import IdempotencyRecord, NotificationEvent, PriceSnapshot, SecurityActivity
-from app.infrastructure.db.session import SessionLocal
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+if str(BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(BACKEND_ROOT))
 
-SAFE_MIN_RETENTION_DAYS = {
-    "price_snapshot_days": 30,
-    "notification_event_days": 30,
-    "security_activity_days": 30,
-    "idempotency_days": 3,
-}
-
-
-@dataclass(frozen=True)
-class TableRetentionPlan:
-    label: str
-    model: Any
-    ts_column: Any
-    retention_days: int
+from app.core.time import utc_now_naive  # noqa: E402
+from app.infrastructure.db.models import IdempotencyRecord, NotificationEvent, PriceSnapshot, SecurityActivity  # noqa: E402
+from app.infrastructure.db.session import SessionLocal  # noqa: E402
+from app.services.db_retention_tables import TableRetentionPlan, prune_table, validate_retention_windows  # noqa: E402
+from app.services.fare_memory_retention import (  # noqa: E402
+    FareMemoryRetentionOptions,
+    retention_result_to_payload,
+    run_fare_memory_retention,
+)
 
 
 def log_event(event: str, payload: dict[str, Any], log_file: str | None = None) -> None:
@@ -50,76 +41,20 @@ def log_event(event: str, payload: dict[str, Any], log_file: str | None = None) 
             handle.write(serialized + "\n")
 
 
-def validate_retention_windows(args: argparse.Namespace) -> None:
-    for field_name, min_days in SAFE_MIN_RETENTION_DAYS.items():
-        value = getattr(args, field_name)
-        if value < min_days:
-            raise ValueError(
-                f"Unsafe retention window for {field_name}: got {value}, requires >= {min_days} days"
-            )
-
-
-def _count_candidates(session: Session, model: Any, ts_column: Any, cutoff: Any) -> int:
-    stmt = select(func.count(model.id)).where(ts_column < cutoff)
-    return int(session.scalar(stmt) or 0)
-
-
-def prune_table(
-    session: Session,
-    plan: TableRetentionPlan,
-    batch_size: int,
-    dry_run: bool,
-    log_file: str | None,
-) -> dict[str, Any]:
-    started = time.monotonic()
-    cutoff = utc_now_naive() - timedelta(days=plan.retention_days)
-    candidates = _count_candidates(session, plan.model, plan.ts_column, cutoff)
-
-    table_result: dict[str, Any] = {
-        "table": plan.label,
-        "retention_days": plan.retention_days,
-        "cutoff_utc": cutoff.isoformat() + "Z",
-        "candidates": candidates,
-        "deleted": 0,
-        "batches": 0,
-        "dry_run": dry_run,
-    }
-
-    if dry_run:
-        table_result["duration_ms"] = round((time.monotonic() - started) * 1000, 2)
-        return table_result
-
-    total_deleted = 0
-    batches = 0
-
-    while True:
-        ids = session.scalars(select(plan.model.id).where(plan.ts_column < cutoff).limit(batch_size)).all()
-        if not ids:
-            break
-        deleted = session.execute(delete(plan.model).where(plan.model.id.in_(ids))).rowcount or 0
-        session.commit()
-        total_deleted += deleted
-        batches += 1
-
-    table_result["deleted"] = total_deleted
-    table_result["batches"] = batches
-    table_result["duration_ms"] = round((time.monotonic() - started) * 1000, 2)
-
+def log_table_completed(table_result: dict[str, Any], log_file: str | None) -> None:
     log_event(
         "db_retention.table_completed",
         {
-            "table": plan.label,
-            "retention_days": plan.retention_days,
-            "candidates": candidates,
-            "deleted": total_deleted,
-            "batches": batches,
+            "table": table_result["table"],
+            "retention_days": table_result["retention_days"],
+            "candidates": table_result["candidates"],
+            "deleted": table_result["deleted"],
+            "batches": table_result["batches"],
             "duration_ms": table_result["duration_ms"],
-            "dry_run": dry_run,
+            "dry_run": table_result["dry_run"],
         },
         log_file,
     )
-
-    return table_result
 
 
 def emit_failure_alert(payload: dict[str, Any], alert_file: str, webhook_url: str | None) -> None:
@@ -140,12 +75,14 @@ def emit_failure_alert(payload: dict[str, Any], alert_file: str, webhook_url: st
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Prune growth tables by retention windows")
+    parser.add_argument("--fare-memory", action="store_true", help="Prune Fare Memory cache tables")
     parser.add_argument("--price-snapshot-days", type=int, default=180)
     parser.add_argument("--notification-event-days", type=int, default=90)
     parser.add_argument("--security-activity-days", type=int, default=180)
     parser.add_argument("--idempotency-days", type=int, default=7)
     parser.add_argument("--batch-size", type=int, default=5000)
     parser.add_argument("--dry-run", action="store_true", help="Only report deletion candidates")
+    parser.add_argument("--apply", action="store_true", help="Explicitly delete candidates")
     parser.add_argument(
         "--log-file",
         default=os.getenv("DB_RETENTION_LOG_FILE", "./logs/db-retention.log"),
@@ -164,25 +101,58 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _validate_execution_mode(args: argparse.Namespace) -> None:
+    if args.dry_run and args.apply:
+        raise ValueError("--dry-run and --apply are mutually exclusive")
+    if args.fare_memory and not args.dry_run and not args.apply:
+        raise ValueError("--fare-memory requires either --dry-run or --apply")
+    if args.batch_size < 1:
+        raise ValueError("--batch-size must be >= 1")
+
+
 def main() -> int:
     args = parse_args()
     started_at = time.monotonic()
     run_started_utc = utc_now_naive().isoformat() + "Z"
 
+    retention_windows = {
+        "price_snapshot_days": args.price_snapshot_days,
+        "notification_event_days": args.notification_event_days,
+        "security_activity_days": args.security_activity_days,
+        "idempotency_days": args.idempotency_days,
+    }
     run_context = {
         "dry_run": args.dry_run,
         "batch_size": args.batch_size,
         "db_url": os.getenv("DB_URL", "sqlite:///./viru.db"),
-        "retention": {
-            "price_snapshot_days": args.price_snapshot_days,
-            "notification_event_days": args.notification_event_days,
-            "security_activity_days": args.security_activity_days,
-            "idempotency_days": args.idempotency_days,
-        },
+        "retention": retention_windows,
     }
 
     try:
-        validate_retention_windows(args)
+        _validate_execution_mode(args)
+        if args.fare_memory:
+            log_event("db_retention.fare_memory_started", run_context, args.log_file)
+            with SessionLocal() as session:
+                result = run_fare_memory_retention(
+                    session,
+                    FareMemoryRetentionOptions(
+                        dry_run=args.dry_run,
+                        batch_size=args.batch_size,
+                        today=utc_now_naive().date(),
+                        now_utc=utc_now_naive(),
+                    ),
+                )
+            summary = {
+                "status": "ok",
+                "started_at": run_started_utc,
+                "finished_at": utc_now_naive().isoformat() + "Z",
+                "duration_ms": round((time.monotonic() - started_at) * 1000, 2),
+                **retention_result_to_payload(result),
+            }
+            log_event("db_retention.fare_memory_completed", summary, args.log_file)
+            return 0
+
+        validate_retention_windows(retention_windows)
 
         plans = [
             TableRetentionPlan("price_snapshot", PriceSnapshot, PriceSnapshot.captured_at_utc, args.price_snapshot_days),
@@ -204,10 +174,11 @@ def main() -> int:
                     plan=plan,
                     batch_size=args.batch_size,
                     dry_run=args.dry_run,
-                    log_file=args.log_file,
                 )
                 for plan in plans
             ]
+            for table_result in per_table:
+                log_table_completed(table_result, args.log_file)
 
         deleted_total = sum(item["deleted"] for item in per_table)
         candidates_total = sum(item["candidates"] for item in per_table)
