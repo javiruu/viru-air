@@ -3,6 +3,7 @@ import datetime as dt
 from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError
 from app.infrastructure.providers.base import FlightProvider
 from app.infrastructure.providers.orchestrator import FlightSearchOrchestrator
+from app.services.provider_health_stats import reset_provider_health_stats_for_tests, snapshot_provider_health
 
 
 def _flight(price: float, dep: str, source: str, currency: str = "EUR") -> ProviderFlight:
@@ -81,3 +82,19 @@ def test_orchestrator_keeps_other_provider_results_when_one_provider_crashes():
     warning = next(item for item in result.warnings_structured if item.provider == "wizzair")
     assert warning.code == "provider_error_partial"
     assert warning.meta == {"error_type": "ValueError"}
+
+
+def test_orchestrator_records_local_provider_health_samples():
+    reset_provider_health_stats_for_tests()
+    orchestrator = FlightSearchOrchestrator(providers=[_OkProvider(), _FailProvider(), _BuggyProvider()])
+
+    result = orchestrator.get_flights("MAD", "DUB", "2026-06-14")
+
+    snapshots = {item.provider_id: item for item in snapshot_provider_health()}
+    assert len(result.flights) == 1
+    assert snapshots["ok"].calls == 1
+    assert snapshots["ok"].successes == 1
+    assert snapshots["fail"].calls == 1
+    assert snapshots["fail"].outages == 1
+    assert snapshots["wizzair"].calls == 1
+    assert snapshots["wizzair"].errors == 1

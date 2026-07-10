@@ -198,9 +198,12 @@ async def lifespan(app: FastAPI):
         with suppress(asyncio.CancelledError):
             await revalidation_worker_task
     if retention_task is not None:
-        retention_task.cancel()
-        with suppress(asyncio.CancelledError):
-            await retention_task
+        try:
+            await asyncio.wait_for(asyncio.shield(retention_task), timeout=5.0)
+        except TimeoutError:
+            retention_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await retention_task
     if startup_route_task is not None:
         startup_route_task.cancel()
         with suppress(asyncio.CancelledError):

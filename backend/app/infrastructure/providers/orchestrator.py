@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import logging
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 
 from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError, ProviderWarning
 from app.infrastructure.providers.base import FlightProvider
 from app.infrastructure.providers.registry import FlightProviderRegistry
+from app.services.provider_health_stats import ProviderHealthSample, record_provider_health_sample
 
 
 logger = logging.getLogger(__name__)
@@ -47,8 +47,9 @@ class FlightSearchOrchestrator:
         t_start = time.perf_counter()
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_map: dict[Any, FlightProvider] = {}
+            future_map: dict[Future[ProviderFetchResult], tuple[FlightProvider, float]] = {}
             for provider in self._providers:
+                provider_started_at = time.perf_counter()
                 future = executor.submit(
                     provider.get_flights,
                     origin=origin,
@@ -57,16 +58,26 @@ class FlightSearchOrchestrator:
                     timeout_ms=provider_timeout,
                     currency=currency,
                 )
-                future_map[future] = provider
+                future_map[future] = (provider, provider_started_at)
 
             for future in as_completed(future_map):
-                provider = future_map[future]
+                provider, provider_started_at = future_map[future]
+                provider_elapsed_ms = int((time.perf_counter() - provider_started_at) * 1000)
                 try:
                     result = future.result()
                     flights.extend(result.flights)
                     warnings.extend(result.warnings)
                     for item in result.warnings_structured or []:
                         warnings_structured.append(item)
+                    record_provider_health_sample(
+                        ProviderHealthSample(
+                            provider_id=provider.provider_id,
+                            elapsed_ms=provider_elapsed_ms,
+                            flights_count=len(result.flights),
+                            warning_codes=self._result_warning_codes(result),
+                            succeeded=True,
+                        )
+                    )
                     logger.debug(
                         "orchestrator_provider_done provider=%s route=%s->%s flights=%s",
                         provider.provider_id, origin, destination, len(result.flights),
@@ -83,6 +94,15 @@ class FlightSearchOrchestrator:
                             )
                             for code in exc.warning_codes
                         ]
+                    )
+                    record_provider_health_sample(
+                        ProviderHealthSample(
+                            provider_id=exc.provider_id or provider.provider_id,
+                            elapsed_ms=provider_elapsed_ms,
+                            flights_count=0,
+                            warning_codes=tuple(exc.warning_codes),
+                            succeeded=False,
+                        )
                     )
                     logger.warning(
                         "orchestrator_provider_error provider=%s route=%s->%s codes=%s",
@@ -104,6 +124,15 @@ class FlightSearchOrchestrator:
                             provider=provider.provider_id,
                             severity="warning",
                             meta={"error_type": type(exc).__name__},
+                        )
+                    )
+                    record_provider_health_sample(
+                        ProviderHealthSample(
+                            provider_id=provider.provider_id,
+                            elapsed_ms=provider_elapsed_ms,
+                            flights_count=0,
+                            warning_codes=("provider_error_partial",),
+                            succeeded=False,
                         )
                     )
 
@@ -139,6 +168,14 @@ class FlightSearchOrchestrator:
             seen.add(warning)
             out.append(warning)
         return out
+
+    def _result_warning_codes(self, result: ProviderFetchResult) -> tuple[str, ...]:
+        return tuple(
+            [
+                *result.warnings,
+                *[warning.code for warning in result.warnings_structured or []],
+            ]
+        )
 
     def _dedupe_structured_warnings(self, warnings: list[ProviderWarning]) -> list[ProviderWarning]:
         seen: set[tuple[str, str, str, tuple[tuple[str, str], ...]]] = set()
