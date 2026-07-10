@@ -582,6 +582,26 @@ class QuickSearchCacheEntry(Base):
     confidence_score: Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True)
 
 
+class QuickSearchProviderLock(Base):
+    __tablename__ = "quick_search_provider_lock"
+    __table_args__ = (
+        Index("ix_qs_provider_lock_expires", "expires_at"),
+        Index("ix_qs_provider_lock_route", "origin_iata", "destination_iata", "travel_date", "provider"),
+    )
+
+    lock_key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    origin_iata: Mapped[str] = mapped_column(String(3))
+    destination_iata: Mapped[str] = mapped_column(String(3))
+    travel_date: Mapped[date_type] = mapped_column(Date)
+    provider: Mapped[str] = mapped_column(String(40))
+    currency: Mapped[str] = mapped_column(String(3), default="EUR")
+    lock_token: Mapped[str] = mapped_column(String(64), index=True)
+    acquired_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    expires_at: Mapped[datetime] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
+
+
 class FlightOfferCacheEntry(Base):
     __tablename__ = "flight_offer_cache_entry"
     __table_args__ = (

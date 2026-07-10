@@ -350,18 +350,27 @@ Implementacion actual desde Fase 33:
 - la politica explicita es last-write-wins para payload, warnings, TTL, estado y latencia;
 - `_DB_LOCK` se conserva como proteccion local hasta cerrar single-flight persistente.
 
+Implementacion actual desde Fase 34:
+
+- `quick_search_provider_lock` actua como lease persistente por route/day/provider/currency sin Redis;
+- `execute_plan` intenta adquirir el lease antes de llamar al provider cuando la cache compartida esta activa;
+- si otro proceso tiene el lease, la request espera L2/negative cache antes de duplicar la llamada;
+- el lease se libera al terminar y puede ser tomado por otro proceso si expira;
+- SQLite y PostgreSQL comparten la misma semantica por primary key `lock_key`.
+
 Riesgo actual:
 
 - `_DB_LOCK` en `quick_search_cache_service` solo protege dentro de un proceso Python; no coordina multiples workers ni pods;
 - `RevalidationJob` ya da dedupe persistente para jobs activos y es la base correcta para coordinacion cross-process;
-- `QuickSearchCacheEntry` tiene upsert atomico por constraint para SQLite/PostgreSQL, pero no sustituye el single-flight de provider;
+- `QuickSearchCacheEntry` tiene upsert atomico por constraint para SQLite/PostgreSQL;
+- `quick_search_provider_lock` reduce duplicados cross-process, pero no sustituye rate limits ni backoff de provider;
 - Redis existe como dependencia opcional y plan futuro, pero no debe tratarse como requisito actual para Fare Memory.
 
 Recomendacion:
 
 - mantener los locks de jobs en DB como fuente de verdad inmediata;
-- no activar workers multiples para rutas de alto volumen sin cerrar Fase 34;
-- si k8s con `replicas: 2` es produccion real, priorizar single-flight persistente antes de subir llamadas a provider;
+- no activar workers multiples para rutas de alto volumen sin verificar metricas de lock wait y provider calls;
+- si k8s con `replicas: 2` es produccion real, activar canary con cache compartida y single-flight antes de subir volumen;
 - Redis puede ser hot layer posterior, no sustituto de idempotencia persistente.
 
 ## Rollout y flags
