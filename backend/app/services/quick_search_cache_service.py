@@ -36,6 +36,13 @@ from app.services.quick_search_cache_upsert import (
     QuickSearchCacheUpsertValues,
     upsert_quick_search_cache_entry,
 )
+from app.services.quick_search_redis_hot_layer import (
+    RedisHotLayerClient,
+    read_negative_cache_entry_from_redis,
+    read_positive_cache_entry_from_redis,
+    write_negative_cache_entry_to_redis,
+    write_positive_cache_entry_to_redis,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -297,6 +304,7 @@ def get_fresh_entry(
     travel_date: dt.date | str,
     provider: str,
     source_hash: str,
+    redis_client: RedisHotLayerClient | None = None,
 ) -> QuickSearchCacheEntry | None:
     """Retrieve a fresh (non-expired) cache entry for the given unit.
 
@@ -309,6 +317,17 @@ def get_fresh_entry(
         travel_date=travel_date,
         provider=provider,
     )
+    redis_entry = read_positive_cache_entry_from_redis(
+        origin_iata=origin_iata,
+        destination_iata=destination_iata,
+        travel_date=travel_date,
+        provider=provider,
+        source_hash=source_hash,
+        now=now,
+        redis_client=redis_client,
+    )
+    if redis_entry is not None:
+        return redis_entry
     stmt = (
         select(QuickSearchCacheEntry)
         .where(
@@ -339,6 +358,7 @@ def set_cache_entry(
     payload_json: str,
     warnings_json: str,
     provider_latency_ms: int | None = None,
+    redis_client: RedisHotLayerClient | None = None,
 ) -> QuickSearchCacheEntry:
     """Persist a cache entry. Uses upsert semantics via unique constraint."""
     now = utc_now_naive()
@@ -380,6 +400,7 @@ def set_cache_entry(
                 provider_latency_ms=provider_latency_ms,
             ),
         )
+    write_positive_cache_entry_to_redis(entry, now=now, redis_client=redis_client)
     return entry
 
 
@@ -507,8 +528,16 @@ def get_fresh_negative_cache_entry(
     db: Session,
     *,
     negative_fingerprint: str,
+    redis_client: RedisHotLayerClient | None = None,
 ) -> QuickSearchNegativeCacheEntry | None:
     now = utc_now_naive()
+    redis_entry = read_negative_cache_entry_from_redis(
+        negative_fingerprint=negative_fingerprint,
+        now=now,
+        redis_client=redis_client,
+    )
+    if redis_entry is not None:
+        return redis_entry
     stmt = (
         select(QuickSearchNegativeCacheEntry)
         .where(
@@ -536,6 +565,7 @@ def set_negative_cache_entry(
     provider: str | None,
     canonical_request_json: str,
     retry_after_at: dt.datetime | None = None,
+    redis_client: RedisHotLayerClient | None = None,
 ) -> QuickSearchNegativeCacheEntry:
     now = utc_now_naive()
     existing_entry: QuickSearchNegativeCacheEntry | None = None
@@ -582,6 +612,7 @@ def set_negative_cache_entry(
         db.add(entry)
         db.commit()
         db.refresh(entry)
+    write_negative_cache_entry_to_redis(entry, now=now, redis_client=redis_client)
     return entry
 
 
