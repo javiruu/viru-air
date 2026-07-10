@@ -22,9 +22,32 @@ PROVIDER_TOTAL_OUTAGE_CODES: Final[frozenset[str]] = frozenset(
 
 PROVIDER_ERROR_CODES: Final[frozenset[str]] = frozenset(
     {
+        "provider_schema_changed",
+        "provider_waf_challenge",
         "ryanair_availability_failed",
         "ryanair_fares_failed",
     }
+)
+
+PROVIDER_INVALID_PRICE_CODES: Final[frozenset[str]] = frozenset(
+    {
+        "invalid_price",
+        "provider_invalid_price",
+    }
+)
+
+PROVIDER_SCHEMA_CHANGED_CODES: Final[frozenset[str]] = frozenset(
+    {
+        "provider_schema_changed",
+        "schema_changed",
+    }
+)
+
+PROVIDER_WAF_WARNING_MARKERS: Final[tuple[str, ...]] = (
+    "_provider_captcha_",
+    "_flight_connections_captcha_",
+    "provider_waf",
+    "waf_challenge",
 )
 
 PROVIDER_PARTIAL_DEGRADATION_CODES: Final[frozenset[str]] = frozenset(
@@ -53,3 +76,7 @@ PROVIDER_OUTAGE_WARNING_CODES: Final[frozenset[str]] = frozenset(
 
 def normalize_warning_code(code: str) -> str:
     return WARNING_CODE_ALIASES.get(code, code)
+
+
+def has_provider_waf_warning(codes: set[str]) -> bool:
+    return any(any(marker in code for marker in PROVIDER_WAF_WARNING_MARKERS) for code in codes)

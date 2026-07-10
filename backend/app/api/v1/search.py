@@ -41,7 +41,6 @@ from app.services.quick_search_planner import PairPlanItem, build_pair_plan
 from app.services.quick_search_ai_preference import select_quick_search_ai_preference
 from app.services.quick_search_ranking import rank_quick_search_results
 from app.services.quick_search_warning_codes import (
-    PROVIDER_ERROR_CODES,
     PROVIDER_OUTAGE_WARNING_CODES,
     PROVIDER_TOTAL_OUTAGE_CODES,
     PROVIDER_WARNING_CODES,
@@ -69,6 +68,7 @@ from app.services.quick_search_cache_service import (
     set_cache_entry,
     prune_expired_entries_async,
 )
+from app.services.quick_search_negative_cache_write_policy import resolve_negative_cache_write_policy
 from app.services.quick_search_provider_singleflight import (
     acquire_quick_search_provider_lock,
     release_quick_search_provider_lock,
@@ -147,27 +147,6 @@ def _filter_ui_warning_codes(codes: list[str]) -> list[str]:
             if code not in visible:
                 visible.append(code)
     return visible
-
-
-def _resolve_negative_cache_write_policy(result: ProviderFetchResult) -> tuple[str, dt.datetime | None]:
-    reason = "no_results"
-    retry_after_at = None
-    warning_codes = set(result.warnings or [])
-    if warning_codes & PROVIDER_TOTAL_OUTAGE_CODES:
-        reason = "provider_total_outage"
-    elif "provider_rate_limited" in warning_codes:
-        reason = "rate_limited"
-        retry_after_at = utc_now_naive() + dt.timedelta(minutes=15)
-    elif "provider_timeout_partial" in warning_codes:
-        reason = "provider_timeout"
-        retry_after_at = utc_now_naive() + dt.timedelta(minutes=5)
-    elif "provider_error_partial" in warning_codes:
-        reason = "provider_partial_degraded"
-        retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
-    elif warning_codes & PROVIDER_ERROR_CODES:
-        reason = "provider_partial_degraded"
-        retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
-    return reason, retry_after_at
 
 
 def _build_fare_memory_cache_callbacks(*, shared_cache_enabled: bool, user_currency: str) -> FareMemoryCacheCallbacks:
@@ -262,7 +241,7 @@ def _build_fare_memory_cache_callbacks(*, shared_cache_enabled: bool, user_curre
                 return resolve_negative_cache_result(entry)
 
         def _negative_set(o: str, d: str, date: dt.date | str, prov: str, result: ProviderFetchResult) -> None:
-            reason, retry_after_at = _resolve_negative_cache_write_policy(result)
+            reason, retry_after_at = resolve_negative_cache_write_policy(result)
             with SessionLocal() as cache_db:
                 set_negative_cache_entry(
                     cache_db,

@@ -236,6 +236,15 @@ Primera integracion real desde la Fase 28:
 - `provider_timeout`, `provider_error` y `provider_total_outage` aplican backoff mas corto y conservan warnings canonicos;
 - la ausencia por provider no debe presentarse como ausencia silenciosa de mercado.
 
+Taxonomia de errores provider desde Fase 38:
+
+- `no_results` representa una ausencia real de vuelos y puede escribirse como `negative_fresh`;
+- `invalid_price` se cachea con TTL corto como dato invalido, no como ausencia de mercado;
+- `provider_timeout`, `provider_total_outage` y `provider_partial_degraded` activan `provider_error_fresh`;
+- `provider_waf_challenge` cubre warning codes con captcha/WAF y nunca debe degradar a `no_results`;
+- `provider_schema_changed` cubre drift de payload/contrato y nunca debe degradar a `no_results`;
+- si un resultado vacio trae WAF/schema drift junto a otros warnings, gana la razon peligrosa para evitar cachear la ruta como vacia.
+
 ## TTL inicial recomendado
 
 | Antelacion salida | TTL |
