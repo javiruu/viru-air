@@ -358,13 +358,21 @@ Implementacion actual desde Fase 34:
 - el lease se libera al terminar y puede ser tomado por otro proceso si expira;
 - SQLite y PostgreSQL comparten la misma semantica por primary key `lock_key`.
 
+Implementacion actual desde Fase 35:
+
+- Redis es una hot layer opcional para `qs:result:{source_hash}` y `qs:negative:{negative_fingerprint}`;
+- solo se usa si `REDIS_URL` configura un cliente operativo;
+- un hit Redis evita lectura DB para la unidad cacheada, pero DB sigue siendo la fuente durable;
+- errores de Redis durante read/write hacen fallback silencioso a DB/in-process;
+- `QUICK_SEARCH_REDIS_TTL_SECONDS` queda capado por el TTL restante de la entrada DB.
+
 Riesgo actual:
 
 - `_DB_LOCK` en `quick_search_cache_service` solo protege dentro de un proceso Python; no coordina multiples workers ni pods;
 - `RevalidationJob` ya da dedupe persistente para jobs activos y es la base correcta para coordinacion cross-process;
 - `QuickSearchCacheEntry` tiene upsert atomico por constraint para SQLite/PostgreSQL;
 - `quick_search_provider_lock` reduce duplicados cross-process, pero no sustituye rate limits ni backoff de provider;
-- Redis existe como dependencia opcional y plan futuro, pero no debe tratarse como requisito actual para Fare Memory.
+- Redis acelera hits compartidos cuando esta disponible, pero no debe tratarse como requisito actual para Fare Memory.
 
 Recomendacion:
 
@@ -379,7 +387,7 @@ Estado de rollout actual:
 
 - la memoria durable existe y puede usarse por capas, pero la activacion debe ser gradual;
 - el warmup de arranque permanece desactivado por defecto;
-- Redis se considera una capa opcional futura, no una dependencia obligatoria de la memoria durable;
+- Redis se considera una capa opcional, no una dependencia obligatoria de la memoria durable;
 - cualquier activacion que aumente llamadas a providers debe tener limite, backoff y verificacion explicita.
 
 Flags relevantes:
