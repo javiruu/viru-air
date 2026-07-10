@@ -69,6 +69,10 @@ from app.services.quick_search_cache_service import (
     set_cache_entry,
     prune_expired_entries_async,
 )
+from app.services.quick_search_provider_singleflight import (
+    acquire_quick_search_provider_lock,
+    release_quick_search_provider_lock,
+)
 from app.services.fare_memory import build_freshness_payload, build_search_fingerprint
 from app.services.fare_memory_provider_observations import ObservationPersistenceContext, persist_provider_flight_observations
 from app.services.quick_search_save_result_observation import handle_saved_result_observation
@@ -88,6 +92,8 @@ CALENDAR_HINTS_GUIDELINE_DEFAULT_MID_MAX = 150.0
 
 SharedCacheGet = Callable[[str, str, dt.date | str, str], ProviderFetchResult | None]
 SharedCacheSet = Callable[[str, str, dt.date | str, str, ProviderFetchResult], None]
+ProviderSingleFlightAcquire = Callable[[str, str, dt.date | str, str], str | None]
+ProviderSingleFlightRelease = Callable[[str], None]
 
 
 @dataclass(frozen=True, slots=True)
@@ -96,6 +102,8 @@ class FareMemoryCacheCallbacks:
     shared_cache_set: SharedCacheSet | None
     negative_cache_get: SharedCacheGet | None
     negative_cache_set: SharedCacheSet | None
+    provider_singleflight_acquire: ProviderSingleFlightAcquire | None
+    provider_singleflight_release: ProviderSingleFlightRelease | None
 
 
 def _build_request_provider() -> MultiSourceFlightProvider:
@@ -169,6 +177,8 @@ def _build_fare_memory_cache_callbacks(*, shared_cache_enabled: bool, user_curre
             shared_cache_set=None,
             negative_cache_get=None,
             negative_cache_set=None,
+            provider_singleflight_acquire=None,
+            provider_singleflight_release=None,
         )
 
     def _shared_get(o: str, d: str, date: dt.date | str, prov: str) -> ProviderFetchResult | None:
@@ -214,6 +224,22 @@ def _build_fare_memory_cache_callbacks(*, shared_cache_enabled: bool, user_curre
                 payload_json=payload_json,
                 warnings_json=warnings_json,
             )
+
+    def _provider_singleflight_acquire(o: str, d: str, date: dt.date | str, prov: str) -> str | None:
+        with SessionLocal() as cache_db:
+            lease = acquire_quick_search_provider_lock(
+                cache_db,
+                origin_iata=o,
+                destination_iata=d,
+                travel_date=date,
+                provider=prov,
+                currency=user_currency,
+            )
+            return lease.lock_token if lease is not None else None
+
+    def _provider_singleflight_release(lock_token: str) -> None:
+        with SessionLocal() as cache_db:
+            release_quick_search_provider_lock(cache_db, lock_token=lock_token)
 
     negative_cache_get = None
     negative_cache_set = None
@@ -271,6 +297,8 @@ def _build_fare_memory_cache_callbacks(*, shared_cache_enabled: bool, user_curre
         shared_cache_set=_shared_set,
         negative_cache_get=negative_cache_get,
         negative_cache_set=negative_cache_set,
+        provider_singleflight_acquire=_provider_singleflight_acquire,
+        provider_singleflight_release=_provider_singleflight_release,
     )
 
 
@@ -1641,6 +1669,8 @@ def quick_search_calendar_hints(
             shared_cache_set=cache_callbacks.shared_cache_set,
             negative_cache_get=cache_callbacks.negative_cache_get,
             negative_cache_set=cache_callbacks.negative_cache_set,
+            provider_singleflight_acquire=cache_callbacks.provider_singleflight_acquire,
+            provider_singleflight_release=cache_callbacks.provider_singleflight_release,
             cache_provider_id=provider_cache_id,
         )
         anchor_pair_prices_by_day, anchor_currency = _build_pair_day_prices(anchor_rows)
@@ -1695,6 +1725,8 @@ def quick_search_calendar_hints(
         shared_cache_set=cache_callbacks.shared_cache_set,
         negative_cache_get=cache_callbacks.negative_cache_get,
         negative_cache_set=cache_callbacks.negative_cache_set,
+        provider_singleflight_acquire=cache_callbacks.provider_singleflight_acquire,
+        provider_singleflight_release=cache_callbacks.provider_singleflight_release,
         cache_provider_id=provider_cache_id,
     )
     pair_prices_by_day, response_currency = _build_pair_day_prices(full_rows)
@@ -2214,6 +2246,8 @@ def quick_search(
             shared_cache_set=cache_callbacks.shared_cache_set,
             negative_cache_get=cache_callbacks.negative_cache_get,
             negative_cache_set=cache_callbacks.negative_cache_set,
+            provider_singleflight_acquire=cache_callbacks.provider_singleflight_acquire,
+            provider_singleflight_release=cache_callbacks.provider_singleflight_release,
             cache_provider_id=provider_cache_id,
         )
         execution_meta["provider_set"] = provider_ids

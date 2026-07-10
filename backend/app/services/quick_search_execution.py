@@ -20,6 +20,8 @@ from app.services.quick_search_warning_codes import PROVIDER_OUTAGE_WARNING_CODE
 CacheUnitKey = tuple[str, str, str, str]
 MemoryCacheKey = tuple[str, str, str, str]
 CacheResultCategory = str  # "ready" | "empty" | "degraded"
+ProviderSingleFlightAcquire = Callable[[str, str, dt.date | str, str], str | None]
+ProviderSingleFlightRelease = Callable[[str], None]
 
 
 def build_unit_cache_key(
@@ -201,6 +203,8 @@ def execute_plan(
     shared_cache_set: Callable[[str, str, dt.date | str, str, ProviderFetchResult], None] | None = None,
     negative_cache_get: Callable[[str, str, dt.date | str, str], ProviderFetchResult | None] | None = None,
     negative_cache_set: Callable[[str, str, dt.date | str, str, ProviderFetchResult], None] | None = None,
+    provider_singleflight_acquire: ProviderSingleFlightAcquire | None = None,
+    provider_singleflight_release: ProviderSingleFlightRelease | None = None,
     cache_provider_id: str = "multi",
 ) -> tuple[list[tuple[str, str, dt.date, ProviderFlight]], dict[str, Any], list[str]]:
     timeout_ms = max(1000, timeout_ms)
@@ -225,6 +229,7 @@ def execute_plan(
                 _fetch_with_cache, unit, timeout_ms, fetch_flights,
                 shared_cache_get, shared_cache_set,
                 negative_cache_get, negative_cache_set,
+                provider_singleflight_acquire, provider_singleflight_release,
                 cache_provider_id,
             ): unit
             for unit in plan.units
@@ -320,6 +325,8 @@ def _fetch_with_cache(
     shared_cache_set: Callable[[str, str, dt.date | str, str, ProviderFetchResult], None] | None = None,
     negative_cache_get: Callable[[str, str, dt.date | str, str], ProviderFetchResult | None] | None = None,
     negative_cache_set: Callable[[str, str, dt.date | str, str, ProviderFetchResult], None] | None = None,
+    provider_singleflight_acquire: ProviderSingleFlightAcquire | None = None,
+    provider_singleflight_release: ProviderSingleFlightRelease | None = None,
     cache_provider_id: str = "multi",
 ) -> tuple[ProviderFetchResult, str]:
     """Fetch with multi-level cache: L1 (memory) -> L2 (persistent) -> provider.
@@ -377,28 +384,53 @@ def _fetch_with_cache(
                 if cached_after_wait and now - cached_after_wait[0] <= _CACHE_TTL_SECONDS:
                     return cached_after_wait[1], "L1"
 
+            lease_token: str | None = None
+            if provider_singleflight_acquire is not None:
+                lease_token = provider_singleflight_acquire(
+                    unit.origin_iata,
+                    unit.destination_iata,
+                    unit.travel_date,
+                    provider_key,
+                )
+                if lease_token is None:
+                    waited_result, waited_hit_type, lease_token = _wait_for_singleflight_result(
+                        key=key,
+                        unit=unit,
+                        provider_key=provider_key,
+                        timeout_ms=timeout_ms,
+                        shared_cache_get=shared_cache_get,
+                        negative_cache_get=negative_cache_get,
+                        provider_singleflight_acquire=provider_singleflight_acquire,
+                    )
+                    if waited_result is not None:
+                        return waited_result, waited_hit_type
+
             # MISS: fetch from provider
-            raw_result = fetch_flights(unit.origin_iata, unit.destination_iata, str(unit.travel_date), timeout_ms)
-            if isinstance(raw_result, ProviderFetchResult):
-                fetch_result = raw_result
-            else:
-                fetch_result = ProviderFetchResult(flights=raw_result, warnings=[])
+            try:
+                raw_result = fetch_flights(unit.origin_iata, unit.destination_iata, str(unit.travel_date), timeout_ms)
+                if isinstance(raw_result, ProviderFetchResult):
+                    fetch_result = raw_result
+                else:
+                    fetch_result = ProviderFetchResult(flights=raw_result, warnings=[])
 
-            # Populate L1
-            with _CACHE_LOCK:
-                _CACHE[key] = (now, fetch_result)
+                # Populate L1
+                with _CACHE_LOCK:
+                    _CACHE[key] = (now, fetch_result)
 
-            # Populate L2
-            if shared_cache_set is not None:
-                shared_cache_set(
-                    unit.origin_iata, unit.destination_iata,
-                    unit.travel_date, provider_key, fetch_result,
-                )
-            if negative_cache_set is not None and not fetch_result.flights:
-                negative_cache_set(
-                    unit.origin_iata, unit.destination_iata,
-                    unit.travel_date, provider_key, fetch_result,
-                )
+                # Populate L2
+                if shared_cache_set is not None:
+                    shared_cache_set(
+                        unit.origin_iata, unit.destination_iata,
+                        unit.travel_date, provider_key, fetch_result,
+                    )
+                if negative_cache_set is not None and not fetch_result.flights:
+                    negative_cache_set(
+                        unit.origin_iata, unit.destination_iata,
+                        unit.travel_date, provider_key, fetch_result,
+                    )
+            finally:
+                if lease_token is not None and provider_singleflight_release is not None:
+                    provider_singleflight_release(lease_token)
         finally:
             # Cleanup: remove the per-key lock to avoid memory leak,
             # even if fetch_flights() or L2 persist raises an exception.
@@ -407,3 +439,52 @@ def _fetch_with_cache(
                     del _FETCH_LOCKS[key]
 
     return fetch_result, "MISS"
+
+
+def _wait_for_singleflight_result(
+    *,
+    key: MemoryCacheKey,
+    unit: ExecutionUnit,
+    provider_key: str,
+    timeout_ms: int,
+    shared_cache_get: Callable[[str, str, dt.date | str, str], ProviderFetchResult | None] | None,
+    negative_cache_get: Callable[[str, str, dt.date | str, str], ProviderFetchResult | None] | None,
+    provider_singleflight_acquire: ProviderSingleFlightAcquire,
+) -> tuple[ProviderFetchResult | None, str, str | None]:
+    deadline = time.monotonic() + min(30.0, max(1.0, (timeout_ms / 1000.0) + 1.0))
+    while time.monotonic() < deadline:
+        time.sleep(0.1)
+        now = time.time()
+        with _CACHE_LOCK:
+            cached = _CACHE.get(key)
+            if cached and now - cached[0] <= _CACHE_TTL_SECONDS:
+                return cached[1], "L1", None
+        if shared_cache_get is not None:
+            l2_result = shared_cache_get(
+                unit.origin_iata,
+                unit.destination_iata,
+                unit.travel_date,
+                provider_key,
+            )
+            if l2_result is not None:
+                with _CACHE_LOCK:
+                    _CACHE[key] = (now, l2_result)
+                return l2_result, "L2", None
+        if negative_cache_get is not None:
+            negative_result = negative_cache_get(
+                unit.origin_iata,
+                unit.destination_iata,
+                unit.travel_date,
+                provider_key,
+            )
+            if negative_result is not None:
+                return negative_result, "NEGATIVE", None
+        lease_token = provider_singleflight_acquire(
+            unit.origin_iata,
+            unit.destination_iata,
+            unit.travel_date,
+            provider_key,
+        )
+        if lease_token is not None:
+            return None, "MISS", lease_token
+    return None, "MISS", None
