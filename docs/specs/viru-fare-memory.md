@@ -333,6 +333,29 @@ Implementacion actual desde Fase 31:
 - si no hay cache fresca, se llama al provider y se persiste la nueva observacion global cuando hay precio;
 - si el provider falla, la respuesta conserva `stale_data=true` y `provider_status=degraded` sin presentar historico viejo como dato actual.
 
+Auditoria multi-worker desde Fase 32:
+
+- local rapido documentado en `README.md` usa `uvicorn app.main:app --reload --port 8000`, por tanto es single-process por defecto;
+- `iniciar_viru.ps1` arranca con un worker por defecto, pero permite `UVICORN_WORKERS>1`, cambiando a `uvicorn --workers`;
+- `infra/k8s/backend.yaml` declara `replicas: 2` para `viru-backend`, asi que ese manifiesto representa riesgo multi-pod real si es el despliegue activo;
+- `infra/k8s/worker.yaml` declara un worker separado con `replicas: 1`, pero aun ejecuta un comando placeholder;
+- `infra/github/workflows/release.yml` no despliega infraestructura real: solo ejecuta quality gates y pasos canary simulados;
+- `docs/engineering/infra.md` confirma que no hay una fuente consolidada de despliegue operacional.
+
+Riesgo actual:
+
+- `_DB_LOCK` en `quick_search_cache_service` solo protege dentro de un proceso Python; no coordina multiples workers ni pods;
+- `RevalidationJob` ya da dedupe persistente para jobs activos y es la base correcta para coordinacion cross-process;
+- `QuickSearchCacheEntry` aun usa delete+insert protegido solo por lock local; Fase 33 debe resolver el upsert seguro;
+- Redis existe como dependencia opcional y plan futuro, pero no debe tratarse como requisito actual para Fare Memory.
+
+Recomendacion:
+
+- mantener los locks de jobs en DB como fuente de verdad inmediata;
+- no activar workers multiples para rutas de alto volumen sin cerrar Fase 33/34;
+- si k8s con `replicas: 2` es produccion real, priorizar upsert DB y single-flight persistente antes de subir llamadas a provider;
+- Redis puede ser hot layer posterior, no sustituto de idempotencia persistente.
+
 ## Rollout y flags
 
 Estado de rollout actual:
