@@ -307,6 +307,12 @@ Requisitos minimos:
 - lock anti-duplicado;
 - flag off por defecto.
 
+Implementacion actual desde Fase 28:
+
+- `fare_memory_warmup` y `watchlist_revalidation` ignoran watches activos con fecha de viaje anterior al dia de arranque;
+- el corte se aplica antes de calcular prioridad, frescura, volatilidad o encolar `RevalidationJob`;
+- el orden de prioridad existente se conserva para rutas futuras o del mismo dia.
+
 ## Rollout y flags
 
 Estado de rollout actual:

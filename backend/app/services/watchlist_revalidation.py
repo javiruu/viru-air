@@ -85,6 +85,7 @@ def enqueue_startup_refresh_jobs(
     active_watches = db.scalars(
         select(FlightWatch)
         .where(FlightWatch.status == WATCH_STATUS_ACTIVE)
+        .where(FlightWatch.travel_date_local >= reference_now.date())
         .order_by(FlightWatch.travel_date_local.asc(), FlightWatch.created_at.asc(), FlightWatch.id.asc())
     ).all()
     routes: dict[tuple[str, str, Date], list[FlightWatch]] = {}
