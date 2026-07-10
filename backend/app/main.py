@@ -28,9 +28,13 @@ from app.services.fare_memory_config import (
     FARE_MEMORY_BOOT_WARMUP_JITTER_SECONDS,
     FARE_MEMORY_MAX_BOOT_JOBS,
     FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE,
+    FARE_MEMORY_REVALIDATION_WORKER_BATCH_SIZE,
+    FARE_MEMORY_REVALIDATION_WORKER_ENABLED,
+    FARE_MEMORY_REVALIDATION_WORKER_INTERVAL_SECONDS,
     FARE_MEMORY_RETENTION_BATCH_SIZE,
     FARE_MEMORY_RETENTION_ENABLED,
 )
+from app.services.fare_memory_revalidation_worker import RevalidationWorkerConfig, run_periodic_revalidation_worker
 from app.services.fare_memory_retention_job import run_startup_fare_memory_retention
 from app.services.fare_memory_warmup import log_scheduled_boot_warmup_jobs
 from app.services.watchlist_revalidation import (
@@ -123,10 +127,21 @@ async def _run_startup_fare_memory_retention_job() -> None:
     )
 
 
+async def _run_periodic_fare_memory_revalidation_worker() -> None:
+    await run_periodic_revalidation_worker(
+        SessionLocal,
+        RevalidationWorkerConfig(
+            interval_seconds=FARE_MEMORY_REVALIDATION_WORKER_INTERVAL_SECONDS,
+            batch_size=FARE_MEMORY_REVALIDATION_WORKER_BATCH_SIZE,
+        ),
+    )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     startup_route_task = None
     retention_task = None
+    revalidation_worker_task = None
     if FARE_MEMORY_BOOT_WARMUP_ENABLED:
         db = SessionLocal()
         try:
@@ -174,7 +189,14 @@ async def lifespan(app: FastAPI):
     if FARE_MEMORY_RETENTION_ENABLED:
         retention_task = asyncio.create_task(_run_startup_fare_memory_retention_job())
         app.state.fare_memory_retention_task = retention_task
+    if FARE_MEMORY_REVALIDATION_WORKER_ENABLED:
+        revalidation_worker_task = asyncio.create_task(_run_periodic_fare_memory_revalidation_worker())
+        app.state.fare_memory_revalidation_worker_task = revalidation_worker_task
     yield
+    if revalidation_worker_task is not None:
+        revalidation_worker_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await revalidation_worker_task
     if retention_task is not None:
         retention_task.cancel()
         with suppress(asyncio.CancelledError):
