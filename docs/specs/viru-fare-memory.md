@@ -326,6 +326,13 @@ Implementacion actual desde Fase 30:
 - jobs terminales (`done`, `skipped`, `failed`) no bloquean un reencolado posterior;
 - un retry ya encolado tras fallo se reutiliza y no crea un tercer job duplicado.
 
+Implementacion actual desde Fase 31:
+
+- `POST /api/v1/watchlist/{watch_id}/refresh-now` procesa el job manual mediante `process_revalidation_job`;
+- si hay cache global fresca para la ruta, se usa sin llamar al provider y se persiste `PriceSnapshot`;
+- si no hay cache fresca, se llama al provider y se persiste la nueva observacion global cuando hay precio;
+- si el provider falla, la respuesta conserva `stale_data=true` y `provider_status=degraded` sin presentar historico viejo como dato actual.
+
 ## Rollout y flags
 
 Estado de rollout actual:
