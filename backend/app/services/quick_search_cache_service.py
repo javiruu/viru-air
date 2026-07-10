@@ -32,6 +32,10 @@ from app.services.quick_search_negative_cache_policy import (
     negative_result_for_reason,
     negative_ttl_for_reason,
 )
+from app.services.quick_search_cache_upsert import (
+    QuickSearchCacheUpsertValues,
+    upsert_quick_search_cache_entry,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -352,41 +356,30 @@ def set_cache_entry(
     expires_at = now + dt.timedelta(seconds=ttl)
 
     with _DB_LOCK:
-        # Delete existing entry for the same unique key before inserting
         key = build_unit_cache_key(
             origin_iata=origin_iata,
             destination_iata=destination_iata,
             travel_date=travel_date,
             provider=provider,
         )
-        db.execute(
-            delete(QuickSearchCacheEntry).where(
-                QuickSearchCacheEntry.origin_iata == key[0],
-                QuickSearchCacheEntry.destination_iata == key[1],
-                QuickSearchCacheEntry.travel_date == travel_date_obj,
-                QuickSearchCacheEntry.provider == key[3],
-                QuickSearchCacheEntry.source_hash == source_hash,
-            )
+        entry = upsert_quick_search_cache_entry(
+            db,
+            QuickSearchCacheUpsertValues(
+                origin_iata=key[0],
+                destination_iata=key[1],
+                travel_date=travel_date_obj,
+                provider=key[3],
+                source_hash=source_hash,
+                status=category,
+                ttl_seconds=ttl,
+                expires_at_utc=expires_at,
+                captured_at_utc=now,
+                last_accessed_at_utc=now,
+                payload_json=payload_json,
+                warnings_json=warnings_json,
+                provider_latency_ms=provider_latency_ms,
+            ),
         )
-
-        entry = QuickSearchCacheEntry(
-            origin_iata=str(origin_iata).strip().upper(),
-            destination_iata=str(destination_iata).strip().upper(),
-            travel_date=travel_date_obj,
-            provider=str(provider).strip().lower(),
-            status=category,
-            ttl_seconds=ttl,
-            expires_at_utc=expires_at,
-            captured_at_utc=now,
-            last_accessed_at_utc=now,
-            payload_json=payload_json,
-            warnings_json=warnings_json,
-            source_hash=source_hash,
-            provider_latency_ms=provider_latency_ms,
-        )
-        db.add(entry)
-        db.commit()
-        db.refresh(entry)
     return entry
 
 

@@ -342,18 +342,26 @@ Auditoria multi-worker desde Fase 32:
 - `infra/github/workflows/release.yml` no despliega infraestructura real: solo ejecuta quality gates y pasos canary simulados;
 - `docs/engineering/infra.md` confirma que no hay una fuente consolidada de despliegue operacional.
 
+Implementacion actual desde Fase 33:
+
+- `set_cache_entry` ya no borra y recrea `QuickSearchCacheEntry` para la misma unidad de cache;
+- SQLite usa `ON CONFLICT DO UPDATE` sobre la clave unica (`origin_iata`, `destination_iata`, `travel_date`, `provider`, `source_hash`);
+- PostgreSQL compila el upsert contra el constraint `uq_quick_search_cache_unit`;
+- la politica explicita es last-write-wins para payload, warnings, TTL, estado y latencia;
+- `_DB_LOCK` se conserva como proteccion local hasta cerrar single-flight persistente.
+
 Riesgo actual:
 
 - `_DB_LOCK` en `quick_search_cache_service` solo protege dentro de un proceso Python; no coordina multiples workers ni pods;
 - `RevalidationJob` ya da dedupe persistente para jobs activos y es la base correcta para coordinacion cross-process;
-- `QuickSearchCacheEntry` aun usa delete+insert protegido solo por lock local; Fase 33 debe resolver el upsert seguro;
+- `QuickSearchCacheEntry` tiene upsert atomico por constraint para SQLite/PostgreSQL, pero no sustituye el single-flight de provider;
 - Redis existe como dependencia opcional y plan futuro, pero no debe tratarse como requisito actual para Fare Memory.
 
 Recomendacion:
 
 - mantener los locks de jobs en DB como fuente de verdad inmediata;
-- no activar workers multiples para rutas de alto volumen sin cerrar Fase 33/34;
-- si k8s con `replicas: 2` es produccion real, priorizar upsert DB y single-flight persistente antes de subir llamadas a provider;
+- no activar workers multiples para rutas de alto volumen sin cerrar Fase 34;
+- si k8s con `replicas: 2` es produccion real, priorizar single-flight persistente antes de subir llamadas a provider;
 - Redis puede ser hot layer posterior, no sustituto de idempotencia persistente.
 
 ## Rollout y flags
