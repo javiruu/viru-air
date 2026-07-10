@@ -181,7 +181,13 @@ class VuelingProvider(FlightProvider):
             departure_time_local=self._to_time(departure_raw),
             captured_at=utc_now_naive(),
             source="vueling-public-availability",
+            provider=self.provider_id,
+            origin_iata=search.origin,
+            destination_iata=search.destination,
+            travel_date=search.travel_date,
             deeplink_url=self._build_deeplink(search),
+            carrier_code=self._normalize_carrier_code(item.get("carrierCode")) or "VY",
+            flight_number=self._normalize_flight_number(item.get("flightNumber")),
         )
 
     def _build_deeplink(self, search: _VuelingSearch) -> str:
@@ -218,3 +224,11 @@ class VuelingProvider(FlightProvider):
         except (TypeError, ValueError):
             return None
         return amount if amount > 0.0 else None
+
+    def _normalize_carrier_code(self, value) -> str | None:
+        normalized = str(value or "").strip().upper()
+        return normalized or None
+
+    def _normalize_flight_number(self, value) -> str | None:
+        normalized = str(value or "").strip().upper()
+        return normalized or None

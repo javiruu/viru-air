@@ -76,3 +76,41 @@ def test_get_flights_raises_when_ryanair_sources_return_non_json() -> None:
     assert "ryanair_fares_failed" in exc_info.value.warning_codes
     assert "ryanair_provider_unavailable_total" in exc_info.value.warning_codes
     assert "provider_total_outage" in exc_info.value.warning_codes
+
+
+def test_availability_flights_include_normalized_provider_contract(monkeypatch: pytest.MonkeyPatch) -> None:
+    provider = RyanairPublicProvider()
+
+    def fake_get_json(url: str, *, timeout_ms: int):
+        assert "Origin=MAD" in url
+        assert "Destination=DUB" in url
+        assert "DateOut=2026-06-14" in url
+        return {
+            "trips": [
+                {
+                    "flights": [
+                        {
+                            "flightNumber": "fr 7032",
+                            "regularFare": {"fares": [{"amount": 42.5}]},
+                            "time": ["2026-06-14T06:30:00"],
+                        }
+                    ]
+                }
+            ]
+        }
+
+    monkeypatch.setattr(provider, "_get_json", fake_get_json)
+
+    flights = provider._fetch_availability("MAD", "DUB", "2026-06-14", timeout_ms=1000, currency="EUR")
+
+    assert len(flights) == 1
+    flight = flights[0]
+    assert flight.provider == "ryanair"
+    assert flight.origin_iata == "MAD"
+    assert flight.destination_iata == "DUB"
+    assert flight.travel_date == "2026-06-14"
+    assert flight.departure_time_local == "06:30"
+    assert flight.carrier_code == "FR"
+    assert flight.flight_number == "FR 7032"
+    assert flight.deeplink_url is not None
+    assert "ryanair.com" in flight.deeplink_url

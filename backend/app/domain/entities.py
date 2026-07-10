@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 
@@ -18,7 +18,13 @@ class ProviderFlight:
     departure_time_local: str | None
     captured_at: datetime
     source: str = "ryanair-public"
+    provider: str | None = None
+    origin_iata: str | None = None
+    destination_iata: str | None = None
+    travel_date: date | str | None = None
     deeplink_url: str | None = None
+    carrier_code: str | None = None
+    flight_number: str | None = None
 
 
 @dataclass
