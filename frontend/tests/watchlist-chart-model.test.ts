@@ -46,6 +46,26 @@ test("watchlist chart model keeps abrupt price changes inside the plot area", ()
   assert.ok(model[0]?.areaPoints.includes("226"));
 });
 
+test("watchlist chart model preserves historical backfill source kind", () => {
+  const backfillRow = {
+    ...historyRow("2026-07-01T08:00:00.000Z", 45.95),
+    sourceKind: "historical_backfill",
+  };
+
+  const model = buildWatchlistChartModel({
+    groupedByDate: {
+      "2026-07-15": [backfillRow],
+    },
+    selectedDates: ["2026-07-15"],
+    chartHeight: 260,
+    chartWidth: 720,
+    chartPad,
+    lineColors: ["#D95D39"],
+  });
+
+  assert.equal(model?.[0]?.points[0]?.sourceKind, "historical_backfill");
+});
+
 test("watchlist provider coverage keys resolve in both locales", () => {
   const keys = [
     "watchlist.providerCoverage.kicker",

@@ -13,6 +13,7 @@ from app.infrastructure.db.models import (
     QuickSearchCacheEntry,
     QuickSearchNegativeCacheEntry,
 )
+from app.services.fare_memory_logging import log_fare_memory_retention_pruned
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,7 +55,9 @@ def run_fare_memory_retention(session: Session, options: FareMemoryRetentionOpti
         _prune_search_cache_entries(session, options),
         _prune_negative_cache_entries(session, options),
     ]
-    return FareMemoryRetentionResult(dry_run=options.dry_run, tables=tables)
+    result = FareMemoryRetentionResult(dry_run=options.dry_run, tables=tables)
+    log_fare_memory_retention_pruned(retention_result_to_payload(result))
+    return result
 
 
 def retention_result_to_payload(result: FareMemoryRetentionResult) -> dict:

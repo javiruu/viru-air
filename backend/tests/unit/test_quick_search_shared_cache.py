@@ -18,7 +18,10 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.core.time import utc_now_naive
 from app.domain.entities import ProviderFetchResult, ProviderFlight
 from app.infrastructure.db.models import Base, QuickSearchCacheEntry, QuickSearchNegativeCacheEntry
-from app.services.quick_search_cache_service import prune_expired_entries
+from app.services.quick_search_cache_service import (
+    get_fresh_entry,
+    prune_expired_entries,
+)
 from app.services.quick_search_execution import (
     _CACHE,
     _FETCH_LOCKS,
@@ -121,6 +124,8 @@ class SharedCacheIntegrationTests(unittest.TestCase):
         )
         self.assertEqual(len(rows2), 1)
         self.assertEqual(meta2["l2_cache_hits"], 1)
+        self.assertEqual(meta2["cache_hits"], 1)
+        self.assertEqual(meta2["cache_misses"], 0)
         self.assertEqual(meta2["provider_calls"], 0)
         # Provider was only called once total
         self.assertEqual(calls_count["n"], 1)
@@ -186,6 +191,75 @@ class SharedCacheIntegrationTests(unittest.TestCase):
         self.assertEqual(called["n"], 1)
         # L2 should now be populated
         self.assertIn(("MAD", "BCN", "2026-08-15", "multi"), l2_store)
+
+    def test_expired_l2_entry_is_treated_as_miss_and_refetched(self):
+        db, engine = self._db()
+        now = utc_now_naive()
+        travel_date = dt.date(2026, 12, 25)
+        source_hash = build_cache_source_hash(
+            origin_iata="AGP",
+            destination_iata="TSF",
+            travel_date=travel_date,
+            provider="multi",
+        )
+        try:
+            db.add(
+                QuickSearchCacheEntry(
+                    origin_iata="AGP",
+                    destination_iata="TSF",
+                    travel_date=travel_date,
+                    provider="multi",
+                    status="ready",
+                    ttl_seconds=60,
+                    expires_at_utc=now - dt.timedelta(seconds=1),
+                    captured_at_utc=now - dt.timedelta(minutes=2),
+                    last_accessed_at_utc=now - dt.timedelta(minutes=2),
+                    payload_json='{"flights":[{"price": 11.0, "currency": "EUR", "source": "expired-cache"}]}',
+                    warnings_json="[]",
+                    source_hash=source_hash,
+                )
+            )
+            db.commit()
+            self.assertIsNone(
+                get_fresh_entry(
+                    db,
+                    origin_iata="AGP",
+                    destination_iata="TSF",
+                    travel_date=travel_date,
+                    provider="multi",
+                    source_hash=source_hash,
+                )
+            )
+
+            pairs = [self._pair("AGP", "TSF")]
+            dates = [travel_date]
+            plan = build_execution_plan(pairs, dates, max_requests=5)
+            calls = {"n": 0}
+
+            def l2_get(origin, destination, date, provider):
+                return None
+
+            def fake_fetch(origin, destination, date_str, timeout_ms):
+                calls["n"] += 1
+                return ProviderFetchResult(flights=[self._make_flight(origin, destination, price=29.0)], warnings=[])
+
+            rows, meta, _warnings = execute_plan(
+                plan,
+                concurrency_limit=2,
+                timeout_ms=3000,
+                fetch_flights=fake_fetch,
+                shared_cache_get=l2_get,
+            )
+
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0][3].price, 29.0)
+            self.assertEqual(calls["n"], 1)
+            self.assertEqual(meta["l2_cache_hits"], 0)
+            self.assertEqual(meta["cache_misses"], 1)
+            self.assertEqual(meta["provider_calls"], 1)
+        finally:
+            db.close()
+            engine.dispose()
 
     # ------------------------------------------------------------------
     # Anti-stampede: per-key locks
@@ -401,6 +475,52 @@ class SharedCacheIntegrationTests(unittest.TestCase):
         self.assertEqual(meta2["l2_cache_hits"], 2)
         self.assertEqual(meta2["provider_calls"], 0)
 
+    def test_l2_cache_hit_for_expanded_route_skips_only_that_provider_call(self):
+        pairs = [
+            self._pair("LEI", "LJU", score=0.0, reason="seed-seed"),
+            self._pair("AGP", "ZAG", score=10.0, reason="nearby-nearby"),
+        ]
+        dates = [dt.date(2026, 12, 25)]
+        plan = build_execution_plan(pairs, dates, max_requests=10)
+        l2_store: dict = {
+            ("AGP", "ZAG", "2026-12-25", "multi"): ProviderFetchResult(
+                flights=[self._make_flight("AGP", "ZAG", price=21.0)],
+                warnings=[],
+            )
+        }
+        fetched_routes: list[tuple[str, str]] = []
+
+        def l2_get(origin, destination, date, provider):
+            return l2_store.get((origin, destination, str(date), provider))
+
+        def l2_set(origin, destination, date, provider, result):
+            l2_store[(origin, destination, str(date), provider)] = result
+
+        def fake_fetch(origin, destination, date_str, timeout_ms):
+            fetched_routes.append((origin, destination))
+            return ProviderFetchResult(
+                flights=[self._make_flight(origin, destination, price=33.0)],
+                warnings=[],
+            )
+
+        rows, meta, _warnings = execute_plan(
+            plan,
+            concurrency_limit=2,
+            timeout_ms=3000,
+            fetch_flights=fake_fetch,
+            shared_cache_get=l2_get,
+            shared_cache_set=l2_set,
+        )
+
+        row_routes = {(origin, destination) for origin, destination, _date, _flight in rows}
+        self.assertEqual(row_routes, {("LEI", "LJU"), ("AGP", "ZAG")})
+        self.assertEqual(fetched_routes, [("LEI", "LJU")])
+        self.assertIn(("LEI", "LJU", "2026-12-25", "multi"), l2_store)
+        self.assertEqual(meta["l2_cache_hits"], 1)
+        self.assertEqual(meta["provider_calls"], 1)
+        self.assertEqual(meta["cache_hits"], 1)
+        self.assertEqual(meta["cache_misses"], 1)
+
     # ------------------------------------------------------------------
     # Warnings propagation through cache
     # ------------------------------------------------------------------
@@ -467,6 +587,8 @@ class SharedCacheIntegrationTests(unittest.TestCase):
         self.assertEqual(warnings, [])
         self.assertEqual(calls["n"], 0)
         self.assertEqual(meta["negative_cache_hits"], 1)
+        self.assertEqual(meta["cache_hits"], 1)
+        self.assertEqual(meta["cache_misses"], 0)
         self.assertEqual(meta["provider_calls"], 0)
 
     def test_negative_cache_provider_error_backoff_skips_provider_and_preserves_warning(self):

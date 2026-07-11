@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.infrastructure.db.models import FlightWatch, PriceSnapshot
 from app.services.fare_memory_config import FARE_MEMORY_WATCHLIST_BACKFILL_ENABLED
+from app.services.fare_memory_logging import log_fare_memory_watchlist_backfill_applied
 from app.services.revalidation_jobs import enqueue_revalidation_job
 from app.services.watchlist_backfill import add_backfill_snapshots_for_watch, find_backfill_observations_for_watch
 from app.services.watchlist_revalidation import route_fingerprint
@@ -71,7 +72,12 @@ def _add_saved_result_backfill_snapshots(db: Session, watch: FlightWatch) -> Non
     if not FARE_MEMORY_WATCHLIST_BACKFILL_ENABLED:
         return
     observations = find_backfill_observations_for_watch(db, watch)
-    add_backfill_snapshots_for_watch(db, watch, observations)
+    inserted = add_backfill_snapshots_for_watch(db, watch, observations)
+    log_fare_memory_watchlist_backfill_applied(
+        candidates_count=len(observations),
+        inserted_count=inserted,
+        source="quick_search_save_result",
+    )
 
 
 def _enqueue_saved_result_revalidation(

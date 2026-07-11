@@ -309,7 +309,7 @@ Reglas:
 - `dominant_direction_recent` describe el sesgo reciente del historico, no una promesa futura.
 - el scheduler de `boot_warmup` puede usar `volatility_score` para bajar prioridad numerica y refrescar antes rutas tecnicamente mas movidas.
 
-## Observabilidad tecnica (Fare Memory Fase 42)
+## Observabilidad tecnica (Fare Memory Fases 40-42)
 
 Si existe auth admin, backend expone `GET /api/v1/admin/fare-memory-health` como snapshot tecnico agregado.
 
@@ -325,6 +325,17 @@ Reglas:
 - solo contadores agregados y estados operativos;
 - no devuelve `payload_json`, `canonical_request_json` ni datos por usuario;
 - pensado para soporte/operacion, no para UI publica.
+
+Quick Search y tareas Fare Memory emiten eventos JSON agregados para soporte operativo:
+
+- `fare_memory_cache_hit`
+- `fare_memory_cache_miss`
+- `fare_memory_provider_call_avoided`
+- `fare_memory_negative_cache_hit`
+- `fare_memory_watchlist_backfill_applied`
+- `fare_memory_retention_pruned`
+
+Estos logs usan conteos agregados y `query_trace_id` cuando existe. No registran rutas concretas, usuarios, precios, payloads crudos, `payload_json` ni `canonical_request_json`.
 
 Behavioral rules:
 
@@ -586,14 +597,20 @@ Cuando una búsqueda usa `include_nearby` o `flex`, el backend:
 - `QUICK_SEARCH_SHARED_CACHE_READY_TTL_SECONDS=86400`
 - `QUICK_SEARCH_SHARED_CACHE_EMPTY_TTL_SECONDS=7200`
 - `QUICK_SEARCH_SHARED_CACHE_DEGRADED_TTL_SECONDS=1800`
-- `QUICK_SEARCH_SHARED_CACHE_USE_MEMORY_HOT_LAYER=true` — mantiene capa en memoria como L1
+- `QUICK_SEARCH_NEGATIVE_CACHE_TTL_SECONDS=1800`
+- `QUICK_SEARCH_NEGATIVE_PROVIDER_ERROR_TTL_SECONDS=600`
+- `QUICK_SEARCH_NEGATIVE_PROVIDER_ERROR_MAX_TTL_SECONDS=3600`
 - `FARE_MEMORY_ENABLED=true` — master switch para capas Fare Memory sin romper Quick Search
 - `FARE_MEMORY_SEARCH_CACHE_ENABLED=true` — activa cache exacta por `search_fingerprint`
 - `FARE_MEMORY_OFFER_CACHE_ENABLED=true` — activa persistencia de observaciones por oferta
 - `FARE_MEMORY_NEGATIVE_CACHE_ENABLED=true` — activa negative cache persistente
+- `FARE_MEMORY_WATCHLIST_BACKFILL_ENABLED=false` — activa backfill histórico al crear/guardar watches
 - `FARE_MEMORY_BOOT_WARMUP_ENABLED=false`
 - `FARE_MEMORY_MAX_BOOT_JOBS=25`
 - `FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE=60`
+- `REDIS_URL` — opcional; si está configurada y operativa, habilita Redis como hot layer compartida
+- `QUICK_SEARCH_REDIS_TTL_SECONDS=300` — TTL máximo de la hot layer Redis
+- `QUICK_SEARCH_REDIS_MAX_PAYLOAD_BYTES=65536` — límite por payload Redis; si se supera, se omite solo la hot layer y DB sigue siendo fuente durable
 
 Con el flag `QUICK_SEARCH_SHARED_CACHE_ENABLED=false`, el sistema usa exclusivamente la cache en memoria actual (TTL 300s) sin tocar la tabla persistente.
 

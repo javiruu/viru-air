@@ -10,6 +10,7 @@ from app.core.time import utc_now_naive
 from app.infrastructure.db.models import QuickSearchCacheEntry, QuickSearchNegativeCacheEntry
 from app.infrastructure.redis_client import get_redis
 from app.services.quick_search_execution import build_unit_cache_key
+from app.services.quick_search_redis_payload_limits import redis_payload_fits, redis_ttl
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +124,7 @@ def write_positive_cache_entry_to_redis(
     client = _resolve_client(redis_client)
     if client is None:
         return
-    ttl = _redis_ttl(entry.expires_at_utc, now=now, max_ttl_seconds=max_ttl_seconds)
+    ttl = redis_ttl(entry.expires_at_utc, now=now, max_ttl_seconds=max_ttl_seconds)
     if ttl <= 0:
         return
     payload: PositiveCachePayload = {
@@ -197,7 +198,7 @@ def write_negative_cache_entry_to_redis(
     client = _resolve_client(redis_client)
     if client is None:
         return
-    ttl = _redis_ttl(entry.expires_at, now=now, max_ttl_seconds=max_ttl_seconds)
+    ttl = redis_ttl(entry.expires_at, now=now, max_ttl_seconds=max_ttl_seconds)
     if ttl <= 0:
         return
     payload: NegativeCachePayload = {
@@ -234,17 +235,10 @@ def _negative_key(negative_fingerprint: str) -> str:
     return f"qs:negative:{negative_fingerprint}"
 
 
-def _redis_ttl(
-    expires_at: dt.datetime,
-    *,
-    now: dt.datetime | None,
-    max_ttl_seconds: int,
-) -> int:
-    remaining = int((expires_at - (now or utc_now_naive())).total_seconds())
-    return min(max(0, remaining), max(1, int(max_ttl_seconds)))
-
-
 def _safe_setex(client: RedisHotLayerClient, name: str, ttl: int, payload: str) -> None:
+    if not redis_payload_fits(payload):
+        logger.debug("quick_search_redis_payload_too_large key=%s bytes=%s", name, len(payload.encode("utf-8")))
+        return
     try:
         client.setex(name, ttl, payload)
     except _redis_error_types():
