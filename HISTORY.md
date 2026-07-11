@@ -1,5 +1,11 @@
 # History
 
+## 2026-07-11 - Cierre documental Fare Memory F60
+
+- `docs/reference/feature-flags.md` deja de apuntar a un estado archivado y consolida las fuentes vivas de activacion por dominio.
+- La spec de Fare Memory documenta el cierre F60: no se retiran flags runtime porque siguen siendo controles de rollout, coste y rollback.
+- `docs/INDICE_UNICO.md`, `docs/reference/README.md` y `docs/DOCS_INVENTORY.md` quedan alineados con la referencia viva de flags.
+
 ## 2026-07-11 - Admin Product Health muestra Fare Memory
 
 - `/admin/product-health` suma un bloque interno de Fare Memory alimentado por `GET /api/v1/admin/fare-memory-health`.
