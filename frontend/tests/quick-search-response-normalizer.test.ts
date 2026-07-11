@@ -90,3 +90,31 @@ test("normalizeQuickSearchResponse preserves heuristic ai preference fallback me
   assert.equal(normalized.results[0].ai_preferred, false);
   assert.equal(normalized.results[0].ai_preferred_reason, null);
 });
+
+test("normalizeQuickSearchResponse tolerates fare memory source metadata", () => {
+  const response: SearchResponseRaw = {
+    results: [
+      {
+        origin: "MAD",
+        destination: "DUB",
+        travel_date: "2026-06-04",
+        departure_time_local: "08:40",
+        price: 58,
+        currency: "EUR",
+        source: "ryanair",
+        cache_source: "shared_cache",
+        source_kind: "live",
+        freshness: {
+          status: "fresh",
+          source: "provider_cache",
+          requires_revalidation: false,
+        },
+      },
+    ],
+  };
+
+  const normalized = normalizeQuickSearchResponse(response);
+  assert.equal(normalized.results[0].cache_source, "shared_cache");
+  assert.equal(normalized.results[0].source_kind, "live");
+  assert.equal(normalized.results[0].freshness?.source, "provider_cache");
+});

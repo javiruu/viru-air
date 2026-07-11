@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 try:
     from app.api.v1.search import (
@@ -49,7 +50,11 @@ def _flight(price: float, dep: str, source: str = "test-provider", currency: str
 
 
 def _db_session():
-    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     Base.metadata.create_all(bind=engine)
     TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
     return engine, TestingSessionLocal, TestingSessionLocal()
@@ -644,6 +649,7 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
         try:
             with (
                 patch("app.api.v1.search.QUICK_SEARCH_SHARED_CACHE_ENABLED", True),
+                patch("app.api.v1.search.FARE_MEMORY_OFFER_CACHE_ENABLED", False),
                 patch("app.api.v1.search.SessionLocal", testing_session_local),
                 patch("app.api.v1.search.get_exact_search_cache_entry", return_value=None),
                 patch("app.api.v1.search.set_exact_search_cache_entry") as set_exact_cache,
@@ -668,6 +674,41 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             self.assertFalse(result["meta"]["search_cache"]["exact_hit"])
             self.assertEqual(result["meta"]["search_cache"]["search_fingerprint"][:11], "fsm_search_")
             self.assertEqual(result["meta"]["search_cache"]["freshness"]["status"], "fresh")
+        finally:
+            db.close()
+            engine.dispose()
+
+    def test_local_dev_shared_cache_second_search_avoids_provider_call(self):
+        payload = self._payload(
+            origin={"seed_iata": "LEI", "include_nearby": False, "radius_km": 250, "max_candidates": 1},
+            destination={"seed_iata": "DUB", "include_nearby": False, "radius_km": 250, "max_candidates": 1},
+            travel={"date": "2026-12-14", "flex_before": 0, "flex_after": 0},
+            execution={"max_pairs": 1, "max_requests": 1, "timeout_ms": 3000, "concurrency_limit": 1},
+        )
+
+        engine, testing_session_local, db = _db_session()
+        fake_provider = _FakeProvider(return_value=[_flight(55, "10:00", source="ryanair")], provider_ids=["ryanair"])
+        try:
+            with (
+                patch.dict("os.environ", {"APP_ENV": "local"}),
+                patch("app.api.v1.search.QUICK_SEARCH_SHARED_CACHE_ENABLED", True),
+                patch("app.api.v1.search.FARE_MEMORY_SEARCH_CACHE_ENABLED", True),
+                patch("app.api.v1.search.FARE_MEMORY_OFFER_CACHE_ENABLED", False),
+                patch("app.api.v1.search.SessionLocal", testing_session_local),
+                patch("app.api.v1.search._build_request_provider", return_value=fake_provider),
+            ):
+                first = self._call_quick_search(payload, db=db)
+                second = self._call_quick_search(payload, db=db)
+
+            self.assertEqual(fake_provider.get_flights_calls, 1)
+            self.assertFalse(first["meta"]["search_cache"]["exact_hit"])
+            self.assertTrue(second["meta"]["search_cache"]["exact_hit"])
+            self.assertEqual(second["meta"]["execution"]["provider_calls"], 0)
+            self.assertEqual(second["meta"]["pipeline_counters"]["provider_calls_avoided"], 1)
+            self.assertEqual(first["results"][0]["price_total"], second["results"][0]["price_total"])
+            self.assertEqual(first["results"][0]["origin"], second["results"][0]["origin"])
+            self.assertEqual(first["results"][0]["destination"], second["results"][0]["destination"])
+            self.assertEqual(first["results"][0]["travel_date"], second["results"][0]["travel_date"])
         finally:
             db.close()
             engine.dispose()

@@ -1,4 +1,6 @@
 import datetime as dt
+import threading
+import time
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.engine import Engine
@@ -183,3 +185,87 @@ def test_execute_plan_waits_for_l2_when_singleflight_lock_is_held() -> None:
     assert meta["provider_singleflight_avoided_calls"] == 1
     assert warnings == []
     assert rows[0][3].source == "singleflight-cache"
+
+
+def test_execute_plan_with_concurrent_units_uses_one_provider_call_per_cache_key() -> None:
+    _CACHE.clear()
+    state_lock = threading.Lock()
+    active_lock = {"held": False}
+    calls = {"provider": 0}
+    shared_store: dict[tuple[str, str, str, str], ProviderFetchResult] = {}
+
+    def fetch_flights(origin: str, destination: str, travel_date: str, timeout_ms: int):
+        with state_lock:
+            calls["provider"] += 1
+        time.sleep(0.2)
+        return ProviderFetchResult(
+            flights=[
+                ProviderFlight(
+                    price=29.99,
+                    currency="EUR",
+                    departure_time_local="14:30",
+                    captured_at=dt.datetime(2026, 7, 10, 12, 0),
+                    source="singleflight-provider",
+                )
+            ],
+            warnings=[],
+        )
+
+    def shared_cache_get(origin: str, destination: str, travel_date: dt.date | str, provider: str):
+        with state_lock:
+            return shared_store.get((origin, destination, str(travel_date), provider))
+
+    def shared_cache_set(
+        origin: str,
+        destination: str,
+        travel_date: dt.date | str,
+        provider: str,
+        result: ProviderFetchResult,
+    ) -> None:
+        with state_lock:
+            shared_store[(origin, destination, str(travel_date), provider)] = result
+
+    def acquire_lock(origin: str, destination: str, travel_date: dt.date | str, provider: str) -> str | None:
+        with state_lock:
+            if active_lock["held"]:
+                return None
+            active_lock["held"] = True
+            return "redis:qs_lock:token"
+
+    def release_lock(lock_token: str) -> None:
+        with state_lock:
+            active_lock["held"] = False
+
+    units = [
+        ExecutionUnit(
+            origin_iata="AGP",
+            destination_iata="TSF",
+            travel_date=dt.date(2026, 12, 25),
+            pair_priority_score=0.0,
+            pair_reason="seed-seed",
+        )
+        for _ in range(5)
+    ]
+
+    rows, meta, warnings = execute_plan(
+        ExecutionPlan(
+            units=units,
+            waves={"wave_1": 5, "wave_2": 0, "wave_3": 0},
+            stats={},
+        ),
+        concurrency_limit=5,
+        timeout_ms=1000,
+        fetch_flights=fetch_flights,
+        shared_cache_get=shared_cache_get,
+        shared_cache_set=shared_cache_set,
+        provider_singleflight_acquire=acquire_lock,
+        provider_singleflight_release=release_lock,
+    )
+
+    assert calls["provider"] == 1
+    assert len(rows) == 5
+    assert meta["provider_calls"] == 1
+    assert meta["l1_cache_hits"] == 4
+    assert meta["provider_singleflight_avoided_calls"] == 0
+    assert meta["cache_hits"] == 4
+    assert warnings == []

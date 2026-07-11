@@ -184,3 +184,90 @@ def test_save_result_stale_backfills_history_while_enqueuing_revalidation() -> N
     finally:
         db.close()
         engine.dispose()
+
+
+def test_save_result_with_backfill_enabled_and_no_history_keeps_current_snapshot_only() -> None:
+    engine, db = _db_session()
+    travel_date = dt.date.today() + dt.timedelta(days=44)
+    payload = QuickSearchSaveResultIn(
+        origin_iata="VLC",
+        destination_iata="DUB",
+        travel_date=travel_date,
+        price_total=67.0,
+        currency="EUR",
+        freshness_status="fresh",
+        requires_revalidation=False,
+        validation_status="revalidated",
+    )
+
+    try:
+        with patch("app.services.quick_search_save_result_observation.FARE_MEMORY_WATCHLIST_BACKFILL_ENABLED", True):
+            created = save_result(
+                payload=payload,
+                idempotency_key=None,
+                db=db,
+                current_user=_CurrentUser(id="user-quick-save-backfill-empty"),
+            )
+
+        snapshots = db.scalars(
+            select(PriceSnapshot)
+            .where(PriceSnapshot.watch_id == created["watch_id"])
+            .order_by(PriceSnapshot.captured_at_utc.asc(), PriceSnapshot.id.asc())
+        ).all()
+
+        assert len(snapshots) == 1
+        assert snapshots[0].provider == "quick-search"
+        assert float(snapshots[0].raw_price) == 67.0
+        assert snapshots[0].is_stale is False
+    finally:
+        db.close()
+        engine.dispose()
+
+
+def test_save_result_backfill_flag_off_ignores_available_history() -> None:
+    engine, db = _db_session()
+    travel_date = dt.date.today() + dt.timedelta(days=45)
+    observed_at = dt.datetime.now(dt.UTC).replace(tzinfo=None, microsecond=0) - dt.timedelta(hours=4)
+    _seed_backfill_observation(
+        db,
+        _BackfillSeed(
+            origin="SVQ",
+            destination="DUB",
+            travel_date=travel_date,
+            observed_at=observed_at,
+            price=38.75,
+        ),
+    )
+    payload = QuickSearchSaveResultIn(
+        origin_iata="SVQ",
+        destination_iata="DUB",
+        travel_date=travel_date,
+        price_total=46.0,
+        currency="EUR",
+        freshness_status="fresh",
+        requires_revalidation=False,
+        validation_status="revalidated",
+    )
+
+    try:
+        with patch("app.services.quick_search_save_result_observation.FARE_MEMORY_WATCHLIST_BACKFILL_ENABLED", False):
+            created = save_result(
+                payload=payload,
+                idempotency_key=None,
+                db=db,
+                current_user=_CurrentUser(id="user-quick-save-backfill-disabled"),
+            )
+
+        snapshots = db.scalars(
+            select(PriceSnapshot)
+            .where(PriceSnapshot.watch_id == created["watch_id"])
+            .order_by(PriceSnapshot.captured_at_utc.asc(), PriceSnapshot.id.asc())
+        ).all()
+
+        assert len(snapshots) == 1
+        assert snapshots[0].provider == "quick-search"
+        assert float(snapshots[0].raw_price) == 46.0
+        assert snapshots[0].is_stale is False
+    finally:
+        db.close()
+        engine.dispose()

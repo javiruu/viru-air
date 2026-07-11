@@ -162,6 +162,41 @@ def test_positive_redis_ttl_does_not_exceed_db_remaining_ttl() -> None:
         engine.dispose()
 
 
+def test_positive_redis_skips_payloads_above_hot_layer_limit() -> None:
+    redis = FakeRedis(values={}, ttl_by_key={})
+    db, engine = _db()
+    try:
+        entry = set_cache_entry(
+            db,
+            origin_iata="AGP",
+            destination_iata="TSF",
+            travel_date=dt.date(2026, 12, 25),
+            provider="multi",
+            source_hash="qs_redis_large_payload",
+            category="ready",
+            payload_json=json.dumps({"flights": [{"notes": "x" * 70000}]}),
+            warnings_json="[]",
+            redis_client=redis,
+        )
+        cached = get_fresh_entry(
+            db,
+            origin_iata="AGP",
+            destination_iata="TSF",
+            travel_date=dt.date(2026, 12, 25),
+            provider="multi",
+            source_hash="qs_redis_large_payload",
+            redis_client=redis,
+        )
+
+        assert entry.source_hash == "qs_redis_large_payload"
+        assert cached is not None
+        assert cached.source_hash == "qs_redis_large_payload"
+        assert redis.values == {}
+    finally:
+        db.close()
+        engine.dispose()
+
+
 def test_negative_redis_hit_returns_explicit_provider_warning() -> None:
     redis = FakeRedis(values={}, ttl_by_key={})
     db, engine = _db()

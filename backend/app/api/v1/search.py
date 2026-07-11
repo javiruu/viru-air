@@ -53,6 +53,7 @@ from app.services.fare_memory_config import (
     FARE_MEMORY_OFFER_CACHE_ENABLED,
     FARE_MEMORY_SEARCH_CACHE_ENABLED,
 )
+from app.services.fare_memory_logging import log_fare_memory_quick_search_counters
 from app.services.quick_search_cache_service import (
     build_effective_freshness,
     build_negative_cache_fingerprint,
@@ -1941,6 +1942,10 @@ def quick_search(
                 "provider_set": provider_ids,
             }
             _enrich_pipeline_counters(exact_payload)
+            log_fare_memory_quick_search_counters(
+                query_trace_id=query_trace_id,
+                pipeline_counters=meta.get("pipeline_counters", {}),
+            )
             return exact_payload
 
     origin_seed_pool = list(origin_list)
@@ -3018,6 +3023,10 @@ def quick_search(
         response_payload["meta"]["search_cache"]["requires_revalidation"] = bool(exact_cache_freshness["requires_revalidation"])
 
     _enrich_pipeline_counters(response_payload)
+    log_fare_memory_quick_search_counters(
+        query_trace_id=query_trace_id,
+        pipeline_counters=response_payload.get("meta", {}).get("pipeline_counters", {}),
+    )
 
     if combined and _supports_db_session(db) and FARE_MEMORY_OFFER_CACHE_ENABLED:
         observation_observed_at = exact_cache_entry.captured_at_utc if exact_cache_entry is not None else utc_now_naive()

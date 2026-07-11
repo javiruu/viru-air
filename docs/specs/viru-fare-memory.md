@@ -478,6 +478,53 @@ Implementacion actual desde Fase 39:
 - las muestras no guardan ruta, fecha, pasajero, usuario, payloads, precios ni tokens;
 - las metricas son locales al proceso y diagnosticas; no sustituyen logs, trazas externas ni almacenamiento durable.
 
+Implementacion actual desde Fase 42:
+
+- `fare_memory_logging` emite eventos JSON agregados para cache hit, cache miss, provider calls avoided, negative cache hit, backfill aplicado y retention;
+- los eventos usan `query_trace_id` cuando existe y solo publican conteos agregados;
+- no se registran `payload_json`, `canonical_request_json`, `user_id`, rutas concretas, precios ni payloads crudos;
+- los eventos operativos actuales son `fare_memory_cache_hit`, `fare_memory_cache_miss`, `fare_memory_provider_call_avoided`, `fare_memory_negative_cache_hit`, `fare_memory_watchlist_backfill_applied` y `fare_memory_retention_pruned`.
+
+Implementacion actual desde Fase 47:
+
+- local/dev puede activar el shared cache con `APP_ENV=local` y `QUICK_SEARCH_SHARED_CACHE_ENABLED=true`;
+- el default documentado sigue `false` para evitar activacion accidental fuera de canary;
+- `test_local_dev_shared_cache_second_search_avoids_provider_call` cubre el smoke local: primera busqueda llama al provider, segunda busqueda sirve `search_exact`, mantiene resultado compatible y expone `provider_calls_avoided=1`.
+
+Estado de Fase 48:
+
+- el canary productivo no se activa desde codigo local ni desde `.env.example`;
+- los prerequisitos tecnicos quedan disponibles para una decision operativa: logs agregados, admin health, rollback por flag, retention dry-run, tests y contrato de privacidad;
+- cualquier activacion real debe hacerse con entorno controlado, observando latencia, `provider_calls_avoided`, error rate, stale served count, cache hit rate, DB growth/day y negative cache hit rate.
+
+Implementacion actual desde Fase 49:
+
+- `FARE_MEMORY_WATCHLIST_BACKFILL_ENABLED=false` mantiene el backfill apagado por defecto;
+- con el flag activo, `save_result` puede crear snapshots `historical_backfill` antes del snapshot actual `quick-search`;
+- la cobertura actual prueba watch nuevo con historico, watch nuevo sin historico, flag apagado con historico disponible y deduplicacion en guardados repetidos;
+- el frontend conserva `sourceKind=historical_backfill` en el modelo del chart para que la UI pueda distinguir historia rescatada de observacion actual.
+
+Implementacion actual desde Fase 50:
+
+- `FARE_MEMORY_RETENTION_ENABLED=false` mantiene la retention automatica apagada por defecto;
+- al activarse, `lifespan` agenda `_run_startup_fare_memory_retention_job` como tarea background y no bloquea el arranque;
+- `FARE_MEMORY_RETENTION_BATCH_SIZE` controla el tamano de lote y `run_fare_memory_retention` emite logs agregados de candidatos/borrados;
+- la cobertura actual prueba dry-run/apply por tabla en unit tests, logs agregados, y scheduling no bloqueante del startup job.
+
+Implementacion actual desde Fase 51:
+
+- Redis sigue siendo una hot layer opcional activada por `REDIS_URL`, no una dependencia obligatoria;
+- `QUICK_SEARCH_REDIS_TTL_SECONDS` limita el TTL Redis sin exceder la frescura durable de DB;
+- `QUICK_SEARCH_REDIS_MAX_PAYLOAD_BYTES=65536` evita escribir payloads grandes en Redis; si se supera, se omite solo Redis y DB conserva la entrada;
+- la cobertura actual prueba fallback con Redis caido, hit Redis positivo/negativo, TTL efectivo y omision de payloads grandes.
+
+Implementacion actual desde Fase 52:
+
+- el lock Redis usa `qs:lock:{cache_key}` con `SET NX EX` y release atomico por token;
+- si Redis no esta disponible, `acquire_quick_search_provider_lock` cae al lease DB persistente;
+- la cobertura actual prueba busy lock Redis, release/reacquire, fallback DB, expiracion del lease DB y 5 unidades concurrentes con una sola llamada real al provider dentro del proceso;
+- activar el canary Redis en produccion sigue condicionado a entorno multi-worker/stampede real y rollback por flag.
+
 ## Impacto por area
 
 ### Quick Search

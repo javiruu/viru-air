@@ -38,6 +38,19 @@ export type QuickSearchFreshness = {
   validation_status?: string | null;
 };
 
+export type QuickSearchCacheSource =
+  | "provider"
+  | "shared_cache"
+  | "negative_cache"
+  | "historical_backfill"
+  | (string & {});
+
+export type QuickSearchSourceKind =
+  | "live"
+  | "historical_backfill"
+  | "watch_refresh"
+  | (string & {});
+
 export type SearchResultRaw = {
   result_id?: string | null;
   origin: string;
@@ -58,6 +71,8 @@ export type SearchResultRaw = {
   freshness_ts?: string | null;
   stale_data?: boolean;
   freshness?: QuickSearchFreshness | null;
+  cache_source?: QuickSearchCacheSource | null;
+  source_kind?: QuickSearchSourceKind | null;
   ai_preferred?: boolean;
   ai_preferred_reason?: string | null;
   deeplink_url?: string | null;
