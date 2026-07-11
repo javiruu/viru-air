@@ -550,6 +550,13 @@ Implementacion actual desde Fase 55:
 - `GET /api/v1/admin/fare-memory-health` expone `refresh_signals.top_routes` con conteos agregados, `priority_score`, `suggested_job_priority` y razones tecnicas;
 - esta fase no cambia el scheduler de warmup ni encola nuevos jobs por si sola: deja la base medible para priorizar refresh cuando haya metricas.
 
+Implementacion actual desde Fase 57:
+
+- no se crea una tabla de agregados persistentes porque aun seria prematuro sin evidencia de crecimiento fuerte;
+- `fare_memory_historical_aggregates` calcula agregados diarios dinamicos por ruta, fecha de salida y moneda;
+- el snapshot admin expone `historical_aggregates.top_routes` con `min_price`, `max_price`, `latest_price`, `observation_count` y `compaction_candidate`;
+- `mode="dynamic_read_only"` indica que no compacta ni borra datos: solo aporta visibilidad para decidir una futura compactacion persistente.
+
 ## Impacto por area
 
 ### Quick Search

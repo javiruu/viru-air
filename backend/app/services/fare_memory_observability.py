@@ -15,6 +15,7 @@ from app.infrastructure.db.models import (
     QuickSearchPopularityCounter,
     RevalidationJob,
 )
+from app.services.fare_memory_historical_aggregates import build_historical_daily_aggregates
 from app.services.fare_memory_refresh_signals import build_route_refresh_signals
 
 
@@ -85,6 +86,13 @@ def build_fare_memory_health_snapshot(
                 or 0
             ),
             "validation_status": _count_by_field(db, FlightPriceObservation.validation_status),
+        },
+        "historical_aggregates": {
+            "mode": "dynamic_read_only",
+            "top_routes": [
+                aggregate.to_payload()
+                for aggregate in build_historical_daily_aggregates(db, now=reference_now, limit=10)
+            ],
         },
         "revalidation_jobs": {
             "total_entries": _count_all(db, RevalidationJob.id),
