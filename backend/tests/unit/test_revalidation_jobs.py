@@ -1,10 +1,13 @@
 import datetime as dt
 
 from sqlalchemy import create_engine, select
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.infrastructure.db.models import Base, RevalidationJob
 from app.services.revalidation_jobs import (
+    DueRevalidationJobQueryOptions,
+    build_due_revalidation_job_query_with_options,
     claim_next_revalidation_job,
     complete_revalidation_job,
     enqueue_revalidation_job,
@@ -82,6 +85,19 @@ def test_claim_next_revalidation_job_locks_single_due_job() -> None:
     finally:
         db.close()
         db._test_engine.dispose()  # type: ignore[attr-defined]
+
+
+def test_due_revalidation_job_query_uses_skip_locked_for_postgres_claims() -> None:
+    query = build_due_revalidation_job_query_with_options(
+        DueRevalidationJobQueryOptions(
+            now=dt.datetime(2026, 6, 16, 10, 1),
+            skip_locked=True,
+        )
+    ).limit(10)
+
+    compiled = str(query.compile(dialect=postgresql.dialect()))
+
+    assert "FOR UPDATE SKIP LOCKED" in compiled
 
 
 def test_complete_revalidation_job_requires_matching_lock_token() -> None:

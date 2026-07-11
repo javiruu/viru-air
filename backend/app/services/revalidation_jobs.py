@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import datetime as dt
 import json
+from dataclasses import dataclass
 from typing import Any
 
 from sqlalchemy import Select, select, update
@@ -11,6 +13,14 @@ from app.infrastructure.db.models import RevalidationJob
 
 ACTIVE_REVALIDATION_JOB_STATUSES = {"queued", "running"}
 FINAL_REVALIDATION_JOB_STATUSES = {"done", "skipped", "failed"}
+
+
+@dataclass(frozen=True, slots=True)
+class DueRevalidationJobQueryOptions:
+    now: dt.datetime | None = None
+    job_types: tuple[str, ...] | None = None
+    target_types: tuple[str, ...] | None = None
+    skip_locked: bool = False
 
 
 def enqueue_revalidation_job(
@@ -78,7 +88,19 @@ def build_due_revalidation_job_query(
     job_types: tuple[str, ...] | None = None,
     target_types: tuple[str, ...] | None = None,
 ) -> Select[tuple[RevalidationJob]]:
-    reference_now = now or utc_now_naive()
+    return build_due_revalidation_job_query_with_options(
+        DueRevalidationJobQueryOptions(
+            now=now,
+            job_types=job_types,
+            target_types=target_types,
+        )
+    )
+
+
+def build_due_revalidation_job_query_with_options(
+    options: DueRevalidationJobQueryOptions,
+) -> Select[tuple[RevalidationJob]]:
+    reference_now = options.now or utc_now_naive()
     query = (
         select(RevalidationJob)
         .where(RevalidationJob.status == "queued")
@@ -90,10 +112,12 @@ def build_due_revalidation_job_query(
             RevalidationJob.id.asc(),
         )
     )
-    if job_types:
-        query = query.where(RevalidationJob.job_type.in_(job_types))
-    if target_types:
-        query = query.where(RevalidationJob.target_type.in_(target_types))
+    if options.job_types:
+        query = query.where(RevalidationJob.job_type.in_(options.job_types))
+    if options.target_types:
+        query = query.where(RevalidationJob.target_type.in_(options.target_types))
+    if options.skip_locked:
+        query = query.with_for_update(skip_locked=True)
     return query
 
 
@@ -107,10 +131,13 @@ def claim_next_revalidation_job(
 ) -> RevalidationJob | None:
     reference_now = now or utc_now_naive()
     candidates = db.scalars(
-        build_due_revalidation_job_query(
-            now=reference_now,
-            job_types=job_types,
-            target_types=target_types,
+        build_due_revalidation_job_query_with_options(
+            DueRevalidationJobQueryOptions(
+                now=reference_now,
+                job_types=job_types,
+                target_types=target_types,
+                skip_locked=db.get_bind().dialect.name == "postgresql",
+            )
         ).limit(10)
     ).all()
     for candidate in candidates:

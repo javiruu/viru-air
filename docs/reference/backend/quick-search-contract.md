@@ -352,6 +352,7 @@ Behavioral rules:
 
 - Enqueue is idempotent for active duplicates: the backend reuses an existing `queued`/`running` job with the same `(job_type, target_type, target_fingerprint, provider)`.
 - Claiming a job upgrades `status` from `queued` to `running`, assigns `lock_token`, and increments `attempt_count`.
+- PostgreSQL claims compile the due-job candidate query with `FOR UPDATE SKIP LOCKED`; SQLite keeps the local fallback without row-level locking syntax.
 - Completing or failing a job requires the same `lock_token` that claimed it.
 - Once a job reaches `done`, `skipped`, or `failed`, a new job for the same target may be enqueued later.
 
