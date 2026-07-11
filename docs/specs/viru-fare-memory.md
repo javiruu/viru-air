@@ -557,6 +557,12 @@ Implementacion actual desde Fase 57:
 - el snapshot admin expone `historical_aggregates.top_routes` con `min_price`, `max_price`, `latest_price`, `observation_count` y `compaction_candidate`;
 - `mode="dynamic_read_only"` indica que no compacta ni borra datos: solo aporta visibilidad para decidir una futura compactacion persistente.
 
+Implementacion actual desde Fase 58:
+
+- `claim_next_revalidation_job` usa `FOR UPDATE SKIP LOCKED` al reclamar candidatos cuando el dialecto activo es PostgreSQL;
+- SQLite conserva el flujo local anterior, sin `FOR UPDATE`, para mantener compatibilidad de desarrollo y tests;
+- no se anaden indices parciales, advisory locks ni politicas de vacuum hasta tener query plans o metricas reales de crecimiento en produccion.
+
 ## Impacto por area
 
 ### Quick Search
