@@ -171,6 +171,7 @@ Decision actual sobre `flight_number` en providers publicos:
 - Ryanair: availability persiste `flightNumber` cuando el endpoint lo entrega; fares lo mantiene nullable cuando no existe evidencia en la respuesta;
 - Vueling: persiste `flightNumber` solo si el endpoint lo entrega explicitamente; `flightID` no se promociona a numero de vuelo fiable;
 - hasta verificar esos campos con evidencia suficiente, `flight_number` permanece nullable y la identidad estable de salida se apoya en `flight_instance_fingerprint`.
+- desde Fase 56, los providers y la persistencia de observaciones normalizan solo `flightNumber` explicito a designador compacto (`FR7032`, `VY8020`); no se deriva desde `flightID` ni desde identificadores opacos.
 
 Contrato minimo normalizado en `ProviderFlight` desde Fase 37:
 

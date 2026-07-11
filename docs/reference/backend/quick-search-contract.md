@@ -167,6 +167,7 @@ Canonical rules:
   - `search_live` for the final response before an exact-search cache hit exists
 - If the backend knows the price is historical only, it must not serialize it as `fresh`.
 - Provider failure must remain distinguishable from `no_results`.
+- Provider `flight_number` enrichment is allowed only from an explicit provider `flightNumber` field. The backend normalizes it to a compact uppercase designator and must not derive it from opaque IDs such as Vueling `flightID`.
 
 Implementation note:
 

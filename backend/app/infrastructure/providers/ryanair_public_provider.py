@@ -19,6 +19,7 @@ from requests.adapters import HTTPAdapter
 
 from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderPrice, ProviderSourceFetchError, ProviderWarning
 from app.infrastructure.providers.base import FlightProvider
+from app.services.flight_number_enrichment import normalize_explicit_flight_number
 
 _PROVIDER_POOL_SIZE = 32
 
@@ -226,8 +227,7 @@ class RyanairPublicProvider(FlightProvider):
             return None
 
     def _normalize_flight_number(self, value: Any) -> str | None:
-        normalized = str(value or "").strip().upper()
-        return normalized or None
+        return normalize_explicit_flight_number(value, carrier_code="FR")
 
     def _build_deeplink(self, origin: str, destination: str, travel_date: str, currency: str) -> str:
         params = {

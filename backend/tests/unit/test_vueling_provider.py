@@ -112,6 +112,36 @@ def test_get_flights_uses_anonymous_public_availability(monkeypatch: pytest.Monk
     assert result.warnings_structured == []
 
 
+def test_get_flights_preserves_explicit_flight_number(monkeypatch: pytest.MonkeyPatch) -> None:
+    provider = VuelingProvider()
+
+    def fake_post(url: str, *, json, timeout: float, headers):
+        if url.endswith("/asm/v1/Auth"):
+            return _FakeResponse({"tokenType": "Bearer", "accessToken": "anonymous-token"})
+        return _FakeResponse(
+            [
+                {
+                    "arrivalStation": "ORY",
+                    "departureDate": "2026-07-14T18:45:00",
+                    "departureStation": "BCN",
+                    "flightID": "opaque-id-8020",
+                    "flightNumber": " vy 8020 ",
+                    "price": 75.99,
+                    "carrierCode": "VY",
+                    "currency": "EUR",
+                    "isAvailableDay": True,
+                    "isInvalidPrice": False,
+                }
+            ]
+        )
+
+    monkeypatch.setattr(provider._session, "post", fake_post)
+
+    result = provider.get_flights("BCN", "ORY", "2026-07-14")
+
+    assert result.flights[0].flight_number == "VY8020"
+
+
 def test_get_flights_returns_empty_result_warning(monkeypatch: pytest.MonkeyPatch) -> None:
     provider = VuelingProvider()
 

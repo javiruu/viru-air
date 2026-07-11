@@ -111,6 +111,6 @@ def test_availability_flights_include_normalized_provider_contract(monkeypatch: 
     assert flight.travel_date == "2026-06-14"
     assert flight.departure_time_local == "06:30"
     assert flight.carrier_code == "FR"
-    assert flight.flight_number == "FR 7032"
+    assert flight.flight_number == "FR7032"
     assert flight.deeplink_url is not None
     assert "ryanair.com" in flight.deeplink_url
