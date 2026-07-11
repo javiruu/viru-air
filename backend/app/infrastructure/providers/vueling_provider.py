@@ -19,6 +19,7 @@ from requests.adapters import HTTPAdapter
 from app.core.time import utc_now_naive
 from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError, ProviderWarning
 from app.infrastructure.providers.base import FlightProvider
+from app.services.flight_number_enrichment import normalize_explicit_flight_number
 
 _DEFAULT_BASE_URL: Final = "https://ams.vueling.com"
 _DEFAULT_BOOKING_URL: Final = "https://tickets.vueling.com/booking/flightSearch"
@@ -175,6 +176,7 @@ class VuelingProvider(FlightProvider):
         if amount is None:
             return None
 
+        carrier_code = self._normalize_carrier_code(item.get("carrierCode")) or "VY"
         return ProviderFlight(
             price=amount,
             currency=str(item.get("currency") or search.currency).upper(),
@@ -186,8 +188,8 @@ class VuelingProvider(FlightProvider):
             destination_iata=search.destination,
             travel_date=search.travel_date,
             deeplink_url=self._build_deeplink(search),
-            carrier_code=self._normalize_carrier_code(item.get("carrierCode")) or "VY",
-            flight_number=self._normalize_flight_number(item.get("flightNumber")),
+            carrier_code=carrier_code,
+            flight_number=self._normalize_flight_number(item.get("flightNumber"), carrier_code=carrier_code),
         )
 
     def _build_deeplink(self, search: _VuelingSearch) -> str:
@@ -229,6 +231,5 @@ class VuelingProvider(FlightProvider):
         normalized = str(value or "").strip().upper()
         return normalized or None
 
-    def _normalize_flight_number(self, value) -> str | None:
-        normalized = str(value or "").strip().upper()
-        return normalized or None
+    def _normalize_flight_number(self, value, *, carrier_code: str | None = None) -> str | None:
+        return normalize_explicit_flight_number(value, carrier_code=carrier_code)

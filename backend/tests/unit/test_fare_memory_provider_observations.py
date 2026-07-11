@@ -164,6 +164,39 @@ def test_provider_observations_derives_stable_carrier_code(
     assert carrier_code == expected_carrier_code
 
 
+def test_provider_observations_persist_explicit_flight_number(db: Session) -> None:
+    travel_date = dt.date(2026, 7, 20)
+
+    persist_provider_flight_observations(
+        db,
+        provider_flights=[
+            _provider_row(
+                travel_date=travel_date,
+                source="ryanair-public-availability",
+                flight_number=" fr 7032 ",
+            )
+        ],
+        context=_context(),
+    )
+
+    offer = db.scalar(select(FlightOfferCacheEntry))
+    assert offer is not None
+    assert offer.flight_number == "FR7032"
+
+
+def test_provider_observations_do_not_invent_missing_flight_number(db: Session) -> None:
+    travel_date = dt.date(2026, 7, 20)
+
+    persist_provider_flight_observations(
+        db,
+        provider_flights=[_provider_row(travel_date=travel_date, source="vueling-public-availability")],
+        context=_context(),
+    )
+
+    flight_number = db.scalar(select(FlightOfferCacheEntry.flight_number))
+    assert flight_number is None
+
+
 def _context(*, observed_at: dt.datetime | None = None) -> ObservationPersistenceContext:
     observed_at_value = observed_at or dt.datetime(2026, 7, 20, 8, 0)
     return ObservationPersistenceContext(
@@ -182,8 +215,19 @@ def _provider_row(
     departure_time_local: str = "10:15",
     price: float = 49.99,
     source: str = "ryanair",
+    flight_number: str | None = None,
 ) -> ProviderFlightRow:
-    return ("LEI", "FCO", travel_date, _flight(departure_time_local=departure_time_local, price=price, source=source))
+    return (
+        "LEI",
+        "FCO",
+        travel_date,
+        _flight(
+            departure_time_local=departure_time_local,
+            price=price,
+            source=source,
+            flight_number=flight_number,
+        ),
+    )
 
 
 def _flight(
@@ -191,6 +235,7 @@ def _flight(
     departure_time_local: str = "10:15",
     price: float = 49.99,
     source: str = "ryanair",
+    flight_number: str | None = None,
 ) -> ProviderFlight:
     return ProviderFlight(
         price=price,
@@ -198,4 +243,5 @@ def _flight(
         departure_time_local=departure_time_local,
         captured_at=dt.datetime(2026, 7, 20, 8, 0),
         source=source,
+        flight_number=flight_number,
     )

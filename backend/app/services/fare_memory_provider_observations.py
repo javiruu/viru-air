@@ -14,6 +14,7 @@ from app.infrastructure.db.models import FlightOfferCacheEntry, FlightPriceObser
 from app.services.fare_memory import build_offer_fingerprint
 from app.services.fare_memory_flight_instances import build_flight_instance_fingerprint, derive_carrier_code
 from app.services.fare_memory_observation_dedupe import ObservationCandidate, is_recent_duplicate_observation
+from app.services.flight_number_enrichment import normalize_explicit_flight_number
 
 
 ProviderFlightRow = tuple[str, str, dt.date, ProviderFlight]
@@ -170,11 +171,15 @@ def _build_provider_offer_payload(row: ProviderFlightRow) -> ProviderOfferPayloa
     if not provider or not math.isfinite(price_amount):
         return None
 
+    carrier_code = flight.carrier_code or derive_carrier_code(provider)
     return {
         "provider": provider,
         "carrier": None,
-        "carrier_code": derive_carrier_code(provider),
-        "flight_number": None,
+        "carrier_code": carrier_code,
+        "flight_number": normalize_explicit_flight_number(
+            flight.flight_number,
+            carrier_code=carrier_code,
+        ),
         "origin_airport": origin_code,
         "destination_airport": destination_code,
         "departure_at": _departure_datetime(travel_date, flight.departure_time_local),
