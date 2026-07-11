@@ -70,6 +70,7 @@ from app.services.quick_search_cache_service import (
     prune_expired_entries_async,
 )
 from app.services.quick_search_negative_cache_write_policy import resolve_negative_cache_write_policy
+from app.services.quick_search_popularity import QuickSearchPopularitySignal, record_quick_search_popularity
 from app.services.quick_search_provider_singleflight import (
     acquire_quick_search_provider_lock,
     release_quick_search_provider_lock,
@@ -1909,6 +1910,16 @@ def quick_search(
         currency=user_currency,
         provider_set=provider_ids,
     )
+    if _supports_db_session(db):
+        record_quick_search_popularity(
+            db,
+            QuickSearchPopularitySignal(
+                origin_iata=canonical.origin.seed_iata,
+                destination_iata=canonical.destination.seed_iata,
+                travel_date=travel_date_value,
+                currency=user_currency,
+            ),
+        )
 
     if shared_cache_enabled and FARE_MEMORY_SEARCH_CACHE_ENABLED:
         exact_cache_entry = get_exact_search_cache_entry(

@@ -16,7 +16,7 @@ try:
         save_result,
     )
     from app.domain.entities import ProviderFetchResult, ProviderFlight
-    from app.infrastructure.db.models import Base, PriceSnapshot, RevalidationJob
+    from app.infrastructure.db.models import Base, PriceSnapshot, QuickSearchPopularityCounter, RevalidationJob
     from app.infrastructure.providers.orchestrator import FlightSearchOrchestrator
     from app.services.quick_search_ai_preference import QuickSearchAiPreferenceResult
     from app.services.quick_search_execution import _CACHE
@@ -32,6 +32,7 @@ except Exception:  # pragma: no cover
     ProviderFlight = None
     Base = None
     PriceSnapshot = None
+    QuickSearchPopularityCounter = None
     RevalidationJob = None
     FlightSearchOrchestrator = None
     QuickSearchAiPreferenceResult = None
@@ -709,6 +710,12 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
             self.assertEqual(first["results"][0]["origin"], second["results"][0]["origin"])
             self.assertEqual(first["results"][0]["destination"], second["results"][0]["destination"])
             self.assertEqual(first["results"][0]["travel_date"], second["results"][0]["travel_date"])
+            popularity = db.query(QuickSearchPopularityCounter).one()
+            self.assertEqual(popularity.origin_iata, "LEI")
+            self.assertEqual(popularity.destination_iata, "DUB")
+            self.assertEqual(popularity.travel_date, dt.date(2026, 12, 14))
+            self.assertEqual(popularity.currency, "EUR")
+            self.assertEqual(popularity.search_count, 2)
         finally:
             db.close()
             engine.dispose()

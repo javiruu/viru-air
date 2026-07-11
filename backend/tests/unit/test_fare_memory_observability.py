@@ -12,6 +12,7 @@ from app.infrastructure.db.models import (
     FlightPriceObservation,
     QuickSearchCacheEntry,
     QuickSearchNegativeCacheEntry,
+    QuickSearchPopularityCounter,
     RevalidationJob,
     User,
 )
@@ -154,6 +155,17 @@ def _seed_fare_memory_records(db: Session) -> None:
         )
     )
     db.add(
+        QuickSearchPopularityCounter(
+            origin_iata="LEI",
+            destination_iata="DUB",
+            travel_date=dt.date(2026, 7, 20),
+            currency="EUR",
+            search_count=4,
+            first_searched_at=dt.datetime(2026, 6, 15, 9, 0),
+            last_searched_at=dt.datetime(2026, 6, 16, 9, 45),
+        )
+    )
+    db.add(
         RevalidationJob(
             job_type="boot_warmup",
             target_type="route",
@@ -196,6 +208,9 @@ def test_build_fare_memory_health_snapshot_returns_aggregated_safe_counts() -> N
         assert snapshot["search_cache"]["expired_entries"] == 1
         assert snapshot["negative_cache"]["active_entries"] == 1
         assert snapshot["negative_cache"]["reasons"]["provider_timeout"] == 1
+        assert snapshot["popularity"]["total_routes"] == 1
+        assert snapshot["popularity"]["top_routes"][0]["route"] == "LEI-DUB"
+        assert snapshot["popularity"]["top_routes"][0]["search_count"] == 4
         assert snapshot["offer_memory"]["offer_entries"] == 1
         assert snapshot["offer_memory"]["price_observations"] == 2
         assert snapshot["offer_memory"]["changed_observations_last_24h"] == 1
@@ -224,6 +239,7 @@ def test_admin_fare_memory_health_endpoint_requires_admin_and_exposes_snapshot()
         payload = response.json()
         assert payload["search_cache"]["total_entries"] == 2
         assert payload["negative_cache"]["reasons"]["provider_timeout"] == 1
+        assert payload["popularity"]["top_routes"][0]["route"] == "LEI-DUB"
         assert payload["offer_memory"]["price_observations"] == 2
         assert payload["revalidation_jobs"]["job_type"]["boot_warmup"] == 1
         assert "canonical_request_json" not in str(payload)
