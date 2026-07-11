@@ -2,6 +2,7 @@ import datetime as dt
 
 from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError
 from app.infrastructure.providers.base import FlightProvider
+from app.infrastructure.providers.circuit_breaker import ProviderCircuitBreaker, ProviderCircuitBreakerConfig
 from app.infrastructure.providers.orchestrator import FlightSearchOrchestrator
 from app.services.provider_health_stats import reset_provider_health_stats_for_tests, snapshot_provider_health
 
@@ -35,11 +36,13 @@ class _OkProvider(FlightProvider):
 
 class _FailProvider(FlightProvider):
     provider_id = "fail"
+    calls = 0
 
     def is_enabled(self) -> bool:
         return True
 
     def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 12000, currency: str = "EUR"):
+        self.calls += 1
         raise ProviderSourceFetchError(
             warning_codes=["provider_error_partial", "provider_total_outage"],
             message="failed",
@@ -98,3 +101,47 @@ def test_orchestrator_records_local_provider_health_samples():
     assert snapshots["fail"].outages == 1
     assert snapshots["wizzair"].calls == 1
     assert snapshots["wizzair"].errors == 1
+
+
+def test_orchestrator_opens_failed_provider_circuit_without_blocking_healthy_provider():
+    fail_provider = _FailProvider()
+    breaker = ProviderCircuitBreaker(ProviderCircuitBreakerConfig(failure_threshold=1, recovery_seconds=30.0))
+    orchestrator = FlightSearchOrchestrator(providers=[_OkProvider(), fail_provider], circuit_breaker=breaker)
+
+    first_result = orchestrator.get_flights("MAD", "DUB", "2026-06-14")
+    second_result = orchestrator.get_flights("MAD", "DUB", "2026-06-14")
+
+    assert len(first_result.flights) == 1
+    assert len(second_result.flights) == 1
+    assert fail_provider.calls == 1
+    assert "provider_circuit_open_partial" in second_result.warnings
+    assert second_result.warnings_structured is not None
+    assert any(
+        item.provider == "fail" and item.code == "provider_circuit_open_partial"
+        for item in second_result.warnings_structured
+    )
+
+
+def test_orchestrator_retries_provider_after_circuit_cooldown():
+    now = [100.0]
+
+    def current_time() -> float:
+        return now[0]
+
+    fail_provider = _FailProvider()
+    breaker = ProviderCircuitBreaker(
+        ProviderCircuitBreakerConfig(failure_threshold=1, recovery_seconds=5.0),
+        now=current_time,
+    )
+    orchestrator = FlightSearchOrchestrator(providers=[fail_provider], circuit_breaker=breaker)
+
+    first_result = orchestrator.get_flights("MAD", "DUB", "2026-06-14")
+    second_result = orchestrator.get_flights("MAD", "DUB", "2026-06-14")
+    now[0] = 106.0
+    third_result = orchestrator.get_flights("MAD", "DUB", "2026-06-14")
+
+    assert fail_provider.calls == 2
+    assert "provider_error_partial" in first_result.warnings
+    assert "provider_circuit_open_partial" in second_result.warnings
+    assert "provider_error_partial" in third_result.warnings
+    assert "provider_circuit_open_partial" not in third_result.warnings

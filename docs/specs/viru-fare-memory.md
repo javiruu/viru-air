@@ -525,6 +525,14 @@ Implementacion actual desde Fase 52:
 - la cobertura actual prueba busy lock Redis, release/reacquire, fallback DB, expiracion del lease DB y 5 unidades concurrentes con una sola llamada real al provider dentro del proceso;
 - activar el canary Redis en produccion sigue condicionado a entorno multi-worker/stampede real y rollback por flag.
 
+Implementacion actual desde Fase 53:
+
+- `FlightSearchOrchestrator` mantiene un circuit breaker ligero en memoria por `provider_id`;
+- por defecto abre el circuito tras 3 fallos consecutivos y reintenta tras 30 segundos de cooldown;
+- si un provider tiene el circuito abierto, solo se omite ese provider y los demas siguen devolviendo resultados;
+- el salto por circuito abierto emite `provider_circuit_open_partial` en `warnings` y `warnings_structured`;
+- la negative cache clasifica ese warning como `provider_partial_degraded`, nunca como `no_results`.
+
 ## Impacto por area
 
 ### Quick Search

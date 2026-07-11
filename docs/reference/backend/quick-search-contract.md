@@ -226,6 +226,7 @@ Rules:
 Warnings canónicos esperados en `meta.warnings_structured`:
 
 - `provider_error_partial`
+- `provider_circuit_open_partial`
 - `provider_timeout_partial`
 - `provider_total_outage`
 - `provider_partial_results_served`
@@ -241,6 +242,7 @@ Current intent:
 - `invalid_price` -> short-lived negative entry for malformed provider fare data.
 - `unsupported_route` -> longer-lived route-date-provider negative entry when the route is known unsupported.
 - `provider_timeout` / `provider_partial_degraded` / `provider_total_outage` -> returns no flights plus canonical warning codes and applies short backoff.
+- `provider_circuit_open_partial` is classified as `provider_partial_degraded`, not as silent `no_results`.
 - repeated provider failures for the same route-date-provider fingerprint increase the backoff window and move `retry_after_at` forward.
 - `rate_limited` returns warning metadata and must remain distinguishable from silent `no_results`.
 
