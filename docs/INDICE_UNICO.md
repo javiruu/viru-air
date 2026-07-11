@@ -21,6 +21,7 @@
 - [Reference](reference/README.md)
 - [Quick Search contract](reference/backend/quick-search-contract.md)
 - [Provider integration guide](reference/backend/provider-integration-guide.md)
+- [Feature flags y activacion por entorno](reference/feature-flags.md)
 - [Door-to-door API contract](reference/backend/door-to-door-contract.md)
 - [Notifications contract](reference/backend/notifications-contract.md)
 - [Quick Search acceptance checklist](reference/backend/quick-search-acceptance-checklist.md)
@@ -62,6 +63,7 @@
 
 - [Infra](engineering/infra.md)
 - [Observabilidad](engineering/observability.md)
+- [Feature flags y activacion por entorno](reference/feature-flags.md)
 - [Runbooks](runbooks/)
 - [Archive QA](archive/qa/README.md)
 

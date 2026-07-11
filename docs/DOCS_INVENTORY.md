@@ -9,6 +9,17 @@
 
 Inventario completo de documentos `.md` y `.txt` relevantes del repositorio tras el saneamiento documental. Excluye dependencias, cach?s, builds, entornos virtuales, `_publish_repo` y otras salidas generadas masivas.
 
+## Actualizacion manual 2026-07-11 (cierre Fare Memory F60)
+
+Entradas vivas actualizadas:
+
+- `docs/reference/feature-flags.md`
+- `docs/reference/README.md`
+- `docs/INDICE_UNICO.md`
+- `docs/specs/viru-fare-memory.md`
+- `docs/DOCS_INVENTORY.md`
+- `HISTORY.md`
+
 ## Actualizacion manual 2026-07-09 (providers activos Quick Search)
 
 Entradas vivas actualizadas:
@@ -647,7 +658,7 @@ Entradas vivas retiradas:
 | docs/reference/backend/quick-search-contract.md | backend | vivo | conservar | docs/reference/backend/quick-search-contract.md | Referencia t?cnica backend can?nica | docs/reference/backend/quick-search-contract.md |
 | docs/reference/codex-operating-contract.md | contexto IA | vivo | conservar | docs/reference/codex-operating-contract.md | Contrato operativo complementario para agentes | docs/reference/codex-operating-contract.md |
 | docs/reference/done-checklist.md | overview | vivo | conservar | docs/reference/done-checklist.md | Referencia t?cnica o de proceso activa | docs/reference/done-checklist.md |
-| docs/reference/feature-flags.md | unknown | vivo | conservar | docs/reference/feature-flags.md | Referencia activa de feature flags | docs/reference/feature-flags.md |
+| docs/reference/feature-flags.md | reference | vivo | conservar | docs/reference/feature-flags.md | Mapa vivo de flags por dominio, fuentes canonicas de activacion y legacy preservado para trazabilidad | docs/reference/feature-flags.md |
 | docs/reference/final-report-template.md | overview | vivo | conservar | docs/reference/final-report-template.md | Referencia t?cnica o de proceso activa | docs/reference/final-report-template.md |
 | docs/reference/quick-search-weather-policy.md | product | vivo | conservar | docs/reference/quick-search-weather-policy.md | Pol?tica funcional activa de quick search | docs/reference/quick-search-weather-policy.md |
 | docs/reference/ui-visible-language-guide.md | reference | vivo | conservar | docs/reference/ui-visible-language-guide.md | Guia canonica para humanizar lenguaje visible sin tocar labels de producto, contratos ni nombres internos | docs/reference/ui-visible-language-guide.md |

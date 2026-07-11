@@ -15,7 +15,7 @@ Esta carpeta reúne documentación técnica activa que sirve como apoyo directo 
 - `../skills/viru-tracker-context/`: espejo local de la skill reusable para reentrada y contexto de Codex.
 - `backend/quick-search-contract.md`: contrato canónico de quick search backend.
 - `backend/quick-search-acceptance-checklist.md`: checklist de aceptación técnica de quick search backend.
-- `feature-flags.md`: flags funcionales vigentes documentados.
+- `feature-flags.md`: mapa vivo de flags por dominio y fuentes canonicas de activacion.
 - `quick-search-weather-policy.md`: política funcional para la integración de weather en quick search.
 - `quick-search-legacy-alias-sunset.md`: política de transición y retirada de aliases legacy en quick search.
 

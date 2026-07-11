@@ -569,6 +569,12 @@ Implementacion actual desde Fase 59:
 - la UI resume cache, negative cache, memoria de ofertas, cola de revalidacion, senales de refresh e historicos dinamicos sin exponer datos personales;
 - el bloque usa la identidad admin existente de Viru, no crea dashboard publico ni modifica contratos backend.
 
+Cierre documental desde Fase 60:
+
+- no se retiran flags runtime porque las flags actuales siguen sirviendo como controles de rollout, coste o rollback;
+- `docs/reference/feature-flags.md` vuelve a ser la referencia viva de fuentes de activacion por dominio, dejando las flags M7-M13 como legacy trazable;
+- `backend/.env.example`, esta spec y los runbooks por dominio quedan como fuentes canonicas para defaults y activacion operativa.
+
 ## Impacto por area
 
 ### Quick Search
