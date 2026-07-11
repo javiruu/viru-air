@@ -15,6 +15,7 @@ from app.infrastructure.db.models import (
     QuickSearchPopularityCounter,
     RevalidationJob,
 )
+from app.services.fare_memory_refresh_signals import build_route_refresh_signals
 
 
 def build_fare_memory_health_snapshot(
@@ -56,6 +57,12 @@ def build_fare_memory_health_snapshot(
         "popularity": {
             "total_routes": _count_all(db, QuickSearchPopularityCounter.id),
             "top_routes": _top_popular_routes(db),
+        },
+        "refresh_signals": {
+            "top_routes": [
+                signal.to_payload()
+                for signal in build_route_refresh_signals(db, now=reference_now, limit=10)
+            ],
         },
         "offer_memory": {
             "offer_entries": _count_all(db, FlightOfferCacheEntry.id),

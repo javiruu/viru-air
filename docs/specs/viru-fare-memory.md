@@ -1,7 +1,7 @@
 # Viru Fare Memory
 
 **Estado:** vivo  
-**Ultima revision:** 2026-07-10
+**Ultima revision:** 2026-07-11
 **Fuente de verdad:** si  
 **Area:** backend / quick-search / watchlist / pricing intelligence
 
@@ -541,6 +541,13 @@ Implementacion actual desde Fase 54:
 - `POST /api/v1/search/quick` incrementa el contador despues de normalizar una request valida, tanto en miss live como en hit de exact-search cache;
 - `GET /api/v1/admin/fare-memory-health` expone `popularity.total_routes` y `popularity.top_routes` como agregados tecnicos;
 - estos contadores preparan priorizacion futura de warmup, dashboard interno y recomendaciones sin cambiar la respuesta publica de quick search.
+
+Implementacion actual desde Fase 55:
+
+- `fare_memory_refresh_signals` agrega senales de producto por ruta y fecha: watches activas, alertas habilitadas, busquedas recientes y cercania a la salida;
+- el score es determinista y observable; no usa IA, prediccion ni datos personales;
+- `GET /api/v1/admin/fare-memory-health` expone `refresh_signals.top_routes` con conteos agregados, `priority_score`, `suggested_job_priority` y razones tecnicas;
+- esta fase no cambia el scheduler de warmup ni encola nuevos jobs por si sola: deja la base medible para priorizar refresh cuando haya metricas.
 
 ## Impacto por area
 
