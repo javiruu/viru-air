@@ -465,6 +465,7 @@ Fases de rollout:
 - `cache_miss_rate`
 - `negative_cache_hit_rate`
 - `provider_calls_avoided`
+- `popular_route_search_count`
 - `stale_served_count`
 - `revalidation_success_count`
 - `revalidation_price_changed_count`
@@ -532,6 +533,14 @@ Implementacion actual desde Fase 53:
 - si un provider tiene el circuito abierto, solo se omite ese provider y los demas siguen devolviendo resultados;
 - el salto por circuito abierto emite `provider_circuit_open_partial` en `warnings` y `warnings_structured`;
 - la negative cache clasifica ese warning como `provider_partial_degraded`, nunca como `no_results`.
+
+Implementacion actual desde Fase 54:
+
+- `quick_search_popularity_counter` agrega busquedas por `origin_iata`, `destination_iata`, `travel_date` y `currency`;
+- no guarda `user_id`, email, sesion, IP ni preferencias personales;
+- `POST /api/v1/search/quick` incrementa el contador despues de normalizar una request valida, tanto en miss live como en hit de exact-search cache;
+- `GET /api/v1/admin/fare-memory-health` expone `popularity.total_routes` y `popularity.top_routes` como agregados tecnicos;
+- estos contadores preparan priorizacion futura de warmup, dashboard interno y recomendaciones sin cambiar la respuesta publica de quick search.
 
 ## Impacto por area
 

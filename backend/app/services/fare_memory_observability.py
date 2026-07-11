@@ -12,6 +12,7 @@ from app.infrastructure.db.models import (
     FlightPriceObservation,
     QuickSearchCacheEntry,
     QuickSearchNegativeCacheEntry,
+    QuickSearchPopularityCounter,
     RevalidationJob,
 )
 
@@ -51,6 +52,10 @@ def build_fare_memory_health_snapshot(
             ),
             "freshness": _count_by_field(db, QuickSearchNegativeCacheEntry.freshness_status),
             "reasons": _count_by_field(db, QuickSearchNegativeCacheEntry.reason),
+        },
+        "popularity": {
+            "total_routes": _count_all(db, QuickSearchPopularityCounter.id),
+            "top_routes": _top_popular_routes(db),
         },
         "offer_memory": {
             "offer_entries": _count_all(db, FlightOfferCacheEntry.id),
@@ -115,3 +120,23 @@ def _count_by_field(db: Session, column) -> dict[str, int]:
         str(key if key is not None else "null"): int(value)
         for key, value in rows
     }
+
+
+def _top_popular_routes(db: Session) -> list[dict[str, Any]]:
+    rows = db.execute(
+        select(QuickSearchPopularityCounter)
+        .order_by(QuickSearchPopularityCounter.search_count.desc(), QuickSearchPopularityCounter.last_searched_at.desc())
+        .limit(10)
+    ).scalars()
+    return [
+        {
+            "route": f"{row.origin_iata}-{row.destination_iata}",
+            "origin_iata": row.origin_iata,
+            "destination_iata": row.destination_iata,
+            "travel_date": row.travel_date.isoformat(),
+            "currency": row.currency,
+            "search_count": int(row.search_count),
+            "last_searched_at": row.last_searched_at.isoformat(),
+        }
+        for row in rows
+    ]

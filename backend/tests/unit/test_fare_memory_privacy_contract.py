@@ -3,6 +3,7 @@ from app.infrastructure.db.models import (
     FlightPriceObservation,
     QuickSearchCacheEntry,
     QuickSearchNegativeCacheEntry,
+    QuickSearchPopularityCounter,
 )
 
 
@@ -11,6 +12,7 @@ GLOBAL_FARE_MEMORY_MODELS = (
     QuickSearchNegativeCacheEntry,
     FlightOfferCacheEntry,
     FlightPriceObservation,
+    QuickSearchPopularityCounter,
 )
 
 
