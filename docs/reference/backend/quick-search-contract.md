@@ -311,7 +311,7 @@ Reglas:
 - `dominant_direction_recent` describe el sesgo reciente del historico, no una promesa futura.
 - el scheduler de `boot_warmup` puede usar `volatility_score` para bajar prioridad numerica y refrescar antes rutas tecnicamente mas movidas.
 
-## Observabilidad tecnica (Fare Memory Fases 40-42, 54)
+## Observabilidad tecnica (Fare Memory Fases 40-42, 54-55)
 
 Si existe auth admin, backend expone `GET /api/v1/admin/fare-memory-health` como snapshot tecnico agregado.
 
@@ -320,6 +320,7 @@ Bloques esperados:
 - `search_cache`
 - `negative_cache`
 - `popularity`
+- `refresh_signals`
 - `offer_memory`
 - `revalidation_jobs`
 
@@ -329,6 +330,8 @@ Reglas:
 - no devuelve `payload_json`, `canonical_request_json` ni datos por usuario;
 - pensado para soporte/operacion, no para UI publica.
 - `popularity.top_routes[]` contiene solo ruta, fecha, moneda, contador agregado y ultimo avistamiento; no contiene `user_id`.
+- `refresh_signals.top_routes[]` contiene ruta, fecha, conteos agregados, `priority_score`, `suggested_job_priority` y razones tecnicas; no contiene `user_id` ni identidad de usuario.
+- las senales de refresh son deterministas y no activan IA ni scheduling nuevo por si solas.
 
 Quick Search y tareas Fare Memory emiten eventos JSON agregados para soporte operativo:
 
