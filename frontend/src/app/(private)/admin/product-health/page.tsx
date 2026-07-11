@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { useI18n } from "@/i18n";
+import { FareMemoryHealthPanel } from "@/modules/admin/FareMemoryHealthPanel";
+import type { FareMemoryHealth } from "@/modules/admin/fareMemoryHealth";
 import { apiFetch } from "@/modules/shared/api";
 import { getSystemStatusMeta } from "@/modules/shared/statusCatalog";
 import { SkeletonPanel } from "@/modules/shared/Skeleton";
@@ -42,6 +44,7 @@ export default function ProductHealthPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [data, setData] = useState<ProductHealth | null>(null);
+  const [fareMemory, setFareMemory] = useState<FareMemoryHealth | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -56,9 +59,16 @@ export default function ProductHealthPage() {
           router.replace("/dashboard");
           return;
         }
-        const payload = await apiFetch<ProductHealth>("/admin/product-health");
-        if (active) setData(payload);
-      } catch {
+        const [payload, fareMemoryPayload] = await Promise.all([
+          apiFetch<ProductHealth>("/admin/product-health"),
+          apiFetch<FareMemoryHealth>("/admin/fare-memory-health"),
+        ]);
+        if (active) {
+          setData(payload);
+          setFareMemory(fareMemoryPayload);
+        }
+      } catch (loadError) {
+        if (!(loadError instanceof Error)) throw loadError;
         if (active) setError("No se pudo cargar Product Health.");
       } finally {
         if (active) setLoading(false);
@@ -85,7 +95,7 @@ export default function ProductHealthPage() {
       <section className="page-header">
         <div>
           <h1>Product Health</h1>
-          <p className="panel-note">Observabilidad de uso, errores y rendimiento (solo admin).</p>
+          <p className="panel-note">Observabilidad de uso, errores, rendimiento y Fare Memory (solo admin).</p>
         </div>
         <Link href="/admin" className="btn-ghost">Volver a Admin</Link>
       </section>
@@ -101,14 +111,14 @@ export default function ProductHealthPage() {
                 {systemMeta?.label ?? data.system.status}
               </span>
             </div>
-            <p className="panel-note">Ãšltima actualizaciÃ³n de datos: {data.system.last_data_update ?? "sin datos"}</p>
-            <p className="panel-note">Ãšltima ejecuciÃ³n de alertas: {data.system.last_alert_execution ?? "sin datos"}</p>
+            <p className="panel-note">Ultima actualizacion de datos: {data.system.last_data_update ?? "sin datos"}</p>
+            <p className="panel-note">Ultima ejecucion de alertas: {data.system.last_alert_execution ?? "sin datos"}</p>
           </section>
 
           <section className="section-gap">
             <div className="dashboard-primary-grid">
               <article className="module-card"><strong>Visitas dashboard</strong><span>{data.usage.dashboard_view?.weekly ?? 0}</span></article>
-              <article className="module-card"><strong>BÃºsquedas rÃ¡pidas</strong><span>{data.usage.quick_search_executed?.weekly ?? 0}</span></article>
+              <article className="module-card"><strong>Busquedas rapidas</strong><span>{data.usage.quick_search_executed?.weekly ?? 0}</span></article>
               <article className="module-card"><strong>Refresh watchlist</strong><span>{data.usage.watchlist_refresh?.weekly ?? 0}</span></article>
               <article className="module-card"><strong>Alertas creadas</strong><span>{data.usage.alert_created?.weekly ?? 0}</span></article>
               <article className="module-card"><strong>Alertas disparadas</strong><span>{data.usage.alert_triggered?.weekly ?? 0}</span></article>
@@ -120,15 +130,15 @@ export default function ProductHealthPage() {
             <h2 className="panel-title">Indicadores clave</h2>
             <div className="split section-gap-sm">
               <div className="panel-soft panel">
-                <strong>% bÃºsquedas sin resultados</strong>
+                <strong>% busquedas sin resultados</strong>
                 <p>{data.indicators.search_empty_rate_pct}%</p>
               </div>
               <div className="panel-soft panel">
-                <strong>Ratio refresh â†’ acciÃ³n</strong>
+                <strong>Ratio refresh a accion</strong>
                 <p>{data.indicators.watchlist_refresh_to_action_pct}%</p>
               </div>
               <div className="panel-soft panel">
-                <strong>Tasa creaciÃ³n alertas</strong>
+                <strong>Tasa creacion alertas</strong>
                 <p>{data.indicators.alert_create_rate_pct}%</p>
               </div>
             </div>
@@ -150,7 +160,7 @@ export default function ProductHealthPage() {
                 <ul>
                   {data.errors.recent.map((item, idx) => (
                     <li key={`${item.created_at}-${idx}`}>
-                      <strong>{item.section}</strong> Â· {item.message}
+                      <strong>{item.section}</strong> - {item.message}
                     </li>
                   ))}
                 </ul>
@@ -163,13 +173,15 @@ export default function ProductHealthPage() {
                 <ul>
                   {data.errors.frequent.map((item, idx) => (
                     <li key={`${item.message}-${idx}`}>
-                      <strong>{item.count}x</strong> Â· {item.message}
+                      <strong>{item.count}x</strong> - {item.message}
                     </li>
                   ))}
                 </ul>
               )}
             </article>
           </section>
+
+          {fareMemory ? <FareMemoryHealthPanel snapshot={fareMemory} /> : null}
         </>
       ) : null}
     </main>

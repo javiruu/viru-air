@@ -1,5 +1,11 @@
 # History
 
+## 2026-07-11 - Admin Product Health muestra Fare Memory
+
+- `/admin/product-health` suma un bloque interno de Fare Memory alimentado por `GET /api/v1/admin/fare-memory-health`.
+- La vista resume cache, negative cache, memoria de ofertas, cola de revalidacion, senales de refresh e historicos dinamicos con contadores agregados, sin datos personales ni payloads crudos.
+- Verificacion focalizada: `npm test -- tests/fare-memory-health-summary.test.ts`, `npx tsc --noEmit`, `npm run build` y QA Playwright con mocks sobre `/admin/product-health` en desktop/mobile y dark/light.
+
 ## 2026-07-09 — Quick Search limita providers activos a Ryanair y Vueling
 
 - `FlightProviderRegistry` ya no activa por defecto WizzAir, easyJet, Iberia ni Duffel; el orden por defecto queda en `ryanair,vueling`.

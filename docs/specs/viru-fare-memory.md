@@ -563,6 +563,12 @@ Implementacion actual desde Fase 58:
 - SQLite conserva el flujo local anterior, sin `FOR UPDATE`, para mantener compatibilidad de desarrollo y tests;
 - no se anaden indices parciales, advisory locks ni politicas de vacuum hasta tener query plans o metricas reales de crecimiento en produccion.
 
+Implementacion actual desde Fase 59:
+
+- `/admin/product-health` consume tambien `GET /api/v1/admin/fare-memory-health` para mostrar un bloque interno de Fare Memory;
+- la UI resume cache, negative cache, memoria de ofertas, cola de revalidacion, senales de refresh e historicos dinamicos sin exponer datos personales;
+- el bloque usa la identidad admin existente de Viru, no crea dashboard publico ni modifica contratos backend.
+
 ## Impacto por area
 
 ### Quick Search
