@@ -91,6 +91,7 @@ def test_negative_cache_hit_increments_counter_and_stale_entry_misses(db: Sessio
         (["provider_timeout_partial"], "provider_timeout"),
         (["provider_total_outage"], "provider_total_outage"),
         (["provider_error_partial"], "provider_partial_degraded"),
+        (["provider_circuit_open_partial"], "provider_partial_degraded"),
         (["ryanair_fares_failed"], "provider_partial_degraded"),
         (["invalid_price"], "invalid_price"),
         (["iberia_provider_captcha_akamai_blocked"], "provider_waf_challenge"),
@@ -112,6 +113,7 @@ def test_quick_search_negative_write_policy_uses_minimum_reason_codes(
     [
         ["provider_total_outage", "iberia_provider_captcha_akamai_blocked"],
         ["provider_error_partial", "provider_schema_changed"],
+        ["provider_circuit_open_partial"],
     ],
 )
 def test_dangerous_provider_errors_are_not_written_as_empty_routes(warnings: list[str]) -> None:

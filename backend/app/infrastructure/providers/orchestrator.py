@@ -6,16 +6,24 @@ from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 
 from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError, ProviderWarning
 from app.infrastructure.providers.base import FlightProvider
+from app.infrastructure.providers.circuit_breaker import ProviderCircuitBreaker
 from app.infrastructure.providers.registry import FlightProviderRegistry
 from app.services.provider_health_stats import ProviderHealthSample, record_provider_health_sample
 
 
 logger = logging.getLogger(__name__)
+_DEFAULT_PROVIDER_CIRCUIT_BREAKER = ProviderCircuitBreaker()
 
 
 class FlightSearchOrchestrator:
-    def __init__(self, providers: list[FlightProvider] | None = None) -> None:
+    def __init__(
+        self,
+        providers: list[FlightProvider] | None = None,
+        *,
+        circuit_breaker: ProviderCircuitBreaker | None = None,
+    ) -> None:
         self._providers = providers if providers is not None else FlightProviderRegistry().resolve_enabled_providers()
+        self._circuit_breaker = circuit_breaker or _DEFAULT_PROVIDER_CIRCUIT_BREAKER
 
     def provider_ids(self) -> list[str]:
         return [provider.provider_id for provider in self._providers]
@@ -49,6 +57,26 @@ class FlightSearchOrchestrator:
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_map: dict[Future[ProviderFetchResult], tuple[FlightProvider, float]] = {}
             for provider in self._providers:
+                circuit_decision = self._circuit_breaker.before_call(provider.provider_id)
+                if not circuit_decision.can_call:
+                    warnings.append("provider_circuit_open_partial")
+                    warnings_structured.append(
+                        ProviderWarning(
+                            code="provider_circuit_open_partial",
+                            provider=provider.provider_id,
+                            severity="warning",
+                            meta={"recover_in_seconds": round(circuit_decision.recover_in_seconds or 0.0, 3)},
+                        )
+                    )
+                    logger.warning(
+                        "orchestrator_provider_circuit_open provider=%s route=%s->%s recover_in_seconds=%s",
+                        provider.provider_id,
+                        origin,
+                        destination,
+                        circuit_decision.recover_in_seconds,
+                    )
+                    continue
+
                 provider_started_at = time.perf_counter()
                 future = executor.submit(
                     provider.get_flights,
@@ -65,6 +93,7 @@ class FlightSearchOrchestrator:
                 provider_elapsed_ms = int((time.perf_counter() - provider_started_at) * 1000)
                 try:
                     result = future.result()
+                    self._circuit_breaker.record_success(provider.provider_id)
                     flights.extend(result.flights)
                     warnings.extend(result.warnings)
                     for item in result.warnings_structured or []:
@@ -83,6 +112,7 @@ class FlightSearchOrchestrator:
                         provider.provider_id, origin, destination, len(result.flights),
                     )
                 except ProviderSourceFetchError as exc:
+                    self._circuit_breaker.record_failure(provider.provider_id)
                     warnings.extend(exc.warning_codes)
                     warnings_structured.extend(
                         [
@@ -109,6 +139,7 @@ class FlightSearchOrchestrator:
                         provider.provider_id, origin, destination, exc.warning_codes,
                     )
                 except Exception as exc:
+                    self._circuit_breaker.record_failure(provider.provider_id)
                     logger.warning(
                         "orchestrator_provider_unexpected provider=%s route=%s->%s error_type=%s",
                         provider.provider_id,

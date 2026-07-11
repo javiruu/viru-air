@@ -53,6 +53,7 @@ PROVIDER_WAF_WARNING_MARKERS: Final[tuple[str, ...]] = (
 PROVIDER_PARTIAL_DEGRADATION_CODES: Final[frozenset[str]] = frozenset(
     {
         "provider_error_partial",
+        "provider_circuit_open_partial",
         "provider_timeout_partial",
         "provider_partial_results_served",
         "ryanair_unavailable_partial",
@@ -69,6 +70,7 @@ PROVIDER_WARNING_CODES: Final[frozenset[str]] = (
 PROVIDER_OUTAGE_WARNING_CODES: Final[frozenset[str]] = frozenset(
     {
         "provider_error_partial",
+        "provider_circuit_open_partial",
         "provider_timeout_partial",
     }
 ) | PROVIDER_TOTAL_OUTAGE_CODES | PROVIDER_ERROR_CODES
