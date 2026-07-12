@@ -48,6 +48,8 @@ _Fuente: `frontend/src/styles/tokens.css`_
 - `--accent-2`
 - `--border`
 - `--shadow`
+- `--color-selection-bg`
+- `--color-selection-text`
 
 ### Valores de referencia para tema dual (documentacion visual)
 Estos valores alinean la guia dark/light, pero **no se declaran aqui como tokens nuevos congelados**:

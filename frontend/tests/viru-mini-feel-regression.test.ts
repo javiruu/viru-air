@@ -131,6 +131,25 @@ test("doorToDoor i18n exposes timezone + known-route copy in es + en", () => {
   assert.match(en, /timezoneAria:/, "missing timezone aria-label copy");
 });
 
+test("global text selection uses dual-theme design tokens", () => {
+  const base = read("styles/base.css");
+  const tokens = read("styles/tokens.css");
+  const selectionRule = base.match(/::selection\s*\{[\s\S]*?\}/);
+  const darkTokens = tokens.match(/:root\[data-theme="dark"\]\s*\{[\s\S]*?\n\}/);
+
+  assert.ok(selectionRule?.[0], "missing global ::selection rule");
+  const selectionCss = selectionRule[0];
+  assert.match(selectionCss, /background-color:\s*var\(--color-selection-bg\)/);
+  assert.match(selectionCss, /color:\s*var\(--color-selection-text\)/);
+  assert.match(base, /::-moz-selection\s*\{[\s\S]*?--color-selection-bg/, "missing Firefox selection fallback");
+  assert.match(tokens, /--color-selection-bg:\s*color-mix\(in srgb,\s*var\(--accent\)/);
+  assert.match(tokens, /--color-selection-text:\s*var\(--ink\)/);
+  assert.ok(darkTokens?.[0], "missing dark theme token block");
+  const darkTokenCss = darkTokens[0];
+  assert.match(darkTokenCss, /--color-selection-bg:/, "missing dark selection background token");
+  assert.match(darkTokenCss, /--color-selection-text:/, "missing dark selection text token");
+});
+
 // ── Cross-cutting CSS surface check ───────────────────────────────────
 test("components.css exposes every mini-feel surface class still in use", () => {
   const css = read("styles/components.css");

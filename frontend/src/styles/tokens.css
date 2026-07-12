@@ -21,6 +21,8 @@
   --color-accent-hover: color-mix(in srgb, var(--accent) 88%, #ffffff 12%);
   --color-accent-pressed: color-mix(in srgb, var(--accent) 80%, #000000 20%);
   --color-accent-text: var(--accent-ink);
+  --color-selection-bg: color-mix(in srgb, var(--accent) 32%, var(--surface) 68%);
+  --color-selection-text: var(--ink);
 
   --color-chip-bg: color-mix(in srgb, var(--surface) 90%, var(--surface-2));
   --color-chip-text: var(--ink);
@@ -124,6 +126,8 @@
   --color-text-disabled: color-mix(in srgb, var(--ink-muted) 70%, transparent);
   --color-accent-hover: color-mix(in srgb, var(--accent) 86%, #ffffff 14%);
   --color-accent-pressed: color-mix(in srgb, var(--accent) 78%, #000000 22%);
+  --color-selection-bg: color-mix(in srgb, var(--accent) 54%, var(--bg) 46%);
+  --color-selection-text: var(--ink);
   --color-chip-bg: color-mix(in srgb, var(--surface) 78%, #ffffff 5%);
   --color-chip-border: color-mix(in srgb, var(--border) 92%, var(--accent-2) 8%);
   --color-footer-bg: color-mix(in srgb, var(--bg) 96%, var(--surface) 4%);
