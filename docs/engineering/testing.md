@@ -21,8 +21,9 @@ La estrategia de testing queda dividida asi:
 - Evidencia visual:
   - [Runbook UI captures](../runbooks/runbook-ui-captures.md)
 - Histórico:
-  - [Archive QA](../archive/qa/README.md)
-  - [Tooling archivado](../archive/tooling/README.md)
+  - [Reportes QA archivados](../archive/qa-reports/)
+  - [Evidencia QA archivada](../archive/qa-evidence/)
+  - [QA visual archivada](../archive/qa-visual/)
 
 ## Relacionado
 

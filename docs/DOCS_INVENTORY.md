@@ -152,13 +152,13 @@ Entradas vivas actualizadas:
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
 
-Entradas vivas retiradas:
+Entradas vivas retiradas (sin referencia verificable activa):
 
-- `docs/runbooks/runbook-duckdns-public-domain.md`
+- docs/runbooks/runbook-duckdns-public-domain.md
 - `infra/Caddyfile`
 - `infra/duckdns.env.example`
-- `infra/public-stable-network-profiles.json`
-- `infra/public-stable-network-state.json`
+- infra/public-stable-network-profiles.json
+- infra/public-stable-network-state.json
 - `scripts/caddy-start.ps1`
 - `scripts/caddy-status.ps1`
 - `scripts/caddy-stop.ps1`
@@ -360,9 +360,9 @@ Entradas vivas actualizadas:
 
 ## Actualizacion manual 2026-06-04 (duckdns public domain rewrite)
 
-Entradas vivas agregadas:
+Entradas historicas agregadas y retiradas posteriormente:
 
-- `docs/runbooks/runbook-duckdns-public-domain.md`
+- docs/runbooks/runbook-duckdns-public-domain.md
 
 Entradas vivas actualizadas:
 
@@ -370,12 +370,12 @@ Entradas vivas actualizadas:
 - `docs/DOCS_INVENTORY.md`
 - `VIRU_PANEL.bat`
 - `infra/Caddyfile`
-- `infra/docker-compose.prod.yml`
+- infra/docker-compose.prod.yml
 
-Entradas vivas retiradas:
+Entradas vivas retiradas (sin referencia verificable activa):
 
-- `docs/runbooks/runbook-free-domain-setup.md`
-- `infra/cloudflared-config.yml`
+- docs/runbooks/runbook-free-domain-setup.md
+- infra/cloudflared-config.yml
 - `scripts/setup-cloudflared.ps1`
 
 ## Actualizacion manual 2026-06-05 (watchlist + quick-search stabilization)
@@ -384,7 +384,7 @@ Entradas vivas agregadas:
 
 - `docs/runbooks/runbook-watchlist-quick-search-stabilization.md`
 | docs/runbooks/runbook-puerta-a-puerta-qa.md | runbook | vivo | conservar | docs/runbooks/runbook-puerta-a-puerta-qa.md | Runbook QA especifico de /puerta-a-puerta con taxonomia de fuentes, checklist y comandos de test | docs/runbooks/runbook-puerta-a-puerta-qa.md |
-- `docs/archive/qa-reports/2026-06-05-watchlist-quick-search-stabilization.md`
+- Reporte archivado no conservado: docs/archive/qa-reports/2026-06-05-watchlist-quick-search-stabilization.md
 
 Entradas vivas actualizadas:
 
@@ -808,17 +808,17 @@ Entradas vivas agregadas:
 
 ## Actualizacion manual 2026-05-27 (DuckDNS domain setup)
 
-Entradas vivas agregadas:
+Entradas historicas agregadas y retiradas posteriormente:
 
-- `docs/runbooks/runbook-duckdns-public-domain.md`
+- docs/runbooks/runbook-duckdns-public-domain.md
 - `infra/Caddyfile`
-- `infra/docker-compose.prod.yml`
+- infra/docker-compose.prod.yml
 - `infra/.env.prod.example`
 
 Entradas vivas actualizadas:
 
-- `infra/docker-compose.yml`
-- `infra/docker-compose.relaunch.yml`
+- infra/docker-compose.yml
+- infra/docker-compose.relaunch.yml
 - `backend/.env.example`
 - `frontend/.env.example`
 - `backend/app/main.py`
