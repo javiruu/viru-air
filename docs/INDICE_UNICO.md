@@ -1,7 +1,7 @@
 # Índice Único de Documentación
 
 **Estado:** vivo
-**Última revisión:** 2026-06-29
+**Última revisión:** 2026-07-12
 **Fuente de verdad:** sí
 **Área:** documentación
 
@@ -50,7 +50,6 @@
 ### QA
 
 - [README QA](qa/README.md)
-- [Estabilización watchlist + quick-search (archivado)](archive/qa-reports/2026-06-05-watchlist-quick-search-stabilization.md)
 - [Frontend PR checklist](qa/acceptance-checklists/frontend-pr-checklist.md)
 - [Matriz QA por area](qa/qa-command-matrix.md)
 - [Fase 0 limpieza conceptual](qa/fase-0-limpieza-conceptual-checklist.md)
@@ -65,7 +64,7 @@
 - [Observabilidad](engineering/observability.md)
 - [Feature flags y activacion por entorno](reference/feature-flags.md)
 - [Runbooks](runbooks/)
-- [Archive QA](archive/qa/README.md)
+- [Archive QA reports](archive/qa-reports/)
 
 ### Agente IA / Codex
 
@@ -153,13 +152,13 @@
 - [Design System para agentes](../DESIGN.md)
 - [Skill Viru Tracker UI](../.codex/skills/viru-tracker-ui/SKILL.md)
 - [Skill Taste Frontend](../.codex/skills/taste-skill/SKILL.md)
-- [Prompts archivados](archive/prompts/README.md)
+- [Prompts legacy](prompts/legacy/)
 
 ### Archive
 
-- [README archive](archive/README.md)
-- [Root legacy](archive/root-legacy/README.md)
-- [Fases](archive/fases/README.md)
-- [QA histórico](archive/qa/README.md)
-- [Duplicados archivados](archive/duplicated/README.md)
-- [Reportes históricos](archive/old-reports/README.md)
+- [Archive](archive/)
+- [Planes archivados](archive/plans/)
+- [QA evidence archivada](archive/qa-evidence/)
+- [QA reports archivados](archive/qa-reports/)
+- [QA visual archivada](archive/qa-visual/)
+- [Reportes historicos](archive/reports/)

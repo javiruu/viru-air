@@ -9,6 +9,17 @@
 
 Inventario completo de documentos `.md` y `.txt` relevantes del repositorio tras el saneamiento documental. Excluye dependencias, cach?s, builds, entornos virtuales, `_publish_repo` y otras salidas generadas masivas.
 
+## Actualizacion manual 2026-07-12 (reparacion enlaces centrales F60)
+
+Entradas vivas actualizadas:
+
+- `docs/README.md`
+- `docs/INDICE_UNICO.md`
+- `docs/qa/README.md`
+- `docs/prompts/README.md`
+- `docs/DOCS_INVENTORY.md`
+- `HISTORY.md`
+
 ## Actualizacion manual 2026-07-11 (cierre Fare Memory F60)
 
 Entradas vivas actualizadas:

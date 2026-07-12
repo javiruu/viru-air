@@ -1,11 +1,11 @@
 ﻿# QA
 
 **Estado:** vivo  
-**Última revisión:** 2026-05-11  
+**Última revisión:** 2026-07-12
 **Fuente de verdad:** sí  
 **Área:** QA
 
-`docs/qa/` conserva solo material vivo o reutilizable. El histórico de ciclos cerrados está en [archive/qa](../archive/qa/README.md).
+`docs/qa/` conserva solo material vivo o reutilizable. El histórico de ciclos cerrados está en [archive/qa-reports](../archive/qa-reports/) y en las carpetas `docs/archive/qa-*`.
 
 ## Qué vive aquí
 
@@ -41,5 +41,5 @@
 
 ## Histórico
 
-- ciclos cerrados y readiness: [../archive/qa/README.md](../archive/qa/README.md)
-- reportes de tooling: [../archive/tooling/README.md](../archive/tooling/README.md)
+- ciclos cerrados y readiness: [../archive/qa-reports/](../archive/qa-reports/)
+- evidencias historicas: [../archive/qa-evidence/](../archive/qa-evidence/)

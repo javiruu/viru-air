@@ -1,7 +1,7 @@
 ﻿# Documentación de Viru Tracker
 
 **Estado:** vivo  
-**Última revisión:** 2026-05-11  
+**Última revisión:** 2026-07-12
 **Fuente de verdad:** sí  
 **Área:** documentación
 
@@ -78,13 +78,13 @@ Documentación histórica:
 
 - Las capturas, snapshots y reportes JSON no deben mezclarse con specs.
 - Evidencia activa y ligera: `docs/qa/visual/`, `docs/qa/reports/`, `docs/qa/evidence/`.
-- Evidencia histórica o de ciclos cerrados: `docs/archive/qa/` o `docs/archive/tooling/`.
+- Evidencia histórica o de ciclos cerrados: `docs/archive/qa-reports/`, `docs/archive/qa-evidence/`, `docs/archive/qa-screenshots/`, `docs/archive/qa-snapshots/` o `docs/archive/qa-visual/`.
 
 ## Cómo tratar prompts antiguos
 
 - `AGENTS.md` es el contrato operativo principal para agentes.
 - `docs/reference/codex-operating-contract.md` complementa reglas persistentes.
-- Los prompts antiguos deben vivir en `docs/prompts/legacy/` o `docs/archive/prompts/`.
+- Los prompts antiguos deben vivir en `docs/prompts/legacy/`.
 
 ## Cómo mantener el inventario
 
@@ -99,4 +99,4 @@ Documentación histórica:
 - [README raíz](../README.md)
 - [Indice único](INDICE_UNICO.md)
 - [Inventario documental](DOCS_INVENTORY.md)
-- [Archivo histórico](archive/README.md)
+- [Archivo histórico](archive/)

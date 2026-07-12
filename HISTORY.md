@@ -1,5 +1,11 @@
 # History
 
+## 2026-07-12 - Reparacion de enlaces centrales del cierre F60
+
+- `docs/INDICE_UNICO.md`, `docs/README.md`, `docs/qa/README.md` y `docs/prompts/README.md` dejan de enlazar READMEs archivados que ya no existen.
+- El indice apunta ahora a las carpetas de archivo reales (`archive/qa-reports/`, `archive/qa-evidence/`, `archive/qa-visual/`, `archive/reports/`) y a `prompts/legacy/`.
+- `.gitignore` excluye `docs/generated/`, que es salida generada por `oma docs verify`.
+
 ## 2026-07-11 - Cierre documental Fare Memory F60
 
 - `docs/reference/feature-flags.md` deja de apuntar a un estado archivado y consolida las fuentes vivas de activacion por dominio.

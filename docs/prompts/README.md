@@ -1,7 +1,7 @@
 ﻿# Prompts y Contexto IA
 
 **Estado:** vivo  
-**Última revisión:** 2026-06-13
+**Última revisión:** 2026-07-12
 **Fuente de verdad:** sí  
 **Área:** contexto IA
 
@@ -31,4 +31,4 @@ Esta carpeta separa el material operativo de agentes del histórico de prompts s
 
 - [AGENTS.md](../../AGENTS.md)
 - [Codex operating contract](../reference/codex-operating-contract.md)
-- [Archive prompts](../archive/prompts/README.md)
+- [Prompts legacy](legacy/)
