@@ -91,3 +91,6 @@ frontend/tests/artifacts/
 # commands redirect with 2>nul on Windows shells (used in some test scripts).
 # Ignore them so they never accidentally enter the repo.
 nul
+
+# oma docs generated artifacts
+docs/generated/
