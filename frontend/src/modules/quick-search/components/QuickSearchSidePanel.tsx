@@ -27,6 +27,7 @@ type Props = {
   totalResults?: number;
   /** Called on page change. */
   onPageChange?: (page: number) => void;
+  isPageChanging?: boolean;
   /** Locale for i18n. */
   locale?: QuickSearchLocale;
   onHoverStart?: () => void;
@@ -54,6 +55,7 @@ export function QuickSearchSidePanel({
   pageSize,
   totalResults,
   onPageChange,
+  isPageChanging,
   locale,
   onHoverStart,
   onHoverEnd,
@@ -148,6 +150,7 @@ export function QuickSearchSidePanel({
             pageSize={pageSize}
             totalResults={totalResults}
             onPageChange={onPageChange}
+            isPageChanging={isPageChanging}
             locale={locale}
           />
         </div>

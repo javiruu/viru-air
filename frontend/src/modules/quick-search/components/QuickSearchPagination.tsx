@@ -41,6 +41,7 @@ type Props = {
   totalResults: number;
   /** Called when the user navigates to a different page. */
   onPageChange: (page: number) => void;
+  isPageChanging?: boolean;
   /** Current locale tag (e.g. "es" | "en") for i18n. */
   locale?: QuickSearchLocale;
   /** Optional className for the root element. */
@@ -62,6 +63,7 @@ export function QuickSearchPagination({
   pageSize,
   totalResults,
   onPageChange,
+  isPageChanging = false,
   locale = "es",
   className,
 }: Props) {
@@ -78,22 +80,24 @@ export function QuickSearchPagination({
 
   return (
     <div
-      className={`qs-pagination animate-fade-in${className ? ` ${className}` : ""}`}
+      className={`qs-pagination animate-fade-in${isPageChanging ? " qs-pagination--loading" : ""}${className ? ` ${className}` : ""}`}
       role="navigation"
       aria-label="Pagination"
+      aria-busy={isPageChanging}
     >
       <span className="qs-pagination-stats">
         {t("paginationShowing")
           .replace("{start}", String(start))
           .replace("{end}", String(end))
           .replace("{total}", String(totalResults))}
+        {isPageChanging ? <span className="qs-pagination-live">Preparando pagina</span> : null}
       </span>
 
       <div className="qs-pagination-nav">
         <button
           type="button"
           className="qs-pagination-btn"
-          disabled={activePage === 1}
+          disabled={activePage === 1 || isPageChanging}
           aria-label={t("paginationPrev")}
           onClick={() => onPageChange(activePage - 1)}
         >
@@ -125,6 +129,7 @@ export function QuickSearchPagination({
                 className={`qs-pagination-btn${num === activePage ? " active" : ""}`}
                 aria-label={`Page ${num}`}
                 aria-current={num === activePage ? "page" : undefined}
+                disabled={isPageChanging}
                 onClick={() => onPageChange(Number(num))}
               >
                 {num}
@@ -136,7 +141,7 @@ export function QuickSearchPagination({
         <button
           type="button"
           className="qs-pagination-btn"
-          disabled={activePage === totalPages}
+          disabled={activePage === totalPages || isPageChanging}
           aria-label={t("paginationNext")}
           onClick={() => onPageChange(activePage + 1)}
         >

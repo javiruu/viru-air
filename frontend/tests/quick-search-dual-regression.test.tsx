@@ -269,6 +269,25 @@ test("outbound and return panels have independent pagination", () => {
   );
 });
 
+test("pagination uses page presentation instead of full search loading", () => {
+  const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
+  const sideHookPath = path.join(
+    process.cwd(),
+    "src",
+    "modules",
+    "quick-search",
+    "state",
+    "useQuickSearchSide.ts",
+  );
+  const sideHookSource = fs.readFileSync(sideHookPath, "utf8");
+
+  assert.match(source, /presentation:\s*"page"/);
+  assert.match(source, /isPageChanging/);
+  assert.match(sideHookSource, /presentation\?:\s*"search"\s*\|\s*"page"/);
+  assert.match(sideHookSource, /runSearch\(params,\s*page,\s*\{\s*presentation:\s*"page"\s*\}\)/);
+  assert.doesNotMatch(sideHookSource, /void runSearch\(params,\s*page\);/);
+});
+
 test("dual workspace renders per-side view controls and independent state", () => {
   const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
 

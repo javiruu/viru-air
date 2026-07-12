@@ -43,6 +43,10 @@ export type QuickSearchSideParams = {
   pageSize?: number;
 };
 
+type QuickSearchRunOptions = {
+  presentation?: "search" | "page";
+};
+
 export type QuickSearchSideState = ReturnType<typeof useQuickSearchSide>;
 
 // ── Hook ──────────────────────────────────────────────────────────────
@@ -73,6 +77,7 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
 
   // ── Pagination ────────────────────────────────────────────────────
   const [currentPage, setCurrentPage] = useState(1);
+  const [isPageChanging, setIsPageChanging] = useState(false);
 
   // ── Deep link ─────────────────────────────────────────────────────
   const [deepLink, setDeepLink] = useState<DeepLinkResponse | null>(null);
@@ -125,7 +130,8 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
   // ── runSearch ─────────────────────────────────────────────────────
 
   const runSearch = useCallback(
-    async (params: QuickSearchSideParams, page = 1) => {
+    async (params: QuickSearchSideParams, page = 1, options?: QuickSearchRunOptions) => {
+      const isPageChange = options?.presentation === "page";
       const startedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
       requestIdRef.current += 1;
       const requestId = requestIdRef.current;
@@ -133,21 +139,23 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
       const isCurrentRequest = () => requestId === requestIdRef.current;
 
       lastParamsRef.current = params;
+      setIsPageChanging(isPageChange);
 
-      // Reset state for a fresh search
       setSearchError(null);
-      setFiltersNotice([]);
-      setFiltersWarningCodes([]);
-      setFiltersMeta(null);
-      setSearchMeta(null);
-      setJobId(null);
-      setIsDegraded(false);
-      setSearchState("loading");
-      setShowLoader(true);
-      setLoadingVisualHold(false);
-      setDisplayProgress(0);
-      setTargetProgress(30);
-      setLoadingPhase("requesting");
+      if (!isPageChange) {
+        setFiltersNotice([]);
+        setFiltersWarningCodes([]);
+        setFiltersMeta(null);
+        setSearchMeta(null);
+        setJobId(null);
+        setIsDegraded(false);
+        setSearchState("loading");
+        setShowLoader(true);
+        setLoadingVisualHold(false);
+        setDisplayProgress(0);
+        setTargetProgress(30);
+        setLoadingPhase("requesting");
+      }
 
       const queryParams: QuickSearchQueryParams = {
         origin_iata: params.originIata,
@@ -176,6 +184,7 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
         if (!isCurrentRequest()) return;
         setSearchError("Invalid search parameters");
         setSearchState("idle");
+        setIsPageChanging(false);
         return;
       }
 
@@ -192,8 +201,10 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
 
         if (!isCurrentRequest()) return;
 
-        setTargetProgress(80);
-        setLoadingPhase("response_parsed");
+        if (!isPageChange) {
+          setTargetProgress(80);
+          setLoadingPhase("response_parsed");
+        }
 
         if (result.ok) {
           const data: SearchResponse = normalizeQuickSearchResponse(result.data);
@@ -222,8 +233,10 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
           setFiltersWarningCodes(warningCodes);
           setFiltersNotice(warningCodes);
 
-          setTargetProgress(95);
-          setLoadingPhase("client_done");
+          if (!isPageChange) {
+            setTargetProgress(95);
+            setLoadingPhase("client_done");
+          }
           setHasSearched(true);
 
           const isEmptyResult =
@@ -232,7 +245,9 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
         } else {
           const { status, error } = result;
 
-          setTargetProgress(95);
+          if (!isPageChange) {
+            setTargetProgress(95);
+          }
 
           if (status === 429) {
             setRateLimitSeconds(error.retry_after_sec ?? 30);
@@ -246,10 +261,16 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
         }
       } catch (err) {
         if (!isCurrentRequest()) return;
-        setTargetProgress(95);
+        if (!isPageChange) {
+          setTargetProgress(95);
+        }
         setSearchState("error");
         setSearchError("Search failed");
         setHasSearched(true);
+      } finally {
+        if (isCurrentRequest()) {
+          setIsPageChanging(false);
+        }
       }
     },
     [], // intentionally empty — uses refs for cancellation
@@ -261,7 +282,7 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
     (page: number) => {
       const params = lastParamsRef.current;
       if (!params) return;
-      void runSearch(params, page);
+      void runSearch(params, page, { presentation: "page" });
     },
     [runSearch],
   );
@@ -333,6 +354,7 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
     setIsDegraded(false);
     setRateLimitSeconds(0);
     setCurrentPage(1);
+    setIsPageChanging(false);
     setDeepLink(null);
     setDeepLinkError("");
     setWeatherOrigin(null);
@@ -381,6 +403,7 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
     // Pagination
     currentPage,
     setCurrentPage,
+    isPageChanging,
 
     // Deep link
     deepLink,
