@@ -9,6 +9,13 @@
 
 Inventario completo de documentos `.md` y `.txt` relevantes del repositorio tras el saneamiento documental. Excluye dependencias, cach?s, builds, entornos virtuales, `_publish_repo` y otras salidas generadas masivas.
 
+## Actualizacion manual 2026-07-12 (tokens de seleccion global)
+
+Entradas vivas actualizadas:
+
+- `docs/ui/UI_SYSTEM_V1.md`
+- `docs/DOCS_INVENTORY.md`
+
 ## Actualizacion manual 2026-07-12 (reparacion enlaces centrales F60)
 
 Entradas vivas actualizadas:
