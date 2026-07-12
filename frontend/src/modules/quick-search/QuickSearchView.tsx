@@ -379,6 +379,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const [loaderResolvedTotalFlights, setLoaderResolvedTotalFlights] = useState<number | null>(null);
   const [loaderScopeRoutes, setLoaderScopeRoutes] = useState(0);
   const [loaderScopeDates, setLoaderScopeDates] = useState(0);
+  const [isPageChanging, setIsPageChanging] = useState(false);
   // signature of the last successfully executed criteria (used to detect pending changes)
   const [appliedCriteriaSignature, setAppliedCriteriaSignature] = useState<string | null>(null);
   const [countrySearchInput, setCountrySearchInput] = useState("");
@@ -1883,14 +1884,19 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     });
   }, [rowMenuTriggerRefs, setOpenRowMenuId]);
 
-  async function onSubmit(event: FormEvent, options?: { page?: number; sortBy?: QuickSearchSortBy }) {
+  async function onSubmit(
+    event: FormEvent,
+    options?: { page?: number; sortBy?: QuickSearchSortBy; presentation?: "search" | "page" },
+  ) {
     event.preventDefault();
     if (searchSubmitInFlightRef.current) return;
+    const isPageChange = options?.presentation === "page";
     searchSubmitInFlightRef.current = true;
     setIsSubmitting(true);
     const releaseSearchSubmit = () => {
       searchSubmitInFlightRef.current = false;
       setIsSubmitting(false);
+      setIsPageChanging(false);
     };
     const startedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
     requestIdRef.current += 1;
@@ -1907,6 +1913,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setMessageType("error");
     setSearchError(null);
     setFieldErrors({});
+    setIsPageChanging(isPageChange);
 
     const nextFieldErrors: QuickSearchFieldErrors = {};
     const originHasValue = Boolean(origin.trim()) || Boolean(originCountryOnly);
@@ -2049,23 +2056,25 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     }
 
     setAppliedCriteriaSignature(currentCriteriaSignature);
-    setWeatherMessage("");
-    setWeatherOrigin(null);
-    setWeatherDestination(null);
-    setFiltersNotice([]);
-    setFiltersWarningCodes([]);
-    setFiltersMeta(null);
-    setSearchMeta(null);
-    lastQuickSearchPayloadRef.current = null;
-    setLoaderResolvedTotalFlights(null);
-    setJobId(null);
-    setIsDegraded(false);
-    setSearchState("loading");
-    setShowLoader(true);
-    setLoadingVisualHold(false);
-    setDisplayProgress(0);
-    setProgress("requesting", 30);
-    setProviderSearchStatuses(INITIAL_PROVIDER_SEARCH_STATUSES);
+    if (!isPageChange) {
+      setWeatherMessage("");
+      setWeatherOrigin(null);
+      setWeatherDestination(null);
+      setFiltersNotice([]);
+      setFiltersWarningCodes([]);
+      setFiltersMeta(null);
+      setSearchMeta(null);
+      lastQuickSearchPayloadRef.current = null;
+      setLoaderResolvedTotalFlights(null);
+      setJobId(null);
+      setIsDegraded(false);
+      setSearchState("loading");
+      setShowLoader(true);
+      setLoadingVisualHold(false);
+      setDisplayProgress(0);
+      setProgress("requesting", 30);
+      setProviderSearchStatuses(INITIAL_PROVIDER_SEARCH_STATUSES);
+    }
     const nextExcludeOrigins = [...excludeOrigins];
     const nextExcludeDestinations = [...excludeDestinations];
     parseIataList(excludeOriginInput).forEach((value) => {
@@ -2132,6 +2141,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       setSearchError(t("errorText"));
       setSearchState("idle");
       setIsLoading(false);
+      setIsPageChanging(false);
       trackEvent("quicksearch_contract_blocked", {
         issues: preparedRequest.issues.map((issue) => issue.code).join(","),
       });
@@ -2142,45 +2152,51 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     try {
       expectedQuerySignaturesRef.current = await buildQuickSearchExpectedSignatures(canonicalPayload);
       if (!isCurrentRequest()) return;
-      setIsLoading(true);
+      if (!isPageChange) {
+        setIsLoading(true);
+      }
       const originWeatherIata = originCountryOnly ? "" : originCode;
       const destinationWeatherIata = destinationCountryOnly ? "" : destinationCode;
       const weatherRangeSupported = range.length > 0 && isWeatherRangeSupportedCheck(range[0], range[range.length - 1]);
-      if (!weatherRangeSupported && (originWeatherIata || destinationWeatherIata)) {
+      if (!isPageChange && !weatherRangeSupported && (originWeatherIata || destinationWeatherIata)) {
         setWeatherMessage(t("weatherUnavailableRange"));
       }
 
-      const originWeatherPromise = weatherRangeSupported && originWeatherIata
-        ? fetchWeather(originWeatherIata, range[0], range[range.length - 1])
-        : Promise.resolve(null);
-      const destinationWeatherPromise = weatherRangeSupported && destinationWeatherIata
-        ? fetchWeather(destinationWeatherIata, range[0], range[range.length - 1])
-        : Promise.resolve(null);
-      void Promise.allSettled([originWeatherPromise, destinationWeatherPromise]).then(([originWeather, destinationWeather]) => {
-        if (!isCurrentRequest()) return;
-        if (originWeather.status === "fulfilled") {
-          setWeatherOrigin(originWeather.value);
-        }
-        if (destinationWeather.status === "fulfilled") {
-          setWeatherDestination(destinationWeather.value);
-        }
+      if (!isPageChange) {
+        const originWeatherPromise = weatherRangeSupported && originWeatherIata
+          ? fetchWeather(originWeatherIata, range[0], range[range.length - 1])
+          : Promise.resolve(null);
+        const destinationWeatherPromise = weatherRangeSupported && destinationWeatherIata
+          ? fetchWeather(destinationWeatherIata, range[0], range[range.length - 1])
+          : Promise.resolve(null);
+        void Promise.allSettled([originWeatherPromise, destinationWeatherPromise]).then(([originWeather, destinationWeather]) => {
+          if (!isCurrentRequest()) return;
+          if (originWeather.status === "fulfilled") {
+            setWeatherOrigin(originWeather.value);
+          }
+          if (destinationWeather.status === "fulfilled") {
+            setWeatherDestination(destinationWeather.value);
+          }
 
-        if (originWeather.status === "rejected" || destinationWeather.status === "rejected") {
-          const reasons = [originWeather, destinationWeather]
-            .filter((item): item is PromiseRejectedResult => item.status === "rejected")
-            .map((item) => item.reason);
-          const hasOutOfRange = reasons.some(
-            (reason) => reason && typeof reason === "object" && "code" in reason && reason.code === "out_of_range",
-          );
-          setWeatherMessage(hasOutOfRange ? t("weatherUnavailableRange") : t("weatherError"));
-        }
-      });
+          if (originWeather.status === "rejected" || destinationWeather.status === "rejected") {
+            const reasons = [originWeather, destinationWeather]
+              .filter((item): item is PromiseRejectedResult => item.status === "rejected")
+              .map((item) => item.reason);
+            const hasOutOfRange = reasons.some(
+              (reason) => reason && typeof reason === "object" && "code" in reason && reason.code === "out_of_range",
+            );
+            setWeatherMessage(hasOutOfRange ? t("weatherUnavailableRange") : t("weatherError"));
+          }
+        });
+      }
       const searchResult = await apiFetchWithStatus<SearchResponseRaw>("/search/quick", {
         method: "POST",
         body: JSON.stringify(canonicalPayload),
       }, { apiBase: LONG_RUNNING_API_BASE });
       if (!isCurrentRequest()) return;
-      setProgress("response_parsed", 80);
+      if (!isPageChange) {
+        setProgress("response_parsed", 80);
+      }
       if (searchResult.ok) {
           const data: SearchResponse = normalizeQuickSearchResponse(searchResult.data);
           lastQuickSearchPayloadRef.current = canonicalPayload;
@@ -2242,7 +2258,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           const warningCodes = collectQuickSearchWarningCodes(data);
           setFiltersWarningCodes(warningCodes);
           setFiltersNotice(warningCodes.map((item) => tWarn(item)));
-          setProgress("client_done", 95);
+          if (!isPageChange) {
+            setProgress("client_done", 95);
+          }
           setHasSearched(true);
           const isEmptyResult = (data.meta?.pagination?.total_results ?? data.results.length) === 0;
           setSearchState(isEmptyResult ? "empty" : "success");
@@ -2265,7 +2283,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             if (validationErrors.destination_iata) setDestinationTouched(true);
             if (validationErrors.travel_date) setDateTouched(true);
           }
-          setProgress("client_done", 95);
+          if (!isPageChange) {
+            setProgress("client_done", 95);
+          }
           if (status === 429) {
             setRateLimitSeconds(error.retry_after_sec ?? 30);
             setSearchState("rate");
@@ -2289,7 +2309,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         error,
         request: canonicalPayload,
       });
-      setProgress("client_done", 95);
+      if (!isPageChange) {
+        setProgress("client_done", 95);
+      }
       setSearchState("error");
       setSearchError(t("searchFailed"));
       setProviderSearchStatuses([]);
@@ -2297,6 +2319,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     } finally {
       if (isCurrentRequest()) {
         setIsLoading(false);
+        setIsPageChanging(false);
       }
       releaseSearchSubmit();
     }
@@ -4453,7 +4476,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const goToPage = (nextPage: number) => {
     const bounded = Math.min(totalPages, Math.max(1, nextPage));
     setCurrentPage(bounded);
-    void onSubmit({ preventDefault: () => {} } as FormEvent, { page: bounded, sortBy });
+    void onSubmit({ preventDefault: () => {} } as FormEvent, {
+      page: bounded,
+      sortBy,
+      presentation: "page",
+    });
     const el = document.querySelector(".qs-results-panel");
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -5588,12 +5615,18 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 onTrackCopyParams={trackCopyParams}
               />
               {totalPages > 1 ? (
-                <div className="qs-pagination animate-fade-in" role="navigation" aria-label="Pagination">
+                <div
+                  className={`qs-pagination animate-fade-in${isPageChanging ? " qs-pagination--loading" : ""}`}
+                  role="navigation"
+                  aria-label="Pagination"
+                  aria-busy={isPageChanging}
+                >
                   <div className="qs-pagination-stats">
                     {t("paginationShowing")
                       .replace("{start}", String(totalResults === 0 ? 0 : (activePage - 1) * pageSize + 1))
                       .replace("{end}", String(Math.min(activePage * pageSize, totalResults)))
                       .replace("{total}", String(totalResults))}
+                    {isPageChanging ? <span className="qs-pagination-live">Preparando pagina</span> : null}
                   </div>
                   <div className="qs-pagination-nav">
                     <button
@@ -5601,7 +5634,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                       onClick={() => {
                         goToPage(activePage - 1);
                       }}
-                      disabled={activePage === 1}
+                      disabled={activePage === 1 || isPageChanging}
                       aria-label={t("paginationPrev")}
                     >
                       <span className="qs-pagination-arrow">â†</span>
@@ -5625,6 +5658,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                             onClick={() => {
                               goToPage(Number(num));
                             }}
+                            disabled={isPageChanging}
                             aria-current={isSelected ? "page" : undefined}
                             aria-label={`Ir a la pagina ${num}`}
                           >
@@ -5639,7 +5673,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                       onClick={() => {
                         goToPage(activePage + 1);
                       }}
-                      disabled={activePage === totalPages}
+                      disabled={activePage === totalPages || isPageChanging}
                       aria-label={t("paginationNext")}
                     >
                       <span className="qs-pagination-btn-text">{t("paginationNext")}</span>
@@ -5821,6 +5855,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             totalPages={outboundSide.searchMeta?.pagination?.total_pages}
             pageSize={outboundSide.searchMeta?.pagination?.page_size}
             totalResults={outboundSide.searchMeta?.pagination?.total_results}
+            isPageChanging={outboundSide.isPageChanging}
             onPageChange={outboundSide.searchState === "success" ? (page: number) => outboundSide.goToPage(page) : undefined}
             locale={locale}
             onHoverStart={() => setDualHoverSide("outbound")}
@@ -5935,6 +5970,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             totalPages={returnSide.searchMeta?.pagination?.total_pages}
             pageSize={returnSide.searchMeta?.pagination?.page_size}
             totalResults={returnSide.searchMeta?.pagination?.total_results}
+            isPageChanging={returnSide.isPageChanging}
             onPageChange={returnSide.searchState === "success" ? (page: number) => returnSide.goToPage(page) : undefined}
             locale={locale}
             onHoverStart={() => setDualHoverSide("return")}
