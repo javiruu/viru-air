@@ -3419,21 +3419,6 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   height: 0.85rem;
 }
 
-.qs-result-details-link {
-  border: none;
-  background: none;
-  color: inherit;
-  text-decoration: none;
-  font-size: inherit;
-  padding: 0;
-}
-
-.qs-result-details-link:focus-visible {
-  outline: 2px solid #93C5FD;
-  outline-offset: 2px;
-  border-radius: 6px;
-}
-
 .qs-row-menu-wrap {
   position: relative;
 }
@@ -14343,13 +14328,8 @@ textarea::placeholder {
   }
 
   .qs-result-buttons .btn-ghost,
-  .qs-result-buttons .btn-primary,
-  .qs-result-details-link {
+  .qs-result-buttons .btn-primary {
     width: 100%;
-  }
-
-  .qs-result-details-link {
-    text-align: left;
   }
 
   .qs-row-menu {
@@ -17422,7 +17402,7 @@ textarea::placeholder {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(210px, 0.65fr);
   gap: 1rem;
-  align-items: start;
+  align-items: stretch;
   border-color: color-mix(in srgb, var(--border) 82%, white 18%);
   border-radius: 18px;
   background:
@@ -17448,6 +17428,46 @@ textarea::placeholder {
   gap: 0.42rem;
   align-content: start;
   min-width: 0;
+}
+
+.qs-result-row:not(.qs-result-row-compact) .qs-result-main {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "kicker recommendation"
+    "route recommendation"
+    "schedule schedule"
+    "provider provider";
+  grid-template-rows: auto auto 1fr auto;
+  align-content: stretch;
+  min-height: 148px;
+}
+
+.qs-result-row:not(.qs-result-row-compact) .qs-result-main > .qs-result-kicker {
+  grid-area: kicker;
+}
+
+.qs-result-row:not(.qs-result-row-compact) .qs-result-route {
+  grid-area: route;
+}
+
+.qs-result-row:not(.qs-result-row-compact) .qs-result-recommendation {
+  grid-area: recommendation;
+  align-self: center;
+  justify-self: center;
+}
+
+.qs-result-row:not(.qs-result-row-compact) .qs-result-meta {
+  grid-area: schedule;
+  order: initial;
+  align-self: center;
+  justify-self: center;
+  justify-content: center;
+}
+
+.qs-result-row:not(.qs-result-row-compact) .qs-result-provider {
+  grid-area: provider;
+  align-self: end;
+  justify-self: start;
 }
 
 .qs-result-route,
@@ -17485,6 +17505,103 @@ textarea::placeholder {
   font-weight: 800;
 }
 
+.qs-result-provider {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.qs-provider-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.56rem;
+  min-width: 0;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.qs-provider-logo-mark {
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 5px 9px color-mix(in srgb, var(--ink) 12%, transparent));
+}
+
+.qs-provider-logo-name {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 0.94rem;
+  font-weight: 800;
+  letter-spacing: 0.045em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.qs-result-recommendation {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--accent);
+  cursor: help;
+  transition: transform 160ms cubic-bezier(0.2, 0, 0, 1), filter 160ms ease;
+}
+
+.qs-result-recommendation:hover,
+.qs-result-recommendation:focus-visible {
+  transform: translateY(-1px) rotate(-3deg);
+  filter: drop-shadow(0 8px 12px color-mix(in srgb, var(--accent) 28%, transparent));
+  outline: none;
+}
+
+.qs-result-recommendation:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.qs-result-recommendation-star {
+  width: 34px;
+  height: 34px;
+  overflow: visible;
+  fill: color-mix(in srgb, var(--accent) 18%, transparent);
+  stroke: currentColor;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.qs-result-recommendation-tooltip {
+  position: absolute;
+  top: calc(100% + 0.48rem);
+  left: 50%;
+  z-index: 40;
+  width: max-content;
+  max-width: min(310px, 72vw);
+  padding: 0.58rem 0.68rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 94%, white 6%);
+  box-shadow: 0 16px 30px color-mix(in srgb, var(--ink) 16%, transparent);
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.4;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -4px);
+  transition: opacity 140ms ease, transform 140ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.qs-result-recommendation:hover .qs-result-recommendation-tooltip,
+.qs-result-recommendation:focus .qs-result-recommendation-tooltip,
+.qs-result-recommendation:focus-within .qs-result-recommendation-tooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
 .qs-result-badges {
   gap: 0.4rem 0.6rem;
 }
@@ -17492,7 +17609,9 @@ textarea::placeholder {
 .qs-result-actions {
   display: grid;
   gap: 0.7rem;
+  grid-template-rows: auto 1fr;
   justify-items: end;
+  align-self: stretch;
   min-width: 0;
 }
 
@@ -17508,8 +17627,56 @@ textarea::placeholder {
 }
 
 .qs-result-buttons {
+  display: grid;
+  align-content: space-between;
+  justify-items: end;
+  gap: 0.7rem;
+  width: 100%;
+}
+
+.qs-result-flight-actions {
+  display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 0.45rem;
+  min-width: 0;
+}
+
+.qs-row-open-ryanair {
+  white-space: nowrap;
+}
+
+.qs-result-flight-time {
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.qs-result-flight-time strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.qs-result-row-compact .qs-result-buttons {
+  display: flex;
+  align-content: initial;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.3rem;
+}
+
+.qs-result-row-compact .qs-result-flight-actions {
+  gap: 0.3rem;
+}
+
+.qs-result-row-compact .qs-provider-logo-mark {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.qs-result-row-compact .qs-provider-logo-name {
+  font-size: 0.8rem;
 }
 
 .qs-row-menu-wrap {
@@ -18074,6 +18241,10 @@ textarea::placeholder {
     grid-template-columns: 1fr;
   }
 
+  .qs-result-row:not(.qs-result-row-compact) .qs-result-main {
+    min-height: 0;
+  }
+
   .qs-result-actions,
   .qs-result-price {
     justify-items: start;
@@ -18081,7 +18252,17 @@ textarea::placeholder {
   }
 
   .qs-result-buttons {
+    justify-items: stretch;
+    width: 100%;
+  }
+
+  .qs-result-flight-actions {
     justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .qs-result-flight-time {
+    margin-right: auto;
   }
 
   .qs-row-menu {

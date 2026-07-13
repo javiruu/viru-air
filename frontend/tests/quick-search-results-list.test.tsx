@@ -73,7 +73,7 @@ function t(key: string) {
   return copy[key] || key;
 }
 
-test("QuickSearchResultsList renders result rows with primary actions and alternative badge", () => {
+test("QuickSearchResultsList renders the simplified result-row hierarchy without badges", () => {
   const html = renderToStaticMarkup(
     <QuickSearchResultsList
       visibleResults={[buildResult()]}
@@ -94,10 +94,6 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
       formatScore={(value) => value.toFixed(2)}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
-      getResultTags={() => [
-        { key: "buffer", label: "margen amplio", tone: "low" },
-        { key: "freshness-fresh", label: "Verificado 4 min", tone: "fresh" },
-      ]}
       canRefreshPrice={() => true}
       refreshingResultId={null}
       refreshPrice={() => undefined}
@@ -120,7 +116,7 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
   assert.match(html, /\(NDR\)/);
   assert.match(html, /Beauvais/);
   assert.match(html, /\(BVA\)/);
-  assert.match(html, /Alternativa/);
+  assert.doesNotMatch(html, /Alternativa/);
   assert.match(html, /EUR 39/);
   assert.match(html, /Salida/);
   assert.match(html, /09:15/);
@@ -128,10 +124,14 @@ test("QuickSearchResultsList renders result rows with primary actions and altern
   assert.match(html, /10:50/);
   assert.match(html, /Guardar/);
   assert.doesNotMatch(html, /Actualizar precio/);
-  assert.match(html, /Ver detalle/);
+  assert.doesNotMatch(html, /Ver detalle/);
   assert.match(html, /Abrir vuelo/);
   assert.match(html, /Ryanair/);
-  assert.match(html, /Verificado 4 min/);
+  assert.match(html, /qs-provider-logo--ryanair/);
+  assert.doesNotMatch(html, /qs-provider-badge/);
+  assert.doesNotMatch(html, /Verificado 4 min/);
+  assert.doesNotMatch(html, /qs-tag/);
+  assert.match(html, /qs-result-flight-time[\s\S]*Vuelo:[\s\S]*95 min[\s\S]*Abrir vuelo/);
   assert.doesNotMatch(html, /Frescura:/);
   assert.doesNotMatch(html, /Duracion:/);
   assert.match(html, /trip\/flights\/select/);
@@ -158,7 +158,6 @@ test("QuickSearchResultsList derives arrival and flight time when legs are missi
       formatScore={(value) => value.toFixed(2)}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
-      getResultTags={() => []}
       canRefreshPrice={() => false}
       refreshingResultId={null}
       refreshPrice={() => undefined}
@@ -206,7 +205,6 @@ test("QuickSearchResultsList canonicalizes Ryanair deeplinks and rejects landing
       formatScore={(value) => value.toFixed(2)}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
-      getResultTags={() => [{ key: "buffer", label: "margen amplio", tone: "low" }]}
       canRefreshPrice={() => false}
       refreshingResultId={null}
       refreshPrice={() => undefined}
@@ -231,6 +229,7 @@ test("QuickSearchResultsList canonicalizes Ryanair deeplinks and rejects landing
   assert.match(htmlWithRelativeLink, /destinationIata=LIS/);
   assert.match(htmlWithRelativeLink, /dateOut=2026-06-01/);
   assert.match(htmlWithRelativeLink, /tpOriginIata=MAD/);
+  assert.match(htmlWithRelativeLink, /role="menuitem"[\s\S]*Ver detalle/);
   assert.doesNotMatch(htmlWithRelativeLink, /href="\/es\/es\/trip\/flights\/select/);
   assert.doesNotMatch(htmlWithRelativeLink, /origin_iata=/);
   assert.doesNotMatch(htmlWithRelativeLink, /date_out=/);
@@ -255,7 +254,6 @@ test("QuickSearchResultsList canonicalizes Ryanair deeplinks and rejects landing
       formatScore={(value) => value.toFixed(2)}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
-      getResultTags={() => []}
       canRefreshPrice={() => false}
       refreshingResultId={null}
       refreshPrice={() => undefined}
@@ -302,7 +300,6 @@ test("QuickSearchResultsList canonicalizes Ryanair deeplinks and rejects landing
       formatScore={(value) => value.toFixed(2)}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
-      getResultTags={() => [{ key: "buffer", label: "margen amplio", tone: "low" }]}
       canRefreshPrice={() => false}
       refreshingResultId={null}
       refreshPrice={() => undefined}
@@ -345,7 +342,6 @@ test("QuickSearchResultsList turns saved rows into a watchlist link action", () 
       formatScore={(value) => value.toFixed(2)}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
-      getResultTags={() => []}
       canRefreshPrice={() => false}
       refreshingResultId={null}
       refreshPrice={() => undefined}
@@ -391,7 +387,6 @@ test("QuickSearchResultsList renders Wizz Air branding and avoids Ryanair fallba
       formatScore={(value) => value.toFixed(2)}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
-      getResultTags={() => [{ key: "freshness-fresh", label: "Verificado 4 min", tone: "fresh" }]}
       canRefreshPrice={() => false}
       refreshingResultId={null}
       refreshPrice={() => undefined}
@@ -422,7 +417,7 @@ test("QuickSearchResultsList renders Wizz Air branding and avoids Ryanair fallba
   assert.doesNotMatch(html, /Abrir vuelo/);
 });
 
-test("QuickSearchResultsList renders ai preferred tag and reason", () => {
+test("QuickSearchResultsList renders the preferred result as an accessible star tooltip", () => {
   const html = renderToStaticMarkup(
     <QuickSearchResultsList
       visibleResults={[{ ...buildResult(), ai_preferred: true, ai_preferred_reason: "Precio recomendado por equilibrio." }]}
@@ -443,10 +438,6 @@ test("QuickSearchResultsList renders ai preferred tag and reason", () => {
       formatScore={(value) => value.toFixed(2)}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
-      getResultTags={() => [
-        { key: "ai-preferred", label: "Precio recomendado", tone: "ai" },
-        { key: "freshness-fresh", label: "Verificado 4 min", tone: "fresh" },
-      ]}
       canRefreshPrice={() => true}
       refreshingResultId={null}
       refreshPrice={() => undefined}
@@ -465,14 +456,15 @@ test("QuickSearchResultsList renders ai preferred tag and reason", () => {
     />,
   );
 
-  assert.match(html, /Precio recomendado/);
   assert.match(html, /Motivo recomendado/);
   assert.match(html, /Precio recomendado por equilibrio/);
-  assert.match(html, /Resultado preferido por IA/);
+  assert.match(html, /qs-result-recommendation-star/);
+  assert.match(html, /role="tooltip"/);
+  assert.doesNotMatch(html, /qs-tag/);
   assert.match(html, /qs-result-row-ai/);
 });
 
-test("QuickSearchResultsList keeps ai and itinerary tags in compact view", () => {
+test("QuickSearchResultsList keeps the star and provider logo but removes compact badges", () => {
   const html = renderToStaticMarkup(
     <QuickSearchResultsList
       visibleResults={[{ ...buildResult(), ai_preferred: true }]}
@@ -493,11 +485,6 @@ test("QuickSearchResultsList keeps ai and itinerary tags in compact view", () =>
       formatScore={(value) => value.toFixed(2)}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
-      getResultTags={() => [
-        { key: "ai-preferred", label: "Precio recomendado", tone: "ai" },
-        { key: "itinerary-direct", label: "Directo", tone: "fresh" },
-        { key: "freshness-warm", label: "Visto 38 min", tone: "med" },
-      ]}
       canRefreshPrice={() => true}
       refreshingResultId={null}
       refreshPrice={() => undefined}
@@ -516,13 +503,17 @@ test("QuickSearchResultsList keeps ai and itinerary tags in compact view", () =>
     />,
   );
 
-  assert.match(html, /Precio recomendado/);
-  assert.match(html, /Directo/);
-  assert.match(html, /Visto 38 min/);
+  assert.doesNotMatch(html, /Precio recomendado/);
+  assert.doesNotMatch(html, /Directo/);
+  assert.doesNotMatch(html, /Visto 38 min/);
+  assert.doesNotMatch(html, /qs-tag/);
+  assert.match(html, /qs-result-recommendation-star/);
+  assert.match(html, /qs-provider-logo--ryanair/);
   assert.match(html, /Resultado preferido por IA/);
+  assert.match(html, /Vuelo.*95 min/s);
 });
 
-test("QuickSearchResultsList shows ai reason in expanded details", () => {
+test("QuickSearchResultsList keeps the AI reason on the star and omits detail badges", () => {
   const html = renderToStaticMarkup(
     <QuickSearchResultsList
       visibleResults={[{ ...buildResult(), ai_preferred: true, ai_preferred_reason: "Mas barato sin sacrificar frescura." }]}
@@ -543,10 +534,6 @@ test("QuickSearchResultsList shows ai reason in expanded details", () => {
       formatScore={(value) => value.toFixed(2)}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
-      getResultTags={() => [
-        { key: "ai-preferred", label: "Precio recomendado", tone: "ai" },
-        { key: "freshness-stale", label: "Precio historico", tone: "stale" },
-      ]}
       canRefreshPrice={() => true}
       refreshingResultId={"res-1"}
       refreshPrice={() => undefined}
@@ -567,7 +554,9 @@ test("QuickSearchResultsList shows ai reason in expanded details", () => {
 
   assert.match(html, /details-res-1/);
   assert.match(html, /Mas barato sin sacrificar frescura/);
-  assert.match(html, /Precio historico/);
+  assert.match(html, /qs-result-recommendation-tooltip/);
+  assert.doesNotMatch(html, /Precio historico/);
+  assert.doesNotMatch(html, /qs-result-detail-tags/);
   assert.doesNotMatch(html, /Actualizando precio/);
 });
 
@@ -592,7 +581,6 @@ test("QuickSearchResultsList omits empty ai reason copy", () => {
       formatScore={(value) => value.toFixed(2)}
       formatMinutes={(value) => `${value ?? 0} min`}
       resultKey={(result) => result.result_id || "fallback"}
-      getResultTags={() => [{ key: "ai-preferred", label: "Precio recomendado", tone: "ai" }]}
       canRefreshPrice={() => false}
       refreshingResultId={null}
       refreshPrice={() => undefined}

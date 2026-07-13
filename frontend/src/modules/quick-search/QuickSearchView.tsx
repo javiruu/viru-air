@@ -115,7 +115,6 @@ import {
   QuickSearchCalendarHintsResponse,
   QuickSearchCalendarScopeMode,
   QuickSearchAutocompleteField,
-  QuickSearchExplainTag,
   QuickSearchField,
   QuickSearchFieldErrors,
   QuickSearchLoadingPhase,
@@ -2907,62 +2906,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setPrefBadge(true);
   }
 
-  function getItineraryTag(result: SearchResult): QuickSearchExplainTag {
-    return {
-      key: `itinerary-${result.itinerary_type || "direct"}`,
-      label: result.itinerary_type === "self_connect" ? t("itinerarySelfConnect") : t("itineraryDirect"),
-      tone: result.itinerary_type === "self_connect" ? "med" : "fresh",
-    };
-  }
-
-  function getFreshnessTag(result: SearchResult): QuickSearchExplainTag | null {
-    const freshness = getQuickSearchFreshnessPresentation({
-      freshness: result.freshness,
-      freshnessTs: result.freshness_ts,
-      staleData: result.stale_data,
-    });
-    if (freshness.isUnavailable) return null;
-    return {
-      key: `freshness-${freshness.status}`,
-      label: freshness.shortLabel,
-      tone: freshness.tone === "stale" ? "stale" : freshness.tone === "fresh" ? "fresh" : "med",
-    };
-  }
-
-  function getAiPreferredTag(result: SearchResult): QuickSearchExplainTag | null {
-    if (!result.ai_preferred) return null;
-    return {
-      key: "ai-preferred",
-      label: t("aiPreferredPrice"),
-      tone: "ai",
-    };
-  }
-
-  function getResultTags(result: SearchResult, mode: "normal" | "compact" | "expanded"): QuickSearchExplainTag[] {
-    const aiPreferredTag = getAiPreferredTag(result);
-    const itineraryTag = getItineraryTag(result);
-    const freshnessTag = getFreshnessTag(result);
-    if (mode === "compact") {
-      return [
-        ...(aiPreferredTag ? [aiPreferredTag] : []),
-        itineraryTag,
-        ...(freshnessTag ? [freshnessTag] : []),
-      ];
-    }
-    if (mode === "expanded") {
-      return [
-        ...(aiPreferredTag ? [aiPreferredTag] : []),
-        itineraryTag,
-        ...(freshnessTag ? [freshnessTag] : []),
-      ].filter((tag): tag is QuickSearchExplainTag => Boolean(tag));
-    }
-    return [
-      ...(aiPreferredTag ? [aiPreferredTag] : []),
-      itineraryTag,
-      ...(freshnessTag ? [freshnessTag] : []),
-    ];
-  }
-
   function parseIataList(raw: string): string[] {
     return parseQuickSearchIataTokens(raw);
   }
@@ -5596,7 +5539,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 formatScore={formatScore}
                 formatMinutes={formatMinutes}
                 resultKey={resultKey}
-                getResultTags={getResultTags}
                 canRefreshPrice={canRefreshPrice}
                 isInWatchlist={isInWatchlist}
                 getWatchlistHref={getResultWatchlistHref}
@@ -5911,7 +5853,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 formatScore={formatScore}
                 formatMinutes={formatMinutes}
                 resultKey={resultKey}
-                getResultTags={getResultTags}
                 canRefreshPrice={canRefreshPrice}
                 refreshingResultId={refreshingResultId}
                 isInWatchlist={isInWatchlist}
@@ -6026,7 +5967,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 formatScore={formatScore}
                 formatMinutes={formatMinutes}
                 resultKey={resultKey}
-                getResultTags={getResultTags}
                 canRefreshPrice={canRefreshPrice}
                 refreshingResultId={refreshingResultId}
                 refreshPrice={refreshQuickSearchResult}

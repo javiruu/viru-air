@@ -4,7 +4,7 @@
  * Verifies:
  *  - Heuristic fallback when OpenAI is unavailable
  *  - Single preferred result (never more than one)
- *  - Frontend badge renders correctly for AI preferred
+ *  - Frontend star renders correctly for AI preferred
  *  - AI preferred row has distinct CSS class
  *  - Reason is shown only when non-empty
  *  - Normalizer handles missing ai_preference meta
@@ -47,16 +47,20 @@ function readSource(filePath: string): string {
   return fs.readFileSync(filePath, "utf8");
 }
 
-// ── 1. Frontend: AI preferred tag exists and is non-aggressive ────────
+// ── 1. Frontend: AI preferred star exists and is non-aggressive ──────
 
-test("Phase 16: AI preferred tag renders as a small badge, not an overlay", () => {
+test("Phase 16: AI preferred renders as a warm star, not a badge or overlay", () => {
   const source = readSource(RESULTS_LIST);
 
-  // The AI tag must be a <span> with qs-tag class (inline badge)
   assert.match(
     source,
+    /className="qs-result-recommendation-star"/,
+    "AI preferred result must render the recommendation star",
+  );
+  assert.doesNotMatch(
+    source,
     /className=\{\`qs-tag qs-tag-\$\{tag\.tone\}\`\}/,
-    "AI preferred tag must use qs-tag class (inline badge, not overlay)",
+    "AI preferred must not render as a tag badge",
   );
 
   // Must NOT use any full-width or overlay class
@@ -67,28 +71,25 @@ test("Phase 16: AI preferred tag renders as a small badge, not an overlay", () =
   );
 });
 
-test("Phase 16: AI preferred tag uses 'ai' tone for visual distinction", () => {
+test("Phase 16: AI preferred styling no longer relies on tag metadata", () => {
   const viewSource = readSource(QUICK_SEARCH_VIEW);
 
-  // getAiPreferredTag must return tone: "ai"
-  assert.match(
+  assert.doesNotMatch(
     viewSource,
-    /tone:\s*\"ai\"/,
-    "getAiPreferredTag must return tone 'ai' for the badge",
+    /getAiPreferredTag|getResultTags/,
+    "Removed recommendation badges must not leave tag metadata helpers behind",
   );
 });
 
 test("Phase 16: AI preferred does not hide other results", () => {
   const source = readSource(RESULTS_LIST);
 
-  // All results are rendered in the same list, AI preferred is just a tag
   assert.match(
     source,
     /props\.visibleResults\.map\(/,
     "All visible results must be mapped, not just the AI preferred one",
   );
 
-  // No conditional rendering that hides non-preferred results
   assert.doesNotMatch(
     source,
     /\.filter\(.*ai_preferred/,
@@ -108,14 +109,18 @@ test("Phase 16: AI reason is trimmed before display", () => {
   );
 });
 
-test("Phase 16: AI reason label only shown when aiReason is truthy", () => {
+test("Phase 16: AI reason is included in the star tooltip only when non-empty", () => {
   const source = readSource(RESULTS_LIST);
 
-  // In the normal view
   assert.match(
     source,
-    /\{r\.ai_preferred && aiReason \? \(/,
-    "AI reason must be conditional on both ai_preferred and aiReason being truthy",
+    /const recommendationLabel = aiReason/,
+    "AI reason must be conditional on a non-empty aiReason",
+  );
+  assert.match(
+    source,
+    /props\.t\("aiPreferredReasonLabel"\)/,
+    "The recommendation tooltip must use the translated reason label",
   );
 });
 
@@ -131,26 +136,30 @@ test("Phase 16: AI preferred row gets qs-result-row-ai class", () => {
   );
 });
 
-test("Phase 16: AI preferred aria-label is set on the tag", () => {
+test("Phase 16: AI preferred star exposes an accessible tooltip", () => {
   const source = readSource(RESULTS_LIST);
 
   assert.match(
     source,
-    /aria-label=\{tag\.key === \"ai-preferred\" \? props\.t\(\"aiPreferredAria\"\) : undefined\}/,
-    "AI preferred tag must have aria-label for accessibility",
+    /aria-label=\{props\.t\(\"aiPreferredAria\"\)\}/,
+    "AI preferred star must expose a concise accessible name",
+  );
+  assert.match(
+    source,
+    /aria-describedby=\{recommendationTooltipId\}/,
+    "AI preferred star must reference its tooltip",
   );
 });
 
 // ── 4. Frontend: Only ONE preferred result ───────────────────────────
 
-test("Phase 16: getAiPreferredTag only marks the preferred result", () => {
-  const source = readSource(QUICK_SEARCH_VIEW);
+test("Phase 16: recommendation star only marks the preferred result", () => {
+  const source = readSource(RESULTS_LIST);
 
-  // The tag is generated per-result, only when result.ai_preferred is true
   assert.match(
     source,
-    /if \(!result\.ai_preferred\) return null;/,
-    "getAiPreferredTag must return null when ai_preferred is falsy",
+    /const recommendationMark = r\.ai_preferred \? \(/,
+    "The recommendation star must be conditional on ai_preferred",
   );
 });
 
