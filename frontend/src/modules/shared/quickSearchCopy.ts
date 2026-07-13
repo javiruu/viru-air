@@ -379,7 +379,7 @@ export const QUICK_SEARCH_COPY = {
     detailsNote: "Viru prioriza precio, tiempo y ultima comprobacion para ayudarte a decidir antes.",
     aiPreferredPrice: "Mejor opcion encontrada",
     aiPreferredAria: "Resultado preferido por IA",
-    aiPreferredReasonLabel: "Por que lo recomendamos",
+    aiPreferredReasonLabel: "Por qué lo recomendamos",
     selectOutbound: "Selecciona una fecha de ida",
     selectReturn: "Selecciona una fecha de vuelta",
     selectReturnHint: "Selecciona una fecha de vuelta para completar ida y vuelta",

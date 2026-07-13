@@ -384,7 +384,6 @@ test("normalizeQuickSearchResponse keeps quick-search results renderable from ba
       formatScore: (value: number) => value.toFixed(2),
       formatMinutes: (value?: number | null) => `${value ?? 0} min`,
       resultKey: (result: { result_id?: string | null }) => result.result_id || "fallback",
-      getResultTags: () => [],
       canRefreshPrice: () => false,
       refreshingResultId: null,
       refreshPrice: () => undefined,

@@ -28,7 +28,6 @@ type Props = {
   formatScore: (value: number) => string;
   formatMinutes: (value?: number | null) => string;
   resultKey: (result: SearchResult, fallback: number) => string;
-  getResultTags: (result: SearchResult, mode: "normal" | "compact" | "expanded") => Array<{ key: string; label: string; tone: string }>;
   canRefreshPrice: (result: SearchResult) => boolean;
   refreshingResultId: string | null;
   refreshPrice: (result: SearchResult) => void;
@@ -115,7 +114,6 @@ function QuickSearchResultsListInner(props: Props) {
                 : (isGenericHttpLink(r.deeplink_url) ? r.deeplink_url ?? "" : "");
             const expanded = Boolean(props.expandedRows[rowId]);
             const detailsId = `details-${rowId}`;
-            const compactTags = props.getResultTags(r, "compact");
             const aiReason = typeof r.ai_preferred_reason === "string" ? r.ai_preferred_reason.trim() : "";
             const rawSourceLabel = typeof r.source === "string" ? r.source.trim() : "";
             const canRefreshPrice = props.canRefreshPrice(r);
@@ -129,6 +127,25 @@ function QuickSearchResultsListInner(props: Props) {
             const arrivalClock = formatLegClock(lastLeg?.arr_ts, props.localeTag) ?? addMinutesToClock(departureClock, totalDurationMinutes);
             const flightTimeLabel = totalDurationMinutes !== null ? props.formatMinutes(totalDurationMinutes) : null;
             const watchlistHref = props.getWatchlistHref?.(r) || "/watchlist";
+            const recommendationTooltipId = `recommendation-${rowId}`;
+            const recommendationLabel = aiReason
+              ? `${props.t("aiPreferredReasonLabel")}: ${aiReason}`
+              : props.t("aiPreferredAria");
+            const recommendationMark = r.ai_preferred ? (
+              <span
+                className="qs-result-recommendation"
+                tabIndex={0}
+                aria-label={props.t("aiPreferredAria")}
+                aria-describedby={recommendationTooltipId}
+              >
+                <svg className="qs-result-recommendation-star" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m12 2.9 2.72 5.5 6.07.88-4.4 4.28 1.04 6.05L12 16.75l-5.43 2.86 1.04-6.05-4.4-4.28 6.07-.88L12 2.9Z" />
+                </svg>
+                <span className="qs-result-recommendation-tooltip" id={recommendationTooltipId} role="tooltip">
+                  {recommendationLabel}
+                </span>
+              </span>
+            ) : null;
             return (
               <article
                 key={rowId}
@@ -143,24 +160,15 @@ function QuickSearchResultsListInner(props: Props) {
                           <span className="qs-result-route-arrow">{" → "}</span>
                           {renderRouteAirport(destinationLabel)}
                         </strong>
-                        {(r.origin !== props.origin || r.destination !== props.destination) ? <span className="chip">{props.t("alternative")}</span> : null}
+                        {recommendationMark}
                       </div>
                       <div className="qs-result-meta qs-result-meta-compact">
+                        <span>{r.travel_date}</span>
                         <span>{props.t("weatherDepart")} {departureClock || "--"}</span>
                         {arrivalClock ? <span>{props.t("weatherArrive")} {arrivalClock}</span> : null}
-                        {flightTimeLabel ? <span>{props.t("flightTime")} {flightTimeLabel}</span> : null}
                       </div>
-                      <div className="qs-result-badges">
-                        <QuickSearchProviderBadge source={r.source} unknownLabel={props.t("sourceUnknown")} />
-                        {compactTags.map((tag) => (
-                          <span
-                            key={`${rowId}-${tag.key}`}
-                            className={`qs-tag qs-tag-${tag.tone}`}
-                            aria-label={tag.key === "ai-preferred" ? props.t("aiPreferredAria") : undefined}
-                          >
-                            {tag.label}
-                          </span>
-                        ))}
+                      <div className="qs-result-provider">
+                        <QuickSearchProviderBadge source={r.source} unknownLabel={props.t("sourceUnknown")} variant="logo" />
                       </div>
                     </>
                   ) : (
@@ -172,32 +180,16 @@ function QuickSearchResultsListInner(props: Props) {
                           <span className="qs-result-route-arrow">{" → "}</span>
                           {renderRouteAirport(destinationLabel)}
                         </strong>
-                        {(r.origin !== props.origin || r.destination !== props.destination) ? <span className="chip">{props.t("alternative")}</span> : null}
                       </div>
+                      {recommendationMark}
                       <div className="qs-result-meta">
                         <span>{r.travel_date}</span>
                         {departureClock ? <span><strong>{props.t("weatherDepart")}:</strong> {departureClock}</span> : null}
                         {arrivalClock ? <span><strong>{props.t("weatherArrive")}:</strong> {arrivalClock}</span> : null}
-                        {flightTimeLabel ? <span><strong>{props.t("flightTime")}:</strong> {flightTimeLabel}</span> : null}
-                        {r.distance_km_ground ? <span>{" - "}{r.distance_km_ground} km</span> : null}
                       </div>
-                      <div className="qs-result-badges">
-                        <QuickSearchProviderBadge source={r.source} unknownLabel={props.t("sourceUnknown")} />
-                        {props.getResultTags(r, "normal").map((tag) => (
-                          <span
-                            key={`${rowId}-${tag.key}`}
-                            className={`qs-tag qs-tag-${tag.tone}`}
-                            aria-label={tag.key === "ai-preferred" ? props.t("aiPreferredAria") : undefined}
-                          >
-                            {tag.label}
-                          </span>
-                        ))}
+                      <div className="qs-result-provider">
+                        <QuickSearchProviderBadge source={r.source} unknownLabel={props.t("sourceUnknown")} variant="logo" />
                       </div>
-                      {r.ai_preferred && aiReason ? (
-                        <p className="qs-result-ai-reason">
-                          <strong>{props.t("aiPreferredReasonLabel")}:</strong> {aiReason}
-                        </p>
-                      ) : null}
                     </>
                   )}
                 </div>
@@ -218,69 +210,77 @@ function QuickSearchResultsListInner(props: Props) {
                         {props.t("save")}
                       </button>
                     )}
-                    {!props.compactView ? (
-                      <button
-                        type="button"
-                        className="btn-ghost qs-result-details-link"
-                        aria-expanded={expanded}
-                        aria-controls={detailsId}
-                        onClick={() => {
-                          props.setExpandedRows((prev) => ({ ...prev, [rowId]: !prev[rowId] }));
-                          props.setSelectedResultId(rowId);
-                        }}
-                      >
-                        {expanded ? props.t("detailsHide") : props.t("detailsToggle")}
-                      </button>
-                    ) : null}
-                    {!props.compactView && rowLink ? (
-                      <a
-                        className="btn-ghost qs-row-open-ryanair"
-                        href={rowLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        onClick={props.onTrackOpenRyanair}
-                      >
-                        {props.t("deepLink")}
-                      </a>
-                    ) : null}
-                    <div className="qs-row-menu-wrap">
-                      <button
-                        type="button"
-                        className="btn-ghost qs-row-menu-trigger"
-                        aria-haspopup="menu"
-                        aria-expanded={props.openRowMenuId === rowId}
-                        aria-controls={`row-menu-${rowId}`}
-                        aria-label={props.t("rowActionsMoreAria")}
-                        ref={(node) => {
-                          props.rowMenuTriggerRefs.current[rowId] = node;
-                        }}
-                        onClick={() => {
-                          props.setOpenRowMenuId((prev) => {
-                            const next = prev === rowId ? null : rowId;
-                            if (next === rowId) props.onTrackRowOverflow(rowId);
-                            return next;
-                          });
-                        }}
-                      >
-                        <svg className="qs-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
-                          <circle cx="6" cy="12" r="1.7" fill="currentColor" />
-                          <circle cx="12" cy="12" r="1.7" fill="currentColor" />
-                          <circle cx="18" cy="12" r="1.7" fill="currentColor" />
-                        </svg>
-                      </button>
-                      {props.openRowMenuId === rowId ? (
-                        <div
-                          id={`row-menu-${rowId}`}
-                          className="qs-row-menu"
-                          role="menu"
-                          aria-label={props.t("rowActionsMenuAria")}
-                          onKeyDown={(event) => {
-                            if (event.key === "Escape") {
-                              event.preventDefault();
-                              props.closeRowMenu(rowId);
-                            }
+                    <div className="qs-result-flight-actions">
+                      {flightTimeLabel ? (
+                        <span className="qs-result-flight-time">
+                          {props.t("flightTime")}: <strong>{flightTimeLabel}</strong>
+                        </span>
+                      ) : null}
+                      {!props.compactView && rowLink ? (
+                        <a
+                          className="btn-ghost qs-row-open-ryanair"
+                          href={rowLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={props.onTrackOpenRyanair}
+                        >
+                          {props.t("deepLink")}
+                        </a>
+                      ) : null}
+                      <div className="qs-row-menu-wrap">
+                        <button
+                          type="button"
+                          className="btn-ghost qs-row-menu-trigger"
+                          aria-haspopup="menu"
+                          aria-expanded={props.openRowMenuId === rowId}
+                          aria-controls={`row-menu-${rowId}`}
+                          aria-label={props.t("rowActionsMoreAria")}
+                          ref={(node) => {
+                            props.rowMenuTriggerRefs.current[rowId] = node;
+                          }}
+                          onClick={() => {
+                            props.setOpenRowMenuId((prev) => {
+                              const next = prev === rowId ? null : rowId;
+                              if (next === rowId) props.onTrackRowOverflow(rowId);
+                              return next;
+                            });
                           }}
                         >
+                          <svg className="qs-inline-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="6" cy="12" r="1.7" fill="currentColor" />
+                            <circle cx="12" cy="12" r="1.7" fill="currentColor" />
+                            <circle cx="18" cy="12" r="1.7" fill="currentColor" />
+                          </svg>
+                        </button>
+                        {props.openRowMenuId === rowId ? (
+                          <div
+                            id={`row-menu-${rowId}`}
+                            className="qs-row-menu"
+                            role="menu"
+                            aria-label={props.t("rowActionsMenuAria")}
+                            onKeyDown={(event) => {
+                              if (event.key === "Escape") {
+                                event.preventDefault();
+                                props.closeRowMenu(rowId);
+                              }
+                            }}
+                          >
+                          {!props.compactView ? (
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="qs-row-menu-item"
+                              aria-expanded={expanded}
+                              aria-controls={detailsId}
+                              onClick={() => {
+                                props.setExpandedRows((prev) => ({ ...prev, [rowId]: !prev[rowId] }));
+                                props.setSelectedResultId(rowId);
+                                props.setOpenRowMenuId(null);
+                              }}
+                            >
+                              {expanded ? props.t("detailsHide") : props.t("detailsToggle")}
+                            </button>
+                          ) : null}
                           <button
                             type="button"
                             role="menuitem"
@@ -324,27 +324,14 @@ function QuickSearchResultsListInner(props: Props) {
                               {props.t("deepLink")}
                             </a>
                           ) : null}
-                        </div>
-                      ) : null}
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                 </div>
                 {!props.compactView && expanded ? (
                   <div className="qs-result-details" id={detailsId}>
-                    <div className="qs-result-detail-tags">
-                      {props.getResultTags(r, "expanded").map((tag) => (
-                        <span
-                          key={`${detailsId}-${tag.key}`}
-                          className={`qs-tag qs-tag-${tag.tone}`}
-                          aria-label={tag.key === "ai-preferred" ? props.t("aiPreferredAria") : undefined}
-                        >
-                          {tag.label}
-                        </span>
-                      ))}
-                      {r.minutes_buffer !== null && r.minutes_buffer !== undefined ? (
-                        <span className="qs-tag qs-tag-fresh">{props.t("detailsBuffer")} {r.minutes_buffer} min</span>
-                      ) : null}
-                    </div>
                     <div>
                       <strong>{props.t("detailsAlt")}</strong>
                       <p>{r.distance_km_ground ? `${r.distance_km_ground} km` : "--"} - {props.t("summaryRadius")} {props.radiusKm} km</p>
@@ -357,16 +344,10 @@ function QuickSearchResultsListInner(props: Props) {
                       <strong>{props.t("detailsScore")}</strong>
                       <p>{props.t("scoreHint")} - {r.ranking_score ? props.formatScore(r.ranking_score) : "--"}</p>
                     </div>
-                    {r.ai_preferred && aiReason ? (
-                      <div>
-                        <strong>{props.t("aiPreferredReasonLabel")}</strong>
-                        <p>{aiReason}</p>
-                      </div>
-                    ) : null}
                     <div>
                       <strong>{props.t("source")}</strong>
                       <div className="qs-result-source-block">
-                        <QuickSearchProviderBadge source={r.source} unknownLabel={props.t("sourceUnknown")} />
+                        <p className="qs-result-source-name">{provider.label}</p>
                         {rawSourceLabel && rawSourceLabel !== provider.label ? (
                           <p className="qs-result-source-raw">{rawSourceLabel}</p>
                         ) : null}

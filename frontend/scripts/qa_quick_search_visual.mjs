@@ -63,15 +63,25 @@ try {
     const pageTarget = path.join(qaDir, pageFileName);
     const panelTarget = path.join(qaDir, panelFileName);
     const pickerVisible = await page.locator('[data-ui="qs-date-picker-v2"]').first().count();
-    const detailsButtons = await page.locator("button.qs-result-details-link").count();
+    const resultsVisible = await page.locator(".qs-result-row").count();
+    let detailsMenuItems = 0;
+    let detailsExpanded = false;
     let weatherDetailsVisible = 0;
-    let resultsVisible = 0;
 
-    if (detailsButtons > 0) {
-      await page.locator("button.qs-result-details-link").first().click();
-      await page.waitForTimeout(700);
-      weatherDetailsVisible = await page.locator(".qs-result-weather").count();
-      resultsVisible = await page.locator(".qs-result-row").count();
+    if (resultsVisible > 0) {
+      const firstResult = page.locator(".qs-result-row").first();
+      const rowMenuTrigger = firstResult.locator("button.qs-row-menu-trigger");
+      if (await rowMenuTrigger.count()) {
+        await rowMenuTrigger.click();
+        const detailsMenuItem = firstResult.locator('button[role="menuitem"][aria-controls^="details-"]');
+        detailsMenuItems = await detailsMenuItem.count();
+        if (detailsMenuItems > 0) {
+          await detailsMenuItem.click();
+          await page.waitForTimeout(700);
+          detailsExpanded = (await firstResult.locator(".qs-result-details").count()) > 0;
+          weatherDetailsVisible = await firstResult.locator(".qs-result-weather").count();
+        }
+      }
     }
 
     const openAdvanced = page.locator('[data-ui="qs-summary-chips-more"]').first();
@@ -177,7 +187,8 @@ try {
       panelFile: path.relative(repoRoot, panelTarget),
       pickerV2Visible: pickerVisible > 0,
       resultsVisible,
-      detailsButtons,
+      detailsMenuItems,
+      detailsExpanded,
       weatherDetailsVisible,
       panelChecks: {
         ...panelMetrics,

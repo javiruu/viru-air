@@ -118,7 +118,7 @@ npm.cmd run qa:visual:quick-search
   1. intenta abrir `/quick-search`;
   2. si detecta redireccion a `/login`, completa login automaticamente;
   3. vuelve a `/quick-search` y captura evidencias;
-  4. expande el primer detalle cuando existe y reporta si detecta `.qs-result-weather`.
+  4. abre el menu de tres puntos de la primera fila, activa `Detalles` cuando existe y reporta si detecta `.qs-result-weather`.
 - Salidas esperadas:
   - `docs/qa/quick-search-visual-report.json`
   - `docs/qa/snapshots_quick-search-desktop.png`
@@ -128,7 +128,8 @@ npm.cmd run qa:visual:quick-search
 - Campos clave que hay que revisar en `quick-search-visual-report.json`:
   - `auth.success`: confirma sesion valida para ruta privada.
   - `snapshots[*].resultsVisible`: numero de filas visibles en resultados.
-  - `snapshots[*].detailsButtons`: confirma si hay botones de "Detalles".
+  - `snapshots[*].detailsMenuItems`: confirma si el menu de tres puntos ofrece `Detalles`.
+  - `snapshots[*].detailsExpanded`: confirma que la accion del menu expandio la fila.
   - `snapshots[*].weatherDetailsVisible`: confirma si existe `.qs-result-weather` al expandir.
 
 #### Diagnostico rapido de fallos recurrentes
@@ -144,9 +145,9 @@ npm.cmd run qa:visual:quick-search
      - ejecutar un run guiado con ruta/fecha conocida con resultados, o
      - usar mock controlado de `/search/quick` solo para QA visual (documentando el mock).
 
-3. `detailsButtons = 0` y `resultsVisible > 0`
-   - Causa probable: vista compacta activa o estado UI no desplegable.
-   - Accion: desactivar compact view en flujo de QA o forzar expansion por selector estable.
+3. `detailsMenuItems = 0` y `resultsVisible > 0`
+   - Causa probable: vista compacta activa o el menu de la fila no ofrece un estado desplegable.
+   - Accion: desactivar compact view en el flujo de QA y verificar `.qs-row-menu-trigger`.
 
 4. `weatherDetailsVisible = 0` con detalles abiertos
    - Causa probable: no hay match de fecha del vuelo con dias de weather disponibles.
@@ -171,6 +172,7 @@ node frontend/scripts/qa_capture_i18n_english.mjs
 
 - `auth.success = true`
 - `resultsVisible > 0`
-- `detailsButtons > 0`
+- `detailsMenuItems > 0`
+- `detailsExpanded = true`
 - `weatherDetailsVisible > 0` en al menos un viewport
 - Capturas guardadas en `docs/qa/` y referenciadas en el reporte final con ruta absoluta.
