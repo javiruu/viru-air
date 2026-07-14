@@ -99,15 +99,15 @@ Estos puntos salen de codigo y docs vivas revisadas hoy, no del brief:
 
 | Fase | Skill / herramienta principal | Uso real |
 |---|---|---|
-| F1 auditoria | `viru-tracker-context`, `writing-plans`, `code-reviewer` | Reentrada rapida, mapa de codigo, hallazgos, severidad |
-| F2 honestidad UI | `web-bug-fixer`, `Browser`, `Viru Tracker UI` | Quitar placeholders falsos y validar estados |
+| F1 auditoria | `viru-air-context`, `writing-plans`, `code-reviewer` | Reentrada rapida, mapa de codigo, hallazgos, severidad |
+| F2 honestidad UI | `web-bug-fixer`, `Browser`, `Viru Air UI` | Quitar placeholders falsos y validar estados |
 | F3 contrato | `fullstack-developer`, `code-reviewer` | Alinear schemas, types, warnings y serializacion |
 | F4 vuelo bloqueado | `fullstack-developer`, `Browser` | Mejorar caso core con watch seleccionado |
 | F5 acciones externas | `web-bug-fixer`, `Browser` | Deep links, CTAs visibles y fallback por tramo |
 | F6 registry/fuentes | `fullstack-developer`, `code-reviewer` | Capacidades, notas, warnings canonicos |
 | F7 GTFS/open data | `fullstack-developer` | Cobertura parcial honesta sin promesas falsas |
 | F8 ranking/composer | `fullstack-developer` | Scoring, etiquetas y explicacion de recomendacion |
-| F9 utilidad UX | `Viru Tracker UI`, `design-taste-frontend`, `Browser` | Jerarquia, timeline y comparacion mas utiles |
+| F9 utilidad UX | `Viru Air UI`, `design-taste-frontend`, `Browser` | Jerarquia, timeline y comparacion mas utiles |
 | F10 cierre | `code-reviewer`, `Browser` | QA, docs, runbook y rollout |
 
 ## Mapa de archivos que realmente gobiernan el modulo

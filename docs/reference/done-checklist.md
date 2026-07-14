@@ -1,6 +1,6 @@
-# Done Checklist (Viru Tracker)
+# Done Checklist (Viru Air)
 
-Usa esta lista para cerrar cualquier tarea en `viru-tracker`, especialmente cuando
+Usa esta lista para cerrar cualquier tarea en `viru-air`, especialmente cuando
 la sesion mezcla investigacion, parche, validacion y publicacion.
 
 ## 1) Investigado
@@ -34,7 +34,7 @@ del roadmap, no aplica como gate de cierre si no hubo cambio visible.
 
 ## 5) Publicado
 
-- [ ] Cambios hechos en checkout canonico: raiz del repo (`viru-tracker`).
+- [ ] Cambios hechos en checkout canonico: raiz del repo (`viru-air`).
 - [ ] Diff revisado y acotado al pedido.
 - [ ] Commit Conventional Commit en `main`.
 - [ ] Push confirmado a `origin/main`.

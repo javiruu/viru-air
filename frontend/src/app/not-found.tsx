@@ -4,7 +4,7 @@ export default function NotFound() {
   return (
     <main className="not-found" id="main-content">
       <section className="sky-door-card">
-        <h1 className="door-title">Viru Tracker no encontro esta ruta</h1>
+        <h1 className="door-title">Viru Air no encontro esta ruta</h1>
         <p className="door-description">
           La puerta que buscas no existe en el mapa de vuelo. Revisa la ruta o vuelve al panel principal.
         </p>

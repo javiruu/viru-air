@@ -1,6 +1,6 @@
-# backend/AGENTS.md — viru-tracker backend rules
+# backend/AGENTS.md — viru-air backend rules
 
-This file defines backend-specific rules for coding agents working inside the backend area of `viru-tracker`.
+This file defines backend-specific rules for coding agents working inside the backend area of `viru-air`.
 
 The root `/AGENTS.md` still applies. This file adds specific guidance for API behavior, backend debugging, service contracts, logs, data safety, and service-level verification.
 

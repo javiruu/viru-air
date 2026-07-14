@@ -7,7 +7,7 @@
 
 ## Resumen
 
-Viru Tracker es una plataforma para seguimiento de vuelos centrada en watchlists, histórico de precios, alertas y quick search. El producto prioriza claridad y soporte a la decisión con una interfaz cálida, intuitiva y con personalidad, lejos del dashboard SaaS genérico.
+Viru Air es una plataforma para seguimiento de vuelos centrada en watchlists, histórico de precios, alertas y quick search. El producto prioriza claridad y soporte a la decisión con una interfaz cálida, intuitiva y con personalidad, lejos del dashboard SaaS genérico.
 
 ## Cuándo usar este documento
 

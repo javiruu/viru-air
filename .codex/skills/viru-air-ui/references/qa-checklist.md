@@ -1,4 +1,4 @@
-# QA Checklist - Viru Tracker UI Skill
+# QA Checklist - Viru Air UI Skill
 
 Validar antes de cerrar cada ajuste:
 - Jerarquia visual clara y CTA principal sin competir con secundarios.

@@ -1,4 +1,4 @@
-# Visual Direction - Viru Tracker
+# Visual Direction - Viru Air
 
 - Mantener jerarquia fuerte: titulo > contenido > acciones.
 - Disenar composicion con ritmo y densidad util; evitar grids repetitivas sin intencion.

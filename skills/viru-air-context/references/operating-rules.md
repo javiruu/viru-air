@@ -1,8 +1,8 @@
-# Viru Tracker Operating Rules
+# Viru Air Operating Rules
 
 ## Purpose
 
-Use this reference when you need the compact process model extracted from the Viru Tracker Studio master Word and adapted to Codex.
+Use this reference when you need the compact process model extracted from the Viru Air Studio master Word and adapted to Codex.
 
 ## Core rules
 

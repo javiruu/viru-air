@@ -9,7 +9,7 @@
 
 ## 1. Qué será /hoteles
 
-/hoteles será un **comparador y tracker diario de precios hoteleros** tipo Trivago, integrado en Viru Tracker.
+/hoteles será un **comparador y tracker diario de precios hoteleros** tipo Trivago, integrado en Viru Air.
 
 El usuario podrá:
 

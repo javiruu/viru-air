@@ -5,23 +5,25 @@
 **Fuente de verdad:** no  
 **Area:** documentacion
 
+> Nota de normalizacion (2026-07-14): los identificadores de marca, rutas y remoto se alinearon con Viru Air durante el rebranding global. La evidencia literal original permanece en el commit `23c6daedf7f8ac0bd492bfbe011daf260cac93a6`.
+
 ## Resumen
 
 Se ha verificado el estado publicado del saneamiento documental sin reorganizar de nuevo la documentacion. Los enlaces Markdown relativos revisados en `README.md`, `AGENTS.md` y `docs/**/*.md` resuelven correctamente, y `docs/INDICE_UNICO.md` solo apunta a rutas existentes.
 
 ## Hallazgos
 
-1. `C:\Users\javiru\Desktop\viru-tracker` no es un repositorio Git. La verificacion de rama, commit y sincronizacion con `origin/main` debe hacerse en `C:\Users\javiru\Desktop\viru-tracker\_publish_repo`.
-2. `C:\Users\javiru\Desktop\viru-tracker\users_prueba.txt` sigue presente en raiz. Debe mantenerse marcado como sensible y pendiente de revision manual.
-3. `C:\Users\javiru\Desktop\viru-tracker\docs\DOCS_INVENTORY.md` refleja el estado final y contiene filas de material archivado, sensible y de revision manual, pero la columna `Accion propuesta` ya no conserva trazas explicitas de acciones historicas como `mover` o `archivar`; predomina `conservar` para el estado consolidado final.
+1. `C:\Users\javiru\Desktop\viru-air` no es un repositorio Git. La verificacion de rama, commit y sincronizacion con `origin/main` debe hacerse en `C:\Users\javiru\Desktop\viru-air\_publish_repo`.
+2. `C:\Users\javiru\Desktop\viru-air\users_prueba.txt` sigue presente en raiz. Debe mantenerse marcado como sensible y pendiente de revision manual.
+3. `C:\Users\javiru\Desktop\viru-air\docs\DOCS_INVENTORY.md` refleja el estado final y contiene filas de material archivado, sensible y de revision manual, pero la columna `Accion propuesta` ya no conserva trazas explicitas de acciones historicas como `mover` o `archivar`; predomina `conservar` para el estado consolidado final.
 
 ## Validaciones ejecutadas
 
-- `git -C C:\Users\javiru\Desktop\viru-tracker\_publish_repo status --short`
-- `git -C C:\Users\javiru\Desktop\viru-tracker\_publish_repo branch --show-current`
-- `git -C C:\Users\javiru\Desktop\viru-tracker\_publish_repo log -1 --oneline`
-- `git -C C:\Users\javiru\Desktop\viru-tracker\_publish_repo rev-parse HEAD`
-- `git -C C:\Users\javiru\Desktop\viru-tracker\_publish_repo rev-parse origin/main`
+- `git -C C:\Users\javiru\Desktop\viru-air\_publish_repo status --short`
+- `git -C C:\Users\javiru\Desktop\viru-air\_publish_repo branch --show-current`
+- `git -C C:\Users\javiru\Desktop\viru-air\_publish_repo log -1 --oneline`
+- `git -C C:\Users\javiru\Desktop\viru-air\_publish_repo rev-parse HEAD`
+- `git -C C:\Users\javiru\Desktop\viru-air\_publish_repo rev-parse origin/main`
 - Chequeo automatizado de enlaces relativos en `README.md`, `AGENTS.md` y `docs/**/*.md`
 - Chequeo especifico de enlaces en `docs/INDICE_UNICO.md`
 - Revision de archivos en raiz y presencia de legacy obvio

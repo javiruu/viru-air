@@ -83,8 +83,8 @@
     copyLink: "Copiar enlace base",
     navLabel: "Navegación de pie de página",
     scrollTop: "Volver arriba ↑",
-    note: "Rutas, señales y soporte oficial de Viru Tracker.",
-    copyright: "© {year} Viru Tracker. Todos los derechos reservados.",
+    note: "Rutas, señales y soporte oficial de Viru Air.",
+    copyright: "© {year} Viru Air. Todos los derechos reservados.",
     groups: {
       explore: "Producto",
       access: "Acceso",
@@ -231,8 +231,8 @@ export const sharedEn = {
     statusPrivate: "Private space",
     copyLink: "Copy base link",
     scrollTop: "Back to top ↑",
-    note: "Official Viru Tracker routes, signals, and support.",
-    copyright: "© {year} Viru Tracker. All rights reserved.",
+    note: "Official Viru Air routes, signals, and support.",
+    copyright: "© {year} Viru Air. All rights reserved.",
     groups: {
       explore: "Product",
       access: "Access",

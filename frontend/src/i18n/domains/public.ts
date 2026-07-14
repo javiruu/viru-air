@@ -7,7 +7,7 @@
     heroClaim: "Viru te dice qué ruta vigilar, cómo se mueve el precio y cuándo merece la pena actuar.",
     heroBody:
       "No es un buscador más. Es una cabina cálida y precisa para seguir rutas, leer histórico, detectar señales reales y entrar a comprar con contexto en vez de con prisa.",
-    heroPointsLabel: "Diferenciales de Viru Tracker",
+    heroPointsLabel: "Diferenciales de Viru Air",
     heroPointQuickSearch: "Abre una ruta y su contexto útil en segundos, sin empezar siempre desde cero.",
     heroPointWatchlists: "Guarda solo lo importante y vuelve a ello con histórico, foco y memoria.",
     heroPointPulse: "Lee la tendencia del precio con pulso e histórico, no con una cifra aislada.",
@@ -197,7 +197,7 @@ export const publicEn = {
     heroClaim: "Viru shows what route to watch, how price is moving, and when it is actually worth acting.",
     heroBody:
       "This is not another flight search. It is a warm, precise cockpit for tracking routes, reading history, spotting real signals, and booking with context instead of hurry.",
-    heroPointsLabel: "Viru Tracker differentiators",
+    heroPointsLabel: "Viru Air differentiators",
     heroPointQuickSearch: "Open a route and its useful context in seconds, without starting from scratch every time.",
     heroPointWatchlists: "Save only what matters and come back to it with history, focus, and memory.",
     heroPointPulse: "Read fare trend through pulse plus history, not a single isolated number.",

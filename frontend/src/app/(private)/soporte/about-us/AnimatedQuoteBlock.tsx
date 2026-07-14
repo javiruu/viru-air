@@ -89,7 +89,7 @@ export default function AnimatedQuoteBlock() {
             : undefined
         }
       >
-        <span className="support-about-quote-kicker">Viru Tracker note</span>
+        <span className="support-about-quote-kicker">Viru Air note</span>
         <span className="support-about-quote-mark" aria-hidden="true">
           &ldquo;
         </span>

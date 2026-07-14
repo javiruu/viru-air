@@ -1,5 +1,11 @@
 # History
 
+## 2026-07-14 - Rebranding integral a Viru Air
+
+- La marca, los slugs, los nombres tecnicos, los ejemplos de despliegue y las referencias documentales se unifican bajo Viru Air.
+- Las skills locales se renombran a `viru-air-ui` y `viru-air-context`, manteniendo actualizados el indice y el inventario documental.
+- El frontend, el manifiesto web, los identificadores de integraciones y las rutas operativas quedan alineados con `viru-air`.
+
 ## 2026-07-12 - Reparacion de enlaces centrales del cierre F60
 
 - `docs/INDICE_UNICO.md`, `docs/README.md`, `docs/qa/README.md` y `docs/prompts/README.md` dejan de enlazar READMEs archivados que ya no existen.
@@ -27,7 +33,7 @@
 
 ## 2026-07-09 — Refinamiento estetico: capa de "lujo silencioso" sobre Aviation Warm-Luxe
 
-Sin tocar el freeze de `UI_SYSTEM_V1` ni los tokens congelados, se anade una segunda capa de refinamiento a la identidad visual de Viru Tracker para elevarla hacia "lujo silencioso" sin perder calidez, cercania ni la personalidad aeronautica.
+Sin tocar el freeze de `UI_SYSTEM_V1` ni los tokens congelados, se anade una segunda capa de refinamiento a la identidad visual de Viru Air para elevarla hacia "lujo silencioso" sin perder calidez, cercania ni la personalidad aeronautica.
 
 ### Documentacion
 - `DESIGN.md` — Nueva seccion 2.2 "Firma de lujo silencioso (Quiet Luxury) — capa de refinamiento" con 5 principios accionables: tipografia y aire hacen el trabajo, densidad util, detalles deliberados, bordes finos y sombras extensas, movimiento sobrio. Reglas de proteccion explicitas (mantener paleta dual, Playfair + Plex Sans, tokens congelados).

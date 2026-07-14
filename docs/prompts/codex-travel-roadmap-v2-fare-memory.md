@@ -34,7 +34,7 @@ Si un documento vivo contradice este roadmap, gana el documento vivo. Si el codi
 
 ## 1. Cambio de direccion respecto al roadmap anterior
 
-Las fases 1-20 ya estan completadas. El roadmap anterior recomendaba seguir por puerta a puerta, pero la nueva conversacion introduce una pieza de arquitectura que afecta a casi todo Viru Tracker:
+Las fases 1-20 ya estan completadas. El roadmap anterior recomendaba seguir por puerta a puerta, pero la nueva conversacion introduce una pieza de arquitectura que afecta a casi todo Viru Air:
 
 **Viru Fare Memory:** un sistema de memoria, cache, snapshots, frescura, revalidacion y aprendizaje de volatilidad para precios de vuelos.
 
@@ -48,7 +48,7 @@ La razon es simple: si Viru aprende a recordar precios sin mentir, todo mejora. 
 
 ## 2. Principios de producto para Viru Fare Memory
 
-Viru Tracker no debe comportarse como un scraper ansioso. Debe comportarse como una cabina de decision con memoria:
+Viru Air no debe comportarse como un scraper ansioso. Debe comportarse como una cabina de decision con memoria:
 
 - recordar busquedas sin convertir memoria en verdad absoluta;
 - ahorrar llamadas a proveedores sin esconder incertidumbre;
@@ -929,7 +929,7 @@ Cada fase debe terminar con:
 ### Backend general
 
 ```powershell
-cd C:\Users\javiru\Desktop\viru-tracker\backend
+cd C:\Users\javiru\Desktop\viru-air\backend
 python -m pytest
 python -m alembic check
 ```
@@ -939,7 +939,7 @@ python -m alembic check
 Los nombres exactos dependeran de los tests creados:
 
 ```powershell
-cd C:\Users\javiru\Desktop\viru-tracker\backend
+cd C:\Users\javiru\Desktop\viru-air\backend
 python -m pytest tests/unit/test_quick_search_cache_models.py -q
 python -m pytest tests/unit/test_fare_memory_fingerprints.py -q
 python -m pytest tests/unit/test_fare_memory_ttl.py -q
@@ -949,7 +949,7 @@ python -m pytest tests/integration/test_quick_search_freshness_contract.py -q
 ### Frontend
 
 ```powershell
-cd C:\Users\javiru\Desktop\viru-tracker\frontend
+cd C:\Users\javiru\Desktop\viru-air\frontend
 npm test
 npm run lint
 npm run build
@@ -958,28 +958,28 @@ npm run build
 ### Quick Search focalizado
 
 ```powershell
-cd C:\Users\javiru\Desktop\viru-tracker\frontend
+cd C:\Users\javiru\Desktop\viru-air\frontend
 npm test -- tests/quick-search-dual-regression.test.tsx tests/quick-search-visible-results.test.ts tests/quick-search-response-normalizer.test.ts
 ```
 
 ### Puerta a puerta
 
 ```powershell
-cd C:\Users\javiru\Desktop\viru-tracker\backend
+cd C:\Users\javiru\Desktop\viru-air\backend
 python -m pytest tests/integration/test_door_to_door.py tests/unit/test_door_to_door_gtfs_transit.py tests/unit/test_door_to_door_deeplinks.py -q
 ```
 
 ### Release guard
 
 ```powershell
-cd C:\Users\javiru\Desktop\viru-tracker
+cd C:\Users\javiru\Desktop\viru-air
 powershell -ExecutionPolicy Bypass -File .\scripts\release_guard.ps1 -AllowDirtyWorktree
 ```
 
 ## 15. Prompt corto para darle a Codex al empezar la Fase 21
 
 ```text
-Estamos en Viru Tracker. Las fases 1-20 del roadmap anterior ya estan completadas. Usa el nuevo roadmap v2: `docs/prompts/codex-travel-roadmap-v2-fare-memory.md`.
+Estamos en Viru Air. Las fases 1-20 del roadmap anterior ya estan completadas. Usa el nuevo roadmap v2: `docs/prompts/codex-travel-roadmap-v2-fare-memory.md`.
 
 Empieza por la Fase 21: auditar la cache existente de Quick Search V2.1 y el historico de precios antes de construir nada. No dupliques caches. No crees migraciones. No actives scraping ni APIs de pago. Lee `AGENTS.md`, `backend/AGENTS.md`, `frontend/AGENTS.md`, `DESIGN.md`, `docs/reference/backend/quick-search-contract.md`, `docs/plans/2026-06-10-quick-search-shared-cache-review-plan.md` y los modelos/servicios/tests reales de quick-search, prices, watchlist y alerts.
 
@@ -989,7 +989,7 @@ Entregable: informe tecnico con tabla de que existe, donde esta, que cubren los 
 ## 16. Prompt largo para Codex si se quiere ejecutar todo el bloque I-J
 
 ```text
-Objetivo: implementar progresivamente Viru Fare Memory, un sistema de cache y memoria de tarifas para Viru Tracker.
+Objetivo: implementar progresivamente Viru Fare Memory, un sistema de cache y memoria de tarifas para Viru Air.
 
 Contexto:
 - Fases 1-20 ya estan completadas.

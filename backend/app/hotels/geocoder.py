@@ -15,7 +15,7 @@ import requests
 logger = logging.getLogger("app.hotels.geocoder")
 
 _NOMINATIM_URL = os.getenv("NOMINATIM_URL", "https://nominatim.openstreetmap.org").rstrip("/")
-_NOMINATIM_USER_AGENT = os.getenv("NOMINATIM_USER_AGENT", "ViruTracker/1.0")
+_NOMINATIM_USER_AGENT = os.getenv("NOMINATIM_USER_AGENT", "ViruAir/1.0")
 
 
 def is_geocoder_enabled() -> bool:

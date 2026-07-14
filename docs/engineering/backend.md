@@ -7,7 +7,7 @@
 
 ## Resumen
 
-El backend de Viru Tracker está implementado con FastAPI y organiza API, dominio, infraestructura y servicios bajo `backend/app/`.
+El backend de Viru Air está implementado con FastAPI y organiza API, dominio, infraestructura y servicios bajo `backend/app/`.
 
 Desde 2026-05-26, la capa de vuelos usa arquitectura **provider-driven**:
 

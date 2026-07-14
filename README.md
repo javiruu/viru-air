@@ -1,6 +1,6 @@
-﻿# Viru Tracker
+﻿# Viru Air
 
-Viru Tracker es una plataforma de seguimiento de vuelos centrada en watchlists, histórico de precios, alertas y quick search. El repo es un monorepo con backend, frontend, infra y un sistema documental consolidado en `docs/`.
+Viru Air es una plataforma de seguimiento de vuelos centrada en watchlists, histórico de precios, alertas y quick search. El repo es un monorepo con backend, frontend, infra y un sistema documental consolidado en `docs/`.
 
 ## Estructura del repo
 
@@ -70,11 +70,11 @@ Regla clave:
 
 Repositorio Git canónico para publicación:
 
-- `C:\Users\javiru\Desktop\viru-tracker`
+- `C:\Users\javiru\Desktop\viru-air`
 
 Validación rápida antes de commit o push:
 
 ```powershell
-cd C:\Users\javiru\Desktop\viru-tracker
+cd C:\Users\javiru\Desktop\viru-air
 powershell -ExecutionPolicy Bypass -File .\scripts\release_guard.ps1 -AllowDirtyWorktree
 ```

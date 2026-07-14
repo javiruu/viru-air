@@ -7,19 +7,19 @@ Wants=network-online.target
 Type=oneshot
 User=viru
 Group=viru
-WorkingDirectory=/opt/viru-tracker/backend
+WorkingDirectory=/opt/viru-air/backend
 EnvironmentFile=-/etc/viru/backend.env
-ExecStart=/opt/viru-tracker/backend/ops/db-retention/run-db-retention.sh
+ExecStart=/opt/viru-air/backend/ops/db-retention/run-db-retention.sh
 # Sane defaults; override via EnvironmentFile if needed
-Environment=DB_RETENTION_LOG_DIR=/opt/viru-tracker/backend/logs
-Environment=DB_RETENTION_PYTHON=/opt/viru-tracker/backend/.venv/bin/python
+Environment=DB_RETENTION_LOG_DIR=/opt/viru-air/backend/logs
+Environment=DB_RETENTION_PYTHON=/opt/viru-air/backend/.venv/bin/python
 
 # Hardening
 NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
 ProtectHome=yes
-ReadWritePaths=/opt/viru-tracker/backend/logs /opt/viru-tracker/backend
+ReadWritePaths=/opt/viru-air/backend/logs /opt/viru-air/backend
 
 [Install]
 WantedBy=multi-user.target

@@ -1,11 +1,11 @@
-# DESIGN.md - Viru Tracker (Direccion de Diseno)
+# DESIGN.md - Viru Air (Direccion de Diseno)
 
 **Estado:** Vivo
 **Ultima revision:** 2026-05-18
 **Area:** Diseno (UI/UX)
 
 ## 1) Definicion base de identidad
-- **Viru Tracker no es SaaS generico:** es una plataforma de flight intelligence con identidad calida, animada y aeronautica.
+- **Viru Air no es SaaS generico:** es una plataforma de flight intelligence con identidad calida, animada y aeronautica.
 - **Impresion deseada:** premium y bien disenada, pero cercana, intuitiva y humana.
 - **Direccion dual:**
   - **Dark mode:** Aviation Dark-Luxe cinematografico, nunca lugubre.

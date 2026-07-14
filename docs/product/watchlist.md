@@ -7,7 +7,7 @@
 
 ## Resumen
 
-Watchlist es el centro operativo de Viru Tracker y absorbe el historico como parte de la misma experiencia de decision.
+Watchlist es el centro operativo de Viru Air y absorbe el historico como parte de la misma experiencia de decision.
 
 ## Contenido principal
 

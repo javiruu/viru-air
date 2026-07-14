@@ -14,7 +14,7 @@ Related: docs/INDICE_UNICO.md, README.md
 - `infra/`: configuracion de despliegue (cloudflare-tunnel.example.yml), workflows y manifests.
 - `scripts/`: utilidades de soporte del repo (túneles, publicación, sanitización).
 - `testsprite_tests/`: tests y artefactos del flujo Testsprite; los reportes documentales se han archivado en `docs/archive/tooling/`.
-- `skills/`: skills reutilizables para agentes (viru-tracker-context, taste-skill, remodex, phase1-mvp).
+- `skills/`: skills reutilizables para agentes (viru-air-context, taste-skill, remodex, phase1-mvp).
 
 ## Directorios clave del frontend
 

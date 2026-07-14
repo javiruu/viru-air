@@ -58,7 +58,7 @@ function Test-ProbablyBinary([string]$AbsolutePath) {
 }
 
 if (-not (Test-Path ".git")) {
-  Fail "No se encontro .git en '$RepoRoot'. Ejecuta este guard dentro de la raiz del repo viru-tracker."
+  Fail "No se encontro .git en '$RepoRoot'. Ejecuta este guard dentro de la raiz del repo viru-air."
 }
 
 $branch = (git rev-parse --abbrev-ref HEAD).Trim()

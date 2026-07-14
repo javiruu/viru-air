@@ -1,4 +1,4 @@
-# Playwright/Auth Reuse Guide (Viru Tracker)
+# Playwright/Auth Reuse Guide (Viru Air)
 
 Objetivo: evitar empezar desde cero en cada conversacion cuando hay que validar flujos reales con login/sesion usando Playwright.
 

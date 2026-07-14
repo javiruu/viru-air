@@ -1,4 +1,4 @@
-# Roadmap de viaje para Codex - 50 fases de mejora de Viru Tracker
+# Roadmap de viaje para Codex - 50 fases de mejora de Viru Air
 
 **Estado:** vivo
 **Ultima revision:** 2026-06-13
@@ -8,7 +8,7 @@
 ## Proposito
 
 Este documento convierte el prompt de viaje del usuario en una hoja de ruta
-ejecutable para mejorar Viru Tracker con autonomia responsable. No sustituye a
+ejecutable para mejorar Viru Air con autonomia responsable. No sustituye a
 `AGENTS.md`, `DESIGN.md`, los contratos backend ni las specs vivas: los resume y
 ordena para que futuras sesiones puedan trabajar fase a fase sin improvisar.
 
@@ -97,7 +97,7 @@ Codigo inspeccionado de forma selectiva:
 
 ### Repo y workflow
 
-- Repo canonico confirmado: `C:\Users\javiru\Desktop\viru-tracker`.
+- Repo canonico confirmado: `C:\Users\javiru\Desktop\viru-air`.
 - Rama actual: `main`.
 - Estado inicial de esta iteracion: repo valido en `main`, con cambios locales
   documentales ya presentes en `docs/prompts/codex-travel-roadmap-50-fases.md`
@@ -320,7 +320,7 @@ a improvisar el contexto en cada sesion.
 
 **Objetivo real**
 
-Dejar una foto util del estado actual de Viru Tracker para futuras sesiones:
+Dejar una foto util del estado actual de Viru Air para futuras sesiones:
 repositorio canonico, areas de producto activas, deuda visible, riesgos
 transversales, comandos de verificacion relevantes y limites de autonomia.
 
@@ -484,7 +484,7 @@ la realidad.
 - Fuente viva creada: `docs/qa/qa-command-matrix.md`.
 - Checks contrastados en esta iteracion:
   - `cd frontend && npm run lint`
-  - `cd C:\Users\javiru\Desktop\viru-tracker && python -m pytest backend\tests\unit\test_quick_search_cache_models.py -q`
+  - `cd C:\Users\javiru\Desktop\viru-air && python -m pytest backend\tests\unit\test_quick_search_cache_models.py -q`
   - `cd backend && python -m pytest tests/unit/test_door_to_door_deeplinks.py -q`
 - Hallazgos reales:
   - `npm run lint` funciona, pero arroja warnings preexistentes en hoteles y
@@ -708,12 +708,12 @@ git status --short
 ```
 
 ```powershell
-cd C:\Users\javiru\Desktop\viru-tracker\frontend
+cd C:\Users\javiru\Desktop\viru-air\frontend
 npm test -- tests/quick-search-dual-regression.test.tsx tests/quick-search-screen-state.test.tsx
 ```
 
 ```powershell
-cd C:\Users\javiru\Desktop\viru-tracker\backend
+cd C:\Users\javiru\Desktop\viru-air\backend
 python -m pytest tests/integration/test_quick_search_dual_reverse_leg.py tests/unit/test_quick_search_execution.py -q
 ```
 
@@ -893,12 +893,12 @@ python -m pytest tests/integration/test_quick_search_dual_reverse_leg.py tests/u
 Comandos base candidatos:
 
 ```powershell
-cd C:\Users\javiru\Desktop\viru-tracker\frontend
+cd C:\Users\javiru\Desktop\viru-air\frontend
 npm test -- --test-name-pattern="quick-search-screen-state|quick-search-refactor-utils|quick-search-dual-regression|quick-search-response-normalizer"
 ```
 
 ```powershell
-cd C:\Users\javiru\Desktop\viru-tracker
+cd C:\Users\javiru\Desktop\viru-air
 python -m pytest backend\tests\integration\test_quick_search_dual_reverse_leg.py backend\tests\integration\test_quick_search_provider_degradation.py backend\tests\unit\test_quick_search_ai_preference.py
 ```
 
@@ -907,12 +907,12 @@ python -m pytest backend\tests\integration\test_quick_search_dual_reverse_leg.py
 Usar el runbook:
 
 ```powershell
-cd C:\Users\javiru\Desktop\viru-tracker\frontend
+cd C:\Users\javiru\Desktop\viru-air\frontend
 node --import tsx --test tests/door-to-door-v1.test.tsx
 ```
 
 ```powershell
-cd C:\Users\javiru\Desktop\viru-tracker\backend
+cd C:\Users\javiru\Desktop\viru-air\backend
 python -m pytest tests/integration/test_door_to_door.py tests/unit/test_door_to_door_gtfs_transit.py tests/unit/test_door_to_door_deeplinks.py -q
 ```
 
@@ -973,7 +973,7 @@ python -m pytest tests/integration/test_door_to_door.py tests/unit/test_door_to_
 - revision de diff documental acotado a docs y checklists
 - comprobacion de rutas de docs referenciadas
 - `cd frontend && npm run lint`
-- `cd C:\Users\javiru\Desktop\viru-tracker && python -m pytest backend\tests\unit\test_quick_search_cache_models.py -q`
+- `cd C:\Users\javiru\Desktop\viru-air && python -m pytest backend\tests\unit\test_quick_search_cache_models.py -q`
 - `cd backend && python -m pytest tests/unit/test_door_to_door_deeplinks.py -q`
 - sin cambios de logica ni de contrato runtime
 

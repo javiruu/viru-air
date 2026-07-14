@@ -1,10 +1,10 @@
-# SkillSprite - Mapa Completo de Capacidades de Usuario (Viru Tracker)
+# SkillSprite - Mapa Completo de Capacidades de Usuario (Viru Air)
 
 Fecha de consolidacion: 2026-02-17  
 Fuentes revisadas: `docs/`, `logs/`, `logs_ia/`
 
 ## Alcance
-Este documento enumera todo lo que puede hacer un usuario en Viru Tracker, separando capacidades por tipo de usuario y por modulo, para uso directo en SkillSprite (diseno de pruebas funcionales y E2E).
+Este documento enumera todo lo que puede hacer un usuario en Viru Air, separando capacidades por tipo de usuario y por modulo, para uso directo en SkillSprite (diseno de pruebas funcionales y E2E).
 
 ## Roles de usuario
 - `Visitante (no autenticado)`: puede ver landing, politicas, login y registro.

@@ -1,6 +1,6 @@
 # Plan progresivo de 20 fases — Quick Search + Ajustes activos
 
-**Proyecto:** Viru Tracker
+**Proyecto:** Viru Air
 **Pantalla:** `/quick-search` / “Búsqueda rápida”
 **Objetivo:** reducir fricción cognitiva, separar búsqueda de filtros de resultados y convertir “Ajustes activos” en un sistema compacto, progresivo y entendible.
 **Nivel de riesgo:** medio-alto si se intenta de golpe; bajo si se ejecuta fase a fase.

@@ -1,13 +1,13 @@
 ---
-name: viru-tracker-context
-description: Reusable operating and onboarding context for Viru Tracker. Use when Codex is working in the Viru Tracker repo and needs to re-onboard quickly, identify which docs are canonical, translate older Paperclip-style process rules into the current Codex workflow, or gather stable project context before editing, verifying, or publishing changes.
+name: viru-air-context
+description: Reusable operating and onboarding context for Viru Air. Use when Codex is working in the Viru Air repo and needs to re-onboard quickly, identify which docs are canonical, translate older Paperclip-style process rules into the current Codex workflow, or gather stable project context before editing, verifying, or publishing changes.
 ---
 
-# Viru Tracker Context
+# Viru Air Context
 
 ## Overview
 
-Use this skill to rebuild working context quickly in the Viru Tracker repo without re-reading the full documentation tree. Prefer live docs first, treat `docs/archive/` as historical intent only, and use the bundled references when you need a compact recap before opening repo files.
+Use this skill to rebuild working context quickly in the Viru Air repo without re-reading the full documentation tree. Prefer live docs first, treat `docs/archive/` as historical intent only, and use the bundled references when you need a compact recap before opening repo files.
 
 ## Quick Start
 

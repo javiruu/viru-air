@@ -1,6 +1,6 @@
 ---
-name: Viru Tracker UI
-description: Mejoras incrementales de UI/UX para Viru Tracker con identidad calida, animada, cercana y no generica.
+name: Viru Air UI
+description: Mejoras incrementales de UI/UX para Viru Air con identidad calida, animada, cercana y no generica.
 trigger_words:
   - diseno
   - interfaz
@@ -19,10 +19,10 @@ od:
   example_prompt: "Describe la jerarquia visual actual de una ruta y propone un unico ajuste incremental sin cambiar logica ni rutas."
 ---
 
-# Skill: Viru Tracker UI
+# Skill: Viru Air UI
 
 ## Objetivo
-Aplicar mejoras visuales incrementales y verificables en Viru Tracker, preservando su identidad calida, con personalidad y su contrato UI canonico.
+Aplicar mejoras visuales incrementales y verificables en Viru Air, preservando su identidad calida, con personalidad y su contrato UI canonico.
 
 ## Alcance obligatorio
 - Cambios incrementales UI/UX en superficies existentes.

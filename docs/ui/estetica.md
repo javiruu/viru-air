@@ -7,7 +7,7 @@ Fuente de verdad: docs/ui/estetica.md
 
 # Direccion Visual: "Aviation Warm-Luxe / Daylight Flight Soul"
 
-**Viru Tracker** adopta una estetica dual: **Dark-Luxe cinematografico** en modo nocturno y una **contraparte luminosa con alma** en modo dia. Ambos temas comparten identidad aeronautica, personalidad visual y calidez premium: codigos IATA, rutas estilizadas, luces de pista, terminales y lenguaje de flight intelligence.
+**Viru Air** adopta una estetica dual: **Dark-Luxe cinematografico** en modo nocturno y una **contraparte luminosa con alma** en modo dia. Ambos temas comparten identidad aeronautica, personalidad visual y calidez premium: codigos IATA, rutas estilizadas, luces de pista, terminales y lenguaje de flight intelligence.
 
 ## Principios de estilo
 - **Dark cinematografico (modo nocturno):** canvas `#121212`, paneles `#1E1E1E/#242424`, texto principal `#F5EAD6`.

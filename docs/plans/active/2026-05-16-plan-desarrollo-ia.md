@@ -7,7 +7,7 @@
 
 ## Contexto y Riesgos de IA
 
-Este plan detalla el roadmap para resolver las zonas críticamente faltas de desarrollo en Viru Tracker. Al ser diseñado para ser ejecutado por una Inteligencia Artificial, el plan incluye mitigaciones específicas para nuestras vulnerabilidades intrínsecas:
+Este plan detalla el roadmap para resolver las zonas críticamente faltas de desarrollo en Viru Air. Al ser diseñado para ser ejecutado por una Inteligencia Artificial, el plan incluye mitigaciones específicas para nuestras vulnerabilidades intrínsecas:
 
 1. **Riesgo de Pérdida de Contexto:** Archivos de miles de líneas (como diccionarios gigantes de aeropuertos o traducciones) provocan que la IA olvide el objetivo o trunque respuestas.
    - **Mitigación:** Toda migración de datos masivos (ej. listado mundial de aeropuertos) se hará mediante scripts programáticos (Python/Node) que descarguen los datos de fuentes públicas fiables y pueblen la Base de Datos automáticamente, evitando inyecciones de código masivas.

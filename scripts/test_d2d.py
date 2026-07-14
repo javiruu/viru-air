@@ -1,9 +1,11 @@
 import asyncio
 import sys
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 
 # Add backend to path
-sys.path.append(r"C:\Users\javiru\Desktop\viru-tracker\backend")
+sys.path.append(str(Path(__file__).resolve().parents[1] / "backend"))
 
 from app.main import app
 from app.infrastructure.db.session import SessionLocal

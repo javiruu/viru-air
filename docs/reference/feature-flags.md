@@ -7,7 +7,7 @@
 
 ## Resumen
 
-Viru Tracker no usa hoy un sistema centralizado unico de feature flags. Las activaciones vigentes se controlan con variables de entorno por dominio y con runbooks especificos cuando el rollout necesita perfiles operativos.
+Viru Air no usa hoy un sistema centralizado unico de feature flags. Las activaciones vigentes se controlan con variables de entorno por dominio y con runbooks especificos cuando el rollout necesita perfiles operativos.
 
 Fuentes actuales:
 

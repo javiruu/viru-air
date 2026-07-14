@@ -34,7 +34,7 @@ class NominatimSuggestionsProvider:
         self.max_cache_entries = max(int(os.getenv("DOOR_TO_DOOR_NOMINATIM_CACHE_MAX_ENTRIES", "500")), 50)
         self.user_agent = os.getenv(
             "DOOR_TO_DOOR_NOMINATIM_USER_AGENT",
-            "viru-tracker/1.0 (door-to-door suggestions)",
+            "viru-air/1.0 (door-to-door suggestions)",
         ).strip()
         self._cache: dict[str, _CachedSuggestions] = {}
 

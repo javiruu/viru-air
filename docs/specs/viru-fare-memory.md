@@ -7,7 +7,7 @@
 
 ## Problema
 
-Viru Tracker ya recuerda resultados exactos de Quick Search con cache compartida V2.1, pero todavia no distingue con suficiente precision:
+Viru Air ya recuerda resultados exactos de Quick Search con cache compartida V2.1, pero todavia no distingue con suficiente precision:
 
 - precio actual verificado;
 - precio visto recientemente;

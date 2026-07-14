@@ -1,11 +1,13 @@
 # Root Git Reconciliation Report
 
 Fecha: 2026-05-11  
-Workspace: `C:\Users\javiru\Desktop\viru-tracker`
+Workspace: `C:\Users\javiru\Desktop\viru-air`
+
+> Nota de normalizacion (2026-07-14): los identificadores de marca, rutas y remoto se alinearon con Viru Air durante el rebranding global. La evidencia literal original permanece en el commit `23c6daedf7f8ac0bd492bfbe011daf260cac93a6`.
 
 ## Resumen ejecutivo
 
-La raíz ya tiene `.git`, rama `main` y `origin` correcto (`https://github.com/javiruu/viru-tracker.git`), pero **todavía no está lista para publicar como único repo sin una reconciliación adicional**.
+La raíz ya tiene `.git`, rama `main` y `origin` correcto (`https://github.com/javiruu/viru-air.git`), pero **todavía no está lista para publicar como único repo sin una reconciliación adicional**.
 
 Bloqueos detectados (estado previo):
 - No existe commit local en la raíz (`HEAD` inexistente).
@@ -29,7 +31,7 @@ Comandos:
 
 Resultado:
 - Rama actual: `main`
-- Remote: `origin` fetch/push a `https://github.com/javiruu/viru-tracker.git`
+- Remote: `origin` fetch/push a `https://github.com/javiruu/viru-air.git`
 - `origin/main`: `bac86841d405ffc0dc36d5cef80037aecf91dc56`
 - `HEAD`: inexistente (fatal: unknown revision)
 - `HEAD == origin/main`: no verificable (no hay `HEAD`)
