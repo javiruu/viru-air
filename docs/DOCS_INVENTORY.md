@@ -1,7 +1,7 @@
 # Inventario documental
 
 **Estado:** vivo
-**Ultima revision:** 2026-06-27
+**Ultima revision:** 2026-07-14
 **Fuente de verdad:** si
 **Area:** documentacion
 
@@ -91,8 +91,8 @@ Entradas vivas actualizadas:
 Entradas vivas actualizadas:
 
 - `docs/reference/codex-operating-contract.md`
-- `skills/viru-tracker-context/SKILL.md`
-- `skills/viru-tracker-context/references/project-context.md`
+- `skills/viru-air-context/SKILL.md`
+- `skills/viru-air-context/references/project-context.md`
 - `docs/overview/repo-map.md`
 - `frontend/AGENTS.md`
 - `docs/INDICE_UNICO.md`
@@ -260,15 +260,15 @@ Entradas vivas agregadas:
 - `docs/archive/qa-reports/2026-05-12-fase1-cumplimiento.md`
 - `backend/tests/unit/test_airports_endpoints.py`
 
-## Actualizacion manual 2026-05-14 (design skill viru-tracker-ui)
+## Actualizacion manual 2026-05-14 (design skill viru-air-ui)
 
 Entradas vivas agregadas:
 
 - `DESIGN.md`
-- `.codex/skills/viru-tracker-ui/SKILL.md`
-- `.codex/skills/viru-tracker-ui/references/product-context.md`
-- `.codex/skills/viru-tracker-ui/references/visual-direction.md`
-- `.codex/skills/viru-tracker-ui/references/qa-checklist.md`
+- `.codex/skills/viru-air-ui/SKILL.md`
+- `.codex/skills/viru-air-ui/references/product-context.md`
+- `.codex/skills/viru-air-ui/references/visual-direction.md`
+- `.codex/skills/viru-air-ui/references/qa-checklist.md`
 
 ## Actualizacion manual 2026-05-14 (install taste frontend skill)
 
@@ -297,10 +297,10 @@ Entradas vivas actualizadas:
 - `docs/ui/UI_SYSTEM_V1.md`
 - `docs/ui/UI_CONTRACT_V1.md`
 - `docs/archive/qa-visual/color-palette-audit.md`
-- `.codex/skills/viru-tracker-ui/SKILL.md`
-- `.codex/skills/viru-tracker-ui/references/product-context.md`
-- `.codex/skills/viru-tracker-ui/references/visual-direction.md`
-- `.codex/skills/viru-tracker-ui/references/qa-checklist.md`
+- `.codex/skills/viru-air-ui/SKILL.md`
+- `.codex/skills/viru-air-ui/references/product-context.md`
+- `.codex/skills/viru-air-ui/references/visual-direction.md`
+- `.codex/skills/viru-air-ui/references/qa-checklist.md`
 
 ## Actualizacion manual 2026-05-18 (warm cockpit direction hardening)
 
@@ -313,9 +313,9 @@ Entradas vivas actualizadas:
 - `docs/ui/UI_SYSTEM_V1.md`
 - `docs/ui/UI_VISUAL_QA_CHECKLIST.md`
 - `docs/archive/qa-visual/color-palette-audit.md`
-- `.codex/skills/viru-tracker-ui/SKILL.md`
-- `.codex/skills/viru-tracker-ui/references/visual-direction.md`
-- `.codex/skills/viru-tracker-ui/references/qa-checklist.md`
+- `.codex/skills/viru-air-ui/SKILL.md`
+- `.codex/skills/viru-air-ui/references/visual-direction.md`
+- `.codex/skills/viru-air-ui/references/qa-checklist.md`
 
 ## Actualizacion manual 2026-05-26 (provider-driven backend architecture)
 
@@ -558,10 +558,10 @@ Entradas vivas retiradas:
 | DESIGN.md | contexto IA | vivo | conservar | DESIGN.md | Sistema de diseno para agentes con direccion visual calida, animada y de premium humano | DESIGN.md |
 | HISTORY.md | overview | vivo | conservar | HISTORY.md | Historial de cambios significativos del proyecto | HISTORY.md |
 | README.md | overview | vivo | conservar | README.md | Punto de entrada principal del repositorio | README.md |
-| .codex/skills/viru-tracker-ui/SKILL.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/SKILL.md | Skill de diseno incremental para Codex orientado a calidez, personalidad y claridad | .codex/skills/viru-tracker-ui/SKILL.md |
-| .codex/skills/viru-tracker-ui/references/product-context.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/references/product-context.md | Contexto de producto para tareas UI con enfoque cercano, calido y no generico | .codex/skills/viru-tracker-ui/references/product-context.md |
-| .codex/skills/viru-tracker-ui/references/visual-direction.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/references/visual-direction.md | Direccion visual calida y con personalidad para el skill Viru Tracker UI | .codex/skills/viru-tracker-ui/references/visual-direction.md |
-| .codex/skills/viru-tracker-ui/references/qa-checklist.md | contexto IA | vivo | conservar | .codex/skills/viru-tracker-ui/references/qa-checklist.md | Checklist de QA visual para validar claridad, calidez y personalidad del skill | .codex/skills/viru-tracker-ui/references/qa-checklist.md |
+| .codex/skills/viru-air-ui/SKILL.md | contexto IA | vivo | conservar | .codex/skills/viru-air-ui/SKILL.md | Skill de diseno incremental para Codex orientado a calidez, personalidad y claridad | .codex/skills/viru-air-ui/SKILL.md |
+| .codex/skills/viru-air-ui/references/product-context.md | contexto IA | vivo | conservar | .codex/skills/viru-air-ui/references/product-context.md | Contexto de producto para tareas UI con enfoque cercano, calido y no generico | .codex/skills/viru-air-ui/references/product-context.md |
+| .codex/skills/viru-air-ui/references/visual-direction.md | contexto IA | vivo | conservar | .codex/skills/viru-air-ui/references/visual-direction.md | Direccion visual calida y con personalidad para el skill Viru Air UI | .codex/skills/viru-air-ui/references/visual-direction.md |
+| .codex/skills/viru-air-ui/references/qa-checklist.md | contexto IA | vivo | conservar | .codex/skills/viru-air-ui/references/qa-checklist.md | Checklist de QA visual para validar claridad, calidez y personalidad del skill | .codex/skills/viru-air-ui/references/qa-checklist.md |
 | .codex/skills/taste-skill/SKILL.md | contexto IA | vivo | conservar | .codex/skills/taste-skill/SKILL.md | Skill de direccion visual frontend premium para tareas de estetica/UI | .codex/skills/taste-skill/SKILL.md |
 | docs/DOCS_INVENTORY.md | overview | vivo | conservar | docs/DOCS_INVENTORY.md | Inventario documental ?nico | docs/DOCS_INVENTORY.md |
 | docs/INDICE_UNICO.md | overview | vivo | conservar | docs/INDICE_UNICO.md | Mapa ?nico de navegaci?n | docs/INDICE_UNICO.md |
@@ -712,9 +712,9 @@ Entradas vivas retiradas:
 | fases/_extraido_txt/FASE_8_Testing_Viru.txt | historical | duplicado | eliminar candidato | docs/archive/fases/transcripts/FASE_8_Testing_Viru.txt | Transcripci?n duplicada ya preservada en archive | docs/archive/fases/transcripts/FASE_8_Testing_Viru.txt |
 | fases/_extraido_txt/FASE_9_Documentacion_Tecnica_Extensa_Viru.txt | historical | duplicado | eliminar candidato | docs/archive/fases/transcripts/FASE_9_Documentacion_Tecnica_Extensa_Viru.txt | Transcripci?n duplicada ya preservada en archive | docs/archive/fases/transcripts/FASE_9_Documentacion_Tecnica_Extensa_Viru.txt |
 | fases/_extraido_txt/INDICE_MAESTRO_VIRU_IA_NAVEGACION.txt | historical | duplicado | eliminar candidato | docs/archive/fases/transcripts/INDICE_MAESTRO_VIRU_IA_NAVEGACION.txt | Transcripci?n duplicada ya preservada en archive | docs/archive/fases/transcripts/INDICE_MAESTRO_VIRU_IA_NAVEGACION.txt |
-| skills/viru-tracker-context/SKILL.md | contexto IA | vivo | conservar | skills/viru-tracker-context/SKILL.md | Contexto reusable para agentes dentro de Viru | skills/viru-tracker-context/SKILL.md |
-| skills/viru-tracker-context/references/operating-rules.md | contexto IA | vivo | conservar | skills/viru-tracker-context/references/operating-rules.md | Contexto reusable para agentes dentro de Viru | skills/viru-tracker-context/references/operating-rules.md |
-| skills/viru-tracker-context/references/project-context.md | contexto IA | vivo | conservar | skills/viru-tracker-context/references/project-context.md | Contexto reusable para agentes dentro de Viru | skills/viru-tracker-context/references/project-context.md |
+| skills/viru-air-context/SKILL.md | contexto IA | vivo | conservar | skills/viru-air-context/SKILL.md | Contexto reusable para agentes dentro de Viru | skills/viru-air-context/SKILL.md |
+| skills/viru-air-context/references/operating-rules.md | contexto IA | vivo | conservar | skills/viru-air-context/references/operating-rules.md | Contexto reusable para agentes dentro de Viru | skills/viru-air-context/references/operating-rules.md |
+| skills/viru-air-context/references/project-context.md | contexto IA | vivo | conservar | skills/viru-air-context/references/project-context.md | Contexto reusable para agentes dentro de Viru | skills/viru-air-context/references/project-context.md |
 | users_prueba.txt | sensitive | sensible | revisar manualmente | users_prueba.txt | Posible dato personal o material de prueba sensible | revisi?n manual requerida |
 
 ## Actualizacion manual 2026-05-12 (F3C.2)

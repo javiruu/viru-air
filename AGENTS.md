@@ -1,6 +1,6 @@
-# AGENTS.md — viru-tracker
+# AGENTS.md — viru-air
 
-This file defines the default operating rules for coding agents working in `viru-tracker`.
+This file defines the default operating rules for coding agents working in `viru-air`.
 
 Follow these instructions unless the user explicitly overrides them.
 
@@ -12,7 +12,7 @@ More specific instructions may exist in nested `AGENTS.md` files. When working i
 
 Complete the requested task end-to-end with a small, intentional, verified change.
 
-`viru-tracker` is not generic SaaS. It should remain clear, intentional, warm, animated, distinctive, and human, with strong visual taste and a close, approachable feel.
+`viru-air` is not generic SaaS. It should remain clear, intentional, warm, animated, distinctive, and human, with strong visual taste and a close, approachable feel.
 
 A good result is not merely code that compiles. A good result solves the real task, preserves product character, is verified with appropriate evidence, and is published correctly when the user asked for a completed change.
 
@@ -22,12 +22,12 @@ A good result is not merely code that compiles. A good result solves the real ta
 
 These rules override softer guidance elsewhere in this file.
 
-- The canonical Git repository is the current `viru-tracker` root.
+- The canonical Git repository is the current `viru-air` root.
 - Do not use `_publish_repo` for any workflow.
 - Treat `_publish_repo` as a deprecated local artifact that may not exist.
 - If the current working directory is not a Git repository, stop and report the problem.
 - Never create or maintain mirror folders, secondary publishing repos, or parallel GitHub versions.
-- All Git operations, verification, commits, and pushes must happen from the canonical `viru-tracker` root.
+- All Git operations, verification, commits, and pushes must happen from the canonical `viru-air` root.
 - Default workflow is **direct commits to `main`**, unless the user explicitly asks for a branch or PR.
 - Do not create feature branches or PRs unless the user explicitly asks for them.
 - Do not leave requested changes only locally if the user asked for a real completed change.
@@ -192,11 +192,11 @@ See `/docs/AGENTS.md` for documentation-specific rules.
 For UI/UX work driven by coding agents, use these local artifacts as persistent design context:
 
 - `/DESIGN.md` (canonical design direction for agents in this repo root);
-- `/.codex/skills/viru-tracker-ui/SKILL.md`;
+- `/.codex/skills/viru-air-ui/SKILL.md`;
 - `/.codex/skills/taste-skill/SKILL.md`;
-- `/.codex/skills/viru-tracker-ui/references/product-context.md`;
-- `/.codex/skills/viru-tracker-ui/references/visual-direction.md`;
-- `/.codex/skills/viru-tracker-ui/references/qa-checklist.md`.
+- `/.codex/skills/viru-air-ui/references/product-context.md`;
+- `/.codex/skills/viru-air-ui/references/visual-direction.md`;
+- `/.codex/skills/viru-air-ui/references/qa-checklist.md`.
 
 Rules:
 
@@ -210,7 +210,7 @@ Rules:
 
 ## Frontend component guidance: shadcn/ui
 
-shadcn/ui is a known, preferred option for reusable frontend primitives in Viru Tracker, especially when the user explicitly asks for "shadcn", "shadcn/ui", "usa cosas de shadcn", "utiliza shadcn", or similar wording. It is not the design authority for Viru Tracker, and it must not override the product identity, existing design contract, or local component patterns by default.
+shadcn/ui is a known, preferred option for reusable frontend primitives in Viru Air, especially when the user explicitly asks for "shadcn", "shadcn/ui", "usa cosas de shadcn", "utiliza shadcn", or similar wording. It is not the design authority for Viru Air, and it must not override the product identity, existing design contract, or local component patterns by default.
 
 Current repo state:
 
@@ -227,11 +227,11 @@ Usage rules:
 
 - When the user explicitly asks for shadcn/ui, use shadcn/ui components where they fit the requested UI.
 - When creating new frontend, consider shadcn/ui for common primitives before hand-rolling another generic button/input/dialog pattern.
-- Prefer existing Viru Tracker components and established local patterns before adding new shadcn/ui components.
+- Prefer existing Viru Air components and established local patterns before adding new shadcn/ui components.
 - Do not force shadcn/ui if a project-specific component already fits better, if the requested change is small, or if adding shadcn would create excessive setup or visual churn.
 - Do not run a mass migration to shadcn/ui without an explicit task asking for that migration.
 - Do not replace existing UI only to "normalize" it to shadcn/ui.
-- Keep Viru Tracker's warm aeronautical identity, dual-theme direction, motion character, spacing rhythm, and existing visual hierarchy.
+- Keep Viru Air's warm aeronautical identity, dual-theme direction, motion character, spacing rhythm, and existing visual hierarchy.
 - If a needed shadcn/ui component is missing, add it with the official shadcn CLI from `/frontend` using npm.
 - If shadcn/ui must be initialized for a task, initialize it minimally and verify the generated paths, aliases, Tailwind setup, tokens, and `cn` helper before using generated imports.
 
@@ -241,7 +241,7 @@ Good shadcn/ui candidates:
 
 Do not force shadcn/ui for:
 
-- Highly specific Viru Tracker surfaces, already-designed layouts, aviation/radar/route visuals, map components, timeline and fare intelligence views, custom empty states, complex domain flows, or logic-heavy components already encapsulated in the app.
+- Highly specific Viru Air surfaces, already-designed layouts, aviation/radar/route visuals, map components, timeline and fare intelligence views, custom empty states, complex domain flows, or logic-heavy components already encapsulated in the app.
 
 Command examples:
 
@@ -312,7 +312,7 @@ For browser-visible work, follow the more specific rules in `/frontend/AGENTS.md
 
 ### Viru is not generic SaaS
 
-- Viru Tracker is not a generic dashboard template.
+- Viru Air is not a generic dashboard template.
 - It has more personality, more art-directed intention, and more visual character than a default SaaS admin panel.
 - Do not flatten Viru into a generic, over-simplified, low-tension interface.
 - “Not generic SaaS” means more personality, not less.
@@ -351,7 +351,7 @@ For design direction and reviews, apply these principles:
 
 ### Simplicity rule
 
-Simplicity in `viru-tracker` means:
+Simplicity in `viru-air` means:
 
 - fewer unnecessary moving parts;
 - clearer flows;
@@ -463,7 +463,7 @@ Rules:
 - When a workflow is repeated often or a missing tool is causing slow fallback work, prefer installing/configuring the right repo-local tool once instead of repeating a slower workaround.
 - Do this only when the future payoff is clear and the setup cost stays reasonable.
 - Do not bloat the repo or violate clarity just to optimize in theory.
-- Keep `viru-tracker` portable:
+- Keep `viru-air` portable:
   - prefer repo-local dependencies;
   - prefer project scripts;
   - prefer pinned versions;
@@ -558,8 +558,8 @@ Avoid:
 - flattening UI or product personality just to make implementation easier;
 - leaving requested changes unpublished when the task called for completion;
 - using `_publish_repo` or any secondary mirror as a fallback repository;
-- creating parallel GitHub versions of `viru-tracker`;
-- committing from any directory other than the canonical `viru-tracker` root;
+- creating parallel GitHub versions of `viru-air`;
+- committing from any directory other than the canonical `viru-air` root;
 - asking avoidable clarifying questions instead of making a safe assumption and proceeding;
 - producing a large diff when a small, verified patch would solve the task.
 

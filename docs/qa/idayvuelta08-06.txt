@@ -561,11 +561,11 @@ no tocar más de lo necesario
 validar !isDualMode como flujo principal legado
 16. Comandos y verificaciones previstas
 Frontend
-cd C:\Users\javiru\Desktop\viru-tracker\frontend
+cd C:\Users\javiru\Desktop\viru-air\frontend
 npm test -- --test-name-pattern="quick-search"
 npm run lint
 Backend
-cd C:\Users\javiru\Desktop\viru-tracker
+cd C:\Users\javiru\Desktop\viru-air
 python -m pytest backend\tests\integration\test_quick_search_returns_results.py backend\tests\integration\test_quick_search_realistic_happy_path.py backend\tests\integration\test_quick_search_calendar_hints.py
 Verificación manual
 abrir http://127.0.0.1:3000/quick-search

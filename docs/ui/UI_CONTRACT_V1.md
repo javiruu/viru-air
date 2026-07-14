@@ -5,7 +5,7 @@ Fuente de verdad: docs/ui/UI_CONTRACT_V1.md
 
 ---
 
-# UI Contract v1 - Viru Tracker
+# UI Contract v1 - Viru Air
 
 > Referencia de freeze oficial: `docs/ui/UI_SYSTEM_V1.md`
 

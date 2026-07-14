@@ -1,5 +1,5 @@
 Status: reference
-Scope: persistent operating contract for Codex sessions in Viru Tracker
+Scope: persistent operating contract for Codex sessions in Viru Air
 Last reviewed: 2026-04-16
 Canonical source: docs/reference/codex-operating-contract.md
 Related: docs/reference/README.md, docs/overview/current-state.md, docs/overview/repo-map.md, AGENTS.md
@@ -9,7 +9,7 @@ Related: docs/reference/README.md, docs/overview/current-state.md, docs/overview
 
 ## Purpose
 
-Condensar el conocimiento operativo estable extraido del master document externo de Viru Tracker Studio y traducirlo a reglas que encajan con Codex y con este repo.
+Condensar el conocimiento operativo estable extraido del master document externo de Viru Air Studio y traducirlo a reglas que encajan con Codex y con este repo.
 
 ## Donde debe vivir cada tipo de conocimiento
 
@@ -41,7 +41,7 @@ Condensar el conocimiento operativo estable extraido del master document externo
 - Secretos, tokens y datos sensibles no deben vivir en markdown, commits, PRs, comentarios, capturas ni logs compartidos.
 - Los conectores o automatizaciones se tratan como superficies sensibles: activalos solo con owner claro, guardrails y rollback.
 - Para pruebas E2E o reproducciones de navegador real, usa TestSprite cuando exista necesidad realista y la maquina ya haya ejecutado el bootstrap del repo.
-- En Viru Tracker, `mcp.json` es la fuente canonica de configuracion de TestSprite; Codex debe materializarla localmente con el bootstrap del repo antes de asumir disponibilidad.
+- En Viru Air, `mcp.json` es la fuente canonica de configuracion de TestSprite; Codex debe materializarla localmente con el bootstrap del repo antes de asumir disponibilidad.
 
 ## Roles adaptados a Codex
 
@@ -83,7 +83,7 @@ Condensar el conocimiento operativo estable extraido del master document externo
 
 ## Matriz Word -> Codex
 
-| Bloque del Word | Decision | Destino en Viru Tracker |
+| Bloque del Word | Decision | Destino en Viru Air |
 |---|---|---|
 | Principios no negociables | Adoptar | `AGENTS.md` + este documento |
 | Regla de remote GitHub | Adaptar | este documento + workflow Git real del repo |

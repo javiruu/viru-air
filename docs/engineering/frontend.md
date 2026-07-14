@@ -7,7 +7,7 @@
 
 ## Resumen
 
-El frontend de Viru Tracker está construido con Next.js, React y TypeScript, y usa un contrato visual documentado para evitar deriva de UI.
+El frontend de Viru Air está construido con Next.js, React y TypeScript, y usa un contrato visual documentado para evitar deriva de UI.
 
 ## Contenido principal
 

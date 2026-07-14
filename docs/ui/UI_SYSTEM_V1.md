@@ -5,7 +5,7 @@ Fuente de verdad: docs/ui/UI_SYSTEM_V1.md
 
 ---
 
-# UI System v1 - Freeze oficial (Viru Tracker)
+# UI System v1 - Freeze oficial (Viru Air)
 
 **Estado:** Vigente
 **Fecha de freeze:** 2026-03-09

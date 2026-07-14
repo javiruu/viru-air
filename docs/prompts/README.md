@@ -13,7 +13,7 @@ Esta carpeta separa el material operativo de agentes del histórico de prompts s
 
 - `AGENTS.md` es el contrato operativo principal para agentes dentro de este repo.
 - `docs/reference/codex-operating-contract.md` actúa como referencia persistente complementaria.
-- `skills/viru-tracker-context/` contiene contexto reusable para reentrada.
+- `skills/viru-air-context/` contiene contexto reusable para reentrada.
 - Los prompts antiguos o de una sesión concreta deben vivir en `legacy/`.
 
 ## Contenido actual

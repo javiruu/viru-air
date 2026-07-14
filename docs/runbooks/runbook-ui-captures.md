@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Definir un flujo reutilizable para obtener evidencia visual de cambios UI (capturas) en `viru-tracker`, sin depender de memoria de conversacion.
+Definir un flujo reutilizable para obtener evidencia visual de cambios UI (capturas) en `viru-air`, sin depender de memoria de conversacion.
 
 ## Reglas base
 

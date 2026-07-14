@@ -1,6 +1,6 @@
-# tests/AGENTS.md — viru-tracker testing rules
+# tests/AGENTS.md — viru-air testing rules
 
-This file defines testing-specific rules for coding agents working inside the testing area of `viru-tracker`.
+This file defines testing-specific rules for coding agents working inside the testing area of `viru-air`.
 
 The root `/AGENTS.md` still applies. This file adds specific guidance for regression tests, browser automation, visual evidence, stable test data, and verification strategy.
 
@@ -8,7 +8,7 @@ The root `/AGENTS.md` still applies. This file adds specific guidance for regres
 
 ## Testing mission
 
-Tests in `viru-tracker` must prove real behavior with the smallest reliable check.
+Tests in `viru-air` must prove real behavior with the smallest reliable check.
 
 A good test is:
 

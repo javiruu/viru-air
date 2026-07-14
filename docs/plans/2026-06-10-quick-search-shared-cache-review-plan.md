@@ -320,7 +320,7 @@ print('Indexes:', [i.name for i in QuickSearchCacheEntry.__table__.indexes])
 
 ```bash
 # 1. Tests unitarios de cache
-cd C:\Users\javiru\Desktop\viru-tracker\backend
+cd C:\Users\javiru\Desktop\viru-air\backend
 python -m pytest tests/unit/test_quick_search_cache_models.py tests/unit/test_quick_search_shared_cache.py tests/unit/test_quick_search_execution.py -v
 
 # 2. Tests de regresión e2e

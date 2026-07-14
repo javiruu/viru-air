@@ -7,7 +7,7 @@ Fuente de verdad: docs/qa/visual/color-palette-audit.md
 
 # Auditoria de la paleta de colores y plan de consolidacion
 
-Este documento consolida la paleta visual dual de Viru Tracker para garantizar consistencia entre dark/light bajo una identidad aeronautica calida, con personalidad y claridad operativa.
+Este documento consolida la paleta visual dual de Viru Air para garantizar consistencia entre dark/light bajo una identidad aeronautica calida, con personalidad y claridad operativa.
 
 ## 1) Paleta visual consolidada (dual)
 

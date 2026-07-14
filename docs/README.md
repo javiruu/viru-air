@@ -1,7 +1,7 @@
-﻿# Documentación de Viru Tracker
+﻿# Documentación de Viru Air
 
 **Estado:** vivo  
-**Última revisión:** 2026-07-12
+**Última revisión:** 2026-07-14
 **Fuente de verdad:** sí  
 **Área:** documentación
 

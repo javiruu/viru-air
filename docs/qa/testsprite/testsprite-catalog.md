@@ -5,7 +5,7 @@ Canonical source: docs/qa/testsprite.md
 Related: docs/qa/README.md, docs/archive/qa/README.md
 
 ---
-# Testsprite - Viru Tracker Test Catalog
+# Testsprite - Viru Air Test Catalog
 
 ## Bootstrap para Codex
 
@@ -16,7 +16,7 @@ Esta referencia asume una integracion `repo-first`: la configuracion canonica de
 - Codex CLI instalado y con sesion iniciada.
 - Node.js 22 o superior.
 - `npx` disponible en `PATH`.
-- Acceso local al repo completo de Viru Tracker.
+- Acceso local al repo completo de Viru Air.
 
 ### Comando unico por maquina
 
@@ -71,7 +71,7 @@ Vuelve a ejecutar el bootstrap si:
 
 Fecha: 2026-02-15
 
-Este documento lista todo lo que se puede hacer en Viru Tracker segun los .md y .log del repo, para que Testsprite lo pruebe.
+Este documento lista todo lo que se puede hacer en Viru Air segun los .md y .log del repo, para que Testsprite lo pruebe.
 
 ## Entorno objetivo
 - Frontend: http://localhost:3000

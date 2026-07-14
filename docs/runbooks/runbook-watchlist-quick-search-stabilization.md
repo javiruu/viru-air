@@ -19,7 +19,7 @@ Dejar una secuencia corta y reproducible para:
 ### Backend
 
 ```powershell
-cd C:\Users\javiru\Desktop\viru-tracker\backend
+cd C:\Users\javiru\Desktop\viru-air\backend
 python -m alembic upgrade head
 python -m uvicorn app.main:app --port 8000
 ```
@@ -33,7 +33,7 @@ Suposiciones operativas:
 ### Frontend
 
 ```powershell
-cd C:\Users\javiru\Desktop\viru-tracker\frontend
+cd C:\Users\javiru\Desktop\viru-air\frontend
 npm install
 npm run dev
 ```
@@ -135,7 +135,7 @@ Interpretacion:
 ### Frontend
 
 ```powershell
-cd C:\Users\javiru\Desktop\viru-tracker\frontend
+cd C:\Users\javiru\Desktop\viru-air\frontend
 npm test -- --test-name-pattern="quick-search-screen-state|quick-search-refactor-utils|watchlist runtime guards"
 npm run lint
 ```
@@ -143,7 +143,7 @@ npm run lint
 ### Backend
 
 ```powershell
-cd C:\Users\javiru\Desktop\viru-tracker
+cd C:\Users\javiru\Desktop\viru-air
 python -m pytest backend\tests\unit\test_provider_session_pooling.py backend\tests\integration\test_watchlist_flow.py backend\tests\integration\test_watchlist_refresh_cooldown.py backend\tests\integration\test_quick_search_returns_results.py backend\tests\integration\test_quick_search_realistic_happy_path.py
 ```
 

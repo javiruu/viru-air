@@ -2,12 +2,14 @@
 
 Fecha: 2026-05-11
 
+> Nota de normalizacion (2026-07-14): los identificadores de marca, rutas y remoto se alinearon con Viru Air durante el rebranding global. La evidencia literal original permanece en el commit `23c6daedf7f8ac0bd492bfbe011daf260cac93a6`.
+
 ## Estado detectado
 
-- Repo actual detectado: `C:\Users\javiru\Desktop\viru-tracker\_publish_repo`
-- Raíz real con `.git`: no (`C:\Users\javiru\Desktop\viru-tracker` no es repo Git)
+- Repo actual detectado: `C:\Users\javiru\Desktop\viru-air\_publish_repo`
+- Raíz real con `.git`: no (`C:\Users\javiru\Desktop\viru-air` no es repo Git)
 - `_publish_repo` limpio: sí (sin cambios versionados pendientes)
-- `origin` de `_publish_repo`: `https://github.com/javiruu/viru-tracker.git`
+- `origin` de `_publish_repo`: `https://github.com/javiruu/viru-air.git`
 - Último commit local (`HEAD`): `bac86841d405ffc0dc36d5cef80037aecf91dc56`
 - `origin/main`: `bac86841d405ffc0dc36d5cef80037aecf91dc56`
 - Estado de sincronía: `HEAD == origin/main`
@@ -22,12 +24,12 @@ Fecha: 2026-05-11
 
 Sin abrir contenido:
 
-- `C:\Users\javiru\Desktop\viru-tracker\users_prueba.txt`
-- `C:\Users\javiru\Desktop\viru-tracker\viru.db`
-- `C:\Users\javiru\Desktop\viru-tracker\backend\.env`
-- `C:\Users\javiru\Desktop\viru-tracker\bot_ryanair_referencia_no_tocar\.env`
-- `C:\Users\javiru\Desktop\viru-tracker\bot_ryanair_referencia_no_tocar\token.txt`
-- `C:\Users\javiru\Desktop\viru-tracker\tree_filtrado.txt`
+- `C:\Users\javiru\Desktop\viru-air\users_prueba.txt`
+- `C:\Users\javiru\Desktop\viru-air\viru.db`
+- `C:\Users\javiru\Desktop\viru-air\backend\.env`
+- `C:\Users\javiru\Desktop\viru-air\bot_ryanair_referencia_no_tocar\.env`
+- `C:\Users\javiru\Desktop\viru-air\bot_ryanair_referencia_no_tocar\token.txt`
+- `C:\Users\javiru\Desktop\viru-air\tree_filtrado.txt`
 
 ## Plan exacto de migración
 

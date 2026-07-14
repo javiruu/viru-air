@@ -1,8 +1,8 @@
-# Viru Tracker Project Context
+# Viru Air Project Context
 
 ## Product
 
-- Viru Tracker is a flight-tracking product centered on watchlists, price history, alerts, and quick search.
+- Viru Air is a flight-tracking product centered on watchlists, price history, alerts, and quick search.
 
 ## Stack
 

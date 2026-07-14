@@ -1,4 +1,4 @@
-# Plan de 5 fases para introducir una navbar sticky morph con CSS scroll-state en todo Viru Tracker
+# Plan de 5 fases para introducir una navbar sticky morph con CSS scroll-state en todo Viru Air
 
 **Estado:** activo  
 **Fecha:** 2026-06-10  
@@ -8,7 +8,7 @@
 
 ## Objetivo
 
-Introducir en todo `viru-tracker` una cabecera sticky que cambie de forma al quedar fijada durante el scroll usando `container-type: scroll-state` y `@container ... (stuck: top)`, manteniendo la identidad calida y aeronautica de Viru, evitando dependencias de JS para la animacion principal y sin degradar dark/light, mobile ni accesibilidad.
+Introducir en todo `viru-air` una cabecera sticky que cambie de forma al quedar fijada durante el scroll usando `container-type: scroll-state` y `@container ... (stuck: top)`, manteniendo la identidad calida y aeronautica de Viru, evitando dependencias de JS para la animacion principal y sin degradar dark/light, mobile ni accesibilidad.
 
 ## Decision de enfoque
 

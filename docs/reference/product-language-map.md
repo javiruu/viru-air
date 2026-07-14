@@ -7,7 +7,7 @@
 
 ## Objetivo
 
-Congelar el vocabulario visible de Viru Tracker y su traduccion operativa entre modulo de producto, ruta, API y entidad persistida.
+Congelar el vocabulario visible de Viru Air y su traduccion operativa entre modulo de producto, ruta, API y entidad persistida.
 
 ## Mapa canonico
 

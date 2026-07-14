@@ -1,17 +1,17 @@
 ---
 name: phase1-mvp
-description: Execute and verify Phase 1 MVP closure in Viru Tracker (auth, quick search, watchlist, refresh/history, alerts, preferences) with contract alignment and targeted QA evidence.
+description: Execute and verify Phase 1 MVP closure in Viru Air (auth, quick search, watchlist, refresh/history, alerts, preferences) with contract alignment and targeted QA evidence.
 ---
 
 # Phase 1 MVP
 
 ## When to use
 
-Use this skill when the request is to execute, close, or verify Phase 1 in Viru Tracker.
+Use this skill when the request is to execute, close, or verify Phase 1 in Viru Air.
 
 ## Inputs
 
-1. Repo at canonical root (`viru-tracker`).
+1. Repo at canonical root (`viru-air`).
 2. Canonical docs available in `/docs`.
 
 ## Workflow

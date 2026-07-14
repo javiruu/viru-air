@@ -1,6 +1,6 @@
-# frontend/AGENTS.md — viru-tracker frontend rules
+# frontend/AGENTS.md — viru-air frontend rules
 
-This file defines frontend-specific rules for coding agents working inside the frontend area of `viru-tracker`.
+This file defines frontend-specific rules for coding agents working inside the frontend area of `viru-air`.
 
 The root `/AGENTS.md` still applies. This file adds specific guidance for UI implementation, visual quality, browser verification, frontend/API contracts, and user-visible behavior.
 
@@ -24,7 +24,7 @@ Do not treat frontend work as only “making the code compile”. A frontend cha
 
 ## Product identity in UI
 
-`viru-tracker` is not generic SaaS.
+`viru-air` is not generic SaaS.
 
 Do not flatten the interface into a bland admin dashboard.
 

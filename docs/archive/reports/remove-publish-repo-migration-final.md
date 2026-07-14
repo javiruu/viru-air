@@ -2,18 +2,20 @@
 
 Fecha: 2026-05-11
 
+> Nota de normalizacion (2026-07-14): los identificadores de marca, rutas y remoto se alinearon con Viru Air durante el rebranding global. La evidencia literal original permanece en el commit `23c6daedf7f8ac0bd492bfbe011daf260cac93a6`.
+
 ## Resumen
 
-Se preparó la raíz `C:\Users\javiru\Desktop\viru-tracker` para que sea la única fuente operativa y Git canónica local, dejando `_publish_repo` como artefacto obsoleto e ignorado.  
+Se preparó la raíz `C:\Users\javiru\Desktop\viru-air` para que sea la única fuente operativa y Git canónica local, dejando `_publish_repo` como artefacto obsoleto e ignorado.
 No se borró `_publish_repo` en esta pasada.
 
 ## Qué se hizo con la raíz Git
 
 - Se confirmó que la raíz no tenía `.git` al inicio.
 - Se inicializó Git en raíz (`git init`).
-- Se configuró `origin` a `https://github.com/javiruu/viru-tracker.git`.
+- Se configuró `origin` a `https://github.com/javiruu/viru-air.git`.
 - Se trajo referencia de `main` usando `_publish_repo` solo para migración/verificación local:
-  - `git fetch C:\Users\javiru\Desktop\viru-tracker\_publish_repo main`
+  - `git fetch C:\Users\javiru\Desktop\viru-air\_publish_repo main`
 - Se fijó rama local actual a `main`.
 - Se detectaron diferencias masivas entre árbol local y `main` de referencia; por seguridad no se ejecutó `checkout/reset` destructivo.
 
@@ -106,7 +108,7 @@ En reportes históricos de `docs/reports/` se añadió nota posterior sin reescr
 ## Estado final de Git (raíz)
 
 - Rama: `main`
-- Remote: `origin -> https://github.com/javiruu/viru-tracker.git`
+- Remote: `origin -> https://github.com/javiruu/viru-air.git`
 - Referencia remota local disponible: `origin/main = bac86841d405ffc0dc36d5cef80037aecf91dc56`
 - Working tree: contiene cambios no trackeados (esperable en esta migración; no se publicó en esta pasada).
 

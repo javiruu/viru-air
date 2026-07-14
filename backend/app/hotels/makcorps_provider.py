@@ -50,7 +50,7 @@ def _build_session() -> requests.Session:
     session.headers.update(
         {
             "Accept": "application/json",
-            "User-Agent": "ViruTracker/1.0",
+            "User-Agent": "ViruAir/1.0",
         }
     )
     return session

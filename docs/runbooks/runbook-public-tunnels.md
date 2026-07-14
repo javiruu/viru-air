@@ -7,7 +7,7 @@
 
 ## Resumen
 
-La historia operativa oficial para exponer `viru-tracker` desde un PC local pasa a ser:
+La historia operativa oficial para exponer `viru-air` desde un PC local pasa a ser:
 
 | Camino | Cuando usarlo | URL publica |
 |---|---|---|
@@ -50,9 +50,9 @@ Si ya tienes el tunnel creado en Cloudflare, puedes dejar preparada la config lo
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\cloudflare-tunnel-setup.ps1 `
   -InstallIfMissing `
-  -Domain virutracker.example.com `
+  -Domain viru-air.example.com `
   -TunnelId <tu-tunnel-id-o-nombre> `
-  -Hostname virutracker.example.com `
+  -Hostname viru-air.example.com `
   -CredentialsFile C:\Users\TU_USUARIO\.cloudflared\<tu-tunnel>.json
 ```
 

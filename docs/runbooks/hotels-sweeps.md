@@ -142,7 +142,7 @@ Programar una tarea cron que ejecute el worker `--once` cada hora:
 
 ```bash
 # crontab -e
-0 * * * * cd /ruta/viru-tracker/backend && HOTEL_SWEEP_ENABLED=true python -m app.worker.hotels_sweep --once --provider makcorps >> logs/sweep.log 2>&1
+0 * * * * cd /ruta/viru-air/backend && HOTEL_SWEEP_ENABLED=true python -m app.worker.hotels_sweep --once --provider makcorps >> logs/sweep.log 2>&1
 ```
 
 Ventajas: simple, fiable, no consume recursos entre ejecuciones.
@@ -154,12 +154,12 @@ Crear un servicio systemd que ejecute el worker en `--loop`:
 ```ini
 # /etc/systemd/system/viru-hotel-sweep.service
 [Unit]
-Description=Viru Tracker Hotel Sweep Worker
+Description=Viru Air Hotel Sweep Worker
 After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/ruta/viru-tracker/backend
+WorkingDirectory=/ruta/viru-air/backend
 Environment="HOTEL_SWEEP_ENABLED=true"
 Environment="HOTEL_PROVIDER=makcorps"
 Environment="MAKCORPS_API_KEY=..."

@@ -1,7 +1,9 @@
 # Root Git Canonicalization Final
 
 Fecha: 2026-05-11  
-Repo raíz: `C:\Users\javiru\Desktop\viru-tracker`
+Repo raíz: `C:\Users\javiru\Desktop\viru-air`
+
+> Nota de normalizacion (2026-07-14): los identificadores de marca, rutas y remoto se alinearon con Viru Air durante el rebranding global. La evidencia literal original permanece en el commit `23c6daedf7f8ac0bd492bfbe011daf260cac93a6`.
 
 ## Resumen
 
@@ -42,7 +44,7 @@ Se completó la canonización operativa de la raíz como único repo Git de trab
 
 ## Estado y criterio final
 
-- `C:\Users\javiru\Desktop\viru-tracker` es el repo Git operativo para commits futuros.
+- `C:\Users\javiru\Desktop\viru-air` es el repo Git operativo para commits futuros.
 - `_publish_repo` ya no debe usarse para commit/push.
 - `_publish_repo` no se borró en esta pasada; puede eliminarse manualmente.
 - `users_prueba.txt` se conserva por decisión del usuario.

@@ -22,7 +22,7 @@
 
 Hoy `quick-search` ya reutiliza parcialmente resultados, pero solo con una cache en memoria, de TTL corto y sin persistencia:
 
-- la cache actual vive en [backend/app/services/quick_search_execution.py](C:/Users/javiru/Desktop/viru-tracker/backend/app/services/quick_search_execution.py)
+- la cache actual vive en [backend/app/services/quick_search_execution.py](C:/Users/javiru/Desktop/viru-air/backend/app/services/quick_search_execution.py)
 - usa una clave minima `(origin_iata, destination_iata, travel_date)`
 - tiene TTL de `300s`
 - no sobrevive reinicios
@@ -451,7 +451,7 @@ El trabajo se considera realmente terminado cuando:
 ## Comandos de verificacion esperados durante la implementacion
 
 ```powershell
-cd C:\Users\javiru\Desktop\viru-tracker\backend
+cd C:\Users\javiru\Desktop\viru-air\backend
 pytest tests/unit/test_quick_search_execution.py -v
 pytest tests/unit/test_quick_search_e2e_regression.py -v
 pytest tests/integration/test_quick_search_provider_degradation.py -v
@@ -460,7 +460,7 @@ pytest tests/integration/test_watchlist_flow.py -v
 ```
 
 ```powershell
-cd C:\Users\javiru\Desktop\viru-tracker\backend
+cd C:\Users\javiru\Desktop\viru-air\backend
 python -m alembic upgrade head
 ```
 

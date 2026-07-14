@@ -16,7 +16,7 @@ class ScraperCircuitOpen(RuntimeError):
 class ScraperProviderBase(DoorToDoorProvider):
     source_type = "scraper"
     feature_flag: str = ""
-    user_agent = "ViruTrackerDoorToDoorBot/0.1 (+https://viru.app; contact: soporte@viru.app)"
+    user_agent = "ViruAirDoorToDoorBot/0.1 (+https://viru.app; contact: soporte@viru.app)"
     rate_limit_per_minute = 6
     timeout_seconds = 8.0
     max_failures_before_open = 3

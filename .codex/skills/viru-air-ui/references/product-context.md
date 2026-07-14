@@ -1,6 +1,6 @@
-# Product Context — Viru Tracker UI
+# Product Context — Viru Air UI
 
-- Producto: Viru Tracker, herramienta de seguimiento de oportunidades de vuelos para usuarios sensibles a precio.
+- Producto: Viru Air, herramienta de seguimiento de oportunidades de vuelos para usuarios sensibles a precio.
 - Objetivo UX: claridad operativa, confianza y rapidez para decidir.
 - Rutas clave: dashboard, quick-search, watchlist, alerts, login/register.
 - Audiencia principal: viajeros con presupuesto, perfiles no tecnicos y uso frecuente.

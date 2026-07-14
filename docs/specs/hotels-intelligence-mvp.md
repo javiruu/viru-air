@@ -9,7 +9,7 @@ Related: docs/overview/project-overview.md, docs/reference/backend/provider-inte
 
 ## 1. Contexto del producto actual
 
-Viru Tracker es una plataforma centrada en seguimiento de vuelos (watchlists, historico de precios, alertas y quick search) con backend FastAPI + SQLAlchemy + Alembic y frontend Next.js/TypeScript.
+Viru Air es una plataforma centrada en seguimiento de vuelos (watchlists, historico de precios, alertas y quick search) con backend FastAPI + SQLAlchemy + Alembic y frontend Next.js/TypeScript.
 
 Esta especificacion define una nueva vertical incremental de inteligencia hotelera sin alterar el core funcional de vuelos ni sus rutas actuales.
 

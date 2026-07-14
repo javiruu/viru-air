@@ -1,4 +1,4 @@
-# docs/AGENTS.md — viru-tracker documentation rules
+# docs/AGENTS.md — viru-air documentation rules
 
 This file defines documentation-specific rules for coding agents working inside `/docs`.
 
@@ -8,7 +8,7 @@ The root `/AGENTS.md` still applies. This file adds specific guidance for canoni
 
 ## Documentation mission
 
-Documentation work must make `viru-tracker` easier to understand, maintain, verify, and continue.
+Documentation work must make `viru-air` easier to understand, maintain, verify, and continue.
 
 A good documentation change is:
 

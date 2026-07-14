@@ -245,7 +245,7 @@ export default function ViruFooterBlock({ variant = "default" }: ViruFooterBlock
             </span>
             <div className="viru-footer-brand-copy">
               <span className="viru-footer-kicker">{t("shared.footer.kicker")}</span>
-              <h2>Viru Tracker</h2>
+              <h2>Viru Air</h2>
               <p>
                 {isPrivateContext ? t("shared.footer.privateBody") : t("shared.footer.publicBody")}
               </p>

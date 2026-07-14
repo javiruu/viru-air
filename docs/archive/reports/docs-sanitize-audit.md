@@ -5,6 +5,8 @@
 **Fuente de verdad:** no  
 **Área:** documentación
 
+> Nota de normalización (2026-07-14): los identificadores de marca, rutas y remoto se alinearon con Viru Air durante el rebranding global. La evidencia literal original permanece en el commit `23c6daedf7f8ac0bd492bfbe011daf260cac93a6`.
+
 ## Resumen ejecutivo
 
 El repositorio ya tiene una primera consolidación documental en `docs/`, pero sigue conviviendo con:
@@ -19,16 +21,16 @@ El repositorio ya tiene una primera consolidación documental en `docs/`, pero s
 
 Hallazgo operativo relevante:
 
-- `C:\Users\javiru\Desktop\viru-tracker` no está inicializado como repo Git.
-- El repo versionado real para publicación está en `C:\Users\javiru\Desktop\viru-tracker\_publish_repo`.
+- `C:\Users\javiru\Desktop\viru-air` no está inicializado como repo Git.
+- El repo versionado real para publicación está en `C:\Users\javiru\Desktop\viru-air\_publish_repo`.
 - La rama de trabajo requerida se ha creado en `_publish_repo`: `docs/sanitize-documentation`.
 
 ## Comandos ejecutados
 
 ```powershell
-git -C "C:\Users\javiru\Desktop\viru-tracker\_publish_repo" status --short
-git -C "C:\Users\javiru\Desktop\viru-tracker\_publish_repo" branch --show-current
-git -C "C:\Users\javiru\Desktop\viru-tracker\_publish_repo" checkout -b docs/sanitize-documentation
+git -C "C:\Users\javiru\Desktop\viru-air\_publish_repo" status --short
+git -C "C:\Users\javiru\Desktop\viru-air\_publish_repo" branch --show-current
+git -C "C:\Users\javiru\Desktop\viru-air\_publish_repo" checkout -b docs/sanitize-documentation
 
 Get-ChildItem -Force
 Get-ChildItem -Force .. 
@@ -74,7 +76,7 @@ Zonas activas detectadas:
 - `docs/archive/`: histórico ya parcialmente ordenado;
 - `backend/docs/`: duplicados funcionales respecto a `docs/reference/backend/`;
 - `fases/_extraido_txt/`: histórico/transcripciones;
-- `skills/viru-tracker-context/`: contexto IA útil;
+- `skills/viru-air-context/`: contexto IA útil;
 - `skills/remodex/`: documentación externa/ajena al producto, no fuente de verdad de Viru.
 
 ## Conteo de documentos
