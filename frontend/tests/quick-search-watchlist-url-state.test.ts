@@ -321,13 +321,15 @@ test("buildWatchlistViewSearchParams returns empty for all defaults", () => {
 
 test("readQuickSearchUrlState reads all params", () => {
   const sp = new URLSearchParams(
-    "?origin=MAD&destination=DUB&travelDate=2026-07-15&returnDate=2026-07-22" +
+    "?origin=MAD&destination=DUB&origins=FCO,BCN&destinations=AMS,LGW&travelDate=2026-07-15&returnDate=2026-07-22" +
     "&isReturn=1&adults=2&flexB=1&flexA=2&radius=250&strict=0"
   );
   const state = readQuickSearchUrlState(sp);
   assert.deepEqual(state, {
     origin: "MAD",
     destination: "DUB",
+    additionalOrigins: ["FCO", "BCN"],
+    additionalDestinations: ["AMS", "LGW"],
     travelDate: "2026-07-15",
     returnDate: "2026-07-22",
     isReturn: true,
@@ -344,6 +346,8 @@ test("readQuickSearchUrlState returns defaults for missing params", () => {
   const state = readQuickSearchUrlState(sp);
   assert.equal(state.origin, "");
   assert.equal(state.destination, "");
+  assert.deepEqual(state.additionalOrigins, []);
+  assert.deepEqual(state.additionalDestinations, []);
   assert.equal(state.travelDate, "");
   assert.equal(state.returnDate, "");
   assert.equal(state.isReturn, false);
@@ -374,6 +378,8 @@ test("buildQuickSearchSearchParams includes non-default params", () => {
   const qs = buildQuickSearchSearchParams({
     origin: "MAD",
     destination: "DUB",
+    additionalOrigins: ["FCO", "MAD", "xx", "BCN"],
+    additionalDestinations: ["AMS", "LGW"],
     travelDate: "2026-07-15",
     returnDate: "2026-07-22",
     isReturn: true,
@@ -385,6 +391,8 @@ test("buildQuickSearchSearchParams includes non-default params", () => {
   });
   assert(qs.includes("origin=MAD"));
   assert(qs.includes("destination=DUB"));
+  assert(qs.includes("origins=FCO%2CBCN"));
+  assert(qs.includes("destinations=AMS%2CLGW"));
   assert(qs.includes("travelDate=2026-07-15"));
   assert(qs.includes("returnDate=2026-07-22"));
   assert(qs.includes("isReturn=1"));
@@ -425,6 +433,8 @@ test("QuickSearch URL round-trip: state → build → read preserves values", ()
   const input = {
     origin: "MAD",
     destination: "DUB",
+    additionalOrigins: ["FCO", "BCN"],
+    additionalDestinations: ["AMS", "LGW"],
     travelDate: "2026-07-15",
     returnDate: "2026-07-22",
     isReturn: true,
@@ -440,6 +450,8 @@ test("QuickSearch URL round-trip: state → build → read preserves values", ()
 
   assert.equal(output.origin, input.origin);
   assert.equal(output.destination, input.destination);
+  assert.deepEqual(output.additionalOrigins, input.additionalOrigins);
+  assert.deepEqual(output.additionalDestinations, input.additionalDestinations);
   assert.equal(output.travelDate, input.travelDate);
   assert.equal(output.returnDate, input.returnDate);
   assert.equal(output.isReturn, input.isReturn);

@@ -169,10 +169,10 @@ test("Phase 15: isDualMode excludes originCountryOnly and destinationCountryOnly
   assert.match(source, /!originCountryOnly\s*&&\s*!destinationCountryOnly/, "isDualMode must exclude country-only");
 });
 
-test("Phase 15: dual submit inverts IATA for return leg", () => {
+test("Phase 15: dual submit inverts route scopes for return leg", () => {
   const source = readSource();
-  assert.match(source, /origin:\s*destination,/, "return leg must use destination as origin");
-  assert.match(source, /destination:\s*origin,/, "return leg must use origin as destination");
+  assert.match(source, /origin:\s*destinationRequestValue,/, "return leg must use destination scope as origin");
+  assert.match(source, /destination:\s*originRequestValue,/, "return leg must use origin scope as destination");
 });
 
 test("Phase 15: dual mode cleanup resets both sides", () => {

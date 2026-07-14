@@ -7635,6 +7635,7 @@ textarea::placeholder {
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   gap: 1rem;
   align-items: center;
+  min-width: 0;
 }
 
 .qs-route-card {
@@ -7647,6 +7648,7 @@ textarea::placeholder {
   background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: 0 12px 24px var(--shadow);
+  min-width: 0;
 }
 
 .qs-route-line {
@@ -7757,6 +7759,112 @@ textarea::placeholder {
 
 .qs-route-card .qs-input-wrap {
   min-height: 44px;
+}
+
+.qs-additional-airports {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.qs-additional-airport {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  gap: 0.45rem;
+  align-items: start;
+  animation: qsAdditionalAirportIn 0.18s ease both;
+}
+
+.qs-additional-airport .qs-input-wrap,
+.qs-additional-airport .qs-input {
+  min-width: 0;
+  width: 100%;
+}
+
+.qs-additional-airport > .qs-error {
+  grid-column: 1 / -1;
+  margin-top: -0.2rem;
+}
+
+.qs-additional-airport__remove {
+  width: 44px;
+  height: 44px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--qs-input-border) 72%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-2) 74%, transparent);
+  color: var(--qs-text-secondary);
+  cursor: pointer;
+  transition: color 0.16s ease, border-color 0.16s ease, background-color 0.16s ease, transform 0.16s ease;
+}
+
+.qs-additional-airport__remove svg,
+.qs-additional-airports__add svg {
+  width: 17px;
+  height: 17px;
+}
+
+.qs-additional-airport__remove:hover {
+  color: var(--ink);
+  border-color: var(--qs-input-border-strong);
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface-2));
+}
+
+.qs-additional-airport__remove:active,
+.qs-additional-airports__add:active {
+  transform: scale(0.98);
+}
+
+.qs-additional-airport__remove:focus-visible,
+.qs-additional-airports__add:focus-visible {
+  outline: none;
+  box-shadow: var(--qs-focus-ring);
+}
+
+.qs-additional-airports__add {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem 0.65rem 0.9rem;
+  border: 1px dashed color-mix(in srgb, var(--qs-input-border) 66%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-2) 52%, transparent);
+  color: color-mix(in srgb, var(--qs-text-secondary) 88%, var(--ink));
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.16s ease, border-color 0.16s ease, background-color 0.16s ease, transform 0.16s ease;
+}
+
+.qs-additional-airports__add svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.qs-additional-airports__add:hover {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--qs-input-border));
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-2));
+}
+
+@keyframes qsAdditionalAirportIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qs-additional-airport {
+    animation: none;
+  }
 }
 
 .qs-input {

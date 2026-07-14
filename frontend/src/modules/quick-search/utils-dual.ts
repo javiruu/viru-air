@@ -4,8 +4,8 @@ import type { QuickSearchSideParams } from "./state/useQuickSearchSide";
 // ── Types ────────────────────────────────────────────────────────────
 
 export type DualSearchParamsInput = {
-  origin: string;
-  destination: string;
+  origin: string | string[];
+  destination: string | string[];
   travelDate: string;
   flexDaysBefore: number;
   flexDaysAfter: number;

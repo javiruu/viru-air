@@ -67,6 +67,33 @@ export function getOfficialRyanairFlightDeepLink(value: string | null | undefine
   }
 }
 
+export function getOfficialRyanairRouteDeepLink(
+  value: string | null | undefined,
+  origin: string,
+  destination: string,
+  dateOut: string,
+): string {
+  const normalized = getOfficialRyanairFlightDeepLink(value);
+  if (!normalized || !origin || !destination || !dateOut) return "";
+  const parsed = new URL(normalized);
+  const routeParams: Record<string, string> = {
+    originIata: origin.toUpperCase(),
+    destinationIata: destination.toUpperCase(),
+    dateOut,
+    originMac: "",
+    destinationMac: "",
+    tpOriginIata: origin.toUpperCase(),
+    tpDestinationIata: destination.toUpperCase(),
+    tpStartDate: dateOut,
+    tpOriginMac: "",
+    tpDestinationMac: "",
+  };
+  for (const [key, routeValue] of Object.entries(routeParams)) {
+    parsed.searchParams.set(key, routeValue);
+  }
+  return parsed.toString();
+}
+
 export function isOfficialWizzAirDeepLink(value: string | null | undefined): boolean {
   if (!value) return false;
   try {
