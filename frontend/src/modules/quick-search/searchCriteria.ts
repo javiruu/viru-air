@@ -23,6 +23,8 @@ export function parseNumericInput(raw: string, options: NumericParseOptions = {}
 export type CriteriaSignatureInput = {
   origin: string;
   destination: string;
+  additionalOrigins?: readonly string[];
+  additionalDestinations?: readonly string[];
   originCountryCode: string | null;
   destinationCountryCode: string | null;
   travelDate: string;
@@ -79,10 +81,21 @@ export function buildCriteriaSignature(input: CriteriaSignatureInput): string {
   const normalizedExcludeDestinations = mergeIataTokens(input.excludeDestinations, input.excludeDestinationInput);
   return JSON.stringify({
     ...input,
+    additionalOrigins: input.additionalOrigins?.map((value) => value.trim().toUpperCase()),
+    additionalDestinations: input.additionalDestinations?.map((value) => value.trim().toUpperCase()),
     excludeOrigins: normalizedExcludeOrigins,
     excludeDestinations: normalizedExcludeDestinations,
     // The exclusion textboxes are transient draft UI; compare the applied semantic state.
     excludeOriginInput: "",
     excludeDestinationInput: "",
   });
+}
+
+export function buildAppliedCriteriaSignature(
+  currentSignature: string,
+  additionalOrigins: readonly string[],
+  additionalDestinations: readonly string[],
+): string {
+  const current = JSON.parse(currentSignature) as Record<string, unknown>;
+  return JSON.stringify({ ...current, additionalOrigins, additionalDestinations });
 }

@@ -1,7 +1,12 @@
 import React, { memo } from "react";
 
 import type { SearchResult } from "@/modules/quick-search/types";
-import { getOfficialRyanairFlightDeepLink, isGenericHttpLink, isOfficialWizzAirDeepLink } from "@/modules/quick-search/api/quickSearchDeepLinks";
+import {
+  getOfficialRyanairFlightDeepLink,
+  getOfficialRyanairRouteDeepLink,
+  isGenericHttpLink,
+  isOfficialWizzAirDeepLink,
+} from "@/modules/quick-search/api/quickSearchDeepLinks";
 import { QuickSearchProviderBadge } from "@/modules/quick-search/components/QuickSearchProviderBadge";
 import { resolveQuickSearchProviderPresentation } from "@/modules/quick-search/providerPresentation";
 import { getAirportMeta } from "@/modules/shared/airports";
@@ -106,7 +111,12 @@ function QuickSearchResultsListInner(props: Props) {
             const rowId = props.resultKey(r, idx);
             const provider = resolveQuickSearchProviderPresentation(r.source, props.t("sourceUnknown"));
             const ryanairResultLink = getOfficialRyanairFlightDeepLink(r.deeplink_url);
-            const ryanairFallbackLink = getOfficialRyanairFlightDeepLink(props.deeplinkUrl);
+            const ryanairFallbackLink = getOfficialRyanairRouteDeepLink(
+              props.deeplinkUrl,
+              r.origin,
+              r.destination,
+              r.travel_date,
+            );
             const rowLink = provider.id === "ryanair"
               ? (ryanairResultLink || ryanairFallbackLink)
               : provider.id === "wizzair"

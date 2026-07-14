@@ -16,7 +16,11 @@ import { trackUxEvent } from "@/lib/uxTracking";
 import { trackEvent } from "@/modules/shared/analytics";
 import { formatCurrency, formatNumber } from "@/modules/shared/format";
 import { buildDateRange } from "@/modules/quick-search/utils";
-import { buildCriteriaSignature, parseNumericInput } from "@/modules/quick-search/searchCriteria";
+import {
+  buildAppliedCriteriaSignature,
+  buildCriteriaSignature,
+  parseNumericInput,
+} from "@/modules/quick-search/searchCriteria";
 import {
   QUICK_SEARCH_PROVIDER_ERROR_WARNING_CODES,
   QUICK_SEARCH_PROVIDER_PARTIAL_INLINE_WARNING_CODES,
@@ -92,6 +96,7 @@ import {
   type QuickSearchCanonicalPayload,
 } from "@/modules/quick-search/api/buildQuickSearchRequest";
 import { buildQuickSearchSaveResultPayload } from "@/modules/quick-search/api/buildSaveResultPayload";
+import { getOfficialRyanairRouteDeepLink } from "@/modules/quick-search/api/quickSearchDeepLinks";
 import {
   buildQuickSearchExportPagePayload,
   buildQuickSearchExportPayload,
@@ -102,6 +107,11 @@ import { QuickSearchResultsWorkspace } from "@/modules/quick-search/components/Q
 import { QuickSearchSummaryChips, type QuickSearchSummaryChip } from "@/modules/quick-search/components/QuickSearchSummaryChips";
 import { QuickSearchAdvancedDrawer } from "@/modules/quick-search/components/QuickSearchAdvancedDrawer";
 import { QuickSearchNearbyBand } from "@/modules/quick-search/components/QuickSearchNearbyBand";
+import { QuickSearchAdditionalAirports } from "@/modules/quick-search/components/QuickSearchAdditionalAirports";
+import {
+  buildRouteSeedList,
+  type QuickSearchAdditionalAirport,
+} from "@/modules/quick-search/multiple-airports";
 
 import {
   AirportIataEntry,
@@ -372,6 +382,14 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const [seedCountries, setSeedCountries] = useState<QuickSearchCountrySeed[]>([]);
   const [originSuggestions, setOriginSuggestions] = useState<Array<{ iata: string; name: string }>>([]);
   const [destinationSuggestions, setDestinationSuggestions] = useState<Array<{ iata: string; name: string }>>([]);
+  const [additionalOrigins, setAdditionalOrigins] = useState<QuickSearchAdditionalAirport[]>([]);
+  const [additionalDestinations, setAdditionalDestinations] = useState<QuickSearchAdditionalAirport[]>([]);
+  const [additionalFocusEntryId, setAdditionalFocusEntryId] = useState<string | null>(null);
+  const [additionalPickerTarget, setAdditionalPickerTarget] = useState<{
+    readonly side: "origin" | "destination";
+    readonly id: string;
+  } | null>(null);
+  const additionalAirportIdRef = useRef(0);
   const [countryAirports, setCountryAirports] = useState<AirportIataEntry[]>([]);
   const [executedCriteria, setExecutedCriteria] = useState<ExecutedCriteriaSnapshot | null>(null);
   const [loaderPlannedTotalFlights, setLoaderPlannedTotalFlights] = useState(0);
@@ -612,6 +630,38 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     debugEpochRef,
     debugLastTickLogTsRef,
   } = useQuickSearchMainState(initialOrigin, initialDestination);
+  const addAdditionalAirport = useCallback((side: "origin" | "destination") => {
+    additionalAirportIdRef.current += 1;
+    const nextEntry: QuickSearchAdditionalAirport = {
+      id: `${side}-${additionalAirportIdRef.current}`,
+      value: "",
+    };
+    setAdditionalFocusEntryId(nextEntry.id);
+    if (side === "origin") {
+      setAdditionalOrigins((current) => [...current, nextEntry]);
+    } else {
+      setAdditionalDestinations((current) => [...current, nextEntry]);
+    }
+  }, []);
+  const updateAdditionalAirport = useCallback((side: "origin" | "destination", id: string, value: string) => {
+    const updateEntries = (current: QuickSearchAdditionalAirport[]) => current.map((entry) => (
+      entry.id === id ? { ...entry, value } : entry
+    ));
+    if (side === "origin") {
+      setAdditionalOrigins(updateEntries);
+    } else {
+      setAdditionalDestinations(updateEntries);
+    }
+  }, []);
+  const removeAdditionalAirport = useCallback((side: "origin" | "destination", id: string) => {
+    const removeEntry = (current: QuickSearchAdditionalAirport[]) => current.filter((entry) => entry.id !== id);
+    if (side === "origin") {
+      setAdditionalOrigins(removeEntry);
+    } else {
+      setAdditionalDestinations(removeEntry);
+    }
+    setAdditionalFocusEntryId((current) => current === id ? null : current);
+  }, []);
   const searchSubmitInFlightRef = useRef(false);
   const lastQuickSearchPayloadRef = useRef<QuickSearchCanonicalPayload | null>(null);
   const normalizedRadiusKm = clampQuickSearchRadius(radiusKm);
@@ -664,6 +714,18 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     const state = readQuickSearchUrlState(searchParams);
     if (state.origin) setOrigin(state.origin);
     if (state.destination) setDestination(state.destination);
+    if (state.additionalOrigins.length > 0) {
+      setAdditionalOrigins(state.additionalOrigins.map((value) => ({
+        id: `origin-${++additionalAirportIdRef.current}`,
+        value,
+      })));
+    }
+    if (state.additionalDestinations.length > 0) {
+      setAdditionalDestinations(state.additionalDestinations.map((value) => ({
+        id: `destination-${++additionalAirportIdRef.current}`,
+        value,
+      })));
+    }
     if (state.travelDate) setTravelDate(state.travelDate);
     if (state.returnDate) setReturnDate(state.returnDate);
     if (state.isReturn) setIsReturn(true);
@@ -686,6 +748,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       const qs = buildQuickSearchSearchParams({
         origin,
         destination,
+        additionalOrigins: additionalOrigins.map((entry) => entry.value),
+        additionalDestinations: additionalDestinations.map((entry) => entry.value),
         travelDate,
         returnDate,
         isReturn,
@@ -703,13 +767,17 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     return () => {
       if (qsUrlTimeoutRef.current) clearTimeout(qsUrlTimeoutRef.current);
     };
-  }, [origin, destination, travelDate, returnDate, isReturn, adults, daysBefore, daysAfter, radiusKm, strictFilters, router]);
+  }, [origin, destination, additionalOrigins, additionalDestinations, travelDate, returnDate, isReturn, adults, daysBefore, daysAfter, radiusKm, strictFilters, router]);
 
   // ── Dual-mode hooks (Fase 6) ───────────────────────────────────────
   const outboundSide = useQuickSearchSide("outbound");
   const returnSide = useQuickSearchSide("return");
   const saveCombination = useSaveCombination();
   const pendingCombinationResultsRef = useRef<{ outbound: SearchResult; return: SearchResult } | null>(null);
+  const submittedRouteSeedsRef = useRef<{ readonly origin: string[]; readonly destination: string[] }>({
+    origin: [],
+    destination: [],
+  });
   const defaultSideViewState = useMemo<QuickSearchVisibleFiltersState>(() => ({
     priceMin: "",
     priceMax: "",
@@ -766,12 +834,14 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       // Compute side-specific origin/destination/date (return leg is inverted)
       const sideOrigin = side === "outbound" ? origin : destination;
       const sideDest = side === "outbound" ? destination : origin;
+      const sideOriginSeeds = side === "outbound" ? submittedRouteSeedsRef.current.origin : submittedRouteSeedsRef.current.destination;
+      const sideDestinationSeeds = side === "outbound" ? submittedRouteSeedsRef.current.destination : submittedRouteSeedsRef.current.origin;
       const sideDate = side === "outbound" ? travelDate : returnDate;
       const targetSide = side === "outbound" ? outboundSide : returnSide;
 
       const sideParams = buildDualSearchParams({
-        origin: sideOrigin,
-        destination: sideDest,
+        origin: sideOriginSeeds.length > 0 ? sideOriginSeeds : sideOrigin,
+        destination: sideDestinationSeeds.length > 0 ? sideDestinationSeeds : sideDest,
         travelDate: sideDate,
         flexDaysBefore: action === "open_date_flex" ? 2 : daysBefore,
         flexDaysAfter: action === "open_date_flex" ? 2 : daysAfter,
@@ -1976,6 +2046,34 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       releaseSearchSubmit();
       return;
     }
+    const optionalOriginCodes = additionalOrigins.map((entry) => entry.value.trim().toUpperCase()).filter(Boolean);
+    const optionalDestinationCodes = additionalDestinations.map((entry) => entry.value.trim().toUpperCase()).filter(Boolean);
+    const optionalCodes = Array.from(new Set([...optionalOriginCodes, ...optionalDestinationCodes]));
+    const optionalValidity = await Promise.all(optionalCodes.map(async (code) => [code, await ensureSeedCode(code)] as const));
+    const knownAirportsForSubmit = new Set(airportsByIata.keys());
+    for (const [code, isValid] of optionalValidity) {
+      if (isValid) knownAirportsForSubmit.add(code);
+    }
+    const originSeeds = buildRouteSeedList(
+      originCountryOnly ? originCountryOnly.airports.map((item) => item.iata) : originCode,
+      optionalOriginCodes,
+      knownAirportsForSubmit,
+    );
+    const destinationSeeds = buildRouteSeedList(
+      destinationCountryOnly ? destinationCountryOnly.airports.map((item) => item.iata) : destinationCode,
+      optionalDestinationCodes,
+      knownAirportsForSubmit,
+    );
+    const validOptionalOriginCodes = Array.from(new Set(optionalOriginCodes.filter((code) => knownAirportsForSubmit.has(code))));
+    const validOptionalDestinationCodes = Array.from(new Set(optionalDestinationCodes.filter((code) => knownAirportsForSubmit.has(code))));
+    const appliedCriteriaSignature = buildAppliedCriteriaSignature(
+      currentCriteriaSignature,
+      validOptionalOriginCodes,
+      validOptionalDestinationCodes,
+    );
+    const originRequestValue = originSeeds.length === 1 ? originSeeds[0] ?? "" : originSeeds;
+    const destinationRequestValue = destinationSeeds.length === 1 ? destinationSeeds[0] ?? "" : destinationSeeds;
+    submittedRouteSeedsRef.current = { origin: originSeeds, destination: destinationSeeds };
     if (isReturn && !returnDate) {
       setSearchState("error");
       setReturnDateTouched(true);
@@ -2000,7 +2098,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
     // ── Dual-mode: dispatch two independent searches in parallel (Fase 6) ──
     if (isDualMode) {
-      setAppliedCriteriaSignature(currentCriteriaSignature);
+      setAppliedCriteriaSignature(appliedCriteriaSignature);
       setHasSearched(true);
 
       const dNextExcludeOrigins = [...excludeOrigins];
@@ -2011,8 +2109,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       if (excludeDestinationInput) setExcludeDestinationInput("");
 
       const dualBaseParams = buildDualSearchParams({
-        origin,
-        destination,
+        origin: originRequestValue,
+        destination: destinationRequestValue,
         travelDate,
         flexDaysBefore: daysBefore,
         flexDaysAfter: daysAfter,
@@ -2032,8 +2130,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         outboundSide.runSearch(dualBaseParams),
         returnSide.runSearch(
           buildDualSearchParams({
-            origin: destination,
-            destination: origin,
+            origin: destinationRequestValue,
+            destination: originRequestValue,
             travelDate: returnDate,
             flexDaysBefore: daysBefore,
             flexDaysAfter: daysAfter,
@@ -2054,7 +2152,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       return;
     }
 
-    setAppliedCriteriaSignature(currentCriteriaSignature);
+    setAppliedCriteriaSignature(appliedCriteriaSignature);
     if (!isPageChange) {
       setWeatherMessage("");
       setWeatherOrigin(null);
@@ -2088,8 +2186,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setExcludeDestinations(nextExcludeDestinations);
     const range = buildDateRange(travelDate, isReturn ? returnDate : travelDate);
     const payload = {
-      origin_iata: originCountryOnly ? originCountryOnly.airports.map((item) => item.iata) : originCode,
-      destination_iata: destinationCountryOnly ? destinationCountryOnly.airports.map((item) => item.iata) : destinationCode,
+      origin_iata: originRequestValue,
+      destination_iata: destinationRequestValue,
       travel_date: travelDate,
       date: travelDate,
       flex_days_before: daysBefore,
@@ -2122,13 +2220,15 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setLoaderScopeDates(datesScopeCount);
     setLoaderPlannedTotalFlights(plannedTotalFlights);
     const nextExecutedCriteria: ExecutedCriteriaSnapshot = {
-      route: `${originCountryOnly ? originCountryOnly.name : origin} â†’ ${destinationCountryOnly ? destinationCountryOnly.name : destination}`,
+      route: `${originCountryOnly ? originCountryOnly.name : originSeeds.join(", ")}${originCountryOnly && validOptionalOriginCodes.length > 0 ? ` + ${validOptionalOriginCodes.join(", ")}` : ""} â†’ ${destinationCountryOnly ? destinationCountryOnly.name : destinationSeeds.join(", ")}${destinationCountryOnly && validOptionalDestinationCodes.length > 0 ? ` + ${validOptionalDestinationCodes.join(", ")}` : ""}`,
       dateLabel: isReturn && returnDate ? `${travelDate} â†’ ${returnDate}` : travelDate,
       paxLabel: `${adults} ${adults === 1 ? t("summaryPassengersSingular") : t("summaryPassengersPlural")}`,
     };
     trackEvent("quicksearch_search_submitted", {
       has_origin_country_scope: Boolean(originCountryOnly),
       has_destination_country_scope: Boolean(destinationCountryOnly),
+      origin_count: originSeeds.length,
+      destination_count: destinationSeeds.length,
       include_stops: includeStops,
       strict_filters: strictFilters,
       radius_km: normalizedRadiusKm,
@@ -2442,9 +2542,15 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   }
 
   async function saveQuickSearchResult(result: SearchResult, fallbackDeepLinkUrl?: string | null) {
+    const routeFallback = getOfficialRyanairRouteDeepLink(
+      fallbackDeepLinkUrl,
+      result.origin,
+      result.destination,
+      result.travel_date,
+    ) || fallbackDeepLinkUrl;
     return apiFetch<{ watch_id?: string; created_or_existing?: string }>("/search/save-result", {
       method: "POST",
-      body: JSON.stringify(buildQuickSearchSaveResultPayload(result, { jobId, fallbackDeepLinkUrl })),
+      body: JSON.stringify(buildQuickSearchSaveResultPayload(result, { jobId, fallbackDeepLinkUrl: routeFallback })),
     });
   }
 
@@ -2582,8 +2688,15 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setActivePicker(which);
   }
 
+  function openAdditionalPicker(side: "origin" | "destination", id: string, trigger: HTMLButtonElement) {
+    lastPickerTriggerRef.current = trigger;
+    setAdditionalPickerTarget({ side, id });
+    openPicker(side);
+  }
+
   const closePickerWithFocusReturn = useCallback(() => {
     setActivePicker(null);
+    setAdditionalPickerTarget(null);
     if (typeof window !== "undefined") {
       window.requestAnimationFrame(() => {
         lastPickerTriggerRef.current?.focus();
@@ -2592,6 +2705,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   }, [lastPickerTriggerRef, setActivePicker]);
 
   function clearSelection() {
+    if (additionalPickerTarget) {
+      updateAdditionalAirport(additionalPickerTarget.side, additionalPickerTarget.id, "");
+      return;
+    }
     if (activePicker === "origin") {
       setOrigin("");
       setOriginCountryOnly(null);
@@ -2650,7 +2767,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setAirportSelectionTouched(true);
     const entry = airportsByIata.get(iata.trim().toUpperCase());
     const countryCode = entry ? entry.country_code : null;
-    if (activePicker === "origin") {
+    if (additionalPickerTarget) {
+      updateAdditionalAirport(additionalPickerTarget.side, additionalPickerTarget.id, iata);
+    } else if (activePicker === "origin") {
       setOrigin(iata);
       setOriginCountryOnly(null);
       setOriginSelectedCountryCode(countryCode);
@@ -2664,7 +2783,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   }
 
   const selectCountryOnly = useCallback(async (country: CountryAirports | null) => {
-    if (!country) return;
+    if (!country || additionalPickerTarget) return;
     const airports = await loadCountryAirports(country.code);
     const completeCountry: CountryAirports = { ...country, airports };
     if (activePicker === "origin") {
@@ -2680,6 +2799,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     closePickerWithFocusReturn();
   }, [
     activePicker,
+    additionalPickerTarget,
     loadCountryAirports,
     setDestination,
     setDestinationCountryOnly,
@@ -2691,13 +2811,14 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   ]);
 
   const closePicker = useCallback(() => {
-    if (activePicker && countrySelectionTouched && !airportSelectionTouched && selectedCountry) {
+    if (activePicker && !additionalPickerTarget && countrySelectionTouched && !airportSelectionTouched && selectedCountry) {
       void selectCountryOnly(selectedCountry);
       return;
     }
     closePickerWithFocusReturn();
   }, [
     activePicker,
+    additionalPickerTarget,
     countrySelectionTouched,
     airportSelectionTouched,
     selectedCountry,
@@ -2821,6 +2942,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setDestinationCountryOnly(nextDestinationCountryOnly);
     setOriginSelectedCountryCode(nextOriginSelectedCountryCode);
     setDestinationSelectedCountryCode(nextDestinationSelectedCountryCode);
+    setAdditionalOrigins(additionalDestinations);
+    setAdditionalDestinations(additionalOrigins);
     setFieldErrors((prev) => ({
       ...prev,
       origin_iata: undefined,
@@ -2843,6 +2966,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     originCountryOnly,
     destinationSelectedCountryCode,
     originSelectedCountryCode,
+    additionalOrigins,
+    additionalDestinations,
     setOrigin,
     setDestination,
     setOriginCountryOnly,
@@ -3243,7 +3368,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 {t("modalClear")}
               </button>
             </div>
-            {selectedCountry ? (
+            {selectedCountry && !additionalPickerTarget ? (
               <div className="qs-airport-modal__country-action">
                 <button type="button" className="btn-secondary btn-compact qs-airport-modal__use-country" onClick={() => void selectCountryOnly(selectedCountry)}>
                   {renderFlag(selectedCountry.code)}
@@ -3401,6 +3526,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const currentCriteriaSignature = useMemo(() => buildCriteriaSignature({
     origin,
     destination,
+    additionalOrigins: additionalOrigins.map((entry) => entry.value),
+    additionalDestinations: additionalDestinations.map((entry) => entry.value),
     originCountryCode: originCountryOnly?.code ?? null,
     destinationCountryCode: destinationCountryOnly?.code ?? null,
     travelDate,
@@ -3429,6 +3556,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   }), [
     origin,
     destination,
+    additionalOrigins,
+    additionalDestinations,
     originCountryOnly,
     destinationCountryOnly,
     travelDate,
@@ -4682,6 +4811,29 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 </small>
               ) : null}
             </label>
+            <QuickSearchAdditionalAirports
+              side="origin"
+              entries={additionalOrigins}
+              focusEntryId={additionalFocusEntryId}
+              airportsByIata={airportsByIata}
+              recentSuggestions={originRecentAirportSuggestions}
+              addLabel={t("addAnotherOrigin")}
+              inputLabel={t("additionalOriginInput")}
+              removeLabel={t("removeAdditionalOrigin")}
+              pickerLabel={t("pickAirportOriginAria")}
+              invalidLabel={t("additionalAirportInvalid")}
+              recentLabel={t("recentAutocompleteLabel")}
+              maxEntries={5}
+              fetchSuggestions={fetchAutocompleteSuggestions}
+              onAdd={() => addAdditionalAirport("origin")}
+              onChange={(id, value) => updateAdditionalAirport("origin", id, value)}
+              onRemove={(id) => removeAdditionalAirport("origin", id)}
+              onSelect={(id, iata) => {
+                updateAdditionalAirport("origin", id, iata);
+                rememberAirportSelection("origin", iata);
+              }}
+              onOpenPicker={(id, trigger) => openAdditionalPicker("origin", id, trigger)}
+            />
           </div>
 
           <div className="qs-route-line">
@@ -4893,6 +5045,29 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 </small>
               ) : null}
             </label>
+            <QuickSearchAdditionalAirports
+              side="destination"
+              entries={additionalDestinations}
+              focusEntryId={additionalFocusEntryId}
+              airportsByIata={airportsByIata}
+              recentSuggestions={destinationRecentAirportSuggestions}
+              addLabel={t("addAnotherDestination")}
+              inputLabel={t("additionalDestinationInput")}
+              removeLabel={t("removeAdditionalDestination")}
+              pickerLabel={t("pickAirportDestinationAria")}
+              invalidLabel={t("additionalAirportInvalid")}
+              recentLabel={t("recentAutocompleteLabel")}
+              maxEntries={5}
+              fetchSuggestions={fetchAutocompleteSuggestions}
+              onAdd={() => addAdditionalAirport("destination")}
+              onChange={(id, value) => updateAdditionalAirport("destination", id, value)}
+              onRemove={(id) => removeAdditionalAirport("destination", id)}
+              onSelect={(id, iata) => {
+                updateAdditionalAirport("destination", id, iata);
+                rememberAirportSelection("destination", iata);
+              }}
+              onOpenPicker={(id, trigger) => openAdditionalPicker("destination", id, trigger)}
+            />
           </div>
         </div>
         

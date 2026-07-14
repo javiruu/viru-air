@@ -24,6 +24,8 @@ export const WL_PARAM_RANGE = "range";
 
 export const QS_PARAM_ORIGIN = PARAM_ORIGIN;
 export const QS_PARAM_DESTINATION = PARAM_DESTINATION;
+export const QS_PARAM_ADDITIONAL_ORIGINS = "origins";
+export const QS_PARAM_ADDITIONAL_DESTINATIONS = "destinations";
 export const QS_PARAM_TRAVEL_DATE = PARAM_TRAVEL_DATE;
 export const QS_PARAM_RETURN_DATE = "returnDate";
 export const QS_PARAM_IS_RETURN = "isReturn";
@@ -205,6 +207,8 @@ export function buildWatchlistViewSearchParams(params: {
 export type QuickSearchUrlState = {
   origin: string;
   destination: string;
+  additionalOrigins: string[];
+  additionalDestinations: string[];
   travelDate: string;
   returnDate: string;
   isReturn: boolean;
@@ -220,9 +224,14 @@ export type QuickSearchUrlState = {
  */
 export function readQuickSearchUrlState(sp: URLSearchParams): QuickSearchUrlState {
   const isReturnRaw = sanitizeFlag(sp.get(QS_PARAM_IS_RETURN));
+  const readAdditionalIata = (param: string) => Array.from(new Set(
+    (sp.get(param) ?? "").split(",").map((value) => sanitizeIata(value)).filter(Boolean),
+  )).slice(0, 5);
   return {
     origin: sanitizeIata(sp.get(QS_PARAM_ORIGIN)),
     destination: sanitizeIata(sp.get(QS_PARAM_DESTINATION)),
+    additionalOrigins: readAdditionalIata(QS_PARAM_ADDITIONAL_ORIGINS),
+    additionalDestinations: readAdditionalIata(QS_PARAM_ADDITIONAL_DESTINATIONS),
     travelDate: sanitizeIsoDate(sp.get(QS_PARAM_TRAVEL_DATE)),
     returnDate: sanitizeIsoDate(sp.get(QS_PARAM_RETURN_DATE)),
     isReturn: isReturnRaw ?? false,
@@ -241,6 +250,8 @@ export function readQuickSearchUrlState(sp: URLSearchParams): QuickSearchUrlStat
 export function buildQuickSearchSearchParams(state: {
   origin?: string;
   destination?: string;
+  additionalOrigins?: readonly string[];
+  additionalDestinations?: readonly string[];
   travelDate?: string;
   returnDate?: string;
   isReturn?: boolean;
@@ -257,6 +268,15 @@ export function buildQuickSearchSearchParams(state: {
 
   const destination = state.destination ? sanitizeIata(state.destination) : "";
   if (destination) search.set(QS_PARAM_DESTINATION, destination);
+
+  const appendAdditionalIata = (param: string, values: readonly string[] | undefined, primary: string) => {
+    const sanitized = Array.from(new Set(
+      (values ?? []).map((value) => sanitizeIata(value)).filter((value) => value && value !== primary),
+    )).slice(0, 5);
+    if (sanitized.length > 0) search.set(param, sanitized.join(","));
+  };
+  appendAdditionalIata(QS_PARAM_ADDITIONAL_ORIGINS, state.additionalOrigins, origin);
+  appendAdditionalIata(QS_PARAM_ADDITIONAL_DESTINATIONS, state.additionalDestinations, destination);
 
   const travelDate = state.travelDate ? sanitizeIsoDate(state.travelDate) : "";
   if (travelDate) search.set(QS_PARAM_TRAVEL_DATE, travelDate);

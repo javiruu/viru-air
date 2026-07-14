@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildCriteriaSignature, type CriteriaSignatureInput } from "../src/modules/quick-search/searchCriteria";
+import {
+  buildAppliedCriteriaSignature,
+  buildCriteriaSignature,
+  type CriteriaSignatureInput,
+} from "../src/modules/quick-search/searchCriteria";
 
 function createBaseInput(): CriteriaSignatureInput {
   return {
@@ -47,4 +51,17 @@ test("criteria signature stays stable after applying exclusion draft tokens", ()
   });
 
   assert.equal(preSubmit, postSubmit);
+});
+
+test("applied criteria keep only additional airports used by the search", () => {
+  const current = buildCriteriaSignature({
+    ...createBaseInput(),
+    additionalOrigins: ["MAD", "INVALID"],
+    additionalDestinations: ["LGW"],
+  });
+  const applied = buildAppliedCriteriaSignature(current, ["MAD"], ["LGW"]);
+
+  assert.notEqual(applied, current);
+  assert.deepEqual(JSON.parse(applied).additionalOrigins, ["MAD"]);
+  assert.deepEqual(JSON.parse(applied).additionalDestinations, ["LGW"]);
 });
