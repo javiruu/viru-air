@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 import app.api.v1.search as search_api
 from app.core.time import utc_now_naive
 from app.domain.entities import ProviderFlight
+from tests.helpers import register_and_token
 
 
 class _FakeQuickSearchProvider:
@@ -20,6 +21,8 @@ class _FakeQuickSearchProvider:
                     departure_time_local="08:40",
                     captured_at=utc_now_naive(),
                     source="fake-quick-search-provider",
+                    carrier_code="FR",
+                    flight_number="FR1234",
                 )
             ]
         return []
@@ -74,6 +77,59 @@ def test_quick_search_valid_route_returns_at_least_one_result(client: TestClient
     assert first["travel_date"] == travel_date
     assert first["price_total"] == 39.99
     assert first["source"] == "fake-quick-search-provider"
+    assert first["legs"][0]["flight_num"] == "FR1234"
+    assert first["legs"][0]["arr_ts"] is None
+
+
+def test_quick_search_result_links_through_save_to_watchlist_live(
+    client: TestClient,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(search_api, "_build_request_provider", _FakeQuickSearchProvider)
+    travel_date = str(date.today() + timedelta(days=22))
+    search_response = client.post(
+        "/api/v1/search/quick",
+        json={
+            "origin": {"seed_iata": "AGP", "include_nearby": False},
+            "destination": {"seed_iata": "DUB", "include_nearby": False},
+            "travel": {"date": travel_date, "flex_before": 0, "flex_after": 0},
+        },
+    )
+    assert search_response.status_code == 200
+    result = search_response.json()["results"][0]
+    result_leg = result["legs"][0]
+    token = register_and_token(client, email="quick-to-live@viru.dev")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    save_response = client.post(
+        "/api/v1/search/save-result",
+        headers=headers,
+        json={
+            "origin_iata": result["origin"],
+            "destination_iata": result["destination"],
+            "travel_date": result["travel_date"],
+            "price_total": result["price_total"],
+            "currency": result["currency"],
+            "legs": [
+                {
+                    "flight_number": result_leg["flight_num"],
+                    "carrier_code": result_leg["carrier_code"],
+                    "origin_iata": result_leg["origin_iata"],
+                    "destination_iata": result_leg["destination_iata"],
+                    "departure_at": result_leg["dep_ts"],
+                    "arrival_at": result_leg["arr_ts"],
+                }
+            ],
+        },
+    )
+
+    assert save_response.status_code == 200
+    live_response = client.get(
+        f"/api/v1/watchlist/{save_response.json()['watch_id']}/live",
+        headers=headers,
+    )
+    assert live_response.status_code == 200
+    assert live_response.json()["legs"][0]["identity"]["flight_number"] == "FR1234"
 
 
 def test_quick_search_skips_malformed_provider_prices(client: TestClient, monkeypatch) -> None:

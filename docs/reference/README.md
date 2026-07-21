@@ -1,6 +1,6 @@
 ﻿Status: reference
 Scope: technical reference for implementation work
-Last reviewed: 2026-04-15
+Last reviewed: 2026-07-21
 Canonical source: docs/reference/README.md
 Related: docs/INDICE_UNICO.md, docs/overview/current-state.md
 
@@ -14,6 +14,7 @@ Esta carpeta reúne documentación técnica activa que sirve como apoyo directo 
 - `codex-operating-contract.md`: reglas operativas persistentes para sesiones de Codex en este repo.
 - `../skills/viru-air-context/`: espejo local de la skill reusable para reentrada y contexto de Codex.
 - `backend/quick-search-contract.md`: contrato canónico de quick search backend.
+- `backend/live-flight-tracking-contract.md`: contrato canónico de identidad, snapshots y estado operacional desde Watchlist.
 - `backend/quick-search-acceptance-checklist.md`: checklist de aceptación técnica de quick search backend.
 - `feature-flags.md`: mapa vivo de flags por dominio y fuentes canonicas de activacion.
 - `quick-search-weather-policy.md`: política funcional para la integración de weather en quick search.

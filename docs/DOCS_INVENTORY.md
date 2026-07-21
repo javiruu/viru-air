@@ -1,7 +1,7 @@
 # Inventario documental
 
 **Estado:** vivo
-**Ultima revision:** 2026-07-14
+**Ultima revision:** 2026-07-21
 **Fuente de verdad:** si
 **Area:** documentacion
 
@@ -79,6 +79,7 @@ Entradas vivas actualizadas:
 Entradas vivas agregadas:
 
 - `docs/adr/ADR-004-flight-tracking-hub.md`
+- `docs/adr/ADR-005-live-operational-flight-tracking.md`
 
 Entradas vivas actualizadas:
 
@@ -569,6 +570,8 @@ Entradas vivas retiradas:
 | docs/adr/ADR-001-monolito-modular.md | ADR | vivo | conservar | docs/adr/ADR-001-monolito-modular.md | Decisi?n de arquitectura vigente | docs/adr/ADR-001-monolito-modular.md |
 | docs/adr/ADR-002-stack-base.md | ADR | vivo | conservar | docs/adr/ADR-002-stack-base.md | Decisi?n de arquitectura vigente | docs/adr/ADR-002-stack-base.md |
 | docs/adr/ADR-003-provider-adapter.md | ADR | vivo | conservar | docs/adr/ADR-003-provider-adapter.md | Decisi?n de arquitectura vigente | docs/adr/ADR-003-provider-adapter.md |
+| docs/adr/ADR-004-flight-tracking-hub.md | ADR | vivo | conservar | docs/adr/ADR-004-flight-tracking-hub.md | Hub compartido de frescura y revalidacion para datos de vuelo | docs/adr/ADR-004-flight-tracking-hub.md |
+| docs/adr/ADR-005-live-operational-flight-tracking.md | ADR | vivo | conservar | docs/adr/ADR-005-live-operational-flight-tracking.md | Identidad exacta opcional, snapshots operacionales compartidos y proveedor reemplazable para Watchlist | docs/adr/ADR-005-live-operational-flight-tracking.md |
 | docs/archive/README.md | historical | hist?rico | conservar | docs/archive/README.md | Gu?a del archivo hist?rico | ninguna; material hist?rico |
 | docs/archive/duplicated/README.md | duplicate | duplicado | conservar | docs/archive/duplicated/README.md | Copia retirada de la navegaci?n principal; la versi?n can?nica vive fuera de archive | ninguna |
 | docs/archive/duplicated/UI_CONTRACT_V1.md | duplicate | duplicado | conservar | docs/archive/duplicated/UI_CONTRACT_V1.md | Copia retirada de la navegaci?n principal; la versi?n can?nica vive fuera de archive | docs/ui/UI_CONTRACT_V1.md |
@@ -649,6 +652,7 @@ Entradas vivas retiradas:
 | docs/overview/repo-map.md | overview | vivo | conservar | docs/overview/repo-map.md | Onboarding y mapa vivo del proyecto | docs/overview/repo-map.md |
 | docs/overview/start-here.md | overview | vivo | conservar | docs/overview/start-here.md | Onboarding y mapa vivo del proyecto | docs/overview/start-here.md |
 | docs/plans/README.md | plan | vivo | conservar | docs/plans/README.md | Gu?a de organizaci?n de planes | docs/plans/README.md |
+| docs/archive/plans/2026-07-21-live-flight-tracking-watchlist.md | plan | archivado | conservar | docs/archive/plans/2026-07-21-live-flight-tracking-watchlist.md | Brainstorming, riesgos, arquitectura, fases y QA completados de Live flight tracking desde Watchlist | docs/archive/plans/2026-07-21-live-flight-tracking-watchlist.md |
 | docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md | plan | vivo | conservar | docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md | Plan de 5 fases (A-E) de correcciones post-cierre para el modulo /hoteles | docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md |
 | docs/plans/2026-06-08-puerta-a-puerta-plan-aterrizado-real.md | plan | vivo | conservar | docs/plans/2026-06-08-puerta-a-puerta-plan-aterrizado-real.md | Plan operativo aterrizado para evolucionar `/puerta-a-puerta` con foco en honestidad, contratos y utilidad incremental real | docs/plans/2026-06-08-puerta-a-puerta-plan-aterrizado-real.md |
 | docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md | plan | vivo | conservar | docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md | Roadmap de 10 fases adicionales para expandir cobertura, pricing real, orquestación avanzada y rollout por mercados | docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md |
@@ -664,6 +668,7 @@ Entradas vivas retiradas:
 | docs/prompts/codex-travel-roadmap-50-fases.md | contexto IA | vivo | conservar | docs/prompts/codex-travel-roadmap-50-fases.md | Roadmap operativo de 50 fases para agentes durante el ciclo de viaje; no sustituye contratos vivos | docs/prompts/codex-travel-roadmap-50-fases.md |
 | docs/prompts/legacy/prompt-root-legacy.txt | prompt | hist?rico | conservar | docs/prompts/legacy/prompt-root-legacy.txt | Prompt legacy preservado | ninguna; material hist?rico |
 | docs/qa/README.md | QA | vivo | conservar | docs/qa/README.md | Navegaci?n y matriz reutilizable de QA | docs/qa/README.md |
+| docs/qa/reports/2026-07-21-watchlist-live-flight-tracking.json | QA | vivo | conservar | docs/qa/reports/2026-07-21-watchlist-live-flight-tracking.json | Resultado reproducible de Playwright para polling, errores, multi-leg, mapa y responsive dual-theme | docs/runbooks/runbook-live-flight-tracking.md |
 | docs/qa/acceptance-checklists/frontend-pr-checklist.md | QA | vivo | conservar | docs/qa/acceptance-checklists/frontend-pr-checklist.md | Checklist reutilizable de QA | docs/qa/acceptance-checklists/frontend-pr-checklist.md |
 | docs/qa/hotels-pending-closeout.md | QA | vivo | conservar | docs/qa/hotels-pending-closeout.md | Checklist viva de cierre operativo para `/hoteles` con deudas pendientes y checks | docs/qa/hotels-pending-closeout.md |
 | docs/archive/qa-reports/quick-search-testsprite-strict-report-2026-04-23.md | QA | archivado | conservar | docs/archive/qa-reports/quick-search-testsprite-strict-report-2026-04-23.md | Reporte activo y ligero, separado del hist?rico cerrado | docs/qa/reports/quick-search-testsprite-strict-report-2026-04-23.md |
@@ -674,6 +679,7 @@ Entradas vivas retiradas:
 | docs/reference/README.md | overview | vivo | conservar | docs/reference/README.md | Referencia t?cnica o de proceso activa | docs/reference/README.md |
 | docs/reference/backend/quick-search-acceptance-checklist.md | backend | vivo | conservar | docs/reference/backend/quick-search-acceptance-checklist.md | Referencia t?cnica backend can?nica | docs/reference/backend/quick-search-acceptance-checklist.md |
 | docs/reference/backend/quick-search-contract.md | backend | vivo | conservar | docs/reference/backend/quick-search-contract.md | Referencia t?cnica backend can?nica | docs/reference/backend/quick-search-contract.md |
+| docs/reference/backend/live-flight-tracking-contract.md | backend | vivo | conservar | docs/reference/backend/live-flight-tracking-contract.md | Contrato canónico de identidad, snapshots y endpoint operacional de Watchlist | docs/reference/backend/live-flight-tracking-contract.md |
 | docs/reference/codex-operating-contract.md | contexto IA | vivo | conservar | docs/reference/codex-operating-contract.md | Contrato operativo complementario para agentes | docs/reference/codex-operating-contract.md |
 | docs/reference/done-checklist.md | overview | vivo | conservar | docs/reference/done-checklist.md | Referencia t?cnica o de proceso activa | docs/reference/done-checklist.md |
 | docs/reference/feature-flags.md | reference | vivo | conservar | docs/reference/feature-flags.md | Mapa vivo de flags por dominio, fuentes canonicas de activacion y legacy preservado para trazabilidad | docs/reference/feature-flags.md |
@@ -687,6 +693,7 @@ Entradas vivas retiradas:
 | docs/runbooks/runbook-public-tunnels.md | runbook | vivo | conservar | docs/runbooks/runbook-public-tunnels.md | Runbook operativo activo para la publicacion web mediante Cloudflare Tunnel y Tailscale Funnel | docs/runbooks/runbook-public-tunnels.md |
 | docs/runbooks/runbook-oom.md | runbook | vivo | conservar | docs/runbooks/runbook-oom.md | Runbook operativo activo | docs/runbooks/runbook-oom.md |
 | docs/runbooks/runbook-provider-degraded.md | runbook | vivo | conservar | docs/runbooks/runbook-provider-degraded.md | Runbook operativo activo | docs/runbooks/runbook-provider-degraded.md |
+| docs/runbooks/runbook-live-flight-tracking.md | runbook | vivo | conservar | docs/runbooks/runbook-live-flight-tracking.md | Activación, verificación, degradación y rollback del proveedor operacional de Watchlist | docs/runbooks/runbook-live-flight-tracking.md |
 | docs/runbooks/runbook-route-canonicalization.md | runbook | vivo | conservar | docs/runbooks/runbook-route-canonicalization.md | Runbook operativo activo | docs/runbooks/runbook-route-canonicalization.md |
 | docs/runbooks/runbook-ui-captures.md | runbook | vivo | conservar | docs/runbooks/runbook-ui-captures.md | Runbook operativo activo | docs/runbooks/runbook-ui-captures.md |
 | docs/runbooks/runbook-watchlist-uniqueness-migration.md | runbook | vivo | conservar | docs/runbooks/runbook-watchlist-uniqueness-migration.md | Runbook operativo activo | docs/runbooks/runbook-watchlist-uniqueness-migration.md |
@@ -855,3 +862,27 @@ Entradas vivas actualizadas:
 - `docs/reference/backend/door-to-door-contract.md`
 - `docs/runbooks/runbook-gtfs-activacion.md`
 - `docs/DOCS_INVENTORY.md`
+## Actualizacion manual 2026-07-21 (Live flight tracking desde Watchlist)
+
+Entradas vivas agregadas:
+
+- `docs/adr/ADR-005-live-operational-flight-tracking.md`
+- `docs/reference/backend/live-flight-tracking-contract.md`
+- `docs/runbooks/runbook-live-flight-tracking.md`
+- `docs/qa/reports/2026-07-21-watchlist-live-flight-tracking.json`
+
+Entrada archivada agregada:
+
+- `docs/archive/plans/2026-07-21-live-flight-tracking-watchlist.md`
+
+Entradas vivas actualizadas:
+
+- `docs/product/watchlist.md`
+- `docs/overview/current-state.md`
+- `docs/engineering/backend.md`
+- `docs/reference/README.md`
+- `docs/reference/backend/quick-search-contract.md`
+- `docs/qa/README.md`
+- `docs/INDICE_UNICO.md`
+- `docs/plans/README.md`
+- `HISTORY.md`

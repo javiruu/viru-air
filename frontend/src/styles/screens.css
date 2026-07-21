@@ -19248,34 +19248,6 @@ textarea::placeholder {
 }
 
 
-/* Animated route dot for watchlist map */
-.watch-map-route-dot {
-  width: 14px;
-  height: 14px;
-  background: #D95D39;
-  border: 2px solid #fff;
-  border-radius: 50%;
-  box-shadow: 0 0 0 3px rgba(217, 93, 57, 0.35), 0 0 12px rgba(217, 93, 57, 0.35);
-  pointer-events: none;
-  animation: watchRouteDotPulse 2s ease-in-out infinite;
-}
-
-@keyframes watchRouteDotPulse {
-  0%, 100% {
-    box-shadow: 0 0 0 3px rgba(217, 93, 57, 0.35), 0 0 8px rgba(217, 93, 57, 0.2);
-    transform: scale(1);
-  }
-  50% {
-    box-shadow: 0 0 0 5px rgba(217, 93, 57, 0.15), 0 0 16px rgba(217, 93, 57, 0.25);
-    transform: scale(1.1);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .watch-map-route-dot {
-    animation: none;
-  }
-}
 /* Landing 2026 warm-aviation redesign (route / only, no /prueba reuse) */
 .landing-shell {
   display: grid;
@@ -23514,4 +23486,308 @@ textarea::placeholder {
   letter-spacing: 0.08em;
   font-size: 0.76rem;
   color: color-mix(in srgb, var(--accent) 78%, var(--ink));
+}
+
+.watch-live-flight {
+  position: relative;
+  display: grid;
+  gap: 0.72rem;
+  overflow: hidden;
+  padding: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--accent-2) 30%, var(--border));
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 92% 8%, color-mix(in srgb, var(--accent-2) 16%, transparent), transparent 38%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface) 94%, transparent), color-mix(in srgb, var(--surface-2) 92%, transparent));
+  box-shadow:
+    0 14px 28px color-mix(in srgb, var(--shadow-strong) 8%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--accent-ink) 18%, transparent);
+}
+
+.watch-live-flight-header,
+.watch-live-flight-header-actions,
+.watch-live-flight-leg-heading,
+.watch-live-flight-meta {
+  display: flex;
+  align-items: center;
+}
+
+.watch-live-flight-header,
+.watch-live-flight-leg-heading {
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.watch-live-flight-header h3 {
+  margin: 0.12rem 0 0;
+  font-size: 1rem;
+  letter-spacing: -0.015em;
+}
+
+.watch-live-flight-kicker {
+  color: var(--accent-2);
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.watch-live-flight-header-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.watch-live-flight-refresh {
+  min-height: 36px;
+}
+
+.watch-live-flight-loading {
+  display: grid;
+  gap: 0.55rem;
+  min-height: 72px;
+  align-content: center;
+}
+
+.watch-live-flight-notice,
+.watch-live-flight-empty {
+  display: grid;
+  gap: 0.28rem;
+  padding: 0.75rem;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  color: var(--ink-muted);
+  font-size: 0.84rem;
+}
+
+.watch-live-flight-notice {
+  border-left: 3px solid var(--accent);
+}
+
+.watch-live-flight-notice strong,
+.watch-live-flight-empty strong {
+  color: var(--ink);
+}
+
+.watch-live-flight-empty {
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  border: 1px dashed color-mix(in srgb, var(--accent-2) 35%, var(--border));
+}
+
+.watch-live-flight-empty p {
+  margin: 0.18rem 0 0;
+  line-height: 1.45;
+}
+
+.watch-live-flight-search {
+  width: fit-content;
+  margin-top: 0.5rem;
+}
+
+.watch-live-flight-route-line {
+  width: 30px;
+  height: 30px;
+  border: 1px solid color-mix(in srgb, var(--accent-2) 54%, var(--border));
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--accent-2) 0 3px, transparent 4px),
+    color-mix(in srgb, var(--accent-2) 9%, var(--surface));
+}
+
+.watch-live-flight-legs {
+  display: grid;
+  gap: 0.58rem;
+}
+
+.watch-live-flight-leg {
+  display: grid;
+  gap: 0.62rem;
+  padding: 0.72rem;
+  border: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--surface) 91%, transparent);
+}
+
+.watch-live-flight-leg--secondary > summary {
+  display: grid;
+  gap: 0.4rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.watch-live-flight-leg--secondary > summary::-webkit-details-marker {
+  display: none;
+}
+
+.watch-live-flight-leg--secondary > summary:focus-visible {
+  border-radius: 8px;
+  outline: 3px solid var(--border-focus);
+  outline-offset: 3px;
+}
+
+.watch-live-flight-leg-disclosure {
+  width: fit-content;
+  color: var(--accent-2);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.watch-live-flight-leg--secondary[open] .watch-live-flight-leg-disclosure {
+  color: var(--ink-muted);
+}
+
+.watch-live-flight-leg-body {
+  display: grid;
+  gap: 0.62rem;
+  padding-top: 0.62rem;
+}
+
+.watch-live-flight-leg-unavailable {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.watch-live-flight-leg-heading > div {
+  display: grid;
+  gap: 0.08rem;
+}
+
+.watch-live-flight-leg-heading > div > span {
+  color: var(--ink-muted);
+  font-size: 0.76rem;
+}
+
+.watch-live-flight-status {
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-2) 13%, var(--surface));
+  color: color-mix(in srgb, var(--accent-2) 82%, var(--ink));
+  font-size: 0.72rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.watch-live-flight-status--cancelled,
+.watch-live-flight-status--diverted {
+  background: color-mix(in srgb, var(--accent) 13%, var(--surface));
+  color: color-mix(in srgb, var(--accent) 82%, var(--ink));
+}
+
+.watch-live-flight-milestones {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.48rem;
+}
+
+.watch-live-flight-milestone {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+  padding-left: 0.58rem;
+  border-left: 2px solid color-mix(in srgb, var(--accent-2) 56%, var(--border));
+}
+
+.watch-live-flight-milestone > span,
+.watch-live-flight-milestone > small {
+  color: var(--ink-muted);
+  font-size: 0.7rem;
+}
+
+.watch-live-flight-milestone > strong {
+  font-size: 1.02rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.watch-live-flight-milestone > em {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 750;
+}
+
+.watch-live-flight-meta {
+  flex-wrap: wrap;
+  gap: 0.32rem;
+}
+
+.watch-live-flight-meta > span {
+  padding: 0.24rem 0.42rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-2) 82%, transparent);
+  color: var(--ink-muted);
+  font-size: 0.68rem;
+}
+
+.watch-map-legend-swatch-live {
+  background: var(--accent-2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-2) 18%, transparent);
+}
+
+.watch-map-position-note {
+  margin: -0.25rem 0 0;
+  padding: 0.52rem 0.65rem;
+  border-left: 2px solid color-mix(in srgb, var(--accent-2) 52%, var(--border));
+  border-radius: 0 10px 10px 0;
+  background: color-mix(in srgb, var(--surface-2) 72%, transparent);
+  color: var(--ink-muted);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.watch-map-live-marker {
+  position: relative;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--accent-2);
+  color: var(--accent-ink);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--shadow-strong) 28%, transparent);
+  transform: rotate(var(--watch-map-heading, 0deg));
+}
+
+.watch-map-live-marker svg {
+  display: block;
+}
+
+.watch-map-live-marker::before {
+  position: absolute;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  border: 2px solid color-mix(in srgb, var(--accent-2) 72%, transparent);
+  border-radius: inherit;
+  content: "";
+  animation: watch-live-position-pulse 2.4s ease-out infinite;
+}
+
+@keyframes watch-live-position-pulse {
+  from { opacity: 0.7; transform: scale(0.85); }
+  to { opacity: 0; transform: scale(1.8); }
+}
+
+@media (max-width: 520px) {
+  .watch-live-flight-header,
+  .watch-live-flight-leg-heading {
+    align-items: flex-start;
+  }
+
+  .watch-live-flight-header-actions {
+    align-items: flex-end;
+  }
+
+  .watch-live-flight-milestones {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .watch-map-live-marker::before {
+    animation: none;
+  }
 }

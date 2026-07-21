@@ -1,7 +1,7 @@
 ﻿# Backend
 
 **Estado:** vivo  
-**Última revisión:** 2026-05-11  
+**Última revisión:** 2026-07-21
 **Fuente de verdad:** sí  
 **Área:** engineering
 
@@ -65,6 +65,12 @@ Esto evita acoplar `quick-search`, `watchlist` y `recommendations` a un provider
   - `execute_plan` centraliza tracking de unidades exactas para Quick Search y calendar hints.
   - Fare Memory conserva memoria operativa compartida; `PriceSnapshot` conserva historico visible por usuario.
   - guardar en watchlist siembra snapshot solo con resultados `fresh`; resultados `warm`, `stale`, `expired`, negativos o errores encolan `RevalidationJob` de ruta.
+- Live flight tracking desde Watchlist:
+  - `GET /api/v1/watchlist/{watch_id}/live` separa estado operacional de histórico de precio;
+  - `WatchTrackedFlightLeg` conserva identidad exacta opcional y ordenada;
+  - `FlightOperationalSnapshot` comparte observaciones por fingerprint con TTL, dedupe, lease DB y retención de 30 días;
+  - Aviationstack es un adapter opcional; sin key el endpoint degrada a `not_configured` sin romper Watchlist;
+  - contrato: [Live flight tracking](../reference/backend/live-flight-tracking-contract.md).
 - Dominio documentado con mayor detalle en:
   - [Quick Search contract](../reference/backend/quick-search-contract.md)
   - [Quick Search acceptance checklist](../reference/backend/quick-search-acceptance-checklist.md)

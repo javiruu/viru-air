@@ -2,8 +2,9 @@ export type QuickSearchLeg = {
   origin_iata: string;
   destination_iata: string;
   dep_ts: string;
-  arr_ts: string;
+  arr_ts: string | null;
   flight_num?: string | null;
+  carrier_code?: string | null;
   price?: number | null;
 };
 

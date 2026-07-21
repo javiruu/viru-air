@@ -39,6 +39,7 @@ type MapProps = {
   styles?: MapStyleSet;
   viewport?: MapViewport;
   onViewportChange?: (viewport: MapViewport) => void;
+  onReady?: () => void;
   fadeDuration?: number;
   className?: string;
   children?: ReactNode;
@@ -89,7 +90,7 @@ function useMapContext(): MapContextValue {
 }
 
 export const Map = forwardRef<MapRef, MapProps>(function Map(
-  { center = [-3.7, 40.4], zoom = 4, styles = DEFAULT_STYLES, viewport, onViewportChange, fadeDuration = 0, className, children },
+  { center = [-3.7, 40.4], zoom = 4, styles = DEFAULT_STYLES, viewport, onViewportChange, onReady, fadeDuration = 0, className, children },
   ref,
 ) {
   const mapContainer = useRef<HTMLDivElement | null>(null);
@@ -150,6 +151,10 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
       duration: 250,
     });
   }, [readyMap, viewport]);
+
+  useEffect(() => {
+    if (readyMap) onReady?.();
+  }, [onReady, readyMap]);
 
   useEffect(() => {
     if (!readyMap) return;

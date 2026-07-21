@@ -1,7 +1,7 @@
 ﻿# QA
 
 **Estado:** vivo  
-**Última revisión:** 2026-07-12
+**Última revisión:** 2026-07-21
 **Fuente de verdad:** sí  
 **Área:** QA
 
@@ -21,6 +21,7 @@
 - [Matriz QA por área](qa-command-matrix.md)
 - [Traceability matrix](traceability-matrix.md)
 - [Runbook UI captures](../runbooks/runbook-ui-captures.md)
+- [Live flight tracking desde Watchlist - resultado browser](reports/2026-07-21-watchlist-live-flight-tracking.json)
 
 ## Politica de validacion visual
 

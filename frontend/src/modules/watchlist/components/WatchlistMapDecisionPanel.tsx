@@ -1,6 +1,7 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { Plane } from "lucide-react";
 
 import { useI18n } from "@/i18n";
 import { Map, MapControls, MapMarker, MapPopup, MapRoute, type MapRef } from "@/components/ui/map";
@@ -8,6 +9,7 @@ import { getWatchStatusMeta } from "@/modules/shared/statusCatalog";
 import { formatCurrency } from "@/modules/shared/format";
 import { safeDateTime } from "@/modules/watchlist/presentation";
 import type { WatchMapInsight, WatchMapMode, WatchMapRouteView } from "@/modules/watchlist/types";
+import type { LiveFlightPosition } from "@/modules/watchlist/liveFlightTypes";
 
 type WatchlistMapDecisionPanelProps = {
   routes: WatchMapRouteView[];
@@ -23,60 +25,10 @@ type WatchlistMapDecisionPanelProps = {
   mode: WatchMapMode;
   insight: WatchMapInsight;
   compareLimitExceeded: boolean;
+  livePosition: LiveFlightPosition | null;
+  liveFlightLabel: string | null;
   onFocusWatch: (watchId: string) => void;
 };
-
-function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduced(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-  return reduced;
-}
-
-function AnimatedRouteDot({ originCoordinates, destinationCoordinates }: {
-  originCoordinates: [number, number];
-  destinationCoordinates: [number, number];
-}) {
-  const reduced = useReducedMotion();
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    if (reduced) return;
-    let startTime: number | null = null;
-    const duration = 4000;
-    let rafId: number;
-
-    function tick(timestamp: number) {
-      if (startTime === null) startTime = timestamp;
-      const elapsed = timestamp - startTime;
-      const raw = (elapsed % duration) / duration;
-      const eased = raw < 0.5
-        ? 2 * raw * raw
-        : 1 - Math.pow(-2 * raw + 2, 2) / 2;
-      setProgress(eased);
-      rafId = requestAnimationFrame(tick);
-    }
-
-    rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
-  }, [reduced]);
-
-  if (reduced) return null;
-
-  const lng = originCoordinates[0] + (destinationCoordinates[0] - originCoordinates[0]) * progress;
-  const lat = originCoordinates[1] + (destinationCoordinates[1] - originCoordinates[1]) * progress;
-
-  return (
-    <MapMarker longitude={lng} latitude={lat}>
-      <div className="watch-map-route-dot" aria-hidden="true" />
-    </MapMarker>
-  );
-}
 
 function routeColor(route: WatchMapRouteView) {
   if (route.isPrimary) return "#D95D39";
@@ -97,11 +49,16 @@ export function WatchlistMapDecisionPanel({
   mode,
   insight,
   compareLimitExceeded,
+  livePosition,
+  liveFlightLabel,
   onFocusWatch,
 }: WatchlistMapDecisionPanelProps) {
   const { t, localeTag } = useI18n();
   const mapRef = useRef<MapRef>(null);
+  const hadLivePositionRef = useRef(false);
   const [activePopupWatchId, setActivePopupWatchId] = useState<string | null>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
+  const handleMapReady = useCallback(() => setIsMapReady(true), []);
 
   const visibleRoutes = useMemo(() => routes.slice(0, 4), [routes]);
   const hasMapData = visibleRoutes.length > 0;
@@ -110,11 +67,13 @@ export function WatchlistMapDecisionPanel({
     [visibleRoutes],
   );
   const popupRoute = useMemo(
-    () =>
-      visibleRoutes.find((route) => route.watchId === activePopupWatchId) ??
-      primary ??
-      null,
-    [activePopupWatchId, primary, visibleRoutes],
+    () => {
+      if (activePopupWatchId) {
+        return visibleRoutes.find((route) => route.watchId === activePopupWatchId) ?? null;
+      }
+      return livePosition ? null : primary;
+    },
+    [activePopupWatchId, livePosition, primary, visibleRoutes],
   );
   const selectedRouteLabel = primary ? `${primary.origin} → ${primary.destination}` : "--";
   const selectedStatus = primary ? getWatchStatusMeta(primary.status, t) : null;
@@ -122,11 +81,12 @@ export function WatchlistMapDecisionPanel({
   const fallbackStatus = selectedRouteContext ? getWatchStatusMeta(selectedRouteContext.status, t) : null;
 
   useEffect(() => {
-    if (!primary) return;
+    if (!primary || !isMapReady) return;
     const boundsPoints = (mode === "compare" ? visibleRoutes : [primary]).flatMap((route) => [
       route.originCoordinates,
       route.destinationCoordinates,
     ]);
+    if (livePosition) boundsPoints.push([livePosition.longitude, livePosition.latitude]);
     if (boundsPoints.length < 2) return;
     const lngs = boundsPoints.map((point) => point[0]);
     const lats = boundsPoints.map((point) => point[1]);
@@ -137,11 +97,17 @@ export function WatchlistMapDecisionPanel({
       ],
       { padding: 84, duration: 250, maxZoom: mode === "single" ? 6 : 5.5 },
     );
-  }, [mode, primary, visibleRoutes]);
+  }, [isMapReady, livePosition, mode, primary, visibleRoutes]);
 
   useEffect(() => {
+    if (livePosition) {
+      if (!hadLivePositionRef.current) setActivePopupWatchId(null);
+      hadLivePositionRef.current = true;
+      return;
+    }
+    hadLivePositionRef.current = false;
     if (!activePopupWatchId && primary) setActivePopupWatchId(primary.watchId);
-  }, [activePopupWatchId, primary]);
+  }, [activePopupWatchId, livePosition, primary]);
 
   if (!hasSelectedRoute) {
     return (
@@ -262,11 +228,22 @@ export function WatchlistMapDecisionPanel({
             <span className="watch-map-legend-swatch watch-map-legend-swatch-other" aria-hidden="true" />
             <span>{t("watchlist.map.legendOther")}</span>
           </span>
+          {livePosition ? (
+            <span className="watch-map-legend-item">
+              <span className="watch-map-legend-swatch watch-map-legend-swatch-live" aria-hidden="true" />
+              <span>{t("watchlist.map.legendLive")}</span>
+            </span>
+          ) : null}
         </div>
+      ) : null}
+      {!livePosition ? (
+        <p className="watch-map-position-note" role="status">
+          {t("watchlist.map.noObservedPosition")}
+        </p>
       ) : null}
 
       <div className="watch-map-stage">
-        <Map ref={mapRef} center={[-3.7, 40.4]} zoom={4.3} className="watch-map-canvas">
+        <Map ref={mapRef} center={[-3.7, 40.4]} zoom={4.3} className="watch-map-canvas" onReady={handleMapReady}>
           <MapControls />
           {visibleRoutes.map((route) => {
             const isPrimary = route.isPrimary;
@@ -287,11 +264,23 @@ export function WatchlistMapDecisionPanel({
             );
           })}
 
-          {primary ? (
-            <AnimatedRouteDot
-              originCoordinates={primary.originCoordinates}
-              destinationCoordinates={primary.destinationCoordinates}
-            />
+          {livePosition ? (
+            <MapMarker longitude={livePosition.longitude} latitude={livePosition.latitude}>
+              <div
+                className="watch-map-live-marker"
+                role="img"
+                style={
+                  livePosition.heading_deg == null
+                    ? undefined
+                    : ({ "--watch-map-heading": `${livePosition.heading_deg}deg` } as CSSProperties)
+                }
+                aria-label={t("watchlist.map.livePositionAria", {
+                  flight: liveFlightLabel ?? t("watchlist.live.flightFallback"),
+                })}
+              >
+                <Plane aria-hidden="true" size={18} strokeWidth={2.1} />
+              </div>
+            </MapMarker>
           ) : null}
 
           {visibleRoutes.map((route) => (

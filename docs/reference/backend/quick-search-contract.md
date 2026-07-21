@@ -502,7 +502,7 @@ Stable fields returned for frontend compatibility:
 - `ranking_score`: numeric alias of the final ranking score used by the UI
 - `stale_data`: current quick-search responses return `false` unless degraded/stale semantics are introduced later
 - `itinerary_type`: currently `direct` in quick mode
-- `legs`: currently an empty list in quick mode unless richer provider segment data is introduced later
+- `legs`: one direct leg when the provider exposes flight number and departure time; otherwise an empty list. The leg uses `flight_num`, optional `carrier_code`, `origin_iata`, `destination_iata`, `dep_ts` and nullable `arr_ts`. Quick Search does not synthesize an arrival timestamp for the tracking identity.
 
 Compatibility/extended fields still returned:
 - `score`: structured ranking breakdown
@@ -517,7 +517,9 @@ Defensive client note:
 
 ### Save result behavior (`POST /api/v1/search/save-result`)
 
-- Request accepts the observed route/date fields plus `price_total`, optional `currency`, and optional freshness fields (`freshness_status`, `requires_revalidation`, `validation_status`).
+- Request accepts the observed route/date fields plus `price_total`, optional `currency`, optional freshness fields (`freshness_status`, `requires_revalidation`, `validation_status`) and optional exact `legs` for operational tracking.
+- When `legs` is present, it transactionally replaces the Watch's ordered exact-flight identity (maximum 8). When omitted, an existing identity is preserved so older clients and price-only saves remain compatible.
+- Response includes `tracking_identity` as `linked`, `updated` or `missing`.
 - When `price_total` is present and the result is fresh, saving a quick-search result to watchlist writes an immediate `PriceSnapshot` with provider `quick-search`.
 - If the result is `warm`, `stale`, `expired`, negative, provider-error, or explicitly `requires_revalidation=true`, the endpoint saves/reuses the watch and enqueues a route revalidation job instead of writing a fresh snapshot from uncertain data.
 - If the watch already exists for the user/route/date, the endpoint reuses that watch and applies the same freshness-aware snapshot/revalidation policy.

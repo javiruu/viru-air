@@ -21,6 +21,11 @@ import { WatchlistCombinationPanel } from "@/modules/watchlist/components/Watchl
 import { monthLabel } from "@/modules/watchlist/dateUtils";
 import { buildWatchlistExportPayload } from "@/modules/watchlist/exportWatchlistJson";
 import { useWatchlistController } from "@/modules/watchlist/useWatchlistController";
+import { useWatchLiveFlight } from "@/modules/watchlist/useWatchLiveFlight";
+import {
+  selectPrimaryFlightLabel,
+  selectPrimaryLivePosition,
+} from "@/modules/watchlist/liveFlightPresentation";
 import { Skeleton, SkeletonPanel } from "@/modules/shared/Skeleton";
 
 const WatchlistMapDecisionPanel = dynamic(
@@ -64,6 +69,9 @@ export default function WatchlistPage() {
     chartPad: CHART_PAD,
     lineColors: LINE_COLORS,
   });
+  const liveFlight = useWatchLiveFlight(derived.selectedWatch?.id ?? null);
+  const livePosition = selectPrimaryLivePosition(liveFlight.data);
+  const liveFlightLabel = selectPrimaryFlightLabel(liveFlight.data);
 
   // ── URL state: read navigation params on mount to auto-select flight ─
   const searchParams = useSearchParams();
@@ -314,6 +322,11 @@ export default function WatchlistPage() {
             detail={actions.selectedWatchDetail}
             summary={actions.selectedWatchSummary}
             isLoading={actions.isLoadingSelectedWatchDetail}
+            liveTracking={liveFlight.data}
+            isLoadingLiveTracking={liveFlight.isLoading}
+            isRefreshingLiveTracking={liveFlight.isRefreshing}
+            hasLiveTrackingError={liveFlight.hasError}
+            onRefreshLiveTracking={liveFlight.refresh}
             onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
             onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
           />
@@ -338,6 +351,8 @@ export default function WatchlistPage() {
             mode={derived.watchMapMode}
             insight={derived.watchMapInsight}
             compareLimitExceeded={view.compareIds.length > 4}
+            livePosition={livePosition}
+            liveFlightLabel={liveFlightLabel}
             onFocusWatch={(watchId) => {
               const watch = actions.items.find((item) => item.id === watchId);
               if (!watch) return;
