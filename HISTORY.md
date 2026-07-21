@@ -4,6 +4,8 @@
 
 - Las Watches guardadas desde resultados exactos conservan sus piernas y exponen estado operacional, horarios, retrasos, terminales, puertas y posición observada mediante `GET /api/v1/watchlist/{watch_id}/live`.
 - El backend añade snapshots compartidos, TTL por fase, lease persistente, deduplicación, retención y un adapter Aviationstack opcional; sin key o con proveedor degradado, precios e histórico siguen funcionando.
+- El tracking operacional incorpora fallback Amadeus, Aviationstack, AeroDataBox, OpenSky, FlightAware y ADS-B Exchange con presupuesto persistente; el modo por defecto excluye cualquier proveedor de pago y evita llamadas de enriquecimiento innecesarias.
+- La migración 0035 recupera instalaciones donde el bootstrap ORM creó tablas antes que Alembic, sin borrar datos, y 0036 añade el ledger de cuotas y bloqueos.
 - `/watchlist` integra una tarjeta cálida y compacta con multi-leg progresivo, recuperación para Watches legacy, polling consciente de visibilidad y mapa sin posiciones simuladas, verificada en dark/light y desktop/tablet/mobile.
 
 ## 2026-07-14 - Rebranding integral a Viru Air

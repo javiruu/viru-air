@@ -132,6 +132,7 @@
 - [ADR-003](adr/ADR-003-provider-adapter.md)
 - [ADR-004](adr/ADR-004-flight-tracking-hub.md)
 - [ADR-005](adr/ADR-005-live-operational-flight-tracking.md)
+- [ADR-006](adr/ADR-006-zero-cost-operational-provider-fallback.md)
 
 ### Specs
 
@@ -147,6 +148,7 @@
 - [Cierre pendiente de `/hoteles`](qa/hotels-pending-closeout.md)
 - [Matriz QA por area](qa/qa-command-matrix.md)
 - [Evidencia Live flight tracking desde Watchlist](qa/reports/2026-07-21-watchlist-live-flight-tracking.json)
+- [QA fallback operacional sin coste](qa/reports/2026-07-21-zero-cost-live-provider-fallback.md)
 - [Visual QA (archivado)](archive/qa-visual/)
 - [Auditoría de paleta dual (archivada)](archive/qa-visual/color-palette-audit.md)
 - [Reportes QA (archivados)](archive/qa-reports/)

@@ -114,7 +114,13 @@ Authorization: Bearer <token>
 ```
 
 `operational` puede ser `null` por pierna. `position` solo existe cuando latitud y longitud superan la validación de límites; la línea del mapa continúa representando la ruta, nunca una posición estimada.
-Todos los timestamps de respuesta representan UTC y se serializan con sufijo `Z`. `speed_mps` se normaliza desde los km/h entregados por Aviationstack.
+Todos los timestamps de respuesta representan UTC y se serializan con sufijo `Z`. Altitud y velocidad se normalizan a metros y metros por segundo aunque el proveedor entregue pies, centenas de pies, nudos o km/h.
+
+## Selección de proveedor y coste
+
+El backend separa `status_schedule` de `position`. Consulta estado secuencialmente y solo enriquece posición cuando falta. Los campos de estado, horario, terminal y puerta del proveedor principal no son sobrescritos por telemetría posterior; `provider` refleja la procedencia combinada, por ejemplo `aerodatabox+opensky`.
+
+La reserva de cuota se realiza antes de cada llamada en `flight_provider_quota`. La clave del proveedor, unidades gastadas, ventana diaria o mensual y bloqueos remotos sobreviven reinicios. El modo por defecto es `LIVE_FLIGHT_ZERO_COST_ONLY=true`: Amadeus test, Aviationstack, AeroDataBox y OpenSky pueden formar la cadena gratuita; FlightAware y ADS-B Exchange permanecen implementados pero excluidos. Una key de pago por sí sola nunca activa gasto.
 
 ## Semántica
 
@@ -157,6 +163,7 @@ El cliente respeta `refresh_after_seconds`, pausa al ocultarse y aborta solicitu
 ## Fuentes relacionadas
 
 - [ADR-005](../../adr/ADR-005-live-operational-flight-tracking.md)
+- [ADR-006](../../adr/ADR-006-zero-cost-operational-provider-fallback.md)
 - [Watchlist](../../product/watchlist.md)
 - [Runbook live flight tracking](../../runbooks/runbook-live-flight-tracking.md)
 - [Quick Search contract](quick-search-contract.md)

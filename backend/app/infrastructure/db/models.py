@@ -181,6 +181,17 @@ class FlightOperationalRefreshLock(Base):
     outcome: Mapped[str | None] = mapped_column(String(24), nullable=True)
 
 
+class FlightProviderQuota(Base):
+    __tablename__ = "flight_provider_quota"
+
+    provider: Mapped[str] = mapped_column(String(40), primary_key=True)
+    window_key: Mapped[str] = mapped_column(String(10))
+    units_used: Mapped[int] = mapped_column(Integer, default=0)
+    blocked_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    block_reason: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+
+
 class AlertRule(Base):
     __tablename__ = "alert_rule"
     __table_args__ = (

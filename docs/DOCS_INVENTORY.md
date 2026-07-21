@@ -572,6 +572,7 @@ Entradas vivas retiradas:
 | docs/adr/ADR-003-provider-adapter.md | ADR | vivo | conservar | docs/adr/ADR-003-provider-adapter.md | Decisi?n de arquitectura vigente | docs/adr/ADR-003-provider-adapter.md |
 | docs/adr/ADR-004-flight-tracking-hub.md | ADR | vivo | conservar | docs/adr/ADR-004-flight-tracking-hub.md | Hub compartido de frescura y revalidacion para datos de vuelo | docs/adr/ADR-004-flight-tracking-hub.md |
 | docs/adr/ADR-005-live-operational-flight-tracking.md | ADR | vivo | conservar | docs/adr/ADR-005-live-operational-flight-tracking.md | Identidad exacta opcional, snapshots operacionales compartidos y proveedor reemplazable para Watchlist | docs/adr/ADR-005-live-operational-flight-tracking.md |
+| docs/adr/ADR-006-zero-cost-operational-provider-fallback.md | ADR | vivo | conservar | docs/adr/ADR-006-zero-cost-operational-provider-fallback.md | Fallback por capacidades con presupuesto persistente y modo sin coste por defecto | docs/adr/ADR-006-zero-cost-operational-provider-fallback.md |
 | docs/archive/README.md | historical | hist?rico | conservar | docs/archive/README.md | Gu?a del archivo hist?rico | ninguna; material hist?rico |
 | docs/archive/duplicated/README.md | duplicate | duplicado | conservar | docs/archive/duplicated/README.md | Copia retirada de la navegaci?n principal; la versi?n can?nica vive fuera de archive | ninguna |
 | docs/archive/duplicated/UI_CONTRACT_V1.md | duplicate | duplicado | conservar | docs/archive/duplicated/UI_CONTRACT_V1.md | Copia retirada de la navegaci?n principal; la versi?n can?nica vive fuera de archive | docs/ui/UI_CONTRACT_V1.md |
@@ -669,6 +670,7 @@ Entradas vivas retiradas:
 | docs/prompts/legacy/prompt-root-legacy.txt | prompt | hist?rico | conservar | docs/prompts/legacy/prompt-root-legacy.txt | Prompt legacy preservado | ninguna; material hist?rico |
 | docs/qa/README.md | QA | vivo | conservar | docs/qa/README.md | Navegaci?n y matriz reutilizable de QA | docs/qa/README.md |
 | docs/qa/reports/2026-07-21-watchlist-live-flight-tracking.json | QA | vivo | conservar | docs/qa/reports/2026-07-21-watchlist-live-flight-tracking.json | Resultado reproducible de Playwright para polling, errores, multi-leg, mapa y responsive dual-theme | docs/runbooks/runbook-live-flight-tracking.md |
+| docs/qa/reports/2026-07-21-zero-cost-live-provider-fallback.md | QA | vivo | conservar | docs/qa/reports/2026-07-21-zero-cost-live-provider-fallback.md | Evidencia de fallback, cuotas concurrentes, migración recuperable y arranque real sin coste | docs/qa/reports/2026-07-21-zero-cost-live-provider-fallback.md |
 | docs/qa/acceptance-checklists/frontend-pr-checklist.md | QA | vivo | conservar | docs/qa/acceptance-checklists/frontend-pr-checklist.md | Checklist reutilizable de QA | docs/qa/acceptance-checklists/frontend-pr-checklist.md |
 | docs/qa/hotels-pending-closeout.md | QA | vivo | conservar | docs/qa/hotels-pending-closeout.md | Checklist viva de cierre operativo para `/hoteles` con deudas pendientes y checks | docs/qa/hotels-pending-closeout.md |
 | docs/archive/qa-reports/quick-search-testsprite-strict-report-2026-04-23.md | QA | archivado | conservar | docs/archive/qa-reports/quick-search-testsprite-strict-report-2026-04-23.md | Reporte activo y ligero, separado del hist?rico cerrado | docs/qa/reports/quick-search-testsprite-strict-report-2026-04-23.md |
@@ -878,6 +880,24 @@ Entrada archivada agregada:
 Entradas vivas actualizadas:
 
 - `docs/product/watchlist.md`
+
+## Actualizacion manual 2026-07-21 (Fallback operacional sin coste)
+
+Entrada viva agregada:
+
+- `docs/adr/ADR-006-zero-cost-operational-provider-fallback.md`
+
+Evidencia QA agregada:
+
+- `docs/qa/reports/2026-07-21-zero-cost-live-provider-fallback.md`
+
+Entradas vivas actualizadas:
+
+- `docs/adr/ADR-005-live-operational-flight-tracking.md`
+- `docs/reference/backend/live-flight-tracking-contract.md`
+- `docs/runbooks/runbook-live-flight-tracking.md`
+- `docs/INDICE_UNICO.md`
+- `docs/DOCS_INVENTORY.md`
 - `docs/overview/current-state.md`
 - `docs/engineering/backend.md`
 - `docs/reference/README.md`
