@@ -25,6 +25,8 @@ class OperationalFlightIdentity:
     departure_date_local: dt.date | None
     scheduled_departure_at: dt.datetime | None
     scheduled_arrival_at: dt.datetime | None
+    callsign: str | None = None
+    icao24: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

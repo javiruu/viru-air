@@ -6,7 +6,7 @@ from app.api.deps import get_current_user
 from app.domain.live_flight_schemas import LiveFlightTrackingOut
 from app.infrastructure.db.models import FlightWatch, User
 from app.infrastructure.db.session import get_db
-from app.infrastructure.providers.aviationstack_operational_provider import build_operational_provider
+from app.infrastructure.providers.operational_provider_registry import build_operational_provider
 from app.services.live_flight_tracking import build_live_tracking_response, refresh_live_tracking
 
 
@@ -29,5 +29,5 @@ def get_watch_live_tracking(
     )
     if watch is None:
         raise HTTPException(status_code=404, detail="watch_not_found")
-    provider_status = refresh_live_tracking(db, watch, build_operational_provider(), refresh)
+    provider_status = refresh_live_tracking(db, watch, build_operational_provider(db), refresh)
     return build_live_tracking_response(db, watch, provider_status)

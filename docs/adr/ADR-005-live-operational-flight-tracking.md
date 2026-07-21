@@ -3,6 +3,7 @@
 - Estado: Aprobado
 - Fecha: 2026-07-21
 - Relacionado: `ADR-004-flight-tracking-hub.md`
+- Enmendado por: `ADR-006-zero-cost-operational-provider-fallback.md`
 
 ## Contexto
 
