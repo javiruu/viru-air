@@ -1,7 +1,8 @@
 {
-  "generated_at": "2026-07-21T17:07:11.093Z",
-  "base_url": "http://127.0.0.1:3102",
+  "generated_at": "2026-07-21T21:03:05.516Z",
+  "base_url": "http://127.0.0.1:3000",
   "route": "/watchlist",
+  "completed": true,
   "assertions": {
     "active_status_visible": true,
     "position_label_visible": true,
@@ -15,6 +16,8 @@
     "desktop_dark_horizontal_overflow_px": 0,
     "hidden_tab_suppressed_polling": true,
     "visible_tab_resumed_polling": true,
+    "identity_copy_has_no_raw_i18n_keys": true,
+    "identity_map_popup_not_auto_open": true,
     "identity_recovery_cta_visible": true,
     "identity_state_hides_useless_refresh": true,
     "multileg_secondary_legs_collapsed": true,
@@ -28,6 +31,9 @@
     "cancelled_state_visible": true,
     "desktop_light_horizontal_overflow_px": 0,
     "zoom_200_live_panel_visible": true,
+    "reported_viewport_has_no_raw_i18n_keys": true,
+    "reported_viewport_popup_not_auto_open": true,
+    "reported_viewport_manual_popup_inside_map": true,
     "tablet_light_horizontal_overflow_px": 0,
     "mobile_dark_horizontal_overflow_px": 0,
     "mobile_light_horizontal_overflow_px": 0,
@@ -36,10 +42,10 @@
     "race_did_not_overwrite_selection": true
   },
   "request_counts": {
-    "live_total": 16,
+    "live_total": 18,
     "by_watch": {
-      "watch-live": 13,
-      "watch-legacy": 2,
+      "watch-live": 14,
+      "watch-legacy": 3,
       "watch-multi": 1
     }
   },
@@ -58,26 +64,45 @@
     "docs/qa/screenshots/watchlist-live-flight-tracking/09-desktop-dark-no-position-map.png",
     "docs/qa/screenshots/watchlist-live-flight-tracking/07-desktop-dark-stale-error.png",
     "docs/qa/screenshots/watchlist-live-flight-tracking/03-desktop-light-live-panel.png",
+    "docs/qa/screenshots/watchlist-live-flight-tracking/15-reported-viewport-light-page.png",
+    "docs/qa/screenshots/watchlist-live-flight-tracking/16-reported-viewport-light-manual-popup.png",
     "docs/qa/screenshots/watchlist-live-flight-tracking/10-tablet-light-live-panel.png",
     "docs/qa/screenshots/watchlist-live-flight-tracking/04-mobile-dark-live-panel.png",
     "docs/qa/screenshots/watchlist-live-flight-tracking/05-mobile-light-live-panel.png",
     "docs/qa/screenshots/watchlist-live-flight-tracking/11-mobile-375-dark-live-panel.png",
-    "docs/qa/screenshots/watchlist-live-flight-tracking/12-mobile-320-light-live-panel.png"
+    "docs/qa/screenshots/watchlist-live-flight-tracking/17-mobile-375-dark-map.png",
+    "docs/qa/screenshots/watchlist-live-flight-tracking/12-mobile-320-light-live-panel.png",
+    "docs/qa/screenshots/watchlist-live-flight-tracking/18-race-1280-dark-page.png"
   ],
   "marker_geometry": {
     "inside": true,
     "marker": {
       "left": 980.7213134765625,
       "right": 1011.2161865234375,
-      "top": 1610.1588134765625,
-      "bottom": 1640.6536865234375
+      "top": 1622.2213134765625,
+      "bottom": 1652.7161865234375
     },
     "stage": {
       "left": 815.71875,
       "right": 1162.796875,
-      "top": 1502.90625,
-      "bottom": 1742.90625
+      "top": 1514.96875,
+      "bottom": 1754.96875
     },
     "topElement": null
+  },
+  "manual_popup_geometry": {
+    "inside": true,
+    "popup": {
+      "left": 425.421875,
+      "right": 577.421875,
+      "top": 219.3125,
+      "bottom": 353.921875
+    },
+    "stage": {
+      "left": 92.421875,
+      "right": 981.578125,
+      "top": 217.5625,
+      "bottom": 457.5625
+    }
   }
 }

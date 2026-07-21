@@ -380,9 +380,20 @@ type MapPopupProps = {
   onClose?: () => void;
   closeButton?: boolean;
   className?: string;
+  anchor?: maplibregl.PopupOptions["anchor"];
+  offset?: maplibregl.PopupOptions["offset"];
 };
 
-export function MapPopup({ longitude, latitude, children, onClose, closeButton = false, className }: MapPopupProps) {
+export function MapPopup({
+  longitude,
+  latitude,
+  children,
+  onClose,
+  closeButton = false,
+  className,
+  anchor,
+  offset,
+}: MapPopupProps) {
   const { map } = useMapContext();
   const popupRef = useRef<maplibregl.Popup | null>(null);
   const renderHostRef = useRef<{ element: HTMLDivElement; root: Root } | null>(null);
@@ -394,6 +405,8 @@ export function MapPopup({ longitude, latitude, children, onClose, closeButton =
     renderHostRef.current = host;
     renderInHost(host.root, children);
     const popup = new maplibregl.Popup({
+      anchor,
+      offset,
       closeButton,
       closeOnClick: false,
       // Avoid browser auto-scroll when popup content includes focusable elements.
@@ -415,7 +428,7 @@ export function MapPopup({ longitude, latitude, children, onClose, closeButton =
       popupRef.current = null;
       renderHostRef.current = null;
     };
-  }, [children, map, longitude, latitude, closeButton, className, onClose]);
+  }, [anchor, children, map, longitude, latitude, closeButton, className, offset, onClose]);
 
   useEffect(() => {
     popupRef.current?.setLngLat([longitude, latitude]);

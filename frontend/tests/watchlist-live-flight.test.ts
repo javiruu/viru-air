@@ -178,6 +178,10 @@ test("watchlist live UI keeps map positions observed and multi-leg detail progre
   assert.match(mapPanel, /--watch-map-heading.*heading_deg/);
   assert.match(screensCss, /rotate\(var\(--watch-map-heading, 0deg\)\)/);
   assert.doesNotMatch(screensCss, /watch-map-live-marker[^}]*rotate\(16deg\)/s);
+  assert.doesNotMatch(mapPanel, /return livePosition \? null : primary/);
+  assert.doesNotMatch(mapPanel, /setActivePopupWatchId\(primary\.watchId\)/);
+  assert.match(mapPanel, /<MapPopup[\s\S]*anchor="top"/);
+  assert.match(mapPanel, /<MapPopup[\s\S]*offset=\{20\}/);
   assert.match(livePanel, /watch-live-flight-leg--secondary/);
   assert.match(livePanel, /<details/);
   assert.match(livePanel, /watchlist\.live\.legUnavailable/);

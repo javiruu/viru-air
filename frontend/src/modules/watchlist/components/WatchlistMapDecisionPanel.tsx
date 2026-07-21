@@ -55,7 +55,6 @@ export function WatchlistMapDecisionPanel({
 }: WatchlistMapDecisionPanelProps) {
   const { t, localeTag } = useI18n();
   const mapRef = useRef<MapRef>(null);
-  const hadLivePositionRef = useRef(false);
   const [activePopupWatchId, setActivePopupWatchId] = useState<string | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const handleMapReady = useCallback(() => setIsMapReady(true), []);
@@ -67,13 +66,8 @@ export function WatchlistMapDecisionPanel({
     [visibleRoutes],
   );
   const popupRoute = useMemo(
-    () => {
-      if (activePopupWatchId) {
-        return visibleRoutes.find((route) => route.watchId === activePopupWatchId) ?? null;
-      }
-      return livePosition ? null : primary;
-    },
-    [activePopupWatchId, livePosition, primary, visibleRoutes],
+    () => visibleRoutes.find((route) => route.watchId === activePopupWatchId) ?? null,
+    [activePopupWatchId, visibleRoutes],
   );
   const selectedRouteLabel = primary ? `${primary.origin} → ${primary.destination}` : "--";
   const selectedStatus = primary ? getWatchStatusMeta(primary.status, t) : null;
@@ -98,16 +92,6 @@ export function WatchlistMapDecisionPanel({
       { padding: 84, duration: 250, maxZoom: mode === "single" ? 6 : 5.5 },
     );
   }, [isMapReady, livePosition, mode, primary, visibleRoutes]);
-
-  useEffect(() => {
-    if (livePosition) {
-      if (!hadLivePositionRef.current) setActivePopupWatchId(null);
-      hadLivePositionRef.current = true;
-      return;
-    }
-    hadLivePositionRef.current = false;
-    if (!activePopupWatchId && primary) setActivePopupWatchId(primary.watchId);
-  }, [activePopupWatchId, livePosition, primary]);
 
   if (!hasSelectedRoute) {
     return (
@@ -321,6 +305,8 @@ export function WatchlistMapDecisionPanel({
             <MapPopup
               longitude={(popupRoute.originCoordinates[0] + popupRoute.destinationCoordinates[0]) / 2}
               latitude={(popupRoute.originCoordinates[1] + popupRoute.destinationCoordinates[1]) / 2}
+              anchor="top"
+              offset={20}
               closeButton
               onClose={() => setActivePopupWatchId(null)}
             >
