@@ -52,6 +52,11 @@ class FlightWatch(Base):
 
     user: Mapped[User] = relationship(back_populates="watches")
     snapshots: Mapped[list["PriceSnapshot"]] = relationship(back_populates="watch")
+    tracked_legs: Mapped[list["WatchTrackedFlightLeg"]] = relationship(
+        back_populates="watch",
+        cascade="all, delete-orphan",
+        order_by="WatchTrackedFlightLeg.sequence",
+    )
 
 
 class PriceSnapshot(Base):
@@ -70,6 +75,110 @@ class PriceSnapshot(Base):
     is_stale: Mapped[bool] = mapped_column(Boolean, default=False)
 
     watch: Mapped[FlightWatch] = relationship(back_populates="snapshots")
+
+
+class WatchTrackedFlightLeg(Base):
+    __tablename__ = "watch_tracked_flight_leg"
+    __table_args__ = (
+        UniqueConstraint("watch_id", "sequence", name="uq_watch_tracked_flight_leg_sequence"),
+        Index("ix_watch_tracked_flight_leg_instance", "flight_instance_fingerprint"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    watch_id: Mapped[str] = mapped_column(
+        ForeignKey("flight_watch.id", ondelete="CASCADE"),
+        index=True,
+    )
+    sequence: Mapped[int] = mapped_column(Integer)
+    flight_instance_fingerprint: Mapped[str] = mapped_column(String(64))
+    carrier_code: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    flight_number: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    origin_iata: Mapped[str] = mapped_column(String(3))
+    destination_iata: Mapped[str] = mapped_column(String(3))
+    departure_date_local: Mapped[date_type | None] = mapped_column(Date, nullable=True)
+    scheduled_departure_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    scheduled_arrival_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    identity_source: Mapped[str] = mapped_column(String(24), default="quick_search")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=utc_now_naive,
+        onupdate=utc_now_naive,
+    )
+
+    watch: Mapped[FlightWatch] = relationship(back_populates="tracked_legs")
+
+
+class FlightOperationalSnapshot(Base):
+    __tablename__ = "flight_operational_snapshot"
+    __table_args__ = (
+        UniqueConstraint(
+            "flight_instance_fingerprint",
+            "provider",
+            "observed_at",
+            name="uq_flight_operational_snapshot_observation",
+        ),
+        Index(
+            "ix_flight_operational_snapshot_instance_observed",
+            "flight_instance_fingerprint",
+            "observed_at",
+        ),
+        Index("ix_flight_operational_snapshot_expires", "expires_at"),
+        Index(
+            "ix_flight_operational_snapshot_provider_flight",
+            "provider",
+            "provider_flight_id",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    flight_instance_fingerprint: Mapped[str] = mapped_column(String(64))
+    provider: Mapped[str] = mapped_column(String(40))
+    provider_flight_id: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    flight_number: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    callsign: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    icao24: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    status: Mapped[str] = mapped_column(String(24))
+    status_raw: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    observed_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime)
+    scheduled_departure_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    estimated_departure_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    actual_departure_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    scheduled_arrival_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    estimated_arrival_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    actual_arrival_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    departure_terminal: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    departure_gate: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    arrival_terminal: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    arrival_gate: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    departure_delay_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    arrival_delay_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    latitude: Mapped[float | None] = mapped_column(Numeric(9, 6), nullable=True)
+    longitude: Mapped[float | None] = mapped_column(Numeric(9, 6), nullable=True)
+    altitude_m: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    speed_mps: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    heading_deg: Mapped[float | None] = mapped_column(Numeric(6, 2), nullable=True)
+    on_ground: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    registration: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    aircraft_iata: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    aircraft_icao: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    data_quality: Mapped[str] = mapped_column(String(24), default="observed")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+
+
+class FlightOperationalRefreshLock(Base):
+    __tablename__ = "flight_operational_refresh_lock"
+    __table_args__ = (
+        Index("ix_flight_operational_refresh_lock_token", "lock_token", unique=True),
+        Index("ix_flight_operational_refresh_lock_expires", "expires_at"),
+    )
+
+    flight_instance_fingerprint: Mapped[str] = mapped_column(String(64), primary_key=True)
+    lock_token: Mapped[str] = mapped_column(String(64))
+    acquired_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    expires_at: Mapped[datetime] = mapped_column(DateTime)
+    outcome: Mapped[str | None] = mapped_column(String(24), nullable=True)
 
 
 class AlertRule(Base):

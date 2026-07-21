@@ -20,8 +20,10 @@
 - [Backend](engineering/backend.md)
 - [Reference](reference/README.md)
 - [Quick Search contract](reference/backend/quick-search-contract.md)
+- [Live flight tracking contract](reference/backend/live-flight-tracking-contract.md)
 - [Provider integration guide](reference/backend/provider-integration-guide.md)
 - [Feature flags y activacion por entorno](reference/feature-flags.md)
+- [Runbook live flight tracking](runbooks/runbook-live-flight-tracking.md)
 - [Door-to-door API contract](reference/backend/door-to-door-contract.md)
 - [Notifications contract](reference/backend/notifications-contract.md)
 - [Quick Search acceptance checklist](reference/backend/quick-search-acceptance-checklist.md)
@@ -110,6 +112,7 @@
 
 - [Runbooks operativos](runbooks/)
 - [Runbook de estabilización watchlist + quick-search](runbooks/runbook-watchlist-quick-search-stabilization.md)
+- [Runbook live flight tracking desde Watchlist](runbooks/runbook-live-flight-tracking.md)
 - [Runbook QA de puerta a puerta](runbooks/runbook-puerta-a-puerta-qa.md)
 - [Publicacion web por tuneles](runbooks/runbook-public-tunnels.md)
 - [Sweeps hoteleros](runbooks/hotels-sweeps.md)
@@ -119,6 +122,7 @@
 - [Planes de trabajo](plans/README.md)
 - [Plan progresivo de 20 fases — Quick Search + Ajustes activos](plans/active/2026-07-01-plan-20-fases-quick-search-ajustes.md)
 - [Quick Search ajustes — Fase 1 inventario](plans/active/2026-07-01-quick-search-ajustes-fase-01-inventario.md)
+- [Live flight tracking a partir de Watchlist (completado)](archive/plans/2026-07-21-live-flight-tracking-watchlist.md)
 - [Auditoria cache Fare Memory F21](plans/2026-06-14-fare-memory-cache-audit.md)
 
 ### ADRs
@@ -127,6 +131,7 @@
 - [ADR-002](adr/ADR-002-stack-base.md)
 - [ADR-003](adr/ADR-003-provider-adapter.md)
 - [ADR-004](adr/ADR-004-flight-tracking-hub.md)
+- [ADR-005](adr/ADR-005-live-operational-flight-tracking.md)
 
 ### Specs
 
@@ -141,6 +146,7 @@
 - [README QA](qa/README.md)
 - [Cierre pendiente de `/hoteles`](qa/hotels-pending-closeout.md)
 - [Matriz QA por area](qa/qa-command-matrix.md)
+- [Evidencia Live flight tracking desde Watchlist](qa/reports/2026-07-21-watchlist-live-flight-tracking.json)
 - [Visual QA (archivado)](archive/qa-visual/)
 - [Auditoría de paleta dual (archivada)](archive/qa-visual/color-palette-audit.md)
 - [Reportes QA (archivados)](archive/qa-reports/)

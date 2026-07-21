@@ -40,13 +40,23 @@ except Exception:  # pragma: no cover
     process_due_route_revalidation_jobs = None
 
 
-def _flight(price: float, dep: str, source: str = "test-provider", currency: str = "EUR") -> ProviderFlight:
+def _flight(
+    price: float,
+    dep: str,
+    source: str = "test-provider",
+    currency: str = "EUR",
+    *,
+    carrier_code: str | None = None,
+    flight_number: str | None = None,
+) -> ProviderFlight:
     return ProviderFlight(
         price=price,
         currency=currency,
         departure_time_local=dep,
         captured_at=dt.datetime.now(dt.UTC).replace(tzinfo=None),
         source=source,
+        carrier_code=carrier_code,
+        flight_number=flight_number,
     )
 
 
@@ -173,6 +183,28 @@ class QuickSearchE2ERegressionTests(unittest.TestCase):
         self.assertFalse(result["meta"]["search_cache"]["exact_hit"])
         self.assertIsNotNone(result["meta"]["search_cache"]["freshness"])
         self.assertFalse(result["meta"]["search_cache"]["requires_revalidation"])
+
+    def test_exact_provider_flight_exposes_saveable_live_tracking_leg(self):
+        payload = self._payload()
+        with _patch_request_provider(
+            return_value=[
+                _flight(
+                    55,
+                    "10:00",
+                    carrier_code="FR",
+                    flight_number="FR1234",
+                )
+            ]
+        ):
+            result = self._call_quick_search(payload)
+
+        leg = result["results"][0]["legs"][0]
+        self.assertEqual(leg["flight_num"], "FR1234")
+        self.assertEqual(leg["carrier_code"], "FR")
+        self.assertEqual(leg["origin_iata"], "LEI")
+        self.assertEqual(leg["destination_iata"], "DUB")
+        self.assertEqual(leg["dep_ts"], "2026-06-14T10:00:00")
+        self.assertIsNone(leg["arr_ts"])
 
     def test_origin_nearby_expansion_is_real(self):
         payload = self._payload(origin={"seed_iata": "LEI", "include_nearby": True, "radius_km": 260, "max_candidates": 4})

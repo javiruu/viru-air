@@ -1,5 +1,11 @@
 # History
 
+## 2026-07-21 - Live flight tracking desde Watchlist
+
+- Las Watches guardadas desde resultados exactos conservan sus piernas y exponen estado operacional, horarios, retrasos, terminales, puertas y posición observada mediante `GET /api/v1/watchlist/{watch_id}/live`.
+- El backend añade snapshots compartidos, TTL por fase, lease persistente, deduplicación, retención y un adapter Aviationstack opcional; sin key o con proveedor degradado, precios e histórico siguen funcionando.
+- `/watchlist` integra una tarjeta cálida y compacta con multi-leg progresivo, recuperación para Watches legacy, polling consciente de visibilidad y mapa sin posiciones simuladas, verificada en dark/light y desktop/tablet/mobile.
+
 ## 2026-07-14 - Rebranding integral a Viru Air
 
 - La marca, los slugs, los nombres tecnicos, los ejemplos de despliegue y las referencias documentales se unifican bajo Viru Air.

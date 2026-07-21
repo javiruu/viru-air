@@ -20,6 +20,10 @@ class CorrelationIdFilter(logging.Filter):
         return True
 
 
+def _suppress_secret_bearing_transport_logs() -> None:
+    logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
+
+
 def configure_logging() -> None:
     level = logging.DEBUG if os.getenv("APP_ENV", "local") == "local" else logging.INFO
     log_file = os.getenv("LOG_FILE") or _default_log_file()
@@ -43,6 +47,8 @@ def configure_logging() -> None:
     root_logger.handlers.clear()
     for handler in handlers:
         root_logger.addHandler(handler)
+
+    _suppress_secret_bearing_transport_logs()
 
     for name in ("uvicorn", "uvicorn.error", "uvicorn.access"):
         logger = logging.getLogger(name)

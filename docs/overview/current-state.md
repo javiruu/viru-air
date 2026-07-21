@@ -1,7 +1,7 @@
 # Estado actual
 
 **Estado:** vivo  
-**Ultima revision:** 2026-07-02
+**Ultima revision:** 2026-07-21
 **Fuente de verdad:** si  
 **Area:** overview
 
@@ -37,6 +37,7 @@
 - `/api/v1/search/quick` — busqueda rapida con cache L1/L2/Provider
 - `/api/v1/search/quick/calendar-hints` — precios estimados por mes
 - `/api/v1/search/deeplink` — generacion de enlaces a aerolineas
+- `/api/v1/watchlist/{watch_id}/live` — estado operacional por vuelo exacto, autenticado por owner
 
 ## Publicacion
 
@@ -60,6 +61,9 @@
 - Centro operativo con historico de precios integrado
 - Refresco automatico y manual de precios
 - Watchlist unificada con migracion de rutas
+- Enlace opcional a vuelos exactos guardados desde Quick Search
+- Estado operacional, horarios, puertas y posicion observada con degradacion segura si falta cobertura
+- Snapshots operacionales compartidos, cooldown de fallos y polling pausado en pestanas ocultas
 
 ### Puerta a puerta (activo)
 

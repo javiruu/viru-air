@@ -20,6 +20,14 @@ export type QuickSearchSaveResultPayload = {
   readonly deeplink_url: string | null;
   readonly itinerary_type: string | null;
   readonly group_id?: string | null;
+  readonly legs?: ReadonlyArray<{
+    readonly flight_number: string | null;
+    readonly carrier_code: string | null;
+    readonly origin_iata: string;
+    readonly destination_iata: string;
+    readonly departure_at: string;
+    readonly arrival_at: string | null;
+  }>;
 };
 
 type BuildQuickSearchSaveResultPayloadOptions = {
@@ -52,5 +60,17 @@ export function buildQuickSearchSaveResultPayload(
     deeplink_url: result.deeplink_url ?? options.fallbackDeepLinkUrl ?? null,
     itinerary_type: result.itinerary_type ?? null,
     group_id: options.groupId,
+    ...(result.legs?.length
+      ? {
+          legs: result.legs.slice(0, 8).map((leg) => ({
+            flight_number: leg.flight_num ?? null,
+            carrier_code: leg.carrier_code ?? null,
+            origin_iata: leg.origin_iata,
+            destination_iata: leg.destination_iata,
+            departure_at: leg.dep_ts,
+            arrival_at: leg.arr_ts,
+          })),
+        }
+      : {}),
   };
 }

@@ -78,6 +78,7 @@ from app.services.quick_search_provider_singleflight import (
 from app.services.fare_memory import build_freshness_payload, build_search_fingerprint
 from app.services.fare_memory_provider_observations import ObservationPersistenceContext, persist_provider_flight_observations
 from app.services.quick_search_save_result_observation import handle_saved_result_observation
+from app.services.live_flight_tracking import replace_watch_tracked_legs
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -469,6 +470,33 @@ def _estimate_duration_minutes(origin: str, destination: str) -> int | None:
     return max(45, int(flight_hours * 60))
 
 
+def _build_live_tracking_legs(item: Any) -> list[dict[str, Any]]:
+    flight_number = (item.flight.flight_number or "").strip().upper()
+    departure_clock = (item.flight.departure_time_local or "").strip()
+    if not flight_number or not departure_clock:
+        return []
+    try:
+        travel_date = (
+            item.travel_date
+            if isinstance(item.travel_date, dt.date)
+            else dt.date.fromisoformat(str(item.travel_date))
+        )
+        departure_time = dt.time.fromisoformat(departure_clock)
+        departure_at = dt.datetime.combine(travel_date, departure_time)
+    except (TypeError, ValueError):
+        return []
+    return [
+        {
+            "origin_iata": item.origin,
+            "destination_iata": item.destination,
+            "dep_ts": departure_at.isoformat(),
+            "arr_ts": None,
+            "flight_num": flight_number,
+            "carrier_code": item.flight.carrier_code,
+        }
+    ]
+
+
 def _sort_quick_search_results(results: list[Any], sort_by: str) -> list[Any]:
     if sort_by == "price":
         return sorted(
@@ -604,6 +632,28 @@ class QuickSearchCanonicalRequest(BaseModel):
     pagination: QuickSearchPagination = Field(default_factory=QuickSearchPagination)
 
 
+class QuickSearchSaveLegIn(BaseModel):
+    flight_number: str | None = Field(default=None, max_length=32)
+    carrier_code: str | None = Field(default=None, max_length=16)
+    origin_iata: str = Field(min_length=3, max_length=3)
+    destination_iata: str = Field(min_length=3, max_length=3)
+    departure_at: dt.datetime | None = None
+    arrival_at: dt.datetime | None = None
+
+    @field_validator("origin_iata", "destination_iata")
+    @classmethod
+    def validate_leg_iata(cls, value: str) -> str:
+        return _validate_iata(value)
+
+    @field_validator("flight_number", "carrier_code")
+    @classmethod
+    def normalize_leg_identity(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip().upper()
+        return normalized or None
+
+
 class QuickSearchSaveResultIn(BaseModel):
     origin_iata: str = Field(min_length=3, max_length=3)
     destination_iata: str = Field(min_length=3, max_length=3)
@@ -614,6 +664,7 @@ class QuickSearchSaveResultIn(BaseModel):
     requires_revalidation: bool | None = None
     validation_status: str | None = Field(default=None, max_length=40)
     group_id: str | None = Field(default=None, max_length=36)
+    legs: list[QuickSearchSaveLegIn] | None = Field(default=None, max_length=8)
 
     @field_validator("origin_iata", "destination_iata")
     @classmethod
@@ -624,6 +675,22 @@ class QuickSearchSaveResultIn(BaseModel):
     @classmethod
     def normalize_currency(cls, value: str) -> str:
         return str(value).upper().strip()
+
+    @model_validator(mode="after")
+    def validate_tracking_leg_chain(self):
+        if not self.legs:
+            return self
+        if self.legs[0].origin_iata != self.origin_iata:
+            raise ValueError("tracking legs must start at the saved route origin")
+        if self.legs[-1].destination_iata != self.destination_iata:
+            raise ValueError("tracking legs must end at the saved route destination")
+        for current, following in zip(self.legs, self.legs[1:], strict=False):
+            if current.destination_iata != following.origin_iata:
+                raise ValueError("tracking legs must form a continuous route")
+        first_departure = self.legs[0].departure_at
+        if first_departure is not None and first_departure.date() != self.travel_date:
+            raise ValueError("first tracking leg must depart on the saved travel date")
+        return self
 
 
 class QuickSearchGuidelineThresholdsIn(BaseModel):
@@ -2691,7 +2758,7 @@ def quick_search(
                 "freshness": item_freshness,
                 "deeplink_url": item.flight.deeplink_url,
                 "itinerary_type": "direct",
-                "legs": [],
+                "legs": _build_live_tracking_legs(item),
                 "score": item.score_breakdown,
                 "origin_seed_iata": item.origin_seed_iata,
                 "destination_seed_iata": item.destination_seed_iata,
@@ -3096,8 +3163,13 @@ def save_result(
     if existing:
         if payload.group_id and existing.group_id != payload.group_id:
             existing.group_id = payload.group_id
+        tracking_identity = replace_watch_tracked_legs(db, existing, payload.legs)
         handle_saved_result_observation(db, existing, payload)
-        body = {"watch_id": existing.id, "created_or_existing": "existing"}
+        body = {
+            "watch_id": existing.id,
+            "created_or_existing": "existing",
+            "tracking_identity": tracking_identity,
+        }
         store_response(
             db,
             user_id=current_user.id,
@@ -3121,8 +3193,13 @@ def save_result(
     )
     db.add(watch)
     db.flush()
+    tracking_identity = replace_watch_tracked_legs(db, watch, payload.legs)
     handle_saved_result_observation(db, watch, payload)
-    body = {"watch_id": watch.id, "created_or_existing": "created"}
+    body = {
+        "watch_id": watch.id,
+        "created_or_existing": "created",
+        "tracking_identity": tracking_identity,
+    }
     store_response(
         db,
         user_id=current_user.id,

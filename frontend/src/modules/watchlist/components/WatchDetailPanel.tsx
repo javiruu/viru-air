@@ -7,12 +7,20 @@ import { safeDateTime } from "@/modules/watchlist/presentation";
 import { getFreshnessPresentation, getHistoryConfidence, hasPriceSummaryData } from "@/modules/watchlist/summary";
 import type { PriceSummary, Watch, WatchDetail } from "@/modules/watchlist/types";
 import { Skeleton } from "@/modules/shared/Skeleton";
+import { WatchLiveFlightPanel } from "@/modules/watchlist/components/WatchLiveFlightPanel";
+import type { LiveFlightTracking } from "@/modules/watchlist/liveFlightTypes";
+import { buildQuickSearchSearchParams } from "@/modules/shared/useRouteState";
 
 type WatchDetailPanelProps = {
   selectedWatch: Watch | null;
   detail: WatchDetail | null;
   summary: PriceSummary | null;
   isLoading: boolean;
+  liveTracking: LiveFlightTracking | null;
+  isLoadingLiveTracking: boolean;
+  isRefreshingLiveTracking: boolean;
+  hasLiveTrackingError: boolean;
+  onRefreshLiveTracking: () => void;
   onPauseWatch: (watchId: string) => void;
   onResumeWatch: (watchId: string) => void;
 };
@@ -22,6 +30,11 @@ export function WatchDetailPanel({
   detail,
   summary,
   isLoading,
+  liveTracking,
+  isLoadingLiveTracking,
+  isRefreshingLiveTracking,
+  hasLiveTrackingError,
+  onRefreshLiveTracking,
   onPauseWatch,
   onResumeWatch,
 }: WatchDetailPanelProps) {
@@ -84,6 +97,11 @@ export function WatchDetailPanel({
     : confidence.level === "limited"
       ? t("watchlist.detail.interpretation.limited")
       : t("watchlist.detail.interpretation.initial");
+  const exactFlightSearchParams = buildQuickSearchSearchParams({
+    origin: focus.origin_iata,
+    destination: focus.destination_iata,
+    travelDate: focus.travel_date_local,
+  });
 
   return (
     <section className="panel panel-soft section-gap watch-detail-panel">
@@ -101,6 +119,15 @@ export function WatchDetailPanel({
         </div>
         <span className={`status-pill watch-detail-hero-status ${status.tone}`}>{status.label}</span>
       </div>
+
+      <WatchLiveFlightPanel
+        tracking={liveTracking}
+        isLoading={isLoadingLiveTracking}
+        isRefreshing={isRefreshingLiveTracking}
+        hasError={hasLiveTrackingError}
+        onRefresh={onRefreshLiveTracking}
+        exactFlightHref={`/quick-search?${exactFlightSearchParams}`}
+      />
 
       <div className="watch-detail-block watch-detail-block--primary">
         <h3 className="watch-detail-block-title">{t("watchlist.detail.mainReadingTitle")}</h3>

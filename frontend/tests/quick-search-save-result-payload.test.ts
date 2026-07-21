@@ -58,3 +58,39 @@ test("quick search save-result payload carries freshness and revalidation metada
     group_id: "group-1",
   });
 });
+
+test("quick search save-result payload preserves exact flight legs for live tracking", () => {
+  const result: SearchResult = {
+    result_id: "result-live-1",
+    origin: "MAD",
+    destination: "FCO",
+    travel_date: "2026-07-22",
+    departure_time_local: "08:30",
+    price: 72.5,
+    currency: "EUR",
+    source: "quick-search",
+    legs: [
+      {
+        flight_num: "FR9602",
+        carrier_code: "FR",
+        origin_iata: "MAD",
+        destination_iata: "FCO",
+        dep_ts: "2026-07-22T08:30:00Z",
+        arr_ts: "2026-07-22T10:55:00Z",
+      },
+    ],
+  };
+
+  const payload = buildQuickSearchSaveResultPayload(result);
+
+  assert.deepEqual(payload.legs, [
+    {
+      flight_number: "FR9602",
+      carrier_code: "FR",
+      origin_iata: "MAD",
+      destination_iata: "FCO",
+      departure_at: "2026-07-22T08:30:00Z",
+      arrival_at: "2026-07-22T10:55:00Z",
+    },
+  ]);
+});
