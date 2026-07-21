@@ -255,6 +255,7 @@ const report = {
   generated_at: new Date().toISOString(),
   base_url: baseUrl,
   route: "/watchlist",
+  completed: false,
   assertions: {},
   request_counts: { live_total: 0, by_watch: {} },
   console_errors: [],
@@ -367,7 +368,8 @@ async function createPage(browser, viewport, theme, locale = "es") {
 async function openWatchlist(page) {
   await page.goto(`${baseUrl}/watchlist?watch_id=watch-live`, { waitUntil: "domcontentloaded", timeout: 30_000 });
   await page.locator(".watch-live-flight-leg").waitFor({ state: "visible", timeout: 20_000 });
-  await page.waitForTimeout(500);
+  await page.locator(".watch-map-stage .maplibregl-canvas").waitFor({ state: "visible", timeout: 20_000 });
+  await page.waitForTimeout(1_000);
 }
 
 async function capture(page, filename, locator = null) {
@@ -446,6 +448,10 @@ try {
   const legacyRow = desktopDark.page.locator(".watch-row", { hasText: "AGP → DUB" });
   await legacyRow.click();
   await desktopDark.page.getByText("Esta ruta aún no sabe qué avión seguir", { exact: true }).waitFor({ state: "visible" });
+  report.assertions.identity_copy_has_no_raw_i18n_keys =
+    (await desktopDark.page.getByText(/^watchlist\.(live|map)\./).count()) === 0;
+  report.assertions.identity_map_popup_not_auto_open =
+    (await desktopDark.page.locator(".watch-map-panel .maplibregl-popup").count()) === 0;
   report.assertions.identity_recovery_cta_visible = await desktopDark.page.getByRole("link", { name: "Buscar este vuelo exacto" }).isVisible();
   report.assertions.identity_state_hides_useless_refresh = (await desktopDark.page.locator(".watch-live-flight-refresh").count()) === 0;
   await capture(desktopDark.page, "06-desktop-dark-identity-missing.png", desktopDark.page.locator(".watch-live-flight"));
@@ -503,6 +509,43 @@ try {
   report.assertions.zoom_200_live_panel_visible = await desktopLight.page.locator(".watch-live-flight").isVisible();
   await desktopLight.context.close();
 
+  const reportedViewport = await createPage(browser, { width: 1074, height: 787 }, "light");
+  await openWatchlist(reportedViewport.page);
+  await reportedViewport.page.locator(".watch-row", { hasText: "AGP → DUB" }).click();
+  await reportedViewport.page
+    .getByText("Esta ruta aún no sabe qué avión seguir", { exact: true })
+    .waitFor({ state: "visible" });
+  report.assertions.reported_viewport_has_no_raw_i18n_keys =
+    (await reportedViewport.page.getByText(/^watchlist\.(live|map)\./).count()) === 0;
+  report.assertions.reported_viewport_popup_not_auto_open =
+    (await reportedViewport.page.locator(".watch-map-panel .maplibregl-popup").count()) === 0;
+  await capture(reportedViewport.page, "15-reported-viewport-light-page.png");
+  await reportedViewport.page.locator(".watch-map-chip.is-primary").first().click();
+  const manualPopup = reportedViewport.page.locator(".watch-map-panel .maplibregl-popup");
+  await manualPopup.waitFor({ state: "visible" });
+  const manualPopupGeometry = await manualPopup.evaluate((element) => {
+    const popup = element.getBoundingClientRect();
+    const stage = element.closest(".watch-map-stage")?.getBoundingClientRect();
+    if (!stage) return { inside: false, popup: null, stage: null };
+    return {
+      inside:
+        popup.left >= stage.left &&
+        popup.right <= stage.right &&
+        popup.top >= stage.top &&
+        popup.bottom <= stage.bottom,
+      popup: { left: popup.left, right: popup.right, top: popup.top, bottom: popup.bottom },
+      stage: { left: stage.left, right: stage.right, top: stage.top, bottom: stage.bottom },
+    };
+  });
+  report.manual_popup_geometry = manualPopupGeometry;
+  report.assertions.reported_viewport_manual_popup_inside_map = manualPopupGeometry.inside;
+  await capture(
+    reportedViewport.page,
+    "16-reported-viewport-light-manual-popup.png",
+    reportedViewport.page.locator(".watch-map-panel"),
+  );
+  await reportedViewport.context.close();
+
   const tablet = await createPage(browser, { width: 768, height: 1024 }, "light");
   await openWatchlist(tablet.page);
   await assertNoHorizontalOverflow(tablet.page, "tablet_light");
@@ -525,6 +568,12 @@ try {
     await openWatchlist(narrowMobile.page);
     await assertNoHorizontalOverflow(narrowMobile.page, `mobile_${width}_${theme}`);
     await capture(narrowMobile.page, filename);
+    if (width === 375) {
+      const mobileMap = narrowMobile.page.locator(".watch-map-panel");
+      await mobileMap.scrollIntoViewIfNeeded();
+      await narrowMobile.page.waitForTimeout(1_200);
+      await capture(narrowMobile.page, "17-mobile-375-dark-map.png", mobileMap);
+    }
     await narrowMobile.context.close();
   }
 
@@ -538,6 +587,7 @@ try {
   report.assertions.race_did_not_overwrite_selection =
     (await race.page.getByText("Esta ruta aún no sabe qué avión seguir", { exact: true }).isVisible()) &&
     (await race.page.locator(".watch-live-flight-leg").count()) === 0;
+  await capture(race.page, "18-race-1280-dark-page.png");
   await race.context.close();
 
   const requiredAssertions = [
@@ -553,6 +603,8 @@ try {
     "hidden_tab_suppressed_polling",
     "visible_tab_resumed_polling",
     "identity_recovery_cta_visible",
+    "identity_copy_has_no_raw_i18n_keys",
+    "identity_map_popup_not_auto_open",
     "identity_state_hides_useless_refresh",
     "multileg_secondary_legs_collapsed",
     "multileg_missing_leg_visible",
@@ -564,6 +616,9 @@ try {
     "landed_state_visible",
     "cancelled_state_visible",
     "zoom_200_live_panel_visible",
+    "reported_viewport_has_no_raw_i18n_keys",
+    "reported_viewport_popup_not_auto_open",
+    "reported_viewport_manual_popup_inside_map",
     "race_did_not_overwrite_selection",
   ];
   for (const assertion of requiredAssertions) {
@@ -571,6 +626,7 @@ try {
   }
   if (report.console_errors.length) throw new Error(`Console errors: ${report.console_errors.length}`);
   if (report.unexpected_http_errors.length) throw new Error(`Unexpected HTTP errors: ${report.unexpected_http_errors.length}`);
+  report.completed = true;
 } finally {
   await browser.close();
   await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
