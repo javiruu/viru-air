@@ -12,6 +12,7 @@ from app.services.live_flight_tracking import (
     link_watch_identity_from_fare_memory,
     refresh_live_tracking,
 )
+from app.services.watchlist_delay_prediction import attach_watchlist_delay_predictions
 
 
 router = APIRouter()
@@ -35,4 +36,5 @@ def get_watch_live_tracking(
         raise HTTPException(status_code=404, detail="watch_not_found")
     link_watch_identity_from_fare_memory(db, watch)
     provider_status = refresh_live_tracking(db, watch, build_operational_provider(db), refresh)
-    return build_live_tracking_response(db, watch, provider_status)
+    tracking = build_live_tracking_response(db, watch, provider_status)
+    return attach_watchlist_delay_predictions(db, tracking, current_user.id)

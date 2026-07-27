@@ -50,6 +50,56 @@ export type LiveFlightOperational = {
   data_quality: string;
 };
 
+export type LiveDelayPredictionFactor =
+  | "incoming_running_late"
+  | "tight_turnaround"
+  | "incoming_airborne"
+  | "official_delay_signal"
+  | "incoming_landed"
+  | "healthy_turnaround"
+  | "stale_observation";
+
+export type LiveIncomingAircraft = {
+  flight_number: string | null;
+  origin_iata: string;
+  destination_iata: string;
+  registration: string;
+  status: LiveFlightStatus;
+  scheduled_arrival_at: string;
+  estimated_arrival_at: string | null;
+  actual_arrival_at: string | null;
+  observed_at: string;
+  freshness: "fresh" | "stale";
+};
+
+export type LiveDelayPrediction =
+  | {
+      status: "available";
+      model_version: "viru_rotation_v1";
+      risk: "low" | "elevated" | "high";
+      risk_score: number;
+      confidence: "low" | "medium" | "high";
+      predicted_delay_min_minutes: number;
+      predicted_delay_max_minutes: number;
+      turnaround_minutes: number;
+      factor_codes: LiveDelayPredictionFactor[];
+      incoming_aircraft: LiveIncomingAircraft;
+    }
+  | {
+      status: "insufficient_data";
+      model_version: "viru_rotation_v1";
+      reason:
+        | "operational_data_missing"
+        | "registration_missing"
+        | "schedule_missing"
+        | "incoming_not_found";
+    }
+  | {
+      status: "not_applicable";
+      model_version: "viru_rotation_v1";
+      reason: "already_departed" | "flight_terminal";
+    };
+
 export type LiveFlightLeg = {
   sequence: number;
   identity: {
@@ -62,6 +112,7 @@ export type LiveFlightLeg = {
     scheduled_arrival_at: string | null;
   };
   operational: LiveFlightOperational | null;
+  delay_prediction?: LiveDelayPrediction | null;
 };
 
 export type LiveFlightTracking = {

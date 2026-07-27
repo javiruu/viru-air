@@ -9,6 +9,7 @@ import {
   selectCurrentLiveLeg,
 } from "@/modules/watchlist/liveFlightPresentation";
 import type { LiveFlightLeg, LiveFlightTracking } from "@/modules/watchlist/liveFlightTypes";
+import { WatchDelayPrediction } from "@/modules/watchlist/components/WatchDelayPrediction";
 
 type WatchLiveFlightPanelProps = {
   tracking: LiveFlightTracking | null;
@@ -106,6 +107,8 @@ export function WatchLiveFlightPanel({
             ) : null}
           </div>
         </div>
+
+        <WatchDelayPrediction prediction={leg.delay_prediction ?? null} />
 
         <footer className="watch-live-flight-meta">
           <span>

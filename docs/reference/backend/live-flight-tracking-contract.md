@@ -1,7 +1,7 @@
 # Live flight tracking desde Watchlist
 
 **Estado:** vivo
-**Última revisión:** 2026-07-27
+**Última revisión:** 2026-07-28
 **Fuente de verdad:** sí
 **Área:** backend
 
@@ -116,6 +116,11 @@ Authorization: Bearer <token>
         "aircraft_iata": "A320",
         "aircraft_icao": "A320",
         "data_quality": "observed"
+      },
+      "delay_prediction": {
+        "status": "not_applicable",
+        "model_version": "viru_rotation_v1",
+        "reason": "already_departed"
       }
     }
   ]
@@ -124,6 +129,60 @@ Authorization: Bearer <token>
 
 `operational` puede ser `null` por pierna. `position` solo existe cuando latitud y longitud superan la validación de límites; la línea del mapa continúa representando la ruta, nunca una posición estimada.
 Todos los timestamps de respuesta representan UTC y se serializan con sufijo `Z`. Altitud y velocidad se normalizan a metros y metros por segundo aunque el proveedor entregue pies, centenas de pies, nudos o km/h.
+
+## Predicción explicable por avión entrante
+
+Cada pierna futura puede incluir `delay_prediction`. El modelo
+`viru_rotation_v1` es determinista y auditable: no llama a un LLM ni presenta
+una probabilidad calibrada. Busca en los snapshots operacionales compartidos el
+tramo anterior de la misma matrícula, exige que termine en el aeropuerto de
+origen y limita la rotación a las 25 horas previas. La señal operacional se
+reutiliza globalmente, pero la identidad de ruta solo puede proceder de piernas
+guardadas por la misma persona autenticada. Esta lectura no crea un cache
+paralelo ni consume cuota adicional.
+
+Cuando existe una rotación fiable, la forma es:
+
+```json
+{
+  "status": "available",
+  "model_version": "viru_rotation_v1",
+  "risk": "high",
+  "risk_score": 90,
+  "confidence": "high",
+  "predicted_delay_min_minutes": 20,
+  "predicted_delay_max_minutes": 40,
+  "turnaround_minutes": 20,
+  "factor_codes": [
+    "incoming_running_late",
+    "tight_turnaround",
+    "incoming_airborne"
+  ],
+  "incoming_aircraft": {
+    "registration": "EC-ROT",
+    "flight_number": "IB1234",
+    "origin_iata": "BCN",
+    "destination_iata": "MAD",
+    "status": "active",
+    "scheduled_arrival_at": "2026-07-28T10:30:00Z",
+    "estimated_arrival_at": "2026-07-28T11:40:00Z",
+    "actual_arrival_at": null,
+    "observed_at": "2026-07-28T10:45:00Z",
+    "freshness": "fresh"
+  }
+}
+```
+
+El rango parte del mayor entre el retraso oficial de salida y el margen que
+falta para una escala base de 45 minutos. El score suma riesgo por escala
+ajustada, demora del entrante, señal oficial y avión todavía en vuelo; se
+clasifica como `low`, `elevated` o `high`. La confianza baja si el snapshot está
+vencido y sube cuando existe hora estimada o real de llegada.
+
+Si falta matrícula, horario, observación o rotación, la respuesta conserva
+`status=insufficient_data` y un `reason` explícito. Para vuelos ya salidos o en
+estado terminal usa `status=not_applicable`. La UI debe mostrar la estimación
+junto al horario oficial, nunca reemplazarlo.
 
 ## Selección de proveedor y coste
 
@@ -168,6 +227,8 @@ El cliente respeta `refresh_after_seconds`, pausa al ocultarse y aborta solicitu
 - los snapshots operacionales se podan a 30 días con cadencia máxima de una ejecución cada 6 horas;
 - el payload remoto crudo y la API key no se persisten ni se devuelven;
 - la consulta filtra siempre por `watch_id` y `user_id`.
+- la predicción nunca toma número o ruta desde la Watch de otra persona, aunque
+  el snapshot operacional subyacente sea compartido;
 
 ## Fuentes relacionadas
 
