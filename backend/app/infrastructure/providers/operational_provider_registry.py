@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import os
+from pathlib import Path
 
 from sqlalchemy.orm import Session
 
@@ -124,9 +126,9 @@ def _free_registrations(*, allow_billable: bool) -> list[OperationalProviderRegi
                 2,
             )
         )
-    if (
-        _bool_env("LIVE_FLIGHT_OPENSKY_ANONYMOUS", True)
-        or os.getenv("OPENSKY_USERNAME", "").strip()
+    opensky_client_id, opensky_client_secret = _opensky_credentials()
+    if _bool_env("LIVE_FLIGHT_OPENSKY_ANONYMOUS", True) or (
+        opensky_client_id and opensky_client_secret
     ):
         registrations.append(
             _registration(
@@ -134,8 +136,13 @@ def _free_registrations(*, allow_billable: bool) -> list[OperationalProviderRegi
                 OpenSkyOperationalFlightProvider(
                     os.getenv("OPENSKY_BASE_URL", "https://opensky-network.org/api"),
                     timeout,
-                    os.getenv("OPENSKY_USERNAME", "").strip() or None,
-                    os.getenv("OPENSKY_PASSWORD", "").strip() or None,
+                    opensky_client_id,
+                    opensky_client_secret,
+                    os.getenv(
+                        "OPENSKY_TOKEN_URL",
+                        "https://auth.opensky-network.org/auth/realms/"
+                        "opensky-network/protocol/openid-connect/token",
+                    ),
                 ),
                 {"position"},
                 "day",
@@ -224,3 +231,24 @@ def _timeout() -> float:
         return max(1.0, min(20.0, float(os.getenv("LIVE_FLIGHT_PROVIDER_TIMEOUT_SECONDS", "8"))))
     except ValueError:
         return 8.0
+
+
+def _opensky_credentials() -> tuple[str | None, str | None]:
+    client_id = os.getenv("OPENSKY_CLIENT_ID", "").strip()
+    client_secret = os.getenv("OPENSKY_CLIENT_SECRET", "").strip()
+    if client_id and client_secret:
+        return client_id, client_secret
+    credentials_file = os.getenv("OPENSKY_CREDENTIALS_FILE", "").strip()
+    if not credentials_file:
+        return None, None
+    try:
+        payload = json.loads(Path(credentials_file).read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return None, None
+    if not isinstance(payload, dict):
+        return None, None
+    file_client_id = str(payload.get("clientId") or "").strip()
+    file_client_secret = str(payload.get("clientSecret") or "").strip()
+    if not file_client_id or not file_client_secret:
+        return None, None
+    return file_client_id, file_client_secret

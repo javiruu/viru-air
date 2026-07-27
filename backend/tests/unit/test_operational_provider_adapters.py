@@ -162,6 +162,45 @@ def test_opensky_maps_state_vector_and_retry_after(monkeypatch) -> None:
     )
 
 
+def test_opensky_uses_oauth_client_credentials_and_bearer_token(monkeypatch) -> None:
+    provider = OpenSkyOperationalFlightProvider(
+        "https://opensky.test/api",
+        4,
+        client_id="viru-api-client",
+        client_secret="secret",
+        token_url="https://opensky.test/token",
+    )
+    observed_timestamp = int(dt.datetime(2026, 7, 22, 8, 45, tzinfo=dt.UTC).timestamp())
+    token_calls = []
+    state_headers = []
+
+    def fake_post(url, *, data, headers, timeout):
+        token_calls.append((url, data, headers, timeout))
+        return _Response(200, {"access_token": "access-token", "expires_in": 1800})
+
+    def fake_get(*args, **kwargs):
+        state_headers.append(kwargs["headers"])
+        return _Response(200, {"time": observed_timestamp, "states": []})
+
+    monkeypatch.setattr(provider._session, "post", fake_post)
+    monkeypatch.setattr(provider._session, "get", fake_get)
+
+    provider.fetch(_identity(icao24="4ca123"), dt.datetime(2026, 7, 22, 8, 45))
+    provider.fetch(_identity(icao24="4ca123"), dt.datetime(2026, 7, 22, 8, 46))
+
+    assert len(token_calls) == 1
+    assert token_calls[0][0] == "https://opensky.test/token"
+    assert token_calls[0][1] == {
+        "grant_type": "client_credentials",
+        "client_id": "viru-api-client",
+        "client_secret": "secret",
+    }
+    assert state_headers == [
+        {"Authorization": "Bearer access-token"},
+        {"Authorization": "Bearer access-token"},
+    ]
+
+
 def test_opensky_rejects_future_position_timestamp(monkeypatch) -> None:
     provider = OpenSkyOperationalFlightProvider("https://opensky.test/api", 4)
     now = dt.datetime(2026, 7, 22, 8, 45)

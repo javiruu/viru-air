@@ -1,5 +1,11 @@
 # History
 
+## 2026-07-27 - Autoenlace de identidad live desde Fare Memory
+
+- Una Watch sin piernas deja de mostrar `identity_missing` cuando una de sus capturas frescas coincide de forma única en ruta, fecha, proveedor y hora con un vuelo completo ya observado por Fare Memory, aunque una captura posterior venga incompleta.
+- La recuperación es local, no consume cuota de proveedores y no elige entre vuelos ambiguos.
+- OpenSky autenticado adopta OAuth2 client credentials y puede cargar el `credentials.json` oficial sin copiar el secreto al repositorio.
+
 ## 2026-07-21 - Live flight tracking desde Watchlist
 
 - Las Watches guardadas desde resultados exactos conservan sus piernas y exponen estado operacional, horarios, retrasos, terminales, puertas y posición observada mediante `GET /api/v1/watchlist/{watch_id}/live`.

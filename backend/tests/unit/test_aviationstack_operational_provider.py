@@ -130,7 +130,7 @@ def test_provider_selects_closest_exact_route_and_sanitizes_live_telemetry(
     assert observation.speed_mps is None
     assert observation.expires_at - observation.observed_at == dt.timedelta(seconds=60)
     assert requested["params"]["flight_iata"] == "FR9602"
-    assert requested["params"]["flight_date"] == "2026-07-22"
+    assert "flight_date" not in requested["params"]
     assert requested["timeout"] == 4.0
     assert "secret" not in caplog.text
 
@@ -150,7 +150,7 @@ def test_provider_rejects_ambiguous_matches_and_incomplete_position(monkeypatch)
     assert outcome.reason == "ambiguous"
 
 
-def test_provider_uses_saved_local_departure_date_and_converts_speed(monkeypatch) -> None:
+def test_provider_uses_free_lookup_and_converts_speed(monkeypatch) -> None:
     provider = _provider()
     requested: dict[str, Any] = {}
 
@@ -186,7 +186,7 @@ def test_provider_uses_saved_local_departure_date_and_converts_speed(monkeypatch
 
     outcome = provider.fetch(identity, dt.datetime(2026, 7, 21, 15, 32))
 
-    assert requested["flight_date"] == "2026-07-22"
+    assert "flight_date" not in requested
     assert isinstance(outcome, OperationalObserved)
     assert outcome.observation.speed_mps == pytest.approx(212.34)
 
@@ -203,6 +203,33 @@ def test_provider_rejects_schedule_far_from_saved_flight(monkeypatch) -> None:
     )
 
     outcome = provider.fetch(_identity(), dt.datetime(2026, 7, 22, 8, 30))
+
+    assert isinstance(outcome, OperationalNoCoverage)
+    assert outcome.reason == "no_match"
+
+
+def test_provider_rejects_wrong_local_date_without_saved_utc_schedule(monkeypatch) -> None:
+    provider = _provider()
+    identity = OperationalFlightIdentity(
+        flight_instance_fingerprint="flight-local-date-only",
+        flight_number="FR9602",
+        carrier_code="FR",
+        origin_iata="MAD",
+        destination_iata="FCO",
+        departure_date_local=dt.date(2026, 7, 22),
+        scheduled_departure_at=None,
+        scheduled_arrival_at=None,
+    )
+    monkeypatch.setattr(
+        provider._session,
+        "get",
+        lambda *args, **kwargs: _Response(
+            200,
+            {"data": [_flight(departure="2026-07-23T08:30:00+00:00")]},
+        ),
+    )
+
+    outcome = provider.fetch(identity, dt.datetime(2026, 7, 22, 8, 30))
 
     assert isinstance(outcome, OperationalNoCoverage)
     assert outcome.reason == "no_match"

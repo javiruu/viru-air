@@ -190,9 +190,9 @@ function identityMissing() {
   return {
     watch_id: "watch-legacy",
     coverage: "identity_missing",
-    provider_status: "ok",
+    provider_status: "no_match",
     generated_at: "2026-07-21T08:38:00Z",
-    refresh_after_seconds: 300,
+    refresh_after_seconds: 3600,
     legs: [],
   };
 }

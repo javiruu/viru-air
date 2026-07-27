@@ -28,6 +28,7 @@ LIVE_FLIGHT_ZERO_COST_ONLY=true
 LIVE_FLIGHT_ALLOW_PAID_PROVIDERS=false
 LIVE_FLIGHT_PROVIDER_TIMEOUT_SECONDS=8
 LIVE_FLIGHT_OPENSKY_ANONYMOUS=true
+OPENSKY_CREDENTIALS_FILE=C:\ruta\local\credentials.json
 AVIATIONSTACK_MONTHLY_REQUEST_LIMIT=90
 AERODATABOX_MONTHLY_UNIT_LIMIT=540
 OPENSKY_DAILY_CREDIT_LIMIT=360
@@ -39,8 +40,12 @@ ADSB_EXCHANGE_MONTHLY_REQUEST_LIMIT=0
 - si la posición sigue ausente, se recorren en el mismo orden los adapters restantes capaces de aportarla: Aviationstack, AeroDataBox, OpenSky y, solo en modo de pago, FlightAware y ADS-B Exchange;
 - un proveedor ya consultado no se llama otra vez para enriquecer la misma observación;
 - Amadeus usa `test` por defecto; producción exige un límite mensual explícito;
-- Aviationstack y AeroDataBox solo se registran con key y paran antes de su cuota gratuita;
+- Aviationstack y AeroDataBox solo se registran con key y paran antes de su cuota gratuita; Aviationstack consulta por número sin el filtro premium `flight_date` y valida fecha/ruta/horario sobre la respuesta;
 - OpenSky anónimo funciona sin key y se limita localmente a 360 créditos diarios;
+- OpenSky autenticado usa OAuth2 client credentials. Se puede apuntar
+  `OPENSKY_CREDENTIALS_FILE` al JSON oficial (`clientId` y `clientSecret`) o
+  usar `OPENSKY_CLIENT_ID` y `OPENSKY_CLIENT_SECRET`; Basic Auth con
+  usuario/contraseña ya no forma parte del contrato;
 - FlightAware y ADS-B Exchange nunca se registran con `LIVE_FLIGHT_ZERO_COST_ONLY=true`;
 - para habilitar un proveedor de pago hacen falta tres decisiones explícitas: desactivar zero-cost, permitir proveedores de pago y fijar un límite positivo;
 - no pongas keys en URL, logs, capturas, reportes ni comandos compartidos.
@@ -106,7 +111,8 @@ No uses número completo, token, correo o key como dimensión de métrica.
 | timeout, DNS o 5xx | `temporarily_unavailable`, posible dato previo | comprobar proveedor y red; no aumentar polling |
 | cero coincidencias | `no_coverage` / `no_match` | verificar identidad y ventana horaria |
 | varias coincidencias iguales | `no_coverage` / `ambiguous` | no elegir automáticamente; revisar identidad guardada |
-| Watch legacy | `identity_missing` | usar el CTA hacia Quick Search y guardar un resultado exacto |
+| Watch legacy con una coincidencia exacta en Fare Memory | identidad enlazada al abrir `/live` | no requiere acción ni consume cuota operacional |
+| Watch legacy sin coincidencia única | `identity_missing` | usar el CTA hacia Quick Search y guardar un resultado exacto |
 | mapa sin posición | ruta y aviso sin marcador | es correcto: no interpolar coordenadas |
 
 ## Verificación automatizada

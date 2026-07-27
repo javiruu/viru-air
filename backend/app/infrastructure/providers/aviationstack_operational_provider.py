@@ -111,7 +111,6 @@ class AviationstackOperationalFlightProvider:
         params: dict[str, str | int] = {
             "access_key": self._api_key,
             "flight_iata": _normalize_flight_number(identity.flight_number),
-            "flight_date": _flight_date(identity, now).isoformat(),
             "limit": 20,
         }
         try:
@@ -188,6 +187,12 @@ def _select_match(
         if _normalize_iata(candidate.departure.iata) != identity.origin_iata:
             continue
         if _normalize_iata(candidate.arrival.iata) != identity.destination_iata:
+            continue
+        expected_date = identity.departure_date_local
+        if expected_date is not None and (
+            candidate.departure.scheduled is None
+            or candidate.departure.scheduled.date() != expected_date
+        ):
             continue
         distance = _schedule_distance_seconds(candidate.departure.scheduled, identity.scheduled_departure_at)
         if identity.scheduled_departure_at is not None and distance > MAX_SCHEDULE_DELTA_SECONDS:
@@ -295,12 +300,6 @@ def _normalize_flight_number(value: str | None) -> str:
 
 def _normalize_iata(value: str | None) -> str:
     return (value or "").strip().upper()
-
-
-def _flight_date(identity: OperationalFlightIdentity, now: dt.datetime) -> dt.date:
-    if identity.departure_date_local is not None:
-        return identity.departure_date_local
-    return identity.scheduled_departure_at.date() if identity.scheduled_departure_at else now.date()
 
 
 def _schedule_distance_seconds(candidate: dt.datetime | None, expected: dt.datetime | None) -> float:

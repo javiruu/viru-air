@@ -5,7 +5,6 @@ import re
 from collections.abc import Mapping
 
 from app.infrastructure.providers.operational_flight_provider import (
-    OperationalFetchOutcome,
     OperationalRateLimited,
     OperationalUnavailable,
 )
@@ -58,7 +57,10 @@ def retry_after(headers: Mapping[str, str], default: int = 300) -> int:
         return default
 
 
-def remote_failure(status_code: int, headers: Mapping[str, str]) -> OperationalFetchOutcome | None:
+def remote_failure(
+    status_code: int,
+    headers: Mapping[str, str],
+) -> OperationalRateLimited | OperationalUnavailable | None:
     if status_code == 429:
         return OperationalRateLimited(retry_after(headers))
     if status_code == 402:
