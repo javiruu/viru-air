@@ -1,7 +1,7 @@
 ﻿# Watchlist
 
 **Estado:** vivo  
-**Última revisión:** 2026-07-21
+**Última revisión:** 2026-07-27
 **Fuente de verdad:** si  
 **Área:** product
 
@@ -19,7 +19,14 @@ Una Watch guardada desde un resultado exacto de Quick Search puede enlazar una o
 - posición en el mapa solo cuando ha sido observada y validada;
 - frescura y estados honestos de falta de identidad, cobertura o proveedor.
 
-Las Watches manuales o antiguas mantienen precio e histórico. No se asigna un vuelo por ruta/fecha: la UI ofrece volver a Quick Search para guardar uno exacto. En multi-leg, solo el primer tramo queda expandido y los siguientes se consultan bajo demanda.
+Las Watches manuales o antiguas mantienen precio e histórico. Viru revisa sus
+capturas frescas de más nueva a más antigua: descarta las que no tienen una
+identidad completa en Fare Memory, enlaza la primera coincidencia única por
+ruta, fecha, proveedor y hora, y se detiene sin elegir si encuentra varias
+salidas plausibles. Así puede recuperar un vuelo exacto ya conocido sin gastar
+cuota aunque una captura posterior venga incompleta. Si falta esa evidencia, la
+UI ofrece volver a Quick Search. En multi-leg, solo el primer tramo queda
+expandido y los siguientes se consultan bajo demanda.
 
 Contrato y operación:
 

@@ -14,7 +14,7 @@ La expresion "tracking" de ADR-004 se refiere a frescura de busqueda, cache y re
 ## Decision
 
 1. `FlightWatch` sigue siendo la entidad de usuario y mantiene su unicidad por usuario, ruta y fecha.
-2. Una Watch puede tener cero o varias piernas exactas en `WatchTrackedFlightLeg`. Quick Search es la fuente preferente de esa identidad; una Watch creada manualmente permanece valida aunque no tenga piernas.
+2. Una Watch puede tener cero o varias piernas exactas en `WatchTrackedFlightLeg`. Quick Search es la fuente preferente de esa identidad; una Watch legacy puede recuperar localmente una identidad completa ya observada por Fare Memory cuando una captura fresca produce una coincidencia única por ruta, fecha, proveedor y hora. Una Watch creada manualmente permanece valida aunque no tenga piernas.
 3. Cada pierna usa un `flight_instance_fingerprint` compatible con Fare Memory. No se infiere una identidad cuando hay mas de un vuelo plausible.
 4. `FlightOperationalSnapshot` conserva observaciones compartidas por identidad de vuelo. No pertenece a un usuario y no almacena payloads crudos del proveedor.
 5. El proveedor operacional se oculta tras un contrato propio. La primera integracion es Aviationstack, activada solo con configuracion de entorno. OpenSky no es el proveedor primario porque no ofrece horarios, retrasos, terminales o puertas y limita el uso comercial de su API publica.

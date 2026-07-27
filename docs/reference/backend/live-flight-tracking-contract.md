@@ -1,7 +1,7 @@
 # Live flight tracking desde Watchlist
 
 **Estado:** vivo
-**Última revisión:** 2026-07-21
+**Última revisión:** 2026-07-27
 **Fuente de verdad:** sí
 **Área:** backend
 
@@ -13,7 +13,13 @@ Este contrato separa dos dominios que conviven en una Watch:
 - `WatchTrackedFlightLeg` enlaza opcionalmente esa Watch con uno o varios vuelos exactos;
 - `FlightOperationalSnapshot` conserva observaciones operacionales compartidas por identidad de vuelo.
 
-Una ruta y una fecha no bastan para identificar un vuelo. Si no existen piernas exactas, el backend devuelve `identity_missing` y no intenta adivinar una salida.
+Una ruta y una fecha no bastan para identificar un vuelo. Si no existen piernas
+exactas, el backend intenta primero un autoenlace local y sin cuota: recorre las
+capturas frescas de la Watch desde la más nueva, combina proveedor y hora con
+ruta y fecha, y exige una única identidad completa observada en Fare Memory.
+Una captura sin coincidencia completa no invalida otra captura fresca anterior.
+Si una captura produce varias identidades plausibles, el proceso se detiene;
+si ninguna produce una coincidencia única, devuelve `identity_missing`.
 
 ## Guardado de identidad exacta
 
@@ -33,6 +39,9 @@ Reglas:
 - guardar `legs` reemplaza el enlace anterior en una transacción;
 - omitir `legs` conserva el enlace existente y mantiene compatibilidad con clientes antiguos;
 - una Watch manual o legacy sigue siendo válida para precios aunque no tenga identidad operacional.
+- una Watch manual o legacy puede recuperar una pierna con
+  `identity_source=fare_memory` al consultar `/live` si la evidencia local es
+  exacta y no ambigua; el enlace nunca llama a un proveedor externo.
 
 La respuesta de `save-result` incluye `tracking_identity` como `linked`, `updated` o `missing`.
 
@@ -130,7 +139,7 @@ La reserva de cuota se realiza antes de cada llamada en `flight_provider_quota`.
 |---|---|
 | `live` | existe al menos una observación fresca |
 | `cached` | solo existe el último dato conocido, ya vencido |
-| `identity_missing` | la Watch no tiene piernas exactas |
+| `identity_missing` | la Watch no tiene piernas exactas ni una coincidencia local única en Fare Memory |
 | `not_configured` | no hay proveedor operacional activo |
 | `no_coverage` | no hubo coincidencia exacta o fue ambigua |
 | `temporarily_unavailable` | rate limit, timeout, red o error remoto; puede conservar dato previo |

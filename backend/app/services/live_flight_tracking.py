@@ -23,8 +23,11 @@ from app.domain.live_flight_schemas import (
     LiveProviderStatus,
 )
 from app.infrastructure.db.models import (
+    FlightOfferCacheEntry,
     FlightOperationalSnapshot,
+    FlightPriceObservation,
     FlightWatch,
+    PriceSnapshot,
     WatchTrackedFlightLeg,
 )
 from app.infrastructure.providers.operational_flight_provider import (
@@ -103,6 +106,84 @@ def replace_watch_tracked_legs(
             )
         )
     return "updated" if existing_count else "linked" if legs else "missing"
+
+
+def link_watch_identity_from_fare_memory(db: Session, watch: FlightWatch) -> bool:
+    existing_leg_id = db.scalar(
+        select(WatchTrackedFlightLeg.id).where(WatchTrackedFlightLeg.watch_id == watch.id).limit(1)
+    )
+    if existing_leg_id is not None:
+        return False
+
+    snapshots = db.scalars(
+        select(PriceSnapshot)
+        .where(
+            PriceSnapshot.watch_id == watch.id,
+            PriceSnapshot.is_stale.is_(False),
+            PriceSnapshot.departure_time_local.is_not(None),
+        )
+        .order_by(PriceSnapshot.captured_at_utc.desc(), PriceSnapshot.id.desc())
+    ).all()
+
+    day_start = dt.datetime.combine(watch.travel_date_local, dt.time.min)
+    offer: FlightOfferCacheEntry | None = None
+    for snapshot in snapshots:
+        provider = snapshot.provider.strip().lower()
+        departure_time_local = snapshot.departure_time_local
+        if not provider or not departure_time_local:
+            continue
+        offers = db.scalars(
+            select(FlightOfferCacheEntry)
+            .join(FlightPriceObservation, FlightPriceObservation.offer_id == FlightOfferCacheEntry.id)
+            .where(
+                FlightOfferCacheEntry.origin_airport == watch.origin_iata,
+                FlightOfferCacheEntry.destination_airport == watch.destination_iata,
+                FlightOfferCacheEntry.departure_at >= day_start,
+                FlightOfferCacheEntry.departure_at < day_start + dt.timedelta(days=1),
+                FlightOfferCacheEntry.provider == provider,
+                FlightOfferCacheEntry.departure_time_local == departure_time_local,
+                FlightOfferCacheEntry.stops_count == 0,
+                FlightOfferCacheEntry.flight_instance_fingerprint.is_not(None),
+                FlightOfferCacheEntry.flight_number.is_not(None),
+                FlightOfferCacheEntry.flight_number != "",
+            )
+            .order_by(FlightOfferCacheEntry.updated_at.desc(), FlightOfferCacheEntry.id.desc())
+        ).all()
+        offers_by_fingerprint = {
+            candidate.flight_instance_fingerprint: candidate
+            for candidate in offers
+            if candidate.flight_instance_fingerprint
+        }
+        if len(offers_by_fingerprint) > 1:
+            return False
+        if len(offers_by_fingerprint) == 1:
+            offer = next(iter(offers_by_fingerprint.values()))
+            break
+    if offer is None:
+        return False
+
+    db.add(
+        WatchTrackedFlightLeg(
+            watch_id=watch.id,
+            sequence=0,
+            flight_instance_fingerprint=cast(str, offer.flight_instance_fingerprint),
+            carrier_code=offer.carrier_code or _carrier_code_from_flight_number(offer.flight_number),
+            flight_number=offer.flight_number,
+            origin_iata=offer.origin_airport,
+            destination_iata=offer.destination_airport,
+            departure_date_local=watch.travel_date_local,
+            scheduled_departure_at=_utc_naive_if_aware(offer.departure_at),
+            scheduled_arrival_at=_utc_naive_if_aware(offer.arrival_at),
+            identity_source="fare_memory",
+        )
+    )
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        return False
+    logger.info("live_flight_identity outcome=linked source=fare_memory")
+    return True
 
 
 def refresh_live_tracking(

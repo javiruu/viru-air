@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import time
 
 import requests
 
@@ -10,6 +11,7 @@ from app.infrastructure.providers.operational_flight_provider import (
     OperationalFlightObservation,
     OperationalNoCoverage,
     OperationalObserved,
+    OperationalRateLimited,
     OperationalUnavailable,
 )
 from app.infrastructure.providers.operational_provider_support import (
@@ -27,12 +29,20 @@ class OpenSkyOperationalFlightProvider:
         self,
         base_url: str,
         timeout_seconds: float,
-        username: str | None = None,
-        password: str | None = None,
+        client_id: str | None = None,
+        client_secret: str | None = None,
+        token_url: str = (
+            "https://auth.opensky-network.org/auth/realms/"
+            "opensky-network/protocol/openid-connect/token"
+        ),
     ) -> None:
         self._base_url = base_url.rstrip("/")
         self._timeout_seconds = timeout_seconds
-        self._auth = (username, password) if username and password else None
+        self._client_id = client_id
+        self._client_secret = client_secret
+        self._token_url = token_url
+        self._access_token: str | None = None
+        self._token_expires_at = 0.0
         self._session = requests.Session()
 
     def fetch(
@@ -43,11 +53,14 @@ class OpenSkyOperationalFlightProvider:
         if not identity.icao24 and not identity.callsign:
             return OperationalNoCoverage(reason="no_match")
         params = {"icao24": identity.icao24.lower()} if identity.icao24 else {}
+        headers = self._authorization_headers()
+        if not isinstance(headers, dict):
+            return headers
         try:
             response = self._session.get(
                 f"{self._base_url}/states/all",
                 params=params,
-                auth=self._auth,
+                headers=headers,
                 timeout=self._timeout_seconds,
             )
         except requests.Timeout:
@@ -77,6 +90,46 @@ class OpenSkyOperationalFlightProvider:
             if observation
             else OperationalUnavailable(reason="invalid_observation")
         )
+
+    def _authorization_headers(
+        self,
+    ) -> dict[str, str] | OperationalRateLimited | OperationalUnavailable:
+        if not self._client_id or not self._client_secret:
+            return {}
+        if self._access_token and time.monotonic() < self._token_expires_at:
+            return {"Authorization": f"Bearer {self._access_token}"}
+        try:
+            response = self._session.post(
+                self._token_url,
+                data={
+                    "grant_type": "client_credentials",
+                    "client_id": self._client_id,
+                    "client_secret": self._client_secret,
+                },
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                timeout=self._timeout_seconds,
+            )
+        except requests.Timeout:
+            return OperationalUnavailable(reason="timeout")
+        except requests.ConnectionError:
+            return OperationalUnavailable(reason="connection")
+        except requests.RequestException:
+            return OperationalUnavailable(reason="request")
+        failure = remote_failure(response.status_code, response.headers)
+        if failure is not None:
+            return failure
+        try:
+            payload = response.json()
+            access_token = payload.get("access_token") if isinstance(payload, dict) else None
+            expires_in = payload.get("expires_in", 1800) if isinstance(payload, dict) else 1800
+            expires_in_seconds = max(60, int(expires_in))
+        except (TypeError, ValueError):
+            return OperationalUnavailable(reason="invalid_payload")
+        if not isinstance(access_token, str) or not access_token:
+            return OperationalUnavailable(reason="invalid_payload")
+        self._access_token = access_token
+        self._token_expires_at = time.monotonic() + max(30, expires_in_seconds - 30)
+        return {"Authorization": f"Bearer {access_token}"}
 
 
 def _matches(state: object, identity: OperationalFlightIdentity) -> bool:

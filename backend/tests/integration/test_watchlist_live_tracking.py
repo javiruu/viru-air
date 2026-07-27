@@ -8,7 +8,13 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
 from app.core.time import utc_now_naive
-from app.infrastructure.db.models import FlightOperationalSnapshot, WatchTrackedFlightLeg
+from app.infrastructure.db.models import (
+    FlightOfferCacheEntry,
+    FlightOperationalSnapshot,
+    FlightPriceObservation,
+    PriceSnapshot,
+    WatchTrackedFlightLeg,
+)
 from app.infrastructure.db.session import get_db
 from app.main import app
 from tests.helpers import register_and_token
@@ -103,6 +109,164 @@ def test_legacy_watch_without_exact_identity_reports_identity_missing(client: Te
     assert live_response.json()["coverage"] == "identity_missing"
     assert live_response.json()["provider_status"] == "no_match"
     assert live_response.json()["legs"] == []
+
+
+def test_live_tracking_links_unique_older_identity_when_newer_snapshot_has_no_match(
+    client: TestClient,
+) -> None:
+    travel_date = date.today() + timedelta(days=22)
+    departure_at = datetime.combine(travel_date, datetime.min.time()).replace(hour=16, minute=55)
+    token = register_and_token(client, email="live-fare-memory-link@viru.dev")
+    headers = {"Authorization": f"Bearer {token}"}
+    create_response = client.post(
+        "/api/v1/watchlist",
+        headers=headers,
+        json={
+            "origin_iata": "MAD",
+            "destination_iata": "VCE",
+            "travel_date_local": travel_date.isoformat(),
+            "target_price": 56.99,
+        },
+    )
+    assert create_response.status_code == 200
+    watch_id = create_response.json()["id"]
+
+    db, generator = _open_test_db_session()
+    try:
+        captured_at = utc_now_naive()
+        db.add(
+            PriceSnapshot(
+                watch_id=watch_id,
+                captured_at_utc=captured_at,
+                raw_price=56.99,
+                raw_currency="EUR",
+                provider="ryanair-public-fares",
+                departure_time_local="16:55",
+            )
+        )
+        db.add(
+            PriceSnapshot(
+                watch_id=watch_id,
+                captured_at_utc=captured_at + timedelta(seconds=1),
+                raw_price=62.57,
+                raw_currency="EUR",
+                provider="vueling-public-availability",
+                departure_time_local="19:25",
+            )
+        )
+        offer = FlightOfferCacheEntry(
+            offer_fingerprint="fsm_offer_live_fare_memory_link",
+            flight_instance_fingerprint="fsm_flight_live_fare_memory_link",
+            provider="ryanair-public-fares",
+            carrier="FR",
+            carrier_code="FR",
+            flight_number="FR1206",
+            origin_airport="MAD",
+            destination_airport="VCE",
+            departure_at=departure_at,
+            arrival_at=departure_at + timedelta(hours=2, minutes=25),
+            departure_time_local="16:55",
+            arrival_time_local="19:20",
+            stops_count=0,
+        )
+        db.add(offer)
+        db.flush()
+        db.add(
+            FlightPriceObservation(
+                offer_id=offer.id,
+                provider="ryanair-public-fares",
+                price_amount=56.99,
+                currency="EUR",
+                observed_at=utc_now_naive(),
+            )
+        )
+        db.commit()
+    finally:
+        db.close()
+        _close_test_db_session(generator)
+
+    live_response = client.get(f"/api/v1/watchlist/{watch_id}/live?refresh=false", headers=headers)
+
+    assert live_response.status_code == 200
+    payload = live_response.json()
+    assert payload["coverage"] == "not_configured"
+    assert payload["legs"][0]["identity"]["flight_number"] == "FR1206"
+    assert payload["legs"][0]["identity"]["scheduled_departure_at"] is None
+
+
+def test_live_tracking_does_not_guess_between_fare_memory_flights(client: TestClient) -> None:
+    travel_date = date.today() + timedelta(days=23)
+    departure_at = datetime.combine(travel_date, datetime.min.time()).replace(hour=16, minute=55)
+    token = register_and_token(client, email="live-fare-memory-ambiguous@viru.dev")
+    headers = {"Authorization": f"Bearer {token}"}
+    created = client.post(
+        "/api/v1/watchlist",
+        headers=headers,
+        json={
+            "origin_iata": "MAD",
+            "destination_iata": "VCE",
+            "travel_date_local": travel_date.isoformat(),
+            "target_price": 56.99,
+        },
+    )
+    watch_id = created.json()["id"]
+
+    db, generator = _open_test_db_session()
+    try:
+        db.add(
+            PriceSnapshot(
+                watch_id=watch_id,
+                raw_price=56.99,
+                raw_currency="EUR",
+                provider="ryanair-public-fares",
+                departure_time_local="16:55",
+            )
+        )
+        for suffix, flight_number in (("a", "FR1206"), ("b", "FR1208")):
+            offer = FlightOfferCacheEntry(
+                offer_fingerprint=f"fsm_offer_live_fare_memory_ambiguous_{suffix}",
+                flight_instance_fingerprint=f"fsm_flight_live_fare_memory_ambiguous_{suffix}",
+                provider="ryanair-public-fares",
+                carrier="FR",
+                carrier_code="FR",
+                flight_number=flight_number,
+                origin_airport="MAD",
+                destination_airport="VCE",
+                departure_at=departure_at,
+                arrival_at=departure_at + timedelta(hours=2, minutes=25),
+                departure_time_local="16:55",
+                arrival_time_local="19:20",
+                stops_count=0,
+            )
+            db.add(offer)
+            db.flush()
+            db.add(
+                FlightPriceObservation(
+                    offer_id=offer.id,
+                    provider="ryanair-public-fares",
+                    price_amount=56.99,
+                    currency="EUR",
+                    observed_at=utc_now_naive(),
+                )
+            )
+        db.commit()
+    finally:
+        db.close()
+        _close_test_db_session(generator)
+
+    live_response = client.get(f"/api/v1/watchlist/{watch_id}/live?refresh=false", headers=headers)
+
+    assert live_response.status_code == 200
+    assert live_response.json()["coverage"] == "identity_missing"
+    db, generator = _open_test_db_session()
+    try:
+        legs = db.scalars(
+            select(WatchTrackedFlightLeg).where(WatchTrackedFlightLeg.watch_id == watch_id)
+        ).all()
+    finally:
+        db.close()
+        _close_test_db_session(generator)
+    assert legs == []
 
 
 def test_live_tracking_hides_watch_owned_by_another_user(client: TestClient) -> None:
