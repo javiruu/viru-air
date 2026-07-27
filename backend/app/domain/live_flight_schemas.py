@@ -77,10 +77,63 @@ class LiveFlightOperationalOut(_UtcResponseModel):
     data_quality: str
 
 
+class LiveIncomingAircraftOut(_UtcResponseModel):
+    registration: str
+    flight_number: str | None = None
+    origin_iata: str
+    destination_iata: str
+    status: Literal["scheduled", "active", "landed", "cancelled", "diverted", "unknown"]
+    scheduled_arrival_at: datetime
+    estimated_arrival_at: datetime | None = None
+    actual_arrival_at: datetime | None = None
+    observed_at: datetime
+    freshness: Literal["fresh", "stale"]
+
+
+class LiveDelayPredictionAvailableOut(_UtcResponseModel):
+    status: Literal["available"] = "available"
+    model_version: Literal["viru_rotation_v1"] = "viru_rotation_v1"
+    risk: Literal["low", "elevated", "high"]
+    risk_score: int = Field(ge=0, le=100)
+    confidence: Literal["low", "medium", "high"]
+    predicted_delay_min_minutes: int = Field(ge=0)
+    predicted_delay_max_minutes: int = Field(ge=0)
+    turnaround_minutes: int
+    factor_codes: list[
+        Literal[
+            "incoming_running_late",
+            "tight_turnaround",
+            "incoming_airborne",
+            "official_delay_signal",
+            "incoming_landed",
+            "healthy_turnaround",
+            "stale_observation",
+        ]
+    ]
+    incoming_aircraft: LiveIncomingAircraftOut
+
+
+class LiveDelayPredictionUnavailableOut(_UtcResponseModel):
+    status: Literal["insufficient_data", "not_applicable"]
+    model_version: Literal["viru_rotation_v1"] = "viru_rotation_v1"
+    reason: Literal[
+        "operational_data_missing",
+        "registration_missing",
+        "schedule_missing",
+        "incoming_not_found",
+        "already_departed",
+        "flight_terminal",
+    ]
+
+
+LiveDelayPredictionOut = LiveDelayPredictionAvailableOut | LiveDelayPredictionUnavailableOut
+
+
 class LiveFlightLegOut(_UtcResponseModel):
     sequence: int = Field(ge=0)
     identity: LiveFlightIdentityOut
     operational: LiveFlightOperationalOut | None = None
+    delay_prediction: LiveDelayPredictionOut | None = None
 
 
 class LiveFlightTrackingOut(_UtcResponseModel):

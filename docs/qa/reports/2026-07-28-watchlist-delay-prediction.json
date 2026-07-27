@@ -1,0 +1,83 @@
+{
+  "generated_at": "2026-07-27T23:35:31.202Z",
+  "route": "/watchlist?watch_id=watch-prediction",
+  "completed": true,
+  "scenarios": [
+    {
+      "name": "desktop_dark",
+      "width": 1440,
+      "height": 1000,
+      "theme": "dark",
+      "capture_height": 1000,
+      "assertions": {
+        "title": true,
+        "range": true,
+        "incoming": true,
+        "risk": true,
+        "evidence": true,
+        "disclaimer": true,
+        "no_raw_i18n": true,
+        "no_horizontal_overflow": true,
+        "no_console_errors": true
+      },
+      "screenshot": "docs/qa/screenshots/watchlist-delay-prediction/desktop_dark.png"
+    },
+    {
+      "name": "desktop_light",
+      "width": 1440,
+      "height": 1000,
+      "theme": "light",
+      "capture_height": 1000,
+      "assertions": {
+        "title": true,
+        "range": true,
+        "incoming": true,
+        "risk": true,
+        "evidence": true,
+        "disclaimer": true,
+        "no_raw_i18n": true,
+        "no_horizontal_overflow": true,
+        "no_console_errors": true
+      },
+      "screenshot": "docs/qa/screenshots/watchlist-delay-prediction/desktop_light.png"
+    },
+    {
+      "name": "mobile_dark",
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "capture_height": 1400,
+      "assertions": {
+        "title": true,
+        "range": true,
+        "incoming": true,
+        "risk": true,
+        "evidence": true,
+        "disclaimer": true,
+        "no_raw_i18n": true,
+        "no_horizontal_overflow": true,
+        "no_console_errors": true
+      },
+      "screenshot": "docs/qa/screenshots/watchlist-delay-prediction/mobile_dark.png"
+    },
+    {
+      "name": "mobile_light",
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "capture_height": 1400,
+      "assertions": {
+        "title": true,
+        "range": true,
+        "incoming": true,
+        "risk": true,
+        "evidence": true,
+        "disclaimer": true,
+        "no_raw_i18n": true,
+        "no_horizontal_overflow": true,
+        "no_console_errors": true
+      },
+      "screenshot": "docs/qa/screenshots/watchlist-delay-prediction/mobile_light.png"
+    }
+  ]
+}

@@ -1,5 +1,11 @@
 # History
 
+## 2026-07-28 - Predicción explicable de retrasos por avión entrante
+
+- `/watchlist` incorpora una lectura compacta de retraso previsto junto al seguimiento operacional, con rango, riesgo, confianza y factores visibles.
+- El modelo determinista `viru_rotation_v1` enlaza la matrícula con su tramo entrante persistido hasta 25 horas atrás, pondera margen de escala, demora observada y señal oficial, y declara datos insuficientes cuando la rotación no es demostrable.
+- La predicción reutiliza la señal compartida del Flight Tracking Hub, pero resuelve la ruta solo con piernas de la cuenta autenticada; no añade llamadas a proveedores, cache paralelo, LLM ni probabilidades simuladas.
+
 ## 2026-07-27 - Autoenlace de identidad live desde Fare Memory
 
 - Una Watch sin piernas deja de mostrar `identity_missing` cuando una de sus capturas frescas coincide de forma única en ruta, fecha, proveedor y hora con un vuelo completo ya observado por Fare Memory, aunque una captura posterior venga incompleta.
