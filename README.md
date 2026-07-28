@@ -38,7 +38,7 @@ Variables recomendadas:
 Importante:
 
 - `JWT_SECRET` es obligatorio y no puede ser `change-me`.
-- `RUN_DB_INIT` no sustituye a Alembic; para un entorno limpio o tras cambios de esquema usa `python -m alembic upgrade head`.
+- Alembic gestiona los cambios de esquema; el runtime no ejecuta un bootstrap global. Para un entorno limpio o tras cambios usa `python -m alembic upgrade head` antes de arrancar la API.
 
 ## Documentación
 
