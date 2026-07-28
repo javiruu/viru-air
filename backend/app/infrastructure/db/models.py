@@ -1,5 +1,5 @@
 from datetime import date as date_type, datetime
-from typing import Optional, TypedDict
+from typing import NotRequired, Optional, TypedDict
 
 from app.core.time import utc_now_naive
 from uuid import uuid4
@@ -14,11 +14,12 @@ from app.infrastructure.db.session import Base
 class FareComparisonExtraData(TypedDict):
     kind: str
     selected: bool
-    amount_per_person: float | None
 
 
 class FareComparisonProfileData(TypedDict):
     travelers: int
+    airline_id: NotRequired[str | None]
+    flight_count: NotRequired[int]
     extras: list[FareComparisonExtraData]
 
 

@@ -124,11 +124,12 @@ FareExtraKind = Literal[
 class FareComparisonExtra(BaseModel):
     kind: FareExtraKind
     selected: bool = False
-    amount_per_person: float | None = Field(default=None, ge=0, allow_inf_nan=False)
 
 
 class FareComparisonProfile(BaseModel):
     travelers: int = Field(default=1, ge=1, le=9)
+    airline_id: Literal["ryanair", "vueling", "wizzair", "easyjet"] | None = None
+    flight_count: int = Field(default=1, ge=1, le=8)
     extras: list[FareComparisonExtra] = Field(default_factory=list, max_length=7)
 
     @model_validator(mode="after")

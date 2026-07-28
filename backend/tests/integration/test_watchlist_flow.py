@@ -210,10 +210,12 @@ def test_watchlist_update_persists_fare_profile(client: TestClient) -> None:
     watch_id = create.json()["id"]
     fare_profile = {
         "travelers": 2,
+        "airline_id": "ryanair",
+        "flight_count": 2,
         "extras": [
-            {"kind": "cabin_bag_10kg", "selected": True, "amount_per_person": 18},
-            {"kind": "insurance", "selected": True, "amount_per_person": 9.5},
-            {"kind": "fast_track", "selected": True, "amount_per_person": 4},
+            {"kind": "cabin_bag_10kg", "selected": True},
+            {"kind": "insurance", "selected": True},
+            {"kind": "fast_track", "selected": True},
         ],
     }
 

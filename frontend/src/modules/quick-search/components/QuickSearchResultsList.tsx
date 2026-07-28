@@ -122,7 +122,6 @@ function QuickSearchResultsListInner(props: Props) {
     }
   }, [fareProfile, setFareProfile, travelers]);
   const locale = props.localeTag.toLowerCase().startsWith("es") ? "es" : "en";
-  const currency = props.visibleResults[0]?.currency ?? "EUR";
 
   return (
     <>
@@ -131,7 +130,6 @@ function QuickSearchResultsListInner(props: Props) {
           <FareComparisonPanel
             profile={fareProfile}
             locale={locale}
-            currency={currency}
             onChange={setFareProfile}
           />
           <div className={`qs-results-list ${props.compactView ? "compact" : ""}`}>
@@ -166,8 +164,22 @@ function QuickSearchResultsListInner(props: Props) {
             const flightTimeLabel = totalDurationMinutes !== null ? props.formatMinutes(totalDurationMinutes) : null;
             const watchlistHref = props.getWatchlistHref?.(r) || "/watchlist";
             const recommendationTooltipId = `recommendation-${rowId}`;
-            const fare = calculateComparableFare(r.price_total ?? r.price, fareProfile);
+            const fare = calculateComparableFare(
+              r.price_total ?? r.price,
+              r.currency,
+              fareProfile,
+              r.source,
+              r.legs?.map((leg) => leg.carrier_code) ?? [],
+              r.legs?.length || 1,
+            );
             const hasSelectedExtras = fareProfile.extras.some((extra) => extra.selected);
+            const comparablePrice = !hasSelectedExtras
+              ? props.formatMoney(fare.base_total, r.currency)
+              : fare.comparable_max_total === null
+                ? `${locale === "es" ? "Desde" : "From"} ${props.formatMoney(fare.comparable_min_total, r.currency)}`
+                : fare.comparable_min_total === fare.comparable_max_total
+                  ? props.formatMoney(fare.comparable_min_total, r.currency)
+                  : `${props.formatMoney(fare.comparable_min_total, r.currency)}–${props.formatMoney(fare.comparable_max_total, r.currency)}`;
             const recommendationLabel = aiReason
               ? `${props.t("aiPreferredReasonLabel")}: ${aiReason}`
               : props.t("aiPreferredAria");
@@ -236,12 +248,21 @@ function QuickSearchResultsListInner(props: Props) {
                 <div className="qs-result-actions">
                   <div className="qs-result-price">
                     {!props.compactView ? <span className="qs-result-kicker">{props.t("resultsColPrice")}</span> : null}
-                    <strong>{props.formatMoney(fare.comparable_total ?? fare.base_total, r.currency)}</strong>
+                    <strong>{comparablePrice}</strong>
                     {hasSelectedExtras ? (
                       <span className={fare.is_complete ? "qs-result-comparable-note" : "qs-result-comparable-note qs-result-comparable-note--missing"}>
                         {fare.is_complete
-                          ? `Base ${props.formatMoney(fare.base_total, r.currency)} + extras ${props.formatMoney(fare.extras_total, r.currency)}`
-                          : locale === "es" ? "Faltan importes de extras" : "Missing extra prices"}
+                          ? fare.extras_max_total === null
+                            ? `${locale === "es" ? "Extras desde" : "Extras from"} ${props.formatMoney(fare.extras_min_total, r.currency)} · ${fare.airline_label ?? (locale === "es" ? "aerolínea sin identificar" : "unknown airline")}`
+                            : `Base ${props.formatMoney(fare.base_total, r.currency)} + extras ${props.formatMoney(fare.extras_min_total, r.currency)}–${props.formatMoney(fare.extras_max_total, r.currency)}`
+                          : locale === "es"
+                            ? `${fare.unavailable_kinds.length} extra(s) sin tarifa pública calculable`
+                            : `${fare.unavailable_kinds.length} extra(s) without a calculable public fare`}
+                        {fare.source_url ? (
+                          <a href={fare.source_url} target="_blank" rel="noreferrer">
+                            {locale === "es" ? "Fuente oficial" : "Official source"}
+                          </a>
+                        ) : null}
                       </span>
                     ) : null}
                     {!props.compactView && r.ranking_score ? <span>{props.t("score")} {props.formatScore(r.ranking_score)}</span> : null}

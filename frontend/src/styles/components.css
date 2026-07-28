@@ -1033,15 +1033,14 @@
 }
 
 .fare-comparison-travelers,
-.fare-extra-price {
+.fare-extra-estimate {
   display: grid;
   gap: 0.3rem;
   color: var(--muted);
   font-size: 0.75rem;
 }
 
-.fare-comparison-travelers input,
-.fare-extra-price input {
+.fare-comparison-travelers input {
   min-width: 0;
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -1080,19 +1079,10 @@
   font-weight: 650;
 }
 
-.fare-extra-price {
+.fare-extra-estimate {
+  display: block;
   margin-top: 0.55rem;
-}
-
-.fare-extra-price-control {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.fare-extra-price small {
-  color: var(--state-warning-text);
+  line-height: 1.35;
 }
 
 .fare-comparison-summary {
@@ -1109,6 +1099,18 @@
   margin-right: auto;
   color: var(--ink);
   font-weight: 700;
+}
+
+.fare-comparison-summary a,
+.qs-result-comparable-note a {
+  margin-left: 0.45rem;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
+.qs-result-comparable-note a {
+  display: inline-block;
 }
 
 .fare-comparison-summary-error {

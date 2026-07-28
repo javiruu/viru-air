@@ -16,9 +16,16 @@ La cesta de precio comparable permite aplicar el mismo criterio a todos los resu
 - número de viajeros;
 - equipaje de cabina de 10 kg y maleta facturada de 20 kg;
 - seguro, Fast Track, embarque prioritario, selección de asiento y cambios flexibles;
-- importes por persona introducidos por el usuario.
+- selección de extras sin introducir importes manuales.
 
-Cada resultado mantiene visible el precio base y solo muestra un total comparable completo cuando todos los extras seleccionados tienen importe. Viru no estima ni inventa tarifas de proveedor. Al guardar un resultado, la cesta viaja con la Watch para conservar la comparación.
+Cada resultado mantiene visible el precio base y calcula automáticamente el
+total o rango comparable con las tarifas públicas de la aerolínea, respetando
+si cada servicio se cobra por vuelo o por reserva. Cuando una tarifa es
+dinámica o no publica un máximo, Viru muestra
+`Desde`; cuando no existe una cifra pública calculable, conserva el total
+parcial y señala el extra pendiente sin inventar un precio. La fuente oficial
+queda enlazada junto a la estimación. Al guardar un resultado, la cesta y la
+aerolínea identificada viajan con la Watch para conservar la comparación.
 
 ## Contenido principal
 

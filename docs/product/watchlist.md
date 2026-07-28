@@ -11,9 +11,16 @@ Watchlist es el centro operativo de Viru Air y absorbe el historico como parte d
 
 ## Precio comparable guardado
 
-Las Watches creadas desde Quick Search conservan la cesta usada para comparar el vuelo: viajeros, equipaje de 10 kg o 20 kg, seguro, Fast Track, embarque prioritario, asiento y cambios flexibles. Los importes siguen siendo editables por persona desde el detalle de Watchlist.
+Las Watches creadas desde Quick Search conservan la cesta usada para comparar
+el vuelo: viajeros, equipaje de 10 kg o 20 kg, seguro, Fast Track, embarque
+prioritario, asiento y cambios flexibles. El usuario selecciona los extras,
+pero no introduce sus importes: Watchlist vuelve a aplicar automáticamente el
+catálogo público de la aerolínea guardada y el número de vuelos del itinerario.
 
-El resumen separa precio base y extras. Si falta el importe de algún extra seleccionado, muestra el precio base y avisa de que el total comparable está incompleto, sin presentar una cifra falsa.
+El resumen muestra un total, un rango o un precio `Desde` según la precisión de
+la tarifa publicada y enlaza su fuente oficial. Si algún extra seleccionado no
+tiene una tarifa pública calculable, muestra el total parcial y lo identifica
+como pendiente, sin presentar una cifra falsa.
 
 ## Seguimiento operacional del vuelo
 

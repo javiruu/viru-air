@@ -1,5 +1,8 @@
 import type { SearchResult } from "../types";
-import type { FareComparisonProfile } from "@/modules/shared/fareComparison";
+import {
+  attachFareAirline,
+  type FareComparisonProfile,
+} from "@/modules/shared/fareComparison";
 
 export type QuickSearchSaveResultPayload = {
   readonly job_id?: string | null;
@@ -71,7 +74,16 @@ export function buildQuickSearchSaveResultPayload(
     deeplink_url: result.deeplink_url ?? options.fallbackDeepLinkUrl ?? null,
     itinerary_type: result.itinerary_type ?? null,
     group_id: options.groupId,
-    ...(options.fareProfile ? { fare_profile: options.fareProfile } : {}),
+    ...(options.fareProfile
+      ? {
+          fare_profile: attachFareAirline(
+            options.fareProfile,
+            result.source,
+            result.legs?.map((leg) => leg.carrier_code) ?? [],
+            result.legs?.length || 1,
+          ),
+        }
+      : {}),
     ...(result.legs?.length
       ? {
           legs: result.legs.slice(0, 8).map((leg) => ({
