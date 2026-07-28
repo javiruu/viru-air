@@ -1,13 +1,26 @@
 # Inventario documental
 
 **Estado:** vivo
-**Ultima revision:** 2026-07-21
+**Ultima revision:** 2026-07-28
 **Fuente de verdad:** si
 **Area:** documentacion
 
 ## Resumen
 
 Inventario completo de documentos `.md` y `.txt` relevantes del repositorio tras el saneamiento documental. Excluye dependencias, cach?s, builds, entornos virtuales, `_publish_repo` y otras salidas generadas masivas.
+
+## Actualizacion manual 2026-07-28 (Community Pricing)
+
+Entradas vivas agregadas:
+
+- `docs/reference/backend/community-pricing-contract.md`
+
+Entradas vivas actualizadas:
+
+- `docs/product/watchlist.md`
+- `docs/INDICE_UNICO.md`
+- `docs/DOCS_INVENTORY.md`
+- `HISTORY.md`
 
 ## Actualizacion manual 2026-07-12 (tokens de seleccion global)
 

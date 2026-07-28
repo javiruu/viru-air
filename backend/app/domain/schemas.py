@@ -1,9 +1,11 @@
 from datetime import date as Date, datetime
+from decimal import Decimal
 from typing import Literal
 
 import re
 
 from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic_core import PydanticCustomError
 from app.domain.vocabulary import (
     ALERT_RULE_TYPE_THRESHOLD_HIGH,
     ALERT_RULE_TYPE_THRESHOLD_LOW,
@@ -163,6 +165,63 @@ class WatchCreateIn(BaseModel):
         return value
 
 
+class CommunityPriceResponseOut(BaseModel):
+    flew: bool
+    price_per_traveler: float | None = None
+    currency: Literal["EUR"] = "EUR"
+
+
+class CommunityPriceAggregateOut(BaseModel):
+    sample_size: int = Field(default=0, ge=0)
+    minimum_sample_size: int = Field(default=3, ge=3)
+    is_public: bool = False
+    min_price: float | None = None
+    max_price: float | None = None
+    currency: Literal["EUR"] = "EUR"
+
+
+class CommunityPricingOut(BaseModel):
+    eligible: bool = False
+    trigger_reason: Literal["purchased", "expired"] | None = None
+    response: CommunityPriceResponseOut | None = None
+    aggregate: CommunityPriceAggregateOut = Field(default_factory=CommunityPriceAggregateOut)
+
+
+class CommunityPriceReportIn(BaseModel):
+    flew: bool
+    price_per_traveler: Decimal | None = Field(
+        default=None,
+        gt=0,
+        le=100000,
+        decimal_places=2,
+    )
+    currency: Literal["EUR"] = "EUR"
+
+    @model_validator(mode="after")
+    def validate_flew_price_consistency(self) -> "CommunityPriceReportIn":
+        if self.flew and self.price_per_traveler is None:
+            raise PydanticCustomError(
+                "community_price_required",
+                "community_price_required",
+            )
+        if not self.flew and self.price_per_traveler is not None:
+            raise PydanticCustomError(
+                "community_price_without_flight",
+                "community_price_without_flight",
+            )
+        return self
+
+
+class CommunityPriceMutationOut(BaseModel):
+    watch_id: str
+    status: str
+    community_pricing: CommunityPricingOut
+
+
+class CommunityPriceDeleteOut(BaseModel):
+    status: Literal["ok"] = "ok"
+
+
 class WatchOut(BaseModel):
     id: str
     origin_iata: str
@@ -173,6 +232,7 @@ class WatchOut(BaseModel):
     watchers_count: int = Field(default=0, ge=0)
     group_id: str | None = None
     fare_profile: FareComparisonProfile | None = None
+    community_pricing: CommunityPricingOut = Field(default_factory=CommunityPricingOut)
 
 
 class WatchDetailOut(WatchOut):

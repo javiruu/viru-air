@@ -7,7 +7,7 @@ import { monthLabel } from "@/modules/watchlist/dateUtils";
 import { safeDateTime } from "@/modules/watchlist/presentation";
 import { getFreshnessPresentation } from "@/modules/watchlist/summary";
 import { resolveProviderPresentation } from "@/modules/shared/providerPresentation";
-import type { CalendarSelectorFlight } from "@/modules/watchlist/types";
+import type { CalendarSelectorFlight, Watch } from "@/modules/watchlist/types";
 
 type ListSort = "freshness" | "price_asc" | "price_desc" | "delta";
 const WATCHLIST_PAGE_SIZE = 3;
@@ -28,16 +28,6 @@ function getPageNumbers(current: number, total: number) {
   return pages;
 }
 
-type WatchItem = {
-  id: string;
-  origin_iata: string;
-  destination_iata: string;
-  travel_date_local: string;
-  target_price?: number | null;
-  status: string;
-  watchers_count?: number | null;
-};
-
 type WatchMetaEntry = {
   latest: {
     capturedAt: string;
@@ -54,8 +44,8 @@ type WatchMetaEntry = {
 };
 
 type SmartWatchListPanelProps = {
-  items: WatchItem[];
-  smartListItems: WatchItem[];
+  items: Watch[];
+  smartListItems: Watch[];
   watchMeta: Map<string, WatchMetaEntry>;
   lastUpdatedGlobal: string;
   watchSearch: string;
@@ -65,7 +55,8 @@ type SmartWatchListPanelProps = {
   onSearchChange: (value: string) => void;
   onSortChange: (value: ListSort) => void;
   onClearSearch: () => void;
-  onSelectWatch: (watch: WatchItem) => void;
+  onSelectWatch: (watch: Watch) => void;
+  onCommunityAction: (watch: Watch) => void;
   onPauseWatch: (watchId: string) => void;
   onResumeWatch: (watchId: string) => void;
   onDeleteWatch: (watchId: string) => void;
@@ -103,6 +94,7 @@ export function SmartWatchListPanel({
   onSortChange,
   onClearSearch,
   onSelectWatch,
+  onCommunityAction,
   onPauseWatch,
   onResumeWatch,
   onDeleteWatch,
@@ -144,7 +136,7 @@ export function SmartWatchListPanel({
     () => (calendarSelectorDay ? calendarSelectorFlightsByDay.get(calendarSelectorDay) ?? [] : []),
     [calendarSelectorDay, calendarSelectorFlightsByDay],
   );
-  const activeCount = useMemo(() => items.filter((item) => item.status !== "paused").length, [items]);
+  const activeCount = useMemo(() => items.filter((item) => item.status === "active").length, [items]);
   const pausedCount = useMemo(() => items.filter((item) => item.status === "paused").length, [items]);
   const showListMode = !isCalendarSelectorOpen;
   const totalPages = Math.max(1, Math.ceil(smartListItems.length / WATCHLIST_PAGE_SIZE));
@@ -392,6 +384,14 @@ export function SmartWatchListPanel({
         const watchersCountRaw = Number(watch.watchers_count ?? 0);
         const watchersCount = Number.isFinite(watchersCountRaw) ? Math.max(0, Math.floor(watchersCountRaw)) : 0;
         const watchStatus = getWatchStatusMeta(watch.status, t);
+        const communityPricing = watch.community_pricing;
+        const communityAggregate = communityPricing.aggregate;
+        const communityActionLabel = communityPricing.response
+          ? t("watchlist.communityPricing.editResponse")
+          : communityPricing.eligible
+            ? t("watchlist.communityPricing.respond")
+            : t("watchlist.communityPricing.markPurchased");
+        const canManageTracking = !communityPricing.eligible && watch.status !== "purchased";
         const meta = watchMeta.get(watch.id);
         const trend = !meta?.latest || !meta?.previous
           ? "flat"
@@ -496,6 +496,25 @@ export function SmartWatchListPanel({
                     : t("watchlist.smartList.savedByCount", { count: watchersCount })}
                 </span>
                 <span className="watch-note">{t("watchlist.smartList.priceDisclaimer")}</span>
+                {communityAggregate.is_public &&
+                communityAggregate.min_price !== null &&
+                communityAggregate.max_price !== null ? (
+                  <span className="watch-note watch-community-proof">
+                    {t("watchlist.communityPricing.aggregatePublic", {
+                      count: communityAggregate.sample_size,
+                      min: new Intl.NumberFormat(localeTag, {
+                        maximumFractionDigits: 2,
+                      }).format(communityAggregate.min_price),
+                      max: new Intl.NumberFormat(localeTag, {
+                        maximumFractionDigits: 2,
+                      }).format(communityAggregate.max_price),
+                    })}
+                  </span>
+                ) : communityPricing.response?.flew ? (
+                  <span className="watch-note watch-community-pending">
+                    {t("watchlist.communityPricing.thresholdPending")}
+                  </span>
+                ) : null}
               </div>
             </div>
             <div className="watch-price-area">
@@ -539,15 +558,25 @@ export function SmartWatchListPanel({
               ) : null}
               <div className="watch-row-actions">
                 <div className="alert-actions">
-                  {watch.status === "paused" ? (
+                  <button
+                    className="btn-secondary btn-compact watch-community-action"
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onCommunityAction(watch);
+                    }}
+                  >
+                    {communityActionLabel}
+                  </button>
+                  {canManageTracking && watch.status === "paused" ? (
                     <button className="btn-ghost btn-compact" type="button" onClick={(e) => { e.stopPropagation(); onResumeWatch(watch.id); }}>
                       {t("watchlist.smartList.resume")}
                     </button>
-                  ) : (
+                  ) : canManageTracking ? (
                     <button className="btn-ghost btn-compact" type="button" onClick={(e) => { e.stopPropagation(); onPauseWatch(watch.id); }}>
                       {t("watchlist.smartList.pause")}
                     </button>
-                  )}
+                  ) : null}
                   <button className="btn-danger btn-compact" type="button" onClick={(e) => { e.stopPropagation(); onDeleteWatch(watch.id); }}>
                     {t("watchlist.smartList.delete")}
                   </button>

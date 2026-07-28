@@ -57,6 +57,30 @@ Contrato y operación:
 - [Live flight tracking desde Watchlist](../reference/backend/live-flight-tracking-contract.md)
 - [Runbook live flight tracking](../runbooks/runbook-live-flight-tracking.md)
 
+## Precio de la comunidad
+
+Cuando un vuelo caduca o la persona lo marca como `Comprado`, Watchlist abre
+una pregunta lateral no invasiva:
+
+1. confirma si finalmente se montó en ese vuelo;
+2. si la respuesta es afirmativa, solicita el precio final pagado por viajero;
+3. permite dejarlo para más tarde, corregir la respuesta o eliminarla.
+
+El importe es el total final por persona, no el total de la reserva ni una
+estimación de Viru. En esta primera versión la moneda es EUR.
+
+Las respuestas viven separadas de Fare Memory: Fare Memory conserva precios
+observados de proveedores y Community Pricing conserva experiencias declaradas
+por viajeros. Solo se publica el rango mínimo–máximo de una ruta direccional
+cuando hay al menos tres viajeros distintos con vuelo realizado y precio válido
+en los últimos 365 días. Antes de ese umbral, la UI solo indica cuántas
+aportaciones faltan; no expone precios, identidades, vuelos concretos ni fechas
+de respuesta.
+
+Contrato:
+
+- [Community Pricing](../reference/backend/community-pricing-contract.md)
+
 ## Contenido principal
 
 - Presencia funcional confirmada en:

@@ -9,6 +9,7 @@ type StatusMeta = {
 const WATCH_STATUS_MAP: Record<string, StatusMeta> = {
   active: { tone: "success", labelKey: "shared.statusCatalog.watch.active" },
   paused: { tone: "warning", labelKey: "shared.statusCatalog.watch.paused" },
+  purchased: { tone: "info", labelKey: "shared.statusCatalog.watch.purchased" },
   deleted: { tone: "info", labelKey: "shared.statusCatalog.watch.deleted" },
 };
 

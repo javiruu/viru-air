@@ -10,6 +10,35 @@ export type Watch = {
   watchers_count?: number | null;
   group_id?: string | null;
   fare_profile?: FareComparisonProfile | null;
+  community_pricing: CommunityPricing;
+};
+
+export type CommunityPriceResponse = {
+  flew: boolean;
+  price_per_traveler: number | null;
+  currency: "EUR";
+};
+
+export type CommunityPriceAggregate = {
+  sample_size: number;
+  minimum_sample_size: number;
+  is_public: boolean;
+  min_price: number | null;
+  max_price: number | null;
+  currency: "EUR";
+};
+
+export type CommunityPricing = {
+  eligible: boolean;
+  trigger_reason: "purchased" | "expired" | null;
+  response: CommunityPriceResponse | null;
+  aggregate: CommunityPriceAggregate;
+};
+
+export type CommunityPriceMutationResponse = {
+  watch_id: string;
+  status: string;
+  community_pricing: CommunityPricing;
 };
 
 export type Snapshot = {
@@ -32,6 +61,7 @@ export type WatchDetail = {
   watchers_count?: number | null;
   group_id?: string | null;
   fare_profile?: FareComparisonProfile | null;
+  community_pricing: CommunityPricing;
   latest_snapshot: Snapshot | null;
   price_history?: Snapshot[];
 };
