@@ -85,11 +85,6 @@ def _ensure_seed_from_master() -> None:
     master_iatas = {row["iata"] for row in master_data}
 
     from sqlalchemy import func, select, delete
-    from app.infrastructure.db.session import Base, engine
-
-    # Ensure table exists
-    Base.metadata.create_all(bind=engine)
-
     db = SessionLocal()
     try:
         db_count = db.scalar(select(func.count()).select_from(DbAirport))

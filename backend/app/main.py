@@ -21,7 +21,7 @@ from app.infrastructure.db.schema_compat import (
     ensure_search_preference_columns,
 )
 from app.infrastructure.db.seed import ensure_seed_users
-from app.infrastructure.db.session import Base, engine
+from app.infrastructure.db.session import engine
 from app.infrastructure.db.session import SessionLocal
 from app.services.fare_memory_config import (
     FARE_MEMORY_BOOT_WARMUP_ENABLED,
@@ -45,11 +45,8 @@ from app.services.watchlist_revalidation import (
 
 configure_logging()
 
-run_db_init = os.getenv("RUN_DB_INIT", "false").lower() in {"1", "true", "yes"}
 run_seed_users = os.getenv("RUN_SEED_USERS", "false").lower() in {"1", "true", "yes"}
 
-if run_db_init:
-    Base.metadata.create_all(bind=engine)
 ensure_search_preference_columns(engine)
 ensure_door_to_door_tables(engine)
 ensure_notification_state_table(engine)
