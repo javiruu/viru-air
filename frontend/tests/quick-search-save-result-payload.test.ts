@@ -107,19 +107,30 @@ test("quick search save-result payload carries the comparable fare basket into w
     departure_time_local: "08:30",
     price: 39.99,
     currency: "EUR",
-    source: "quick-search",
+    source: "amadeus",
+    legs: [{
+      carrier_code: "VY",
+      origin_iata: "AGP",
+      destination_iata: "DUB",
+      dep_ts: "2026-09-10T08:30:00Z",
+      arr_ts: "2026-09-10T11:10:00Z",
+    }],
   };
   const fareProfile: FareComparisonProfile = {
     travelers: 1,
     extras: [
-      { kind: "checked_bag_20kg", selected: true, amount_per_person: 31 },
-      { kind: "insurance", selected: true, amount_per_person: 8 },
+      { kind: "checked_bag_20kg", selected: true },
+      { kind: "insurance", selected: true },
     ],
   };
 
   const payload = buildQuickSearchSaveResultPayload(result, { fareProfile });
 
-  assert.deepEqual(payload.fare_profile, fareProfile);
+  assert.deepEqual(payload.fare_profile, {
+    ...fareProfile,
+    airline_id: "vueling",
+    flight_count: 1,
+  });
 });
 
 test("round-trip combination keeps the fare basket for each saved leg", () => {
@@ -141,11 +152,11 @@ test("round-trip combination keeps the fare basket for each saved leg", () => {
   };
   const outboundFareProfile: FareComparisonProfile = {
     travelers: 2,
-    extras: [{ kind: "cabin_bag_10kg", selected: true, amount_per_person: 18 }],
+    extras: [{ kind: "cabin_bag_10kg", selected: true }],
   };
   const returnFareProfile: FareComparisonProfile = {
     travelers: 2,
-    extras: [{ kind: "fast_track", selected: true, amount_per_person: 4 }],
+    extras: [{ kind: "fast_track", selected: true }],
   };
 
   const [outboundPayload, returnPayload] = buildQuickSearchSaveCombinationPayloads({
@@ -156,8 +167,8 @@ test("round-trip combination keeps the fare basket for each saved leg", () => {
     returnFareProfile,
   });
 
-  assert.deepEqual(outboundPayload.fare_profile, outboundFareProfile);
-  assert.deepEqual(returnPayload.fare_profile, returnFareProfile);
+  assert.deepEqual(outboundPayload.fare_profile, { ...outboundFareProfile, flight_count: 1 });
+  assert.deepEqual(returnPayload.fare_profile, { ...returnFareProfile, flight_count: 1 });
   assert.equal(outboundPayload.group_id, "round-trip-1");
   assert.equal(returnPayload.group_id, "round-trip-1");
 });

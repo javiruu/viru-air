@@ -15,6 +15,7 @@ import { resolveCurrentWatchDetail } from "@/modules/watchlist/watchlistActions.
 import { buildQuickSearchSearchParams } from "@/modules/shared/useRouteState";
 import { FareComparisonPanel } from "@/modules/shared/FareComparisonPanel";
 import {
+  attachFareAirline,
   calculateComparableFare,
   createEmptyFareComparisonProfile,
   type FareComparisonProfile,
@@ -101,8 +102,23 @@ export function WatchDetailPanel({
   const currentPriceValue = hasSnapshotPrice ? formatCurrency(latestSnapshot.raw_price, currency, localeTag) : "--";
   const currentPriceStatus = !latestSnapshot ? "no-snapshot" : !hasSnapshotPrice ? "pending-capture" : "ok";
   const comparableFare = hasSnapshotPrice
-    ? calculateComparableFare(latestSnapshot.raw_price, fareProfile)
+    ? calculateComparableFare(
+        latestSnapshot.raw_price,
+        currency,
+        fareProfile,
+        latestSnapshot.provider,
+      )
     : null;
+  const hasSelectedFareExtras = fareProfile.extras.some((extra) => extra.selected);
+  const comparableFareLabel = !comparableFare
+    ? "--"
+    : !hasSelectedFareExtras
+      ? formatCurrency(comparableFare.base_total, currency, localeTag)
+      : comparableFare.comparable_max_total === null
+        ? `${localeTag.toLowerCase().startsWith("es") ? "Desde" : "From"} ${formatCurrency(comparableFare.comparable_min_total, currency, localeTag)}`
+        : comparableFare.comparable_min_total === comparableFare.comparable_max_total
+          ? formatCurrency(comparableFare.comparable_min_total, currency, localeTag)
+          : `${formatCurrency(comparableFare.comparable_min_total, currency, localeTag)}–${formatCurrency(comparableFare.comparable_max_total, currency, localeTag)}`;
   const minPriceValue = summaryData?.min_price == null ? "--" : formatCurrency(summaryData.min_price, currency, localeTag);
   const deltaFromMin = latestSnapshot && summaryData?.min_price != null
     ? latestSnapshot.raw_price - summaryData.min_price
@@ -190,7 +206,6 @@ export function WatchDetailPanel({
         <FareComparisonPanel
           profile={fareProfile}
           locale={localeTag.toLowerCase().startsWith("es") ? "es" : "en"}
-          currency={currency}
           onChange={(nextProfile) => {
             setFareProfile(nextProfile);
             setFareProfileSaved(false);
@@ -199,11 +214,15 @@ export function WatchDetailPanel({
         />
         <div className="fare-comparison-summary" aria-live="polite">
           <span>
-            {comparableFare?.comparable_total != null
-              ? `${localeTag.toLowerCase().startsWith("es") ? "Total comparable" : "Comparable total"}: ${formatCurrency(comparableFare.comparable_total, currency, localeTag)}`
-              : localeTag.toLowerCase().startsWith("es")
-                ? "Completa los importes seleccionados para ver el total."
-                : "Complete selected prices to see the total."}
+            {`${localeTag.toLowerCase().startsWith("es") ? "Total comparable estimado" : "Estimated comparable total"}: ${comparableFareLabel}`}
+            {comparableFare && !comparableFare.is_complete
+              ? ` · ${comparableFare.unavailable_kinds.length} ${localeTag.toLowerCase().startsWith("es") ? "extra(s) sin tarifa pública" : "extra(s) without a public fare"}`
+              : ""}
+            {comparableFare?.source_url ? (
+              <a href={comparableFare.source_url} target="_blank" rel="noreferrer">
+                {localeTag.toLowerCase().startsWith("es") ? "Fuente oficial" : "Official source"}
+              </a>
+            ) : null}
           </span>
           <button
             className="btn-secondary btn-compact"
@@ -214,7 +233,12 @@ export function WatchDetailPanel({
               setFareProfileSaved(false);
               setFareProfileSaveFailed(false);
               try {
-                await onSaveFareProfile(focus.id, focus.status, fareProfile);
+                const profileToSave = attachFareAirline(
+                  fareProfile,
+                  latestSnapshot?.provider,
+                );
+                await onSaveFareProfile(focus.id, focus.status, profileToSave);
+                setFareProfile(profileToSave);
                 setFareProfileSaved(true);
               } catch {
                 setFareProfileSaveFailed(true);

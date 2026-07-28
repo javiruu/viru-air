@@ -56,16 +56,16 @@ class _MalformedPriceQuickSearchProvider:
         return []
 
 
-def test_fare_comparison_profile_rejects_non_finite_amounts() -> None:
+def test_fare_comparison_profile_rejects_unknown_airline() -> None:
     with pytest.raises(ValidationError):
         FareComparisonProfile.model_validate(
             {
                 "travelers": 1,
+                "airline_id": "invented-airline",
                 "extras": [
                     {
                         "kind": "cabin_bag_10kg",
                         "selected": True,
-                        "amount_per_person": 1e309,
                     }
                 ],
             }
@@ -121,10 +121,12 @@ def test_quick_search_result_links_through_save_to_watchlist_live(
     headers = {"Authorization": f"Bearer {token}"}
     fare_profile = {
         "travelers": 2,
+        "airline_id": "ryanair",
+        "flight_count": 1,
         "extras": [
-            {"kind": "cabin_bag_10kg", "selected": True, "amount_per_person": 18.0},
-            {"kind": "insurance", "selected": True, "amount_per_person": 9.5},
-            {"kind": "fast_track", "selected": False, "amount_per_person": None},
+            {"kind": "cabin_bag_10kg", "selected": True},
+            {"kind": "insurance", "selected": True},
+            {"kind": "fast_track", "selected": False},
         ],
     }
 

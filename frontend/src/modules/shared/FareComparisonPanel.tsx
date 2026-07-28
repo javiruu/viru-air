@@ -12,18 +12,14 @@ const LABELS: Record<"es" | "en", {
   readonly title: string;
   readonly subtitle: string;
   readonly travelers: string;
-  readonly amount: string;
-  readonly perPerson: string;
-  readonly missing: string;
+  readonly automatic: string;
   readonly extras: Record<FareExtraKind, string>;
 }> = {
   es: {
     title: "Precio comparable",
-    subtitle: "Crea la misma cesta para todos los vuelos. Los importes son tuyos; Viru no inventa tarifas.",
+    subtitle: "Elige tu cesta y Viru aplicará los rangos publicados por cada aerolínea en cada resultado.",
     travelers: "Viajeros",
-    amount: "Precio",
-    perPerson: "por persona",
-    missing: "Añade el importe para calcular el total real.",
+    automatic: "Estimación automática según la unidad publicada",
     extras: {
       cabin_bag_10kg: "Equipaje de cabina · 10 kg",
       checked_bag_20kg: "Maleta facturada · 20 kg",
@@ -36,11 +32,9 @@ const LABELS: Record<"es" | "en", {
   },
   en: {
     title: "Comparable price",
-    subtitle: "Use the same basket for every flight. Prices are yours; Viru never invents fees.",
+    subtitle: "Choose your basket and Viru will apply each airline's published ranges to every result.",
     travelers: "Travelers",
-    amount: "Price",
-    perPerson: "per person",
-    missing: "Add the amount to calculate the real total.",
+    automatic: "Automatic estimate using the published billing unit",
     extras: {
       cabin_bag_10kg: "Cabin bag · 10 kg",
       checked_bag_20kg: "Checked bag · 20 kg",
@@ -56,14 +50,12 @@ const LABELS: Record<"es" | "en", {
 type FareComparisonPanelProps = {
   readonly profile: FareComparisonProfile;
   readonly locale: "es" | "en";
-  readonly currency: string;
   readonly onChange: (profile: FareComparisonProfile) => void;
 };
 
 export function FareComparisonPanel({
   profile,
   locale,
-  currency,
   onChange,
 }: FareComparisonPanelProps) {
   const copy = LABELS[locale];
@@ -74,7 +66,7 @@ export function FareComparisonPanel({
     onChange({ ...profile, travelers });
   }
 
-  function updateExtra(kind: FareExtraKind, selected: boolean, amount: number | null): void {
+  function updateExtra(kind: FareExtraKind, selected: boolean): void {
     const currentByKind = new Map(profile.extras.map((extra) => [extra.kind, extra]));
     onChange({
       ...profile,
@@ -82,10 +74,9 @@ export function FareComparisonPanel({
         const current = currentByKind.get(extraKind) ?? {
           kind: extraKind,
           selected: false,
-          amount_per_person: null,
         };
         return extraKind === kind
-          ? { ...current, selected, amount_per_person: amount }
+          ? { ...current, selected }
           : current;
       }),
     });
@@ -108,7 +99,6 @@ export function FareComparisonPanel({
           const extra = profile.extras.find((item) => item.kind === kind) ?? {
             kind,
             selected: false,
-            amount_per_person: null,
           };
           return (
             <div className={`fare-extra ${extra.selected ? "fare-extra--selected" : ""}`} key={kind}>
@@ -116,29 +106,12 @@ export function FareComparisonPanel({
                 <input
                   type="checkbox"
                   checked={extra.selected}
-                  onChange={(event) => updateExtra(kind, event.target.checked, extra.amount_per_person)}
+                  onChange={(event) => updateExtra(kind, event.target.checked)}
                 />
                 <span>{copy.extras[kind]}</span>
               </label>
               {extra.selected ? (
-                <label className="fare-extra-price">
-                  <span>{copy.amount}</span>
-                  <span className="fare-extra-price-control">
-                    <input
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      value={extra.amount_per_person ?? ""}
-                      aria-label={`${copy.amount}: ${copy.extras[kind]} (${copy.perPerson})`}
-                      onChange={(event) => {
-                        const value = event.target.value === "" ? null : Number(event.target.value);
-                        updateExtra(kind, true, value !== null && Number.isFinite(value) ? Math.max(0, value) : null);
-                      }}
-                    />
-                    <span>{currency}</span>
-                  </span>
-                  {extra.amount_per_person === null ? <small>{copy.missing}</small> : null}
-                </label>
+                <small className="fare-extra-estimate">{copy.automatic}</small>
               ) : null}
             </div>
           );

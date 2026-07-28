@@ -164,7 +164,7 @@ test("resolveCurrentWatchDetail rejects detail from the previously selected watc
     latest_snapshot: null,
     fare_profile: {
       travelers: 1,
-      extras: [{ kind: "fast_track", selected: true, amount_per_person: 4 }],
+      extras: [{ kind: "fast_track", selected: true }],
     },
   };
 

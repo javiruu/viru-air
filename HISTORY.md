@@ -1,10 +1,11 @@
 # History
 
-## 2026-07-28 - Precio comparable con extras en Quick Search y Watchlist
+## 2026-07-28 - Estimación automática de extras en Quick Search y Watchlist
 
 - `/quick-search` permite aplicar una misma cesta por persona a todos los resultados: equipaje de cabina de 10 kg, maleta facturada de 20 kg, seguro, Fast Track, embarque prioritario, asiento y cambios flexibles.
-- Viru muestra el total comparable solo cuando todos los extras seleccionados tienen un importe introducido por el usuario; no inventa tarifas ni altera el precio observado del proveedor.
-- La cesta se conserva al guardar el resultado y puede revisarse o actualizarse desde `/watchlist`.
+- Viru calcula automáticamente un rango comparable con las tarifas públicas de Ryanair, Vueling y Wizz Air, multiplica cada servicio por viajeros y por su unidad publicada (vuelo o reserva), deduplica paquetes que incluyen varios extras y enlaza la fuente oficial.
+- Los servicios dinámicos sin un rango público calculable se declaran como no estimables; no se inventan importes ni se altera el precio observado del proveedor.
+- La selección y la aerolínea resuelta se conservan al guardar el resultado y pueden revisarse o actualizarse desde `/watchlist`.
 
 ## 2026-07-28 - Predicción explicable de retrasos por avión entrante
 
