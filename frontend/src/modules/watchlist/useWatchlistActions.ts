@@ -113,7 +113,7 @@ export function useWatchlistActions({
     setIsLoadingSelectedWatchDetail,
   });
 
-  const { refreshFiltered, updateWatchStatus, deleteWatch, bulkUpdateStatus, bulkDelete } =
+  const { refreshFiltered, updateWatchStatus, updateFareProfile, deleteWatch, bulkUpdateStatus, bulkDelete } =
     useWatchlistMutations({
       t,
       load,
@@ -179,6 +179,7 @@ export function useWatchlistActions({
     onSubmit,
     refreshFiltered,
     updateWatchStatus,
+    updateFareProfile,
     deleteWatch,
     bulkUpdateStatus,
     bulkDelete,

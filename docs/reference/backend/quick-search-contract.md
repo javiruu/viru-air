@@ -517,7 +517,10 @@ Defensive client note:
 
 ### Save result behavior (`POST /api/v1/search/save-result`)
 
-- Request accepts the observed route/date fields plus `price_total`, optional `currency`, optional freshness fields (`freshness_status`, `requires_revalidation`, `validation_status`) and optional exact `legs` for operational tracking.
+- Request accepts the observed route/date fields plus `price_total`, optional `currency`, optional freshness fields (`freshness_status`, `requires_revalidation`, `validation_status`), optional exact `legs` for operational tracking and optional `fare_profile` for the user's comparable-price basket.
+- `fare_profile` contains `travelers` (`1..9`) and at most one entry per supported extra: `cabin_bag_10kg`, `checked_bag_20kg`, `insurance`, `fast_track`, `priority_boarding`, `seat_selection` and `flexible_ticket`. Each entry carries `selected` and nullable `amount_per_person >= 0`.
+- Extra prices are user-provided comparison inputs, not provider quotes. A comparable total is complete only when every selected extra has an amount; the persisted profile never changes the canonical observed `PriceSnapshot`.
+- The profile is returned by Watchlist list/detail responses and can be updated through `PUT /api/v1/watchlist/{watch_id}` together with the current `status`.
 - When `legs` is present, it transactionally replaces the Watch's ordered exact-flight identity (maximum 8). When omitted, an existing identity is preserved so older clients and price-only saves remain compatible.
 - Response includes `tracking_identity` as `linked`, `updated` or `missing`.
 - When `price_total` is present and the result is fresh, saving a quick-search result to watchlist writes an immediate `PriceSnapshot` with provider `quick-search`.

@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useEffect, useState } from "react";
 
 import type { SearchResult } from "@/modules/quick-search/types";
 import {
@@ -11,6 +11,12 @@ import { QuickSearchProviderBadge } from "@/modules/quick-search/components/Quic
 import { resolveQuickSearchProviderPresentation } from "@/modules/quick-search/providerPresentation";
 import { getAirportMeta } from "@/modules/shared/airports";
 import type { QuickSearchCopyKey } from "@/modules/shared/quickSearchCopy";
+import { FareComparisonPanel } from "@/modules/shared/FareComparisonPanel";
+import {
+  calculateComparableFare,
+  createEmptyFareComparisonProfile,
+  type FareComparisonProfile,
+} from "@/modules/shared/fareComparison";
 
 type Props = {
   visibleResults: SearchResult[];
@@ -24,6 +30,9 @@ type Props = {
   departAfter: string;
   departBefore: string;
   localeTag: string;
+  travelers?: number;
+  fareProfile?: FareComparisonProfile;
+  onFareProfileChange?: (profile: FareComparisonProfile) => void;
   weatherOrigin?: unknown;
   weatherDestination?: unknown;
   getCopyPayload: (result: SearchResult) => string;
@@ -38,7 +47,7 @@ type Props = {
   refreshPrice: (result: SearchResult) => void;
   isInWatchlist: (result: SearchResult) => boolean;
   getWatchlistHref?: (result: SearchResult) => string;
-  addToWatchlist: (result: SearchResult) => void;
+  addToWatchlist: (result: SearchResult, fareProfile: FareComparisonProfile) => void;
   viewInWatchlist: (result: SearchResult) => void;
   setExpandedRows: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   setSelectedResultId: React.Dispatch<React.SetStateAction<string | null>>;
@@ -103,10 +112,29 @@ function getLegDurationMinutes(depTs: string | null | undefined, arrTs: string |
 }
 
 function QuickSearchResultsListInner(props: Props) {
+  const travelers = props.travelers ?? 1;
+  const [internalFareProfile, setInternalFareProfile] = useState(() => createEmptyFareComparisonProfile(travelers));
+  const fareProfile = props.fareProfile ?? internalFareProfile;
+  const setFareProfile = props.onFareProfileChange ?? setInternalFareProfile;
+  useEffect(() => {
+    if (fareProfile.travelers !== travelers) {
+      setFareProfile({ ...fareProfile, travelers });
+    }
+  }, [fareProfile, setFareProfile, travelers]);
+  const locale = props.localeTag.toLowerCase().startsWith("es") ? "es" : "en";
+  const currency = props.visibleResults[0]?.currency ?? "EUR";
+
   return (
     <>
       {props.visibleResults.length > 0 ? (
-        <div className={`qs-results-list ${props.compactView ? "compact" : ""}`}>
+        <>
+          <FareComparisonPanel
+            profile={fareProfile}
+            locale={locale}
+            currency={currency}
+            onChange={setFareProfile}
+          />
+          <div className={`qs-results-list ${props.compactView ? "compact" : ""}`}>
           {props.visibleResults.map((r, idx) => {
             const rowId = props.resultKey(r, idx);
             const provider = resolveQuickSearchProviderPresentation(r.source, props.t("sourceUnknown"));
@@ -138,6 +166,8 @@ function QuickSearchResultsListInner(props: Props) {
             const flightTimeLabel = totalDurationMinutes !== null ? props.formatMinutes(totalDurationMinutes) : null;
             const watchlistHref = props.getWatchlistHref?.(r) || "/watchlist";
             const recommendationTooltipId = `recommendation-${rowId}`;
+            const fare = calculateComparableFare(r.price_total ?? r.price, fareProfile);
+            const hasSelectedExtras = fareProfile.extras.some((extra) => extra.selected);
             const recommendationLabel = aiReason
               ? `${props.t("aiPreferredReasonLabel")}: ${aiReason}`
               : props.t("aiPreferredAria");
@@ -206,7 +236,14 @@ function QuickSearchResultsListInner(props: Props) {
                 <div className="qs-result-actions">
                   <div className="qs-result-price">
                     {!props.compactView ? <span className="qs-result-kicker">{props.t("resultsColPrice")}</span> : null}
-                    <strong>{props.formatMoney(r.price_total ?? r.price, r.currency)}</strong>
+                    <strong>{props.formatMoney(fare.comparable_total ?? fare.base_total, r.currency)}</strong>
+                    {hasSelectedExtras ? (
+                      <span className={fare.is_complete ? "qs-result-comparable-note" : "qs-result-comparable-note qs-result-comparable-note--missing"}>
+                        {fare.is_complete
+                          ? `Base ${props.formatMoney(fare.base_total, r.currency)} + extras ${props.formatMoney(fare.extras_total, r.currency)}`
+                          : locale === "es" ? "Faltan importes de extras" : "Missing extra prices"}
+                      </span>
+                    ) : null}
                     {!props.compactView && r.ranking_score ? <span>{props.t("score")} {props.formatScore(r.ranking_score)}</span> : null}
                   </div>
                   <div className="qs-result-buttons">
@@ -216,7 +253,7 @@ function QuickSearchResultsListInner(props: Props) {
                         {props.t("viewWatchlist")}
                       </a>
                     ) : (
-                      <button className="btn-secondary qs-row-save" type="button" onClick={() => props.addToWatchlist(r)}>
+                      <button className="btn-secondary qs-row-save" type="button" onClick={() => props.addToWatchlist(r, fareProfile)}>
                         {props.t("save")}
                       </button>
                     )}
@@ -389,7 +426,8 @@ function QuickSearchResultsListInner(props: Props) {
               </article>
             );
           })}
-        </div>
+          </div>
+        </>
       ) : null}
 
     </>

@@ -1,14 +1,25 @@
 from datetime import date as date_type, datetime
-from typing import Optional
+from typing import Optional, TypedDict
 
 from app.core.time import utc_now_naive
 from uuid import uuid4
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.domain.vocabulary import DELIVERY_STATUS_QUEUED, WATCH_STATUS_ACTIVE
 from app.infrastructure.db.session import Base
+
+
+class FareComparisonExtraData(TypedDict):
+    kind: str
+    selected: bool
+    amount_per_person: float | None
+
+
+class FareComparisonProfileData(TypedDict):
+    travelers: int
+    extras: list[FareComparisonExtraData]
 
 
 class User(Base):
@@ -47,6 +58,7 @@ class FlightWatch(Base):
     travel_date_local: Mapped[datetime.date] = mapped_column(Date)
     target_price: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
     group_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    fare_profile: Mapped[FareComparisonProfileData | None] = mapped_column(JSON, nullable=True)
     status: Mapped[str] = mapped_column(String(20), default=WATCH_STATUS_ACTIVE)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
 

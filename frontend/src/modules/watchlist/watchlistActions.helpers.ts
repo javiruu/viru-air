@@ -104,6 +104,10 @@ export function mergeWatchDetailPriceHistoryRows(rows: HistoryRow[], detail: Wat
   return Array.from(merged.values());
 }
 
+export function resolveCurrentWatchDetail(selectedWatch: Watch, detail: WatchDetail | null): WatchDetail | null {
+  return detail?.id === selectedWatch.id ? detail : null;
+}
+
 export function filterWatchesBySelection(
   items: Watch[],
   selectedOrigin: string,

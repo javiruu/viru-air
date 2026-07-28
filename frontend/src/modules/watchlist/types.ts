@@ -1,4 +1,6 @@
-﻿export type Watch = {
+﻿import type { FareComparisonProfile } from "@/modules/shared/fareComparison";
+
+export type Watch = {
   id: string;
   origin_iata: string;
   destination_iata: string;
@@ -7,6 +9,7 @@
   status: string;
   watchers_count?: number | null;
   group_id?: string | null;
+  fare_profile?: FareComparisonProfile | null;
 };
 
 export type Snapshot = {
@@ -28,6 +31,7 @@ export type WatchDetail = {
   status: string;
   watchers_count?: number | null;
   group_id?: string | null;
+  fare_profile?: FareComparisonProfile | null;
   latest_snapshot: Snapshot | null;
   price_history?: Snapshot[];
 };

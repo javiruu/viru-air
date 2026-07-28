@@ -1,10 +1,13 @@
 from datetime import date, timedelta
 
+import pytest
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 
 import app.api.v1.search as search_api
 from app.core.time import utc_now_naive
 from app.domain.entities import ProviderFlight
+from app.domain.schemas import FareComparisonProfile
 from tests.helpers import register_and_token
 
 
@@ -51,6 +54,22 @@ class _MalformedPriceQuickSearchProvider:
                 ),
             ]
         return []
+
+
+def test_fare_comparison_profile_rejects_non_finite_amounts() -> None:
+    with pytest.raises(ValidationError):
+        FareComparisonProfile.model_validate(
+            {
+                "travelers": 1,
+                "extras": [
+                    {
+                        "kind": "cabin_bag_10kg",
+                        "selected": True,
+                        "amount_per_person": 1e309,
+                    }
+                ],
+            }
+        )
 
 
 def test_quick_search_valid_route_returns_at_least_one_result(client: TestClient, monkeypatch) -> None:
@@ -100,6 +119,14 @@ def test_quick_search_result_links_through_save_to_watchlist_live(
     result_leg = result["legs"][0]
     token = register_and_token(client, email="quick-to-live@viru.dev")
     headers = {"Authorization": f"Bearer {token}"}
+    fare_profile = {
+        "travelers": 2,
+        "extras": [
+            {"kind": "cabin_bag_10kg", "selected": True, "amount_per_person": 18.0},
+            {"kind": "insurance", "selected": True, "amount_per_person": 9.5},
+            {"kind": "fast_track", "selected": False, "amount_per_person": None},
+        ],
+    }
 
     save_response = client.post(
         "/api/v1/search/save-result",
@@ -110,6 +137,7 @@ def test_quick_search_result_links_through_save_to_watchlist_live(
             "travel_date": result["travel_date"],
             "price_total": result["price_total"],
             "currency": result["currency"],
+            "fare_profile": fare_profile,
             "legs": [
                 {
                     "flight_number": result_leg["flight_num"],
@@ -124,6 +152,12 @@ def test_quick_search_result_links_through_save_to_watchlist_live(
     )
 
     assert save_response.status_code == 200
+    detail_response = client.get(
+        f"/api/v1/watchlist/{save_response.json()['watch_id']}",
+        headers=headers,
+    )
+    assert detail_response.status_code == 200
+    assert detail_response.json()["fare_profile"] == fare_profile
     live_response = client.get(
         f"/api/v1/watchlist/{save_response.json()['watch_id']}/live",
         headers=headers,

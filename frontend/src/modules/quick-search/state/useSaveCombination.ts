@@ -4,9 +4,10 @@ import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { apiFetch } from "@/modules/shared/api";
-import { buildQuickSearchSaveResultPayload } from "@/modules/quick-search/api/buildSaveResultPayload";
+import { buildQuickSearchSaveCombinationPayloads } from "@/modules/quick-search/api/buildSaveResultPayload";
 import { buildWatchlistUrl } from "@/modules/shared/useRouteState";
 import type { SearchResult } from "@/modules/quick-search/types";
+import type { FareComparisonProfile } from "@/modules/shared/fareComparison";
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -19,6 +20,8 @@ type SaveCombinationParams = {
   destination: string;
   /** Shared group identifier (generated once per combination). */
   groupId: string;
+  outboundFareProfile: FareComparisonProfile;
+  returnFareProfile: FareComparisonProfile;
 };
 
 type SaveResult = {
@@ -53,15 +56,22 @@ export function useSaveCombination() {
   const saveCombination = useCallback(
     async (params: SaveCombinationParams) => {
       setState({ status: "saving", messageKey: null, outboundWatchId: "", returnWatchId: "", groupId: params.groupId });
+      const [outboundPayload, returnPayload] = buildQuickSearchSaveCombinationPayloads({
+        outbound: params.outbound,
+        returnResult: params.return,
+        groupId: params.groupId,
+        outboundFareProfile: params.outboundFareProfile,
+        returnFareProfile: params.returnFareProfile,
+      });
 
       const [outboundResult, returnResult] = await Promise.allSettled([
         apiFetch<SaveResult>("/search/save-result", {
           method: "POST",
-          body: JSON.stringify(buildQuickSearchSaveResultPayload(params.outbound, { groupId: params.groupId })),
+          body: JSON.stringify(outboundPayload),
         }),
         apiFetch<SaveResult>("/search/save-result", {
           method: "POST",
-          body: JSON.stringify(buildQuickSearchSaveResultPayload(params.return, { groupId: params.groupId })),
+          body: JSON.stringify(returnPayload),
         }),
       ]);
 

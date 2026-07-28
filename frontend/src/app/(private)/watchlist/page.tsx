@@ -329,6 +329,7 @@ export default function WatchlistPage() {
             onRefreshLiveTracking={liveFlight.refresh}
             onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
             onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
+            onSaveFareProfile={actions.updateFareProfile}
           />
         </div>
 

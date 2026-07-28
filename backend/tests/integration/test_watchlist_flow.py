@@ -195,6 +195,40 @@ def test_watchlist_create_list_and_refresh(client: TestClient, monkeypatch) -> N
     assert detail.json()["watchers_count"] == 0
 
 
+def test_watchlist_update_persists_fare_profile(client: TestClient) -> None:
+    token = register_and_token(client, email="watch-fare-profile@viru.dev")
+    headers = {"Authorization": f"Bearer {token}"}
+    create = client.post(
+        "/api/v1/watchlist",
+        headers=headers,
+        json={
+            "origin_iata": "MAD",
+            "destination_iata": "FCO",
+            "travel_date_local": str(date.today() + timedelta(days=31)),
+        },
+    )
+    watch_id = create.json()["id"]
+    fare_profile = {
+        "travelers": 2,
+        "extras": [
+            {"kind": "cabin_bag_10kg", "selected": True, "amount_per_person": 18},
+            {"kind": "insurance", "selected": True, "amount_per_person": 9.5},
+            {"kind": "fast_track", "selected": True, "amount_per_person": 4},
+        ],
+    }
+
+    update = client.put(
+        f"/api/v1/watchlist/{watch_id}",
+        headers=headers,
+        json={"status": "active", "fare_profile": fare_profile},
+    )
+
+    assert update.status_code == 200
+    assert update.json()["fare_profile"] == fare_profile
+    detail = client.get(f"/api/v1/watchlist/{watch_id}", headers=headers)
+    assert detail.json()["fare_profile"] == fare_profile
+
+
 def test_watchlist_create_backfills_historical_snapshots_when_enabled(
     client: TestClient,
     monkeypatch,

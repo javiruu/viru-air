@@ -5,6 +5,7 @@ import {
   filterWatchesBySelection,
   mapSnapshotsToHistoryRows,
   mergeWatchDetailPriceHistoryRows,
+  resolveCurrentWatchDetail,
 } from "@/modules/watchlist/watchlistActions.helpers";
 import type { HistoryRow, Snapshot, WatchDetail, Watch } from "@/modules/watchlist/types";
 
@@ -155,4 +156,18 @@ test("filterWatchesBySelection filters by origin, destination and optional dates
 
   const noDateFilter = filterWatchesBySelection(WATCHES, "MAD", "DUB", []);
   assert.deepEqual(noDateFilter.map((w) => w.id), ["w1"]);
+});
+
+test("resolveCurrentWatchDetail rejects detail from the previously selected watch", () => {
+  const previousDetail: WatchDetail = {
+    ...WATCHES[1],
+    latest_snapshot: null,
+    fare_profile: {
+      travelers: 1,
+      extras: [{ kind: "fast_track", selected: true, amount_per_person: 4 }],
+    },
+  };
+
+  assert.equal(resolveCurrentWatchDetail(WATCHES[0], previousDetail), null);
+  assert.equal(resolveCurrentWatchDetail(WATCHES[1], previousDetail), previousDetail);
 });

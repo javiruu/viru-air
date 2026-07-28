@@ -1,7 +1,7 @@
 # Estado actual
 
 **Estado:** vivo  
-**Ultima revision:** 2026-07-21
+**Ultima revision:** 2026-07-28
 **Fuente de verdad:** si  
 **Area:** overview
 
@@ -55,6 +55,8 @@
 - Proveedores: Ryanair, Vueling, Wizz Air, easyJet, Duffel (API)
 - Indicador visual de estado por proveedor durante la busqueda
 - Logging en tiempo real de actividad por provider
+- Cesta comparable por viajeros con equipaje, seguro, Fast Track y otros extras introducidos por el usuario
+- Persistencia de la cesta al guardar un resultado en Watchlist
 
 ### Watchlist (estable)
 
@@ -64,6 +66,7 @@
 - Enlace opcional a vuelos exactos guardados desde Quick Search
 - Estado operacional, horarios, puertas y posicion observada con degradacion segura si falta cobertura
 - Snapshots operacionales compartidos, cooldown de fallos y polling pausado en pestanas ocultas
+- Precio comparable editable, con desglose base/extras y estado honesto cuando faltan importes
 
 ### Puerta a puerta (activo)
 

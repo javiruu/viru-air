@@ -1,5 +1,11 @@
 # History
 
+## 2026-07-28 - Precio comparable con extras en Quick Search y Watchlist
+
+- `/quick-search` permite aplicar una misma cesta por persona a todos los resultados: equipaje de cabina de 10 kg, maleta facturada de 20 kg, seguro, Fast Track, embarque prioritario, asiento y cambios flexibles.
+- Viru muestra el total comparable solo cuando todos los extras seleccionados tienen un importe introducido por el usuario; no inventa tarifas ni altera el precio observado del proveedor.
+- La cesta se conserva al guardar el resultado y puede revisarse o actualizarse desde `/watchlist`.
+
 ## 2026-07-28 - Predicción explicable de retrasos por avión entrante
 
 - `/watchlist` incorpora una lectura compacta de retraso previsto junto al seguimiento operacional, con rango, riesgo, confianza y factores visibles.

@@ -1,4 +1,5 @@
 import type { SearchResult } from "../types";
+import type { FareComparisonProfile } from "@/modules/shared/fareComparison";
 
 export type QuickSearchSaveResultPayload = {
   readonly job_id?: string | null;
@@ -20,6 +21,7 @@ export type QuickSearchSaveResultPayload = {
   readonly deeplink_url: string | null;
   readonly itinerary_type: string | null;
   readonly group_id?: string | null;
+  readonly fare_profile?: FareComparisonProfile | null;
   readonly legs?: ReadonlyArray<{
     readonly flight_number: string | null;
     readonly carrier_code: string | null;
@@ -30,10 +32,19 @@ export type QuickSearchSaveResultPayload = {
   }>;
 };
 
+type BuildQuickSearchSaveCombinationPayloadsInput = {
+  readonly outbound: SearchResult;
+  readonly returnResult: SearchResult;
+  readonly groupId: string;
+  readonly outboundFareProfile: FareComparisonProfile;
+  readonly returnFareProfile: FareComparisonProfile;
+};
+
 type BuildQuickSearchSaveResultPayloadOptions = {
   readonly jobId?: string | null;
   readonly fallbackDeepLinkUrl?: string | null;
   readonly groupId?: string | null;
+  readonly fareProfile?: FareComparisonProfile | null;
 };
 
 export function buildQuickSearchSaveResultPayload(
@@ -60,6 +71,7 @@ export function buildQuickSearchSaveResultPayload(
     deeplink_url: result.deeplink_url ?? options.fallbackDeepLinkUrl ?? null,
     itinerary_type: result.itinerary_type ?? null,
     group_id: options.groupId,
+    ...(options.fareProfile ? { fare_profile: options.fareProfile } : {}),
     ...(result.legs?.length
       ? {
           legs: result.legs.slice(0, 8).map((leg) => ({
@@ -73,4 +85,19 @@ export function buildQuickSearchSaveResultPayload(
         }
       : {}),
   };
+}
+
+export function buildQuickSearchSaveCombinationPayloads(
+  input: BuildQuickSearchSaveCombinationPayloadsInput,
+): readonly [QuickSearchSaveResultPayload, QuickSearchSaveResultPayload] {
+  return [
+    buildQuickSearchSaveResultPayload(input.outbound, {
+      groupId: input.groupId,
+      fareProfile: input.outboundFareProfile,
+    }),
+    buildQuickSearchSaveResultPayload(input.returnResult, {
+      groupId: input.groupId,
+      fareProfile: input.returnFareProfile,
+    }),
+  ];
 }
