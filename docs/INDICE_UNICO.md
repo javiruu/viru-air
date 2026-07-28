@@ -149,6 +149,7 @@
 - [Matriz QA por area](qa/qa-command-matrix.md)
 - [Evidencia Live flight tracking desde Watchlist](qa/reports/2026-07-21-watchlist-live-flight-tracking.json)
 - [QA fallback operacional sin coste](qa/reports/2026-07-21-zero-cost-live-provider-fallback.md)
+- [QA precio comparable en Quick Search y Watchlist](qa/reports/2026-07-28-fare-comparison-manual-qa.md)
 - [Visual QA (archivado)](archive/qa-visual/)
 - [Auditoría de paleta dual (archivada)](archive/qa-visual/color-palette-audit.md)
 - [Reportes QA (archivados)](archive/qa-reports/)

@@ -359,6 +359,26 @@ test("save combination callback uses findCombinationResult helper", () => {
   );
 });
 
+test("round-trip result panels keep independent controlled fare profiles", () => {
+  const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
+  const outboundPanel = source.slice(
+    source.indexOf("{/* ── Outbound panel ── */}"),
+    source.indexOf("{/* ── Return panel ── */}"),
+  );
+  const returnPanel = source.slice(
+    source.indexOf("{/* ── Return panel ── */}"),
+    source.indexOf("{/* ── Combined banner ── */}"),
+  );
+
+  assert.match(outboundPanel, /fareProfile=\{outboundFareProfile\}/);
+  assert.match(outboundPanel, /onFareProfileChange=\{setOutboundFareProfile\}/);
+  assert.doesNotMatch(outboundPanel, /fareProfile=\{returnFareProfile\}/);
+
+  assert.match(returnPanel, /fareProfile=\{returnFareProfile\}/);
+  assert.match(returnPanel, /onFareProfileChange=\{setReturnFareProfile\}/);
+  assert.doesNotMatch(returnPanel, /fareProfile=\{outboundFareProfile\}/);
+});
+
 // ── 6. Dual mode flag guards ─────────────────────────────────────────
 
 test("isDualMode excludes country‑only scope", () => {
@@ -395,12 +415,12 @@ test("dual submit uses buildDualSearchParams helper", () => {
   // Return leg must invert IATA
   assert.match(
     source,
-    /origin:\s*destination,/,
+    /origin:\s*destinationRequestValue,/,
     "return leg missing inverted origin (must use destination)",
   );
   assert.match(
     source,
-    /destination:\s*origin,/,
+    /destination:\s*originRequestValue,/,
     "return leg missing inverted destination (must use origin)",
   );
   assert.match(

@@ -25,6 +25,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from app.api.deps import get_current_user
 from app.api.v1.airports import _validate_iata
 from app.domain.entities import ProviderFetchResult
+from app.domain.schemas import FareComparisonProfile
 from app.infrastructure.db.models import FlightWatch, User
 from app.infrastructure.db.session import get_db, SessionLocal
 from app.infrastructure.airports_catalog import ExpandedAirportCandidate, get_airport, resolve_seed_airport
@@ -664,6 +665,7 @@ class QuickSearchSaveResultIn(BaseModel):
     requires_revalidation: bool | None = None
     validation_status: str | None = Field(default=None, max_length=40)
     group_id: str | None = Field(default=None, max_length=36)
+    fare_profile: FareComparisonProfile | None = None
     legs: list[QuickSearchSaveLegIn] | None = Field(default=None, max_length=8)
 
     @field_validator("origin_iata", "destination_iata")
@@ -3163,6 +3165,8 @@ def save_result(
     if existing:
         if payload.group_id and existing.group_id != payload.group_id:
             existing.group_id = payload.group_id
+        if payload.fare_profile is not None:
+            existing.fare_profile = payload.fare_profile.model_dump(mode="json")
         tracking_identity = replace_watch_tracked_legs(db, existing, payload.legs)
         handle_saved_result_observation(db, existing, payload)
         body = {
@@ -3190,6 +3194,7 @@ def save_result(
         travel_date_local=payload.travel_date,
         target_price=payload.price_total,
         group_id=payload.group_id,
+        fare_profile=payload.fare_profile.model_dump(mode="json") if payload.fare_profile else None,
     )
     db.add(watch)
     db.flush()

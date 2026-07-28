@@ -37,3 +37,10 @@ test("watch detail panel contains required empty state keys", () => {
   assert.match(source, /watchlist\.detail\.empty/);
   assert.match(source, /watchlist\.summary\.empty/);
 });
+
+test("watch detail uses only detail that belongs to the selected watch", () => {
+  const panelSource = fs.readFileSync(DETAIL_PANEL_FILE, "utf8");
+
+  assert.match(panelSource, /resolveCurrentWatchDetail\(selectedWatch, detail\)/);
+  assert.match(panelSource, /selectedWatch\?\.fare_profile \?\? currentDetail\?\.fare_profile/);
+});

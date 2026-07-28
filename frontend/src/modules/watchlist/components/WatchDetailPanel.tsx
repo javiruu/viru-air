@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import { useI18n } from "@/i18n";
 import { formatCurrency, formatPercent } from "@/modules/shared/format";
 import { getWatchStatusMeta } from "@/modules/shared/statusCatalog";
@@ -9,7 +11,14 @@ import type { PriceSummary, Watch, WatchDetail } from "@/modules/watchlist/types
 import { Skeleton } from "@/modules/shared/Skeleton";
 import { WatchLiveFlightPanel } from "@/modules/watchlist/components/WatchLiveFlightPanel";
 import type { LiveFlightTracking } from "@/modules/watchlist/liveFlightTypes";
+import { resolveCurrentWatchDetail } from "@/modules/watchlist/watchlistActions.helpers";
 import { buildQuickSearchSearchParams } from "@/modules/shared/useRouteState";
+import { FareComparisonPanel } from "@/modules/shared/FareComparisonPanel";
+import {
+  calculateComparableFare,
+  createEmptyFareComparisonProfile,
+  type FareComparisonProfile,
+} from "@/modules/shared/fareComparison";
 
 type WatchDetailPanelProps = {
   selectedWatch: Watch | null;
@@ -23,6 +32,7 @@ type WatchDetailPanelProps = {
   onRefreshLiveTracking: () => void;
   onPauseWatch: (watchId: string) => void;
   onResumeWatch: (watchId: string) => void;
+  onSaveFareProfile: (watchId: string, status: string, profile: FareComparisonProfile) => Promise<void>;
 };
 
 export function WatchDetailPanel({
@@ -37,8 +47,20 @@ export function WatchDetailPanel({
   onRefreshLiveTracking,
   onPauseWatch,
   onResumeWatch,
+  onSaveFareProfile,
 }: WatchDetailPanelProps) {
   const { t, localeTag } = useI18n();
+  const [fareProfile, setFareProfile] = useState(() => createEmptyFareComparisonProfile(1));
+  const [isSavingFareProfile, setIsSavingFareProfile] = useState(false);
+  const [fareProfileSaved, setFareProfileSaved] = useState(false);
+  const [fareProfileSaveFailed, setFareProfileSaveFailed] = useState(false);
+  const currentDetail = selectedWatch ? resolveCurrentWatchDetail(selectedWatch, detail) : null;
+
+  useEffect(() => {
+    setFareProfile(selectedWatch?.fare_profile ?? currentDetail?.fare_profile ?? createEmptyFareComparisonProfile(1));
+    setFareProfileSaved(false);
+    setFareProfileSaveFailed(false);
+  }, [currentDetail?.fare_profile, selectedWatch?.fare_profile, selectedWatch?.id]);
 
   if (!selectedWatch) {
     return (
@@ -56,7 +78,7 @@ export function WatchDetailPanel({
     );
   }
 
-  const focus = detail || selectedWatch;
+  const focus = currentDetail ?? selectedWatch;
   const status = getWatchStatusMeta(focus.status, t);
   const hasSummaryData = Boolean(summary && hasPriceSummaryData(summary));
   const summaryData = hasSummaryData ? summary : null;
@@ -64,12 +86,12 @@ export function WatchDetailPanel({
   const freshness = getFreshnessPresentation({
     t,
     locale: localeTag,
-    lastUpdatedAt: detail?.latest_snapshot?.captured_at_utc,
-    freshnessState: detail?.latest_snapshot ? "observing" : null,
+    lastUpdatedAt: currentDetail?.latest_snapshot?.captured_at_utc,
+    freshnessState: currentDetail?.latest_snapshot ? "observing" : null,
     observationCount: summary?.count ?? 0,
   });
 
-  const latestSnapshot = detail?.latest_snapshot ?? null;
+  const latestSnapshot = currentDetail?.latest_snapshot ?? null;
   const latestProvider = resolveProviderPresentation(
     latestSnapshot?.provider,
     t("watchlist.providerCoverage.unknown"),
@@ -78,6 +100,9 @@ export function WatchDetailPanel({
   const hasSnapshotPrice = latestSnapshot && latestSnapshot.raw_price != null && latestSnapshot.raw_price >= 0;
   const currentPriceValue = hasSnapshotPrice ? formatCurrency(latestSnapshot.raw_price, currency, localeTag) : "--";
   const currentPriceStatus = !latestSnapshot ? "no-snapshot" : !hasSnapshotPrice ? "pending-capture" : "ok";
+  const comparableFare = hasSnapshotPrice
+    ? calculateComparableFare(latestSnapshot.raw_price, fareProfile)
+    : null;
   const minPriceValue = summaryData?.min_price == null ? "--" : formatCurrency(summaryData.min_price, currency, localeTag);
   const deltaFromMin = latestSnapshot && summaryData?.min_price != null
     ? latestSnapshot.raw_price - summaryData.min_price
@@ -162,6 +187,58 @@ export function WatchDetailPanel({
       </div>
 
       <div className="watch-detail-block">
+        <FareComparisonPanel
+          profile={fareProfile}
+          locale={localeTag.toLowerCase().startsWith("es") ? "es" : "en"}
+          currency={currency}
+          onChange={(nextProfile) => {
+            setFareProfile(nextProfile);
+            setFareProfileSaved(false);
+            setFareProfileSaveFailed(false);
+          }}
+        />
+        <div className="fare-comparison-summary" aria-live="polite">
+          <span>
+            {comparableFare?.comparable_total != null
+              ? `${localeTag.toLowerCase().startsWith("es") ? "Total comparable" : "Comparable total"}: ${formatCurrency(comparableFare.comparable_total, currency, localeTag)}`
+              : localeTag.toLowerCase().startsWith("es")
+                ? "Completa los importes seleccionados para ver el total."
+                : "Complete selected prices to see the total."}
+          </span>
+          <button
+            className="btn-secondary btn-compact"
+            type="button"
+            disabled={isSavingFareProfile}
+            onClick={async () => {
+              setIsSavingFareProfile(true);
+              setFareProfileSaved(false);
+              setFareProfileSaveFailed(false);
+              try {
+                await onSaveFareProfile(focus.id, focus.status, fareProfile);
+                setFareProfileSaved(true);
+              } catch {
+                setFareProfileSaveFailed(true);
+              } finally {
+                setIsSavingFareProfile(false);
+              }
+            }}
+          >
+            {isSavingFareProfile
+              ? localeTag.toLowerCase().startsWith("es") ? "Guardando..." : "Saving..."
+              : localeTag.toLowerCase().startsWith("es") ? "Guardar cesta" : "Save basket"}
+          </button>
+          {fareProfileSaved ? <small>{localeTag.toLowerCase().startsWith("es") ? "Cesta guardada." : "Basket saved."}</small> : null}
+          {fareProfileSaveFailed ? (
+            <small className="fare-comparison-summary-error">
+              {localeTag.toLowerCase().startsWith("es")
+                ? "No se pudo guardar la cesta. Inténtalo de nuevo."
+                : "The basket could not be saved. Try again."}
+            </small>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="watch-detail-block">
         <h3 className="watch-detail-block-title">{t("watchlist.detail.operational.title")}</h3>
         <div className="watch-detail-operational">
           <span className="watch-detail-operational-item tabular-nums">{t("watchlist.detail.latestSnapshot")} {latestSnapshot ? safeDateTime(latestSnapshot.captured_at_utc, localeTag) : "--"}</span>
@@ -183,7 +260,7 @@ export function WatchDetailPanel({
         <p className="panel-note">{t("watchlist.summary.empty")}</p>
       )}
 
-      {isLoading && !detail ? (
+      {isLoading && !currentDetail ? (
         <div className="history-summary history-summary--kpis" aria-label={t("watchlist.smartList.loadingAria")}>
           <div className="history-kpi"><span className="skeleton skeleton-line" /><strong className="skeleton skeleton-line" /></div>
           <div className="history-kpi"><span className="skeleton skeleton-line" /><strong className="skeleton skeleton-line" /></div>

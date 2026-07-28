@@ -110,11 +110,41 @@ class AdminProductMetricsOut(BaseModel):
     alert_created_rate_pct: float
 
 
+FareExtraKind = Literal[
+    "cabin_bag_10kg",
+    "checked_bag_20kg",
+    "insurance",
+    "fast_track",
+    "priority_boarding",
+    "seat_selection",
+    "flexible_ticket",
+]
+
+
+class FareComparisonExtra(BaseModel):
+    kind: FareExtraKind
+    selected: bool = False
+    amount_per_person: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+
+
+class FareComparisonProfile(BaseModel):
+    travelers: int = Field(default=1, ge=1, le=9)
+    extras: list[FareComparisonExtra] = Field(default_factory=list, max_length=7)
+
+    @model_validator(mode="after")
+    def validate_unique_extra_kinds(self) -> "FareComparisonProfile":
+        kinds = [extra.kind for extra in self.extras]
+        if len(kinds) != len(set(kinds)):
+            raise ValueError("fare_extra_kind_duplicated")
+        return self
+
+
 class WatchCreateIn(BaseModel):
     origin_iata: str = Field(min_length=3, max_length=3)
     destination_iata: str = Field(min_length=3, max_length=3)
     travel_date_local: Date
     target_price: float | None = Field(default=None, ge=0)
+    fare_profile: FareComparisonProfile | None = None
 
     @field_validator("origin_iata", "destination_iata")
     @classmethod
@@ -141,6 +171,7 @@ class WatchOut(BaseModel):
     status: str
     watchers_count: int = Field(default=0, ge=0)
     group_id: str | None = None
+    fare_profile: FareComparisonProfile | None = None
 
 
 class WatchDetailOut(WatchOut):
@@ -151,6 +182,7 @@ class WatchDetailOut(WatchOut):
 class WatchUpdateIn(BaseModel):
     status: str
     target_price: float | None = None
+    fare_profile: FareComparisonProfile | None = None
 
     @field_validator("status")
     @classmethod

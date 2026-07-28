@@ -96,6 +96,10 @@ import {
   type QuickSearchCanonicalPayload,
 } from "@/modules/quick-search/api/buildQuickSearchRequest";
 import { buildQuickSearchSaveResultPayload } from "@/modules/quick-search/api/buildSaveResultPayload";
+import {
+  createEmptyFareComparisonProfile,
+  type FareComparisonProfile,
+} from "@/modules/shared/fareComparison";
 import { getOfficialRyanairRouteDeepLink } from "@/modules/quick-search/api/quickSearchDeepLinks";
 import {
   buildQuickSearchExportPagePayload,
@@ -773,6 +777,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const outboundSide = useQuickSearchSide("outbound");
   const returnSide = useQuickSearchSide("return");
   const saveCombination = useSaveCombination();
+  const [outboundFareProfile, setOutboundFareProfile] = useState(() => createEmptyFareComparisonProfile(adults));
+  const [returnFareProfile, setReturnFareProfile] = useState(() => createEmptyFareComparisonProfile(adults));
   const pendingCombinationResultsRef = useRef<{ outbound: SearchResult; return: SearchResult } | null>(null);
   const submittedRouteSeedsRef = useRef<{ readonly origin: string[]; readonly destination: string[] }>({
     origin: [],
@@ -2541,7 +2547,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     }
   }
 
-  async function saveQuickSearchResult(result: SearchResult, fallbackDeepLinkUrl?: string | null) {
+  async function saveQuickSearchResult(
+    result: SearchResult,
+    fallbackDeepLinkUrl?: string | null,
+    fareProfile?: FareComparisonProfile,
+  ) {
     const routeFallback = getOfficialRyanairRouteDeepLink(
       fallbackDeepLinkUrl,
       result.origin,
@@ -2550,7 +2560,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     ) || fallbackDeepLinkUrl;
     return apiFetch<{ watch_id?: string; created_or_existing?: string }>("/search/save-result", {
       method: "POST",
-      body: JSON.stringify(buildQuickSearchSaveResultPayload(result, { jobId, fallbackDeepLinkUrl: routeFallback })),
+      body: JSON.stringify(buildQuickSearchSaveResultPayload(result, {
+        jobId,
+        fallbackDeepLinkUrl: routeFallback,
+        fareProfile,
+      })),
     });
   }
 
@@ -2641,10 +2655,10 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     });
   }, [getWatchId]);
 
-  async function addToWatchlist(result: SearchResult) {
+  async function addToWatchlist(result: SearchResult, fareProfile: FareComparisonProfile) {
     setMessage("");
     try {
-      const response = await saveQuickSearchResult(result, deeplinkUrl);
+      const response = await saveQuickSearchResult(result, deeplinkUrl, fareProfile);
       markAsSaved(result, response.watch_id);
       if (response.created_or_existing === "existing") {
         notify({
@@ -3470,11 +3484,13 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       outboundSide.reset();
       returnSide.reset();
       saveCombination.reset();
+      setOutboundFareProfile(createEmptyFareComparisonProfile(adults));
+      setReturnFareProfile(createEmptyFareComparisonProfile(adults));
       setOutboundViewState(defaultSideViewState);
       setReturnViewState(defaultSideViewState);
     }
     wasDualModeRef.current = isDualMode;
-  }, [defaultSideViewState, isDualMode, outboundSide, returnSide, saveCombination]);
+  }, [adults, defaultSideViewState, isDualMode, outboundSide, returnSide, saveCombination]);
 
   useEffect(() => {
     if (saveCombination.status === "saved") {
@@ -5705,6 +5721,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 departAfter={departAfter}
                 departBefore={departBefore}
                 localeTag={localeTag}
+                travelers={adults}
+                fareProfile={outboundFareProfile}
+                onFareProfileChange={setOutboundFareProfile}
                 weatherOrigin={weatherOrigin}
                 weatherDestination={weatherDestination}
                 getCopyPayload={getCopyPayload}
@@ -6019,6 +6038,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 departAfter={departAfter}
                 departBefore={departBefore}
                 localeTag={localeTag}
+                travelers={adults}
+                fareProfile={outboundFareProfile}
+                onFareProfileChange={setOutboundFareProfile}
                 weatherOrigin={outboundSide.weatherOrigin}
                 weatherDestination={outboundSide.weatherDestination}
                 getCopyPayload={getCopyPayload}
@@ -6034,13 +6056,14 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 getWatchlistHref={getResultWatchlistHref}
                 refreshPrice={refreshQuickSearchResult}
                 viewInWatchlist={viewResultInWatchlist}
-                addToWatchlist={async (result: SearchResult) => {
+                addToWatchlist={async (result: SearchResult, fareProfile: FareComparisonProfile) => {
                   setMessage("");
                   try {
                     const response = await apiFetch<{ watch_id?: string; created_or_existing?: string }>("/search/save-result", {
                       method: "POST",
                       body: JSON.stringify(buildQuickSearchSaveResultPayload(result, {
                         jobId: outboundSide.jobId,
+                        fareProfile,
                         fallbackDeepLinkUrl: outboundSide.deepLink?.url ?? outboundSide.deepLink?.fallback_url ?? localRyanairUrl ?? null,
                       })),
                     });
@@ -6133,6 +6156,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 departAfter={departAfter}
                 departBefore={departBefore}
                 localeTag={localeTag}
+                travelers={adults}
+                fareProfile={returnFareProfile}
+                onFareProfileChange={setReturnFareProfile}
                 weatherOrigin={null} /* Phase 14: weather not fetched in dual mode */
                 weatherDestination={null} /* Phase 14: weather not fetched in dual mode */
                 getCopyPayload={getCopyPayload}
@@ -6148,13 +6174,14 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 isInWatchlist={isInWatchlist}
                 getWatchlistHref={getResultWatchlistHref}
                 viewInWatchlist={viewResultInWatchlist}
-                addToWatchlist={async (result: SearchResult) => {
+                addToWatchlist={async (result: SearchResult, fareProfile: FareComparisonProfile) => {
                   setMessage("");
                   try {
                     const response = await apiFetch<{ watch_id?: string; created_or_existing?: string }>("/search/save-result", {
                       method: "POST",
                       body: JSON.stringify(buildQuickSearchSaveResultPayload(result, {
                         jobId: returnSide.jobId,
+                        fareProfile,
                         fallbackDeepLinkUrl: returnSide.deepLink?.url ?? returnSide.deepLink?.fallback_url ?? localRyanairUrl ?? null,
                       })),
                     });
@@ -6226,6 +6253,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 origin,
                 destination,
                 groupId: crypto.randomUUID(),
+                outboundFareProfile,
+                returnFareProfile,
               });
             }}
             saving={saveCombination.status === "saving"}

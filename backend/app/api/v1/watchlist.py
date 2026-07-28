@@ -89,6 +89,7 @@ def _watch_out(watch: FlightWatch, watchers_count: int = 0) -> WatchOut:
         status=watch.status,
         watchers_count=watchers_count,
         group_id=watch.group_id,
+        fare_profile=watch.fare_profile,
     )
 
 
@@ -169,6 +170,7 @@ def create_watch(
         if existing.status == WATCH_STATUS_DELETED:
             existing.status = WATCH_STATUS_ACTIVE
             existing.target_price = payload.target_price
+            existing.fare_profile = payload.fare_profile.model_dump(mode="json") if payload.fare_profile else None
             db.commit()
             db.refresh(existing)
             watchers_count = _count_watchers_by_route(
@@ -187,6 +189,7 @@ def create_watch(
         destination_iata=destination_iata,
         travel_date_local=payload.travel_date_local,
         target_price=payload.target_price,
+        fare_profile=payload.fare_profile.model_dump(mode="json") if payload.fare_profile else None,
     )
     db.add(watch)
     try:
@@ -224,6 +227,7 @@ def create_watch(
         "status": watch.status,
         "watchers_count": watchers_count,
         "group_id": watch.group_id,
+        "fare_profile": watch.fare_profile,
     }
     store_response(
         db,
@@ -371,6 +375,7 @@ def get_watch_detail(
         status=watch.status,
         watchers_count=watchers_count,
         group_id=watch.group_id,
+        fare_profile=watch.fare_profile,
         latest_snapshot=(
             None
             if latest is None
@@ -413,6 +418,8 @@ def update_watch(
     watch.status = payload.status
     if payload.target_price is not None:
         watch.target_price = payload.target_price if payload.target_price > 0 else None
+    if payload.fare_profile is not None:
+        watch.fare_profile = payload.fare_profile.model_dump(mode="json")
     db.commit()
     db.refresh(watch)
     watchers_count = _count_watchers_by_route(

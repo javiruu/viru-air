@@ -3,6 +3,7 @@ import { apiFetch } from "@/modules/shared/api";
 import { summarizeRefreshBulkResult } from "@/modules/watchlist/summary";
 import { filterWatchesBySelection } from "@/modules/watchlist/watchlistActions.helpers";
 import type { Watch } from "@/modules/watchlist/types";
+import type { FareComparisonProfile } from "@/modules/shared/fareComparison";
 
 type MessageType = "error" | "success";
 
@@ -88,6 +89,26 @@ export function useWatchlistMutations({
     }
   }
 
+  async function updateFareProfile(
+    id: string,
+    status: string,
+    fareProfile: FareComparisonProfile,
+  ): Promise<void> {
+    try {
+      await apiFetch<Watch>(`/watchlist/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ status, fare_profile: fareProfile }),
+      });
+      await load();
+      setMessage(t("watchlist.messages.fareProfileSaved"));
+      setMessageType("success");
+    } catch {
+      setMessage(t("watchlist.messages.fareProfileSaveError"));
+      setMessageType("error");
+      throw new Error("fare_profile_save_failed");
+    }
+  }
+
   async function deleteWatch(id: string): Promise<void> {
     try {
       await apiFetch<{ status: string }>(`/watchlist/${id}`, { method: "DELETE" });
@@ -157,6 +178,7 @@ export function useWatchlistMutations({
   return {
     refreshFiltered,
     updateWatchStatus,
+    updateFareProfile,
     deleteWatch,
     bulkUpdateStatus,
     bulkDelete,
