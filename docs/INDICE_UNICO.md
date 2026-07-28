@@ -1,7 +1,7 @@
 # Índice Único de Documentación
 
 **Estado:** vivo
-**Última revisión:** 2026-07-14
+**Última revisión:** 2026-07-28
 **Fuente de verdad:** sí
 **Área:** documentación
 
@@ -20,6 +20,7 @@
 - [Backend](engineering/backend.md)
 - [Reference](reference/README.md)
 - [Quick Search contract](reference/backend/quick-search-contract.md)
+- [Community Pricing contract](reference/backend/community-pricing-contract.md)
 - [Live flight tracking contract](reference/backend/live-flight-tracking-contract.md)
 - [Provider integration guide](reference/backend/provider-integration-guide.md)
 - [Feature flags y activacion por entorno](reference/feature-flags.md)
@@ -43,6 +44,7 @@
 - [Dashboard](product/dashboard.md)
 - [Quick Search](product/quick-search.md)
 - [Watchlist](product/watchlist.md)
+- [Community Pricing contract](reference/backend/community-pricing-contract.md)
 - [Puerta a puerta](product/door-to-door.md)
 - [Centro de notificaciones persistente](product/notifications.md)
 - [Product language map](reference/product-language-map.md)
@@ -94,6 +96,7 @@
 - [Dashboard](product/dashboard.md)
 - [Quick Search](product/quick-search.md)
 - [Watchlist](product/watchlist.md)
+- [Community Pricing contract](reference/backend/community-pricing-contract.md)
 - [Puerta a puerta](product/door-to-door.md)
 - [Centro de notificaciones persistente](product/notifications.md)
 - [Policies Page](product/policies-page.md)

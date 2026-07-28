@@ -88,6 +88,8 @@ export function mergeWatchDetailPriceHistoryRows(rows: HistoryRow[], detail: Wat
     status: detail.status,
     watchers_count: detail.watchers_count,
     group_id: detail.group_id,
+    fare_profile: detail.fare_profile,
+    community_pricing: detail.community_pricing,
   };
   const merged = new Map<string, HistoryRow>();
   rows.forEach((row) => {

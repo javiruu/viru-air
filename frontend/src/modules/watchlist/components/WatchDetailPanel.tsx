@@ -295,7 +295,7 @@ export function WatchDetailPanel({
       <DoorToDoorWatchlistSuggestion watch={focus} />
 
       <div className="alert-actions watch-detail-actions">
-        {focus.status === "paused" ? (
+        {focus.community_pricing.eligible ? null : focus.status === "paused" ? (
           <button className="btn-ghost btn-compact" type="button" onClick={() => onResumeWatch(focus.id)}>
             {t("watchlist.detail.actions.resume")}
           </button>

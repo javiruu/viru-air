@@ -4,7 +4,20 @@ from typing import NotRequired, Optional, TypedDict
 from app.core.time import utc_now_naive
 from uuid import uuid4
 
-from sqlalchemy import JSON, Boolean, Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    CheckConstraint,
+    Date,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.domain.vocabulary import DELIVERY_STATUS_QUEUED, WATCH_STATUS_ACTIVE
@@ -37,6 +50,9 @@ class User(Base):
 
     watches: Mapped[list["FlightWatch"]] = relationship(back_populates="user")
     notes: Mapped[list["UserNote"]] = relationship(back_populates="user")
+    community_price_reports: Mapped[list["CommunityPriceReport"]] = relationship(
+        back_populates="user",
+    )
 
 
 class FlightWatch(Base):
@@ -70,6 +86,43 @@ class FlightWatch(Base):
         cascade="all, delete-orphan",
         order_by="WatchTrackedFlightLeg.sequence",
     )
+    community_price_report: Mapped["CommunityPriceReport | None"] = relationship(
+        back_populates="watch",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
+
+
+class CommunityPriceReport(Base):
+    __tablename__ = "community_price_report"
+    __table_args__ = (
+        UniqueConstraint("watch_id", name="uq_community_price_report_watch"),
+        CheckConstraint(
+            "(flew = false AND price_per_traveler IS NULL) "
+            "OR (flew = true AND price_per_traveler > 0)",
+            name="ck_community_price_report_flew_price",
+        ),
+        Index("ix_community_price_report_user", "user_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    watch_id: Mapped[str] = mapped_column(
+        ForeignKey("flight_watch.id", ondelete="CASCADE"),
+    )
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    trigger_reason: Mapped[str] = mapped_column(String(20))
+    flew: Mapped[bool] = mapped_column(Boolean)
+    price_per_traveler: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    currency: Mapped[str] = mapped_column(String(3), default="EUR")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=utc_now_naive,
+        onupdate=utc_now_naive,
+    )
+
+    watch: Mapped[FlightWatch] = relationship(back_populates="community_price_report")
+    user: Mapped[User] = relationship(back_populates="community_price_reports")
 
 
 class PriceSnapshot(Base):

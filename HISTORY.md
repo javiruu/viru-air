@@ -1,5 +1,12 @@
 # History
 
+## 2026-07-28 - Precio real y anónimo de la comunidad
+
+- Al caducar un vuelo o marcarlo como `Comprado`, `/watchlist` pregunta si la persona llegó a volar y, en caso afirmativo, qué precio final pagó por viajero.
+- Las respuestas pueden dejarse para más tarde, corregirse o eliminarse y se guardan separadas de Fare Memory para no mezclar precios declarados con observaciones de proveedores.
+- Viru publica únicamente el rango mínimo–máximo de una ruta direccional durante los últimos 365 días cuando existen al menos tres viajeros distintos; antes del umbral no expone importes ni datos individuales.
+- El flujo se integra en un panel lateral accesible, mantiene la identidad cálida de Watchlist y contempla tema claro, oscuro y móvil.
+
 ## 2026-07-28 - Estimación automática de extras en Quick Search y Watchlist
 
 - `/quick-search` permite aplicar una misma cesta por persona a todos los resultados: equipaje de cabina de 10 kg, maleta facturada de 20 kg, seguro, Fast Track, embarque prioritario, asiento y cambios flexibles.

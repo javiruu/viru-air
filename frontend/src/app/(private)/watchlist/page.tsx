@@ -14,6 +14,7 @@ import { useFtueHint } from "@/lib/ftue";
 import { AddWatchModal } from "@/modules/watchlist/components/AddWatchModal";
 import { AirportPickerModal } from "@/modules/watchlist/components/AirportPickerModal";
 import { ComparePanels } from "@/modules/watchlist/components/ComparePanels";
+import { CommunityPricingDrawer } from "@/modules/watchlist/components/CommunityPricingDrawer";
 import { HistoryIntegratedPanel } from "@/modules/watchlist/components/HistoryIntegratedPanel";
 import { SmartWatchListPanel } from "@/modules/watchlist/components/SmartWatchListPanel";
 import { WatchDetailPanel } from "@/modules/watchlist/components/WatchDetailPanel";
@@ -286,6 +287,9 @@ export default function WatchlistPage() {
             onSortChange={view.setWatchSort}
             onClearSearch={() => view.setWatchSearch("")}
             onSelectWatch={handleSelectWatch}
+            onCommunityAction={(watch) => {
+              void actions.communityPricing.open(watch);
+            }}
             onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
             onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
             onDeleteWatch={actions.deleteWatch}
@@ -396,6 +400,27 @@ export default function WatchlistPage() {
         onSelectCountry={actions.setSelectedCountry}
         onClearSelection={actions.clearSelection}
         onSelectAirport={actions.selectAirport}
+      />
+
+      <CommunityPricingDrawer
+        watch={actions.communityPricing.activeWatch}
+        pendingCount={actions.communityPricing.pendingCount}
+        stage={actions.communityPricing.stage}
+        price={actions.communityPricing.price}
+        isSaving={actions.communityPricing.isSaving}
+        error={actions.communityPricing.error}
+        onPriceChange={actions.communityPricing.setPrice}
+        onClose={actions.communityPricing.close}
+        onChooseFlew={actions.communityPricing.chooseFlew}
+        onSaveNoFlight={() => {
+          void actions.communityPricing.saveNoFlight();
+        }}
+        onSavePrice={() => {
+          void actions.communityPricing.savePrice();
+        }}
+        onDeleteResponse={() => {
+          void actions.communityPricing.deleteResponse();
+        }}
       />
     </main>
   );

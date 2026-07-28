@@ -15,6 +15,7 @@ from app.domain.vocabulary import (
     WATCH_STATUS_ACTIVE,
     WATCH_STATUS_DELETED,
     WATCH_STATUS_PAUSED,
+    WATCH_STATUS_PURCHASED,
 )
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -26,6 +27,7 @@ from app.domain.schemas import (
     WatchDeleteBulkIn,
     WatchDetailOut,
     WatchOut,
+    CommunityPricingOut,
     WatchPriceHistoryOut,
     WatchRefreshBulkIn,
     WatchStatusBulkIn,
@@ -51,6 +53,10 @@ from app.services.watchlist_revalidation import (
     route_fingerprint,
 )
 from app.services.watchlist_refresh_policy import evaluate_route_freshness, latest_snapshot_by_watch_ids
+from app.services.community_pricing import (
+    build_community_pricing_by_watch,
+    community_pricing_for_watch,
+)
 
 router = APIRouter()
 provider = MultiSourceFlightProvider()
@@ -79,7 +85,11 @@ def _snapshot_source_kind(provider_name: str | None) -> str:
     return "provider"
 
 
-def _watch_out(watch: FlightWatch, watchers_count: int = 0) -> WatchOut:
+def _watch_out(
+    watch: FlightWatch,
+    watchers_count: int = 0,
+    community_pricing: CommunityPricingOut | None = None,
+) -> WatchOut:
     return WatchOut(
         id=watch.id,
         origin_iata=watch.origin_iata,
@@ -90,6 +100,7 @@ def _watch_out(watch: FlightWatch, watchers_count: int = 0) -> WatchOut:
         watchers_count=watchers_count,
         group_id=watch.group_id,
         fare_profile=watch.fare_profile,
+        community_pricing=community_pricing or CommunityPricingOut(),
     )
 
 
@@ -180,7 +191,15 @@ def create_watch(
             ).get(
                 _watch_route_key(existing), 0
             )
-            return _watch_out(existing, watchers_count)
+            return _watch_out(
+                existing,
+                watchers_count,
+                community_pricing_for_watch(
+                    db,
+                    existing,
+                    current_user_id=current_user.id,
+                ),
+            )
         raise HTTPException(status_code=409, detail="watch_already_exists")
 
     watch = FlightWatch(
@@ -218,17 +237,16 @@ def create_watch(
         {_watch_route_key(watch)},
         current_user_id=current_user.id,
     ).get(_watch_route_key(watch), 0)
-    body = {
-        "id": watch.id,
-        "origin_iata": watch.origin_iata,
-        "destination_iata": watch.destination_iata,
-        "travel_date_local": str(watch.travel_date_local),
-        "target_price": float(watch.target_price) if watch.target_price else None,
-        "status": watch.status,
-        "watchers_count": watchers_count,
-        "group_id": watch.group_id,
-        "fare_profile": watch.fare_profile,
-    }
+    watch_out = _watch_out(
+        watch,
+        watchers_count,
+        community_pricing_for_watch(
+            db,
+            watch,
+            current_user_id=current_user.id,
+        ),
+    )
+    body = watch_out.model_dump(mode="json")
     store_response(
         db,
         user_id=current_user.id,
@@ -238,7 +256,7 @@ def create_watch(
         response_status=200,
         response_body=body,
     )
-    return WatchOut(**body)
+    return watch_out
 
 
 @router.get("", response_model=list[WatchOut])
@@ -258,8 +276,17 @@ def list_watches(
         route_keys,
         current_user_id=current_user.id,
     )
+    community_pricing_by_watch = build_community_pricing_by_watch(
+        db,
+        watches,
+        current_user_id=current_user.id,
+    )
     return [
-        _watch_out(w, watchers_count_by_route.get(_watch_route_key(w), 0))
+        _watch_out(
+            w,
+            watchers_count_by_route.get(_watch_route_key(w), 0),
+            community_pricing_by_watch[w.id],
+        )
         for w in watches
     ]
 
@@ -366,6 +393,11 @@ def get_watch_detail(
         {_watch_route_key(watch)},
         current_user_id=current_user.id,
     ).get(_watch_route_key(watch), 0)
+    community_pricing = community_pricing_for_watch(
+        db,
+        watch,
+        current_user_id=current_user.id,
+    )
     return WatchDetailOut(
         id=watch.id,
         origin_iata=watch.origin_iata,
@@ -376,6 +408,7 @@ def get_watch_detail(
         watchers_count=watchers_count,
         group_id=watch.group_id,
         fare_profile=watch.fare_profile,
+        community_pricing=community_pricing,
         latest_snapshot=(
             None
             if latest is None
@@ -427,7 +460,15 @@ def update_watch(
         {_watch_route_key(watch)},
         current_user_id=current_user.id,
     ).get(_watch_route_key(watch), 0)
-    return _watch_out(watch, watchers_count)
+    return _watch_out(
+        watch,
+        watchers_count,
+        community_pricing_for_watch(
+            db,
+            watch,
+            current_user_id=current_user.id,
+        ),
+    )
 
 
 @router.delete("/{watch_id}")
@@ -505,6 +546,8 @@ def _refresh_watch_now(db: Session, watch_id: str, current_user: User) -> JSONRe
         raise HTTPException(status_code=404, detail="watch_not_found")
     if watch.status == WATCH_STATUS_PAUSED:
         raise HTTPException(status_code=409, detail="watch_paused")
+    if watch.status == WATCH_STATUS_PURCHASED:
+        raise HTTPException(status_code=409, detail="watch_purchased")
 
     latest_snapshot = latest_snapshot_by_watch_ids(db, [watch.id]).get(watch.id)
     route_freshness = evaluate_route_freshness(

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useI18n } from "@/i18n";
 import { COUNTRY_AIRPORTS, CountryAirports, findCountryByIata } from "@/modules/shared/airports";
 import { useWatchlistCompatibility } from "@/modules/watchlist/useWatchlistCompatibility";
+import { useCommunityPricing } from "@/modules/watchlist/useCommunityPricing";
 import { useWatchlistDataLoader } from "@/modules/watchlist/useWatchlistDataLoader";
 import { useWatchlistDetail } from "@/modules/watchlist/useWatchlistDetail";
 import { useWatchlistForm } from "@/modules/watchlist/useWatchlistForm";
@@ -146,6 +147,7 @@ export function useWatchlistActions({
     setSelectedCountry,
     load,
   });
+  const communityPricing = useCommunityPricing({ items, load });
 
   return {
     items,
@@ -186,6 +188,7 @@ export function useWatchlistActions({
     openPicker,
     clearSelection,
     selectAirport,
+    communityPricing,
   };
 }
 

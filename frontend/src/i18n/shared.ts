@@ -129,6 +129,7 @@
     watch: {
       active: "Activo",
       paused: "Pausado",
+      purchased: "Comprado",
       deleted: "Eliminado",
     },
     delivery: {
@@ -277,6 +278,7 @@ export const sharedEn = {
     watch: {
       active: "Active",
       paused: "Paused",
+      purchased: "Purchased",
       deleted: "Deleted",
     },
     delivery: {
