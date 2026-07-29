@@ -1,7 +1,7 @@
 ﻿# Watchlist
 
 **Estado:** vivo  
-**Última revisión:** 2026-07-28
+**Última revisión:** 2026-07-29
 **Fuente de verdad:** si  
 **Área:** product
 
@@ -59,12 +59,21 @@ Contrato y operación:
 
 ## Precio de la comunidad
 
-Cuando un vuelo caduca o la persona lo marca como `Comprado`, Watchlist abre
-una pregunta lateral no invasiva:
+Cada fila de Watchlist tiene un icono comunitario discreto arriba a la
+izquierda. Al abrirlo aparece un hub lateral que reúne el rango anónimo pagado
+por viajero, el tamaño o umbral de la muestra, cuántas personas siguen la ruta,
+las garantías de privacidad y la aportación propia. Abrir el hub es siempre de
+solo lectura: no marca el vuelo como comprado ni dispara otra mutación.
+
+Cuando un vuelo caduca, el icono indica que hay una aportación pendiente sin
+abrirse automáticamente. Si la persona pulsa `Comprado` dentro del hub:
 
 1. confirma si finalmente se montó en ese vuelo;
 2. si la respuesta es afirmativa, solicita el precio final pagado por viajero;
 3. permite dejarlo para más tarde, corregir la respuesta o eliminarla.
+
+Las acciones comunitarias no se mezclan con `Pausar`, `Reanudar` o `Eliminar`
+en la fila, y no existe una pantalla comunitaria paralela.
 
 El importe es el total final por persona, no el total de la reserva ni una
 estimación de Viru. En esta primera versión la moneda es EUR.

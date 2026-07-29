@@ -5,6 +5,7 @@ import test from "node:test";
 
 const SUMMARY_FILE = path.join(process.cwd(), "src", "modules", "watchlist", "summary.ts");
 const SMART_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "SmartWatchListPanel.tsx");
+const WATCH_ROW = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchRow.tsx");
 const DETAIL_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");
 const HISTORY_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "HistoryIntegratedPanel.tsx");
 const WATCHLIST_I18N = path.join(process.cwd(), "src", "i18n", "domains", "watchlist.ts");
@@ -28,7 +29,7 @@ test("W6: helper de frescura cubre caso sin timestamp ni snapshot", () => {
 });
 
 test("W6: lista muestra frescura accionable y no deja En observacion aislado", () => {
-  const source = fs.readFileSync(SMART_PANEL, "utf8");
+  const source = fs.readFileSync(WATCH_ROW, "utf8");
   assert.match(source, /getFreshnessPresentation/);
   assert.match(source, /freshness\.label/);
   assert.match(source, /freshness\.detail/);

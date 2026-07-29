@@ -5,6 +5,7 @@ import test from "node:test";
 
 const WATCHLIST_PAGE = path.join(process.cwd(), "src", "app", "(private)", "watchlist", "page.tsx");
 const SMART_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "SmartWatchListPanel.tsx");
+const WATCH_ROW = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchRow.tsx");
 const DETAIL_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");
 const HISTORY_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "HistoryIntegratedPanel.tsx");
 const COMPARE_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "ComparePanels.tsx");
@@ -30,26 +31,26 @@ test("W9.1: watchlist keeps main surfaces and removes detail calendar table", ()
 
 test("W9.1: watchlist exposes multi-provider coverage without fake per-route claims", () => {
   const providerPanel = fs.readFileSync(PROVIDER_PANEL, "utf8");
-  const smart = fs.readFileSync(SMART_PANEL, "utf8");
+  const row = fs.readFileSync(WATCH_ROW, "utf8");
   const detail = fs.readFileSync(DETAIL_PANEL, "utf8");
   const i18n = fs.readFileSync(WATCHLIST_I18N, "utf8");
 
   assert.match(providerPanel, /provider\.status === "observed"/);
   assert.match(providerPanel, /providerCoverage\.pendingSummary/);
-  assert.match(smart, /resolveProviderPresentation/);
-  assert.match(smart, /providerCoverage\.rowSource/);
+  assert.match(row, /resolveProviderPresentation/);
+  assert.match(row, /providerCoverage\.rowSource/);
   assert.match(detail, /providerCoverage\.detailSource/);
   assert.match(i18n, /Cobertura de búsqueda/);
 });
 
 test("W9.1: route separators use arrows and never question marks", () => {
   const detail = fs.readFileSync(DETAIL_PANEL, "utf8");
-  const smart = fs.readFileSync(SMART_PANEL, "utf8");
+  const row = fs.readFileSync(WATCH_ROW, "utf8");
   const history = fs.readFileSync(HISTORY_PANEL, "utf8");
   const compare = fs.readFileSync(COMPARE_PANEL, "utf8");
 
   assert.match(detail, /origin_iata\} \{"→"\} \{focus\.destination_iata\}/);
-  assert.match(smart, /\{" → "\}/);
+  assert.match(row, /watch\.origin_iata\} → \{watch\.destination_iata/);
   assert.match(history, /origin_iata\} → \$\{selectedWatch\.destination_iata\}/);
   assert.match(compare, /{option\.origin} → {option\.destination}/);
   assert.match(compare, /<strong>{origin} → {destination}<\/strong>/);

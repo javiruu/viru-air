@@ -60,8 +60,8 @@ test("QuickSearchView still saves resume snapshot (no microtoast regression)", (
 });
 
 // ── #5 Watchlist price-delta percent chip ─────────────────────────────
-test("SmartWatchListPanel computes trend-percent delta and renders the chip", () => {
-  const source = read("modules/watchlist/components/SmartWatchListPanel.tsx");
+test("WatchRow computes trend-percent delta and renders the chip", () => {
+  const source = read("modules/watchlist/components/WatchRow.tsx");
   assert.match(source, /trendPercentLabel/, "missing trendPercentLabel wiring");
   assert.match(source, /trend-chip-percent/, "missing trend-chip-percent rendering");
   assert.doesNotMatch(

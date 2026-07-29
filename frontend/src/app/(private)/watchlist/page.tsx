@@ -287,8 +287,8 @@ export default function WatchlistPage() {
             onSortChange={view.setWatchSort}
             onClearSearch={() => view.setWatchSearch("")}
             onSelectWatch={handleSelectWatch}
-            onCommunityAction={(watch) => {
-              void actions.communityPricing.open(watch);
+            onCommunityAction={(watch, trigger) => {
+              actions.communityPricing.open(watch, trigger);
             }}
             onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
             onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
@@ -404,13 +404,17 @@ export default function WatchlistPage() {
 
       <CommunityPricingDrawer
         watch={actions.communityPricing.activeWatch}
-        pendingCount={actions.communityPricing.pendingCount}
         stage={actions.communityPricing.stage}
         price={actions.communityPricing.price}
         isSaving={actions.communityPricing.isSaving}
         error={actions.communityPricing.error}
         onPriceChange={actions.communityPricing.setPrice}
         onClose={actions.communityPricing.close}
+        onMarkPurchased={() => {
+          void actions.communityPricing.markPurchased();
+        }}
+        onBeginContribution={actions.communityPricing.beginContribution}
+        onReturnToOverview={actions.communityPricing.backToOverview}
         onChooseFlew={actions.communityPricing.chooseFlew}
         onSaveNoFlight={() => {
           void actions.communityPricing.saveNoFlight();

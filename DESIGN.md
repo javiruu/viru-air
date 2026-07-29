@@ -93,6 +93,18 @@ Patrones base (`components.css`):
 
 *Regla de extension:* si un patron se repite en 2+ pantallas, extraer a componente/tokens canonicos.
 
+### Watchlist: acceso de comunidad
+
+- Cada `list-row watch-row` reserva su esquina superior izquierda para un
+  acceso comunitario compacto, nunca para una accion textual secundaria.
+- El icono puede indicar evidencia publica, respuesta pendiente o aportacion
+  realizada con color, punto o check; no debe competir con precio, ruta ni
+  estado operativo.
+- Abrir el hub es una accion de lectura. Cualquier mutacion (`Comprado`,
+  responder, editar o eliminar) requiere un control explicito dentro del panel.
+- El movimiento usa solo `transform` y `opacity`, respeta
+  `prefers-reduced-motion` y conserva foco visible.
+
 ## 7) Estados y semantica
 - `success`: exito/completado.
 - `warning`: parcial/pendiente.

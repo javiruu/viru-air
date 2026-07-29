@@ -72,14 +72,49 @@ export const watchlistEs = {
     sparklineMeta: "Último {latest} · Mín {min} · Máx {max}",
   },
   communityPricing: {
+    hubKicker: "Comunidad de la ruta",
+    hubSubtitle: "Experiencias reales, sin salir de tu seguimiento.",
     kicker: "Precio real, entre viajeros",
-    close: "Cerrar Community Pricing",
+    close: "Cerrar comunidad de la ruta",
     pendingCount: "{count} pendientes en tu cola",
     expired: "Vuelo caducado",
     purchased: "Compra registrada",
+    tracking: "En seguimiento",
     markPurchased: "Comprado",
     respond: "Responder",
     editResponse: "Editar respuesta",
+    backToHub: "Volver a la comunidad",
+    routePriceLabel: "Precio pagado por viajero",
+    aggregateRange: "{min}–{max} €",
+    buildingRange: "Rango en construcción",
+    sampleCount: "{count} aportaciones anónimas · últimos 12 meses",
+    thresholdProgress: "{count} de {minimum} aportaciones para publicar el rango",
+    routeWatchersLabel: "Personas siguiendo la ruta",
+    routeWatcherSingle: "1 persona tiene esta ruta guardada",
+    routeWatchers: "{count} personas tienen esta ruta guardada",
+    privacyTitle: "Privado por diseño",
+    privacyBody:
+      "Solo mostramos rangos anónimos por ruta durante 12 meses y a partir de 3 viajeros.",
+    yourContribution: "Tu aportación",
+    purchaseTitle: "¿Ya compraste este vuelo?",
+    purchaseBody:
+      "Registra la compra solo cuando quieras. Después te preguntaremos si llegaste a volar.",
+    contributeTitle: "Tu experiencia puede completar la ruta",
+    contributeBody:
+      "Cuéntanos si volaste y, si fue así, el precio final de una persona.",
+    contributedTitle: "Ya has ayudado a esta ruta",
+    contributedPrice: "Compartiste {price} por viajero de forma anónima.",
+    contributedNoFlight: "Nos contaste que finalmente no volaste.",
+    indicator: {
+      available:
+        "Abrir comunidad de {origin} a {destination}",
+      public:
+        "Abrir comunidad de {origin} a {destination}; hay precios reales",
+      pending:
+        "Abrir comunidad de {origin} a {destination}; tu aportación está pendiente",
+      contributed:
+        "Abrir comunidad de {origin} a {destination}; ya has aportado",
+    },
     stepFlight: "Paso 1 de 2",
     stepPrice: "Paso 2 de 2",
     didFly: "¿Llegaste a montar en este vuelo?",
@@ -551,14 +586,49 @@ export const watchlistEn = {
     sparklineMeta: "Latest {latest} · Min {min} · Max {max}",
   },
   communityPricing: {
+    hubKicker: "Route community",
+    hubSubtitle: "Real experiences without leaving your watch.",
     kicker: "Real prices, shared by travelers",
-    close: "Close Community Pricing",
+    close: "Close route community",
     pendingCount: "{count} pending in your queue",
     expired: "Expired flight",
     purchased: "Purchase recorded",
+    tracking: "Being watched",
     markPurchased: "Purchased",
     respond: "Respond",
     editResponse: "Edit response",
+    backToHub: "Back to community",
+    routePriceLabel: "Price paid per traveler",
+    aggregateRange: "€{min}–€{max}",
+    buildingRange: "Range in progress",
+    sampleCount: "{count} anonymous contributions · last 12 months",
+    thresholdProgress: "{count} of {minimum} contributions needed to publish",
+    routeWatchersLabel: "People watching this route",
+    routeWatcherSingle: "1 person has this route saved",
+    routeWatchers: "{count} people have this route saved",
+    privacyTitle: "Private by design",
+    privacyBody:
+      "We only show anonymous route ranges from the last 12 months and after 3 travelers.",
+    yourContribution: "Your contribution",
+    purchaseTitle: "Have you bought this flight?",
+    purchaseBody:
+      "Record the purchase only when you choose. Then we will ask whether you actually flew.",
+    contributeTitle: "Your experience can complete this route",
+    contributeBody:
+      "Tell us whether you flew and, if so, the final price for one traveler.",
+    contributedTitle: "You have already helped this route",
+    contributedPrice: "You anonymously shared {price} per traveler.",
+    contributedNoFlight: "You told us that you did not end up flying.",
+    indicator: {
+      available:
+        "Open community for {origin} to {destination}",
+      public:
+        "Open community for {origin} to {destination}; real prices available",
+      pending:
+        "Open community for {origin} to {destination}; your contribution is pending",
+      contributed:
+        "Open community for {origin} to {destination}; you have contributed",
+    },
     stepFlight: "Step 1 of 2",
     stepPrice: "Step 2 of 2",
     didFly: "Did you take this flight?",

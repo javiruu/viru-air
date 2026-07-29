@@ -36,7 +36,7 @@ export default function AccountMenu() {
       }
     }
     function onDocKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && open) {
         setOpen(false);
         triggerRef.current?.focus();
       }
@@ -47,7 +47,7 @@ export default function AccountMenu() {
       document.removeEventListener("pointerdown", onDocPointerDown);
       document.removeEventListener("keydown", onDocKeyDown);
     };
-  }, []);
+  }, [open]);
 
   useEffect(() => {
     if (!open || !menuRef.current) return;
