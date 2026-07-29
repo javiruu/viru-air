@@ -1,6 +1,10 @@
 import { useEffect } from "react";
 
 import { apiFetch } from "@/modules/shared/api";
+import {
+  normalizeWatchDetailApiResponse,
+  type WatchDetailApiResponse,
+} from "@/modules/watchlist/watchlistApiCompatibility";
 import type { PriceSummary, WatchDetail } from "@/modules/watchlist/types";
 
 type UseWatchlistDetailInput = {
@@ -25,12 +29,12 @@ export function useWatchlistDetail({
     let isMounted = true;
     setIsLoadingSelectedWatchDetail(true);
     Promise.all([
-      apiFetch<WatchDetail>(`/watchlist/${selectedWatchId}`),
+      apiFetch<WatchDetailApiResponse>(`/watchlist/${selectedWatchId}`),
       apiFetch<PriceSummary>(`/prices/summary?watch_id=${selectedWatchId}`),
     ])
       .then(([detail, summary]) => {
         if (!isMounted) return;
-        setSelectedWatchDetail(detail);
+        setSelectedWatchDetail(normalizeWatchDetailApiResponse(detail));
         setSelectedWatchSummary(summary);
       })
       .catch(() => {

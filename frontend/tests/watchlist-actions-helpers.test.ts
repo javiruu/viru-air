@@ -7,6 +7,7 @@ import {
   mergeWatchDetailPriceHistoryRows,
   resolveCurrentWatchDetail,
 } from "@/modules/watchlist/watchlistActions.helpers";
+import { createEmptyCommunityPricing } from "@/modules/watchlist/watchlistApiCompatibility";
 import type { HistoryRow, Snapshot, WatchDetail, Watch } from "@/modules/watchlist/types";
 
 const WATCHES: Watch[] = [
@@ -17,6 +18,7 @@ const WATCHES: Watch[] = [
     travel_date_local: "2026-07-10",
     status: "active",
     target_price: null,
+    community_pricing: createEmptyCommunityPricing(),
   },
   {
     id: "w2",
@@ -25,6 +27,7 @@ const WATCHES: Watch[] = [
     travel_date_local: "2026-07-10",
     status: "active",
     target_price: null,
+    community_pricing: createEmptyCommunityPricing(),
   },
 ];
 

@@ -2,6 +2,10 @@ import { useCallback, useRef } from "react";
 
 import { apiFetch } from "@/modules/shared/api";
 import { toIsoMonth } from "@/modules/watchlist/dateUtils";
+import {
+  normalizeWatchApiResponse,
+  type WatchApiResponse,
+} from "@/modules/watchlist/watchlistApiCompatibility";
 import { mapSnapshotsToHistoryRows } from "@/modules/watchlist/watchlistActions.helpers";
 import type { HistoryRow, Snapshot, Watch } from "@/modules/watchlist/types";
 
@@ -53,7 +57,8 @@ export function useWatchlistDataLoader({
     setIsLoadingWatchlist(true);
     setIsLoadingHistoryInitial(true);
     try {
-      const rows = await apiFetch<Watch[]>("/watchlist");
+      const responses = await apiFetch<WatchApiResponse[]>("/watchlist");
+      const rows = responses.map(normalizeWatchApiResponse);
       setListErrorMessage("");
       setItems(rows);
 
