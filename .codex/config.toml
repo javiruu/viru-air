@@ -1,5 +1,5 @@
-model = "gpt-5.5"
-model_context_window = 400000
+model = "gpt-5.6-sol"
+model_context_window = 372000
 [mcp_servers.chrome-devtools]
 command = "npx"
 args = [ "-y", "chrome-devtools-mcp@latest", "--no-usage-statistics", "--isolated" ]
@@ -28,3 +28,7 @@ enabled = false
 # Opt out: LAZYCODEX_CONFIG_MIGRATION_DISABLED=1 (or OMO_CODEX_CONFIG_MIGRATION_DISABLED=1).
 [features.multi_agent_v2]
 enabled = false
+max_concurrent_threads_per_session = 1000
+
+[agents]
+max_threads = 1000
