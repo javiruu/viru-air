@@ -6,7 +6,7 @@ from app.domain.vocabulary import (
 
 
 def test_watch_statuses_are_canonical():
-    assert WATCH_STATUS_VALUES == ("active", "paused", "deleted")
+    assert WATCH_STATUS_VALUES == ("active", "paused", "purchased", "deleted")
 
 
 def test_delivery_statuses_are_canonical():

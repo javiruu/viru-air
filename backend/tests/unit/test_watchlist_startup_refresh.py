@@ -233,7 +233,8 @@ def test_server_startup_refreshes_stale_watchlist_routes_automatically(monkeypat
     try:
         owner_a = _seed_user(seed_db, "startup-live-a@example.com")
         owner_b = _seed_user(seed_db, "startup-live-b@example.com")
-        travel_date = dt.date(2026, 7, 21)
+        reference_now = utc_now_naive().replace(microsecond=0)
+        travel_date = reference_now.date() + dt.timedelta(days=30)
         watch_a = _seed_watch(
             seed_db,
             user_id=owner_a.id,
@@ -251,7 +252,7 @@ def test_server_startup_refreshes_stale_watchlist_routes_automatically(monkeypat
         _seed_snapshot(
             seed_db,
             watch_id=watch_a.id,
-            captured_at=dt.datetime(2026, 7, 18, 7, 0),
+            captured_at=reference_now - dt.timedelta(days=3),
             price=120.0,
         )
     finally:

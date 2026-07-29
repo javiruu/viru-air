@@ -10,8 +10,9 @@ const DETAIL_PANEL_FILE = path.join(process.cwd(), "src", "modules", "watchlist"
 
 test("watchlist selected route loads detail and prices summary endpoints", () => {
   const source = fs.readFileSync(DETAIL_LOADER_FILE, "utf8");
-  assert.match(source, /apiFetch<WatchDetail>\(`\/watchlist\/\$\{selectedWatchId\}`\)/);
+  assert.match(source, /apiFetch<WatchDetailApiResponse>\(`\/watchlist\/\$\{selectedWatchId\}`\)/);
   assert.match(source, /apiFetch<PriceSummary>\(`\/prices\/summary\?watch_id=\$\{selectedWatchId\}`\)/);
+  assert.match(source, /setSelectedWatchDetail\(normalizeWatchDetailApiResponse\(detail\)\)/);
 });
 
 test("watchlist bulk refresh uses refresh-bulk endpoint", () => {

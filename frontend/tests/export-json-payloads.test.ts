@@ -10,6 +10,7 @@ import {
 } from "../src/modules/quick-search/exportQuickSearchJson";
 import type { SearchResult } from "../src/modules/quick-search/types";
 import { buildWatchlistExportPayload } from "../src/modules/watchlist/exportWatchlistJson";
+import { createEmptyCommunityPricing } from "../src/modules/watchlist/watchlistApiCompatibility";
 import type { HistoryRow, Watch } from "../src/modules/watchlist/types";
 
 test("watchlist JSON export groups every saved flight with its snapshots", () => {
@@ -23,6 +24,7 @@ test("watchlist JSON export groups every saved flight with its snapshots", () =>
       status: "active",
       watchers_count: 2,
       group_id: "trip-1",
+      community_pricing: createEmptyCommunityPricing(),
     },
   ];
   const historyRows: HistoryRow[] = [
