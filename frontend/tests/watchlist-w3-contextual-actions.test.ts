@@ -4,6 +4,7 @@ import path from "node:path";
 import test from "node:test";
 
 const SMART_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "SmartWatchListPanel.tsx");
+const WATCH_ROW = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchRow.tsx");
 const DETAIL_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");
 const COMPARE_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "ComparePanels.tsx");
 const WATCHLIST_PAGE = path.join(process.cwd(), "src", "app", "(private)", "watchlist", "page.tsx");
@@ -42,13 +43,13 @@ test("W3: compare selection remains independent from bulk actions", () => {
 });
 
 test("W3: row and detail actions keep lifecycle controls without manual refresh affordances", () => {
-  const smartSource = fs.readFileSync(SMART_PANEL, "utf8");
+  const rowSource = fs.readFileSync(WATCH_ROW, "utf8");
   const detailSource = fs.readFileSync(DETAIL_PANEL, "utf8");
 
-  assert.match(smartSource, /onPauseWatch\(watch\.id\)/);
-  assert.match(smartSource, /onResumeWatch\(watch\.id\)/);
-  assert.match(smartSource, /onDeleteWatch\(watch\.id\)/);
-  assert.doesNotMatch(smartSource, /onRefreshWatch\(watch\.id\)/);
+  assert.match(rowSource, /onPause\(watch\.id\)/);
+  assert.match(rowSource, /onResume\(watch\.id\)/);
+  assert.match(rowSource, /onDelete\(watch\.id\)/);
+  assert.doesNotMatch(rowSource, /onRefresh\(watch\.id\)/);
 
   assert.match(detailSource, /watchlist\.detail\.actions\.pause/);
   assert.match(detailSource, /watchlist\.detail\.actions\.resume/);

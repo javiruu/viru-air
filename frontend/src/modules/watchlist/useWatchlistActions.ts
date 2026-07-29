@@ -147,7 +147,7 @@ export function useWatchlistActions({
     setSelectedCountry,
     load,
   });
-  const communityPricing = useCommunityPricing({ items, load });
+  const communityPricing = useCommunityPricing({ load });
 
   return {
     items,

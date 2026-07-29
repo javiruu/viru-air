@@ -1,5 +1,17 @@
 # History
 
+## 2026-07-29 - Hub comunitario por ruta en Watchlist
+
+- Cada fila de `/watchlist` incorpora un acceso comunitario suave en su esquina
+  superior izquierda, con estados para evidencia pública, aportación pendiente
+  y respuesta realizada.
+- El panel lateral reúne precios reales agregados, seguimiento de la ruta,
+  umbral de privacidad y la aportación propia sin recargar la fila ni abrir una
+  pantalla independiente.
+- Abrir la comunidad es de solo lectura. `Comprado`, confirmar si se voló,
+  compartir el precio por viajero, editar y eliminar son acciones deliberadas
+  dentro del hub.
+
 ## 2026-07-28 - Precio real y anónimo de la comunidad
 
 - Al caducar un vuelo o marcarlo como `Comprado`, `/watchlist` pregunta si la persona llegó a volar y, en caso afirmativo, qué precio final pagó por viajero.

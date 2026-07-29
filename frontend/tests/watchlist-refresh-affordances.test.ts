@@ -5,6 +5,7 @@ import test from "node:test";
 
 const WATCHLIST_PAGE = path.join(process.cwd(), "src", "app", "(private)", "watchlist", "page.tsx");
 const SMART_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "SmartWatchListPanel.tsx");
+const WATCH_ROW = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchRow.tsx");
 const DETAIL_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");
 const ACTIONS_FILE = path.join(process.cwd(), "src", "modules", "watchlist", "useWatchlistActions.ts");
 
@@ -19,11 +20,13 @@ test("watchlist route no longer wires manual refresh actions into list or detail
 
 test("watchlist panels show freshness context without manual refresh buttons", () => {
   const smartSource = fs.readFileSync(SMART_PANEL, "utf8");
+  const rowSource = fs.readFileSync(WATCH_ROW, "utf8");
+  const listSource = `${smartSource}\n${rowSource}`;
   const detailSource = fs.readFileSync(DETAIL_PANEL, "utf8");
 
-  assert.match(smartSource, /watchlist\.detail\.latestSnapshot/);
-  assert.match(smartSource, /watchlist\.detail\.freshness/);
-  assert.doesNotMatch(smartSource, /watchlist\.smartList\.refresh|watchlist\.smartList\.updating/);
+  assert.match(listSource, /watchlist\.detail\.latestSnapshot/);
+  assert.match(listSource, /watchlist\.detail\.freshness/);
+  assert.doesNotMatch(listSource, /watchlist\.smartList\.refresh|watchlist\.smartList\.updating/);
   assert.doesNotMatch(detailSource, /watchlist\.detail\.actions\.refresh/);
 });
 

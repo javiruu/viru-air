@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { flushSync } from "react-dom";
 
 import { useI18n } from "@/i18n";
 import { apiFetch } from "@/modules/shared/api";
@@ -7,87 +8,58 @@ import type {
   Watch,
 } from "@/modules/watchlist/types";
 
-type CommunityPricingStage = "flight" | "price";
+type CommunityPricingStage = "overview" | "flight" | "price";
 
 type UseCommunityPricingInput = {
-  readonly items: readonly Watch[];
   readonly load: () => Promise<void>;
 };
 
 export function useCommunityPricing({
-  items,
   load,
 }: UseCommunityPricingInput) {
   const { t } = useI18n();
-  const [activeWatchId, setActiveWatchId] = useState<string | null>(null);
-  const [stage, setStage] = useState<CommunityPricingStage>("flight");
+  const [activeWatch, setActiveWatch] = useState<Watch | null>(null);
+  const [stage, setStage] = useState<CommunityPricingStage>("overview");
   const [price, setPrice] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
-  const hasOfferedExpiredWatch = useRef(false);
-
-  const pendingWatches = useMemo(
-    () =>
-      items.filter(
-        (watch) =>
-          watch.community_pricing.eligible &&
-          watch.community_pricing.response === null,
-      ),
-    [items],
-  );
-  const activeWatch =
-    items.find((watch) => watch.id === activeWatchId) ?? null;
-
-  useEffect(() => {
-    if (
-      hasOfferedExpiredWatch.current ||
-      activeWatchId !== null ||
-      pendingWatches.length === 0
-    ) {
-      return;
-    }
-    const firstExpired = pendingWatches.find(
-      (watch) => watch.community_pricing.trigger_reason === "expired",
-    );
-    if (!firstExpired) return;
-    hasOfferedExpiredWatch.current = true;
-    setActiveWatchId(firstExpired.id);
-  }, [activeWatchId, pendingWatches]);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
 
   function prepareWatch(watch: Watch): void {
-    setActiveWatchId(watch.id);
+    setActiveWatch(watch);
     setError("");
+    setStage("overview");
     if (
       watch.community_pricing.response?.flew &&
       watch.community_pricing.response.price_per_traveler !== null
     ) {
-      setStage("price");
       setPrice(String(watch.community_pricing.response.price_per_traveler));
       return;
     }
-    setStage("flight");
     setPrice("");
   }
 
-  async function open(watch: Watch): Promise<void> {
-    if (watch.community_pricing.eligible) {
-      prepareWatch(watch);
-      return;
-    }
+  function open(watch: Watch, returnFocusTarget: HTMLElement): void {
+    returnFocusRef.current = returnFocusTarget;
+    prepareWatch(watch);
+  }
 
+  async function markPurchased(): Promise<void> {
+    if (!activeWatch || activeWatch.community_pricing.eligible) return;
     setIsSaving(true);
     setError("");
     try {
       const response = await apiFetch<CommunityPriceMutationResponse>(
-        `/watchlist/${watch.id}/mark-purchased`,
+        `/watchlist/${activeWatch.id}/mark-purchased`,
         { method: "POST" },
       );
-      prepareWatch({
-        ...watch,
+      setActiveWatch({
+        ...activeWatch,
         status: response.status,
         community_pricing: response.community_pricing,
       });
-      await load();
+      setStage("flight");
+      await load().catch(() => undefined);
     } catch (caught) {
       if (!(caught instanceof Error)) throw caught;
       setError(t("watchlist.communityPricing.errors.markPurchased"));
@@ -97,9 +69,24 @@ export function useCommunityPricing({
   }
 
   function close(): void {
-    setActiveWatchId(null);
+    const returnFocusTarget = returnFocusRef.current;
+    flushSync(() => {
+      setActiveWatch(null);
+      setStage("overview");
+      setPrice("");
+      setError("");
+    });
+    returnFocusTarget?.focus();
+    returnFocusRef.current = null;
+  }
+
+  function beginContribution(): void {
     setStage("flight");
-    setPrice("");
+    setError("");
+  }
+
+  function backToOverview(): void {
+    setStage("overview");
     setError("");
   }
 
@@ -121,7 +108,7 @@ export function useCommunityPricing({
     setIsSaving(true);
     setError("");
     try {
-      await apiFetch<CommunityPriceMutationResponse>(
+      const response = await apiFetch<CommunityPriceMutationResponse>(
         `/watchlist/${activeWatch.id}/community-price`,
         {
           method: "PUT",
@@ -131,15 +118,13 @@ export function useCommunityPricing({
           }),
         },
       );
-      await load();
-      const nextPending = pendingWatches.find(
-        (watch) => watch.id !== activeWatch.id,
-      );
-      if (nextPending) {
-        prepareWatch(nextPending);
-      } else {
-        close();
-      }
+      setActiveWatch({
+        ...activeWatch,
+        status: response.status,
+        community_pricing: response.community_pricing,
+      });
+      await load().catch(() => undefined);
+      setStage("overview");
     } catch (caught) {
       if (!(caught instanceof Error)) throw caught;
       setError(t("watchlist.communityPricing.errors.save"));
@@ -171,9 +156,8 @@ export function useCommunityPricing({
         `/watchlist/${activeWatch.id}/community-price`,
         { method: "DELETE" },
       );
-      await load();
-      setStage("flight");
-      setPrice("");
+      await load().catch(() => undefined);
+      close();
     } catch (caught) {
       if (!(caught instanceof Error)) throw caught;
       setError(t("watchlist.communityPricing.errors.delete"));
@@ -184,7 +168,6 @@ export function useCommunityPricing({
 
   return {
     activeWatch,
-    pendingCount: pendingWatches.length,
     stage,
     price,
     isSaving,
@@ -192,6 +175,9 @@ export function useCommunityPricing({
     setPrice: updatePrice,
     open,
     close,
+    markPurchased,
+    beginContribution,
+    backToOverview,
     chooseFlew,
     saveNoFlight,
     savePrice,

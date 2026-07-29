@@ -5,6 +5,7 @@ import test from "node:test";
 
 const WATCHLIST_PAGE = path.join(process.cwd(), "src", "app", "(private)", "watchlist", "page.tsx");
 const SMART_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "SmartWatchListPanel.tsx");
+const WATCH_ROW = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchRow.tsx");
 const DETAIL_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");
 const HISTORY_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "HistoryIntegratedPanel.tsx");
 const MAP_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchlistMapDecisionPanel.tsx");
@@ -54,6 +55,7 @@ test("W9: bulk toolbar remains contextual and hidden with zero selection", () =>
 test("W9: historical confidence and actionable freshness remain visible in detail/list flow", () => {
   const detailSource = fs.readFileSync(DETAIL_PANEL, "utf8");
   const smartSource = fs.readFileSync(SMART_PANEL, "utf8");
+  const watchRowSource = fs.readFileSync(WATCH_ROW, "utf8");
   const summarySource = fs.readFileSync(SUMMARY, "utf8");
 
   assert.match(detailSource, /getHistoryConfidence\(summary\?\.count \?\? 0\)/);
@@ -62,7 +64,7 @@ test("W9: historical confidence and actionable freshness remain visible in detai
   assert.match(summarySource, /watchlist\.summary\.historyConfidence\.sufficientTitle/);
   assert.match(summarySource, /watchlist\.freshness\.updatedAgo/);
   assert.match(summarySource, /watchlist\.freshness\.lastUpdatedAgo/);
-  assert.match(smartSource, /watchlist\.detail\.freshness/);
+  assert.match(`${smartSource}\n${watchRowSource}`, /watchlist\.detail\.freshness/);
 });
 
 test("W9: map and compare keep non-contradictory and reactive states", () => {

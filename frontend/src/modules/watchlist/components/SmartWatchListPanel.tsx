@@ -1,12 +1,13 @@
 ﻿import { useMemo, useState } from "react";
 
 import { useI18n } from "@/i18n";
-import { formatCurrency, formatSignedCurrency } from "@/modules/shared/format";
-import { getWatchStatusMeta } from "@/modules/shared/statusCatalog";
+import { formatCurrency } from "@/modules/shared/format";
+import {
+  WatchRow,
+  type WatchMetaEntry,
+} from "@/modules/watchlist/components/WatchRow";
 import { monthLabel } from "@/modules/watchlist/dateUtils";
 import { safeDateTime } from "@/modules/watchlist/presentation";
-import { getFreshnessPresentation } from "@/modules/watchlist/summary";
-import { resolveProviderPresentation } from "@/modules/shared/providerPresentation";
 import type { CalendarSelectorFlight, Watch } from "@/modules/watchlist/types";
 
 type ListSort = "freshness" | "price_asc" | "price_desc" | "delta";
@@ -28,21 +29,6 @@ function getPageNumbers(current: number, total: number) {
   return pages;
 }
 
-type WatchMetaEntry = {
-  latest: {
-    capturedAt: string;
-    price: number;
-    currency: string;
-    provider: string | null;
-  } | null;
-  previous: {
-    price: number;
-    currency: string;
-  } | null;
-  min: number | null;
-  max: number | null;
-};
-
 type SmartWatchListPanelProps = {
   items: Watch[];
   smartListItems: Watch[];
@@ -56,7 +42,7 @@ type SmartWatchListPanelProps = {
   onSortChange: (value: ListSort) => void;
   onClearSearch: () => void;
   onSelectWatch: (watch: Watch) => void;
-  onCommunityAction: (watch: Watch) => void;
+  onCommunityAction: (watch: Watch, trigger: HTMLButtonElement) => void;
   onPauseWatch: (watchId: string) => void;
   onResumeWatch: (watchId: string) => void;
   onDeleteWatch: (watchId: string) => void;
@@ -150,6 +136,13 @@ export function SmartWatchListPanel({
   const goToPage = (page: number) => {
     const next = Math.max(1, Math.min(page, totalPages));
     setCurrentPage(next);
+  };
+  const toggleBulkSelected = (watchId: string, selected: boolean) => {
+    setSelectedIds((previous) =>
+      selected
+        ? Array.from(new Set([...previous, watchId]))
+        : previous.filter((id) => id !== watchId),
+    );
   };
 
   return (
@@ -380,212 +373,21 @@ export function SmartWatchListPanel({
         </div>
       ) : null}
       {showListMode
-        ? pagedListItems.map((watch) => {
-        const watchersCountRaw = Number(watch.watchers_count ?? 0);
-        const watchersCount = Number.isFinite(watchersCountRaw) ? Math.max(0, Math.floor(watchersCountRaw)) : 0;
-        const watchStatus = getWatchStatusMeta(watch.status, t);
-        const communityPricing = watch.community_pricing;
-        const communityAggregate = communityPricing.aggregate;
-        const communityActionLabel = communityPricing.response
-          ? t("watchlist.communityPricing.editResponse")
-          : communityPricing.eligible
-            ? t("watchlist.communityPricing.respond")
-            : t("watchlist.communityPricing.markPurchased");
-        const canManageTracking = !communityPricing.eligible && watch.status !== "purchased";
-        const meta = watchMeta.get(watch.id);
-        const trend = !meta?.latest || !meta?.previous
-          ? "flat"
-          : meta.latest.price > meta.previous.price
-            ? "up"
-            : meta.latest.price < meta.previous.price
-              ? "down"
-              : "flat";
-        const deltaLabel = !meta?.latest || !meta?.previous
-          ? t("watchlist.smartList.noTrend")
-          : formatSignedCurrency(meta.latest.price - meta.previous.price, meta.latest.currency, localeTag);
-        const routeHealthLabel = trend === "up" ? t("watchlist.smartList.trendUp") : trend === "down" ? t("watchlist.smartList.trendDown") : t("watchlist.smartList.trendStable");
-
-        const freshness = getFreshnessPresentation({
-          t,
-          locale: localeTag,
-          lastUpdatedAt: meta?.latest?.capturedAt,
-          freshnessState: meta?.latest ? "observing" : null,
-        });
-        const priceDropAmount = trend === "down" && meta?.latest && meta?.previous
-          ? meta.previous.price - meta.latest.price
-          : null;
-        const priceDropPercent =
-          priceDropAmount != null && meta?.previous && meta.previous.price > 0
-            ? Math.round((priceDropAmount / meta.previous.price) * 100)
-            : null;
-        const percentDeltaRaw =
-          meta?.previous && meta.previous.price > 0 && meta?.latest
-            ? Math.round(((meta.latest.price - meta.previous.price) / meta.previous.price) * 100)
-            : null;
-        const trendPercentLabel = percentDeltaRaw != null && percentDeltaRaw !== 0
-          ? t("watchlist.smartList.trendPercentDelta", {
-              value: `${percentDeltaRaw > 0 ? "+" : ""}${percentDeltaRaw}`,
-            })
-          : "";
-        const hasMeaningfulDrop = priceDropAmount != null && priceDropPercent != null && priceDropPercent > 0;
-        const isBestPrice =
-          meta?.latest && meta?.min != null && meta.latest.price <= meta.min && meta?.max != null && meta.max > meta.min;
-        const provider = resolveProviderPresentation(
-          meta?.latest?.provider,
-          t("watchlist.providerCoverage.unknown"),
-        );
-
-        return (
-          <article
-            key={watch.id}
-            className={`list-row watch-row ${selectedWatchId === watch.id ? "watch-selected" : ""}`}
-            data-selected={selectedWatchId === watch.id ? "true" : "false"}
-            onClick={() => onSelectWatch(watch)}
-            role="button"
-            tabIndex={0}
-            aria-pressed={selectedWatchId === watch.id}
-            aria-label={t("watchlist.smartList.selectRowAria", {
-              origin: watch.origin_iata,
-              destination: watch.destination_iata,
-              date: watch.travel_date_local,
-            })}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                onSelectWatch(watch);
-              }
-            }}
-          >
-            <div className="watch-details">
-              <div className="watch-route">
-                <input
-                  type="checkbox"
-                  className="watch-bulk-checkbox"
-                  checked={selectedSet.has(watch.id)}
-                  onChange={(event) => {
-                    event.stopPropagation();
-                    setSelectedIds((prev) =>
-                      event.target.checked ? Array.from(new Set([...prev, watch.id])) : prev.filter((id) => id !== watch.id),
-                    );
-                  }}
-                  aria-label={t("watchlist.smartList.selectCheckboxAria", {
-                    origin: watch.origin_iata,
-                    destination: watch.destination_iata,
-                    })}
-                />
-                <strong className="watch-route-code">{watch.origin_iata}{" → "}{watch.destination_iata}</strong>
-                <span className="watch-date tabular-nums">{watch.travel_date_local}</span>
-                <span className={`status-pill ${watchStatus.tone}`}>{watchStatus.label}</span>
-                <strong className="watch-inline-price tabular-nums">
-                  {meta?.latest ? formatCurrency(meta.latest.price, meta.latest.currency, localeTag) : "--"}
-                </strong>
-              </div>
-              <div className="watch-meta">
-                <span className={`status-pill ${trend === "up" ? "error" : trend === "down" ? "success" : "warning"}`}>
-                  {routeHealthLabel}
-                </span>
-                <span className="watch-meta-chip tabular-nums">{t("watchlist.detail.latestSnapshot")} {safeDateTime(meta?.latest?.capturedAt, localeTag)}</span>
-                <span className="watch-meta-chip watch-meta-chip--freshness tabular-nums">{t("watchlist.detail.freshness")} {freshness.label}</span>
-                <span className={`watch-provider-chip watch-provider-chip--${provider.id}`}>
-                  {t("watchlist.providerCoverage.rowSource", { provider: provider.label })}
-                </span>
-                <span className="watch-note">{freshness.detail}</span>
-                <span className="watch-note">
-                  {watchersCount === 0
-                    ? t("watchlist.smartList.noOtherWatchers")
-                    : t("watchlist.smartList.savedByCount", { count: watchersCount })}
-                </span>
-                <span className="watch-note">{t("watchlist.smartList.priceDisclaimer")}</span>
-                {communityAggregate.is_public &&
-                communityAggregate.min_price !== null &&
-                communityAggregate.max_price !== null ? (
-                  <span className="watch-note watch-community-proof">
-                    {t("watchlist.communityPricing.aggregatePublic", {
-                      count: communityAggregate.sample_size,
-                      min: new Intl.NumberFormat(localeTag, {
-                        maximumFractionDigits: 2,
-                      }).format(communityAggregate.min_price),
-                      max: new Intl.NumberFormat(localeTag, {
-                        maximumFractionDigits: 2,
-                      }).format(communityAggregate.max_price),
-                    })}
-                  </span>
-                ) : communityPricing.response?.flew ? (
-                  <span className="watch-note watch-community-pending">
-                    {t("watchlist.communityPricing.thresholdPending")}
-                  </span>
-                ) : null}
-              </div>
-            </div>
-            <div className="watch-price-area">
-              <div className="watch-price tabular-nums">
-                <span className="watch-price-caption">{t("watchlist.smartList.currentPrice")}</span>
-                <span className={`trend-chip trend-${trend}`}>
-                  <span className="trend-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                      <path
-                        d="M6 15l6-6 6 6"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                  {deltaLabel}
-                  {trendPercentLabel ? (
-                    <span className="trend-chip-percent" aria-label={trendPercentLabel}>
-                      {trendPercentLabel}
-                    </span>
-                  ) : null}
-                </span>
-              </div>
-              {hasMeaningfulDrop || isBestPrice ? (
-                <div className="watch-price-badges">
-                  {hasMeaningfulDrop ? (
-                    <span className="price-drop-badge tabular-nums">
-                      <svg viewBox="0 0 16 16" className="price-drop-icon" aria-hidden="true">
-                        <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      {formatCurrency(priceDropAmount!, meta?.latest?.currency ?? "EUR", localeTag)} ({priceDropPercent}%)
-                    </span>
-                  ) : null}
-                  {isBestPrice ? (
-                    <span className="best-price-badge">{t("watchlist.compare.bestPriceBadge")}</span>
-                  ) : null}
-                </div>
-              ) : null}
-              <div className="watch-row-actions">
-                <div className="alert-actions">
-                  <button
-                    className="btn-secondary btn-compact watch-community-action"
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onCommunityAction(watch);
-                    }}
-                  >
-                    {communityActionLabel}
-                  </button>
-                  {canManageTracking && watch.status === "paused" ? (
-                    <button className="btn-ghost btn-compact" type="button" onClick={(e) => { e.stopPropagation(); onResumeWatch(watch.id); }}>
-                      {t("watchlist.smartList.resume")}
-                    </button>
-                  ) : canManageTracking ? (
-                    <button className="btn-ghost btn-compact" type="button" onClick={(e) => { e.stopPropagation(); onPauseWatch(watch.id); }}>
-                      {t("watchlist.smartList.pause")}
-                    </button>
-                  ) : null}
-                  <button className="btn-danger btn-compact" type="button" onClick={(e) => { e.stopPropagation(); onDeleteWatch(watch.id); }}>
-                    {t("watchlist.smartList.delete")}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </article>
-        );
-          })
+        ? pagedListItems.map((watch) => (
+            <WatchRow
+              key={watch.id}
+              watch={watch}
+              meta={watchMeta.get(watch.id)}
+              isSelected={selectedWatchId === watch.id}
+              isBulkSelected={selectedSet.has(watch.id)}
+              onSelect={onSelectWatch}
+              onToggleBulkSelected={toggleBulkSelected}
+              onOpenCommunity={onCommunityAction}
+              onPause={onPauseWatch}
+              onResume={onResumeWatch}
+              onDelete={onDeleteWatch}
+            />
+          ))
         : null}
       {showListMode && smartListItems.length > 0 ? (
         <div className="qs-pagination animate-fade-in" role="navigation" aria-label="Watchlist pagination">

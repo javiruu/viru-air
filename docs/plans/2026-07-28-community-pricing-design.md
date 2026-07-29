@@ -55,15 +55,18 @@ La API pública no expone identidad, respuestas individuales, marcas de tiempo i
 
 ### Entrada por compra
 
-1. El usuario pulsa `Comprado` en una fila activa de `/watchlist`.
-2. El vuelo deja de estar en seguimiento activo.
-3. Se abre la cola de Community Pricing con la pregunta `¿Llegaste a volar?`.
+1. El usuario abre el icono de comunidad situado arriba a la izquierda de la
+   fila. La apertura es de solo lectura y no cambia el estado del vuelo.
+2. Dentro del hub pulsa `Comprado`.
+3. El vuelo deja de estar en seguimiento activo.
+4. El hub enlaza con la pregunta `¿Llegaste a volar?`.
 
 ### Entrada por caducidad
 
 1. La fecha del vuelo queda en el pasado.
 2. El backend lo presenta como elegible para Community Pricing sin reescribir el histórico.
-3. Al abrir `/watchlist`, el primer vuelo pendiente se ofrece una sola vez por sesión.
+3. El icono de comunidad muestra un estado pendiente suave; la persona decide
+   cuándo abrirlo, sin interrupción automática.
 
 ### Respuesta
 
@@ -76,9 +79,14 @@ La API pública no expone identidad, respuestas individuales, marcas de tiempo i
 
 La experiencia vive dentro de Watchlist:
 
-- acción `Comprado` acomodada junto a las acciones existentes de cada fila;
-- cajón lateral derecho en escritorio y hoja de ancho completo en móvil;
-- cola breve de vuelos pendientes, procesada de uno en uno;
+- icono comunitario persistente arriba a la izquierda de cada fila, con estados
+  discretos para rango público, aportación pendiente y aportación realizada;
+- un hub lateral derecho en escritorio y hoja de ancho completo en móvil;
+- el hub reúne rango anónimo, tamaño o umbral de muestra, personas siguiendo la
+  ruta, reglas de privacidad y la aportación propia;
+- `Comprado`, responder, editar y eliminar viven dentro del hub, no entre las
+  acciones operativas de la fila;
+- abrir el hub nunca dispara `mark-purchased` ni otra mutación;
 - jerarquía cálida y aeronáutica de Viru, compatible con tema claro y oscuro;
 - sin convertir la fila en un formulario permanente ni añadir una pantalla independiente.
 
@@ -120,6 +128,7 @@ Los vuelos futuros marcados como comprados pueden recoger respuesta, pero no ent
 ## Criterios de aceptación
 
 - un propietario puede marcar su vuelo como comprado;
+- abrir el icono comunitario no muta el vuelo;
 - un vuelo caducado aparece pendiente sin mutar su fecha ni crear snapshots;
 - se puede guardar `No volé` sin precio;
 - `Sí, volé` exige un precio final por viajero válido;
