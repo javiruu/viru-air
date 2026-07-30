@@ -1,5 +1,11 @@
 # History
 
+## 2026-07-30 - Compilación anticipada de rutas en desarrollo
+
+- `npm run dev` arranca Next.js con Turbopack y responde en cuanto la portada está preparada.
+- Después del arranque, Viru descubre las rutas estáticas de `src/app` y las compila secuencialmente en segundo plano, priorizando los apartados principales para evitar picos de CPU y esperas al abrir páginas como `/watchlist`.
+- El calentamiento puede desactivarse con `VIRU_ROUTE_WARMUP=0`, tolera fallos aislados y conserva la consulta CSS experimental del shell sin bloquear el parser de Next.js 15.5.
+
 ## 2026-07-30 - Alertas integradas dentro de Señales
 
 - La navegacion privada muestra una sola entrada `Señales`, con dos vistas internas claras: `Bandeja` para los avisos recibidos y `Reglas` para configurar que debe vigilar Viru.

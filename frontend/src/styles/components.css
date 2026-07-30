@@ -2,8 +2,8 @@
 
 /* ============================================================
    SHELL HEADER (sticky morph) — progressive enhancement.
-   Resting state always works. Morph uses container-type: scroll-state
-   when the browser supports it. No JS observer required.
+   Resting state always works. RootLayout inlines the scroll-state enhancement
+   so Next.js 15.5 Turbopack does not parse the unsupported at-rule.
    ============================================================ */
 .shell-header {
   position: sticky;
@@ -25,25 +25,6 @@
     background-color var(--shell-header-transition-duration) var(--shell-header-transition-ease),
     box-shadow var(--shell-header-transition-duration) var(--shell-header-transition-ease),
     border-radius var(--shell-header-transition-duration) var(--shell-header-transition-ease);
-}
-
-@supports (container-type: scroll-state) {
-  .shell-header {
-    container-type: scroll-state;
-  }
-}
-
-@container scroll-state(stuck: top) {
-  .shell-header {
-    padding: var(--shell-header-stuck-padding-block) var(--shell-header-stuck-padding-inline);
-    border-radius: var(--shell-header-stuck-radius);
-    border-bottom: none;
-    border: var(--shell-header-stuck-border);
-    background: var(--shell-header-stuck-bg);
-    box-shadow: var(--shell-header-stuck-shadow);
-    -webkit-backdrop-filter: blur(var(--shell-header-stuck-backdrop-blur)) saturate(140%);
-    backdrop-filter: blur(var(--shell-header-stuck-backdrop-blur)) saturate(140%);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
