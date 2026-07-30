@@ -657,6 +657,28 @@ function Get-CloudflareQuickTunnelUrl {
   return $null
 }
 
+function Test-PublicUrlReady {
+  param([string]$Url)
+
+  if (-not $Url) {
+    return $false
+  }
+
+  $ProgressPreference = "SilentlyContinue"
+  try {
+    $response = Invoke-WebRequest `
+      -Uri $Url `
+      -Method Head `
+      -UseBasicParsing `
+      -MaximumRedirection 3 `
+      -TimeoutSec 5 `
+      -ErrorAction Stop
+    return ([int]$response.StatusCode -ge 200 -and [int]$response.StatusCode -lt 400)
+  } catch {
+    return $false
+  }
+}
+
 function Get-CloudflareTunnelStatus {
   $cliPath = Get-CloudflaredCliPath
   $paths = Get-CloudflareTunnelPaths
@@ -664,6 +686,7 @@ function Get-CloudflareTunnelStatus {
   $config = Get-CloudflareTunnelConfigInfo
   $mode = if ($config.ConfigPath) { "named" } else { "quick" }
   $publicUrl = if ($mode -eq "named" -and $config.Hostname) { "https://$($config.Hostname)" } else { Get-CloudflareQuickTunnelUrl }
+  $publicUrlReady = if ($mode -eq "quick") { Test-PublicUrlReady -Url $publicUrl } else { [bool]$publicUrl }
   $authCertPath = Get-CloudflareTunnelAuthCertPath
   $credentialsFileExists = [bool]($config.CredentialsFile -and (Test-Path $config.CredentialsFile))
   $namedConfigReady = [bool]($config.ConfigPath -and $config.TunnelIdOrName -and $config.Hostname -and $credentialsFileExists)
@@ -686,6 +709,9 @@ function Get-CloudflareTunnelStatus {
   } elseif ($mode -eq "named" -and -not $credentialsFileExists) {
     $blockingReason = "La configuracion local de Cloudflare existe, pero falta el credentials-file del tunel."
     $nextStep = "Descarga el credentials-file del tunel y apunta a el desde infra/cloudflare-tunnel.local.yml."
+  } elseif ($mode -eq "quick" -and $state.IsRunning -and $publicUrl -and -not $publicUrlReady) {
+    $blockingReason = "El proceso de Cloudflare sigue activo, pero su URL publica ya no responde."
+    $nextStep = "Vuelve a PUBLICAR WEB para reiniciar el quick tunnel y obtener una URL nueva."
   } elseif ($mode -eq "quick" -and -not $state.IsRunning) {
     $nextStep = "Si quieres dominio propio, crea infra/cloudflare-tunnel.local.yml. Si no, puedes arrancar un quick tunnel desde el panel."
   }
@@ -709,7 +735,8 @@ function Get-CloudflareTunnelStatus {
     AuthCertPath = $authCertPath
     AuthCertExists = (Test-Path $authCertPath)
     PublicUrl = $publicUrl
-    Ready = [bool]($state.IsRunning -and $publicUrl)
+    PublicUrlReady = $publicUrlReady
+    Ready = [bool]($state.IsRunning -and $publicUrlReady)
     BlockingReason = $blockingReason
     NextStep = $nextStep
     Paths = $paths
@@ -752,7 +779,8 @@ function Start-CloudflareTunnel {
 
   Set-Content -Path $paths.PidFile -Value $proc.Id -Encoding ASCII
 
-  for ($i = 0; $i -lt 30; $i++) {
+  $readyDeadline = (Get-Date).AddSeconds(90)
+  do {
     Start-Sleep -Milliseconds 500
     $current = Get-CloudflareTunnelStatus
     if ($current.Ready) {
@@ -768,7 +796,7 @@ function Start-CloudflareTunnel {
     if (-not $current.Running) {
       break
     }
-  }
+  } while ((Get-Date) -lt $readyDeadline)
 
   return (Get-CloudflareTunnelStatus)
 }
