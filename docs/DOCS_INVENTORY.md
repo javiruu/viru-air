@@ -666,6 +666,7 @@ Entradas vivas retiradas:
 | docs/overview/repo-map.md | overview | vivo | conservar | docs/overview/repo-map.md | Onboarding y mapa vivo del proyecto | docs/overview/repo-map.md |
 | docs/overview/start-here.md | overview | vivo | conservar | docs/overview/start-here.md | Onboarding y mapa vivo del proyecto | docs/overview/start-here.md |
 | docs/plans/README.md | plan | vivo | conservar | docs/plans/README.md | Gu?a de organizaci?n de planes | docs/plans/README.md |
+| docs/plans/2026-07-30-next-dev-compilation.md | plan | vivo | conservar | docs/plans/2026-07-30-next-dev-compilation.md | Plan de implementación para Turbopack y calentamiento controlado de rutas estáticas | docs/plans/2026-07-30-next-dev-compilation.md |
 | docs/plans/2026-07-30-next-dev-compilation-design.md | plan | vivo | conservar | docs/plans/2026-07-30-next-dev-compilation-design.md | Diseño aprobado para acelerar Next.js en desarrollo y calentar rutas estáticas en segundo plano | docs/plans/2026-07-30-next-dev-compilation-design.md |
 | docs/plans/2026-07-28-community-pricing-design.md | plan | vivo | conservar | docs/plans/2026-07-28-community-pricing-design.md | Diseño aprobado para recopilar y agregar precios reales por viajero desde Watchlist | docs/plans/2026-07-28-community-pricing-design.md |
 | docs/plans/2026-07-28-community-pricing.md | plan | vivo | conservar | docs/plans/2026-07-28-community-pricing.md | Plan de implementación full-stack de Community Pricing con privacidad por umbral | docs/plans/2026-07-28-community-pricing.md |
