@@ -73,27 +73,39 @@ test("components.css declares .shell-header as the sticky morph base", () => {
   assert.match(css, /\.shell-header\s*\{[^}]*top:\s*var\(--shell-header-top\)/);
 });
 
-test("components.css uses @supports (container-type: scroll-state) for progressive enhancement", () => {
-  const css = read("src/styles/components.css");
+test("the inlined shell stylesheet keeps scroll-state progressive enhancement", () => {
+  const css = read("src/modules/shared/shellScrollStateCss.ts");
   assert.match(css, /@supports\s+\(container-type:\s*scroll-state\)/);
   assert.match(css, /container-type:\s*scroll-state/);
 });
 
-test("components.css declares the stuck morph via @container scroll-state(stuck: top)", () => {
-  const css = read("src/styles/components.css");
+test("the inlined shell stylesheet keeps the complete stuck morph", () => {
+  const css = read("src/modules/shared/shellScrollStateCss.ts");
   assert.match(css, /@container\s+scroll-state\(stuck:\s*top\)/);
   const morph = css.match(/@container\s+scroll-state\(stuck:\s*top\)\s*\{[\s\S]*?\n\}/);
-  assert.ok(morph, "morph block not found");
+  if (morph === null) assert.fail("morph block not found");
+  const morphCss = morph[0];
   assert.match(
-    morph![0],
+    morphCss,
     /padding:\s*var\(--shell-header-stuck-padding/,
   );
   assert.match(
-    morph![0],
+    morphCss,
     /border-radius:\s*var\(--shell-header-stuck-radius/,
   );
-  assert.match(morph![0], /box-shadow:\s*var\(--shell-header-stuck-shadow/);
-  assert.match(morph![0], /backdrop-filter/);
+  assert.match(morphCss, /box-shadow:\s*var\(--shell-header-stuck-shadow/);
+  assert.match(morphCss, /backdrop-filter/);
+});
+
+test("root layout inlines scroll-state CSS without sending it through the CSS parser", () => {
+  const componentsCss = read("src/styles/components.css");
+  const rootLayout = read("src/app/layout.tsx");
+  assert.doesNotMatch(componentsCss, /@container\s+scroll-state/);
+  assert.match(
+    rootLayout,
+    /import \{ SHELL_SCROLL_STATE_CSS \} from "@\/modules\/shared\/shellScrollStateCss"/,
+  );
+  assert.match(rootLayout, /<style>\{SHELL_SCROLL_STATE_CSS\}<\/style>/);
 });
 
 test("components.css respects prefers-reduced-motion for the morph", () => {

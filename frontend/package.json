@@ -6,7 +6,7 @@
     "postinstall": "node scripts/strip_framer_motion_sourcemaps.mjs",
     "predev": "node scripts/strip_framer_motion_sourcemaps.mjs",
     "prebuild": "node scripts/strip_framer_motion_sourcemaps.mjs",
-    "dev": "next dev -p 3000",
+    "dev": "node scripts/dev-server.mjs",
     "build": "next build",
     "start": "next start -p 3000",
     "lint": "next lint",

@@ -5,6 +5,7 @@ import Script from "next/script";
 
 import { NotificationCenterProvider } from "@/components/components/notifications/notification-center";
 import ScrollActivityScrollbar from "@/modules/shared/ScrollActivityScrollbar";
+import { SHELL_SCROLL_STATE_CSS } from "@/modules/shared/shellScrollStateCss";
 
 export const metadata: Metadata = {
   title: "Viru",
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es" suppressHydrationWarning data-theme="light">
       <head>
+        <style>{SHELL_SCROLL_STATE_CSS}</style>
         {gaMeasurementId ? (
           <>
             <Script
