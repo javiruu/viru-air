@@ -1,12 +1,14 @@
 export const notificationsEs = {
   pageTitle: "Señales",
-  pageSubtitle: "Tu cabina para revisar avisos y decidir qué debe vigilar Viru.",
+  pageSubtitle: "Revisa avisos y decide qué debe vigilar Viru.",
   hero: {
     kicker: "Bandeja de señales",
-    title: "Todo lo que Viru quiso decirte, sin perderse en un toast",
-    subtitle: "Revisa señales pasadas, marca como leído y vuelve a la ruta exacta cuando toque decidir.",
     markAll: "Marcar todo como leído",
     openAlerts: "Configurar alertas",
+    briefingKicker: "Checklist de cabina",
+    briefingTitle: "señales piden una decisión",
+    briefingBody: "Tienes {unread} avisos sin leer. Empieza por los que te llevan a una acción concreta.",
+    summaryLabel: "Resumen de señales recientes",
   },
   sections: {
     label: "Vistas de señales",
@@ -22,9 +24,12 @@ export const notificationsEs = {
     security: "Seguridad",
     digest: "Digest",
     worker: "Workers",
+    system: "Sistema",
   },
   filters: {
+    label: "Filtrar señales",
     all: "Todas",
+    actionable: "Para actuar",
     unread: "Sin leer",
     price: "Precio",
     security: "Seguridad",
@@ -36,12 +41,27 @@ export const notificationsEs = {
     empty: "La bandeja está limpia.",
     emptyBody: "Cuando una alerta, una actividad de seguridad o un worker deje rastro, aparecerá aquí.",
     error: "No se pudo cargar la bandeja de señales.",
+    retry: "Reintentar",
+    actionableEmpty: "Cabina despejada.",
+    actionableEmptyBody: "No hay señales pendientes con una acción concreta. Puedes revisar el resto sin prisa.",
+  },
+  timeline: {
+    today: "Hoy",
+    recent: "Últimos 7 días",
+    earlier: "Anteriores",
+    count: "{count} señales",
   },
   row: {
     unread: "Sin leer",
     read: "Leída",
     markRead: "Marcar leída",
     open: "Abrir",
+    actions: {
+      price: "Revisar precio",
+      security: "Revisar acceso",
+      digest: "Abrir resumen",
+      worker: "Ver incidencia",
+    },
   },
   toast: {
     markedRead: "Señal marcada como leída.",
@@ -52,13 +72,15 @@ export const notificationsEs = {
 
 export const notificationsEn = {
   pageTitle: "Signals",
-  pageSubtitle: "Your cockpit to review notices and decide what Viru should watch.",
+  pageSubtitle: "Review notices and decide what Viru should watch.",
   hero: {
     kicker: "Signal inbox",
-    title: "Everything Viru needed to tell you, beyond a toast",
-    subtitle: "Review past signals, mark them as read, and jump back to the exact route when it matters.",
     markAll: "Mark all as read",
     openAlerts: "Configure alerts",
+    briefingKicker: "Cockpit checklist",
+    briefingTitle: "signals need a decision",
+    briefingBody: "You have {unread} unread notices. Start with the ones that lead to a concrete action.",
+    summaryLabel: "Recent signal summary",
   },
   sections: {
     label: "Signal views",
@@ -74,9 +96,12 @@ export const notificationsEn = {
     security: "Security",
     digest: "Digest",
     worker: "Workers",
+    system: "System",
   },
   filters: {
+    label: "Filter signals",
     all: "All",
+    actionable: "To act on",
     unread: "Unread",
     price: "Price",
     security: "Security",
@@ -88,12 +113,27 @@ export const notificationsEn = {
     empty: "The inbox is clear.",
     emptyBody: "When an alert, security activity, or worker leaves a trace, it will appear here.",
     error: "Could not load the signal inbox.",
+    retry: "Try again",
+    actionableEmpty: "Cockpit clear.",
+    actionableEmptyBody: "There are no pending signals with a concrete action. You can review the rest at your pace.",
+  },
+  timeline: {
+    today: "Today",
+    recent: "Last 7 days",
+    earlier: "Earlier",
+    count: "{count} signals",
   },
   row: {
     unread: "Unread",
     read: "Read",
     markRead: "Mark read",
     open: "Open",
+    actions: {
+      price: "Review price",
+      security: "Review access",
+      digest: "Open digest",
+      worker: "View incident",
+    },
   },
   toast: {
     markedRead: "Signal marked as read.",
