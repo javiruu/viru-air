@@ -11,6 +11,7 @@ import { getDeliveryStateCopy, getNotificationChannelCopy } from "@/modules/aler
 import { apiFetch } from "@/modules/shared/api";
 import { formatCurrency, formatRelativeTime } from "@/modules/shared/format";
 import { getDeliveryStatusMeta, getWatchStatusMeta } from "@/modules/shared/statusCatalog";
+import { SignalCadencePanel } from "@/modules/signals/SignalCadencePanel";
 import { SignalsSectionNav } from "@/modules/signals/SignalsSectionNav";
 import { getFreshnessPresentation } from "@/modules/watchlist/summary";
 import type { PriceSummary, WatchDetail } from "@/modules/watchlist/types";
@@ -197,6 +198,10 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
     }
 
     let isMounted = true;
+    setRules([]);
+    setEvents([]);
+    setSelectedWatchDetail(null);
+    setSelectedWatchSummary(null);
 
     Promise.all([
       apiFetch<AlertRule[]>(`/alerts/rules?watch_id=${selectedWatchId}`),
@@ -276,6 +281,14 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
       lastEvaluation: events[0]?.created_at ?? null,
     };
   }, [events, rules]);
+
+  const minimumActiveCooldown = useMemo(() => {
+    const activeCooldowns = rules
+      .filter((rule) => rule.enabled && Number.isFinite(rule.cooldown_minutes) && rule.cooldown_minutes > 0)
+      .map((rule) => rule.cooldown_minutes);
+
+    return activeCooldowns.length > 0 ? Math.min(...activeCooldowns) : null;
+  }, [rules]);
 
   const previewText = useMemo(() => {
     if (!selectedWatch) return t("alerts.form.previewSelectFlight");
@@ -539,38 +552,26 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
         </div>
       </section>
 
-      <section className="panel panel-soft stack section-gap">
-        <div className="row-between">
-          <h2 className="panel-title">{t("alerts.form.quietHoursTitle")}</h2>
-        </div>
-        <label className="alert-check">
-          <input
-            type="checkbox"
-            checked={quietHoursEnabled}
-            onChange={(event) => setQuietHoursEnabled(event.target.checked)}
-          />
-          <span className="alert-check-ui" aria-hidden="true">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M5.5 12.5 10 17l8.5-9" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </span>
-          {t("alerts.form.quietHoursEnabled")}
-        </label>
-        <div className="row-actions">
-          <label className="field">
-            {t("alerts.form.quietHoursStart")}
-            <input type="time" value={quietHoursStart} onChange={(event) => setQuietHoursStart(event.target.value)} />
-          </label>
-          <label className="field">
-            {t("alerts.form.quietHoursEnd")}
-            <input type="time" value={quietHoursEnd} onChange={(event) => setQuietHoursEnd(event.target.value)} />
-          </label>
-          <button className="btn-secondary" type="button" onClick={saveQuietHours}>
-            {t("alerts.form.buttonSave")}
-          </button>
-        </div>
-        <p className="panel-note">{t("alerts.form.quietHoursHelp")}</p>
-      </section>
+      <SignalCadencePanel
+        scope={{
+          routeLabel: selectedWatch
+            ? `${selectedWatch.origin_iata} → ${selectedWatch.destination_iata} · ${selectedWatch.travel_date_local}`
+            : null,
+          activeRules: summary.active,
+          pausedRules: summary.paused,
+          cooldownMinutes: minimumActiveCooldown,
+          lastEvaluation: summary.lastEvaluation,
+        }}
+        quietHours={{
+          enabled: quietHoursEnabled,
+          start: quietHoursStart,
+          end: quietHoursEnd,
+          onEnabledChange: setQuietHoursEnabled,
+          onStartChange: setQuietHoursStart,
+          onEndChange: setQuietHoursEnd,
+          onSave: () => void saveQuietHours(),
+        }}
+      />
 
       <section className="panel panel-soft stack section-gap">
         <div className="row-between">

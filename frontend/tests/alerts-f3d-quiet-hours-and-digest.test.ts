@@ -4,12 +4,14 @@ import path from "node:path";
 import test from "node:test";
 
 const ALERTS_PAGE = path.join(process.cwd(), "src", "modules", "signals", "AlertRulesWorkspace.tsx");
+const CADENCE_PANEL = path.join(process.cwd(), "src", "modules", "signals", "SignalCadencePanel.tsx");
 const ALERTS_I18N = path.join(process.cwd(), "src", "i18n", "domains", "alerts.ts");
 
 test("alerts page renders quiet hours controls and persists payload", () => {
   const source = fs.readFileSync(ALERTS_PAGE, "utf8");
-  assert.match(source, /alerts\.form\.quietHoursTitle/);
-  assert.match(source, /alerts\.form\.quietHoursEnabled/);
+  const panelSource = fs.readFileSync(CADENCE_PANEL, "utf8");
+  assert.match(panelSource, /alerts\.form\.quietHoursTitle/);
+  assert.match(panelSource, /alerts\.form\.quietHoursEnabled/);
   assert.match(source, /quiet_hours_enabled: quietHoursEnabled/);
   assert.match(source, /quiet_hours_start: quietHoursStart/);
   assert.match(source, /quiet_hours_end: quietHoursEnd/);

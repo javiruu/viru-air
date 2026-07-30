@@ -1,5 +1,11 @@
 # History
 
+## 2026-07-30 - Señales accionables y reglas conectadas
+
+- La Bandeja incorpora un checklist `Para actuar`, agrupacion temporal y acciones contextualizadas sin alterar la identidad ni el estado de lectura de cada evento.
+- La frontera HTTP tolera respuestas parciales y el envelope legado en array, manteniendo `source_type` y `source_id` exactos para las mutaciones.
+- Reglas explica la ruta seleccionada, su ritmo minimo, ultima evaluacion y horas tranquilas con acceso directo a pendientes, sin endpoints ni polling adicionales.
+
 ## 2026-07-30 - Compilación anticipada de rutas en desarrollo
 
 - `npm run dev` arranca Next.js con Turbopack y responde en cuanto la portada está preparada.

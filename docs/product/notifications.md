@@ -25,14 +25,17 @@ La bandeja existe para senales que no deben perderse:
 
 La vista `Bandeja` de `/notifications` muestra:
 
-- resumen por total, sin leer, precio, seguridad, digest y workers;
-- filtros por categoria y estado sin leer;
-- lista cronologica de senales con titulo, descripcion, hora relativa, ruta cuando aplica y accion de apertura;
+- un checklist de cabina que prioriza senales sin leer con una accion concreta;
+- resumen reciente por total, precio, seguridad y sistema, sin mezclar esas cifras globales con las de una ruta;
+- filtros por categoria, estado sin leer y `Para actuar` (tambien enlazable con `?filter=actionable`);
+- cronologia visual por hoy, ultimos siete dias y anteriores, sin colapsar ni alterar los eventos fuente;
 - acciones para marcar una senal como leida o marcar toda la bandeja como leida;
 - contador de senales sin leer en la navegacion privada;
 - acceso interno a `Reglas` para decidir que debe vigilar Viru.
 
-La vista `Reglas` mantiene la configuracion existente de alertas de precio, horas tranquilas, simulacion, entregas e historial. Cuando el alias legado incluye `watch_id`, la vista selecciona ese seguimiento si sigue disponible para el usuario.
+La vista `Reglas` mantiene la configuracion existente de alertas de precio, horas tranquilas, simulacion, entregas e historial. Suma una lectura conectada de la ruta seleccionada: reglas activas/pausadas, cooldown minimo y ultima evaluacion, con acceso directo a las senales pendientes. Esta lectura reutiliza el estado ya cargado y no anade endpoints ni polling. Cuando el alias legado incluye `watch_id`, la vista selecciona ese seguimiento si sigue disponible para el usuario.
+
+La respuesta de Bandeja se normaliza en la frontera HTTP para tolerar colecciones o campos opcionales ausentes y el envelope legado en forma de array. Las filas sin identidad fuente segura se descartan, porque el estado de lectura debe conservar exactamente `source_type` y `source_id`.
 
 La identidad visual sigue el contrato dual-theme de Viru: clara y oscura con el mismo tono calido/aeronautico, sin convertir la bandeja en un panel SaaS generico.
 
