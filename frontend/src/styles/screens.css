@@ -23321,6 +23321,11 @@ textarea::placeholder {
   background: var(--ink-soft);
 }
 
+.watch-community-hub-button.is-available {
+  right: var(--space-panel-header-gap);
+  left: auto;
+}
+
 .watch-community-hub-check {
   width: 0.9rem;
   height: 0.9rem;
