@@ -1,6 +1,6 @@
 Status: canonical
 Scope: UI system, visual contract
-Last reviewed: 2026-05-18
+Last reviewed: 2026-07-30
 Fuente de verdad: docs/ui/UI_SYSTEM_V1.md
 
 ---
@@ -100,6 +100,6 @@ _Fuente: `frontend/src/styles/components.css`_
 - Alias legacy (`/history`, `/preferences`) por compatibilidad.
 
 ## 9) Compatibilidad
-- Rutas canon: `/dashboard`, `/watchlist`, `/quick-search`, `/alerts`, `/preferencias`.
+- Rutas canon: `/dashboard`, `/watchlist`, `/quick-search`, `/notifications`, `/preferencias`.
 - Rutas legacy: `/history`->`/preferencias`, `/suggestions`->en revision.
 - No reintroducir `warn`; usar `warning`.

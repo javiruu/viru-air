@@ -4,7 +4,6 @@ export const NAV_V1_PRIVATE = [
   { href: "/puerta-a-puerta", labelKey: "shared.footer.links.doorToDoor" },
   { href: "/quick-search", labelKey: "shared.footer.links.quickSearch" },
   { href: "/hoteles", labelKey: "shared.footer.links.hotelsRadar" },
-  { href: "/alerts", labelKey: "shared.footer.links.alerts" },
   { href: "/notifications", labelKey: "shared.footer.links.notifications" },
   { href: "/recomendaciones", labelKey: "shared.footer.links.opportunities" },
   { href: "/preferencias", labelKey: "shared.footer.links.preferences" },

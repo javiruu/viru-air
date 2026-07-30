@@ -1,7 +1,7 @@
 # Estado actual
 
 **Estado:** vivo  
-**Ultima revision:** 2026-07-28
+**Ultima revision:** 2026-07-30
 **Fuente de verdad:** si  
 **Area:** overview
 
@@ -10,7 +10,7 @@
 - `/dashboard`
 - `/watchlist`
 - `/quick-search`
-- `/alerts`
+- `/notifications`
 - `/recomendaciones`
 - `/preferencias`
 - `/soporte/ayuda`
@@ -20,6 +20,7 @@
 ## Alias legacy activos
 
 - `/history` -> `/watchlist`
+- `/alerts` -> `/notifications?view=rules`
 - `/preferences` -> `/preferencias`
 - `/suggestions` -> `/soporte/feedback?type=idea`
 

@@ -357,13 +357,13 @@ export default function DashboardPage() {
                 ) : null}
                 <div className="module-actions">
                   <Link
-                    href="/alerts"
+                    href="/notifications?view=rules"
                     className="btn-secondary"
                     onClick={() => trackEvent("dashboard_alerts_open", { area: "dashboard", source: "alerts_card" })}
                   >
                     {t("dashboard.modules.alerts.primary")}
                   </Link>
-                  <Link href="/alerts" className="link-subtle">
+                  <Link href="/notifications?view=rules" className="link-subtle">
                     {t("dashboard.modules.alerts.secondary")}
                   </Link>
                 </div>

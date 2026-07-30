@@ -1,5 +1,11 @@
 # History
 
+## 2026-07-30 - Alertas integradas dentro de Señales
+
+- La navegacion privada muestra una sola entrada `Señales`, con dos vistas internas claras: `Bandeja` para los avisos recibidos y `Reglas` para configurar que debe vigilar Viru.
+- `/alerts` se mantiene como alias compatible hacia `/notifications?view=rules`, preserva sus parametros y sigue seleccionando el `watch_id` enlazado cuando esta disponible.
+- Los contratos backend `/api/v1/alerts/*` y `/api/v1/notifications/*` permanecen intactos; la fusion reorganiza la experiencia sin duplicar datos ni pipelines.
+
 ## 2026-07-29 - Hub comunitario por ruta en Watchlist
 
 - Cada fila de `/watchlist` incorpora un acceso comunitario suave en su esquina

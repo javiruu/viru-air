@@ -1,6 +1,6 @@
 Status: canonical
 Scope: UI system, visual contract
-Last reviewed: 2026-05-18
+Last reviewed: 2026-07-30
 Fuente de verdad: docs/ui/UI_CONTRACT_V1.md
 
 ---
@@ -102,7 +102,7 @@ Todo componente debe mantener en **dark y light**:
 - Estados: Cargando..., Sin resultados, Error, Listo.
 
 ## Convenciones legacy / Deprecacion
-- Rutas canonicas: `/dashboard`, `/watchlist`, `/quick-search`, `/alerts`, `/recomendaciones`, `/preferencias`.
+- Rutas canonicas: `/dashboard`, `/watchlist`, `/quick-search`, `/notifications`, `/recomendaciones`, `/preferencias`.
 - Rutas legacy: `/history`->`/preferencias`, `/suggestions`->en revision.
 - Naming de estado: usar `warning`, no `warn`.
 

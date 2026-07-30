@@ -13,10 +13,11 @@ export const PRODUCT_VOCAB = {
     legacy: "/history",
   },
   alerts: {
-    label: "Alertas",
-    route: "/alerts",
+    label: "Señales",
+    route: "/notifications?view=rules",
     api: "/api/v1/alerts",
     entity: "AlertRule",
+    legacy: "/alerts",
   },
   opportunities: {
     label: "Oportunidades",

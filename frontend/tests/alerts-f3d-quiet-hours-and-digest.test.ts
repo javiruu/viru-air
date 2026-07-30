@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
-const ALERTS_PAGE = path.join(process.cwd(), "src", "app", "(private)", "alerts", "page.tsx");
+const ALERTS_PAGE = path.join(process.cwd(), "src", "modules", "signals", "AlertRulesWorkspace.tsx");
 const ALERTS_I18N = path.join(process.cwd(), "src", "i18n", "domains", "alerts.ts");
 
 test("alerts page renders quiet hours controls and persists payload", () => {
@@ -56,7 +56,7 @@ test("spanish alerts copy includes grouped, quiet hours and freshness messaging"
   const source = fs.readFileSync(ALERTS_I18N, "utf8");
   assert.match(source, /groupedLabel: "Agrupada"/);
   assert.match(source, /quietHoursPending: "Pendiente hasta que terminen tus horas tranquilas"/);
-  assert.match(source, /kicker: "Cabina de señales"/);
+  assert.match(source, /kicker: "Reglas de señales"/);
   assert.match(source, /quietHoursSaved: "Horas tranquilas actualizadas\."/);
   assert.match(source, /freshnessLabel: "Señal actual"/);
   assert.match(source, /freshnessStale: "Precio histórico\. Guardamos la regla, pero conviene revalidar antes de decidir\."/);

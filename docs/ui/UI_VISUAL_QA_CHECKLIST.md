@@ -1,6 +1,6 @@
 Status: canonical
 Scope: UI system, visual contract, or design guidance
-Last reviewed: 2026-05-18
+Last reviewed: 2026-07-30
 Canonical source: docs/ui/UI_VISUAL_QA_CHECKLIST.md
 Related: docs/ui/UI_SYSTEM_V1.md, docs/specs/README.md
 
@@ -17,7 +17,7 @@ Referencia operativa para agentes:
 - `/dashboard`
 - `/watchlist`
 - `/quick-search`
-- `/alerts`
+- `/notifications`
 - `/login`
 - `/register`
 
@@ -61,9 +61,9 @@ Rutas recomendadas adicionales:
 - [ ] Error
 - [ ] Resultados presentes con acciones visibles
 
-### /alerts
-- [ ] Lista con alertas
-- [ ] Sin alertas
+### /notifications
+- [ ] Bandeja y reglas accesibles desde la misma superficie
+- [ ] Sin señales ni reglas
 - [ ] Toggle activar/pausar
 - [ ] Historial legible
 

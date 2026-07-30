@@ -1,12 +1,19 @@
 export const notificationsEs = {
-  pageTitle: "Bandeja de señales",
-  pageSubtitle: "Un inbox persistente para precio, seguridad, digest y workers.",
+  pageTitle: "Señales",
+  pageSubtitle: "Tu cabina para revisar avisos y decidir qué debe vigilar Viru.",
   hero: {
-    kicker: "Centro persistente",
+    kicker: "Bandeja de señales",
     title: "Todo lo que Viru quiso decirte, sin perderse en un toast",
     subtitle: "Revisa señales pasadas, marca como leído y vuelve a la ruta exacta cuando toque decidir.",
     markAll: "Marcar todo como leído",
     openAlerts: "Configurar alertas",
+  },
+  sections: {
+    label: "Vistas de señales",
+    inbox: "Bandeja",
+    inboxDescription: "Avisos y actividad",
+    rules: "Reglas",
+    rulesDescription: "Qué debe vigilar Viru",
   },
   summary: {
     unread: "Sin leer",
@@ -44,14 +51,21 @@ export const notificationsEs = {
 };
 
 export const notificationsEn = {
-  pageTitle: "Signal inbox",
-  pageSubtitle: "A persistent inbox for price, security, digests, and workers.",
+  pageTitle: "Signals",
+  pageSubtitle: "Your cockpit to review notices and decide what Viru should watch.",
   hero: {
-    kicker: "Persistent center",
+    kicker: "Signal inbox",
     title: "Everything Viru needed to tell you, beyond a toast",
     subtitle: "Review past signals, mark them as read, and jump back to the exact route when it matters.",
     markAll: "Mark all as read",
     openAlerts: "Configure alerts",
+  },
+  sections: {
+    label: "Signal views",
+    inbox: "Inbox",
+    inboxDescription: "Notices and activity",
+    rules: "Rules",
+    rulesDescription: "What Viru should watch",
   },
   summary: {
     unread: "Unread",

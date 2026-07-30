@@ -1,13 +1,17 @@
 # Centro de notificaciones persistente
 
 **Estado:** vivo
-**Ultima revision:** 2026-07-03
+**Ultima revision:** 2026-07-30
 **Fuente de verdad:** si
 **Area:** producto
 
 ## Proposito
 
-`/notifications` es la bandeja persistente de señales privadas de Viru. Complementa los toast in-app: los toast avisan en el momento, pero esta pantalla conserva el rastro consultable para decisiones posteriores.
+`/notifications` es el centro privado de Señales de Viru. Reune la bandeja persistente y la configuracion de reglas en una sola superficie con dos vistas: `Bandeja` y `Reglas`.
+
+La ruta historica `/alerts` se conserva como alias compatible y redirige a `/notifications?view=rules`, preservando los parametros de consulta. Las APIs `/api/v1/alerts/*` no cambian.
+
+La bandeja complementa los toast in-app: los toast avisan en el momento, pero esta pantalla conserva el rastro consultable para decisiones posteriores.
 
 La bandeja existe para senales que no deben perderse:
 
@@ -19,14 +23,16 @@ La bandeja existe para senales que no deben perderse:
 
 ## Experiencia actual
 
-La pantalla privada `/notifications` muestra:
+La vista `Bandeja` de `/notifications` muestra:
 
 - resumen por total, sin leer, precio, seguridad, digest y workers;
 - filtros por categoria y estado sin leer;
 - lista cronologica de senales con titulo, descripcion, hora relativa, ruta cuando aplica y accion de apertura;
 - acciones para marcar una senal como leida o marcar toda la bandeja como leida;
 - contador de senales sin leer en la navegacion privada;
-- enlace directo a `/alerts` para ajustar alertas de precio.
+- acceso interno a `Reglas` para decidir que debe vigilar Viru.
+
+La vista `Reglas` mantiene la configuracion existente de alertas de precio, horas tranquilas, simulacion, entregas e historial. Cuando el alias legado incluye `watch_id`, la vista selecciona ese seguimiento si sigue disponible para el usuario.
 
 La identidad visual sigue el contrato dual-theme de Viru: clara y oscura con el mismo tono calido/aeronautico, sin convertir la bandeja en un panel SaaS generico.
 

@@ -1,9 +1,9 @@
 ﻿export const alertsEs = {
-  pageTitle: "Alertas",
-  pageSubtitle: "Cabina de señales para reglas, entregas y decisiones con contexto.",
+  pageTitle: "Señales",
+  pageSubtitle: "Configura las reglas que Viru vigila y revisa cómo se entregan.",
   hero: {
-    kicker: "Cabina de señales",
-    title: "Orquesta tus alertas con claridad",
+    kicker: "Reglas de señales",
+    title: "Decide qué debe vigilar Viru",
     subtitle: "Viru une reglas, entrega y ritmo para avisarte sin ruido.",
     createRule: "Crear regla",
     backToDashboard: "Volver al dashboard",
@@ -154,11 +154,11 @@
 };
 
 export const alertsEn = {
-  pageTitle: "Alerts",
-  pageSubtitle: "Signal cockpit for rules, deliveries, and decisions with context.",
+  pageTitle: "Signals",
+  pageSubtitle: "Configure the rules Viru watches and review how they are delivered.",
   hero: {
-    kicker: "Signal cockpit",
-    title: "Orchestrate your alerts with clarity",
+    kicker: "Signal rules",
+    title: "Decide what Viru should watch",
     subtitle: "Viru aligns rules, delivery, and cadence to notify you without noise.",
     createRule: "Create rule",
     backToDashboard: "Back to dashboard",
