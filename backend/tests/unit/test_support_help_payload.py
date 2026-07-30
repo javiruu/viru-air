@@ -5,13 +5,13 @@ CANONICAL_PRIVATE_ROUTES = {
     "/dashboard",
     "/watchlist",
     "/quick-search",
-    "/alerts",
+    "/notifications?view=rules",
     "/recomendaciones",
     "/preferencias",
     "/soporte/contacto",
 }
 
-LEGACY_ROUTES = {"/history", "/preferences", "/suggestions"}
+LEGACY_ROUTES = {"/history", "/preferences", "/suggestions", "/alerts"}
 
 
 def test_help_payload_exposes_expected_operational_sections() -> None:
@@ -25,7 +25,7 @@ def test_help_payload_exposes_expected_operational_sections() -> None:
         "Empieza por el panel",
         "Gestiona rutas en Watchlist",
         "Busca oportunidades en Quick Search",
-        "Controla tus alertas",
+        "Configura tus señales",
         "Revisa recomendaciones",
         "Ajusta preferencias",
         "Soporte directo",

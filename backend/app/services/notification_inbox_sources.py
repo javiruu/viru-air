@@ -65,7 +65,7 @@ def alert_item(event: NotificationEvent, watch: FlightWatch, read_at: datetime |
         title=_alert_title(category),
         body=event.message,
         route_label=route_label,
-        action_href=f"/alerts?watch_id={watch.id}",
+        action_href=f"/notifications?view=rules&watch_id={watch.id}",
         created_at=event.created_at,
         read_at=read_at,
     )

@@ -1,5 +1,5 @@
 **Estado:** vivo  
-**Ultima revision:** 2026-06-16  
+**Ultima revision:** 2026-07-30
 **Fuente de verdad:** si  
 **Area:** reference
 
@@ -40,7 +40,8 @@ Convertir lenguaje tecnico, interno o mixto en copy visible claro, cercano y acc
 
 - `Watchlist` se mantiene como label visible de producto.
 - `Quick Search` se mantiene como label visible de producto.
-- `Oportunidades`, `Alertas`, `Preferencias` y `Ayuda` se mantienen como labels visibles canonicos.
+- `Oportunidades`, `Señales`, `Preferencias` y `Ayuda` se mantienen como labels visibles canonicos.
+- Dentro de `Señales`, usar `Bandeja` para los avisos recibidos y `Reglas` para aquello que Viru debe vigilar. `Alertas` puede seguir apareciendo en copy contextual, pero no como modulo de navegacion independiente.
 
 ## Aplicacion minima obligatoria
 

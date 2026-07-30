@@ -1,7 +1,7 @@
 # Matriz QA por area
 
 **Estado:** vivo  
-**Ultima revision:** 2026-07-12
+**Ultima revision:** 2026-07-30
 **Fuente de verdad:** si  
 **Area:** QA
 
@@ -27,7 +27,7 @@ para validar cambios sin depender de memoria de sesion ni de wrappers dudosos.
 | Quick Search | Validar cache compartida y contrato cercano al cambio | `cd C:\Users\javiru\Desktop\viru-air && python -m pytest backend\tests\unit\test_quick_search_cache_models.py -q` | `17 passed` o equivalente focalizado | canonico | La cache persistente V2.1 existe; no usar docs antiguas que aun hablen de cache solo en memoria |
 | Quick Search | Validar regresiones de pantalla y estados visibles | `cd frontend && npm test -- --test-name-pattern="quick-search-screen-state|quick-search-refactor-utils|quick-search-dual-regression|quick-search-response-normalizer"` | Tests de UI/logica en verde | canonico | Complementar con revision humana si el cambio altera layout, loading, empty o copy |
 | Watchlist/Alertas | Verificar estabilizacion minima de flujos guardados e historico | `cd C:\Users\javiru\Desktop\viru-air && python -m pytest backend\tests\integration\test_watchlist_flow.py backend\tests\integration\test_watchlist_refresh_cooldown.py -q` | Integraciones focalizadas en verde | heredado/contextual | El runbook de estabilizacion sigue siendo la referencia viva para diagnostico |
-| Watchlist/Alertas | Confirmar flujo visible real | Abrir `/watchlist` o `/alerts` con cuenta limpia y seguir checklist del runbook | Ruta, interaccion, resultado observado y feedback humano | requiere validacion humana | La QA visual final depende de revision manual del usuario en navegador real |
+| Watchlist/Señales | Confirmar flujo visible real | Abrir `/watchlist` o `/notifications?view=rules` con cuenta limpia y seguir checklist del runbook | Ruta, interaccion, resultado observado y feedback humano | requiere validacion humana | La QA visual final depende de revision manual del usuario en navegador real |
 | Puerta a puerta | Verificar contrato y deeplinks sin tocar providers externos | `cd backend && python -m pytest tests/unit/test_door_to_door_deeplinks.py -q` | `24 passed` o equivalente focalizado | canonico | Test ejecutado y en verde en esta sesion |
 | Puerta a puerta | Verificar estructura frontend del modulo | `cd frontend && node --import tsx --test tests/door-to-door-v1.test.tsx` | Suite estructural/render en verde | canonico | Complementar con dark/light y mobile si hay cambio visible |
 | Hoteles | Verificar tipado/cierre tecnico en frontend hotelero | `cd frontend && npx tsc --noEmit` | Comprobacion de TypeScript sin errores en la superficie tocada | canonico | El frontend no tiene script dedicado de typecheck |

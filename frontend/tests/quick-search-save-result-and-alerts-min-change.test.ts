@@ -5,7 +5,7 @@ import test from "node:test";
 
 const QUICK_SEARCH_VIEW = path.join(process.cwd(), "src", "modules", "quick-search", "QuickSearchView.tsx");
 const QUICK_SEARCH_COPY = path.join(process.cwd(), "src", "modules", "shared", "quickSearchCopy.ts");
-const ALERTS_PAGE = path.join(process.cwd(), "src", "app", "(private)", "alerts", "page.tsx");
+const ALERTS_PAGE = path.join(process.cwd(), "src", "modules", "signals", "AlertRulesWorkspace.tsx");
 
 test("quick search save uses save-result without fallback manual create", () => {
   const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");

@@ -7,12 +7,14 @@ test("product vocabulary maps canonical route/api/entity pairs", () => {
   assert.equal(PRODUCT_VOCAB.watchlist.entity, "FlightWatch");
   assert.equal(PRODUCT_VOCAB.history.entity, "PriceSnapshot");
   assert.equal(PRODUCT_VOCAB.alerts.entity, "AlertRule");
+  assert.equal(PRODUCT_VOCAB.alerts.route, "/notifications?view=rules");
   assert.equal(PRODUCT_VOCAB.opportunities.route, "/recomendaciones");
   assert.equal(PRODUCT_VOCAB.feedback.route, "/soporte/feedback?type=idea");
 });
 
 test("legacy aliases stay explicit in vocabulary map", () => {
   assert.equal(PRODUCT_VOCAB.history.legacy, "/history");
+  assert.equal(PRODUCT_VOCAB.alerts.legacy, "/alerts");
   assert.equal(PRODUCT_VOCAB.preferences.legacy, "/preferences");
   assert.equal(PRODUCT_VOCAB.feedback.legacy, "/suggestions");
 });

@@ -119,6 +119,7 @@ def test_notifications_inbox_lists_and_marks_persistent_signals(client: TestClie
     alert_item = next(item for item in body["items"] if item["source_id"] == alert_source_id)
     assert alert_item["category"] == "price"
     assert alert_item["route_label"] == "MAD -> DUB"
+    assert alert_item["action_href"].startswith("/notifications?view=rules&watch_id=")
     assert alert_item["is_read"] is False
     hotel_item = next(item for item in body["items"] if item["source_id"] == hotel_source_id)
     assert hotel_item["source_type"] == "hotel_alert_event"

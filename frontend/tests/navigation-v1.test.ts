@@ -12,7 +12,6 @@ test("private nav follows canonical Phase 0 IA", () => {
       "/puerta-a-puerta",
       "/quick-search",
       "/hoteles",
-      "/alerts",
       "/notifications",
       "/recomendaciones",
       "/preferencias",

@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { BellRing, CheckCheck, RadioTower, ShieldCheck, Tags, Wrench } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { CheckCheck, RadioTower, ShieldCheck, Tags, Wrench } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
+import { AlertRulesWorkspace } from "@/modules/signals/AlertRulesWorkspace";
+import { SignalsSectionNav } from "@/modules/signals/SignalsSectionNav";
 import { apiFetch } from "@/modules/shared/api";
 import { formatRelativeTime } from "@/modules/shared/format";
 
@@ -44,6 +47,24 @@ const CATEGORY_ICONS = {
 } as const;
 
 export default function NotificationsPage() {
+  return (
+    <Suspense>
+      <NotificationsView />
+    </Suspense>
+  );
+}
+
+function NotificationsView() {
+  const searchParams = useSearchParams();
+
+  if (searchParams.get("view") === "rules") {
+    return <AlertRulesWorkspace requestedWatchId={searchParams.get("watch_id")} />;
+  }
+
+  return <SignalsInbox />;
+}
+
+function SignalsInbox() {
   const { t, localeTag } = useI18n();
   const { notify } = useNotificationCenter();
   const [items, setItems] = useState<NotificationInboxItem[]>([]);
@@ -65,7 +86,7 @@ export default function NotificationsPage() {
       setItems(response.items);
       setSummary(response.summary);
       setStatus("ready");
-    } catch (error) {
+    } catch {
       setStatus("error");
       notify({ tone: "error", title: t("notifications.states.error"), durationMs: 3600 });
     }
@@ -99,7 +120,7 @@ export default function NotificationsPage() {
       await apiFetch(`/notifications/${item.source_type}/${item.source_id}/read`, { method: "POST" });
       await loadNotifications();
       notify({ tone: "success", title: t("notifications.toast.markedRead"), durationMs: 2600 });
-    } catch (error) {
+    } catch {
       notify({ tone: "error", title: t("notifications.toast.error"), durationMs: 3600 });
     }
   }
@@ -109,13 +130,13 @@ export default function NotificationsPage() {
       await apiFetch("/notifications/read-all", { method: "POST" });
       await loadNotifications();
       notify({ tone: "success", title: t("notifications.toast.markedAll"), durationMs: 2600 });
-    } catch (error) {
+    } catch {
       notify({ tone: "error", title: t("notifications.toast.error"), durationMs: 3600 });
     }
   }
 
   return (
-    <main className="stack notifications-page">
+    <main className="stack notifications-page" id="main-content">
       <header className="page-header">
         <div>
           <p className="eyebrow">{t("notifications.hero.kicker")}</p>
@@ -123,16 +144,14 @@ export default function NotificationsPage() {
           <p>{t("notifications.pageSubtitle")}</p>
         </div>
         <div className="panel-actions">
-          <Link className="btn-ghost" href="/alerts">
-            <BellRing size={16} aria-hidden="true" />
-            {t("notifications.hero.openAlerts")}
-          </Link>
           <button className="btn-secondary" type="button" onClick={markAllRead} disabled={summary.unread === 0}>
             <CheckCheck size={16} aria-hidden="true" />
             {t("notifications.hero.markAll")}
           </button>
         </div>
       </header>
+
+      <SignalsSectionNav activeSection="inbox" />
 
       <section className="panel panel-soft notifications-hero">
         <div>

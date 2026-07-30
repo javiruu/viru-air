@@ -1,7 +1,7 @@
 # Notifications contract
 
 **Estado:** vivo
-**Ultima revision:** 2026-07-03
+**Ultima revision:** 2026-07-30
 **Fuente de verdad:** si
 **Area:** backend
 
@@ -29,7 +29,7 @@ Response shape:
       "body": "Precio bajo: 39.00 EUR (umbral 45.00).",
       "created_at": "2026-07-03T10:00:00Z",
       "read_at": null,
-      "action_href": "/alerts",
+      "action_href": "/notifications?view=rules",
       "route_label": "MAD -> DUB",
       "tone": "success"
     }

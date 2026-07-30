@@ -115,7 +115,7 @@ No usar `warn` en cambios nuevos.
 
 ## 8) QA visual minimo
 Antes de cerrar cambios visuales:
-- Validar flujos core (`/dashboard`, `/watchlist`, `/quick-search`, `/alerts`, `/login`, `/register`).
+- Validar flujos core (`/dashboard`, `/watchlist`, `/quick-search`, `/notifications`, `/login`, `/register`).
 - Revisar resoluciones desktop/tablet/movil.
 - Confirmar focus visible, sin solapes ni overflow horizontal.
 - Validar estados clave (loading, empty, error, success) con personalidad y claridad.

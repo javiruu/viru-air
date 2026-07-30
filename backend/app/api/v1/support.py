@@ -36,10 +36,10 @@ def help_payload() -> dict:
                 "cta_href": "/watchlist",
             },
             {
-                "title": "Controla tus alertas",
-                "body": "Alertas te sirve para guardar una regla y volver despues; no hace falta abrirlo antes de tener una ruta clara.",
-                "cta_label": "Ir a Alertas",
-                "cta_href": "/alerts",
+                "title": "Configura tus señales",
+                "body": "Señales te permite guardar una regla y volver despues; no hace falta abrirlas antes de tener una ruta clara.",
+                "cta_label": "Abrir reglas de señales",
+                "cta_href": "/notifications?view=rules",
             },
             {
                 "title": "Revisa recomendaciones",
