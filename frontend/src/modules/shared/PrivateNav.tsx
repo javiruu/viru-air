@@ -30,6 +30,10 @@ export default function PrivateNav() {
     };
   }, []);
 
+  useEffect(() => {
+    document.title = unreadSignals > 0 ? `(${unreadSignals}) Viru` : "Viru";
+  }, [unreadSignals]);
+
   return (
     <nav className="private-nav" aria-label={t("shared.a11y.mainNavigation")}>
       {NAV_V1_PRIVATE.map((item) => {

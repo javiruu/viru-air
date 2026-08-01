@@ -27,6 +27,12 @@ test("(private)/layout.tsx mounts PrivateTopBar", () => {
   assert.match(source, /<PrivateTopBar>/);
 });
 
+test("private navigation keeps the page title in sync with unread notifications", () => {
+  const source = read("src/modules/shared/PrivateNav.tsx");
+  assert.match(source, /document\.title\s*=\s*unreadSignals\s*>\s*0\s*\?\s*`\(\$\{unreadSignals\}\) Viru`\s*:\s*"Viru"/);
+  assert.match(source, /\}, \[unreadSignals\]\);/);
+});
+
 // ============================================================
 // PUBLIC SHELL HEADER
 // ============================================================
