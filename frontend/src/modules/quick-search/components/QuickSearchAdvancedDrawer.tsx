@@ -84,7 +84,7 @@ function QuickSearchAdvancedDrawerInner(props: AdvancedDrawerProps) {
           <div>
             <span className="qs-filter-eyebrow">{props.t("filterConsoleEyebrow")}</span>
             <h2>{props.t("moreOptions")}</h2>
-            <span className="muted">Ajustes avanzados para tu búsqueda</span>
+            <span className="muted">{props.t("filterConsoleEyebrow")}</span>
           </div>
           <button
             type="button"
@@ -103,8 +103,8 @@ function QuickSearchAdvancedDrawerInner(props: AdvancedDrawerProps) {
             <div className="qs-filter-section-head">
               <div>
                 <span className="qs-filter-eyebrow">{props.t("filterAppliedOnSearch")}</span>
-                <h3>Combinar vuelos separados</h3>
-                <p>Viru puede unir vuelos que no van en la misma reserva. Puede salir más barato, pero la conexión corre por tu cuenta.</p>
+                <h3>{props.t("separateFlightsTitle")}</h3>
+                <p>{props.t("separateFlightsBody")}</p>
               </div>
             </div>
             <div className="qs-filter-grid">
@@ -159,7 +159,7 @@ function QuickSearchAdvancedDrawerInner(props: AdvancedDrawerProps) {
             </div>
             {props.includeStops && (
               <div className="qs-warning">
-                Revisa bien el margen. Si el primer vuelo se retrasa, la segunda reserva puede no estar protegida.
+                {props.t("selfConnectWarningDetail")}
               </div>
             )}
           </section>
@@ -168,8 +168,8 @@ function QuickSearchAdvancedDrawerInner(props: AdvancedDrawerProps) {
             <div className="qs-filter-section-head">
               <div>
                 <span className="qs-filter-eyebrow">{props.t("filterAppliedOnSearch")}</span>
-                <h3>Exclusiones</h3>
-                <p>Evita aeropuertos específicos en tu búsqueda.</p>
+                <h3>{props.t("exclusionsTitle")}</h3>
+                <p>{props.t("exclusionsBody")}</p>
               </div>
             </div>
             <div className="qs-filter-grid">

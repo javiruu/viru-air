@@ -373,6 +373,16 @@ export const watchlistEs = {
       pause: "Pausar",
       resume: "Reanudar",
     },
+    fareComparison: {
+      fromLabel: "Desde",
+      customizeLabel: "Personalizar precio comparable",
+      unavailableKinds: "{count} extra(s) sin tarifa pública",
+      officialSource: "Fuente oficial",
+      saving: "Guardando...",
+      save: "Guardar cesta",
+      saved: "Cesta guardada.",
+      saveError: "No se pudo guardar la cesta. Inténtalo de nuevo.",
+    },
   },
   freshness: {
     noDataLabel: "Sin datos todavía",
@@ -886,6 +896,16 @@ export const watchlistEn = {
     actions: {
       pause: "Pause",
       resume: "Resume",
+    },
+    fareComparison: {
+      fromLabel: "From",
+      customizeLabel: "Customize comparable price",
+      unavailableKinds: "{count} extra(s) without a public fare",
+      officialSource: "Official source",
+      saving: "Saving...",
+      save: "Save basket",
+      saved: "Basket saved.",
+      saveError: "The basket could not be saved. Try again.",
     },
   },
   freshness: {

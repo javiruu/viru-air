@@ -269,14 +269,12 @@ function QuickSearchResultsListInner(props: Props) {
                       <span className={fare.is_complete ? "qs-result-comparable-note" : "qs-result-comparable-note qs-result-comparable-note--missing"}>
                         {fare.is_complete
                           ? fare.extras_max_total === null
-                            ? `${locale === "es" ? "Extras desde" : "Extras from"} ${props.formatMoney(fare.extras_min_total, r.currency)} · ${fare.airline_label ?? (locale === "es" ? "aerolínea sin identificar" : "unknown airline")}`
+                            ? `${props.t("extrasFromLabel")} ${props.formatMoney(fare.extras_min_total, r.currency)} · ${fare.airline_label ?? props.t("unknownAirline")}`
                             : `Base ${props.formatMoney(fare.base_total, r.currency)} + extras ${props.formatMoney(fare.extras_min_total, r.currency)}–${props.formatMoney(fare.extras_max_total, r.currency)}`
-                          : locale === "es"
-                            ? `${fare.unavailable_kinds.length} extra(s) sin tarifa pública calculable`
-                            : `${fare.unavailable_kinds.length} extra(s) without a calculable public fare`}
+                          : `${fare.unavailable_kinds.length} ${props.t("unavailableKindsNoPublicFare")}`}
                         {fare.source_url ? (
                           <a href={fare.source_url} target="_blank" rel="noreferrer">
-                            {locale === "es" ? "Fuente oficial" : "Official source"}
+                            {props.t("officialSource")}
                           </a>
                         ) : null}
                       </span>
