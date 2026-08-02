@@ -1,4 +1,6 @@
 import { useI18n } from "@/i18n";
+import { CommunityRouteSignal } from "@/modules/community-routes/CommunityRouteSignal";
+import type { CommunityRouteInsight } from "@/modules/community-routes/communityRoutesTypes";
 import { formatCurrency, formatSignedCurrency } from "@/modules/shared/format";
 import { resolveProviderPresentation } from "@/modules/shared/providerPresentation";
 import { getWatchStatusMeta } from "@/modules/shared/statusCatalog";
@@ -25,6 +27,7 @@ export type WatchMetaEntry = {
 type WatchRowProps = {
   readonly watch: Watch;
   readonly meta: WatchMetaEntry | undefined;
+  readonly communityInsight: CommunityRouteInsight | undefined;
   readonly isSelected: boolean;
   readonly isBulkSelected: boolean;
   readonly onSelect: (watch: Watch) => void;
@@ -41,6 +44,7 @@ type WatchRowProps = {
 export function WatchRow({
   watch,
   meta,
+  communityInsight,
   isSelected,
   isBulkSelected,
   onSelect,
@@ -198,6 +202,10 @@ export function WatchRow({
           <span className="watch-note">
             {t("watchlist.smartList.priceDisclaimer")}
           </span>
+          <CommunityRouteSignal
+            watchersCount={watch.watchers_count ?? 0}
+            insight={communityInsight}
+          />
         </div>
       </div>
       <div className="watch-price-area">

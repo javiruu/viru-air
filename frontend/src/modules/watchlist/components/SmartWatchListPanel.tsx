@@ -1,6 +1,8 @@
 ﻿import { useMemo, useState } from "react";
 
 import { useI18n } from "@/i18n";
+import { communityRouteKey } from "@/modules/community-routes/communityRoutesApi";
+import { useCommunityRouteInsights } from "@/modules/community-routes/useCommunityRouteInsights";
 import { formatCurrency } from "@/modules/shared/format";
 import {
   WatchRow,
@@ -107,6 +109,12 @@ export function SmartWatchListPanel({
   const { t, localeTag } = useI18n();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const communityInsights = useCommunityRouteInsights(
+    items.map((item) => ({
+      origin_iata: item.origin_iata,
+      destination_iata: item.destination_iata,
+    })),
+  );
   const hasSelection = selectedIds.length > 0;
   const selectionCount = selectedIds.length;
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
@@ -378,6 +386,10 @@ export function SmartWatchListPanel({
               key={watch.id}
               watch={watch}
               meta={watchMeta.get(watch.id)}
+              communityInsight={communityInsights.get(communityRouteKey({
+                origin_iata: watch.origin_iata,
+                destination_iata: watch.destination_iata,
+              }))}
               isSelected={selectedWatchId === watch.id}
               isBulkSelected={selectedSet.has(watch.id)}
               onSelect={onSelectWatch}

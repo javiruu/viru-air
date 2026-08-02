@@ -3,7 +3,11 @@ import datetime as dt
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.infrastructure.db.models import Base, QuickSearchPopularityCounter
+from app.infrastructure.db.models import (
+    Base,
+    QuickSearchPopularityCounter,
+    QuickSearchPopularityDaily,
+)
 from app.services.quick_search_popularity import QuickSearchPopularitySignal, record_quick_search_popularity
 
 
@@ -40,7 +44,9 @@ def test_record_quick_search_popularity_increments_anonymous_route_counter() -> 
         )
 
         rows = db.query(QuickSearchPopularityCounter).all()
+        daily_rows = db.query(QuickSearchPopularityDaily).all()
         assert len(rows) == 1
+        assert len(daily_rows) == 1
         assert first.id == second.id
         assert second.origin_iata == "LEI"
         assert second.destination_iata == "DUB"
@@ -48,6 +54,10 @@ def test_record_quick_search_popularity_increments_anonymous_route_counter() -> 
         assert second.search_count == 2
         assert second.first_searched_at == dt.datetime(2026, 7, 11, 10, 0)
         assert second.last_searched_at == dt.datetime(2026, 7, 11, 11, 30)
+        assert daily_rows[0].search_date == dt.date(2026, 7, 11)
+        assert daily_rows[0].origin_iata == "LEI"
+        assert daily_rows[0].destination_iata == "DUB"
+        assert daily_rows[0].search_count == 2
     finally:
         db.close()
         db._test_engine.dispose()  # type: ignore[attr-defined]
@@ -62,3 +72,13 @@ def test_quick_search_popularity_counter_is_cross_user_and_anonymous() -> None:
 
     assert "user_id" not in column_names
     assert not any(target.startswith("users.") for target in foreign_key_targets)
+
+    daily_column_names = {
+        column.name for column in QuickSearchPopularityDaily.__table__.columns
+    }
+    daily_foreign_key_targets = {
+        f"{foreign_key.column.table.name}.{foreign_key.column.name}"
+        for foreign_key in QuickSearchPopularityDaily.__table__.foreign_keys
+    }
+    assert "user_id" not in daily_column_names
+    assert not any(target.startswith("users.") for target in daily_foreign_key_targets)

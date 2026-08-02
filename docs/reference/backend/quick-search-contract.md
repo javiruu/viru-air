@@ -687,6 +687,7 @@ La arquitectura está diseñada para añadir Redis como capa L1 (caliente) sin c
 
 ## Observability and debug
 - Every search emits `meta.query_trace_id`.
+
 - Phase timings are exposed in `meta.pipeline_metrics`.
 - Structured counters are exposed in `meta.pipeline_counters`.
 - Structured warning objects are exposed in `meta.warnings_structured`.
@@ -697,6 +698,20 @@ La arquitectura está diseñada para añadir Redis como capa L1 (caliente) sin c
   - `reason`
   - `reason_code` / `rejected_value` when the backend can derive them
   - `canonical_request` for local diagnosis
+
+## Popularidad comunitaria derivada
+
+Cada búsqueda válida mantiene dos señales anónimas:
+
+- `quick_search_popularity_counter`: acumulado histórico por ruta, fecha de viaje y moneda;
+- `quick_search_popularity_daily`: bucket por fecha de búsqueda, ruta direccional y moneda.
+
+El segundo permite calcular una ventana real de siete días sin reinterpretar
+`last_searched_at` ni atribuir el acumulado histórico a la semana actual. La
+respuesta de `POST /api/v1/search/quick` no incorpora estos agregados: Dashboard,
+Quick Search y Watchlist los solicitan mediante los endpoints ligeros
+`/api/v1/community/routes/*`, por lo que una degradación comunitaria no bloquea
+la búsqueda principal.
 
 
 

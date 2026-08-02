@@ -9,11 +9,20 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
-from app.infrastructure.db.models import QuickSearchPopularityCounter
+from app.infrastructure.db.models import (
+    QuickSearchPopularityCounter,
+    QuickSearchPopularityDaily,
+)
 
 
 PopularityValue = str | int | dt.date | dt.datetime
 _CONFLICT_COLUMNS = ("origin_iata", "destination_iata", "travel_date", "currency")
+_DAILY_CONFLICT_COLUMNS = (
+    "search_date",
+    "origin_iata",
+    "destination_iata",
+    "currency",
+)
 
 
 class QuickSearchPopularityUpsertError(RuntimeError):
@@ -37,10 +46,16 @@ def record_quick_search_popularity(
     dialect_name = db.get_bind().dialect.name
     if dialect_name == "postgresql":
         db.execute(_build_postgresql_upsert(normalized))
+        db.execute(_build_postgresql_daily_upsert(normalized))
     elif dialect_name == "sqlite":
         db.execute(_build_sqlite_upsert(normalized))
+        db.execute(_build_sqlite_daily_upsert(normalized))
     else:
-        return _fallback_upsert(db, normalized)
+        entry = _fallback_upsert(db, normalized)
+        _fallback_daily_upsert(db, normalized)
+        db.commit()
+        db.refresh(entry)
+        return entry
 
     db.commit()
     return _get_counter_by_key(db, normalized)
@@ -75,6 +90,24 @@ def _build_sqlite_upsert(signal: QuickSearchPopularitySignal):
     )
 
 
+def _build_postgresql_daily_upsert(signal: QuickSearchPopularitySignal):
+    stmt = postgresql_insert(QuickSearchPopularityDaily).values(
+        **_daily_insert_values(signal)
+    )
+    return stmt.on_conflict_do_update(
+        constraint="uq_qs_popularity_daily_route_currency",
+        set_=_daily_update_values(signal),
+    )
+
+
+def _build_sqlite_daily_upsert(signal: QuickSearchPopularitySignal):
+    stmt = sqlite_insert(QuickSearchPopularityDaily).values(**_daily_insert_values(signal))
+    return stmt.on_conflict_do_update(
+        index_elements=list(_DAILY_CONFLICT_COLUMNS),
+        set_=_daily_update_values(signal),
+    )
+
+
 def _fallback_upsert(
     db: Session,
     signal: QuickSearchPopularitySignal,
@@ -88,8 +121,22 @@ def _fallback_upsert(
         entry.search_count += 1
         entry.last_searched_at = searched_at
         entry.updated_at = searched_at
-    db.commit()
-    db.refresh(entry)
+    return entry
+
+
+def _fallback_daily_upsert(
+    db: Session,
+    signal: QuickSearchPopularitySignal,
+) -> QuickSearchPopularityDaily:
+    entry = db.scalar(_select_daily_by_key(signal))
+    if entry is None:
+        entry = QuickSearchPopularityDaily(**_daily_insert_values(signal))
+        db.add(entry)
+    else:
+        searched_at = _searched_at(signal)
+        entry.search_count += 1
+        entry.last_searched_at = searched_at
+        entry.updated_at = searched_at
     return entry
 
 
@@ -112,6 +159,15 @@ def _select_by_key(signal: QuickSearchPopularitySignal):
     )
 
 
+def _select_daily_by_key(signal: QuickSearchPopularitySignal):
+    return select(QuickSearchPopularityDaily).where(
+        QuickSearchPopularityDaily.search_date == _searched_at(signal).date(),
+        QuickSearchPopularityDaily.origin_iata == signal.origin_iata,
+        QuickSearchPopularityDaily.destination_iata == signal.destination_iata,
+        QuickSearchPopularityDaily.currency == signal.currency,
+    )
+
+
 def _insert_values(signal: QuickSearchPopularitySignal) -> dict[str, PopularityValue]:
     searched_at = _searched_at(signal)
     return {
@@ -130,6 +186,29 @@ def _insert_values(signal: QuickSearchPopularitySignal) -> dict[str, PopularityV
 def _update_values(signal: QuickSearchPopularitySignal) -> dict[str, PopularityValue]:
     return {
         "search_count": QuickSearchPopularityCounter.search_count + 1,
+        "last_searched_at": _searched_at(signal),
+        "updated_at": _searched_at(signal),
+    }
+
+
+def _daily_insert_values(signal: QuickSearchPopularitySignal) -> dict[str, PopularityValue]:
+    searched_at = _searched_at(signal)
+    return {
+        "search_date": searched_at.date(),
+        "origin_iata": signal.origin_iata,
+        "destination_iata": signal.destination_iata,
+        "currency": signal.currency,
+        "search_count": 1,
+        "first_searched_at": searched_at,
+        "last_searched_at": searched_at,
+        "created_at": searched_at,
+        "updated_at": searched_at,
+    }
+
+
+def _daily_update_values(signal: QuickSearchPopularitySignal) -> dict[str, PopularityValue]:
+    return {
+        "search_count": QuickSearchPopularityDaily.search_count + 1,
         "last_searched_at": _searched_at(signal),
         "updated_at": _searched_at(signal),
     }

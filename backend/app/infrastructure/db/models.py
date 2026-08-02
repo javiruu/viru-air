@@ -901,6 +901,37 @@ class QuickSearchPopularityCounter(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
 
 
+class QuickSearchPopularityDaily(Base):
+    __tablename__ = "quick_search_popularity_daily"
+    __table_args__ = (
+        UniqueConstraint(
+            "search_date",
+            "origin_iata",
+            "destination_iata",
+            "currency",
+            name="uq_qs_popularity_daily_route_currency",
+        ),
+        Index("ix_qs_popularity_daily_date_count", "search_date", "search_count"),
+        Index(
+            "ix_qs_popularity_daily_route",
+            "origin_iata",
+            "destination_iata",
+            "search_date",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    search_date: Mapped[date_type] = mapped_column(Date)
+    origin_iata: Mapped[str] = mapped_column(String(3))
+    destination_iata: Mapped[str] = mapped_column(String(3))
+    currency: Mapped[str] = mapped_column(String(3), default="EUR")
+    search_count: Mapped[int] = mapped_column(Integer, default=1)
+    first_searched_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    last_searched_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
+
+
 class RevalidationJob(Base):
     __tablename__ = "revalidation_job"
     __table_args__ = (

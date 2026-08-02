@@ -222,6 +222,54 @@ class CommunityPriceDeleteOut(BaseModel):
     status: Literal["ok"] = "ok"
 
 
+class CommunityRouteIn(BaseModel):
+    origin_iata: str = Field(min_length=3, max_length=3)
+    destination_iata: str = Field(min_length=3, max_length=3)
+
+    @field_validator("origin_iata", "destination_iata")
+    @classmethod
+    def validate_route_iata(cls, value: str) -> str:
+        cleaned = value.strip().upper()
+        if re.fullmatch(r"[A-Z]{3}", cleaned) is None:
+            raise ValueError("iata_invalido")
+        return cleaned
+
+
+class CommunityRouteInsightsIn(BaseModel):
+    routes: list[CommunityRouteIn] = Field(min_length=1, max_length=100)
+
+
+class CommunityPopularRouteOut(CommunityRouteIn):
+    searches_count: int = Field(ge=0)
+    is_trending: bool = False
+
+
+class CommunityPopularRoutesOut(BaseModel):
+    window_days: Literal[7] = 7
+    routes: list[CommunityPopularRouteOut] = Field(default_factory=list)
+
+
+class CommunityRouteInsightOut(CommunityRouteIn):
+    searches_count: int = Field(default=0, ge=0)
+    is_trending: bool = False
+    sample_size: int = Field(default=0, ge=0)
+    min_price: float | None = None
+    max_price: float | None = None
+    currency: Literal["EUR"] = "EUR"
+
+
+class CommunityRouteInsightsOut(BaseModel):
+    routes: list[CommunityRouteInsightOut] = Field(default_factory=list)
+
+
+class CommunityRelatedRouteOut(CommunityRouteIn):
+    travelers_count: int = Field(ge=3)
+
+
+class CommunityRelatedRoutesOut(BaseModel):
+    routes: list[CommunityRelatedRouteOut] = Field(default_factory=list)
+
+
 class WatchOut(BaseModel):
     id: str
     origin_iata: str

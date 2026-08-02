@@ -22,7 +22,7 @@ def test_current_alembic_chain_has_no_missing_down_revisions() -> None:
     assert payload["missing_down_revisions"] == []
     assert payload["duplicate_revisions"] == {}
     assert payload["files_missing_identifiers"] == []
-    assert payload["heads"] == ["0039_add_community_pricing"]
+    assert payload["heads"] == ["0040_add_qs_popularity_daily"]
 
 
 def test_inspect_database_revision_flags_orphan_alembic_version(tmp_path: Path) -> None:
@@ -222,7 +222,7 @@ def test_upgrade_repairs_orphan_live_tracking_tables_created_by_orm() -> None:
         assert "ix_flight_operational_refresh_lock_token" in lock_indexes
         assert "ix_flight_operational_refresh_lock_expires" in lock_indexes
         assert {"flight_instance_fingerprint", "provider", "observed_at"} in snapshot_unique
-        assert revision == "0039_add_community_pricing"
+        assert revision == "0040_add_qs_popularity_daily"
     finally:
         try:
             os.remove(db_path)

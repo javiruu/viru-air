@@ -138,6 +138,16 @@ export const dashboardEs = {
     emptyTitle: "Sin oportunidades activas",
     emptyBody: "Genera nuevas búsquedas para desbloquear rutas destacadas.",
   },
+  communityCorridors: {
+    eyebrow: "Radar comunidad",
+    title: "Corredores más buscados",
+    period: "Esta semana",
+    loading: "Cargando corredores más buscados",
+    heatAria: "Concentración de búsquedas por corredor",
+    searches: "{count} búsquedas",
+    emptyTitle: "El radar semanal está arrancando",
+    emptyBody: "Las rutas aparecerán aquí a medida que la comunidad busque nuevos vuelos.",
+  },
   ftue: {
     title: "Primeros pasos",
     body: "Aqui ves tu resumen de actividad y los accesos rapidos del panel.",
@@ -415,6 +425,16 @@ export const dashboardEn = {
     cta: "View opportunities",
     emptyTitle: "No active opportunities",
     emptyBody: "Run new searches to unlock highlighted routes.",
+  },
+  communityCorridors: {
+    eyebrow: "Community radar",
+    title: "Most searched corridors",
+    period: "This week",
+    loading: "Loading most searched corridors",
+    heatAria: "Search concentration by corridor",
+    searches: "{count} searches",
+    emptyTitle: "The weekly radar is warming up",
+    emptyBody: "Routes will appear here as the community searches for new flights.",
   },
   ftue: {
     title: "Quick start",

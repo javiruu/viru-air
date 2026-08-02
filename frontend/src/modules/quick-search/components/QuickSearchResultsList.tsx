@@ -1,5 +1,8 @@
 import React, { memo, useEffect, useState } from "react";
 
+import { CommunityPriceSignal } from "@/modules/community-routes/CommunityPriceSignal";
+import { communityRouteKey } from "@/modules/community-routes/communityRoutesApi";
+import { useCommunityRouteInsights } from "@/modules/community-routes/useCommunityRouteInsights";
 import type { SearchResult } from "@/modules/quick-search/types";
 import {
   getOfficialRyanairFlightDeepLink,
@@ -122,6 +125,12 @@ function QuickSearchResultsListInner(props: Props) {
     }
   }, [fareProfile, setFareProfile, travelers]);
   const locale = props.localeTag.toLowerCase().startsWith("es") ? "es" : "en";
+  const communityInsights = useCommunityRouteInsights(
+    props.visibleResults.map((result) => ({
+      origin_iata: result.origin,
+      destination_iata: result.destination,
+    })),
+  );
 
   return (
     <>
@@ -245,6 +254,13 @@ function QuickSearchResultsListInner(props: Props) {
                     </>
                   )}
                 </div>
+                <CommunityPriceSignal
+                  insight={communityInsights.get(communityRouteKey({
+                    origin_iata: r.origin,
+                    destination_iata: r.destination,
+                  }))}
+                  localeTag={props.localeTag}
+                />
                 <div className="qs-result-actions">
                   <div className="qs-result-price">
                     {!props.compactView ? <span className="qs-result-kicker">{props.t("resultsColPrice")}</span> : null}
