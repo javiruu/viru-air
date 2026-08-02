@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
+from app.i18n import t
 from app.hotels.contracts import ProviderRateRecord
 from app.hotels.geo import HotelGeoService, HotelNearbySuggestion, haversine_km
 from app.hotels.normalization import HotelNormalizationService
@@ -439,7 +440,7 @@ def sweep_tracked_offers(
         if previous_price is not None and previous_price != new_price:
             delta = new_price - previous_price
             pct = round((delta / previous_price) * 100, 1) if previous_price > 0 else 0.0
-            direction = "subió" if delta > 0 else "bajó"
+            direction = t("es", "hotels.direction.rose") if delta > 0 else t("es", "hotels.direction.dropped")
             event_type = "price_above" if delta > 0 else "price_below"
 
             db.add(
@@ -447,9 +448,15 @@ def sweep_tracked_offers(
                     hotel_id=offer.hotel_id,
                     provider_run_id=provider_run_id,
                     event_type=event_type,
-                    message=(
-                        f"{hotel_name}: {direction} de {previous_price:.2f} a {new_price:.2f} "
-                        f"{offer.currency} ({pct:+.1f}%)"
+                    message=t(
+                        "es",
+                        "hotels.message.sweep_direction",
+                        hotel=hotel_name,
+                        direction=direction,
+                        previous=f"{previous_price:.2f}",
+                        current=f"{new_price:.2f}",
+                        currency=offer.currency or "EUR",
+                        pct=f"{pct:+.1f}%",
                     ),
                     trigger_value=new_price,
                 )
@@ -606,7 +613,7 @@ def _evaluate_tracked_alert_rule(
                     hotel_id=rule.hotel_id,
                     provider_run_id=provider_run_id,
                     event_type="price_below",
-                    message=f"{hotel_name}: bajó a {latest.currency} {latest_amount:.2f}",
+                    message=t("es", "hotels.message.price_dropped_to", hotel=hotel_name, currency=latest.currency, amount=f"{latest_amount:.2f}"),
                     trigger_value=latest_amount,
                 )
             )
@@ -619,7 +626,7 @@ def _evaluate_tracked_alert_rule(
                     hotel_id=rule.hotel_id,
                     provider_run_id=provider_run_id,
                     event_type="price_above",
-                    message=f"{hotel_name}: subió a {latest.currency} {latest_amount:.2f}",
+                    message=t("es", "hotels.message.price_rose_to", hotel=hotel_name, currency=latest.currency, amount=f"{latest_amount:.2f}"),
                     trigger_value=latest_amount,
                 )
             )
@@ -634,7 +641,7 @@ def _evaluate_tracked_alert_rule(
                         hotel_id=rule.hotel_id,
                         provider_run_id=provider_run_id,
                         event_type="percentage_drop",
-                        message=f"{hotel_name}: bajó {pct:.1f}% ({compare_baseline:.2f} → {latest_amount:.2f} {latest.currency})",
+                        message=t("es", "hotels.message.percentage_drop", hotel=hotel_name, pct=f"{pct:.1f}%", baseline=f"{compare_baseline:.2f}", current=f"{latest_amount:.2f}", currency=latest.currency),
                         trigger_value=pct,
                     )
                 )
@@ -649,7 +656,7 @@ def _evaluate_tracked_alert_rule(
                         hotel_id=rule.hotel_id,
                         provider_run_id=provider_run_id,
                         event_type="percentage_increase",
-                        message=f"{hotel_name}: subió {pct:.1f}% ({compare_baseline:.2f} → {latest_amount:.2f} {latest.currency})",
+                        message=t("es", "hotels.message.percentage_increase", hotel=hotel_name, pct=f"{pct:.1f}%", baseline=f"{compare_baseline:.2f}", current=f"{latest_amount:.2f}", currency=latest.currency),
                         trigger_value=pct,
                     )
                 )
@@ -662,7 +669,7 @@ def _evaluate_tracked_alert_rule(
                     hotel_id=rule.hotel_id,
                     provider_run_id=provider_run_id,
                     event_type="provider_changed",
-                    message=f"{hotel_name}: el proveedor más barato cambió de {previous.provider} a {latest.provider}",
+                    message=t("es", "hotels.message.provider_changed", hotel=hotel_name, previous_provider=previous.provider or "?", current_provider=latest.provider or "?"),
                     trigger_value=latest_amount,
                 )
             )
@@ -675,7 +682,7 @@ def _evaluate_tracked_alert_rule(
                     hotel_id=rule.hotel_id,
                     provider_run_id=provider_run_id,
                     event_type="availability_returned",
-                    message=f"{hotel_name}: vuelve a estar disponible a {latest.currency} {latest_amount:.2f}",
+                    message=t("es", "hotels.message.availability_returned", hotel=hotel_name, currency=latest.currency, amount=f"{latest_amount:.2f}"),
                     trigger_value=latest_amount,
                 )
             )
