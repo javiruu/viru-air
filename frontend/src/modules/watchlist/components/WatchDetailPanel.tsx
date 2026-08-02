@@ -53,6 +53,7 @@ export function WatchDetailPanel({
   mapContent,
 }: WatchDetailPanelProps) {
   const { t, localeTag } = useI18n();
+  const isSpanish = localeTag.toLowerCase().startsWith("es");
   const [fareProfile, setFareProfile] = useState(() => createEmptyFareComparisonProfile(1));
   const [isSavingFareProfile, setIsSavingFareProfile] = useState(false);
   const [fareProfileSaved, setFareProfileSaved] = useState(false);
@@ -117,7 +118,7 @@ export function WatchDetailPanel({
     : !hasSelectedFareExtras
       ? formatCurrency(comparableFare.base_total, currency, localeTag)
       : comparableFare.comparable_max_total === null
-        ? `${localeTag.toLowerCase().startsWith("es") ? "Desde" : "From"} ${formatCurrency(comparableFare.comparable_min_total, currency, localeTag)}`
+        ? `${isSpanish ? "Desde" : "From"} ${formatCurrency(comparableFare.comparable_min_total, currency, localeTag)}`
         : comparableFare.comparable_min_total === comparableFare.comparable_max_total
           ? formatCurrency(comparableFare.comparable_min_total, currency, localeTag)
           : `${formatCurrency(comparableFare.comparable_min_total, currency, localeTag)}–${formatCurrency(comparableFare.comparable_max_total, currency, localeTag)}`;
@@ -207,13 +208,13 @@ export function WatchDetailPanel({
 
       <details className="watch-detail-secondary">
         <summary className="watch-detail-secondary-summary">
-          <span>{localeTag.toLowerCase().startsWith("es") ? "Personalizar precio comparable" : "Customize comparable price"}</span>
+          <span>{isSpanish ? "Personalizar precio comparable" : "Customize comparable price"}</span>
           <strong aria-live="polite">{comparableFareLabel}</strong>
         </summary>
         <div className="watch-detail-secondary-content">
           <FareComparisonPanel
             profile={fareProfile}
-            locale={localeTag.toLowerCase().startsWith("es") ? "es" : "en"}
+            locale={isSpanish ? "es" : "en"}
             onChange={(nextProfile) => {
               setFareProfile(nextProfile);
               setFareProfileSaved(false);
@@ -223,11 +224,11 @@ export function WatchDetailPanel({
           <div className="fare-comparison-summary" aria-live="polite">
             <span>
               {comparableFare && !comparableFare.is_complete
-                ? `${comparableFare.unavailable_kinds.length} ${localeTag.toLowerCase().startsWith("es") ? "extra(s) sin tarifa pública" : "extra(s) without a public fare"}`
+                ? `${comparableFare.unavailable_kinds.length} ${isSpanish ? "extra(s) sin tarifa pública" : "extra(s) without a public fare"}`
                 : ""}
               {comparableFare?.source_url ? (
                 <a href={comparableFare.source_url} target="_blank" rel="noreferrer">
-                  {localeTag.toLowerCase().startsWith("es") ? "Fuente oficial" : "Official source"}
+                  {isSpanish ? "Fuente oficial" : "Official source"}
                 </a>
               ) : null}
             </span>
@@ -255,13 +256,13 @@ export function WatchDetailPanel({
               }}
             >
               {isSavingFareProfile
-                ? localeTag.toLowerCase().startsWith("es") ? "Guardando..." : "Saving..."
-                : localeTag.toLowerCase().startsWith("es") ? "Guardar cesta" : "Save basket"}
+                ? isSpanish ? "Guardando..." : "Saving..."
+                : isSpanish ? "Guardar cesta" : "Save basket"}
             </button>
-            {fareProfileSaved ? <small>{localeTag.toLowerCase().startsWith("es") ? "Cesta guardada." : "Basket saved."}</small> : null}
+            {fareProfileSaved ? <small>{isSpanish ? "Cesta guardada." : "Basket saved."}</small> : null}
             {fareProfileSaveFailed ? (
               <small className="fare-comparison-summary-error">
-                {localeTag.toLowerCase().startsWith("es")
+                {isSpanish
                   ? "No se pudo guardar la cesta. Inténtalo de nuevo."
                   : "The basket could not be saved. Try again."}
               </small>
