@@ -5,32 +5,14 @@ import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { useI18n } from "@/i18n";
-import { apiFetchWithStatus } from "@/modules/shared/api";
 import { NAV_V1_PRIVATE } from "@/modules/shared/navigationV1";
 
-type NotificationSummary = {
-  readonly unread: number;
-};
-
-export default function PrivateNav() {
+export default function PrivateNav({ unreadSignals = 0 }: { unreadSignals?: number }) {
   const { t } = useI18n();
   const pathname = usePathname();
   const pathnameValue = pathname ?? "";
-  const [unreadSignals, setUnreadSignals] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
-
-  useEffect(() => {
-    let active = true;
-    apiFetchWithStatus<NotificationSummary>("/notifications/summary", undefined, { timeoutMs: 3500 }).then((result) => {
-      if (active && result.ok) {
-        setUnreadSignals(result.data.unread);
-      }
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
 
   useEffect(() => {
     document.title = unreadSignals > 0 ? `(${unreadSignals}) Viru` : "Viru";
