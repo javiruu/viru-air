@@ -17904,6 +17904,85 @@ textarea::placeholder {
     animation: private-nav-drop-in 220ms cubic-bezier(0.2, 0, 0, 1) both;
   }
 
+/* ── Mobile bottom navigation ──────────────────────────────── */
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .mobile-bottom-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    height: 64px;
+    padding: 6px 8px max(6px, env(safe-area-inset-bottom, 0px));
+    background: color-mix(in srgb, var(--surface) 94%, var(--panel-bg));
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 20px var(--shadow);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    backdrop-filter: blur(12px) saturate(140%);
+  }
+
+  .mobile-bottom-nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 6px;
+    border-radius: 12px;
+    color: var(--ink-muted);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.64rem;
+    letter-spacing: 0.01em;
+    min-width: 56px;
+    transition: color 180ms ease;
+  }
+
+  .mobile-bottom-nav-link.is-active {
+    color: var(--accent);
+  }
+
+  .mobile-bottom-nav-icon {
+    position: relative;
+    display: grid;
+    place-items: center;
+  }
+
+  .mobile-bottom-nav-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 64px;
+  }
+
+  .mobile-bottom-nav-badge {
+    position: absolute;
+    top: -4px;
+    right: -8px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-size: 0.6rem;
+    font-weight: 800;
+    line-height: 16px;
+    text-align: center;
+  }
+
+  /* Add padding at bottom so content isn't hidden behind nav */
+  .private-content {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
   @keyframes private-nav-drop-in {
     from {
       opacity: 0;
