@@ -6413,16 +6413,6 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
       "detail"
       "compare";
   }
-}
-
-@media (max-width: 768px) {
-  .watchlist-cockpit-grid {
-    grid-template-areas:
-      "routes"
-      "history"
-      "detail"
-      "compare";
-  }
 
   .history-filterbar-actions {
     width: 100%;
@@ -6448,6 +6438,38 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
 
   .watch-detail-actions > .btn-compact {
     min-height: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Watchlist: tighter spacing on phone */
+  .watchlist-area-routes .panel {
+    padding: 0.55rem 0.65rem;
+  }
+
+  .watch-detail-hero {
+    padding: 0.55rem 0.65rem;
+  }
+
+  .watch-smart-search input {
+    font-size: 0.82rem;
+  }
+
+  /* Dashboard: full-width cards on phone */
+  .dashboard-primary-grid .module-card {
+    grid-column: span 12;
+  }
+
+  .module-card-feature,
+  .module-card,
+  .module-card-compact,
+  .kpi-card {
+    grid-column: span 12;
+  }
+
+  /* Dashboard news rail tighter */
+  .dashboard-news-rail {
+    padding: 0.55rem 0.65rem;
   }
 }
 
@@ -16684,6 +16706,29 @@ textarea::placeholder {
   min-width: 0;
   overflow-x: auto;
   scrollbar-width: thin;
+  position: relative;
+}
+
+/* Scroll fade indicator — hints there's more content to the right */
+.private-nav::after {
+  content: "";
+  position: sticky;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  flex: 0 0 20px;
+  min-height: 36px;
+  background: linear-gradient(to right, transparent, var(--surface) 72%);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.private-nav:hover::after,
+.private-nav:focus-within::after {
+  opacity: 1;
 }
 
 .private-nav-link {
