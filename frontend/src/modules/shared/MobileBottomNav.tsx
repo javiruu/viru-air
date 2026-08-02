@@ -2,15 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import { Bell, Eye, LayoutDashboard, Search } from "lucide-react";
 
 import { useI18n } from "@/i18n";
-import { apiFetchWithStatus } from "@/modules/shared/api";
-
-type NotificationSummary = {
-  readonly unread: number;
-};
 
 const BOTTOM_NAV_ITEMS = [
   { href: "/dashboard", icon: LayoutDashboard, labelKey: "shared.footer.links.dashboard" as const },
@@ -19,23 +13,10 @@ const BOTTOM_NAV_ITEMS = [
   { href: "/notifications", icon: Bell, labelKey: "shared.footer.links.notifications" as const },
 ] as const;
 
-export default function MobileBottomNav() {
+export default function MobileBottomNav({ unreadSignals = 0 }: { unreadSignals?: number }) {
   const { t } = useI18n();
   const pathname = usePathname();
   const pathnameValue = pathname ?? "";
-  const [unreadSignals, setUnreadSignals] = useState(0);
-
-  useEffect(() => {
-    let active = true;
-    apiFetchWithStatus<NotificationSummary>("/notifications/summary", undefined, { timeoutMs: 3500 }).then((result) => {
-      if (active && result.ok) {
-        setUnreadSignals(result.data.unread);
-      }
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
 
   return (
     <nav className="mobile-bottom-nav" aria-label={t("shared.a11y.mainNavigation")}>
