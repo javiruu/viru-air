@@ -185,7 +185,7 @@ function QuickSearchResultsListInner(props: Props) {
             const comparablePrice = !hasSelectedExtras
               ? props.formatMoney(fare.base_total, r.currency)
               : fare.comparable_max_total === null
-                ? `${locale === "es" ? "Desde" : "From"} ${props.formatMoney(fare.comparable_min_total, r.currency)}`
+                ? `${props.t("fromLabel")} ${props.formatMoney(fare.comparable_min_total, r.currency)}`
                 : fare.comparable_min_total === fare.comparable_max_total
                   ? props.formatMoney(fare.comparable_min_total, r.currency)
                   : `${props.formatMoney(fare.comparable_min_total, r.currency)}–${props.formatMoney(fare.comparable_max_total, r.currency)}`;
