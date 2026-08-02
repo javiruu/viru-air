@@ -42,6 +42,8 @@
     sessionExpired: "Sesión caducada. Inicia sesión de nuevo.",
     sessionRequired: "Necesitas iniciar sesión para continuar.",
     generic: "Se ha producido un error. Inténtalo de nuevo.",
+    sectionLoadFailed: "Algo falló al cargar esta sección.",
+    tryReload: "Puedes intentar recargar.",
   },
   a11y: {
     openAccountMenu: "Abrir menú de cuenta",
@@ -191,6 +193,8 @@ export const sharedEn = {
     sessionExpired: "Session expired. Please sign in again.",
     sessionRequired: "You need to sign in to continue.",
     generic: "Something went wrong. Please try again.",
+    sectionLoadFailed: "Something went wrong loading this section.",
+    tryReload: "You can try reloading.",
   },
   a11y: {
     openAccountMenu: "Open account menu",

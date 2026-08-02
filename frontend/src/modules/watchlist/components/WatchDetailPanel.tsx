@@ -53,7 +53,6 @@ export function WatchDetailPanel({
   mapContent,
 }: WatchDetailPanelProps) {
   const { t, localeTag } = useI18n();
-  const isSpanish = localeTag.toLowerCase().startsWith("es");
   const [fareProfile, setFareProfile] = useState(() => createEmptyFareComparisonProfile(1));
   const [isSavingFareProfile, setIsSavingFareProfile] = useState(false);
   const [fareProfileSaved, setFareProfileSaved] = useState(false);
@@ -118,7 +117,7 @@ export function WatchDetailPanel({
     : !hasSelectedFareExtras
       ? formatCurrency(comparableFare.base_total, currency, localeTag)
       : comparableFare.comparable_max_total === null
-        ? `${isSpanish ? "Desde" : "From"} ${formatCurrency(comparableFare.comparable_min_total, currency, localeTag)}`
+        ? `${t("watchlist.detail.fareComparison.fromLabel")} ${formatCurrency(comparableFare.comparable_min_total, currency, localeTag)}`
         : comparableFare.comparable_min_total === comparableFare.comparable_max_total
           ? formatCurrency(comparableFare.comparable_min_total, currency, localeTag)
           : `${formatCurrency(comparableFare.comparable_min_total, currency, localeTag)}–${formatCurrency(comparableFare.comparable_max_total, currency, localeTag)}`;
@@ -208,13 +207,13 @@ export function WatchDetailPanel({
 
       <details className="watch-detail-secondary">
         <summary className="watch-detail-secondary-summary">
-          <span>{isSpanish ? "Personalizar precio comparable" : "Customize comparable price"}</span>
+          <span>{t("watchlist.detail.fareComparison.customizeLabel")}</span>
           <strong aria-live="polite">{comparableFareLabel}</strong>
         </summary>
         <div className="watch-detail-secondary-content">
           <FareComparisonPanel
             profile={fareProfile}
-            locale={isSpanish ? "es" : "en"}
+            locale={localeTag.toLowerCase().startsWith("es") ? "es" : "en"}
             onChange={(nextProfile) => {
               setFareProfile(nextProfile);
               setFareProfileSaved(false);
@@ -224,11 +223,11 @@ export function WatchDetailPanel({
           <div className="fare-comparison-summary" aria-live="polite">
             <span>
               {comparableFare && !comparableFare.is_complete
-                ? `${comparableFare.unavailable_kinds.length} ${isSpanish ? "extra(s) sin tarifa pública" : "extra(s) without a public fare"}`
+                ? t("watchlist.detail.fareComparison.unavailableKinds", { count: comparableFare.unavailable_kinds.length })
                 : ""}
               {comparableFare?.source_url ? (
                 <a href={comparableFare.source_url} target="_blank" rel="noreferrer">
-                  {isSpanish ? "Fuente oficial" : "Official source"}
+                  {t("watchlist.detail.fareComparison.officialSource")}
                 </a>
               ) : null}
             </span>
@@ -256,15 +255,13 @@ export function WatchDetailPanel({
               }}
             >
               {isSavingFareProfile
-                ? isSpanish ? "Guardando..." : "Saving..."
-                : isSpanish ? "Guardar cesta" : "Save basket"}
+                ? t("watchlist.detail.fareComparison.saving")
+                : t("watchlist.detail.fareComparison.save")}
             </button>
-            {fareProfileSaved ? <small>{isSpanish ? "Cesta guardada." : "Basket saved."}</small> : null}
+            {fareProfileSaved ? <small>{t("watchlist.detail.fareComparison.saved")}</small> : null}
             {fareProfileSaveFailed ? (
               <small className="fare-comparison-summary-error">
-                {isSpanish
-                  ? "No se pudo guardar la cesta. Inténtalo de nuevo."
-                  : "The basket could not be saved. Try again."}
+                {t("watchlist.detail.fareComparison.saveError")}
               </small>
             ) : null}
           </div>

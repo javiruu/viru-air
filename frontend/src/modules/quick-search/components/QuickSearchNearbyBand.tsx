@@ -24,8 +24,8 @@ export const QuickSearchNearbyBand = memo(function QuickSearchNearbyBand(props: 
   return (
     <div className="qs-nearby-band" data-ui="qs-nearby-band">
       <div className="qs-nearby-band-header">
-        <span className="qs-nearby-title">Aeropuertos cercanos</span>
-        <span className="qs-nearby-subtitle">Actívalo si puedes salir o llegar desde otro aeropuerto.</span>
+        <span className="qs-nearby-title">{props.t("nearbyTitle")}</span>
+        <span className="qs-nearby-subtitle">{props.t("nearbySubtitle")}</span>
       </div>
       <div className="qs-nearby-band-controls">
         <label className={`qs-chip-toggle ${props.includeNearbyOrigins ? 'active' : ''}`}>
@@ -35,7 +35,7 @@ export const QuickSearchNearbyBand = memo(function QuickSearchNearbyBand(props: 
             checked={props.includeNearbyOrigins} 
             onChange={(e) => props.setIncludeNearbyOrigins(e.target.checked)} 
           />
-          Cerca del origen
+          {props.t("nearbyOrigin")}
         </label>
         <label className={`qs-chip-toggle ${props.includeNearbyDestinations ? 'active' : ''}`}>
           <input 
@@ -44,14 +44,14 @@ export const QuickSearchNearbyBand = memo(function QuickSearchNearbyBand(props: 
             checked={props.includeNearbyDestinations} 
             onChange={(e) => props.setIncludeNearbyDestinations(e.target.checked)} 
           />
-          Cerca del destino
+          {props.t("nearbyDestination")}
         </label>
         
         {isAnyNearby && (
           <div className="qs-nearby-distance">
-            <span className="qs-nearby-distance-label">Distancia máxima</span>
+            <span className="qs-nearby-distance-label">{props.t("nearbyDistanceLabel")}</span>
             <Slider
-              aria-label="Distancia máxima en kilómetros"
+              aria-label={props.t("nearbyDistanceAria")}
               className="qs-nearby-slider"
               min={50}
               max={500}
