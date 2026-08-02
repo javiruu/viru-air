@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+from app.i18n import t
 from app.infrastructure.db.models import (
     FlightWatch,
     HotelAlertEvent,
@@ -129,18 +130,18 @@ def _alert_tone(event: NotificationEvent) -> str:
 
 def _alert_title(category: str) -> str:
     if category == "worker":
-        return "Worker de señales necesita atención"
+        return t("es", "notifications.worker_needs_attention")
     if category == "digest":
-        return "Resumen de señales agrupadas"
-    return "Movimiento de precio detectado"
+        return t("es", "notifications.grouped_summary")
+    return t("es", "notifications.price_movement")
 
 
 def _hotel_alert_title(event_type: str) -> str:
     if event_type in {"price_below", "percentage_drop", "availability_returned"}:
-        return "Señal hotelera favorable"
+        return t("es", "hotels.alert.favorable")
     if event_type in {"price_above", "percentage_increase"}:
-        return "Cambio hotelero a vigilar"
-    return "Radar hotelero actualizado"
+        return t("es", "hotels.alert.to_watch")
+    return t("es", "hotels.alert.radar_updated")
 
 
 def _hotel_alert_tone(event_type: str) -> str:
@@ -152,19 +153,20 @@ def _hotel_alert_tone(event_type: str) -> str:
 
 
 def _security_title(event_type: str) -> str:
-    titles = {
-        "register": "Cuenta creada",
-        "login": "Nuevo acceso a tu cuenta",
-        "refresh": "Sesión renovada",
-        "close_all_sessions": "Sesiones cerradas",
-        "password_change": "Contraseña actualizada",
-        "forgot_password_requested": "Recuperación solicitada",
-        "password_reset": "Contraseña restablecida",
+    key_map = {
+        "register": "security.title.register",
+        "login": "security.title.login",
+        "refresh": "security.title.refresh",
+        "close_all_sessions": "security.title.close_all_sessions",
+        "password_change": "security.title.password_change",
+        "forgot_password_requested": "security.title.forgot_password_requested",
+        "password_reset": "security.title.password_reset",
     }
-    return titles.get(event_type, "Actividad de seguridad")
+    key = key_map.get(event_type, "security.title.default")
+    return t("es", key)
 
 
 def _security_body(activity: SecurityActivity) -> str:
     if activity.ip:
-        return f"Actividad registrada desde {activity.ip}."
-    return "Actividad registrada en tu cuenta."
+        return t("es", "security.body.with_ip", ip=str(activity.ip))
+    return t("es", "security.body.without_ip")
