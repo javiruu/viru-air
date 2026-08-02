@@ -15233,6 +15233,52 @@ textarea::placeholder {
     width: 100%;
     min-height: 44px;
   }
+
+  /* ── Prefs: touch targets + iOS zoom ─────────────────── */
+  .prefs-savebar .btn-primary,
+  .prefs-savebar .btn-ghost {
+    min-height: 48px;
+  }
+
+  .prefs-form input,
+  .prefs-form select,
+  .prefs-form textarea {
+    font-size: 1rem;
+  }
+
+  .prefs-card-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+
+  /* ── Soporte contacto: touch targets + iOS zoom ──────── */
+  .support-contact-form input,
+  .support-contact-form textarea {
+    font-size: 1rem;
+  }
+
+  .support-contact-actions .btn-primary {
+    width: 100%;
+    justify-content: center;
+    min-height: 48px;
+  }
+
+  .support-contact-page {
+    padding: 0.55rem 0.6rem;
+  }
+
+  .support-contact-hero {
+    padding: 0.75rem 0.8rem;
+  }
+
+  .support-contact-point {
+    padding: 0.6rem 0.7rem;
+  }
+
+  .support-contact-aside-card {
+    padding: 0.55rem 0.65rem;
+  }
 }
 
 @media (max-width: 768px) {
