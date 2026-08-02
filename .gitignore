@@ -94,3 +94,10 @@ nul
 
 # oma docs generated artifacts
 docs/generated/
+
+# Serena MCP local memory
+.serena/
+
+# One-off analysis artifacts
+premortem-*
+viru-air-mega-plan-*
