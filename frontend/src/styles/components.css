@@ -834,6 +834,10 @@
 }
 
 @media (max-width: 480px) {
+  .viru-footer-block {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+
   .viru-footer-shell {
     padding: 0 1rem;
   }
