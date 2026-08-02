@@ -7,7 +7,6 @@ import { dashboardEs } from "./domains/dashboard";
 import { alertsEs } from "./domains/alerts";
 import { recommendationsEs } from "./domains/recommendations";
 import { notificationsEs } from "./domains/notifications";
-import { suggestionsEs } from "./domains/suggestions";
 import { adminEs } from "./domains/admin";
 import { watchlistEs } from "./domains/watchlist";
 import { doorToDoorEs } from "./domains/doorToDoor";
@@ -23,7 +22,6 @@ const es = {
   alerts: alertsEs,
   recommendations: recommendationsEs,
   notifications: notificationsEs,
-  suggestions: suggestionsEs,
   admin: adminEs,
   watchlist: watchlistEs,
   doorToDoor: doorToDoorEs,
