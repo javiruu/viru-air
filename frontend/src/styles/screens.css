@@ -6574,6 +6574,161 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   }
 }
 
+@media (max-width: 480px) {
+  /* Dashboard: stacked mobile layout */
+  .dashboard-top-stage {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  .dashboard-hero-state {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1rem 0.85rem;
+    gap: 0.8rem;
+  }
+
+  .dashboard-hero-state::after {
+    display: none;
+  }
+
+  .dashboard-hero-title h2 {
+    font-size: 1.6rem;
+  }
+
+  .dashboard-hero-highlight {
+    gap: 0.55rem;
+  }
+
+  .dashboard-hero-side {
+    justify-items: start;
+    order: -1;
+  }
+
+  .dashboard-hero-actions .btn-primary {
+    width: 100%;
+    justify-content: center;
+    min-height: 48px;
+  }
+
+  .dashboard-access-toggle {
+    width: 100%;
+  }
+
+  .dashboard-section {
+    margin-top: 0.9rem;
+    gap: 0.65rem;
+  }
+
+  .dashboard-section-head {
+    flex-direction: column;
+    gap: 0.35rem;
+    align-items: flex-start;
+  }
+
+  .dashboard-section-head-row {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .dashboard-primary-grid {
+    gap: 0.75rem;
+  }
+
+  .dashboard-primary-grid .module-card {
+    padding: 0.8rem 0.85rem;
+  }
+
+  .module-card {
+    padding: 0.85rem 0.9rem;
+  }
+
+  .module-card .module-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .module-card .module-actions .btn-secondary,
+  .module-card .module-actions .btn-primary {
+    width: 100%;
+    justify-content: center;
+    min-height: 48px;
+  }
+
+  .notes-board-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .notes-board-content {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.8rem;
+  }
+
+  .notes-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .notes-header-actions .btn-ghost {
+    min-height: 44px;
+    flex: 1;
+  }
+
+  .notes-form input,
+  .notes-form textarea {
+    font-size: 1rem;
+  }
+
+  .notes-actions {
+    flex-direction: column;
+  }
+
+  .notes-actions .btn-primary,
+  .notes-actions .btn-danger {
+    width: 100%;
+    justify-content: center;
+    min-height: 48px;
+  }
+
+  .activity-timeline {
+    gap: 0.5rem;
+  }
+
+  .activity-timeline-item {
+    padding: 0.55rem 0;
+  }
+
+  .dashboard-news-rail {
+    padding: 0.45rem 0.55rem;
+  }
+
+  .notes-cards {
+    gap: 0.5rem;
+  }
+
+  .notes-card {
+    padding: 0.65rem 0.75rem;
+  }
+
+  .dashboard-context-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dashboard-context-card {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .dashboard-context-actions {
+    flex-direction: column;
+  }
+
+  .dashboard-context-actions .btn-secondary {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+}
+
 .history-disclaimer {
   margin-top: 0.75rem;
   border: 1px dashed color-mix(in srgb, var(--border) 72%, transparent);
