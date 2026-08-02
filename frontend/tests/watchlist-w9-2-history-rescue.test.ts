@@ -38,10 +38,10 @@ test("W9.2: elimina duplicidad 'Rango temporal RANGO' en histórico", () => {
   assert.doesNotMatch(source, /Rango temporal RANGO|Rango RANGO/);
 });
 
-test("W9.2: histórico integrado mantiene ruta con separador correcto y gráfico principal", () => {
+test("W9.2: histórico integrado evita repetir la ruta y mantiene el gráfico principal", () => {
   const source = fs.readFileSync(HISTORY_PANEL, "utf8");
   const page = fs.readFileSync(PAGE, "utf8");
-  assert.match(source, /selectedWatch\.origin_iata} → \$\{selectedWatch\.destination_iata/);
+  assert.doesNotMatch(source, /selectedWatch\.origin_iata} → \$\{selectedWatch\.destination_iata/);
   assert.match(source, /viewMode === "chart"/);
   assert.match(page, /<HistoryIntegratedPanel/);
 });

@@ -150,9 +150,8 @@ export function HistoryIntegratedPanel({
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
-  const selectedRouteLabel = t("watchlist.history.selectedRouteLabel");
   const selectedRouteValue = selectedWatch
-    ? `${selectedWatch.origin_iata} → ${selectedWatch.destination_iata} · ${selectedWatch.travel_date_local}`
+    ? selectedWatch.travel_date_local
     : t("watchlist.history.selectFlightPlaceholder");
   const rangeTitle = t("watchlist.history.rangeTitle");
   const statusLabel = !selectedWatch
@@ -236,7 +235,7 @@ export function HistoryIntegratedPanel({
               {hasSelectedWatch ? t("watchlist.history.subtitleWithRoute") : t("watchlist.history.subtitleWithoutRoute")}
             </p>
             <div className="history-route-line">
-              <span className="history-route-line-text">{selectedRouteLabel}: {selectedRouteValue}</span>
+              <span className="history-route-line-text">{selectedRouteValue}</span>
               <span className={`status-pill ${statusTone}`}>{statusLabel}</span>
             </div>
           </div>

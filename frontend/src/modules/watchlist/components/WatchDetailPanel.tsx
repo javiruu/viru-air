@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { useI18n } from "@/i18n";
 import { formatCurrency, formatPercent } from "@/modules/shared/format";
@@ -34,6 +34,7 @@ type WatchDetailPanelProps = {
   onPauseWatch: (watchId: string) => void;
   onResumeWatch: (watchId: string) => void;
   onSaveFareProfile: (watchId: string, status: string, profile: FareComparisonProfile) => Promise<void>;
+  mapContent?: ReactNode;
 };
 
 export function WatchDetailPanel({
@@ -49,6 +50,7 @@ export function WatchDetailPanel({
   onPauseWatch,
   onResumeWatch,
   onSaveFareProfile,
+  mapContent,
 }: WatchDetailPanelProps) {
   const { t, localeTag } = useI18n();
   const [fareProfile, setFareProfile] = useState(() => createEmptyFareComparisonProfile(1));
@@ -153,9 +155,10 @@ export function WatchDetailPanel({
         {isLoading ? <Skeleton variant="pill" width={112} height={18} /> : null}
       </header>
 
+      <div key={focus.id} className="watch-detail-selection-transition">
+
       <div className="watch-detail-hero">
         <div className="watch-detail-route">
-          <strong>{focus.origin_iata} {"→"} {focus.destination_iata}</strong>
           <span className="panel-note tabular-nums">{focus.travel_date_local}</span>
         </div>
         <span className={`status-pill watch-detail-hero-status ${status.tone}`}>{status.label}</span>
@@ -202,65 +205,70 @@ export function WatchDetailPanel({
         </div>
       </div>
 
-      <div className="watch-detail-block">
-        <FareComparisonPanel
-          profile={fareProfile}
-          locale={localeTag.toLowerCase().startsWith("es") ? "es" : "en"}
-          onChange={(nextProfile) => {
-            setFareProfile(nextProfile);
-            setFareProfileSaved(false);
-            setFareProfileSaveFailed(false);
-          }}
-        />
-        <div className="fare-comparison-summary" aria-live="polite">
-          <span>
-            {`${localeTag.toLowerCase().startsWith("es") ? "Total comparable estimado" : "Estimated comparable total"}: ${comparableFareLabel}`}
-            {comparableFare && !comparableFare.is_complete
-              ? ` · ${comparableFare.unavailable_kinds.length} ${localeTag.toLowerCase().startsWith("es") ? "extra(s) sin tarifa pública" : "extra(s) without a public fare"}`
-              : ""}
-            {comparableFare?.source_url ? (
-              <a href={comparableFare.source_url} target="_blank" rel="noreferrer">
-                {localeTag.toLowerCase().startsWith("es") ? "Fuente oficial" : "Official source"}
-              </a>
-            ) : null}
-          </span>
-          <button
-            className="btn-secondary btn-compact"
-            type="button"
-            disabled={isSavingFareProfile}
-            onClick={async () => {
-              setIsSavingFareProfile(true);
+      <details className="watch-detail-secondary">
+        <summary className="watch-detail-secondary-summary">
+          <span>{localeTag.toLowerCase().startsWith("es") ? "Personalizar precio comparable" : "Customize comparable price"}</span>
+          <strong aria-live="polite">{comparableFareLabel}</strong>
+        </summary>
+        <div className="watch-detail-secondary-content">
+          <FareComparisonPanel
+            profile={fareProfile}
+            locale={localeTag.toLowerCase().startsWith("es") ? "es" : "en"}
+            onChange={(nextProfile) => {
+              setFareProfile(nextProfile);
               setFareProfileSaved(false);
               setFareProfileSaveFailed(false);
-              try {
-                const profileToSave = attachFareAirline(
-                  fareProfile,
-                  latestSnapshot?.provider,
-                );
-                await onSaveFareProfile(focus.id, focus.status, profileToSave);
-                setFareProfile(profileToSave);
-                setFareProfileSaved(true);
-              } catch {
-                setFareProfileSaveFailed(true);
-              } finally {
-                setIsSavingFareProfile(false);
-              }
             }}
-          >
-            {isSavingFareProfile
-              ? localeTag.toLowerCase().startsWith("es") ? "Guardando..." : "Saving..."
-              : localeTag.toLowerCase().startsWith("es") ? "Guardar cesta" : "Save basket"}
-          </button>
-          {fareProfileSaved ? <small>{localeTag.toLowerCase().startsWith("es") ? "Cesta guardada." : "Basket saved."}</small> : null}
-          {fareProfileSaveFailed ? (
-            <small className="fare-comparison-summary-error">
-              {localeTag.toLowerCase().startsWith("es")
-                ? "No se pudo guardar la cesta. Inténtalo de nuevo."
-                : "The basket could not be saved. Try again."}
-            </small>
-          ) : null}
+          />
+          <div className="fare-comparison-summary" aria-live="polite">
+            <span>
+              {comparableFare && !comparableFare.is_complete
+                ? `${comparableFare.unavailable_kinds.length} ${localeTag.toLowerCase().startsWith("es") ? "extra(s) sin tarifa pública" : "extra(s) without a public fare"}`
+                : ""}
+              {comparableFare?.source_url ? (
+                <a href={comparableFare.source_url} target="_blank" rel="noreferrer">
+                  {localeTag.toLowerCase().startsWith("es") ? "Fuente oficial" : "Official source"}
+                </a>
+              ) : null}
+            </span>
+            <button
+              className="btn-secondary btn-compact"
+              type="button"
+              disabled={isSavingFareProfile}
+              onClick={async () => {
+                setIsSavingFareProfile(true);
+                setFareProfileSaved(false);
+                setFareProfileSaveFailed(false);
+                try {
+                  const profileToSave = attachFareAirline(
+                    fareProfile,
+                    latestSnapshot?.provider,
+                  );
+                  await onSaveFareProfile(focus.id, focus.status, profileToSave);
+                  setFareProfile(profileToSave);
+                  setFareProfileSaved(true);
+                } catch {
+                  setFareProfileSaveFailed(true);
+                } finally {
+                  setIsSavingFareProfile(false);
+                }
+              }}
+            >
+              {isSavingFareProfile
+                ? localeTag.toLowerCase().startsWith("es") ? "Guardando..." : "Saving..."
+                : localeTag.toLowerCase().startsWith("es") ? "Guardar cesta" : "Save basket"}
+            </button>
+            {fareProfileSaved ? <small>{localeTag.toLowerCase().startsWith("es") ? "Cesta guardada." : "Basket saved."}</small> : null}
+            {fareProfileSaveFailed ? (
+              <small className="fare-comparison-summary-error">
+                {localeTag.toLowerCase().startsWith("es")
+                  ? "No se pudo guardar la cesta. Inténtalo de nuevo."
+                  : "The basket could not be saved. Try again."}
+              </small>
+            ) : null}
+          </div>
         </div>
-      </div>
+      </details>
 
       <div className="watch-detail-block">
         <h3 className="watch-detail-block-title">{t("watchlist.detail.operational.title")}</h3>
@@ -292,6 +300,8 @@ export function WatchDetailPanel({
         </div>
       ) : null}
 
+      {mapContent ? <div className="watch-detail-map">{mapContent}</div> : null}
+
       <DoorToDoorWatchlistSuggestion watch={focus} />
 
       <div className="alert-actions watch-detail-actions">
@@ -306,7 +316,7 @@ export function WatchDetailPanel({
         )}
       </div>
 
-
+      </div>
     </section>
   );
 }

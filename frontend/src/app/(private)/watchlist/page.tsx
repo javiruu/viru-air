@@ -313,14 +313,14 @@ export default function WatchlistPage() {
             onCalendarPrevMonth={view.prevMonth}
             onCalendarNextMonth={view.nextMonth}
           />
-        </div>
-
-        <div className="watchlist-area watchlist-area-detail">
           <WatchlistCombinationPanel
             groups={derived.combinationGroups}
             selectedWatchId={view.selectedWatchId}
             onSelectWatchById={handleSelectWatchById}
           />
+        </div>
+
+        <div className="watchlist-area watchlist-area-detail">
           <WatchDetailPanel
             selectedWatch={derived.selectedWatch}
             detail={actions.selectedWatchDetail}
@@ -334,35 +334,32 @@ export default function WatchlistPage() {
             onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
             onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
             onSaveFareProfile={actions.updateFareProfile}
-          />
-        </div>
-
-        <div className="watchlist-area watchlist-area-map">
-          <WatchlistMapDecisionPanel
-            routes={derived.watchMapRoutes}
-            hasSelectedRoute={Boolean(derived.selectedWatch)}
-            hasWatchItems={actions.items.length > 0}
-            selectedRouteContext={
-              derived.selectedWatch
-                ? {
+            mapContent={
+              derived.selectedWatch ? (
+                <WatchlistMapDecisionPanel
+                  routes={derived.watchMapRoutes}
+                  hasSelectedRoute
+                  hasWatchItems={actions.items.length > 0}
+                  selectedRouteContext={{
                     origin: derived.selectedWatch.origin_iata,
                     destination: derived.selectedWatch.destination_iata,
                     travelDate: derived.selectedWatch.travel_date_local,
                     status: derived.selectedWatch.status,
                     lastCaptureAt: actions.selectedWatchDetail?.latest_snapshot?.captured_at_utc ?? null,
-                  }
-                : null
+                  }}
+                  mode={derived.watchMapMode}
+                  insight={derived.watchMapInsight}
+                  compareLimitExceeded={view.compareIds.length > 4}
+                  livePosition={livePosition}
+                  liveFlightLabel={liveFlightLabel}
+                  onFocusWatch={(watchId) => {
+                    const watch = actions.items.find((item) => item.id === watchId);
+                    if (!watch) return;
+                    handleSelectWatch(watch);
+                  }}
+                />
+              ) : null
             }
-            mode={derived.watchMapMode}
-            insight={derived.watchMapInsight}
-            compareLimitExceeded={view.compareIds.length > 4}
-            livePosition={livePosition}
-            liveFlightLabel={liveFlightLabel}
-            onFocusWatch={(watchId) => {
-              const watch = actions.items.find((item) => item.id === watchId);
-              if (!watch) return;
-              handleSelectWatch(watch);
-            }}
           />
         </div>
 

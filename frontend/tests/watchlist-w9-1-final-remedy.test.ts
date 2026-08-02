@@ -9,6 +9,7 @@ const WATCH_ROW = path.join(process.cwd(), "src", "modules", "watchlist", "compo
 const DETAIL_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");
 const HISTORY_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "HistoryIntegratedPanel.tsx");
 const COMPARE_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "ComparePanels.tsx");
+const COMBINATION_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchlistCombinationPanel.tsx");
 const PROVIDER_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchProviderCoveragePanel.tsx");
 const WATCHLIST_I18N = path.join(process.cwd(), "src", "i18n", "domains", "watchlist.ts");
 
@@ -43,18 +44,20 @@ test("W9.1: watchlist exposes multi-provider coverage without fake per-route cla
   assert.match(i18n, /Cobertura de búsqueda/);
 });
 
-test("W9.1: route separators use arrows and never question marks", () => {
+test("W9.1: functional routes keep arrows while decorative repetitions stay removed", () => {
   const detail = fs.readFileSync(DETAIL_PANEL, "utf8");
   const row = fs.readFileSync(WATCH_ROW, "utf8");
   const history = fs.readFileSync(HISTORY_PANEL, "utf8");
   const compare = fs.readFileSync(COMPARE_PANEL, "utf8");
+  const combination = fs.readFileSync(COMBINATION_PANEL, "utf8");
 
-  assert.match(detail, /origin_iata\} \{"→"\} \{focus\.destination_iata\}/);
   assert.match(row, /watch\.origin_iata\} → \{watch\.destination_iata/);
-  assert.match(history, /origin_iata\} → \$\{selectedWatch\.destination_iata\}/);
   assert.match(compare, /{option\.origin} → {option\.destination}/);
   assert.match(compare, /<strong>{origin} → {destination}<\/strong>/);
+  assert.match(combination, /leg\.origin\}\{\" → \"\}\{leg\.destination/);
 
+  assert.doesNotMatch(detail, /origin_iata\} \{"→"\} \{focus\.destination_iata\}/);
+  assert.doesNotMatch(history, /origin_iata\} → \$\{selectedWatch\.destination_iata\}/);
   assert.doesNotMatch(history, /\$\{selectedWatch\.origin_iata\} \? \$/);
   assert.doesNotMatch(compare, /\{option\.origin\} \? \{option\.destination\}/);
   assert.doesNotMatch(compare, /<strong>\{origin\} \? \{destination\}<\/strong>/);
