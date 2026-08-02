@@ -10382,6 +10382,42 @@ textarea::placeholder {
   }
 }
 
+@media (max-width: 480px) {
+  .glass-forgot-card,
+  .glass-signin-card {
+    padding: 0.9rem 0.75rem;
+    border-radius: 1rem;
+  }
+
+  .glass-signin-form input[type="email"],
+  .glass-signin-form input[type="password"] {
+    min-height: 3rem;
+    font-size: 1rem;
+  }
+
+  .glass-signin-submit {
+    min-height: 3rem;
+    font-size: 1rem;
+  }
+
+  .glass-signin-social-btn {
+    min-height: 2.8rem;
+  }
+
+  .glass-signin-head h1 {
+    font-size: clamp(1.3rem, 6vw, 1.8rem);
+  }
+
+  .glass-forgot-footer {
+    flex-direction: column;
+  }
+
+  .glass-forgot-footer .btn-ghost {
+    width: 100%;
+    min-height: 2.8rem;
+  }
+}
+
 /* =========================
    PRIVATE ACCOUNT MENU
    ========================= */
@@ -17421,17 +17457,12 @@ textarea::placeholder {
 
   .account-profile-grid {
     grid-template-columns: 1fr;
+    padding: 0.8rem;
   }
 
   .account-profile-side {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
-  }
-}
-
-@media (max-width: 768px) {
-  .account-profile-grid {
-    padding: 0.8rem;
   }
 
   .account-profile-heading h1 {
@@ -17464,6 +17495,36 @@ textarea::placeholder {
   .account-profile-heading-row {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .account-profile-grid {
+    padding: 0.55rem;
+  }
+
+  .account-profile-hero,
+  .account-profile-panel {
+    padding: 0.65rem 0.7rem;
+  }
+
+  .account-profile-side {
+    grid-template-columns: 1fr;
+  }
+
+  .account-profile-button {
+    width: 100%;
+    min-height: 3rem;
+    justify-content: center;
+  }
+
+  .account-profile-form input {
+    min-height: 2.8rem;
+  }
+
+  .account-profile-delete-modal {
+    width: calc(100vw - 2rem);
+    margin: 0 1rem;
   }
 }
 
