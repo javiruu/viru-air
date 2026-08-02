@@ -4,6 +4,30 @@ model_context_window = 372000
 command = "npx"
 args = [ "-y", "chrome-devtools-mcp@latest", "--no-usage-statistics", "--isolated" ]
 
+[mcp_servers.chrome-devtools.tools.new_page]
+approval_mode = "approve"
+
+[mcp_servers.chrome-devtools.tools.take_snapshot]
+approval_mode = "approve"
+
+[mcp_servers.chrome-devtools.tools.fill_form]
+approval_mode = "approve"
+
+[mcp_servers.chrome-devtools.tools.click]
+approval_mode = "approve"
+
+[mcp_servers.chrome-devtools.tools.navigate_page]
+approval_mode = "approve"
+
+[mcp_servers.chrome-devtools.tools.take_screenshot]
+approval_mode = "approve"
+
+[mcp_servers.chrome-devtools.tools.evaluate_script]
+approval_mode = "approve"
+
+[mcp_servers.chrome-devtools.tools.resize_page]
+approval_mode = "approve"
+
 [mcp_servers.serena]
 command = "serena"
 args = [ "start-mcp-server", "--context", "codex", "--project-from-cwd", "--open-web-dashboard", "false" ]
@@ -23,12 +47,5 @@ enabled = false
 [feedback]
 enabled = false
 
-# Managed by LazyCodex: multi_agent_v2 is re-disabled on every Codex session start
-# because enabling it fails every turn with HTTP 400 (openai/codex#26753).
-# Opt out: LAZYCODEX_CONFIG_MIGRATION_DISABLED=1 (or OMO_CODEX_CONFIG_MIGRATION_DISABLED=1).
 [features.multi_agent_v2]
-enabled = false
 max_concurrent_threads_per_session = 1000
-
-[agents]
-max_threads = 1000

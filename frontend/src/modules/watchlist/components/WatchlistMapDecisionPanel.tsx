@@ -69,9 +69,7 @@ export function WatchlistMapDecisionPanel({
     () => visibleRoutes.find((route) => route.watchId === activePopupWatchId) ?? null,
     [activePopupWatchId, visibleRoutes],
   );
-  const selectedRouteLabel = primary ? `${primary.origin} → ${primary.destination}` : "--";
   const selectedStatus = primary ? getWatchStatusMeta(primary.status, t) : null;
-  const fallbackRouteLabel = selectedRouteContext ? `${selectedRouteContext.origin} → ${selectedRouteContext.destination}` : "--";
   const fallbackStatus = selectedRouteContext ? getWatchStatusMeta(selectedRouteContext.status, t) : null;
 
   useEffect(() => {
@@ -119,11 +117,13 @@ export function WatchlistMapDecisionPanel({
 
   if (!hasMapData) {
     return (
-      <section className="panel panel-soft watch-map-panel section-gap" aria-label={t("watchlist.map.title")}>
+      <section
+        className="panel panel-soft watch-map-panel section-gap"
+        aria-label={`${t("watchlist.map.title")}: ${selectedRouteContext?.origin ?? "ORG"} → ${selectedRouteContext?.destination ?? "DST"}`}
+      >
         <div className="panel-header watch-map-header">
           <div>
             <h2 className="panel-title">{t("watchlist.map.title")}</h2>
-            <p className="panel-subtitle">{fallbackRouteLabel}</p>
           </div>
           {fallbackStatus ? <span className={`status-pill ${fallbackStatus.tone}`}>{fallbackStatus.label}</span> : null}
         </div>
@@ -142,18 +142,6 @@ export function WatchlistMapDecisionPanel({
           {selectedRouteContext ? (
             <div className="watch-map-meta" role="list" aria-label={t("watchlist.map.metaAriaLabel")}>
               <div className="watch-map-meta-item" role="listitem">
-                <span>{t("watchlist.map.originLabel")}</span>
-                <strong>{selectedRouteContext.origin}</strong>
-              </div>
-              <div className="watch-map-meta-item" role="listitem">
-                <span>{t("watchlist.map.destinationLabel")}</span>
-                <strong>{selectedRouteContext.destination}</strong>
-              </div>
-              <div className="watch-map-meta-item" role="listitem">
-                <span>{t("watchlist.map.dateLabel")}</span>
-                <strong>{selectedRouteContext.travelDate || "--"}</strong>
-              </div>
-              <div className="watch-map-meta-item" role="listitem">
                 <span>{t("watchlist.map.lastCaptureLabel")}</span>
                 <strong>{selectedRouteContext.lastCaptureAt ? safeDateTime(selectedRouteContext.lastCaptureAt, localeTag) : "--"}</strong>
               </div>
@@ -165,11 +153,13 @@ export function WatchlistMapDecisionPanel({
   }
 
   return (
-    <section className="panel panel-soft watch-map-panel section-gap" aria-label={t("watchlist.map.title")}>
+    <section
+      className="panel panel-soft watch-map-panel section-gap"
+      aria-label={`${t("watchlist.map.title")}: ${primary?.origin ?? "ORG"} → ${primary?.destination ?? "DST"}`}
+    >
       <div className="panel-header watch-map-header">
         <div>
           <h2 className="panel-title">{t("watchlist.map.title")}</h2>
-          <p className="panel-subtitle">{selectedRouteLabel}</p>
         </div>
         {selectedStatus ? <span className={`status-pill ${selectedStatus.tone}`}>{selectedStatus.label}</span> : null}
       </div>
@@ -180,18 +170,6 @@ export function WatchlistMapDecisionPanel({
       </div>
       {primary ? (
         <div className="watch-map-meta" role="list" aria-label={t("watchlist.map.metaAriaLabel")}>
-          <div className="watch-map-meta-item" role="listitem">
-            <span>{t("watchlist.map.originLabel")}</span>
-            <strong>{primary.origin}</strong>
-          </div>
-          <div className="watch-map-meta-item" role="listitem">
-            <span>{t("watchlist.map.destinationLabel")}</span>
-            <strong>{primary.destination}</strong>
-          </div>
-          <div className="watch-map-meta-item" role="listitem">
-            <span>{t("watchlist.map.dateLabel")}</span>
-            <strong>{primary.travelDate || "--"}</strong>
-          </div>
           <div className="watch-map-meta-item" role="listitem">
             <span>{t("watchlist.map.lastCaptureLabel")}</span>
             <strong>{primary.freshnessTs ? safeDateTime(primary.freshnessTs, localeTag) : "--"}</strong>

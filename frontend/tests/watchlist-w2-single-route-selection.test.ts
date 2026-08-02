@@ -9,13 +9,13 @@ const DETAIL_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "co
 
 const FORBIDDEN_WATCHLIST_COPY = ["Back", "Flight Watchlist", "Add flight", "Quick start", "Last update", "Min", "Max"];
 
-test("W2: history panel uses selected route summary and removes editable route selectors", () => {
+test("W2: history panel keeps the selected date without repeating the route", () => {
   const source = fs.readFileSync(HISTORY_PANEL, "utf8");
 
   assert.match(source, /history-route-line-text/);
-  assert.match(source, /selectedWatch\.origin_iata/);
-  assert.match(source, /selectedWatch\.destination_iata/);
   assert.match(source, /selectedWatch\.travel_date_local/);
+  assert.doesNotMatch(source, /selectedWatch\.origin_iata/);
+  assert.doesNotMatch(source, /selectedWatch\.destination_iata/);
 
   assert.doesNotMatch(source, /name="history_origin"/);
   assert.doesNotMatch(source, /name="history_destination"/);
@@ -39,6 +39,8 @@ test("W2: page wires the same selected route into detail and history panels", ()
   assert.match(pageSource, /<WatchDetailPanel[\s\S]*selectedWatch=\{derived\.selectedWatch\}/);
   assert.match(pageSource, /<HistoryIntegratedPanel[\s\S]*selectedWatch=\{derived\.selectedWatch\}/);
   assert.match(detailSource, /selectedWatch:/);
+  assert.match(detailSource, /watch-detail-route[\s\S]*focus\.travel_date_local/);
+  assert.doesNotMatch(detailSource, /<strong>\{focus\.origin_iata\}[\s\S]*focus\.destination_iata/);
 });
 
 test("W2: watchlist page keeps forbidden EN literals blocked", () => {

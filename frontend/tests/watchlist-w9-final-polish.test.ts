@@ -10,11 +10,12 @@ const DETAIL_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "co
 const HISTORY_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "HistoryIntegratedPanel.tsx");
 const MAP_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchlistMapDecisionPanel.tsx");
 const COMPARE_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "ComparePanels.tsx");
+const SCREENS = path.join(process.cwd(), "src", "styles", "screens.css");
 const SUMMARY = path.join(process.cwd(), "src", "modules", "watchlist", "summary.ts");
 
 const FORBIDDEN_EN_COPY = ["Back", "Flight Watchlist", "Add flight", "Quick start", "Last update", "Min", "Max"];
 
-test("W9: main reading order follows cockpit layout history -> routes -> detail -> map -> compare", () => {
+test("W9: main reading order keeps history and selection before embedded detail map and compare", () => {
   const source = fs.readFileSync(WATCHLIST_PAGE, "utf8");
   const listPos = source.indexOf("<SmartWatchListPanel");
   const detailPos = source.indexOf("<WatchDetailPanel");
@@ -37,9 +38,12 @@ test("W9: old/forbidden copy does not reappear in watchlist page", () => {
   }
 });
 
-test("W9: history keeps single selected-route model without editable route filters", () => {
+test("W9: history keeps selected-date context without repeating the selected route", () => {
   const source = fs.readFileSync(HISTORY_PANEL, "utf8");
-  assert.match(source, /watchlist\.history\.selectedRouteLabel/);
+  assert.doesNotMatch(source, /watchlist\.history\.selectedRouteLabel/);
+  assert.match(source, /selectedWatch\.travel_date_local/);
+  assert.doesNotMatch(source, /selectedWatch\.origin_iata/);
+  assert.doesNotMatch(source, /selectedWatch\.destination_iata/);
   assert.doesNotMatch(source, /Origen/);
   assert.doesNotMatch(source, /Destino/);
   assert.doesNotMatch(source, /Fechas de vuelo/);
@@ -70,9 +74,15 @@ test("W9: historical confidence and actionable freshness remain visible in detai
 test("W9: map and compare keep non-contradictory and reactive states", () => {
   const mapSource = fs.readFileSync(MAP_PANEL, "utf8");
   const compareSource = fs.readFileSync(COMPARE_PANEL, "utf8");
+  const screensSource = fs.readFileSync(SCREENS, "utf8");
 
   assert.doesNotMatch(mapSource, /No hay rutas activas para mostrar en el mapa\./);
+  assert.doesNotMatch(mapSource, /selectedRouteLabel|fallbackRouteLabel/);
+  assert.doesNotMatch(mapSource, /watchlist\.map\.(originLabel|destinationLabel|dateLabel)/);
+  assert.match(mapSource, /watchlist\.map\.lastCaptureLabel/);
+  assert.match(screensSource, /\.watch-map-meta-item:only-child\s*\{\s*grid-column:\s*1\s*\/\s*-1;/);
   assert.match(mapSource, /watchlist\.map\.unavailableTitle/);
+  assert.match(compareSource, /option\.origin\} → \{option\.destination/);
   assert.match(compareSource, /selectedCount === 0/);
   assert.match(compareSource, /selectedCount === 1/);
   assert.match(compareSource, /selectedCount > 4/);

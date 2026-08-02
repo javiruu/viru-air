@@ -3846,6 +3846,10 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   padding: 0.5rem 0.62rem;
 }
 
+.watch-map-meta-item:only-child {
+  grid-column: 1 / -1;
+}
+
 .watch-map-meta-item span {
   font-size: 0.7rem;
   text-transform: uppercase;
@@ -6196,7 +6200,7 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   grid-template-columns: minmax(0, 1.42fr) minmax(320px, 1fr);
   grid-template-areas:
     "history routes"
-    "detail map"
+    "detail routes"
     "compare compare";
 }
 
@@ -6207,8 +6211,23 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
 .watchlist-area-history { grid-area: history; }
 .watchlist-area-routes { grid-area: routes; }
 .watchlist-area-detail { grid-area: detail; }
-.watchlist-area-map { grid-area: map; }
 .watchlist-area-compare { grid-area: compare; }
+
+.watchlist-area-routes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  align-content: start;
+}
+
+.watch-detail-map {
+  min-width: 0;
+}
+
+.watch-detail-map .watch-map-panel {
+  margin: 0;
+  box-shadow: none;
+}
 
 .watchlist-page .panel-title,
 .watchlist-page .panel-subtitle,
@@ -6231,6 +6250,26 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   display: grid;
   gap: 0.72rem;
   align-content: start;
+}
+
+.watch-detail-selection-transition {
+  display: grid;
+  gap: 0.72rem;
+  min-width: 0;
+  animation: watch-detail-selection-in 180ms ease-out both;
+}
+
+@keyframes watch-detail-selection-in {
+  from {
+    opacity: 0.72;
+    transform: translateY(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .watch-detail-selection-transition {
+    animation: none;
+  }
 }
 
 .watch-detail-header {
@@ -6265,6 +6304,36 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
 .watch-detail-block {
   display: grid;
   gap: 0.46rem;
+}
+
+.watch-detail-secondary {
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  overflow: clip;
+}
+
+.watch-detail-secondary-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.72rem 0.8rem;
+  color: var(--ink);
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.watch-detail-secondary-summary strong {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.watch-detail-secondary-content {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0 0.8rem 0.8rem;
 }
 
 .watch-detail-block-title {
@@ -6351,21 +6420,13 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   margin: 0.2rem 0 0;
 }
 
-@media (min-width: 1121px) {
-  .watch-detail-panel {
-    position: sticky;
-    top: 1rem;
-  }
-}
-
 @media (max-width: 1120px) {
   .watchlist-cockpit-grid {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      "history"
       "routes"
+      "history"
       "detail"
-      "map"
       "compare";
   }
 }
@@ -6374,9 +6435,8 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   .watchlist-cockpit-grid {
     grid-template-areas:
       "routes"
-      "detail"
       "history"
-      "map"
+      "detail"
       "compare";
   }
 
