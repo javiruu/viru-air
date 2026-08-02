@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Download } from "lucide-react";
@@ -137,10 +137,23 @@ export default function WatchlistPage() {
   const isLoadingHistory = Boolean(derived.selectedWatch && actions.isLoadingHistoryInitial && !hasHistoryData);
   const isRefreshingHistory = Boolean(actions.isRefreshingFiltered && hasHistoryData);
   const hasNotices = Boolean(watchlistHint.visible || derived.lastUpdatedGlobal || actions.message);
-  const handleSelectWatch = (watch: Parameters<typeof selectWatch>[0]) => {
+  const selectedRouteContext = useMemo(() => derived.selectedWatch ? ({
+    origin: derived.selectedWatch.origin_iata,
+    destination: derived.selectedWatch.destination_iata,
+    travelDate: derived.selectedWatch.travel_date_local,
+    status: derived.selectedWatch.status,
+    lastCaptureAt: actions.selectedWatchDetail?.latest_snapshot?.captured_at_utc ?? null,
+  }) : null, [derived.selectedWatch, actions.selectedWatchDetail]);
+
+  const handleSelectWatch = useCallback((watch: Parameters<typeof selectWatch>[0]) => {
     selectWatch(watch);
     notify({ tone: "success", title: t("watchlist.messages.flightSelected") });
-  };
+  }, [selectWatch, notify, t]);
+  const onFocusWatch = useCallback((watchId: string) => {
+    const watch = actions.items.find((item) => item.id === watchId);
+    if (!watch) return;
+    handleSelectWatch(watch);
+  }, [actions.items, handleSelectWatch]);
   const handleSelectWatchById = (watchId: string) => {
     const watchExists = actions.items.some((item) => item.id === watchId);
     if (!watchExists) return;
@@ -340,23 +353,13 @@ export default function WatchlistPage() {
                   routes={derived.watchMapRoutes}
                   hasSelectedRoute
                   hasWatchItems={actions.items.length > 0}
-                  selectedRouteContext={{
-                    origin: derived.selectedWatch.origin_iata,
-                    destination: derived.selectedWatch.destination_iata,
-                    travelDate: derived.selectedWatch.travel_date_local,
-                    status: derived.selectedWatch.status,
-                    lastCaptureAt: actions.selectedWatchDetail?.latest_snapshot?.captured_at_utc ?? null,
-                  }}
+                  selectedRouteContext={selectedRouteContext}
                   mode={derived.watchMapMode}
                   insight={derived.watchMapInsight}
                   compareLimitExceeded={view.compareIds.length > 4}
                   livePosition={livePosition}
                   liveFlightLabel={liveFlightLabel}
-                  onFocusWatch={(watchId) => {
-                    const watch = actions.items.find((item) => item.id === watchId);
-                    if (!watch) return;
-                    handleSelectWatch(watch);
-                  }}
+                  onFocusWatch={onFocusWatch}
                 />
               ) : null
             }
