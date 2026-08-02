@@ -23325,9 +23325,8 @@ textarea::placeholder {
     font-size: 1rem;
   }
 
-  /* ── Decision grid: single column ─────────────────────── */
+  /* ── Decision grid: tighter gap ───────────────────────── */
   .d2d-decision-grid {
-    grid-template-columns: minmax(0, 1fr);
     gap: 0.75rem;
   }
 
