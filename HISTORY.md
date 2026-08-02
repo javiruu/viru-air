@@ -1,5 +1,51 @@
 # History
 
+## 2026-08-02 — Overhaul móvil completo (18 commits, 10 rutas auditadas)
+
+Todas las rutas privadas de Viru Air fueron auditadas y optimizadas para pantallas ≤480px con un sistema consistente de breakpoints, touch targets y prevención de zoom iOS. El trabajo se distribuyó en 18 commits incrementales sobre 4 archivos CSS, sin romper ningún test ni build.
+
+### Sistema base (7 commits)
+
+- Consolidación de breakpoints duales (`768px` + `480px`) en todo el CSS.
+- Menú hamburger en `PrivateNav` con toggle para ≤480px y overlay con escape.
+- Barra de navegación inferior fija para móvil (`bottom-nav`) con micro-animación en la pestaña activa.
+- Variables CSS (`--ui-shell-padding-*`) para padding responsivo.
+- Indicador `scroll-fade` con gradiente inferior para scroll horizontal.
+- `fetch` de notificaciones elevado a `PrivateLayout` para evitar llamadas duplicadas.
+- Inputs de formulario con `min-height: 48px` (touch targets) y `font-size: 1rem` (iOS zoom).
+
+### Rutas auditadas (11 commits)
+
+| Ruta | Fixes principales |
+|---|---|
+| **QuickSearch** | Status grid 2-columnas, padding reducido, paginación compacta |
+| **Watchlist** | Header ordenado (back-link arriba), CSS inválido corregido, mapa embebido en detail panel, grid 3-columnas, history panel simplificado |
+| **Dashboard** | 2 pasadas: hero/state/CTA stacking, modules/notes/context full-width, hero opportunity + suggestions + module internals compactos |
+| **Puerta-a-puerta** | Header, hero, form, decision-grid, options, map hub — overhaul completo |
+| **Signals + Notifications** | Alerts hero/metrics/nav compactos, briefing font clamp, summary cards single-col, filters 44px, cross-file cascade fix |
+| **Preferences + Soporte** | Savebar 48px, form inputs `font-size: 1rem`, card-head column, support-contact form + actions full-width |
+| **Recomendaciones** | Mode-toggle buttons 44px, config panel inputs iOS zoom, results-bar column, header/card/results padding tighter |
+| **Cuenta/Perfil** | `font-size: 1rem` en account-profile inputs (iOS zoom) |
+
+### Patrones consolidados
+
+- **Touch targets**: `48px` (btn-primary, submit) / `44px` (btn-secondary, btn-ghost) / `40px` (btn-compact).
+- **iOS zoom**: `font-size: 1rem` en todos los `input`, `select`, `textarea`.
+- **Grids**: Colapso a `1fr` single-column en todas las rutas.
+- **Padding**: Reducido proporcionalmente para viewports estrechos.
+- **Botones**: Full-width + `min-height` consistente en las acciones principales.
+- **Cascada**: Reglas 480px residen en `screens.css` (último en cargar) para evitar conflictos cross-file.
+
+### Verificación
+
+- `npx tsc --noEmit`: 0 errores
+- `npm test`: 487 pass, 0 fail, 17 skipped (pre-existentes e2e)
+- `npm run build`: 35/35 rutas compiladas
+
+### Archivos modificados
+
+`frontend/src/styles/screens.css`, `frontend/src/styles/signals.css`, `frontend/src/styles/components.css`, `frontend/src/styles/tokens.css`, `frontend/src/app/(private)/watchlist/page.tsx`, `frontend/src/modules/watchlist/components/*`, `frontend/src/modules/shared/PrivateNav.tsx`
+
 ## 2026-08-01 - Radar comunitario de rutas
 
 - Dashboard incorpora `Corredores más buscados` con una banda de concentración y las diez rutas direccionales más buscadas durante siete días, enlazadas a Quick Search.
