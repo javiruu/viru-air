@@ -17948,6 +17948,27 @@ textarea::placeholder {
     color: var(--accent);
   }
 
+  .mobile-bottom-nav-link.is-active .mobile-bottom-nav-icon {
+    animation: bottom-nav-pop 260ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  @keyframes bottom-nav-pop {
+    from {
+      transform: scale(0.82);
+      opacity: 0.6;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mobile-bottom-nav-link.is-active .mobile-bottom-nav-icon {
+      animation: none;
+    }
+  }
+
   .mobile-bottom-nav-icon {
     position: relative;
     display: grid;
