@@ -7,7 +7,6 @@ import { dashboardEn } from "./domains/dashboard";
 import { alertsEn } from "./domains/alerts";
 import { recommendationsEn } from "./domains/recommendations";
 import { notificationsEn } from "./domains/notifications";
-import { suggestionsEn } from "./domains/suggestions";
 import { adminEn } from "./domains/admin";
 import { watchlistEn } from "./domains/watchlist";
 import { doorToDoorEn } from "./domains/doorToDoor";
@@ -23,7 +22,6 @@ const en = {
   alerts: alertsEn,
   recommendations: recommendationsEn,
   notifications: notificationsEn,
-  suggestions: suggestionsEn,
   admin: adminEn,
   watchlist: watchlistEn,
   doorToDoor: doorToDoorEn,
