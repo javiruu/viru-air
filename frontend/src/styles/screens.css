@@ -250,7 +250,9 @@ h1 {
 
 @media (max-width: 480px) {
   .shell {
-    padding: 0.85rem 0.55rem 1.5rem;
+    --ui-shell-padding-top: 0.85rem;
+    --ui-shell-padding-inline: 0.55rem;
+    --ui-shell-padding-bottom: 1.5rem;
   }
 
   .section-gap {
@@ -17836,12 +17838,42 @@ textarea::placeholder {
     display: none;
   }
 
-  /* When open, stack links vertically */
+  /* When open, slide down as absolute overlay */
   .private-nav.open {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 60;
     flex-direction: column;
     align-items: stretch;
     gap: 4px;
-    padding-top: 0.45rem;
+    padding: 0.55rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 24px 48px var(--shadow-strong);
+    max-height: calc(100dvh - 80px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    animation: private-nav-drop-in 220ms cubic-bezier(0.2, 0, 0, 1) both;
+  }
+
+  @keyframes private-nav-drop-in {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .private-nav.open {
+      animation: none;
+    }
   }
 
   .private-nav.open .private-nav-link {
