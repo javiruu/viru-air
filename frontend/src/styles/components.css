@@ -127,7 +127,7 @@
   flex: none;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .public-shell-header {
     gap: 0.55rem;
   }
@@ -537,7 +537,7 @@
   justify-content: flex-end;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .notification-center {
     top: 0.72rem;
     width: min(360px, calc(100vw - 1rem));
@@ -813,7 +813,7 @@
   color: var(--color-footer-text);
 }
 
-@media (max-width: 920px) {
+@media (max-width: 768px) {
   .viru-footer-shell {
     padding: 0 1.25rem;
   }
@@ -833,7 +833,7 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .viru-footer-shell {
     padding: 0 1rem;
   }
@@ -891,7 +891,7 @@
   border-color: color-mix(in srgb, var(--landing-runway-light) 44%, var(--color-footer-border));
 }
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .viru-footer-landing .viru-footer-shell {
     padding: 0 1rem;
   }
@@ -965,7 +965,7 @@
   border: 1px solid color-mix(in srgb, var(--border, rgba(128,128,128,0.22)) 80%, transparent);
   letter-spacing: 0.01em;
 }
-@media (max-width: 980px) {
+@media (max-width: 768px) {
   .d2d-timezone-pill { display: none; }
 }
 .d2d-known-route-tag {
@@ -1109,7 +1109,7 @@
   color: var(--state-warning-text);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .fare-comparison-header {
     align-items: stretch;
     flex-direction: column;

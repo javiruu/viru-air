@@ -387,7 +387,7 @@
 
 /* ── Responsive (mobile) ──────────────────────────────────────────────── */
 
-@media (max-width: 899px) {
+@media (max-width: 768px) {
   .qs-dual-workspace {
     grid-template-columns: 1fr;
   }

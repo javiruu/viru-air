@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { useI18n } from "@/i18n";
@@ -17,6 +17,8 @@ export default function PrivateNav() {
   const pathname = usePathname();
   const pathnameValue = pathname ?? "";
   const [unreadSignals, setUnreadSignals] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
 
   useEffect(() => {
     let active = true;
@@ -35,7 +37,23 @@ export default function PrivateNav() {
   }, [unreadSignals]);
 
   return (
-    <nav className="private-nav" aria-label={t("shared.a11y.mainNavigation")}>
+    <>
+      {menuOpen ? <div className="private-nav-backdrop" onClick={closeMenu} aria-hidden="true" /> : null}
+      <nav
+        className={`private-nav${menuOpen ? " open" : ""}`}
+        aria-label={t("shared.a11y.mainNavigation")}
+      >
+      <button
+        className="private-nav-toggle"
+        type="button"
+        aria-label={menuOpen ? t("shared.actions.closeMenu") : t("shared.actions.openMenu")}
+        aria-expanded={menuOpen}
+        onClick={() => setMenuOpen((prev) => !prev)}
+      >
+        <span className="private-nav-toggle-bar" />
+        <span className="private-nav-toggle-bar" />
+        <span className="private-nav-toggle-bar" />
+      </button>
       {NAV_V1_PRIVATE.map((item) => {
         const active = pathnameValue === item.href || pathnameValue.startsWith(`${item.href}/`);
         return (
@@ -49,6 +67,7 @@ export default function PrivateNav() {
                 ? t("shared.a11y.notificationsUnread", { count: unreadSignals })
                 : undefined
             }
+            onClick={closeMenu}
           >
             {t(item.labelKey)}
             {item.href === "/notifications" && unreadSignals > 0 ? (
@@ -58,5 +77,6 @@ export default function PrivateNav() {
         );
       })}
     </nav>
+    </>
   );
 }
