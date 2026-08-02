@@ -1,5 +1,6 @@
 import { UsersRound } from "lucide-react";
 
+import { useI18n } from "@/i18n";
 import type { CommunityRouteInsight } from "@/modules/community-routes/communityRoutesTypes";
 
 type CommunityPriceSignalProps = {
@@ -11,6 +12,7 @@ export function CommunityPriceSignal({
   insight,
   localeTag,
 }: CommunityPriceSignalProps) {
+  const { t } = useI18n(localeTag);
   if (
     !insight ||
     insight.sample_size < 3 ||
@@ -23,9 +25,10 @@ export function CommunityPriceSignal({
     maximumFractionDigits: 0,
   });
   const range = `${formatter.format(insight.min_price)}–${formatter.format(insight.max_price)} €`;
-  const copy = localeTag.toLowerCase().startsWith("es")
-    ? `${insight.sample_size} viajeros de Viru pagaron ${range} por persona en esta ruta.`
-    : `${insight.sample_size} Viru travelers paid ${range} per person on this route.`;
+  const copy = t("watchlist.communityPricing.publicAggregateInline", {
+    count: insight.sample_size,
+    range,
+  });
 
   return (
     <p className="community-price-signal">

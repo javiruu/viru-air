@@ -135,6 +135,8 @@ export const watchlistEs = {
       "Tu precio ya suma. Mostraremos el rango cuando haya 3 viajeros.",
     aggregatePublic:
       "{count} viajeros de Viru pagaron {min}–{max} € por persona.",
+    publicAggregateInline:
+      "{count} viajeros de Viru pagaron {range} por persona en esta ruta.",
     errors: {
       markPurchased: "No se pudo registrar la compra. Inténtalo de nuevo.",
       save: "No se pudo guardar tu respuesta. No hemos perdido lo escrito.",
@@ -659,6 +661,8 @@ export const watchlistEn = {
       "Your price now counts. We will show the range after 3 travelers.",
     aggregatePublic:
       "{count} Viru travelers paid €{min}–€{max} per person.",
+    publicAggregateInline:
+      "{count} Viru travelers paid {range} per person on this route.",
     errors: {
       markPurchased: "The purchase could not be recorded. Please try again.",
       save: "Your response could not be saved. Your input is still here.",
