@@ -6727,6 +6727,87 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
     justify-content: center;
     min-height: 44px;
   }
+
+  /* ── Hero opportunity/empty: tighter padding ──────────── */
+  .hero-opportunity,
+  .hero-empty {
+    padding: 0.7rem 0.8rem;
+    gap: 0.45rem;
+  }
+
+  .hero-opportunity strong,
+  .hero-empty strong {
+    font-size: 0.9rem;
+  }
+
+  .hero-opportunity-metrics {
+    gap: 0.55rem;
+  }
+
+  .hero-opportunity-metrics .status-pill {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .dashboard-hero-side {
+    gap: 0.4rem;
+  }
+
+  /* ── Module card internals: compact ───────────────────── */
+  .module-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .module-head {
+    gap: 0.5rem;
+  }
+
+  .module-title {
+    font-size: 0.95rem;
+  }
+
+  .module-desc,
+  .module-inline-status {
+    font-size: 0.82rem;
+  }
+
+  /* ── Suggestion cards: compact ────────────────────────── */
+  .suggestion-highlight {
+    padding: 0.55rem 0.65rem;
+    gap: 0.3rem;
+  }
+
+  .suggestion-highlight strong {
+    font-size: 0.88rem;
+  }
+
+  .suggestion-highlight p {
+    font-size: 0.8rem;
+  }
+
+  .suggestion-empty {
+    padding: 0.6rem 0.7rem;
+    gap: 0.25rem;
+  }
+
+  .suggestion-badge {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.45rem;
+  }
+
+  /* ── Dashboard access toggle: compact ─────────────────── */
+  .dashboard-access-toggle {
+    gap: 0.5rem;
+  }
+
+  .dashboard-access-toggle__copy strong {
+    font-size: 0.74rem;
+  }
+
+  .dashboard-access-toggle__copy span {
+    font-size: 0.7rem;
+  }
 }
 
 .history-disclaimer {
