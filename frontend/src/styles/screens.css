@@ -23860,6 +23860,41 @@ textarea::placeholder {
   }
 }
 
+@media (max-width: 480px) {
+  .hotel-search-mode-tab {
+    min-height: 44px;
+    font-size: 0.84rem;
+  }
+
+  .hotel-search-grid input,
+  .hotel-search-grid select,
+  .hotel-search-area-grid input,
+  .hotel-search-area-grid select {
+    font-size: 1rem;
+  }
+
+  .hotel-tracked-offer-item {
+    gap: 0.55rem;
+  }
+
+  .hotel-tracked-offer-actions {
+    width: 100%;
+  }
+
+  .hotel-comp-set-item {
+    padding: 0.5rem 0.65rem;
+    font-size: 0.82rem;
+  }
+
+  .hotel-nearby-item {
+    padding: 0.7rem;
+  }
+
+  .hotel-provider-context {
+    width: 100%;
+  }
+}
+
 /* Comprehensive reduced-motion (all d2d-* animations) */
 @media (prefers-reduced-motion: reduce) {
   /* Phase 10 additions */
