@@ -1,7 +1,7 @@
 ﻿# Watchlist
 
 **Estado:** vivo  
-**Última revisión:** 2026-07-29
+**Última revisión:** 2026-08-01
 **Fuente de verdad:** si  
 **Área:** product
 
@@ -75,6 +75,15 @@ abrirse automáticamente. Si la persona pulsa `Comprado` dentro del hub:
 Las acciones comunitarias no se mezclan con `Pausar`, `Reanudar` o `Eliminar`
 en la fila, y no existe una pantalla comunitaria paralela.
 
+La fila puede resumir la señal con `N siguiendo` cuando la ruta supera cinco
+seguidores y con `En tendencia` cuando pertenece al 20 % superior de búsquedas
+de los últimos siete días. Si coinciden, se combinan en una sola cápsula para
+no duplicar ruido.
+
+El hub también puede mostrar hasta tres rutas relacionadas por co-ocurrencia de
+Watches. Cada sugerencia exige al menos tres usuarios distintos y solo expone
+la ruta y el conteo agregado. Al abrirla, Quick Search recibe origen y destino.
+
 El importe es el total final por persona, no el total de la reserva ni una
 estimación de Viru. En esta primera versión la moneda es EUR.
 
@@ -85,6 +94,11 @@ cuando hay al menos tres viajeros distintos con vuelo realizado y precio válido
 en los últimos 365 días. Antes de ese umbral, la UI solo indica cuántas
 aportaciones faltan; no expone precios, identidades, vuelos concretos ni fechas
 de respuesta.
+
+Cuando el histórico personal no tiene capturas y el rango comunitario es
+público, el panel muestra una banda `Referencia comunidad` con el mínimo y
+máximo por persona. No colorea fechas concretas del calendario porque el
+agregado comunitario no contiene granularidad diaria.
 
 Contrato:
 

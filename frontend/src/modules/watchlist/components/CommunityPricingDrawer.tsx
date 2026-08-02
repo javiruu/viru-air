@@ -2,6 +2,7 @@ import { ArrowLeft, PlaneTakeoff, UsersRound, X } from "lucide-react";
 import { useLayoutEffect, useRef, type KeyboardEvent } from "react";
 
 import { useI18n } from "@/i18n";
+import { RelatedCommunityRoutes } from "@/modules/community-routes/RelatedCommunityRoutes";
 import { CommunityHubOverview } from "@/modules/watchlist/components/CommunityHubOverview";
 import type { Watch } from "@/modules/watchlist/types";
 
@@ -134,13 +135,19 @@ export function CommunityPricingDrawer({
         </div>
 
         {stage === "overview" ? (
-          <CommunityHubOverview
-            watch={watch}
-            isSaving={isSaving}
-            onMarkPurchased={onMarkPurchased}
-            onBeginContribution={onBeginContribution}
-            onDeleteResponse={onDeleteResponse}
-          />
+          <>
+            <CommunityHubOverview
+              watch={watch}
+              isSaving={isSaving}
+              onMarkPurchased={onMarkPurchased}
+              onBeginContribution={onBeginContribution}
+              onDeleteResponse={onDeleteResponse}
+            />
+            <RelatedCommunityRoutes
+              origin={watch.origin_iata}
+              destination={watch.destination_iata}
+            />
+          </>
         ) : (
           <div className="community-pricing-step">
             <button

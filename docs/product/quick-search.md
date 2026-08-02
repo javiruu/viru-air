@@ -1,7 +1,7 @@
 ﻿# Quick Search
 
 **Estado:** vivo  
-**Última revisión:** 2026-07-28
+**Última revisión:** 2026-08-01
 **Fuente de verdad:** sí  
 **Área:** product
 
@@ -26,6 +26,16 @@ dinámica o no publica un máximo, Viru muestra
 parcial y señala el extra pendiente sin inventar un precio. La fuente oficial
 queda enlazada junto a la estimación. Al guardar un resultado, la cesta y la
 aerolínea identificada viajan con la Watch para conservar la comparación.
+
+## Referencia de precios comunitarios
+
+Los resultados consultan en lote la señal comunitaria de sus rutas. Cuando
+existen al menos tres viajeros distintos con un precio válido y público, la
+fila muestra el tamaño de muestra y el rango pagado por persona. Por debajo del
+umbral no muestra importes ni revela que exista una respuesta individual.
+
+Esta consulta es auxiliar: si falla, la búsqueda y sus resultados siguen
+funcionando sin el texto comunitario.
 
 ## Contenido principal
 

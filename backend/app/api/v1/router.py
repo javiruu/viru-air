@@ -9,6 +9,7 @@ from app.api.v1 import (
     airports,
     auth,
     community_pricing,
+    community_routes,
     hotels,
     live_flight_tracking,
     notes,
@@ -30,6 +31,11 @@ api_v1.include_router(hotels.router, prefix="/hotels", tags=["hotels"])
 api_v1.include_router(admin.router, prefix="/admin", tags=["admin"])
 api_v1.include_router(watchlist.router, prefix="/watchlist", tags=["watchlist"])
 api_v1.include_router(community_pricing.router, prefix="/watchlist", tags=["watchlist"])
+api_v1.include_router(
+    community_routes.router,
+    prefix="/community/routes",
+    tags=["community"],
+)
 api_v1.include_router(live_flight_tracking.router, prefix="/watchlist", tags=["watchlist"])
 api_v1.include_router(door_to_door.router, prefix="/door-to-door", tags=["door-to-door"])
 api_v1.include_router(prices.router, prefix="/prices", tags=["prices"])

@@ -9,6 +9,8 @@ import { useI18n } from "@/i18n";
 import { useFtueHint } from "@/lib/ftue";
 import { trackUxEvent } from "@/lib/uxTracking";
 import { DashboardAccessSwitch } from "@/modules/dashboard/dashboard-access-switch";
+import { CommunityCorridorsPanel } from "@/modules/community-routes/CommunityCorridorsPanel";
+import communityStyles from "@/modules/community-routes/CommunityCorridorsPanel.module.css";
 import { apiFetch } from "@/modules/shared/api";
 import { trackEvent } from "@/modules/shared/analytics";
 
@@ -409,7 +411,9 @@ export default function DashboardPage() {
             <h3>{t("dashboard.sections.opportunities")}</h3>
           </div>
         </div>
-        <article className="module-card module-card-opportunity">
+        <div className={communityStyles.discoveryGrid}>
+          <CommunityCorridorsPanel />
+        <article className={`module-card module-card-opportunity ${communityStyles.opportunityCard}`}>
           <div className="module-head">
             <h4 className="module-title">{t("dashboard.opportunities.title")}</h4>
             <span className="module-icon" aria-hidden="true">
@@ -444,6 +448,7 @@ export default function DashboardPage() {
             </Link>
           </div>
         </article>
+        </div>
       </section>
 
       <section className="dashboard-section dashboard-secondary">

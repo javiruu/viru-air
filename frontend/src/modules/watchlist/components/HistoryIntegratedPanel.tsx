@@ -6,6 +6,8 @@
 import { useEffect, useRef } from "react";
 
 import { useI18n } from "@/i18n";
+import { CommunityPriceReferenceBand } from "@/modules/community-routes/CommunityPriceReferenceBand";
+import type { CommunityPricing } from "@/modules/watchlist/types";
 import { formatCurrency } from "@/modules/shared/format";
 import type { WatchlistChartSerie } from "@/modules/watchlist/chartModel";
 import { formatDateTime } from "@/modules/watchlist/presentation";
@@ -18,6 +20,7 @@ type SelectedWatch = {
   destination_iata: string;
   travel_date_local: string;
   status: string;
+  community_pricing: CommunityPricing;
 } | null;
 
 type SelectedPointData = {
@@ -422,6 +425,9 @@ export function HistoryIntegratedPanel({
             </svg>
           ) : (
             <div className="history-ghost">
+              <CommunityPriceReferenceBand
+                aggregate={selectedWatch?.community_pricing.aggregate}
+              />
               <div className="history-ghost-line" />
               <p>{t("watchlist.history.chartEmpty")}</p>
             </div>
@@ -542,10 +548,15 @@ export function HistoryIntegratedPanel({
               ) : null}
             </>
           ) : (
-            <div className="history-compact-note history-compact-note--calendar">
-              <strong>{t("watchlist.history.calendarUnavailableTitle")}</strong>
-              <p>{t("watchlist.history.calendarUnavailableBody")}</p>
-            </div>
+            <>
+              <CommunityPriceReferenceBand
+                aggregate={selectedWatch?.community_pricing.aggregate}
+              />
+              <div className="history-compact-note history-compact-note--calendar">
+                <strong>{t("watchlist.history.calendarUnavailableTitle")}</strong>
+                <p>{t("watchlist.history.calendarUnavailableBody")}</p>
+              </div>
+            </>
           )}
           <p className="history-microcopy muted">{t("watchlist.history.trendMicrocopy")}</p>
           <details className="history-disclaimer">

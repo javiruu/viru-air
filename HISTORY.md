@@ -1,5 +1,11 @@
 # History
 
+## 2026-08-01 - Radar comunitario de rutas
+
+- Dashboard incorpora `Corredores más buscados` con una banda de concentración y las diez rutas direccionales más buscadas durante siete días, enlazadas a Quick Search.
+- Quick Search muestra rangos de precios pagados cuando hay al menos tres viajeros, y Watchlist añade señales compactas de seguimiento/tendencia, rutas relacionadas privadas por umbral y una referencia comunitaria cuando falta histórico personal.
+- La popularidad semanal nace de buckets diarios anónimos exactos desde despliegue; no reinterpreta el contador histórico ni crea backfill ficticio.
+
 ## 2026-07-30 - Señales accionables y reglas conectadas
 
 - La Bandeja incorpora un checklist `Para actuar`, agrupacion temporal y acciones contextualizadas sin alterar la identidad ni el estado de lectura de cada evento.

@@ -1,7 +1,7 @@
 ﻿# QA
 
 **Estado:** vivo  
-**Última revisión:** 2026-07-21
+**Última revisión:** 2026-08-01
 **Fuente de verdad:** sí  
 **Área:** QA
 
@@ -22,6 +22,7 @@
 - [Traceability matrix](traceability-matrix.md)
 - [Runbook UI captures](../runbooks/runbook-ui-captures.md)
 - [Live flight tracking desde Watchlist - resultado browser](reports/2026-07-21-watchlist-live-flight-tracking.json)
+- [Inteligencia comunitaria de rutas - QA full-stack](reports/2026-08-01-community-route-intelligence.md)
 
 ## Politica de validacion visual
 

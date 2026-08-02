@@ -1,7 +1,7 @@
 # Community Pricing Backend Contract
 
 **Estado:** vivo
-**Última revisión:** 2026-07-28
+**Última revisión:** 2026-08-01
 **Fuente de verdad:** sí
 **Área:** reference/backend
 
@@ -131,3 +131,60 @@ La tabla `community_price_report` guarda:
 
 Las restricciones de base de datos mantienen una respuesta por Watch y
 coherencia entre `flew` y `price_per_traveler`.
+
+## Lectura comunitaria por rutas
+
+Todos estos endpoints requieren autenticación, son solo de lectura y no
+exponen respuestas individuales.
+
+### Corredores populares
+
+`GET /api/v1/community/routes/popular?limit=10`
+
+Suma buckets diarios anónimos desde hoy menos seis días hasta hoy. Devuelve
+`window_days=7` y rutas con `origin_iata`, `destination_iata`,
+`searches_count` e `is_trending`. El contador acumulado histórico de Quick
+Search no se usa para simular esta ventana.
+
+Una ruta es tendencia si ocupa una de las primeras
+`ceil(total_rutas * 0,20)` posiciones de la ventana. El orden desempata por
+origen y destino para mantenerse estable.
+
+### Insights en lote
+
+`POST /api/v1/community/routes/insights`
+
+Acepta entre 1 y 100 rutas por petición. Los clientes con listas mayores las
+dividen en lotes de 100 y conservan el orden de la respuesta.
+
+```json
+{
+  "routes": [
+    {"origin_iata": "MAD", "destination_iata": "BCN"}
+  ]
+}
+```
+
+Devuelve, en el mismo orden, popularidad y precio comunitario público. El rango
+solo aparece con al menos tres viajeros distintos; si no, `sample_size` es `0`
+y `min_price` y `max_price` son `null`, sin revelar que existen una o dos
+aportaciones privadas.
+
+### Rutas relacionadas
+
+`GET /api/v1/community/routes/{origin_iata}/{destination_iata}/related?limit=3`
+
+Agrupa rutas direccionales guardadas por usuarios que también tienen la ruta
+consultada. Solo devuelve una ruta relacionada cuando al menos tres usuarios
+distintos comparten ambas. No devuelve `user_id`, `watch_id`, fechas ni estados
+individuales.
+
+## Popularidad diaria
+
+`quick_search_popularity_daily` almacena un bucket anónimo por fecha de
+búsqueda, ruta direccional y moneda. Cada búsqueda válida actualiza este bucket
+y el contador acumulado existente en la misma transacción.
+
+La migración no realiza backfill especulativo. La ventana semanal es exacta
+desde el despliegue de la revisión `0040_add_qs_popularity_daily`; durante los
+primeros siete días representa únicamente los días ya observados.

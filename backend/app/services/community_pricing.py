@@ -54,7 +54,7 @@ def build_community_pricing_by_watch(
     )
     report_by_watch_id = {report.watch_id: report for report in reports}
     route_keys = {(watch.origin_iata, watch.destination_iata) for watch in watches}
-    aggregate_by_route = _aggregate_by_route(
+    aggregate_by_route = aggregate_community_prices_by_route(
         db,
         route_keys,
         today=current_date,
@@ -110,7 +110,7 @@ def community_pricing_for_watch(
     )[watch.id]
 
 
-def _aggregate_by_route(
+def aggregate_community_prices_by_route(
     db: Session,
     route_keys: set[CommunityRouteKey],
     *,
