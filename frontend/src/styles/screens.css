@@ -17986,8 +17986,10 @@ textarea::placeholder {
     justify-content: center;
   }
 
-  .account-profile-form input {
+  .account-profile-form input,
+  .account-profile-field input {
     min-height: 2.8rem;
+    font-size: 1rem;
   }
 
   .account-profile-delete-modal {
