@@ -4598,6 +4598,62 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   }
 }
 
+@media (max-width: 480px) {
+  /* Alerts: compact mobile layout */
+  .alerts-hero {
+    padding: 0.7rem 0.75rem;
+    gap: 0.7rem;
+  }
+
+  .alerts-hero-top {
+    gap: 0.55rem;
+  }
+
+  .alerts-hero-actions .btn-secondary,
+  .alerts-hero-actions .btn-primary {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .alerts-hero-grid {
+    gap: 0.5rem;
+  }
+
+  .alerts-metric-card {
+    padding: 0.55rem 0.65rem;
+  }
+
+  .alerts-metric-card strong {
+    font-size: 1.05rem;
+  }
+
+  .alerts-flow-links .btn-secondary {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .signals-section-nav {
+    padding: 0.55rem 0.6rem;
+    gap: 0.35rem;
+  }
+
+  .signals-section-link {
+    padding: 0.5rem 0.6rem;
+    gap: 0.45rem;
+  }
+
+  .signals-section-link strong {
+    font-size: 0.88rem;
+  }
+
+  /* Notifications: summary grid single column */
+  .notifications-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .notifications-page {
   animation: section-enter 0.28s ease both;
 }
