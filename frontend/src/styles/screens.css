@@ -15986,6 +15986,10 @@ textarea::placeholder {
 }
 
 @media (max-width: 480px) {
+  .reco-header-clean {
+    padding: 0.8rem 0.85rem;
+  }
+
   .reco-header-clean p {
     font-size: 0.9rem;
   }
@@ -15993,6 +15997,31 @@ textarea::placeholder {
   .reco-panel-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 0.55rem;
+  }
+
+  .reco-mode-toggle button {
+    min-height: 44px;
+    font-size: 0.82rem;
+  }
+
+  .reco-config-panel .field input,
+  .reco-config-panel .field select {
+    font-size: 1rem;
+  }
+
+  .reco-results-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.55rem;
+  }
+
+  .reco-results-focus {
+    padding: 0.55rem 0.65rem;
+  }
+
+  .reco-card-v2 {
+    padding: 0.75rem 0.8rem;
     gap: 0.55rem;
   }
 
