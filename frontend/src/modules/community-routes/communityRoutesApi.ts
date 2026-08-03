@@ -1,3 +1,4 @@
+import { COMMUNITY_MIN_SAMPLE_SIZE } from "@/modules/community-routes/communityConstants";
 import { apiFetch } from "@/modules/shared/api";
 import type {
   CommunityPopularRoute,
@@ -66,7 +67,7 @@ export function normalizeRouteInsightsResponse(
         const sampleSize = normalizeCount(candidate.sample_size);
         const minPrice = normalizeNullablePrice(candidate.min_price);
         const maxPrice = normalizeNullablePrice(candidate.max_price);
-        const isPublic = sampleSize >= 3 && minPrice !== null && maxPrice !== null;
+        const isPublic = sampleSize >= COMMUNITY_MIN_SAMPLE_SIZE && minPrice !== null && maxPrice !== null;
         return [{
           ...route,
           sample_size: isPublic ? sampleSize : 0,
@@ -88,7 +89,7 @@ export function normalizeRelatedRoutesResponse(
         const origin = normalizeIata(candidate.origin_iata);
         const destination = normalizeIata(candidate.destination_iata);
         const travelersCount = normalizeCount(candidate.travelers_count);
-        if (!origin || !destination || travelersCount < 3) return [];
+        if (!origin || !destination || travelersCount < COMMUNITY_MIN_SAMPLE_SIZE) return [];
         return [{
           origin_iata: origin,
           destination_iata: destination,

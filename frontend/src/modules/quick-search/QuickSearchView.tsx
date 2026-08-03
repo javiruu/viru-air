@@ -5067,6 +5067,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 </small>
               ) : null}
             </label>
+            <PopularDestinationsChips
+              origin={destination}
+              onSelectDestination={(iata) => selectAutocompleteSuggestion("origin", iata)}
+              t={(key, params) => t(key as Parameters<typeof t>[0], params)}
+            />
             <QuickSearchAdditionalAirports
               side="destination"
               entries={additionalDestinations}

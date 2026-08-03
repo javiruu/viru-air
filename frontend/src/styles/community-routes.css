@@ -125,6 +125,21 @@
   font-size: 0.74rem;
 }
 
+.community-reference-freshness {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--color-text-tertiary, var(--color-text-secondary));
+  font-size: 0.68rem;
+  opacity: 0.8;
+}
+
+.community-reference-freshness svg {
+  width: 11px;
+  height: 11px;
+  flex: 0 0 auto;
+}
+
 /* ── Community thanks animation ────────────────────────────── */
 
 .community-pricing-thanks-content {
