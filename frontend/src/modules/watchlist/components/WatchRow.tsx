@@ -30,6 +30,8 @@ type WatchRowProps = {
   readonly communityInsight: CommunityRouteInsight | undefined;
   readonly isSelected: boolean;
   readonly isBulkSelected: boolean;
+  readonly seedPrice?: number;
+  readonly seedCurrency?: string;
   readonly onSelect: (watch: Watch) => void;
   readonly onToggleBulkSelected: (watchId: string, selected: boolean) => void;
   readonly onOpenCommunity: (
@@ -47,6 +49,8 @@ export function WatchRow({
   communityInsight,
   isSelected,
   isBulkSelected,
+  seedPrice,
+  seedCurrency,
   onSelect,
   onToggleBulkSelected,
   onOpenCommunity,
@@ -171,37 +175,43 @@ export function WatchRow({
                   meta.latest.currency,
                   localeTag,
                 )
-              : "--"}
+              : seedPrice != null
+                ? formatCurrency(seedPrice, seedCurrency ?? "EUR", localeTag)
+                : "--"}
           </strong>
         </div>
         <div className="watch-meta">
-          <span
-            className={`status-pill ${
-              trend === "up"
-                ? "error"
-                : trend === "down"
-                  ? "success"
-                  : "warning"
-            }`}
-          >
-            {routeHealthLabel}
-          </span>
-          <span className="watch-meta-chip tabular-nums">
-            {t("watchlist.detail.latestSnapshot")}{" "}
-            {safeDateTime(meta?.latest?.capturedAt, localeTag)}
-          </span>
-          <span className="watch-meta-chip watch-meta-chip--freshness tabular-nums">
-            {t("watchlist.detail.freshness")} {freshness.label}
-          </span>
-          <span className={`watch-provider-chip watch-provider-chip--${provider.id}`}>
-            {t("watchlist.providerCoverage.rowSource", {
-              provider: provider.label,
-            })}
-          </span>
-          <span className="watch-note">{freshness.detail}</span>
-          <span className="watch-note">
-            {t("watchlist.smartList.priceDisclaimer")}
-          </span>
+          {meta?.latest ? (
+            <span
+              className={`status-pill ${
+                trend === "up"
+                  ? "error"
+                  : trend === "down"
+                    ? "success"
+                    : "warning"
+              }`}
+            >
+              {routeHealthLabel}
+            </span>
+          ) : null}
+          {meta?.latest?.capturedAt ? (
+            <span className="watch-meta-chip tabular-nums">
+              {t("watchlist.detail.latestSnapshot")}{" "}
+              {safeDateTime(meta.latest.capturedAt, localeTag)}
+            </span>
+          ) : null}
+          {meta?.latest?.capturedAt ? (
+            <span className="watch-meta-chip watch-meta-chip--freshness tabular-nums">
+              {t("watchlist.detail.freshness")} {freshness.label}
+            </span>
+          ) : null}
+          {meta?.latest?.provider ? (
+            <span className={`watch-provider-chip watch-provider-chip--${provider.id}`}>
+              {t("watchlist.providerCoverage.rowSource", {
+                provider: provider.label,
+              })}
+            </span>
+          ) : null}
           <CommunityRouteSignal
             watchersCount={watch.watchers_count ?? 0}
             insight={communityInsight}

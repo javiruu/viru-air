@@ -308,11 +308,7 @@ export function HistoryIntegratedPanel({
                   <p className="panel-note">{selectedPointFreshness.observationNote}</p>
                 ) : null}
               </div>
-            ) : (
-              <div className="history-detail-empty">
-                {t("watchlist.history.selectPointHelp")}
-              </div>
-            )}
+            ) : null}
           </div>
           <div className="history-primary">
           {chartIsZoomed ? (
@@ -471,10 +467,6 @@ export function HistoryIntegratedPanel({
             </div>
           ) : null}
           <p className="history-microcopy muted">{t("watchlist.history.trendMicrocopy")}</p>
-          <details className="history-disclaimer">
-            <summary>{t("watchlist.history.priceMeaningTitle")}</summary>
-            <p>{t("watchlist.history.priceMeaningBody")}</p>
-          </details>
         </div>
       ) : hasSelectedWatch && !isLoadingHistory ? (
         <div key={`calendar-${visibleMonth}`} className="panel history-stage history-calendar history-calendar-panel history-layout">
@@ -571,10 +563,6 @@ export function HistoryIntegratedPanel({
             </>
           )}
           <p className="history-microcopy muted">{t("watchlist.history.trendMicrocopy")}</p>
-          <details className="history-disclaimer">
-            <summary>{t("watchlist.history.priceMeaningTitle")}</summary>
-            <p>{t("watchlist.history.priceMeaningBody")}</p>
-          </details>
         </div>
       ) : null}
     </section>
