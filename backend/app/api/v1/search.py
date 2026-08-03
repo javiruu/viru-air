@@ -3202,8 +3202,7 @@ def save_result(
             response_status=200,
             response_body=body,
         )
-        if not idempotency_key:
-            db.commit()
+        db.commit()
         return body
 
     watch = FlightWatch(
@@ -3234,7 +3233,6 @@ def save_result(
         response_status=200,
         response_body=body,
     )
-    if not idempotency_key:
-        db.commit()
+    db.commit()
     db.refresh(watch)
     return body
