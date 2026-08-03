@@ -198,6 +198,9 @@ def _departure_datetime(travel_date: dt.date, departure_time_local: str | None) 
     Mirrors fare_memory._departure_datetime_for_ranked_result — kept separate
     because this module receives raw (date, time) tuples rather than RankedResult
     objects, and the overhead of an adapter class outweighs 10 lines of duplication.
+
+    IMPORTANT: if the logic in either function changes, both must be updated
+    in sync to avoid behavioral divergence.
     """
     value = (departure_time_local or "").strip()
     if value:
