@@ -13,7 +13,13 @@ from app.infrastructure.db.models import (
 SOURCE_ALERT_EVENT = "alert_event"
 SOURCE_HOTEL_ALERT_EVENT = "hotel_alert_event"
 SOURCE_SECURITY_ACTIVITY = "security_activity"
-READABLE_SOURCES = {SOURCE_ALERT_EVENT, SOURCE_HOTEL_ALERT_EVENT, SOURCE_SECURITY_ACTIVITY}
+SOURCE_COMMUNITY_TRENDING = "community_trending"
+READABLE_SOURCES = {
+    SOURCE_ALERT_EVENT,
+    SOURCE_HOTEL_ALERT_EVENT,
+    SOURCE_SECURITY_ACTIVITY,
+    SOURCE_COMMUNITY_TRENDING,
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,6 +112,23 @@ def security_item(activity: SecurityActivity, read_at: datetime | None) -> Inbox
         route_label=None,
         action_href="/cuenta/seguridad",
         created_at=activity.created_at,
+        read_at=read_at,
+    )
+
+
+def community_trending_item(event: NotificationEvent, read_at: datetime | None) -> InboxItem:
+    """Build an InboxItem for a community trending notification."""
+    return InboxItem(
+        id=f"{SOURCE_COMMUNITY_TRENDING}:{event.id}",
+        source_type=SOURCE_COMMUNITY_TRENDING,
+        source_id=event.id,
+        category="community",
+        tone="info",
+        title=t("es", "notifications.community_trending_title"),
+        body=event.message,
+        route_label=None,
+        action_href="/dashboard",
+        created_at=event.created_at,
         read_at=read_at,
     )
 

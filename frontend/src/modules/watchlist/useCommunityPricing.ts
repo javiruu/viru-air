@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
 import { useI18n } from "@/i18n";
@@ -8,7 +8,7 @@ import type {
   Watch,
 } from "@/modules/watchlist/types";
 
-type CommunityPricingStage = "overview" | "flight" | "price";
+type CommunityPricingStage = "overview" | "flight" | "price" | "thanks";
 
 type UseCommunityPricingInput = {
   readonly load: () => Promise<void>;
@@ -124,13 +124,29 @@ export function useCommunityPricing({
         community_pricing: response.community_pricing,
       });
       await load().catch(() => undefined);
-      setStage("overview");
+      // After a successful price contribution, show a warm thank-you
+      if (flew && pricePerTraveler !== undefined) {
+        setStage("thanks");
+      } else {
+        setStage("overview");
+      }
     } catch (caught) {
       if (!(caught instanceof Error)) throw caught;
       setError(t("watchlist.communityPricing.errors.save"));
     } finally {
       setIsSaving(false);
     }
+  }
+
+  // Auto-transition from "thanks" back to "overview" after a warm pause
+  useEffect(() => {
+    if (stage !== "thanks") return;
+    const timer = setTimeout(() => setStage("overview"), 2500);
+    return () => clearTimeout(timer);
+  }, [stage]);
+
+  function dismissThanks(): void {
+    setStage("overview");
   }
 
   async function saveNoFlight(): Promise<void> {
@@ -182,5 +198,6 @@ export function useCommunityPricing({
     saveNoFlight,
     savePrice,
     deleteResponse,
+    dismissThanks,
   };
 }

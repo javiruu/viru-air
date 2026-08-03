@@ -112,6 +112,7 @@ import { QuickSearchSummaryChips, type QuickSearchSummaryChip } from "@/modules/
 import { QuickSearchAdvancedDrawer } from "@/modules/quick-search/components/QuickSearchAdvancedDrawer";
 import { QuickSearchNearbyBand } from "@/modules/quick-search/components/QuickSearchNearbyBand";
 import { QuickSearchAdditionalAirports } from "@/modules/quick-search/components/QuickSearchAdditionalAirports";
+import { PopularDestinationsChips } from "@/modules/community-routes/PopularDestinationsChips";
 import {
   buildRouteSeedList,
   type QuickSearchAdditionalAirport,
@@ -4827,6 +4828,11 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 </small>
               ) : null}
             </label>
+            <PopularDestinationsChips
+              origin={origin}
+              onSelectDestination={(iata) => selectAutocompleteSuggestion("destination", iata)}
+              t={(key, params) => t(key as Parameters<typeof t>[0], params)}
+            />
             <QuickSearchAdditionalAirports
               side="origin"
               entries={additionalOrigins}

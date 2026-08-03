@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.domain.schemas import (
+    CommunityContributorStatsOut,
     CommunityPriceDeleteOut,
     CommunityPriceMutationOut,
     CommunityPriceReportIn,
@@ -48,6 +49,58 @@ def _mutation_out(
             watch,
             current_user_id=current_user_id,
         ),
+    )
+
+
+@router.get("/contributor-stats", response_model=CommunityContributorStatsOut)
+def get_contributor_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> CommunityContributorStatsOut:
+    """Return the authenticated user's total community contributions and weekly streak."""
+    from datetime import date, timedelta
+
+    rows = list(
+        db.execute(
+            select(CommunityPriceReport.created_at)
+            .where(
+                CommunityPriceReport.user_id == current_user.id,
+                CommunityPriceReport.flew.is_(True),
+                CommunityPriceReport.price_per_traveler.is_not(None),
+            )
+            .order_by(CommunityPriceReport.created_at.desc())
+        ).scalars().all()
+    )
+
+    total = len(rows)
+    if total == 0:
+        return CommunityContributorStatsOut(total_contributions=0, streak_weeks=0)
+
+    # Calculate consecutive-week streak (ISO weeks, going backwards from today)
+    today = date.today()
+    current_monday = today - timedelta(days=today.weekday())
+    reported_weeks: set[str] = set()
+    for created_at in rows:
+        d = created_at.date() if hasattr(created_at, "date") else created_at
+        monday = d - timedelta(days=d.weekday())
+        reported_weeks.add(monday.isoformat())
+
+    streak = 0
+    check_monday = current_monday
+    for _ in range(52):  # cap at 52 weeks
+        if check_monday.isoformat() in reported_weeks:
+            streak += 1
+            check_monday -= timedelta(days=7)
+        else:
+            # Allow skipping the current week (it might not be over yet)
+            if streak == 0 and check_monday == current_monday:
+                check_monday -= timedelta(days=7)
+                continue
+            break
+
+    return CommunityContributorStatsOut(
+        total_contributions=total,
+        streak_weeks=streak,
     )
 
 

@@ -4,6 +4,7 @@ from sqlalchemy import and_, case, desc, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
+from app.i18n import t
 from app.infrastructure.db.models import (
     AlertRule,
     FlightWatch,
@@ -18,6 +19,7 @@ from app.infrastructure.db.models import (
 from app.services.notification_inbox_sources import (
     READABLE_SOURCES,
     SOURCE_ALERT_EVENT,
+    SOURCE_COMMUNITY_TRENDING,
     SOURCE_HOTEL_ALERT_EVENT,
     SOURCE_SECURITY_ACTIVITY,
     InboxItem,
@@ -66,6 +68,19 @@ def _source_belongs_to_user(
                 select(SecurityActivity.id).where(
                     SecurityActivity.id == ref.source_id,
                     SecurityActivity.user_id == user_id,
+                )
+            )
+            is not None
+        )
+    if ref.source_type == SOURCE_COMMUNITY_TRENDING:
+        from app.services.community_trending_notifier import SOURCE_COMMUNITY_TRENDING as CT_SRC
+        return (
+            db.scalar(
+                select(NotificationEvent.id)
+                .where(
+                    NotificationEvent.id == ref.source_id,
+                    NotificationEvent.rule_id == "",
+                    NotificationEvent.dedupe_key.like(f"{CT_SRC}:{user_id}:%"),
                 )
             )
             is not None
@@ -146,14 +161,41 @@ def list_notification_inbox(db: Session, *, user_id: str, limit: int = 80) -> li
             .limit(hotel_limit)
         ).all()
     )
+    # Community trending signals (in-memory, not persisted as NotificationEvent)
+    from app.services.community_trending_notifier import get_trending_signals_for_user
+    trending_signals = get_trending_signals_for_user(user_id)
+    trending_refs = [
+        SourceRef(SOURCE_COMMUNITY_TRENDING, signal.event_id)
+        for signal in trending_signals
+    ]
     refs = (
-        [alert_ref(event) for event, _, _ in alert_rows]
+        trending_refs
+        + [alert_ref(event) for event, _, _ in alert_rows]
         + [hotel_alert_ref(event) for event, _ in hotel_rows]
         + [security_ref(activity) for activity in security_rows]
     )
     states = _state_map(db, user_id=user_id, source_refs=refs)
 
     items: list[InboxItem] = []
+    for signal in trending_signals:
+        items.append(
+            InboxItem(
+                id=f"{SOURCE_COMMUNITY_TRENDING}:{signal.event_id}",
+                source_type=SOURCE_COMMUNITY_TRENDING,
+                source_id=signal.event_id,
+                category="community",
+                tone="info",
+                title=t("es", "notifications.community_trending_title"),
+                body=f"{signal.origin_iata} → {signal.destination_iata} es una ruta en tendencia esta semana.",
+                route_label=f"{signal.origin_iata} → {signal.destination_iata}",
+                action_href="/dashboard",
+                created_at=signal.created_at,
+                read_at=states.get(
+                    SourceRef(SOURCE_COMMUNITY_TRENDING, signal.event_id)
+                ),
+            )
+        )
+
     for event, _, watch in alert_rows:
         items.append(alert_item(event, watch, states.get(alert_ref(event))))
 
@@ -341,6 +383,26 @@ def count_notification_summary(db: Session, *, user_id: str) -> dict[str, int]:
     digest_count = int(cat_row.digest or 0)
     price_count = total_alerts - worker_count - digest_count
 
+    # Count community trending signals for this user
+    from app.services.community_trending_notifier import get_trending_signals_for_user
+    trending_signals = get_trending_signals_for_user(user_id)
+    community_count = len(trending_signals)
+    total += community_count
+
+    # Count unread community items
+    read_community_rows = db.execute(
+        select(UserNotificationState.source_id).where(
+            UserNotificationState.user_id == user_id,
+            UserNotificationState.source_type == SOURCE_COMMUNITY_TRENDING,
+        )
+    ).all()
+    read_community_id_set = {row[0] for row in read_community_rows}
+    unread_community = len([
+        s for s in trending_signals
+        if s.event_id not in read_community_id_set
+    ])
+    unread += unread_community
+
     return {
         "total": total,
         "unread": unread,
@@ -348,4 +410,5 @@ def count_notification_summary(db: Session, *, user_id: str) -> dict[str, int]:
         "security": security_count,
         "digest": digest_count,
         "worker": worker_count,
+        "community": community_count,
     }

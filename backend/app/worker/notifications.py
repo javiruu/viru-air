@@ -10,6 +10,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.logging import configure_logging
 from app.infrastructure.db.session import SessionLocal
+from app.services.community_trending_notifier import notify_trending_routes
 from app.services.notification_service import dispatch_pending_events
 
 DEFAULT_WORKER_ENABLED = os.getenv("NOTIFICATION_WORKER_ENABLED", "false").lower() in {
@@ -29,9 +30,10 @@ def _parse_args() -> argparse.Namespace:
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--once", action="store_true", help="Run one processing cycle and exit.")
     mode.add_argument("--loop", action="store_true", help="Run continuously with sleep intervals.")
+    mode.add_argument("--trending", action="store_true", help="Run community trending check and exit.")
     parser.add_argument("--sleep-seconds", type=int, default=DEFAULT_WORKER_INTERVAL_SECONDS)
     args = parser.parse_args()
-    if not args.once and not args.loop:
+    if not args.once and not args.loop and not args.trending:
         args.once = True
     return args
 
@@ -64,12 +66,32 @@ def run_once(*, session_factory: sessionmaker = SessionLocal, limit: int = DEFAU
         db.close()
 
 
+def run_trending(*, session_factory: sessionmaker = SessionLocal) -> int:
+    """Run community trending check and return number of notifications created."""
+    db = session_factory()
+    try:
+        created = notify_trending_routes(db)
+        logger.info(
+            json.dumps(
+                {
+                    "event": "notification_trending_cycle",
+                    "created": created,
+                },
+                ensure_ascii=False,
+            )
+        )
+        return created
+    finally:
+        db.close()
+
+
 def run_loop(
     *,
     session_factory: sessionmaker = SessionLocal,
     limit: int = DEFAULT_WORKER_BATCH_SIZE,
     sleep_seconds: int = DEFAULT_WORKER_INTERVAL_SECONDS,
 ) -> None:
+    trending_cycle = 0
     while True:
         db = session_factory()
         try:
@@ -77,6 +99,12 @@ def run_loop(
             _log_cycle(result, once=False, limit=limit)
         finally:
             db.close()
+
+        # Run trending check every ~15 cycles (every ~15 minutes)
+        trending_cycle += 1
+        if trending_cycle % 15 == 0:
+            run_trending()
+
         time.sleep(max(1, sleep_seconds))
 
 
@@ -93,6 +121,10 @@ def main() -> int:
                 ensure_ascii=False,
             )
         )
+
+    if args.trending:
+        created = run_trending()
+        return 0 if created >= 0 else 1
 
     if args.once:
         run_once(limit=args.limit)

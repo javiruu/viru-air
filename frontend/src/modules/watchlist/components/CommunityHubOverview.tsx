@@ -1,14 +1,21 @@
 import {
   CheckCircle2,
+  Flame,
   ShieldCheck,
   TicketCheck,
   UsersRound,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useI18n } from "@/i18n";
+import { apiFetch } from "@/modules/shared/api";
 import { getCommunityHubParticipation } from "@/modules/watchlist/communityHubPresentation";
 import type { Watch } from "@/modules/watchlist/types";
+
+type ContributorStats = {
+  total_contributions: number;
+  streak_weeks: number;
+};
 
 type CommunityHubOverviewProps = {
   readonly watch: Watch;
@@ -26,6 +33,17 @@ export function CommunityHubOverview({
   onDeleteResponse,
 }: CommunityHubOverviewProps) {
   const { t, localeTag } = useI18n();
+  const [contributorStats, setContributorStats] = useState<ContributorStats | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch<ContributorStats>("/watchlist/contributor-stats")
+      .then((data) => {
+        if (!cancelled) setContributorStats(data);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
   const pricing = watch.community_pricing;
   const aggregate = pricing.aggregate;
   const participation = getCommunityHubParticipation(pricing);
@@ -104,6 +122,18 @@ export function CommunityHubOverview({
           <span>{t("watchlist.communityPricing.privacyBody")}</span>
         </p>
       </div>
+
+      {contributorStats && contributorStats.streak_weeks >= 2 ? (
+        <div className="community-hub-streak">
+          <Flame aria-hidden="true" />
+          <span>
+            {t("watchlist.communityPricing.streakBanner", {
+              weeks: contributorStats.streak_weeks,
+              total: contributorStats.total_contributions,
+            })}
+          </span>
+        </div>
+      ) : null}
 
       <section className="community-hub-contribution">
         <span className="community-pricing-step-label">

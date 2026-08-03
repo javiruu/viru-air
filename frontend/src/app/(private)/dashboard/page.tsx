@@ -30,6 +30,7 @@ type DashboardNotificationSummary = {
   security: number;
   digest: number;
   worker: number;
+  community: number;
 };
 
 type SuggestionBadgeType = "price" | "schedule" | "altAirport";

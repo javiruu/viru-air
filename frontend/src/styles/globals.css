@@ -6,6 +6,8 @@
 @import './components.css';
 @import './screens.css';
 @import './quick-search-dual.css';
+@import './community-routes.css';
+@import './signals.css';
 
 @custom-variant dark (&:is(:root[data-theme="dark"] *));
 

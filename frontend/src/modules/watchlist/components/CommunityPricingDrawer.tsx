@@ -1,4 +1,4 @@
-import { ArrowLeft, PlaneTakeoff, UsersRound, X } from "lucide-react";
+import { ArrowLeft, Heart, PlaneTakeoff, UsersRound, X } from "lucide-react";
 import { useLayoutEffect, useRef, type KeyboardEvent } from "react";
 
 import { useI18n } from "@/i18n";
@@ -8,7 +8,7 @@ import type { Watch } from "@/modules/watchlist/types";
 
 type CommunityPricingDrawerProps = {
   readonly watch: Watch | null;
-  readonly stage: "overview" | "flight" | "price";
+  readonly stage: "overview" | "flight" | "price" | "thanks";
   readonly price: string;
   readonly isSaving: boolean;
   readonly error: string;
@@ -21,6 +21,7 @@ type CommunityPricingDrawerProps = {
   readonly onSaveNoFlight: () => void;
   readonly onSavePrice: () => void;
   readonly onDeleteResponse: () => void;
+  readonly onDismissThanks: () => void;
 };
 
 export function CommunityPricingDrawer({
@@ -38,6 +39,7 @@ export function CommunityPricingDrawer({
   onSaveNoFlight,
   onSavePrice,
   onDeleteResponse,
+  onDismissThanks,
 }: CommunityPricingDrawerProps) {
   const { t } = useI18n();
   const drawerRef = useRef<HTMLElement>(null);
@@ -134,7 +136,23 @@ export function CommunityPricingDrawer({
           <span className="status-pill info">{routeState}</span>
         </div>
 
-        {stage === "overview" ? (
+        {stage === "thanks" ? (
+          <div className="community-pricing-thanks">
+            <button
+              className="btn-ghost btn-compact community-hub-back"
+              type="button"
+              onClick={onDismissThanks}
+            >
+              <ArrowLeft aria-hidden="true" />
+              {t("watchlist.communityPricing.backToHub")}
+            </button>
+            <div className="community-pricing-thanks-content">
+              <Heart aria-hidden="true" className="community-pricing-thanks-icon" />
+              <h3>{t("watchlist.communityPricing.thanksTitle")}</h3>
+              <p>{t("watchlist.communityPricing.thanksBody")}</p>
+            </div>
+          </div>
+        ) : stage === "overview" ? (
           <>
             <CommunityHubOverview
               watch={watch}
