@@ -237,12 +237,12 @@
   .notifications-filter {
     font-size: 0.78rem;
     padding: 0.35rem 0.6rem;
-    min-height: 44px;
+    min-height: 48px;
   }
 
   .notifications-page .page-header .btn-secondary {
     width: 100%;
     justify-content: center;
-    min-height: 44px;
+    min-height: 48px;
   }
 }
