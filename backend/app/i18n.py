@@ -17,6 +17,10 @@ from __future__ import annotations
 
 _STRINGS: dict[str, dict[str, str]] = {
     # ── Notification inbox titles ──
+    "notifications.community_trending_title": {
+        "es": "Ruta en tendencia en Viru",
+        "en": "Trending route on Viru",
+    },
     "notifications.worker_needs_attention": {
         "es": "Worker de señales necesita atención",
         "en": "Signals worker needs attention",

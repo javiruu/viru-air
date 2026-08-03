@@ -105,6 +105,10 @@ export const watchlistEs = {
     contributedTitle: "Ya has ayudado a esta ruta",
     contributedPrice: "Compartiste {price} por viajero de forma anónima.",
     contributedNoFlight: "Nos contaste que finalmente no volaste.",
+    thanksTitle: "Gracias por compartir 🧡",
+    thanksBody:
+      "Tu precio ayuda a otros viajeros a decidir mejor. Todo es anónimo y privado.",
+    streakBanner: "{weeks} semanas seguidas compartiendo · {total} aportaciones en total",
     indicator: {
       available:
         "Abrir comunidad de {origin} a {destination}",
@@ -631,6 +635,10 @@ export const watchlistEn = {
     contributedTitle: "You have already helped this route",
     contributedPrice: "You anonymously shared {price} per traveler.",
     contributedNoFlight: "You told us that you did not end up flying.",
+    thanksTitle: "Thanks for sharing 🧡",
+    thanksBody:
+      "Your price helps other travelers make better decisions. Everything is anonymous and private.",
+    streakBanner: "{weeks} weeks sharing in a row · {total} total contributions",
     indicator: {
       available:
         "Open community for {origin} to {destination}",

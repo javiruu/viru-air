@@ -425,6 +425,7 @@ export default function WatchlistPage() {
         onDeleteResponse={() => {
           void actions.communityPricing.deleteResponse();
         }}
+        onDismissThanks={actions.communityPricing.dismissThanks}
       />
     </main>
   );

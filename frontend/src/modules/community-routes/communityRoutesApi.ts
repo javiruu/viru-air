@@ -132,6 +132,16 @@ export async function fetchRelatedCommunityRoutes(
   );
 }
 
+export async function fetchPopularDestinationsFromOrigin(
+  origin: string,
+): Promise<CommunityPopularRoutesResponse> {
+  return normalizePopularRoutesResponse(
+    await apiFetch<unknown>(
+      `/community/routes/popular-from/${encodeURIComponent(origin)}`,
+    ),
+  );
+}
+
 export function communityRouteKey(route: CommunityRoute): string {
   return `${route.origin_iata.trim().toUpperCase()}-${route.destination_iata.trim().toUpperCase()}`;
 }

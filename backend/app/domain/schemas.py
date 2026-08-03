@@ -212,6 +212,11 @@ class CommunityPriceReportIn(BaseModel):
         return self
 
 
+class CommunityContributorStatsOut(BaseModel):
+    total_contributions: int
+    streak_weeks: int
+
+
 class CommunityPriceMutationOut(BaseModel):
     watch_id: str
     status: str
@@ -246,6 +251,10 @@ class CommunityPopularRouteOut(CommunityRouteIn):
 
 class CommunityPopularRoutesOut(BaseModel):
     window_days: Literal[7] = 7
+    routes: list[CommunityPopularRouteOut] = Field(default_factory=list)
+
+
+class CommunityPopularDestinationsOut(BaseModel):
     routes: list[CommunityPopularRouteOut] = Field(default_factory=list)
 
 
@@ -438,9 +447,9 @@ class NotificationEventOut(BaseModel):
 
 class NotificationInboxItemOut(BaseModel):
     id: str
-    source_type: Literal["alert_event", "hotel_alert_event", "security_activity"]
+    source_type: Literal["alert_event", "hotel_alert_event", "security_activity", "community_trending"]
     source_id: str
-    category: Literal["price", "security", "digest", "worker"]
+    category: Literal["price", "security", "digest", "worker", "community"]
     tone: Literal["success", "warning", "error", "info"]
     title: str
     body: str
@@ -458,6 +467,7 @@ class NotificationInboxSummaryOut(BaseModel):
     security: int
     digest: int
     worker: int
+    community: int = 0
 
 
 class NotificationInboxOut(BaseModel):

@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.domain.schemas import (
+    CommunityPopularDestinationsOut,
     CommunityPopularRoutesOut,
     CommunityRelatedRoutesOut,
     CommunityRouteIn,
@@ -36,6 +37,25 @@ def route_insights(
     _current_user: User = Depends(get_current_user),
 ) -> CommunityRouteInsightsOut:
     return CommunityRouteInsightsOut(routes=build_route_insights(db, payload.routes))
+
+
+@router.get(
+    "/popular-from/{origin_iata}",
+    response_model=CommunityPopularDestinationsOut,
+)
+def popular_destinations_from_origin(
+    origin_iata: str = Path(..., min_length=3, max_length=3, pattern=r"^[A-Za-z]{3}$"),
+    limit: int = Query(default=5, ge=1, le=5),
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(get_current_user),
+) -> CommunityPopularDestinationsOut:
+    """Return popular destinations from a given origin airport."""
+    popular = list_popular_routes(db, limit=50)
+    from_origin = [
+        route for route in popular
+        if route.origin_iata == origin_iata.upper()
+    ][:limit]
+    return CommunityPopularDestinationsOut(routes=from_origin)
 
 
 @router.get(
