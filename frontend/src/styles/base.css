@@ -21,3 +21,9 @@
   cursor: not-allowed;
   color: var(--color-button-disabled-text);
 }
+
+/* ── iOS zoom prevention ────────────────────────────────── */
+
+.ios-zoom-fix {
+  font-size: 1rem; /* prevents iOS Safari from zooming on focus when font-size < 16px */
+}
