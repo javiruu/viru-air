@@ -557,8 +557,7 @@ def _refresh_watch_now(db: Session, watch_id: str, current_user: User) -> JSONRe
         max_age_seconds=WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS,
     )
 
-    if REFRESH_COOLDOWN_SECONDS > 0:
-        if latest_snapshot:
+    if REFRESH_COOLDOWN_SECONDS > 0 and latest_snapshot:
             current_utc = utc_now_naive()
             earliest_next_refresh = latest_snapshot.captured_at_utc + timedelta(seconds=REFRESH_COOLDOWN_SECONDS)
             if earliest_next_refresh > current_utc:

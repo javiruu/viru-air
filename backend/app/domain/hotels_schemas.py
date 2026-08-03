@@ -114,9 +114,8 @@ class HotelAlertRuleCreateIn(BaseModel):
 
     @model_validator(mode="after")
     def validate_threshold_combination(self):
-        if self.rule_type in {"price_below", "price_above"}:
-            if self.threshold_amount is None and self.threshold_percent is None:
-                raise ValueError("threshold_required_for_price_rule")
+        if self.rule_type in {"price_below", "price_above"} and self.threshold_amount is None and self.threshold_percent is None:
+            raise ValueError("threshold_required_for_price_rule")
         if self.rule_type in {"percentage_drop", "percentage_increase"}:
             if self.threshold_percent is None:
                 raise ValueError("threshold_percent_required_for_percentage_rule")
@@ -149,9 +148,8 @@ class HotelAlertRuleUpdateIn(BaseModel):
         effective_type = self.rule_type
         if effective_type is None:
             return self
-        if effective_type in {"price_below", "price_above"}:
-            if self.threshold_amount is None and self.threshold_percent is None:
-                raise ValueError("threshold_required_for_price_rule")
+        if effective_type in {"price_below", "price_above"} and self.threshold_amount is None and self.threshold_percent is None:
+            raise ValueError("threshold_required_for_price_rule")
         if effective_type in {"percentage_drop", "percentage_increase"}:
             if self.threshold_percent is None:
                 raise ValueError("threshold_percent_required_for_percentage_rule")

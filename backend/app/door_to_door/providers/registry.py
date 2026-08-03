@@ -415,9 +415,7 @@ def resolve_provider_runtime() -> ProviderRuntime:
                 else gtfs_transit_enabled if descriptor.name == "gtfs_transit"
                 else navitia_enabled
             )
-            if descriptor.name == "google_routes":
-                status = "functional_api" if enabled else "disabled"
-            elif descriptor.name == "navitia":
+            if descriptor.name == "google_routes" or descriptor.name == "navitia":
                 status = "functional_api" if enabled else "disabled"
             else:
                 status = "functional_open_data" if enabled else "disabled"

@@ -85,9 +85,8 @@ def rank_quick_search_results(
                 continue
             
             flight_duration = getattr(flight, "duration_mins", None)
-            if duration_max_min is not None and flight_duration is not None:
-                if flight_duration > duration_max_min:
-                    continue
+            if duration_max_min is not None and flight_duration is not None and flight_duration > duration_max_min:
+                continue
 
         price_component = price_value - min_price
 

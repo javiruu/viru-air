@@ -264,14 +264,13 @@ def evaluate_rules_for_watch(
                     f"Precio alto: {latest_price:.2f} {latest.raw_currency} "
                     f"(umbral {float(rule.threshold_value):.2f})."
                 )
-        elif rule.rule_type == "every_change":
-            if previous and previous_price != latest_price:
-                delta = latest_price - previous_price
-                trigger = True
-                message = (
-                    f"Cambio de precio: {previous_price:.2f} -> {latest_price:.2f} "
-                    f"{latest.raw_currency} ({delta:+.2f})."
-                )
+        elif rule.rule_type == "every_change" and previous and previous_price != latest_price:
+            delta = latest_price - previous_price
+            trigger = True
+            message = (
+                f"Cambio de precio: {previous_price:.2f} -> {latest_price:.2f} "
+                f"{latest.raw_currency} ({delta:+.2f})."
+            )
 
         if not trigger:
             continue

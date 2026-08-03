@@ -33,13 +33,7 @@ def resolve_negative_cache_write_policy(result: ProviderFetchResult) -> tuple[st
     elif "provider_timeout_partial" in warning_codes:
         reason = "provider_timeout"
         retry_after_at = utc_now_naive() + dt.timedelta(minutes=5)
-    elif "provider_circuit_open_partial" in warning_codes:
-        reason = "provider_partial_degraded"
-        retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
-    elif "provider_error_partial" in warning_codes:
-        reason = "provider_partial_degraded"
-        retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
-    elif warning_codes & PROVIDER_ERROR_CODES:
+    elif "provider_circuit_open_partial" in warning_codes or "provider_error_partial" in warning_codes or warning_codes & PROVIDER_ERROR_CODES:
         reason = "provider_partial_degraded"
         retry_after_at = utc_now_naive() + dt.timedelta(minutes=10)
     return reason, retry_after_at

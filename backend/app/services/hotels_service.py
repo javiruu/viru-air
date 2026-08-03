@@ -554,19 +554,18 @@ def evaluate_hotel_alerts(db: Session, *, provider_run_id: str) -> list[HotelAle
         elif rule.rule_type == "parity_break":
             signals = HotelParityService.compute_parity(rates)
             for signal in signals:
-                if signal.is_parity_broken and signal.spread_percent is not None:
-                    if rule.threshold_percent is None or signal.spread_percent >= rule.threshold_percent:
-                        events.append(
-                            HotelAlertEvent(
-                                rule_id=rule.id,
-                                hotel_id=rule.hotel_id,
-                                provider_run_id=provider_run_id,
-                                event_type="parity_break",
-                                message=f"{hotel_name}: spread {signal.spread_percent}% ({signal.lowest_price}-{signal.highest_price} {signal.currency})",
-                                trigger_value=signal.spread_percent,
-                            )
+                if signal.is_parity_broken and signal.spread_percent is not None and (rule.threshold_percent is None or signal.spread_percent >= rule.threshold_percent):
+                    events.append(
+                        HotelAlertEvent(
+                            rule_id=rule.id,
+                            hotel_id=rule.hotel_id,
+                            provider_run_id=provider_run_id,
+                            event_type="parity_break",
+                            message=f"{hotel_name}: spread {signal.spread_percent}% ({signal.lowest_price}-{signal.highest_price} {signal.currency})",
+                            trigger_value=signal.spread_percent,
                         )
-                        break
+                    )
+                    break
 
         # New human rule types for non-tracked offers (fallback to legacy behavior)
         elif rule.rule_type == "percentage_drop":
@@ -674,18 +673,17 @@ def _evaluate_tracked_alert_rule(
                 )
             )
 
-    elif rule.rule_type == "availability_returned" and previous is not None:
-        if previous.availability_status == "unavailable" and latest.availability_status == "available":
-            events.append(
-                HotelAlertEvent(
-                    rule_id=rule.id,
-                    hotel_id=rule.hotel_id,
-                    provider_run_id=provider_run_id,
-                    event_type="availability_returned",
-                    message=t("es", "hotels.message.availability_returned", hotel=hotel_name, currency=latest.currency, amount=f"{latest_amount:.2f}"),
-                    trigger_value=latest_amount,
-                )
+    elif rule.rule_type == "availability_returned" and previous is not None and previous.availability_status == "unavailable" and latest.availability_status == "available":
+        events.append(
+            HotelAlertEvent(
+                rule_id=rule.id,
+                hotel_id=rule.hotel_id,
+                provider_run_id=provider_run_id,
+                event_type="availability_returned",
+                message=t("es", "hotels.message.availability_returned", hotel=hotel_name, currency=latest.currency, amount=f"{latest_amount:.2f}"),
+                trigger_value=latest_amount,
             )
+        )
 
 
 def _evaluate_legacy_percentage_rule(
