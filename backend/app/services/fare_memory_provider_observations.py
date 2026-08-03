@@ -193,6 +193,12 @@ def _build_provider_offer_payload(row: ProviderFlightRow) -> ProviderOfferPayloa
 
 
 def _departure_datetime(travel_date: dt.date, departure_time_local: str | None) -> dt.datetime:
+    """Build a departure datetime from date + HH:MM string.
+
+    Mirrors fare_memory._departure_datetime_for_ranked_result — kept separate
+    because this module receives raw (date, time) tuples rather than RankedResult
+    objects, and the overhead of an adapter class outweighs 10 lines of duplication.
+    """
     value = (departure_time_local or "").strip()
     if value:
         parts = value.split(":")
