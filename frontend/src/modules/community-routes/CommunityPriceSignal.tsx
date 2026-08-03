@@ -1,6 +1,7 @@
 import { UsersRound } from "lucide-react";
 
 import { useI18n } from "@/i18n";
+import { COMMUNITY_MIN_SAMPLE_SIZE } from "@/modules/community-routes/communityConstants";
 import type { CommunityRouteInsight } from "@/modules/community-routes/communityRoutesTypes";
 
 type CommunityPriceSignalProps = {
@@ -15,7 +16,7 @@ export function CommunityPriceSignal({
   const { t } = useI18n(localeTag);
   if (
     !insight ||
-    insight.sample_size < 3 ||
+    insight.sample_size < COMMUNITY_MIN_SAMPLE_SIZE ||
     insight.min_price === null ||
     insight.max_price === null
   ) {

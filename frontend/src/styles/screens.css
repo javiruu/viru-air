@@ -24549,6 +24549,30 @@ textarea::placeholder {
   }
 }
 
+@keyframes community-hub-check-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  60% {
+    transform: scale(1.18);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.watch-community-hub-button.is-contributed .watch-community-hub-check {
+  animation: community-hub-check-pop 0.38s cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .watch-community-hub-button.is-contributed .watch-community-hub-check {
+    animation: none;
+  }
+}
+
 .community-pricing-overlay {
   position: fixed;
   inset: 0;

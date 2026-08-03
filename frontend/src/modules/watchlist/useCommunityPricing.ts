@@ -138,15 +138,20 @@ export function useCommunityPricing({
     }
   }
 
-  // Auto-transition from "thanks" back to "overview" after a warm pause
+  // Auto-transition from "thanks" back to "overview" after a warm pause,
+  // then refresh community data so the overview shows updated values.
   useEffect(() => {
     if (stage !== "thanks") return;
-    const timer = setTimeout(() => setStage("overview"), 2500);
+    const timer = setTimeout(() => {
+      setStage("overview");
+      void load().catch(() => undefined);
+    }, 2500);
     return () => clearTimeout(timer);
-  }, [stage]);
+  }, [load, stage]);
 
-  function dismissThanks(): void {
+  async function dismissThanks(): Promise<void> {
     setStage("overview");
+    await load().catch(() => undefined);
   }
 
   async function saveNoFlight(): Promise<void> {

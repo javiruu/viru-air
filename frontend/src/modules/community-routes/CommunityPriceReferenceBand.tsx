@@ -1,6 +1,7 @@
-import { UsersRound } from "lucide-react";
+import { Clock, UsersRound } from "lucide-react";
 
 import { useI18n } from "@/i18n";
+import { COMMUNITY_WINDOW_DAYS } from "@/modules/community-routes/communityConstants";
 import type { CommunityPriceAggregate } from "@/modules/watchlist/types";
 
 type CommunityPriceReferenceBandProps = {
@@ -26,7 +27,14 @@ export function CommunityPriceReferenceBand({
       <UsersRound aria-hidden="true" />
       <div>
         <strong>{t("watchlist.communitySignals.referenceTitle")}</strong>
-        <span>{t("watchlist.communitySignals.referenceRange", { range })}</span>
+        <span>
+          {t("watchlist.communitySignals.referenceRange", { range })}
+          {" · "}
+          <span className="community-reference-freshness">
+            <Clock aria-hidden="true" size={12} />
+            {t("watchlist.communitySignals.referenceFreshness", { days: COMMUNITY_WINDOW_DAYS })}
+          </span>
+        </span>
       </div>
     </div>
   );
