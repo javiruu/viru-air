@@ -7,6 +7,7 @@ import { useEffect, useRef } from "react";
 
 import { useI18n } from "@/i18n";
 import { CommunityPriceReferenceBand } from "@/modules/community-routes/CommunityPriceReferenceBand";
+import { RelatedCommunityRoutes } from "@/modules/community-routes/RelatedCommunityRoutes";
 import type { CommunityPricing } from "@/modules/watchlist/types";
 import { formatCurrency } from "@/modules/shared/format";
 import type { WatchlistChartSerie } from "@/modules/watchlist/chartModel";
@@ -427,6 +428,12 @@ export function HistoryIntegratedPanel({
               <CommunityPriceReferenceBand
                 aggregate={selectedWatch?.community_pricing.aggregate}
               />
+              {selectedWatch ? (
+                <RelatedCommunityRoutes
+                  origin={selectedWatch.origin_iata}
+                  destination={selectedWatch.destination_iata}
+                />
+              ) : null}
               <div className="history-ghost-line" />
               <p>{t("watchlist.history.chartEmpty")}</p>
             </div>
@@ -551,6 +558,12 @@ export function HistoryIntegratedPanel({
               <CommunityPriceReferenceBand
                 aggregate={selectedWatch?.community_pricing.aggregate}
               />
+              {selectedWatch ? (
+                <RelatedCommunityRoutes
+                  origin={selectedWatch.origin_iata}
+                  destination={selectedWatch.destination_iata}
+                />
+              ) : null}
               <div className="history-compact-note history-compact-note--calendar">
                 <strong>{t("watchlist.history.calendarUnavailableTitle")}</strong>
                 <p>{t("watchlist.history.calendarUnavailableBody")}</p>
