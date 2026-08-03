@@ -50,17 +50,17 @@ export function PopularDestinationsChips({
   if (!loading && !hasRoutes) return null;
 
   return (
-    <div className="popular-destinations-strip" aria-label={t("popularDestinationsLabel")} aria-busy={loading}>
-      <span className="popular-destinations-strip-label">
+    <div className="community-popular-destinations-strip" aria-label={t("popularDestinationsLabel")} aria-busy={loading}>
+      <span className="community-popular-destinations-strip-label">
         <TrendingUp aria-hidden="true" size={14} />
         {t("popularDestinationsLabel")}
       </span>
-      <div className="popular-destinations-chips">
+      <div className="community-popular-destinations-chips">
         {loading
           ? Array.from({ length: 3 }).map((_, i) => (
               <span
                 key={`sk-${i}`}
-                className="popular-destination-chip-skeleton"
+                className="community-popular-destination-chip-skeleton"
                 aria-hidden="true"
               />
             ))
@@ -68,7 +68,7 @@ export function PopularDestinationsChips({
               <button
                 key={`${route.origin_iata}-${route.destination_iata}`}
                 type="button"
-                className="popular-destination-chip"
+                className="community-popular-destination-chip"
                 onClick={() => onSelectDestination(route.destination_iata)}
                 title={t("popularDestinationAria", {
                   origin: route.origin_iata,
