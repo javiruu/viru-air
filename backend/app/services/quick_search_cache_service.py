@@ -340,6 +340,8 @@ def get_fresh_entry(
         travel_date=travel_date,
         provider=provider,
     )
+    # Redis hot layer — fast path. Does not update DB last_accessed_at_utc;
+    # acceptable trade-off since Redis TTL is only ~300s.
     redis_entry = read_positive_cache_entry_from_redis(
         origin_iata=origin_iata,
         destination_iata=destination_iata,
@@ -364,6 +366,8 @@ def get_fresh_entry(
         .order_by(QuickSearchCacheEntry.expires_at_utc.desc())
         .limit(1)
     )
+    # NOTE: db.commit() flushes the entire session — callers must not have
+    # uncommitted work pending in the same session.
     with _DB_LOCK:
         entry = db.scalar(stmt)
         if entry is not None:
