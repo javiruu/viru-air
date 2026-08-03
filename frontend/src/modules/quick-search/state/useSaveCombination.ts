@@ -24,9 +24,17 @@ type SaveCombinationParams = {
   returnFareProfile: FareComparisonProfile;
 };
 
-type SaveResult = {
+export type SaveResult = {
   watch_id?: string;
   created_or_existing?: string;
+  tracking_identity?: string;
+  snapshot?: {
+    captured_at_utc: string | null;
+    raw_price: number | null;
+    raw_currency: string;
+    departure_time_local: string | null;
+    provider: string | null;
+  } | null;
 };
 
 type SaveCombinationState = {

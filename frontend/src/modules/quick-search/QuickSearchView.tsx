@@ -155,7 +155,7 @@ import { getQuickSearchVisualState } from "@/modules/quick-search/state/getQuick
 import { useQuickSearchLoadingFlow } from "@/modules/quick-search/state/useQuickSearchLoadingFlow";
 import { useQuickSearchSide } from "@/modules/quick-search/state/useQuickSearchSide";
 import { useQuickSearchWatchlist } from "@/modules/quick-search/state/useQuickSearchWatchlist";
-import { useSaveCombination } from "@/modules/quick-search/state/useSaveCombination";
+import { useSaveCombination, type SaveResult } from "@/modules/quick-search/state/useSaveCombination";
 import { QuickSearchDualWorkspace } from "@/modules/quick-search/components/QuickSearchDualWorkspace";
 import { buildDualSearchParams, findCombinationResult } from "@/modules/quick-search/utils-dual";
 import { QuickSearchSidePanel } from "@/modules/quick-search/components/QuickSearchSidePanel";
@@ -2559,7 +2559,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       result.destination,
       result.travel_date,
     ) || fallbackDeepLinkUrl;
-    return apiFetch<{ watch_id?: string; created_or_existing?: string }>("/search/save-result", {
+    return apiFetch<SaveResult>("/search/save-result", {
       method: "POST",
       body: JSON.stringify(buildQuickSearchSaveResultPayload(result, {
         jobId,
@@ -6072,7 +6072,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 addToWatchlist={async (result: SearchResult, fareProfile: FareComparisonProfile) => {
                   setMessage("");
                   try {
-                    const response = await apiFetch<{ watch_id?: string; created_or_existing?: string }>("/search/save-result", {
+                    const response = await apiFetch<SaveResult>("/search/save-result", {
                       method: "POST",
                       body: JSON.stringify(buildQuickSearchSaveResultPayload(result, {
                         jobId: outboundSide.jobId,
@@ -6190,7 +6190,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 addToWatchlist={async (result: SearchResult, fareProfile: FareComparisonProfile) => {
                   setMessage("");
                   try {
-                    const response = await apiFetch<{ watch_id?: string; created_or_existing?: string }>("/search/save-result", {
+                    const response = await apiFetch<SaveResult>("/search/save-result", {
                       method: "POST",
                       body: JSON.stringify(buildQuickSearchSaveResultPayload(result, {
                         jobId: returnSide.jobId,
