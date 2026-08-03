@@ -56,11 +56,13 @@ def _seed_watch_snapshot_from_saved_result(
 
 
 def _saved_result_requires_revalidation(payload: SavedQuickSearchResultPayload) -> bool:
+    # Aligned with fare_memory._REVALIDATION_REQUIRED_STATUSES.
+    # negative_fresh is intentionally excluded: a fresh negative cache hit
+    # does not warrant an immediate revalidation probe.
     revalidation_statuses = {
         "warm",
         "stale",
         "expired",
-        "negative_fresh",
         "negative_stale",
         "provider_error_fresh",
         "provider_error_stale",

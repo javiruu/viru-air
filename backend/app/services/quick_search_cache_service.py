@@ -366,6 +366,9 @@ def get_fresh_entry(
     )
     with _DB_LOCK:
         entry = db.scalar(stmt)
+        if entry is not None:
+            entry.last_accessed_at_utc = now
+            db.commit()
     return entry
 
 
@@ -591,28 +594,31 @@ def set_negative_cache_entry(
     redis_client: RedisHotLayerClient | None = None,
 ) -> QuickSearchNegativeCacheEntry:
     now = utc_now_naive()
-    existing_entry: QuickSearchNegativeCacheEntry | None = None
-    if _is_provider_backoff_reason(reason):
-        existing_entry = db.scalar(
-            select(QuickSearchNegativeCacheEntry)
-            .where(QuickSearchNegativeCacheEntry.negative_fingerprint == negative_fingerprint)
-            .order_by(QuickSearchNegativeCacheEntry.expires_at.desc())
-            .limit(1)
-        )
-        ttl = _resolve_provider_backoff_seconds(
-            existing_entry=existing_entry,
-            negative_fingerprint=negative_fingerprint,
-            reason=reason,
-            now=now,
-            requested_retry_after_at=retry_after_at,
-        )
-        retry_after_at = now + dt.timedelta(seconds=ttl)
-    else:
-        ttl = max(60, _negative_ttl_for_reason(reason))
-    expires_at = now + dt.timedelta(seconds=ttl)
     freshness_status = _negative_freshness_status_for_reason(reason)
 
     with _DB_LOCK:
+        # Read existing entry INSIDE the lock to avoid TOCTOU race when
+        # calculating exponential backoff for provider errors.
+        existing_entry: QuickSearchNegativeCacheEntry | None = None
+        if _is_provider_backoff_reason(reason):
+            existing_entry = db.scalar(
+                select(QuickSearchNegativeCacheEntry)
+                .where(QuickSearchNegativeCacheEntry.negative_fingerprint == negative_fingerprint)
+                .order_by(QuickSearchNegativeCacheEntry.expires_at.desc())
+                .limit(1)
+            )
+            ttl = _resolve_provider_backoff_seconds(
+                existing_entry=existing_entry,
+                negative_fingerprint=negative_fingerprint,
+                reason=reason,
+                now=now,
+                requested_retry_after_at=retry_after_at,
+            )
+            retry_after_at = now + dt.timedelta(seconds=ttl)
+        else:
+            ttl = max(60, _negative_ttl_for_reason(reason))
+        expires_at = now + dt.timedelta(seconds=ttl)
+
         db.execute(
             delete(QuickSearchNegativeCacheEntry).where(
                 QuickSearchNegativeCacheEntry.negative_fingerprint == negative_fingerprint,
