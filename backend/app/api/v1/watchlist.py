@@ -256,6 +256,7 @@ def create_watch(
         response_status=200,
         response_body=body,
     )
+    db.commit()
     return watch_out
 
 
@@ -522,6 +523,7 @@ def refresh_watch(
                 response_status=refresh_result.status_code,
                 response_body=response_body,
             )
+            db.commit()
         return refresh_result
     body = {"status": "queued", "watch_id": watch_id}
     store_response(
@@ -533,6 +535,7 @@ def refresh_watch(
         response_status=200,
         response_body=body,
     )
+    db.commit()
     return body
 
 
