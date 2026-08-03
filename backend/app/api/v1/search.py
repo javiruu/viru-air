@@ -147,9 +147,8 @@ def _filter_ui_warning_codes(codes: list[str]) -> list[str]:
     visible: list[str] = []
     for raw_code in codes:
         code = _normalize_warning_code(raw_code)
-        if code in UI_WARNING_CRITICAL_CODES or code in UI_WARNING_PARTIAL_CODES:
-            if code not in visible:
-                visible.append(code)
+        if (code in UI_WARNING_CRITICAL_CODES or code in UI_WARNING_PARTIAL_CODES) and code not in visible:
+            visible.append(code)
     return visible
 
 

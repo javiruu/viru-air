@@ -65,10 +65,7 @@ def score_itinerary(
     completeness_delta = COMPLETENESS_BONUS[completeness]
 
     # Price: reduced penalty for null (deeplinks are still useful)
-    if price_midpoint is None:
-        price_penalty = 12
-    else:
-        price_penalty = min(24, int(price_midpoint / 8))
+    price_penalty = 12 if price_midpoint is None else min(24, int(price_midpoint / 8))
 
     # Duration: penalty proportional to excess over 6 hours
     duration_penalty = min(22, max(0, int((duration_minutes - 360) / 35)))
