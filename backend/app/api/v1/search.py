@@ -26,7 +26,7 @@ from app.api.deps import get_current_user
 from app.api.v1.airports import _validate_iata
 from app.domain.entities import ProviderFetchResult
 from app.domain.schemas import FareComparisonProfile
-from app.infrastructure.db.models import FlightWatch, User
+from app.infrastructure.db.models import FlightWatch, PriceSnapshot, User
 from app.infrastructure.db.session import get_db, SessionLocal
 from app.infrastructure.airports_catalog import ExpandedAirportCandidate, get_airport, resolve_seed_airport
 from app.infrastructure.providers.flight_provider import MultiSourceFlightProvider
@@ -3129,13 +3129,32 @@ def quick_search(
     return response_payload
 
 
+def get_saved_result_snapshot(db: Session, watch: FlightWatch) -> dict | None:
+    """Return the latest snapshot for a watch as a JSON-safe dict, or None."""
+    latest = db.scalar(
+        select(PriceSnapshot)
+        .where(PriceSnapshot.watch_id == watch.id)
+        .order_by(PriceSnapshot.captured_at_utc.desc(), PriceSnapshot.id.desc())
+        .limit(1)
+    )
+    if latest is None:
+        return None
+    return {
+        "captured_at_utc": latest.captured_at_utc.isoformat() if latest.captured_at_utc else None,
+        "raw_price": float(latest.raw_price) if latest.raw_price is not None else None,
+        "raw_currency": latest.raw_currency,
+        "departure_time_local": latest.departure_time_local,
+        "provider": latest.provider,
+    }
+
+
 @router.post("/save-result")
 def save_result(
     payload: QuickSearchSaveResultIn,
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> dict[str, str]:
+) -> dict[str, Any]:
     endpoint = "POST:/api/v1/search/save-result"
     req_hash = request_hash(payload.model_dump(mode="json"))
     replay = replay_if_exists(
@@ -3172,6 +3191,7 @@ def save_result(
             "watch_id": existing.id,
             "created_or_existing": "existing",
             "tracking_identity": tracking_identity,
+            "snapshot": get_saved_result_snapshot(db, existing),
         }
         store_response(
             db,
@@ -3203,6 +3223,7 @@ def save_result(
         "watch_id": watch.id,
         "created_or_existing": "created",
         "tracking_identity": tracking_identity,
+        "snapshot": get_saved_result_snapshot(db, watch),
     }
     store_response(
         db,

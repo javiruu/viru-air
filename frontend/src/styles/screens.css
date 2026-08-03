@@ -3739,15 +3739,6 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   text-align: right;
 }
 
-.history-detail-empty {
-  padding: 0.7rem 0.85rem;
-  border-radius: 14px;
-  border: 1px dashed color-mix(in srgb, var(--border) 74%, transparent);
-  background: color-mix(in srgb, var(--surface) 90%, transparent);
-  font-size: 0.85rem;
-  color: var(--ink-muted);
-}
-
 .history-calendar-panel {
   margin-top: 1rem;
 }
@@ -6866,41 +6857,6 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   }
 }
 
-.history-disclaimer {
-  margin-top: 0.75rem;
-  border: 1px dashed color-mix(in srgb, var(--border) 72%, transparent);
-  border-radius: 12px;
-  padding: 0.5rem 0.7rem;
-  background: color-mix(in srgb, var(--surface) 86%, transparent);
-  font-size: 0.82rem;
-  color: var(--ink-muted);
-}
-
-.history-disclaimer summary {
-  cursor: pointer;
-  font-weight: 600;
-  color: var(--ink);
-  list-style: none;
-}
-
-.history-disclaimer summary::-webkit-details-marker {
-  display: none;
-}
-
-.history-disclaimer summary::after {
-  content: "+";
-  float: right;
-  color: var(--accent);
-}
-
-.history-disclaimer[open] summary::after {
-  content: "-";
-}
-
-.history-disclaimer p {
-  margin: 0.4rem 0 0;
-}
-
 .history-calendar {
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--surface) 80%, transparent), transparent),
@@ -8304,7 +8260,8 @@ textarea::placeholder {
 
 .qs-additional-airports {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
 }
 
 .qs-additional-airport {
@@ -8482,6 +8439,9 @@ textarea::placeholder {
 .qs-input::placeholder {
   color: var(--qs-placeholder);
   opacity: 1;
+  font-weight: inherit;
+  font-size: inherit;
+  font-family: inherit;
   transition: color 0.16s ease, opacity 0.16s ease;
 }
 
@@ -9237,6 +9197,7 @@ textarea::placeholder {
 .qs-nearby-band {
   display: grid;
   gap: 0.8rem;
+  margin-top: 0.75rem;
   padding: 0.9rem;
   border: 1px solid color-mix(in srgb, var(--qs-input-border) 74%, transparent);
   border-radius: 14px;

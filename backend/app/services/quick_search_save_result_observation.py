@@ -53,6 +53,7 @@ def _seed_watch_snapshot_from_saved_result(
             is_stale=False,
         )
     )
+    db.flush()
 
 
 def _saved_result_requires_revalidation(payload: SavedQuickSearchResultPayload) -> bool:

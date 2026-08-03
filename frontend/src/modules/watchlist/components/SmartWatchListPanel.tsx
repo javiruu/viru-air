@@ -35,6 +35,7 @@ type SmartWatchListPanelProps = {
   items: Watch[];
   smartListItems: Watch[];
   watchMeta: Map<string, WatchMetaEntry>;
+  getSeedPrice?: (watchId: string) => { price: number; currency: string } | undefined;
   lastUpdatedGlobal: string;
   watchSearch: string;
   watchSort: ListSort;
@@ -73,6 +74,7 @@ export function SmartWatchListPanel({
   items,
   smartListItems,
   watchMeta,
+  getSeedPrice,
   lastUpdatedGlobal,
   watchSearch,
   watchSort,
@@ -381,7 +383,9 @@ export function SmartWatchListPanel({
         </div>
       ) : null}
       {showListMode
-        ? pagedListItems.map((watch) => (
+        ? pagedListItems.map((watch) => {
+            const seed = getSeedPrice?.(watch.id);
+            return (
             <WatchRow
               key={watch.id}
               watch={watch}
@@ -392,6 +396,8 @@ export function SmartWatchListPanel({
               }))}
               isSelected={selectedWatchId === watch.id}
               isBulkSelected={selectedSet.has(watch.id)}
+              seedPrice={seed?.price}
+              seedCurrency={seed?.currency}
               onSelect={onSelectWatch}
               onToggleBulkSelected={toggleBulkSelected}
               onOpenCommunity={onCommunityAction}
@@ -399,7 +405,8 @@ export function SmartWatchListPanel({
               onResume={onResumeWatch}
               onDelete={onDeleteWatch}
             />
-          ))
+          );
+          })
         : null}
       {showListMode && smartListItems.length > 0 ? (
         <div className="qs-pagination animate-fade-in" role="navigation" aria-label="Watchlist pagination">

@@ -77,10 +77,17 @@ export default function WatchlistPage() {
   // ── URL state: read navigation params on mount to auto-select flight ─
   const searchParams = useSearchParams();
   const hasAppliedUrlState = useRef(false);
+  const seedPriceByWatchId = useRef<Map<string, { price: number; currency: string }>>(new Map());
   useEffect(() => {
     if (hasAppliedUrlState.current || actions.items.length === 0) return;
     hasAppliedUrlState.current = true;
     const nav = readWatchlistNavigationParams(searchParams);
+    if (nav.watchId && nav.seedPrice != null) {
+      seedPriceByWatchId.current.set(nav.watchId, {
+        price: nav.seedPrice,
+        currency: nav.seedCurrency || "EUR",
+      });
+    }
     if (nav.watchId) {
       const match = actions.items.find((item) => item.id === nav.watchId);
       if (match) {
@@ -291,6 +298,7 @@ export default function WatchlistPage() {
             items={actions.items}
             smartListItems={derived.smartListItems}
             watchMeta={derived.watchMeta}
+            getSeedPrice={(watchId) => seedPriceByWatchId.current.get(watchId)}
             lastUpdatedGlobal={derived.lastUpdatedGlobal}
             watchSearch={view.watchSearch}
             watchSort={view.watchSort}

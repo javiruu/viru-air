@@ -19,6 +19,8 @@ export const WL_PARAM_ORIGIN = PARAM_ORIGIN;
 export const WL_PARAM_DESTINATION = PARAM_DESTINATION;
 export const WL_PARAM_TRAVEL_DATE = PARAM_TRAVEL_DATE;
 export const WL_PARAM_WATCH_ID = "watchId";
+export const WL_PARAM_SEED_PRICE = "seedPrice";
+export const WL_PARAM_SEED_CURRENCY = "seedCurrency";
 export const WL_PARAM_VIEW = "view";
 export const WL_PARAM_RANGE = "range";
 
@@ -124,6 +126,8 @@ export type QuickSearchWatchlistNav = {
   destination: string;
   travelDate: string;
   watchId?: string;
+  seedPrice?: number;
+  seedCurrency?: string;
 };
 
 /**
@@ -141,6 +145,8 @@ export function buildWatchlistUrl(params: QuickSearchWatchlistNav): string {
   if (origin) search.set(WL_PARAM_ORIGIN, origin);
   if (destination) search.set(WL_PARAM_DESTINATION, destination);
   if (travelDate) search.set(WL_PARAM_TRAVEL_DATE, travelDate);
+  if (params.seedPrice != null) search.set(WL_PARAM_SEED_PRICE, String(params.seedPrice));
+  if (params.seedCurrency) search.set(WL_PARAM_SEED_CURRENCY, params.seedCurrency);
 
   const qs = search.toString();
   return qs ? `/watchlist?${qs}` : "/watchlist";
@@ -153,11 +159,15 @@ export function buildWatchlistUrl(params: QuickSearchWatchlistNav): string {
 export function readWatchlistNavigationParams(
   sp: URLSearchParams,
 ): QuickSearchWatchlistNav {
+  const seedPriceRaw = sp.get(WL_PARAM_SEED_PRICE);
+  const seedPrice = seedPriceRaw != null && seedPriceRaw !== "" ? Number(seedPriceRaw) : undefined;
   return {
     origin: sanitizeIata(sp.get(WL_PARAM_ORIGIN)),
     destination: sanitizeIata(sp.get(WL_PARAM_DESTINATION)),
     travelDate: sanitizeIsoDate(sp.get(WL_PARAM_TRAVEL_DATE)),
     watchId: sanitizeWatchId(sp.get(WL_PARAM_WATCH_ID)),
+    seedPrice: Number.isFinite(seedPrice) ? seedPrice : undefined,
+    seedCurrency: sp.get(WL_PARAM_SEED_CURRENCY) || undefined,
   };
 }
 
