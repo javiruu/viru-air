@@ -30,8 +30,6 @@ type WatchRowProps = {
   readonly communityInsight: CommunityRouteInsight | undefined;
   readonly isSelected: boolean;
   readonly isBulkSelected: boolean;
-  readonly seedPrice?: number;
-  readonly seedCurrency?: string;
   readonly onSelect: (watch: Watch) => void;
   readonly onToggleBulkSelected: (watchId: string, selected: boolean) => void;
   readonly onOpenCommunity: (
@@ -49,8 +47,6 @@ export function WatchRow({
   communityInsight,
   isSelected,
   isBulkSelected,
-  seedPrice,
-  seedCurrency,
   onSelect,
   onToggleBulkSelected,
   onOpenCommunity,
@@ -122,10 +118,12 @@ export function WatchRow({
       meta.max !== null &&
       meta.max > meta.min,
   );
-  const provider = resolveProviderPresentation(
-    meta?.latest?.provider,
-    t("watchlist.providerCoverage.unknown"),
-  );
+  const provider = meta?.latest?.provider
+    ? resolveProviderPresentation(
+        meta.latest.provider,
+        t("watchlist.providerCoverage.unknown"),
+      )
+    : null;
 
   return (
     <article
@@ -175,13 +173,11 @@ export function WatchRow({
                   meta.latest.currency,
                   localeTag,
                 )
-              : seedPrice != null
-                ? formatCurrency(seedPrice, seedCurrency ?? "EUR", localeTag)
-                : "--"}
+              : "--"}
           </strong>
         </div>
         <div className="watch-meta">
-          {meta?.latest ? (
+          {meta?.latest && meta.previous ? (
             <span
               className={`status-pill ${
                 trend === "up"
@@ -205,7 +201,7 @@ export function WatchRow({
               {t("watchlist.detail.freshness")} {freshness.label}
             </span>
           ) : null}
-          {meta?.latest?.provider ? (
+          {meta?.latest?.provider && provider ? (
             <span className={`watch-provider-chip watch-provider-chip--${provider.id}`}>
               {t("watchlist.providerCoverage.rowSource", {
                 provider: provider.label,
@@ -219,35 +215,39 @@ export function WatchRow({
         </div>
       </div>
       <div className="watch-price-area">
-        <div className="watch-price tabular-nums">
-          <span className="watch-price-caption">
-            {t("watchlist.smartList.currentPrice")}
-          </span>
-          <span className={`trend-chip trend-${trend}`}>
-            <span className="trend-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24">
-                <path
-                  d="M6 15l6-6 6 6"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+        {meta?.latest ? (
+          <div className="watch-price tabular-nums">
+            <span className="watch-price-caption">
+              {t("watchlist.smartList.currentPrice")}
             </span>
-            {deltaLabel}
-            {trendPercentLabel ? (
-              <span
-                className="trend-chip-percent"
-                aria-label={trendPercentLabel}
-              >
-                {trendPercentLabel}
+            {meta.previous ? (
+              <span className={`trend-chip trend-${trend}`}>
+                <span className="trend-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M6 15l6-6 6 6"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+                {deltaLabel}
+                {trendPercentLabel ? (
+                  <span
+                    className="trend-chip-percent"
+                    aria-label={trendPercentLabel}
+                  >
+                    {trendPercentLabel}
+                  </span>
+                ) : null}
               </span>
             ) : null}
-          </span>
-        </div>
-        {hasMeaningfulDrop || isBestPrice ? (
+          </div>
+        ) : null}
+        {meta?.latest && (hasMeaningfulDrop || isBestPrice) ? (
           <div className="watch-price-badges">
             {hasMeaningfulDrop &&
             priceDropAmount !== null &&

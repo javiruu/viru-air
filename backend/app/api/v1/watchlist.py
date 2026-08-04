@@ -419,6 +419,7 @@ def get_watch_detail(
                 "raw_currency": latest.raw_currency,
                 "departure_time_local": latest.departure_time_local,
                 "provider": latest.provider,
+                "is_stale": latest.is_stale,
             }
         ),
         price_history=[

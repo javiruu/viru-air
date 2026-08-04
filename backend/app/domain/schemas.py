@@ -324,6 +324,7 @@ class SnapshotOut(BaseModel):
     raw_currency: str
     departure_time_local: str | None = None
     provider: str | None = None
+    is_stale: bool = False
 
 
 class WatchPriceHistoryOut(SnapshotOut):

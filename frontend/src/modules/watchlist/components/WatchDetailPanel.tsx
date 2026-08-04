@@ -95,14 +95,15 @@ export function WatchDetailPanel({
   });
 
   const latestSnapshot = currentDetail?.latest_snapshot ?? null;
-  const latestProvider = resolveProviderPresentation(
-    latestSnapshot?.provider,
-    t("watchlist.providerCoverage.unknown"),
-  );
+  const latestProvider = latestSnapshot
+    ? resolveProviderPresentation(
+        latestSnapshot.provider,
+        t("watchlist.providerCoverage.unknown"),
+      )
+    : null;
   const currency = latestSnapshot?.raw_currency ?? "EUR";
   const hasSnapshotPrice = latestSnapshot && latestSnapshot.raw_price != null && latestSnapshot.raw_price >= 0;
   const currentPriceValue = hasSnapshotPrice ? formatCurrency(latestSnapshot.raw_price, currency, localeTag) : "--";
-  const currentPriceStatus = !latestSnapshot ? "no-snapshot" : !hasSnapshotPrice ? "pending-capture" : "ok";
   const comparableFare = hasSnapshotPrice
     ? calculateComparableFare(
         latestSnapshot.raw_price,
@@ -180,13 +181,6 @@ export function WatchDetailPanel({
             <span>{t("watchlist.detail.currentPriceLabel")}</span>
             <strong>
               {currentPriceValue}
-              {currentPriceStatus !== "ok" ? (
-                <span className="watch-detail-price-status">
-                  {currentPriceStatus === "no-snapshot"
-                    ? t("watchlist.freshness.noDataLabel")
-                    : t("watchlist.freshness.noDataDetail")}
-                </span>
-              ) : null}
             </strong>
           </div>
           <div className="watch-detail-metric">
@@ -197,11 +191,13 @@ export function WatchDetailPanel({
             <span>{t("watchlist.detail.deltaFromMinLabel")}</span>
             <strong>{deltaFromMinValue}</strong>
           </div>
-          <div className="watch-detail-metric">
-            <span>{t("watchlist.detail.freshnessLabel")}</span>
-            <strong>{freshness.fullText}</strong>
-            {freshness.observationNote ? <small className="panel-note">{freshness.observationNote}</small> : null}
-          </div>
+          {latestSnapshot ? (
+            <div className="watch-detail-metric">
+              <span>{t("watchlist.detail.freshnessLabel")}</span>
+              <strong>{freshness.fullText}</strong>
+              {freshness.observationNote ? <small className="panel-note">{freshness.observationNote}</small> : null}
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -271,10 +267,16 @@ export function WatchDetailPanel({
       <div className="watch-detail-block">
         <h3 className="watch-detail-block-title">{t("watchlist.detail.operational.title")}</h3>
         <div className="watch-detail-operational">
-          <span className="watch-detail-operational-item tabular-nums">{t("watchlist.detail.latestSnapshot")} {latestSnapshot ? safeDateTime(latestSnapshot.captured_at_utc, localeTag) : "--"}</span>
-          <span className={`watch-detail-operational-item watch-provider-chip watch-provider-chip--${latestProvider.id}`}>
-            {t("watchlist.providerCoverage.detailSource", { provider: latestProvider.label })}
-          </span>
+          {latestSnapshot ? (
+            <>
+              <span className="watch-detail-operational-item tabular-nums">{t("watchlist.detail.latestSnapshot")} {safeDateTime(latestSnapshot.captured_at_utc, localeTag)}</span>
+              {latestProvider ? (
+                <span className={`watch-detail-operational-item watch-provider-chip watch-provider-chip--${latestProvider.id}`}>
+                  {t("watchlist.providerCoverage.detailSource", { provider: latestProvider.label })}
+                </span>
+              ) : null}
+            </>
+          ) : null}
           <span className="watch-detail-operational-item tabular-nums">{t("watchlist.summary.count")} {summaryData ? summaryData.count : "--"}</span>
           <span className="watch-detail-operational-item tabular-nums">{t("watchlist.summary.delta")} {summaryData?.delta_pct == null ? "--" : formatPercent(summaryData.delta_pct, localeTag)}</span>
           <span className="watch-detail-operational-item">{t("watchlist.detail.operational.trend")} {trendText}</span>

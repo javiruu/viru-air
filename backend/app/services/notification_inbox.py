@@ -1,12 +1,15 @@
 from datetime import datetime
 
-from sqlalchemy import and_, case, desc, func, or_, select
+from sqlalchemy import and_, case, desc, exists, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
+from app.domain.vocabulary import WATCH_STATUS_ACTIVE
 from app.i18n import t
 from app.infrastructure.db.models import (
     AlertRule,
+    CommunityTrendingSnapshot,
+    CommunityTrendingSnapshotRoute,
     FlightWatch,
     HotelAlertEvent,
     HotelAlertRule,
@@ -15,6 +18,10 @@ from app.infrastructure.db.models import (
     NotificationEvent,
     SecurityActivity,
     UserNotificationState,
+)
+from app.services.community_trending_notifier import (
+    build_community_trending_source_id,
+    parse_community_trending_source_id,
 )
 from app.services.notification_inbox_sources import (
     READABLE_SOURCES,
@@ -31,6 +38,8 @@ from app.services.notification_inbox_sources import (
     security_item,
     security_ref,
 )
+
+COMMUNITY_INBOX_LIMIT = 20
 
 
 def _state_map(
@@ -56,6 +65,91 @@ def _state_map(
     }
 
 
+def _latest_visible_community_snapshot(
+    db: Session,
+    *,
+    now: datetime,
+) -> CommunityTrendingSnapshot | None:
+    return db.scalar(
+        select(CommunityTrendingSnapshot)
+        .where(
+            CommunityTrendingSnapshot.status == "published",
+            CommunityTrendingSnapshot.expires_at_utc > now,
+        )
+        .order_by(
+            CommunityTrendingSnapshot.calculated_at_utc.desc(),
+            CommunityTrendingSnapshot.id.desc(),
+        )
+        .limit(1)
+    )
+
+
+def _community_trending_items(
+    db: Session,
+    *,
+    user_id: str,
+    now: datetime | None = None,
+    limit: int = COMMUNITY_INBOX_LIMIT,
+) -> list[InboxItem]:
+    visible_at = now or utc_now_naive()
+    snapshot = _latest_visible_community_snapshot(db, now=visible_at)
+    if snapshot is None:
+        return []
+
+    active_watch_for_route = exists(
+        select(FlightWatch.id).where(
+            FlightWatch.origin_iata == CommunityTrendingSnapshotRoute.origin_iata,
+            FlightWatch.destination_iata == CommunityTrendingSnapshotRoute.destination_iata,
+            FlightWatch.user_id == user_id,
+            FlightWatch.status == WATCH_STATUS_ACTIVE,
+        )
+    )
+    routes = db.scalars(
+        select(CommunityTrendingSnapshotRoute)
+        .where(
+            CommunityTrendingSnapshotRoute.snapshot_id == snapshot.id,
+            active_watch_for_route,
+        )
+        .order_by(
+            CommunityTrendingSnapshotRoute.rank.asc(),
+            CommunityTrendingSnapshotRoute.origin_iata.asc(),
+            CommunityTrendingSnapshotRoute.destination_iata.asc(),
+        )
+        .limit(max(limit, 1))
+    ).all()
+
+    refs: list[SourceRef] = []
+    item_data: list[tuple[SourceRef, str, datetime]] = []
+    created_at = snapshot.published_at_utc or snapshot.calculated_at_utc
+    for route in routes:
+        source_id = build_community_trending_source_id(
+            snapshot.reporting_date,
+            route.origin_iata,
+            route.destination_iata,
+        )
+        ref = SourceRef(SOURCE_COMMUNITY_TRENDING, source_id)
+        refs.append(ref)
+        item_data.append((ref, f"{route.origin_iata} → {route.destination_iata}", created_at))
+
+    states = _state_map(db, user_id=user_id, source_refs=refs)
+    return [
+        InboxItem(
+            id=f"{SOURCE_COMMUNITY_TRENDING}:{ref.source_id}",
+            source_type=SOURCE_COMMUNITY_TRENDING,
+            source_id=ref.source_id,
+            category="community",
+            tone="info",
+            title=t("es", "notifications.community_trending_title"),
+            body=f"{route_label} es una ruta en tendencia esta semana.",
+            route_label=route_label,
+            action_href="/dashboard",
+            created_at=created_at,
+            read_at=states.get(ref),
+        )
+        for ref, route_label, created_at in item_data
+    ]
+
+
 def _source_belongs_to_user(
     db: Session,
     *,
@@ -73,14 +167,29 @@ def _source_belongs_to_user(
             is not None
         )
     if ref.source_type == SOURCE_COMMUNITY_TRENDING:
-        from app.services.community_trending_notifier import SOURCE_COMMUNITY_TRENDING as CT_SRC
+        parsed = parse_community_trending_source_id(ref.source_id)
+        if parsed is None:
+            return False
+        reporting_date, origin_iata, destination_iata = parsed
+        snapshot = _latest_visible_community_snapshot(db, now=utc_now_naive())
+        if snapshot is None or snapshot.reporting_date != reporting_date:
+            return False
         return (
             db.scalar(
-                select(NotificationEvent.id)
+                select(CommunityTrendingSnapshotRoute.id)
+                .join(
+                    FlightWatch,
+                    and_(
+                        FlightWatch.origin_iata == CommunityTrendingSnapshotRoute.origin_iata,
+                        FlightWatch.destination_iata == CommunityTrendingSnapshotRoute.destination_iata,
+                        FlightWatch.user_id == user_id,
+                        FlightWatch.status == WATCH_STATUS_ACTIVE,
+                    ),
+                )
                 .where(
-                    NotificationEvent.id == ref.source_id,
-                    NotificationEvent.rule_id == "",
-                    NotificationEvent.dedupe_key.like(f"{CT_SRC}:{user_id}:%"),
+                    CommunityTrendingSnapshotRoute.snapshot_id == snapshot.id,
+                    CommunityTrendingSnapshotRoute.origin_iata == origin_iata,
+                    CommunityTrendingSnapshotRoute.destination_iata == destination_iata,
                 )
             )
             is not None
@@ -123,7 +232,13 @@ def _source_belongs_to_user(
     return False
 
 
-def list_notification_inbox(db: Session, *, user_id: str, limit: int = 80) -> list[InboxItem]:
+def list_notification_inbox(
+    db: Session,
+    *,
+    user_id: str,
+    limit: int = 80,
+    community_limit: int = COMMUNITY_INBOX_LIMIT,
+) -> list[InboxItem]:
     bounded_limit = min(max(limit, 1), 200)
     security_limit = min(bounded_limit, 20)
     hotel_limit = min(bounded_limit, 40)
@@ -161,49 +276,31 @@ def list_notification_inbox(db: Session, *, user_id: str, limit: int = 80) -> li
             .limit(hotel_limit)
         ).all()
     )
-    # Community trending signals (in-memory, not persisted as NotificationEvent)
-    from app.services.community_trending_notifier import get_trending_signals_for_user
-    trending_signals = get_trending_signals_for_user(user_id)
-    trending_refs = [
-        SourceRef(SOURCE_COMMUNITY_TRENDING, signal.event_id)
-        for signal in trending_signals
-    ]
+    trending_items = _community_trending_items(
+        db,
+        user_id=user_id,
+        limit=min(max(community_limit, 1), 200),
+    )
     refs = (
-        trending_refs
-        + [alert_ref(event) for event, _, _ in alert_rows]
+        [alert_ref(event) for event, _, _ in alert_rows]
         + [hotel_alert_ref(event) for event, _ in hotel_rows]
         + [security_ref(activity) for activity in security_rows]
     )
     states = _state_map(db, user_id=user_id, source_refs=refs)
 
-    items: list[InboxItem] = []
-    for signal in trending_signals:
-        items.append(
-            InboxItem(
-                id=f"{SOURCE_COMMUNITY_TRENDING}:{signal.event_id}",
-                source_type=SOURCE_COMMUNITY_TRENDING,
-                source_id=signal.event_id,
-                category="community",
-                tone="info",
-                title=t("es", "notifications.community_trending_title"),
-                body=f"{signal.origin_iata} → {signal.destination_iata} es una ruta en tendencia esta semana.",
-                route_label=f"{signal.origin_iata} → {signal.destination_iata}",
-                action_href="/dashboard",
-                created_at=signal.created_at,
-                read_at=states.get(
-                    SourceRef(SOURCE_COMMUNITY_TRENDING, signal.event_id)
-                ),
-            )
-        )
-
-    for event, _, watch in alert_rows:
-        items.append(alert_item(event, watch, states.get(alert_ref(event))))
-
-    for event, hotel in hotel_rows:
-        items.append(hotel_alert_item(event, hotel, states.get(hotel_alert_ref(event))))
-
-    for activity in security_rows:
-        items.append(security_item(activity, states.get(security_ref(activity))))
+    items: list[InboxItem] = list(trending_items)
+    items.extend(
+        alert_item(event, watch, states.get(alert_ref(event)))
+        for event, _, watch in alert_rows
+    )
+    items.extend(
+        hotel_alert_item(event, hotel, states.get(hotel_alert_ref(event)))
+        for event, hotel in hotel_rows
+    )
+    items.extend(
+        security_item(activity, states.get(security_ref(activity)))
+        for activity in security_rows
+    )
 
     return sorted(items, key=lambda item: (item.created_at, item.id), reverse=True)[:bounded_limit]
 
@@ -243,13 +340,24 @@ def mark_notification_read(
 
 def mark_all_notifications_read(db: Session, *, user_id: str) -> int:
     """Mark all unread notifications as read using bulk SQL operations."""
-    items = list_notification_inbox(db, user_id=user_id, limit=200)
+    items = list_notification_inbox(
+        db,
+        user_id=user_id,
+        limit=200,
+        community_limit=200,
+    )
+    community_items = _community_trending_items(db, user_id=user_id, limit=200)
+    existing_item_keys = {(item.source_type, item.source_id) for item in items}
+    items.extend(
+        item
+        for item in community_items
+        if (item.source_type, item.source_id) not in existing_item_keys
+    )
     unread_items = [item for item in items if not item.is_read]
     if not unread_items:
         return 0
 
     now = utc_now_naive()
-    # Bulk-update existing rows
     existing_pairs = {
         (item.source_type, item.source_id)
         for item in unread_items
@@ -266,9 +374,9 @@ def mark_all_notifications_read(db: Session, *, user_id: str) -> int:
         row.read_at = now
         existing_pairs_found.add((row.source_type, row.source_id))
 
-    # Insert new rows for items not yet in state table
     new_items = [
-        item for item in unread_items
+        item
+        for item in unread_items
         if (item.source_type, item.source_id) not in existing_pairs_found
     ]
     if new_items:
@@ -288,7 +396,6 @@ def mark_all_notifications_read(db: Session, *, user_id: str) -> int:
 
 def count_notification_summary(db: Session, *, user_id: str) -> dict[str, int]:
     """Lightweight summary using SQL COUNT queries instead of fetching full rows."""
-    # Count alert events for this user
     alert_count = db.scalar(
         select(func.count(NotificationEvent.id))
         .join(AlertRule, NotificationEvent.rule_id == AlertRule.id)
@@ -296,13 +403,11 @@ def count_notification_summary(db: Session, *, user_id: str) -> dict[str, int]:
         .where(FlightWatch.user_id == user_id)
     ) or 0
 
-    # Count security activities
     security_count = db.scalar(
         select(func.count(SecurityActivity.id))
         .where(SecurityActivity.user_id == user_id)
     ) or 0
 
-    # Count hotel alert events
     rule_hotel_ids = select(HotelAlertRule.hotel_id).where(HotelAlertRule.user_id == user_id)
     tracked_hotel_ids = select(HotelTrackedOffer.hotel_id).where(HotelTrackedOffer.user_id == user_id)
     hotel_count = db.scalar(
@@ -315,10 +420,14 @@ def count_notification_summary(db: Session, *, user_id: str) -> dict[str, int]:
         )
     ) or 0
 
-    total = alert_count + security_count + hotel_count
+    community_items = _community_trending_items(
+        db,
+        user_id=user_id,
+        limit=COMMUNITY_INBOX_LIMIT,
+    )
+    community_count = len(community_items)
+    total = alert_count + security_count + hotel_count + community_count
 
-    # Count unread: items NOT in user_notification_state
-    # For alerts
     read_alert_ids = select(UserNotificationState.source_id).where(
         UserNotificationState.user_id == user_id,
         UserNotificationState.source_type == SOURCE_ALERT_EVENT,
@@ -330,7 +439,6 @@ def count_notification_summary(db: Session, *, user_id: str) -> dict[str, int]:
         .where(FlightWatch.user_id == user_id, NotificationEvent.id.not_in(read_alert_ids))
     ) or 0
 
-    # For security
     read_security_ids = select(UserNotificationState.source_id).where(
         UserNotificationState.user_id == user_id,
         UserNotificationState.source_type == SOURCE_SECURITY_ACTIVITY,
@@ -340,7 +448,6 @@ def count_notification_summary(db: Session, *, user_id: str) -> dict[str, int]:
         .where(SecurityActivity.user_id == user_id, SecurityActivity.id.not_in(read_security_ids))
     ) or 0
 
-    # For hotels
     read_hotel_ids = select(UserNotificationState.source_id).where(
         UserNotificationState.user_id == user_id,
         UserNotificationState.source_type == SOURCE_HOTEL_ALERT_EVENT,
@@ -356,10 +463,15 @@ def count_notification_summary(db: Session, *, user_id: str) -> dict[str, int]:
         )
     ) or 0
 
-    unread = unread_alerts + unread_security + unread_hotels
+    community_refs = [SourceRef(item.source_type, item.source_id) for item in community_items]
+    community_states = _state_map(db, user_id=user_id, source_refs=community_refs)
+    unread_community = sum(
+        1
+        for item in community_items
+        if community_states.get(SourceRef(item.source_type, item.source_id)) is None
+    )
+    unread = unread_alerts + unread_security + unread_hotels + unread_community
 
-    # Category breakdown from alert events using SQL CASE/WHEN (matching _alert_category logic)
-    # _alert_category priority: worker > digest > price
     is_worker = or_(
         NotificationEvent.delivery_status.in_({"failed", "error"}),
         NotificationEvent.group_reason == "revalidation_failed",
@@ -382,26 +494,6 @@ def count_notification_summary(db: Session, *, user_id: str) -> dict[str, int]:
     worker_count = int(cat_row.worker or 0)
     digest_count = int(cat_row.digest or 0)
     price_count = total_alerts - worker_count - digest_count
-
-    # Count community trending signals for this user
-    from app.services.community_trending_notifier import get_trending_signals_for_user
-    trending_signals = get_trending_signals_for_user(user_id)
-    community_count = len(trending_signals)
-    total += community_count
-
-    # Count unread community items
-    read_community_rows = db.execute(
-        select(UserNotificationState.source_id).where(
-            UserNotificationState.user_id == user_id,
-            UserNotificationState.source_type == SOURCE_COMMUNITY_TRENDING,
-        )
-    ).all()
-    read_community_id_set = {row[0] for row in read_community_rows}
-    unread_community = len([
-        s for s in trending_signals
-        if s.event_id not in read_community_id_set
-    ])
-    unread += unread_community
 
     return {
         "total": total,

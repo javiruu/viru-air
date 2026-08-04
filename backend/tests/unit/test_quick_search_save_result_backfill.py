@@ -174,11 +174,17 @@ def test_save_result_stale_backfills_history_while_enqueuing_revalidation() -> N
         ).all()
 
         assert existing["watch_id"] == created["watch_id"]
-        assert len(snapshots) == 1
+        assert len(snapshots) == 3
         assert snapshots[0].provider == "historical_backfill"
         assert float(snapshots[0].raw_price) == 39.25
         assert snapshots[0].captured_at_utc == observed_at
         assert snapshots[0].is_stale is True
+        assert snapshots[1].provider == "quick-search"
+        assert float(snapshots[1].raw_price) == 41.0
+        assert snapshots[1].is_stale is True
+        assert snapshots[2].provider == "quick-search"
+        assert float(snapshots[2].raw_price) == 41.0
+        assert snapshots[2].is_stale is True
         assert len(jobs) == 1
         assert jobs[0].status == "queued"
     finally:

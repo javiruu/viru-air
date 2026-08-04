@@ -29,18 +29,24 @@ def handle_saved_result_observation(
     watch: FlightWatch,
     payload: SavedQuickSearchResultPayload,
 ) -> None:
-    if _saved_result_requires_revalidation(payload):
-        _add_saved_result_backfill_snapshots(db, watch)
-        _enqueue_saved_result_revalidation(db, watch, payload)
-        return
-    _seed_watch_snapshot_from_saved_result(db, watch, payload)
+    requires_revalidation = _saved_result_requires_revalidation(payload)
+    _seed_watch_snapshot_from_saved_result(
+        db,
+        watch,
+        payload,
+        is_stale=requires_revalidation,
+    )
     _add_saved_result_backfill_snapshots(db, watch)
+    if requires_revalidation:
+        _enqueue_saved_result_revalidation(db, watch, payload)
 
 
 def _seed_watch_snapshot_from_saved_result(
     db: Session,
     watch: FlightWatch,
     payload: SavedQuickSearchResultPayload,
+    *,
+    is_stale: bool,
 ) -> None:
     if payload.price_total is None:
         return
@@ -50,7 +56,7 @@ def _seed_watch_snapshot_from_saved_result(
             raw_price=payload.price_total,
             raw_currency=payload.currency,
             provider="quick-search",
-            is_stale=False,
+            is_stale=is_stale,
         )
     )
     db.flush()

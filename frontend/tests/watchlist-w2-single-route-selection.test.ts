@@ -14,8 +14,7 @@ test("W2: history panel keeps the selected date without repeating the route", ()
 
   assert.match(source, /history-route-line-text/);
   assert.match(source, /selectedWatch\.travel_date_local/);
-  assert.doesNotMatch(source, /selectedWatch\.origin_iata/);
-  assert.doesNotMatch(source, /selectedWatch\.destination_iata/);
+  assert.doesNotMatch(source, /selectedWatch\.origin_iata\}\s*→\s*\$\{selectedWatch\.destination_iata\}/);
 
   assert.doesNotMatch(source, /name="history_origin"/);
   assert.doesNotMatch(source, /name="history_destination"/);

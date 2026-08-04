@@ -6,6 +6,7 @@ Automatizar y operar con seguridad la poda de tablas de crecimiento del backend:
 - `notification_event`
 - `security_activity`
 - `idempotency_record`
+- `community_trending_snapshot` y sus rutas `community_trending_snapshot_route`
 
 Script principal: `backend/scripts/db_retention.py`  
 Runner recomendado: `backend/ops/db-retention/run-db-retention.sh`
@@ -18,6 +19,8 @@ El script valida mínimos de retención antes de tocar datos:
 - `notification_event_days >= 30`
 - `security_activity_days >= 30`
 - `idempotency_days >= 3`
+- `community_trending_days >= 30`
+- `community_trending_building_hours > 0`
 
 Si una ventana es menor al mínimo:
 1. termina con exit code `1`
@@ -56,6 +59,15 @@ cd backend
 ops/db-retention/run-db-retention.sh --dry-run
 ops/db-retention/run-db-retention.sh
 ```
+
+La limpieza comunitaria usa dos políticas independientes:
+
+- snapshots `published`: se conservan por defecto 90 días, controlados por `--community-trending-days`;
+- snapshots `building`: se eliminan si tienen más de 1 hora, controlados por `--community-trending-building-hours`.
+
+En `--dry-run` se informa de candidatos, rutas y estados `community_trending` sin borrar nada. En modo apply se eliminan primero los estados comunitarios que ya no pueden ser representados por ninguna snapshot retenida, después las rutas y finalmente las snapshots. Los estados de otras fuentes nunca se eliminan aunque compartan `source_id`.
+
+La limpieza comunitaria emite `db_retention.community_trending_completed` con candidatos, eliminados, batches y duración; no incluye usuarios, emails ni payloads privados.
 
 ---
 

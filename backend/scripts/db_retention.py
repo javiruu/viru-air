@@ -16,9 +16,19 @@ if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
 from app.core.time import utc_now_naive  # noqa: E402
-from app.infrastructure.db.models import IdempotencyRecord, NotificationEvent, PriceSnapshot, SecurityActivity  # noqa: E402
+from app.infrastructure.db.models import (  # noqa: E402
+    IdempotencyRecord,
+    NotificationEvent,
+    PriceSnapshot,
+    SecurityActivity,
+)
 from app.infrastructure.db.session import SessionLocal  # noqa: E402
 from app.services.db_retention_tables import TableRetentionPlan, prune_table, validate_retention_windows  # noqa: E402
+from app.services.community_trending_retention import (  # noqa: E402
+    CommunityTrendingRetentionOptions,
+    run_community_trending_retention,
+    validate_community_trending_retention_days,
+)
 from app.services.fare_memory_retention import (  # noqa: E402
     FareMemoryRetentionOptions,
     retention_result_to_payload,
@@ -80,6 +90,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--notification-event-days", type=int, default=90)
     parser.add_argument("--security-activity-days", type=int, default=180)
     parser.add_argument("--idempotency-days", type=int, default=7)
+    parser.add_argument("--community-trending-days", type=int, default=90)
+    parser.add_argument("--community-trending-building-hours", type=int, default=1)
     parser.add_argument("--batch-size", type=int, default=5000)
     parser.add_argument("--dry-run", action="store_true", help="Only report deletion candidates")
     parser.add_argument("--apply", action="store_true", help="Explicitly delete candidates")
@@ -108,6 +120,9 @@ def _validate_execution_mode(args: argparse.Namespace) -> None:
         raise ValueError("--fare-memory requires either --dry-run or --apply")
     if args.batch_size < 1:
         raise ValueError("--batch-size must be >= 1")
+    if args.community_trending_building_hours <= 0:
+        raise ValueError("--community-trending-building-hours must be > 0")
+    validate_community_trending_retention_days(args.community_trending_days)
 
 
 def main() -> int:
@@ -120,6 +135,7 @@ def main() -> int:
         "notification_event_days": args.notification_event_days,
         "security_activity_days": args.security_activity_days,
         "idempotency_days": args.idempotency_days,
+        "community_trending_days": args.community_trending_days,
     }
     run_context = {
         "dry_run": args.dry_run,
@@ -180,8 +196,24 @@ def main() -> int:
             for table_result in per_table:
                 log_table_completed(table_result, args.log_file)
 
-        deleted_total = sum(item["deleted"] for item in per_table)
-        candidates_total = sum(item["candidates"] for item in per_table)
+            community_result = run_community_trending_retention(
+                session,
+                CommunityTrendingRetentionOptions(
+                    dry_run=args.dry_run,
+                    batch_size=args.batch_size,
+                    snapshot_days=args.community_trending_days,
+                    building_hours=args.community_trending_building_hours,
+                    now_utc=utc_now_naive(),
+                ),
+            )
+            log_event(
+                "db_retention.community_trending_completed",
+                community_result.to_payload(),
+                args.log_file,
+            )
+
+        deleted_total = sum(item["deleted"] for item in per_table) + community_result.deleted_total
+        candidates_total = sum(item["candidates"] for item in per_table) + community_result.candidates_total
         duration_ms = round((time.monotonic() - started_at) * 1000, 2)
 
         summary = {
@@ -192,6 +224,7 @@ def main() -> int:
             "dry_run": args.dry_run,
             "batch_size": args.batch_size,
             "tables": per_table,
+            "community_trending": community_result.to_payload(),
             "totals": {
                 "candidates": candidates_total,
                 "deleted": deleted_total,

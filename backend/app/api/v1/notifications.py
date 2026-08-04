@@ -25,6 +25,7 @@ def _summary(items: list[InboxItem]) -> dict[str, int]:
         "security": sum(1 for item in items if item.category == "security"),
         "digest": sum(1 for item in items if item.category == "digest"),
         "worker": sum(1 for item in items if item.category == "worker"),
+        "community": sum(1 for item in items if item.category == "community"),
     }
 
 

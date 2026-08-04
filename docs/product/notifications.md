@@ -1,7 +1,7 @@
 # Centro de notificaciones persistente
 
 **Estado:** vivo
-**Ultima revision:** 2026-07-30
+**Ultima revision:** 2026-08-04
 **Fuente de verdad:** si
 **Area:** producto
 
@@ -16,6 +16,7 @@ La bandeja complementa los toast in-app: los toast avisan en el momento, pero es
 La bandeja existe para senales que no deben perderse:
 
 - cambios de precio de alertas;
+- tendencias comunitarias de rutas vigiladas;
 - senales hoteleras del radar de hoteles;
 - actividad de seguridad;
 - digest de alertas agrupadas;
@@ -26,7 +27,7 @@ La bandeja existe para senales que no deben perderse:
 La vista `Bandeja` de `/notifications` muestra:
 
 - un checklist de cabina que prioriza senales sin leer con una accion concreta;
-- resumen reciente por total, precio, seguridad y sistema, sin mezclar esas cifras globales con las de una ruta;
+- resumen reciente por total, precio, seguridad, digest, worker y comunidad, sin mezclar esas cifras globales con las de una ruta;
 - filtros por categoria, estado sin leer y `Para actuar` (tambien enlazable con `?filter=actionable`);
 - cronologia visual por hoy, ultimos siete dias y anteriores, sin colapsar ni alterar los eventos fuente;
 - acciones para marcar una senal como leida o marcar toda la bandeja como leida;
@@ -52,5 +53,8 @@ La bandeja no introduce un pipeline paralelo. Agrega fuentes existentes y les su
 - `notification_event`: eventos emitidos por alertas, digests y workers.
 - `hotel_alert_event`: eventos emitidos por reglas hoteleras o hoteles trackeados por el usuario.
 - `security_activity`: actividad sensible de cuenta.
+- `community_trending`: snapshot persistente de rutas en tendencia, visible solo cuando el usuario tiene una Watch activa para esa dirección.
+
+Las señales comunitarias no son alertas personalizadas de precio ni identifican a otros viajeros. Desaparecen cuando el snapshot deja de estar publicado o caduca.
 
 El contrato tecnico de endpoints, tipos y persistencia esta en `docs/reference/backend/notifications-contract.md`.

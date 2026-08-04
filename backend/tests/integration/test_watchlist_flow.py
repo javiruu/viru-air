@@ -458,6 +458,61 @@ def test_watchlist_refresh_persists_one_canonical_snapshot_per_refresh(client: T
     assert detail.status_code == 200
     assert detail.json()["latest_snapshot"]["raw_price"] == 44.0
     assert detail.json()["latest_snapshot"]["departure_time_local"] == "07:40"
+    assert detail.json()["latest_snapshot"]["is_stale"] is False
+
+
+def test_watchlist_refresh_replaces_stale_snapshot_with_fresh_snapshot(
+    client: TestClient,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(watchlist_api, "provider", _SequentialPriceProvider([53.0]))
+    monkeypatch.setattr(watchlist_api, "REFRESH_COOLDOWN_SECONDS", 0)
+
+    token = register_and_token(client, email="stale-to-fresh@viru.dev")
+    headers = {"Authorization": f"Bearer {token}"}
+    travel_date = date.today() + timedelta(days=33)
+
+    create = client.post(
+        "/api/v1/watchlist",
+        headers=headers,
+        json={
+            "origin_iata": "MAD",
+            "destination_iata": "DUB",
+            "travel_date_local": str(travel_date),
+        },
+    )
+    assert create.status_code == 200
+    watch_id = create.json()["id"]
+
+    db, generator = _open_test_db_session()
+    try:
+        db.add(
+            PriceSnapshot(
+                watch_id=watch_id,
+                captured_at_utc=utc_now_naive() - timedelta(minutes=5),
+                departure_time_local="08:00",
+                raw_price=47.0,
+                raw_currency="EUR",
+                provider="quick-search",
+                is_stale=True,
+            )
+        )
+        db.commit()
+    finally:
+        _close_test_db_session(generator)
+
+    before = client.get(f"/api/v1/watchlist/{watch_id}", headers=headers)
+    assert before.status_code == 200
+    assert before.json()["latest_snapshot"]["raw_price"] == 47.0
+    assert before.json()["latest_snapshot"]["is_stale"] is True
+
+    refresh = client.post(f"/api/v1/watchlist/{watch_id}/refresh-now", headers=headers)
+    assert refresh.status_code == 200
+
+    after = client.get(f"/api/v1/watchlist/{watch_id}", headers=headers)
+    assert after.status_code == 200
+    assert after.json()["latest_snapshot"]["raw_price"] == 53.0
+    assert after.json()["latest_snapshot"]["is_stale"] is False
 
 
 def test_watchlist_collapses_legacy_same_second_snapshots_across_read_endpoints(

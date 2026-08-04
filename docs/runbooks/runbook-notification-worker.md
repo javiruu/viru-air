@@ -16,7 +16,7 @@ python -m app.worker.notifications --once
 - `NOTIFICATION_WORKER_INTERVAL_SECONDS` (default: `60`)
 
 Prerequisito:
-- Base de datos migrada a head (`0015_alerts_quiet_hours_digest`).
+- Base de datos migrada al head actual de Alembic (`0041_add_community_trending_snapshots` en esta versión).
 
 Notas:
 - El worker **no se activa automaticamente** al levantar la API web.
@@ -27,6 +27,29 @@ Notas:
 cd backend
 python -m app.worker.notifications --once
 ```
+
+Para generar un snapshot de tendencias comunitarias persistentes:
+
+```bash
+cd backend
+python -m app.worker.notifications --trending
+```
+
+El ciclo publica un snapshot global de rutas; el inbox solo lo muestra para Watches activas del usuario. Un snapshot vacío es válido y elimina lógicamente las señales anteriores. El evento `notification_trending_cycle` registra `routes_persisted`, no notificaciones individuales. La lectura no depende de caché de proceso y sobrevive al reinicio del worker.
+
+Para inspeccionar el snapshot visible sin generar uno nuevo, ejecutar una consulta equivalente sobre la base configurada:
+
+```sql
+SELECT s.id, s.reporting_date, s.calculated_at_utc, s.expires_at_utc,
+       r.origin_iata, r.destination_iata, r.rank, r.search_count
+FROM community_trending_snapshot AS s
+LEFT JOIN community_trending_snapshot_route AS r ON r.snapshot_id = s.id
+WHERE s.status = 'published'
+  AND s.expires_at_utc > CURRENT_TIMESTAMP
+ORDER BY s.calculated_at_utc DESC, r.rank ASC;
+```
+
+La retención y el worker no requieren una caché de proceso.
 
 Opcional con limite personalizado:
 ```bash

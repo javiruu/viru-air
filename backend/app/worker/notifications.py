@@ -67,7 +67,7 @@ def run_once(*, session_factory: sessionmaker = SessionLocal, limit: int = DEFAU
 
 
 def run_trending(*, session_factory: sessionmaker = SessionLocal) -> int:
-    """Run community trending check and return number of notifications created."""
+    """Run community trending check and return the number of routes persisted."""
     db = session_factory()
     try:
         created = notify_trending_routes(db)
@@ -75,7 +75,7 @@ def run_trending(*, session_factory: sessionmaker = SessionLocal) -> int:
             json.dumps(
                 {
                     "event": "notification_trending_cycle",
-                    "created": created,
+                    "routes_persisted": created,
                 },
                 ensure_ascii=False,
             )
@@ -103,7 +103,7 @@ def run_loop(
         # Run trending check every ~15 cycles (every ~15 minutes)
         trending_cycle += 1
         if trending_cycle % 15 == 0:
-            run_trending()
+            run_trending(session_factory=session_factory)
 
         time.sleep(max(1, sleep_seconds))
 

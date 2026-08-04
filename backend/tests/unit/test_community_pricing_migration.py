@@ -7,7 +7,7 @@ import sys
 
 
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
-HEAD_REVISION = "0040_add_qs_popularity_daily"
+HEAD_REVISION = "0041_add_community_trending_snapshots"
 MIGRATION_PATH = (
     BACKEND_ROOT / "alembic" / "versions" / "0039_add_community_pricing.py"
 )

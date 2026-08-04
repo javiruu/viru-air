@@ -35,7 +35,6 @@ type SmartWatchListPanelProps = {
   items: Watch[];
   smartListItems: Watch[];
   watchMeta: Map<string, WatchMetaEntry>;
-  getSeedPrice?: (watchId: string) => { price: number; currency: string } | undefined;
   lastUpdatedGlobal: string;
   watchSearch: string;
   watchSort: ListSort;
@@ -74,7 +73,6 @@ export function SmartWatchListPanel({
   items,
   smartListItems,
   watchMeta,
-  getSeedPrice,
   lastUpdatedGlobal,
   watchSearch,
   watchSort,
@@ -384,7 +382,6 @@ export function SmartWatchListPanel({
       ) : null}
       {showListMode
         ? pagedListItems.map((watch) => {
-            const seed = getSeedPrice?.(watch.id);
             return (
             <WatchRow
               key={watch.id}
@@ -396,8 +393,6 @@ export function SmartWatchListPanel({
               }))}
               isSelected={selectedWatchId === watch.id}
               isBulkSelected={selectedSet.has(watch.id)}
-              seedPrice={seed?.price}
-              seedCurrency={seed?.currency}
               onSelect={onSelectWatch}
               onToggleBulkSelected={toggleBulkSelected}
               onOpenCommunity={onCommunityAction}

@@ -47,6 +47,15 @@ class _PriceSequenceProvider:
         ]
 
 
+class _CountingProvider:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def get_flights(self, origin: str, destination: str, travel_date: str, **kwargs: object) -> list[ProviderFlight]:
+        self.calls += 1
+        raise AssertionError("watchlist read unexpectedly called the provider")
+
+
 def test_quick_search_and_alert_rule(client: TestClient, monkeypatch) -> None:
     monkeypatch.setattr(search_api, "_build_request_provider", lambda: _FakeSearchProvider())
 
@@ -137,6 +146,48 @@ def test_search_save_result_creates_or_reuses_watch(client: TestClient, monkeypa
     assert watches.status_code == 200
     saved_watch = next(item for item in watches.json() if item["id"] == first_payload["watch_id"])
     assert saved_watch["group_id"] == "round_trip_existing"
+
+
+def test_saved_warm_price_is_read_from_watchlist_without_provider_request(
+    client: TestClient,
+    monkeypatch,
+) -> None:
+    provider = _CountingProvider()
+    monkeypatch.setattr(watchlist_api, "provider", provider)
+
+    token = register_and_token(client, email="save-result-warm-watchlist@viru.dev")
+    headers = {"Authorization": f"Bearer {token}"}
+    travel_date = str(date.today() + timedelta(days=21))
+
+    saved = client.post(
+        "/api/v1/search/save-result",
+        headers=headers,
+        json={
+            "origin_iata": "MAD",
+            "destination_iata": "DUB",
+            "travel_date": travel_date,
+            "price_total": 47.0,
+            "currency": "EUR",
+            "freshness_status": "warm",
+            "requires_revalidation": True,
+            "validation_status": "seen",
+        },
+    )
+    assert saved.status_code == 200
+    watch_id = saved.json()["watch_id"]
+
+    listing = client.get("/api/v1/watchlist", headers=headers)
+    detail = client.get(f"/api/v1/watchlist/{watch_id}", headers=headers)
+
+    assert listing.status_code == 200
+    assert detail.status_code == 200
+    assert listing.json()[0]["id"] == watch_id
+    assert detail.json()["latest_snapshot"]["raw_price"] == 47.0
+    assert detail.json()["latest_snapshot"]["raw_currency"] == "EUR"
+    assert detail.json()["latest_snapshot"]["is_stale"] is True
+    assert detail.json()["price_history"][0]["raw_price"] == 47.0
+    assert detail.json()["price_history"][0]["is_stale"] is True
+    assert provider.calls == 0
 
 
 def test_alert_rule_min_change_pct_is_applied(client: TestClient, monkeypatch) -> None:
