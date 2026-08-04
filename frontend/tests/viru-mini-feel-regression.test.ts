@@ -60,6 +60,12 @@ test("QuickSearchView still saves resume snapshot (no microtoast regression)", (
 });
 
 // ── #5 Watchlist price-delta percent chip ─────────────────────────────
+test("WatchRow only renders trend metadata when a previous snapshot exists", () => {
+  const source = read("modules/watchlist/components/WatchRow.tsx");
+  assert.match(source, /meta\?\.latest && meta\.previous/, "trend status must require two snapshots");
+  assert.match(source, /meta\.previous \? \(/, "trend chip must require a previous snapshot");
+});
+
 test("WatchRow computes trend-percent delta and renders the chip", () => {
   const source = read("modules/watchlist/components/WatchRow.tsx");
   assert.match(source, /trendPercentLabel/, "missing trendPercentLabel wiring");

@@ -9,7 +9,7 @@ const ALERTS_PAGE = path.join(process.cwd(), "src", "modules", "signals", "Alert
 
 test("quick search save uses save-result without fallback manual create", () => {
   const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
-  assert.match(source, /apiFetch<\{ watch_id\?: string; created_or_existing\?: string \}>\("\/search\/save-result"/);
+  assert.match(source, /apiFetch<SaveResult>\("\/search\/save-result"/);
   assert.match(source, /response\.created_or_existing === "existing"/);
   assert.doesNotMatch(source, /await apiFetch\("\/watchlist", \{\s*method: "POST"/);
 });

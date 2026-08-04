@@ -6,13 +6,14 @@ import test from "node:test";
 const DETAIL_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");
 const MAP_COMPONENT = path.join(process.cwd(), "src", "components", "ui", "map.tsx");
 
-test("watchlist detail uses freshness copy keys for no-snapshot states", () => {
+test("watchlist detail omits empty snapshot metadata while preserving valid detail copy", () => {
   const source = fs.readFileSync(DETAIL_PANEL, "utf8");
 
-  assert.match(source, /watchlist\.freshness\.noDataLabel/);
-  assert.match(source, /watchlist\.freshness\.noDataDetail/);
+  assert.doesNotMatch(source, /watchlist\.freshness\.noDataLabel/);
+  assert.doesNotMatch(source, /watchlist\.freshness\.noDataDetail/);
   assert.doesNotMatch(source, /watchlist\.noDataLabel/);
   assert.doesNotMatch(source, /watchlist\.noDataDetail/);
+  assert.match(source, /watchlist\.detail\.freshnessLabel/);
 });
 
 test("map runtime waits for style readiness before exposing controls and viewport actions", () => {

@@ -42,8 +42,9 @@ test("W9: history keeps selected-date context without repeating the selected rou
   const source = fs.readFileSync(HISTORY_PANEL, "utf8");
   assert.doesNotMatch(source, /watchlist\.history\.selectedRouteLabel/);
   assert.match(source, /selectedWatch\.travel_date_local/);
-  assert.doesNotMatch(source, /selectedWatch\.origin_iata/);
-  assert.doesNotMatch(source, /selectedWatch\.destination_iata/);
+  const communityRouteReferences = source.match(/<RelatedCommunityRoutes[\s\S]*?origin=\{selectedWatch\.origin_iata\}[\s\S]*?destination=\{selectedWatch\.destination_iata\}/g) ?? [];
+  assert.equal(communityRouteReferences.length, 2);
+  assert.doesNotMatch(source, /selectedWatch\.origin_iata\}\s*→\s*\$\{selectedWatch\.destination_iata\}/);
   assert.doesNotMatch(source, /Origen/);
   assert.doesNotMatch(source, /Destino/);
   assert.doesNotMatch(source, /Fechas de vuelo/);

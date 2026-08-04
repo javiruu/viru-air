@@ -932,6 +932,91 @@ class QuickSearchPopularityDaily(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
 
 
+class CommunityTrendingSnapshot(Base):
+    __tablename__ = "community_trending_snapshot"
+    __table_args__ = (
+        Index(
+            "ix_community_trending_snapshot_status_calculated",
+            "status",
+            "calculated_at_utc",
+        ),
+        Index(
+            "ix_community_trending_snapshot_status_expires",
+            "status",
+            "expires_at_utc",
+        ),
+        Index("ix_community_trending_snapshot_reporting_date", "reporting_date"),
+        CheckConstraint(
+            "status IN ('building', 'published')",
+            name="ck_community_trending_snapshot_status",
+        ),
+        CheckConstraint(
+            "route_count >= 0",
+            name="ck_community_trending_snapshot_route_count",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    reporting_date: Mapped[date_type] = mapped_column(Date)
+    window_start_date: Mapped[date_type] = mapped_column(Date)
+    window_end_date: Mapped[date_type] = mapped_column(Date)
+    calculated_at_utc: Mapped[datetime] = mapped_column(DateTime)
+    published_at_utc: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    expires_at_utc: Mapped[datetime] = mapped_column(DateTime)
+    status: Mapped[str] = mapped_column(String(16), default="building")
+    route_count: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+
+    routes: Mapped[list["CommunityTrendingSnapshotRoute"]] = relationship(
+        back_populates="snapshot",
+        cascade="all, delete-orphan",
+        order_by="CommunityTrendingSnapshotRoute.rank",
+    )
+
+
+class CommunityTrendingSnapshotRoute(Base):
+    __tablename__ = "community_trending_snapshot_route"
+    __table_args__ = (
+        UniqueConstraint(
+            "snapshot_id",
+            "origin_iata",
+            "destination_iata",
+            name="uq_community_trending_snapshot_route",
+        ),
+        Index(
+            "ix_community_trending_snapshot_route_snapshot_rank",
+            "snapshot_id",
+            "rank",
+        ),
+        Index(
+            "ix_community_trending_snapshot_route_snapshot_route",
+            "snapshot_id",
+            "origin_iata",
+            "destination_iata",
+        ),
+        CheckConstraint(
+            "rank >= 1",
+            name="ck_community_trending_snapshot_route_rank",
+        ),
+        CheckConstraint(
+            "search_count >= 0",
+            name="ck_community_trending_snapshot_route_search_count",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    snapshot_id: Mapped[str] = mapped_column(
+        ForeignKey("community_trending_snapshot.id", ondelete="CASCADE"),
+    )
+    origin_iata: Mapped[str] = mapped_column(String(3))
+    destination_iata: Mapped[str] = mapped_column(String(3))
+    rank: Mapped[int] = mapped_column(Integer)
+    search_count: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+
+    snapshot: Mapped[CommunityTrendingSnapshot] = relationship(back_populates="routes")
+
+
 class RevalidationJob(Base):
     __tablename__ = "revalidation_job"
     __table_args__ = (

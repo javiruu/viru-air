@@ -1,13 +1,23 @@
 # Inventario documental
 
 **Estado:** vivo
-**Ultima revision:** 2026-07-28
+**Ultima revision:** 2026-08-04
 **Fuente de verdad:** si
 **Area:** documentacion
 
 ## Resumen
 
 Inventario completo de documentos `.md` y `.txt` relevantes del repositorio tras el saneamiento documental. Excluye dependencias, cach?s, builds, entornos virtuales, `_publish_repo` y otras salidas generadas masivas.
+
+## Actualizacion manual 2026-08-04 (persistencia de tendencias comunitarias e inbox)
+
+Entradas vivas agregadas:
+
+- `docs/plans/2026-08-04-community-trending-persistence-inbox.md`
+
+Motivo:
+
+- Mega plan implementado y verificado para persistir snapshots diarios de tendencias comunitarias, corregir ownership/read-state del inbox y verificar compatibilidad, retención, rollback y privacidad.
 
 ## Actualizacion manual 2026-07-28 (Community Pricing)
 
@@ -668,6 +678,7 @@ Entradas vivas retiradas:
 | docs/plans/README.md | plan | vivo | conservar | docs/plans/README.md | Gu?a de organizaci?n de planes | docs/plans/README.md |
 | docs/plans/2026-08-01-community-route-intelligence.md | plan | vivo | conservar | docs/plans/2026-08-01-community-route-intelligence.md | Plan full-stack para popularidad semanal, precios, tendencias, rutas relacionadas e historial comunitario | docs/plans/2026-08-01-community-route-intelligence-design.md |
 | docs/plans/2026-08-01-community-route-intelligence-design.md | plan | vivo | conservar | docs/plans/2026-08-01-community-route-intelligence-design.md | Diseño aprobado de inteligencia comunitaria de rutas y variante Lazyweb Corredores más buscados | docs/plans/2026-08-01-community-route-intelligence.md |
+| docs/plans/2026-08-04-community-trending-persistence-inbox.md | plan | vivo | conservar | docs/plans/2026-08-04-community-trending-persistence-inbox.md | Mega plan implementado y verificado para persistencia diaria de tendencias comunitarias, ownership/read-state del inbox, retención, rollback y verificación | conservar como diseño e historial; contratos y runbooks vivos reflejan el estado operativo |
 | docs/plans/2026-07-30-next-dev-compilation.md | plan | vivo | conservar | docs/plans/2026-07-30-next-dev-compilation.md | Plan de implementación para Turbopack y calentamiento controlado de rutas estáticas | docs/plans/2026-07-30-next-dev-compilation.md |
 | docs/plans/2026-07-30-next-dev-compilation-design.md | plan | vivo | conservar | docs/plans/2026-07-30-next-dev-compilation-design.md | Diseño aprobado para acelerar Next.js en desarrollo y calentar rutas estáticas en segundo plano | docs/plans/2026-07-30-next-dev-compilation-design.md |
 | docs/plans/2026-07-28-community-pricing-design.md | plan | vivo | conservar | docs/plans/2026-07-28-community-pricing-design.md | Diseño aprobado para recopilar y agregar precios reales por viajero desde Watchlist | docs/plans/2026-07-28-community-pricing-design.md |

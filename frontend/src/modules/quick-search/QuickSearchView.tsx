@@ -2627,14 +2627,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     }
   }
 
-  const navigateToWatchlistWithContext = useCallback((origin?: string, destination?: string, travelDate?: string, watchId?: string, seedPrice?: number, seedCurrency?: string) => {
+  const navigateToWatchlistWithContext = useCallback((origin?: string, destination?: string, travelDate?: string, watchId?: string) => {
     const url = buildWatchlistUrl({
       origin: origin || "",
       destination: destination || "",
       travelDate: travelDate || "",
       watchId: watchId || "",
-      seedPrice,
-      seedCurrency,
     });
     router.push(url);
   }, [router]);
@@ -2668,7 +2666,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           tone: "success",
           title: t("watchExists"),
           actionLabel: t("viewWatchlist"),
-          onAction: () => navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date, response.watch_id, result.price_total, result.currency),
+          onAction: () => navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date, response.watch_id),
           durationMs: 3200,
         });
       } else {
@@ -2682,7 +2680,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           tone: "success",
           title: t("watchAdded"),
           actionLabel: t("viewWatchlist"),
-          onAction: () => navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date, response.watch_id, result.price_total, result.currency),
+          onAction: () => navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date, response.watch_id),
           durationMs: 3200,
         });
       }
@@ -3504,7 +3502,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         tone: "success",
         title: t("combinationSaved"),
         actionLabel: t("viewWatchlist"),
-        onAction: () => navigateToWatchlistWithContext(origin, destination, travelDate, saveCombination.outboundWatchId, savedResults?.outbound?.price_total, savedResults?.outbound?.currency),
+        onAction: () => navigateToWatchlistWithContext(origin, destination, travelDate, saveCombination.outboundWatchId),
         durationMs: 3200,
       });
       pendingCombinationResultsRef.current = null;
@@ -6087,7 +6085,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                         tone: "success",
                         title: t(isExisting ? "watchExists" : "watchAdded"),
                         actionLabel: t("viewWatchlist"),
-                        onAction: () => navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date, response.watch_id, result.price_total, result.currency),
+                        onAction: () => navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date, response.watch_id),
                         durationMs: 3200,
                       });
                     }
@@ -6187,6 +6185,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 isInWatchlist={isInWatchlist}
                 getWatchlistHref={getResultWatchlistHref}
                 viewInWatchlist={viewResultInWatchlist}
+                setExpandedRows={setExpandedRows}
                 addToWatchlist={async (result: SearchResult, fareProfile: FareComparisonProfile) => {
                   setMessage("");
                   try {
@@ -6205,7 +6204,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                         tone: "success",
                         title: t(isExisting ? "watchExists" : "watchAdded"),
                         actionLabel: t("viewWatchlist"),
-                        onAction: () => navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date, response.watch_id, result.price_total, result.currency),
+                        onAction: () => navigateToWatchlistWithContext(result.origin, result.destination, result.travel_date, response.watch_id),
                         durationMs: 3200,
                       });
                     }

@@ -116,23 +116,6 @@ def security_item(activity: SecurityActivity, read_at: datetime | None) -> Inbox
     )
 
 
-def community_trending_item(event: NotificationEvent, read_at: datetime | None) -> InboxItem:
-    """Build an InboxItem for a community trending notification."""
-    return InboxItem(
-        id=f"{SOURCE_COMMUNITY_TRENDING}:{event.id}",
-        source_type=SOURCE_COMMUNITY_TRENDING,
-        source_id=event.id,
-        category="community",
-        tone="info",
-        title=t("es", "notifications.community_trending_title"),
-        body=event.message,
-        route_label=None,
-        action_href="/dashboard",
-        created_at=event.created_at,
-        read_at=read_at,
-    )
-
-
 def _alert_category(event: NotificationEvent) -> str:
     if event.delivery_status in {"failed", "error"} or event.group_reason == "revalidation_failed":
         return "worker"

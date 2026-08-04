@@ -1,7 +1,7 @@
 # Notifications contract
 
 **Estado:** vivo
-**Ultima revision:** 2026-07-30
+**Ultima revision:** 2026-08-04
 **Fuente de verdad:** si
 **Area:** backend
 
@@ -40,12 +40,13 @@ Response shape:
     "price": 1,
     "security": 0,
     "digest": 0,
-    "worker": 0
+    "worker": 0,
+    "community": 0
   }
 }
 ```
 
-`category` is one of `price`, `security`, `digest`, or `worker`.
+`category` is one of `price`, `security`, `digest`, `worker`, or `community`. Community items come from the latest published, non-expired trending snapshot and are visible only for the authenticated user's active Watch routes. The inbox envelope summary describes the bounded page returned by `GET /notifications`; `/notifications/summary` is the global counter used by navigation.
 
 ### `GET /api/v1/notifications/summary`
 
@@ -60,7 +61,8 @@ Response shape:
   "price": 2,
   "security": 1,
   "digest": 1,
-  "worker": 0
+  "worker": 0,
+  "community": 0
 }
 ```
 
@@ -73,6 +75,9 @@ Allowed `source_type` values:
 - `alert_event`
 - `hotel_alert_event`
 - `security_activity`
+- `community_trending`
+
+For `community_trending`, `source_id` has the deterministic format `ct-YYYYMMDD-AAA-BBB`. The server validates that the ID belongs to the latest published, non-expired snapshot and that the authenticated user has an active Watch for that directed route. Invalid, expired, or other-user sources return the same `404 notification_not_found` response.
 
 The endpoint validates that the source belongs to the authenticated user before writing read state.
 
@@ -102,6 +107,8 @@ The unique key is `(user_id, source_type, source_id)`. Source rows remain immuta
 `hotel_alert_event` rows are owned through either `hotel_alert_rule.user_id` or a `hotel_tracked_offer` for the same hotel/user. They are mapped as `price`, with favorable hotel movement using `success`, increases/parity breaks using `warning`, and neutral radar changes using `info`.
 
 `security_activity` rows are mapped as `security`.
+
+Community trending rows are persisted in `community_trending_snapshot` and `community_trending_snapshot_route`; they do not create `notification_event` rows and contain no user identity. Multiple active Watches for the same directed route produce one inbox item. The global summary includes only the same bounded community visibility window used for the inbox source; `read-all` can process the full bounded backend set independently of the display page.
 
 The inbox bounds returned data to keep the screen usable and avoid a security-activity flood dominating price/workers signals.
 
