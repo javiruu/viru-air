@@ -1368,3 +1368,13 @@ Entradas vivas actualizadas:
 - `docs/INDICE_UNICO.md`
 - `docs/plans/README.md`
 - `HISTORY.md`
+
+## Actualizacion manual 2026-08-06 (runtime hotelero)
+
+Entradas vivas agregadas:
+
+- `docs/runbooks/hotels-runtime-activation.md`
+
+Motivo:
+
+- Runbook operativo para publicar la imagen GHCR, crear el Secret `viru-backend-runtime`, ejecutar la migracion y activar el CronJob de sweep Mock (overlay `infra/k8s/overlays/staging/`, plantilla `infra/k8s/runtime-secret.example.yaml`), con verificacion y rollback.

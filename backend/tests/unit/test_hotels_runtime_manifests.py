@@ -90,6 +90,29 @@ def test_runtime_fixes_from_container_gate_are_registered() -> None:
     assert "key: JWT_SECRET" in migrate
 
 
+def test_ghcr_publish_workflow_and_activation_overlay_are_prepared() -> None:
+    release = _read("infra/github/workflows/release.yml")
+    secret = _read("infra/k8s/runtime-secret.example.yaml")
+    overlay = _read("infra/k8s/overlays/staging/kustomization.yaml")
+    base_cron = _read("infra/k8s/hotels-sweep-cronjob.yaml")
+
+    assert "publish-image" in release
+    assert "docker/build-push-action" in release
+    assert "packages: write" in release
+    assert "sha-${{ github.sha }}" in release
+
+    assert "suspend: true" in base_cron  # base must stay fail-closed
+
+    assert "kind: Secret" in secret
+    assert "name: viru-backend-runtime" in secret
+    assert "DB_URL" in secret
+    assert "JWT_SECRET" in secret
+
+    assert "patchesStrategicMerge" in overlay
+    assert "hotels-sweep-cronjob-enabled-patch.yaml" in overlay
+    assert "newName" in overlay
+
+
 def test_enabled_cronjob_patch_is_explicit_and_not_default() -> None:
     base = _read("infra/k8s/hotels-sweep-cronjob.yaml")
     patch = _read("infra/k8s/hotels-sweep-cronjob-enabled-patch.yaml")

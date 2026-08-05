@@ -119,6 +119,7 @@
 - [Runbook QA de puerta a puerta](runbooks/runbook-puerta-a-puerta-qa.md)
 - [Publicacion web por tuneles](runbooks/runbook-public-tunnels.md)
 - [Sweeps hoteleros](runbooks/hotels-sweeps.md)
+- [Activacion del runtime hotelero](runbooks/hotels-runtime-activation.md)
 
 ### Plans
 
