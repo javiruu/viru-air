@@ -1,8 +1,8 @@
 # Runbook Sweeps Hoteleros
 
-**Estado:** vivo  
-**Ultima revision:** 2026-06-04 (cierre Fase 10)  
-**Fuente de verdad:** si  
+**Estado:** vivo
+**Ultima revision:** 2026-08-05 (gate runtime de imagen/CronJob)
+**Fuente de verdad:** si
 **Area:** runbooks
 
 ## Resumen
@@ -173,9 +173,9 @@ WantedBy=multi-user.target
 
 Ventajas: reinicio automático, logging vía journald, gestión nativa del SO.
 
-**Opción C — Docker Compose (entorno actual del proyecto):**
+**Opción C — Docker Compose (objetivo; la imagen existe, no el compose):**
 
-Añadir el worker como servicio adicional en `docker-compose.yml`:
+El patrón previsto sería añadir el worker como servicio adicional en `docker-compose.yml`:
 
 ```yaml
 hotel-sweep:
@@ -191,7 +191,9 @@ hotel-sweep:
     - backend
 ```
 
-Ventajas: consistente con el resto de la infraestructura, mismo ciclo de despliegue.
+Ventajas previstas: ciclo de despliegue compartido y configuración reproducible.
+
+**Estado actual:** el repositorio no contiene `docker-compose.yml` ni `infra/docker/backend.Dockerfile`, pero sí incluye `backend/Dockerfile` (multi-stage Python 3.12 + `uv.lock`, non-root, logs en `/tmp`) construido y validado localmente, CI que lo construye sin push, y los manifests `infra/k8s/hotels-sweep-cronjob.yaml` (CronJob `--once` suspendido, `concurrencyPolicy: Forbid`, `DB_URL`/`JWT_SECRET` desde Secret) y `infra/k8s/hotels-migrate-job.yaml` (Job Alembic separado y suspendido). No hay imagen publicada ni despliegue: el CronJob y el Job de migración siguen `suspend: true` hasta aprobar imagen inmutable, Secret/DB, migración y gates H43/H45/H55.
 
 **Opción D — Loop manual (desarrollo/pruebas):**
 
