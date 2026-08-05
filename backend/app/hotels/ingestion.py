@@ -64,9 +64,15 @@ class HotelIngestionResult:
 
 
 class HotelIngestionService:
-    def __init__(self, db: Session, provider: HotelProviderAdapter | None = None) -> None:
+    def __init__(
+        self,
+        db: Session,
+        provider: HotelProviderAdapter | None = None,
+        provider_run_id: str | None = None,
+    ) -> None:
         self._db = db
         self._provider = provider if provider is not None else resolve_hotel_provider()
+        self._provider_run_id = provider_run_id
 
     def ingest(self) -> HotelIngestionResult:
         records = self._provider.fetch_hotels()
@@ -109,16 +115,21 @@ class HotelIngestionService:
 
             rates_for_hotel = 0
             for rate in record.rates:
-                snapshot = self._db.scalar(
-                    select(HotelRateSnapshot).where(
-                        HotelRateSnapshot.hotel_id == hotel_id,
-                        HotelRateSnapshot.provider == self._provider.provider_id,
-                        HotelRateSnapshot.check_in == rate.check_in,
-                        HotelRateSnapshot.check_out == rate.check_out,
-                        HotelRateSnapshot.guests == rate.guests,
-                        HotelRateSnapshot.currency == rate.currency,
-                        HotelRateSnapshot.amount == rate.amount,
+                snapshot_filters = [
+                    HotelRateSnapshot.hotel_id == hotel_id,
+                    HotelRateSnapshot.provider == self._provider.provider_id,
+                    HotelRateSnapshot.check_in == rate.check_in,
+                    HotelRateSnapshot.check_out == rate.check_out,
+                    HotelRateSnapshot.guests == rate.guests,
+                    HotelRateSnapshot.currency == rate.currency,
+                    HotelRateSnapshot.amount == rate.amount,
+                ]
+                if self._provider_run_id is not None:
+                    snapshot_filters.append(
+                        HotelRateSnapshot.provider_run_id == self._provider_run_id
                     )
+                snapshot = self._db.scalar(
+                    select(HotelRateSnapshot).where(*snapshot_filters)
                 )
                 if snapshot is not None:
                     continue
@@ -126,6 +137,7 @@ class HotelIngestionService:
                 self._db.add(
                     HotelRateSnapshot(
                         hotel_id=hotel_id,
+                        provider_run_id=self._provider_run_id,
                         provider=self._provider.provider_id,
                         check_in=rate.check_in,
                         check_out=rate.check_out,

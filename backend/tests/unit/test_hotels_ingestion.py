@@ -78,6 +78,7 @@ def test_ingestion_loads_fixtures_and_persists_aliases_and_rates(monkeypatch: py
         assert len(aliases) == 3
         assert len(rates) == 3
         assert {rate.currency for rate in rates} == {"EUR"}
+        assert all(rate.provider_run_id is None for rate in rates)
         assert all(alias.raw_payload is not None for alias in aliases)
 
         # Idempotencia razonable: segunda ingesta no duplica rates.
@@ -122,6 +123,32 @@ def test_ingestion_rejects_invalid_currency_and_date_range(
     try:
         with pytest.raises(ValueError, match="Invalid currency|Invalid stay range"):
             HotelIngestionService(db).ingest()
+    finally:
+        _close(db)
+
+
+def test_run_hotel_sweep_links_each_ingestion_observation_to_its_provider_run(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("HOTEL_FEATURE_ENABLED", "true")
+    monkeypatch.setenv("HOTEL_PROVIDER", "mock")
+    db = _db()
+    try:
+        first = run_hotel_sweep(db, provider="mock")
+        second = run_hotel_sweep(db, provider="mock")
+
+        assert first.status == "completed"
+        assert second.status == "completed"
+        rates = db.scalars(select(HotelRateSnapshot)).all()
+        assert len(rates) == 6
+        assert {rate.provider_run_id for rate in rates} == {first.id, second.id}
+        assert sum(rate.provider_run_id == first.id for rate in rates) == 3
+        assert sum(rate.provider_run_id == second.id for rate in rates) == 3
+
+        # Replaying the same provider run remains idempotent.
+        replay = HotelIngestionService(db, provider_run_id=second.id).ingest()
+        assert replay.rates_ingested == 0
+        assert len(db.scalars(select(HotelRateSnapshot)).all()) == 6
     finally:
         _close(db)
 
