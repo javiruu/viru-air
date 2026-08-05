@@ -76,8 +76,8 @@ def list_hotel_rates(
     return list(db.scalars(stmt))
 
 
-def ingest_hotels_mock(db: Session):
-    return HotelIngestionService(db).ingest()
+def ingest_hotels_mock(db: Session, *, provider_run_id: str | None = None):
+    return HotelIngestionService(db, provider_run_id=provider_run_id).ingest()
 
 
 def list_watchlist(db: Session, user_id: str) -> list[HotelWatchlistItem]:
@@ -272,12 +272,16 @@ def run_hotel_sweep(db: Session, *, provider: str = "mock") -> HotelProviderRun:
     adapter = None
     try:
         if provider == "mock":
-            result = ingest_hotels_mock(db)
+            result = ingest_hotels_mock(db, provider_run_id=provider_run.id)
         elif provider == "makcorps":
             from app.hotels.ingestion import HotelIngestionService, resolve_hotel_provider
 
             adapter = resolve_hotel_provider()
-            result = HotelIngestionService(db, provider=adapter).ingest()
+            result = HotelIngestionService(
+                db,
+                provider=adapter,
+                provider_run_id=provider_run.id,
+            ).ingest()
         else:
             raise ValueError(f"Unsupported sweep provider: {provider}")
 
