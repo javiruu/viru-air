@@ -42,6 +42,7 @@ observed_local_evidence:
   - plain `alembic upgrade head` executed inside the image container completed exit 0 up to `0041_add_community_trending_snapshots` on isolated SQLite
   - `python -m app.worker.hotels_sweep --once --provider mock` inside the image container logged `hotel_sweep_cycle` completed with 3 items
   - runtime gate fixes required by the image validation: `prepend_sys_path = .` in `backend/alembic.ini`; `httpx` moved from dev extras to core dependencies (app.main imports it at runtime); `JWT_SECRET` added to the CronJob and migration Job env from the runtime Secret
+  - GHCR publication workflow prepared in `release.yml` (immutable `sha-<commit>` + `latest` tags, `packages: write`), runtime Secret template `infra/k8s/runtime-secret.example.yaml` and staging activation overlay `infra/k8s/overlays/staging/`; execution against a real registry/cluster remains unverified
   - image publication/digest, Secret/DB creation, real DB migration compatibility, provider approval and active scheduling remain unverified
 k8s_worker_gate: blocked_legacy_deployment_and_suspended_cronjob
 k8s_migration_job_gate: blocked_suspended_unverified

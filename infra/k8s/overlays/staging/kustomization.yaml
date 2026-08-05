@@ -1,0 +1,29 @@
+# Staging overlay — explicit Mock activation of the hotel sweep runtime.
+#
+# SAFETY: the base manifests (infra/k8s/hotels-sweep-cronjob.yaml and
+# infra/k8s/hotels-migrate-job.yaml) remain `suspend: true`. This overlay is
+# the ONLY place where the sweep CronJob is unsuspended, and only after:
+#   - an image has been published to GHCR (prefer an immutable sha tag) and is
+#     referenced below;
+#   - the `viru-backend-runtime` Secret exists with DB_URL and JWT_SECRET;
+#   - the migration Job has been resumed, run and verified against the target DB;
+#   - gates H43/H45/H55 are approved (mock provider only here; no live data).
+#
+# Usage:
+#   kubectl apply --dry-run=server -k infra/k8s/overlays/staging
+#   kubectl apply -k infra/k8s/overlays/staging
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../hotels-sweep-cronjob.yaml
+  - ../../hotels-migrate-job.yaml
+patchesStrategicMerge:
+  - ../../hotels-sweep-cronjob-enabled-patch.yaml
+images:
+  # Replace with the image actually published by the Release workflow
+  # (ghcr.io/<owner>/<repo>/<IMAGE_NAME-or-'backend'>:sha-<commit>).
+  # If the workflow was run with a non-default IMAGE_NAME, use that name here.
+  # Prefer an immutable sha tag.
+  - name: ghcr.io/your-org/viru-backend
+    newName: ghcr.io/javiruu/viru-air/backend
+    newTag: latest

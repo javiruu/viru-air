@@ -31,7 +31,7 @@ worker_once_run: isolated temporary SQLite file; worker exit=0; log file deleted
 worker_restart_two_cycle: two fresh --once processes; both exit=0; 2 completed runs; 6 snapshots (3 per run)
 k8s_worker_status: legacy_placeholder_command_not_hotel_sweep
 k8s_worker_gate: blocked — legacy Deployment remains placeholder; new CronJob is suspend=true; image published immutable, DB/Secret contract, provider approval, lease contract and active scheduling remain unverified
-runtime_image_status: backend/Dockerfile multi-stage with uv.lock; image built and runtime-verified locally (build exit 0; app.main import OK; uvicorn /health 200 on migrated isolated DB); CI build without push; published digest unapproved
+runtime_image_status: backend/Dockerfile multi-stage with uv.lock; image built and runtime-verified locally (build exit 0; app.main import OK; uvicorn /health 200 on migrated isolated DB); CI builds without push; release.yml publish-image job prepared (ghcr sha/latest tags, packages:write); GHCR publication unexecuted
 k8s_migration_job_status: suspended in K8s; alembic upgrade head executed inside the image container against isolated SQLite (exit 0 to 0041_add_community_trending_snapshots); real DB/Secret execution unverified
 provider_run_traceability: complete_for_sweep_ingestion_snapshots_after_fix
 legacy_direct_ingestion_traceability: intentionally_none_when_no_provider_run_id_is_supplied
