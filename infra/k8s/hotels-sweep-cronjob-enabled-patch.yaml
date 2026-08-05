@@ -1,0 +1,23 @@
+# Kustomize strategic-merge patch only. Do not apply this file as a standalone
+# replacement manifest. Apply only after H43/H45/H55 approval, image
+# publication, Secret/DB validation, migration verification and provider
+# authorization. This patch enables Mock only; it does not authorize live data.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: viru-hotels-sweep
+spec:
+  suspend: false
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: hotels-sweep
+              env:
+                - name: HOTEL_FEATURE_ENABLED
+                  value: "true"
+                - name: HOTEL_SWEEP_ENABLED
+                  value: "true"
+                - name: HOTEL_PROVIDER
+                  value: "mock"

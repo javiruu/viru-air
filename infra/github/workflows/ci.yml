@@ -1,4 +1,4 @@
-﻿name: CI
+name: CI
 
 on:
   pull_request:
@@ -18,6 +18,9 @@ jobs:
           python-version: "3.12"
       - run: pip install -e .[dev]
       - run: pytest -q
+      - name: Build backend image
+        working-directory: .
+        run: docker build --file backend/Dockerfile --tag viru-backend:ci backend
 
   frontend:
     runs-on: ubuntu-latest

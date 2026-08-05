@@ -1,0 +1,87 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: viru-hotels-sweep
+  labels:
+    app: viru-hotels-sweep
+    component: hotel-tracking
+spec:
+  # Safe by default: enable only after image, Secret, migration and H43/H45 gates.
+  suspend: true
+  schedule: "0 * * * *"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 900
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    metadata:
+      labels:
+        app: viru-hotels-sweep
+        component: hotel-tracking
+    spec:
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app: viru-hotels-sweep
+            component: hotel-tracking
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            fsGroup: 10001
+          restartPolicy: OnFailure
+          terminationGracePeriodSeconds: 30
+          volumes:
+            - name: tmp
+              emptyDir: {}
+          containers:
+            - name: hotels-sweep
+              # Replace the configurable placeholder with the approved immutable
+              # image digest/tag before enabling this CronJob.
+              image: ghcr.io/your-org/viru-backend:latest
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              command: ["python", "-m", "app.worker.hotels_sweep"]
+              args: ["--once", "--provider", "mock"]
+              env:
+                - name: APP_ENV
+                  value: "staging"
+                - name: LOG_FILE
+                  value: "/tmp/viru.log"
+                - name: DB_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: viru-backend-runtime
+                      key: DB_URL
+                - name: HOTEL_FEATURE_ENABLED
+                  value: "false"
+                - name: HOTEL_SWEEP_ENABLED
+                  value: "false"
+                - name: HOTEL_PROVIDER
+                  value: "mock"
+                - name: RUN_DB_INIT
+                  value: "false"
+                - name: RUN_SEED_USERS
+                  value: "false"
+                - name: JWT_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: viru-backend-runtime
+                      key: JWT_SECRET
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+              resources:
+                requests:
+                  cpu: "300m"
+                  memory: "768Mi"
+                limits:
+                  cpu: "1"
+                  memory: "1536Mi"
