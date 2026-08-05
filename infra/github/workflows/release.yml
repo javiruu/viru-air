@@ -1,4 +1,4 @@
-﻿name: Release
+name: Release
 
 on:
   workflow_dispatch:
@@ -24,6 +24,8 @@ jobs:
           cd frontend
           npm install
           npm run build
+      - name: Build backend image (no push)
+        run: docker build --file backend/Dockerfile --tag viru-backend:release backend
 
   canary-deploy:
     needs: [quality-gates]
