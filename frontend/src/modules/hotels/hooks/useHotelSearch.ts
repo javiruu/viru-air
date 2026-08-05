@@ -86,6 +86,9 @@ export function useHotelSearch(onAfterIngest?: () => Promise<void>) {
   const [results, setResults] = useState<HotelSearchOut[]>([]);
   const [selectedHotelId, setSelectedHotelId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // H46: distinguishes first-visit idle (never searched) from a completed
+  // search without matches (empty).
+  const [hasSearched, setHasSearched] = useState(false);
 
   const selectedHotel = useMemo(
     () => results.find((item) => item.id === selectedHotelId) ?? null,
@@ -103,6 +106,7 @@ export function useHotelSearch(onAfterIngest?: () => Promise<void>) {
   }, [query, city, selectedHotelId]);
 
   const handleSearch = useCallback(async () => {
+    setHasSearched(true);
     setLoading(true);
     setErrorMessage(null);
     // Clear area results when switching to name mode
@@ -145,6 +149,7 @@ export function useHotelSearch(onAfterIngest?: () => Promise<void>) {
   }, [runSearch, t, notify, searchMode, areaResolved, checkIn, checkOut, guests, radiusKm, useProvider, selectedHotelId]);
 
   const handleIngest = useCallback(async () => {
+    setHasSearched(true);
     setLoading(true);
     setErrorMessage(null);
     try {
@@ -216,6 +221,7 @@ export function useHotelSearch(onAfterIngest?: () => Promise<void>) {
     isAreaSearchActive,
     loading,
     results,
+    hasSearched,
     selectedHotelId,
     setSelectedHotelId,
     selectedHotel,
