@@ -47,6 +47,13 @@ export function useTrackedOffers(
           hotelRates.length > 0
             ? [...hotelRates].sort((a, b) => a.amount - b.amount)[0]
             : null;
+        // H46: never create tracking silently with defaults that look complete.
+        // Without an eligible stay (observed price/rates) block with a reason
+        // and offer a safe alternative.
+        if (cheapest === null) {
+          notify({ tone: "warning", title: t("hotels.messages.trackingNeedsContext") });
+          return;
+        }
         await createTrackedOffer({
           hotel_id: hotelId,
           area_label: hotel?.city || undefined,

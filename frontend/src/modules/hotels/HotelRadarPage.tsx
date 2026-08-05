@@ -191,7 +191,9 @@ export function HotelRadarPage() {
                   hasTracking={tracked.trackedHotelIds.includes(hotel.id)}
                 />
               ))}
-              {search.results.length === 0 && !search.loading ? <HotelEmptyState /> : null}
+              {search.results.length === 0 && !search.loading && !search.errorMessage ? (
+                <HotelEmptyState variant={search.hasSearched ? "empty" : "idle"} />
+              ) : null}
               {search.loading ? <p className="panel-note">{t("shared.states.loading")}</p> : null}
             </div>
           </section>

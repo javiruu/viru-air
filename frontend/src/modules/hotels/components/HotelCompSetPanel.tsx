@@ -181,12 +181,13 @@ export function HotelCompSetPanel({
   );
 }
 
-export function HotelEmptyState() {
+export function HotelEmptyState({ variant = "empty" }: { variant?: "idle" | "empty" }) {
   const { t } = useI18n();
+  const isIdle = variant === "idle";
   return (
     <section className="panel panel-soft hotel-empty-state">
-      <h2 className="panel-title">{t("hotels.empty.title")}</h2>
-      <p className="panel-subtitle">{t("hotels.empty.body")}</p>
+      <h2 className="panel-title">{t(isIdle ? "hotels.idle.title" : "hotels.empty.title")}</h2>
+      <p className="panel-subtitle">{t(isIdle ? "hotels.idle.body" : "hotels.empty.body")}</p>
     </section>
   );
 }

@@ -1,6 +1,6 @@
 # H46 — Primera victoria sin tutorial largo en `/hoteles`
 
-**Estado:** COMPLETA como contrato de experiencia; implementación del flujo guiado, persistencia URL, auth contextual, eventos y QA browser pendientes  
+**Estado:** COMPLETA como contrato de experiencia; implementación parcial del Camino A (copy honesto guardar/seguir, idle/empty, bloqueo de tracking sin contexto); persistencia URL, auth contextual, eventos y QA browser pendientes
 **Fecha:** 2026-08-05  
 **Área:** producto / UX / frontend / i18n / QA  
 **Fuente de verdad:** sí para la primera victoria, la jerarquía de entrada y el onboarding implícito de `/hoteles`  
@@ -60,18 +60,29 @@ La base permite construir H46, pero no demuestra todavía una primera victoria c
 
 | Área | Actual verificable | Gap H46 |
 |---|---|---|
-| Promesa | título/subtítulo breves | no explican en una frase qué se puede guardar, seguir y revisar |
+| Promesa | título/subtítulo breves | subtitle migrado a la promesa H46 (qué se compara, guarda y sigue); revisar jerarquía visual completa según H31 |
 | Entrada | dos modos de búsqueda y campos visibles | el modo por nombre no pide fechas/ocupación; el modo zona exige resolver área antes de buscar |
 | Demo | botón explícito de datos de prueba | es útil para QA, pero no debe parecer una fuente equivalente a una búsqueda real |
 | Resultados | cards seleccionables y acciones | la decisión, el precio y su contexto no tienen todavía la jerarquía V2 de H16 |
-| Favorito | backend/UI de watchlist existente | copy actual `Añadir a seguimiento` puede confundirse con tracking de precio |
-| Tracking | CTA y panel de seguimientos existentes | `useTrackedOffers` puede crear usando defaults/bridge cuando falta una oferta completa; H23 exige confirmación contextual |
+| Favorito | backend/UI de watchlist existente | copy migrado a `Guardar hotel`/`Guardado` (ES) y `Save hotel`/`Saved` (EN) con confirmación que no promete tracking; revisión browser pendiente |
+| Tracking | CTA y panel de seguimientos existentes | `handleTrackPrice` bloquea sin contexto elegible (fechas/huéspedes/precio observado) y explica la razón con alternativa; confirmación honesta sin claim diario no respaldado |
 | Alertas | formulario en panel lateral | aparece demasiado pronto para una persona nueva y no explica el ciclo posterior en un paso breve |
 | Auth | la ruta es privada en la estructura actual | no existe aún una política H46 explícita de preservar búsqueda al pedir login/registro |
-| Estados | loading, empty y errores parciales por panel | no hay un camino único de recuperación ni una distinción completa idle/empty/error según H21 |
+| Estados | loading, empty y errores parciales por panel | distinción idle/empty implementada (`hasSearched`); faltan caminos de recuperación únicos y auth contextual |
 | Evidencia | tests estructurales H56/H57/H59-H61 y tests de señal | no existe todavía un test de primera victoria completo ni aprobación browser de H40 |
 
-### 2.1. Regla de claims
+### 2.1. Avance 2026-08-06
+
+Primer tramo del Camino A implementado y verificado de forma estructural:
+
+- copy migrado en `src/i18n/domains/hotels.ts` (ES/EN): `Guardar hotel`/`Save hotel`, `Seguir precio`/`Follow price`, confirmaciones que no prometen tracking ni comprobación diaria no respaldada;
+- `hasSearched` en `useHotelSearch` distingue `idle` (primera visita) de `empty` (búsqueda sin resultados) y `HotelEmptyState` acepta la variante;
+- `handleTrackPrice` (H23/H46 §6.1) bloquea la creación de tracking con defaults cuando no hay oferta elegible y muestra `trackingNeedsContext`;
+- test estructural `frontend/tests/hotels-h46-first-victory.test.ts` (4 casos) cubre copy, confirmaciones, idle/empty y bloqueo; suite frontend completa 492 passed.
+
+Pendiente para cerrar H46: serialización URL H13, auth contextual con retorno de intención, eventos H46 instrumentados, alertas contextuales y QA browser H40.
+
+### 2.2. Regla de claims
 
 - `Modo demo`, fixture, snapshot o señal parcial nunca se presenta como disponibilidad confirmada.
 - `Cargar datos de prueba` es una herramienta de desarrollo/QA y debe conservar rotulación explícita.
