@@ -49,6 +49,8 @@
 
 ## Modulos activos
 
+La revalidacion se despliega como proceso separado del API y consume `RevalidationJob`; el API no depende de tareas en proceso cuando `ENABLE_IN_PROCESS_WORKERS=false`.
+
 ### Quick Search (estabilizado)
 
 - Busqueda rapida de vuelos con cache compartida persistente (L1 local + L2 DB + provider)

@@ -13,6 +13,23 @@ import { useI18n } from "@/i18n";
 import { apiFetch } from "@/modules/shared/api";
 import { clearToken } from "@/modules/shared/auth";
 
+const ACCOUNT_SESSIONS_PAGE_SIZE = 200;
+
+async function fetchAllAccountSessions(): Promise<GlassProfileSession[]> {
+  const sessions: GlassProfileSession[] = [];
+  let offset = 0;
+
+  while (true) {
+    const page = await apiFetch<{ items: GlassProfileSession[] }>(
+      `/account/sessions?limit=${ACCOUNT_SESSIONS_PAGE_SIZE}&offset=${offset}`,
+    );
+    const items = Array.isArray(page.items) ? page.items : [];
+    sessions.push(...items);
+    if (items.length < ACCOUNT_SESSIONS_PAGE_SIZE) return sessions;
+    offset += items.length;
+  }
+}
+
 export default function PerfilPage() {
   const router = useRouter();
   const { t, localeTag } = useI18n();
@@ -27,11 +44,11 @@ export default function PerfilPage() {
   useEffect(() => {
     Promise.all([
       apiFetch<GlassProfileData>("/account/profile"),
-      apiFetch<{ items: GlassProfileSession[] }>("/account/sessions"),
+      fetchAllAccountSessions(),
     ])
       .then(([profileData, sessionsData]) => {
         setProfile(profileData);
-        setSessions(sessionsData.items || []);
+        setSessions(sessionsData);
       })
       .catch(() => notify({ tone: "error", title: t("account.profile.updateError"), durationMs: 3200 }));
   }, [notify, t]);

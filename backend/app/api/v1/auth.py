@@ -51,9 +51,23 @@ def register(payload: RegisterIn, request: Request, db: Session = Depends(get_db
     db.add(user)
     db.commit()
     db.refresh(user)
-    log_security_event(db, user.id, "register", request.client.host if request.client else None)
+    client_ip = request.client.host if request.client else None
+    agent = request.headers.get("user-agent") or "Este dispositivo"
+    db.add(
+        UserSession(
+            user_id=user.id,
+            device=agent[:200],
+            ip=client_ip,
+            last_seen=utc_now_naive(),
+            created_at=utc_now_naive(),
+            is_active=True,
+        )
+    )
+    refresh_token, refresh_record = _create_refresh_token_record(user.id, request)
+    db.add(refresh_record)
+    log_security_event(db, user.id, "register", client_ip)
     db.commit()
-    return AuthOut(access_token=create_access_token(user.id))
+    return AuthOut(access_token=create_access_token(user.id), refresh_token=refresh_token)
 
 
 @router.post("/login", response_model=AuthOut)

@@ -7,7 +7,7 @@ import { GlassSignInCard } from "@/components/components/forms/glass-sign-in";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
 import type { AuthOut } from "@/modules/shared/auth";
-import { clearToken, hasToken, saveToken } from "@/modules/shared/auth";
+import { clearToken, hasToken, saveAuthTokens } from "@/modules/shared/auth";
 import { isDashboardDemoAccessEnabled, signInDashboardDemoAccount } from "@/modules/shared/dashboard-demo-session";
 import { resolvePostAuthUrl } from "@/modules/shared/navigation";
 import { SkeletonForm } from "@/modules/shared/Skeleton";
@@ -89,7 +89,7 @@ function RegisterContent() {
         method: "POST",
         body: JSON.stringify({ email: normalizedEmail, password }),
       });
-      saveToken(data.access_token);
+      saveAuthTokens(data);
       notify({
         tone: "success",
         title: t("public.auth.registerSuccess"),

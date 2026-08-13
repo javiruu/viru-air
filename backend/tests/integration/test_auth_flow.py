@@ -8,7 +8,12 @@ def test_register_login_and_me(client: TestClient) -> None:
     register = client.post("/api/v1/auth/register", json={"email": "qa@viru.dev", "password": "password123"})
     assert register.status_code == 200
     assert "access_token" in register.json()
+    assert "refresh_token" in register.json()
     token = register.json()["access_token"]
+
+    refresh = client.post("/api/v1/auth/refresh", json={"refresh_token": register.json()["refresh_token"]})
+    assert refresh.status_code == 200
+    assert refresh.json()["refresh_token"] != register.json()["refresh_token"]
 
     login = client.post("/api/v1/auth/login", json={"email": "qa@viru.dev", "password": "password123"})
     assert login.status_code == 200
