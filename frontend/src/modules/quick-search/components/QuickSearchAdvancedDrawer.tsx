@@ -5,12 +5,6 @@ import { QuickSearchFieldErrors } from "@/modules/quick-search/types";
 import { QuickSearchCopyKey } from "@/modules/shared/quickSearchCopy";
 import { useEscapeClose } from "@/modules/shared/useEscapeClose";
 
-type ActiveChip = {
-  id: string;
-  label: string;
-  onClear: () => void;
-};
-
 type AdvancedDrawerProps = {
   isOpen: boolean;
   onClose: () => void;

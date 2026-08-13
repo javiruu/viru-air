@@ -84,7 +84,6 @@ export function useQuickSearchFormState(initialOrigin: string, initialDestinatio
   const autocompleteBlurTimer = useRef<number | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
   const filtersToggleRef = useRef<HTMLButtonElement | null>(null);
-  const filtersCloseRef = useRef<HTMLButtonElement | null>(null);
   const explainPopoverRef = useRef<HTMLDetailsElement | null>(null);
   const explainTriggerRef = useRef<HTMLElement | null>(null);
   const relaxUndoRef = useRef<RelaxUndoPayload | null>(null);
@@ -209,7 +208,6 @@ export function useQuickSearchFormState(initialOrigin: string, initialDestinatio
     autocompleteBlurTimer,
     formRef,
     filtersToggleRef,
-    filtersCloseRef,
     explainPopoverRef,
     explainTriggerRef,
     relaxUndoRef,

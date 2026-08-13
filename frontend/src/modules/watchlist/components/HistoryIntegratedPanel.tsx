@@ -169,13 +169,6 @@ export function HistoryIntegratedPanel({
       : selectedWatch.status === "paused"
         ? "warning"
         : "info";
-  const allChartPoints = chartModel?.flatMap((serie) => serie.points) ?? [];
-  const latestPoint =
-    allChartPoints.length > 0
-      ? allChartPoints.reduce((latest, point) =>
-          new Date(point.capturedAt).getTime() > new Date(latest.capturedAt).getTime() ? point : latest,
-        )
-      : null;
   const selectedPointFreshness = selectedPointData
     ? getFreshnessPresentation({
         t,

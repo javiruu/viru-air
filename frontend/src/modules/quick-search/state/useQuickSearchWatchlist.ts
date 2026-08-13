@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { apiFetch } from "@/modules/shared/api";
 import type { SearchResult } from "@/modules/quick-search/types";

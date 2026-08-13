@@ -28,18 +28,9 @@ import {
   WL_PARAM_DESTINATION,
   WL_PARAM_TRAVEL_DATE,
   WL_PARAM_WATCH_ID,
-  WL_PARAM_VIEW,
-  WL_PARAM_RANGE,
   QS_PARAM_ORIGIN,
   QS_PARAM_DESTINATION,
   QS_PARAM_TRAVEL_DATE,
-  QS_PARAM_RETURN_DATE,
-  QS_PARAM_IS_RETURN,
-  QS_PARAM_ADULTS,
-  QS_PARAM_FLEX_BEFORE,
-  QS_PARAM_FLEX_AFTER,
-  QS_PARAM_RADIUS,
-  QS_PARAM_STRICT,
 } from "../src/modules/shared/useRouteState";
 
 // ─── Sanitization ───────────────────────────────────────────────────

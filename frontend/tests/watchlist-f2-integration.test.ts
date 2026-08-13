@@ -3,7 +3,6 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
-const ACTIONS_FILE = path.join(process.cwd(), "src", "modules", "watchlist", "useWatchlistActions.ts");
 const DETAIL_LOADER_FILE = path.join(process.cwd(), "src", "modules", "watchlist", "useWatchlistDetail.ts");
 const MUTATIONS_FILE = path.join(process.cwd(), "src", "modules", "watchlist", "useWatchlistMutations.ts");
 const DETAIL_PANEL_FILE = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");

@@ -132,7 +132,6 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
   const runSearch = useCallback(
     async (params: QuickSearchSideParams, page = 1, options?: QuickSearchRunOptions) => {
       const isPageChange = options?.presentation === "page";
-      const startedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
       requestIdRef.current += 1;
       const requestId = requestIdRef.current;
       activeLoadingRequestRef.current = requestId;
@@ -328,7 +327,7 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
           setDeepLink(null);
           setDeepLinkError("deeplink_failed");
         }
-      }).catch((err) => {
+      }).catch(() => {
         if (controller.signal.aborted) return;
         setDeepLink(null);
         setDeepLinkError("deeplink_failed");

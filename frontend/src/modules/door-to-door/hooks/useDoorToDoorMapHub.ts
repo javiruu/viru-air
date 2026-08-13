@@ -28,7 +28,6 @@ export function useDoorToDoorMapHub(response: DoorToDoorResponse | null, selecte
   const [savedPlaces, setSavedPlaces] = useState<DoorToDoorSavedPlace[]>([]);
   const [savedPlaceLabel, setSavedPlaceLabel] = useState("");
   const [savedPlaceNote, setSavedPlaceNote] = useState("");
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     fetchDoorToDoorProviderStatus()
@@ -81,7 +80,6 @@ export function useDoorToDoorMapHub(response: DoorToDoorResponse | null, selecte
         setSavedPlaces(items.slice(0, 12));
       })
       .catch(() => setSavedPlaces([]));
-    setMounted(true);
   }, [selectedWatchId]);
 
   const providerStatusSummary = useMemo(() => {

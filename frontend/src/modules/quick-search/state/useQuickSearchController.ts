@@ -119,7 +119,6 @@ export function useQuickSearchMainState(initialOrigin: string, initialDestinatio
     autocompleteBlurTimer,
     formRef,
     filtersToggleRef,
-    filtersCloseRef,
     explainPopoverRef,
     explainTriggerRef,
     relaxUndoRef,
@@ -184,14 +183,10 @@ export function useQuickSearchMainState(initialOrigin: string, initialDestinatio
   const [infoExpanded, setInfoExpanded] = useState(false);
 
   // Result-scoped refs
-  const zeroResultsTracked = useRef(false);
-  const idleStateTracked = useRef(false);
   const resultsToolbarRef = useRef<HTMLDivElement | null>(null);
   const rowMenuTriggerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const tripTypeIncompleteTrackedRef = useRef(false);
   const sourcesShownKeyRef = useRef<string | null>(null);
   const freshnessShownKeyRef = useRef<string | null>(null);
-  const headrowRemovedTrackedRef = useRef(false);
   const requestIdRef = useRef(0);
   const activeLoadingRequestRef = useRef<number | null>(null);
   const prevSearchStateRef = useRef(searchState);
@@ -242,7 +237,7 @@ export function useQuickSearchMainState(initialOrigin: string, initialDestinatio
     activeAutocompleteField, setActiveAutocompleteField,
     activeAutocompleteIndex, setActiveAutocompleteIndex,
     isFiltersOpen, setIsFiltersOpen,
-    blurTimer, autocompleteBlurTimer, formRef, filtersToggleRef, filtersCloseRef,
+    blurTimer, autocompleteBlurTimer, formRef, filtersToggleRef,
     explainPopoverRef, explainTriggerRef, relaxUndoRef, lastPickerTriggerRef,
     airportSearchInputRef,
     results, setResults, message, setMessage, messageType, setMessageType,
@@ -268,9 +263,8 @@ export function useQuickSearchMainState(initialOrigin: string, initialDestinatio
     warningsExpanded, setWarningsExpanded,
     criticalWarningsExpanded, setCriticalWarningsExpanded,
     emptyCausesExpanded, setEmptyCausesExpanded, infoExpanded, setInfoExpanded,
-    zeroResultsTracked, idleStateTracked, resultsToolbarRef,
-    rowMenuTriggerRefs, tripTypeIncompleteTrackedRef,
-    sourcesShownKeyRef, freshnessShownKeyRef, headrowRemovedTrackedRef,
+    resultsToolbarRef, rowMenuTriggerRefs,
+    sourcesShownKeyRef, freshnessShownKeyRef,
     requestIdRef, activeLoadingRequestRef, prevSearchStateRef,
     progressRafRef, animFromRef, animToRef, animStartTsRef, animDurationMsRef,
     lastTargetRef, isAnimatingRef, displayProgressRef, commitRafRef,

@@ -32,7 +32,7 @@ export function HotelTrackedOfferSnapshots({
         if (cancelled) return;
         setHistory(data);
       })
-      .catch((error: unknown) => {
+      .catch(() => {
         if (cancelled) return;
         if (controller.signal.aborted) return;
         setHasError(true);

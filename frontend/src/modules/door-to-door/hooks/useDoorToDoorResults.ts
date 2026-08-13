@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
 import { chooseDoorToDoorOption } from "@/modules/door-to-door/api";
-import { getAlternativeDeltas, getDecisionBadges, getDecisionReasons, hasUncertainSources } from "@/modules/door-to-door/decision";
+import { getAlternativeDeltas, getDecisionBadges, getDecisionReasons } from "@/modules/door-to-door/decision";
 import type { DoorToDoorOption, DoorToDoorResponse } from "@/modules/door-to-door/types";
 
 type TrustTone = "success" | "warning";
