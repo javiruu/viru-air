@@ -37,6 +37,22 @@ def log_fare_memory_quick_search_counters(
         _emit("fare_memory_negative_cache_hit", **base, negative_cache_hits=negative_cache_hits)
 
 
+def log_quick_search_legacy_aliases_used(*, aliases: list[str], app_env: str) -> None:
+    """Emit one aggregate-safe usage event per deprecated Quick Search alias."""
+    seen: set[str] = set()
+    for raw_alias in aliases:
+        alias = raw_alias.strip()
+        if not alias or alias in seen:
+            continue
+        seen.add(alias)
+        _emit(
+            "quick_search_legacy_alias_used",
+            alias=alias,
+            app_env=app_env.strip().lower() or "local",
+            contract_version="quick_search.v2",
+        )
+
+
 def log_fare_memory_watchlist_backfill_applied(
     *,
     candidates_count: int,

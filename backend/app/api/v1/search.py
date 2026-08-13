@@ -55,6 +55,7 @@ from app.services.fare_memory_config import (
     FARE_MEMORY_SEARCH_CACHE_ENABLED,
 )
 from app.services.fare_memory_logging import log_fare_memory_quick_search_counters
+from app.services.quick_search_legacy_compatibility import enforce_quick_search_legacy_alias_policy
 from app.services.quick_search_cache_service import (
     build_effective_freshness,
     build_negative_cache_fingerprint,
@@ -1274,6 +1275,7 @@ def _normalize_quick_search_request(
             canonical_dict["pagination"] = {**(canonical_dict.get("pagination") or {}), "sort_by": query_overrides["sort_by"]}
             legacy_aliases_used.append("query.sort_by")
     else:
+        legacy_aliases_used.append("payload.flat")
         origin_value = query_overrides.get("origin_iata") or legacy_payload.origin_iata
         destination_value = query_overrides.get("destination_iata") or legacy_payload.destination_iata
         travel_date_value = query_overrides.get("travel_date") or legacy_payload.travel_date or legacy_payload.date
@@ -1971,6 +1973,8 @@ def quick_search(
             details=[detail_item],
         ) from exc
     _phase_end("request_normalization_ms", started)
+
+    enforce_quick_search_legacy_alias_policy(filter_contract["aliases"])
 
     travel_date_value = canonical.travel.date
     search_fingerprint = build_search_fingerprint(
