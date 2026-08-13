@@ -76,6 +76,7 @@ Related: docs/INDICE_UNICO.md, docs/overview/current-state.md
 ## Legacy compatibility
 The endpoint still accepts legacy flat payload/query params and normalizes them internally.
 Legacy aliases are exposed in response `meta.legacy_aliases_used` for transition tracking.
+The backend also emits the aggregate-safe `quick_search_legacy_alias_used` event per alias. `QUICK_SEARCH_LEGACY_ALIASES_MODE=block` is reserved for development/canary validation; production remains in `observe` until the documented 30-day zero-use window completes.
 
 Legacy aliases (accepted temporarily):
 - `include_nearby_origin` / `include_nearby_origins`

@@ -1,7 +1,7 @@
 ﻿# Planes de trabajo
 
 **Estado:** vivo  
-**Última revisión:** 2026-08-04
+**Última revisión:** 2026-08-13
 **Fuente de verdad:** sí  
 **Área:** plan
 
@@ -17,6 +17,7 @@ Esta carpeta separa los planes de trabajo del resto de la documentación viva.
 
 ## Planes activos
 
+- [Limpieza masiva y retirada segura de legado](2026-08-13-dead-code-legacy-retirement.md)
 - [Plan maestro de `/hoteles` — tracker hotelero preferido](2026-08-04-hoteles-master-roadmap.md)
 - [Arquitectura de información H03 de `/hoteles`](../product/hoteles-information-architecture-h03.md)
 - [Métricas y eventos H04 de `/hoteles`](../product/hoteles-metrics-events-h04.md)

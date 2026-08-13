@@ -9,6 +9,16 @@
 
 Inventario completo de documentos `.md` y `.txt` relevantes del repositorio tras el saneamiento documental. Excluye dependencias, cach?s, builds, entornos virtuales, `_publish_repo` y otras salidas generadas masivas.
 
+## Actualización manual 2026-08-13 (retirada segura de legado)
+
+Entrada viva agregada:
+
+- `docs/plans/2026-08-13-dead-code-legacy-retirement.md`
+
+Motivo:
+
+- Define la limpieza interna inmediata, la telemetría agregada y la retirada a 30 días de compatibilidades públicas y datos hoteleros persistidos.
+
 ## Actualizacion manual 2026-08-13 (planes de cierre local de `/hoteles`)
 
 Entradas vivas agregadas:
