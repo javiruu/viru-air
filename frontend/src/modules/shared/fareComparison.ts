@@ -44,6 +44,16 @@ export type ComparableFare = {
   readonly source_checked_on: string | null;
 };
 
+export type FareExtrasImpact = {
+  readonly known_extra_total: number;
+  readonly is_complete: boolean;
+  readonly unavailable_kinds: readonly FareExtraKind[];
+  readonly airline_id: FareAirlineId | null;
+  readonly airline_label: string | null;
+  readonly source_url: string | null;
+  readonly source_checked_on: string | null;
+};
+
 type FareOffer = {
   readonly id: string;
   readonly covers: readonly FareExtraKind[];
@@ -205,7 +215,7 @@ export function resolveFareAirline(
 
 export function createEmptyFareComparisonProfile(travelers: number): FareComparisonProfile {
   return {
-    travelers: Math.max(1, Math.min(9, Math.trunc(travelers))),
+    travelers: normalizeFareTravelers(travelers),
     airline_id: null,
     flight_count: 1,
     extras: FARE_EXTRA_KINDS.map((kind) => ({
@@ -213,6 +223,11 @@ export function createEmptyFareComparisonProfile(travelers: number): FareCompari
       selected: false,
     })),
   };
+}
+
+export function normalizeFareTravelers(value: number): number {
+  if (!Number.isFinite(value)) return 1;
+  return Math.max(1, Math.min(9, Math.trunc(value)));
 }
 
 export function attachFareAirline(
@@ -226,6 +241,55 @@ export function attachFareAirline(
     ...profile,
     ...(airlineId ? { airline_id: airlineId } : {}),
     flight_count: Math.max(1, Math.min(8, Math.trunc(flightCount))),
+  };
+}
+
+export function calculateFareExtrasImpact(
+  profile: FareComparisonProfile,
+  currency: string,
+  provider: string | null | undefined,
+  carrierCodes: readonly (string | null | undefined)[] = [],
+  flightCount = profile.flight_count ?? 1,
+): FareExtrasImpact {
+  const airlineId = profile.airline_id ?? resolveFareAirline(provider, carrierCodes);
+  const tariff = airlineId ? AIRLINE_TARIFFS[airlineId] : null;
+  const selectedKinds = new Set(
+    profile.extras.filter((extra) => extra.selected).map((extra) => extra.kind),
+  );
+  const travelers = normalizeFareTravelers(profile.travelers);
+  const billableFlights = Math.max(1, Math.min(8, Math.trunc(flightCount)));
+  const matchedOffers = tariff && tariff.currency === currency.toUpperCase()
+    ? tariff.offers.filter((offer) => offer.covers.some((kind) => selectedKinds.has(kind)))
+    : [];
+  const pricedKinds = new Set<FareExtraKind>();
+  const unavailableKinds = new Set<FareExtraKind>();
+  let knownExtraTotal = 0;
+
+  for (const offer of matchedOffers) {
+    const selectedOfferKinds = offer.covers.filter((kind) => selectedKinds.has(kind));
+    const unitCount = offer.billing_unit === "per_flight" ? billableFlights : 1;
+    const maximumTotal = offer.maximum_per_traveler_per_unit === null
+      ? null
+      : roundMoney(offer.maximum_per_traveler_per_unit * unitCount * travelers);
+    for (const kind of selectedOfferKinds) {
+      pricedKinds.add(kind);
+      if (maximumTotal === null) unavailableKinds.add(kind);
+    }
+    if (maximumTotal !== null) knownExtraTotal += maximumTotal;
+  }
+
+  for (const kind of selectedKinds) {
+    if (!pricedKinds.has(kind)) unavailableKinds.add(kind);
+  }
+
+  return {
+    known_extra_total: roundMoney(knownExtraTotal),
+    is_complete: unavailableKinds.size === 0,
+    unavailable_kinds: [...unavailableKinds],
+    airline_id: airlineId,
+    airline_label: tariff?.label ?? null,
+    source_url: tariff?.source_url ?? null,
+    source_checked_on: tariff?.source_checked_on ?? null,
   };
 }
 

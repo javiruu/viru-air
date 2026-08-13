@@ -4,6 +4,7 @@ import React, { type ChangeEvent, useId } from "react";
 
 import {
   FARE_EXTRA_KINDS,
+  normalizeFareTravelers,
   type FareComparisonProfile,
   type FareExtraKind,
 } from "@/modules/shared/fareComparison";
@@ -51,18 +52,32 @@ type FareComparisonPanelProps = {
   readonly profile: FareComparisonProfile;
   readonly locale: "es" | "en";
   readonly onChange: (profile: FareComparisonProfile) => void;
+  readonly mode?: "comparison" | "extras";
 };
 
 export function FareComparisonPanel({
   profile,
   locale,
   onChange,
+  mode = "comparison",
 }: FareComparisonPanelProps) {
   const copy = LABELS[locale];
   const titleId = useId();
+  const isExtrasMode = mode === "extras";
+  const title = isExtrasMode
+    ? locale === "es" ? "Extras del viaje" : "Trip extras"
+    : copy.title;
+  const subtitle = isExtrasMode
+    ? locale === "es"
+      ? "Selecciona lo que quieres añadir. Watchlist suma solo los importes publicados verificables para esta aerolínea."
+      : "Choose what to add. Watchlist sums only published, verifiable amounts for this airline."
+    : copy.subtitle;
+  const selectedNote = isExtrasMode
+    ? locale === "es" ? "Añadido a tu cesta" : "Added to your basket"
+    : copy.automatic;
 
   function updateTravelers(event: ChangeEvent<HTMLInputElement>): void {
-    const travelers = Math.max(1, Math.min(9, Number(event.target.value) || 1));
+    const travelers = normalizeFareTravelers(Number(event.target.value));
     onChange({ ...profile, travelers });
   }
 
@@ -86,8 +101,8 @@ export function FareComparisonPanel({
     <section className="fare-comparison" aria-labelledby={titleId}>
       <header className="fare-comparison-header">
         <div>
-          <span className="fare-comparison-kicker" id={titleId}>{copy.title}</span>
-          <p>{copy.subtitle}</p>
+          <span className="fare-comparison-kicker" id={titleId}>{title}</span>
+          <p>{subtitle}</p>
         </div>
         <label className="fare-comparison-travelers">
           <span>{copy.travelers}</span>
@@ -111,7 +126,7 @@ export function FareComparisonPanel({
                 <span>{copy.extras[kind]}</span>
               </label>
               {extra.selected ? (
-                <small className="fare-extra-estimate">{copy.automatic}</small>
+                <small className="fare-extra-estimate">{selectedNote}</small>
               ) : null}
             </div>
           );

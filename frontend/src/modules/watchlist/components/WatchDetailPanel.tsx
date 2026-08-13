@@ -16,7 +16,7 @@ import { buildQuickSearchSearchParams } from "@/modules/shared/useRouteState";
 import { FareComparisonPanel } from "@/modules/shared/FareComparisonPanel";
 import {
   attachFareAirline,
-  calculateComparableFare,
+  calculateFareExtrasImpact,
   createEmptyFareComparisonProfile,
   type FareComparisonProfile,
 } from "@/modules/shared/fareComparison";
@@ -104,24 +104,19 @@ export function WatchDetailPanel({
   const currency = latestSnapshot?.raw_currency ?? "EUR";
   const hasSnapshotPrice = latestSnapshot && latestSnapshot.raw_price != null && latestSnapshot.raw_price >= 0;
   const currentPriceValue = hasSnapshotPrice ? formatCurrency(latestSnapshot.raw_price, currency, localeTag) : "--";
-  const comparableFare = hasSnapshotPrice
-    ? calculateComparableFare(
-        latestSnapshot.raw_price,
-        currency,
-        fareProfile,
-        latestSnapshot.provider,
-      )
-    : null;
   const hasSelectedFareExtras = fareProfile.extras.some((extra) => extra.selected);
-  const comparableFareLabel = !comparableFare
-    ? "--"
-    : !hasSelectedFareExtras
-      ? formatCurrency(comparableFare.base_total, currency, localeTag)
-      : comparableFare.comparable_max_total === null
-        ? `${t("watchlist.detail.fareComparison.fromLabel")} ${formatCurrency(comparableFare.comparable_min_total, currency, localeTag)}`
-        : comparableFare.comparable_min_total === comparableFare.comparable_max_total
-          ? formatCurrency(comparableFare.comparable_min_total, currency, localeTag)
-          : `${formatCurrency(comparableFare.comparable_min_total, currency, localeTag)}–${formatCurrency(comparableFare.comparable_max_total, currency, localeTag)}`;
+  const fareExtrasImpact = calculateFareExtrasImpact(
+    fareProfile,
+    currency,
+    latestSnapshot?.provider,
+  );
+  const fareExtrasLabel = !hasSelectedFareExtras
+    ? t("watchlist.detail.fareComparison.noExtras")
+    : fareExtrasImpact.known_extra_total > 0
+      ? t("watchlist.detail.fareComparison.increaseLabel", {
+          value: formatCurrency(fareExtrasImpact.known_extra_total, currency, localeTag),
+        })
+      : t("watchlist.detail.fareComparison.noVerifiedAmount");
   const minPriceValue = summaryData?.min_price == null ? "--" : formatCurrency(summaryData.min_price, currency, localeTag);
   const deltaFromMin = latestSnapshot && summaryData?.min_price != null
     ? latestSnapshot.raw_price - summaryData.min_price
@@ -204,12 +199,13 @@ export function WatchDetailPanel({
       <details className="watch-detail-secondary">
         <summary className="watch-detail-secondary-summary">
           <span>{t("watchlist.detail.fareComparison.customizeLabel")}</span>
-          <strong aria-live="polite">{comparableFareLabel}</strong>
+          <strong aria-live="polite">{fareExtrasLabel}</strong>
         </summary>
         <div className="watch-detail-secondary-content">
           <FareComparisonPanel
             profile={fareProfile}
             locale={localeTag.toLowerCase().startsWith("es") ? "es" : "en"}
+            mode="extras"
             onChange={(nextProfile) => {
               setFareProfile(nextProfile);
               setFareProfileSaved(false);
@@ -218,11 +214,16 @@ export function WatchDetailPanel({
           />
           <div className="fare-comparison-summary" aria-live="polite">
             <span>
-              {comparableFare && !comparableFare.is_complete
-                ? t("watchlist.detail.fareComparison.unavailableKinds", { count: comparableFare.unavailable_kinds.length })
+              {!fareExtrasImpact.is_complete
+                ? t("watchlist.detail.fareComparison.unavailableKinds", {
+                    count: fareExtrasImpact.unavailable_kinds.length,
+                    extras: fareExtrasImpact.unavailable_kinds
+                      .map((kind) => t(`watchlist.detail.fareComparison.extraNames.${kind}`))
+                      .join(", "),
+                  })
                 : ""}
-              {comparableFare?.source_url ? (
-                <a href={comparableFare.source_url} target="_blank" rel="noreferrer">
+              {fareExtrasImpact.source_url ? (
+                <a href={fareExtrasImpact.source_url} target="_blank" rel="noreferrer">
                   {t("watchlist.detail.fareComparison.officialSource")}
                 </a>
               ) : null}

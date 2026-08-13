@@ -1,7 +1,7 @@
 ﻿# Watchlist
 
 **Estado:** vivo  
-**Última revisión:** 2026-08-01
+**Última revisión:** 2026-08-13
 **Fuente de verdad:** si  
 **Área:** product
 
@@ -17,10 +17,12 @@ prioritario, asiento y cambios flexibles. El usuario selecciona los extras,
 pero no introduce sus importes: Watchlist vuelve a aplicar automáticamente el
 catálogo público de la aerolínea guardada y el número de vuelos del itinerario.
 
-El resumen muestra un total, un rango o un precio `Desde` según la precisión de
-la tarifa publicada y enlaza su fuente oficial. Si algún extra seleccionado no
-tiene una tarifa pública calculable, muestra el total parcial y lo identifica
-como pendiente, sin presentar una cifra falsa.
+Dentro de `Extras del viaje`, Watchlist muestra únicamente cuánto pueden añadir
+los extras seleccionados, separado del precio observado del vuelo. Cuando la
+aerolínea publica un máximo verificable, el resumen usa `Hasta +X`; no presenta
+un rango de precio total del vuelo. Los extras sin tarifa pública verificable,
+como un Fast Track dependiente del aeropuerto, quedan fuera de la suma y se
+identifican de forma explícita junto a la fuente oficial.
 
 ## Seguimiento operacional del vuelo
 

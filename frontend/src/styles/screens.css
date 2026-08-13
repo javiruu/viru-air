@@ -18336,6 +18336,10 @@ textarea::placeholder {
   display: none;
 }
 
+.mobile-bottom-nav {
+  display: none;
+}
+
 @media (max-width: 480px) {
   .private-nav-toggle {
     display: inline-flex;
@@ -18409,11 +18413,7 @@ textarea::placeholder {
   }
 
 /* ── Mobile bottom navigation ──────────────────────────────── */
-.mobile-bottom-nav {
-  display: none;
-}
-
-@media (max-width: 480px) {
+@media (max-width: 480px) and (hover: none) and (pointer: coarse) {
   .mobile-bottom-nav {
     display: flex;
     align-items: center;
@@ -24663,6 +24663,8 @@ textarea::placeholder {
 }
 
 .watch-community-hub-button.is-contributed {
+  right: var(--space-panel-header-gap);
+  left: auto;
   color: var(--success);
   border-color: color-mix(in srgb, var(--success) 52%, var(--border));
   background: color-mix(in srgb, var(--success) 10%, var(--surface));

@@ -3,11 +3,59 @@ import test from "node:test";
 
 import {
   attachFareAirline,
+  calculateFareExtrasImpact,
   calculateComparableFare,
   createEmptyFareComparisonProfile,
+  normalizeFareTravelers,
   resolveFareAirline,
   type FareComparisonProfile,
 } from "../src/modules/shared/fareComparison";
+
+test("Watchlist extra impact exposes one airline-specific increase instead of a fare range", () => {
+  const profile: FareComparisonProfile = {
+    travelers: 2,
+    extras: [
+      { kind: "cabin_bag_10kg", selected: true },
+      { kind: "priority_boarding", selected: true },
+      { kind: "checked_bag_20kg", selected: true },
+    ],
+  };
+
+  const impact = calculateFareExtrasImpact(profile, "EUR", "ryanair-public-fares");
+
+  assert.equal(impact.known_extra_total, 191.98);
+  assert.equal(impact.is_complete, true);
+  assert.deepEqual(impact.unavailable_kinds, []);
+  assert.equal(impact.airline_label, "Ryanair");
+});
+
+test("Watchlist extra impact keeps airport-priced Fast Track out of the sum", () => {
+  const profile: FareComparisonProfile = {
+    travelers: 1,
+    extras: [
+      { kind: "checked_bag_20kg", selected: true },
+      { kind: "fast_track", selected: true },
+    ],
+  };
+
+  const impact = calculateFareExtrasImpact(profile, "EUR", "ryanair");
+
+  assert.equal(impact.known_extra_total, 59.99);
+  assert.equal(impact.is_complete, false);
+  assert.deepEqual(impact.unavailable_kinds, ["fast_track"]);
+});
+
+test("Watchlist extra impact normalizes manipulated traveler counts", () => {
+  const profile: FareComparisonProfile = {
+    travelers: 1.8,
+    extras: [{ kind: "checked_bag_20kg", selected: true }],
+  };
+
+  assert.equal(calculateFareExtrasImpact(profile, "EUR", "ryanair").known_extra_total, 59.99);
+  assert.equal(normalizeFareTravelers(Number.POSITIVE_INFINITY), 1);
+  assert.equal(normalizeFareTravelers(-4), 1);
+  assert.equal(normalizeFareTravelers(18), 9);
+});
 
 test("Ryanair estimate applies official ranges per traveler and deduplicates Priority bundle", () => {
   const profile: FareComparisonProfile = {
