@@ -88,6 +88,7 @@ def test_server_startup_schedules_fare_memory_retention_without_blocking(monkeyp
     Base.metadata.create_all(bind=engine)
 
     monkeypatch.setattr(main_module, "SessionLocal", testing_session_local)
+    monkeypatch.setattr(main_module, "enable_in_process_workers", True)
     monkeypatch.setattr(main_module, "FARE_MEMORY_RETENTION_ENABLED", True)
     monkeypatch.setattr(main_module, "FARE_MEMORY_RETENTION_BATCH_SIZE", 50)
     monkeypatch.setattr(main_module, "WATCHLIST_STARTUP_REFRESH_ENABLED", False)

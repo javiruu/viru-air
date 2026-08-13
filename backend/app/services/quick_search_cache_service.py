@@ -11,6 +11,7 @@ import json
 import logging
 import os
 import threading
+from contextlib import nullcontext
 from typing import Any
 
 from sqlalchemy import select, delete
@@ -46,9 +47,7 @@ from app.services.quick_search_redis_hot_layer import (
 
 logger = logging.getLogger(__name__)
 
-# Thread-safety: SQLAlchemy sessions are not thread-safe. Since execute_plan()
-# uses ThreadPoolExecutor, all L2 cache DB access must be serialized.
-_DB_LOCK = threading.Lock()
+_DB_CONTEXT = nullcontext()
 
 # ---------------------------------------------------------------------------
 # TTL defaults (configurable via env)
@@ -331,7 +330,7 @@ def get_fresh_entry(
 ) -> QuickSearchCacheEntry | None:
     """Retrieve a fresh (non-expired) cache entry for the given unit.
 
-    Thread-safe: protected by _DB_LOCK.
+    Each caller supplies its own SQLAlchemy session.
     """
     now = utc_now_naive()
     key = build_unit_cache_key(
@@ -368,7 +367,7 @@ def get_fresh_entry(
     )
     # NOTE: db.commit() flushes the entire session — callers must not have
     # uncommitted work pending in the same session.
-    with _DB_LOCK:
+    with _DB_CONTEXT:
         entry = db.scalar(stmt)
         if entry is not None:
             entry.last_accessed_at_utc = now
@@ -405,7 +404,7 @@ def set_cache_entry(
     )
     expires_at = now + dt.timedelta(seconds=ttl)
 
-    with _DB_LOCK:
+    with _DB_CONTEXT:
         key = build_unit_cache_key(
             origin_iata=origin_iata,
             destination_iata=destination_iata,
@@ -478,7 +477,7 @@ def set_exact_search_cache_entry(
         payload_json=payload_json,
         warnings_json="[]",
     )
-    with _DB_LOCK:
+    with _DB_CONTEXT:
         entry.search_fingerprint = search_fingerprint
         entry.canonical_request_json = canonical_request_json
         entry.provider_set_json = provider_set_json
@@ -577,7 +576,7 @@ def get_fresh_negative_cache_entry(
         .order_by(QuickSearchNegativeCacheEntry.expires_at.desc())
         .limit(1)
     )
-    with _DB_LOCK:
+    with _DB_CONTEXT:
         entry = db.scalar(stmt)
         if entry:
             entry.hit_count = int(entry.hit_count or 0) + 1
@@ -600,7 +599,7 @@ def set_negative_cache_entry(
     now = utc_now_naive()
     freshness_status = _negative_freshness_status_for_reason(reason)
 
-    with _DB_LOCK:
+    with _DB_CONTEXT:
         # Read existing entry INSIDE the lock to avoid TOCTOU race when
         # calculating exponential backoff for provider errors.
         existing_entry: QuickSearchNegativeCacheEntry | None = None
@@ -656,13 +655,13 @@ def resolve_negative_cache_result(entry: QuickSearchNegativeCacheEntry) -> Provi
 def prune_expired_entries(db: Session, *, batch_size: int = 200) -> int:
     """Delete expired cache entries. Returns count of deleted rows.
 
-    Thread-safe: protected by _DB_LOCK.
+    Each caller supplies its own SQLAlchemy session.
     Prunes both positive (QuickSearchCacheEntry) and negative
     (QuickSearchNegativeCacheEntry) expired entries.
     Uses a subquery because SQLAlchemy Delete does not support .limit().
     """
     now = utc_now_naive()
-    with _DB_LOCK:
+    with _DB_CONTEXT:
         # Prune expired positive cache entries
         pos_subquery = (
             select(QuickSearchCacheEntry.id)
@@ -733,7 +732,7 @@ def get_cache_stats(db: Session) -> dict[str, int]:
             stmt = stmt.where(where)
         return db.execute(stmt).scalar() or 0
 
-    with _DB_LOCK:
+    with _DB_CONTEXT:
         return {
             "total_entries": _count(),
             "fresh_entries": _count(QuickSearchCacheEntry.expires_at_utc > now),

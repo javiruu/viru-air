@@ -22,13 +22,7 @@ from app.core.request_diagnostics import AccessLogMiddleware
 from app.api.v1.router import api_v1
 from app.core.logging import configure_logging
 from app.infrastructure.db import models  # noqa: F401
-from app.infrastructure.db.schema_compat import (
-    ensure_door_to_door_tables,
-    ensure_notification_state_table,
-    ensure_search_preference_columns,
-)
 from app.infrastructure.db.seed import ensure_seed_users
-from app.infrastructure.db.session import engine
 from app.infrastructure.db.session import SessionLocal
 from app.services.fare_memory_config import (
     FARE_MEMORY_BOOT_WARMUP_ENABLED,
@@ -53,25 +47,13 @@ from app.services.watchlist_revalidation import (
 configure_logging()
 
 run_seed_users = os.getenv("RUN_SEED_USERS", "false").lower() in {"1", "true", "yes"}
+enable_in_process_workers = os.getenv("ENABLE_IN_PROCESS_WORKERS", "false").lower() in {"1", "true", "yes"}
 
-ensure_search_preference_columns(engine)
-ensure_door_to_door_tables(engine)
-ensure_notification_state_table(engine)
 if run_seed_users:
     ensure_seed_users()
 
 def _parse_cors_origins() -> list[str]:
-    default_origins = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3101",
-        "http://127.0.0.1:3101",
-        "http://45.136.18.49:3000",
-        "http://45.136.18.49:3101",
-        "http://45.136.18.49:3200",
-        "http://45.136.18.49:3300",
-        "http://192.168.56.1:3000",
-    ]
+    default_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
     # Automatically add the configured DOMAIN (https) when set (e.g. via FreeDomain).
     domain = os.getenv("DOMAIN", "").strip()
@@ -84,9 +66,7 @@ def _parse_cors_origins() -> list[str]:
     if env_value:
         env_origins = [item.strip() for item in env_value.split(",") if item.strip()]
         if env_origins:
-            # Keep dev-safe defaults even when env overrides are present.
-            merged = list(dict.fromkeys([*default_origins, *env_origins]))
-            return merged
+            return list(dict.fromkeys(env_origins))
 
     return default_origins
 
@@ -146,7 +126,7 @@ async def lifespan(app: FastAPI):
     startup_route_task = None
     retention_task = None
     revalidation_worker_task = None
-    if FARE_MEMORY_BOOT_WARMUP_ENABLED:
+    if enable_in_process_workers and FARE_MEMORY_BOOT_WARMUP_ENABLED:
         db = SessionLocal()
         try:
             log_scheduled_boot_warmup_jobs(
@@ -170,7 +150,7 @@ async def lifespan(app: FastAPI):
             )
         finally:
             db.close()
-    if WATCHLIST_STARTUP_REFRESH_ENABLED:
+    if enable_in_process_workers and WATCHLIST_STARTUP_REFRESH_ENABLED:
         db = SessionLocal()
         try:
             log_enqueued_startup_refresh_jobs(db)
@@ -187,13 +167,13 @@ async def lifespan(app: FastAPI):
             )
         finally:
             db.close()
-    if WATCHLIST_STARTUP_REFRESH_ENABLED or FARE_MEMORY_BOOT_WARMUP_ENABLED:
+    if enable_in_process_workers and (WATCHLIST_STARTUP_REFRESH_ENABLED or FARE_MEMORY_BOOT_WARMUP_ENABLED):
         startup_route_task = asyncio.create_task(_run_startup_route_revalidation_jobs())
         app.state.startup_route_revalidation_task = startup_route_task
-    if FARE_MEMORY_RETENTION_ENABLED:
+    if enable_in_process_workers and FARE_MEMORY_RETENTION_ENABLED:
         retention_task = asyncio.create_task(_run_startup_fare_memory_retention_job())
         app.state.fare_memory_retention_task = retention_task
-    if FARE_MEMORY_REVALIDATION_WORKER_ENABLED:
+    if enable_in_process_workers and FARE_MEMORY_REVALIDATION_WORKER_ENABLED:
         revalidation_worker_task = asyncio.create_task(_run_periodic_fare_memory_revalidation_worker())
         app.state.fare_memory_revalidation_worker_task = revalidation_worker_task
     yield
@@ -219,9 +199,7 @@ app = FastAPI(title="Viru API", version="0.1.0", lifespan=lifespan)
 
 _env_regex = os.getenv("CORS_ALLOW_ORIGIN_REGEX")
 if _env_regex is None:
-    _allow_origin_regex: str | None = (
-        r"^https?://(45\.136\.18\.49|localhost|127\.0\.0\.1)(?::\d+)?$"
-    )
+    _allow_origin_regex: str | None = None
 elif _env_regex.strip() == "":
     _allow_origin_regex = None  # Explicitly disabled
 else:
@@ -232,8 +210,8 @@ app.add_middleware(
     allow_origins=_parse_cors_origins(),
     allow_origin_regex=_allow_origin_regex,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Correlation-Id", "X-Client-Event-Id"],
 )
 app.add_middleware(AccessLogMiddleware)
 app.include_router(api_v1, prefix="/api/v1")

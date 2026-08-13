@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import os
 import uuid
 from dataclasses import dataclass
 
@@ -65,24 +66,20 @@ def acquire_quick_search_provider_lock(
         currency=currency,
     )
     lock_token = uuid.uuid4().hex
-    redis_attempt = acquire_redis_provider_lock(
-        lock_key=lock_key,
-        ttl_seconds=ttl,
-        redis_client=redis_client,
-    )
-    match redis_attempt.status:
-        case "acquired":
-            if redis_attempt.lock_token is None:
-                return None
+    use_redis = redis_client is not None or os.getenv("QUICK_SEARCH_LOCK_BACKEND", "database").strip().lower() == "redis"
+    if use_redis:
+        redis_attempt = acquire_redis_provider_lock(
+            lock_key=lock_key,
+            ttl_seconds=ttl,
+            redis_client=redis_client,
+        )
+        if redis_attempt.status == "acquired" and redis_attempt.lock_token is not None:
             return QuickSearchProviderLease(
                 lock_key=lock_key,
                 lock_token=redis_attempt.lock_token,
                 expires_at=expires_at,
             )
-        case "busy":
-            return None
-        case "unavailable":
-            pass
+        return None
 
     if _try_insert_lock(
         db,

@@ -1350,6 +1350,16 @@ class RevalidationJob(Base):
         Index("ix_revalidation_job_due", "status", "scheduled_at", "priority"),
         Index("ix_revalidation_job_target", "target_type", "target_fingerprint", "provider", "status"),
         Index("ix_revalidation_job_lock_token", "lock_token"),
+        Index(
+            "uq_revalidation_job_active_target",
+            "job_type",
+            "target_type",
+            "target_fingerprint",
+            text("coalesce(provider, '')"),
+            unique=True,
+            postgresql_where=text("status IN ('queued', 'running')"),
+            sqlite_where=text("status IN ('queued', 'running')"),
+        ),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))

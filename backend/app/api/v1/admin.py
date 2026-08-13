@@ -62,8 +62,15 @@ def _delete_watch(db: Session, watch_id: str) -> None:
 
 
 @router.get("/users", response_model=list[AdminUserOut])
-def list_users(db: Session = Depends(get_db), _: User = Depends(require_admin)) -> list[AdminUserOut]:
-    users = db.scalars(select(User)).all()
+def list_users(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0, le=100_000),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> list[AdminUserOut]:
+    users = db.scalars(
+        select(User).order_by(User.created_at.desc(), User.id.desc()).offset(offset).limit(limit)
+    ).all()
     return [
         AdminUserOut(
             id=u.id,

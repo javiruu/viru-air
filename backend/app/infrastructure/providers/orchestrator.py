@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import logging
+import os
 import time
+import threading
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
+from contextlib import contextmanager
 
 from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError, ProviderWarning
 from app.infrastructure.providers.base import FlightProvider
@@ -13,6 +16,17 @@ from app.services.provider_health_stats import ProviderHealthSample, record_prov
 
 logger = logging.getLogger(__name__)
 _DEFAULT_PROVIDER_CIRCUIT_BREAKER = ProviderCircuitBreaker()
+_PROVIDER_EXECUTOR = ThreadPoolExecutor(
+    max_workers=max(1, int(os.getenv("PROVIDER_EXECUTOR_MAX_WORKERS", "8")))
+)
+_PROVIDER_SLOTS = threading.BoundedSemaphore(
+    max(1, int(os.getenv("PROVIDER_CONCURRENCY_LIMIT", "16")))
+)
+
+
+@contextmanager
+def _provider_executor_context():
+    yield _PROVIDER_EXECUTOR
 
 
 class FlightSearchOrchestrator:
@@ -44,7 +58,6 @@ class FlightSearchOrchestrator:
         # Fair per-provider timeout: divide total, but ensure each provider
         # gets at least 3s so slower APIs (Wizz Air farechart) don't false-timeout.
         provider_timeout = max(3000, timeout_ms // len(self._providers))
-        max_workers = min(len(self._providers), 4)
 
         logger.info(
             "orchestrator_parallel_start route=%s->%s date=%s providers=%s timeout_per_provider=%s",
@@ -54,7 +67,7 @@ class FlightSearchOrchestrator:
         )
         t_start = time.perf_counter()
 
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        with _provider_executor_context() as executor:
             future_map: dict[Future[ProviderFetchResult], tuple[FlightProvider, float]] = {}
             for provider in self._providers:
                 circuit_decision = self._circuit_breaker.before_call(provider.provider_id)
@@ -78,6 +91,7 @@ class FlightSearchOrchestrator:
                     continue
 
                 provider_started_at = time.perf_counter()
+                _PROVIDER_SLOTS.acquire()
                 future = executor.submit(
                     provider.get_flights,
                     origin=origin,
@@ -86,6 +100,7 @@ class FlightSearchOrchestrator:
                     timeout_ms=provider_timeout,
                     currency=currency,
                 )
+                future.add_done_callback(lambda _: _PROVIDER_SLOTS.release())
                 future_map[future] = (provider, provider_started_at)
 
             for future in as_completed(future_map):

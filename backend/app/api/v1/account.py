@@ -1,6 +1,6 @@
 from app.core.time import utc_now_naive
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from passlib.context import CryptContext
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
@@ -95,11 +95,18 @@ def update_profile(
 
 
 @router.get("/sessions")
-def get_sessions(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)) -> dict:
+def get_sessions(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0, le=100_000),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
     sessions = db.scalars(
         select(UserSession)
         .where(UserSession.user_id == current_user.id)
         .order_by(UserSession.last_seen.desc(), UserSession.id.desc())
+        .offset(offset)
+        .limit(limit)
     ).all()
     data = [
         {

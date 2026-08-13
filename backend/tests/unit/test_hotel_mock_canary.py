@@ -30,7 +30,7 @@ def test_mock_canary_passes_nominal_and_kill_switch_without_private_evidence(tmp
 
     assert report["status"] == "passed"
     assert report["provider_mode"] == "mock"
-    assert report["migration_revision"] == "0059_hotel_tracking_lifecycle"
+    assert report["migration_revision"] == "0060_revalidation_job_active_target"
     assert MIGRATION_REVISION == report["migration_revision"]
     assert report["external_calls_expected"] == 0
     assert report["external_calls_observed"] == 0
