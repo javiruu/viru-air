@@ -61,3 +61,25 @@ def test_hotel_alert_event_ownership_migration_backfills_rule_owner(tmp_path: Pa
             assert row.user_id == user_id
     finally:
         engine.dispose()
+
+
+def test_hotel_alert_event_ownership_migration_recovers_after_sqlite_partial_add_column(tmp_path: Path) -> None:
+    backend_root = Path(__file__).resolve().parents[2]
+    db_path = tmp_path / "hotel-event-ownership-partial.db"
+    config = Config(str(backend_root / "alembic.ini"))
+    config.set_main_option("script_location", str(backend_root / "alembic"))
+    config.set_main_option("sqlalchemy.url", f"sqlite:///{db_path}")
+
+    command.upgrade(config, "0041_add_community_trending_snapshots")
+    engine = create_engine(f"sqlite:///{db_path}")
+    try:
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE hotel_alert_event ADD COLUMN user_id VARCHAR(36)"))
+
+        command.upgrade(config, "0042_hotel_alert_event_ownership")
+
+        with engine.connect() as connection:
+            indexes = {index["name"] for index in connection.dialect.get_indexes(connection, "hotel_alert_event")}
+            assert "ix_hotel_alert_event_user_id" in indexes
+    finally:
+        engine.dispose()
