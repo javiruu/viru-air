@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   filterWatchesBySelection,
+  mapLatestWatchSnapshotsToHistoryRows,
   mapSnapshotsToHistoryRows,
   mergeWatchDetailPriceHistoryRows,
   resolveCurrentWatchDetail,
@@ -56,6 +57,25 @@ test("mapSnapshotsToHistoryRows maps only snapshots linked to existing watch ids
   assert.equal(rows[0].origin, "MAD");
   assert.equal(rows[0].destination, "DUB");
   assert.equal(rows[0].provider, "easyjet-public");
+});
+
+test("mapLatestWatchSnapshotsToHistoryRows exposes the persisted save-result price before batch history returns", () => {
+  const rows = mapLatestWatchSnapshotsToHistoryRows([
+    {
+      ...WATCHES[0],
+      latest_snapshot: {
+        captured_at_utc: "2026-05-01T10:00:00Z",
+        raw_price: 47,
+        raw_currency: "EUR",
+        departure_time_local: "10:00",
+        provider: "quick-search",
+      },
+    },
+  ]);
+
+  assert.deepEqual(rows.map((row) => [row.watchId, row.price, row.currency]), [
+    ["w1", 47, "EUR"],
+  ]);
 });
 
 test("mapSnapshotsToHistoryRows collapses same-refresh legacy snapshots to one canonical point", () => {

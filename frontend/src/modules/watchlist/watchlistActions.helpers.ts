@@ -2,6 +2,14 @@ import type { HistoryRow, Snapshot, Watch, WatchDetail } from "@/modules/watchli
 
 type SnapshotWithWatchId = Snapshot & { watch_id: string };
 
+export function mapLatestWatchSnapshotsToHistoryRows(rows: Watch[]): HistoryRow[] {
+  return rows.flatMap((watch) =>
+    watch.latest_snapshot
+      ? [snapshotToHistoryRow(watch, watch.latest_snapshot)]
+      : [],
+  );
+}
+
 function toRefreshBucket(capturedAtUtc: string): string {
   const normalized = capturedAtUtc.trim();
   const [withoutFraction] = normalized.split(".");

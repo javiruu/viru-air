@@ -28,11 +28,10 @@ test("W6: helper de frescura cubre caso sin timestamp ni snapshot", () => {
   assert.match(source, /Sin datos todavÃ­a|watchlist\.freshness\.noDataLabel/);
 });
 
-test("W6: lista muestra frescura accionable condicionalmente con datos disponibles", () => {
+test("W6: la fila compacta no repite frescura ya disponible en el detalle", () => {
   const source = fs.readFileSync(WATCH_ROW, "utf8");
-  assert.match(source, /getFreshnessPresentation/);
-  assert.match(source, /freshness\.label/);
-  assert.match(source, /meta\?\.latest\?\.capturedAt/);
+  assert.doesNotMatch(source, /getFreshnessPresentation/);
+  assert.doesNotMatch(source, /watchlist\.detail\.freshness/);
 });
 
 test("W6: detalle usa una sola linea de frescura y evita duplicidad absurda", () => {

@@ -30,7 +30,7 @@ test("W9.1: watchlist keeps main surfaces and removes detail calendar table", ()
   assert.doesNotMatch(detail, /prices\/calendar/);
 });
 
-test("W9.1: watchlist exposes multi-provider coverage without fake per-route claims", () => {
+test("W9.1: provider coverage avoids fake per-route claims in compact rows", () => {
   const providerPanel = fs.readFileSync(PROVIDER_PANEL, "utf8");
   const row = fs.readFileSync(WATCH_ROW, "utf8");
   const detail = fs.readFileSync(DETAIL_PANEL, "utf8");
@@ -38,8 +38,8 @@ test("W9.1: watchlist exposes multi-provider coverage without fake per-route cla
 
   assert.match(providerPanel, /provider\.status === "observed"/);
   assert.match(providerPanel, /providerCoverage\.pendingSummary/);
-  assert.match(row, /resolveProviderPresentation/);
-  assert.match(row, /providerCoverage\.rowSource/);
+  assert.doesNotMatch(row, /resolveProviderPresentation/);
+  assert.doesNotMatch(row, /providerCoverage\.rowSource/);
   assert.match(detail, /providerCoverage\.detailSource/);
   assert.match(i18n, /Cobertura de búsqueda/);
 });

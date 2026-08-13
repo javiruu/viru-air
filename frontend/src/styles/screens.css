@@ -8140,6 +8140,7 @@ textarea::placeholder {
   gap: 0.7rem;
   align-content: flex-start;
   min-height: var(--qs-route-card-min-height);
+  overflow: visible;
   padding: 0.95rem 1rem;
   border-radius: 16px;
   background: var(--surface);
@@ -8261,7 +8262,7 @@ textarea::placeholder {
 .qs-additional-airports {
   display: grid;
   gap: 0.75rem;
-  margin-top: 0.25rem;
+  margin-top: 0.7rem;
 }
 
 .qs-additional-airport {
@@ -8276,6 +8277,13 @@ textarea::placeholder {
 .qs-additional-airport .qs-input {
   min-width: 0;
   width: 100%;
+}
+
+.qs-additional-airport .qs-input,
+.qs-additional-airport .qs-input::placeholder {
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .qs-additional-airport > .qs-error {
@@ -8335,6 +8343,10 @@ textarea::placeholder {
   font-weight: 600;
   cursor: pointer;
   transition: color 0.16s ease, border-color 0.16s ease, background-color 0.16s ease, transform 0.16s ease;
+}
+
+.qs-additional-airports__add {
+  margin-top: 0.05rem;
 }
 
 .qs-additional-airports__add svg {

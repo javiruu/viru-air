@@ -182,6 +182,9 @@ def test_saved_warm_price_is_read_from_watchlist_without_provider_request(
     assert listing.status_code == 200
     assert detail.status_code == 200
     assert listing.json()[0]["id"] == watch_id
+    assert listing.json()[0]["latest_snapshot"]["raw_price"] == 47.0
+    assert listing.json()[0]["latest_snapshot"]["raw_currency"] == "EUR"
+    assert listing.json()[0]["latest_snapshot"]["is_stale"] is True
     assert detail.json()["latest_snapshot"]["raw_price"] == 47.0
     assert detail.json()["latest_snapshot"]["raw_currency"] == "EUR"
     assert detail.json()["latest_snapshot"]["is_stale"] is True
