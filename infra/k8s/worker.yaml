@@ -12,10 +12,43 @@ spec:
       labels:
         app: viru-worker-tracking
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: tmp
+          emptyDir: {}
       containers:
         - name: worker
           image: ghcr.io/your-org/viru-backend:latest
-          command: ["python", "-c", "print('worker placeholder')"]
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "app.services.revalidation_worker_entrypoint"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          env:
+            - name: APP_ENV
+              value: "staging"
+            - name: LOG_FILE
+              value: "/tmp/viru-worker.log"
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: viru-backend-runtime
+                  key: DB_URL
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: viru-backend-runtime
+                  key: JWT_SECRET
           resources:
             requests:
               cpu: "300m"

@@ -35,6 +35,22 @@ type QaCheck = {
   detail: string;
 };
 
+const ADMIN_USERS_PAGE_SIZE = 200;
+
+async function fetchAllAdminUsers(): Promise<AdminUser[]> {
+  const users: AdminUser[] = [];
+  let offset = 0;
+
+  while (true) {
+    const page = await apiFetch<AdminUser[]>(
+      `/admin/users?limit=${ADMIN_USERS_PAGE_SIZE}&offset=${offset}`,
+    );
+    users.push(...page);
+    if (page.length < ADMIN_USERS_PAGE_SIZE) return users;
+    offset += page.length;
+  }
+}
+
 type ProductMetrics = {
   dashboard_views: number;
   quick_search_executed: number;
@@ -76,7 +92,7 @@ export default function AdminPage() {
   const runSystemChecks = useCallback(async () => {
     const checks = await Promise.allSettled([
       apiFetch<Me>("/auth/me"),
-      apiFetch<AdminUser[]>("/admin/users"),
+      fetchAllAdminUsers(),
       apiFetch<Watch[]>("/watchlist"),
       apiFetch<ProductMetrics>("/admin/product-metrics"),
     ]);
@@ -136,7 +152,7 @@ export default function AdminPage() {
           router.replace("/dashboard");
           return;
         }
-        const data = await apiFetch<AdminUser[]>("/admin/users");
+        const data = await fetchAllAdminUsers();
         setUsers(data);
         await runSystemChecks();
       } catch {
@@ -148,7 +164,7 @@ export default function AdminPage() {
   }, [router, runSystemChecks, t]);
 
   async function refreshUsers() {
-    const data = await apiFetch<AdminUser[]>("/admin/users");
+    const data = await fetchAllAdminUsers();
     setUsers(data);
   }
 
