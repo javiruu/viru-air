@@ -1,8 +1,8 @@
 # H04 — Métricas, eventos y definición de “done” de `/hoteles`
 
-**Estado:** completo como contrato — pendiente de implementación gradual  
+**Estado:** contrato + RUM hotelero + allowlist first-party de seis eventos de producto implementados y verificados en laboratorio; instrumentación completa, dedupe y métricas derivadas siguen siendo graduales
 **Fecha:** 2026-08-04  
-**Área:** producto / analítica / backend / frontend / QA  
+**Área:** producto / analítica / backend / frontend / QA
 **Fuente de verdad:** sí para la taxonomía y los criterios de éxito de hoteles; la implementación de cada evento debe respetar los helpers y contratos técnicos existentes.
 
 ## 1. Propósito
@@ -23,7 +23,7 @@ La dirección de H04 es incremental:
 |---|---|---|
 | `trackEvent` | Emite eventos primitivos a gtag, Plausible y PostHog si están disponibles | Reutilizar para hitos de producto; no enviar PII |
 | `trackUxEvent` | Envía eventos autenticados a `/ux/events` | Reutilizar para eventos hoteleros persistidos y duraciones |
-| Allowlist `ALLOWED_EVENTS` | Incluye dashboard, quick search, watchlist y alertas generales | Añadir eventos hoteleros solo con revisión de contrato |
+| Allowlist `ALLOWED_EVENTS` | Incluye dashboard, quick search, watchlist, alertas generales y seis eventos hoteleros versionados | Mantener ampliación explícita y testeada; la taxonomía completa sigue gradual |
 | `UxEvent` | Guarda usuario, nombre, duración y metadata JSON | Mantener payload pequeño y redacted; definir retención antes de escalar volumen |
 | Admin product metrics | Agrega eventos existentes | Añadir métricas hoteleras agregadas, nunca exponer payloads crudos |
 | Eventos de dominio hotelero | `HotelAlertEvent.event_type` representa cambios de precio/availability | No confundir eventos de dominio con eventos de comportamiento; relacionarlos mediante IDs opacos solo cuando sea necesario |
@@ -31,7 +31,7 @@ La dirección de H04 es incremental:
 
 ### Gap principal
 
-H01 ya define el embudo hotelero, pero hoy la instrumentación hotelera no tiene un contrato completo ni una allowlist específica. H04 resuelve la semántica; H13, H16, H18, H22-H28 y H41 implementarán los eventos en los puntos adecuados.
+H01 define el embudo hotelero y el backend ya valida una allowlist first-party explícita para seis hitos (`hotel_search_completed`, `hotel_detail_viewed`, `hotel_tracking_created`, `hotel_alert_created`, `hotel_inbox_viewed`, `hotel_partner_clicked`) además de `hotel_rum_vitals`. La instrumentación de todos los puntos del embudo, dedupe operativo, dashboards y métricas causales siguen siendo graduales; H13, H16, H18, H22-H28 y H41 deben completar esos puntos sin ampliar el contrato arbitrariamente.
 
 ## 3. Principios de medición
 
@@ -241,11 +241,12 @@ Un experimento o cambio no se considera positivo si mejora clicks pero empeora m
 
 ### Estado técnico al cerrar H04
 
-El contrato está definido, pero la infraestructura actual todavía no lo implementa completo:
+El contrato está definido y existe un primer evento RUM hotelero acotado; la infraestructura de producto todavía no está completa:
 
 - `trackEvent` normaliza propiedades primitivas, pero no aplica una allowlist hotelera ni añade automáticamente `schema_version`.
 - `trackUxEvent` compacta metadata, pero aún no genera `event_id`, `search_session_id` ni una clave de dedupe.
-- `/ux/events` valida el nombre contra `ALLOWED_EVENTS`, pero no valida todavía una allowlist de propiedades hoteleras ni límites específicos de metadata más allá del esquema general.
+- `/ux/events` acepta `hotel_rum_vitals` con siete claves bucketizadas y seis eventos de producto hotelero con metadata versionada y enumeraciones allowlisted; rechaza claves desconocidas, PII/IDs y `schema_version` booleano. La taxonomía restante y la instrumentación de frontend siguen siendo graduales.
+- `HotelRumTracker` está apagado por defecto y solo se activa con `viru_hotels_rum_consent=granted`; envía LCP, una aproximación de INP basada en Event Timing, CLS y TTFB sin URL, PII ni valores exactos.
 - Las métricas de funnel no deben publicarse como exactas hasta que H13/H15 introduzcan una identidad de búsqueda/sesión y tests contra retry, Strict Mode y re-render.
 
 Estas carencias son requisitos de implementación para H13/H15/H41, no una razón para cambiar la semántica de este documento.

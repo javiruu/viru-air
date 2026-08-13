@@ -57,14 +57,14 @@ Por tanto, V1 no debe presentar una fila con `is_active=true` como tracking oper
 
 ### 2.3. PATCH actual y riesgo de identidad
 
-El PATCH V1 permite mutar campos que pueden definir una oferta distinta, incluyendo fechas, provider, precios y condiciones como habitación, régimen o cancelación. Si se cambia uno de esos campos dentro de la misma fila:
+El PATCH V1 permite actualizar precios y pausa, pero el cierre local ya bloquea mutaciones de identidad que podrían definir una oferta distinta (fechas, ocupación, provider, habitación, régimen, cancelación y moneda). Si se intenta cambiar uno de esos campos dentro de la misma fila:
 
 - la serie histórica puede mezclar ofertas no comparables;
 - el snapshot inicial deja de describir la identidad actual;
 - las reglas pueden comparar baselines de estancias distintas;
 - un deeplink o evento antiguo puede apuntar a una configuración que ya no existe.
 
-H29 documenta este comportamiento como deuda de compatibilidad, no como semántica deseada. La implementación V2 debe separar edición de preferencias de una nueva versión o suscripción cuando cambie la identidad.
+H29 conserva como pendiente V2 la separación entre edición de preferencias y una nueva versión/suscripción cuando cambie la identidad. El bloqueo actual evita mezclar silenciosamente históricos y baselines, pero no implementa todavía estados persistidos `paused/expired/archived`, auditoría ni expiración automática.
 
 ### 2.4. DELETE actual
 
@@ -249,7 +249,7 @@ deleted/expired/paused
   > delivery
 ```
 
-Un retry de email/push no puede revivir un tracking expirado ni enviar una alerta creada después de una pausa. Un evento histórico puede permanecer en inbox si H27 lo autoriza, pero su estado de delivery nuevo debe reflejar la cancelación.
+Un retry de un canal externo no puede revivir un tracking expirado ni enviar una alerta creada después de una pausa. Un evento histórico puede permanecer en inbox si H27 lo autoriza, pero su estado de delivery nuevo debe reflejar la cancelación.
 
 ## 6. Ownership, cascadas y borrado de cuenta
 
@@ -314,7 +314,7 @@ sweep lee active       || usuario pausa
 sweep lee active       || usuario elimina
 sweep crea snapshot    || checkout expira
 alert evaluator corre  || tracking cambia de oferta
-email retry corre      || tracking se elimina
+retry de canal externo || tracking se elimina
 restore archived       || cleanup/purge vence
 ```
 

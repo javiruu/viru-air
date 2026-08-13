@@ -90,6 +90,15 @@ def test_runtime_fixes_from_container_gate_are_registered() -> None:
     assert "key: JWT_SECRET" in migrate
 
 
+def test_ci_runs_the_redacted_hotel_mock_canary_gate_in_backend_job() -> None:
+    workflow = _read("infra/github/workflows/ci.yml")
+    backend_block = workflow.split("\n  backend:\n", 1)[1].split("\n  frontend:\n", 1)[0]
+
+    assert "working-directory: backend" in backend_block
+    assert "Hotel Mock canary dry-run (H44/H43)" in backend_block
+    assert "python scripts/hotel_mock_canary.py --dry-run" in backend_block
+
+
 def test_ghcr_publish_workflow_and_activation_overlay_are_prepared() -> None:
     release = _read("infra/github/workflows/release.yml")
     secret = _read("infra/k8s/runtime-secret.example.yaml")

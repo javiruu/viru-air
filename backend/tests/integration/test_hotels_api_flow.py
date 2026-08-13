@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 from fastapi.testclient import TestClient
 
-from app.infrastructure.db.models import HotelCompSet, HotelProperty, HotelRateSnapshot
+from app.infrastructure.db.models import HotelCompSet, HotelProperty, HotelProviderRun, HotelRateSnapshot, User
 from app.infrastructure.db.session import get_db
 from app.main import app
 from app.services.hotels_service import run_hotel_sweep
@@ -12,7 +12,10 @@ from tests.helpers import register_and_token
 
 @pytest.fixture(autouse=True)
 def _enable_hotels(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("APP_ENV", "local")
+    monkeypatch.setenv("HOTEL_PROFILE", "local_demo")
     monkeypatch.setenv("HOTEL_FEATURE_ENABLED", "true")
+    monkeypatch.setenv("HOTEL_SWEEP_ENABLED", "true")
     monkeypatch.setenv("HOTEL_PROVIDER", "mock")
 
 
@@ -29,6 +32,177 @@ def _open_overridden_db():
     generator = override()
     db = next(generator)
     return db, generator
+
+
+def test_hotels_ingest_persists_client_event_on_provider_run(client: TestClient) -> None:
+    email = "hotels-ingest-client-event@viru.dev"
+    token = register_and_token(client, email=email)
+    headers = {
+        **_auth(token),
+        "x-correlation-id": "corr-ingest-client-event",
+        "x-client-event-id": "intent-ingest-client-event",
+    }
+
+    ingest = client.post("/api/v1/hotels/ingest/mock", headers=headers)
+    assert ingest.status_code == 200
+    payload = ingest.json()
+    provider_run_id = payload["provider_run_id"]
+    assert provider_run_id
+
+    db, generator = _open_overridden_db()
+    try:
+        persisted = db.get(HotelProviderRun, provider_run_id)
+        assert persisted is not None
+        assert persisted.correlation_id == "corr-ingest-client-event"
+        assert persisted.client_event_id == "intent-ingest-client-event"
+        rates = db.query(HotelRateSnapshot).filter_by(provider_run_id=provider_run_id).all()
+        assert rates
+    finally:
+        try:
+            next(generator)
+        except StopIteration:
+            pass
+
+    admin_email = "hotels-ingest-client-event-admin@viru.dev"
+    admin_token = register_and_token(client, email=admin_email)
+    admin_db, admin_generator = _open_overridden_db()
+    try:
+        admin_user = admin_db.query(User).filter_by(email=admin_email).one()
+        admin_user.is_admin = True
+        admin_db.commit()
+    finally:
+        try:
+            next(admin_generator)
+        except StopIteration:
+            pass
+    response = client.get(
+        f"/api/v1/hotels/provider-runs/{provider_run_id}",
+        headers=_auth(admin_token),
+    )
+    assert response.status_code == 200
+    assert response.json()["client_event_id"] == "intent-ingest-client-event"
+
+
+def test_hotel_read_detail_rates_parity_echo_intent_without_creating_run(client: TestClient) -> None:
+    email = "hotels-read-intent@viru.dev"
+    token = register_and_token(client, email=email)
+    auth_headers = _auth(token)
+
+    ingest = client.post("/api/v1/hotels/ingest/mock", headers=auth_headers)
+    assert ingest.status_code == 200
+    hotel_id = client.get("/api/v1/hotels/search", headers=auth_headers).json()[0]["id"]
+    intent = "intent-detail-read-01"
+    headers = {**auth_headers, "x-client-event-id": intent}
+
+    db, generator = _open_overridden_db()
+    try:
+        runs_before = db.query(HotelProviderRun).count()
+    finally:
+        try:
+            next(generator)
+        except StopIteration:
+            pass
+
+    for path in (
+        f"/api/v1/hotels/{hotel_id}",
+        f"/api/v1/hotels/{hotel_id}/rates",
+        f"/api/v1/hotels/{hotel_id}/parity",
+    ):
+        response = client.get(path, headers=headers)
+        assert response.status_code == 200, (path, response.text)
+        assert response.headers["x-client-event-id"] == intent
+
+    db, generator = _open_overridden_db()
+    try:
+        assert db.query(HotelProviderRun).count() == runs_before
+    finally:
+        try:
+            next(generator)
+        except StopIteration:
+            pass
+
+
+def test_hotel_provider_run_endpoint_exposes_persisted_outcomes(client: TestClient) -> None:
+    email = "hotels-provider-run-outcomes@viru.dev"
+    token = register_and_token(client, email=email)
+    headers = _auth(token)
+    db, generator = _open_overridden_db()
+    try:
+        user = db.query(User).filter_by(email=email).one()
+        user.is_admin = True
+        db.commit()
+        provider_run = run_hotel_sweep(db, provider="mock")
+        run_id = provider_run.id
+    finally:
+        try:
+            next(generator)
+        except StopIteration:
+            pass
+
+    response = client.get(f"/api/v1/hotels/provider-runs/{run_id}", headers=headers)
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["id"] == run_id
+    assert payload["tracked_outcomes"]["offers_scanned"] == 0
+
+
+def test_hotel_provider_run_endpoint_redacts_historical_error(client: TestClient) -> None:
+    email = "hotels-provider-run-redaction@viru.dev"
+    token = register_and_token(client, email=email)
+    db, generator = _open_overridden_db()
+    try:
+        user = db.query(User).filter_by(email=email).one()
+        user.is_admin = True
+        provider_run = HotelProviderRun(
+            provider="mock",
+            status="failed",
+            error_message='GET https://provider.test?api_key="secret-value" token=abc123',
+        )
+        db.add(provider_run)
+        db.commit()
+        run_id = provider_run.id
+    finally:
+        try:
+            next(generator)
+        except StopIteration:
+            pass
+
+    response = client.get(f"/api/v1/hotels/provider-runs/{run_id}", headers=_auth(token))
+    assert response.status_code == 200
+    error_message = response.json()["error_message"]
+    assert "secret-value" not in error_message
+    assert "abc123" not in error_message
+    assert "***" in error_message
+
+
+def test_hotel_provider_run_endpoint_requires_admin(client: TestClient) -> None:
+    token = register_and_token(client, email="hotels-provider-run-forbidden@viru.dev")
+    response = client.get(
+        "/api/v1/hotels/provider-runs/00000000-0000-0000-0000-000000000000",
+        headers=_auth(token),
+    )
+    assert response.status_code == 403
+
+
+def test_hotel_provider_run_endpoint_returns_404_for_unknown_run(client: TestClient) -> None:
+    email = "hotels-provider-run-404@viru.dev"
+    token = register_and_token(client, email=email)
+    db, generator = _open_overridden_db()
+    try:
+        user = db.query(User).filter_by(email=email).one()
+        user.is_admin = True
+        db.commit()
+    finally:
+        try:
+            next(generator)
+        except StopIteration:
+            pass
+    response = client.get(
+        "/api/v1/hotels/provider-runs/00000000-0000-0000-0000-000000000000",
+        headers=_auth(token),
+    )
+    assert response.status_code == 404
+    assert _error_code(response.json()) == "hotel_provider_run_not_found"
 
 
 def test_hotels_search_without_results_returns_empty_list(client: TestClient) -> None:
@@ -532,6 +706,101 @@ def test_hotels_alert_events_route_is_not_captured_by_hotel_detail(client: TestC
     assert response.json() == []
 
 
+def test_hotels_alert_rule_rejects_foreign_or_mismatched_tracked_offer(client: TestClient) -> None:
+    token_a = register_and_token(client, email="hotels-alert-tracked-owner-a@viru.dev")
+    token_b = register_and_token(client, email="hotels-alert-tracked-owner-b@viru.dev")
+    headers_a = _auth(token_a)
+    headers_b = _auth(token_b)
+
+    ingest = client.post("/api/v1/hotels/ingest/mock", headers=headers_a)
+    assert ingest.status_code == 200
+    hotels = client.get("/api/v1/hotels/search", headers=headers_a).json()
+    assert len(hotels) >= 2
+    hotel_a = hotels[0]["id"]
+    hotel_b = hotels[1]["id"]
+
+    created = client.post(
+        "/api/v1/hotels/tracked-offers",
+        headers=headers_a,
+        json={"hotel_id": hotel_a, "provider": "mock", "initial_price": 100, "currency": "EUR"},
+    )
+    assert created.status_code == 201
+    offer_id = created.json()["id"]
+
+    foreign = client.post(
+        "/api/v1/hotels/alert-rules",
+        headers=headers_b,
+        json={
+            "hotel_id": hotel_a,
+            "tracked_offer_id": offer_id,
+            "rule_type": "price_below",
+            "threshold_amount": 90,
+            "is_active": True,
+        },
+    )
+    assert foreign.status_code == 403
+
+    mismatch = client.post(
+        "/api/v1/hotels/alert-rules",
+        headers=headers_a,
+        json={
+            "hotel_id": hotel_b,
+            "tracked_offer_id": offer_id,
+            "rule_type": "price_below",
+            "threshold_amount": 90,
+            "is_active": True,
+        },
+    )
+    assert mismatch.status_code == 422
+    assert _error_code(mismatch.json()) == "hotel_alert_rule_tracked_offer_hotel_mismatch"
+
+
+def test_hotels_alert_events_are_isolated_between_users_for_shared_hotel(client: TestClient) -> None:
+    token_a = register_and_token(client, email="hotels-alert-isolation-a@viru.dev")
+    token_b = register_and_token(client, email="hotels-alert-isolation-b@viru.dev")
+    headers_a = _auth(token_a)
+    headers_b = _auth(token_b)
+
+    ingest = client.post("/api/v1/hotels/ingest/mock", headers=headers_a)
+    assert ingest.status_code == 200
+    hotel_id = client.get("/api/v1/hotels/search", headers=headers_a).json()[0]["id"]
+
+    for headers in (headers_a, headers_b):
+        created = client.post(
+            "/api/v1/hotels/alert-rules",
+            headers=headers,
+            json={
+                "hotel_id": hotel_id,
+                "rule_type": "price_below",
+                "threshold_amount": 500,
+                "is_active": True,
+            },
+        )
+        assert created.status_code == 200
+
+    db, generator = _open_overridden_db()
+    try:
+        provider_run = run_hotel_sweep(db, provider="mock")
+        assert provider_run.status == "completed"
+    finally:
+        try:
+            next(generator)
+        except StopIteration:
+            pass
+
+    events_a = client.get("/api/v1/hotels/alert-events", headers=headers_a)
+    events_b = client.get("/api/v1/hotels/alert-events", headers=headers_b)
+    assert events_a.status_code == 200
+    assert events_b.status_code == 200
+    payload_a = events_a.json()
+    payload_b = events_b.json()
+    assert payload_a
+    assert payload_b
+    assert all(item["hotel_id"] == hotel_id for item in payload_a + payload_b)
+    assert not any("user_id" in item for item in payload_a + payload_b)
+    assert {item["id"] for item in payload_a}.isdisjoint({item["id"] for item in payload_b})
+
+
 def test_hotels_alert_events_lists_triggered_events_after_sweep(client: TestClient) -> None:
     token = register_and_token(client, email="hotels-alert-events-populated@viru.dev")
     headers = _auth(token)
@@ -636,15 +905,21 @@ def test_hotels_tracked_offers_crud_flow(client: TestClient) -> None:
     assert patched.json()["target_price"] == 95.00
     assert patched.json()["initial_price"] == 120.50
 
+    snapshots = client.get(f"/api/v1/hotels/tracked-offers/{offer_id}/snapshots", headers=headers)
+    assert snapshots.status_code == 200
+    assert len(snapshots.json()) == 1
+
     # Delete
     deleted = client.delete(f"/api/v1/hotels/tracked-offers/{offer_id}", headers=headers)
     assert deleted.status_code == 200
     assert deleted.json()["status"] == "ok"
 
-    # Verify deleted
+    # Verify deleted and its offer-owned snapshots are gone too.
     listed_after = client.get("/api/v1/hotels/tracked-offers", headers=headers)
     assert listed_after.status_code == 200
     assert listed_after.json() == []
+    snapshots_after = client.get(f"/api/v1/hotels/tracked-offers/{offer_id}/snapshots", headers=headers)
+    assert snapshots_after.status_code == 404
 
 
 def test_hotels_tracked_offers_ownership_enforced(client: TestClient) -> None:
@@ -708,6 +983,56 @@ def test_hotels_tracked_offers_not_found_returns_404(client: TestClient) -> None
     delete = client.delete(f"/api/v1/hotels/tracked-offers/{fake_id}", headers=headers)
     assert delete.status_code == 404
     assert _error_code(delete.json()) == "tracked_offer_not_found"
+
+
+def test_hotels_tracked_offers_reject_identity_mutation_but_allow_lifecycle_updates(client: TestClient) -> None:
+    token = register_and_token(client, email="hotels-tracked-identity-immutable@viru.dev")
+    headers = _auth(token)
+
+    ingest = client.post("/api/v1/hotels/ingest/mock", headers=headers)
+    assert ingest.status_code == 200
+    hotel_id = client.get("/api/v1/hotels/search", headers=headers).json()[0]["id"]
+    created = client.post(
+        "/api/v1/hotels/tracked-offers",
+        headers=headers,
+        json={
+            "hotel_id": hotel_id,
+            "check_in": "2026-08-01",
+            "check_out": "2026-08-03",
+            "guests": 2,
+            "provider": "mock",
+            "initial_price": 120,
+            "target_price": 100,
+            "currency": "EUR",
+        },
+    )
+    assert created.status_code == 201
+    offer_id = created.json()["id"]
+
+    identity_patch = client.patch(
+        f"/api/v1/hotels/tracked-offers/{offer_id}",
+        headers=headers,
+        json={"check_in": "2026-08-02"},
+    )
+    assert identity_patch.status_code == 422
+    assert _error_code(identity_patch.json()) == "tracked_offer_identity_immutable"
+
+    provider_patch = client.patch(
+        f"/api/v1/hotels/tracked-offers/{offer_id}",
+        headers=headers,
+        json={"provider": "makcorps"},
+    )
+    assert provider_patch.status_code == 422
+    assert _error_code(provider_patch.json()) == "tracked_offer_identity_immutable"
+
+    lifecycle_patch = client.patch(
+        f"/api/v1/hotels/tracked-offers/{offer_id}",
+        headers=headers,
+        json={"target_price": 90, "is_active": False},
+    )
+    assert lifecycle_patch.status_code == 200
+    assert lifecycle_patch.json()["target_price"] == 90
+    assert lifecycle_patch.json()["is_active"] is False
 
 
 def test_hotels_tracked_offers_filter_active(client: TestClient) -> None:
@@ -893,6 +1218,45 @@ def test_hotels_area_resolve_empty_query_returns_422(client: TestClient) -> None
     assert response.status_code == 422
 
 
+def test_hotels_search_and_area_inputs_have_server_side_hard_bounds(client: TestClient) -> None:
+    """H38 regression: bounded inputs reject oversized/costly requests before service work."""
+    token = register_and_token(client, email="hotels-hard-bounds@viru.dev")
+    headers = _auth(token)
+
+    cases = (
+        ("/api/v1/hotels/search", {"q": "x" * 121}),
+        ("/api/v1/hotels/search", {"city": "x" * 101}),
+        ("/api/v1/hotels/search", {"limit": 101}),
+        ("/api/v1/hotels/search", {"offset": -1}),
+        ("/api/v1/hotels/area-resolve", {"q": "x" * 121}),
+        ("/api/v1/hotels/area-search", {"latitude": 40, "longitude": 0, "radius_km": 51}),
+        ("/api/v1/hotels/area-search", {"latitude": 91, "longitude": 0}),
+        ("/api/v1/hotels/area-search", {"latitude": 40, "longitude": 181}),
+        ("/api/v1/hotels/area-search", {"latitude": 40, "longitude": 0, "guests": 21}),
+        ("/api/v1/hotels/area-search", {"latitude": 40, "longitude": 0, "currency": "EURO"}),
+        (
+            "/api/v1/hotels/area-search",
+            {"latitude": 40, "longitude": 0, "check_in": "2026-08-05", "check_out": "2026-08-03"},
+        ),
+    )
+    for path, params in cases:
+        response = client.get(path, headers=headers, params=params)
+        assert response.status_code == 422, (path, params, response.text)
+        error_payload = response.json()
+        assert (
+            error_payload.get("details")
+            or error_payload.get("detail")
+            or error_payload.get("code")
+        ), (path, params, response.text)
+
+    date_error = client.get(
+        "/api/v1/hotels/area-search",
+        headers=headers,
+        params={"latitude": 40, "longitude": 0, "check_in": "2026-08-05", "check_out": "2026-08-03"},
+    )
+    assert _error_code(date_error.json()) == "invalid_date_range"
+
+
 # ── Area Search ────────────────────────────────────────────────────
 
 
@@ -911,6 +1275,58 @@ def test_hotels_area_search_requires_coordinates(client: TestClient) -> None:
         },
     )
     assert response.status_code == 422
+
+
+def test_hotels_area_search_provider_is_blocked_in_prod_off_without_external_calls(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    token = register_and_token(client, email="hotels-area-search-provider-off@viru.dev")
+    headers = _auth(token)
+
+    ingest = client.post("/api/v1/hotels/ingest/mock", headers=headers)
+    assert ingest.status_code == 200
+
+    db, generator = _open_overridden_db()
+    try:
+        snapshots_before = db.query(HotelRateSnapshot).count()
+    finally:
+        try:
+            next(generator)
+        except StopIteration:
+            pass
+
+    monkeypatch.setenv("HOTEL_PROFILE", "prod_off")
+    monkeypatch.setenv("HOTEL_FEATURE_ENABLED", "false")
+    monkeypatch.setenv("HOTEL_SWEEP_ENABLED", "false")
+    monkeypatch.setenv("HOTEL_GEOCODER_ENABLED", "false")
+
+    with monkeypatch.context() as requests_patch:
+        requests_patch.setattr("app.hotels.makcorps_provider.requests.Session", lambda: (_ for _ in ()).throw(AssertionError("provider must not be constructed")))
+        response = client.get(
+            "/api/v1/hotels/area-search",
+            headers=headers,
+            params={
+                "latitude": 40.4168,
+                "longitude": -3.7038,
+                "radius_km": 50,
+                "check_in": "2026-07-01",
+                "check_out": "2026-07-03",
+                "guests": 2,
+                "currency": "EUR",
+                "use_provider": True,
+            },
+        )
+
+    assert response.status_code == 200
+
+    db, generator = _open_overridden_db()
+    try:
+        assert db.query(HotelRateSnapshot).count() == snapshots_before
+    finally:
+        try:
+            next(generator)
+        except StopIteration:
+            pass
 
 
 def test_hotels_area_search_returns_results_after_ingest(client: TestClient) -> None:

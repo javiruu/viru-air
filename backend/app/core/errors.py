@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.core.request_context import get_correlation_id
+from app.core.request_context import get_client_event_id, get_correlation_id
 
 
 @dataclass
@@ -21,8 +21,10 @@ def error_envelope(
     message: str,
     details: list[dict] | dict | None = None,
     retry_after_sec: int | None = None,
+    correlation_id: str | None = None,
+    client_event_id: str | None = None,
 ) -> dict:
-    correlation_id = get_correlation_id() or None
+    correlation_id = correlation_id or get_correlation_id() or None
     payload = {
         "status": status,
         "code": code,
@@ -31,6 +33,9 @@ def error_envelope(
     }
     if correlation_id:
         payload["correlation_id"] = correlation_id
+    client_event_id = client_event_id or get_client_event_id()
+    if client_event_id:
+        payload["client_event_id"] = client_event_id
     if retry_after_sec is not None:
         payload["retry_after_sec"] = retry_after_sec
     return payload

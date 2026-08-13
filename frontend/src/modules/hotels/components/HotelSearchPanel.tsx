@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 
 import { useI18n } from "@/i18n";
 
@@ -65,8 +65,12 @@ export function HotelSearchPanel({
   onRadiusKmChange: (value: number) => void;
   onUseProviderChange: (value: boolean) => void;
 }) {
-  const { t } = useI18n();
+  const { t, localeTag } = useI18n();
   const disabled = useMemo(() => loading, [loading]);
+  const areaSuggestionListId = useId();
+  const [areaSuggestionsOpen, setAreaSuggestionsOpen] = useState(true);
+  const [activeAreaSuggestionIndex, setActiveAreaSuggestionIndex] = useState(-1);
+  const showAreaSuggestions = searchMode === "area" && areaSuggestionsOpen && areaSuggestions.length > 0;
 
   // Debounced area resolve
   useEffect(() => {
@@ -76,6 +80,13 @@ export function HotelSearchPanel({
     }, 350);
     return () => clearTimeout(timer);
   }, [areaQuery, searchMode, onAreaResolve]);
+
+  useEffect(() => {
+    if (searchMode !== "area" || areaQuery.trim().length < 2) {
+      setAreaSuggestionsOpen(false);
+      setActiveAreaSuggestionIndex(-1);
+    }
+  }, [areaQuery, searchMode]);
 
   const canSearch = useMemo(() => {
     if (searchMode === "area") {
@@ -138,6 +149,7 @@ export function HotelSearchPanel({
                 value={city}
                 onChange={(event) => onCityChange(event.target.value)}
                 placeholder={t("hotels.search.cityPlaceholder")}
+                data-testid="hotel-city-input"
               />
             </label>
           </div>
@@ -150,29 +162,67 @@ export function HotelSearchPanel({
                 <input
                   className="qs-input-neutral"
                   value={areaQuery}
-                  onChange={(event) => onAreaQueryChange(event.target.value)}
+                  onChange={(event) => {
+                    setAreaSuggestionsOpen(true);
+                    setActiveAreaSuggestionIndex(-1);
+                    onAreaQueryChange(event.target.value);
+                  }}
                   placeholder={t("hotels.search.areaPlaceholder")}
                   autoComplete="off"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-expanded={showAreaSuggestions}
+                  aria-controls={showAreaSuggestions ? areaSuggestionListId : undefined}
+                  aria-activedescendant={
+                    activeAreaSuggestionIndex >= 0
+                      ? `${areaSuggestionListId}-option-${activeAreaSuggestionIndex}`
+                      : undefined
+                  }
+                  onKeyDown={(event) => {
+                    if (!showAreaSuggestions) return;
+                    if (event.key === "ArrowDown") {
+                      event.preventDefault();
+                      setActiveAreaSuggestionIndex((current) =>
+                        current < areaSuggestions.length - 1 ? current + 1 : 0,
+                      );
+                    } else if (event.key === "ArrowUp") {
+                      event.preventDefault();
+                      setActiveAreaSuggestionIndex((current) =>
+                        current > 0 ? current - 1 : areaSuggestions.length - 1,
+                      );
+                    } else if (event.key === "Enter" && activeAreaSuggestionIndex >= 0) {
+                      event.preventDefault();
+                      onSelectArea(areaSuggestions[activeAreaSuggestionIndex]);
+                      setAreaSuggestionsOpen(false);
+                      setActiveAreaSuggestionIndex(-1);
+                    } else if (event.key === "Escape") {
+                      event.preventDefault();
+                      setAreaSuggestionsOpen(false);
+                      setActiveAreaSuggestionIndex(-1);
+                    }
+                  }}
                 />
                 {areaResolving ? (
                   <span className="hotel-area-spinner" aria-label={t("shared.states.loading")} />
                 ) : null}
-                {areaSuggestions.length > 0 ? (
-                  <ul className="hotel-area-suggestions" role="listbox">
-                    {areaSuggestions.map((suggestion) => (
+                {showAreaSuggestions ? (
+                  <ul id={areaSuggestionListId} className="hotel-area-suggestions" role="listbox">
+                    {areaSuggestions.map((suggestion, index) => (
                       <li
                         key={`${suggestion.latitude}-${suggestion.longitude}`}
+                        id={`${areaSuggestionListId}-option-${index}`}
+                        className="hotel-area-suggestion-item"
                         role="option"
-                        aria-selected={false}
+                        aria-selected={activeAreaSuggestionIndex === index}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => {
+                          onSelectArea(suggestion);
+                          setAreaSuggestionsOpen(false);
+                          setActiveAreaSuggestionIndex(-1);
+                        }}
                       >
-                        <button
-                          type="button"
-                          className="hotel-area-suggestion-item"
-                          onClick={() => onSelectArea(suggestion)}
-                        >
-                          <strong>{suggestion.area_label}</strong>
-                          <span>{suggestion.country_code}</span>
-                        </button>
+                        <strong>{suggestion.area_label}</strong>
+                        <span>{suggestion.country_code}</span>
                       </li>
                     ))}
                   </ul>
@@ -254,7 +304,7 @@ export function HotelSearchPanel({
         ) : null}
 
         <div className="action-row section-gap-sm">
-          <button type="submit" className="btn-primary" disabled={disabled || !canSearch}>
+          <button type="submit" className="btn-primary" data-testid="hotel-search-submit" disabled={disabled || !canSearch}>
             {loading ? t("shared.states.loading") : t("hotels.actions.search")}
           </button>
           <button type="button" className="btn-secondary" onClick={onIngest} disabled={disabled}>
@@ -285,13 +335,22 @@ export function HotelSearchPanel({
                 </div>
                 <div className="hotel-area-result-price">
                   {result.lowest_price !== null ? (
-                    <strong>
-                      {new Intl.NumberFormat("es-ES", {
-                        style: "currency",
-                        currency: result.currency,
-                        maximumFractionDigits: 0,
-                      }).format(result.lowest_price)}
-                    </strong>
+                    <>
+                      <strong>
+                        {new Intl.NumberFormat(localeTag, {
+                          style: "currency",
+                          currency: result.currency,
+                          maximumFractionDigits: 0,
+                        }).format(result.lowest_price)}
+                      </strong>
+                      <span className="panel-note">
+                        {t(
+                          result.price_basis === "total_stay"
+                            ? "hotels.area.totalStayObserved"
+                            : "hotels.area.priceObserved",
+                        )}
+                      </span>
+                    </>
                   ) : (
                     <span className="panel-note">{t("hotels.trackedOffers.noPrice")}</span>
                   )}
@@ -318,6 +377,7 @@ export function HotelResultCard({
   onRemoveWatch,
   onTrackPrice,
   trackedBusy,
+  trackingDisabled,
   hasTracking,
 }: {
   hotel: HotelSearchOut;
@@ -329,6 +389,7 @@ export function HotelResultCard({
   onRemoveWatch: (hotelId: string) => void;
   onTrackPrice?: (hotelId: string) => void;
   trackedBusy?: boolean;
+  trackingDisabled?: boolean;
   hasTracking?: boolean;
 }) {
   const { t } = useI18n();
@@ -348,13 +409,12 @@ export function HotelResultCard({
             type="button"
             className={`btn-primary btn-compact${hasTracking ? " is-active" : ""}`}
             onClick={() => onTrackPrice(hotel.id)}
-            disabled={trackedBusy || hasTracking}
-            aria-pressed={hasTracking}
+            disabled={trackedBusy || trackingDisabled}
           >
             {trackedBusy
               ? t("shared.states.loading")
               : hasTracking
-                ? t("hotels.actions.trackingActive")
+                ? t("hotels.actions.trackAnotherOffer")
                 : t("hotels.actions.trackPrice")}
           </button>
         ) : null}

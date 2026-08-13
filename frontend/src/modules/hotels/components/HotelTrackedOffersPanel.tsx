@@ -4,22 +4,31 @@ import { useState } from "react";
 import { useI18n } from "@/i18n";
 
 import { formatDateShort, formatPrice } from "../format";
-import type { HotelTrackedOfferOut } from "../types";
+import type { HotelTrackedOfferOut, HotelTrackedOfferV2State } from "../types";
 import { HotelTrackedOfferSnapshots } from "./HotelTrackedOfferSnapshots";
 
 export function HotelTrackedOffersPanel({
   offers,
   loading,
+  onSetTrackingActive,
+  onArchiveTracking,
   onStopTracking,
   busyOfferIds,
+  error = null,
+  statesByOfferId = {},
 }: {
   offers: HotelTrackedOfferOut[];
   loading: boolean;
+  onSetTrackingActive: (offerId: string, isActive: boolean) => void;
+  onArchiveTracking: (offerId: string) => void;
   onStopTracking: (offerId: string) => void;
   busyOfferIds: string[];
+  error?: string | null;
+  statesByOfferId?: Readonly<Record<string, HotelTrackedOfferV2State>>;
 }) {
   const { t, localeTag } = useI18n();
   const [expandedSnapshots, setExpandedSnapshots] = useState<Record<string, boolean>>({});
+  const [confirmingDeletionOfferId, setConfirmingDeletionOfferId] = useState<string | null>(null);
 
   function toggleSnapshots(offerId: string) {
     setExpandedSnapshots((curr) => ({ ...curr, [offerId]: !curr[offerId] }));
@@ -36,7 +45,9 @@ export function HotelTrackedOffersPanel({
         <p className="panel-note section-gap-sm">{t("hotels.trackedOffers.loading")}</p>
       ) : null}
 
-      {!loading && offers.length === 0 ? (
+      {error ? <p className="notice notice-error section-gap-sm" role="alert">{error}</p> : null}
+
+      {!loading && !error && offers.length === 0 ? (
         <p className="panel-note section-gap-sm">{t("hotels.trackedOffers.empty")}</p>
       ) : null}
 
@@ -44,12 +55,22 @@ export function HotelTrackedOffersPanel({
         <div className="hotel-tracked-offers-list section-gap-sm">
           {offers.map((offer) => {
             const busy = busyOfferIds.includes(offer.id);
+            const state = statesByOfferId[offer.id];
+            const isPaused = state === "paused";
+            const isExpired = state === "expired";
+            const isArchived = state === "archived";
+            const isPastStay = offer.check_out !== null && offer.check_out < new Date().toISOString().slice(0, 10);
             return (
               <article key={offer.id} className="list-row hotel-tracked-offer-item">
                 <div className="hotel-tracked-offer-copy">
                   <div className="hotel-tracked-offer-header">
                     <strong>{offer.area_label || offer.hotel_id.slice(0, 8)}</strong>
                     <span className="status-pill info">{offer.provider}</span>
+                    {state ? (
+                      <span className={`status-pill ${state === "active" ? "success" : "warning"}`}>
+                        {t(`hotels.trackingStates.${state}`)}
+                      </span>
+                    ) : null}
                   </div>
                   <div className="hotel-tracked-offer-dates panel-note">
                     {formatDateShort(offer.check_in, localeTag)} → {formatDateShort(offer.check_out, localeTag)}
@@ -86,23 +107,77 @@ export function HotelTrackedOffersPanel({
                     type="button"
                     className="btn-ghost btn-compact"
                     onClick={() => toggleSnapshots(offer.id)}
+                    aria-expanded={expandedSnapshots[offer.id] ?? false}
+                    aria-controls={`hotel-tracked-offer-snapshots-${offer.id}`}
                   >
                     {expandedSnapshots[offer.id]
                       ? t("hotels.trackedOffers.hideHistory")
                       : t("hotels.trackedOffers.viewHistory")}
                   </button>
-                  <button
-                    type="button"
-                    className="btn-ghost btn-compact"
-                    onClick={() => onStopTracking(offer.id)}
-                    disabled={busy}
-                  >
-                    {busy ? t("shared.states.loading") : t("hotels.trackedOffers.stopTracking")}
-                  </button>
+                  {isArchived ? (
+                    <p className="panel-note">{t("hotels.trackingStates.archived")}</p>
+                  ) : isExpired || (isPaused && isPastStay) ? (
+                    <p className="panel-note">{t("hotels.trackedOffers.pastStayCannotResume")}</p>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn-ghost btn-compact"
+                      onClick={() => onSetTrackingActive(offer.id, isPaused)}
+                      disabled={busy}
+                    >
+                      {busy
+                        ? t("shared.states.loading")
+                        : t(isPaused ? "hotels.trackedOffers.resumeTracking" : "hotels.trackedOffers.pauseTracking")}
+                    </button>
+                  )}
+                  {!isArchived ? (
+                    <button
+                      type="button"
+                      className="btn-ghost btn-compact"
+                      onClick={() => onArchiveTracking(offer.id)}
+                      disabled={busy}
+                    >
+                      {busy ? t("shared.states.loading") : t("hotels.trackedOffers.archiveTracking")}
+                    </button>
+                  ) : null}
+                  {confirmingDeletionOfferId === offer.id ? (
+                    <>
+                      <p className="panel-note" role="status">{t("hotels.trackedOffers.deleteConfirmation")}</p>
+                      <button
+                        type="button"
+                        className="btn-ghost btn-compact"
+                        onClick={() => setConfirmingDeletionOfferId(null)}
+                        disabled={busy}
+                      >
+                        {t("hotels.trackedOffers.cancelDelete")}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-danger btn-compact"
+                        onClick={() => {
+                          setConfirmingDeletionOfferId(null);
+                          onStopTracking(offer.id);
+                        }}
+                        disabled={busy}
+                      >
+                        {busy ? t("shared.states.loading") : t("hotels.trackedOffers.confirmDelete")}
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn-danger btn-compact"
+                      onClick={() => setConfirmingDeletionOfferId(offer.id)}
+                      disabled={busy}
+                    >
+                      {t("hotels.trackedOffers.deleteTracking")}
+                    </button>
+                  )}
                 </div>
                 <HotelTrackedOfferSnapshots
                   offerId={offer.id}
                   visible={expandedSnapshots[offer.id] ?? false}
+                  panelId={`hotel-tracked-offer-snapshots-${offer.id}`}
                 />
               </article>
             );

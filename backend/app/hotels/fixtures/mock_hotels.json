@@ -18,7 +18,14 @@
           "guests": 2,
           "room_label": "Doble estandar",
           "meal_plan": "solo alojamiento",
-          "cancellation_policy": "flexible"
+          "cancellation_policy": "flexible",
+          "provider_offer_id": "mock-sol-001-standard-2026-07-10-2",
+          "room_type_normalized": "standard",
+          "meal_plan_normalized": "RO",
+          "cancellation_type": "refundable",
+          "price_semantics": "total",
+          "amount_total": 189.5,
+          "conditions_completeness": "complete"
         }
       ]
     },
@@ -40,7 +47,14 @@
           "guests": 2,
           "room_label": "Doble superior",
           "meal_plan": "desayuno",
-          "cancellation_policy": "no reembolsable"
+          "cancellation_policy": "no reembolsable",
+          "provider_offer_id": "mock-luna-002-superior-2026-07-10-2",
+          "room_type_normalized": "superior",
+          "meal_plan_normalized": "BB",
+          "cancellation_type": "non_refundable",
+          "price_semantics": "total",
+          "amount_total": 210,
+          "conditions_completeness": "complete"
         }
       ]
     },
@@ -62,7 +76,14 @@
           "guests": 2,
           "room_label": "Doble",
           "meal_plan": "solo alojamiento",
-          "cancellation_policy": "flexible"
+          "cancellation_policy": "flexible",
+          "provider_offer_id": "mock-sol-003-standard-2026-07-10-2",
+          "room_type_normalized": "standard",
+          "meal_plan_normalized": "RO",
+          "cancellation_type": "refundable",
+          "price_semantics": "total",
+          "amount_total": 99,
+          "conditions_completeness": "complete"
         }
       ]
     }

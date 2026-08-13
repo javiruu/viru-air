@@ -1,0 +1,23 @@
+{
+  "dataset_id": "hoteles-demo-v1",
+  "fixture_version": 1,
+  "seed_revision": "hotel-demo-seed-v1",
+  "created_at_utc": "2026-08-09T00:00:00Z",
+  "default_locale": "es-ES",
+  "default_timezone": "Europe/Madrid",
+  "default_currency": "EUR",
+  "source": "local_mock",
+  "provider_mode": "mock",
+  "synthetic_label": "DEMO_NO_LIVE_AVAILABILITY",
+  "sensitive_data": "none",
+  "expected_external_calls": 0,
+  "demo_users": [
+    "demo-user-a@viru.local",
+    "demo-user-b@viru.local"
+  ],
+  "provider_hotel_ids": [
+    "mock-sol-001",
+    "mock-luna-002",
+    "mock-sol-003"
+  ]
+}

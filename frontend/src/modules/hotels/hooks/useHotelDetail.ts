@@ -6,7 +6,7 @@ import { getHotelDetail, getHotelParity, getHotelRates, HotelsRequestError } fro
 import type { HotelDetailOut, HotelParityOut, HotelRateOut } from "../types";
 import { resolveHotelMessage } from "./useHotelSearch";
 
-export function useHotelDetail(selectedHotelId: string | null) {
+export function useHotelDetail(selectedHotelId: string | null, intentId?: string | null) {
   const { t } = useI18n();
   const [rates, setRates] = useState<HotelRateOut[]>([]);
   const [hotelDetail, setHotelDetail] = useState<HotelDetailOut | null>(null);
@@ -21,17 +21,19 @@ export function useHotelDetail(selectedHotelId: string | null) {
       setRates([]);
       setParitySignals([]);
       setParityError(null);
+      setLoadingRates(false);
       setParityLoading(false);
       return;
     }
     let cancelled = false;
+    const controller = new AbortController();
     setLoadingRates(true);
     setParityLoading(true);
     setParityError(null);
     Promise.allSettled([
-      getHotelDetail(selectedHotelId),
-      getHotelRates(selectedHotelId),
-      getHotelParity(selectedHotelId),
+      getHotelDetail(selectedHotelId, controller.signal, intentId ?? undefined),
+      getHotelRates(selectedHotelId, undefined, controller.signal, intentId ?? undefined),
+      getHotelParity(selectedHotelId, controller.signal, intentId ?? undefined),
     ])
       .then(([detailResult, ratesResult, parityResult]) => {
         if (cancelled) return;
@@ -52,8 +54,9 @@ export function useHotelDetail(selectedHotelId: string | null) {
       });
     return () => {
       cancelled = true;
+      controller.abort();
     };
-  }, [selectedHotelId, t]);
+  }, [selectedHotelId, intentId, t]);
 
   return {
     rates,

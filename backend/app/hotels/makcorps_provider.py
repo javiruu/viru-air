@@ -15,6 +15,7 @@ import json
 import logging
 import os
 import re
+import threading
 from datetime import date, timedelta
 from typing import Any
 
@@ -22,6 +23,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from app.core.request_context import get_client_event_id, get_correlation_id
 from app.hotels.contracts import HotelProviderAdapter, ProviderHotelRecord, ProviderRateRecord
 
 logger = logging.getLogger("app.hotels.makcorps")
@@ -31,9 +33,56 @@ _MAKCORPS_BASE_URL = os.getenv("MAKCORPS_BASE_URL", "https://api.makcorps.com").
 _PROVIDER_TIMEOUT = int(os.getenv("HOTEL_PROVIDER_TIMEOUT_SECONDS", "10"))
 _PROVIDER_MAX_RETRIES = int(os.getenv("HOTEL_PROVIDER_MAX_RETRIES", "2"))
 
+_SENSITIVE_KEY_PATTERN = re.compile(
+    r'''(?i)(["']?(?:api[_-]?key|token|secret|password|authorization|cookie)["']?\s*[:=]\s*["']?)([^&\s,}"']+)'''
+)
+_SENSITIVE_PAYLOAD_KEYS = (
+    "api_key",
+    "apikey",
+    "authorization",
+    "cookie",
+    "password",
+    "secret",
+    "token",
+)
+
+
+def _redact_sensitive_text(value: object) -> str:
+    """Remove query/header-style secrets from exception and payload text."""
+    return _SENSITIVE_KEY_PATTERN.sub(r"\1***", str(value)[:2000])
+
+
+def _redact_provider_payload(value: Any) -> Any:
+    """Keep provider diagnostics useful without persisting credentials."""
+    if isinstance(value, dict):
+        redacted: dict[Any, Any] = {}
+        for key, item in value.items():
+            key_text = str(key).lower().replace("-", "_")
+            if any(part in key_text for part in _SENSITIVE_PAYLOAD_KEYS):
+                redacted[key] = "***"
+            else:
+                redacted[key] = _redact_provider_payload(item)
+        return redacted
+    if isinstance(value, list):
+        return [_redact_provider_payload(item) for item in value]
+    if isinstance(value, str):
+        return _redact_sensitive_text(value)
+    return value
+
 
 def _log_payload(event: str, **fields: Any) -> str:
-    return json.dumps({"event": event, **fields}, ensure_ascii=False)
+    context = {
+        "correlation_id": get_correlation_id() or None,
+        "client_event_id": get_client_event_id(),
+    }
+    return json.dumps(
+        {
+            "event": event,
+            **context,
+            **{key: _redact_provider_payload(value) for key, value in fields.items()},
+        },
+        ensure_ascii=False,
+    )
 
 
 def _build_session() -> requests.Session:
@@ -53,6 +102,12 @@ def _build_session() -> requests.Session:
             "User-Agent": "ViruAir/1.0",
         }
     )
+    correlation_id = get_correlation_id()
+    client_event_id = get_client_event_id()
+    if correlation_id:
+        session.headers["x-correlation-id"] = correlation_id
+    if client_event_id:
+        session.headers["x-client-event-id"] = client_event_id
     return session
 
 
@@ -112,6 +167,10 @@ class MakcorpsHotelProviderAdapter(HotelProviderAdapter):
 
     def __init__(self, session: requests.Session | None = None) -> None:
         self._session = session or _build_session()
+        # A provider adapter can be used by area-search worker threads. The
+        # requests Session is shared for connection pooling, but requests does
+        # not guarantee Session mutation/read safety across threads.
+        self._session_lock = threading.RLock()
 
     # ── helpers ──────────────────────────────────────────────────────
 
@@ -129,12 +188,15 @@ class MakcorpsHotelProviderAdapter(HotelProviderAdapter):
         merged = {**params, **self._auth_params()}
         url = f"{_MAKCORPS_BASE_URL}{path}"
         try:
-            response = self._session.get(url, params=merged, timeout=_PROVIDER_TIMEOUT)
+            # Keep the shared Session safe while preserving the copied
+            # ContextVar (correlation/client intent) in the calling thread.
+            with self._session_lock:
+                response = self._session.get(url, params=merged, timeout=_PROVIDER_TIMEOUT)
             response.raise_for_status()
             return response.json()
         except Exception as exc:
             logger.warning(
-                _log_payload("makcorps_request_failed", path=path, error=str(exc))
+                _log_payload("makcorps_request_failed", path=path, error=_redact_sensitive_text(exc))
             )
             return None
 
@@ -432,7 +494,7 @@ class MakcorpsHotelProviderAdapter(HotelProviderAdapter):
                     longitude=lng,
                     stars=_parse_optional_int(item.get("stars") or item.get("rating")),
                     rates=rates,
-                    raw_payload=item,
+                    raw_payload=_redact_provider_payload(item),
                 )
             )
 

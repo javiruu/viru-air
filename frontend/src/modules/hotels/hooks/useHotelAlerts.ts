@@ -46,11 +46,7 @@ export function useHotelAlerts() {
       setAlertEventsLoading(true);
       setAlertEventsError(null);
       try {
-        if (!hotelId) {
-          setAlertEvents([]);
-          return;
-        }
-        const items = await listHotelAlertEvents({ hotel_id: hotelId, limit: 50 });
+        const items = await listHotelAlertEvents(hotelId ? { hotel_id: hotelId, limit: 50 } : { limit: 50 });
         setAlertEvents(items);
       } catch (error) {
         setAlertEventsError(
@@ -78,6 +74,7 @@ export function useHotelAlerts() {
       threshold_amount: number | null;
       threshold_percent: number | null;
       compare_against?: string;
+      cooldown_minutes?: number;
       is_active: boolean;
     }): Promise<boolean> => {
       setAlertCreateBusy(true);

@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT
 
 from app.core.errors import ApiError, error_envelope, message_for_code
-from app.core.request_context import get_correlation_id
+from app.core.request_context import get_client_event_id, get_correlation_id
 from app.core.request_diagnostics import safe_request_body, sanitize_request_body
 
 logger = logging.getLogger("app.access")
@@ -41,6 +41,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         code="validation_error",
         message=message_for_code("validation_error"),
         details=safe_errors,
+        correlation_id=get_correlation_id() or getattr(request.state, "correlation_id", None),
+        client_event_id=get_client_event_id() or getattr(request.state, "client_event_id", None),
     )
     return JSONResponse(status_code=HTTP_422_UNPROCESSABLE_CONTENT, content=envelope)
 
@@ -68,6 +70,7 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
             {
                 "event": "http_exception",
                 "correlation_id": get_correlation_id() or getattr(request.state, "correlation_id", "") or "-",
+                "client_event_id": get_client_event_id(),
                 "path": request.url.path,
                 "method": request.method,
                 "query": dict(request.query_params),
@@ -84,7 +87,14 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
         if isinstance(exc.detail, dict) and exc.detail.get("message")
         else message_for_code(code, fallback="Request failed.")
     )
-    envelope = error_envelope(status=exc.status_code, code=code, message=message, details=details)
+    envelope = error_envelope(
+        status=exc.status_code,
+        code=code,
+        message=message,
+        details=details,
+        correlation_id=get_correlation_id() or getattr(request.state, "correlation_id", None),
+        client_event_id=get_client_event_id() or getattr(request.state, "client_event_id", None),
+    )
     return JSONResponse(status_code=exc.status_code, content=envelope)
 
 
@@ -95,6 +105,8 @@ async def api_error_handler(request: Request, exc: ApiError) -> JSONResponse:
         message=exc.message,
         details=exc.details,
         retry_after_sec=exc.retry_after_sec,
+        correlation_id=get_correlation_id() or getattr(request.state, "correlation_id", None),
+        client_event_id=get_client_event_id() or getattr(request.state, "client_event_id", None),
     )
     return JSONResponse(status_code=exc.status, content=envelope)
 
@@ -106,6 +118,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
             {
                 "event": "unhandled_exception",
                 "correlation_id": get_correlation_id() or getattr(request.state, "correlation_id", "") or "-",
+                "client_event_id": get_client_event_id(),
                 "path": request.url.path,
                 "method": request.method,
                 "query": dict(request.query_params),
@@ -122,11 +135,16 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
         code="internal_server_error",
         message="Internal server error.",
         details=[],
+        correlation_id=get_correlation_id() or getattr(request.state, "correlation_id", None),
+        client_event_id=get_client_event_id() or getattr(request.state, "client_event_id", None),
     )
     response = JSONResponse(status_code=500, content=envelope)
     correlation_id = get_correlation_id() or getattr(request.state, "correlation_id", "")
     if correlation_id:
         response.headers["x-correlation-id"] = correlation_id
+    client_event_id = get_client_event_id() or getattr(request.state, "client_event_id", None)
+    if client_event_id:
+        response.headers["x-client-event-id"] = client_event_id
     return response
 
 

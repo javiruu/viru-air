@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import and_, asc, or_, select
+from sqlalchemy import and_, asc, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
@@ -15,7 +15,18 @@ from app.domain.vocabulary import (
     DELIVERY_STATUS_QUEUED,
     DELIVERY_STATUS_SENT,
 )
-from app.infrastructure.db.models import AlertRule, FlightWatch, NotificationEvent, User, UserPreference
+from app.services.hotel_observability_metrics import (
+    METRIC_HOTEL_DELIVERY,
+    record_hotel_daily_metric,
+)
+from app.infrastructure.db.models import (
+    AlertRule,
+    FlightWatch,
+    HotelNotificationDelivery,
+    NotificationEvent,
+    User,
+    UserPreference,
+)
 
 DEFAULT_DISPATCH_BATCH_SIZE = int(os.getenv("NOTIFICATION_DISPATCH_BATCH_SIZE", "25"))
 DEFAULT_MAX_ATTEMPTS = int(os.getenv("NOTIFICATION_MAX_ATTEMPTS", "3"))
@@ -28,6 +39,11 @@ class DispatchResult:
     failed: int = 0
     retried: int = 0
     skipped: int = 0
+    hotel_processed: int = 0
+    hotel_delivered: int = 0
+    hotel_failed: int = 0
+    hotel_retried: int = 0
+    hotel_skipped: int = 0
 
 
 class NotificationAdapter:
@@ -53,6 +69,27 @@ class EmailNotificationAdapter(NotificationAdapter):
         if should_fail:
             return False, "email_stub_forced_failure"
         return True, None
+
+
+class HotelDeliveryAdapter:
+    """Adapter contract for the hotel delivery ledger.
+
+    ``send`` returns ``(ok, error_code, error_class)``. The first hotel
+    channel is local in-app materialization; the boundary stays explicit so
+    retry behavior is testable without implying an external channel exists.
+    """
+
+    channel = "in_app"
+
+    def send(self, delivery: HotelNotificationDelivery) -> tuple[bool, str | None, str | None]:
+        raise NotImplementedError
+
+
+class LocalHotelInAppDeliveryAdapter(HotelDeliveryAdapter):
+    """Record local in-app materialization without making a network call."""
+
+    def send(self, delivery: HotelNotificationDelivery) -> tuple[bool, str | None, str | None]:
+        return True, None, None
 
 
 def _next_attempt_delay(attempts: int) -> timedelta:
@@ -198,4 +235,113 @@ def dispatch_pending_events(db: Session, *, limit: int | None = None) -> Dispatc
         )
     )
     result.skipped = len(stuck_rows)
+    return result
+
+
+def dispatch_pending_hotel_deliveries(
+    db: Session,
+    *,
+    limit: int | None = None,
+    adapter: HotelDeliveryAdapter | None = None,
+) -> DispatchResult:
+    """Materialize queued hotel in-app deliveries without touching flight rows.
+
+    Adapter failures follow the same bounded retry contract as flight
+    notifications: retryable failures remain queued with ``next_attempt_at``;
+    exhausted attempts become terminal ``failed`` rows. The default adapter is
+    local and performs no network I/O.
+    """
+    now = utc_now_naive()
+    batch_limit = limit if limit is not None else DEFAULT_DISPATCH_BATCH_SIZE
+    delivery_adapter = adapter or LocalHotelInAppDeliveryAdapter()
+    result = DispatchResult()
+    rows = list(
+        db.scalars(
+            select(HotelNotificationDelivery)
+            .where(
+                HotelNotificationDelivery.channel == delivery_adapter.channel,
+                HotelNotificationDelivery.status == DELIVERY_STATUS_QUEUED,
+                HotelNotificationDelivery.attempts < DEFAULT_MAX_ATTEMPTS,
+                or_(
+                    HotelNotificationDelivery.next_attempt_at.is_(None),
+                    HotelNotificationDelivery.next_attempt_at <= now,
+                ),
+            )
+            .order_by(asc(HotelNotificationDelivery.created_at), asc(HotelNotificationDelivery.id))
+            .limit(batch_limit)
+        )
+    )
+
+    for delivery in rows:
+        result.hotel_processed += 1
+        delivery.attempts += 1
+        try:
+            adapter_result = delivery_adapter.send(delivery)
+            if len(adapter_result) == 2:
+                ok, error = adapter_result
+                error_class = "retryable" if not ok else None
+            else:
+                ok, error, error_class = adapter_result
+        except Exception:
+            ok, error, error_class = False, "hotel_adapter_exception", "retryable"
+
+        if ok:
+            # In-app delivery is local materialization. The public inbox
+            # remains sourced from HotelAlertEvent; this ledger records the
+            # worker outcome.
+            delivery.status = DELIVERY_STATUS_DELIVERED
+            delivery.delivered_at = now
+            delivery.next_attempt_at = None
+            delivery.last_error = None
+            delivery.error_class = None
+            result.hotel_delivered += 1
+            record_hotel_daily_metric(
+                db,
+                metric_name=METRIC_HOTEL_DELIVERY,
+                provider="local",
+                outcome="delivered",
+            )
+            continue
+
+        delivery.last_error = (error or "hotel_dispatch_failed")[:500]
+        delivery.error_class = error_class if error_class in {"retryable", "permanent", "ambiguous"} else "retryable"
+        if delivery.error_class == "permanent":
+            delivery.status = DELIVERY_STATUS_FAILED
+            delivery.next_attempt_at = None
+            result.hotel_failed += 1
+            record_hotel_daily_metric(
+                db,
+                metric_name=METRIC_HOTEL_DELIVERY,
+                provider="local",
+                outcome="failed",
+            )
+        elif delivery.attempts >= DEFAULT_MAX_ATTEMPTS:
+            delivery.status = DELIVERY_STATUS_FAILED
+            delivery.next_attempt_at = None
+            result.hotel_failed += 1
+            record_hotel_daily_metric(
+                db,
+                metric_name=METRIC_HOTEL_DELIVERY,
+                provider="local",
+                outcome="failed",
+            )
+        else:
+            delivery.status = DELIVERY_STATUS_QUEUED
+            delivery.next_attempt_at = now + _next_attempt_delay(delivery.attempts)
+            result.hotel_retried += 1
+            record_hotel_daily_metric(
+                db,
+                metric_name=METRIC_HOTEL_DELIVERY,
+                provider="local",
+                outcome="retried",
+            )
+
+    exhausted = db.scalar(
+        select(func.count(HotelNotificationDelivery.id)).where(
+            HotelNotificationDelivery.status == DELIVERY_STATUS_FAILED,
+            HotelNotificationDelivery.attempts >= DEFAULT_MAX_ATTEMPTS,
+        )
+    ) or 0
+    result.hotel_skipped = int(exhausted)
+    db.commit()
     return result

@@ -8,6 +8,8 @@ const HOTELS_PAGE = path.join(process.cwd(), "src", "modules", "hotels", "HotelR
 const HOTELS_EMPTY = path.join(process.cwd(), "src", "modules", "hotels", "components", "HotelCompSetPanel.tsx");
 const HOTELS_SEARCH_HOOK = path.join(process.cwd(), "src", "modules", "hotels", "hooks", "useHotelSearch.ts");
 const HOTELS_TRACKED = path.join(process.cwd(), "src", "modules", "hotels", "hooks", "useTrackedOffers.ts");
+const HOTELS_TIMELINE = path.join(process.cwd(), "src", "modules", "hotels", "components", "HotelTimelineAndSignals.tsx");
+const HOTELS_TRACKING_CONFIRMATION = path.join(process.cwd(), "src", "modules", "hotels", "components", "HotelTrackingConfirmationDialog.tsx");
 
 test("H46: watchlist copy is save semantics, not tracking semantics (ES/EN)", () => {
   const i18n = fs.readFileSync(HOTELS_I18N, "utf8");
@@ -63,4 +65,20 @@ test("H46: tracking is blocked without an eligible stay context", () => {
   assert.match(tracked, /cheapest === null/);
   assert.match(i18n, /trackingNeedsContext:/);
   assert.match(i18n, /trackingNeedsContext: "Para seguir el precio hace falta una estancia/);
+});
+
+test("H23: tracking confirms a concrete observed offer through the V2 source rate", () => {
+  const tracked = fs.readFileSync(HOTELS_TRACKED, "utf8");
+  const page = fs.readFileSync(HOTELS_PAGE, "utf8");
+  const timeline = fs.readFileSync(HOTELS_TIMELINE, "utf8");
+  const confirmation = fs.readFileSync(HOTELS_TRACKING_CONFIRMATION, "utf8");
+
+  assert.match(tracked, /createTrackedOfferV2/);
+  assert.ok(!/await createTrackedOffer\(/.test(tracked));
+  assert.match(tracked, /trackingCandidate/);
+  assert.match(page, /HotelTrackingConfirmationDialog/);
+  assert.match(timeline, /onTrackRate/);
+  assert.match(confirmation, /room_label/);
+  assert.match(confirmation, /cancellation_policy/);
+  assert.match(confirmation, /onConfirm/);
 });

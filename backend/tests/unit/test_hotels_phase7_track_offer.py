@@ -424,7 +424,7 @@ class TestTrackedOfferSnapshotsAfterDuplicate:
 # ── Delete behaviour ──────────────────────────────────────────
 
 class TestDeleteTrackedOffer:
-    def test_delete_leaves_snapshots_intact(self):
+    def test_delete_removes_offer_owned_snapshots(self):
         db = _db()
         try:
             user = _create_user(db)
@@ -453,10 +453,11 @@ class TestDeleteTrackedOffer:
             offers = list_tracked_offers(db, user_id=user.id)
             assert len(offers) == 0
 
-            # Snapshots should remain (tracked_offer_id becomes orphaned, which is fine)
+            # Offer-owned snapshots are removed explicitly by the service so
+            # a deleted tracking cannot leave private history orphaned.
             remaining = db.scalars(
                 select(HotelRateSnapshot).where(HotelRateSnapshot.tracked_offer_id == offer.id)
             ).all()
-            assert len(remaining) == 1  # snapshot survives delete (FK is nullable, no cascade)
+            assert len(remaining) == 0
         finally:
             _close(db)

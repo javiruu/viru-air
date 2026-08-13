@@ -11,6 +11,7 @@ type AlertFormDraft = {
   thresholdAmount: string;
   thresholdPercent: string;
   compareAgainst: string;
+  cooldownMinutes: string;
   isActive: boolean;
 };
 
@@ -19,6 +20,7 @@ const DEFAULT_DRAFT: AlertFormDraft = {
   thresholdAmount: "",
   thresholdPercent: "",
   compareAgainst: "snapshot_previous",
+  cooldownMinutes: "60",
   isActive: true,
 };
 
@@ -143,6 +145,7 @@ export function HotelAlertsPanel({
       thresholdAmount: "",
       thresholdPercent: "",
       compareAgainst: "snapshot_previous",
+      cooldownMinutes: "60",
       isActive: true,
     });
     setValidationMessage(null);
@@ -158,12 +161,19 @@ export function HotelAlertsPanel({
       return;
     }
 
+    const cooldownMinutes = Number(draft.cooldownMinutes);
+    if (!Number.isInteger(cooldownMinutes) || cooldownMinutes < 1 || cooldownMinutes > 10080) {
+      setValidationMessage(t("hotels.alerts.validation.invalidCooldown"));
+      return;
+    }
+
     const payload = {
       hotel_id: selectedHotel.id,
       rule_type: draft.ruleType,
       threshold_amount: shouldShowAmount ? parseThreshold(draft.thresholdAmount) : null,
       threshold_percent: parseThreshold(draft.thresholdPercent),
       compare_against: shouldShowCompareAgainst ? draft.compareAgainst : undefined,
+      cooldown_minutes: cooldownMinutes,
       is_active: draft.isActive,
     };
 
@@ -174,10 +184,9 @@ export function HotelAlertsPanel({
   }
 
   return (
-    <section className="panel panel-soft hotel-alerts-panel">
+    <div className="hotel-alerts-panel">
       <div className="panel-header">
         <div>
-          <h2 className="panel-title">{t("hotels.alerts.title")}</h2>
           <p className="panel-subtitle">{t("hotels.alerts.subtitle")}</p>
         </div>
         <span className="status-pill info">{rules.length}</span>
@@ -262,6 +271,8 @@ export function HotelAlertsPanel({
                   <input
                     className="qs-input-neutral"
                     inputMode="decimal"
+                    aria-invalid={validationMessage ? true : undefined}
+                    aria-describedby={validationMessage ? "hotel-alerts-validation" : undefined}
                     value={draft.thresholdAmount}
                     onChange={(event) => {
                       setDraft((current) => ({ ...current, thresholdAmount: event.target.value }));
@@ -278,6 +289,8 @@ export function HotelAlertsPanel({
                   <input
                     className="qs-input-neutral"
                     inputMode="decimal"
+                    aria-invalid={validationMessage ? true : undefined}
+                    aria-describedby={validationMessage ? "hotel-alerts-validation" : undefined}
                     value={draft.thresholdPercent}
                     onChange={(event) => {
                       setDraft((current) => ({ ...current, thresholdPercent: event.target.value }));
@@ -288,6 +301,20 @@ export function HotelAlertsPanel({
                 </label>
               ) : null}
             </div>
+
+            <label className="field qs-label">
+              <span>{t("hotels.alerts.fields.cooldownMinutes")}</span>
+              <input
+                className="qs-input-neutral"
+                inputMode="numeric"
+                aria-invalid={validationMessage ? true : undefined}
+                aria-describedby={validationMessage ? "hotel-alerts-validation" : undefined}
+                min={1}
+                max={10080}
+                value={draft.cooldownMinutes}
+                onChange={(event) => setDraft((current) => ({ ...current, cooldownMinutes: event.target.value }))}
+              />
+            </label>
 
             {shouldShowCompareAgainst ? (
               <label className="field qs-label">
@@ -308,7 +335,11 @@ export function HotelAlertsPanel({
               <span>{t("hotels.alerts.fields.isActive")}</span>
             </label>
 
-            {validationMessage ? <p className="panel-note hotel-alerts-validation">{validationMessage}</p> : null}
+            {validationMessage ? (
+              <p id="hotel-alerts-validation" className="panel-note hotel-alerts-validation" role="alert">
+                {validationMessage}
+              </p>
+            ) : null}
 
             <div className="action-row">
               <button type="submit" className="btn-secondary btn-compact" disabled={createBusy}>
@@ -343,6 +374,7 @@ export function HotelAlertsPanel({
                         {rule.is_active ? t("hotels.alerts.states.active") : t("hotels.alerts.states.inactive")}
                       </span>
                       <span className="status-pill info">{ruleTypeLabel[rule.rule_type]}</span>
+                      <span className="status-pill neutral">{rule.evaluation_state}</span>
                     </div>
                     <strong>{summaryParts.length > 0 ? summaryParts.join(" · ") : t("hotels.alerts.thresholdFallback")}</strong>
                   </div>
@@ -384,6 +416,6 @@ export function HotelAlertsPanel({
           </div>
         ) : null}
       </section>
-    </section>
+    </div>
   );
 }

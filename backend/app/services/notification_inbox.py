@@ -14,7 +14,6 @@ from app.infrastructure.db.models import (
     HotelAlertEvent,
     HotelAlertRule,
     HotelProperty,
-    HotelTrackedOffer,
     NotificationEvent,
     SecurityActivity,
     UserNotificationState,
@@ -208,23 +207,27 @@ def _source_belongs_to_user(
             is not None
         )
     if ref.source_type == SOURCE_HOTEL_ALERT_EVENT:
-        rule_owned = db.scalar(
-            select(HotelAlertEvent.id)
-            .join(HotelAlertRule, HotelAlertEvent.rule_id == HotelAlertRule.id)
-            .where(
-                HotelAlertEvent.id == ref.source_id,
-                HotelAlertRule.user_id == user_id,
-            )
-        )
-        if rule_owned is not None:
-            return True
+        # New events carry explicit ownership. During the transition, only
+        # historical events linked to a user-owned rule are attributable;
+        # shared hotel_id alone is never sufficient ownership evidence.
         return (
             db.scalar(
                 select(HotelAlertEvent.id)
-                .join(HotelTrackedOffer, HotelAlertEvent.hotel_id == HotelTrackedOffer.hotel_id)
                 .where(
                     HotelAlertEvent.id == ref.source_id,
-                    HotelTrackedOffer.user_id == user_id,
+                    or_(
+                        HotelAlertEvent.user_id == user_id,
+                        and_(
+                            HotelAlertEvent.user_id.is_(None),
+                            HotelAlertEvent.rule_id.is_not(None),
+                            exists(
+                                select(HotelAlertRule.id).where(
+                                    HotelAlertRule.id == HotelAlertEvent.rule_id,
+                                    HotelAlertRule.user_id == user_id,
+                                )
+                            ),
+                        ),
+                    ),
                 )
             )
             is not None
@@ -242,8 +245,25 @@ def list_notification_inbox(
     bounded_limit = min(max(limit, 1), 200)
     security_limit = min(bounded_limit, 20)
     hotel_limit = min(bounded_limit, 40)
-    rule_hotel_ids = select(HotelAlertRule.hotel_id).where(HotelAlertRule.user_id == user_id)
-    tracked_hotel_ids = select(HotelTrackedOffer.hotel_id).where(HotelTrackedOffer.user_id == user_id)
+    hotel_event_owned = and_(
+        or_(
+            HotelAlertEvent.user_id == user_id,
+            and_(
+                HotelAlertEvent.user_id.is_(None),
+                HotelAlertEvent.rule_id.is_not(None),
+                exists(
+                    select(HotelAlertRule.id).where(
+                        HotelAlertRule.id == HotelAlertEvent.rule_id,
+                        HotelAlertRule.user_id == user_id,
+                    )
+                ),
+            ),
+        ),
+        or_(
+            HotelAlertEvent.evaluation_state.is_(None),
+            HotelAlertEvent.evaluation_state != "legacy_observation",
+        ),
+    )
     alert_rows = list(
         db.execute(
             select(NotificationEvent, AlertRule, FlightWatch)
@@ -266,12 +286,7 @@ def list_notification_inbox(
         db.execute(
             select(HotelAlertEvent, HotelProperty)
             .join(HotelProperty, HotelAlertEvent.hotel_id == HotelProperty.id)
-            .where(
-                or_(
-                    HotelAlertEvent.hotel_id.in_(rule_hotel_ids),
-                    HotelAlertEvent.hotel_id.in_(tracked_hotel_ids),
-                )
-            )
+            .where(hotel_event_owned)
             .order_by(desc(HotelAlertEvent.created_at), desc(HotelAlertEvent.id))
             .limit(hotel_limit)
         ).all()
@@ -408,16 +423,28 @@ def count_notification_summary(db: Session, *, user_id: str) -> dict[str, int]:
         .where(SecurityActivity.user_id == user_id)
     ) or 0
 
-    rule_hotel_ids = select(HotelAlertRule.hotel_id).where(HotelAlertRule.user_id == user_id)
-    tracked_hotel_ids = select(HotelTrackedOffer.hotel_id).where(HotelTrackedOffer.user_id == user_id)
+    hotel_event_owned = and_(
+        or_(
+            HotelAlertEvent.user_id == user_id,
+            and_(
+                HotelAlertEvent.user_id.is_(None),
+                HotelAlertEvent.rule_id.is_not(None),
+                exists(
+                    select(HotelAlertRule.id).where(
+                        HotelAlertRule.id == HotelAlertEvent.rule_id,
+                        HotelAlertRule.user_id == user_id,
+                    )
+                ),
+            ),
+        ),
+        or_(
+            HotelAlertEvent.evaluation_state.is_(None),
+            HotelAlertEvent.evaluation_state != "legacy_observation",
+        ),
+    )
     hotel_count = db.scalar(
         select(func.count(HotelAlertEvent.id))
-        .where(
-            or_(
-                HotelAlertEvent.hotel_id.in_(rule_hotel_ids),
-                HotelAlertEvent.hotel_id.in_(tracked_hotel_ids),
-            )
-        )
+        .where(hotel_event_owned)
     ) or 0
 
     community_items = _community_trending_items(
@@ -454,13 +481,7 @@ def count_notification_summary(db: Session, *, user_id: str) -> dict[str, int]:
     )
     unread_hotels = db.scalar(
         select(func.count(HotelAlertEvent.id))
-        .where(
-            or_(
-                HotelAlertEvent.hotel_id.in_(rule_hotel_ids),
-                HotelAlertEvent.hotel_id.in_(tracked_hotel_ids),
-            ),
-            HotelAlertEvent.id.not_in(read_hotel_ids),
-        )
+        .where(hotel_event_owned, HotelAlertEvent.id.not_in(read_hotel_ids))
     ) or 0
 
     community_refs = [SourceRef(item.source_type, item.source_id) for item in community_items]

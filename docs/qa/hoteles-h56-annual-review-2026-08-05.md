@@ -19,6 +19,12 @@ review_id: H56-2026-08-05-local-baseline
 review_period_start_utc: 2026-08-05T15:56:00Z
 review_period_end_utc: 2026-08-05T15:58:00Z
 execution_environment: local_test
+local_closeout_observed_at_utc: 2026-08-10T00:00:00Z
+local_closeout_source_commit: 948d2449df4aa8f2e2c0351cbf26d869e187c756
+local_closeout_worktree: dirty_at_generation (commit identifies base only; working-tree diff is required)
+local_closeout_artifacts: docs/qa/evidence/hotels-local-closeout-current/{activation-audit,recovery-drill,mock-canary}.json
+local_backlog_closeout_plan: docs/plans/2026-08-10-hoteles-local-backlog-closeout-plan.md
+tracking_invariant_tests: backend/tests/unit/test_hotels_phase7_tracking_invariants.py + integration tracking regression
 provider_mode: mock_only (Makcorps remains mocked in the selected test suite)
 external_calls_allowed: false
 commercial_credentials_used: false
@@ -173,7 +179,7 @@ DB_URL=sqlite:///:memory: \
 | revision graph | `measured` | no hay down revisions ausentes, duplicados ni ficheros sin identificadores en el grafo inspeccionado |
 | head | `measured` | la cabeza observada es `0041_add_community_trending_snapshots` |
 | DB restaurada/migrada | `blocked` | una SQLite en memoria vacía no tiene `alembic_version`; no se ejecutó `upgrade head` en este comando |
-| restore/recovery | `not_measured` | este audit no es un backup/restore ni un recovery drill H55 |
+| restore/recovery | `measured_local` | drill H55 SQLite/Mock pasó: schema head, counts, ownership y sentinel restaurados; cleanup verificado | no backup productivo, failover ni RPO operativo |
 
 No convertir `chain_ok=true` en “migración de producción sana”: solo describe el grafo de revisiones y la ausencia de una tabla de versión en la DB efímera usada.
 
@@ -254,7 +260,7 @@ No se usó Makcorps, no se leyó una credencial comercial y no se hizo ninguna l
 | 429 real actual | `not_measured` en esta ejecución | TBD | tests solo simulan errores | H07 contiene una observación histórica, no una nueva medición |
 | latencia provider | `not_measured` | TBD | no hubo red comercial | la duración global de tests no es latencia API |
 | tracking diario garantizado | `not_measured` | TBD | worker se probó localmente, pero no hay scheduling sostenido | H09/H43/H55 siguen pendientes |
-| métricas funnel H04 | `not_measured` | TBD | allowlist UX actual no demuestra taxonomía completa `hotel_*` | falta instrumentación hotelera y denominadores |
+| métricas funnel H04 | `not_measured` | allowlist first-party local verificada para RUM + seis eventos de producto; sin denominadores ni instrumentación completa | no calcular funnel causal todavía |
 | feedback de producción | `not_measured` | TBD | endpoint/modelo existen | no se agregaron datos de producción |
 | DB aislada migrada con Alembic | `measured` | `0041_add_community_trending_snapshots`; 2 runs Mock `completed`, 3 items cada uno | salida JSON del sweep temporal | solo DB local efímera; no staging/producción |
 | worker real `--once` | `measured` local | exit `0`, `hotel_sweep_cycle` `completed`, 3 items | stdout/log estructurado y DB temporal | no prueba scheduling sostenido, HA ni producción |
@@ -262,7 +268,7 @@ No se usó Makcorps, no se leyó una credencial comercial y no se hizo ninguna l
 | hoteles, aliases y snapshots Mock persistidos | `measured` | 3 hoteles, 3 aliases, 6 snapshots; 3 por cada run | consulta redacted de la DB temporal | solo Mock/local; ingesta directa sin run conserva `None` |
 | snapshots atribuibles por run | `measured` local | 6 snapshots con `provider_run_id`, 3 por cada sweep aislado | assertion `snapshot_counts_by_run={first: 3, second: 3}` | solo Mock/local; ingesta directa sin run conserva `None` |
 | alert event asociado al segundo run | `measured` local/fixture | 1 `price_below`, `trigger_value=210.0` | consulta por `provider_run_id` | umbral sintético; no producción |
-| recovery drill H55 | `not_measured` | TBD | no se restauró backup ni se simuló pérdida | este baseline no toca datos live |
+| recovery drill H55 | `measured_local` | `hotel-recovery-drill-v1` passed; restore observado en evidencia local; RPO=0 solo para checkpoint del mismo proceso | SQLite/Mock temporal; no backup cifrado, failover o datos live |
 | decision anual | `evidence_incomplete` | sin decisión final | este paquete | falta periodo real, owners y revisión aprobadora |
 
 ---
@@ -274,10 +280,10 @@ No se usó Makcorps, no se leyó una credencial comercial y no se hizo ninguna l
 3. Repetir el worker `--once --provider mock` desde CI/staging-like y conservar `HotelProviderRun`/snapshots/eventos redacted.
 4. Mantener bloqueado el cambio de `infra/k8s/worker.yaml`: el legacy Deployment sigue siendo placeholder. El nuevo CronJob queda suspendido hasta demostrar imagen publicada inmutable, Secret/DB, migración compatible, provider aprobado y operación/scheduling conforme H43/H45/H55.
 5. Mantener el contrato: todo sweep debe pasar `provider_run_id`; no usar ingesta directa como evidencia de un run.
-6. Auditar flags en API, worker y job directo; H43 documenta que no todos los entrypoints comparten todavía la misma decisión.
-7. Implementar/medir la allowlist hotelera H04 antes de calcular funnel causal.
+6. Repetir desde CI/staging-like la auditoría local `hotel-activation-audit-v1`; la matriz local compara API/worker/job bajo cinco perfiles, pero no prueba producción.
+7. Instrumentar los puntos restantes H04, dedupe y denominadores antes de calcular funnel causal; la allowlist first-party local ya está verificada.
 8. Obtener evidencia comercial aprobada antes de cualquier canary Makcorps/otro provider.
-9. Ejecutar H55 restore/drill aislado antes de reclamar RPO/RTO.
+9. Repetir H55 desde CI/staging-like y con backup aprobado antes de reclamar RPO/RTO operativo; el drill SQLite/Mock local ya pasó.
 10. Crear un `DecisionRecord` final solo después de resolver estas limitaciones y revisar el paquete con owners.
 
 ---
@@ -307,7 +313,7 @@ approximate_claims: []
 not_measured_claims:
   - provider live health/coverage/cost/latency
   - production funnel/retention/feedback
-  - RPO/RTO and restore
+  - production RPO/RTO, backup and restore
   - delivery hotelero externo
   - canary/traffic split
 measured_traceability:
@@ -316,8 +322,9 @@ contract_only_claims:
   - H04 event taxonomy
   - H37 cost/rate-limit policy
   - H41 dashboards/SLO
-  - H43 unified flags/canary
-  - H55 backup/restore/drill
+  - H43 production flags/canary, rollout and hot rollback
+  - H55 production backup/restore/failover (local drill measured separately)
+  - H23/H29 production-grade offer identity/versioning and lifecycle scheduler (local identity guard measured separately)
 provider_decisions: none_yet
 market_decisions: none_yet
 next_roadmap: not_created

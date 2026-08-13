@@ -39,6 +39,8 @@ npm-cache/
 .venv/
 venv/
 .next/
+.next-dev-*/
+frontend/.next-*/
 .next_broken_*/
 .pytest_cache/
 .mypy_cache/
@@ -62,6 +64,13 @@ backend/=*
 
 # Temporary agent artifacts
 .codex/tmp-*
+.codex/config.toml.backup-*
+docs/qa/evidence/
+frontend/.agents/
+frontend/.claude/
+frontend/.factory/
+frontend/.windsurf/
+frontend/skills/
 *.log
 
 # Editor / OS

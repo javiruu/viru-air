@@ -1,13 +1,16 @@
 # `/hoteles` — Plan Maestro para convertirlo en el tracker hotelero preferido
 
-**Estado:** vivo — plan maestro de ejecución  
-**Fecha:** 2026-08-04  
+**Estado:** vivo — plan maestro de ejecución; estado auditado manualmente H00–H56 el 2026-08-10; smoke Chromium H40 actualizado con evidencia vigente, cross-browser/producción aún abiertos
+**Fecha:** 2026-08-10
+**Auditoría vigente:** [`2026-08-10-hoteles-auditoria-checklist-completa.md`](2026-08-10-hoteles-auditoria-checklist-completa.md)
 **Área:** producto / frontend / backend / datos / QA / operación  
 **Fuente de verdad del plan:** este documento  
 **Referencia de producto:** [Travel Price Drops Hotels](https://travelpricedrops.com/hotels?lng=es)  
 **Código actual:** `frontend/src/modules/hotels/`, `backend/app/api/v1/hotels.py`, `backend/app/services/hotels_service.py`
 
 > Este documento es un roadmap de producto y ejecución. No pretende resolver en detalle cada implementación: cada fase debe investigarse en el código real, respetar los contratos existentes y cerrarse con evidencia. La prioridad es no dejar huecos: producto, datos, proveedores, experiencia, confianza, alertas, operación, seguridad, rendimiento, adquisición y QA forman parte del resultado final.
+>
+> **Regla vigente desde la auditoría 2026-08-10:** `COMPLETA TOTAL` exige contrato, implementación, evidencia reproducible y gate. Las etiquetas históricas `COMPLETA (contrato/diseño)` se mantienen solo como registro del avance documental; no significan cierre técnico.
 
 ---
 
@@ -45,7 +48,7 @@ Cuando el plan esté completado, una persona debe poder:
 10. Seguir una oferta concreta: hotel + fechas + ocupación + habitación + régimen + cancelación + proveedor/contexto de precio.
 11. Ver el histórico, mínimo, máximo, mediana/tendencia, última comprobación y confianza del histórico.
 12. Definir alertas sencillas: baja de precio, porcentaje de bajada, vuelve a estar disponible o alcanza objetivo.
-13. Recibir alertas dentro de Viru y, cuando el canal esté habilitado, por email/push.
+13. Recibir alertas dentro de Viru mediante el inbox privado.
 14. Abrir un deeplink de partner con contexto suficiente y con una advertencia honesta de que el precio puede cambiar.
 15. Gestionar seguimientos desde `/hoteles`, notificaciones y cualquier futura superficie de cuenta.
 16. Usar la experiencia en español e inglés, dark/light y móvil sin perder funciones.
@@ -101,7 +104,7 @@ Se tomarán referencias funcionales: búsqueda directa, alertas visibles, contex
 
 ### 2.8. No elegir proveedores externos por memoria
 
-Toda futura integración de proveedor de hoteles, geocoder, email, push, analítica, mapas o monitorización debe pasar por investigación actualizada y por el proceso de selección del repositorio. Usar `gravity_index` para descubrir y comparar servicios; leer documentación oficial antes de decidir; registrar coste, límites, privacidad, SLA y plan de salida.
+Toda futura integración de proveedor de hoteles, geocoder, push, analítica, mapas o monitorización debe pasar por investigación actualizada y por el proceso de selección del repositorio. Usar `gravity_index` para descubrir y comparar servicios; leer documentación oficial antes de decidir; registrar coste, límites, privacidad, SLA y plan de salida.
 
 ---
 
@@ -191,60 +194,61 @@ Este registro evita que el roadmap se interprete como una colección de ideas. C
 | H00 | COMPLETA | QA/PM | — | Baseline reproducible y matriz hecho/parcial/roto — `docs/qa/reports/2026-08-04-hoteles-h00-baseline.md` |
 | H01 | COMPLETA | PM | H00 | Visión, personas, jobs y métricas de valor — `docs/product/hoteles-product-vision-h01.md` |
 | H02 | COMPLETA | PM/UX | H00 | Benchmark fechado y separado de inferencias — `docs/benchmarks/2026-08-04-travelpricedrops-hotels-h02.md` |
-| H03 | COMPLETA (diseño) | UX/Frontend | H01-H02 | IA, wireflows desktop/mobile, estado URL objetivo y estados límite — `docs/product/hoteles-information-architecture-h03.md` |
-| H04 | COMPLETA (contrato) | PM/Analítica | H01-H03 | Taxonomía de eventos, métricas, privacidad, guardrails y definición de done — `docs/product/hoteles-metrics-events-h04.md` |
-| H05 | COMPLETA (contrato) | Backend/Producto | H00-H01 | Contrato de freshness, provenance, disponibilidad, comparabilidad y confidence — `docs/reference/backend/hoteles-freshness-provenance-confidence-h05.md` |
-| H06 | COMPLETA (contrato) | Backend/Arquitectura | H05 | Contrato provider-neutral V2, envelope, errores, deeplinks y matriz de contract tests — `docs/reference/backend/hoteles-provider-neutral-contract-h06.md` |
-| H07 | COMPLETA (auditoría condicionada) | Backend/Producto | H06 | Auditoría Makcorps, matriz de evidencia, decisión limitada, presupuesto y plan de canary — `docs/reference/backend/hoteles-makcorps-audit-h07.md` |
-| H08 | COMPLETA (evaluación; onboarding abierto) | Backend/Producto | H06-H07 | Matriz provider-neutral, política de onboarding, canary y salida — `docs/reference/backend/hoteles-provider-onboarding-h08.md` |
-| H09 | COMPLETA (contrato operativo; implementación pendiente) | Infra/Backend | H06-H08 | Gateway/sweep con leases, dedupe, retries, budget, breaker, health y rollback — `docs/reference/backend/hoteles-sweep-gateway-h09.md` |
-| H10 | COMPLETA (contrato de dominio; migración pendiente) | Backend/DB | H05-H09 | StayQuery, ocupación, oferta, snapshot, matching, fingerprints y compatibilidad — `docs/reference/backend/hoteles-stay-offer-model-h10.md` |
-| H11 | COMPLETA (contrato de migración; implementación pendiente) | DB/Backend | H10 | Expand-and-contract, backfill, doble lectura/escritura, índices, retención y rollback — `docs/reference/backend/hoteles-data-migration-h11.md` |
-| H12 | COMPLETA (contrato de destino; implementación pendiente) | Backend/Frontend | H03-H06 | Resolución tipada, confidence, ambigüedad, geocoder limitado y fallback — `docs/reference/backend/hoteles-destination-resolution-h12.md` |
-| H13 | COMPLETA (contrato de interacción; implementación pendiente) | Frontend | H03,H10,H12 | Formulario, URL state, validación, submit, recuperación y accesibilidad — `docs/reference/backend/hoteles-search-form-h13.md` |
-| H14 | COMPLETA (contrato de filtros; implementación pendiente) | Frontend/Backend | H13,H10-H12 | Filtros y orden con resultados explicables — `docs/reference/backend/hoteles-filters-ranking-h14.md` |
-| H15 | COMPLETA (contrato de resultados; implementación pendiente) | Backend | H05,H06,H09-H14 | Contrato versionado de resultados y paginación — `docs/reference/backend/hoteles-results-pagination-h15.md` |
-| H16 | COMPLETA (contrato visual; implementación pendiente) | Frontend/UX | H13-H15,H31 | Cards con precio, condiciones, freshness y CTA — `docs/reference/frontend/hoteles-result-cards-h16.md` |
-| H17 | COMPLETA (contrato de ranking; implementación pendiente) | Backend/Producto | H14-H16 | Ranking determinista y explicación de orden — `docs/reference/backend/hoteles-ranking-explainability-h17.md` |
-| H18 | COMPLETA (contrato de detalle; implementación pendiente) | Frontend | H10,H13,H15-H17 | Detalle navegable con retorno a búsqueda — `docs/reference/frontend/hoteles-detail-navigation-h18.md` |
-| H19 | COMPLETA (contrato de precio; implementación pendiente) | Backend/Producto | H05,H06,H10-H11,H15-H18 | Total/noches/fees comparables y transparencia — `docs/reference/backend/hoteles-price-total-fees-h19.md` |
-| H20 | COMPLETA (contrato de comparación; implementación pendiente) | Frontend/Backend | H05,H10,H15,H17-H19 | Paridad y cercanos relegados y accionables — `docs/reference/backend/hoteles-provider-comparison-nearby-h20.md` |
-| H21 | COMPLETA (contrato de estados; implementación pendiente) | Frontend/QA | H05,H12-H20 | Matriz transversal de idle/loading/success/empty/partial/stale/error y recuperación — `docs/reference/frontend/hoteles-state-matrix-h21.md` |
-| H22 | COMPLETA (contrato de semántica; implementación pendiente) | Producto/Backend | H10,H13,H18-H21 | Favorito simple frente a tracking, ownership, lifecycle y migración — `docs/reference/backend/hoteles-favorite-vs-tracking-h22.md` |
-| H23 | COMPLETA (contrato de creación; implementación pendiente) | Backend/Frontend | H05,H09-H15,H18-H22 | Tracking desde oferta real, snapshot inicial, estados, idempotencia y reconstrucción — `docs/reference/backend/hoteles-real-offer-tracking-h23.md` |
-| H24 | COMPLETA (contrato; implementación pendiente) | Frontend/Backend | H05,H10,H19,H21-H23 | Histórico ligado a oferta/estancia, elegibilidad, agregados, gaps, estados y alternativa accesible al gráfico | docs/reference/backend/hoteles-price-history-curve-h24.md |
-| H25 | COMPLETA (contrato; implementación pendiente) | Producto/Backend | H05,H19,H21,H23-H24 | Freshness, provenance, confidence, recomendaciones prudentes y refresh seguro | docs/reference/backend/hoteles-freshness-confidence-actions-h25.md |
-| H26 | COMPLETA (contrato; implementación pendiente) | Backend | H19,H21-H25 | Reglas, baselines, elegibilidad, cooldown, dedupe, ownership y eventos deterministas | docs/reference/backend/hoteles-alert-rules-dedupe-h26.md |
-| H27 | COMPLETA (contrato; implementación pendiente) | Backend/Frontend | H26 | Inbox privado, ownership estricto, lectura y deep links contextuales correctos | docs/reference/backend/hoteles-private-inbox-deeplinks-h27.md |
-| H28 | COMPLETA (contrato; implementación pendiente) | Backend/Infra | H27, decisión de servicio | Delivery hotelero, canales, reintentos, preferencias, quiet hours y observabilidad | docs/reference/backend/hoteles-delivery-retries-preferences-h28.md |
-| H29 | COMPLETA (contrato; implementación pendiente) | Frontend/Backend | H23-H28 | Lifecycle seguro: pausa, edición, expiración, archivado, eliminación, ownership, cascadas e idempotencia — docs/reference/backend/hoteles-lifecycle-pause-edit-expire-delete-h29.md |
-| H30 | COMPLETA (contrato; implementación pendiente) | Producto/Backend | H10,H13-H15,H17,H19,H24 | Calendario y flexibilidad de fechas, capabilities, comparabilidad, coste y rollout — docs/reference/backend/hoteles-flexible-dates-calendar-h30.md |
-| H31 | COMPLETA (contrato; implementación pendiente) | UX/Frontend | H02-H03,H16,H21 | Dirección visual Warm-Luxe hotelera, jerarquía, estados, responsive, motion y handoff — docs/reference/frontend/hoteles-visual-direction-states-h31.md |
-| H32 | COMPLETA (contrato; implementación pendiente) | Frontend/QA | H16,H21,H31 | Responsive sin overflow, zoom, teclado y CTAs accesibles — docs/reference/frontend/hoteles-responsive-accessible-ctas-h32.md |
-| H33 | COMPLETA (contrato; remediación pendiente) | QA/Frontend | H13,H16,H18,H27,H32 | Auditoría WCAG 2.2 AA, prioridades P0/P1/P2 y gate de evidencia — docs/reference/frontend/hoteles-wcag-accessibility-audit-h33.md |
-| H34 | COMPLETA (contrato; remediación pendiente) | Frontend/i18n | H13,H16,H23,H27 | ES/EN, fechas civiles, monedas de origen, pluralización y timezones — docs/reference/frontend/hoteles-localization-dates-currency-timezones-h34.md |
-| H35 | COMPLETA (contrato; implementación y revisión legal/security pendientes) | Legal/Security | H19,H27,H28 | Disclosure, consentimiento, retención, ownership, redaction y deeplinks — [contrato H35](../reference/backend/hoteles-legal-privacy-disclosure-deeplinks-h35.md) |
-| H36 | COMPLETA (contrato; instrumentación y optimización pendientes) | Frontend | H13-H21,H31-H35 | Presupuesto de rendimiento, Web Vitals, primer resultado, requests, assets y gates móvil — [contrato H36](../reference/frontend/hoteles-performance-web-vitals-h36.md) |
-| H37 | COMPLETA (contrato; implementación y benchmark pendientes) | Backend/DB | H09,H11,H15,H23-H28,H35-H36 | Benchmark, rate limits, locks y coste máximo — [contrato H37](../reference/backend/hoteles-benchmark-rate-limits-locks-cost-h37.md) |
-| H38 | COMPLETA (auditoría/contrato; remediación pendiente) | Security/Backend | H10-H29,H35-H37 | Ownership, secretos, SSRF y abuso auditados — [contrato H38](../reference/backend/hoteles-ownership-secrets-ssrf-abuse-h38.md) |
-| H39 | COMPLETA (estrategia/matriz; implementación de huecos pendiente) | QA | H06,H10-H29,H33-H38 | Pirámide de tests y huecos explícitos — [contrato H39](../reference/backend/hoteles-test-pyramid-gaps-h39.md) |
-| H40 | COMPLETA (contrato; rerun browser y aprobación humana pendientes) | QA/Frontend | H21,H31-H39 | Browser QA dark/light/mobile/intermedio — [contrato H40](../reference/frontend/hoteles-visual-manual-crossbrowser-qa-h40.md) |
-| H41 | COMPLETA (contrato; instrumentación, dashboards y SLO pendientes) | Observabilidad/Backend | H06,H09,H26-H28,H37-H40 | Correlación E2E, métricas, logs redacted, health, SLO y gates — [contrato H41](../reference/backend/hoteles-observability-e2e-h41.md) |
-| H42 | COMPLETA (contrato/runbook; simulacros y owners pendientes) | Infra/Support | H09,H28,H38,H41 | Incidentes hoteleros, diagnóstico, contención, recovery, rollback y comunicación — [runbook H42](../runbooks/hoteles-incidentes-recovery-h42.md) |
-| H43 | COMPLETA (contrato; resolver unificado, canary y kill switches pendientes) | Infra/Backend | H09,H35,H41-H42 | Flags, perfiles, canary, rollout gradual y kill switches — [contrato H43](../reference/backend/hoteles-flags-canary-killswitch-h43.md) |
-| H44 | COMPLETA (contrato; seed, reset, fault profiles y E2E pendientes) | Backend/QA | H06,H10,H39,H42-H43 | Dataset demo, fixtures de fallos y reproducción local — [contrato H44](../reference/backend/hoteles-seed-demo-fallos-h44.md) |
-| H45 | COMPLETA (contrato; smoke E2E, canary real y rollback probado pendientes) | Release/QA | H32-H44 | Release readiness, smoke, canary, promoción y rollback — [contrato H45](../reference/backend/hoteles-release-canary-smoke-rollback-h45.md) |
-| H46 | COMPLETA (contrato; implementación del flujo, auth contextual, eventos y QA browser pendientes) | UX/Frontend | H13,H16,H21,H31-H34,H40,H44-H45 | Primera victoria sin tutorial largo — [contrato H46](../reference/frontend/hoteles-primera-victoria-h46.md) |
-| H47 | COMPLETA (contrato; agregador, URL state, deep links, ownership V2, lifecycle visual y QA pendientes) | Producto/Frontend | H24-H29,H40,H45-H46 | Resumen “mis hoteles” y retorno útil — [contrato H47](../reference/frontend/hoteles-mis-hoteles-reengagement-h47.md) |
-| H48 | COMPLETA (contrato; parser URL hotelero, SavedHotelSearch, share token opcional, restore y QA pendientes) | Frontend/Backend | H10-H15,H22,H27,H29,H34-H35,H40,H47 | Búsqueda guardada/compartible sin fuga privada — [contrato H48](../reference/backend/hoteles-busquedas-guardadas-compartibles-h48.md) |
-| H49 | COMPLETA (contrato; perfil hotelero, recommended, controles, integración y QA pendientes) | Producto/Frontend | H17,H34,H38,H47-H48 | Personalización prudente y explicable — [contrato H49](../reference/frontend/hoteles-personalizacion-prudente-h49.md) |
-| H50 | COMPLETA (contrato; partner, deeplinks, consentimiento, ledger, reconciliación y QA pendientes) | Producto/Negocio | H04,H08,H19,H28,H35,H37-H38,H41,H43,H45,H49 | Monetización, afiliación y atribución responsable — [contrato H50](../reference/backend/hoteles-monetizacion-afiliacion-atribucion-h50.md) |
-| H51 | COMPLETA (contrato; motor de experimentación, asignación, exposición, tripwires y QA pendientes) | PM/Analítica | H04,H21,H35,H40,H43,H45,H49-H50 | Experimentos con hipótesis y guardrails — [contrato H51](../reference/frontend/hoteles-experimentos-hipotesis-guardrails-h51.md) |
-| H52 | COMPLETA (contrato; flujo contextual, triage, correcciones, privacidad y QA pendientes) | Producto/Support | H04,H21,H25,H27,H35,H38,H40,H42,H45,H47,H50-H51 | Feedback clasificado y correcciones de confianza — [contrato H52](../reference/frontend/hoteles-feedback-correcciones-confianza-h52.md) |
-| H53 | COMPLETA (contrato; shadow matching, cola, merge/split, migración y QA pendientes) | Backend/DB | H07,H10-H12,H38-H39,H41,H44-H45,H52 | Matching y deduplicación auditable con métricas — [contrato H53](../reference/backend/hoteles-catalogo-matching-deduplicacion-h53.md) |
-| H54 | COMPLETA (contrato; registro de mercados, capabilities, canary, salida y QA pendientes) | PM/Backend | H07-H08,H12,H34,H37-H38,H41-H45,H53 | Mercados hoteleros con criterios de entrada y salida — [contrato H54](../reference/backend/hoteles-mercados-entrada-salida-h54.md) |
-| H55 | COMPLETA (contrato; backup/restore, worker productivo y recovery drill pendientes) | Infra/DB | H11,H28,H38,H41-H45,H54 | Continuidad, restore, reconciliación y recovery drill medido — [contrato H55](../reference/backend/hoteles-continuidad-disaster-recovery-h55.md) |
-| H56 | COMPLETA (contrato; revisión anual ejecutada y siguiente roadmap pendientes) | PM/Arquitectura | H04,H07-H08,H37,H41,H43,H45,H49-H55 | Gobernanza anual, decisiones de provider/mercado/coste y siguiente roadmap — [contrato H56](../reference/backend/hoteles-revision-anual-roadmap-h56.md) |
+| H03 | COMPLETA — CONTRATO/DISEÑO | UX/Frontend | H01-H02 | IA, wireflows desktop/mobile, estado URL objetivo y estados límite — `docs/product/hoteles-information-architecture-h03.md` |
+| H04 | PARCIAL — allowlist first-party local verificada; instrumentación completa pendiente | PM/Analítica | H01-H03 | Taxonomía de eventos, métricas, privacidad, guardrails y definición de done — `docs/product/hoteles-metrics-events-h04.md` |
+| H05 | COMPLETA — CONTRATO; implementación parcial | Backend/Producto | H00-H01 | Contrato de freshness, provenance, disponibilidad, comparabilidad y confidence — `docs/reference/backend/hoteles-freshness-provenance-confidence-h05.md` |
+| H06 | COMPLETA — CONTRATO; adopción V2 parcial | Backend/Arquitectura | H05 | Contrato provider-neutral V2, envelope, errores, deeplinks y matriz de contract tests — `docs/reference/backend/hoteles-provider-neutral-contract-h06.md` |
+| H07 | COMPLETA — auditoría documental condicionada | Backend/Producto | H06 | Auditoría Makcorps, matriz de evidencia, decisión limitada, presupuesto y plan de canary — `docs/reference/backend/hoteles-makcorps-audit-h07.md` |
+| H08 | COMPLETA — evaluación documental; producción abierta | Backend/Producto | H06-H07 | Matriz provider-neutral, política de onboarding, canary y salida — `docs/reference/backend/hoteles-provider-onboarding-h08.md` |
+| H09 | EN QA / PARCIAL | Infra/Backend | H06-H08 | Gateway/sweep con leases, dedupe, retries, budget, breaker, health y rollback — `docs/reference/backend/hoteles-sweep-gateway-h09.md` |
+| H10 | COMPLETA — CONTRATO; implementación V1 | Backend/DB | H05-H09 | StayQuery, ocupación, oferta, snapshot, matching, fingerprints y compatibilidad — `docs/reference/backend/hoteles-stay-offer-model-h10.md` |
+| H11 | PARCIAL | DB/Backend | H10 | Expand-and-contract, backfill, doble lectura/escritura, índices, retención y rollback — `docs/reference/backend/hoteles-data-migration-h11.md` |
+| H12 | PARCIAL | Backend/Frontend | H03-H06 | Resolución tipada, confidence, ambigüedad, geocoder limitado y fallback — `docs/reference/backend/hoteles-destination-resolution-h12.md` |
+| H13 | PARCIAL | Frontend | H03,H10,H12 | Formulario, URL state, validación, submit, recuperación y accesibilidad — `docs/reference/backend/hoteles-search-form-h13.md` |
+| H14 | PARCIAL | Frontend/Backend | H13,H10-H12 | Filtros y orden con resultados explicables — `docs/reference/backend/hoteles-filters-ranking-h14.md` |
+| H15 | PARCIAL | Backend | H05,H06,H09-H14 | Contrato versionado de resultados y paginación — `docs/reference/backend/hoteles-results-pagination-h15.md` |
+| H16 | PARCIAL | Frontend/UX | H13-H15,H31 | Cards con precio, condiciones, freshness y CTA — `docs/reference/frontend/hoteles-result-cards-h16.md` |
+| H17 | PARCIAL | Backend/Producto | H14-H16 | Ranking determinista y explicación de orden — `docs/reference/backend/hoteles-ranking-explainability-h17.md` |
+| H18 | PARCIAL | Frontend | H10,H13,H15-H17 | Detalle navegable con retorno a búsqueda — `docs/reference/frontend/hoteles-detail-navigation-h18.md` |
+| H19 | PARCIAL | Backend/Producto | H05,H06,H10-H11,H15-H18 | Total/noches/fees comparables y transparencia — `docs/reference/backend/hoteles-price-total-fees-h19.md` |
+| H20 | PARCIAL | Frontend/Backend | H05,H10,H15,H17-H19 | Paridad y cercanos relegados y accionables — `docs/reference/backend/hoteles-provider-comparison-nearby-h20.md` |
+| H21 | PARCIAL | Frontend/QA | H05,H12-H20 | Matriz transversal de idle/loading/success/empty/partial/stale/error y recuperación — `docs/reference/frontend/hoteles-state-matrix-h21.md` |
+| H22 | PARCIAL | Producto/Backend | H10,H13,H18-H21 | Favorito simple frente a tracking, ownership, lifecycle y migración — `docs/reference/backend/hoteles-favorite-vs-tracking-h22.md` |
+| H23 | PARCIAL | Backend/Frontend | H05,H09-H15,H18-H22 | Tracking V2 desde oferta real, snapshot inicial, estados, confirmación local/E2E y reconstrucción; `Idempotency-Key` explícita pendiente — `docs/reference/backend/hoteles-real-offer-tracking-h23.md` |
+| H24 | PARCIAL | Frontend/Backend | H05,H10,H19,H21-H23 | Histórico ligado a oferta/estancia, elegibilidad, agregados, gaps, estados y alternativa accesible al gráfico | docs/reference/backend/hoteles-price-history-curve-h24.md |
+| H25 | PARCIAL | Producto/Backend | H05,H19,H21,H23-H24 | Freshness, provenance, confidence, recomendaciones prudentes y refresh seguro | docs/reference/backend/hoteles-freshness-confidence-actions-h25.md |
+| H26 | COMPLETA — ALCANCE LOCAL DETERMINISTA | Backend | H19,H21-H25 | Reglas, baselines, elegibilidad, cooldown, dedupe, ownership y eventos deterministas; freshness/fees y handoffs externos explícitos | docs/reference/backend/hoteles-alert-rules-dedupe-h26.md |
+| H27 | PARCIAL | Backend/Frontend | H26 | Inbox privado, ownership estricto, lectura y deep links contextuales correctos | docs/reference/backend/hoteles-private-inbox-deeplinks-h27.md |
+| H28 | EN QA — in_app local; canales externos pendientes | Backend/Infra | H27, decisión de servicio | Delivery hotelero, canales, reintentos, preferencias, quiet hours y observabilidad | docs/reference/backend/hoteles-delivery-retries-preferences-h28.md |
+| H29 | PARCIAL | Frontend/Backend | H23-H28 | Lifecycle seguro: pausa, edición, expiración, archivado, eliminación, ownership, cascadas e idempotencia — docs/reference/backend/hoteles-lifecycle-pause-edit-expire-delete-h29.md |
+| H30 | COMPLETA — CONTRATO | Producto/Backend | H10,H13-H15,H17,H19,H24 | Calendario y flexibilidad de fechas, capabilities, comparabilidad, coste y rollout — docs/reference/backend/hoteles-flexible-dates-calendar-h30.md |
+| H31 | COMPLETA — CONTRATO VISUAL | UX/Frontend | H02-H03,H16,H21 | Dirección visual Warm-Luxe hotelera, jerarquía, estados, responsive, motion y handoff — docs/reference/frontend/hoteles-visual-direction-states-h31.md |
+| H32 | COMPLETA — CONTRATO RESPONSIVE | Frontend/QA | H16,H21,H31 | Responsive sin overflow, zoom, teclado y CTAs accesibles — docs/reference/frontend/hoteles-responsive-accessible-ctas-h32.md |
+| H33 | COMPLETA — CONTRATO DE AUDITORÍA | QA/Frontend | H13,H16,H18,H27,H32 | Auditoría WCAG 2.2 AA, prioridades P0/P1/P2 y gate de evidencia — docs/reference/frontend/hoteles-wcag-accessibility-audit-h33.md |
+| H34 | COMPLETA — CONTRATO DE LOCALIZACIÓN | Frontend/i18n | H13,H16,H23,H27 | ES/EN, fechas civiles, monedas de origen, pluralización y timezones — docs/reference/frontend/hoteles-localization-dates-currency-timezones-h34.md |
+| H35 | PARCIAL — seguridad técnica; legal/QA pendientes | Legal/Security | H19,H27,H28 | Disclosure, consentimiento, retención, ownership, redaction y deeplinks — [contrato H35](../reference/backend/hoteles-legal-privacy-disclosure-deeplinks-h35.md) |
+| H36 | PARCIAL — lab cerrado; field abierto | Frontend | H13-H21,H31-H35 | Presupuesto de rendimiento, Web Vitals, primer resultado, requests, assets y gates móvil — [contrato H36](../reference/frontend/hoteles-performance-web-vitals-h36.md) |
+| H37 | EN QA — implementación parcial | Backend/DB | H09,H11,H15,H23-H28,H35-H36 | Ledger budget, leases, circuit y outcomes externos verificados; benchmark PostgreSQL, canary comercial y coste real pendientes — [contrato H37](../reference/backend/hoteles-benchmark-rate-limits-locks-cost-h37.md) |
+| H38 | EN QA — hardening focalizado | Security/Backend | H10-H29,H35-H37 | Ownership, secretos, SSRF y abuso auditados; regresiones focalizadas verdes — [contrato H38](../reference/backend/hoteles-ownership-secrets-ssrf-abuse-h38.md) |
+| H39 | EN QA | QA | H06,H10-H29,H33-H38 | Pirámide de tests, regresiones de migración verdes y huecos explícitos — [contrato H39](../reference/backend/hoteles-test-pyramid-gaps-h39.md) |
+| H40 | EN QA — Chromium local actualizado; cross-browser/humano pendientes | QA/Frontend | H21,H31-H39 | Smoke automatizado vigente en `docs/qa/evidence/hotels-h40-rerun-audit-current/`; no declara cierre visual — [contrato H40](../reference/frontend/hoteles-visual-manual-crossbrowser-qa-h40.md) || H41 | EN QA — implementación amplia; gates operativos abiertos | Observabilidad/Backend | H06,H09,H26-H28,H37-H40 | Correlación E2E, métricas, logs redacted, health, SLO y gates — [contrato H41](../reference/backend/hoteles-observability-e2e-h41.md)
+ |
+
+| H42 | COMPLETA — CONTRATO/RUNBOOK; operación no simulada | Infra/Support | H09,H28,H38,H41 | Incidentes hoteleros, diagnóstico, contención, recovery, rollback y comunicación — [runbook H42](../runbooks/hoteles-incidentes-recovery-h42.md) |
+| H43 | EN QA — auditoría local/Mock verificada; live bloqueado | Infra/Backend | H09,H35,H41-H42 | Flags, perfiles, canary, rollout gradual y kill switches — [contrato H43](../reference/backend/hoteles-flags-canary-killswitch-h43.md) |
+| H44 | EN QA — seed/reset, perfiles, canary offline y browser E2E local cerrados; canary comercial/cross-browser pendientes | Backend/QA | H06,H10,H39,H42-H43 | Dataset demo, fixtures de fallos y reproducción local — [contrato H44](../reference/backend/hoteles-seed-demo-fallos-h44.md) |
+| H45 | EN QA — contrato, smoke local y E2E H44 aislado cerrados; canary/promoción/rollback reales pendientes | Release/QA | H32-H44 | Release readiness, smoke, canary, promoción y rollback — [contrato H45](../reference/backend/hoteles-release-canary-smoke-rollback-h45.md) |
+| H46 | PARCIAL | UX/Frontend | H13,H16,H21,H31-H34,H40,H44-H45 | Primera victoria sin tutorial largo — [contrato H46](../reference/frontend/hoteles-primera-victoria-h46.md) |
+| H47 | COMPLETA — CONTRATO/NAVEGACIÓN; implementación parcial | Producto/Frontend | H24-H29,H40,H45-H46 | Resumen “mis hoteles” y retorno útil — [contrato H47](../reference/frontend/hoteles-mis-hoteles-reengagement-h47.md) |
+| H48 | COMPLETA — CONTRATO; implementación pendiente | Frontend/Backend | H10-H15,H22,H27,H29,H34-H35,H40,H47 | Búsqueda guardada/compartible sin fuga privada — [contrato H48](../reference/backend/hoteles-busquedas-guardadas-compartibles-h48.md) |
+| H49 | COMPLETA — CONTRATO; implementación pendiente | Producto/Frontend | H17,H34,H38,H47-H48 | Personalización prudente y explicable — [contrato H49](../reference/frontend/hoteles-personalizacion-prudente-h49.md) |
+| H50 | COMPLETA — CONTRATO; implementación pendiente | Producto/Negocio | H04,H08,H19,H28,H35,H37-H38,H41,H43,H45,H49 | Monetización, afiliación y atribución responsable — [contrato H50](../reference/backend/hoteles-monetizacion-afiliacion-atribucion-h50.md) |
+| H51 | COMPLETA — CONTRATO; motor pendiente | PM/Analítica | H04,H21,H35,H40,H43,H45,H49-H50 | Experimentos con hipótesis y guardrails — [contrato H51](../reference/frontend/hoteles-experimentos-hipotesis-guardrails-h51.md) |
+| H52 | COMPLETA — CONTRATO; flujo pendiente | Producto/Support | H04,H21,H25,H27,H35,H38,H40,H42,H45,H47,H50-H51 | Feedback clasificado y correcciones de confianza — [contrato H52](../reference/frontend/hoteles-feedback-correcciones-confianza-h52.md) |
+| H53 | COMPLETA — CONTRATO; matching avanzado pendiente | Backend/DB | H07,H10-H12,H38-H39,H41,H44-H45,H52 | Matching y deduplicación auditable con métricas — [contrato H53](../reference/backend/hoteles-catalogo-matching-deduplicacion-h53.md) |
+| H54 | COMPLETA — CONTRATO; registro/canary pendientes | PM/Backend | H07-H08,H12,H34,H37-H38,H41-H45,H53 | Mercados hoteleros con criterios de entrada y salida — [contrato H54](../reference/backend/hoteles-mercados-entrada-salida-h54.md) |
+| H55 | PARCIAL — drill local SQLite/Mock verificado; backup/failover productivo pendiente | Infra/DB | H11,H28,H38,H41-H45,H54 | Continuidad, restore, reconciliación y recovery drill medido — [contrato H55](../reference/backend/hoteles-continuidad-disaster-recovery-h55.md) |
+| H56 | PARCIAL — evidencia anual incompleta | PM/Arquitectura | H04,H07-H08,H37,H41,H43,H45,H49-H55 | Gobernanza anual, decisiones de provider/mercado/coste y siguiente roadmap — [contrato H56](../reference/backend/hoteles-revision-anual-roadmap-h56.md) |
 
 ### 4.6. Matriz de tratamiento del trabajo existente
 
@@ -356,7 +360,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H03 — Arquitectura de información y navegación
 
-**Estado:** COMPLETA como diseño — contrato documentado en `docs/product/hoteles-information-architecture-h03.md`; la implementación de URL state, filtros y superficies secundarias queda para H13-H18/H22-H23.
+**Estado:** COMPLETA — CONTRATO/DISEÑO; implementación URL state, filtros y superficies secundarias pendiente.
 
 **Objetivo:** decidir la jerarquía de la página y de las superficies relacionadas.
 
@@ -375,7 +379,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H04 — Métricas de éxito, eventos y definición de “done”
 
-**Estado:** COMPLETA como contrato — `docs/product/hoteles-metrics-events-h04.md`; la instrumentación se implementa por fases posteriores.
+**Estado:** PARCIAL — contrato definido y primer RUM verificado; instrumentación de producto pendiente.
 
 **Objetivo:** evitar medir solo “la pantalla carga”.
 
@@ -399,7 +403,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H05 — Taxonomía de procedencia, freshness y confianza
 
-**Estado:** COMPLETA como contrato — `docs/reference/backend/hoteles-freshness-provenance-confidence-h05.md`; la implementación queda distribuida entre H06-H11 y las superficies de frontend.
+**Estado:** COMPLETA — CONTRATO; implementación uniforme en superficies pendiente.
 
 **Objetivo:** que el sistema sepa y comunique qué significa cada dato.
 
@@ -419,7 +423,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H06 — Contrato provider-neutral de hoteles
 
-**Estado:** COMPLETA como contrato — `docs/reference/backend/hoteles-provider-neutral-contract-h06.md`; la adopción V2 queda pendiente de H07-H11 y no sustituye todavía al adapter V1.
+**Estado:** COMPLETA — CONTRATO; adopción V2 parcial y adapter V1 aún vigente.
 
 **Objetivo:** que ningún provider dicte la arquitectura de negocio.
 
@@ -439,7 +443,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H07 — Auditoría Makcorps y decisión de continuidad
 
-**Estado:** COMPLETA como auditoría condicionada — `docs/reference/backend/hoteles-makcorps-audit-h07.md`; Makcorps queda limitado/experimental y no aprobado como provider principal.
+**Estado:** COMPLETA — auditoría documental condicionada; Makcorps limitado/experimental, no provider principal.
 
 **Objetivo:** decidir con datos si Makcorps sirve para discovery, tracking, ambos o ninguno.
 
@@ -459,7 +463,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H08 — Evaluación y onboarding de providers adicionales
 
-**Estado:** COMPLETA como evaluación documental; onboarding de producción abierto — [contrato H08](../reference/backend/hoteles-provider-onboarding-h08.md).
+**Estado:** COMPLETA — EVALUACIÓN DOCUMENTAL; onboarding de producción abierto.
 
 **Objetivo:** ampliar cobertura sin crear deuda ni dependencia ciega.
 
@@ -479,7 +483,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H09 — Scheduler, sweeps y garantías de ejecución
 
-**Estado:** COMPLETA como contrato operativo; implementación y canary pendientes — [contrato H09](../reference/backend/hoteles-sweep-gateway-h09.md).
+**Estado:** EN QA / PARCIAL — contrato operativo; despliegue y canary pendientes.
 
 **Objetivo:** que “tracking diario” deje de ser una promesa manual, pero solo después de demostrar una ejecución coordinada y reversible.
 
@@ -504,7 +508,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H10 — Modelo canónico de estancia/oferta
 
-**Estado:** COMPLETA como contrato de dominio; implementación y migración pendientes — [contrato H10](../reference/backend/hoteles-stay-offer-model-h10.md).
+**Estado:** COMPLETA — CONTRATO; implementación V1 y migración canónica pendientes.
 
 **Objetivo:** representar correctamente lo que el usuario cree que está siguiendo.
 
@@ -524,7 +528,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H11 — Migraciones, índices y retención de datos hoteleros
 
-**Estado:** COMPLETA como contrato de migración; implementación, Alembic y backfill pendientes — [contrato H11](../reference/backend/hoteles-data-migration-h11.md).
+**Estado:** PARCIAL — migraciones recientes verificadas; migración canónica/backfill pendientes.
 
 **Objetivo:** sostener histórico y búsquedas sin degradar la base.
 
@@ -546,7 +550,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H12 — Búsqueda de destino robusta
 
-**Estado:** COMPLETA como contrato de destino; implementación de autocomplete y hardening pendientes — [contrato H12](../reference/backend/hoteles-destination-resolution-h12.md).
+**Estado:** PARCIAL — resolución V1 existente; autocomplete y hardening pendientes.
 
 **Objetivo:** que “Madrid”, “Madrid Centro”, un aeropuerto, landmark o zona razonable produzcan una búsqueda útil sin ocultar ambigüedad.
 
@@ -566,7 +570,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H13 — Formulario de búsqueda principal
 
-**Estado:** COMPLETA como contrato de interacción; implementación frontend y E2E pendientes — [contrato H13](../reference/backend/hoteles-search-form-h13.md).
+**Estado:** PARCIAL — formulario V1/helpers existentes; implementación canónica y E2E pendientes.
 
 **Objetivo:** reemplazar el formulario técnico por un flujo de búsqueda evidente y recuperable.
 
@@ -587,7 +591,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H14 — Filtros y ordenación accionables
 
-**Estado:** COMPLETA como contrato de filtros y ordenación; implementación frontend/backend pendiente — [contrato H14](../reference/backend/hoteles-filters-ranking-h14.md).
+**Estado:** PARCIAL — filtros V1 existentes; contrato completo frontend/backend pendiente.
 
 **Objetivo:** ayudar a elegir sin convertir la búsqueda en un panel abrumador.
 
@@ -608,7 +612,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H15 — Contrato de resultados y paginación
 
-**Estado:** COMPLETA como contrato de API y consumo; implementación V2, adaptadores y contract tests pendientes — [contrato H15](../reference/backend/hoteles-results-pagination-h15.md).
+**Estado:** PARCIAL — respuestas V1 existentes; envelope V2/adaptadores/tests pendientes.
 
 **Objetivo:** que frontend y backend compartan un resultado rico, estable y eficiente.
 
@@ -632,7 +636,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H16 — Rediseño de result cards
 
-**Estado:** COMPLETA como contrato visual y funcional; implementación frontend, CSS, i18n y QA visual pendientes — [contrato H16](../reference/frontend/hoteles-result-cards-h16.md).
+**Estado:** PARCIAL — cards V1 existentes; card contextual y QA visual pendientes.
 
 **Objetivo:** hacer que cada card responda “qué es, cuánto cuesta, bajo qué condiciones y qué puedo hacer”.
 
@@ -653,7 +657,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H17 — Ranking explicable y señales de recomendación
 
-**Estado:** COMPLETA como contrato de ranking; implementación backend, metadata V2, fixtures y contract tests pendientes — [contrato H17](../reference/backend/hoteles-ranking-explainability-h17.md).
+**Estado:** PARCIAL — órdenes V1 deterministas; metadata V2 y explicación pendientes.
 
 **Objetivo:** ordenar resultados de forma útil sin fabricar “mejor opción”.
 
@@ -674,7 +678,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H18 — Página/panel de detalle de hotel
 
-**Estado:** COMPLETA como contrato de navegación y superficie; implementación frontend, URL state y QA E2E pendientes — [contrato H18](../reference/frontend/hoteles-detail-navigation-h18.md).
+**Estado:** PARCIAL — detalle V1/panel existente; navegación URL-driven y E2E pendientes.
 
 **Objetivo:** permitir decidir sin saturar la lista.
 
@@ -695,7 +699,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H19 — Precio total, noches y transparencia de fees
 
-**Estado:** COMPLETA como contrato de precio; implementación backend/frontend, migración V2, i18n, legal y QA pendientes — [contrato H19](../reference/backend/hoteles-price-total-fees-h19.md).
+**Estado:** PARCIAL — importe V1/tax parsing parcial; total/fees/comparabilidad pendientes.
 
 **Objetivo:** evitar que el precio barato sea una trampa de contexto.
 
@@ -717,7 +721,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H20 — Comparación de proveedores y hoteles cercanos
 
-**Estado:** COMPLETA como contrato de comparación; implementación V2, comparabilidad completa, frontend y QA pendientes — [contrato H20](../reference/backend/hoteles-provider-comparison-nearby-h20.md).
+**Estado:** PARCIAL — paridad/nearby V1 existentes; comparabilidad V2 y QA pendientes.
 
 **Objetivo:** reutilizar paridad y comp sets como ayuda secundaria, separando comparación de tarifas del mismo hotel y exploración de propiedades cercanas.
 
@@ -739,7 +743,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H21 — Matriz transversal de estados y recuperación
 
-**Estado:** COMPLETA como contrato — `docs/reference/frontend/hoteles-state-matrix-h21.md`; implementación de estados explícitos, envelope V2, i18n, accesibilidad y QA E2E pendientes.
+**Estado:** PARCIAL — matriz definida; estados explícitos V2 e2e/i18n/a11y pendientes.
 
 **Objetivo:** que la ausencia de resultados no sea un callejón sin salida y que ningún error de provider, sesión, red o dato stale se presente como una respuesta vacía válida.
 
@@ -766,7 +770,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H22 — Unificación semántica de favoritos y seguimientos
 
-**Estado:** COMPLETA como contrato — `docs/reference/backend/hoteles-favorite-vs-tracking-h22.md`; implementación frontend/backend, migración V2, i18n, inbox y QA pendientes.
+**Estado:** PARCIAL — entidades separadas V1; semántica V2, copy y QA pendientes.
 
 **Objetivo:** que el usuario entienda la diferencia entre guardar una propiedad y vigilar una estancia/oferta concreta, sin prometer refresh ni alertas para un favorito simple.
 
@@ -787,7 +791,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H23 — Crear tracking desde una oferta real
 
-**Estado:** COMPLETA como contrato — `docs/reference/backend/hoteles-real-offer-tracking-h23.md`; implementación estricta de alta, snapshot/fingerprint V2, idempotencia, migración, UI de confirmación y QA E2E pendientes.
+**Estado:** PARCIAL — CRUD/tracking V1 existente; oferta contextual/fingerprint V2 y E2E pendientes.
 
 **Objetivo:** eliminar tracked offers incompletos o ambiguos y hacer que cada suscripción pueda reconstruirse sin depender de la búsqueda que la originó.
 
@@ -810,7 +814,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H24 — Histórico y curva de precio
 
-**Estado:** COMPLETA como contrato; implementación backend/frontend y QA pendientes.
+**Estado:** PARCIAL — snapshots consultables; histórico/agregados/curva y QA pendientes.
 
 **Objetivo:** convertir snapshots en una herramienta de decisión, no en una lista de fechas.
 
@@ -830,7 +834,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H25 — Confianza, freshness y recomendaciones de acción
 
-**Estado:** COMPLETA como contrato; implementación backend/frontend, refresh seguro, i18n y QA pendientes.
+**Estado:** PARCIAL — freshness/provenance parcial; confidence/acciones/QA pendientes.
 
 **Objetivo:** explicar si conviene esperar, seguir o revisar ahora sin convertir la señal en una predicción absoluta.
 
@@ -849,7 +853,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H26 — Motor de reglas de alerta y deduplicación
 
-**Estado:** COMPLETA como contrato; implementación backend/frontend, migración de eventos, cooldown y QA pendientes.
+**Estado:** PARCIAL — reglas/evaluator/dedupe V1 parcial; baselines y cobertura completa pendientes.
 
 **Objetivo:** generar alertas útiles, privadas y deterministas, no ruido.
 
@@ -889,18 +893,18 @@ H42-H45 Mejora continua y escala
 
 ## Fase H28 — Delivery hotelero, canales, reintentos y preferencias
 
-**Estado:** COMPLETA como contrato; adapters externos, consentimiento por canal, endurecimiento del pipeline hotelero y QA operativo pendientes — [contrato H28](../reference/backend/hoteles-delivery-retries-preferences-h28.md).
+**Estado:** EN QA — `in_app` local con ledger separado, ownership, idempotencia y retries básicos; adapters externos, consentimiento por canal, leases, jitter, DLQ/replay y QA operativo siguen pendientes.
+
 
 **Objetivo:** que “avisarme” tenga un significado operativo, verificable y honesto para una señal hotelera autorizada.
 
 **Requisitos:**
 
-- Mantener `in_app` como canal privado base y no declarar email/push activos sin adapter, consentimiento, sandbox, límites y canary.
+- Mantener `in_app` como canal privado base y no declarar canales externos activos sin adapter, consentimiento, sandbox, límites y canary.
 - Elegir cualquier provider externo mediante investigación de servicio, coste, privacidad, límites y salida, no por memoria.
 - Separar evento hotelero H26, ownership H27, intención/outbox, cola, adapter de canal y estado final.
 - Usar delivery at-least-once con idempotency key, retries clasificados, backoff, lease, dead-letter/replay y observabilidad redacted.
 - Aplicar preferencias por canal, consentimiento, quiet hours, digest y fallback honesto a inbox.
-- Mantener el stub email como fixture/sandbox; no interpretarlo como correo real.
 - Respetar opt-in, unsubscribe, preferencias, lifecycle y privacidad.
 - Usar plantillas ES/EN, copy de señal stale/provider-degraded y deeplink seguro de H27.
 - No filtrar información de usuario en logs, colas, templates ni métricas.
@@ -910,7 +914,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H29 — Lifecycle seguro de seguimientos
 
-**Estado:** COMPLETA como contrato; implementación V2, migración, scheduler de expiración, archivado y QA E2E pendientes — [contrato H29](../reference/backend/hoteles-lifecycle-pause-edit-expire-delete-h29.md).
+**Estado:** PARCIAL — lifecycle V1 básico; estados V2, scheduler y E2E pendientes.
 
 **Objetivo:** que pausar, reanudar, editar, expirar y eliminar un seguimiento sea explícito, reversible solo cuando exista soporte real y seguro frente a sweeps, alertas, delivery y retención.
 
@@ -929,7 +933,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H30 — Calendario y flexibilidad de fechas
 
-**Estado:** COMPLETA como contrato; implementación de ventanas, calendario, capabilities, migración V2, canary y QA pendientes — [contrato H30](../reference/backend/hoteles-flexible-dates-calendar-h30.md).
+**Estado:** COMPLETA — CONTRATO; ventanas/calendario V2 y QA pendientes.
 
 **Objetivo:** permitir explorar fechas alternativas sin romper la búsqueda exacta ni convertir estancias incompatibles en una falsa oportunidad.
 
@@ -954,7 +958,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H31 — Dirección visual específica de hoteles
 
-**Estado:** COMPLETA como contrato; implementación específica, responsive final, i18n completa y browser QA pendientes — [contrato H31](../reference/frontend/hoteles-visual-direction-states-h31.md).
+**Estado:** COMPLETA — CONTRATO VISUAL; aplicación específica y browser QA pendientes.
 
 **Objetivo:** dar personalidad al módulo sin romper el sistema Viru y orientar toda la superficie a buscar, comparar, guardar y seguir una estancia.
 
@@ -975,7 +979,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H32 — Responsive, overflow y CTAs accesibles
 
-**Estado:** COMPLETA como contrato responsive; implementación frontend, hardening de CSS, tests de viewport y browser QA pendientes — [contrato H32](../reference/frontend/hoteles-responsive-accessible-ctas-h32.md).
+**Estado:** COMPLETA — CONTRATO RESPONSIVE; implementación/hardening y browser QA pendientes.
 
 **Objetivo:** que buscar, comparar y seguir una estancia sea cómodo y accionable en móvil, tablet, desktop, teclado y zoom ampliado.
 
@@ -1000,7 +1004,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H33 — Accesibilidad WCAG 2.2 AA
 
-**Estado:** COMPLETA como contrato de auditoría; remediación frontend, tests a11y y recorrido manual pendientes — [contrato H33](../reference/frontend/hoteles-wcag-accessibility-audit-h33.md).
+**Estado:** COMPLETA — CONTRATO DE AUDITORÍA; remediación y recorrido manual pendientes.
 
 **Objetivo:** hacer el flujo usable para teclado, lector de pantalla, zoom y usuarios con necesidades diversas, sin confundir una auditoría estática con conformidad real.
 
@@ -1022,7 +1026,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H34 — Internacionalización, monedas y zonas horarias
 
-**Estado:** COMPLETA como contrato de localización; remediación frontend, cobertura de claves y QA ES/EN pendientes — [contrato H34](../reference/frontend/hoteles-localization-dates-currency-timezones-h34.md).
+**Estado:** COMPLETA — CONTRATO DE LOCALIZACIÓN; remediación y QA ES/EN pendientes.
 
 **Objetivo:** que ES/EN no sean una traducción superficial y que las fechas, importes, unidades y timestamps no induzcan a error.
 
@@ -1044,7 +1048,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H35 — Legal, afiliación, privacidad y consentimiento
 
-**Estado:** COMPLETA como contrato; implementación, revisión legal/security y QA de integración pendientes — [contrato H35](../reference/backend/hoteles-legal-privacy-disclosure-deeplinks-h35.md).
+**Estado:** PARCIAL — seguridad técnica; revisión legal, disclosure y QA pendientes.
 
 **Objetivo:** construir confianza y reducir riesgo sin declarar aprobación legal, afiliación activa ni deeplinks seguros antes de tener evidencia.
 
@@ -1052,7 +1056,7 @@ H42-H45 Mejora continua y escala
 
 - Explicar que Viru compara/redirige y no controla la reserva final.
 - Disclosure visible ES/EN de afiliación cuando exista, precio observado frente a precio final y variación posible.
-- Separar crear tracking de consentimiento para email, push y analítica.
+- Separar crear tracking de consentimiento para push y analítica.
 - Definir ownership por recurso, minimización de payloads y redaction de URLs/credenciales/logs.
 - Definir retención, exportación, pausa, expiración, borrado y cascadas junto a H11/H28/H29.
 - Validar deeplinks mediante allowlist de esquema/host/path/parámetros; bloquear open redirects y SSRF si existe proxy o fetch.
@@ -1070,7 +1074,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H36 — Rendimiento frontend y percepción de velocidad
 
-**Estado:** COMPLETA como contrato; instrumentación, optimización y QA de rendimiento pendientes — [contrato H36](../reference/frontend/hoteles-performance-web-vitals-h36.md).
+**Estado:** PARCIAL — lab cerrado; field/RUM y optimización abiertos.
 
 **Objetivo:** que la búsqueda parezca rápida incluso cuando un provider tarda, sin ocultar la latencia ni declarar cumplimiento sin medición.
 
@@ -1093,7 +1097,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H37 — Rendimiento backend, concurrencia y costes
 
-**Estado:** COMPLETA como contrato — [benchmark, rate limits, locks y coste máximo H37](../reference/backend/hoteles-benchmark-rate-limits-locks-cost-h37.md); implementación, benchmark de canary y revisión del plan comercial pendientes.
+**Estado:** EN QA — implementación parcial; benchmark PostgreSQL, canary y coste comercial pendientes.
 
 **Objetivo:** escalar búsquedas y sweeps sin multiplicar costes ni producir snapshots falsos.
 
@@ -1115,7 +1119,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H38 — Seguridad de dominio hotelero
 
-**Estado:** COMPLETA como auditoría/contrato — [ownership, secretos, SSRF y abuso H38](../reference/backend/hoteles-ownership-secrets-ssrf-abuse-h38.md); remediación, pruebas de seguridad y revisión de rollout pendientes.
+**Estado:** EN QA — hardening focalizado; limiter, SSRF completa y rollout pendientes.
 
 **Objetivo:** proteger cuentas, datos y operaciones sin confundir autenticación con ownership.
 
@@ -1136,7 +1140,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H39 — Test pyramid específica de hoteles
 
-**Estado:** COMPLETA como estrategia/matriz — [contrato H39](../reference/backend/hoteles-test-pyramid-gaps-h39.md); implementación de huecos, canary y QA browser pendientes.
+**Estado:** EN QA — matriz y suite parcial; PostgreSQL, integración de fault profiles en revalidación y browser pendientes.
 
 **Objetivo:** que cada fase futura pueda cambiar sin romper el dominio y que ningún hueco crítico quede oculto detrás de fixtures o tests estructurales.
 
@@ -1158,7 +1162,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H40 — QA visual, manual y cross-browser
 
-**Estado:** COMPLETA como contrato — [QA visual, manual y cross-browser H40](../reference/frontend/hoteles-visual-manual-crossbrowser-qa-h40.md); rerun browser, evidencia visual vigente y aprobación humana pendientes.
+**Estado:** EN QA — Chromium local actualizado; cross-browser, revisión humana y aprobación de release pendientes.
 
 **Objetivo:** demostrar que la ruta funciona en la UI real sin convertir un test estructural o un cierre histórico en pase permanente.
 
@@ -1184,7 +1188,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H41 — Observabilidad end-to-end
 
-**Estado:** COMPLETA como contrato — `docs/reference/backend/hoteles-observability-e2e-h41.md`; instrumentación hotelera, métricas persistentes, dashboards, SLO y alertas operativas pendientes.
+**Estado:** EN QA — implementación amplia; métricas RED/provider, dashboards, retención, SLO y canary pendientes.
 
 **Objetivo:** saber por qué falla una búsqueda, un sweep, una revalidación, una alerta o su entrega, desde la UI hasta el provider y de vuelta al inbox.
 
@@ -1203,7 +1207,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H42 — Runbooks, soporte y recuperación
 
-**Estado:** COMPLETA como contrato/runbook — `docs/runbooks/hoteles-incidentes-recovery-h42.md`; simulacros, owners de guardia y controles H09/H41/H43 pendientes.
+**Estado:** COMPLETA — CONTRATO/RUNBOOK; operación no simulada.
 
 **Objetivo:** operar `/hoteles` sin depender de la IA que lo construyó.
 
@@ -1223,7 +1227,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H43 — Feature flags, canary y rollout gradual
 
-**Estado:** COMPLETA como contrato — `docs/reference/backend/hoteles-flags-canary-killswitch-h43.md`; resolver central, protección de todos los entrypoints, canary real y pruebas de cero llamadas externas pendientes.
+**Estado:** EN QA — local/Mock verificado; canary live y rollout pendientes.
 
 **Objetivo:** activar hoteles de forma gradual y reversible, con defaults fail-closed, perfiles explícitos, kill switches verificables y rollback sin pérdida de datos.
 
@@ -1261,7 +1265,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H44 — Seed, demo y entorno de desarrollo realista
 
-**Estado:** COMPLETA como contrato — `docs/reference/backend/hoteles-seed-demo-fallos-h44.md`; seed hotelero integral, reset seguro, fault profiles y E2E reproducible pendientes.
+**Estado:** EN QA — seed/reset, los 13 profiles soportados, revalidación Mock con warnings/needs_review por ítem, matriz declarativa expected counts/status/error/external calls y dry-run desechable validados; el gate redacted de CI está añadido; browser E2E, canary comercial y matriz histórica persistida pendientes.
 
 **Objetivo:** que las IAs y el equipo puedan investigar sin depender de producción.
 
@@ -1269,16 +1273,16 @@ H42-H45 Mejora continua y escala
 
 - Versionar un manifest y dataset sintético con varias ciudades, fechas, ocupaciones, providers, fees, cancelaciones, gaps y cambios de precio.
 - Cubrir hoteles con y sin rates, coordenadas incompletas, matching ambiguo, tracking, histórico, alertas, inbox y User A/B.
-- Crear fixtures de fallos tipadas: 429, timeout, vacío, invalid JSON/schema drift, rate sin currency, sold out, hotel ambiguo, stale, partial y deeplink inválido.
+- Crear fixtures de fallos tipadas: 429, timeout, vacío, invalid JSON/schema drift, rate sin currency, sold out, hotel ambiguo, stale, partial y deeplink inválido; los profiles ejecutables de transporte/tarifa ya llegan a `fetch_hotel_rates()` y al sweep Mock.
 - Entregar comandos seguros y claramente diferenciados para seed, reset y sweep local; los módulos objetivo y `AISOLATED_DB_URL` deben etiquetarse como futuros hasta existir, y el worker actual debe ejecutarse solo con una guardia de DB aislada y flags explícitas.
 - Aislar DB/entorno, hacer seeds idempotentes y prohibir datos reales, secretos o copy que parezca disponibilidad live.
 - Reutilizar los escenarios por tests backend, frontend, Playwright/TestSprite y browser QA, con dataset/profile en la evidencia.
 
-**Gate:** un flujo completo se puede reproducir localmente desde cero, con cero red externa por defecto y sin tocar datos fuera del entorno demo.
+**Gate:** un flujo completo se puede reproducir localmente desde cero, con cero red externa por defecto y sin tocar datos fuera del entorno demo. La revalidación Mock ejecutable persiste outcomes/latencia, warnings/needs_review por ítem y excluye observaciones `unavailable/stale` de precio/parity/alertas; `hotel_mock_canary.py --dry-run` cubre los 13 profiles, compara expected counts/status/error/external calls, verifica cleanup de SQLite y queda configurado como gate redacted del workflow backend de CI; la ejecución remota no se ha observado en esta sesión. El gate total sigue bloqueado por browser E2E, canary comercial y matriz histórica persistida si se exige trazabilidad entre ejecuciones.
 
 ## Fase H45 — Lanzamiento, canary y rollback
 
-**Estado:** COMPLETA como contrato — `docs/reference/backend/hoteles-release-canary-smoke-rollback-h45.md`; smoke E2E hotelero, canary real, métricas de promoción y rollback probado pendientes.
+**Estado:** EN QA — contrato y smoke parcial; canary/promoción/rollback pendientes.
 
 **Objetivo:** ponerlo delante de usuarios sin convertirles en testers involuntarios.
 
@@ -1301,7 +1305,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H46 — Onboarding y primera victoria
 
-**Estado:** COMPLETA como contrato de experiencia — `docs/reference/frontend/hoteles-primera-victoria-h46.md`; implementación del flujo guiado, auth contextual, eventos y QA browser pendientes.
+**Estado:** PARCIAL — Camino A y copy honesto; flujo guiado/auth/eventos/browser pendientes.
 
 **Objetivo:** que una persona nueva entienda el valor de `/hoteles` y consiga una primera utilidad sin tutorial largo ni claims de disponibilidad que el sistema no pueda respaldar.
 
@@ -1321,7 +1325,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H47 — Re-engagement y superficie de “mis hoteles”
 
-**Estado:** COMPLETA como contrato de producto/navegación — `docs/reference/frontend/hoteles-mis-hoteles-reengagement-h47.md`; agregador, URL state, deep links contextuales, ownership V2, lifecycle visual, eventos y QA browser pendientes.
+**Estado:** COMPLETA — CONTRATO/NAVEGACIÓN; agregador y QA browser pendientes.
 
 **Objetivo:** crear un retorno útil a `/hoteles` sin crear otro dashboard ni duplicar la fuente de verdad.
 
@@ -1342,7 +1346,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H48 — Guardar y compartir búsquedas
 
-**Estado:** COMPLETA como contrato de dominio/navegación — `docs/reference/backend/hoteles-busquedas-guardadas-compartibles-h48.md`; parser URL hotelero, persistencia SavedHotelSearch, share token opcional, restore, lifecycle y QA pendientes.
+**Estado:** COMPLETA — CONTRATO; SavedHotelSearch, share/restore/lifecycle y QA pendientes.
 
 **Objetivo:** reducir fricción para búsquedas recurrentes sin mezclar una intención pública con una suscripción privada.
 
@@ -1363,7 +1367,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H49 — Personalización prudente
 
-**Estado:** COMPLETA como contrato — `docs/reference/frontend/hoteles-personalizacion-prudente-h49.md`; implementación del perfil hotelero, `recommended`, controles, integración y QA pendientes.
+**Estado:** COMPLETA — CONTRATO; perfil, recommended, controles y QA pendientes.
 
 **Objetivo:** mejorar resultados sin crear una caja negra.
 
@@ -1382,7 +1386,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H50 — Monetización y afiliación responsable
 
-**Estado:** COMPLETA como contrato — `docs/reference/backend/hoteles-monetizacion-afiliacion-atribucion-h50.md`; partner aprobado, deeplinks allowlisted, consentimiento, ledger, reconciliación y QA pendientes.
+**Estado:** COMPLETA — CONTRATO; afiliación, ledger, consentimiento y QA pendientes.
 
 **Objetivo:** hacer sostenible el tracker sin degradar confianza.
 
@@ -1401,7 +1405,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H51 — Experimentos de producto
 
-**Estado:** COMPLETA como contrato — `docs/reference/frontend/hoteles-experimentos-hipotesis-guardrails-h51.md`; motor de experimentación, asignación sticky, exposición, tripwires y QA automatizado pendientes.
+**Estado:** COMPLETA — CONTRATO; motor, asignación, tripwires y QA pendientes.
 
 **Objetivo:** aprender sin fragmentar el contrato.
 
@@ -1423,7 +1427,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H52 — Feedback de usuarios y correcciones de confianza
 
-**Estado:** COMPLETA como contrato — [contrato H52](../reference/frontend/hoteles-feedback-correcciones-confianza-h52.md); implementación del flujo contextual, triage, correcciones, inbox y QA pendientes.
+**Estado:** COMPLETA — CONTRATO; flujo contextual, triage, correcciones y QA pendientes.
 
 **Objetivo:** aprender dónde no coincide la promesa con la experiencia y convertir la señal en una corrección trazable, reversible y con owner.
 
@@ -1443,7 +1447,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H53 — Calidad de catálogo, matching y deduplicación avanzada
 
-**Estado:** COMPLETA como contrato — [contrato H53](../reference/backend/hoteles-catalogo-matching-deduplicacion-h53.md); implementación de shadow matching, cola de revisión, merge/split, migración y QA pendientes.
+**Estado:** COMPLETA — CONTRATO; matching avanzado, cola, merge/split y QA pendientes.
 
 **Objetivo:** que el mismo hotel no aparezca como cuatro propiedades distintas sin fusionar hoteles diferentes por similitud superficial.
 
@@ -1463,7 +1467,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H54 — Escala geográfica y cobertura de mercados
 
-**Estado:** COMPLETA como contrato — [contrato H54](../reference/backend/hoteles-mercados-entrada-salida-h54.md); implementación de registro de mercados, matriz de capabilities, canary, kill switch, salida y QA pendientes.
+**Estado:** COMPLETA — CONTRATO; registro, capabilities, canary y QA pendientes.
 
 **Objetivo:** crecer por mercados donde la experiencia sea realmente buena, con un alcance probado y una retirada segura.
 
@@ -1483,7 +1487,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H55 — Hardening de continuidad y disaster recovery
 
-**Estado:** COMPLETA como contrato; implementación de backup/restore, recuperación de workers, reconciliación y recovery drill medido pendientes — [contrato H55](../reference/backend/hoteles-continuidad-disaster-recovery-h55.md).
+**Estado:** PARCIAL — contrato + drill local SQLite/Mock verificados; backup/failover productivo pendientes.
 
 **Objetivo:** proteger el histórico y la confianza acumulada, recuperando `/hoteles` sin inventar disponibilidad, perder ownership ni duplicar snapshots/alertas.
 
@@ -1502,7 +1506,7 @@ H42-H45 Mejora continua y escala
 
 ## Fase H56 — Revisión anual de producto, providers y costes
 
-**Estado:** COMPLETA como contrato; revisión anual ejecutada, instrumentación completa, provider aprobado, reconciliación financiera y siguiente roadmap pendientes — [contrato H56](../reference/backend/hoteles-revision-anual-roadmap-h56.md).
+**Estado:** PARCIAL — evidencia anual incompleta; aprobación, provider, reconciliación y siguiente roadmap pendientes.
 
 **Objetivo:** evitar que el plan quede obsoleto y convertir cada ciclo en decisiones fechadas sobre valor, confianza, providers, mercados, costes y deuda.
 
@@ -1622,7 +1626,7 @@ Debe incluir:
 | Accesibilidad | teclado, focus, labels, combobox, errores, lector, reduced motion |
 | Rendimiento | cold start, cache hit, provider lento, muchos resultados, muchos trackings |
 | Operación | worker parado, retry, lock, replay, provider desactivado, rollback |
-| Localización | ES/EN, plural, moneda, fecha, mensajes de error y email |
+| Localización | ES/EN, plural, moneda, fecha y mensajes de error |
 | Legal | disclosure, consentimientos, unsubscribe, deeplink, retención/borrado |
 
 ---
@@ -1681,7 +1685,7 @@ Estas decisiones no se deben esconder dentro de una PR:
 8. ¿Se mantiene `HotelWatchlistItem` indefinidamente como favorito o se migra a una entidad común?
 9. ¿Qué funcionalidades quedan fuera del primer release: calendario flexible, mapa avanzado, reviews, personalización, share?
 10. ¿Cuál es el modelo de afiliación y cómo se informa?
-11. ¿Qué presupuesto máximo de provider/geocoder/email existe?
+11. ¿Qué presupuesto máximo de provider/geocoder existe?
 12. ¿Qué SLO mínimo es aceptable para búsqueda, sweep y alertas?
 
 ---

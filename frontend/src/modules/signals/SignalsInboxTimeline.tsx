@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { RadioTower, ShieldCheck, Tags, Wrench } from "lucide-react";
+import { RadioTower, ShieldCheck, Tags, UsersRound, Wrench } from "lucide-react";
 
 import { useI18n } from "@/i18n";
 import type {
@@ -16,6 +16,7 @@ const CATEGORY_ICONS = {
   security: ShieldCheck,
   digest: RadioTower,
   worker: Wrench,
+  community: UsersRound,
 } as const;
 
 type SignalsInboxTimelineProps = {

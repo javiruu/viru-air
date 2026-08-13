@@ -17,6 +17,41 @@ class _SensitivePayload(BaseModel):
     password: str
 
 
+def test_client_event_id_is_normalized_in_response_and_error_envelope(client: TestClient) -> None:
+    response = client.get(
+        "/health",
+        headers={"x-client-event-id": " intent-search-01 "},
+    )
+
+    assert response.status_code == 200
+    assert response.headers["x-client-event-id"] == "intent-search-01"
+
+    router = APIRouter()
+
+    @router.get("/_test/client-event-error")
+    def client_event_error() -> dict[str, str]:
+        raise ApiError(status=409, code="request_failed", message="Request failed.")
+
+    app.include_router(router)
+    try:
+        error_response = client.get(
+            "/_test/client-event-error",
+            headers={"x-client-event-id": "intent-search-01"},
+        )
+        assert error_response.status_code == 409
+        assert error_response.json()["client_event_id"] == "intent-search-01"
+        assert error_response.headers["x-client-event-id"] == "intent-search-01"
+    finally:
+        app.router.routes.pop()
+
+
+def test_invalid_client_event_id_is_not_propagated(client: TestClient) -> None:
+    response = client.get("/health", headers={"x-client-event-id": "email@example.com with spaces"})
+
+    assert response.status_code == 200
+    assert "x-client-event-id" not in response.headers
+
+
 def test_health_returns_ok_with_correlation_header(client: TestClient) -> None:
     response = client.get("/health", headers={"x-correlation-id": "corr-health-1"})
 

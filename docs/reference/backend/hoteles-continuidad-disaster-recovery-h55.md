@@ -1,6 +1,6 @@
 # H55 — Continuidad, backup/restore y disaster recovery del tracker hotelero
 
-**Estado:** COMPLETA como contrato de continuidad y recuperación; backup/restore automatizado, worker productivo y recovery drill ejecutado pendientes  
+**Estado:** contrato completo; recovery drill local SQLite/Mock ejecutado y verificado; backup/restore automatizado productivo, worker productivo y failover siguen pendientes
 **Fecha:** 2026-08-05  
 **Área:** infraestructura / DB / backend / workers / delivery / providers / seguridad / QA / soporte  
 **Fuente de verdad:** sí para diseñar, ejecutar, medir y aprobar la recuperación de `/hoteles`  
@@ -64,7 +64,7 @@ H55 parte de la evidencia del repositorio y mantiene una separación estricta en
 | Release | `infra/github/workflows/release.yml` ejecuta tests/build y un paso nominal de canary; H45 lo marca como scaffolding | existe una intención de quality gate y rollout | que exista traffic split, restore de infraestructura o rollback automático ejecutado |
 | Health | `/health` y `/ready` son probes básicas | la API puede comprobarse superficialmente | que DB, worker, provider, freshness, delivery o integridad hotelera estén sanos |
 | Observabilidad | H41 define correlación, eventos, redaction, métricas y SLO candidatos | hay un contrato de evidencia | que dashboards, métricas persistentes, SLO y alertas hoteleras estén activos |
-| Backups | no hay evidencia suficiente de un job de backup/restore hotelero automatizado y verificado en este repositorio | el contrato puede exigirlo | que exista una copia restaurable, un RPO/RTO medido o un mecanismo de failover |
+| Backups | existe un drill local reproducible que crea, copia y restaura una SQLite temporal con seed Mock, schema head, ownership y cleanup verificados; no es un job de backup productivo | el flujo aislado y sus límites están probados | backup cifrado/retención productiva, RPO/RTO operativo o mecanismo de failover |
 
 **Conclusión:** H55 es un contrato de hardening. La implementación avanzada no se declara completa hasta ejecutar un restore y un drill sobre datos sanitizados/aislados, conservar evidencia y pasar los gates de este documento.
 
@@ -568,4 +568,4 @@ H55 podrá declararse **implementada**, no solo contractualmente completa, cuand
 7. H41 aporte señales consultables, H42 runbook ejecutable, H43 kill switch verificable y H45 rollback de release reproducible;
 8. los gaps restantes estén explícitos y no se anuncie tracking automático más allá de lo demostrado.
 
-**Resultado H55 actual:** contrato de continuidad aprobado. No se declara que exista backup/restore automatizado, failover, RTO/RPO operativo, worker Kubernetes productivo o recovery drill pasado hasta ejecutar los gates anteriores.
+**Resultado H55 actual:** el contrato y el drill local aislado están verificados (`hotel-recovery-drill-v1`, Mock, SQLite temporal, cero llamadas externas, ownership de dos usuarios y cleanup confirmado). El resultado no declara backup cifrado/automatizado, failover, RPO/RTO operativo ni worker Kubernetes productivo: esas dependencias siguen abiertas.

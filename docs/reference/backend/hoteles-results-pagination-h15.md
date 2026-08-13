@@ -1,6 +1,6 @@
 # H15 — Contrato versionado de resultados y paginación hotelera
 
-**Estado:** contrato de API y consumo; implementación V2 pendiente  
+**Estado:** contrato de API y consumo; `GET /api/v1/hotels/v2/area-search` implementado como primera superficie V2 aditiva; paginación cursor, resto de colecciones y adopción frontend pendientes
 **Fuente de verdad:** sí, para envelopes, metadata, warnings, capacidades, estados y paginación de hoteles  
 **Fase del roadmap:** H15  
 **Dependencias:** H05, H06, H09, H10, H11, H12, H13, H14  
@@ -10,7 +10,7 @@
 
 H15 evita que frontend y backend tengan que adivinar el significado de una lista vacía, un campo ausente o un resultado parcial. Define una respuesta rica y estable para búsquedas, resultados por área, detalle de oferta y futuras capacidades de tracking.
 
-Esta fase es **contractual**. No implementa todavía rutas V2 ni cambia las listas de V1. La implementación debe ser aditiva, probarse junto al cliente actual y poder retirarse mediante flag sin invalidar datos ni consumidores existentes.
+La primera implementación entrega una ruta V2 aditiva de búsqueda por área y no cambia las listas de V1. La implementación debe probarse junto al cliente actual y poder retirarse sin invalidar datos ni consumidores existentes.
 
 La regla principal es:
 
@@ -73,13 +73,14 @@ La primera implementación debe crear rutas aditivas V2, usando el prefijo efect
 
 H15 de implementación debe confirmar si el prefijo efectivo será `/api/v2`, `/api/hotels/v2` u otra composición según `main.py` y los routers instalados. Esa decisión debe quedar en contract tests y documentación de despliegue. No se debe sustituir V1 mediante rewrite silencioso ni cambiar el tipo de respuesta de una ruta existente.
 
-H15 puede comenzar con V2 para búsqueda y `area-search`; el resto de colecciones se incorpora cuando sus campos y ownership estén preparados. Cada endpoint debe publicar su versión de contrato y capability set.
+H15 comienza con `GET /api/v1/hotels/v2/area-search`; el prefijo efectivo conserva `/api/v1` porque el router hotelero sigue montado bajo esa versión y V2 es una evolución contractual aditiva del recurso, no un reemplazo del router. El resto de colecciones se incorpora cuando sus campos y ownership estén preparados. Cada endpoint debe publicar su versión de contrato y capability set.
 
 ### 3.2. V1 permanece estable
 
 - V1 conserva listas y campos existentes durante la transición.
 - No se añade un envelope a V1 si eso rompe consumidores.
 - El cliente frontend debe usar un adaptador explícito `V1 list → normalized collection`.
+- `frontend/src/modules/hotels/api.ts` valida `hotels.results.v2` y expone un adaptador explícito V2→V1; la pantalla actual sigue en V1 hasta que el rollout de producto seleccione la nueva ruta.
 - El adaptador debe distinguir “payload V1 válido” de “payload V2 válido”; nunca aceptar cualquier objeto con `data` como si fuera V2.
 - V2 puede tener campos adicionales y metadata sin contaminar los tipos V1.
 - La retirada de V1 requiere inventario de consumidores, periodo de compatibilidad, métricas y rollback documentado.

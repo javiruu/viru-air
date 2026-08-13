@@ -10,7 +10,7 @@ def test_watch_statuses_are_canonical():
 
 
 def test_delivery_statuses_are_canonical():
-    assert DELIVERY_STATUS_VALUES == ("queued", "sent", "delivered", "failed", "error")
+    assert DELIVERY_STATUS_VALUES == ("queued", "sent", "delivered", "failed", "error", "suppressed")
 
 
 def test_system_statuses_are_canonical():

@@ -43,9 +43,8 @@ export function HotelCompSetPanel({
     : false;
 
   return (
-    <section className="panel panel-soft hotel-comp-set-panel">
+    <div className="hotel-comp-set-panel">
       <div className="panel-header">
-        <h2 className="panel-title">{t("hotels.compSet.title")}</h2>
         <span className="status-pill info">{t("hotels.compSet.badge")}</span>
       </div>
       <div className="section-gap-sm hotel-comp-set-actions">
@@ -177,7 +176,7 @@ export function HotelCompSetPanel({
       <div className="section-gap-sm">
         <p className="panel-note">{t("hotels.compSet.availableHotels")}: {hotels.length}</p>
       </div>
-    </section>
+    </div>
   );
 }
 

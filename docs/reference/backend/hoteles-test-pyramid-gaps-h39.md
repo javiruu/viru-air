@@ -1,6 +1,6 @@
 # H39 — Pirámide de tests y huecos explícitos de `/hoteles`
 
-**Estado:** COMPLETA como estrategia/matriz de cobertura; implementación de huecos, canary y QA browser pendientes  
+**Estado:** EN QA; la estrategia/matriz y el roundtrip SQLite de migraciones hoteleras 0044–0047 están verificados; PostgreSQL/concurrencia, canary provider y QA browser siguen pendientes
 **Fecha:** 2026-08-05  
 **Área:** backend / frontend / providers / seguridad / migraciones / QA  
 **Fuente de verdad:** sí para la pirámide, matriz de cobertura, prioridades y criterios de cierre de H39  
@@ -78,7 +78,7 @@ Limitaciones observadas:
 - la cobertura existente no demuestra todos los endpoints bajo User A/User B;
 - no hay gate explícito para regla con `tracked_offer_id` de otra cuenta/hotel;
 - no hay test de fuga de `HotelAlertEvent` cuando dos usuarios siguen el mismo hotel;
-- no hay integración real PostgreSQL para locks/leases/migraciones H11/H37;
+- el roundtrip de 0044–0047 y las constraints/indexes se verifican en SQLite; no hay integración real PostgreSQL para locks/leases/migraciones H11/H37;
 - no hay test server-side de SSRF/open redirect/deeplink allowlist;
 - no hay test de redaction en access logs, tracing y excepción de requests;
 - no hay prueba de exportación/retención completa de datos hoteleros;
@@ -113,7 +113,7 @@ No se debe contar la existencia de `hoteles-f56-audit.test.ts` como browser QA. 
 | deeplink externo | no suficiente | no suficiente | no aprobado | pendiente | P0 |
 | provider 429/timeout/partial | mock del adapter | limitado | no live | pendiente | P0 |
 | sweep concurrente | no | no | no | n/a | P0 |
-| migración/rollback | no suficiente | no PostgreSQL | n/a | n/a | P0 |
+| migración/rollback | roundtrip SQLite de 0044–0047; backfill legacy y PostgreSQL pendientes | no PostgreSQL | n/a | n/a | P0 |
 | SSRF/redaction/abuso | no suficiente | no | no | pendiente | P0 |
 | i18n/a11y/responsive | helpers parciales | no | n/a | pendiente H40 | P1 |
 | rendimiento/Web Vitals | no | no | n/a | pendiente H36/H40 | P1 |
@@ -339,4 +339,4 @@ Hasta cerrar los gates, no puede afirmarse que `/hoteles`:
 
 H39 sí autoriza una afirmación más limitada: existe una estrategia de pruebas asignable, una base real identificada y un inventario honesto de los huecos que deben cerrarse antes de declarar el tracker hotelero listo.
 
-**Resultado H39:** matriz de test pyramid aprobada; la cobertura actual es parcial y especialmente insuficiente en browser, seguridad relacional, concurrencia, migraciones, provider live y SSRF. H40 debe cerrar la evidencia visual/browser sin sustituir H39.
+**Resultado H39:** estrategia/matriz aprobada y evidencia local añadida para el esquema y rollback de migraciones hoteleras 0044–0047 (`test_hotel_provider_infrastructure_migration.py`, 9 tests focalizados verdes). La cobertura sigue insuficiente en PostgreSQL/concurrencia, browser, provider live/canary y otros P0; H40 debe cerrar la evidencia visual/browser sin sustituir H39.

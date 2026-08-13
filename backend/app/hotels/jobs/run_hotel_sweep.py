@@ -14,6 +14,7 @@ import os
 import sys
 
 from app.core.logging import configure_logging
+from app.hotels.activation import is_hotel_sweep_enabled
 from app.infrastructure.db.session import SessionLocal
 from app.services import hotels_service
 
@@ -32,6 +33,15 @@ def _parse_args() -> argparse.Namespace:
 
 
 def run(provider: str = "mock") -> int:
+    if not is_hotel_sweep_enabled(provider=provider):
+        logger.warning(
+            json.dumps(
+                {"event": "hotel_sweep_disabled", "message": "HOTEL_SWEEP_ENABLED=false"},
+                ensure_ascii=False,
+            )
+        )
+        return 0
+
     db = SessionLocal()
     try:
         logger.info(

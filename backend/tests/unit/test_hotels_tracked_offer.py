@@ -528,7 +528,9 @@ def test_list_tracked_offer_snapshots_enforces_ownership() -> None:
         _close(db)
 
 
-def test_snapshot_stores_availability_and_deep_link() -> None:
+def test_snapshot_stores_availability_and_deep_link(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("HOTEL_DEEPLINK_ALLOWED_HOSTS", "booking.com")
+    monkeypatch.setenv("HOTEL_DEEPLINK_ALLOWED_QUERY_KEYS", "")
     db = _db()
     try:
         hotel = _create_hotel(db)

@@ -1,10 +1,68 @@
 # H36 — Rendimiento frontend y Web Vitals de `/hoteles`
 
-**Estado:** COMPLETA como contrato; instrumentación, optimización y QA de rendimiento pendientes  
-**Fecha:** 2026-08-05  
+**Estado:** baseline lab autenticado obtenido; Gate B/R/M cerrados para las rondas lab declaradas; Gate F lab cerrado para la instrumentación opt-in local; field/RUM de producción y optimización siguen abiertos
+**Fecha:** 2026-08-08
 **Área:** frontend / performance / backend / QA / observabilidad  
 **Fuente de verdad:** sí para los presupuestos, prioridades y criterios de cierre de H36  
 **No es:** una medición de producción, una garantía de Web Vitals ni una aprobación de infraestructura
+
+### Actualización 2026-08-08 — cierre del bloque de cancelación y latest-wins
+
+Se implementó el primer bloque accionable de H36 sin cambiar contratos HTTP del backend:
+
+- `apiFetchWithStatus` conserva la `AbortSignal` del llamador y la compone con el timeout opcional;
+- `searchHotels`, `areaResolve`, `areaSearch`, `getHotelDetail`, `getHotelRates` y `getHotelParity` aceptan señal de cancelación;
+- `useHotelSearch` aborta búsquedas y resoluciones obsoletas, aplica request IDs latest-wins y limpia cancelación al desmontar/cambiar de modo;
+- `useHotelDetail` aborta detalle, rates y parity al cambiar de hotel o desmontar, y no deja el loading activo al deseleccionar;
+- se añadieron regresiones de transporte, composición caller-signal/timeout y cableado de hooks.
+
+**Validación ejecutada:** 519 tests frontend pasaron antes de la corrección final; tras la corrección final pasaron las 6 regresiones H36/API, `npx tsc --noEmit`, `npm run lint` y `npm run build`. El bloque lab Gate F está cerrado para la instrumentación opt-in local; no se declara cumplimiento de Web Vitals ni field/RUM de producción.
+
+**Siguiente bloque H36:** ejecutar el profiler configurable contra un frontend/backend local levantado y guardar la evidencia del baseline. El runner ya admite `PERF_ROUTES`, `PERF_PROFILES`, Fast 3G y JSON; quedan fuera de este bloque skeletons, dedupe/TTL, fan-out de watchlist y lazy loading de secundarios.
+
+### Actualización 2026-08-08 — profiler configurable preparado
+
+Se extendió `frontend/scripts/perf_profile_playwright.cjs` manteniendo el comportamiento histórico por defecto:
+
+```bash
+cd frontend
+PERF_ROUTES=/hoteles \
+PERF_PROFILES=desktop,mobile,fast3g \
+PERF_JSON=1 \
+PERF_OUTPUT_DIR=../docs/qa/evidence/hotels-h36-baseline \
+PERF_HOTELS_FLOW=1 PERF_HOTELS_CITY=Madrid \
+LOGIN_EMAIL='cuenta-de-qa' LOGIN_PASSWORD='secreto-de-qa' \
+node scripts/perf_profile_playwright.cjs
+```
+
+- `PERF_ROUTES` limita rutas y falla explícitamente si una ruta no existe.
+- `PERF_PROFILES` acepta `desktop`, `mobile` y `fast3g`; el último usa emulación CDP y caché desactivada.
+- `PERF_JSON=1` activa el JSON; `PERF_OUTPUT_DIR` también lo activa y fija la carpeta de salida relativa a `frontend/`.
+- El reporte conserva TTFB, DCL, load, LCP, CLS y TTI aproximado; TTI sigue siendo `networkidle + settle`, no INP.
+- Para `/hoteles`, registra `shellInteractiveAt` al encontrar el input principal. Con `PERF_HOTELS_FLOW=1` rellena una ciudad de QA (`PERF_HOTELS_CITY`, por defecto `Madrid`), ejecuta la búsqueda y registra `firstResultRenderedAt` si aparece una card; sin ese flag, el primer resultado queda deliberadamente en `null`.
+- Las requests hoteleras se guardan como método + pathname (`GET /api/v1/hotels/...`), nunca query strings.
+- Se registran errores de consola truncados y no se guardan credenciales, payloads, tokens ni URLs completas.
+- Si no se proporciona login, el baseline mide la respuesta de la ruta/redirect público; no debe interpretarse como baseline autenticado del radar.
+- `PERF_HOTELS_FLOW=1` es un recorrido de lectura/búsqueda; usa una cuenta de QA y no crea tracking, watchlist, alertas ni comparativas.
+- El waiter de hitos exige un identificador de documento nuevo tras cada navegación para no medir un selector del DOM anterior al reutilizar la página.
+
+**Validación del runner:** `node --check`, typecheck, lint y 9 tests de contrato pasan. Las evidencias de diagnóstico público (`hotels-h36-baseline` y `hotels-h36-baseline-3100`) quedan archivadas como inválidas/no autenticadas y no se usan como métricas.
+
+**Baseline autenticado válido — 2026-08-08:** se construyó un build de producción aislado con Next 15.5.22, se verificó `/hoteles` y un asset `/_next/static` con HTTP 200, y se ejecutó una ronda con una cuenta QA efímera contra backend local. Evidencia: `docs/qa/evidence/hotels-h36-auth-baseline-3400-final/perf_playwright_20260808T153149.{md,json}`. En desktop/mobile/Fast 3G: status 200, cero errores de consola, shell en 417/433/2980 ms, primer resultado en 778/785/3367 ms y 9 requests GET hoteleras por perfil. TTFB fue 4/7/6 ms, LCP 456/400/2656 ms y CLS 0.003/0/0; TTI es aproximado (`networkidle + 500 ms`). Es una medición lab local de una ronda con fixture/backend QA, no un p75 de producción ni un claim de cumplimiento de Web Vitals.
+
+**Resultado del diagnóstico posterior:** el HTTP 500 de `:3000` no era un fallo de `/hoteles`; el puerto estaba ocupado por un proceso Next previo y un arranque paralelo produjo `EADDRINUSE`. La evidencia de `:3000` queda clasificada como inválida por conflicto de entorno. En un servidor sano de producción sobre `:3100`, `/hoteles` respondió `200`, y el navegador confirmó el redirect correcto a `/login?returnUrl=%2Fhoteles` sin sesión y sin errores de consola. La evidencia pública está en `docs/qa/evidence/hotels-h36-baseline-3100/perf_playwright_20260808T151023.{md,json}`.
+
+El reporte `:3100` no es todavía un baseline del radar: `authConfigured=false`, `PERF_HOTELS_FLOW=false`, no hubo shell hotelero ni requests hoteleras y aparecieron respuestas 400 de llamadas auxiliares de la página pública. No se usan sus tiempos como claim de rendimiento del radar.
+
+**Gate R — recorrido real autenticado, 2026-08-08:** se ejecutó el script `frontend/scripts/qa_hotels_gate_r.mjs` en un build de producción aislado sobre `:3500`, con cuenta QA efímera y solo operaciones GET. Evidencia sanitizada: `docs/qa/evidence/hotels-h36-gate-r-3500/gate-r.json`; no se conserva trace autenticado porque puede incluir headers/tokens de sesión. Pasaron: búsqueda Madrid (2 resultados), selección con detalle, autocomplete Madrid + area-search (respuesta 200; `areaCount=0`, empty válido), error 503 controlado con alerta y query conservada, empty controlado sin alerta falsa, error de paridad controlado con badge visible y cancelación por navegación (`ERR_ABORTED`) sin alerta residual. No hubo errores de consola inesperados; los 503 controlados quedan en el registro como esperados. La evidencia JSON no contiene credenciales, tokens, query strings ni UUIDs de hoteles y no ejecutó tracking, watchlist, alertas, comp sets ni ingest. El trace es opt-in mediante `GATE_R_TRACE=1` y no debe persistirse con una sesión autenticada sin auditoría.
+
+**Siguiente acción real:** repetir Gate M en varias rondas y completar el bloque field/RUM de producción: volumen suficiente, p75 por segmento y bundle route-specific. Gate R y Gate M quedan cerrados únicamente para las rondas lab declaradas; no implica cierre de H21 ni cumplimiento de producción.
+
+**Gate F — laboratorio autenticado, 2026-08-08:** se añadió `frontend/src/modules/hotels/HotelRumTracker.tsx`, montado únicamente en `/hoteles`, y el contrato puro `hotelRum.ts`. La activación es opt-in mediante `localStorage` (`viru_hotels_rum_consent=granted`); sin consentimiento no se emiten eventos RUM. El evento first-party `hotel_rum_vitals` usa `/ux/events`, exige autenticación y solo acepta `schema_version`, superficie, métrica, bucket de valor, rating, tipo de navegación y clase de dispositivo. LCP/CLS/TTFB se observan mediante `PerformanceObserver`/Navigation Timing; INP se registra como aproximación de Event Timing y no como INP oficial completo. La evidencia sanitizada del build aislado `:3603` está en `docs/qa/evidence/hotels-h36-gate-f-3603-final/gate-f.json`: consentimiento ausente produjo cero RUM, consentimiento concedido produjo dos RUM válidos, `failedGateFAssertions=0`, sin errores de consola ni violaciones de privacidad. Los eventos no-RUM del canal compartido se registran solo por nombre en la evidencia.
+
+**Gate M — ronda lab autenticada, 2026-08-08:** se ejecutó `frontend/scripts/qa_hotels_gate_m.mjs` en un build de producción aislado sobre `:3602`, con cuenta QA efímera, backend local y operaciones hoteleras solo GET. Evidencia sanitizada: `docs/qa/evidence/hotels-h36-gate-m-3602/gate-m.json`. Los perfiles `desktop` (1440×1200), `tablet` (1024×900), `mobile` (390×844) y `fast3g-cpu4` (390×844, Fast 3G emulado y CPU 4×) pasaron con HTTP 200, autenticación lista, 2 resultados, foco inicial establecido, cero overflow visual, cero fallos de requests hoteleras, cero respuestas 5xx, cero escrituras y cero errores de consola; `failedGateMAssertions=0`. El runner registra LCP/CLS/TTFB y tareas largas como señales observacionales: Fast 3G/CPU4 observó 24 tareas largas, 2.797 ms acumulados y una máxima de 417 ms; no se convierten aún en un gate binario por falta de un umbral reproducible por hardware.
+
+El primer intento de Gate M marcó desktop/tablet por `scrollWidth` bruto con `html { zoom: 75% }`; la medición fue endurecida para comprobar overflow visual mediante rects y registrar layout normalizado. No se modificó el CSS del producto por ese falso positivo. Esta evidencia es una ronda lab local con fixture/backend QA: no demuestra INP, p75 de producción, RUM/field compliance ni latencia real del provider. No se conserva trace autenticado y el JSON valida ausencia de credenciales, tokens, query strings y marcadores de autorización.
 
 **Relacionado con:** H03 arquitectura de información, H04 métricas, H05 freshness/provenance, H09 sweeps, H13 formulario, H15 resultados, H16 cards, H18 detalle, H19 precio, H20 comparación, H21 estados, H31 dirección visual, H32 responsive, H33 accesibilidad, H34 i18n, H35 legal/privacidad, H37 benchmark/coste, H39 tests, H40 browser QA, H41 observabilidad.
 
@@ -54,11 +112,11 @@ H36 no decide por sí sola:
 |---|---|---|
 | Ruta | `/hoteles` renderiza `HotelRadarPage`, un Client Component | La página depende de hidratación y requests de cliente para poblar datos |
 | Refresh inicial | Al montar se llaman `refreshCompSets`, `refreshWatchlist`, `refreshAlertRules` y `refreshTrackedOffers` | Hay varias cargas secundarias concurrentes, pero no existe un presupuesto ni prioridad documentada |
-| Detalle seleccionado | `useHotelDetail` ejecuta en paralelo detalle, rates y parity con `Promise.allSettled` | Evita una cascada interna; sigue ocurriendo al seleccionar hotel y no tiene abort HTTP |
+| Detalle seleccionado | `useHotelDetail` ejecuta en paralelo detalle, rates y parity con `Promise.allSettled` | Evita una cascada interna y ahora aborta HTTP al cambiar de selección; sigue pendiente medir su coste |
 | Watchlist | La hidratación de hoteles faltantes hace `Promise.allSettled` sobre un request por hotel | Puede crear un fan-out proporcional al tamaño de la lista; necesita límite, dedupe, cache TTL o endpoint batch |
 | Comparativa | `useHotelCompSets` carga lista y, al seleccionar, detalle del comp set, anchor y nearby suggestions | Es una superficie secundaria que no debe bloquear el primer resultado |
-| Autocomplete | `HotelSearchPanel` aplica debounce de 350 ms para `areaResolve` | Existe debounce local; no hay `AbortSignal`, dedupe ni garantía de que una respuesta vieja no gane al escribir rápido |
-| Requests | `frontend/src/modules/hotels/api.ts` usa `apiFetchWithStatus`, pero las funciones hoteleras no pasan señal de cancelación propia | El contrato actual no ofrece cancelación por búsqueda obsoleta |
+| Autocomplete | `HotelSearchPanel` aplica debounce de 350 ms para `areaResolve` | Existe debounce local, cancelación HTTP y latest-wins; dedupe y medición de coste siguen pendientes |
+| Requests | `frontend/src/modules/hotels/api.ts` usa `apiFetchWithStatus` y las operaciones principales aceptan `AbortSignal` | La cancelación de búsqueda, resolve y selección ya está cableada; dedupe, prioridades y métricas siguen pendientes |
 | Resultados | La card principal hace `.map()` sobre la lista y el search V1 pide `limit: 30` | Hay un límite inicial, pero no existe paginación/virtualización contractual para crecimiento posterior |
 | Loading | La página muestra textos de loading y estados vacíos; no hay skeleton hotelero estructural completo | El espacio puede cambiar cuando llegan resultados o paneles secundarios |
 | Cache | Existen caches en memoria para algunos detalles de watchlist/comp set | No hay TTL, invalidación ni límite de memoria documentado |
@@ -69,10 +127,10 @@ H36 no decide por sí sola:
 
 - El primer paint puede incluir un shell client-side antes de que exista resultado; no debe llamarse “resultado rápido” solo por mostrar un loader.
 - Los refreshes secundarios de montaje compiten por red, CPU y autenticación con la primera interacción.
-- Seleccionar un hotel dispara tres requests; cambiar de selección rápido puede dejar trabajo obsoleto aunque el estado se proteja con flags `cancelled`.
+- Seleccionar un hotel dispara tres requests; ahora el transporte se aborta al cambiar de selección, aunque el coste y la prioridad de esos requests siguen pendientes de medir.
 - La hidratación de watchlist puede disparar muchas llamadas de detalle en paralelo.
 - `Promise.allSettled` evita que una petición secundaria mate todo el panel, pero no reduce coste ni prioriza el camino principal.
-- El autocomplete resuelve después de 350 ms, pero no cancela la request previa ni garantiza una política de latest-wins en la capa de red.
+- El autocomplete resuelve después de 350 ms y ahora cancela la request previa con latest-wins; todavía no existe dedupe de intenciones idénticas.
 - El resultado de área construye una lista derivada y cada card formatea precio en render; su coste debe medirse con resultados grandes.
 - No hay evidencia de dimensiones reservadas para recursos hoteleros futuros ni de un skeleton con alturas equivalentes.
 - La importación global de fuentes externas y CSS de MapLibre debe auditarse en el bundle de `/hoteles`, aunque no todos sus estilos se usen en la pantalla.
@@ -244,7 +302,7 @@ H36 no exige Web Workers, prefetch agresivo ni streaming por moda. Cada optimiza
 
 ### P1 — eficiencia y escalabilidad
 
-- `AbortSignal` real en API/hook y latest-wins del autocomplete.
+- `AbortSignal` real en API/hook y latest-wins del autocomplete. **Cerrado el 2026-08-08 para búsqueda, resolve y selección de hotel.**
 - TTL/dedupe/límites para caches y fan-out de watchlist.
 - Lazy/deferred loading de alertas, parity, comp sets, nearby e histórico cuando no estén visibles.
 - Bundle y fuentes route-specific medidos; CSS/terceros fuera de la ruta crítica si procede.
@@ -289,7 +347,8 @@ H36 no exige Web Workers, prefetch agresivo ni streaming por moda. Cada optimiza
 - Instrumentación compatible con `onLCP`, `onINP`, `onCLS` y `onTTFB` o equivalente.
 - Redaction y consentimiento conforme H35; no activar analítica sensible por defecto.
 - Segmentación por ruta, viewport, conexión, locale, provider y estado sin identificar personas.
-- Evaluación p75 sobre una ventana de datos suficiente; si no hay volumen, marcar “no concluyente” y no “cumple”.
+- **Lab cerrado:** la implementación opt-in y el contrato sanitizado pasan la evidencia `hotels-h36-gate-f-3603-final`; el runner intercepta `/ux/events` y no persiste telemetría de QA.
+- **Field pendiente:** la implementación local no demuestra volumen, p75 de producción ni cumplimiento; sin una ventana de datos suficiente se debe marcar “no concluyente” y no “cumple”.
 
 ### Gate Q — regresión
 

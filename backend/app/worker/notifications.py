@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from app.core.logging import configure_logging
 from app.infrastructure.db.session import SessionLocal
 from app.services.community_trending_notifier import notify_trending_routes
-from app.services.notification_service import dispatch_pending_events
+from app.services.notification_service import dispatch_pending_events, dispatch_pending_hotel_deliveries
 
 DEFAULT_WORKER_ENABLED = os.getenv("NOTIFICATION_WORKER_ENABLED", "false").lower() in {
     "1",
@@ -50,6 +50,11 @@ def _log_cycle(result, *, once: bool, limit: int) -> None:
                 "failed": result.failed,
                 "skipped": result.skipped,
                 "retried": result.retried,
+                "hotel_processed": result.hotel_processed,
+                "hotel_delivered": result.hotel_delivered,
+                "hotel_failed": result.hotel_failed,
+                "hotel_retried": result.hotel_retried,
+                "hotel_skipped": result.hotel_skipped,
             },
             ensure_ascii=False,
         )
@@ -60,6 +65,12 @@ def run_once(*, session_factory: sessionmaker = SessionLocal, limit: int = DEFAU
     db = session_factory()
     try:
         result = dispatch_pending_events(db, limit=limit)
+        hotel_result = dispatch_pending_hotel_deliveries(db, limit=limit)
+        result.hotel_processed = hotel_result.hotel_processed
+        result.hotel_delivered = hotel_result.hotel_delivered
+        result.hotel_failed = hotel_result.hotel_failed
+        result.hotel_retried = hotel_result.hotel_retried
+        result.hotel_skipped = hotel_result.hotel_skipped
         _log_cycle(result, once=True, limit=limit)
         return result
     finally:
@@ -96,6 +107,12 @@ def run_loop(
         db = session_factory()
         try:
             result = dispatch_pending_events(db, limit=limit)
+            hotel_result = dispatch_pending_hotel_deliveries(db, limit=limit)
+            result.hotel_processed = hotel_result.hotel_processed
+            result.hotel_delivered = hotel_result.hotel_delivered
+            result.hotel_failed = hotel_result.hotel_failed
+            result.hotel_retried = hotel_result.hotel_retried
+            result.hotel_skipped = hotel_result.hotel_skipped
             _log_cycle(result, once=False, limit=limit)
         finally:
             db.close()

@@ -78,7 +78,7 @@ El modelo actual no tiene todavía `observed_at`, `offer_fingerprint`, `comparab
 La vista actual tiene dos superficies relacionadas, pero no equivalentes:
 
 - `HotelPriceTimeline` recibe `detail.rates`, es decir, rates generales del hotel seleccionado; ordena por `collected_at` y muestra una lista de provider, fecha, importe y habitación. No es todavía el histórico privado de una oferta concreta.
-- `HotelTrackedOfferSnapshots` carga el endpoint privado al expandir un seguimiento y muestra una lista de importe, provider, disponibilidad y fecha. Actualmente convierte un error de carga en `snapshots=[]`, por lo que puede presentar un fallo HTTP como “aún no hay registros”. H24 exige separar `empty` de `error`.
+- `HotelTrackedOfferSnapshots` carga el endpoint privado al expandir un seguimiento y muestra una lista de importe, provider, disponibilidad y fecha. Ahora separa `loading`, `empty` y `error`: un fallo HTTP o de red muestra un estado de error localizado, mientras que `empty` solo se usa cuando la API devuelve una lista vacía. La petición se cancela al ocultar la superficie o cambiar de oferta; esto cierra este subgap local de H36/H24, pero no implementa todavía la curva ni los agregados V2.
 
 Actualmente no hay una curva matemática, SVG con puntos, mediana/promedio, variación contra baseline, agrupación diaria, detección visible de gaps ni tabla equivalente específica del histórico. El texto “registros diarios” de la i18n actual tampoco está respaldado por un scheduler diario garantizado. El contrato H24 no debe describir esas funciones como implementadas.
 

@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter, Depends, HTTPException
+﻿from fastapi import APIRouter, Depends, HTTPException, Query
 from passlib.context import CryptContext
 from datetime import timedelta
 
@@ -30,6 +30,15 @@ from app.infrastructure.db.models import (
 )
 from app.infrastructure.db.session import get_db
 from app.services.fare_memory_observability import build_fare_memory_health_snapshot
+from app.services.hotel_observability_metrics import (
+    build_hotel_health_snapshot,
+    list_hotel_daily_metrics,
+    list_hotel_provider_controls,
+    list_hotel_provider_latency_diagnostics,
+    list_hotel_provider_outcome_diagnostics,
+    list_hotel_provider_run_diagnostics,
+    list_hotel_sweep_lease_diagnostics,
+)
 
 router = APIRouter()
 pwd = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
@@ -345,6 +354,122 @@ def product_health(db: Session = Depends(get_db), _: User = Depends(require_admi
             "last_data_update": last_data_update.isoformat() if last_data_update else None,
             "last_alert_execution": last_alert_execution.isoformat() if last_alert_execution else None,
         },
+    }
+
+
+@router.get("/hotels/health")
+def hotel_health(
+    window_hours: int = Query(default=24, ge=1, le=168),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> dict[str, object]:
+    try:
+        return build_hotel_health_snapshot(db, window_hours=window_hours)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.get("/hotels/runs")
+def hotel_provider_runs(
+    limit: int = Query(default=20, ge=1, le=50),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> dict[str, object]:
+    try:
+        runs = list_hotel_provider_run_diagnostics(db, limit=limit)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"limit": limit, "runs": runs}
+
+
+@router.get("/hotels/provider-latency")
+def hotel_provider_latency(
+    limit: int = Query(default=20, ge=1, le=50),
+    provider: str | None = None,
+    operation: str | None = None,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> dict[str, object]:
+    try:
+        return list_hotel_provider_latency_diagnostics(
+            db,
+            limit=limit,
+            provider=provider,
+            operation=operation,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.get("/hotels/provider-outcomes")
+def hotel_provider_outcomes(
+    limit: int = Query(default=20, ge=1, le=50),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> dict[str, object]:
+    try:
+        return list_hotel_provider_outcome_diagnostics(db, limit=limit)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.get("/hotels/sweep-leases")
+def hotel_sweep_leases(
+    limit: int = Query(default=20, ge=1, le=50),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> dict[str, object]:
+    try:
+        return list_hotel_sweep_lease_diagnostics(db, limit=limit)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.get("/hotels/provider-controls")
+def hotel_provider_controls(
+    limit: int = Query(default=50, ge=1, le=50),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> dict[str, object]:
+    try:
+        controls = list_hotel_provider_controls(db, limit=limit)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"limit": limit, **controls}
+
+
+@router.get("/hotels/observability")
+def hotel_observability(
+    days: int = 7,
+    provider: str | None = None,
+    metric_name: str | None = None,
+    outcome: str | None = None,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> dict:
+    try:
+        rows = list_hotel_daily_metrics(
+            db,
+            days=days,
+            provider=provider,
+            metric_name=metric_name,
+            outcome=outcome,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {
+        "days": days,
+        "metrics": [
+            {
+                "metric_date": row.metric_date.isoformat(),
+                "metric_name": row.metric_name,
+                "provider": row.provider,
+                "outcome": row.outcome,
+                "count": row.count,
+                "updated_at": row.updated_at.isoformat(),
+            }
+            for row in rows
+        ],
     }
 
 

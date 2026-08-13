@@ -1,6 +1,6 @@
 # H45 — Release, smoke tests, canary y rollback hotelero
 
-**Estado:** COMPLETA como contrato de release readiness; smoke E2E hotelero, canary real y rollback probado pendientes  
+**Estado:** COMPLETA como contrato de release readiness; smoke offline Mock + kill switch y smoke E2E local H44 con evidencia redacted están verificados; canary comercial, promoción/rollback real y firma de release siguen pendientes
 **Fecha:** 2026-08-05  
 **Área:** release / QA / backend / frontend / infraestructura  
 **Fuente de verdad:** sí para aprobar o bloquear una release hotelera  
@@ -26,7 +26,7 @@ H45 no mezcla tres cosas distintas:
 | Superficie | Qué valida | Estado real |
 |---|---|---|
 | Release canary | artefacto backend/frontend, probes y comportamiento de la release | workflow y runbook genéricos; canary real no demostrado |
-| Smoke hotelero | `/hoteles`, auth, búsqueda, detalle, tracking, alertas, inbox y deeplink sobre Mock/H44 | tests parciales existentes; E2E completo pendiente |
+| Smoke hotelero | `/hoteles`, auth, búsqueda, detalle, tracking, alertas, inbox y deeplink sobre Mock/H44 | E2E local Chromium aislado verificado; cross-browser y aprobación humana pendientes |
 | Provider canary | tráfico controlado a provider comercial aprobado | objetivo H43/H45; Makcorps tiene riesgo 429 y no está aprobado como camino estable |
 
 ## 2. Baseline de release comprobado
@@ -116,7 +116,7 @@ El smoke local debe usar H44, una DB aislada y cero red externa:
 14. probar `empty_provider`, `provider_timeout`, `rate_limited_429`, `stale_history` y `partial_batch` con adapters locales cuando H44 los implemente;
 15. guardar dataset/profile/commit, requests, consola, screenshots y resultado.
 
-El worker real requiere guardia de DB aislada y flags explícitas, por ejemplo `: "${AISOLATED_DB_URL:?Set an isolated demo DB URL}"` antes de asignar `DB_URL`, tal como exige H44. Hasta existir el seed/reset H44, los pasos de preparación son manuales y el smoke queda `partial`, no `passed` completo.
+El worker real requiere guardia de DB aislada y flags explícitas, por ejemplo `: "${AISOLATED_DB_URL:?Set an isolated demo DB URL}"` antes de asignar `DB_URL`, tal como exige H44. El runner `backend/scripts/hotel_mock_canary.py` cubre únicamente el tramo offline de Mock, persistencia y kill switch; hasta existir el seed/reset H44 y el flujo navegador completo, el smoke queda `partial`, no `passed` E2E completo.
 
 ### 4.2 Smoke de API mínimo actual
 

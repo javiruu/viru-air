@@ -1,6 +1,6 @@
-# H28 — Delivery hotelero, reintentos, preferencias y quiet hours
+# H28 — Delivery hotelero in-app, reintentos y trazabilidad
 
-**Estado:** completa como contrato de delivery; implementación de adapters externos, consentimiento por canal, endurecimiento hotelero y QA operativo pendientes  
+**Estado:** EN QA para delivery hotelero `in_app` local; los canales externos quedan fuera de alcance, y leases, jitter, DLQ/replay y QA operativo siguen pendientes
 **Fecha:** 2026-08-05  
 **Área:** backend / infraestructura / producto / privacidad / frontend / QA / observabilidad  
 **Fuente de verdad:** sí para la semántica de delivery hotelero, canales, reintentos, preferencias y quiet hours  
@@ -25,7 +25,7 @@ H28 define el tramo entre el evento autorizado de H26/H27 y el canal elegido por
 9. observabilidad redacted, métricas y runbook;
 10. migración V1→V2, fixtures, sandbox y gates operativos.
 
-H28 no decide si una señal hotelera debe existir —eso corresponde a H26— ni quién puede verla —eso corresponde a H27—. Tampoco promete proveedor de email/push, frecuencia de sweeps, reserva o disponibilidad del partner. H29 gobierna la pausa, expiración y eliminación del seguimiento; H35 gobierna consentimiento, legal y disclosures.
+H28 no decide si una señal hotelera debe existir —eso corresponde a H26— ni quién puede verla —eso corresponde a H27—. Tampoco promete canales externos, frecuencia de sweeps, reserva o disponibilidad del partner. H29 gobierna la pausa, expiración y eliminación del seguimiento; H35 gobierna consentimiento, legal y disclosures.
 
 ## 2. Estado actual comprobable (V1)
 
@@ -49,16 +49,17 @@ grouped_count
 created_at
 ```
 
-`dispatch_pending_events()`:
+`dispatch_pending_events()` continúa siendo el dispatcher de vuelos y selecciona eventos ligados a `AlertRule -> FlightWatch -> User`. El worker llama además a `dispatch_pending_hotel_deliveries()`, que opera exclusivamente sobre el ledger `HotelNotificationDelivery`:
 
-- selecciona eventos ligados a `AlertRule -> FlightWatch -> User`;
-- en V1 no selecciona `HotelAlertEvent`: las señales hoteleras aparecen en el inbox mediante la agregación de H27, pero todavía no pasan por este dispatcher ni por un adapter de canal;
-- pretende procesar estados `queued` y `failed` cuyo `next_attempt_at` ya venció, pero la consulta actual solo aplica explícitamente el vencimiento a `failed`; un `queued` con `next_attempt_at` futuro puede resultar elegible. H28 debe corregir este gap antes de tratar quiet hours como garantía operativa;
+- los eventos hoteleros autorizados se materializan como una intención `in_app` idempotente en la misma operación del sweep;
+- el dispatcher hotelero usa un adapter local sin red y marca `queued -> delivered` cuando la materialización tiene éxito;
+- fallos `retryable` conservan `queued`, persisten `next_attempt_at` y reintentan hasta el máximo; fallos `permanent` y agotados quedan en `failed` con `error_class` auditable;
+- no selecciona `NotificationEvent` ni altera la cola de vuelos;
+- procesa solo estados `queued` con `next_attempt_at` nulo o ya vencido; una entrega reprogramada en el futuro no vuelve a ser elegible antes de tiempo, y una regresión unitaria cubre este límite;
 - respeta `NOTIFICATION_DISPATCH_BATCH_SIZE` y `NOTIFICATION_MAX_ATTEMPTS`;
-- usa adapters internos para `in_app` y `email`;
+- usa un adapter interno para `in_app`;
 - incrementa `attempts` antes de llamar al adapter;
 - marca `in_app` como `delivered` cuando el adapter devuelve éxito;
-- marca `email` como `sent` cuando el adapter devuelve éxito;
 - conserva `delivered_at` y limpia `next_attempt_at/last_error` en éxito;
 - reprograma fallos recuperables con backoff acotado;
 - deja fallos agotados en `failed` con `next_attempt_at = null`.
@@ -69,12 +70,10 @@ La selección actual está construida para alertas de vuelos: se une a `AlertRul
 
 | Canal | V1 observable | Qué significa | Limitación |
 |---|---|---|---|
-| `in_app` | adapter que devuelve éxito local para `NotificationEvent` de vuelos | el evento de vuelo queda marcado en el ledger y puede aparecer en inbox | los `HotelAlertEvent` aún no pasan por este adapter; no prueba lectura, websocket ni entrega fuera de la API |
-| `email` | adapter stub | permite probar estados y errores sin enviar correo | no hay proveedor externo ni correo real |
+| `in_app` | adapter local para `NotificationEvent` de vuelos y `HotelNotificationDelivery` de hoteles | eventos autorizados quedan materializados en su ledger y pueden aparecer en inbox | no prueba websocket ni entrega fuera de la API |
 | `push` | no existe adapter operativo comprobable | no disponible | no debe aparecer como activado |
 | `sms`/`webhook` | fuera del contrato actual | no disponible | no anunciar ni modelar como capacidad activa |
 
-El caso de prueba `force_fail` del stub email es una fixture de test, no una simulación de un proveedor real ni una política de producción.
 
 ### 2.3. Worker y operación V1
 
@@ -99,7 +98,7 @@ El backoff actual es determinista y pequeño:
 - respeta `next_attempt_at`;
 - cuando se alcanza el máximo, deja el evento `failed` y lo cuenta como agotado.
 
-V1 no tiene jitter, clasificación formal de errores, lease de delivery, outbox separada, DLQ dedicada ni garantía de exclusión concurrente. La columna `dedupe_key` existente no demuestra por sí misma que el dispatcher hotelero sea idempotente.
+El bridge hotelero ya tiene clasificación mínima `retryable/permanent`, `error_class`, backoff y `next_attempt_at`, además de idempotencia por evento/usuario/canal/template. V1 aún no tiene jitter, lease de delivery, outbox separada, DLQ/replay dedicada ni garantía de exclusión concurrente. La evidencia E2E cubre el worker, pero no equivale a un canal externo.
 
 ### 2.5. Preferencias y quiet hours V1
 
@@ -116,7 +115,6 @@ preferred_currency
 
 El dispatcher calcula la ventana en la zona horaria configurada y, si quiet hours está activa:
 
-- retrasa `email` manteniéndolo `queued` y establece `next_attempt_at` al final de la ventana;
 - deja que `in_app` siga siendo entregable para conservar trazabilidad interna;
 - no implementa una matriz granular de consentimiento por canal;
 - no permite aún reglas hoteleras de severidad, digest y excepción formalmente separadas.
@@ -182,7 +180,7 @@ hash(
 )
 ```
 
-No incluir email, token, umbral privado ni URL externa completa en una clave compartida o log. Un cambio de plantilla o una nueva transición de H26 crea una intención nueva de forma explícita.
+No incluir datos de contacto, token, umbral privado ni URL externa completa en una clave compartida o log. Un cambio de plantilla o una nueva transición de H26 crea una intención nueva de forma explícita.
 
 ### 3.3. Estados canónicos
 
@@ -198,36 +196,21 @@ No incluir email, token, umbral privado ni URL externa completa en una clave com
 | `dead_letter` | fallo agotado o ambiguo enviado a cuarentena | no | alerta operativa y replay explícito |
 | `cancelled` | seguimiento/evento ya no debe entregarse por lifecycle | no | conservar auditoría según H29 |
 
-V1 puede seguir usando `queued`, `sent`, `delivered` y `failed`; el adapter/bridge debe mapearlos sin afirmar que `sent=email` equivale a `delivered`.
+V1 puede seguir usando `queued`, `sent`, `delivered` y `failed`; el adapter/bridge debe conservar que `sent` no equivale necesariamente a `delivered`.
 
 ## 4. Canales, consentimiento y preferencias
 
 ### 4.1. In-app
 
-In-app es el canal base de H27, pero en V1 hay que separar persistencia de dispatch: un `HotelAlertEvent` autorizado aparece en el inbox por la agregación de H27 aunque no exista email/push; eso no significa que el worker actual lo haya enviado. El dispatcher `in_app` existente procesa `NotificationEvent` de vuelos.
+In-app es el canal base de H27. Un `HotelAlertEvent` autorizado aparece en el inbox por la agregación de H27 y, cuando el sweep materializa `HotelNotificationDelivery`, el worker registra por separado el resultado local `queued -> delivered`. Esto no significa websocket ni entrega fuera de la API. El dispatcher de vuelos continúa procesando `NotificationEvent` de forma independiente.
 
-- un evento autorizado aparece en el inbox aunque no exista email/push;
+- un evento autorizado aparece en el inbox sin depender de un canal externo;
 - `read/unread` es estado de lectura, no confirmación de delivery externo;
 - `in_app` no debe bloquearse por quiet hours si la política de producto mantiene la trazabilidad;
 - toasts son una capa efímera y no sustituyen al inbox persistente;
 - una señal stale/provider degraded conserva su copy honesto al abrirse.
 
-### 4.2. Email
-
-Email solo puede activarse cuando exista:
-
-- consentimiento/opt-in registrable y revocable;
-- dirección verificada y ownership de cuenta;
-- template versionado ES/EN;
-- provider/adapter real con sandbox y límites;
-- allowlist de enlaces internos y partner conforme H27/H35;
-- clasificación de bounce, complaint, rate limit, timeout y error permanente;
-- logs redacted y mecanismo de unsubscribe;
-- contract/integration tests y canary.
-
-El stub actual **no** satisface estos requisitos. La aceptación del adapter por el dispatcher solo prueba el flujo interno del código.
-
-### 4.3. Push
+### 4.2. Push
 
 Push permanece `planned` hasta definir:
 
@@ -240,7 +223,7 @@ Push permanece `planned` hasta definir:
 
 No se debe mostrar un control “push activo” mientras no exista esta evidencia.
 
-### 4.4. Matriz de preferencia
+### 4.3. Matriz de preferencia
 
 El objetivo V2 es una preferencia explícita por usuario, canal y tipo de señal:
 
@@ -282,7 +265,7 @@ Para cada canal debe definirse:
 - cuándo expira el evento antes de enviarse;
 - qué ocurre si el usuario cambia su preferencia durante la espera.
 
-El MVP conserva la decisión V1: email se retrasa; in-app permanece disponible. Una futura excepción crítica debe ser explícita y no inferirse de `tone`.
+El MVP conserva la decisión V1: in-app permanece disponible. Una futura excepción crítica debe ser explícita y no inferirse de `tone`.
 
 ### 5.2. Digest
 
@@ -303,7 +286,7 @@ La agrupación debe conservar `grouped_count`, IDs fuente autorizados, rango tem
 | Clase | Ejemplos | Acción |
 |---|---|---|
 | `retryable` | timeout, 429, conexión, 5xx | reintentar con backoff y jitter |
-| `permanent` | opt-out, email inválido, token expirado, template inválido | marcar fallo permanente, no insistir |
+| `permanent` | opt-out, destino inválido, token expirado, template inválido | marcar fallo permanente, no insistir |
 | `ambiguous` | timeout después de aceptar, respuesta perdida | reintentar con idempotency key o reconciliar |
 | `invalid_domain` | evento sin ownership, snapshot no elegible, provider error | no entregar; cuarentena/métrica |
 | `cancelled` | tracking pausado/expirado/eliminado | cancelar intención según H29 |
@@ -365,14 +348,14 @@ La plantilla debe tener:
 - disclosure de que precio/disponibilidad pueden cambiar;
 - no “reserva ahora” automático, garantía ni promesa de precio final.
 
-El contenido externo no debe incluir IDs internos, email, thresholds privados innecesarios, payload raw, tokens ni URL arbitraria.
+El contenido externo no debe incluir IDs internos, datos de contacto, thresholds privados innecesarios, payload raw, tokens ni URL arbitraria.
 
 ### 7.3. Provider degraded y stale
 
 Si el evento describe un cambio histórico válido pero la última revalidación falló:
 
 - el inbox puede conservar el histórico conforme H27;
-- email/push deben usar copy de señal histórica o suprimirse según freshness policy;
+- los canales externos deben usar copy de señal histórica o suprimirse según freshness policy;
 - nunca decir “hemos encontrado disponibilidad” si solo existe un snapshot antiguo;
 - un provider error actual no crea una alerta favorable.
 
@@ -405,7 +388,7 @@ Metadata permitida:
 
 No registrar:
 
-- email completo, tokens, secretos o device tokens;
+- datos de contacto completos, tokens, secretos o device tokens;
 - payload raw del provider;
 - URL externa completa;
 - thresholds, notas o labels privados salvo necesidad operacional redacted;
@@ -418,9 +401,8 @@ La cola, logs y caches deben particionarse por ownership/recipient cuando el con
 1. Mantener `NotificationEvent` y estados V1 durante el bridge.
 2. Añadir `source_type/source_id`, scope de ownership y versión de template sin romper eventos de vuelos.
 3. Crear adaptador hotelero que solo acepte eventos H26/H27 elegibles.
-4. Mapear `queued/sent/delivered/failed` V1 a estados V2 sin llamar delivered a un `sent` de email.
+4. Mapear `queued/sent/delivered/failed` V1 a estados V2 sin llamar delivered a un `sent` no confirmado.
 5. Habilitar in-app hotelero primero con fixtures y tests de dos usuarios.
-6. Mantener email en stub/sandbox hasta provider, consentimiento, unsubscribe y canary.
 7. No activar push por tener un tipo de canal en frontend.
 8. Introducir idempotency key, clasificación de error, lease y replay antes de aumentar frecuencia.
 9. Medir colas, retries, supresión, errores y eventos sin owner.
@@ -431,14 +413,12 @@ La cola, logs y caches deben particionarse por ownership/recipient cuando el con
 ### Backend unit/integration
 
 - evento hotelero sin ownership no crea intención de delivery;
-- favorito simple no dispara email/push;
+- favorito simple no dispara un canal externo;
 - usuario A no recibe intención de usuario B aunque compartan hotel;
-- un evento hotelero autorizado queda disponible en inbox aunque no dependa de proveedor externo, y una futura intención `in_app` hotelera no se duplica por reintentos;
-- email stub nunca realiza una llamada de red;
-- email/push sin consentimiento quedan `suppressed` con razón auditable;
-- quiet hours retrasa email, conserva `next_attempt_at` y no lo marca como failed;
+- un evento hotelero autorizado queda disponible en inbox aunque no dependa de proveedor externo, y la intención `in_app` hotelera no se duplica por reintentos/materializaciones repetidas;
+- los canales externos sin consentimiento quedan `suppressed` con razón auditable;
 - in-app respeta la política definida y no se duplica por reintentos;
-- 429/timeout/5xx son retryable; opt-out/email inválido son permanentes;
+- 429/timeout/5xx son retryable; opt-out/destino inválido son permanentes;
 - `next_attempt_at`, backoff, límite de intentos y lease se respetan;
 - dos workers concurrentes no generan dos envíos visibles para la misma idempotency key;
 - timeout ambiguo puede reintentarse sin duplicar en un receiver idempotente;
@@ -449,9 +429,9 @@ La cola, logs y caches deben particionarse por ownership/recipient cuando el con
 ### Frontend/contract
 
 - estado `queued/suppressed/retrying/failed` no se presenta como `delivered`;
-- inbox sigue mostrando señal persistida aunque email esté pendiente/fallido;
+- inbox sigue mostrando señal persistida aunque un canal externo esté pendiente/fallido;
 - copy ES/EN distingue evento, entrega y lectura;
-- enlaces de email/push abren deep links H27 internos y reautorizados;
+- enlaces externos abren deep links H27 internos y reautorizados;
 - preferencias y quiet hours no borran historial;
 - categoría/canal no rompe el normalizador ni el summary;
 - error de delivery no se presenta como ausencia de alerta.
@@ -472,16 +452,16 @@ H28 podrá considerarse implementada cuando:
 
 1. el evento hotelero, la intención de delivery y el estado final estén separados y trazables;
 2. los eventos hoteleros autorizados estén disponibles como inbox privado H27 y, si se les aplica un dispatcher `in_app`, ese dispatch esté verificado por separado sin confundir persistencia con entrega;
-3. email/push solo se anuncien donde exista adapter, consentimiento, provider, sandbox, límites y canary verificables;
+3. los canales externos solo se anuncien donde exista adapter, consentimiento, provider, sandbox, límites y canary verificables;
 4. la selección de cola excluya `queued` con `next_attempt_at` futuro y respete leases/concurrencia;
 5. la semántica sea at-least-once con idempotencia, no exactly-once implícito;
 6. retries, backoff, `next_attempt_at`, lease, clasificación de errores y dead letter/replay sean operables;
 7. quiet hours y preferencias sean por canal, explícitas y no destructivas;
 8. un evento stale/provider degraded no se entregue con copy de disponibilidad actual;
 9. ownership de H27 se conserve en cola, template, logs y deep link;
-10. ES/EN, unsubscribe, privacidad, accesibilidad y disclosures pasen QA;
+10. ES/EN, privacidad, accesibilidad y disclosures pasen QA;
 11. worker manual, scheduler y flags indiquen con honestidad si delivery está activo;
 12. métricas permitan localizar generación, cola, adapter, provider, retries, supresión y fallo;
 13. rollback a inbox-only sea posible sin perder eventos ni reabrir fugas entre usuarios.
 
-**Resultado contractual:** H28 queda definida. La existencia del worker, del stub email, de `delivery_status` o de quiet hours para un canal no basta para declarar delivery hotelero externo listo.
+**Resultado contractual:** H28 queda definida y el primer bridge `in_app` hotelero está en QA con ledger, ownership, idempotencia, worker, retries y regresiones focalizadas. La existencia de ese bridge, de `delivery_status` o de quiet hours no basta para declarar un canal hotelero externo listo.

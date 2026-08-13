@@ -1,6 +1,6 @@
 # H08 — Matriz de providers adicionales y política de onboarding
 
-**Estado:** completa como evaluación documental; gate de onboarding de producción abierto  
+**Estado:** evaluación documental completa; candidatos registrados en configuración fail-closed, gate de onboarding de producción abierto
 **Fecha:** 2026-08-04  
 **Área:** backend / arquitectura / producto / proveedores / costes  
 **Fuente de verdad:** sí para la comparación de candidatos y los requisitos de entrada de providers hoteleros adicionales.
@@ -31,7 +31,11 @@ Ambos quedan en estado `candidate_pending_canary`, no `approved`:
 - no se ha validado todavía la seguridad y legalidad de deeplinks, afiliación o booking;
 - ningún candidato se puede presentar como fallback equivalente hasta comparar la misma ocupación, condiciones y semántica de precio.
 
-**Makcorps** mantiene la decisión H07: adapter experimental y limitado, no provider principal. **Mock** sigue siendo el fallback honesto para fixtures, desarrollo y QA; no debe describirse como cobertura live.
+**Makcorps** mantiene la decisión H07: adapter experimental y limitado, no provider principal. **Mock** y `local_scrape` cubren el modo gratuito/local: `local_scrape` parsea JSON-LD de una copia HTML guardada y nunca contacta URLs remotas. Ambos sirven para fixtures, captura local y QA; no deben describirse como cobertura live.
+
+La configuración ejecutable reconoce `booking_demand` y `liteapi` como candidatos, con flags individuales, presupuesto diario `0` y secretos vacíos en `backend/.env.example`. El resolver bloquea ambos con `provider_credentials_missing` si falta cualquier secreto requerido y con `provider_adapter_unavailable` aunque las credenciales estén presentes: no existe todavía un adapter canary ni se realiza I/O externo.
+
+`osm_overpass` está implementado únicamente para catálogo: requiere `staging_canary` o `prod_gradual`, `HOTEL_PROVIDER_OSM_OVERPASS_ENABLED=true`, un rectángulo de como máximo `0.1` grados por eje, ciudad, país y un `User-Agent` identificable. Consulta exclusivamente `https://overpass-api.de/api/interpreter`, no hereda proxies y limita la respuesta a 100 hoteles y 512 KiB. Su presupuesto diario queda en `0` por defecto y no puede usarse para buscar tarifas, revalidar una oferta ni alimentar tracking periódico.
 
 El gate de producto “al menos un provider usable para el caso priorizado y un fallback honesto” queda **abierto** hasta que un candidato complete el canary y la revisión H35/H37/H41.
 
@@ -143,8 +147,9 @@ Si un candidato no soporta una dimensión, puede ser útil para un caso acotado,
 | Caso de uso | Provider permitido ahora | Decisión |
 |---|---|---|
 | fixtures, desarrollo y QA | Mock | aprobado; siempre `fixture_demo` |
+| captura HTML local | `local_scrape` | aprobado; sin credenciales ni requests remotos; solo acepta precio total si el marcado lo declara explícitamente |
 | pruebas de parser V2 | Mock + fixtures versionados de candidatos | aprobado sin requests externos |
-| discovery público | ninguno comercial | bloqueado hasta canary y quality gate |
+| discovery público de catálogo | `osm_overpass` en canary explícito | permitido solo para un área pequeña y presupuesto positivo; no equivale a cobertura de precios |
 | rates de una estancia exacta | ninguno comercial | bloqueado hasta probar fees/ocupación/condiciones |
 | revalidación de una oferta | ninguno | bloqueado hasta checkrate/prebook y resultado V2 |
 | tracking periódico | ninguno | bloqueado; H09 necesita budget, locks y health |

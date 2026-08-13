@@ -2,7 +2,9 @@ from pathlib import Path
 
 from sqlalchemy import create_engine, inspect, text
 
-from app.infrastructure.db.schema_compat import ensure_search_preference_columns
+from app.infrastructure.db.schema_compat import (
+    ensure_search_preference_columns,
+)
 
 
 def test_ensure_search_preference_columns_upgrades_legacy_user_preference_schema(tmp_path: Path) -> None:

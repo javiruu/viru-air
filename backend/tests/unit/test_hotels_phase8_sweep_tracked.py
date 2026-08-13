@@ -11,14 +11,19 @@ from app.infrastructure.db.models import (
     Base,
     HotelAlertEvent,
     HotelProperty,
+    HotelProviderAlias,
     HotelProviderRun,
     HotelRateSnapshot,
+    HotelSweepLease,
     User,
 )
+from app.hotels.contracts import ProviderRateRecord
+from app.hotels.mock_provider import MockHotelProviderAdapter
 from app.services.hotels_service import (
     create_tracked_offer,
     sweep_tracked_offers,
 )
+from app.infrastructure.db.models import HotelProviderBudget
 
 
 # ── Helpers ────────────────────────────────────────────────────
@@ -343,7 +348,7 @@ class TestSweepTrackedOffers:
                 check_in=date(2026, 9, 1),
                 check_out=date(2026, 9, 3),
                 guests=3,
-                provider="booking",
+                provider="mock",
                 initial_price=200.00,
                 currency="EUR",
             )
@@ -377,6 +382,653 @@ class TestSweepTrackedOffers:
             db.refresh(offer2)
             assert float(offer1.current_price) == 95.00  # type: ignore[arg-type]
             assert float(offer2.current_price) == 180.00  # type: ignore[arg-type]
+        finally:
+            _close(db)
+
+    def test_targeted_provider_fetch_is_denied_when_budget_is_zero(self, monkeypatch):
+        monkeypatch.delenv("HOTEL_PROVIDER_MAKCORPS_DAILY_REQUEST_BUDGET", raising=False)
+        db = _db()
+        try:
+            user = _create_user(db)
+            hotel = _create_hotel(db)
+            create_tracked_offer(
+                db,
+                user_id=user.id,
+                hotel_id=hotel.id,
+                check_in=date(2026, 8, 1),
+                check_out=date(2026, 8, 3),
+                provider="makcorps",
+                initial_price=100.00,
+                currency="EUR",
+            )
+            db.add(HotelProviderAlias(
+                hotel_id=hotel.id,
+                provider="makcorps",
+                provider_hotel_id="makcorps-budget-zero",
+            ))
+            db.commit()
+            provider_run = _add_provider_run(db, provider="makcorps")
+
+            class UnexpectedProvider:
+                provider_id = "makcorps"
+
+                def fetch_hotel_rates(self, **kwargs):
+                    raise AssertionError("budget denial must happen before provider call")
+
+            result = sweep_tracked_offers(
+                db,
+                provider_run_id=provider_run.id,
+                provider_adapter=UnexpectedProvider(),
+            )
+            assert result["provider_fetch_attempted"] == 0
+            assert result["provider_fetch_budget_denied"] == 1
+            assert result["snapshots_created"] == 0
+            budget = db.scalar(select(HotelProviderBudget))
+            assert budget is not None
+            assert budget.units_reserved == 0
+        finally:
+            _close(db)
+
+    def test_targeted_provider_empty_emits_empty_latency_sample(self, monkeypatch):
+        monkeypatch.setenv("HOTEL_PROVIDER_MAKCORPS_DAILY_REQUEST_BUDGET", "1")
+        db = _db()
+        try:
+            user = _create_user(db)
+            hotel = _create_hotel(db)
+            create_tracked_offer(
+                db,
+                user_id=user.id,
+                hotel_id=hotel.id,
+                check_in=date(2026, 8, 1),
+                check_out=date(2026, 8, 3),
+                provider="makcorps",
+                initial_price=100.00,
+                currency="EUR",
+            )
+            db.add(HotelProviderAlias(hotel_id=hotel.id, provider="makcorps", provider_hotel_id="empty-42"))
+            db.commit()
+            provider_run = _add_provider_run(db, provider="makcorps")
+
+            class EmptyProvider:
+                provider_id = "makcorps"
+
+                def fetch_hotel_rates(self, **kwargs):
+                    return []
+
+            samples = []
+            result = sweep_tracked_offers(
+                db,
+                provider_run_id=provider_run.id,
+                provider_adapter=EmptyProvider(),
+                latency_sink=samples.append,
+            )
+            assert result["provider_fetch_empty"] == 1
+            assert len(samples) == 1
+            assert samples[0].operation == "revalidation"
+            assert samples[0].outcome == "empty"
+        finally:
+            _close(db)
+
+    def test_targeted_provider_fetch_uses_external_provider_hotel_id(self, monkeypatch):
+        monkeypatch.setenv("HOTEL_PROVIDER_MAKCORPS_DAILY_REQUEST_BUDGET", "1")
+        db = _db()
+        try:
+            user = _create_user(db)
+            hotel = _create_hotel(db)
+            offer = create_tracked_offer(
+                db,
+                user_id=user.id,
+                hotel_id=hotel.id,
+                check_in=date(2026, 8, 1),
+                check_out=date(2026, 8, 3),
+                guests=2,
+                provider="makcorps",
+                initial_price=100.00,
+                currency="EUR",
+            )
+            alias = HotelProviderAlias(
+                hotel_id=hotel.id,
+                provider="makcorps",
+                provider_hotel_id="makcorps-hotel-42",
+            )
+            db.add(alias)
+            db.commit()
+            provider_run = _add_provider_run(db, provider="makcorps")
+
+            class RecordingProvider:
+                provider_id = "makcorps"
+
+                def __init__(self):
+                    self.requested_hotel_ids = []
+
+                def fetch_hotel_rates(self, **kwargs):
+                    self.requested_hotel_ids.append(kwargs["hotel_id"])
+                    return [
+                        ProviderRateRecord(
+                            check_in=date(2026, 8, 1),
+                            check_out=date(2026, 8, 3),
+                            amount=90.00,
+                            currency="EUR",
+                            guests=2,
+                        )
+                    ]
+
+            provider = RecordingProvider()
+            samples = []
+            result = sweep_tracked_offers(
+                db,
+                provider_run_id=provider_run.id,
+                provider_adapter=provider,
+                latency_sink=samples.append,
+            )
+
+            assert result["snapshots_created"] == 1
+            assert len(samples) == 1
+            assert samples[0].operation == "revalidation"
+            assert samples[0].provider == "makcorps"
+            assert samples[0].outcome == "success"
+            assert samples[0].duration_ms >= 0
+            assert provider.requested_hotel_ids == ["makcorps-hotel-42"]
+            db.refresh(offer)
+            assert float(offer.current_price) == 90.00  # type: ignore[arg-type]
+        finally:
+            _close(db)
+
+    def test_missing_provider_alias_skips_external_fetch(self):
+        db = _db()
+        try:
+            user = _create_user(db)
+            hotel = _create_hotel(db)
+            offer = create_tracked_offer(
+                db,
+                user_id=user.id,
+                hotel_id=hotel.id,
+                check_in=date(2026, 8, 1),
+                check_out=date(2026, 8, 3),
+                guests=2,
+                provider="makcorps",
+                initial_price=100.00,
+                currency="EUR",
+            )
+            _add_rate(
+                db,
+                hotel_id=hotel.id,
+                check_in=date(2026, 8, 1),
+                check_out=date(2026, 8, 3),
+                guests=2,
+                currency="EUR",
+                amount=95.00,
+                provider="makcorps",
+            )
+            provider_run = _add_provider_run(db, provider="makcorps")
+
+            class UnexpectedProvider:
+                provider_id = "makcorps"
+
+                def fetch_hotel_rates(self, **kwargs):
+                    raise AssertionError("provider must not be called without an alias")
+
+            result = sweep_tracked_offers(
+                db,
+                provider_run_id=provider_run.id,
+                provider_adapter=UnexpectedProvider(),
+            )
+
+            assert result["snapshots_created"] == 0
+            assert result["provider_fetch_attempted"] == 0
+            assert result["provider_fetch_skipped"] == 1
+            snapshots = db.scalars(
+                select(HotelRateSnapshot).where(HotelRateSnapshot.tracked_offer_id == offer.id)
+            ).all()
+            assert len(snapshots) == 1  # only the initial snapshot
+            db.refresh(offer)
+            assert float(offer.current_price) == 100.00  # type: ignore[arg-type]
+        finally:
+            _close(db)
+
+    def test_provider_mismatch_does_not_call_adapter(self):
+        db = _db()
+        try:
+            user = _create_user(db)
+            hotel = _create_hotel(db)
+            create_tracked_offer(
+                db,
+                user_id=user.id,
+                hotel_id=hotel.id,
+                check_in=date(2026, 8, 1),
+                check_out=date(2026, 8, 3),
+                provider="booking",
+                initial_price=100.00,
+                currency="EUR",
+            )
+            provider_run = _add_provider_run(db, provider="makcorps")
+
+            class UnexpectedProvider:
+                provider_id = "makcorps"
+
+                def fetch_hotel_rates(self, **kwargs):
+                    raise AssertionError("provider must not be called for another offer provider")
+
+            result = sweep_tracked_offers(
+                db,
+                provider_run_id=provider_run.id,
+                provider_adapter=UnexpectedProvider(),
+            )
+            assert result["snapshots_created"] == 0
+        finally:
+            _close(db)
+
+    def test_ambiguous_provider_alias_skips_external_fetch(self):
+        db = _db()
+        try:
+            user = _create_user(db)
+            hotel = _create_hotel(db)
+            create_tracked_offer(
+                db,
+                user_id=user.id,
+                hotel_id=hotel.id,
+                check_in=date(2026, 8, 1),
+                check_out=date(2026, 8, 3),
+                provider="makcorps",
+                initial_price=100.00,
+                currency="EUR",
+            )
+            db.add_all(
+                [
+                    HotelProviderAlias(hotel_id=hotel.id, provider="makcorps", provider_hotel_id="one"),
+                    HotelProviderAlias(hotel_id=hotel.id, provider="makcorps", provider_hotel_id="two"),
+                ]
+            )
+            db.commit()
+            provider_run = _add_provider_run(db, provider="makcorps")
+
+            class UnexpectedProvider:
+                provider_id = "makcorps"
+
+                def fetch_hotel_rates(self, **kwargs):
+                    raise AssertionError("provider must not be called for ambiguous mapping")
+
+            result = sweep_tracked_offers(
+                db,
+                provider_run_id=provider_run.id,
+                provider_adapter=UnexpectedProvider(),
+            )
+            assert result["snapshots_created"] == 0
+        finally:
+            _close(db)
+
+    def test_empty_provider_response_does_not_fall_back_to_local_history(self, monkeypatch):
+        monkeypatch.setenv("HOTEL_PROVIDER_MAKCORPS_DAILY_REQUEST_BUDGET", "1")
+        db = _db()
+        try:
+            user = _create_user(db)
+            hotel = _create_hotel(db)
+            offer = create_tracked_offer(
+                db,
+                user_id=user.id,
+                hotel_id=hotel.id,
+                check_in=date(2026, 8, 1),
+                check_out=date(2026, 8, 3),
+                guests=2,
+                provider="makcorps",
+                initial_price=100.00,
+                currency="EUR",
+            )
+            db.add(HotelProviderAlias(
+                hotel_id=hotel.id,
+                provider="makcorps",
+                provider_hotel_id="makcorps-hotel-empty",
+            ))
+            _add_rate(
+                db,
+                hotel_id=hotel.id,
+                check_in=date(2026, 8, 1),
+                check_out=date(2026, 8, 3),
+                guests=2,
+                currency="EUR",
+                amount=95.00,
+                provider="makcorps",
+            )
+            db.commit()
+            provider_run = _add_provider_run(db, provider="makcorps")
+
+            class EmptyProvider:
+                provider_id = "makcorps"
+
+                def fetch_hotel_rates(self, **kwargs):
+                    return []
+
+            result = sweep_tracked_offers(
+                db,
+                provider_run_id=provider_run.id,
+                provider_adapter=EmptyProvider(),
+            )
+
+            assert result["provider_fetch_attempted"] == 1
+            assert result["provider_fetch_completed"] == 1
+            assert result["provider_fetch_empty"] == 1
+            assert result["provider_fetch_failed"] == 0
+            assert result["snapshots_created"] == 0
+            lease = db.scalar(select(HotelSweepLease))
+            assert lease is not None
+            assert lease.status == "done"
+            assert lease.last_provider_run_id == provider_run.id
+            assert lease.lease_expires_at is None
+            db.refresh(offer)
+            assert float(offer.current_price) == 100.00  # type: ignore[arg-type]
+        finally:
+            _close(db)
+
+    def test_provider_error_does_not_fall_back_to_local_history(self, monkeypatch):
+        monkeypatch.setenv("HOTEL_PROVIDER_MAKCORPS_DAILY_REQUEST_BUDGET", "1")
+        db = _db()
+        try:
+            user = _create_user(db)
+            hotel = _create_hotel(db)
+            offer = create_tracked_offer(
+                db,
+                user_id=user.id,
+                hotel_id=hotel.id,
+                check_in=date(2026, 8, 1),
+                check_out=date(2026, 8, 3),
+                guests=2,
+                provider="makcorps",
+                initial_price=100.00,
+                currency="EUR",
+            )
+            db.add(HotelProviderAlias(
+                hotel_id=hotel.id,
+                provider="makcorps",
+                provider_hotel_id="makcorps-hotel-error",
+            ))
+            _add_rate(
+                db,
+                hotel_id=hotel.id,
+                check_in=date(2026, 8, 1),
+                check_out=date(2026, 8, 3),
+                guests=2,
+                currency="EUR",
+                amount=95.00,
+                provider="makcorps",
+            )
+            db.commit()
+            provider_run = _add_provider_run(db, provider="makcorps")
+
+            class FailingProvider:
+                provider_id = "makcorps"
+
+                def fetch_hotel_rates(self, **kwargs):
+                    raise RuntimeError("provider unavailable")
+
+            samples = []
+            result = sweep_tracked_offers(
+                db,
+                provider_run_id=provider_run.id,
+                provider_adapter=FailingProvider(),
+                latency_sink=samples.append,
+            )
+
+            assert result["provider_fetch_attempted"] == 1
+            assert len(samples) == 1
+            assert samples[0].operation == "revalidation"
+            assert samples[0].outcome == "failed"
+            assert samples[0].error_code == "provider_fetch_failed"
+            assert result["provider_fetch_completed"] == 0
+            assert result["provider_fetch_empty"] == 0
+            assert result["provider_fetch_failed"] == 1
+            assert result["snapshots_created"] == 0
+            lease = db.scalar(select(HotelSweepLease))
+            assert lease is not None
+            assert lease.status == "failed"
+            assert lease.last_provider_run_id == provider_run.id
+            assert lease.last_error_code == "provider_fetch_failed"
+            assert lease.lease_expires_at is None
+            db.refresh(offer)
+            assert float(offer.current_price) == 100.00  # type: ignore[arg-type]
+        finally:
+            _close(db)
+
+    def test_mock_empty_profile_does_not_fall_back_to_local_history(self):
+        db = _db()
+        try:
+            user = _create_user(db)
+            hotel = _create_hotel(db)
+            offer = create_tracked_offer(
+                db,
+                user_id=user.id,
+                hotel_id=hotel.id,
+                check_in=date(2026, 7, 10),
+                check_out=date(2026, 7, 12),
+                guests=2,
+                provider="mock",
+                initial_price=250.00,
+                currency="EUR",
+            )
+            db.add(HotelProviderAlias(
+                hotel_id=hotel.id,
+                provider="mock",
+                provider_hotel_id="mock-sol-001",
+            ))
+            _add_rate(
+                db,
+                hotel_id=hotel.id,
+                check_in=date(2026, 7, 10),
+                check_out=date(2026, 7, 12),
+                guests=2,
+                currency="EUR",
+                amount=189.50,
+                provider="mock",
+            )
+            db.commit()
+            provider_run = _add_provider_run(db)
+            outcome_sink = {}
+
+            result = sweep_tracked_offers(
+                db,
+                provider_run_id=provider_run.id,
+                provider_adapter=MockHotelProviderAdapter(fault_profile="empty_provider"),
+                outcome_sink=outcome_sink,
+            )
+
+            assert result["provider_fetch_attempted"] == 1
+            assert result["provider_fetch_completed"] == 1
+            assert result["provider_fetch_empty"] == 1
+            assert result["snapshots_created"] == 0
+            db.refresh(offer)
+            assert float(offer.current_price) == 250.00  # type: ignore[arg-type]
+        finally:
+            _close(db)
+
+    def test_mock_typed_fault_does_not_fall_back_and_records_profile_outcome(self):
+        db = _db()
+        try:
+            user = _create_user(db)
+            hotel = _create_hotel(db)
+            offer = create_tracked_offer(
+                db,
+                user_id=user.id,
+                hotel_id=hotel.id,
+                check_in=date(2026, 7, 10),
+                check_out=date(2026, 7, 12),
+                guests=2,
+                provider="mock",
+                initial_price=250.00,
+                currency="EUR",
+            )
+            db.add(HotelProviderAlias(
+                hotel_id=hotel.id,
+                provider="mock",
+                provider_hotel_id="mock-sol-001",
+            ))
+            _add_rate(
+                db,
+                hotel_id=hotel.id,
+                check_in=date(2026, 7, 10),
+                check_out=date(2026, 7, 12),
+                guests=2,
+                currency="EUR",
+                amount=189.50,
+                provider="mock",
+            )
+            db.commit()
+            provider_run = _add_provider_run(db)
+            outcome_sink = {}
+
+            result = sweep_tracked_offers(
+                db,
+                provider_run_id=provider_run.id,
+                provider_adapter=MockHotelProviderAdapter(fault_profile="provider_timeout"),
+                outcome_sink=outcome_sink,
+            )
+
+            assert result["provider_fetch_attempted"] == 1
+            assert result["provider_fetch_failed"] == 1
+            assert result["snapshots_created"] == 0
+            assert outcome_sink["provider_fetch_error_timeout"] == 1
+            db.refresh(offer)
+            assert float(offer.current_price) == 250.00  # type: ignore[arg-type]
+        finally:
+            _close(db)
+
+    def test_mock_sold_out_creates_explicit_unavailable_snapshot(self):
+        db = _db()
+        try:
+            user = _create_user(db)
+            hotel = _create_hotel(db)
+            offer = create_tracked_offer(
+                db,
+                user_id=user.id,
+                hotel_id=hotel.id,
+                check_in=date(2026, 7, 10),
+                check_out=date(2026, 7, 12),
+                guests=2,
+                provider="mock",
+                initial_price=250.00,
+                currency="EUR",
+            )
+            db.add(HotelProviderAlias(
+                hotel_id=hotel.id,
+                provider="mock",
+                provider_hotel_id="mock-sol-001",
+            ))
+            db.commit()
+            provider_run = _add_provider_run(db)
+
+            result = sweep_tracked_offers(
+                db,
+                provider_run_id=provider_run.id,
+                provider_adapter=MockHotelProviderAdapter(fault_profile="sold_out"),
+            )
+
+            assert result["snapshots_created"] == 1
+            snapshot = db.scalar(
+                select(HotelRateSnapshot).where(
+                    HotelRateSnapshot.tracked_offer_id == offer.id,
+                    HotelRateSnapshot.provider_run_id == provider_run.id,
+                )
+            )
+            assert snapshot is not None
+            assert snapshot.availability_status == "unavailable"
+            assert float(snapshot.amount) == 189.50
+            db.refresh(offer)
+            assert float(offer.current_price) == 250.00  # type: ignore[arg-type]
+            assert db.scalars(select(HotelAlertEvent)).all() == []
+        finally:
+            _close(db)
+
+    def test_mock_invalid_deeplink_is_sanitized_before_snapshot_persistence(self):
+        db = _db()
+        try:
+            user = _create_user(db)
+            hotel = _create_hotel(db)
+            offer = create_tracked_offer(
+                db,
+                user_id=user.id,
+                hotel_id=hotel.id,
+                check_in=date(2026, 7, 10),
+                check_out=date(2026, 7, 12),
+                guests=2,
+                provider="mock",
+                initial_price=250.00,
+                currency="EUR",
+            )
+            db.add(HotelProviderAlias(
+                hotel_id=hotel.id,
+                provider="mock",
+                provider_hotel_id="mock-sol-001",
+            ))
+            db.commit()
+            provider_run = _add_provider_run(db)
+
+            result = sweep_tracked_offers(
+                db,
+                provider_run_id=provider_run.id,
+                provider_adapter=MockHotelProviderAdapter(fault_profile="deeplink_invalid"),
+            )
+
+            assert result["snapshots_created"] == 1
+            snapshot = db.scalar(
+                select(HotelRateSnapshot).where(
+                    HotelRateSnapshot.tracked_offer_id == offer.id,
+                    HotelRateSnapshot.provider_run_id == provider_run.id,
+                )
+            )
+            assert snapshot is not None
+            assert snapshot.deep_link is None
+        finally:
+            _close(db)
+
+    def test_mock_provider_adapter_failure_keeps_local_pool_fallback(self):
+        db = _db()
+        try:
+            user = _create_user(db)
+            hotel = _create_hotel(db)
+            offer = create_tracked_offer(
+                db,
+                user_id=user.id,
+                hotel_id=hotel.id,
+                check_in=date(2026, 8, 1),
+                check_out=date(2026, 8, 3),
+                guests=2,
+                provider="mock",
+                initial_price=100.00,
+                currency="EUR",
+            )
+            db.add(HotelProviderAlias(
+                hotel_id=hotel.id,
+                provider="mock",
+                provider_hotel_id="mock-hotel-1",
+            ))
+            _add_rate(
+                db,
+                hotel_id=hotel.id,
+                check_in=date(2026, 8, 1),
+                check_out=date(2026, 8, 3),
+                guests=2,
+                currency="EUR",
+                amount=95.00,
+                provider="mock",
+            )
+            db.commit()
+            provider_run = _add_provider_run(db, provider="mock")
+
+            class FailingMockProvider:
+                provider_id = "mock"
+
+                def fetch_hotel_rates(self, **kwargs):
+                    raise RuntimeError("mock adapter failure")
+
+            result = sweep_tracked_offers(
+                db,
+                provider_run_id=provider_run.id,
+                provider_adapter=FailingMockProvider(),
+            )
+
+            assert result["provider_fetch_attempted"] == 1
+            assert result["provider_fetch_failed"] == 1
+            assert result["snapshots_created"] == 1
+            db.refresh(offer)
+            assert float(offer.current_price) == 95.00  # type: ignore[arg-type]
         finally:
             _close(db)
 

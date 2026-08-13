@@ -225,6 +225,7 @@ export type ApiError = {
   details?: unknown;
   retry_after_sec?: number;
   correlation_id?: string;
+  client_event_id?: string;
 };
 
 type ParsedErrorEnvelope = {
@@ -233,6 +234,7 @@ type ParsedErrorEnvelope = {
   details?: unknown;
   retry_after_sec?: number;
   correlation_id?: string;
+  client_event_id?: string;
 };
 
 function extractDetailMessage(detail: unknown): string | null {
@@ -258,6 +260,7 @@ function extractTopLevelErrorEnvelope(parsed: unknown): ParsedErrorEnvelope | nu
     || "details" in candidate
     || "retry_after_sec" in candidate
     || "correlation_id" in candidate
+    || "client_event_id" in candidate
   );
   if (!hasKnownKey) return null;
   return {
@@ -266,6 +269,7 @@ function extractTopLevelErrorEnvelope(parsed: unknown): ParsedErrorEnvelope | nu
     details: candidate.details,
     retry_after_sec: typeof candidate.retry_after_sec === "number" ? candidate.retry_after_sec : undefined,
     correlation_id: typeof candidate.correlation_id === "string" ? candidate.correlation_id : undefined,
+    client_event_id: typeof candidate.client_event_id === "string" ? candidate.client_event_id : undefined,
   };
 }
 
@@ -291,29 +295,40 @@ export async function apiFetchWithStatus<T>(
   }
   const mergedHeaders = buildHeaders(init);
   const timeoutMs = options?.timeoutMs;
-  const controller = timeoutMs ? new AbortController() : null;
+  const callerSignal = init?.signal;
+  const timeoutController = timeoutMs ? new AbortController() : null;
+  const abortTimeoutController = () => {
+    timeoutController?.abort();
+  };
+  if (timeoutController && callerSignal) {
+    if (callerSignal.aborted) {
+      timeoutController.abort();
+    } else {
+      callerSignal.addEventListener("abort", abortTimeoutController, { once: true });
+    }
+  }
   const timeoutId = timeoutMs
     ? globalThis.setTimeout(() => {
-      controller?.abort();
+      timeoutController?.abort();
     }, timeoutMs)
     : null;
   let response: Response;
   try {
     response = await fetch(`${options?.apiBase ?? API_BASE}${path}`, {
       ...init,
-      signal: controller?.signal,
+      signal: timeoutController?.signal ?? callerSignal,
       headers: mergedHeaders,
     });
   } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") {
+    if ((error instanceof DOMException && error.name === "AbortError") || callerSignal?.aborted) {
       return {
         ok: false,
         status: 0,
         headers: new Headers(),
         error: {
           status: 0,
-          code: "NETWORK_TIMEOUT",
-          message: translate("shared.errors.generic"),
+          code: callerSignal?.aborted ? "ABORTED" : "NETWORK_TIMEOUT",
+          message: callerSignal?.aborted ? "" : translate("shared.errors.generic"),
         },
       };
     }
@@ -334,6 +349,7 @@ export async function apiFetchWithStatus<T>(
     if (timeoutId != null) {
       globalThis.clearTimeout(timeoutId);
     }
+    callerSignal?.removeEventListener("abort", abortTimeoutController);
   }
 
   if (!response.ok) {
@@ -357,6 +373,8 @@ export async function apiFetchWithStatus<T>(
           status: response.status,
           code: authCode || "INVALID_TOKEN",
           message: translate("shared.errors.sessionExpired"),
+          correlation_id: topLevelEnvelope?.correlation_id || response.headers.get("x-correlation-id") || undefined,
+          client_event_id: topLevelEnvelope?.client_event_id || response.headers.get("x-client-event-id") || undefined,
         },
       };
     }
@@ -372,6 +390,7 @@ export async function apiFetchWithStatus<T>(
           message: authEntryMessage || translate("shared.errors.sessionRequired"),
           details: topLevelEnvelope?.details,
           correlation_id: topLevelEnvelope?.correlation_id || response.headers.get("x-correlation-id") || undefined,
+          client_event_id: topLevelEnvelope?.client_event_id || response.headers.get("x-client-event-id") || undefined,
         },
       };
     }
@@ -402,6 +421,7 @@ export async function apiFetchWithStatus<T>(
         details: topLevelEnvelope?.details ?? errorObj?.details ?? detail,
         retry_after_sec: retryAfter,
         correlation_id: topLevelEnvelope?.correlation_id || response.headers.get("x-correlation-id") || undefined,
+        client_event_id: topLevelEnvelope?.client_event_id || response.headers.get("x-client-event-id") || undefined,
       },
     };
   }

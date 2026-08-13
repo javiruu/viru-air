@@ -1,6 +1,6 @@
 # H43 — Flags, canary, rollout gradual y kill switches hoteleros
 
-**Estado:** COMPLETA como contrato de rollout; implementación centralizada de flags, canary y kill switches pendiente  
+**Estado:** resolver central, auditoría local de API/worker/job y kill switches verificados; candidatos Booking Demand/LiteAPI registrados fail-closed; dual-write canónico opt-in registrado; canary offline Mock + evidencia redacted pasado; canary comercial, leases/budget de rollout y promoción siguen bloqueados
 **Fecha:** 2026-08-05  
 **Área:** backend / infraestructura / QA  
 **Fuente de verdad:** sí para la activación segura de hoteles  
@@ -16,7 +16,7 @@ H43 responde a una pregunta operativa concreta: **¿quién puede activar qué ca
 Reglas no negociables:
 
 1. **Fail closed:** si falta una flag de seguridad, el valor efectivo es `false`; nunca se activa un provider comercial por una ausencia de configuración.
-2. **Off means zero external calls:** con el dominio hotelero apagado no se realizan llamadas al provider, al geocoder externo ni al scheduler por causa hotelera. El delivery tiene un flag separado (`NOTIFICATION_WORKER_ENABLED`) y hoy el adapter de email es un stub; H43 no afirma que el master switch hotelero controle ese pipeline. Si en el futuro se entrega una alerta hotelera por un canal externo, deberá existir una decisión explícita de operación/delivery y su propio kill switch.
+2. **Off means zero external calls:** con el dominio hotelero apagado no se realizan llamadas al provider, al geocoder externo ni al scheduler por causa hotelera. El delivery tiene un flag separado (`NOTIFICATION_WORKER_ENABLED`) para el inbox local; H43 no afirma que el master switch hotelero controle ese pipeline. Si en el futuro se entrega una alerta hotelera por un canal externo, deberá existir una decisión explícita de operación/delivery y su propio kill switch.
 3. **No pérdida de datos al apagar:** un kill switch detiene ingestión/sweeps y nuevas escrituras de provider, pero conserva hoteles, aliases, snapshots, tracked offers, reglas y eventos históricos.
 4. **Apagado verificable:** cambiar un `.env` no basta para procesos ya arrancados; hay que reiniciar o detener el proceso y comprobar logs, health/readiness y ausencia de requests.
 5. **Una sola decisión efectiva:** API, worker y job directo deben resolver la misma configuración, con la misma precedencia y el mismo motivo de bloqueo.
@@ -31,13 +31,17 @@ Reglas no negociables:
 |---|---:|---|---|---|
 | `HOTEL_FEATURE_ENABLED` | `false` | `backend/app/hotels/ingestion.py` | Habilita provider-backed ingestion y resolución de provider | Si falta, el código actual puede auto-habilitar `mock` en `APP_ENV=local/development/dev`; no es fail-closed todavía |
 | `HOTEL_SWEEP_ENABLED` | `false` | `backend/app/worker/hotels_sweep.py` | Bloquea el worker `app.worker.hotels_sweep` | No bloquea el job directo ni procesos ya arrancados |
-| `HOTEL_PROVIDER` | `mock` | ingestion, worker y job | Selecciona `mock` o `makcorps` | La selección no sustituye a un permiso explícito por provider |
+| `HOTEL_PROVIDER` | `mock` | ingestion, worker y job | Selecciona `mock`, `local_scrape`, `makcorps`, `osm_overpass`, `booking_demand` o `liteapi` | La selección no sustituye a un permiso explícito por provider ni a un adapter aprobado |
+| `HOTEL_PROVIDER_OSM_OVERPASS_ENABLED` | `false` | resolver | Autoriza el catálogo OpenStreetMap/Overpass en un perfil externo permitido | Requiere bbox, ciudad, país, `User-Agent` y presupuesto positivo; no habilita precios ni tracking |
 | `HOTEL_MOCK_FIXTURE_PATH` | vacío | adapter mock | Permite fixture del mock cuando se define | No convierte el modo mock en dry-run ni evita mutaciones de DB |
 | `HOTEL_GEOCODER_ENABLED` | `true` | `backend/app/hotels/geocoder.py` | Permite fallback de `/area-resolve` a geocoder externo | Su default actual no es fail-closed y no está subordinado a `HOTEL_FEATURE_ENABLED` |
 | `MAKCORPS_API_KEY` | vacío | adapter Makcorps | Habilita la credencial del adapter | No debe ser condición suficiente para activar tráfico |
-| `NOTIFICATION_WORKER_ENABLED` | `false` | `backend/app/worker/notifications.py` | Controla el worker genérico de notificaciones | No es un kill switch hotelero y el email real sigue siendo stub |
+| `BOOKING_DEMAND_API_TOKEN` + `BOOKING_DEMAND_AFFILIATE_ID` | vacíos | resolver | Requisitos de configuración de Booking Demand | Sin ambos devuelve `provider_credentials_missing`; con ambos sigue bloqueado hasta adapter canary |
+| `LITEAPI_API_KEY` | vacío | resolver | Requisito de configuración de LiteAPI | Sin key devuelve `provider_credentials_missing`; con key sigue bloqueado hasta adapter canary |
+| `NOTIFICATION_WORKER_ENABLED` | `false` | `backend/app/worker/notifications.py` | Controla el worker genérico de notificaciones | No es un kill switch hotelero ni habilita canales externos |
 | `HOTEL_PROVIDER_TIMEOUT_SECONDS` | `10` | provider/configuración | Limita espera del provider | No constituye por sí solo un circuit breaker ni un budget ledger |
 | `HOTEL_PROVIDER_MAX_RETRIES` | `2` | provider/configuración | Limita reintentos del provider | Debe quedar subordinado a H09/H37 y al perfil activo |
+| `HOTEL_CANONICAL_MODEL_ENABLED` + `HOTEL_CANONICAL_DUAL_WRITE_ENABLED` | `false` + `false` | bridge de tracking V1 | Activa la escritura canónica únicamente si ambos valores son true | No habilita dual-read, backfill, shadow compare ni providers; omite texto legacy libre de habitación/régimen/cancelación |
 
 La plantilla canónica es `backend/.env.example`. `backend/.env` está ignorado y puede tener valores locales distintos; nunca se toma como contrato ni se copian sus secretos a documentación, logs, fixtures o commits.
 
@@ -53,11 +57,11 @@ La plantilla canónica es `backend/.env.example`. `backend/.env` está ignorado 
 | API `GET /api/v1/hotels/*` | Permite leer datos existentes | Debe seguir disponible en modo `prod_off` cuando no implique provider externo |
 | `run_hotel_sweep` en `hotels_service` | Orquesta ingestión, alertas y tracked offers | Es la barrera común recomendada para la futura decisión efectiva |
 
-**Gate obligatorio:** ningún supervisor, cron, comando manual o endpoint puede invocar una operación de provider sin pasar por la misma resolución de flags y autorización de entorno.
+**Gate obligatorio:** ningún supervisor, cron, comando manual o endpoint puede invocar una operación de provider sin pasar por la misma resolución de flags y autorización de entorno. La matriz local `hotel_activation_audit-v1` compara las decisiones de lectura, ingestión y sweep bajo cinco perfiles y confirma consistencia entre los caminos de worker/job; no sustituye la ejecución de los entrypoints en staging/producción.
 
 ## 3. Perfiles canónicos H43
 
-Los perfiles son contrato objetivo. Mientras no exista un resolver único y una auditoría de configuración, se aplican como checklist manual; no se debe presentar el rollout como automatizado.
+Los perfiles son contrato objetivo. El resolver único ya existe en `backend/app/hotels/activation.py` y exige un perfil canónico explícito; los perfiles de canary/producción siguen siendo checklist manual hasta cerrar H09/H37/H41/H42.
 
 | Perfil | Propósito | Provider | Externo | Sweep | Estado |
 |---|---|---|---|---|---|
@@ -118,10 +122,10 @@ La resolución debe devolver, como mínimo: `enabled`, `profile`, `provider`, `o
 
 ### 5.2 Limitaciones actuales que bloquean declarar H43 implementada
 
-1. `HOTEL_SWEEP_ENABLED=false` solo se aplica al worker `app.worker.hotels_sweep`; no bloquea automáticamente `app.hotels.jobs.run_hotel_sweep`.
-2. `HOTEL_FEATURE_ENABLED` tiene fallback local para `mock` cuando falta la variable; debe eliminarse o quedar restringido a un perfil de test explícito.
-3. `HOTEL_GEOCODER_ENABLED` puede permitir el fallback externo de `/area-resolve` aunque el master switch de ingestión esté off; debe quedar subordinado a la decisión efectiva de área/geocoder.
-4. `/area-search?use_provider=true` puede invocar Makcorps desde una lectura; `use_provider` debe pasar por provider allowlist, budget y kill switch.
+1. El worker y el job directo ya consultan el mismo resolver y `HOTEL_SWEEP_ENABLED`.
+2. `HOTEL_PROFILE` exige un perfil canónico explícito; la ausencia cae en `prod_off` y no activa Mock por `APP_ENV=local`.
+3. `HOTEL_GEOCODER_ENABLED` está subordinado al resolver efectivo y al master switch.
+4. `/area-search?use_provider=true` ya pasa por provider allowlist y kill switch; aún requiere budget, leases y pruebas P0 de cero requests antes de un canary.
 5. Las flags se leen en momentos distintos; cambiar el entorno no reconfigura procesos ya arrancados.
 6. No existe un sistema central de cohortes, porcentaje, región, usuario interno, lease global ni auditoría de cambios.
 7. No existe todavía una garantía automática de “cero requests” para cada operación de hoteles.
@@ -280,4 +284,4 @@ H43 devuelve a fases anteriores los gaps que bloquean activación:
 - **H41:** métricas, correlación y redaction;
 - **H42:** incidentes, recovery y rollback.
 
-**Decisión de rollout actual:** mantener `prod_off` como perfil seguro. No se declara `staging_canary` ni `prod_gradual` activos hasta que los gates P0/P1 estén implementados y verificados.
+**Decisión de rollout actual:** mantener `prod_off` como perfil seguro. El runner `backend/scripts/hotel_mock_canary.py` verifica únicamente un canary offline Mock sobre DB temporal y el kill switch global con cero I/O; no se declara `staging_canary` ni `prod_gradual` activos hasta que los gates P0/P1 estén implementados y verificados.

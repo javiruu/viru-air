@@ -1,7 +1,7 @@
 # H48 — Búsquedas guardadas y compartibles sin fuga privada
 
-**Estado:** COMPLETA como contrato de dominio/navegación; parser URL hotelero, persistencia de búsquedas guardadas, share tokens opcionales, restore, lifecycle y QA pendientes  
-**Fecha:** 2026-08-05  
+**Estado:** implementación local parcial verificada: parser/restauración URL, persistencia privada CRUD, ownership, idempotencia y lifecycle active/paused/delete cubiertos; share tokens públicos, expiración productiva, cache avanzada y QA E2E pendientes
+**Fecha:** 2026-08-10
 **Área:** producto / frontend / backend / privacidad / navegación / i18n / QA  
 **Fuente de verdad:** sí para la semántica de búsquedas hoteleras reproducibles, guardadas y compartibles  
 **Fase del roadmap:** H48  
@@ -38,6 +38,8 @@ H48 no implementa por sí sola:
 
 ### 2.1. Estado hotelero actual
 
+El bloque local implementado en esta iteración añade `HotelSavedSearch` y los endpoints privados `GET/POST /hotels/saved-searches`, `GET/PATCH/DELETE /hotels/saved-searches/{id}`. El payload está limitado a `hotel-search-v1` y a parámetros de búsqueda allowlisted; el fingerprint se calcula sobre JSON canónico ordenado. Crear es idempotente por usuario y fingerprint, y todas las lecturas/mutaciones comprueban ownership. Restaurar desde la UI vuelve a pasar por el parser/builder URL allowlisted y no marca `searched`, no conserva selección privada y no ejecuta provider automáticamente.
+
 `frontend/src/modules/hotels/hooks/useHotelSearch.ts` mantiene en React:
 
 - `query`, `city`, `searchMode`;
@@ -45,13 +47,13 @@ H48 no implementa por sí sola:
 - `checkIn`, `checkOut`, `guests`, `radiusKm`, `useProvider`;
 - `results`, `areaResults`, `selectedHotelId`, `errorMessage`.
 
-`frontend/src/modules/hotels/api.ts` tiene búsqueda por nombre, detalle, rates, área, ingest mock, watchlist, tracking, alertas y comp sets. No existe un parser/builder hotelero URL-driven, un endpoint de búsquedas guardadas ni un modelo `SavedHotelSearch` demostrable en el repositorio. La búsqueda hotelera actual no puede declararse restaurable desde refresh/back-forward solo por existir `URLSearchParams` en otros módulos.
+La implementación local añade `frontend/src/modules/hotels/hotelSearchUrlState.ts` como parser/builder URL-driven, `api.ts` con el CRUD autenticado de búsquedas guardadas y `useSavedHotelSearches.ts`/`HotelSavedSearchesPanel.tsx` para guardar, restaurar, pausar y eliminar desde `/hoteles`. La respuesta devuelve siempre el payload canónico normalizado. Restaurar no ejecuta provider implícitamente; la búsqueda explícita sigue siendo una acción separada.
 
 ### 2.2. Capacidades reutilizables, no equivalentes
 
 `frontend/src/modules/shared/useRouteState.ts` contiene sanitización y URL state para Quick Search y Watchlist de vuelos. Es un patrón reutilizable, no un contrato hotelero ya implementado. Sus parámetros IATA (`origin`, `destination`) no deben copiarse como si fueran destino, zona o `StayQuery`.
 
-H03/H13 ya definen parámetros hoteleros objetivo (`destination`, `destination_type`, `area`, `check_in`, `check_out`, `guests`, `radius`, `currency`, filtros, orden, `hotel_id`, `panel`), pero dejan explícito que la implementación actual conserva el estado principalmente en React. H48 convierte esa intención en contrato versionado sin afirmar que el parser exista hoy.
+H03/H13 ya definen parámetros hoteleros objetivo (`destination`, `destination_type`, `area`, `check_in`, `check_out`, `guests`, `radius`, `currency`, filtros, orden, `hotel_id`, `panel`). H48 convierte la parte local soportada por el radar en un contrato versionado; los campos aún no respaldados por la UI/API siguen fuera de la allowlist efectiva.
 
 ### 2.3. Auth actual
 
@@ -395,4 +397,4 @@ H48 podrá considerarse implementada cuando:
 11. tests de dos usuarios, cache, TTL, share token opcional y browser QA pasan;
 12. H47 recibe una búsqueda restaurable y H49 puede consumir preferencias sin cambiar la semántica de la query.
 
-**Resultado contractual:** H48 queda definida como separación entre intención pública compartible, búsqueda guardada privada y tracking/alertas privados. El repositorio tiene patrones de URL en vuelos y contratos hoteleros de StayQuery/privacidad, pero todavía no demuestra parser hotelero, persistencia SavedHotelSearch ni share tokens; implementación y QA permanecen pendientes.
+**Resultado H48:** el parser/restauración URL y la persistencia privada CRUD local están implementados con tests de canonicalización, dos usuarios, idempotencia, validación de privacidad y no ejecución implícita. El lifecycle local usa `active/paused` y DELETE físico; no se presenta como archivado ni expiración productiva. Siguen pendientes los share tokens públicos, expiración/retención productiva, cache privada avanzada, re-auth, browser QA y provider live.

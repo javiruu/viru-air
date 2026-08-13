@@ -15,6 +15,7 @@ test("normalizes missing and null inbox collections without sharing fallback obj
     security: 0,
     digest: 0,
     worker: 0,
+    community: 0,
   });
   assert.notEqual(first.items, second.items);
   assert.notEqual(first.summary, second.summary);
@@ -148,4 +149,29 @@ test("derives a safe category from a known legacy source", () => {
   assert.equal(response.items[0]?.category, "security");
   assert.equal(response.summary.security, 1);
   assert.equal(response.summary.worker, 0);
+});
+
+test("preserves supported community trending signals instead of dropping them", () => {
+  const response = normalizeNotificationInboxResponse({
+    items: [
+      {
+        id: "community_trending:2026-08-11:MAD:BCN",
+        source_type: "community_trending",
+        source_id: "2026-08-11:MAD:BCN",
+        category: "community",
+        tone: "info",
+        title: "La comunidad está mirando esta ruta",
+        body: "MAD → BCN es una ruta en tendencia esta semana.",
+        route_label: "MAD → BCN",
+        action_href: "/dashboard",
+        created_at: "2026-08-11T08:00:00Z",
+        read_at: null,
+      },
+    ],
+    summary: { total: 1, unread: 1, community: 1 },
+  });
+
+  assert.equal(response.items[0]?.source_type, "community_trending");
+  assert.equal(response.items[0]?.category, "community");
+  assert.equal(response.summary.community, 1);
 });

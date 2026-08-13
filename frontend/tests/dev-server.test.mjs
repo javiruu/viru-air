@@ -9,6 +9,7 @@ import test from "node:test";
 import {
   buildNextDevArguments,
   discoverStaticRoutes,
+  resolveDevDistDir,
   isRouteWarmupEnabled,
   resolveDevPort,
   warmStaticRoutes,
@@ -51,6 +52,12 @@ test("discovers every static App Router page in Viru priority order", async () =
   } finally {
     await rm(fixtureRoot, { recursive: true, force: true });
   }
+});
+
+test("uses an isolated development dist directory for non-default ports", () => {
+  assert.equal(resolveDevDistDir({}, 3000), ".next");
+  assert.equal(resolveDevDistDir({}, 3100), ".next-dev-3100");
+  assert.equal(resolveDevDistDir({ NEXT_DIST_DIR: "custom-next" }, 3100), "custom-next");
 });
 
 test("resolves the effective Next development port from supported CLI forms", () => {

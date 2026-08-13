@@ -25,7 +25,7 @@ H27 define el último tramo entre un evento hotelero elegible de H26 y la person
 9. migración, auditoría, retención y privacidad;
 10. gates backend, frontend, accesibilidad y browser QA.
 
-H27 **no** implementa el motor de reglas/cooldown de H26, el delivery externo de H28 ni el lifecycle de H29. Un evento visible en el inbox demuestra persistencia y ownership de la señal, no entrega por email/push ni disponibilidad actual del partner.
+H27 **no** implementa el motor de reglas/cooldown de H26, el delivery externo de H28 ni el lifecycle de H29. Un evento visible en el inbox demuestra persistencia y ownership de la señal, no entrega por canales externos ni disponibilidad actual del partner.
 
 ## 2. Estado actual comprobable (V1)
 

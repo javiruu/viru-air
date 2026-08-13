@@ -13,7 +13,8 @@
     "test": "tsx --test",
     "test:e2e:quick-search": "tsx --test tests/quick-search-relax-preview.e2e.test.ts",
     "qa:visual:quick-search": "node scripts/qa_quick_search_visual.mjs",
-    "update:airports": "node ./scripts/update_airports_iata.mjs"
+    "update:airports": "node ./scripts/update_airports_iata.mjs",
+    "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.2",
@@ -37,6 +38,7 @@
     "eslint": "^8.57.1",
     "eslint-config-next": "15.5.22",
     "playwright": "^1.59.1",
+    "react-doctor": "^0.9.11",
     "tsx": "^4.20.0",
     "typescript": "5.7.2"
   },

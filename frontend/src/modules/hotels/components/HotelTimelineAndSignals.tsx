@@ -15,7 +15,17 @@ function formatDate(value: string, localeTag: string): string {
   return new Intl.DateTimeFormat(localeTag, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
 
-export function HotelPriceTimeline({ rates }: { rates: HotelRateOut[] }) {
+export function HotelPriceTimeline({
+  rates,
+  onTrackRate,
+  selectedRateId,
+  trackingDisabled = false,
+}: {
+  rates: HotelRateOut[];
+  onTrackRate?: (rate: HotelRateOut) => void;
+  selectedRateId?: string | null;
+  trackingDisabled?: boolean;
+}) {
   const { t, localeTag } = useI18n();
   const sorted = useMemo(() => [...rates].sort((a, b) => new Date(b.collected_at).getTime() - new Date(a.collected_at).getTime()), [rates]);
 
@@ -36,6 +46,16 @@ export function HotelPriceTimeline({ rates }: { rates: HotelRateOut[] }) {
             <div className="hotel-rate-right">
               <strong>{formatMoney(rate.amount, rate.currency, localeTag)}</strong>
               <p className="panel-note">{rate.room_label || t("hotels.timeline.standardRoom")}</p>
+              {onTrackRate ? (
+                <button
+                  type="button"
+                  className="btn-secondary btn-compact"
+                  onClick={() => onTrackRate(rate)}
+                  disabled={trackingDisabled || selectedRateId === rate.id}
+                >
+                  {selectedRateId === rate.id ? t("hotels.actions.offerSelected") : t("hotels.actions.trackRate")}
+                </button>
+              ) : null}
             </div>
           </article>
         ))}

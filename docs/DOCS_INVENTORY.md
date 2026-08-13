@@ -9,6 +9,35 @@
 
 Inventario completo de documentos `.md` y `.txt` relevantes del repositorio tras el saneamiento documental. Excluye dependencias, cach?s, builds, entornos virtuales, `_publish_repo` y otras salidas generadas masivas.
 
+## Actualizacion manual 2026-08-13 (planes de cierre local de `/hoteles`)
+
+Entradas vivas agregadas:
+
+- `docs/plans/2026-08-08-h36-performance-baseline.md`
+- `docs/plans/2026-08-08-hoteles-detail-intent-design.md`
+- `docs/plans/2026-08-08-hoteles-detail-intent-implementation.md`
+- `docs/plans/2026-08-09-hotel-demo-seed-plan.md`
+- `docs/plans/2026-08-09-hotel-mock-canary-design.md`
+- `docs/plans/2026-08-09-hotel-mock-canary-plan.md`
+- `docs/plans/2026-08-09-hotel-provider-latency-contract-plan.md`
+- `docs/plans/2026-08-09-hotel-provider-latency-persistence-design.md`
+- `docs/plans/2026-08-09-hotel-provider-latency-persistence-plan.md`
+- `docs/plans/2026-08-09-hoteles-delivery-design.md`
+- `docs/plans/2026-08-09-hoteles-delivery-implementation.md`
+- `docs/plans/2026-08-09-hoteles-observability-dashboard-plan.md`
+- `docs/plans/2026-08-09-hoteles-observability-metrics-design.md`
+- `docs/plans/2026-08-10-h44-fault-matrix-dry-run-design.md`
+- `docs/plans/2026-08-10-h44-fault-matrix-dry-run-plan.md`
+- `docs/plans/2026-08-10-h44-revalidation-fault-profiles-plan.md`
+- `docs/plans/2026-08-10-h48-saved-hotel-searches.md`
+- `docs/plans/2026-08-10-hoteles-auditoria-checklist-completa.md`
+- `docs/plans/2026-08-10-hoteles-local-backlog-closeout-plan.md`
+- `docs/plans/2026-08-10-hotels-local-closeout-implementation.md`
+
+Motivo:
+
+- Planes vivos de diseño, implementación y auditoría que acompañan los cierres locales de datos, tracking, observabilidad, delivery in-app, proveedores, rendimiento y QA de `/hoteles`.
+
 ## Actualizacion manual 2026-08-04 (cierre H00-H07 de `/hoteles`)
 
 Entradas vivas agregadas:
