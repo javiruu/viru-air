@@ -25,6 +25,7 @@ const EMPTY_SUMMARY: NotificationInboxSummary = {
   security: 0,
   digest: 0,
   worker: 0,
+  community: 0,
 };
 
 export function SignalsInbox({ requestedFilter }: { requestedFilter?: string | null }) {
@@ -67,6 +68,7 @@ export function SignalsInbox({ requestedFilter }: { requestedFilter?: string | n
         { value: "security", label: t("notifications.filters.security"), count: summary.security },
         { value: "digest", label: t("notifications.filters.digest"), count: summary.digest },
         { value: "worker", label: t("notifications.filters.worker"), count: summary.worker },
+        { value: "community", label: t("notifications.filters.community"), count: summary.community },
       ] as const,
     [actionableCount, summary, t],
   );

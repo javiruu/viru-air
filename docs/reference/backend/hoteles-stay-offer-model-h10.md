@@ -1,6 +1,6 @@
 # H10 — Modelo canónico de estancia, ocupación, oferta y matching hotelero
 
-**Estado:** completa como contrato de dominio; implementación y migración pendientes  
+**Estado:** contrato de dominio completo; H10-A y persistencia/dual-write V2 inicial opt-in implementados; API V2, dual-read, backfill y shadow compare pendientes
 **Fecha:** 2026-08-04  
 **Área:** backend / DB / dominio / API / providers  
 **Fuente de verdad:** sí para la semántica de una estancia, una oferta comparable, un snapshot y el matching entre identidad interna y externa.
@@ -14,7 +14,9 @@
 
 H10 define qué significa exactamente “seguir un hotel” o “comparar una tarifa” en Viru. El objetivo es impedir que una cifra aislada se trate como una oferta comparable cuando cambian las fechas, la ocupación, la habitación, el régimen, la cancelación, los fees o la freshness.
 
-La fase produce un modelo conceptual y una migración compatible. **No cambia todavía las tablas, no rompe los endpoints actuales y no habilita providers externos.**
+La fase produce un modelo conceptual y una migración compatible. **No rompe los endpoints actuales ni habilita providers externos.**
+
+Implementación actual: `backend/app/hotels/stay_offer.py` contiene los tipos internos, validaciones, fingerprints deterministas y el bridge `stay_query_from_legacy(...)`. La expansión `0057_hotel_canonical_stay_offer` y el bridge de escritura opt-in crean `HotelStayOffer`/`HotelUserStayWatch` sin cambiar la lectura V1. El bridge conserva `occupancy_source=legacy_inferred`; no reinterpreta texto legacy de habitación, régimen o cancelación, no expone todavía un payload V2 y queda apagado hasta que activen sus dos flags.
 
 ### Decisión H10
 
@@ -516,10 +518,10 @@ Los campos V2 no deben fabricar valores para columnas legacy. Si el legacy `gues
 
 ### H10-A — Tipos de dominio y normalizadores
 
-- Crear `StayQuery`, `Occupancy`, `RoomSignature`, `CancellationPolicy`, `FeeBreakdown`, `OfferIdentity` y `SnapshotOutcome` internos.
-- Añadir validadores sin cambiar todavía tablas.
-- Implementar fingerprints deterministas con serialización canónica.
-- Añadir tests de invariantes y equivalencia legacy.
+- Implementado en `backend/app/hotels/stay_offer.py`: `StayQuery`, `Occupancy`, `RoomSignature`, `CancellationPolicy`, `FeeBreakdown`, `OfferIdentity` y `SnapshotOutcome` internos.
+- Los validadores no modifican tablas ni endpoints.
+- Los fingerprints usan serialización canónica y excluyen ownership privado.
+- `backend/tests/unit/test_hotels_stay_offer.py` cubre invariantes, equivalencia legacy y elegibilidad de outcomes.
 
 ### H10-B — Bridge de entrada
 

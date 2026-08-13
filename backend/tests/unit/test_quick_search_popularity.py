@@ -1,6 +1,9 @@
 import datetime as dt
 
-from sqlalchemy import create_engine
+import pytest
+from sqlalchemy import create_engine, inspect, text
+from sqlalchemy.engine import Engine
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.infrastructure.db.models import (
@@ -18,6 +21,13 @@ def _db() -> Session:
     session = testing_session_local()
     session._test_engine = engine  # type: ignore[attr-defined]
     return session
+
+
+def _legacy_db() -> tuple[Session, Engine]:
+    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    QuickSearchPopularityCounter.__table__.create(bind=engine)
+    testing_session_local = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    return testing_session_local(), engine
 
 
 def test_record_quick_search_popularity_increments_anonymous_route_counter() -> None:
@@ -82,3 +92,47 @@ def test_quick_search_popularity_counter_is_cross_user_and_anonymous() -> None:
     }
     assert "user_id" not in daily_column_names
     assert not any(target.startswith("users.") for target in daily_foreign_key_targets)
+
+
+def test_record_quick_search_popularity_preserves_legacy_counter_without_daily_table() -> None:
+    db, engine = _legacy_db()
+    try:
+        counter = record_quick_search_popularity(
+            db,
+            QuickSearchPopularitySignal(
+                origin_iata="LEI",
+                destination_iata="DUB",
+                travel_date=dt.date(2026, 12, 14),
+                searched_at=dt.datetime(2026, 7, 11, 10, 0),
+            ),
+        )
+
+        assert counter.search_count == 1
+        assert "quick_search_popularity_daily" not in set(inspect(engine).get_table_names())
+    finally:
+        db.close()
+        engine.dispose()
+
+
+def test_record_quick_search_popularity_rolls_back_counter_when_daily_table_is_invalid() -> None:
+    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    QuickSearchPopularityCounter.__table__.create(bind=engine)
+    with engine.begin() as connection:
+        connection.execute(text("CREATE TABLE quick_search_popularity_daily (id VARCHAR(36) PRIMARY KEY)"))
+    db = sessionmaker(bind=engine, autoflush=False, autocommit=False)()
+    try:
+        with pytest.raises(OperationalError):
+            record_quick_search_popularity(
+                db,
+                QuickSearchPopularitySignal(
+                    origin_iata="LEI",
+                    destination_iata="DUB",
+                    travel_date=dt.date(2026, 12, 14),
+                    searched_at=dt.datetime(2026, 7, 11, 10, 0),
+                ),
+            )
+
+        assert db.query(QuickSearchPopularityCounter).count() == 0
+    finally:
+        db.close()
+        engine.dispose()

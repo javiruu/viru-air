@@ -1,6 +1,6 @@
 # H38 — Ownership, secretos, SSRF y abuso hotelero
 
-**Estado:** COMPLETA como auditoría/contrato; remediación, pruebas de seguridad y revisión de rollout pendientes  
+**Estado:** EN QA; ownership, geocoder SSRF, redaction y deeplinks tienen remediación server-side y regresiones negativas; los hard bounds de abuso están verificados, pero rate limiting distribuido, gateway externo y gates de rollout/operación siguen pendientes
 **Fecha:** 2026-08-05  
 **Área:** backend / seguridad / privacidad / frontend / providers / QA  
 **Fuente de verdad:** sí para el alcance, riesgos, prioridades y gates de seguridad de H38  
@@ -60,8 +60,8 @@ H38 no decide:
 | Watchlist | list filtra por `user_id`; delete compara owner | Protección parcial correcta para esas operaciones |
 | Comp sets | list filtra por `user_id`; detalle/mutaciones verifican owner antes de acceder | Debe mantenerse en cualquier endpoint nuevo y en helpers internos |
 | Tracked offers | list/get/update/delete/snapshots pasan `user_id` al service y verifican owner | Es el patrón canónico para recursos privados |
-| Alert rules | list/update/delete filtran o verifican `rule.user_id` | La creación valida hotel, pero no comprueba explícitamente que un `tracked_offer_id` dado pertenezca a la cuenta y al mismo hotel |
-| Alert events | `list_hotel_alert_events` deriva hoteles permitidos desde reglas/tracking del usuario | Filtrar solo por `hotel_id` puede mezclar eventos de otros usuarios que sigan el mismo hotel; `HotelAlertEvent` no tiene `user_id` directo |
+| Alert rules | list/update/delete filtran o verifican `rule.user_id`; creación valida owner y hotel del tracking enlazado | La relación `tracked_offer_id` se rechaza si pertenece a otra cuenta o a otro hotel |
+| Alert events | eventos nuevos llevan `user_id`; históricos con `rule_id` se backfillean y se resuelven por owner de regla; eventos no atribuibles quedan fuera | `/alert-events`, inbox y summary aplican ownership explícito; un `hotel_id` compartido no autoriza acceso |
 | Account deletion | `account.py` elimina eventos ligados a reglas propias, reglas, comp sets/members, tracked offers y watchlist del usuario | Existe una cascada explícita parcial; no demuestra exportación, retención, aislamiento de eventos sin `rule_id` ni pruebas de borrado completo |
 | Provider secrets | Makcorps API key se obtiene de entorno y no de payload de cliente | No garantiza ausencia en access logs, excepciones, tracing o URLs completas |
 | Geocoder | URL base configurable por `NOMINATIM_URL`; query de usuario viaja como parámetro | La URL de destino es una superficie de configuración SSRF; no existe allowlist/validación DNS documentada |
@@ -70,7 +70,7 @@ H38 no decide:
 
 ### 2.2. Hallazgos prioritarios
 
-#### H38-P0-01 — Regla con `tracked_offer_id` sin comprobación relacional
+#### H38-P0-01 — Regla con `tracked_offer_id` sin comprobación relacional (remediado)
 
 `create_alert_rule()` comprueba que `hotel_id` existe y guarda `user_id`/`tracked_offer_id`, pero no carga el tracking para comprobar:
 
@@ -81,27 +81,28 @@ tracked_offer.hotel_id == payload.hotel_id
 
 La creación de una regla debe rechazar cualquier combinación cruzada. No basta con que quien llama esté autenticado ni con que ambos IDs existan.
 
-**Riesgo:** una regla de un usuario puede quedar asociada a un tracking de otra cuenta o a otro hotel; después la evaluación de alertas puede operar sobre una relación no autorizada.
+**Riesgo histórico:** una regla de un usuario podía quedar asociada a un tracking de otra cuenta o a otro hotel.
 
-**Cierre:** test con User A/B, tracking cruzado y hotel cruzado; respuesta genérica `403` o `404` según la política H27/H35; constraint o validación transaccional adicional si procede.
+**Cierre aplicado:** `create_alert_rule()` carga el tracking con ownership del usuario y comprueba coincidencia de hotel; hay regresiones API para tracking cruzado y hotel cruzado.
 
-#### H38-P0-02 — Eventos filtrados por `hotel_id`, no por ownership del evento
+#### H38-P0-02 — Eventos filtrados por `hotel_id`, no por ownership del evento (remediado)
 
-`HotelAlertEvent` tiene `rule_id`, `hotel_id` y `provider_run_id`, pero no `user_id` directo. `list_hotel_alert_events()` obtiene IDs de hotel permitidos desde reglas/tracked offers del usuario y después devuelve cualquier evento cuyo `hotel_id` pertenezca al conjunto.
+`HotelAlertEvent` tiene ahora `user_id` nullable e indexado. La migración 0042 backfillea eventos históricos con `rule_id` desde `hotel_alert_rule.user_id`; eventos históricos sin owner verificable permanecen fuera de lecturas privadas.
 
 **Riesgo:** dos cuentas que siguen la misma propiedad pueden ver eventos generados para la otra, especialmente eventos de sweep con `rule_id is None`. El código demuestra una condición de aislamiento insuficiente; la explotación concreta depende de los datos y del flujo de creación.
 
-**Opciones de remediación a decidir en H11/H23/H26/H29:**
+**Cierre aplicado en esta fase:**
 
-- filtrar eventos mediante `rule.user_id` o `tracked_offer.user_id` en una query relacional estricta;
-- añadir `user_id`/`tracked_offer_id` al evento cuando el evento sea privado;
-- separar eventos públicos de provider de eventos privados de usuario;
-- migrar/quarantinar eventos legacy sin ownership verificable;
-- devolver 404/empty prudente y no enumerar existencia de recursos.
+- eventos nuevos reciben `user_id` desde la regla o el tracking;
+- la migración 0042 añade FK/index y backfill desde reglas;
+- `/alert-events`, inbox, summary y mark-read usan ownership explícito o regla histórica propia;
+- eventos legacy sin ownership verificable quedan en cuarentena lógica y no se muestran;
+- no se usa `hotel_id` compartido como prueba de ownership;
+- el `user_id` interno no se expone en `HotelAlertEventOut`.
 
-No se debe “arreglar” ampliando la lista de `hotel_id` permitidos.
+La política de retención física de eventos no atribuibles sigue pendiente de H29.
 
-#### H38-P0-03 — Geocoder con host configurable y request server-side
+#### H38-P0-03 — Geocoder con host configurable y request server-side (remediado)
 
 `geocoder.py` construye `f"{_NOMINATIM_URL}/search"` y ejecuta `requests.get()` con timeout. La consulta del usuario solo es `q`, pero el host puede cambiar por entorno y la librería puede seguir redirects HTTP según defaults.
 
@@ -117,13 +118,23 @@ No se debe “arreglar” ampliando la lista de `hotel_id` permitidos.
 - no aceptar una URL completa del cliente como destino;
 - cache/cooldown/rate limit y redaction H35/H37.
 
+**Cierre aplicado en este bloque:**
+
+- destino limitado a `https` y allowlist exacta de hosts configurados;
+- credenciales, puertos, query y fragmentos en `NOMINATIM_URL` rechazados;
+- resolución DNS validada contra IPs no globales y conexión fijada a la IP validada, conservando SNI/Host del dominio;
+- proxies heredados y redirects desactivados;
+- timeout de conexión/lectura acotado por deadline total, límite de bytes y `Content-Type` JSON;
+- input `q` limitado, no interpretado como URL y nunca reflejado en logs;
+- regresiones negativas para allowlist, DNS privado, redirects, payload, timeout, coordenadas y redaction.
+
 El input `q` no debe interpretarse como URL ni concatenarse en el path.
 
-#### H38-P0-04 — API key en query parameter y redacción incompleta
+#### H38-P0-04 — API key en query parameter y redacción incompleta (remediado parcialmente; gateway externo pendiente)
 
-Makcorps fusiona `api_key` en cada URL de request. Aunque el logger propio intenta no imprimir la clave, la URL puede aparecer en access logs, excepciones de `requests`, proxies, tracing, métricas HTTP o herramientas de debugging.
+Makcorps fusiona `api_key` en cada URL de request porque ese es el contrato actual del provider. El adapter redacted excepciones/log payloads y persiste `raw_payload` sin claves sensibles; la key nunca se devuelve al frontend. Siguen fuera del control del adapter los access logs/proxies/tracing externos que puedan capturar la URL completa.
 
-**Requisitos:** preferir header auth si el provider lo soporta; si no, desactivar captura de URLs completas, aplicar redaction en cada sink, probar rotación/revocación y evitar propagar excepciones sin sanitizar. Nunca enviar la clave al frontend.
+**Cierre aplicado:** sanitización de texto antes del logger propio, redaction recursiva de respuestas antes de persistirlas y regresiones que provocan excepciones con query secreta. **Pendiente antes de producción:** confirmar auth por header o configurar egress/access logs para no capturar URLs completas, además de rotación/revocación y evidencia de infraestructura.
 
 ---
 
@@ -322,8 +333,8 @@ Los límites deben devolver estado estable (`429` cuando proceda), `Retry-After`
 ### P1 — defensa operativa
 
 - autorización central reusable para recursos y relaciones;
-- rate limits server-side de search, resolve, area-search y tracking;
-- límites de payload/listas/fan-out y paginación segura;
+- rate limits server-side de search, resolve, area-search y tracking (pendiente como limiter distribuido/429 estable);
+- límites de payload/listas/fan-out, radio, coordenadas, ocupación y paginación segura (hard bounds V1 verificados por regresiones HTTP);
 - errores tipados sin enumeración y outcomes H37;
 - tests de dos usuarios, provider malicioso, DNS/redirect y logs;
 - auditoría de cascada, exportación, retención y replay.
@@ -370,8 +381,9 @@ Los límites deben devolver estado estable (`429` cuando proceda), `Retry-After`
 
 ### Gate R — abuso y egress
 
-- burst de search/resolve/area-search/tracking produce backpressure estable;
-- `429` y `Retry-After` no revelan información privada;
+- **Parcial verificado:** search/resolve/area-search rechazan inputs sobredimensionados o fuera de rango antes del servicio, con regresión `test_hotels_search_and_area_inputs_have_server_side_hard_bounds`;
+- **Pendiente:** burst de search/resolve/area-search/tracking debe producir backpressure estable;
+- **Pendiente:** `429` y `Retry-After` no deben revelar información privada;
 - flags off y budget cero producen cero requests externas;
 - tamaño, timeout, bytes y redirects externos están acotados;
 - dos workers/requests concurrentes no duplican una operación sensible fuera de H37;
@@ -416,4 +428,4 @@ H38 sí autoriza el contrato de que toda nueva ruta, provider, URL externa, migr
 - H35 — legal, privacidad, disclosure y deeplinks
 - H37 — benchmark, rate limits, locks y coste máximo
 
-**Resultado H38:** auditoría y contrato de seguridad aprobados. El código actual conserva autenticación JWT y ownership parcial, pero no se declara cerrado hasta remediar los P0 y ejecutar los gates negativos.
+**Resultado H38:** auditoría y contrato de seguridad aprobados; las regresiones focalizadas de ownership, SSRF, deeplink, redaction y hard bounds pasan, pero H38 queda en `EN QA` hasta demostrar limiter distribuido/backpressure, sinks externos de logs, exportación/retención y los gates de rollout.

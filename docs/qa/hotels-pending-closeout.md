@@ -1,13 +1,37 @@
 # Cierre pendiente de `/hoteles`
 
 **Estado:** vivo  
-**Ultima revision:** 2026-06-21 (cierre Fases 59-61)  
+**Ultima revision:** 2026-08-10 (auditoría H00–H56 y rerun Chromium H40)
+
 **Fuente de verdad:** si  
 **Area:** QA
 
 ## Resumen
 
-Checklist viva de cierre para el modulo `/hoteles`.
+Checklist viva de cierre para el modulo `/hoteles`. Las entradas fechadas son
+registro histórico de la evidencia disponible en su momento: los hashes, conteos
+y estados de CI de esas secciones no describen por sí solos el estado actual de
+la rama, que se verifica con Git y la CI vigente.
+
+### Rerun H40 2026-08-10
+
+El runner `frontend/scripts/qa_hotels_phase57.mjs` se ajustó para usar el selector estable `data-testid="hotel-city-input"`, redacción de diagnósticos y metadata explícita de cobertura Chromium. Contra una instancia Next fresca y API local, los cuatro escenarios ES (desktop/mobile × dark/light) pasaron: resultados, tracking, favorito, alerta y comparativa visibles; sin overflow horizontal ni errores de consola. La evidencia vigente queda en `docs/qa/evidence/hotels-h40-rerun-audit-current/`. El runner usa la API/DB local compartida y datos de prueba; no sustituye una ejecución aislada de staging ni ejecuta cleanup de datos persistidos.
+
+Este resultado cierra el subgate automatizado Chromium de H40, no la revisión humana, cross-browser, estados F5 ni la aprobación de release.
+
+### Delta H13 — canonicalización de navegación (2026-08-10)
+
+Se corrigió un gap local de bajo nivel en `useHotelSearch`: la comparación entre la URL entrante y el estado generado ahora usa una query canónica (`URLSearchParams.sort()`), de modo que el orden de parámetros o un encoding equivalente (`+` frente a `%20`) no provoca `router.replace` ni refetch innecesario durante back/forward. La regresión está cubierta en `frontend/tests/hotels-url-state.test.ts`. H13 sigue siendo parcial: la UI V2 completa, habitaciones/edades, estados E2E, master-detail, accesibilidad y QA browser continúan abiertos.
+
+### Delta H48 — búsquedas privadas guardadas (2026-08-10)
+
+Se implementó el bloque local de H48: `HotelSavedSearch` con migración `0056_hotel_saved_searches`, CRUD autenticado, ownership server-side, fingerprint determinista e idempotencia por usuario. La UI distingue guardar búsqueda de guardar hotel y tracking; restaurar vuelve a pasar por el parser URL allowlisted, elimina selección/ejecución y no llama provider implícitamente. El lifecycle local es `active/paused` y DELETE físico; share tokens, expiración productiva, cache avanzada y QA browser siguen pendientes.
+
+### Delta H24/H36 — error real separado de historial vacío (2026-08-10)
+
+`HotelTrackedOfferSnapshots` ya no convierte un fallo HTTP o de red en “sin registros”: distingue `loading`, lista vacía y error localizado ES/EN. La API frontend acepta `AbortSignal` y el componente cancela la petición al ocultarse o cambiar de oferta, ignorando únicamente ese abort de limpieza. La regresión H36 cubre propagación de señal, cancelación y fallo de red; no se añade aún un harness React nuevo porque el proyecto no tiene `@testing-library`, `jsdom` ni otro runner de componentes instalado. Esto cierra solo el subgap local de estados/cancelación; H24 sigue abierto para curva, agregados, comparabilidad, freshness y QA a11y/visual.
+
+## Registro histórico de cierres
 
 ## Actualizacion 2026-06-21 (cierre Fases 59-61)
 
@@ -32,8 +56,8 @@ Checklist viva de cierre para el modulo `/hoteles`.
 
 ### Resultado
 
-1. La verificacion visual real de `/hoteles` queda cerrada.
-2. Se validaron `desktop-dark`, `desktop-light`, `mobile-dark` y `mobile-light`.
+1. La verificación visual automatizada histórica de `/hoteles` queda registrada; el cierre humano/cross-browser sigue separado.
+2. Se validaron `desktop-dark`, `desktop-light`, `mobile-dark` y `mobile-light` en la evidencia histórica de 2026-06-20.
 3. El flujo real cubierto fue: buscar hotel, seleccionar, trackear precio, anadir a seguimiento, crear alerta y crear comparativa.
 4. No se detecto overflow horizontal en los cuatro escenarios.
 5. La evidencia local queda en `docs/qa/evidence/hotels-2026-06-20-phase57/report.json`.
@@ -142,11 +166,11 @@ Fases completadas en esta iteración:
 2. Scheduler automático de sweeps.
 3. Verificación visual manual en navegador real.
 4. Geocoder externo para area-resolve.
-5. Alertas sobre `initial_price` además del snapshot anterior.
+5. Alertas sobre `initial_price` además del snapshot anterior (cerrado: `compare_against="initial_price"`).
 
 Pendiente:
 
-1. Verificación visual manual en navegador real (dark/light/responsive/focus/copy).
+1. Verificación visual manual en navegador real (dark/light/responsive/focus/copy). Sigue abierta y requiere aprobación humana; el E2E Chromium H44 automatizado ya está cerrado con evidencia redacted.
 
 ## Actualización 2026-06-03 (cierre Fase 9)
 
@@ -296,7 +320,7 @@ Fases completadas en esta iteración:
 2. Scheduler automático de sweeps.
 3. Verificación visual manual en navegador real.
 4. Geocoder externo para area-resolve.
-5. Alertas sobre `initial_price` además del snapshot anterior.
+5. Alertas sobre `initial_price` además del snapshot anterior (cerrado: `compare_against="initial_price"`).
 
 Nota: La deuda #4 anterior (`DELETE /comp-sets/{id}` no implementado) queda saldada en Fase E.
 
@@ -334,7 +358,7 @@ Se abordaron las 3 áreas de deuda técnica identificadas tras el cierre de Fase
 
 ### Pendiente
 
-1. Verificación visual manual en navegador real (dark/light/responsive/focus/copy).
+1. Verificación visual manual en navegador real (dark/light/responsive/focus/copy). Sigue abierta y requiere aprobación humana; el E2E Chromium H44 automatizado ya está cerrado con evidencia redacted.
 2. Resolver rate-limiting de Makcorps (429 en `/mapping`) para probar sweep real completo.
 
 ### Deudas futuras actualizadas

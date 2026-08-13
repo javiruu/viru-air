@@ -1,6 +1,6 @@
 # H26 — Reglas de alerta, baselines y deduplicación hotelera
 
-**Estado:** completa como contrato de evaluación determinista; implementación backend/frontend, migración de eventos, cooldown y QA pendientes  
+**Estado:** implementación local V1 cerrada con límites explícitos; quedan fuera del cierre los gates avanzados de provider/freshness, scheduler, inbox/delivery y QA visual/manual
 **Fecha:** 2026-08-05  
 **Área:** backend / producto / DB / frontend / privacidad / QA / observabilidad  
 **Fuente de verdad:** sí para la semántica de reglas, baselines, eventos, cooldown y deduplicación de alertas hoteleras  
@@ -25,7 +25,7 @@ H26 define:
 9. metadatos auditables y reason codes;
 10. compatibilidad V1 y envelope/event ledger V2.
 
-H26 no implementa por sí misma el inbox de usuario, email/push, scheduler, provider gateway, deeplinks ni lifecycle completo. H27 consume los eventos ya validados; H28 decide delivery; H29 gobierna pausa, expiración y borrado.
+H26 no implementa por sí misma el inbox de usuario, canales externos, scheduler, provider gateway, deeplinks ni lifecycle completo. H27 consume los eventos ya validados; H28 decide delivery; H29 gobierna pausa, expiración y borrado.
 
 ## 2. Estado actual comprobable
 
@@ -42,6 +42,10 @@ rule_type
 threshold_amount nullable
 threshold_percent nullable
 compare_against
+cooldown_minutes
+evaluation_state
+last_fired_at nullable
+last_event_fingerprint nullable
 is_active
 ```
 
@@ -57,9 +61,9 @@ availability_returned
 parity_break
 ```
 
-Los schemas validan combinaciones básicas de umbral y `compare_against` (`snapshot_previous` o `initial_price`), pero el servicio actual no valida todavía que `tracked_offer_id` pertenezca al usuario autenticado ni que corresponda al `hotel_id` de la regla. H26 lo marca como gap de ownership/coherencia bloqueante.
+Los schemas validan combinaciones básicas de umbral y `compare_against` (`snapshot_previous` o `initial_price`). El servicio valida que `tracked_offer_id` pertenezca al usuario autenticado y que corresponda al `hotel_id` de la regla; este gate de ownership/coherencia está cerrado y cubierto por integración.
 
-Además, `price_below`/`price_above` permiten `threshold_percent` en schema y UI, pero la evaluación V1 de reglas trackeadas solo compara `threshold_amount`; una regla porcentual absoluta puede aceptarse y después no producir el resultado esperado. Debe corregirse o rechazarse explícitamente durante H26.
+`price_below`/`price_above` aceptan `threshold_amount` o `threshold_percent` en schema/UI. Para reglas trackeadas, el evaluador aplica ambos tipos contra el baseline explícito (`snapshot_previous` o `initial_price`) y cuenta con regresiones unitarias para bajada/subida porcentual.
 
 La UI permite crear reglas desde el hotel seleccionado y gestionar activación/eliminación, pero no presenta todavía identidad de oferta, snapshot baseline, estado de cooldown, razón estructurada ni evidencia comparable.
 
@@ -71,10 +75,11 @@ La UI permite crear reglas desde el hotel seleccionado y gestionar activación/e
 - para reglas con tracking consulta snapshots de la oferta;
 - para reglas sin tracking usa rates generales del hotel como fallback legacy;
 - compara contra el último snapshot o `initial_price` según la regla;
-- puede emitir un `HotelAlertEvent` en cada evaluación que siga cumpliendo la condición;
-- en `price_below`/`price_above` trackeados solo usa `threshold_amount`; no implementa todavía la variante porcentual admitida por schema/UI;
-- no exige de forma completa freshness, condiciones, semántica de fees o comparabilidad H10/H19;
-- no tiene cooldown persistente ni dedupe por fingerprint de evento.
+- aplica `clear → fired`, `fired → fired` suprimido y rearme al limpiar la condición;
+- en `price_below`/`price_above` trackeados aplica `threshold_amount` o `threshold_percent` contra el baseline configurado;
+- exige comparabilidad de estancia, ocupación, moneda y condiciones para snapshots trackeados;
+- persiste cooldown, fingerprint y metadata de snapshots/razón en cada evento nuevo;
+- los gates externos de freshness H25/provider y la semántica completa de fees H19 siguen fuera de esta migración local.
 
 Los eventos pueden contener:
 
@@ -97,9 +102,9 @@ Este comportamiento no es apto para una bandeja privada: dos usuarios que sigan 
 
 Además, el sweep V1 puede convertir un error del provider dirigido en `provider_rates=[]`, tomar un snapshot general y actualizar `current_price`; un evento nacido de ese fallback no es elegible. H26 no debe deduplicar un evento inválido: debe impedir su creación.
 
-### 2.4. Dedupe inexistente o insuficiente en V1
+### 2.4. Dedupe y cooldown implementados en V1
 
-La tabla `HotelAlertEvent` no tiene actualmente:
+La tabla `HotelAlertEvent` conserva ahora metadata nullable para compatibilidad histórica:
 
 ```text
 event_fingerprint
@@ -109,11 +114,11 @@ baseline_snapshot_id
 comparability_key
 reason_code
 eligibility_status
+rule_version
 cooldown_until
-transition_key
 ```
 
-Por tanto, el sistema no puede demostrar de forma robusta que dos eventos sean el mismo cambio, que un evento sea una transición nueva o que se haya respetado un cooldown. La existencia de un `provider_run_id` no sustituye a una identidad de dedupe.
+Los eventos nuevos llevan fingerprint único, razón y estado de elegibilidad. Las observaciones históricas del sweep sin regla se conservan para trazabilidad con `not_evaluable` y no se exponen en el listado privado de alertas. La existencia de un `provider_run_id` sigue sin sustituir a la identidad de dedupe; por eso el fingerprint se persiste con índice único.
 
 ## 3. Separación de superficies
 
@@ -488,7 +493,7 @@ No mostrar “bajada” si el baseline no es comparable. No usar color como úni
 | H19 | elegibilidad de importe, fees, moneda y semántica total |
 | H23-H25 | oferta, snapshots, baselines, freshness, confidence y reason codes |
 | H27 | inbox privado, read-state, deep links y cuarentena de eventos legacy |
-| H28 | email/push, plantillas, preferencias y delivery deduplicado |
+| H28 | in-app, plantillas, preferencias y delivery deduplicado |
 | H29 | pausa, expiración, edición, borrado y retención de reglas/eventos |
 | H31-H34 | UX de reglas/eventos, copy, responsive, i18n y accesibilidad |
 | H36 | locks, índices, coste y concurrencia |
@@ -552,4 +557,4 @@ H26 puede considerarse implementada cuando:
 - H27 puede consumir eventos con ownership inequívoco;
 - observabilidad mide fired, suppressed, not_evaluable, invalid, dedupe y latencia.
 
-**Resultado H26:** contrato aprobado. La implementación V1 actual valida tipos y umbrales básicos, pero no se declara motor determinista, cooldown persistente, dedupe seguro ni ownership completo de eventos hasta cerrar H11/H12/H23-H25/H27-H29/H36/H40-H41.
+**Resultado H26:** el motor local de evaluación determinista, cooldown, rearmado, fingerprint, comparabilidad básica, metadata auditable de `initial_price`, tolerancia a carreras de unicidad y separación de observaciones legacy está implementado y cubierto por regresiones. Permanecen explícitamente fuera de este cierre: freshness avanzada H25, total/fees H19, scheduler/provider real, inbox/delivery H27-H28, lifecycle H29, concurrencia de scheduler H36 y QA visual/manual H40-H41.

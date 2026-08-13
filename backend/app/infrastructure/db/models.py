@@ -1,5 +1,5 @@
 from datetime import date as date_type, datetime
-from typing import NotRequired, Optional, TypedDict
+from typing import Any, NotRequired, Optional, TypedDict
 
 from app.core.time import utc_now_naive
 from uuid import uuid4
@@ -13,12 +13,14 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    BigInteger,
     Numeric,
     String,
     Text,
     UniqueConstraint,
+    text,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.domain.vocabulary import DELIVERY_STATUS_QUEUED, WATCH_STATUS_ACTIVE
 from app.infrastructure.db.session import Base
@@ -611,11 +613,39 @@ class HotelProviderAlias(Base):
     confidence_score: Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True)
 
 
+class HotelStayOffer(Base):
+    __tablename__ = "hotel_stay_offer"
+    __table_args__ = (
+        UniqueConstraint(
+            "provider",
+            "provider_hotel_id",
+            "stay_query_fingerprint",
+            "offer_fingerprint",
+            name="uq_hotel_stay_offer_identity",
+        ),
+        Index("ix_hotel_stay_offer_hotel_provider", "canonical_hotel_id", "provider"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    canonical_hotel_id: Mapped[str] = mapped_column(ForeignKey("hotel_property.id"), index=True)
+    provider: Mapped[str] = mapped_column(String(40), index=True)
+    provider_hotel_id: Mapped[str] = mapped_column(String(120))
+    fingerprint_version: Mapped[str] = mapped_column(String(24), default="hotel-stay-v2")
+    stay_query_fingerprint: Mapped[str] = mapped_column(String(64), index=True)
+    offer_fingerprint: Mapped[str] = mapped_column(String(64), index=True)
+    canonical_query_json: Mapped[str] = mapped_column(Text)
+    conditions_completeness: Mapped[str] = mapped_column(String(16), default="unknown")
+    fee_semantics: Mapped[str] = mapped_column(String(16), default="unknown")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
+
+
 class HotelRateSnapshot(Base):
     __tablename__ = "hotel_rate_snapshot"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     hotel_id: Mapped[str] = mapped_column(ForeignKey("hotel_property.id"), index=True)
+    stay_offer_id: Mapped[str | None] = mapped_column(ForeignKey("hotel_stay_offer.id"), nullable=True, index=True)
     tracked_offer_id: Mapped[str | None] = mapped_column(ForeignKey("hotel_tracked_offer.id"), nullable=True, index=True)
     provider_run_id: Mapped[str | None] = mapped_column(ForeignKey("hotel_provider_run.id"), nullable=True, index=True)
     provider: Mapped[str] = mapped_column(String(40), index=True)
@@ -630,6 +660,30 @@ class HotelRateSnapshot(Base):
     availability_status: Mapped[str] = mapped_column(String(20), default="available")
     deep_link: Mapped[str | None] = mapped_column(String(500), nullable=True)
     collected_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, index=True)
+    observed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    stay_query_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    offer_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    snapshot_outcome: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    price_semantics: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    amount_base: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    amount_total: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    fees_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    conditions_completeness: Mapped[str | None] = mapped_column(String(16), nullable=True)
+
+    @validates("deep_link")
+    def _sanitize_deep_link(
+        self,
+        _key: str,
+        value: str | None,
+    ) -> str | None:
+        # Enforce the same deny-by-default boundary for every ORM write,
+        # including imports/admin scripts that bypass the hotel service.
+        from app.hotels.partner_links import sanitize_hotel_deep_link
+
+        return sanitize_hotel_deep_link(
+            value,
+            provider=getattr(self, "provider", None),
+        )
 
 
 class HotelWatchlistItem(Base):
@@ -677,6 +731,10 @@ class HotelAlertRule(Base):
     threshold_amount: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
     threshold_percent: Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True)
     compare_against: Mapped[str] = mapped_column(String(20), default="snapshot_previous")
+    cooldown_minutes: Mapped[int] = mapped_column(Integer, default=60)
+    evaluation_state: Mapped[str] = mapped_column(String(16), default="clear")
+    last_fired_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_event_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
@@ -685,11 +743,202 @@ class HotelProviderRun(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     provider: Mapped[str] = mapped_column(String(40), index=True)
+    correlation_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    client_event_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    execution_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     started_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="running")
     items_processed: Mapped[int] = mapped_column(Integer, default=0)
     error_message: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    tracked_outcomes: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    latency_aggregates: Mapped[list["HotelProviderLatencyAggregate"]] = relationship(
+        back_populates="provider_run",
+        cascade="all, delete-orphan",
+    )
+
+
+class HotelProviderLatencyAggregate(Base):
+    __tablename__ = "hotel_provider_latency_aggregate"
+    __table_args__ = (
+        UniqueConstraint(
+            "provider_run_id",
+            "provider",
+            "operation",
+            "outcome",
+            "error_code",
+            name="uq_hotel_provider_latency_aggregate_key",
+        ),
+        Index("ix_hotel_provider_latency_aggregate_run", "provider_run_id"),
+        Index(
+            "ix_hotel_provider_latency_aggregate_provider_operation_created",
+            "provider",
+            "operation",
+            "created_at",
+        ),
+        CheckConstraint("sample_count >= 0", name="ck_hotel_provider_latency_sample_count_nonnegative"),
+        CheckConstraint(
+            "total_duration_ms >= 0",
+            name="ck_hotel_provider_latency_total_duration_nonnegative",
+        ),
+        CheckConstraint(
+            "min_duration_ms >= 0",
+            name="ck_hotel_provider_latency_min_duration_nonnegative",
+        ),
+        CheckConstraint(
+            "max_duration_ms >= 0",
+            name="ck_hotel_provider_latency_max_duration_nonnegative",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    provider_run_id: Mapped[str] = mapped_column(
+        ForeignKey("hotel_provider_run.id", ondelete="CASCADE"),
+    )
+    provider: Mapped[str] = mapped_column(String(40))
+    operation: Mapped[str] = mapped_column(String(40))
+    outcome: Mapped[str] = mapped_column(String(24))
+    # ``none`` is the storage sentinel for the nullable in-memory error code;
+    # keeping this dimension non-null makes the cross-dialect key deterministic.
+    error_code: Mapped[str] = mapped_column(String(32))
+    sample_count: Mapped[int] = mapped_column(Integer, default=0)
+    total_duration_ms: Mapped[int] = mapped_column(BigInteger, default=0)
+    min_duration_ms: Mapped[int] = mapped_column(Integer, default=0)
+    max_duration_ms: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=utc_now_naive,
+        onupdate=utc_now_naive,
+    )
+
+    provider_run: Mapped[HotelProviderRun] = relationship(back_populates="latency_aggregates")
+
+
+class HotelDailyMetric(Base):
+    __tablename__ = "hotel_daily_metric"
+    __table_args__ = (
+        UniqueConstraint(
+            "metric_date",
+            "metric_name",
+            "provider",
+            "outcome",
+            name="uq_hotel_daily_metric_key",
+        ),
+        Index("ix_hotel_daily_metric_date", "metric_date"),
+        Index("ix_hotel_daily_metric_name_date", "metric_name", "metric_date"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    metric_date: Mapped[date_type] = mapped_column(Date)
+    metric_name: Mapped[str] = mapped_column(String(32))
+    provider: Mapped[str] = mapped_column(String(40))
+    outcome: Mapped[str] = mapped_column(String(24))
+    count: Mapped[int] = mapped_column(Integer, default=0)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
+
+
+class HotelNotificationDelivery(Base):
+    __tablename__ = "hotel_notification_delivery"
+    __table_args__ = (
+        UniqueConstraint("idempotency_key", name="uq_hotel_notification_delivery_idempotency"),
+        Index("ix_hotel_notification_delivery_queue", "status", "next_attempt_at", "created_at"),
+        Index("ix_hotel_notification_delivery_recipient", "recipient_user_id", "created_at"),
+        Index("ix_hotel_notification_delivery_source", "source_event_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    source_event_id: Mapped[str] = mapped_column(ForeignKey("hotel_alert_event.id", ondelete="CASCADE"))
+    recipient_user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    channel: Mapped[str] = mapped_column(String(20), default="in_app")
+    template_version: Mapped[str] = mapped_column(String(32), default="hotel-alert-v1")
+    idempotency_key: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(24), default="queued")
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_error: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    error_class: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
+
+
+class HotelSweepLease(Base):
+    __tablename__ = "hotel_sweep_lease"
+    __table_args__ = (
+        Index("ix_hotel_sweep_lease_status_expires", "status", "lease_expires_at"),
+        Index("ix_hotel_sweep_lease_token", "lock_token", unique=True),
+    )
+
+    fingerprint: Mapped[str] = mapped_column(String(64), primary_key=True)
+    status: Mapped[str] = mapped_column(String(16), default="queued")
+    lock_token: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    lock_acquired_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    attempt_count: Mapped[int] = mapped_column(Integer, default=0)
+    last_provider_run_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    last_error_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
+
+
+class HotelProviderCircuit(Base):
+    __tablename__ = "hotel_provider_circuit"
+    __table_args__ = (
+        UniqueConstraint("provider", "operation", name="uq_hotel_provider_circuit_provider_operation"),
+        Index("ix_hotel_provider_circuit_status_probe", "status", "next_probe_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    provider: Mapped[str] = mapped_column(String(40), index=True)
+    operation: Mapped[str] = mapped_column(String(40))
+    status: Mapped[str] = mapped_column(String(16), default="closed")
+    failure_threshold: Mapped[int] = mapped_column(Integer, default=3)
+    cooldown_seconds: Mapped[int] = mapped_column(Integer, default=300)
+    consecutive_failures: Mapped[int] = mapped_column(Integer, default=0)
+    state_version: Mapped[int] = mapped_column(Integer, default=0)
+    opened_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    next_probe_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    probe_token: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    probe_expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_error_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
+
+
+class HotelProviderBudgetReservation(Base):
+    __tablename__ = "hotel_provider_budget_reservation"
+    __table_args__ = (
+        Index("ix_hotel_provider_budget_reservation_budget", "budget_id"),
+        Index("ix_hotel_provider_budget_reservation_status", "status"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    budget_id: Mapped[str] = mapped_column(ForeignKey("hotel_provider_budget.id", ondelete="CASCADE"))
+    units: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(16), default="reserved")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
+
+
+class HotelProviderBudget(Base):
+    __tablename__ = "hotel_provider_budget"
+    __table_args__ = (
+        UniqueConstraint("provider", "operation", "window_key", name="uq_hotel_provider_budget_window"),
+        Index("ix_hotel_provider_budget_operation", "operation"),
+        Index("ix_hotel_provider_budget_provider_operation", "provider", "operation"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    provider: Mapped[str] = mapped_column(String(40), index=True)
+    operation: Mapped[str] = mapped_column(String(40))
+    window_key: Mapped[str] = mapped_column(String(20))
+    hard_limit: Mapped[int] = mapped_column(Integer, default=0)
+    units_reserved: Mapped[int] = mapped_column(Integer, default=0)
+    units_used: Mapped[int] = mapped_column(Integer, default=0)
+    units_released: Mapped[int] = mapped_column(Integer, default=0)
+    window_expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    source: Mapped[str] = mapped_column(String(24), default="local_config")
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
 
 
 class HotelTrackedOffer(Base):
@@ -697,7 +946,20 @@ class HotelTrackedOffer(Base):
     __table_args__ = (
         UniqueConstraint(
             "user_id", "hotel_id", "check_in", "check_out", "guests", "provider",
+            "room_label", "meal_plan", "cancellation_policy", "currency", "offer_fingerprint",
             name="uq_hotel_tracked_offer_identity",
+        ),
+        Index(
+            "uq_hotel_tracked_offer_legacy_identity",
+            "user_id",
+            "hotel_id",
+            "check_in",
+            "check_out",
+            "guests",
+            "provider",
+            unique=True,
+            sqlite_where=text("offer_fingerprint IS NULL AND check_in IS NOT NULL AND check_out IS NOT NULL"),
+            postgresql_where=text("offer_fingerprint IS NULL AND check_in IS NOT NULL AND check_out IS NOT NULL"),
         ),
     )
 
@@ -716,13 +978,78 @@ class HotelTrackedOffer(Base):
     meal_plan: Mapped[str | None] = mapped_column(String(80), nullable=True)
     cancellation_policy: Mapped[str | None] = mapped_column(String(120), nullable=True)
     provider: Mapped[str] = mapped_column(String(40))
+    offer_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     initial_price: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
     current_price: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
     target_price: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
     currency: Mapped[str] = mapped_column(String(3), default="EUR")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    lifecycle_state: Mapped[str] = mapped_column(String(24), default="active", index=True)
+    lifecycle_version: Mapped[int] = mapped_column(Integer, default=1)
+    lifecycle_changed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
+
+
+class HotelTrackedOfferLifecycleEvent(Base):
+    __tablename__ = "hotel_tracked_offer_lifecycle_event"
+    __table_args__ = (
+        UniqueConstraint("tracked_offer_id", "state_version", name="uq_hotel_tracking_lifecycle_version"),
+        Index("ix_hotel_tracking_lifecycle_offer_created", "tracked_offer_id", "created_at"),
+        Index("ix_hotel_tracking_lifecycle_user_created", "user_id", "created_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    tracked_offer_id: Mapped[str] = mapped_column(
+        ForeignKey("hotel_tracked_offer.id", ondelete="CASCADE"),
+    )
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    from_state: Mapped[str] = mapped_column(String(24))
+    to_state: Mapped[str] = mapped_column(String(24))
+    action: Mapped[str] = mapped_column(String(24))
+    source: Mapped[str] = mapped_column(String(32))
+    state_version: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+
+
+class HotelUserStayWatch(Base):
+    __tablename__ = "hotel_user_stay_watch"
+    __table_args__ = (
+        UniqueConstraint("user_id", "stay_offer_id", name="uq_hotel_user_stay_watch_identity"),
+        UniqueConstraint("legacy_tracked_offer_id", name="uq_hotel_user_stay_watch_legacy"),
+        Index("ix_hotel_user_stay_watch_user_status_updated", "user_id", "status", "updated_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    stay_offer_id: Mapped[str] = mapped_column(ForeignKey("hotel_stay_offer.id"), index=True)
+    legacy_tracked_offer_id: Mapped[str | None] = mapped_column(
+        ForeignKey("hotel_tracked_offer.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    status: Mapped[str] = mapped_column(String(16), default="active", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
+
+
+class HotelSavedSearch(Base):
+    __tablename__ = "hotel_saved_search"
+    __table_args__ = (
+        UniqueConstraint("user_id", "fingerprint", name="uq_hotel_saved_search_user_fingerprint"),
+        Index("ix_hotel_saved_search_user_status_updated", "user_id", "status", "updated_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    schema_version: Mapped[str] = mapped_column(String(32), default="hotel-search-v1")
+    fingerprint: Mapped[str] = mapped_column(String(64))
+    canonical_query_json: Mapped[str] = mapped_column(Text)
+    label: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    status: Mapped[str] = mapped_column(String(16), default="active", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
 class QuickSearchCacheEntry(Base):
@@ -1046,13 +1373,33 @@ class RevalidationJob(Base):
 
 class HotelAlertEvent(Base):
     __tablename__ = "hotel_alert_event"
+    __table_args__ = (
+        Index("uq_hotel_alert_event_fingerprint", "event_fingerprint", unique=True),
+        Index("ix_hotel_alert_event_rule_created", "rule_id", "created_at"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    # Nullable for compatibility with historical sweep events created before
+    # explicit event ownership existed. New events must always populate it.
+    user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     rule_id: Mapped[str | None] = mapped_column(ForeignKey("hotel_alert_rule.id"), nullable=True, index=True)
     hotel_id: Mapped[str] = mapped_column(ForeignKey("hotel_property.id"), index=True)
     provider_run_id: Mapped[str | None] = mapped_column(ForeignKey("hotel_provider_run.id"), nullable=True, index=True)
     event_type: Mapped[str] = mapped_column(String(30))
     message: Mapped[str] = mapped_column(Text)
     trigger_value: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    event_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    snapshot_before_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    snapshot_after_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    baseline_snapshot_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    baseline_source: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    baseline_amount: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    baseline_currency: Mapped[str | None] = mapped_column(String(3), nullable=True)
+    comparability_key: Mapped[str | None] = mapped_column(String(180), nullable=True)
+    reason_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    eligibility_status: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    rule_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    evaluation_state: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    cooldown_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, index=True)
 

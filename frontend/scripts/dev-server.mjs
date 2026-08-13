@@ -66,6 +66,12 @@ function parsePort(value) {
   return Number.isInteger(parsed) && parsed > 0 && parsed <= 65_535 ? parsed : null;
 }
 
+export function resolveDevDistDir(environment = process.env, port = DEFAULT_PORT) {
+  const configuredDir = environment.NEXT_DIST_DIR?.trim();
+  if (configuredDir) return configuredDir;
+  return port === DEFAULT_PORT ? ".next" : `.next-dev-${port}`;
+}
+
 export function resolveDevPort(commandArguments) {
   let port = DEFAULT_PORT;
   for (let index = 0; index < commandArguments.length; index += 1) {
@@ -96,11 +102,12 @@ export function buildNextDevArguments(commandArguments) {
     forwardedArguments.push(argument);
   }
 
+  const port = resolveDevPort(commandArguments);
   return [
     "dev",
     "--turbopack",
     "-p",
-    String(resolveDevPort(commandArguments)),
+    String(port),
     ...forwardedArguments,
   ];
 }
@@ -210,11 +217,15 @@ async function runDevelopmentServer(commandArguments) {
   const nextCli = require.resolve("next/dist/bin/next");
   const port = resolveDevPort(commandArguments);
   const origin = `http://127.0.0.1:${port}`;
+  const environment = {
+    ...process.env,
+    NEXT_DIST_DIR: resolveDevDistDir(process.env, port),
+  };
   const abortController = new AbortController();
   const nextProcess = spawn(
     process.execPath,
     [nextCli, ...buildNextDevArguments(commandArguments)],
-    { env: process.env, stdio: "inherit" },
+    { env: environment, stdio: "inherit" },
   );
 
   if (isRouteWarmupEnabled(process.env)) {

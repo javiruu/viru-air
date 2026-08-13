@@ -1,6 +1,6 @@
 # H40 — QA visual, manual y cross-browser de `/hoteles`
 
-**Estado:** COMPLETA como contrato de QA; rerun browser, evidencia visual recuperable y aprobación humana pendientes  
+**Estado:** EN QA; smoke browser Chromium actual repetido con evidencia vigente en `docs/qa/evidence/hotels-h40-rerun-audit-current/`; cross-browser, revisión humana y cierre visual completo siguen pendientes
 **Fecha:** 2026-08-05  
 **Área:** frontend / QA / accesibilidad / responsive / cross-browser / producto  
 **Fuente de verdad:** sí para la matriz visual, browser, manual y criterios de cierre de H40  
@@ -77,12 +77,12 @@ La documentación histórica referencia un report.json de la fase visual 57 y ca
 |---|---:|---|---|
 | `frontend/tests/hotels-f56-audit.test.ts` | sí | estructura de ruta/componentes, wiring y algunos estados | render browser, CSS real, red, foco, overflow o consola |
 | `frontend/tests/hotels-signal-assessment.test.ts` | sí | clasificación de señales insuficientes/limitadas/comparables | flujo completo, visual, provider real o recuperación |
-| `frontend/scripts/qa_hotels_phase57.mjs` | sí | runner reutilizable para el flujo histórico | pase actual sin ejecutarlo y sin artefactos presentes |
+| `frontend/scripts/qa_hotels_phase57.mjs` | sí | runner actual con `H40_OUTPUT_DIR`, metadata Chromium/locale, redaction de URLs y escenarios Mock/local | no sustituye cross-browser ni revisión humana; no prueba todos los estados F5 |
 | `docs/qa/hotels-visual-qa.md` | sí | decisiones/correcciones y relato de cierre histórico | evidencia binaria/capturas actuales |
 | `docs/qa/hotels-pending-closeout.md` | sí | checklist y comandos históricos | no sustituye un rerun con el código actual |
-| browser-use de esta auditoría | sin evidencia runtime nueva | no se pudo registrar un pase browser actual | no autoriza declarar QA actual cerrado |
+| rerun Chromium 2026-08-10 | sí | cuatro perfiles desktop/mobile × dark/light; resultados, tracking, favorito, alerta y comp set visibles; sin overflow ni errores de consola; evidencia en `docs/qa/evidence/hotels-h40-rerun-audit-current/report.json` | solo Chromium automatizado con locale ES; no autoriza declarar QA visual/cross-browser cerrado |
 
-**Estado de lanzamiento:** H40 no declara el QA visual actual como pasado hasta recuperar o repetir evidencia browser con el código vigente.
+**Estado de lanzamiento:** el smoke funcional Chromium actual pasa y queda trazado contra una instancia Next fresca (cuatro perfiles, locale ES), pero H40 no declara el QA visual/cross-browser completo como pasado hasta revisión humana y navegador adicional.
 
 ---
 
@@ -377,4 +377,4 @@ Hasta cerrar los gates, no puede afirmarse que `/hoteles`:
 
 H40 sí autoriza una afirmación limitada: existe una matriz reproducible para volver a verificar la ruta y separar evidencia histórica, automatizada, browser y humana.
 
-**Resultado H40:** contrato QA aprobado. Existe un runner visual histórico reutilizable y una base documental sólida, pero el cierre vigente requiere recuperar artefactos o repetir el flujo con el código actual y obtener aprobación humana.
+**Resultado H40:** smoke browser Chromium actual aprobado automáticamente el 2026-08-10 en cuatro perfiles y evidencia vigente guardada en `docs/qa/evidence/hotels-h40-rerun-audit-current/`; el cierre H40 completo sigue pendiente de revisión humana, navegador adicional, estados F5 y aprobación de release.

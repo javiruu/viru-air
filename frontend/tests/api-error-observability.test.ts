@@ -14,6 +14,7 @@ test("apiFetchWithStatus parses top-level error envelope and correlation id", as
         message: "Quick-search request rejected by backend validation.",
         details: [{ reason: "unknown_seed_iata:TSF", query_trace_id: "qs_debug_123" }],
         correlation_id: "corr-debug-123",
+        client_event_id: "intent-debug-123",
       }),
       {
         status: 400,
@@ -38,6 +39,7 @@ test("apiFetchWithStatus parses top-level error envelope and correlation id", as
     assert.equal(result.error.code, "quick_search_invalid_request");
     assert.equal(result.error.message, "Quick-search request rejected by backend validation.");
     assert.equal(result.error.correlation_id, "corr-debug-123");
+    assert.equal(result.error.client_event_id, "intent-debug-123");
     assert.deepEqual(result.error.details, [{ reason: "unknown_seed_iata:TSF", query_trace_id: "qs_debug_123" }]);
   } finally {
     globalThis.fetch = originalFetch;

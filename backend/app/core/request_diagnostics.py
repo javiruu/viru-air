@@ -8,7 +8,7 @@ from fastapi import Request
 from starlette.requests import ClientDisconnect
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from app.core.request_context import get_correlation_id
+from app.core.request_context import get_client_event_id, get_correlation_id
 
 type JsonValue = None | bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"]
 
@@ -91,6 +91,7 @@ class AccessLogMiddleware:
                 log_payload = {
                     "event": "http",
                     "correlation_id": get_correlation_id() or headers.get("x-correlation-id") or "-",
+                    "client_event_id": get_client_event_id(),
                     "method": scope.get("method"),
                     "path": scope.get("path"),
                     "status": status_code or 500,

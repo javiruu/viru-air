@@ -1,6 +1,6 @@
 # H11 — Migración compatible, backfill, índices y retención de datos hoteleros
 
-**Estado:** completa como contrato de migración; implementación, migración Alembic y backfill pendientes  
+**Estado:** contrato completo; expansión Alembic V2 y dual-write inicial opt-in implementados; backfill, dual-read y shadow compare pendientes
 **Fecha:** 2026-08-04  
 **Área:** DB / backend / datos / QA / operación  
 **Fuente de verdad:** sí para la evolución segura del modelo hotelero V1 hacia H10 mientras convivan los contratos legacy y canónico.
@@ -18,7 +18,7 @@ H11 define cómo introducir el modelo H10 sin perder `HotelTrackedOffer`, snapsh
 expand → backfill → dual-write → dual-read → validate → cutover → contract
 ```
 
-La fase no ejecuta una migración ni modifica las tablas actuales. No se borran columnas, no se cambia una unicidad existente y no se declara migrado ningún dato hasta completar los gates de QA y rollback.
+La migración `0057_hotel_canonical_stay_offer` implementa la expansión reversible: crea `hotel_stay_offer` y `hotel_user_stay_watch`, y añade campos V2 nullable a `hotel_rate_snapshot`. El flujo de creación V1 puede escribir el bridge V2 solo si están activos simultáneamente `HOTEL_CANONICAL_MODEL_ENABLED` y `HOTEL_CANONICAL_DUAL_WRITE_ENABLED`; ambos permanecen apagados por defecto. No elimina columnas V1 ni declara migrado ningún dato histórico.
 
 ### Decisión H11
 
@@ -66,7 +66,7 @@ Los nombres finales de tablas/columnas y la decisión de reutilizar `Revalidatio
 
 ### Fase A — Expandir schema, sin cambiar lecturas
 
-Añadir de forma nullable/aditiva, según el diseño aprobado:
+Implementado de forma nullable/aditiva:
 
 ```text
 stay_offer / canonical offer table
@@ -79,7 +79,7 @@ HotelAlertRule.user_stay_watch_id nullable
 HotelTrackedOffer.canonical_query_id nullable, si aporta compatibilidad
 ```
 
-La expansión no debe:
+La expansión actual no debe:
 
 - exigir NOT NULL sobre filas existentes;
 - eliminar `tracked_offer_id` ni `hotel_id` legacy;
@@ -157,7 +157,7 @@ HOTEL_CANONICAL_BACKFILL_ENABLED=false
 HOTEL_CANONICAL_SHADOW_COMPARE_ENABLED=false
 ```
 
-Los nombres son contractuales/provisionales; H43 debe consolidarlos con la convención real antes de implementar.
+La implementación actual exige ambos flags para escribir. Dual-read, backfill y shadow compare siguen reservados y apagados.
 
 ### 4.2. Escritura de una nueva watch
 
@@ -173,6 +173,8 @@ Una creación V1/V2 debe:
 8. confirmar ambas representaciones o hacer rollback de ambas.
 
 No aceptar “éxito” si solo se escribió V2 y un caller V1 seguirá leyendo una ausencia; durante la ventana de dual-write la operación es atómica o queda en estado explícito de reparación.
+
+La primera activación cubre únicamente `create_tracked_offer`: conserva la escritura V1, crea o reutiliza `HotelStayOffer`, mantiene la ownership en `HotelUserStayWatch` y enlaza el snapshot inicial si existe. Si faltan alias confirmados, la operación falla antes del commit; si hay texto legacy libre de habitación, régimen o cancelación, V1 se conserva sin fabricar una identidad canónica ni enlazar el snapshot.
 
 ### 4.3. Escritura de snapshot
 

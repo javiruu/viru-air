@@ -1,6 +1,6 @@
 """Unit tests for hotel alert evaluation logic."""
 
-from datetime import date
+from datetime import date, datetime, timedelta
 
 import pytest
 from sqlalchemy import create_engine
@@ -11,13 +11,18 @@ from app.infrastructure.db.models import (
     HotelAlertRule,
     HotelProperty,
     HotelRateSnapshot,
+    HotelTrackedOffer,
+    HotelAlertEvent,
 )
 from app.services.hotels_service import evaluate_hotel_alerts, run_hotel_sweep
 
 
 @pytest.fixture(autouse=True)
 def _enable_hotels(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("APP_ENV", "local")
+    monkeypatch.setenv("HOTEL_PROFILE", "local_demo")
     monkeypatch.setenv("HOTEL_FEATURE_ENABLED", "true")
+    monkeypatch.setenv("HOTEL_SWEEP_ENABLED", "true")
     monkeypatch.setenv("HOTEL_PROVIDER", "mock")
 
 
@@ -47,13 +52,25 @@ def _make_hotel(db: Session, **kwargs) -> HotelProperty:
     return hotel
 
 
-def _make_rule(db: Session, *, user_id: str, hotel_id: str, rule_type: str, threshold_amount=None, threshold_percent=None) -> HotelAlertRule:
+def _make_rule(
+    db: Session,
+    *,
+    user_id: str,
+    hotel_id: str,
+    rule_type: str,
+    threshold_amount=None,
+    threshold_percent=None,
+    tracked_offer_id: str | None = None,
+    compare_against: str = "snapshot_previous",
+) -> HotelAlertRule:
     rule = HotelAlertRule(
         user_id=user_id,
         hotel_id=hotel_id,
         rule_type=rule_type,
         threshold_amount=threshold_amount,
         threshold_percent=threshold_percent,
+        tracked_offer_id=tracked_offer_id,
+        compare_against=compare_against,
         is_active=True,
     )
     db.add(rule)
@@ -77,6 +94,247 @@ def _make_rate(db: Session, *, hotel_id: str, provider: str, amount: float, curr
 
 
 class TestEvaluateHotelAlerts:
+    def test_percentage_drop_can_compare_against_initial_price(self, db: Session):
+        hotel = _make_hotel(db)
+        offer = HotelTrackedOffer(
+            user_id="u-initial",
+            hotel_id=hotel.id,
+            provider="mock",
+            initial_price=200,
+            current_price=150,
+            currency="EUR",
+            is_active=True,
+        )
+        db.add(offer)
+        db.flush()
+        rule = _make_rule(
+            db,
+            user_id="u-initial",
+            hotel_id=hotel.id,
+            rule_type="percentage_drop",
+            threshold_percent=20,
+            tracked_offer_id=offer.id,
+            compare_against="initial_price",
+        )
+        _make_rate(db, hotel_id=hotel.id, provider="mock", amount=190)
+        latest = _make_rate(db, hotel_id=hotel.id, provider="mock", amount=150)
+        latest.tracked_offer_id = offer.id
+        previous = db.query(HotelRateSnapshot).filter(HotelRateSnapshot.id != latest.id).one()
+        previous.tracked_offer_id = offer.id
+        db.flush()
+
+        events = evaluate_hotel_alerts(db, provider_run_id="run-initial-price")
+
+        matching = [event for event in events if event.rule_id == rule.id and event.event_type == "percentage_drop"]
+        assert len(matching) == 1
+        assert matching[0].trigger_value == pytest.approx(25.0)
+
+    def test_tracked_price_below_percent_uses_snapshot_baseline(self, db: Session):
+        hotel = _make_hotel(db)
+        offer = HotelTrackedOffer(
+            user_id="u-price-below-percent",
+            hotel_id=hotel.id,
+            provider="mock",
+            initial_price=200,
+            current_price=150,
+            currency="EUR",
+            is_active=True,
+        )
+        db.add(offer)
+        db.flush()
+        rule = _make_rule(
+            db,
+            user_id="u-price-below-percent",
+            hotel_id=hotel.id,
+            rule_type="price_below",
+            threshold_percent=20,
+            tracked_offer_id=offer.id,
+            compare_against="initial_price",
+        )
+        previous = _make_rate(db, hotel_id=hotel.id, provider="mock", amount=190)
+        previous.tracked_offer_id = offer.id
+        previous.collected_at = datetime(2026, 7, 1, 12, 0, 0)
+        latest = _make_rate(db, hotel_id=hotel.id, provider="mock", amount=150)
+        latest.tracked_offer_id = offer.id
+        latest.collected_at = previous.collected_at + timedelta(minutes=1)
+        db.flush()
+
+        events = evaluate_hotel_alerts(db, provider_run_id="run-price-below-percent")
+
+        matching = [event for event in events if event.rule_id == rule.id and event.event_type == "price_below"]
+        assert len(matching) == 1
+        assert matching[0].trigger_value == 150
+
+    def test_tracked_price_above_percent_uses_snapshot_baseline(self, db: Session):
+        hotel = _make_hotel(db)
+        offer = HotelTrackedOffer(
+            user_id="u-price-above-percent",
+            hotel_id=hotel.id,
+            provider="mock",
+            initial_price=100,
+            current_price=125,
+            currency="EUR",
+            is_active=True,
+        )
+        db.add(offer)
+        db.flush()
+        rule = _make_rule(
+            db,
+            user_id="u-price-above-percent",
+            hotel_id=hotel.id,
+            rule_type="price_above",
+            threshold_percent=20,
+            tracked_offer_id=offer.id,
+            compare_against="initial_price",
+        )
+        previous = _make_rate(db, hotel_id=hotel.id, provider="mock", amount=110)
+        previous.tracked_offer_id = offer.id
+        previous.collected_at = datetime(2026, 7, 1, 12, 0, 0)
+        latest = _make_rate(db, hotel_id=hotel.id, provider="mock", amount=125)
+        latest.tracked_offer_id = offer.id
+        latest.collected_at = previous.collected_at + timedelta(minutes=1)
+        db.flush()
+
+        events = evaluate_hotel_alerts(db, provider_run_id="run-price-above-percent")
+
+        matching = [event for event in events if event.rule_id == rule.id and event.event_type == "price_above"]
+        assert len(matching) == 1
+        assert matching[0].trigger_value == 125
+
+    def test_tracked_price_below_percent_uses_previous_snapshot_by_default(self, db: Session):
+        hotel = _make_hotel(db)
+        offer = HotelTrackedOffer(
+            user_id="u-price-below-previous",
+            hotel_id=hotel.id,
+            provider="mock",
+            initial_price=300,
+            current_price=150,
+            currency="EUR",
+            is_active=True,
+        )
+        db.add(offer)
+        db.flush()
+        rule = _make_rule(
+            db,
+            user_id="u-price-below-previous",
+            hotel_id=hotel.id,
+            rule_type="price_below",
+            threshold_percent=20,
+            tracked_offer_id=offer.id,
+        )
+        previous = _make_rate(db, hotel_id=hotel.id, provider="mock", amount=200)
+        previous.tracked_offer_id = offer.id
+        previous.collected_at = datetime(2026, 7, 1, 12, 0, 0)
+        latest = _make_rate(db, hotel_id=hotel.id, provider="mock", amount=150)
+        latest.tracked_offer_id = offer.id
+        latest.collected_at = previous.collected_at + timedelta(minutes=1)
+        db.flush()
+
+        events = evaluate_hotel_alerts(db, provider_run_id="run-price-below-previous")
+
+        matching = [event for event in events if event.rule_id == rule.id and event.event_type == "price_below"]
+        assert len(matching) == 1
+        assert matching[0].trigger_value == 150
+
+    def test_condition_held_is_suppressed_and_rearms_after_clear(self, db: Session):
+        hotel = _make_hotel(db)
+        rule = _make_rule(db, user_id="u-dedupe", hotel_id=hotel.id, rule_type="price_below", threshold_amount=100)
+        first_rate = _make_rate(db, hotel_id=hotel.id, provider="p1", amount=80)
+        first_rate.collected_at = datetime(2026, 7, 1, 12, 0, 0)
+        db.flush()
+
+        first = evaluate_hotel_alerts(db, provider_run_id="run-dedupe-1")
+        assert len([event for event in first if event.rule_id == rule.id]) == 1
+        assert rule.evaluation_state == "fired"
+        assert first[0].event_fingerprint
+
+        second = evaluate_hotel_alerts(db, provider_run_id="run-dedupe-2")
+        assert len([event for event in second if event.rule_id == rule.id]) == 0
+        assert rule.evaluation_state == "suppressed"
+
+        # The legacy hotel-scope evaluator only knows current eligible rates;
+        # expire the previous observation before introducing the clear state.
+        first_rate.availability_status = "stale"
+        clear_rate = _make_rate(db, hotel_id=hotel.id, provider="p1", amount=120)
+        clear_rate.collected_at = datetime(2026, 7, 1, 12, 1, 0)
+        db.flush()
+        evaluate_hotel_alerts(db, provider_run_id="run-dedupe-clear")
+        assert rule.evaluation_state == "rearmed"
+
+        rearmed_rate = _make_rate(db, hotel_id=hotel.id, provider="p1", amount=75)
+        rearmed_rate.collected_at = datetime(2026, 7, 1, 12, 2, 0)
+        db.flush()
+        third = evaluate_hotel_alerts(db, provider_run_id="run-dedupe-3")
+        assert len([event for event in third if event.rule_id == rule.id]) == 1
+        assert db.query(HotelAlertEvent).filter(HotelAlertEvent.rule_id == rule.id).count() == 2
+
+    def test_initial_price_metadata_uses_offer_baseline_without_snapshot_identity(self, db: Session):
+        hotel = _make_hotel(db)
+        offer = HotelTrackedOffer(
+            user_id="u-baseline-meta",
+            hotel_id=hotel.id,
+            provider="mock",
+            initial_price=200,
+            current_price=150,
+            currency="EUR",
+            is_active=True,
+        )
+        db.add(offer)
+        db.flush()
+        rule = _make_rule(
+            db,
+            user_id="u-baseline-meta",
+            hotel_id=hotel.id,
+            rule_type="percentage_drop",
+            threshold_percent=20,
+            tracked_offer_id=offer.id,
+            compare_against="initial_price",
+        )
+        latest = _make_rate(db, hotel_id=hotel.id, provider="mock", amount=150)
+        latest.tracked_offer_id = offer.id
+        latest.collected_at = datetime(2026, 7, 1, 12, 1, 0)
+        db.flush()
+
+        events = evaluate_hotel_alerts(db, provider_run_id="run-baseline-meta")
+        event = next(event for event in events if event.rule_id == rule.id)
+        assert event.baseline_snapshot_id is None
+        assert event.baseline_source == "initial_price"
+        assert event.baseline_amount == pytest.approx(200)
+        assert event.baseline_currency == "EUR"
+
+    def test_stale_tracked_snapshot_is_not_a_comparable_baseline(self, db: Session):
+        hotel = _make_hotel(db)
+        offer = HotelTrackedOffer(
+            user_id="u-stale",
+            hotel_id=hotel.id,
+            provider="mock",
+            initial_price=200,
+            current_price=100,
+            currency="EUR",
+            is_active=True,
+        )
+        db.add(offer)
+        db.flush()
+        rule = _make_rule(
+            db,
+            user_id="u-stale",
+            hotel_id=hotel.id,
+            rule_type="percentage_drop",
+            threshold_percent=20,
+            tracked_offer_id=offer.id,
+        )
+        stale = _make_rate(db, hotel_id=hotel.id, provider="mock", amount=200)
+        stale.tracked_offer_id = offer.id
+        stale.availability_status = "stale"
+        stale.collected_at = datetime(2026, 7, 1, 12, 0, 0)
+        latest = _make_rate(db, hotel_id=hotel.id, provider="mock", amount=100)
+        latest.tracked_offer_id = offer.id
+        latest.collected_at = datetime(2026, 7, 1, 12, 1, 0)
+        db.flush()
+
+        events = evaluate_hotel_alerts(db, provider_run_id="run-stale")
+        assert [event for event in events if event.rule_id == rule.id] == []
+
     def test_price_below_threshold_amount_triggers(self, db: Session):
         hotel = _make_hotel(db)
         rule = _make_rule(db, user_id="u1", hotel_id=hotel.id, rule_type="price_below", threshold_amount=100)
@@ -175,6 +433,10 @@ class TestRunHotelSweep:
         assert provider_run.provider == "mock"
         assert provider_run.status == "completed"
         assert provider_run.finished_at is not None
+        assert provider_run.tracked_outcomes is not None
+        assert provider_run.tracked_outcomes["offers_scanned"] == 0
+        assert provider_run.tracked_outcomes["snapshots_created"] == 0
+        assert provider_run.status == "completed"
 
     def test_sweep_is_idempotent(self, db: Session):
         first = run_hotel_sweep(db, provider="mock")
@@ -182,3 +444,7 @@ class TestRunHotelSweep:
 
         assert first.status == "completed"
         assert second.status == "completed"
+        assert first.tracked_outcomes is not None
+        assert second.tracked_outcomes is not None
+        assert first.tracked_outcomes["provider_fetch_attempted"] == 0
+        assert second.tracked_outcomes["provider_fetch_attempted"] == 0

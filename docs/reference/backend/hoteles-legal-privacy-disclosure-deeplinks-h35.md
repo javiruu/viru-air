@@ -1,6 +1,6 @@
 # H35 — Legal, privacidad, disclosure y deeplinks hoteleros
 
-**Estado:** COMPLETA como contrato; implementación, revisión legal/security y QA de integración pendientes  
+**Estado:** COMPLETA como contrato; validación server-side deny-by-default y redaction hotelera implementadas; revisión legal/security, CTA/disclosure y QA de integración pendientes
 **Fecha:** 2026-08-05  
 **Área:** legal / privacidad / seguridad / backend / frontend / producto  
 **Fuente de verdad:** sí para el alcance y los criterios de cierre de H35  
@@ -55,7 +55,7 @@ H35 no decide por sí sola:
 |---|---|---|
 | Auth | Los endpoints hoteleros usan `get_current_user` en búsqueda, watchlist, alertas, eventos y tracked offers | Hay una base de autenticación; no sustituye una revisión de ownership por recurso y operación |
 | Ownership | El servicio filtra por `user_id` y comprueba `not_allowed` para varios recursos | Debe extenderse a cada evento, snapshot, deeplink y deep link interno |
-| `deep_link` | `HotelRateOut`/snapshots transportan `deep_link: string \| null`; el servicio copia el valor del rate más barato | Es dato externo no aprobado automáticamente; no tiene todavía contrato de allowlist hotelera |
+| `deep_link` | `HotelRateOut`/snapshots transportan `deep_link: string \| null`; las salidas y el límite ORM aplican el validador server-side | Deny-by-default; solo se expone/persiste un HTTPS con host/query allowlisted por configuración; el resto es `null` |
 | Inbox/deep links internos | H27 define reautorización, aislamiento y separación frente al partner externo | H27 es contrato; no equivale a que todos los paths estén implementados y verificados |
 | Policies | Existe una página índice de políticas (`docs/product/policies-page.md`) | Un índice general no prueba disclosure hotelero visible en el CTA |
 | Provider/geocoder | Existen adapters/configuración y contratos que contemplan provider externo | Cada servicio requiere términos, minimización, redaction, límites y aprobación propios |
@@ -64,9 +64,9 @@ H35 no decide por sí sola:
 
 ### 2.2. Gaps que H35 deja explícitos
 
-- No existe todavía una allowlist hotelera demostrada de esquemas, hosts, rutas y parámetros.
+- La allowlist server-side existe como configuración `HOTEL_DEEPLINK_ALLOWED_HOSTS`/`HOTEL_DEEPLINK_ALLOWED_QUERY_KEYS`, pero la revisión por provider, ruta y afiliación aún debe documentarse antes de activar CTA.
 - No debe copiarse una URL arbitraria de provider directamente a `href`, redirect o telemetría.
-- No está demostrado que una URL con API key, token, identificador de usuario o query sensible sea eliminada antes de persistirse o mostrarse.
+- Las escrituras ORM y las respuestas API eliminan URLs no aprobadas y parámetros sensibles; la revisión por provider, ruta y afiliación aún debe completarse antes de activar CTA.
 - No hay evidencia de validación contra open redirect, SSRF, hosts privados, DNS rebinding o redirects encadenados si se introduce un proxy servidor.
 - El disclosure de intermediación, precio variable y afiliación no está cerrado como copy visible ES/EN en la superficie hotelera.
 - Retención, exportación, hard-delete y cascadas de búsquedas, tracking, snapshots, eventos y logs siguen pendientes de decisión legal/operativa.
@@ -262,6 +262,12 @@ El retorno desde un partner no debe asumir que la reserva se completó. Si se of
 ---
 
 ## 7. Providers, geocoder y observabilidad
+
+### 7.1. RUM hotelero opt-in
+
+La primera instrumentación RUM de `/hoteles` es first-party, mínima y apagada por defecto. Solo se activa cuando `viru_hotels_rum_consent=granted` está presente en almacenamiento local; no se infiere consentimiento por crear tracking, iniciar sesión o abrir la página. El payload `hotel_rum_vitals` no contiene URL, query, email, token, user-agent crudo, IDs privados ni valores exactos: usa únicamente claves y buckets allowlisted, y el backend rechaza metadata extra o buckets incompatibles con la métrica. La evidencia lab intercepta el canal y no persiste telemetría de QA.
+
+Este mecanismo no fija por sí solo la base legal definitiva ni sustituye una UI/política de consentimiento aprobada. Antes de activarlo para tráfico real deben definirse owner, finalidad, revocación, retención, segmentación permitida y revisión Legal; hasta entonces el field/RUM se considera no concluyente.
 
 Antes de activar cualquier provider o geocoder externo, el owner debe adjuntar:
 

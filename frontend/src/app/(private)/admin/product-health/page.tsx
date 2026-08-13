@@ -97,7 +97,10 @@ export default function ProductHealthPage() {
           <h1>Product Health</h1>
           <p className="panel-note">Observabilidad de uso, errores, rendimiento y Fare Memory (solo admin).</p>
         </div>
-        <Link href="/admin" className="btn-ghost">Volver a Admin</Link>
+        <div className="hotel-observability-hero-actions">
+          <Link href="/admin/hotels-observability" className="btn-secondary">{t("admin.hotelObservability.title")}</Link>
+          <Link href="/admin" className="btn-ghost">{t("admin.hotelObservability.back")}</Link>
+        </div>
       </section>
 
       {error ? <div className="notice notice-error">{error}</div> : null}

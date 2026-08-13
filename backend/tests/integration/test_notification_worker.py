@@ -11,13 +11,21 @@ from sqlalchemy.orm import sessionmaker
 from app.api.deps import get_db
 from app.core.time import utc_now_naive
 from app.domain.entities import ProviderFlight
-from app.infrastructure.db.models import NotificationEvent
+from app.infrastructure.db.models import (
+    HotelAlertEvent,
+    HotelNotificationDelivery,
+    HotelProperty,
+    HotelProviderRun,
+    NotificationEvent,
+    User,
+)
 from app.infrastructure.db.session import Base
 from app.main import app
 from app.worker import notifications as notification_worker
+from app.services.hotels_service import materialize_hotel_delivery_intents
+from app.services.notification_service import HotelDeliveryAdapter
 from tests.helpers import register_and_token
 import app.api.deps as deps
-from app.infrastructure.db.models import User
 
 
 class _PriceSequenceProvider:
@@ -142,6 +150,118 @@ def test_worker_once_processes_pending_events(worker_client) -> None:
     headers = {"Authorization": f"Bearer {token}"}
     listed = client.get(f"/api/v1/alerts/events?watch_id={watch_id}", headers=headers)
     assert listed.status_code == 200
+
+
+def test_worker_dispatches_hotel_in_app_delivery_without_mixing_flight_events(worker_client) -> None:
+    client, session_factory = worker_client
+    flight_watch_id = _create_alert_events(client, email="worker-hotel-coexist@viru.dev")
+    token = register_and_token(client, email="worker-hotel-coexist@viru.dev")
+
+    with session_factory() as db:
+        user = db.scalar(select(User).where(User.email == "worker-hotel-coexist@viru.dev"))
+        assert user is not None
+        hotel = HotelProperty(
+            canonical_name="Hotel Worker Delivery",
+            normalized_name="hotel worker delivery",
+            city="Madrid",
+            normalized_city="madrid",
+            country_code="ES",
+        )
+        run = HotelProviderRun(provider="mock", status="completed")
+        db.add_all([hotel, run])
+        db.flush()
+        event = HotelAlertEvent(
+            user_id=user.id,
+            hotel_id=hotel.id,
+            provider_run_id=run.id,
+            event_type="price_below",
+            message="Hotel Worker Delivery: bajó",
+        )
+        db.add(event)
+        db.flush()
+        assert materialize_hotel_delivery_intents(db, provider_run_id=run.id) == 1
+        assert materialize_hotel_delivery_intents(db, provider_run_id=run.id) == 0
+        delivery = db.scalar(
+            select(HotelNotificationDelivery).where(
+                HotelNotificationDelivery.source_event_id == event.id
+            )
+        )
+        assert delivery is not None
+        delivery_id = delivery.id
+        db.commit()
+
+    result = notification_worker.run_once(session_factory=session_factory, limit=50)
+    assert result.delivered >= 2
+    assert result.hotel_processed == 1
+    assert result.hotel_processed == 1
+    assert result.hotel_delivered == 1
+
+    with session_factory() as db:
+        delivered = db.get(HotelNotificationDelivery, delivery_id)
+        assert delivered is not None
+        assert delivered.status == "delivered"
+        assert delivered.attempts == 1
+        flight_events = list(db.scalars(select(NotificationEvent)))
+        assert len(flight_events) >= 2
+
+    headers = {"Authorization": f"Bearer {token}"}
+    assert client.get(f"/api/v1/alerts/events?watch_id={flight_watch_id}", headers=headers).status_code == 200
+
+
+def test_worker_hotel_adapter_failure_is_retryable(worker_client, monkeypatch) -> None:
+    client, session_factory = worker_client
+    email = "worker-hotel-retry@viru.dev"
+    register_and_token(client, email=email)
+
+    class _FailingAdapter(HotelDeliveryAdapter):
+        def send(self, delivery):
+            return False, "forced_hotel_failure", "retryable"
+
+    with session_factory() as db:
+        user = db.scalar(select(User).where(User.email == email))
+        assert user is not None
+        hotel = HotelProperty(
+            canonical_name="Hotel Worker Retry",
+            normalized_name="hotel worker retry",
+            city="Madrid",
+            normalized_city="madrid",
+            country_code="ES",
+        )
+        run = HotelProviderRun(provider="mock", status="completed")
+        db.add_all([hotel, run])
+        db.flush()
+        event = HotelAlertEvent(
+            user_id=user.id,
+            hotel_id=hotel.id,
+            provider_run_id=run.id,
+            event_type="price_below",
+            message="Hotel Worker Retry: fallo",
+        )
+        db.add(event)
+        db.flush()
+        assert materialize_hotel_delivery_intents(db, provider_run_id=run.id) == 1
+        delivery = db.scalar(
+            select(HotelNotificationDelivery).where(
+                HotelNotificationDelivery.source_event_id == event.id
+            )
+        )
+        assert delivery is not None
+        delivery_id = delivery.id
+        db.commit()
+
+    from app.services import notification_service
+    monkeypatch.setattr(notification_service, "LocalHotelInAppDeliveryAdapter", _FailingAdapter)
+    result = notification_worker.run_once(session_factory=session_factory, limit=50)
+    assert result.hotel_processed == 1
+    assert result.hotel_retried == 1
+    assert result.hotel_failed == 0
+
+    with session_factory() as db:
+        retry = db.get(HotelNotificationDelivery, delivery_id)
+        assert retry is not None
+        assert retry.status == "queued"
+        assert retry.attempts == 1
+        assert retry.last_error == "forced_hotel_failure"
 
 
 def test_worker_respects_future_next_attempt_at(worker_client) -> None:

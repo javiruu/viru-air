@@ -24,6 +24,7 @@ export const notificationsEs = {
     security: "Seguridad",
     digest: "Digest",
     worker: "Workers",
+    community: "Comunidad",
     system: "Sistema",
   },
   filters: {
@@ -61,6 +62,7 @@ export const notificationsEs = {
       security: "Revisar acceso",
       digest: "Abrir resumen",
       worker: "Ver incidencia",
+      community: "Ver rutas",
     },
   },
   toast: {
@@ -96,6 +98,7 @@ export const notificationsEn = {
     security: "Security",
     digest: "Digest",
     worker: "Workers",
+    community: "Community",
     system: "System",
   },
   filters: {
@@ -133,6 +136,7 @@ export const notificationsEn = {
       security: "Review access",
       digest: "Open digest",
       worker: "View incident",
+      community: "View routes",
     },
   },
   toast: {

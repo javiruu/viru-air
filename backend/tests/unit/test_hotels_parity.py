@@ -31,6 +31,7 @@ def _rate(
     check_out: datetime.date | None = None,
     guests: int = 2,
     currency: str = "EUR",
+    availability_status: str = "available",
 ) -> HotelRateSnapshot:
     return HotelRateSnapshot(
         hotel_id="h1",
@@ -40,6 +41,7 @@ def _rate(
         guests=guests,
         currency=currency,
         amount=amount,
+        availability_status=availability_status,
     )
 
 
@@ -142,6 +144,36 @@ def test_parity_different_guests_are_separate_groups() -> None:
             _rate("m2", 160, guests=2),
         ])
         assert len(signals) == 2
+    finally:
+        _close(db)
+
+
+def test_parity_ignores_unavailable_rates_but_keeps_available_providers() -> None:
+    db = _db()
+    try:
+        signals = HotelParityService.compute_parity([
+            _rate("mock", 100),
+            _rate("booking", 1, availability_status="unavailable"),
+            _rate("makcorps", 110),
+        ])
+        assert len(signals) == 1
+        assert signals[0].provider_count == 2
+        assert signals[0].lowest_price == 100
+        assert signals[0].highest_price == 110
+    finally:
+        _close(db)
+
+
+def test_parity_ignores_stale_rates_as_price_evidence() -> None:
+    db = _db()
+    try:
+        signals = HotelParityService.compute_parity([
+            _rate("mock", 100),
+            _rate("booking", 1, availability_status="stale"),
+        ])
+        assert len(signals) == 1
+        assert signals[0].provider_count == 1
+        assert signals[0].lowest_price is None
     finally:
         _close(db)
 

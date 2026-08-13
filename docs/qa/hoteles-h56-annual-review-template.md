@@ -165,7 +165,7 @@ Antes de activar tráfico automático deben existir `budget`, `owner`, `alert_th
 - `SupportFeedback` con `feedback_type=bug|idea|general`;
 - logs de sweep `hotel_sweep_cycle`, `hotel_sweep_disabled` y errores del job.
 
-**Gap conocido:** H04 define eventos `hotel_*`, pero la allowlist actual de `backend/app/api/v1/ux.py` no demuestra todavía esa taxonomía hotelera completa. No contabilizar métricas H04 como instrumentadas hasta cerrar ese gap.
+**Estado local verificado:** la allowlist de `backend/app/api/v1/ux.py` acepta RUM y seis eventos de producto hotelero con metadata versionada; tests backend cubren evento válido, schema booleano, claves desconocidas y PII/IDs. No contabilizar aún el funnel completo: frontend, dedupe, denominadores, retención y dashboards siguen pendientes.
 
 ### Experimentos/personalización/monetización
 
@@ -211,7 +211,7 @@ Prioridad inicial de auditoría:
 - `HOTEL_MOCK_FIXTURE_PATH`;
 - `NOTIFICATION_WORKER_ENABLED` como control separado.
 
-**Advertencia:** H43 documenta que algunos entrypoints leen flags de forma distinta y que el job directo puede saltarse `HOTEL_SWEEP_ENABLED`. No marcar el kill switch como verificado solo por inspeccionar `.env`.
+**Advertencia:** H43 mantiene bloqueados los gates live y de producción. La matriz local `hotel-activation-audit-v1` verifica decisiones del resolver para API/worker/job bajo cinco perfiles; no sustituye ejecutar entrypoints reales en staging/producción.
 
 ---
 

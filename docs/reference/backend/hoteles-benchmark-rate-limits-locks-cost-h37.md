@@ -1,6 +1,6 @@
 # H37 — Benchmark, rate limits, locks y coste máximo hotelero
 
-**Estado:** COMPLETA como contrato; implementación, benchmark de canary y revisión del plan comercial pendientes  
+**Estado:** implementación parcial verificada en Mock/fixtures; runner canary offline Mock + kill switch verificado; benchmark PostgreSQL, canary comercial y revisión de coste real pendientes
 **Fecha:** 2026-08-05  
 **Área:** backend / providers / workers / base de datos / costes / observabilidad  
 **Fuente de verdad:** sí para la metodología, límites, presupuestos y criterios de cierre de H37  
@@ -64,7 +64,7 @@ H37 no decide:
 | Feature flags | `HOTEL_FEATURE_ENABLED` y `HOTEL_SWEEP_ENABLED` mantienen defaults seguros | Las flags desactivan trabajo; no son ledger, lock ni observabilidad |
 | Coste | H07 indica cuota/precio Makcorps no verificados | El presupuesto automático de producción es cero hasta verificar el plan |
 
-**Conclusión V1:** existen protecciones parciales para fixtures y ejecución manual, pero no hay evidencia suficiente para declarar capacidad, coste por sweep, dedupe cross-process, p95 de provider o escalabilidad de producción.
+**Conclusión V1:** existen ledger de budget, leases y circuit breaker integrados en paths externos y cubiertos por regresiones; además, los estados vacío/error cierran leases con owner token y `provider_run_id`, y el budget denegado evita la llamada. Sigue sin haber evidencia suficiente para declarar benchmark PostgreSQL, coste por sweep, dedupe cross-process a escala, p95 de provider o escalabilidad de producción.
 
 ---
 
@@ -446,6 +446,8 @@ Ante anomalía:
 - budget denegado no realiza request;
 - límites provider/operación/ventana y backpressure observables.
 
+**Progreso demostrado:** la suite focalizada H37 pasa con 47 tests (budget, leases, circuit, migración, sweep y area-search). El flujo externo de revalidación termina leases `done`/`failed` con `last_provider_run_id`, error clasificado y sin snapshot falso; el mock conserva su fallback local. Esto no sustituye el benchmark PostgreSQL de dos procesos ni un canary provider.
+
 ### Gate C — provider/coste
 
 - plan/cuota/coste del provider documentados sin secretos;
@@ -505,6 +507,7 @@ H37 sí autoriza el contrato de que toda llamada futura deberá tener una unidad
 | H36 | primer resultado, fan-out y presupuesto de frontend |
 | H39 | tests de locks, budget, provider y regresión |
 | H41 | métricas, health, traces redacted y SLO |
+| Latencia provider | contrato de medición monotónica, envelope y canary futuro — [plan de contrato de latencia](../../plans/2026-08-09-hotel-provider-latency-contract-plan.md); no es una medición productiva, pero su agregado por run sí está persistido mediante la migración `0053` |
 | H43 | flags, canary, rollout y kill switch |
 
-**Resultado H37:** contrato de benchmark, límites, concurrencia y coste aprobado. La implementación actual sigue siendo V1/manual/Mock y no se declara escalable ni económicamente aprobada para providers comerciales hasta superar los gates.
+**Resultado H37:** contrato de benchmark, límites, concurrencia y coste aprobado. La implementación actual sigue siendo V1/manual/Mock; `backend/scripts/hotel_mock_canary.py` aporta evidencia offline redacted de persistencia de latencia y kill switch, pero no benchmark PostgreSQL, coste comercial, p50/p95/p99 field ni aprobación de providers comerciales. La latencia por run está persistida según el [plan de contrato de latencia](../../plans/2026-08-09-hotel-provider-latency-contract-plan.md).

@@ -1,6 +1,6 @@
 # H23 — Crear tracking hotelero desde una oferta real
 
-**Estado:** contrato de dominio/API/UX; implementación frontend/backend, migración V2, idempotencia, i18n y QA E2E pendientes  
+**Estado:** lectura y alta V2 estrictas disponibles con dedupe semántico, cliente tipado, confirmación accesible y QA E2E local; `Idempotency-Key` explícita sigue pendiente
 **Fecha:** 2026-08-05  
 **Área:** backend / frontend / DB / producto / providers / seguridad / QA  
 **Fuente de verdad:** sí para la creación de una suscripción hotelera reconstruible desde una oferta observada  
@@ -52,7 +52,9 @@ Después de crear el tracking, la aplicación debe poder explicar sin leer el es
 - `initial_price`, `current_price` y `target_price`;
 - varios campos de búsqueda de área.
 
-`guests` tiene default `2` y `provider` default `mock`. El servicio valida el hotel y crea `HotelTrackedOffer`. Solo crea `HotelRateSnapshot` si existen fechas y un precio actual derivable. Por tanto, hoy puede existir una fila sin snapshot inicial.
+`guests` tiene default `2` y `provider` default `mock`. El servicio valida el hotel, exige fechas juntas y ordenadas cuando se proporcionan y crea `HotelTrackedOffer`. El PATCH local no permite mutar la identidad de una oferta ya creada (fechas, ocupación, provider, habitación, régimen, cancelación o moneda); sí mantiene cambios de precio objetivo y pausa. Solo crea `HotelRateSnapshot` si existen fechas y un precio actual derivable. Por tanto, una fila legacy sin snapshot inicial sigue siendo posible, pero no se presenta como tracking V2 completo.
+
+La lectura aditiva `GET /api/v1/hotels/v2/tracked-offers` clasifica cada fila privada sin reescribir V1: `paused`, `pending_context`, `pending_first_observation`, `partial` o `active`. Una observación V1 sin semántica total, condiciones completas y evidencia canónica se declara `partial`; no se etiqueta como `active` solo porque `is_active=true`. `POST /api/v1/hotels/v2/tracked-offers` exige un `source_rate_id` con oferta canónica, precio total, condiciones completas, disponibilidad elegible y outcome `success`; crea el bridge privado V1/V2 y deduplica semánticamente la misma oferta del mismo usuario.
 
 Los tests actuales cubren deliberadamente ambos caminos:
 
@@ -62,19 +64,19 @@ Los tests actuales cubren deliberadamente ambos caminos:
 - creación mínima con defaults;
 - duplicado exacto mediante `IntegrityError`/`tracked_offer_already_exists`.
 
-Estos tests describen compatibilidad V1, no el criterio de “tracking real listo”. H23 debe conservarlos durante la transición y añadir el contrato estricto para nuevas altas desde una oferta.
+Estos tests describen compatibilidad V1, no el criterio de “tracking real listo”. El cierre local añade regresiones de contexto e identidad en `test_hotels_phase7_tracking_invariants.py` y en el flujo API; H23 debe conservarlos durante la transición y añadir el contrato estricto para nuevas altas desde una oferta.
 
 ### 2.2. Alta actual desde frontend
 
-`useTrackedOffers.handleTrackPrice` recibe solo `hotelId`. Busca una tarifa del hotel seleccionado, elige la más barata, y crea el tracking con los campos disponibles. Para una card no seleccionada puede no tener rates; en ese caso usa provider `mock`, moneda `EUR` y deja fechas/precio ausentes.
+`useTrackedOffers` abre una confirmación para una tarifa concreta y envía exclusivamente su `source_rate_id` al POST V2. Una card no seleccionada abre el detalle; si no hay rates, la UI explica que falta contexto y no crea un tracking V1 con defaults.
 
-Ese comportamiento no demuestra que la persona haya confirmado una oferta concreta. La nueva UX debe dejar de presentar esa acción como tracking operativo sin contexto: si no hay una oferta compatible, debe llevar al detalle/búsqueda o marcar la intención como `pending_context`, nunca ocultar la falta de datos.
+La confirmación muestra estancia, huéspedes, habitación, régimen, cancelación, provider, importe observado y momento de observación. Cancelar no muta estado y una respuesta de dedupe semántico informa de que el seguimiento ya existía.
 
 ### 2.3. Snapshot inicial actual
 
 El servicio crea un snapshot enlazado usando los datos recibidos, con `availability_status="available"`, pero el modelo V1 no conserva todavía un `observed_at` independiente de `collected_at`, una semántica completa de fees, un fingerprint de oferta ni un token de observación. Por sí solo, ese snapshot V1 no permite validar de forma fiable freshness, fees o elegibilidad V2.
 
-H23 exige que el snapshot inicial de una oferta real sea inmutable como evidencia de creación; esa inmutabilidad es un requisito V2 de H11, no un comportamiento garantizado por el modelo actual. Los campos desconocidos permanecen desconocidos y la implementación aditiva concreta no se inventa en esta fase contractual.
+H23 exige que el snapshot inicial de una oferta real sea inmutable como evidencia de creación; la identidad de la oferta ya está protegida contra mutación local, pero la inmutabilidad/versionado del snapshot sigue siendo un requisito V2 de H11. Los campos desconocidos permanecen desconocidos y la implementación aditiva concreta no se inventa en esta fase contractual.
 
 ### 2.4. Duplicados y ownership actuales
 
@@ -147,13 +149,13 @@ Dos ofertas del mismo hotel y estancia pueden ser trackings distintos cuando cam
 
 ### 3.3. Observación inicial
 
-El request de creación debe referenciar la observación que la persona vio, mediante una estrategia V2 futura (ninguna de estas capacidades existe todavía en el endpoint V1):
+El request V2 de creación referencia la observación que la persona vio mediante `source_rate_id`. Las estrategias alternativas de fingerprint o token opaco permanecen propuestas futuras:
 
 1. `source_rate_id` interno de un `HotelRateSnapshot` elegible;
 2. `offer_fingerprint` + contexto completo, resuelto server-side contra una observación reciente;
 3. un token opaco de selección emitido por el backend y de vida corta.
 
-Hasta que H11/H15/H19 implementen ese bridge, el backend no puede tratar un `source_rate_id`, fingerprint o token como si fueran campos V1 disponibles ni validar automáticamente el total/freshness que el modelo actual no conserva.
+El bridge V2 ya rechaza un `source_rate_id` sin oferta canónica, precio total, condiciones completas, disponibilidad elegible u outcome `success`. Freshness detallado, fingerprint como entrada y token opaco siguen pendientes de los contratos correspondientes; no se infieren de campos V1.
 
 No se acepta que el cliente convierta libremente un precio numérico en “oferta real”. Si solo hay precio sin observación, la creación queda `pending_context`/`partial` y no `active`.
 
@@ -346,13 +348,13 @@ Cambiar esas dimensiones debe crear una nueva versión o una nueva suscripción,
 - label privado si se añade explícitamente;
 - configuración no identitaria y auditada.
 
-El PATCH V1 actual acepta más campos y actualmente permite mutar fechas, provider, habitación, régimen, cancelación y precios después de crear la fila; esto es un gap bloqueante de consistencia histórica. H23 lo documenta como compatibilidad legacy y exige que la futura API rechace o versiona esas mutaciones, o cree una nueva versión/suscripción sin reescribir la serie anterior.
+El PATCH V1 mantiene un payload legacy amplio, pero el servicio ya rechaza mutaciones de fechas, provider, habitación, régimen, cancelación, ocupación y moneda con `tracked_offer_identity_immutable`. Siguen pendientes el endpoint V2 de edición/versionado y la idempotencia de creación; ninguna de esas carencias justifica reescribir la serie histórica.
 
 ## 9. Ownership, seguridad y privacidad
 
 - Toda lectura/mutación filtra por `current_user.id` o comprueba ownership antes de serializar.
 - El cliente nunca puede elegir `user_id`.
-- `source_rate_id`, `tracking_id` y snapshots privados no se exponen en URL pública sin contrato seguro; `source_rate_id`, fingerprints y tokens son capacidades V2 propuestas, no campos V1 actualmente disponibles.
+- `source_rate_id`, `tracking_id` y snapshots privados no se exponen en URL pública sin contrato seguro; `source_rate_id` es un cuerpo privado del POST V2, mientras fingerprints y tokens siguen siendo capacidades propuestas.
 - No incluir targets, thresholds, emails, notas, tokens ni raw provider en fingerprints compartidos o telemetry.
 - Un rate público/cacheado puede servir para discovery, pero al crear tracking el backend debe comprobar que pertenece al hotel/contexto y que es elegible.
 - Una regla de alerta solo puede referenciar un tracking del mismo usuario y hotel coherente.
@@ -447,10 +449,10 @@ Medir cantidades y riesgos con IDs redacted en logs. No convertir automáticamen
 ### H23-B — Nueva alta estricta
 
 - Mantener endpoint V1 para compatibilidad controlada.
-- Añadir un camino de creación desde `source_rate_id`/offer token o request V2.
+- Mantener el camino de creación V2 basado en `source_rate_id`; evaluar offer token solo cuando aporte un contrato de selección más seguro.
 - Bloquear `active` si no hay contexto y observación elegible.
 - Devolver estado explícito y warnings.
-- Añadir idempotencia de request y dedupe semántico.
+- Añadir `Idempotency-Key` de request; el dedupe semántico ya devuelve el tracking existente sin crear otra observación privada.
 - Emitir métricas de creación, duplicado, incomplete y provider unavailable.
 
 ### H23-C — Backfill y doble lectura
@@ -461,6 +463,8 @@ Medir cantidades y riesgos con IDs redacted en logs. No convertir automáticamen
 - Marcar `needs_review` cuando haya ambigüedad.
 - Leer estado V2 si existe; fallback V1 con warning `legacy_tracking_contract`.
 - Mantener rollback y comparar divergencias antes de retirar campos legacy.
+
+La primera lectura V2 ya devuelve ese warning para snapshots sin enlace canónico, sin convertirlos ni inventar semántica de precio. Aún faltan el backfill medido y la comparación de divergencias antes de retirar V1.
 
 ### H23-D — Rollout frontend
 
@@ -600,7 +604,7 @@ H23 puede marcarse completa como contrato cuando:
 9. confirmación, copy, a11y, i18n y legal están especificados;
 10. tests prueban creación, retry, duplicado, estados, dos usuarios y refresh.
 
-**Resultado contractual:** H23 queda definido como contrato de creación reconstruible. La implementación estricta de alta, snapshot/fingerprint V2, idempotencia, migración, UI de confirmación y QA E2E permanecen pendientes.
+**Resultado contractual:** H23 queda definido como contrato de creación reconstruible. La alta estricta V2 desde una observación canónica crea un bridge privado, conserva la evidencia de precio total y dispone de cliente TypeScript que valida tanto lectura como alta. La UI de confirmación y el QA E2E local con Mock/SQLite están verificados; `Idempotency-Key` explícita permanece pendiente.
 
 ## 15. Handoff
 

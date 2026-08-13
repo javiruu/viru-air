@@ -26,14 +26,15 @@ class ParitySignal:
 
     @classmethod
     def from_rates(cls, rates: list[HotelRateSnapshot]) -> ParitySignal | None:
-        if not rates:
+        eligible_rates = [rate for rate in rates if rate.availability_status not in {"unavailable", "stale"}]
+        if not eligible_rates:
             return None
 
-        first = rates[0]
+        first = eligible_rates[0]
         providers: set[str] = set()
         amounts: list[float] = []
 
-        for rate in rates:
+        for rate in eligible_rates:
             providers.add(rate.provider)
             amounts.append(float(rate.amount))
 
@@ -99,6 +100,8 @@ class HotelParityService:
         """
         groups: dict[tuple[datetime.date, datetime.date, int, str], list[HotelRateSnapshot]] = {}
         for rate in rates:
+            if rate.availability_status in {"unavailable", "stale"}:
+                continue
             key = (rate.check_in, rate.check_out, rate.guests, rate.currency)
             groups.setdefault(key, []).append(rate)
 

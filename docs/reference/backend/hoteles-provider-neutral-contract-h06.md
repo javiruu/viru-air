@@ -1,6 +1,6 @@
 # H06 — Contrato provider-neutral de hoteles y contract tests
 
-**Estado:** completo como contrato — pendiente de implementación gradual  
+**Estado:** contrato completo; envelope y capacidades V2 implementados de forma aditiva, adapters/gateway V2 pendientes
 **Fecha:** 2026-08-04  
 **Área:** backend / arquitectura / providers / QA  
 **Fuente de verdad:** sí para la frontera entre providers de hoteles y el dominio de Viru. La implementación puede evolucionar por etapas, pero no debe introducir semántica provider-específica en servicios, API o UI.
@@ -12,9 +12,11 @@
 
 ## 1. Propósito y límite de la fase
 
-H06 define una frontera reemplazable entre cualquier fuente externa de hoteles y el dominio de Viru. El dominio debe poder preguntar por hoteles, tarifas y revalidaciones sin conocer nombres de endpoints, formas de payload, códigos de error, límites comerciales o peculiaridades de un provider concreto.
+H06 define una frontera reemplazable entre cualquier fuente de hoteles y el dominio de Viru. El dominio debe poder preguntar por hoteles, tarifas y revalidaciones sin conocer nombres de endpoints, formas de payload, límites comerciales o peculiaridades de un provider concreto.
 
 La fase **no integra un provider nuevo**, no decide todavía si Makcorps continuará y no cambia por sí sola el modelo de base de datos. Produce el contrato que H07-H11 y los futuros adapters deben implementar y probar.
+
+Implementación actual: `backend/app/hotels/contracts.py` expone `ProviderCapabilities`, `ProviderWarning`, `ProviderError` y `ProviderResult[T]`. Los adapters V1 continúan con sus métodos existentes y devuelven capacidades conservadoras (`null`) hasta adoptar operaciones V2.
 
 ### 1.1. Regla de arquitectura
 
@@ -43,6 +45,8 @@ La implementación actual debe considerarse **V1 compatible**:
 | `HotelProviderAdapter` | `backend/app/hotels/contracts.py` | expone listas desnudas y no un envelope común |
 | `ProviderHotelRecord` / `ProviderRateRecord` | `backend/app/hotels/contracts.py` | no contienen capacidades, warnings, timestamps, fees, disponibilidad o deeplink por rate |
 | `MockHotelProviderAdapter` | `backend/app/hotels/mock_provider.py` | fixture útil para desarrollo; no representa datos live |
+| `LocalHtmlHotelProviderAdapter` | `backend/app/hotels/local_scrape_provider.py` | parsea JSON-LD de una copia HTML local; no hace requests, y deja `price_semantics=unknown` si la página no declara total de estancia |
+| `OverpassHotelProviderAdapter` | `backend/app/hotels/overpass_provider.py` | catálogo acotado de OpenStreetMap; no devuelve rates, disponibilidad, fees, deeplink ni revalidación |
 | `MakcorpsHotelProviderAdapter` | `backend/app/hotels/makcorps_provider.py` | traduce fallos de request a `None`/listas vacías y usa retries de `requests` |
 | `HotelIngestionService` | `backend/app/hotels/ingestion.py` | trabaja con `fetch_hotels()` y persiste sin envelope de partial/error |
 | `HotelProviderRun` | `backend/app/infrastructure/db/models.py` | hoy distingue principalmente `running`, `completed` y `failed` |
@@ -71,7 +75,7 @@ La implementación actual debe considerarse **V1 compatible**:
 - prometer cobertura geográfica o disponibilidad final;
 - diseñar el ranking de hoteles;
 - crear migraciones definitivas de `HotelRateSnapshot`;
-- elegir email, push, afiliación o un servicio externo;
+- elegir canales de notificación externos, afiliación o un servicio externo;
 - convertir cualquier provider real en una fuente de verdad de reservas.
 
 ---

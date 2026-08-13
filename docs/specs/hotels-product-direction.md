@@ -216,6 +216,6 @@ Todas las fases del plan están completadas:
 1. **Provider real dinámico**: Makcorps y futuros providers deben aceptar zona/fechas/huéspedes para que el sweep produzca snapshots nuevos en cada ejecución.
 2. **Scheduler automático**: Los sweeps se ejecutan manualmente o vía worker opcional. No hay scheduler integrado en el startup del API.
 3. **Verificación visual manual**: La QA visual en navegador real (dark/light/responsive) queda pendiente.
-4. **`DELETE /comp-sets/{id}`**: El backend no expone endpoint para eliminar un comp set entero.
-5. **Geocoder externo**: La resolución de área usa solo datos internos. Un geocoder como Nominatim podría mejorar la precisión para zonas sin hoteles en el catálogo.
-6. **Alertas sobre `initial_price`**: Las alertas de % comparan contra el snapshot anterior, no contra `initial_price`. Podría añadirse como opción.
+4. **`DELETE /comp-sets/{id}`**: Cerrado en la implementación V1 y cubierto por tests de ownership; mantener QA visual del control.
+5. **Geocoder externo**: La resolución externa está habilitada detrás de `HOTEL_GEOCODER_ENABLED`; siguen pendientes la calibración de cobertura, coste, cache y límites para producción.
+6. **Alertas sobre `initial_price`**: Cerrado en H26/HISTORY. `compare_against="initial_price"` ya permite que las reglas porcentuales comparen contra el baseline original; se conserva como opción explícita frente a `snapshot_previous`.

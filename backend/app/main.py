@@ -9,7 +9,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.exception_handlers import register_exception_handlers
-from app.core.request_context import normalize_correlation_id, set_correlation_id
+from app.core.request_context import (
+    normalize_client_event_id,
+    normalize_correlation_id,
+    reset_client_event_id,
+    reset_correlation_id,
+    set_client_event_id,
+    set_correlation_id,
+)
 from app.core.request_diagnostics import AccessLogMiddleware
 
 from app.api.v1.router import api_v1
@@ -236,11 +243,20 @@ register_exception_handlers(app)
 @app.middleware("http")
 async def correlation_middleware(request: Request, call_next):
     correlation_id = normalize_correlation_id(request.headers.get("x-correlation-id"))
+    client_event_id = normalize_client_event_id(request.headers.get("x-client-event-id"))
     request.state.correlation_id = correlation_id
-    set_correlation_id(correlation_id)
-    response = await call_next(request)
-    response.headers["x-correlation-id"] = correlation_id
-    return response
+    request.state.client_event_id = client_event_id
+    correlation_token = set_correlation_id(correlation_id)
+    client_event_token = set_client_event_id(client_event_id)
+    try:
+        response = await call_next(request)
+        response.headers["x-correlation-id"] = correlation_id
+        if client_event_id:
+            response.headers["x-client-event-id"] = client_event_id
+        return response
+    finally:
+        reset_client_event_id(client_event_token)
+        reset_correlation_id(correlation_token)
 
 
 @app.get("/health")

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <title>Captura local de hoteles</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Hotel",
+        "@id": "local-html-sol-madrid",
+        "name": "Hotel Sol Madrid",
+        "url": "https://local.example/hoteles/sol-madrid",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Calle del Sol 10",
+          "addressLocality": "Madrid",
+          "addressCountry": "ES"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 40.4168,
+          "longitude": -3.7038
+        },
+        "starRating": {"@type": "Rating", "ratingValue": 4},
+        "makesOffer": {
+          "@type": "Offer",
+          "@id": "local-html-sol-madrid-standard",
+          "name": "Doble estándar",
+          "price": "240.00",
+          "priceCurrency": "EUR",
+          "availability": "https://schema.org/InStock",
+          "description": "Cancelación gratuita hasta 48 horas antes",
+          "priceSpecification": {"priceType": "total_stay"}
+        }
+      }
+    </script>
+  </head>
+  <body></body>
+</html>

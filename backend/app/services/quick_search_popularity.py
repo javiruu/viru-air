@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime as dt
 from dataclasses import dataclass
 
-from sqlalchemy import select
+from sqlalchemy import inspect, select
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
@@ -44,20 +44,30 @@ def record_quick_search_popularity(
 ) -> QuickSearchPopularityCounter:
     normalized = _normalize_signal(signal)
     dialect_name = db.get_bind().dialect.name
-    if dialect_name == "postgresql":
-        db.execute(_build_postgresql_upsert(normalized))
-        db.execute(_build_postgresql_daily_upsert(normalized))
-    elif dialect_name == "sqlite":
-        db.execute(_build_sqlite_upsert(normalized))
-        db.execute(_build_sqlite_daily_upsert(normalized))
-    else:
-        entry = _fallback_upsert(db, normalized)
-        _fallback_daily_upsert(db, normalized)
-        db.commit()
-        db.refresh(entry)
-        return entry
+    daily_table_available = inspect(db.get_bind()).has_table(
+        QuickSearchPopularityDaily.__tablename__
+    )
+    try:
+        if dialect_name == "postgresql":
+            db.execute(_build_postgresql_upsert(normalized))
+            if daily_table_available:
+                db.execute(_build_postgresql_daily_upsert(normalized))
+        elif dialect_name == "sqlite":
+            db.execute(_build_sqlite_upsert(normalized))
+            if daily_table_available:
+                db.execute(_build_sqlite_daily_upsert(normalized))
+        else:
+            entry = _fallback_upsert(db, normalized)
+            if daily_table_available:
+                _fallback_daily_upsert(db, normalized)
+            db.commit()
+            db.refresh(entry)
+            return entry
 
-    db.commit()
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     return _get_counter_by_key(db, normalized)
 
 

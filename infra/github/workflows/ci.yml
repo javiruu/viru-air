@@ -18,6 +18,8 @@ jobs:
           python-version: "3.12"
       - run: pip install -e .[dev]
       - run: pytest -q
+      - name: Hotel Mock canary dry-run (H44/H43)
+        run: python scripts/hotel_mock_canary.py --dry-run
       - name: Build backend image
         working-directory: .
         run: docker build --file backend/Dockerfile --tag viru-backend:ci backend

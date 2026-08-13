@@ -1,0 +1,110 @@
+{
+  "version": 1,
+  "profiles": {
+    "happy_path": {
+      "mode": "fixture",
+      "expected_status": "success",
+      "expected_run_status": "completed",
+      "error_code": null,
+      "expected_counts": {"hotels_processed": 3, "snapshots_created": 3, "warning_count": 1},
+      "expected_external_calls": 0
+    },
+    "empty_provider": {
+      "mode": "empty",
+      "expected_status": "empty",
+      "expected_run_status": "completed",
+      "error_code": null,
+      "expected_counts": {"hotels_processed": 0, "snapshots_created": 0},
+      "expected_external_calls": 0
+    },
+    "rate_limited_429": {
+      "mode": "raise",
+      "expected_status": "rate_limited",
+      "expected_run_status": "failed",
+      "error_code": "rate_limited",
+      "expected_counts": {"hotels_processed": 0, "snapshots_created": 0},
+      "expected_external_calls": 0
+    },
+    "provider_timeout": {
+      "mode": "raise",
+      "expected_status": "timeout",
+      "expected_run_status": "failed",
+      "error_code": "timeout",
+      "expected_counts": {"hotels_processed": 0, "snapshots_created": 0},
+      "expected_external_calls": 0
+    },
+    "invalid_json": {
+      "mode": "raise",
+      "expected_status": "invalid_response",
+      "expected_run_status": "failed",
+      "error_code": "invalid_response",
+      "expected_counts": {"hotels_processed": 0, "snapshots_created": 0},
+      "expected_external_calls": 0
+    },
+    "schema_drift": {
+      "mode": "raise",
+      "expected_status": "invalid_response",
+      "expected_run_status": "failed",
+      "error_code": "schema_drift",
+      "expected_counts": {"hotels_processed": 0, "snapshots_created": 0},
+      "expected_external_calls": 0
+    },
+    "rate_without_currency": {
+      "mode": "raise",
+      "expected_status": "invalid_response",
+      "expected_run_status": "failed",
+      "error_code": "rate_without_currency",
+      "expected_counts": {"hotels_processed": 0, "snapshots_created": 0},
+      "expected_external_calls": 0
+    },
+    "sold_out": {
+      "mode": "sold_out",
+      "expected_status": "success",
+      "expected_run_status": "completed",
+      "error_code": null,
+      "expected_counts": {"hotels_processed": 3, "snapshots_created": 3},
+      "expected_external_calls": 0
+    },
+    "hotel_ambiguous": {
+      "mode": "ambiguous",
+      "expected_status": "partial",
+      "expected_run_status": "partial",
+      "error_code": "hotel_ambiguous",
+      "expected_counts": {"hotels_processed": 3, "snapshots_created": 3, "warning_count": 3},
+      "expected_external_calls": 0
+    },
+    "deeplink_invalid": {
+      "mode": "invalid_deeplink",
+      "expected_status": "success",
+      "expected_run_status": "completed",
+      "error_code": null,
+      "expected_counts": {"hotels_processed": 3, "snapshots_created": 3},
+      "expected_external_calls": 0
+    },
+    "stale_history": {
+      "mode": "stale_history",
+      "expected_status": "success",
+      "expected_run_status": "completed",
+      "error_code": null,
+      "expected_counts": {"hotels_processed": 3, "snapshots_created": 3, "warning_count": 3},
+      "expected_external_calls": 0
+    },
+    "partial_batch": {
+      "mode": "partial",
+      "expected_status": "partial",
+      "expected_run_status": "partial",
+      "error_code": "partial_batch",
+      "expected_counts": {"hotels_processed": 1, "snapshots_created": 1, "warning_count": 1},
+      "expected_external_calls": 0
+    },
+    "ownership_cross_user": {
+      "mode": "fixture",
+      "expected_status": "success",
+      "expected_run_status": "completed",
+      "error_code": null,
+      "scope": "api_ownership_test",
+      "expected_counts": {"hotels_processed": 3, "snapshots_created": 3},
+      "expected_external_calls": 0
+    }
+  }
+}

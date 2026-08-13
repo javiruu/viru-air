@@ -1,9 +1,9 @@
-export const NOTIFICATION_CATEGORIES = ["price", "security", "digest", "worker"] as const;
+export const NOTIFICATION_CATEGORIES = ["price", "security", "digest", "worker", "community"] as const;
 
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 export type NotificationFilter = "all" | "actionable" | "unread" | NotificationCategory;
 export type NotificationTone = "success" | "warning" | "error" | "info";
-export type NotificationSourceType = "alert_event" | "hotel_alert_event" | "security_activity";
+export type NotificationSourceType = "alert_event" | "hotel_alert_event" | "security_activity" | "community_trending";
 export type NotificationTimelineGroupKey = "today" | "recent" | "earlier";
 
 export type NotificationInboxItem = {
@@ -37,6 +37,7 @@ const SOURCE_TYPES = new Set<NotificationSourceType>([
   "alert_event",
   "hotel_alert_event",
   "security_activity",
+  "community_trending",
 ]);
 const CATEGORIES = new Set<NotificationCategory>(NOTIFICATION_CATEGORIES);
 const TONES = new Set<NotificationTone>(["success", "warning", "error", "info"]);
@@ -110,7 +111,7 @@ function normalizeItem(value: unknown): NotificationInboxItem | null {
     category:
       typeof categoryValue === "string" && CATEGORIES.has(categoryValue as NotificationCategory)
         ? (categoryValue as NotificationCategory)
-        : sourceType === "security_activity" ? "security" : "price",
+        : sourceType === "security_activity" ? "security" : sourceType === "community_trending" ? "community" : "price",
     tone:
       typeof toneValue === "string" && TONES.has(toneValue as NotificationTone)
         ? (toneValue as NotificationTone)
@@ -133,6 +134,7 @@ function deriveSummary(items: readonly NotificationInboxItem[]): NotificationInb
     security: 0,
     digest: 0,
     worker: 0,
+    community: 0,
   };
 
   for (const item of items) {
@@ -154,6 +156,7 @@ function normalizeSummary(value: unknown, derived: NotificationInboxSummary): No
     security: getNonNegativeInteger(getProperty(record, "security")) ?? derived.security,
     digest: getNonNegativeInteger(getProperty(record, "digest")) ?? derived.digest,
     worker: getNonNegativeInteger(getProperty(record, "worker")) ?? derived.worker,
+    community: getNonNegativeInteger(getProperty(record, "community")) ?? derived.community,
   };
 }
 

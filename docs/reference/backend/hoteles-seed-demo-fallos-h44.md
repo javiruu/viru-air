@@ -1,6 +1,7 @@
 # H44 — Seed, demo y fallos reproducibles de hoteles
 
-**Estado:** COMPLETA como contrato de reproducibilidad; seed hotelero integral, reset seguro y perfiles de fallo reutilizables pendientes  
+**Estado:** seed/reset hotelero Mock implementado y validado sobre SQLite temporal; profiles locales integrados en `fetch_hotel_rates()`/sweep con outcomes, warnings por ítem y latencia persistida; matriz declarativa de expected counts/status/error/external calls y dry-run desechable verificados; el dry-run redacted corre como gate explícito de CI; browser E2E Playwright/Chromium local verificado con aislamiento A/B, cleanup y privacy en `docs/qa/evidence/hotels-h44-browser-current/report.json`; canary comercial, cross-browser/QA humano y matriz histórica entre ejecuciones siguen pendientes
+
 **Fecha:** 2026-08-05  
 **Área:** backend / QA / frontend / datos  
 **Fuente de verdad:** sí para datos sintéticos, fixtures y reproducción local de `/hoteles`  
@@ -38,23 +39,17 @@ Reglas no negociables:
 | Worker manual | `python -m app.worker.hotels_sweep --once --provider mock` | Existe, pero depende de flags y puede mutar `DB_URL`; no es dry-run |
 | Seed genérico | `backend/app/infrastructure/db/seed.py` | Siembra usuarios y compatibilidad legacy; no siembra hoteles |
 | Seed TestSprite | `backend/scripts/seed_testsprite_data.py` | Siembra watchlists/snapshots/reglas de vuelos; no es un seed de hoteles |
-| Tests de Mock | `backend/tests/unit/test_hotels_mock_provider.py` | Cubren fixture válido y country inválido; no cubren toda la matriz H44 |
+| Tests de Mock | `backend/tests/unit/test_hotels_mock_provider.py`, `backend/tests/unit/test_hotels_fault_profiles.py`, `backend/tests/unit/test_hotels_sweep_outcomes.py` | Cubren fixture V1, loader declarativo, revalidación Mock, outcomes y latencia; no cubren todavía toda la semántica avanzada/browser de H44 |
 | Tests de ingestión | `backend/tests/unit/test_hotels_ingestion.py` | Cubren idempotencia, flag, provider desconocido, moneda/rango inválidos y lectura persistida |
 | Tests de área | `backend/tests/unit/test_hotels_area_search.py`, `test_hotels_area_resolve.py` | Cubren radio, precio, estrellas, moneda, coordenadas y fallback geocoder apagado |
 
-### 2.2 Lo que no existe todavía
+### 2.2 Lo que sigue pendiente
 
-No se debe documentar como comando disponible hasta implementarlo y probarlo:
+El loader declarativo local y la selección por configuración están implementados y probados para ingestión y revalidación Mock. La integración actual cubre `fetch_hotel_rates()`, propagación a `HotelProviderRun`, muestras/agregados de latencia, sanitización de deeplinks y exclusión de precios `unavailable/stale` en ranking/parity. Lo siguiente no debe presentarse como disponible hasta tener evidencia específica:
 
-- `seed_hotels_demo.py` o equivalente hotelero versionado;
-- `reset_hotels_demo.py` o un reset con guardas de entorno;
-- dataset completo con tracked offers, usuarios A/B, reglas, snapshots históricos e inbox;
-- catálogo de fault profiles seleccionable desde CLI/configuración;
-- transporte Mock de provider con 429/timeout/invalid response como perfiles reutilizables;
+- una matriz histórica persistida entre ejecuciones, si se necesita comparar regresiones longitudinales;
+- separación formal de freshness/disponibilidad en todas las superficies de producto;
 - fixture Playwright/TestSprite de `/hoteles` de puerta a puerta;
-- snapshot de expectativas o manifest que detecte drift del dataset;
-- reporte estándar de `dataset_id`, `fixture_version`, `seed_revision` y counts;
-- modo dry-run que garantice cero mutaciones del Mock.
 
 ## 3. Contrato de identidad del dataset
 
@@ -71,10 +66,10 @@ default_currency: EUR
 source: local_mock
 sensitive_data: none
 synthetic_label: DEMO_NO_LIVE_AVAILABILITY
-expected_external_calls: 0  # contrato de los fault adapters locales; no evidencia actual de loader implementado
+expected_external_calls: 0  # contrato verificado por la matriz offline del canary
 ```
 
-El manifest futuro puede vivir junto al fixture bajo `backend/app/hotels/fixtures/`; esa ruta ya existe para `mock_hotels.json`, pero el manifest y el loader aún son entregables de H44.
+El manifest implementado vive junto al fixture bajo `backend/app/hotels/fixtures/hoteles_demo_manifest.json`; el manifest de perfiles vive en `backend/app/hotels/fixtures/hotel_fault_profiles.json`, el loader local en `backend/app/hotels/fault_profiles.py` y la matriz/dry-run en `backend/scripts/hotel_mock_canary.py`. La integración ejecutable de revalidación Mock, incluidos `hotel_ambiguous`, `stale_history` y `partial_batch`, y la matriz offline completa ya están verificadas a nivel servicio/canary; la integración browser y una matriz histórica persistida siguen pendientes.
 
 Requisitos de IDs y nombres:
 
@@ -124,7 +119,7 @@ El seed H44 debe cubrir al menos:
 
 ## 5. Fault profiles H44
 
-Los perfiles deben ser declarativos, deterministas y seleccionables sin editar código de producción. El nombre es contrato objetivo; no existe todavía un loader/fault injector H44. Hasta implementarlo, los tests pueden representarlos con fixtures locales o mocks de sesión, pero deben etiquetar esa cobertura como contrato parcial, no como una matriz ya disponible para demo.
+Los perfiles deben ser declarativos, deterministas y seleccionables sin editar código de producción. El loader local existe y todos los profiles soportados (`empty_provider`, `rate_limited_429`, `provider_timeout`, `invalid_json`, `schema_drift`, `rate_without_currency`, `sold_out`, `deeplink_invalid`, `stale_history`, `hotel_ambiguous`, `partial_batch`) se aplican a ingestión/revalidación Mock. `HotelProviderRun.tracked_outcomes` conserva `warnings`, `warning_count`, `needs_review` y `fault_profile`; la cobertura aún no equivale a una matriz persistida completa ni a browser demo.
 
 | Profile | Simula | Resultado esperado | External calls |
 |---|---|---|---:|
@@ -160,15 +155,16 @@ pytest tests/unit/test_hotels_mock_provider.py \
 
 Este comando ejecuta tests existentes y no es un seed/reset de demo. La suite debe seguir siendo independiente del `backend/.env` y de providers externos.
 
-### 6.2 Demo local futura
+### 6.2 Demo local implementada y límites pendientes
 
 H44 debe entregar comandos explícitos, con guardas, por ejemplo:
 
-Los comandos de seed/reset que H44 debe entregar son todavía conceptuales; los módulos no existen hoy:
+El CLI implementado y seguro es `backend/scripts/hotel_demo_seed.py`. Exige `APP_ENV` en `test|demo|local_fixture`, una SQLite absoluta dentro de `tempfile.gettempdir()` y un marker lateral de scope. `seed` es idempotente; `reset` exige `--confirm-demo-db`; `abort` permite retirar únicamente una DB temporal marcada `in_progress` tras una interrupción. Ninguna operación toca `backend/.env`, PostgreSQL, staging o provider live.
 
-```text
-MÓDULO FUTURO DE SEED HOTELERO — pendiente de implementar
-MÓDULO FUTURO DE RESET HOTELERO — pendiente de implementar
+```bash
+cd backend
+APP_ENV=local_fixture HOTEL_PROVIDER=mock python scripts/hotel_demo_seed.py seed --db-url "$AISOLATED_DB_URL"
+APP_ENV=local_fixture HOTEL_PROVIDER=mock python scripts/hotel_demo_seed.py reset --db-url "$AISOLATED_DB_URL" --confirm-demo-db
 ```
 
 El único worker hotelero existente puede ejecutarse manualmente, pero solo después de comprobar una DB aislada y activar explícitamente las flags necesarias:
@@ -218,7 +214,7 @@ El flujo futuro reusable debe poder seleccionar dataset/profile sin modificar el
 6. verificar copy, estados, foco, URL state, consola y requests;
 7. guardar screenshot/trace/network evidence con `dataset_id` y profile.
 
-`frontend/tests/hotels-f56-audit.test.ts` y `hotels-signal-assessment.test.ts` aportan evidencia estructural, pero no son todavía un flujo browser E2E completo de H44. H40/H45 deben cerrar esa evidencia.
+`frontend/tests/hotels-f56-audit.test.ts` y `hotels-signal-assessment.test.ts` aportan evidencia estructural. El flujo browser E2E H44 reutilizable está cubierto por `frontend/scripts/qa_hotels_h44_browser.mjs` y su reporte redacted vigente; H40/H45 mantienen abiertos cross-browser y revisión humana.
 
 TestSprite puede reutilizar el mismo dataset si se implementa un adapter/fixture explícito; `backend/scripts/seed_testsprite_data.py` actualmente siembra vuelos y no debe recibir responsabilidades hoteleras implícitas.
 
@@ -276,10 +272,11 @@ Clasificación de fallo:
 
 ### Gate F — fallos
 
-- [ ] perfiles 429, timeout, vacío, invalid JSON, schema drift, no currency, sold out, ambiguo, deeplink inválido, stale y partial;
-- [ ] outcomes se distinguen y no crean snapshots/precios falsos;
-- [ ] fallos son deterministas y no requieren llamadas externas;
-- [ ] logs/evidencia redacted.
+- [x] perfiles ejecutables 429, timeout, vacío, invalid JSON, schema drift, no currency, sold out y deeplink inválido;
+- [x] outcomes se distinguen, latencia de revalidación se persiste y no se crean snapshots/precios elegibles falsos;
+- [x] perfiles `hotel_ambiguous`, `stale_history` y `partial_batch` con warnings/needs_review por item;
+- [x] fallos son deterministas y no requieren llamadas externas;
+- [x] logs/evidencia redacted; `validate_evidence` bloquea identificadores, secretos, payloads, URLs y valores no acotados.
 
 ### Gate E — E2E
 
@@ -317,4 +314,4 @@ H44 devuelve a fases relacionadas:
 - **H43:** perfiles `local_demo`/`local_fixture`, cero red y kill switches;
 - **H45:** release smoke, canary y rollback.
 
-**Decisión actual:** conservar `mock_hotels.json` como fixture base, sin llamarlo catálogo de producción; no declarar H44 completamente implementada hasta que exista seed hotelero, manifest, reset seguro, perfiles de fallo y un flujo E2E reproducible.
+**Decisión actual:** `hoteles_demo_manifest.json` + `hotel_demo_seed.py` cierran manifest, seed idempotente, reset/abort seguro, scope redacted y cero red; `hotel_fault_profiles.json` + `fault_profiles.py`, `fetch_hotel_rates()` y el sweep Mock cierran el subalcance ejecutable de revalidación, incluidos warnings/needs_review por ítem, outcomes, latencia y seguridad de precio/deeplink; `hotel_mock_canary.py --dry-run` verifica los 13 profiles, expected counts/status/error/external calls, redaction y cleanup de SQLite temporal, y ese gate queda configurado en CI; la ejecución remota no se ha observado en esta sesión. H44 permanece parcial por browser E2E, canary comercial y eventual matriz histórica persistida; el seed no es dry-run y las tarifas siguen siendo `DEMO_NO_LIVE_AVAILABILITY`.
