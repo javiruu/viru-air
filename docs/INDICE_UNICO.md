@@ -124,6 +124,7 @@
 ### Plans
 
 - [Planes de trabajo](plans/README.md)
+- [Limpieza masiva y retirada segura de legado](plans/2026-08-13-dead-code-legacy-retirement.md)
 - [Plan maestro de `/hoteles` — tracker hotelero preferido](plans/2026-08-04-hoteles-master-roadmap.md)
 - [Visión de producto H01 de `/hoteles`](product/hoteles-product-vision-h01.md)
 - [Benchmark H02 de Travel Price Drops Hotels](benchmarks/2026-08-04-travelpricedrops-hotels-h02.md)
