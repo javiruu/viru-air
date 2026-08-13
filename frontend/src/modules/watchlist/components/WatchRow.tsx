@@ -2,11 +2,8 @@ import { useI18n } from "@/i18n";
 import { CommunityRouteSignal } from "@/modules/community-routes/CommunityRouteSignal";
 import type { CommunityRouteInsight } from "@/modules/community-routes/communityRoutesTypes";
 import { formatCurrency, formatSignedCurrency } from "@/modules/shared/format";
-import { resolveProviderPresentation } from "@/modules/shared/providerPresentation";
 import { getWatchStatusMeta } from "@/modules/shared/statusCatalog";
 import { CommunityHubButton } from "@/modules/watchlist/components/CommunityHubButton";
-import { safeDateTime } from "@/modules/watchlist/presentation";
-import { getFreshnessPresentation } from "@/modules/watchlist/summary";
 import type { Watch } from "@/modules/watchlist/types";
 
 export type WatchMetaEntry = {
@@ -74,18 +71,6 @@ export function WatchRow({
           meta.latest.currency,
           localeTag,
         );
-  const routeHealthLabel =
-    trend === "up"
-      ? t("watchlist.smartList.trendUp")
-      : trend === "down"
-        ? t("watchlist.smartList.trendDown")
-        : t("watchlist.smartList.trendStable");
-  const freshness = getFreshnessPresentation({
-    t,
-    locale: localeTag,
-    lastUpdatedAt: meta?.latest?.capturedAt,
-    freshnessState: meta?.latest ? "observing" : null,
-  });
   const priceDropAmount =
     trend === "down" && meta?.latest && meta.previous
       ? meta.previous.price - meta.latest.price
@@ -118,13 +103,6 @@ export function WatchRow({
       meta.max !== null &&
       meta.max > meta.min,
   );
-  const provider = meta?.latest?.provider
-    ? resolveProviderPresentation(
-        meta.latest.provider,
-        t("watchlist.providerCoverage.unknown"),
-      )
-    : null;
-
   return (
     <article
       className={`list-row watch-row ${isSelected ? "watch-selected" : ""}`}
@@ -177,7 +155,7 @@ export function WatchRow({
           </strong>
         </div>
         <div className="watch-meta">
-          {meta?.latest && meta.previous ? (
+          {meta?.latest && meta.previous && trend !== "flat" ? (
             <span
               className={`status-pill ${
                 trend === "up"
@@ -187,25 +165,9 @@ export function WatchRow({
                     : "warning"
               }`}
             >
-              {routeHealthLabel}
-            </span>
-          ) : null}
-          {meta?.latest?.capturedAt ? (
-            <span className="watch-meta-chip tabular-nums">
-              {t("watchlist.detail.latestSnapshot")}{" "}
-              {safeDateTime(meta.latest.capturedAt, localeTag)}
-            </span>
-          ) : null}
-          {meta?.latest?.capturedAt ? (
-            <span className="watch-meta-chip watch-meta-chip--freshness tabular-nums">
-              {t("watchlist.detail.freshness")} {freshness.label}
-            </span>
-          ) : null}
-          {meta?.latest?.provider && provider ? (
-            <span className={`watch-provider-chip watch-provider-chip--${provider.id}`}>
-              {t("watchlist.providerCoverage.rowSource", {
-                provider: provider.label,
-              })}
+              {trend === "up"
+                ? t("watchlist.smartList.trendUp")
+                : t("watchlist.smartList.trendDown")}
             </span>
           ) : null}
           <CommunityRouteSignal

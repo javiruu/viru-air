@@ -6,7 +6,10 @@ import {
   normalizeWatchApiResponse,
   type WatchApiResponse,
 } from "@/modules/watchlist/watchlistApiCompatibility";
-import { mapSnapshotsToHistoryRows } from "@/modules/watchlist/watchlistActions.helpers";
+import {
+  mapLatestWatchSnapshotsToHistoryRows,
+  mapSnapshotsToHistoryRows,
+} from "@/modules/watchlist/watchlistActions.helpers";
 import type { HistoryRow, Snapshot, Watch } from "@/modules/watchlist/types";
 
 type UseWatchlistDataLoaderInput = {
@@ -75,7 +78,14 @@ export function useWatchlistDataLoader({
           })
         : [];
 
-      const merged = mapSnapshotsToHistoryRows(rows, snapshots);
+      const batchHistoryRows = mapSnapshotsToHistoryRows(rows, snapshots);
+      const batchWatchIds = new Set(batchHistoryRows.map((row) => row.watchId));
+      const merged = [
+        ...batchHistoryRows,
+        ...mapLatestWatchSnapshotsToHistoryRows(rows).filter(
+          (row) => !batchWatchIds.has(row.watchId),
+        ),
+      ];
       setHistoryRows(merged);
 
       const nextSelectedWatchId = resolveSelectedWatchId(rows, selectedWatchIdRef.current);

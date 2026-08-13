@@ -57,7 +57,7 @@ test("W9: bulk toolbar remains contextual and hidden with zero selection", () =>
   assert.match(source, /data-testid="watchlist-bulk-toolbar"/);
 });
 
-test("W9: historical confidence and actionable freshness remain visible in detail/list flow", () => {
+test("W9: historical confidence remains available without crowding the watch row", () => {
   const detailSource = fs.readFileSync(DETAIL_PANEL, "utf8");
   const smartSource = fs.readFileSync(SMART_PANEL, "utf8");
   const watchRowSource = fs.readFileSync(WATCH_ROW, "utf8");
@@ -69,7 +69,8 @@ test("W9: historical confidence and actionable freshness remain visible in detai
   assert.match(summarySource, /watchlist\.summary\.historyConfidence\.sufficientTitle/);
   assert.match(summarySource, /watchlist\.freshness\.updatedAgo/);
   assert.match(summarySource, /watchlist\.freshness\.lastUpdatedAgo/);
-  assert.match(`${smartSource}\n${watchRowSource}`, /watchlist\.detail\.freshness/);
+  assert.doesNotMatch(watchRowSource, /watchlist\.detail\.freshness/);
+  assert.match(smartSource, /watchlist\.lastUpdateInline/);
 });
 
 test("W9: map and compare keep non-contradictory and reactive states", () => {

@@ -290,10 +290,10 @@ class WatchOut(BaseModel):
     group_id: str | None = None
     fare_profile: FareComparisonProfile | None = None
     community_pricing: CommunityPricingOut = Field(default_factory=CommunityPricingOut)
+    latest_snapshot: "SnapshotOut | None" = None
 
 
 class WatchDetailOut(WatchOut):
-    latest_snapshot: "SnapshotOut | None" = None
     price_history: list["WatchPriceHistoryOut"] = Field(default_factory=list)
 
 

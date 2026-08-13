@@ -11,6 +11,7 @@ export type Watch = {
   group_id?: string | null;
   fare_profile?: FareComparisonProfile | null;
   community_pricing: CommunityPricing;
+  latest_snapshot?: Snapshot | null;
 };
 
 export type CommunityPriceResponse = {

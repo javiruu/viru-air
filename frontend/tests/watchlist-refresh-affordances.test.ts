@@ -18,15 +18,14 @@ test("watchlist route no longer wires manual refresh actions into list or detail
   assert.doesNotMatch(pageSource, /isRefreshingBulk=/);
 });
 
-test("watchlist panels show freshness context without manual refresh buttons", () => {
+test("watchlist keeps freshness context outside compact list rows", () => {
   const smartSource = fs.readFileSync(SMART_PANEL, "utf8");
   const rowSource = fs.readFileSync(WATCH_ROW, "utf8");
-  const listSource = `${smartSource}\n${rowSource}`;
   const detailSource = fs.readFileSync(DETAIL_PANEL, "utf8");
 
-  assert.match(listSource, /watchlist\.detail\.latestSnapshot/);
-  assert.match(listSource, /watchlist\.detail\.freshness/);
-  assert.doesNotMatch(listSource, /watchlist\.smartList\.refresh|watchlist\.smartList\.updating/);
+  assert.doesNotMatch(rowSource, /watchlist\.detail\.(latestSnapshot|freshness)/);
+  assert.match(smartSource, /watchlist\.lastUpdateInline/);
+  assert.doesNotMatch(`${smartSource}\n${rowSource}`, /watchlist\.smartList\.refresh|watchlist\.smartList\.updating/);
   assert.doesNotMatch(detailSource, /watchlist\.detail\.actions\.refresh/);
 });
 

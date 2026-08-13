@@ -89,6 +89,7 @@ def _watch_out(
     watch: FlightWatch,
     watchers_count: int = 0,
     community_pricing: CommunityPricingOut | None = None,
+    latest_snapshot: WatchPriceHistoryOut | None = None,
 ) -> WatchOut:
     return WatchOut(
         id=watch.id,
@@ -101,7 +102,39 @@ def _watch_out(
         group_id=watch.group_id,
         fare_profile=watch.fare_profile,
         community_pricing=community_pricing or CommunityPricingOut(),
+        latest_snapshot=latest_snapshot,
     )
+
+
+def _latest_snapshots_by_watch_id(
+    db: Session,
+    watches: list[FlightWatch],
+) -> dict[str, WatchPriceHistoryOut]:
+    if not watches:
+        return {}
+
+    canonical_snapshots = canonicalize_snapshot_rows(
+        db.scalars(
+            select(PriceSnapshot)
+            .where(PriceSnapshot.watch_id.in_([watch.id for watch in watches]))
+            .order_by(PriceSnapshot.watch_id.asc(), PriceSnapshot.captured_at_utc.asc(), PriceSnapshot.id.asc())
+        )
+    )
+    latest_by_watch_id: dict[str, WatchPriceHistoryOut] = {}
+    for snapshot in canonical_snapshots:
+        current = latest_by_watch_id.get(snapshot.watch_id)
+        if current is not None and current.captured_at_utc >= snapshot.captured_at_utc:
+            continue
+        latest_by_watch_id[snapshot.watch_id] = WatchPriceHistoryOut(
+            captured_at_utc=snapshot.captured_at_utc,
+            raw_price=snapshot.raw_price,
+            raw_currency=snapshot.raw_currency,
+            departure_time_local=snapshot.departure_time_local,
+            provider=snapshot.provider,
+            is_stale=snapshot.is_stale,
+            source_kind=_snapshot_source_kind(snapshot.provider),
+        )
+    return latest_by_watch_id
 
 
 def _count_watchers_by_route(
@@ -272,6 +305,7 @@ def list_watches(
         )
     )
     route_keys = {_watch_route_key(watch) for watch in watches}
+    latest_snapshots_by_watch_id = _latest_snapshots_by_watch_id(db, watches)
     watchers_count_by_route = _count_watchers_by_route(
         db,
         route_keys,
@@ -287,6 +321,7 @@ def list_watches(
             w,
             watchers_count_by_route.get(_watch_route_key(w), 0),
             community_pricing_by_watch[w.id],
+            latest_snapshots_by_watch_id.get(w.id),
         )
         for w in watches
     ]
