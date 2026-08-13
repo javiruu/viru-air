@@ -11,7 +11,6 @@ import {
 } from "@/modules/door-to-door/api";
 import { DoorToDoorEmptyState } from "@/modules/door-to-door/components/DoorToDoorEmptyState";
 import { DoorToDoorErrorState } from "@/modules/door-to-door/components/DoorToDoorErrorState";
-import { DoorToDoorFilters } from "@/modules/door-to-door/components/DoorToDoorFilters";
 import { DoorToDoorLoadingState } from "@/modules/door-to-door/components/DoorToDoorLoadingState";
 import { DoorToDoorOptionCard } from "@/modules/door-to-door/components/DoorToDoorOptionCard";
 import { DoorToDoorFilterPanel } from "@/modules/door-to-door/components/DoorToDoorFilterPanel";

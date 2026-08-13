@@ -4,7 +4,6 @@ import path from "node:path";
 import test from "node:test";
 
 const SUMMARY_FILE = path.join(process.cwd(), "src", "modules", "watchlist", "summary.ts");
-const SMART_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "SmartWatchListPanel.tsx");
 const WATCH_ROW = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchRow.tsx");
 const DETAIL_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");
 const HISTORY_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "HistoryIntegratedPanel.tsx");

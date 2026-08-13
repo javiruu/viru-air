@@ -31,8 +31,6 @@ type QuickSearchScreenStateArgs = {
   excludeDestinationsCount: number;
   departAfter: string;
   departBefore: string;
-  daysBefore: number;
-  daysAfter: number;
   emptyCausesExpanded: boolean;
   t: (key: QuickSearchCopyKey) => string;
   tWarn: (key: string) => string;
@@ -66,8 +64,6 @@ export function useQuickSearchScreenState({
   excludeDestinationsCount,
   departAfter,
   departBefore,
-  daysBefore,
-  daysAfter,
   emptyCausesExpanded,
   t,
   tWarn,

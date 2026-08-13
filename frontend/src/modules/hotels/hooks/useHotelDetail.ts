@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useI18n } from "@/i18n";
-import { getHotelDetail, getHotelParity, getHotelRates, HotelsRequestError } from "../api";
+import { getHotelDetail, getHotelParity, getHotelRates } from "../api";
 import type { HotelDetailOut, HotelParityOut, HotelRateOut } from "../types";
 import { resolveHotelMessage } from "./useHotelSearch";
 

@@ -11,7 +11,6 @@ import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = path.join(process.cwd(), "src");
-const TESTS_ROOT = process.cwd();
 
 const read = (relativePath: string) => {
   const abs = fs.existsSync(path.join(ROOT, relativePath))

@@ -180,15 +180,6 @@ export default function DashboardPage() {
     [noteActiveId, startNewNote, t]
   );
 
-  const userName = me?.email || me?.id || "Usuario";
-  const userInitials = useMemo(() => {
-    const clean = userName.trim();
-    const [first, second] = clean.split(/[\s.@_-]+/).filter(Boolean);
-    if (!first) return "US";
-    if (!second) return first.slice(0, 2).toUpperCase();
-    return `${first[0]}${second[0]}`.toUpperCase();
-  }, [userName]);
-
   const sortedNotes = useMemo(
     () => [...notes].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
     [notes]

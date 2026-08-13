@@ -4,7 +4,6 @@ import path from "node:path";
 import test from "node:test";
 
 const SUMMARY = path.join(process.cwd(), "src", "modules", "watchlist", "summary.ts");
-const FORMAT = path.join(process.cwd(), "src", "modules", "shared", "format.ts");
 const HISTORY_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "HistoryIntegratedPanel.tsx");
 const DERIVED = path.join(process.cwd(), "src", "modules", "watchlist", "useWatchlistDerived.ts");
 const PAGE = path.join(process.cwd(), "src", "app", "(private)", "watchlist", "page.tsx");

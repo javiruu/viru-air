@@ -5,7 +5,6 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { DoorToDoorErrorState } from "../src/modules/door-to-door/components/DoorToDoorErrorState";
 import { DoorToDoorFilters } from "../src/modules/door-to-door/components/DoorToDoorFilters";
 import { DoorToDoorOptionCard } from "../src/modules/door-to-door/components/DoorToDoorOptionCard";
 import { DoorToDoorRouteVisual } from "../src/modules/door-to-door/components/DoorToDoorRouteVisual";
@@ -159,30 +158,6 @@ const preferences: DoorToDoorPreferences = {
   public_transport_only: false,
   sort_by: "best_balance",
 };
-/** Extract a named domain section from the i18n source, skipping braces inside strings. */
-function extractDomainSection(source: string, domainName: string) {
-  const marker = "export const " + domainName + " =";
-  const start = source.indexOf(marker);
-  if (start === -1) return "";
-  let depth = 0;
-  let inSection = false;
-  let inString = false;
-  let stringChar = "";
-  for (let i = start; i < Math.min(start + 12000, source.length); i++) {
-    if (!inString && (source[i] === "'" || source[i] === '"' || source[i] === "`")) { inString = true; stringChar = source[i]; continue; }
-    if (inString && source[i] === "\\") { i++; continue; }
-    if (inString && source[i] === stringChar) { inString = false; continue; }
-    if (inString) continue;
-    if (!inSection && source[i] === "{") { inSection = true; depth = 1; continue; }
-    if (inSection) {
-      if (source[i] === "{") depth++;
-      if (source[i] === "}") { depth--; if (depth === 0) return source.slice(start, i + 1); }
-    }
-  }
-  return source.slice(start, Math.min(start + 12000, source.length));
-}
-
-
 function readAllDoorToDoorSource() {
   const files = fs.readdirSync(MODULE_DIR, { recursive: true }).filter((item) => String(item).endsWith(".tsx") || String(item).endsWith(".ts"));
   return files.map((item) => fs.readFileSync(path.join(MODULE_DIR, String(item)), "utf8")).join("\n");

@@ -8,7 +8,6 @@ import { Download } from "lucide-react";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetch, apiFetchWithStatus, LONG_RUNNING_API_BASE } from "@/modules/shared/api";
 import type { ApiError } from "@/modules/shared/api";
-import { getAirportMeta } from "@/modules/shared/airports";
 import { buildJsonExportFilename, downloadJson } from "@/modules/shared/jsonExport";
 import { getQuickSearchCopy } from "@/modules/shared/quickSearchCopy";
 import { useFtueHint } from "@/lib/ftue";
@@ -136,15 +135,12 @@ import {
   QuickSearchLoadingSubcheckStatus,
   QuickSearchMode,
   QuickSearchSortBy,
-  QuickSearchTagTone,
   QuickSearchTripType,
   QuickSearchVisibleFiltersState,
   RegionPref,
   SearchResult,
   SearchResponse,
   SearchResponseRaw,
-  WeatherDay,
-  WeatherReport,
   SummaryHighlightKey,
   ZeroResultRelaxAction,
 } from "@/modules/quick-search/types";
@@ -168,7 +164,7 @@ import { getPendingActionVisibility } from "@/modules/quick-search/state/pending
 import { getApiSearchQuery } from "@/modules/shared/cityTranslations";
 import { buildAirportSuggestions, normalizeText } from "@/modules/quick-search/airportSuggestions";
 import { INITIAL_PROVIDER_SEARCH_STATUSES } from "@/modules/quick-search/providerPresentation";
-import { fetchWeather as fetchWeatherApi, isWeatherRangeSupported as isWeatherRangeSupportedCheck, WeatherFetchError } from "@/modules/quick-search/weatherUtils";
+import { fetchWeather as fetchWeatherApi, isWeatherRangeSupported as isWeatherRangeSupportedCheck } from "@/modules/quick-search/weatherUtils";
 import {
   buildResumeSearchSnapshot,
   loadResumeSearchSnapshot,
@@ -229,24 +225,16 @@ const RYANAIR_TOP_CITIES = [
   "Valencia",
 ];
 
-type ExecutedCriteriaSnapshot = {
-  route: string;
-  dateLabel: string;
-  paxLabel: string;
-};
-
-type QuickSearchSeedAirportResponse = {
-  items: AirportIataEntry[];
-  count: number;
-  total?: number;
-  next_offset?: number;
-  source: string;
-};
-
 type QuickSearchCountrySeed = {
   code: string;
   name: string;
   airport_count: number;
+};
+
+type ExecutedCriteriaSnapshot = {
+  route: string;
+  dateLabel: string;
+  paxLabel: string;
 };
 
 type QuickSearchCountrySeedResponse = {
@@ -342,21 +330,6 @@ function _getDisplayNames(): Intl.DisplayNames | null {
   }
 }
 
-function resolveCountryName(code: string): string {
-  const normalized = code.trim().toUpperCase();
-  if (!normalized) return "";
-  if (typeof Intl === "undefined" || typeof Intl.DisplayNames !== "function") {
-    return normalized;
-  }
-  try {
-    const locale = typeof navigator !== "undefined" && navigator.language ? navigator.language : "en";
-    const display = new Intl.DisplayNames([locale], { type: "region" });
-    return display.of(normalized) || normalized;
-  } catch {
-    return normalized;
-  }
-}
-
 function getPageNumbers(current: number, total: number) {
   const pages: (number | string)[] = [];
   if (total <= 7) {
@@ -396,7 +369,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   } | null>(null);
   const additionalAirportIdRef = useRef(0);
   const [countryAirports, setCountryAirports] = useState<AirportIataEntry[]>([]);
-  const [executedCriteria, setExecutedCriteria] = useState<ExecutedCriteriaSnapshot | null>(null);
+  const [, setExecutedCriteria] = useState<ExecutedCriteriaSnapshot | null>(null);
   const [loaderPlannedTotalFlights, setLoaderPlannedTotalFlights] = useState(0);
   const [loaderResolvedTotalFlights, setLoaderResolvedTotalFlights] = useState<number | null>(null);
   const [loaderScopeRoutes, setLoaderScopeRoutes] = useState(0);
@@ -486,7 +459,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setOriginSelectedCountryCode,
     destinationSelectedCountryCode,
     setDestinationSelectedCountryCode,
-    isEditing,
     setIsEditing,
     routePulse,
     setRoutePulse,
@@ -542,7 +514,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setPref,
     regionPref,
     setRegionPref,
-    prefBadge,
     setPrefBadge,
     deepLink,
     setDeepLink,
@@ -585,9 +556,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     showLoader,
     setShowLoader,
     prefersReducedMotion,
-    setPrefersReducedMotion,
     isMobileViewport,
-    setIsMobileViewport,
     emptyCausesExpanded,
     setEmptyCausesExpanded,
     infoExpanded,
@@ -600,22 +569,17 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setAirportSelectionTouched,
     blurTimer,
     autocompleteBlurTimer,
-    zeroResultsTracked,
-    idleStateTracked,
     resultsToolbarRef,
     formRef,
     filtersToggleRef,
-    filtersCloseRef,
     explainPopoverRef,
     explainTriggerRef,
     relaxUndoRef,
     lastPickerTriggerRef,
     airportSearchInputRef,
     rowMenuTriggerRefs,
-    tripTypeIncompleteTrackedRef,
     sourcesShownKeyRef,
     freshnessShownKeyRef,
-    headrowRemovedTrackedRef,
     requestIdRef,
     activeLoadingRequestRef,
     prevSearchStateRef,
@@ -1919,8 +1883,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
   // weatherLabel imported from @/modules/quick-search/weatherUtils
 
-  // WeatherFetchError imported from @/modules/quick-search/weatherUtils
-
   // isWeatherRangeSupported imported from @/modules/quick-search/weatherUtils
 
   // fetchWeather imported from @/modules/quick-search/weatherUtils
@@ -3033,19 +2995,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setAdults((prev) => Math.min(9, Math.max(1, prev + delta)));
   }
 
-  function applyPreferences() {
-    if (!pref) return;
-    const defaults = resolveQuickSearchPreferenceDefaults(pref);
-    setRadiusKm(defaults.radiusKm);
-    setIncludeStops(defaults.includeStops);
-    setDepartAfter(defaults.departAfter);
-    setDepartBefore(defaults.departBefore);
-    setIncludeNearbyOrigins(defaults.includeNearbyOrigins);
-    setIncludeNearbyDestinations(defaults.includeNearbyDestinations);
-    setStrictFilters(defaults.strictFilters);
-    setPrefBadge(true);
-  }
-
   function parseIataList(raw: string): string[] {
     return parseQuickSearchIataTokens(raw);
   }
@@ -3085,75 +3034,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     addChip(excludeDestinationInput, excludeDestinations, setExcludeDestinations, setExcludeDestinationInput);
   }, [excludeDestinationInput, excludeDestinations, setExcludeDestinationInput, setExcludeDestinations]);
 
-  const resetCoverageFilters = useCallback(() => {
-    setIncludeNearbyOrigins(false);
-    setIncludeNearbyDestinations(false);
-    setRadiusKm(QUICK_SEARCH_RADIUS_DEFAULT);
-    setExcludeOrigins([]);
-    setExcludeDestinations([]);
-    setExcludeOriginInput("");
-    setExcludeDestinationInput("");
-  }, [
-    setExcludeDestinationInput,
-    setExcludeDestinations,
-    setExcludeOriginInput,
-    setExcludeOrigins,
-    setIncludeNearbyDestinations,
-    setIncludeNearbyOrigins,
-    setRadiusKm,
-  ]);
-
-  const resetTimingFilters = useCallback(() => {
-    setDepartAfter("07:00");
-    setDepartBefore("22:00");
-    setStrictFilters(true);
-  }, [setDepartAfter, setDepartBefore, setStrictFilters]);
-
-
-  const resetExperimentalFilters = useCallback(() => {
-    setIncludeStops(false);
-    setMaxStops(1);
-    setBufferMin("");
-  }, [setBufferMin, setIncludeStops, setMaxStops]);
-
-  const applyDirectCoveragePreset = useCallback(() => {
-    setIncludeNearbyOrigins(false);
-    setIncludeNearbyDestinations(false);
-    setRadiusKm(QUICK_SEARCH_RADIUS_DEFAULT);
-  }, [setIncludeNearbyDestinations, setIncludeNearbyOrigins, setRadiusKm]);
-
-  const applyOriginNearbyPreset = useCallback(() => {
-    setIncludeNearbyOrigins(true);
-    setIncludeNearbyDestinations(false);
-    setRadiusKm(QUICK_SEARCH_RADIUS_DEFAULT);
-  }, [setIncludeNearbyDestinations, setIncludeNearbyOrigins, setRadiusKm]);
-
-  const applyBothNearbyPreset = useCallback(() => {
-    setIncludeNearbyOrigins(true);
-    setIncludeNearbyDestinations(true);
-    setRadiusKm(QUICK_SEARCH_RADIUS_DEFAULT);
-  }, [setIncludeNearbyDestinations, setIncludeNearbyOrigins, setRadiusKm]);
-
-  const applyRegionalCoveragePreset = useCallback(() => {
-    setIncludeNearbyOrigins(true);
-    setIncludeNearbyDestinations(true);
-    setRadiusKm(250);
-  }, [setIncludeNearbyDestinations, setIncludeNearbyOrigins, setRadiusKm]);
-
   function formatMinutes(value?: number | null) {
     if (!value && value !== 0) return "--";
     return `${value} min`;
-  }
-
-  function formatFreshness(value?: string | null) {
-    if (!value) return t("freshnessUnknown");
-    const ts = new Date(value).getTime();
-    if (Number.isNaN(ts)) return value;
-    const diff = Math.max(0, Date.now() - ts);
-    const mins = Math.round(diff / 60000);
-    if (mins < 60) return `${mins} min`;
-    const hours = Math.round(mins / 60);
-    return `${hours} h`;
   }
 
   function formatFreshnessTime(value?: string | null) {
@@ -3463,7 +3346,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     : "";
   const tripType = getTripTypeLabel(isReturn, returnDate);
   const radiusActive = includeNearbyOrigins || includeNearbyDestinations;
-  const hasInvalidRoute = !originValid || !destinationValid;
   const routeInputsValid = originValid && destinationValid;
   const returnDateInvalid = Boolean(isReturn && travelDate && returnDate && returnDate < travelDate);
   // Dual-mode flag (Fase 6) ─ after routeInputsValid to avoid TDZ
@@ -3911,8 +3793,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     excludeDestinationsCount: excludeDestinations.length,
     departAfter,
     departBefore,
-    daysBefore,
-    daysAfter,
     emptyCausesExpanded,
     t,
     tWarn,
@@ -3949,8 +3829,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     excludeDestinationsCount: excludeDestinations.length,
     departAfter,
     departBefore,
-    daysBefore,
-    daysAfter,
     emptyCausesExpanded: false,
     t,
     tWarn,
@@ -3975,8 +3853,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     excludeDestinationsCount: excludeDestinations.length,
     departAfter,
     departBefore,
-    daysBefore,
-    daysAfter,
     emptyCausesExpanded: false,
     t,
     tWarn,
@@ -4210,11 +4086,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setRadiusKm,
     setStrictFilters,
   ]);
-
-  const clearAllFilters = useCallback(() => {
-    activeChips.forEach((chip) => chip.onClear());
-  }, [activeChips]);
-
 
   const [relaxPreviewOpen, setRelaxPreviewOpen] = useState(false);
 
@@ -4503,53 +4374,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             : visualSearchState === "rate"
               ? t("rateLimitTitle")
               : t("searchReadyTitle");
-  const heroStatusTone =
-    visualSearchState === "error" || visualSearchState === "rate"
-      ? "alert"
-      : isVisualLoading
-        ? "active"
-        : showDegradedState || hasFinalEmptyState
-          ? "warning"
-          : hasFinalResults
-            ? "ready"
-            : "idle";
-  const heroStatusLabel =
-    isVisualLoading
-      ? t("loadingTitle")
-      : visualSearchState === "error"
-        ? t("errorTitle")
-        : visualSearchState === "rate"
-          ? t("rateLimitTitle")
-          : showDegradedState
-            ? t("degradedBadge")
-            : hasFinalResults || hasFinalEmptyState
-              ? t("searchSummaryTitle")
-              : t("searchReadyTitle");
-  const heroStatusTitle =
-    hasFinalResults
-      ? `${totalResults} ${t("results")}`
-      : isVisualLoading
-        ? t("loadingTitle")
-        : visualSearchState === "rate"
-          ? `${rateLimitSeconds}s`
-          : hasFinalEmptyState
-            ? emptyStateMainTitle
-            : visualSearchState === "error"
-              ? t("errorTitle")
-              : t("searchReadyTitle");
-  const heroStatusBody =
-    hasFinalResults
-      ? executedCriteria?.route || summaryTrip
-      : isVisualLoading
-        ? t("loadingText")
-        : visualSearchState === "rate"
-          ? `${t("rateLimitText")} ${rateLimitSeconds}s`
-          : hasFinalEmptyState
-            ? t("emptyText")
-            : visualSearchState === "error"
-              ? (searchError || t("searchFailed"))
-              : (searchDisabledHint || t("searchReadyHint"));
-
   const runSearch = () => {
     void onSubmit({ preventDefault: () => {} } as FormEvent, { page: 1 });
   };
@@ -4581,11 +4405,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const removeExcludeDestinationChip = useCallback((iata: string) => {
     removeChip(iata, excludeDestinations, setExcludeDestinations);
   }, [excludeDestinations, setExcludeDestinations]);
-
-  const openFiltersFromConsole = useCallback(() => {
-    trackEvent("quicksearch_filters_opened", { active_filters: activeChips.length, source: "console" });
-    setIsFiltersOpen(true);
-  }, [activeChips.length, setIsFiltersOpen]);
 
   const toggleEmptyCauses = useCallback(() => {
     setEmptyCausesExpanded((prev) => !prev);
