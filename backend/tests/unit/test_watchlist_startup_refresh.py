@@ -266,6 +266,7 @@ def test_server_startup_refreshes_stale_watchlist_routes_automatically(monkeypat
         monkeypatch.setattr(main_module, "SessionLocal", TestingSessionLocal)
         monkeypatch.setattr(watchlist_revalidation, "provider", _FakeProvider())
         monkeypatch.setattr(main_module, "WATCHLIST_STARTUP_REFRESH_ENABLED", True)
+        monkeypatch.setattr(main_module, "enable_in_process_workers", True)
         monkeypatch.setattr(main_module, "FARE_MEMORY_BOOT_WARMUP_ENABLED", False)
 
         with TestClient(app):

@@ -5,12 +5,13 @@ Revises: 0018_hotels_provider_run_and_alert_event
 Create Date: 2026-06-03
 """
 
+import re
+import unicodedata
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
 
-from app.hotels.normalization import HotelNormalizationService
 
 
 revision: str = "0019_hotels_normalized_city"
@@ -27,6 +28,15 @@ def _has_column(conn, table_name: str, column_name: str) -> bool:
 def _index_names(conn, table_name: str) -> set[str]:
     inspector = sa.inspect(conn)
     return {idx["name"] for idx in inspector.get_indexes(table_name)}
+
+
+def _normalize_city(value: str | None) -> str:
+    if not value:
+        return ""
+    lowered = value.strip().lower()
+    no_accents = unicodedata.normalize("NFKD", lowered).encode("ascii", errors="ignore").decode("ascii")
+    no_punctuation = re.sub(r"[^\w\s]", " ", no_accents)
+    return re.sub(r"\s+", " ", no_punctuation).strip()
 
 
 def upgrade() -> None:
@@ -47,7 +57,7 @@ def upgrade() -> None:
 
     rows = conn.execute(sa.select(hotel_property.c.id, hotel_property.c.city)).mappings().all()
     for row in rows:
-        normalized_city = HotelNormalizationService.normalize_city(row["city"])
+        normalized_city = _normalize_city(row["city"])
         conn.execute(
             hotel_property.update()
             .where(hotel_property.c.id == row["id"])

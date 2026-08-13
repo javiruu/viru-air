@@ -19,6 +19,7 @@ async def test_lifespan_schedules_retention_without_blocking_startup() -> None:
 
     with (
         patch("app.main.FARE_MEMORY_BOOT_WARMUP_ENABLED", False),
+        patch("app.main.enable_in_process_workers", True),
         patch("app.main.WATCHLIST_STARTUP_REFRESH_ENABLED", False),
         patch("app.main.FARE_MEMORY_RETENTION_ENABLED", True),
         patch("app.main.FARE_MEMORY_REVALIDATION_WORKER_ENABLED", False),
@@ -42,6 +43,7 @@ async def test_lifespan_skips_retention_when_flag_is_disabled() -> None:
 
     with (
         patch("app.main.FARE_MEMORY_BOOT_WARMUP_ENABLED", False),
+        patch("app.main.enable_in_process_workers", False),
         patch("app.main.WATCHLIST_STARTUP_REFRESH_ENABLED", False),
         patch("app.main.FARE_MEMORY_RETENTION_ENABLED", False),
         patch("app.main.FARE_MEMORY_REVALIDATION_WORKER_ENABLED", False),

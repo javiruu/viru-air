@@ -26,6 +26,9 @@ Esto evita acoplar `quick-search`, `watchlist` y `recommendations` a un provider
 - Stack base verificado: Python 3.12+, FastAPI, SQLAlchemy, Alembic.
 - Punto de entrada: `backend/app/main.py`.
 - **Cache compartida persistente (V2.1):** `quick_search_cache_service.py` + `QuickSearchCacheEntry` en BD. Reutiliza resultados de provider entre usuarios con TTL por categoría (ready=24h, empty=2h, degraded=30min). Activada con `QUICK_SEARCH_SHARED_CACHE_ENABLED=true`. Ver contrato en [Quick Search contract](../reference/backend/quick-search-contract.md).
+- Las migraciones Alembic son la única autoridad del esquema. El arranque de FastAPI no ejecuta `ALTER TABLE` ni `create_all()`.
+- El worker de revalidación se ejecuta fuera de los workers HTTP con `python -m app.services.revalidation_worker_entrypoint`. `ENABLE_IN_PROCESS_WORKERS=false` es el valor seguro para despliegues con varias réplicas.
+- La coordinación de single-flight usa una única backend por entorno: `QUICK_SEARCH_LOCK_BACKEND=database` o `redis`; no hay fallback automático entre ambos porque permitiría locks duplicados durante una caída de Redis.
 - Endpoints operativos visibles:
   - `/health`
   - `/ready`
@@ -42,7 +45,7 @@ Esto evita acoplar `quick-search`, `watchlist` y `recommendations` a un provider
   - `WATCHLIST_STARTUP_REFRESH_ENABLED=true` por defecto.
   - en startup, el backend encola `RevalidationJob` de tipo `startup_refresh` para cada ruta activa compartida.
   - `WATCHLIST_STARTUP_REFRESH_MAX_AGE_SECONDS=14400` define cuando una ruta activa se considera vencida al arrancar; el umbral se usa para prioridad y observabilidad, no para saltarse rutas activas.
-  - el arranque no bloquea `ready`: un worker background drena jobs due de tipo `startup_refresh`, `boot_warmup` y `manual` con `target_type=route`.
+  - el worker externo drena jobs due de tipo `startup_refresh`, `boot_warmup` y `manual` con `target_type=route`.
   - una sola revalidacion por ruta comprueba todos los watches activos de esa ruta y persiste snapshots por usuario solo cuando falta dato, el dato previo era stale o el precio/currency cambio; asi se evita llenar el historico con puntos repetidos al abrir el servidor varias veces.
 - Boot warmup de Fare Memory:
   - `FARE_MEMORY_BOOT_WARMUP_ENABLED=false` por defecto.

@@ -63,6 +63,7 @@ def test_server_startup_runs_periodic_revalidation_worker_without_blocking(monke
             raise
 
     monkeypatch.setattr(main_module, "FARE_MEMORY_REVALIDATION_WORKER_ENABLED", True)
+    monkeypatch.setattr(main_module, "enable_in_process_workers", True)
     monkeypatch.setattr(main_module, "FARE_MEMORY_REVALIDATION_WORKER_INTERVAL_SECONDS", 60)
     monkeypatch.setattr(main_module, "FARE_MEMORY_REVALIDATION_WORKER_BATCH_SIZE", 20)
     monkeypatch.setattr(main_module, "FARE_MEMORY_RETENTION_ENABLED", False)

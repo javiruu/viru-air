@@ -109,7 +109,7 @@ def test_redis_lock_release_allows_reacquire() -> None:
         engine.dispose()
 
 
-def test_redis_lock_down_falls_back_to_db_lock() -> None:
+def test_redis_lock_down_does_not_fallback_to_db_lock() -> None:
     db, engine = _db()
     try:
         lease = acquire_quick_search_provider_lock(
@@ -122,9 +122,8 @@ def test_redis_lock_down_falls_back_to_db_lock() -> None:
         )
         db_lock_count = db.scalar(select(func.count(QuickSearchProviderLock.lock_key)))
 
-        assert lease is not None
-        assert not lease.lock_token.startswith("redis:")
-        assert db_lock_count == 1
+        assert lease is None
+        assert db_lock_count == 0
     finally:
         db.close()
         engine.dispose()

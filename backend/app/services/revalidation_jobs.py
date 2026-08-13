@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from sqlalchemy import Select, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
@@ -59,7 +60,23 @@ def enqueue_revalidation_job(
         payload_json=json.dumps(payload, ensure_ascii=False, sort_keys=True) if payload is not None else None,
     )
     db.add(job)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        existing = db.scalar(
+            select(RevalidationJob)
+            .where(RevalidationJob.job_type == job_type)
+            .where(RevalidationJob.target_type == target_type)
+            .where(RevalidationJob.target_fingerprint == target_fingerprint)
+            .where(RevalidationJob.provider == provider)
+            .where(RevalidationJob.status.in_(tuple(ACTIVE_REVALIDATION_JOB_STATUSES)))
+            .order_by(RevalidationJob.created_at.desc(), RevalidationJob.id.desc())
+            .limit(1)
+        )
+        if existing is None:
+            raise
+        return existing, False
     db.refresh(job)
     return job, True
 

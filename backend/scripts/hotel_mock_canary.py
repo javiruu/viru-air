@@ -30,7 +30,7 @@ from app.services.hotels_service import run_hotel_sweep  # noqa: E402
 
 
 SCHEMA_VERSION = "hotel-mock-canary-v1"
-MIGRATION_REVISION = "0059_hotel_tracking_lifecycle"
+MIGRATION_REVISION = "0060_revalidation_job_active_target"
 ALLOWED_PROFILES = frozenset({"local_demo", "local_fixture"})
 FORBIDDEN_KEY_PARTS = frozenset(
     {
