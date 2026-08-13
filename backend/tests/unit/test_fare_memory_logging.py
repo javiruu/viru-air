@@ -5,6 +5,7 @@ from app.services.fare_memory_logging import (
     log_fare_memory_quick_search_counters,
     log_fare_memory_retention_pruned,
     log_fare_memory_watchlist_backfill_applied,
+    log_quick_search_legacy_aliases_used,
 )
 
 
@@ -87,3 +88,31 @@ def test_retention_log_uses_safe_totals_only(caplog) -> None:
         }
     ]
     assert "must-not-be-logged" not in caplog.text
+
+
+def test_quick_search_legacy_alias_logs_are_aggregate_and_deduplicated(caplog) -> None:
+    with caplog.at_level(logging.INFO, logger="app.fare_memory.metrics"):
+        log_quick_search_legacy_aliases_used(
+            aliases=["date", "strict_mode", "date"],
+            app_env="staging",
+        )
+
+    payloads = _messages(caplog)
+
+    assert payloads == [
+        {
+            "event": "quick_search_legacy_alias_used",
+            "alias": "date",
+            "app_env": "staging",
+            "contract_version": "quick_search.v2",
+        },
+        {
+            "event": "quick_search_legacy_alias_used",
+            "alias": "strict_mode",
+            "app_env": "staging",
+            "contract_version": "quick_search.v2",
+        },
+    ]
+    assert "query_trace_id" not in caplog.text
+    assert "user_id" not in caplog.text
+    assert "payload" not in caplog.text
