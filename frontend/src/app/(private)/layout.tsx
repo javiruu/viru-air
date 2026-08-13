@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import Link from "next/link";
 
 import AccountMenu from "@/modules/shared/AccountMenu";
 import LanguageToggle from "@/modules/shared/LanguageToggle";
@@ -10,6 +11,7 @@ import ThemeToggle from "@/modules/shared/ThemeToggle";
 import RequireAuth from "@/modules/shared/RequireAuth";
 import PrivateNav from "@/modules/shared/PrivateNav";
 import ViruFooterBlock from "@/modules/shared/ViruFooterBlock";
+import ViruWordmark from "@/modules/shared/ViruWordmark";
 import { apiFetchWithStatus } from "@/modules/shared/api";
 
 type NotificationSummary = { readonly unread: number };
@@ -29,6 +31,9 @@ export default function PrivateLayout({ children }: { children: ReactNode }) {
     <RequireAuth>
       <div className="private-layout">
         <PrivateTopBar>
+          <Link href="/dashboard" className="private-shell-brand" aria-label="Viru Air, ir al panel">
+            <ViruWordmark />
+          </Link>
           <PrivateNav unreadSignals={unreadSignals} />
           <div className="private-account-controls">
             <div className="private-locale-toggle">
