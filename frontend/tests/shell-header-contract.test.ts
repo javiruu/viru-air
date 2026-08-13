@@ -53,7 +53,8 @@ test("PublicShellHeader filters auth links from NAV_V1_PUBLIC", () => {
 test("PublicShellHeader renders brand, nav and action controls", () => {
   const source = read("src/modules/shared/PublicShellHeader.tsx");
   assert.match(source, /public-shell-brand/);
-  assert.match(source, /public-shell-brand-dot/);
+  assert.match(source, /import ViruWordmark from "@\/modules\/shared\/ViruWordmark"/);
+  assert.match(source, /<ViruWordmark\s*\/>/);
   assert.match(source, /public-shell-nav/);
   assert.match(source, /public-shell-nav-link/);
   assert.match(source, /public-shell-actions/);
@@ -161,9 +162,20 @@ test("screens.css no longer carries the removed landing-* rules", () => {
   }
 });
 
-test("screens.css still defines .landing-dot (used by ViruFooterBlock)", () => {
+test("shared brand surfaces use the reusable wordmark instead of the removed landing dot", () => {
   const css = read("src/styles/screens.css");
-  assert.match(css, /\.landing-dot\s*\{/);
+  const footer = read("src/modules/shared/ViruFooterBlock.tsx");
+  const privateLayout = read("src/app/(private)/layout.tsx");
+  const wordmark = read("src/modules/shared/ViruWordmark.tsx");
+
+  assert.doesNotMatch(css, /\.landing-dot\s*\{/);
+  assert.match(footer, /<ViruWordmark\s*\/>/);
+  assert.match(privateLayout, /<ViruWordmark\s*\/>/);
+  assert.match(wordmark, /src="\/brand\/viru-wordmark\.png"/);
+  assert.ok(
+    fs.existsSync(path.join(ROOT, "public/brand/viru-wordmark.png")),
+    "expected the public Viru wordmark asset",
+  );
 });
 
 test("screens.css no longer has the .is-leaving state", () => {

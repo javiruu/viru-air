@@ -326,14 +326,6 @@ h1 {
   gap: 2rem;
 }
 
-.landing-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #f6cdb6, var(--accent));
-  box-shadow: 0 0 0 6px rgba(217, 93, 57, 0.12);
-}
-
 .linkInline {
   color: var(--ink);
   text-decoration: none;
@@ -1112,10 +1104,6 @@ h1 {
     radial-gradient(circle at 82% 16%, rgba(255, 176, 0, 0.18), transparent 32%),
     radial-gradient(circle at 14% 84%, rgba(16, 185, 129, 0.14), transparent 30%),
     linear-gradient(160deg, rgba(8, 10, 11, 0.36), rgba(8, 10, 11, 0.84) 62%);
-}
-
-.landing-prueba-cinema .landing-dot {
-  box-shadow: 0 0 0 6px rgba(255, 176, 0, 0.2);
 }
 
 .landing-prueba-cinema-body {
@@ -10808,6 +10796,22 @@ textarea::placeholder {
   min-height: 52px;
 }
 
+.private-shell-brand {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: 116px;
+  padding: 0.18rem 0.32rem;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  border-radius: 0.6rem;
+  background: #fff;
+  box-shadow: 0 5px 16px -12px var(--shadow);
+  text-decoration: none;
+}
+
+.private-shell-brand:hover {
+  border-color: color-mix(in srgb, var(--accent) 46%, var(--border));
+}
+
 .private-account-controls {
   display: inline-flex;
   align-items: center;
@@ -14936,6 +14940,11 @@ textarea::placeholder {
     flex-wrap: wrap;
     align-items: flex-start;
     gap: 0.65rem;
+  }
+
+  .private-shell-brand {
+    order: 0;
+    width: 104px;
   }
 
   .private-nav {

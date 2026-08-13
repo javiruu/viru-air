@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 
 import { hasToken } from "@/modules/shared/auth";
 import { useI18n } from "@/i18n";
+import ViruWordmark from "@/modules/shared/ViruWordmark";
 
 type FooterLink = {
   label: string;
@@ -241,7 +242,7 @@ export default function ViruFooterBlock({ variant = "default" }: ViruFooterBlock
         >
           <div className="viru-footer-brand">
             <span className="viru-footer-brand-mark" aria-hidden="true">
-              <span className="landing-dot" />
+              <ViruWordmark />
             </span>
             <div className="viru-footer-brand-copy">
               <span className="viru-footer-kicker">{t("shared.footer.kicker")}</span>
