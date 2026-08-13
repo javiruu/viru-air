@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Bell, Eye, LayoutDashboard, Search } from "lucide-react";
 
 import { useI18n } from "@/i18n";
@@ -17,6 +18,17 @@ export default function MobileBottomNav({ unreadSignals = 0 }: { unreadSignals?:
   const { t } = useI18n();
   const pathname = usePathname();
   const pathnameValue = pathname ?? "";
+  const [isMobileNavigation, setIsMobileNavigation] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 480px) and (hover: none) and (pointer: coarse)");
+    const sync = () => setIsMobileNavigation(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
+
+  if (!isMobileNavigation) return null;
 
   return (
     <nav className="mobile-bottom-nav" aria-label={t("shared.a11y.mainNavigation")}>
