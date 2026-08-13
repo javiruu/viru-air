@@ -104,7 +104,7 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
 
   if (state !== "authed") {
     return (
-      <main className="shell auth-guard">
+      <main className="shell auth-guard" id="main-content">
         <SkeletonPanel className="auth-guard-card air-loader-wrap" ariaLabel={t("account.authGuard.title")}>
           <Skeleton variant="pill" width={220} height={18} />
           <Skeleton variant="line" width="74%" />

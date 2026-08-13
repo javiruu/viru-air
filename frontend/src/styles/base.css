@@ -1,5 +1,22 @@
 /* Base layer */
 
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
+:where(button, input, select, textarea, [role="button"]) {
+  min-height: 44px;
+}
+
 :where(a, button, input, select, textarea, [role="button"], [tabindex]):focus-visible {
   outline: 3px solid var(--color-input-focus);
   outline-offset: 2px;
@@ -20,6 +37,32 @@
 :where(button, input, select, textarea):disabled {
   cursor: not-allowed;
   color: var(--color-button-disabled-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (forced-colors: active) {
+  :where(a, button, input, select, textarea, [role="button"]) {
+    forced-color-adjust: auto;
+  }
+
+  :where(a, button, input, select, textarea, [role="button"]):focus-visible {
+    outline: 3px solid Highlight;
+    outline-offset: 3px;
+  }
 }
 
 /* ── iOS zoom prevention ────────────────────────────────── */

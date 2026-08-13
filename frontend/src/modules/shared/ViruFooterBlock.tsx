@@ -224,8 +224,8 @@ export default function ViruFooterBlock({ variant = "default" }: ViruFooterBlock
   return (
     <motion.footer
       className={`viru-footer-block${variant === "landing" ? " viru-footer-landing" : ""}`}
-      initial={shouldReduceMotion ? undefined : { opacity: 0, y: 18 }}
-      whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+      initial={false}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
     >
@@ -234,8 +234,8 @@ export default function ViruFooterBlock({ variant = "default" }: ViruFooterBlock
       <div className="shell viru-footer-shell">
         <motion.div
           className="viru-footer-top"
-          initial={shouldReduceMotion ? undefined : { opacity: 0, y: 12 }}
-          whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+          initial={false}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.45, delay: 0.05 }}
         >
@@ -279,8 +279,8 @@ export default function ViruFooterBlock({ variant = "default" }: ViruFooterBlock
             <motion.section
               key={group.title}
               className="viru-footer-column"
-              initial={shouldReduceMotion ? undefined : { opacity: 0, y: 14 }}
-              whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+              initial={false}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.25 }}
               transition={{ duration: 0.42, delay: 0.08 + index * 0.06 }}
             >

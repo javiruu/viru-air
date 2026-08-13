@@ -232,6 +232,10 @@ body {
   outline-offset: 2px;
 }
 
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
 .policies-shell section[id] {
   scroll-margin-top: 96px;
 }
@@ -10665,6 +10669,12 @@ textarea::placeholder {
 .glass-signin-submit {
   margin-top: 0.2rem;
   width: 100%;
+}
+
+.glass-signin-social-btn,
+.viru-footer-chip,
+.viru-footer-scroll {
+  min-height: 44px;
 }
 
 .glass-signin-alt-actions {

@@ -47,9 +47,10 @@ export function GlassForgotPasswordCard({
       </div>
 
       <form className="glass-signin-form" onSubmit={onSubmit}>
-        <label>
+        <label htmlFor="forgot-email">
           {t("public.auth.forgotEmailLabel")}
           <input
+            id="forgot-email"
             name="email"
             autoComplete="email"
             value={email}
@@ -60,7 +61,7 @@ export function GlassForgotPasswordCard({
         </label>
 
         {error ? (
-          <div className="notice notice-error" role="status" aria-live="polite">
+          <div className="notice notice-error" role="alert" aria-live="assertive">
             {error}
           </div>
         ) : null}
