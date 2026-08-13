@@ -13,7 +13,7 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
   return (
     <html>
       <body>
-        <main className="shell">
+        <main className="shell" id="main-content">
           <ErrorFallback onRetry={reset} />
         </main>
       </body>

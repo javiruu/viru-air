@@ -4,6 +4,7 @@ import "../styles/community-routes.css";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { Metadata } from "next";
 import Script from "next/script";
+import { MotionConfig } from "framer-motion";
 
 import { NotificationCenterProvider } from "@/components/components/notifications/notification-center";
 import ScrollActivityScrollbar from "@/modules/shared/ScrollActivityScrollbar";
@@ -39,14 +40,16 @@ gtag('config', '${gaMeasurementId}');`}
       </head>
       <body>
         <ScrollActivityScrollbar />
-        <NotificationCenterProvider>
-          <a className="skip-link" href="#main-content">
-            Saltar al contenido
-          </a>
-          <div className="app-root">
-            <div className="app-content">{children}</div>
-          </div>
-        </NotificationCenterProvider>
+        <MotionConfig reducedMotion="user">
+          <NotificationCenterProvider>
+            <a className="skip-link" href="#main-content">
+              Saltar al contenido
+            </a>
+            <div className="app-root">
+              <div className="app-content">{children}</div>
+            </div>
+          </NotificationCenterProvider>
+        </MotionConfig>
       </body>
     </html>
   );

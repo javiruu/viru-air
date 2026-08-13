@@ -92,30 +92,36 @@ export function GlassSignInCard({
       </div>
 
       <form className="glass-signin-form" onSubmit={onSubmit}>
-        <label>
+        <label htmlFor="auth-email">
           {emailLabel}
           <input
+            id="auth-email"
             name="email"
             autoComplete="email"
             value={email}
             onChange={(event) => onEmailChange(event.target.value)}
             type="email"
             placeholder={t("public.auth.emailPlaceholder")}
+            aria-invalid={Boolean(fieldError.email)}
+            aria-describedby={fieldError.email ? "auth-email-error" : undefined}
           />
-          {fieldError.email ? <small className="field-error">{fieldError.email}</small> : null}
+          {fieldError.email ? <small id="auth-email-error" className="field-error" role="alert">{fieldError.email}</small> : null}
         </label>
 
-        <label>
+        <label htmlFor="auth-password">
           {passwordLabel}
           <input
+            id="auth-password"
             name="password"
             autoComplete={isRegister ? "new-password" : "current-password"}
             value={password}
             onChange={(event) => onPasswordChange(event.target.value)}
             type="password"
             placeholder={t("public.auth.passwordPlaceholder")}
+            aria-invalid={Boolean(fieldError.password)}
+            aria-describedby={fieldError.password ? "auth-password-error" : undefined}
           />
-          {fieldError.password ? <small className="field-error">{fieldError.password}</small> : null}
+          {fieldError.password ? <small id="auth-password-error" className="field-error" role="alert">{fieldError.password}</small> : null}
         </label>
 
         {!isRegister ? (
@@ -134,7 +140,7 @@ export function GlassSignInCard({
         ) : null}
 
         {error ? (
-          <div className="notice notice-error" role="status" aria-live="polite">
+          <div className="notice notice-error" role="alert" aria-live="assertive">
             {error}
           </div>
         ) : null}
