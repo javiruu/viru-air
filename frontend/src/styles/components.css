@@ -46,14 +46,10 @@
   display: inline-flex;
   align-items: center;
   flex: none;
-  width: 136px;
-  min-height: 36px;
-  padding: 0.18rem 0.34rem;
-  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  padding: 0.28rem 0.16rem;
+  border: 1px solid transparent;
   border-radius: 0.65rem;
-  background: #fff;
   text-decoration: none;
-  box-shadow: 0 5px 16px -12px var(--shadow);
 }
 
 .public-shell-brand:hover,
@@ -70,15 +66,35 @@
 }
 
 .viru-wordmark {
-  display: block;
-  width: 100%;
-  line-height: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  color: var(--ink);
+  font-family: "Avenir Next Rounded", "Avenir Next", "Nunito Sans", "IBM Plex Sans", sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.065em;
+  line-height: 1;
+  white-space: nowrap;
 }
 
-.viru-wordmark img {
+.viru-wordmark-mark {
   display: block;
-  width: 100%;
-  height: auto;
+  width: 1.22em;
+  aspect-ratio: 652 / 563;
+  flex: 0 0 auto;
+  background: linear-gradient(135deg, var(--color-accent-hover), var(--color-button-primary));
+  -webkit-mask: url("/brand/viru-mark.png") center / contain no-repeat;
+  mask: url("/brand/viru-mark.png") center / contain no-repeat;
+}
+
+.viru-wordmark-type {
+  display: block;
+  padding-bottom: 0.035em;
+}
+
+.public-shell-brand:hover .viru-wordmark-mark {
+  filter: brightness(1.06);
 }
 
 .public-shell-nav {
@@ -139,9 +155,11 @@
   }
 
   .public-shell-brand {
-    width: 104px;
-    min-height: 30px;
-    padding: 0.12rem 0.24rem;
+    padding: 0.2rem 0.1rem;
+  }
+
+  .public-shell-brand .viru-wordmark {
+    font-size: 1.56rem;
   }
 
   .public-shell-nav {
@@ -636,14 +654,16 @@
 }
 
 .viru-footer-brand-mark {
-  width: 136px;
+  width: auto;
+  display: inline-flex;
+  align-items: center;
   align-self: start;
-  padding: 0.28rem 0.42rem;
-  border: 1px solid var(--color-footer-border);
-  border-radius: 0.72rem;
-  background: #fff;
-  line-height: 0;
-  box-shadow: 0 8px 20px -16px var(--shadow);
+  padding: 0.12rem 0;
+  line-height: 1;
+}
+
+.viru-footer-brand-mark .viru-wordmark {
+  font-size: 2.12rem;
 }
 
 .viru-footer-brand-copy {
@@ -884,7 +904,6 @@
   }
 }
 
-:root[data-theme="dark"] .viru-footer-brand-mark,
 :root[data-theme="dark"] .viru-footer-chip,
 :root[data-theme="dark"] .viru-footer-scroll {
   border-color: color-mix(in srgb, var(--color-footer-border) 92%, var(--accent-2) 8%);
@@ -892,10 +911,6 @@
   box-shadow:
     0 14px 28px color-mix(in srgb, var(--shadow-strong) 28%, transparent),
     inset 0 1px 0 color-mix(in srgb, var(--surface) 18%, transparent);
-}
-
-:root[data-theme="dark"] .viru-footer-brand-mark {
-  background: #fff;
 }
 
 .viru-footer-landing .viru-footer-shell {
@@ -914,15 +929,10 @@
   border-color: color-mix(in srgb, var(--color-footer-border) 78%, var(--landing-route-line) 22%);
 }
 
-.viru-footer-landing .viru-footer-brand-mark,
 .viru-footer-landing .viru-footer-chip,
 .viru-footer-landing .viru-footer-scroll {
   background: color-mix(in srgb, var(--landing-terminal-glass) 88%, transparent);
   border-color: color-mix(in srgb, var(--landing-flight-strip-border) 86%, transparent);
-}
-
-.viru-footer-landing .viru-footer-brand-mark {
-  background: #fff;
 }
 
 .viru-footer-landing .viru-footer-chip:hover,

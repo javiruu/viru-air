@@ -10799,17 +10799,18 @@ textarea::placeholder {
 .private-shell-brand {
   display: inline-flex;
   flex: 0 0 auto;
-  width: 116px;
-  padding: 0.18rem 0.32rem;
-  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  padding: 0.28rem 0.16rem;
+  border: 1px solid transparent;
   border-radius: 0.6rem;
-  background: #fff;
-  box-shadow: 0 5px 16px -12px var(--shadow);
   text-decoration: none;
 }
 
 .private-shell-brand:hover {
   border-color: color-mix(in srgb, var(--accent) 46%, var(--border));
+}
+
+.private-shell-brand .viru-wordmark {
+  font-size: 1.82rem;
 }
 
 .private-account-controls {
@@ -14944,7 +14945,11 @@ textarea::placeholder {
 
   .private-shell-brand {
     order: 0;
-    width: 104px;
+    padding: 0.2rem 0.1rem;
+  }
+
+  .private-shell-brand .viru-wordmark {
+    font-size: 1.56rem;
   }
 
   .private-nav {
