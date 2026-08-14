@@ -15,7 +15,7 @@ export default function PrivateNav({ unreadSignals = 0 }: { unreadSignals?: numb
   const closeMenu = useCallback(() => setMenuOpen(false), []);
 
   useEffect(() => {
-    document.title = unreadSignals > 0 ? `(${unreadSignals}) Viru` : "Viru";
+    document.title = unreadSignals > 0 ? `(${unreadSignals}) Viru Air` : "Viru Air";
   }, [unreadSignals]);
 
   return (
