@@ -1,9 +1,16 @@
 {
   "name": "Viru Air",
-  "short_name": "Viru",
+  "short_name": "Viru Air",
   "description": "Ryanair Tracker",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f1115",
-  "theme_color": "#0f1115"
+  "theme_color": "#0f1115",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "652x563",
+      "type": "image/png"
+    }
+  ]
 }

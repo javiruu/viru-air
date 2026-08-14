@@ -29,8 +29,18 @@ test("(private)/layout.tsx mounts PrivateTopBar", () => {
 
 test("private navigation keeps the page title in sync with unread notifications", () => {
   const source = read("src/modules/shared/PrivateNav.tsx");
-  assert.match(source, /document\.title\s*=\s*unreadSignals\s*>\s*0\s*\?\s*`\(\$\{unreadSignals\}\) Viru`\s*:\s*"Viru"/);
+  assert.match(source, /document\.title\s*=\s*unreadSignals\s*>\s*0\s*\?\s*`\(\$\{unreadSignals\}\) Viru Air`\s*:\s*"Viru Air"/);
   assert.match(source, /\}, \[unreadSignals\]\);/);
+});
+
+test("root metadata and manifest expose the Viru Air tab identity", () => {
+  const layout = read("src/app/layout.tsx");
+  const manifest = read("public/manifest.json");
+
+  assert.match(layout, /title:\s*"Viru Air"/);
+  assert.match(manifest, /"short_name":\s*"Viru Air"/);
+  assert.match(manifest, /"src":\s*"\/icon\.png"/);
+  assert.ok(fs.existsSync(path.join(ROOT, "src/app/icon.png")), "expected the Viru app icon");
 });
 
 // ============================================================

@@ -11,7 +11,7 @@ import ScrollActivityScrollbar from "@/modules/shared/ScrollActivityScrollbar";
 import { SHELL_SCROLL_STATE_CSS } from "@/modules/shared/shellScrollStateCss";
 
 export const metadata: Metadata = {
-  title: "Viru",
+  title: "Viru Air",
   description: "Ryanair Tracker",
 };
 
