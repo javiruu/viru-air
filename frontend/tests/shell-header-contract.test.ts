@@ -162,8 +162,9 @@ test("screens.css no longer carries the removed landing-* rules", () => {
   }
 });
 
-test("shared brand surfaces use the reusable wordmark instead of the removed landing dot", () => {
+test("shared brand surfaces compose the reusable Viru mark instead of the removed landing dot", () => {
   const css = read("src/styles/screens.css");
+  const componentsCss = read("src/styles/components.css");
   const footer = read("src/modules/shared/ViruFooterBlock.tsx");
   const privateLayout = read("src/app/(private)/layout.tsx");
   const wordmark = read("src/modules/shared/ViruWordmark.tsx");
@@ -171,10 +172,13 @@ test("shared brand surfaces use the reusable wordmark instead of the removed lan
   assert.doesNotMatch(css, /\.landing-dot\s*\{/);
   assert.match(footer, /<ViruWordmark\s*\/>/);
   assert.match(privateLayout, /<ViruWordmark\s*\/>/);
-  assert.match(wordmark, /src="\/brand\/viru-wordmark\.png"/);
+  assert.match(wordmark, /viru-wordmark-mark/);
+  assert.match(wordmark, />viru<\/span>/);
+  assert.match(componentsCss, /mask:\s*url\("\/brand\/viru-mark\.png"\)/);
+  assert.match(componentsCss, /color:\s*var\(--ink\)/);
   assert.ok(
-    fs.existsSync(path.join(ROOT, "public/brand/viru-wordmark.png")),
-    "expected the public Viru wordmark asset",
+    fs.existsSync(path.join(ROOT, "public/brand/viru-mark.png")),
+    "expected the public Viru mark asset",
   );
 });
 
