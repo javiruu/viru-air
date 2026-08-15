@@ -9,7 +9,7 @@ const read = (rel: string) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 // ============================================================
 // PRIVATE SHELL HEADER
 // ============================================================
-test("PrivateTopBar is a presentational wrapper with no JS observer", () => {
+test("PrivateTopBar is a presentational controls wrapper with no shared shell header", () => {
   const source = read("src/modules/shared/PrivateTopBar.tsx");
   assert.ok(!/useState/.test(source), "PrivateTopBar still uses useState");
   assert.ok(!/useRef/.test(source), "PrivateTopBar still uses useRef");
@@ -18,7 +18,8 @@ test("PrivateTopBar is a presentational wrapper with no JS observer", () => {
     !/IntersectionObserver/.test(source),
     "PrivateTopBar still uses IntersectionObserver",
   );
-  assert.match(source, /className="shell-header private-account-anchor"/);
+  assert.match(source, /className="private-account-controls-bar"/);
+  assert.doesNotMatch(source, /shell-header|private-account-anchor/);
 });
 
 test("(private)/layout.tsx mounts PrivateTopBar", () => {

@@ -313,7 +313,7 @@ h1 {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .private-account-anchor {
+  .private-account-controls-bar {
     gap: 0.65rem;
     min-height: 48px;
     padding-block: 7px;
@@ -10790,9 +10790,7 @@ textarea::placeholder {
 }
 
 
-/* Sticky/morph base lives in .shell-header (components.css).
-   Keep only the private-layout composition overrides here. */
-.private-account-anchor {
+.private-account-controls-bar {
   min-height: 52px;
 }
 
@@ -14935,7 +14933,7 @@ textarea::placeholder {
     grid-column: span 12;
   }
 
-  .private-account-anchor {
+  .private-account-controls-bar {
     top: var(--shell-header-top);
     padding: 0.55rem 0.75rem;
     flex-wrap: wrap;
@@ -18328,7 +18326,7 @@ textarea::placeholder {
 }
 
 @media (max-width: 768px) {
-  .private-account-anchor {
+  .private-account-controls-bar {
     flex-wrap: wrap;
     align-items: flex-start;
   }
@@ -18568,7 +18566,7 @@ textarea::placeholder {
     padding: 0.3rem 0.55rem;
   }
 
-  .private-account-anchor {
+  .private-account-controls-bar {
     gap: 0.45rem;
   }
 
@@ -25990,7 +25988,7 @@ textarea::placeholder {
   min-width: 0;
 }
 
-.private-workspace .private-account-anchor {
+.private-workspace .private-account-controls-bar {
   display: flex;
   justify-content: flex-end;
   padding-inline: clamp(1rem, 2vw, 2rem);
@@ -26290,7 +26288,7 @@ textarea::placeholder {
     background: color-mix(in srgb, var(--ink) 28%, transparent);
   }
 
-  .private-workspace .private-account-anchor {
+  .private-workspace .private-account-controls-bar {
     padding-left: 4.15rem;
   }
 
