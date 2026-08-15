@@ -40,7 +40,7 @@ test("W1: watchlist restores history beside selection and embeds the map in deta
   assert.ok(mapPos < comparePos, "compare remains the final secondary tool");
   assert.doesNotMatch(source, /watchlist-area-map/);
   assert.match(source, /mapContent=\{/);
-  assert.match(screens, /"history routes"\s*"detail routes"\s*"compare compare"/);
+  assert.match(screens, /"routes routes"\s*"history detail"\s*"compare compare"/);
 });
 
 test("W1: watchlist route source keeps EN blocked literals out", () => {
