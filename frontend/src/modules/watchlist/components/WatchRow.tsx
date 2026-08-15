@@ -1,3 +1,5 @@
+import { Pause, Plane, Play, Trash2, TrendingDown, TrendingUp } from "lucide-react";
+
 import { useI18n } from "@/i18n";
 import { CommunityRouteSignal } from "@/modules/community-routes/CommunityRouteSignal";
 import type { CommunityRouteInsight } from "@/modules/community-routes/communityRoutesTypes";
@@ -20,6 +22,68 @@ export type WatchMetaEntry = {
   readonly min: number | null;
   readonly max: number | null;
 };
+
+type TicketCity = {
+  readonly label: string;
+  readonly art: string;
+};
+
+const TICKET_CITIES: Readonly<Record<string, TicketCity>> = {
+  ALC: { label: "Alicante", art: "alicante" },
+  BER: { label: "Berlín", art: "berlin" },
+  BRU: { label: "Bruselas", art: "bruselas" },
+  BUD: { label: "Budapest", art: "budapest" },
+  CTA: { label: "Catania", art: "catania" },
+  CGN: { label: "Colonia", art: "colonia" },
+  DUB: { label: "Dublín", art: "dublin" },
+  EIN: { label: "Eindhoven", art: "eindhoven" },
+  FAO: { label: "Faro", art: "faro" },
+  FRA: { label: "Frankfurt", art: "frankfurt" },
+  FUE: { label: "Fuerteventura", art: "fuerteventura" },
+  LPA: { label: "Gran Canaria", art: "gran canaria" },
+  ACE: { label: "Lanzarote", art: "lanzarote" },
+  LHR: { label: "Londres", art: "londres" },
+  LGW: { label: "Londres", art: "londres" },
+  LTN: { label: "Londres", art: "londres" },
+  STN: { label: "Londres", art: "londres" },
+  LCY: { label: "Londres", art: "londres" },
+  AGP: { label: "Málaga", art: "malaga" },
+  RAK: { label: "Marrakech", art: "marrakech" },
+  MXP: { label: "Milán", art: "milan" },
+  LIN: { label: "Milán", art: "milan" },
+  BGY: { label: "Milán", art: "milan" },
+  OPO: { label: "Oporto", art: "oporto" },
+  PMO: { label: "Palermo", art: "palermo" },
+  CDG: { label: "París", art: "paris" },
+  ORY: { label: "París", art: "paris" },
+  BVA: { label: "París", art: "paris" },
+  PSA: { label: "Pisa", art: "pisa" },
+  PRG: { label: "Praga", art: "praga" },
+  FCO: { label: "Roma", art: "roma" },
+  CIA: { label: "Roma", art: "roma" },
+  SVQ: { label: "Sevilla", art: "sevilla" },
+  TSF: { label: "Treviso", art: "treviso" },
+  VIE: { label: "Viena", art: "viena" },
+};
+
+function ticketCity(iata: string): TicketCity {
+  return TICKET_CITIES[iata.toUpperCase()] ?? { label: iata, art: "" };
+}
+
+function ticketDate(value: string, localeTag: string) {
+  const date = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(date.getTime())) {
+    return { day: "--", month: "", year: "" };
+  }
+
+  return {
+    day: new Intl.DateTimeFormat(localeTag, { day: "2-digit" }).format(date),
+    month: new Intl.DateTimeFormat(localeTag, { month: "long" })
+      .format(date)
+      .toUpperCase(),
+    year: new Intl.DateTimeFormat(localeTag, { year: "numeric" }).format(date),
+  };
+}
 
 type WatchRowProps = {
   readonly watch: Watch;
@@ -52,6 +116,9 @@ export function WatchRow({
   onDelete,
 }: WatchRowProps) {
   const { t, localeTag } = useI18n();
+  const origin = ticketCity(watch.origin_iata);
+  const destination = ticketCity(watch.destination_iata);
+  const departureDate = ticketDate(watch.travel_date_local, localeTag);
   const watchStatus = getWatchStatusMeta(watch.status, t);
   const canManageTracking =
     !watch.community_pricing.eligible && watch.status !== "purchased";
@@ -103,9 +170,11 @@ export function WatchRow({
       meta.max !== null &&
       meta.max > meta.min,
   );
+  const trendIcon =
+    trend === "up" ? <TrendingUp aria-hidden="true" /> : trend === "down" ? <TrendingDown aria-hidden="true" /> : null;
   return (
     <article
-      className={`list-row watch-row ${isSelected ? "watch-selected" : ""}`}
+      className={`list-row watch-row watch-ticket-row ${isSelected ? "watch-selected" : ""}`}
       data-selected={isSelected ? "true" : "false"}
     >
       <button
@@ -120,8 +189,9 @@ export function WatchRow({
         onClick={() => onSelect(watch)}
       />
       <CommunityHubButton watch={watch} onOpen={onOpenCommunity} />
-      <div className="watch-details">
-        <div className="watch-route">
+      <div className="watch-ticket-art" aria-hidden="true" style={destination.art ? { backgroundImage: `url("/illustraciones/${destination.art}.png")` } : undefined} />
+      <div className="watch-ticket-main">
+        <div className="watch-ticket-route">
           <input
             type="checkbox"
             className="watch-bulk-checkbox"
@@ -135,103 +205,59 @@ export function WatchRow({
               destination: watch.destination_iata,
             })}
           />
-          <strong className="watch-route-code">
-            {watch.origin_iata} → {watch.destination_iata}
-          </strong>
-          <span className="watch-date tabular-nums">
-            {watch.travel_date_local}
-          </span>
-          <span className={`status-pill ${watchStatus.tone}`}>
-            {watchStatus.label}
-          </span>
-          <strong className="watch-inline-price tabular-nums">
-            {meta?.latest
-              ? formatCurrency(
-                  meta.latest.price,
-                  meta.latest.currency,
-                  localeTag,
-                )
-              : "--"}
-          </strong>
+          <div className="watch-ticket-airport">
+            <strong className="watch-route-code">{watch.origin_iata}</strong>
+            <span>{origin.label}</span>
+          </div>
+          <Plane className="watch-ticket-route-plane" aria-hidden="true" />
+          <div className="watch-ticket-airport">
+            <strong>{watch.destination_iata}</strong>
+            <span>{destination.label}</span>
+          </div>
+          <span className="sr-only">{watch.origin_iata} → {watch.destination_iata}</span>
         </div>
-        <div className="watch-meta">
-          {meta?.latest && meta.previous && trend !== "flat" ? (
-            <span
-              className={`status-pill ${
-                trend === "up"
-                  ? "error"
-                  : trend === "down"
-                    ? "success"
-                    : "warning"
-              }`}
-            >
-              {trend === "up"
-                ? t("watchlist.smartList.trendUp")
-                : t("watchlist.smartList.trendDown")}
-            </span>
-          ) : null}
-          <CommunityRouteSignal
-            watchersCount={watch.watchers_count ?? 0}
-            insight={communityInsight}
-          />
+        <svg className="watch-ticket-path" viewBox="0 0 460 70" fill="none" aria-hidden="true">
+          <circle cx="20" cy="35" r="5" />
+          <path d="M31 35c68 42 113-31 188 1s114 38 220-4" />
+          <circle cx="449" cy="32" r="5" />
+        </svg>
+        <div className="watch-ticket-status-line">
+          <span className={`status-pill ${watchStatus.tone}`}>{watchStatus.label}</span>
+          <CommunityRouteSignal watchersCount={watch.watchers_count ?? 0} insight={communityInsight} />
         </div>
-      </div>
-      <div className="watch-price-area">
-        {meta?.latest ? (
+        <div className="watch-ticket-pricing">
           <div className="watch-price tabular-nums">
-            <span className="watch-price-caption">
-              {t("watchlist.smartList.currentPrice")}
+            <span className="watch-price-caption">{t("watchlist.smartList.currentPrice")}</span>
+            <strong className="watch-ticket-price">
+              {meta?.latest ? formatCurrency(meta.latest.price, meta.latest.currency, localeTag) : "--"}
+            </strong>
+          </div>
+          <div className={`watch-ticket-trend trend-${trend}`}>
+            <span className="watch-ticket-trend-icon">{trendIcon}</span>
+            <strong>{meta && meta.previous ? (deltaLabel) : "--"}</strong>
+            <span>
+              <b className="trend-chip-percent">{trendPercentLabel || "--"}</b>
+              <small>vs periodo anterior</small>
             </span>
-            {meta.previous ? (
-              <span className={`trend-chip trend-${trend}`}>
-                <span className="trend-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24">
-                    <path
-                      d="M6 15l6-6 6 6"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-                {deltaLabel}
-                {trendPercentLabel ? (
-                  <span
-                    className="trend-chip-percent"
-                    aria-label={trendPercentLabel}
-                  >
-                    {trendPercentLabel}
-                  </span>
-                ) : null}
-              </span>
-            ) : null}
           </div>
-        ) : null}
-        {meta?.latest && (hasMeaningfulDrop || isBestPrice) ? (
-          <div className="watch-price-badges">
-            {hasMeaningfulDrop &&
-            priceDropAmount !== null &&
-            priceDropPercent !== null ? (
-              <span className="price-drop-badge tabular-nums">
-                {formatCurrency(
-                  priceDropAmount,
-                  meta?.latest?.currency ?? "EUR",
-                  localeTag,
-                )}{" "}
-                ({priceDropPercent}%)
-              </span>
-            ) : null}
-            {isBestPrice ? (
-              <span className="best-price-badge">
-                {t("watchlist.compare.bestPriceBadge")}
-              </span>
-            ) : null}
-          </div>
-        ) : null}
-        <div className="watch-row-actions">
-          <div className="alert-actions">
+        </div>
+        <div className="watch-ticket-actions">
+          <span className={`watch-ticket-trend-action watch-ticket-trend-action--${trend}`}>
+            {trend === "up"
+              ? t("watchlist.smartList.trendUp")
+              : trend === "down"
+                ? t("watchlist.smartList.trendDown")
+                : t("watchlist.smartList.trendStable")}
+          </span>
+          {meta?.latest && (hasMeaningfulDrop || isBestPrice) ? (
+            <div className="watch-price-badges">
+              {hasMeaningfulDrop && priceDropAmount !== null && priceDropPercent !== null ? (
+                <span className="price-drop-badge tabular-nums">{formatCurrency(priceDropAmount, meta.latest.currency, localeTag)} ({priceDropPercent}%)</span>
+              ) : null}
+              {isBestPrice ? <span className="best-price-badge">{t("watchlist.compare.bestPriceBadge")}</span> : null}
+            </div>
+          ) : null}
+          <div className="alert-actions watch-ticket-action-buttons">
             {canManageTracking && watch.status === "paused" ? (
               <button
                 className="btn-ghost btn-compact"
@@ -241,6 +267,7 @@ export function WatchRow({
                   onResume(watch.id);
                 }}
               >
+                  <Play aria-hidden="true" />
                 {t("watchlist.smartList.resume")}
               </button>
             ) : canManageTracking ? (
@@ -252,6 +279,7 @@ export function WatchRow({
                   onPause(watch.id);
                 }}
               >
+                <Pause aria-hidden="true" />
                 {t("watchlist.smartList.pause")}
               </button>
             ) : null}
@@ -262,12 +290,26 @@ export function WatchRow({
                 event.stopPropagation();
                 onDelete(watch.id);
               }}
-            >
-              {t("watchlist.smartList.delete")}
+              >
+              <Trash2 aria-hidden="true" />
+                {t("watchlist.smartList.delete")}
             </button>
           </div>
         </div>
       </div>
+      <aside className="watch-ticket-stub" aria-label={watch.travel_date_local}>
+        <div className="watch-ticket-date-caption"><span />FECHA<span /></div>
+        <strong className="watch-ticket-day tabular-nums">{departureDate.day}</strong>
+        <span className="watch-ticket-month">{departureDate.month}</span>
+        <span className="watch-ticket-year tabular-nums">{departureDate.year}</span>
+        <div className="watch-ticket-stub-rule" />
+        <div className="watch-ticket-stamp" aria-hidden="true">
+          <span>VIRU TRACKER</span>
+          <Plane />
+          <strong>BUEN VIAJE</strong>
+          <small>EST. 2024</small>
+        </div>
+      </aside>
     </article>
   );
 }
