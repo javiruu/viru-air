@@ -11,6 +11,7 @@ import { HotelMyHotelsPanel } from "./components/HotelMyHotelsPanel";
 import { HotelResultCard, HotelSearchPanel } from "./components/HotelSearchPanel";
 import { HotelSavedSearchesPanel } from "./components/HotelSavedSearchesPanel";
 import { HotelTrackingConfirmationDialog } from "./components/HotelTrackingConfirmationDialog";
+import { HotelTrackedOfferSnapshots } from "./components/HotelTrackedOfferSnapshots";
 import { HotelParitySignal, HotelPriceTimeline, HotelProviderStatusPill } from "./components/HotelTimelineAndSignals";
 import { HotelTrackedOffersPanel } from "./components/HotelTrackedOffersPanel";
 import { HotelRumTracker } from "./HotelRumTracker";
@@ -55,6 +56,7 @@ export function HotelRadarPage() {
     search.selectedHotelId,
     detail.rates,
   );
+  const { trackedOffers } = tracked;
 
   const alerts = useHotelAlerts();
   const savedSearches = useSavedHotelSearches();
@@ -109,6 +111,29 @@ export function HotelRadarPage() {
     () => alerts.alertEvents.filter((event) => event.hotel_id === search.selectedHotelId),
     [alerts.alertEvents, search.selectedHotelId],
   );
+  const selectedTrackedOffer = useMemo(() => {
+    if (search.selectedHotelId === null) return null;
+    const isSelectedStay = (offer: (typeof trackedOffers)[number]) => {
+      return detail.rates.some((rate) => (
+        rate.hotel_id === offer.hotel_id
+        && rate.check_in === offer.check_in
+        && rate.check_out === offer.check_out
+        && rate.guests === offer.guests
+        && rate.currency === offer.currency
+        && rate.provider === offer.provider
+        && rate.room_label === offer.room_label
+        && rate.meal_plan === offer.meal_plan
+        && rate.cancellation_policy === offer.cancellation_policy
+      ));
+    };
+    return trackedOffers.find((offer) => (
+      offer.hotel_id === search.selectedHotelId && offer.is_active && isSelectedStay(offer)
+    ))
+      ?? trackedOffers.find((offer) => (
+        offer.hotel_id === search.selectedHotelId && isSelectedStay(offer)
+      ))
+      ?? null;
+  }, [detail.rates, search.selectedHotelId, trackedOffers]);
   const latestParitySignal = detail.paritySignals[0] ?? null;
   const isMyHotelsPanel = search.panel === "mis-hoteles";
 
@@ -343,7 +368,7 @@ export function HotelRadarPage() {
         </div>
 
         <aside className="hoteles-side-column">
-          <section className={`panel panel-soft${collapsedPanels["detail"] ? " is-collapsed" : ""}`}>
+          <section className={`panel panel-soft hotel-selected-focus-card${collapsedPanels["detail"] ? " is-collapsed" : ""}`}>
             <button
               type="button"
               className="panel-collapse-toggle"
@@ -358,7 +383,8 @@ export function HotelRadarPage() {
               {!collapsedPanels["detail"] ? (
                 <>
                   {selectedHotel ? (
-                    <div className="section-gap-sm hotel-selected-meta">
+                    <div className="section-gap-sm hotel-selected-meta hotel-selected-focus-body">
+                      <span className="hotel-selected-kicker">{t("hotels.selected.title")}</span>
                       <strong>{selectedHotel.canonical_name}</strong>
                       <p className="panel-note hotel-selected-location">
                         {selectedHotel.city}, {selectedHotel.country_code}
@@ -372,6 +398,23 @@ export function HotelRadarPage() {
                           {new Date(detail.hotelDetail.updated_at).toLocaleString(localeTag)}
                         </p>
                       ) : null}
+                      <div className="hotel-selected-signal-row" aria-label={t("hotels.results.title")}>
+                        <span>{t("hotels.results.title")}</span>
+                        <strong>{detail.rates.length}</strong>
+                        <span>{t("hotels.trackedOffers.title")}</span>
+                        <strong>{selectedTrackedOffer === null ? 0 : 1}</strong>
+                      </div>
+                      {selectedTrackedOffer !== null ? (
+                        <HotelTrackedOfferSnapshots
+                          offerId={selectedTrackedOffer.id}
+                          visible
+                          panelId="hotel-selected-observation-history"
+                        />
+                      ) : (
+                        <p className="panel-note hotel-selected-tracking-empty">
+                          {t("hotels.trackedOffers.empty")}
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <p className="panel-note section-gap-sm">{t("hotels.selected.empty")}</p>

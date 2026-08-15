@@ -177,11 +177,14 @@ test("shared brand surfaces compose the reusable Viru mark instead of the remove
   const componentsCss = read("src/styles/components.css");
   const footer = read("src/modules/shared/ViruFooterBlock.tsx");
   const privateLayout = read("src/app/(private)/layout.tsx");
+  const privateNav = read("src/modules/shared/PrivateNav.tsx");
   const wordmark = read("src/modules/shared/ViruWordmark.tsx");
 
   assert.doesNotMatch(css, /\.landing-dot\s*\{/);
   assert.match(footer, /<ViruWordmark\s*\/>/);
-  assert.match(privateLayout, /<ViruWordmark\s*\/>/);
+  assert.match(privateNav, /import ViruWordmark from "@\/modules\/shared\/ViruWordmark"/);
+  assert.match(privateNav, /<ViruWordmark\s*\/>/);
+  assert.doesNotMatch(privateLayout, /ViruWordmark/);
   assert.match(wordmark, /viru-wordmark-mark/);
   assert.match(wordmark, />viru<\/span>/);
   assert.match(componentsCss, /mask:\s*url\("\/brand\/viru-mark\.png"\)/);
@@ -190,6 +193,31 @@ test("shared brand surfaces compose the reusable Viru mark instead of the remove
     fs.existsSync(path.join(ROOT, "public/brand/viru-mark.png")),
     "expected the public Viru mark asset",
   );
+});
+
+test("private navigation is a persistent lateral workspace rail", () => {
+  const layout = read("src/app/(private)/layout.tsx");
+  const nav = read("src/modules/shared/PrivateNav.tsx");
+  const css = read("src/styles/screens.css");
+
+  assert.match(layout, /<PrivateNav unreadSignals=\{unreadSignals\} \/>/);
+  assert.match(layout, /className="private-workspace"/);
+  assert.match(nav, /className="private-nav-brand"/);
+  assert.match(nav, /className="private-nav-links"/);
+  assert.match(css, /\.private-layout\s*\{[^}]*grid-template-columns:\s*minmax\(13\.5rem, 16\.5rem\) minmax\(0, 1fr\)/);
+  assert.match(css, /\.private-nav\s*\{[^}]*position:\s*sticky/);
+});
+
+test("mobile private navigation restores focus and prevents background scroll", () => {
+  const nav = read("src/modules/shared/PrivateNav.tsx");
+  const css = read("src/styles/screens.css");
+
+  assert.match(nav, /event\.key === "Escape"/);
+  assert.match(nav, /document\.body\.style\.overflow = "hidden"/);
+  assert.match(nav, /toggleRef\.current\?\.focus\(\)/);
+  assert.match(nav, /navRef\.current\?\.querySelector<HTMLAnchorElement>\("\.private-nav-link"\)\?\.focus\(\)/);
+  assert.match(css, /@media \(max-width: 768px\)[\s\S]*?\.private-nav \{[\s\S]*?visibility:\s*hidden/);
+  assert.match(css, /\.private-nav\.open \{[\s\S]*?visibility:\s*visible/);
 });
 
 test("screens.css no longer has the .is-leaving state", () => {

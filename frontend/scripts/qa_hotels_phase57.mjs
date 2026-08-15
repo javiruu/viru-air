@@ -188,6 +188,9 @@ async function exerciseHotelsFlow(page) {
   const trackButton = firstResult.getByRole("button", { name: /Seguir precio|Siguiendo precio|Track price|Following price|Trackear precio|Ya en seguimiento/ });
   await trackButton.waitFor({ state: "visible", timeout: 15000 });
   await clickButtonInView(page, trackButton);
+  const confirmTracking = page.getByRole("button", { name: /Confirmar seguimiento|Confirm tracking/ });
+  await confirmTracking.waitFor({ state: "visible", timeout: 15000 });
+  await clickButtonInView(page, confirmTracking);
   await page.locator(".hotel-tracked-offer-item").first().waitFor({ state: "visible", timeout: 30000 });
 
   const watchButton = firstResult.getByRole("button", { name: /Guardar hotel|Guardado|Save hotel|Saved|Añadir a seguimiento|En seguimiento/ });
