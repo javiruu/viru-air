@@ -63,6 +63,7 @@ const TICKET_CITIES: Readonly<Record<string, TicketCity>> = {
   CIA: { label: "Roma", art: "roma" },
   SVQ: { label: "Sevilla", art: "sevilla" },
   TSF: { label: "Treviso", art: "treviso" },
+  TRS: { label: "Trieste", art: "" },
   VIE: { label: "Viena", art: "viena" },
 };
 
@@ -118,6 +119,7 @@ export function WatchRow({
   const { t, localeTag } = useI18n();
   const origin = ticketCity(watch.origin_iata);
   const destination = ticketCity(watch.destination_iata);
+  const ticketArt = destination.art || origin.art;
   const departureDate = ticketDate(watch.travel_date_local, localeTag);
   const watchStatus = getWatchStatusMeta(watch.status, t);
   const canManageTracking =
@@ -189,7 +191,15 @@ export function WatchRow({
         onClick={() => onSelect(watch)}
       />
       <CommunityHubButton watch={watch} onOpen={onOpenCommunity} />
-      <div className="watch-ticket-art" aria-hidden="true" style={destination.art ? { backgroundImage: `url("/illustraciones/${destination.art}.webp")` } : undefined} />
+      <div
+        className="watch-ticket-art"
+        aria-hidden="true"
+        style={
+          ticketArt
+            ? { backgroundImage: `url("/illustraciones/${ticketArt}.webp")` }
+            : undefined
+        }
+      />
       <div className="watch-ticket-main">
         <div className="watch-ticket-route">
           <input
