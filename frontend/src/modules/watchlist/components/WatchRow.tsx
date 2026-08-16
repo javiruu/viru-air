@@ -194,7 +194,7 @@ export function WatchRow({
         <div className="watch-ticket-route">
           <input
             type="checkbox"
-            className="watch-bulk-checkbox"
+            className="watch-bulk-checkbox sr-only"
             checked={isBulkSelected}
             onClick={(event) => event.stopPropagation()}
             onChange={(event) =>
