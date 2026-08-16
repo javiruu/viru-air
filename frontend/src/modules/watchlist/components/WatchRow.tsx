@@ -189,7 +189,7 @@ export function WatchRow({
         onClick={() => onSelect(watch)}
       />
       <CommunityHubButton watch={watch} onOpen={onOpenCommunity} />
-      <div className="watch-ticket-art" aria-hidden="true" style={destination.art ? { backgroundImage: `url("/illustraciones/${destination.art}.png")` } : undefined} />
+      <div className="watch-ticket-art" aria-hidden="true" style={destination.art ? { backgroundImage: `url("/illustraciones/${destination.art}.webp")` } : undefined} />
       <div className="watch-ticket-main">
         <div className="watch-ticket-route">
           <input
