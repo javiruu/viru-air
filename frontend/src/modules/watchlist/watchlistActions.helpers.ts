@@ -16,6 +16,22 @@ function toRefreshBucket(capturedAtUtc: string): string {
   return withoutFraction.length >= 19 ? withoutFraction.slice(0, 19) : normalized;
 }
 
+export function mergeLatestWatchSnapshotsIntoHistoryRows(
+  batchRows: HistoryRow[],
+  watches: Watch[],
+): HistoryRow[] {
+  const merged = new Map<string, HistoryRow>();
+  batchRows.forEach((row) => {
+    merged.set([row.watchId, toRefreshBucket(row.capturedAt)].join("|"), row);
+  });
+  mapLatestWatchSnapshotsToHistoryRows(watches).forEach((row) => {
+    merged.set([row.watchId, toRefreshBucket(row.capturedAt)].join("|"), row);
+  });
+  return Array.from(merged.values()).sort((left, right) =>
+    left.capturedAt.localeCompare(right.capturedAt),
+  );
+}
+
 function compareSnapshotPriority(
   candidate: SnapshotWithWatchId,
   current: SnapshotWithWatchId,
