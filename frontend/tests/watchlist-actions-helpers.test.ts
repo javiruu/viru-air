@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   filterWatchesBySelection,
+  mergeLatestWatchSnapshotsIntoHistoryRows,
   mapLatestWatchSnapshotsToHistoryRows,
   mapSnapshotsToHistoryRows,
   mergeWatchDetailPriceHistoryRows,
@@ -76,6 +77,44 @@ test("mapLatestWatchSnapshotsToHistoryRows exposes the persisted save-result pri
   assert.deepEqual(rows.map((row) => [row.watchId, row.price, row.currency]), [
     ["w1", 47, "EUR"],
   ]);
+});
+
+test("mergeLatestWatchSnapshotsIntoHistoryRows keeps a newly saved price when batch history is stale", () => {
+  const batchRows = mapSnapshotsToHistoryRows(WATCHES, [
+    {
+      watch_id: "w1",
+      captured_at_utc: "2026-05-01T10:00:00Z",
+      raw_price: 61,
+      raw_currency: "EUR",
+      departure_time_local: "10:00",
+      provider: "historical_backfill",
+    },
+  ]);
+  const watchesWithSavedPrice: Watch[] = [
+    {
+      ...WATCHES[0],
+      latest_snapshot: {
+        captured_at_utc: "2026-05-01T10:05:00Z",
+        raw_price: 47,
+        raw_currency: "EUR",
+        departure_time_local: "10:00",
+        provider: "quick-search",
+      },
+    },
+  ];
+
+  const rows = mergeLatestWatchSnapshotsIntoHistoryRows(
+    batchRows,
+    watchesWithSavedPrice,
+  );
+
+  assert.deepEqual(
+    rows.map((row) => [row.watchId, row.capturedAt, row.price, row.currency]),
+    [
+      ["w1", "2026-05-01T10:00:00Z", 61, "EUR"],
+      ["w1", "2026-05-01T10:05:00Z", 47, "EUR"],
+    ],
+  );
 });
 
 test("mapSnapshotsToHistoryRows collapses same-refresh legacy snapshots to one canonical point", () => {

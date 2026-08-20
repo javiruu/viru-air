@@ -7,8 +7,8 @@ import {
   type WatchApiResponse,
 } from "@/modules/watchlist/watchlistApiCompatibility";
 import {
-  mapLatestWatchSnapshotsToHistoryRows,
   mapSnapshotsToHistoryRows,
+  mergeLatestWatchSnapshotsIntoHistoryRows,
 } from "@/modules/watchlist/watchlistActions.helpers";
 import type { HistoryRow, Snapshot, Watch } from "@/modules/watchlist/types";
 
@@ -79,13 +79,7 @@ export function useWatchlistDataLoader({
         : [];
 
       const batchHistoryRows = mapSnapshotsToHistoryRows(rows, snapshots);
-      const batchWatchIds = new Set(batchHistoryRows.map((row) => row.watchId));
-      const merged = [
-        ...batchHistoryRows,
-        ...mapLatestWatchSnapshotsToHistoryRows(rows).filter(
-          (row) => !batchWatchIds.has(row.watchId),
-        ),
-      ];
+      const merged = mergeLatestWatchSnapshotsIntoHistoryRows(batchHistoryRows, rows);
       setHistoryRows(merged);
 
       const nextSelectedWatchId = resolveSelectedWatchId(rows, selectedWatchIdRef.current);
