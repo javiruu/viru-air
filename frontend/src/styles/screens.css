@@ -8341,6 +8341,22 @@ textarea::placeholder {
   margin-top: 0.05rem;
 }
 
+.qs-additional-airports[data-side="origin"]:has(> .qs-additional-airport) .qs-additional-airports__add {
+  margin-top: 3.05rem;
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .qs-additional-airports[data-side="origin"]:has(> .qs-additional-airport) .qs-additional-airports__add {
+    margin-top: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .qs-additional-airports[data-side="origin"]:has(> .qs-additional-airport) .qs-additional-airports__add {
+    margin-top: 3.12rem;
+  }
+}
+
 .qs-additional-airports__add svg {
   flex: 0 0 auto;
   color: var(--accent);
