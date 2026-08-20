@@ -165,6 +165,27 @@ class WatchCreateIn(BaseModel):
         return value
 
 
+class WatchBulkCreateIn(BaseModel):
+    origin_iata: str = Field(min_length=3, max_length=3)
+    destination_iata: str = Field(min_length=3, max_length=3)
+    travel_dates: list[Date] = Field(min_length=1, max_length=15)
+
+    @field_validator("origin_iata", "destination_iata")
+    @classmethod
+    def validate_iata(cls, value: str) -> str:
+        cleaned = value.strip().upper()
+        if len(cleaned) != 3 or not cleaned.isalpha():
+            raise ValueError("iata_invalido")
+        return cleaned
+
+    @field_validator("travel_dates")
+    @classmethod
+    def normalize_travel_dates(cls, values: list[Date]) -> list[Date]:
+        if any(value < Date.today() for value in values):
+            raise ValueError("travel_date_in_past")
+        return sorted(set(values))
+
+
 class CommunityPriceResponseOut(BaseModel):
     flew: bool
     price_per_traveler: float | None = None
@@ -493,7 +514,7 @@ class PreferenceIn(BaseModel):
     depart_before_default: str | None = None
     strict_filters_default: bool = True
     country_price_hint_mode_default: Literal["min", "median", "fixed_route"] = "min"
-    calendar_hint_bucket_mode_default: Literal["monthly_terciles", "guidelines"] = "monthly_terciles"
+    calendar_hint_bucket_mode_default: Literal["contextual", "monthly_terciles", "guidelines"] = "contextual"
     calendar_hint_guideline_low_max_default: float = Field(default=90, ge=0)
     calendar_hint_guideline_mid_max_default: float = Field(default=150, gt=0)
     preferred_currency: str = "EUR"

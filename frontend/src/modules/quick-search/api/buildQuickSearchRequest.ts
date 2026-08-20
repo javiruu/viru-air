@@ -5,6 +5,7 @@ export type QuickSearchQueryParams = {
   destination_iata: string | string[];
   travel_date: string;
   date: string;
+  travel_dates?: string[];
   flex_days_before: number;
   flex_days_after: number;
   radius_km: number;
@@ -61,6 +62,7 @@ export type QuickSearchCanonicalPayload = {
     date: string;
     flex_before: number;
     flex_after: number;
+    dates?: string[];
   };
   constraints: {
     departure_window: {
@@ -126,15 +128,24 @@ function normalizeIataValue(value: string | string[]): string | string[] {
   return value.trim().toUpperCase();
 }
 
+function normalizeTravelDates(values: string[] | undefined): string[] {
+  return Array.from(
+    new Set((values || []).filter((value) => /^\d{4}-\d{2}-\d{2}$/.test(value))),
+  ).sort();
+}
+
 export function prepareQuickSearchRequest(input: QuickSearchQueryParams): QuickSearchPreparedRequest {
+  const travelDates = normalizeTravelDates(input.travel_dates);
+  const hasMultipleExactDates = travelDates.length > 1;
   const normalized: QuickSearchQueryParams = {
     ...input,
     origin_iata: normalizeIataValue(input.origin_iata),
     destination_iata: normalizeIataValue(input.destination_iata),
     travel_date: input.travel_date?.trim?.() || "",
     date: input.date?.trim?.() || input.travel_date?.trim?.() || "",
-    flex_days_before: clampInt(input.flex_days_before, 0, 7, 0),
-    flex_days_after: clampInt(input.flex_days_after, 0, 7, 0),
+    travel_dates: travelDates,
+    flex_days_before: hasMultipleExactDates ? 0 : clampInt(input.flex_days_before, 0, 7, 0),
+    flex_days_after: hasMultipleExactDates ? 0 : clampInt(input.flex_days_after, 0, 7, 0),
     radius_km: clampInt(input.radius_km, 10, 500, 150),
     include_stops: Boolean(input.include_stops),
     include_nearby_origins: Boolean(input.include_nearby_origins),
@@ -228,8 +239,9 @@ function isWideSearchMode(params: QuickSearchQueryParams): boolean {
     (Array.isArray(params.origin_iata) && params.origin_iata.length > 1)
     || (Array.isArray(params.destination_iata) && params.destination_iata.length > 1);
   const hasFlex = params.flex_days_before > 0 || params.flex_days_after > 0;
+  const hasExactDates = (params.travel_dates?.length || 0) > 1;
   const hasNearby = params.include_nearby_origins || params.include_nearby_destinations;
-  return seedRich || hasFlex || hasNearby;
+  return seedRich || hasFlex || hasExactDates || hasNearby;
 }
 
 export function buildQuickSearchCanonicalPayload(params: QuickSearchQueryParams): QuickSearchCanonicalPayload {
@@ -255,6 +267,7 @@ export function buildQuickSearchCanonicalPayload(params: QuickSearchQueryParams)
       date: params.travel_date,
       flex_before: params.flex_days_before,
       flex_after: params.flex_days_after,
+      ...(params.travel_dates && params.travel_dates.length > 1 ? { dates: params.travel_dates } : {}),
     },
     constraints: {
       departure_window: {
@@ -301,6 +314,7 @@ export async function buildQuickSearchQuerySignature(
     origin_seed_pool: payload.origin.seed_iata_list || [payload.origin.seed_iata],
     destination_seed_pool: payload.destination.seed_iata_list || [payload.destination.seed_iata],
     travel_date: payload.travel.date,
+    travel_dates: payload.travel.dates || [],
     flex_before: payload.travel.flex_before,
     flex_after: payload.travel.flex_after,
     include_nearby_origins: payload.origin.include_nearby,
