@@ -541,6 +541,7 @@ class QuickSearchPayload(BaseModel):
     destination_iata: str | list[str] | None = None
     travel_date: dt.date | None = None
     date: dt.date | None = None
+    travel_dates: list[dt.date] | None = None
     radius_km: int | None = None
     include_stops: bool | None = None
     include_nearby_origin: bool | None = None
@@ -593,6 +594,14 @@ class QuickSearchTravel(BaseModel):
     date: dt.date
     flex_before: int = Field(default=0, ge=0, le=7)
     flex_after: int = Field(default=0, ge=0, le=7)
+    dates: list[dt.date] = Field(default_factory=list, max_length=15)
+
+    @model_validator(mode="after")
+    def normalize_exact_dates(self) -> "QuickSearchTravel":
+        if self.dates and (self.flex_before or self.flex_after):
+            raise ValueError("exact_dates_incompatible_with_flexibility")
+        self.dates = sorted(set(self.dates))
+        return self
 
 
 class QuickSearchDepartureWindow(BaseModel):
@@ -1338,6 +1347,7 @@ def _normalize_quick_search_request(
             },
             "travel": {
                 "date": travel_date_value,
+                "dates": legacy_payload.travel_dates or [],
                 "flex_before": _clamp_days(
                     query_overrides.get("flex_days_before")
                     if query_overrides.get("flex_days_before") is not None
@@ -2035,6 +2045,7 @@ def quick_search(
     destination_seed_pool = list(destination_list)
     requested_days_before = canonical.travel.flex_before
     requested_days_after = canonical.travel.flex_after
+    requested_exact_dates = canonical.travel.dates
 
     requested_include_nearby_origins = canonical.origin.include_nearby
     requested_include_nearby_destinations = canonical.destination.include_nearby
@@ -2264,7 +2275,7 @@ def quick_search(
         if include_nearby_destinations and len(destination_expanded) <= 1:
             _warn("no_nearby_candidates_found", side="destination", seed_iata=canonical.destination.seed_iata)
 
-        date_candidates = _build_flex_dates(travel_date_value, days_before, days_after)
+        date_candidates = requested_exact_dates or _build_flex_dates(travel_date_value, days_before, days_after)
 
         started = _phase_start()
         pair_plan, pair_plan_stats = build_pair_plan(
@@ -2652,7 +2663,11 @@ def quick_search(
     warnings = _normalize_warning_codes(warnings)
     ui_warning_codes = _filter_ui_warning_codes(warnings)
     phase_ms["total_search_ms"] = int((time.perf_counter() - t0) * 1000)
-    requested_date_candidates = _build_flex_dates(travel_date_value, requested_days_before, requested_days_after)
+    requested_date_candidates = requested_exact_dates or _build_flex_dates(
+        travel_date_value,
+        requested_days_before,
+        requested_days_after,
+    )
 
     warning_codes_set = set(warnings)
     provider_status_entries = execution_meta.get("provider_statuses", [])
@@ -2869,6 +2884,7 @@ def quick_search(
                 "date": str(travel_date_value),
                 "flex_before": requested_days_before,
                 "flex_after": requested_days_after,
+                "dates": [str(date_item) for date_item in requested_exact_dates],
                 "travel_dates": [str(date_item) for date_item in requested_date_candidates],
             },
             "constraints": {

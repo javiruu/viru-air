@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.domain.schemas import (
     WatchCreateIn,
+    WatchBulkCreateIn,
     WatchDeleteBulkIn,
     WatchDetailOut,
     WatchOut,
@@ -291,6 +292,55 @@ def create_watch(
     )
     db.commit()
     return watch_out
+
+
+@router.post("/bulk-create")
+def create_watches_bulk(
+    payload: WatchBulkCreateIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict[str, object]:
+    origin_iata = payload.origin_iata.upper()
+    destination_iata = payload.destination_iata.upper()
+    if origin_iata == destination_iata:
+        raise HTTPException(status_code=400, detail="origin_equals_destination")
+
+    requested_dates = payload.travel_dates
+    existing_by_date = {
+        watch.travel_date_local: watch
+        for watch in db.scalars(
+            select(FlightWatch).where(
+                FlightWatch.user_id == current_user.id,
+                FlightWatch.origin_iata == origin_iata,
+                FlightWatch.destination_iata == destination_iata,
+                FlightWatch.travel_date_local.in_(requested_dates),
+            )
+        )
+    }
+    created_dates: list[str] = []
+    existing_dates: list[str] = []
+    for travel_date in requested_dates:
+        existing = existing_by_date.get(travel_date)
+        if existing is not None:
+            if existing.status == WATCH_STATUS_DELETED:
+                existing.status = WATCH_STATUS_ACTIVE
+            existing_dates.append(str(travel_date))
+            continue
+        db.add(
+            FlightWatch(
+                user_id=current_user.id,
+                origin_iata=origin_iata,
+                destination_iata=destination_iata,
+                travel_date_local=travel_date,
+            )
+        )
+        created_dates.append(str(travel_date))
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="watch_already_exists") from exc
+    return {"status": "ok", "created_dates": created_dates, "existing_dates": existing_dates}
 
 
 @router.get("", response_model=list[WatchOut])

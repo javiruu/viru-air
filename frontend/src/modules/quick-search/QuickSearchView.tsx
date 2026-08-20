@@ -237,6 +237,12 @@ type ExecutedCriteriaSnapshot = {
   paxLabel: string;
 };
 
+type BulkWatchCreateResponse = {
+  status: string;
+  created_dates: string[];
+  existing_dates: string[];
+};
+
 type QuickSearchCountrySeedResponse = {
   items: QuickSearchCountrySeed[];
   count: number;
@@ -384,6 +390,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const [calendarHintsByKeyReturn, setCalendarHintsByKeyReturn] = useState<Record<string, CalendarHintsCacheEntry>>({});
   const [calendarHintsLoadingKey, setCalendarHintsLoadingKey] = useState<string | null>(null);
   const [calendarHintsLoadingKeyReturn, setCalendarHintsLoadingKeyReturn] = useState<string | null>(null);
+  const [selectedTravelDates, setSelectedTravelDates] = useState<string[]>([]);
   const initialOrigin = "";
   const initialDestination = "";
   const originCodeLookupRef = useRef<string | null>(null);
@@ -1344,7 +1351,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         const normalized: Pref = {
           ...data,
           country_price_hint_mode_default: data.country_price_hint_mode_default || "min",
-          calendar_hint_bucket_mode_default: data.calendar_hint_bucket_mode_default || "monthly_terciles",
+          calendar_hint_bucket_mode_default: data.calendar_hint_bucket_mode_default || "contextual",
           calendar_hint_guideline_low_max_default: Number(data.calendar_hint_guideline_low_max_default ?? 90),
           calendar_hint_guideline_mid_max_default: Number(data.calendar_hint_guideline_mid_max_default ?? 150),
           preferred_currency: data.preferred_currency || "EUR",
@@ -1505,9 +1512,14 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     return "min";
   }, [hasCountryScopeForCalendarHints, pref?.country_price_hint_mode_default]);
   const calendarHintBucketMode = useMemo<QuickSearchCalendarBucketMode>(() => {
-    const mode = pref?.calendar_hint_bucket_mode_default || "monthly_terciles";
-    return mode === "guidelines" ? "guidelines" : "monthly_terciles";
+    const mode = pref?.calendar_hint_bucket_mode_default || "contextual";
+    if (mode === "guidelines" || mode === "monthly_terciles") return mode;
+    return "contextual";
   }, [pref?.calendar_hint_bucket_mode_default]);
+  const calendarHintCurrency = useMemo<"EUR" | "USD" | "GBP">(() => {
+    const currency = (pref?.preferred_currency || "EUR").toUpperCase();
+    return currency === "USD" || currency === "GBP" ? currency : "EUR";
+  }, [pref?.preferred_currency]);
   const calendarHintGuidelineThresholds = useMemo<QuickSearchCalendarGuidelineThresholds | null>(() => {
     if (calendarHintBucketMode !== "guidelines") return null;
     const rawLow = Number(pref?.calendar_hint_guideline_low_max_default ?? 90);
@@ -1547,11 +1559,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const calendarHintsRequestKey = useMemo(() => {
     if (!calendarVisibleMonth) return "";
     if (!canRequestCalendarHints) return "";
-    return `${calendarVisibleMonth}|${calendarHintsScopeSignature}|${calendarHintAggregationMode}|${calendarHintBucketMode}|${calendarHintGuidelineSignature}|${adults}`;
+    return `${calendarVisibleMonth}|${calendarHintsScopeSignature}|${calendarHintAggregationMode}|${calendarHintBucketMode}|${calendarHintGuidelineSignature}|${calendarHintCurrency}|outbound|${adults}`;
   }, [
     adults,
     calendarHintAggregationMode,
     calendarHintBucketMode,
+    calendarHintCurrency,
     calendarHintGuidelineSignature,
     calendarHintsScopeSignature,
     calendarVisibleMonth,
@@ -1569,11 +1582,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   const calendarHintsRequestKeyReturn = useMemo(() => {
     if (!calendarVisibleMonthReturn) return "";
     if (!canRequestCalendarHints) return "";
-    return `${calendarVisibleMonthReturn}|${calendarHintsScopeSignatureReturn}|${calendarHintAggregationMode}|${calendarHintBucketMode}|${calendarHintGuidelineSignature}|${adults}`;
+    return `${calendarVisibleMonthReturn}|${calendarHintsScopeSignatureReturn}|${calendarHintAggregationMode}|${calendarHintBucketMode}|${calendarHintGuidelineSignature}|${calendarHintCurrency}|return|${adults}`;
   }, [
     adults,
     calendarHintAggregationMode,
     calendarHintBucketMode,
+    calendarHintCurrency,
     calendarHintGuidelineSignature,
     calendarHintsScopeSignatureReturn,
     calendarVisibleMonthReturn,
@@ -1611,6 +1625,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           : destinationCalendarHintPool[0] || destinationCode,
         month: requestedMonth,
         adults,
+        currency: calendarHintCurrency,
+        leg: "outbound",
+        cabin: "economy",
         aggregation_mode: calendarHintAggregationMode,
         bucket_mode: calendarHintBucketMode,
         guideline_thresholds: calendarHintBucketMode === "guidelines" ? calendarHintGuidelineThresholds : undefined,
@@ -1676,6 +1693,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     adults,
     calendarHintAggregationMode,
     calendarHintBucketMode,
+    calendarHintCurrency,
     calendarHintGuidelineThresholds,
     calendarHintsByKey,
     calendarHintsRequestKey,
@@ -1718,6 +1736,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           : originCalendarHintPool[0] || originCode,
         month: requestedMonth,
         adults,
+        currency: calendarHintCurrency,
+        leg: "return",
+        cabin: "economy",
         aggregation_mode: calendarHintAggregationMode,
         bucket_mode: calendarHintBucketMode,
         guideline_thresholds: calendarHintBucketMode === "guidelines" ? calendarHintGuidelineThresholds : undefined,
@@ -1783,6 +1804,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     adults,
     calendarHintAggregationMode,
     calendarHintBucketMode,
+    calendarHintCurrency,
     calendarHintGuidelineThresholds,
     calendarHintsByKeyReturn,
     calendarHintsRequestKeyReturn,
@@ -2153,14 +2175,20 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     if (excludeDestinationInput) setExcludeDestinationInput("");
     setExcludeOrigins(nextExcludeOrigins);
     setExcludeDestinations(nextExcludeDestinations);
-    const range = buildDateRange(travelDate, isReturn ? returnDate : travelDate);
+    const exactTravelDates = !isReturn && selectedTravelDates.length > 1
+      ? selectedTravelDates
+      : [];
+    const range = exactTravelDates.length > 0
+      ? exactTravelDates
+      : buildDateRange(travelDate, isReturn ? returnDate : travelDate);
     const payload = {
       origin_iata: originRequestValue,
       destination_iata: destinationRequestValue,
       travel_date: travelDate,
       date: travelDate,
-      flex_days_before: daysBefore,
-      flex_days_after: daysAfter,
+      travel_dates: exactTravelDates,
+      flex_days_before: exactTravelDates.length > 0 ? 0 : daysBefore,
+      flex_days_after: exactTravelDates.length > 0 ? 0 : daysAfter,
       radius_km: normalizedRadiusKm,
       include_stops: includeStops,
       include_nearby_origins: includeNearbyOrigins,
@@ -2190,7 +2218,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     setLoaderPlannedTotalFlights(plannedTotalFlights);
     const nextExecutedCriteria: ExecutedCriteriaSnapshot = {
       route: `${originCountryOnly ? originCountryOnly.name : originSeeds.join(", ")}${originCountryOnly && validOptionalOriginCodes.length > 0 ? ` + ${validOptionalOriginCodes.join(", ")}` : ""} â†’ ${destinationCountryOnly ? destinationCountryOnly.name : destinationSeeds.join(", ")}${destinationCountryOnly && validOptionalDestinationCodes.length > 0 ? ` + ${validOptionalDestinationCodes.join(", ")}` : ""}`,
-      dateLabel: isReturn && returnDate ? `${travelDate} â†’ ${returnDate}` : travelDate,
+      dateLabel: exactTravelDates.length > 0
+        ? `${exactTravelDates.length} ${locale === "es" ? "días seleccionados" : "selected days"}`
+        : isReturn && returnDate ? `${travelDate} â†’ ${returnDate}` : travelDate,
       paxLabel: `${adults} ${adults === 1 ? t("summaryPassengersSingular") : t("summaryPassengersPlural")}`,
     };
     trackEvent("quicksearch_search_submitted", {
@@ -2203,6 +2233,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       radius_km: normalizedRadiusKm,
       flex_days_before: daysBefore,
       flex_days_after: daysAfter,
+      exact_dates_count: exactTravelDates.length,
     });
     const preparedRequest = prepareQuickSearchRequest(payload);
     if (preparedRequest.issues.length > 0) {
@@ -2220,6 +2251,43 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     try {
       expectedQuerySignaturesRef.current = await buildQuickSearchExpectedSignatures(canonicalPayload);
       if (!isCurrentRequest()) return;
+      if (
+        exactTravelDates.length > 0
+        && !isPageChange
+        && typeof originRequestValue === "string"
+        && typeof destinationRequestValue === "string"
+      ) {
+        const watchResponse = await apiFetchWithStatus<BulkWatchCreateResponse>("/watchlist/bulk-create", {
+          method: "POST",
+          body: JSON.stringify({
+            origin_iata: originRequestValue,
+            destination_iata: destinationRequestValue,
+            travel_dates: exactTravelDates,
+          }),
+        });
+        if (watchResponse.ok) {
+          const createdCount = watchResponse.data.created_dates.length;
+          const existingCount = watchResponse.data.existing_dates.length;
+          const title = locale === "es"
+            ? `${createdCount} seguimiento${createdCount === 1 ? "" : "s"} creado${createdCount === 1 ? "" : "s"}${existingCount ? ` · ${existingCount} ya existente${existingCount === 1 ? "" : "s"}` : ""}`
+            : `${createdCount} tracking ${createdCount === 1 ? "created" : "entries created"}${existingCount ? ` · ${existingCount} already existed` : ""}`;
+          notify({
+            tone: "success",
+            title,
+            actionLabel: t("viewWatchlist"),
+            onAction: () => navigateToWatchlistWithContext(originRequestValue, destinationRequestValue),
+            durationMs: 4200,
+          });
+        } else {
+          notify({
+            tone: "error",
+            title: locale === "es"
+              ? "No se han podido crear los seguimientos de los días elegidos. La búsqueda continúa."
+              : "We could not create tracking for the selected days. The search will continue.",
+            durationMs: 4200,
+          });
+        }
+      }
       if (!isPageChange) {
         setIsLoading(true);
       }
@@ -4980,10 +5048,24 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               showCountryEstimateBadge={canRequestCalendarHints && hasCountryScopeForCalendarHints}
               hintScopeMode={calendarHintsActive?.scopeMode || calendarHintsScopeMode}
               onVisibleMonthChange={setCalendarVisibleMonth}
+              multiple={!isReturn}
+              selectedValues={selectedTravelDates}
+              maxSelections={15}
+              onSelectedValuesChange={(values) => {
+                const normalizedDates = Array.from(new Set(values)).sort().slice(0, 15);
+                setSelectedTravelDates(normalizedDates);
+                setDaysBefore(0);
+                setDaysAfter(0);
+                if (normalizedDates[0]) {
+                  setTravelDate(normalizedDates[0]);
+                  setCalendarVisibleMonth(monthFromDateIso(normalizedDates[0]));
+                }
+              }}
               invalid={(dateTouched && !travelDate) || Boolean(fieldErrors.travel_date)}
               onBlur={() => setDateTouched(true)}
               onChange={(value) => {
                 setTravelDate(value);
+                setSelectedTravelDates([]);
                 setCalendarVisibleMonth(monthFromDateIso(value));
                 if (isReturn && returnDate && value && returnDate < value) {
                   setReturnDate("");
