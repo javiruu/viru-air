@@ -183,7 +183,8 @@ export type SearchResponse = Omit<SearchResponseRaw, "results"> & {
 export type QuickSearchCalendarDayHintBucket = "low" | "mid" | "high" | "none";
 export type QuickSearchCalendarAggregationMode = "min" | "median" | "fixed_route";
 export type QuickSearchCalendarScopeMode = "iata" | "country_mixed" | "country_country";
-export type QuickSearchCalendarBucketMode = "monthly_terciles" | "guidelines";
+export type QuickSearchCalendarBucketMode = "contextual" | "monthly_terciles" | "guidelines";
+export type QuickSearchCalendarDataQuality = "available" | "partial" | "stale" | "unavailable";
 export type QuickSearchCalendarGuidelineThresholds = {
   low_max: number;
   mid_max: number;
@@ -194,7 +195,9 @@ export type QuickSearchCalendarDayHint = {
   date: string;
   min_price: number | null;
   bucket: QuickSearchCalendarDayHintBucket;
+  data_quality?: QuickSearchCalendarDataQuality;
   no_data_reason?: string | null;
+  reference_sample_size?: number;
 };
 
 export type QuickSearchCalendarHintsResponse = {
@@ -215,6 +218,26 @@ export type QuickSearchCalendarHintsResponse = {
     aggregation_mode?: QuickSearchCalendarAggregationMode;
     bucket_mode?: QuickSearchCalendarBucketMode;
     guideline_thresholds_effective?: QuickSearchCalendarGuidelineThresholds | null;
+    classification?: {
+      mode: QuickSearchCalendarBucketMode;
+      reference_sample_size: number;
+      reference_window_days: number;
+    };
+    coverage?: {
+      days_total: number;
+      days_priced: number;
+      days_reused: number;
+      days_stale: number;
+      days_unavailable: number;
+    };
+    quality?: {
+      invalid_price_count: number;
+      travel_date_mismatch_count: number;
+      currency_excluded_count: number;
+      classification_without_reference_count: number;
+      provider_failure_count: number;
+    };
+    calendar_observations_available?: boolean;
   };
 };
 

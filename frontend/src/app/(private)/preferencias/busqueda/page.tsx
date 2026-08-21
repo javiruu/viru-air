@@ -47,7 +47,7 @@ export default function PreferenciasBusquedaPage() {
         const normalized: Pref = {
           ...data,
           country_price_hint_mode_default: data.country_price_hint_mode_default || "min",
-          calendar_hint_bucket_mode_default: data.calendar_hint_bucket_mode_default || "monthly_terciles",
+          calendar_hint_bucket_mode_default: data.calendar_hint_bucket_mode_default || "contextual",
           calendar_hint_guideline_low_max_default: Number(data.calendar_hint_guideline_low_max_default ?? 90),
           calendar_hint_guideline_mid_max_default: Number(data.calendar_hint_guideline_mid_max_default ?? 150),
           preferred_currency: data.preferred_currency || "EUR",
@@ -416,9 +416,10 @@ export default function PreferenciasBusquedaPage() {
                 <select
                   id="pref-calendar-bucket-mode"
                   className="prefs-control"
-                  value={pref.calendar_hint_bucket_mode_default || "monthly_terciles"}
+                  value={pref.calendar_hint_bucket_mode_default || "contextual"}
                   onChange={(event) => updatePref("calendar_hint_bucket_mode_default", event.target.value as Pref["calendar_hint_bucket_mode_default"])}
                 >
+                  <option value="contextual">{t("preferences.search.calendarHintBucketModeContextual")}</option>
                   <option value="monthly_terciles">{t("preferences.search.calendarHintBucketModeMonthly")}</option>
                   <option value="guidelines">{t("preferences.search.calendarHintBucketModeGuidelines")}</option>
                 </select>

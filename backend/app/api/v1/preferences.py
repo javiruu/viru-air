@@ -43,7 +43,7 @@ def get_preferences(
             "include_nearby_origins_default": False,
             "include_nearby_destinations_default": False,
             "country_price_hint_mode_default": "min",
-            "calendar_hint_bucket_mode_default": "monthly_terciles",
+            "calendar_hint_bucket_mode_default": "contextual",
             "calendar_hint_guideline_low_max_default": 90.0,
             "calendar_hint_guideline_mid_max_default": 150.0,
             "avoid_departure_before": None,
@@ -62,7 +62,7 @@ def get_preferences(
         "include_nearby_origins_default": pref.include_nearby_origins_default,
         "include_nearby_destinations_default": pref.include_nearby_destinations_default,
         "country_price_hint_mode_default": pref.country_price_hint_mode_default or "min",
-        "calendar_hint_bucket_mode_default": pref.calendar_hint_bucket_mode_default or "monthly_terciles",
+        "calendar_hint_bucket_mode_default": pref.calendar_hint_bucket_mode_default or "contextual",
         "calendar_hint_guideline_low_max_default": float(
             pref.calendar_hint_guideline_low_max_default
             if pref.calendar_hint_guideline_low_max_default is not None

@@ -1,5 +1,11 @@
 # History
 
+## 2026-08-21 — Inteligencia de precios del calendario
+
+- El calendario de Quick Search conserva observaciones propias, normaliza la moneda antes de comparar y clasifica solo frente a una referencia reciente y comparable.
+- Los días ahora diferencian precio disponible, parcial, antiguo y no disponible, con causas explícitas para timeout, proveedor, moneda y cobertura.
+- La selección de ruta amplia reutiliza datos compatibles y reserva cobertura para rescatar días sin tarifa antes de mostrar una ausencia.
+
 ## 2026-08-02 — Overhaul móvil completo (18 commits, 10 rutas auditadas)
 
 Todas las rutas privadas de Viru Air fueron auditadas y optimizadas para pantallas ≤480px con un sistema consistente de breakpoints, touch targets y prevención de zoom iOS. El trabajo se distribuyó en 18 commits incrementales sobre 4 archivos CSS, sin romper ningún test ni build.

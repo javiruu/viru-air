@@ -350,7 +350,7 @@ class UserPreference(Base):
     include_nearby_origins_default: Mapped[bool] = mapped_column(Boolean, default=False)
     include_nearby_destinations_default: Mapped[bool] = mapped_column(Boolean, default=False)
     country_price_hint_mode_default: Mapped[str] = mapped_column(String(16), default="min")
-    calendar_hint_bucket_mode_default: Mapped[str] = mapped_column(String(24), default="monthly_terciles")
+    calendar_hint_bucket_mode_default: Mapped[str] = mapped_column(String(24), default="contextual")
     calendar_hint_guideline_low_max_default: Mapped[float] = mapped_column(Numeric(10, 2), default=90.0)
     calendar_hint_guideline_mid_max_default: Mapped[float] = mapped_column(Numeric(10, 2), default=150.0)
     avoid_departure_before: Mapped[str | None] = mapped_column(String(5), nullable=True)
@@ -1113,6 +1113,53 @@ class QuickSearchProviderLock(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
+
+
+class CalendarPriceObservation(Base):
+    __tablename__ = "calendar_price_observation"
+    __table_args__ = (
+        UniqueConstraint(
+            "query_fingerprint",
+            "route_signature",
+            "provider",
+            "observed_at",
+            name="uq_calendar_price_observation_sample",
+        ),
+        Index(
+            "ix_calendar_price_observation_reference",
+            "reference_fingerprint",
+            "observed_at",
+        ),
+        Index(
+            "ix_calendar_price_observation_day",
+            "query_fingerprint",
+            "travel_date",
+            "observed_at",
+        ),
+        Index("ix_calendar_price_observation_expires", "expires_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    query_fingerprint: Mapped[str] = mapped_column(String(64))
+    reference_fingerprint: Mapped[str] = mapped_column(String(64))
+    route_signature: Mapped[str] = mapped_column(String(255))
+    travel_date: Mapped[date_type] = mapped_column(Date)
+    leg: Mapped[str] = mapped_column(String(16), default="outbound")
+    adults: Mapped[int] = mapped_column(Integer, default=1)
+    cabin: Mapped[str] = mapped_column(String(32), default="economy")
+    aggregation_mode: Mapped[str] = mapped_column(String(16), default="min")
+    currency: Mapped[str] = mapped_column(String(3), default="EUR")
+    provider: Mapped[str] = mapped_column(String(80), default="calendar-aggregate")
+    raw_price_amount: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    raw_currency: Mapped[str | None] = mapped_column(String(3), nullable=True)
+    normalized_price_amount: Mapped[float] = mapped_column(Numeric(10, 2))
+    observed_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    freshness_status: Mapped[str] = mapped_column(String(32), default="fresh")
+    coverage_status: Mapped[str] = mapped_column(String(32), default="partial")
+    validation_status: Mapped[str] = mapped_column(String(32), default="observed")
+    source_kind: Mapped[str] = mapped_column(String(32), default="calendar_hint")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now_naive)
 
 
 class FlightOfferCacheEntry(Base):
