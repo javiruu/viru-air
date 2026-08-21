@@ -51,7 +51,12 @@ test("Watchlist renders three real ticket rows per page and keeps the compact ti
 
   assert.match(panelSource, /const WATCHLIST_PAGE_SIZE = 3;/);
   assert.match(panelSource, /smartListItems\.slice\(start, start \+ WATCHLIST_PAGE_SIZE\)/);
-  assert.match(screensSource, /\.watch-ticket-row\s*\{[\s\S]*?min-height:\s*14\.15rem;/);
+  assert.match(screensSource, /\.watch-ticket-row\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) var\(--watch-ticket-stub-width\);/);
+  assert.match(screensSource, /\.watch-ticket-row\s*\{[\s\S]*?align-items:\s*stretch;/);
+  assert.match(screensSource, /\.watch-ticket-row\s*\{[\s\S]*?min-height:\s*15rem;/);
+  assert.match(screensSource, /\.watch-ticket-main\s*\{[\s\S]*?grid-template-rows:\s*28% 12% 18% 24% 18%;/);
+  assert.match(screensSource, /\.watch-ticket-route\s*\{[\s\S]*?grid-template-columns:\s*max-content minmax\(1\.45rem, 1fr\) max-content;/);
+  assert.doesNotMatch(screensSource, /watch-smart-panel \.watch-ticket-route[\s\S]*?width:\s*48%;/);
   assert.match(screensSource, /\.watch-ticket-pricing\s*\{[\s\S]*?border-top:\s*1px dashed var\(--watch-ticket-line\);/);
   assert.match(screensSource, /\.watch-ticket-stub\s*\{[\s\S]*?border-left:\s*1px dashed var\(--watch-ticket-line\);/);
   assert.match(screensSource, /\.watch-ticket-art\s*\{[\s\S]*?pointer-events:\s*none;/);
