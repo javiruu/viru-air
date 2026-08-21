@@ -426,6 +426,19 @@ export async function apiFetchWithStatus<T>(
     };
   }
 
-  const data = (await response.json()) as T;
-  return { ok: true, data, status: response.status, headers: response.headers };
+  try {
+    const data = (await response.json()) as T;
+    return { ok: true, data, status: response.status, headers: response.headers };
+  } catch {
+    return {
+      ok: false,
+      status: response.status,
+      headers: response.headers,
+      error: {
+        status: response.status,
+        code: "INVALID_RESPONSE",
+        message: translate("shared.errors.generic"),
+      },
+    };
+  }
 }

@@ -189,6 +189,7 @@ def test_calendar_hints_inverted_iata_for_return_leg(client: TestClient, monkeyp
         "destination_iata": "MAD",
         "month": "2030-06",
         "adults": 1,
+        "bucket_mode": "monthly_terciles",
     }
 
     response = client.post("/api/v1/search/quick/calendar-hints", json=payload)

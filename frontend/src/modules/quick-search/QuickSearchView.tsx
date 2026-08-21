@@ -2081,7 +2081,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           destination_iata: destinationRequestValue,
           travel_dates: exactTravelDates,
         }),
-      });
+      }, { timeoutMs: 5000 });
       if (!watchResponse.ok) {
         notify({
           tone: "error",
@@ -2140,7 +2140,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       if (excludeOriginInput) setExcludeOriginInput("");
       if (excludeDestinationInput) setExcludeDestinationInput("");
 
-      await createSelectedDateWatches();
+      void createSelectedDateWatches();
 
       const dualBaseParams = buildDualSearchParams({
         origin: originRequestValue,
@@ -2292,7 +2292,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     try {
       expectedQuerySignaturesRef.current = await buildQuickSearchExpectedSignatures(canonicalPayload);
       if (!isCurrentRequest()) return;
-      await createSelectedDateWatches();
+      void createSelectedDateWatches();
       if (!isPageChange) {
         setIsLoading(true);
       }
