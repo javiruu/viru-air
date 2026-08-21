@@ -1,6 +1,6 @@
 import { useCallback, useRef } from "react";
 
-import { apiFetch } from "@/modules/shared/api";
+import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
 import { toIsoMonth } from "@/modules/watchlist/dateUtils";
 import {
   normalizeWatchApiResponse,
@@ -71,14 +71,16 @@ export function useWatchlistDataLoader({
         setSelectedDates([rows[0].travel_date_local]);
       }
 
-      const snapshots = rows.length
-        ? await apiFetch<Array<Snapshot & { watch_id: string }>>("/prices/history/batch", {
+      const batchResponse = rows.length
+        ? await apiFetchWithStatus<Array<Snapshot & { watch_id: string }>>("/prices/history/batch", {
             method: "POST",
             body: JSON.stringify({ watch_ids: rows.map((watch) => watch.id) }),
           })
-        : [];
+        : null;
 
-      const batchHistoryRows = mapSnapshotsToHistoryRows(rows, snapshots);
+      const batchHistoryRows = batchResponse?.ok
+        ? mapSnapshotsToHistoryRows(rows, batchResponse.data)
+        : null;
       const merged = mergeLatestWatchSnapshotsIntoHistoryRows(batchHistoryRows, rows);
       setHistoryRows(merged);
 
