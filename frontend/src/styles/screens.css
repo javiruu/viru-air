@@ -6242,8 +6242,8 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   align-items: start;
   grid-template-columns: minmax(0, 1.42fr) minmax(320px, 1fr);
   grid-template-areas:
-    "routes routes"
-    "history detail"
+    "history routes"
+    "detail routes"
     "compare compare";
 }
 
