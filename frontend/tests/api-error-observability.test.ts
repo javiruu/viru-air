@@ -74,3 +74,23 @@ test("apiFetchWithStatus can bypass the same-origin proxy for long-running reque
     globalThis.fetch = originalFetch;
   }
 });
+
+test("apiFetchWithStatus returns a controlled error for an invalid success payload", async () => {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = async () => new Response("{not-json", {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  });
+
+  try {
+    const result = await apiFetchWithStatus("/watchlist/bulk-create", { method: "POST" });
+
+    assert.equal(result.ok, false);
+    if (result.ok) throw new Error("expected_invalid_response");
+    assert.equal(result.status, 200);
+    assert.equal(result.error.code, "INVALID_RESPONSE");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

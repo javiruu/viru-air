@@ -450,8 +450,8 @@ test("dual submit preserves selected outbound dates and tracks even one selected
   );
   assert.match(
     source,
-    /await createSelectedDateWatches\(\);/,
-    "selected dates must be sent to Watchlist before either search mode runs",
+    /void createSelectedDateWatches\(\);/,
+    "selected dates must be sent to Watchlist without delaying either search mode",
   );
   assert.doesNotMatch(
     source,
