@@ -59,14 +59,15 @@ test("W8: compare selection guard keeps hard limit at 4 routes", () => {
   assert.match(source, /watchlist\.compare\.maxSelectionMessage/);
 });
 
-test("W8: compare selection remains isolated from bulk destructive toolbar", () => {
+test("W8: compare selection remains isolated from ticket selection", () => {
   const compareSource = fs.readFileSync(COMPARE_PANEL, "utf8");
   const smartSource = fs.readFileSync(SMART_PANEL, "utf8");
 
   assert.match(compareSource, /name="compare_selection"/);
   assert.match(compareSource, /onToggleCompare\(option\.id\)/);
   assert.doesNotMatch(compareSource, /onBulkDelete|onBulkPause|onBulkResume|onBulkRefresh/);
-  assert.match(smartSource, /data-testid="watchlist-bulk-toolbar"/);
+  assert.match(smartSource, /selectedWatchId/);
+  assert.doesNotMatch(smartSource, /data-testid="watchlist-bulk-toolbar"/);
 });
 
 test("W8: watchlist route source still blocks forbidden EN literals", () => {
