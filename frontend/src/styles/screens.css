@@ -8917,6 +8917,18 @@ textarea::placeholder {
   color: #9a3412;
 }
 
+.qs-date-nav--multiple.is-active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 8px 16px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.qs-date-nav--multiple.is-active:hover {
+  background: var(--color-accent-hover);
+  color: var(--accent-ink);
+}
+
 .qs-date-nav svg {
   width: 15px;
   height: 15px;
@@ -19253,6 +19265,18 @@ textarea::placeholder {
   border-color: color-mix(in srgb, var(--color-accent) 36%, var(--color-border));
   background: color-mix(in srgb, var(--color-accent) 14%, var(--color-surface));
   color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .qs-date-nav--multiple.is-active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+:root[data-theme="dark"] .qs-date-nav--multiple.is-active:hover {
+  background: var(--color-accent-hover);
+  color: var(--accent-ink);
 }
 
 :root[data-theme="dark"] .qs-date-day:hover:not(.is-disabled) {
