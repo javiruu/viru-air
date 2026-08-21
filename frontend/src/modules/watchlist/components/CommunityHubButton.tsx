@@ -1,4 +1,4 @@
-import { Check, Plane } from "lucide-react";
+import { Check, UsersRound } from "lucide-react";
 
 import { useI18n } from "@/i18n";
 import { getCommunityHubIndicator } from "@/modules/watchlist/communityHubPresentation";
@@ -32,7 +32,7 @@ export function CommunityHubButton({
         onOpen(watch, event.currentTarget);
       }}
     >
-      <Plane aria-hidden="true" />
+      <UsersRound aria-hidden="true" />
       {indicator === "contributed" ? (
         <span className="watch-community-hub-check" aria-hidden="true">
           <Check />
