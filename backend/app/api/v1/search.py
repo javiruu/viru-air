@@ -1814,7 +1814,7 @@ def quick_search_calendar_hints(
         ranked_destination_pool = prioritized_destination_pool[:1]
         selected_pairs = candidate_pairs[:1]
     elif provider_days:
-        anchor_dates = _pick_calendar_anchor_dates(month_dates)
+        anchor_dates = _pick_calendar_anchor_dates(provider_days)
         anchor_pair_cap = min(24, len(candidate_pairs))
         anchor_planned_pairs, _anchor_pair_meta = build_pair_plan(
             origin_candidates,

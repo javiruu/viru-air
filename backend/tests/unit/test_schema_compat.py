@@ -33,5 +33,19 @@ def test_ensure_search_preference_columns_upgrades_legacy_user_preference_schema
     columns = {column["name"] for column in inspect(engine).get_columns("user_preference")}
     assert "include_nearby_origins_default" in columns
     assert "include_nearby_destinations_default" in columns
+    assert "calendar_hint_bucket_mode_default" in columns
     assert "depart_before_default" in columns
     assert "strict_filters_default" in columns
+
+    with engine.begin() as connection:
+        connection.execute(
+            text("INSERT INTO user_preference (id, user_id) VALUES ('legacy-pref', 'legacy-user')")
+        )
+        bucket_mode = connection.scalar(
+            text(
+                "SELECT calendar_hint_bucket_mode_default "
+                "FROM user_preference WHERE id = 'legacy-pref'"
+            )
+        )
+
+    assert bucket_mode == "contextual"

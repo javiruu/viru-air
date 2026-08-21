@@ -94,6 +94,18 @@ class _AllDaysCalendarHintsProvider:
         ]
 
 
+class _ObservedDaysCalendarHintsProvider:
+    def __init__(self) -> None:
+        self.travel_dates: list[str] = []
+
+    def provider_ids(self) -> list[str]:
+        return ["fake"]
+
+    def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000):
+        self.travel_dates.append(travel_date)
+        return []
+
+
 class _MixedCurrencyCalendarHintsProvider:
     def provider_ids(self) -> list[str]:
         return ["fake"]
@@ -703,6 +715,46 @@ def test_quick_search_calendar_hints_skips_country_anchor_when_fresh_observation
     assert reused_response.status_code == 200
     assert provider.calls == first_call_count
     assert reused_response.json()["meta"]["execution"]["provider_calls"] == 0
+
+
+def test_quick_search_calendar_hints_anchors_only_days_missing_from_fresh_observations(
+    client: TestClient,
+    monkeypatch,
+) -> None:
+    _CACHE.clear()
+    with search_api._CALENDAR_HINTS_CACHE_LOCK:
+        search_api._CALENDAR_HINTS_CACHE.clear()
+
+    provider = _ObservedDaysCalendarHintsProvider()
+    now = utc_now_naive()
+    missing_day = dt.date(2030, 6, 2)
+
+    def load_reused_days(*, query_fingerprints: dict[dt.date, str]) -> dict[dt.date, CalendarStoredPrice]:
+        return {
+            day: CalendarStoredPrice(
+                price=100.0,
+                observed_at=now,
+                expires_at=now + dt.timedelta(hours=1),
+                freshness_status="fresh",
+                coverage_status="available",
+            )
+            for day in query_fingerprints
+            if day != missing_day
+        }
+
+    monkeypatch.setattr(search_api, "_build_request_provider", lambda: provider)
+    monkeypatch.setattr(search_api, "load_latest_calendar_days", lambda _db, *, query_fingerprints: load_reused_days(query_fingerprints=query_fingerprints))
+    monkeypatch.setattr(search_api, "load_fresh_calendar_reference", lambda _db, *, reference_fingerprint, now: [])
+    monkeypatch.setattr(search_api, "record_calendar_prices", lambda *args, **kwargs: None)
+
+    response = client.post(
+        "/api/v1/search/quick/calendar-hints",
+        json={"origin_iata": ["IBZ", "LPA"], "destination_iata": "DUB", "month": "2030-06"},
+    )
+
+    assert response.status_code == 200
+    assert provider.travel_dates
+    assert set(provider.travel_dates) == {missing_day.isoformat()}
 
 
 def test_quick_search_calendar_hints_does_not_double_count_reused_reference_days(
