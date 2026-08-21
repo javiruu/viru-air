@@ -99,7 +99,13 @@ export function QuickSearchAdditionalAirports(props: Props) {
                 <span className="qs-input-icon"><MapPin /></span>
               </span>
               <input
-                ref={(node) => { inputRefs.current[entry.id] = node; }}
+                ref={(node) => {
+                  if (node) {
+                    inputRefs.current[entry.id] = node;
+                  } else {
+                    delete inputRefs.current[entry.id];
+                  }
+                }}
                 className="qs-input qs-input-with-action"
                 name={`${props.side}_iata_optional_${rowIndex + 1}`}
                 role="combobox"
@@ -192,6 +198,12 @@ export function QuickSearchAdditionalAirports(props: Props) {
               className="qs-additional-airport__remove"
               onClick={() => {
                 const focusTargetId = getAdditionalAirportFocusTarget(props.entries, rowIndex);
+                setTouchedIds((current) => {
+                  if (!current.has(entry.id)) return current;
+                  const next = new Set(current);
+                  next.delete(entry.id);
+                  return next;
+                });
                 props.onRemove(entry.id);
                 window.requestAnimationFrame(() => {
                   if (focusTargetId) {
