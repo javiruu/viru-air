@@ -430,6 +430,36 @@ test("dual submit uses buildDualSearchParams helper", () => {
   );
 });
 
+test("dual submit preserves selected outbound dates and tracks even one selected day", () => {
+  const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
+
+  assert.match(
+    source,
+    /const exactTravelDates = selectedTravelDates;/,
+    "the multi-date selection must remain available in the dual submit path",
+  );
+  assert.match(
+    source,
+    /travelDates:\s*exactTravelDates\.length > 0 \? exactTravelDates : undefined/,
+    "the outbound dual search must receive every selected exact date",
+  );
+  assert.match(
+    source,
+    /flexDaysBefore:\s*exactTravelDates\.length > 0 \? 0 : daysBefore/,
+    "sparse dates must disable contiguous flexibility in the outbound dual search",
+  );
+  assert.match(
+    source,
+    /await createSelectedDateWatches\(\);/,
+    "selected dates must be sent to Watchlist before either search mode runs",
+  );
+  assert.doesNotMatch(
+    source,
+    /selectedTravelDates\.length > 1/,
+    "a single day selected through multi-select must also be tracked",
+  );
+});
+
 // ── 7. Date grid layout ───────────────────────────────────────────────
 
 test("qs-date-grid uses explicit column layout (not auto‑fit)", () => {

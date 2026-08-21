@@ -2065,6 +2065,47 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     const originRequestValue = originSeeds.length === 1 ? originSeeds[0] ?? "" : originSeeds;
     const destinationRequestValue = destinationSeeds.length === 1 ? destinationSeeds[0] ?? "" : destinationSeeds;
     submittedRouteSeedsRef.current = { origin: originSeeds, destination: destinationSeeds };
+    const exactTravelDates = selectedTravelDates;
+    const createSelectedDateWatches = async (): Promise<void> => {
+      if (
+        exactTravelDates.length === 0
+        || isPageChange
+        || typeof originRequestValue !== "string"
+        || typeof destinationRequestValue !== "string"
+      ) return;
+
+      const watchResponse = await apiFetchWithStatus<BulkWatchCreateResponse>("/watchlist/bulk-create", {
+        method: "POST",
+        body: JSON.stringify({
+          origin_iata: originRequestValue,
+          destination_iata: destinationRequestValue,
+          travel_dates: exactTravelDates,
+        }),
+      });
+      if (!watchResponse.ok) {
+        notify({
+          tone: "error",
+          title: locale === "es"
+            ? "No se han podido crear los seguimientos de los días elegidos. La búsqueda continúa."
+            : "We could not create tracking for the selected days. The search will continue.",
+          durationMs: 4200,
+        });
+        return;
+      }
+
+      const createdCount = watchResponse.data.created_dates.length;
+      const existingCount = watchResponse.data.existing_dates.length;
+      const title = locale === "es"
+        ? `${createdCount} seguimiento${createdCount === 1 ? "" : "s"} creado${createdCount === 1 ? "" : "s"}${existingCount ? ` · ${existingCount} ya existente${existingCount === 1 ? "" : "s"}` : ""}`
+        : `${createdCount} tracking ${createdCount === 1 ? "created" : "entries created"}${existingCount ? ` · ${existingCount} already existed` : ""}`;
+      notify({
+        tone: "success",
+        title,
+        actionLabel: t("viewWatchlist"),
+        onAction: () => navigateToWatchlistWithContext(originRequestValue, destinationRequestValue),
+        durationMs: 4200,
+      });
+    };
     if (isReturn && !returnDate) {
       setSearchState("error");
       setReturnDateTouched(true);
@@ -2099,12 +2140,15 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       if (excludeOriginInput) setExcludeOriginInput("");
       if (excludeDestinationInput) setExcludeDestinationInput("");
 
+      await createSelectedDateWatches();
+
       const dualBaseParams = buildDualSearchParams({
         origin: originRequestValue,
         destination: destinationRequestValue,
         travelDate,
-        flexDaysBefore: daysBefore,
-        flexDaysAfter: daysAfter,
+        travelDates: exactTravelDates.length > 0 ? exactTravelDates : undefined,
+        flexDaysBefore: exactTravelDates.length > 0 ? 0 : daysBefore,
+        flexDaysAfter: exactTravelDates.length > 0 ? 0 : daysAfter,
         radiusKm: normalizedRadiusKm,
         includeStops,
         includeNearbyOrigins,
@@ -2175,9 +2219,6 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     if (excludeDestinationInput) setExcludeDestinationInput("");
     setExcludeOrigins(nextExcludeOrigins);
     setExcludeDestinations(nextExcludeDestinations);
-    const exactTravelDates = !isReturn && selectedTravelDates.length > 1
-      ? selectedTravelDates
-      : [];
     const range = exactTravelDates.length > 0
       ? exactTravelDates
       : buildDateRange(travelDate, isReturn ? returnDate : travelDate);
@@ -2251,43 +2292,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     try {
       expectedQuerySignaturesRef.current = await buildQuickSearchExpectedSignatures(canonicalPayload);
       if (!isCurrentRequest()) return;
-      if (
-        exactTravelDates.length > 0
-        && !isPageChange
-        && typeof originRequestValue === "string"
-        && typeof destinationRequestValue === "string"
-      ) {
-        const watchResponse = await apiFetchWithStatus<BulkWatchCreateResponse>("/watchlist/bulk-create", {
-          method: "POST",
-          body: JSON.stringify({
-            origin_iata: originRequestValue,
-            destination_iata: destinationRequestValue,
-            travel_dates: exactTravelDates,
-          }),
-        });
-        if (watchResponse.ok) {
-          const createdCount = watchResponse.data.created_dates.length;
-          const existingCount = watchResponse.data.existing_dates.length;
-          const title = locale === "es"
-            ? `${createdCount} seguimiento${createdCount === 1 ? "" : "s"} creado${createdCount === 1 ? "" : "s"}${existingCount ? ` · ${existingCount} ya existente${existingCount === 1 ? "" : "s"}` : ""}`
-            : `${createdCount} tracking ${createdCount === 1 ? "created" : "entries created"}${existingCount ? ` · ${existingCount} already existed` : ""}`;
-          notify({
-            tone: "success",
-            title,
-            actionLabel: t("viewWatchlist"),
-            onAction: () => navigateToWatchlistWithContext(originRequestValue, destinationRequestValue),
-            durationMs: 4200,
-          });
-        } else {
-          notify({
-            tone: "error",
-            title: locale === "es"
-              ? "No se han podido crear los seguimientos de los días elegidos. La búsqueda continúa."
-              : "We could not create tracking for the selected days. The search will continue.",
-            durationMs: 4200,
-          });
-        }
-      }
+      await createSelectedDateWatches();
       if (!isPageChange) {
         setIsLoading(true);
       }
@@ -5048,7 +5053,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
               showCountryEstimateBadge={canRequestCalendarHints && hasCountryScopeForCalendarHints}
               hintScopeMode={calendarHintsActive?.scopeMode || calendarHintsScopeMode}
               onVisibleMonthChange={setCalendarVisibleMonth}
-              multiple={!isReturn}
+              multiple
               selectedValues={selectedTravelDates}
               maxSelections={15}
               onSelectedValuesChange={(values) => {

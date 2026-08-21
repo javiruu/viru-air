@@ -339,6 +339,22 @@ def create_watches_bulk(
         db.commit()
     except IntegrityError as exc:
         db.rollback()
+        concurrent_dates = set(
+            db.scalars(
+                select(FlightWatch.travel_date_local).where(
+                    FlightWatch.user_id == current_user.id,
+                    FlightWatch.origin_iata == origin_iata,
+                    FlightWatch.destination_iata == destination_iata,
+                    FlightWatch.travel_date_local.in_(requested_dates),
+                )
+            )
+        )
+        if concurrent_dates == set(requested_dates):
+            return {
+                "status": "ok",
+                "created_dates": [],
+                "existing_dates": [str(travel_date) for travel_date in requested_dates],
+            }
         raise HTTPException(status_code=409, detail="watch_already_exists") from exc
     return {"status": "ok", "created_dates": created_dates, "existing_dates": existing_dates}
 
