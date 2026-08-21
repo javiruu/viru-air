@@ -24,7 +24,7 @@ Usa este documento cuando necesites entender qué es Viru antes de entrar en spe
   - `docs/overview/`
   - `docs/reference/`
   - `docs/specs/`
-  - `docs/ui/`
+  - `DESIGN.md`
   - `docs/runbooks/`
   - `docs/qa/`
 

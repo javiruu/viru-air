@@ -1,14 +1,14 @@
 # H31 — Dirección visual y estados aprobados de `/hoteles`
 
-**Estado:** completa como contrato visual; implementación específica, responsive final, i18n completa y browser QA pendientes  
+**Estado:** contrato de flujo y estados; la dirección visual transversal vive en `DESIGN.md`. Implementación específica, responsive final, i18n completa y browser QA pendientes
 **Fecha:** 2026-08-05  
 **Área:** UX / frontend / accesibilidad / i18n / producto / QA  
-**Fuente de verdad:** sí para la dirección visual y la jerarquía del módulo hotelero  
+**Fuente de verdad:** sí para el flujo, estados y jerarquía del módulo hotelero; `DESIGN.md` gobierna la dirección visual transversal
 **Fase del roadmap:** H31  
 **Depende de:** [H02 — benchmark](../../benchmarks/2026-08-04-travelpricedrops-hotels-h02.md), [H03 — arquitectura de información](../../product/hoteles-information-architecture-h03.md), [H16 — result cards](hoteles-result-cards-h16.md), [H21 — estados y recuperación](hoteles-state-matrix-h21.md)  
 **Relacionado con:** H13 URL/formulario, H15 resultados, H17 ranking, H18 detalle, H19 precio, H20 comparación, H22 favoritos, H23 tracking, H25 freshness, H27 inbox, H30 fechas flexibles, H32 responsive, H33 WCAG, H34 i18n, H39-H40 QA
 
-> H31 no crea otra identidad visual para hoteles. Traduce la identidad Aviation Warm-Luxe de Viru a una experiencia de búsqueda, comparación y seguimiento hotelero: cálida, precisa, respirable y claramente orientada a decidir.
+> H31 no crea otra identidad visual para hoteles. `DESIGN.md` fija cómo se expresa Viru; H31 conserva cómo la búsqueda, comparación y seguimiento hotelero se ordenan para decidir.
 
 ## 1. Decisión de alcance
 
@@ -17,13 +17,11 @@ H31 fija el contrato antes de implementar CSS/React específico:
 1. jerarquía de la página y orden de lectura;
 2. relación entre buscador, resultados, detalle y paneles secundarios;
 3. anatomía visual de estados y cards;
-4. uso de tokens, superficies, tipografía y acentos semánticos;
-5. diferencias permitidas entre dark y light sin romper identidad;
-6. responsive, densidad y touch targets;
-7. motion, focus y reduced motion;
-8. copy visible ES/EN y nomenclatura producto;
-9. criterios de accesibilidad, telemetría y visual QA;
-10. handoff a H32-H34/H40.
+4. encaje de la experiencia hotelera con los tokens y la accesibilidad ya definidos en `DESIGN.md`;
+5. responsive, densidad y touch targets;
+6. copy visible ES/EN y nomenclatura producto;
+7. criterios de accesibilidad, telemetría y visual QA;
+8. handoff a H32-H34/H40.
 
 H31 no implementa todavía la dirección, no cambia la paleta global, no añade dependencias y no convierte el módulo en un dashboard de métricas. H16 conserva la anatomía de cards; H21 conserva la máquina semántica de estados; H31 decide cómo se leen y se sienten juntos.
 
@@ -55,33 +53,9 @@ Por tanto:
 - verificar la dirección sobre datos reales, parciales, stale, vacíos y errores;
 - conservar la discrepancia entre “QA de corrección puntual” y “QA visual de release completa”.
 
-## 3. Dirección visual: Aviation Warm-Luxe para hoteles
+## 3. Alcance de la jerarquía hotelera
 
-### 3.1. Idea rectora
-
-El módulo debe sentirse como una **mesa de planificación de viaje**: una persona introduce una estancia, recibe una lectura ordenada de opciones, entiende la señal de precio y decide qué guardar o seguir.
-
-La metáfora aeronautical se usa con discreción:
-
-- línea de ruta o pequeños marcadores para representar contexto temporal/espacial;
-- microcopy de “comprobado”, “señal parcial” o “última observación” como instrumentación legible;
-- estructura de boarding-pass/itinerario solo cuando ayude a leer estancia;
-- radar y señales para estados de datos, no como decoración permanente;
-- ningún efecto de cockpit, grid técnica o mapa ornamental debe competir con hotel, fechas, precio y acción.
-
-La personalidad no procede de llenar la pantalla de iconos o pills. Procede de ritmo, contraste, copy cercano, pequeños detalles de viaje y una composición que sabe dónde respirar.
-
-### 3.2. Sensación objetivo
-
-| Dimensión | Debe sentirse | No debe sentirse |
-|---|---|---|
-| Claridad | sé qué busco y qué precio estoy viendo | panel de control que debo descifrar |
-| Calidez | Viru me acompaña sin infantilizar | agencia corporativa fría |
-| Precisión | cada señal tiene contexto y fecha | número brillante sin procedencia |
-| Densidad | suficiente información para decidir | muro de tarjetas y badges |
-| Premium | aire, tipografía y bordes deliberados | sombra pesada y cajas anidadas |
-| Movimiento | la interfaz responde y confirma | animación decorativa o mareante |
-| Personalidad | viaje, ruta, estancia y señales | plantilla SaaS genérica |
+La expresión estética, la creatividad, los tokens, el motion y el QA transversal se rigen únicamente por `DESIGN.md`. H31 conserva la lectura hotelera: una persona introduce una estancia, entiende la señal de precio y decide qué guardar o seguir.
 
 ## 4. Jerarquía de página
 
@@ -112,7 +86,7 @@ En el layout actual esto se traduce en:
 
 ### 4.2. Prioridad de acciones
 
-La jerarquía de botones sigue UI Contract v1:
+La jerarquía de botones sigue `DESIGN.md`:
 
 - `primary`: buscar, confirmar una selección o abrir la siguiente decisión principal;
 - `secondary`: guardar/seguir cuando acompaña al CTA principal sin competir;
@@ -137,38 +111,13 @@ Reglas:
 - no presentar `is_active=true` como “seguimiento operativo” si H22/H23/H29 no lo respaldan;
 - en mobile se pueden convertir en una franja horizontal o resumen plegable.
 
-## 5. Sistema visual y tokens
+## 5. Integración con el sistema de diseño
 
-### 5.1. Fuente de verdad
+La identidad, tokens, tipografía, dark/light, motion, foco y QA transversal se rigen únicamente por `DESIGN.md`. Hoteles no crea una paleta, un tema ni una excepción visual propia.
 
-Usar los aliases y patrones existentes:
-
-- `frontend/src/styles/tokens.css` para valores semánticos;
-- `components.css` para patrones compartidos;
-- `screens.css` para excepciones exclusivas de `/hoteles`;
-- `DESIGN.md`, `docs/ui/UI_SYSTEM_V1.md`, `UI_CONTRACT_V1.md` y `estetica.md` para identidad.
-
-No hardcodear nuevos colores, sombras, radios o spacing en componentes si un token existente representa la semántica. Un valor nuevo debe justificar por qué no pertenece primero a tokens y no puede cambiar la identidad global por una necesidad hotelera local.
-
-### 5.2. Dark y light
-
-Ambos temas mantienen la misma geometría, jerarquía, copy, orden de información y significado de estados. Cambian luminancia, contraste de superficies y tratamiento de sombra:
-
-- **Dark:** cinematográfico, profundo y cálido; paneles separados por capas sutiles, bordes finos y acentos de señal.
-- **Light:** luminoso con alma; superficies crema/luminosas, separación por borde y sombra suave, nunca blanco plano sin ritmo.
-- **Acento de acción:** el acento principal de Viru se reserva a CTA y momentos de atención.
-- **Verde/info/error:** solo para semántica de estado, no como decoración de una tarjeta.
-
-No crear un “hotel dark theme” paralelo ni invertir estados al cambiar tema.
-
-### 5.3. Tipografía y datos
-
-- Playfair Display para títulos de sección y momentos de identidad;
-- IBM Plex Sans para controles, cuerpo y copy operativo;
-- monoespaciada solo para datos que ganen precisión con ella;
-- nombres de hotel con lectura natural, sin tracking exagerado;
-- fechas, noches y precios con cifras alineadas y fáciles de escanear;
-- evitar titulares largos que creen un bloque editorial pesado en mobile.
+- `frontend/src/styles/tokens.css` contiene valores semánticos; `components.css`, patrones compartidos; y `screens.css`, composición local.
+- No hardcodear un color, sombra, radio o spacing si existe un token semántico equivalente.
+- La necesidad hotelera no justifica alterar la jerarquía de información, el significado de estados ni las capacidades reales de provider/tracking.
 
 ## 6. Anatomía visual por superficie
 
@@ -311,26 +260,9 @@ H31 adopta la taxonomía H21. Cada estado debe combinar señal visual, texto y a
 
 Viewports mínimos: 360, 390/414, 768, 1024 y desktop habitual. La dirección no se considera válida si solo funciona a 1440 px.
 
-## 9. Motion y microinteracciones
+## 9. Feedback de interacción
 
-Motion debe explicar continuidad:
-
-- entrada de secciones: fade + desplazamiento de 4–8 px;
-- selección de card: transición corta de borde/superficie, sin mover la lista;
-- cambio de precio: énfasis breve en el valor y su contexto, nunca rebote repetido;
-- carga: skeleton estable y shimmer solo si no distrae;
-- éxito de guardar/seguir: confirmación local y accesible, no confeti;
-- apertura/cierre de panel secundario: altura/opacity controladas, foco preservado;
-- hover: elevación mínima y glow contextual tenue;
-- click: compresión de 1–2 px como máximo.
-
-Límites:
-
-- usar transform/opacity cuando sea posible;
-- no animar layout completo ni modificar scroll inesperadamente;
-- no usar pulsos continuos para estados estáticos;
-- no dar apariencia de actualización live a datos históricos;
-- respetar `prefers-reduced-motion: reduce` eliminando loops, desplazamientos y escalados no esenciales.
+El motion y las microinteracciones se rigen por `DESIGN.md`. En hoteles, además, ningún efecto puede sugerir una actualización live si sólo cambió la presentación, ni desplazar inesperadamente la lista de resultados.
 
 ## 10. Accesibilidad e i18n
 
@@ -355,7 +287,7 @@ Límites:
 4. No añadir iconos, imágenes o mapas externos sin procedencia/licencia y sin evidencia de valor.
 5. Mantener fallback funcional sin imágenes y sin provider.
 6. No convertir un panel técnico en una nueva fuente de verdad: el copy refleja H10-H30.
-7. Cada excepción visual debe indicar qué regla de UI Contract preserva y por qué es específica de hoteles.
+7. Cada excepción visual debe indicar qué regla de `DESIGN.md` preserva y por qué es específica de hoteles.
 8. La implementación debe poder desactivarse por flag sin dejar la página ilegible.
 
 ## 12. Tests y gates
@@ -401,4 +333,4 @@ H31 podrá considerarse implementada cuando:
 11. la evidencia de browser incluya estados no felices y no solo una captura de resultados;
 12. ninguna decisión visual sugiera capacidades de provider/tracking que H10-H30 no respalden.
 
-**Resultado contractual:** H31 queda definida como dirección visual específica de hoteles. La UI actual conserva una base Warm-Luxe y correcciones visuales previas, pero la implementación completa de esta jerarquía, cobertura de estados, responsive, i18n y browser QA queda pendiente de H32-H34/H40.
+**Resultado contractual:** H31 queda definido como contrato hotelero de jerarquía, estados y comportamiento. La expresión visual transversal vive en `DESIGN.md`; la implementación completa de esta jerarquía, cobertura de estados, responsive, i18n y browser QA queda pendiente de H32-H34/H40.

@@ -33,10 +33,8 @@
 ### Frontend
 
 - [Frontend](engineering/frontend.md)
-- [UI System](ui/UI_SYSTEM_V1.md)
-- [UI Contract](ui/UI_CONTRACT_V1.md)
+- [Dirección de diseño](../DESIGN.md)
 - [Guia de lenguaje visible humanizado](reference/ui-visible-language-guide.md)
-- [Estética UI (dark + light)](ui/estetica.md)
 - [Specs activas](specs/README.md)
 
 ### Producto
@@ -77,7 +75,6 @@
 - [Codex operating contract](reference/codex-operating-contract.md)
 - [Prompts y contexto IA](prompts/README.md)
 - [Skill Viru Air UI](../.codex/skills/viru-air-ui/SKILL.md)
-- [Skill Taste Frontend](../.codex/skills/taste-skill/SKILL.md)
 - [Inventario documental](DOCS_INVENTORY.md)
 - [HISTORY.md](../HISTORY.md)
 
@@ -226,7 +223,6 @@
 - [Roadmap de viaje 50 fases](prompts/codex-travel-roadmap-50-fases.md)
 - [Design System para agentes](../DESIGN.md)
 - [Skill Viru Air UI](../.codex/skills/viru-air-ui/SKILL.md)
-- [Skill Taste Frontend](../.codex/skills/taste-skill/SKILL.md)
 - [Prompts legacy](prompts/legacy/)
 
 ### Archive

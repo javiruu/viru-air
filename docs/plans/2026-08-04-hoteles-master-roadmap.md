@@ -973,7 +973,7 @@ H42-H45 Mejora continua y escala
 - Usar motion breve para carga, selección, cambios y confirmaciones, respetando reduced motion.
 - Mantener estructura y semántica equivalentes en dark/light sin crear paleta hotelera paralela.
 - No sugerir capacidades de provider, precio, tracking o delivery que H10-H30 no respalden.
-- Validar componentes y excepciones contra `DESIGN.md`, `docs/ui/*`, H16 y H21 antes de codificar.
+- Validar componentes y excepciones contra `DESIGN.md`, H16 y H21 antes de codificar.
 
 **Gate:** propuesta visual y evidencia browser cubren estados felices y no felices, dark/light, responsive, teclado, foco, i18n y reduced motion; no basta una captura de resultados.
 

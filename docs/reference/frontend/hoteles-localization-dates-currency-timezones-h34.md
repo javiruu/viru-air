@@ -118,7 +118,7 @@ La moneda de origen y el locale de presentación son dimensiones distintas: `1,2
 - Todo copy de producto —estado, aria-label, placeholder, error, botón, badge, tooltip y live region hotelero— sale de `t()`; existe una allowlist explícita para datos externos como nombre de hotel, ciudad, dirección, país, provider y room label.
 - No concatenar frases traducibles en TSX cuando el orden pueda cambiar: usar una clave con `{hotel}`, `{count}`, `{date}`, `{price}`, `{distance}` o `{currency}`.
 - Los valores interpolados no deben contener copy traducible oculto ni enums técnicos.
-- El copy debe mantener la terminología de `docs/reference/ui-visible-language-guide.md` y UI Contract v1.
+- El copy debe mantener la terminología de `docs/reference/ui-visible-language-guide.md` y `DESIGN.md`.
 - “Demo”, “última comprobación”, “señal limitada”, “sin historial” y “provider error” deben tener copy de producto, no nombres internos.
 - Los nombres propios y direcciones no se traducen automáticamente; si el provider devuelve texto en otro idioma, se conserva y se marca solo cuando sea necesario para comprensión.
 

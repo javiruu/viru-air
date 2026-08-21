@@ -33,4 +33,4 @@ La banda es una ayuda de escaneo, no un gráfico analítico. En escritorio ocupa
 ## Relacionado
 
 - [Frontend](../engineering/frontend.md)
-- [UI System](../ui/UI_SYSTEM_V1.md)
+- [Dirección de diseño](../../DESIGN.md)

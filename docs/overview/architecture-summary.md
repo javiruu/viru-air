@@ -39,7 +39,7 @@ Monorepo con backend (FastAPI), frontend (Next.js), infraestructura de túneles 
 - `docs/adr/` — 3 ADRs vigentes
 - `docs/reference/` — contratos API activos
 - `docs/specs/` — especificaciones vivas
-- `docs/ui/` — sistema visual y contrato UI
+- `DESIGN.md` — sistema visual y contrato creativo UI
 - `docs/runbooks/` — operación y respuesta
 - `docs/qa/` — checklists, reportes y evidencia
 - `docs/plans/` — planes activos y completados

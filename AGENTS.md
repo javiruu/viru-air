@@ -189,22 +189,14 @@ See `/docs/AGENTS.md` for documentation-specific rules.
 
 ## Design context for agents
 
-For UI/UX work driven by coding agents, use these local artifacts as persistent design context:
-
-- `/DESIGN.md` (canonical design direction for agents in this repo root);
-- `/.codex/skills/viru-air-ui/SKILL.md`;
-- `/.codex/skills/taste-skill/SKILL.md`;
-- `/.codex/skills/viru-air-ui/references/product-context.md`;
-- `/.codex/skills/viru-air-ui/references/visual-direction.md`;
-- `/.codex/skills/viru-air-ui/references/qa-checklist.md`.
+For UI/UX work driven by coding agents, use `/DESIGN.md` as the sole design source of truth. `/.codex/skills/viru-air-ui/SKILL.md` exists only to enforce that reading.
 
 Rules:
 
-- Treat `/DESIGN.md` as the active design contract for agent-driven UI proposals and incremental improvements.
-- Keep it aligned with canonical UI docs in `/docs/ui` (`estetica.md`, `UI_CONTRACT_V1.md`, `UI_SYSTEM_V1.md`, `UI_VISUAL_QA_CHECKLIST.md`).
-- Preserve the dual-theme direction across all UI docs: dark mode = Aviation Dark-Luxe, light mode = luminous counterpart of the same identity (not generic SaaS white UI).
-- Use the skill/references to guide tone, hierarchy, and QA expectations; do not use them to justify logic, route, or API contract changes.
-- If these files are added, moved, renamed, or archived, update `/docs/DOCS_INVENTORY.md` and `/docs/INDICE_UNICO.md` in the same change.
+- Treat `/DESIGN.md` as the active contract for UI proposals and incremental improvements.
+- Preserve its dual-theme direction: Aviation Dark-Luxe at night and its luminous, non-generic counterpart by day.
+- Use neither design guidance nor the skill to justify logic, route or API contract changes.
+- If the design source changes location or scope, update `/docs/DOCS_INVENTORY.md` and `/docs/INDICE_UNICO.md` in the same change.
 
 ---
 

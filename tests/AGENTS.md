@@ -38,6 +38,8 @@ Verification ladder:
 
 When the change impacts UI look/feel, hierarchy, or palette, verification must cover both dark and light themes unless the user explicitly narrows scope.
 
+`DESIGN.md` es la única fuente de dirección visual para decidir esa cobertura; las pruebas no deben reintroducir una guía estética paralela.
+
 Do not use a broad test suite as a substitute for a targeted check when the bug or behavior can be tested directly.
 
 Do not claim a fix is verified unless the checks actually cover the changed behavior.

@@ -38,7 +38,7 @@
 - `docs/reference/codex-operating-contract.md`: adapted operating rules for Codex.
 - `docs/reference/backend/`: active backend contracts and acceptance.
 - `docs/specs/`: active product, UI, and policy specs.
-- `docs/ui/`: visual system and UI contract.
+- `DESIGN.md`: única dirección visual y contrato creativo transversal.
 - `docs/runbooks/`: operational playbooks.
 - `docs/qa/`: evergreen QA artifacts.
 - `docs/archive/`: historical material only.

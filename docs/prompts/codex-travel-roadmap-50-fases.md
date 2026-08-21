@@ -56,9 +56,7 @@ Documentacion y reglas:
 
 Producto, UI, QA y contratos:
 
-- `docs/ui/UI_SYSTEM_V1.md`
-- `docs/ui/UI_CONTRACT_V1.md`
-- `docs/ui/estetica.md`
+- `DESIGN.md`
 - `docs/product/quick-search.md`
 - `docs/product/door-to-door.md`
 - `docs/product/watchlist.md`

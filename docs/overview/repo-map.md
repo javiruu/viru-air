@@ -14,7 +14,7 @@ Related: docs/INDICE_UNICO.md, README.md
 - `infra/`: configuracion de despliegue (cloudflare-tunnel.example.yml), workflows y manifests.
 - `scripts/`: utilidades de soporte del repo (túneles, publicación, sanitización).
 - `testsprite_tests/`: tests y artefactos del flujo Testsprite; los reportes documentales se han archivado en `docs/archive/tooling/`.
-- `skills/`: skills reutilizables para agentes (viru-air-context, taste-skill, remodex, phase1-mvp).
+- `skills/`: skills reutilizables para agentes (viru-air-context, remodex, phase1-mvp).
 
 ## Directorios clave del frontend
 
@@ -31,7 +31,7 @@ Related: docs/INDICE_UNICO.md, README.md
 - `docs/adr/`: decisiones arquitectónicas (3 ADRs vigentes).
 - `docs/reference/`: contratos API, feature flags y referencias técnicas activas.
 - `docs/specs/`: specs activas de producto, UI y contenido.
-- `docs/ui/`: sistema visual, contrato UI y guía estética (Aviation Dark-Luxe).
+- `DESIGN.md`: sistema visual, contrato creativo y guía estética (Aviation Warm-Luxe).
 - `docs/product/`: resúmenes funcionales por área de producto.
 - `docs/engineering/`: resúmenes técnicos por capa.
 - `docs/runbooks/`: operación y respuesta ante incidentes.
@@ -51,6 +51,5 @@ Related: docs/INDICE_UNICO.md, README.md
 ## Qué esperar en la raíz
 
 La raíz debería quedar ligera: `README.md`, `AGENTS.md`, scripts de arranque y configuración del repo. Las specs y documentación de trabajo ya no deberían vivir ahí.
-
 
 
