@@ -64,6 +64,7 @@ export function useWatchlistDataLoader({
       const rows = responses.map(normalizeWatchApiResponse);
       setListErrorMessage("");
       setItems(rows);
+      setHistoryRows(mergeLatestWatchSnapshotsIntoHistoryRows(null, rows));
 
       if (!selectedOrigin && rows.length > 0) {
         setSelectedOrigin(rows[0].origin_iata);
