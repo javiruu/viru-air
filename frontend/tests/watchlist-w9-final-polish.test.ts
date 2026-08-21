@@ -50,11 +50,11 @@ test("W9: history keeps selected-date context without repeating the selected rou
   assert.doesNotMatch(source, /Fechas de vuelo/);
 });
 
-test("W9: bulk toolbar remains contextual and hidden with zero selection", () => {
+test("W9: ticket selection remains contextual without a bulk toolbar", () => {
   const source = fs.readFileSync(SMART_PANEL, "utf8");
-  assert.match(source, /const hasSelection = selectedIds\.length > 0;/);
-  assert.match(source, /\{hasSelection \? \(/);
-  assert.match(source, /data-testid="watchlist-bulk-toolbar"/);
+  assert.match(source, /selectedWatchId === watch\.id/);
+  assert.match(source, /onSelect=\{onSelectWatch\}/);
+  assert.doesNotMatch(source, /data-testid="watchlist-bulk-toolbar"/);
 });
 
 test("W9: historical confidence remains available without crowding the watch row", () => {

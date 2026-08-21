@@ -11,35 +11,34 @@ const WATCHLIST_PAGE = path.join(process.cwd(), "src", "app", "(private)", "watc
 
 const FORBIDDEN_WATCHLIST_COPY = ["Back", "Flight Watchlist", "Add flight", "Quick start", "Last update", "Min", "Max"];
 
-test("W3: bulk actions toolbar is contextual and hidden when selection is empty", () => {
-  const source = fs.readFileSync(SMART_PANEL, "utf8");
+test("W3: ticket selection is integrated into the row without a bulk toolbar", () => {
+  const smartSource = fs.readFileSync(SMART_PANEL, "utf8");
+  const rowSource = fs.readFileSync(WATCH_ROW, "utf8");
 
-  assert.match(source, /const hasSelection = selectedIds\.length > 0;/);
-  assert.match(source, /\{hasSelection \? \(/);
-  assert.match(source, /data-testid="watchlist-bulk-toolbar"/);
-  assert.match(source, /role="toolbar"/);
-  assert.match(source, /watchlist\.bulk\.toolbarAriaLabel/);
-  assert.doesNotMatch(source, /watchlist\.bulk\.refreshSelected/);
+  assert.match(smartSource, /selectedWatchId === watch\.id/);
+  assert.match(smartSource, /onSelect=\{onSelectWatch\}/);
+  assert.match(rowSource, /onClick=\{\(\) => onSelect\(watch\)\}/);
+  assert.match(rowSource, /aria-pressed=\{isSelected\}/);
+  assert.doesNotMatch(smartSource, /data-testid="watchlist-bulk-toolbar"/);
 });
 
-test("W3: bulk toolbar exposes only lifecycle actions with explicit bulk selection", () => {
+test("W3: ticket rows retain their individual lifecycle actions", () => {
   const source = fs.readFileSync(SMART_PANEL, "utf8");
 
-  assert.match(source, /watchlist\.bulk\.selectedCount/);
-  assert.match(source, /onBulkPause\(selectedIds\)/);
-  assert.match(source, /onBulkResume\(selectedIds\)/);
-  assert.match(source, /onBulkDelete\(selectedIds\)/);
-  assert.doesNotMatch(source, /onBulkRefresh\(selectedIds\)/);
+  assert.match(source, /onPause=\{onPauseWatch\}/);
+  assert.match(source, /onResume=\{onResumeWatch\}/);
+  assert.match(source, /onDelete=\{onDeleteWatch\}/);
+  assert.doesNotMatch(source, /onBulkPause|onBulkResume|onBulkDelete/);
 });
 
-test("W3: compare selection remains independent from bulk actions", () => {
+test("W3: compare selection remains independent from ticket selection", () => {
   const smartSource = fs.readFileSync(SMART_PANEL, "utf8");
   const compareSource = fs.readFileSync(COMPARE_PANEL, "utf8");
 
-  assert.match(smartSource, /setSelectedIds/);
+  assert.match(smartSource, /selectedWatchId/);
   assert.match(compareSource, /name="compare_selection"/);
   assert.match(compareSource, /onToggleCompare\(option\.id\)/);
-  assert.doesNotMatch(compareSource, /onBulkDelete|onBulkPause|onBulkResume/);
+  assert.doesNotMatch(compareSource, /onBulkDelete|onBulkPause|onBulkResume|onBulkRefresh/);
 });
 
 test("W3: row and detail actions keep lifecycle controls without manual refresh affordances", () => {

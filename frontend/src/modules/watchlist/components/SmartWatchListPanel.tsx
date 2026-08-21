@@ -48,9 +48,6 @@ type SmartWatchListPanelProps = {
   onPauseWatch: (watchId: string) => void;
   onResumeWatch: (watchId: string) => void;
   onDeleteWatch: (watchId: string) => void;
-  onBulkPause: (watchIds: string[]) => void;
-  onBulkResume: (watchIds: string[]) => void;
-  onBulkDelete: (watchIds: string[]) => void;
   isLoading: boolean;
   listErrorMessage: string;
   onRetryLoad: () => void;
@@ -86,9 +83,6 @@ export function SmartWatchListPanel({
   onPauseWatch,
   onResumeWatch,
   onDeleteWatch,
-  onBulkPause,
-  onBulkResume,
-  onBulkDelete,
   isLoading,
   listErrorMessage,
   onRetryLoad,
@@ -107,7 +101,6 @@ export function SmartWatchListPanel({
   onCalendarNextMonth,
 }: SmartWatchListPanelProps) {
   const { t, localeTag } = useI18n();
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const communityInsights = useCommunityRouteInsights(
     items.map((item) => ({
@@ -115,9 +108,6 @@ export function SmartWatchListPanel({
       destination_iata: item.destination_iata,
     })),
   );
-  const hasSelection = selectedIds.length > 0;
-  const selectionCount = selectedIds.length;
-  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const calendarWeekdays = useMemo(
     () =>
       t("watchlist.history.weekdays")
@@ -144,13 +134,6 @@ export function SmartWatchListPanel({
   const goToPage = (page: number) => {
     const next = Math.max(1, Math.min(page, totalPages));
     setCurrentPage(next);
-  };
-  const toggleBulkSelected = (watchId: string, selected: boolean) => {
-    setSelectedIds((previous) =>
-      selected
-        ? Array.from(new Set([...previous, watchId]))
-        : previous.filter((id) => id !== watchId),
-    );
   };
 
   return (
@@ -216,16 +199,6 @@ export function SmartWatchListPanel({
               {t("watchlist.smartList.clearSearch")}
             </button>
           </div>
-          {hasSelection ? (
-            <div className="watch-smart-tool-group watch-smart-tool-group--selection">
-              <div className="alert-actions watch-bulk-toolbar" role="toolbar" aria-label={t("watchlist.bulk.toolbarAriaLabel")} data-testid="watchlist-bulk-toolbar">
-                <span className="watch-smart-meta tabular-nums">{t("watchlist.bulk.selectedCount", { count: selectionCount })}</span>
-                <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkPause(selectedIds)}>{t("watchlist.bulk.pause")}</button>
-                <button type="button" className="btn-ghost btn-compact" onClick={() => onBulkResume(selectedIds)}>{t("watchlist.bulk.resume")}</button>
-                <button type="button" className="btn-danger btn-compact" onClick={() => onBulkDelete(selectedIds)}>{t("watchlist.bulk.delete")}</button>
-              </div>
-            </div>
-          ) : null}
           <div className="watch-smart-tool-group watch-smart-tool-group--calendar">
             <button
               type="button"
@@ -392,9 +365,7 @@ export function SmartWatchListPanel({
                 destination_iata: watch.destination_iata,
               }))}
               isSelected={selectedWatchId === watch.id}
-              isBulkSelected={selectedSet.has(watch.id)}
               onSelect={onSelectWatch}
-              onToggleBulkSelected={toggleBulkSelected}
               onOpenCommunity={onCommunityAction}
               onPause={onPauseWatch}
               onResume={onResumeWatch}

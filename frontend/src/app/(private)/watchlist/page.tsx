@@ -306,9 +306,6 @@ export default function WatchlistPage() {
             onPauseWatch={(watchId) => actions.updateWatchStatus(watchId, "paused")}
             onResumeWatch={(watchId) => actions.updateWatchStatus(watchId, "active")}
             onDeleteWatch={actions.deleteWatch}
-            onBulkPause={(ids) => actions.bulkUpdateStatus(ids, "paused")}
-            onBulkResume={(ids) => actions.bulkUpdateStatus(ids, "active")}
-            onBulkDelete={actions.bulkDelete}
             isLoading={actions.isLoadingWatchlist}
             listErrorMessage={actions.listErrorMessage}
             onRetryLoad={actions.load}

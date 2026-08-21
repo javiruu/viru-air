@@ -62,7 +62,7 @@ const TICKET_CITIES: Readonly<Record<string, TicketCity>> = {
   FCO: { label: "Roma", art: "roma" },
   CIA: { label: "Roma", art: "roma" },
   SVQ: { label: "Sevilla", art: "sevilla" },
-  TSF: { label: "Treviso", art: "treviso" },
+  TSF: { label: "Treviso", art: "" },
   TRS: { label: "Trieste", art: "" },
   VIE: { label: "Viena", art: "viena" },
 };
@@ -91,9 +91,7 @@ type WatchRowProps = {
   readonly meta: WatchMetaEntry | undefined;
   readonly communityInsight: CommunityRouteInsight | undefined;
   readonly isSelected: boolean;
-  readonly isBulkSelected: boolean;
   readonly onSelect: (watch: Watch) => void;
-  readonly onToggleBulkSelected: (watchId: string, selected: boolean) => void;
   readonly onOpenCommunity: (
     watch: Watch,
     trigger: HTMLButtonElement,
@@ -108,9 +106,7 @@ export function WatchRow({
   meta,
   communityInsight,
   isSelected,
-  isBulkSelected,
   onSelect,
-  onToggleBulkSelected,
   onOpenCommunity,
   onPause,
   onResume,
@@ -119,7 +115,7 @@ export function WatchRow({
   const { t, localeTag } = useI18n();
   const origin = ticketCity(watch.origin_iata);
   const destination = ticketCity(watch.destination_iata);
-  const ticketArt = destination.art || origin.art;
+  const ticketArt = destination.art;
   const departureDate = ticketDate(watch.travel_date_local, localeTag);
   const watchStatus = getWatchStatusMeta(watch.status, t);
   const canManageTracking =
@@ -178,6 +174,7 @@ export function WatchRow({
     <article
       className={`list-row watch-row watch-ticket-row ${isSelected ? "watch-selected" : ""}`}
       data-selected={isSelected ? "true" : "false"}
+      data-has-art={ticketArt ? "true" : "false"}
     >
       <button
         className="watch-row-select-surface"
@@ -202,19 +199,6 @@ export function WatchRow({
       />
       <div className="watch-ticket-main">
         <div className="watch-ticket-route">
-          <input
-            type="checkbox"
-            className="watch-bulk-checkbox sr-only"
-            checked={isBulkSelected}
-            onClick={(event) => event.stopPropagation()}
-            onChange={(event) =>
-              onToggleBulkSelected(watch.id, event.target.checked)
-            }
-            aria-label={t("watchlist.smartList.selectCheckboxAria", {
-              origin: watch.origin_iata,
-              destination: watch.destination_iata,
-            })}
-          />
           <div className="watch-ticket-airport">
             <strong className="watch-route-code">{watch.origin_iata}</strong>
             <span>{origin.label}</span>
@@ -314,7 +298,7 @@ export function WatchRow({
         <span className="watch-ticket-year tabular-nums">{departureDate.year}</span>
         <div className="watch-ticket-stub-rule" />
         <div className="watch-ticket-stamp" aria-hidden="true">
-          <span>VIRU TRACKER</span>
+          <span>VIRU AIR</span>
           <Plane />
           <strong>BUEN VIAJE</strong>
           <small>EST. 2024</small>
