@@ -1,4 +1,4 @@
-import { Pause, Plane, Play, Trash2, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowRight, Minus, Pause, Plane, Play, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 
 import { useI18n } from "@/i18n";
 import { CommunityRouteSignal } from "@/modules/community-routes/CommunityRouteSignal";
@@ -169,7 +169,7 @@ export function WatchRow({
       meta.max > meta.min,
   );
   const trendIcon =
-    trend === "up" ? <TrendingUp aria-hidden="true" /> : trend === "down" ? <TrendingDown aria-hidden="true" /> : null;
+    trend === "up" ? <TrendingUp aria-hidden="true" /> : trend === "down" ? <TrendingDown aria-hidden="true" /> : <Minus aria-hidden="true" />;
   return (
     <article
       className={`list-row watch-row watch-ticket-row ${isSelected ? "watch-selected" : ""}`}
@@ -203,7 +203,7 @@ export function WatchRow({
             <strong className="watch-route-code">{watch.origin_iata}</strong>
             <span>{origin.label}</span>
           </div>
-          <Plane className="watch-ticket-route-plane" aria-hidden="true" />
+          <ArrowRight className="watch-ticket-route-plane" aria-hidden="true" />
           <div className="watch-ticket-airport">
             <strong>{watch.destination_iata}</strong>
             <span>{destination.label}</span>
@@ -292,7 +292,7 @@ export function WatchRow({
         </div>
       </div>
       <aside className="watch-ticket-stub" aria-label={watch.travel_date_local}>
-        <div className="watch-ticket-date-caption"><span />FECHA<span /></div>
+        <div className="watch-ticket-date-caption"><span /><b>FECHA <Plane aria-hidden="true" /></b><span /></div>
         <strong className="watch-ticket-day tabular-nums">{departureDate.day}</strong>
         <span className="watch-ticket-month">{departureDate.month}</span>
         <span className="watch-ticket-year tabular-nums">{departureDate.year}</span>
