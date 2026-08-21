@@ -22,14 +22,11 @@ od:
 # Skill: Viru Air UI
 
 ## Objetivo
-Aplicar mejoras visuales incrementales y verificables en Viru Air, preservando su identidad calida, con personalidad y su contrato UI canonico.
+Aplicar mejoras visuales incrementales y verificables en Viru Air, siguiendo el contrato creativo y visual único de `DESIGN.md`.
 
-## Alcance obligatorio
-- Cambios incrementales UI/UX en superficies existentes.
-- Mantener paleta/tokens y semantica de estados (`success`, `warning`, `error`, `info`).
-- Respetar componentes y patrones base del sistema UI vigente.
-- Favorecer claridad + calidez + personalidad sin ruido visual.
-- Reforzar microinteracciones suaves y microcopy vivo cuando aporte comprension.
+## Lectura obligatoria
+
+Antes de diseñar, proponer o implementar cualquier cambio UI/UX, la única lectura obligatoria de diseño es `DESIGN.md`. Ese documento contiene la identidad, los límites técnicos, la libertad creativa, la accesibilidad y el QA visual de Viru. Las especificaciones funcionales aplicables conservan su autoridad sobre flujo, datos y contratos.
 
 ## Fuera de alcance por defecto
 - Cambiar logica de negocio.
@@ -37,18 +34,8 @@ Aplicar mejoras visuales incrementales y verificables en Viru Air, preservando s
 - Reescribir pantallas completas sin solicitud explicita.
 - Introducir dependencias nuevas para ajustes visuales menores.
 
-## Guardrails de interpretacion
-- No entregar propuestas sobrias, frias, contenidas o corporativas como salida valida.
-- No usar "editorial premium" como direccion dominante.
-- No confundir simplicidad con austeridad ni con perdida de alma visual.
-
 ## Flujo recomendado
-1. Leer `DESIGN.md` y referencias de esta skill.
+1. Leer `DESIGN.md`.
 2. Identificar un unico problema de jerarquia/lectura/interaccion.
 3. Proponer y aplicar el cambio minimo viable.
 4. Verificar con evidencia visual y checks de estado afectados.
-
-## Referencias locales
-- `references/product-context.md`
-- `references/visual-direction.md`
-- `references/qa-checklist.md`

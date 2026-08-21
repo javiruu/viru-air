@@ -16,12 +16,12 @@ Use this skill to rebuild working context quickly in the Viru Air repo without r
 3. Open `docs/reference/codex-operating-contract.md` if you need the persistent operating policy.
 4. Branch by area:
    - Backend or quick-search: `docs/reference/README.md` and `docs/reference/backend/`.
-   - UI or UX: `docs/ui/UI_SYSTEM_V1.md`, `docs/ui/UI_CONTRACT_V1.md`, `docs/ui/UI_VISUAL_QA_CHECKLIST.md`, and `docs/specs/README.md`.
+   - UI or UX: `DESIGN.md` and the relevant document under `docs/specs/` or `docs/reference/frontend/` for product behavior.
    - Ops or QA: `docs/runbooks/` and `docs/qa/README.md`.
 
 ## Working Rules
 
-- Treat `docs/overview/`, `docs/reference/`, `docs/specs/`, `docs/ui/`, `docs/runbooks/`, and `docs/qa/` as live documentation.
+- Treat `DESIGN.md`, `docs/overview/`, `docs/reference/`, `docs/specs/`, `docs/runbooks/`, and `docs/qa/` as live documentation.
 - Treat `docs/plans/` as nearby historical reference and `docs/archive/` as deep history only.
 - Keep one canonical source per rule or contract; prefer linking over copying.
 - Do not propose broad product or visual redesigns without explicit direction.

@@ -12,12 +12,8 @@ El frontend de Viru Air está construido con Next.js, React y TypeScript, y usa 
 ## Contenido principal
 
 - Stack visible: Next.js 15, React 19, TypeScript.
-- Skill visual recomendado para trabajo UI de agente:
-  - `/.codex/skills/taste-skill/SKILL.md` (frontend premium con reglas anti-genérico).
-- La guía viva del sistema visual está en:
-  - [UI System v1](../ui/UI_SYSTEM_V1.md)
-  - [UI Contract v1](../ui/UI_CONTRACT_V1.md)
-  - [UI Visual QA Checklist](../ui/UI_VISUAL_QA_CHECKLIST.md)
+- La guía viva del sistema visual está en [DESIGN.md](../../DESIGN.md).
+- La skill `/.codex/skills/viru-air-ui/SKILL.md` obliga a leerla antes del trabajo UI.
 - Las specs UI activas están en:
   - [Specs activas](../specs/README.md)
 

@@ -26,9 +26,7 @@ Este documento no sustituye a la documentacion viva del repo. Codex debe leer pr
 - `docs/product/quick-search.md`
 - `docs/product/watchlist.md`
 - `docs/product/door-to-door.md`
-- `docs/ui/UI_SYSTEM_V1.md`
-- `docs/ui/UI_CONTRACT_V1.md`
-- `docs/ui/estetica.md`
+- `DESIGN.md`
 
 Si un documento vivo contradice este roadmap, gana el documento vivo. Si el codigo contradice ambos, Codex debe reportarlo como drift y no inventar una sintesis optimista.
 

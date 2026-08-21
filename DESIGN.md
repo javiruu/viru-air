@@ -1,132 +1,93 @@
-# DESIGN.md - Viru Air (Direccion de Diseno)
+# DESIGN.md — Viru Air
 
-**Estado:** Vivo
-**Ultima revision:** 2026-05-18
-**Area:** Diseno (UI/UX)
+**Estado:** vivo
+**Última revisión:** 2026-08-22
+**Fuente de verdad:** sí, para toda decisión estética y creativa de Viru Air
+**Área:** diseño UI/UX y guía para agentes
 
-## 1) Definicion base de identidad
-- **Viru Air no es SaaS generico:** es una plataforma de flight intelligence con identidad calida, animada y aeronautica.
-- **Impresion deseada:** premium y bien disenada, pero cercana, intuitiva y humana.
-- **Direccion dual:**
-  - **Dark mode:** Aviation Dark-Luxe cinematografico, nunca lugubre.
-  - **Light mode:** contraparte luminosa con alma, nunca blanco corporativo plano.
-- **Personalidad compartida en ambos modos:** cues aeronauticos (IATA, rutas, terminales, radar), ritmo visual, acentos semanticos y microcopy vivo.
-- **Mejoras incrementales:** priorizar iteraciones progresivas sobre redisenos amplios.
+## 1. Mandato
 
-## 2) Principios obligatorios
-1. Calidez antes que frialdad.
-2. Personalidad antes que neutralidad.
-3. Animacion con intencion, no inmovilidad.
-4. Claridad sin austeridad.
-5. Premium cercano, no premium distante.
-6. Aeronautico aesthetic, no corporativo de aerolinea.
-7. Light mode con alma, no blanco generico.
-8. Dark mode cinematografico, no lugubre.
-9. La interfaz debe parecer disenada, viva y cuidada, no ensamblada.
-10. Los detalles deben hacer sonreir sin estorbar.
+Viru Air es una plataforma de *flight intelligence* cálida, cercana, animada y aeronáutica. No es un SaaS genérico, un panel corporativo frío ni una interfaz de aerolínea convencional.
 
-## 2.1) Anti-interpretaciones (bloqueante para agentes)
-- No interpretar "claridad" como austeridad visual.
-- No interpretar "premium" como distancia emocional.
-- No interpretar "orden" como composicion sobria o apagada.
-- No interpretar "funcional" como dashboard corporativo frio.
-- No interpretar "minimal" como ausencia de personalidad.
+La impresión buscada es una cabina viva: información precisa, orientación inmediata y una personalidad que acompaña. La claridad no significa austeridad; el refinamiento no significa distancia; la creatividad no significa ruido.
 
-## 2.2) Firma de lujo silencioso (Quiet Luxury) — capa de refinamiento
-La identidad "Aviation Warm-Luxe" gana una segunda capa: **lujo silencioso**. No sustituye los principios ni los tokens; los refine.
+Este documento es la única fuente viva para identidad visual, libertad creativa, composición, motion, microcopy, accesibilidad visual y QA de interfaz. Las decisiones de producto, flujo, datos y contratos siguen perteneciendo a sus especificaciones respectivas.
 
-1. **Menos ornamento, mas ritmo.** Cada componente debe poder explicarse con tipografia, jerarquia y aire; los bordes y sombras son complemento, no protagonista.
-2. **Densidad util, no densidad abarrotada.** Quitar lo repetido, agrupar lo relacionado, dejar respirar entre grupos. Una pantalla limpia transmite mas control que una pantalla llena.
-3. **Detalles deliberados, no uniformes.** Permitir asimetria y momentos diferenciados; las superficies planas se reservan para zonas de descanso visual en zonas de alta densidad.
-4. **Bordes mas finos, sombras mas largas.** Reducir el grosor visual de las lineas y ampliar la dispersion suave para alejarse de la "caja corporativa".
-5. **Movimiento sobrio y consistente.** Curvas suaves, duraciones cortas, finales firmes. Evitar cualquier animacion que parezca decorativa sin proposito.
+## 2. Identidad dual
 
-Reglas de proteccion:
-- Mantener paleta dual (`#121212`, `#FFFFFF`, `#FFB000`, `#10B981`, `#50BFE6`, `#FF6464`).
-- Mantener Playfair Display + IBM Plex Sans como duo tipografico base.
-- Mantener los tokens congelados de `UI_SYSTEM_V1.md`; aqui solo se refine la aplicacion.
-- Cualquier token nuevo debe pasar por `tokens.css` antes de usarse en componentes.
+- **Dark:** Aviation Dark-Luxe cinematográfico, profundo y cálido; nunca lúgubre, gamer, neón ni cyberpunk.
+- **Light:** contraparte de día luminosa y con alma; nunca una superficie blanca, plana o corporativa.
+- Ambos temas conservan geometría, jerarquía, orden de información, foco y significado de estados. Cambia la luminancia y el tratamiento de superficie, no la personalidad.
+- Las claves de marca aparecen con intención: IATA, rutas, terminales, radar, pista, señales de vuelo, estancia o trayecto. Son contexto, nunca decoración obligatoria.
 
-## 3) Paleta y tokens canonicos
-**Paleta de referencia dual:**
-- **Dark canvas:** `#121212`
-- **Light canvas:** `#FFFFFF`
-- **Dark panels:** `#1E1E1E` / `#242424`
-- **Light panels:** `#F5F5F5` / `#FAFAFA` / `#F0F0F0`
-- **Dark text:** `#F5EAD6`
-- **Light text:** `#121212`
-- **Acentos compartidos:** `#FFB000`, `#10B981`, `#50BFE6`, `#FF6464`
+## 3. Libertad creativa media
 
-**Reglas:**
-- Usar unicamente colores de la paleta aprobada.
-- Evitar extremos visuales: negro puro masivo en dark y blanco plano sin jerarquia en light.
-- Mantener contraste legible, semantica de estados y cues de vuelo en ambos modos.
+La creatividad es **media y transversal**: cada superficie debe evitar parecer una plantilla repetida y puede usar una variación intencional de composición, ritmo, profundidad, detalle aeronáutico, microcopy o microinteracción.
 
-## 4) Tipografia, microcopy y composicion
-- **Titulares:** Playfair Display.
-- **Subtitulos/cuerpo:** IBM Plex Sans.
-- **Datos de vuelo:** monoespaciada para codigos y horarios cuando aporte claridad.
-- **Lenguaje UI:** espanol consistente, accionable y cercano; evitar mezcla ES/EN en texto visible.
-- **Composicion:** paneles con ritmo, jerarquia clara, densidad util y asimetria controlada cuando mejora lectura. Debe sentirse cabina viva, no maqueta editorial contenida.
-- **Evitar:** grids repetitivas sin ritmo y estetica dominante de "dashboard serio".
+Una pantalla conserva una lectura primaria inequívoca, pero puede tener un gesto memorable: una pieza protagonista, una transición de secciones con cadencia, un detalle de ruta, una confirmación cálida o una composición menos simétrica. El resultado debe tener jolgorio con criterio, no solemnidad ni artificio.
 
-## 5) Interaccion y microanimacion
-- Motion con intencion: **claridad + delight + continuidad + personalidad**.
-- Entrada de secciones: fade + desplazamiento suave (4-8px).
-- Hover de tarjetas: elevacion minima + glow contextual tenue.
-- Click en botones: compresion leve (1-2px).
-- Anadir microinteracciones en hover, seleccion, carga, empty states y confirmaciones.
-- Cada estado importante debe incluir senal de acompanamiento (copy/feedback) para transmitir mimo de producto.
+| Regla | Qué implica |
+| --- | --- |
+| **Congelado** | Valores y alias de `frontend/src/styles/tokens.css`; semántica `success`, `warning`, `error`, `info`; contraste, foco, teclado, reduced motion; jerarquía de información; identidad dual. |
+| **Flexible** | Composición, peso visual, ritmo, profundidad, densidad, detalles de viaje, recursos de marca, tono del microcopy y microinteracciones. |
+| **Prohibido** | SaaS genérico, simetría monótona, paredes de cards iguales, gamificación estridente, color sin semántica, ornamento que compita con la decisión, movimiento decorativo o que altere el scroll. |
 
-**Limites de motion y estilo:**
-- Sin ruido visual barato.
-- Sin exceso de colores.
-- Sin animaciones mareantes.
-- Sin estetica cyberpunk, "Awwwards" poco usable o clon corporativo.
-- Sin tono sobrio/frio como resultado dominante.
+## 4. Composición y componentes
 
-## 6) Componentes congelados (UI System v1)
-Patrones base (`components.css`):
-`panel`, `panel-soft`, `page-header`, `panel-header`, `panel-actions`,
-`panel-title`, `panel-subtitle`, `list-row`, `action-row`, `row-actions`,
-`section-gap` (sm/lg), `status-pill`, `state-success|warning|error|info`.
+- Priorizar una lectura: contexto y decisión primero; datos de apoyo, historial y herramientas después.
+- No hacer que todas las secciones pesen igual. Alternar descanso y densidad útil, con asimetría controlada cuando mejore la lectura.
+- Usar paneles, bordes finos y sombras largas y suaves como estructura, no como una colección de cajas anidadas.
+- Mantener como patrones compartidos `panel`, `panel-soft`, `card`, `page-header`, `panel-header`, `panel-actions`, `panel-title`, `panel-subtitle`, `list-row`, `action-row`, `row-actions`, `section-gap|section-gap-sm|section-gap-lg`, `notice-compact`, `notice-actions`, `status-pill` y `state-success|warning|error|info`.
+- Una acción primaria por panel, card, modal o bloque de decisión. Las acciones secundarias deben quedar disponibles sin disputar la lectura principal.
+- `primary` inicia o confirma la decisión principal; `secondary` acompaña sin competir; `ghost` o `link-subtle` revela, vuelve, reintenta o amplía contexto; `danger` queda reservado para acciones destructivas.
+- Si un valor semántico o patrón aparece en dos o más pantallas, pertenece a `tokens.css` o `components.css`; no crear tokens locales en componentes.
 
-*Regla de extension:* si un patron se repite en 2+ pantallas, extraer a componente/tokens canonicos.
+## 5. Tipografía, color y datos
 
-### Watchlist: acceso de comunidad
+- Titulares con Playfair Display para momentos de identidad; IBM Plex Sans para controles, cuerpo y copy operativo; monoespaciada sólo cuando los códigos, horarios o cifras ganen precisión.
+- La implementación vigente de spacing, foco y estados vive en `frontend/src/styles/tokens.css`; los valores de tema viven en las variables CSS de `frontend/src/styles/screens.css`. No duplicar ni inventar una paleta documental paralela.
+- Evitar negro puro masivo, blanco plano sin jerarquía, color decorativo y nuevos valores hardcodeados si existe un token semántico.
+- El acento principal guía una acción o un momento de atención; verde, azul y rojo mantienen significado de estado, no adornan tarjetas.
+- Usar cifras escaneables, fechas y precios bien agrupados; reservar la expresividad tipográfica para la jerarquía, no para disfrazar datos.
 
-- Cada `list-row watch-row` reserva su esquina superior izquierda para un
-  acceso comunitario compacto, nunca para una accion textual secundaria.
-- El icono puede indicar evidencia publica, respuesta pendiente o aportacion
-  realizada con color, punto o check; no debe competir con precio, ruta ni
-  estado operativo.
-- Abrir el hub es una accion de lectura. Cualquier mutacion (`Comprado`,
-  responder, editar o eliminar) requiere un control explicito dentro del panel.
-- El movimiento usa solo `transform` y `opacity`, respeta
-  `prefers-reduced-motion` y conserva foco visible.
+## 6. Estados, microcopy y tono
 
-## 7) Estados y semantica
-- `success`: exito/completado.
-- `warning`: parcial/pendiente.
-- `error`: falla/validacion.
-- `info`: contexto neutral.
+- `success`: completado; `warning`: parcial o pendiente; `error`: fallo o validación; `info`: contexto neutral. No usar `warn` en cambios nuevos.
+- Cada estado combina señal visual, texto comprensible y la siguiente acción cuando exista. El color nunca es la única señal.
+- Escribir en español cercano, accionable y humano, sin tono infantil, mezcla gratuita ES/EN ni jerga interna visible.
+- Los labels consolidados de producto se respetan; el resto del copy puede tener chispa, calidez y precisión. Explicar siempre qué ocurre y qué puede hacer la persona si un dato es parcial, antiguo o falla.
+- Los vacíos, cargas y confirmaciones son oportunidades de personalidad: deben acompañar sin retrasar la tarea ni prometer capacidades inexistentes.
 
-No usar `warn` en cambios nuevos.
+## 7. Motion y respuesta
 
-## 8) QA visual minimo
-Antes de cerrar cambios visuales:
-- Validar flujos core (`/dashboard`, `/watchlist`, `/quick-search`, `/notifications`, `/login`, `/register`).
-- Revisar resoluciones desktop/tablet/movil.
-- Confirmar focus visible, sin solapes ni overflow horizontal.
-- Validar estados clave (loading, empty, error, success) con personalidad y claridad.
-- Probar siempre ambos temas (dark y light) y verificar que conservan la misma identidad de marca.
+- El motion explica continuidad, selección, progreso o confirmación: claridad + delight + continuidad + personalidad.
+- Preferir entradas de 4–8 px, elevación mínima, glow contextual tenue y compresión de 1–2 px; usar `transform` y `opacity` siempre que sea posible.
+- Permitido: transiciones cortas de superficie, énfasis breve de valor, apertura contextual, shimmer discreto y una confirmación local con carácter.
+- Prohibido: loops o pulsos para estados estáticos, rebotes repetidos, cambios de layout que muevan la lectura, scroll inesperado o apariencia de actualización en vivo para datos históricos.
+- `prefers-reduced-motion` elimina desplazamientos, escalados y loops no esenciales sin ocultar información ni acciones.
 
-## 9) Limites para desarrolladores
-- Cambios visuales incrementales, verificables y documentados.
-- No tocar logica de negocio, rutas o API sin aprobacion explicita.
-- No anadir librerias para retoques esteticos menores.
+## 8. Accesibilidad y responsive
 
-## 10) Skill de diseno incremental
-- Skill: `/.codex/skills/taste-skill/SKILL.md`.
-- Uso: jerarquia, ritmo, composicion, motion y polish visual.
-- Prioridad: `DESIGN.md` y `docs/ui/*` son contrato canonico.
+- Cumplir contraste AA, foco visible, orden de tabulación lógico, controles operables sin hover y zoom de texto sin pérdida de acciones.
+- La selección, el error, el progreso y la prioridad nunca dependen sólo del color.
+- Mantener la misma intención en desktop, tablet y mobile: sin solapes, scroll horizontal inesperado ni acciones relevantes escondidas.
+- Los paneles secundarios pueden plegarse en pantallas estrechas, pero no deben ocultar la acción principal ni convertir cada card en un mosaico de badges.
+- Usar mensajes accesibles para cambios globales de resultado o error; no anunciar cada elemento repetido de una lista.
+
+## 9. QA visual obligatorio
+
+Antes de cerrar una modificación visual:
+
+- Verificar la superficie afectada en dark y light; desktop 1440×900, tablet 768×1024 y mobile 375×812, además de 320×780 cuando la ruta privada lo requiera.
+- Confirmar jerarquía, CTA principal, foco, contraste, overflow, solapes y ausencia de tono frío/corporativo dominante.
+- Cubrir los estados aplicables: normal, loading, empty, error, parcial o éxito.
+- Para rutas core, reutilizar esta cobertura: `/dashboard`, `/watchlist`, `/quick-search`, `/notifications`, `/login` y `/register`; `/ayuda` y `/policies` cuando cambien.
+- Aportar evidencia real del navegador: vista de contexto y del componente afectado; añadir estado de interacción cuando el cambio sea stateful.
+- Los tests y builds complementan la evidencia, pero no sustituyen la comprobación visual renderizada.
+
+## 10. Límites de implementación para agentes
+
+- No cambiar lógica de negocio, rutas, contratos API ni semántica de datos como parte de un ajuste visual.
+- No introducir dependencias para retoques menores.
+- No usar una regla de esta guía para justificar una paleta paralela de módulo, una capacidad no soportada o un cambio de contrato.
+- Las especificaciones de Dashboard, Watchlist, Hoteles y otros módulos definen su comportamiento propio; esta guía decide cómo se siente y se expresa esa experiencia.

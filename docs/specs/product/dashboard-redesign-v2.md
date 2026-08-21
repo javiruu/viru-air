@@ -88,22 +88,9 @@ Textos dinámicos sin nuevas features:
 
 ---
 
-## 4. Mejora visual (sin cambiar identidad)
+## 4. Dirección visual
 
-### 4.1 Jerarquía
-- Hero state → H2 dominante
-- Sección → H3
-- Card title → H4
-
-### 4.2 Espaciado
-- Sistema 8 / 16 / 24
-- Más aire arriba y abajo de secciones
-
-### 4.3 Contraste
-- Mantener estética beige
-- Badges con color semántico
-- Botón primario consistente
-- Cards secundarias más planas
+La expresión visual del dashboard se rige por `DESIGN.md`. Esta especificación conserva únicamente la prioridad funcional: bloque principal, operativa, descubrimiento y soporte no deben competir entre sí.
 
 ---
 

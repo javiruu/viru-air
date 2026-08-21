@@ -16,7 +16,7 @@ Condensar el conocimiento operativo estable extraido del master document externo
 - `AGENTS.md`: reglas cortas, recordatorios operativos y enlaces.
 - `docs/reference/codex-operating-contract.md`: politica operativa adaptada a Codex.
 - `docs/overview/`: reentrada rapida, estado actual y mapa del repo.
-- `docs/reference/`, `docs/specs/`, `docs/ui/`, `docs/runbooks/`, `docs/qa/`: verdad de dominio, tecnica, UX y operacion.
+- `DESIGN.md`, `docs/reference/`, `docs/specs/`, `docs/runbooks/`, `docs/qa/`: verdad de dirección visual, dominio, técnica, UX y operación.
 - `docs/plans/` y `HISTORY.md`: referencia historica util.
 - `docs/archive/`: ultimo recurso para reconstruir intencion historica, nunca primera parada.
 
@@ -26,7 +26,7 @@ Condensar el conocimiento operativo estable extraido del master document externo
 2. `AGENTS.md` para reglas cortas obligatorias del repo.
 3. Este documento para politica operativa persistente de Codex.
 4. `docs/overview/` para reenganche y navegacion.
-5. `docs/reference/`, `docs/specs/`, `docs/ui/`, `docs/runbooks/` y `docs/qa/` para verdad funcional.
+5. `DESIGN.md`, `docs/reference/`, `docs/specs/`, `docs/runbooks/` y `docs/qa/` para verdad funcional y visual.
 6. `docs/plans/` y `HISTORY.md` para contexto historico cercano.
 7. `docs/archive/` solo cuando los documentos vivos no explican una decision.
 

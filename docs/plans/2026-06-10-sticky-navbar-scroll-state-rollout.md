@@ -55,7 +55,7 @@ Por eso el rollout correcto es:
 
 - `frontend/tests/navigation-v1.test.ts`
 - nuevos tests de navbar/shell si se crean
-- `docs/ui/UI_CONTRACT_V1.md` solo si el patron queda ya congelado como contrato
+- `DESIGN.md` si el patrón modifica la dirección visual compartida
 - `docs/qa/` para evidencia visual si el rollout se ejecuta
 
 ## Riesgo tecnico principal
@@ -99,9 +99,7 @@ Definir exactamente como debe comportarse la navbar morph en Viru antes de tocar
 - `frontend/src/modules/shared/navigationV1.ts`
 - `frontend/src/styles/screens.css`
 - `DESIGN.md`
-- `docs/ui/UI_CONTRACT_V1.md`
-- `docs/ui/UI_SYSTEM_V1.md`
-- `docs/ui/UI_VISUAL_QA_CHECKLIST.md`
+- `DESIGN.md`
 
 ### Criterio de salida
 
@@ -118,7 +116,7 @@ Definir exactamente como debe comportarse la navbar morph en Viru antes de tocar
   - `/alerts`
   - `/login`
   - `/register`
-- Checklist de contrato visual contra `docs/ui/UI_VISUAL_QA_CHECKLIST.md`.
+- Checklist de contrato visual contra `DESIGN.md`.
 
 ---
 
@@ -296,8 +294,7 @@ Cerrar el rollout con evidencia, limpieza de deuda y documentacion suficiente pa
   - estados de navegacion activa
 - Ejecutar QA visual transversal sobre rutas core y rutas publicas largas.
 - Documentar el patron si queda consolidado como componente/base del sistema:
-  - `docs/ui/UI_CONTRACT_V1.md`
-  - `docs/ui/UI_SYSTEM_V1.md`
+  - `DESIGN.md`
   - evidencia ligera en `docs/qa/` si el cambio se implementa
 
 ### Verificacion minima de cierre

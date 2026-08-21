@@ -402,8 +402,8 @@ Avoid:
 
 ---
 
-## Skill visual recomendado para agentes
+## Dirección visual para agentes
 
-- Skill instalado en repo: `/.codex/skills/taste-skill/SKILL.md`.
-- Usarlo en tareas de frontend/estetica para elevar calidad visual sin caer en UI generica.
-- Mantener prioridad de contratos canonicos: `DESIGN.md`, `docs/ui/UI_SYSTEM_V1.md`, `docs/ui/UI_CONTRACT_V1.md` y `docs/ui/estetica.md`.
+- La única fuente normativa de UI es `DESIGN.md`.
+- `/.codex/skills/viru-air-ui/SKILL.md` obliga a leerla antes de cualquier trabajo visual.
+- Las skills o referencias genéricas pueden inspirar una técnica concreta, pero nunca sustituyen ni amplían el contrato de `DESIGN.md`.

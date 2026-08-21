@@ -295,6 +295,26 @@ Entradas vivas actualizadas:
 - `docs/DOCS_INVENTORY.md`
 - `HISTORY.md`
 
+## Actualizacion manual 2026-08-22 (consolidacion de direccion visual)
+
+Fuente de verdad vigente:
+
+- `DESIGN.md` — identidad visual, libertad creativa media, accesibilidad visual y QA para agentes.
+
+Entradas eliminadas por duplicidad tras migrar sus reglas únicas a `DESIGN.md`:
+
+- `docs/ui/estetica.md`
+- `docs/ui/UI_SYSTEM_V1.md`
+- `docs/ui/UI_CONTRACT_V1.md`
+- `docs/ui/UI_VISUAL_QA_CHECKLIST.md`
+- `.codex/skills/viru-air-ui/references/product-context.md`
+- `.codex/skills/viru-air-ui/references/visual-direction.md`
+- `.codex/skills/viru-air-ui/references/qa-checklist.md`
+
+## Registro histórico de actualizaciones anteriores
+
+Los bloques que siguen registran el estado en la fecha indicada. La expresión “entradas vivas” describe ese momento histórico, no el inventario actual; para la vigencia se usa la tabla de inventario y la fuente de verdad declarada arriba.
+
 ## Actualizacion manual 2026-07-12 (tokens de seleccion global)
 
 Entradas vivas actualizadas:
@@ -995,14 +1015,10 @@ Motivo:
 | .github/pull_request_template.md | unknown | revisar manualmente | revisar manualmente | .github/pull_request_template.md | Clasificaci?n no resuelta autom?ticamente | revisi?n manual requerida |
 | AGENTS.md | contexto IA | vivo | conservar | AGENTS.md | Contrato operativo principal para agentes | AGENTS.md |
 | docs/archive/plans/cabinalimpia.txt | plan | archivado | conservar | docs/archive/plans/cabinalimpia.txt | Plan consolidado de correcciones post-cierre del modulo /hoteles (Fases A-E) | cabinalimpia.txt |
-| DESIGN.md | contexto IA | vivo | conservar | DESIGN.md | Sistema de diseno para agentes con direccion visual calida, animada y de premium humano | DESIGN.md |
+| DESIGN.md | contexto IA | vivo | conservar | DESIGN.md | Fuente única de dirección visual, libertad creativa media, accesibilidad visual y QA para agentes | DESIGN.md |
 | HISTORY.md | overview | vivo | conservar | HISTORY.md | Historial de cambios significativos del proyecto | HISTORY.md |
 | README.md | overview | vivo | conservar | README.md | Punto de entrada principal del repositorio | README.md |
-| .codex/skills/viru-air-ui/SKILL.md | contexto IA | vivo | conservar | .codex/skills/viru-air-ui/SKILL.md | Skill de diseno incremental para Codex orientado a calidez, personalidad y claridad | .codex/skills/viru-air-ui/SKILL.md |
-| .codex/skills/viru-air-ui/references/product-context.md | contexto IA | vivo | conservar | .codex/skills/viru-air-ui/references/product-context.md | Contexto de producto para tareas UI con enfoque cercano, calido y no generico | .codex/skills/viru-air-ui/references/product-context.md |
-| .codex/skills/viru-air-ui/references/visual-direction.md | contexto IA | vivo | conservar | .codex/skills/viru-air-ui/references/visual-direction.md | Direccion visual calida y con personalidad para el skill Viru Air UI | .codex/skills/viru-air-ui/references/visual-direction.md |
-| .codex/skills/viru-air-ui/references/qa-checklist.md | contexto IA | vivo | conservar | .codex/skills/viru-air-ui/references/qa-checklist.md | Checklist de QA visual para validar claridad, calidez y personalidad del skill | .codex/skills/viru-air-ui/references/qa-checklist.md |
-| .codex/skills/taste-skill/SKILL.md | contexto IA | vivo | conservar | .codex/skills/taste-skill/SKILL.md | Skill de direccion visual frontend premium para tareas de estetica/UI | .codex/skills/taste-skill/SKILL.md |
+| .codex/skills/viru-air-ui/SKILL.md | contexto IA | vivo | conservar | .codex/skills/viru-air-ui/SKILL.md | Skill mínima que obliga a leer DESIGN.md antes de trabajo UI | DESIGN.md |
 | docs/DOCS_INVENTORY.md | overview | vivo | conservar | docs/DOCS_INVENTORY.md | Inventario documental ?nico | docs/DOCS_INVENTORY.md |
 | docs/INDICE_UNICO.md | overview | vivo | conservar | docs/INDICE_UNICO.md | Mapa ?nico de navegaci?n | docs/INDICE_UNICO.md |
 | docs/README.md | overview | vivo | conservar | docs/README.md | Gu?a principal de navegaci?n documental | docs/README.md |
@@ -1014,12 +1030,12 @@ Motivo:
 | docs/adr/ADR-006-zero-cost-operational-provider-fallback.md | ADR | vivo | conservar | docs/adr/ADR-006-zero-cost-operational-provider-fallback.md | Fallback por capacidades con presupuesto persistente y modo sin coste por defecto | docs/adr/ADR-006-zero-cost-operational-provider-fallback.md |
 | docs/archive/README.md | historical | hist?rico | conservar | docs/archive/README.md | Gu?a del archivo hist?rico | ninguna; material hist?rico |
 | docs/archive/duplicated/README.md | duplicate | duplicado | conservar | docs/archive/duplicated/README.md | Copia retirada de la navegaci?n principal; la versi?n can?nica vive fuera de archive | ninguna |
-| docs/archive/duplicated/UI_CONTRACT_V1.md | duplicate | duplicado | conservar | docs/archive/duplicated/UI_CONTRACT_V1.md | Copia retirada de la navegaci?n principal; la versi?n can?nica vive fuera de archive | docs/ui/UI_CONTRACT_V1.md |
-| docs/archive/duplicated/UI_SYSTEM_V1.md | duplicate | duplicado | conservar | docs/archive/duplicated/UI_SYSTEM_V1.md | Copia retirada de la navegaci?n principal; la versi?n can?nica vive fuera de archive | docs/ui/UI_SYSTEM_V1.md |
-| docs/archive/duplicated/UI_VISUAL_QA_CHECKLIST.md | duplicate | duplicado | conservar | docs/archive/duplicated/UI_VISUAL_QA_CHECKLIST.md | Copia retirada de la navegaci?n principal; la versi?n can?nica vive fuera de archive | docs/ui/UI_VISUAL_QA_CHECKLIST.md |
+| docs/archive/duplicated/UI_CONTRACT_V1.md | duplicate | duplicado | conservar | docs/archive/duplicated/UI_CONTRACT_V1.md | Copia histórica; la dirección vigente vive en DESIGN.md | DESIGN.md |
+| docs/archive/duplicated/UI_SYSTEM_V1.md | duplicate | duplicado | conservar | docs/archive/duplicated/UI_SYSTEM_V1.md | Copia histórica; la dirección vigente vive en DESIGN.md | DESIGN.md |
+| docs/archive/duplicated/UI_VISUAL_QA_CHECKLIST.md | duplicate | duplicado | conservar | docs/archive/duplicated/UI_VISUAL_QA_CHECKLIST.md | Copia histórica; el QA visual vigente vive en DESIGN.md | DESIGN.md |
 | docs/archive/duplicated/backend-docs/quick-search-acceptance-checklist.md | duplicate | duplicado | conservar | docs/archive/duplicated/backend-docs/quick-search-acceptance-checklist.md | Copia retirada de la navegaci?n principal; la versi?n can?nica vive fuera de archive | docs/reference/backend/quick-search-acceptance-checklist.md |
 | docs/archive/duplicated/backend-docs/quick-search-contract.md | duplicate | duplicado | conservar | docs/archive/duplicated/backend-docs/quick-search-contract.md | Copia retirada de la navegaci?n principal; la versi?n can?nica vive fuera de archive | docs/reference/backend/quick-search-contract.md |
-| docs/archive/duplicated/estetica.md | duplicate | duplicado | conservar | docs/archive/duplicated/estetica.md | Copia retirada de la navegaci?n principal; la versi?n can?nica vive fuera de archive | docs/ui/estetica.md |
+| docs/archive/duplicated/estetica.md | duplicate | duplicado | conservar | docs/archive/duplicated/estetica.md | Copia histórica; la dirección vigente vive en DESIGN.md | DESIGN.md |
 | docs/archive/duplicated/feature-flags.md | duplicate | duplicado | conservar | docs/archive/duplicated/feature-flags.md | Copia retirada de la navegaci?n principal; la versi?n can?nica vive fuera de archive | docs/reference/feature-flags.md |
 | docs/archive/duplicated/quick-search-weather-policy.md | duplicate | duplicado | conservar | docs/archive/duplicated/quick-search-weather-policy.md | Copia retirada de la navegaci?n principal; la versi?n can?nica vive fuera de archive | docs/reference/quick-search-weather-policy.md |
 | docs/archive/extracted-txt/README.md | generated/noise | generado | conservar | docs/archive/extracted-txt/README.md | Snapshot textual o extracci?n preservada por trazabilidad | ninguna; artefacto generado |
@@ -1120,7 +1136,7 @@ Motivo:
 | docs/reference/backend/hoteles-favorite-vs-tracking-h22.md | backend | vivo | conservar | docs/reference/backend/hoteles-favorite-vs-tracking-h22.md | Contrato H22 de favorito simple frente a tracking, identidad, lifecycle, conversión, ownership, inbox, migración y gates | fuente de verdad de semántica de guardados y seguimientos hoteleros H22 |
 | docs/reference/backend/hoteles-lifecycle-pause-edit-expire-delete-h29.md | backend | vivo | conservar | docs/reference/backend/hoteles-lifecycle-pause-edit-expire-delete-h29.md | Contrato H29 de pausa, edición, expiración, archivado, eliminación, ownership, cascadas, retención e idempotencia de seguimientos hoteleros | fuente de verdad de lifecycle hotelero H29 |
 | docs/reference/backend/hoteles-flexible-dates-calendar-h30.md | backend | vivo | conservar | docs/reference/backend/hoteles-flexible-dates-calendar-h30.md | Contrato H30 de calendario, ventanas temporales, capabilities de provider, comparabilidad, coste, URL, tracking y rollout | fuente de verdad de flexibilidad de fechas hoteleras H30 |
-| docs/reference/frontend/hoteles-visual-direction-states-h31.md | frontend | vivo | conservar | docs/reference/frontend/hoteles-visual-direction-states-h31.md | Contrato H31 de dirección visual Warm-Luxe hotelera, jerarquía, estados, responsive, motion, accesibilidad e i18n | fuente de verdad visual de hoteles H31 |
+| docs/reference/frontend/hoteles-visual-direction-states-h31.md | frontend | vivo | conservar | docs/reference/frontend/hoteles-visual-direction-states-h31.md | Contrato H31 de jerarquía, estados, responsive, accesibilidad e i18n hoteleros | fuente de verdad de flujo y estados hoteleros H31; DESIGN.md rige la expresión visual |
 | docs/reference/frontend/hoteles-responsive-accessible-ctas-h32.md | frontend | vivo | conservar | docs/reference/frontend/hoteles-responsive-accessible-ctas-h32.md | Contrato H32 de responsive por viewport, overflow, zoom, CTAs de 48 px, teclado, foco, estados móviles, reduced motion y browser QA | fuente de verdad responsive y CTAs hoteleros H32 |
 | docs/reference/frontend/hoteles-wcag-accessibility-audit-h33.md | frontend | vivo | conservar | docs/reference/frontend/hoteles-wcag-accessibility-audit-h33.md | Contrato H33 de auditoría WCAG 2.2 AA, combobox, labels/errores, foco, estados, contraste, zoom, reduced motion, prioridades y evidencia | fuente de verdad de accesibilidad hotelera H33 |
 | docs/reference/frontend/hoteles-localization-dates-currency-timezones-h34.md | frontend | vivo | conservar | docs/reference/frontend/hoteles-localization-dates-currency-timezones-h34.md | Contrato H34 de i18n ES/EN, placeholders, pluralización, fechas civiles, timestamps, monedas de origen, timezones, copy provider y gates de QA | fuente de verdad de localización hotelera H34 |
@@ -1217,10 +1233,6 @@ Motivo:
 | docs/specs/policies/policies-page-rewrite.md | spec | vivo | conservar | docs/specs/policies/policies-page-rewrite.md | Especificaci?n activa | docs/specs/policies/policies-page-rewrite.md |
 | docs/specs/product/dashboard-redesign-v2.md | spec | vivo | conservar | docs/specs/product/dashboard-redesign-v2.md | Especificaci?n activa | docs/specs/product/dashboard-redesign-v2.md |
 | docs/specs/ui/ui-changes.md | spec | vivo | conservar | docs/specs/ui/ui-changes.md | Especificaci?n activa | docs/specs/ui/ui-changes.md |
-| docs/ui/UI_CONTRACT_V1.md | frontend | vivo | conservar | docs/ui/UI_CONTRACT_V1.md | Contrato visual y sistema UI canonico con identidad calida y no generica | docs/ui/UI_CONTRACT_V1.md |
-| docs/ui/UI_SYSTEM_V1.md | frontend | vivo | conservar | docs/ui/UI_SYSTEM_V1.md | Contrato visual y sistema UI canonico con identidad calida y no generica | docs/ui/UI_SYSTEM_V1.md |
-| docs/ui/UI_VISUAL_QA_CHECKLIST.md | frontend | vivo | conservar | docs/ui/UI_VISUAL_QA_CHECKLIST.md | Contrato visual y sistema UI can?nico | docs/ui/UI_VISUAL_QA_CHECKLIST.md |
-| docs/ui/estetica.md | frontend | vivo | conservar | docs/ui/estetica.md | Contrato visual y sistema UI canonico con identidad calida y no generica | docs/ui/estetica.md |
 | fases/_extraido_txt/FASE_10_Futuras_Escalabilidades_Viru.txt | historical | duplicado | eliminar candidato | docs/archive/fases/transcripts/FASE_10_Futuras_Escalabilidades_Viru.txt | Transcripci?n duplicada ya preservada en archive | docs/archive/fases/transcripts/FASE_10_Futuras_Escalabilidades_Viru.txt |
 | fases/_extraido_txt/FASE_1_Analisis_de_Documentacion_Viru.txt | historical | duplicado | eliminar candidato | docs/archive/fases/transcripts/FASE_1_Analisis_de_Documentacion_Viru.txt | Transcripci?n duplicada ya preservada en archive | docs/archive/fases/transcripts/FASE_1_Analisis_de_Documentacion_Viru.txt |
 | fases/_extraido_txt/FASE_2_Arquitectura_Global_Viru.txt | historical | duplicado | eliminar candidato | docs/archive/fases/transcripts/FASE_2_Arquitectura_Global_Viru.txt | Transcripci?n duplicada ya preservada en archive | docs/archive/fases/transcripts/FASE_2_Arquitectura_Global_Viru.txt |

@@ -1,11 +1,11 @@
 # Watchlist Redesign v1 — Spec
 
 **Estado:** borrador  
-**Última revisión:** 2026-06-13  
+**Última revisión:** 2026-08-22
 **Fuente de verdad:** sí  
 **Área:** product / ui  
 **Basado en:** entrevista con usuario + análisis de código (`frontend/src/modules/watchlist/`)  
-**Skills aplicables:** `frontend-design`, `design-taste-frontend`, `make-interfaces-feel-better`, `high-end-visual-design`, `minimalist-ui`
+**Dirección visual aplicable:** `DESIGN.md`
 
 ---
 
@@ -35,19 +35,7 @@ La página debe sentirse como un espacio con personalidad donde el usuario:
 
 ---
 
-## 3. Inspiración visual
-
-**FlightRadar / aviación** como referencia de tono:
-
-- Códigos IATA como identificadores claros
-- Datos precisos con presentación editorial
-- Mapa con peso visual pero en su sitio y cuando toca
-- Sensación de instrumental de navegación, no de app genérica
-- Mantener paleta beige/sobria actual de Viru
-
----
-
-## 4. Nueva jerarquía de la página (orden de secciones)
+## 3. Nueva jerarquía de la página (orden de secciones)
 
 | Prioridad | Sección | Rol |
 |-----------|---------|-----|
@@ -60,9 +48,9 @@ La página debe sentirse como un espacio con personalidad donde el usuario:
 
 ---
 
-## 5. Flujo de usuario
+## 4. Flujo de usuario
 
-### 5.1 Sin ruta seleccionada
+### 4.1 Sin ruta seleccionada
 ```
 [Histórico] → Muestra aviso: "Selecciona una ruta de tu Watchlist para ver su histórico"
 [Mis rutas] → Lista completa de todas las rutas vigiladas
@@ -70,7 +58,7 @@ La página debe sentirse como un espacio con personalidad donde el usuario:
 ```
 El foco inicial está en la lista: el usuario debe elegir una ruta.
 
-### 5.2 Con ruta seleccionada
+### 4.2 Con ruta seleccionada
 ```
 [Histórico] → GRANDE, dominante. Gráfico + KPIs + resumen
 [Mis rutas] → La ruta seleccionada aparece expandida inline como "card protagonista"
@@ -81,9 +69,9 @@ El foco inicial está en la lista: el usuario debe elegir una ruta.
 
 ---
 
-## 6. Rediseño de componentes
+## 5. Rediseño de componentes
 
-### 6.1 SmartWatchList → Mis rutas
+### 5.1 SmartWatchList → Mis rutas
 
 **Nuevo nombre:** Mis rutas (i18n: `watchlist.smartList.heading` → `Mis rutas`)
 
@@ -112,7 +100,12 @@ Cada fila muestra solo:
 - Error inline: mensaje + botón reintentar
 - Sin resultados de búsqueda: mensaje + "Ver todos"
 
-### 6.2 WatchDetailPanel → Eliminado como panel separado
+### 5.1.1 Acceso comunitario
+
+- Cada `list-row watch-row` reserva en su esquina superior izquierda el acceso compacto a comunidad, sin competir con precio, ruta ni estado.
+- El acceso abre el hub en modo lectura; las mutaciones requieren una acción explícita dentro de ese panel.
+
+### 5.2 WatchDetailPanel → Eliminado como panel separado
 
 **El detalle de ruta se integra como expansión inline de la fila.**
 
@@ -146,7 +139,7 @@ Características:
 - CTA secundario: "Ver análisis completo" (selecciona la ruta para que el histórico de abajo se actualice)
 - No abre panel lateral, no cambia de contexto
 
-### 6.3 HistoryIntegratedPanel → Histórico
+### 5.3 HistoryIntegratedPanel → Histórico
 
 **Es el bloque más importante de la página.**
 
@@ -178,7 +171,7 @@ Características:
 | Leyenda de series | Visible | Chips con color + fecha |
 | Disclaimer precio | Colapsable | details/summary |
 
-### 6.4 ComparePanels → Modal/Overlay
+### 5.4 ComparePanels → Modal/Overlay
 
 **Se transforma en una herramienta que se abre bajo demanda, no una sección permanente.**
 
@@ -187,7 +180,7 @@ Características:
 - **Comportamiento:** Al cerrar, vuelve al flujo principal sin perder selección
 - **Estados:** Loading, vacío, error, mixed currency warning
 
-### 6.5 WatchlistMapDecisionPanel → Mapa
+### 5.5 WatchlistMapDecisionPanel → Mapa
 
 - Se mantiene al final de la página
 - Debe tener más peso visual y presencia
@@ -198,33 +191,30 @@ Características:
 
 ---
 
-## 7. Estados y micro-interacciones
+## 6. Estados y micro-interacciones
 
-### 7.1 Loading
+### 6.1 Loading
 - Skeleton loaders para lista (mantener actual)
 - Skeleton para histórico (toolbar + chart area + KPIs) — mantener actual
 - Estados de refresco: isRefreshingHistory, isRefreshingBulk
 
-### 7.2 Empty states
+### 6.2 Empty states
 - **Watchlist vacía:** mantener onboarding actual (3 pasos + CTA añadir vuelo)
 - **Sin resultados de búsqueda:** mensaje + "Ver todos"
 - **Histórico sin datos:** "Aún no hay histórico suficiente para resumir esta ruta"
 
-### 7.3 Error states
+### 6.3 Error states
 - **Error al cargar watchlist:** mensaje inline + botón reintentar
 - **Error al refrescar:** notificación toast/inline
 - **Error en comparativa:** mensaje inline en modal
 
-### 7.4 Animation & motion
-- Expansión inline de fila → suave, spring physics
-- Staggered reveal de elementos al cargar
-- Hover sutil en cards
-- Transiciones de estado sin saltos bruscos
-- Modal de comparativa → fade + scale
+### 6.4 Feedback de acciones
+- La expansión inline, la carga y la comparativa deben conservar el resultado de la acción y el contexto de la ruta.
+- La expresión visual y el motion se rigen por `DESIGN.md`.
 
 ---
 
-## 8. Acciones disponibles
+## 7. Acciones disponibles
 
 | Acción | Dónde | Tipo |
 |--------|-------|------|
@@ -246,7 +236,7 @@ Características:
 
 ---
 
-## 9. Nombres actualizados (i18n)
+## 8. Nombres actualizados (i18n)
 
 | Actual | Nuevo | Clave i18n |
 |--------|-------|------------|
@@ -258,65 +248,17 @@ Características:
 
 ---
 
-## 10. Estética y diseño visual
-
-### 10.1 Paleta
-- Mantener paleta actual de Viru (beige/sobria)
-- Beige base: `#F7F6F3` / `#FBFBFA`
-- Acentos: `#2E6E62` (verde Viru), `#D95D39` (terracota)
-- Neutros: zinc/slate suaves
-- Texto: off-black, nunca `#000000`
-
-### 10.2 Tipografía
-- Mantener tipografía actual del proyecto
-- Jerarquía clara: H1 (título página), H2 (título sección), body
-- Códigos IATA en weight semibold o bold para identificación rápida
-
-### 10.3 Espaciado
-- Scroll narrativo: secciones con padding vertical generoso (`py-16`+)
-- Whitespace como herramienta de jerarquía
-- Cards con padding interno amplio
-
-### 10.4 Toques editoriales
-- Flecha tipográfica `→` para rutas (ya implementado)
-- Códigos IATA como identificadores primarios
-- Fechas en formato legible
-- Precios con moneda, tabular-nums
-- Badges semánticos con color
-
-### 10.5 Lo que NO cambiar
-- No oscurecer la interfaz
-- No añadir gradientes ni glassmorphism
-- No cambiar el sistema de tokens actual
-- No añadir dependencias nuevas sin verificar en package.json
-
----
-
-## 11. Skills de diseño aplicables
-
-Skills cargadas que guiarán la implementación:
-
-| Skill | Aportación |
-|-------|------------|
-| `frontend-design` | Crear interfaz distintiva y de grado de producción, evitar estética AI genérica |
-| `design-taste-frontend` | Baseline: DESIGN_VARIANCE=8, MOTION_INTENSITY=6, VISUAL_DENSITY=4. Anti-patrones: no Inter, no purple, no cards-overuse |
-| `make-interfaces-feel-better` | Micro-interacciones: concentric border radius, scale on press, tabular-nums, interruptible animations, staggered reveals |
-| `high-end-visual-design` | Double-bezel architecture para cards premium, button-in-button, spatial rhythm |
-| `minimalist-ui` | Bento grids tipográficos, ultra-flat components, muted pastel accents |
-
----
-
-## 12. No incluido en este spec (fuera de scope)
+## 9. No incluido en este spec (fuera de scope)
 
 - Backend: no se tocan APIs, no se añaden endpoints
 - Nuevas features de producto (alertas avanzadas, recomendaciones, etc.)
 - Dashboard: es otra página con su propio spec
 - Quick search: es otro módulo independiente
-- Mobile responsive: se menciona pero no se detalla (aplica UI_VISUAL_QA_CHECKLIST)
+- La dirección visual general, los tokens, el motion y el QA transversal (aplican `DESIGN.md`).
 
 ---
 
-## 13. Definition of Done (DoD)
+## 10. Definition of Done (DoD)
 
 - [ ] Histórico es el bloque dominante arriba cuando hay ruta seleccionada
 - [ ] Sin ruta seleccionada → aviso claro en lugar de histórico vacío
