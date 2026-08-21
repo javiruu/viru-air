@@ -51,7 +51,11 @@ test("Watchlist renders three real ticket rows per page and keeps the compact ti
 
   assert.match(panelSource, /const WATCHLIST_PAGE_SIZE = 3;/);
   assert.match(panelSource, /smartListItems\.slice\(start, start \+ WATCHLIST_PAGE_SIZE\)/);
-  assert.match(screensSource, /\.watch-ticket-row\s*\{[\s\S]*?min-height:\s*11\.75rem;/);
+  assert.match(screensSource, /\.watch-ticket-row\s*\{[\s\S]*?min-height:\s*14\.15rem;/);
   assert.match(screensSource, /\.watch-ticket-pricing\s*\{[\s\S]*?border-top:\s*1px dashed var\(--watch-ticket-line\);/);
   assert.match(screensSource, /\.watch-ticket-stub\s*\{[\s\S]*?border-left:\s*1px dashed var\(--watch-ticket-line\);/);
+  assert.match(screensSource, /\.watch-ticket-art\s*\{[\s\S]*?pointer-events:\s*none;/);
+  assert.match(panelSource, /WatchRow/);
+  assert.match(fs.readFileSync(watchRowPath, "utf8"), /<ArrowRight className="watch-ticket-route-plane"/);
+  assert.doesNotMatch(fs.readFileSync(watchRowPath, "utf8"), /type="checkbox"/);
 });
