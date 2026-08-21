@@ -115,6 +115,13 @@ function QuickSearchDatePickerInner(props: Props) {
       outboundReady: "Salida elegida",
       returnReady: "Vuelta elegida",
       noPriceHint: "Sin datos de precio para este día",
+      stalePriceHint: "Referencia de precio anterior",
+      partialPriceHint: "Precio disponible con cobertura parcial",
+      providerTimeoutHint: "El proveedor tardó demasiado en responder",
+      providerUnavailableHint: "El proveedor no está disponible ahora",
+      currencyHint: "El precio recibido no se puede comparar en esta moneda",
+      limitedCoverageHint: "Cobertura limitada para este día",
+      referenceHint: "Precio disponible sin referencia suficiente para colorearlo",
       countryEstimateMixed: "Estimación país",
       countryEstimateCountryCountry: "Estimación país-país",
       enableMultiple: "Seleccionar varios días",
@@ -134,6 +141,13 @@ function QuickSearchDatePickerInner(props: Props) {
       outboundReady: "Outbound selected",
       returnReady: "Return selected",
       noPriceHint: "No fare data for this day",
+      stalePriceHint: "Earlier price reference",
+      partialPriceHint: "Price available with partial coverage",
+      providerTimeoutHint: "The provider took too long to respond",
+      providerUnavailableHint: "The provider is unavailable right now",
+      currencyHint: "This price cannot be compared in the selected currency",
+      limitedCoverageHint: "Limited coverage for this day",
+      referenceHint: "Price is available but needs more reference data for a color",
       countryEstimateMixed: "Country estimate",
       countryEstimateCountryCountry: "Country-country estimate",
       enableMultiple: "Select multiple days",
@@ -144,6 +158,21 @@ function QuickSearchDatePickerInner(props: Props) {
   const countryEstimateLabel = props.hintScopeMode === "country_country"
     ? locale.countryEstimateCountryCountry
     : locale.countryEstimateMixed;
+  const calendarHintLabel = (
+    reason: string | null | undefined,
+    hasPrice: boolean,
+    dataQuality: QuickSearchCalendarDayHint["data_quality"],
+  ): string => {
+    if (reason === "stale_reference") return locale.stalePriceHint;
+    if (dataQuality === "stale") return locale.stalePriceHint;
+    if (dataQuality === "partial" && hasPrice) return locale.partialPriceHint;
+    if (reason === "provider_timeout") return locale.providerTimeoutHint;
+    if (reason === "provider_unavailable") return locale.providerUnavailableHint;
+    if (reason === "incompatible_currency") return locale.currencyHint;
+    if (reason === "coverage_limited") return locale.limitedCoverageHint;
+    if (reason === "insufficient_reference" && hasPrice) return locale.referenceHint;
+    return locale.noPriceHint;
+  };
 
   const selectedDate = useMemo(() => parseIsoDate(props.value), [props.value]);
   const selectedDates = useMemo(
@@ -347,8 +376,18 @@ function QuickSearchDatePickerInner(props: Props) {
             {calendarDays.map((day) => (
               (() => {
                 const hint = day.inMonth ? props.dayHintsByIso?.[day.iso] : undefined;
-                const noData = Boolean(hint && hint.bucket === "none");
+                const noData = Boolean(hint && hint.min_price === null);
+                const qualityMarker = Boolean(
+                  hint
+                  && hint.min_price !== null
+                  && (hint.bucket === "none" || hint.data_quality === "partial" || hint.data_quality === "stale"),
+                );
                 const hintClass = hint && hint.bucket !== "none" ? `hint-${hint.bucket}` : "";
+                const hintLabel = calendarHintLabel(
+                  hint?.no_data_reason,
+                  Boolean(hint?.min_price !== null),
+                  hint?.data_quality,
+                );
                 const loadingClass = props.hintsLoading && day.inMonth && !day.isDisabled ? "is-hints-loading" : "";
                 return (
                   <button
@@ -363,6 +402,7 @@ function QuickSearchDatePickerInner(props: Props) {
                       day.isDisabled ? "is-disabled" : "",
                       hintClass,
                       noData ? "is-no-price-data" : "",
+                      qualityMarker ? "is-price-quality-data" : "",
                       loadingClass,
                     ].filter(Boolean).join(" ")}
                     disabled={day.isDisabled}
@@ -382,15 +422,17 @@ function QuickSearchDatePickerInner(props: Props) {
                     }}
                   >
                     <span className="qs-date-day__number">{day.date.getDate()}</span>
-                    {noData ? (
+                    {noData || qualityMarker ? (
                       <span className="qs-date-day__no-price" aria-hidden="true">
                         <span className="qs-date-day__no-price-icon">
-                          <svg viewBox="0 0 20 20" role="img" aria-hidden="true">
-                            <circle cx="10" cy="10" r="7.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
-                            <path d="M6 14 14 6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                          </svg>
+                          {qualityMarker ? "~" : (
+                            <svg viewBox="0 0 20 20" role="img" aria-hidden="true">
+                              <circle cx="10" cy="10" r="7.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
+                              <path d="M6 14 14 6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                            </svg>
+                          )}
                         </span>
-                        <span className="qs-date-day__no-price-tooltip">{locale.noPriceHint}</span>
+                        <span className={qualityMarker ? "qs-date-day__quality-marker qs-date-day__no-price-tooltip" : "qs-date-day__no-price-tooltip"}>{hintLabel}</span>
                       </span>
                     ) : null}
                   </button>

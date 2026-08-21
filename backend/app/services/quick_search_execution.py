@@ -221,6 +221,8 @@ def execute_plan(
     provider_singleflight_avoided_calls = 0
     timed_out_units_count = 0
     provider_failures = 0
+    timed_out_dates: set[str] = set()
+    failed_dates: set[str] = set()
     provider_stats: dict[str, dict[str, Any]] = {}
     structured_warning_events: list[ProviderWarning] = []
 
@@ -255,8 +257,10 @@ def execute_plan(
                     provider_calls += 1
                     cache_misses += 1
                 warnings.extend(fetch_result.warnings)
+                warning_codes = set(fetch_result.warnings)
                 for warning_event in fetch_result.warnings_structured or []:
                     structured_warning_events.append(warning_event)
+                    warning_codes.add(warning_event.code)
                     stats = provider_stats.setdefault(
                         warning_event.provider,
                         {"id": warning_event.provider, "errors": 0, "timeouts": 0, "results_count": 0, "status": "ok"},
@@ -270,6 +274,14 @@ def execute_plan(
                     }:
                         stats["errors"] += 1
                         stats["status"] = "degraded"
+                if warning_codes & {"provider_timeout_partial", "provider_timeout_parcial"}:
+                    timed_out_dates.add(unit.travel_date.isoformat())
+                if warning_codes & {
+                    "provider_error_partial",
+                    "provider_total_outage",
+                    "ryanair_unavailable_parcial",
+                }:
+                    failed_dates.add(unit.travel_date.isoformat())
                 for flight in fetch_result.flights:
                     combined.append((unit.origin_iata, unit.destination_iata, unit.travel_date, flight))
                     source_provider = (flight.source or "").split("-")[0]
@@ -281,6 +293,7 @@ def execute_plan(
                         stats["results_count"] += 1
             except ProviderSourceFetchError as exc:
                 provider_failures += 1
+                failed_dates.add(unit.travel_date.isoformat())
                 warnings.extend(exc.warning_codes)
                 provider_key = exc.provider_id or "unknown"
                 stats = provider_stats.setdefault(
@@ -293,8 +306,10 @@ def execute_plan(
                 provider_failures += 1
                 if "timeout" in str(exc).lower():
                     timed_out_units_count += 1
+                    timed_out_dates.add(unit.travel_date.isoformat())
                     warnings.append("provider_timeout_parcial")
                 else:
+                    failed_dates.add(unit.travel_date.isoformat())
                     warnings.append("ryanair_unavailable_parcial")
 
     meta = {
@@ -309,7 +324,9 @@ def execute_plan(
         "l2_cache_hits": l2_cache_hits,
         "negative_cache_hits": negative_cache_hits,
         "timed_out_units_count": timed_out_units_count,
+        "timed_out_dates": sorted(timed_out_dates),
         "provider_failures": provider_failures,
+        "failed_dates": sorted(failed_dates),
         "concurrency_limit": concurrency,
         "timeout_ms": timeout_ms,
         "waves": plan.waves,

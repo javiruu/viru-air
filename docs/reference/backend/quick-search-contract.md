@@ -369,8 +369,11 @@ Fast monthly endpoint for `/quick-search` datepicker heat hints.
   "destination_iata": "DUB",
   "month": "2030-06",
   "adults": 1,
+  "currency": "EUR",
+  "leg": "outbound",
+  "cabin": "economy",
   "aggregation_mode": "min",
-  "bucket_mode": "monthly_terciles"
+  "bucket_mode": "contextual"
 }
 ```
 
@@ -401,13 +404,17 @@ Country scope request (mixed or both sides):
       "date": "2030-06-05",
       "min_price": 60.0,
       "bucket": "low",
-      "no_data_reason": null
+      "data_quality": "available",
+      "no_data_reason": null,
+      "reference_sample_size": 8
     },
     {
       "date": "2030-06-20",
       "min_price": null,
       "bucket": "none",
-      "no_data_reason": "no_fare_data"
+      "data_quality": "unavailable",
+      "no_data_reason": "provider_timeout",
+      "reference_sample_size": 8
     }
   ],
   "meta": {
@@ -429,12 +436,37 @@ Country scope request (mixed or both sides):
       "low_max": 90.0,
       "mid_max": 150.0,
       "currency": "EUR"
+    },
+    "classification": {
+      "mode": "guidelines",
+      "reference_sample_size": 8,
+      "reference_window_days": 30
+    },
+    "quality": {
+      "invalid_price_count": 0,
+      "travel_date_mismatch_count": 0,
+      "currency_excluded_count": 0,
+      "classification_without_reference_count": 0,
+      "provider_failure_count": 0
+    },
+    "coverage": {
+      "days_total": 30,
+      "days_priced": 18,
+      "days_reused": 4,
+      "days_stale": 1,
+      "days_unavailable": 11
     }
   }
 }
 ```
 
 ### Bucket semantics
+- `bucket_mode=contextual` (default): classifies a usable price against recent,
+  validated and complete comparable observations for the same scoped route, leg, passengers, cabin,
+  target currency, providers and aggregation mode. The reference uses the
+  median with a 15% robust band: below is `low`, inside is `mid`, and above is
+  `high`. At least five comparable observations are required; otherwise the
+  price is returned with `bucket=none` and `no_data_reason=insufficient_reference`.
 - `bucket_mode=monthly_terciles`:
   - `low`: cheaper third of priced days in the month.
   - `mid`: middle third of priced days.
@@ -443,7 +475,29 @@ Country scope request (mixed or both sides):
   - `low`: `price <= low_max`
   - `mid`: `price > low_max` and `price <= mid_max`
   - `high`: `price > mid_max`
-- `none`: day without usable fare data.
+- `none`: no color can be assigned. It can mean an unclassified usable price or
+  a day without a usable fare; clients must use `data_quality` and
+  `no_data_reason` to distinguish them.
+
+### Data quality and currencies
+- `currency` accepts `EUR`, `USD` or `GBP` and defaults to `EUR`. Every provider
+  price is normalized to this target before the daily aggregation; unsupported
+  currencies are excluded rather than compared numerically.
+- `leg` is `outbound` by default and can be `return`. Calendar prices are for
+  that selected leg only, never an implicit round-trip total.
+- `cabin` currently accepts only `economy`, because the configured provider
+  request does not yet support cabin-specific availability. It remains an
+  explicit fingerprint dimension to prevent future fare-family mixing.
+- `data_quality` is one of `available`, `partial`, `stale` or `unavailable`.
+- `no_data_reason` can be `insufficient_reference`, `stale_reference`,
+  `no_fare_data`, `provider_timeout`, `provider_unavailable`,
+  `incompatible_currency` or `coverage_limited`.
+- A `stale` day keeps the last compatible observed price but never receives a
+  color. A fresh provider price found during a partially completed query is
+  returned as `partial`.
+- Provider offers with a different travel date, invalid, non-finite or
+  non-positive price are discarded. Aggregate quality counters expose those
+  exclusions without conflating them with absent fares.
 
 ### Scope and aggregation notes
 - `origin_iata` and `destination_iata` accept a single IATA (`string`) or a seed pool (`string[]`).
@@ -457,7 +511,8 @@ Country scope request (mixed or both sides):
   - `fixed_route`: day price from a single recommended route.
 - For `scope_mode=iata`, backend keeps simple route behavior and treats aggregation effectively as `min`.
 - `bucket_mode`:
-  - `monthly_terciles` (default)
+  - `contextual` (default)
+  - `monthly_terciles` (legacy explicit mode)
   - `guidelines`
 - `guideline_thresholds` is optional but required in practice for deterministic custom guideline behavior:
   - `{ low_max, mid_max, currency }`
@@ -473,10 +528,33 @@ Country scope request (mixed or both sides):
 - Default value: `min`.
 - This preference is consumed by quick-search calendar hints when at least one side is country scope.
 - Added fields:
-  - `calendar_hint_bucket_mode_default`: `monthly_terciles|guidelines` (default `monthly_terciles`)
+- `calendar_hint_bucket_mode_default`: `contextual|monthly_terciles|guidelines` (default `contextual`)
   - `calendar_hint_guideline_low_max_default`: number (default `90`)
   - `calendar_hint_guideline_mid_max_default`: number (default `150`, must be greater than `low`)
 - Guideline thresholds are stored in `preferred_currency` and converted when that currency is changed through this endpoint.
+- Migration `0061` converts the prior implicit `monthly_terciles` default to
+  `contextual`, and aligns the raw database default. A user can still
+  deliberately select monthly terciles or fixed guidelines after migration.
+
+### Persistence, coverage and observability
+- `calendar_price_observation` stores additive, normalized calendar observations
+  separately from fare snapshots. Its fingerprints include scope, travel date,
+  leg, passengers, cabin, target currency, provider set and aggregation mode.
+- Its persisted scope signature is hashed, and retention prunes only observations
+  outside the 30-day contextual window through the expiry index. Partial observations
+  remain transparent in the daily result but never create the contextual baseline.
+- Recent compatible observations and provider cache are reused before new calls.
+  Broad scopes rank initial routes and reserve two further routes to rescue days
+  without coverage while retaining the existing concurrency and request budgets.
+- The endpoint exposes aggregate coverage through `meta.coverage` and execution
+  reuse/call counts through `meta.execution`. `meta.quality` reports invalid
+  prices, date mismatches, excluded currencies, provider failures and days that
+  could not be classified for lack of a reference. The absence of a contextual
+  reference is explicit in each day instead of being represented as a false color.
+- During a rolling deployment before migration `0061` is present, the endpoint
+  continues without persisted calendar observations and reports
+  `meta.calendar_observations_available=false`; it never returns a 500 merely
+  because the additive table is not available yet.
 
 ## Quick-search seed catalog
 - `GET /api/v1/airports/seeds` is the canonical source for seed airports allowed by quick-search UI.

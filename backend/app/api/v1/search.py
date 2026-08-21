@@ -15,6 +15,7 @@ from typing import Any, Callable, Literal
 
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, Query
 from sqlalchemy import select
+from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlalchemy.orm import Session
 
 from app.core.errors import ApiError, message_for_code
@@ -81,6 +82,16 @@ from app.services.fare_memory import build_freshness_payload, build_search_finge
 from app.services.fare_memory_provider_observations import ObservationPersistenceContext, persist_provider_flight_observations
 from app.services.quick_search_save_result_observation import handle_saved_result_observation
 from app.services.live_flight_tracking import replace_watch_tracked_legs
+from app.services.calendar_price_intelligence import (
+    CalendarComparableObservation,
+    build_calendar_query_fingerprint,
+    build_calendar_reference_fingerprint,
+    classify_contextual_price,
+    convert_calendar_price,
+    load_fresh_calendar_reference,
+    load_latest_calendar_days,
+    record_calendar_prices,
+)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -91,7 +102,7 @@ QUICK_SEARCH_SHARED_CACHE_ENABLED = os.getenv("QUICK_SEARCH_SHARED_CACHE_ENABLED
 CALENDAR_HINTS_CACHE_TTL_SECONDS = 600
 CALENDAR_HINTS_CACHE_MAX_SIZE = 500
 _CALENDAR_HINTS_CACHE_LOCK = threading.Lock()
-_CALENDAR_HINTS_CACHE: dict[tuple[str, str, int, str, str, str, str], tuple[float, dict[str, Any]]] = {}
+_CALENDAR_HINTS_CACHE: dict[tuple[str, ...], tuple[float, dict[str, Any]]] = {}
 CALENDAR_HINTS_GUIDELINE_DEFAULT_LOW_MAX = 90.0
 CALENDAR_HINTS_GUIDELINE_DEFAULT_MID_MAX = 150.0
 
@@ -721,8 +732,11 @@ class QuickSearchCalendarHintsIn(BaseModel):
     destination_iata: str | list[str]
     month: str = Field(pattern=r"^\d{4}-\d{2}$")
     adults: int = Field(default=1, ge=1, le=9)
+    currency: Literal["EUR", "USD", "GBP"] = "EUR"
+    leg: Literal["outbound", "return"] = "outbound"
+    cabin: Literal["economy"] = "economy"
     aggregation_mode: Literal["min", "median", "fixed_route"] = "min"
-    bucket_mode: Literal["monthly_terciles", "guidelines"] = "monthly_terciles"
+    bucket_mode: Literal["contextual", "monthly_terciles", "guidelines"] = "contextual"
     guideline_thresholds: QuickSearchGuidelineThresholdsIn | None = None
 
     @field_validator("origin_iata", "destination_iata", mode="before")
@@ -822,36 +836,43 @@ def _bucketize_day_prices_guidelines(
     return buckets
 
 
-def _resolve_guideline_thresholds(payload: QuickSearchCalendarHintsIn) -> dict[str, Any] | None:
+def _resolve_guideline_thresholds(
+    payload: QuickSearchCalendarHintsIn,
+    *,
+    target_currency: str,
+) -> dict[str, Any] | None:
     if payload.bucket_mode != "guidelines":
         return None
     thresholds = payload.guideline_thresholds
     if thresholds is None:
-        return {
-            "low_max": CALENDAR_HINTS_GUIDELINE_DEFAULT_LOW_MAX,
-            "mid_max": CALENDAR_HINTS_GUIDELINE_DEFAULT_MID_MAX,
-            "currency": "EUR",
-        }
-    low_max = float(thresholds.low_max)
-    mid_max = float(thresholds.mid_max)
+        low_max = CALENDAR_HINTS_GUIDELINE_DEFAULT_LOW_MAX
+        mid_max = CALENDAR_HINTS_GUIDELINE_DEFAULT_MID_MAX
+        currency = "EUR"
+    else:
+        low_max = float(thresholds.low_max)
+        mid_max = float(thresholds.mid_max)
+        currency = str(thresholds.currency).strip().upper()
     if low_max < 0:
         low_max = 0.0
     if mid_max <= low_max:
         mid_max = max(low_max + 1.0, CALENDAR_HINTS_GUIDELINE_DEFAULT_MID_MAX)
-    currency = str(thresholds.currency).strip().upper()
     if currency not in {"EUR", "USD", "GBP"}:
         currency = "EUR"
+    normalized_low_max = convert_calendar_price(low_max, currency, target_currency)
+    normalized_mid_max = convert_calendar_price(mid_max, currency, target_currency)
+    if normalized_low_max is None or normalized_mid_max is None:
+        return None
     return {
-        "low_max": round(low_max, 2),
-        "mid_max": round(mid_max, 2),
-        "currency": currency,
+        "low_max": normalized_low_max,
+        "mid_max": normalized_mid_max,
+        "currency": target_currency,
     }
 
 
 def _bucketize_day_prices_by_mode(
     day_min_prices: dict[dt.date, float],
     *,
-    bucket_mode: Literal["monthly_terciles", "guidelines"],
+    bucket_mode: Literal["contextual", "monthly_terciles", "guidelines"],
     guideline_thresholds: dict[str, Any] | None,
 ) -> dict[dt.date, str]:
     if bucket_mode == "guidelines" and guideline_thresholds:
@@ -898,6 +919,10 @@ def _build_calendar_scope_signature(origin_pool: list[str], destination_pool: li
     return f"o:{origin_key}|d:{destination_key}"
 
 
+def _calendar_observation_route_signature(scope_signature: str) -> str:
+    return hashlib.sha256(scope_signature.encode("utf-8")).hexdigest()
+
+
 def _prioritize_iata_pool(pool: list[str], *, max_size: int) -> list[str]:
     unique = list(dict.fromkeys(pool))
 
@@ -941,23 +966,49 @@ def _to_scope_candidates(pool: list[str], side: str) -> list[ExpandedAirportCand
 
 def _build_pair_day_prices(
     rows: list[tuple[str, str, dt.date, Any]],
-) -> tuple[dict[tuple[str, str], dict[dt.date, float]], str]:
+    *,
+    target_currency: str,
+) -> tuple[dict[tuple[str, str], dict[dt.date, float]], dict[str, int], dict[dt.date, dict[str, int]]]:
     pair_prices: dict[tuple[str, str], dict[dt.date, float]] = {}
-    response_currency = "EUR"
+    quality_counters = {
+        "invalid_price_count": 0,
+        "travel_date_mismatch_count": 0,
+        "currency_excluded_count": 0,
+    }
+    quality_by_day: dict[dt.date, dict[str, int]] = {}
+
+    def increment_quality(day: dt.date, key: str) -> None:
+        quality_counters[key] += 1
+        day_counters = quality_by_day.setdefault(day, {
+            "invalid_price_count": 0,
+            "travel_date_mismatch_count": 0,
+            "currency_excluded_count": 0,
+        })
+        day_counters[key] += 1
+
     for origin_iata, destination_iata, travel_date, flight in rows:
-        response_currency = str(flight.currency or response_currency).upper()
+        flight_travel_date = getattr(flight, "travel_date", None)
+        if flight_travel_date is not None and str(flight_travel_date) != travel_date.isoformat():
+            increment_quality(travel_date, "travel_date_mismatch_count")
+            continue
         pair_key = (origin_iata, destination_iata)
         by_day = pair_prices.setdefault(pair_key, {})
         try:
             price = float(flight.price)
         except (TypeError, ValueError):
+            increment_quality(travel_date, "invalid_price_count")
             continue
-        if not math.isfinite(price):
+        if not math.isfinite(price) or price <= 0:
+            increment_quality(travel_date, "invalid_price_count")
+            continue
+        normalized_price = convert_calendar_price(price, str(flight.currency or ""), target_currency)
+        if normalized_price is None:
+            increment_quality(travel_date, "currency_excluded_count")
             continue
         current = by_day.get(travel_date)
-        if current is None or price < current:
-            by_day[travel_date] = price
-    return pair_prices, response_currency
+        if current is None or normalized_price < current:
+            by_day[travel_date] = normalized_price
+    return pair_prices, quality_counters, quality_by_day
 
 
 def _rank_pairs_adaptive(
@@ -1057,7 +1108,7 @@ def _to_pair_plan_items(pairs: list[tuple[str, str]]) -> list[PairPlanItem]:
     return items
 
 
-def _calendar_hints_cache_get(cache_key: tuple[str, str, int, str, str, str, str]) -> dict[str, Any] | None:
+def _calendar_hints_cache_get(cache_key: tuple[str, ...]) -> dict[str, Any] | None:
     now = time.time()
     with _CALENDAR_HINTS_CACHE_LOCK:
         cached = _CALENDAR_HINTS_CACHE.get(cache_key)
@@ -1070,7 +1121,7 @@ def _calendar_hints_cache_get(cache_key: tuple[str, str, int, str, str, str, str
         return payload
 
 
-def _calendar_hints_cache_set(cache_key: tuple[str, str, int, str, str, str, str], payload: dict[str, Any]) -> None:
+def _calendar_hints_cache_set(cache_key: tuple[str, ...], payload: dict[str, Any]) -> None:
     with _CALENDAR_HINTS_CACHE_LOCK:
         # Evict oldest entries (FIFO) if at capacity
         while len(_CALENDAR_HINTS_CACHE) >= CALENDAR_HINTS_CACHE_MAX_SIZE:
@@ -1640,13 +1691,16 @@ def quick_search_calendar_hints(
     origin_pool = _normalize_calendar_hint_iata_pool(payload.origin_iata)
     destination_pool = _normalize_calendar_hint_iata_pool(payload.destination_iata)
     scope_mode = _resolve_calendar_scope_mode(origin_pool, destination_pool)
-    bucket_mode_effective: Literal["monthly_terciles", "guidelines"] = payload.bucket_mode
-    guideline_thresholds_effective = _resolve_guideline_thresholds(payload)
+    bucket_mode_effective: Literal["contextual", "monthly_terciles", "guidelines"] = payload.bucket_mode
+    cache_currency = payload.currency
+    guideline_thresholds_effective = _resolve_guideline_thresholds(
+        payload,
+        target_currency=cache_currency,
+    )
     aggregation_mode_effective: Literal["min", "median", "fixed_route"] = (
         "min" if scope_mode == "iata" else payload.aggregation_mode
     )
 
-    cache_currency = "EUR"
     cache_scope_signature = _build_calendar_scope_signature(origin_pool, destination_pool)
     cache_bucket_signature = (
         f"{bucket_mode_effective}:{_stable_json_dumps(guideline_thresholds_effective)}"
@@ -1668,6 +1722,8 @@ def quick_search_calendar_hints(
         aggregation_mode_effective,
         cache_bucket_signature,
         provider_cache_id,
+        payload.leg,
+        payload.cabin.strip().lower(),
     )
     cached_payload = _calendar_hints_cache_get(cache_key)
     if cached_payload:
@@ -1676,6 +1732,56 @@ def quick_search_calendar_hints(
         cached_meta["cache_hit"] = True
         cached_copy["meta"] = cached_meta
         return cached_copy
+
+    origin_scope = tuple(origin_pool)
+    destination_scope = tuple(destination_pool)
+    provider_scope = tuple(provider_ids)
+    reference_fingerprint = build_calendar_reference_fingerprint(
+        origin_scope=origin_scope,
+        destination_scope=destination_scope,
+        leg=payload.leg,
+        adults=payload.adults,
+        currency=cache_currency,
+        provider_set=provider_scope,
+        aggregation_mode=aggregation_mode_effective,
+        cabin=payload.cabin,
+    )
+    query_fingerprints = {
+        day: build_calendar_query_fingerprint(
+            origin_scope=origin_scope,
+            destination_scope=destination_scope,
+            travel_date=day,
+            leg=payload.leg,
+            adults=payload.adults,
+            currency=cache_currency,
+            provider_set=provider_scope,
+            aggregation_mode=aggregation_mode_effective,
+            cabin=payload.cabin,
+        )
+        for day in month_dates
+    }
+    now = utc_now_naive()
+    calendar_observations_available = True
+    try:
+        historical_reference = load_fresh_calendar_reference(
+            db,
+            reference_fingerprint=reference_fingerprint,
+            now=now,
+        )
+        latest_known_by_day = load_latest_calendar_days(db, query_fingerprints=query_fingerprints)
+    except (OperationalError, ProgrammingError):
+        db.rollback()
+        logger.warning("calendar_observations_unavailable")
+        historical_reference = []
+        latest_known_by_day = {}
+        calendar_observations_available = False
+    reused_fresh_observations = {
+        day: stored
+        for day, stored in latest_known_by_day.items()
+        if stored.freshness_status == "fresh" and stored.expires_at is not None and stored.expires_at > now
+    }
+    reused_fresh_prices = {day: stored.price for day, stored in reused_fresh_observations.items()}
+    provider_days = [day for day in month_dates if day not in reused_fresh_prices]
 
     prioritized_origin_pool = _prioritize_iata_pool(origin_pool, max_size=12 if len(origin_pool) > 1 else 1)
     prioritized_destination_pool = _prioritize_iata_pool(
@@ -1694,14 +1800,20 @@ def quick_search_calendar_hints(
         raise HTTPException(status_code=422, detail="calendar_hints_scope_has_no_valid_pairs")
 
     anchor_pair_prices_by_day: dict[tuple[str, str], dict[dt.date, float]] = {}
-    anchor_currency = "EUR"
     anchor_execution_meta: dict[str, Any] = {}
-    anchor_warnings: list[dict[str, Any]] = []
+    anchor_warnings: list[str] = []
+    anchor_quality_counters = {
+        "invalid_price_count": 0,
+        "travel_date_mismatch_count": 0,
+        "currency_excluded_count": 0,
+    }
+    anchor_quality_by_day: dict[dt.date, dict[str, int]] = {}
+    ranked_pairs = candidate_pairs
     if scope_mode == "iata":
         ranked_origin_pool = prioritized_origin_pool[:1]
         ranked_destination_pool = prioritized_destination_pool[:1]
         selected_pairs = candidate_pairs[:1]
-    else:
+    elif provider_days:
         anchor_dates = _pick_calendar_anchor_dates(month_dates)
         anchor_pair_cap = min(24, len(candidate_pairs))
         anchor_planned_pairs, _anchor_pair_meta = build_pair_plan(
@@ -1734,7 +1846,10 @@ def quick_search_calendar_hints(
             provider_singleflight_release=cache_callbacks.provider_singleflight_release,
             cache_provider_id=provider_cache_id,
         )
-        anchor_pair_prices_by_day, anchor_currency = _build_pair_day_prices(anchor_rows)
+        anchor_pair_prices_by_day, anchor_quality_counters, anchor_quality_by_day = _build_pair_day_prices(
+            anchor_rows,
+            target_currency=cache_currency,
+        )
         origin_ranked_adaptive = _rank_airport_pool_adaptive(
             prioritized_origin_pool,
             side="origin",
@@ -1748,12 +1863,12 @@ def quick_search_calendar_hints(
         ranked_origin_pool = _combine_ranked_pool(
             prioritized_origin_pool,
             origin_ranked_adaptive,
-            limit=6,
+            limit=8,
         )
         ranked_destination_pool = _combine_ranked_pool(
             prioritized_destination_pool,
             destination_ranked_adaptive,
-            limit=6,
+            limit=8,
         )
         ranked_candidate_pairs = [
             (origin_iata, destination_iata)
@@ -1764,13 +1879,25 @@ def quick_search_calendar_hints(
         if not ranked_candidate_pairs:
             ranked_candidate_pairs = candidate_pairs[:1]
         ranked_pairs = _rank_pairs_adaptive(ranked_candidate_pairs, anchor_pair_prices_by_day)
-        route_cap = 1 if aggregation_mode_effective == "fixed_route" else min(8, len(ranked_pairs))
+        route_cap = 1 if aggregation_mode_effective == "fixed_route" else min(6, len(ranked_pairs))
+        selected_pairs = ranked_pairs[: max(1, route_cap)]
+
+    else:
+        ranked_origin_pool = prioritized_origin_pool[:8]
+        ranked_destination_pool = prioritized_destination_pool[:8]
+        ranked_pairs = [
+            (origin_iata, destination_iata)
+            for origin_iata in ranked_origin_pool
+            for destination_iata in ranked_destination_pool
+            if origin_iata != destination_iata
+        ]
+        route_cap = 1 if aggregation_mode_effective == "fixed_route" else min(6, len(ranked_pairs))
         selected_pairs = ranked_pairs[: max(1, route_cap)]
 
     full_month_execution_plan = build_execution_plan(
         _to_pair_plan_items(selected_pairs),
-        month_dates,
-        max_requests=max(1, len(selected_pairs) * max(1, len(month_dates))),
+        provider_days,
+        max_requests=max(1, len(selected_pairs) * max(1, len(provider_days))),
     )
     full_rows, full_execution_meta, full_warnings = execute_plan(
         full_month_execution_plan,
@@ -1790,52 +1917,235 @@ def quick_search_calendar_hints(
         provider_singleflight_release=cache_callbacks.provider_singleflight_release,
         cache_provider_id=provider_cache_id,
     )
-    pair_prices_by_day, response_currency = _build_pair_day_prices(full_rows)
+    pair_prices_by_day, full_quality_counters, full_quality_by_day = _build_pair_day_prices(
+        full_rows,
+        target_currency=cache_currency,
+    )
     day_aggregated_prices = _aggregate_day_prices(
         selected_pairs,
         pair_prices_by_day,
         month_dates,
         aggregation_mode_effective,
     )
+    newly_observed_prices = dict(day_aggregated_prices)
+    day_aggregated_prices = {**reused_fresh_prices, **day_aggregated_prices}
 
-    bucket_by_day = _bucketize_day_prices_by_mode(
-        day_aggregated_prices,
-        bucket_mode=bucket_mode_effective,
-        guideline_thresholds=guideline_thresholds_effective,
+    rescue_execution_meta: dict[str, Any] = {}
+    rescue_warnings: list[str] = []
+    rescue_quality_counters = {
+        "invalid_price_count": 0,
+        "travel_date_mismatch_count": 0,
+        "currency_excluded_count": 0,
+    }
+    rescue_quality_by_day: dict[dt.date, dict[str, int]] = {}
+    rescue_candidates: list[tuple[str, str]] = []
+    if scope_mode != "iata" and aggregation_mode_effective != "fixed_route":
+        missing_days = [day for day in month_dates if day not in day_aggregated_prices]
+        rescue_candidates = [pair for pair in ranked_pairs if pair not in selected_pairs]
+        rescue_pairs = rescue_candidates[:2]
+        if missing_days and rescue_pairs:
+            rescue_plan = build_execution_plan(
+                _to_pair_plan_items(rescue_pairs),
+                missing_days,
+                max_requests=len(rescue_pairs) * len(missing_days),
+            )
+            rescue_rows, rescue_execution_meta, rescue_warnings = execute_plan(
+                rescue_plan,
+                concurrency_limit=3,
+                timeout_ms=6000,
+                fetch_flights=lambda origin, destination, travel_date, timeout_ms: request_provider.get_flights(
+                    origin,
+                    destination,
+                    travel_date,
+                    timeout_ms,
+                ),
+                shared_cache_get=cache_callbacks.shared_cache_get,
+                shared_cache_set=cache_callbacks.shared_cache_set,
+                negative_cache_get=cache_callbacks.negative_cache_get,
+                negative_cache_set=cache_callbacks.negative_cache_set,
+                provider_singleflight_acquire=cache_callbacks.provider_singleflight_acquire,
+                provider_singleflight_release=cache_callbacks.provider_singleflight_release,
+                cache_provider_id=provider_cache_id,
+            )
+            rescue_pair_prices, rescue_quality_counters, rescue_quality_by_day = _build_pair_day_prices(
+                rescue_rows,
+                target_currency=cache_currency,
+            )
+            pair_prices_by_day.update(rescue_pair_prices)
+            selected_pairs.extend(rescue_pairs)
+            rescued_prices = _aggregate_day_prices(
+                selected_pairs,
+                pair_prices_by_day,
+                month_dates,
+                aggregation_mode_effective,
+            )
+            newly_observed_prices.update(rescued_prices)
+            day_aggregated_prices = {**reused_fresh_prices, **rescued_prices}
+
+    currency_excluded_days = {
+        day
+        for quality_by_day in (anchor_quality_by_day, full_quality_by_day, rescue_quality_by_day)
+        for day, counters in quality_by_day.items()
+        if counters["currency_excluded_count"] > 0
+    }
+    timed_out_days = {
+        dt.date.fromisoformat(day)
+        for execution_meta in (anchor_execution_meta, full_execution_meta, rescue_execution_meta)
+        for day in execution_meta.get("timed_out_dates", [])
+    }
+    provider_failed_days = {
+        dt.date.fromisoformat(day)
+        for execution_meta in (anchor_execution_meta, full_execution_meta, rescue_execution_meta)
+        for day in execution_meta.get("failed_dates", [])
+    }
+    incomplete_current_days = currency_excluded_days | timed_out_days | provider_failed_days
+    reference_by_day = {
+        observation.travel_date: observation
+        for observation in historical_reference
+        if observation.travel_date is not None
+    }
+    reference_by_day.update(
+        {
+            day: CalendarComparableObservation(price=price, observed_at=now, travel_date=day)
+            for day, price in day_aggregated_prices.items()
+            if day not in incomplete_current_days
+            and (
+                day not in reused_fresh_observations
+                or reused_fresh_observations[day].coverage_status == "available"
+            )
+        }
+    )
+    reference_observations = list(reference_by_day.values())
+    contextual_classifications = {
+        day: classify_contextual_price(price, reference_observations)
+        for day, price in day_aggregated_prices.items()
+    }
+    if bucket_mode_effective == "contextual":
+        bucket_by_day = {
+            day: classification.bucket
+            for day, classification in contextual_classifications.items()
+            if classification.bucket is not None
+        }
+    else:
+        bucket_by_day = _bucketize_day_prices_by_mode(
+            day_aggregated_prices,
+            bucket_mode=bucket_mode_effective,
+            guideline_thresholds=guideline_thresholds_effective,
+        )
+
+    all_quality_counters = {
+        key: anchor_quality_counters[key] + full_quality_counters[key] + rescue_quality_counters[key]
+        for key in full_quality_counters
+    }
+    partial = (
+        bool(anchor_warnings or full_warnings or rescue_warnings)
+        or int(anchor_execution_meta.get("provider_failures", 0)) > 0
+        or int(anchor_execution_meta.get("timed_out_units_count", 0)) > 0
+        or int(full_execution_meta.get("provider_failures", 0)) > 0
+        or int(full_execution_meta.get("timed_out_units_count", 0)) > 0
+        or int(rescue_execution_meta.get("provider_failures", 0)) > 0
+        or int(rescue_execution_meta.get("timed_out_units_count", 0)) > 0
     )
     days_payload: list[dict[str, Any]] = []
     for day in month_dates:
         min_price = day_aggregated_prices.get(day)
         if min_price is None:
+            stored_price = latest_known_by_day.get(day)
+            if stored_price is not None:
+                days_payload.append(
+                    {
+                        "date": day.isoformat(),
+                        "min_price": round(stored_price.price, 2),
+                        "bucket": "none",
+                        "data_quality": "stale",
+                        "no_data_reason": "stale_reference",
+                        "reference_sample_size": len(reference_observations),
+                    }
+                )
+                continue
+            no_data_reason = "no_fare_data"
+            if day in currency_excluded_days:
+                no_data_reason = "incompatible_currency"
+            elif day in timed_out_days:
+                no_data_reason = "provider_timeout"
+            elif day in provider_failed_days:
+                no_data_reason = "provider_unavailable"
+            elif rescue_candidates[2:]:
+                no_data_reason = "coverage_limited"
             days_payload.append(
                 {
                     "date": day.isoformat(),
                     "min_price": None,
                     "bucket": "none",
-                    "no_data_reason": "no_fare_data",
+                    "data_quality": "unavailable",
+                    "no_data_reason": no_data_reason,
+                    "reference_sample_size": len(reference_observations),
                 }
             )
             continue
+        classification = contextual_classifications[day]
         days_payload.append(
             {
                 "date": day.isoformat(),
                 "min_price": round(min_price, 2),
-                "bucket": bucket_by_day.get(day, "mid"),
-                "no_data_reason": None,
+                "bucket": bucket_by_day.get(day, "none"),
+                "data_quality": (
+                    reused_fresh_observations[day].coverage_status
+                    if day in reused_fresh_observations
+                    else "partial" if day in incomplete_current_days else "available"
+                ),
+                "no_data_reason": classification.reason if bucket_mode_effective == "contextual" else None,
+                "reference_sample_size": classification.reference_sample_size,
             }
         )
 
-    partial = bool(anchor_warnings or full_warnings) or int(anchor_execution_meta.get("provider_failures", 0)) > 0 or int(
-        anchor_execution_meta.get("timed_out_units_count", 0)
-    ) > 0 or int(full_execution_meta.get("provider_failures", 0)) > 0 or int(
-        full_execution_meta.get("timed_out_units_count", 0)
-    ) > 0
-    if response_currency == "EUR" and anchor_currency:
-        response_currency = anchor_currency
+    coverage = {
+        "days_total": len(month_dates),
+        "days_priced": sum(day["min_price"] is not None for day in days_payload),
+        "days_reused": len(reused_fresh_prices),
+        "days_stale": sum(day["data_quality"] == "stale" for day in days_payload),
+        "days_unavailable": sum(day["data_quality"] == "unavailable" for day in days_payload),
+    }
+    quality_metrics = {
+        **all_quality_counters,
+        "classification_without_reference_count": sum(
+            day["no_data_reason"] == "insufficient_reference" for day in days_payload
+        ),
+        "provider_failure_count": sum(
+            int(execution_meta.get("provider_failures", 0))
+            for execution_meta in (anchor_execution_meta, full_execution_meta, rescue_execution_meta)
+        ),
+    }
+
+    if calendar_observations_available:
+        try:
+            record_calendar_prices(
+                db,
+                query_fingerprints=query_fingerprints,
+                reference_fingerprint=reference_fingerprint,
+                route_signature=_calendar_observation_route_signature(cache_scope_signature),
+                prices_by_day=newly_observed_prices,
+                coverage_status_by_day={
+                    day: "partial" if day in incomplete_current_days else "available"
+                    for day in newly_observed_prices
+                },
+                leg=payload.leg,
+                adults=payload.adults,
+                cabin=payload.cabin,
+                currency=cache_currency,
+                aggregation_mode=aggregation_mode_effective,
+                provider=provider_cache_id,
+                observed_at=now,
+                expires_at=now + dt.timedelta(hours=24),
+            )
+        except (OperationalError, ProgrammingError):
+            db.rollback()
+            logger.warning("calendar_observations_write_unavailable")
+            calendar_observations_available = False
     response_payload = {
         "days": days_payload,
         "meta": {
-            "currency": response_currency,
+            "currency": cache_currency,
             "cache_ttl_sec": CALENDAR_HINTS_CACHE_TTL_SECONDS,
             "cache_hit": False,
             "partial": partial,
@@ -1852,7 +2162,19 @@ def quick_search_calendar_hints(
             "guideline_thresholds_effective": guideline_thresholds_effective,
             "provider_set": provider_ids,
             "provider_cache_id": provider_cache_id,
-            "execution": _combine_execution_cache_counters(anchor_execution_meta, full_execution_meta),
+            "classification": {
+                "mode": bucket_mode_effective,
+                "reference_sample_size": len(reference_observations),
+                "reference_window_days": 30,
+            },
+            "coverage": coverage,
+            "quality": quality_metrics,
+            "calendar_observations_available": calendar_observations_available,
+            "execution": _combine_execution_cache_counters(
+                anchor_execution_meta,
+                full_execution_meta,
+                rescue_execution_meta,
+            ),
         },
     }
     _calendar_hints_cache_set(cache_key, response_payload)

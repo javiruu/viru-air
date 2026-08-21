@@ -84,6 +84,48 @@ test("QuickSearchDatePicker renders no-data marker with compact tooltip", () => 
   assert.match(html, /Sin datos de precio para este d(?:í|i)a/);
 });
 
+test("QuickSearchDatePicker distinguishes stale and unavailable calendar hints", () => {
+  const html = renderToStaticMarkup(
+    <QuickSearchDatePicker
+      name="travel_date"
+      label="Fecha"
+      value="2026-06-10"
+      onChange={() => undefined}
+      placeholder="Selecciona fechas"
+      localeTag="es-ES"
+      variant="outbound"
+      defaultOpen={true}
+      dayHintsByIso={{
+        "2026-06-11": {
+          date: "2026-06-11",
+          min_price: 80,
+          bucket: "none",
+          data_quality: "stale",
+          no_data_reason: "stale_reference",
+        },
+        "2026-06-12": {
+          date: "2026-06-12",
+          min_price: null,
+          bucket: "none",
+          data_quality: "unavailable",
+          no_data_reason: "provider_timeout",
+        },
+        "2026-06-13": {
+          date: "2026-06-13",
+          min_price: 90,
+          bucket: "mid",
+          data_quality: "partial",
+        },
+      }}
+    />,
+  );
+
+  assert.match(html, /qs-date-day__quality-marker/);
+  assert.match(html, /Referencia de precio anterior/);
+  assert.match(html, /El proveedor tardó demasiado en responder/);
+  assert.match(html, /Precio disponible con cobertura parcial/);
+});
+
 test("QuickSearchDatePicker renders country estimate badge when scope is country", () => {
   const html = renderToStaticMarkup(
     <QuickSearchDatePicker
