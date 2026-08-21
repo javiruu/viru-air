@@ -9,6 +9,16 @@
 
 Inventario completo de documentos `.md` y `.txt` relevantes del repositorio tras el saneamiento documental. Excluye dependencias, cach?s, builds, entornos virtuales, `_publish_repo` y otras salidas generadas masivas.
 
+## Actualizacion manual 2026-08-21 (fiabilidad del calendario)
+
+Entrada viva agregada:
+
+- `docs/plans/designs/001-calendar-price-reliability.md`
+
+Motivo:
+
+- Registra las invariantes de compatibilidad y reutilizacion eficiente que guian las correcciones del calendario de Quick Search.
+
 ## Actualización manual 2026-08-13 (retirada segura de legado)
 
 Entrada viva agregada:
