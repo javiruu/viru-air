@@ -26343,21 +26343,21 @@ textarea::placeholder {
 }
 
 
-/* Watchlist ticket row: visual contract from ilustraciones/watchrow.png. */
 .watch-ticket-row {
   --watch-ticket-paper: #fcf7ef;
   --watch-ticket-ink: #202121;
   --watch-ticket-orange: #cd5d29;
   --watch-ticket-line: #e8cfb3;
   --watch-ticket-green: #315a39;
-  --watch-ticket-stub-width: clamp(8.7rem, 26%, 10.35rem);
+  --watch-ticket-stub-width: 25.5%;
   position: relative;
   isolation: isolate;
   display: grid;
   gap: 0;
   padding: 0;
   grid-template-columns: minmax(0, 1fr) var(--watch-ticket-stub-width);
-  min-height: 14.15rem;
+  align-items: stretch;
+  min-height: 15rem;
   overflow: hidden;
   border: 2px solid var(--watch-ticket-line);
   border-radius: 1.5rem;
@@ -26367,30 +26367,6 @@ textarea::placeholder {
   cursor: pointer;
   container-type: inline-size;
   transition: transform 180ms cubic-bezier(0.2, 0, 0, 1), border-color 180ms cubic-bezier(0.2, 0, 0, 1), box-shadow 180ms cubic-bezier(0.2, 0, 0, 1);
-}
-
-@media (min-width: 761px) {
-  .watch-smart-panel .watch-ticket-row {
-    width: 100%;
-    margin-inline: auto;
-  }
-
-  .watch-ticket-route {
-    display: grid;
-    grid-template-columns: max-content minmax(1.1rem, 1fr) max-content;
-    width: 15rem;
-    margin-left: 8rem;
-    padding-left: 0;
-  }
-
-  .watch-ticket-route-plane {
-    justify-self: center;
-  }
-
-  .watch-ticket-path {
-    width: 15rem;
-    margin-left: 8rem;
-  }
 }
 
 .watch-ticket-row:hover {
@@ -26424,12 +26400,12 @@ textarea::placeholder {
 .watch-ticket-art {
   position: absolute;
   z-index: 0;
-  top: 28%;
-  right: calc(var(--watch-ticket-stub-width) + 1.35rem);
-  bottom: 29%;
-  left: clamp(4.9rem, 13%, 7.2rem);
+  top: 19%;
+  right: calc(var(--watch-ticket-stub-width) + 0.65rem);
+  bottom: 40%;
+  left: 14%;
   overflow: hidden;
-  background-position: center 82%;
+  background-position: center bottom;
   background-repeat: no-repeat;
   background-size: cover;
   opacity: 0.16;
@@ -26447,24 +26423,23 @@ textarea::placeholder {
 
 .watch-ticket-main {
   display: grid;
-  grid-template-rows: 2.8rem 1.2rem 1.42rem 3.45rem 1.85rem;
-  gap: 0.2rem;
+  grid-template-rows: 28% 12% 18% 24% 18%;
+  gap: 0;
   align-content: stretch;
   min-width: 0;
-  padding: 0.72rem 0.82rem 0.65rem;
+  padding: 0.28rem 0 0.46rem;
 }
 
 .watch-ticket-row .watch-community-hub-button {
   z-index: 3;
   top: 0.9rem;
-  left: 1.2rem;
-  width: 2.6rem;
-  height: 2.6rem;
-  min-height: 2.6rem;
-  max-height: 2.6rem;
-  aspect-ratio: 1;
+  left: 1.15rem;
+  width: 3.2rem;
+  height: 2.7rem;
+  min-height: 2.7rem;
+  max-height: 2.7rem;
   border: 1px solid var(--watch-ticket-line);
-  border-radius: 0.7rem;
+  border-radius: 0.92rem;
   color: var(--watch-ticket-orange);
   background: color-mix(in srgb, var(--watch-ticket-paper) 92%, white);
   box-shadow: none;
@@ -26476,13 +26451,14 @@ textarea::placeholder {
 }
 
 .watch-ticket-route {
-  display: flex;
+  display: grid;
+  grid-template-columns: max-content minmax(1.45rem, 1fr) max-content;
   align-items: flex-start;
-  justify-content: space-between;
-  width: 78%;
-  gap: clamp(0.7rem, 1.9vw, 1.3rem);
+  width: 58%;
+  margin-top: 1.18rem;
+  margin-left: 22%;
+  gap: 0;
   min-width: 0;
-  padding-left: 2.85rem;
 }
 
 .watch-ticket-airport {
@@ -26518,7 +26494,7 @@ textarea::placeholder {
 }
 
 .watch-ticket-route-plane {
-  flex: 0 0 auto;
+  justify-self: center;
   width: clamp(0.86rem, 1.35vw, 1.12rem);
   height: clamp(0.86rem, 1.35vw, 1.12rem);
   margin-top: 0.1rem;
@@ -26527,9 +26503,9 @@ textarea::placeholder {
 }
 
 .watch-ticket-path {
-  width: min(78%, 21rem);
-  height: 100%;
-  margin-left: 2.7rem;
+  width: 60%;
+  height: 82%;
+  margin-left: 22%;
   align-self: center;
   overflow: visible;
   color: var(--watch-ticket-orange);
@@ -26551,9 +26527,9 @@ textarea::placeholder {
 
 .watch-ticket-status-line {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 0.4rem;
-  padding-left: 0.15rem;
+  padding-left: 1.5rem;
   min-height: 0;
 }
 
@@ -26578,11 +26554,11 @@ textarea::placeholder {
 
 .watch-ticket-pricing {
   display: grid;
-  grid-template-columns: minmax(6.5rem, 0.65fr) minmax(0, 1.35fr);
+  grid-template-columns: minmax(6.75rem, 0.72fr) minmax(0, 1.28fr);
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.46rem;
   min-width: 0;
-  padding: 0.46rem 0.05rem 0;
+  padding: 0.56rem 2rem 0;
   border-top: 1px dashed var(--watch-ticket-line);
 }
 
@@ -26599,7 +26575,7 @@ textarea::placeholder {
 }
 
 .watch-ticket-price {
-  font-size: clamp(1.75rem, 2.7vw, 2.15rem);
+  font-size: clamp(1.9rem, 2.9vw, 2.28rem);
   line-height: 0.9;
   letter-spacing: -0.05em;
 }
@@ -26610,10 +26586,10 @@ textarea::placeholder {
   align-items: center;
   gap: 0.36rem;
   min-width: 0;
-  min-height: 2.85rem;
-  padding: 0.36rem 0.46rem;
-  border: 1px solid color-mix(in srgb, var(--watch-ticket-orange) 16%, var(--watch-ticket-line));
-  border-radius: 0.62rem;
+  min-height: 2.58rem;
+  padding: 0.32rem 0.42rem;
+  border: 1px solid color-mix(in srgb, var(--watch-ticket-orange) 18%, var(--watch-ticket-line));
+  border-radius: 0.8rem;
   background: color-mix(in srgb, var(--watch-ticket-orange) 6%, var(--watch-ticket-paper));
   color: var(--watch-ticket-orange);
 }
@@ -26660,8 +26636,9 @@ textarea::placeholder {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.38rem;
-  min-height: 1.85rem;
+  gap: 0.42rem;
+  min-height: 1.72rem;
+  padding: 0 2rem;
 }
 
 .watch-ticket-row .watch-price-badges {
@@ -26671,14 +26648,22 @@ textarea::placeholder {
 .watch-ticket-trend-action {
   display: inline-flex;
   align-items: center;
-  min-height: 1.75rem;
-  padding: 0.12rem 0.5rem;
+  min-height: 1.62rem;
+  min-width: 3.7rem;
+  justify-content: center;
+  padding: 0.1rem 0.48rem;
   border: 1px solid var(--watch-ticket-line);
   border-radius: 999px;
   color: var(--watch-ticket-ink);
   font-size: clamp(0.5rem, 0.64vw, 0.57rem);
   font-weight: 700;
   letter-spacing: 0.03em;
+}
+
+.watch-ticket-trend-action svg {
+  width: 0.82rem;
+  height: 0.82rem;
+  stroke-width: 1.9;
 }
 
 .watch-ticket-trend-action--up {
@@ -26695,13 +26680,15 @@ textarea::placeholder {
 
 .watch-ticket-action-buttons {
   display: flex;
+  flex: 1 1 0;
   flex-wrap: wrap;
-  gap: 0.38rem;
+  gap: 0.42rem;
 }
 
 .watch-ticket-row .watch-ticket-action-buttons .btn-compact {
   display: inline-flex;
-  min-height: 1.75rem;
+  flex: 1 1 0;
+  min-height: 1.62rem;
   align-items: center;
   justify-content: center;
   gap: 0.24rem;
@@ -26737,7 +26724,7 @@ textarea::placeholder {
   align-content: start;
   justify-items: center;
   min-width: 0;
-  padding: 0.72rem 0.55rem 0.6rem;
+  padding: 1.45rem 0.55rem 0.68rem;
   border-left: 1px dashed var(--watch-ticket-line);
   text-align: center;
 }
@@ -26776,15 +26763,15 @@ textarea::placeholder {
 }
 
 .watch-ticket-day {
-  margin-top: 0.42rem;
+  margin-top: 0.46rem;
   color: var(--watch-ticket-orange);
-  font-size: clamp(2.95rem, 4.7vw, 3.6rem);
-  line-height: 0.7;
+  font-size: clamp(3.36rem, 5.1vw, 3.96rem);
+  line-height: 0.66;
   letter-spacing: -0.08em;
 }
 
 .watch-ticket-month {
-  margin-top: 0.16rem;
+  margin-top: 0.45rem;
   color: var(--watch-ticket-orange);
   font-family: "Playfair Display", Georgia, serif;
   font-size: clamp(0.48rem, 0.64vw, 0.57rem);
@@ -26793,26 +26780,26 @@ textarea::placeholder {
 }
 
 .watch-ticket-year {
-  margin-top: 0.2rem;
-  font-size: clamp(1.08rem, 1.7vw, 1.42rem);
+  margin-top: 0.34rem;
+  font-size: clamp(1.18rem, 1.85vw, 1.5rem);
   line-height: 0.92;
   letter-spacing: -0.06em;
 }
 
 .watch-ticket-stub-rule {
   width: 78%;
-  margin-top: 0.46rem;
+  margin-top: 0.88rem;
   border-top: 1px dashed var(--watch-ticket-line);
 }
 
 .watch-ticket-stamp {
   display: grid;
-  width: min(88%, 6rem);
-  min-height: 2.7rem;
+  width: min(86%, 5.75rem);
+  min-height: 2.1rem;
   align-content: center;
   justify-items: center;
   gap: 0.1rem;
-  margin-top: auto;
+  margin-top: 1.38rem;
   padding: 0.24rem;
   border: 1px double color-mix(in srgb, var(--watch-ticket-orange) 39%, var(--watch-ticket-line));
   border-radius: 35% 43% 39% 46%;
@@ -26867,8 +26854,10 @@ textarea::placeholder {
   }
 
   .watch-ticket-route {
-    gap: 0.45rem;
-    padding-left: 2.1rem;
+    gap: 0;
+    width: 64%;
+    margin-top: 0;
+    margin-left: 19%;
   }
 
   .watch-ticket-airport strong {
@@ -26897,7 +26886,7 @@ textarea::placeholder {
   .watch-ticket-pricing {
     grid-template-columns: 5.25rem minmax(0, 1fr);
     gap: 0.4rem;
-    padding-top: 0.5rem;
+    padding: 0.5rem 0 0;
   }
 
   .watch-ticket-row .watch-price-caption {
@@ -27062,26 +27051,6 @@ textarea::placeholder {
   font-size: 0.66rem;
 }
 
-.watch-ticket-row {
-  min-height: 14.15rem;
-}
-
-@media (min-width: 761px) {
-  .watch-smart-panel .watch-ticket-route {
-    display: grid;
-    grid-template-columns: max-content minmax(1.1rem, 1fr) max-content;
-    width: 48%;
-    margin-left: 24%;
-    padding-left: 0;
-    gap: 0;
-  }
-
-  .watch-smart-panel .watch-ticket-path {
-    width: 48%;
-    margin-left: 24%;
-  }
-}
-
 .watch-ticket-row::before,
 .watch-ticket-row::after {
   position: absolute;
@@ -27126,9 +27095,9 @@ textarea::placeholder {
   }
 
   .watch-ticket-route {
-    width: 100%;
-    margin-left: 0;
-    padding-left: 3.6rem;
+    width: calc(100% - 3.6rem);
+    margin-top: 0;
+    margin-left: 3.6rem;
   }
 
   .watch-ticket-airport strong {
@@ -27148,6 +27117,7 @@ textarea::placeholder {
   .watch-ticket-pricing {
     grid-template-columns: minmax(5.6rem, 0.68fr) minmax(0, 1.32fr);
     min-height: 3.1rem;
+    padding: 0.48rem 0 0;
   }
 
   .watch-ticket-price {
@@ -27167,6 +27137,11 @@ textarea::placeholder {
 
   .watch-ticket-actions {
     gap: 0.32rem;
+    padding: 0;
+  }
+
+  .watch-ticket-action-buttons {
+    flex: 0 1 auto;
   }
 
   .watch-ticket-trend-action,

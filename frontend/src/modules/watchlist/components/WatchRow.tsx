@@ -237,6 +237,7 @@ export function WatchRow({
         </div>
         <div className="watch-ticket-actions">
           <span className={`watch-ticket-trend-action watch-ticket-trend-action--${trend}`}>
+            {trendIcon}
             {trend === "up"
               ? t("watchlist.smartList.trendUp")
               : trend === "down"
