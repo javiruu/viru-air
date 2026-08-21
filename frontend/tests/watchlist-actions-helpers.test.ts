@@ -117,6 +117,25 @@ test("mergeLatestWatchSnapshotsIntoHistoryRows keeps a newly saved price when ba
   );
 });
 
+test("mergeLatestWatchSnapshotsIntoHistoryRows keeps a saved price when batch history is unavailable", () => {
+  const rows = mergeLatestWatchSnapshotsIntoHistoryRows(null, [
+    {
+      ...WATCHES[0],
+      latest_snapshot: {
+        captured_at_utc: "2026-05-01T10:05:00Z",
+        raw_price: 47,
+        raw_currency: "EUR",
+        departure_time_local: "10:00",
+        provider: "quick-search",
+      },
+    },
+  ]);
+
+  assert.deepEqual(rows.map((row) => [row.watchId, row.price, row.currency]), [
+    ["w1", 47, "EUR"],
+  ]);
+});
+
 test("mapSnapshotsToHistoryRows collapses same-refresh legacy snapshots to one canonical point", () => {
   const snapshots: Array<Snapshot & { watch_id: string }> = [
     {

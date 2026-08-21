@@ -17,11 +17,11 @@ function toRefreshBucket(capturedAtUtc: string): string {
 }
 
 export function mergeLatestWatchSnapshotsIntoHistoryRows(
-  batchRows: HistoryRow[],
+  batchRows: HistoryRow[] | null,
   watches: Watch[],
 ): HistoryRow[] {
   const merged = new Map<string, HistoryRow>();
-  batchRows.forEach((row) => {
+  (batchRows ?? []).forEach((row) => {
     merged.set([row.watchId, toRefreshBucket(row.capturedAt)].join("|"), row);
   });
   mapLatestWatchSnapshotsToHistoryRows(watches).forEach((row) => {
