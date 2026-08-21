@@ -27007,17 +27007,104 @@ textarea::placeholder {
   border-radius: 0.72rem;
 }
 
+.watch-smart-panel .watch-smart-tool-group--route-tools {
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  min-width: 0;
+  margin-left: auto;
+  border-color: color-mix(in srgb, var(--border) 68%, transparent);
+  background:
+    linear-gradient(120deg, color-mix(in srgb, var(--surface-2) 70%, transparent), color-mix(in srgb, var(--surface) 94%, transparent));
+}
+
+.watch-smart-route-picker {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 0.18rem;
+}
+
+.watch-smart-route-field,
+.watch-smart-panel .watch-smart-sort {
+  display: grid;
+  min-width: 0;
+  gap: 0.06rem;
+  color: var(--ink-muted);
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.watch-smart-route-field select,
+.watch-smart-panel .watch-smart-sort select {
+  min-width: 0;
+  height: 1.25rem;
+  padding: 0 1.15rem 0 0;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  background-position: right 0.08rem center;
+  color: var(--ink);
+  font-size: 0.73rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+  box-shadow: none;
+}
+
+.watch-smart-route-field select {
+  width: min(8.5rem, 17vw);
+}
+
+.watch-smart-panel .watch-smart-sort select {
+  width: min(8.25rem, 15vw);
+}
+
+.watch-smart-route-field select:hover,
+.watch-smart-panel .watch-smart-sort select:hover {
+  color: var(--accent);
+}
+
+.watch-smart-route-field select:focus,
+.watch-smart-panel .watch-smart-sort select:focus {
+  border-radius: 0.3rem;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  outline: none;
+}
+
+.watch-smart-route-arrow {
+  display: inline-grid;
+  width: 1.55rem;
+  height: 1.55rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--border));
+  border-radius: 999px;
+  color: var(--accent);
+  font-family: Georgia, serif;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.watch-smart-tools-divider {
+  width: 1px;
+  height: 1.8rem;
+  flex: 0 0 auto;
+  background: color-mix(in srgb, var(--border) 76%, transparent);
+}
+
 .watch-smart-panel .watch-smart-tools {
   gap: 0.38rem;
 }
 
-.watch-smart-panel .watch-smart-search input,
 .watch-smart-panel .watch-smart-sort select,
 .watch-smart-panel .watch-smart-calendar-toggle {
   min-height: 2rem;
 }
 
-.watch-smart-panel .watch-smart-search,
 .watch-smart-panel .watch-smart-sort {
   font-size: 0.62rem;
 }
@@ -27027,6 +27114,70 @@ textarea::placeholder {
   min-height: 2rem;
   padding-inline: 0.5rem;
   font-size: 0.68rem;
+}
+
+@media (max-width: 1024px) {
+  .watch-smart-panel .watch-smart-panel-header,
+  .watch-smart-panel .watch-smart-tools {
+    width: 100%;
+  }
+
+  .watch-smart-panel .watch-smart-tool-group--route-tools {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .watch-smart-route-field select {
+    width: min(9.5rem, 20vw);
+  }
+
+  .watch-smart-panel .watch-smart-sort select {
+    width: min(7.75rem, 16vw);
+  }
+}
+
+@media (max-width: 640px) {
+  .watch-smart-panel .watch-smart-tool-group--route-tools {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.45rem;
+    align-items: center;
+  }
+
+  .watch-smart-route-picker {
+    grid-column: 1 / -1;
+    width: 100%;
+    gap: 0.3rem;
+  }
+
+  .watch-smart-route-field {
+    flex: 1 1 0;
+  }
+
+  .watch-smart-panel .watch-smart-sort {
+    width: 100%;
+  }
+
+  .watch-smart-route-field select,
+  .watch-smart-panel .watch-smart-sort select {
+    width: 100%;
+  }
+
+  .watch-smart-tools-divider {
+    display: none;
+  }
+
+  .watch-smart-panel .watch-smart-calendar-toggle,
+  .watch-smart-panel .watch-smart-reset {
+    width: 100%;
+    min-height: 2.1rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .watch-smart-panel .watch-smart-reset {
+    justify-self: start;
+  }
 }
 
 .watch-smart-panel .qs-pagination {

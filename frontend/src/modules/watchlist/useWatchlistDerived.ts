@@ -44,7 +44,8 @@ type UseWatchlistDerivedInput = {
   selectedDates: string[];
   selectedPoint: string;
   rangeWindow: RangeWindow;
-  watchSearch: string;
+  watchRouteOrigin: string;
+  watchRouteDestination: string;
   watchSort: ListSort;
   selectedWatchId: string;
   compareIds: string[];
@@ -63,7 +64,8 @@ export function useWatchlistDerived({
   selectedDates,
   selectedPoint,
   rangeWindow,
-  watchSearch,
+  watchRouteOrigin,
+  watchRouteDestination,
   watchSort,
   selectedWatchId,
   compareIds,
@@ -133,12 +135,23 @@ export function useWatchlistDerived({
     [items, selectedOrigin, selectedDestination],
   );
 
+  const watchRouteOrigins = useMemo(
+    () => Array.from(new Set(items.map((item) => item.origin_iata))).sort(),
+    [items],
+  );
+
+  const watchRouteDestinations = useMemo(
+    () => Array.from(new Set(items
+      .filter((item) => !watchRouteOrigin || item.origin_iata === watchRouteOrigin)
+      .map((item) => item.destination_iata))).sort(),
+    [items, watchRouteOrigin],
+  );
+
   const smartListItems = useMemo(() => {
-    const needle = watchSearch.trim().toUpperCase();
     const filtered = items.filter((item) => {
-      if (!needle) return true;
-      const route = `${item.origin_iata} ${item.destination_iata} ${item.travel_date_local}`.toUpperCase();
-      return route.includes(needle);
+      if (watchRouteOrigin && item.origin_iata !== watchRouteOrigin) return false;
+      if (watchRouteDestination && item.destination_iata !== watchRouteDestination) return false;
+      return true;
     });
     return filtered.slice().sort((a, b) => {
       const metaA = watchMeta.get(a.id);
@@ -154,9 +167,9 @@ export function useWatchlistDerived({
       if (watchSort === "delta") return deltaB - deltaA;
       return freshB - freshA;
     });
-  }, [items, watchMeta, watchSearch, watchSort]);
+  }, [items, watchMeta, watchRouteDestination, watchRouteOrigin, watchSort]);
 
-  const hasSearchFilter = watchSearch.trim().length > 0;
+  const hasRouteFilter = Boolean(watchRouteOrigin || watchRouteDestination);
 
   const selectedWatch = useMemo(
     () => items.find((item) => item.id === selectedWatchId) || null,
@@ -570,8 +583,10 @@ export function useWatchlistDerived({
     allOrigins,
     allDestinations,
     allTravelDates,
+    watchRouteOrigins,
+    watchRouteDestinations,
     smartListItems,
-    hasSearchFilter,
+    hasRouteFilter,
     selectedWatch,
     combinationGroups,
     filteredRows,

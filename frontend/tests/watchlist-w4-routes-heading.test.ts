@@ -18,12 +18,13 @@ test("W4: smart list heading uses rutas vigiladas copy and removes old long titl
   assert.doesNotMatch(panelSource, /Lista inteligente de vuelos/);
 });
 
-test("W4: search and sort controls remain visible in smart panel", () => {
+test("W4: route and sort controls remain visible in smart panel", () => {
   const panelSource = fs.readFileSync(SMART_PANEL, "utf8");
 
-  assert.match(panelSource, /watchlist\.smartList\.search/);
+  assert.match(panelSource, /watchlist\.smartList\.origin/);
+  assert.match(panelSource, /watchlist\.smartList\.destination/);
   assert.match(panelSource, /watchlist\.smartList\.sort/);
-  assert.match(panelSource, /watch-smart-search/);
+  assert.match(panelSource, /watch-smart-route-picker/);
   assert.match(panelSource, /watch-smart-sort/);
 });
 

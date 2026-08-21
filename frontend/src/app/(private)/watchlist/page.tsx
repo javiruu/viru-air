@@ -292,13 +292,20 @@ export default function WatchlistPage() {
             smartListItems={derived.smartListItems}
             watchMeta={derived.watchMeta}
             lastUpdatedGlobal={derived.lastUpdatedGlobal}
-            watchSearch={view.watchSearch}
+            watchRouteOrigin={view.watchRouteOrigin}
+            watchRouteDestination={view.watchRouteDestination}
+            watchRouteOrigins={derived.watchRouteOrigins}
+            watchRouteDestinations={derived.watchRouteDestinations}
             watchSort={view.watchSort}
-            hasSearchFilter={derived.hasSearchFilter}
+            hasRouteFilter={derived.hasRouteFilter}
             selectedWatchId={view.selectedWatchId}
-            onSearchChange={view.setWatchSearch}
+            onRouteOriginChange={view.onWatchRouteOriginChange}
+            onRouteDestinationChange={view.setWatchRouteDestination}
             onSortChange={view.setWatchSort}
-            onClearSearch={() => view.setWatchSearch("")}
+            onClearRouteFilters={() => {
+              view.setWatchRouteOrigin("");
+              view.setWatchRouteDestination("");
+            }}
             onSelectWatch={handleSelectWatch}
             onCommunityAction={(watch, trigger) => {
               actions.communityPricing.open(watch, trigger);

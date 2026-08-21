@@ -4,6 +4,7 @@ import { useI18n } from "@/i18n";
 import { communityRouteKey } from "@/modules/community-routes/communityRoutesApi";
 import { useCommunityRouteInsights } from "@/modules/community-routes/useCommunityRouteInsights";
 import { formatCurrency } from "@/modules/shared/format";
+import { getAirportMeta } from "@/modules/shared/airports";
 import {
   WatchRow,
   type WatchMetaEntry,
@@ -36,13 +37,17 @@ type SmartWatchListPanelProps = {
   smartListItems: Watch[];
   watchMeta: Map<string, WatchMetaEntry>;
   lastUpdatedGlobal: string;
-  watchSearch: string;
+  watchRouteOrigin: string;
+  watchRouteDestination: string;
+  watchRouteOrigins: string[];
+  watchRouteDestinations: string[];
   watchSort: ListSort;
-  hasSearchFilter: boolean;
+  hasRouteFilter: boolean;
   selectedWatchId: string;
-  onSearchChange: (value: string) => void;
+  onRouteOriginChange: (value: string) => void;
+  onRouteDestinationChange: (value: string) => void;
   onSortChange: (value: ListSort) => void;
-  onClearSearch: () => void;
+  onClearRouteFilters: () => void;
   onSelectWatch: (watch: Watch) => void;
   onCommunityAction: (watch: Watch, trigger: HTMLButtonElement) => void;
   onPauseWatch: (watchId: string) => void;
@@ -71,13 +76,17 @@ export function SmartWatchListPanel({
   smartListItems,
   watchMeta,
   lastUpdatedGlobal,
-  watchSearch,
+  watchRouteOrigin,
+  watchRouteDestination,
+  watchRouteOrigins,
+  watchRouteDestinations,
   watchSort,
-  hasSearchFilter,
+  hasRouteFilter,
   selectedWatchId,
-  onSearchChange,
+  onRouteOriginChange,
+  onRouteDestinationChange,
   onSortChange,
-  onClearSearch,
+  onClearRouteFilters,
   onSelectWatch,
   onCommunityAction,
   onPauseWatch,
@@ -135,6 +144,10 @@ export function SmartWatchListPanel({
     const next = Math.max(1, Math.min(page, totalPages));
     setCurrentPage(next);
   };
+  const airportLabel = (iata: string) => {
+    const airport = getAirportMeta(iata);
+    return airport ? `${iata} · ${airport.city}` : iata;
+  };
 
   return (
     <section className="panel panel-soft section-gap watch-smart-panel">
@@ -153,24 +166,44 @@ export function SmartWatchListPanel({
             </span>
           ) : null}
         </div>
-        <div className="watch-smart-tools">
-          <div className="watch-smart-tool-group watch-smart-tool-group--filters">
-            <label className="watch-smart-search" htmlFor="watch-smart-search">
-              {t("watchlist.smartList.search")}
-              <input
-                id="watch-smart-search"
-                name="watch_smart_search"
-                autoComplete="off"
-                value={watchSearch}
-                onChange={(event) => {
-                  setCurrentPage(1);
-                  onSearchChange(event.target.value);
-                }}
-                placeholder={t("watchlist.smartList.searchPlaceholder")}
-              />
-            </label>
+        <div className="watch-smart-tools" aria-label={t("watchlist.smartList.routeToolsAria")}>
+          <div className="watch-smart-tool-group watch-smart-tool-group--route-tools">
+            <div className="watch-smart-route-picker">
+              <label className="watch-smart-route-field" data-side="origin" htmlFor="watch-smart-route-origin">
+                <span>{t("watchlist.smartList.origin")}</span>
+                <select
+                  id="watch-smart-route-origin"
+                  name="watch_smart_route_origin"
+                  value={watchRouteOrigin}
+                  onChange={(event) => {
+                    setCurrentPage(1);
+                    onRouteOriginChange(event.target.value);
+                  }}
+                >
+                  <option value="">{t("watchlist.smartList.allOrigins")}</option>
+                  {watchRouteOrigins.map((origin) => <option key={origin} value={origin}>{airportLabel(origin)}</option>)}
+                </select>
+              </label>
+              <span className="watch-smart-route-arrow" aria-hidden="true">→</span>
+              <label className="watch-smart-route-field" data-side="destination" htmlFor="watch-smart-route-destination">
+                <span>{t("watchlist.smartList.destination")}</span>
+                <select
+                  id="watch-smart-route-destination"
+                  name="watch_smart_route_destination"
+                  value={watchRouteDestination}
+                  onChange={(event) => {
+                    setCurrentPage(1);
+                    onRouteDestinationChange(event.target.value);
+                  }}
+                >
+                  <option value="">{t("watchlist.smartList.allDestinations")}</option>
+                  {watchRouteDestinations.map((destination) => <option key={destination} value={destination}>{airportLabel(destination)}</option>)}
+                </select>
+              </label>
+            </div>
+            <span className="watch-smart-tools-divider" aria-hidden="true" />
             <label className="watch-smart-sort" htmlFor="watch-smart-sort">
-              {t("watchlist.smartList.sort")}
+              <span>{t("watchlist.smartList.sort")}</span>
               <select
                 id="watch-smart-sort"
                 name="watch_smart_sort"
@@ -189,19 +222,6 @@ export function SmartWatchListPanel({
             </label>
             <button
               type="button"
-              className="btn-ghost btn-compact watch-smart-reset"
-              onClick={() => {
-                setCurrentPage(1);
-                onClearSearch();
-              }}
-              disabled={!hasSearchFilter}
-            >
-              {t("watchlist.smartList.clearSearch")}
-            </button>
-          </div>
-          <div className="watch-smart-tool-group watch-smart-tool-group--calendar">
-            <button
-              type="button"
               className={`btn-ghost btn-compact watch-smart-calendar-toggle ${isCalendarSelectorOpen ? "is-active" : ""}`}
               onClick={onToggleCalendarSelector}
               aria-expanded={isCalendarSelectorOpen}
@@ -210,6 +230,18 @@ export function SmartWatchListPanel({
             >
               {t("watchlist.history.viewCalendar")}
             </button>
+            {hasRouteFilter ? (
+              <button
+                type="button"
+                className="btn-ghost btn-compact watch-smart-reset"
+                onClick={() => {
+                  setCurrentPage(1);
+                  onClearRouteFilters();
+                }}
+              >
+                {t("watchlist.smartList.clearRouteFilters")}
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
@@ -347,9 +379,9 @@ export function SmartWatchListPanel({
       ) : null}
       {showListMode && items.length > 0 && smartListItems.length === 0 ? (
         <div className="watch-empty-search" role="status" aria-live="polite">
-          <p>{t("watchlist.smartList.searchEmpty")}</p>
-          <button type="button" className="btn-ghost btn-compact" onClick={onClearSearch}>
-            {t("watchlist.smartList.searchEmptyCta")}
+          <p>{t("watchlist.smartList.routeFiltersEmpty")}</p>
+          <button type="button" className="btn-ghost btn-compact" onClick={onClearRouteFilters}>
+            {t("watchlist.smartList.routeFiltersEmptyCta")}
           </button>
         </div>
       ) : null}
