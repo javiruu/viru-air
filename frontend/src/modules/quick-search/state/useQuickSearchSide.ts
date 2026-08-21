@@ -27,6 +27,7 @@ export type QuickSearchSideParams = {
   originIata: string | string[];
   destinationIata: string | string[];
   travelDate: string;
+  travelDates?: string[];
   flexDaysBefore: number;
   flexDaysAfter: number;
   radiusKm: number;
@@ -161,6 +162,7 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
         destination_iata: params.destinationIata,
         travel_date: params.travelDate,
         date: params.travelDate,
+        travel_dates: params.travelDates,
         flex_days_before: params.flexDaysBefore,
         flex_days_after: params.flexDaysAfter,
         radius_km: params.radiusKm,

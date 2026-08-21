@@ -305,8 +305,8 @@ function QuickSearchDatePickerInner(props: Props) {
                     if (nextMultipleSelection && selectedDates.length === 0 && selectedDate) {
                       props.onSelectedValuesChange?.([formatIsoDate(selectedDate)]);
                     }
-                    if (!nextMultipleSelection && selectedDate) {
-                      props.onSelectedValuesChange?.([formatIsoDate(selectedDate)]);
+                    if (!nextMultipleSelection) {
+                      props.onSelectedValuesChange?.([]);
                     }
                   }}
                 >

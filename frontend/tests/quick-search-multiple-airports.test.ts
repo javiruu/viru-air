@@ -47,6 +47,29 @@ test("buildDualSearchParams preserves multiple origins and destinations", () => 
   assert.deepEqual(params.destinationIata, ["AMS", "LHR"]);
 });
 
+test("buildDualSearchParams preserves sparse outbound dates without flexibility", () => {
+  const params = buildDualSearchParams({
+    origin: "MAD",
+    destination: "DUB",
+    travelDate: "2026-09-03",
+    travelDates: ["2026-09-03", "2026-09-12"],
+    flexDaysBefore: 0,
+    flexDaysAfter: 0,
+    radiusKm: 150,
+    includeStops: false,
+    includeNearbyOrigins: false,
+    includeNearbyDestinations: false,
+    departAfter: "",
+    departBefore: "",
+    maxStops: 0,
+    excludeOrigins: [],
+    excludeDestinations: [],
+    strictFilters: true,
+  });
+
+  assert.deepEqual(params.travelDates, ["2026-09-03", "2026-09-12"]);
+});
+
 test("additional airport removal moves focus to the next row, previous row, or add button", () => {
   const entries = [
     { id: "row-1", value: "MAD" },

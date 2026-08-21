@@ -7,6 +7,7 @@ export type DualSearchParamsInput = {
   origin: string | string[];
   destination: string | string[];
   travelDate: string;
+  travelDates?: string[];
   flexDaysBefore: number;
   flexDaysAfter: number;
   radiusKm: number;
@@ -36,6 +37,7 @@ export function buildDualSearchParams(
     originIata: input.origin,
     destinationIata: input.destination,
     travelDate: input.travelDate,
+    travelDates: input.travelDates,
     flexDaysBefore: input.flexDaysBefore,
     flexDaysAfter: input.flexDaysAfter,
     radiusKm: input.radiusKm,
