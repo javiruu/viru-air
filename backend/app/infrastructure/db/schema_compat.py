@@ -10,7 +10,7 @@ SEARCH_PREFERENCE_COLUMN_PATCHES = (
     ("country_price_hint_mode_default", "ALTER TABLE user_preference ADD COLUMN country_price_hint_mode_default VARCHAR(16) NOT NULL DEFAULT 'min'"),
     (
         "calendar_hint_bucket_mode_default",
-        "ALTER TABLE user_preference ADD COLUMN calendar_hint_bucket_mode_default VARCHAR(24) NOT NULL DEFAULT 'monthly_terciles'",
+        "ALTER TABLE user_preference ADD COLUMN calendar_hint_bucket_mode_default VARCHAR(24) NOT NULL DEFAULT 'contextual'",
     ),
     (
         "calendar_hint_guideline_low_max_default",
