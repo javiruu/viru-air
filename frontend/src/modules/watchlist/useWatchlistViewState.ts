@@ -18,7 +18,8 @@ export function useWatchlistViewState() {
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [compareNotice, setCompareNotice] = useState("");
   const [selectedWatchId, setSelectedWatchId] = useState("");
-  const [watchSearch, setWatchSearch] = useState("");
+  const [watchRouteOrigin, setWatchRouteOrigin] = useState("");
+  const [watchRouteDestination, setWatchRouteDestination] = useState("");
   const [watchSort, setWatchSort] = useState<ListSort>("freshness");
 
   const onOriginChange = useCallback((value: string) => {
@@ -41,6 +42,11 @@ export function useWatchlistViewState() {
 
   const toggleViewMode = useCallback(() => {
     setViewMode((current) => (current === "chart" ? "calendar" : "chart"));
+  }, []);
+
+  const onWatchRouteOriginChange = useCallback((value: string) => {
+    setWatchRouteOrigin(value);
+    setWatchRouteDestination("");
   }, []);
 
   const openCalendarSelector = useCallback(() => {
@@ -98,7 +104,8 @@ export function useWatchlistViewState() {
     compareIds,
     compareNotice,
     selectedWatchId,
-    watchSearch,
+    watchRouteOrigin,
+    watchRouteDestination,
     watchSort,
     setSelectedOrigin,
     setSelectedDestination,
@@ -110,11 +117,13 @@ export function useWatchlistViewState() {
     setRangeWindow,
     setViewMode,
     setSelectedWatchId,
-    setWatchSearch,
+    setWatchRouteOrigin,
+    setWatchRouteDestination,
     setWatchSort,
     setCompareIds,
     onOriginChange,
     onDestinationChange,
+    onWatchRouteOriginChange,
     onDatesChange,
     toggleViewMode,
     openCalendarSelector,
