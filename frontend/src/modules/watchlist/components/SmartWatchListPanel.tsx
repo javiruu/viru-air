@@ -148,6 +148,15 @@ export function SmartWatchListPanel({
     const airport = getAirportMeta(iata);
     return airport ? `${iata} · ${airport.city}` : iata;
   };
+  const airportPresentation = (iata: string, allLabel: string) => {
+    const airport = getAirportMeta(iata);
+    return {
+      code: iata || allLabel,
+      city: iata ? airport?.city ?? iata : "",
+    };
+  };
+  const routeOriginPresentation = airportPresentation(watchRouteOrigin, t("watchlist.smartList.allOrigins"));
+  const routeDestinationPresentation = airportPresentation(watchRouteDestination, t("watchlist.smartList.allDestinations"));
 
   return (
     <section className="panel panel-soft section-gap watch-smart-panel">
@@ -170,7 +179,11 @@ export function SmartWatchListPanel({
           <div className="watch-smart-tool-group watch-smart-tool-group--route-tools">
             <div className="watch-smart-route-picker">
               <label className="watch-smart-route-field" data-side="origin" htmlFor="watch-smart-route-origin">
-                <span>{t("watchlist.smartList.origin")}</span>
+                <span className="watch-smart-route-field-label">{t("watchlist.smartList.origin")}</span>
+                <span className="watch-smart-route-airport" aria-hidden="true">
+                  <strong>{routeOriginPresentation.code}</strong>
+                  {routeOriginPresentation.city ? <span>{routeOriginPresentation.city}</span> : null}
+                </span>
                 <select
                   id="watch-smart-route-origin"
                   name="watch_smart_route_origin"
@@ -184,9 +197,13 @@ export function SmartWatchListPanel({
                   {watchRouteOrigins.map((origin) => <option key={origin} value={origin}>{airportLabel(origin)}</option>)}
                 </select>
               </label>
-              <span className="watch-smart-route-arrow" aria-hidden="true">→</span>
+              <span className="watch-smart-route-arrow" aria-hidden="true"><i /> <b>→</b></span>
               <label className="watch-smart-route-field" data-side="destination" htmlFor="watch-smart-route-destination">
-                <span>{t("watchlist.smartList.destination")}</span>
+                <span className="watch-smart-route-field-label">{t("watchlist.smartList.destination")}</span>
+                <span className="watch-smart-route-airport" aria-hidden="true">
+                  <strong>{routeDestinationPresentation.code}</strong>
+                  {routeDestinationPresentation.city ? <span>{routeDestinationPresentation.city}</span> : null}
+                </span>
                 <select
                   id="watch-smart-route-destination"
                   name="watch_smart_route_destination"

@@ -78,8 +78,14 @@ try {
   const { page } = desktop;
   const origin = page.locator("#watch-smart-route-origin");
   const destination = page.locator("#watch-smart-route-destination");
+  const originField = page.locator('.watch-smart-route-field[data-side="origin"]');
   const rows = page.locator(".watch-row");
   assert.equal(await rows.count(), 3);
+  const defaultBorder = await originField.evaluate((element) => getComputedStyle(element).borderColor);
+  await originField.hover();
+  assert.notEqual(await originField.evaluate((element) => getComputedStyle(element).borderColor), defaultBorder);
+  await origin.focus();
+  assert.notEqual(await originField.evaluate((element) => getComputedStyle(element).boxShadow), "none");
   await page.screenshot({ path: path.join(screenshotsDir, "desktop-dark-full.png"), fullPage: true });
   await page.locator(".watch-smart-tool-group--route-tools").screenshot({ path: path.join(screenshotsDir, "desktop-dark-toolbar.png") });
 
