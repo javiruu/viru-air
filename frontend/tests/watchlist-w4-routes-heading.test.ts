@@ -26,6 +26,7 @@ test("W4: route and sort controls remain visible in smart panel", () => {
   assert.match(panelSource, /watchlist\.smartList\.sort/);
   assert.match(panelSource, /watch-smart-route-picker/);
   assert.match(panelSource, /watch-smart-sort/);
+  assert.doesNotMatch(panelSource, /watch-smart-counts|watch-smart-meta/);
 });
 
 test("W4: summary copy uses rutas terminology and avoids vuelos in count line", () => {

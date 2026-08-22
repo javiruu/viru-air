@@ -291,7 +291,6 @@ export default function WatchlistPage() {
             items={actions.items}
             smartListItems={derived.smartListItems}
             watchMeta={derived.watchMeta}
-            lastUpdatedGlobal={derived.lastUpdatedGlobal}
             watchRouteOrigin={view.watchRouteOrigin}
             watchRouteDestination={view.watchRouteDestination}
             watchRouteOrigins={derived.watchRouteOrigins}
