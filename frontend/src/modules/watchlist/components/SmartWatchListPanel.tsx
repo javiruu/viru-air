@@ -36,7 +36,6 @@ type SmartWatchListPanelProps = {
   items: Watch[];
   smartListItems: Watch[];
   watchMeta: Map<string, WatchMetaEntry>;
-  lastUpdatedGlobal: string;
   watchRouteOrigin: string;
   watchRouteDestination: string;
   watchRouteOrigins: string[];
@@ -75,7 +74,6 @@ export function SmartWatchListPanel({
   items,
   smartListItems,
   watchMeta,
-  lastUpdatedGlobal,
   watchRouteOrigin,
   watchRouteDestination,
   watchRouteOrigins,
@@ -129,8 +127,6 @@ export function SmartWatchListPanel({
     () => (calendarSelectorDay ? calendarSelectorFlightsByDay.get(calendarSelectorDay) ?? [] : []),
     [calendarSelectorDay, calendarSelectorFlightsByDay],
   );
-  const activeCount = useMemo(() => items.filter((item) => item.status === "active").length, [items]);
-  const pausedCount = useMemo(() => items.filter((item) => item.status === "paused").length, [items]);
   const showListMode = !isCalendarSelectorOpen;
   const totalPages = Math.max(1, Math.ceil(smartListItems.length / WATCHLIST_PAGE_SIZE));
   const boundedPage = Math.min(currentPage, totalPages);
@@ -163,17 +159,6 @@ export function SmartWatchListPanel({
       <div className="panel-header watch-smart-panel-header">
         <div className="watch-smart-header-copy">
           <h2 className="panel-title">{t("watchlist.smartList.heading")}</h2>
-          <div className="watch-smart-counts muted" role="status" aria-live="polite">
-            <span className="watch-smart-count-pill tabular-nums">{t("watchlist.smartList.activeCount", { count: activeCount })}</span>
-            <span className="watch-smart-count-pill tabular-nums">{t("watchlist.smartList.pausedCount", { count: pausedCount })}</span>
-            <span className="watch-smart-count-pill tabular-nums">{t("watchlist.smartList.totalCount", { count: items.length })}</span>
-            {lastUpdatedGlobal ? <span className="tabular-nums">{t("watchlist.lastUpdateInline", { value: lastUpdatedGlobal })}</span> : null}
-          </div>
-          {items.length > 0 ? (
-            <span className="watch-smart-meta tabular-nums">
-              {t("watchlist.smartList.showingCount", { shown: smartListItems.length, total: items.length })}
-            </span>
-          ) : null}
         </div>
         <div className="watch-smart-tools" aria-label={t("watchlist.smartList.routeToolsAria")}>
           <div className="watch-smart-tool-group watch-smart-tool-group--route-tools">

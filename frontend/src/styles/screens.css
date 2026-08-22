@@ -5083,25 +5083,6 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   gap: 0.2rem;
 }
 
-.watch-smart-counts {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem 0.5rem;
-  margin-top: 0.15rem;
-}
-
-.watch-smart-count-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.12rem 0.42rem;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 80%, var(--surface-2));
-  font-size: 0.74rem;
-  letter-spacing: 0.01em;
-}
-
 .watch-smart-tools {
   display: flex;
   gap: 0.52rem;
@@ -5112,13 +5093,6 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
 .watch-bulk-toolbar {
   margin-left: auto;
   row-gap: 0.45rem;
-}
-
-.watch-smart-meta {
-  display: block;
-  margin-top: 0.3rem;
-  font-size: 0.8rem;
-  color: var(--ink-muted);
 }
 
 .watch-smart-search,
@@ -15111,10 +15085,6 @@ textarea::placeholder {
     align-items: stretch;
   }
 
-  .watch-smart-counts {
-    gap: 0.25rem 0.35rem;
-  }
-
   .watch-bulk-toolbar {
     margin-left: 0;
   }
@@ -24501,8 +24471,6 @@ textarea::placeholder {
   gap: 0.9rem;
 }
 
-.watch-smart-count-pill,
-.watch-smart-meta,
 .watch-route-code,
 .watch-date,
 .watch-inline-price,
