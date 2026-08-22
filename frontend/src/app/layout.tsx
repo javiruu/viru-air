@@ -12,7 +12,7 @@ import { SHELL_SCROLL_STATE_CSS } from "@/modules/shared/shellScrollStateCss";
 
 export const metadata: Metadata = {
   title: "Viru Air",
-  description: "Ryanair Tracker",
+  description: "Viru Air",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
