@@ -1,4 +1,4 @@
-import { Check, UsersRound } from "lucide-react";
+import { Check, Plane, UsersRound } from "lucide-react";
 
 import { useI18n } from "@/i18n";
 import { getCommunityHubIndicator } from "@/modules/watchlist/communityHubPresentation";
@@ -7,11 +7,13 @@ import type { Watch } from "@/modules/watchlist/types";
 type CommunityHubButtonProps = {
   readonly watch: Watch;
   readonly onOpen: (watch: Watch, trigger: HTMLButtonElement) => void;
+  readonly variant?: "default" | "ticket";
 };
 
 export function CommunityHubButton({
   watch,
   onOpen,
+  variant = "default",
 }: CommunityHubButtonProps) {
   const { t } = useI18n();
   const indicator = getCommunityHubIndicator(watch.community_pricing);
@@ -22,7 +24,7 @@ export function CommunityHubButton({
 
   return (
     <button
-      className={`watch-community-hub-button is-${indicator}`}
+      className={`watch-community-hub-button is-${indicator} ${variant === "ticket" ? "watch-community-hub-button--ticket" : ""}`}
       type="button"
       aria-label={label}
       aria-haspopup="dialog"
@@ -32,7 +34,12 @@ export function CommunityHubButton({
         onOpen(watch, event.currentTarget);
       }}
     >
-      <UsersRound aria-hidden="true" />
+      {variant === "ticket" ? (
+        <>
+          <span className="watch-ticket-community-orbit" aria-hidden="true" />
+          <Plane aria-hidden="true" />
+        </>
+      ) : <UsersRound aria-hidden="true" />}
       {indicator === "contributed" ? (
         <span className="watch-community-hub-check" aria-hidden="true">
           <Check />

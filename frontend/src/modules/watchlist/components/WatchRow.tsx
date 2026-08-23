@@ -3,6 +3,7 @@ import { ArrowRight, Minus, Pause, Plane, Play, Trash2, TrendingDown, TrendingUp
 import { useI18n } from "@/i18n";
 import { CommunityRouteSignal } from "@/modules/community-routes/CommunityRouteSignal";
 import type { CommunityRouteInsight } from "@/modules/community-routes/communityRoutesTypes";
+import { getAirportMeta } from "@/modules/shared/airports";
 import { formatCurrency, formatSignedCurrency } from "@/modules/shared/format";
 import { getWatchStatusMeta } from "@/modules/shared/statusCatalog";
 import { CommunityHubButton } from "@/modules/watchlist/components/CommunityHubButton";
@@ -68,7 +69,11 @@ const TICKET_CITIES: Readonly<Record<string, TicketCity>> = {
 };
 
 function ticketCity(iata: string): TicketCity {
-  return TICKET_CITIES[iata.toUpperCase()] ?? { label: iata, art: "" };
+  const code = iata.toUpperCase();
+  const configuredCity = TICKET_CITIES[code];
+  if (configuredCity) return configuredCity;
+
+  return { label: getAirportMeta(code)?.city ?? iata, art: "" };
 }
 
 function ticketDate(value: string, localeTag: string) {
@@ -115,7 +120,7 @@ export function WatchRow({
   const { t, localeTag } = useI18n();
   const origin = ticketCity(watch.origin_iata);
   const destination = ticketCity(watch.destination_iata);
-  const ticketArt = destination.art;
+  const ticketArt = origin.art || destination.art;
   const departureDate = ticketDate(watch.travel_date_local, localeTag);
   const watchStatus = getWatchStatusMeta(watch.status, t);
   const canManageTracking =
@@ -187,7 +192,7 @@ export function WatchRow({
         })}
         onClick={() => onSelect(watch)}
       />
-      <CommunityHubButton watch={watch} onOpen={onOpenCommunity} />
+      <CommunityHubButton watch={watch} onOpen={onOpenCommunity} variant="ticket" />
       <div
         className="watch-ticket-art"
         aria-hidden="true"
@@ -293,16 +298,21 @@ export function WatchRow({
         </div>
       </div>
       <aside className="watch-ticket-stub" aria-label={watch.travel_date_local}>
-        <div className="watch-ticket-date-caption"><span /><b>FECHA <Plane aria-hidden="true" /></b><span /></div>
-        <strong className="watch-ticket-day tabular-nums">{departureDate.day}</strong>
-        <span className="watch-ticket-month">{departureDate.month}</span>
-        <span className="watch-ticket-year tabular-nums">{departureDate.year}</span>
-        <div className="watch-ticket-stub-rule" />
-        <div className="watch-ticket-stamp" aria-hidden="true">
-          <span>VIRU AIR</span>
-          <Plane />
-          <strong>BUEN VIAJE</strong>
-          <small>EST. 2024</small>
+        <div className="watch-ticket-date-zone">
+          <div className="watch-ticket-date-caption"><span /><b>FECHA <Plane aria-hidden="true" /></b><span /></div>
+          <strong className="watch-ticket-day tabular-nums">{departureDate.day}</strong>
+          <span className="watch-ticket-month">{departureDate.month}</span>
+          <span className="watch-ticket-year tabular-nums">{departureDate.year}</span>
+        </div>
+        <div className="watch-ticket-stub-lower">
+          <div className="watch-ticket-stub-rule" />
+          <div className="watch-ticket-postal-waves" aria-hidden="true" />
+          <div className="watch-ticket-stamp" aria-hidden="true">
+            <span>VIRU TRACKER</span>
+            <Plane />
+            <strong>BUEN VIAJE</strong>
+            <small>EST. 2024</small>
+          </div>
         </div>
       </aside>
     </article>
