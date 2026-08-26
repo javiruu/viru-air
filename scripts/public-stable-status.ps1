@@ -49,6 +49,12 @@ if ($cloudflare.Installed) {
   } else {
     Write-Warn "Cloudflare Tunnel no esta activo ahora mismo."
   }
+  if ($cloudflare.BlockingReason -and -not $cloudflare.Ready) {
+    Write-Warn $cloudflare.BlockingReason
+  }
+  if ($cloudflare.NextStep -and -not $cloudflare.Ready) {
+    Write-Info $cloudflare.NextStep
+  }
 } else {
   Write-Warn "Cloudflare Tunnel no esta instalado en este equipo."
 }
@@ -64,6 +70,12 @@ if ($tailscale.Installed) {
     }
   } else {
     Write-Warn "Tailscale Funnel no esta activo ahora mismo."
+  }
+  if ($tailscale.BlockingReason -and -not $tailscale.Ready) {
+    Write-Warn $tailscale.BlockingReason
+  }
+  if ($tailscale.NextStep -and -not $tailscale.Ready) {
+    Write-Info $tailscale.NextStep
   }
 } else {
   Write-Warn "Tailscale no esta instalado en este equipo."

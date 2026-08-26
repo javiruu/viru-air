@@ -227,7 +227,11 @@ function Get-CommandVersionText {
     }
   } catch {}
 
-  $result = Invoke-CommandWithTimeout -FilePath $FilePath -Arguments $Arguments -TimeoutSeconds $TimeoutSeconds
+  try {
+    $result = Invoke-CommandWithTimeout -FilePath $FilePath -Arguments $Arguments -TimeoutSeconds $TimeoutSeconds
+  } catch {
+    return $null
+  }
   if ($result.TimedOut -or $result.ExitCode -ne 0 -or $result.Output.Count -eq 0) {
     return $null
   }
@@ -654,29 +658,67 @@ function Get-CloudflareQuickTunnelUrl {
     return $genericUrl[0]
   }
 
+  $state = Read-StableTunnelState
+  $cachedUrls = @()
+  if ($state -and $state.PublicUrl) {
+    $cachedUrls += [string]$state.PublicUrl
+  }
+  if ($state -and $state.PublicUrls) {
+    $cachedUrls += @($state.PublicUrls | ForEach-Object { [string]$_ })
+  }
+  $cachedQuickUrl = @($cachedUrls | Where-Object { $_ -like "https://*.trycloudflare.com*" } | Select-Object -Last 1)
+  if ($cachedQuickUrl.Count -gt 0) {
+    return $cachedQuickUrl[0]
+  }
+
   return $null
+}
+
+function Get-PublicUrlReadiness {
+  param([string]$Url)
+
+  if (-not $Url) {
+    return [pscustomobject]@{
+      Ready = $false
+      Method = $null
+      Error = "No se ha detectado ninguna URL publica."
+    }
+  }
+
+  $ProgressPreference = "SilentlyContinue"
+  $errors = @()
+  foreach ($method in @("Head", "Get")) {
+    try {
+      $response = Invoke-WebRequest `
+        -Uri $Url `
+        -Method $method `
+        -UseBasicParsing `
+        -MaximumRedirection 3 `
+        -TimeoutSec 5 `
+        -ErrorAction Stop
+      if ([int]$response.StatusCode -ge 200 -and [int]$response.StatusCode -lt 400) {
+        return [pscustomobject]@{
+          Ready = $true
+          Method = $method
+          Error = $null
+        }
+      }
+      $errors += "$method devolvio HTTP $($response.StatusCode)."
+    } catch {
+      $errors += "$method no pudo conectar: $($_.Exception.Message)"
+    }
+  }
+
+  return [pscustomobject]@{
+    Ready = $false
+    Method = $null
+    Error = ($errors -join " ")
+  }
 }
 
 function Test-PublicUrlReady {
   param([string]$Url)
-
-  if (-not $Url) {
-    return $false
-  }
-
-  $ProgressPreference = "SilentlyContinue"
-  try {
-    $response = Invoke-WebRequest `
-      -Uri $Url `
-      -Method Head `
-      -UseBasicParsing `
-      -MaximumRedirection 3 `
-      -TimeoutSec 5 `
-      -ErrorAction Stop
-    return ([int]$response.StatusCode -ge 200 -and [int]$response.StatusCode -lt 400)
-  } catch {
-    return $false
-  }
+  return (Get-PublicUrlReadiness -Url $Url).Ready
 }
 
 function Get-CloudflareTunnelStatus {
@@ -686,7 +728,12 @@ function Get-CloudflareTunnelStatus {
   $config = Get-CloudflareTunnelConfigInfo
   $mode = if ($config.ConfigPath) { "named" } else { "quick" }
   $publicUrl = if ($mode -eq "named" -and $config.Hostname) { "https://$($config.Hostname)" } else { Get-CloudflareQuickTunnelUrl }
-  $publicUrlReady = if ($mode -eq "quick") { Test-PublicUrlReady -Url $publicUrl } else { [bool]$publicUrl }
+  $publicUrlCheck = if ($mode -eq "quick") {
+    Get-PublicUrlReadiness -Url $publicUrl
+  } else {
+    [pscustomobject]@{ Ready = [bool]$publicUrl; Method = "configured hostname"; Error = $null }
+  }
+  $publicUrlReady = $publicUrlCheck.Ready
   $authCertPath = Get-CloudflareTunnelAuthCertPath
   $credentialsFileExists = [bool]($config.CredentialsFile -and (Test-Path $config.CredentialsFile))
   $namedConfigReady = [bool]($config.ConfigPath -and $config.TunnelIdOrName -and $config.Hostname -and $credentialsFileExists)
@@ -710,8 +757,8 @@ function Get-CloudflareTunnelStatus {
     $blockingReason = "La configuracion local de Cloudflare existe, pero falta el credentials-file del tunel."
     $nextStep = "Descarga el credentials-file del tunel y apunta a el desde infra/cloudflare-tunnel.local.yml."
   } elseif ($mode -eq "quick" -and $state.IsRunning -and $publicUrl -and -not $publicUrlReady) {
-    $blockingReason = "El proceso de Cloudflare sigue activo, pero su URL publica ya no responde."
-    $nextStep = "Vuelve a PUBLICAR WEB para reiniciar el quick tunnel y obtener una URL nueva."
+    $blockingReason = "El proceso de Cloudflare sigue activo, pero no he podido verificar su URL desde este equipo tras probar HEAD y GET."
+    $nextStep = "URL detectada: $publicUrl. Pruebala desde otra red; si tampoco abre, vuelve a PUBLICAR WEB para crear un quick tunnel nuevo."
   } elseif ($mode -eq "quick" -and -not $state.IsRunning) {
     $nextStep = "Si quieres dominio propio, crea infra/cloudflare-tunnel.local.yml. Si no, puedes arrancar un quick tunnel desde el panel."
   }
@@ -736,6 +783,7 @@ function Get-CloudflareTunnelStatus {
     AuthCertExists = (Test-Path $authCertPath)
     PublicUrl = $publicUrl
     PublicUrlReady = $publicUrlReady
+    PublicUrlCheck = $publicUrlCheck
     Ready = [bool]($state.IsRunning -and $publicUrlReady)
     BlockingReason = $blockingReason
     NextStep = $nextStep
@@ -756,6 +804,11 @@ function Start-CloudflareTunnel {
 
   if ($status.Running -and $status.Ready) {
     return $status
+  }
+
+  if ($status.Running) {
+    Stop-CloudflareTunnel | Out-Null
+    $status = Get-CloudflareTunnelStatus
   }
 
   $paths = $status.Paths
@@ -903,6 +956,7 @@ function Invoke-TailscaleJsonCommand {
     ExitCode = $result.ExitCode
     Output = $result.Output
     Json = $json
+    AccessDenied = (($result.Output -join "`n") -match '(?i)acceso denegado|access is denied|protectedprefix\\administrators\\tailscale')
   }
 }
 
@@ -971,6 +1025,9 @@ function Get-TailscaleFunnelStatus {
   if (-not $cliPath) {
     $blockingReason = "Tailscale no esta instalado en este equipo."
     $nextStep = "Instala Tailscale para usar Funnel."
+  } elseif ($statusResult.AccessDenied) {
+    $blockingReason = "Tailscale esta activo, pero el panel no tiene permiso para consultar su servicio local."
+    $nextStep = "Abre el panel o una consola como administrador y ejecuta 'tailscale status'."
   } elseif (-not $statusResult.Success) {
     $blockingReason = "Tailscale no esta listo todavia."
     $nextStep = "Tailscale no esta listo todavia. Ejecuta 'tailscale up' y asegurate de iniciar sesion."
@@ -1004,6 +1061,7 @@ function Get-TailscaleFunnelStatus {
     NextStep = $nextStep
     RawStatusOutput = $statusResult.Output
     RawFunnelOutput = $funnelResult.Output
+    AccessDenied = $statusResult.AccessDenied
     Paths = $paths
   }
 }

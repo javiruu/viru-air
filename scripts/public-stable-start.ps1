@@ -74,6 +74,9 @@ if ($cloudflareInstall.Installed) {
   } else {
     $cloudflareReason = if ($cloudflare.BlockingReason) { $cloudflare.BlockingReason } else { "Cloudflare Tunnel no ha conseguido abrir una URL publica todavia." }
     Write-Warn $cloudflareReason
+    if ($cloudflare.PublicUrl) {
+      Write-Info ("URL de Cloudflare detectada (pendiente de verificacion local): " + $cloudflare.PublicUrl)
+    }
     if ($cloudflare.NextStep) {
       Write-Info $cloudflare.NextStep
     }
