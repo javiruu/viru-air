@@ -55,6 +55,14 @@ test("W3: row and detail actions keep lifecycle controls without manual refresh 
   assert.doesNotMatch(detailSource, /watchlist\.detail\.actions\.refresh/);
 });
 
+test("W3: purchased tickets use Comprado in the action area and retain delete", () => {
+  const rowSource = fs.readFileSync(WATCH_ROW, "utf8");
+
+  assert.match(rowSource, /watch\.status === "purchased"/);
+  assert.match(rowSource, /watch-ticket-purchased-action/);
+  assert.match(rowSource, /onDelete\(watch\.id\)/);
+});
+
 test("W3: watchlist route source keeps forbidden EN literals blocked", () => {
   const source = fs.readFileSync(WATCHLIST_PAGE, "utf8");
   for (const snippet of FORBIDDEN_WATCHLIST_COPY) {

@@ -4,6 +4,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.domain.vocabulary import WATCH_STATUS_PURCHASED
 from app.infrastructure.db.models import Base, FlightWatch, PriceSnapshot, RevalidationJob, User
 from app.services.watchlist_revalidation import (
     enqueue_startup_refresh_jobs,
@@ -45,12 +46,19 @@ def _seed_user(db: Session, email: str) -> User:
     return user
 
 
-def _seed_watch(db: Session, *, user_id: str, travel_date: dt.date) -> FlightWatch:
+def _seed_watch(
+    db: Session,
+    *,
+    user_id: str,
+    travel_date: dt.date,
+    status: str = "active",
+) -> FlightWatch:
     watch = FlightWatch(
         user_id=user_id,
         origin_iata="MAD",
         destination_iata="DUB",
         travel_date_local=travel_date,
+        status=status,
     )
     db.add(watch)
     db.commit()
@@ -130,6 +138,37 @@ def test_startup_refresh_enqueues_routes_checked_four_hours_ago() -> None:
         assert report["jobs"][0]["reason"] == "snapshot_expired"
         assert len(jobs) == 1
         assert jobs[0].job_type == "startup_refresh"
+    finally:
+        db.close()
+        engine.dispose()
+
+
+def test_startup_refresh_enqueues_purchased_watch_routes() -> None:
+    engine, testing_session_local = _session_factory()
+    db = testing_session_local()
+    try:
+        reference_now = dt.datetime(2026, 6, 30, 10, 0)
+        owner = _seed_user(db, "startup-purchased-watch@example.com")
+        watch = _seed_watch(
+            db,
+            user_id=owner.id,
+            travel_date=reference_now.date() + dt.timedelta(days=30),
+            status=WATCH_STATUS_PURCHASED,
+        )
+        _seed_snapshot(
+            db,
+            watch_id=watch.id,
+            captured_at=reference_now - dt.timedelta(hours=4),
+            price=61.0,
+        )
+
+        report = enqueue_startup_refresh_jobs(db, now=reference_now)
+        jobs = db.execute(select(RevalidationJob)).scalars().all()
+
+        assert report["evaluated_route_count"] == 1
+        assert report["enqueued_job_count"] == 1
+        assert len(jobs) == 1
+        assert jobs[0].target_fingerprint == f"route:MAD:DUB:{watch.travel_date_local.isoformat()}"
     finally:
         db.close()
         engine.dispose()

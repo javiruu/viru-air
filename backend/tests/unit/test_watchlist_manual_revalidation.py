@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.api.deps import get_current_user
+from app.domain.vocabulary import WATCH_STATUS_PURCHASED
 from app.infrastructure.db.models import Base, FlightWatch, PriceSnapshot, RevalidationJob, User
 from app.infrastructure.db.session import get_db
 from app.main import app
@@ -109,6 +110,41 @@ def test_refresh_now_revalidates_stale_watch_and_marks_job_done() -> None:
 
         assert len(snapshots) == 2
         assert len(refreshed) == 1
+        assert len(jobs) == 1
+        assert jobs[0].status == "done"
+    finally:
+        app.dependency_overrides.clear()
+        db.close()
+        db._test_engine.dispose()  # type: ignore[attr-defined]
+
+
+def test_refresh_now_revalidates_purchased_watch_and_marks_job_done() -> None:
+    db = _db()
+    current_user = _seed_user(db, "purchased-watch-owner@example.com")
+    watch = _seed_watch(db, user_id=current_user.id)
+    watch.status = WATCH_STATUS_PURCHASED
+    db.commit()
+
+    app.dependency_overrides[get_db] = _override_db(db)
+    app.dependency_overrides[get_current_user] = lambda: current_user
+    client = TestClient(app)
+
+    try:
+        with (
+            patch("app.api.v1.watchlist.REFRESH_COOLDOWN_SECONDS", 0),
+            patch("app.api.v1.watchlist.provider.get_flights", return_value=[_flight(75.0)]),
+        ):
+            response = client.post(f"/api/v1/watchlist/{watch.id}/refresh-now")
+
+        snapshots = db.execute(
+            select(PriceSnapshot).where(PriceSnapshot.watch_id == watch.id)
+        ).scalars().all()
+        jobs = db.execute(select(RevalidationJob)).scalars().all()
+
+        assert response.status_code == 200
+        assert response.json()["status"] == "queued"
+        assert len(snapshots) == 1
+        assert float(snapshots[0].raw_price) == 75.0
         assert len(jobs) == 1
         assert jobs[0].status == "done"
     finally:
