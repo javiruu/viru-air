@@ -2,7 +2,7 @@
 
 function Stop-ViruConsoleWindows {
   $viruConsoles = @(Get-CimInstance Win32_Process -Filter "Name = 'cmd.exe'" -ErrorAction SilentlyContinue | Where-Object {
-    $_.CommandLine -match "(?i)\btitle\s+Viru\s+(Backend|Frontend)\b"
+    $_.CommandLine -match "(?i)\btitle\s+Viru\s+(Backend|Frontend|Revalidation)\b"
   })
 
   foreach ($console in $viruConsoles) {
@@ -35,6 +35,20 @@ function Stop-ViruLocal {
   $stopped = @()
 
   Stop-ViruConsoleWindows
+
+  $workers = @(Get-CimInstance Win32_Process -Filter "Name = 'python.exe'" -ErrorAction SilentlyContinue | Where-Object {
+    $_.CommandLine -match "(?i)app\.services\.revalidation_worker_entrypoint"
+  })
+  foreach ($worker in $workers) {
+    try {
+      Stop-ViruProcessTree -ProcessId $worker.ProcessId
+      $stopped += $worker
+      Write-Ok ("Detenido worker de revalidacion (PID $($worker.ProcessId)).")
+    } catch {
+      Write-Fail ("No pude detener el worker de revalidacion (PID $($worker.ProcessId)): $($_.Exception.Message)")
+      exit 1
+    }
+  }
 
   foreach ($port in 3000, 8000) {
     $listeners = @(Get-PortListeners -Ports @($port) | Where-Object { $_.Listening })

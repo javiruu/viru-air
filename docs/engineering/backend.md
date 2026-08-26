@@ -27,7 +27,7 @@ Esto evita acoplar `quick-search`, `watchlist` y `recommendations` a un provider
 - Punto de entrada: `backend/app/main.py`.
 - **Cache compartida persistente (V2.1):** `quick_search_cache_service.py` + `QuickSearchCacheEntry` en BD. Reutiliza resultados de provider entre usuarios con TTL por categoría (ready=24h, empty=2h, degraded=30min). Activada con `QUICK_SEARCH_SHARED_CACHE_ENABLED=true`. Ver contrato en [Quick Search contract](../reference/backend/quick-search-contract.md).
 - Las migraciones Alembic son la única autoridad del esquema. El arranque de FastAPI no ejecuta `ALTER TABLE` ni `create_all()`.
-- El worker de revalidación se ejecuta fuera de los workers HTTP con `python -m app.services.revalidation_worker_entrypoint`. `ENABLE_IN_PROCESS_WORKERS=false` es el valor seguro para despliegues con varias réplicas.
+- El worker de revalidación se ejecuta fuera de los workers HTTP con `python -m app.services.revalidation_worker_entrypoint`. Programa las rutas vigiladas al arrancar y cada `WATCHLIST_DAILY_REFRESH_INTERVAL_SECONDS` (24 horas por defecto), además de drenar la cola. `ENABLE_IN_PROCESS_WORKERS=false` es el valor seguro para despliegues con varias réplicas.
 - La coordinación de single-flight usa una única backend por entorno: `QUICK_SEARCH_LOCK_BACKEND=database` o `redis`; no hay fallback automático entre ambos porque permitiría locks duplicados durante una caída de Redis.
 - Endpoints operativos visibles:
   - `/health`

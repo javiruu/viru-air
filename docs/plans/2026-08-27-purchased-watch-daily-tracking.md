@@ -4,7 +4,7 @@
 
 **Goal:** Keep a watch marked `purchased` visible as Comprado while it continues to receive daily price checks and changed-price snapshots.
 
-**Architecture:** `purchased` remains a community-pricing state but joins `active` as a trackable watch state. A shared backend predicate will drive the existing scheduled route checks, startup scheduling, and manual refresh. The ticket replaces pause/resume with a Comprado indicator and retains delete.
+**Architecture:** `purchased` remains a community-pricing state but joins `active` as a trackable watch state. A shared backend predicate drives startup scheduling and manual refresh. The standalone revalidation worker schedules the same route checks every 24 hours. The ticket replaces pause/resume with a Comprado indicator and retains delete.
 
 **Tech Stack:** FastAPI, SQLAlchemy, SQLite/PostgreSQL-compatible revalidation jobs, Next.js, React, TypeScript, CSS, pytest, Node test runner, Playwright.
 
@@ -23,15 +23,15 @@
 2. Add the smallest shared trackable-status predicate for `active` and `purchased`; keep paused and deleted excluded.
 3. Run both focused suites and confirm they pass.
 
-### Task 2: Retain the existing daily route-check cadence
+### Task 2: Run route checks daily
 
 **Files:**
 - Modify: `backend/app/services/watchlist_revalidation.py`
 - Test: `backend/tests/unit/test_watchlist_startup_refresh_regression.py`
 
-1. Cover that the existing scheduled route selection includes purchased watches.
-2. Reuse the current queue, deduplication and invariant-price persistence behavior rather than adding a second scheduler.
-3. Verify price-invariant refreshes still do not create duplicate snapshots.
+1. Write a failing test for the standalone worker's 24-hour scheduling cadence.
+2. Reuse the current queue, deduplication and invariant-price persistence behavior rather than adding a second scheduler or future-dated jobs.
+3. Start and stop the standalone worker with the local launcher, then verify price-invariant refreshes still do not create duplicate snapshots.
 
 ### Task 3: Express Comprado in the existing ticket actions
 
