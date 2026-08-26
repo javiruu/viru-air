@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 
 from app.infrastructure.db.session import SessionLocal
 from app.services.fare_memory_config import (
@@ -23,6 +24,10 @@ from app.services.watchlist_revalidation import (
 )
 
 logger = logging.getLogger("app.revalidation_worker")
+WATCHLIST_DAILY_REFRESH_INTERVAL_SECONDS = max(
+    1,
+    int(os.getenv("WATCHLIST_DAILY_REFRESH_INTERVAL_SECONDS", "86400")),
+)
 
 
 def _schedule_jobs() -> None:
@@ -46,15 +51,25 @@ def _schedule_jobs() -> None:
         db.close()
 
 
+async def _schedule_watchlist_daily() -> None:
+    while True:
+        await asyncio.sleep(WATCHLIST_DAILY_REFRESH_INTERVAL_SECONDS)
+        await asyncio.to_thread(_schedule_jobs)
+
+
 async def main() -> None:
     _schedule_jobs()
-    await run_periodic_revalidation_worker(
-        SessionLocal,
-        RevalidationWorkerConfig(
-            interval_seconds=FARE_MEMORY_REVALIDATION_WORKER_INTERVAL_SECONDS,
-            batch_size=FARE_MEMORY_REVALIDATION_WORKER_BATCH_SIZE,
-        ),
-    )
+    async with asyncio.TaskGroup() as task_group:
+        task_group.create_task(_schedule_watchlist_daily())
+        task_group.create_task(
+            run_periodic_revalidation_worker(
+                SessionLocal,
+                RevalidationWorkerConfig(
+                    interval_seconds=FARE_MEMORY_REVALIDATION_WORKER_INTERVAL_SECONDS,
+                    batch_size=FARE_MEMORY_REVALIDATION_WORKER_BATCH_SIZE,
+                ),
+            )
+        )
 
 
 if __name__ == "__main__":

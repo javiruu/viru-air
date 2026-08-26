@@ -638,6 +638,8 @@ New-Item -ItemType Directory -Force -Path $logsDir | Out-Null
 $ts = Get-Date -Format "yyyyMMdd-HHmmss-fff"
 $backendLog = Join-Path $logsDir "backend-$ts.log"
 $backendErrLog = Join-Path $logsDir "backend-$ts.err.log"
+$revalidationWorkerLog = Join-Path $logsDir "revalidation-worker-$ts.log"
+$revalidationWorkerErrLog = Join-Path $logsDir "revalidation-worker-$ts.err.log"
 $frontendLog = Join-Path $logsDir "frontend-$ts.log"
 $frontendErrLog = Join-Path $logsDir "frontend-$ts.err.log"
 $frontendBuildDir = Join-Path $root "frontend\.next"
@@ -680,6 +682,14 @@ if ($runBackground) {
     -PassThru `
     -WindowStyle Hidden | Out-Null
 
+  Start-Process -FilePath $backendPython `
+    -ArgumentList @("-m", "app.services.revalidation_worker_entrypoint") `
+    -WorkingDirectory $backendDir `
+    -RedirectStandardOutput $revalidationWorkerLog `
+    -RedirectStandardError $revalidationWorkerErrLog `
+    -PassThru `
+    -WindowStyle Hidden | Out-Null
+
   $env:NEXT_PUBLIC_API_URL = "/api/v1"
   Start-Process -FilePath "cmd.exe" `
     -ArgumentList @("/c", "npm run dev") `
@@ -693,6 +703,9 @@ if ($runBackground) {
   $uvicornWorkersArg = if ($uvicornWorkers -gt 1) { "--workers $uvicornWorkers" } else { "" }
   $backendCmd = "title Viru Backend && cd /d `"$root\backend`" && set LOG_FILE=$backendLog && set DB_URL=$backendDbUrl && `"$backendPython`" -m uvicorn app.main:app --host 127.0.0.1 --port 8000 $uvicornReloadArg $uvicornWorkersArg"
   Start-Process -FilePath "cmd.exe" -ArgumentList "/k", $backendCmd | Out-Null
+
+  $revalidationWorkerCmd = "title Viru Revalidation && cd /d `"$root\backend`" && set DB_URL=$backendDbUrl && `"$backendPython`" -m app.services.revalidation_worker_entrypoint"
+  Start-Process -FilePath "cmd.exe" -ArgumentList "/k", $revalidationWorkerCmd | Out-Null
 
   # Frontend (modo foreground en nueva ventana)
   $frontendCmd = "title Viru Frontend && cd /d `"$root\frontend`" && set NEXT_PUBLIC_API_URL=/api/v1 && npm run dev"
@@ -715,6 +728,8 @@ try {
   Write-Host "DB_URL:" $backendDbUrl
   Write-Host "Backend log:" $backendLog
   Write-Host "Backend err log:" $backendErrLog
+  Write-Host "Worker log:" $revalidationWorkerLog
+  Write-Host "Worker err log:" $revalidationWorkerErrLog
   Write-Host "Frontend log:" $frontendLog
   Write-Host "Frontend err log:" $frontendErrLog
   Write-Host "Abre: http://localhost:3000"
