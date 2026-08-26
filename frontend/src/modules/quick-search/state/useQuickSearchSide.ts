@@ -7,7 +7,7 @@ import {
   type QuickSearchCanonicalPayload,
   type QuickSearchQueryParams,
 } from "@/modules/quick-search/api/buildQuickSearchRequest";
-import { collectQuickSearchWarningCodes, normalizeQuickSearchResponse } from "@/modules/quick-search/responseNormalizer";
+import { collectQuickSearchWarningCodes, normalizeQuickSearchResponse } from "@/modules/quick-search/api/normalizeQuickSearchResponse";
 import type {
   DeepLinkResponse,
   QuickSearchLoadingPhase,

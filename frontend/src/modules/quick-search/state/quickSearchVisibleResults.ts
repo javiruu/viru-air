@@ -1,5 +1,3 @@
-import { useMemo } from "react";
-
 import { normalizeQuickSearchResults } from "@/modules/quick-search/api/normalizeQuickSearchResponse";
 import { parseNumericInput } from "@/modules/quick-search/searchCriteria";
 import type { QuickSearchSortBy, SearchResult } from "@/modules/quick-search/types";
@@ -43,17 +41,4 @@ export function deriveQuickSearchVisibleResults({
   });
 
   return list;
-}
-
-export function useQuickSearchVisibleResults({
-  results,
-  priceMin,
-  priceMax,
-  durationMax,
-  sortBy,
-}: QuickSearchVisibleResultsArgs): SearchResult[] {
-  return useMemo(
-    () => deriveQuickSearchVisibleResults({ results, priceMin, priceMax, durationMax, sortBy }),
-    [results, priceMin, priceMax, durationMax, sortBy],
-  );
 }

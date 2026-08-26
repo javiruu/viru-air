@@ -54,24 +54,3 @@ export function buildAirportSuggestions(
 
   return out;
 }
-
-// ── Merge recent + API suggestions ───────────────────────────────────
-
-export function mergeAirportSuggestions(
-  recentSuggestions: Array<{ iata: string; name: string }>,
-  apiSuggestions: Array<{ iata: string; name: string }>,
-  limit = 6,
-) {
-  const out: Array<{ iata: string; name: string }> = [];
-  const seen = new Set<string>();
-
-  for (const suggestion of [...recentSuggestions, ...apiSuggestions]) {
-    const key = suggestion.iata.trim().toUpperCase();
-    if (!key || seen.has(key)) continue;
-    seen.add(key);
-    out.push({ iata: key, name: suggestion.name });
-    if (out.length >= limit) break;
-  }
-
-  return out;
-}

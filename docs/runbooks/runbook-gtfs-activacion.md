@@ -68,7 +68,7 @@ DOOR_TO_DOOR_GTFS_MAX_WALK_RADIUS_METERS=2000
 
 ```bash
 cd backend
-python -m app.door_to_door.tools.gtfs_probe --feed-id <ID_DEL_FEED>
+python -m app.door_to_door.tools.gtfs_probe --feed <ID_DEL_FEED>
 ```
 
 El probe descarga, parsea y muestra:
@@ -142,8 +142,8 @@ Los feeds de EMT Málaga y CTAN Andalucía están alojados en el National Access
 4. **Verificar la descarga con el probe**:
    ```bash
    cd backend
-   python -m app.door_to_door.tools.gtfs_probe --feed-id emt_malaga_nap
-   python -m app.door_to_door.tools.gtfs_probe --feed-id ctan_andalucia_nap
+   python -m app.door_to_door.tools.gtfs_probe --feed emt_malaga_nap
+   python -m app.door_to_door.tools.gtfs_probe --feed ctan_andalucia_nap
    ```
    El probe mostrará número de rutas, paradas, viajes y cobertura de fechas.
 5. **Verificar paradas cercanas a AGP**: confirma que el probe encuentra paradas cerca de Málaga centro (36.72, -4.42) y del aeropuerto AGP (36.675, -4.499).

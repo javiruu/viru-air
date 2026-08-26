@@ -120,7 +120,7 @@ Quick Search no esta en cero. Tiene:
 - contrato backend canonico v2 con request estructurada;
 - cache compartida persistente documentada como V2.1;
 - preferencia AI/heuristica ya documentada en `meta.ai_preference`;
-- modulos frontend separados (`requestBuilder`, `responseNormalizer`, `filterUtils`,
+- modulos frontend separados (`api/buildQuickSearchRequest`, `api/normalizeQuickSearchResponse`, `filterUtils`,
   `QuickSearchDualWorkspace`, `QuickSearchSidePanel`, `useQuickSearchSide`);
 - flujo dual ida/vuelta implementado parcialmente;
 - tests backend de reverse leg, calendar hints invertidos, deep links con `date_in`
