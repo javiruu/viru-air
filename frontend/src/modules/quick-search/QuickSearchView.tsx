@@ -144,7 +144,7 @@ import {
   SummaryHighlightKey,
   ZeroResultRelaxAction,
 } from "@/modules/quick-search/types";
-import { collectQuickSearchWarningCodes, normalizeQuickSearchResponse } from "@/modules/quick-search/responseNormalizer";
+import { collectQuickSearchWarningCodes, normalizeQuickSearchResponse } from "@/modules/quick-search/api/normalizeQuickSearchResponse";
 import { getQuickSearchFreshnessPresentation } from "@/modules/quick-search/freshnessPresentation";
 import { useQuickSearchMainState } from "@/modules/quick-search/state/useQuickSearchController";
 import { getQuickSearchVisualState } from "@/modules/quick-search/state/getQuickSearchVisualState";

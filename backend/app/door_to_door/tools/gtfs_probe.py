@@ -1,12 +1,12 @@
 """GTFS feed probe — manual diagnostic tool for real feed validation.
 
 Usage:
-    uv run python -m backend.app.door_to_door.tools.gtfs_probe \\
-        --feed ctan_andalucia \\
-        --origin "Almería" --destination "Málaga AGP" \\
+    uv run python -m app.door_to_door.tools.gtfs_probe \\
+        --feed ctan_andalucia_nap \\
+        --origin "Almería" --destination "Málaga" \\
         --date 2026-07-15
 
-    uv run python -m backend.app.door_to_door.tools.gtfs_probe \\
+    uv run python -m app.door_to_door.tools.gtfs_probe \\
         --feed mom_treviso \\
         --origin-lat 45.6508 --origin-lng 12.1978 \\
         --dest-lat 45.6669 --dest-lng 12.243 \\
@@ -22,14 +22,10 @@ Outputs a readable summary:
 import argparse
 import sys
 from datetime import date, datetime, timedelta, timezone
-from pathlib import Path
 
 # Ensure stdout can handle Unicode on Windows
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
-# Ensure backend is on the path when invoked as python -m
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent))
 
 from app.door_to_door.services.gtfs_feed_service import (
     GtfsFeedDescriptor,
@@ -210,19 +206,20 @@ def probe_trips(feed_service: GtfsFeedService, feed_id: str,
                 )
                 for t in trips:
                     all_trips.append((search_date, from_s, to_s, t))
-                    if len(all_trips) >= 10:
+                    if len(all_trips) >= feed_service.max_results:
                         break
-                if len(all_trips) >= 10:
+                if len(all_trips) >= feed_service.max_results:
                     break
-            if len(all_trips) >= 10:
+            if len(all_trips) >= feed_service.max_results:
                 break
         if all_trips:
             break
 
     if not all_trips:
         print("  [NONE] No matching trips found for any of the 3 dates searched")
-        return        print(f"  [OK] Found {len(all_trips)} trip(s):\n")
-    for search_date, from_s, to_s, t in all_trips[:10]:
+        return
+    print(f"  [OK] Found {len(all_trips)} trip(s):\n")
+    for search_date, from_s, to_s, t in all_trips:
         print(f"  Date: {search_date}")
         print(f"    From: [{from_s.stop_id}] {from_s.name}")
         print(f"    To:   [{to_s.stop_id}] {to_s.name}")
@@ -240,7 +237,7 @@ def main() -> None:
         epilog="""
 Examples:
   python -m app.door_to_door.tools.gtfs_probe --list
-  python -m app.door_to_door.tools.gtfs_probe --feed ctan_andalucia --origin "Almería" --dest "Málaga AGP" --date 2026-07-15
+  python -m app.door_to_door.tools.gtfs_probe --feed ctan_andalucia_nap --origin "Almería" --dest "Málaga" --date 2026-07-15
   python -m app.door_to_door.tools.gtfs_probe --feed mom_treviso --origin-lat 45.6508 --origin-lng 12.1978 --dest-lat 45.6669 --dest-lng 12.243
         """,
     )
@@ -257,7 +254,6 @@ Examples:
     parser.add_argument("--cache-ttl", type=int, default=0, help="Cache TTL in seconds (0 = always re-download)")
     parser.add_argument("--max-walk", type=int, default=2000, help="Max walk radius in meters")
     parser.add_argument("--max-results", type=int, default=5, help="Max trip results per search")
-    parser.add_argument("--json", action="store_true", help="Output as JSON (for scripting)")
 
     args = parser.parse_args()
     target_date = date.fromisoformat(args.date) if args.date else date.today()

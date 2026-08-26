@@ -3,17 +3,18 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { buildQuickSearchCanonicalPayload, toQuickSearchQuery } from "../src/modules/quick-search/requestBuilder";
 import {
   buildQuickSearchExpectedSignatures,
   buildQuickSearchQuerySignature,
+  buildQuickSearchCanonicalPayload,
   prepareQuickSearchRequest,
+  toQuickSearchQuery,
 } from "../src/modules/quick-search/api/buildQuickSearchRequest";
 import {
   collectQuickSearchWarningCodes,
   normalizeQuickSearchResponse,
   normalizeQuickSearchResults,
-} from "../src/modules/quick-search/responseNormalizer";
+} from "../src/modules/quick-search/api/normalizeQuickSearchResponse";
 import { QuickSearchResultsList } from "../src/modules/quick-search/components/QuickSearchResultsList";
 
 test("toQuickSearchQuery keeps quick-search API contract shape", () => {
