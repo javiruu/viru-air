@@ -26671,6 +26671,34 @@ textarea::placeholder {
   gap: 0.7rem;
 }
 
+.watch-ticket-action-buttons--purchased {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.watch-ticket-purchased-action {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 5.75cqw;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.76rem;
+  border: 1.5px solid color-mix(in srgb, var(--watch-ticket-green) 58%, var(--watch-ticket-line));
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--watch-ticket-green) 14%, var(--watch-ticket-paper));
+  color: var(--watch-ticket-ink);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(0.78rem, 2.15cqw, 1.72rem);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.watch-ticket-purchased-action svg {
+  width: 1.05em;
+  height: 1.05em;
+  stroke-width: 2;
+}
+
 .watch-ticket-row .watch-ticket-action-buttons .btn-compact {
   display: inline-flex;
   min-height: 5.75cqw;
@@ -26996,6 +27024,13 @@ textarea::placeholder {
   }
 
   .watch-ticket-row .watch-ticket-action-buttons .btn-compact {
+    min-height: 1.52rem;
+    gap: 0.18rem;
+    padding: 0.25rem 0.38rem;
+    font-size: 0.51rem;
+  }
+
+  .watch-ticket-purchased-action {
     min-height: 1.52rem;
     gap: 0.18rem;
     padding: 0.25rem 0.38rem;
@@ -27544,7 +27579,8 @@ textarea::placeholder {
   }
 
   .watch-ticket-trend-action,
-  .watch-ticket-row .watch-ticket-action-buttons .btn-compact {
+  .watch-ticket-row .watch-ticket-action-buttons .btn-compact,
+  .watch-ticket-purchased-action {
     min-height: 1.58rem;
     font-size: 0.56rem;
   }

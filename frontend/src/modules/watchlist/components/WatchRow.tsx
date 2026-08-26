@@ -1,4 +1,4 @@
-import { ArrowRight, Minus, Pause, Plane, Play, Trash2, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowRight, Check, Minus, Pause, Plane, Play, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 
 import { useI18n } from "@/i18n";
 import { CommunityRouteSignal } from "@/modules/community-routes/CommunityRouteSignal";
@@ -241,24 +241,44 @@ export function WatchRow({
           </div>
         </div>
         <div className="watch-ticket-actions">
-          <span className={`watch-ticket-trend-action watch-ticket-trend-action--${trend}`}>
-            {trendIcon}
-            {trend === "up"
-              ? t("watchlist.smartList.trendUp")
-              : trend === "down"
-                ? t("watchlist.smartList.trendDown")
-                : t("watchlist.smartList.trendStable")}
-          </span>
-          {meta?.latest && (hasMeaningfulDrop || isBestPrice) ? (
-            <div className="watch-price-badges">
-              {hasMeaningfulDrop && priceDropAmount !== null && priceDropPercent !== null ? (
-                <span className="price-drop-badge tabular-nums">{formatCurrency(priceDropAmount, meta.latest.currency, localeTag)} ({priceDropPercent}%)</span>
-              ) : null}
-              {isBestPrice ? <span className="best-price-badge">{t("watchlist.compare.bestPriceBadge")}</span> : null}
+          {watch.status === "purchased" ? (
+            <div className="alert-actions watch-ticket-action-buttons watch-ticket-action-buttons--purchased">
+              <span className="watch-ticket-purchased-action">
+                <Check aria-hidden="true" />
+                {watchStatus.label}
+              </span>
+              <button
+                className="btn-danger btn-compact"
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onDelete(watch.id);
+                }}
+              >
+                <Trash2 aria-hidden="true" />
+                {t("watchlist.smartList.delete")}
+              </button>
             </div>
-          ) : null}
-          <div className="alert-actions watch-ticket-action-buttons">
-            {canManageTracking && watch.status === "paused" ? (
+          ) : (
+            <>
+              <span className={`watch-ticket-trend-action watch-ticket-trend-action--${trend}`}>
+                {trendIcon}
+                {trend === "up"
+                  ? t("watchlist.smartList.trendUp")
+                  : trend === "down"
+                    ? t("watchlist.smartList.trendDown")
+                    : t("watchlist.smartList.trendStable")}
+              </span>
+              {meta?.latest && (hasMeaningfulDrop || isBestPrice) ? (
+                <div className="watch-price-badges">
+                  {hasMeaningfulDrop && priceDropAmount !== null && priceDropPercent !== null ? (
+                    <span className="price-drop-badge tabular-nums">{formatCurrency(priceDropAmount, meta.latest.currency, localeTag)} ({priceDropPercent}%)</span>
+                  ) : null}
+                  {isBestPrice ? <span className="best-price-badge">{t("watchlist.compare.bestPriceBadge")}</span> : null}
+                </div>
+              ) : null}
+              <div className="alert-actions watch-ticket-action-buttons">
+                {canManageTracking && watch.status === "paused" ? (
               <button
                 className="btn-ghost btn-compact"
                 type="button"
@@ -270,7 +290,7 @@ export function WatchRow({
                   <Play aria-hidden="true" />
                 {t("watchlist.smartList.resume")}
               </button>
-            ) : canManageTracking ? (
+                ) : canManageTracking ? (
               <button
                 className="btn-ghost btn-compact"
                 type="button"
@@ -282,19 +302,21 @@ export function WatchRow({
                 <Pause aria-hidden="true" />
                 {t("watchlist.smartList.pause")}
               </button>
-            ) : null}
-            <button
-              className="btn-danger btn-compact"
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                onDelete(watch.id);
-              }}
-              >
-              <Trash2 aria-hidden="true" />
-                {t("watchlist.smartList.delete")}
-            </button>
-          </div>
+                ) : null}
+                <button
+                  className="btn-danger btn-compact"
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onDelete(watch.id);
+                  }}
+                >
+                  <Trash2 aria-hidden="true" />
+                  {t("watchlist.smartList.delete")}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
       <aside className="watch-ticket-stub" aria-label={watch.travel_date_local}>

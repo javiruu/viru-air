@@ -9,6 +9,16 @@
 
 Inventario completo de documentos `.md` y `.txt` relevantes del repositorio tras el saneamiento documental. Excluye dependencias, cach?s, builds, entornos virtuales, `_publish_repo` y otras salidas generadas masivas.
 
+## Actualizacion manual 2026-08-27 (seguimiento diario de watches comprados)
+
+Entrada viva agregada:
+
+- `docs/plans/2026-08-27-purchased-watch-daily-tracking.md`
+
+Motivo:
+
+- Plan aprobado para conservar el estado comunitario `purchased` sin detener las revalidaciones diarias, los snapshots de precio y la acción secundaria de borrar en `/watchlist`.
+
 ## Actualizacion manual 2026-08-21 (fiabilidad del calendario)
 
 Entrada viva agregada:

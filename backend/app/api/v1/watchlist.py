@@ -15,7 +15,6 @@ from app.domain.vocabulary import (
     WATCH_STATUS_ACTIVE,
     WATCH_STATUS_DELETED,
     WATCH_STATUS_PAUSED,
-    WATCH_STATUS_PURCHASED,
 )
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -651,9 +650,6 @@ def _refresh_watch_now(db: Session, watch_id: str, current_user: User) -> JSONRe
         raise HTTPException(status_code=404, detail="watch_not_found")
     if watch.status == WATCH_STATUS_PAUSED:
         raise HTTPException(status_code=409, detail="watch_paused")
-    if watch.status == WATCH_STATUS_PURCHASED:
-        raise HTTPException(status_code=409, detail="watch_purchased")
-
     latest_snapshot = latest_snapshot_by_watch_ids(db, [watch.id]).get(watch.id)
     route_freshness = evaluate_route_freshness(
         watches=[watch],

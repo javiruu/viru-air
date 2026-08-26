@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
 from app.domain.entities import ProviderFetchResult
-from app.domain.vocabulary import WATCH_STATUS_ACTIVE
+from app.domain.vocabulary import WATCH_STATUS_TRACKABLE
 from app.infrastructure.db.models import FlightWatch, RevalidationJob
 from app.infrastructure.providers.flight_provider import MultiSourceFlightProvider
 from app.services.quick_search_cache_service import (
@@ -84,7 +84,7 @@ def enqueue_startup_refresh_jobs(
     reference_now = now or utc_now_naive()
     active_watches = db.scalars(
         select(FlightWatch)
-        .where(FlightWatch.status == WATCH_STATUS_ACTIVE)
+        .where(FlightWatch.status.in_(WATCH_STATUS_TRACKABLE))
         .where(FlightWatch.travel_date_local >= reference_now.date())
         .order_by(FlightWatch.travel_date_local.asc(), FlightWatch.created_at.asc(), FlightWatch.id.asc())
     ).all()
@@ -294,7 +294,7 @@ def revalidate_route(
     active_watches = list(
         db.scalars(
             select(FlightWatch)
-            .where(FlightWatch.status == WATCH_STATUS_ACTIVE)
+            .where(FlightWatch.status.in_(WATCH_STATUS_TRACKABLE))
             .where(FlightWatch.origin_iata == origin_iata)
             .where(FlightWatch.destination_iata == destination_iata)
             .where(FlightWatch.travel_date_local == travel_date_local)
