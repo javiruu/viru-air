@@ -18,7 +18,7 @@ Se implementó el primer bloque accionable de H36 sin cambiar contratos HTTP del
 
 **Validación ejecutada:** 519 tests frontend pasaron antes de la corrección final; tras la corrección final pasaron las 6 regresiones H36/API, `npx tsc --noEmit`, `npm run lint` y `npm run build`. El bloque lab Gate F está cerrado para la instrumentación opt-in local; no se declara cumplimiento de Web Vitals ni field/RUM de producción.
 
-**Siguiente bloque H36:** ejecutar el profiler configurable contra un frontend/backend local levantado y guardar la evidencia del baseline. El runner ya admite `PERF_ROUTES`, `PERF_PROFILES`, Fast 3G y JSON; quedan fuera de este bloque skeletons, dedupe/TTL, fan-out de watchlist y lazy loading de secundarios.
+**Siguiente bloque H36:** ejecutar el profiler configurable contra un frontend/backend local levantado y guardar la evidencia del baseline. El runner ya admite `PERF_ROUTES`, `PERF_PROFILES`, Fast 3G y JSON; quedan fuera de este bloque estados Boneyard, dedupe/TTL, fan-out de watchlist y lazy loading de secundarios.
 
 ### Actualización 2026-08-08 — profiler configurable preparado
 
@@ -87,7 +87,7 @@ H36 cubre:
 - presupuesto de documento, CSS, JavaScript, fuentes y recursos críticos;
 - LCP, INP, CLS, TTFB y tiempo hasta primer resultado útil;
 - waterfalls de requests, cancelación, debounce, dedupe y prioridades;
-- skeletons estructurales, loading/empty/error y estabilidad de layout;
+- estados Boneyard estructurales, loading/empty/error y estabilidad de layout;
 - carga diferida de comparativas, alertas, watchlist, histórico y paneles secundarios;
 - límites de resultados, paginación/virtualización y coste de renderizado;
 - imágenes, fuentes, mapas y scripts de terceros;
@@ -118,7 +118,7 @@ H36 no decide por sí sola:
 | Autocomplete | `HotelSearchPanel` aplica debounce de 350 ms para `areaResolve` | Existe debounce local, cancelación HTTP y latest-wins; dedupe y medición de coste siguen pendientes |
 | Requests | `frontend/src/modules/hotels/api.ts` usa `apiFetchWithStatus` y las operaciones principales aceptan `AbortSignal` | La cancelación de búsqueda, resolve y selección ya está cableada; dedupe, prioridades y métricas siguen pendientes |
 | Resultados | La card principal hace `.map()` sobre la lista y el search V1 pide `limit: 30` | Hay un límite inicial, pero no existe paginación/virtualización contractual para crecimiento posterior |
-| Loading | La página muestra textos de loading y estados vacíos; no hay skeleton hotelero estructural completo | El espacio puede cambiar cuando llegan resultados o paneles secundarios |
+| Loading | La página muestra textos de loading y estados vacíos; no hay un estado Boneyard hotelero estructural completo | El espacio puede cambiar cuando llegan resultados o paneles secundarios |
 | Cache | Existen caches en memoria para algunos detalles de watchlist/comp set | No hay TTL, invalidación ni límite de memoria documentado |
 | Fuentes | `globals.css` importa Google Fonts mediante `@import` | Puede afectar la ruta crítica y requiere medir bloqueo, fallback y consentimiento H35 |
 | Instrumentación | No se encontró instrumentación hotelera específica de LCP/INP/CLS/TTFB/RUM | No puede afirmarse cumplimiento ni regresión controlada antes de medir |
@@ -132,7 +132,7 @@ H36 no decide por sí sola:
 - `Promise.allSettled` evita que una petición secundaria mate todo el panel, pero no reduce coste ni prioriza el camino principal.
 - El autocomplete resuelve después de 350 ms y ahora cancela la request previa con latest-wins; todavía no existe dedupe de intenciones idénticas.
 - El resultado de área construye una lista derivada y cada card formatea precio en render; su coste debe medirse con resultados grandes.
-- No hay evidencia de dimensiones reservadas para recursos hoteleros futuros ni de un skeleton con alturas equivalentes.
+- No hay evidencia de dimensiones reservadas para recursos hoteleros futuros ni de un estado Boneyard con alturas equivalentes.
 - La importación global de fuentes externas y CSS de MapLibre debe auditarse en el bundle de `/hoteles`, aunque no todos sus estilos se usen en la pantalla.
 
 **Estado de lanzamiento:** H36 no declara “rápido”, “instantáneo”, “sin layout shift” ni “cumple Core Web Vitals” hasta aportar medición lab y field suficiente.
@@ -234,7 +234,7 @@ La implementación puede mantener llamadas concurrentes, pero debe demostrar que
 
 ### 5.2. Loading y estabilidad visual
 
-- Usar skeletons con la misma estructura aproximada que la primera card, heading, count y panel visible.
+- Usar estados Boneyard con la misma estructura aproximada que la primera card, heading, count y panel visible.
 - Reservar altura para contenido que llegará async; no insertar bloques grandes encima del foco actual.
 - Mantener estable el ancho/alto del autocomplete y sus sugerencias.
 - No mostrar `0` como resultado definitivo mientras una búsqueda está cargando.
@@ -269,7 +269,7 @@ La implementación puede mantener llamadas concurrentes, pero debe demostrar que
 
 - medir baseline de `/hoteles` en desktop, móvil y red Fast 3G;
 - añadir eventos/telemetría de T1–T5 sin PII;
-- skeletons estructurales y estados estables;
+- estados Boneyard estructurales y estados estables;
 - cancelación y latest-wins para requests obsoletas;
 - prioridad del primer resultado sobre paneles secundarios;
 - límite V1 de 30 resultados y protección ante fan-out de watchlist;
@@ -297,7 +297,7 @@ H36 no exige Web Workers, prefetch agresivo ni streaming por moda. Cada optimiza
 - Medición reproducible de shell, buscador, primer resultado, LCP, INP y CLS.
 - Separar carga prioritaria de refreshes secundarios de montaje.
 - Evitar que una búsqueda o selección obsoleta pueda sobrescribir la vigente.
-- Skeleton/estado estable para que loading no produzca layout engañoso.
+- Estado Boneyard estable para que loading no produzca layout engañoso.
 - Presupuesto móvil y Fast 3G con evidencia versionada.
 
 ### P1 — eficiencia y escalabilidad

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { useI18n } from "@/i18n";
 import { apiFetch } from "@/modules/shared/api";
-import { Skeleton, SkeletonPanel } from "@/modules/shared/Skeleton";
+import { BoneyardLoad, BoneyardPanel, LoadReference } from "@/modules/shared/BoneyardLoad";
 import {
   HOTEL_METRIC_NAMES,
   HOTEL_PROVIDERS,
@@ -186,7 +186,7 @@ export default function HotelObservabilityPage() {
   if (!me?.is_admin) {
     return (
       <main className="shell" id="main-content">
-        <SkeletonPanel ariaLabel={t("admin.hotelObservability.loading")} />
+        <BoneyardPanel name="hotel-observability-access-load" ariaLabel={t("admin.hotelObservability.loading")} />
       </main>
     );
   }
@@ -406,12 +406,16 @@ export default function HotelObservabilityPage() {
       </section>
 
       {loading ? (
-        <section className="hotel-observability-loading" role="status" aria-live="polite" aria-label={t("admin.hotelObservability.loading")} aria-busy="true">
+        <BoneyardLoad name="hotel-observability-load" className="hotel-observability-loading" ariaLabel={t("admin.hotelObservability.loading")}>
           <div className="hotel-observability-summary-grid">
-            {Array.from({ length: 4 }).map((_, index) => <Skeleton variant="card" key={`hotel-summary-${index}`} className="hotel-observability-skeleton-card" />)}
+            {Array.from({ length: 4 }).map((_, index) => <LoadReference shape="card" key={`hotel-summary-load-${index}`} className="hotel-observability-load-card" />)}
           </div>
-          <SkeletonPanel />
-        </section>
+          <div className="panel panel-soft boneyard-panel">
+            <LoadReference shape="chip" width="34%" height={18} />
+            <LoadReference width="74%" />
+            <LoadReference width="58%" />
+          </div>
+        </BoneyardLoad>
       ) : data ? (
         <>
           <section className="hotel-observability-summary-grid" aria-label={t("admin.hotelObservability.summaryLabel")}>

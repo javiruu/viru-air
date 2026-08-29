@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { Skeleton, SkeletonPanel } from "@/modules/shared/Skeleton";
+import { BoneyardPanel, LoadReference } from "@/modules/shared/BoneyardLoad";
 import { apiFetchWithStatus } from "@/modules/shared/api";
 import { clearToken, hasToken } from "@/modules/shared/auth";
 import { isDashboardDemoAccessEnabled } from "@/modules/shared/dashboard-demo-session";
@@ -48,15 +48,15 @@ export default function HomePage() {
   if (state === "checking") {
     return (
       <main className="shell landing-shell" id="main-content">
-        <SkeletonPanel className="landing-check air-loader-section" ariaLabel={t("public.landing.checkingSession")}>
-          <Skeleton variant="pill" width={180} height={18} />
-          <Skeleton variant="line" width="68%" />
-          <Skeleton variant="line" width="52%" />
-          <div className="loading-skeleton-row" aria-hidden="true">
-            <Skeleton variant="card" className="loading-skeleton-card" />
-            <Skeleton variant="card" className="loading-skeleton-card" />
+        <BoneyardPanel name="landing-session-load" className="landing-check air-loader-section" ariaLabel={t("public.landing.checkingSession")}>
+          <LoadReference shape="chip" width={180} height={18} />
+          <LoadReference width="68%" />
+          <LoadReference width="52%" />
+          <div className="boneyard-reference-row" aria-hidden="true">
+            <LoadReference shape="card" />
+            <LoadReference shape="card" />
           </div>
-        </SkeletonPanel>
+        </BoneyardPanel>
       </main>
     );
   }

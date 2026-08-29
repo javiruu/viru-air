@@ -205,7 +205,7 @@ H27 consume la taxonomía H21 y añade semántica de autorización:
 | Estado | Significado | Presentación | Acción |
 |---|---|---|---|
 | `idle` | no se ha cargado la bandeja | estado inicial | cargar |
-| `loading` | consulta en curso | skeleton sin borrar contexto | esperar |
+| `loading` | consulta en curso | estado Boneyard sin borrar contexto | esperar |
 | `success` | items autorizados y válidos | lista normal | abrir/marcar |
 | `success_empty` | respuesta válida sin items visibles | empty honesto | volver a reglas o buscar |
 | `partial` | alguna fuente falla, otras son utilizables | conservar válidas + aviso | reintentar fuente |

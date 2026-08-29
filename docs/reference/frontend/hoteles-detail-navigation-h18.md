@@ -202,8 +202,8 @@ El detalle no debe repetir toda la pantalla de búsqueda ni competir con la acci
 
 Detalle, rates, parity, histórico y acciones pueden cargar por separado:
 
-- skeleton de identidad mientras llega `HotelDetailOut`;
-- skeleton de rates mientras llega `HotelRateOut[]`;
+- estado de carga Boneyard de identidad mientras llega `HotelDetailOut`;
+- estado de carga Boneyard de rates mientras llega `HotelRateOut[]`;
 - parity puede mostrar `loading`, `limited`, `error` o `empty` sin bloquear identidad;
 - no mostrar un spinner global que oculte un detalle ya válido;
 - conservar datos anteriores mientras se actualiza la misma selección si H15 lo permite.

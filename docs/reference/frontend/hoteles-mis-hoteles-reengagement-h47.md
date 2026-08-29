@@ -171,7 +171,7 @@ H47 consume H21/H25/H29. La lista no puede usar `is_active` como única explicac
 
 | Estado | Significado | Presentación | Acción |
 |---|---|---|---|
-| `loading` | se carga el retorno | skeleton estable | esperar |
+| `loading` | se carga el retorno | estado Boneyard estable | esperar |
 | `success` | entidad autorizada y usable | card normal | revisar |
 | `success_empty` | no hay guardados/seguimientos visibles | empty accionable | explorar hoteles |
 | `partial` | solo parte del contexto o fuentes está disponible | warning localizado | revisar/completar |

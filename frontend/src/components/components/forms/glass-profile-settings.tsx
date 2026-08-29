@@ -18,7 +18,7 @@ import {
   X,
 } from "lucide-react";
 
-import { Skeleton } from "@/modules/shared/Skeleton";
+import { BoneyardLoad, LoadReference } from "@/modules/shared/BoneyardLoad";
 
 export type GlassProfileData = {
   display_name: string;
@@ -153,16 +153,16 @@ export function GlassProfileSettingsCard({
           </button>
         </div>
 
-        <section className="account-profile-glass account-profile-loading">
+        <BoneyardLoad name="account-profile-load" className="account-profile-glass account-profile-loading" ariaLabel={t("account.profile.title")}>
           <div className="account-profile-loading-copy">
-            <Skeleton variant="pill" width={152} height={16} />
-            <Skeleton variant="line" width="78%" height={20} />
-            <Skeleton variant="line" width="66%" />
+            <LoadReference shape="chip" width={152} height={16} />
+            <LoadReference width="78%" height={20} />
+            <LoadReference width="66%" />
           </div>
           <div className="air-loader-section" aria-hidden="true">
-            <Skeleton variant="circle" width={78} height={78} />
+            <LoadReference shape="round" width={78} height={78} />
           </div>
-        </section>
+        </BoneyardLoad>
       </main>
     );
   }

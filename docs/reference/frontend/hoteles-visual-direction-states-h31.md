@@ -198,9 +198,9 @@ H31 adopta la taxonomía H21. Cada estado debe combinar señal visual, texto y a
 
 | Estado | Tratamiento visual | Copy/acción |
 |---|---|---|
-| `idle` | superficie tranquila, CTA visible, sin skeleton | empezar búsqueda |
+| `idle` | superficie tranquila, CTA visible, sin estado de carga | empezar búsqueda |
 | `validating` | campo en foco, error inline, CTA ocupado | corregir el campo |
-| `loading` | skeleton con proporción de resultado; preservar contexto | esperar/cancelar |
+| `loading` | estado Boneyard con proporción de resultado; preservar contexto | esperar/cancelar |
 | `success` | jerarquía completa, selección y acciones disponibles | revisar/guardar/seguir |
 | `empty` | espacio respirable, ilustración/señal sutil, explicación concreta | ampliar zona/fechas/filtros |
 | `partial` | warning localizado junto al dato incompleto | revisar limitación/reintentar |

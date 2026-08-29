@@ -175,7 +175,7 @@ No se borra `areaQuery` cuando una resolución falla. Una sugerencia vacía no d
 | Estado | Significado | UI y acción |
 |---|---|---|
 | `idle` | aún no se buscó | estado inicial orientado a comenzar |
-| `loading` | catálogo consultándose | skeleton de resultados; no saltos de layout |
+| `loading` | catálogo consultándose | estado Boneyard de resultados; no saltos de layout |
 | `success` | hay hoteles | lista y selección |
 | `empty` | búsqueda válida sin coincidencias | cambiar nombre/ciudad, quitar filtro, cargar demo si procede |
 | `error` | catálogo/backend falló | conservar query y resultados previos; reintentar |
@@ -188,7 +188,7 @@ No se borra `areaQuery` cuando una resolución falla. Una sugerencia vacía no d
 
 | Estado | Condición | UI y acción |
 |---|---|---|
-| `loading` | resolución completa y area search en curso | skeleton de cards y estado de búsqueda |
+| `loading` | resolución completa y area search en curso | estado Boneyard de cards y estado de búsqueda |
 | `success` | lista con datos utilizables | cards/resultados |
 | `empty` | catálogo respondió sin hoteles en radio/filtros | ampliar radio, fechas o filtros |
 | `partial` | catálogo local o provider devolvió solo parte | mostrar resultados y qué provider/capacidad falta |
@@ -204,7 +204,7 @@ La lista de resultados y la señal del provider deben poder tener estados distin
 | Estado | UI | Acción |
 |---|---|---|
 | `idle` | ningún hotel seleccionado | elegir hotel |
-| `loading` | identidad/detalle en carga | skeleton del bloque, conservar búsqueda |
+| `loading` | identidad/detalle en carga | estado Boneyard del bloque, conservar búsqueda |
 | `success` | detalle válido | mostrar identidad y acciones |
 | `partial` | identidad válida, rates/paridad no disponibles | mostrar detalle, explicar qué panel falta |
 | `stale` | rates/histórico antiguos | mostrar fecha y revalidar |
@@ -373,7 +373,7 @@ Todos los códigos y copys deben tener ES/EN, pluralización, fechas/monedas loc
 - botones de retry tienen nombre específico: “Reintentar tarifas”, no solo “Reintentar”;
 - stale conserva lectura de datos y añade una nota asociada;
 - empty ofrece acción enfocada y no deja el teclado en un control eliminado;
-- skeletons respetan reduced motion y no sustituyen el contenido en un error permanente;
+- los estados Boneyard respetan reduced motion y no sustituyen el contenido en un error permanente;
 - focus vuelve al origen después de retry/cierre de detalle cuando corresponda;
 - móvil no oculta el CTA de recuperación bajo un panel o teclado virtual;
 - estados largos, nombres de provider y mensajes de error no rompen layout.
@@ -509,7 +509,7 @@ La frontera con H22/H23 es obligatoria: `HotelWatchlistItem`/“guardar hotel”
 | H26-H28 | no generar ni entregar alertas desde estados no evaluables; mantener reason codes |
 | H29 | pausar/expirar tracking cuando no haya revalidación válida, sin borrar histórico |
 | H31-H34 | jerarquía visual, copy ES/EN, responsive y accesibilidad de estados |
-| H36 | skeleton, cancelación y presupuesto de percepción de velocidad |
+| H36 | estado Boneyard, cancelación y presupuesto de percepción de velocidad |
 | H38 | auth/ownership, errores seguros y no filtrado de request context |
 | H39-H40 | matriz de tests y browser QA de todas las transiciones |
 | H41 | métricas de estados, retries, provider degradation y silent failures |

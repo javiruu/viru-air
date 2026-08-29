@@ -10,7 +10,7 @@ import { AuthProvider, type AuthUser } from "@/modules/shared/AuthProvider";
 import { clearToken, hasToken } from "@/modules/shared/auth";
 import { isDashboardDemoAccessEnabled, signInDashboardDemoAccount } from "@/modules/shared/dashboard-demo-session";
 import { buildLoginRedirect, currentPathWithSearch } from "@/modules/shared/navigation";
-import { Skeleton, SkeletonPanel } from "@/modules/shared/Skeleton";
+import { BoneyardPanel, LoadReference } from "@/modules/shared/BoneyardLoad";
 import { persistLocale, useI18n } from "@/i18n";
 
 type GateState = "checking" | "authed" | "redirecting";
@@ -105,11 +105,11 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
   if (state !== "authed") {
     return (
       <main className="shell auth-guard" id="main-content">
-        <SkeletonPanel className="auth-guard-card air-loader-wrap" ariaLabel={t("account.authGuard.title")}>
-          <Skeleton variant="pill" width={220} height={18} />
-          <Skeleton variant="line" width="74%" />
-          <Skeleton variant="line" width="58%" />
-        </SkeletonPanel>
+        <BoneyardPanel name="auth-guard-load" className="auth-guard-card air-loader-wrap" ariaLabel={t("account.authGuard.title")}>
+          <LoadReference shape="chip" width={220} height={18} />
+          <LoadReference width="74%" />
+          <LoadReference width="58%" />
+        </BoneyardPanel>
       </main>
     );
   }

@@ -1,5 +1,10 @@
 # History
 
+## 2026-08-29 — Estados de carga generados con Boneyard
+
+- El frontend concentra sus estados de carga en Boneyard, con huesos generados por estructura y registro común para rutas públicas, privadas, Watchlist, Quick Search, administración, comunidad y puerta a puerta.
+- La captura de desarrollo `/boneyard-capture` y `npm run bones:build` permiten regenerar todos los estados con la paleta cálida de ambos temas sin recuperar un primitivo local paralelo.
+
 ## 2026-08-21 — Inteligencia de precios del calendario
 
 - El calendario de Quick Search conserva observaciones propias, normaliza la moneda antes de comparar y clasifica solo frente a una referencia reciente y comparable.

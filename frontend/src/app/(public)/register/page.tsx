@@ -10,7 +10,7 @@ import type { AuthOut } from "@/modules/shared/auth";
 import { clearToken, hasToken, saveAuthTokens } from "@/modules/shared/auth";
 import { isDashboardDemoAccessEnabled, signInDashboardDemoAccount } from "@/modules/shared/dashboard-demo-session";
 import { resolvePostAuthUrl } from "@/modules/shared/navigation";
-import { SkeletonForm } from "@/modules/shared/Skeleton";
+import { BoneyardForm } from "@/modules/shared/BoneyardLoad";
 import { useI18n } from "@/i18n";
 
 function RegisterContent() {
@@ -110,7 +110,7 @@ function RegisterContent() {
   if (entryState === "checking") {
     return (
       <main className="shell" id="main-content">
-        <SkeletonForm className="air-loader-section" ariaLabel={t("public.auth.registerLoading")} />
+        <BoneyardForm name="register-session-load" className="air-loader-section" ariaLabel={t("public.auth.registerLoading")} />
       </main>
     );
   }
@@ -146,7 +146,7 @@ export default function RegisterPage() {
     <Suspense
       fallback={
         <main className="shell" id="main-content">
-          <SkeletonForm className="air-loader-section" ariaLabel={t("public.auth.registerLoading")} />
+          <BoneyardForm name="register-session-load" className="air-loader-section" ariaLabel={t("public.auth.registerLoading")} />
         </main>
       }
     >

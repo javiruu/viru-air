@@ -2456,18 +2456,13 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   margin-bottom: 0.25rem;
 }
 
-.qs-skeleton {
-  display: grid;
-  gap: 0.5rem;
-}
-
-.qs-skeleton-cards {
+.qs-loading-bones {
   width: 100%;
   display: grid;
   gap: 0.8rem;
 }
 
-.qs-skeleton-card {
+.qs-loading-card {
   border: 1px solid var(--color-border);
   border-radius: 14px;
   background: var(--color-surface);
@@ -2476,35 +2471,22 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   gap: 0.5rem;
 }
 
-.qs-skeleton-row {
-  height: 14px;
-  border-radius: 10px;
-  background: linear-gradient(90deg, rgba(148, 163, 184, 0.2), rgba(226, 232, 240, 0.75), rgba(148, 163, 184, 0.2));
-  animation: qsSkeleton 1.2s ease-in-out infinite;
-}
-
-.qs-skeleton-route {
+.qs-load-route {
   width: 72%;
-  height: 16px;
+  min-height: 16px;
 }
 
-.qs-skeleton-meta {
+.qs-load-meta {
   width: 92%;
 }
 
-.qs-skeleton-meta.short {
+.qs-load-meta-short {
   width: 58%;
 }
 
-.qs-skeleton-price {
+.qs-load-price {
   width: 36%;
   justify-self: end;
-}
-
-@keyframes qsSkeleton {
-  0% { opacity: 0.5; }
-  50% { opacity: 0.9; }
-  100% { opacity: 0.5; }
 }
 
 
@@ -5136,8 +5118,8 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-2) 24%, transparent);
 }
 
-.watch-row.watch-row-skeleton:hover,
-.watch-row.watch-row-skeleton:active {
+.watch-row.watch-row-load:hover,
+.watch-row.watch-row-load:active {
   transform: none;
   box-shadow: none;
 }
@@ -5782,17 +5764,17 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   margin-top: 0.75rem;
 }
 
-.history-skeleton-toolbar {
+.history-load-toolbar {
   width: 36%;
   min-height: 2rem;
 }
 
-.history-skeleton-chart {
+.history-load-chart {
   width: 100%;
   min-height: 260px;
 }
 
-.history-skeleton-line {
+.history-load-line {
   width: 100%;
   min-height: 1rem;
 }
@@ -7184,82 +7166,83 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   border-color: color-mix(in srgb, var(--color-border) 82%, transparent);
 }
 
-.skeleton,
-.vt-skeleton {
-  display: inline-block;
-  border-radius: 10px;
-  background: linear-gradient(
-    100deg,
-    color-mix(in srgb, var(--surface-2) 88%, transparent) 10%,
-    color-mix(in srgb, var(--surface) 95%, white 5%) 45%,
-    color-mix(in srgb, var(--surface-2) 88%, transparent) 90%
-  );
-  background-size: 220% 100%;
-  animation: vt-skeleton-shimmer 1.6s linear infinite;
+.boneyard-status {
+  min-width: 0;
 }
 
-.vt-skeleton {
+.boneyard-status--inline {
+  display: inline-block;
+}
+
+.boneyard-status--inline .boneyard-frame {
+  display: inline-block;
+  min-width: 0;
+}
+
+.boneyard-frame {
+  min-width: 0;
+}
+
+.boneyard-reference {
+  display: block;
   width: 100%;
   min-height: 0.88rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-2) 86%, var(--surface));
 }
 
-.vt-skeleton--line {
-  min-height: 0.82rem;
-}
-
-.vt-skeleton--pill {
+.boneyard-reference--chip {
   min-height: 1.1rem;
   border-radius: 999px;
 }
 
-.vt-skeleton--block {
+.boneyard-reference--block {
   min-height: 2rem;
-  display: block;
 }
 
-.vt-skeleton--circle {
+.boneyard-reference--round {
   border-radius: 999px;
 }
 
-.vt-skeleton--card {
+.boneyard-reference--card {
   min-height: 5.2rem;
   border-radius: 14px;
-  display: block;
 }
 
-.loading-skeleton-panel,
-.loading-skeleton-form,
-.loading-skeleton-list {
+.boneyard-panel,
+.boneyard-form,
+.boneyard-list {
   display: grid;
   gap: 0.75rem;
 }
 
-.loading-skeleton-row {
+.boneyard-stack {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.boneyard-reference-row {
   display: grid;
   gap: 0.7rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: 0.2rem;
 }
 
-.loading-skeleton-card {
-  min-height: 5.4rem;
-}
-
-.loading-skeleton-form .loading-skeleton-field {
+.boneyard-field-reference {
   display: grid;
   gap: 0.48rem;
 }
 
-.loading-skeleton-cta {
+.boneyard-action-reference {
   margin-top: 0.3rem;
 }
 
-.loading-skeleton-list-rows {
+.boneyard-list-reference {
   display: grid;
   gap: 0.6rem;
 }
 
-.loading-skeleton-list-row {
+.boneyard-list-reference-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.65rem;
@@ -7269,12 +7252,12 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   padding: 0.7rem 0.8rem;
 }
 
-.loading-skeleton-list-main {
+.boneyard-list-reference-main {
   display: grid;
   gap: 0.42rem;
 }
 
-.loading-skeleton-overlay {
+.boneyard-overlay {
   position: fixed;
   inset: 0;
   z-index: 1400;
@@ -7286,7 +7269,7 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   pointer-events: none;
 }
 
-.loading-skeleton-overlay__card {
+.boneyard-overlay-card {
   min-width: min(420px, calc(100vw - 2rem));
   min-height: 250px;
   display: flex;
@@ -7296,53 +7279,35 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
   box-shadow: 0 20px 52px var(--shadow-strong);
 }
 
-.loading-skeleton-overlay__stack {
+.boneyard-overlay-stack {
   display: grid;
   place-items: center;
   gap: 0.72rem;
 }
 
-.skeleton-line {
-  min-height: 0.8rem;
-}
-
-.skeleton-pill {
-  min-height: 1.1rem;
-  border-radius: 999px;
-}
-
-.skeleton-block {
-  display: block;
-}
-
-.watchlist-skeleton-list {
+.watchlist-load-list {
   display: grid;
   gap: 0.6rem;
   margin-top: 0.7rem;
 }
 
-.watch-skeleton-checkbox { width: 1.1rem; }
-.watch-skeleton-route { width: 9.5rem; }
-.watch-skeleton-date { width: 5.7rem; }
-.watch-skeleton-pill { width: 4.2rem; }
-.watch-skeleton-meta { width: 11rem; }
-.watch-skeleton-note { width: 14rem; }
-.watch-skeleton-caption { width: 5.4rem; }
-.watch-skeleton-price { width: 7.2rem; min-height: 1.6rem; }
-.watch-skeleton-delta { width: 6rem; }
-.watch-skeleton-spark { width: 96px; height: 28px; }
-.watch-skeleton-button { width: 7.6rem; min-height: 2rem; }
-
-@keyframes vt-skeleton-shimmer {
-  0% { background-position: 100% 0; }
-  100% { background-position: -120% 0; }
-}
+.watch-load-checkbox { width: 1.1rem; }
+.watch-load-route { width: 9.5rem; }
+.watch-load-date { width: 5.7rem; }
+.watch-load-pill { width: 4.2rem; }
+.watch-load-meta { width: 11rem; }
+.watch-load-note { width: 14rem; }
+.watch-load-caption { width: 5.4rem; }
+.watch-load-price { width: 7.2rem; min-height: 1.6rem; }
+.watch-load-delta { width: 6rem; }
+.watch-load-spark { width: 96px; height: 28px; }
+.watch-load-button { width: 7.6rem; min-height: 2rem; }
 
 @media (prefers-reduced-motion: reduce) {
-  .skeleton,
-  .vt-skeleton {
-    animation: none;
-    background-position: 0 0;
+  .boneyard-frame [data-boneyard-bone="true"] {
+    animation: none !important;
+    transition: none !important;
+    background-position: 0 0 !important;
   }
 }
 
@@ -19018,13 +18983,9 @@ textarea::placeholder {
   }
 }
 
-.qs-skeleton-card {
+.qs-loading-card {
   border-color: color-mix(in srgb, var(--border) 78%, white 22%);
   background: color-mix(in srgb, var(--surface) 88%, white 12%);
-}
-
-.qs-skeleton-row {
-  background: linear-gradient(90deg, rgba(217, 205, 187, 0.28), rgba(255, 250, 244, 0.8), rgba(217, 205, 187, 0.28));
 }
 
 .qs-warning-grouped,
@@ -21818,21 +21779,21 @@ textarea::placeholder {
   50% { opacity: 1; }
 }
 
-/* Loading state: skeleton cards */
+/* Loading state: Boneyard capture references */
 .d2d-loading-header {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.d2d-loading-skeletons {
+.d2d-loading-bones {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
   margin-top: 1rem;
 }
 
-.d2d-skeleton-card {
+.d2d-load-card {
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--panel-bg);
@@ -21842,34 +21803,16 @@ textarea::placeholder {
   gap: 0.5rem;
 }
 
-.d2d-skeleton-line {
-  height: 0.7rem;
-  border-radius: 6px;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--border) 50%, transparent) 25%,
-    color-mix(in srgb, var(--border) 80%, transparent) 50%,
-    color-mix(in srgb, var(--border) 50%, transparent) 75%
-  );
-  background-size: 200% 100%;
-  animation: d2d-shimmer 1.5s ease-in-out infinite;
-}
-
-.d2d-skeleton-route {
+.d2d-load-route {
   width: 55%;
 }
 
-.d2d-skeleton-meta {
+.d2d-load-meta {
   width: 80%;
 }
 
-.d2d-skeleton-price {
+.d2d-load-price {
   width: 35%;
-}
-
-@keyframes d2d-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
 }
 
 /* Error state: friendly visual */
@@ -21899,7 +21842,6 @@ textarea::placeholder {
 @media (prefers-reduced-motion: reduce) {
   .d2d-state-enter,
   .d2d-empty-route,
-  .d2d-skeleton-line,
   .d2d-error-icon,
   .d2d-timeline-leg,
   .d2d-option-card,

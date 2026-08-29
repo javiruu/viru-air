@@ -1,0 +1,20 @@
+{
+  "breakpoints": [375, 768, 1280],
+  "out": "./src/bones",
+  "wait": 1400,
+  "skeletons": {
+    "viru-loading-states": {
+      "route": "/boneyard-capture",
+      "wait": 1400
+    }
+  },
+  "color": "#eee2d1",
+  "darkColor": "#27312d",
+  "animate": "shimmer",
+  "shimmerColor": "#fff8ef",
+  "darkShimmerColor": "#36443e",
+  "speed": "1.8s",
+  "shimmerAngle": 112,
+  "stagger": 24,
+  "transition": 220
+}

@@ -4,7 +4,7 @@ import { FormEvent, Suspense, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { GlassForgotPasswordCard } from "@/components/components/forms/glass-forgot-password";
-import { SkeletonForm } from "@/modules/shared/Skeleton";
+import { BoneyardForm } from "@/modules/shared/BoneyardLoad";
 import { useI18n } from "@/i18n";
 import { submitForgotPassword } from "@/modules/shared/forgot-password";
 
@@ -68,7 +68,7 @@ export default function ForgotPasswordPage() {
     <Suspense
       fallback={
         <main className="shell" id="main-content">
-          <SkeletonForm className="air-loader-section" ariaLabel={t("public.auth.forgotLoading")} />
+          <BoneyardForm name="forgot-password-session-load" className="air-loader-section" ariaLabel={t("public.auth.forgotLoading")} />
         </main>
       }
     >

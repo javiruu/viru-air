@@ -5,6 +5,7 @@ import { communityRouteKey } from "@/modules/community-routes/communityRoutesApi
 import { useCommunityRouteInsights } from "@/modules/community-routes/useCommunityRouteInsights";
 import { formatCurrency } from "@/modules/shared/format";
 import { getAirportMeta } from "@/modules/shared/airports";
+import { BoneyardLoad, LoadReference } from "@/modules/shared/BoneyardLoad";
 import {
   WatchRow,
   type WatchMetaEntry,
@@ -319,35 +320,35 @@ export function SmartWatchListPanel({
         </div>
       ) : null}
       {showListMode && isLoading && items.length === 0 ? (
-        <div className="watchlist-skeleton-list" role="status" aria-live="polite" aria-label={t("watchlist.smartList.loadingAria")}>
+        <BoneyardLoad name="watchlist-list-load" className="watchlist-load-list" ariaLabel={t("watchlist.smartList.loadingAria")}>
           {[0, 1, 2].map((index) => (
-            <article key={index} className="watch-row watch-row-skeleton" aria-hidden="true">
+            <article key={index} className="watch-row watch-row-load" aria-hidden="true">
               <div className="watch-details">
                 <div className="watch-route">
-                  <span className="skeleton skeleton-pill watch-skeleton-checkbox" />
-                  <span className="skeleton skeleton-line watch-skeleton-route" />
-                  <span className="skeleton skeleton-pill watch-skeleton-date" />
-                  <span className="skeleton skeleton-pill watch-skeleton-pill" />
-                  <span className="skeleton skeleton-pill watch-skeleton-pill" />
+                  <LoadReference shape="chip" className="watch-load-checkbox" />
+                  <LoadReference className="watch-load-route" />
+                  <LoadReference shape="chip" className="watch-load-date" />
+                  <LoadReference shape="chip" className="watch-load-pill" />
+                  <LoadReference shape="chip" className="watch-load-pill" />
                 </div>
                 <div className="watch-meta">
-                  <span className="skeleton skeleton-pill watch-skeleton-meta" />
-                  <span className="skeleton skeleton-pill watch-skeleton-meta" />
-                  <span className="skeleton skeleton-line watch-skeleton-note" />
+                  <LoadReference shape="chip" className="watch-load-meta" />
+                  <LoadReference shape="chip" className="watch-load-meta" />
+                  <LoadReference className="watch-load-note" />
                 </div>
               </div>
               <div className="watch-price-area">
                 <div className="watch-price">
-                  <span className="skeleton skeleton-line watch-skeleton-caption" />
-                  <span className="skeleton skeleton-line watch-skeleton-price" />
-                  <span className="skeleton skeleton-pill watch-skeleton-delta" />
+                  <LoadReference className="watch-load-caption" />
+                  <LoadReference className="watch-load-price" />
+                  <LoadReference shape="chip" className="watch-load-delta" />
                 </div>
-                <span className="skeleton skeleton-block watch-skeleton-spark" />
-                <span className="skeleton skeleton-pill watch-skeleton-button" />
+                <LoadReference shape="block" className="watch-load-spark" />
+                <LoadReference shape="chip" className="watch-load-button" />
               </div>
             </article>
           ))}
-        </div>
+        </BoneyardLoad>
       ) : null}
       {listErrorMessage ? (
         <div className={`notice notice-compact section-gap-sm ${items.length === 0 ? "notice-error" : "notice-info"}`} role="alert" aria-live="assertive">

@@ -10,7 +10,7 @@ import { clearToken, hasToken, saveAuthTokens } from "@/modules/shared/auth";
 import { isDashboardDemoAccessEnabled, signInDashboardDemoAccount } from "@/modules/shared/dashboard-demo-session";
 import { submitLogin } from "@/modules/shared/login-submit";
 import { resolvePostAuthUrl } from "@/modules/shared/navigation";
-import { SkeletonForm } from "@/modules/shared/Skeleton";
+import { BoneyardForm } from "@/modules/shared/BoneyardLoad";
 import { useI18n } from "@/i18n";
 
 function LoginContent() {
@@ -114,7 +114,7 @@ function LoginContent() {
   if (entryState === "checking") {
     return (
       <main className="shell" id="main-content">
-        <SkeletonForm className="air-loader-section" ariaLabel={t("public.auth.loginLoading")} />
+        <BoneyardForm name="login-session-load" className="air-loader-section" ariaLabel={t("public.auth.loginLoading")} />
       </main>
     );
   }
@@ -150,7 +150,7 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <main className="shell" id="main-content">
-          <SkeletonForm className="air-loader-section" ariaLabel={t("public.auth.loginLoading")} />
+          <BoneyardForm name="login-session-load" className="air-loader-section" ariaLabel={t("public.auth.loginLoading")} />
         </main>
       }
     >

@@ -1,6 +1,7 @@
 import React from "react";
 
 import { useI18n } from "@/i18n";
+import { BoneyardLoad, LoadReference } from "@/modules/shared/BoneyardLoad";
 
 export function DoorToDoorLoadingState() {
   const { t } = useI18n();
@@ -17,15 +18,15 @@ export function DoorToDoorLoadingState() {
           <p className="panel-note">{t("doorToDoor.states.loadingBody")}</p>
         </div>
       </div>
-      <div className="d2d-loading-skeletons" aria-hidden="true">
+      <BoneyardLoad name="door-to-door-results-load" className="d2d-loading-bones" ariaLabel={t("doorToDoor.states.loadingTitle")}>
         {[1, 2, 3].map((i) => (
-          <div key={i} className="d2d-skeleton-card">
-            <div className="d2d-skeleton-line d2d-skeleton-route" />
-            <div className="d2d-skeleton-line d2d-skeleton-meta" />
-            <div className="d2d-skeleton-line d2d-skeleton-price" />
+          <div key={i} className="d2d-load-card">
+            <LoadReference className="d2d-load-route" />
+            <LoadReference className="d2d-load-meta" />
+            <LoadReference className="d2d-load-price" />
           </div>
         ))}
-      </div>
+      </BoneyardLoad>
     </section>
   );
 }
