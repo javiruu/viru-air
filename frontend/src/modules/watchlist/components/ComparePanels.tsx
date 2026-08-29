@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useI18n } from "@/i18n";
 import { apiFetch } from "@/modules/shared/api";
 import { formatCurrency } from "@/modules/shared/format";
-import { Skeleton } from "@/modules/shared/Skeleton";
+import { BoneyardLoad, LoadReference } from "@/modules/shared/BoneyardLoad";
 import { formatDateTime } from "@/modules/watchlist/presentation";
 import type { PriceCompareResponse } from "@/modules/watchlist/types";
 
@@ -273,17 +273,17 @@ export function ComparePanels({
           ) : selectedCount > 4 ? (
             <p className="muted">{t("watchlist.compare.maxSelectionMessage")}</p>
           ) : isLoadingCompare ? (
-            <div className="loading-skeleton-list" role="status" aria-live="polite" aria-label={t("watchlist.compare.loading")} aria-busy="true">
+            <BoneyardLoad name="watchlist-compare-load" className="boneyard-list" ariaLabel={t("watchlist.compare.loading")}>
               {Array.from({ length: 3 }).map((_, idx) => (
-                <article key={`watch-compare-skeleton-${idx}`} className="loading-skeleton-list-row">
-                  <div className="loading-skeleton-list-main">
-                    <Skeleton variant="line" width="65%" />
-                    <Skeleton variant="line" width="48%" />
+                <article key={`watch-compare-load-${idx}`} className="boneyard-list-reference-row">
+                  <div className="boneyard-list-reference-main">
+                    <LoadReference width="65%" />
+                    <LoadReference width="48%" />
                   </div>
-                  <Skeleton variant="pill" width={92} height={22} />
+                  <LoadReference shape="chip" width={92} height={22} />
                 </article>
               ))}
-            </div>
+            </BoneyardLoad>
           ) : compareResponse?.watches?.length ? (
             <div className="compare-multi-container">
 

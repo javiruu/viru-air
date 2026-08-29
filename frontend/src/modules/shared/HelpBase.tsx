@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 
 import { apiFetch } from "@/modules/shared/api";
-import { SkeletonPanel } from "@/modules/shared/Skeleton";
+import { BoneyardPanel } from "@/modules/shared/BoneyardLoad";
 
 export type HelpSection = {
   title: string;
@@ -48,7 +48,7 @@ export default function HelpBase(props: HelpBaseProps) {
             <p>{props.subtitle}</p>
           </div>
         </div>
-        <SkeletonPanel className="air-loader-section" ariaLabel={props.loadingLabel} />
+        <BoneyardPanel name="help-page-load" className="air-loader-section" ariaLabel={props.loadingLabel} />
       </main>
     );
   }

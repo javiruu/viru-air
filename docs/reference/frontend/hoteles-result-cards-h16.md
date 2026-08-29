@@ -261,7 +261,7 @@ Cada variante debe cubrir:
 - `hover`: elevación/contraste sutil, sin desplazar layout;
 - `focus-visible`: foco claro en card y acciones;
 - `selected`: hotel activo en el panel de detalle;
-- `loading`: skeleton que conserva proporciones y no usa solo spinner;
+- `loading`: estado Boneyard que conserva proporciones y no usa solo spinner;
 - `disabled`: acción concreta deshabilitada con motivo accesible;
 - `no_price`: hotel conocido, sin precio comparable;
 - `partial`: precio o condiciones con warning de fuente incompleta;
@@ -273,7 +273,7 @@ Cada variante debe cubrir:
 
 ### 8.2. Loading y estabilidad
 
-- El skeleton debe reservar altura aproximada de la card final.
+- El estado Boneyard debe reservar altura aproximada de la card final.
 - Un refresh no debe borrar todas las cards mientras llega la respuesta si H15 permite conservar la búsqueda anterior.
 - El estado `selected` debe sobrevivir a la actualización si el hotel sigue en resultados.
 - Una respuesta obsoleta no puede modificar precio, selección ni estado de tracking.
@@ -333,7 +333,7 @@ No basta con probar únicamente móvil estrecho y desktop ancho.
 - El foco debe ser visible en light y dark.
 - El orden de tabulación sigue identidad → detalle → guardar → tracking → partner.
 - Los iconos de corazón, external link y señales deben tener label o ser decorativos.
-- El skeleton debe comunicar carga con `role=status` o texto accesible, sin ruido para cada elemento.
+- El estado Boneyard debe comunicar carga con `role=status` o texto accesible, sin ruido para cada elemento.
 
 ## 11. Copy e i18n
 

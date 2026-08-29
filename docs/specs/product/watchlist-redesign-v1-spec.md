@@ -1,7 +1,7 @@
 # Watchlist Redesign v1 — Spec
 
 **Estado:** borrador  
-**Última revisión:** 2026-08-22
+**Última revisión:** 2026-08-29
 **Fuente de verdad:** sí  
 **Área:** product / ui  
 **Basado en:** entrevista con usuario + análisis de código (`frontend/src/modules/watchlist/`)  
@@ -95,7 +95,7 @@ Cada fila muestra solo:
 - Botón "Añadir vuelo"
 
 **Estados:**
-- Loading: skeletons (mantener actual)
+- Loading: estados Boneyard con proporción de la estructura final.
 - Vacío: onboarding actual (3 pasos + CTA)
 - Error inline: mensaje + botón reintentar
 - Sin resultados de búsqueda: mensaje + "Ver todos"
@@ -194,8 +194,8 @@ Características:
 ## 6. Estados y micro-interacciones
 
 ### 6.1 Loading
-- Skeleton loaders para lista (mantener actual)
-- Skeleton para histórico (toolbar + chart area + KPIs) — mantener actual
+- Estado Boneyard para lista (misma proporción de cada fila)
+- Estado Boneyard para histórico (toolbar + chart area + KPIs)
 - Estados de refresco: isRefreshingHistory, isRefreshingBulk
 
 ### 6.2 Empty states

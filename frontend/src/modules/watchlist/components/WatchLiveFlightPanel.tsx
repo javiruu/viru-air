@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { useI18n } from "@/i18n";
+import { BoneyardLoad, LoadReference } from "@/modules/shared/BoneyardLoad";
 import {
   formatLiveTime,
   liveCoverageTone,
@@ -163,11 +164,10 @@ export function WatchLiveFlightPanel({
       </header>
 
       {isLoading && !tracking ? (
-        <div className="watch-live-flight-loading" role="status" aria-live="polite">
-          <span className="sr-only">{t("watchlist.live.coverage.loading")}</span>
-          <span className="skeleton skeleton-line" />
-          <span className="skeleton skeleton-line" />
-        </div>
+        <BoneyardLoad name="watch-live-flight-load" className="watch-live-flight-loading" ariaLabel={t("watchlist.live.coverage.loading")}>
+          <LoadReference width="72%" />
+          <LoadReference width="48%" />
+        </BoneyardLoad>
       ) : null}
 
       {hasError ? (

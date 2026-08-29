@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useI18n } from "@/i18n";
 import { fetchPopularCommunityRoutes } from "@/modules/community-routes/communityRoutesApi";
 import type { CommunityPopularRoute } from "@/modules/community-routes/communityRoutesTypes";
+import { BoneyardLoad, LoadReference } from "@/modules/shared/BoneyardLoad";
 
 import styles from "./CommunityCorridorsPanel.module.css";
 
@@ -48,16 +49,16 @@ export function CommunityCorridorsPanel() {
       </div>
 
       {isLoading ? (
-        <div className={styles.loading} role="status" aria-label={t("dashboard.communityCorridors.loading")}>
+        <BoneyardLoad name="community-corridors-load" className={styles.loading} ariaLabel={t("dashboard.communityCorridors.loading")}>
           <div className={styles.heatStrip} aria-hidden="true">
             {Array.from({ length: 10 }, (_, index) => (
-              <span key={index} className={styles.heatSkeleton} />
+              <LoadReference key={index} shape="block" className={styles.heatLoad} />
             ))}
           </div>
           {Array.from({ length: 5 }, (_, index) => (
-            <span key={index} className={styles.rowSkeleton} aria-hidden="true" />
+            <LoadReference key={index} className={styles.rowLoad} />
           ))}
-        </div>
+        </BoneyardLoad>
       ) : routes.length > 0 ? (
         <>
           <div className={styles.heatStrip} aria-label={t("dashboard.communityCorridors.heatAria")}>

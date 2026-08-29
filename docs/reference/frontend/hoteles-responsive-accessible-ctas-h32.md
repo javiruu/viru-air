@@ -183,7 +183,7 @@ El resultado debe preservar identidad, importe, contexto de estancia, estado de 
 
 ### 5.3. Loading y refresh
 
-- skeletons reservan una altura aproximada y no producen saltos que muevan el CTA bajo el dedo;
+- los estados Boneyard reservan una altura aproximada y no producen saltos que muevan el CTA bajo el dedo;
 - refresh compatible conserva resultados anteriores con etiqueta de estado según H21;
 - una respuesta obsoleta no reordena ni sobrescribe una selección nueva;
 - la transición de loading a error/empty conserva formulario y contexto;
@@ -206,7 +206,7 @@ El resultado debe preservar identidad, importe, contexto de estancia, estado de 
 La adaptación visual no puede simplificar la semántica:
 
 - `idle`: CTA visible y formulario intacto;
-- `loading`: skeleton estable, contexto conservado y opción de cancelar si existe;
+- `loading`: estado Boneyard estable, contexto conservado y opción de cancelar si existe;
 - `success`: resultados y acciones completas;
 - `empty`: explicación y acción para ampliar/cambiar, no un panel vacío;
 - `partial`: warning junto al dato afectado, no banner técnico que desplace todo;

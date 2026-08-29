@@ -13,11 +13,13 @@
     "test": "tsx --test",
     "test:e2e:quick-search": "tsx --test tests/quick-search-relax-preview.e2e.test.ts",
     "qa:visual:quick-search": "node scripts/qa_quick_search_visual.mjs",
+    "bones:build": "boneyard-js build",
     "update:airports": "node ./scripts/update_airports_iata.mjs",
     "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.2",
+    "boneyard-js": "^1.9.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.8.0",

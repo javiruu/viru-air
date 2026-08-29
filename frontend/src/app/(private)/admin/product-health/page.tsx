@@ -9,7 +9,7 @@ import { FareMemoryHealthPanel } from "@/modules/admin/FareMemoryHealthPanel";
 import type { FareMemoryHealth } from "@/modules/admin/fareMemoryHealth";
 import { apiFetch } from "@/modules/shared/api";
 import { getSystemStatusMeta } from "@/modules/shared/statusCatalog";
-import { SkeletonPanel } from "@/modules/shared/Skeleton";
+import { BoneyardPanel } from "@/modules/shared/BoneyardLoad";
 
 type Me = { id: string; email: string; locale: string; is_admin: boolean };
 
@@ -83,7 +83,7 @@ export default function ProductHealthPage() {
   if (!me?.is_admin || loading) {
     return (
       <main className="shell">
-        <SkeletonPanel ariaLabel="Cargando Product Health" />
+        <BoneyardPanel name="admin-product-health-load" ariaLabel="Cargando Product Health" />
       </main>
     );
   }

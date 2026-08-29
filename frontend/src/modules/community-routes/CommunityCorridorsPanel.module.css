@@ -75,7 +75,7 @@
 }
 
 .heatCell,
-.heatSkeleton {
+.heatLoad {
   min-width: 0;
   border-radius: 3px;
 }
@@ -89,10 +89,9 @@
   filter: saturate(1.12);
 }
 
-.heatSkeleton,
-.rowSkeleton {
+.heatLoad,
+.rowLoad {
   background: color-mix(in srgb, var(--color-border) 72%, transparent);
-  animation: corridorPulse 1.2s ease-in-out infinite alternate;
 }
 
 .list {
@@ -166,7 +165,7 @@
   gap: 8px;
 }
 
-.rowSkeleton {
+.rowLoad {
   display: block;
   height: 31px;
   border-radius: 8px;
@@ -196,11 +195,6 @@
   background: linear-gradient(90deg, color-mix(in srgb, var(--color-accent) 32%, transparent), color-mix(in srgb, var(--color-border) 48%, transparent));
 }
 
-@keyframes corridorPulse {
-  from { opacity: 0.45; }
-  to { opacity: 0.85; }
-}
-
 @media (max-width: 768px) {
   .discoveryGrid {
     grid-template-columns: 1fr;
@@ -226,9 +220,7 @@
 @media (prefers-reduced-motion: reduce) {
   .heatCell,
   .route,
-  .topRoute,
-  .heatSkeleton,
-  .rowSkeleton {
+  .topRoute {
     animation: none;
     transition: none;
   }

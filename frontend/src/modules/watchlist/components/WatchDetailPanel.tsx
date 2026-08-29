@@ -8,7 +8,7 @@ import { resolveProviderPresentation } from "@/modules/shared/providerPresentati
 import { safeDateTime } from "@/modules/watchlist/presentation";
 import { getFreshnessPresentation, getHistoryConfidence, hasPriceSummaryData } from "@/modules/watchlist/summary";
 import type { PriceSummary, Watch, WatchDetail } from "@/modules/watchlist/types";
-import { Skeleton } from "@/modules/shared/Skeleton";
+import { BoneyardInline, BoneyardLoad, LoadReference } from "@/modules/shared/BoneyardLoad";
 import { WatchLiveFlightPanel } from "@/modules/watchlist/components/WatchLiveFlightPanel";
 import type { LiveFlightTracking } from "@/modules/watchlist/liveFlightTypes";
 import { resolveCurrentWatchDetail } from "@/modules/watchlist/watchlistActions.helpers";
@@ -148,7 +148,7 @@ export function WatchDetailPanel({
         <div className="watch-detail-title-block">
           <h2 className="panel-title">{t("watchlist.detail.title")}</h2>
         </div>
-        {isLoading ? <Skeleton variant="pill" width={112} height={18} /> : null}
+        {isLoading ? <BoneyardInline name="watch-detail-title-load" shape="chip" width={112} height={18} ariaLabel={t("watchlist.smartList.loadingAria")} /> : null}
       </header>
 
       <div key={focus.id} className="watch-detail-selection-transition">
@@ -294,11 +294,14 @@ export function WatchDetailPanel({
       )}
 
       {isLoading && !currentDetail ? (
-        <div className="history-summary history-summary--kpis" aria-label={t("watchlist.smartList.loadingAria")}>
-          <div className="history-kpi"><span className="skeleton skeleton-line" /><strong className="skeleton skeleton-line" /></div>
-          <div className="history-kpi"><span className="skeleton skeleton-line" /><strong className="skeleton skeleton-line" /></div>
-          <div className="history-kpi"><span className="skeleton skeleton-line" /><strong className="skeleton skeleton-line" /></div>
-        </div>
+        <BoneyardLoad name="watch-detail-history-load" className="history-summary history-summary--kpis" ariaLabel={t("watchlist.smartList.loadingAria")}>
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div className="history-kpi" key={`watch-detail-history-load-${index}`}>
+              <LoadReference width="42%" />
+              <LoadReference width="68%" height={22} />
+            </div>
+          ))}
+        </BoneyardLoad>
       ) : null}
 
       {mapContent ? <div className="watch-detail-map">{mapContent}</div> : null}

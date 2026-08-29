@@ -27,7 +27,7 @@ import {
   selectPrimaryFlightLabel,
   selectPrimaryLivePosition,
 } from "@/modules/watchlist/liveFlightPresentation";
-import { Skeleton, SkeletonPanel } from "@/modules/shared/Skeleton";
+import { BoneyardPanel, LoadReference } from "@/modules/shared/BoneyardLoad";
 
 const WatchlistMapDecisionPanel = dynamic(
   () =>
@@ -43,11 +43,11 @@ const WatchlistMapDecisionPanel = dynamic(
 function WatchlistMapLoadingPanel() {
   const { t } = useI18n();
   return (
-    <SkeletonPanel className="watch-map-panel section-gap" ariaLabel={t("watchlist.mapLoadingBody")}>
-      <Skeleton variant="pill" width={170} height={18} />
-      <Skeleton variant="line" width="64%" />
-      <Skeleton variant="card" className="loading-skeleton-card" />
-    </SkeletonPanel>
+    <BoneyardPanel name="watchlist-map-load" className="watch-map-panel section-gap" ariaLabel={t("watchlist.mapLoadingBody")}>
+      <LoadReference shape="chip" width={170} height={18} />
+      <LoadReference width="64%" />
+      <LoadReference shape="card" />
+    </BoneyardPanel>
   );
 }
 

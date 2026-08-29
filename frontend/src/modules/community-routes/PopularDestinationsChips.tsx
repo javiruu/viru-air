@@ -5,6 +5,7 @@ import { TrendingUp } from "lucide-react";
 
 import { fetchPopularDestinationsFromOrigin } from "@/modules/community-routes/communityRoutesApi";
 import type { CommunityPopularRoute } from "@/modules/community-routes/communityRoutesTypes";
+import { BoneyardLoad, LoadReference } from "@/modules/shared/BoneyardLoad";
 
 type PopularDestinationsChipsProps = {
   readonly origin: string;
@@ -57,13 +58,13 @@ export function PopularDestinationsChips({
       </span>
       <div className="community-popular-destinations-chips">
         {loading
-          ? Array.from({ length: 3 }).map((_, i) => (
-              <span
-                key={`sk-${i}`}
-                className="community-popular-destination-chip-skeleton"
-                aria-hidden="true"
-              />
-            ))
+          ? (
+            <BoneyardLoad name="community-popular-destinations-load" className="community-popular-destination-loads" ariaLabel={t("popularDestinationsLabel")}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <LoadReference key={`community-popular-destination-load-${i}`} shape="chip" className="community-popular-destination-chip-load" />
+              ))}
+            </BoneyardLoad>
+          )
           : routes.map((route) => (
               <button
                 key={`${route.origin_iata}-${route.destination_iata}`}

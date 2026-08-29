@@ -1,5 +1,6 @@
 import React from "react";
 
+import { BoneyardLoad, LoadReference } from "@/modules/shared/BoneyardLoad";
 import { QuickSearchLoadingSubcheckStatus } from "@/modules/quick-search/types";
 import { RyanairIcon, WizzAirIcon, GenericProviderIcon } from "@/icons";
 
@@ -190,16 +191,16 @@ export function QuickSearchLoadingProgress(props: Props) {
         <p className="qs-loading-kpi"><strong>{props.loadingProgressText}</strong></p>
         <p className="qs-loading-kpi qs-loading-kpi-muted">{props.loadingScopeText}</p>
       </div>
-      <div className="qs-skeleton-cards" aria-hidden="true">
+      <BoneyardLoad name="quick-search-progress-load" className="qs-loading-bones" ariaLabel={props.loadingAria}>
         {Array.from({ length: 4 }).map((_, idx) => (
-          <article key={`skeleton-card-${idx}`} className="qs-skeleton-card">
-            <div className="qs-skeleton-row qs-skeleton-route" />
-            <div className="qs-skeleton-row qs-skeleton-meta" />
-            <div className="qs-skeleton-row qs-skeleton-meta short" />
-            <div className="qs-skeleton-row qs-skeleton-price" />
+          <article key={`quick-search-load-${idx}`} className="qs-loading-card">
+            <LoadReference className="qs-load-route" />
+            <LoadReference className="qs-load-meta" />
+            <LoadReference className="qs-load-meta qs-load-meta-short" />
+            <LoadReference className="qs-load-price" />
           </article>
         ))}
-      </div>
+      </BoneyardLoad>
     </div>
   );
 }

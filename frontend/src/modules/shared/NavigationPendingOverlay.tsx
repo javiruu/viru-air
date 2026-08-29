@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
-import { SkeletonOverlay } from "@/modules/shared/Skeleton";
+import { BoneyardOverlay } from "@/modules/shared/BoneyardLoad";
 
 const FAILSAFE_TIMEOUT_MS = 10000;
 
@@ -144,6 +144,6 @@ export default function NavigationPendingOverlay() {
 
   if (!isPending) return null;
 
-  return <SkeletonOverlay ariaLabel="Cargando navegacion" />;
+  return <BoneyardOverlay name="navigation-pending-load" ariaLabel="Cargando navegacion" />;
 }
 

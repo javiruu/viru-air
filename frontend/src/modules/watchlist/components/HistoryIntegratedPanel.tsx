@@ -6,6 +6,7 @@
 import { useEffect, useRef } from "react";
 
 import { useI18n } from "@/i18n";
+import { BoneyardLoad, LoadReference } from "@/modules/shared/BoneyardLoad";
 import { CommunityPriceReferenceBand } from "@/modules/community-routes/CommunityPriceReferenceBand";
 import { RelatedCommunityRoutes } from "@/modules/community-routes/RelatedCommunityRoutes";
 import type { CommunityPricing } from "@/modules/watchlist/types";
@@ -256,20 +257,19 @@ export function HistoryIntegratedPanel({
         </div>
       ) : null}
       {isLoadingHistory ? (
-        <div className="history-loading" role="status" aria-live="polite" aria-label={t("watchlist.smartList.loadingAria")}>
-          <div className="skeleton skeleton-line history-skeleton-toolbar" />
+        <BoneyardLoad name="watch-history-load" className="history-loading" ariaLabel={t("watchlist.smartList.loadingAria")}>
+          <LoadReference className="history-load-toolbar" />
           <div className="history-layout">
             <div className="history-primary">
-              <span className="skeleton skeleton-block history-skeleton-chart" />
+              <LoadReference shape="block" className="history-load-chart" />
             </div>
             <div className="history-support">
-              <span className="skeleton skeleton-line history-skeleton-line" />
-              <span className="skeleton skeleton-line history-skeleton-line" />
-              <span className="skeleton skeleton-line history-skeleton-line" />
+              <LoadReference className="history-load-line" />
+              <LoadReference className="history-load-line" />
+              <LoadReference className="history-load-line" />
             </div>
           </div>
-
-        </div>
+        </BoneyardLoad>
       ) : null}
 
       {!hasSelectedWatch && !isLoadingHistory ? (

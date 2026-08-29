@@ -1,0 +1,92 @@
+{
+  "breakpoints": {
+    "375": {
+      "name": "community-popular-destinations-load",
+      "viewportWidth": 333,
+      "width": 333,
+      "height": 74,
+      "bones": [
+        [
+          0,
+          3,
+          21.6196,
+          30,
+          999
+        ],
+        [
+          51.6796,
+          3,
+          21.6196,
+          30,
+          999
+        ],
+        [
+          0,
+          44,
+          21.6196,
+          30,
+          999
+        ]
+      ]
+    },
+    "768": {
+      "name": "community-popular-destinations-load",
+      "viewportWidth": 704,
+      "width": 704,
+      "height": 74,
+      "bones": [
+        [
+          0,
+          3,
+          10.2327,
+          30,
+          999
+        ],
+        [
+          50.795,
+          3,
+          10.2327,
+          30,
+          999
+        ],
+        [
+          0,
+          44,
+          10.2327,
+          30,
+          999
+        ]
+      ]
+    },
+    "1280": {
+      "name": "community-popular-destinations-load",
+      "viewportWidth": 464,
+      "width": 464,
+      "height": 73,
+      "bones": [
+        [
+          0,
+          3,
+          15.5329,
+          30,
+          999
+        ],
+        [
+          51.0551,
+          3,
+          15.5329,
+          30,
+          999
+        ],
+        [
+          0,
+          43,
+          15.5329,
+          30,
+          999
+        ]
+      ]
+    }
+  },
+  "_hash": "56d42e3cf11947ab02320c55adc56c12"
+}

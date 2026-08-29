@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { useI18n } from "@/i18n";
 import { apiFetch } from "@/modules/shared/api";
-import { Skeleton, SkeletonPanel } from "@/modules/shared/Skeleton";
+import { BoneyardLoad, BoneyardPanel, LoadReference } from "@/modules/shared/BoneyardLoad";
 
 type Me = { id: string; email: string; locale: string; is_admin: boolean };
 
@@ -287,7 +287,7 @@ export default function AdminPage() {
   if (!me?.is_admin) {
     return (
       <main className="shell" id="main-content">
-        <SkeletonPanel className="air-loader-section" ariaLabel={t("admin.loading")} />
+        <BoneyardPanel name="admin-access-load" className="air-loader-section" ariaLabel={t("admin.loading")} />
       </main>
     );
   }
@@ -327,17 +327,17 @@ export default function AdminPage() {
         </div>
         <div className="stack">
           {qaChecks.length === 0 ? (
-            <div className="loading-skeleton-list" role="status" aria-live="polite" aria-label={t("admin.loading")} aria-busy="true">
+            <BoneyardLoad name="admin-checks-load" className="boneyard-list" ariaLabel={t("admin.loading")}>
               {Array.from({ length: 3 }).map((_, idx) => (
-                <article key={`admin-check-skeleton-${idx}`} className="loading-skeleton-list-row">
-                  <div className="loading-skeleton-list-main">
-                    <Skeleton variant="line" width="58%" />
-                    <Skeleton variant="line" width="42%" />
+                <article key={`admin-check-load-${idx}`} className="boneyard-list-reference-row">
+                  <div className="boneyard-list-reference-main">
+                    <LoadReference width="58%" />
+                    <LoadReference width="42%" />
                   </div>
-                  <Skeleton variant="pill" width={74} height={22} />
+                  <LoadReference shape="chip" width={74} height={22} />
                 </article>
               ))}
-            </div>
+            </BoneyardLoad>
           ) : (
             qaChecks.map((check) => (
               <article key={check.label} className="list-row">
@@ -358,14 +358,14 @@ export default function AdminPage() {
           <span className="panel-note">{t("admin.metricsSubtitle")}</span>
         </div>
         {!metrics ? (
-          <div className="dashboard-primary-grid" role="status" aria-live="polite" aria-label={t("admin.loading")} aria-busy="true">
+          <BoneyardLoad name="admin-metrics-load" className="dashboard-primary-grid" ariaLabel={t("admin.loading")}>
             {Array.from({ length: 6 }).map((_, idx) => (
-              <article key={`admin-metric-skeleton-${idx}`} className="module-card">
-                <Skeleton variant="line" width="70%" />
-                <Skeleton variant="pill" width="44%" height={20} />
+              <article key={`admin-metric-load-${idx}`} className="module-card">
+                <LoadReference width="70%" />
+                <LoadReference shape="chip" width="44%" height={20} />
               </article>
             ))}
-          </div>
+          </BoneyardLoad>
         ) : (
           <div className="dashboard-primary-grid">
             <article className="module-card"><strong>{t("admin.metricsQuickSearches")}</strong><span>{metrics.quick_search_executed}</span></article>

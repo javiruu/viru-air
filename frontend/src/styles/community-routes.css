@@ -322,34 +322,26 @@
   }
 }
 
-/* ── Skeleton loading chips ─────────────────────────────── */
+/* ── Boneyard capture references ────────────────────────── */
 
-.community-popular-destination-chip-skeleton {
+.community-popular-destination-loads {
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+.community-popular-destination-chip-load {
   display: inline-block;
   width: 44px;
   height: 24px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
-  animation: community-skeleton-pulse 1.4s ease-in-out infinite;
 }
 
-.community-popular-destination-chip-skeleton:nth-child(2) {
+.community-popular-destination-chip-load:nth-child(2) {
   width: 38px;
-  animation-delay: 0.15s;
 }
 
-.community-popular-destination-chip-skeleton:nth-child(3) {
+.community-popular-destination-chip-load:nth-child(3) {
   width: 40px;
-  animation-delay: 0.3s;
-}
-
-@keyframes community-skeleton-pulse {
-  0%, 100% {
-    opacity: 0.35;
-  }
-  50% {
-    opacity: 0.7;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -358,9 +350,5 @@
   }
   .community-popular-destination-chip {
     transition: none;
-  }
-  .community-popular-destination-chip-skeleton {
-    animation: none;
-    opacity: 0.5;
   }
 }

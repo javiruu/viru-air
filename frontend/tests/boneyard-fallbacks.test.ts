@@ -23,7 +23,7 @@ const fallbackFiles = [
   "app/(private)/preferencias/region/page.tsx",
 ];
 
-test("key loading fallbacks use skeletons instead of AirLoader", () => {
+test("key loading fallbacks use Boneyard", () => {
   for (const relativePath of fallbackFiles) {
     const absolutePath = path.join(FRONTEND_SRC, relativePath);
     const content = fs.readFileSync(absolutePath, "utf8");
@@ -35,13 +35,13 @@ test("key loading fallbacks use skeletons instead of AirLoader", () => {
     );
     assert.match(
       content,
-      /Skeleton/,
-      `expected Skeleton usage in ${relativePath}`,
+      /Boneyard/,
+      `expected Boneyard usage in ${relativePath}`,
     );
   }
 });
 
-test("root layout does not mount the global navigation shimmer overlay", () => {
+test("root layout does not mount the global navigation loading overlay", () => {
   const layoutPath = path.join(FRONTEND_SRC, "app/layout.tsx");
   const content = fs.readFileSync(layoutPath, "utf8");
 

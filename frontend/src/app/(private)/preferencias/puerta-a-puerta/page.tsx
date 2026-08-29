@@ -7,7 +7,7 @@ import { useNotificationCenter } from "@/components/components/notifications/not
 import { useI18n } from "@/i18n";
 import { deleteDoorToDoorLocation, fetchSavedDoorToDoorLocation, saveDoorToDoorLocation } from "@/modules/door-to-door/api";
 import type { DoorToDoorLocationType, DoorToDoorSavedLocation } from "@/modules/door-to-door/types";
-import { Skeleton } from "@/modules/shared/Skeleton";
+import { BoneyardLoad, LoadReference } from "@/modules/shared/BoneyardLoad";
 
 export default function PreferenciasPuertaAPuertaPage() {
   const router = useRouter();
@@ -84,9 +84,9 @@ export default function PreferenciasPuertaAPuertaPage() {
 
       <form className="panel panel-soft prefs-form d2d-location-form prefs-priority-block" onSubmit={onSubmit}>
         {loading ? (
-          <div className="air-loader-section" role="status" aria-live="polite" aria-label={t("doorToDoor.preferences.loading")} aria-busy="true">
-            <Skeleton variant="line" width="62%" />
-          </div>
+          <BoneyardLoad name="door-to-door-preferences-load" className="air-loader-section" ariaLabel={t("doorToDoor.preferences.loading")}>
+            <LoadReference width="62%" />
+          </BoneyardLoad>
         ) : null}
         <label className="field">
           {t("doorToDoor.preferences.label")}

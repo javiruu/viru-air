@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
 import { apiFetch } from "@/modules/shared/api";
-import { SkeletonForm } from "@/modules/shared/Skeleton";
+import { BoneyardForm } from "@/modules/shared/BoneyardLoad";
 import { Pref } from "@/modules/quick-search/types";
 import {
   buildSearchPreferenceSummary,
@@ -143,7 +143,7 @@ export default function PreferenciasBusquedaPage() {
             </button>
           </section>
         ) : (
-          <SkeletonForm className="air-loader-section" ariaLabel={t("preferences.search.loading")} />
+          <BoneyardForm name="preferences-search-load" className="air-loader-section" ariaLabel={t("preferences.search.loading")} />
         )}
       </main>
     );

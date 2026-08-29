@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
-import { SkeletonForm } from "@/modules/shared/Skeleton";
+import { BoneyardForm } from "@/modules/shared/BoneyardLoad";
 import { apiFetch } from "@/modules/shared/api";
 import { useI18n } from "@/i18n";
 
@@ -84,7 +84,7 @@ export default function PreferenciasAparienciaPage() {
             <p>{t("preferences.appearance.subtitle")}</p>
           </div>
         </div>
-        <SkeletonForm className="air-loader-section" ariaLabel={t("preferences.appearance.loading")} />
+        <BoneyardForm name="preferences-appearance-load" className="air-loader-section" ariaLabel={t("preferences.appearance.loading")} />
       </main>
     );
   }

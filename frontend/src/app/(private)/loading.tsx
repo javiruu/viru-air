@@ -1,22 +1,22 @@
-import { Skeleton, SkeletonList, SkeletonPanel } from "@/modules/shared/Skeleton";
+import { BoneyardList, BoneyardPanel, LoadReference } from "@/modules/shared/BoneyardLoad";
 
 export default function PrivateLoading() {
   return (
     <main className="shell section-gap-lg" id="main-content" aria-busy="true">
-      <SkeletonPanel ariaLabel="Cargando modulo privado">
-        <Skeleton variant="pill" width={180} height={18} />
-        <Skeleton variant="line" width="64%" />
-        <Skeleton variant="line" width="46%" />
-      </SkeletonPanel>
+      <BoneyardPanel name="private-module-load" ariaLabel="Cargando modulo privado">
+        <LoadReference shape="chip" width={180} height={18} />
+        <LoadReference width="64%" />
+        <LoadReference width="46%" />
+      </BoneyardPanel>
 
       <section className="split section-gap">
-        <SkeletonList rows={4} ariaLabel="Cargando datos de lista" />
-        <SkeletonPanel ariaLabel="Cargando resumen">
-          <Skeleton variant="pill" width={150} height={18} />
-          <Skeleton variant="line" width="82%" />
-          <Skeleton variant="line" width="58%" />
-          <Skeleton variant="card" className="loading-skeleton-card" />
-        </SkeletonPanel>
+        <BoneyardList name="private-list-load" rows={4} ariaLabel="Cargando datos de lista" />
+        <BoneyardPanel name="private-summary-load" ariaLabel="Cargando resumen">
+          <LoadReference shape="chip" width={150} height={18} />
+          <LoadReference width="82%" />
+          <LoadReference width="58%" />
+          <LoadReference shape="card" />
+        </BoneyardPanel>
       </section>
     </main>
   );
