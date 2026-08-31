@@ -65,10 +65,11 @@ test("WatchRow only renders trend metadata when a previous snapshot exists", () 
   assert.match(source, /meta\.previous \? \(/, "trend chip must require a previous snapshot");
 });
 
-test("WatchRow computes trend-percent delta and renders the chip", () => {
+test("WatchRow renders a signed trend percentage without period copy", () => {
   const source = read("modules/watchlist/components/WatchRow.tsx");
   assert.match(source, /trendPercentLabel/, "missing trendPercentLabel wiring");
   assert.match(source, /trend-chip-percent/, "missing trend-chip-percent rendering");
+  assert.doesNotMatch(source, /vs periodo anterior/, "trend chip must not include a period qualifier");
   assert.doesNotMatch(
     source,
     /trend-chip-percent"[^>]*>{trendPercentLabel}<\/span>(\s|\S)*<svg[\s\S]*?d="M6 15l6-6 6 6"/,
@@ -78,10 +79,11 @@ test("WatchRow computes trend-percent delta and renders the chip", () => {
   assert.match(source, /watchlist\.smartList\.trendPercentDelta/, "missing i18n key wiring");
 });
 
-test("watchlist i18n exposes trendPercentDelta in es + en", () => {
-  const en = read("i18n/domains/watchlist.ts");
-  assert.match(en, /trendPercentDelta: ".*% vs previous period"/, "missing EN copy");
-  assert.match(en, /trendPercentDelta: ".*% vs periodo anterior"/, "missing ES copy");
+test("watchlist i18n exposes a bare trendPercentDelta in es + en", () => {
+  const source = read("i18n/domains/watchlist.ts");
+  const labels = [...source.matchAll(/trendPercentDelta: "([^"]+)"/g)].map((match) => match[1]);
+
+  assert.deepEqual(labels, ["{value}%", "{value}%"]);
 });
 
 test("Dashboard page restores the historical quick-search hero and keeps unread alerts inside the alerts card", () => {

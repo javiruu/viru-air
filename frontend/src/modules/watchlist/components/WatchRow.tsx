@@ -236,7 +236,6 @@ export function WatchRow({
             <strong>{meta && meta.previous ? (deltaLabel) : "--"}</strong>
             <span>
               <b className="trend-chip-percent">{trendPercentLabel || "--"}</b>
-              <small>vs periodo anterior</small>
             </span>
           </div>
         </div>
