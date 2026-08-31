@@ -1,9 +1,8 @@
-from datetime import datetime
-
 import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
+from app.core.time import utc_now_naive
 from app.infrastructure.db.models import Base, HotelProviderLatencyAggregate, HotelProviderRun
 from app.services.hotel_provider_latency import (
     HotelProviderLatencyAccumulator,
@@ -61,7 +60,7 @@ def test_accumulator_groups_and_orders_without_raw_data() -> None:
 def test_persistence_upserts_in_same_transaction_without_commit() -> None:
     engine, db = _db()
     try:
-        run = HotelProviderRun(provider="mock", status="completed", started_at=datetime.utcnow())
+        run = HotelProviderRun(provider="mock", status="completed", started_at=utc_now_naive())
         db.add(run)
         db.flush()
         accumulator = HotelProviderLatencyAccumulator()

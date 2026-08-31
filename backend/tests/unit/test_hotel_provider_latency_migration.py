@@ -8,7 +8,7 @@ from pathlib import Path
 
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
 BASE_REVISION = "0052_hotel_daily_metric"
-HEAD_REVISION = "0060_revalidation_job_active_target"
+HEAD_REVISION = "0062_prune_legacy_expiry_indexes"
 
 
 def _env(db_path: Path) -> dict[str, str]:

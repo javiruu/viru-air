@@ -7,7 +7,7 @@ import sys
 
 
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
-HEAD_REVISION = "0060_revalidation_job_active_target"
+HEAD_REVISION = "0062_prune_legacy_expiry_indexes"
 MIGRATION_PATH = (
     BACKEND_ROOT / "alembic" / "versions" / "0039_add_community_pricing.py"
 )

@@ -56,7 +56,7 @@ def test_canonical_stay_offer_schema_expands_and_rolls_back_without_v1_removal(t
     assert {"user_id", "stay_offer_id", "legacy_tracked_offer_id", "status"}.issubset(stay_watch_columns)
     assert "ix_hotel_rate_snapshot_stay_offer_id" in snapshot_indexes
     assert "uq_hotel_tracked_offer_legacy_identity" in tracked_offer_indexes
-    assert revision == "0060_revalidation_job_active_target"
+    assert revision == "0062_prune_legacy_expiry_indexes"
 
     command.downgrade(config, "0056_hotel_saved_searches")
     with sqlite3.connect(db_path) as connection:

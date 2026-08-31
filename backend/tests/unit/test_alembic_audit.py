@@ -22,7 +22,7 @@ def test_current_alembic_chain_has_no_missing_down_revisions() -> None:
     assert payload["missing_down_revisions"] == []
     assert payload["duplicate_revisions"] == {}
     assert payload["files_missing_identifiers"] == []
-    assert payload["heads"] == ["0060_revalidation_job_active_target"]
+    assert payload["heads"] == ["0062_prune_legacy_expiry_indexes"]
 
 
 def test_inspect_database_revision_flags_orphan_alembic_version(tmp_path: Path) -> None:
@@ -101,6 +101,87 @@ def test_clean_upgrade_keeps_alembic_check_green() -> None:
             sqlite3.connect(db_path).close()
         except sqlite3.Error:
             pass
+        try:
+            os.remove(db_path)
+        except OSError:
+            pass
+
+
+def test_upgrade_prunes_redundant_legacy_expiry_indexes() -> None:
+    backend_root = Path(__file__).resolve().parents[2]
+    fd, db_path = tempfile.mkstemp(suffix="-alembic-legacy-expiry.db", dir=backend_root)
+    os.close(fd)
+    env = os.environ.copy()
+    env["DB_URL"] = f"sqlite:///./{Path(db_path).name}"
+
+    try:
+        baseline = subprocess.run(
+            [sys.executable, "-m", "alembic", "upgrade", "0061_calendar_price_observations"],
+            cwd=backend_root,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert baseline.returncode == 0, baseline.stderr
+
+        connection = sqlite3.connect(db_path)
+        try:
+            connection.executescript(
+                """
+                CREATE INDEX ix_flight_price_observation_expires_at
+                    ON flight_price_observation (expires_at);
+                CREATE INDEX ix_quick_search_negative_cache_entry_expires_at
+                    ON quick_search_negative_cache_entry (expires_at);
+                CREATE INDEX ix_quick_search_provider_lock_expires_at
+                    ON quick_search_provider_lock (expires_at);
+                """
+            )
+            connection.commit()
+        finally:
+            connection.close()
+
+        upgrade = subprocess.run(
+            [sys.executable, "-m", "alembic", "upgrade", "head"],
+            cwd=backend_root,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert upgrade.returncode == 0, upgrade.stderr
+
+        connection = sqlite3.connect(db_path)
+        try:
+            indexes = {
+                table: {row[1] for row in connection.execute(f"PRAGMA index_list({table})")}
+                for table in (
+                    "flight_price_observation",
+                    "quick_search_negative_cache_entry",
+                    "quick_search_provider_lock",
+                )
+            }
+        finally:
+            connection.close()
+
+        assert "ix_flight_price_observation_expires_at" not in indexes["flight_price_observation"]
+        assert "ix_quick_search_negative_cache_entry_expires_at" not in indexes[
+            "quick_search_negative_cache_entry"
+        ]
+        assert "ix_quick_search_provider_lock_expires_at" not in indexes[
+            "quick_search_provider_lock"
+        ]
+
+        check = subprocess.run(
+            [sys.executable, "-m", "alembic", "check"],
+            cwd=backend_root,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert check.returncode == 0, check.stderr or check.stdout
+    finally:
         try:
             os.remove(db_path)
         except OSError:
@@ -222,7 +303,7 @@ def test_upgrade_repairs_orphan_live_tracking_tables_created_by_orm() -> None:
         assert "ix_flight_operational_refresh_lock_token" in lock_indexes
         assert "ix_flight_operational_refresh_lock_expires" in lock_indexes
         assert {"flight_instance_fingerprint", "provider", "observed_at"} in snapshot_unique
-        assert revision == "0060_revalidation_job_active_target"
+        assert revision == "0062_prune_legacy_expiry_indexes"
 
     finally:
         try:
