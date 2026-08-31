@@ -78,7 +78,7 @@ def configure_logging() -> None:
     console_handler.set_name("viru.logging.console")
     file_handler = logging.FileHandler(log_file, encoding="utf-8")
     file_handler.set_name("viru.logging.file")
-    handlers = [console_handler, file_handler]
+    handlers: list[logging.Handler] = [console_handler, file_handler]
     correlation_filter = CorrelationIdFilter()
     for handler in handlers:
         handler.setFormatter(formatter)

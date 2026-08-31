@@ -432,7 +432,7 @@ def list_hotel_provider_controls(
         raise ValueError("hotel_provider_control_limit_out_of_bounds")
 
     now = utc_now_naive()
-    budgets = list(
+    budgets: list[HotelProviderBudget] = list(
         db.scalars(
             select(HotelProviderBudget)
             .where(
@@ -444,7 +444,7 @@ def list_hotel_provider_controls(
             .limit(limit)
         )
     )
-    circuits = list(
+    circuits: list[HotelProviderCircuit] = list(
         db.scalars(
             select(HotelProviderCircuit)
             .where(
@@ -489,36 +489,36 @@ def list_hotel_provider_controls(
         return "unknown"
 
     budget_payload = []
-    for row in budgets:
-        remaining = max(0, int(row.hard_limit or 0) - int(row.units_used or 0) - int(row.units_reserved or 0))
+    for budget in budgets:
+        remaining = max(0, int(budget.hard_limit or 0) - int(budget.units_used or 0) - int(budget.units_reserved or 0))
         budget_payload.append(
             {
-                "provider": _provider(row.provider),
-                "operation": _operation(row.operation),
-                "window_key": _window_key(row.window_key),
-                "hard_limit": max(0, int(row.hard_limit or 0)),
-                "units_reserved": max(0, int(row.units_reserved or 0)),
-                "units_used": max(0, int(row.units_used or 0)),
-                "units_released": max(0, int(row.units_released or 0)),
+                "provider": _provider(budget.provider),
+                "operation": _operation(budget.operation),
+                "window_key": _window_key(budget.window_key),
+                "hard_limit": max(0, int(budget.hard_limit or 0)),
+                "units_reserved": max(0, int(budget.units_reserved or 0)),
+                "units_used": max(0, int(budget.units_used or 0)),
+                "units_released": max(0, int(budget.units_released or 0)),
                 "units_remaining": remaining,
-                "window_expires_at": row.window_expires_at.isoformat(),
-                "source": _source(row.source),
+                "window_expires_at": budget.window_expires_at.isoformat(),
+                "source": _source(budget.source),
             }
         )
 
     circuit_payload = []
-    for row in circuits:
+    for circuit in circuits:
         circuit_payload.append(
             {
-                "provider": _provider(row.provider),
-                "operation": _operation(row.operation),
-                "status": _status(row.status),
-                "consecutive_failures": max(0, int(row.consecutive_failures or 0)),
-                "failure_threshold": max(1, int(row.failure_threshold or 1)),
-                "opened_at": row.opened_at.isoformat() if row.opened_at else None,
-                "next_probe_at": row.next_probe_at.isoformat() if row.next_probe_at else None,
-                "last_error_code": _error_code(row.last_error_code),
-                "updated_at": row.updated_at.isoformat(),
+                "provider": _provider(circuit.provider),
+                "operation": _operation(circuit.operation),
+                "status": _status(circuit.status),
+                "consecutive_failures": max(0, int(circuit.consecutive_failures or 0)),
+                "failure_threshold": max(1, int(circuit.failure_threshold or 1)),
+                "opened_at": circuit.opened_at.isoformat() if circuit.opened_at else None,
+                "next_probe_at": circuit.next_probe_at.isoformat() if circuit.next_probe_at else None,
+                "last_error_code": _error_code(circuit.last_error_code),
+                "updated_at": circuit.updated_at.isoformat(),
             }
         )
     return {"budgets": budget_payload, "circuits": circuit_payload}
@@ -625,7 +625,9 @@ def list_hotel_provider_outcome_diagnostics(
                 "outcomes": {},
             },
         )
-        item["runs"] = int(item["runs"]) + 1
+        runs = item["runs"]
+        assert isinstance(runs, int)
+        item["runs"] = runs + 1
         safe_status = row.status if row.status in HEALTH_RUN_STATUSES else "unknown"
         status_counts = item["statuses"]
         assert isinstance(status_counts, dict)
