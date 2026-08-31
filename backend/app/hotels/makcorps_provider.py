@@ -111,24 +111,6 @@ def _build_session() -> requests.Session:
     return session
 
 
-def _parse_date(value: str | None) -> date | None:
-    if not value:
-        return None
-    try:
-        return date.fromisoformat(value)
-    except (ValueError, TypeError):
-        return None
-
-
-def _normalize_currency(value: str | None) -> str:
-    if not value:
-        return ""
-    cleaned = str(value).strip().upper()
-    if len(cleaned) == 3 and cleaned.isalpha():
-        return cleaned
-    return ""
-
-
 def _parse_positive_amount(value: Any) -> float | None:
     """Parse a numeric value, stripping currency symbols and whitespace."""
     try:

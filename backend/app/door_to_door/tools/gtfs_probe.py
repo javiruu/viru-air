@@ -25,7 +25,9 @@ from datetime import date, datetime, timedelta, timezone
 
 # Ensure stdout can handle Unicode on Windows
 if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    reconfigure_stdout = getattr(sys.stdout, "reconfigure", None)
+    if callable(reconfigure_stdout):
+        reconfigure_stdout(encoding="utf-8", errors="replace")
 
 from app.door_to_door.services.gtfs_feed_service import (
     GtfsFeedDescriptor,

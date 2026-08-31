@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+import json
 import os
 from typing import Any
 
@@ -18,7 +19,8 @@ class DuffelProvider(FlightProvider):
     provider_id = "duffel"
 
     def __init__(self, api_key: str | None = None, *, base_url: str = "https://api.duffel.com/air") -> None:
-        self.api_key = (api_key or os.getenv("DUFFEL_API_KEY", "")).strip()
+        resolved_api_key = api_key if api_key is not None else os.getenv("DUFFEL_API_KEY") or ""
+        self.api_key = resolved_api_key.strip()
         self.base_url = base_url.rstrip("/")
         self._session = requests.Session()
         adapter = HTTPAdapter(pool_connections=_PROVIDER_POOL_SIZE, pool_maxsize=_PROVIDER_POOL_SIZE)
@@ -57,7 +59,7 @@ class DuffelProvider(FlightProvider):
                     "supplier_timeout": str(max(2000, min(timeout_ms, 60000))),
                     "view": "offers",
                 },
-                json=payload,
+                data=json.dumps(payload),
                 timeout=max(2.0, timeout_ms / 1000),
                 headers={
                     "Authorization": f"Bearer {self.api_key}",

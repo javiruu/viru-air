@@ -6,6 +6,7 @@ import unicodedata
 from datetime import datetime, time, timedelta
 from math import asin, cos, radians, sin, sqrt
 from pathlib import Path
+from typing import Literal
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -17,12 +18,15 @@ from app.door_to_door.providers.registry import resolve_provider_runtime
 from app.door_to_door.schemas import (
     DoorToDoorChosenOptionIn,
     DoorToDoorChosenOptionOut,
+    DoorToDoorConfidence,
     DoorToDoorCorridorOut,
+    DoorToDoorCorridorStatus,
     DoorToDoorCorridorsOut,
     DoorToDoorFlightOut,
     DoorToDoorHealthOut,
     DoorToDoorHistoryOut,
     DoorToDoorLocation,
+    DoorToDoorLocationType,
     DoorToDoorMapCapabilityOut,
     DoorToDoorPreferences,
     DoorToDoorProviderStatusOut,
@@ -81,7 +85,7 @@ def _flight_context(db: Session, watch: FlightWatch) -> tuple[DoorToDoorFlightOu
         .where(PriceSnapshot.watch_id == watch.id)
         .order_by(PriceSnapshot.captured_at_utc.desc(), PriceSnapshot.id.desc())
     )
-    confidence = "estimated"
+    confidence: DoorToDoorConfidence = "estimated"
     departure_clock = time(hour=14, minute=20)
     using_estimated_schedule = True
 
@@ -120,7 +124,7 @@ def _flight_context(db: Session, watch: FlightWatch) -> tuple[DoorToDoorFlightOu
 def _saved_location_out(location: DoorToDoorSavedLocation) -> DoorToDoorSavedLocationOut:
     return DoorToDoorSavedLocationOut(
         id=location.id,
-        type=location.location_type,
+        type=_saved_location_type(location.location_type),
         label=location.label,
         lat=float(location.lat) if location.lat is not None else None,
         lng=float(location.lng) if location.lng is not None else None,
@@ -159,7 +163,29 @@ def _sanitize_notes(raw_notes: str) -> str:
     return cleaned
 
 
-def _build_corridor_out(raw: dict) -> DoorToDoorCorridorOut:
+def _saved_location_type(value: str) -> DoorToDoorLocationType:
+    if value == "city":
+        return "city"
+    if value == "address":
+        return "address"
+    if value == "station":
+        return "station"
+    if value == "airport":
+        return "airport"
+    if value == "airport_only":
+        return "airport_only"
+    return "saved_location"
+
+
+def _corridor_status(value: object) -> DoorToDoorCorridorStatus:
+    if value == "verified":
+        return "verified"
+    if value == "verified_limited":
+        return "verified_limited"
+    return "planned_blocked"
+
+
+def _build_corridor_out(raw: dict[str, object]) -> DoorToDoorCorridorOut:
     """Curate a raw corridor dict from gtfs_corridors.json into the public schema.
 
     Strips operational tokens (feed URLs, API endpoints, account details,
@@ -167,34 +193,42 @@ def _build_corridor_out(raw: dict) -> DoorToDoorCorridorOut:
     we don't leak infrastructure specifics to clients while still telling
     users what works and where the limits are.
     """
-    coverage = raw.get("coverage") if isinstance(raw.get("coverage"), dict) else {}
+    raw_coverage = raw.get("coverage")
+    coverage: dict[str, object] = raw_coverage if isinstance(raw_coverage, dict) else {}
     raw_notes = str(raw.get("notes") or "").strip()
     sanitized = _sanitize_notes(raw_notes)
     notes_preview = sanitized[:180].rstrip()
     if len(sanitized) > 180:
         notes_preview += "…"
     service_by_date = coverage.get("service_by_date")
-    if not isinstance(service_by_date, bool):
-        # Accept only the documented string tokens; anything else folds to False.
-        if service_by_date in {"limited_window", "limited"}:
-            service_by_date_typed: bool | str = service_by_date
-        else:
-            service_by_date_typed = False
-    else:
+    service_by_date_typed: bool | Literal["limited_window", "limited"]
+    if isinstance(service_by_date, bool):
         service_by_date_typed = service_by_date
+    elif service_by_date == "limited_window":
+        service_by_date_typed = "limited_window"
+    elif service_by_date == "limited":
+        service_by_date_typed = "limited"
+    else:
+        service_by_date_typed = False
+    raw_airport_search_terms = raw.get("airport_search_terms")
+    airport_search_terms = (
+        [str(term) for term in raw_airport_search_terms if term]
+        if isinstance(raw_airport_search_terms, list)
+        else []
+    )
     return DoorToDoorCorridorOut(
         id=str(raw.get("id") or ""),
         name=str(raw.get("name") or raw.get("id") or ""),
         region=str(raw.get("region") or ""),
         origin_area=str(raw.get("origin_area") or ""),
         destination_airport=str(raw.get("destination_airport") or "").upper(),
-        status=raw.get("status") or "planned_blocked",  # type: ignore[arg-type]
+        status=_corridor_status(raw.get("status")),
         verified_at=str(raw.get("verified_at") or "") or None,
         notes_preview=notes_preview,
         both_legs=bool(coverage.get("both_legs")),
         coverage_has_nearby_stops=bool(coverage.get("nearby_stops")),
         coverage_service_by_date=service_by_date_typed,
-        airport_search_terms=[str(t) for t in (raw.get("airport_search_terms") or []) if t],
+        airport_search_terms=airport_search_terms,
     )
 
 

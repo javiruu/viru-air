@@ -18,6 +18,7 @@ from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
+from app.infrastructure.db.execution import affected_row_count
 from app.domain.entities import ProviderFetchResult, ProviderFlight
 from app.infrastructure.db.models import QuickSearchCacheEntry, QuickSearchNegativeCacheEntry
 from app.services.fare_memory import build_freshness_payload
@@ -689,8 +690,8 @@ def prune_expired_entries(db: Session, *, batch_size: int = 200) -> int:
         )
 
         db.commit()
-    pos_deleted = pos_result.rowcount
-    neg_deleted = neg_result.rowcount
+    pos_deleted = affected_row_count(pos_result)
+    neg_deleted = affected_row_count(neg_result)
     total = pos_deleted + neg_deleted
     if total > 0:
         logger.info(

@@ -11,7 +11,7 @@ import threading
 import time
 import uuid
 from dataclasses import dataclass
-from typing import Any, Callable, Literal
+from typing import Any, Callable, Literal, TypedDict
 
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, Query
 from sqlalchemy import select
@@ -27,7 +27,7 @@ from app.api.deps import get_current_user
 from app.api.v1.airports import _validate_iata
 from app.domain.entities import ProviderFetchResult
 from app.domain.schemas import FareComparisonProfile
-from app.infrastructure.db.models import FlightWatch, PriceSnapshot, User
+from app.infrastructure.db.models import FareComparisonExtraData, FareComparisonProfileData, FlightWatch, PriceSnapshot, User
 from app.infrastructure.db.session import get_db, SessionLocal
 from app.infrastructure.airports_catalog import ExpandedAirportCandidate, get_airport, resolve_seed_airport
 from app.infrastructure.providers.flight_provider import MultiSourceFlightProvider
@@ -102,7 +102,7 @@ QUICK_SEARCH_SHARED_CACHE_ENABLED = os.getenv("QUICK_SEARCH_SHARED_CACHE_ENABLED
 CALENDAR_HINTS_CACHE_TTL_SECONDS = 600
 CALENDAR_HINTS_CACHE_MAX_SIZE = 500
 _CALENDAR_HINTS_CACHE_LOCK = threading.Lock()
-_CALENDAR_HINTS_CACHE: dict[tuple[str, ...], tuple[float, dict[str, Any]]] = {}
+_CALENDAR_HINTS_CACHE: dict[tuple[object, ...], tuple[float, dict[str, Any]]] = {}
 CALENDAR_HINTS_GUIDELINE_DEFAULT_LOW_MAX = 90.0
 CALENDAR_HINTS_GUIDELINE_DEFAULT_MID_MAX = 150.0
 
@@ -110,6 +110,30 @@ SharedCacheGet = Callable[[str, str, dt.date | str, str], ProviderFetchResult | 
 SharedCacheSet = Callable[[str, str, dt.date | str, str, ProviderFetchResult], None]
 ProviderSingleFlightAcquire = Callable[[str, str, dt.date | str, str], str | None]
 ProviderSingleFlightRelease = Callable[[str], None]
+
+
+class QuickSearchSeedPoolContract(TypedDict):
+    cap: int
+    origin_requested_count: int
+    destination_requested_count: int
+    origin_requested_iata: list[str]
+    destination_requested_iata: list[str]
+    origin_count: int
+    destination_count: int
+    origin_effective_iata: list[str]
+    destination_effective_iata: list[str]
+    origin_truncated: bool
+    destination_truncated: bool
+
+
+class QuickSearchFilterContract(TypedDict):
+    aliases: list[str]
+    hard_supported: list[str]
+    soft_supported: list[str]
+    unsupported: list[str]
+    legacy_partial: list[str]
+    pending: list[str]
+    seed_pool: QuickSearchSeedPoolContract
 
 
 @dataclass(frozen=True, slots=True)
@@ -1108,7 +1132,7 @@ def _to_pair_plan_items(pairs: list[tuple[str, str]]) -> list[PairPlanItem]:
     return items
 
 
-def _calendar_hints_cache_get(cache_key: tuple[str, ...]) -> dict[str, Any] | None:
+def _calendar_hints_cache_get(cache_key: tuple[object, ...]) -> dict[str, Any] | None:
     now = time.time()
     with _CALENDAR_HINTS_CACHE_LOCK:
         cached = _CALENDAR_HINTS_CACHE.get(cache_key)
@@ -1121,7 +1145,7 @@ def _calendar_hints_cache_get(cache_key: tuple[str, ...]) -> dict[str, Any] | No
         return payload
 
 
-def _calendar_hints_cache_set(cache_key: tuple[str, ...], payload: dict[str, Any]) -> None:
+def _calendar_hints_cache_set(cache_key: tuple[object, ...], payload: dict[str, Any]) -> None:
     with _CALENDAR_HINTS_CACHE_LOCK:
         # Evict oldest entries (FIFO) if at capacity
         while len(_CALENDAR_HINTS_CACHE) >= CALENDAR_HINTS_CACHE_MAX_SIZE:
@@ -1220,6 +1244,7 @@ def _matches_time_window(
     if after_minutes is None and before_minutes is None:
         return True
     if after_minutes is None:
+        assert before_minutes is not None
         return dep_minutes <= before_minutes
     if before_minutes is None:
         return dep_minutes >= after_minutes
@@ -1236,6 +1261,19 @@ def _normalize_iata_list(value: str | list[str] | None) -> list[str]:
     else:
         items = [item.strip().upper() for item in value.split(",")]
     return [item for item in items if item]
+
+
+def _fare_profile_data(profile: FareComparisonProfile) -> FareComparisonProfileData:
+    extras: list[FareComparisonExtraData] = [
+        {"kind": extra.kind, "selected": extra.selected}
+        for extra in profile.extras
+    ]
+    return {
+        "travelers": profile.travelers,
+        "airline_id": profile.airline_id,
+        "flight_count": profile.flight_count,
+        "extras": extras,
+    }
 
 
 def _seed_priority_key(iata: str) -> tuple[int, str]:
@@ -1274,15 +1312,6 @@ def _normalize_seed_pool(
     return effective, truncated
 
 
-def _required_error(field: str) -> ApiError:
-    return ApiError(
-        status=422,
-        code="validation_error",
-        message=message_for_code("validation_error"),
-        details=[{"loc": ["body", field], "msg": "Field required", "type": "missing"}],
-    )
-
-
 def _parse_iata_input(value: str | list[str]) -> list[str]:
     codes = _normalize_iata_list(value)
     if not codes:
@@ -1298,7 +1327,7 @@ def _parse_iata_input(value: str | list[str]) -> list[str]:
 def _normalize_quick_search_request(
     payload_dict: dict[str, Any] | None,
     query_overrides: dict[str, Any],
-) -> tuple[QuickSearchCanonicalRequest, list[str], list[str], dict[str, list[str]]]:
+) -> tuple[QuickSearchCanonicalRequest, list[str], list[str], QuickSearchFilterContract]:
     payload_dict = payload_dict or {}
     legacy_payload = QuickSearchPayload.model_validate(payload_dict)
 
@@ -1386,14 +1415,14 @@ def _normalize_quick_search_request(
                 "seed_iata": origin_value[0] if isinstance(origin_value, list) and origin_value else origin_value,
                 "seed_iata_list": origin_value if isinstance(origin_value, list) else None,
                 "include_nearby": include_nearby_origins_value,
-                "radius_km": _normalize_radius_km(raw_radius_km, include_nearby_origins_value),
+                "radius_km": _normalize_radius_km(raw_radius_km, bool(include_nearby_origins_value)),
                 "max_candidates": 40 if origin_value == "ANY" else 10,
             },
             "destination": {
                 "seed_iata": destination_value[0] if isinstance(destination_value, list) and destination_value else destination_value,
                 "seed_iata_list": destination_value if isinstance(destination_value, list) else None,
                 "include_nearby": include_nearby_destinations_value,
-                "radius_km": _normalize_radius_km(raw_radius_km, include_nearby_destinations_value),
+                "radius_km": _normalize_radius_km(raw_radius_km, bool(include_nearby_destinations_value)),
                 "max_candidates": 40 if destination_value == "ANY" else 10,
             },
             "travel": {
@@ -1544,7 +1573,8 @@ def _normalize_quick_search_request(
     canonical.destination.seed_iata = destination_list[0]
     canonical.destination.seed_iata_list = destination_list
 
-    filter_support = {
+    filter_contract: QuickSearchFilterContract = {
+        "aliases": legacy_aliases_used,
         "hard_supported": ["strict_filters", "departure_window", "exclude_origins", "exclude_destinations"],
         "soft_supported": ["soft_filters_weight", "seed_distance_penalty", "pair_category_bias"],
         "unsupported": ["include_stops", "max_stops", "duration_max_min"],
@@ -1565,7 +1595,7 @@ def _normalize_quick_search_request(
         },
     }
 
-    return canonical, origin_list, destination_list, {"aliases": legacy_aliases_used, **filter_support}
+    return canonical, origin_list, destination_list, filter_contract
 
 
 @router.get("/deeplink")
@@ -2020,6 +2050,7 @@ def quick_search_calendar_hints(
         day: classify_contextual_price(price, reference_observations)
         for day, price in day_aggregated_prices.items()
     }
+    bucket_by_day: dict[dt.date, str]
     if bucket_mode_effective == "contextual":
         bucket_by_day = {
             day: classification.bucket
@@ -2142,7 +2173,7 @@ def quick_search_calendar_hints(
             db.rollback()
             logger.warning("calendar_observations_write_unavailable")
             calendar_observations_available = False
-    response_payload = {
+    response_payload: dict[str, Any] = {
         "days": days_payload,
         "meta": {
             "currency": cache_currency,
@@ -2419,24 +2450,25 @@ def quick_search(
     exclude_origin_list = canonical.constraints.exclude_origins
     exclude_destination_list = canonical.constraints.exclude_destinations
     country_scope_multi_seed_mode = len(origin_seed_pool) > 1 or len(destination_seed_pool) > 1
+    filter_seed_pool = filter_contract["seed_pool"]
 
     if len(origin_seed_pool) > 1:
         _warn("country_scope_multi_seed_applied", side="origin", seed_count=len(origin_seed_pool))
     if len(destination_seed_pool) > 1:
         _warn("country_scope_multi_seed_applied", side="destination", seed_count=len(destination_seed_pool))
-    if filter_contract.get("seed_pool", {}).get("origin_truncated"):
+    if filter_seed_pool["origin_truncated"]:
         _warn(
             "country_scope_seed_pool_truncated",
             side="origin",
-            cap=filter_contract["seed_pool"]["cap"],
-            effective_count=filter_contract["seed_pool"]["origin_count"],
+            cap=filter_seed_pool["cap"],
+            effective_count=filter_seed_pool["origin_count"],
         )
-    if filter_contract.get("seed_pool", {}).get("destination_truncated"):
+    if filter_seed_pool["destination_truncated"]:
         _warn(
             "country_scope_seed_pool_truncated",
             side="destination",
-            cap=filter_contract["seed_pool"]["cap"],
-            effective_count=filter_contract["seed_pool"]["destination_count"],
+            cap=filter_seed_pool["cap"],
+            effective_count=filter_seed_pool["destination_count"],
         )
 
     def _phase_add(name: str, elapsed_ms: int) -> None:
@@ -2945,8 +2977,8 @@ def quick_search(
             discarded_count=out_of_scope_discarded,
         )
 
-    signature_origin_seed_pool = filter_contract.get("seed_pool", {}).get("origin_requested_iata") or origin_seed_pool
-    signature_destination_seed_pool = filter_contract.get("seed_pool", {}).get("destination_requested_iata") or destination_seed_pool
+    signature_origin_seed_pool = filter_seed_pool["origin_requested_iata"] or origin_seed_pool
+    signature_destination_seed_pool = filter_seed_pool["destination_requested_iata"] or destination_seed_pool
     query_signature = _build_query_signature(
         origin_seed_pool=signature_origin_seed_pool,
         destination_seed_pool=signature_destination_seed_pool,
@@ -2976,7 +3008,7 @@ def quick_search(
         "destination_expanded_count": len(destination_scope_iata),
     }
     seed_pool_trace = {
-        **filter_contract.get("seed_pool", {}),
+        **filter_seed_pool,
         "winning_step": selected_pass["step"],
         "origin_scope_count": len(origin_scope_iata),
         "destination_scope_count": len(destination_scope_iata),
@@ -3198,7 +3230,7 @@ def quick_search(
             },
         }
 
-    response_payload = {
+    response_payload: dict[str, Any] = {
         "query": {
             "origin": canonical.origin.model_dump(),
             "destination": canonical.destination.model_dump(),
@@ -3526,7 +3558,7 @@ def save_result(
         if payload.group_id and existing.group_id != payload.group_id:
             existing.group_id = payload.group_id
         if payload.fare_profile is not None:
-            existing.fare_profile = payload.fare_profile.model_dump(mode="json")
+            existing.fare_profile = _fare_profile_data(payload.fare_profile)
         tracking_identity = replace_watch_tracked_legs(db, existing, payload.legs)
         handle_saved_result_observation(db, existing, payload)
         body = {
@@ -3554,7 +3586,7 @@ def save_result(
         travel_date_local=payload.travel_date,
         target_price=payload.price_total,
         group_id=payload.group_id,
-        fare_profile=payload.fare_profile.model_dump(mode="json") if payload.fare_profile else None,
+        fare_profile=_fare_profile_data(payload.fare_profile) if payload.fare_profile else None,
     )
     db.add(watch)
     db.flush()

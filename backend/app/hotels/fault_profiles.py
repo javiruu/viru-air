@@ -95,7 +95,9 @@ def load_hotel_fault_profiles(path: str | Path | None = None) -> dict[str, Hotel
         scope = raw.get("scope", "provider")
         expected_counts = raw.get("expected_counts", {})
         expected_external_calls = raw.get("expected_external_calls", 0)
-        if not all(isinstance(value, str) for value in (mode, expected_status, expected_run_status, scope)):
+        if not isinstance(mode, str) or not isinstance(expected_status, str):
+            raise ValueError("hotel_fault_profile_invalid_shape")
+        if not isinstance(expected_run_status, str) or not isinstance(scope, str):
             raise ValueError("hotel_fault_profile_invalid_shape")
         if expected_run_status not in {"completed", "partial", "failed", "skipped"}:
             raise ValueError("hotel_fault_profile_invalid_run_status")

@@ -6,13 +6,9 @@ import random
 import time
 from typing import Any, Final
 
-try:
-    from curl_cffi import requests
-    from curl_cffi.requests.errors import RequestsError
-except ImportError:
-    import requests
-    from requests.exceptions import RequestException as RequestsError
+import requests
 from requests.adapters import HTTPAdapter
+from requests.exceptions import RequestException
 
 from app.domain.entities import ProviderFetchResult, ProviderSourceFetchError, ProviderWarning
 from app.infrastructure.providers.base import FlightProvider
@@ -27,6 +23,18 @@ from app.infrastructure.providers._browser_warmup import (
 )
 from app.infrastructure.providers._captcha import WafRule, detect_captcha_kind
 from app.infrastructure.providers._session_factory import build_session_kwargs
+
+curl_requests: Any | None
+CurlRequestsError: type[Exception]
+try:
+    from curl_cffi import requests as imported_curl_requests
+    from curl_cffi.requests.errors import RequestsError as imported_curl_requests_error
+except ImportError:
+    curl_requests = None
+    CurlRequestsError = RequestException
+else:
+    curl_requests = imported_curl_requests
+    CurlRequestsError = imported_curl_requests_error
 
 _DEFAULT_BASE_URL: Final = "https://www.iberia.com"
 _DEFAULT_API_BASE_URL: Final = "https://ibisservices.iberia.com/api"
@@ -72,20 +80,23 @@ class IberiaProvider(FlightProvider):
         language: str | None = None,
         impersonate: str | None = None,
     ) -> None:
-        self.base_url = (base_url or os.getenv("IBERIA_BASE_URL", _DEFAULT_BASE_URL)).strip().rstrip("/")
+        self.base_url = (base_url or os.getenv("IBERIA_BASE_URL") or _DEFAULT_BASE_URL).strip().rstrip("/")
         self.api_base_url = (
-            api_base_url or os.getenv("IBERIA_API_BASE_URL", _DEFAULT_API_BASE_URL)
+            api_base_url or os.getenv("IBERIA_API_BASE_URL") or _DEFAULT_API_BASE_URL
         ).strip().rstrip("/")
-        self.availability_path = os.getenv("IBERIA_AVAILABILITY_PATH", _DEFAULT_AVAILABILITY_PATH).strip()
+        self.availability_path = (os.getenv("IBERIA_AVAILABILITY_PATH") or _DEFAULT_AVAILABILITY_PATH).strip()
         self.authorization = (
-            authorization or os.getenv("IBERIA_PUBLIC_AUTHORIZATION", _DEFAULT_AUTHORIZATION)
+            authorization or os.getenv("IBERIA_PUBLIC_AUTHORIZATION") or _DEFAULT_AUTHORIZATION
         ).strip()
-        self.market = (market or os.getenv("IBERIA_MARKET", _DEFAULT_MARKET)).strip().upper()
-        self.language = (language or os.getenv("IBERIA_LANGUAGE", _DEFAULT_LANGUAGE)).strip().lower()
+        self.market = (market or os.getenv("IBERIA_MARKET") or _DEFAULT_MARKET).strip().upper()
+        self.language = (language or os.getenv("IBERIA_LANGUAGE") or _DEFAULT_LANGUAGE).strip().lower()
         impersonate_version = (
-            impersonate or os.getenv(_IMPERSONATE_ENV_VAR, _DEFAULT_IMPERSONATE)
+            impersonate or os.getenv(_IMPERSONATE_ENV_VAR) or _DEFAULT_IMPERSONATE
         ).strip() or _DEFAULT_IMPERSONATE
+        self._session: Any
         try:
+            if curl_requests is None:
+                raise TypeError("curl_cffi_unavailable")
             session_kwargs = build_session_kwargs(
                 impersonate_env=_IMPERSONATE_ENV_VAR,
                 extra_fp_env="IBERIA_EXTRA_FP",
@@ -94,7 +105,7 @@ class IberiaProvider(FlightProvider):
             )
             # Honour the explicit ``impersonate`` ctor kwarg over the env var.
             session_kwargs["impersonate"] = impersonate_version
-            self._session = requests.Session(**session_kwargs)
+            self._session = curl_requests.Session(**session_kwargs)
         except TypeError:
             # stdlib ``requests`` (test doubles / curl_cffi import failure):
             # drop curl_cffi-only kwargs and fall back to a vanilla pool.
@@ -121,7 +132,7 @@ class IberiaProvider(FlightProvider):
             # Captcha / source-specific failures: propagate unchanged so the
             # orchestrator sees the rich warning_codes the helper produced.
             raise
-        except (RequestsError, ValueError) as exc:
+        except (CurlRequestsError, RequestException, ValueError) as exc:
             raise ProviderSourceFetchError(
                 warning_codes=["iberia_provider_unavailable_total", "provider_total_outage"],
                 message=f"Iberia public provider unavailable for {search.origin}->{search.destination} on {search.travel_date}",

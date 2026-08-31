@@ -18,14 +18,18 @@ from app.door_to_door.providers.mock import MockDoorToDoorProvider  # noqa: E402
 from app.door_to_door.providers.mozio import MozioDeepLinkProvider  # noqa: E402
 from app.door_to_door.providers.navitia import NavitiaProvider  # noqa: E402
 from app.door_to_door.providers.nominatim import NominatimSuggestionsProvider  # noqa: E402
-from app.door_to_door.schemas import DoorToDoorProviderStatusOut, DoorToDoorSourceType  # noqa: E402
+from app.door_to_door.schemas import (  # noqa: E402
+    DoorToDoorProviderStatusKind,
+    DoorToDoorProviderStatusOut,
+    DoorToDoorSourceType,
+)
 
 
 @dataclass(frozen=True)
 class ProviderDescriptor:
     name: str
     source_type: DoorToDoorSourceType
-    base_status: str
+    base_status: DoorToDoorProviderStatusKind
     production_ready: bool
     supports_search: bool
     supports_booking_url: bool
@@ -433,7 +437,7 @@ def resolve_provider_runtime() -> ProviderRuntime:
             DoorToDoorProviderStatusOut(
                 name=descriptor.name,
                 enabled=enabled,
-                status=status,  # type: ignore[arg-type]
+                status=status,
                 source_type=descriptor.source_type,
                 production_ready=descriptor.production_ready,
                 supports_search=supports_search and enabled,
@@ -448,9 +452,10 @@ def resolve_provider_runtime() -> ProviderRuntime:
     google_places_provider = (
         GooglePlacesSuggestionsProvider() if google_places_enabled else None
     )
-    nominatim_provider = NominatimSuggestionsProvider()
-    if not nominatim_provider.enabled:
-        nominatim_provider = None
+    nominatim_candidate = NominatimSuggestionsProvider()
+    nominatim_provider: NominatimSuggestionsProvider | None = (
+        nominatim_candidate if nominatim_candidate.enabled else None
+    )
 
     return ProviderRuntime(
         providers=providers,

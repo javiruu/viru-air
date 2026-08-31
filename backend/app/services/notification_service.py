@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import and_, asc, func, or_, select
+from sqlalchemy import Select, and_, asc, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
@@ -98,7 +98,9 @@ def _next_attempt_delay(attempts: int) -> timedelta:
     return timedelta(minutes=minutes)
 
 
-def _eligible_events_query(now, *, limit: int) -> select:
+def _eligible_events_query(
+    now: datetime, *, limit: int
+) -> Select[tuple[NotificationEvent, User, UserPreference]]:
     return (
         select(NotificationEvent, User, UserPreference)
         .join(AlertRule, NotificationEvent.rule_id == AlertRule.id)
@@ -166,7 +168,9 @@ def dispatch_pending_events(db: Session, *, limit: int | None = None) -> Dispatc
         "in_app": InAppNotificationAdapter(),
         "email": EmailNotificationAdapter(),
     }
-    rows = list(db.execute(_eligible_events_query(now, limit=batch_limit)).all())
+    rows: list[tuple[NotificationEvent, User, UserPreference]] = list(
+        db.execute(_eligible_events_query(now, limit=batch_limit)).tuples().all()
+    )
     for event, user, preference in rows:
         result.processed += 1
         adapter = adapters.get(event.channel)

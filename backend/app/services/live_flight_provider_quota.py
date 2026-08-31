@@ -9,6 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.infrastructure.db.models import FlightProviderQuota
+from app.infrastructure.db.execution import affected_row_count
 
 
 QuotaWindow = Literal["day", "month"]
@@ -62,7 +63,7 @@ class SqlAlchemyProviderQuotaLedger:
                     updated_at=now,
                 )
             )
-            return result.rowcount == 1
+            return affected_row_count(result) == 1
 
     def block(self, provider: str, now: dt.datetime, seconds: int, reason: str) -> None:
         self._ensure_row(provider, now.strftime("%Y-%m"), now)

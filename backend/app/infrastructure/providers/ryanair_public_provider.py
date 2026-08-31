@@ -9,17 +9,30 @@ from app.core.time import utc_now_naive
 
 import time
 import random
-try:
-    from curl_cffi import requests
-    from curl_cffi.requests.errors import RequestsError
-except ImportError:
-    import requests
-    from requests.exceptions import RequestException as RequestsError
+import requests as std_requests
 from requests.adapters import HTTPAdapter
+from requests.exceptions import RequestException
 
 from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderPrice, ProviderSourceFetchError, ProviderWarning
 from app.infrastructure.providers.base import FlightProvider
 from app.services.flight_number_enrichment import normalize_explicit_flight_number
+
+curl_requests: Any | None
+CurlRequestsError: type[Exception]
+try:
+    from curl_cffi import requests as imported_curl_requests
+    from curl_cffi.requests.errors import RequestsError as imported_curl_requests_error
+except ImportError:
+    curl_requests = None
+    CurlRequestsError = RequestException
+else:
+    curl_requests = imported_curl_requests
+    CurlRequestsError = imported_curl_requests_error
+
+# Keep the historical module-level transport seam: when curl_cffi is present,
+# callers can still exercise its impersonated session and its fallback path.
+requests: Any = curl_requests if curl_requests is not None else std_requests
+RequestsError = CurlRequestsError
 
 _PROVIDER_POOL_SIZE = 32
 
@@ -28,8 +41,11 @@ class RyanairPublicProvider(FlightProvider):
     provider_id = "ryanair"
 
     def __init__(self) -> None:
+        self._session: Any
         try:
-            self._session = requests.Session(impersonate="chrome110")
+            if curl_requests is None:
+                raise TypeError("curl_cffi_unavailable")
+            self._session = curl_requests.Session(impersonate="chrome110")
         except TypeError:
             self._session = requests.Session()
             adapter = HTTPAdapter(pool_connections=_PROVIDER_POOL_SIZE, pool_maxsize=_PROVIDER_POOL_SIZE)
@@ -50,14 +66,14 @@ class RyanairPublicProvider(FlightProvider):
 
         try:
             availability = self._fetch_availability(origin, destination, travel_date, timeout_ms=timeout_ms, currency=currency)
-        except (RequestsError, ValueError):
+        except (CurlRequestsError, RequestException, ValueError):
             availability = []
             availability_error = True
             warnings.append("ryanair_availability_failed_partial")
 
         try:
             fares = self._fetch_one_way_fares(origin, destination, travel_date, timeout_ms=timeout_ms, currency=currency)
-        except (RequestsError, ValueError):
+        except (CurlRequestsError, RequestException, ValueError):
             fares = []
             fares_error = True
             warnings.append("ryanair_fares_failed_partial")

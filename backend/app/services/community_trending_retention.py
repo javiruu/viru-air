@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from itertools import islice
 from typing import Iterator
 
 from sqlalchemy import delete, func, or_, select
+from sqlalchemy.engine import CursorResult, Row
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
@@ -20,6 +22,12 @@ COMMUNITY_TRENDING_RETENTION_MIN_DAYS = 30
 COMMUNITY_TRENDING_BUILDING_RETENTION_HOURS = 1
 # Keep DELETE/IN statements safely below SQLite's default parameter limit.
 COMMUNITY_TRENDING_SQL_BATCH_SIZE = 200
+
+
+def _rowcount(result: object) -> int:
+    if not isinstance(result, CursorResult):
+        raise RuntimeError("community_trending_delete_result_invalid")
+    return result.rowcount
 
 
 @dataclass(frozen=True, slots=True)
@@ -159,11 +167,11 @@ def run_community_trending_retention(
             batch_size=effective_batch_size,
         ):
             routes_deleted += _delete_routes_for_snapshots(session, batch)
-            deleted = session.execute(
+            deleted = _rowcount(session.execute(
                 delete(CommunityTrendingSnapshot).where(
                     CommunityTrendingSnapshot.id.in_(batch)
                 )
-            ).rowcount or 0
+            ))
             session.commit()
             if status == "published":
                 snapshots_deleted += deleted
@@ -306,12 +314,12 @@ def _iter_candidate_batches(
         ]
         if last_id is not None:
             conditions.append(CommunityTrendingSnapshot.id > last_id)
-        ids = session.scalars(
+        ids = list(session.scalars(
             select(CommunityTrendingSnapshot.id)
             .where(*conditions)
             .order_by(CommunityTrendingSnapshot.id)
             .limit(batch_size)
-        ).all()
+        ).all())
         if not ids:
             return
         yield ids
@@ -378,8 +386,11 @@ def _source_ids_for_route_keys(
     Filtering by route keys keeps retention from loading every historical route
     into Python, while the source-id set remains bounded by candidate routes.
     """
-    keys = [_parse_source_id(source_id) for source_id in source_ids]
-    keys = [key for key in keys if key is not None]
+    keys: list[tuple[date, str, str]] = []
+    for source_id in source_ids:
+        key = _parse_source_id(source_id)
+        if key is not None:
+            keys.append(key)
     retained: set[str] = set()
     for offset in range(0, len(keys), 200):
         chunk = keys[offset : offset + 200]
@@ -419,14 +430,14 @@ def _source_ids_for_route_keys(
     return retained
 
 
-def _source_ids_from_rows(rows: list[tuple[object, str, str]]) -> set[str]:
+def _source_ids_from_rows(rows: Sequence[Row[tuple[date, str, str]]]) -> set[str]:
     return {
         f"ct-{reporting_date:%Y%m%d}-{origin_iata}-{destination_iata}"
         for reporting_date, origin_iata, destination_iata in rows
     }
 
 
-def _parse_source_id(source_id: str) -> tuple[object, str, str] | None:
+def _parse_source_id(source_id: str) -> tuple[date, str, str] | None:
     if not source_id.startswith("ct-"):
         return None
     try:
@@ -455,12 +466,12 @@ def _count_community_states(session: Session, source_ids: set[str]) -> int:
 def _delete_community_states(session: Session, source_ids: set[str]) -> int:
     deleted = 0
     for chunk in _chunks(source_ids, 200):
-        deleted += session.execute(
+        deleted += _rowcount(session.execute(
             delete(UserNotificationState).where(
                 UserNotificationState.source_type == "community_trending",
                 UserNotificationState.source_id.in_(chunk),
             )
-        ).rowcount or 0
+        ))
     return deleted
 
 
@@ -471,8 +482,8 @@ def _chunks(values: set[str], size: int) -> Iterator[set[str]]:
 
 
 def _delete_routes_for_snapshots(session: Session, snapshot_ids: list[str]) -> int:
-    return session.execute(
+    return _rowcount(session.execute(
         delete(CommunityTrendingSnapshotRoute).where(
             CommunityTrendingSnapshotRoute.snapshot_id.in_(snapshot_ids)
         )
-    ).rowcount or 0
+    ))

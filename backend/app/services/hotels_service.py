@@ -10,7 +10,7 @@ from datetime import date as Date, datetime, time, timedelta
 from contextvars import copy_context
 from dataclasses import dataclass
 from threading import Lock
-from typing import Callable
+from typing import Callable, TypedDict, cast
 from uuid import uuid4
 
 from app.core.request_context import (
@@ -20,7 +20,8 @@ from app.core.request_context import (
     normalize_correlation_id,
 )
 
-from sqlalchemy import and_, asc, case, delete, desc, func, or_, select, update
+from sqlalchemy import Select, and_, asc, case, delete, desc, func, or_, select, update
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -33,7 +34,7 @@ from app.hotels.activation import (
 )
 from app.hotels.canonical_tracking import write_canonical_tracking_watch
 from app.i18n import t
-from app.hotels.contracts import ProviderRateRecord
+from app.hotels.contracts import HotelProviderAdapter, ProviderRateRecord
 from app.hotels.fault_profiles import HotelFaultProfileError
 from app.hotels.geo import HotelGeoService, HotelNearbySuggestion, haversine_km
 from app.hotels.normalization import HotelNormalizationService
@@ -121,6 +122,48 @@ class HotelObservationFreshnessInput:
 class HotelTrackedOfferCreation:
     offer: HotelTrackedOffer
     created: bool
+
+
+class HotelAreaResolveResult(TypedDict):
+    area_label: str
+    latitude: float
+    longitude: float
+    country_code: str
+    confidence: str
+    source: str
+
+
+class HotelAreaPriceInfo(TypedDict):
+    provider: str | None
+    amount: float | None
+    currency: str
+    price_semantics: str | None
+    amount_total: float | None
+    observed_at: datetime | None
+    snapshot_outcome: str | None
+    conditions_completeness: str | None
+
+
+class HotelAreaSearchResult(TypedDict):
+    hotel_id: str
+    canonical_name: str
+    city: str
+    country_code: str
+    stars: int | None
+    distance_km: float
+    lowest_price: float | None
+    displayed_price: float | None
+    currency: str
+    provider: str | None
+    price_semantics: str | None
+    amount_total: float | None
+    observed_at: datetime | None
+    snapshot_outcome: str | None
+    conditions_completeness: str | None
+    check_in: Date
+    check_out: Date
+    guests: int
+    has_tracking: bool
 
 
 def classify_hotel_observation_freshness(
@@ -958,8 +1001,8 @@ def sweep_tracked_offers(
     db: Session,
     *,
     provider_run_id: str,
-    provider_adapter: object | None = None,
-    outcome_sink: dict[str, int] | None = None,
+    provider_adapter: HotelProviderAdapter | None = None,
+    outcome_sink: dict[str, object] | None = None,
     latency_sink: Callable[[ProviderLatencySample], None] | None = None,
 ) -> dict[str, int]:
     """Sweep active tracked offers: create snapshots from matching rates and update current_price.
@@ -1022,8 +1065,12 @@ def sweep_tracked_offers(
         outcome_sink["warning_count"] = len(warnings)
         if code in {"hotel_ambiguous", "partial_batch"}:
             outcome_sink["needs_review"] = True
+    def _outcome_count(key: str) -> int:
+        value = (outcome_sink or {}).get(key, 0)
+        return value if isinstance(value, int) else 0
+
     outcome_baseline = {
-        key: (outcome_sink or {}).get(key, 0)
+        key: _outcome_count(key)
         for key in (
             "offers_scanned",
             "snapshots_created",
@@ -1056,7 +1103,9 @@ def sweep_tracked_offers(
         offers_scanned += 1
         _sync_outcomes()
 
-        if offer.check_in is None or offer.check_out is None:
+        stay_check_in = offer.check_in
+        stay_check_out = offer.check_out
+        if stay_check_in is None or stay_check_out is None:
             continue
 
         # Fetch targeted rates only after resolving the provider's external
@@ -1066,12 +1115,13 @@ def sweep_tracked_offers(
         # they must never fall back to a different provider's local history.
         provider_rates: list[ProviderRateRecord] = []
         external_provider_blocked = is_hotel_provider_external(offer.provider)
-        provider_id = getattr(provider_adapter, "provider_id", None)
+        provider_id = provider_adapter.provider_id if provider_adapter is not None else None
         provider_alias = None
         query_lease = None
-        adapter_profile = getattr(provider_adapter, "fault_profile", "")
+        adapter_profile = str(getattr(provider_adapter, "fault_profile", ""))
 
-        if provider_adapter is not None and hasattr(provider_adapter, "fetch_hotel_rates"):
+        if provider_adapter is not None:
+            adapter = provider_adapter
             if provider_id == offer.provider:
                 provider_aliases = list(
                     db.scalars(
@@ -1133,8 +1183,8 @@ def sweep_tracked_offers(
                         operation="revalidation",
                         canonical_hotel_id=offer.hotel_id,
                         provider_hotel_id=provider_alias.provider_hotel_id,
-                        check_in=offer.check_in,
-                        check_out=offer.check_out,
+                        check_in=stay_check_in,
+                        check_out=stay_check_out,
                         guests=offer.guests or 2,
                         currency=offer.currency or "EUR",
                         room_label=offer.room_label,
@@ -1169,10 +1219,10 @@ def sweep_tracked_offers(
                 _sync_outcomes()
                 try:
                     measurement = measure_provider_call(
-                        lambda: provider_adapter.fetch_hotel_rates(
+                        lambda: adapter.fetch_hotel_rates(
                             hotel_id=provider_alias.provider_hotel_id,
-                            check_in=offer.check_in,
-                            check_out=offer.check_out,
+                            check_in=stay_check_in,
+                            check_out=stay_check_out,
                             guests=offer.guests or 2,
                             currency=offer.currency or "EUR",
                         ),
@@ -1265,7 +1315,7 @@ def sweep_tracked_offers(
             # current price.
             best = min(eligible_provider_rates or provider_rates, key=lambda r: r.amount)
             rate_amount = best.amount
-            rate_provider = provider_adapter.provider_id if hasattr(provider_adapter, "provider_id") else "makcorps"
+            rate_provider = provider_adapter.provider_id if provider_adapter is not None else "makcorps"
             rate_room = best.room_label or offer.room_label
             rate_meal = best.meal_plan or offer.meal_plan
             rate_cancellation = best.cancellation_policy or offer.cancellation_policy
@@ -1391,7 +1441,12 @@ def sweep_tracked_offers(
         hotel = db.get(HotelProperty, offer.hotel_id)
         hotel_name = hotel.canonical_name if hotel else offer.hotel_id
 
-        if price_is_eligible and previous_price is not None and previous_price != new_price:
+        if (
+            price_is_eligible
+            and previous_snapshot is not None
+            and previous_price is not None
+            and previous_price != new_price
+        ):
             delta = new_price - previous_price
             pct = round((delta / previous_price) * 100, 1) if previous_price > 0 else 0.0
             direction = t("es", "hotels.direction.rose") if delta > 0 else t("es", "hotels.direction.dropped")
@@ -1675,9 +1730,10 @@ def evaluate_hotel_alerts(db: Session, *, provider_run_id: str) -> list[HotelAle
             continue
 
         legacy_condition_triggered = False
+        threshold_percent = rule.threshold_percent
         if rule.rule_type == "price_below":
             amounts_f = [float(r.amount) for r in rates]
-            avg = sum(amounts_f) / len(amounts_f) if rule.threshold_percent is not None and len(amounts_f) > 0 else None
+            avg = sum(amounts_f) / len(amounts_f) if threshold_percent is not None and amounts_f else None
             for rate in rates:
                 triggered = False
                 trigger_value = None
@@ -1685,7 +1741,7 @@ def evaluate_hotel_alerts(db: Session, *, provider_run_id: str) -> list[HotelAle
                 if rule.threshold_amount is not None and rate_f < float(rule.threshold_amount):
                     triggered = True
                     trigger_value = rate_f
-                if avg is not None and avg > 0 and ((avg - rate_f) / avg * 100) >= float(rule.threshold_percent):
+                if avg is not None and avg > 0 and threshold_percent is not None and ((avg - rate_f) / avg * 100) >= float(threshold_percent):
                     triggered = True
                     trigger_value = rate_f
                 if triggered:
@@ -1713,7 +1769,7 @@ def evaluate_hotel_alerts(db: Session, *, provider_run_id: str) -> list[HotelAle
 
         elif rule.rule_type == "price_above":
             amounts_f = [float(r.amount) for r in rates]
-            avg = sum(amounts_f) / len(amounts_f) if rule.threshold_percent is not None and len(amounts_f) > 0 else None
+            avg = sum(amounts_f) / len(amounts_f) if threshold_percent is not None and amounts_f else None
             for rate in rates:
                 triggered = False
                 trigger_value = None
@@ -1721,7 +1777,7 @@ def evaluate_hotel_alerts(db: Session, *, provider_run_id: str) -> list[HotelAle
                 if rule.threshold_amount is not None and rate_f > float(rule.threshold_amount):
                     triggered = True
                     trigger_value = rate_f
-                if avg is not None and avg > 0 and ((rate_f - avg) / avg * 100) >= float(rule.threshold_percent):
+                if avg is not None and avg > 0 and threshold_percent is not None and ((rate_f - avg) / avg * 100) >= float(threshold_percent):
                     triggered = True
                     trigger_value = rate_f
                 if triggered:
@@ -1786,14 +1842,14 @@ def evaluate_hotel_alerts(db: Session, *, provider_run_id: str) -> list[HotelAle
         if event.event_fingerprint is not None or event.rule_id is None:
             finalized_events.append(event)
             continue
-        rule = db.get(HotelAlertRule, event.rule_id)
-        if rule is None:
+        event_rule = db.get(HotelAlertRule, event.rule_id)
+        if event_rule is None:
             finalized_events.append(event)
             continue
         finalized_events.extend(
             _finalize_hotel_alert_candidates(
                 db,
-                rule=rule,
+                rule=event_rule,
                 candidates=[event],
                 latest=None,
                 baseline=None,
@@ -2221,8 +2277,8 @@ def get_hotel_alert_trace(
 
 def _validate_tracked_offer_context(
     *,
-    check_in: object | None,
-    check_out: object | None,
+    check_in: Date | None,
+    check_out: Date | None,
     guests: int | None,
 ) -> None:
     if (check_in is None) != (check_out is None):
@@ -2243,8 +2299,8 @@ def create_tracked_offer(
     latitude: float | None = None,
     longitude: float | None = None,
     radius_km: int | None = None,
-    check_in: object | None = None,
-    check_out: object | None = None,
+    check_in: Date | None = None,
+    check_out: Date | None = None,
     guests: int = 2,
     room_label: str | None = None,
     meal_plan: str | None = None,
@@ -2277,6 +2333,7 @@ def create_tracked_offer(
         if db.scalar(existing_stmt) is not None:
             raise ValueError("tracked_offer_already_exists")
 
+    current: float | None
     if initial_price is not None:
         current = current_price if current_price is not None else initial_price
     else:
@@ -2453,6 +2510,7 @@ def transition_tracked_offer_lifecycle(
             updated_at=changed_at,
         )
     )
+    assert isinstance(result, CursorResult)
     if result.rowcount != 1:
         db.rollback()
         raise ValueError("tracked_offer_state_conflict")
@@ -2489,7 +2547,9 @@ def transition_tracked_offer_lifecycle(
 
 
 def expire_due_tracked_offers(db: Session, *, today: Date | None = None) -> int:
-    lifecycle_today = today or utc_now_naive().date()
+    # Stay dates are entered and displayed as local calendar dates, so expiry
+    # must not lag by one local day while UTC is still on the previous date.
+    lifecycle_today = today or Date.today()
     due_offers = list(
         db.scalars(
             select(HotelTrackedOffer).where(
@@ -2788,9 +2848,9 @@ def update_tracked_offer(
     if changed_identity_fields:
         raise ValueError("tracked_offer_identity_immutable")
 
-    candidate_check_in = update_data.get("check_in", offer.check_in)
-    candidate_check_out = update_data.get("check_out", offer.check_out)
-    candidate_guests = update_data.get("guests", offer.guests)
+    candidate_check_in = cast(Date | None, update_data.get("check_in", offer.check_in))
+    candidate_check_out = cast(Date | None, update_data.get("check_out", offer.check_out))
+    candidate_guests = cast(int | None, update_data.get("guests", offer.guests))
     _validate_tracked_offer_context(
         check_in=candidate_check_in,
         check_out=candidate_check_out,
@@ -2847,7 +2907,7 @@ def area_resolve(
     db: Session,
     *,
     q: str,
-) -> dict[str, object]:
+) -> HotelAreaResolveResult:
     normalized = HotelNormalizationService.normalize_text(q)
 
     # Find hotels whose normalized_city contains the query
@@ -2867,30 +2927,39 @@ def area_resolve(
 
         geocode_result = geocode_city(q)
         if geocode_result is not None:
-            return geocode_result
+            return cast(HotelAreaResolveResult, geocode_result)
 
         raise ValueError("area_not_found")
 
     # Compute centroid
-    lats = [float(h.latitude) for h in hotels]
-    lngs = [float(h.longitude) for h in hotels]
-    countries = {h.country_code for h in hotels}
+    resolved_hotels: list[tuple[HotelProperty, float, float]] = []
+    for hotel in hotels:
+        hotel_latitude = hotel.latitude
+        hotel_longitude = hotel.longitude
+        if hotel_latitude is None or hotel_longitude is None:
+            continue
+        resolved_hotels.append((hotel, float(hotel_latitude), float(hotel_longitude)))
+    if not resolved_hotels:
+        raise ValueError("area_not_found")
+    lats = [latitude for _, latitude, _ in resolved_hotels]
+    lngs = [longitude for _, _, longitude in resolved_hotels]
+    countries = {hotel.country_code for hotel, _, _ in resolved_hotels}
 
     avg_lat = sum(lats) / len(lats)
     avg_lng = sum(lngs) / len(lngs)
 
     # Determine confidence based on city convergence
-    if len(hotels) >= 3:
+    if len(resolved_hotels) >= 3:
         confidence = "high"
-    elif len(hotels) == 1:
+    elif len(resolved_hotels) == 1:
         confidence = "low"
     else:
         confidence = "medium"
 
     # Build area label from the most common city
     city_counts: dict[str, int] = {}
-    for h in hotels:
-        city_counts[h.city] = city_counts.get(h.city, 0) + 1
+    for hotel, _, _ in resolved_hotels:
+        city_counts[hotel.city] = city_counts.get(hotel.city, 0) + 1
     best_city = max(city_counts, key=city_counts.get)  # type: ignore[arg-type]
 
     country_code = countries.pop() if len(countries) == 1 else "ES"
@@ -2911,8 +2980,8 @@ def area_search(
     latitude: float,
     longitude: float,
     radius_km: int,
-    check_in: object,
-    check_out: object,
+    check_in: Date,
+    check_out: Date,
     guests: int,
     currency: str,
     min_stars: int | None = None,
@@ -2922,7 +2991,7 @@ def area_search(
     use_provider: bool = False,
     latency_sink: Callable[[ProviderLatencySample], None] | None = None,
     provider_state: dict[str, str] | None = None,
-) -> list[dict[str, object]]:
+) -> list[HotelAreaSearchResult]:
     # Get all hotels with coordinates
     hotels = list(
         db.scalars(
@@ -2936,6 +3005,8 @@ def area_search(
     # Filter by radius and min_stars
     nearby: list[tuple[HotelProperty, float]] = []
     for hotel in hotels:
+        if hotel.latitude is None or hotel.longitude is None:
+            continue
         if min_stars is not None and (hotel.stars is None or hotel.stars < min_stars):
             continue
         distance = haversine_km(
@@ -2951,7 +3022,7 @@ def area_search(
     nearby_hotel_ids = [h.id for h, _ in nearby]
 
     # ── External provider rate fetching (Makcorps) ─────────────────
-    provider_price_map: dict[str, dict[str, object]] = {}
+    provider_price_map: dict[str, HotelAreaPriceInfo] = {}
     provider_unavailable_hotel_ids: set[str] = set()
     if use_provider:
         provider_id: str | None = None
@@ -3041,7 +3112,7 @@ def area_search(
         ).where(rates_subq.c.rn == 1)
     ).all()
 
-    price_map: dict[str, dict[str, object]] = {}
+    price_map: dict[str, HotelAreaPriceInfo] = {}
     for row in cheapest:
         price_map[row.hotel_id] = {
             "provider": row.provider,
@@ -3074,7 +3145,7 @@ def area_search(
         tracked_hotel_ids = set(tracked)
 
     # Build results
-    results: list[dict[str, object]] = []
+    results: list[HotelAreaSearchResult] = []
     for hotel, distance in nearby:
         price_info = price_map.get(hotel.id)
         if price_info:
@@ -3091,7 +3162,7 @@ def area_search(
                 if price_semantics == "total" and amount_total is not None
                 else amount
             )
-            if max_price is not None and displayed_price > max_price:
+            if max_price is not None and displayed_price is not None and displayed_price > max_price:
                 continue
         else:
             provider, amount, curr = None, None, currency
@@ -3208,13 +3279,13 @@ def list_tracked_offer_history_snapshots(
 def _fetch_and_store_provider_rates(
     *,
     db: Session,
-    adapter: object,
+    adapter: HotelProviderAdapter,
     nearby_hotel_ids: list[str],
-    check_in: object,
-    check_out: object,
+    check_in: Date,
+    check_out: Date,
     guests: int,
     currency: str,
-    provider_price_map: dict[str, dict[str, object]],
+    provider_price_map: dict[str, HotelAreaPriceInfo],
     provider_unavailable_hotel_ids: set[str] | None = None,
     latency_sink: Callable[[ProviderLatencySample], None] | None = None,
 ) -> str | None:
@@ -3224,7 +3295,7 @@ def _fetch_and_store_provider_rates(
     rates as HotelRateSnapshot rows and populates provider_price_map with
     the cheapest rate per hotel from the provider.
     """
-    provider_id: str = getattr(adapter, "provider_id", "makcorps")
+    provider_id = adapter.provider_id
     sample_lock = Lock()
 
     def _thread_safe_sink(sample: ProviderLatencySample) -> None:
@@ -3294,9 +3365,9 @@ def _fetch_and_store_provider_rates(
             _fail_pending_area_leases()
             raise
 
-    def _safe_existing_snapshots(statement: object) -> list[HotelRateSnapshot]:
+    def _safe_existing_snapshots(statement: Select[tuple[HotelRateSnapshot]]) -> list[HotelRateSnapshot]:
         try:
-            return list(db.scalars(statement))  # type: ignore[arg-type]
+            return list(db.scalars(statement))
         except Exception:
             _fail_pending_area_leases()
             raise
@@ -3398,7 +3469,7 @@ def _fetch_and_store_provider_rates(
                     guests=guests,
                     currency=currency,
                 ),
-                provider=getattr(adapter, "provider_id", "unknown"),
+                provider=adapter.provider_id,
                 operation="area_search",
                 classify_result=lambda value: ("empty" if not value else "success", None),
                 classify_exception=lambda _: ("failed", "provider_fetch_failed"),

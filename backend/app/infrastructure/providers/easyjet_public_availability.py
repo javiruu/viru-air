@@ -146,6 +146,8 @@ def _to_time(value: str) -> str | None:
 
 
 def _positive_float(value: JsonValue) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float, str)):
+        return None
     try:
         amount = float(value)
     except (TypeError, ValueError):

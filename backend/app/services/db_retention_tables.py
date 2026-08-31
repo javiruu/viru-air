@@ -9,6 +9,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
+from app.infrastructure.db.execution import affected_row_count
 
 SAFE_MIN_RETENTION_DAYS = {
     "price_snapshot_days": 30,
@@ -65,7 +66,7 @@ def prune_table(
         ids = session.scalars(select(plan.model.id).where(plan.ts_column < cutoff).limit(batch_size)).all()
         if not ids:
             break
-        deleted = session.execute(delete(plan.model).where(plan.model.id.in_(ids))).rowcount or 0
+        deleted = affected_row_count(session.execute(delete(plan.model).where(plan.model.id.in_(ids))))
         session.commit()
         total_deleted += deleted
         batches += 1

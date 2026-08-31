@@ -42,6 +42,15 @@ class BootWarmupCandidate:
     reasons: list[str]
 
 
+def _as_optional_float(value: object) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float, str, Decimal)):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def build_boot_warmup_candidate_report(
     db: Session,
     *,
@@ -285,13 +294,13 @@ def _build_candidate(
     volatility_report: dict[str, object],
     now: datetime,
 ) -> BootWarmupCandidate:
-    latest_price = float(latest_snapshot.raw_price) if latest_snapshot is not None else None
+    latest_price = _as_optional_float(latest_snapshot.raw_price) if latest_snapshot is not None else None
     latest_currency = latest_snapshot.raw_currency if latest_snapshot is not None else None
     latest_snapshot_age_seconds = _snapshot_age_seconds(latest_snapshot, now=now)
     departure_in_days = max(0, _days_until_departure(watch.travel_date_local, now=now))
     threshold_distance_ratio = _nearest_threshold_distance_ratio(alerts, latest_price)
     near_threshold = threshold_distance_ratio is not None and threshold_distance_ratio <= _WARMUP_THRESHOLD_NEAR_RATIO
-    volatility_score = float(volatility_report["volatility_score"]) if volatility_report.get("volatility_score") is not None else None
+    volatility_score = _as_optional_float(volatility_report.get("volatility_score"))
     volatility_status = str(volatility_report.get("status") or "insufficient_data")
 
     reasons: list[str] = []
@@ -303,7 +312,7 @@ def _build_candidate(
     if latest_snapshot is not None and latest_snapshot.is_stale:
         priority -= 120
         reasons.append("stale_snapshot")
-    if near_threshold:
+    if threshold_distance_ratio is not None and threshold_distance_ratio <= _WARMUP_THRESHOLD_NEAR_RATIO:
         closeness_bonus = int(round((_WARMUP_THRESHOLD_NEAR_RATIO - threshold_distance_ratio) * 100))
         priority -= 100 + max(0, closeness_bonus)
         reasons.append("near_alert_threshold")
@@ -358,9 +367,10 @@ def _nearest_threshold_distance_ratio(alerts: list[AlertRule], latest_price: flo
 
     candidate_ratios: list[float] = []
     for alert in alerts:
-        if alert.threshold_value in (None, Decimal("0")):
+        raw_threshold_value = alert.threshold_value
+        if raw_threshold_value is None or raw_threshold_value == Decimal("0"):
             continue
-        threshold_value = float(alert.threshold_value)
+        threshold_value = float(raw_threshold_value)
         if threshold_value <= 0:
             continue
         candidate_ratios.append(abs(latest_price - threshold_value) / threshold_value)

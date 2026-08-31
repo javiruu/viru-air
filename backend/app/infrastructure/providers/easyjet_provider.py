@@ -4,15 +4,11 @@ from collections.abc import Mapping
 import os
 import random
 import time
-from typing import Final
+from typing import Any, Final
 
-try:
-    from curl_cffi import requests
-    from curl_cffi.requests.errors import RequestsError
-except ImportError:
-    import requests
-    from requests.exceptions import RequestException as RequestsError
+import requests
 from requests.adapters import HTTPAdapter
+from requests.exceptions import RequestException
 
 from app.domain.entities import ProviderFetchResult, ProviderSourceFetchError, ProviderWarning
 from app.infrastructure.providers.base import FlightProvider
@@ -45,6 +41,20 @@ from app.infrastructure.providers._easyjet_provider_support import (
 )
 from app.infrastructure.providers._session_factory import build_session_kwargs
 
+curl_requests: Any | None
+CurlRequestsError: type[Exception]
+try:
+    from curl_cffi import requests as imported_curl_requests
+    from curl_cffi.requests.errors import RequestsError as imported_curl_requests_error
+except ImportError:
+    curl_requests = None
+    CurlRequestsError = RequestException
+else:
+    curl_requests = imported_curl_requests
+    CurlRequestsError = imported_curl_requests_error
+
+RequestsError = CurlRequestsError
+
 _DEFAULT_BASE_URL: Final = "https://www.easyjet.com"
 _DEFAULT_FLIGHT_CONNECTIONS_URL: Final = "https://flightconnections.easyjet.com"
 _DEFAULT_LANGUAGE_CODE: Final = "EN"
@@ -65,22 +75,27 @@ class EasyJetProvider(FlightProvider):
         language_code: str | None = None,
         impersonate: str | None = None,
     ) -> None:
-        self.base_url = (base_url or os.getenv("EASYJET_BASE_URL", _DEFAULT_BASE_URL)).strip().rstrip("/")
+        self.base_url = (base_url or os.getenv("EASYJET_BASE_URL") or _DEFAULT_BASE_URL).strip().rstrip("/")
         self.flight_connections_url = os.getenv(
-            "EASYJET_FLIGHT_CONNECTIONS_URL", _DEFAULT_FLIGHT_CONNECTIONS_URL
-        ).strip().rstrip("/")
+            "EASYJET_FLIGHT_CONNECTIONS_URL"
+        ) or _DEFAULT_FLIGHT_CONNECTIONS_URL
+        self.flight_connections_url = self.flight_connections_url.strip().rstrip("/")
         self.flight_connections_bypass_secret = (
             os.getenv("EASYJET_FLIGHT_CONNECTIONS_BYPASS_SECRET")
-            or os.getenv("DATADOME_BYPASS_SECRET", "")
+            or os.getenv("DATADOME_BYPASS_SECRET")
+            or ""
         ).strip()
         self.language_code = (
-            language_code or os.getenv("EASYJET_LANGUAGE_CODE", _DEFAULT_LANGUAGE_CODE)
+            language_code or os.getenv("EASYJET_LANGUAGE_CODE") or _DEFAULT_LANGUAGE_CODE
         ).strip().upper()
-        self.residency = os.getenv("EASYJET_RESIDENCY", _DEFAULT_RESIDENCY).strip().upper()
+        self.residency = (os.getenv("EASYJET_RESIDENCY") or _DEFAULT_RESIDENCY).strip().upper()
         impersonate_version = (
-            impersonate or os.getenv(_IMPERSONATE_ENV_VAR, _DEFAULT_IMPERSONATE)
+            impersonate or os.getenv(_IMPERSONATE_ENV_VAR) or _DEFAULT_IMPERSONATE
         ).strip() or _DEFAULT_IMPERSONATE
+        self._session: Any
         try:
+            if curl_requests is None:
+                raise TypeError("curl_cffi_unavailable")
             session_kwargs = build_session_kwargs(
                 impersonate_env=_IMPERSONATE_ENV_VAR,
                 extra_fp_env="EASYJET_EXTRA_FP",
@@ -88,7 +103,7 @@ class EasyJetProvider(FlightProvider):
                 ja3_env="EASYJET_JA3",
             )
             session_kwargs["impersonate"] = impersonate_version
-            self._session = requests.Session(**session_kwargs)
+            self._session = curl_requests.Session(**session_kwargs)
         except TypeError:
             # stdlib ``requests`` (test doubles / curl_cffi import failure):
             # drop curl_cffi-only kwargs and fall back to a vanilla pool.
@@ -123,7 +138,7 @@ class EasyJetProvider(FlightProvider):
             # produced. The flight connections fallback would just hit the
             # same WAF on the same IP, so don't fall through.
             raise
-        except (RequestsError, ValueError) as exc:
+        except (CurlRequestsError, RequestException, ValueError) as exc:
             source_error = exc
             flights = []
 
@@ -147,7 +162,7 @@ class EasyJetProvider(FlightProvider):
                 ):
                     raise
                 source_error = exc
-            except (RequestsError, ValueError) as exc:
+            except (CurlRequestsError, RequestException, ValueError) as exc:
                 source_error = exc
 
         if source_error is not None and not flights:

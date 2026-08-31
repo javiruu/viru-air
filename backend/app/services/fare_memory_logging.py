@@ -70,7 +70,8 @@ def log_fare_memory_watchlist_backfill_applied(
 
 
 def log_fare_memory_retention_pruned(payload: dict[str, Any]) -> None:
-    totals = payload.get("totals") if isinstance(payload.get("totals"), dict) else {}
+    raw_totals = payload.get("totals")
+    totals = raw_totals if isinstance(raw_totals, dict) else {}
     _emit(
         "fare_memory_retention_pruned",
         dry_run=bool(payload.get("dry_run")),

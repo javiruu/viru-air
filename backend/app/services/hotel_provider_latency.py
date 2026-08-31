@@ -129,7 +129,7 @@ def measure_provider_call(
     except Exception as exc:
         finished = clock()
         try:
-            outcome, error_code = (
+            outcome, failure_error_code = (
                 classify_exception(exc)
                 if classify_exception is not None
                 else _classify_exception(exc)
@@ -137,8 +137,8 @@ def measure_provider_call(
         except Exception:
             # A classifier is local instrumentation code; never let it expose
             # raw exception data or hide the terminal provider failure.
-            outcome, error_code = "failed", "provider_error"
-        measurement = ProviderCallMeasurement(
+            outcome, failure_error_code = "failed", "provider_error"
+        measurement: ProviderCallMeasurement[T] = ProviderCallMeasurement(
             value=None,
             sample=ProviderLatencySample(
                 provider=_normalize_dimension(provider, PROVIDER_NAMES),
@@ -146,7 +146,7 @@ def measure_provider_call(
                 outcome=_normalize_outcome(outcome),
                 duration_ms=_duration_ms(started, finished, max_duration_ms),
                 attempt=attempt,
-                error_code=_normalize_error_code(error_code),
+                error_code=_normalize_error_code(failure_error_code),
             ),
             raised=True,
         )
@@ -301,9 +301,10 @@ def persist_hotel_provider_latency_aggregates(
             "updated_at": utc_now_naive(),
         }
         if dialect_name == "postgresql":
-            stmt = postgresql_insert(HotelProviderLatencyAggregate).values(**values)
-            excluded = stmt.excluded
-            stmt = stmt.on_conflict_do_update(
+            postgresql_stmt = postgresql_insert(HotelProviderLatencyAggregate).values(**values)
+            excluded = postgresql_stmt.excluded
+            db.execute(
+                postgresql_stmt.on_conflict_do_update(
                 constraint="uq_hotel_provider_latency_aggregate_key",
                 set_={
                     "sample_count": excluded.sample_count,
@@ -312,11 +313,13 @@ def persist_hotel_provider_latency_aggregates(
                     "max_duration_ms": excluded.max_duration_ms,
                     "updated_at": utc_now_naive(),
                 },
+                )
             )
         elif dialect_name == "sqlite":
-            stmt = sqlite_insert(HotelProviderLatencyAggregate).values(**values)
-            excluded = stmt.excluded
-            stmt = stmt.on_conflict_do_update(
+            sqlite_stmt = sqlite_insert(HotelProviderLatencyAggregate).values(**values)
+            excluded = sqlite_stmt.excluded
+            db.execute(
+                sqlite_stmt.on_conflict_do_update(
                 index_elements=["provider_run_id", "provider", "operation", "outcome", "error_code"],
                 set_={
                     "sample_count": excluded.sample_count,
@@ -325,10 +328,10 @@ def persist_hotel_provider_latency_aggregates(
                     "max_duration_ms": excluded.max_duration_ms,
                     "updated_at": utc_now_naive(),
                 },
+                )
             )
         else:
             raise RuntimeError("hotel_provider_latency_aggregate_unsupported_dialect")
-        db.execute(stmt)
     return len(aggregates)
 
 

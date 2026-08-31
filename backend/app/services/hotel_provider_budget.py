@@ -6,10 +6,17 @@ from dataclasses import dataclass
 from uuid import uuid4
 
 from sqlalchemy import select, update
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.infrastructure.db.models import HotelProviderBudget, HotelProviderBudgetReservation
+
+
+def _rowcount(result: object) -> int:
+    if not isinstance(result, CursorResult):
+        raise RuntimeError("hotel_budget_update_result_invalid")
+    return result.rowcount
 
 
 @dataclass(frozen=True, slots=True)
@@ -83,7 +90,7 @@ class HotelProviderBudgetLedger:
             )
         )
         self._db.flush()
-        if result.rowcount != 1:
+        if _rowcount(result) != 1:
             return _denied(policy, window_key)
         reservation_id = str(uuid4())
         self._db.add(
@@ -158,7 +165,7 @@ class HotelProviderBudgetLedger:
                     )
                     .values(status=status, updated_at=now)
                 )
-                if result.rowcount != 1:
+                if _rowcount(result) != 1:
                     raise RuntimeError("hotel_budget_reservation_transition_failed")
                 values = {
                     "units_reserved": HotelProviderBudget.units_reserved - reservation.units_reserved,
@@ -176,7 +183,7 @@ class HotelProviderBudgetLedger:
                     )
                     .values(**values)
                 )
-                if budget_result.rowcount != 1:
+                if _rowcount(budget_result) != 1:
                     raise RuntimeError("hotel_budget_transition_failed")
                 self._db.flush()
         except RuntimeError:

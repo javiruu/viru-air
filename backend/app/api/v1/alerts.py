@@ -27,13 +27,13 @@ from app.services.notification_service import dispatch_pending_events
 router = APIRouter()
 
 
-@router.post("/rules")
+@router.post("/rules", response_model=None)
 def add_rule(
     payload: AlertRuleIn,
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> dict:
+) -> dict | JSONResponse:
     req_hash = request_hash(payload.model_dump(mode="json"))
     endpoint = "POST:/api/v1/alerts/rules"
     replay = replay_if_exists(

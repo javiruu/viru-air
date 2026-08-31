@@ -349,7 +349,7 @@ def product_health(db: Session = Depends(get_db), _: User = Depends(require_admi
             "frequent": [
                 {
                     "message": row.message,
-                    "count": int(row.count),
+                    "count": int(row._mapping["count"]),
                     "last_seen": row.last_seen.isoformat() if row.last_seen else None,
                 }
                 for row in frequent_errors

@@ -59,7 +59,7 @@ def list_events(
     )
     if watch_id:
         query = query.where(AlertRule.watch_id == watch_id)
-    return list(db.execute(query).all())
+    return list(db.execute(query).tuples().all())
 
 
 def _latest_snapshots(db: Session, watch_id: str, limit: int = 2) -> list[PriceSnapshot]:
@@ -238,17 +238,22 @@ def evaluate_rules_for_watch(
 
         trigger = False
         message = ""
-        previous_price = float(previous.raw_price) if previous else None
+        previous_price = (
+            float(previous.raw_price)
+            if previous is not None and previous.raw_price is not None
+            else None
+        )
         latest_price = float(latest.raw_price)
 
-        if rule.min_change_pct is not None and previous_price not in (None, 0):
+        min_change_pct = rule.min_change_pct
+        if min_change_pct is not None and previous_price is not None and previous_price != 0:
             delta_pct = abs((latest_price - previous_price) / previous_price) * 100.0
-            if delta_pct < float(rule.min_change_pct):
+            if delta_pct < float(min_change_pct):
                 continue
 
         if rule.rule_type == "threshold_low" and rule.threshold_value is not None:
             if latest_price <= float(rule.threshold_value) and (
-                not previous or previous_price > float(rule.threshold_value)
+                previous_price is None or previous_price > float(rule.threshold_value)
             ):
                 trigger = True
                 message = (
@@ -257,14 +262,18 @@ def evaluate_rules_for_watch(
                 )
         elif rule.rule_type == "threshold_high" and rule.threshold_value is not None:
             if latest_price >= float(rule.threshold_value) and (
-                not previous or previous_price < float(rule.threshold_value)
+                previous_price is None or previous_price < float(rule.threshold_value)
             ):
                 trigger = True
                 message = (
                     f"Precio alto: {latest_price:.2f} {latest.raw_currency} "
                     f"(umbral {float(rule.threshold_value):.2f})."
                 )
-        elif rule.rule_type == "every_change" and previous and previous_price != latest_price:
+        elif (
+            rule.rule_type == "every_change"
+            and previous_price is not None
+            and previous_price != latest_price
+        ):
             delta = latest_price - previous_price
             trigger = True
             message = (

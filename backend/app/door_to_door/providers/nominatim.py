@@ -9,7 +9,7 @@ from typing import Any, Sequence
 
 import requests
 
-from app.door_to_door.schemas import DoorToDoorSuggestionOut
+from app.door_to_door.schemas import DoorToDoorLocationType, DoorToDoorSuggestionOut
 
 logger = logging.getLogger("app.door_to_door.nominatim")
 
@@ -77,14 +77,15 @@ class NominatimSuggestionsProvider:
 
     def _fetch_suggestions(self, query: str, limit: int) -> list[DoorToDoorSuggestionOut]:
         try:
+            params: dict[str, str | int] = {
+                "q": query,
+                "format": "jsonv2",
+                "addressdetails": 1,
+                "limit": max(limit * 2, 8),
+            }
             response = requests.get(
                 self.base_url,
-                params={
-                    "q": query,
-                    "format": "jsonv2",
-                    "addressdetails": 1,
-                    "limit": max(limit * 2, 8),
-                },
+                params=params,
                 headers={
                     "User-Agent": self.user_agent,
                     "Accept-Language": "es,en",
@@ -125,7 +126,8 @@ class NominatimSuggestionsProvider:
         if not label:
             return None
 
-        address = raw.get("address") if isinstance(raw.get("address"), dict) else {}
+        raw_address = raw.get("address")
+        address: dict[str, Any] = raw_address if isinstance(raw_address, dict) else {}
         city = str(address.get("city") or address.get("town") or address.get("village") or "").strip()
         country = str(address.get("country") or "").strip()
         subtitle_parts = [part for part in [city, country] if part]
@@ -133,7 +135,7 @@ class NominatimSuggestionsProvider:
 
         place_class = str(raw.get("class") or "").lower()
         osm_type = str(raw.get("type") or "").lower()
-        location_type = "address"
+        location_type: DoorToDoorLocationType = "address"
         if place_class in {"aeroway"} or "airport" in osm_type:
             location_type = "airport"
         elif place_class in {"railway", "public_transport"} or osm_type in {"station", "halt"}:
@@ -146,7 +148,7 @@ class NominatimSuggestionsProvider:
         place_id = str(raw.get("place_id") or raw.get("osm_id") or f"nominatim_{index}")
         return DoorToDoorSuggestionOut(
             id=f"nominatim_{place_id}",
-            type=location_type,  # type: ignore[arg-type]
+            type=location_type,
             label=label[:180],
             subtitle=subtitle[:180],
             source_type="open_data",
@@ -161,7 +163,7 @@ class NominatimSuggestionsProvider:
 
     @staticmethod
     def _parse_float(value: object) -> float | None:
-        if value is None:
+        if not isinstance(value, (str, int, float)) or isinstance(value, bool):
             return None
         try:
             return float(value)

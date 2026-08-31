@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from typing import Literal, Protocol
+from typing import Literal, Protocol, cast
 
 from app.infrastructure.redis_client import get_redis
 
@@ -67,7 +67,10 @@ def release_redis_provider_lock(
 
 
 def _resolve_client(redis_client: RedisLockClient | None) -> RedisLockClient | None:
-    return redis_client if redis_client is not None else get_redis()
+    if redis_client is not None:
+        return redis_client
+    client = get_redis()
+    return cast(RedisLockClient, client) if client is not None else None
 
 
 def _redis_lock_key(lock_key: str) -> str:

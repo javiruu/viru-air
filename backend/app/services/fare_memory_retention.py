@@ -13,6 +13,7 @@ from app.infrastructure.db.models import (
     QuickSearchCacheEntry,
     QuickSearchNegativeCacheEntry,
 )
+from app.infrastructure.db.execution import affected_row_count
 from app.services.fare_memory_logging import log_fare_memory_retention_pruned
 
 
@@ -187,7 +188,7 @@ def _delete_entries(
         ids = session.scalars(candidate_stmt.limit(options.batch_size)).all()
         if not ids:
             break
-        total_deleted += session.execute(delete(model).where(model.id.in_(ids))).rowcount or 0
+        total_deleted += affected_row_count(session.execute(delete(model).where(model.id.in_(ids))))
         session.commit()
         batches += 1
     return total_deleted, batches

@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
+from app.infrastructure.db.execution import affected_row_count
 from app.infrastructure.db.models import QuickSearchProviderLock
 from app.services.quick_search_execution import build_cache_source_hash
 from app.services.quick_search_redis_lock import (
@@ -106,7 +107,7 @@ def acquire_quick_search_provider_lock(
             updated_at=reference_now,
         )
     )
-    if taken_over.rowcount != 1:
+    if affected_row_count(taken_over) != 1:
         db.rollback()
         return None
     db.commit()
@@ -125,7 +126,7 @@ def release_quick_search_provider_lock(
     released = db.execute(
         delete(QuickSearchProviderLock).where(QuickSearchProviderLock.lock_token == lock_token)
     )
-    if released.rowcount != 1:
+    if affected_row_count(released) != 1:
         db.rollback()
         return False
     db.commit()
