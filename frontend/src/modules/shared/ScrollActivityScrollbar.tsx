@@ -13,6 +13,9 @@ export default function ScrollActivityScrollbar() {
   useEffect(() => {
     let timeoutId: number | null = null;
     let wheelTimeoutId: number | null = null;
+    let pointerFrameId: number | null = null;
+    let latestPointerX = 0;
+    let isNearScrollbar = false;
 
     const showScrollbar = () => {
       document.documentElement.classList.add(SCROLLING_CLASS);
@@ -37,11 +40,23 @@ export default function ScrollActivityScrollbar() {
     };
 
     const handlePointerMove = (event: MouseEvent) => {
-      const nearScrollbar = window.innerWidth - event.clientX <= PROXIMITY_PX;
-      document.documentElement.classList.toggle(SCROLLBAR_PROXIMITY_CLASS, nearScrollbar);
+      latestPointerX = event.clientX;
+      if (pointerFrameId !== null) return;
+      pointerFrameId = window.requestAnimationFrame(() => {
+        pointerFrameId = null;
+        const nextIsNearScrollbar = window.innerWidth - latestPointerX <= PROXIMITY_PX;
+        if (nextIsNearScrollbar === isNearScrollbar) return;
+        isNearScrollbar = nextIsNearScrollbar;
+        document.documentElement.classList.toggle(SCROLLBAR_PROXIMITY_CLASS, isNearScrollbar);
+      });
     };
 
     const handlePointerLeave = () => {
+      if (pointerFrameId !== null) {
+        window.cancelAnimationFrame(pointerFrameId);
+        pointerFrameId = null;
+      }
+      isNearScrollbar = false;
       document.documentElement.classList.remove(SCROLLBAR_PROXIMITY_CLASS);
     };
 
@@ -59,6 +74,9 @@ export default function ScrollActivityScrollbar() {
       }
       if (wheelTimeoutId !== null) {
         window.clearTimeout(wheelTimeoutId);
+      }
+      if (pointerFrameId !== null) {
+        window.cancelAnimationFrame(pointerFrameId);
       }
       document.documentElement.classList.remove(SCROLLING_CLASS);
       document.documentElement.classList.remove(SCROLLBAR_PROXIMITY_CLASS);

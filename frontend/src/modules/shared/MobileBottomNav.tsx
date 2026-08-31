@@ -39,6 +39,7 @@ export default function MobileBottomNav({ unreadSignals = 0 }: { unreadSignals?:
           <Link
             key={item.href}
             href={item.href}
+            prefetch={false}
             className={`mobile-bottom-nav-link${active ? " is-active" : ""}`}
             aria-current={active ? "page" : undefined}
           >

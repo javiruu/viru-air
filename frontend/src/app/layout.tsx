@@ -1,7 +1,6 @@
 import "../styles/globals.css";
 import "../styles/signals.css";
 import "../styles/community-routes.css";
-import "maplibre-gl/dist/maplibre-gl.css";
 import type { Metadata } from "next";
 import Script from "next/script";
 import { MotionConfig } from "framer-motion";
