@@ -128,6 +128,15 @@ export function SmartWatchListPanel({
     () => (calendarSelectorDay ? calendarSelectorFlightsByDay.get(calendarSelectorDay) ?? [] : []),
     [calendarSelectorDay, calendarSelectorFlightsByDay],
   );
+  const lastUpdatedGlobal = useMemo(
+    () =>
+      items.reduce<string | null>((latest, watch) => {
+        const capturedAt = watchMeta.get(watch.id)?.latest?.capturedAt;
+        if (!capturedAt || (latest && latest >= capturedAt)) return latest;
+        return capturedAt;
+      }, null),
+    [items, watchMeta],
+  );
   const showListMode = !isCalendarSelectorOpen;
   const totalPages = Math.max(1, Math.ceil(smartListItems.length / WATCHLIST_PAGE_SIZE));
   const boundedPage = Math.min(currentPage, totalPages);
@@ -160,6 +169,13 @@ export function SmartWatchListPanel({
       <div className="panel-header watch-smart-panel-header">
         <div className="watch-smart-header-copy">
           <h2 className="panel-title">{t("watchlist.smartList.heading")}</h2>
+          {lastUpdatedGlobal ? (
+            <p className="muted tabular-nums">
+              {t("watchlist.lastUpdateInline", {
+                value: safeDateTime(lastUpdatedGlobal, localeTag),
+              })}
+            </p>
+          ) : null}
         </div>
         <div className="watch-smart-tools" aria-label={t("watchlist.smartList.routeToolsAria")}>
           <div className="watch-smart-tool-group watch-smart-tool-group--route-tools">

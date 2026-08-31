@@ -80,9 +80,8 @@ test("hotel observability bars remain bounded and the page exposes semantic tabl
   assert.equal(getHotelMetricBarWidth(100, 0), 0);
 
   const source = fs.readFileSync(PAGE, "utf8");
-  assert.match(source, /<table className="hotel-observability-table">/);
+  assert.match(source, /<table className="hotel-observability-table" aria-busy=\{loading\}>/);
   assert.match(source, /role="alert"/);
-  assert.match(source, /aria-busy="true"/);
   assert.match(source, /admin\.hotelObservability\.footnote/);
   assert.match(source, /requestVersion/);
   assert.match(source, /mounted\.current/);
