@@ -26552,14 +26552,6 @@ textarea::placeholder {
   border-left: 1px solid color-mix(in srgb, var(--watch-ticket-orange) 35%, transparent);
 }
 
-.watch-ticket-trend small {
-  overflow: hidden;
-  color: color-mix(in srgb, var(--watch-ticket-ink) 74%, transparent);
-  font-size: clamp(0.58rem, 1.45cqw, 1.18rem);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .watch-ticket-actions {
   display: flex;
   flex-wrap: wrap;
@@ -26867,10 +26859,6 @@ textarea::placeholder {
     text-overflow: ellipsis;
   }
 
-  .watch-ticket-trend small {
-    font-size: clamp(0.5rem, 1.45cqw, 0.72rem);
-  }
-
   .watch-ticket-actions {
     gap: 0.46rem;
     padding: 0 4.5%;
@@ -26948,10 +26936,6 @@ textarea::placeholder {
   .watch-ticket-trend > strong,
   .watch-ticket-trend b {
     font-size: 0.57rem;
-  }
-
-  .watch-ticket-trend small {
-    font-size: 0.42rem;
   }
 
   .watch-ticket-actions {
