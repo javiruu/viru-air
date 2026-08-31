@@ -444,7 +444,7 @@ export default function HotelObservabilityPage() {
               </div>
             ) : (
               <div className="hotel-observability-table-wrap">
-                <table className="hotel-observability-table">
+                <table className="hotel-observability-table" aria-busy={loading}>
                   <caption className="sr-only">{t("admin.hotelObservability.tableCaption")}</caption>
                   <thead>
                     <tr>

@@ -21,6 +21,10 @@ type FooterGroup = {
   links: FooterLink[];
 };
 
+// Keep the server and the first client render deterministic. Update this at the
+// start of a new calendar year instead of reading the clock during hydration.
+const COPYRIGHT_YEAR = 2026;
+
 /* ── Inline SVG icons (no FontAwesome CDN dependency) ── */
 
 const ICONS: Record<string, string> = {
@@ -310,7 +314,7 @@ export default function ViruFooterBlock({ variant = "default" }: ViruFooterBlock
         </div>
 
         <div className="viru-footer-bottom">
-          <p>{t("shared.footer.copyright", { year: new Date().getFullYear() })}</p>
+          <p>{t("shared.footer.copyright", { year: COPYRIGHT_YEAR })}</p>
           <p>{t("shared.footer.note")}</p>
         </div>
       </div>

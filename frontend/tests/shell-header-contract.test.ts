@@ -196,6 +196,13 @@ test("shared brand surfaces compose the reusable Viru mark instead of the remove
   );
 });
 
+test("shared footer keeps its first server and client render free of clock reads", () => {
+  const footer = read("src/modules/shared/ViruFooterBlock.tsx");
+
+  assert.match(footer, /const COPYRIGHT_YEAR = 2026;/);
+  assert.doesNotMatch(footer, /new Date\(\)\.getFullYear\(\)/);
+});
+
 test("private navigation is a persistent lateral workspace rail", () => {
   const layout = read("src/app/(private)/layout.tsx");
   const nav = read("src/modules/shared/PrivateNav.tsx");
