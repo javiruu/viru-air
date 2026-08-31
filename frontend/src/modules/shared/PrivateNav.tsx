@@ -90,7 +90,13 @@ export default function PrivateNav({ unreadSignals = 0 }: { unreadSignals?: numb
         className={`private-nav${menuOpen ? " open" : ""}`}
         aria-label={t("shared.a11y.mainNavigation")}
       >
-        <Link href="/dashboard" className="private-nav-brand" aria-label="Viru Air, ir al panel" onClick={() => closeMenu(false)}>
+        <Link
+          href="/dashboard"
+          prefetch={false}
+          className="private-nav-brand"
+          aria-label="Viru Air, ir al panel"
+          onClick={() => closeMenu(false)}
+        >
           <ViruWordmark />
         </Link>
         <div className="private-nav-links">
@@ -101,6 +107,7 @@ export default function PrivateNav({ unreadSignals = 0 }: { unreadSignals?: numb
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={false}
                 className={`private-nav-link${active ? " is-active" : ""}`}
                 aria-current={active ? "page" : undefined}
                 aria-label={
