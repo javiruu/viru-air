@@ -1,4 +1,6 @@
 ﻿from passlib.context import CryptContext
+from typing import TypedDict
+
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
@@ -7,7 +9,14 @@ from app.infrastructure.db.session import SessionLocal
 
 pwd = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
-DEFAULT_USERS = [
+class SeedUser(TypedDict):
+    email: str
+    password: str
+    is_admin: bool
+    is_verified: bool
+
+
+DEFAULT_USERS: list[SeedUser] = [
     {
         "email": "user@viru.local",
         "password": "ViruUser123",
@@ -24,7 +33,7 @@ DEFAULT_USERS = [
 
 
 def _ensure_admin_column(db: Session) -> None:
-    inspector = inspect(db.bind)
+    inspector = inspect(db.get_bind())
     columns = {col["name"] for col in inspector.get_columns("users")}
     if "is_admin" not in columns:
         db.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT 0"))
@@ -32,7 +41,7 @@ def _ensure_admin_column(db: Session) -> None:
 
 
 def _ensure_snapshot_time_column(db: Session) -> None:
-    inspector = inspect(db.bind)
+    inspector = inspect(db.get_bind())
     if "price_snapshot" not in inspector.get_table_names():
         return
     columns = {col["name"] for col in inspector.get_columns("price_snapshot")}

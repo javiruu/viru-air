@@ -197,8 +197,8 @@ def calendar(
     day_min_values: list[float] = []
     day_max_values: list[float] = []
     day_stats: list[dict[str, str | float | int | bool | None]] = []
-    for day in sorted(by_day.keys()):
-        snapshots = by_day[day]
+    for day_value in sorted(by_day.keys()):
+        snapshots = by_day[day_value]
         prices = [float(item.raw_price) for item in snapshots]
         min_price = min(prices)
         max_price = max(prices)
@@ -215,7 +215,7 @@ def calendar(
             freshness_state = "mixed"
         day_stats.append(
             {
-                "date": day.isoformat(),
+                "date": day_value.isoformat(),
                 "min_price": min_price,
                 "max_price": max_price,
                 "avg_price": avg_price,
@@ -228,9 +228,9 @@ def calendar(
 
     overall_day_min = min(day_min_values)
     overall_day_max = max(day_max_values)
-    for day in day_stats:
-        day["is_daily_min"] = day["min_price"] == overall_day_min
-        day["is_daily_max"] = day["max_price"] == overall_day_max
+    for day_stat in day_stats:
+        day_stat["is_daily_min"] = day_stat["min_price"] == overall_day_min
+        day_stat["is_daily_max"] = day_stat["max_price"] == overall_day_max
 
     return {"watch_id": watch_id, "currency": canonical_rows[-1].raw_currency, "days": day_stats}
 
@@ -256,7 +256,7 @@ def compare(
     to: Date | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> dict[str, str | list[dict[str, str | float | int | None | list[dict[str, str | float | int]]]]]:
+) -> dict[str, object]:
     requested_ids = [item.strip() for item in watch_ids.split(",") if item.strip()]
     unique_ids = list(dict.fromkeys(requested_ids))
     if len(unique_ids) < 2:

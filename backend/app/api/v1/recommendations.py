@@ -10,7 +10,7 @@ from fastapi import APIRouter, Body, HTTPException
 from app.core.errors import ApiError, message_for_code
 
 from app.domain.entities import ProviderFetchResult
-from app.domain.schemas import RecommendationRequest, RecommendationResponse
+from app.domain.schemas import RecommendationAiMeta, RecommendationRequest, RecommendationResponse
 from app.infrastructure.airports_catalog import expand_airports, get_airport
 from app.infrastructure.providers.flight_provider import MultiSourceFlightProvider
 
@@ -87,10 +87,8 @@ def _matches_time_window(
         return False
     after_minutes = _time_to_minutes(after_value)
     before_minutes = _time_to_minutes(before_value)
-    if after_minutes is None and before_minutes is None:
-        return True
     if after_minutes is None:
-        return dep_minutes <= before_minutes
+        return before_minutes is None or dep_minutes <= before_minutes
     if before_minutes is None:
         return dep_minutes >= after_minutes
     if after_minutes <= before_minutes:
@@ -127,7 +125,7 @@ def _fetch_weather(iata: str, date_value: dt.date) -> dict[str, Any] | None:
     airport = get_airport(iata)
     if not airport:
         return None
-    params = {
+    params: dict[str, str | float] = {
         "latitude": airport.latitude,
         "longitude": airport.longitude,
         "timezone": "auto",
@@ -252,8 +250,8 @@ def _call_ai(candidates: list[dict[str, Any]], locale: str, weights: dict[str, f
     try:
         resp = requests.post(
             OPENAI_ENDPOINT,
-            headers={"Authorization": f"Bearer {api_key}"},
-            json=payload,
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            data=json.dumps(payload, ensure_ascii=False),
             timeout=20,
         )
         resp.raise_for_status()
@@ -307,8 +305,13 @@ def _build_candidates(
                 try:
                     provider_result = provider.get_flights(origin_code, destination_code, str(date_value))
                 except Exception:
-                    provider_result = []
-                flights = provider_result.flights if isinstance(provider_result, ProviderFetchResult) else provider_result
+                    flights: list[Any] = []
+                else:
+                    flights = list(
+                        provider_result.flights
+                        if isinstance(provider_result, ProviderFetchResult)
+                        else provider_result
+                    )
                 for flight in flights:
                     flights_by_date.append((date_value, flight))
             pairs.append((origin_code, destination_code, flights_by_date))
@@ -511,16 +514,16 @@ def recommendations(
             "weights": weights,
         },
         items=enriched_sorted,
-        ai={
-            "used": bool(ai_result),
-            "model": OPENAI_MODEL if ai_result else None,
-            "error": ai_error,
-            "reasoning_mode": "ai" if ai_result else "heuristic",
-            "summary": (
+        ai=RecommendationAiMeta(
+            used=bool(ai_result),
+            model=OPENAI_MODEL if ai_result else None,
+            error=ai_error,
+            reasoning_mode="ai" if ai_result else "heuristic",
+            summary=(
                 "Ranking based on AI model signals."
                 if ai_result
                 else "Using heuristic ranking based on price, trend, speed, and climate."
             ),
-            "active_signals": ["price", "trend", "speed", "climate", "novelty"],
-        },
+            active_signals=["price", "trend", "speed", "climate", "novelty"],
+        ),
     )

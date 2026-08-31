@@ -24,8 +24,10 @@ class HarvestedCookie:
         value = entry.get("value")
         if not (isinstance(name, str) and isinstance(value, str) and name and value):
             return None
-        domain = entry.get("domain") or ""
-        path = entry.get("path") or "/"
+        raw_domain = entry.get("domain")
+        raw_path = entry.get("path")
+        domain = raw_domain if isinstance(raw_domain, str) else ""
+        path = raw_path if isinstance(raw_path, str) and raw_path else "/"
         secure = bool(entry.get("secure", True))
         raw_expires = entry.get("expires")
         expires: int | None = None

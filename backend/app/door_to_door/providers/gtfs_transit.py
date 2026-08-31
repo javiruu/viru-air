@@ -28,6 +28,7 @@ from app.door_to_door.domain.models import ProviderHealth
 from app.door_to_door.domain.scoring import score_itinerary
 from app.door_to_door.providers.base import DoorToDoorProvider, DoorToDoorProviderQuery
 from app.door_to_door.schemas import (
+    DoorToDoorConfidence,
     DoorToDoorLegOut,
     DoorToDoorMode,
     DoorToDoorOptionOut,
@@ -37,6 +38,7 @@ from app.door_to_door.schemas import (
 from app.door_to_door.services.gtfs_feed_service import (
     GtfsFeedService,
     GtfsTransitLeg,
+    ParsedGtfsFeed,
     load_feed_descriptors,
 )
 
@@ -385,7 +387,7 @@ class GtfsTransitProvider(DoorToDoorProvider):
         flight = query.flight
         checked_at = query.checked_at
 
-        confidence = "cached" if option_idx > 0 else "live"
+        confidence: DoorToDoorConfidence = "cached" if option_idx > 0 else "live"
         sources: list[DoorToDoorSourceOut] = []
 
         if outbound:
@@ -611,7 +613,7 @@ def _airport_search_terms(iata: str) -> list[str]:
     return terms
 
 
-def _find_stops_by_name(feed: "ParsedGtfsFeed", query: str) -> list:  # noqa: F821
+def _find_stops_by_name(feed: ParsedGtfsFeed, query: str) -> list:
     """Find stops whose name contains the query string (case-insensitive, accent-insensitive)."""
     import unicodedata
 
@@ -626,7 +628,7 @@ def _find_stops_by_name(feed: "ParsedGtfsFeed", query: str) -> list:  # noqa: F8
     return results[:10]
 
 
-def _find_airport_stops(feed: "ParsedGtfsFeed", iata: str) -> list:  # noqa: F821
+def _find_airport_stops(feed: ParsedGtfsFeed, iata: str) -> list:
     """Find stops near an airport by trying multiple search terms.
 
     Uses city name, IATA code, and common airport words to catch stops

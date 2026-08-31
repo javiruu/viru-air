@@ -1,5 +1,6 @@
 from collections.abc import Mapping, Sequence
 from datetime import date as Date, timedelta
+from typing import Literal
 
 from sqlalchemy import distinct, func, select
 from sqlalchemy.orm import Session
@@ -17,13 +18,14 @@ COMMUNITY_PRICE_WINDOW_DAYS = 365
 
 CommunityRouteKey = tuple[str, str]
 CommunityAggregateRow = tuple[int, float | None, float | None]
+CommunityTriggerReason = Literal["purchased", "expired"]
 
 
 def community_trigger_reason(
     watch: FlightWatch,
     *,
     today: Date | None = None,
-) -> str | None:
+) -> CommunityTriggerReason | None:
     current_date = today or Date.today()
     if watch.status == WATCH_STATUS_PURCHASED:
         return "purchased"

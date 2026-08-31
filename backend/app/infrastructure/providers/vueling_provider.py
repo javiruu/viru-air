@@ -5,21 +5,31 @@ from datetime import datetime
 import os
 import random
 import time
-from typing import Final
+from typing import Any, Final
 from urllib.parse import urlencode
 
-try:
-    from curl_cffi import requests
-    from curl_cffi.requests.errors import RequestsError
-except ImportError:
-    import requests
-    from requests.exceptions import RequestException as RequestsError
+import requests
 from requests.adapters import HTTPAdapter
+from requests.exceptions import RequestException
 
 from app.core.time import utc_now_naive
 from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError, ProviderWarning
 from app.infrastructure.providers.base import FlightProvider
 from app.services.flight_number_enrichment import normalize_explicit_flight_number
+
+curl_requests: Any | None
+CurlRequestsError: type[Exception]
+try:
+    from curl_cffi import requests as imported_curl_requests
+    from curl_cffi.requests.errors import RequestsError as imported_curl_requests_error
+except ImportError:
+    curl_requests = None
+    CurlRequestsError = RequestException
+else:
+    curl_requests = imported_curl_requests
+    CurlRequestsError = imported_curl_requests_error
+
+RequestsError = CurlRequestsError
 
 _DEFAULT_BASE_URL: Final = "https://ams.vueling.com"
 _DEFAULT_BOOKING_URL: Final = "https://tickets.vueling.com/booking/flightSearch"
@@ -43,10 +53,13 @@ class VuelingProvider(FlightProvider):
     _token_expires_at: float = 0.0
 
     def __init__(self, *, base_url: str | None = None, profile_id: str | None = None) -> None:
-        self.base_url = (base_url or os.getenv("VUELING_BASE_URL", _DEFAULT_BASE_URL)).strip().rstrip("/")
-        self.profile_id = (profile_id or os.getenv("VUELING_PROFILE_ID", _DEFAULT_PROFILE_ID)).strip()
+        self.base_url = (base_url or os.getenv("VUELING_BASE_URL") or _DEFAULT_BASE_URL).strip().rstrip("/")
+        self.profile_id = (profile_id or os.getenv("VUELING_PROFILE_ID") or _DEFAULT_PROFILE_ID).strip()
+        self._session: Any
         try:
-            self._session = requests.Session(impersonate="chrome110")
+            if curl_requests is None:
+                raise TypeError("curl_cffi_unavailable")
+            self._session = curl_requests.Session(impersonate="chrome110")
         except TypeError:
             self._session = requests.Session()
             adapter = HTTPAdapter(pool_connections=_PROVIDER_POOL_SIZE, pool_maxsize=_PROVIDER_POOL_SIZE)
@@ -77,7 +90,7 @@ class VuelingProvider(FlightProvider):
         try:
             token = self._get_token_or_cached(timeout_ms=timeout_ms)
             payload = self._fetch_public_availability(search, token, timeout_ms=timeout_ms)
-        except RequestsError as exc:
+        except (CurlRequestsError, RequestException) as exc:
             raise ProviderSourceFetchError(
                 warning_codes=["vueling_provider_unavailable_total", "provider_total_outage"],
                 message=f"Vueling provider unavailable for {search.origin}->{search.destination} on {search.travel_date}",

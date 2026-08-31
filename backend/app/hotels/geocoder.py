@@ -301,7 +301,10 @@ class _PinnedHTTPSConnection(HTTPSConnection):
         if remaining <= 0:
             raise TimeoutError("geocoder_response_deadline_exceeded")
         connect_timeout = getattr(self.timeout, "connect_timeout", self.timeout)
-        self.timeout = max(0.001, min(float(connect_timeout), remaining))
+        if isinstance(connect_timeout, (int, float)) and not isinstance(connect_timeout, bool):
+            self.timeout = max(0.001, min(float(connect_timeout), remaining))
+        else:
+            self.timeout = max(0.001, remaining)
         super().connect()
         remaining = self._deadline - time.monotonic()
         if remaining <= 0:

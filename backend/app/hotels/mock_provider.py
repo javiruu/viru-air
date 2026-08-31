@@ -3,6 +3,7 @@
 import json
 from datetime import date
 from pathlib import Path
+from typing import Literal, cast
 
 from app.hotels.contracts import HotelProviderAdapter, ProviderHotelRecord, ProviderRateRecord
 from app.hotels.fault_profiles import (
@@ -93,6 +94,12 @@ class MockHotelProviderAdapter(HotelProviderAdapter):
                         f"Invalid stay range for provider_hotel_id={provider_hotel_id}: "
                         f"check_out ({check_out}) must be after check_in ({check_in})"
                     )
+                price_semantics = str(rate.get("price_semantics", "unknown"))
+                if price_semantics not in {"base", "total", "unknown"}:
+                    raise HotelFaultProfileError(profile, "hotel_mock_schema_drift")
+                conditions_completeness = str(rate.get("conditions_completeness", "unknown"))
+                if conditions_completeness not in {"complete", "partial", "unknown"}:
+                    raise HotelFaultProfileError(profile, "hotel_mock_schema_drift")
                 rates.append(
                     ProviderRateRecord(
                         check_in=check_in,
@@ -109,9 +116,11 @@ class MockHotelProviderAdapter(HotelProviderAdapter):
                         room_type_normalized=str(rate.get("room_type_normalized", "unknown")),
                         meal_plan_normalized=str(rate.get("meal_plan_normalized", "UNKNOWN")),
                         cancellation_type=str(rate.get("cancellation_type", "unknown")),
-                        price_semantics=str(rate.get("price_semantics", "unknown")),
+                        price_semantics=cast(Literal["base", "total", "unknown"], price_semantics),
                         amount_total=(float(rate["amount_total"]) if rate.get("amount_total") is not None else None),
-                        conditions_completeness=str(rate.get("conditions_completeness", "unknown")),
+                        conditions_completeness=cast(
+                            Literal["complete", "partial", "unknown"], conditions_completeness
+                        ),
                     )
                 )
             records.append(

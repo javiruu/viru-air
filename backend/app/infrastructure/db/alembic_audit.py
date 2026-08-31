@@ -163,7 +163,8 @@ def inspect_database_revision(db_url: str, known_revisions: Iterable[str]) -> di
 def build_audit_payload(backend_root: Path, db_url: str | None = None) -> tuple[dict[str, Any], int]:
     versions_dir = backend_root / "alembic" / "versions"
     graph = collect_revision_graph(versions_dir)
-    db_state = inspect_database_revision(db_url or os.getenv("DB_URL", "sqlite:///./viru.db"), graph["known_revisions"])
+    resolved_db_url = db_url or os.getenv("DB_URL") or "sqlite:///./viru.db"
+    db_state = inspect_database_revision(resolved_db_url, graph["known_revisions"])
     untracked = detect_untracked_migration_files(backend_root)
 
     chain_ok = not (

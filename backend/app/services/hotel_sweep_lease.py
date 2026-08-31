@@ -7,10 +7,17 @@ import uuid
 from dataclasses import dataclass
 
 from sqlalchemy import or_, select, update
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.infrastructure.db.models import HotelSweepLease
+
+
+def _rowcount(result: object) -> int:
+    if not isinstance(result, CursorResult):
+        raise RuntimeError("hotel_sweep_lease_update_result_invalid")
+    return result.rowcount
 
 
 @dataclass(frozen=True, slots=True)
@@ -111,7 +118,7 @@ class HotelSweepLeaseStore:
                 updated_at=now,
             )
         )
-        if result.rowcount != 1:
+        if _rowcount(result) != 1:
             self._db.rollback()
             return None
         self._db.commit()
@@ -136,8 +143,9 @@ class HotelSweepLeaseStore:
                 updated_at=now,
             )
         )
-        self._db.commit() if result.rowcount == 1 else self._db.rollback()
-        return result.rowcount == 1
+        affected_rows = _rowcount(result)
+        self._db.commit() if affected_rows == 1 else self._db.rollback()
+        return affected_rows == 1
 
     def finish(
         self,
@@ -168,13 +176,14 @@ class HotelSweepLeaseStore:
                 updated_at=now,
             )
         )
-        if result.rowcount == 1:
+        affected_rows = _rowcount(result)
+        if affected_rows == 1:
             self._db.flush()
             if commit:
                 self._db.commit()
         elif commit:
             self._db.rollback()
-        return result.rowcount == 1
+        return affected_rows == 1
 
     def owns_active_lease(self, lease: HotelSweepLeaseToken, *, now: dt.datetime) -> bool:
         return self._db.scalar(

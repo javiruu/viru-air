@@ -73,6 +73,8 @@ class HotelGeoService:
         for candidate in candidates:
             if candidate.id in excluded_ids:
                 continue
+            if candidate.latitude is None or candidate.longitude is None:
+                continue
 
             raw_distance = haversine_km(
                 anchor_lat,

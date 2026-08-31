@@ -88,6 +88,8 @@ class AccessLogMiddleware:
             try:
                 elapsed_ms = int((time.perf_counter() - start) * 1000)
                 headers = scope_headers(scope)
+                client = scope.get("client")
+                client_host = client[0] if isinstance(client, (tuple, list)) and client else None
                 log_payload = {
                     "event": "http",
                     "correlation_id": get_correlation_id() or headers.get("x-correlation-id") or "-",
@@ -96,7 +98,7 @@ class AccessLogMiddleware:
                     "path": scope.get("path"),
                     "status": status_code or 500,
                     "elapsed_ms": elapsed_ms,
-                    "client": scope.get("client")[0] if scope.get("client") else None,
+                    "client": client_host,
                     "origin": headers.get("origin"),
                     "referer": headers.get("referer"),
                     "user_agent": headers.get("user-agent"),

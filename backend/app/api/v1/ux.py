@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import json
-
 import logging
+from collections.abc import Mapping
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -30,7 +30,7 @@ ALLOWED_EVENTS = {
     "hotel_inbox_viewed",
     "hotel_partner_clicked",
 }
-HOTEL_RUM_METADATA_KEYS = {
+HOTEL_RUM_METADATA_KEYS: set[str] = {
     "schema_version",
     "surface",
     "metric",
@@ -39,7 +39,7 @@ HOTEL_RUM_METADATA_KEYS = {
     "navigation_type",
     "device_class",
 }
-HOTEL_RUM_ALLOWED_VALUES = {
+HOTEL_RUM_ALLOWED_VALUES: dict[str, set[object]] = {
     "schema_version": {1},
     "surface": {"hoteles"},
     "metric": {"lcp", "inp", "cls", "ttfb"},
@@ -47,14 +47,14 @@ HOTEL_RUM_ALLOWED_VALUES = {
     "navigation_type": {"navigate", "reload", "back_forward", "prerender"},
     "device_class": {"mobile", "tablet", "desktop"},
 }
-HOTEL_RUM_ALLOWED_BUCKETS = {
+HOTEL_RUM_ALLOWED_BUCKETS: set[str] = {
     "0-250ms", "250-500ms", "500-1000ms", "1000-2000ms", "2000-4000ms", "4000-8000ms", "8000+ms",
     "0-0.1", "0.1-0.25", "0.25-0.5", "0.5+", "unknown",
 }
 
 # Product events use the same bounded, non-PII contract as RUM. IDs, URLs,
 # emails, provider payloads and arbitrary metadata are deliberately excluded.
-HOTEL_PRODUCT_EVENT_METADATA = {
+HOTEL_PRODUCT_EVENT_METADATA: dict[str, dict[str, set[object]]] = {
     "hotel_search_completed": {
         "schema_version": {1},
         "surface": {"hoteles"},
@@ -92,7 +92,7 @@ HOTEL_PRODUCT_EVENT_METADATA = {
 HOTEL_PRODUCT_EVENT_NAMES = set(HOTEL_PRODUCT_EVENT_METADATA)
 
 
-def _hotel_product_metadata_is_valid(event_name: str, metadata: dict[str, object]) -> bool:
+def _hotel_product_metadata_is_valid(event_name: str, metadata: Mapping[str, object]) -> bool:
     allowed = HOTEL_PRODUCT_EVENT_METADATA.get(event_name)
     if allowed is None or set(metadata) != set(allowed):
         return False
@@ -101,7 +101,7 @@ def _hotel_product_metadata_is_valid(event_name: str, metadata: dict[str, object
     return all(metadata.get(key) in values for key, values in allowed.items())
 
 
-def _hotel_event_is_allowed(event_name: str, metadata: dict[str, object]) -> bool:
+def _hotel_event_is_allowed(event_name: str, metadata: Mapping[str, object]) -> bool:
     if event_name == "hotel_rum_vitals":
         return True
     if event_name in HOTEL_PRODUCT_EVENT_NAMES:

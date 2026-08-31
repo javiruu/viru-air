@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
+from app.infrastructure.db.execution import affected_row_count
 from app.infrastructure.db.models import RevalidationJob
 
 ACTIVE_REVALIDATION_JOB_STATUSES = {"queued", "running"}
@@ -170,7 +171,7 @@ def claim_next_revalidation_job(
                 attempt_count=RevalidationJob.attempt_count + 1,
             )
         )
-        if claimed.rowcount != 1:
+        if affected_row_count(claimed) != 1:
             db.rollback()
             continue
         db.commit()
@@ -198,7 +199,7 @@ def claim_revalidation_job(
             attempt_count=RevalidationJob.attempt_count + 1,
         )
     )
-    if claimed.rowcount != 1:
+    if affected_row_count(claimed) != 1:
         db.rollback()
         return None
     db.commit()
@@ -228,7 +229,7 @@ def complete_revalidation_job(
             lock_token=None,
         )
     )
-    if updated.rowcount != 1:
+    if affected_row_count(updated) != 1:
         db.rollback()
         return None
     db.commit()
@@ -256,7 +257,7 @@ def fail_revalidation_job(
             lock_token=None,
         )
     )
-    if updated.rowcount != 1:
+    if affected_row_count(updated) != 1:
         db.rollback()
         return None
     db.commit()

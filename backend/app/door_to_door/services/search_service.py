@@ -1,7 +1,7 @@
 ﻿import json
 import logging
 from datetime import datetime, timedelta
-from typing import Literal
+from typing import Literal, TypeAlias
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -17,6 +17,7 @@ from app.door_to_door.providers.circuit_breaker import (
 from app.door_to_door.domain.scoring import score_itinerary
 from app.door_to_door.schemas import (
     DoorToDoorCapabilityState,
+    DoorToDoorCapabilityKey,
     DoorToDoorConfidence,
     DoorToDoorFlightOut,
     DoorToDoorLegOut,
@@ -38,7 +39,8 @@ from app.infrastructure.db.models import DoorToDoorChosenOption, DoorToDoorSearc
 
 logger = logging.getLogger("app.door_to_door")
 
-GROUND_MODES: set[DoorToDoorMode] = {"bus", "train", "rideshare", "shuttle", "taxi", "car", "walking"}
+GROUND_MODES: set[DoorToDoorMode] = {"bus", "train", "metro", "rideshare", "shuttle", "taxi", "car", "walking"}
+MapSourceType: TypeAlias = DoorToDoorSourceType | Literal["none"]
 
 # Source quality tiers for arbitration (Fase 6).
 # Higher = better data. Used to prefer the best source per trip segment
@@ -67,6 +69,7 @@ CO2_KG_PER_KM: dict[DoorToDoorMode, float] = {
     "shuttle": 0.150,
     "bus": 0.103,
     "train": 0.041,
+    "metro": 0.041,
     "walking": 0.0,
 }
 
@@ -80,6 +83,7 @@ AVG_KMH_INFERENCE: dict[DoorToDoorMode, float] = {
     "shuttle": 60.0,
     "bus": 50.0,
     "train": 100.0,
+    "metro": 40.0,
     "walking": 5.0,
 }
 
@@ -311,7 +315,7 @@ class DoorToDoorSearchService:
         checked_at: datetime,
         options: list[DoorToDoorOptionOut],
         warnings: list[DoorToDoorWarningOut],
-    ) -> dict[str, DoorToDoorMapCapabilityOut]:
+    ) -> dict[DoorToDoorCapabilityKey, DoorToDoorMapCapabilityOut]:
         provider_by_name = {item.name: item for item in self.provider_statuses}
         has_google_routes = provider_by_name.get("google_routes", None)
         has_google_routes_enabled = has_google_routes is not None and has_google_routes.enabled
@@ -321,8 +325,6 @@ class DoorToDoorSearchService:
         has_google_places_enabled = has_google_places is not None and has_google_places.enabled
 
         has_options = len(options) > 0
-
-        MapSourceType = DoorToDoorSourceType | Literal["none"]  # type: ignore[valid-type]
 
         def _cap(state: DoorToDoorCapabilityState, source_type: MapSourceType, confidence: DoorToDoorConfidence, *, why_missing: str | None = None) -> DoorToDoorMapCapabilityOut:
             return DoorToDoorMapCapabilityOut(

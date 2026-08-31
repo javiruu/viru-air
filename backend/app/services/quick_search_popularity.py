@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime as dt
 from dataclasses import dataclass
 
-from sqlalchemy import inspect, select
+from sqlalchemy import ColumnElement, inspect, select
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
@@ -16,6 +16,7 @@ from app.infrastructure.db.models import (
 
 
 PopularityValue = str | int | dt.date | dt.datetime
+PopularityUpdateValue = PopularityValue | ColumnElement[int]
 _CONFLICT_COLUMNS = ("origin_iata", "destination_iata", "travel_date", "currency")
 _DAILY_CONFLICT_COLUMNS = (
     "search_date",
@@ -193,7 +194,7 @@ def _insert_values(signal: QuickSearchPopularitySignal) -> dict[str, PopularityV
     }
 
 
-def _update_values(signal: QuickSearchPopularitySignal) -> dict[str, PopularityValue]:
+def _update_values(signal: QuickSearchPopularitySignal) -> dict[str, PopularityUpdateValue]:
     return {
         "search_count": QuickSearchPopularityCounter.search_count + 1,
         "last_searched_at": _searched_at(signal),
@@ -216,7 +217,7 @@ def _daily_insert_values(signal: QuickSearchPopularitySignal) -> dict[str, Popul
     }
 
 
-def _daily_update_values(signal: QuickSearchPopularitySignal) -> dict[str, PopularityValue]:
+def _daily_update_values(signal: QuickSearchPopularitySignal) -> dict[str, PopularityUpdateValue]:
     return {
         "search_count": QuickSearchPopularityDaily.search_count + 1,
         "last_searched_at": _searched_at(signal),

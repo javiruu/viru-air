@@ -3,12 +3,14 @@ from __future__ import annotations
 import json
 import logging
 import traceback
+from typing import cast
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT
+from starlette.types import ExceptionHandler
 
 from app.core.errors import ApiError, error_envelope, message_for_code
 from app.core.request_context import get_client_event_id, get_correlation_id
@@ -18,12 +20,21 @@ logger = logging.getLogger("app.access")
 app_logger = logging.getLogger("app.main")
 
 
+def _error_details(value: object) -> list[dict] | dict:
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, list):
+        return [item if isinstance(item, dict) else {"detail": item} for item in value]
+    return [{"detail": value}]
+
+
 async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
     body = exc.body
     if isinstance(body, dict):
         body = sanitize_request_body(body)
 
     safe_errors = sanitize_request_body(jsonable_encoder(exc.errors()))
+    details = _error_details(safe_errors)
     logger.error(
         json.dumps(
             {
@@ -40,7 +51,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         status=HTTP_422_UNPROCESSABLE_CONTENT,
         code="validation_error",
         message=message_for_code("validation_error"),
-        details=safe_errors,
+        details=details,
         correlation_id=get_correlation_id() or getattr(request.state, "correlation_id", None),
         client_event_id=get_client_event_id() or getattr(request.state, "client_event_id", None),
     )
@@ -49,19 +60,20 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
     safe_body = await safe_request_body(request)
+    details: list[dict] | dict
     if isinstance(exc.detail, str):
         code = exc.detail
         details = []
     elif isinstance(exc.detail, list):
         code = "validation_error"
-        details = exc.detail
+        details = _error_details(exc.detail)
     elif isinstance(exc.detail, dict):
         code = str(exc.detail.get("code") or "request_failed")
         raw_details = exc.detail.get("details", [])
         if isinstance(raw_details, (list, dict)):
-            details = raw_details
+            details = _error_details(raw_details)
         else:
-            details = [{"detail": raw_details}]
+            details = _error_details(raw_details)
     else:
         code = "request_failed"
         details = []
@@ -149,7 +161,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 
 
 def register_exception_handlers(app: FastAPI) -> None:
-    app.add_exception_handler(RequestValidationError, validation_exception_handler)
-    app.add_exception_handler(HTTPException, http_exception_handler)
-    app.add_exception_handler(ApiError, api_error_handler)
+    app.add_exception_handler(RequestValidationError, cast(ExceptionHandler, validation_exception_handler))
+    app.add_exception_handler(HTTPException, cast(ExceptionHandler, http_exception_handler))
+    app.add_exception_handler(ApiError, cast(ExceptionHandler, api_error_handler))
     app.add_exception_handler(Exception, unhandled_exception_handler)

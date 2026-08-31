@@ -10,10 +10,11 @@ from typing import Sequence
 import requests
 
 from app.door_to_door.domain.models import ProviderHealth
-from app.door_to_door.schemas import DoorToDoorSuggestionOut
+from app.door_to_door.schemas import DoorToDoorSourceType, DoorToDoorSuggestionOut
 
 GOOGLE_PLACES_AUTOCOMPLETE_ENDPOINT = "https://places.googleapis.com/v1/places:autocomplete"
 logger = logging.getLogger("app.door_to_door.google_places")
+type JsonValue = None | bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"]
 
 
 @dataclass(frozen=True)
@@ -24,7 +25,7 @@ class _CachedSuggestions:
 
 class GooglePlacesSuggestionsProvider:
     provider_name = "google_places"
-    source_type = "api"
+    source_type: DoorToDoorSourceType = "api"
 
     def __init__(self) -> None:
         self.api_key = os.getenv("GOOGLE_MAPS_API_KEY", "").strip()
@@ -117,12 +118,15 @@ class GooglePlacesSuggestionsProvider:
         session_token: str | None = None,
         preferred_region_codes: Sequence[str] | None = None,
     ) -> list[DoorToDoorSuggestionOut]:
-        body: dict[str, object] = {
+        body: dict[str, JsonValue] = {
             "input": query,
             "languageCode": "es",
         }
         if preferred_region_codes:
-            body["includedRegionCodes"] = list(preferred_region_codes)[:5]
+            included_region_codes: list[JsonValue] = []
+            for region_code in preferred_region_codes[:5]:
+                included_region_codes.append(region_code)
+            body["includedRegionCodes"] = included_region_codes
         if session_token:
             body["sessionToken"] = session_token
 

@@ -123,23 +123,29 @@ def _parse_descriptors_json(raw: str) -> list[GtfsFeedDescriptor]:
     for item in items:
         if not isinstance(item, dict):
             continue
-        if not item.get("id") or not item.get("url"):
+        feed_id = item.get("id")
+        url = item.get("url")
+        if not isinstance(feed_id, str) or not feed_id.strip() or not isinstance(url, str) or not url.strip():
             continue
+        name = item.get("name", feed_id)
+        region = item.get("region", "")
+        source_type = item.get("source_type", "open_data")
+        auth_value_prefix = item.get("auth_value_prefix", "")
         descriptors.append(
             GtfsFeedDescriptor(
-                    id=item["id"],
-                    name=item.get("name", item["id"]),
-                    region=item.get("region", ""),
-                    url=item["url"],
-                    source_type=item.get("source_type", "open_data"),
-                    license_url=item.get("license_url"),
-                    attribution=item.get("attribution"),
-                    api_key_env=item.get("api_key_env"),
-                    auth_header_name=item.get("auth_header_name"),
-                    auth_value_prefix=item.get("auth_value_prefix", ""),
-                    response_format=item.get("response_format"),
-                )
+                id=feed_id,
+                name=name if isinstance(name, str) and name.strip() else feed_id,
+                region=region if isinstance(region, str) else "",
+                url=url,
+                source_type=source_type if isinstance(source_type, str) else "open_data",
+                license_url=item.get("license_url") if isinstance(item.get("license_url"), str) else None,
+                attribution=item.get("attribution") if isinstance(item.get("attribution"), str) else None,
+                api_key_env=item.get("api_key_env") if isinstance(item.get("api_key_env"), str) else None,
+                auth_header_name=item.get("auth_header_name") if isinstance(item.get("auth_header_name"), str) else None,
+                auth_value_prefix=auth_value_prefix if isinstance(auth_value_prefix, str) else "",
+                response_format=item.get("response_format") if isinstance(item.get("response_format"), str) else None,
             )
+        )
     return descriptors
 
 
@@ -281,10 +287,10 @@ class GtfsFeedService:
             stat = cached_path.stat()
             age = time.time() - stat.st_mtime
             if age < self.cache_ttl:
-                feed = self._parse_feed(cached_path, descriptor.id)
-                if feed is not None:
-                    self._feeds[descriptor.id] = feed
-                    return feed
+                parsed_feed = self._parse_feed(cached_path, descriptor.id)
+                if parsed_feed is not None:
+                    self._feeds[descriptor.id] = parsed_feed
+                    return parsed_feed
 
         try:
             raw_bytes = self._download(descriptor)
@@ -292,11 +298,11 @@ class GtfsFeedService:
             logger.warning("gtfs_download_failed", extra={"feed_id": descriptor.id, "url": descriptor.url})
             # Try stale cache
             if cached_path.exists():
-                feed = self._parse_feed(cached_path, descriptor.id)
-                if feed is not None:
-                    feed.downloaded_at = time.time()  # mark as stale but usable
-                    self._feeds[descriptor.id] = feed
-                    return feed
+                parsed_feed = self._parse_feed(cached_path, descriptor.id)
+                if parsed_feed is not None:
+                    parsed_feed.downloaded_at = time.time()  # mark as stale but usable
+                    self._feeds[descriptor.id] = parsed_feed
+                    return parsed_feed
             return None
 
         # Validate zip
@@ -312,10 +318,10 @@ class GtfsFeedService:
             return None
 
         cached_path.write_bytes(raw_bytes)
-        feed = self._parse_feed(cached_path, descriptor.id)
-        if feed is not None:
-            self._feeds[descriptor.id] = feed
-        return feed
+        parsed_feed = self._parse_feed(cached_path, descriptor.id)
+        if parsed_feed is not None:
+            self._feeds[descriptor.id] = parsed_feed
+        return parsed_feed
 
     def find_nearby_stops(self, feed_id: str, lat: float, lng: float) -> list[GtfsStop]:
         """Find stops within max_walk_radius of the given coordinates, sorted nearest first.

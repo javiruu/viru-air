@@ -138,8 +138,8 @@ def _call_openai_for_preference(
     try:
         response = requests.post(
             OPENAI_ENDPOINT,
-            headers={"Authorization": f"Bearer {api_key}"},
-            json=payload,
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            data=json.dumps(payload, ensure_ascii=False),
             timeout=OPENAI_TIMEOUT_SECONDS,
         )
         response.raise_for_status()
@@ -181,6 +181,16 @@ def select_quick_search_ai_preference(
             fallback_used=True,
             reason=heuristic.reason,
             failure_reason=error,
+        )
+
+    if parsed is None:
+        return QuickSearchAiPreferenceResult(
+            enabled=heuristic.enabled,
+            source="heuristic",
+            preferred_result_id=heuristic.preferred_result_id,
+            fallback_used=True,
+            reason=heuristic.reason,
+            failure_reason="openai_missing_payload",
         )
 
     preferred_result_id = parsed.get("preferred_result_id")

@@ -1,6 +1,6 @@
 import json
 from datetime import date as Date, datetime, timezone
-from typing import Any
+from typing import Any, Literal
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
@@ -27,9 +27,7 @@ from app.domain.schemas import (
     HotelV2PaginationOut,
     HotelV2PriceOut,
     HotelV2ProviderOut,
-    HotelV2ResultExplanationOut,
     HotelV2ResultsMetaOut,
-    HotelV2StayContextOut,
     HotelV2TrackedOfferOut,
     HotelV2TrackedOfferCreateIn,
     HotelV2TrackedOfferCreateOut,
@@ -40,7 +38,6 @@ from app.domain.schemas import (
     HotelV2TrackedOffersMetaOut,
     HotelV2TrackedOffersOut,
     HotelV2TrackingObservationOut,
-    HotelV2TrackingStayContextOut,
     HotelV2WarningOut,
     HotelCompSetCreateIn,
     HotelCompSetDetailOut,
@@ -65,7 +62,7 @@ from app.domain.schemas import (
     HotelWatchlistItemCreateIn,
     HotelWatchlistItemOut,
 )
-from app.infrastructure.db.models import HotelRateSnapshot, HotelTrackedOffer, User
+from app.infrastructure.db.models import HotelAlertRule, HotelRateSnapshot, HotelSavedSearch, HotelTrackedOffer, User
 from app.infrastructure.db.session import get_db
 from app.core.request_context import get_correlation_id
 from app.hotels.activation import resolve_hotel_activation
@@ -76,7 +73,10 @@ router = APIRouter()
 
 
 def _extract_validation_error_code(exc: ValidationError) -> str:
-    first_error = exc.errors()[0] if exc.errors() else {}
+    errors = exc.errors()
+    if not errors:
+        return "validation_error"
+    first_error = errors[0]
     msg = first_error.get("msg")
     if isinstance(msg, str) and msg:
         prefix = "Value error, "
@@ -244,18 +244,38 @@ def delete_watchlist_item(
     return {"status": "ok"}
 
 
-def _saved_search_out(row: object) -> HotelSavedSearchOut:
-    return HotelSavedSearchOut(
-        id=row.id,
-        user_id=row.user_id,
-        schema_version=row.schema_version,
-        fingerprint=row.fingerprint,
-        query=json.loads(row.canonical_query_json),
-        label=row.label,
-        status=row.status,
-        created_at=row.created_at,
-        updated_at=row.updated_at,
-        last_used_at=row.last_used_at,
+def _saved_search_out(row: HotelSavedSearch) -> HotelSavedSearchOut:
+    return HotelSavedSearchOut.model_validate(
+        {
+            "id": row.id,
+            "user_id": row.user_id,
+            "schema_version": row.schema_version,
+            "fingerprint": row.fingerprint,
+            "query": json.loads(row.canonical_query_json),
+            "label": row.label,
+            "status": row.status,
+            "created_at": row.created_at,
+            "updated_at": row.updated_at,
+            "last_used_at": row.last_used_at,
+        }
+    )
+
+
+def _alert_rule_out(row: HotelAlertRule) -> HotelAlertRuleOut:
+    return HotelAlertRuleOut.model_validate(
+        {
+            "id": row.id,
+            "hotel_id": row.hotel_id,
+            "tracked_offer_id": row.tracked_offer_id,
+            "compare_against": row.compare_against,
+            "cooldown_minutes": row.cooldown_minutes,
+            "evaluation_state": row.evaluation_state,
+            "last_fired_at": row.last_fired_at,
+            "rule_type": row.rule_type,
+            "threshold_amount": float(row.threshold_amount) if row.threshold_amount is not None else None,
+            "threshold_percent": float(row.threshold_percent) if row.threshold_percent is not None else None,
+            "is_active": row.is_active,
+        }
     )
 
 
@@ -484,22 +504,7 @@ def list_alert_rules(
     current_user: User = Depends(get_current_user),
 ) -> list[HotelAlertRuleOut]:
     rows = hotels_service.list_alert_rules(db, current_user.id)
-    return [
-        HotelAlertRuleOut(
-            id=row.id,
-            hotel_id=row.hotel_id,
-            tracked_offer_id=row.tracked_offer_id,
-            compare_against=row.compare_against,
-            cooldown_minutes=row.cooldown_minutes,
-            evaluation_state=row.evaluation_state,
-            last_fired_at=row.last_fired_at,
-            rule_type=row.rule_type,
-            threshold_amount=float(row.threshold_amount) if row.threshold_amount is not None else None,
-            threshold_percent=float(row.threshold_percent) if row.threshold_percent is not None else None,
-            is_active=row.is_active,
-        )
-        for row in rows
-    ]
+    return [_alert_rule_out(row) for row in rows]
 
 
 @router.post("/alert-rules", response_model=HotelAlertRuleOut)
@@ -530,16 +535,7 @@ def create_alert_rule(
         _raise_http_for_value_error(exc)
     except PermissionError as exc:
         _raise_http_for_permission_error(exc)
-    return HotelAlertRuleOut(
-        id=row.id,
-        hotel_id=row.hotel_id,
-        tracked_offer_id=row.tracked_offer_id,
-        compare_against=row.compare_against,
-        rule_type=row.rule_type,
-        threshold_amount=float(row.threshold_amount) if row.threshold_amount is not None else None,
-        threshold_percent=float(row.threshold_percent) if row.threshold_percent is not None else None,
-        is_active=row.is_active,
-    )
+    return _alert_rule_out(row)
 
 
 @router.patch("/alert-rules/{rule_id}", response_model=HotelAlertRuleOut)
@@ -565,16 +561,7 @@ def patch_alert_rule(
         _raise_http_for_value_error(exc)
     except PermissionError as exc:
         _raise_http_for_permission_error(exc)
-    return HotelAlertRuleOut(
-        id=row.id,
-        hotel_id=row.hotel_id,
-        tracked_offer_id=row.tracked_offer_id,
-        compare_against=row.compare_against,
-        rule_type=row.rule_type,
-        threshold_amount=float(row.threshold_amount) if row.threshold_amount is not None else None,
-        threshold_percent=float(row.threshold_percent) if row.threshold_percent is not None else None,
-        is_active=row.is_active,
-    )
+    return _alert_rule_out(row)
 
 
 @router.delete("/alert-rules/{rule_id}")
@@ -645,7 +632,7 @@ def area_resolve(
     _: User = Depends(get_current_user),
 ) -> HotelAreaResolveOut:
     try:
-        _ = HotelAreaResolveQueryIn(q=q)
+        HotelAreaResolveQueryIn(q=q)
     except ValidationError as exc:
         raise HTTPException(status_code=422, detail=_extract_validation_error_code(exc)) from exc
 
@@ -654,14 +641,7 @@ def area_resolve(
     except ValueError as exc:
         _raise_http_for_value_error(exc)
 
-    return HotelAreaResolveOut(
-        area_label=result["area_label"],
-        latitude=result["latitude"],
-        longitude=result["longitude"],
-        country_code=result["country_code"],
-        confidence=result["confidence"],
-        source=result["source"],
-    )
+    return HotelAreaResolveOut.model_validate(result)
 
 
 @router.get("/area-search", response_model=list[HotelAreaSearchResultOut])
@@ -711,24 +691,7 @@ def area_search(
         user_id=current_user.id,
         use_provider=use_provider,
     )
-    return [
-        HotelAreaSearchResultOut(
-            hotel_id=r["hotel_id"],
-            canonical_name=r["canonical_name"],
-            city=r["city"],
-            country_code=r["country_code"],
-            stars=r["stars"],
-            distance_km=r["distance_km"],
-            lowest_price=r["lowest_price"],
-            currency=r["currency"],
-            provider=r["provider"],
-            check_in=r["check_in"],
-            check_out=r["check_out"],
-            guests=r["guests"],
-            has_tracking=r["has_tracking"],
-        )
-        for r in results
-    ]
+    return [HotelAreaSearchResultOut.model_validate(result) for result in results]
 
 
 @router.get("/v2/area-search", response_model=HotelV2AreaSearchOut)
@@ -804,11 +767,13 @@ def area_search_v2(
         elif provider_state:
             provider = provider_state["provider"]
             providers.append(
-                HotelV2ProviderOut(
-                    id=provider,
-                    operation="area_search",
-                    status=provider_state["status"],
-                    fallback_used=bool(results),
+                HotelV2ProviderOut.model_validate(
+                    {
+                        "id": provider,
+                        "operation": "area_search",
+                        "status": provider_state["status"],
+                        "fallback_used": bool(results),
+                    }
                 )
             )
             warnings.append(
@@ -822,43 +787,49 @@ def area_search_v2(
             )
 
     data = [
-        HotelV2AreaSearchResultOut(
-            hotel_id=result["hotel_id"],
-            canonical_name=result["canonical_name"],
-            city=result["city"],
-            country_code=result["country_code"],
-            stars=result["stars"],
-            distance_km=result["distance_km"],
-            price=HotelV2PriceOut(
-                amount=(
-                    result["amount_total"]
-                    if result["price_semantics"] == "total" and result["amount_total"] is not None
-                    else result["lowest_price"]
-                ),
-                currency=result["currency"],
-                basis=(
-                    "total_stay"
-                    if result["price_semantics"] == "total" and result["amount_total"] is not None
-                    else "unknown"
-                ),
-                status="observed" if result["lowest_price"] is not None else "unavailable",
-                observed_at=result["observed_at"],
-            ),
-            stay_context=HotelV2StayContextOut(
-                check_in=result["check_in"],
-                check_out=result["check_out"],
-                guests=result["guests"],
-            ),
-            provider=result["provider"],
-            has_tracking=result["has_tracking"],
-            explanation=HotelV2ResultExplanationOut(
-                primary_reason="lowest_observed_price" if result["lowest_price"] is not None else "price_unavailable",
-                codes=["price_context_match"] if result["lowest_price"] is not None else ["price_unavailable"],
-            ),
+        HotelV2AreaSearchResultOut.model_validate(
+            {
+                "hotel_id": result["hotel_id"],
+                "canonical_name": result["canonical_name"],
+                "city": result["city"],
+                "country_code": result["country_code"],
+                "stars": result["stars"],
+                "distance_km": result["distance_km"],
+                "price": {
+                    "amount": (
+                        result["amount_total"]
+                        if result["price_semantics"] == "total" and result["amount_total"] is not None
+                        else result["lowest_price"]
+                    ),
+                    "currency": result["currency"],
+                    "basis": (
+                        "total_stay"
+                        if result["price_semantics"] == "total" and result["amount_total"] is not None
+                        else "unknown"
+                    ),
+                    "status": "observed" if result["lowest_price"] is not None else "unavailable",
+                    "observed_at": result["observed_at"],
+                },
+                "stay_context": {
+                    "check_in": result["check_in"],
+                    "check_out": result["check_out"],
+                    "guests": result["guests"],
+                },
+                "provider": result["provider"],
+                "has_tracking": result["has_tracking"],
+                "explanation": {
+                    "primary_reason": "lowest_observed_price"
+                    if result["lowest_price"] is not None
+                    else "price_unavailable",
+                    "codes": ["price_context_match"]
+                    if result["lowest_price"] is not None
+                    else ["price_unavailable"],
+                },
+            }
         )
         for result in results
     ]
-    result_state = "partial" if warnings else "success" if data else "empty"
+    result_state: Literal["success", "empty", "partial"] = "partial" if warnings else "success" if data else "empty"
     generated_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     return HotelV2AreaSearchOut(
         data=data,
@@ -952,7 +923,9 @@ def list_tracked_offers_v2(
         is_active=is_active,
     )
     data = [_tracked_offer_v2_out(projection) for projection in projections]
-    result_state = "empty" if not data else "partial" if any(item.warnings for item in data) else "success"
+    result_state: Literal["success", "empty", "partial"] = (
+        "empty" if not data else "partial" if any(item.warnings for item in data) else "success"
+    )
     return HotelV2TrackedOffersOut(
         data=data,
         meta=HotelV2TrackedOffersMetaOut(
@@ -987,6 +960,7 @@ def _tracked_offer_v2_out(projection: hotels_service.HotelTrackedOfferStatus) ->
     latest_observation = None
     if snapshot is not None:
         is_total_stay = snapshot.price_semantics == "total" and snapshot.amount_total is not None
+        price_amount = snapshot.amount_total if is_total_stay else snapshot.amount
         price_status = (
             "observed"
             if snapshot.snapshot_outcome == "success" and snapshot.availability_status in {"available", "limited"}
@@ -1007,37 +981,41 @@ def _tracked_offer_v2_out(projection: hotels_service.HotelTrackedOfferStatus) ->
             availability_status=snapshot.availability_status,
             conditions_completeness=snapshot.conditions_completeness,
             canonical_stay_offer_id=snapshot.stay_offer_id,
-            price=HotelV2PriceOut(
-                amount=float(snapshot.amount_total if is_total_stay else snapshot.amount),
-                currency=snapshot.currency,
-                basis="total_stay" if is_total_stay else "unknown",
-                status=price_status,
-                observed_at=snapshot.observed_at,
+            price=HotelV2PriceOut.model_validate(
+                {
+                    "amount": float(price_amount) if price_amount is not None else None,
+                    "currency": snapshot.currency,
+                    "basis": "total_stay" if is_total_stay else "unknown",
+                    "status": price_status,
+                    "observed_at": snapshot.observed_at,
+                }
             ),
             freshness=_hotel_v2_freshness_out(snapshot),
         )
-    return HotelV2TrackedOfferOut(
-        id=offer.id,
-        hotel_id=offer.hotel_id,
-        state_version=offer.lifecycle_version or 1,
-        state=projection.state,
-        stay_context=HotelV2TrackingStayContextOut(
-            check_in=offer.check_in,
-            check_out=offer.check_out,
-            guests=offer.guests,
-            currency=offer.currency,
-        ),
-        latest_observation=latest_observation,
-        capabilities={
-            "pause": "supported" if projection.state != "archived" else "unavailable",
-            "resume": "supported" if projection.state == "paused" else "unavailable",
-            "archive": "supported" if projection.state != "archived" else "unavailable",
-            "edit_target": "supported",
-            "delete": "supported",
-            "create_alert": "supported_with_caveat",
-            "external_delivery": "unavailable",
-        },
-        warnings=warnings,
+    return HotelV2TrackedOfferOut.model_validate(
+        {
+            "id": offer.id,
+            "hotel_id": offer.hotel_id,
+            "state_version": offer.lifecycle_version or 1,
+            "state": projection.state,
+            "stay_context": {
+                "check_in": offer.check_in,
+                "check_out": offer.check_out,
+                "guests": offer.guests,
+                "currency": offer.currency,
+            },
+            "latest_observation": latest_observation,
+            "capabilities": {
+                "pause": "supported" if projection.state != "archived" else "unavailable",
+                "resume": "supported" if projection.state == "paused" else "unavailable",
+                "archive": "supported" if projection.state != "archived" else "unavailable",
+                "edit_target": "supported",
+                "delete": "supported",
+                "create_alert": "supported_with_caveat",
+                "external_delivery": "unavailable",
+            },
+            "warnings": warnings,
+        }
     )
 
 
@@ -1049,14 +1027,16 @@ def _hotel_v2_freshness_out(snapshot: HotelRateSnapshot | None) -> HotelV2Freshn
         provider=snapshot.provider if snapshot is not None else None,
         )
     )
-    return HotelV2FreshnessOut(
-        state=freshness.state,
-        observed_at=freshness.observed_at,
-        age_seconds=freshness.age_seconds,
-        expires_at=freshness.expires_at,
-        requires_revalidation=freshness.requires_revalidation,
-        policy_version="hotel-freshness-v1",
-        provenance_kind=freshness.provenance_kind,
+    return HotelV2FreshnessOut.model_validate(
+        {
+            "state": freshness.state,
+            "observed_at": freshness.observed_at,
+            "age_seconds": freshness.age_seconds,
+            "expires_at": freshness.expires_at,
+            "requires_revalidation": freshness.requires_revalidation,
+            "policy_version": "hotel-freshness-v1",
+            "provenance_kind": freshness.provenance_kind,
+        }
     )
 
 
@@ -1097,6 +1077,7 @@ def _tracked_offer_history_v2_out(
     points: list[HotelV2HistoryPointOut] = []
     for snapshot, excluded_reason in point_inputs:
         is_total_stay = snapshot.price_semantics == "total" and snapshot.amount_total is not None
+        price_amount = snapshot.amount_total if is_total_stay else snapshot.amount
         price_status = (
             "observed"
             if snapshot.snapshot_outcome == "success" and snapshot.availability_status in {"available", "limited"}
@@ -1106,9 +1087,9 @@ def _tracked_offer_history_v2_out(
             if snapshot.availability_status not in {"available", "limited"}
             else "not_comparable"
         )
-        if excluded_reason is None:
+        if excluded_reason is None and snapshot.amount_total is not None:
             eligible_amounts.append(float(snapshot.amount_total))
-        else:
+        elif excluded_reason is not None:
             exclusions[excluded_reason] = exclusions.get(excluded_reason, 0) + 1
         points.append(
             HotelV2HistoryPointOut(
@@ -1120,12 +1101,14 @@ def _tracked_offer_history_v2_out(
                 conditions_completeness=snapshot.conditions_completeness,
                 canonical_stay_offer_id=snapshot.stay_offer_id,
                 price_semantics="total" if is_total_stay else "unknown",
-                price=HotelV2PriceOut(
-                    amount=float(snapshot.amount_total if is_total_stay else snapshot.amount),
-                    currency=snapshot.currency,
-                    basis="total_stay" if is_total_stay else "unknown",
-                    status=price_status,
-                    observed_at=snapshot.observed_at,
+                price=HotelV2PriceOut.model_validate(
+                    {
+                        "amount": float(price_amount) if price_amount is not None else None,
+                        "currency": snapshot.currency,
+                        "basis": "total_stay" if is_total_stay else "unknown",
+                        "status": price_status,
+                        "observed_at": snapshot.observed_at,
+                    }
                 ),
                 eligibility="eligible" if excluded_reason is None else "excluded",
                 excluded_reason=excluded_reason,
@@ -1146,14 +1129,16 @@ def _tracked_offer_history_v2_out(
     return HotelV2TrackedOfferHistoryOut(
         tracked_offer_id=offer.id,
         series=HotelV2HistorySeriesOut(
-            identity=HotelV2HistoryIdentityOut(
-                comparability_key=next(iter(fingerprints)) if canonical_identity else None,
-                status=identity_status,
-                check_in=offer.check_in,
-                check_out=offer.check_out,
-                guests=offer.guests,
-                currency=offer.currency,
-                provider_scope=next(iter(providers)) if len(providers) == 1 else None,
+            identity=HotelV2HistoryIdentityOut.model_validate(
+                {
+                    "comparability_key": next(iter(fingerprints)) if canonical_identity else None,
+                    "status": identity_status,
+                    "check_in": offer.check_in,
+                    "check_out": offer.check_out,
+                    "guests": offer.guests,
+                    "currency": offer.currency,
+                    "provider_scope": next(iter(providers)) if len(providers) == 1 else None,
+                }
             ),
             points=points,
         ),
@@ -1263,9 +1248,11 @@ def transition_tracked_offer_v2_lifecycle(
         for item in hotels_service.list_tracked_offer_statuses(db, user_id=current_user.id)
         if item.offer.id == transition.offer.id
     )
-    return HotelV2TrackedOfferLifecycleOut(
-        tracking=_tracked_offer_v2_out(projection),
-        outcome=transition.outcome,
+    return HotelV2TrackedOfferLifecycleOut.model_validate(
+        {
+            "tracking": _tracked_offer_v2_out(projection),
+            "outcome": transition.outcome,
+        }
     )
 
 
@@ -1497,7 +1484,7 @@ def get_hotel_rates(
     _: User = Depends(get_current_user),
 ) -> list[HotelRateOut]:
     try:
-        _ = hotels_service.get_hotel_or_404(db, hotel_id)
+        hotels_service.get_hotel_or_404(db, hotel_id)
     except ValueError as exc:
         _raise_http_for_value_error(exc)
 

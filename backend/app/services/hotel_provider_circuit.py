@@ -6,11 +6,17 @@ from dataclasses import dataclass
 from uuid import uuid4
 
 from sqlalchemy import case, select, update
+from sqlalchemy.engine import Connection, CursorResult
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.engine import Connection
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.infrastructure.db.models import HotelProviderCircuit
+
+
+def _rowcount(result: object) -> int:
+    if not isinstance(result, CursorResult):
+        raise RuntimeError("hotel_circuit_update_result_invalid")
+    return result.rowcount
 
 
 _FAILURE_OUTCOMES = frozenset(
@@ -169,7 +175,7 @@ class HotelProviderCircuitStore:
                 else:
                     conditions.append(HotelProviderCircuit.status == "closed")
                 result = db.execute(update(HotelProviderCircuit).where(*conditions).values(**values))
-                if result.rowcount == 1:
+                if _rowcount(result) == 1:
                     db.commit()
                     return True
                 db.rollback()
@@ -237,7 +243,7 @@ class HotelProviderCircuitStore:
                         updated_at=now,
                     )
                 )
-            if result.rowcount == 1:
+            if _rowcount(result) == 1:
                 db.commit()
                 return True
             db.rollback()
@@ -279,7 +285,7 @@ class HotelProviderCircuitStore:
                 updated_at=now,
             )
         )
-        if result.rowcount != 1:
+        if _rowcount(result) != 1:
             db.rollback()
             return HotelCircuitAdmission(False, "skipped_circuit")
         db.commit()

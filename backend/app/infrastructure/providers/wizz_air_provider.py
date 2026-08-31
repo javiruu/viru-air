@@ -8,18 +8,28 @@ import time
 from collections import defaultdict
 from datetime import datetime
 from typing import Any
-try:
-    from curl_cffi import requests
-    from curl_cffi.requests.errors import RequestsError
-except ImportError:
-    import requests
-    from requests.exceptions import RequestException as RequestsError
 import ssl
+import requests
 from requests.adapters import HTTPAdapter
+from requests.exceptions import RequestException
 
 from app.core.time import utc_now_naive
 from app.domain.entities import ProviderFetchResult, ProviderFlight, ProviderSourceFetchError, ProviderWarning
 from app.infrastructure.providers.base import FlightProvider
+
+curl_requests: Any | None
+CurlRequestsError: type[Exception]
+try:
+    from curl_cffi import requests as imported_curl_requests
+    from curl_cffi.requests.errors import RequestsError as imported_curl_requests_error
+except ImportError:
+    curl_requests = None
+    CurlRequestsError = RequestException
+else:
+    curl_requests = imported_curl_requests
+    CurlRequestsError = imported_curl_requests_error
+
+RequestsError = CurlRequestsError
 
 logger = logging.getLogger(__name__)
 
@@ -41,10 +51,13 @@ class WizzAirProvider(FlightProvider):
         base_url: str = "https://be.wizzair.com/29.4.0/Api",
         day_interval: int | None = None,
     ) -> None:
-        self.base_url = (base_url or os.getenv("WIZZAIR_BASE_URL", "https://be.wizzair.com/29.4.0/Api")).rstrip("/")
-        self.day_interval = max(3, int(day_interval or os.getenv("WIZZAIR_FARECHART_DAY_INTERVAL", "9")))
+        self.base_url = (base_url or os.getenv("WIZZAIR_BASE_URL") or "https://be.wizzair.com/29.4.0/Api").rstrip("/")
+        self.day_interval = max(3, int(day_interval or os.getenv("WIZZAIR_FARECHART_DAY_INTERVAL") or "9"))
+        self._session: Any
         try:
-            self._session = requests.Session(impersonate="chrome110")
+            if curl_requests is None:
+                raise TypeError("curl_cffi_unavailable")
+            self._session = curl_requests.Session(impersonate="chrome110")
         except TypeError:
             self._session = requests.Session()
             adapter = TLSAdapter(pool_connections=_PROVIDER_POOL_SIZE, pool_maxsize=_PROVIDER_POOL_SIZE)
@@ -104,7 +117,7 @@ class WizzAirProvider(FlightProvider):
             t0 = time.perf_counter()
             try:
                 body = self._fetch_farechart(origin, destination, travel_date, timeout_ms=timeout_ms)
-            except (RequestsError, ValueError) as exc:
+            except (CurlRequestsError, RequestException, ValueError) as exc:
                 elapsed = int((time.perf_counter() - t0) * 1000)
                 logger.warning(
                     "wizzair_fetch_failed route=%s->%s date=%s elapsed_ms=%s error=%s",

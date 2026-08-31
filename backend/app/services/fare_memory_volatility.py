@@ -32,13 +32,16 @@ def build_offer_volatility_report(
         .where(FlightPriceObservation.price_amount.is_not(None))
         .order_by(FlightPriceObservation.observed_at.asc(), FlightPriceObservation.id.asc())
     ).all()
-    points = [
-        _ObservedPoint(
-            observed_at=observation.observed_at,
-            price_amount=float(observation.price_amount),
+    points: list[_ObservedPoint] = []
+    for observation in observations:
+        if observation.price_amount is None:
+            continue
+        points.append(
+            _ObservedPoint(
+                observed_at=observation.observed_at,
+                price_amount=float(observation.price_amount),
+            )
         )
-        for observation in observations
-    ]
     report = _build_volatility_report_from_points(
         points,
         subject_key=offer_id,

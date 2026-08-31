@@ -29,12 +29,13 @@ def _get_jwt_secret() -> str | None:
     return None
 
 
-JWT_SECRET = _get_jwt_secret()
-if not JWT_SECRET or JWT_SECRET == "change-me":
+jwt_secret = _get_jwt_secret()
+if not jwt_secret or jwt_secret == "change-me":
     raise RuntimeError(
         "JWT_SECRET must be set to a secure value "
         "(environment variable or backend/.env)"
     )
+JWT_SECRET: str = jwt_secret
 JWT_ALG = os.getenv("JWT_ALG", "HS256")
 ACCESS_TOKEN_MINUTES = int(os.getenv("ACCESS_TOKEN_MINUTES", "30"))
 REFRESH_TOKEN_DAYS = int(os.getenv("REFRESH_TOKEN_DAYS", "30"))

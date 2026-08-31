@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.hotels.activation import is_hotel_provider_external, resolve_hotel_activation
-from app.hotels.contracts import HotelProviderAdapter, ProviderRateRecord
+from app.hotels.contracts import HotelProviderAdapter, ProviderHotelRecord, ProviderRateRecord
 from app.hotels.fault_profiles import HotelFaultProfileError
 from app.hotels.makcorps_provider import MakcorpsHotelProviderAdapter
 from app.hotels.local_scrape_provider import LocalHtmlHotelProviderAdapter
@@ -44,6 +44,7 @@ def resolve_hotel_provider(*, provider: str | None = None) -> HotelProviderAdapt
         raise ValueError(messages.get(activation.reason, "Hotel provider ingestion is disabled."))
 
     provider = activation.provider
+    adapter: HotelProviderAdapter
     if provider == "mock":
         fixture_path = os.getenv("HOTEL_MOCK_FIXTURE_PATH")
         adapter = MockHotelProviderAdapter(
@@ -128,7 +129,7 @@ class HotelIngestionService:
         self._outcome_sink = outcome_sink
         self._latency_sink = latency_sink
 
-    def _classify_provider_result(self, value: list[object]) -> tuple[str, str | None]:
+    def _classify_provider_result(self, value: list[ProviderHotelRecord]) -> tuple[str, str | None]:
         if not value:
             return "empty", None
         profile = getattr(self._provider, "fault_profile", "happy_path")
@@ -228,26 +229,26 @@ class HotelIngestionService:
         self._db.flush()
         return stay_offer
 
+    def _increment_outcome(self, key: str) -> None:
+        if self._outcome_sink is None:
+            return
+        current = self._outcome_sink.get(key, 0)
+        self._outcome_sink[key] = current + 1 if isinstance(current, int) else 1
+
     def ingest(self) -> HotelIngestionResult:
         reservation = None
         if is_hotel_provider_external(self._provider.provider_id):
             budget = HotelProviderBudgetLedger(self._db)
             reservation = budget.reserve(policy_from_env(self._provider.provider_id, "ingestion"))
             if not reservation.allowed:
-                if self._outcome_sink is not None:
-                    self._outcome_sink["provider_fetch_budget_denied"] = self._outcome_sink.get(
-                        "provider_fetch_budget_denied", 0
-                    ) + 1
+                self._increment_outcome("provider_fetch_budget_denied")
                 raise HotelIngestionBudgetDeniedError(self._provider.provider_id)
             # The adapter call is about to happen, so the admission becomes
             # consumed before any provider I/O. It can no longer be counted
             # against the outstanding reservation.
             if not budget.consume(reservation):
                 raise RuntimeError("hotel_provider_budget_consume_failed")
-            if self._outcome_sink is not None:
-                self._outcome_sink["provider_fetch_attempted"] = self._outcome_sink.get(
-                    "provider_fetch_attempted", 0
-                ) + 1
+            self._increment_outcome("provider_fetch_attempted")
         measurement = measure_provider_call(
             self._provider.fetch_hotels,
             provider=self._provider.provider_id,
@@ -260,13 +261,9 @@ class HotelIngestionService:
         assert measurement is not None
         records = measurement.value or []
         if self._outcome_sink is not None and is_hotel_provider_external(self._provider.provider_id):
-            self._outcome_sink["provider_fetch_completed"] = self._outcome_sink.get(
-                "provider_fetch_completed", 0
-            ) + 1
+            self._increment_outcome("provider_fetch_completed")
             if not records:
-                self._outcome_sink["provider_fetch_empty"] = self._outcome_sink.get(
-                    "provider_fetch_empty", 0
-                ) + 1
+                self._increment_outcome("provider_fetch_empty")
         mapping_service = HotelMappingService(self._db)
 
         items: list[IngestedHotelSummary] = []

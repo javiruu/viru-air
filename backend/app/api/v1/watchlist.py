@@ -26,6 +26,8 @@ from app.domain.schemas import (
     WatchBulkCreateIn,
     WatchDeleteBulkIn,
     WatchDetailOut,
+    FareComparisonProfile,
+    SnapshotOut,
     WatchOut,
     CommunityPricingOut,
     WatchPriceHistoryOut,
@@ -33,10 +35,16 @@ from app.domain.schemas import (
     WatchStatusBulkIn,
     WatchUpdateIn,
 )
-from app.infrastructure.db.models import FlightWatch, PriceSnapshot, User
+from app.infrastructure.db.models import (
+    FareComparisonExtraData,
+    FareComparisonProfileData,
+    FlightWatch,
+    PriceSnapshot,
+    User,
+)
 from app.infrastructure.db.session import get_db
 from app.infrastructure.providers.flight_provider import MultiSourceFlightProvider
-from app.services.watchlist_snapshots import canonicalize_snapshot_rows
+from app.services.watchlist_snapshots import CanonicalPriceSnapshot, canonicalize_snapshot_rows
 from app.services.fare_memory_config import (
     FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE,
     FARE_MEMORY_WATCHLIST_BACKFILL_ENABLED,
@@ -67,6 +75,34 @@ WATCH_DETAIL_PRICE_HISTORY_LIMIT = max(1, int(os.getenv("WATCH_DETAIL_PRICE_HIST
 WatchRouteKey = tuple[str, str, Date]
 
 
+def _fare_profile_data(profile: FareComparisonProfile) -> FareComparisonProfileData:
+    extras: list[FareComparisonExtraData] = [
+        {"kind": extra.kind, "selected": extra.selected}
+        for extra in profile.extras
+    ]
+    return {
+        "travelers": profile.travelers,
+        "airline_id": profile.airline_id,
+        "flight_count": profile.flight_count,
+        "extras": extras,
+    }
+
+
+def _fare_profile_out(profile: FareComparisonProfileData | None) -> FareComparisonProfile | None:
+    return FareComparisonProfile.model_validate(profile) if profile is not None else None
+
+
+def _snapshot_out(snapshot: PriceSnapshot | CanonicalPriceSnapshot) -> SnapshotOut:
+    return SnapshotOut(
+        captured_at_utc=snapshot.captured_at_utc,
+        raw_price=snapshot.raw_price,
+        raw_currency=snapshot.raw_currency,
+        departure_time_local=snapshot.departure_time_local,
+        provider=snapshot.provider,
+        is_stale=snapshot.is_stale,
+    )
+
+
 def _watch_route_key(watch: FlightWatch) -> WatchRouteKey:
     return (watch.origin_iata, watch.destination_iata, watch.travel_date_local)
 
@@ -89,7 +125,7 @@ def _watch_out(
     watch: FlightWatch,
     watchers_count: int = 0,
     community_pricing: CommunityPricingOut | None = None,
-    latest_snapshot: WatchPriceHistoryOut | None = None,
+    latest_snapshot: SnapshotOut | None = None,
 ) -> WatchOut:
     return WatchOut(
         id=watch.id,
@@ -100,7 +136,7 @@ def _watch_out(
         status=watch.status,
         watchers_count=watchers_count,
         group_id=watch.group_id,
-        fare_profile=watch.fare_profile,
+        fare_profile=_fare_profile_out(watch.fare_profile),
         community_pricing=community_pricing or CommunityPricingOut(),
         latest_snapshot=latest_snapshot,
     )
@@ -109,7 +145,7 @@ def _watch_out(
 def _latest_snapshots_by_watch_id(
     db: Session,
     watches: list[FlightWatch],
-) -> dict[str, WatchPriceHistoryOut]:
+) -> dict[str, SnapshotOut]:
     if not watches:
         return {}
 
@@ -120,20 +156,12 @@ def _latest_snapshots_by_watch_id(
             .order_by(PriceSnapshot.watch_id.asc(), PriceSnapshot.captured_at_utc.asc(), PriceSnapshot.id.asc())
         )
     )
-    latest_by_watch_id: dict[str, WatchPriceHistoryOut] = {}
+    latest_by_watch_id: dict[str, SnapshotOut] = {}
     for snapshot in canonical_snapshots:
         current = latest_by_watch_id.get(snapshot.watch_id)
         if current is not None and current.captured_at_utc >= snapshot.captured_at_utc:
             continue
-        latest_by_watch_id[snapshot.watch_id] = WatchPriceHistoryOut(
-            captured_at_utc=snapshot.captured_at_utc,
-            raw_price=snapshot.raw_price,
-            raw_currency=snapshot.raw_currency,
-            departure_time_local=snapshot.departure_time_local,
-            provider=snapshot.provider,
-            is_stale=snapshot.is_stale,
-            source_kind=_snapshot_source_kind(snapshot.provider),
-        )
+        latest_by_watch_id[snapshot.watch_id] = _snapshot_out(snapshot)
     return latest_by_watch_id
 
 
@@ -180,7 +208,7 @@ def create_watch(
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> WatchOut:
+) -> WatchOut | JSONResponse:
     req_hash = request_hash(payload.model_dump(mode="json"))
     endpoint = "POST:/api/v1/watchlist"
     replay = replay_if_exists(
@@ -214,7 +242,7 @@ def create_watch(
         if existing.status == WATCH_STATUS_DELETED:
             existing.status = WATCH_STATUS_ACTIVE
             existing.target_price = payload.target_price
-            existing.fare_profile = payload.fare_profile.model_dump(mode="json") if payload.fare_profile else None
+            existing.fare_profile = _fare_profile_data(payload.fare_profile) if payload.fare_profile else None
             db.commit()
             db.refresh(existing)
             watchers_count = _count_watchers_by_route(
@@ -241,7 +269,7 @@ def create_watch(
         destination_iata=destination_iata,
         travel_date_local=payload.travel_date_local,
         target_price=payload.target_price,
-        fare_profile=payload.fare_profile.model_dump(mode="json") if payload.fare_profile else None,
+        fare_profile=_fare_profile_data(payload.fare_profile) if payload.fare_profile else None,
     )
     db.add(watch)
     try:
@@ -508,20 +536,9 @@ def get_watch_detail(
         status=watch.status,
         watchers_count=watchers_count,
         group_id=watch.group_id,
-        fare_profile=watch.fare_profile,
+        fare_profile=_fare_profile_out(watch.fare_profile),
         community_pricing=community_pricing,
-        latest_snapshot=(
-            None
-            if latest is None
-            else {
-                "captured_at_utc": latest.captured_at_utc,
-                "raw_price": latest.raw_price,
-                "raw_currency": latest.raw_currency,
-                "departure_time_local": latest.departure_time_local,
-                "provider": latest.provider,
-                "is_stale": latest.is_stale,
-            }
-        ),
+        latest_snapshot=_snapshot_out(latest) if latest is not None else None,
         price_history=[
             WatchPriceHistoryOut(
                 captured_at_utc=snapshot.captured_at_utc,
@@ -554,7 +571,7 @@ def update_watch(
     if payload.target_price is not None:
         watch.target_price = payload.target_price if payload.target_price > 0 else None
     if payload.fare_profile is not None:
-        watch.fare_profile = payload.fare_profile.model_dump(mode="json")
+        watch.fare_profile = _fare_profile_data(payload.fare_profile)
     db.commit()
     db.refresh(watch)
     watchers_count = _count_watchers_by_route(
@@ -589,13 +606,13 @@ def delete_watch(
     return {"status": "ok"}
 
 
-@router.post("/{watch_id}/refresh-now")
+@router.post("/{watch_id}/refresh-now", response_model=None)
 def refresh_watch(
     watch_id: str,
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> dict[str, str]:
+) -> dict[str, str] | JSONResponse:
     endpoint = f"POST:/api/v1/watchlist/{watch_id}/refresh-now"
     req_hash = request_hash({})
     replay = replay_if_exists(
@@ -614,7 +631,7 @@ def refresh_watch(
     refresh_result = _refresh_watch_now(db=db, watch_id=watch_id, current_user=current_user)
     if isinstance(refresh_result, JSONResponse):
         if idempotency_key:
-            response_body = json.loads(refresh_result.body.decode("utf-8"))
+            response_body = json.loads(bytes(refresh_result.body).decode("utf-8"))
             store_response(
                 db,
                 user_id=current_user.id,

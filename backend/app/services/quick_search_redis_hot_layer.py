@@ -252,10 +252,38 @@ def _decode_positive_payload(raw_value: bytes | str) -> PositiveCachePayload | N
         return None
     if not isinstance(decoded, dict):
         return None
-    required = set(PositiveCachePayload.__annotations__)
-    if not required.issubset(decoded):
+    string_fields = (
+        "origin_iata", "destination_iata", "travel_date", "provider", "source_hash", "status",
+        "expires_at_utc", "captured_at_utc", "last_accessed_at_utc", "payload_json", "warnings_json",
+    )
+    if any(not isinstance(decoded.get(field), str) for field in string_fields):
         return None
-    return decoded
+    ttl_seconds = decoded.get("ttl_seconds")
+    provider_latency_ms = decoded.get("provider_latency_ms")
+    if (
+        not isinstance(ttl_seconds, int)
+        or isinstance(ttl_seconds, bool)
+        or (
+            provider_latency_ms is not None
+            and (not isinstance(provider_latency_ms, int) or isinstance(provider_latency_ms, bool))
+        )
+    ):
+        return None
+    return {
+        "origin_iata": decoded["origin_iata"],
+        "destination_iata": decoded["destination_iata"],
+        "travel_date": decoded["travel_date"],
+        "provider": decoded["provider"],
+        "source_hash": decoded["source_hash"],
+        "status": decoded["status"],
+        "ttl_seconds": ttl_seconds,
+        "expires_at_utc": decoded["expires_at_utc"],
+        "captured_at_utc": decoded["captured_at_utc"],
+        "last_accessed_at_utc": decoded["last_accessed_at_utc"],
+        "payload_json": decoded["payload_json"],
+        "warnings_json": decoded["warnings_json"],
+        "provider_latency_ms": provider_latency_ms,
+    }
 
 
 def _decode_negative_payload(raw_value: bytes | str) -> NegativeCachePayload | None:
@@ -265,10 +293,36 @@ def _decode_negative_payload(raw_value: bytes | str) -> NegativeCachePayload | N
         return None
     if not isinstance(decoded, dict):
         return None
-    required = set(NegativeCachePayload.__annotations__)
-    if not required.issubset(decoded):
+    string_fields = (
+        "negative_fingerprint", "scope", "reason", "canonical_request_json", "observed_at",
+        "expires_at", "freshness_status", "created_at", "updated_at",
+    )
+    if any(not isinstance(decoded.get(field), str) for field in string_fields):
         return None
-    return decoded
+    provider = decoded.get("provider")
+    retry_after_at = decoded.get("retry_after_at")
+    hit_count = decoded.get("hit_count")
+    if (
+        (provider is not None and not isinstance(provider, str))
+        or (retry_after_at is not None and not isinstance(retry_after_at, str))
+        or not isinstance(hit_count, int)
+        or isinstance(hit_count, bool)
+    ):
+        return None
+    return {
+        "negative_fingerprint": decoded["negative_fingerprint"],
+        "scope": decoded["scope"],
+        "reason": decoded["reason"],
+        "provider": provider,
+        "canonical_request_json": decoded["canonical_request_json"],
+        "observed_at": decoded["observed_at"],
+        "expires_at": decoded["expires_at"],
+        "freshness_status": decoded["freshness_status"],
+        "retry_after_at": retry_after_at,
+        "hit_count": hit_count,
+        "created_at": decoded["created_at"],
+        "updated_at": decoded["updated_at"],
+    }
 
 
 def _redis_error_types() -> tuple[type[BaseException], ...]:

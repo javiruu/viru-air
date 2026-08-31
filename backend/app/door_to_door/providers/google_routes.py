@@ -17,6 +17,7 @@ from app.door_to_door.schemas import (
     DoorToDoorConfidence,
     DoorToDoorLegOut,
     DoorToDoorLocation,
+    DoorToDoorMode,
     DoorToDoorOptionOut,
     DoorToDoorSourceOut,
 )
@@ -24,6 +25,7 @@ from app.door_to_door.schemas import (
 GOOGLE_ROUTES_ENDPOINT = "https://routes.googleapis.com/directions/v2:computeRoutes"
 GOOGLE_PLACE_DETAILS_ENDPOINT = "https://places.googleapis.com/v1/places/{place_id}"
 logger = logging.getLogger("app.door_to_door.google_routes")
+type JsonValue = None | bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"]
 AIRPORT_COORDS: dict[str, tuple[float, float]] = {
     "AGP": (36.675, -4.499),
     "ALC": (38.282, -0.558),
@@ -459,7 +461,7 @@ class GoogleRoutesProvider(DoorToDoorProvider):
         departure_at: datetime,
     ) -> _RouteResult | None:
         normalized_mode = self._normalize_mode(mode)
-        body: dict[str, object] = {
+        body: dict[str, JsonValue] = {
             "origin": {
                 "location": {
                     "latLng": {
@@ -561,7 +563,7 @@ class GoogleRoutesProvider(DoorToDoorProvider):
             return None
 
     @staticmethod
-    def _map_mode(raw_mode: str) -> str:
+    def _map_mode(raw_mode: str) -> DoorToDoorMode:
         if raw_mode == "transit":
             return "bus"
         if raw_mode == "walking":

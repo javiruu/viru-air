@@ -246,7 +246,7 @@ def list_seed_airports(
     page = filtered[offset : offset + effective_limit]
     next_offset = offset + len(page)
     if next_offset >= total:
-        next_offset = None
+        return page, total, None
     return page, total, next_offset
 
 

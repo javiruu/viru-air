@@ -151,6 +151,7 @@ def _build_aggregate(
         .order_by(FlightPriceObservation.id.desc())
         .limit(1)
     )
+    resolved_latest_price = float(latest_price) if latest_price is not None else row.max_price
     return HistoricalDailyAggregate(
         origin_iata=row.key.origin_iata,
         destination_iata=row.key.destination_iata,
@@ -159,7 +160,7 @@ def _build_aggregate(
         observation_count=row.observation_count,
         min_price=row.min_price,
         max_price=row.max_price,
-        latest_price=float(latest_price),
+        latest_price=resolved_latest_price,
         latest_observed_at=row.latest_observed_at,
         compaction_candidate=row.key.departure_date < now.date(),
     )

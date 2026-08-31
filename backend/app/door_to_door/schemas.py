@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import AliasChoices, BaseModel, Field, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 
 DoorToDoorSourceType = Literal["api", "open_data", "aggregator", "deeplink", "scraper", "mock", "estimate", "maps", "external_deeplink"]
 DoorToDoorOptionStatus = Literal["real_result", "real_deeplink", "estimate_only"]
@@ -11,7 +11,7 @@ DoorToDoorConfidence = Literal["live", "cached", "estimated", "deeplink", "unava
 DoorToDoorLocationType = Literal["city", "address", "station", "saved_location", "airport", "airport_only"]
 DoorToDoorSortBy = Literal["best_balance", "cheapest", "fastest", "fewest_changes", "lowest_emissions"]
 DoorToDoorLuggage = Literal["backpack", "cabin", "checked"]
-DoorToDoorMode = Literal["bus", "train", "rideshare", "shuttle", "taxi", "car", "walking", "flight"]
+DoorToDoorMode = Literal["bus", "train", "metro", "rideshare", "shuttle", "taxi", "car", "walking", "flight"]
 DoorToDoorSuggestionSourceType = Literal["local_static", "mock", "api", "open_data"]
 DoorToDoorCapabilityState = Literal["available", "partial", "planned", "unavailable"]
 DoorToDoorCapabilityKey = Literal[
@@ -106,7 +106,7 @@ class DoorToDoorSourceOut(BaseModel):
 
 class DoorToDoorActionOut(BaseModel):
     id: str
-    provider: Literal["google_maps", "blablacar", "goopti", "gtfs"]
+    provider: Literal["google_maps", "blablacar", "goopti", "gtfs", "mozio"]
     label: str
     url: str
     kind: Literal["directions", "provider_search", "booking"]
@@ -120,8 +120,14 @@ class DoorToDoorActionOut(BaseModel):
 class DoorToDoorLegOut(BaseModel):
     type: Literal["ground", "flight"]
     mode: DoorToDoorMode
-    from_location: str = Field(alias="from")
-    to_location: str = Field(alias="to")
+    from_location: str = Field(
+        validation_alias=AliasChoices("from", "from_location"),
+        serialization_alias="from",
+    )
+    to_location: str = Field(
+        validation_alias=AliasChoices("to", "to_location"),
+        serialization_alias="to",
+    )
     departure_at: datetime | None = None
     arrival_at: datetime | None = None
     duration_minutes: int | None = Field(default=None, ge=0)
@@ -135,7 +141,7 @@ class DoorToDoorLegOut(BaseModel):
     co2_kg: float | None = Field(default=None, ge=0)
     actions: list[DoorToDoorActionOut] = Field(default_factory=list)
 
-    model_config = {"populate_by_name": True}
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class DoorToDoorDeepLinkOut(BaseModel):
