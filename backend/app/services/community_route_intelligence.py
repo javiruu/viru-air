@@ -12,6 +12,7 @@ from app.domain.schemas import (
     CommunityRouteInsightOut,
 )
 from app.domain.vocabulary import WATCH_STATUS_DELETED
+from app.infrastructure.airports_catalog import get_airport
 from app.infrastructure.db.models import FlightWatch, QuickSearchPopularityDaily
 from app.services.community_pricing import (
     COMMUNITY_PRICE_MINIMUM_SAMPLE_SIZE,
@@ -172,4 +173,6 @@ def _popularity_rows(
     return [
         (origin_iata, destination_iata, int(searches_count))
         for origin_iata, destination_iata, searches_count in rows
+        if get_airport(origin_iata) is not None
+        and get_airport(destination_iata) is not None
     ]
