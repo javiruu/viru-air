@@ -109,12 +109,13 @@ def test_popular_routes_use_exact_seven_day_window_and_stable_top_twenty_percent
         ("MAD", "BCN", 20),
         ("MAD", "LIS", 15),
         ("AGP", "FCO", 10),
-        ("SVQ", "BIO", 8),
+        ("SVQ", "VCE", 8),
         ("ALC", "PMI", 5),
-        ("BIO", "LPA", 5),
+        ("DUB", "LPA", 5),
     ]
     for origin, destination, count in routes:
         _seed_popularity(origin, destination, count)
+    _seed_popularity("ZZZ", "BCN", 99)
     _seed_popularity("LPA", "TFN", 99, days_ago=7)
 
     response = client.get("/api/v1/community/routes/popular", headers=headers)
@@ -125,6 +126,7 @@ def test_popular_routes_use_exact_seven_day_window_and_stable_top_twenty_percent
     assert [(row["origin_iata"], row["destination_iata"]) for row in payload["routes"]] == [
         (origin, destination) for origin, destination, _ in routes
     ]
+    assert all("ZZZ" not in (row["origin_iata"], row["destination_iata"]) for row in payload["routes"])
     assert all(row["is_trending"] is True for row in payload["routes"][:2])
     assert all(row["is_trending"] is False for row in payload["routes"][2:])
 
