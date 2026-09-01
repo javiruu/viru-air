@@ -2,22 +2,21 @@ import { useEffect, useMemo, useState } from "react";
 
 import es from "./es";
 import en from "./en";
+import { DEFAULT_LOCALE, getLanguage, LANGUAGES, type Locale, type LocaleTag } from "./config";
 
-export type Locale = "es" | "en";
-export type LocaleTag = "es-ES" | "en-US";
+export { DEFAULT_LOCALE, LANGUAGES, getLanguage, type Locale, type LocaleTag } from "./config";
 
 type Dictionary = typeof es;
 type DictValue = string | { one: string; other: string };
 
 const DICTS: Record<Locale, Dictionary> = { es, en };
-const LOCALE_TAGS: Record<Locale, LocaleTag> = { es: "es-ES", en: "en-US" };
-const DEFAULT_LOCALE: Locale = "es";
+const LOCALE_CHANGE_EVENT = "viru:locale-changed";
 
 export function normalizeLocale(raw?: string | null): Locale {
   if (!raw) return DEFAULT_LOCALE;
   const lower = raw.trim().toLowerCase();
-  if (lower.startsWith("en")) return "en";
-  return "es";
+  const language = LANGUAGES.find(({ locale }) => lower === locale || lower.startsWith(`${locale}-`));
+  return language?.locale ?? DEFAULT_LOCALE;
 }
 
 export function resolveLocale(raw?: string | null): Locale {
@@ -33,15 +32,17 @@ export function resolveLocale(raw?: string | null): Locale {
 }
 
 export function localeTag(locale: Locale): LocaleTag {
-  return LOCALE_TAGS[locale] || LOCALE_TAGS[DEFAULT_LOCALE];
+  return getLanguage(locale).localeTag;
 }
 
 export function persistLocale(locale: Locale) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem("viru_locale", locale);
+  const normalizedLocale = normalizeLocale(locale);
+  window.localStorage.setItem("viru_locale", normalizedLocale);
   if (document?.documentElement) {
-    document.documentElement.lang = locale;
+    document.documentElement.lang = normalizedLocale;
   }
+  window.dispatchEvent(new CustomEvent(LOCALE_CHANGE_EVENT, { detail: normalizedLocale }));
 }
 
 function getNestedValue(dict: Dictionary, key: string): DictValue | null {
@@ -88,11 +89,18 @@ export function useI18n(rawLocale?: string | null) {
   const [locale, setLocale] = useState<Locale>(() => normalizeLocale(rawLocale));
 
   useEffect(() => {
-    if (rawLocale) {
-      setLocale(normalizeLocale(rawLocale));
-      return;
-    }
-    setLocale(resolveLocale());
+    const syncLocale = (nextLocale: Locale) => {
+      setLocale(nextLocale);
+      document.documentElement.lang = nextLocale;
+    };
+    const initialLocale = rawLocale ? normalizeLocale(rawLocale) : resolveLocale();
+    syncLocale(initialLocale);
+    const onLocaleChange = (event: Event) => {
+      const detail = (event as CustomEvent<Locale>).detail;
+      syncLocale(detail ? normalizeLocale(detail) : resolveLocale());
+    };
+    window.addEventListener(LOCALE_CHANGE_EVENT, onLocaleChange);
+    return () => window.removeEventListener(LOCALE_CHANGE_EVENT, onLocaleChange);
   }, [rawLocale]);
 
   const localeKey = localeTag(locale);

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import LanguageToggle from "@/modules/shared/LanguageToggle";
+import LanguageSelector from "@/modules/shared/LanguageSelector";
 import { NAV_V1_PUBLIC } from "@/modules/shared/navigationV1";
 import ThemeToggle from "@/modules/shared/ThemeToggle";
 import ViruWordmark from "@/modules/shared/ViruWordmark";
@@ -42,7 +42,7 @@ export default function PublicShellHeader() {
         })}
       </nav>
       <div className="public-shell-actions">
-        <LanguageToggle />
+        <LanguageSelector />
         <ThemeToggle />
       </div>
     </div>
