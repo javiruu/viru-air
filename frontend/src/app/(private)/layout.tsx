@@ -19,10 +19,20 @@ export default function PrivateLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    apiFetchWithStatus<NotificationSummary>("/notifications/summary", undefined, { timeoutMs: 3500 }).then((result) => {
-      if (active && result.ok) setUnreadSignals(result.data.unread);
-    });
-    return () => { active = false; };
+    let latestRequest = 0;
+    const refreshUnreadSignals = () => {
+      const requestId = ++latestRequest;
+      apiFetchWithStatus<NotificationSummary>("/notifications/summary", undefined, { timeoutMs: 3500 }).then((result) => {
+        if (active && requestId === latestRequest && result.ok) setUnreadSignals(result.data.unread);
+      });
+    };
+
+    refreshUnreadSignals();
+    window.addEventListener("viru:notifications-changed", refreshUnreadSignals);
+    return () => {
+      active = false;
+      window.removeEventListener("viru:notifications-changed", refreshUnreadSignals);
+    };
   }, []);
 
   return (

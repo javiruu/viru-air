@@ -34,6 +34,16 @@ test("private navigation keeps the page title in sync with unread notifications"
   assert.match(source, /\}, \[unreadSignals\]\);/);
 });
 
+test("private shell refreshes unread notifications after inbox read actions", () => {
+  const layout = read("src/app/(private)/layout.tsx");
+  const inbox = read("src/modules/signals/SignalsInbox.tsx");
+
+  assert.match(layout, /window\.addEventListener\("viru:notifications-changed", refreshUnreadSignals\)/);
+  assert.match(layout, /window\.removeEventListener\("viru:notifications-changed", refreshUnreadSignals\)/);
+  assert.match(inbox, /apiFetch\(`\/notifications\/\$\{item\.source_type\}\/\$\{item\.source_id\}\/read`, \{ method: "POST" \}\);\s*window\.dispatchEvent\(new Event\("viru:notifications-changed"\)\)/);
+  assert.match(inbox, /apiFetch\("\/notifications\/read-all", \{ method: "POST" \}\);\s*window\.dispatchEvent\(new Event\("viru:notifications-changed"\)\)/);
+});
+
 test("root metadata and manifest expose the Viru Air tab identity", () => {
   const layout = read("src/app/layout.tsx");
   const manifest = read("public/manifest.json");
