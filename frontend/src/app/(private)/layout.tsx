@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 
 import AccountMenu from "@/modules/shared/AccountMenu";
-import LanguageToggle from "@/modules/shared/LanguageToggle";
+import LanguageSelector from "@/modules/shared/LanguageSelector";
 import MobileBottomNav from "@/modules/shared/MobileBottomNav";
 import PrivateTopBar from "@/modules/shared/PrivateTopBar";
 import ThemeToggle from "@/modules/shared/ThemeToggle";
@@ -43,7 +43,7 @@ export default function PrivateLayout({ children }: { children: ReactNode }) {
           <PrivateTopBar>
             <div className="private-account-controls">
               <div className="private-locale-toggle">
-                <LanguageToggle />
+                <LanguageSelector />
               </div>
               <div className="private-theme-toggle">
                 <ThemeToggle />

@@ -79,7 +79,7 @@ test("PublicShellHeader renders brand, nav and action controls", () => {
   assert.match(source, /public-shell-nav/);
   assert.match(source, /public-shell-nav-link/);
   assert.match(source, /public-shell-actions/);
-  assert.match(source, /<LanguageToggle/);
+  assert.match(source, /<LanguageSelector/);
   assert.match(source, /<ThemeToggle/);
 });
 
