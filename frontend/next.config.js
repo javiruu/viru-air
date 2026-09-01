@@ -5,6 +5,7 @@ const distDir = process.env.NEXT_DIST_DIR?.trim() || ".next";
 const nextConfig = {
   reactStrictMode: true,
   distDir,
+  allowedDevOrigins: ["localhost", "127.0.0.1"],
   async rewrites() {
     return [
       {

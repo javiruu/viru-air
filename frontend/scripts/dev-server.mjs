@@ -69,7 +69,7 @@ function parsePort(value) {
 export function resolveDevDistDir(environment = process.env, port = DEFAULT_PORT) {
   const configuredDir = environment.NEXT_DIST_DIR?.trim();
   if (configuredDir) return configuredDir;
-  return port === DEFAULT_PORT ? ".next" : `.next-dev-${port}`;
+  return `.next-dev-${port}`;
 }
 
 export function resolveDevPort(commandArguments) {
