@@ -123,6 +123,7 @@ export function WatchRow({
   const ticketArt = origin.art || destination.art;
   const departureDate = ticketDate(watch.travel_date_local, localeTag);
   const watchStatus = getWatchStatusMeta(watch.status, t);
+  const showWatchStatus = watch.status !== "active";
   const canManageTracking =
     !watch.community_pricing.eligible && watch.status !== "purchased";
   const trend =
@@ -221,7 +222,7 @@ export function WatchRow({
           <circle cx="449" cy="32" r="5" />
         </svg>
         <div className="watch-ticket-status-line">
-          <span className={`status-pill ${watchStatus.tone}`}>{watchStatus.label}</span>
+          {showWatchStatus ? <span className={`status-pill ${watchStatus.tone}`}>{watchStatus.label}</span> : null}
           <CommunityRouteSignal watchersCount={watch.watchers_count ?? 0} insight={communityInsight} />
         </div>
         <div className="watch-ticket-pricing">
