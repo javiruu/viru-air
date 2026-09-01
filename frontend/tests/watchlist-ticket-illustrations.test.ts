@@ -46,6 +46,13 @@ test("WatchRow resolves city names dynamically and prefers an available origin i
   assert.match(source, /TSF: \{ label: "Treviso", art: "" \}/);
 });
 
+test("WatchRow omits the active-status pill while preserving other lifecycle states", () => {
+  const source = fs.readFileSync(watchRowPath, "utf8");
+
+  assert.match(source, /const showWatchStatus = watch\.status !== "active";/);
+  assert.match(source, /\{showWatchStatus \? <span className=\{`status-pill \$\{watchStatus\.tone\}`\}>\{watchStatus\.label\}<\/span> : null\}/);
+});
+
 test("Watchlist ticket preserves the desktop ticket anatomy inside its narrow route column", () => {
   const panelSource = fs.readFileSync(smartPanelPath, "utf8");
   const screensSource = fs.readFileSync(screensPath, "utf8");
