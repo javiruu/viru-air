@@ -80,6 +80,7 @@ export function SignalsInbox({ requestedFilter }: { requestedFilter?: string | n
   async function markRead(item: NotificationInboxItem): Promise<void> {
     try {
       await apiFetch(`/notifications/${item.source_type}/${item.source_id}/read`, { method: "POST" });
+      window.dispatchEvent(new Event("viru:notifications-changed"));
       await loadNotifications();
       notify({ tone: "success", title: t("notifications.toast.markedRead"), durationMs: 2600 });
     } catch {
@@ -90,6 +91,7 @@ export function SignalsInbox({ requestedFilter }: { requestedFilter?: string | n
   async function markAllRead(): Promise<void> {
     try {
       await apiFetch("/notifications/read-all", { method: "POST" });
+      window.dispatchEvent(new Event("viru:notifications-changed"));
       await loadNotifications();
       notify({ tone: "success", title: t("notifications.toast.markedAll"), durationMs: 2600 });
     } catch {
