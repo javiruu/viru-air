@@ -75,17 +75,19 @@ test("resolves the effective Next development port from supported CLI forms", ()
 
 test("forwards one effective port to Next and preserves unrelated arguments", () => {
   assert.deepEqual(
-    buildNextDevArguments(["--hostname", "0.0.0.0", "-p", "4101", "--port=4102"]),
+    buildNextDevArguments(["--warmup", "--hostname", "0.0.0.0", "-p", "4101", "--port=4102"]),
     ["dev", "--turbopack", "-p", "4102", "--hostname", "0.0.0.0"],
   );
 });
 
-test("allows route warmup to be disabled explicitly", () => {
-  assert.equal(isRouteWarmupEnabled({}), true);
+test("keeps route warmup opt-in and honors explicit environment settings", () => {
+  assert.equal(isRouteWarmupEnabled({}), false);
+  assert.equal(isRouteWarmupEnabled({}, ["--warmup"]), true);
   assert.equal(isRouteWarmupEnabled({ VIRU_ROUTE_WARMUP: "1" }), true);
   assert.equal(isRouteWarmupEnabled({ VIRU_ROUTE_WARMUP: "true" }), true);
   assert.equal(isRouteWarmupEnabled({ VIRU_ROUTE_WARMUP: "0" }), false);
   assert.equal(isRouteWarmupEnabled({ VIRU_ROUTE_WARMUP: "false" }), false);
+  assert.equal(isRouteWarmupEnabled({ VIRU_ROUTE_WARMUP: "false" }, ["--warmup"]), false);
 });
 
 test("warms routes sequentially and isolates a failing route", async () => {

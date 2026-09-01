@@ -1,4 +1,4 @@
-import { translate } from "@/i18n";
+import { translate } from "@/i18n/shell";
 import { getToken, hasToken } from "@/modules/shared/auth";
 
 const RAW_API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1").trim();

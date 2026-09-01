@@ -11,7 +11,7 @@ import { isDashboardDemoAccessEnabled, signInDashboardDemoAccount } from "@/modu
 import { submitLogin } from "@/modules/shared/login-submit";
 import { resolvePostAuthUrl } from "@/modules/shared/navigation";
 import { BoneyardForm } from "@/modules/shared/BoneyardLoad";
-import { useI18n } from "@/i18n";
+import { useI18n } from "@/i18n/shell";
 
 function LoginContent() {
   const router = useRouter();

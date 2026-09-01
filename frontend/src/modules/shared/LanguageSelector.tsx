@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Check, ChevronDown } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
-import { LANGUAGES, persistLocale, useI18n, type Locale } from "@/i18n";
+import { LANGUAGES, persistLocale, useI18n, type Locale } from "@/i18n/shell";
 import { apiFetch } from "@/modules/shared/api";
 import { hasToken } from "@/modules/shared/auth";
 

@@ -7,7 +7,7 @@ import LanguageSelector from "@/modules/shared/LanguageSelector";
 import { NAV_V1_PUBLIC } from "@/modules/shared/navigationV1";
 import ThemeToggle from "@/modules/shared/ThemeToggle";
 import ViruWordmark from "@/modules/shared/ViruWordmark";
-import { useI18n } from "@/i18n";
+import { useI18n } from "@/i18n/shell";
 
 const PUBLIC_NAV_ITEMS = NAV_V1_PUBLIC.filter(
   (item) => item.href !== "/login" && item.href !== "/register",

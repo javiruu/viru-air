@@ -94,6 +94,7 @@ export function buildNextDevArguments(commandArguments) {
   const forwardedArguments = [];
   for (let index = 0; index < commandArguments.length; index += 1) {
     const argument = commandArguments[index];
+    if (argument === "--warmup") continue;
     if (argument === "-p" || argument === "--port") {
       index += 1;
       continue;
@@ -112,9 +113,12 @@ export function buildNextDevArguments(commandArguments) {
   ];
 }
 
-export function isRouteWarmupEnabled(environment) {
+export function isRouteWarmupEnabled(environment, commandArguments = []) {
   const configuredValue = environment.VIRU_ROUTE_WARMUP?.trim().toLowerCase();
-  return configuredValue !== "0" && configuredValue !== "false";
+  if (configuredValue !== undefined) {
+    return configuredValue === "1" || configuredValue === "true";
+  }
+  return commandArguments.includes("--warmup");
 }
 
 function delay(milliseconds) {
@@ -228,7 +232,7 @@ async function runDevelopmentServer(commandArguments) {
     { env: environment, stdio: "inherit" },
   );
 
-  if (isRouteWarmupEnabled(process.env)) {
+  if (isRouteWarmupEnabled(process.env, commandArguments)) {
     void runRouteWarmup({
       origin,
       appDirectory: path.resolve("src", "app"),
@@ -237,7 +241,7 @@ async function runDevelopmentServer(commandArguments) {
       const reason = error instanceof Error ? error.message : "error desconocido";
       console.warn(`[Viru warmup] No se pudo completar: ${reason}`);
     });
-  } else {
+  } else if (process.env.VIRU_ROUTE_WARMUP) {
     console.log("[Viru warmup] Desactivado mediante VIRU_ROUTE_WARMUP.");
   }
 

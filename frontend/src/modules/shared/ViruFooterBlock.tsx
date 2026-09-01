@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { hasToken } from "@/modules/shared/auth";
-import { useI18n } from "@/i18n";
+import { useI18n } from "@/i18n/shell";
 import ViruWordmark from "@/modules/shared/ViruWordmark";
 
 type FooterLink = {
