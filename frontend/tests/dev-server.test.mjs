@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
+import nextConfig from "../next.config.js";
 import {
   buildNextDevArguments,
   discoverStaticRoutes,
@@ -54,10 +55,14 @@ test("discovers every static App Router page in Viru priority order", async () =
   }
 });
 
-test("uses an isolated development dist directory for non-default ports", () => {
-  assert.equal(resolveDevDistDir({}, 3000), ".next");
+test("uses an isolated development dist directory for every port", () => {
+  assert.equal(resolveDevDistDir({}, 3000), ".next-dev-3000");
   assert.equal(resolveDevDistDir({}, 3100), ".next-dev-3100");
   assert.equal(resolveDevDistDir({ NEXT_DIST_DIR: "custom-next" }, 3100), "custom-next");
+});
+
+test("allows the local origins used by the development server", () => {
+  assert.deepEqual(nextConfig.allowedDevOrigins, ["localhost", "127.0.0.1"]);
 });
 
 test("resolves the effective Next development port from supported CLI forms", () => {
