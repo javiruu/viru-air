@@ -1,7 +1,7 @@
 "use client";
 
 import HelpBase from "@/modules/shared/HelpBase";
-import { useI18n } from "@/i18n";
+import { useI18n } from "@/i18n/shell";
 
 export default function AyudaPublicaPage() {
   const { t } = useI18n();

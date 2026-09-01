@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useI18n } from "@/i18n";
+import { useI18n } from "@/i18n/shell";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 
 type ThemeMode = "light" | "dark";

@@ -8,7 +8,7 @@ import { BoneyardPanel, LoadReference } from "@/modules/shared/BoneyardLoad";
 import { apiFetchWithStatus } from "@/modules/shared/api";
 import { clearToken, hasToken } from "@/modules/shared/auth";
 import { isDashboardDemoAccessEnabled } from "@/modules/shared/dashboard-demo-session";
-import { useI18n } from "@/i18n";
+import { useI18n } from "@/i18n/shell";
 
 type LandingState = "checking" | "public";
 

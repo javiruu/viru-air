@@ -11,7 +11,7 @@ import { clearToken, hasToken, saveAuthTokens } from "@/modules/shared/auth";
 import { isDashboardDemoAccessEnabled, signInDashboardDemoAccount } from "@/modules/shared/dashboard-demo-session";
 import { resolvePostAuthUrl } from "@/modules/shared/navigation";
 import { BoneyardForm } from "@/modules/shared/BoneyardLoad";
-import { useI18n } from "@/i18n";
+import { useI18n } from "@/i18n/shell";
 
 function RegisterContent() {
   const router = useRouter();

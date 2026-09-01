@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { GlassForgotPasswordCard } from "@/components/components/forms/glass-forgot-password";
 import { BoneyardForm } from "@/modules/shared/BoneyardLoad";
-import { useI18n } from "@/i18n";
+import { useI18n } from "@/i18n/shell";
 import { submitForgotPassword } from "@/modules/shared/forgot-password";
 
 function ForgotPasswordContent() {
