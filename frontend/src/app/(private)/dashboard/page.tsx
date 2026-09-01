@@ -9,14 +9,23 @@ import { useI18n } from "@/i18n";
 import { useFtueHint } from "@/lib/ftue";
 import { trackUxEvent } from "@/lib/uxTracking";
 import { DashboardAccessSwitch } from "@/modules/dashboard/dashboard-access-switch";
+import { getHeroOpportunityMetrics } from "@/modules/dashboard/hero-opportunity-metrics";
 import { CommunityCorridorsPanel } from "@/modules/community-routes/CommunityCorridorsPanel";
 import communityStyles from "@/modules/community-routes/CommunityCorridorsPanel.module.css";
 import { apiFetch } from "@/modules/shared/api";
 import { trackEvent } from "@/modules/shared/analytics";
+import { formatCurrency, formatPercent } from "@/modules/shared/format";
 
 type Me = { id: string; email: string; locale: string; is_admin: boolean };
-type Watch = { id: string; origin_iata: string; destination_iata: string; status: string };
+type Watch = {
+  id: string;
+  origin_iata: string;
+  destination_iata: string;
+  status: string;
+  latest_snapshot?: { raw_price: number; raw_currency: string } | null;
+};
 type Note = { id: string; title: string; body: string; created_at: string; updated_at: string };
+type PriceSummary = { latest_price: number | null; delta_pct: number | null };
 
 type BackendBanner = {
   severity: "warning" | "error";
@@ -49,6 +58,7 @@ export default function DashboardPage() {
   const [me, setMe] = useState<Me | null>(null);
   const [notificationSummary, setNotificationSummary] = useState<DashboardNotificationSummary | null>(null);
   const [watches, setWatches] = useState<Watch[]>([]);
+  const [heroPriceSummary, setHeroPriceSummary] = useState<PriceSummary | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const [backendBanner, setBackendBanner] = useState<BackendBanner | null>(null);
   const dashboardHint = useFtueHint("dashboard");
@@ -87,6 +97,27 @@ export default function DashboardPage() {
   useEffect(() => {
     loadDashboard();
   }, [loadDashboard]);
+
+  useEffect(() => {
+    const watchId = watches[0]?.id;
+    if (!watchId) {
+      setHeroPriceSummary(null);
+      return;
+    }
+
+    let isCurrent = true;
+    apiFetch<PriceSummary>(`/prices/summary?watch_id=${watchId}`)
+      .then((summary) => {
+        if (isCurrent) setHeroPriceSummary(summary);
+      })
+      .catch(() => {
+        if (isCurrent) setHeroPriceSummary(null);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [watches]);
 
   const formattedNoteDate = useCallback((value: string) => {
     if (!value) return "";
@@ -239,6 +270,16 @@ export default function DashboardPage() {
   const locale = me?.locale?.toUpperCase() || "ES";
   const unreadAlertsCount = notificationSummary?.unread ?? 0;
   const hasOpportunity = Boolean(topSuggestion);
+  const heroMetrics = useMemo(
+    () => getHeroOpportunityMetrics(watches[0] ?? null, heroPriceSummary),
+    [heroPriceSummary, watches],
+  );
+  const heroPriceLabel = heroMetrics.latestPrice != null && heroMetrics.currency
+    ? formatCurrency(heroMetrics.latestPrice, heroMetrics.currency, localeTag)
+    : t("dashboard.hero.opportunityValueUnknown");
+  const heroDeltaLabel = heroMetrics.deltaPct != null
+    ? `${heroMetrics.deltaPct > 0 ? "+" : ""}${formatPercent(heroMetrics.deltaPct, localeTag)}`
+    : t("dashboard.hero.opportunityValueUnknown");
   const heroStatus = t("dashboard.hero.status", { count: watches.length, activity: activityLabel });
   const heroCtaHref = "/quick-search";
   const featuredNews = useMemo(() => getDashboardFeaturedNews(localeTag), [localeTag]);
@@ -270,13 +311,12 @@ export default function DashboardPage() {
                     <div className="hero-opportunity-metrics">
                       <div>
                         <span className="hero-label">{t("dashboard.hero.opportunityPriceLabel")}</span>
-                        <strong>{t("dashboard.hero.opportunityValueUnknown")}</strong>
+                        <strong>{heroPriceLabel}</strong>
                       </div>
                       <div>
                         <span className="hero-label">{t("dashboard.hero.opportunityDeltaLabel")}</span>
-                        <strong>{t("dashboard.hero.opportunityValueUnknown")}</strong>
+                        <strong>{heroDeltaLabel}</strong>
                       </div>
-                      <span className="status-pill success">{t("dashboard.hero.opportunityBadge")}</span>
                     </div>
                   </div>
                 ) : (
