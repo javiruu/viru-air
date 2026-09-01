@@ -7,7 +7,21 @@ import { fileURLToPath } from "node:url";
 const DEFAULT_PORT = 3000;
 const SERVER_READY_TIMEOUT_MS = 5 * 60_000;
 const ROUTE_REQUEST_TIMEOUT_MS = 120_000;
-const ROUTE_PAUSE_MS = 75;
+const FAST_ROUTE_PAUSE_MS = 75;
+const SLOW_WARMUP_PROFILE = Object.freeze({
+  mode: "slow",
+  initialDelayMs: 8_000,
+  pauseMs: 1_500,
+  batchSize: 2,
+  batchPauseMs: 4_000,
+});
+const FAST_WARMUP_PROFILE = Object.freeze({
+  mode: "fast",
+  initialDelayMs: 0,
+  pauseMs: FAST_ROUTE_PAUSE_MS,
+  batchSize: Number.POSITIVE_INFINITY,
+  batchPauseMs: 0,
+});
 const PRIMARY_ROUTES = [
   "/",
   "/dashboard",
@@ -94,7 +108,7 @@ export function buildNextDevArguments(commandArguments) {
   const forwardedArguments = [];
   for (let index = 0; index < commandArguments.length; index += 1) {
     const argument = commandArguments[index];
-    if (argument === "--warmup") continue;
+    if (argument === "--warmup" || argument.startsWith("--warmup=")) continue;
     if (argument === "-p" || argument === "--port") {
       index += 1;
       continue;
@@ -113,18 +127,46 @@ export function buildNextDevArguments(commandArguments) {
   ];
 }
 
-export function isRouteWarmupEnabled(environment, commandArguments = []) {
-  const configuredValue = environment.VIRU_ROUTE_WARMUP?.trim().toLowerCase();
-  if (configuredValue !== undefined) {
-    return configuredValue === "1" || configuredValue === "true";
+function getCommandWarmupMode(commandArguments) {
+  for (const argument of commandArguments) {
+    if (argument === "--warmup") return "slow";
+    if (argument.startsWith("--warmup=")) return argument.slice("--warmup=".length).trim().toLowerCase();
   }
-  return commandArguments.includes("--warmup");
+  return undefined;
 }
 
-function delay(milliseconds) {
+export function resolveRouteWarmupProfile(environment = process.env, commandArguments = []) {
+  const configuredMode = environment.VIRU_ROUTE_WARMUP?.trim().toLowerCase();
+  const mode = configuredMode === undefined ? getCommandWarmupMode(commandArguments) ?? "slow" : configuredMode;
+
+  if (["0", "false", "off", "none"].includes(mode)) return null;
+  if (["fast", "eager"].includes(mode)) return { ...FAST_WARMUP_PROFILE };
+  if (["1", "true", "slow"].includes(mode)) return { ...SLOW_WARMUP_PROFILE };
+  return null;
+}
+
+export function isRouteWarmupEnabled(environment, commandArguments = []) {
+  return resolveRouteWarmupProfile(environment, commandArguments) !== null;
+}
+
+function delay(milliseconds, signal) {
+  if (milliseconds <= 0 || signal?.aborted) return Promise.resolve();
   return new Promise((resolve) => {
-    setTimeout(resolve, milliseconds);
+    const finish = () => {
+      clearTimeout(timeout);
+      signal?.removeEventListener("abort", finish);
+      resolve();
+    };
+    const timeout = setTimeout(finish, milliseconds);
+    signal?.addEventListener("abort", finish, { once: true });
   });
+}
+
+function routePauseAfter({ index, total, pauseMs, batchSize, batchPauseMs }) {
+  if (index >= total - 1) return 0;
+  const completed = index + 1;
+  const endsBatch = Number.isFinite(batchSize) && batchSize > 0 && completed % batchSize === 0;
+  return endsBatch ? batchPauseMs : pauseMs;
 }
 
 async function requestRoute(origin, route, timeoutMs, parentSignal) {
@@ -159,7 +201,7 @@ async function waitForServer(origin, signal) {
       if (signal.aborted) return false;
       if (!(error instanceof Error)) throw error;
     }
-    await delay(250);
+    await delay(250, signal);
   }
   return false;
 }
@@ -167,8 +209,11 @@ async function waitForServer(origin, signal) {
 export async function warmStaticRoutes({
   origin,
   routes,
-  pauseMs = ROUTE_PAUSE_MS,
+  pauseMs = FAST_ROUTE_PAUSE_MS,
+  batchSize = Number.POSITIVE_INFINITY,
+  batchPauseMs = 0,
   requestTimeoutMs = ROUTE_REQUEST_TIMEOUT_MS,
+  delayFn = delay,
   log = console.log,
   signal,
 }) {
@@ -194,15 +239,17 @@ export async function warmStaticRoutes({
       const reason = error instanceof Error ? error.message : "error desconocido";
       log(`[Viru warmup] ${index + 1}/${routes.length} ${route} falló: ${reason}`);
     }
-    if (pauseMs > 0 && index < routes.length - 1) await delay(pauseMs);
+
+    const nextPauseMs = routePauseAfter({ index, total: routes.length, pauseMs, batchSize, batchPauseMs });
+    if (nextPauseMs > 0) await delayFn(nextPauseMs, signal);
   }
 
   return { total: routes.length, succeeded, failed };
 }
 
-async function runRouteWarmup({ origin, appDirectory, signal }) {
+async function runRouteWarmup({ origin, appDirectory, profile, signal }) {
   const routes = await discoverStaticRoutes(appDirectory);
-  console.log(`[Viru warmup] ${routes.length} rutas estáticas descubiertas; esperando a Next...`);
+  console.log(`[Viru warmup] ${routes.length} rutas estáticas descubiertas; modo ${profile.mode}; esperando a Next...`);
   const serverReady = await waitForServer(origin, signal);
   if (!serverReady) {
     if (!signal.aborted) console.warn("[Viru warmup] Next no respondió a tiempo; se omite el calentamiento.");
@@ -210,8 +257,23 @@ async function runRouteWarmup({ origin, appDirectory, signal }) {
   }
 
   const queuedRoutes = routes.filter((route) => route !== "/");
-  console.log(`[Viru warmup] Portada lista; compilando ${queuedRoutes.length} rutas en segundo plano.`);
-  const summary = await warmStaticRoutes({ origin, routes: queuedRoutes, signal });
+  if (profile.initialDelayMs > 0) {
+    console.log(`[Viru warmup] Portada lista; cediendo ${profile.initialDelayMs / 1_000} s antes de la primera tanda.`);
+    await delay(profile.initialDelayMs, signal);
+    if (signal.aborted) return;
+  }
+
+  console.log(
+    `[Viru warmup] Compilando ${queuedRoutes.length} rutas en segundo plano: ${profile.batchSize} rutas por tanda, ${profile.pauseMs} ms entre rutas y ${profile.batchPauseMs} ms entre tandas.`,
+  );
+  const summary = await warmStaticRoutes({
+    origin,
+    routes: queuedRoutes,
+    pauseMs: profile.pauseMs,
+    batchSize: profile.batchSize,
+    batchPauseMs: profile.batchPauseMs,
+    signal,
+  });
   const suffix = summary.failed.length === 0 ? "" : `; fallaron: ${summary.failed.join(", ")}`;
   console.log(`[Viru warmup] Completado: ${summary.succeeded}/${summary.total} rutas${suffix}.`);
 }
@@ -231,11 +293,13 @@ async function runDevelopmentServer(commandArguments) {
     [nextCli, ...buildNextDevArguments(commandArguments)],
     { env: environment, stdio: "inherit" },
   );
+  const warmupProfile = resolveRouteWarmupProfile(process.env, commandArguments);
 
-  if (isRouteWarmupEnabled(process.env, commandArguments)) {
+  if (warmupProfile) {
     void runRouteWarmup({
       origin,
       appDirectory: path.resolve("src", "app"),
+      profile: warmupProfile,
       signal: abortController.signal,
     }).catch((error) => {
       const reason = error instanceof Error ? error.message : "error desconocido";

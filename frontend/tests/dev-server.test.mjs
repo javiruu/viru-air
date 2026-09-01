@@ -12,6 +12,7 @@ import {
   discoverStaticRoutes,
   resolveDevDistDir,
   isRouteWarmupEnabled,
+  resolveRouteWarmupProfile,
   resolveDevPort,
   warmStaticRoutes,
 } from "../scripts/dev-server.mjs";
@@ -75,19 +76,25 @@ test("resolves the effective Next development port from supported CLI forms", ()
 
 test("forwards one effective port to Next and preserves unrelated arguments", () => {
   assert.deepEqual(
-    buildNextDevArguments(["--warmup", "--hostname", "0.0.0.0", "-p", "4101", "--port=4102"]),
+    buildNextDevArguments(["--warmup=fast", "--hostname", "0.0.0.0", "-p", "4101", "--port=4102"]),
     ["dev", "--turbopack", "-p", "4102", "--hostname", "0.0.0.0"],
   );
 });
 
-test("keeps route warmup opt-in and honors explicit environment settings", () => {
-  assert.equal(isRouteWarmupEnabled({}), false);
-  assert.equal(isRouteWarmupEnabled({}, ["--warmup"]), true);
-  assert.equal(isRouteWarmupEnabled({ VIRU_ROUTE_WARMUP: "1" }), true);
-  assert.equal(isRouteWarmupEnabled({ VIRU_ROUTE_WARMUP: "true" }), true);
-  assert.equal(isRouteWarmupEnabled({ VIRU_ROUTE_WARMUP: "0" }), false);
-  assert.equal(isRouteWarmupEnabled({ VIRU_ROUTE_WARMUP: "false" }), false);
-  assert.equal(isRouteWarmupEnabled({ VIRU_ROUTE_WARMUP: "false" }, ["--warmup"]), false);
+test("warms routes slowly by default and honors explicit warmup profiles", () => {
+  assert.deepEqual(resolveRouteWarmupProfile({}), {
+    mode: "slow",
+    initialDelayMs: 8_000,
+    pauseMs: 1_500,
+    batchSize: 2,
+    batchPauseMs: 4_000,
+  });
+  assert.equal(isRouteWarmupEnabled({}), true);
+  assert.equal(resolveRouteWarmupProfile({}, ["--warmup=fast"])?.mode, "fast");
+  assert.equal(resolveRouteWarmupProfile({ VIRU_ROUTE_WARMUP: "fast" })?.mode, "fast");
+  assert.equal(resolveRouteWarmupProfile({ VIRU_ROUTE_WARMUP: "0" }), null);
+  assert.equal(resolveRouteWarmupProfile({ VIRU_ROUTE_WARMUP: "false" }, ["--warmup=fast"]), null);
+  assert.equal(resolveRouteWarmupProfile({ VIRU_ROUTE_WARMUP: "unknown" }), null);
 });
 
 test("warms routes sequentially and isolates a failing route", async () => {
@@ -126,6 +133,69 @@ test("warms routes sequentially and isolates a failing route", async () => {
       succeeded: 2,
       failed: ["/broken"],
     });
+  } finally {
+    server.close();
+    await once(server, "close");
+  }
+});
+
+test("paces warmup routes with a longer pause after each batch", async () => {
+  const pauses = [];
+  const server = createServer((_request, response) => {
+    response.statusCode = 200;
+    response.end("compiled");
+  });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const address = server.address();
+  assert.notEqual(address, null);
+  assert.equal(typeof address, "object");
+
+  try {
+    const summary = await warmStaticRoutes({
+      origin: `http://127.0.0.1:${address.port}`,
+      routes: ["/dashboard", "/quick-search", "/watchlist"],
+      pauseMs: 10,
+      batchSize: 2,
+      batchPauseMs: 25,
+      delayFn: async (milliseconds) => pauses.push(milliseconds),
+      log: () => {},
+    });
+
+    assert.deepEqual(summary, { total: 3, succeeded: 3, failed: [] });
+    assert.deepEqual(pauses, [10, 25]);
+  } finally {
+    server.close();
+    await once(server, "close");
+  }
+});
+
+test("waits between real warmup requests instead of sending a burst", async () => {
+  const requestTimes = [];
+  const server = createServer((_request, response) => {
+    requestTimes.push(Date.now());
+    response.statusCode = 200;
+    response.end("compiled");
+  });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const address = server.address();
+  assert.notEqual(address, null);
+  assert.equal(typeof address, "object");
+
+  try {
+    await warmStaticRoutes({
+      origin: `http://127.0.0.1:${address.port}`,
+      routes: ["/dashboard", "/quick-search", "/watchlist"],
+      pauseMs: 30,
+      batchSize: 2,
+      batchPauseMs: 60,
+      log: () => {},
+    });
+
+    assert.equal(requestTimes.length, 3);
+    assert.ok(requestTimes[1] - requestTimes[0] >= 25);
+    assert.ok(requestTimes[2] - requestTimes[1] >= 55);
   } finally {
     server.close();
     await once(server, "close");
