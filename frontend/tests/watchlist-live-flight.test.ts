@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
+import { readStylesheetTree } from "./helpers/read-stylesheet-tree";
 
 import {
   formatLiveTime,
@@ -170,7 +171,7 @@ test("watchlist live UI keeps map positions observed and multi-leg detail progre
     path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchLiveFlightPanel.tsx"),
     "utf8",
   );
-  const screensCss = fs.readFileSync(path.join(process.cwd(), "src", "styles", "screens.css"), "utf8");
+  const screensCss = readStylesheetTree(path.join(process.cwd(), "src", "styles", "screens.css"));
 
   assert.doesNotMatch(mapPanel, /AnimatedRouteDot|watch-map-route-dot|✈/);
   assert.match(mapPanel, /watchlist\.map\.noObservedPosition/);

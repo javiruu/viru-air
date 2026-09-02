@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
+import { readStylesheetTree } from "./helpers/read-stylesheet-tree";
 
 const ROOT = path.resolve(__dirname, "..");
 const read = (rel: string) => fs.readFileSync(path.join(ROOT, rel), "utf8");
@@ -170,7 +171,7 @@ test("tokens.css exposes the full shell-header morph token set", () => {
 // CSS ORPHAN CLEANUP
 // ============================================================
 test("screens.css no longer carries the removed landing-* rules", () => {
-  const css = read("src/styles/screens.css");
+  const css = readStylesheetTree(path.join(ROOT, "src/styles/screens.css"));
   for (const cls of [
     "landing-header",
     "landing-brand",
@@ -184,7 +185,7 @@ test("screens.css no longer carries the removed landing-* rules", () => {
 });
 
 test("shared brand surfaces compose the reusable Viru mark instead of the removed landing dot", () => {
-  const css = read("src/styles/screens.css");
+  const css = readStylesheetTree(path.join(ROOT, "src/styles/screens.css"));
   const componentsCss = read("src/styles/components.css");
   const footer = read("src/modules/shared/ViruFooterBlock.tsx");
   const privateLayout = read("src/app/(private)/layout.tsx");
@@ -216,7 +217,7 @@ test("shared footer keeps its first server and client render free of clock reads
 test("private navigation is a persistent lateral workspace rail", () => {
   const layout = read("src/app/(private)/layout.tsx");
   const nav = read("src/modules/shared/PrivateNav.tsx");
-  const css = read("src/styles/screens.css");
+  const css = readStylesheetTree(path.join(ROOT, "src/styles/screens.css"));
 
   assert.match(layout, /<PrivateNav unreadSignals=\{unreadSignals\} \/>/);
   assert.match(layout, /className="private-workspace"/);
@@ -228,7 +229,7 @@ test("private navigation is a persistent lateral workspace rail", () => {
 
 test("mobile private navigation restores focus and prevents background scroll", () => {
   const nav = read("src/modules/shared/PrivateNav.tsx");
-  const css = read("src/styles/screens.css");
+  const css = readStylesheetTree(path.join(ROOT, "src/styles/screens.css"));
 
   assert.match(nav, /event\.key === "Escape"/);
   assert.match(nav, /document\.body\.style\.overflow = "hidden"/);
@@ -239,7 +240,7 @@ test("mobile private navigation restores focus and prevents background scroll", 
 });
 
 test("screens.css no longer has the .is-leaving state", () => {
-  const css = read("src/styles/screens.css");
+  const css = readStylesheetTree(path.join(ROOT, "src/styles/screens.css"));
   assert.ok(!/is-leaving/.test(css), "screens.css still references is-leaving");
 });
 

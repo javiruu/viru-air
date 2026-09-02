@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
+import { readStylesheetTree } from "./helpers/read-stylesheet-tree";
 
 const WATCHLIST_PAGE = path.join(process.cwd(), "src", "app", "(private)", "watchlist", "page.tsx");
 const COMPARE_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "ComparePanels.tsx");
@@ -12,7 +13,7 @@ const FORBIDDEN_WATCHLIST_COPY = ["Back", "Flight Watchlist", "Add flight", "Qui
 
 test("W1: watchlist restores history beside selection and embeds the map in detail", () => {
   const source = fs.readFileSync(WATCHLIST_PAGE, "utf8");
-  const screens = fs.readFileSync(SCREENS, "utf8");
+  const screens = readStylesheetTree(SCREENS);
 
   const listPos = source.indexOf("<SmartWatchListPanel");
   const combinationPos = source.indexOf("<WatchlistCombinationPanel");

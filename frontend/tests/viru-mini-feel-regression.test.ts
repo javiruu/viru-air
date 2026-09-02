@@ -9,6 +9,7 @@ import { strict as assert } from "node:assert";
 import { test } from "node:test";
 import fs from "node:fs";
 import path from "node:path";
+import { readStylesheetTree } from "./helpers/read-stylesheet-tree";
 
 const ROOT = path.join(process.cwd(), "src");
 
@@ -36,7 +37,7 @@ test("animated route swap adds a Bezier flight-path via CSS", () => {
 });
 
 test("swap animation coexists with the existing routePulse in screens.css", () => {
-  const screens = read("styles/screens.css");
+  const screens = readStylesheetTree(path.join(ROOT, "styles", "screens.css"));
   assert.match(screens, /\.route-pulse/, "screens.css no longer drives .route-pulse");
 });
 

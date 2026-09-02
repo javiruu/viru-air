@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
+import { readStylesheetTree } from "./helpers/read-stylesheet-tree";
 
 const watchRowPath = path.join(
   process.cwd(),
@@ -55,7 +56,7 @@ test("WatchRow omits the active-status pill while preserving other lifecycle sta
 
 test("Watchlist ticket preserves the desktop ticket anatomy inside its narrow route column", () => {
   const panelSource = fs.readFileSync(smartPanelPath, "utf8");
-  const screensSource = fs.readFileSync(screensPath, "utf8");
+  const screensSource = readStylesheetTree(screensPath);
 
   assert.match(panelSource, /const WATCHLIST_PAGE_SIZE = 3;/);
   assert.match(panelSource, /smartListItems\.slice\(start, start \+ WATCHLIST_PAGE_SIZE\)/);

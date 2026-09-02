@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
+import { readStylesheetTree } from "./helpers/read-stylesheet-tree";
 
 const root = new URL("../src/", import.meta.url);
 
@@ -11,7 +12,7 @@ function read(path: string): string {
 test("the application shell exposes the accessible keyboard and motion contract", () => {
   const layout = read("app/layout.tsx");
   const baseStyles = read("styles/base.css");
-  const screenStyles = read("styles/screens.css");
+  const screenStyles = readStylesheetTree(new URL("styles/screens.css", root));
 
   assert.match(layout, /skip-link/);
   assert.match(layout, /MotionConfig/);

@@ -18,6 +18,7 @@ import path from "node:path";
 import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { readStylesheetTree } from "./helpers/read-stylesheet-tree";
 
 import { QuickSearchDatePicker } from "../src/modules/quick-search/components/QuickSearchDatePicker";
 
@@ -469,7 +470,7 @@ test("qs-date-grid uses explicit column layout (not auto‑fit)", () => {
     "styles",
     "screens.css",
   );
-  const css = fs.readFileSync(cssPath, "utf8");
+  const css = readStylesheetTree(cssPath);
 
   // The grid must NOT use auto‑fit (which caused misalignment)
   assert.doesNotMatch(
@@ -493,7 +494,7 @@ test("qs-date-grid has conditional has-return modifier", () => {
     "styles",
     "screens.css",
   );
-  const css = fs.readFileSync(cssPath, "utf8");
+  const css = readStylesheetTree(cssPath);
 
   assert.match(
     css,
