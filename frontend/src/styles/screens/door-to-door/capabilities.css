@@ -1,0 +1,562 @@
+/* ══════════════════════════════════════════════════════════════
+   Phase 9 — Map Hub alive dashboard (horizontal scroll + live dots)
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Horizontal capability scroll ───────────────────────── */
+.d2d-map-hub-scroll {
+  display: flex;
+  gap: 0.65rem;
+  overflow-x: auto;
+  padding: 0.5rem 0 0.75rem;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.d2d-map-hub-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.d2d-map-hub-scroll::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+/* ── Horizontal capability card ─────────────────────────── */
+.d2d-map-card-horizontal {
+  flex: 0 0 220px;
+  scroll-snap-align: start;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--panel-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.d2d-map-card-horizontal:hover {
+  border-color: var(--accent);
+  box-shadow: 0 2px 12px color-mix(in srgb, var(--accent) 10%, transparent);
+  transform: translateY(-1px);
+}
+
+.d2d-map-card-horizontal.is-available {
+  border-color: color-mix(in srgb, var(--accent-2) 45%, transparent);
+}
+
+.d2d-map-card-horizontal.is-partial {
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.d2d-map-card-horizontal strong {
+  font-size: 0.8rem;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.d2d-map-card-horizontal p {
+  font-size: 0.7rem;
+  color: var(--ink-muted);
+  line-height: 1.35;
+  flex: 1;
+}
+
+.d2d-capability-reason {
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+  line-height: 1.35;
+  margin: 0.3rem 0 0;
+  font-style: italic;
+  opacity: 0.85;
+  flex: none;
+}
+
+/* ── Card icon row ──────────────────────────────────────── */
+.d2d-map-card-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.d2d-capability-state-icon {
+  font-size: 0.72rem;
+  font-weight: 600;
+  width: 1.2rem;
+  height: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  color: var(--ink-muted);
+}
+
+.d2d-capability-state-icon.is-available {
+  border-color: var(--accent-2);
+  color: var(--accent-2);
+  background: color-mix(in srgb, var(--accent-2) 12%, transparent);
+}
+
+.d2d-capability-state-icon.is-partial {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+/* ── Live pulse dot ─────────────────────────────────────── */
+.d2d-capability-dot.is-live {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  flex-shrink: 0;
+  animation: d2d-live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes d2d-live-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-2) 60%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 5px transparent;
+  }
+}
+
+/* ── Capability status pill (compact) ───────────────────── */
+.d2d-capability-pill {
+  font-size: 0.62rem;
+  align-self: flex-start;
+  padding: 0.1rem 0.4rem;
+}
+
+/* ── Saved Places section (always visible) ──────────────── */
+.d2d-saved-places-section {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.d2d-saved-places-section header {
+  margin-bottom: 0.5rem;
+}
+
+.d2d-saved-places-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  margin: 0 0 0.15rem;
+  color: var(--ink);
+}
+
+/* ── Reduced motion ─────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .d2d-capability-dot.is-live {
+    animation: none;
+  }
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .d2d-map-card-horizontal {
+    flex: 0 0 185px;
+    padding: 0.6rem;
+  }
+  .d2d-map-card-horizontal strong {
+    font-size: 0.75rem;
+  }
+  .d2d-map-card-horizontal p {
+    font-size: 0.66rem;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Phase 10 — Micro-interactions, final polish, dual-theme QA
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Button press compression ───────────────────────────── */
+.btn-primary:active,
+.btn-secondary:active,
+.btn-ghost:active,
+.btn-compact:active {
+  transform: scale(0.97);
+}
+
+/* ── Section entry animation + stagger ──────────────────── */
+.d2d-chosen-trust,
+.d2d-results-section,
+.d2d-option-comparator,
+.d2d-estimate-section,
+.d2d-map-hub {
+  animation: d2d-section-enter 0.45s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes d2d-section-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.d2d-chosen-trust        { animation-delay: 0ms; }
+.d2d-results-section     { animation-delay: 60ms; }
+.d2d-option-comparator   { animation-delay: 120ms; }
+.d2d-estimate-section    { animation-delay: 180ms; }
+.d2d-map-hub             { animation-delay: 240ms; }
+
+/* ── Status pill color transitions ──────────────────────── */
+.status-pill {
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* ── Focus-visible ring for all interactive elements ────── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ── Autocomplete smooth entry ──────────────────────────── */
+.d2d-autocomplete .qs-autocomplete {
+  animation: d2d-autocomplete-in 0.18s ease-out;
+}
+
+@keyframes d2d-autocomplete-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Chosen option enhanced transition ──────────────────── */
+.d2d-option-card.is-chosen {
+  transition: border-color 0.35s ease, box-shadow 0.35s ease, background 0.35s ease, transform 0.25s ease;
+}
+
+/* ── Trust modal animation ──────────────────────────────── */
+.d2d-trust-overlay {
+  animation: d2d-overlay-in 0.2s ease-out;
+}
+
+.d2d-trust-modal {
+  animation: d2d-modal-enter 0.28s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@keyframes d2d-modal-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ── Comparator row bar animation enhancement ───────────── */
+.d2d-compare-row-bar {
+  animation: d2d-row-bar-reveal 0.4s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.d2d-compare-row-bar:nth-child(1) { animation-delay: 0ms; }
+.d2d-compare-row-bar:nth-child(2) { animation-delay: 80ms; }
+.d2d-compare-row-bar:nth-child(3) { animation-delay: 160ms; }
+
+@keyframes d2d-row-bar-reveal {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ── Touch device: remove hover elevation ───────────────── */
+@media (hover: none) {
+  .d2d-option-card:hover,
+  .d2d-leg-card:hover,
+  .d2d-map-card-horizontal:hover,
+  .d2d-compare-row-bar:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* ── Mobile responsive refinements ──────────────────────── */
+@media (max-width: 768px) {
+  /* Sticky bar: collapse metrics, keep only label + price */
+  .d2d-sticky-bar {
+    flex-direction: column;
+    padding: 0.4rem 0.5rem;
+    gap: 0.25rem;
+  }
+
+  .d2d-sticky-summary {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .d2d-sticky-metrics {
+    gap: 0.4rem;
+    font-size: 0.72rem;
+  }
+
+  .d2d-sticky-nav {
+    overflow-x: auto;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  /* Filter slide-out: full width */
+  .d2d-filter-slideout {
+    width: 100vw;
+  }
+
+  /* Decision grid: single column */
+  .d2d-decision-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Comparator: thinner bars */
+  .d2d-compare-bar-fill {
+    height: 5px;
+    border-radius: 2.5px;
+  }
+
+  .d2d-compare-bar-group {
+    font-size: 0.7rem;
+  }
+
+  /* Map cards: stack vertically instead of horizontal scroll */
+  .d2d-map-hub-scroll {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    overflow-x: visible;
+    scroll-snap-type: none;
+  }
+
+  .d2d-map-card-horizontal {
+    flex: none;
+    scroll-snap-align: none;
+  }
+
+  /* Option cards: reduce padding */
+  .d2d-option-card {
+    padding: 0.65rem;
+  }
+
+  /* Comparator: hide collapse, always open */
+  .d2d-compare-collapse {
+    border: none;
+    padding: 0;
+  }
+
+  .d2d-compare-collapse summary {
+    pointer-events: none;
+    cursor: default;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Map cards: single column */
+  .d2d-map-hub-scroll {
+    grid-template-columns: 1fr;
+  }
+
+  /* Section delay: faster for mobile */
+  .d2d-chosen-trust        { animation-delay: 0ms; }
+  .d2d-results-section     { animation-delay: 30ms; }
+  .d2d-option-comparator   { animation-delay: 60ms; }
+  .d2d-estimate-section    { animation-delay: 90ms; }
+  .d2d-map-hub             { animation-delay: 120ms; }
+
+  /* ── Page header: stack vertically ────────────────────── */
+  .d2d-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .d2d-page-header .page-title h1 {
+    font-size: 1.5rem;
+  }
+
+  /* ── Hero: reduced padding ────────────────────────────── */
+  .d2d-hero {
+    padding: 0.85rem 0.8rem;
+    gap: 0.6rem;
+  }
+
+  .d2d-hero h2 {
+    font-size: 1.35rem;
+  }
+
+  .d2d-hero-ticket {
+    padding: 0.65rem 0.75rem;
+  }
+
+  /* ── Form: single column ──────────────────────────────── */
+  .d2d-form-essentials {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.65rem;
+    padding: 0.7rem 0.75rem;
+  }
+
+  .d2d-essentials-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+
+  .d2d-form-essentials > .btn-primary {
+    width: 100%;
+    justify-content: center;
+    min-height: 48px;
+    font-size: 1rem;
+  }
+
+  /* iOS zoom prevention on all d2d inputs */
+  .d2d-form input,
+  .d2d-form select,
+  .d2d-filters-content input,
+  .d2d-filters-content select,
+  .d2d-saved-places-manager input {
+    font-size: 1rem;
+  }
+
+  /* ── Decision grid: tighter gap ───────────────────────── */
+  .d2d-decision-grid {
+    gap: 0.75rem;
+  }
+
+  .d2d-settings-aside {
+    order: -1;
+    padding: 0.65rem 0.75rem;
+  }
+
+  /* ── Section heads: wrap on mobile ────────────────────── */
+  .d2d-section-head {
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .d2d-section-head h2 {
+    font-size: 1.05rem;
+  }
+
+  /* ── Compare chart: compact bars ──────────────────────── */
+  .d2d-compare-bars {
+    gap: 0.5rem;
+  }
+
+  .d2d-compare-bar-group {
+    font-size: 0.65rem;
+  }
+
+  .d2d-compare-option {
+    font-size: 0.78rem;
+  }
+
+  /* ── Option cards: tighter padding ────────────────────── */
+  .d2d-option-card {
+    padding: 0.5rem;
+  }
+
+  .d2d-option-main {
+    gap: 0.4rem;
+  }
+
+  .d2d-option-head strong {
+    font-size: 0.92rem;
+  }
+
+  .d2d-option-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .d2d-option-actions .btn-primary,
+  .d2d-option-actions .btn-secondary {
+    width: 100%;
+    justify-content: center;
+    min-height: 48px;
+  }
+
+  /* ── Sticky bar: even tighter ─────────────────────────── */
+  .d2d-sticky-bar {
+    padding: 0.3rem 0.4rem;
+  }
+
+  .d2d-sticky-nav-item {
+    font-size: 0.72rem;
+    padding: 0.35rem 0.55rem;
+  }
+
+  /* ── History panel: full-width items ──────────────────── */
+  .d2d-history-action-row .btn-secondary {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .d2d-history-item-reusable {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .d2d-history-item-reusable .btn-compact {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  /* ── Map hub saved places: full-width buttons ─────────── */
+  .d2d-saved-places-manager {
+    gap: 0.5rem;
+  }
+
+  .d2d-saved-places-manager .btn-secondary {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .d2d-saved-place-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .d2d-saved-place-item .btn-ghost {
+    width: 100%;
+    justify-content: center;
+    min-height: 40px;
+  }
+
+  /* ── Trust / estimate sections: compact ───────────────── */
+  .d2d-chosen-trust,
+  .d2d-estimate-section {
+    padding: 0.65rem 0.75rem;
+  }
+
+  /* ── Map card horizontal: remove fixed width ──────────── */
+  .d2d-map-card-horizontal {
+    width: auto;
+  }
+}
+

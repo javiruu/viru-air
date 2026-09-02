@@ -1,0 +1,46 @@
+/* =========================
+   DOOR-TO-DOOR ESTIMATE DISTINCT
+   Distinct modifier so the estimate-only section cannot be confused with
+   confirmed data. Dashed treatment + muted background + warning left-rail
+   reinforce the "no real data" semantics.
+   ========================= */
+.d2d-estimate-section--distinct {
+  background:
+    linear-gradient(120deg, color-mix(in srgb, var(--surface) 90%, transparent), color-mix(in srgb, var(--surface-2) 82%, transparent)),
+    repeating-linear-gradient(
+      -16deg,
+      transparent 0,
+      transparent 14px,
+      color-mix(in srgb, var(--border) 36%, transparent) 14px,
+      color-mix(in srgb, var(--border) 36%, transparent) 15px
+    ) !important;
+  border-left: 3px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.d2d-estimate-section--distinct .d2d-section-head h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: color-mix(in srgb, var(--accent) 78%, var(--ink));
+}
+
+.d2d-estimate-section--distinct .d2d-estimate-preamble {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 4%, var(--surface));
+  border: 1px dashed color-mix(in srgb, var(--accent) 40%, var(--border));
+  margin-bottom: 0.6rem;
+}
+
+.d2d-estimate-section--distinct .d2d-estimate-preamble strong {
+  display: block;
+  margin-bottom: 0.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.76rem;
+  color: color-mix(in srgb, var(--accent) 78%, var(--ink));
+}
+

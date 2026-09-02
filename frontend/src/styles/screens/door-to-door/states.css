@@ -1,0 +1,135 @@
+/* ── Phase 2: state personality ── */
+
+/* Shared state entry animation */
+.d2d-state-enter {
+  animation: d2d-state-fade-in 0.4s ease-out both;
+}
+
+@keyframes d2d-state-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Empty state visual: animated route */
+.d2d-empty-visual {
+  display: flex;
+  justify-content: center;
+  padding: 1.25rem 0 0.5rem;
+}
+
+.d2d-empty-route {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  animation: d2d-route-pulse 2.5s ease-in-out infinite;
+}
+
+.d2d-empty-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.d2d-empty-origin {
+  background: var(--accent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.d2d-empty-dest {
+  background: var(--accent-2);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent-2) 50%, transparent);
+}
+
+.d2d-empty-line {
+  width: 32px;
+  height: 1.5px;
+  background: var(--border);
+  border-radius: 1px;
+}
+
+.d2d-empty-plane {
+  font-size: 1.15rem;
+  color: var(--accent);
+  line-height: 1;
+}
+
+@keyframes d2d-route-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* Loading state: Boneyard capture references */
+.d2d-loading-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.d2d-loading-bones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.d2d-load-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel-bg);
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.d2d-load-route {
+  width: 55%;
+}
+
+.d2d-load-meta {
+  width: 80%;
+}
+
+.d2d-load-price {
+  width: 35%;
+}
+
+/* Error state: friendly visual */
+.d2d-error-visual {
+  display: flex;
+  justify-content: center;
+  padding: 0.4rem 0;
+}
+
+.d2d-error-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  font-size: 1.5rem;
+  color: var(--accent);
+  animation: d2d-error-soft-pulse 2s ease-in-out infinite;
+}
+
+@keyframes d2d-error-soft-pulse {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .d2d-state-enter,
+  .d2d-empty-route,
+  .d2d-error-icon,
+  .d2d-timeline-leg,
+  .d2d-option-card,
+  .d2d-sticky-bar,
+  .d2d-compare-row-bar,
+  .d2d-compare-bar-fill {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+

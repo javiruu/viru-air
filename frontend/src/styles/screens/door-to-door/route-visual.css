@@ -1,0 +1,239 @@
+/* ══════════════════════════════════════════════════════════════
+   Phase 8 — Route Visual (connected trace + IATA cards + draw animation)
+   ══════════════════════════════════════════════════════════════ */
+
+.d2d-route-visual {
+  padding: 0.75rem 0 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+/* ── Trace list ──────────────────────────────────────────── */
+.d2d-route-trace {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+}
+
+/* ── Each segment (connector + node) ─────────────────────── */
+.d2d-route-segment {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+  opacity: 0;
+  animation: d2d-route-node-reveal 0.4s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+@keyframes d2d-route-node-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── Connector line between nodes ────────────────────────── */
+.d2d-route-connector {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 2rem;
+  flex-shrink: 0;
+}
+
+.d2d-route-connector-line {
+  display: block;
+  height: 2px;
+  min-width: 1.25rem;
+  background: var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.d2d-route-connector-line::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: d2d-route-line-draw 0.55s 0.35s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+@keyframes d2d-route-line-draw {
+  to { transform: scaleX(1); }
+}
+
+.d2d-route-connector-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--panel-bg);
+  border: 1.5px solid var(--border);
+  color: var(--ink-muted);
+  flex-shrink: 0;
+  margin: 0 0.15rem;
+  opacity: 0;
+  animation: d2d-route-node-reveal 0.35s 0.2s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+/* ── Route node (boarding-pass style card) ───────────────── */
+.d2d-route-node {
+  display: flex;
+  align-items: center;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  background: var(--panel-bg);
+  border: 1.5px solid var(--border);
+  flex-shrink: 0;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.d2d-route-node.is-flight-node {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, var(--panel-bg)), var(--panel-bg));
+}
+
+.d2d-route-node.is-arrival-node {
+  border-color: var(--accent-2);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent-2) 10%, var(--panel-bg)), var(--panel-bg));
+}
+
+.d2d-route-node.is-ground-node {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--ink-muted) 35%, transparent);
+}
+
+/* ── IATA text inside node ───────────────────────────────── */
+.d2d-route-iata {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.is-flight-node .d2d-route-iata {
+  font-size: 0.88rem;
+}
+
+.d2d-route-plane-icon {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* ── Mode labels row ─────────────────────────────────────── */
+.d2d-route-labels {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0.15rem 0.75rem 0.25rem;
+  overflow-x: auto;
+}
+
+.d2d-route-label {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.1rem 0.55rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  opacity: 0;
+  animation: d2d-route-label-reveal 0.3s 0.3s ease forwards;
+}
+
+@keyframes d2d-route-label-reveal {
+  to { opacity: 1; }
+}
+
+.d2d-route-label.is-flight-label {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── Flight strip (compact IATA + dashes) ────────────────── */
+.d2d-route-flight-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem 0.1rem;
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+}
+
+.d2d-route-flight-strip-iata {
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--ink);
+  font-size: 0.78rem;
+}
+
+.d2d-route-flight-strip-line {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: var(--accent);
+}
+
+.d2d-route-flight-strip-dash {
+  width: 1rem;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── Reduced motion ──────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .d2d-route-segment,
+  .d2d-route-label {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .d2d-route-connector-line::after {
+    animation: none;
+    transform: scaleX(1);
+  }
+  .d2d-route-connector-icon {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .d2d-route-trace {
+    padding: 0.4rem 0.5rem;
+  }
+  .d2d-route-connector {
+    min-width: 1.25rem;
+  }
+  .d2d-route-connector-line {
+    min-width: 0.7rem;
+  }
+  .d2d-route-node {
+    padding: 0.25rem 0.4rem;
+  }
+  .d2d-route-iata {
+    font-size: 0.72rem;
+  }
+  .is-flight-node .d2d-route-iata {
+    font-size: 0.76rem;
+  }
+}
+

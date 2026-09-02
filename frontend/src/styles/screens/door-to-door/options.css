@@ -1,0 +1,187 @@
+/* ── Phase 4: option card visual hierarchy ── */
+
+/* Base card */
+.d2d-option-card {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--panel-bg);
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.85rem;
+  align-items: start;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s ease,
+              background 0.2s ease;
+}
+
+.d2d-option-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px var(--shadow);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+}
+
+/* Preserve golden glow on hover for chosen cards */
+.d2d-option-card.is-chosen:hover {
+  box-shadow: 0 6px 20px var(--shadow), 0 0 14px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.d2d-option-card:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Real result: premium treatment */
+.d2d-option-card.is-real {
+  border-color: color-mix(in srgb, var(--accent-2) 30%, var(--border));
+  background: linear-gradient(
+    135deg,
+    var(--panel-bg),
+    color-mix(in srgb, var(--accent-2) 4%, var(--panel-bg))
+  );
+}
+
+/* Deeplink: dashed border, info tone */
+.d2d-option-card.is-deeplink {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--accent-2) 20%, var(--border));
+}
+
+/* Estimate: muted, translucent */
+.d2d-option-card.is-estimate {
+  opacity: 0.84;
+  border-color: transparent;
+  background: color-mix(in srgb, var(--border) 20%, var(--panel-bg));
+}
+
+/* Chosen plan: golden glow */
+.d2d-option-card.is-chosen {
+  border-color: var(--accent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 18%, transparent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent) 6%, var(--panel-bg)),
+    color-mix(in srgb, var(--accent) 3%, var(--panel-bg))
+  );
+}
+
+/* Recommended star */
+.d2d-recommended-star {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.8rem;
+  color: var(--accent);
+  font-size: 0.95rem;
+  line-height: 1;
+  z-index: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+/* Options stack spacing */
+.d2d-options-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+/* Option card inner sections */
+.d2d-option-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.d2d-option-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.d2d-option-head h3 {
+  margin: 0.25rem 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.d2d-option-trust-note {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  font-style: italic;
+}
+
+.d2d-option-quick-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.d2d-option-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.65rem;
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+}
+
+.d2d-option-price {
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.d2d-option-price-unconfirmed {
+  color: var(--ink-muted);
+}
+
+.d2d-option-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.d2d-option-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.d2d-decision-reasons {
+  border-top: 1px dashed var(--border);
+  padding-top: 0.45rem;
+}
+
+.d2d-decision-reasons strong {
+  display: block;
+  font-size: 0.82rem;
+  margin-bottom: 0.3rem;
+  color: var(--ink);
+}
+
+.d2d-decision-reasons ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+}
+
+/* Touch devices: remove hover elevation */
+@media (hover: none) {
+  .d2d-option-card:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: var(--border);
+  }
+}
+
+

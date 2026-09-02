@@ -1,0 +1,345 @@
+/* =========================
+   PRIVATE ACCOUNT MENU
+   ========================= */
+.private-layout {
+  position: relative;
+}
+
+
+.private-account-controls-bar {
+  min-height: 52px;
+}
+
+.private-shell-brand {
+  display: inline-flex;
+  flex: 0 0 auto;
+  padding: 0.28rem 0.16rem;
+  border: 1px solid transparent;
+  border-radius: 0.6rem;
+  text-decoration: none;
+}
+
+.private-shell-brand:hover {
+  border-color: color-mix(in srgb, var(--accent) 46%, var(--border));
+}
+
+.private-shell-brand .viru-wordmark {
+  font-size: 1.82rem;
+}
+
+.private-account-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-left: auto;
+}
+
+.private-content {
+  padding-top: 0;
+}
+
+/* Reduced-motion handling is centralized in .shell-header (components.css). */
+
+.private-theme-toggle {
+  border-radius: 14px;
+  border: 1px solid var(--border-default);
+  background: color-mix(in srgb, var(--panel-bg) 90%, var(--surface));
+  padding: 0.32rem 0.44rem;
+  box-shadow: var(--shadow-elevation);
+}
+
+.private-locale-toggle {
+  display: inline-flex;
+}
+
+.account-menu {
+  position: relative;
+  min-width: 250px;
+}
+
+.account-trigger {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-default);
+  background: color-mix(in srgb, var(--panel-bg) 86%, var(--surface));
+  color: var(--text-primary);
+  padding: 0.45rem 0.65rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-elevation);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.account-trigger:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 34px var(--shadow-strong);
+}
+
+.account-trigger:focus-visible {
+  outline: 3px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.account-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: var(--accent-ink);
+}
+
+.account-meta {
+  display: grid;
+  text-align: left;
+  min-width: 0;
+}
+
+.account-meta strong {
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-meta small {
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+}
+
+.account-caret {
+  margin-left: auto;
+  color: var(--text-secondary);
+}
+
+.account-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.45rem);
+  width: 100%;
+  background: var(--color-dropdown-bg);
+  border: 1px solid var(--color-dropdown-border);
+  border-radius: 16px;
+  box-shadow: 0 20px 40px var(--shadow-strong);
+  padding: 0.45rem;
+  display: grid;
+  gap: 0.24rem;
+  animation: menuIn 0.16s ease;
+}
+
+.account-status-panel {
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  background:
+    linear-gradient(145deg, rgba(217, 93, 57, 0.18), rgba(255, 198, 111, 0.1)),
+    var(--surface);
+  border: 1px solid rgba(217, 93, 57, 0.3);
+  display: grid;
+  gap: 0.4rem;
+}
+
+.account-status-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.account-status-panel p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+}
+
+.account-group-grid {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.account-group-card {
+  padding: 0.8rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-card);
+  display: grid;
+  gap: 0.65rem;
+  box-shadow: 0 12px 28px rgba(31, 29, 26, 0.12);
+}
+
+.account-group-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.account-group-card-header span {
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-size: 0.78rem;
+}
+
+.account-group-card-header small {
+  font-size: 0.7rem;
+  line-height: 1.2;
+  color: var(--ink-muted);
+  display: block;
+}
+
+.account-group-items {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.account-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.45rem 0.4rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.account-link:hover,
+.account-link:focus-visible {
+  border-color: color-mix(in srgb, var(--color-accent) 42%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-card));
+  transform: translateX(2px);
+}
+
+.account-link-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.6rem;
+  background: rgba(217, 93, 57, 0.12);
+  color: var(--accent);
+}
+
+.account-link-admin {
+  border-color: rgba(255, 198, 111, 0.6);
+  background: rgba(255, 198, 111, 0.12);
+}
+
+.account-group {
+  display: grid;
+  gap: 0.24rem;
+  padding: 0.2rem;
+  border-radius: 12px;
+}
+
+.account-group + .account-group {
+  border-top: 1px dashed var(--border-default);
+  padding-top: 0.45rem;
+  margin-top: 0.2rem;
+}
+
+.account-group-label {
+  padding: 0.2rem 0.45rem;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-secondary);
+}
+
+.account-divider {
+  height: 1px;
+  background: var(--border-default);
+  margin: 0.35rem 0.35rem;
+}
+
+.panel-list {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.panel-list-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  padding: 0.6rem 0.7rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.account-dropdown a,
+.account-dropdown button {
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-primary);
+  border-radius: 10px;
+  padding: 0.56rem 0.62rem;
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+}
+
+.account-dropdown a:hover,
+.account-dropdown button:hover {
+  background: var(--color-dropdown-hover);
+  border-color: var(--color-dropdown-border);
+  transform: translateX(1px);
+}
+
+.account-dropdown a:focus-visible,
+.account-dropdown button:focus-visible {
+  outline: 3px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.account-logout {
+  margin-top: 0.22rem;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent-pressed) 70%, var(--color-surface) 30%), color-mix(in srgb, var(--color-accent-pressed) 86%, var(--color-surface) 14%)) !important;
+  color: var(--color-button-primary-text) !important;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 46%, transparent) !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: space-between;
+  padding: 0.6rem 0.9rem;
+  box-shadow: var(--btn-shadow-strong) !important;
+}
+
+.account-dropdown .account-logout:hover {
+  transform: scale(1.01);
+}
+
+.account-dropdown .account-logout:active {
+  transform: scale(0.98);
+}
+
+.account-dropdown .account-logout:focus-visible {
+  outline: 3px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+:root[data-theme="dark"] .account-logout {
+  color: var(--color-button-primary-text) !important;
+}
+
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

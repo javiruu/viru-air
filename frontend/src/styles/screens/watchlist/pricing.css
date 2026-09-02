@@ -1,0 +1,144 @@
+/* Price drop & best-price inline badges */
+.watch-price-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.1rem;
+}
+
+.price-drop-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.725rem;
+  font-weight: 600;
+  line-height: 1.3;
+  border: 1px solid rgba(46, 110, 98, 0.4);
+  background: rgba(46, 110, 98, 0.12);
+  color: var(--accent-2);
+}
+
+.price-drop-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.best-price-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.725rem;
+  font-weight: 600;
+  line-height: 1.3;
+  border: 1px solid rgba(204, 158, 66, 0.45);
+  background: rgba(204, 158, 66, 0.12);
+  color: #8b6914;
+}
+
+.trend-flat {
+  color: var(--ink-muted);
+}
+
+.trend-flat .trend-icon svg {
+  transform: rotate(90deg);
+}
+
+.history-note {
+  margin-top: 0.6rem;
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+}
+
+.empty-guide {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 0.8rem;
+  padding: 0.95rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  background:
+    radial-gradient(circle at 8% 12%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 42%),
+    linear-gradient(135deg, color-mix(in srgb, var(--surface) 92%, transparent), color-mix(in srgb, var(--surface-2) 84%, transparent));
+}
+
+.empty-guide::before {
+  content: "";
+  position: absolute;
+  right: 0.9rem;
+  top: 0.85rem;
+  width: 68px;
+  height: 68px;
+  border: 1px solid color-mix(in srgb, var(--accent-2) 30%, var(--border));
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--accent) 16%, transparent) 0 10%, transparent 11%),
+    repeating-radial-gradient(circle, transparent 0 13px, color-mix(in srgb, var(--accent-2) 18%, transparent) 14px 15px);
+  opacity: 0.76;
+  pointer-events: none;
+}
+
+.empty-guide .panel-note {
+  max-width: 58ch;
+  margin: 0;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.empty-guide .btn-primary {
+  justify-self: start;
+}
+
+.watch-empty-search {
+  margin-top: 0.7rem;
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding: 0.7rem 0.8rem;
+  border-radius: 12px;
+  border: 1px dashed color-mix(in srgb, var(--border) 72%, transparent);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--ink-muted);
+}
+
+.watch-empty-search p {
+  margin: 0;
+}
+
+.empty-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.empty-steps div {
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+  background: color-mix(in srgb, var(--surface) 84%, transparent);
+}
+
+.empty-steps strong {
+  display: block;
+  color: var(--ink);
+}
+
+.empty-steps span {
+  display: block;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 768px) {
+  .empty-steps {
+    grid-template-columns: 1fr;
+  }
+}
+

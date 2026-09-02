@@ -1,0 +1,454 @@
+/* Puerta a puerta V1 */
+.d2d-page {
+  max-width: 1380px;
+}
+
+.d2d-page-header .page-title h1,
+.d2d-hero h2 {
+  font-family: "Playfair Display", serif;
+}
+
+.d2d-ops-panel {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.d2d-hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 0.34fr);
+  gap: 1rem;
+  align-items: stretch;
+  background:
+    radial-gradient(circle at 12% 20%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 42%),
+    radial-gradient(circle at 92% 15%, color-mix(in srgb, var(--accent-2) 18%, transparent), transparent 38%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface) 88%, var(--panel-bg) 12%), color-mix(in srgb, var(--surface-2) 82%, var(--surface) 18%));
+}
+
+.d2d-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(90deg, transparent 0 52px, color-mix(in srgb, var(--accent-2) 18%, transparent) 52px 53px, transparent 53px 104px);
+  opacity: 0.35;
+}
+
+.d2d-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.d2d-mini-kicker,
+.d2d-option-kicker {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  border: 1px solid color-mix(in srgb, var(--border) 76%, var(--accent) 24%);
+  border-radius: 999px;
+  padding: 0.16rem 0.5rem;
+  color: var(--ink-muted);
+  font-family: "IBM Plex Mono", "IBM Plex Sans", monospace;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.d2d-hero h2 {
+  margin: 0.55rem 0 0.4rem;
+  font-size: clamp(1.55rem, 3vw, 2.8rem);
+  line-height: 0.98;
+}
+
+.d2d-hero p {
+  max-width: 62rem;
+  color: var(--ink-muted);
+  line-height: 1.62;
+}
+
+.d2d-hero-ticket {
+  display: grid;
+  gap: 0.22rem;
+  align-content: center;
+  border: 1px dashed color-mix(in srgb, var(--border) 82%, var(--accent-2) 18%);
+  border-radius: 18px;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--surface) 84%, transparent);
+}
+
+.d2d-hero-ticket strong {
+  font-family: "IBM Plex Mono", "IBM Plex Sans", monospace;
+  font-size: 1.35rem;
+}
+
+@media (max-width: 768px) {
+  .d2d-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.8rem;
+  }
+
+  .d2d-hero h2 {
+    max-width: 12ch;
+    font-size: clamp(1.9rem, 8vw, 2.45rem);
+    line-height: 1.04;
+    text-wrap: balance;
+  }
+
+  .d2d-hero p {
+    max-width: none;
+  }
+
+  .d2d-hero-ticket {
+    padding: 0.85rem 0.95rem;
+  }
+
+  .d2d-hero-ticket strong {
+    font-size: 1.08rem;
+  }
+}
+
+.d2d-ops-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.d2d-ops-summary span {
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 74%, transparent);
+  padding: 0.25rem 0.62rem;
+  font-size: 0.79rem;
+  color: var(--ink-muted);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+}
+
+.d2d-decision-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(240px, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.d2d-form,
+.d2d-location-coords {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+  align-items: end;
+}
+
+.d2d-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(188px, 1fr));
+  gap: 0.8rem;
+  align-items: start;
+  min-width: 0;
+}
+
+.d2d-form-essentials {
+  gap: 0.85rem;
+}
+
+.d2d-form-essentials > .btn-primary {
+  justify-self: start;
+}
+
+.d2d-essentials-head {
+  grid-column: 1 / -1;
+}
+
+.d2d-filters-collapse {
+  margin-top: 0.25rem;
+}
+
+.d2d-filters-collapse summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  cursor: pointer;
+}
+
+.d2d-filters-collapse summary span {
+  color: var(--ink-muted);
+  font-size: 0.84rem;
+}
+
+.d2d-filters-collapse[open] summary {
+  margin-bottom: 0.7rem;
+}
+
+.d2d-filters-content {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.d2d-filter-section {
+  display: grid;
+  gap: 0.72rem;
+  min-width: 0;
+}
+
+.d2d-filter-section + .d2d-filter-section {
+  margin-top: 0.2rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+}
+
+.d2d-filter-section-title {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.d2d-filter-label {
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--ink-muted);
+  line-height: 1.28;
+}
+
+.d2d-filter-label-with-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  min-width: 0;
+}
+
+.d2d-filter-help {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 74%, var(--accent) 26%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "IBM Plex Mono", "IBM Plex Sans", monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink-muted);
+  background: color-mix(in srgb, var(--surface) 88%, var(--panel-bg) 12%);
+  cursor: help;
+}
+
+.d2d-input-with-suffix {
+  position: relative;
+  min-width: 0;
+}
+
+.d2d-input-with-suffix .prefs-control,
+.d2d-input-with-suffix .qs-input-neutral {
+  width: 100%;
+  padding-right: 2.3rem;
+}
+
+.d2d-input-suffix {
+  position: absolute;
+  top: 50%;
+  right: 0.74rem;
+  transform: translateY(-50%);
+  color: var(--ink-muted);
+  font-family: "IBM Plex Mono", "IBM Plex Sans", monospace;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}
+
+.d2d-checkbox-field {
+  grid-column: span 2;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 44px;
+}
+
+.d2d-autocomplete {
+  position: relative;
+}
+
+.d2d-autocomplete-status {
+  margin: 0.3rem 0 0;
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+}
+
+.d2d-suggestions {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 96%, var(--panel-bg) 4%);
+  box-shadow: 0 18px 34px var(--shadow-strong);
+}
+
+.d2d-suggestions button {
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+.d2d-suggestions button:hover,
+.d2d-suggestions button:focus-visible {
+  background: color-mix(in srgb, var(--surface-2) 78%, transparent);
+  outline: 3px solid var(--color-input-focus);
+  outline-offset: 2px;
+}
+
+.d2d-suggestions span,
+.d2d-option-main p,
+.d2d-history-list span {
+  color: var(--ink-muted);
+  font-size: 0.86rem;
+}
+
+.d2d-toggle-row,
+.d2d-option-meta,
+.d2d-option-sources,
+.d2d-option-quick-badges {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+}
+
+.d2d-toggle-row .field {
+  flex: 1 1 220px;
+  min-width: 0;
+  display: grid;
+  gap: 0.42rem;
+}
+
+.d2d-form .field,
+.d2d-filters-content .field {
+  min-width: 0;
+}
+
+.d2d-filters-content .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+  font-weight: 500;
+}
+
+.d2d-form .field-hint,
+.d2d-filters-content .field-hint {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.d2d-filters-content .prefs-control,
+.d2d-filters-content .prefs-toggle,
+.d2d-filters-content .qs-input-neutral {
+  width: 100%;
+  min-width: 0;
+}
+
+.d2d-filters-content :is(input, select, button):focus-visible {
+  outline: 3px solid var(--color-input-focus);
+  outline-offset: 2px;
+}
+
+.d2d-toggle-row .prefs-toggle {
+  min-height: 44px;
+  justify-content: flex-start;
+  padding: 0.5rem 0.62rem;
+}
+
+.d2d-toggle-row .prefs-toggle-track {
+  width: 46px;
+  height: 26px;
+}
+
+.d2d-toggle-row .prefs-toggle-knob {
+  width: 18px;
+  height: 18px;
+}
+
+.d2d-toggle-row .prefs-toggle.is-on .prefs-toggle-track {
+  background: color-mix(in srgb, #FFB000 32%, var(--surface));
+  border-color: color-mix(in srgb, #FFB000 62%, var(--border));
+}
+
+.d2d-toggle-row .prefs-toggle.is-on .prefs-toggle-knob {
+  background: #FFB000;
+  border-color: color-mix(in srgb, #FFB000 80%, #1f1d1a);
+  transform: translateX(18px);
+}
+
+.d2d-toggle-row .prefs-toggle.is-on {
+  border-color: color-mix(in srgb, #FFB000 64%, var(--border));
+  background: color-mix(in srgb, var(--surface) 88%, #FFB000 12%);
+}
+
+.d2d-state-card,
+.d2d-loading-state,
+.d2d-success-copy,
+.d2d-no-coverage,
+.d2d-error-state {
+  margin-top: 1rem;
+}
+
+.d2d-empty-state {
+  position: relative;
+  overflow: hidden;
+  min-height: 150px;
+}
+
+.d2d-radar-dot {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--accent-2) 42%, transparent);
+  box-shadow: inset 0 0 0 18px color-mix(in srgb, var(--accent-2) 8%, transparent), 0 0 0 12px color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.d2d-loading-state {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.d2d-loading-radar {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--accent-2) 45%, var(--border));
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%);
+}
+
+.d2d-loading-radar span {
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  border: 1px dashed color-mix(in srgb, var(--accent-2) 40%, transparent);
+  animation: d2dRadar 2.8s linear infinite;
+}
+
+.d2d-loading-radar span:nth-child(2) { inset: 22px; animation-duration: 2.1s; }
+.d2d-loading-radar span:nth-child(3) { inset: 32px; animation-duration: 1.6s; }
+
+

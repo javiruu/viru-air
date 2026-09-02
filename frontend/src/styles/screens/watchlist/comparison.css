@@ -1,0 +1,394 @@
+.compare-panel {
+  background:
+    linear-gradient(
+      150deg,
+      color-mix(in srgb, var(--surface) 92%, transparent),
+      color-mix(in srgb, var(--surface-2) 82%, transparent)
+    );
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--shadow-strong) 10%, transparent);
+}
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.8rem;
+}
+
+.compare-card {
+  border-top: 1px solid var(--border);
+  border-inline: 0;
+  border-bottom: 0;
+  border-radius: 16px;
+  padding: 0.9rem;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  display: grid;
+  gap: 0.6rem;
+  box-shadow: none;
+}
+
+.compare-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.compare-card strong,
+.compare-count {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.compare-body {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.compare-label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-muted);
+}
+
+.compare-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+}
+
+.compare-multi-panel {
+  position: relative;
+}
+
+.compare-panel-body {
+  border-top: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  padding-top: 0.7rem;
+}
+
+.compare-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.compare-option {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.compare-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.compare-option.active {
+  border-color: rgba(46, 110, 98, 0.5);
+  background: rgba(46, 110, 98, 0.08);
+  box-shadow: none;
+  transform: translateY(-2px);
+}
+
+.compare-option:focus-within {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.compare-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+  color: transparent;
+  background: var(--surface-2);
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.compare-check svg {
+  width: 14px;
+  height: 14px;
+}
+
+.compare-option.active .compare-check {
+  border-color: rgba(46, 110, 98, 0.5);
+  background: rgba(46, 110, 98, 0.18);
+  color: var(--accent-2);
+}
+
+.compare-route {
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compare-date {
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+  justify-self: end;
+  white-space: nowrap;
+}
+
+.compare-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(46, 110, 98, 0.35);
+  background: rgba(46, 110, 98, 0.12);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.compare-grid--multi {
+  margin-top: 0.6rem;
+}
+
+.compare-card--multi {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.compare-chart {
+  display: grid;
+  gap: 0.48rem;
+  border: 1px solid color-mix(in srgb, var(--border) 74%, transparent);
+  border-radius: 12px;
+  background:
+    linear-gradient(150deg, color-mix(in srgb, var(--history-wash-1) 62%, transparent), transparent),
+    color-mix(in srgb, var(--surface) 94%, transparent);
+  padding: 0.5rem 0.56rem 0.54rem;
+}
+
+.compare-chart-frame {
+  width: 100%;
+  overflow: hidden;
+}
+
+.compare-chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.compare-chart-grid {
+  stroke: color-mix(in srgb, var(--history-grid) 84%, transparent);
+  stroke-width: 1;
+}
+
+.compare-chart-line {
+  stroke-width: 2;
+  opacity: 0.36;
+  transition: opacity 0.2s ease, stroke-width 0.2s ease;
+}
+
+.compare-chart-line.is-current {
+  stroke-width: 2.7;
+  opacity: 0.98;
+}
+
+.compare-chart-endpoint {
+  opacity: 0.72;
+  stroke: color-mix(in srgb, var(--surface) 86%, var(--panel-bg));
+  stroke-width: 1.25;
+}
+
+.compare-chart-endpoint--last {
+  opacity: 1;
+}
+
+.compare-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.32rem 0.45rem;
+  align-items: center;
+}
+
+.compare-chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.33rem;
+  padding: 0.14rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+  color: var(--ink-muted);
+  font-size: 0.68rem;
+  line-height: 1.2;
+}
+
+.compare-chart-legend-item i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex: 0 0 8px;
+}
+
+.compare-chart-legend-item.is-current {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--accent-2) 38%, var(--border));
+  background: color-mix(in srgb, var(--accent-2) 13%, var(--surface));
+}
+
+.compare-chart-empty {
+  margin: 0;
+  padding: 0.25rem 0.12rem;
+}
+
+/* Nuevo bloque para el Chart Global y Hover */
+.compare-chart--global {
+  margin-bottom: 1.25rem;
+  padding: 1.2rem;
+  border-radius: 16px;
+  box-shadow: 0 16px 32px var(--shadow);
+}
+
+.compare-chart--global .compare-chart-svg {
+  min-height: 200px;
+}
+
+.compare-chart--global .compare-chart-legend-item {
+  font-size: 0.82rem;
+  padding: 0.35rem 0.75rem;
+  cursor: default;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+/* Modificamos el estado base para que destaque si no hay hover */
+.compare-chart-line {
+  stroke-width: 2.2;
+  opacity: 0.85;
+  flex: none;
+  transition: opacity 0.25s ease, stroke-width 0.25s ease;
+}
+
+/* Estados de Hover para las lineas */
+.compare-chart-line.is-focused {
+  stroke-width: 3.2;
+  opacity: 1;
+}
+
+.compare-chart-line.is-muted,
+.compare-chart-endpoint.is-muted {
+  opacity: 0.15;
+}
+
+/* Interaccion con las tarjetas */
+.compare-card--multi.is-hovered {
+  border-color: rgba(46, 110, 98, 0.45);
+  box-shadow: 0 16px 28px var(--shadow);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .compare-chart {
+    padding: 0.46rem 0.48rem 0.5rem;
+  }
+
+  .compare-chart-line {
+    stroke-width: 1.75;
+  }
+
+  .compare-chart-line.is-current {
+    stroke-width: 2.45;
+  }
+
+  .compare-chart-legend-item {
+    font-size: 0.65rem;
+  }
+}
+
+.compare-badges {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.compare-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(46, 110, 98, 0.35);
+  background: rgba(46, 110, 98, 0.1);
+  color: var(--text-primary);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.compare-badge {
+  border: 1px solid rgba(46, 110, 98, 0.35);
+  background: rgba(46, 110, 98, 0.12);
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.compare-subtitle {
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.compare-fresh {
+  border: 1px solid rgba(199, 154, 58, 0.45);
+  background: rgba(199, 154, 58, 0.12);
+  color: #7a5b1c;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.compare-updated {
+  font-weight: 600;
+}
+
+.muted {
+  opacity: 0.8;
+  font-size: 0.9rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-chip-border);
+  background: var(--color-chip-bg);
+  color: var(--color-chip-text);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.08rem 0.5rem;
+  margin-right: 0.4rem;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+

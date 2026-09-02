@@ -1,0 +1,1084 @@
+/* Landing 2026 warm-aviation redesign (route / only, no /prueba reuse) */
+.landing-shell {
+  display: grid;
+  gap: 1.35rem;
+}
+
+.landing-shell-full {
+  position: relative;
+  width: 100%;
+  overflow-x: clip;
+  display: grid;
+  gap: 1.45rem;
+  padding: var(--ui-shell-padding-top) 0 var(--ui-shell-padding-bottom);
+}
+
+.landing-inner {
+  width: min(100%, 1440px);
+  margin: 0 auto;
+  padding-inline: clamp(1rem, 2.8vw, 2.5rem);
+}
+
+.landing-inner-wide {
+  width: min(100%, 1600px);
+}
+
+.landing-fullband {
+  width: 100%;
+  padding-inline: clamp(0.4rem, 1.4vw, 1rem);
+}
+
+.landing-fullband-hero,
+.landing-fullband-proof,
+.landing-fullband-close {
+  position: relative;
+}
+
+.landing-fullband-hero::before,
+.landing-fullband-proof::before,
+.landing-fullband-close::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.landing-fullband-hero::before {
+  background:
+    radial-gradient(circle at 12% 40%, color-mix(in srgb, var(--landing-glow-warm) 60%, transparent), transparent 48%),
+    radial-gradient(circle at 84% 22%, color-mix(in srgb, var(--accent-2) 12%, transparent), transparent 42%);
+}
+
+.landing-fullband-proof::before {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--landing-glow-warm) 48%, transparent), transparent 48%);
+}
+
+.landing-fullband-close::before {
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--landing-route-line) 8%, transparent));
+}
+
+.landing-fullband .landing-inner {
+  position: relative;
+  z-index: 1;
+}
+
+.landing-eyebrow {
+  margin: 0;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-muted);
+  font-weight: 700;
+}
+
+.landing-hero-v2 {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+  gap: 1.1rem;
+  border-radius: 24px;
+  border: 1px solid color-mix(in srgb, var(--border) 86%, transparent);
+  background:
+    radial-gradient(circle at 8% 18%, rgba(255, 176, 0, 0.14), transparent 44%),
+    radial-gradient(circle at 92% 20%, rgba(80, 191, 230, 0.14), transparent 40%),
+    linear-gradient(145deg, color-mix(in srgb, var(--panel-bg) 82%, var(--surface) 18%), color-mix(in srgb, var(--surface) 78%, var(--panel-bg) 22%));
+  box-shadow: 0 24px 58px var(--shadow-strong);
+  padding: clamp(1.1rem, 2vw, 2rem);
+}
+
+.landing-hero-v2-copy {
+  display: grid;
+  align-content: center;
+  gap: 0.72rem;
+}
+
+.landing-hero-v2-copy h1 {
+  margin: 0;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(2rem, 4.8vw, 3.45rem);
+  line-height: 1.03;
+  max-width: 16ch;
+}
+
+.landing-claim {
+  margin: 0;
+  font-size: clamp(1rem, 2.1vw, 1.28rem);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.landing-body {
+  margin: 0;
+  color: var(--ink-muted);
+  line-height: 1.7;
+  max-width: 54ch;
+}
+
+.landing-hero-points {
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.landing-hero-points li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  color: color-mix(in srgb, var(--ink) 90%, var(--accent) 10%);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.landing-hero-points li::before {
+  content: "•";
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.landing-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 0.45rem;
+}
+
+.landing-cta-note {
+  margin: 0.15rem 0 0;
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+}
+
+.landing-signal-panel {
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: 20px;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  backdrop-filter: blur(6px);
+  display: grid;
+  gap: 0.78rem;
+}
+
+.landing-panel-header-v2 h2 {
+  margin: 0;
+  font-size: 1.14rem;
+  font-family: "Playfair Display", serif;
+}
+
+.landing-panel-header-v2 p {
+  margin: 0.18rem 0 0;
+  color: var(--ink-muted);
+  font-size: 0.86rem;
+}
+
+.landing-signal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.signal-route {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.signal-route strong {
+  font-family: "IBM Plex Mono", "IBM Plex Sans", monospace;
+  letter-spacing: 0.02em;
+}
+
+.signal-label,
+.signal-meta {
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+}
+
+.signal-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.62rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.signal-chip-success {
+  border-color: color-mix(in srgb, var(--state-success-border) 84%, var(--border));
+  background: color-mix(in srgb, var(--state-success-bg) 84%, transparent);
+}
+
+.signal-chip-muted {
+  color: var(--ink-muted);
+}
+
+.signal-bars {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: end;
+  gap: 0.3rem;
+  min-height: 86px;
+}
+
+.signal-bars span {
+  border-radius: 999px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 88%, #ffffff 12%), color-mix(in srgb, var(--accent) 18%, transparent));
+}
+
+.landing-signal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.signal-cell {
+  border: 1px solid color-mix(in srgb, var(--border) 74%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 74%, transparent);
+  padding: 0.52rem 0.6rem;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.signal-cell span {
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+}
+
+.signal-cell strong {
+  font-size: 0.86rem;
+}
+
+.landing-signal-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.landing-proof-band {
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 20px;
+  padding: 1rem;
+  background:
+    linear-gradient(120deg, rgba(255, 176, 0, 0.08), transparent 34%),
+    color-mix(in srgb, var(--surface) 92%, var(--panel-bg) 8%);
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 0.95rem;
+}
+
+.landing-proof-copy h2 {
+  margin: 0.2rem 0 0.35rem;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(1.35rem, 2.2vw, 1.9rem);
+}
+
+.landing-proof-copy p {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.landing-metrics-v2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.landing-metric-v2 {
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  border-radius: 12px;
+  padding: 0.6rem 0.75rem;
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  display: grid;
+  gap: 0.14rem;
+}
+
+.landing-metric-v2 strong {
+  font-size: 1.07rem;
+}
+
+.landing-metric-v2 span {
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+}
+
+.landing-capabilities {
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(0, 0.82fr);
+  gap: 0.9rem;
+  margin-top: 0.75rem;
+}
+
+.landing-capability-main,
+.landing-flow-v2,
+.landing-close-cta,
+.landing-calendar-preview {
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 20px;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--surface) 92%, var(--panel-bg) 8%);
+}
+
+.landing-cap-main-grid {
+  margin-top: 0.7rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.landing-capability-side {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.landing-cap-card {
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 14px;
+  padding: 0.75rem;
+  background:
+    linear-gradient(140deg, color-mix(in srgb, var(--accent-2) 11%, transparent), transparent 52%),
+    color-mix(in srgb, var(--surface) 84%, transparent);
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.landing-cap-card:hover,
+.landing-cap-card:focus-within {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 24%, var(--border));
+  box-shadow: 0 8px 18px var(--shadow);
+}
+
+.landing-cap-card h3 {
+  margin: 0 0 0.3rem;
+}
+
+.landing-cap-card p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.88rem;
+}
+
+.landing-steps-grid-v2 {
+  margin-top: 0.78rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.landing-step-v2 {
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 13px;
+  padding: 0.72rem;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+}
+
+.step-index {
+  display: inline-flex;
+  padding: 0.1rem 0.42rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-family: "IBM Plex Mono", "IBM Plex Sans", monospace;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  color: var(--ink-muted);
+}
+
+.landing-step-v2 h3 {
+  margin: 0.45rem 0 0.3rem;
+  font-size: 0.92rem;
+}
+
+.landing-step-v2 p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.landing-close-cta {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  background:
+    radial-gradient(circle at 12% 16%, rgba(255, 176, 0, 0.11), transparent 46%),
+    color-mix(in srgb, var(--surface) 90%, var(--panel-bg) 10%);
+}
+
+.landing-close-cta h2 {
+  margin: 0.2rem 0 0.25rem;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(1.3rem, 2.3vw, 1.95rem);
+}
+
+.landing-close-cta p {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.landing-close-actions {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+}
+
+.landing-calendar-preview {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.demo-calendar-grid-v2 {
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 14px;
+  padding: 0.7rem;
+}
+
+@media (max-width: 768px) {
+  .landing-hero-v2,
+  .landing-proof-band,
+  .landing-capabilities {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-steps-grid-v2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .landing-close-cta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .landing-capability-side,
+  .landing-metrics-v2,
+  .landing-steps-grid-v2,
+  .landing-signal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-hero-v2 {
+    padding: 0.95rem;
+  }
+
+  .landing-shell {
+    gap: 1rem;
+  }
+
+  .landing-shell-full {
+    gap: 0.95rem;
+  }
+
+  .landing-fullband {
+    padding-inline: 0.35rem;
+  }
+}
+
+:root[data-theme="dark"] .landing-hero-v2 {
+  background:
+    radial-gradient(circle at 12% 20%, rgba(255, 176, 0, 0.15), transparent 46%),
+    radial-gradient(circle at 92% 22%, rgba(80, 191, 230, 0.14), transparent 44%),
+    linear-gradient(150deg, color-mix(in srgb, var(--surface) 86%, var(--surface-2) 14%), color-mix(in srgb, var(--surface-2) 82%, #0f1312 18%));
+  box-shadow: 0 26px 60px rgba(0, 0, 0, 0.54);
+}
+
+:root[data-theme="dark"] .landing-signal-panel,
+:root[data-theme="dark"] .landing-capability-main,
+:root[data-theme="dark"] .landing-flow-v2,
+:root[data-theme="dark"] .landing-close-cta,
+:root[data-theme="dark"] .landing-calendar-preview,
+:root[data-theme="dark"] .landing-proof-band,
+:root[data-theme="dark"] .landing-cap-card,
+:root[data-theme="dark"] .landing-step-v2,
+:root[data-theme="dark"] .landing-metric-v2,
+:root[data-theme="dark"] .signal-cell,
+:root[data-theme="dark"] .demo-calendar-grid-v2 {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background-color: color-mix(in srgb, var(--color-surface) 90%, var(--color-surface-elevated) 10%);
+}
+
+:root[data-theme="dark"] .landing-cap-card {
+  border-color: color-mix(in srgb, var(--color-border) 90%, transparent);
+  background:
+    linear-gradient(140deg, color-mix(in srgb, var(--accent-2) 7%, transparent), transparent 58%),
+    color-mix(in srgb, var(--color-surface) 92%, var(--color-surface-elevated) 8%);
+}
+
+:root[data-theme="dark"] .landing-cap-card:hover,
+:root[data-theme="dark"] .landing-cap-card:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 18%, var(--color-border));
+  box-shadow: 0 7px 16px color-mix(in srgb, var(--shadow) 58%, transparent);
+}
+
+:root[data-theme="dark"] .signal-bars span {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 82%, #ffffff 18%), color-mix(in srgb, var(--accent) 22%, transparent));
+}
+
+/* Landing personality pass: warm flight-deck rhythm */
+.landing-hero-v2 {
+  isolation: isolate;
+  grid-template-columns: minmax(0, 1.14fr) minmax(340px, 0.86fr);
+  background:
+    radial-gradient(circle at 8% 16%, var(--landing-glow-warm), transparent 46%),
+    radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--accent-2) 18%, transparent), transparent 41%),
+    linear-gradient(150deg, color-mix(in srgb, var(--surface) 90%, var(--panel-bg) 10%), color-mix(in srgb, var(--surface-2) 84%, var(--surface) 16%));
+}
+
+.landing-hero-v2::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 58px, color-mix(in srgb, var(--landing-runway-light) 26%, transparent) 58px 59px, transparent 59px 118px),
+    linear-gradient(180deg, color-mix(in srgb, var(--landing-route-line) 20%, transparent), transparent 20%);
+  opacity: 0.26;
+}
+
+.landing-hero-airway {
+  position: absolute;
+  top: 1rem;
+  left: 1.1rem;
+  right: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.airway-point {
+  font-size: 0.66rem;
+  font-family: "IBM Plex Mono", "IBM Plex Sans", monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0.14rem 0.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--landing-flight-strip-border);
+  background: color-mix(in srgb, var(--landing-terminal-glass) 92%, transparent);
+}
+
+.airway-arc {
+  height: 22px;
+  flex: 1;
+  border-top: 1px dashed color-mix(in srgb, var(--landing-route-line) 74%, transparent);
+  border-radius: 999px 999px 0 0;
+  position: relative;
+}
+
+.airway-arc::after {
+  content: "";
+  position: absolute;
+  right: 28%;
+  top: -4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--landing-runway-light);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--landing-runway-light) 24%, transparent), 0 0 12px color-mix(in srgb, var(--landing-runway-light) 40%, transparent);
+}
+
+.landing-hero-v2-copy {
+  position: relative;
+  z-index: 2;
+  padding-top: 1.4rem;
+}
+
+.landing-signal-panel {
+  position: relative;
+  z-index: 2;
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--landing-terminal-glass) 88%, transparent), color-mix(in srgb, var(--surface) 84%, transparent));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--landing-runway-light) 26%, transparent);
+}
+
+.signal-chip-pulse {
+  border-color: var(--landing-signal-active);
+  animation: landingSignalPulse 2.8s ease-in-out infinite;
+}
+
+.landing-flight-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+  border: 1px dashed var(--landing-flight-strip-border);
+  border-radius: 10px;
+  padding: 0.45rem 0.5rem;
+  background: color-mix(in srgb, var(--landing-terminal-glass) 88%, transparent);
+}
+
+.landing-flight-strip span {
+  font-size: 0.68rem;
+  font-family: "IBM Plex Mono", "IBM Plex Sans", monospace;
+  color: var(--ink-muted);
+}
+
+.signal-bars span {
+  animation: landingBarBreathe 3.6s ease-in-out infinite;
+}
+
+.signal-bars span:nth-child(2n) {
+  animation-delay: 0.35s;
+}
+
+.signal-bars span:nth-child(3n) {
+  animation-delay: 0.7s;
+}
+
+.landing-proof-band {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.8rem;
+  background:
+    linear-gradient(95deg, color-mix(in srgb, var(--landing-glow-warm) 90%, transparent), transparent 36%),
+    color-mix(in srgb, var(--surface) 92%, var(--panel-bg) 8%);
+}
+
+.landing-metrics-v2 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.landing-capabilities {
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+}
+
+.landing-cap-main-grid .pulse-row {
+  border: 1px solid color-mix(in srgb, var(--landing-flight-strip-border) 86%, transparent);
+  border-radius: 12px;
+  padding: 0.58rem 0.62rem;
+  background: color-mix(in srgb, var(--landing-terminal-glass) 86%, transparent);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.landing-cap-main-grid .pulse-row:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--landing-flight-strip-border));
+}
+
+.landing-capability-side {
+  grid-template-columns: 1fr;
+}
+
+.landing-flow-v2 {
+  overflow: hidden;
+  position: relative;
+}
+
+.landing-steps-grid-v2 {
+  position: relative;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.landing-steps-grid-v2::before {
+  content: "";
+  position: absolute;
+  left: 0.8rem;
+  right: 0.8rem;
+  top: 0.95rem;
+  border-top: 1px dashed color-mix(in srgb, var(--landing-route-line) 68%, transparent);
+}
+
+.landing-step-v2 {
+  position: relative;
+  z-index: 1;
+}
+
+.landing-step-v2:hover {
+  transform: translateY(-2px);
+}
+
+.landing-step-v2,
+.landing-close-cta,
+.landing-calendar-preview,
+.landing-metric-v2 {
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.landing-metric-v2:hover,
+.landing-calendar-preview:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px var(--shadow);
+}
+
+.demo-meta-strip {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+@keyframes landingSignalPulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--landing-signal-active) 36%, transparent); }
+  50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--landing-signal-active) 8%, transparent); }
+}
+
+@keyframes landingBarBreathe {
+  0%, 100% { filter: saturate(0.95); }
+  50% { filter: saturate(1.14) brightness(1.06); }
+}
+
+:root[data-theme="dark"] .landing-hero-v2 {
+  background:
+    radial-gradient(circle at 12% 20%, color-mix(in srgb, var(--landing-glow-warm) 112%, transparent), transparent 46%),
+    radial-gradient(circle at 92% 22%, color-mix(in srgb, var(--accent-2) 22%, transparent), transparent 44%),
+    linear-gradient(153deg, color-mix(in srgb, var(--surface) 86%, #122122 14%), color-mix(in srgb, var(--surface-2) 82%, #0e1718 18%));
+}
+
+@media (max-width: 768px) {
+  .landing-metrics-v2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .landing-hero-airway {
+    position: static;
+    margin-bottom: 0.4rem;
+  }
+
+  .landing-hero-v2-copy {
+    padding-top: 0;
+  }
+
+  .landing-metrics-v2 {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-steps-grid-v2::before {
+    display: none;
+  }
+
+  .landing-flight-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signal-chip-pulse,
+  .signal-bars span {
+    animation: none;
+  }
+}
+
+/* Landing conversion restructure — stronger narrative, fewer competing blocks */
+.landing-conv-hero-grid {
+  gap: clamp(1rem, 2vw, 1.4rem);
+  align-items: stretch;
+}
+
+.landing-conv-copy {
+  gap: 0.85rem;
+}
+
+.landing-conv-copy h1 {
+  text-wrap: balance;
+  max-width: 12ch;
+}
+
+.landing-conv-copy .landing-body,
+.landing-proof-copy-v2 p,
+.landing-decision-heading p,
+.landing-close-copy p {
+  text-wrap: pretty;
+}
+
+.landing-hero-link {
+  font-size: 0.9rem;
+}
+
+.landing-conv-trust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.1rem;
+}
+
+.landing-conv-trust span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0.28rem 0.72rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  border: 1px solid color-mix(in srgb, var(--landing-flight-strip-border) 78%, transparent);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--shadow-strong) 8%, transparent);
+  font-size: 0.8rem;
+  color: color-mix(in srgb, var(--ink) 92%, var(--accent) 8%);
+}
+
+.landing-conv-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.2rem;
+}
+
+.landing-metric-v2--hero {
+  min-height: 96px;
+  box-shadow:
+    0 14px 26px color-mix(in srgb, var(--shadow-strong) 8%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.landing-metric-v2--hero strong,
+.landing-proof-metrics strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.landing-conv-demo {
+  border-radius: 24px;
+  padding: 1.05rem;
+  background:
+    linear-gradient(165deg, color-mix(in srgb, var(--landing-terminal-glass) 92%, transparent), color-mix(in srgb, var(--surface) 86%, transparent));
+  box-shadow:
+    0 24px 42px color-mix(in srgb, var(--shadow-strong) 16%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--landing-runway-light) 28%, transparent);
+}
+
+.landing-demo-stack {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.landing-demo-card {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.72rem;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--landing-flight-strip-border) 82%, transparent);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--shadow-strong) 8%, transparent);
+}
+
+.landing-demo-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.landing-demo-card-header strong {
+  font-size: 0.84rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+}
+
+.demo-calendar-grid-v3 {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.28rem;
+  padding: 0.55rem;
+}
+
+.landing-signal-foot--elevated {
+  justify-content: space-between;
+}
+
+.landing-proof-cred {
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  align-items: start;
+  padding: 1.15rem;
+}
+
+.landing-proof-copy-v2 h2,
+.landing-decision-heading h2,
+.landing-close-copy h2 {
+  text-wrap: balance;
+}
+
+.landing-proof-grid-v2 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  grid-column: 1 / -1;
+}
+
+.landing-proof-card {
+  min-height: 150px;
+}
+
+.landing-conv-decision {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 0.7rem;
+}
+
+.landing-decision-heading {
+  align-items: flex-end;
+}
+
+.landing-decision-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.16fr) minmax(320px, 0.84fr);
+  gap: 0.9rem;
+}
+
+.landing-decision-story {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 22px;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--surface) 92%, transparent), color-mix(in srgb, var(--surface-2) 82%, transparent));
+  box-shadow: 0 20px 38px color-mix(in srgb, var(--shadow-strong) 10%, transparent);
+}
+
+.landing-steps-grid-v3 {
+  margin-top: 0;
+}
+
+.landing-steps-grid-v3::before {
+  top: 1.05rem;
+}
+
+.landing-steps-grid-v3 .landing-step-v2 {
+  min-height: 170px;
+  transition-property: transform, box-shadow, border-color, background-color;
+  transition-duration: 0.22s;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.landing-steps-grid-v3 .landing-step-v2:hover {
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--shadow-strong) 10%, transparent);
+}
+
+.landing-decision-support {
+  grid-template-columns: 1fr;
+}
+
+.landing-cap-card--cta {
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 60%),
+    color-mix(in srgb, var(--surface) 88%, transparent);
+}
+
+.landing-cap-card--cta .btn-secondary {
+  margin-top: 0.35rem;
+  min-height: 40px;
+}
+
+.landing-close-cta-v2 {
+  gap: 1.2rem;
+  align-items: center;
+}
+
+.landing-close-copy {
+  display: grid;
+  gap: 0.3rem;
+  max-width: 60ch;
+}
+
+.landing-close-proof {
+  margin: 0.35rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.landing-close-proof li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  color: var(--ink-muted);
+}
+
+.landing-close-proof li::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  margin-top: 0.35rem;
+  border-radius: 50%;
+  background: var(--landing-runway-light);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--landing-runway-light) 20%, transparent);
+  flex: 0 0 auto;
+}
+
+.landing-cap-card,
+.landing-metric-v2,
+.landing-step-v2,
+.landing-demo-card,
+.landing-conv-trust span,
+.landing-close-cta-v2,
+.landing-proof-cred,
+.landing-decision-story {
+  transition-property: transform, box-shadow, border-color, background-color, opacity;
+  transition-duration: 0.22s;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.landing-cap-card:active,
+.landing-metric-v2:active,
+.landing-step-v2:active,
+.landing-demo-card:active {
+  transform: scale(0.96);
+}
+
+.landing-metric-v2:hover,
+.landing-demo-card:hover,
+.landing-proof-cred:hover,
+.landing-close-cta-v2:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 32px color-mix(in srgb, var(--shadow-strong) 12%, transparent);
+}
+
+@media (max-width: 768px) {
+  .landing-conv-metrics-row,
+  .landing-proof-grid-v2,
+  .landing-decision-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-proof-cred {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .landing-conv-trust,
+  .landing-cta-row,
+  .landing-demo-card-header,
+  .landing-signal-foot--elevated {
+    align-items: flex-start;
+  }
+
+  .landing-conv-metrics-row,
+  .landing-proof-grid-v2 {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-conv-demo,
+  .landing-proof-cred,
+  .landing-decision-story,
+  .landing-close-cta-v2 {
+    padding: 0.9rem;
+  }
+
+  .landing-close-cta-v2 {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-cap-card,
+  .landing-metric-v2,
+  .landing-step-v2,
+  .landing-demo-card,
+  .landing-conv-trust span,
+  .landing-close-cta-v2,
+  .landing-proof-cred,
+  .landing-decision-story {
+    transition: none;
+    transform: none;
+  }
+}
+

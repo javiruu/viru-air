@@ -1,0 +1,512 @@
+.watch-live-flight {
+  position: relative;
+  display: grid;
+  gap: 0.72rem;
+  overflow: hidden;
+  padding: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--accent-2) 30%, var(--border));
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 92% 8%, color-mix(in srgb, var(--accent-2) 16%, transparent), transparent 38%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface) 94%, transparent), color-mix(in srgb, var(--surface-2) 92%, transparent));
+  box-shadow:
+    0 14px 28px color-mix(in srgb, var(--shadow-strong) 8%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--accent-ink) 18%, transparent);
+}
+
+.watch-live-flight-header,
+.watch-live-flight-header-actions,
+.watch-live-flight-leg-heading,
+.watch-live-flight-meta {
+  display: flex;
+  align-items: center;
+}
+
+.watch-live-flight-header,
+.watch-live-flight-leg-heading {
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.watch-live-flight-header h3 {
+  margin: 0.12rem 0 0;
+  font-size: 1rem;
+  letter-spacing: -0.015em;
+}
+
+.watch-live-flight-kicker {
+  color: var(--accent-2);
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.watch-live-flight-header-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.watch-live-flight-refresh {
+  min-height: 36px;
+}
+
+.watch-live-flight-loading {
+  display: grid;
+  gap: 0.55rem;
+  min-height: 72px;
+  align-content: center;
+}
+
+.watch-live-flight-notice,
+.watch-live-flight-empty {
+  display: grid;
+  gap: 0.28rem;
+  padding: 0.75rem;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  color: var(--ink-muted);
+  font-size: 0.84rem;
+}
+
+.watch-live-flight-notice {
+  border-left: 3px solid var(--accent);
+}
+
+.watch-live-flight-notice strong,
+.watch-live-flight-empty strong {
+  color: var(--ink);
+}
+
+.watch-live-flight-empty {
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  border: 1px dashed color-mix(in srgb, var(--accent-2) 35%, var(--border));
+}
+
+.watch-live-flight-empty p {
+  margin: 0.18rem 0 0;
+  line-height: 1.45;
+}
+
+.watch-live-flight-search {
+  width: fit-content;
+  margin-top: 0.5rem;
+}
+
+.watch-live-flight-route-line {
+  width: 30px;
+  height: 30px;
+  border: 1px solid color-mix(in srgb, var(--accent-2) 54%, var(--border));
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--accent-2) 0 3px, transparent 4px),
+    color-mix(in srgb, var(--accent-2) 9%, var(--surface));
+}
+
+.watch-live-flight-legs {
+  display: grid;
+  gap: 0.58rem;
+}
+
+.watch-live-flight-leg {
+  display: grid;
+  gap: 0.62rem;
+  padding: 0.72rem;
+  border: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--surface) 91%, transparent);
+}
+
+.watch-live-flight-leg--secondary > summary {
+  display: grid;
+  gap: 0.4rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.watch-live-flight-leg--secondary > summary::-webkit-details-marker {
+  display: none;
+}
+
+.watch-live-flight-leg--secondary > summary:focus-visible {
+  border-radius: 8px;
+  outline: 3px solid var(--border-focus);
+  outline-offset: 3px;
+}
+
+.watch-live-flight-leg-disclosure {
+  width: fit-content;
+  color: var(--accent-2);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.watch-live-flight-leg--secondary[open] .watch-live-flight-leg-disclosure {
+  color: var(--ink-muted);
+}
+
+.watch-live-flight-leg-body {
+  display: grid;
+  gap: 0.62rem;
+  padding-top: 0.62rem;
+}
+
+.watch-live-flight-leg-unavailable {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.watch-live-flight-leg-heading > div {
+  display: grid;
+  gap: 0.08rem;
+}
+
+.watch-live-flight-leg-heading > div > span {
+  color: var(--ink-muted);
+  font-size: 0.76rem;
+}
+
+.watch-live-flight-status {
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-2) 13%, var(--surface));
+  color: color-mix(in srgb, var(--accent-2) 82%, var(--ink));
+  font-size: 0.72rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.watch-live-flight-status--cancelled,
+.watch-live-flight-status--diverted {
+  background: color-mix(in srgb, var(--accent) 13%, var(--surface));
+  color: color-mix(in srgb, var(--accent) 82%, var(--ink));
+}
+
+.watch-live-flight-milestones {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.48rem;
+}
+
+.watch-live-flight-milestone {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+  padding-left: 0.58rem;
+  border-left: 2px solid color-mix(in srgb, var(--accent-2) 56%, var(--border));
+}
+
+.watch-live-flight-milestone > span,
+.watch-live-flight-milestone > small {
+  color: var(--ink-muted);
+  font-size: 0.7rem;
+}
+
+.watch-live-flight-milestone > strong {
+  font-size: 1.02rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.watch-live-flight-milestone > em {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 750;
+}
+
+.watch-delay-prediction {
+  --prediction-tone: var(--accent-2);
+  display: grid;
+  gap: 0.62rem;
+  padding: 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--prediction-tone) 34%, var(--border));
+  border-radius: 13px;
+  background:
+    linear-gradient(115deg, color-mix(in srgb, var(--prediction-tone) 7%, var(--surface)), transparent 72%),
+    color-mix(in srgb, var(--surface-2) 62%, var(--surface));
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--prediction-tone) 72%, transparent);
+}
+
+.watch-delay-prediction--low {
+  --prediction-tone: var(--success);
+}
+
+.watch-delay-prediction--high {
+  --prediction-tone: var(--accent);
+}
+
+.watch-delay-prediction-header,
+.watch-delay-prediction-reading,
+.watch-delay-prediction-incoming {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.watch-delay-prediction-header > div,
+.watch-delay-prediction-reading > div,
+.watch-delay-prediction-incoming > div {
+  display: grid;
+  gap: 0.08rem;
+}
+
+.watch-delay-prediction-header span,
+.watch-delay-prediction-reading span,
+.watch-delay-prediction-incoming span,
+.watch-delay-prediction-factors > span {
+  color: var(--ink-muted);
+  font-size: 0.66rem;
+  font-weight: 720;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.watch-delay-prediction-header strong {
+  color: color-mix(in srgb, var(--prediction-tone) 76%, var(--ink));
+  font-size: 0.9rem;
+}
+
+.watch-delay-prediction-header > small,
+.watch-delay-prediction-reading small,
+.watch-delay-prediction-incoming small,
+.watch-delay-prediction footer {
+  color: var(--ink-muted);
+  font-size: 0.66rem;
+}
+
+.watch-delay-prediction-reading {
+  padding-block: 0.52rem;
+  border-block: 1px solid color-mix(in srgb, var(--prediction-tone) 18%, var(--border));
+}
+
+.watch-delay-prediction-reading strong {
+  color: var(--ink);
+  font-size: 0.98rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.012em;
+}
+
+.watch-delay-prediction-reading > div:last-child {
+  text-align: right;
+}
+
+.watch-delay-prediction-reading > div:last-child > span {
+  color: color-mix(in srgb, var(--prediction-tone) 78%, var(--ink));
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.watch-delay-prediction-route {
+  position: relative;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 2px;
+  background: color-mix(in srgb, var(--prediction-tone) 62%, var(--border));
+}
+
+.watch-delay-prediction-route::before,
+.watch-delay-prediction-route::after {
+  position: absolute;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border: 2px solid var(--prediction-tone);
+  border-radius: 50%;
+  background: var(--surface);
+  content: "";
+  transform: translateY(-50%);
+}
+
+.watch-delay-prediction-route::before {
+  left: 0;
+}
+
+.watch-delay-prediction-route::after {
+  right: 0;
+}
+
+.watch-delay-prediction-incoming {
+  justify-content: flex-start;
+}
+
+.watch-delay-prediction-incoming > div {
+  min-width: 0;
+}
+
+.watch-delay-prediction-incoming > div strong,
+.watch-delay-prediction-incoming > div small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.watch-delay-prediction-incoming > small {
+  margin-left: auto;
+  text-align: right;
+}
+
+.watch-delay-prediction-factors {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.watch-delay-prediction-factors > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.watch-delay-prediction-factors small {
+  padding: 0.22rem 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--prediction-tone) 9%, var(--surface));
+  color: var(--ink-muted);
+  font-size: 0.65rem;
+}
+
+.watch-delay-prediction footer {
+  line-height: 1.4;
+}
+
+.watch-delay-prediction--waiting {
+  grid-template-columns: 10px minmax(0, 1fr);
+  align-items: center;
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.watch-delay-prediction--waiting > div {
+  display: grid;
+  gap: 0.08rem;
+}
+
+.watch-delay-prediction--waiting strong {
+  font-size: 0.76rem;
+}
+
+.watch-delay-prediction--waiting span {
+  color: var(--ink-muted);
+  font-size: 0.7rem;
+}
+
+.watch-delay-prediction-signal {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--prediction-tone);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--prediction-tone) 14%, transparent);
+}
+
+.watch-live-flight-meta {
+  flex-wrap: wrap;
+  gap: 0.32rem;
+}
+
+.watch-live-flight-meta > span {
+  padding: 0.24rem 0.42rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-2) 82%, transparent);
+  color: var(--ink-muted);
+  font-size: 0.68rem;
+}
+
+.watch-map-legend-swatch-live {
+  background: var(--accent-2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-2) 18%, transparent);
+}
+
+.watch-map-position-note {
+  margin: -0.25rem 0 0;
+  padding: 0.52rem 0.65rem;
+  border-left: 2px solid color-mix(in srgb, var(--accent-2) 52%, var(--border));
+  border-radius: 0 10px 10px 0;
+  background: color-mix(in srgb, var(--surface-2) 72%, transparent);
+  color: var(--ink-muted);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.watch-map-live-marker {
+  position: relative;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--accent-2);
+  color: var(--accent-ink);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--shadow-strong) 28%, transparent);
+  transform: rotate(var(--watch-map-heading, 0deg));
+}
+
+.watch-map-live-marker svg {
+  display: block;
+}
+
+.watch-map-live-marker::before {
+  position: absolute;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  border: 2px solid color-mix(in srgb, var(--accent-2) 72%, transparent);
+  border-radius: inherit;
+  content: "";
+  animation: watch-live-position-pulse 2.4s ease-out infinite;
+}
+
+@keyframes watch-live-position-pulse {
+  from { opacity: 0.7; transform: scale(0.85); }
+  to { opacity: 0; transform: scale(1.8); }
+}
+
+@media (max-width: 480px) {
+  .watch-live-flight-header,
+  .watch-live-flight-leg-heading {
+    align-items: flex-start;
+  }
+
+  .watch-live-flight-header-actions {
+    align-items: flex-end;
+  }
+
+  .watch-live-flight-milestones {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .watch-delay-prediction-header,
+  .watch-delay-prediction-reading {
+    align-items: flex-start;
+  }
+
+  .watch-delay-prediction-reading {
+    display: grid;
+  }
+
+  .watch-delay-prediction-reading > div:last-child {
+    text-align: left;
+  }
+
+  .watch-delay-prediction-incoming {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr);
+  }
+
+  .watch-delay-prediction-incoming > small {
+    grid-column: 2;
+    margin-left: 0;
+    text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .watch-map-live-marker::before {
+    animation: none;
+  }
+}
+
