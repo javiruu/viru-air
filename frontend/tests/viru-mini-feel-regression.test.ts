@@ -80,6 +80,14 @@ test("WatchRow renders a signed trend percentage without period copy", () => {
   assert.match(source, /watchlist\.smartList\.trendPercentDelta/, "missing i18n key wiring");
 });
 
+test("WatchRow shows the known departure time without the redundant trend action", () => {
+  const source = read("modules/watchlist/components/WatchRow.tsx");
+
+  assert.match(source, /watch\.latest_snapshot\?\.departure_time_local/, "departure time must come from the latest snapshot");
+  assert.match(source, /watch-ticket-departure-time/, "missing departure time rendering");
+  assert.doesNotMatch(source, /watch-ticket-trend-action/, "redundant trend action must stay removed");
+});
+
 test("watchlist i18n exposes a bare trendPercentDelta in es + en", () => {
   const source = read("i18n/domains/watchlist.ts");
   const labels = [...source.matchAll(/trendPercentDelta: "([^"]+)"/g)].map((match) => match[1]);

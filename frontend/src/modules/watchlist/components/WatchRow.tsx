@@ -1,4 +1,4 @@
-import { ArrowRight, Check, Minus, Pause, Plane, Play, Trash2, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowRight, Check, Clock3, Minus, Pause, Plane, Play, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 
 import { useI18n } from "@/i18n";
 import { CommunityRouteSignal } from "@/modules/community-routes/CommunityRouteSignal";
@@ -122,6 +122,7 @@ export function WatchRow({
   const destination = ticketCity(watch.destination_iata);
   const ticketArt = origin.art || destination.art;
   const departureDate = ticketDate(watch.travel_date_local, localeTag);
+  const departureTime = watch.latest_snapshot?.departure_time_local;
   const watchStatus = getWatchStatusMeta(watch.status, t);
   const showWatchStatus = watch.status !== "active";
   const canManageTracking =
@@ -224,6 +225,12 @@ export function WatchRow({
         <div className="watch-ticket-status-line">
           {showWatchStatus ? <span className={`status-pill ${watchStatus.tone}`}>{watchStatus.label}</span> : null}
           <CommunityRouteSignal watchersCount={watch.watchers_count ?? 0} insight={communityInsight} />
+          {departureTime ? (
+            <span className="watch-ticket-departure-time tabular-nums">
+              <Clock3 aria-hidden="true" />
+              {t("watchlist.history.departureAt", { value: departureTime })}
+            </span>
+          ) : null}
         </div>
         <div className="watch-ticket-pricing">
           <div className="watch-price tabular-nums">
@@ -261,14 +268,6 @@ export function WatchRow({
             </div>
           ) : (
             <>
-              <span className={`watch-ticket-trend-action watch-ticket-trend-action--${trend}`}>
-                {trendIcon}
-                {trend === "up"
-                  ? t("watchlist.smartList.trendUp")
-                  : trend === "down"
-                    ? t("watchlist.smartList.trendDown")
-                    : t("watchlist.smartList.trendStable")}
-              </span>
               {meta?.latest && (hasMeaningfulDrop || isBestPrice) ? (
                 <div className="watch-price-badges">
                   {hasMeaningfulDrop && priceDropAmount !== null && priceDropPercent !== null ? (
