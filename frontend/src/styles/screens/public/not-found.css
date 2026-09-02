@@ -401,10 +401,6 @@
     grid-template-columns: 1fr;
   }
 
-  .qs-result-row {
-    grid-template-columns: 1fr;
-  }
-
   .qs-result-actions {
     justify-items: start;
     width: 100%;
@@ -690,4 +686,3 @@
     grid-template-columns: 1fr;
   }
 }
-

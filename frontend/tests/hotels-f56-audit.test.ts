@@ -65,6 +65,8 @@ test("H32: hotel mobile controls preserve 48px targets and long-content wrapping
 
   assert.match(css, /\.hotel-search-mode-tab \{[^}]*min-height:\s*48px/);
   assert.match(css, /\.hotel-area-suggestion-item \{[^}]*min-height:\s*48px/);
+  assert.match(css, /\.hotel-overview-strip \{[^}]*grid-template-columns:\s*repeat\(3/s);
+  assert.match(css, /@media \(max-width:\s*768px\)[\s\S]*\.hotel-overview-strip \{[^}]*overflow-x:\s*auto/s);
   assert.match(css, /\.hotel-provider-toggle-row \{[^}]*min-height:\s*48px/);
   assert.match(css, /\.hotel-result-main \{[^}]*display:\s*flex[^}]*width:\s*100%[^}]*min-height:\s*48px[^}]*overflow-wrap:\s*anywhere/);
   assert.match(css, /\.hoteles-layout,\s*\.hoteles-main-column,\s*\.hoteles-side-column,\s*\.hotel-search-panel,\s*\.hotel-results-panel,\s*\.hotel-results-list \{\s*min-width:\s*0;/);

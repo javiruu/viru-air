@@ -5,7 +5,7 @@
 .qs-filters-grid {
   margin-top: 0.5rem;
   display: grid;
-  gap: 1rem;
+  gap: var(--screen-flow-gap);
 }
 
 .qs-page-header {
@@ -613,4 +613,3 @@ button.qs-filters-backdrop:has(+ #qs-advanced-drawer) {
 .qs-results-list.compact {
   gap: 0.5rem;
 }
-

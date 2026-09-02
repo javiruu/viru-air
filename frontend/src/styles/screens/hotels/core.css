@@ -44,11 +44,47 @@
   max-width: 1560px;
 }
 
+.hotel-overview-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  padding-block: 0.72rem;
+  border-block: 1px solid var(--screen-surface-border);
+}
+
+.hotel-overview-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: baseline;
+  min-width: 0;
+  padding-inline: 0.85rem;
+}
+
+.hotel-overview-card + .hotel-overview-card {
+  border-inline-start: 1px dashed color-mix(in srgb, var(--border) 82%, transparent);
+}
+
+.hotel-overview-card span {
+  color: var(--ink-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hotel-overview-card strong {
+  color: var(--ink);
+  font-family: "IBM Plex Mono", "IBM Plex Sans", monospace;
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
 .hoteles-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.55fr) minmax(18rem, 0.85fr);
   align-items: start;
-  gap: 1rem;
+  gap: var(--screen-flow-gap);
 }
 
 .hoteles-main-column,
@@ -112,7 +148,7 @@
   background: var(--surface);
   color: var(--ink-muted);
   cursor: pointer;
-  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+  transition: background var(--screen-motion-fast) ease, color var(--screen-motion-fast) ease, border-color var(--screen-motion-fast) ease;
   font-weight: 600;
   font-size: 0.88rem;
 }
@@ -512,6 +548,15 @@
 
 /* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 768px) {
+  .hotel-overview-strip {
+    grid-template-columns: repeat(3, minmax(8.5rem, 1fr));
+    margin-inline: calc(var(--ui-shell-padding-inline) * -1);
+    padding-inline: var(--ui-shell-padding-inline);
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+  }
+
   .hotel-search-grid,
   .hotel-search-area-grid {
     grid-template-columns: 1fr;
@@ -548,23 +593,11 @@
 
   .hotel-tracked-offer-actions {
     flex-direction: row;
+    justify-content: flex-start;
   }
-}
 
-@media (max-width: 1023px) {
-  .hoteles-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
   .hotel-tracked-offer-item {
     grid-template-columns: 1fr;
-  }
-
-  .hotel-tracked-offer-actions {
-    flex-direction: row;
-    justify-content: flex-start;
   }
 }
 
@@ -658,4 +691,3 @@
     transition: none;
   }
 }
-

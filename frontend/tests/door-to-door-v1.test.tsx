@@ -344,6 +344,7 @@ test("Door-to-door styles include responsive radar and mobile decision layout ho
   assert.match(source, /d2d-trust-modal/);
   assert.match(source, /d2d-form-essentials > \.btn-primary/);
   assert.match(source, /max-width: 768px/);
+  assert.match(source, /\.d2d-form-essentials > \*\s*\{[^}]*grid-column:\s*1 \/ -1/s);
   assert.match(source, /prefers-reduced-motion/);
 });
 

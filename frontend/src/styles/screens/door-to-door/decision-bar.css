@@ -101,11 +101,6 @@
     gap: 0.4rem;
   }
 
-  .d2d-sticky-summary {
-    width: 100%;
-    justify-content: space-between;
-  }
-
   .d2d-sticky-nav {
     overflow-x: auto;
     width: 100%;
@@ -116,5 +111,4 @@
     height: 0;
   }
 }
-
 

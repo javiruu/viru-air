@@ -115,7 +115,7 @@ Reglas:
 
 La identidad, tokens, tipografía, dark/light, motion, foco y QA transversal se rigen únicamente por `DESIGN.md`. Hoteles no crea una paleta, un tema ni una excepción visual propia.
 
-- `frontend/src/styles/tokens.css` contiene valores semánticos; `components.css`, patrones compartidos; y `screens.css`, composición local.
+- `frontend/src/styles/tokens.css` contiene valores semánticos; `components.css`, patrones compartidos; y `frontend/src/styles/screens/`, composición local por dominio, cargada desde el manifiesto `screens.css`.
 - No hardcodear un color, sombra, radio o spacing si existe un token semántico equivalente.
 - La necesidad hotelera no justifica alterar la jerarquía de información, el significado de estados ni las capacidades reales de provider/tracking.
 
@@ -283,7 +283,7 @@ El motion y las microinteracciones se rigen por `DESIGN.md`. En hoteles, además
 
 1. No crear tokens locales en TSX si existe alias semántico.
 2. No cambiar API, estado de negocio o nombres de endpoints como parte de un polish visual.
-3. Extraer a `components.css` solo patrones que aparezcan en dos o más pantallas; lo exclusivo queda en `screens.css`.
+3. Extraer a `components.css` solo patrones que aparezcan en dos o más pantallas; lo exclusivo queda en su módulo dentro de `styles/screens/`.
 4. No añadir iconos, imágenes o mapas externos sin procedencia/licencia y sin evidencia de valor.
 5. Mantener fallback funcional sin imágenes y sin provider.
 6. No convertir un panel técnico en una nueva fuente de verdad: el copy refleja H10-H30.
