@@ -321,6 +321,16 @@
   line-height: 1;
 }
 
+a.qs-provider-logo {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+a.qs-provider-logo:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
 @media (max-width: 768px) {
   .private-account-controls-bar {
     flex-wrap: wrap;
@@ -715,10 +725,6 @@
   justify-content: flex-end;
   gap: 0.45rem;
   min-width: 0;
-}
-
-.qs-row-open-ryanair {
-  white-space: nowrap;
 }
 
 .qs-result-flight-time {
