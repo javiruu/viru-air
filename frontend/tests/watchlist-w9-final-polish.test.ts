@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
+import { readStylesheetTree } from "./helpers/read-stylesheet-tree";
 
 const WATCHLIST_PAGE = path.join(process.cwd(), "src", "app", "(private)", "watchlist", "page.tsx");
 const SMART_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "SmartWatchListPanel.tsx");
@@ -76,7 +77,7 @@ test("W9: historical confidence remains available without crowding the watch row
 test("W9: map and compare keep non-contradictory and reactive states", () => {
   const mapSource = fs.readFileSync(MAP_PANEL, "utf8");
   const compareSource = fs.readFileSync(COMPARE_PANEL, "utf8");
-  const screensSource = fs.readFileSync(SCREENS, "utf8");
+  const screensSource = readStylesheetTree(SCREENS);
 
   assert.doesNotMatch(mapSource, /No hay rutas activas para mostrar en el mapa\./);
   assert.doesNotMatch(mapSource, /selectedRouteLabel|fallbackRouteLabel/);

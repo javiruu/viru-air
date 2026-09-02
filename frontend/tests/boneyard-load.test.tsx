@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { readStylesheetTree } from "./helpers/read-stylesheet-tree";
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const LOAD_COMPONENT = path.resolve(TEST_DIR, "../src/modules/shared/BoneyardLoad.tsx");
@@ -25,7 +26,7 @@ test("Boneyard loading frames retain the generated-bones contract", () => {
 });
 
 test("Boneyard honors reduced-motion preferences", () => {
-  const styles = fs.readFileSync(LOADING_STYLES, "utf8");
+  const styles = readStylesheetTree(LOADING_STYLES);
 
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
   assert.match(styles, /\[data-boneyard-bone="true"\]/);

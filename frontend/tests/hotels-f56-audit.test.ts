@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
+import { readStylesheetTree } from "./helpers/read-stylesheet-tree";
 
 const HOTELS_ROUTE = path.join(process.cwd(), "src", "app", "(private)", "hoteles", "page.tsx");
 const HOTELS_PAGE = path.join(process.cwd(), "src", "modules", "hotels", "HotelRadarPage.tsx");
@@ -60,7 +61,7 @@ test("H32: hotel errors and collapsible panels expose accessible semantics", () 
 });
 
 test("H32: hotel mobile controls preserve 48px targets and long-content wrapping", () => {
-  const css = fs.readFileSync(SCREENS_CSS, "utf8");
+  const css = readStylesheetTree(SCREENS_CSS);
 
   assert.match(css, /\.hotel-search-mode-tab \{[^}]*min-height:\s*48px/);
   assert.match(css, /\.hotel-area-suggestion-item \{[^}]*min-height:\s*48px/);
@@ -96,7 +97,7 @@ test("H57: hotel result cards keep both tracking and watchlist actions visible",
 });
 
 test("H57: weather promo card styles stay scoped instead of overriding every .card", () => {
-  const css = fs.readFileSync(SCREENS_CSS, "utf8");
+  const css = readStylesheetTree(SCREENS_CSS);
 
   assert.match(css, /\.cardm > \.card \{/);
   assert.match(css, /:root\[data-theme="dark"\] \.cardm > \.card \{/);
@@ -105,7 +106,7 @@ test("H57: weather promo card styles stay scoped instead of overriding every .ca
 
 test("H59-H60: hotel radar includes honest provider context and responsive hotel blocks", () => {
   const page = fs.readFileSync(HOTELS_PAGE, "utf8");
-  const css = fs.readFileSync(SCREENS_CSS, "utf8");
+  const css = readStylesheetTree(SCREENS_CSS);
 
   assert.match(page, /hotel-provider-context/);
   assert.match(page, /providerHintOn/);

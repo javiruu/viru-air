@@ -4,6 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { readStylesheetTree } from "./helpers/read-stylesheet-tree";
 
 import { DoorToDoorFilters } from "../src/modules/door-to-door/components/DoorToDoorFilters";
 import { DoorToDoorOptionCard } from "../src/modules/door-to-door/components/DoorToDoorOptionCard";
@@ -338,11 +339,11 @@ test("Door-to-door module has no mojibake markers", () => {
 });
 
 test("Door-to-door styles include responsive radar and mobile decision layout hooks", () => {
-  const source = fs.readFileSync(STYLES, "utf8");
+  const source = readStylesheetTree(STYLES);
   assert.match(source, /d2d-route-visual/);
   assert.match(source, /d2d-trust-modal/);
   assert.match(source, /d2d-form-essentials > \.btn-primary/);
-  assert.match(source, /max-width: 680px/);
+  assert.match(source, /max-width: 768px/);
   assert.match(source, /prefers-reduced-motion/);
 });
 
