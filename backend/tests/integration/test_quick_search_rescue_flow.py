@@ -108,6 +108,7 @@ def _base_payload(target_date: str) -> dict:
 class _ProviderDateRescue:
     def __init__(self, target_date: date) -> None:
         self._target = target_date
+        self.requested_dates: list[date] = []
 
     def provider_ids(self) -> list[str]:
         return ["fake"]
@@ -115,6 +116,7 @@ class _ProviderDateRescue:
     def get_flights(self, origin: str, destination: str, travel_date: str, timeout_ms: int = 8000, **kwargs: object):
         del timeout_ms
         query_date = date.fromisoformat(travel_date)
+        self.requested_dates.append(query_date)
         if origin == "MAD" and destination == "BCN" and query_date == self._target + timedelta(days=1):
             return ProviderFetchResult(
                 flights=[
@@ -184,7 +186,7 @@ class _ProviderExactSuccess:
         return ProviderFetchResult(flights=[], warnings=[])
 
 
-def test_quick_search_rescue_date_finds_results(client: TestClient, monkeypatch) -> None:
+def test_quick_search_rescue_preserves_an_exact_date(client: TestClient, monkeypatch) -> None:
     _CACHE.clear()
     target_date = date.today() + timedelta(days=21)
     fake_provider = _ProviderDateRescue(target_date)
@@ -195,15 +197,16 @@ def test_quick_search_rescue_date_finds_results(client: TestClient, monkeypatch)
     assert response.status_code == 200
     payload = response.json()
 
-    assert len(payload["results"]) >= 1
+    assert payload["results"] == []
     assert payload["meta"]["rescue"]["attempted"] is True
-    assert payload["meta"]["rescue"]["winning_step"] == "pass_3_rescue_date"
-    assert "date_flex_auto" in payload["filters"]["relaxed"]
+    assert payload["meta"]["rescue"]["winning_step"] is None
+    assert "date_flex_auto" not in payload["filters"]["relaxed"]
     assert "rescue_mode_applied" not in payload["filters"]["warnings"]
     assert [item["step"] for item in payload["meta"]["rescue"]["pass_summaries"][:2]] == [
         "pass_1_exact",
         "pass_2_rescue_budget_boost",
     ]
+    assert {requested_date for requested_date in fake_provider.requested_dates} == {target_date}
 
 
 def test_quick_search_rescue_nearby_finds_results(client: TestClient, monkeypatch) -> None:
@@ -242,7 +245,6 @@ def test_quick_search_rescue_exhausted_keeps_empty_results(client: TestClient, m
     assert "rescue_mode_applied" not in payload["filters"]["warnings"]
     assert payload["meta"]["rescue"]["applied_steps"] == [
         "pass_2_rescue_budget_boost",
-        "pass_3_rescue_date",
         "pass_4_rescue_nearby",
         "pass_5_rescue_time_window",
     ]

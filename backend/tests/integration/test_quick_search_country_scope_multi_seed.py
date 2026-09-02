@@ -177,7 +177,7 @@ def test_country_scope_multi_seed_returns_results_from_secondary_seed(client, mo
     assert any(item["code"] == "country_scope_multi_seed_applied" for item in payload["meta"]["warnings_structured"])
 
 
-def test_country_scope_multi_seed_rescue_finds_results(client, monkeypatch) -> None:
+def test_country_scope_multi_seed_rescue_preserves_the_exact_date(client, monkeypatch) -> None:
     _CACHE.clear()
     target = date.today() + timedelta(days=30)
     fake_provider = _ProviderDateRescueSecondSeed(target)
@@ -188,10 +188,10 @@ def test_country_scope_multi_seed_rescue_finds_results(client, monkeypatch) -> N
     assert response.status_code == 200
     payload = response.json()
 
-    assert len(payload["results"]) >= 1
+    assert payload["results"] == []
     assert payload["meta"]["rescue"]["attempted"] is True
-    assert payload["meta"]["rescue"]["winning_step"] == "pass_3_rescue_date"
-    assert "date_flex_auto" in payload["filters"]["relaxed"]
+    assert payload["meta"]["rescue"]["winning_step"] is None
+    assert "date_flex_auto" not in payload["filters"]["relaxed"]
 
 
 def test_country_scope_multi_seed_exhausted_keeps_empty_with_metadata(client, monkeypatch) -> None:

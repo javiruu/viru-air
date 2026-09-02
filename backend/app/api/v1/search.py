@@ -2838,22 +2838,6 @@ def quick_search(
                 "max_requests_override": budget_boost_max_requests,
             }
         )
-        if requested_days_before == 0 and requested_days_after == 0:
-            rescue_steps.append(
-                {
-                    "step": "pass_3_rescue_date",
-                    "days_before": 1,
-                    "days_after": 1,
-                    "include_nearby_origins": requested_include_nearby_origins,
-                    "include_nearby_destinations": requested_include_nearby_destinations,
-                    "radius_km_origin": requested_radius_km_origin,
-                    "radius_km_destination": requested_radius_km_destination,
-                    "depart_after": requested_depart_after,
-                    "depart_before": requested_depart_before,
-                    "max_pairs_override": None,
-                    "max_requests_override": None,
-                }
-            )
         rescue_steps.append(
             {
                 "step": "pass_4_rescue_nearby",
@@ -2872,8 +2856,8 @@ def quick_search(
         rescue_steps.append(
             {
                 "step": "pass_5_rescue_time_window",
-                "days_before": 1 if requested_days_before == 0 and requested_days_after == 0 else requested_days_before,
-                "days_after": 1 if requested_days_before == 0 and requested_days_after == 0 else requested_days_after,
+                "days_before": requested_days_before,
+                "days_after": requested_days_after,
                 "include_nearby_origins": True,
                 "include_nearby_destinations": True,
                 "radius_km_origin": max(150, requested_radius_km_origin),
