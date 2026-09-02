@@ -206,13 +206,13 @@ export function WatchRow({
       <div className="watch-ticket-main">
         <div className="watch-ticket-route">
           <div className="watch-ticket-airport">
-            <strong className="watch-route-code">{watch.origin_iata}</strong>
             <span>{origin.label}</span>
+            <strong className="watch-route-code">{watch.origin_iata}</strong>
           </div>
           <ArrowRight className="watch-ticket-route-plane" aria-hidden="true" />
           <div className="watch-ticket-airport">
-            <strong>{watch.destination_iata}</strong>
             <span>{destination.label}</span>
+            <strong>{watch.destination_iata}</strong>
           </div>
           <span className="sr-only">{watch.origin_iata} → {watch.destination_iata}</span>
         </div>

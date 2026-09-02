@@ -47,6 +47,19 @@ test("WatchRow resolves city names dynamically and prefers an available origin i
   assert.match(source, /TSF: \{ label: "Treviso", art: "" \}/);
 });
 
+test("WatchRow renders the airport city above its IATA code at both ends of the ticket", () => {
+  const source = fs.readFileSync(watchRowPath, "utf8");
+
+  assert.match(
+    source,
+    /<div className="watch-ticket-airport">\s*<span>\{origin\.label\}<\/span>\s*<strong className="watch-route-code">\{watch\.origin_iata\}<\/strong>/,
+  );
+  assert.match(
+    source,
+    /<div className="watch-ticket-airport">\s*<span>\{destination\.label\}<\/span>\s*<strong>\{watch\.destination_iata\}<\/strong>/,
+  );
+});
+
 test("WatchRow omits the active-status pill while preserving other lifecycle states", () => {
   const source = fs.readFileSync(watchRowPath, "utf8");
 
