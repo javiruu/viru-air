@@ -212,6 +212,24 @@
   min-height: 0;
 }
 
+.watch-ticket-departure-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  min-width: 0;
+  color: color-mix(in srgb, var(--watch-ticket-ink) 74%, var(--watch-ticket-orange));
+  font-size: clamp(0.68rem, 1.55cqw, 1.18rem);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.watch-ticket-departure-time svg {
+  width: 1em;
+  height: 1em;
+  color: var(--watch-ticket-orange);
+  stroke-width: 1.8;
+}
+
 .watch-ticket-row .status-pill {
   padding: 0.34rem 0.92rem;
   border: 1px solid color-mix(in srgb, var(--watch-ticket-green) 36%, var(--watch-ticket-line));
@@ -315,39 +333,6 @@
 
 .watch-ticket-row .watch-price-badges {
   display: none;
-}
-
-.watch-ticket-trend-action {
-  display: inline-flex;
-  align-items: center;
-  min-height: 5.75cqw;
-  min-width: 0;
-  justify-content: center;
-  padding: 0.32rem 0.78rem;
-  border: 1px solid var(--watch-ticket-line);
-  border-radius: 999px;
-  color: var(--watch-ticket-ink);
-  font-size: clamp(0.68rem, 1.65cqw, 1.34rem);
-  font-weight: 700;
-  letter-spacing: 0.03em;
-}
-
-.watch-ticket-trend-action svg {
-  width: 1.2em;
-  height: 1.2em;
-  stroke-width: 1.9;
-}
-
-.watch-ticket-trend-action--up {
-  background: color-mix(in srgb, var(--watch-ticket-orange) 12%, var(--watch-ticket-paper));
-}
-
-.watch-ticket-trend-action--down {
-  background: color-mix(in srgb, var(--watch-ticket-green) 12%, var(--watch-ticket-paper));
-}
-
-.watch-ticket-trend-action--stable {
-  background: color-mix(in srgb, var(--watch-ticket-line) 32%, var(--watch-ticket-paper));
 }
 
 .watch-ticket-action-buttons {
@@ -693,12 +678,6 @@
   .watch-ticket-actions {
     gap: 0.3rem;
     min-height: 1.5rem;
-  }
-
-  .watch-ticket-trend-action {
-    min-height: 1.45rem;
-    padding: 0.12rem 0.34rem;
-    font-size: 0.44rem;
   }
 
   .watch-ticket-row .watch-ticket-action-buttons .btn-compact {
@@ -1257,7 +1236,6 @@
     flex: 0 1 auto;
   }
 
-  .watch-ticket-trend-action,
   .watch-ticket-row .watch-ticket-action-buttons .btn-compact,
   .watch-ticket-purchased-action {
     min-height: 1.58rem;
