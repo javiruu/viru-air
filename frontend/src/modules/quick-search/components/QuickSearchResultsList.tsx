@@ -229,7 +229,14 @@ function QuickSearchResultsListInner(props: Props) {
                         {arrivalClock ? <span>{props.t("weatherArrive")} {arrivalClock}</span> : null}
                       </div>
                       <div className="qs-result-provider">
-                        <QuickSearchProviderBadge source={r.source} unknownLabel={props.t("sourceUnknown")} variant="logo" />
+                        <QuickSearchProviderBadge
+                          source={r.source}
+                          unknownLabel={props.t("sourceUnknown")}
+                          variant="logo"
+                          href={rowLink || undefined}
+                          linkAriaLabel={`${props.t("deepLink")}: ${provider.label}`}
+                          onClick={rowLink ? props.onTrackOpenRyanair : undefined}
+                        />
                       </div>
                     </>
                   ) : (
@@ -249,7 +256,14 @@ function QuickSearchResultsListInner(props: Props) {
                         {arrivalClock ? <span><strong>{props.t("weatherArrive")}:</strong> {arrivalClock}</span> : null}
                       </div>
                       <div className="qs-result-provider">
-                        <QuickSearchProviderBadge source={r.source} unknownLabel={props.t("sourceUnknown")} variant="logo" />
+                        <QuickSearchProviderBadge
+                          source={r.source}
+                          unknownLabel={props.t("sourceUnknown")}
+                          variant="logo"
+                          href={rowLink || undefined}
+                          linkAriaLabel={`${props.t("deepLink")}: ${provider.label}`}
+                          onClick={rowLink ? props.onTrackOpenRyanair : undefined}
+                        />
                       </div>
                     </>
                   )}
@@ -297,17 +311,6 @@ function QuickSearchResultsListInner(props: Props) {
                         <span className="qs-result-flight-time">
                           {props.t("flightTime")}: <strong>{flightTimeLabel}</strong>
                         </span>
-                      ) : null}
-                      {!props.compactView && rowLink ? (
-                        <a
-                          className="btn-ghost qs-row-open-ryanair"
-                          href={rowLink}
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={props.onTrackOpenRyanair}
-                        >
-                          {props.t("deepLink")}
-                        </a>
                       ) : null}
                       <div className="qs-row-menu-wrap">
                         <button
