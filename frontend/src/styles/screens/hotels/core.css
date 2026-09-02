@@ -1,0 +1,661 @@
+/* ══════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════
+   Hoteles — Area Search & Results
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Search mode tabs ─────────────────────────────────────────── */
+.hoteles-page button {
+  min-height: 48px;
+}
+
+.hoteles-page input:not([type="checkbox"]),
+.hoteles-page select {
+  min-height: 48px;
+}
+
+/* Alert form controls must shrink with the card instead of preserving the
+   intrinsic width of the longest select option on narrow viewports. */
+.hoteles-page .hotel-alerts-panel .field {
+  min-width: 0;
+}
+
+.hoteles-page .hotel-alerts-panel .qs-input-neutral {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.hotel-search-mode-tabs {
+  display: flex;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.hoteles-layout,
+.hoteles-main-column,
+.hoteles-side-column,
+.hotel-search-panel,
+.hotel-results-panel,
+.hotel-results-list {
+  min-width: 0;
+}
+
+.hoteles-page {
+  max-width: 1560px;
+}
+
+.hoteles-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(18rem, 0.85fr);
+  align-items: start;
+  gap: 1rem;
+}
+
+.hoteles-main-column,
+.hoteles-side-column {
+  display: grid;
+  align-content: start;
+  gap: 0.85rem;
+}
+
+.hotel-result-card,
+.hotel-result-main,
+.hotel-result-actions,
+.hotel-area-result-card,
+.hotel-area-result-main,
+.hotel-area-result-price {
+  min-width: 0;
+}
+
+.hotel-result-main {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.hotel-result-main > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.hotel-result-main h3,
+.hotel-result-main p {
+  overflow-wrap: anywhere;
+}
+
+.hotel-result-actions,
+.hotel-area-result-price,
+.hotel-provider-toggle-row {
+  flex-wrap: wrap;
+}
+
+.hotel-result-actions,
+.hotel-result-actions > button {
+  scroll-margin-bottom: 96px;
+}
+
+.hotel-result-actions > button {
+  min-height: 48px;
+}
+
+.hotel-search-mode-tab {
+  flex: 1;
+  min-height: 48px;
+  padding: 0.55rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.hotel-search-mode-tab:hover {
+  background: color-mix(in srgb, var(--surface-2) 80%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+}
+
+.hotel-search-mode-tab.is-active {
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--border));
+  color: var(--accent);
+}
+
+.hotel-search-mode-tab:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* ── Search grid ──────────────────────────────────────────────── */
+.hotel-search-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+  align-items: end;
+}
+
+.hotel-search-area-grid {
+  grid-template-columns: 2fr 1fr 1fr 0.85fr;
+}
+
+/* ── Area autocomplete ────────────────────────────────────────── */
+.hotel-area-autocomplete {
+  position: relative;
+}
+
+.hotel-area-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  z-index: 14;
+  max-height: 210px;
+  overflow-y: auto;
+  margin-top: 0.3rem;
+  list-style: none;
+  padding: 0.25rem;
+  box-shadow: 0 12px 28px var(--shadow);
+}
+
+.hotel-area-suggestion-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.6rem 0.75rem;
+  background: none;
+  border: none;
+  border-radius: 10px;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms ease;
+  font: inherit;
+}
+
+.hotel-area-suggestion-item:hover,
+.hotel-area-suggestion-item:focus-visible {
+  background: color-mix(in srgb, var(--surface-2) 80%, transparent);
+  outline: none;
+}
+
+.hotel-area-spinner {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: hotel-spin 0.55s linear infinite;
+}
+
+@keyframes hotel-spin {
+  from {
+    transform: translateY(-50%) rotate(0deg);
+  }
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
+.hotel-area-resolved-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── Area results ─────────────────────────────────────────────── */
+.hotel-area-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.hotel-area-result-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.hotel-area-result-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.hotel-area-result-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+
+/* ── Provider toggle ─────────────────────────────────────────── */
+.hotel-provider-toggle {
+  display: grid;
+}
+
+.hotel-provider-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 48px;
+  padding: 0.55rem 0.7rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.6);
+}
+
+.hotel-provider-toggle-row:hover {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+  background: color-mix(in srgb, var(--surface-2) 82%, var(--surface));
+  box-shadow: 0 8px 18px var(--shadow);
+}
+
+.hotel-provider-toggle-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.hotel-provider-toggle-note,
+.hotel-provider-context-note {
+  display: block;
+  margin-top: 0.45rem;
+  max-width: 44rem;
+}
+
+.hotel-provider-context {
+  display: grid;
+  justify-items: end;
+  gap: 0.4rem;
+}
+
+:root[data-theme="dark"] .hotel-provider-toggle-row {
+  border-color: var(--border);
+  background: color-mix(in srgb, var(--surface) 90%, var(--surface-2) 10%);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+:root[data-theme="dark"] .hotel-provider-toggle-row:hover {
+  border-color: color-mix(in srgb, var(--accent) 44%, var(--border));
+  background: color-mix(in srgb, var(--surface-2) 86%, var(--surface) 14%);
+}
+
+.hotel-tracked-offers-list,
+.hotel-comp-set-member-list,
+.hotel-nearby-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.hotel-my-hotels-panel,
+.hotel-my-hotels-sections {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.hotel-my-hotels-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at 86% 10%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 34%),
+    linear-gradient(135deg, color-mix(in srgb, var(--surface) 92%, var(--surface-2)), var(--surface));
+}
+
+.hotel-my-hotels-header > div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.hotel-my-hotels-header h2,
+.hotel-my-hotels-empty h3 {
+  margin: 0;
+}
+
+.hotel-my-hotels-eyebrow {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hotel-my-hotels-empty {
+  display: grid;
+  justify-items: start;
+  gap: 0.7rem;
+}
+
+.hotel-my-hotels-alert-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.hotel-my-hotels-alert-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 90%, var(--surface-2));
+}
+
+.hotel-my-hotels-alert-item > div {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.hotel-tracked-offer-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.9rem;
+}
+
+.hotel-tracked-offer-copy {
+  min-width: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.hotel-tracked-offer-header,
+.hotel-tracked-offer-price-row,
+.hotel-comp-set-summary,
+.hotel-nearby-item,
+.hotel-comp-set-member-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.hotel-tracked-offer-prices {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.hotel-tracked-offer-price-row {
+  flex-wrap: wrap;
+}
+
+.hotel-tracked-offer-price-value {
+  font-size: 1.05rem;
+}
+
+.hotel-tracked-offer-actions,
+.hotel-comp-set-actions,
+.hotel-nearby-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.hotel-tracked-offer-actions {
+  flex-direction: column;
+}
+
+.hotel-tracked-offer-snapshots {
+  grid-column: 1 / -1;
+}
+
+.hotel-comp-set-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.hotel-comp-set-item {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  padding: 0.45rem 0.85rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+.hotel-comp-set-item:hover,
+.hotel-comp-set-item:focus-visible,
+.hotel-comp-set-item.is-active {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+  background: color-mix(in srgb, var(--surface-2) 82%, var(--surface));
+}
+
+.hotel-comp-set-item:hover {
+  transform: translateY(-1px);
+}
+
+.hotel-comp-set-active {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.hotel-comp-set-summary {
+  flex-wrap: wrap;
+}
+
+.hotel-comp-set-eyebrow {
+  display: inline-flex;
+  margin-bottom: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.hotel-nearby-item {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.8rem 0.95rem;
+  background: color-mix(in srgb, var(--surface) 92%, var(--surface-2));
+}
+
+.hotel-nearby-copy {
+  display: grid;
+  gap: 0.2rem;
+}
+/* The app intentionally uses a 75% desktop zoom. Compensate hotel controls
+   so their physical hit area remains at least 48px in the browser. */
+@media (min-width: 1024px) {
+  .hoteles-page button {
+    min-height: 64px;
+  }
+
+  .hoteles-page input:not([type="checkbox"]),
+  .hoteles-page select {
+    min-height: 64px;
+  }
+}
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .hotel-search-grid,
+  .hotel-search-area-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hotel-search-mode-tabs {
+    flex-direction: column;
+  }
+
+  .hotel-provider-context {
+    justify-items: start;
+  }
+
+  .hotel-my-hotels-header,
+  .hotel-my-hotels-alert-item {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .hotel-tracked-offer-header,
+  .hotel-nearby-item,
+  .hotel-comp-set-member-item,
+  .hotel-comp-set-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hotel-tracked-offer-actions,
+  .hotel-nearby-actions,
+  .hotel-comp-set-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .hotel-tracked-offer-actions {
+    flex-direction: row;
+  }
+}
+
+@media (max-width: 1023px) {
+  .hoteles-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .hotel-tracked-offer-item {
+    grid-template-columns: 1fr;
+  }
+
+  .hotel-tracked-offer-actions {
+    flex-direction: row;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .hotel-search-mode-tab {
+    min-height: 48px;
+    font-size: 0.84rem;
+  }
+
+  .hotel-search-grid input,
+  .hotel-search-grid select,
+  .hotel-search-area-grid input,
+  .hotel-search-area-grid select {
+    font-size: 1rem;
+  }
+
+  .hotel-tracked-offer-item {
+    gap: 0.55rem;
+  }
+
+  .hotel-tracked-offer-actions {
+    width: 100%;
+  }
+
+  .hotel-comp-set-item {
+    padding: 0.5rem 0.65rem;
+    font-size: 0.82rem;
+  }
+
+  .hotel-nearby-item {
+    padding: 0.7rem;
+  }
+
+  .hotel-provider-context {
+    width: 100%;
+  }
+
+  .hotel-result-actions,
+  .hotel-area-result-price {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .hotel-result-actions > button {
+    flex: 1 1 10rem;
+  }
+}
+
+/* Comprehensive reduced-motion (all d2d-* animations) */
+@media (prefers-reduced-motion: reduce) {
+  /* Phase 10 additions */
+  .d2d-chosen-trust,
+  .d2d-results-section,
+  .d2d-option-comparator,
+  .d2d-estimate-section,
+  .d2d-map-hub,
+  .d2d-trust-overlay,
+  .d2d-trust-modal,
+  .d2d-compare-row-bar,
+  .d2d-autocomplete .qs-autocomplete {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Phase 4-6 remnants not covered by individual blocks */
+  .d2d-option-card.is-chosen,
+  .d2d-compare-bar-fill,
+  .d2d-sticky-bar,
+  /* Button press */
+  .btn-primary:active,
+  .btn-secondary:active,
+  .btn-ghost:active,
+  .btn-compact:active {
+    transform: none;
+    transition: none;
+  }
+
+  /* Hotel controls and feedback */
+  .hotel-area-spinner,
+  .hotel-search-mode-tab,
+  .hotel-area-suggestion-item,
+  .hotel-provider-toggle-row {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Status pills */
+  .status-pill {
+    transition: none;
+  }
+}
+

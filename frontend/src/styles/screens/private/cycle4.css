@@ -1,0 +1,74 @@
+/* =========================
+   C7.4 VISUAL POLISH
+   ========================= */
+.cycle4-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.suggestions-page .panel,
+.admin-page .panel {
+  padding: clamp(1rem, 0.8rem + 0.8vw, 1.4rem);
+}
+
+.suggestions-page .suggestion-form {
+  gap: 1.1rem;
+}
+
+.suggestions-actions {
+  align-items: center;
+}
+
+.state-pill {
+  margin-left: auto;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.28rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.state-pill.state-loading {
+  border-color: var(--state-warning-border);
+  background: var(--state-warning-bg);
+  color: var(--state-warning-text);
+}
+
+.state-pill.state-success {
+  border-color: var(--state-success-border);
+  background: var(--state-success-bg);
+  color: var(--state-success-text);
+}
+
+.state-pill.state-error {
+  border-color: var(--state-error-border);
+  background: var(--state-error-bg);
+  color: var(--state-error-text);
+}
+
+.admin-page .list-row {
+  padding-block: 0.2rem;
+}
+
+.policies-context-note {
+  margin-top: 0.25rem;
+}
+
+.policies-page .policies-section,
+.policies-page .policies-tldr,
+.policies-page .policies-index,
+.policies-page .policies-quick-card {
+  border-radius: 16px;
+}
+
+.policies-page .policies-section p,
+.policies-page .policies-quick-card p {
+  line-height: 1.58;
+}
+
+.alert-form {
+  display: grid;
+  gap: 1rem;
+}
+

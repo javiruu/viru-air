@@ -1,0 +1,197 @@
+.hoteles-layout {
+  grid-template-columns: minmax(17rem, 0.94fr) minmax(25rem, 1.36fr);
+}
+
+.hotel-selected-focus-card {
+  position: sticky;
+  top: 5.8rem;
+  overflow: clip;
+}
+
+.hotel-selected-focus-card .panel-collapse-toggle {
+  background:
+    radial-gradient(circle at 92% 10%, color-mix(in srgb, var(--accent-2) 16%, transparent), transparent 42%),
+    color-mix(in srgb, var(--surface-2) 76%, var(--surface));
+}
+
+.hotel-selected-focus-body {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.hotel-selected-kicker {
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.hotel-selected-focus-body > strong {
+  font-family: "Playfair Display", serif;
+  font-size: clamp(1.4rem, 2vw, 2rem);
+  line-height: 1;
+}
+
+.hotel-selected-signal-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.35rem 0.7rem;
+  padding: 0.75rem 0;
+  border-block: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  color: var(--ink-muted);
+  font-size: 0.76rem;
+}
+
+.hotel-selected-signal-row strong {
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+
+.hotel-selected-tracking-empty {
+  padding: 0.65rem 0.75rem;
+  border-left: 3px solid color-mix(in srgb, var(--accent) 48%, var(--border));
+  border-radius: 0 0.7rem 0.7rem 0;
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+}
+
+.hotel-price-observations {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  border-radius: 1rem;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 8%, var(--surface)), var(--surface));
+}
+
+.hotel-price-observations-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.65rem;
+  color: var(--ink-muted);
+  font-size: 0.74rem;
+}
+
+.hotel-price-observations-header strong {
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+.hotel-price-observations-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.hotel-price-observations-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+
+.hotel-price-observations-point {
+  fill: var(--accent-2);
+  stroke: var(--surface);
+  stroke-width: 3;
+}
+
+.hotel-price-observations-note {
+  margin: 0;
+}
+
+@media (max-width: 1023px) {
+  .private-layout {
+    grid-template-columns: minmax(11.75rem, 13.5rem) minmax(0, 1fr);
+  }
+
+  .hoteles-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hotel-selected-focus-card {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .private-layout {
+    display: block;
+  }
+
+  .private-nav-toggle {
+    position: fixed;
+    z-index: 62;
+    top: 0.65rem;
+    left: 0.65rem;
+    display: inline-grid;
+    width: 2.8rem;
+    height: 2.8rem;
+    place-items: center;
+    border: 1px solid var(--border-default);
+    border-radius: 0.8rem;
+    background: color-mix(in srgb, var(--surface) 94%, var(--panel-bg));
+    box-shadow: var(--shadow-elevation);
+    color: var(--ink);
+  }
+
+  .private-nav {
+    position: fixed;
+    z-index: 61;
+    top: 0;
+    left: 0;
+    width: min(18rem, calc(100vw - 2rem));
+    height: 100dvh;
+    transform: translateX(calc(-100% - 1rem));
+    transition: transform 180ms ease;
+    visibility: hidden;
+    pointer-events: none;
+    box-shadow: 22px 0 42px color-mix(in srgb, var(--shadow-strong) 26%, transparent);
+  }
+
+  .private-nav.open {
+    position: fixed;
+    top: 0;
+    right: auto;
+    bottom: auto;
+    left: 0;
+    width: min(18rem, calc(100vw - 2rem));
+    height: 100dvh;
+    max-height: none;
+    padding: 4.4rem 0.75rem 1.35rem;
+    border-radius: 0;
+    animation: none;
+    transform: translateX(0);
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .private-nav-backdrop {
+    position: fixed;
+    z-index: 60;
+    inset: 0;
+    display: block;
+    background: color-mix(in srgb, var(--ink) 28%, transparent);
+  }
+
+  .private-workspace .private-account-controls-bar {
+    padding-left: 4.15rem;
+  }
+
+  .hotel-price-observations-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .private-nav {
+    transition: none;
+  }
+}
+
+

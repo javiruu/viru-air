@@ -1,0 +1,326 @@
+.history-summary--compact {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.8rem;
+  margin: 0.5rem 0 0.8rem;
+}
+
+.auth-grid {
+  display: grid;
+  gap: 1.2rem;
+  grid-template-columns: 1fr 1fr;
+}
+
+
+.watchlist-header {
+  align-items: baseline;
+  padding-right: 0.4rem;
+}
+
+.watchlist-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.watchlist-header-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.watchlist-theme-toggle {
+  border-radius: 14px;
+  border: 1px solid var(--border-default);
+  background: color-mix(in srgb, var(--panel-bg) 90%, var(--surface));
+  padding: 0.32rem 0.44rem;
+  box-shadow: var(--shadow-elevation);
+}
+
+.watchlist-header .account-menu {
+  min-width: 220px;
+}
+
+.watchlist-header .account-trigger {
+  padding: 0.4rem 0.6rem;
+}
+
+.watchlist-page .history-chart .history-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.watchlist-page .history-chart--compact .history-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.page-title h1 {
+  margin: 0;
+}
+
+.page-title p {
+  margin: 0.25rem 0 0;
+  opacity: 0.9;
+  max-width: 72ch;
+  line-height: 1.45;
+}
+
+.page-message {
+  margin: 0 0 1rem;
+  font-weight: 600;
+}
+
+
+
+.watch-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(178px, auto);
+  align-items: center;
+  gap: 0.72rem 0.84rem;
+  min-height: 110px;
+}
+
+.watch-details {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.watch-route {
+  display: flex;
+  gap: 0.44rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.watch-route strong {
+  white-space: nowrap;
+}
+
+.watch-date {
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
+
+.watch-inline-price {
+  margin-left: auto;
+  font-size: 1.04rem;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: 0.01em;
+}
+
+.watch-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
+
+.watch-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.16rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 86%, var(--surface-2));
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.watch-meta-chip--freshness {
+  white-space: nowrap;
+}
+
+.watch-note {
+  color: var(--ink-muted);
+  width: 100%;
+  font-size: 0.74rem;
+}
+
+.watch-price {
+  display: grid;
+  gap: 0.28rem;
+  text-align: right;
+}
+
+.watch-price-area {
+  display: grid;
+  gap: 0.38rem;
+  justify-items: end;
+  align-content: center;
+}
+
+.watch-price-caption {
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.watch-price-main {
+  font-size: 1.4rem;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.watch-smart-header-copy {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.watch-smart-tools {
+  display: flex;
+  gap: 0.52rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.watch-bulk-toolbar {
+  margin-left: auto;
+  row-gap: 0.45rem;
+}
+
+.watch-smart-search,
+.watch-smart-sort {
+  display: grid;
+  gap: 0.22rem;
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+}
+
+.watch-smart-search input,
+.watch-smart-sort select {
+  min-width: 145px;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.watch-smart-reset[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.watch-row {
+  cursor: pointer;
+  border-radius: 14px;
+  padding: 0.7rem;
+  border: 1px solid transparent;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.watch-row:hover {
+  border-color: color-mix(in srgb, var(--accent-2) 30%, var(--border));
+  background: color-mix(in srgb, var(--surface) 86%, var(--surface-2));
+  transform: translateX(2px);
+  box-shadow: 0 12px 20px color-mix(in srgb, var(--shadow-strong) 14%, transparent);
+}
+
+.watch-row:active {
+  transform: translateX(1px) scale(0.995);
+}
+
+.watch-row:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-2) 24%, transparent);
+}
+
+.watch-row.watch-row-load:hover,
+.watch-row.watch-row-load:active {
+  transform: none;
+  box-shadow: none;
+}
+
+.watch-selected {
+  border-bottom-color: transparent;
+  background: color-mix(in srgb, var(--surface) 68%, var(--accent-soft));
+  box-shadow: 0 0 0 1px rgba(46, 110, 98, 0.22) inset;
+}
+
+.watch-row-actions {
+  display: grid;
+  grid-template-columns: auto;
+  align-items: center;
+  justify-items: end;
+  gap: 0.32rem;
+}
+
+.watch-row-actions > .btn-secondary {
+  min-width: 108px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .watch-row,
+  .compare-option,
+  .history-filter {
+    transition: none;
+    transform: none;
+  }
+}
+
+.trend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(121, 106, 88, 0.1);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.trend-icon {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(121, 106, 88, 0.16);
+}
+
+.trend-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.trend-up {
+  border-color: rgba(217, 93, 57, 0.4);
+  background: rgba(217, 93, 57, 0.12);
+  color: var(--accent);
+}
+
+.trend-up .trend-icon {
+  background: rgba(217, 93, 57, 0.2);
+}
+
+.trend-up .trend-icon svg {
+  transform: rotate(0deg);
+}
+
+.trend-down {
+  border-color: rgba(46, 110, 98, 0.4);
+  background: rgba(46, 110, 98, 0.12);
+  color: var(--accent-2);
+}
+
+.trend-down .trend-icon {
+  background: rgba(46, 110, 98, 0.18);
+}
+
+.trend-down .trend-icon svg {
+  transform: rotate(180deg);
+}
+

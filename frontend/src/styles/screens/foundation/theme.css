@@ -1,0 +1,316 @@
+:root {
+  --bg: #f6f0e7;
+  --surface: #fffaf4;
+  --surface-2: #f4ede2;
+  --surface-3: #fff3e2;
+  --ink: #1f1d1a;
+  --ink-muted: #5b5349;
+  --accent: #d95d39;
+  --accent-2: #2e6e62;
+  --accent-ink: #fdf7ef;
+  --border: #d9cdbb;
+  --shadow: rgba(47, 40, 24, 0.08);
+  --shadow-strong: rgba(32, 28, 21, 0.16);
+  --overlay: rgba(31, 29, 26, 0.45);
+  --bg-spot-1: #f9e5c5;
+  --bg-spot-2: #cfe8df;
+  --input-bg: #ffffff;
+  --panel-bg: #fffaf4;
+  --radius-lg: 18px;
+  --radius-xl: 26px;
+  --history-wash-1: #f7ebda;
+  --history-wash-2: #f3efe8;
+  --history-wash-3: #fff6ea;
+  --history-glass: rgba(255, 250, 244, 0.93);
+  --history-grid: rgba(155, 132, 105, 0.12);
+  --history-ghost: rgba(71, 82, 95, 0.12);
+  --history-scrollbar: rgba(121, 106, 88, 0.45);
+  --app-scrollbar-thumb: rgba(111, 97, 80, 0.56);
+  --app-scrollbar-thumb-hover: rgba(98, 85, 70, 0.72);
+  --history-accent-origin: #4f7fa6;
+  --history-accent-destination: #3b8e80;
+  --history-accent-date: #c79a3a;
+  --history-accent-point: #6b7280;
+  --qs-route-line: rgba(94, 114, 132, 0.45);
+  --qs-route-glow: rgba(94, 114, 132, 0.2);
+  --qs-map: rgba(96, 110, 122, 0.08);
+  --qs-ready: rgba(46, 110, 98, 0.25);
+  --qs-accent: #d95d39;
+  --qs-accent-2: #e5805c;
+  --qs-text-secondary: #5f574c;
+  --qs-placeholder: #7a7165;
+  --qs-placeholder-focus: #9a8f82;
+  --qs-input-border: #8c7558;
+  --qs-input-border-strong: #735c42;
+  --qs-input-elevation: 0 10px 20px rgba(31, 29, 26, 0.08);
+  --qs-panel-shadow: 0 22px 44px rgba(32, 28, 21, 0.14);
+  --qs-panel-shadow-strong: 0 26px 56px rgba(32, 28, 21, 0.2);
+  --qs-button-shadow: 0 12px 24px rgba(217, 93, 57, 0.25);
+  --qs-button-shadow-hover: 0 18px 30px rgba(217, 93, 57, 0.3);
+  --qs-check-shadow: 0 10px 22px rgba(46, 110, 98, 0.22);
+  --qs-focus-ring: 0 0 0 3px rgba(217, 93, 57, 0.3);
+  --qs-focus-outline: rgba(217, 93, 57, 0.72);
+  --qs-control-height: 48px;
+  --qs-route-card-min-height: 190px;
+  --text-primary: #1f1d1a;
+  --text-secondary: #5b5349;
+  --placeholder: #7a7165;
+  --border-default: #9f8769;
+  --border-focus: rgba(217, 93, 57, 0.62);
+  --shadow-elevation: 0 16px 28px rgba(47, 40, 24, 0.12);
+  --btn-shadow: 0 10px 20px rgba(47, 40, 24, 0.16);
+  --btn-shadow-strong: 0 14px 30px rgba(32, 28, 21, 0.22);
+  --ui-root-font-size: 16px;
+  --ui-shell-max-width: 1060px;
+  --ui-dashboard-max-width: 1160px;
+  --ui-shell-padding-top: 1.6rem;
+  --ui-shell-padding-inline: 0.95rem;
+  --ui-shell-padding-bottom: 2.45rem;
+  --ui-policies-aside-width: 252px;
+  --ui-hero-density-padding: 2rem;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0f1211;
+  --surface: #191f1d;
+  --surface-2: #141a18;
+  --surface-3: #1f2623;
+  --ink: #f2ebe0;
+  --ink-muted: #b7b0a6;
+  --accent: #e07b56;
+  --accent-2: #6fb2a1;
+  --accent-ink: #15110d;
+  --border: #2d3532;
+  --shadow: rgba(5, 6, 6, 0.55);
+  --shadow-strong: rgba(0, 0, 0, 0.7);
+  --overlay: rgba(3, 4, 4, 0.65);
+  --bg-spot-1: #1e2a24;
+  --bg-spot-2: #1b2420;
+  --input-bg: #121614;
+  --panel-bg: #161c19;
+  --history-wash-1: #16221f;
+  --history-wash-2: #121a18;
+  --history-wash-3: #1a2420;
+  --history-glass: rgba(22, 28, 25, 0.94);
+  --history-grid: rgba(185, 204, 196, 0.12);
+  --history-ghost: rgba(158, 182, 193, 0.16);
+  --history-scrollbar: rgba(162, 184, 175, 0.5);
+  --app-scrollbar-thumb: rgba(164, 184, 176, 0.58);
+  --app-scrollbar-thumb-hover: rgba(187, 207, 200, 0.76);
+  --history-accent-origin: #6aa0c5;
+  --history-accent-destination: #53a99a;
+  --history-accent-date: #d1a94d;
+  --history-accent-point: #8b97a8;
+  --qs-route-line: rgba(169, 187, 204, 0.45);
+  --qs-route-glow: rgba(169, 187, 204, 0.24);
+  --qs-map: rgba(180, 196, 210, 0.1);
+  --qs-ready: rgba(92, 176, 156, 0.28);
+  --qs-accent: #e07b56;
+  --qs-accent-2: #f08f6a;
+  --qs-text-secondary: #cfc7bb;
+  --qs-placeholder: #b5ac9f;
+  --qs-placeholder-focus: #ddd4c8;
+  --qs-input-border: #62736b;
+  --qs-input-border-strong: #7f958a;
+  --qs-input-elevation: 0 10px 24px rgba(0, 0, 0, 0.35);
+  --qs-panel-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
+  --qs-panel-shadow-strong: 0 30px 62px rgba(0, 0, 0, 0.72);
+  --qs-button-shadow: 0 12px 26px rgba(232, 150, 120, 0.24);
+  --qs-button-shadow-hover: 0 18px 32px rgba(232, 150, 120, 0.34);
+  --qs-check-shadow: 0 12px 24px rgba(111, 178, 161, 0.3);
+  --qs-focus-ring: 0 0 0 3px rgba(232, 150, 120, 0.36);
+  --qs-focus-outline: rgba(232, 150, 120, 0.86);
+  --text-primary: #f2ebe0;
+  --text-secondary: #cfc7bb;
+  --placeholder: #b5ac9f;
+  --border-default: #5f6f68;
+  --border-focus: rgba(232, 150, 120, 0.78);
+  --shadow-elevation: 0 20px 34px rgba(0, 0, 0, 0.55);
+  --btn-shadow: 0 12px 24px rgba(0, 0, 0, 0.45);
+  --btn-shadow-strong: 0 18px 34px rgba(0, 0, 0, 0.62);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: var(--ui-root-font-size);
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 2s ease;
+}
+
+html::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+  transition: background-color 2s ease;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background: var(--app-scrollbar-thumb-hover);
+}
+
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html.is-scrolling {
+  scrollbar-color: var(--app-scrollbar-thumb) transparent;
+}
+
+html.is-scrolling::-webkit-scrollbar-thumb {
+  background: var(--app-scrollbar-thumb);
+}
+
+html.is-scrolling.is-wheel-scrolling::-webkit-scrollbar-thumb {
+  transition-duration: 0.2s;
+}
+
+html.is-scrollbar-proximity {
+  scrollbar-color: var(--app-scrollbar-thumb) transparent;
+  transition-duration: 0.5s;
+}
+
+html.is-scrollbar-proximity::-webkit-scrollbar-thumb {
+  background: var(--app-scrollbar-thumb);
+  transition-duration: 0.5s;
+}
+
+body {
+  margin: 0;
+  font-family: "IBM Plex Sans", sans-serif;
+  color: var(--text-primary);
+  background:
+    radial-gradient(circle at 15% 15%, var(--bg-spot-1) 0%, transparent 40%),
+    radial-gradient(circle at 88% 12%, var(--bg-spot-2) 0%, transparent 36%),
+    var(--bg);
+  min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.app-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-content {
+  flex: 1 0 auto;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: 0.75rem;
+  transform: translateY(-200%);
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  z-index: 2000;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+.policies-shell section[id] {
+  scroll-margin-top: 96px;
+}
+
+h1 {
+  font-family: "Playfair Display", serif;
+  font-size: clamp(1.8rem, 3.3vw, 3rem);
+  margin: 0 0 0.5rem;
+}
+
+.shell {
+  max-width: var(--ui-shell-max-width);
+  margin: 0 auto;
+  padding: var(--ui-shell-padding-top) var(--ui-shell-padding-inline) var(--ui-shell-padding-bottom);
+}
+
+@media (max-width: 480px) {
+  .shell {
+    --ui-shell-padding-top: 0.85rem;
+    --ui-shell-padding-inline: 0.55rem;
+    --ui-shell-padding-bottom: 1.5rem;
+  }
+
+  .section-gap {
+    margin-top: 0.65rem;
+  }
+
+  .panel {
+    padding: 0.65rem 0.7rem;
+  }
+
+  .panel-header {
+    padding-bottom: 0.4rem;
+  }
+
+  .page-header {
+    padding-bottom: 0.45rem;
+    margin-bottom: 0.7rem;
+  }
+
+  /* Touch-friendly horizontal scroll */
+  .private-nav {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+}
+
+@media (max-width: 1440px) and (min-width: 1280px) {
+  :root {
+    --ui-root-font-size: 14.5px;
+    --ui-shell-max-width: 1020px;
+    --ui-dashboard-max-width: 1110px;
+    --ui-policies-aside-width: 238px;
+    --ui-hero-density-padding: 1.75rem;
+  }
+}
+
+@media (max-width: 1366px) and (min-width: 1024px) {
+  :root {
+    --ui-root-font-size: 14px;
+    --ui-shell-max-width: 980px;
+    --ui-dashboard-max-width: 1060px;
+    --ui-shell-padding-top: 1.35rem;
+    --ui-shell-padding-inline: 0.85rem;
+    --ui-shell-padding-bottom: 2rem;
+    --ui-policies-aside-width: 220px;
+    --ui-hero-density-padding: 1.55rem;
+  }
+
+  .qs-workspace-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dashboard-top-stage {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .private-account-controls-bar {
+    gap: 0.65rem;
+    min-height: 48px;
+    padding-block: 7px;
+    padding-inline: 12px;
+  }
+}
+

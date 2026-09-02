@@ -1,0 +1,156 @@
+/* ── Phase 3: connected timeline ── */
+
+.d2d-connected-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+}
+
+.d2d-timeline-leg {
+  position: relative;
+  padding-left: 2rem;
+  animation: d2d-leg-reveal 0.35s ease-out both;
+}
+
+.d2d-timeline-leg:nth-child(1) { animation-delay: 0ms; }
+.d2d-timeline-leg:nth-child(2) { animation-delay: 120ms; }
+.d2d-timeline-leg:nth-child(3) { animation-delay: 240ms; }
+.d2d-timeline-leg:nth-child(4) { animation-delay: 360ms; }
+
+@keyframes d2d-leg-reveal {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Vertical connector line between legs */
+.d2d-timeline-connector {
+  position: absolute;
+  left: 0.55rem;
+  top: -0.85rem;
+  height: 0.85rem;
+  width: 1.5px;
+  background: linear-gradient(to bottom, var(--accent), color-mix(in srgb, var(--border) 60%, transparent));
+  border-radius: 1px;
+}
+
+/* Leg card base */
+.d2d-leg-card {
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s ease;
+}
+
+.d2d-leg-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.d2d-leg-card-inner {
+  position: relative;
+  padding: 0.65rem 0.85rem;
+}
+
+/* Flight segment: boarding-pass aesthetic */
+.d2d-leg-flight {
+  border-left: 3px solid var(--accent);
+  background: linear-gradient(
+    135deg,
+    var(--panel-bg),
+    color-mix(in srgb, var(--accent) 4%, var(--panel-bg))
+  );
+}
+
+/* Ground segment: mode-adaptive */
+.d2d-leg-ground {
+  border-left: 3px solid var(--border);
+  background: var(--panel-bg);
+}
+
+/* Mode-specific accent dots via ::before */
+/* Connector dots on timeline leg (has position:relative) */
+.d2d-timeline-leg::before {
+  content: "";
+  position: absolute;
+  left: 0.55rem;
+  top: 1.1rem;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  z-index: 1;
+  transform: translateX(-50%);
+}
+
+.d2d-timeline-leg.is-ground::before {
+  width: 8px;
+  height: 8px;
+  background: var(--border);
+}
+
+.d2d-timeline-leg.is-flight::before {
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* Segment typography refinements */
+.d2d-segment-main strong {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.d2d-segment-time {
+  margin: 0.2rem 0 0;
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+}
+
+.d2d-segment-meta {
+  margin-top: 0.45rem;
+}
+
+/* Flight details strip */
+.d2d-leg-flight .d2d-leg-card-inner {
+  border-left: none;
+  position: relative;
+}
+
+.d2d-leg-flight .d2d-leg-card-inner::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.3rem;
+  bottom: 0.3rem;
+  width: 1px;
+  background: repeating-linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--accent) 30%, transparent) 0,
+    color-mix(in srgb, var(--accent) 30%, transparent) 3px,
+    transparent 3px,
+    transparent 6px
+  );
+  opacity: 0.4;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .d2d-timeline-leg {
+    padding-left: 1.5rem;
+  }
+
+  .d2d-timeline-connector {
+    left: 0.4rem;
+  }
+}
+
+

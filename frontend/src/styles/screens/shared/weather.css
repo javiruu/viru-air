@@ -1,0 +1,167 @@
+/* =========================
+   WEATHER CARD (Uiverse base)
+   ========================= */
+.weather-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  margin-top: 1rem;
+}
+
+.weather-group {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 16px 30px var(--shadow);
+}
+
+.weather-group h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.cardm {
+  position: relative;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+}
+
+.cardm > .card {
+  position: relative;
+  width: 240px;
+  height: 130px;
+  border-radius: 22px;
+  background: var(--surface);
+  color: var(--ink);
+  z-index: 2;
+  transition: background-color 0.4s ease-in-out;
+  border: 1px solid transparent;
+  box-shadow: none;
+}
+
+:root[data-theme="dark"] .cardm > .card {
+  background: var(--surface-2);
+}
+
+.weather {
+  position: relative;
+  margin: 0.9em;
+}
+
+.main {
+  font-size: 1.8em;
+  position: relative;
+  top: -2.6em;
+  left: 4.1em;
+  color: var(--ink);
+}
+
+.mainsub {
+  position: relative;
+  top: -9.5em;
+  left: 12.6em;
+  font-size: 0.62em;
+  color: var(--ink-muted);
+}
+
+.card2 {
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  width: 232px;
+  height: 130px;
+  border-radius: 30px;
+  background: var(--surface-2);
+  z-index: -1;
+  transition: 0.4s ease-in-out;
+  border: 1px solid var(--border);
+}
+
+.cardm > .card:hover {
+  background-color: var(--surface-3);
+  cursor: pointer;
+.cardm > .card:focus-visible {
+  outline: 3px solid var(--color-input-focus);
+  outline-offset: 2px;
+}
+}
+
+.cardm > .card:hover + .card2 {
+  height: 260px;
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
+}
+
+.cardm > .card:hover + .card2 .lower {
+  top: 16.2em;
+}
+
+.upper {
+  display: flex;
+  flex-direction: row;
+  position: relative;
+  color: var(--ink);
+  left: 1.4em;
+  top: 0.5em;
+  gap: 3.2em;
+}
+
+.humiditytext {
+  position: relative;
+  left: 3.1em;
+  top: 2.4em;
+  font-size: 0.6em;
+  color: var(--ink-muted);
+}
+
+.airtext {
+  position: relative;
+  left: 3.2em;
+  top: 2.4em;
+  font-size: 0.6em;
+  color: var(--ink-muted);
+}
+
+.lower {
+  display: flex;
+  flex-direction: row;
+  position: absolute;
+  text-align: center;
+  color: var(--ink);
+  left: 2.6em;
+  top: 1em;
+  margin-top: 0.7em;
+  font-size: 0.7em;
+  transition: 0.4s ease-in-out;
+}
+
+.aqi {
+  margin-right: 2.6em;
+}
+
+.realfeel {
+  margin-right: 1.4em;
+}
+
+.card3 {
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  width: 232px;
+  height: 30px;
+  top: 4.5em;
+  left: -2.2em;
+  font-size: 1.1em;
+  border-bottom-left-radius: 30px;
+  border-bottom-right-radius: 30px;
+  background: linear-gradient(135deg, var(--accent-2), var(--accent));
+  color: var(--accent-ink);
+  transition: 0.4s ease-in-out;
+}
+

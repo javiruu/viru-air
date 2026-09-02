@@ -1,0 +1,1335 @@
+.watch-ticket-row {
+  --watch-ticket-paper: #fcf7ef;
+  --watch-ticket-ink: #202121;
+  --watch-ticket-orange: #cd5d29;
+  --watch-ticket-line: #e8cfb3;
+  --watch-ticket-green: #315a39;
+  --watch-ticket-stub-width: 25.25%;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  gap: 0;
+  padding: 0;
+  grid-template-columns: minmax(0, 74.75%) minmax(0, 25.25%);
+  align-items: stretch;
+  min-height: 0;
+  aspect-ratio: 1.72 / 1;
+  overflow: hidden;
+  border: 1px solid var(--watch-ticket-line);
+  border-radius: 2.05rem;
+  background:
+    radial-gradient(circle at 16% 0%, rgba(255, 255, 255, 0.72), transparent 37%),
+    linear-gradient(135deg, #fffdf8 0%, var(--watch-ticket-paper) 68%, #fbf1e4 100%);
+  box-shadow: 0 22px 42px color-mix(in srgb, var(--shadow-strong) 13%, transparent);
+  color: var(--watch-ticket-ink);
+  cursor: pointer;
+  container-type: inline-size;
+  transition: transform 180ms cubic-bezier(0.2, 0, 0, 1), border-color 180ms cubic-bezier(0.2, 0, 0, 1), box-shadow 180ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.watch-ticket-row:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 28px 52px color-mix(in srgb, var(--shadow-strong) 18%, transparent);
+}
+
+.watch-ticket-row:active {
+  transform: translateY(0) scale(0.997);
+}
+
+.watch-ticket-row[data-selected="true"] {
+  border-color: var(--watch-ticket-orange);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--watch-ticket-orange) 16%, transparent), 0 28px 52px color-mix(in srgb, var(--shadow-strong) 18%, transparent);
+}
+
+.watch-ticket-row > .watch-ticket-main,
+.watch-ticket-row > .watch-ticket-stub {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  pointer-events: none;
+}
+
+.watch-ticket-row input,
+.watch-ticket-row button,
+.watch-ticket-row .watch-ticket-actions {
+  pointer-events: auto;
+}
+
+.watch-ticket-art {
+  position: absolute;
+  z-index: 0;
+  top: 24%;
+  right: calc(var(--watch-ticket-stub-width) + 0.2rem);
+  bottom: 41%;
+  left: 15%;
+  overflow: hidden;
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  background-size: cover;
+  opacity: 0.16;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 16%, #000 75%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 18%, #000 74%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 16%, #000 75%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 18%, #000 74%, transparent 100%);
+  mask-composite: intersect;
+}
+
+.watch-ticket-row[data-has-art="true"] .watch-ticket-art {
+  opacity: 0.25;
+}
+
+.watch-ticket-main {
+  display: grid;
+  grid-template-rows: 30% 12% 17% 25% 16%;
+  gap: 0;
+  align-content: stretch;
+  min-width: 0;
+  padding: 0.48rem 0 0.8rem;
+}
+
+.watch-ticket-row .watch-community-hub-button {
+  z-index: 3;
+  top: 8.5%;
+  left: 4.5%;
+  width: min(9%, 7.5rem);
+  height: auto;
+  aspect-ratio: 1 / 1;
+  min-height: 0;
+  max-height: none;
+  border: 1px solid var(--watch-ticket-line);
+  border-radius: 1.15rem;
+  color: var(--watch-ticket-orange);
+  background: color-mix(in srgb, var(--watch-ticket-paper) 92%, white);
+  box-shadow: none;
+}
+
+.watch-ticket-row .watch-community-hub-button > svg {
+  position: relative;
+  z-index: 1;
+  width: 46%;
+  height: 46%;
+  transform: rotate(-21deg);
+}
+
+.watch-ticket-community-orbit {
+  position: absolute;
+  right: 17%;
+  bottom: 17%;
+  width: 45%;
+  height: 31%;
+  border: 2px dashed currentColor;
+  border-top-color: transparent;
+  border-left-color: transparent;
+  border-radius: 50%;
+  transform: rotate(-29deg);
+}
+
+.watch-ticket-row .watch-community-hub-button--ticket .watch-community-hub-signal {
+  display: none;
+}
+
+.watch-ticket-route {
+  display: grid;
+  grid-template-columns: max-content minmax(1.45rem, 1fr) max-content;
+  align-items: flex-start;
+  width: 60%;
+  margin-top: 1.66rem;
+  margin-left: 22%;
+  gap: 0;
+  min-width: 0;
+}
+
+.watch-ticket-airport {
+  display: grid;
+  min-width: 0;
+  gap: 0.12rem;
+}
+
+.watch-ticket-airport strong,
+.watch-ticket-price,
+.watch-ticket-day,
+.watch-ticket-year,
+.watch-ticket-stamp strong {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 600;
+}
+
+.watch-ticket-airport strong {
+  font-size: clamp(2.15rem, 6.25cqw, 5.7rem);
+  line-height: 0.84;
+  letter-spacing: -0.06em;
+}
+
+.watch-ticket-airport span {
+  overflow: hidden;
+  max-width: min(6.4rem, 18cqw);
+  padding-left: 0.1rem;
+  color: var(--watch-ticket-orange);
+  font-size: clamp(0.74rem, 2.15cqw, 1.85rem);
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.watch-ticket-route-plane {
+  justify-self: center;
+  width: clamp(1.4rem, 3.25cqw, 3rem);
+  height: clamp(1.4rem, 3.25cqw, 3rem);
+  margin-top: 0.34rem;
+  color: var(--watch-ticket-orange);
+  stroke-width: 1.45;
+}
+
+.watch-ticket-path {
+  width: 62%;
+  height: 90%;
+  margin-left: 22%;
+  align-self: center;
+  overflow: visible;
+  color: var(--watch-ticket-orange);
+}
+
+.watch-ticket-path path {
+  stroke: currentColor;
+  stroke-width: 1.45;
+  stroke-linecap: round;
+  stroke-dasharray: 4 5;
+  opacity: 0.76;
+}
+
+.watch-ticket-path circle {
+  fill: var(--watch-ticket-paper);
+  stroke: currentColor;
+  stroke-width: 1.55;
+}
+
+.watch-ticket-status-line {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+  padding-left: 4.5%;
+  min-height: 0;
+}
+
+.watch-ticket-row .status-pill {
+  padding: 0.34rem 0.92rem;
+  border: 1px solid color-mix(in srgb, var(--watch-ticket-green) 36%, var(--watch-ticket-line));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--watch-ticket-green) 11%, var(--watch-ticket-paper));
+  color: var(--watch-ticket-green);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(0.72rem, 1.8cqw, 1.45rem);
+  font-weight: 600;
+}
+
+.watch-ticket-row .status-pill::before {
+  width: 0.75em;
+  height: 0.75em;
+  content: "";
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.watch-ticket-pricing {
+  display: grid;
+  grid-template-columns: minmax(7.3rem, 0.72fr) minmax(0, 1.28fr);
+  align-items: end;
+  gap: 0.75rem;
+  min-width: 0;
+  margin-top: 0.9cqw;
+  padding: 1rem 6% 0;
+  border-top: 1px dashed var(--watch-ticket-line);
+}
+
+.watch-ticket-row .watch-price {
+  gap: 0.22rem;
+  text-align: left;
+}
+
+.watch-ticket-row .watch-price-caption {
+  color: var(--watch-ticket-orange);
+  font-size: clamp(0.62rem, 1.55cqw, 1.26rem);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.watch-ticket-price {
+  font-size: clamp(2.35rem, 7.2cqw, 6.2rem);
+  line-height: 0.82;
+  letter-spacing: -0.05em;
+}
+
+.watch-ticket-trend {
+  display: grid;
+  grid-template-columns: minmax(1.7rem, 3.5cqw) minmax(0, 1fr) minmax(0, 1.12fr);
+  align-items: center;
+  gap: 0.62rem;
+  min-width: 0;
+  min-height: 6.4cqw;
+  padding: 0.72rem 0.82rem;
+  border: 1px solid color-mix(in srgb, var(--watch-ticket-orange) 21%, var(--watch-ticket-line));
+  border-radius: 1.25rem;
+  background: color-mix(in srgb, var(--watch-ticket-orange) 6%, var(--watch-ticket-paper));
+  color: var(--watch-ticket-orange);
+}
+
+.watch-ticket-trend-icon {
+  display: grid;
+  width: 3.5cqw;
+  height: 3.5cqw;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--watch-ticket-orange) 18%, var(--watch-ticket-paper));
+}
+
+.watch-ticket-trend-icon svg {
+  width: 48%;
+  height: 48%;
+  stroke-width: 1.8;
+}
+
+.watch-ticket-trend > strong,
+.watch-ticket-trend b {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(0.88rem, 2.55cqw, 2.2rem);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.watch-ticket-trend > span:last-child {
+  display: grid;
+  min-width: 0;
+  padding-left: 0.4rem;
+  border-left: 1px solid color-mix(in srgb, var(--watch-ticket-orange) 35%, transparent);
+}
+
+.watch-ticket-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 0;
+  padding: 0 6%;
+}
+
+.watch-ticket-row .watch-price-badges {
+  display: none;
+}
+
+.watch-ticket-trend-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 5.75cqw;
+  min-width: 0;
+  justify-content: center;
+  padding: 0.32rem 0.78rem;
+  border: 1px solid var(--watch-ticket-line);
+  border-radius: 999px;
+  color: var(--watch-ticket-ink);
+  font-size: clamp(0.68rem, 1.65cqw, 1.34rem);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.watch-ticket-trend-action svg {
+  width: 1.2em;
+  height: 1.2em;
+  stroke-width: 1.9;
+}
+
+.watch-ticket-trend-action--up {
+  background: color-mix(in srgb, var(--watch-ticket-orange) 12%, var(--watch-ticket-paper));
+}
+
+.watch-ticket-trend-action--down {
+  background: color-mix(in srgb, var(--watch-ticket-green) 12%, var(--watch-ticket-paper));
+}
+
+.watch-ticket-trend-action--stable {
+  background: color-mix(in srgb, var(--watch-ticket-line) 32%, var(--watch-ticket-paper));
+}
+
+.watch-ticket-action-buttons {
+  display: grid;
+  flex: 1 1 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.watch-ticket-action-buttons--purchased {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.watch-ticket-purchased-action {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 5.75cqw;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.76rem;
+  border: 1.5px solid color-mix(in srgb, var(--watch-ticket-green) 58%, var(--watch-ticket-line));
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--watch-ticket-green) 14%, var(--watch-ticket-paper));
+  color: var(--watch-ticket-ink);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(0.78rem, 2.15cqw, 1.72rem);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.watch-ticket-purchased-action svg {
+  width: 1.05em;
+  height: 1.05em;
+  stroke-width: 2;
+}
+
+.watch-ticket-row .watch-ticket-action-buttons .btn-compact {
+  display: inline-flex;
+  min-height: 5.75cqw;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.76rem;
+  border-radius: 0.9rem;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(0.78rem, 2.15cqw, 1.72rem);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.watch-ticket-row .watch-ticket-action-buttons .btn-compact svg {
+  width: 1.05em;
+  height: 1.05em;
+  stroke-width: 1.8;
+}
+
+.watch-ticket-row .watch-ticket-action-buttons .btn-ghost {
+  border: 1.5px solid color-mix(in srgb, var(--watch-ticket-ink) 45%, var(--watch-ticket-line));
+  background: color-mix(in srgb, var(--watch-ticket-paper) 84%, white);
+  color: var(--watch-ticket-ink);
+}
+
+.watch-ticket-row .watch-ticket-action-buttons .btn-danger {
+  border: 1px solid color-mix(in srgb, var(--watch-ticket-orange) 76%, #9b3815);
+  background: #cf5b29;
+  color: #fffaf2;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.23);
+}
+
+.watch-ticket-stub {
+  display: grid;
+  position: relative;
+  grid-template-rows: 59% 41%;
+  align-content: stretch;
+  justify-items: center;
+  min-width: 0;
+  padding: 0;
+  border-left: 0;
+  text-align: center;
+}
+
+.watch-ticket-stub::before {
+  position: absolute;
+  z-index: 1;
+  top: 1.7rem;
+  bottom: 1.7rem;
+  left: 0;
+  width: 2px;
+  content: "";
+  background: repeating-linear-gradient(to bottom, var(--watch-ticket-line) 0 0.5rem, transparent 0.5rem 1.2rem);
+  border-radius: 999px;
+}
+
+.watch-ticket-date-zone {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  padding: 12% 11% 0;
+}
+
+.watch-ticket-date-caption {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  width: 100%;
+  gap: 0.62rem;
+  color: var(--watch-ticket-orange);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(0.58rem, 1.5cqw, 1.18rem);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.watch-ticket-date-caption span {
+  height: 1px;
+  background: currentColor;
+  opacity: 0.75;
+}
+
+.watch-ticket-date-caption b {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.12rem;
+  font: inherit;
+  white-space: nowrap;
+}
+
+.watch-ticket-date-caption svg {
+  width: 1em;
+  height: 1em;
+  stroke-width: 1.55;
+}
+
+.watch-ticket-day {
+  margin-top: 1.05rem;
+  color: var(--watch-ticket-orange);
+  font-size: clamp(3.4rem, 11.5cqw, 10.2rem);
+  line-height: 0.68;
+  letter-spacing: -0.08em;
+}
+
+.watch-ticket-month {
+  margin-top: 0.84rem;
+  color: var(--watch-ticket-orange);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(0.62rem, 2.15cqw, 1.82rem);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.watch-ticket-year {
+  margin-top: 0.72rem;
+  font-size: clamp(1.65rem, 5.2cqw, 4.6rem);
+  line-height: 0.92;
+  letter-spacing: -0.06em;
+}
+
+.watch-ticket-stub-lower {
+  position: relative;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.watch-ticket-stub-rule {
+  position: absolute;
+  top: 0;
+  width: 76%;
+  margin: 0;
+  border-top: 1px dashed var(--watch-ticket-line);
+}
+
+.watch-ticket-postal-waves {
+  position: absolute;
+  top: 55%;
+  right: -27%;
+  width: 91%;
+  height: 38%;
+  opacity: 0.6;
+  background: repeating-radial-gradient(ellipse at 0 0, transparent 0 0.54rem, var(--watch-ticket-line) 0.58rem 0.64rem, transparent 0.68rem 1rem);
+  transform: rotate(-7deg);
+}
+
+.watch-ticket-stamp {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 72%;
+  min-height: 13.5cqw;
+  align-content: center;
+  justify-items: center;
+  gap: 0.22rem;
+  margin: 0.7rem 0 0;
+  padding: 0.48rem;
+  border: 1px double color-mix(in srgb, var(--watch-ticket-orange) 39%, var(--watch-ticket-line));
+  border-radius: 35% 43% 39% 46%;
+  color: color-mix(in srgb, var(--watch-ticket-orange) 56%, var(--watch-ticket-line));
+  opacity: 0.82;
+  transform: rotate(-5deg);
+}
+
+.watch-ticket-stamp > span,
+.watch-ticket-stamp small {
+  font-size: clamp(0.36rem, 0.95cqw, 0.76rem);
+  letter-spacing: 0.12em;
+}
+
+.watch-ticket-stamp svg {
+  width: 1.1em;
+  height: 1.1em;
+  stroke-width: 1.4;
+}
+
+.watch-ticket-stamp strong {
+  font-size: clamp(0.75rem, 2.05cqw, 1.72rem);
+  line-height: 1;
+}
+
+:root[data-theme="dark"] .watch-ticket-row {
+  --watch-ticket-paper: #29231f;
+  --watch-ticket-ink: #f5ead6;
+  --watch-ticket-line: #765c48;
+  --watch-ticket-orange: #ffb000;
+  --watch-ticket-green: #92bd8e;
+  box-shadow: 0 22px 42px color-mix(in srgb, #000 46%, transparent);
+}
+
+:root[data-theme="dark"] .watch-ticket-art {
+  opacity: 0.28;
+  mix-blend-mode: multiply;
+  filter: sepia(0.5) saturate(1.2) brightness(0.9);
+}
+
+@container (max-width: 32rem) {
+  .watch-ticket-pricing {
+    grid-template-columns: minmax(6.1rem, 0.68fr) minmax(0, 1.32fr);
+    gap: 0.45rem;
+    margin-top: 0.9cqw;
+    padding: 0.78rem 4.5% 0;
+  }
+
+  .watch-ticket-trend {
+    grid-template-columns: 1.25rem minmax(0, 0.88fr) minmax(0, 1.12fr);
+    gap: 0.32rem;
+    min-height: 3.4rem;
+    padding: 0.45rem 0.48rem;
+  }
+
+  .watch-ticket-trend-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .watch-ticket-trend > strong,
+  .watch-ticket-trend b {
+    overflow: hidden;
+    font-size: clamp(0.72rem, 2.55cqw, 1.08rem);
+    text-overflow: ellipsis;
+  }
+
+  .watch-ticket-actions {
+    gap: 0.46rem;
+    padding: 0 4.5%;
+  }
+}
+
+@container (max-width: 21rem) {
+  .watch-ticket-row {
+    --watch-ticket-stub-width: 7.45rem;
+    min-height: 14.75rem;
+    border-radius: 1.45rem;
+  }
+
+  .watch-ticket-main {
+    grid-template-rows: auto 2.25rem minmax(2.2rem, 1fr) auto auto;
+    gap: 0.34rem;
+    padding: 0.82rem 0.78rem 0.6rem;
+  }
+
+  .watch-ticket-route {
+    gap: 0;
+    width: 64%;
+    margin-top: 0;
+    margin-left: 19%;
+  }
+
+  .watch-ticket-airport strong {
+    font-size: 1.58rem;
+  }
+
+  .watch-ticket-airport span {
+    max-width: 4.45rem;
+    font-size: 0.48rem;
+  }
+
+  .watch-ticket-route-plane {
+    width: 0.72rem;
+    height: 0.72rem;
+  }
+
+  .watch-ticket-status-line {
+    align-items: end;
+  }
+
+  .watch-ticket-row .status-pill {
+    padding: 0.14rem 0.42rem;
+    font-size: 0.52rem;
+  }
+
+  .watch-ticket-pricing {
+    grid-template-columns: 5.25rem minmax(0, 1fr);
+    gap: 0.4rem;
+    margin-top: 0;
+    padding: 0.5rem 0 0;
+  }
+
+  .watch-ticket-row .watch-price-caption {
+    font-size: 0.45rem;
+  }
+
+  .watch-ticket-price {
+    font-size: 1.42rem;
+  }
+
+  .watch-ticket-trend {
+    gap: 0.24rem;
+    padding: 0.3rem;
+  }
+
+  .watch-ticket-trend-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .watch-ticket-trend > strong,
+  .watch-ticket-trend b {
+    font-size: 0.57rem;
+  }
+
+  .watch-ticket-actions {
+    gap: 0.3rem;
+    min-height: 1.5rem;
+  }
+
+  .watch-ticket-trend-action {
+    min-height: 1.45rem;
+    padding: 0.12rem 0.34rem;
+    font-size: 0.44rem;
+  }
+
+  .watch-ticket-row .watch-ticket-action-buttons .btn-compact {
+    min-height: 1.52rem;
+    gap: 0.18rem;
+    padding: 0.25rem 0.38rem;
+    font-size: 0.51rem;
+  }
+
+  .watch-ticket-purchased-action {
+    min-height: 1.52rem;
+    gap: 0.18rem;
+    padding: 0.25rem 0.38rem;
+    font-size: 0.51rem;
+  }
+
+  .watch-ticket-stub {
+    padding: 0.9rem 0.4rem 0.55rem;
+  }
+
+  .watch-ticket-date-caption {
+    gap: 0.28rem;
+    font-size: 0.43rem;
+  }
+
+  .watch-ticket-day {
+    margin-top: 0.55rem;
+    font-size: 2.62rem;
+  }
+
+  .watch-ticket-month {
+    font-size: 0.46rem;
+  }
+
+  .watch-ticket-year {
+    font-size: 0.94rem;
+  }
+
+  .watch-ticket-stamp {
+    width: min(84%, 5.2rem);
+    min-height: 2.65rem;
+    padding: 0.2rem;
+  }
+
+  .watch-ticket-stamp > span,
+  .watch-ticket-stamp small {
+    font-size: 0.34rem;
+  }
+
+  .watch-ticket-stamp strong {
+    font-size: 0.74rem;
+  }
+
+  .watch-ticket-stamp svg {
+    width: 0.6rem;
+    height: 0.6rem;
+  }
+
+  .watch-ticket-art {
+    top: 4rem;
+    right: calc(var(--watch-ticket-stub-width) + 0.75rem);
+    bottom: 3.5rem;
+    left: 2.75rem;
+  }
+
+  .watch-ticket-row .watch-community-hub-button {
+    top: 0.76rem;
+    left: 0.7rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 0.5rem;
+  }
+}
+
+.watch-smart-panel {
+  container: watch-smart-panel / inline-size;
+  gap: 0.9rem;
+  overflow: visible;
+}
+
+.watch-smart-panel-header {
+  gap: 0.5rem;
+}
+
+.watch-smart-panel .watch-smart-tool-group {
+  gap: 0.35rem;
+  padding: 0.38rem 0.42rem;
+  border-radius: 0.72rem;
+}
+
+.watch-smart-panel .watch-smart-tool-group--route-tools {
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  min-width: 0;
+  margin-left: auto;
+  gap: 0.46rem;
+  min-height: 3.05rem;
+  padding: 0.34rem 0.42rem 0.34rem 0.52rem;
+  border-color: color-mix(in srgb, var(--border) 82%, transparent);
+  background:
+    linear-gradient(108deg, color-mix(in srgb, var(--surface-3) 62%, var(--surface)), color-mix(in srgb, var(--surface) 96%, transparent));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 24%, transparent), 0 0.45rem 1.1rem color-mix(in srgb, var(--shadow) 48%, transparent);
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.watch-smart-route-picker {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  gap: 0.32rem;
+}
+
+.watch-smart-route-field {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: min(8.4rem, 16vw);
+  min-height: 2.32rem;
+  gap: 0.12rem;
+  padding: 0.26rem 1.3rem 0.26rem 0.45rem;
+  border: 1px solid transparent;
+  border-radius: 0.56rem;
+  background: color-mix(in srgb, var(--surface) 50%, transparent);
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.watch-smart-route-field::after {
+  position: absolute;
+  top: 50%;
+  right: 0.42rem;
+  width: 0.34rem;
+  height: 0.34rem;
+  content: "";
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  opacity: 0.72;
+  transform: translateY(-66%) rotate(45deg);
+  pointer-events: none;
+}
+
+.watch-smart-route-field-label {
+  overflow: hidden;
+  font-size: 0.48rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.watch-smart-route-airport {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.26rem;
+  color: var(--ink);
+}
+
+.watch-smart-route-airport strong {
+  flex: 0 0 auto;
+  font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 0.91rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  line-height: 1;
+}
+
+.watch-smart-route-airport span {
+  overflow: hidden;
+  color: var(--ink-muted);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.watch-smart-route-field select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.watch-smart-route-field:hover {
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  color: var(--accent);
+}
+
+.watch-smart-route-field:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 64%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  outline: none;
+}
+
+.watch-smart-route-field:active {
+  transform: translateY(1px);
+}
+
+.watch-smart-route-arrow {
+  position: relative;
+  display: grid;
+  width: 2.6rem;
+  min-width: 2.6rem;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--accent);
+  font-size: 0.82rem;
+  line-height: 1;
+}
+
+.watch-smart-route-arrow i {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 1px;
+  border-top: 1px dashed color-mix(in srgb, var(--accent) 68%, var(--border));
+}
+
+.watch-smart-route-arrow b {
+  position: relative;
+  display: grid;
+  width: 1.18rem;
+  height: 1.18rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 46%, var(--border));
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 0.18rem 0.45rem color-mix(in srgb, var(--shadow) 52%, transparent);
+  font-family: Georgia, serif;
+  font-size: 0.82rem;
+  font-weight: 400;
+}
+
+.watch-smart-tools-divider {
+  width: 1px;
+  height: 2.15rem;
+  flex: 0 0 auto;
+  background: repeating-linear-gradient(to bottom, color-mix(in srgb, var(--border) 86%, transparent) 0 0.16rem, transparent 0.16rem 0.31rem);
+}
+
+.watch-smart-panel .watch-smart-sort {
+  display: grid;
+  min-width: 0;
+  gap: 0.13rem;
+  color: var(--ink-muted);
+  font-size: 0.48rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.watch-smart-panel .watch-smart-sort select {
+  width: min(7.8rem, 14vw);
+  height: 1.34rem;
+  padding: 0 1rem 0 0;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  background-position: right 0.05rem center;
+  color: var(--ink);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0;
+  line-height: 1.1;
+  box-shadow: none;
+  transition: color 160ms ease;
+}
+
+.watch-smart-panel .watch-smart-sort select:hover {
+  color: var(--accent);
+}
+
+.watch-smart-panel .watch-smart-calendar-toggle {
+  min-height: 2.28rem;
+  padding-inline: 0.56rem;
+  border-color: color-mix(in srgb, var(--border) 78%, transparent);
+  border-radius: 0.54rem;
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
+  font-size: 0.66rem;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.watch-smart-panel .watch-smart-calendar-toggle:hover:not(:disabled),
+.watch-smart-panel .watch-smart-calendar-toggle.is-active {
+  border-color: color-mix(in srgb, var(--accent) 54%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  color: var(--accent);
+}
+
+.watch-smart-panel .watch-smart-calendar-toggle:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.watch-smart-panel .watch-smart-reset {
+  min-height: 2.28rem;
+  padding-inline: 0.42rem;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.61rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 46%, transparent);
+  text-underline-offset: 0.18rem;
+}
+
+@media (max-width: 1024px) {
+  .watch-smart-panel .watch-smart-panel-header,
+  .watch-smart-panel .watch-smart-tools {
+    width: 100%;
+  }
+
+  .watch-smart-panel .watch-smart-tool-group--route-tools {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .watch-smart-panel .watch-smart-sort select {
+    width: min(8.5rem, 18vw);
+  }
+}
+
+@media (max-width: 640px) {
+  .watch-smart-panel .watch-smart-tool-group--route-tools {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.45rem;
+    align-items: center;
+  }
+
+  .watch-smart-route-picker {
+    grid-column: 1 / -1;
+    width: 100%;
+    gap: 0.38rem;
+  }
+
+  .watch-smart-route-field {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .watch-smart-panel .watch-smart-sort select {
+    width: 100%;
+  }
+
+  .watch-smart-tools-divider {
+    grid-column: 1 / -1;
+    width: 100%;
+    height: 1px;
+    background: repeating-linear-gradient(to right, color-mix(in srgb, var(--border) 86%, transparent) 0 0.16rem, transparent 0.16rem 0.31rem);
+  }
+
+  .watch-smart-panel .watch-smart-sort,
+  .watch-smart-panel .watch-smart-calendar-toggle {
+    width: 100%;
+  }
+
+  .watch-smart-panel .watch-smart-calendar-toggle,
+  .watch-smart-panel .watch-smart-reset {
+    width: 100%;
+    min-height: 2.45rem;
+  }
+
+  .watch-smart-panel .watch-smart-reset {
+    justify-self: start;
+    width: auto;
+  }
+}
+
+@media (max-width: 380px) {
+  .watch-smart-route-field {
+    padding-right: 0.82rem;
+    padding-left: 0.28rem;
+  }
+
+  .watch-smart-route-field-label {
+    overflow: visible;
+    font-size: 0.4rem;
+    letter-spacing: 0.035em;
+  }
+
+  .watch-smart-route-arrow {
+    width: 1.44rem;
+    min-width: 1.44rem;
+  }
+
+  .watch-smart-route-arrow b {
+    width: 1rem;
+    height: 1rem;
+    font-size: 0.71rem;
+  }
+
+  .watch-smart-panel .watch-smart-reset {
+    justify-self: start;
+  }
+}
+
+.watch-smart-panel .qs-pagination {
+  gap: 0.38rem;
+  margin-top: 0.1rem;
+  padding-top: 0.42rem;
+}
+
+.watch-smart-panel .qs-pagination-stats {
+  font-size: 0.66rem;
+}
+
+.watch-smart-panel .qs-pagination-nav,
+.watch-smart-panel .qs-pagination-pages {
+  gap: 0.22rem;
+}
+
+.watch-smart-panel .qs-pagination-btn {
+  min-width: 1.72rem;
+  min-height: 1.72rem;
+  padding: 0.25rem 0.36rem;
+  font-size: 0.66rem;
+}
+
+@container watch-smart-panel (max-width: 32rem) {
+  .watch-smart-panel-header {
+    display: grid;
+    align-items: stretch;
+  }
+
+  .watch-smart-panel .watch-smart-tools,
+  .watch-smart-panel .watch-smart-tool-group--route-tools {
+    width: 100%;
+    min-width: 0;
+    margin-left: 0;
+  }
+
+  .watch-smart-panel .watch-smart-tool-group--route-tools {
+    flex-wrap: wrap;
+  }
+
+  .watch-smart-panel .watch-smart-route-picker {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .watch-smart-panel .watch-smart-sort {
+    flex: 1 1 6.4rem;
+  }
+
+  .watch-smart-panel .watch-smart-sort select {
+    width: 100%;
+  }
+}
+
+.watch-ticket-row::before,
+.watch-ticket-row::after {
+  position: absolute;
+  z-index: 4;
+  left: calc(100% - var(--watch-ticket-stub-width) - 0.42rem);
+  width: 0.84rem;
+  height: 0.84rem;
+  content: "";
+  border: 1px solid var(--watch-ticket-line);
+  border-radius: 999px;
+  background: var(--watch-ticket-paper);
+}
+
+.watch-ticket-row::before {
+  top: -0.42rem;
+}
+
+.watch-ticket-row::after {
+  bottom: -0.42rem;
+}
+
+@media (max-width: 760px) {
+  .watch-smart-panel {
+    gap: 0.62rem;
+  }
+
+  .watch-ticket-row {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+    aspect-ratio: auto;
+    border-radius: 1rem;
+  }
+
+  .watch-ticket-row::before,
+  .watch-ticket-row::after {
+    display: none;
+  }
+
+  .watch-ticket-main {
+    grid-template-rows: 2.6rem 1.45rem 1.1rem auto 1.72rem;
+    gap: 0.28rem;
+    padding: 0.78rem 0.86rem 0.66rem;
+  }
+
+  .watch-ticket-route {
+    width: calc(100% - 3.6rem);
+    margin-top: 0;
+    margin-left: 3.6rem;
+  }
+
+  .watch-ticket-airport strong {
+    font-size: clamp(1.74rem, 8.2vw, 2.35rem);
+  }
+
+  .watch-ticket-airport span {
+    max-width: 7rem;
+    font-size: 0.58rem;
+  }
+
+  .watch-ticket-path {
+    width: calc(100% - 1.8rem);
+    margin-left: 1.8rem;
+  }
+
+  .watch-ticket-pricing {
+    grid-template-columns: minmax(5.6rem, 0.68fr) minmax(0, 1.32fr);
+    min-height: 3.1rem;
+    margin-top: 0;
+    padding: 0.48rem 0 0;
+  }
+
+  .watch-ticket-price {
+    font-size: 1.88rem;
+  }
+
+  .watch-ticket-trend {
+    grid-template-columns: 1.45rem minmax(0, 1fr) minmax(0, 1.3fr);
+    min-height: 2.62rem;
+  }
+
+  .watch-ticket-trend > strong,
+  .watch-ticket-trend b {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .watch-ticket-actions {
+    gap: 0.32rem;
+    padding: 0;
+  }
+
+  .watch-ticket-action-buttons {
+    flex: 0 1 auto;
+  }
+
+  .watch-ticket-trend-action,
+  .watch-ticket-row .watch-ticket-action-buttons .btn-compact,
+  .watch-ticket-purchased-action {
+    min-height: 1.58rem;
+    font-size: 0.56rem;
+  }
+
+  .watch-ticket-stub {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr);
+    align-items: center;
+    justify-items: start;
+    gap: 0.42rem;
+    padding: 0.56rem 0.86rem;
+    border-top: 1px dashed var(--watch-ticket-line);
+    border-left: 0;
+  }
+
+  .watch-ticket-stub::before,
+  .watch-ticket-postal-waves {
+    display: none;
+  }
+
+  .watch-ticket-date-zone {
+    display: flex;
+    align-items: baseline;
+    justify-items: start;
+    gap: 0.26rem;
+    padding: 0;
+  }
+
+  .watch-ticket-stub-lower {
+    display: block;
+    overflow: visible;
+  }
+
+  .watch-ticket-date-caption,
+  .watch-ticket-stub-rule {
+    display: none;
+  }
+
+  .watch-ticket-day,
+  .watch-ticket-month,
+  .watch-ticket-year {
+    margin: 0;
+  }
+
+  .watch-ticket-day {
+    font-size: 1.72rem;
+  }
+
+  .watch-ticket-month {
+    font-size: 0.56rem;
+  }
+
+  .watch-ticket-year {
+    font-size: 0.92rem;
+  }
+
+  .watch-ticket-stamp {
+    display: grid;
+    justify-self: end;
+    width: 4.45rem;
+    min-height: 2.12rem;
+    margin: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .watch-ticket-row,
+  .watch-ticket-row:hover,
+  .watch-ticket-row:active {
+    transform: none;
+    transition: none;
+  }
+}

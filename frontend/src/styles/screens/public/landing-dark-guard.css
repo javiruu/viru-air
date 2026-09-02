@@ -1,0 +1,204 @@
+/* Landing dark-mode hardening: remove light island while preserving editorial tone. */
+:root[data-theme="dark"] .landing-hero {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background:
+    radial-gradient(circle at 84% 16%, rgba(224, 123, 86, 0.12), transparent 32%),
+    radial-gradient(circle at 14% 14%, rgba(111, 178, 161, 0.1), transparent 30%),
+    linear-gradient(145deg, color-mix(in srgb, var(--color-surface) 90%, var(--color-surface-elevated) 10%), color-mix(in srgb, var(--color-surface-elevated) 84%, var(--color-surface-muted) 16%));
+  box-shadow: 0 26px 60px rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme="dark"] .landing-hero-copy h1,
+:root[data-theme="dark"] .landing-panel-header h2,
+:root[data-theme="dark"] .demo-chart-header strong,
+:root[data-theme="dark"] .landing-claim {
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .landing-hero-copy p,
+:root[data-theme="dark"] .landing-cta-note,
+:root[data-theme="dark"] .landing-panel-header p {
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .landing-hero-panel {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background:
+    radial-gradient(circle at top right, rgba(224, 123, 86, 0.1), transparent 34%),
+    linear-gradient(160deg, color-mix(in srgb, var(--color-surface-elevated) 88%, var(--color-surface) 12%), color-mix(in srgb, var(--color-surface) 90%, var(--color-surface-muted) 10%));
+  box-shadow:
+    0 20px 42px rgba(0, 0, 0, 0.46),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme="dark"] .demo-chart,
+:root[data-theme="dark"] .demo-calendar {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background: color-mix(in srgb, var(--color-surface) 88%, var(--color-surface-elevated) 12%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme="dark"] .demo-chart-header,
+:root[data-theme="dark"] .demo-calendar-header,
+:root[data-theme="dark"] .demo-day,
+:root[data-theme="dark"] .demo-chip-muted {
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .demo-date {
+  background: color-mix(in srgb, var(--color-info-bg) 58%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-info-border) 60%, transparent);
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .demo-date-2 {
+  background: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-accent) 46%, transparent);
+}
+
+:root[data-theme="dark"] .demo-date-3 {
+  background: color-mix(in srgb, var(--color-chip-bg) 88%, var(--color-surface) 12%);
+  border-color: color-mix(in srgb, var(--color-chip-border) 72%, transparent);
+}
+
+:root[data-theme="dark"] .demo-chip {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background: color-mix(in srgb, var(--color-surface) 88%, var(--color-surface-elevated) 12%);
+  color: var(--color-text-primary);
+}
+
+/* Final dark pass: quick-search info rail + airport picker must avoid light leakage. */
+:root[data-theme="dark"] .quick-search-shell .qs-info-stack {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background:
+    radial-gradient(circle at 92% 10%, rgba(224, 123, 86, 0.1), transparent 28%),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-surface) 90%, var(--color-surface-elevated) 10%), color-mix(in srgb, var(--color-surface-elevated) 86%, var(--color-surface-muted) 14%));
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-info-summary,
+:root[data-theme="dark"] .quick-search-shell .qs-info-body,
+:root[data-theme="dark"] .quick-search-shell .qs-info-tech-body {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-info-tier,
+:root[data-theme="dark"] .quick-search-shell .qs-info-tech,
+:root[data-theme="dark"] .quick-search-shell .qs-sources-panel,
+:root[data-theme="dark"] .quick-search-shell .qs-info-impact-row {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background: color-mix(in srgb, var(--color-surface-elevated) 88%, var(--color-surface) 12%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-info-tier-kicker {
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-info-tier strong,
+:root[data-theme="dark"] .quick-search-shell .qs-info-impact-row span,
+:root[data-theme="dark"] .quick-search-shell .qs-sources-panel strong {
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-sources-panel li span {
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-info-impact-row-critical {
+  border-color: color-mix(in srgb, var(--color-danger-border) 74%, var(--color-border));
+  background: color-mix(in srgb, var(--color-danger-bg) 52%, var(--color-surface));
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background:
+    radial-gradient(circle at top right, rgba(224, 123, 86, 0.12), transparent 30%),
+    radial-gradient(circle at 18% 14%, rgba(111, 178, 161, 0.1), transparent 26%),
+    linear-gradient(170deg, color-mix(in srgb, var(--color-surface-elevated) 90%, var(--color-surface) 10%), color-mix(in srgb, var(--color-surface) 92%, var(--color-surface-muted) 8%));
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__close {
+  border-color: color-mix(in srgb, var(--color-border) 80%, var(--color-border-strong) 20%);
+  background: color-mix(in srgb, var(--color-surface-elevated) 88%, var(--color-surface) 12%);
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__close:hover {
+  background: color-mix(in srgb, var(--color-surface-elevated) 96%, var(--color-surface) 4%);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__header,
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__search {
+  border-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+  background: color-mix(in srgb, var(--color-surface) 90%, var(--color-surface-elevated) 10%);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__countries {
+  border-right-color: color-mix(in srgb, var(--color-border) 84%, var(--color-border-strong) 16%);
+}
+
+:root[data-theme="dark"] .quick-search-shell .airport-modal-left,
+:root[data-theme="dark"] .quick-search-shell .airport-modal-right {
+  background: transparent;
+}
+
+:root[data-theme="dark"] .quick-search-shell .airport-modal-left h2,
+:root[data-theme="dark"] .quick-search-shell .airport-modal-header h3,
+:root[data-theme="dark"] .quick-search-shell .country-pill {
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__airport-item {
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__airport-item:hover {
+  background: color-mix(in srgb, var(--color-surface-elevated) 84%, var(--color-surface) 16%);
+  border-color: color-mix(in srgb, var(--color-border) 70%, var(--color-border-strong) 30%);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__airport-iata {
+  background: rgba(111, 178, 161, 0.14);
+  color: color-mix(in srgb, var(--color-accent-secondary) 80%, white 20%);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__count {
+  background: rgba(111, 178, 161, 0.16);
+  color: color-mix(in srgb, var(--color-accent-secondary) 80%, white 20%);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__use-country {
+  border-color: rgba(111, 178, 161, 0.24);
+  background: rgba(111, 178, 161, 0.08);
+  color: color-mix(in srgb, var(--color-accent-secondary) 80%, white 20%);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__use-country:hover {
+  background: rgba(111, 178, 161, 0.14);
+  border-color: rgba(111, 178, 161, 0.34);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__recent-chip {
+  border-color: color-mix(in srgb, var(--color-border) 72%, var(--color-border-strong) 28%);
+  background: color-mix(in srgb, var(--color-surface-elevated) 80%, var(--color-surface) 20%);
+  color: var(--color-text-primary);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__recent-chip:hover {
+  background: color-mix(in srgb, var(--color-surface-elevated) 92%, var(--color-surface) 8%);
+  border-color: rgba(111, 178, 161, 0.24);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__search-icon {
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__empty {
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .quick-search-shell .qs-airport-modal__recents-label {
+  color: var(--color-text-secondary);
+}
+
+
