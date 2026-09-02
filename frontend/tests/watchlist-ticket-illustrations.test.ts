@@ -75,6 +75,7 @@ test("Watchlist ticket preserves the desktop ticket anatomy inside its narrow ro
   assert.match(screensSource, /\.watch-ticket-stub\s*\{[\s\S]*?border-left:\s*0;/);
   assert.match(screensSource, /\.watch-smart-panel\s*\{[\s\S]*?container:\s*watch-smart-panel \/ inline-size;/);
   assert.match(screensSource, /@container watch-smart-panel \(max-width:\s*32rem\)/);
+  assert.match(screensSource, /\.watch-smart-panel-header \{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/s);
   assert.match(screensSource, /\.watch-ticket-art\s*\{[\s\S]*?pointer-events:\s*none;/);
   assert.match(panelSource, /WatchRow/);
   assert.match(fs.readFileSync(watchRowPath, "utf8"), /<ArrowRight className="watch-ticket-route-plane"/);

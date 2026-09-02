@@ -35,9 +35,6 @@
   animation: d2d-bar-grow 0.5s ease-out both;
 }
 
-.d2d-compare-row-bar:nth-child(1) { animation-delay: 0ms; }
-.d2d-compare-row-bar:nth-child(2) { animation-delay: 80ms; }
-.d2d-compare-row-bar:nth-child(3) { animation-delay: 160ms; }
 .d2d-compare-row-bar:nth-child(4) { animation-delay: 240ms; }
 
 @keyframes d2d-bar-grow {
@@ -120,5 +117,4 @@
     gap: 0.35rem;
   }
 }
-
 

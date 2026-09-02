@@ -2,7 +2,7 @@
 .reco-shell {
   position: relative;
   display: grid;
-  gap: 1.35rem;
+  gap: var(--screen-flow-gap);
 }
 
 .reco-header-clean {

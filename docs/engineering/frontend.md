@@ -1,7 +1,7 @@
 ﻿# Frontend
 
 **Estado:** vivo  
-**Última revisión:** 2026-08-29
+**Última revisión:** 2026-09-02
 **Fuente de verdad:** sí  
 **Área:** engineering
 
@@ -16,6 +16,20 @@ El frontend de Viru Air está construido con Next.js, React y TypeScript, y usa 
 - La skill `/.codex/skills/viru-air-ui/SKILL.md` obliga a leerla antes del trabajo UI.
 - Las specs UI activas están en:
   - [Specs activas](../specs/README.md)
+
+## Arquitectura de estilos de pantalla
+
+- `frontend/src/styles/screens.css` es el punto de entrada estable y contiene únicamente imports ordenados.
+- Las reglas viven en `frontend/src/styles/screens/`, separadas por dominio (`quick-search`, `watchlist`, `door-to-door`, `hotels`, `private`, `public`, `shared` y `foundation`).
+- El orden del manifiesto es parte del contrato: algunos módulos finales refinan reglas anteriores. No reordenar imports para agruparlos visualmente sin comprobar la cascada renderizada.
+- Una regla exclusiva permanece en su dominio. Sólo los patrones realmente usados por varias pantallas pasan a `shared`, `components.css` o `tokens.css`.
+- Antes de cerrar cambios en este árbol, ejecutar desde `frontend`:
+
+  ```bash
+  npm run styles:verify
+  ```
+
+  La comprobación rechaza imports duplicados, módulos ausentes o huérfanos, CSS inválido y archivos que vuelvan a superar 3.000 líneas.
 
 ## Estados de carga Boneyard
 

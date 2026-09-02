@@ -440,14 +440,6 @@
   border: 0;
 }
 
-/* /quick-search - popover "Como ordenamos": panel flotante anclado al summary */
-.qs-how-order {
-  position: relative;
-  display: inline-block;
-  vertical-align: middle;
-  max-width: 100%;
-}
-
 .qs-how-order__summary {
   list-style: none;
 }
@@ -1761,4 +1753,3 @@
     transition: none !important;
   }
 }
-

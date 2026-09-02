@@ -3,7 +3,7 @@
    ========================= */
 .prefs-shell {
   display: grid;
-  gap: 1.4rem;
+  gap: var(--screen-flow-gap);
 }
 
 .prefs-header {
@@ -635,4 +635,3 @@ textarea::placeholder {
   gap: 0.75rem;
   align-items: flex-end;
 }
-

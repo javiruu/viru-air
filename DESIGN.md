@@ -45,7 +45,7 @@ Una pantalla conserva una lectura primaria inequívoca, pero puede tener un gest
 ## 5. Tipografía, color y datos
 
 - Titulares con Playfair Display para momentos de identidad; IBM Plex Sans para controles, cuerpo y copy operativo; monoespaciada sólo cuando los códigos, horarios o cifras ganen precisión.
-- La implementación vigente de spacing, foco y estados vive en `frontend/src/styles/tokens.css`; los valores de tema viven en las variables CSS de `frontend/src/styles/screens.css`. No duplicar ni inventar una paleta documental paralela.
+- La implementación vigente de spacing, foco y estados vive en `frontend/src/styles/tokens.css`; los valores de tema y los tokens transversales de composición viven en `frontend/src/styles/screens/foundation/theme.css`, cargados a través de `frontend/src/styles/screens.css`. No duplicar ni inventar una paleta documental paralela.
 - Evitar negro puro masivo, blanco plano sin jerarquía, color decorativo y nuevos valores hardcodeados si existe un token semántico.
 - El acento principal guía una acción o un momento de atención; verde, azul y rojo mantienen significado de estado, no adornan tarjetas.
 - Usar cifras escaneables, fechas y precios bien agrupados; reservar la expresividad tipográfica para la jerarquía, no para disfrazar datos.

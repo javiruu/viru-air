@@ -1133,6 +1133,7 @@
 @container watch-smart-panel (max-width: 32rem) {
   .watch-smart-panel-header {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
   }
 

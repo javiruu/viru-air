@@ -1,0 +1,126 @@
+/* Shared finish for Viru's decision-oriented product screens. */
+:where(
+  .dashboard-shell,
+  .watchlist-page,
+  .quick-search-shell,
+  .d2d-page,
+  .hoteles-page,
+  .reco-shell,
+  .prefs-shell,
+  .alerts-page,
+  .suggestions-page,
+  .admin-page
+) {
+  container-type: inline-size;
+}
+
+:where(
+  .dashboard-shell,
+  .watchlist-page,
+  .quick-search-shell,
+  .d2d-page,
+  .hoteles-page,
+  .reco-shell,
+  .prefs-shell,
+  .alerts-page,
+  .suggestions-page,
+  .admin-page
+) :is(h1, h2, h3) {
+  letter-spacing: var(--screen-title-tracking);
+  text-wrap: balance;
+}
+
+:where(
+  .dashboard-shell,
+  .watchlist-page,
+  .quick-search-shell,
+  .d2d-page,
+  .hoteles-page,
+  .reco-shell,
+  .prefs-shell,
+  .alerts-page,
+  .suggestions-page,
+  .admin-page
+) :is(p, li) {
+  text-wrap: pretty;
+}
+
+:where(
+  .dashboard-shell,
+  .watchlist-page,
+  .quick-search-shell,
+  .d2d-page,
+  .hoteles-page,
+  .reco-shell,
+  .prefs-shell,
+  .alerts-page,
+  .suggestions-page,
+  .admin-page
+) :is(.page-title p, .panel-subtitle, .panel-note) {
+  max-inline-size: var(--screen-reading-width);
+  line-height: 1.55;
+}
+
+:where(
+  .dashboard-shell,
+  .watchlist-page,
+  .quick-search-shell,
+  .d2d-page,
+  .hoteles-page,
+  .reco-shell,
+  .prefs-shell,
+  .alerts-page,
+  .suggestions-page,
+  .admin-page
+) :is(button, a, input, select, textarea, summary):focus-visible {
+  scroll-margin-block: 6rem;
+}
+
+:where(
+  .dashboard-news-card,
+  .dashboard-context-card,
+  .qs-result-row,
+  .watch-ticket-row,
+  .d2d-option-card,
+  .hotel-result-card,
+  .hotel-area-result-card
+) {
+  transition-duration: var(--screen-motion-base);
+  transition-timing-function: var(--screen-motion-curve);
+}
+
+@media (max-width: 768px) {
+  :root {
+    --screen-flow-gap: 1rem;
+    --ui-hero-density-padding: clamp(1.15rem, 4.8vw, 1.6rem);
+  }
+}
+
+@media (max-width: 480px) {
+  :where(
+    .dashboard-shell,
+    .watchlist-page,
+    .quick-search-shell,
+    .d2d-page,
+    .hoteles-page,
+    .reco-shell,
+    .prefs-shell,
+    .alerts-page
+  ) :is(button, [role="button"], input:not([type="checkbox"]):not([type="radio"]), select, summary) {
+    min-height: var(--screen-control-height);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(
+    .dashboard-news-card,
+    .dashboard-context-card,
+    .qs-result-row,
+    .watch-ticket-row,
+    .d2d-option-card,
+    .hotel-result-card,
+    .hotel-area-result-card
+  ) {
+    transition-duration: 0.01ms;
+  }
+}

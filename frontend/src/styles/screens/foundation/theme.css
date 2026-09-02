@@ -68,6 +68,15 @@
   --ui-shell-padding-bottom: 2.45rem;
   --ui-policies-aside-width: 252px;
   --ui-hero-density-padding: 2rem;
+  --screen-flow-gap: clamp(1rem, 0.82rem + 0.5vw, 1.45rem);
+  --screen-reading-width: 68ch;
+  --screen-control-height: 44px;
+  --screen-motion-fast: 160ms;
+  --screen-motion-base: 220ms;
+  --screen-motion-curve: cubic-bezier(0.2, 0, 0, 1);
+  --screen-title-tracking: -0.025em;
+  --screen-surface-border: color-mix(in srgb, var(--border) 82%, transparent);
+  --screen-surface-shadow: 0 20px 48px color-mix(in srgb, var(--shadow-strong) 18%, transparent);
 }
 
 :root[data-theme="dark"] {
@@ -313,4 +322,3 @@ h1 {
     padding-inline: 12px;
   }
 }
-

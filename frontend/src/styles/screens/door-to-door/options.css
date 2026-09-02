@@ -12,10 +12,10 @@
   gap: 0.85rem;
   align-items: start;
   cursor: pointer;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.2s ease,
-              background 0.2s ease;
+  transition: transform var(--screen-motion-base) var(--screen-motion-curve),
+              box-shadow var(--screen-motion-base) var(--screen-motion-curve),
+              border-color var(--screen-motion-base) ease,
+              background var(--screen-motion-base) ease;
 }
 
 .d2d-option-card:hover {
@@ -183,5 +183,4 @@
     border-color: var(--border);
   }
 }
-
 

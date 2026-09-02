@@ -436,10 +436,6 @@
   height: 0.85rem;
 }
 
-.qs-row-menu-wrap {
-  position: relative;
-}
-
 .qs-row-menu-trigger {
   min-width: 36px;
   min-height: 36px;
@@ -1128,4 +1124,3 @@
   background: rgba(217, 93, 57, 0.16);
   color: var(--accent);
 }
-
