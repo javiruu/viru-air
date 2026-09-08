@@ -158,7 +158,7 @@ def build_operational_provider() -> AviationstackOperationalFlightProvider | Ope
     api_key = os.getenv("AVIATIONSTACK_API_KEY", "").strip()
     if not api_key:
         return OperationalNotConfigured()
-    base_url = os.getenv("AVIATIONSTACK_BASE_URL", "https://api.aviationstack.com/v1").strip()
+    base_url = os.getenv("AVIATIONSTACK_BASE_URL", "https://api.apilayer.net/aviationstack/v1").strip()
     timeout_seconds = _timeout_seconds_from_env(os.getenv("AVIATIONSTACK_TIMEOUT_SECONDS"))
     return AviationstackOperationalFlightProvider(api_key, base_url, timeout_seconds)
 
