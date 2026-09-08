@@ -100,7 +100,7 @@ def _free_registrations(*, allow_billable: bool) -> list[OperationalProviderRegi
                 "aviationstack",
                 AviationstackOperationalFlightProvider(
                     aviationstack_key,
-                    os.getenv("AVIATIONSTACK_BASE_URL", "https://api.aviationstack.com/v1"),
+                    os.getenv("AVIATIONSTACK_BASE_URL", "https://api.apilayer.net/aviationstack/v1"),
                     timeout,
                 ),
                 {"status_schedule", "position"},

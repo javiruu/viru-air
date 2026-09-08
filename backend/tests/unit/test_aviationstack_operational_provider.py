@@ -85,6 +85,7 @@ def test_provider_configuration_is_optional_and_invalid_timeout_falls_back(monke
     provider = build_operational_provider()
 
     assert isinstance(provider, AviationstackOperationalFlightProvider)
+    assert provider._base_url == "https://api.apilayer.net/aviationstack/v1"
     assert provider._timeout_seconds == 8.0
 
 
