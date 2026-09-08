@@ -76,6 +76,7 @@ export function WatchLiveFlightPanel({
       return <p className="watch-live-flight-leg-unavailable">{t("watchlist.live.legUnavailable")}</p>;
     }
     const numberFormat = new Intl.NumberFormat(localeTag, { maximumFractionDigits: 0 });
+    const aircraftCode = operational.aircraft_iata ?? operational.aircraft_icao;
     return (
       <>
         <div className="watch-live-flight-milestones">
@@ -130,6 +131,16 @@ export function WatchLiveFlightPanel({
             <span>{t("watchlist.live.heading", { value: numberFormat.format(operational.position.heading_deg) })}</span>
           ) : null}
           {operational.callsign ? <span>{operational.callsign}</span> : null}
+          {operational.registration ? (
+            <span>{t("watchlist.live.registration", { value: operational.registration })}</span>
+          ) : null}
+          {aircraftCode ? (
+            <span>
+              {t("watchlist.live.aircraft", {
+                value: aircraftCode,
+              })}
+            </span>
+          ) : null}
         </footer>
       </>
     );

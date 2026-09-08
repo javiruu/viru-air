@@ -1,7 +1,7 @@
 # Runbook - Live flight tracking desde Watchlist
 
 **Estado:** vivo
-**Última revisión:** 2026-07-21
+**Última revisión:** 2026-09-09
 **Fuente de verdad:** sí
 **Área:** runbook
 
@@ -52,6 +52,18 @@ ADSB_EXCHANGE_MONTHLY_REQUEST_LIMIT=0
 - no pongas keys en URL, logs, capturas, reportes ni comandos compartidos.
 
 `flight_provider_quota` persiste consumo, ventana y bloqueos. Un reinicio no reinicia el contador. Los `429` respetan `Retry-After`; un `402` bloquea el proveedor y la cadena continúa.
+
+## Cobertura observada de proveedores
+
+Sonda realizada el 2026-09-09 con la cuenta configurada, sin guardar payloads remotos ni credenciales:
+
+- Aviationstack respondió en `GET /flights`, `GET /timetable` y `GET /aircraft_types`. La respuesta de vuelos aporta estado, horarios, terminal/puerta, retraso, posición cuando exista, callsign, matrícula y código de aeronave; Watchlist muestra esos dos últimos metadatos solo si vienen observados.
+- `GET /timetable` puede servir para exploración o futuras conciliaciones de programación, pero no entra automáticamente en la actualización live actual: cada refresh reserva una unidad en el ledger local y un segundo request necesitaría contabilidad de cuota explícita antes de habilitarse.
+- En este plan, `GET /airports`, `GET /airlines`, `GET /cities` y `GET /routes` devolvieron `403 function_access_restricted`; no se usan como fuente de verdad ni se reintentan desde Watchlist.
+- `GET /flightsFuture` devolvió `503`; se considera disponibilidad transitoria, no una promesa de datos futuros.
+- El endpoint público de posiciones de OpenSky respondió correctamente, aunque puede no tener cobertura para una aeronave concreta. Su histórico por aeronave devolvió `403` sin OAuth: requiere las credenciales OAuth2 descritas arriba.
+
+Estas capacidades son una observación del plan y la fecha indicados. Antes de depender de un endpoint nuevo en producción, prueba el entitlement de la cuenta y conserva los límites de coste y de frecuencia.
 
 ## Activación gradual
 

@@ -188,5 +188,7 @@ test("watchlist live UI keeps map positions observed and multi-leg detail progre
   assert.match(livePanel, /watchlist\.live\.legUnavailable/);
   assert.match(livePanel, /watchlist\.live\.providerSource/);
   assert.match(livePanel, /watchlist\.live\.altitude/);
+  assert.match(livePanel, /watchlist\.live\.registration/);
+  assert.match(livePanel, /watchlist\.live\.aircraft/);
   assert.doesNotMatch(livePanel, /filter\(\(leg\) => leg\.operational\)/);
 });

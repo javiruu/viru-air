@@ -273,6 +273,8 @@ export const watchlistEs = {
     altitude: "Altitud {value} m",
     speed: "Velocidad {value} km/h",
     heading: "Rumbo {value}°",
+    registration: "Matrícula {value}",
+    aircraft: "Aeronave {value}",
     prediction: {
       kicker: "Lectura adelantada",
       title: "Predicción de retraso",
@@ -819,6 +821,8 @@ export const watchlistEn = {
     altitude: "Altitude {value} m",
     speed: "Speed {value} km/h",
     heading: "Heading {value}°",
+    registration: "Registration {value}",
+    aircraft: "Aircraft {value}",
     prediction: {
       kicker: "Early reading",
       title: "Delay prediction",
