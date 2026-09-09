@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 import { DashboardNewsRail } from "@/components/components/dashboard/DashboardNewsRail";
@@ -57,6 +57,7 @@ export default function DashboardPage() {
   const { t, localeTag } = useI18n();
   const [me, setMe] = useState<Me | null>(null);
   const [notificationSummary, setNotificationSummary] = useState<DashboardNotificationSummary | null>(null);
+  const notificationSummaryRequest = useRef(0);
   const [watches, setWatches] = useState<Watch[]>([]);
   const [heroPriceSummary, setHeroPriceSummary] = useState<PriceSummary | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -82,8 +83,9 @@ export default function DashboardPage() {
       setWatches(watchData);
       setNotes(noteData);
       setBackendBanner(null);
+      const requestId = ++notificationSummaryRequest.current;
       const notificationData = await apiFetch<DashboardNotificationSummary>("/notifications/summary").catch(() => null);
-      setNotificationSummary(notificationData);
+      if (requestId === notificationSummaryRequest.current) setNotificationSummary(notificationData);
     } catch {
       setNotificationSummary(null);
       const fallback = t("dashboard.banner.warmMessage");
@@ -97,6 +99,18 @@ export default function DashboardPage() {
   useEffect(() => {
     loadDashboard();
   }, [loadDashboard]);
+
+  useEffect(() => {
+    const clearUnreadAlerts = (event: Event) => {
+      if (event instanceof CustomEvent && event.detail?.unread === 0) {
+        notificationSummaryRequest.current += 1;
+        setNotificationSummary((current) => (current ? { ...current, unread: 0 } : current));
+      }
+    };
+
+    window.addEventListener("viru:notifications-changed", clearUnreadAlerts);
+    return () => window.removeEventListener("viru:notifications-changed", clearUnreadAlerts);
+  }, []);
 
   useEffect(() => {
     const watchId = watches[0]?.id;

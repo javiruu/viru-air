@@ -37,12 +37,17 @@ test("private navigation keeps the page title in sync with unread notifications"
 
 test("private shell refreshes unread notifications after inbox read actions", () => {
   const layout = read("src/app/(private)/layout.tsx");
+  const dashboard = read("src/app/(private)/dashboard/page.tsx");
   const inbox = read("src/modules/signals/SignalsInbox.tsx");
 
   assert.match(layout, /window\.addEventListener\("viru:notifications-changed", refreshUnreadSignals\)/);
   assert.match(layout, /window\.removeEventListener\("viru:notifications-changed", refreshUnreadSignals\)/);
+  assert.match(layout, /event instanceof CustomEvent && event\.detail\?\.unread === 0/);
+  assert.match(layout, /setUnreadSignals\(0\)/);
+  assert.match(dashboard, /window\.addEventListener\("viru:notifications-changed", clearUnreadAlerts\)/);
+  assert.match(dashboard, /setNotificationSummary\(\(current\) => \(current \? \{ \.\.\.current, unread: 0 \} : current\)\)/);
   assert.match(inbox, /apiFetch\(`\/notifications\/\$\{item\.source_type\}\/\$\{item\.source_id\}\/read`, \{ method: "POST" \}\);\s*window\.dispatchEvent\(new Event\("viru:notifications-changed"\)\)/);
-  assert.match(inbox, /apiFetch\("\/notifications\/read-all", \{ method: "POST" \}\);\s*window\.dispatchEvent\(new Event\("viru:notifications-changed"\)\)/);
+  assert.match(inbox, /apiFetch\("\/notifications\/read-all", \{ method: "POST" \}\);\s*window\.dispatchEvent\(new CustomEvent\("viru:notifications-changed", \{ detail: \{ unread: 0 \} \}\)\)/);
 });
 
 test("root metadata and manifest expose the Viru Air tab identity", () => {

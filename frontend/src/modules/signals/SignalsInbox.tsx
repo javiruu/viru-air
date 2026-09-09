@@ -91,7 +91,7 @@ export function SignalsInbox({ requestedFilter }: { requestedFilter?: string | n
   async function markAllRead(): Promise<void> {
     try {
       await apiFetch("/notifications/read-all", { method: "POST" });
-      window.dispatchEvent(new Event("viru:notifications-changed"));
+      window.dispatchEvent(new CustomEvent("viru:notifications-changed", { detail: { unread: 0 } }));
       await loadNotifications();
       notify({ tone: "success", title: t("notifications.toast.markedAll"), durationMs: 2600 });
     } catch {
