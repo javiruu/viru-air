@@ -35,6 +35,30 @@ def _close_test_db_session(generator) -> None:
         pass
 
 
+def test_mark_all_read_clears_security_activity_beyond_the_inbox_window(client: TestClient) -> None:
+    token = register_and_token(client, email="inbox-mark-all-security@viru.dev")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    db, generator = _open_test_db_session()
+    try:
+        user = db.scalar(select(User).where(User.email == "inbox-mark-all-security@viru.dev"))
+        assert user is not None
+        db.add_all([
+            SecurityActivity(user_id=user.id, event_type="login", ip="127.0.0.1")
+            for _ in range(25)
+        ])
+        db.commit()
+    finally:
+        _close_test_db_session(generator)
+
+    unread_before = client.get("/api/v1/notifications/summary", headers=headers).json()["unread"]
+    assert unread_before > 20
+    marked = client.post("/api/v1/notifications/read-all", headers=headers)
+    assert marked.status_code == 200
+    assert marked.json()["updated"] == unread_before
+    assert client.get("/api/v1/notifications/summary", headers=headers).json()["unread"] == 0
+
+
 def test_notifications_hotel_events_are_isolated_in_inbox_summary_and_read_state(client: TestClient) -> None:
     token_a = register_and_token(client, email="inbox-hotel-owner-a@viru.dev")
     token_b = register_and_token(client, email="inbox-hotel-owner-b@viru.dev")

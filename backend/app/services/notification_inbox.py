@@ -354,59 +354,71 @@ def mark_notification_read(
 
 
 def mark_all_notifications_read(db: Session, *, user_id: str) -> int:
-    """Mark all unread notifications as read using bulk SQL operations."""
-    items = list_notification_inbox(
-        db,
-        user_id=user_id,
-        limit=200,
-        community_limit=200,
+    """Mark every unread notification counted by the summary as read."""
+    hotel_event_owned = and_(
+        or_(
+            HotelAlertEvent.user_id == user_id,
+            and_(
+                HotelAlertEvent.user_id.is_(None),
+                HotelAlertEvent.rule_id.is_not(None),
+                exists(
+                    select(HotelAlertRule.id).where(
+                        HotelAlertRule.id == HotelAlertEvent.rule_id,
+                        HotelAlertRule.user_id == user_id,
+                    )
+                ),
+            ),
+        ),
+        or_(
+            HotelAlertEvent.evaluation_state.is_(None),
+            HotelAlertEvent.evaluation_state != "legacy_observation",
+        ),
     )
-    community_items = _community_trending_items(db, user_id=user_id, limit=200)
-    existing_item_keys = {(item.source_type, item.source_id) for item in items}
-    items.extend(
-        item
-        for item in community_items
-        if (item.source_type, item.source_id) not in existing_item_keys
-    )
-    unread_items = [item for item in items if not item.is_read]
-    if not unread_items:
+    source_refs = [
+        *[
+            SourceRef(SOURCE_ALERT_EVENT, source_id)
+            for source_id in db.scalars(
+                select(NotificationEvent.id)
+                .join(AlertRule, NotificationEvent.rule_id == AlertRule.id)
+                .join(FlightWatch, AlertRule.watch_id == FlightWatch.id)
+                .where(FlightWatch.user_id == user_id)
+            )
+        ],
+        *[
+            SourceRef(SOURCE_SECURITY_ACTIVITY, source_id)
+            for source_id in db.scalars(
+                select(SecurityActivity.id).where(SecurityActivity.user_id == user_id)
+            )
+        ],
+        *[
+            SourceRef(SOURCE_HOTEL_ALERT_EVENT, source_id)
+            for source_id in db.scalars(
+                select(HotelAlertEvent.id).where(hotel_event_owned)
+            )
+        ],
+        *[
+            SourceRef(item.source_type, item.source_id)
+            for item in _community_trending_items(db, user_id=user_id)
+        ],
+    ]
+    read_states = _state_map(db, user_id=user_id, source_refs=source_refs)
+    unread_refs = [ref for ref in source_refs if ref not in read_states]
+    if not unread_refs:
         return 0
 
     now = utc_now_naive()
-    existing_pairs = {
-        (item.source_type, item.source_id)
-        for item in unread_items
-    }
-    existing_rows = db.scalars(
-        select(UserNotificationState).where(
-            UserNotificationState.user_id == user_id,
-            UserNotificationState.source_type.in_({p[0] for p in existing_pairs}),
-            UserNotificationState.source_id.in_({p[1] for p in existing_pairs}),
+    db.add_all([
+        UserNotificationState(
+            user_id=user_id,
+            source_type=ref.source_type,
+            source_id=ref.source_id,
+            read_at=now,
         )
-    ).all()
-    existing_pairs_found: set[tuple[str, str]] = set()
-    for row in existing_rows:
-        row.read_at = now
-        existing_pairs_found.add((row.source_type, row.source_id))
-
-    new_items = [
-        item
-        for item in unread_items
-        if (item.source_type, item.source_id) not in existing_pairs_found
-    ]
-    if new_items:
-        db.add_all([
-            UserNotificationState(
-                user_id=user_id,
-                source_type=item.source_type,
-                source_id=item.source_id,
-                read_at=now,
-            )
-            for item in new_items
-        ])
+        for ref in unread_refs
+    ])
 
     db.commit()
-    return len(unread_items)
+    return len(unread_refs)
 
 
 def count_notification_summary(db: Session, *, user_id: str) -> dict[str, int]:

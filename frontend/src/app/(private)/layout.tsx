@@ -20,7 +20,12 @@ export default function PrivateLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true;
     let latestRequest = 0;
-    const refreshUnreadSignals = () => {
+    const refreshUnreadSignals = (event?: Event) => {
+      if (event instanceof CustomEvent && event.detail?.unread === 0) {
+        latestRequest += 1;
+        setUnreadSignals(0);
+        return;
+      }
       const requestId = ++latestRequest;
       apiFetchWithStatus<NotificationSummary>("/notifications/summary", undefined, { timeoutMs: 3500 }).then((result) => {
         if (active && requestId === latestRequest && result.ok) setUnreadSignals(result.data.unread);
