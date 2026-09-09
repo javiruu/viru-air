@@ -6,7 +6,6 @@ from app.domain.schemas import NotificationInboxOut, NotificationInboxSummaryOut
 from app.infrastructure.db.models import User
 from app.infrastructure.db.session import get_db
 from app.services.notification_inbox import (
-    InboxItem,
     SourceRef,
     count_notification_summary,
     list_notification_inbox,
@@ -15,18 +14,6 @@ from app.services.notification_inbox import (
 )
 
 router = APIRouter()
-
-
-def _summary(items: list[InboxItem]) -> dict[str, int]:
-    return {
-        "total": len(items),
-        "unread": sum(1 for item in items if not item.is_read),
-        "price": sum(1 for item in items if item.category == "price"),
-        "security": sum(1 for item in items if item.category == "security"),
-        "digest": sum(1 for item in items if item.category == "digest"),
-        "worker": sum(1 for item in items if item.category == "worker"),
-        "community": sum(1 for item in items if item.category == "community"),
-    }
 
 
 @router.get("", response_model=NotificationInboxOut)
@@ -54,7 +41,7 @@ def get_notifications(
             }
             for item in items
         ],
-        "summary": _summary(items),
+        "summary": count_notification_summary(db, user_id=current_user.id),
     }
 
 

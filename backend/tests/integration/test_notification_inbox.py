@@ -53,6 +53,7 @@ def test_mark_all_read_clears_security_activity_beyond_the_inbox_window(client: 
 
     unread_before = client.get("/api/v1/notifications/summary", headers=headers).json()["unread"]
     assert unread_before > 20
+    assert client.get("/api/v1/notifications", headers=headers).json()["summary"]["unread"] == unread_before
     marked = client.post("/api/v1/notifications/read-all", headers=headers)
     assert marked.status_code == 200
     assert marked.json()["updated"] == unread_before
