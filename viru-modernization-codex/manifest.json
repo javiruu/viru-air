@@ -1,0 +1,94 @@
+{
+  "generated_at": "2026-09-12",
+  "purpose": "Viru modernization/migration instructions for Codex",
+  "files": [
+    {
+      "name": "00_BACKEND_AUDIT.md",
+      "bytes": 2365
+    },
+    {
+      "name": "00_GLOBAL_GUARDRAILS.md",
+      "bytes": 3373
+    },
+    {
+      "name": "00_START_HERE.md",
+      "bytes": 2701
+    },
+    {
+      "name": "01_PLAYWRIGHT.md",
+      "bytes": 6702
+    },
+    {
+      "name": "02_BIOME.md",
+      "bytes": 5793
+    },
+    {
+      "name": "03_TYPESCRIPT_STRICT.md",
+      "bytes": 5692
+    },
+    {
+      "name": "04_OPENAPI.md",
+      "bytes": 6393
+    },
+    {
+      "name": "05_ORVAL.md",
+      "bytes": 5887
+    },
+    {
+      "name": "06_TANSTACK_QUERY.md",
+      "bytes": 5952
+    },
+    {
+      "name": "07_ZOD.md",
+      "bytes": 5890
+    },
+    {
+      "name": "08_SUPABASE.md",
+      "bytes": 8803
+    },
+    {
+      "name": "09_DRIZZLE_DECISION.md",
+      "bytes": 5543
+    },
+    {
+      "name": "10_SHADCN_UI.md",
+      "bytes": 5787
+    },
+    {
+      "name": "11_POSTHOG.md",
+      "bytes": 6128
+    },
+    {
+      "name": "12_OPENTELEMETRY.md",
+      "bytes": 6311
+    },
+    {
+      "name": "13_VALKEY.md",
+      "bytes": 5954
+    },
+    {
+      "name": "14_TRIGGER_DEV.md",
+      "bytes": 6481
+    },
+    {
+      "name": "15_TYPESENSE.md",
+      "bytes": 6097
+    },
+    {
+      "name": "16_TEMPORAL.md",
+      "bytes": 6619
+    },
+    {
+      "name": "DOCS_SOURCES.md",
+      "bytes": 1314
+    },
+    {
+      "name": "FINAL_ARCHITECTURE_CHECKLIST.md",
+      "bytes": 1447
+    },
+    {
+      "name": "MIGRATION_STATUS_TEMPLATE.md",
+      "bytes": 470
+    }
+  ]
+}
