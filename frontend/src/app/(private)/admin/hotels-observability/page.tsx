@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } fro
 import { useRouter } from "next/navigation";
 
 import { useI18n } from "@/i18n";
-import { apiFetch } from "@/modules/shared/api";
+import { customClient as apiFetch } from "@/api/mutator/custom-client";
 import { BoneyardLoad, BoneyardPanel, LoadReference } from "@/modules/shared/BoneyardLoad";
 import {
   HOTEL_METRIC_NAMES,
@@ -810,3 +810,4 @@ export default function HotelObservabilityPage() {
     </main>
   );
 }
+

@@ -5,7 +5,8 @@ import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { apiFetch } from "@/modules/shared/api";
+import { publicHelpApiV1PublicHelpGet } from "@/api/generated/public/public";
+import { getHelpApiV1SupportHelpGet } from "@/api/generated/support/support";
 import { BoneyardPanel } from "@/modules/shared/BoneyardLoad";
 
 export type HelpSection = {
@@ -40,8 +41,12 @@ export default function HelpBase(props: HelpBaseProps) {
   const [help, setHelp] = useState<HelpPayload | null>(null);
 
   useEffect(() => {
-    apiFetch<HelpPayload>(props.endpoint)
-      .then(setHelp)
+    const fetcher = props.endpoint === "/public/help" 
+      ? publicHelpApiV1PublicHelpGet() 
+      : getHelpApiV1SupportHelpGet();
+    
+    fetcher
+      .then((data: any) => setHelp(data))
       .catch(() => setHelp(null));
   }, [props.endpoint]);
 

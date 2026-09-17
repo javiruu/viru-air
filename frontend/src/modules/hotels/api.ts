@@ -1,4 +1,4 @@
-﻿import { apiFetchWithStatus } from "@/modules/shared/api";
+﻿import { customClient } from "@/api/mutator/custom-client";
 
 import type {
   HotelAlertEventOut,
@@ -54,14 +54,14 @@ function queryString(params: Record<string, string | number | boolean | null | u
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const result = await apiFetchWithStatus<T>(path, init);
-  if (!result.ok) {
-    throw new HotelsRequestError(result.status, result.error.message, {
-      correlation_id: result.error.correlation_id,
-      client_event_id: result.error.client_event_id,
+  try {
+    return await customClient<T>(path, init);
+  } catch (err: any) {
+    throw new HotelsRequestError(err.status || 500, err.message, {
+      correlation_id: err.correlation_id,
+      client_event_id: err.client_event_id,
     });
   }
-  return result.data;
 }
 
 export async function ingestHotelsMock(): Promise<HotelIngestOut> {

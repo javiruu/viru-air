@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import { apiFetchBestEffort } from "@/modules/shared/api";
+import { createUxEventApiV1UxEventsPost } from "@/api/generated/ux/ux";
 
 type UxMeta = Record<string, string | number | boolean | null | undefined>;
 
@@ -34,9 +34,7 @@ export async function trackUxEvent(eventName: string, metadata: UxMeta = {}): Pr
     metadata: compactMeta(metadata),
   };
 
-  await apiFetchBestEffort("/ux/events", {
-    method: "POST",
-    body: JSON.stringify(payload),
-    keepalive: true,
-  });
+  try {
+    await createUxEventApiV1UxEventsPost(payload);
+  } catch {}
 }

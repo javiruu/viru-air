@@ -1,10 +1,10 @@
-ï»¿"use client";
+"use client";
 
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useI18n } from "@/i18n";
-import { apiFetch } from "@/modules/shared/api";
+import { customClient as apiFetch } from "@/api/mutator/custom-client";
 import { BoneyardLoad, BoneyardPanel, LoadReference } from "@/modules/shared/BoneyardLoad";
 
 type Me = { id: string; email: string; locale: string; is_admin: boolean };
@@ -481,8 +481,8 @@ export default function AdminPage() {
                 <div>
                   <strong>{u.email}</strong>
                   <div className="panel-note">
-                    {u.is_admin ? t("admin.users.roleAdmin") : t("admin.users.roleUser")} Â·{" "}
-                    {u.locale} Â· {u.timezone}
+                    {u.is_admin ? t("admin.users.roleAdmin") : t("admin.users.roleUser")} ·{" "}
+                    {u.locale} · {u.timezone}
                   </div>
                 </div>
                 <div className="row-actions">
@@ -609,3 +609,4 @@ export default function AdminPage() {
     </main>
   );
 }
+

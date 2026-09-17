@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
-import { apiFetchWithStatus } from "@/modules/shared/api";
+import { getProfileApiV1AccountProfileGet } from "@/api/generated/account/account";
 import { AuthProvider, type AuthUser } from "@/modules/shared/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -74,9 +74,9 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
           return;
         }
       }
-      const meResult = await apiFetchWithStatus<Me>("/auth/me", undefined, { timeoutMs: 7000 });
-      if (meResult.ok) {
-        const me = meResult.data;
+      try {
+        const meRes = await getProfileApiV1AccountProfileGet();
+        const me = meRes as any;
         if (me?.locale) {
           persistLocale(me.locale === "en" ? "en" : "es");
         }
@@ -90,9 +90,8 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
           setState("authed");
         }
         return;
-      }
-
-      if (meResult.status === 401) {
+      } catch (err) {
+        const supabase = createClient();
         await supabase.auth.signOut();
         if (!notifiedRef.current) {
           notify({
@@ -102,9 +101,9 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
           });
           notifiedRef.current = true;
         }
+        setState("redirecting");
+        router.replace(loginRedirect);
       }
-      setState("redirecting");
-      router.replace(loginRedirect);
     }
 
     validateSession();

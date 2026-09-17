@@ -2249,22 +2249,23 @@ type AirportSeedItem = {
   longitude: number;
 };
 
-import { apiFetchWithStatus } from "@/modules/shared/api";
+import { listSeedAirportsRouteApiV1AirportsSeedsGet } from "@/api/generated/airports/airports";
 
 export async function searchAirportsAsync(query: string): Promise<AirportMeta[]> {
   if (!query || query.trim().length < 2) return [];
-  const response = await apiFetchWithStatus<{ items: AirportSeedItem[] }>(
-    `/airports/seeds?q=${encodeURIComponent(query)}`,
-  );
-  if (!response.ok) return [];
-  return response.data.items.map((item) => ({
-    iata: item.iata,
-    name: item.name,
-    city: item.municipality,
-    country: item.country_code,
-    latitude: Number(item.latitude),
-    longitude: Number(item.longitude),
-  }));
+  try {
+    const response = await listSeedAirportsRouteApiV1AirportsSeedsGet({ q: query }) as unknown as { items: AirportSeedItem[] };
+    return response.items.map((item) => ({
+      iata: item.iata,
+      name: item.name,
+      city: item.municipality,
+      country: item.country_code,
+      latitude: Number(item.latitude),
+      longitude: Number(item.longitude),
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export async function getAirportMetaAsync(iata: string): Promise<AirportMeta | null> {
