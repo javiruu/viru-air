@@ -59,10 +59,16 @@ for (const directoryEntry of fs.readdirSync(screenRoot, { recursive: true, withF
   diskModules.push(path.join(directoryEntry.parentPath, directoryEntry.name));
 }
 
-const importedModules = new Set(imports.map((importPath) => path.resolve(path.dirname(entryPath), importPath)));
-const orphanModules = diskModules.filter((filePath) => !importedModules.has(path.resolve(filePath)));
+const importedModules = new Set(
+  imports.map((importPath) => path.resolve(path.dirname(entryPath), importPath)),
+);
+const orphanModules = diskModules.filter(
+  (filePath) => !importedModules.has(path.resolve(filePath)),
+);
 if (orphanModules.length > 0) {
   throw new Error(`Unreferenced screen modules: ${orphanModules.join(", ")}`);
 }
 
-console.log(`Screen styles valid: ${imports.length} modules, ${totalLines} lines, ${totalRules} rules.`);
+console.log(
+  `Screen styles valid: ${imports.length} modules, ${totalLines} lines, ${totalRules} rules.`,
+);

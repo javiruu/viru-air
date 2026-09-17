@@ -9,7 +9,10 @@ fs.mkdirSync(outDir, { recursive: true });
 
 async function bootstrapContext(context) {
   await context.addInitScript(() => {
-    window.localStorage.setItem("viru_token", "tok_12345678901234567890123456789012345678901234567890");
+    window.localStorage.setItem(
+      "viru_token",
+      "tok_12345678901234567890123456789012345678901234567890",
+    );
   });
 }
 
@@ -18,7 +21,12 @@ async function mockCommon(page) {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ id: "admin-1", email: "admin@viru.app", locale: "es", is_admin: true }),
+      body: JSON.stringify({
+        id: "admin-1",
+        email: "admin@viru.app",
+        locale: "es",
+        is_admin: true,
+      }),
     });
   });
 
@@ -27,8 +35,24 @@ async function mockCommon(page) {
       status: 200,
       contentType: "application/json",
       body: JSON.stringify([
-        { id: "u1", email: "ana@viru.app", is_admin: false, is_verified: true, locale: "es", timezone: "Europe/Madrid", created_at: "2026-03-01T10:00:00Z" },
-        { id: "u2", email: "ops@viru.app", is_admin: true, is_verified: true, locale: "en", timezone: "Europe/Berlin", created_at: "2026-03-02T11:00:00Z" },
+        {
+          id: "u1",
+          email: "ana@viru.app",
+          is_admin: false,
+          is_verified: true,
+          locale: "es",
+          timezone: "Europe/Madrid",
+          created_at: "2026-03-01T10:00:00Z",
+        },
+        {
+          id: "u2",
+          email: "ops@viru.app",
+          is_admin: true,
+          is_verified: true,
+          locale: "en",
+          timezone: "Europe/Berlin",
+          created_at: "2026-03-02T11:00:00Z",
+        },
       ]),
     });
   });
@@ -37,7 +61,15 @@ async function mockCommon(page) {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify([{ id: "w1", origin_iata: "MAD", destination_iata: "DUB", travel_date_local: "2026-04-21", status: "active" }]),
+      body: JSON.stringify([
+        {
+          id: "w1",
+          origin_iata: "MAD",
+          destination_iata: "DUB",
+          travel_date_local: "2026-04-21",
+          status: "active",
+        },
+      ]),
     });
   });
 
@@ -45,13 +77,25 @@ async function mockCommon(page) {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify([{ id: "w2", origin_iata: "BCN", destination_iata: "LIS", travel_date_local: "2026-04-30", status: "active" }]),
+      body: JSON.stringify([
+        {
+          id: "w2",
+          origin_iata: "BCN",
+          destination_iata: "LIS",
+          travel_date_local: "2026-04-30",
+          status: "active",
+        },
+      ]),
     });
   });
 
   await page.route("**/api/v1/suggestions", async (route) => {
     if (route.request().method() === "POST") {
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok" }) });
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ status: "ok" }),
+      });
       return;
     }
     await route.fallback();
