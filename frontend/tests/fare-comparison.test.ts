@@ -123,9 +123,9 @@ test("selected extras without a public calculable tariff remain explicit", () =>
   const profile = createEmptyFareComparisonProfile(1);
   const withFastTrack: FareComparisonProfile = {
     ...profile,
-    extras: profile.extras.map((extra) => (
-      extra.kind === "fast_track" ? { ...extra, selected: true } : extra
-    )),
+    extras: profile.extras.map((extra) =>
+      extra.kind === "fast_track" ? { ...extra, selected: true } : extra,
+    ),
   };
 
   const result = calculateComparableFare(49.99, "EUR", withFastTrack, "ryanair");
@@ -160,14 +160,11 @@ test("airline resolution prefers carrier codes and supports provider aliases", (
 test("Watchlist-ready profiles persist the resolved airline and itinerary size", () => {
   const profile = createEmptyFareComparisonProfile(2);
 
-  assert.deepEqual(
-    attachFareAirline(profile, "amadeus", ["VY", "VY"], 2),
-    {
-      ...profile,
-      airline_id: "vueling",
-      flight_count: 2,
-    },
-  );
+  assert.deepEqual(attachFareAirline(profile, "amadeus", ["VY", "VY"], 2), {
+    ...profile,
+    airline_id: "vueling",
+    flight_count: 2,
+  });
 });
 
 test("mixed-airline itineraries remain unpriced instead of borrowing one catalog", () => {
@@ -228,5 +225,8 @@ test("catalog prices are not converted into an unsupported currency", () => {
   assert.equal(result.comparable_min_total, 60);
   assert.equal(result.is_complete, false);
   assert.deepEqual(result.unavailable_kinds, ["checked_bag_20kg"]);
-  assert.equal(result.source_url, "https://www.vueling.com/en/vueling-services/supplementary-service-rates/");
+  assert.equal(
+    result.source_url,
+    "https://www.vueling.com/en/vueling-services/supplementary-service-rates/",
+  );
 });

@@ -14,20 +14,54 @@ import {
   getHotelOutcomesForMetric,
 } from "../src/modules/admin/hotelObservability";
 
-const PAGE = path.join(process.cwd(), "src", "app", "(private)", "admin", "hotels-observability", "page.tsx");
+const PAGE = path.join(
+  process.cwd(),
+  "src",
+  "app",
+  "(private)",
+  "admin",
+  "hotels-observability",
+  "page.tsx",
+);
 
 test("hotel observability builds bounded admin query parameters", () => {
   assert.equal(
-    buildHotelObservabilityPath({ days: 31, provider: "local", metricName: "hotel_delivery", outcome: "retried" }),
+    buildHotelObservabilityPath({
+      days: 31,
+      provider: "local",
+      metricName: "hotel_delivery",
+      outcome: "retried",
+    }),
     "/admin/hotels/observability?days=31&provider=local&metric_name=hotel_delivery&outcome=retried",
   );
 });
 
 test("hotel observability summary aggregates rows without private dimensions", () => {
   const summary = buildHotelObservabilitySummary([
-    { metric_date: "2026-08-09", metric_name: "sweep_run", provider: "local", outcome: "completed", count: 4, updated_at: "2026-08-09T10:00:00" },
-    { metric_date: "2026-08-09", metric_name: "hotel_delivery", provider: "local", outcome: "retried", count: 2, updated_at: "2026-08-09T10:00:00" },
-    { metric_date: "2026-08-08", metric_name: "hotel_delivery", provider: "mock", outcome: "failed", count: 1, updated_at: "2026-08-08T10:00:00" },
+    {
+      metric_date: "2026-08-09",
+      metric_name: "sweep_run",
+      provider: "local",
+      outcome: "completed",
+      count: 4,
+      updated_at: "2026-08-09T10:00:00",
+    },
+    {
+      metric_date: "2026-08-09",
+      metric_name: "hotel_delivery",
+      provider: "local",
+      outcome: "retried",
+      count: 2,
+      updated_at: "2026-08-09T10:00:00",
+    },
+    {
+      metric_date: "2026-08-08",
+      metric_name: "hotel_delivery",
+      provider: "mock",
+      outcome: "failed",
+      count: 1,
+      updated_at: "2026-08-08T10:00:00",
+    },
   ]);
 
   assert.deepEqual(summary, {

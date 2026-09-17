@@ -5,7 +5,6 @@ from dataclasses import dataclass
 
 from sqlalchemy import ColumnElement, inspect, select
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
-from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
@@ -53,10 +52,6 @@ def record_quick_search_popularity(
             db.execute(_build_postgresql_upsert(normalized))
             if daily_table_available:
                 db.execute(_build_postgresql_daily_upsert(normalized))
-        elif dialect_name == "sqlite":
-            db.execute(_build_sqlite_upsert(normalized))
-            if daily_table_available:
-                db.execute(_build_sqlite_daily_upsert(normalized))
         else:
             entry = _fallback_upsert(db, normalized)
             if daily_table_available:
@@ -93,12 +88,6 @@ def _build_postgresql_upsert(signal: QuickSearchPopularitySignal):
     )
 
 
-def _build_sqlite_upsert(signal: QuickSearchPopularitySignal):
-    stmt = sqlite_insert(QuickSearchPopularityCounter).values(**_insert_values(signal))
-    return stmt.on_conflict_do_update(
-        index_elements=list(_CONFLICT_COLUMNS),
-        set_=_update_values(signal),
-    )
 
 
 def _build_postgresql_daily_upsert(signal: QuickSearchPopularitySignal):
@@ -111,12 +100,6 @@ def _build_postgresql_daily_upsert(signal: QuickSearchPopularitySignal):
     )
 
 
-def _build_sqlite_daily_upsert(signal: QuickSearchPopularitySignal):
-    stmt = sqlite_insert(QuickSearchPopularityDaily).values(**_daily_insert_values(signal))
-    return stmt.on_conflict_do_update(
-        index_elements=list(_DAILY_CONFLICT_COLUMNS),
-        set_=_daily_update_values(signal),
-    )
 
 
 def _fallback_upsert(

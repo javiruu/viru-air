@@ -1,9 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildMapCapabilities, filterSavedPlacesForWatch } from "../src/modules/door-to-door/mapHub";
+import {
+  buildMapCapabilities,
+  filterSavedPlacesForWatch,
+} from "../src/modules/door-to-door/mapHub";
 import { doorToDoorEn, doorToDoorEs } from "../src/i18n/domains/doorToDoor";
-import type { DoorToDoorProviderStatus, DoorToDoorResponse, DoorToDoorSavedPlace } from "../src/modules/door-to-door/types";
+import type {
+  DoorToDoorProviderStatus,
+  DoorToDoorResponse,
+  DoorToDoorSavedPlace,
+} from "../src/modules/door-to-door/types";
 
 function makeProvider(overrides: Partial<DoorToDoorProviderStatus>): DoorToDoorProviderStatus {
   return {
@@ -37,9 +44,21 @@ function makeResponse(overrides: Partial<DoorToDoorResponse> = {}): DoorToDoorRe
 
 test("buildMapCapabilities keeps traffic/incidents partial on degraded warnings", () => {
   const response = makeResponse({
-    warnings: [{ code: "GOOGLE_ROUTES_UNAVAILABLE", message: "routes disabled" }, { code: "NO_COVERAGE", message: "no coverage" }],
+    warnings: [
+      { code: "GOOGLE_ROUTES_UNAVAILABLE", message: "routes disabled" },
+      { code: "NO_COVERAGE", message: "no coverage" },
+    ],
   });
-  const providers = [makeProvider({ name: "google_routes", enabled: true, status: "functional_maps", source_type: "maps", production_ready: true, supports_search: true })];
+  const providers = [
+    makeProvider({
+      name: "google_routes",
+      enabled: true,
+      status: "functional_maps",
+      source_type: "maps",
+      production_ready: true,
+      supports_search: true,
+    }),
+  ];
   const result = buildMapCapabilities(response, providers);
 
   const traffic = result.find((item) => item.key === "traffic");
@@ -65,7 +84,16 @@ test("buildMapCapabilities respects backend map_capabilities as source of truth"
       },
     },
   });
-  const providers = [makeProvider({ name: "google_routes", enabled: true, status: "functional_maps", source_type: "maps", production_ready: true, supports_search: true })];
+  const providers = [
+    makeProvider({
+      name: "google_routes",
+      enabled: true,
+      status: "functional_maps",
+      source_type: "maps",
+      production_ready: true,
+      supports_search: true,
+    }),
+  ];
   const result = buildMapCapabilities(response, providers);
 
   const incidents = result.find((item) => item.key === "incidents");
@@ -105,14 +133,32 @@ test("filterSavedPlacesForWatch with empty watch shows global items only", () =>
 
 test("buildMapCapabilities only emits whyMissing reasons covered by ES and EN i18n", () => {
   const scenarios = [
-    buildMapCapabilities(
-      makeResponse(),
-      [
-        makeProvider({ name: "google_routes", enabled: true, status: "functional_maps", source_type: "maps", production_ready: true, supports_search: true }),
-        makeProvider({ name: "gtfs_transit", enabled: true, status: "functional_open_data", source_type: "open_data", production_ready: true, supports_search: true }),
-        makeProvider({ name: "google_places", enabled: true, status: "functional_maps", source_type: "maps", production_ready: true, supports_search: true }),
-      ],
-    ),
+    buildMapCapabilities(makeResponse(), [
+      makeProvider({
+        name: "google_routes",
+        enabled: true,
+        status: "functional_maps",
+        source_type: "maps",
+        production_ready: true,
+        supports_search: true,
+      }),
+      makeProvider({
+        name: "gtfs_transit",
+        enabled: true,
+        status: "functional_open_data",
+        source_type: "open_data",
+        production_ready: true,
+        supports_search: true,
+      }),
+      makeProvider({
+        name: "google_places",
+        enabled: true,
+        status: "functional_maps",
+        source_type: "maps",
+        production_ready: true,
+        supports_search: true,
+      }),
+    ]),
     buildMapCapabilities(makeResponse(), []),
     buildMapCapabilities(
       makeResponse({
@@ -150,7 +196,13 @@ test("buildMapCapabilities only emits whyMissing reasons covered by ES and EN i1
   );
 
   for (const reason of emittedReasons) {
-    assert.ok(doorToDoorEs.mapHub.whyMissing[reason as keyof typeof doorToDoorEs.mapHub.whyMissing], `Missing ES translation for ${reason}`);
-    assert.ok(doorToDoorEn.mapHub.whyMissing[reason as keyof typeof doorToDoorEn.mapHub.whyMissing], `Missing EN translation for ${reason}`);
+    assert.ok(
+      doorToDoorEs.mapHub.whyMissing[reason as keyof typeof doorToDoorEs.mapHub.whyMissing],
+      `Missing ES translation for ${reason}`,
+    );
+    assert.ok(
+      doorToDoorEn.mapHub.whyMissing[reason as keyof typeof doorToDoorEn.mapHub.whyMissing],
+      `Missing EN translation for ${reason}`,
+    );
   }
 });

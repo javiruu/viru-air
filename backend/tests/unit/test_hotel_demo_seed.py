@@ -97,7 +97,7 @@ def test_abort_requires_confirmation_for_in_progress_demo(tmp_path: Path) -> Non
     assert not marker.exists()
 
 
-def test_reset_rejects_marked_db_not_at_alembic_head(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_reset_rejects_marked_db_not_at_schema_baseline_head(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     url = _db_url(tmp_path)
     run_seed(url)
     monkeypatch.setattr("scripts.hotel_demo_seed.ScriptDirectory.from_config", lambda _config: type("Scripts", (), {"get_heads": lambda self: ["not-current"]})())

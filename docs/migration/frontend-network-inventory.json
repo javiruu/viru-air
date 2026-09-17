@@ -1,0 +1,2023 @@
+{
+  "total_files_scanned": 690,
+  "fetch_call_sites_count": 6,
+  "fetch_call_sites": [
+    {
+      "file": "api/mutator/custom-client.ts",
+      "line": 72,
+      "text": "const response = await fetch(fullUrl, {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 1713,
+      "text": "// ── Return-side calendar hints fetch (Fase 4) ──────────────────────"
+    },
+    {
+      "file": "modules/quick-search/weatherUtils.ts",
+      "line": 89,
+      "text": "const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`);"
+    },
+    {
+      "file": "modules/shared/api.ts",
+      "line": 185,
+      "text": "response = await fetch(`${API_BASE}${path}`, {"
+    },
+    {
+      "file": "modules/shared/api.ts",
+      "line": 220,
+      "text": "await fetch(`${API_BASE}${path}`, {"
+    },
+    {
+      "file": "modules/shared/api.ts",
+      "line": 327,
+      "text": "response = await fetch(`${options?.apiBase ?? API_BASE}${path}`, {"
+    }
+  ],
+  "custom_client_imports_count": 0,
+  "custom_client_imports": [],
+  "api_shared_imports_count": 45,
+  "api_shared_imports": [
+    {
+      "file": "app/(private)/admin/hotels-observability/page.tsx",
+      "line": 8,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "app/(private)/admin/page.tsx",
+      "line": 7,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "app/(private)/admin/product-health/page.tsx",
+      "line": 10,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "app/(private)/cuenta/perfil/page.tsx",
+      "line": 13,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "app/(private)/cuenta/seguridad/page.tsx",
+      "line": 7,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "app/(private)/dashboard/page.tsx",
+      "line": 15,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "app/(private)/layout.tsx",
+      "line": 13,
+      "text": "import { apiFetchWithStatus } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "app/(private)/preferencias/apariencia/page.tsx",
+      "line": 8,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "app/(private)/preferencias/busqueda/page.tsx",
+      "line": 8,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "app/(private)/preferencias/region/page.tsx",
+      "line": 8,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "app/(private)/soporte/contacto/SoporteContactoClient.tsx",
+      "line": 8,
+      "text": "import { apiFetch, apiFetchWithStatus } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "app/(private)/soporte/feedback/SoporteFeedbackClient.tsx",
+      "line": 7,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "app/(public)/login/page.tsx",
+      "line": 8,
+      "text": "import { apiFetchWithStatus } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "app/(public)/page.tsx",
+      "line": 8,
+      "text": "import { apiFetchWithStatus } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "app/(public)/prueba/page.tsx",
+      "line": 8,
+      "text": "import { apiFetchWithStatus } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "app/(public)/register/page.tsx",
+      "line": 10,
+      "text": "import { apiFetch, apiFetchWithStatus } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "lib/errorLogging.ts",
+      "line": 2,
+      "text": "import { apiFetchBestEffort } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "lib/uxTracking.ts",
+      "line": 2,
+      "text": "import { apiFetchBestEffort } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/community-routes/communityRoutesApi.ts",
+      "line": 2,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/door-to-door/api.ts",
+      "line": 1,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/door-to-door/hooks/useDoorToDoorSearch.ts",
+      "line": 21,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/hotels/api.ts",
+      "line": 1,
+      "text": "import { apiFetchWithStatus } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 9,
+      "text": "import { apiFetch, apiFetchWithStatus, LONG_RUNNING_API_BASE } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 10,
+      "text": "import type { ApiError } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/quick-search/state/useQuickSearchSide.ts",
+      "line": 3,
+      "text": "import { apiFetchWithStatus, LONG_RUNNING_API_BASE } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/quick-search/state/useQuickSearchWatchlist.ts",
+      "line": 3,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/quick-search/state/useSaveCombination.ts",
+      "line": 6,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/recommendations/RecommendationsExplorer.tsx",
+      "line": 8,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/shared/airports.ts",
+      "line": 2252,
+      "text": "import { apiFetchWithStatus } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/shared/forgot-password.ts",
+      "line": 1,
+      "text": "import { apiFetchWithStatus } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/shared/HelpBase.tsx",
+      "line": 8,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/shared/LanguageSelector.tsx",
+      "line": 8,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/shared/login-submit.ts",
+      "line": 2,
+      "text": "import { apiFetchWithStatus } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/shared/RequireAuth.tsx",
+      "line": 8,
+      "text": "import { apiFetchWithStatus } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/signals/AlertRulesWorkspace.tsx",
+      "line": 11,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/signals/SignalsInbox.tsx",
+      "line": 19,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/watchlist/components/CommunityHubOverview.tsx",
+      "line": 11,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/watchlist/components/ComparePanels.tsx",
+      "line": 5,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/watchlist/useCommunityPricing.ts",
+      "line": 5,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/watchlist/useWatchlistCompatibility.ts",
+      "line": 3,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/watchlist/useWatchlistDataLoader.ts",
+      "line": 3,
+      "text": "import { apiFetch, apiFetchWithStatus } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/watchlist/useWatchlistDetail.ts",
+      "line": 3,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/watchlist/useWatchlistForm.ts",
+      "line": 3,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/watchlist/useWatchlistMutations.ts",
+      "line": 2,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    },
+    {
+      "file": "modules/watchlist/useWatchLiveFlight.ts",
+      "line": 5,
+      "text": "import { apiFetch } from \"@/modules/shared/api\";"
+    }
+  ],
+  "orval_generated_imports_count": 1,
+  "orval_generated_imports": [
+    {
+      "file": "app/(public)/register/page.tsx",
+      "line": 7,
+      "text": "import { registerApiV1AuthRegisterPost } from \"@/api/generated/auth/auth\";"
+    }
+  ],
+  "use_query_call_sites_count": 77,
+  "use_query_call_sites": [
+    {
+      "file": "api/generated/account/account.ts",
+      "line": 269,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/account/account.ts",
+      "line": 480,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/account/account.ts",
+      "line": 613,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/account/account.ts",
+      "line": 810,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/admin/admin.ts",
+      "line": 306,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/admin/admin.ts",
+      "line": 425,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/admin/admin.ts",
+      "line": 565,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/admin/admin.ts",
+      "line": 797,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/admin/admin.ts",
+      "line": 916,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/alerts/alerts.ts",
+      "line": 185,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/alerts/alerts.ts",
+      "line": 424,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/alerts/alerts.ts",
+      "line": 543,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/alerts/alerts.ts",
+      "line": 676,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/alerts/alerts.ts",
+      "line": 887,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/auth/auth.ts",
+      "line": 184,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/auth/auth.ts",
+      "line": 317,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/auth/auth.ts",
+      "line": 535,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/auth/auth.ts",
+      "line": 668,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/auth/auth.ts",
+      "line": 801,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/auth/auth.ts",
+      "line": 934,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/community/community.ts",
+      "line": 281,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/door-to-door/door-to-door.ts",
+      "line": 555,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/door-to-door/door-to-door.ts",
+      "line": 773,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/door-to-door/door-to-door.ts",
+      "line": 885,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/door-to-door/door-to-door.ts",
+      "line": 1124,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/door-to-door/door-to-door.ts",
+      "line": 1356,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/door-to-door/door-to-door.ts",
+      "line": 1475,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/door-to-door/door-to-door.ts",
+      "line": 1615,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/door-to-door/door-to-door.ts",
+      "line": 1734,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/door-to-door/door-to-door.ts",
+      "line": 1938,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 301,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 611,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 730,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 948,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 1180,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 1299,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 1517,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 1728,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 1969,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 2096,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 2314,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 2454,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 2573,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 3201,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 3433,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 3674,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 3906,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 4025,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/notes/notes.ts",
+      "line": 263,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/notes/notes.ts",
+      "line": 403,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/notes/notes.ts",
+      "line": 522,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/notifications/notifications.ts",
+      "line": 357,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/notifications/notifications.ts",
+      "line": 469,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/preferences/preferences.ts",
+      "line": 270,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/preferences/preferences.ts",
+      "line": 488,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/preferences/preferences.ts",
+      "line": 706,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/preferences/preferences.ts",
+      "line": 924,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/prices/prices.ts",
+      "line": 283,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/recommendations/recommendations.ts",
+      "line": 172,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/search/search.ts",
+      "line": 282,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/search/search.ts",
+      "line": 429,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/search/search.ts",
+      "line": 562,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/suggestions/suggestions.ts",
+      "line": 172,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/support/support.ts",
+      "line": 262,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/ux/ux.ts",
+      "line": 174,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/ux/ux.ts",
+      "line": 307,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/watchlist/watchlist.ts",
+      "line": 193,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/watchlist/watchlist.ts",
+      "line": 411,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/watchlist/watchlist.ts",
+      "line": 544,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/watchlist/watchlist.ts",
+      "line": 677,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/watchlist/watchlist.ts",
+      "line": 810,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/watchlist/watchlist.ts",
+      "line": 1042,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/watchlist/watchlist.ts",
+      "line": 1161,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/watchlist/watchlist.ts",
+      "line": 1280,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/watchlist/watchlist.ts",
+      "line": 1485,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/watchlist/watchlist.ts",
+      "line": 1625,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    },
+    {
+      "file": "api/generated/watchlist/watchlist.ts",
+      "line": 1744,
+      "text": "const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };"
+    }
+  ],
+  "use_mutation_call_sites_count": 74,
+  "use_mutation_call_sites": [
+    {
+      "file": "api/generated/account/account.ts",
+      "line": 144,
+      "text": "return useMutation(getGetProfileApiV1AccountProfileGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/account/account.ts",
+      "line": 376,
+      "text": "return useMutation(getGetSessionsApiV1AccountSessionsGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/account/account.ts",
+      "line": 706,
+      "text": "return useMutation(getSecurityActivityApiV1AccountSecurityActivityGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/admin/admin.ts",
+      "line": 174,
+      "text": "return useMutation(getListUsersApiV1AdminUsersGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/admin/admin.ts",
+      "line": 665,
+      "text": "return useMutation(getListUserWatchlistApiV1AdminUsersUserIdWatchlistGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/admin/admin.ts",
+      "line": 1009,
+      "text": "return useMutation(getProductHealthApiV1AdminProductHealthGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/admin/admin.ts",
+      "line": 1108,
+      "text": "return useMutation(getHotelHealthApiV1AdminHotelsHealthGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/admin/admin.ts",
+      "line": 1207,
+      "text": "return useMutation(getHotelProviderRunsApiV1AdminHotelsRunsGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/admin/admin.ts",
+      "line": 1306,
+      "text": "return useMutation(getHotelProviderLatencyApiV1AdminHotelsProviderLatencyGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/admin/admin.ts",
+      "line": 1405,
+      "text": "return useMutation(getHotelProviderOutcomesApiV1AdminHotelsProviderOutcomesGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/admin/admin.ts",
+      "line": 1504,
+      "text": "return useMutation(getHotelSweepLeasesApiV1AdminHotelsSweepLeasesGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/admin/admin.ts",
+      "line": 1603,
+      "text": "return useMutation(getHotelProviderControlsApiV1AdminHotelsProviderControlsGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/admin/admin.ts",
+      "line": 1702,
+      "text": "return useMutation(getHotelObservabilityApiV1AdminHotelsObservabilityGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/admin/admin.ts",
+      "line": 1787,
+      "text": "return useMutation(getFareMemoryHealthApiV1AdminFareMemoryHealthGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/admin/admin.ts",
+      "line": 1872,
+      "text": "return useMutation(getProductMetricsApiV1AdminProductMetricsGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/airports/airports.ts",
+      "line": 131,
+      "text": "return useMutation(getCompatibleAirportsApiV1AirportsCompatibleGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/airports/airports.ts",
+      "line": 230,
+      "text": "return useMutation(getNearbyApiV1AirportsNearbyGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/airports/airports.ts",
+      "line": 329,
+      "text": "return useMutation(getListSeedAirportsRouteApiV1AirportsSeedsGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/airports/airports.ts",
+      "line": 414,
+      "text": "return useMutation(getListSeedCountriesRouteApiV1AirportsCountriesGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/alerts/alerts.ts",
+      "line": 292,
+      "text": "return useMutation(getGetRulesApiV1AlertsRulesGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/alerts/alerts.ts",
+      "line": 783,
+      "text": "return useMutation(getGetEventsApiV1AlertsEventsGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/auth/auth.ts",
+      "line": 410,
+      "text": "return useMutation(getMeApiV1AuthMeGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/community/community.ts",
+      "line": 156,
+      "text": "return useMutation(getPopularRoutesApiV1CommunityRoutesPopularGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/community/community.ts",
+      "line": 391,
+      "text": "return useMutation(getPopularDestinationsFromOriginApiV1CommunityRoutesPopularFromOriginIataGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/community/community.ts",
+      "line": 494,
+      "text": "return useMutation(getRelatedRoutesApiV1CommunityRoutesOriginIataDestinationIataRelatedGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/default/default.ts",
+      "line": 111,
+      "text": "return useMutation(getHealthHealthGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/default/default.ts",
+      "line": 196,
+      "text": "return useMutation(getReadyReadyGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/door-to-door/door-to-door.ts",
+      "line": 155,
+      "text": "return useMutation(getProvidersStatusApiV1DoorToDoorProvidersStatusGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/door-to-door/door-to-door.ts",
+      "line": 245,
+      "text": "return useMutation(getCorridorsApiV1DoorToDoorCorridorsGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/door-to-door/door-to-door.ts",
+      "line": 331,
+      "text": "return useMutation(getHealthApiV1DoorToDoorHealthGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/door-to-door/door-to-door.ts",
+      "line": 430,
+      "text": "return useMutation(getSuggestionsApiV1DoorToDoorSuggestionsGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/door-to-door/door-to-door.ts",
+      "line": 648,
+      "text": "return useMutation(getGetSavedLocationApiV1DoorToDoorSavedLocationGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/door-to-door/door-to-door.ts",
+      "line": 992,
+      "text": "return useMutation(getListHistoryApiV1DoorToDoorHistoryGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/door-to-door/door-to-door.ts",
+      "line": 1231,
+      "text": "return useMutation(getListSavedPlacesApiV1DoorToDoorSavedPlacesGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/door-to-door/door-to-door.ts",
+      "line": 1827,
+      "text": "return useMutation(getListPlansApiV1DoorToDoorPlansGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 197,
+      "text": "return useMutation(getSearchHotelsApiV1HotelsSearchGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 401,
+      "text": "return useMutation(getGetHotelProviderRunApiV1HotelsProviderRunsProviderRunIdGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 486,
+      "text": "return useMutation(getListWatchlistApiV1HotelsWatchlistGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 823,
+      "text": "return useMutation(getListSavedSearchesApiV1HotelsSavedSearchesGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 1048,
+      "text": "return useMutation(getGetSavedSearchApiV1HotelsSavedSearchesSavedSearchIdGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 1392,
+      "text": "return useMutation(getListCompSetsApiV1HotelsCompSetsGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 1617,
+      "text": "return useMutation(getGetCompSetDetailApiV1HotelsCompSetsCompSetIdGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 1837,
+      "text": "return useMutation(getGetCompSetNearbySuggestionsApiV1HotelsCompSetsCompSetIdNearbySuggestionsGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 2189,
+      "text": "return useMutation(getListAlertRulesApiV1HotelsAlertRulesGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 2680,
+      "text": "return useMutation(getListAlertEventsApiV1HotelsAlertEventsGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 2779,
+      "text": "return useMutation(getAreaResolveApiV1HotelsAreaResolveGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 2878,
+      "text": "return useMutation(getAreaSearchApiV1HotelsAreaSearchGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 2977,
+      "text": "return useMutation(getAreaSearchV2ApiV1HotelsV2AreaSearchGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 3076,
+      "text": "return useMutation(getListTrackedOffersApiV1HotelsTrackedOffersGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 3308,
+      "text": "return useMutation(getListTrackedOffersV2ApiV1HotelsV2TrackedOffersGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 3542,
+      "text": "return useMutation(getGetTrackedOfferHistoryV2ApiV1HotelsV2TrackedOffersTrackedOfferIdHistoryGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 3774,
+      "text": "return useMutation(getGetTrackedOfferApiV1HotelsTrackedOffersTrackedOfferIdGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 4125,
+      "text": "return useMutation(getGetTrackedOfferSnapshotsApiV1HotelsTrackedOffersTrackedOfferIdSnapshotsGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 4217,
+      "text": "return useMutation(getGetHotelDetailApiV1HotelsHotelIdGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 4318,
+      "text": "return useMutation(getGetHotelRatesApiV1HotelsHotelIdRatesGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/hotels/hotels.ts",
+      "line": 4410,
+      "text": "return useMutation(getGetHotelParityApiV1HotelsHotelIdParityGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/notes/notes.ts",
+      "line": 138,
+      "text": "return useMutation(getListNotesApiV1NotesGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/notifications/notifications.ts",
+      "line": 153,
+      "text": "return useMutation(getGetNotificationsApiV1NotificationsGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/notifications/notifications.ts",
+      "line": 238,
+      "text": "return useMutation(getGetNotificationsSummaryApiV1NotificationsSummaryGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/preferences/preferences.ts",
+      "line": 145,
+      "text": "return useMutation(getGetPreferencesApiV1PreferencesGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/preferences/preferences.ts",
+      "line": 363,
+      "text": "return useMutation(getGetSearchPreferencesApiV1PreferencesSearchGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/preferences/preferences.ts",
+      "line": 581,
+      "text": "return useMutation(getGetAppearancePreferencesApiV1PreferencesAppearanceGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/preferences/preferences.ts",
+      "line": 799,
+      "text": "return useMutation(getGetRegionPreferencesApiV1PreferencesRegionGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/prices/prices.ts",
+      "line": 158,
+      "text": "return useMutation(getHistoryApiV1PricesHistoryGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/prices/prices.ts",
+      "line": 390,
+      "text": "return useMutation(getSummaryApiV1PricesSummaryGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/prices/prices.ts",
+      "line": 489,
+      "text": "return useMutation(getCalendarApiV1PricesCalendarGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/prices/prices.ts",
+      "line": 588,
+      "text": "return useMutation(getCompareApiV1PricesCompareGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/public/public.ts",
+      "line": 110,
+      "text": "return useMutation(getPublicHelpApiV1PublicHelpGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/search/search.ts",
+      "line": 157,
+      "text": "return useMutation(getDeeplinkApiV1SearchDeeplinkGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/support/support.ts",
+      "line": 137,
+      "text": "return useMutation(getGetHelpApiV1SupportHelpGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/watchlist/watchlist.ts",
+      "line": 286,
+      "text": "return useMutation(getListWatchesApiV1WatchlistGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/watchlist/watchlist.ts",
+      "line": 910,
+      "text": "return useMutation(getGetWatchDetailApiV1WatchlistWatchIdGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/watchlist/watchlist.ts",
+      "line": 1374,
+      "text": "return useMutation(getGetContributorStatsApiV1WatchlistContributorStatsGetMutationOptions(options), queryClient);"
+    },
+    {
+      "file": "api/generated/watchlist/watchlist.ts",
+      "line": 1853,
+      "text": "return useMutation(getGetWatchLiveTrackingApiV1WatchlistWatchIdLiveGetMutationOptions(options), queryClient);"
+    }
+  ],
+  "use_effect_count": 163,
+  "use_effect_by_class": {
+    "SERVER_STATE": 82,
+    "BROWSER_EFFECT": 27,
+    "UI_EFFECT": 11,
+    "SUBSCRIPTION": 0,
+    "UNKNOWN": 43
+  },
+  "use_effect_sites": [
+    {
+      "file": "app/(private)/admin/hotels-observability/page.tsx",
+      "line": 127,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(private)/admin/page.tsx",
+      "line": 146,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(private)/admin/product-health/page.tsx",
+      "line": 49,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(private)/cuenta/perfil/page.tsx",
+      "line": 44,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(private)/cuenta/seguridad/page.tsx",
+      "line": 27,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(private)/dashboard/error.tsx",
+      "line": 9,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(private)/dashboard/page.tsx",
+      "line": 67,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(private)/dashboard/page.tsx",
+      "line": 99,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(private)/dashboard/page.tsx",
+      "line": 103,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(private)/dashboard/page.tsx",
+      "line": 115,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(private)/layout.tsx",
+      "line": 20,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(private)/preferencias/apariencia/page.tsx",
+      "line": 43,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(private)/preferencias/busqueda/page.tsx",
+      "line": 64,
+      "classification": "UI_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(private)/preferencias/puerta-a-puerta/page.tsx",
+      "line": 24,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(private)/preferencias/region/page.tsx",
+      "line": 30,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(private)/quick-search/error.tsx",
+      "line": 9,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(private)/soporte/about-us/AnimatedQuoteBlock.tsx",
+      "line": 19,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(private)/soporte/contacto/SoporteContactoClient.tsx",
+      "line": 37,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(private)/watchlist/error.tsx",
+      "line": 9,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(private)/watchlist/page.tsx",
+      "line": 80,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(private)/watchlist/page.tsx",
+      "line": 106,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(public)/login/page.tsx",
+      "line": 31,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(public)/page.tsx",
+      "line": 20,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(public)/policies/page.tsx",
+      "line": 38,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(public)/prueba/page.tsx",
+      "line": 19,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/(public)/register/page.tsx",
+      "line": 33,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/global-error.tsx",
+      "line": 9,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "app/providers/QueryProvider.tsx",
+      "line": 30,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "components/components/notifications/notification-center.tsx",
+      "line": 67,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "components/ui/map.tsx",
+      "line": 122,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "components/ui/map.tsx",
+      "line": 164,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "components/ui/map.tsx",
+      "line": 175,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "components/ui/map.tsx",
+      "line": 179,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "components/ui/map.tsx",
+      "line": 233,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "components/ui/map.tsx",
+      "line": 283,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "components/ui/map.tsx",
+      "line": 381,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "components/ui/map.tsx",
+      "line": 409,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "components/ui/map.tsx",
+      "line": 413,
+      "classification": "UI_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "components/ui/map.tsx",
+      "line": 446,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "components/ui/map.tsx",
+      "line": 478,
+      "classification": "UI_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "components/ui/map.tsx",
+      "line": 482,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "i18n/runtime.ts",
+      "line": 85,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "lib/ftue.ts",
+      "line": 27,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/community-routes/CommunityCorridorsPanel.tsx",
+      "line": 17,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/community-routes/PopularDestinationsChips.tsx",
+      "line": 24,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/community-routes/RelatedCommunityRoutes.tsx",
+      "line": 21,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/community-routes/useCommunityRouteInsights.ts",
+      "line": 31,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/dashboard/dashboard-access-switch.tsx",
+      "line": 13,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/door-to-door/components/DoorToDoorFilterPanel.tsx",
+      "line": 25,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/door-to-door/components/DoorToDoorFilterPanel.tsx",
+      "line": 38,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/door-to-door/components/DoorToDoorStickyBar.tsx",
+      "line": 30,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/door-to-door/DoorToDoorPanel.tsx",
+      "line": 110,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/door-to-door/DoorToDoorPanel.tsx",
+      "line": 177,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/door-to-door/DoorToDoorPanel.tsx",
+      "line": 180,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/door-to-door/DoorToDoorPanel.tsx",
+      "line": 411,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/door-to-door/DoorToDoorPanel.tsx",
+      "line": 436,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/door-to-door/hooks/useDoorToDoorHistory.ts",
+      "line": 30,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/door-to-door/hooks/useDoorToDoorHistory.ts",
+      "line": 34,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/door-to-door/hooks/useDoorToDoorMapHub.ts",
+      "line": 32,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/door-to-door/hooks/useDoorToDoorMapHub.ts",
+      "line": 38,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/door-to-door/hooks/useDoorToDoorResults.ts",
+      "line": 55,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/door-to-door/hooks/useDoorToDoorSearch.ts",
+      "line": 62,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/door-to-door/hooks/useDoorToDoorSearch.ts",
+      "line": 66,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/door-to-door/hooks/useDoorToDoorSearch.ts",
+      "line": 94,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/door-to-door/hooks/useDoorToDoorSearch.ts",
+      "line": 112,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/door-to-door/hooks/useDoorToDoorSearch.ts",
+      "line": 117,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/door-to-door/hooks/useDoorToDoorSearch.ts",
+      "line": 127,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/hotels/components/HotelSearchPanel.tsx",
+      "line": 76,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/hotels/components/HotelSearchPanel.tsx",
+      "line": 84,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/hotels/components/HotelTrackedOfferSnapshots.tsx",
+      "line": 24,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/hotels/hooks/useHotelCompSets.ts",
+      "line": 110,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/hotels/hooks/useHotelCompSets.ts",
+      "line": 153,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/hotels/hooks/useHotelDetail.ts",
+      "line": 18,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/hotels/hooks/useHotelSearch.ts",
+      "line": 306,
+      "classification": "UI_EFFECT",
+      "snippet": "useEffect(() => () => {"
+    },
+    {
+      "file": "modules/hotels/hooks/useHotelSearch.ts",
+      "line": 316,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/hotels/hooks/useHotelSearch.ts",
+      "line": 354,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/hotels/hooks/useHotelSearch.ts",
+      "line": 374,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/hotels/hooks/useHotelWatchlist.ts",
+      "line": 36,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/hotels/hooks/useSavedHotelSearches.ts",
+      "line": 32,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/hotels/HotelRadarPage.tsx",
+      "line": 146,
+      "classification": "UI_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/hotels/HotelRadarPage.tsx",
+      "line": 154,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/hotels/HotelRadarPage.tsx",
+      "line": 160,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/hotels/HotelRumTracker.tsx",
+      "line": 22,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/components/QuickSearchAdditionalAirports.tsx",
+      "line": 53,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/components/QuickSearchAdditionalAirports.tsx",
+      "line": 60,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/components/QuickSearchDatePicker.tsx",
+      "line": 188,
+      "classification": "UI_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/components/QuickSearchDatePicker.tsx",
+      "line": 194,
+      "classification": "UI_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/components/QuickSearchDatePicker.tsx",
+      "line": 199,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/components/QuickSearchResultsList.tsx",
+      "line": 122,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 657,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 719,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 888,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 899,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 1130,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 1156,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 1209,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 1216,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 1225,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 1236,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 1276,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 1295,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 1314,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 1331,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 1348,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 1389,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 1598,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 1605,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 1714,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 1825,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 2879,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 3224,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 3253,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 3428,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 3438,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 3451,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 3963,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 3999,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/QuickSearchView.tsx",
+      "line": 4010,
+      "classification": "UI_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/state/useQuickSearchLoadingFlow.ts",
+      "line": 71,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/state/useQuickSearchLoadingFlow.ts",
+      "line": 100,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/state/useQuickSearchLoadingFlow.ts",
+      "line": 104,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/state/useQuickSearchLoadingFlow.ts",
+      "line": 202,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/state/useQuickSearchLoadingFlow.ts",
+      "line": 224,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/quick-search/state/useQuickSearchLoadingFlow.ts",
+      "line": 272,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => () => {"
+    },
+    {
+      "file": "modules/quick-search/state/useQuickSearchWatchlist.ts",
+      "line": 38,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/recommendations/RecommendationsExplorer.tsx",
+      "line": 147,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/recommendations/RecommendationsExplorer.tsx",
+      "line": 223,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/recommendations/RecommendationsExplorer.tsx",
+      "line": 231,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/shared/AccountMenu.tsx",
+      "line": 37,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/shared/AccountMenu.tsx",
+      "line": 58,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/shared/HelpBase.tsx",
+      "line": 42,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/shared/LanguageSelector.tsx",
+      "line": 57,
+      "classification": "UI_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/shared/MobileBottomNav.tsx",
+      "line": 23,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/shared/NavigationPendingOverlay.tsx",
+      "line": 70,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/shared/NavigationPendingOverlay.tsx",
+      "line": 78,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/shared/PrivateNav.tsx",
+      "line": 51,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/shared/PrivateNav.tsx",
+      "line": 55,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/shared/RequireAuth.tsx",
+      "line": 31,
+      "classification": "UI_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/shared/ScrollActivityScrollbar.tsx",
+      "line": 13,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/shared/ThemeToggle.tsx",
+      "line": 31,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/shared/useEscapeClose.ts",
+      "line": 19,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/shared/ViruFooterBlock.tsx",
+      "line": 119,
+      "classification": "UI_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/signals/AlertRulesWorkspace.tsx",
+      "line": 97,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/signals/AlertRulesWorkspace.tsx",
+      "line": 167,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/signals/AlertRulesWorkspace.tsx",
+      "line": 191,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/signals/SignalsInbox.tsx",
+      "line": 52,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/signals/SignalsInbox.tsx",
+      "line": 56,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/watchlist/components/AirportPickerModal.tsx",
+      "line": 32,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/watchlist/components/AirportPickerModal.tsx",
+      "line": 52,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/watchlist/components/CommunityHubOverview.tsx",
+      "line": 38,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/watchlist/components/ComparePanels.tsx",
+      "line": 207,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/watchlist/components/HistoryIntegratedPanel.tsx",
+      "line": 189,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/watchlist/components/WatchDetailPanel.tsx",
+      "line": 62,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/watchlist/components/WatchlistMapDecisionPanel.tsx",
+      "line": 75,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/watchlist/useChartViewport.ts",
+      "line": 200,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/watchlist/useCommunityPricing.ts",
+      "line": 143,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/watchlist/useWatchlistActions.ts",
+      "line": 80,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/watchlist/useWatchlistActions.ts",
+      "line": 86,
+      "classification": "BROWSER_EFFECT",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/watchlist/useWatchlistCompatibility.ts",
+      "line": 25,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/watchlist/useWatchlistCompatibility.ts",
+      "line": 49,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/watchlist/useWatchlistController.ts",
+      "line": 42,
+      "classification": "UNKNOWN",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/watchlist/useWatchlistDetail.ts",
+      "line": 23,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    },
+    {
+      "file": "modules/watchlist/useWatchLiveFlight.ts",
+      "line": 17,
+      "classification": "SERVER_STATE",
+      "snippet": "useEffect(() => {"
+    }
+  ]
+}

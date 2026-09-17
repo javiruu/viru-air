@@ -2,13 +2,9 @@ import fs from "node:fs";
 import path from "node:path";
 import https from "node:https";
 
-const OURAIRPORTS_CSV_URL =
-  "https://davidmegginson.github.io/ourairports-data/airports.csv";
+const OURAIRPORTS_CSV_URL = "https://davidmegginson.github.io/ourairports-data/airports.csv";
 
-const OUT_PATH = path.resolve(
-  process.cwd(),
-  "frontend/src/data/airports_iata.min.json"
-);
+const OUT_PATH = path.resolve(process.cwd(), "frontend/src/data/airports_iata.min.json");
 
 function fetchText(url) {
   return new Promise((resolve, reject) => {
@@ -89,7 +85,7 @@ function pickBetter(a, b) {
   const map = new Map(); // iata -> entry
   for (const r of rows) {
     const iata = (r.iata_code || "").trim().toUpperCase();
-    if (!iata || iata.length !== 3) continue;
+    if (iata?.length !== 3) continue;
 
     const entry = {
       iata,
@@ -106,18 +102,14 @@ function pickBetter(a, b) {
   }
 
   const list = Array.from(map.values()).sort((a, b) => {
-    if (a.country_code !== b.country_code)
-      return a.country_code.localeCompare(b.country_code);
-    if (a.municipality !== b.municipality)
-      return a.municipality.localeCompare(b.municipality);
+    if (a.country_code !== b.country_code) return a.country_code.localeCompare(b.country_code);
+    if (a.municipality !== b.municipality) return a.municipality.localeCompare(b.municipality);
     return a.name.localeCompare(b.name);
   });
 
   fs.mkdirSync(path.dirname(OUT_PATH), { recursive: true });
   fs.writeFileSync(OUT_PATH, JSON.stringify(list), "utf8");
-  process.stdout.write(
-    `Wrote ${list.length} airports with IATA to ${OUT_PATH}\n`
-  );
+  process.stdout.write(`Wrote ${list.length} airports with IATA to ${OUT_PATH}\n`);
 })().catch((err) => {
   console.error(err);
   process.exit(1);

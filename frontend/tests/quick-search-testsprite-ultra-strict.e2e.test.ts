@@ -78,14 +78,20 @@ async function openQuickSearch(context: BrowserContext) {
   const page = await context.newPage();
   try {
     await Promise.all([
-      page.waitForResponse((response) => response.url().includes("/api/v1/airports/seeds") && response.status() === 200, {
-        timeout: 30000,
-      }),
+      page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/v1/airports/seeds") && response.status() === 200,
+        {
+          timeout: 30000,
+        },
+      ),
       page.goto(`${BASE_URL}/quick-search`, { waitUntil: "networkidle", timeout: 30000 }),
     ]);
 
     await page.locator('input[name="origin_iata"]').waitFor({ state: "visible", timeout: 10000 });
-    await page.locator('input[name="destination_iata"]').waitFor({ state: "visible", timeout: 10000 });
+    await page
+      .locator('input[name="destination_iata"]')
+      .waitFor({ state: "visible", timeout: 10000 });
   } catch {
     await page.close();
     return null;
@@ -94,8 +100,10 @@ async function openQuickSearch(context: BrowserContext) {
 }
 
 async function selectAirport(page: Page, field: "origin" | "destination", iata: string) {
-  const selector = field === "origin" ? 'input[name="origin_iata"]' : 'input[name="destination_iata"]';
-  const suggestionsSelector = field === "origin" ? "#origin-suggestions" : "#destination-suggestions";
+  const selector =
+    field === "origin" ? 'input[name="origin_iata"]' : 'input[name="destination_iata"]';
+  const suggestionsSelector =
+    field === "origin" ? "#origin-suggestions" : "#destination-suggestions";
   const input = page.locator(selector);
   await input.click();
   await input.fill(iata.toLowerCase());
@@ -115,11 +123,18 @@ async function selectAirport(page: Page, field: "origin" | "destination", iata: 
 async function selectDeterministicFutureDate(page: Page, targetDate: string) {
   const datePicker = page.locator('[data-ui="qs-date-picker-v2"]').first();
   await datePicker.locator(".qs-date-trigger").click();
-  const targetButton = page.locator(`.qs-date-popover .qs-date-day[data-date="${targetDate}"]:not(.is-disabled):not(.is-outside)`).first();
+  const targetButton = page
+    .locator(
+      `.qs-date-popover .qs-date-day[data-date="${targetDate}"]:not(.is-disabled):not(.is-outside)`,
+    )
+    .first();
   if (await targetButton.count()) {
     await targetButton.click();
   } else {
-    await page.locator(".qs-date-popover .qs-date-day:not(.is-disabled):not(.is-outside)").first().click();
+    await page
+      .locator(".qs-date-popover .qs-date-day:not(.is-disabled):not(.is-outside)")
+      .first()
+      .click();
   }
   await page.keyboard.press("Escape");
 }
@@ -142,7 +157,9 @@ async function runStrictRouteCase(page: Page, routeCase: RouteCase, targetDate: 
       return;
     }
     const payload = JSON.parse(request.postData() || "{}") as Record<string, unknown>;
-    const travel = (payload.travel && typeof payload.travel === "object" ? payload.travel : {}) as Record<string, unknown>;
+    const travel = (
+      payload.travel && typeof payload.travel === "object" ? payload.travel : {}
+    ) as Record<string, unknown>;
     travel.date = targetDate;
     travel.flex_before = 0;
     travel.flex_after = 0;
@@ -158,8 +175,14 @@ async function runStrictRouteCase(page: Page, routeCase: RouteCase, targetDate: 
   let quickJson: QuickResponseShape = {};
   let status = 0;
   try {
-    const quickResponsePromise = page.waitForResponse((response) => response.url().includes("/api/v1/search/quick"), { timeout: 30000 });
-    await page.getByRole("button", { name: /buscar|search/i }).first().click();
+    const quickResponsePromise = page.waitForResponse(
+      (response) => response.url().includes("/api/v1/search/quick"),
+      { timeout: 30000 },
+    );
+    await page
+      .getByRole("button", { name: /buscar|search/i })
+      .first()
+      .click();
     const quickResponse = await quickResponsePromise;
     status = quickResponse.status();
     quickJson = (await quickResponse.json().catch(() => ({}))) as QuickResponseShape;
@@ -172,8 +195,16 @@ async function runStrictRouteCase(page: Page, routeCase: RouteCase, targetDate: 
 
   const resultRows = page.locator(".qs-result-row");
   const rowCount = await resultRows.count();
-  const listVisible = await page.locator(".qs-results-list").first().isVisible().catch(() => false);
-  const statePanelVisible = await page.locator(".qs-state-panel").first().isVisible().catch(() => false);
+  const listVisible = await page
+    .locator(".qs-results-list")
+    .first()
+    .isVisible()
+    .catch(() => false);
+  const statePanelVisible = await page
+    .locator(".qs-state-panel")
+    .first()
+    .isVisible()
+    .catch(() => false);
 
   return {
     status,
@@ -195,7 +226,9 @@ test("testsprite ultra-strict: route contract and visible results stay consisten
   try {
     const page = await openQuickSearch(context);
     if (!page) {
-      t.skip(`Quick-Search not reachable at ${BASE_URL} or backend ${API_BASE}. Start frontend/backend and retry.`);
+      t.skip(
+        `Quick-Search not reachable at ${BASE_URL} or backend ${API_BASE}. Start frontend/backend and retry.`,
+      );
       return;
     }
     let validated = 0;
@@ -219,20 +252,49 @@ test("testsprite ultra-strict: route contract and visible results stay consisten
       });
 
       assert.equal(result.status, 200, `API /search/quick must return 200 (${routeCase.id}).`);
-      assert.ok(result.capturedRequestBody.includes(targetDate), `Request body must contain deterministic date (${routeCase.id}).`);
-      assert.equal(result.response.query?.origin?.seed_iata, routeCase.origin, `Response query origin mismatch (${routeCase.id}).`);
-      assert.equal(result.response.query?.destination?.seed_iata, routeCase.destination, `Response query destination mismatch (${routeCase.id}).`);
-      assert.equal(result.response.query?.travel?.date, targetDate, `Response query date mismatch (${routeCase.id}).`);
+      assert.ok(
+        result.capturedRequestBody.includes(targetDate),
+        `Request body must contain deterministic date (${routeCase.id}).`,
+      );
+      assert.equal(
+        result.response.query?.origin?.seed_iata,
+        routeCase.origin,
+        `Response query origin mismatch (${routeCase.id}).`,
+      );
+      assert.equal(
+        result.response.query?.destination?.seed_iata,
+        routeCase.destination,
+        `Response query destination mismatch (${routeCase.id}).`,
+      );
+      assert.equal(
+        result.response.query?.travel?.date,
+        targetDate,
+        `Response query date mismatch (${routeCase.id}).`,
+      );
       if (rescue) {
-        assert.ok(Array.isArray(rescue.pass_summaries), `meta.rescue.pass_summaries must be an array when rescue exists (${routeCase.id}).`);
+        assert.ok(
+          Array.isArray(rescue.pass_summaries),
+          `meta.rescue.pass_summaries must be an array when rescue exists (${routeCase.id}).`,
+        );
       }
 
       if (responseResults.length > 0) {
-        assert.equal(result.listVisible, true, `Results list must be visible when response has rows (${routeCase.id}).`);
-        assert.ok(result.rowCount > 0, `DOM must render at least one row when response has results (${routeCase.id}).`);
+        assert.equal(
+          result.listVisible,
+          true,
+          `Results list must be visible when response has rows (${routeCase.id}).`,
+        );
+        assert.ok(
+          result.rowCount > 0,
+          `DOM must render at least one row when response has results (${routeCase.id}).`,
+        );
         validated += 1;
       } else {
-        assert.equal(result.statePanelVisible, true, `State panel must be visible when response is empty (${routeCase.id}).`);
+        assert.equal(
+          result.statePanelVisible,
+          true,
+          `State panel must be visible when response is empty (${routeCase.id}).`,
+        );
         assert.ok(
           rescue?.attempted || warnings.length > 0,
           `Empty response must expose rescue attempt or explicit warnings (${routeCase.id}).`,
@@ -246,7 +308,10 @@ test("testsprite ultra-strict: route contract and visible results stay consisten
       "utf8",
     );
 
-    assert.ok(validated >= 2, `Expected at least 2 strict routes with visible results, got ${validated}.`);
+    assert.ok(
+      validated >= 2,
+      `Expected at least 2 strict routes with visible results, got ${validated}.`,
+    );
   } finally {
     await browser.close();
   }
@@ -259,7 +324,9 @@ test("testsprite ultra-strict: empty response must render explicit empty-state e
   try {
     const page = await openQuickSearch(context);
     if (!page) {
-      t.skip(`Quick-Search not reachable at ${BASE_URL} or backend ${API_BASE}. Start frontend/backend and retry.`);
+      t.skip(
+        `Quick-Search not reachable at ${BASE_URL} or backend ${API_BASE}. Start frontend/backend and retry.`,
+      );
       return;
     }
     const targetDate = buildDeterministicFutureDateIso();
@@ -277,7 +344,12 @@ test("testsprite ultra-strict: empty response must render explicit empty-state e
         body: JSON.stringify({
           query: {
             origin: { seed_iata: "MAD", include_nearby: false, radius_km: 150, max_candidates: 6 },
-            destination: { seed_iata: "BCN", include_nearby: false, radius_km: 150, max_candidates: 6 },
+            destination: {
+              seed_iata: "BCN",
+              include_nearby: false,
+              radius_km: 150,
+              max_candidates: 6,
+            },
             travel: { date: targetDate, flex_before: 0, flex_after: 0, travel_dates: [targetDate] },
             constraints: {
               departure_window: { after: "07:00", before: "22:00" },
@@ -301,9 +373,21 @@ test("testsprite ultra-strict: empty response must render explicit empty-state e
               applied_steps: ["pass_2_rescue_date", "pass_3_rescue_nearby"],
               winning_step: "pass_3_rescue_nearby",
               pass_summaries: [
-                { step: "pass_1_exact", result_count: 0, warnings: ["ryanair_availability_failed_partial"] },
-                { step: "pass_2_rescue_date", result_count: 0, warnings: ["ryanair_availability_failed_partial"] },
-                { step: "pass_3_rescue_nearby", result_count: 1, warnings: ["ryanair_availability_failed_partial"] },
+                {
+                  step: "pass_1_exact",
+                  result_count: 0,
+                  warnings: ["ryanair_availability_failed_partial"],
+                },
+                {
+                  step: "pass_2_rescue_date",
+                  result_count: 0,
+                  warnings: ["ryanair_availability_failed_partial"],
+                },
+                {
+                  step: "pass_3_rescue_nearby",
+                  result_count: 1,
+                  warnings: ["ryanair_availability_failed_partial"],
+                },
               ],
             },
           },
@@ -318,8 +402,14 @@ test("testsprite ultra-strict: empty response must render explicit empty-state e
       });
     });
 
-    const quickResponsePromise = page.waitForResponse((response) => response.url().includes("/api/v1/search/quick"), { timeout: 30000 });
-    await page.getByRole("button", { name: /buscar|search/i }).first().click();
+    const quickResponsePromise = page.waitForResponse(
+      (response) => response.url().includes("/api/v1/search/quick"),
+      { timeout: 30000 },
+    );
+    await page
+      .getByRole("button", { name: /buscar|search/i })
+      .first()
+      .click();
     const quickResponse = await quickResponsePromise;
     await page.waitForTimeout(900);
 
@@ -327,10 +417,21 @@ test("testsprite ultra-strict: empty response must render explicit empty-state e
     assert.ok(interceptedQuick >= 1, "Mocked /search/quick should be intercepted at least once.");
 
     const mockedBody = (await quickResponse.json().catch(() => ({}))) as QuickResponseShape;
-    const resultsListVisible = await page.locator(".qs-results-list").first().isVisible().catch(() => false);
+    const resultsListVisible = await page
+      .locator(".qs-results-list")
+      .first()
+      .isVisible()
+      .catch(() => false);
 
-    assert.equal(resultsListVisible, false, "Results list must not be visible when API returns empty results.");
-    assert.ok(Array.isArray(mockedBody.results) && mockedBody.results.length === 0, "Mocked quick-search response must remain empty.");
+    assert.equal(
+      resultsListVisible,
+      false,
+      "Results list must not be visible when API returns empty results.",
+    );
+    assert.ok(
+      Array.isArray(mockedBody.results) && mockedBody.results.length === 0,
+      "Mocked quick-search response must remain empty.",
+    );
     assert.ok(
       (mockedBody.filters?.warnings || []).includes("rescue_mode_applied"),
       "Empty mocked response must contain explicit degraded warning (rescue_mode_applied).",

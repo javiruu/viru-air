@@ -73,13 +73,19 @@ async function openQuickSearch(context: BrowserContext) {
   const page = await context.newPage();
   try {
     await Promise.all([
-      page.waitForResponse((response) => response.url().includes("/api/v1/airports/seeds") && response.status() === 200, {
-        timeout: 30000,
-      }),
+      page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/v1/airports/seeds") && response.status() === 200,
+        {
+          timeout: 30000,
+        },
+      ),
       page.goto(`${BASE_URL}/quick-search`, { waitUntil: "networkidle", timeout: 30000 }),
     ]);
     await page.locator('input[name="origin_iata"]').waitFor({ state: "visible", timeout: 10000 });
-    await page.locator('input[name="destination_iata"]').waitFor({ state: "visible", timeout: 10000 });
+    await page
+      .locator('input[name="destination_iata"]')
+      .waitFor({ state: "visible", timeout: 10000 });
   } catch {
     await page.close();
     return null;
@@ -87,13 +93,22 @@ async function openQuickSearch(context: BrowserContext) {
   return page;
 }
 
-async function selectCountryOnly(page: Page, field: "origin" | "destination", countryRegex: RegExp) {
-  const trigger = page.locator(".qs-route-card .qs-input-inline-action").nth(field === "origin" ? 0 : 1);
+async function selectCountryOnly(
+  page: Page,
+  field: "origin" | "destination",
+  countryRegex: RegExp,
+) {
+  const trigger = page
+    .locator(".qs-route-card .qs-input-inline-action")
+    .nth(field === "origin" ? 0 : 1);
   await trigger.click();
   const modal = page.locator(".qs-airport-modal").first();
   await modal.waitFor({ state: "visible", timeout: 10000 });
 
-  const countryButton = modal.locator(".airport-country-grid .country-pill").filter({ hasText: countryRegex }).first();
+  const countryButton = modal
+    .locator(".airport-country-grid .country-pill")
+    .filter({ hasText: countryRegex })
+    .first();
   await countryButton.click();
   const countryOnlyButton = modal.locator(".btn-secondary.btn-compact").first();
   await countryOnlyButton.click();
@@ -103,11 +118,18 @@ async function selectCountryOnly(page: Page, field: "origin" | "destination", co
 async function selectDeterministicFutureDate(page: Page, targetDate: string) {
   const datePicker = page.locator('[data-ui="qs-date-picker-v2"]').first();
   await datePicker.locator(".qs-date-trigger").click();
-  const targetButton = page.locator(`.qs-date-popover .qs-date-day[data-date="${targetDate}"]:not(.is-disabled):not(.is-outside)`).first();
+  const targetButton = page
+    .locator(
+      `.qs-date-popover .qs-date-day[data-date="${targetDate}"]:not(.is-disabled):not(.is-outside)`,
+    )
+    .first();
   if (await targetButton.count()) {
     await targetButton.click();
   } else {
-    await page.locator(".qs-date-popover .qs-date-day:not(.is-disabled):not(.is-outside)").first().click();
+    await page
+      .locator(".qs-date-popover .qs-date-day:not(.is-disabled):not(.is-outside)")
+      .first()
+      .click();
   }
   await page.keyboard.press("Escape");
 }
@@ -123,7 +145,9 @@ async function runCountryScopeAttempt(page: Page, targetDate: string) {
       return;
     }
     const payload = JSON.parse(request.postData() || "{}") as Record<string, unknown>;
-    const travel = (payload.travel && typeof payload.travel === "object" ? payload.travel : {}) as Record<string, unknown>;
+    const travel = (
+      payload.travel && typeof payload.travel === "object" ? payload.travel : {}
+    ) as Record<string, unknown>;
     travel.date = targetDate;
     travel.flex_before = 0;
     travel.flex_after = 0;
@@ -177,8 +201,14 @@ async function runCountryScopeAttempt(page: Page, targetDate: string) {
   let quickJson: QuickResponseShape = {};
   let status = 0;
   try {
-    const quickResponsePromise = page.waitForResponse((response) => response.url().includes("/api/v1/search/quick"), { timeout: 30000 });
-    await page.getByRole("button", { name: /buscar|search/i }).first().click();
+    const quickResponsePromise = page.waitForResponse(
+      (response) => response.url().includes("/api/v1/search/quick"),
+      { timeout: 30000 },
+    );
+    await page
+      .getByRole("button", { name: /buscar|search/i })
+      .first()
+      .click();
     const quickResponse = await quickResponsePromise;
     status = quickResponse.status();
     quickJson = (await quickResponse.json().catch(() => ({}))) as QuickResponseShape;
@@ -189,7 +219,11 @@ async function runCountryScopeAttempt(page: Page, targetDate: string) {
   await page.waitForTimeout(1200);
   await page.screenshot({ path: screenshotPath, fullPage: true });
   const rowCount = await page.locator(".qs-result-row").count();
-  const listVisible = await page.locator(".qs-results-list").first().isVisible().catch(() => false);
+  const listVisible = await page
+    .locator(".qs-results-list")
+    .first()
+    .isVisible()
+    .catch(() => false);
 
   return {
     status,
@@ -210,7 +244,9 @@ test("testsprite country-scope ultra: Italy -> Spain sends seed_iata_list and re
   try {
     const page = await openQuickSearch(context);
     if (!page) {
-      t.skip(`Quick-Search not reachable at ${BASE_URL} or backend ${API_BASE}. Start frontend/backend and retry.`);
+      t.skip(
+        `Quick-Search not reachable at ${BASE_URL} or backend ${API_BASE}. Start frontend/backend and retry.`,
+      );
       return;
     }
     await selectCountryOnly(page, "origin", /Italy|Italia/i);
@@ -223,8 +259,12 @@ test("testsprite country-scope ultra: Italy -> Spain sends seed_iata_list and re
       origin?: { seed_iata_list?: string[] };
       destination?: { seed_iata_list?: string[] };
     };
-    const originSeedList = Array.isArray(parsedRequest.origin?.seed_iata_list) ? parsedRequest.origin?.seed_iata_list : [];
-    const destinationSeedList = Array.isArray(parsedRequest.destination?.seed_iata_list) ? parsedRequest.destination?.seed_iata_list : [];
+    const originSeedList = Array.isArray(parsedRequest.origin?.seed_iata_list)
+      ? parsedRequest.origin?.seed_iata_list
+      : [];
+    const destinationSeedList = Array.isArray(parsedRequest.destination?.seed_iata_list)
+      ? parsedRequest.destination?.seed_iata_list
+      : [];
     const responseResults = Array.isArray(run.quickJson.results) ? run.quickJson.results : [];
 
     const attempts: Array<Record<string, unknown>> = [
@@ -248,11 +288,27 @@ test("testsprite country-scope ultra: Italy -> Spain sends seed_iata_list and re
     );
 
     assert.equal(run.status, 200, `API /search/quick must return 200 (${targetDate}).`);
-    assert.ok(originSeedList.length > 1, `Request must include origin.seed_iata_list>1 (${targetDate}).`);
-    assert.ok(destinationSeedList.length > 1, `Request must include destination.seed_iata_list>1 (${targetDate}).`);
-    assert.ok(responseResults.length > 0, `Mocked quick-search response must contain rows (${targetDate}).`);
-    assert.equal(run.listVisible, true, `Results list must be visible when API returns rows (${targetDate}).`);
-    assert.ok(run.rowCount > 0, `DOM must render at least one row when API has results (${targetDate}).`);
+    assert.ok(
+      originSeedList.length > 1,
+      `Request must include origin.seed_iata_list>1 (${targetDate}).`,
+    );
+    assert.ok(
+      destinationSeedList.length > 1,
+      `Request must include destination.seed_iata_list>1 (${targetDate}).`,
+    );
+    assert.ok(
+      responseResults.length > 0,
+      `Mocked quick-search response must contain rows (${targetDate}).`,
+    );
+    assert.equal(
+      run.listVisible,
+      true,
+      `Results list must be visible when API returns rows (${targetDate}).`,
+    );
+    assert.ok(
+      run.rowCount > 0,
+      `DOM must render at least one row when API has results (${targetDate}).`,
+    );
   } finally {
     await browser.close();
   }

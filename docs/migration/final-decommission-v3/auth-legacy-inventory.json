@@ -1,0 +1,92 @@
+{
+  "authority": "02_AUTH_SINGLE_AUTHORITY.md Phase A",
+  "generated_at": "2026-09-12T23:15:00Z",
+  "pbkdf2_occurrences": [
+    "backend/app/api/v1/account.py",
+    "backend/app/api/v1/admin.py",
+    "backend/app/api/v1/auth.py",
+    "backend/app/infrastructure/db/seed.py"
+  ],
+  "jwt_issuer_occurrences": [
+    "backend/app/api/v1/auth.py",
+    "backend/app/core/security.py"
+  ],
+  "refresh_token_occurrences": [
+    "backend/app/api/v1/auth.py",
+    "backend/app/core/security.py",
+    "backend/app/domain/schemas.py",
+    "backend/app/infrastructure/db/models.py"
+  ],
+  "viru_token_occurrences": [
+    "frontend/src/lib/ftue.ts",
+    "frontend/src/modules/shared/api.ts",
+    "frontend/src/modules/shared/auth-schema.ts",
+    "frontend/src/modules/shared/auth.ts"
+  ],
+  "auth_endpoints": [
+    {
+      "method": "POST",
+      "path": "/register"
+    },
+    {
+      "method": "POST",
+      "path": "/login"
+    },
+    {
+      "method": "GET",
+      "path": "/me"
+    },
+    {
+      "method": "POST",
+      "path": "/refresh"
+    },
+    {
+      "method": "POST",
+      "path": "/logout"
+    },
+    {
+      "method": "POST",
+      "path": "/forgot-password"
+    },
+    {
+      "method": "POST",
+      "path": "/reset-password"
+    }
+  ],
+  "supabase_helpers": [
+    "frontend/src/lib/supabase/client.ts",
+    "frontend/src/lib/supabase/server.ts"
+  ],
+  "user_scoped_tables": [
+    "suggestion",
+    "support_feedback",
+    "client_error_event",
+    "door_to_door_saved_location",
+    "flight_watch",
+    "hotel_comp_set",
+    "hotel_saved_search",
+    "hotel_tracked_offer",
+    "hotel_watchlist_item",
+    "idempotency_record",
+    "password_reset_token",
+    "refresh_token",
+    "security_activity",
+    "user_note",
+    "user_notification_state",
+    "user_preference",
+    "user_preference_appearance",
+    "user_preference_region",
+    "user_profile",
+    "user_session",
+    "ux_event",
+    "community_price_report",
+    "door_to_door_saved_place",
+    "door_to_door_search_history",
+    "hotel_alert_rule",
+    "hotel_tracked_offer_lifecycle_event",
+    "hotel_user_stay_watch",
+    "door_to_door_chosen_option",
+    "hotel_alert_event",
+    "hotel_notification_delivery"
+  ]
+}

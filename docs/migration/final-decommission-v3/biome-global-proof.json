@@ -1,0 +1,27 @@
+{
+  "authority": "05_BIOME_GLOBAL_ZERO.md",
+  "phase": "05 Biome Global Zero",
+  "generated_at": "2026-09-12T23:59:00Z",
+  "verdict": "PASS",
+  "counters": {
+    "files_in_scope": 473,
+    "files_checked": 473,
+    "errors": 0,
+    "warnings": 75,
+    "infos": 1,
+    "exit_code": 0
+  },
+  "excluded_generated_paths": [
+    "frontend/src/api/generated/**"
+  ],
+  "excluded_vendor_paths": [
+    "frontend/node_modules/**",
+    "frontend/.next/**"
+  ],
+  "evidence": {
+    "biome_config": "frontend/biome.json",
+    "scope_doc": "docs/migration/final-decommission-v3/biome-scope.md",
+    "check_command": "npm run check:biome",
+    "exit_code": 0
+  }
+}

@@ -6,8 +6,22 @@ import test from "node:test";
 import { resolveBridgeRoute } from "../src/modules/shared/routeBridges";
 
 const HISTORY_PAGE = path.join(process.cwd(), "src", "app", "(private)", "history", "page.tsx");
-const PREFERENCES_PAGE = path.join(process.cwd(), "src", "app", "(private)", "preferences", "page.tsx");
-const SUGGESTIONS_PAGE = path.join(process.cwd(), "src", "app", "(private)", "suggestions", "page.tsx");
+const PREFERENCES_PAGE = path.join(
+  process.cwd(),
+  "src",
+  "app",
+  "(private)",
+  "preferences",
+  "page.tsx",
+);
+const SUGGESTIONS_PAGE = path.join(
+  process.cwd(),
+  "src",
+  "app",
+  "(private)",
+  "suggestions",
+  "page.tsx",
+);
 
 test("legacy bridges resolve to canonical routes", () => {
   assert.equal(resolveBridgeRoute("/history"), "/watchlist");
@@ -24,7 +38,10 @@ test("history and preferences routes use server redirect pages", () => {
   assert.doesNotMatch(historySource, /useEffect|router\.replace/);
   assert.doesNotMatch(preferencesSource, /useEffect|router\.replace/);
   assert.doesNotMatch(historySource, /Redirecting|History is now part of/);
-  assert.doesNotMatch(preferencesSource, /Redirecting to the unified panel|History is now part of Flight Watchlist/);
+  assert.doesNotMatch(
+    preferencesSource,
+    /Redirecting to the unified panel|History is now part of Flight Watchlist/,
+  );
 });
 
 test("suggestions legacy route redirects to feedback idea flow", () => {

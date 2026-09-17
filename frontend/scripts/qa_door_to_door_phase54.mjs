@@ -7,7 +7,13 @@ import { chromium } from "playwright";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const frontendRoot = path.resolve(__dirname, "..");
 const repoRoot = path.resolve(frontendRoot, "..");
-const evidenceDir = path.join(repoRoot, "docs", "qa", "evidence", "door-to-door-2026-06-20-phase54");
+const evidenceDir = path.join(
+  repoRoot,
+  "docs",
+  "qa",
+  "evidence",
+  "door-to-door-2026-06-20-phase54",
+);
 
 const BASE_URL = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 const API_BASE = process.env.E2E_API_BASE_URL || "http://127.0.0.1:8000/api/v1";
@@ -22,9 +28,10 @@ const requestedScenarios = (process.env.QA_D2D_SCENARIOS || "")
   .split(",")
   .map((value) => value.trim())
   .filter(Boolean);
-const activeScenarios = requestedScenarios.length > 0
-  ? scenarios.filter((scenario) => requestedScenarios.includes(scenario.name))
-  : scenarios;
+const activeScenarios =
+  requestedScenarios.length > 0
+    ? scenarios.filter((scenario) => requestedScenarios.includes(scenario.name))
+    : scenarios;
 
 async function registerAndCreateWatch() {
   const email = `codex-d2d-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
@@ -82,12 +89,15 @@ async function captureScenario(browser, setup, scenario) {
   const trackedResponses = [];
   const consoleErrors = [];
 
-  await context.addInitScript(({ token, theme }) => {
-    window.localStorage.setItem("viru_token", token);
-    window.localStorage.setItem("viru-theme", theme);
-    document.documentElement.dataset.theme = theme;
-    document.documentElement.style.colorScheme = theme;
-  }, { token: setup.token, theme: scenario.theme });
+  await context.addInitScript(
+    ({ token, theme }) => {
+      window.localStorage.setItem("viru_token", token);
+      window.localStorage.setItem("viru-theme", theme);
+      document.documentElement.dataset.theme = theme;
+      document.documentElement.style.colorScheme = theme;
+    },
+    { token: setup.token, theme: scenario.theme },
+  );
 
   const page = await context.newPage();
   page.on("console", (message) => {
@@ -107,17 +117,27 @@ async function captureScenario(browser, setup, scenario) {
 
   const watchSelect = page.locator("select").first();
   await watchSelect.waitFor({ state: "visible", timeout: 15000 });
-  await page.waitForFunction((watchId) => {
-    const select = document.querySelector("select");
-    return Boolean(select && select.value === watchId);
-  }, setup.watch.id, { timeout: 15000 });
+  await page.waitForFunction(
+    (watchId) => {
+      const select = document.querySelector("select");
+      return Boolean(select && select.value === watchId);
+    },
+    setup.watch.id,
+    { timeout: 15000 },
+  );
 
   await waitForResults(page);
 
   const timeline = page.locator(".d2d-connected-timeline");
   const timelineVisible = await timeline.isVisible().catch(() => false);
-  const emptyVisible = await page.locator(".d2d-empty-state").isVisible().catch(() => false);
-  const errorVisible = await page.locator(".d2d-error-state").isVisible().catch(() => false);
+  const emptyVisible = await page
+    .locator(".d2d-empty-state")
+    .isVisible()
+    .catch(() => false);
+  const errorVisible = await page
+    .locator(".d2d-error-state")
+    .isVisible()
+    .catch(() => false);
 
   if (!timelineVisible && !emptyVisible && !errorVisible) {
     throw new Error(`no_terminal_state:${scenario.name}`);
@@ -131,9 +151,7 @@ async function captureScenario(browser, setup, scenario) {
   await page.waitForTimeout(300);
   await page.evaluate(() => {
     const sentinel = document.getElementById("d2d-results-sentinel");
-    const absoluteTop = sentinel
-      ? sentinel.getBoundingClientRect().top + window.scrollY
-      : 0;
+    const absoluteTop = sentinel ? sentinel.getBoundingClientRect().top + window.scrollY : 0;
     window.scrollTo({ top: absoluteTop + 260, behavior: "instant" });
   });
   await page.waitForTimeout(800);
@@ -233,10 +251,13 @@ const failures = report.scenarios.flatMap((scenario) => {
   }
   const reasons = [];
   if (!scenario.metrics.ok) reasons.push("missing-dom");
-  if (scenario.metrics.ok && scenario.metrics.stickyPosition !== "sticky") reasons.push("sticky-not-sticky");
+  if (scenario.metrics.ok && scenario.metrics.stickyPosition !== "sticky")
+    reasons.push("sticky-not-sticky");
   if (scenario.metrics.ok && !scenario.metrics.stickyTopVisible) reasons.push("sticky-top-offset");
-  if (scenario.metrics.ok && !scenario.metrics.stickyWithinViewport) reasons.push("sticky-overflow");
-  if (scenario.metrics.ok && scenario.metrics.timelineLegCount < 2) reasons.push("timeline-too-short");
+  if (scenario.metrics.ok && !scenario.metrics.stickyWithinViewport)
+    reasons.push("sticky-overflow");
+  if (scenario.metrics.ok && scenario.metrics.timelineLegCount < 2)
+    reasons.push("timeline-too-short");
   if (scenario.consoleErrors.length > 0) reasons.push("console-errors");
   return reasons.length > 0 ? [{ scenario: scenario.scenario, reasons }] : [];
 });

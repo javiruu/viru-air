@@ -1,12 +1,4 @@
-from fastapi.testclient import TestClient
-
-from app.main import app
-
-
-client = TestClient(app)
-
-
-def test_quick_search_invalid_seed_returns_traceable_error_envelope() -> None:
+def test_quick_search_invalid_seed_returns_traceable_error_envelope(client):
     response = client.post(
         "/api/v1/search/quick",
         json={
@@ -30,7 +22,7 @@ def test_quick_search_invalid_seed_returns_traceable_error_envelope() -> None:
     assert payload["details"][0]["query_trace_id"].startswith("qs_")
 
 
-def test_quick_search_invalid_iata_during_normalization_returns_traceable_error_envelope() -> None:
+def test_quick_search_invalid_iata_during_normalization_returns_traceable_error_envelope(client):
     response = client.post(
         "/api/v1/search/quick",
         json={
@@ -52,7 +44,7 @@ def test_quick_search_invalid_iata_during_normalization_returns_traceable_error_
     assert payload["details"][0]["raw_payload"]["origin_iata"] == "AG"
 
 
-def test_deeplink_invalid_iata_returns_traceable_error_envelope() -> None:
+def test_deeplink_invalid_iata_returns_traceable_error_envelope(client):
     response = client.get(
         "/api/v1/search/deeplink?origin_iata=AG&destination_iata=DUB&date_out=2026-06-14&adults=1&teens=0&children=0&infants=0&locale=es-es",
         headers={"x-correlation-id": "corrtest125"},

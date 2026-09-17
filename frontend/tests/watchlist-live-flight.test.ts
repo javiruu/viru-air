@@ -88,7 +88,9 @@ test("live flight presentation exposes only a provider-observed position", () =>
   });
   assert.equal(selectPrimaryFlightLabel(tracking), "FR9602");
 
-  tracking.legs[0]!.operational!.position = null;
+  if (tracking.legs[0]?.operational) {
+    tracking.legs[0].operational.position = null;
+  }
   assert.equal(selectPrimaryLivePosition(tracking), null);
 });
 
@@ -164,11 +166,25 @@ test("live flight coverage tone distinguishes observed, stale, and unavailable d
 
 test("watchlist live UI keeps map positions observed and multi-leg detail progressive", () => {
   const mapPanel = fs.readFileSync(
-    path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchlistMapDecisionPanel.tsx"),
+    path.join(
+      process.cwd(),
+      "src",
+      "modules",
+      "watchlist",
+      "components",
+      "WatchlistMapDecisionPanel.tsx",
+    ),
     "utf8",
   );
   const livePanel = fs.readFileSync(
-    path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchLiveFlightPanel.tsx"),
+    path.join(
+      process.cwd(),
+      "src",
+      "modules",
+      "watchlist",
+      "components",
+      "WatchLiveFlightPanel.tsx",
+    ),
     "utf8",
   );
   const screensCss = readStylesheetTree(path.join(process.cwd(), "src", "styles", "screens.css"));

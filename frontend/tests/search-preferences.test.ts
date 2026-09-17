@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildSearchPreferenceSummary, validateSearchPreferences } from "../src/modules/preferences/searchPreferences";
+import {
+  buildSearchPreferenceSummary,
+  validateSearchPreferences,
+} from "../src/modules/preferences/searchPreferences";
 
 const copy: Record<string, string> = {
   "preferences.search.rangeError": "range {min}-{max}",

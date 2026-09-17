@@ -8,8 +8,20 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const frontendRoot = path.resolve(scriptDir, "..");
 const repoRoot = path.resolve(frontendRoot, "..");
 const baseUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3102";
-const screenshotDir = path.join(repoRoot, "docs", "qa", "screenshots", "watchlist-delay-prediction");
-const reportPath = path.join(repoRoot, "docs", "qa", "reports", "2026-07-28-watchlist-delay-prediction.json");
+const screenshotDir = path.join(
+  repoRoot,
+  "docs",
+  "qa",
+  "screenshots",
+  "watchlist-delay-prediction",
+);
+const reportPath = path.join(
+  repoRoot,
+  "docs",
+  "qa",
+  "reports",
+  "2026-07-28-watchlist-delay-prediction.json",
+);
 
 const watch = {
   id: "watch-prediction",
@@ -129,7 +141,12 @@ async function installMocks(page) {
     const apiPath = url.pathname.replace(/^.*\/api\/v1/, "");
 
     if (apiPath === "/auth/me") {
-      await fulfillJson(route, { id: "qa-user", email: "qa@viru.local", locale: "es", is_admin: false });
+      await fulfillJson(route, {
+        id: "qa-user",
+        email: "qa@viru.local",
+        locale: "es",
+        is_admin: false,
+      });
       return;
     }
     if (apiPath === "/watchlist" && request.method() === "GET") {
@@ -190,12 +207,15 @@ try {
       viewport: { width: scenario.width, height: scenario.height },
       reducedMotion: "reduce",
     });
-    await context.addInitScript(({ theme }) => {
-      localStorage.setItem("viru_token", "qa_token_for_mocked_browser_session_1234567890");
-      localStorage.setItem("viru-theme", theme);
-      localStorage.setItem("viru-locale", "es");
-      localStorage.setItem("viru-ftue-watchlist", "dismissed");
-    }, { theme: scenario.theme });
+    await context.addInitScript(
+      ({ theme }) => {
+        localStorage.setItem("viru_token", "qa_token_for_mocked_browser_session_1234567890");
+        localStorage.setItem("viru-theme", theme);
+        localStorage.setItem("viru-locale", "es");
+        localStorage.setItem("viru-ftue-watchlist", "dismissed");
+      },
+      { theme: scenario.theme },
+    );
     const page = await context.newPage();
     const consoleErrors = [];
     page.on("console", (message) => {
@@ -216,11 +236,15 @@ try {
       risk: await prediction.getByText("Riesgo alto · 90/100", { exact: true }).isVisible(),
       evidence: await prediction.getByText("Escala muy ajustada", { exact: true }).isVisible(),
       disclaimer: await prediction
-        .getByText("Estimación temprana y explicable; no sustituye el horario oficial.", { exact: true })
+        .getByText("Estimación temprana y explicable; no sustituye el horario oficial.", {
+          exact: true,
+        })
         .isVisible(),
       no_raw_i18n: (await prediction.getByText(/^watchlist\./).count()) === 0,
       no_horizontal_overflow:
-        (await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)) <= 1,
+        (await page.evaluate(
+          () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        )) <= 1,
       no_console_errors: consoleErrors.length === 0,
     };
     if (Object.values(assertions).some((value) => value !== true)) {

@@ -10,7 +10,14 @@ import {
 } from "../src/modules/quick-search/providerPresentation";
 
 test("resolveQuickSearchProviderPresentation recognizes easyJet sources", () => {
-  for (const source of ["easyjet-public-availability", "easy-jet-public", "easy_jet", "ezj-feed", "EZY availability", "U2 fares"]) {
+  for (const source of [
+    "easyjet-public-availability",
+    "easy-jet-public",
+    "easy_jet",
+    "ezj-feed",
+    "EZY availability",
+    "U2 fares",
+  ]) {
     const provider = resolveQuickSearchProviderPresentation(source);
 
     assert.equal(provider.id, "easyjet");
@@ -20,7 +27,12 @@ test("resolveQuickSearchProviderPresentation recognizes easyJet sources", () => 
 });
 
 test("resolveQuickSearchProviderPresentation recognizes Iberia sources", () => {
-  for (const source of ["iberia-public-availability", "Iberia availability", "iberia-ndc-airshopping", "IB fares"]) {
+  for (const source of [
+    "iberia-public-availability",
+    "Iberia availability",
+    "iberia-ndc-airshopping",
+    "IB fares",
+  ]) {
     const provider = resolveQuickSearchProviderPresentation(source);
 
     assert.equal(provider.id, "iberia");

@@ -8,16 +8,49 @@ import { buildHotelPriceObservationChart } from "../src/modules/hotels/component
 test("hotel price chart only visualizes eligible total-price observations", () => {
   const chart = buildHotelPriceObservationChart(
     [
-      { id: "excluded", observedAt: "2026-08-03T10:00:00Z", amount: 91, eligible: false, totalPrice: true },
-      { id: "unknown", observedAt: "2026-08-02T10:00:00Z", amount: 94, eligible: true, totalPrice: false },
-      { id: "valid-later", observedAt: "2026-08-04T10:00:00Z", amount: 108, eligible: true, totalPrice: true },
-      { id: "valid-earlier", observedAt: "2026-08-01T10:00:00Z", amount: 101, eligible: true, totalPrice: true },
-      { id: "missing", observedAt: "2026-08-05T10:00:00Z", amount: null, eligible: true, totalPrice: true },
+      {
+        id: "excluded",
+        observedAt: "2026-08-03T10:00:00Z",
+        amount: 91,
+        eligible: false,
+        totalPrice: true,
+      },
+      {
+        id: "unknown",
+        observedAt: "2026-08-02T10:00:00Z",
+        amount: 94,
+        eligible: true,
+        totalPrice: false,
+      },
+      {
+        id: "valid-later",
+        observedAt: "2026-08-04T10:00:00Z",
+        amount: 108,
+        eligible: true,
+        totalPrice: true,
+      },
+      {
+        id: "valid-earlier",
+        observedAt: "2026-08-01T10:00:00Z",
+        amount: 101,
+        eligible: true,
+        totalPrice: true,
+      },
+      {
+        id: "missing",
+        observedAt: "2026-08-05T10:00:00Z",
+        amount: null,
+        eligible: true,
+        totalPrice: true,
+      },
     ],
     false,
   );
 
-  assert.deepEqual(chart.points.map((point) => point.id), ["valid-earlier", "valid-later"]);
+  assert.deepEqual(
+    chart.points.map((point) => point.id),
+    ["valid-earlier", "valid-later"],
+  );
   assert.equal(chart.hasContinuousLine, false);
   assert.equal(chart.minAmount, 101);
   assert.equal(chart.maxAmount, 108);
@@ -26,9 +59,27 @@ test("hotel price chart only visualizes eligible total-price observations", () =
 test("hotel price chart joins only consecutive complete observations", () => {
   const chart = buildHotelPriceObservationChart(
     [
-      { id: "first", observedAt: "2026-08-01T10:00:00Z", amount: 101, eligible: true, totalPrice: true },
-      { id: "second", observedAt: "2026-08-02T10:00:00Z", amount: 98, eligible: true, totalPrice: true },
-      { id: "third", observedAt: "2026-08-03T10:00:00Z", amount: 95, eligible: true, totalPrice: true },
+      {
+        id: "first",
+        observedAt: "2026-08-01T10:00:00Z",
+        amount: 101,
+        eligible: true,
+        totalPrice: true,
+      },
+      {
+        id: "second",
+        observedAt: "2026-08-02T10:00:00Z",
+        amount: 98,
+        eligible: true,
+        totalPrice: true,
+      },
+      {
+        id: "third",
+        observedAt: "2026-08-03T10:00:00Z",
+        amount: 95,
+        eligible: true,
+        totalPrice: true,
+      },
     ],
     true,
   );

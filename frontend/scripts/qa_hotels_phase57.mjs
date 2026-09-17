@@ -35,7 +35,10 @@ function sanitizeDiagnosticText(value) {
     })
     .replace(/(authorization\s*[:=]\s*bearer\s+)[^\s,;]+/gi, "$1[redacted]")
     .replace(/((?:token|api[_-]?key|password|secret)\s*[:=]\s*)[^\s,;]+/gi, "$1[redacted]")
-    .replace(/([?&](?:token|api[_-]?key|password|secret|access_token)\s*=\s*)[^&\s]+/gi, "$1[redacted]")
+    .replace(
+      /([?&](?:token|api[_-]?key|password|secret|access_token)\s*=\s*)[^&\s]+/gi,
+      "$1[redacted]",
+    )
     .slice(0, 500);
 }
 
@@ -67,9 +70,11 @@ async function clickAndWait(page, buttonName, responsePart) {
   const responsePromise = page.waitForResponse(
     (response) => {
       const url = new URL(response.url());
-      return url.pathname === responsePart
-        && response.request().method() === "GET"
-        && response.status() === 200;
+      return (
+        url.pathname === responsePart &&
+        response.request().method() === "GET" &&
+        response.status() === 200
+      );
     },
     { timeout: 45000 },
   );
@@ -91,10 +96,7 @@ async function clickButtonInView(page, locator) {
       const mobileNavRect = mobileNav?.getBoundingClientRect();
       const headerRect = document.querySelector(".shell-header")?.getBoundingClientRect();
       const safeTop = Math.max(8, (headerRect?.bottom ?? 0) + 8);
-      const safeBottom = Math.min(
-        viewportHeight - 8,
-        (mobileNavRect?.top ?? viewportHeight) - 8,
-      );
+      const safeBottom = Math.min(viewportHeight - 8, (mobileNavRect?.top ?? viewportHeight) - 8);
 
       if (rect.top < safeTop) return rect.top - safeTop;
       if (rect.bottom > safeBottom) return rect.bottom - safeBottom;
@@ -102,7 +104,10 @@ async function clickButtonInView(page, locator) {
     });
 
     if (scrollDelta !== 0) {
-      await page.evaluate((delta) => window.scrollBy({ top: delta, behavior: "instant" }), scrollDelta);
+      await page.evaluate(
+        (delta) => window.scrollBy({ top: delta, behavior: "instant" }),
+        scrollDelta,
+      );
     }
     await page.waitForTimeout(250);
 
@@ -137,12 +142,15 @@ async function setupScenario(browser, scenario) {
     hasTouch: scenario.viewport.width < 500,
   });
 
-  await context.addInitScript(({ token: initToken, theme }) => {
-    window.localStorage.setItem("viru_token", initToken);
-    window.localStorage.setItem("viru-theme", theme);
-    document.documentElement.dataset.theme = theme;
-    document.documentElement.style.colorScheme = theme;
-  }, { token, theme: scenario.theme });
+  await context.addInitScript(
+    ({ token: initToken, theme }) => {
+      window.localStorage.setItem("viru_token", initToken);
+      window.localStorage.setItem("viru-theme", theme);
+      document.documentElement.dataset.theme = theme;
+      document.documentElement.style.colorScheme = theme;
+    },
+    { token, theme: scenario.theme },
+  );
 
   const page = await context.newPage();
   const trackedResponses = [];
@@ -185,15 +193,24 @@ async function exerciseHotelsFlow(page) {
   const firstResult = resultCards.first();
   await clickButtonInView(page, firstResult.locator(".hotel-result-main"));
 
-  const trackButton = firstResult.getByRole("button", { name: /Seguir precio|Siguiendo precio|Track price|Following price|Trackear precio|Ya en seguimiento/ });
+  const trackButton = firstResult.getByRole("button", {
+    name: /Seguir precio|Siguiendo precio|Track price|Following price|Trackear precio|Ya en seguimiento/,
+  });
   await trackButton.waitFor({ state: "visible", timeout: 15000 });
   await clickButtonInView(page, trackButton);
-  const confirmTracking = page.getByRole("button", { name: /Confirmar seguimiento|Confirm tracking/ });
+  const confirmTracking = page.getByRole("button", {
+    name: /Confirmar seguimiento|Confirm tracking/,
+  });
   await confirmTracking.waitFor({ state: "visible", timeout: 15000 });
   await clickButtonInView(page, confirmTracking);
-  await page.locator(".hotel-tracked-offer-item").first().waitFor({ state: "visible", timeout: 30000 });
+  await page
+    .locator(".hotel-tracked-offer-item")
+    .first()
+    .waitFor({ state: "visible", timeout: 30000 });
 
-  const watchButton = firstResult.getByRole("button", { name: /Guardar hotel|Guardado|Save hotel|Saved|Añadir a seguimiento|En seguimiento/ });
+  const watchButton = firstResult.getByRole("button", {
+    name: /Guardar hotel|Guardado|Save hotel|Saved|Añadir a seguimiento|En seguimiento/,
+  });
   await watchButton.waitFor({ state: "visible", timeout: 15000 });
   await clickButtonInView(page, watchButton);
   await page.locator(".hotel-watchlist-item").first().waitFor({ state: "visible", timeout: 30000 });
@@ -204,17 +221,26 @@ async function exerciseHotelsFlow(page) {
   const createAlert = page.getByRole("button", { name: "Crear alerta" });
   await createAlert.waitFor({ state: "visible", timeout: 15000 });
   const alertCreated = page.waitForResponse(
-    (response) => response.url().includes("/api/v1/hotels/alert-rules") && response.request().method() === "POST" && response.status() < 500,
+    (response) =>
+      response.url().includes("/api/v1/hotels/alert-rules") &&
+      response.request().method() === "POST" &&
+      response.status() < 500,
     { timeout: 30000 },
   );
   await clickButtonInView(page, createAlert);
   await alertCreated;
-  await page.locator(".hotel-alert-rule-item").first().waitFor({ state: "visible", timeout: 30000 });
+  await page
+    .locator(".hotel-alert-rule-item")
+    .first()
+    .waitFor({ state: "visible", timeout: 30000 });
 
   const createCompSet = page.getByRole("button", { name: "Crear comparativa" });
   await createCompSet.waitFor({ state: "visible", timeout: 15000 });
   const compSetCreated = page.waitForResponse(
-    (response) => response.url().includes("/api/v1/hotels/comp-sets") && response.request().method() === "POST" && response.status() < 500,
+    (response) =>
+      response.url().includes("/api/v1/hotels/comp-sets") &&
+      response.request().method() === "POST" &&
+      response.status() < 500,
     { timeout: 30000 },
   );
   await clickButtonInView(page, createCompSet);
@@ -224,7 +250,11 @@ async function exerciseHotelsFlow(page) {
   const nearbyAdd = page.locator(".hotel-nearby-actions .btn-ghost").first();
   if (await nearbyAdd.count()) {
     await clickButtonInView(page, nearbyAdd);
-    await page.locator(".hotel-comp-set-member-item").first().waitFor({ state: "visible", timeout: 30000 }).catch(() => undefined);
+    await page
+      .locator(".hotel-comp-set-member-item")
+      .first()
+      .waitFor({ state: "visible", timeout: 30000 })
+      .catch(() => undefined);
   }
 
   await page.waitForTimeout(1200);
@@ -319,10 +349,16 @@ try {
 const reportPath = path.join(evidenceDir, "report.json");
 const serializedReport = JSON.stringify(report);
 const privacyViolations = [];
-if (/eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/.test(serializedReport)) privacyViolations.push("jwt-marker");
-if (/(?:authorization|bearer|password|secret|api[_-]?key|access_token)\s*[:=]/i.test(serializedReport)) privacyViolations.push("credential-marker");
-if (/[?&](?:token|password|secret|access_token|api[_-]?key)=/i.test(serializedReport)) privacyViolations.push("sensitive-query-marker");
-if (/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(serializedReport)) privacyViolations.push("email-marker");
+if (/eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/.test(serializedReport))
+  privacyViolations.push("jwt-marker");
+if (
+  /(?:authorization|bearer|password|secret|api[_-]?key|access_token)\s*[:=]/i.test(serializedReport)
+)
+  privacyViolations.push("credential-marker");
+if (/[?&](?:token|password|secret|access_token|api[_-]?key)=/i.test(serializedReport))
+  privacyViolations.push("sensitive-query-marker");
+if (/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(serializedReport))
+  privacyViolations.push("email-marker");
 if (privacyViolations.length > 0) {
   report.privacy = { status: "failed", violations: privacyViolations };
   throw new Error(`phase57_privacy_validation_failed:${privacyViolations.join(",")}`);

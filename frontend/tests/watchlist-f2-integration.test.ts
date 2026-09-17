@@ -3,33 +3,64 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
-const DETAIL_LOADER_FILE = path.join(process.cwd(), "src", "modules", "watchlist", "useWatchlistDetail.ts");
-const MUTATIONS_FILE = path.join(process.cwd(), "src", "modules", "watchlist", "useWatchlistMutations.ts");
-const DETAIL_PANEL_FILE = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");
+const DETAIL_LOADER_FILE = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "useWatchlistDetail.ts",
+);
+const MUTATIONS_FILE = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "useWatchlistMutations.ts",
+);
+const DETAIL_PANEL_FILE = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "WatchDetailPanel.tsx",
+);
 
 test("watchlist selected route loads detail and prices summary endpoints", () => {
   const source = fs.readFileSync(DETAIL_LOADER_FILE, "utf8");
   assert.match(source, /apiFetch<WatchDetailApiResponse>\(`\/watchlist\/\$\{selectedWatchId\}`\)/);
-  assert.match(source, /apiFetch<PriceSummary>\(`\/prices\/summary\?watch_id=\$\{selectedWatchId\}`\)/);
+  assert.match(
+    source,
+    /apiFetch<PriceSummary>\(`\/prices\/summary\?watch_id=\$\{selectedWatchId\}`\)/,
+  );
   assert.match(source, /setSelectedWatchDetail\(normalizeWatchDetailApiResponse\(detail\)\)/);
 });
 
 test("watchlist bulk refresh uses refresh-bulk endpoint", () => {
   const source = fs.readFileSync(MUTATIONS_FILE, "utf8");
   assert.match(source, /"\/watchlist\/refresh-bulk"/);
-  assert.doesNotMatch(source, /Promise\.allSettled\(\s*targets\.map\(\(item\) => apiFetch<\{ status: string \}>\(`\/watchlist\/\$\{item\.id\}\/refresh-now`/);
+  assert.doesNotMatch(
+    source,
+    /Promise\.allSettled\(\s*targets\.map\(\(item\) => apiFetch<\{ status: string \}>\(`\/watchlist\/\$\{item\.id\}\/refresh-now`/,
+  );
 });
 
 test("watchlist bulk status uses status-bulk endpoint with a single request", () => {
   const source = fs.readFileSync(MUTATIONS_FILE, "utf8");
   assert.match(source, /"\/watchlist\/status-bulk"/);
-  assert.doesNotMatch(source, /Promise\.allSettled\(\s*ids\.map\(\(id\) =>\s*apiFetch<Watch>\(`\/watchlist\/\$\{id\}`/);
+  assert.doesNotMatch(
+    source,
+    /Promise\.allSettled\(\s*ids\.map\(\(id\) =>\s*apiFetch<Watch>\(`\/watchlist\/\$\{id\}`/,
+  );
 });
 
 test("watchlist bulk delete uses delete-bulk endpoint with a single request", () => {
   const source = fs.readFileSync(MUTATIONS_FILE, "utf8");
   assert.match(source, /"\/watchlist\/delete-bulk"/);
-  assert.doesNotMatch(source, /Promise\.allSettled\(\s*ids\.map\(\(id\) =>\s*apiFetch<\{ status: string \}>\(`\/watchlist\/\$\{id\}`/);
+  assert.doesNotMatch(
+    source,
+    /Promise\.allSettled\(\s*ids\.map\(\(id\) =>\s*apiFetch<\{ status: string \}>\(`\/watchlist\/\$\{id\}`/,
+  );
 });
 
 test("watch detail panel contains required empty state keys", () => {
@@ -42,5 +73,5 @@ test("watch detail uses only detail that belongs to the selected watch", () => {
   const panelSource = fs.readFileSync(DETAIL_PANEL_FILE, "utf8");
 
   assert.match(panelSource, /resolveCurrentWatchDetail\(selectedWatch, detail\)/);
-  assert.match(panelSource, /selectedWatch\?\.fare_profile \?\? currentDetail\?\.fare_profile/);
+  assert.match(panelSource, /selectedWatch\?\.fare_profile \?\?\s*currentDetail\?\.fare_profile/);
 });

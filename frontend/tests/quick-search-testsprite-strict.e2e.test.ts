@@ -71,15 +71,24 @@ async function openQuickSearch(context: BrowserContext) {
   const page = await context.newPage();
   try {
     await Promise.all([
-      page.waitForResponse((response) => response.url().includes("/api/v1/airports/seeds") && response.status() === 200, {
-        timeout: 30000,
-      }),
+      page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/v1/airports/seeds") && response.status() === 200,
+        {
+          timeout: 30000,
+        },
+      ),
       page.goto(`${BASE_URL}/quick-search`, { waitUntil: "networkidle", timeout: 30000 }),
     ]);
 
     await page.locator('input[name="origin_iata"]').waitFor({ state: "visible", timeout: 10000 });
-    await page.locator('input[name="destination_iata"]').waitFor({ state: "visible", timeout: 10000 });
-    await page.locator('[data-ui="qs-date-picker-v2"]').first().waitFor({ state: "visible", timeout: 10000 });
+    await page
+      .locator('input[name="destination_iata"]')
+      .waitFor({ state: "visible", timeout: 10000 });
+    await page
+      .locator('[data-ui="qs-date-picker-v2"]')
+      .first()
+      .waitFor({ state: "visible", timeout: 10000 });
   } catch {
     await page.close();
     return null;
@@ -88,8 +97,10 @@ async function openQuickSearch(context: BrowserContext) {
 }
 
 async function selectAirport(page: Page, field: "origin" | "destination", iata: string) {
-  const selector = field === "origin" ? 'input[name="origin_iata"]' : 'input[name="destination_iata"]';
-  const suggestionsSelector = field === "origin" ? "#origin-suggestions" : "#destination-suggestions";
+  const selector =
+    field === "origin" ? 'input[name="origin_iata"]' : 'input[name="destination_iata"]';
+  const suggestionsSelector =
+    field === "origin" ? "#origin-suggestions" : "#destination-suggestions";
   const input = page.locator(selector);
 
   await input.click();
@@ -113,11 +124,18 @@ async function selectDeterministicFutureDate(page: Page) {
   const targetDate = buildDeterministicFutureDateIso();
   const datePicker = page.locator('[data-ui="qs-date-picker-v2"]').first();
   await datePicker.locator(".qs-date-trigger").click();
-  const targetButton = page.locator(`.qs-date-popover .qs-date-day[data-date="${targetDate}"]:not(.is-disabled):not(.is-outside)`).first();
+  const targetButton = page
+    .locator(
+      `.qs-date-popover .qs-date-day[data-date="${targetDate}"]:not(.is-disabled):not(.is-outside)`,
+    )
+    .first();
   if (await targetButton.count()) {
     await targetButton.click();
   } else {
-    await page.locator(".qs-date-popover .qs-date-day:not(.is-disabled):not(.is-outside)").first().click();
+    await page
+      .locator(".qs-date-popover .qs-date-day:not(.is-disabled):not(.is-outside)")
+      .first()
+      .click();
   }
   await page.keyboard.press("Escape");
 }
@@ -168,13 +186,16 @@ async function runRouteCase(page: Page, routeCase: RouteCase): Promise<RouteEvid
     };
     await page.route("**/api/v1/search/quick", rewriteQuickRequest);
 
-    let quickResponse;
+    let quickResponse: any = undefined;
     try {
       const quickResponsePromise = page.waitForResponse(
         (response) => response.url().includes("/api/v1/search/quick"),
         { timeout: 30000 },
       );
-      await page.getByRole("button", { name: /buscar|search/i }).first().click();
+      await page
+        .getByRole("button", { name: /buscar|search/i })
+        .first()
+        .click();
       quickResponse = await quickResponsePromise;
     } finally {
       await page.unroute("**/api/v1/search/quick", rewriteQuickRequest);
@@ -213,17 +234,33 @@ async function runRouteCase(page: Page, routeCase: RouteCase): Promise<RouteEvid
     const resultRows = page.locator(".qs-result-row");
     const resultsVisible = await resultsList.isVisible().catch(() => false);
     const rowCount = await resultRows.count();
-    const firstRouteText = rowCount > 0
-      ? ((await page.locator(".qs-result-route").first().innerText()).replace(/\s+/g, " ").trim())
-      : "";
-    const stateHeadline = (await page.locator(".qs-state-panel h3, .qs-state-panel strong").first().innerText().catch(() => "")).trim();
-    const probableCauses = (await page.locator(".qs-state-panel li").allInnerTexts().catch(() => []))
+    const firstRouteText =
+      rowCount > 0
+        ? (await page.locator(".qs-result-route").first().innerText()).replace(/\s+/g, " ").trim()
+        : "";
+    const stateHeadline = (
+      await page
+        .locator(".qs-state-panel h3, .qs-state-panel strong")
+        .first()
+        .innerText()
+        .catch(() => "")
+    ).trim();
+    const probableCauses = (
+      await page
+        .locator(".qs-state-panel li")
+        .allInnerTexts()
+        .catch(() => [])
+    )
       .map((item) => item.replace(/\s+/g, " ").trim())
       .filter(Boolean);
 
     await page.screenshot({ path: screenshotPath, fullPage: true });
 
-    assert.equal(responseStatus, 200, `Quick-search API failed for ${routeLabel} with status ${responseStatus}.`);
+    assert.equal(
+      responseStatus,
+      200,
+      `Quick-search API failed for ${routeLabel} with status ${responseStatus}.`,
+    );
     assert.equal(resultsVisible, true, `Results list is not visible for ${routeLabel}.`);
     assert.ok(rowCount > 0, `No result rows rendered for ${routeLabel}.`);
     assert.match(firstRouteText, new RegExp(routeCase.origin, "i"));
@@ -271,7 +308,9 @@ test("testsprite strict quick-search routes render visible results without false
   try {
     const page = await openQuickSearch(context);
     if (!page) {
-      t.skip(`Quick-Search not reachable at ${BASE_URL} or backend ${API_BASE}. Start frontend/backend and retry.`);
+      t.skip(
+        `Quick-Search not reachable at ${BASE_URL} or backend ${API_BASE}. Start frontend/backend and retry.`,
+      );
       return;
     }
     for (const routeCase of ROUTE_CASES) {
@@ -283,7 +322,11 @@ test("testsprite strict quick-search routes render visible results without false
   }
 
   const reportPath = path.join(TMP_DIR, "quick_search_strict_results_report.json");
-  await fs.writeFile(reportPath, JSON.stringify({ generated_at: new Date().toISOString(), evidence }, null, 2), "utf8");
+  await fs.writeFile(
+    reportPath,
+    JSON.stringify({ generated_at: new Date().toISOString(), evidence }, null, 2),
+    "utf8",
+  );
 
   const failures = evidence.filter((item) => item.error);
   assert.equal(

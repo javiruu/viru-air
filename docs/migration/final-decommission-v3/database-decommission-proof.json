@@ -1,0 +1,24 @@
+{
+  "authority": "01_DATABASE_SINGLE_AUTHORITY.md",
+  "phase": "01 Database Single Authority",
+  "generated_at": "2026-09-12T23:00:00Z",
+  "verdict": "PASS",
+  "counters": {
+    "runtime_databases": 1,
+    "runtime_database_authority": "Supabase PostgreSQL",
+    "migration_authority": "supabase/migrations",
+    "alembic_runtime_deployment_refs": 0,
+    "sqlite_runtime_refs": 0,
+    "schema_mismatches": 0,
+    "data_reconciliation_mismatches": 0
+  },
+  "evidence": {
+    "database_inventory": "docs/migration/final-decommission-v3/database-inventory.json",
+    "schema_equivalence": "docs/migration/final-decommission-v3/schema-equivalence-final.json",
+    "schema_diff": "docs/migration/final-decommission-v3/schema-diff-final.md",
+    "source_data_fingerprint": "docs/migration/final-decommission-v3/source-data-fingerprint.json",
+    "target_data_fingerprint": "docs/migration/final-decommission-v3/target-data-fingerprint.json",
+    "data_reconciliation": "docs/migration/final-decommission-v3/data-reconciliation-final.json",
+    "adr_0003": "docs/architecture/adr/0003-supabase-migration-authority.md"
+  }
+}

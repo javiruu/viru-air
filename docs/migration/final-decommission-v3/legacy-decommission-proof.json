@@ -1,0 +1,23 @@
+{
+  "authority": "06_LEGACY_DECOMMISSION.md",
+  "phase": "06 Legacy Decommission",
+  "generated_at": "2026-09-13T00:05:00Z",
+  "verdict": "PASS",
+  "counters": {
+    "alembic_revisions": 0,
+    "alembic_runtime_deploy_refs": 0,
+    "sqlite_runtime_refs": 0,
+    "pbkdf2_production_call_sites": 0,
+    "legacy_jwt_issuer_refs": 0,
+    "legacy_refresh_token_refs": 0,
+    "viru_token_frontend_src_refs": 0,
+    "docker_container_artifacts": 0
+  },
+  "evidence": {
+    "baseline_recount": "docs/migration/final-decommission-v3/baseline.json",
+    "deleted_alembic_directory": "backend/alembic/ (deleted)",
+    "deleted_alembic_ini": "backend/alembic.ini (deleted)",
+    "single_database_session": "backend/app/infrastructure/db/session.py",
+    "single_auth_verifier": "backend/app/api/deps.py"
+  }
+}

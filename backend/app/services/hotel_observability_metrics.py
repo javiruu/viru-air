@@ -6,7 +6,6 @@ from datetime import date, timedelta
 
 from sqlalchemy import asc, desc, func, select
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
-from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
@@ -153,10 +152,13 @@ def record_hotel_daily_metric(
     dialect_name = db.get_bind().dialect.name
     if dialect_name == "postgresql":
         db.execute(_postgresql_upsert(key, increment))
-    elif dialect_name == "sqlite":
-        db.execute(_sqlite_upsert(key, increment))
     else:
-        raise RuntimeError("hotel_metric_atomic_upsert_unsupported_dialect")
+        existing = db.query(HotelDailyMetric).filter_by(metric_date=key.metric_date, metric_name=key.metric_name, provider=key.provider, outcome=key.outcome).first()
+        if existing:
+            existing.count += increment
+            existing.updated_at = utc_now_naive()
+        else:
+            db.add(HotelDailyMetric(metric_date=key.metric_date, metric_name=key.metric_name, provider=key.provider, outcome=key.outcome, count=increment, updated_at=utc_now_naive()))
 
 
 def list_hotel_daily_metrics(
@@ -737,20 +739,3 @@ def _postgresql_upsert(key: HotelMetricKey, increment: int):
         },
     )
 
-
-def _sqlite_upsert(key: HotelMetricKey, increment: int):
-    stmt = sqlite_insert(HotelDailyMetric).values(
-        metric_date=key.metric_date,
-        metric_name=key.metric_name,
-        provider=key.provider,
-        outcome=key.outcome,
-        count=increment,
-        updated_at=utc_now_naive(),
-    )
-    return stmt.on_conflict_do_update(
-        index_elements=["metric_date", "metric_name", "provider", "outcome"],
-        set_={
-            "count": HotelDailyMetric.count + increment,
-            "updated_at": utc_now_naive(),
-        },
-    )

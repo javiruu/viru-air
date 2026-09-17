@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
-import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { readStylesheetTree } from "./helpers/read-stylesheet-tree";
 
@@ -10,20 +9,52 @@ import { DoorToDoorFilters } from "../src/modules/door-to-door/components/DoorTo
 import { DoorToDoorOptionCard } from "../src/modules/door-to-door/components/DoorToDoorOptionCard";
 import { DoorToDoorRouteVisual } from "../src/modules/door-to-door/components/DoorToDoorRouteVisual";
 import { DoorToDoorTimeline } from "../src/modules/door-to-door/components/DoorToDoorTimeline";
-import type { DoorToDoorFlight, DoorToDoorOption, DoorToDoorPreferences } from "../src/modules/door-to-door/types";
+import type {
+  DoorToDoorFlight,
+  DoorToDoorOption,
+  DoorToDoorPreferences,
+} from "../src/modules/door-to-door/types";
 
 const ROOT = process.cwd();
 const PAGE = path.join(ROOT, "src", "app", "(private)", "puerta-a-puerta", "page.tsx");
 const PANEL = path.join(ROOT, "src", "modules", "door-to-door", "DoorToDoorPanel.tsx");
 const API = path.join(ROOT, "src", "modules", "door-to-door", "api.ts");
 const NAV = path.join(ROOT, "src", "modules", "shared", "navigationV1.ts");
-const WATCH_DETAIL = path.join(ROOT, "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");
+const WATCH_DETAIL = path.join(
+  ROOT,
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "WatchDetailPanel.tsx",
+);
 const STYLES = path.join(ROOT, "src", "styles", "screens.css");
 const MODULE_DIR = path.join(ROOT, "src", "modules", "door-to-door");
 const D2D_I18N = path.join(ROOT, "src", "i18n", "domains", "doorToDoor.ts");
-const RESULTS_HOOK = path.join(ROOT, "src", "modules", "door-to-door", "hooks", "useDoorToDoorResults.ts");
-const OPTION_CARD = path.join(ROOT, "src", "modules", "door-to-door", "components", "DoorToDoorOptionCard.tsx");
-const BACKEND_GTFS_TEST = path.join(ROOT, "..", "backend", "tests", "unit", "test_door_to_door_gtfs_transit.py");
+const RESULTS_HOOK = path.join(
+  ROOT,
+  "src",
+  "modules",
+  "door-to-door",
+  "hooks",
+  "useDoorToDoorResults.ts",
+);
+const OPTION_CARD = path.join(
+  ROOT,
+  "src",
+  "modules",
+  "door-to-door",
+  "components",
+  "DoorToDoorOptionCard.tsx",
+);
+const BACKEND_GTFS_TEST = path.join(
+  ROOT,
+  "..",
+  "backend",
+  "tests",
+  "unit",
+  "test_door_to_door_gtfs_transit.py",
+);
 
 const flight: DoorToDoorFlight = {
   origin_airport: "AGP",
@@ -38,7 +69,7 @@ const mockOption: DoorToDoorOption = {
   label: "Mejor equilibrio",
   description: "Sales de Almería con margen cómodo antes del vuelo.",
   status: "estimate_only",
-      completeness: "exploratory",
+  completeness: "exploratory",
   total_price_min: 42,
   total_price_max: 68,
   price_per_person_min: 42,
@@ -50,13 +81,58 @@ const mockOption: DoorToDoorOption = {
   airport_buffer_minutes: 140,
   confidence: "estimated",
   source_types: ["estimate"],
-  sources: [{ provider: "mock_multimodal", source_provider: "mock_multimodal", source_type: "estimate", confidence: "estimated", checked_at: "2026-05-20T10:00:00+02:00" }],
+  sources: [
+    {
+      provider: "mock_multimodal",
+      source_provider: "mock_multimodal",
+      source_type: "estimate",
+      confidence: "estimated",
+      checked_at: "2026-05-20T10:00:00+02:00",
+    },
+  ],
   is_recommended: true,
   is_extended: false,
   legs: [
-    { type: "ground", mode: "bus", from: "Almería", to: "Aeropuerto de Málaga AGP", departure_at: "2026-06-14T08:10:00+02:00", arrival_at: "2026-06-14T12:00:00+02:00", duration_minutes: 230, price_min: 18, price_max: 28, provider: "mock_multimodal", source_type: "estimate", confidence: "estimated" },
-    { type: "flight", mode: "flight", from: "AGP", to: "TSF", departure_at: "2026-06-14T14:20:00+02:00", arrival_at: "2026-06-14T16:55:00+02:00", duration_minutes: 155, provider: "flight_watch", source_type: "estimate", confidence: "estimated" },
-    { type: "ground", mode: "shuttle", from: "Treviso Airport TSF", to: "Treviso centro", departure_at: "2026-06-14T17:30:00+02:00", arrival_at: "2026-06-14T18:10:00+02:00", duration_minutes: 40, price_min: 12, price_max: 20, provider: "mock_multimodal", source_type: "estimate", confidence: "estimated" },
+    {
+      type: "ground",
+      mode: "bus",
+      from: "Almería",
+      to: "Aeropuerto de Málaga AGP",
+      departure_at: "2026-06-14T08:10:00+02:00",
+      arrival_at: "2026-06-14T12:00:00+02:00",
+      duration_minutes: 230,
+      price_min: 18,
+      price_max: 28,
+      provider: "mock_multimodal",
+      source_type: "estimate",
+      confidence: "estimated",
+    },
+    {
+      type: "flight",
+      mode: "flight",
+      from: "AGP",
+      to: "TSF",
+      departure_at: "2026-06-14T14:20:00+02:00",
+      arrival_at: "2026-06-14T16:55:00+02:00",
+      duration_minutes: 155,
+      provider: "flight_watch",
+      source_type: "estimate",
+      confidence: "estimated",
+    },
+    {
+      type: "ground",
+      mode: "shuttle",
+      from: "Treviso Airport TSF",
+      to: "Treviso centro",
+      departure_at: "2026-06-14T17:30:00+02:00",
+      arrival_at: "2026-06-14T18:10:00+02:00",
+      duration_minutes: 40,
+      price_min: 12,
+      price_max: 20,
+      provider: "mock_multimodal",
+      source_type: "estimate",
+      confidence: "estimated",
+    },
   ],
 };
 
@@ -90,8 +166,27 @@ const deeplinkOption: DoorToDoorOption = {
   is_recommended: false,
   is_extended: true,
   legs: [
-    { type: "ground", mode: "rideshare", from: "Almería", to: "Aeropuerto de Málaga AGP", duration_minutes: 230, provider: "blablacar", source_type: "deeplink", confidence: "deeplink", booking_url: "https://www.blablacar.es/search?from=Almeria&to=Malaga" },
-    { type: "flight", mode: "flight", from: "AGP", to: "TSF", duration_minutes: 155, provider: "flight_watch", source_type: "api", confidence: "estimated" },
+    {
+      type: "ground",
+      mode: "rideshare",
+      from: "Almería",
+      to: "Aeropuerto de Málaga AGP",
+      duration_minutes: 230,
+      provider: "blablacar",
+      source_type: "deeplink",
+      confidence: "deeplink",
+      booking_url: "https://www.blablacar.es/search?from=Almeria&to=Malaga",
+    },
+    {
+      type: "flight",
+      mode: "flight",
+      from: "AGP",
+      to: "TSF",
+      duration_minutes: 155,
+      provider: "flight_watch",
+      source_type: "api",
+      confidence: "estimated",
+    },
   ],
 };
 
@@ -139,9 +234,38 @@ const apiRouteOption: DoorToDoorOption = {
   is_recommended: false,
   is_extended: false,
   legs: [
-    { type: "ground", mode: "car", from: "Almería", to: "Aeropuerto de Málaga AGP", duration_minutes: 210, distance_meters: 198000, provider: "google_routes", source_type: "api", confidence: "live" },
-    { type: "flight", mode: "flight", from: "AGP", to: "TSF", duration_minutes: 155, provider: "flight_watch", source_type: "api", confidence: "estimated" },
-    { type: "ground", mode: "car", from: "Treviso Airport TSF", to: "Treviso centro", duration_minutes: 35, distance_meters: 6000, provider: "google_routes", source_type: "api", confidence: "live" },
+    {
+      type: "ground",
+      mode: "car",
+      from: "Almería",
+      to: "Aeropuerto de Málaga AGP",
+      duration_minutes: 210,
+      distance_meters: 198000,
+      provider: "google_routes",
+      source_type: "api",
+      confidence: "live",
+    },
+    {
+      type: "flight",
+      mode: "flight",
+      from: "AGP",
+      to: "TSF",
+      duration_minutes: 155,
+      provider: "flight_watch",
+      source_type: "api",
+      confidence: "estimated",
+    },
+    {
+      type: "ground",
+      mode: "car",
+      from: "Treviso Airport TSF",
+      to: "Treviso centro",
+      duration_minutes: 35,
+      distance_meters: 6000,
+      provider: "google_routes",
+      source_type: "api",
+      confidence: "live",
+    },
   ],
 };
 
@@ -160,8 +284,12 @@ const preferences: DoorToDoorPreferences = {
   sort_by: "best_balance",
 };
 function readAllDoorToDoorSource() {
-  const files = fs.readdirSync(MODULE_DIR, { recursive: true }).filter((item) => String(item).endsWith(".tsx") || String(item).endsWith(".ts"));
-  return files.map((item) => fs.readFileSync(path.join(MODULE_DIR, String(item)), "utf8")).join("\n");
+  const files = fs
+    .readdirSync(MODULE_DIR, { recursive: true })
+    .filter((item) => String(item).endsWith(".tsx") || String(item).endsWith(".ts"));
+  return files
+    .map((item) => fs.readFileSync(path.join(MODULE_DIR, String(item)), "utf8"))
+    .join("\n");
 }
 
 test("Puerta a puerta route, nav, watchlist suggestion, and API contract are wired", () => {
@@ -184,9 +312,9 @@ test("DoorToDoorPanel includes no-coverage-real handling, provider status and wa
   assert.match(source, /providersStatus/);
   assert.match(source, /d2d-filters-header/);
   assert.match(source, /setShowFilterPanel\(true\)/);
-  const originIndex = source.indexOf("id=\"d2d-origin\"");
-  const watchIndex = source.indexOf("id=\"d2d-watch\"");
-  const finalIndex = source.indexOf("id=\"d2d-final\"");
+  const originIndex = source.indexOf('id="d2d-origin"');
+  const watchIndex = source.indexOf('id="d2d-watch"');
+  const finalIndex = source.indexOf('id="d2d-final"');
   assert.ok(originIndex > -1 && watchIndex > -1 && finalIndex > -1);
   assert.ok(originIndex < watchIndex);
   assert.ok(watchIndex < finalIndex);
@@ -232,7 +360,10 @@ test("door-to-door i18n includes map hub copy in es and en", () => {
 test("DoorToDoorPanel guards keyboard navigation when autocomplete has no suggestions", () => {
   const source = fs.readFileSync(PANEL, "utf8");
   assert.match(source, /if \(suggestions\.length === 0\)/);
-  assert.match(source, /event\.key === "ArrowDown" \|\| event\.key === "ArrowUp" \|\| event\.key === "Enter"/);
+  assert.match(
+    source,
+    /event\.key === "ArrowDown" \|\| event\.key === "ArrowUp" \|\| event\.key === "Enter"/,
+  );
   assert.match(source, /event\.preventDefault\(\)/);
 });
 
@@ -272,7 +403,10 @@ test("Door-to-door option, radar, filters, and timeline render mock and flight-e
       <DoorToDoorOptionCard
         option={mockOption}
         chosen={true}
-        reasons={[{ kind: "price", label: "price" }, { kind: "buffer", label: "buffer" }]}
+        reasons={[
+          { kind: "price", label: "price" },
+          { kind: "buffer", label: "buffer" },
+        ]}
         quickBadges={[{ kind: "fastest", label: "fastest" }]}
         trustInline={true}
         onChoose={() => undefined}
@@ -292,7 +426,9 @@ test("Door-to-door option, radar, filters, and timeline render mock and flight-e
 });
 
 test("Door-to-door deeplink option renders open-provider CTA and handles null price", () => {
-  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={deeplinkOption} chosen={false} onChoose={() => undefined} />);
+  const html = renderToStaticMarkup(
+    <DoorToDoorOptionCard option={deeplinkOption} chosen={false} onChoose={() => undefined} />,
+  );
   assert.match(html, /precio/);
   assert.match(html, /Abrir proveedor/);
   assert.match(html, /se confirma fuera de Viru|sin precio confirmado/i);
@@ -303,14 +439,22 @@ test("Door-to-door deeplink option renders open-provider CTA and handles null pr
 });
 
 test("Door-to-door api option renders real duration and keeps price unconfirmed", () => {
-  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={apiRouteOption} chosen={false} onChoose={() => undefined} />);
+  const html = renderToStaticMarkup(
+    <DoorToDoorOptionCard option={apiRouteOption} chosen={false} onChoose={() => undefined} />,
+  );
   assert.match(html, /duración real/);
   assert.match(html, /sin precio confirmado/);
   assert.doesNotMatch(html, /desde \\d+/);
 });
 
 test("Door-to-door deeplink option with Google Routes enrichment shows real-duration badge", () => {
-  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={deeplinkWithApiDurationOption} chosen={false} onChoose={() => undefined} />);
+  const html = renderToStaticMarkup(
+    <DoorToDoorOptionCard
+      option={deeplinkWithApiDurationOption}
+      chosen={false}
+      onChoose={() => undefined}
+    />,
+  );
   assert.match(html, /duración real/);
   assert.match(html, /8h30/);
 });
@@ -335,7 +479,7 @@ test("Door-to-door i18n includes provider-specific CTAs and source disclosure", 
 
 test("Door-to-door module has no mojibake markers", () => {
   const source = `${readAllDoorToDoorSource()}\n${fs.readFileSync(D2D_I18N, "utf8")}`;
-  assert.doesNotMatch(source, new RegExp("[\\u00c3\\u00c2\\ufffd]|\\u00e2"));
+  assert.doesNotMatch(source, /[\u00c3\u00c2\ufffd]|\u00e2/);
 });
 
 test("Door-to-door styles include responsive radar and mobile decision layout hooks", () => {
@@ -415,7 +559,9 @@ const gtfsOption: DoorToDoorOption = {
 };
 
 test("Door-to-door GTFS transit option renders public schedule and handles null price", () => {
-  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={gtfsOption} chosen={false} onChoose={() => undefined} />);
+  const html = renderToStaticMarkup(
+    <DoorToDoorOptionCard option={gtfsOption} chosen={false} onChoose={() => undefined} />,
+  );
   assert.match(html, /sin precio confirmado/);
   assert.match(html, /Datos abiertos/);
   assert.match(html, /Transporte público/);
@@ -453,10 +599,30 @@ const nullPriceOption: DoorToDoorOption = {
   airport_buffer_minutes: null,
   confidence: "deeplink",
   source_types: ["deeplink"],
-  sources: [{ provider: "blablacar_deeplink", source_provider: "blablacar", source_type: "deeplink", confidence: "deeplink", checked_at: "2026-05-20T10:00:00+02:00", booking_url: "https://www.blablacar.es/search" }],
+  sources: [
+    {
+      provider: "blablacar_deeplink",
+      source_provider: "blablacar",
+      source_type: "deeplink",
+      confidence: "deeplink",
+      checked_at: "2026-05-20T10:00:00+02:00",
+      booking_url: "https://www.blablacar.es/search",
+    },
+  ],
   is_recommended: false,
   is_extended: false,
-  legs: [{ type: "ground", mode: "rideshare", from: "A", to: "B", duration_minutes: 200, provider: "blablacar", source_type: "deeplink", confidence: "deeplink" }],
+  legs: [
+    {
+      type: "ground",
+      mode: "rideshare",
+      from: "A",
+      to: "B",
+      duration_minutes: 200,
+      provider: "blablacar",
+      source_type: "deeplink",
+      confidence: "deeplink",
+    },
+  ],
 };
 
 const zeroPriceOption: DoorToDoorOption = {
@@ -472,7 +638,7 @@ const nullScheduleOption: DoorToDoorOption = {
   label: "Ruta sin horario",
   description: "Opción con horarios null.",
   status: "estimate_only",
-      completeness: "exploratory",
+  completeness: "exploratory",
   total_price_min: 50,
   total_price_max: 80,
   price_per_person_min: 50,
@@ -484,14 +650,37 @@ const nullScheduleOption: DoorToDoorOption = {
   airport_buffer_minutes: null,
   confidence: "estimated",
   source_types: ["estimate"],
-  sources: [{ provider: "mock_multimodal", source_provider: "mock_multimodal", source_type: "estimate", confidence: "estimated", checked_at: "2026-05-20T10:00:00+02:00" }],
+  sources: [
+    {
+      provider: "mock_multimodal",
+      source_provider: "mock_multimodal",
+      source_type: "estimate",
+      confidence: "estimated",
+      checked_at: "2026-05-20T10:00:00+02:00",
+    },
+  ],
   is_recommended: false,
   is_extended: false,
-  legs: [{ type: "ground", mode: "bus", from: "A", to: "B", departure_at: null, arrival_at: null, duration_minutes: null, provider: "mock_multimodal", source_type: "estimate", confidence: "estimated" }],
+  legs: [
+    {
+      type: "ground",
+      mode: "bus",
+      from: "A",
+      to: "B",
+      departure_at: null,
+      arrival_at: null,
+      duration_minutes: null,
+      provider: "mock_multimodal",
+      source_type: "estimate",
+      confidence: "estimated",
+    },
+  ],
 };
 
 test("F2: null price does not render 0,00 EUR fake price and shows honest disclosure", () => {
-  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={nullPriceOption} chosen={false} onChoose={() => undefined} />);
+  const html = renderToStaticMarkup(
+    <DoorToDoorOptionCard option={nullPriceOption} chosen={false} onChoose={() => undefined} />,
+  );
   assert.doesNotMatch(html, /0,00/);
   assert.doesNotMatch(html, /0\.00/);
   // real_deeplink with null price shows externalPriceNote, not noPrice
@@ -499,34 +688,47 @@ test("F2: null price does not render 0,00 EUR fake price and shows honest disclo
 });
 
 test("F2: null departure/arrival does not render --:--", () => {
-  const html = renderToStaticMarkup(<DoorToDoorTimeline option={nullScheduleOption} flight={flight} />);
+  const html = renderToStaticMarkup(
+    <DoorToDoorTimeline option={nullScheduleOption} flight={flight} />,
+  );
   assert.doesNotMatch(html, /--:--/);
   assert.match(html, /Horario no confirmado|Schedule not confirmed/i);
-  assert.doesNotMatch(html, /Horario no confirmado\s*-\s*Horario no confirmado|Schedule not confirmed\s*-\s*Schedule not confirmed/i);
+  assert.doesNotMatch(
+    html,
+    /Horario no confirmado\s*-\s*Horario no confirmado|Schedule not confirmed\s*-\s*Schedule not confirmed/i,
+  );
 });
 
 test("F2: null duration on timeline shows honest copy instead of --", () => {
-  const html = renderToStaticMarkup(<DoorToDoorTimeline option={nullScheduleOption} flight={flight} />);
+  const html = renderToStaticMarkup(
+    <DoorToDoorTimeline option={nullScheduleOption} flight={flight} />,
+  );
   assert.doesNotMatch(html, />\s*--\s*min/);
   assert.match(html, /Duración no confirmada|Duration not confirmed/i);
 });
 
 test("F2: deeplink option renders external disclosure badge", () => {
-  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={deeplinkOption} chosen={false} onChoose={() => undefined} />);
+  const html = renderToStaticMarkup(
+    <DoorToDoorOptionCard option={deeplinkOption} chosen={false} onChoose={() => undefined} />,
+  );
   assert.match(html, /Búsqueda externa|External search/i);
   assert.match(html, /Abrir proveedor|Open provider/i);
   assert.match(html, /Este enlace abre el proveedor|This link opens the provider/i);
 });
 
 test("F2: zero total price is treated as unconfirmed instead of confirmed fare", () => {
-  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={zeroPriceOption} chosen={false} onChoose={() => undefined} />);
+  const html = renderToStaticMarkup(
+    <DoorToDoorOptionCard option={zeroPriceOption} chosen={false} onChoose={() => undefined} />,
+  );
   assert.doesNotMatch(html, /desde 0\b|from 0\b/i);
   assert.doesNotMatch(html, /0,00|0\.00/);
   assert.match(html, /El precio se confirma fuera de Viru|Price is confirmed outside Viru/i);
 });
 
 test("F2: GTFS/open data does not promise price or booking", () => {
-  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={gtfsOption} chosen={false} onChoose={() => undefined} />);
+  const html = renderToStaticMarkup(
+    <DoorToDoorOptionCard option={gtfsOption} chosen={false} onChoose={() => undefined} />,
+  );
   assert.match(html, /sin precio confirmado|price unconfirmed/i);
   assert.doesNotMatch(html, /Abrir proveedor|Open provider/);
   assert.doesNotMatch(html, /Reservar|Book/i);
@@ -574,12 +776,40 @@ const tightBufferOption: DoorToDoorOption = {
   airport_buffer_minutes: 75,
   confidence: "live",
   source_types: ["api"],
-  sources: [{ provider: "google_routes", source_provider: "google_routes", source_type: "api", confidence: "live", checked_at: "2026-05-20T10:00:00+02:00" }],
+  sources: [
+    {
+      provider: "google_routes",
+      source_provider: "google_routes",
+      source_type: "api",
+      confidence: "live",
+      checked_at: "2026-05-20T10:00:00+02:00",
+    },
+  ],
   is_recommended: true,
   is_extended: false,
   legs: [
-    { type: "ground", mode: "car", from: "A", to: "B", departure_at: "2026-06-14T12:15:00+02:00", arrival_at: "2026-06-14T13:30:00+02:00", duration_minutes: 75, provider: "google_routes", source_type: "api", confidence: "live" },
-    { type: "flight", mode: "flight", from: "AGP", to: "TSF", duration_minutes: 155, provider: "flight_watch", source_type: "api", confidence: "estimated" },
+    {
+      type: "ground",
+      mode: "car",
+      from: "A",
+      to: "B",
+      departure_at: "2026-06-14T12:15:00+02:00",
+      arrival_at: "2026-06-14T13:30:00+02:00",
+      duration_minutes: 75,
+      provider: "google_routes",
+      source_type: "api",
+      confidence: "live",
+    },
+    {
+      type: "flight",
+      mode: "flight",
+      from: "AGP",
+      to: "TSF",
+      duration_minutes: 155,
+      provider: "flight_watch",
+      source_type: "api",
+      confidence: "estimated",
+    },
   ],
 };
 
@@ -600,15 +830,52 @@ const optionWithLegActions: DoorToDoorOption = {
   airport_buffer_minutes: 120,
   confidence: "deeplink",
   source_types: ["deeplink"],
-  sources: [{ provider: "blablacar_deeplink", source_provider: "blablacar", source_type: "deeplink", confidence: "deeplink", checked_at: "2026-05-20T10:00:00+02:00" }],
+  sources: [
+    {
+      provider: "blablacar_deeplink",
+      source_provider: "blablacar",
+      source_type: "deeplink",
+      confidence: "deeplink",
+      checked_at: "2026-05-20T10:00:00+02:00",
+    },
+  ],
   is_recommended: false,
   is_extended: true,
   legs: [
     {
-      type: "ground", mode: "rideshare", from: "A", to: "B", duration_minutes: 200, provider: "blablacar", source_type: "deeplink", confidence: "deeplink",
-      actions: [{ id: "act_1", provider: "blablacar", label: "Buscar en BlaBlaCar", url: "https://blablacar.es/search", kind: "provider_search", opens_external: true, source_status: "external_search", price_status: "external", availability_status: "external", trust_copy: "Precio y plazas en BlaBlaCar" }],
+      type: "ground",
+      mode: "rideshare",
+      from: "A",
+      to: "B",
+      duration_minutes: 200,
+      provider: "blablacar",
+      source_type: "deeplink",
+      confidence: "deeplink",
+      actions: [
+        {
+          id: "act_1",
+          provider: "blablacar",
+          label: "Buscar en BlaBlaCar",
+          url: "https://blablacar.es/search",
+          kind: "provider_search",
+          opens_external: true,
+          source_status: "external_search",
+          price_status: "external",
+          availability_status: "external",
+          trust_copy: "Precio y plazas en BlaBlaCar",
+        },
+      ],
     },
-    { type: "flight", mode: "flight", from: "AGP", to: "TSF", duration_minutes: 155, provider: "flight_watch", source_type: "api", confidence: "estimated" },
+    {
+      type: "flight",
+      mode: "flight",
+      from: "AGP",
+      to: "TSF",
+      duration_minutes: 155,
+      provider: "flight_watch",
+      source_type: "api",
+      confidence: "estimated",
+    },
   ],
 };
 
@@ -643,48 +910,117 @@ const optionWithUnsafeExternalActions: DoorToDoorOption = {
       source_type: "deeplink",
       confidence: "deeplink",
       actions: [
-        { id: "unsafe_1", provider: "blablacar", label: "Comprar ya", url: "javascript:alert('xss')", kind: "provider_search", opens_external: true, source_status: "external_search", price_status: "external", availability_status: "external", trust_copy: "Precio fuera" },
-        { id: "safe_1", provider: "blablacar", label: "Comprar ya", url: "https://www.blablacar.es/search?from=A&to=B", kind: "provider_search", opens_external: true, source_status: "external_search", price_status: "external", availability_status: "external", trust_copy: "Precio fuera" },
+        {
+          id: "unsafe_1",
+          provider: "blablacar",
+          label: "Comprar ya",
+          url: "javascript:alert('xss')",
+          kind: "provider_search",
+          opens_external: true,
+          source_status: "external_search",
+          price_status: "external",
+          availability_status: "external",
+          trust_copy: "Precio fuera",
+        },
+        {
+          id: "safe_1",
+          provider: "blablacar",
+          label: "Comprar ya",
+          url: "https://www.blablacar.es/search?from=A&to=B",
+          kind: "provider_search",
+          opens_external: true,
+          source_status: "external_search",
+          price_status: "external",
+          availability_status: "external",
+          trust_copy: "Precio fuera",
+        },
       ],
     },
-    { type: "flight", mode: "flight", from: "AGP", to: "TSF", duration_minutes: 155, provider: "flight_watch", source_type: "api", confidence: "estimated" },
+    {
+      type: "flight",
+      mode: "flight",
+      from: "AGP",
+      to: "TSF",
+      duration_minutes: 155,
+      provider: "flight_watch",
+      source_type: "api",
+      confidence: "estimated",
+    },
   ],
 };
 
 test("F4: tight buffer (< 90 min) shows risk indicator in option card", () => {
-  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={tightBufferOption} chosen={false} onChoose={() => undefined} isRecommended={true} reasons={[{ kind: "tight_buffer", label: "tight_buffer" }]} />);
+  const html = renderToStaticMarkup(
+    <DoorToDoorOptionCard
+      option={tightBufferOption}
+      chosen={false}
+      onChoose={() => undefined}
+      isRecommended={true}
+      reasons={[{ kind: "tight_buffer", label: "tight_buffer" }]}
+    />,
+  );
   assert.match(html, /Margen ajustado|Tight buffer/i);
   assert.match(html, /75 min margen/);
 });
 
 test("F4: tight buffer reason appears in decision reasons", () => {
-  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={tightBufferOption} chosen={false} onChoose={() => undefined} isRecommended={true} reasons={[{ kind: "tight_buffer", label: "tight_buffer" }]} />);
+  const html = renderToStaticMarkup(
+    <DoorToDoorOptionCard
+      option={tightBufferOption}
+      chosen={false}
+      onChoose={() => undefined}
+      isRecommended={true}
+      reasons={[{ kind: "tight_buffer", label: "tight_buffer" }]}
+    />,
+  );
   assert.match(html, /Margen ajustado: el tiempo|Tight buffer: connection time/i);
 });
 
 test("F4: leg actions are rendered in option card", () => {
-  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={optionWithLegActions} chosen={false} onChoose={() => undefined} />);
+  const html = renderToStaticMarkup(
+    <DoorToDoorOptionCard
+      option={optionWithLegActions}
+      chosen={false}
+      onChoose={() => undefined}
+    />,
+  );
   assert.match(html, /Acciones por tramo|Actions by segment/i);
   assert.match(html, /Abrir BlaBlaCar|Open BlaBlaCar/i);
   assert.match(html, /blablacar\.es\/search/);
 });
 
 test("F4: watchId param is consumed in useDoorToDoorSearch hook source", () => {
-  const source = fs.readFileSync(path.join(ROOT, "src", "modules", "door-to-door", "hooks", "useDoorToDoorSearch.ts"), "utf8");
+  const source = fs.readFileSync(
+    path.join(ROOT, "src", "modules", "door-to-door", "hooks", "useDoorToDoorSearch.ts"),
+    "utf8",
+  );
   assert.match(source, /searchParams\?\.get\("watchId"\)/);
   assert.match(source, /watchIdParam/);
   assert.match(source, /setSelectedWatchId\(watchIdParam\)/);
 });
 
 test("F4: chosen option persistence uses server-side chosen_option_id in results hook", () => {
-  const source = fs.readFileSync(path.join(ROOT, "src", "modules", "door-to-door", "hooks", "useDoorToDoorResults.ts"), "utf8");
+  const source = fs.readFileSync(
+    path.join(ROOT, "src", "modules", "door-to-door", "hooks", "useDoorToDoorResults.ts"),
+    "utf8",
+  );
   assert.match(source, /chosen_option_id/);
   assert.match(source, /setChosenOptionId/);
   assert.match(source, /markChosen/);
 });
 
 test("F4: DoorToDoorWatchlistSuggestion links include watchId query param", () => {
-  const source = fs.readFileSync(path.join(ROOT, "src", "modules", "door-to-door", "components", "DoorToDoorWatchlistSuggestion.tsx"), "utf8");
+  const source = fs.readFileSync(
+    path.join(
+      ROOT,
+      "src",
+      "modules",
+      "door-to-door",
+      "components",
+      "DoorToDoorWatchlistSuggestion.tsx",
+    ),
+    "utf8",
+  );
   assert.match(source, /watchId=\$\{encodeURIComponent\(watch\.id\)\}/);
 });
 
@@ -704,7 +1040,10 @@ test("F4: i18n includes buffer risk and segment actions keys", () => {
 test("F5: no CTA label contains 'Reservar' or 'Comprar' in door-to-door i18n or components", () => {
   const i18nSource = fs.readFileSync(D2D_I18N, "utf8");
   const panelSource = fs.readFileSync(PANEL, "utf8");
-  const cardSource = fs.readFileSync(path.join(ROOT, "src", "modules", "door-to-door", "components", "DoorToDoorOptionCard.tsx"), "utf8");
+  const cardSource = fs.readFileSync(
+    path.join(ROOT, "src", "modules", "door-to-door", "components", "DoorToDoorOptionCard.tsx"),
+    "utf8",
+  );
   const combined = `${i18nSource}\n${panelSource}\n${cardSource}`;
   // "Reservar" solo debe aparecer en contexto de "antes de reservar" (antifrases), nunca como CTA
   const ctaReservar = /(?:>|aria-label="|label:\s*")[^<"]*Reservar/i;
@@ -727,7 +1066,13 @@ test("F5: i18n CTA keys use honest verbs (Abrir, Buscar, Ver) not misleading one
 });
 
 test("F5: external actions in DoorToDoorOptionCard render as links with target=_blank", () => {
-  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={optionWithLegActions} chosen={false} onChoose={() => undefined} />);
+  const html = renderToStaticMarkup(
+    <DoorToDoorOptionCard
+      option={optionWithLegActions}
+      chosen={false}
+      onChoose={() => undefined}
+    />,
+  );
   // External links must open in new tab
   const externalLinks = html.match(/target="_blank"/g);
   assert.ok(externalLinks && externalLinks.length >= 1);
@@ -735,7 +1080,13 @@ test("F5: external actions in DoorToDoorOptionCard render as links with target=_
 });
 
 test("F5: external actions ignore unsafe urls and normalize misleading CTA copy", () => {
-  const html = renderToStaticMarkup(<DoorToDoorOptionCard option={optionWithUnsafeExternalActions} chosen={false} onChoose={() => undefined} />);
+  const html = renderToStaticMarkup(
+    <DoorToDoorOptionCard
+      option={optionWithUnsafeExternalActions}
+      chosen={false}
+      onChoose={() => undefined}
+    />,
+  );
   assert.doesNotMatch(html, /javascript:|data:text\/html/i);
   assert.doesNotMatch(html, /Comprar ahora|Comprar ya/i);
   assert.match(html, /Abrir BlaBlaCar|Open BlaBlaCar/i);
@@ -782,7 +1133,8 @@ test("F7: i18n gtfsWarnings section has all 6 warning keys in ES", () => {
   const i18nSource = fs.readFileSync(D2D_I18N, "utf8");
   const esStart = i18nSource.indexOf("export const doorToDoorEs =");
   const enStart = i18nSource.indexOf("export const doorToDoorEn =");
-  const esSection = enStart > esStart ? i18nSource.slice(esStart, enStart) : i18nSource.slice(esStart);
+  const esSection =
+    enStart > esStart ? i18nSource.slice(esStart, enStart) : i18nSource.slice(esStart);
   assert.match(esSection, /gtfsWarnings/);
   assert.match(esSection, /feedUnavailable/);
   assert.match(esSection, /noNearbyStops/);
@@ -820,7 +1172,8 @@ test("F7: GTFS options never claim booking or price in UI labels", () => {
   const i18nSource = fs.readFileSync(D2D_I18N, "utf8");
   const esStart = i18nSource.indexOf("export const doorToDoorEs =");
   const enStart = i18nSource.indexOf("export const doorToDoorEn =");
-  const esSection = enStart > esStart ? i18nSource.slice(esStart, enStart) : i18nSource.slice(esStart);
+  const esSection =
+    enStart > esStart ? i18nSource.slice(esStart, enStart) : i18nSource.slice(esStart);
   const enSection = i18nSource.slice(enStart);
   // openDataSchedule and openDataHint should be honest about GTFS limits
   assert.match(esSection, /horario público/);
@@ -846,20 +1199,29 @@ test("F8: getCompletenessScore rates options with real sources higher than deepl
   // deeplinkOption has 1 deeplink source + null price → score 0
   // Real result with API sources should have higher completeness
   assert.ok(true); // Structural: function exists in decision.ts
-  const source = fs.readFileSync(path.join(ROOT, "src", "modules", "door-to-door", "decision.ts"), "utf8");
+  const source = fs.readFileSync(
+    path.join(ROOT, "src", "modules", "door-to-door", "decision.ts"),
+    "utf8",
+  );
   assert.match(source, /getCompletenessScore/);
   assert.match(source, /function getCompletenessScore/);
 });
 
 test("F8: getDecisionBadges includes most_complete badge for most complete option", () => {
-  const source = fs.readFileSync(path.join(ROOT, "src", "modules", "door-to-door", "decision.ts"), "utf8");
+  const source = fs.readFileSync(
+    path.join(ROOT, "src", "modules", "door-to-door", "decision.ts"),
+    "utf8",
+  );
   assert.match(source, /most_complete/);
   assert.match(source, /byCompleteness/);
   assert.match(source, /getCompletenessScore\(b\) - getCompletenessScore\(a\)/);
 });
 
 test("F8: getDecisionReasons includes completeness when recommended has more confirmed data", () => {
-  const source = fs.readFileSync(path.join(ROOT, "src", "modules", "door-to-door", "decision.ts"), "utf8");
+  const source = fs.readFileSync(
+    path.join(ROOT, "src", "modules", "door-to-door", "decision.ts"),
+    "utf8",
+  );
   assert.match(source, /recCompleteness/);
   assert.match(source, /bestPeerCompleteness/);
   assert.match(source, /kind: "completeness"/);
@@ -867,7 +1229,10 @@ test("F8: getDecisionReasons includes completeness when recommended has more con
 });
 
 test("F8: DecisionReasonKind and DecisionBadgeKind include completeness in types", () => {
-  const source = fs.readFileSync(path.join(ROOT, "src", "modules", "door-to-door", "types.ts"), "utf8");
+  const source = fs.readFileSync(
+    path.join(ROOT, "src", "modules", "door-to-door", "types.ts"),
+    "utf8",
+  );
   assert.match(source, /"completeness"/);
   assert.match(source, /"most_complete"/);
   assert.match(source, /DecisionReasonKind/);
@@ -893,7 +1258,10 @@ test("F9: trust/sources section is rendered after comparator and before deeplink
   const compareIdx = source.indexOf("d2d-section-compare");
   const sourcesIdx = source.indexOf("d2d-section-sources");
   const deeplinksIdx = source.indexOf("d2d-section-deeplinks");
-  assert.ok(compareIdx > 0 && sourcesIdx > 0 && deeplinksIdx > 0, "All section IDs must exist in Panel source");
+  assert.ok(
+    compareIdx > 0 && sourcesIdx > 0 && deeplinksIdx > 0,
+    "All section IDs must exist in Panel source",
+  );
   assert.ok(compareIdx < sourcesIdx, "Comparator must come before sources/trust section");
   assert.ok(sourcesIdx < deeplinksIdx, "Sources/trust must come before deeplinks section");
 });
@@ -915,7 +1283,10 @@ test("F9: timeline section comes before results in DOM order", () => {
 });
 
 test("F9: sticky bar includes sources, deeplinks, and history navigation items", () => {
-  const stickySource = fs.readFileSync(path.join(ROOT, "src", "modules", "door-to-door", "components", "DoorToDoorStickyBar.tsx"), "utf8");
+  const stickySource = fs.readFileSync(
+    path.join(ROOT, "src", "modules", "door-to-door", "components", "DoorToDoorStickyBar.tsx"),
+    "utf8",
+  );
   assert.match(stickySource, /id: "sources"/);
   assert.match(stickySource, /id: "deeplinks"/);
   assert.match(stickySource, /id: "history"/);
@@ -981,7 +1352,14 @@ test("F10: product doc includes explicit limits (no confirma precios, no cobertu
 });
 
 test("F10: cross-module impact is documented (Watchlist imports DoorToDoorWatchlistSuggestion)", () => {
-  const watchDetailPath = path.join(ROOT, "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");
+  const watchDetailPath = path.join(
+    ROOT,
+    "src",
+    "modules",
+    "watchlist",
+    "components",
+    "WatchDetailPanel.tsx",
+  );
   const source = fs.readFileSync(watchDetailPath, "utf8");
   assert.match(source, /DoorToDoorWatchlistSuggestion/);
   assert.match(source, /from.*door-to-door/);

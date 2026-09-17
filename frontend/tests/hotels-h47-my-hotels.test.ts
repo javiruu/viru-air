@@ -3,17 +3,57 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
-import { buildHotelSearchQuery, readHotelSearchUrlState } from "../src/modules/hotels/hotelSearchUrlState";
+import {
+  buildHotelSearchQuery,
+  readHotelSearchUrlState,
+} from "../src/modules/hotels/hotelSearchUrlState";
 
 const HOTEL_PAGE = path.join(process.cwd(), "src", "modules", "hotels", "HotelRadarPage.tsx");
-const MY_HOTELS_PANEL = path.join(process.cwd(), "src", "modules", "hotels", "components", "HotelMyHotelsPanel.tsx");
-const ALERTS_HOOK = path.join(process.cwd(), "src", "modules", "hotels", "hooks", "useHotelAlerts.ts");
-const SEARCH_HOOK = path.join(process.cwd(), "src", "modules", "hotels", "hooks", "useHotelSearch.ts");
-const TRACKING_HOOK = path.join(process.cwd(), "src", "modules", "hotels", "hooks", "useTrackedOffers.ts");
-const TRACKING_PANEL = path.join(process.cwd(), "src", "modules", "hotels", "components", "HotelTrackedOffersPanel.tsx");
+const MY_HOTELS_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "hotels",
+  "components",
+  "HotelMyHotelsPanel.tsx",
+);
+const ALERTS_HOOK = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "hotels",
+  "hooks",
+  "useHotelAlerts.ts",
+);
+const SEARCH_HOOK = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "hotels",
+  "hooks",
+  "useHotelSearch.ts",
+);
+const TRACKING_HOOK = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "hotels",
+  "hooks",
+  "useTrackedOffers.ts",
+);
+const TRACKING_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "hotels",
+  "components",
+  "HotelTrackedOffersPanel.tsx",
+);
 
 test("H47: the return panel survives canonical hotel search URL state", () => {
-  const state = readHotelSearchUrlState(new URLSearchParams("panel=mis-hoteles&q=Madrid&searched=1"));
+  const state = readHotelSearchUrlState(
+    new URLSearchParams("panel=mis-hoteles&q=Madrid&searched=1"),
+  );
 
   assert.equal(state.panel, "mis-hoteles");
   assert.equal(
@@ -35,7 +75,7 @@ test("H47: Mis hoteles is an in-place return surface with tracking, alerts, and 
   assert.ok(fs.existsSync(MY_HOTELS_PANEL));
   assert.match(page, /HotelMyHotelsPanel/);
   assert.match(page, /search\.navigatePanel\(isMyHotelsPanel \? "search" : "mis-hoteles"\)/);
-  assert.match(alertsHook, /: \{ limit: 50 \}\)/);
+  assert.match(alertsHook, /:\s*\{ limit: 50 \}\s*,?\s*\)/);
   assert.match(searchHook, /selectedHotelId,\s*searchIntentId,/);
   assert.match(searchHook, /nextPanel === "search" \? null : selectedHotelId/);
   assert.match(trackingHook, /trackedOffersError/);

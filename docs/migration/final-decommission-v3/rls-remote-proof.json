@@ -1,0 +1,15 @@
+{
+  "authority": "04_REMOTE_RLS_30_TABLE_MATRIX.md",
+  "phase": "04 Remote RLS 30-Table Matrix",
+  "generated_at": "2026-09-12T23:55:00Z",
+  "verdict": "FAIL",
+  "reason": "Missing remote hosted Supabase test project credentials (TEST_SUPABASE_DB_URL / SUPABASE_TEST_URL / SUPABASE_TEST_SECRET_KEY). Pursuant to 00_START_HERE.md and MASTER_PROMPT_FOR_CODEX.md rule 3, skipped remote test due to missing staging credentials is a real blocker and therefore FAIL until supplied.",
+  "user_scoped_tables_expected": 30,
+  "user_scoped_tables_tested": 0,
+  "rls_metadata_failures": 0,
+  "owner_access_failures": 0,
+  "cross_user_bypasses": 0,
+  "anonymous_unexpected_access": 0,
+  "skipped_critical_rls_tests": 1,
+  "policy_matrix": "docs/migration/final-decommission-v3/rls-policy-matrix.csv"
+}

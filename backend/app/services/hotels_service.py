@@ -2894,7 +2894,7 @@ def delete_tracked_offer(db: Session, *, user_id: str, tracked_offer_id: str) ->
     )
     # Rate snapshots and alert rules created for a tracked offer are owned by
     # that offer. Delete them explicitly because the legacy FKs have no database
-    # cascade and SQLite otherwise leaves dependent rows behind.
+    # cascade and otherwise leaves dependent rows behind.
     db.execute(delete(HotelRateSnapshot).where(HotelRateSnapshot.tracked_offer_id == offer.id))
     alert_rule_ids = select(HotelAlertRule.id).where(HotelAlertRule.tracked_offer_id == offer.id)
     db.execute(delete(HotelAlertEvent).where(HotelAlertEvent.rule_id.in_(alert_rule_ids)))

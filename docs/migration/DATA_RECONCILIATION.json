@@ -1,0 +1,442 @@
+{
+  "executed_at": "2026-09-12T18:05:23.814507+00:00",
+  "source": "C:\\Users\\javiru\\Desktop\\viru-tracker\\viru.db",
+  "target_url_configured": false,
+  "tables": {
+    "airport": {
+      "source_row_count": 222,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "READY"
+    },
+    "calendar_price_observation": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "community_trending_snapshot": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "flight_offer_cache_entry": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "flight_operational_refresh_lock": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "flight_operational_snapshot": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "flight_provider_quota": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_daily_metric": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_property": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_provider_budget": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_provider_circuit": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_provider_run": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_sweep_lease": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "quick_search_cache_entry": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "quick_search_negative_cache_entry": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "quick_search_popularity_counter": {
+      "source_row_count": 3,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "READY"
+    },
+    "quick_search_popularity_daily": {
+      "source_row_count": 3,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "READY"
+    },
+    "quick_search_provider_lock": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "revalidation_job": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "suggestion": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "support_feedback": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "users": {
+      "source_row_count": 1,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "READY"
+    },
+    "client_error_event": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "community_trending_snapshot_route": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "door_to_door_saved_location": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "flight_price_observation": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "flight_watch": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_comp_set": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_provider_alias": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_provider_budget_reservation": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_provider_latency_aggregate": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_saved_search": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_stay_offer": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_tracked_offer": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_watchlist_item": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "idempotency_record": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "password_reset_token": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "refresh_token": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "security_activity": {
+      "source_row_count": 1,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "READY"
+    },
+    "user_note": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "user_notification_state": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "user_preference": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "user_preference_appearance": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "user_preference_region": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "user_profile": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "user_session": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "ux_event": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "alert_rule": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "community_price_report": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "door_to_door_saved_place": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "door_to_door_search_history": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_alert_rule": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_comp_set_member": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_rate_snapshot": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_tracked_offer_lifecycle_event": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_user_stay_watch": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "price_snapshot": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "watch_tracked_flight_leg": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "door_to_door_chosen_option": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_alert_event": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "notification_event": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    },
+    "hotel_notification_delivery": {
+      "source_row_count": 0,
+      "target_row_count": null,
+      "pk_unique": true,
+      "fk_orphans": 0,
+      "status": "EMPTY"
+    }
+  },
+  "errors": []
+}

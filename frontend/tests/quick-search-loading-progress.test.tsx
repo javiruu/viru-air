@@ -5,7 +5,10 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
-const COMPONENT_PATH = path.resolve(TEST_DIR, "../src/modules/quick-search/components/QuickSearchLoadingProgress.tsx");
+const COMPONENT_PATH = path.resolve(
+  TEST_DIR,
+  "../src/modules/quick-search/components/QuickSearchLoadingProgress.tsx",
+);
 
 test("QuickSearchLoadingProgress retains its progress flow and delegates capture cards to Boneyard", () => {
   const source = fs.readFileSync(COMPONENT_PATH, "utf8");

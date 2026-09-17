@@ -16,7 +16,6 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
-import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { readStylesheetTree } from "./helpers/read-stylesheet-tree";
 
@@ -76,16 +75,8 @@ test("return datepicker is wired with dayHintsByIso from return-side cache", () 
 test("return datepicker variant is 'return' (not 'outbound')", () => {
   const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
 
-  assert.match(
-    source,
-    /name="return_date"/,
-    "return datepicker missing name='return_date'",
-  );
-  assert.match(
-    source,
-    /variant="return"/,
-    "return datepicker missing variant='return'",
-  );
+  assert.match(source, /name="return_date"/, "return datepicker missing name='return_date'");
+  assert.match(source, /variant="return"/, "return datepicker missing variant='return'");
 });
 
 test("return-side calendar hints cache is separate from outbound", () => {
@@ -196,12 +187,7 @@ test("quick-search route renders an explicit swap button", () => {
 });
 
 test("QuickSearchDualWorkspace uses 3-column grid from CSS", () => {
-  const dualCssPath = path.join(
-    process.cwd(),
-    "src",
-    "styles",
-    "quick-search-dual.css",
-  );
+  const dualCssPath = path.join(process.cwd(), "src", "styles", "quick-search-dual.css");
   const css = fs.readFileSync(dualCssPath, "utf8");
 
   assert.match(
@@ -212,12 +198,7 @@ test("QuickSearchDualWorkspace uses 3-column grid from CSS", () => {
 });
 
 test("dual divider has visual ::after pseudo‑element for gradient", () => {
-  const dualCssPath = path.join(
-    process.cwd(),
-    "src",
-    "styles",
-    "quick-search-dual.css",
-  );
+  const dualCssPath = path.join(process.cwd(), "src", "styles", "quick-search-dual.css");
   const css = fs.readFileSync(dualCssPath, "utf8");
 
   assert.match(css, /\.qs-dual-divider/);
@@ -232,28 +213,12 @@ test("outbound and return panels have independent pagination", () => {
   const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
 
   // Outbound uses outboundSide for pagination
-  assert.match(
-    source,
-    /outboundSide\.goToPage/,
-    "outbound panel missing per‑side goToPage",
-  );
-  assert.match(
-    source,
-    /outboundSide\.currentPage/,
-    "outbound panel missing per‑side currentPage",
-  );
+  assert.match(source, /outboundSide\.goToPage/, "outbound panel missing per‑side goToPage");
+  assert.match(source, /outboundSide\.currentPage/, "outbound panel missing per‑side currentPage");
 
   // Return uses returnSide for pagination
-  assert.match(
-    source,
-    /returnSide\.goToPage/,
-    "return panel missing per‑side goToPage",
-  );
-  assert.match(
-    source,
-    /returnSide\.currentPage/,
-    "return panel missing per‑side currentPage",
-  );
+  assert.match(source, /returnSide\.goToPage/, "return panel missing per‑side goToPage");
+  assert.match(source, /returnSide\.currentPage/, "return panel missing per‑side currentPage");
 
   // Outbound pagination gated by outbound searchState
   assert.match(
@@ -311,11 +276,7 @@ test("QuickSearchCombinedBanner is imported and rendered in dual workspace", () 
     /import.*QuickSearchCombinedBanner/,
     "QuickSearchCombinedBanner not imported",
   );
-  assert.match(
-    source,
-    /<QuickSearchCombinedBanner/,
-    "QuickSearchCombinedBanner not rendered",
-  );
+  assert.match(source, /<QuickSearchCombinedBanner/, "QuickSearchCombinedBanner not rendered");
   assert.match(source, /const dualCombinationVisible =/);
   assert.match(source, /outboundPanelState\.visibleResults\.length > 0/);
   assert.match(source, /returnPanelState\.visibleResults\.length > 0/);
@@ -424,11 +385,7 @@ test("dual submit uses buildDualSearchParams helper", () => {
     /destination:\s*originRequestValue,/,
     "return leg missing inverted destination (must use origin)",
   );
-  assert.match(
-    source,
-    /travelDate:\s*returnDate,/,
-    "return leg must use returnDate as travelDate",
-  );
+  assert.match(source, /travelDate:\s*returnDate,/, "return leg must use returnDate as travelDate");
 });
 
 test("dual submit preserves selected outbound dates and tracks even one selected day", () => {
@@ -464,12 +421,7 @@ test("dual submit preserves selected outbound dates and tracks even one selected
 // ── 7. Date grid layout ───────────────────────────────────────────────
 
 test("qs-date-grid uses explicit column layout (not auto‑fit)", () => {
-  const cssPath = path.join(
-    process.cwd(),
-    "src",
-    "styles",
-    "screens.css",
-  );
+  const cssPath = path.join(process.cwd(), "src", "styles", "screens.css");
   const css = readStylesheetTree(cssPath);
 
   // The grid must NOT use auto‑fit (which caused misalignment)
@@ -488,12 +440,7 @@ test("qs-date-grid uses explicit column layout (not auto‑fit)", () => {
 });
 
 test("qs-date-grid has conditional has-return modifier", () => {
-  const cssPath = path.join(
-    process.cwd(),
-    "src",
-    "styles",
-    "screens.css",
-  );
+  const cssPath = path.join(process.cwd(), "src", "styles", "screens.css");
   const css = readStylesheetTree(cssPath);
 
   assert.match(
@@ -540,12 +487,7 @@ test("dual workspace hover wiring is scoped to round-trip panels", () => {
 });
 
 test("dual workspace hover styles only apply on hover-capable desktop viewports", () => {
-  const dualCssPath = path.join(
-    process.cwd(),
-    "src",
-    "styles",
-    "quick-search-dual.css",
-  );
+  const dualCssPath = path.join(process.cwd(), "src", "styles", "quick-search-dual.css");
   const css = fs.readFileSync(dualCssPath, "utf8");
 
   assert.match(
@@ -563,11 +505,7 @@ test("dual workspace hover styles only apply on hover-capable desktop viewports"
     /data-hovered-side="return"\]\s+\.qs-dual-panel--outbound/,
     "return hover must dim the outbound panel",
   );
-  assert.match(
-    css,
-    /opacity:\s*0\.74/,
-    "dimmed panel opacity must stay legible",
-  );
+  assert.match(css, /opacity:\s*0\.74/, "dimmed panel opacity must stay legible");
   assert.match(
     css,
     /transition:\s*\n\s*opacity 180ms ease,/,

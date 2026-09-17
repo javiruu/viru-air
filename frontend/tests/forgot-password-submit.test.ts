@@ -22,10 +22,13 @@ test("forgot-password submit resolves success on generic backend response", asyn
 test("forgot-password submit resolves generic error on backend failure", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () =>
-    new Response(JSON.stringify({ status: 500, code: "request_failed", message: "Request failed." }), {
-      status: 500,
-      headers: { "content-type": "application/json" },
-    });
+    new Response(
+      JSON.stringify({ status: 500, code: "request_failed", message: "Request failed." }),
+      {
+        status: 500,
+        headers: { "content-type": "application/json" },
+      },
+    );
 
   try {
     const result = await submitForgotPassword("qa@viru.dev");

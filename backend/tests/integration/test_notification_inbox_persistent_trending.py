@@ -37,7 +37,7 @@ def _watch(client, email: str, origin: str, destination: str) -> tuple[str, dict
         json={
             "origin_iata": origin,
             "destination_iata": destination,
-            "travel_date_local": "2026-09-03",
+            "travel_date_local": str(date.today() + timedelta(days=30)),
         },
     )
     assert response.status_code == 200

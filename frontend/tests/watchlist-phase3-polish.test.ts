@@ -28,5 +28,8 @@ test("Phase 3.4: selected detail transition respects reduced motion", () => {
   const screens = readStylesheetTree(SCREENS);
 
   assert.match(detail, /watch-detail-selection-transition/);
-  assert.match(screens, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.watch-detail-selection-transition/);
+  assert.match(
+    screens,
+    /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.watch-detail-selection-transition/,
+  );
 });

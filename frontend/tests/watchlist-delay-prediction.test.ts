@@ -6,11 +6,25 @@ import test from "node:test";
 test("watchlist delay prediction stays inside the operational panel and explains its evidence", () => {
   // Given: the existing Watchlist operational surface.
   const livePanel = fs.readFileSync(
-    path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchLiveFlightPanel.tsx"),
+    path.join(
+      process.cwd(),
+      "src",
+      "modules",
+      "watchlist",
+      "components",
+      "WatchLiveFlightPanel.tsx",
+    ),
     "utf8",
   );
   const predictionPanel = fs.readFileSync(
-    path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchDelayPrediction.tsx"),
+    path.join(
+      process.cwd(),
+      "src",
+      "modules",
+      "watchlist",
+      "components",
+      "WatchDelayPrediction.tsx",
+    ),
     "utf8",
   );
 

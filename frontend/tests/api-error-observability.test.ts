@@ -40,7 +40,9 @@ test("apiFetchWithStatus parses top-level error envelope and correlation id", as
     assert.equal(result.error.message, "Quick-search request rejected by backend validation.");
     assert.equal(result.error.correlation_id, "corr-debug-123");
     assert.equal(result.error.client_event_id, "intent-debug-123");
-    assert.deepEqual(result.error.details, [{ reason: "unknown_seed_iata:TSF", query_trace_id: "qs_debug_123" }]);
+    assert.deepEqual(result.error.details, [
+      { reason: "unknown_seed_iata:TSF", query_trace_id: "qs_debug_123" },
+    ]);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -78,10 +80,11 @@ test("apiFetchWithStatus can bypass the same-origin proxy for long-running reque
 test("apiFetchWithStatus returns a controlled error for an invalid success payload", async () => {
   const originalFetch = globalThis.fetch;
 
-  globalThis.fetch = async () => new Response("{not-json", {
-    status: 200,
-    headers: { "content-type": "application/json" },
-  });
+  globalThis.fetch = async () =>
+    new Response("{not-json", {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
 
   try {
     const result = await apiFetchWithStatus("/watchlist/bulk-create", { method: "POST" });

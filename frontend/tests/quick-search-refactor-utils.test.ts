@@ -214,8 +214,14 @@ test("buildQuickSearchQuerySignature is deterministic and changes by winning ste
   });
 
   const exact = await buildQuickSearchQuerySignature({ payload, winningStep: "pass_1_exact" });
-  const nearby = await buildQuickSearchQuerySignature({ payload, winningStep: "pass_4_rescue_nearby" });
-  const exactSecondTime = await buildQuickSearchQuerySignature({ payload, winningStep: "pass_1_exact" });
+  const nearby = await buildQuickSearchQuerySignature({
+    payload,
+    winningStep: "pass_4_rescue_nearby",
+  });
+  const exactSecondTime = await buildQuickSearchQuerySignature({
+    payload,
+    winningStep: "pass_1_exact",
+  });
 
   assert.equal(exact, exactSecondTime);
   assert.notEqual(exact, nearby);
@@ -245,7 +251,10 @@ test("buildQuickSearchExpectedSignatures contains all rescue v3 pass variants", 
   const signatures = await buildQuickSearchExpectedSignatures(payload);
   assert.ok(signatures);
   assert.equal(signatures.size, 5);
-  const unknown = await buildQuickSearchQuerySignature({ payload, winningStep: "pass_unknown_custom" });
+  const unknown = await buildQuickSearchQuerySignature({
+    payload,
+    winningStep: "pass_unknown_custom",
+  });
   assert.ok(unknown);
   assert.equal(signatures.has(unknown), false);
 });
@@ -414,10 +423,7 @@ test("normalizeQuickSearchResponse keeps quick-search results renderable from ba
 test("collectQuickSearchWarningCodes dedupes filter warnings with canonical structured warnings", () => {
   const warningCodes = collectQuickSearchWarningCodes({
     meta: {
-      warnings_structured: [
-        { code: "provider_error_partial" },
-        { code: "provider_total_outage" },
-      ],
+      warnings_structured: [{ code: "provider_error_partial" }, { code: "provider_total_outage" }],
     },
     filters: {
       warnings: ["provider_error_partial", "ryanair_availability_failed_partial"],

@@ -3,9 +3,23 @@ import path from "node:path";
 import test from "node:test";
 import assert from "node:assert/strict";
 
-const SMART_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "SmartWatchListPanel.tsx");
+const SMART_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "SmartWatchListPanel.tsx",
+);
 const WATCHLIST_PAGE = path.join(process.cwd(), "src", "app", "(private)", "watchlist", "page.tsx");
-const HISTORY_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "HistoryIntegratedPanel.tsx");
+const HISTORY_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "HistoryIntegratedPanel.tsx",
+);
 
 test("calendar selector trigger lives in SmartWatchListPanel", () => {
   const source = fs.readFileSync(SMART_PANEL, "utf8");

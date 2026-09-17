@@ -5,7 +5,6 @@ from dataclasses import dataclass
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
-from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
 from app.infrastructure.db.models import QuickSearchCacheEntry
@@ -65,8 +64,6 @@ def upsert_quick_search_cache_entry(
     dialect_name = db.get_bind().dialect.name
     if dialect_name == "postgresql":
         db.execute(_build_postgresql_upsert(values))
-    elif dialect_name == "sqlite":
-        db.execute(_build_sqlite_upsert(values))
     else:
         return _fallback_upsert(db, values)
 
@@ -82,12 +79,6 @@ def _build_postgresql_upsert(values: QuickSearchCacheUpsertValues):
     )
 
 
-def _build_sqlite_upsert(values: QuickSearchCacheUpsertValues):
-    stmt = sqlite_insert(QuickSearchCacheEntry).values(**_insert_values(values))
-    return stmt.on_conflict_do_update(
-        index_elements=list(_CONFLICT_COLUMNS),
-        set_={column: getattr(stmt.excluded, column) for column in _UPDATE_COLUMNS},
-    )
 
 
 def _fallback_upsert(db: Session, values: QuickSearchCacheUpsertValues) -> QuickSearchCacheEntry:

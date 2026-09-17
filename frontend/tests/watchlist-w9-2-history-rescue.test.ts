@@ -4,12 +4,27 @@ import path from "node:path";
 import test from "node:test";
 
 const SUMMARY = path.join(process.cwd(), "src", "modules", "watchlist", "summary.ts");
-const HISTORY_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "HistoryIntegratedPanel.tsx");
+const HISTORY_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "HistoryIntegratedPanel.tsx",
+);
 const DERIVED = path.join(process.cwd(), "src", "modules", "watchlist", "useWatchlistDerived.ts");
 const PAGE = path.join(process.cwd(), "src", "app", "(private)", "watchlist", "page.tsx");
 const I18N = path.join(process.cwd(), "src", "i18n", "domains", "watchlist.ts");
 
-const FORBIDDEN_EN_COPY = ["Back", "Flight Watchlist", "Add flight", "Quick start", "Last update", "Min", "Max"];
+const FORBIDDEN_EN_COPY = [
+  "Back",
+  "Flight Watchlist",
+  "Add flight",
+  "Quick start",
+  "Last update",
+  "Min",
+  "Max",
+];
 
 test("W9.2: frescura no genera 'hace hace'", () => {
   const summary = fs.readFileSync(SUMMARY, "utf8");
@@ -50,7 +65,10 @@ test("W9.2: calendario toma mes coherente del filtro activo y no de otra ruta", 
   assert.match(source, /if \(selectedDates\.length > 0\) return toIsoMonth\(selectedDates\[0\]\)/);
   assert.match(source, /const latestRow = filteredRows\[filteredRows\.length - 1\]/);
   assert.match(source, /return filteredRows\.reduce/);
-  assert.doesNotMatch(source, /const source = filteredRows\.length > 0 \? filteredRows : historyRows/);
+  assert.doesNotMatch(
+    source,
+    /const source = filteredRows\.length > 0 \? filteredRows : historyRows/,
+  );
 });
 
 test("W9.2: si calendario no aporta, usa estado compacto y evita grid vacía dominante", () => {
@@ -65,6 +83,10 @@ test("W9.2: si calendario no aporta, usa estado compacto y evita grid vacía dom
 test("W9.2: copy EN bloqueado en watchlist", () => {
   const source = fs.readFileSync(PAGE, "utf8");
   for (const snippet of FORBIDDEN_EN_COPY) {
-    assert.equal(source.includes(snippet), false, `watchlist page still contains forbidden EN copy: ${snippet}`);
+    assert.equal(
+      source.includes(snippet),
+      false,
+      `watchlist page still contains forbidden EN copy: ${snippet}`,
+    );
   }
 });

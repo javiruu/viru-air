@@ -4,10 +4,13 @@ import test from "node:test";
 import { DEFAULT_LOCALE, LANGUAGES, localeTag, normalizeLocale } from "../src/i18n";
 
 test("language selector uses one centralized ES/EN configuration", () => {
-  assert.deepEqual(LANGUAGES.map(({ locale, shortLabel, countryCode }) => ({ locale, shortLabel, countryCode })), [
-    { locale: "es", shortLabel: "ES", countryCode: "es" },
-    { locale: "en", shortLabel: "EN", countryCode: "gb" },
-  ]);
+  assert.deepEqual(
+    LANGUAGES.map(({ locale, shortLabel, countryCode }) => ({ locale, shortLabel, countryCode })),
+    [
+      { locale: "es", shortLabel: "ES", countryCode: "es" },
+      { locale: "en", shortLabel: "EN", countryCode: "gb" },
+    ],
+  );
   assert.equal(DEFAULT_LOCALE, "es");
 });
 

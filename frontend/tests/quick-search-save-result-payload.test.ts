@@ -108,13 +108,15 @@ test("quick search save-result payload carries the comparable fare basket into w
     price: 39.99,
     currency: "EUR",
     source: "amadeus",
-    legs: [{
-      carrier_code: "VY",
-      origin_iata: "AGP",
-      destination_iata: "DUB",
-      dep_ts: "2026-09-10T08:30:00Z",
-      arr_ts: "2026-09-10T11:10:00Z",
-    }],
+    legs: [
+      {
+        carrier_code: "VY",
+        origin_iata: "AGP",
+        destination_iata: "DUB",
+        dep_ts: "2026-09-10T08:30:00Z",
+        arr_ts: "2026-09-10T11:10:00Z",
+      },
+    ],
   };
   const fareProfile: FareComparisonProfile = {
     travelers: 1,

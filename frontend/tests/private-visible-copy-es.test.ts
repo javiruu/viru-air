@@ -7,14 +7,32 @@ const DASHBOARD_PAGE = path.join(process.cwd(), "src", "app", "(private)", "dash
 const WATCHLIST_PAGE = path.join(process.cwd(), "src", "app", "(private)", "watchlist", "page.tsx");
 const HISTORY_PAGE = path.join(process.cwd(), "src", "app", "(private)", "history", "page.tsx");
 const ALERTS_PAGE = path.join(process.cwd(), "src", "app", "(private)", "alerts", "page.tsx");
-const QUICK_SEARCH_PAGE = path.join(process.cwd(), "src", "app", "(private)", "quick-search", "page.tsx");
-const PREFERENCES_PAGE = path.join(process.cwd(), "src", "app", "(private)", "preferences", "page.tsx");
-const SUGGESTIONS_PAGE = path.join(process.cwd(), "src", "app", "(private)", "suggestions", "page.tsx");
+const QUICK_SEARCH_PAGE = path.join(
+  process.cwd(),
+  "src",
+  "app",
+  "(private)",
+  "quick-search",
+  "page.tsx",
+);
+const PREFERENCES_PAGE = path.join(
+  process.cwd(),
+  "src",
+  "app",
+  "(private)",
+  "preferences",
+  "page.tsx",
+);
+const SUGGESTIONS_PAGE = path.join(
+  process.cwd(),
+  "src",
+  "app",
+  "(private)",
+  "suggestions",
+  "page.tsx",
+);
 
-const FORBIDDEN_DASHBOARD_COPY = [
-  "Quick start",
-  "Got it",
-];
+const FORBIDDEN_DASHBOARD_COPY = ["Quick start", "Got it"];
 
 const FORBIDDEN_WATCHLIST_COPY = [
   "Back",
@@ -68,7 +86,11 @@ test("private session routes avoid forbidden EN copy for ES locale", () => {
   }
   for (const snippet of FORBIDDEN_PRIVATE_COPY_LITERALS) {
     for (const source of privateSources) {
-      assert.doesNotMatch(source, snippet, `private source still contains forbidden EN copy: ${snippet}`);
+      assert.doesNotMatch(
+        source,
+        snippet,
+        `private source still contains forbidden EN copy: ${snippet}`,
+      );
     }
   }
 });

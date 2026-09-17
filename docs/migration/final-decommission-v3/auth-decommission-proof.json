@@ -1,0 +1,24 @@
+{
+  "authority": "02_AUTH_SINGLE_AUTHORITY.md",
+  "phase": "02 Auth Single Authority",
+  "generated_at": "2026-09-12T23:30:00Z",
+  "verdict": "PASS",
+  "counters": {
+    "auth_authorities": 1,
+    "canonical_auth": "Supabase Auth",
+    "legacy_password_verifier_refs": 0,
+    "legacy_jwt_issuer_refs": 0,
+    "legacy_refresh_token_refs": 0,
+    "viru_token_refs_frontend_src": 0,
+    "legacy_auth_fallback_branches": 0
+  },
+  "evidence": {
+    "auth_legacy_inventory": "docs/migration/final-decommission-v3/auth-legacy-inventory.json",
+    "auth_identity_migration_plan": "docs/migration/final-decommission-v3/auth-identity-migration-plan.md",
+    "negative_tests_suite": "backend/tests/unit/test_supabase_auth_negative.py",
+    "supabase_ssr_helpers": [
+      "frontend/src/lib/supabase/client.ts",
+      "frontend/src/lib/supabase/server.ts"
+    ]
+  }
+}

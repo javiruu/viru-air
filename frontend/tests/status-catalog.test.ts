@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { getDeliveryStatusMeta, getSystemStatusMeta, getWatchStatusMeta } from "../src/modules/shared/statusCatalog";
+import {
+  getDeliveryStatusMeta,
+  getSystemStatusMeta,
+  getWatchStatusMeta,
+} from "../src/modules/shared/statusCatalog";
 
 const labels: Record<string, string> = {
   "shared.statusCatalog.watch.active": "Activo",

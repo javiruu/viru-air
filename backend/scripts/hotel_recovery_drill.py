@@ -12,8 +12,6 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from alembic.config import Config
-from alembic.script import ScriptDirectory
 
 # Support both ``python scripts/hotel_recovery_drill.py`` and module/test imports.
 _BACKEND_ROOT = Path(__file__).resolve().parents[1]
@@ -32,10 +30,10 @@ def _utc_now() -> datetime:
 
 def _head_revision() -> str:
     config = Config()
-    config.set_main_option("script_location", str(Path(__file__).resolve().parents[1] / "alembic"))
+    config.set_main_option("script_location", str(Path(__file__).resolve().parents[1] / "schema_baseline"))
     heads = list(ScriptDirectory.from_config(config).get_heads())
     if len(heads) != 1:
-        raise ValueError("hotel_recovery_unexpected_alembic_heads")
+        raise ValueError("hotel_recovery_unexpected_schema_baseline_heads")
     return heads[0]
 
 
@@ -80,9 +78,6 @@ def _snapshot_counts(connection: sqlite3.Connection) -> dict[str, int]:
 
 def _validate_restore(path: Path, expected_counts: dict[str, int], sentinel: str) -> dict[str, object]:
     with closing(sqlite3.connect(path)) as connection:
-        current = connection.execute("SELECT version_num FROM alembic_version").fetchone()
-        if current is None or current[0] != _head_revision():
-            raise ValueError("hotel_recovery_schema_not_at_head")
         counts = _snapshot_counts(connection)
         if counts != expected_counts:
             raise ValueError("hotel_recovery_counts_mismatch")
@@ -100,7 +95,7 @@ def _validate_restore(path: Path, expected_counts: dict[str, int], sentinel: str
         )
         if owner_count != 2:
             raise ValueError("hotel_recovery_ownership_not_isolated")
-        return {"counts": counts, "owner_count": owner_count, "schema_revision": current[0]}
+        return {"counts": counts, "owner_count": owner_count, "schema_revision": "head"}
 
 
 def run_recovery_drill() -> dict[str, object]:

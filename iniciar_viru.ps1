@@ -7,7 +7,6 @@ $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $runBackground = -not $Foreground
 $backendDir = Join-Path $root "backend"
 $backendPython = Join-Path $root "backend\.venv\Scripts\python.exe"
-$backendAlembicIni = Join-Path $root "backend\alembic.ini"
 $backendDbPath = Join-Path $backendDir "viru.db"
 $backendDbUrl = "sqlite:///$($backendDbPath.Replace('\', '/'))"
 
@@ -418,63 +417,6 @@ function Install-BackendDependencies {
   Write-Host "Dependencias del backend reparadas correctamente."
 }
 
-function Invoke-AlembicAudit {
-  Push-Location $backendDir
-  try {
-    $output = @(& $backendPython -m app.infrastructure.db.alembic_audit --json 2>&1)
-    $exitCode = $LASTEXITCODE
-  } catch {
-    $output = @($_.Exception.Message)
-    $exitCode = 999
-  } finally {
-    Pop-Location
-  }
-
-  $lines = @($output | ForEach-Object { $_.ToString() })
-  $jsonLine = $null
-  foreach ($line in $lines) {
-    $trimmed = $line.TrimStart()
-    if ($trimmed.StartsWith("{")) {
-      $jsonLine = $line
-      break
-    }
-  }
-
-  return [pscustomobject]@{
-    Json = $jsonLine
-    Output = ($lines -join "`n")
-    ExitCode = $exitCode
-  }
-}
-
-function Test-AlembicAuditNeedsDependencyRepair {
-  param(
-    [Parameter(Mandatory)]
-    [pscustomobject]$Result
-  )
-
-  if ($Result.Output -match "(?i)(ImportError|ModuleNotFoundError|No module named|cannot import name|sqlalchemy_unavailable|Package\(s\) not found|invalid literal for int\(\) with base 10)") {
-    return $true
-  }
-
-  if (-not [string]::IsNullOrWhiteSpace($Result.Json)) {
-    try {
-      $payload = $Result.Json | ConvertFrom-Json -ErrorAction Stop
-      return ($payload.db_state.status -eq "db_error" -and $payload.db_state.error -match "(?i)(sqlalchemy|alembic|ImportError|ModuleNotFoundError|No module named|cannot import name)")
-    } catch {
-      return $false
-    }
-  }
-
-  return $false
-}
-
-Ensure-BackendVirtualEnv
-Ensure-VenvPythonRunnable
-
-$backendEnvFile = Join-Path $root "backend\.env"
-$jwtSecret = $null
-
 function Set-ProcessEnvFromDotEnv {
   param(
     [string]$Path
@@ -536,102 +478,7 @@ $env:JWT_SECRET = $jwtSecret
 $env:DB_URL = $backendDbUrl
 $env:PYTHONUNBUFFERED = "1"
 
-Write-Host "Validando cadena de migraciones Alembic..."
-$auditResult = Invoke-AlembicAudit
-
-if (Test-AlembicAuditNeedsDependencyRepair -Result $auditResult) {
-  Write-Host "La auditoria detecto dependencias Python incompletas o corruptas." -ForegroundColor Yellow
-  Write-Host "VIRU intentara repararlas una vez y reintentar la auditoria."
-  Install-BackendDependencies
-  $auditResult = Invoke-AlembicAudit
-}
-
-$auditRaw = $auditResult.Json
-$auditExitCode = $auditResult.ExitCode
-
-if ([string]::IsNullOrWhiteSpace($auditRaw)) {
-  throw @"
-No se pudo ejecutar la auditoria de migraciones Alembic en:
-  $backendPython -m app.infrastructure.db.alembic_audit --json
-
-Salida capturada:
-$($auditResult.Output)
-
-Causas posibles:
-  1. El entorno virtual de Python (.venv) esta incompleto o corrupto
-  2. Faltan dependencias del backend (corre pip install -e .[dev])
-  3. Hay un error de importacion en el modulo alembic_audit
-
-Accion sugerida (desde la raiz del repo):
-  cd "$backendDir"
-  .\.venv\Scripts\python.exe -m pip install -e .[dev]
-
-Si el problema persiste, regenera el .venv:
-  rmdir /s "$backendDir\.venv"
-  py -3.14 -m venv .venv
-  .\.venv\Scripts\python.exe -m pip install -e .[dev]
-"@
-}
-
-try {
-  $audit = $auditRaw | ConvertFrom-Json -ErrorAction Stop
-} catch {
-  throw "No se pudo interpretar el diagnostico previo de Alembic. Detalle: $auditRaw"
-}
-
-if ($audit.untracked_migration_files.Count -gt 0) {
-  Write-Host "Aviso: hay migraciones sin trackear en el repo:"
-  $audit.untracked_migration_files | ForEach-Object { Write-Host " - $_" }
-}
-
-if ($auditExitCode -eq 3) {
-  $missing = @($audit.missing_down_revisions)
-  $duplicates = @($audit.duplicate_revisions.PSObject.Properties.Name)
-  $missingFiles = @($audit.files_missing_identifiers)
-  throw @"
-Cadena de migraciones Alembic rota en el repo.
-missing_down_revisions: $($missing -join ', ')
-duplicate_revisions: $($duplicates -join ', ')
-files_missing_identifiers: $($missingFiles -join ', ')
-Revisa backend/alembic/versions antes de arrancar.
-"@
-}
-
-if ($auditExitCode -eq 2) {
-  $invalidRevisions = @($audit.db_state.invalid_revisions)
-  throw @"
-La base local tiene un alembic_version invalido para este repo.
-Revision(es) huerfana(s): $($invalidRevisions -join ', ')
-Esto suele significar que la DB local quedo apuntando a un ID antiguo o renombrado.
-Recuperacion local sugerida:
-  1. si no necesitas conservar datos, recrea backend/viru.db y vuelve a arrancar;
-  2. si necesitas conservarlos, corrige alembic_version para que apunte a una revision existente y valida con:
-     cd "$root\backend"
-     .\.venv\Scripts\python.exe -m alembic current
-"@
-}
-
-if ($auditExitCode -eq 4) {
-  throw "No se pudo inspeccionar el estado de la base para Alembic: $($audit.db_state.error)"
-}
-
-if ($auditExitCode -ne 0) {
-  throw "Fallo el diagnostico previo de Alembic (exit $auditExitCode)."
-}
-
-Write-Host "Aplicando migraciones del backend antes del arranque..."
-$alembicArgs = @("-m", "alembic", "-c", $backendAlembicIni, "upgrade", "head")
-$alembic = Start-Process -FilePath $backendPython `
-  -ArgumentList $alembicArgs `
-  -WorkingDirectory $backendDir `
-  -NoNewWindow `
-  -Wait `
-  -PassThru
-
-if ($alembic.ExitCode -ne 0) {
-  throw "Fallo al ejecutar migraciones Alembic (exit $($alembic.ExitCode))."
-}
-
+Write-Host "Base de datos: SQLite local de desarrollo (viru.db). Produccion usa Supabase PostgreSQL (esquema gobernado por supabase/migrations/)."
 # Logs (timestamped, no overwrite)
 $logsDir = Join-Path $root "logs"
 New-Item -ItemType Directory -Force -Path $logsDir | Out-Null

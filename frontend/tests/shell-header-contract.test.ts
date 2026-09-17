@@ -15,10 +15,7 @@ test("PrivateTopBar is a presentational controls wrapper with no shared shell he
   assert.ok(!/useState/.test(source), "PrivateTopBar still uses useState");
   assert.ok(!/useRef/.test(source), "PrivateTopBar still uses useRef");
   assert.ok(!/useEffect/.test(source), "PrivateTopBar still uses useEffect");
-  assert.ok(
-    !/IntersectionObserver/.test(source),
-    "PrivateTopBar still uses IntersectionObserver",
-  );
+  assert.ok(!/IntersectionObserver/.test(source), "PrivateTopBar still uses IntersectionObserver");
   assert.match(source, /className="private-account-controls-bar"/);
   assert.doesNotMatch(source, /shell-header|private-account-anchor/);
 });
@@ -31,7 +28,10 @@ test("(private)/layout.tsx mounts PrivateTopBar", () => {
 
 test("private navigation keeps the page title in sync with unread notifications", () => {
   const source = read("src/modules/shared/PrivateNav.tsx");
-  assert.match(source, /document\.title\s*=\s*unreadSignals\s*>\s*0\s*\?\s*`\(\$\{unreadSignals\}\) Viru Air`\s*:\s*"Viru Air"/);
+  assert.match(
+    source,
+    /document\.title\s*=\s*unreadSignals\s*>\s*0\s*\?\s*`\(\$\{unreadSignals\}\) Viru Air`\s*:\s*"Viru Air"/,
+  );
   assert.match(source, /\}, \[unreadSignals\]\);/);
 });
 
@@ -40,14 +40,32 @@ test("private shell refreshes unread notifications after inbox read actions", ()
   const dashboard = read("src/app/(private)/dashboard/page.tsx");
   const inbox = read("src/modules/signals/SignalsInbox.tsx");
 
-  assert.match(layout, /window\.addEventListener\("viru:notifications-changed", refreshUnreadSignals\)/);
-  assert.match(layout, /window\.removeEventListener\("viru:notifications-changed", refreshUnreadSignals\)/);
+  assert.match(
+    layout,
+    /window\.addEventListener\("viru:notifications-changed", refreshUnreadSignals\)/,
+  );
+  assert.match(
+    layout,
+    /window\.removeEventListener\("viru:notifications-changed", refreshUnreadSignals\)/,
+  );
   assert.match(layout, /event instanceof CustomEvent && event\.detail\?\.unread === 0/);
   assert.match(layout, /setUnreadSignals\(0\)/);
-  assert.match(dashboard, /window\.addEventListener\("viru:notifications-changed", clearUnreadAlerts\)/);
-  assert.match(dashboard, /setNotificationSummary\(\(current\) => \(current \? \{ \.\.\.current, unread: 0 \} : current\)\)/);
-  assert.match(inbox, /apiFetch\(`\/notifications\/\$\{item\.source_type\}\/\$\{item\.source_id\}\/read`, \{ method: "POST" \}\);\s*window\.dispatchEvent\(new Event\("viru:notifications-changed"\)\)/);
-  assert.match(inbox, /apiFetch\("\/notifications\/read-all", \{ method: "POST" \}\);\s*window\.dispatchEvent\(new CustomEvent\("viru:notifications-changed", \{ detail: \{ unread: 0 \} \}\)\)/);
+  assert.match(
+    dashboard,
+    /window\.addEventListener\("viru:notifications-changed", clearUnreadAlerts\)/,
+  );
+  assert.match(
+    dashboard,
+    /setNotificationSummary\(\(current\) => \(current \? \{ \.\.\.current, unread: 0 \} : current\)\)/,
+  );
+  assert.match(
+    inbox,
+    /apiFetch\(`\/notifications\/\$\{item\.source_type\}\/\$\{item\.source_id\}\/read`,\s*\{\s*method:\s*"POST",?\s*\}\);\s*window\.dispatchEvent\(new Event\("viru:notifications-changed"\)\)/,
+  );
+  assert.match(
+    inbox,
+    /apiFetch\("\/notifications\/read-all", \{ method: "POST" \}\);\s*window\.dispatchEvent\(\s*new CustomEvent\("viru:notifications-changed", \{ detail: \{ unread: 0 \} \}\),?\s*\)/,
+  );
 });
 
 test("root metadata and manifest expose the Viru Air tab identity", () => {
@@ -91,10 +109,7 @@ test("PublicShellHeader renders brand, nav and action controls", () => {
 
 test("(public)/layout.tsx mounts PublicShellHeader", () => {
   const source = read("src/app/(public)/layout.tsx");
-  assert.match(
-    source,
-    /import PublicShellHeader from "@\/modules\/shared\/PublicShellHeader"/,
-  );
+  assert.match(source, /import PublicShellHeader from "@\/modules\/shared\/PublicShellHeader"/);
   assert.match(source, /<PublicShellHeader\s*\/>/);
 });
 
@@ -119,14 +134,8 @@ test("the inlined shell stylesheet keeps the complete stuck morph", () => {
   const morph = css.match(/@container\s+scroll-state\(stuck:\s*top\)\s*\{[\s\S]*?\n\}/);
   if (morph === null) assert.fail("morph block not found");
   const morphCss = morph[0];
-  assert.match(
-    morphCss,
-    /padding:\s*var\(--shell-header-stuck-padding/,
-  );
-  assert.match(
-    morphCss,
-    /border-radius:\s*var\(--shell-header-stuck-radius/,
-  );
+  assert.match(morphCss, /padding:\s*var\(--shell-header-stuck-padding/);
+  assert.match(morphCss, /border-radius:\s*var\(--shell-header-stuck-radius/);
   assert.match(morphCss, /box-shadow:\s*var\(--shell-header-stuck-shadow/);
   assert.match(morphCss, /backdrop-filter/);
 });
@@ -228,7 +237,10 @@ test("private navigation is a persistent lateral workspace rail", () => {
   assert.match(layout, /className="private-workspace"/);
   assert.match(nav, /className="private-nav-brand"/);
   assert.match(nav, /className="private-nav-links"/);
-  assert.match(css, /\.private-layout\s*\{[^}]*grid-template-columns:\s*minmax\(13\.5rem, 16\.5rem\) minmax\(0, 1fr\)/);
+  assert.match(
+    css,
+    /\.private-layout\s*\{[^}]*grid-template-columns:\s*minmax\(13\.5rem, 16\.5rem\) minmax\(0, 1fr\)/,
+  );
   assert.match(css, /\.private-nav\s*\{[^}]*position:\s*sticky/);
 });
 
@@ -239,8 +251,14 @@ test("mobile private navigation restores focus and prevents background scroll", 
   assert.match(nav, /event\.key === "Escape"/);
   assert.match(nav, /document\.body\.style\.overflow = "hidden"/);
   assert.match(nav, /toggleRef\.current\?\.focus\(\)/);
-  assert.match(nav, /navRef\.current\?\.querySelector<HTMLAnchorElement>\("\.private-nav-link"\)\?\.focus\(\)/);
-  assert.match(css, /@media \(max-width: 768px\)[\s\S]*?\.private-nav \{[\s\S]*?visibility:\s*hidden/);
+  assert.match(
+    nav,
+    /navRef\.current\?\.querySelector<HTMLAnchorElement>\("\.private-nav-link"\)\?\.focus\(\)/,
+  );
+  assert.match(
+    css,
+    /@media \(max-width: 768px\)[\s\S]*?\.private-nav \{[\s\S]*?visibility:\s*hidden/,
+  );
   assert.match(css, /\.private-nav\.open \{[\s\S]*?visibility:\s*visible/);
 });
 
@@ -284,16 +302,11 @@ test("auth forms no longer import or render ThemeToggle inside glass-signin-topb
     "src/app/(public)/forgot-password/page.tsx",
   ]) {
     const source = read(file);
-    assert.ok(
-      !/import ThemeToggle/.test(source),
-      `${file} still imports ThemeToggle`,
-    );
-    const topbar = source.match(
-      /<div className="glass-signin-topbar">[\s\S]*?<\/div>/,
-    );
+    assert.ok(!/import ThemeToggle/.test(source), `${file} still imports ThemeToggle`);
+    const topbar = source.match(/<div className="glass-signin-topbar">[\s\S]*?<\/div>/);
     assert.ok(topbar, `${file} missing glass-signin-topbar`);
     assert.ok(
-      !/<ThemeToggle/.test(topbar![0]),
+      !/<ThemeToggle/.test(topbar?.[0]),
       `${file} glass-signin-topbar still renders <ThemeToggle />`,
     );
   }
@@ -301,15 +314,8 @@ test("auth forms no longer import or render ThemeToggle inside glass-signin-topb
 
 test("/prueba no longer renders the cinema-header or imports ThemeToggle", () => {
   const source = read("src/app/(public)/prueba/page.tsx");
-  assert.ok(
-    !/import ThemeToggle/.test(source),
-    "/prueba still imports ThemeToggle",
-  );
-  for (const forbidden of [
-    "landing-prueba-cinema-header",
-    "landing-brand",
-    "landing-tagline",
-  ]) {
+  assert.ok(!/import ThemeToggle/.test(source), "/prueba still imports ThemeToggle");
+  for (const forbidden of ["landing-prueba-cinema-header", "landing-brand", "landing-tagline"]) {
     assert.ok(!source.includes(forbidden), `/prueba still references ${forbidden}`);
   }
 });

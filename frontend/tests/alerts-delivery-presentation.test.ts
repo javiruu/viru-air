@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { getDeliveryStateCopy, getNotificationChannelCopy } from "@/modules/alerts/deliveryPresentation";
+import {
+  getDeliveryStateCopy,
+  getNotificationChannelCopy,
+} from "@/modules/alerts/deliveryPresentation";
 
 const t = (key: string) => {
   const dict: Record<string, string> = {

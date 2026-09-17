@@ -11,18 +11,9 @@ def _read(path: str) -> str:
 
 
 def test_backend_image_contract_is_locked_and_non_root() -> None:
-    dockerfile = _read("backend/Dockerfile")
-
-    assert "python:3.12-slim-bookworm AS builder" in dockerfile
-    assert "uv sync --locked --no-dev --no-install-project" in dockerfile
-    assert "USER app" in dockerfile
-    assert "LOG_FILE=/tmp/viru.log" in dockerfile
-    assert "alembic upgrade" not in dockerfile
-
-    dockerignore = _read("backend/.dockerignore")
-    assert ".env" in dockerignore
-    assert "*.db" in dockerignore
-    assert "logs/" in dockerignore
+    # Container eradication: verify no Dockerfile or .dockerignore in repository
+    assert not (REPO_ROOT / "backend/Dockerfile").exists()
+    assert not (REPO_ROOT / "backend/.dockerignore").exists()
 
 
 def test_hotel_sweep_cronjob_is_safe_by_default() -> None:
@@ -60,7 +51,7 @@ def test_hotel_migration_job_is_separate_and_suspended() -> None:
     assert "runAsUser: 10001" in manifest
     assert "allowPrivilegeEscalation: false" in manifest
     assert 'drop: ["ALL"]' in manifest
-    assert 'command: ["alembic", "upgrade", "head"]' in manifest
+    assert 'migrations_managed_by_supabase' in manifest
     assert "name: DB_URL" in manifest
     assert "name: viru-backend-runtime" in manifest
     assert "key: JWT_SECRET" in manifest
@@ -72,13 +63,11 @@ def test_hotel_migration_job_is_separate_and_suspended() -> None:
 
 
 def test_runtime_fixes_from_container_gate_are_registered() -> None:
-    alembic_ini = _read("backend/alembic.ini")
     pyproject = _read("backend/pyproject.toml")
     cronjob = _read("infra/k8s/hotels-sweep-cronjob.yaml")
     migrate = _read("infra/k8s/hotels-migrate-job.yaml")
 
-    assert "prepend_sys_path = ." in alembic_ini
-
+    
     deps_start = pyproject.index("[project]")
     opt_start = pyproject.index("[project.optional-dependencies]")
     core_section = pyproject[deps_start:opt_start]
@@ -105,10 +94,8 @@ def test_ghcr_publish_workflow_and_activation_overlay_are_prepared() -> None:
     overlay = _read("infra/k8s/overlays/staging/kustomization.yaml")
     base_cron = _read("infra/k8s/hotels-sweep-cronjob.yaml")
 
-    assert "publish-image" in release
-    assert "docker/build-push-action" in release
-    assert "packages: write" in release
-    assert "sha-${{ github.sha }}" in release
+    assert "quality-gates" in release
+    assert "canary-deploy" in release
 
     assert "suspend: true" in base_cron  # base must stay fail-closed
 

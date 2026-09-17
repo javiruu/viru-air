@@ -53,7 +53,10 @@ async function findPageFiles(directory) {
 }
 
 function routeFromPageFile(appDirectory, pageFile) {
-  const segments = path.relative(appDirectory, path.dirname(pageFile)).split(path.sep).filter(Boolean);
+  const segments = path
+    .relative(appDirectory, path.dirname(pageFile))
+    .split(path.sep)
+    .filter(Boolean);
   if (segments.some((segment) => segment.startsWith("@") || segment.startsWith("["))) return null;
 
   const urlSegments = segments.filter((segment) => !segment.startsWith("("));
@@ -118,26 +121,24 @@ export function buildNextDevArguments(commandArguments) {
   }
 
   const port = resolveDevPort(commandArguments);
-  return [
-    "dev",
-    "--turbopack",
-    "-p",
-    String(port),
-    ...forwardedArguments,
-  ];
+  return ["dev", "--turbopack", "-p", String(port), ...forwardedArguments];
 }
 
 function getCommandWarmupMode(commandArguments) {
   for (const argument of commandArguments) {
     if (argument === "--warmup") return "slow";
-    if (argument.startsWith("--warmup=")) return argument.slice("--warmup=".length).trim().toLowerCase();
+    if (argument.startsWith("--warmup="))
+      return argument.slice("--warmup=".length).trim().toLowerCase();
   }
   return undefined;
 }
 
 export function resolveRouteWarmupProfile(environment = process.env, commandArguments = []) {
   const configuredMode = environment.VIRU_ROUTE_WARMUP?.trim().toLowerCase();
-  const mode = configuredMode === undefined ? getCommandWarmupMode(commandArguments) ?? "slow" : configuredMode;
+  const mode =
+    configuredMode === undefined
+      ? (getCommandWarmupMode(commandArguments) ?? "slow")
+      : configuredMode;
 
   if (["0", "false", "off", "none"].includes(mode)) return null;
   if (["fast", "eager"].includes(mode)) return { ...FAST_WARMUP_PROFILE };
@@ -228,7 +229,9 @@ export async function warmStaticRoutes({
       const elapsedMs = Date.now() - startedAt;
       if (status >= 500) {
         failed.push(route);
-        log(`[Viru warmup] ${index + 1}/${routes.length} ${route} HTTP ${status} (${elapsedMs} ms)`);
+        log(
+          `[Viru warmup] ${index + 1}/${routes.length} ${route} HTTP ${status} (${elapsedMs} ms)`,
+        );
       } else {
         succeeded += 1;
         log(`[Viru warmup] ${index + 1}/${routes.length} ${route} lista (${elapsedMs} ms)`);
@@ -240,7 +243,13 @@ export async function warmStaticRoutes({
       log(`[Viru warmup] ${index + 1}/${routes.length} ${route} falló: ${reason}`);
     }
 
-    const nextPauseMs = routePauseAfter({ index, total: routes.length, pauseMs, batchSize, batchPauseMs });
+    const nextPauseMs = routePauseAfter({
+      index,
+      total: routes.length,
+      pauseMs,
+      batchSize,
+      batchPauseMs,
+    });
     if (nextPauseMs > 0) await delayFn(nextPauseMs, signal);
   }
 
@@ -249,16 +258,21 @@ export async function warmStaticRoutes({
 
 async function runRouteWarmup({ origin, appDirectory, profile, signal }) {
   const routes = await discoverStaticRoutes(appDirectory);
-  console.log(`[Viru warmup] ${routes.length} rutas estáticas descubiertas; modo ${profile.mode}; esperando a Next...`);
+  console.log(
+    `[Viru warmup] ${routes.length} rutas estáticas descubiertas; modo ${profile.mode}; esperando a Next...`,
+  );
   const serverReady = await waitForServer(origin, signal);
   if (!serverReady) {
-    if (!signal.aborted) console.warn("[Viru warmup] Next no respondió a tiempo; se omite el calentamiento.");
+    if (!signal.aborted)
+      console.warn("[Viru warmup] Next no respondió a tiempo; se omite el calentamiento.");
     return;
   }
 
   const queuedRoutes = routes.filter((route) => route !== "/");
   if (profile.initialDelayMs > 0) {
-    console.log(`[Viru warmup] Portada lista; cediendo ${profile.initialDelayMs / 1_000} s antes de la primera tanda.`);
+    console.log(
+      `[Viru warmup] Portada lista; cediendo ${profile.initialDelayMs / 1_000} s antes de la primera tanda.`,
+    );
     await delay(profile.initialDelayMs, signal);
     if (signal.aborted) return;
   }

@@ -24,13 +24,7 @@ const COMMUNITY_HOOK = path.join(
   "watchlist",
   "useCommunityPricing.ts",
 );
-const ACCOUNT_MENU = path.join(
-  process.cwd(),
-  "src",
-  "modules",
-  "shared",
-  "AccountMenu.tsx",
-);
+const ACCOUNT_MENU = path.join(process.cwd(), "src", "modules", "shared", "AccountMenu.tsx");
 
 test("community hub indicator prioritizes the traveler's pending contribution", () => {
   const communityPricing = createEmptyCommunityPricing();
@@ -86,7 +80,10 @@ test("community hub drawer preserves modal keyboard and focus behavior", () => {
   assert.match(source, /closeButtonRef\.current\?\.focus\(\)/);
   assert.match(source, /event\.key === "Escape" && !isSaving/);
   assert.match(source, /aria-hidden="true"[\s\S]*disabled=\{isSaving\}/);
-  assert.match(source, /aria-label=\{t\("watchlist\.communityPricing\.close"\)\}[\s\S]*disabled=\{isSaving\}/);
+  assert.match(
+    source,
+    /aria-label=\{t\("watchlist\.communityPricing\.close"\)\}[\s\S]*disabled=\{isSaving\}/,
+  );
   assert.match(source, /event\.key !== "Tab"/);
   assert.match(source, /\}, \[activeWatchId\]\);/);
   assert.match(hookSource, /returnFocusRef\.current =/);
