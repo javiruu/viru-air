@@ -1,7 +1,8 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { DashboardNewsRail } from "@/components/components/dashboard/DashboardNewsRail";
 import { getDashboardFeaturedNews } from "@/data/dashboardNews";
@@ -12,35 +13,19 @@ import { DashboardAccessSwitch } from "@/modules/dashboard/dashboard-access-swit
 import { getHeroOpportunityMetrics } from "@/modules/dashboard/hero-opportunity-metrics";
 import { CommunityCorridorsPanel } from "@/modules/community-routes/CommunityCorridorsPanel";
 import communityStyles from "@/modules/community-routes/CommunityCorridorsPanel.module.css";
-import { apiFetch } from "@/modules/shared/api";
 import { trackEvent } from "@/modules/shared/analytics";
 import { formatCurrency, formatPercent } from "@/modules/shared/format";
+import { useAuth } from "@/modules/shared/AuthProvider";
 
-type Me = { id: string; email: string; locale: string; is_admin: boolean };
-type Watch = {
-  id: string;
-  origin_iata: string;
-  destination_iata: string;
-  status: string;
-  latest_snapshot?: { raw_price: number; raw_currency: string } | null;
-};
-type Note = { id: string; title: string; body: string; created_at: string; updated_at: string };
-type PriceSummary = { latest_price: number | null; delta_pct: number | null };
-
-type BackendBanner = {
-  severity: "warning" | "error";
-  message: string;
-};
-
-type DashboardNotificationSummary = {
-  total: number;
-  unread: number;
-  price: number;
-  security: number;
-  digest: number;
-  worker: number;
-  community: number;
-};
+import { listWatchesApiV1WatchlistGet } from "@/api/generated/watchlist/watchlist";
+import {
+  listNotesApiV1NotesGet,
+  createNoteApiV1NotesPost,
+  updateNoteApiV1NotesNoteIdPut,
+  deleteNoteApiV1NotesNoteIdDelete,
+} from "@/api/generated/notes/notes";
+import { getNotificationsSummaryApiV1NotificationsSummaryGet } from "@/api/generated/notifications/notifications";
+import { summaryApiV1PricesSummaryGet } from "@/api/generated/prices/prices";
 
 type SuggestionBadgeType = "price" | "schedule" | "altAirport";
 
@@ -53,89 +38,145 @@ type DashboardSuggestion = {
   destination: string;
 };
 
+const EMPTY_ARRAY: any[] = [];
+
 export default function DashboardPage() {
   const { t, localeTag } = useI18n();
-  const [me, setMe] = useState<Me | null>(null);
-  const [notificationSummary, setNotificationSummary] =
-    useState<DashboardNotificationSummary | null>(null);
-  const notificationSummaryRequest = useRef(0);
-  const [watches, setWatches] = useState<Watch[]>([]);
-  const [heroPriceSummary, setHeroPriceSummary] = useState<PriceSummary | null>(null);
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [backendBanner, setBackendBanner] = useState<BackendBanner | null>(null);
+  const { user: me } = useAuth();
+  const queryClient = useQueryClient();
   const dashboardHint = useFtueHint("dashboard");
 
   useEffect(() => {
     void trackUxEvent("dashboard_view");
   }, []);
+
   const [noteDraft, setNoteDraft] = useState({ title: "", body: "" });
   const [noteActiveId, setNoteActiveId] = useState<string | null>(null);
   const [noteStatus, setNoteStatus] = useState<string | null>(null);
   const [notesCollapsed, setNotesCollapsed] = useState(false);
 
-  const loadDashboard = useCallback(async () => {
-    try {
-      const [meData, watchData, noteData] = await Promise.all([
-        apiFetch<Me>("/auth/me"),
-        apiFetch<Watch[]>("/watchlist"),
-        apiFetch<Note[]>("/notes"),
-      ]);
-      setMe(meData);
-      setWatches(watchData);
-      setNotes(noteData);
-      setBackendBanner(null);
-      const requestId = ++notificationSummaryRequest.current;
-      const notificationData = await apiFetch<DashboardNotificationSummary>(
-        "/notifications/summary",
-      ).catch(() => null);
-      if (requestId === notificationSummaryRequest.current)
-        setNotificationSummary(notificationData);
-    } catch {
-      setNotificationSummary(null);
-      const fallback = t("dashboard.banner.warmMessage");
-      setBackendBanner({
-        severity: "warning",
-        message: fallback,
-      });
-    }
-  }, [t]);
+  // Queries
+  const {
+    data: watchesRes,
+    isError: watchesError,
+    refetch: refetchWatches,
+  } = useQuery({
+    queryKey: ["watches"],
+    queryFn: () => listWatchesApiV1WatchlistGet(),
+  });
+  const watches = watchesRes?.status === 200 ? (watchesRes.data as any[]) : EMPTY_ARRAY;
 
-  useEffect(() => {
-    loadDashboard();
-  }, [loadDashboard]);
+  const {
+    data: notesRes,
+    isError: notesError,
+    refetch: refetchNotes,
+  } = useQuery({
+    queryKey: ["notes"],
+    queryFn: () => listNotesApiV1NotesGet(),
+  });
+  const notes = notesRes?.status === 200 ? (notesRes.data as any[]) : EMPTY_ARRAY;
+
+  const {
+    data: notificationSummaryRes,
+    isError: notificationsError,
+    refetch: refetchNotifications,
+  } = useQuery({
+    queryKey: ["notificationsSummary"],
+    queryFn: () => getNotificationsSummaryApiV1NotificationsSummaryGet(),
+  });
+  const notificationSummary = notificationSummaryRes?.status === 200 ? notificationSummaryRes.data : null;
+
+  const firstWatchId = watches[0]?.id;
+  const {
+    data: heroPriceSummaryRes,
+    isError: priceSummaryError,
+  } = useQuery({
+    queryKey: ["priceSummary", firstWatchId],
+    queryFn: () => summaryApiV1PricesSummaryGet({ watch_id: firstWatchId! }),
+    enabled: !!firstWatchId,
+  });
+  const heroPriceSummary = heroPriceSummaryRes?.status === 200 ? heroPriceSummaryRes.data : null;
+
+  const isError = watchesError || notesError || notificationsError || priceSummaryError;
+
+  // Mutations for Notes
+  const createNoteMut = useMutation({
+    mutationFn: (payload: { title: string; body: string }) => createNoteApiV1NotesPost(payload),
+    onSuccess: (res) => {
+      if (res.status === 200) {
+        queryClient.setQueryData(["notes"], (old: any) => {
+          if (!old || old.status !== 200) return old;
+          return { ...old, data: [res.data, ...old.data] };
+        });
+        setNoteActiveId(res.data.id);
+        setNoteStatus(t("dashboard.notes.status.created"));
+      } else {
+        setNoteStatus(t("dashboard.notes.status.saveFail"));
+      }
+    },
+    onError: () => setNoteStatus(t("dashboard.notes.status.saveFail")),
+  });
+
+  const updateNoteMut = useMutation({
+    mutationFn: (payload: { id: string; title: string; body: string }) =>
+      updateNoteApiV1NotesNoteIdPut(payload.id, { title: payload.title, body: payload.body }),
+    onSuccess: (res) => {
+      if (res.status === 200) {
+        queryClient.setQueryData(["notes"], (old: any) => {
+          if (!old || old.status !== 200) return old;
+          return {
+            ...old,
+            data: old.data.map((n: any) => (n.id === res.data.id ? res.data : n)),
+          };
+        });
+        setNoteStatus(t("dashboard.notes.status.updated"));
+      } else {
+        setNoteStatus(t("dashboard.notes.status.saveFail"));
+      }
+    },
+    onError: () => setNoteStatus(t("dashboard.notes.status.saveFail")),
+  });
+
+  const deleteNoteMut = useMutation({
+    mutationFn: (id: string) => deleteNoteApiV1NotesNoteIdDelete(id),
+    onSuccess: (res, deletedId) => {
+      if (res.status === 200) {
+        queryClient.setQueryData(["notes"], (old: any) => {
+          if (!old || old.status !== 200) return old;
+          return {
+            ...old,
+            data: old.data.filter((n: any) => n.id !== deletedId),
+          };
+        });
+        if (noteActiveId === deletedId) {
+          startNewNote();
+        }
+        setNoteStatus(t("dashboard.notes.status.deleted"));
+      } else {
+        setNoteStatus(t("dashboard.notes.status.deleteFail"));
+      }
+    },
+    onError: () => setNoteStatus(t("dashboard.notes.status.deleteFail")),
+  });
 
   useEffect(() => {
     const clearUnreadAlerts = (event: Event) => {
       if (event instanceof CustomEvent && event.detail?.unread === 0) {
-        notificationSummaryRequest.current += 1;
-        setNotificationSummary((current) => (current ? { ...current, unread: 0 } : current));
+        queryClient.setQueryData(["notificationsSummary"], (old: any) => {
+          if (!old || old.status !== 200) return old;
+          return { ...old, data: { ...old.data, unread: 0 } };
+        });
       }
     };
-
     window.addEventListener("viru:notifications-changed", clearUnreadAlerts);
     return () => window.removeEventListener("viru:notifications-changed", clearUnreadAlerts);
-  }, []);
+  }, [queryClient]);
 
-  useEffect(() => {
-    const watchId = watches[0]?.id;
-    if (!watchId) {
-      setHeroPriceSummary(null);
-      return;
-    }
-
-    let isCurrent = true;
-    apiFetch<PriceSummary>(`/prices/summary?watch_id=${watchId}`)
-      .then((summary) => {
-        if (isCurrent) setHeroPriceSummary(summary);
-      })
-      .catch(() => {
-        if (isCurrent) setHeroPriceSummary(null);
-      });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [watches]);
+  const loadDashboard = useCallback(() => {
+    refetchWatches();
+    refetchNotes();
+    refetchNotifications();
+  }, [refetchWatches, refetchNotes, refetchNotifications]);
 
   const formattedNoteDate = useCallback(
     (value: string) => {
@@ -182,57 +223,31 @@ export default function DashboardPage() {
     setNotesCollapsed(false);
   }, []);
 
-  const handleSelectNote = useCallback((note: Note) => {
+  const handleSelectNote = useCallback((note: any) => {
     setNoteActiveId(note.id);
     setNoteDraft({ title: note.title ?? "", body: note.body ?? "" });
     setNoteStatus(null);
   }, []);
 
-  const handleSaveNote = useCallback(async () => {
-    const payload = {
-      title: noteDraft.title.trim(),
-      body: noteDraft.body.trim(),
-    };
-    if (!payload.title && !payload.body) {
+  const handleSaveNote = useCallback(() => {
+    const title = noteDraft.title.trim();
+    const body = noteDraft.body.trim();
+    if (!title && !body) {
       setNoteStatus(t("dashboard.notes.status.requireContent"));
       return;
     }
-    try {
-      if (noteActiveId) {
-        const updated = await apiFetch<Note>(`/notes/${noteActiveId}`, {
-          method: "PUT",
-          body: JSON.stringify(payload),
-        });
-        setNotes((prev) => prev.map((note) => (note.id === updated.id ? updated : note)));
-        setNoteStatus(t("dashboard.notes.status.updated"));
-      } else {
-        const created = await apiFetch<Note>("/notes", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
-        setNotes((prev) => [created, ...prev]);
-        setNoteActiveId(created.id);
-        setNoteStatus(t("dashboard.notes.status.created"));
-      }
-    } catch (_error) {
-      setNoteStatus(t("dashboard.notes.status.saveFail"));
+    if (noteActiveId) {
+      updateNoteMut.mutate({ id: noteActiveId, title, body });
+    } else {
+      createNoteMut.mutate({ title, body });
     }
-  }, [noteActiveId, noteDraft.body, noteDraft.title, t]);
+  }, [noteActiveId, noteDraft, t, updateNoteMut, createNoteMut]);
 
   const handleDeleteNote = useCallback(
-    async (noteId: string) => {
-      try {
-        await apiFetch(`/notes/${noteId}`, { method: "DELETE" });
-        setNotes((prev) => prev.filter((note) => note.id !== noteId));
-        if (noteActiveId === noteId) {
-          startNewNote();
-        }
-        setNoteStatus(t("dashboard.notes.status.deleted"));
-      } catch (_error) {
-        setNoteStatus(t("dashboard.notes.status.deleteFail"));
-      }
+    (noteId: string) => {
+      deleteNoteMut.mutate(noteId);
     },
-    [noteActiveId, startNewNote, t],
+    [deleteNoteMut],
   );
 
   const sortedNotes = useMemo(
@@ -276,7 +291,7 @@ export default function DashboardPage() {
         when: formattedNoteDate(sortedNotes[0].updated_at),
       });
     }
-    watches.slice(0, 2).forEach((watch) => {
+    watches.slice(0, 2).forEach((watch: any) => {
       out.push({
         id: `watch-${watch.id}`,
         text: t("dashboard.activity.watchActive", {
@@ -301,7 +316,7 @@ export default function DashboardPage() {
   const unreadAlertsCount = notificationSummary?.unread ?? 0;
   const hasOpportunity = Boolean(topSuggestion);
   const heroMetrics = useMemo(
-    () => getHeroOpportunityMetrics(watches[0] ?? null, heroPriceSummary),
+    () => getHeroOpportunityMetrics(watches[0] ?? null, heroPriceSummary as any),
     [heroPriceSummary, watches],
   );
   const heroPriceLabel =
@@ -495,15 +510,15 @@ export default function DashboardPage() {
         </section>
       ) : null}
 
-      {backendBanner ? (
+      {isError ? (
         <section
-          className={`notice notice-compact notice-${backendBanner.severity} section-gap`}
+          className={`notice notice-compact notice-warning section-gap`}
           role="status"
           aria-live="polite"
         >
           <div>
             <strong>{t("dashboard.banner.title")}</strong>
-            <p>{backendBanner.message}</p>
+            <p>{t("dashboard.banner.warmMessage")}</p>
           </div>
           <div className="notice-actions">
             <button type="button" className="btn-secondary btn-compact" onClick={loadDashboard}>
@@ -648,7 +663,12 @@ export default function DashboardPage() {
                   />
                 </label>
                 <div className="notes-actions">
-                  <button className="btn-primary" type="button" onClick={handleSaveNote}>
+                  <button
+                    className="btn-primary"
+                    type="button"
+                    onClick={handleSaveNote}
+                    disabled={createNoteMut.isPending || updateNoteMut.isPending}
+                  >
                     {noteActiveId
                       ? t("dashboard.notes.actions.saveChanges")
                       : t("dashboard.notes.actions.save")}
@@ -658,6 +678,7 @@ export default function DashboardPage() {
                       className="btn-danger"
                       type="button"
                       onClick={() => handleDeleteNote(noteActiveId)}
+                      disabled={deleteNoteMut.isPending}
                     >
                       {t("dashboard.notes.actions.delete")}
                     </button>
@@ -682,7 +703,7 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div className="notes-cards">
-                  {notes.map((note) => (
+                  {notes.map((note: any) => (
                     <button
                       key={note.id}
                       type="button"
@@ -707,3 +728,4 @@ export default function DashboardPage() {
     </main>
   );
 }
+
