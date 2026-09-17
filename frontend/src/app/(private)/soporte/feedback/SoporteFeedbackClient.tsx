@@ -2,9 +2,10 @@
 
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useMutation } from "@tanstack/react-query";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
-import { apiFetch } from "@/modules/shared/api";
+import { submitFeedbackApiV1SupportFeedbackPost } from "@/api/generated/support/support";
 import { useI18n } from "@/i18n";
 
 type Props = {
@@ -25,7 +26,18 @@ export default function SoporteFeedbackClient({
     useState<Props["initialFeedbackType"]>(initialFeedbackType);
   const [message, setMessage] = useState(initialMessage);
   const [attachmentUrl, setAttachmentUrl] = useState(initialAttachmentUrl);
-  const [saving, setSaving] = useState(false);
+
+  const { mutateAsync: submitFeedback, isPending: saving } = useMutation({
+    mutationFn: (data: Parameters<typeof submitFeedbackApiV1SupportFeedbackPost>[0]) => submitFeedbackApiV1SupportFeedbackPost(data),
+    onSuccess: () => {
+      setMessage("");
+      setAttachmentUrl("");
+      notify({ tone: "success", title: t("support.feedback.success"), durationMs: 3200 });
+    },
+    onError: () => {
+      notify({ tone: "error", title: t("support.feedback.error"), durationMs: 3200 });
+    }
+  });
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -33,24 +45,11 @@ export default function SoporteFeedbackClient({
       notify({ tone: "error", title: t("support.feedback.validation"), durationMs: 3200 });
       return;
     }
-    setSaving(true);
-    try {
-      await apiFetch<{ status: string }>("/support/feedback", {
-        method: "POST",
-        body: JSON.stringify({
-          feedback_type: feedbackType,
-          message,
-          attachment_url: attachmentUrl || null,
-        }),
-      });
-      setMessage("");
-      setAttachmentUrl("");
-      notify({ tone: "success", title: t("support.feedback.success"), durationMs: 3200 });
-    } catch {
-      notify({ tone: "error", title: t("support.feedback.error"), durationMs: 3200 });
-    } finally {
-      setSaving(false);
-    }
+    await submitFeedback({
+      feedback_type: feedbackType,
+      message,
+      attachment_url: attachmentUrl || null,
+    });
   }
 
   return (

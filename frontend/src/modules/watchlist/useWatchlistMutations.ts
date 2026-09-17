@@ -1,5 +1,11 @@
 import { trackUxEvent } from "@/lib/uxTracking";
-import { apiFetch } from "@/modules/shared/api";
+import { 
+  refreshWatchBulkApiV1WatchlistRefreshBulkPost,
+  updateWatchApiV1WatchlistWatchIdPut,
+  deleteWatchApiV1WatchlistWatchIdDelete,
+  updateWatchStatusBulkApiV1WatchlistStatusBulkPost,
+  deleteWatchBulkApiV1WatchlistDeleteBulkPost 
+} from "@/api/generated/watchlist/watchlist";
 import { summarizeRefreshBulkResult } from "@/modules/watchlist/summary";
 import { filterWatchesBySelection } from "@/modules/watchlist/watchlistActions.helpers";
 import type { Watch } from "@/modules/watchlist/types";
@@ -49,16 +55,11 @@ export function useWatchlistMutations({
 
     setIsRefreshingFiltered(true);
     try {
-      const response = await apiFetch<{
-        status: string;
-        requested: number;
-        refreshed: string[];
-        failed: Array<{ watch_id: string; code: string }>;
-      }>("/watchlist/refresh-bulk", {
-        method: "POST",
-        body: JSON.stringify({ watch_ids: targets.map((item) => item.id) }),
+      const response = await refreshWatchBulkApiV1WatchlistRefreshBulkPost({
+        watch_ids: targets.map((item) => item.id),
       });
-      const summary = summarizeRefreshBulkResult(response);
+      const data = response.data as any;
+      const summary = summarizeRefreshBulkResult(data);
       void trackUxEvent("watchlist_refresh", { scope: "filtered", count: targets.length });
       await load();
       setMessage(
@@ -81,10 +82,7 @@ export function useWatchlistMutations({
 
   async function updateWatchStatus(id: string, status: "active" | "paused"): Promise<void> {
     try {
-      await apiFetch<Watch>(`/watchlist/${id}`, {
-        method: "PUT",
-        body: JSON.stringify({ status }),
-      });
+      await updateWatchApiV1WatchlistWatchIdPut(id, { status });
       await load();
       setMessage(
         status === "paused"
@@ -104,9 +102,9 @@ export function useWatchlistMutations({
     fareProfile: FareComparisonProfile,
   ): Promise<void> {
     try {
-      await apiFetch<Watch>(`/watchlist/${id}`, {
-        method: "PUT",
-        body: JSON.stringify({ status, fare_profile: fareProfile }),
+      await updateWatchApiV1WatchlistWatchIdPut(id, { 
+        status: status as "active" | "paused", 
+        fare_profile: fareProfile as any 
       });
       await load();
       setMessage(t("watchlist.messages.fareProfileSaved"));
@@ -120,7 +118,7 @@ export function useWatchlistMutations({
 
   async function deleteWatch(id: string): Promise<void> {
     try {
-      await apiFetch<{ status: string }>(`/watchlist/${id}`, { method: "DELETE" });
+      await deleteWatchApiV1WatchlistWatchIdDelete(id);
       await load();
       setMessage(t("watchlist.messages.flightDeleted"));
       setMessageType("success");
@@ -133,25 +131,21 @@ export function useWatchlistMutations({
   async function bulkUpdateStatus(ids: string[], status: "active" | "paused"): Promise<void> {
     if (ids.length === 0) return;
     try {
-      const response = await apiFetch<{
-        status: string;
-        requested: number;
-        updated_ids: string[];
-        failed: Array<{ watch_id: string; code: string }>;
-      }>("/watchlist/status-bulk", {
-        method: "POST",
-        body: JSON.stringify({ watch_ids: ids, status }),
+      const response = await updateWatchStatusBulkApiV1WatchlistStatusBulkPost({
+        watch_ids: ids,
+        status,
       });
-      const failedCount = response.failed.length;
+      const data = response.data as any;
+      const failedCount = data.failed.length;
       await load();
       if (failedCount > 0) {
         setMessage(
           t("watchlist.messages.bulkPartialError", {
             failed: failedCount,
-            total: response.requested,
+            total: data.requested,
           }),
         );
-        setMessageType(failedCount === response.requested ? "error" : "success");
+        setMessageType(failedCount === data.requested ? "error" : "success");
       } else {
         setMessage(
           status === "paused"
@@ -169,25 +163,20 @@ export function useWatchlistMutations({
   async function bulkDelete(ids: string[]): Promise<void> {
     if (ids.length === 0) return;
     try {
-      const response = await apiFetch<{
-        status: string;
-        requested: number;
-        deleted_ids: string[];
-        failed: Array<{ watch_id: string; code: string }>;
-      }>("/watchlist/delete-bulk", {
-        method: "POST",
-        body: JSON.stringify({ watch_ids: ids }),
+      const response = await deleteWatchBulkApiV1WatchlistDeleteBulkPost({
+        watch_ids: ids,
       });
-      const failedCount = response.failed.length;
+      const data = response.data as any;
+      const failedCount = data.failed.length;
       await load();
       if (failedCount > 0) {
         setMessage(
           t("watchlist.messages.bulkPartialError", {
             failed: failedCount,
-            total: response.requested,
+            total: data.requested,
           }),
         );
-        setMessageType(failedCount === response.requested ? "error" : "success");
+        setMessageType(failedCount === data.requested ? "error" : "success");
       } else {
         setMessage(t("watchlist.messages.flightsDeleted"));
         setMessageType("success");

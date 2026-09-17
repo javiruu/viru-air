@@ -1,6 +1,5 @@
 import { useCallback, useRef } from "react";
 
-import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
 import { toIsoMonth } from "@/modules/watchlist/dateUtils";
 import {
   normalizeWatchApiResponse,
@@ -11,6 +10,8 @@ import {
   mergeLatestWatchSnapshotsIntoHistoryRows,
 } from "@/modules/watchlist/watchlistActions.helpers";
 import type { HistoryRow, Snapshot, Watch } from "@/modules/watchlist/types";
+import { listWatchesApiV1WatchlistGet } from "@/api/generated/watchlist/watchlist";
+import { historyBatchApiV1PricesHistoryBatchPost } from "@/api/generated/prices/prices";
 
 type UseWatchlistDataLoaderInput = {
   selectedOrigin: string;
@@ -63,7 +64,8 @@ export function useWatchlistDataLoader({
     setIsLoadingWatchlist(true);
     setIsLoadingHistoryInitial(true);
     try {
-      const responses = await apiFetch<WatchApiResponse[]>("/watchlist");
+      const rawResponses = await listWatchesApiV1WatchlistGet();
+      const responses = rawResponses as unknown as WatchApiResponse[];
       const rows = responses.map(normalizeWatchApiResponse);
       setListErrorMessage("");
       setItems(rows);
@@ -75,19 +77,19 @@ export function useWatchlistDataLoader({
         setSelectedDates([rows[0].travel_date_local]);
       }
 
-      const batchResponse = rows.length
-        ? await apiFetchWithStatus<Array<Snapshot & { watch_id: string }>>(
-            "/prices/history/batch",
-            {
-              method: "POST",
-              body: JSON.stringify({ watch_ids: rows.map((watch) => watch.id) }),
-            },
-          )
-        : null;
+      let batchHistoryRows: HistoryRow[] | null = null;
+      if (rows.length > 0) {
+        try {
+          const rawBatch = await historyBatchApiV1PricesHistoryBatchPost({
+            watch_ids: rows.map((watch) => watch.id),
+          });
+          const batchData = rawBatch as unknown as Array<Snapshot & { watch_id: string }>;
+          batchHistoryRows = mapSnapshotsToHistoryRows(rows, batchData);
+        } catch (err) {
+          batchHistoryRows = null;
+        }
+      }
 
-      const batchHistoryRows = batchResponse?.ok
-        ? mapSnapshotsToHistoryRows(rows, batchResponse.data)
-        : null;
       const merged = mergeLatestWatchSnapshotsIntoHistoryRows(batchHistoryRows, rows);
       setHistoryRows(merged);
 

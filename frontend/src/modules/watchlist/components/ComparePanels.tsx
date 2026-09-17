@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useI18n } from "@/i18n";
-import { apiFetch } from "@/modules/shared/api";
+import { useCompareApiV1PricesCompareGet } from "@/api/generated/prices/prices";
 import { formatCurrency } from "@/modules/shared/format";
 import { BoneyardLoad, LoadReference } from "@/modules/shared/BoneyardLoad";
 import { formatDateTime } from "@/modules/watchlist/presentation";
@@ -69,6 +69,8 @@ export function ComparePanels({
   const [compareResponse, setCompareResponse] = useState<PriceCompareResponse | null>(null);
   const [isLoadingCompare, setIsLoadingCompare] = useState(false);
   const [hasCompareError, setHasCompareError] = useState(false);
+
+  const { mutate } = useCompareApiV1PricesCompareGet();
 
   const [hoveredWatchId, setHoveredWatchId] = useState<string | null>(null);
   const [hoveredPoint, setHoveredPoint] = useState<
@@ -226,24 +228,29 @@ export function ComparePanels({
     }
     let mounted = true;
     setIsLoadingCompare(true);
-    apiFetch<PriceCompareResponse>(`/prices/compare?watch_ids=${compareQuery}`)
-      .then((payload) => {
-        if (!mounted) return;
-        setCompareResponse(payload);
-        setHasCompareError(false);
-      })
-      .catch(() => {
-        if (!mounted) return;
-        setCompareResponse(null);
-        setHasCompareError(true);
-      })
-      .finally(() => {
-        if (mounted) setIsLoadingCompare(false);
-      });
+    
+    mutate(
+      { params: { watch_ids: compareQuery } },
+      {
+        onSuccess: (response) => {
+          if (!mounted) return;
+          // Orval with customClient returns the payload directly
+          setCompareResponse(response as unknown as PriceCompareResponse);
+          setHasCompareError(false);
+          setIsLoadingCompare(false);
+        },
+        onError: () => {
+          if (!mounted) return;
+          setCompareResponse(null);
+          setHasCompareError(true);
+          setIsLoadingCompare(false);
+        }
+      }
+    );
     return () => {
       mounted = false;
     };
-  }, [compareQuery, selectedCount]);
+  }, [compareQuery, selectedCount, mutate]);
 
   return (
     <section

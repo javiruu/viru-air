@@ -2,10 +2,12 @@
 
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
-import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
+import { submitFeedbackApiV1SupportFeedbackPost } from "@/api/generated/support/support";
+import { apiFetchWithStatus } from "@/modules/shared/api";
 type Me = { id: string; email: string; locale: string; is_admin: boolean };
 
 function isValidOptionalUrl(value: string): boolean {
@@ -27,20 +29,33 @@ function getCounterTone(length: number): "short" | "ready" | "rich" {
 export default function SoporteContactoClient() {
   const { t } = useI18n();
   const { notify } = useNotificationCenter();
-  const [me, setMe] = useState<Me | null>(null);
   const [message, setMessage] = useState("");
   const [attachmentUrl, setAttachmentUrl] = useState("");
-  const [saving, setSaving] = useState(false);
   const [messageError, setMessageError] = useState("");
   const [attachmentError, setAttachmentError] = useState("");
 
-  useEffect(() => {
-    apiFetchWithStatus<Me>("/auth/me").then((result) => {
-      if (result.ok) {
-        setMe(result.data);
-      }
-    });
-  }, []);
+  const { data: me } = useQuery({
+    queryKey: ["auth-me"],
+    queryFn: async () => {
+      const result = await apiFetchWithStatus<Me>("/auth/me");
+      if (result.ok) return result.data;
+      throw new Error("Failed to fetch me");
+    }
+  });
+
+  const { mutateAsync: submitFeedback, isPending: saving } = useMutation({
+    mutationFn: (data: Parameters<typeof submitFeedbackApiV1SupportFeedbackPost>[0]) => submitFeedbackApiV1SupportFeedbackPost(data),
+    onSuccess: () => {
+      setMessage("");
+      setAttachmentUrl("");
+      setMessageError("");
+      setAttachmentError("");
+      notify({ tone: "success", title: t("support.contact.success"), durationMs: 3200 });
+    },
+    onError: () => {
+      notify({ tone: "error", title: t("support.contact.error"), durationMs: 3200 });
+    }
+  });
 
   const trimmedLength = message.trim().length;
   const counterTone = useMemo(() => getCounterTone(trimmedLength), [trimmedLength]);
@@ -74,26 +89,11 @@ export default function SoporteContactoClient() {
       });
       return;
     }
-    setSaving(true);
-    try {
-      await apiFetch<{ status: string }>("/support/feedback", {
-        method: "POST",
-        body: JSON.stringify({
-          feedback_type: "general",
-          message: message.trim(),
-          attachment_url: attachmentUrl || null,
-        }),
-      });
-      setMessage("");
-      setAttachmentUrl("");
-      setMessageError("");
-      setAttachmentError("");
-      notify({ tone: "success", title: t("support.contact.success"), durationMs: 3200 });
-    } catch {
-      notify({ tone: "error", title: t("support.contact.error"), durationMs: 3200 });
-    } finally {
-      setSaving(false);
-    }
+    await submitFeedback({
+      feedback_type: "general",
+      message: message.trim(),
+      attachment_url: attachmentUrl || null,
+    });
   }
 
   const asideCards = [

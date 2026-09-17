@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
 import { useI18n } from "@/i18n";
-import { apiFetch } from "@/modules/shared/api";
+import {
+  markWatchPurchasedApiV1WatchlistWatchIdMarkPurchasedPost,
+  upsertCommunityPriceApiV1WatchlistWatchIdCommunityPricePut,
+  deleteCommunityPriceApiV1WatchlistWatchIdCommunityPriceDelete
+} from "@/api/generated/watchlist/watchlist";
 import type { CommunityPriceMutationResponse, Watch } from "@/modules/watchlist/types";
 
 type CommunityPricingStage = "overview" | "flight" | "price" | "thanks";
@@ -44,14 +48,12 @@ export function useCommunityPricing({ load }: UseCommunityPricingInput) {
     setIsSaving(true);
     setError("");
     try {
-      const response = await apiFetch<CommunityPriceMutationResponse>(
-        `/watchlist/${activeWatch.id}/mark-purchased`,
-        { method: "POST" },
-      );
+      const response = await markWatchPurchasedApiV1WatchlistWatchIdMarkPurchasedPost(activeWatch.id);
+      const data = response as unknown as CommunityPriceMutationResponse;
       setActiveWatch({
         ...activeWatch,
-        status: response.status,
-        community_pricing: response.community_pricing,
+        status: data.status,
+        community_pricing: data.community_pricing,
       });
       setStage("flight");
       await load().catch(() => undefined);
@@ -100,20 +102,15 @@ export function useCommunityPricing({ load }: UseCommunityPricingInput) {
     setIsSaving(true);
     setError("");
     try {
-      const response = await apiFetch<CommunityPriceMutationResponse>(
-        `/watchlist/${activeWatch.id}/community-price`,
-        {
-          method: "PUT",
-          body: JSON.stringify({
-            flew,
-            price_per_traveler: flew ? pricePerTraveler : null,
-          }),
-        },
-      );
+      const response = await upsertCommunityPriceApiV1WatchlistWatchIdCommunityPricePut(activeWatch.id, {
+        flew,
+        price_per_traveler: flew ? pricePerTraveler : null,
+      });
+      const data = response as unknown as CommunityPriceMutationResponse;
       setActiveWatch({
         ...activeWatch,
-        status: response.status,
-        community_pricing: response.community_pricing,
+        status: data.status,
+        community_pricing: data.community_pricing,
       });
       await load().catch(() => undefined);
       // After a successful price contribution, show a warm thank-you
@@ -165,9 +162,7 @@ export function useCommunityPricing({ load }: UseCommunityPricingInput) {
     setIsSaving(true);
     setError("");
     try {
-      await apiFetch<{ readonly status: string }>(`/watchlist/${activeWatch.id}/community-price`, {
-        method: "DELETE",
-      });
+      await deleteCommunityPriceApiV1WatchlistWatchIdCommunityPriceDelete(activeWatch.id);
       await load().catch(() => undefined);
       close();
     } catch (caught) {

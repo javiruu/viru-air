@@ -1,15 +1,10 @@
 import { CheckCircle2, Flame, ShieldCheck, TicketCheck, UsersRound } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import { useI18n } from "@/i18n";
-import { apiFetch } from "@/modules/shared/api";
+import { useGetContributorStatsApiV1WatchlistContributorStatsGet } from "@/api/generated/watchlist/watchlist";
 import { getCommunityHubParticipation } from "@/modules/watchlist/communityHubPresentation";
 import type { Watch } from "@/modules/watchlist/types";
-
-type ContributorStats = {
-  total_contributions: number;
-  streak_weeks: number;
-};
 
 type CommunityHubOverviewProps = {
   readonly watch: Watch;
@@ -27,19 +22,11 @@ export function CommunityHubOverview({
   onDeleteResponse,
 }: CommunityHubOverviewProps) {
   const { t, localeTag } = useI18n();
-  const [contributorStats, setContributorStats] = useState<ContributorStats | null>(null);
+  const { data: rawStats } = useGetContributorStatsApiV1WatchlistContributorStatsGet();
+  
+  // Orval's type expects axios wrapper, but custom client returns payload directly
+  const contributorStats = rawStats as unknown as { total_contributions: number; streak_weeks: number; };
 
-  useEffect(() => {
-    let cancelled = false;
-    apiFetch<ContributorStats>("/watchlist/contributor-stats")
-      .then((data) => {
-        if (!cancelled) setContributorStats(data);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
   const pricing = watch.community_pricing;
   const aggregate = pricing.aggregate;
   const participation = getCommunityHubParticipation(pricing);

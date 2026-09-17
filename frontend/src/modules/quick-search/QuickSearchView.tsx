@@ -7,6 +7,7 @@ import { Download } from "lucide-react";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetch, apiFetchWithStatus, LONG_RUNNING_API_BASE } from "@/modules/shared/api";
+import { saveResultApiV1SearchSaveResultPost } from "@/api/generated/search/search";
 import type { ApiError } from "@/modules/shared/api";
 import { buildJsonExportFilename, downloadJson } from "@/modules/shared/jsonExport";
 import { getQuickSearchCopy } from "@/modules/shared/quickSearchCopy";
@@ -2882,29 +2883,27 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     }
   }
 
-  async function saveQuickSearchResult(
-    result: SearchResult,
-    fallbackDeepLinkUrl?: string | null,
-    fareProfile?: FareComparisonProfile,
-  ) {
-    const routeFallback =
-      getOfficialRyanairRouteDeepLink(
-        fallbackDeepLinkUrl,
-        result.origin,
-        result.destination,
-        result.travel_date,
-      ) || fallbackDeepLinkUrl;
-    return apiFetch<SaveResult>("/search/save-result", {
-      method: "POST",
-      body: JSON.stringify(
-        buildQuickSearchSaveResultPayload(result, {
-          jobId,
-          fallbackDeepLinkUrl: routeFallback,
-          fareProfile,
-        }),
-      ),
-    });
-  }
+    async function saveQuickSearchResult(
+      result: SearchResult,
+      fallbackDeepLinkUrl?: string | null,
+      fareProfile?: FareComparisonProfile,
+    ) {
+      const routeFallback =
+        getOfficialRyanairRouteDeepLink(
+          fallbackDeepLinkUrl,
+          result.origin,
+          result.destination,
+          result.travel_date,
+        ) || fallbackDeepLinkUrl;
+      const res = await saveResultApiV1SearchSaveResultPost(
+          buildQuickSearchSaveResultPayload(result, {
+            jobId,
+            fallbackDeepLinkUrl: routeFallback,
+            fareProfile,
+          }) as any
+      );
+      return res.data as any;
+    }
 
   function canRefreshPrice(result: SearchResult) {
     const status = result.freshness?.status ?? null;
@@ -6945,9 +6944,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 ) => {
                   setMessage("");
                   try {
-                    const response = await apiFetch<SaveResult>("/search/save-result", {
-                      method: "POST",
-                      body: JSON.stringify(
+                    const response = await saveResultApiV1SearchSaveResultPost(
                         buildQuickSearchSaveResultPayload(result, {
                           jobId: outboundSide.jobId,
                           fareProfile,
@@ -6956,28 +6953,28 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                             outboundSide.deepLink?.fallback_url ??
                             localRyanairUrl ??
                             null,
-                        }),
-                      ),
-                    });
-                    if (response) {
-                      markAsSaved(result, response.watch_id);
-                      const isExisting =
-                        "created_or_existing" in response &&
-                        response.created_or_existing === "existing";
-                      notify({
-                        tone: "success",
-                        title: t(isExisting ? "watchExists" : "watchAdded"),
-                        actionLabel: t("viewWatchlist"),
-                        onAction: () =>
-                          navigateToWatchlistWithContext(
-                            result.origin,
-                            result.destination,
-                            result.travel_date,
-                            response.watch_id,
-                          ),
-                        durationMs: 3200,
-                      });
-                    }
+                        }) as any
+                      );
+                      if (response && response.data) {
+                        const data = response.data as any;
+                        markAsSaved(result, data.watch_id);
+                        const isExisting =
+                          "created_or_existing" in data &&
+                          data.created_or_existing === "existing";
+                        notify({
+                          tone: "success",
+                          title: t(isExisting ? "watchExists" : "watchAdded"),
+                          actionLabel: t("viewWatchlist"),
+                          onAction: () =>
+                            navigateToWatchlistWithContext(
+                              result.origin,
+                              result.destination,
+                              result.travel_date,
+                              data.watch_id,
+                            ),
+                          durationMs: 3200,
+                        });
+                      }
                   } catch {
                     setMessage(t("watchFailed"));
                     setMessageType("error");
@@ -7106,9 +7103,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 ) => {
                   setMessage("");
                   try {
-                    const response = await apiFetch<SaveResult>("/search/save-result", {
-                      method: "POST",
-                      body: JSON.stringify(
+                    const response = await saveResultApiV1SearchSaveResultPost(
                         buildQuickSearchSaveResultPayload(result, {
                           jobId: returnSide.jobId,
                           fareProfile,
@@ -7117,28 +7112,28 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                             returnSide.deepLink?.fallback_url ??
                             localRyanairUrl ??
                             null,
-                        }),
-                      ),
-                    });
-                    if (response) {
-                      markAsSaved(result, response.watch_id);
-                      const isExisting =
-                        "created_or_existing" in response &&
-                        response.created_or_existing === "existing";
-                      notify({
-                        tone: "success",
-                        title: t(isExisting ? "watchExists" : "watchAdded"),
-                        actionLabel: t("viewWatchlist"),
-                        onAction: () =>
-                          navigateToWatchlistWithContext(
-                            result.origin,
-                            result.destination,
-                            result.travel_date,
-                            response.watch_id,
-                          ),
-                        durationMs: 3200,
-                      });
-                    }
+                        }) as any
+                      );
+                      if (response && response.data) {
+                        const data = response.data as any;
+                        markAsSaved(result, data.watch_id);
+                        const isExisting =
+                          "created_or_existing" in data &&
+                          data.created_or_existing === "existing";
+                        notify({
+                          tone: "success",
+                          title: t(isExisting ? "watchExists" : "watchAdded"),
+                          actionLabel: t("viewWatchlist"),
+                          onAction: () =>
+                            navigateToWatchlistWithContext(
+                              result.origin,
+                              result.destination,
+                              result.travel_date,
+                              data.watch_id,
+                            ),
+                          durationMs: 3200,
+                        });
+                      }
                   } catch {
                     setMessage(t("watchFailed"));
                     setMessageType("error");

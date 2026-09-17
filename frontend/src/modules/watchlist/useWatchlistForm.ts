@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 
-import { apiFetch } from "@/modules/shared/api";
+import { createWatchApiV1WatchlistPost } from "@/api/generated/watchlist/watchlist";
 import { COUNTRY_AIRPORTS, findCountryByIata } from "@/modules/shared/airports";
 import type { CountryAirports } from "@/modules/shared/airports";
 import type { Watch } from "@/modules/watchlist/types";
@@ -73,14 +73,11 @@ export function useWatchlistForm({
     }
 
     try {
-      await apiFetch<Watch>("/watchlist", {
-        method: "POST",
-        body: JSON.stringify({
-          origin_iata: origin,
-          destination_iata: destination,
-          travel_date_local: travelDate,
-          target_price: targetPrice ? Number(targetPrice) : null,
-        }),
+      await createWatchApiV1WatchlistPost({
+        origin_iata: origin,
+        destination_iata: destination,
+        travel_date_local: travelDate,
+        target_price: targetPrice ? Number(targetPrice) : null,
       });
       await load();
       setMessage(t("watchlist.messages.flightCreated"));
