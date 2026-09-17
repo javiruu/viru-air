@@ -1,4 +1,4 @@
-import { hasToken } from "@/modules/shared/auth";
+import { createClient } from "@/lib/supabase/client";
 import { apiFetchBestEffort } from "@/modules/shared/api";
 
 type UxMeta = Record<string, string | number | boolean | null | undefined>;
@@ -23,7 +23,9 @@ function compactMeta(input: UxMeta = {}): Record<string, string | number | boole
 
 export async function trackUxEvent(eventName: string, metadata: UxMeta = {}): Promise<void> {
   if (typeof window === "undefined") return;
-  if (!hasToken()) return;
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) return;
 
   const payload = {
     event_name: eventName,

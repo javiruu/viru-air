@@ -1,5 +1,5 @@
 import { translate } from "@/i18n/shell";
-import { getToken, hasToken } from "@/modules/shared/auth";
+import { createClient } from "@/lib/supabase/client";
 
 const RAW_API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1").trim();
 const RAW_LOCAL_API_ORIGIN = (
@@ -80,8 +80,10 @@ export function resolveLongRunningApiBase(
 
 export const LONG_RUNNING_API_BASE = resolveLongRunningApiBase(RAW_API_BASE);
 
-function authHeaders(): HeadersInit {
-  const token = getToken();
+async function authHeaders(): Promise<HeadersInit> {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
   if (!token) {
     return {};
   }
@@ -95,8 +97,8 @@ function correlationId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-function applyAuthHeaders(mergedHeaders: Headers) {
-  const auth = authHeaders();
+async function applyAuthHeaders(mergedHeaders: Headers) {
+  const auth = await authHeaders();
   if (auth instanceof Headers) {
     auth.forEach((value, key) => mergedHeaders.set(key, value));
   } else if (Array.isArray(auth)) {
@@ -131,13 +133,13 @@ function shouldSetJsonContentType(init?: RequestInit): boolean {
   return true;
 }
 
-function buildHeaders(init?: RequestInit): Headers {
+async function buildHeaders(init?: RequestInit): Promise<Headers> {
   const mergedHeaders = new Headers(init?.headers || {});
   if (shouldSetJsonContentType(init) && !mergedHeaders.has("Content-Type")) {
     mergedHeaders.set("Content-Type", "application/json");
   }
   mergedHeaders.set("x-correlation-id", correlationId());
-  applyAuthHeaders(mergedHeaders);
+  await applyAuthHeaders(mergedHeaders);
   return mergedHeaders;
 }
 
@@ -179,10 +181,12 @@ function isNetworkFailure(error: unknown): boolean {
 }
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  if (path === "/auth/me" && !hasToken()) {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (path === "/auth/me" && !session?.access_token) {
     throw new Error(translate("shared.errors.sessionRequired"));
   }
-  const mergedHeaders = buildHeaders(init);
+  const mergedHeaders = await buildHeaders(init);
   let response: Response;
   try {
     response = await fetch(`${API_BASE}${path}`, {
@@ -219,7 +223,7 @@ export { API_BASE };
 
 export async function apiFetchBestEffort(path: string, init?: RequestInit): Promise<void> {
   try {
-    const mergedHeaders = buildHeaders(init);
+    const mergedHeaders = await buildHeaders(init);
     await fetch(`${API_BASE}${path}`, {
       ...init,
       headers: mergedHeaders,
@@ -294,7 +298,9 @@ export async function apiFetchWithStatus<T>(
   | { ok: true; data: T; status: number; headers: Headers }
   | { ok: false; error: ApiError; status: number; headers: Headers }
 > {
-  if (path === "/auth/me" && !hasToken()) {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (path === "/auth/me" && !session?.access_token) {
     return {
       ok: false,
       status: 401,
@@ -306,7 +312,7 @@ export async function apiFetchWithStatus<T>(
       },
     };
   }
-  const mergedHeaders = buildHeaders(init);
+  const mergedHeaders = await buildHeaders(init);
   const timeoutMs = options?.timeoutMs;
   const callerSignal = init?.signal;
   const timeoutController = timeoutMs ? new AbortController() : null;

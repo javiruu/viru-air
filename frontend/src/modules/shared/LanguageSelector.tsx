@@ -6,7 +6,8 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { LANGUAGES, persistLocale, useI18n, type Locale } from "@/i18n/shell";
 import { apiFetch } from "@/modules/shared/api";
-import { hasToken } from "@/modules/shared/auth";
+
+import { createClient } from "@/lib/supabase/client";
 
 type RegionPref = {
   language: string;
@@ -17,7 +18,9 @@ type RegionPref = {
 };
 
 async function persistProfileLanguage(locale: Locale) {
-  if (!hasToken()) return;
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
 
   try {
     const preference = await apiFetch<RegionPref>("/preferences/region");

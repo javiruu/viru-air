@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 
 import { BoneyardPanel, LoadReference } from "@/modules/shared/BoneyardLoad";
 import { apiFetchWithStatus } from "@/modules/shared/api";
-import { clearToken, hasToken } from "@/modules/shared/auth";
 import { isDashboardDemoAccessEnabled } from "@/modules/shared/dashboard-demo-session";
 import { useI18n } from "@/i18n/shell";
 
@@ -20,7 +19,7 @@ export default function HomePage() {
   useEffect(() => {
     let active = true;
     async function checkSession() {
-      if (!hasToken()) {
+      if (!false /* TODO: migrate to Supabase SSR */) {
         if (active) setState("public");
         return;
       }
@@ -32,7 +31,7 @@ export default function HomePage() {
         return;
       }
       if (meResult.status === 401) {
-        clearToken();
+        /* TODO: migrate to Supabase SSR */;
       }
       if (active) setState("public");
     }

@@ -10,7 +10,6 @@
 import {
   DASHBOARD_DEMO_ACCOUNT,
   isDashboardLoginRequired,
-  saveAuthTokens,
 } from "@/modules/shared/auth";
 import { submitLogin } from "@/modules/shared/login-submit";
 
@@ -22,6 +21,6 @@ export async function signInDashboardDemoAccount(): Promise<boolean> {
   if (!isDashboardDemoAccessEnabled()) return false;
   const result = await submitLogin(DASHBOARD_DEMO_ACCOUNT.email, DASHBOARD_DEMO_ACCOUNT.password);
   if (result.kind !== "success") return false;
-  saveAuthTokens(result.data);
+  /* TODO: migrate saveAuthTokens result.data */;
   return true;
 }

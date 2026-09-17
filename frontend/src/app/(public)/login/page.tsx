@@ -1,12 +1,13 @@
 "use client";
 
+import { createClient } from "@/lib/supabase/client";
+
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 
 import { GlassSignInCard } from "@/components/components/forms/glass-sign-in";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetchWithStatus } from "@/modules/shared/api";
-import { clearToken, hasToken, saveAuthTokens } from "@/modules/shared/auth";
 import {
   isDashboardDemoAccessEnabled,
   signInDashboardDemoAccount,
@@ -25,6 +26,7 @@ function LoginContent() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [fieldError, setFieldError] = useState<{ email?: string; password?: string }>({});
+  const supabase = createClient();
   const [entryState, setEntryState] = useState<"checking" | "ready">("checking");
 
   const returnUrl = useMemo(() => {
@@ -34,7 +36,8 @@ function LoginContent() {
   useEffect(() => {
     let active = true;
     async function checkEntryRoute() {
-      if (!hasToken()) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
         if (isDashboardDemoAccessEnabled()) {
           const didSignIn = await signInDashboardDemoAccount();
           if (!active) return;
@@ -59,7 +62,7 @@ function LoginContent() {
         return;
       }
       if (result.status === 401) {
-        clearToken();
+        await supabase.auth.signOut();;
       }
       if (active) setEntryState("ready");
     }
@@ -69,7 +72,7 @@ function LoginContent() {
     return () => {
       active = false;
     };
-  }, [notify, router, t]);
+  }, [notify, router, t, supabase.auth]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -89,7 +92,7 @@ function LoginContent() {
     setFieldError({});
     const result = await submitLogin(normalizedEmail, password);
     if (result.kind === "success") {
-      saveAuthTokens(result.data);
+      await supabase.auth.setSession({ access_token: result.data.access_token, refresh_token: result.data.refresh_token || "" });;
       notify({
         tone: "success",
         title: t("public.auth.loginSuccess"),

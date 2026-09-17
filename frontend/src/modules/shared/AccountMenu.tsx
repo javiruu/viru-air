@@ -12,7 +12,6 @@ import { useRouter } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useAuth } from "@/modules/shared/AuthProvider";
-import { clearToken } from "@/modules/shared/auth";
 import { buildAccountMenuGroups } from "@/modules/shared/accountMenuConfig";
 import { useI18n } from "@/i18n";
 
@@ -82,7 +81,7 @@ export default function AccountMenu() {
   }
 
   function onLogout() {
-    clearToken();
+    /* TODO: migrate to Supabase SSR */;
     notify({
       tone: "success",
       title: t("public.auth.loginLogoutTitle"),
