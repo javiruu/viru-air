@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 
-import { apiFetchWithStatus, LONG_RUNNING_API_BASE } from "@/modules/shared/api";
+import { quickSearchApiV1SearchQuickPost, deeplinkApiV1SearchDeeplinkGet } from "@/api/generated/search/search";
+import { LONG_RUNNING_API_BASE } from "@/modules/shared/api";
 import {
   buildQuickSearchCanonicalPayload,
   prepareQuickSearchRequest,
@@ -199,14 +200,7 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
       try {
         if (!isCurrentRequest()) return;
 
-        const result = await apiFetchWithStatus<SearchResponseRaw>(
-          "/search/quick",
-          {
-            method: "POST",
-            body: JSON.stringify(canonicalPayload),
-          },
-          { apiBase: LONG_RUNNING_API_BASE },
-        );
+        const result = await quickSearchApiV1SearchQuickPost(canonicalPayload as any);
 
         if (!isCurrentRequest()) return;
 
@@ -215,8 +209,8 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
           setLoadingPhase("response_parsed");
         }
 
-        if (result.ok) {
-          const data: SearchResponse = normalizeQuickSearchResponse(result.data);
+        if (result.status === 200) {
+          const data: SearchResponse = normalizeQuickSearchResponse(result.data as any);
 
           setResults(data.results);
           setFiltersMeta(data.filters || null);
@@ -249,30 +243,24 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
 
           const isEmptyResult = (data.meta?.pagination?.total_results ?? data.results.length) === 0;
           setSearchState(isEmptyResult ? "empty" : "success");
-        } else {
-          const { status, error } = result;
-
-          if (!isPageChange) {
-            setTargetProgress(95);
-          }
-
-          if (status === 429) {
-            setRateLimitSeconds(error.retry_after_sec ?? 30);
-            setSearchState("rate");
-            setSearchError("Rate limited");
-          } else {
-            setSearchState("error");
-            setSearchError(error.message ?? "Search failed");
-          }
-          setHasSearched(true);
         }
-      } catch (_err) {
+      } catch (err: any) {
         if (!isCurrentRequest()) return;
         if (!isPageChange) {
           setTargetProgress(95);
         }
-        setSearchState("error");
-        setSearchError("Search failed");
+
+        const status = err?.response?.status || err?.status;
+        const errorBody = err?.response?.data || err?.data || {};
+
+        if (status === 429) {
+          setRateLimitSeconds(errorBody.retry_after_sec ?? 30);
+          setSearchState("rate");
+          setSearchError("Rate limited");
+        } else {
+          setSearchState("error");
+          setSearchError(errorBody.message ?? "Search failed");
+        }
         setHasSearched(true);
       } finally {
         if (isCurrentRequest()) {
@@ -323,14 +311,21 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
       query.set("infants", "0");
       query.set("locale", params.locale === "en" ? "en-us" : "es-es");
 
-      void apiFetchWithStatus<DeepLinkResponse>(`/search/deeplink?${query.toString()}`, {
-        method: "GET",
-        signal: controller.signal,
-      })
+      deeplinkApiV1SearchDeeplinkGet({
+        origin_iata: params.originIata,
+        destination_iata: params.destinationIata,
+        date_out: params.dateOut,
+        date_in: params.dateIn,
+        adults: params.adults,
+        teens: 0,
+        children: 0,
+        infants: 0,
+        locale: params.locale === "en" ? "en-us" : "es-es",
+      }, { signal: controller.signal })
         .then((result) => {
           if (controller.signal.aborted) return;
-          if (result.ok) {
-            setDeepLink(result.data);
+          if (result.data) {
+            setDeepLink(result.data as DeepLinkResponse);
             setDeepLinkError("");
           } else {
             setDeepLink(null);

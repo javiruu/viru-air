@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
@@ -18,6 +19,15 @@ import { SignalCadencePanel } from "@/modules/signals/SignalCadencePanel";
 import { SignalsSectionNav } from "@/modules/signals/SignalsSectionNav";
 import { getFreshnessPresentation } from "@/modules/watchlist/summary";
 import type { PriceSummary, WatchDetail } from "@/modules/watchlist/types";
+
+import {
+  addRuleApiV1AlertsRulesPost,
+  deleteRuleHandlerApiV1AlertsRulesRuleIdDelete,
+  evaluateRulesApiV1AlertsEvaluatePost,
+  getEventsApiV1AlertsEventsGet,
+  getRulesApiV1AlertsRulesGet,
+  updateRuleHandlerApiV1AlertsRulesRuleIdPut
+} from "@/api/generated/alerts/alerts";
 
 // allow: SIZE_OK - migrated intact to preserve the existing alert-rule behavior during route consolidation.
 type Watch = {
@@ -209,15 +219,15 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
     setSelectedWatchSummary(null);
 
     Promise.all([
-      apiFetch<AlertRule[]>(`/alerts/rules?watch_id=${selectedWatchId}`),
-      apiFetch<AlertEvent[]>(`/alerts/events?watch_id=${selectedWatchId}&limit=50`),
+      getRulesApiV1AlertsRulesGet({ watch_id: selectedWatchId }),
+      getEventsApiV1AlertsEventsGet({ watch_id: selectedWatchId, limit: 50 }),
       apiFetch<WatchDetail>(`/watchlist/${selectedWatchId}`),
       apiFetch<PriceSummary>(`/prices/summary?watch_id=${selectedWatchId}`),
     ])
-      .then(([ruleRows, eventRows, watchDetail, watchSummary]) => {
+      .then(([ruleRes, eventRes, watchDetail, watchSummary]) => {
         if (!isMounted) return;
-        setRules(ruleRows);
-        setEvents(eventRows);
+        setRules(ruleRes.data as unknown as AlertRule[]);
+        setEvents(eventRes.data as unknown as AlertEvent[]);
         setSelectedWatchDetail(watchDetail);
         setSelectedWatchSummary(watchSummary);
       })
@@ -232,6 +242,22 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
       isMounted = false;
     };
   }, [selectedWatchId, t]);
+
+  const { mutateAsync: addRuleMutate } = useMutation({
+    mutationFn: (data: Parameters<typeof addRuleApiV1AlertsRulesPost>[0]) => addRuleApiV1AlertsRulesPost(data)
+  });
+
+  const { mutateAsync: updateRuleMutate } = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof updateRuleHandlerApiV1AlertsRulesRuleIdPut>[1] }) => updateRuleHandlerApiV1AlertsRulesRuleIdPut(id, data)
+  });
+
+  const { mutateAsync: deleteRuleMutate } = useMutation({
+    mutationFn: (id: string) => deleteRuleHandlerApiV1AlertsRulesRuleIdDelete(id)
+  });
+
+  const { mutateAsync: evaluateMutate } = useMutation({
+    mutationFn: (data: Parameters<typeof evaluateRulesApiV1AlertsEvaluatePost>[0]) => evaluateRulesApiV1AlertsEvaluatePost(data)
+  });
 
   const selectedWatch = useMemo(
     () => watches.find((w) => w.id === selectedWatchId) || null,
@@ -378,24 +404,21 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
 
     try {
       setStatus("sending");
-      await apiFetch("/alerts/rules", {
-        method: "POST",
-        body: JSON.stringify({
-          watch_id: selectedWatchId,
-          rule_type: ruleType,
-          threshold_value: ruleType === "every_change" ? null : Number(thresholdValue),
-          min_change_pct: minChangePct ? Number(minChangePct) : null,
-          notify_on_every_change: notifyEveryChange,
-          cooldown_minutes: cooldownMinutes,
-        }),
+      await addRuleMutate({
+        watch_id: selectedWatchId,
+        rule_type: ruleType,
+        threshold_value: ruleType === "every_change" ? null : Number(thresholdValue),
+        min_change_pct: minChangePct ? Number(minChangePct) : null,
+        notify_on_every_change: notifyEveryChange,
+        cooldown_minutes: cooldownMinutes,
       });
 
       const [updatedRules, updatedEvents] = await Promise.all([
-        apiFetch<AlertRule[]>(`/alerts/rules?watch_id=${selectedWatchId}`),
-        apiFetch<AlertEvent[]>(`/alerts/events?watch_id=${selectedWatchId}&limit=50`),
+        getRulesApiV1AlertsRulesGet({ watch_id: selectedWatchId }),
+        getEventsApiV1AlertsEventsGet({ watch_id: selectedWatchId, limit: 50 }),
       ]);
-      setRules(updatedRules);
-      setEvents(updatedEvents);
+      setRules(updatedRules.data as unknown as AlertRule[]);
+      setEvents(updatedEvents.data as unknown as AlertEvent[]);
       void trackUxEvent("alert_created", { rule_type: ruleType });
       setStatus("success");
       setMessage(t("alerts.messages.ruleCreated"));
@@ -410,15 +433,15 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
 
   async function toggleRule(rule: AlertRule) {
     try {
-      await apiFetch(`/alerts/rules/${rule.id}`, {
-        method: "PUT",
-        body: JSON.stringify({
+      await updateRuleMutate({
+        id: rule.id,
+        data: {
           enabled: !rule.enabled,
           min_change_pct: rule.min_change_pct ?? null,
-        }),
+        }
       });
-      const updated = await apiFetch<AlertRule[]>(`/alerts/rules?watch_id=${selectedWatchId}`);
-      setRules(updated);
+      const updated = await getRulesApiV1AlertsRulesGet({ watch_id: selectedWatchId });
+      setRules(updated.data as unknown as AlertRule[]);
     } catch {
       setStatus("error");
       setMessage(t("alerts.messages.ruleUpdateError"));
@@ -430,9 +453,9 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
     if (!confirmed) return;
 
     try {
-      await apiFetch(`/alerts/rules/${rule.id}`, { method: "DELETE" });
-      const updated = await apiFetch<AlertRule[]>(`/alerts/rules?watch_id=${selectedWatchId}`);
-      setRules(updated);
+      await deleteRuleMutate(rule.id);
+      const updated = await getRulesApiV1AlertsRulesGet({ watch_id: selectedWatchId });
+      setRules(updated.data as unknown as AlertRule[]);
       setStatus("success");
       setMessage(t("alerts.messages.ruleDeleted"));
     } catch {
@@ -446,17 +469,12 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
 
     try {
       setIsEvaluating(true);
-      await apiFetch("/alerts/evaluate", {
-        method: "POST",
-        body: JSON.stringify({ watch_id: selectedWatchId }),
-      });
+      await evaluateMutate({ watch_id: selectedWatchId });
       const previousEventCount = events.length;
-      const updatedEvents = await apiFetch<AlertEvent[]>(
-        `/alerts/events?watch_id=${selectedWatchId}&limit=50`,
-      );
-      setEvents(updatedEvents);
+      const updatedEvents = await getEventsApiV1AlertsEventsGet({ watch_id: selectedWatchId, limit: 50 });
+      setEvents(updatedEvents.data as unknown as AlertEvent[]);
 
-      const triggeredCount = Math.max(0, updatedEvents.length - previousEventCount);
+      const triggeredCount = Math.max(0, (updatedEvents.data as any).length - previousEventCount);
       if (triggeredCount > 0) {
         void trackUxEvent("alert_triggered", { count: triggeredCount });
       }

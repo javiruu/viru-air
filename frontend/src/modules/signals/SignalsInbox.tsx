@@ -1,7 +1,8 @@
 "use client";
 
 import { CheckCheck, ListChecks } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
@@ -11,14 +12,16 @@ import {
   normalizeNotificationFilter,
   normalizeNotificationInboxResponse,
   type NotificationFilter,
-  type NotificationInboxItem,
-  type NotificationInboxSummary,
 } from "@/modules/signals/notificationInboxModel";
 import { SignalsInboxTimeline } from "@/modules/signals/SignalsInboxTimeline";
 import { SignalsSectionNav } from "@/modules/signals/SignalsSectionNav";
-import { apiFetch } from "@/modules/shared/api";
+import {
+  getNotificationsApiV1NotificationsGet,
+  markAllReadApiV1NotificationsReadAllPost,
+  markReadApiV1NotificationsSourceTypeSourceIdReadPost,
+} from "@/api/generated/notifications/notifications";
 
-const EMPTY_SUMMARY: NotificationInboxSummary = {
+const EMPTY_SUMMARY = {
   total: 0,
   unread: 0,
   price: 0,
@@ -31,35 +34,49 @@ const EMPTY_SUMMARY: NotificationInboxSummary = {
 export function SignalsInbox({ requestedFilter }: { requestedFilter?: string | null }) {
   const { t } = useI18n();
   const { notify } = useNotificationCenter();
-  const [items, setItems] = useState<NotificationInboxItem[]>([]);
-  const [summary, setSummary] = useState<NotificationInboxSummary>({ ...EMPTY_SUMMARY });
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<NotificationFilter>(() =>
     normalizeNotificationFilter(requestedFilter ?? null),
   );
-  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
 
-  const loadNotifications = useCallback(async () => {
-    setStatus("loading");
-    try {
-      const response = normalizeNotificationInboxResponse(
-        await apiFetch<unknown>("/notifications"),
+  const { data, status, refetch } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: async () => {
+      const response = await getNotificationsApiV1NotificationsGet();
+      return normalizeNotificationInboxResponse(response.data);
+    },
+  });
+
+  const { mutateAsync: markReadMutate } = useMutation({
+    mutationFn: ({ sourceType, sourceId }: { sourceType: string; sourceId: string }) =>
+      markReadApiV1NotificationsSourceTypeSourceIdReadPost(sourceType, sourceId),
+    onSuccess: () => {
+      window.dispatchEvent(new Event("viru:notifications-changed"));
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      notify({ tone: "success", title: t("notifications.toast.markedRead"), durationMs: 2600 });
+    },
+    onError: () => {
+      notify({ tone: "error", title: t("notifications.toast.error"), durationMs: 3600 });
+    },
+  });
+
+  const { mutateAsync: markAllReadMutate } = useMutation({
+    mutationFn: () => markAllReadApiV1NotificationsReadAllPost(),
+    onSuccess: () => {
+      window.dispatchEvent(
+        new CustomEvent("viru:notifications-changed", { detail: { unread: 0 } }),
       );
-      setItems(response.items);
-      setSummary(response.summary);
-      setStatus("ready");
-    } catch {
-      setStatus("error");
-      notify({ tone: "error", title: t("notifications.states.error"), durationMs: 3600 });
-    }
-  }, [notify, t]);
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      notify({ tone: "success", title: t("notifications.toast.markedAll"), durationMs: 2600 });
+    },
+    onError: () => {
+      notify({ tone: "error", title: t("notifications.toast.error"), durationMs: 3600 });
+    },
+  });
 
-  useEffect(() => {
-    void loadNotifications();
-  }, [loadNotifications]);
-
-  useEffect(() => {
-    setFilter(normalizeNotificationFilter(requestedFilter ?? null));
-  }, [requestedFilter]);
+  const items = data?.items ?? [];
+  const summary = data?.summary ?? EMPTY_SUMMARY;
+  const loadStatus = status === "pending" ? "loading" : status === "error" ? "error" : "ready";
 
   const actionableCount = useMemo(
     () => filterNotificationItems(items, "actionable").length,
@@ -92,32 +109,6 @@ export function SignalsInbox({ requestedFilter }: { requestedFilter?: string | n
     [filter, items],
   );
 
-  async function markRead(item: NotificationInboxItem): Promise<void> {
-    try {
-      await apiFetch(`/notifications/${item.source_type}/${item.source_id}/read`, {
-        method: "POST",
-      });
-      window.dispatchEvent(new Event("viru:notifications-changed"));
-      await loadNotifications();
-      notify({ tone: "success", title: t("notifications.toast.markedRead"), durationMs: 2600 });
-    } catch {
-      notify({ tone: "error", title: t("notifications.toast.error"), durationMs: 3600 });
-    }
-  }
-
-  async function markAllRead(): Promise<void> {
-    try {
-      await apiFetch("/notifications/read-all", { method: "POST" });
-      window.dispatchEvent(
-        new CustomEvent("viru:notifications-changed", { detail: { unread: 0 } }),
-      );
-      await loadNotifications();
-      notify({ tone: "success", title: t("notifications.toast.markedAll"), durationMs: 2600 });
-    } catch {
-      notify({ tone: "error", title: t("notifications.toast.error"), durationMs: 3600 });
-    }
-  }
-
   return (
     <main className="shell stack notifications-page" id="main-content">
       <header className="page-header">
@@ -130,7 +121,7 @@ export function SignalsInbox({ requestedFilter }: { requestedFilter?: string | n
           <button
             className="btn-secondary"
             type="button"
-            onClick={markAllRead}
+            onClick={() => void markAllReadMutate()}
             disabled={summary.unread === 0}
           >
             <CheckCheck size={16} aria-hidden="true" />
@@ -194,9 +185,9 @@ export function SignalsInbox({ requestedFilter }: { requestedFilter?: string | n
         <SignalsInboxTimeline
           filter={filter}
           groups={groups}
-          status={status}
-          onMarkRead={(item) => void markRead(item)}
-          onRetry={() => void loadNotifications()}
+          status={loadStatus}
+          onMarkRead={(item) => void markReadMutate({ sourceType: item.source_type, sourceId: item.source_id })}
+          onRetry={() => void refetch()}
         />
       </section>
     </main>

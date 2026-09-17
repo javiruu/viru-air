@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { apiFetch } from "@/modules/shared/api";
+import { listWatchesApiV1WatchlistGet } from "@/api/generated/watchlist/watchlist";
 import type { SearchResult } from "@/modules/quick-search/types";
 
 export type WatchlistItemBrief = {
@@ -33,9 +33,10 @@ export function useQuickSearchWatchlist() {
 
   useEffect(() => {
     let cancelled = false;
-    apiFetch<WatchlistItemBrief[]>("/watchlist")
-      .then((items) => {
+    listWatchesApiV1WatchlistGet()
+      .then((res) => {
         if (cancelled) return;
+        const items = res.data;
         const nextWatchedByKey = new Map<string, string>();
         if (Array.isArray(items)) {
           for (const item of items) {

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { apiFetch } from "@/modules/shared/api";
+import { compatibleAirportsApiV1AirportsCompatibleGet } from "@/api/generated/airports/airports";
 import type { CompatibleResponse } from "@/modules/watchlist/types";
 
 type UseWatchlistCompatibilityInput = {
@@ -36,10 +36,12 @@ export function useWatchlistCompatibility({
       return;
     }
 
-    apiFetch<CompatibleResponse>(
-      `/airports/compatible?origin_iata=${origin}&travel_date=${travelDate}`,
-    )
-      .then((data) => {
+    compatibleAirportsApiV1AirportsCompatibleGet({
+      origin_iata: origin,
+      travel_date: travelDate,
+    })
+      .then((response) => {
+        const data = response as unknown as CompatibleResponse;
         setCompatibleDestinations(data.compatible_iata);
         if (
           destination &&
@@ -71,10 +73,12 @@ export function useWatchlistCompatibility({
       return;
     }
 
-    apiFetch<CompatibleResponse>(
-      `/airports/compatible?destination_iata=${destination}&travel_date=${travelDate}`,
-    )
-      .then((data) => {
+    compatibleAirportsApiV1AirportsCompatibleGet({
+      destination_iata: destination,
+      travel_date: travelDate,
+    })
+      .then((response) => {
+        const data = response as unknown as CompatibleResponse;
         setCompatibleOrigins(data.compatible_iata);
         if (origin && data.compatible_iata.length > 0 && !data.compatible_iata.includes(origin)) {
           setOrigin("");

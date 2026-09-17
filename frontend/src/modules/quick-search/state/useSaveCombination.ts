@@ -3,9 +3,9 @@
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { apiFetch } from "@/modules/shared/api";
 import { buildQuickSearchSaveCombinationPayloads } from "@/modules/quick-search/api/buildSaveResultPayload";
 import { buildWatchlistUrl } from "@/modules/shared/useRouteState";
+import { saveResultApiV1SearchSaveResultPost } from "@/api/generated/search/search";
 import type { SearchResult } from "@/modules/quick-search/types";
 import type { FareComparisonProfile } from "@/modules/shared/fareComparison";
 
@@ -84,20 +84,14 @@ export function useSaveCombination() {
     });
 
     const [outboundResult, returnResult] = await Promise.allSettled([
-      apiFetch<SaveResult>("/search/save-result", {
-        method: "POST",
-        body: JSON.stringify(outboundPayload),
-      }),
-      apiFetch<SaveResult>("/search/save-result", {
-        method: "POST",
-        body: JSON.stringify(returnPayload),
-      }),
+      saveResultApiV1SearchSaveResultPost(outboundPayload as any),
+      saveResultApiV1SearchSaveResultPost(returnPayload as any),
     ]);
 
     const outboundOk = outboundResult.status === "fulfilled" && outboundResult.value;
     const returnOk = returnResult.status === "fulfilled" && returnResult.value;
-    const outboundWatchId = outboundOk ? (outboundResult.value.watch_id ?? "") : "";
-    const returnWatchId = returnOk ? (returnResult.value.watch_id ?? "") : "";
+    const outboundWatchId = outboundOk ? ((outboundResult.value as any).data?.watch_id ?? (outboundResult.value as any).watch_id ?? "") : "";
+    const returnWatchId = returnOk ? ((returnResult.value as any).data?.watch_id ?? (returnResult.value as any).watch_id ?? "") : "";
 
     if (outboundOk && returnOk) {
       setState({

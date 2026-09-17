@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { apiFetch } from "@/modules/shared/api";
+import { getWatchLiveTrackingApiV1WatchlistWatchIdLiveGet } from "@/api/generated/watchlist/watchlist";
 import type { LiveFlightTracking } from "@/modules/watchlist/liveFlightTypes";
 
 const ERROR_RETRY_SECONDS = 300;
@@ -50,14 +50,15 @@ export function useWatchLiveFlight(watchId: string | null) {
       else setIsRefreshing(true);
 
       try {
-        const response = await apiFetch<LiveFlightTracking>(`/watchlist/${watchId}/live`, {
+        const response = await getWatchLiveTrackingApiV1WatchlistWatchIdLiveGet(watchId, {}, {
           signal: requestController.signal,
         });
         if (disposed || requestController.signal.aborted) return;
         hasResolvedData = true;
-        setData(response);
+        const data = response as unknown as LiveFlightTracking;
+        setData(data);
         setHasError(false);
-        schedule(response.refresh_after_seconds);
+        schedule(data.refresh_after_seconds);
       } catch (_error) {
         if (disposed || requestController.signal.aborted) return;
         setHasError(true);

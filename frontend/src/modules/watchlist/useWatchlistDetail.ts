@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
-import { apiFetch } from "@/modules/shared/api";
+import { getWatchDetailApiV1WatchlistWatchIdGet } from "@/api/generated/watchlist/watchlist";
+import { summaryApiV1PricesSummaryGet } from "@/api/generated/prices/prices";
 import {
   normalizeWatchDetailApiResponse,
   type WatchDetailApiResponse,
@@ -29,13 +30,13 @@ export function useWatchlistDetail({
     let isMounted = true;
     setIsLoadingSelectedWatchDetail(true);
     Promise.all([
-      apiFetch<WatchDetailApiResponse>(`/watchlist/${selectedWatchId}`),
-      apiFetch<PriceSummary>(`/prices/summary?watch_id=${selectedWatchId}`),
+      getWatchDetailApiV1WatchlistWatchIdGet(selectedWatchId),
+      summaryApiV1PricesSummaryGet({ watch_id: selectedWatchId }),
     ])
       .then(([detail, summary]) => {
         if (!isMounted) return;
-        setSelectedWatchDetail(normalizeWatchDetailApiResponse(detail));
-        setSelectedWatchSummary(summary);
+        setSelectedWatchDetail(normalizeWatchDetailApiResponse(detail as unknown as WatchDetailApiResponse));
+        setSelectedWatchSummary(summary as unknown as PriceSummary);
       })
       .catch(() => {
         if (!isMounted) return;
