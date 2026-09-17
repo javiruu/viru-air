@@ -14,7 +14,6 @@ inventory = {
     'authority': '02_AUTH_SINGLE_AUTHORITY.md Phase A',
     'generated_at': '2026-09-12T23:15:00Z',
     'pbkdf2_occurrences': [],
-    'jwt_issuer_occurrences': [],
     'refresh_token_occurrences': [],
     'viru_token_occurrences': [],
     'auth_endpoints': [],
@@ -29,14 +28,6 @@ for root, _, files in os.walk(backend_dir / 'app'):
             txt = p.read_text(encoding='utf-8', errors='ignore')
             if re.search(r'pbkdf2|pwd_context|cryptcontext', txt, re.I):
                 inventory['pbkdf2_occurrences'].append(str(p.relative_to(repo_root)).replace('\\', '/'))
-
-for root, _, files in os.walk(backend_dir / 'app'):
-    for f in files:
-        if f.endswith('.py'):
-            p = Path(root) / f
-            txt = p.read_text(encoding='utf-8', errors='ignore')
-            if 'create_access_token' in txt or 'create_refresh_token' in txt:
-                inventory['jwt_issuer_occurrences'].append(str(p.relative_to(repo_root)).replace('\\', '/'))
 
 for root, _, files in os.walk(backend_dir / 'app'):
     for f in files:

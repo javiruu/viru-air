@@ -12,7 +12,15 @@ import {
   getDeliveryStateCopy,
   getNotificationChannelCopy,
 } from "@/modules/alerts/deliveryPresentation";
-import { apiFetch } from "@/modules/shared/api";
+import {
+  getPreferencesApiV1PreferencesGet,
+  setPreferencesApiV1PreferencesPut,
+} from "@/api/generated/preferences/preferences";
+import { summaryApiV1PricesSummaryGet } from "@/api/generated/prices/prices";
+import {
+  getWatchDetailApiV1WatchlistWatchIdGet,
+  listWatchesApiV1WatchlistGet,
+} from "@/api/generated/watchlist/watchlist";
 import { formatCurrency, formatRelativeTime } from "@/modules/shared/format";
 import { getDeliveryStatusMeta, getWatchStatusMeta } from "@/modules/shared/statusCatalog";
 import { SignalCadencePanel } from "@/modules/signals/SignalCadencePanel";
@@ -178,8 +186,9 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
   );
 
   useEffect(() => {
-    apiFetch<Watch[]>("/watchlist")
-      .then((rows) => {
+    listWatchesApiV1WatchlistGet()
+      .then((res) => {
+        const rows = res.data as unknown as Watch[];
         setWatches(rows);
         if (rows.length > 0) {
           setSelectedWatchId(
@@ -194,8 +203,9 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
         setMessage(t("alerts.messages.watchlistLoadError"));
       });
 
-    apiFetch<QuietHoursPreference>("/preferences")
-      .then((prefs) => {
+    getPreferencesApiV1PreferencesGet()
+      .then((res) => {
+        const prefs = res.data as unknown as QuietHoursPreference;
         setQuietHoursEnabled(Boolean(prefs.quiet_hours_enabled));
         setQuietHoursStart(prefs.quiet_hours_start || "22:00");
         setQuietHoursEnd(prefs.quiet_hours_end || "08:00");
@@ -221,8 +231,8 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
     Promise.all([
       getRulesApiV1AlertsRulesGet({ watch_id: selectedWatchId }),
       getEventsApiV1AlertsEventsGet({ watch_id: selectedWatchId, limit: 50 }),
-      apiFetch<WatchDetail>(`/watchlist/${selectedWatchId}`),
-      apiFetch<PriceSummary>(`/prices/summary?watch_id=${selectedWatchId}`),
+      getWatchDetailApiV1WatchlistWatchIdGet(selectedWatchId).then(res => res.data as unknown as WatchDetail),
+      summaryApiV1PricesSummaryGet({ watch_id: selectedWatchId }).then(res => res.data as unknown as PriceSummary),
     ])
       .then(([ruleRes, eventRes, watchDetail, watchSummary]) => {
         if (!isMounted) return;
@@ -491,16 +501,14 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
 
   async function saveQuietHours() {
     try {
-      const current = await apiFetch<Record<string, unknown>>("/preferences");
-      await apiFetch("/preferences", {
-        method: "PUT",
-        body: JSON.stringify({
-          ...current,
-          quiet_hours_enabled: quietHoursEnabled,
-          quiet_hours_start: quietHoursStart,
-          quiet_hours_end: quietHoursEnd,
-          quiet_hours_timezone: null,
-        }),
+      const res = await getPreferencesApiV1PreferencesGet();
+      const current = res.data as unknown as Record<string, unknown>;
+      await setPreferencesApiV1PreferencesPut({
+        ...current,
+        quiet_hours_enabled: quietHoursEnabled,
+        quiet_hours_start: quietHoursStart,
+        quiet_hours_end: quietHoursEnd,
+        quiet_hours_timezone: null,
       });
       setStatus("success");
       setMessage(t("alerts.messages.quietHoursSaved"));

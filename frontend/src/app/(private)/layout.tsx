@@ -10,7 +10,7 @@ import ThemeToggle from "@/modules/shared/ThemeToggle";
 import RequireAuth from "@/modules/shared/RequireAuth";
 import PrivateNav from "@/modules/shared/PrivateNav";
 import ViruFooterBlock from "@/modules/shared/ViruFooterBlock";
-import { apiFetchWithStatus } from "@/modules/shared/api";
+import { getNotificationsSummaryApiV1NotificationsSummaryGet } from "@/api/generated/notifications/notifications";
 
 type NotificationSummary = { readonly unread: number };
 
@@ -27,12 +27,20 @@ export default function PrivateLayout({ children }: { children: ReactNode }) {
         return;
       }
       const requestId = ++latestRequest;
-      apiFetchWithStatus<NotificationSummary>("/notifications/summary", undefined, {
-        timeoutMs: 3500,
-      }).then((result) => {
-        if (active && requestId === latestRequest && result.ok)
-          setUnreadSignals(result.data.unread);
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+      getNotificationsSummaryApiV1NotificationsSummaryGet({ signal: controller.signal })
+        .then((result) => {
+          clearTimeout(timeoutId);
+          if (active && requestId === latestRequest) {
+            const payload = result as unknown as { unread: number };
+            setUnreadSignals(payload.unread);
+          }
+        })
+        .catch(() => {
+          clearTimeout(timeoutId);
+        });
     };
 
     refreshUnreadSignals();

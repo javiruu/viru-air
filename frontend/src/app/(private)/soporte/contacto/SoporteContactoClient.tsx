@@ -7,8 +7,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
 import { submitFeedbackApiV1SupportFeedbackPost } from "@/api/generated/support/support";
-import { apiFetchWithStatus } from "@/modules/shared/api";
-type Me = { id: string; email: string; locale: string; is_admin: boolean };
+import { createClient } from "@/lib/supabase/client";
 
 function isValidOptionalUrl(value: string): boolean {
   if (!value.trim()) return true;
@@ -37,9 +36,10 @@ export default function SoporteContactoClient() {
   const { data: me } = useQuery({
     queryKey: ["auth-me"],
     queryFn: async () => {
-      const result = await apiFetchWithStatus<Me>("/auth/me");
-      if (result.ok) return result.data;
-      throw new Error("Failed to fetch me");
+      const supabase = createClient();
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data.user) throw new Error("Failed to fetch me");
+      return data.user;
     }
   });
 

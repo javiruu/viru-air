@@ -5,12 +5,19 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } fro
 import { useRouter } from "next/navigation";
 
 import { useI18n } from "@/i18n";
-import { customClient as apiFetch } from "@/api/mutator/custom-client";
+import { createClient } from "@/lib/supabase/client";
+import {
+  hotelObservabilityApiV1AdminHotelsObservabilityGet,
+  hotelHealthApiV1AdminHotelsHealthGet,
+  hotelProviderRunsApiV1AdminHotelsRunsGet,
+  hotelProviderControlsApiV1AdminHotelsProviderControlsGet,
+  hotelSweepLeasesApiV1AdminHotelsSweepLeasesGet,
+  hotelProviderOutcomesApiV1AdminHotelsProviderOutcomesGet,
+} from "@/api/generated/admin/admin";
 import { BoneyardLoad, BoneyardPanel, LoadReference } from "@/modules/shared/BoneyardLoad";
 import {
   HOTEL_METRIC_NAMES,
   HOTEL_PROVIDERS,
-  buildHotelObservabilityPath,
   buildHotelObservabilitySummary,
   formatHotelMetricDate,
   formatHotelMetricTimestamp,
@@ -116,12 +123,17 @@ export default function HotelObservabilityPage() {
           leasesPayload,
           outcomesPayload,
         ] = await Promise.all([
-          apiFetch<HotelObservabilityResponse>(buildHotelObservabilityPath(nextFilters)),
-          apiFetch<HotelHealthResponse>("/admin/hotels/health?window_hours=24"),
-          apiFetch<HotelRunDiagnosticsResponse>("/admin/hotels/runs?limit=8"),
-          apiFetch<HotelProviderControlsResponse>("/admin/hotels/provider-controls?limit=50"),
-          apiFetch<HotelSweepLeaseDiagnosticsResponse>("/admin/hotels/sweep-leases?limit=20"),
-          apiFetch<HotelProviderOutcomeDiagnostics>("/admin/hotels/provider-outcomes?limit=20"),
+          hotelObservabilityApiV1AdminHotelsObservabilityGet({
+            days: nextFilters.days,
+            provider: nextFilters.provider || undefined,
+            metric_name: nextFilters.metricName || undefined,
+            outcome: nextFilters.outcome || undefined,
+          }) as unknown as Promise<HotelObservabilityResponse>,
+          hotelHealthApiV1AdminHotelsHealthGet({ window_hours: 24 }) as unknown as Promise<HotelHealthResponse>,
+          hotelProviderRunsApiV1AdminHotelsRunsGet({ limit: 8 }) as unknown as Promise<HotelRunDiagnosticsResponse>,
+          hotelProviderControlsApiV1AdminHotelsProviderControlsGet({ limit: 50 }) as unknown as Promise<HotelProviderControlsResponse>,
+          hotelSweepLeasesApiV1AdminHotelsSweepLeasesGet({ limit: 20 }) as unknown as Promise<HotelSweepLeaseDiagnosticsResponse>,
+          hotelProviderOutcomesApiV1AdminHotelsProviderOutcomesGet({ limit: 20 }) as unknown as Promise<HotelProviderOutcomeDiagnostics>,
         ]);
         if (mounted.current && requestVersion.current === version) {
           setData(payload);
@@ -146,8 +158,16 @@ export default function HotelObservabilityPage() {
     mounted.current = true;
     async function authenticateAndLoad() {
       try {
-        const meData = await apiFetch<Me>("/auth/me");
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!active) return;
+        if (!user) throw new Error("No session");
+
+        const meData: Me = {
+          is_admin: user.user_metadata?.is_admin === true,
+        };
         setMe(meData);
         if (!meData.is_admin) {
           router.replace("/dashboard");

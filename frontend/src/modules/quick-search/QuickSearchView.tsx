@@ -7,7 +7,7 @@ import { Download } from "lucide-react";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { saveResultApiV1SearchSaveResultPost } from "@/api/generated/search/search";
-import type { ApiError } from "@/modules/shared/api";
+export type ApiError = { status: number; code: string; message: string; details?: any };
 import { buildJsonExportFilename, downloadJson } from "@/modules/shared/jsonExport";
 import { getQuickSearchCopy } from "@/modules/shared/quickSearchCopy";
 import { useFtueHint } from "@/lib/ftue";

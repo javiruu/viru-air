@@ -7,7 +7,11 @@ import { useRouter } from "next/navigation";
 import { useI18n } from "@/i18n";
 import { FareMemoryHealthPanel } from "@/modules/admin/FareMemoryHealthPanel";
 import type { FareMemoryHealth } from "@/modules/admin/fareMemoryHealth";
-import { customClient as apiFetch } from "@/api/mutator/custom-client";
+import { createClient } from "@/lib/supabase/client";
+import {
+  productHealthApiV1AdminProductHealthGet,
+  fareMemoryHealthApiV1AdminFareMemoryHealthGet,
+} from "@/api/generated/admin/admin";
 import { getSystemStatusMeta } from "@/modules/shared/statusCatalog";
 import { BoneyardPanel } from "@/modules/shared/BoneyardLoad";
 
@@ -52,16 +56,27 @@ export default function ProductHealthPage() {
       setLoading(true);
       setError("");
       try {
-        const meData = await apiFetch<Me>("/auth/me");
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!active) return;
+        if (!user) throw new Error("No session");
+
+        const meData: Me = {
+          id: user.id,
+          email: user.email ?? "",
+          locale: user.user_metadata?.locale ?? "en",
+          is_admin: user.user_metadata?.is_admin === true,
+        };
         setMe(meData);
         if (!meData.is_admin) {
           router.replace("/dashboard");
           return;
         }
         const [payload, fareMemoryPayload] = await Promise.all([
-          apiFetch<ProductHealth>("/admin/product-health"),
-          apiFetch<FareMemoryHealth>("/admin/fare-memory-health"),
+          productHealthApiV1AdminProductHealthGet() as unknown as Promise<ProductHealth>,
+          fareMemoryHealthApiV1AdminFareMemoryHealthGet() as unknown as Promise<FareMemoryHealth>,
         ]);
         if (active) {
           setData(payload);
