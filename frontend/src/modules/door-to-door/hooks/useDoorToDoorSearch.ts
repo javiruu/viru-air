@@ -18,7 +18,7 @@ import type {
   DoorToDoorPreferences,
   DoorToDoorResponse,
 } from "@/modules/door-to-door/types";
-import { apiFetch } from "@/modules/shared/api";
+import { listWatchesApiV1WatchlistGet } from "@/api/generated/watchlist/watchlist";
 import type { Watch } from "@/modules/watchlist/types";
 
 function normalizeLabel(value: string) {
@@ -66,8 +66,9 @@ export function useDoorToDoorSearch() {
   }, [watchIdParam]);
 
   useEffect(() => {
-    apiFetch<Watch[]>("/watchlist")
-      .then((items) => {
+    listWatchesApiV1WatchlistGet()
+      .then((res) => {
+        const items = res.data as unknown as Watch[];
         setWatches(items);
         setSelectedWatchId((c) => c || watchIdParam || items[0]?.id || "");
       })

@@ -4,7 +4,20 @@ import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react
 import { useRouter } from "next/navigation";
 
 import { useI18n } from "@/i18n";
-import { customClient as apiFetch } from "@/api/mutator/custom-client";
+import { createClient } from "@/lib/supabase/client";
+import {
+  listUsersApiV1AdminUsersGet,
+  updateUserApiV1AdminUsersUserIdPatch,
+  resetPasswordApiV1AdminUsersUserIdPasswordPut,
+  deleteUserApiV1AdminUsersUserIdDelete,
+  listUserWatchlistApiV1AdminUsersUserIdWatchlistGet,
+  createWatchForUserApiV1AdminUsersUserIdWatchlistPost,
+  productMetricsApiV1AdminProductMetricsGet,
+  deleteWatchApiV1AdminWatchlistWatchIdDelete,
+} from "@/api/generated/admin/admin";
+import {
+  listWatchesApiV1WatchlistGet,
+} from "@/api/generated/watchlist/watchlist";
 import { BoneyardLoad, BoneyardPanel, LoadReference } from "@/modules/shared/BoneyardLoad";
 
 type Me = { id: string; email: string; locale: string; is_admin: boolean };
@@ -42,9 +55,10 @@ async function fetchAllAdminUsers(): Promise<AdminUser[]> {
   let offset = 0;
 
   while (true) {
-    const page = await apiFetch<AdminUser[]>(
-      `/admin/users?limit=${ADMIN_USERS_PAGE_SIZE}&offset=${offset}`,
-    );
+    const page = (await listUsersApiV1AdminUsersGet({
+      limit: ADMIN_USERS_PAGE_SIZE,
+      offset,
+    })) as unknown as AdminUser[];
     users.push(...page);
     if (page.length < ADMIN_USERS_PAGE_SIZE) return users;
     offset += page.length;
@@ -92,11 +106,15 @@ export default function AdminPage() {
   }, [systemStatus, t]);
 
   const runSystemChecks = useCallback(async () => {
+    const supabase = createClient();
     const checks = await Promise.allSettled([
-      apiFetch<Me>("/auth/me"),
+      supabase.auth.getUser().then(({ data, error }) => {
+        if (error || !data.user) throw error || new Error("No user");
+        return data.user;
+      }),
       fetchAllAdminUsers(),
-      apiFetch<Watch[]>("/watchlist"),
-      apiFetch<ProductMetrics>("/admin/product-metrics"),
+      listWatchesApiV1WatchlistGet(),
+      productMetricsApiV1AdminProductMetricsGet(),
     ]);
 
     const nextChecks: QaCheck[] = [
@@ -145,7 +163,7 @@ export default function AdminPage() {
     setQaChecks(nextChecks);
 
     if (checks[3].status === "fulfilled") {
-      setMetrics(checks[3].value);
+      setMetrics(checks[3].value as unknown as ProductMetrics);
     }
 
     const failures = nextChecks.filter((item) => !item.ok).length;
@@ -169,7 +187,18 @@ export default function AdminPage() {
   useEffect(() => {
     async function load() {
       try {
-        const meData = await apiFetch<Me>("/auth/me");
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) throw new Error("No session");
+
+        const meData: Me = {
+          id: user.id,
+          email: user.email ?? "",
+          locale: user.user_metadata?.locale ?? "en",
+          is_admin: user.user_metadata?.is_admin === true,
+        };
         setMe(meData);
         if (!meData.is_admin) {
           router.replace("/dashboard");
@@ -192,7 +221,9 @@ export default function AdminPage() {
   }
 
   async function loadWatches(userId: string) {
-    const data = await apiFetch<Watch[]>(`/admin/users/${userId}/watchlist`);
+    const data = (await listUserWatchlistApiV1AdminUsersUserIdWatchlistGet(
+      userId,
+    )) as unknown as Watch[];
     setSelectedWatches(data);
   }
 
@@ -214,10 +245,7 @@ export default function AdminPage() {
       return;
     }
     try {
-      await apiFetch(`/admin/users/${selectedUserId}/password`, {
-        method: "PUT",
-        body: JSON.stringify({ password }),
-      });
+      await resetPasswordApiV1AdminUsersUserIdPasswordPut(selectedUserId, { password });
       setPassword("");
       setMessage(t("admin.notices.passwordUpdated"));
       setMessageType("success");
@@ -231,10 +259,7 @@ export default function AdminPage() {
     setMessage("");
     setMessageType("error");
     try {
-      await apiFetch(`/admin/users/${user.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ is_admin: !user.is_admin }),
-      });
+      await updateUserApiV1AdminUsersUserIdPatch(user.id, { is_admin: !user.is_admin });
       await refreshUsers();
       setMessage(t("admin.notices.roleUpdated"));
       setMessageType("success");
@@ -253,14 +278,11 @@ export default function AdminPage() {
       return;
     }
     try {
-      await apiFetch(`/admin/users/${selectedUserId}/watchlist`, {
-        method: "POST",
-        body: JSON.stringify({
-          origin_iata: origin,
-          destination_iata: destination,
-          travel_date_local: travelDate,
-          target_price: targetPrice ? Number(targetPrice) : null,
-        }),
+      await createWatchForUserApiV1AdminUsersUserIdWatchlistPost(selectedUserId, {
+        origin_iata: origin,
+        destination_iata: destination,
+        travel_date_local: travelDate,
+        target_price: targetPrice ? Number(targetPrice) : undefined,
       });
       await loadWatches(selectedUserId);
       setMessage(t("admin.notices.watchInjected"));
@@ -275,7 +297,7 @@ export default function AdminPage() {
     setMessage("");
     setMessageType("error");
     try {
-      await apiFetch(`/admin/watchlist/${watchId}`, { method: "DELETE" });
+      await deleteWatchApiV1AdminWatchlistWatchIdDelete(watchId);
       if (selectedUserId) {
         await loadWatches(selectedUserId);
       }
@@ -293,7 +315,7 @@ export default function AdminPage() {
     setMessage("");
     setMessageType("error");
     try {
-      await apiFetch(`/admin/users/${userId}`, { method: "DELETE" });
+      await deleteUserApiV1AdminUsersUserIdDelete(userId);
       if (userId === selectedUserId) {
         setSelectedUserId("");
         setSelectedWatches([]);
@@ -481,8 +503,8 @@ export default function AdminPage() {
                 <div>
                   <strong>{u.email}</strong>
                   <div className="panel-note">
-                    {u.is_admin ? t("admin.users.roleAdmin") : t("admin.users.roleUser")} ·{" "}
-                    {u.locale} · {u.timezone}
+                    {u.is_admin ? t("admin.users.roleAdmin") : t("admin.users.roleUser")} ï¿½{" "}
+                    {u.locale} ï¿½ {u.timezone}
                   </div>
                 </div>
                 <div className="row-actions">

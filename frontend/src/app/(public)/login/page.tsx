@@ -7,7 +7,6 @@ import { type FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 
 import { GlassSignInCard } from "@/components/components/forms/glass-sign-in";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
-import { apiFetchWithStatus } from "@/modules/shared/api";
 import {
   isDashboardDemoAccessEnabled,
   signInDashboardDemoAccount,
@@ -55,14 +54,14 @@ function LoginContent() {
         return;
       }
 
-      const result = await apiFetchWithStatus<{ id: string }>("/auth/me");
+      const { data: { user }, error } = await supabase.auth.getUser();
       if (!active) return;
-      if (result.ok) {
+      if (user) {
         router.replace("/dashboard");
         return;
       }
-      if (result.status === 401) {
-        await supabase.auth.signOut();;
+      if (error?.status === 401) {
+        await supabase.auth.signOut();
       }
       if (active) setEntryState("ready");
     }

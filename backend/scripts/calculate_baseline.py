@@ -44,22 +44,6 @@ results["sqlite_runtime_refs"] = {
     "files": sqlite_files
 }
 
-# 5. Legacy JWT issuer refs
-jwt_files = []
-for root, dirs, files in os.walk('backend/app'):
-    for f in files:
-        if f.endswith('.py'):
-            p = os.path.join(root, f)
-            content = open(p, encoding='utf-8', errors='ignore').read()
-            if 'create_access_token' in content or 'create_refresh_token' in content or 'jwt.encode' in content:
-                matches = len(re.findall(r'create_access_token|create_refresh_token|jwt\.encode', content))
-                jwt_files.append((p.replace('\\', '/'), matches))
-results["legacy_jwt_issuer_refs"] = {
-    "total_matches": sum(m for _, m in jwt_files),
-    "files_count": len(jwt_files),
-    "files": jwt_files
-}
-
 # 6. Legacy refresh-token refs
 rt_files = []
 for root, dirs, files in os.walk('backend/app'):

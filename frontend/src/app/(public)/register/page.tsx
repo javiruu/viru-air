@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { registerApiV1AuthRegisterPost } from "@/api/generated/auth/auth";
 import { GlassSignInCard } from "@/components/components/forms/glass-sign-in";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
-import { apiFetchWithStatus } from "@/modules/shared/api";
 import type { AuthOut } from "@/modules/shared/auth";
 import {
   isDashboardDemoAccessEnabled,
@@ -57,14 +56,14 @@ function RegisterContent() {
         return;
       }
 
-      const result = await apiFetchWithStatus<{ id: string }>("/auth/me");
+      const { data: { user }, error } = await supabase.auth.getUser();
       if (!active) return;
-      if (result.ok) {
+      if (user) {
         router.replace("/dashboard");
         return;
       }
-      if (result.status === 401) {
-        await supabase.auth.signOut();;
+      if (error?.status === 401) {
+        await supabase.auth.signOut();
       }
       if (active) setEntryState("ready");
     }

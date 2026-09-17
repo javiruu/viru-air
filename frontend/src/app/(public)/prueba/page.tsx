@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { BoneyardPanel, LoadReference } from "@/modules/shared/BoneyardLoad";
-import { apiFetchWithStatus } from "@/modules/shared/api";
+import { createClient } from "@/lib/supabase/client";
 import { useI18n } from "@/i18n/shell";
 
 type LandingState = "checking" | "public";
@@ -17,6 +17,7 @@ export default function PruebaLandingPage() {
 
   useEffect(() => {
     let active = true;
+    const supabase = createClient();
 
     async function checkSession() {
       if (!false /* TODO: migrate to Supabase SSR */) {
@@ -24,15 +25,13 @@ export default function PruebaLandingPage() {
         return;
       }
 
-      const meResult = await apiFetchWithStatus<{ id: string }>("/auth/me", undefined, {
-        timeoutMs: 7000,
-      });
-      if (meResult.ok) {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (user) {
         router.replace("/dashboard");
         return;
       }
 
-      if (meResult.status === 401) {
+      if (error?.status === 401) {
         /* TODO: migrate to Supabase SSR */;
       }
 

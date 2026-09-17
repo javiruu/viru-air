@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 
 import { quickSearchApiV1SearchQuickPost, deeplinkApiV1SearchDeeplinkGet } from "@/api/generated/search/search";
-import { LONG_RUNNING_API_BASE } from "@/modules/shared/api";
+
 import {
   buildQuickSearchCanonicalPayload,
   prepareQuickSearchRequest,
