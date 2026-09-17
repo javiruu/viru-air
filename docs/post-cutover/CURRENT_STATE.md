@@ -21,7 +21,7 @@ Se han analizado las referencias clave para medir la adopción real y la deuda p
 
 ### 2.2. Global y Deuda Técnica
 - **Referencias a SQLite, Alembic y Docker:** **131 referencias** (en código, comentarios o documentación, excluyendo dependencias/builds). 
-- **Estado de los slices SHADOW_VERIFIED:** **9 referencias** encontradas (el estado de la base de datos y la auth aún figuran como `SHADOW_VERIFIED` en la documentación/auditorías en lugar de estar 100% probados en un entorno remoto puro).
+- **Estado de los slices CUTOVER:** **9 referencias** encontradas (el estado de la base de datos y la auth aún figuran como `CUTOVER` en la documentación/auditorías en lugar de estar 100% probados en un entorno remoto puro).
 
 ## 3. Estado de los Gates Rápidos
 - **Frontend Typecheck (`tsc --noEmit`):** PASS
@@ -29,6 +29,6 @@ Se han analizado las referencias clave para medir la adopción real y la deuda p
 - **Backend Tests (`pytest`):** PENDIENTE (entorno virtual no cargado correctamente en la primera pasada, requiere ejecución manual o CI).
 
 ## 4. Conclusión y Siguientes Pasos
-El estado "verde" en compilación es engañoso frente a la cantidad de deuda remanente (`SHADOW_VERIFIED` y 131 menciones de tecnologías legacy). 
+El estado "verde" en compilación es engañoso frente a la cantidad de deuda remanente (`CUTOVER` y 131 menciones de tecnologías legacy). 
 1. **Paso inmediato:** Aislar los 468 archivos en commits semánticos separados.
 2. **Setup STAGING:** Desplegar el esquema a un proyecto Supabase real remoto para validar schema y matriz RLS sin Docker, tal y como exige `VIRU_NEXT_STEPS_AFTER_CUTOVER.md`.

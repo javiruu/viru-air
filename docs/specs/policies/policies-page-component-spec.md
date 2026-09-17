@@ -1,18 +1,18 @@
-ï»¿Status: canonical
+Status: canonical
 Scope: active product, UI, or policy specification
 Last reviewed: 2026-04-15
 Canonical source: docs/specs/policies/policies-page-component-spec.md
 Related: docs/specs/README.md, docs/INDICE_UNICO.md
 
 ---
-# Especificacion de componentes â€” Politicas y Transparencia (Viru)
+# Especificacion de componentes — Politicas y Transparencia (Viru)
 
 ## 1) Hero de confianza
 - Elementos:
-  - H1: â€œPoliticas y Transparenciaâ€
+  - H1: “Politicas y Transparencia”
   - Subtitulo de una linea
   - Metadatos: Ultima actualizacion, Version, Idioma, Tiempo de lectura
-  - Acciones: â€œAtrasâ€ y â€œVolver al panelâ€
+  - Acciones: “Atras” y “Volver al panel”
 - Comportamiento:
   - Mantener jerarquia H1 y lectura clara
   - Metadatos visibles y escaneables
@@ -21,21 +21,21 @@ Related: docs/specs/README.md, docs/INDICE_UNICO.md
   - Links con focus visible
 
 ## 2) Resumen ejecutivo (TL;DR)
-- Caja destacada con 6â€“8 bullets
-- Uso de badge â€œTransparenciaâ€
+- Caja destacada con 6–8 bullets
+- Uso de badge “Transparencia”
 - Texto en lenguaje llano
 
 ## 3) Indice navegable (sticky / collapsable)
 - Navegacion con anchors internos
 - Estado activo por scroll
 - Desktop: visible siempre
-- Movil: colapsable con toggle â€œAbrir indiceâ€
+- Movil: colapsable con toggle “Abrir indice”
 - Accesibilidad:
   - nav con `aria-label`
   - botones con `aria-expanded`
 
 ## 4) Cuerpo de politicas completo
-Secciones largas Aâ€“M:
+Secciones largas A–M:
 - A) Uso responsable
 - B) Alcance del servicio y limites
 - C) Datos de proveedor y calidad del dato
@@ -56,7 +56,7 @@ Componentes comunes:
 - Lista simple (sin jerga)
 - Tabla de flujo para borrado
 
-## 5) Bloque â€œTus derechos, en simpleâ€
+## 5) Bloque “Tus derechos, en simple”
 - Formato acordeon con `<details>`
 - Items:
   - Acceso
@@ -80,21 +80,21 @@ Componentes comunes:
 
 ## 8) Resumen rapido fijo
 - Aside sticky en desktop
-- Caja con 4â€“6 bullets
+- Caja con 4–6 bullets
 - Se mantiene visible mientras se lee
 
 ## 9) Floating CTA (movil)
-- Botones â€œSubirâ€ e â€œIndiceâ€
+- Botones “Subir” e “Indice”
 - Posicion fixed, bottom-right
 
 ## 10) Badges semanticos
-- â€œImportanteâ€
-- â€œTransparenciaâ€
-- â€œLimitacionâ€
-- â€œTu controlâ€
+- “Importante”
+- “Transparencia”
+- “Limitacion”
+- “Tu control”
 
 ## 11) Accesibilidad
-- H1â€“H3 en orden
+- H1–H3 en orden
 - Focus visible
 - Contraste AA minimo
 - Navegacion por teclado

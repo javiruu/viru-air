@@ -1,24 +1,24 @@
-Ôªø# QA
+# QA
 
 **Estado:** vivo  
-**√öltima revisi√≥n:** 2026-08-01
-**Fuente de verdad:** s√≠  
-**√Årea:** QA
+**⁄ltima revisiÛn:** 2026-08-01
+**Fuente de verdad:** sÌ  
+**¡rea:** QA
 
-`docs/qa/` conserva solo material vivo o reutilizable. El hist√≥rico de ciclos cerrados est√° en [archive/qa-reports](../archive/qa-reports/) y en las carpetas `docs/archive/qa-*`.
+`docs/qa/` conserva solo material vivo o reutilizable. El histÛrico de ciclos cerrados est· en [archive/qa-reports](../archive/qa-reports/) y en las carpetas `docs/archive/qa-*`.
 
-## Qu√© vive aqu√≠
+## QuÈ vive aquÌ
 
 - `acceptance-checklists/`: checklists reutilizables.
 - `visual/`: capturas y activos visuales activos.
-- `reports/`: reportes ligeros y resultados activos que siguen siendo √∫tiles.
+- `reports/`: reportes ligeros y resultados activos que siguen siendo ˙tiles.
 - `evidence/`: evidencia adicional referenciada.
 - `traceability-matrix.md`: matriz base de trazabilidad.
 
 ## Lectura recomendada
 
 - [Frontend PR checklist](acceptance-checklists/frontend-pr-checklist.md)
-- [Matriz QA por √°rea](qa-command-matrix.md)
+- [Matriz QA por ·rea](qa-command-matrix.md)
 - [Traceability matrix](traceability-matrix.md)
 - [Runbook UI captures](../runbooks/runbook-ui-captures.md)
 - [Live flight tracking desde Watchlist - resultado browser](reports/2026-07-21-watchlist-live-flight-tracking.json)
@@ -34,14 +34,14 @@
   - feedback observado.
 - Build/tests/lint/typecheck de terminal siguen siendo responsabilidad de la IA.
 
-## Qu√© no debe quedarse aqu√≠
+## QuÈ no debe quedarse aquÌ
 
 - actas de un ciclo cerrado;
 - reportes fechados duplicados;
 - prompts de herramientas;
 - dumps o logs masivos no referenciados.
 
-## Hist√≥rico
+## HistÛrico
 
 - ciclos cerrados y readiness: [../archive/qa-reports/](../archive/qa-reports/)
 - evidencias historicas: [../archive/qa-evidence/](../archive/qa-evidence/)

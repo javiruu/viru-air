@@ -1,29 +1,29 @@
-Ôªø# Prompts y Contexto IA
+# Prompts y Contexto IA
 
 **Estado:** vivo  
-**√öltima revisi√≥n:** 2026-07-12
-**Fuente de verdad:** s√≠  
-**√Årea:** contexto IA
+**⁄ltima revisiÛn:** 2026-07-12
+**Fuente de verdad:** sÌ  
+**¡rea:** contexto IA
 
 ## Resumen
 
-Esta carpeta separa el material operativo de agentes del hist√≥rico de prompts sueltos.
+Esta carpeta separa el material operativo de agentes del histÛrico de prompts sueltos.
 
 ## Regla principal
 
 - `AGENTS.md` es el contrato operativo principal para agentes dentro de este repo.
-- `docs/reference/codex-operating-contract.md` act√∫a como referencia persistente complementaria.
+- `docs/reference/codex-operating-contract.md` act˙a como referencia persistente complementaria.
 - `skills/viru-air-context/` contiene contexto reusable para reentrada.
-- Los prompts antiguos o de una sesi√≥n concreta deben vivir en `legacy/`.
+- Los prompts antiguos o de una sesiÛn concreta deben vivir en `legacy/`.
 
 ## Contenido actual
 
 - `codex-travel-roadmap-50-fases.md`: roadmap operativo para agentes durante el ciclo de viaje; no sustituye a contratos vivos.
-- `legacy/prompt-root-legacy.txt`: prompt antiguo movido desde la ra√≠z.
+- `legacy/prompt-root-legacy.txt`: prompt antiguo movido desde la raÌz.
 
-## Qu√© no hacer
+## QuÈ no hacer
 
-- No dupliques reglas activas de `AGENTS.md` aqu√≠.
+- No dupliques reglas activas de `AGENTS.md` aquÌ.
 - No conviertas prompts viejos en fuente de verdad del proyecto.
 - No guardes secretos ni datos reales de usuario.
 

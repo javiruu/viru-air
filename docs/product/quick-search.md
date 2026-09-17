@@ -1,47 +1,47 @@
-Ôªø# Quick Search
+# Quick Search
 
 **Estado:** vivo  
-**√öltima revisi√≥n:** 2026-08-01
-**Fuente de verdad:** s√≠  
-**√Årea:** product
+**⁄ltima revisiÛn:** 2026-08-01
+**Fuente de verdad:** sÌ  
+**¡rea:** product
 
 ## Resumen
 
-Quick Search es una de las √°reas m√°s documentadas del proyecto y cuenta con contrato backend, checklist t√©cnico, pol√≠tica de weather y gu√≠as de QA visual/manual.
+Quick Search es una de las ·reas m·s documentadas del proyecto y cuenta con contrato backend, checklist tÈcnico, polÌtica de weather y guÌas de QA visual/manual.
 
 ## Precio comparable
 
 La cesta de precio comparable permite aplicar el mismo criterio a todos los resultados:
 
-- n√∫mero de viajeros;
+- n˙mero de viajeros;
 - equipaje de cabina de 10 kg y maleta facturada de 20 kg;
-- seguro, Fast Track, embarque prioritario, selecci√≥n de asiento y cambios flexibles;
-- selecci√≥n de extras sin introducir importes manuales.
+- seguro, Fast Track, embarque prioritario, selecciÛn de asiento y cambios flexibles;
+- selecciÛn de extras sin introducir importes manuales.
 
-Cada resultado mantiene visible el precio base y calcula autom√°ticamente el
-total o rango comparable con las tarifas p√∫blicas de la aerol√≠nea, respetando
+Cada resultado mantiene visible el precio base y calcula autom·ticamente el
+total o rango comparable con las tarifas p˙blicas de la aerolÌnea, respetando
 si cada servicio se cobra por vuelo o por reserva. Cuando una tarifa es
-din√°mica o no publica un m√°ximo, Viru muestra
-`Desde`; cuando no existe una cifra p√∫blica calculable, conserva el total
-parcial y se√±ala el extra pendiente sin inventar un precio. La fuente oficial
-queda enlazada junto a la estimaci√≥n. Al guardar un resultado, la cesta y la
-aerol√≠nea identificada viajan con la Watch para conservar la comparaci√≥n.
+din·mica o no publica un m·ximo, Viru muestra
+`Desde`; cuando no existe una cifra p˙blica calculable, conserva el total
+parcial y seÒala el extra pendiente sin inventar un precio. La fuente oficial
+queda enlazada junto a la estimaciÛn. Al guardar un resultado, la cesta y la
+aerolÌnea identificada viajan con la Watch para conservar la comparaciÛn.
 
 ## Referencia de precios comunitarios
 
-Los resultados consultan en lote la se√±al comunitaria de sus rutas. Cuando
-existen al menos tres viajeros distintos con un precio v√°lido y p√∫blico, la
-fila muestra el tama√±o de muestra y el rango pagado por persona. Por debajo del
+Los resultados consultan en lote la seÒal comunitaria de sus rutas. Cuando
+existen al menos tres viajeros distintos con un precio v·lido y p˙blico, la
+fila muestra el tamaÒo de muestra y el rango pagado por persona. Por debajo del
 umbral no muestra importes ni revela que exista una respuesta individual.
 
-Esta consulta es auxiliar: si falla, la b√∫squeda y sus resultados siguen
+Esta consulta es auxiliar: si falla, la b˙squeda y sus resultados siguen
 funcionando sin el texto comunitario.
 
 ## Contenido principal
 
-- Contrato t√©cnico:
+- Contrato tÈcnico:
   - [Quick Search contract](../reference/backend/quick-search-contract.md)
-- Criterios t√©cnicos:
+- Criterios tÈcnicos:
   - [Quick Search acceptance checklist](../reference/backend/quick-search-acceptance-checklist.md)
 - Comportamiento auxiliar:
   - [Quick Search weather policy](../reference/quick-search-weather-policy.md)

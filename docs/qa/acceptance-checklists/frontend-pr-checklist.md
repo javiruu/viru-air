@@ -1,4 +1,4 @@
-ï»¿Status: reference
+Status: reference
 Scope: reusable QA reference or checklist
 Last reviewed: 2026-04-15
 Canonical source: docs/qa/frontend-pr-checklist.md
@@ -22,7 +22,7 @@ rg -n "role=\"dialog\"|aria-modal|modal-close|>x<|>X<" frontend/src
 
 ### H4. Copy e idioma consistentes
 - [x] Sin mezcla ES/EN dentro del mismo bloque funcional (ej. alerts).
-- [x] Uso consistente de acentos y microcopy (ej. `Atras` vs `Atras/AtrÃ¡s` definido por criterio de producto).
+- [x] Uso consistente de acentos y microcopy (ej. `Atras` vs `Atras/Atrás` definido por criterio de producto).
 - [ ] Textos de estado y errores siguen misma convencion.
 
 Aceptacion:
@@ -30,7 +30,7 @@ Aceptacion:
 
 Verificacion:
 ```powershell
-rg -n "Category|No results|Atras|AtrÃ¡s|Historico|HistÃ³rico" frontend/src/app
+rg -n "Category|No results|Atras|Atrás|Historico|Histórico" frontend/src/app
 ```
 
 ---

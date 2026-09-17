@@ -1,4 +1,4 @@
-﻿Status: reference
+Status: reference
 Scope: reusable QA reference or checklist
 Last reviewed: 2026-04-15
 Canonical source: docs/qa/testsprite.md

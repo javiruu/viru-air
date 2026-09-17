@@ -1,4 +1,4 @@
-﻿# Informe corto de control de calidad documental
+# Informe corto de control de calidad documental
 
 **Estado:** QC final  
 **Ultima revision:** 2026-05-11  

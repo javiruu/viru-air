@@ -1,13 +1,13 @@
-ï»¿# Policies Page
+# Policies Page
 
 **Estado:** vivo  
-**Ãšltima revisiÃ³n:** 2026-05-11  
-**Fuente de verdad:** sÃ­  
-**Ãrea:** product
+**Última revisión:** 2026-05-11  
+**Fuente de verdad:** sí  
+**Área:** product
 
 ## Resumen
 
-La pÃ¡gina de polÃ­ticas cuenta con un conjunto consolidado de documentos vivos: rewrite, component spec, copy deck y checklist de aceptaciÃ³n.
+La página de políticas cuenta con un conjunto consolidado de documentos vivos: rewrite, component spec, copy deck y checklist de aceptación.
 
 ## Contenido principal
 

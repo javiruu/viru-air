@@ -1,36 +1,36 @@
-ï»¿# Dashboard
+# Dashboard
 
 **Estado:** vivo  
-**Ãšltima revisiÃ³n:** 2026-08-01
-**Fuente de verdad:** sÃ­  
-**Ãrea:** product
+**Última revisión:** 2026-08-01
+**Fuente de verdad:** sí  
+**Área:** product
 
 ## Resumen
 
-La referencia viva del dashboard es la spec consolidada de rediseÃ±o, cuyo objetivo explÃ­cito es mejorar jerarquÃ­a, foco y limpieza sin aÃ±adir funcionalidad compleja.
+La referencia viva del dashboard es la spec consolidada de rediseño, cuyo objetivo explícito es mejorar jerarquía, foco y limpieza sin añadir funcionalidad compleja.
 
 ## Contenido principal
 
 - Fuente activa:
   - [Spec dashboard redesign v2](../specs/product/dashboard-redesign-v2.md)
-- La intenciÃ³n de producto verificada es:
-  - mÃ¡s jerarquÃ­a;
-  - mÃ¡s foco en acciÃ³n;
+- La intención de producto verificada es:
+  - más jerarquía;
+  - más foco en acción;
   - menos redundancia;
   - mejor lectura del estado principal.
 
-## Corredores mÃ¡s buscados
+## Corredores más buscados
 
-`Descubrimiento` combina la oportunidad personal con una seÃ±al comunitaria semanal:
+`Descubrimiento` combina la oportunidad personal con una señal comunitaria semanal:
 
-- una banda horizontal de diez celdas resume la concentraciÃ³n de bÃºsquedas;
-- la lista ordena hasta diez rutas direccionales por bÃºsquedas de los Ãºltimos siete dÃ­as;
+- una banda horizontal de diez celdas resume la concentración de búsquedas;
+- la lista ordena hasta diez rutas direccionales por búsquedas de los últimos siete días;
 - cada corredor abre Quick Search con origen y destino precargados;
-- la tarjeta pasa a un estado vacÃ­o honesto mientras el agregado diario reÃºne cobertura.
+- la tarjeta pasa a un estado vacío honesto mientras el agregado diario reúne cobertura.
 
-La banda es una ayuda de escaneo, no un grÃ¡fico analÃ­tico. En escritorio ocupa la columna izquierda y la oportunidad personal mantiene la derecha; en mÃ³vil ambas tarjetas se apilan con la seÃ±al comunitaria primero.
+La banda es una ayuda de escaneo, no un gráfico analítico. En escritorio ocupa la columna izquierda y la oportunidad personal mantiene la derecha; en móvil ambas tarjetas se apilan con la señal comunitaria primero.
 
 ## Relacionado
 
 - [Frontend](../engineering/frontend.md)
-- [DirecciÃ³n de diseÃ±o](../../DESIGN.md)
+- [Dirección de diseño](../../DESIGN.md)

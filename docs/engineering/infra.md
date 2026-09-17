@@ -1,18 +1,18 @@
-ï»¿# Infra
+# Infra
 
 **Estado:** vivo
-**Ãšltima revisiÃ³n:** 2026-06-23
+**Última revisión:** 2026-06-23
 **Fuente de verdad:** no
-**Ãrea:** engineering
+**Área:** engineering
 
 ## Resumen
 
-La documentaciÃ³n viva confirma una capa `infra/` con soporte para despliegue, workflows y manifiestos, pero no existe una sola doc consolidada que describa todo el stack operacional.
+La documentación viva confirma una capa `infra/` con soporte para despliegue, workflows y manifiestos, pero no existe una sola doc consolidada que describa todo el stack operacional.
 
 ## Contenido principal
 
-- La raÃ­z del repo y `docs/overview/current-state.md` mencionan:
-  - Cloudflare Tunnel como camino principal de publicaciÃ³n estable desde local
+- La raíz del repo y `docs/overview/current-state.md` mencionan:
+  - Cloudflare Tunnel como camino principal de publicación estable desde local
   - Tailscale Funnel como alternativa estable soportada
   - CI/CD base
   - manifiestos Kubernetes
@@ -23,9 +23,9 @@ La documentaciÃ³n viva confirma una capa `infra/` con soporte para despliegue, w
 
 ## Nota
 
-> TODO: completar con una fuente consolidada si mÃ¡s adelante se documenta formalmente el flujo de despliegue y los entornos.
+> TODO: completar con una fuente consolidada si más adelante se documenta formalmente el flujo de despliegue y los entornos.
 
 ## Relacionado
 
 - [Observabilidad](observability.md)
-- [README raÃ­z](../../README.md)
+- [README raíz](../../README.md)

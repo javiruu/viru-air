@@ -1,4 +1,4 @@
-﻿# Watchlist W2 Single Route Selection
+# Watchlist W2 Single Route Selection
 
 **Estado:** vivo  
 **Fecha:** 2026-05-13  
@@ -38,7 +38,7 @@ W2 establece una sola fuente visible de seleccion de ruta: la lista Watchlist.
   - vista acotada;
   - reset zoom.
 - Sin ruta seleccionada, el historico muestra el empty state:
-  - `Selecciona una ruta de tu Watchlist para ver su histórico.`
+  - `Selecciona una ruta de tu Watchlist para ver su hist�rico.`
 - `WatchDetailPanel` y `HistoryIntegratedPanel` consumen la misma ruta seleccionada (`derived.selectedWatch`).
 
 ## Verificacion ejecutada

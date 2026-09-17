@@ -28,7 +28,8 @@ Only explicitly typed product events are allowed:
 - session_recording.maskAllInputs: true (all input fields masked)
 - session_recording.maskTextSelector: "*" (full text masking)
 - Identity: identifyUser(userId) accepts only the anonymous/stable Supabase UUID; no raw emails or personal details are set as user properties.
-- Logout: esetAnalytics() calls posthog.reset() to erase session identity.
+- Logout: 
+esetAnalytics() calls posthog.reset() to erase session identity.
 
 ## 4. Automated Test Proof
 

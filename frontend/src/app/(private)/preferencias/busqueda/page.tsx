@@ -1,11 +1,11 @@
 "use client";
 
-import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
-import { apiFetch } from "@/modules/shared/api";
 import { BoneyardForm } from "@/modules/shared/BoneyardLoad";
 import type { Pref } from "@/modules/quick-search/types";
 import {
@@ -19,6 +19,11 @@ import {
   validateSearchPreferences,
   type SearchPreferenceErrors,
 } from "@/modules/preferences/searchPreferences";
+
+import {
+  getSearchPreferencesApiV1PreferencesSearchGet,
+  setSearchPreferencesApiV1PreferencesSearchPut,
+} from "@/api/generated/preferences/preferences";
 
 function PreferenceIcon({ path }: { path: string }) {
   return (
@@ -43,41 +48,57 @@ export default function PreferenciasBusquedaPage() {
   const router = useRouter();
   const { t } = useI18n();
   const { notify } = useNotificationCenter();
+  const queryClient = useQueryClient();
+
   const [pref, setPref] = useState<Pref | null>(null);
   const [initialPref, setInitialPref] = useState<Pref | null>(null);
   const [errors, setErrors] = useState<SearchPreferenceErrors>({});
-  const [saving, setSaving] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
 
-  const loadPreferences = useCallback(() => {
-    setLoadFailed(false);
-    apiFetch<Pref>("/preferences/search")
-      .then((data) => {
-        const normalized: Pref = {
-          ...data,
-          country_price_hint_mode_default: data.country_price_hint_mode_default || "min",
-          calendar_hint_bucket_mode_default: data.calendar_hint_bucket_mode_default || "contextual",
-          calendar_hint_guideline_low_max_default: Number(
-            data.calendar_hint_guideline_low_max_default ?? 90,
-          ),
-          calendar_hint_guideline_mid_max_default: Number(
-            data.calendar_hint_guideline_mid_max_default ?? 150,
-          ),
-          preferred_currency: data.preferred_currency || "EUR",
-        };
-        setPref(normalized);
-        setInitialPref(normalized);
-      })
-      .catch(() => {
-        setLoadFailed(true);
-        notify({ tone: "error", title: t("preferences.search.loadError"), durationMs: 3200 });
-      });
-  }, [notify, t]);
+  const searchPrefQuery = useQuery({
+    queryKey: ["searchPreferences"],
+    queryFn: () => getSearchPreferencesApiV1PreferencesSearchGet(),
+  });
 
   useEffect(() => {
-    loadPreferences();
-    // we intentionally reload when translation context changes
-  }, [loadPreferences]);
+    if (searchPrefQuery.data) {
+      const data = searchPrefQuery.data as unknown as Pref;
+      const normalized: Pref = {
+        ...data,
+        country_price_hint_mode_default: data.country_price_hint_mode_default || "min",
+        calendar_hint_bucket_mode_default: data.calendar_hint_bucket_mode_default || "contextual",
+        calendar_hint_guideline_low_max_default: Number(
+          data.calendar_hint_guideline_low_max_default ?? 90,
+        ),
+        calendar_hint_guideline_mid_max_default: Number(
+          data.calendar_hint_guideline_mid_max_default ?? 150,
+        ),
+        preferred_currency: data.preferred_currency || "EUR",
+      };
+      setPref(normalized);
+      setInitialPref(normalized);
+      setLoadFailed(false);
+    }
+  }, [searchPrefQuery.data]);
+
+  useEffect(() => {
+    if (searchPrefQuery.isError) {
+      setLoadFailed(true);
+      notify({ tone: "error", title: t("preferences.search.loadError"), durationMs: 3200 });
+    }
+  }, [searchPrefQuery.isError, notify, t]);
+
+  const searchPrefMutation = useMutation({
+    mutationFn: (data: Pref) => setSearchPreferencesApiV1PreferencesSearchPut(data as any),
+    onSuccess: (data) => {
+      queryClient.setQueryData(["searchPreferences"], data);
+      setInitialPref(pref);
+      notify({ tone: "success", title: t("preferences.search.saveSuccess"), durationMs: 3200 });
+    },
+    onError: () => {
+      notify({ tone: "error", title: t("preferences.search.saveError"), durationMs: 3200 });
+    },
+  });
 
   const dirty = useMemo(() => {
     if (!pref || !initialPref) return false;
@@ -124,19 +145,7 @@ export default function PreferenciasBusquedaPage() {
     }
     if (!dirty) return;
 
-    setSaving(true);
-    try {
-      await apiFetch<{ status: string }>("/preferences/search", {
-        method: "PUT",
-        body: JSON.stringify(pref),
-      });
-      setInitialPref(pref);
-      notify({ tone: "success", title: t("preferences.search.saveSuccess"), durationMs: 3200 });
-    } catch {
-      notify({ tone: "error", title: t("preferences.search.saveError"), durationMs: 3200 });
-    } finally {
-      setSaving(false);
-    }
+    searchPrefMutation.mutate(pref);
   }
 
   if (!pref || !summary) {
@@ -154,7 +163,11 @@ export default function PreferenciasBusquedaPage() {
         {loadFailed ? (
           <section className="panel panel-soft air-loader-section">
             <p className="muted">{t("preferences.search.loadError")}</p>
-            <button className="btn-primary" type="button" onClick={loadPreferences}>
+            <button
+              className="btn-primary"
+              type="button"
+              onClick={() => searchPrefQuery.refetch()}
+            >
               {t("shared.actions.retry")}
             </button>
           </section>
@@ -583,8 +596,8 @@ export default function PreferenciasBusquedaPage() {
             <button type="button" className="btn-ghost" onClick={() => setPref(initialPref)}>
               {t("preferences.search.resetButton")}
             </button>
-            <button type="submit" className="btn-primary" disabled={saving || !dirty}>
-              {saving ? t("preferences.search.saving") : t("preferences.search.saveButton")}
+            <button type="submit" className="btn-primary" disabled={searchPrefMutation.isPending || !dirty}>
+              {searchPrefMutation.isPending ? t("preferences.search.saving") : t("preferences.search.saveButton")}
             </button>
           </div>
         </section>

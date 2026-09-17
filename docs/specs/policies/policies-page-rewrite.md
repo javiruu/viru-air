@@ -1,4 +1,4 @@
-ï»¿Status: canonical
+Status: canonical
 Scope: active product, UI, or policy specification
 Last reviewed: 2026-04-15
 Canonical source: docs/specs/policies/policies-page-rewrite.md
@@ -31,7 +31,7 @@ Viru muestra datos de precios observados y sus cambios en el tiempo. El precio f
 - condiciones del proveedor en el momento de compra.
 
 Ejemplo: si el proveedor no responde, veras el ultimo dato confirmado y la hora de su ultima comprobacion.  
-Nunca inventamos valores ni â€œrellenamosâ€ silencios con supuestos sin aviso.
+Nunca inventamos valores ni “rellenamos” silencios con supuestos sin aviso.
 
 ---
 
@@ -225,40 +225,40 @@ Soporte general: soporte@viru.app
 
 ## FAQ
 
-1) Â¿Viru garantiza el precio que veo?  
+1) ¿Viru garantiza el precio que veo?  
 No. El precio final se confirma en el proveedor.
 
-2) Â¿Que pasa si el proveedor no responde?  
+2) ¿Que pasa si el proveedor no responde?  
 Mostramos el ultimo dato confirmado con su ultima comprobacion.
 
-3) Â¿Que significa que vea resultados parciales?  
+3) ¿Que significa que vea resultados parciales?  
 Que el proveedor no respondio del todo. Mantenemos lo ya confirmado y avisamos en la interfaz.
 
-4) Â¿Puedo borrar mi cuenta?  
+4) ¿Puedo borrar mi cuenta?  
 Si, desde tu cuenta o soporte.
 
-5) Â¿Se comparten mis credenciales?  
+5) ¿Se comparten mis credenciales?  
 No.
 
-6) Â¿Las alertas son automaticas?  
+6) ¿Las alertas son automaticas?  
 Dependen de tus reglas.
 
-7) Â¿Que datos se guardan?  
+7) ¿Que datos se guardan?  
 Cuenta, watchlist, alertas y preferencias.
 
-8) Â¿Puedo exportar mis datos?  
+8) ¿Puedo exportar mis datos?  
 Si, ofrecemos portabilidad.
 
-9) Â¿Viru ofrece recomendaciones financieras?  
+9) ¿Viru ofrece recomendaciones financieras?  
 No. Son informativas.
 
-10) Â¿Hay politicas distintas por pais?  
+10) ¿Hay politicas distintas por pais?  
 Si, con version y revision editorial.
 
-11) Â¿Puedo desactivar analitica?  
+11) ¿Puedo desactivar analitica?  
 Si, desde preferencias.
 
-12) Â¿Como reporto un error en un dato?  
+12) ¿Como reporto un error en un dato?  
 Contacta soporte con ruta y fecha.
 
 ---

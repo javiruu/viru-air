@@ -2,11 +2,15 @@
 
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { BoneyardForm } from "@/modules/shared/BoneyardLoad";
-import { apiFetch } from "@/modules/shared/api";
 import { useI18n } from "@/i18n";
+import {
+  getAppearancePreferencesApiV1PreferencesAppearanceGet,
+  setAppearancePreferencesApiV1PreferencesAppearancePut,
+} from "@/api/generated/preferences/preferences";
 
 type AppearancePref = {
   theme: "light" | "dark" | "system";
@@ -19,9 +23,10 @@ export default function PreferenciasAparienciaPage() {
   const router = useRouter();
   const { t } = useI18n();
   const { notify } = useNotificationCenter();
+  const queryClient = useQueryClient();
+
   const [pref, setPref] = useState<AppearancePref | null>(null);
   const [initialPref, setInitialPref] = useState<AppearancePref | null>(null);
-  const [saving, setSaving] = useState(false);
 
   const themeOptions = useMemo(
     () => [
@@ -60,16 +65,37 @@ export default function PreferenciasAparienciaPage() {
     [t],
   );
 
+  const prefQuery = useQuery({
+    queryKey: ["appearancePref"],
+    queryFn: () => getAppearancePreferencesApiV1PreferencesAppearanceGet(),
+  });
+
   useEffect(() => {
-    apiFetch<AppearancePref>("/preferences/appearance")
-      .then((data) => {
-        setPref(data);
-        setInitialPref(data);
-      })
-      .catch(() =>
-        notify({ tone: "error", title: t("preferences.appearance.loadError"), durationMs: 3200 }),
-      );
-  }, [notify, t]);
+    if (prefQuery.data) {
+      const data = prefQuery.data as unknown as AppearancePref;
+      setPref(data);
+      setInitialPref(data);
+    }
+  }, [prefQuery.data]);
+
+  useEffect(() => {
+    if (prefQuery.isError) {
+      notify({ tone: "error", title: t("preferences.appearance.loadError"), durationMs: 3200 });
+    }
+  }, [prefQuery.isError, notify, t]);
+
+  const prefMutation = useMutation({
+    mutationFn: (data: AppearancePref) =>
+      setAppearancePreferencesApiV1PreferencesAppearancePut(data as any),
+    onSuccess: (data) => {
+      queryClient.setQueryData(["appearancePref"], data);
+      setInitialPref(pref);
+      notify({ tone: "success", title: t("preferences.appearance.saveSuccess"), durationMs: 3200 });
+    },
+    onError: () => {
+      notify({ tone: "error", title: t("preferences.appearance.saveError"), durationMs: 3200 });
+    },
+  });
 
   const dirty = useMemo(() => {
     if (!pref || !initialPref) return false;
@@ -79,19 +105,7 @@ export default function PreferenciasAparienciaPage() {
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     if (!pref) return;
-    setSaving(true);
-    try {
-      await apiFetch<{ status: string }>("/preferences/appearance", {
-        method: "PUT",
-        body: JSON.stringify(pref),
-      });
-      setInitialPref(pref);
-      notify({ tone: "success", title: t("preferences.appearance.saveSuccess"), durationMs: 3200 });
-    } catch {
-      notify({ tone: "error", title: t("preferences.appearance.saveError"), durationMs: 3200 });
-    } finally {
-      setSaving(false);
-    }
+    prefMutation.mutate(pref);
   }
 
   if (!pref) {
@@ -229,8 +243,8 @@ export default function PreferenciasAparienciaPage() {
       <section className="panel">
         <form onSubmit={onSubmit}>
           <div className="row-actions">
-            <button type="submit" className="btn-primary" disabled={saving || !dirty}>
-              {saving ? t("preferences.appearance.saving") : t("preferences.appearance.saveButton")}
+            <button type="submit" className="btn-primary" disabled={prefMutation.isPending || !dirty}>
+              {prefMutation.isPending ? t("preferences.appearance.saving") : t("preferences.appearance.saveButton")}
             </button>
           </div>
         </form>

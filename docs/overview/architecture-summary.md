@@ -1,54 +1,54 @@
-Ôªø# Resumen de Arquitectura
+# Resumen de Arquitectura
 
 **Estado:** vivo  
-**√öltima revisi√≥n:** 2026-07-02
-**Fuente de verdad:** s√≠  
-**√Årea:** overview
+**⁄ltima revisiÛn:** 2026-07-02
+**Fuente de verdad:** sÌ  
+**¡rea:** overview
 
 ## Resumen
 
-Monorepo con backend (FastAPI), frontend (Next.js), infraestructura de t√∫neles y documentaci√≥n consolidada.
+Monorepo con backend (FastAPI), frontend (Next.js), infraestructura de t˙neles y documentaciÛn consolidada.
 
 ## Backend
 
 - **Framework:** FastAPI + SQLAlchemy + Alembic
 - **Entrada:** `backend/app/main.py` con prefijo `/api/v1`
-- **Base de datos:** PostgreSQL (producci√≥n), SQLite (desarrollo local)
-- **Arquitectura de providers:** `FlightSearchOrchestrator` ejecuta providers en paralelo via `ThreadPoolExecutor`. Cada provider (Ryanair, Vueling, Wizz Air, easyJet, Duffel) implementa `FlightProvider` interface. Wizz Air usa per-route locks para evitar serializaci√≥n entre rutas distintas.
-- **Cach√© de b√∫squeda:** Tres niveles ‚Üí L1 (memoria local), L2 (DB compartida entre usuarios), Provider (API live). Anti-stampede con lock por firma de b√∫squeda.
-- **Door-to-door:** Providers de transporte terrestre con datos GTFS + APIs REST (ORS, OpenTripPlanner). Perfiles de activaci√≥n con blindaje anti-mock.
+- **Base de datos:** PostgreSQL (producciÛn), SQLite (desarrollo local)
+- **Arquitectura de providers:** `FlightSearchOrchestrator` ejecuta providers en paralelo via `ThreadPoolExecutor`. Cada provider (Ryanair, Vueling, Wizz Air, easyJet, Duffel) implementa `FlightProvider` interface. Wizz Air usa per-route locks para evitar serializaciÛn entre rutas distintas.
+- **CachÈ de b˙squeda:** Tres niveles ? L1 (memoria local), L2 (DB compartida entre usuarios), Provider (API live). Anti-stampede con lock por firma de b˙squeda.
+- **Door-to-door:** Providers de transporte terrestre con datos GTFS + APIs REST (ORS, OpenTripPlanner). Perfiles de activaciÛn con blindaje anti-mock.
 
 ## Frontend
 
 - **Framework:** Next.js + React + TypeScript
 - **Rutas:** App Router con layout privado y auth
-- **Estado:** Hooks locales con useReducer + useState, sin librer√≠a de estado global
+- **Estado:** Hooks locales con useReducer + useState, sin librerÌa de estado global
 - **SVGs corporativos:** Centralizados en `src/icons/` como componentes React (RyanairIcon, WizzAirIcon, GenericProviderIcon)
 - **Estilos:** CSS modules + variables CSS con sistema dual dark/light (Aviation Dark-Luxe)
 - **i18n:** Sistema propio con archivos por dominio y locale
 
 ## Infraestructura
 
-- **Publicaci√≥n principal:** Cloudflare Tunnel
+- **PublicaciÛn principal:** Cloudflare Tunnel
 - **Failover:** Tailscale Funnel
-- **Panel unificado:** `VIRU_PANEL.bat` con estado y control de ambos t√∫neles
+- **Panel unificado:** `VIRU_PANEL.bat` con estado y control de ambos t˙neles
 
-## Documentaci√≥n
+## DocumentaciÛn
 
-- `docs/overview/` ‚Äî reentrada y estado actual
-- `docs/adr/` ‚Äî 3 ADRs vigentes
-- `docs/reference/` ‚Äî contratos API activos
-- `docs/specs/` ‚Äî especificaciones vivas
-- `DESIGN.md` ‚Äî sistema visual y contrato creativo UI
-- `docs/runbooks/` ‚Äî operaci√≥n y respuesta
-- `docs/qa/` ‚Äî checklists, reportes y evidencia
-- `docs/plans/` ‚Äî planes activos y completados
+- `docs/overview/` ó reentrada y estado actual
+- `docs/adr/` ó 3 ADRs vigentes
+- `docs/reference/` ó contratos API activos
+- `docs/specs/` ó especificaciones vivas
+- `DESIGN.md` ó sistema visual y contrato creativo UI
+- `docs/runbooks/` ó operaciÛn y respuesta
+- `docs/qa/` ó checklists, reportes y evidencia
+- `docs/plans/` ó planes activos y completados
 
 ## Decisiones base
 
-- [ADR-001](../adr/ADR-001-monolito-modular.md) ‚Äî monolito modular
-- [ADR-002](../adr/ADR-002-stack-base.md) ‚Äî stack base (FastAPI, Next.js, SQLAlchemy)
-- [ADR-003](../adr/ADR-003-provider-adapter.md) ‚Äî patr√≥n adapter para providers
+- [ADR-001](../adr/ADR-001-monolito-modular.md) ó monolito modular
+- [ADR-002](../adr/ADR-002-stack-base.md) ó stack base (FastAPI, Next.js, SQLAlchemy)
+- [ADR-003](../adr/ADR-003-provider-adapter.md) ó patrÛn adapter para providers
 
 ## Relacionado
 

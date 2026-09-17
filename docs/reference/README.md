@@ -1,4 +1,4 @@
-ï»¿Status: reference
+Status: reference
 Scope: technical reference for implementation work
 Last reviewed: 2026-07-21
 Canonical source: docs/reference/README.md
@@ -7,22 +7,22 @@ Related: docs/INDICE_UNICO.md, docs/overview/current-state.md
 ---
 # Reference
 
-Esta carpeta reÃºne documentaciÃ³n tÃ©cnica activa que sirve como apoyo directo al desarrollo.
+Esta carpeta reúne documentación técnica activa que sirve como apoyo directo al desarrollo.
 
 ## Contenido actual
 
 - `codex-operating-contract.md`: reglas operativas persistentes para sesiones de Codex en este repo.
 - `../skills/viru-air-context/`: espejo local de la skill reusable para reentrada y contexto de Codex.
-- `backend/quick-search-contract.md`: contrato canÃ³nico de quick search backend.
-- `backend/live-flight-tracking-contract.md`: contrato canÃ³nico de identidad, snapshots y estado operacional desde Watchlist.
-- `backend/quick-search-acceptance-checklist.md`: checklist de aceptaciÃ³n tÃ©cnica de quick search backend.
+- `backend/quick-search-contract.md`: contrato canónico de quick search backend.
+- `backend/live-flight-tracking-contract.md`: contrato canónico de identidad, snapshots y estado operacional desde Watchlist.
+- `backend/quick-search-acceptance-checklist.md`: checklist de aceptación técnica de quick search backend.
 - `feature-flags.md`: mapa vivo de flags por dominio y fuentes canonicas de activacion.
-- `quick-search-weather-policy.md`: polÃ­tica funcional para la integraciÃ³n de weather en quick search.
-- `quick-search-legacy-alias-sunset.md`: polÃ­tica de transiciÃ³n y retirada de aliases legacy en quick search.
+- `quick-search-weather-policy.md`: política funcional para la integración de weather en quick search.
+- `quick-search-legacy-alias-sunset.md`: política de transición y retirada de aliases legacy en quick search.
 
 ## Uso recomendado
 
-- Empieza aquÃ­ cuando ya sabes quÃ© mÃ³dulo vas a tocar y necesitas contrato, criterios o reglas operativas.
+- Empieza aquí cuando ya sabes qué módulo vas a tocar y necesitas contrato, criterios o reglas operativas.
 - Si necesitas contexto de producto o de UX, vuelve a [../specs/README.md](../specs/README.md) o [../ui/](../ui/).
 
 
