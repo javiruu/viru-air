@@ -1,12 +1,12 @@
-ï»¿# ADR-002 Stack Base
+# ADR-002 Stack Base
 
 - Estado: Aprobado
 - Fecha: 2026-02-15
 
-## DecisiÃ³n
+## Decisión
 - Backend: FastAPI + SQLAlchemy + Alembic.
 - Frontend: Next.js + TypeScript.
 - Datos: PostgreSQL (objetivo), SQLite local.
 
-## JustificaciÃ³n
-Coherencia con fases y velocidad de implementaciÃ³n.
+## Justificación
+Coherencia con fases y velocidad de implementación.

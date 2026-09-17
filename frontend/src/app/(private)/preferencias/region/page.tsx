@@ -2,11 +2,15 @@
 
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { BoneyardForm } from "@/modules/shared/BoneyardLoad";
-import { apiFetch } from "@/modules/shared/api";
 import { persistLocale, useI18n } from "@/i18n";
+import {
+  getRegionPreferencesApiV1PreferencesRegionGet,
+  setRegionPreferencesApiV1PreferencesRegionPut,
+} from "@/api/generated/preferences/preferences";
 
 type RegionPref = {
   language: string;
@@ -23,23 +27,47 @@ export default function PreferenciasRegionPage() {
   const router = useRouter();
   const { t } = useI18n();
   const { notify } = useNotificationCenter();
+  const queryClient = useQueryClient();
+
   const [pref, setPref] = useState<RegionPref | null>(null);
   const [initialPref, setInitialPref] = useState<RegionPref | null>(null);
-  const [saving, setSaving] = useState(false);
+
+  const regionQuery = useQuery({
+    queryKey: ["regionPreferences"],
+    queryFn: () => getRegionPreferencesApiV1PreferencesRegionGet(),
+  });
 
   useEffect(() => {
-    apiFetch<RegionPref>("/preferences/region")
-      .then((data) => {
-        setPref(data);
-        setInitialPref(data);
-        if (data?.language) {
-          persistLocale(data.language === "en" ? "en" : "es");
-        }
-      })
-      .catch(() =>
-        notify({ tone: "error", title: t("preferences.region.loadError"), durationMs: 3200 }),
-      );
-  }, [notify, t]);
+    if (regionQuery.data) {
+      const data = regionQuery.data as unknown as RegionPref;
+      setPref(data);
+      setInitialPref(data);
+      if (data?.language) {
+        persistLocale(data.language === "en" ? "en" : "es");
+      }
+    }
+  }, [regionQuery.data]);
+
+  useEffect(() => {
+    if (regionQuery.isError) {
+      notify({ tone: "error", title: t("preferences.region.loadError"), durationMs: 3200 });
+    }
+  }, [regionQuery.isError, notify, t]);
+
+  const regionMutation = useMutation({
+    mutationFn: (data: RegionPref) => setRegionPreferencesApiV1PreferencesRegionPut(data as any),
+    onSuccess: (data) => {
+      queryClient.setQueryData(["regionPreferences"], data);
+      setInitialPref(pref);
+      if (pref?.language) {
+        persistLocale(pref.language === "en" ? "en" : "es");
+      }
+      notify({ tone: "success", title: t("preferences.region.saveSuccess"), durationMs: 3200 });
+    },
+    onError: () => {
+      notify({ tone: "error", title: t("preferences.region.saveError"), durationMs: 3200 });
+    },
+  });
 
   const dirty = useMemo(() => {
     if (!pref || !initialPref) return false;
@@ -49,22 +77,7 @@ export default function PreferenciasRegionPage() {
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     if (!pref) return;
-    setSaving(true);
-    try {
-      await apiFetch<{ status: string }>("/preferences/region", {
-        method: "PUT",
-        body: JSON.stringify(pref),
-      });
-      setInitialPref(pref);
-      if (pref.language) {
-        persistLocale(pref.language === "en" ? "en" : "es");
-      }
-      notify({ tone: "success", title: t("preferences.region.saveSuccess"), durationMs: 3200 });
-    } catch {
-      notify({ tone: "error", title: t("preferences.region.saveError"), durationMs: 3200 });
-    } finally {
-      setSaving(false);
-    }
+    regionMutation.mutate(pref);
   }
 
   if (!pref) {
@@ -186,8 +199,8 @@ export default function PreferenciasRegionPage() {
           </fieldset>
 
           <div className="row-actions">
-            <button type="submit" className="btn-primary" disabled={saving || !dirty}>
-              {saving ? t("preferences.region.saving") : t("preferences.region.saveButton")}
+            <button type="submit" className="btn-primary" disabled={regionMutation.isPending || !dirty}>
+              {regionMutation.isPending ? t("preferences.region.saving") : t("preferences.region.saveButton")}
             </button>
           </div>
         </form>

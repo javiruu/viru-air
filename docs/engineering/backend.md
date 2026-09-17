@@ -1,34 +1,34 @@
-Ôªø# Backend
+# Backend
 
 **Estado:** vivo  
-**√öltima revisi√≥n:** 2026-07-21
-**Fuente de verdad:** s√≠  
-**√Årea:** engineering
+**⁄ltima revisiÛn:** 2026-07-21
+**Fuente de verdad:** sÌ  
+**¡rea:** engineering
 
 ## Resumen
 
-El backend de Viru Air est√° implementado con FastAPI y organiza API, dominio, infraestructura y servicios bajo `backend/app/`.
+El backend de Viru Air est· implementado con FastAPI y organiza API, dominio, infraestructura y servicios bajo `backend/app/`.
 
 Desde 2026-05-26, la capa de vuelos usa arquitectura **provider-driven**:
 
-- contrato com√∫n `FlightProvider` para integraciones;
-- `FlightProviderRegistry` para activar/ordenar providers por configuraci√≥n;
-- `FlightSearchOrchestrator` para merge, dedupe y normalizaci√≥n de warnings.
+- contrato com˙n `FlightProvider` para integraciones;
+- `FlightProviderRegistry` para activar/ordenar providers por configuraciÛn;
+- `FlightSearchOrchestrator` para merge, dedupe y normalizaciÛn de warnings.
 
 Esto evita acoplar `quick-search`, `watchlist` y `recommendations` a un provider concreto.
 
-## Cu√°ndo usar este documento
+## Cu·ndo usar este documento
 
-√ösalo como punto de entrada antes de abrir contratos m√°s espec√≠ficos o tests del backend.
+⁄salo como punto de entrada antes de abrir contratos m·s especÌficos o tests del backend.
 
 ## Contenido principal
 
 - Stack base verificado: Python 3.12+, FastAPI, SQLAlchemy, Alembic.
 - Punto de entrada: `backend/app/main.py`.
-- **Cache compartida persistente (V2.1):** `quick_search_cache_service.py` + `QuickSearchCacheEntry` en BD. Reutiliza resultados de provider entre usuarios con TTL por categor√≠a (ready=24h, empty=2h, degraded=30min). Activada con `QUICK_SEARCH_SHARED_CACHE_ENABLED=true`. Ver contrato en [Quick Search contract](../reference/backend/quick-search-contract.md).
-- Las migraciones Alembic son la √∫nica autoridad del esquema. El arranque de FastAPI no ejecuta `ALTER TABLE` ni `create_all()`.
-- El worker de revalidaci√≥n se ejecuta fuera de los workers HTTP con `python -m app.services.revalidation_worker_entrypoint`. Programa las rutas vigiladas al arrancar y cada `WATCHLIST_DAILY_REFRESH_INTERVAL_SECONDS` (24 horas por defecto), adem√°s de drenar la cola. `ENABLE_IN_PROCESS_WORKERS=false` es el valor seguro para despliegues con varias r√©plicas.
-- La coordinaci√≥n de single-flight usa una √∫nica backend por entorno: `QUICK_SEARCH_LOCK_BACKEND=database` o `redis`; no hay fallback autom√°tico entre ambos porque permitir√≠a locks duplicados durante una ca√≠da de Redis.
+- **Cache compartida persistente (V2.1):** `quick_search_cache_service.py` + `QuickSearchCacheEntry` en BD. Reutiliza resultados de provider entre usuarios con TTL por categorÌa (ready=24h, empty=2h, degraded=30min). Activada con `QUICK_SEARCH_SHARED_CACHE_ENABLED=true`. Ver contrato en [Quick Search contract](../reference/backend/quick-search-contract.md).
+- Las migraciones Alembic son la ˙nica autoridad del esquema. El arranque de FastAPI no ejecuta `ALTER TABLE` ni `create_all()`.
+- El worker de revalidaciÛn se ejecuta fuera de los workers HTTP con `python -m app.services.revalidation_worker_entrypoint`. Programa las rutas vigiladas al arrancar y cada `WATCHLIST_DAILY_REFRESH_INTERVAL_SECONDS` (24 horas por defecto), adem·s de drenar la cola. `ENABLE_IN_PROCESS_WORKERS=false` es el valor seguro para despliegues con varias rÈplicas.
+- La coordinaciÛn de single-flight usa una ˙nica backend por entorno: `QUICK_SEARCH_LOCK_BACKEND=database` o `redis`; no hay fallback autom·tico entre ambos porque permitirÌa locks duplicados durante una caÌda de Redis.
 - Endpoints operativos visibles:
   - `/health`
   - `/ready`
@@ -58,7 +58,7 @@ Esto evita acoplar `quick-search`, `watchlist` y `recommendations` a un provider
   - calcula `changes_per_day`, `average_delta_abs`, `max_delta_abs`, `average_time_between_changes_seconds`, `dominant_direction_recent` y `volatility_score`.
   - soporta historico por oferta (`FlightPriceObservation`) y por ruta (`PriceSnapshot` agrupado por origen/destino/fecha).
   - si hay menos de 3 observaciones devuelve `status=insufficient_data` y no finge score predictivo.
-  - desde 2026-06-16 el boot warmup usa esa se√±al para adelantar rutas que han cambiado varias veces recientemente, pero solo como prioridad tecnica de refresco.
+  - desde 2026-06-16 el boot warmup usa esa seÒal para adelantar rutas que han cambiado varias veces recientemente, pero solo como prioridad tecnica de refresco.
 - Observabilidad tecnica de Fare Memory:
   - endpoint admin: `GET /api/v1/admin/fare-memory-health`.
   - devuelve contadores agregados de `search_cache`, `negative_cache`, `offer_memory` y `revalidation_jobs`.
@@ -69,9 +69,9 @@ Esto evita acoplar `quick-search`, `watchlist` y `recommendations` a un provider
   - Fare Memory conserva memoria operativa compartida; `PriceSnapshot` conserva historico visible por usuario.
   - guardar en watchlist siembra snapshot solo con resultados `fresh`; resultados `warm`, `stale`, `expired`, negativos o errores encolan `RevalidationJob` de ruta.
 - Live flight tracking desde Watchlist:
-  - `GET /api/v1/watchlist/{watch_id}/live` separa estado operacional de hist√≥rico de precio;
+  - `GET /api/v1/watchlist/{watch_id}/live` separa estado operacional de histÛrico de precio;
   - `WatchTrackedFlightLeg` conserva identidad exacta opcional y ordenada;
-  - `FlightOperationalSnapshot` comparte observaciones por fingerprint con TTL, dedupe, lease DB y retenci√≥n de 30 d√≠as;
+  - `FlightOperationalSnapshot` comparte observaciones por fingerprint con TTL, dedupe, lease DB y retenciÛn de 30 dÌas;
   - Aviationstack es un adapter opcional; sin key el endpoint degrada a `not_configured` sin romper Watchlist;
   - contrato: [Live flight tracking](../reference/backend/live-flight-tracking-contract.md).
 - Dominio documentado con mayor detalle en:

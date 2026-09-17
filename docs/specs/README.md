@@ -1,4 +1,4 @@
-ï»¿Status: canonical
+Status: canonical
 Scope: active product, UI, or policy specification
 Last reviewed: 2026-04-15
 Canonical source: docs/specs/README.md
@@ -7,30 +7,30 @@ Related: docs/specs/README.md, docs/INDICE_UNICO.md
 ---
 # Specs Activas
 
-Esta carpeta agrupa especificaciones que todavÃ­a sirven como guÃ­a de producto o diseÃ±o. No incluye histÃ³rico completo de decisiones, que queda en `docs/plans/` y `docs/archive/`.
+Esta carpeta agrupa especificaciones que todavía sirven como guía de producto o diseño. No incluye histórico completo de decisiones, que queda en `docs/plans/` y `docs/archive/`.
 
 ## Producto
 
-- [product/dashboard-redesign-v2.md](product/dashboard-redesign-v2.md): reorganizaciÃ³n del dashboard sin aÃ±adir funcionalidad compleja.
-- [phase1-codex.md](phase1-codex.md): cierre operativo del MVP de Fase 1 (scope, DoD y verificaciÃ³n).
-- [hotels-intelligence-mvp.md](hotels-intelligence-mvp.md): definiciÃ³n incremental del MVP de inteligencia hotelera (Fase 0).
-- [viru-fare-memory.md](viru-fare-memory.md): contrato vivo para memoria de tarifas, frescura y revalidaciÃ³n.
+- [product/dashboard-redesign-v2.md](product/dashboard-redesign-v2.md): reorganización del dashboard sin añadir funcionalidad compleja.
+- [phase1-codex.md](phase1-codex.md): cierre operativo del MVP de Fase 1 (scope, DoD y verificación).
+- [hotels-intelligence-mvp.md](hotels-intelligence-mvp.md): definición incremental del MVP de inteligencia hotelera (Fase 0).
+- [viru-fare-memory.md](viru-fare-memory.md): contrato vivo para memoria de tarifas, frescura y revalidación.
 
 ## UI
 
-- [ui/ui-changes.md](ui/ui-changes.md): correcciones y reestructuraciÃ³n transversal de UI/UX.
+- [ui/ui-changes.md](ui/ui-changes.md): correcciones y reestructuración transversal de UI/UX.
 
 ## Policies
 
-- [policies/policies-page-rewrite.md](policies/policies-page-rewrite.md): contenido base de la pÃ¡gina.
+- [policies/policies-page-rewrite.md](policies/policies-page-rewrite.md): contenido base de la página.
 - [policies/policies-page-component-spec.md](policies/policies-page-component-spec.md): componentes y comportamiento esperado.
-- [policies/policies-page-copy-deck-es.md](policies/policies-page-copy-deck-es.md): copy deck en espaÃ±ol.
+- [policies/policies-page-copy-deck-es.md](policies/policies-page-copy-deck-es.md): copy deck en español.
 - [policies/policies-page-acceptance-checklist.md](policies/policies-page-acceptance-checklist.md): criterios de QA.
 
-## QuÃ© se considera legacy
+## Qué se considera legacy
 
-- Los documentos de la raÃ­z antigua han sido absorbidos aquÃ­ o archivados.
-- Los diseÃ±os y planes fechados siguen en `docs/plans/` como referencia histÃ³rica, no como Ã­ndice principal de specs vivas.
+- Los documentos de la raíz antigua han sido absorbidos aquí o archivados.
+- Los diseños y planes fechados siguen en `docs/plans/` como referencia histórica, no como índice principal de specs vivas.
 
 
 

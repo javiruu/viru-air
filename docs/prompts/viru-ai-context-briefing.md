@@ -1,4 +1,4 @@
-﻿# Briefing de contexto de Viru para IA
+# Briefing de contexto de Viru para IA
 
 > Documento vivo. Lo generado en sesiones IA debe consolidarse aqui, no repetirse en cada conversacion.
 >

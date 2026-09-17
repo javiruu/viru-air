@@ -1,31 +1,31 @@
-Ôªø# Informe final de saneamiento documental
+# Informe final de saneamiento documental
 
 **Estado:** final  
-**√öltima revisi√≥n:** 2026-05-11  
+**⁄ltima revisiÛn:** 2026-05-11  
 **Fuente de verdad:** no  
-**√Årea:** documentaci√≥n
+**¡rea:** documentaciÛn
 
 ## Resumen ejecutivo
 
-Se consolid√≥ `docs/` como centro documental del proyecto, se limpi√≥ la ra√≠z de documentaci√≥n legacy, se separ√≥ QA vivo de hist√≥rico, se archivaron duplicados que compet√≠an con fuentes can√≥nicas y se regener√≥ el inventario documental completo.
+Se consolidÛ `docs/` como centro documental del proyecto, se limpiÛ la raÌz de documentaciÛn legacy, se separÛ QA vivo de histÛrico, se archivaron duplicados que competÌan con fuentes canÛnicas y se regenerÛ el inventario documental completo.
 
 ## Objetivo del trabajo
 
-Sanear, adaptar, deduplicar, clasificar y estructurar la documentaci√≥n del repositorio sin tocar c√≥digo funcional y sin exponer contenido sensible.
+Sanear, adaptar, deduplicar, clasificar y estructurar la documentaciÛn del repositorio sin tocar cÛdigo funcional y sin exponer contenido sensible.
 
 ## Estructura antes
 
-Antes del saneamiento, la documentaci√≥n estaba repartida entre:
+Antes del saneamiento, la documentaciÛn estaba repartida entre:
 
-- ra√≠z del repo con m√∫ltiples documentos legacy compitiendo con `docs/`;
-- `docs/` con base razonable, pero todav√≠a con duplicados en la ra√≠z de `docs/`, material QA hist√≥rico mezclado con QA reutilizable y `DOCS_INVENTORY.md` desactualizado;
+- raÌz del repo con m˙ltiples documentos legacy compitiendo con `docs/`;
+- `docs/` con base razonable, pero todavÌa con duplicados en la raÌz de `docs/`, material QA histÛrico mezclado con QA reutilizable y `DOCS_INVENTORY.md` desactualizado;
 - `backend/docs/` duplicando contratos ya presentes en `docs/reference/backend/`;
 - `fases/_extraido_txt/` duplicando transcripciones ya archivadas;
-- `skills/` mezclando contexto IA √∫til con documentaci√≥n externa no can√≥nica para Viru.
+- `skills/` mezclando contexto IA ˙til con documentaciÛn externa no canÛnica para Viru.
 
-## Estructura despu√©s
+## Estructura despuÈs
 
-La estructura principal qued√≥ organizada as√≠:
+La estructura principal quedÛ organizada asÌ:
 
 - `docs/README.md`
 - `docs/INDICE_UNICO.md`
@@ -42,10 +42,10 @@ La estructura principal qued√≥ organizada as√≠:
 - `docs/reports/`
 - `docs/archive/`
 
-Adem√°s:
+Adem·s:
 
 - `docs/plans/` ahora separa `completed/`.
-- la ra√≠z qued√≥ reducida a documentos de entrada reales y un √∫nico archivo sensible pendiente de revisi√≥n manual.
+- la raÌz quedÛ reducida a documentos de entrada reales y un ˙nico archivo sensible pendiente de revisiÛn manual.
 
 ## Archivos creados
 
@@ -92,44 +92,44 @@ Principales archivos actualizados:
 
 Movimientos principales:
 
-- ra√≠z legacy a `docs/archive/root-legacy/`:
+- raÌz legacy a `docs/archive/root-legacy/`:
   - `DASHBOARD_REDESIGN_V2.md`
   - `UI_CHANGES.md`
   - `POLICIES_PAGE_COMPONENT_SPEC.md`
   - `POLICIES_PAGE_ACCEPTANCE_CHECKLIST.md`
   - `POLICIES_PAGE_COPY_DECK_ES.md`
   - `POLICIES_PAGE_REWRITE.md`
-- duplicados de `docs/` ra√≠z a `docs/archive/duplicated/`:
+- duplicados de `docs/` raÌz a `docs/archive/duplicated/`:
   - `docs/UI_CONTRACT_V1.md`
   - `docs/UI_SYSTEM_V1.md`
   - `docs/UI_VISUAL_QA_CHECKLIST.md`
   - `docs/estetica.md`
   - `docs/feature-flags.md`
   - `docs/quick-search-weather-policy.md`
-- documentaci√≥n backend duplicada a `docs/archive/duplicated/backend-docs/`
-- reportes hist√≥ricos a `docs/archive/old-reports/`
-- `prompt.txt` ra√≠z a `docs/prompts/legacy/prompt-root-legacy.txt`
+- documentaciÛn backend duplicada a `docs/archive/duplicated/backend-docs/`
+- reportes histÛricos a `docs/archive/old-reports/`
+- `prompt.txt` raÌz a `docs/prompts/legacy/prompt-root-legacy.txt`
 - `tree_filtrado.txt` a `docs/archive/extracted-txt/tree_filtrado.txt`
 - activos QA reubicados en:
   - `docs/qa/acceptance-checklists/`
   - `docs/qa/testsprite/`
   - `docs/qa/reports/`
   - `docs/qa/visual/`
-- planes hist√≥ricos a `docs/plans/completed/`
+- planes histÛricos a `docs/plans/completed/`
 
 ## Archivos fusionados
 
 Consolidaciones efectivas por fuente de verdad:
 
-- dashboard can√≥nico en `docs/specs/product/dashboard-redesign-v2.md`
-- cambios UI can√≥nicos en `docs/specs/ui/ui-changes.md`
-- policies can√≥nicas en `docs/specs/policies/`
-- quick search backend can√≥nico en `docs/reference/backend/`
-- UI system can√≥nico en `docs/ui/`
+- dashboard canÛnico en `docs/specs/product/dashboard-redesign-v2.md`
+- cambios UI canÛnicos en `docs/specs/ui/ui-changes.md`
+- policies canÛnicas en `docs/specs/policies/`
+- quick search backend canÛnico en `docs/reference/backend/`
+- UI system canÛnico en `docs/ui/`
 
 ## Archivos archivados
 
-Familias archivadas o reforzadas como hist√≥rico:
+Familias archivadas o reforzadas como histÛrico:
 
 - `docs/archive/root-legacy/`
 - `docs/archive/duplicated/`
@@ -148,13 +148,13 @@ Se dejaron sin cambios por seguridad o por no ser fuente de verdad del proyecto:
 - `skills/remodex/*`
 - dependencias, caches, builds, entornos virtuales y `_publish_repo` durante el inventario principal
 
-## Candidatos a eliminaci√≥n manual
+## Candidatos a eliminaciÛn manual
 
-Pendientes recomendados para revisi√≥n humana:
+Pendientes recomendados para revisiÛn humana:
 
 - `users_prueba.txt`
 - `fases/_extraido_txt/*.txt` porque duplican `docs/archive/fases/transcripts/`
-- `skills/remodex/Docs/RECAP-local-first-cleanup.md` porque est√° vac√≠o
+- `skills/remodex/Docs/RECAP-local-first-cleanup.md` porque est· vacÌo
 - el resto de `skills/remodex/*` para decidir si deben seguir viviendo dentro del repo de Viru o documentarse como referencia externa
 
 ## Documentos marcados como sensibles
@@ -163,31 +163,31 @@ Pendientes recomendados para revisi√≥n humana:
 
 ## Decisiones tomadas
 
-- `docs/` queda como centro documental √∫nico.
-- `docs/archive/` queda expl√≠citamente separado de la ruta viva.
+- `docs/` queda como centro documental ˙nico.
+- `docs/archive/` queda explÌcitamente separado de la ruta viva.
 - `docs/qa/` conserva solo material reutilizable o activo.
 - `docs/plans/` separa planes completados.
 - `AGENTS.md` se mantiene como contrato operativo principal para agentes.
-- los duplicados no compiten ya en la navegaci√≥n principal.
+- los duplicados no compiten ya en la navegaciÛn principal.
 
 ## Contradicciones detectadas
 
-- coexist√≠an documentos ra√≠z y documentos can√≥nicos dentro de `docs/specs/`, `docs/reference/` y `docs/ui/`.
-- `docs/DOCS_INVENTORY.md` ten√≠a una taxonom√≠a anterior que ya no representaba el repo real.
-- `backend/docs/` segu√≠a compitiendo con `docs/reference/backend/`.
-- `docs/qa/` mezclaba hist√≥rico cerrado y QA reutilizable.
+- coexistÌan documentos raÌz y documentos canÛnicos dentro de `docs/specs/`, `docs/reference/` y `docs/ui/`.
+- `docs/DOCS_INVENTORY.md` tenÌa una taxonomÌa anterior que ya no representaba el repo real.
+- `backend/docs/` seguÌa compitiendo con `docs/reference/backend/`.
+- `docs/qa/` mezclaba histÛrico cerrado y QA reutilizable.
 
 ## Riesgos
 
-- `fases/_extraido_txt/` sigue duplicando material hist√≥rico ya archivado.
-- `skills/remodex/` sigue presente como documentaci√≥n externa no can√≥nica.
-- `users_prueba.txt` requiere revisi√≥n manual y no debe tratarse como documentaci√≥n del proyecto.
-- algunas evidencias hist√≥ricas archivadas conservan valor contextual, pero no deben reinterpretarse como estado actual.
+- `fases/_extraido_txt/` sigue duplicando material histÛrico ya archivado.
+- `skills/remodex/` sigue presente como documentaciÛn externa no canÛnica.
+- `users_prueba.txt` requiere revisiÛn manual y no debe tratarse como documentaciÛn del proyecto.
+- algunas evidencias histÛricas archivadas conservan valor contextual, pero no deben reinterpretarse como estado actual.
 
 ## TODOs pendientes
 
-- decidir si `fases/_extraido_txt/` se elimina o se mantiene como snapshot hist√≥rico adicional.
-- decidir si `skills/remodex/` debe quedar fuera del inventario vivo del proyecto en una pr√≥xima pasada.
+- decidir si `fases/_extraido_txt/` se elimina o se mantiene como snapshot histÛrico adicional.
+- decidir si `skills/remodex/` debe quedar fuera del inventario vivo del proyecto en una prÛxima pasada.
 - valorar si `docs/qa/screenshots/`, `docs/qa/snapshots/` y `docs/qa/evidence/` necesitan una limpieza adicional o una README propia por subcarpeta.
 
 ## Comandos ejecutados
@@ -197,41 +197,41 @@ Comandos y familias de comandos usadas durante el saneamiento:
 - `git -C ... status --short`
 - `git -C ... branch --show-current`
 - `git -C ... checkout -b docs/sanitize-documentation`
-- inventario recursivo con PowerShell y Python est√°ndar excluyendo ruido t√©cnico
+- inventario recursivo con PowerShell y Python est·ndar excluyendo ruido tÈcnico
 - `Get-ChildItem`, `Get-Content`, `Select-String`
 - `robocopy` para reflejar `docs/` en `_publish_repo`
-- validaci√≥n local de enlaces Markdown con script Python sin dependencias externas
+- validaciÛn local de enlaces Markdown con script Python sin dependencias externas
 
 ## Validaciones realizadas
 
-Se valid√≥:
+Se validÛ:
 
 - estado Git real en `_publish_repo`
 - existencia de rama `docs/sanitize-documentation`
 - inventario de `.md` y `.txt` excluyendo ruido
 - conteo documental final: `184` documentos reales (`157 .md`, `27 .txt`)
-- detecci√≥n de duplicados por nombre y por hash durante la auditor√≠a
+- detecciÛn de duplicados por nombre y por hash durante la auditorÌa
 - enlaces Markdown relativos en `README.md`, `AGENTS.md` y `docs/**/*.md`
-- referencias a rutas antiguas en la documentaci√≥n viva
+- referencias a rutas antiguas en la documentaciÛn viva
 - estructura final de `docs/`, `docs/qa/` y `docs/archive/`
 
 ## Validaciones no realizadas y motivo
 
-- no se ejecutaron tests de aplicaci√≥n porque la tarea fue documental y no toc√≥ c√≥digo funcional.
-- no se eliminaron directamente `fases/_extraido_txt/*` ni `skills/remodex/*` porque requieren decisi√≥n humana adicional.
+- no se ejecutaron tests de aplicaciÛn porque la tarea fue documental y no tocÛ cÛdigo funcional.
+- no se eliminaron directamente `fases/_extraido_txt/*` ni `skills/remodex/*` porque requieren decisiÛn humana adicional.
 
 ## Estado de git final
 
-Estado esperado de cierre para publicaci√≥n:
+Estado esperado de cierre para publicaciÛn:
 
 - rama de trabajo: `docs/sanitize-documentation`
 - commit documental principal creado en `_publish_repo`
-- integraci√≥n posterior en `main` mediante fast-forward
-- verificaci√≥n final requerida: `local HEAD == origin/main`
+- integraciÛn posterior en `main` mediante fast-forward
+- verificaciÛn final requerida: `local HEAD == origin/main`
 
-## Pr√≥ximos pasos recomendados
+## PrÛximos pasos recomendados
 
-1. Revisar manualmente `users_prueba.txt` y decidir su destino fuera de la documentaci√≥n del proyecto.
-2. Decidir si `fases/_extraido_txt/` debe eliminarse por duplicidad hist√≥rica.
-3. Decidir si `skills/remodex/` debe permanecer en el repo como referencia externa o salir del per√≠metro documental de Viru.
+1. Revisar manualmente `users_prueba.txt` y decidir su destino fuera de la documentaciÛn del proyecto.
+2. Decidir si `fases/_extraido_txt/` debe eliminarse por duplicidad histÛrica.
+3. Decidir si `skills/remodex/` debe permanecer en el repo como referencia externa o salir del perÌmetro documental de Viru.
 # Nota posterior: `_publish_repo` fue un artefacto local temporal usado durante el saneamiento documental. No forma parte del flujo actual ni debe usarse como fuente de verdad.

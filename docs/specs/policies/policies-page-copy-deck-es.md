@@ -1,15 +1,15 @@
-ï»¿Status: canonical
+Status: canonical
 Scope: active product, UI, or policy specification
 Last reviewed: 2026-04-15
 Canonical source: docs/specs/policies/policies-page-copy-deck-es.md
 Related: docs/specs/README.md, docs/INDICE_UNICO.md
 
 ---
-# Copy Deck â€” Politicas y Transparencia (ES)
+# Copy Deck — Politicas y Transparencia (ES)
 
 ## Hero
 - Titulo: Politicas y Transparencia
-- Subtitulo: â€œEn Viru priorizamos claridad, control del usuario y limites honestos sobre lo que podemos y no podemos garantizar.â€
+- Subtitulo: “En Viru priorizamos claridad, control del usuario y limites honestos sobre lo que podemos y no podemos garantizar.”
 - Meta label: Ultima actualizacion
 - Meta label: Version
 - Meta label: Idioma
@@ -17,7 +17,7 @@ Related: docs/specs/README.md, docs/INDICE_UNICO.md
 
 ## Resumen ejecutivo
 - Titulo: Resumen ejecutivo (TL;DR)
-- Subtitulo: â€œLo esencial, sin tecnicismos.â€
+- Subtitulo: “Lo esencial, sin tecnicismos.”
 - Badge: Transparencia
 
 ## Indice
@@ -31,7 +31,7 @@ Related: docs/specs/README.md, docs/INDICE_UNICO.md
 - Limitacion
 - Tu control
 
-## Secciones Aâ€“M (titulos)
+## Secciones A–M (titulos)
 - Uso responsable
 - Alcance del servicio y limites
 - Datos de proveedor y calidad del dato
@@ -47,11 +47,11 @@ Related: docs/specs/README.md, docs/INDICE_UNICO.md
 - Contacto legal / soporte privacidad
 
 ## Microcopys de ejemplo
-- â€œSi el proveedor no responde, mostramos el ultimo dato confirmado con la hora de su ultima comprobacion.â€
-- â€œLas recomendaciones son orientativas, no asesoramiento financiero.â€
-- â€œPuedes solicitar eliminacion desde tu cuenta o soporte.â€
-- â€œResultados parciales: reducimos consultas para mantener estabilidad.â€
-- â€œDato observado, estimado y prediccion se muestran diferenciados.â€
+- “Si el proveedor no responde, mostramos el ultimo dato confirmado con la hora de su ultima comprobacion.”
+- “Las recomendaciones son orientativas, no asesoramiento financiero.”
+- “Puedes solicitar eliminacion desde tu cuenta o soporte.”
+- “Resultados parciales: reducimos consultas para mantener estabilidad.”
+- “Dato observado, estimado y prediccion se muestran diferenciados.”
 
 ## Derechos (labels)
 - Acceso
@@ -62,23 +62,23 @@ Related: docs/specs/README.md, docs/INDICE_UNICO.md
 - Retirada de consentimiento
 
 ## FAQ (titulos)
-- Â¿Viru garantiza el precio que veo?
-- Â¿Por que veo precios desactualizados?
-- Â¿Que significa que vea resultados parciales?
-- Â¿Puedo borrar mi cuenta?
-- Â¿Viru comparte mis credenciales?
-- Â¿Las alertas son automaticas?
-- Â¿Que datos se guardan?
-- Â¿Puedo exportar mis datos?
-- Â¿Viru ofrece recomendaciones financieras?
-- Â¿Hay politicas distintas por pais?
-- Â¿Puedo desactivar analitica?
-- Â¿Como reporto un error en un dato?
+- ¿Viru garantiza el precio que veo?
+- ¿Por que veo precios desactualizados?
+- ¿Que significa que vea resultados parciales?
+- ¿Puedo borrar mi cuenta?
+- ¿Viru comparte mis credenciales?
+- ¿Las alertas son automaticas?
+- ¿Que datos se guardan?
+- ¿Puedo exportar mis datos?
+- ¿Viru ofrece recomendaciones financieras?
+- ¿Hay politicas distintas por pais?
+- ¿Puedo desactivar analitica?
+- ¿Como reporto un error en un dato?
 
 ## CTA final
 - Titulo: Acciones finales
 - Copys:
-  - â€œSi necesitas volver al panel o gestionar privacidad, aqui tienes accesos directos.â€
+  - “Si necesitas volver al panel o gestionar privacidad, aqui tienes accesos directos.”
 - Botones:
   - Volver al panel
   - Contactar soporte

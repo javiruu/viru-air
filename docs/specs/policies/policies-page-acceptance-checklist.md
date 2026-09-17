@@ -1,19 +1,19 @@
-ï»¿Status: canonical
+Status: canonical
 Scope: active product, UI, or policy specification
 Last reviewed: 2026-04-15
 Canonical source: docs/specs/policies/policies-page-acceptance-checklist.md
 Related: docs/specs/README.md, docs/INDICE_UNICO.md
 
 ---
-# Checklist QA â€” Politicas y Transparencia (Viru)
+# Checklist QA — Politicas y Transparencia (Viru)
 
 ## Contenido
-- [ ] H1 â€œPoliticas y Transparenciaâ€ visible
+- [ ] H1 “Politicas y Transparencia” visible
 - [ ] Subtitulo explica claridad y limites honestos
 - [ ] Metadatos visibles (ultima actualizacion, version, idioma, tiempo)
-- [ ] Resumen ejecutivo con 6â€“8 puntos claros
-- [ ] Incluye los 13 bloques Aâ€“M obligatorios
-- [ ] â€œTus derechos, en simpleâ€ con 6 items
+- [ ] Resumen ejecutivo con 6–8 puntos claros
+- [ ] Incluye los 13 bloques A–M obligatorios
+- [ ] “Tus derechos, en simple” con 6 items
 - [ ] FAQ con minimo 12 preguntas
 - [ ] CTA final con 3 acciones
 - [ ] Contenido menciona: herramienta informativa sin garantia
@@ -35,7 +35,7 @@ Related: docs/specs/README.md, docs/INDICE_UNICO.md
 - [ ] Indice sticky en desktop
 - [ ] Indice colapsable en movil
 - [ ] Resumen rapido fijo en desktop
-- [ ] CTA flotante â€œSubir / Indiceâ€ en movil
+- [ ] CTA flotante “Subir / Indice” en movil
 - [ ] No hay emojis como iconos
 - [ ] Contraste minimo AA
 

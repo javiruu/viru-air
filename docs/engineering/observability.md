@@ -1,24 +1,24 @@
-ï»¿# Observabilidad
+# Observabilidad
 
 **Estado:** vivo  
-**Ãšltima revisiÃ³n:** 2026-05-11  
+**Última revisión:** 2026-05-11  
 **Fuente de verdad:** no  
-**Ãrea:** engineering
+**Área:** engineering
 
 ## Resumen
 
-La observabilidad viva documentada hoy es ligera y estÃ¡ distribuida entre el README raÃ­z, el estado actual y algunos reportes de QA.
+La observabilidad viva documentada hoy es ligera y está distribuida entre el README raíz, el estado actual y algunos reportes de QA.
 
 ## Contenido principal
 
-- SeÃ±ales operativas verificadas:
+- Señales operativas verificadas:
   - `GET /health`
   - `GET /ready`
-- La documentaciÃ³n raÃ­z menciona logging estructurado JSON y `x-correlation-id`.
+- La documentación raíz menciona logging estructurado JSON y `x-correlation-id`.
 
 ## Nota
 
-> TODO: completar con fuentes tÃ©cnicas mÃ¡s precisas si se consolida una doc propia para logs, mÃ©tricas y trazabilidad.
+> TODO: completar con fuentes técnicas más precisas si se consolida una doc propia para logs, métricas y trazabilidad.
 
 ## Relacionado
 

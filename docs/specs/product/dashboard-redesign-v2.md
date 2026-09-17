@@ -1,4 +1,4 @@
-ï»¿Status: canonical
+Status: canonical
 Scope: active product, UI, or policy specification
 Last reviewed: 2026-04-15
 Canonical source: docs/specs/product/dashboard-redesign-v2.md
@@ -7,64 +7,64 @@ Related: docs/specs/README.md, docs/INDICE_UNICO.md
 ---
 # 2. Nueva arquitectura del dashboard
 
-### ZONA 1 â€” BLOQUE PRINCIPAL (full width)
+### ZONA 1 — BLOQUE PRINCIPAL (full width)
 Reemplazar las tres tarjetas superiores por un bloque dominante.
 
 **Componente:** `DashboardHeroState`
 
 **Contenido:**
-- TÃ­tulo dinÃ¡mico: â€œHoy en Viruâ€
-- Subtexto: â€œ2 vuelos vigilados Â· Ãšltima bÃºsqueda hace 5dâ€
+- Título dinámico: “Hoy en Viru”
+- Subtexto: “2 vuelos vigilados · Última búsqueda hace 5d”
 - Oportunidad destacada (si existe):
   - Ruta
   - Precio actual
-  - Delta (% o â‚¬)
-- CTA principal: â€œRevisar oportunidadâ€
+  - Delta (% o €)
+- CTA principal: “Revisar oportunidad”
 - Si no hay oportunidades:
-  - â€œNada urgente hoy.â€
-  - CTA: â€œExplorar nuevas rutasâ€
-- Si 0 vuelos activos: estado onboarding con copy breve y CTA â€œExplorar nuevas rutasâ€.
+  - “Nada urgente hoy.”
+  - CTA: “Explorar nuevas rutas”
+- Si 0 vuelos activos: estado onboarding con copy breve y CTA “Explorar nuevas rutas”.
 
 **Estilo:**
-- Card mÃ¡s ancha
-- Sombra ligeramente mÃ¡s fuerte
-- Badge verde/rojo segÃºn oportunidad
+- Card más ancha
+- Sombra ligeramente más fuerte
+- Badge verde/rojo según oportunidad
 - Punto focal visual
 
-### ZONA 2 â€” OPERATIVA PRINCIPAL
-SecciÃ³n con tÃ­tulo: â€œGestionar tus vuelosâ€.
+### ZONA 2 — OPERATIVA PRINCIPAL
+Sección con título: “Gestionar tus vuelos”.
 
 Contiene:
 - Watchlist
 - Alertas
-- AnÃ¡lisis
+- Análisis
 
 **Reglas:**
-- 1 botÃ³n principal por card
-- Acciones secundarias como link pequeÃ±o
-- Mismo tamaÃ±o para las 3 cards
+- 1 botón principal por card
+- Acciones secundarias como link pequeño
+- Mismo tamaño para las 3 cards
 - Espaciado consistente
 
 Ejemplo Watchlist:
-- BotÃ³n: â€œAbrir watchlistâ€
-- Link discreto: â€œVer anÃ¡lisisâ€
+- Botón: “Abrir watchlist”
+- Link discreto: “Ver análisis”
 
-### ZONA 3 â€” DESCUBRIMIENTO
-Fusionar Recomendaciones + Sugerencias en una nueva tarjeta: â€œOportunidadesâ€.
+### ZONA 3 — DESCUBRIMIENTO
+Fusionar Recomendaciones + Sugerencias en una nueva tarjeta: “Oportunidades”.
 
 **Contenido interno:**
 - 1 highlight principal
-- CTA Ãºnico: â€œVer oportunidadesâ€
+- CTA único: “Ver oportunidades”
 
 Eliminar duplicidad conceptual.
 
-### ZONA 4 â€” SECUNDARIO (compacto)
+### ZONA 4 — SECUNDARIO (compacto)
 Reducir peso visual de:
 
 **Actividad reciente**
 - Timeline compacto: icono + texto corto
 - Menor padding
-- MÃ¡s discreto
+- Más discreto
 
 **Notas**
 - Colapsable dentro del dashboard
@@ -72,38 +72,38 @@ Reducir peso visual de:
 
 ---
 
-## 3. ReducciÃ³n de fricciÃ³n
+## 3. Reducción de fricción
 
 ### 3.1 Botones
 Regla global:
-- MÃ¡ximo 1 botÃ³n sÃ³lido por tarjeta
+- Máximo 1 botón sólido por tarjeta
 - Secundarios en estilo link
 - Eliminar redundantes
 
-### 3.2 Microcopy orientado a acciÃ³n
-Textos dinÃ¡micos sin nuevas features:
-- â€œÃšltima actividad hace 5 dÃ­asâ€
-- â€œSin cambios en las Ãºltimas 24hâ€
-- â€œ1 oportunidad detectadaâ€
+### 3.2 Microcopy orientado a acción
+Textos dinámicos sin nuevas features:
+- “Última actividad hace 5 días”
+- “Sin cambios en las últimas 24h”
+- “1 oportunidad detectada”
 
 ---
 
-## 4. DirecciÃ³n visual
+## 4. Dirección visual
 
-La expresiÃ³n visual del dashboard se rige por `DESIGN.md`. Esta especificaciÃ³n conserva Ãºnicamente la prioridad funcional: bloque principal, operativa, descubrimiento y soporte no deben competir entre sÃ­.
-
----
-
-## 5. Comportamiento inteligente (sin nueva lÃ³gica)
-- Si 0 vuelos activos â†’ Hero muestra onboarding
-- Si no hay oportunidades â†’ Hero muestra â€œNada urgente hoyâ€ + CTA explorar
-
-No aÃ±adir backend nuevo, solo condicional UI.
+La expresión visual del dashboard se rige por `DESIGN.md`. Esta especificación conserva únicamente la prioridad funcional: bloque principal, operativa, descubrimiento y soporte no deben competir entre sí.
 
 ---
 
-## 6. QuÃ© eliminar
-- SeparaciÃ³n rÃ­gida en 3 columnas iguales
+## 5. Comportamiento inteligente (sin nueva lógica)
+- Si 0 vuelos activos ? Hero muestra onboarding
+- Si no hay oportunidades ? Hero muestra “Nada urgente hoy” + CTA explorar
+
+No añadir backend nuevo, solo condicional UI.
+
+---
+
+## 6. Qué eliminar
+- Separación rígida en 3 columnas iguales
 - Duplicidad Recomendaciones/Sugerencias
 - Botones secundarios grandes
 - Notas como bloque dominante
@@ -112,9 +112,9 @@ No aÃ±adir backend nuevo, solo condicional UI.
 
 ## 7. Resultado esperado
 El usuario entra y:
-- Ve un bloque claro que le dice quÃ© pasa hoy.
-- Entiende dÃ³nde gestionar sus vuelos.
-- Tiene una secciÃ³n clara para descubrir.
+- Ve un bloque claro que le dice qué pasa hoy.
+- Entiende dónde gestionar sus vuelos.
+- Tiene una sección clara para descubrir.
 - No se siente abrumado.
 - Percibe producto premium y organizado.
 
@@ -123,24 +123,24 @@ El usuario entra y:
 ## 8. Definition of Done
 - Existe un bloque Hero dominante arriba.
 - Recomendaciones y Sugerencias fusionadas.
-- Solo 1 botÃ³n principal por tarjeta.
+- Solo 1 botón principal por tarjeta.
 - Actividad convertida en timeline compacto.
 - Notas reducidas o colapsables.
-- JerarquÃ­a visual clara.
+- Jerarquía visual clara.
 - Espaciado coherente.
-- Dashboard mÃ¡s limpio y menos plano.
+- Dashboard más limpio y menos plano.
 
 ---
 
 ## 9. Prompt directo para Codex
-â€œAplica DASHBOARD_REDESIGN_V2.md.
-Reestructura el dashboard priorizando jerarquÃ­a y claridad.
+“Aplica DASHBOARD_REDESIGN_V2.md.
+Reestructura el dashboard priorizando jerarquía y claridad.
 Crea un bloque Hero dominante.
 Fusiona Recomendaciones y Sugerencias en Oportunidades.
 Reduce botones secundarios.
 Compacta Actividad y Notas.
-No aÃ±adas nuevas funcionalidades complejas.
-MantÃ©n el estilo Viru actual pero mejora jerarquÃ­a y foco.â€
+No añadas nuevas funcionalidades complejas.
+Mantén el estilo Viru actual pero mejora jerarquía y foco.”
 
 
 

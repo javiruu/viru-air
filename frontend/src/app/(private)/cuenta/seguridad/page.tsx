@@ -1,12 +1,17 @@
 "use client";
 
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
-import { apiFetch } from "@/modules/shared/api";
 import { BoneyardLoad, LoadReference } from "@/modules/shared/BoneyardLoad";
 import { useI18n } from "@/i18n";
+
+import {
+  securityActivityApiV1AccountSecurityActivityGet,
+  changePasswordApiV1AccountSecurityPasswordPost,
+} from "@/api/generated/account/account";
 
 type SecurityEvent = {
   event_type: string;
@@ -20,33 +25,34 @@ export default function SeguridadPage() {
   const { notify } = useNotificationCenter();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [events, setEvents] = useState<SecurityEvent[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    apiFetch<{ items: SecurityEvent[] }>("/account/security/activity")
-      .then((data) => setEvents(data.items || []))
-      .catch(() => setEvents([]))
-      .finally(() => setLoading(false));
-  }, []);
+  const activityQuery = useQuery({
+    queryKey: ["securityActivity"],
+    queryFn: () => securityActivityApiV1AccountSecurityActivityGet(),
+  });
 
-  async function onSubmit(event: FormEvent) {
-    event.preventDefault();
-    setSaving(true);
-    try {
-      await apiFetch<{ status: string }>("/account/security/password", {
-        method: "POST",
-        body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
-      });
+  const events = ((activityQuery.data as any)?.items || []) as unknown as SecurityEvent[];
+  const loading = activityQuery.isPending;
+
+  const passwordMutation = useMutation({
+    mutationFn: (data: { current_password: string; new_password: string }) =>
+      changePasswordApiV1AccountSecurityPasswordPost(data),
+    onSuccess: () => {
       setCurrentPassword("");
       setNewPassword("");
       notify({ tone: "success", title: t("account.security.passwordSuccess"), durationMs: 3200 });
-    } catch {
+    },
+    onError: () => {
       notify({ tone: "error", title: t("account.security.passwordError"), durationMs: 3200 });
-    } finally {
-      setSaving(false);
-    }
+    },
+  });
+
+  function onSubmit(event: FormEvent) {
+    event.preventDefault();
+    passwordMutation.mutate({
+      current_password: currentPassword,
+      new_password: newPassword,
+    });
   }
 
   return (
@@ -90,9 +96,9 @@ export default function SeguridadPage() {
               <button
                 type="submit"
                 className="btn-primary"
-                disabled={saving || !currentPassword || !newPassword}
+                disabled={passwordMutation.isPending || !currentPassword || !newPassword}
               >
-                {saving
+                {passwordMutation.isPending
                   ? t("account.security.passwordSaving")
                   : t("account.security.passwordAction")}
               </button>

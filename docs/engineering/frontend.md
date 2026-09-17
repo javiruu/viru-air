@@ -1,35 +1,35 @@
-Ôªø# Frontend
+# Frontend
 
 **Estado:** vivo  
-**√öltima revisi√≥n:** 2026-09-02
-**Fuente de verdad:** s√≠  
-**√Årea:** engineering
+**⁄ltima revisiÛn:** 2026-09-02
+**Fuente de verdad:** sÌ  
+**¡rea:** engineering
 
 ## Resumen
 
-El frontend de Viru Air est√° construido con Next.js, React y TypeScript, y usa un contrato visual documentado para evitar deriva de UI.
+El frontend de Viru Air est· construido con Next.js, React y TypeScript, y usa un contrato visual documentado para evitar deriva de UI.
 
 ## Contenido principal
 
 - Stack visible: Next.js 15, React 19, TypeScript.
-- La gu√≠a viva del sistema visual est√° en [DESIGN.md](../../DESIGN.md).
+- La guÌa viva del sistema visual est· en [DESIGN.md](../../DESIGN.md).
 - La skill `/.codex/skills/viru-air-ui/SKILL.md` obliga a leerla antes del trabajo UI.
-- Las specs UI activas est√°n en:
+- Las specs UI activas est·n en:
   - [Specs activas](../specs/README.md)
 
 ## Arquitectura de estilos de pantalla
 
-- `frontend/src/styles/screens.css` es el punto de entrada estable y contiene √∫nicamente imports ordenados.
+- `frontend/src/styles/screens.css` es el punto de entrada estable y contiene ˙nicamente imports ordenados.
 - Las reglas viven en `frontend/src/styles/screens/`, separadas por dominio (`quick-search`, `watchlist`, `door-to-door`, `hotels`, `private`, `public`, `shared` y `foundation`).
-- El orden del manifiesto es parte del contrato: algunos m√≥dulos finales refinan reglas anteriores. No reordenar imports para agruparlos visualmente sin comprobar la cascada renderizada.
-- Una regla exclusiva permanece en su dominio. S√≥lo los patrones realmente usados por varias pantallas pasan a `shared`, `components.css` o `tokens.css`.
-- Antes de cerrar cambios en este √°rbol, ejecutar desde `frontend`:
+- El orden del manifiesto es parte del contrato: algunos mÛdulos finales refinan reglas anteriores. No reordenar imports para agruparlos visualmente sin comprobar la cascada renderizada.
+- Una regla exclusiva permanece en su dominio. SÛlo los patrones realmente usados por varias pantallas pasan a `shared`, `components.css` o `tokens.css`.
+- Antes de cerrar cambios en este ·rbol, ejecutar desde `frontend`:
 
   ```bash
   npm run styles:verify
   ```
 
-  La comprobaci√≥n rechaza imports duplicados, m√≥dulos ausentes o hu√©rfanos, CSS inv√°lido y archivos que vuelvan a superar 3.000 l√≠neas.
+  La comprobaciÛn rechaza imports duplicados, mÛdulos ausentes o huÈrfanos, CSS inv·lido y archivos que vuelvan a superar 3.000 lÌneas.
 
 ## Estados de carga Boneyard
 
@@ -41,7 +41,7 @@ El frontend de Viru Air est√° construido con Next.js, React y TypeScript, y usa 
   npm run bones:build -- http://localhost:3000/boneyard-capture --force
   ```
 
-- `/boneyard-capture` existe solo en desarrollo y re√∫ne todos los estados nombrados para regenerarlos. A√±adir `?review=1` oculta el overlay de navegaci√≥n para revisar visualmente la galer√≠a; `?review=1&theme=dark` permite comprobar sus colores oscuros. La configuraci√≥n conserva los colores c√°lidos de ambos temas en `frontend/boneyard.config.json`.
+- `/boneyard-capture` existe solo en desarrollo y re˙ne todos los estados nombrados para regenerarlos. AÒadir `?review=1` oculta el overlay de navegaciÛn para revisar visualmente la galerÌa; `?review=1&theme=dark` permite comprobar sus colores oscuros. La configuraciÛn conserva los colores c·lidos de ambos temas en `frontend/boneyard.config.json`.
 
 ## Relacionado
 

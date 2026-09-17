@@ -1,9 +1,9 @@
-Ôªø# Watchlist
+# Watchlist
 
 **Estado:** vivo  
-**√öltima revisi√≥n:** 2026-08-13
+**⁄ltima revisiÛn:** 2026-08-13
 **Fuente de verdad:** si  
-**√Årea:** product
+**¡rea:** product
 
 ## Resumen
 
@@ -14,47 +14,47 @@ Watchlist es el centro operativo de Viru Air y absorbe el historico como parte d
 Las Watches creadas desde Quick Search conservan la cesta usada para comparar
 el vuelo: viajeros, equipaje de 10 kg o 20 kg, seguro, Fast Track, embarque
 prioritario, asiento y cambios flexibles. El usuario selecciona los extras,
-pero no introduce sus importes: Watchlist vuelve a aplicar autom√°ticamente el
-cat√°logo p√∫blico de la aerol√≠nea guardada y el n√∫mero de vuelos del itinerario.
+pero no introduce sus importes: Watchlist vuelve a aplicar autom·ticamente el
+cat·logo p˙blico de la aerolÌnea guardada y el n˙mero de vuelos del itinerario.
 
-Dentro de `Extras del viaje`, Watchlist muestra √∫nicamente cu√°nto pueden a√±adir
+Dentro de `Extras del viaje`, Watchlist muestra ˙nicamente cu·nto pueden aÒadir
 los extras seleccionados, separado del precio observado del vuelo. Cuando la
-aerol√≠nea publica un m√°ximo verificable, el resumen usa `Hasta +X`; no presenta
-un rango de precio total del vuelo. Los extras sin tarifa p√∫blica verificable,
+aerolÌnea publica un m·ximo verificable, el resumen usa `Hasta +X`; no presenta
+un rango de precio total del vuelo. Los extras sin tarifa p˙blica verificable,
 como un Fast Track dependiente del aeropuerto, quedan fuera de la suma y se
-identifican de forma expl√≠cita junto a la fuente oficial.
+identifican de forma explÌcita junto a la fuente oficial.
 
 ## Seguimiento operacional del vuelo
 
 Una Watch guardada desde un resultado exacto de Quick Search puede enlazar una o varias piernas y mostrar, sin desplazar la lectura de precio:
 
-- estado normalizado, n√∫mero y ruta;
+- estado normalizado, n˙mero y ruta;
 - salida/llegada programada, estimada o real;
 - retraso, terminal y puerta cuando la fuente los entrega;
-- posici√≥n en el mapa solo cuando ha sido observada y validada;
-- predicci√≥n temprana de retraso para vuelos programados, enlazando la matr√≠cula
+- posiciÛn en el mapa solo cuando ha sido observada y validada;
+- predicciÛn temprana de retraso para vuelos programados, enlazando la matrÌcula
   con su tramo entrante y explicando riesgo, confianza, margen de escala y
-  se√±ales usadas;
+  seÒales usadas;
 - frescura y estados honestos de falta de identidad, cobertura o proveedor.
 
-Las Watches manuales o antiguas mantienen precio e hist√≥rico. Viru revisa sus
-capturas frescas de m√°s nueva a m√°s antigua: descarta las que no tienen una
-identidad completa en Fare Memory, enlaza la primera coincidencia √∫nica por
+Las Watches manuales o antiguas mantienen precio e histÛrico. Viru revisa sus
+capturas frescas de m·s nueva a m·s antigua: descarta las que no tienen una
+identidad completa en Fare Memory, enlaza la primera coincidencia ˙nica por
 ruta, fecha, proveedor y hora, y se detiene sin elegir si encuentra varias
-salidas plausibles. As√≠ puede recuperar un vuelo exacto ya conocido sin gastar
+salidas plausibles. AsÌ puede recuperar un vuelo exacto ya conocido sin gastar
 cuota aunque una captura posterior venga incompleta. Si falta esa evidencia, la
 UI ofrece volver a Quick Search. En multi-leg, solo el primer tramo queda
 expandido y los siguientes se consultan bajo demanda.
 
-La predicci√≥n vive dentro del bloque operacional, no compite con precio ni
-hist√≥rico y nunca sustituye el horario oficial. Reutiliza la se√±al de snapshots
+La predicciÛn vive dentro del bloque operacional, no compite con precio ni
+histÛrico y nunca sustituye el horario oficial. Reutiliza la seÒal de snapshots
 compartidos del Flight Tracking Hub, pero solo enlaza rutas exactas guardadas
-por la misma persona; mira hasta 25 horas atr√°s y no provoca llamadas externas
-nuevas. Si Viru no puede demostrar la rotaci√≥n exacta sin cruzar datos entre
-cuentas, muestra una se√±al compacta de datos insuficientes en lugar de inventar
-una predicci√≥n.
+por la misma persona; mira hasta 25 horas atr·s y no provoca llamadas externas
+nuevas. Si Viru no puede demostrar la rotaciÛn exacta sin cruzar datos entre
+cuentas, muestra una seÒal compacta de datos insuficientes en lugar de inventar
+una predicciÛn.
 
-Contrato y operaci√≥n:
+Contrato y operaciÛn:
 
 - [Live flight tracking desde Watchlist](../reference/backend/live-flight-tracking-contract.md)
 - [Runbook live flight tracking](../runbooks/runbook-live-flight-tracking.md)
@@ -62,44 +62,44 @@ Contrato y operaci√≥n:
 ## Precio de la comunidad
 
 Cada fila de Watchlist tiene un icono comunitario discreto arriba a la
-izquierda. Al abrirlo aparece un hub lateral que re√∫ne el rango an√≥nimo pagado
-por viajero, el tama√±o o umbral de la muestra, cu√°ntas personas siguen la ruta,
-las garant√≠as de privacidad y la aportaci√≥n propia. Abrir el hub es siempre de
-solo lectura: no marca el vuelo como comprado ni dispara otra mutaci√≥n.
+izquierda. Al abrirlo aparece un hub lateral que re˙ne el rango anÛnimo pagado
+por viajero, el tamaÒo o umbral de la muestra, cu·ntas personas siguen la ruta,
+las garantÌas de privacidad y la aportaciÛn propia. Abrir el hub es siempre de
+solo lectura: no marca el vuelo como comprado ni dispara otra mutaciÛn.
 
-Cuando un vuelo caduca, el icono indica que hay una aportaci√≥n pendiente sin
-abrirse autom√°ticamente. Si la persona pulsa `Comprado` dentro del hub:
+Cuando un vuelo caduca, el icono indica que hay una aportaciÛn pendiente sin
+abrirse autom·ticamente. Si la persona pulsa `Comprado` dentro del hub:
 
-1. confirma si finalmente se mont√≥ en ese vuelo;
+1. confirma si finalmente se montÛ en ese vuelo;
 2. si la respuesta es afirmativa, solicita el precio final pagado por viajero;
-3. permite dejarlo para m√°s tarde, corregir la respuesta o eliminarla.
+3. permite dejarlo para m·s tarde, corregir la respuesta o eliminarla.
 
 Las acciones comunitarias no se mezclan con `Pausar`, `Reanudar` o `Eliminar`
 en la fila, y no existe una pantalla comunitaria paralela.
 
-La fila puede resumir la se√±al con `N siguiendo` cuando la ruta supera cinco
-seguidores y con `En tendencia` cuando pertenece al 20 % superior de b√∫squedas
-de los √∫ltimos siete d√≠as. Si coinciden, se combinan en una sola c√°psula para
+La fila puede resumir la seÒal con `N siguiendo` cuando la ruta supera cinco
+seguidores y con `En tendencia` cuando pertenece al 20 % superior de b˙squedas
+de los ˙ltimos siete dÌas. Si coinciden, se combinan en una sola c·psula para
 no duplicar ruido.
 
-El hub tambi√©n puede mostrar hasta tres rutas relacionadas por co-ocurrencia de
+El hub tambiÈn puede mostrar hasta tres rutas relacionadas por co-ocurrencia de
 Watches. Cada sugerencia exige al menos tres usuarios distintos y solo expone
 la ruta y el conteo agregado. Al abrirla, Quick Search recibe origen y destino.
 
 El importe es el total final por persona, no el total de la reserva ni una
-estimaci√≥n de Viru. En esta primera versi√≥n la moneda es EUR.
+estimaciÛn de Viru. En esta primera versiÛn la moneda es EUR.
 
 Las respuestas viven separadas de Fare Memory: Fare Memory conserva precios
 observados de proveedores y Community Pricing conserva experiencias declaradas
-por viajeros. Solo se publica el rango m√≠nimo‚Äìm√°ximo de una ruta direccional
-cuando hay al menos tres viajeros distintos con vuelo realizado y precio v√°lido
-en los √∫ltimos 365 d√≠as. Antes de ese umbral, la UI solo indica cu√°ntas
+por viajeros. Solo se publica el rango mÌnimoñm·ximo de una ruta direccional
+cuando hay al menos tres viajeros distintos con vuelo realizado y precio v·lido
+en los ˙ltimos 365 dÌas. Antes de ese umbral, la UI solo indica cu·ntas
 aportaciones faltan; no expone precios, identidades, vuelos concretos ni fechas
 de respuesta.
 
-Cuando el hist√≥rico personal no tiene capturas y el rango comunitario es
-p√∫blico, el panel muestra una banda `Referencia comunidad` con el m√≠nimo y
-m√°ximo por persona. No colorea fechas concretas del calendario porque el
+Cuando el histÛrico personal no tiene capturas y el rango comunitario es
+p˙blico, el panel muestra una banda `Referencia comunidad` con el mÌnimo y
+m·ximo por persona. No colorea fechas concretas del calendario porque el
 agregado comunitario no contiene granularidad diaria.
 
 Contrato:

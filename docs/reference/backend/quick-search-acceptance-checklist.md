@@ -1,4 +1,4 @@
-﻿Status: reference
+Status: reference
 Scope: technical reference for implementation work
 Last reviewed: 2026-04-15
 Canonical source: docs/reference/backend/quick-search-acceptance-checklist.md

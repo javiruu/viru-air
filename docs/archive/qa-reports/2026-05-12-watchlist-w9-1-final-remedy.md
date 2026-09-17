@@ -1,4 +1,4 @@
-ï»¿# Watchlist W9.1 Final Remedy
+# Watchlist W9.1 Final Remedy
 
 **Estado:** vivo  
 **Fecha:** 2026-05-13  
@@ -8,19 +8,19 @@
 
 ## Problemas corregidos
 
-- Separador de rutas inconsistente con `?` en mÃºltiples superficies de `/watchlist`.
-- Bloque de confianza histÃ³rica del detalle con lectura demasiado fragmentada.
-- Duplicidad visual en histÃ³rico integrado (`Rango` repetido en cabecera y selector).
+- Separador de rutas inconsistente con `?` en múltiples superficies de `/watchlist`.
+- Bloque de confianza histórica del detalle con lectura demasiado fragmentada.
+- Duplicidad visual en histórico integrado (`Rango` repetido en cabecera y selector).
 - Salto poco legible en frescura dentro de cards.
-- Calendario tabular dentro del detalle de ruta, duplicando el histÃ³rico integrado.
+- Calendario tabular dentro del detalle de ruta, duplicando el histórico integrado.
 
-## DecisiÃ³n W9.1
+## Decisión W9.1
 
-Se elimina por completo el calendario tabular del panel **Detalle de ruta** (`WatchDetailPanel`) para reducir sobrecarga visual y evitar duplicidad con el histÃ³rico integrado.
+Se elimina por completo el calendario tabular del panel **Detalle de ruta** (`WatchDetailPanel`) para reducir sobrecarga visual y evitar duplicidad con el histórico integrado.
 
-AclaraciÃ³n explÃ­cita:
+Aclaración explícita:
 
-> No se elimina `/prices/calendar` ni histÃ³rico backend; solo se elimina la tabla del detalle porque duplicaba el histÃ³rico integrado.
+> No se elimina `/prices/calendar` ni histórico backend; solo se elimina la tabla del detalle porque duplicaba el histórico integrado.
 
 ## Archivos tocados
 
@@ -46,5 +46,5 @@ En `frontend`:
 
 ## Caveats
 
-- NingÃºn cambio de backend, endpoints o migraciones.
+- Ningún cambio de backend, endpoints o migraciones.
 - Si aparece warning preexistente de `react-hooks/exhaustive-deps` fuera de este alcance, se documenta y no se modifica en W9.1.

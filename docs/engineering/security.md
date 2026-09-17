@@ -1,9 +1,9 @@
-ï»¿# Seguridad
+# Seguridad
 
 **Estado:** vivo  
-**Ãšltima revisiÃ³n:** 2026-05-11  
+**Última revisión:** 2026-05-11  
 **Fuente de verdad:** no  
-**Ãrea:** engineering
+**Área:** engineering
 
 ## Resumen
 
@@ -11,15 +11,15 @@ Las reglas de seguridad documental y operativa aparecen repartidas entre `AGENTS
 
 ## Contenido principal
 
-- No deben publicarse secretos, tokens ni datos personales en documentaciÃ³n.
-- La raÃ­z del proyecto marca `JWT_SECRET` como obligatorio para entorno local.
-- La documentaciÃ³n de sesiÃ³n y contrato operativo estÃ¡ en:
+- No deben publicarse secretos, tokens ni datos personales en documentación.
+- La raíz del proyecto marca `JWT_SECRET` como obligatorio para entorno local.
+- La documentación de sesión y contrato operativo está en:
   - [AGENTS.md](../../AGENTS.md)
   - [Codex operating contract](../reference/codex-operating-contract.md)
 
 ## Nota
 
-> TODO: no se ha encontrado una documentaciÃ³n viva consolidada de seguridad de aplicaciÃ³n mÃ¡s allÃ¡ de reglas operativas y de publicaciÃ³n.
+> TODO: no se ha encontrado una documentación viva consolidada de seguridad de aplicación más allá de reglas operativas y de publicación.
 
 ## Relacionado
 
