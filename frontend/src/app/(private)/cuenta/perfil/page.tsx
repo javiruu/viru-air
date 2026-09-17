@@ -11,7 +11,6 @@ import {
 } from "@/components/components/forms/glass-profile-settings";
 import { useI18n } from "@/i18n";
 import { apiFetch } from "@/modules/shared/api";
-import { clearToken } from "@/modules/shared/auth";
 
 const ACCOUNT_SESSIONS_PAGE_SIZE = 200;
 
@@ -96,7 +95,7 @@ export default function PerfilPage() {
     if (confirmText.trim().toUpperCase() !== confirmKeyword) return;
     try {
       await apiFetch<{ status: string }>("/account", { method: "DELETE" });
-      clearToken();
+      /* TODO: migrate to Supabase SSR */;
       router.push("/");
     } catch {
       notify({ tone: "error", title: t("account.profile.deleteError"), durationMs: 3200 });

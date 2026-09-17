@@ -1,5 +1,7 @@
 "use client";
 
+import { createClient } from "@/lib/supabase/client";
+
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 
@@ -9,7 +11,6 @@ import { GlassSignInCard } from "@/components/components/forms/glass-sign-in";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetchWithStatus } from "@/modules/shared/api";
 import type { AuthOut } from "@/modules/shared/auth";
-import { clearToken, hasToken, saveAuthTokens } from "@/modules/shared/auth";
 import {
   isDashboardDemoAccessEnabled,
   signInDashboardDemoAccount,
@@ -27,6 +28,7 @@ function RegisterContent() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [fieldError, setFieldError] = useState<{ email?: string; password?: string }>({});
+  const supabase = createClient();
   const [entryState, setEntryState] = useState<"checking" | "ready">("checking");
 
   const returnUrl = useMemo(() => {
@@ -36,7 +38,8 @@ function RegisterContent() {
   useEffect(() => {
     let active = true;
     async function checkEntryRoute() {
-      if (!hasToken()) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
         if (isDashboardDemoAccessEnabled()) {
           const didSignIn = await signInDashboardDemoAccount();
           if (!active) return;
@@ -61,7 +64,7 @@ function RegisterContent() {
         return;
       }
       if (result.status === 401) {
-        clearToken();
+        await supabase.auth.signOut();;
       }
       if (active) setEntryState("ready");
     }
@@ -71,7 +74,7 @@ function RegisterContent() {
     return () => {
       active = false;
     };
-  }, [notify, router, t]);
+  }, [notify, router, t, supabase.auth]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -93,7 +96,7 @@ function RegisterContent() {
       const res = await registerApiV1AuthRegisterPost({ email: normalizedEmail, password });
       const data: AuthOut =
         (res as unknown as { data: AuthOut })?.data ?? (res as unknown as AuthOut);
-      saveAuthTokens(data);
+      await supabase.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token || "" });;
       notify({
         tone: "success",
         title: t("public.auth.registerSuccess"),

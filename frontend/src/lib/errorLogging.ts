@@ -1,4 +1,4 @@
-import { hasToken } from "@/modules/shared/auth";
+import { createClient } from "@/lib/supabase/client";
 import { apiFetchBestEffort } from "@/modules/shared/api";
 
 const MAX_SECTION_LEN = 64;
@@ -14,7 +14,9 @@ function truncate(value: string | null | undefined, limit: number): string | nul
 
 export async function reportClientError(section: string, error: Error): Promise<void> {
   if (typeof window === "undefined") return;
-  if (!hasToken()) return;
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) return;
 
   const safeSection = truncate(section, MAX_SECTION_LEN) || "unknown";
   const safeMessage =

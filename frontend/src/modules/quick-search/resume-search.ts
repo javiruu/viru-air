@@ -1,4 +1,3 @@
-import { getToken } from "@/modules/shared/auth";
 import { buildQuickSearchSearchParams } from "@/modules/shared/useRouteState";
 
 const RESUME_SEARCH_STORAGE_KEY = "viru_resume_search_snapshot";
@@ -44,9 +43,7 @@ type SnapshotInput = Omit<
 >;
 
 function tokenHint(): string | null {
-  const token = getToken();
-  if (!token) return null;
-  return token.slice(0, 24);
+  return "supabase-session";
 }
 
 function safeJsonParse(raw: string | null): ResumeSearchSnapshot | null {

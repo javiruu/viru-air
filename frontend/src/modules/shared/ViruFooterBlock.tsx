@@ -5,8 +5,8 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 
-import { hasToken } from "@/modules/shared/auth";
 import { useI18n } from "@/i18n/shell";
+import { createClient } from "@/lib/supabase/client";
 import ViruWordmark from "@/modules/shared/ViruWordmark";
 
 type FooterLink = {
@@ -117,7 +117,7 @@ export default function ViruFooterBlock({ variant = "default" }: ViruFooterBlock
   const [hasSession, setHasSession] = useState(false);
 
   useEffect(() => {
-    setHasSession(hasToken());
+    createClient().auth.getSession().then(({ data }) => setHasSession(!!data.session));
   }, []);
 
   const isPrivateRoute =

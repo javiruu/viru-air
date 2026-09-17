@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetchWithStatus } from "@/modules/shared/api";
 import { AuthProvider, type AuthUser } from "@/modules/shared/AuthProvider";
-import { clearToken, hasToken } from "@/modules/shared/auth";
+import { createClient } from "@/lib/supabase/client";
 import {
   isDashboardDemoAccessEnabled,
   signInDashboardDemoAccount,
@@ -33,8 +33,10 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
     const returnUrl = pathname || "/dashboard";
     const loginRedirect = buildLoginRedirect(currentPathWithSearch() || returnUrl);
 
+    const supabase = createClient();
     async function validateSession() {
-      if (!hasToken()) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
         const canUseDashboardDemoAccount =
           pathname === "/dashboard" && isDashboardDemoAccessEnabled();
         if (canUseDashboardDemoAccount) {
@@ -91,7 +93,7 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
       }
 
       if (meResult.status === 401) {
-        clearToken();
+        await supabase.auth.signOut();
         if (!notifiedRef.current) {
           notify({
             tone: "warning",
