@@ -54,22 +54,26 @@ export function useDoorToDoorMapHub(response: DoorToDoorResponse | null, selecte
                       watch_id: item.watch_id || null,
                     }).catch(() => null),
                   ),
-                ).then(async () => {
-                  // Refetch first, then clear localStorage only on success
-                  try {
-                    const migrated = await fetchDoorToDoorSavedPlaces(selectedWatchId || undefined);
-                    if (migrated && migrated.length > 0) {
-                      window.localStorage.removeItem("viru_d2d_saved_places_v1");
+                )
+                  .then(async () => {
+                    // Refetch first, then clear localStorage only on success
+                    try {
+                      const migrated = await fetchDoorToDoorSavedPlaces(
+                        selectedWatchId || undefined,
+                      );
+                      if (migrated && migrated.length > 0) {
+                        window.localStorage.removeItem("viru_d2d_saved_places_v1");
+                      }
+                      setSavedPlaces((migrated || []).slice(0, 12));
+                    } catch {
+                      // Refetch failed — keep localStorage as safety net
+                      setSavedPlaces(parsed.slice(0, 12));
                     }
-                    setSavedPlaces((migrated || []).slice(0, 12));
-                  } catch {
-                    // Refetch failed — keep localStorage as safety net
+                  })
+                  .catch(() => {
+                    // Migration failed — keep localStorage items visible
                     setSavedPlaces(parsed.slice(0, 12));
-                  }
-                }).catch(() => {
-                  // Migration failed — keep localStorage items visible
-                  setSavedPlaces(parsed.slice(0, 12));
-                });
+                  });
                 return;
               }
             }
@@ -84,9 +88,17 @@ export function useDoorToDoorMapHub(response: DoorToDoorResponse | null, selecte
 
   const providerStatusSummary = useMemo(() => {
     const enabled = providerStatus.filter((p) => p.enabled);
-    const realEnabled = enabled.filter((p) => p.source_type !== "mock" && p.source_type !== "estimate");
-    const estimateEnabled = enabled.filter((p) => p.source_type === "mock" || p.source_type === "estimate");
-    return { enabled: enabled.length, realEnabled: realEnabled.length, estimateEnabled: estimateEnabled.length };
+    const realEnabled = enabled.filter(
+      (p) => p.source_type !== "mock" && p.source_type !== "estimate",
+    );
+    const estimateEnabled = enabled.filter(
+      (p) => p.source_type === "mock" || p.source_type === "estimate",
+    );
+    return {
+      enabled: enabled.length,
+      realEnabled: realEnabled.length,
+      estimateEnabled: estimateEnabled.length,
+    };
   }, [providerStatus]);
 
   const mapCapabilities = useMemo(
@@ -126,15 +138,18 @@ export function useDoorToDoorMapHub(response: DoorToDoorResponse | null, selecte
     }
   }, [savedPlaceLabel, savedPlaceNote, savedPlaces, selectedWatchId, notify, t]);
 
-  const removeSavedPlace = useCallback(async (id: string) => {
-    try {
-      await deleteDoorToDoorSavedPlace(id);
-      setSavedPlaces((current) => current.filter((item) => item.id !== id));
-      notify({ tone: "success", title: t("doorToDoor.mapHub.savedPlaces.deletedToast") });
-    } catch {
-      notify({ tone: "error", title: t("doorToDoor.mapHub.savedPlaces.deleteError") });
-    }
-  }, [notify, t]);
+  const removeSavedPlace = useCallback(
+    async (id: string) => {
+      try {
+        await deleteDoorToDoorSavedPlace(id);
+        setSavedPlaces((current) => current.filter((item) => item.id !== id));
+        notify({ tone: "success", title: t("doorToDoor.mapHub.savedPlaces.deletedToast") });
+      } catch {
+        notify({ tone: "error", title: t("doorToDoor.mapHub.savedPlaces.deleteError") });
+      }
+    },
+    [notify, t],
+  );
 
   return {
     providerStatus,

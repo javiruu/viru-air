@@ -17,7 +17,8 @@ export async function reportClientError(section: string, error: Error): Promise<
   if (!hasToken()) return;
 
   const safeSection = truncate(section, MAX_SECTION_LEN) || "unknown";
-  const safeMessage = truncate(error.message || "unknown_error", MAX_MESSAGE_LEN) || "unknown_error";
+  const safeMessage =
+    truncate(error.message || "unknown_error", MAX_MESSAGE_LEN) || "unknown_error";
   const safeStack = truncate(error.stack || null, MAX_STACK_LEN);
 
   await apiFetchBestEffort("/ux/errors", {

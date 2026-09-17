@@ -4,9 +4,7 @@ type SnapshotWithWatchId = Snapshot & { watch_id: string };
 
 export function mapLatestWatchSnapshotsToHistoryRows(rows: Watch[]): HistoryRow[] {
   return rows.flatMap((watch) =>
-    watch.latest_snapshot
-      ? [snapshotToHistoryRow(watch, watch.latest_snapshot)]
-      : [],
+    watch.latest_snapshot ? [snapshotToHistoryRow(watch, watch.latest_snapshot)] : [],
   );
 }
 
@@ -99,7 +97,10 @@ export function mapSnapshotsToHistoryRows(
     .filter((row): row is HistoryRow => Boolean(row));
 }
 
-export function mergeWatchDetailPriceHistoryRows(rows: HistoryRow[], detail: WatchDetail | null): HistoryRow[] {
+export function mergeWatchDetailPriceHistoryRows(
+  rows: HistoryRow[],
+  detail: WatchDetail | null,
+): HistoryRow[] {
   const detailHistory = detail?.price_history ?? [];
   if (detailHistory.length === 0 || !detail) return rows;
 
@@ -119,18 +120,23 @@ export function mergeWatchDetailPriceHistoryRows(rows: HistoryRow[], detail: Wat
   rows.forEach((row) => {
     merged.set([row.watchId, toRefreshBucket(row.capturedAt)].join("|"), row);
   });
-  detailHistory.map((snapshot) => snapshotToHistoryRow(detailWatch, snapshot)).forEach((row) => {
-    const key = [row.watchId, toRefreshBucket(row.capturedAt)].join("|");
-    const current = merged.get(key);
-    if (!current || compareHistoryPriority(row, current) < 0) {
-      merged.set(key, row);
-    }
-  });
+  detailHistory
+    .map((snapshot) => snapshotToHistoryRow(detailWatch, snapshot))
+    .forEach((row) => {
+      const key = [row.watchId, toRefreshBucket(row.capturedAt)].join("|");
+      const current = merged.get(key);
+      if (!current || compareHistoryPriority(row, current) < 0) {
+        merged.set(key, row);
+      }
+    });
 
   return Array.from(merged.values());
 }
 
-export function resolveCurrentWatchDetail(selectedWatch: Watch, detail: WatchDetail | null): WatchDetail | null {
+export function resolveCurrentWatchDetail(
+  selectedWatch: Watch,
+  detail: WatchDetail | null,
+): WatchDetail | null {
   return detail?.id === selectedWatch.id ? detail : null;
 }
 

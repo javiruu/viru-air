@@ -45,7 +45,11 @@ export function HotelTrackedOffersPanel({
         <p className="panel-note section-gap-sm">{t("hotels.trackedOffers.loading")}</p>
       ) : null}
 
-      {error ? <p className="notice notice-error section-gap-sm" role="alert">{error}</p> : null}
+      {error ? (
+        <p className="notice notice-error section-gap-sm" role="alert">
+          {error}
+        </p>
+      ) : null}
 
       {!loading && !error && offers.length === 0 ? (
         <p className="panel-note section-gap-sm">{t("hotels.trackedOffers.empty")}</p>
@@ -59,7 +63,8 @@ export function HotelTrackedOffersPanel({
             const isPaused = state === "paused";
             const isExpired = state === "expired";
             const isArchived = state === "archived";
-            const isPastStay = offer.check_out !== null && offer.check_out < new Date().toISOString().slice(0, 10);
+            const isPastStay =
+              offer.check_out !== null && offer.check_out < new Date().toISOString().slice(0, 10);
             return (
               <article key={offer.id} className="list-row hotel-tracked-offer-item">
                 <div className="hotel-tracked-offer-copy">
@@ -73,7 +78,8 @@ export function HotelTrackedOffersPanel({
                     ) : null}
                   </div>
                   <div className="hotel-tracked-offer-dates panel-note">
-                    {formatDateShort(offer.check_in, localeTag)} → {formatDateShort(offer.check_out, localeTag)}
+                    {formatDateShort(offer.check_in, localeTag)} →{" "}
+                    {formatDateShort(offer.check_out, localeTag)}
                     {" · "}
                     {t("hotels.trackedOffers.guests", { count: offer.guests })}
                   </div>
@@ -127,7 +133,11 @@ export function HotelTrackedOffersPanel({
                     >
                       {busy
                         ? t("shared.states.loading")
-                        : t(isPaused ? "hotels.trackedOffers.resumeTracking" : "hotels.trackedOffers.pauseTracking")}
+                        : t(
+                            isPaused
+                              ? "hotels.trackedOffers.resumeTracking"
+                              : "hotels.trackedOffers.pauseTracking",
+                          )}
                     </button>
                   )}
                   {!isArchived ? (
@@ -137,12 +147,16 @@ export function HotelTrackedOffersPanel({
                       onClick={() => onArchiveTracking(offer.id)}
                       disabled={busy}
                     >
-                      {busy ? t("shared.states.loading") : t("hotels.trackedOffers.archiveTracking")}
+                      {busy
+                        ? t("shared.states.loading")
+                        : t("hotels.trackedOffers.archiveTracking")}
                     </button>
                   ) : null}
                   {confirmingDeletionOfferId === offer.id ? (
                     <>
-                      <p className="panel-note" role="status">{t("hotels.trackedOffers.deleteConfirmation")}</p>
+                      <p className="panel-note" role="status">
+                        {t("hotels.trackedOffers.deleteConfirmation")}
+                      </p>
                       <button
                         type="button"
                         className="btn-ghost btn-compact"
@@ -160,7 +174,9 @@ export function HotelTrackedOffersPanel({
                         }}
                         disabled={busy}
                       >
-                        {busy ? t("shared.states.loading") : t("hotels.trackedOffers.confirmDelete")}
+                        {busy
+                          ? t("shared.states.loading")
+                          : t("hotels.trackedOffers.confirmDelete")}
                       </button>
                     </>
                   ) : (

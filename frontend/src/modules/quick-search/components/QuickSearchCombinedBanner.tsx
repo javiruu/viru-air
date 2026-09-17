@@ -51,9 +51,7 @@ export function QuickSearchCombinedBanner({
   });
 
   const priceLabel =
-    combinedPrice != null && combinedPrice > 0
-      ? formatter.format(combinedPrice)
-      : "--";
+    combinedPrice != null && combinedPrice > 0 ? formatter.format(combinedPrice) : "--";
 
   return (
     <div
@@ -64,12 +62,7 @@ export function QuickSearchCombinedBanner({
       <span className="qs-dual-combined__label">{t("combinedPrice")}</span>
       <span className="qs-dual-combined__price">{priceLabel}</span>
 
-      <button
-        type="button"
-        className="qs-dual-combined__save"
-        disabled={saving}
-        onClick={onSave}
-      >
+      <button type="button" className="qs-dual-combined__save" disabled={saving} onClick={onSave}>
         {saving ? (
           <span className="qs-dual-combined__saving" aria-label={t("savingCombination")}>
             <svg

@@ -1,4 +1,4 @@
-import { FormEventHandler, ReactNode, RefObject } from "react";
+import type { FormEventHandler, ReactNode, RefObject } from "react";
 
 type Props = {
   formRef: RefObject<HTMLFormElement | null>;

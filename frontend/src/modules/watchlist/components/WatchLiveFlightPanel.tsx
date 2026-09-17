@@ -30,7 +30,8 @@ function unavailableCopyKey(tracking: LiveFlightTracking): string | null {
   if (tracking.coverage === "identity_missing") return "watchlist.live.states.identityMissing";
   if (tracking.coverage === "not_configured") return "watchlist.live.states.preparing";
   if (tracking.coverage === "no_coverage") return "watchlist.live.states.noCoverage";
-  if (tracking.coverage === "temporarily_unavailable") return "watchlist.live.states.temporarilyUnavailable";
+  if (tracking.coverage === "temporarily_unavailable")
+    return "watchlist.live.states.temporarilyUnavailable";
   return null;
 }
 
@@ -54,14 +55,20 @@ export function WatchLiveFlightPanel({
 
   function renderLegHeading(leg: LiveFlightLeg) {
     const operational = leg.operational;
-    const flightLabel = leg.identity.flight_number ?? `${leg.identity.origin_iata} → ${leg.identity.destination_iata}`;
+    const flightLabel =
+      leg.identity.flight_number ??
+      `${leg.identity.origin_iata} → ${leg.identity.destination_iata}`;
     return (
       <div className="watch-live-flight-leg-heading">
         <div>
           <strong>{flightLabel}</strong>
-          <span>{leg.identity.origin_iata} → {leg.identity.destination_iata}</span>
+          <span>
+            {leg.identity.origin_iata} → {leg.identity.destination_iata}
+          </span>
         </div>
-        <span className={`watch-live-flight-status watch-live-flight-status--${operational?.status ?? "unknown"}`}>
+        <span
+          className={`watch-live-flight-status watch-live-flight-status--${operational?.status ?? "unknown"}`}
+        >
           {operational
             ? t(`watchlist.live.status.${operational.status}`)
             : t("watchlist.live.legUnavailableShort")}
@@ -73,7 +80,9 @@ export function WatchLiveFlightPanel({
   function renderLegBody(leg: LiveFlightLeg) {
     const operational = leg.operational;
     if (!operational) {
-      return <p className="watch-live-flight-leg-unavailable">{t("watchlist.live.legUnavailable")}</p>;
+      return (
+        <p className="watch-live-flight-leg-unavailable">{t("watchlist.live.legUnavailable")}</p>
+      );
     }
     const numberFormat = new Intl.NumberFormat(localeTag, { maximumFractionDigits: 0 });
     const aircraftCode = operational.aircraft_iata ?? operational.aircraft_icao;
@@ -83,7 +92,9 @@ export function WatchLiveFlightPanel({
           <div className="watch-live-flight-milestone">
             <span>{t("watchlist.live.departure")}</span>
             <strong>{formatLiveTime(milestoneTimestamp(operational.departure), localeTag)}</strong>
-            <small>{t(`watchlist.live.timeSource.${milestoneTimeSource(operational.departure)}`)}</small>
+            <small>
+              {t(`watchlist.live.timeSource.${milestoneTimeSource(operational.departure)}`)}
+            </small>
             <small>
               {t("watchlist.live.terminalGate", {
                 terminal: operational.departure.terminal ?? "--",
@@ -97,7 +108,9 @@ export function WatchLiveFlightPanel({
           <div className="watch-live-flight-milestone">
             <span>{t("watchlist.live.arrival")}</span>
             <strong>{formatLiveTime(milestoneTimestamp(operational.arrival), localeTag)}</strong>
-            <small>{t(`watchlist.live.timeSource.${milestoneTimeSource(operational.arrival)}`)}</small>
+            <small>
+              {t(`watchlist.live.timeSource.${milestoneTimeSource(operational.arrival)}`)}
+            </small>
             <small>
               {t("watchlist.live.terminalGate", {
                 terminal: operational.arrival.terminal ?? "--",
@@ -120,15 +133,31 @@ export function WatchLiveFlightPanel({
           </span>
           {operational.position ? <span>{t("watchlist.live.positionOnMap")}</span> : null}
           <span>{t("watchlist.live.providerSource", { provider: operational.provider })}</span>
-          <span>{t("watchlist.live.observedAt", { time: formatLiveTime(operational.observed_at, localeTag) })}</span>
+          <span>
+            {t("watchlist.live.observedAt", {
+              time: formatLiveTime(operational.observed_at, localeTag),
+            })}
+          </span>
           {operational.position?.altitude_m != null ? (
-            <span>{t("watchlist.live.altitude", { value: numberFormat.format(operational.position.altitude_m) })}</span>
+            <span>
+              {t("watchlist.live.altitude", {
+                value: numberFormat.format(operational.position.altitude_m),
+              })}
+            </span>
           ) : null}
           {operational.position?.speed_mps != null ? (
-            <span>{t("watchlist.live.speed", { value: numberFormat.format(operational.position.speed_mps * 3.6) })}</span>
+            <span>
+              {t("watchlist.live.speed", {
+                value: numberFormat.format(operational.position.speed_mps * 3.6),
+              })}
+            </span>
           ) : null}
           {operational.position?.heading_deg != null ? (
-            <span>{t("watchlist.live.heading", { value: numberFormat.format(operational.position.heading_deg) })}</span>
+            <span>
+              {t("watchlist.live.heading", {
+                value: numberFormat.format(operational.position.heading_deg),
+              })}
+            </span>
           ) : null}
           {operational.callsign ? <span>{operational.callsign}</span> : null}
           {operational.registration ? (
@@ -175,7 +204,11 @@ export function WatchLiveFlightPanel({
       </header>
 
       {isLoading && !tracking ? (
-        <BoneyardLoad name="watch-live-flight-load" className="watch-live-flight-loading" ariaLabel={t("watchlist.live.coverage.loading")}>
+        <BoneyardLoad
+          name="watch-live-flight-load"
+          className="watch-live-flight-loading"
+          ariaLabel={t("watchlist.live.coverage.loading")}
+        >
           <LoadReference width="72%" />
           <LoadReference width="48%" />
         </BoneyardLoad>
@@ -195,7 +228,10 @@ export function WatchLiveFlightPanel({
             <strong>{t(`watchlist.live.stateTitles.${tracking.coverage}`)}</strong>
             <p>{t(unavailableKey)}</p>
             {tracking.coverage === "identity_missing" ? (
-              <Link className="btn-primary btn-compact watch-live-flight-search" href={exactFlightHref}>
+              <Link
+                className="btn-primary btn-compact watch-live-flight-search"
+                href={exactFlightHref}
+              >
                 {t("watchlist.live.findExactFlight")}
               </Link>
             ) : null}
@@ -208,17 +244,25 @@ export function WatchLiveFlightPanel({
           {displayLegs.map((leg, index) => {
             if (index === 0) {
               return (
-              <article className="watch-live-flight-leg" key={leg.identity.flight_instance_fingerprint}>
-                {renderLegHeading(leg)}
-                {renderLegBody(leg)}
-              </article>
+                <article
+                  className="watch-live-flight-leg"
+                  key={leg.identity.flight_instance_fingerprint}
+                >
+                  {renderLegHeading(leg)}
+                  {renderLegBody(leg)}
+                </article>
               );
             }
             return (
-              <details className="watch-live-flight-leg watch-live-flight-leg--secondary" key={leg.identity.flight_instance_fingerprint}>
+              <details
+                className="watch-live-flight-leg watch-live-flight-leg--secondary"
+                key={leg.identity.flight_instance_fingerprint}
+              >
                 <summary>
                   {renderLegHeading(leg)}
-                  <span className="watch-live-flight-leg-disclosure">{t("watchlist.live.legDetails")}</span>
+                  <span className="watch-live-flight-leg-disclosure">
+                    {t("watchlist.live.legDetails")}
+                  </span>
                 </summary>
                 <div className="watch-live-flight-leg-body">{renderLegBody(leg)}</div>
               </details>

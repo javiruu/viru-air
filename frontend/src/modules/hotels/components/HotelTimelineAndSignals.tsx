@@ -8,11 +8,20 @@ import { assessHotelSignal } from "../signalAssessment";
 import type { HotelParityOut, HotelRateOut } from "../types";
 
 function formatMoney(value: number, currency: string, localeTag: string): string {
-  return new Intl.NumberFormat(localeTag, { style: "currency", currency, maximumFractionDigits: 0 }).format(value);
+  return new Intl.NumberFormat(localeTag, {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(value);
 }
 
 function formatDate(value: string, localeTag: string): string {
-  return new Intl.DateTimeFormat(localeTag, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+  return new Intl.DateTimeFormat(localeTag, {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
 }
 
 export function HotelPriceTimeline({
@@ -27,7 +36,13 @@ export function HotelPriceTimeline({
   trackingDisabled?: boolean;
 }) {
   const { t, localeTag } = useI18n();
-  const sorted = useMemo(() => [...rates].sort((a, b) => new Date(b.collected_at).getTime() - new Date(a.collected_at).getTime()), [rates]);
+  const sorted = useMemo(
+    () =>
+      [...rates].sort(
+        (a, b) => new Date(b.collected_at).getTime() - new Date(a.collected_at).getTime(),
+      ),
+    [rates],
+  );
 
   return (
     <section className="panel panel-soft hotel-timeline">
@@ -35,7 +50,9 @@ export function HotelPriceTimeline({
         <h2 className="panel-title">{t("hotels.timeline.title")}</h2>
         <span className="status-pill info">{t("hotels.timeline.lastCapture")}</span>
       </div>
-      {sorted.length === 0 ? <p className="panel-note section-gap-sm">{t("hotels.timeline.empty")}</p> : null}
+      {sorted.length === 0 ? (
+        <p className="panel-note section-gap-sm">{t("hotels.timeline.empty")}</p>
+      ) : null}
       <div className="section-gap-sm hotel-timeline-list">
         {sorted.map((rate) => (
           <article key={rate.id} className="list-row hotel-rate-row">
@@ -53,7 +70,9 @@ export function HotelPriceTimeline({
                   onClick={() => onTrackRate(rate)}
                   disabled={trackingDisabled || selectedRateId === rate.id}
                 >
-                  {selectedRateId === rate.id ? t("hotels.actions.offerSelected") : t("hotels.actions.trackRate")}
+                  {selectedRateId === rate.id
+                    ? t("hotels.actions.offerSelected")
+                    : t("hotels.actions.trackRate")}
                 </button>
               ) : null}
             </div>
@@ -73,7 +92,9 @@ export function HotelProviderStatusPill({
 }) {
   const { t } = useI18n();
   const assessment = assessHotelSignal(rates, signal ?? null);
-  return <span className={`status-pill ${assessment.status}`}>{t(assessment.providerLabelKey)}</span>;
+  return (
+    <span className={`status-pill ${assessment.status}`}>{t(assessment.providerLabelKey)}</span>
+  );
 }
 
 function resolveParityLabel(signal: HotelParityOut, t: ReturnType<typeof useI18n>["t"]): string {
@@ -146,19 +167,32 @@ export function HotelParitySignal({
         </span>
       </div>
       <div className="section-gap-sm">
-        <p className="panel-note">{t("hotels.parity.providerCount", { count: signal.provider_count })}</p>
-        {canScore && signal.lowest_price !== null && signal.highest_price !== null && signal.spread_percent !== null ? (
+        <p className="panel-note">
+          {t("hotels.parity.providerCount", { count: signal.provider_count })}
+        </p>
+        {canScore &&
+        signal.lowest_price !== null &&
+        signal.highest_price !== null &&
+        signal.spread_percent !== null ? (
           <div className="hotel-parity-metrics section-gap-sm">
             <div className="hotel-parity-metric">
               <span>{t("hotels.parity.lowest")}</span>
               <strong>
-                {new Intl.NumberFormat(localeTag, { style: "currency", currency: signal.currency, maximumFractionDigits: 0 }).format(signal.lowest_price)}
+                {new Intl.NumberFormat(localeTag, {
+                  style: "currency",
+                  currency: signal.currency,
+                  maximumFractionDigits: 0,
+                }).format(signal.lowest_price)}
               </strong>
             </div>
             <div className="hotel-parity-metric">
               <span>{t("hotels.parity.highest")}</span>
               <strong>
-                {new Intl.NumberFormat(localeTag, { style: "currency", currency: signal.currency, maximumFractionDigits: 0 }).format(signal.highest_price)}
+                {new Intl.NumberFormat(localeTag, {
+                  style: "currency",
+                  currency: signal.currency,
+                  maximumFractionDigits: 0,
+                }).format(signal.highest_price)}
               </strong>
             </div>
             <div className="hotel-parity-metric">
@@ -173,4 +207,3 @@ export function HotelParitySignal({
     </section>
   );
 }
-

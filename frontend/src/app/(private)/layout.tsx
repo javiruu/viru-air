@@ -27,8 +27,11 @@ export default function PrivateLayout({ children }: { children: ReactNode }) {
         return;
       }
       const requestId = ++latestRequest;
-      apiFetchWithStatus<NotificationSummary>("/notifications/summary", undefined, { timeoutMs: 3500 }).then((result) => {
-        if (active && requestId === latestRequest && result.ok) setUnreadSignals(result.data.unread);
+      apiFetchWithStatus<NotificationSummary>("/notifications/summary", undefined, {
+        timeoutMs: 3500,
+      }).then((result) => {
+        if (active && requestId === latestRequest && result.ok)
+          setUnreadSignals(result.data.unread);
       });
     };
 

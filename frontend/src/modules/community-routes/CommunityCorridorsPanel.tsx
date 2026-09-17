@@ -41,15 +41,17 @@ export function CommunityCorridorsPanel() {
             <Radar aria-hidden="true" />
             {t("dashboard.communityCorridors.eyebrow")}
           </span>
-          <h4 id="community-corridors-title">
-            {t("dashboard.communityCorridors.title")}
-          </h4>
+          <h4 id="community-corridors-title">{t("dashboard.communityCorridors.title")}</h4>
         </div>
         <span className={styles.period}>{t("dashboard.communityCorridors.period")}</span>
       </div>
 
       {isLoading ? (
-        <BoneyardLoad name="community-corridors-load" className={styles.loading} ariaLabel={t("dashboard.communityCorridors.loading")}>
+        <BoneyardLoad
+          name="community-corridors-load"
+          className={styles.loading}
+          ariaLabel={t("dashboard.communityCorridors.loading")}
+        >
           <div className={styles.heatStrip} aria-hidden="true">
             {Array.from({ length: 10 }, (_, index) => (
               <LoadReference key={index} shape="block" className={styles.heatLoad} />
@@ -86,7 +88,9 @@ export function CommunityCorridorsPanel() {
                   href={`/quick-search?origin=${route.origin_iata}&destination=${route.destination_iata}`}
                 >
                   <span className={styles.rank}>{String(index + 1).padStart(2, "0")}</span>
-                  <strong>{route.origin_iata} → {route.destination_iata}</strong>
+                  <strong>
+                    {route.origin_iata} → {route.destination_iata}
+                  </strong>
                   <span className={styles.count}>
                     {t("dashboard.communityCorridors.searches", { count: route.searches_count })}
                   </span>

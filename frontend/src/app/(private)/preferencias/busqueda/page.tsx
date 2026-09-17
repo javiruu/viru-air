@@ -1,13 +1,13 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
 import { apiFetch } from "@/modules/shared/api";
 import { BoneyardForm } from "@/modules/shared/BoneyardLoad";
-import { Pref } from "@/modules/quick-search/types";
+import type { Pref } from "@/modules/quick-search/types";
 import {
   buildSearchPreferenceSummary,
   SEARCH_PREF_DEFAULT_TIME_PLACEHOLDER,
@@ -17,13 +17,22 @@ import {
   SEARCH_PREF_MIN_RADIUS_KM,
   SEARCH_PREF_QUICK_TIME_CHIPS,
   validateSearchPreferences,
-  SearchPreferenceErrors,
+  type SearchPreferenceErrors,
 } from "@/modules/preferences/searchPreferences";
 
 function PreferenceIcon({ path }: { path: string }) {
   return (
     <span className="prefs-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <path d={path} />
       </svg>
     </span>
@@ -48,8 +57,12 @@ export default function PreferenciasBusquedaPage() {
           ...data,
           country_price_hint_mode_default: data.country_price_hint_mode_default || "min",
           calendar_hint_bucket_mode_default: data.calendar_hint_bucket_mode_default || "contextual",
-          calendar_hint_guideline_low_max_default: Number(data.calendar_hint_guideline_low_max_default ?? 90),
-          calendar_hint_guideline_mid_max_default: Number(data.calendar_hint_guideline_mid_max_default ?? 150),
+          calendar_hint_guideline_low_max_default: Number(
+            data.calendar_hint_guideline_low_max_default ?? 90,
+          ),
+          calendar_hint_guideline_mid_max_default: Number(
+            data.calendar_hint_guideline_mid_max_default ?? 150,
+          ),
           preferred_currency: data.preferred_currency || "EUR",
         };
         setPref(normalized);
@@ -90,7 +103,10 @@ export default function PreferenciasBusquedaPage() {
     });
   }
 
-  function onGuidelineThresholdChange(field: "calendar_hint_guideline_low_max_default" | "calendar_hint_guideline_mid_max_default", value: string) {
+  function onGuidelineThresholdChange(
+    field: "calendar_hint_guideline_low_max_default" | "calendar_hint_guideline_mid_max_default",
+    value: string,
+  ) {
     if (!pref) return;
     const parsed = Number(value);
     updatePref(field, Number.isFinite(parsed) ? parsed : 0);
@@ -143,7 +159,11 @@ export default function PreferenciasBusquedaPage() {
             </button>
           </section>
         ) : (
-          <BoneyardForm name="preferences-search-load" className="air-loader-section" ariaLabel={t("preferences.search.loading")} />
+          <BoneyardForm
+            name="preferences-search-load"
+            className="air-loader-section"
+            ariaLabel={t("preferences.search.loading")}
+          />
         )}
       </main>
     );
@@ -161,7 +181,11 @@ export default function PreferenciasBusquedaPage() {
           <h1>{t("preferences.search.title")}</h1>
           <p>{t("preferences.search.subtitleStrong")}</p>
         </div>
-        {dirty ? <span className="status-pill warning prefs-pending-badge">{t("preferences.search.pendingBadge")}</span> : null}
+        {dirty ? (
+          <span className="status-pill warning prefs-pending-badge">
+            {t("preferences.search.pendingBadge")}
+          </span>
+        ) : null}
       </div>
 
       <section className="panel prefs-hero prefs-search-hero">
@@ -199,13 +223,20 @@ export default function PreferenciasBusquedaPage() {
                   role="switch"
                   aria-checked={pref.include_nearby_origins_default}
                   className={`prefs-toggle ${pref.include_nearby_origins_default ? "is-on" : ""}`}
-                  onClick={() => updatePref("include_nearby_origins_default", !pref.include_nearby_origins_default)}
+                  onClick={() =>
+                    updatePref(
+                      "include_nearby_origins_default",
+                      !pref.include_nearby_origins_default,
+                    )
+                  }
                 >
                   <span className="prefs-toggle-track" aria-hidden="true">
                     <span className="prefs-toggle-knob" />
                   </span>
                   <span className="prefs-toggle-text">
-                    {pref.include_nearby_origins_default ? t("preferences.search.enabled") : t("preferences.search.disabled")}
+                    {pref.include_nearby_origins_default
+                      ? t("preferences.search.enabled")
+                      : t("preferences.search.disabled")}
                   </span>
                 </button>
               </div>
@@ -218,18 +249,24 @@ export default function PreferenciasBusquedaPage() {
                   role="switch"
                   aria-checked={pref.include_nearby_destinations_default}
                   className={`prefs-toggle ${pref.include_nearby_destinations_default ? "is-on" : ""}`}
-                  onClick={() => updatePref("include_nearby_destinations_default", !pref.include_nearby_destinations_default)}
+                  onClick={() =>
+                    updatePref(
+                      "include_nearby_destinations_default",
+                      !pref.include_nearby_destinations_default,
+                    )
+                  }
                 >
                   <span className="prefs-toggle-track" aria-hidden="true">
                     <span className="prefs-toggle-knob" />
                   </span>
                   <span className="prefs-toggle-text">
-                    {pref.include_nearby_destinations_default ? t("preferences.search.enabled") : t("preferences.search.disabled")}
+                    {pref.include_nearby_destinations_default
+                      ? t("preferences.search.enabled")
+                      : t("preferences.search.disabled")}
                   </span>
                 </button>
               </div>
             </div>
-
           </section>
 
           <section className="panel prefs-card prefs-search-card prefs-search-card-timing prefs-search-card-essential">
@@ -253,9 +290,15 @@ export default function PreferenciasBusquedaPage() {
                   autoComplete="off"
                   value={pref.avoid_departure_before ?? ""}
                   placeholder={SEARCH_PREF_DEFAULT_TIME_PLACEHOLDER}
-                  onChange={(event) => updatePref("avoid_departure_before", event.target.value || null)}
+                  onChange={(event) =>
+                    updatePref("avoid_departure_before", event.target.value || null)
+                  }
                 />
-                <div className="prefs-chip-row" role="group" aria-label={t("preferences.search.quickTimes")}>
+                <div
+                  className="prefs-chip-row"
+                  role="group"
+                  aria-label={t("preferences.search.quickTimes")}
+                >
                   {SEARCH_PREF_QUICK_TIME_CHIPS.map((timeValue) => (
                     <button
                       key={timeValue}
@@ -267,7 +310,9 @@ export default function PreferenciasBusquedaPage() {
                     </button>
                   ))}
                 </div>
-                {errors.avoid_departure_before ? <span className="prefs-error">{errors.avoid_departure_before}</span> : null}
+                {errors.avoid_departure_before ? (
+                  <span className="prefs-error">{errors.avoid_departure_before}</span>
+                ) : null}
               </label>
 
               <label className="field" htmlFor="pref-time-before">
@@ -281,9 +326,15 @@ export default function PreferenciasBusquedaPage() {
                   autoComplete="off"
                   value={pref.depart_before_default ?? ""}
                   placeholder={SEARCH_PREF_LATE_TIME_PLACEHOLDER}
-                  onChange={(event) => updatePref("depart_before_default", event.target.value || null)}
+                  onChange={(event) =>
+                    updatePref("depart_before_default", event.target.value || null)
+                  }
                 />
-                <div className="prefs-chip-row" role="group" aria-label={t("preferences.search.lateTimes")}>
+                <div
+                  className="prefs-chip-row"
+                  role="group"
+                  aria-label={t("preferences.search.lateTimes")}
+                >
                   {SEARCH_PREF_LATE_TIME_CHIPS.map((timeValue) => (
                     <button
                       key={timeValue}
@@ -295,7 +346,9 @@ export default function PreferenciasBusquedaPage() {
                     </button>
                   ))}
                 </div>
-                {errors.depart_before_default ? <span className="prefs-error">{errors.depart_before_default}</span> : null}
+                {errors.depart_before_default ? (
+                  <span className="prefs-error">{errors.depart_before_default}</span>
+                ) : null}
               </label>
             </div>
 
@@ -313,7 +366,9 @@ export default function PreferenciasBusquedaPage() {
                   <span className="prefs-toggle-knob" />
                 </span>
                 <span className="prefs-toggle-text">
-                  {pref.strict_filters_default ? t("preferences.search.enabled") : t("preferences.search.disabled")}
+                  {pref.strict_filters_default
+                    ? t("preferences.search.enabled")
+                    : t("preferences.search.disabled")}
                 </span>
               </button>
             </div>
@@ -349,7 +404,9 @@ export default function PreferenciasBusquedaPage() {
                     <span className="prefs-toggle-knob" />
                   </span>
                   <span className="prefs-toggle-text">
-                    {pref.include_stops_default ? t("preferences.search.enabled") : t("preferences.search.disabled")}
+                    {pref.include_stops_default
+                      ? t("preferences.search.enabled")
+                      : t("preferences.search.disabled")}
                   </span>
                 </button>
                 <div className="panel panel-soft prefs-inline-callout prefs-search-inline-callout">
@@ -368,7 +425,10 @@ export default function PreferenciasBusquedaPage() {
                     min={SEARCH_PREF_MIN_RADIUS_KM}
                     max={SEARCH_PREF_MAX_RADIUS_KM}
                     step={5}
-                    value={Math.min(SEARCH_PREF_MAX_RADIUS_KM, Math.max(SEARCH_PREF_MIN_RADIUS_KM, pref.default_radius_km))}
+                    value={Math.min(
+                      SEARCH_PREF_MAX_RADIUS_KM,
+                      Math.max(SEARCH_PREF_MIN_RADIUS_KM, pref.default_radius_km),
+                    )}
                     onChange={(event) => onRadiusChange(event.target.value)}
                   />
                   <input
@@ -383,9 +443,14 @@ export default function PreferenciasBusquedaPage() {
                   />
                 </div>
                 <span className="hint">
-                  {t("preferences.search.radiusSummary", { value: pref.default_radius_km, hours: radiusDriveHours })}
+                  {t("preferences.search.radiusSummary", {
+                    value: pref.default_radius_km,
+                    hours: radiusDriveHours,
+                  })}
                 </span>
-                {errors.default_radius_km ? <span className="prefs-error">{errors.default_radius_km}</span> : null}
+                {errors.default_radius_km ? (
+                  <span className="prefs-error">{errors.default_radius_km}</span>
+                ) : null}
               </label>
             </section>
 
@@ -402,11 +467,18 @@ export default function PreferenciasBusquedaPage() {
                   id="pref-country-hint-mode"
                   className="prefs-control"
                   value={pref.country_price_hint_mode_default || "min"}
-                  onChange={(event) => updatePref("country_price_hint_mode_default", event.target.value as Pref["country_price_hint_mode_default"])}
+                  onChange={(event) =>
+                    updatePref(
+                      "country_price_hint_mode_default",
+                      event.target.value as Pref["country_price_hint_mode_default"],
+                    )
+                  }
                 >
                   <option value="min">{t("preferences.search.countryHintModeMin")}</option>
                   <option value="median">{t("preferences.search.countryHintModeMedian")}</option>
-                  <option value="fixed_route">{t("preferences.search.countryHintModeFixedRoute")}</option>
+                  <option value="fixed_route">
+                    {t("preferences.search.countryHintModeFixedRoute")}
+                  </option>
                 </select>
               </label>
 
@@ -417,11 +489,22 @@ export default function PreferenciasBusquedaPage() {
                   id="pref-calendar-bucket-mode"
                   className="prefs-control"
                   value={pref.calendar_hint_bucket_mode_default || "contextual"}
-                  onChange={(event) => updatePref("calendar_hint_bucket_mode_default", event.target.value as Pref["calendar_hint_bucket_mode_default"])}
+                  onChange={(event) =>
+                    updatePref(
+                      "calendar_hint_bucket_mode_default",
+                      event.target.value as Pref["calendar_hint_bucket_mode_default"],
+                    )
+                  }
                 >
-                  <option value="contextual">{t("preferences.search.calendarHintBucketModeContextual")}</option>
-                  <option value="monthly_terciles">{t("preferences.search.calendarHintBucketModeMonthly")}</option>
-                  <option value="guidelines">{t("preferences.search.calendarHintBucketModeGuidelines")}</option>
+                  <option value="contextual">
+                    {t("preferences.search.calendarHintBucketModeContextual")}
+                  </option>
+                  <option value="monthly_terciles">
+                    {t("preferences.search.calendarHintBucketModeMonthly")}
+                  </option>
+                  <option value="guidelines">
+                    {t("preferences.search.calendarHintBucketModeGuidelines")}
+                  </option>
                 </select>
               </label>
 
@@ -438,10 +521,17 @@ export default function PreferenciasBusquedaPage() {
                         min={0}
                         step={1}
                         value={pref.calendar_hint_guideline_low_max_default}
-                        onChange={(event) => onGuidelineThresholdChange("calendar_hint_guideline_low_max_default", event.target.value)}
+                        onChange={(event) =>
+                          onGuidelineThresholdChange(
+                            "calendar_hint_guideline_low_max_default",
+                            event.target.value,
+                          )
+                        }
                       />
                       {errors.calendar_hint_guideline_low_max_default ? (
-                        <span className="prefs-error">{errors.calendar_hint_guideline_low_max_default}</span>
+                        <span className="prefs-error">
+                          {errors.calendar_hint_guideline_low_max_default}
+                        </span>
                       ) : null}
                     </label>
                     <label className="field" htmlFor="pref-guideline-mid">
@@ -453,10 +543,17 @@ export default function PreferenciasBusquedaPage() {
                         min={0}
                         step={1}
                         value={pref.calendar_hint_guideline_mid_max_default}
-                        onChange={(event) => onGuidelineThresholdChange("calendar_hint_guideline_mid_max_default", event.target.value)}
+                        onChange={(event) =>
+                          onGuidelineThresholdChange(
+                            "calendar_hint_guideline_mid_max_default",
+                            event.target.value,
+                          )
+                        }
                       />
                       {errors.calendar_hint_guideline_mid_max_default ? (
-                        <span className="prefs-error">{errors.calendar_hint_guideline_mid_max_default}</span>
+                        <span className="prefs-error">
+                          {errors.calendar_hint_guideline_mid_max_default}
+                        </span>
                       ) : null}
                     </label>
                   </div>
@@ -475,8 +572,12 @@ export default function PreferenciasBusquedaPage() {
 
         <section className="panel panel-soft prefs-savebar">
           <div className="prefs-savebar-copy">
-            <strong>{dirty ? t("preferences.search.unsavedTitle") : t("preferences.search.savedTitle")}</strong>
-            <span>{dirty ? t("preferences.search.unsavedBody") : t("preferences.search.savedBody")}</span>
+            <strong>
+              {dirty ? t("preferences.search.unsavedTitle") : t("preferences.search.savedTitle")}
+            </strong>
+            <span>
+              {dirty ? t("preferences.search.unsavedBody") : t("preferences.search.savedBody")}
+            </span>
           </div>
           <div className="row-actions">
             <button type="button" className="btn-ghost" onClick={() => setPref(initialPref)}>

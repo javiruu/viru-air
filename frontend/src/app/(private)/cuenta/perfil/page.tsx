@@ -1,12 +1,12 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import {
-  GlassProfileData,
-  GlassProfileSession,
+  type GlassProfileData,
+  type GlassProfileSession,
   GlassProfileSettingsCard,
 } from "@/components/components/forms/glass-profile-settings";
 import { useI18n } from "@/i18n";
@@ -42,15 +42,14 @@ export default function PerfilPage() {
   const [confirmText, setConfirmText] = useState("");
 
   useEffect(() => {
-    Promise.all([
-      apiFetch<GlassProfileData>("/account/profile"),
-      fetchAllAccountSessions(),
-    ])
+    Promise.all([apiFetch<GlassProfileData>("/account/profile"), fetchAllAccountSessions()])
       .then(([profileData, sessionsData]) => {
         setProfile(profileData);
         setSessions(sessionsData);
       })
-      .catch(() => notify({ tone: "error", title: t("account.profile.updateError"), durationMs: 3200 }));
+      .catch(() =>
+        notify({ tone: "error", title: t("account.profile.updateError"), durationMs: 3200 }),
+      );
   }, [notify, t]);
 
   function updateField(key: "display_name" | "avatar_url", value: string) {

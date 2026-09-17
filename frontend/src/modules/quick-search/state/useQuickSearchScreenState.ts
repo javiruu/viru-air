@@ -1,7 +1,12 @@
 import { useMemo } from "react";
 
-import { QuickSearchCopyKey } from "@/modules/shared/quickSearchCopy";
-import { SearchFilters, SearchResponse, SearchResult, ZeroResultRelaxAction } from "@/modules/quick-search/types";
+import type { QuickSearchCopyKey } from "@/modules/shared/quickSearchCopy";
+import type {
+  SearchFilters,
+  SearchResponse,
+  SearchResult,
+  ZeroResultRelaxAction,
+} from "@/modules/quick-search/types";
 import { deriveQuickSearchVisibleResults } from "@/modules/quick-search/state/quickSearchVisibleResults";
 import { parseNumericInput } from "@/modules/quick-search/searchCriteria";
 import { resolveQuickSearchProviderPresentation } from "@/modules/quick-search/providerPresentation";
@@ -36,7 +41,9 @@ type QuickSearchScreenStateArgs = {
   tWarn: (key: string) => string;
 };
 
-const PROVIDER_TOTAL_OUTAGE_CODES = new Set<string>(QUICK_SEARCH_PROVIDER_TOTAL_OUTAGE_WARNING_CODES);
+const PROVIDER_TOTAL_OUTAGE_CODES = new Set<string>(
+  QUICK_SEARCH_PROVIDER_TOTAL_OUTAGE_WARNING_CODES,
+);
 const PROVIDER_PARTIAL_OUTAGE_CODES = new Set<string>(QUICK_SEARCH_PROVIDER_PARTIAL_WARNING_CODES);
 
 const PROVIDER_CRITICAL_WARNING_CODES = new Set([
@@ -79,7 +86,8 @@ export function useQuickSearchScreenState({
   }, [results, priceMin, priceMax, durationMax, sortBy]);
 
   const warningSeverity = useMemo(() => {
-    const sourceCodesOrNotices = filtersWarningCodes.length > 0 ? filtersWarningCodes : filtersNotice;
+    const sourceCodesOrNotices =
+      filtersWarningCodes.length > 0 ? filtersWarningCodes : filtersNotice;
     const neutral: string[] = [];
     const critical: string[] = [];
     sourceCodesOrNotices.forEach((codeOrNotice) => {
@@ -136,15 +144,23 @@ export function useQuickSearchScreenState({
         count: 1,
       });
     });
-    const entries = Array.from(grouped.values()).sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
-    const preview = entries.slice(0, 2).map((entry) => `${entry.label} (${entry.count})`).join(", ");
+    const entries = Array.from(grouped.values()).sort(
+      (a, b) => b.count - a.count || a.label.localeCompare(b.label),
+    );
+    const preview = entries
+      .slice(0, 2)
+      .map((entry) => `${entry.label} (${entry.count})`)
+      .join(", ");
     return {
       entries,
       preview,
     };
   }, [visibleResults, t]);
 
-  const durationMaxNumber = useMemo(() => parseNumericInput(durationMax, { min: 1 }), [durationMax]);
+  const durationMaxNumber = useMemo(
+    () => parseNumericInput(durationMax, { min: 1 }),
+    [durationMax],
+  );
 
   const timeWindowMinutes = useMemo(() => {
     const parseMinutes = (value: string) => {
@@ -161,15 +177,18 @@ export function useQuickSearchScreenState({
 
   const providerStatus = searchMeta?.provider_status;
   const providerOverallStatus = providerStatus?.overall_status ?? providerStatus?.overall;
-  const providerTotalOutage = filtersWarningCodes.some((code) => PROVIDER_TOTAL_OUTAGE_CODES.has(code))
-    || providerOverallStatus === "total_outage"
-    || Boolean(providerStatus?.total_outage);
-  const providerPartialOutage = filtersWarningCodes.some((code) => PROVIDER_PARTIAL_OUTAGE_CODES.has(code))
-    || providerOverallStatus === "partial_degraded"
-    || Boolean(providerStatus?.partial_results_served);
+  const providerTotalOutage =
+    filtersWarningCodes.some((code) => PROVIDER_TOTAL_OUTAGE_CODES.has(code)) ||
+    providerOverallStatus === "total_outage" ||
+    Boolean(providerStatus?.total_outage);
+  const providerPartialOutage =
+    filtersWarningCodes.some((code) => PROVIDER_PARTIAL_OUTAGE_CODES.has(code)) ||
+    providerOverallStatus === "partial_degraded" ||
+    Boolean(providerStatus?.partial_results_served);
   const providerPartialInlineNotice = useMemo(() => {
     if (!providerStatus) return null;
-    if ((providerStatus.overall_status ?? providerStatus.overall) !== "partial_degraded") return null;
+    if ((providerStatus.overall_status ?? providerStatus.overall) !== "partial_degraded")
+      return null;
     if (!providerStatus.partial_results_served) return null;
     const availabilityFailed = providerStatus.availability?.status === "failed";
     const faresFailed = providerStatus.fares?.status === "failed";
@@ -177,19 +196,17 @@ export function useQuickSearchScreenState({
     if (faresFailed && !availabilityFailed) return t("providerPartialFaresNotice");
     return t("providerPartialMixedNotice");
   }, [providerStatus, t]);
-  const hasGroupedWarnings = warningSeverity.critical.length > 0 || warningSeverity.neutral.length > 0;
+  const hasGroupedWarnings =
+    warningSeverity.critical.length > 0 || warningSeverity.neutral.length > 0;
   const showDegradedState =
-    isDegraded
-    || Boolean(searchMeta?.stale_data)
-    || providerPartialOutage
-    || providerTotalOutage;
+    isDegraded || Boolean(searchMeta?.stale_data) || providerPartialOutage || providerTotalOutage;
   const infoItemsCount =
-    (filtersMeta?.relaxed && filtersMeta.relaxed.length > 0 ? 1 : 0)
-    + (warningSeverity.critical.length > 0 ? 1 : 0)
-    + (warningSeverity.neutral.length > 0 ? 1 : 0)
-    + (showDegradedState && !hasGroupedWarnings ? 1 : 0)
-    + (weatherMessage ? 1 : 0)
-    + 1;
+    (filtersMeta?.relaxed && filtersMeta.relaxed.length > 0 ? 1 : 0) +
+    (warningSeverity.critical.length > 0 ? 1 : 0) +
+    (warningSeverity.neutral.length > 0 ? 1 : 0) +
+    (showDegradedState && !hasGroupedWarnings ? 1 : 0) +
+    (weatherMessage ? 1 : 0) +
+    1;
 
   const zeroResultCauses = useMemo(() => {
     if (providerTotalOutage) {
@@ -200,9 +217,11 @@ export function useQuickSearchScreenState({
     if (strictFilters) causes.push(t("emptyCauseStrict"));
     if (!includeStops) causes.push(t("emptyCauseStops"));
     if (durationMaxNumber !== null) causes.push(t("emptyCauseDuration"));
-    if (timeWindowMinutes !== null && timeWindowMinutes <= 360) causes.push(t("emptyCauseTimeWindow"));
+    if (timeWindowMinutes !== null && timeWindowMinutes <= 360)
+      causes.push(t("emptyCauseTimeWindow"));
     if (!radiusActive || radiusKm < 150) causes.push(t("emptyCauseRadius"));
-    if (excludeOriginsCount > 0 || excludeDestinationsCount > 0) causes.push(t("emptyCauseExclusions"));
+    if (excludeOriginsCount > 0 || excludeDestinationsCount > 0)
+      causes.push(t("emptyCauseExclusions"));
     return causes;
   }, [
     strictFilters,
@@ -218,7 +237,9 @@ export function useQuickSearchScreenState({
     t,
   ]);
 
-  const visibleZeroResultCauses = emptyCausesExpanded ? zeroResultCauses : zeroResultCauses.slice(0, 3);
+  const visibleZeroResultCauses = emptyCausesExpanded
+    ? zeroResultCauses
+    : zeroResultCauses.slice(0, 3);
   const canExpandZeroResultCauses = zeroResultCauses.length > 3;
   const emptyStateMainTitle = providerTotalOutage
     ? t("emptyStateProviderTitle")

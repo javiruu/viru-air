@@ -55,7 +55,10 @@ export function SignalCadencePanel({
           <span>{t("alerts.cadence.scope")}</span>
           <strong>{scope.routeLabel ?? t("alerts.cadence.noRoute")}</strong>
           <small>
-            {t("alerts.cadence.ruleState", { active: scope.activeRules, paused: scope.pausedRules })}
+            {t("alerts.cadence.ruleState", {
+              active: scope.activeRules,
+              paused: scope.pausedRules,
+            })}
           </small>
         </article>
         <article>

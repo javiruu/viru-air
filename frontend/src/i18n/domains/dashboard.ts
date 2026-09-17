@@ -55,7 +55,8 @@ export const dashboardEs = {
   },
   foundForYou: {
     title: "Viru encontro algo para ti",
-    messageMatchedCountry: "Has estado mirando {country} desde {origin}. He visto {route} por {price}, y esta si merece una mirada.",
+    messageMatchedCountry:
+      "Has estado mirando {country} desde {origin}. He visto {route} por {price}, y esta si merece una mirada.",
     messageGeneric: "He visto una pista buena para ti: {route} por {price}.",
     reasonMatchedCountry: "Encaja con tus rutas recientes hacia {country}.",
     reasonGeneric: "No te lo ensenaria si no pareciera interesante.",
@@ -112,7 +113,8 @@ export const dashboardEs = {
       desc: "Define umbrales y dispara notificaciones al instante.",
       primary: "Gestionar alertas",
       secondary: "Simular ahora",
-    },    activity: {
+    },
+    activity: {
       title: "Actividad reciente",
       button: "Actualizar actividad",
     },
@@ -162,7 +164,8 @@ export const dashboardEs = {
   },
   notes: {
     headerTitle: "Notas simples",
-    headerBody: "Ideas rápidas, recordatorios de rutas o criterios de compra. Se guardan en tu usuario.",
+    headerBody:
+      "Ideas rápidas, recordatorios de rutas o criterios de compra. Se guardan en tu usuario.",
     newNote: "Nueva nota",
     collapse: "Contraer notas",
     expand: "Expandir notas",
@@ -253,7 +256,8 @@ export const dashboardEn = {
   },
   foundForYou: {
     title: "Viru found something for you",
-    messageMatchedCountry: "You have been checking {country} from {origin}. I spotted {route} at {price}, and this one is worth a look.",
+    messageMatchedCountry:
+      "You have been checking {country} from {origin}. I spotted {route} at {price}, and this one is worth a look.",
     messageGeneric: "I found a promising lead for you: {route} at {price}.",
     reasonMatchedCountry: "It lines up with the routes you have been checking in {country}.",
     reasonGeneric: "I would not show this if it did not look genuinely interesting.",
@@ -310,7 +314,8 @@ export const dashboardEn = {
       desc: "Set thresholds and trigger notifications instantly.",
       primary: "Manage alerts",
       secondary: "Simulate now",
-    },    activity: {
+    },
+    activity: {
       title: "Recent activity",
       button: "Refresh activity",
     },

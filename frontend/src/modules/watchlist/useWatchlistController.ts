@@ -43,7 +43,8 @@ export function useWatchlistController({
     setCompareIds((prev) => {
       if (prev.length === 0) return prev;
       const next = prev.filter((id) => items.some((item) => item.id === id));
-      const unchanged = next.length === prev.length && next.every((id, index) => id === prev[index]);
+      const unchanged =
+        next.length === prev.length && next.every((id, index) => id === prev[index]);
       return unchanged ? prev : next;
     });
   }, [items, setCompareIds]);
@@ -63,11 +64,22 @@ export function useWatchlistController({
       setSelectedDates([watch.travel_date_local]);
       setSelectedPoint("");
       if (watch.group_id) {
-        const groupWatchIds = items.filter((item) => item.group_id === watch.group_id).map((item) => item.id).slice(0, 4);
+        const groupWatchIds = items
+          .filter((item) => item.group_id === watch.group_id)
+          .map((item) => item.id)
+          .slice(0, 4);
         setCompareIds(groupWatchIds);
       }
     },
-    [items, setCompareIds, setSelectedDestination, setSelectedDates, setSelectedOrigin, setSelectedPoint, setSelectedWatchId],
+    [
+      items,
+      setCompareIds,
+      setSelectedDestination,
+      setSelectedDates,
+      setSelectedOrigin,
+      setSelectedPoint,
+      setSelectedWatchId,
+    ],
   );
 
   const selectWatchById = useCallback(

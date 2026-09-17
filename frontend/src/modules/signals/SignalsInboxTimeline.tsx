@@ -62,8 +62,16 @@ export function SignalsInboxTimeline({
     return (
       <div className="notifications-empty">
         <div className="notifications-radar" aria-hidden="true" />
-        <strong>{t(actionable ? "notifications.states.actionableEmpty" : "notifications.states.empty")}</strong>
-        <p>{t(actionable ? "notifications.states.actionableEmptyBody" : "notifications.states.emptyBody")}</p>
+        <strong>
+          {t(actionable ? "notifications.states.actionableEmpty" : "notifications.states.empty")}
+        </strong>
+        <p>
+          {t(
+            actionable
+              ? "notifications.states.actionableEmptyBody"
+              : "notifications.states.emptyBody",
+          )}
+        </p>
       </div>
     );
   }
@@ -80,7 +88,10 @@ export function SignalsInboxTimeline({
             {group.items.map((item) => {
               const Icon = CATEGORY_ICONS[item.category];
               return (
-                <article className={`list-row notifications-row ${item.is_read ? "" : "is-unread"}`} key={item.id}>
+                <article
+                  className={`list-row notifications-row ${item.is_read ? "" : "is-unread"}`}
+                  key={item.id}
+                >
                   <div className={`notifications-row-icon ${item.tone}`} aria-hidden="true">
                     <Icon size={17} />
                   </div>
@@ -93,7 +104,9 @@ export function SignalsInboxTimeline({
                     </div>
                     <p>{item.body}</p>
                     <div className="notifications-row-meta">
-                      <time dateTime={item.created_at}>{formatRelativeTime(item.created_at, localeTag)}</time>
+                      <time dateTime={item.created_at}>
+                        {formatRelativeTime(item.created_at, localeTag)}
+                      </time>
                       {item.route_label ? <span>{item.route_label}</span> : null}
                     </div>
                   </div>

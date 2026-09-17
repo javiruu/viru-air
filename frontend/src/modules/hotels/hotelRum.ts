@@ -73,7 +73,9 @@ export function buildHotelRumMetadata(
     metric,
     value_bucket: bucketHotelRumValue(metric, value),
     rating: rateHotelRumMetric(metric, value),
-    navigation_type: ["navigate", "reload", "back_forward", "prerender"].includes(options.navigationType || "")
+    navigation_type: ["navigate", "reload", "back_forward", "prerender"].includes(
+      options.navigationType || "",
+    )
       ? options.navigationType || "navigate"
       : "navigate",
     device_class: classifyHotelRumDevice(options.viewportWidth || 0),

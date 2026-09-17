@@ -1,6 +1,6 @@
-import React, { memo } from "react";
+import { memo } from "react";
 import { Slider } from "@/components/ui/slider";
-import { QuickSearchCopyKey } from "@/modules/shared/quickSearchCopy";
+import type { QuickSearchCopyKey } from "@/modules/shared/quickSearchCopy";
 
 type QuickSearchNearbyBandProps = {
   includeNearbyOrigins: boolean;
@@ -12,7 +12,9 @@ type QuickSearchNearbyBandProps = {
   setRadiusKm: (value: number) => void;
 };
 
-export const QuickSearchNearbyBand = memo(function QuickSearchNearbyBand(props: QuickSearchNearbyBandProps) {
+export const QuickSearchNearbyBand = memo(function QuickSearchNearbyBand(
+  props: QuickSearchNearbyBandProps,
+) {
   const isAnyNearby = props.includeNearbyOrigins || props.includeNearbyDestinations;
   const handleRadiusChange = (values: number[]) => {
     const nextRadius = values[0];
@@ -28,25 +30,25 @@ export const QuickSearchNearbyBand = memo(function QuickSearchNearbyBand(props: 
         <span className="qs-nearby-subtitle">{props.t("nearbySubtitle")}</span>
       </div>
       <div className="qs-nearby-band-controls">
-        <label className={`qs-chip-toggle ${props.includeNearbyOrigins ? 'active' : ''}`}>
-          <input 
-            type="checkbox" 
+        <label className={`qs-chip-toggle ${props.includeNearbyOrigins ? "active" : ""}`}>
+          <input
+            type="checkbox"
             className="sr-only"
-            checked={props.includeNearbyOrigins} 
-            onChange={(e) => props.setIncludeNearbyOrigins(e.target.checked)} 
+            checked={props.includeNearbyOrigins}
+            onChange={(e) => props.setIncludeNearbyOrigins(e.target.checked)}
           />
           {props.t("nearbyOrigin")}
         </label>
-        <label className={`qs-chip-toggle ${props.includeNearbyDestinations ? 'active' : ''}`}>
-          <input 
-            type="checkbox" 
+        <label className={`qs-chip-toggle ${props.includeNearbyDestinations ? "active" : ""}`}>
+          <input
+            type="checkbox"
             className="sr-only"
-            checked={props.includeNearbyDestinations} 
-            onChange={(e) => props.setIncludeNearbyDestinations(e.target.checked)} 
+            checked={props.includeNearbyDestinations}
+            onChange={(e) => props.setIncludeNearbyDestinations(e.target.checked)}
           />
           {props.t("nearbyDestination")}
         </label>
-        
+
         {isAnyNearby && (
           <div className="qs-nearby-distance">
             <span className="qs-nearby-distance-label">{props.t("nearbyDistanceLabel")}</span>

@@ -117,7 +117,7 @@ export function useHotelSearch(onAfterIngest?: () => Promise<void>) {
     () => results.find((item) => item.id === selectedHotelId) ?? null,
     [results, selectedHotelId],
   );
-  const featureDisabled = Boolean(errorMessage && errorMessage.includes("HOTEL_FEATURE_ENABLED"));
+  const featureDisabled = Boolean(errorMessage?.includes("HOTEL_FEATURE_ENABLED"));
 
   // ── Name search ─────────────────────────────────────────────────
   const beginSearchRequest = useCallback(() => {
@@ -131,97 +131,125 @@ export function useHotelSearch(onAfterIngest?: () => Promise<void>) {
     return { controller, requestId, intentId };
   }, []);
 
-  const runSearch = useCallback(async (request = beginSearchRequest()) => {
-    const requestedSelectedHotelId = selectedHotelExplicitRef.current ? selectedHotelId : null;
-    try {
-      const list = await searchHotels(
-        { q: query || undefined, city: city || undefined, limit: 30 },
-        request.controller.signal,
-        request.intentId,
-      );
-      if (request.controller.signal.aborted || request.requestId !== searchRequestIdRef.current) return;
-      setResults(list);
-      if (!list.some((item) => item.id === requestedSelectedHotelId)) {
-        selectedHotelExplicitRef.current = false;
-        setSelectedHotelId(list[0]?.id ?? null);
-      }
-    } finally {
-      if (request.requestId === searchRequestIdRef.current) {
-        searchAbortRef.current = null;
-      }
-    }
-  }, [beginSearchRequest, query, city, selectedHotelId]);
-
-  const handleSearch = useCallback(async (options?: { preserveSelection?: boolean }) => {
-    if (searchMode === "area") {
-      if (!areaResolved) {
-        const message = t("hotels.messages.areaRequired");
-        setErrorMessage(message);
-        notify({ tone: "error", title: message });
-        return;
-      }
-      if (!isHotelDateRangeValid(checkIn, checkOut)) {
-        const message = t("hotels.messages.dateRangeInvalid");
-        setErrorMessage(message);
-        notify({ tone: "error", title: message });
-        return;
-      }
-    }
-
-    if (!options?.preserveSelection) {
-      selectedHotelExplicitRef.current = false;
-      setSelectedHotelId(null);
-    }
-    setHasSearched(true);
-    setLoading(true);
-    setErrorMessage(null);
-    const request = beginSearchRequest();
-    // Clear area results when switching to name mode
-    if (searchMode === "name") {
-      setAreaResults([]);
-    }
-    try {
-      if (searchMode === "area" && areaResolved) {
-        const response = await areaSearchV2({
-          latitude: areaResolved.latitude,
-          longitude: areaResolved.longitude,
-          radius_km: radiusKm,
-          check_in: checkIn,
-          check_out: checkOut,
-          guests,
-          use_provider: useProvider,
-        }, request.controller.signal, request.intentId);
-        if (request.controller.signal.aborted || request.requestId !== searchRequestIdRef.current) return;
-        const list = adaptAreaSearchV2ToV1(response);
-        setAreaResults(list);
-        const derived: HotelSearchOut[] = list.map((r) => ({
-          id: r.hotel_id,
-          canonical_name: r.canonical_name,
-          city: r.city,
-          country_code: r.country_code,
-          stars: r.stars,
-        }));
-        setResults(derived);
-        const requestedSelectedHotelId = selectedHotelExplicitRef.current ? selectedHotelId : null;
-        if (!derived.some((item) => item.id === requestedSelectedHotelId)) {
+  const runSearch = useCallback(
+    async (request = beginSearchRequest()) => {
+      const requestedSelectedHotelId = selectedHotelExplicitRef.current ? selectedHotelId : null;
+      try {
+        const list = await searchHotels(
+          { q: query || undefined, city: city || undefined, limit: 30 },
+          request.controller.signal,
+          request.intentId,
+        );
+        if (request.controller.signal.aborted || request.requestId !== searchRequestIdRef.current)
+          return;
+        setResults(list);
+        if (!list.some((item) => item.id === requestedSelectedHotelId)) {
           selectedHotelExplicitRef.current = false;
-          setSelectedHotelId(derived[0]?.id ?? null);
+          setSelectedHotelId(list[0]?.id ?? null);
         }
-      } else {
-        await runSearch(request);
+      } finally {
+        if (request.requestId === searchRequestIdRef.current) {
+          searchAbortRef.current = null;
+        }
       }
-    } catch (error) {
-      if (request.controller.signal.aborted || request.requestId !== searchRequestIdRef.current) return;
-      const message = resolveHotelMessage(error, t);
-      setErrorMessage(message);
-      notify({ tone: "error", title: message });
-    } finally {
-      if (request.requestId === searchRequestIdRef.current) {
-        searchAbortRef.current = null;
-        setLoading(false);
+    },
+    [beginSearchRequest, query, city, selectedHotelId],
+  );
+
+  const handleSearch = useCallback(
+    async (options?: { preserveSelection?: boolean }) => {
+      if (searchMode === "area") {
+        if (!areaResolved) {
+          const message = t("hotels.messages.areaRequired");
+          setErrorMessage(message);
+          notify({ tone: "error", title: message });
+          return;
+        }
+        if (!isHotelDateRangeValid(checkIn, checkOut)) {
+          const message = t("hotels.messages.dateRangeInvalid");
+          setErrorMessage(message);
+          notify({ tone: "error", title: message });
+          return;
+        }
       }
-    }
-  }, [beginSearchRequest, runSearch, t, notify, searchMode, areaResolved, checkIn, checkOut, guests, radiusKm, useProvider, selectedHotelId]);
+
+      if (!options?.preserveSelection) {
+        selectedHotelExplicitRef.current = false;
+        setSelectedHotelId(null);
+      }
+      setHasSearched(true);
+      setLoading(true);
+      setErrorMessage(null);
+      const request = beginSearchRequest();
+      // Clear area results when switching to name mode
+      if (searchMode === "name") {
+        setAreaResults([]);
+      }
+      try {
+        if (searchMode === "area" && areaResolved) {
+          const response = await areaSearchV2(
+            {
+              latitude: areaResolved.latitude,
+              longitude: areaResolved.longitude,
+              radius_km: radiusKm,
+              check_in: checkIn,
+              check_out: checkOut,
+              guests,
+              use_provider: useProvider,
+            },
+            request.controller.signal,
+            request.intentId,
+          );
+          if (request.controller.signal.aborted || request.requestId !== searchRequestIdRef.current)
+            return;
+          const list = adaptAreaSearchV2ToV1(response);
+          setAreaResults(list);
+          const derived: HotelSearchOut[] = list.map((r) => ({
+            id: r.hotel_id,
+            canonical_name: r.canonical_name,
+            city: r.city,
+            country_code: r.country_code,
+            stars: r.stars,
+          }));
+          setResults(derived);
+          const requestedSelectedHotelId = selectedHotelExplicitRef.current
+            ? selectedHotelId
+            : null;
+          if (!derived.some((item) => item.id === requestedSelectedHotelId)) {
+            selectedHotelExplicitRef.current = false;
+            setSelectedHotelId(derived[0]?.id ?? null);
+          }
+        } else {
+          await runSearch(request);
+        }
+      } catch (error) {
+        if (request.controller.signal.aborted || request.requestId !== searchRequestIdRef.current)
+          return;
+        const message = resolveHotelMessage(error, t);
+        setErrorMessage(message);
+        notify({ tone: "error", title: message });
+      } finally {
+        if (request.requestId === searchRequestIdRef.current) {
+          searchAbortRef.current = null;
+          setLoading(false);
+        }
+      }
+    },
+    [
+      beginSearchRequest,
+      runSearch,
+      t,
+      notify,
+      searchMode,
+      areaResolved,
+      checkIn,
+      checkOut,
+      guests,
+      radiusKm,
+      useProvider,
+      selectedHotelId,
+    ],
+  );
 
   const handleIngest = useCallback(async () => {
     setHasSearched(true);
@@ -303,10 +331,13 @@ export function useHotelSearch(onAfterIngest?: () => Promise<void>) {
     setAreaSuggestions([]);
   }, []);
 
-  useEffect(() => () => {
-    searchAbortRef.current?.abort();
-    areaResolveAbortRef.current?.abort();
-  }, []);
+  useEffect(
+    () => () => {
+      searchAbortRef.current?.abort();
+      areaResolveAbortRef.current?.abort();
+    },
+    [],
+  );
 
   // ── Area search active check ────────────────────────────────────
   const isAreaSearchActive = searchMode === "area" && areaResults.length > 0;
@@ -326,8 +357,8 @@ export function useHotelSearch(onAfterIngest?: () => Promise<void>) {
     setCity(state.city);
     setAreaQuery(state.areaQuery);
     setAreaResolved(state.areaResolved);
-    setCheckIn((current) => searchParams.has("check_in") ? state.checkIn : current);
-    setCheckOut((current) => searchParams.has("check_out") ? state.checkOut : current);
+    setCheckIn((current) => (searchParams.has("check_in") ? state.checkIn : current));
+    setCheckOut((current) => (searchParams.has("check_out") ? state.checkOut : current));
     setGuests(state.guests);
     setRadiusKm(state.radiusKm);
     setUseProvider(state.useProvider);
@@ -353,7 +384,8 @@ export function useHotelSearch(onAfterIngest?: () => Promise<void>) {
   // makes reload/deep-link/back-forward useful without searching on typing.
   useEffect(() => {
     if (!urlHydrated || !urlSearchPending) return;
-    if (searchMode === "area" && (!areaResolved || !isHotelDateRangeValid(checkIn, checkOut))) return;
+    if (searchMode === "area" && (!areaResolved || !isHotelDateRangeValid(checkIn, checkOut)))
+      return;
     if (searchMode === "name" && !query.trim() && !city.trim()) return;
     setUrlSearchPending(false);
     void handleSearch({ preserveSelection: true });
@@ -373,7 +405,8 @@ export function useHotelSearch(onAfterIngest?: () => Promise<void>) {
   // there is a real search intent, so a blank visit remains /hoteles.
   useEffect(() => {
     if (!urlHydrated) return;
-    if (!hasSearched && searchMode === "name" && !query.trim() && !city.trim() && !selectedHotelId) return;
+    if (!hasSearched && searchMode === "name" && !query.trim() && !city.trim() && !selectedHotelId)
+      return;
 
     const queryString = buildHotelSearchQuery({
       panel,
@@ -413,81 +446,87 @@ export function useHotelSearch(onAfterIngest?: () => Promise<void>) {
     useProvider,
   ]);
 
-  const selectHotel = useCallback((hotelId: string) => {
-    selectedHotelExplicitRef.current = true;
-    setPanel("detail");
-    setSelectedHotelId(hotelId);
-    const queryString = buildHotelSearchQuery({
-      panel: "detail",
-      mode: searchMode,
-      query,
-      city,
+  const selectHotel = useCallback(
+    (hotelId: string) => {
+      selectedHotelExplicitRef.current = true;
+      setPanel("detail");
+      setSelectedHotelId(hotelId);
+      const queryString = buildHotelSearchQuery({
+        panel: "detail",
+        mode: searchMode,
+        query,
+        city,
+        areaQuery,
+        areaResolved,
+        checkIn,
+        checkOut,
+        guests,
+        radiusKm,
+        useProvider,
+        hasSearched,
+        selectedHotelId: hotelId,
+      });
+      lastSyncedUrlRef.current = canonicalizeHotelSearchQuery(queryString);
+      router.push(`/hoteles${queryString ? `?${queryString}` : ""}`, { scroll: false });
+    },
+    [
       areaQuery,
       areaResolved,
       checkIn,
       checkOut,
+      city,
       guests,
-      radiusKm,
-      useProvider,
       hasSearched,
-      selectedHotelId: hotelId,
-    });
-    lastSyncedUrlRef.current = canonicalizeHotelSearchQuery(queryString);
-    router.push(`/hoteles${queryString ? `?${queryString}` : ""}`, { scroll: false });
-  }, [
-    areaQuery,
-    areaResolved,
-    checkIn,
-    checkOut,
-    city,
-    guests,
-    hasSearched,
-    query,
-    radiusKm,
-    router,
-    searchMode,
-    useProvider,
-  ]);
+      query,
+      radiusKm,
+      router,
+      searchMode,
+      useProvider,
+    ],
+  );
 
-  const navigatePanel = useCallback((nextPanel: HotelReturnPanel) => {
-    const nextSelectedHotelId = nextPanel === "search" ? null : selectedHotelId;
-    setPanel(nextPanel);
-    if (nextPanel === "search") {
-      selectedHotelExplicitRef.current = false;
-      setSelectedHotelId(null);
-    }
-    const queryString = buildHotelSearchQuery({
-      panel: nextPanel,
-      mode: searchMode,
-      query,
-      city,
+  const navigatePanel = useCallback(
+    (nextPanel: HotelReturnPanel) => {
+      const nextSelectedHotelId = nextPanel === "search" ? null : selectedHotelId;
+      setPanel(nextPanel);
+      if (nextPanel === "search") {
+        selectedHotelExplicitRef.current = false;
+        setSelectedHotelId(null);
+      }
+      const queryString = buildHotelSearchQuery({
+        panel: nextPanel,
+        mode: searchMode,
+        query,
+        city,
+        areaQuery,
+        areaResolved,
+        checkIn,
+        checkOut,
+        guests,
+        radiusKm,
+        useProvider,
+        hasSearched,
+        selectedHotelId: nextSelectedHotelId,
+      });
+      lastSyncedUrlRef.current = canonicalizeHotelSearchQuery(queryString);
+      router.push(`/hoteles${queryString ? `?${queryString}` : ""}`, { scroll: false });
+    },
+    [
       areaQuery,
       areaResolved,
       checkIn,
       checkOut,
+      city,
       guests,
-      radiusKm,
-      useProvider,
       hasSearched,
-      selectedHotelId: nextSelectedHotelId,
-    });
-    lastSyncedUrlRef.current = canonicalizeHotelSearchQuery(queryString);
-    router.push(`/hoteles${queryString ? `?${queryString}` : ""}`, { scroll: false });
-  }, [
-    areaQuery,
-    areaResolved,
-    checkIn,
-    checkOut,
-    city,
-    guests,
-    hasSearched,
-    query,
-    radiusKm,
-    router,
-    searchMode,
-    selectedHotelId,
-    useProvider,
-  ]);
+      query,
+      radiusKm,
+      router,
+      searchMode,
+      selectedHotelId,
+      useProvider,
+    ],
+  );
 
   return {
     panel,

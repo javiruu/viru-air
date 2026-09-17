@@ -3,8 +3,20 @@
 import { useCallback, useMemo, useState } from "react";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
-import { createTrackedOfferV2, deleteTrackedOffer, listTrackedOffersV2, transitionTrackedOfferV2Lifecycle } from "../api";
-import type { HotelRateOut, HotelSearchOut, HotelTrackedOfferOut, HotelTrackedOfferV2Out, HotelTrackedOfferV2State, HotelTrackingCandidate } from "../types";
+import {
+  createTrackedOfferV2,
+  deleteTrackedOffer,
+  listTrackedOffersV2,
+  transitionTrackedOfferV2Lifecycle,
+} from "../api";
+import type {
+  HotelRateOut,
+  HotelSearchOut,
+  HotelTrackedOfferOut,
+  HotelTrackedOfferV2Out,
+  HotelTrackedOfferV2State,
+  HotelTrackingCandidate,
+} from "../types";
 import { resolveHotelMessage } from "./useHotelSearch";
 
 export function useTrackedOffers(
@@ -21,20 +33,40 @@ export function useTrackedOffers(
   const [trackedBusyOfferIds, setTrackedBusyOfferIds] = useState<string[]>([]);
   const [trackedBusyHotelIds, setTrackedBusyHotelIds] = useState<string[]>([]);
   const [trackingCandidate, setTrackingCandidate] = useState<HotelTrackingCandidate | null>(null);
-  const [trackedOfferStates, setTrackedOfferStates] = useState<Record<string, HotelTrackedOfferV2State>>({});
-  const [trackedOfferStateVersions, setTrackedOfferStateVersions] = useState<Record<string, number>>({});
+  const [trackedOfferStates, setTrackedOfferStates] = useState<
+    Record<string, HotelTrackedOfferV2State>
+  >({});
+  const [trackedOfferStateVersions, setTrackedOfferStateVersions] = useState<
+    Record<string, number>
+  >({});
 
   const toTrackedOfferView = useCallback((offer: HotelTrackedOfferV2Out): HotelTrackedOfferOut => {
     const observation = offer.latest_observation;
-    const observedPrice = observation?.price.status === "observed" ? observation.price.amount : null;
+    const observedPrice =
+      observation?.price.status === "observed" ? observation.price.amount : null;
     return {
-      id: offer.id, user_id: "", hotel_id: offer.hotel_id, area_label: null, origin_query: null,
-      latitude: null, longitude: null, radius_km: null,
-      check_in: offer.stay_context.check_in, check_out: offer.stay_context.check_out, guests: offer.stay_context.guests,
-      room_label: observation?.room_label ?? null, meal_plan: observation?.meal_plan ?? null,
-      cancellation_policy: observation?.cancellation_policy ?? null, provider: observation?.provider ?? "unknown",
-      initial_price: null, current_price: observedPrice, target_price: null, currency: offer.stay_context.currency,
-      is_active: offer.state === "active", created_at: "", updated_at: "",
+      id: offer.id,
+      user_id: "",
+      hotel_id: offer.hotel_id,
+      area_label: null,
+      origin_query: null,
+      latitude: null,
+      longitude: null,
+      radius_km: null,
+      check_in: offer.stay_context.check_in,
+      check_out: offer.stay_context.check_out,
+      guests: offer.stay_context.guests,
+      room_label: observation?.room_label ?? null,
+      meal_plan: observation?.meal_plan ?? null,
+      cancellation_policy: observation?.cancellation_policy ?? null,
+      provider: observation?.provider ?? "unknown",
+      initial_price: null,
+      current_price: observedPrice,
+      target_price: null,
+      currency: offer.stay_context.currency,
+      is_active: offer.state === "active",
+      created_at: "",
+      updated_at: "",
     };
   }, []);
 
@@ -48,8 +80,12 @@ export function useTrackedOffers(
     try {
       const response = await listTrackedOffersV2();
       setTrackedOffers(response.data.map(toTrackedOfferView));
-      setTrackedOfferStates(Object.fromEntries(response.data.map((offer) => [offer.id, offer.state])));
-      setTrackedOfferStateVersions(Object.fromEntries(response.data.map((offer) => [offer.id, offer.state_version])));
+      setTrackedOfferStates(
+        Object.fromEntries(response.data.map((offer) => [offer.id, offer.state])),
+      );
+      setTrackedOfferStateVersions(
+        Object.fromEntries(response.data.map((offer) => [offer.id, offer.state_version])),
+      );
       setTrackedOffersError(null);
     } catch (error) {
       setTrackedOffersError(
@@ -68,7 +104,8 @@ export function useTrackedOffers(
 
       const hotel = results.find((item) => item.id === hotelId);
       const hotelRates = hotelId === selectedHotelId ? rates : [];
-      const cheapest = hotelRates.length > 0 ? [...hotelRates].sort((a, b) => a.amount - b.amount)[0] : null;
+      const cheapest =
+        hotelRates.length > 0 ? [...hotelRates].sort((a, b) => a.amount - b.amount)[0] : null;
       // H46: never create tracking silently with defaults that look complete.
       if (hotel === undefined || cheapest === null) {
         notify({ tone: "warning", title: t("hotels.messages.trackingNeedsContext") });

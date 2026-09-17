@@ -4,11 +4,19 @@ type NumberKey = `${string}|${string}`;
 const currencyFormatters = new Map<CurrencyKey, Intl.NumberFormat>();
 const numberFormatters = new Map<NumberKey, Intl.NumberFormat>();
 
-function currencyKey(locale: string, currency: string, signDisplay: Intl.NumberFormatOptions["signDisplay"]): CurrencyKey {
+function currencyKey(
+  locale: string,
+  currency: string,
+  signDisplay: Intl.NumberFormatOptions["signDisplay"],
+): CurrencyKey {
   return `${locale}|${currency}|${signDisplay || "auto"}`;
 }
 
-function numberKey(locale: string, maxFractionDigits: number | undefined, minFractionDigits: number | undefined): NumberKey {
+function numberKey(
+  locale: string,
+  maxFractionDigits: number | undefined,
+  minFractionDigits: number | undefined,
+): NumberKey {
   return `${locale}|${maxFractionDigits ?? "auto"}|${minFractionDigits ?? "auto"}`;
 }
 
@@ -55,7 +63,10 @@ export function formatPercent(value: number, locale: string): string {
   return `${formatNumber(value, { maximumFractionDigits: 2, minimumFractionDigits: 0 }, locale)}%`;
 }
 
-export function formatRelativeTime(input: string | Date | null | undefined, locale: string): string {
+export function formatRelativeTime(
+  input: string | Date | null | undefined,
+  locale: string,
+): string {
   if (!input) return locale.startsWith("en") ? "no data" : "sin datos";
   const date = input instanceof Date ? input : new Date(input);
   if (Number.isNaN(date.getTime())) return locale.startsWith("en") ? "no data" : "sin datos";

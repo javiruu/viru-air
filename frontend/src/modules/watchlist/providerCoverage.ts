@@ -12,13 +12,20 @@ export type WatchProviderCoverageItem = {
   latestCapturedAt: string | null;
 };
 
-export function buildWatchProviderCoverage(rows: Pick<HistoryRow, "provider" | "capturedAt">[]): WatchProviderCoverageItem[] {
-  const observed = new Map<string, { label: string; count: number; latestCapturedAt: string | null }>();
+export function buildWatchProviderCoverage(
+  rows: Pick<HistoryRow, "provider" | "capturedAt">[],
+): WatchProviderCoverageItem[] {
+  const observed = new Map<
+    string,
+    { label: string; count: number; latestCapturedAt: string | null }
+  >();
   rows.forEach((row) => {
     const provider = resolveProviderPresentation(row.provider);
     if (provider.id === "unknown" || !provider.rawSource) return;
     const current = observed.get(provider.id);
-    const currentLatest = current?.latestCapturedAt ? new Date(current.latestCapturedAt).getTime() : 0;
+    const currentLatest = current?.latestCapturedAt
+      ? new Date(current.latestCapturedAt).getTime()
+      : 0;
     const nextLatest = new Date(row.capturedAt).getTime();
     observed.set(provider.id, {
       label: provider.label,
@@ -26,7 +33,7 @@ export function buildWatchProviderCoverage(rows: Pick<HistoryRow, "provider" | "
       latestCapturedAt:
         Number.isFinite(nextLatest) && nextLatest >= currentLatest
           ? row.capturedAt
-          : current?.latestCapturedAt ?? row.capturedAt,
+          : (current?.latestCapturedAt ?? row.capturedAt),
     });
   });
 

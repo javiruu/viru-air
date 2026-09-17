@@ -14,4 +14,3 @@ export function safeDateTime(iso: string | null | undefined, locale: string): st
   if (Number.isNaN(date.getTime())) return "";
   return formatDateTime(iso, locale);
 }
-

@@ -11,10 +11,7 @@ type RelatedCommunityRoutesProps = {
   readonly destination: string;
 };
 
-export function RelatedCommunityRoutes({
-  origin,
-  destination,
-}: RelatedCommunityRoutesProps) {
+export function RelatedCommunityRoutes({ origin, destination }: RelatedCommunityRoutesProps) {
   const { t } = useI18n();
   const [routes, setRoutes] = useState<CommunityRelatedRoute[]>([]);
 
@@ -47,8 +44,12 @@ export function RelatedCommunityRoutes({
               className="community-related-link"
               href={`/quick-search?origin=${route.origin_iata}&destination=${route.destination_iata}`}
             >
-              <strong>{route.origin_iata} → {route.destination_iata}</strong>
-              <span>{t("watchlist.communitySignals.travelers", { count: route.travelers_count })}</span>
+              <strong>
+                {route.origin_iata} → {route.destination_iata}
+              </strong>
+              <span>
+                {t("watchlist.communitySignals.travelers", { count: route.travelers_count })}
+              </span>
               <ChevronRight aria-hidden="true" />
             </Link>
           </li>

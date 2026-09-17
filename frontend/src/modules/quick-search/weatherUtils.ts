@@ -22,7 +22,10 @@ export function weatherLabel(code: number): string {
  * from quickSearchCopy. Used inside `fetchWeather` so the component's locale
  * is respected.
  */
-export function weatherLabelLocalized(code: number, t: (key: QuickSearchCopyKey) => string): string {
+export function weatherLabelLocalized(
+  code: number,
+  t: (key: QuickSearchCopyKey) => string,
+): string {
   if (code === 0) return t("weatherClear");
   if (code === 1 || code === 2) return t("weatherMostlyClear");
   if (code === 3) return t("weatherCloudy");
@@ -56,7 +59,9 @@ export function isWeatherRangeSupported(start: string, end: string): boolean {
   if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return false;
 
   const today = new Date();
-  const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  const todayUtc = new Date(
+    Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()),
+  );
   const maxDate = new Date(todayUtc);
   maxDate.setUTCDate(maxDate.getUTCDate() + 14);
 
@@ -89,7 +94,8 @@ export async function fetchWeather(
   const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`);
   if (!res.ok) {
     const reasonRaw = await res.text().catch(() => "");
-    const isRange400 = res.status === 400 && reasonRaw.toLowerCase().includes("out of allowed range");
+    const isRange400 =
+      res.status === 400 && reasonRaw.toLowerCase().includes("out of allowed range");
     if (isRange400) {
       throw new WeatherFetchError("out_of_range", "weather_out_of_range");
     }

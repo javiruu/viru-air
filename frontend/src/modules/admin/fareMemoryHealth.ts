@@ -119,6 +119,8 @@ export function buildFareMemorySummary(snapshot: FareMemoryHealth): FareMemorySu
     failedLast24h: snapshot.revalidation_jobs.failed_last_24h,
     refreshSignalCount: snapshot.refresh_signals.top_routes.length,
     historicalRouteCount: snapshot.historical_aggregates.top_routes.length,
-    compactionCandidateCount: snapshot.historical_aggregates.top_routes.filter((route) => route.compaction_candidate).length,
+    compactionCandidateCount: snapshot.historical_aggregates.top_routes.filter(
+      (route) => route.compaction_candidate,
+    ).length,
   };
 }

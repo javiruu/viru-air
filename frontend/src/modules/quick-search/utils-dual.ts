@@ -30,9 +30,7 @@ export type DualSearchParamsInput = {
  * Keeps the dual submit branch in `QuickSearchView` focused on orchestration
  * instead of field-by-field mapping.
  */
-export function buildDualSearchParams(
-  input: DualSearchParamsInput,
-): QuickSearchSideParams {
+export function buildDualSearchParams(input: DualSearchParamsInput): QuickSearchSideParams {
   return {
     originIata: input.origin,
     destinationIata: input.destination,
@@ -66,9 +64,7 @@ export function findCombinationResult(
 ): SearchResult | undefined {
   if (selectedResultId) {
     return results.find((r, i) => {
-      const key =
-        r.result_id ||
-        `${r.origin}-${r.destination}-${r.travel_date}-${i}`;
+      const key = r.result_id || `${r.origin}-${r.destination}-${r.travel_date}-${i}`;
       return key === selectedResultId;
     });
   }

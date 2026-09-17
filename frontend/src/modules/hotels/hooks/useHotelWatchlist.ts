@@ -3,7 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
-import { createHotelWatchlistItem, deleteHotelWatchlistItem, getHotelDetail, HotelsRequestError, listHotelWatchlist } from "../api";
+import {
+  createHotelWatchlistItem,
+  deleteHotelWatchlistItem,
+  getHotelDetail,
+  HotelsRequestError,
+  listHotelWatchlist,
+} from "../api";
 import type { HotelDetailOut, HotelWatchlistEntry, HotelWatchlistItemOut } from "../types";
 import { resolveHotelMessage } from "./useHotelSearch";
 
@@ -13,7 +19,9 @@ export function useHotelWatchlist() {
   const [watchlistItems, setWatchlistItems] = useState<HotelWatchlistItemOut[]>([]);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [watchlistError, setWatchlistError] = useState<string | null>(null);
-  const [watchlistHotelCache, setWatchlistHotelCache] = useState<Record<string, HotelDetailOut>>({});
+  const [watchlistHotelCache, setWatchlistHotelCache] = useState<Record<string, HotelDetailOut>>(
+    {},
+  );
   const [watchlistUnavailableHotelIds, setWatchlistUnavailableHotelIds] = useState<string[]>([]);
   const [watchlistBusyHotelIds, setWatchlistBusyHotelIds] = useState<string[]>([]);
   const watchlistHotelCacheRef = useRef<Record<string, HotelDetailOut>>({});
@@ -85,9 +93,7 @@ export function useHotelWatchlist() {
       setWatchlistItems(items);
       await hydrateWatchlistHotels(items);
     } catch (error) {
-      setWatchlistError(
-        resolveHotelMessage(error, t) || t("hotels.messages.watchlistLoadError"),
-      );
+      setWatchlistError(resolveHotelMessage(error, t) || t("hotels.messages.watchlistLoadError"));
     } finally {
       setWatchlistLoading(false);
     }
@@ -112,7 +118,10 @@ export function useHotelWatchlist() {
         notify({ tone: "success", title: t("hotels.messages.watchAdded") });
       } catch (error) {
         const message = resolveHotelMessage(error, t);
-        if (error instanceof HotelsRequestError && error.message === "hotel_watchlist_item_already_exists") {
+        if (
+          error instanceof HotelsRequestError &&
+          error.message === "hotel_watchlist_item_already_exists"
+        ) {
           await refreshWatchlist();
         }
         notify({ tone: "error", title: message });

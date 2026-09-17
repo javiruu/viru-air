@@ -33,13 +33,17 @@ export function SignalsInbox({ requestedFilter }: { requestedFilter?: string | n
   const { notify } = useNotificationCenter();
   const [items, setItems] = useState<NotificationInboxItem[]>([]);
   const [summary, setSummary] = useState<NotificationInboxSummary>({ ...EMPTY_SUMMARY });
-  const [filter, setFilter] = useState<NotificationFilter>(() => normalizeNotificationFilter(requestedFilter ?? null));
+  const [filter, setFilter] = useState<NotificationFilter>(() =>
+    normalizeNotificationFilter(requestedFilter ?? null),
+  );
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
 
   const loadNotifications = useCallback(async () => {
     setStatus("loading");
     try {
-      const response = normalizeNotificationInboxResponse(await apiFetch<unknown>("/notifications"));
+      const response = normalizeNotificationInboxResponse(
+        await apiFetch<unknown>("/notifications"),
+      );
       setItems(response.items);
       setSummary(response.summary);
       setStatus("ready");
@@ -57,18 +61,29 @@ export function SignalsInbox({ requestedFilter }: { requestedFilter?: string | n
     setFilter(normalizeNotificationFilter(requestedFilter ?? null));
   }, [requestedFilter]);
 
-  const actionableCount = useMemo(() => filterNotificationItems(items, "actionable").length, [items]);
+  const actionableCount = useMemo(
+    () => filterNotificationItems(items, "actionable").length,
+    [items],
+  );
   const filters = useMemo(
     () =>
       [
         { value: "all", label: t("notifications.filters.all"), count: summary.total },
-        { value: "actionable", label: t("notifications.filters.actionable"), count: actionableCount },
+        {
+          value: "actionable",
+          label: t("notifications.filters.actionable"),
+          count: actionableCount,
+        },
         { value: "unread", label: t("notifications.filters.unread"), count: summary.unread },
         { value: "price", label: t("notifications.filters.price"), count: summary.price },
         { value: "security", label: t("notifications.filters.security"), count: summary.security },
         { value: "digest", label: t("notifications.filters.digest"), count: summary.digest },
         { value: "worker", label: t("notifications.filters.worker"), count: summary.worker },
-        { value: "community", label: t("notifications.filters.community"), count: summary.community },
+        {
+          value: "community",
+          label: t("notifications.filters.community"),
+          count: summary.community,
+        },
       ] as const,
     [actionableCount, summary, t],
   );
@@ -79,7 +94,9 @@ export function SignalsInbox({ requestedFilter }: { requestedFilter?: string | n
 
   async function markRead(item: NotificationInboxItem): Promise<void> {
     try {
-      await apiFetch(`/notifications/${item.source_type}/${item.source_id}/read`, { method: "POST" });
+      await apiFetch(`/notifications/${item.source_type}/${item.source_id}/read`, {
+        method: "POST",
+      });
       window.dispatchEvent(new Event("viru:notifications-changed"));
       await loadNotifications();
       notify({ tone: "success", title: t("notifications.toast.markedRead"), durationMs: 2600 });
@@ -91,7 +108,9 @@ export function SignalsInbox({ requestedFilter }: { requestedFilter?: string | n
   async function markAllRead(): Promise<void> {
     try {
       await apiFetch("/notifications/read-all", { method: "POST" });
-      window.dispatchEvent(new CustomEvent("viru:notifications-changed", { detail: { unread: 0 } }));
+      window.dispatchEvent(
+        new CustomEvent("viru:notifications-changed", { detail: { unread: 0 } }),
+      );
       await loadNotifications();
       notify({ tone: "success", title: t("notifications.toast.markedAll"), durationMs: 2600 });
     } catch {
@@ -108,7 +127,12 @@ export function SignalsInbox({ requestedFilter }: { requestedFilter?: string | n
           <p>{t("notifications.pageSubtitle")}</p>
         </div>
         <div className="panel-actions">
-          <button className="btn-secondary" type="button" onClick={markAllRead} disabled={summary.unread === 0}>
+          <button
+            className="btn-secondary"
+            type="button"
+            onClick={markAllRead}
+            disabled={summary.unread === 0}
+          >
             <CheckCheck size={16} aria-hidden="true" />
             {t("notifications.hero.markAll")}
           </button>
@@ -126,10 +150,15 @@ export function SignalsInbox({ requestedFilter }: { requestedFilter?: string | n
             <p className="eyebrow">{t("notifications.hero.briefingKicker")}</p>
             <strong>{actionableCount}</strong>
             <h2 className="panel-title">{t("notifications.hero.briefingTitle")}</h2>
-            <p className="panel-subtitle">{t("notifications.hero.briefingBody", { unread: summary.unread })}</p>
+            <p className="panel-subtitle">
+              {t("notifications.hero.briefingBody", { unread: summary.unread })}
+            </p>
           </div>
         </div>
-        <div className="notifications-summary-grid" aria-label={t("notifications.hero.summaryLabel")}>
+        <div
+          className="notifications-summary-grid"
+          aria-label={t("notifications.hero.summaryLabel")}
+        >
           {(["total", "price", "security"] as const).map((key) => (
             <article className="notifications-summary-card" key={key}>
               <span>{t(`notifications.summary.${key}`)}</span>

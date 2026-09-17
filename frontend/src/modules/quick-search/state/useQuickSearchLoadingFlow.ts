@@ -1,6 +1,6 @@
-import { Dispatch, MutableRefObject, SetStateAction, useEffect } from "react";
+import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect } from "react";
 
-import { QuickSearchLoadingPhase } from "@/modules/quick-search/types";
+import type { QuickSearchLoadingPhase } from "@/modules/quick-search/types";
 
 type SearchState = "idle" | "loading" | "success" | "empty" | "error" | "rate";
 type QuickSearchLoadingFlowArgs = {
@@ -139,7 +139,9 @@ export function useQuickSearchLoadingFlow({
       if (process.env.NODE_ENV !== "production") {
         if (ts - debugLastTickLogTsRef.current >= 120 || progress >= 1) {
           debugLastTickLogTsRef.current = ts;
-          debugLog(`tick from=${from.toFixed(1)} to=${to.toFixed(1)} display=${nextSafe.toFixed(1)} t=${progress.toFixed(2)}`);
+          debugLog(
+            `tick from=${from.toFixed(1)} to=${to.toFixed(1)} display=${nextSafe.toFixed(1)} t=${progress.toFixed(2)}`,
+          );
         }
       }
       if (nextInt !== prevInt || progress >= 1) {
@@ -269,36 +271,39 @@ export function useQuickSearchLoadingFlow({
     takeoffHoldTimerRef,
   ]);
 
-  useEffect(() => () => {
-    if (progressRafRef.current) {
-      debugLog("cancel RAF (cleanup)");
-      window.cancelAnimationFrame(progressRafRef.current);
-      progressRafRef.current = null;
-    }
-    if (commitRafRef.current) {
-      window.cancelAnimationFrame(commitRafRef.current);
-      commitRafRef.current = null;
-    }
-    if (boardingThresholdTimerRef.current) {
-      window.clearTimeout(boardingThresholdTimerRef.current);
-      boardingThresholdTimerRef.current = null;
-    }
-    if (takeoffHoldTimerRef.current) {
-      window.clearTimeout(takeoffHoldTimerRef.current);
-      takeoffHoldTimerRef.current = null;
-    }
-    if (hideTimeoutRef.current) {
-      window.clearTimeout(hideTimeoutRef.current);
-      hideTimeoutRef.current = null;
-    }
-    loadingStartRef.current = null;
-  }, [
-    debugLog,
-    boardingThresholdTimerRef,
-    commitRafRef,
-    hideTimeoutRef,
-    loadingStartRef,
-    progressRafRef,
-    takeoffHoldTimerRef,
-  ]);
+  useEffect(
+    () => () => {
+      if (progressRafRef.current) {
+        debugLog("cancel RAF (cleanup)");
+        window.cancelAnimationFrame(progressRafRef.current);
+        progressRafRef.current = null;
+      }
+      if (commitRafRef.current) {
+        window.cancelAnimationFrame(commitRafRef.current);
+        commitRafRef.current = null;
+      }
+      if (boardingThresholdTimerRef.current) {
+        window.clearTimeout(boardingThresholdTimerRef.current);
+        boardingThresholdTimerRef.current = null;
+      }
+      if (takeoffHoldTimerRef.current) {
+        window.clearTimeout(takeoffHoldTimerRef.current);
+        takeoffHoldTimerRef.current = null;
+      }
+      if (hideTimeoutRef.current) {
+        window.clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = null;
+      }
+      loadingStartRef.current = null;
+    },
+    [
+      debugLog,
+      boardingThresholdTimerRef,
+      commitRafRef,
+      hideTimeoutRef,
+      loadingStartRef,
+      progressRafRef,
+      takeoffHoldTimerRef,
+    ],
+  );
 }

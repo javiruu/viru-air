@@ -49,7 +49,9 @@ export type WatchlistExportPayload = {
 };
 
 function summarizePrices(snapshots: WatchlistExportSnapshot[]) {
-  const prices = snapshots.map((snapshot) => snapshot.raw_price).filter((price) => Number.isFinite(price));
+  const prices = snapshots
+    .map((snapshot) => snapshot.raw_price)
+    .filter((price) => Number.isFinite(price));
   if (prices.length === 0) {
     return {
       min_price: null,

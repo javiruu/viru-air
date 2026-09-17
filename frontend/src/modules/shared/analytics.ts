@@ -4,7 +4,10 @@ type AnalyticsProps = Record<string, AnalyticsValue>;
 declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
-    plausible?: (eventName: string, options?: { props?: Record<string, string | number | boolean> }) => void;
+    plausible?: (
+      eventName: string,
+      options?: { props?: Record<string, string | number | boolean> },
+    ) => void;
     posthog?: {
       capture?: (eventName: string, props?: Record<string, string | number | boolean>) => void;
     };

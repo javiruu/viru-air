@@ -225,9 +225,7 @@ export function CommunityPricingDrawer({
                     />
                     <span>EUR</span>
                   </div>
-                  <small className="hint">
-                    {t("watchlist.communityPricing.priceHint")}
-                  </small>
+                  <small className="hint">{t("watchlist.communityPricing.priceHint")}</small>
                 </label>
                 <button
                   className="btn-primary community-pricing-save"

@@ -147,7 +147,9 @@ export function HistoryIntegratedPanel({
   const hasCalendarData = Boolean(visibleMonth);
   const canToggleCalendar = hasCalendarData && calendarHasUsefulData;
 
-  const calendarMidpoint = calendarRange ? calendarRange.min + (calendarRange.max - calendarRange.min) / 2 : null;
+  const calendarMidpoint = calendarRange
+    ? calendarRange.min + (calendarRange.max - calendarRange.min) / 2
+    : null;
   const weekdays = t("watchlist.history.weekdays")
     .split(",")
     .map((value) => value.trim())
@@ -227,7 +229,9 @@ export function HistoryIntegratedPanel({
           </h2>
           <div className="history-context">
             <p className="muted">
-              {hasSelectedWatch ? t("watchlist.history.subtitleWithRoute") : t("watchlist.history.subtitleWithoutRoute")}
+              {hasSelectedWatch
+                ? t("watchlist.history.subtitleWithRoute")
+                : t("watchlist.history.subtitleWithoutRoute")}
             </p>
             <div className="history-route-line">
               <span className="history-route-line-text">{selectedRouteValue}</span>
@@ -243,13 +247,21 @@ export function HistoryIntegratedPanel({
             <button type="button" hidden disabled={!canToggleCalendar}>
               {t("watchlist.history.viewCalendar")}
             </button>
-            <button className="btn-compact history-filter-apply" type="button" disabled={isRefreshingFiltered || !hasSelectedWatch} onClick={onApplyFilters}>
-              {isRefreshingFiltered ? t("watchlist.history.refreshing") : t("watchlist.history.applyFilters")}
+            <button
+              className="btn-compact history-filter-apply"
+              type="button"
+              disabled={isRefreshingFiltered || !hasSelectedWatch}
+              onClick={onApplyFilters}
+            >
+              {isRefreshingFiltered
+                ? t("watchlist.history.refreshing")
+                : t("watchlist.history.applyFilters")}
             </button>
           </div>
         </div>
-        {!canToggleCalendar ? <span className="history-helper">{t("watchlist.history.calendarUnavailableBody")}</span> : null}
-
+        {!canToggleCalendar ? (
+          <span className="history-helper">{t("watchlist.history.calendarUnavailableBody")}</span>
+        ) : null}
       </div>
       {isRefreshingHistory ? (
         <div className="history-refresh-indicator muted" role="status" aria-live="polite">
@@ -257,7 +269,11 @@ export function HistoryIntegratedPanel({
         </div>
       ) : null}
       {isLoadingHistory ? (
-        <BoneyardLoad name="watch-history-load" className="history-loading" ariaLabel={t("watchlist.smartList.loadingAria")}>
+        <BoneyardLoad
+          name="watch-history-load"
+          className="history-loading"
+          ariaLabel={t("watchlist.smartList.loadingAria")}
+        >
           <LoadReference className="history-load-toolbar" />
           <div className="history-layout">
             <div className="history-primary">
@@ -288,13 +304,23 @@ export function HistoryIntegratedPanel({
             {selectedPointData ? (
               <div className="history-detail-card">
                 <div>
-                <span className="history-detail-label">{t("watchlist.history.selectedPointLabel")}</span>
-                  <strong>{formatCurrency(selectedPointData.price, selectedPointData.currency, localeTag)}</strong>
+                  <span className="history-detail-label">
+                    {t("watchlist.history.selectedPointLabel")}
+                  </span>
+                  <strong>
+                    {formatCurrency(selectedPointData.price, selectedPointData.currency, localeTag)}
+                  </strong>
                 </div>
                 <div className="history-detail-meta">
                   <span>{formatDateTime(selectedPointData.capturedAt, localeTag)}</span>
                   <span>{selectedPointData.date}</span>
-                  {selectedPointData.departureTime ? <span>{t("watchlist.history.departureAt", { value: selectedPointData.departureTime })}</span> : null}
+                  {selectedPointData.departureTime ? (
+                    <span>
+                      {t("watchlist.history.departureAt", {
+                        value: selectedPointData.departureTime,
+                      })}
+                    </span>
+                  ) : null}
                   {selectedPointFreshness ? <span>{selectedPointFreshness.label}</span> : null}
                 </div>
                 {selectedPointFreshness?.observationNote ? (
@@ -304,129 +330,151 @@ export function HistoryIntegratedPanel({
             ) : null}
           </div>
           <div className="history-primary">
-          {chartIsZoomed ? (
-            <div className="history-zoom-toolbar">
-              <button className="btn-ghost btn-compact history-zoom-reset" type="button" onClick={onResetChartZoom}>
-                {t("watchlist.history.resetZoom")}
-              </button>
-            </div>
-          ) : null}
-          {hasChartData ? (
-            <svg
-              ref={chartSvgRef}
-              className={`history-svg${chartIsZoomed ? " is-zoomed" : ""}${chartIsDragging ? " is-dragging" : ""}`}
-              viewBox={`${chartViewBox.x} ${chartViewBox.y} ${chartViewBox.width} ${chartViewBox.height}`}
-              width="100%"
-              role="img"
-              aria-label={t("watchlist.history.chartAriaLabel")}
-              onMouseMove={onChartMouseMove}
-              onMouseLeave={onChartMouseLeave}
-              onPointerDown={onChartPointerDown}
-              onPointerMove={onChartPointerMove}
-              onPointerUp={onChartPointerUp}
-              onPointerCancel={onChartPointerCancel}
-              onPointerLeave={(event) => {
-                onChartPointerLeave(event);
-                onChartMouseLeave();
-              }}
-            >
-              <line
-                x1={chartPad.left}
-                y1={chartHeight - chartPad.bottom}
-                x2={chartWidth - chartPad.right}
-                y2={chartHeight - chartPad.bottom}
-                stroke="var(--color-border-strong)"
-                strokeWidth="1"
-              />
-              <line
-                x1={chartPad.left}
-                y1={chartPad.top}
-                x2={chartPad.left}
-                y2={chartHeight - chartPad.bottom}
-                stroke="var(--color-border-strong)"
-                strokeWidth="1"
-              />
-              {[0.25, 0.5, 0.75].map((ratio) => {
-                const y = chartPad.top + (chartHeight - chartPad.top - chartPad.bottom) * ratio;
-                return (
-                  <line
-                    key={`grid-${ratio}`}
-                    className="history-grid"
-                    x1={chartPad.left}
-                    y1={y}
-                    x2={chartWidth - chartPad.right}
-                    y2={y}
-                  />
-                );
-              })}
-              {hoverPoint ? (
-                <g className="history-hover">
-                  <line
-                    x1={hoverPoint.x}
-                    y1={chartPad.top}
-                    x2={hoverPoint.x}
-                    y2={chartHeight - chartPad.bottom}
-                    stroke={hoverPoint.color}
-                    strokeWidth="1.5"
-                    strokeDasharray="4 6"
-                  />
-                  <circle
-                    cx={hoverPoint.x}
-                    cy={hoverPoint.y}
-                    r={7}
-                    fill="var(--color-surface)"
-                    stroke={hoverPoint.color}
-                    strokeWidth="2.2"
-                  />
-                </g>
-              ) : null}
-              {chartModel?.map((serie) => (
-                <g key={serie.date}>
-                  {serie.areaPoints ? <polygon className="history-area" fill={serie.color} points={serie.areaPoints} /> : null}
-                  <polyline
-                    fill="none"
-                    stroke={serie.color}
-                    strokeWidth={chartPointCount < 4 ? 3.4 : 2.8}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    points={serie.path}
-                  />
-                  {serie.points.map((point) => {
-                    const isBackfillPoint = point.sourceKind === "historical_backfill";
-                    return (
-                      <circle
-                        key={`${serie.date}-${point.capturedAt}`}
-                        className={isBackfillPoint ? "history-point history-point--backfill" : "history-point"}
-                        cx={point.x}
-                        cy={point.y}
-                        r={selectedPoint === point.capturedAt ? 6.4 : chartPointCount < 4 ? 5 : 4.3}
-                        fill={isBackfillPoint ? "var(--panel-bg)" : serie.color}
-                        stroke={selectedPoint === point.capturedAt ? "var(--color-text-primary)" : serie.color}
-                        strokeDasharray={isBackfillPoint ? "3 3" : undefined}
-                        strokeWidth={selectedPoint === point.capturedAt ? 2 : isBackfillPoint ? 1.8 : 1}
-                      >
-                        <title>{`${serie.date} - ${formatDateTime(point.capturedAt, localeTag)} - ${formatCurrency(point.price, point.currency, localeTag)}${isBackfillPoint ? ` - ${t("watchlist.history.backfillTooltip")}` : ""}`}</title>
-                      </circle>
-                    );
-                  })}
-                </g>
-              ))}
-            </svg>
-          ) : (
-            <div className="history-ghost">
-              <CommunityPriceReferenceBand
-                aggregate={selectedWatch?.community_pricing.aggregate}
-              />
-              {selectedWatch ? (
-                <RelatedCommunityRoutes
-                  origin={selectedWatch.origin_iata}
-                  destination={selectedWatch.destination_iata}
+            {chartIsZoomed ? (
+              <div className="history-zoom-toolbar">
+                <button
+                  className="btn-ghost btn-compact history-zoom-reset"
+                  type="button"
+                  onClick={onResetChartZoom}
+                >
+                  {t("watchlist.history.resetZoom")}
+                </button>
+              </div>
+            ) : null}
+            {hasChartData ? (
+              <svg
+                ref={chartSvgRef}
+                className={`history-svg${chartIsZoomed ? " is-zoomed" : ""}${chartIsDragging ? " is-dragging" : ""}`}
+                viewBox={`${chartViewBox.x} ${chartViewBox.y} ${chartViewBox.width} ${chartViewBox.height}`}
+                width="100%"
+                role="img"
+                aria-label={t("watchlist.history.chartAriaLabel")}
+                onMouseMove={onChartMouseMove}
+                onMouseLeave={onChartMouseLeave}
+                onPointerDown={onChartPointerDown}
+                onPointerMove={onChartPointerMove}
+                onPointerUp={onChartPointerUp}
+                onPointerCancel={onChartPointerCancel}
+                onPointerLeave={(event) => {
+                  onChartPointerLeave(event);
+                  onChartMouseLeave();
+                }}
+              >
+                <line
+                  x1={chartPad.left}
+                  y1={chartHeight - chartPad.bottom}
+                  x2={chartWidth - chartPad.right}
+                  y2={chartHeight - chartPad.bottom}
+                  stroke="var(--color-border-strong)"
+                  strokeWidth="1"
                 />
-              ) : null}
-              <div className="history-ghost-line" />
-              <p>{t("watchlist.history.chartEmpty")}</p>
-            </div>
-          )}
+                <line
+                  x1={chartPad.left}
+                  y1={chartPad.top}
+                  x2={chartPad.left}
+                  y2={chartHeight - chartPad.bottom}
+                  stroke="var(--color-border-strong)"
+                  strokeWidth="1"
+                />
+                {[0.25, 0.5, 0.75].map((ratio) => {
+                  const y = chartPad.top + (chartHeight - chartPad.top - chartPad.bottom) * ratio;
+                  return (
+                    <line
+                      key={`grid-${ratio}`}
+                      className="history-grid"
+                      x1={chartPad.left}
+                      y1={y}
+                      x2={chartWidth - chartPad.right}
+                      y2={y}
+                    />
+                  );
+                })}
+                {hoverPoint ? (
+                  <g className="history-hover">
+                    <line
+                      x1={hoverPoint.x}
+                      y1={chartPad.top}
+                      x2={hoverPoint.x}
+                      y2={chartHeight - chartPad.bottom}
+                      stroke={hoverPoint.color}
+                      strokeWidth="1.5"
+                      strokeDasharray="4 6"
+                    />
+                    <circle
+                      cx={hoverPoint.x}
+                      cy={hoverPoint.y}
+                      r={7}
+                      fill="var(--color-surface)"
+                      stroke={hoverPoint.color}
+                      strokeWidth="2.2"
+                    />
+                  </g>
+                ) : null}
+                {chartModel?.map((serie) => (
+                  <g key={serie.date}>
+                    {serie.areaPoints ? (
+                      <polygon
+                        className="history-area"
+                        fill={serie.color}
+                        points={serie.areaPoints}
+                      />
+                    ) : null}
+                    <polyline
+                      fill="none"
+                      stroke={serie.color}
+                      strokeWidth={chartPointCount < 4 ? 3.4 : 2.8}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      points={serie.path}
+                    />
+                    {serie.points.map((point) => {
+                      const isBackfillPoint = point.sourceKind === "historical_backfill";
+                      return (
+                        <circle
+                          key={`${serie.date}-${point.capturedAt}`}
+                          className={
+                            isBackfillPoint
+                              ? "history-point history-point--backfill"
+                              : "history-point"
+                          }
+                          cx={point.x}
+                          cy={point.y}
+                          r={
+                            selectedPoint === point.capturedAt ? 6.4 : chartPointCount < 4 ? 5 : 4.3
+                          }
+                          fill={isBackfillPoint ? "var(--panel-bg)" : serie.color}
+                          stroke={
+                            selectedPoint === point.capturedAt
+                              ? "var(--color-text-primary)"
+                              : serie.color
+                          }
+                          strokeDasharray={isBackfillPoint ? "3 3" : undefined}
+                          strokeWidth={
+                            selectedPoint === point.capturedAt ? 2 : isBackfillPoint ? 1.8 : 1
+                          }
+                        >
+                          <title>{`${serie.date} - ${formatDateTime(point.capturedAt, localeTag)} - ${formatCurrency(point.price, point.currency, localeTag)}${isBackfillPoint ? ` - ${t("watchlist.history.backfillTooltip")}` : ""}`}</title>
+                        </circle>
+                      );
+                    })}
+                  </g>
+                ))}
+              </svg>
+            ) : (
+              <div className="history-ghost">
+                <CommunityPriceReferenceBand
+                  aggregate={selectedWatch?.community_pricing.aggregate}
+                />
+                {selectedWatch ? (
+                  <RelatedCommunityRoutes
+                    origin={selectedWatch.origin_iata}
+                    destination={selectedWatch.destination_iata}
+                  />
+                ) : null}
+                <div className="history-ghost-line" />
+                <p>{t("watchlist.history.chartEmpty")}</p>
+              </div>
+            )}
           </div>
           {hoverPoint ? (
             <div
@@ -439,9 +487,15 @@ export function HistoryIntegratedPanel({
               <span className="history-tooltip-tag">{hoverPoint.date}</span>
               <strong>{formatCurrency(hoverPoint.price, hoverPoint.currency, localeTag)}</strong>
               <span>{formatDateTime(hoverPoint.capturedAt, localeTag)}</span>
-              {hoverPoint.departureTime ? <span>{t("watchlist.history.departureAt", { value: hoverPoint.departureTime })}</span> : null}
+              {hoverPoint.departureTime ? (
+                <span>
+                  {t("watchlist.history.departureAt", { value: hoverPoint.departureTime })}
+                </span>
+              ) : null}
               {hoverPoint.sourceKind === "historical_backfill" ? (
-                <span className="history-tooltip-note">{t("watchlist.history.backfillTooltip")}</span>
+                <span className="history-tooltip-note">
+                  {t("watchlist.history.backfillTooltip")}
+                </span>
               ) : null}
             </div>
           ) : null}
@@ -462,23 +516,35 @@ export function HistoryIntegratedPanel({
           <p className="history-microcopy muted">{t("watchlist.history.trendMicrocopy")}</p>
         </div>
       ) : hasSelectedWatch && !isLoadingHistory ? (
-        <div key={`calendar-${visibleMonth}`} className="panel history-stage history-calendar history-calendar-panel history-layout">
+        <div
+          key={`calendar-${visibleMonth}`}
+          className="panel history-stage history-calendar history-calendar-panel history-layout"
+        >
           {hasCalendarData && calendarHasUsefulData ? (
             <>
               <div className="history-calendar-nav">
-                <button className="btn-ghost" type="button" onClick={onPrevMonth}>{t("watchlist.history.prevMonth")}</button>
+                <button className="btn-ghost" type="button" onClick={onPrevMonth}>
+                  {t("watchlist.history.prevMonth")}
+                </button>
                 <strong className="month-title">{monthTitle}</strong>
-                <button className="btn-ghost" type="button" onClick={onNextMonth}>{t("watchlist.history.nextMonth")}</button>
+                <button className="btn-ghost" type="button" onClick={onNextMonth}>
+                  {t("watchlist.history.nextMonth")}
+                </button>
               </div>
               <div className="history-calendar-grid history-primary">
-                {(weekdays.length === 7 ? weekdays : ["L", "M", "X", "J", "V", "S", "D"]).map((weekday, index) => (
-                  <div key={`history-weekday-${index}`} className="history-weekday">{weekday}</div>
-                ))}
+                {(weekdays.length === 7 ? weekdays : ["L", "M", "X", "J", "V", "S", "D"]).map(
+                  (weekday, index) => (
+                    <div key={`history-weekday-${index}`} className="history-weekday">
+                      {weekday}
+                    </div>
+                  ),
+                )}
                 {monthCells.map((day, idx) => {
                   const event = day ? calendarEvents[day] : undefined;
                   let heatStyle: CSSProperties | undefined;
                   if (event && calendarRange && calendarRange.max !== calendarRange.min) {
-                    const normalized = (event.min - calendarRange.min) / (calendarRange.max - calendarRange.min);
+                    const normalized =
+                      (event.min - calendarRange.min) / (calendarRange.max - calendarRange.min);
                     const heat = 1 - normalized;
                     const strong = 0.08 + heat * 0.28;
                     const glow = 0.06 + heat * 0.18;
@@ -501,7 +567,8 @@ export function HistoryIntegratedPanel({
                             <div className="history-day-meta">
                               {t("watchlist.history.pointsCount", { count: event.count })}
                               <br />
-                              {formatCurrency(event.min, calendarCurrency, localeTag)}-{formatCurrency(event.max, calendarCurrency, localeTag)}
+                              {formatCurrency(event.min, calendarCurrency, localeTag)}-
+                              {formatCurrency(event.max, calendarCurrency, localeTag)}
                             </div>
                           ) : null}
                         </>
@@ -521,28 +588,34 @@ export function HistoryIntegratedPanel({
                   <div className="history-heat-scale">
                     <span className="history-heat-scale-item">
                       <strong>{t("watchlist.history.legendLow")}</strong>
-                      <span className="tabular-nums">{formatCurrency(calendarRange.min, calendarCurrency, localeTag)}</span>
+                      <span className="tabular-nums">
+                        {formatCurrency(calendarRange.min, calendarCurrency, localeTag)}
+                      </span>
                     </span>
                     {calendarMidpoint != null ? (
                       <span className="history-heat-scale-item">
                         <strong>{t("watchlist.history.legendMid")}</strong>
-                        <span className="tabular-nums">{formatCurrency(calendarMidpoint, calendarCurrency, localeTag)}</span>
+                        <span className="tabular-nums">
+                          {formatCurrency(calendarMidpoint, calendarCurrency, localeTag)}
+                        </span>
                       </span>
                     ) : null}
                     <span className="history-heat-scale-item">
                       <strong>{t("watchlist.history.legendHigh")}</strong>
-                      <span className="tabular-nums">{formatCurrency(calendarRange.max, calendarCurrency, localeTag)}</span>
+                      <span className="tabular-nums">
+                        {formatCurrency(calendarRange.max, calendarCurrency, localeTag)}
+                      </span>
                     </span>
                   </div>
-                  <p className="muted history-heat-explainer">{t("watchlist.history.heatLegendExplainer")}</p>
+                  <p className="muted history-heat-explainer">
+                    {t("watchlist.history.heatLegendExplainer")}
+                  </p>
                 </div>
               ) : null}
             </>
           ) : (
             <>
-              <CommunityPriceReferenceBand
-                aggregate={selectedWatch?.community_pricing.aggregate}
-              />
+              <CommunityPriceReferenceBand aggregate={selectedWatch?.community_pricing.aggregate} />
               {selectedWatch ? (
                 <RelatedCommunityRoutes
                   origin={selectedWatch.origin_iata}
@@ -561,5 +634,3 @@ export function HistoryIntegratedPanel({
     </section>
   );
 }
-
-

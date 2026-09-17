@@ -149,9 +149,7 @@ export function buildWatchlistUrl(params: QuickSearchWatchlistNav): string {
  * Reads navigation params from a URLSearchParams object.
  * Returns sanitized values — empty strings for missing/invalid params.
  */
-export function readWatchlistNavigationParams(
-  sp: URLSearchParams,
-): QuickSearchWatchlistNav {
+export function readWatchlistNavigationParams(sp: URLSearchParams): QuickSearchWatchlistNav {
   return {
     origin: sanitizeIata(sp.get(WL_PARAM_ORIGIN)),
     destination: sanitizeIata(sp.get(WL_PARAM_DESTINATION)),
@@ -223,9 +221,15 @@ export type QuickSearchUrlState = {
  */
 export function readQuickSearchUrlState(sp: URLSearchParams): QuickSearchUrlState {
   const isReturnRaw = sanitizeFlag(sp.get(QS_PARAM_IS_RETURN));
-  const readAdditionalIata = (param: string) => Array.from(new Set(
-    (sp.get(param) ?? "").split(",").map((value) => sanitizeIata(value)).filter(Boolean),
-  )).slice(0, 5);
+  const readAdditionalIata = (param: string) =>
+    Array.from(
+      new Set(
+        (sp.get(param) ?? "")
+          .split(",")
+          .map((value) => sanitizeIata(value))
+          .filter(Boolean),
+      ),
+    ).slice(0, 5);
   return {
     origin: sanitizeIata(sp.get(QS_PARAM_ORIGIN)),
     destination: sanitizeIata(sp.get(QS_PARAM_DESTINATION)),
@@ -268,10 +272,18 @@ export function buildQuickSearchSearchParams(state: {
   const destination = state.destination ? sanitizeIata(state.destination) : "";
   if (destination) search.set(QS_PARAM_DESTINATION, destination);
 
-  const appendAdditionalIata = (param: string, values: readonly string[] | undefined, primary: string) => {
-    const sanitized = Array.from(new Set(
-      (values ?? []).map((value) => sanitizeIata(value)).filter((value) => value && value !== primary),
-    )).slice(0, 5);
+  const appendAdditionalIata = (
+    param: string,
+    values: readonly string[] | undefined,
+    primary: string,
+  ) => {
+    const sanitized = Array.from(
+      new Set(
+        (values ?? [])
+          .map((value) => sanitizeIata(value))
+          .filter((value) => value && value !== primary),
+      ),
+    ).slice(0, 5);
     if (sanitized.length > 0) search.set(param, sanitized.join(","));
   };
   appendAdditionalIata(QS_PARAM_ADDITIONAL_ORIGINS, state.additionalOrigins, origin);

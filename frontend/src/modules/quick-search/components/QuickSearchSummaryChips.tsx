@@ -1,5 +1,3 @@
-import React from "react";
-
 export type QuickSearchSummaryChip = {
   id: string;
   label: string;
@@ -36,7 +34,9 @@ export function QuickSearchSummaryChips(props: QuickSearchSummaryChipsProps) {
               "qs-summary-chip-compact",
               `qs-summary-chip-compact-${chip.tone ?? "search"}`,
               chip.emphasis ? "qs-summary-chip-compact-highlight" : "",
-            ].filter(Boolean).join(" ")}
+            ]
+              .filter(Boolean)
+              .join(" ")}
           >
             {chip.label}
           </span>
@@ -50,7 +50,13 @@ export function QuickSearchSummaryChips(props: QuickSearchSummaryChipsProps) {
             aria-controls="qs-advanced-drawer"
             data-ui="qs-summary-chips-more"
           >
-            <svg className="qs-inline-icon" viewBox="0 0 24 24" aria-hidden="true" width="16" height="16">
+            <svg
+              className="qs-inline-icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              width="16"
+              height="16"
+            >
               <path
                 d="M6 9l6 6 6-6"
                 fill="none"
@@ -67,7 +73,9 @@ export function QuickSearchSummaryChips(props: QuickSearchSummaryChipsProps) {
       {missingBadges.length > 0 ? (
         <div className="qs-summary-missing">
           {missingBadges.map((badge) => (
-            <span key={badge} className="qs-summary-missing-badge">{badge}</span>
+            <span key={badge} className="qs-summary-missing-badge">
+              {badge}
+            </span>
           ))}
         </div>
       ) : null}

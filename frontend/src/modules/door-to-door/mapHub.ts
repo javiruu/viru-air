@@ -19,7 +19,10 @@ const CAPABILITY_KEYS: DoorToDoorMapCapabilityKey[] = [
   "eco_route",
 ];
 
-export function buildMapCapabilities(response: DoorToDoorResponse | null, providers: DoorToDoorProviderStatus[]): DoorToDoorMapCapability[] {
+export function buildMapCapabilities(
+  response: DoorToDoorResponse | null,
+  providers: DoorToDoorProviderStatus[],
+): DoorToDoorMapCapability[] {
   const providerByName = new Map(providers.map((provider) => [provider.name, provider]));
   const input = response?.map_capabilities ?? {};
   const hasGoogleRoutes = providerByName.get("google_routes")?.enabled || false;
@@ -30,28 +33,93 @@ export function buildMapCapabilities(response: DoorToDoorResponse | null, provid
     // ── Capacidades con valor real (Fase 9) ──
     navigation: hasGoogleRoutes
       ? { state: "available", source_type: "maps", confidence: "live", why_missing: null }
-      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "google_routes_disabled" },
+      : {
+          state: "planned",
+          source_type: "none",
+          confidence: "unavailable",
+          why_missing: "google_routes_disabled",
+        },
     transit: hasGtfsTransit
-      ? { state: "partial", source_type: "open_data", confidence: "cached", why_missing: "corridor_limited" }
-      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "gtfs_provider_disabled" },
+      ? {
+          state: "partial",
+          source_type: "open_data",
+          confidence: "cached",
+          why_missing: "corridor_limited",
+        }
+      : {
+          state: "planned",
+          source_type: "none",
+          confidence: "unavailable",
+          why_missing: "gtfs_provider_disabled",
+        },
     alternatives: response?.options?.length
       ? { state: "available", source_type: "api", confidence: "cached", why_missing: null }
-      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "route_candidates_pending" },
-    saved_places: { state: "available", source_type: "api", confidence: "cached", why_missing: null },
+      : {
+          state: "planned",
+          source_type: "none",
+          confidence: "unavailable",
+          why_missing: "route_candidates_pending",
+        },
+    saved_places: {
+      state: "available",
+      source_type: "api",
+      confidence: "cached",
+      why_missing: null,
+    },
     // ── Fase 7: capacidades activadas con backend real ──
     traffic: hasGoogleRoutes
       ? { state: "partial", source_type: "maps", confidence: "cached", why_missing: "driving_only" }
-      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "google_routes_disabled" },
+      : {
+          state: "planned",
+          source_type: "none",
+          confidence: "unavailable",
+          why_missing: "google_routes_disabled",
+        },
     nearby_pois: hasGooglePlaces
-      ? { state: "partial", source_type: "maps", confidence: "cached", why_missing: "search_endpoint_not_wired" }
-      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "google_places_disabled" },
+      ? {
+          state: "partial",
+          source_type: "maps",
+          confidence: "cached",
+          why_missing: "search_endpoint_not_wired",
+        }
+      : {
+          state: "planned",
+          source_type: "none",
+          confidence: "unavailable",
+          why_missing: "google_places_disabled",
+        },
     // ── Capacidades sembradas, sin backend real ──
-    street_view_preview: { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "street_view_not_connected" },
-    offline: { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "offline_cache_not_implemented" },
+    street_view_preview: {
+      state: "planned",
+      source_type: "none",
+      confidence: "unavailable",
+      why_missing: "street_view_not_connected",
+    },
+    offline: {
+      state: "planned",
+      source_type: "none",
+      confidence: "unavailable",
+      why_missing: "offline_cache_not_implemented",
+    },
     incidents: hasGoogleRoutes
-      ? { state: "partial", source_type: "maps", confidence: "cached", why_missing: "incident_source_limited" }
-      : { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "incident_source_not_connected" },
-    eco_route: { state: "planned", source_type: "none", confidence: "unavailable", why_missing: "eco_route_provider_pending" },
+      ? {
+          state: "partial",
+          source_type: "maps",
+          confidence: "cached",
+          why_missing: "incident_source_limited",
+        }
+      : {
+          state: "planned",
+          source_type: "none",
+          confidence: "unavailable",
+          why_missing: "incident_source_not_connected",
+        },
+    eco_route: {
+      state: "planned",
+      source_type: "none",
+      confidence: "unavailable",
+      why_missing: "eco_route_provider_pending",
+    },
   };
 
   return CAPABILITY_KEYS.map((key) => {
@@ -68,7 +136,10 @@ export function buildMapCapabilities(response: DoorToDoorResponse | null, provid
   });
 }
 
-export function filterSavedPlacesForWatch(savedPlaces: DoorToDoorSavedPlace[], selectedWatchId: string): DoorToDoorSavedPlace[] {
+export function filterSavedPlacesForWatch(
+  savedPlaces: DoorToDoorSavedPlace[],
+  selectedWatchId: string,
+): DoorToDoorSavedPlace[] {
   if (!selectedWatchId) return savedPlaces.filter((item) => item.watch_id === null);
   return savedPlaces.filter((item) => item.watch_id === selectedWatchId || item.watch_id === null);
 }

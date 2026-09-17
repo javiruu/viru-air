@@ -1,9 +1,19 @@
-export const NOTIFICATION_CATEGORIES = ["price", "security", "digest", "worker", "community"] as const;
+export const NOTIFICATION_CATEGORIES = [
+  "price",
+  "security",
+  "digest",
+  "worker",
+  "community",
+] as const;
 
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 export type NotificationFilter = "all" | "actionable" | "unread" | NotificationCategory;
 export type NotificationTone = "success" | "warning" | "error" | "info";
-export type NotificationSourceType = "alert_event" | "hotel_alert_event" | "security_activity" | "community_trending";
+export type NotificationSourceType =
+  | "alert_event"
+  | "hotel_alert_event"
+  | "security_activity"
+  | "community_trending";
 export type NotificationTimelineGroupKey = "today" | "recent" | "earlier";
 
 export type NotificationInboxItem = {
@@ -41,7 +51,12 @@ const SOURCE_TYPES = new Set<NotificationSourceType>([
 ]);
 const CATEGORIES = new Set<NotificationCategory>(NOTIFICATION_CATEGORIES);
 const TONES = new Set<NotificationTone>(["success", "warning", "error", "info"]);
-const FILTERS = new Set<NotificationFilter>(["all", "actionable", "unread", ...NOTIFICATION_CATEGORIES]);
+const FILTERS = new Set<NotificationFilter>([
+  "all",
+  "actionable",
+  "unread",
+  ...NOTIFICATION_CATEGORIES,
+]);
 
 function getProperty(value: object, key: string): unknown {
   return Object.getOwnPropertyDescriptor(value, key)?.value;
@@ -111,7 +126,11 @@ function normalizeItem(value: unknown): NotificationInboxItem | null {
     category:
       typeof categoryValue === "string" && CATEGORIES.has(categoryValue as NotificationCategory)
         ? (categoryValue as NotificationCategory)
-        : sourceType === "security_activity" ? "security" : sourceType === "community_trending" ? "community" : "price",
+        : sourceType === "security_activity"
+          ? "security"
+          : sourceType === "community_trending"
+            ? "community"
+            : "price",
     tone:
       typeof toneValue === "string" && TONES.has(toneValue as NotificationTone)
         ? (toneValue as NotificationTone)
@@ -145,7 +164,10 @@ function deriveSummary(items: readonly NotificationInboxItem[]): NotificationInb
   return summary;
 }
 
-function normalizeSummary(value: unknown, derived: NotificationInboxSummary): NotificationInboxSummary {
+function normalizeSummary(
+  value: unknown,
+  derived: NotificationInboxSummary,
+): NotificationInboxSummary {
   const record = getRecord(value);
   if (!record) return { ...derived };
 
@@ -217,9 +239,12 @@ export function groupNotificationItems(
 
   for (const item of items) {
     const createdAt = new Date(item.created_at);
-    const itemDay = Number.isNaN(createdAt.getTime()) ? Number.NEGATIVE_INFINITY : localDayOrdinal(createdAt);
+    const itemDay = Number.isNaN(createdAt.getTime())
+      ? Number.NEGATIVE_INFINITY
+      : localDayOrdinal(createdAt);
     const ageInDays = Math.floor((today - itemDay) / oneDay);
-    const key: NotificationTimelineGroupKey = ageInDays <= 0 ? "today" : ageInDays <= 7 ? "recent" : "earlier";
+    const key: NotificationTimelineGroupKey =
+      ageInDays <= 0 ? "today" : ageInDays <= 7 ? "recent" : "earlier";
     groups.get(key)?.push(item);
   }
 

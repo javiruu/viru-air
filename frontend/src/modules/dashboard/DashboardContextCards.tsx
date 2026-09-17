@@ -50,7 +50,9 @@ export function DashboardContextCards(args: {
             </strong>
             <p>
               {foundForYou.matchedCountry
-                ? t("dashboard.foundForYou.reasonMatchedCountry", { country: foundForYou.matchedCountry })
+                ? t("dashboard.foundForYou.reasonMatchedCountry", {
+                    country: foundForYou.matchedCountry,
+                  })
                 : t("dashboard.foundForYou.reasonGeneric")}
             </p>
           </div>

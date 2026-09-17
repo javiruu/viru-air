@@ -1,6 +1,7 @@
 export const hotelsEs = {
   title: "Hoteles",
-  subtitle: "Compara la señal disponible, guarda tus hoteles y sigue una estancia cuando el contexto esté completo.",
+  subtitle:
+    "Compara la señal disponible, guarda tus hoteles y sigue una estancia cuando el contexto esté completo.",
   overview: {
     hotels: "Hoteles encontrados",
     tracking: "En seguimiento",
@@ -37,8 +38,10 @@ export const hotelsEs = {
     radiusLabel: "Radio",
     radiusOption: "{value} km",
     useProviderLabel: "Intentar señal de proveedor",
-    providerHintOn: "Si entra señal de proveedor la verás aquí. Si no, Viru mantiene contexto guardado o demo: esta vista no confirma disponibilidad en vivo.",
-    providerHintOff: "Con el proveedor apagado verás contexto guardado o demo. Úsalo para comparar, no como confirmación en vivo.",
+    providerHintOn:
+      "Si entra señal de proveedor la verás aquí. Si no, Viru mantiene contexto guardado o demo: esta vista no confirma disponibilidad en vivo.",
+    providerHintOff:
+      "Con el proveedor apagado verás contexto guardado o demo. Úsalo para comparar, no como confirmación en vivo.",
   },
   area: {
     resultsTitle: "Hoteles en {area}",
@@ -138,7 +141,8 @@ export const hotelsEs = {
     review: "Revisar",
     alertsTitle: "Señales recientes",
     emptyTitle: "Aún no tienes hoteles para revisar",
-    emptyBody: "Busca un hotel, guárdalo o confirma un seguimiento para volver a ver aquí su contexto privado.",
+    emptyBody:
+      "Busca un hotel, guárdalo o confirma un seguimiento para volver a ver aquí su contexto privado.",
   },
   trackingStates: {
     active: "Activo",
@@ -167,15 +171,18 @@ export const hotelsEs = {
   },
   trackedOffers: {
     title: "Seguimientos activos",
-    empty: "No tienes seguimientos. Busca por zona con fechas y pulsa «Seguir precio» en un resultado con precio observado.",
+    empty:
+      "No tienes seguimientos. Busca por zona con fechas y pulsa «Seguir precio» en un resultado con precio observado.",
     loading: "Cargando seguimientos…",
     loadError: "No se pudieron cargar tus seguimientos. Inténtalo de nuevo.",
     pauseTracking: "Pausar seguimiento",
     resumeTracking: "Reanudar seguimiento",
     archiveTracking: "Archivar seguimiento",
-    pastStayCannotResume: "Esta estancia ya ha terminado. Crea un seguimiento nuevo para volver a comprobar precios.",
+    pastStayCannotResume:
+      "Esta estancia ya ha terminado. Crea un seguimiento nuevo para volver a comprobar precios.",
     deleteTracking: "Eliminar seguimiento",
-    deleteConfirmation: "Eliminar borra este seguimiento y su contexto privado. Esta acción no se puede deshacer.",
+    deleteConfirmation:
+      "Eliminar borra este seguimiento y su contexto privado. Esta acción no se puede deshacer.",
     cancelDelete: "Cancelar",
     confirmDelete: "Sí, eliminar",
     currentPrice: "Precio actual",
@@ -195,7 +202,8 @@ export const hotelsEs = {
     snapshotsNotComparable: "No comparable",
     snapshotsVisualTitle: "Precio observado",
     snapshotsVisualComplete: "Cada punto corresponde a una observación comparable registrada.",
-    snapshotsVisualGaps: "Viru muestra puntos separados porque la fuente no certifica la continuidad entre fechas.",
+    snapshotsVisualGaps:
+      "Viru muestra puntos separados porque la fuente no certifica la continuidad entre fechas.",
     freshness: {
       fresh: "Comprobado hace poco.",
       recent: "Comprobado hoy; el precio puede cambiar.",
@@ -208,7 +216,8 @@ export const hotelsEs = {
   },
   trackingConfirmation: {
     title: "Revisa el seguimiento",
-    subtitle: "Viru guardará esta observación privada. El precio y la disponibilidad pueden cambiar.",
+    subtitle:
+      "Viru guardará esta observación privada. El precio y la disponibilidad pueden cambiar.",
     close: "Cerrar confirmación",
     hotel: "Hotel",
     stay: "Estancia",
@@ -291,7 +300,8 @@ export const hotelsEs = {
     watchRemoved: "Hotel quitado de guardados.",
     watchlistLoadError: "No se pudieron cargar los hoteles guardados.",
     watchAlreadyAdded: "Este hotel ya está guardado.",
-    trackingNeedsContext: "Para seguir el precio hace falta una estancia con fechas, huéspedes y un precio observado. Si acabas de seleccionar el hotel, espera a que cargue su precio; si no, guarda el hotel o busca por zona con fechas.",
+    trackingNeedsContext:
+      "Para seguir el precio hace falta una estancia con fechas, huéspedes y un precio observado. Si acabas de seleccionar el hotel, espera a que cargue su precio; si no, guarda el hotel o busca por zona con fechas.",
     compSetCreated: "Comparativa creada.",
     compSetDeleted: "Comparativa eliminada.",
     memberAdded: "Hotel añadido a la comparativa.",
@@ -303,7 +313,8 @@ export const hotelsEs = {
     alertCreated: "Alerta creada.",
     alertUpdated: "Alerta actualizada.",
     alertDeleted: "Alerta eliminada.",
-    trackedOfferCreated: "Seguimiento creado con el precio observado. De momento no hay comprobación automática diaria activada.",
+    trackedOfferCreated:
+      "Seguimiento creado con el precio observado. De momento no hay comprobación automática diaria activada.",
     trackedOfferAlreadyExists: "Este seguimiento ya estaba activo.",
     trackedOfferPaused: "Seguimiento pausado. Se conserva el historial privado.",
     trackedOfferResumed: "Seguimiento reanudado.",
@@ -318,7 +329,8 @@ export const hotelsEs = {
 
 export const hotelsEn = {
   title: "Hotels",
-  subtitle: "Compare the available signal, save your hotels and follow a stay when the context is complete.",
+  subtitle:
+    "Compare the available signal, save your hotels and follow a stay when the context is complete.",
   overview: {
     hotels: "Hotels found",
     tracking: "Being tracked",
@@ -355,8 +367,10 @@ export const hotelsEn = {
     radiusLabel: "Radius",
     radiusOption: "{value} km",
     useProviderLabel: "Try provider signal",
-    providerHintOn: "If a provider responds, Viru adds that signal here. Otherwise you will still see saved or demo context: this view does not confirm live availability.",
-    providerHintOff: "With provider lookup off, you will only see saved or demo context. Use it for comparison, not as a live confirmation.",
+    providerHintOn:
+      "If a provider responds, Viru adds that signal here. Otherwise you will still see saved or demo context: this view does not confirm live availability.",
+    providerHintOff:
+      "With provider lookup off, you will only see saved or demo context. Use it for comparison, not as a live confirmation.",
   },
   area: {
     resultsTitle: "Hotels in {area}",
@@ -456,7 +470,8 @@ export const hotelsEn = {
     review: "Review",
     alertsTitle: "Recent signals",
     emptyTitle: "You do not have hotels to review yet",
-    emptyBody: "Search for a hotel, save it, or confirm tracking to return here to its private context.",
+    emptyBody:
+      "Search for a hotel, save it, or confirm tracking to return here to its private context.",
   },
   trackingStates: {
     active: "Active",
@@ -485,15 +500,18 @@ export const hotelsEn = {
   },
   trackedOffers: {
     title: "Active tracking",
-    empty: "No active tracking. Search by area with dates and tap \"Follow price\" on a result with an observed price.",
+    empty:
+      'No active tracking. Search by area with dates and tap "Follow price" on a result with an observed price.',
     loading: "Loading tracked offers…",
     loadError: "Could not load your tracked offers. Please try again.",
     pauseTracking: "Pause tracking",
     resumeTracking: "Resume tracking",
     archiveTracking: "Archive tracking",
-    pastStayCannotResume: "This stay has already ended. Create a new tracking entry to check prices again.",
+    pastStayCannotResume:
+      "This stay has already ended. Create a new tracking entry to check prices again.",
     deleteTracking: "Delete tracking",
-    deleteConfirmation: "Deleting removes this tracking entry and its private context. This action cannot be undone.",
+    deleteConfirmation:
+      "Deleting removes this tracking entry and its private context. This action cannot be undone.",
     cancelDelete: "Cancel",
     confirmDelete: "Yes, delete",
     currentPrice: "Current price",
@@ -513,7 +531,8 @@ export const hotelsEn = {
     snapshotsNotComparable: "Not comparable",
     snapshotsVisualTitle: "Observed price",
     snapshotsVisualComplete: "Each point represents a recorded comparable observation.",
-    snapshotsVisualGaps: "Viru keeps the points separate because the source does not certify continuity between dates.",
+    snapshotsVisualGaps:
+      "Viru keeps the points separate because the source does not certify continuity between dates.",
     freshness: {
       fresh: "Checked recently.",
       recent: "Checked today; the price may change.",
@@ -609,7 +628,8 @@ export const hotelsEn = {
     watchRemoved: "Hotel removed from saved.",
     watchlistLoadError: "Could not load saved hotels.",
     watchAlreadyAdded: "This hotel is already saved.",
-    trackingNeedsContext: "To follow a price you need a stay with dates, guests and an observed price. If you just selected the hotel, wait for its price to load; otherwise save the hotel or search by area with dates.",
+    trackingNeedsContext:
+      "To follow a price you need a stay with dates, guests and an observed price. If you just selected the hotel, wait for its price to load; otherwise save the hotel or search by area with dates.",
     compSetCreated: "Comparison created.",
     compSetDeleted: "Comparison deleted.",
     memberAdded: "Hotel added to comparison.",
@@ -621,7 +641,8 @@ export const hotelsEn = {
     alertCreated: "Alert created.",
     alertUpdated: "Alert updated.",
     alertDeleted: "Alert deleted.",
-    trackedOfferCreated: "Tracking created with the observed price. Automatic daily checks are not active yet.",
+    trackedOfferCreated:
+      "Tracking created with the observed price. Automatic daily checks are not active yet.",
     trackedOfferAlreadyExists: "This tracking was already active.",
     trackedOfferPaused: "Tracking paused. Your private history is kept.",
     trackedOfferResumed: "Tracking resumed.",

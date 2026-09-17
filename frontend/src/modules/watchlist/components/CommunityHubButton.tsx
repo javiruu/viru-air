@@ -39,7 +39,9 @@ export function CommunityHubButton({
           <span className="watch-ticket-community-orbit" aria-hidden="true" />
           <Plane aria-hidden="true" />
         </>
-      ) : <UsersRound aria-hidden="true" />}
+      ) : (
+        <UsersRound aria-hidden="true" />
+      )}
       {indicator === "contributed" ? (
         <span className="watch-community-hub-check" aria-hidden="true">
           <Check />

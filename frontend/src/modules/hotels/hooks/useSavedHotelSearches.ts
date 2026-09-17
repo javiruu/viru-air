@@ -52,7 +52,7 @@ export function useSavedHotelSearches() {
     setBusyId(id);
     try {
       const updated = await updateSavedHotelSearch(id, { status });
-      setSavedSearches((current) => current.map((item) => item.id === id ? updated : item));
+      setSavedSearches((current) => current.map((item) => (item.id === id ? updated : item)));
       setMutationError(null);
     } catch (cause) {
       setMutationError(cause instanceof Error ? cause.message : "saved_search_update_failed");
@@ -74,5 +74,15 @@ export function useSavedHotelSearches() {
     }
   }, []);
 
-  return { savedSearches, loading, error: error || mutationError, busyId, saving, refreshSavedSearches, saveSearch, setStatus, removeSearch };
+  return {
+    savedSearches,
+    loading,
+    error: error || mutationError,
+    busyId,
+    saving,
+    refreshSavedSearches,
+    saveSearch,
+    setStatus,
+    removeSearch,
+  };
 }

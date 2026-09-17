@@ -1,15 +1,15 @@
-import React, { memo, RefObject } from "react";
+import { memo, type RefObject } from "react";
 import { createPortal } from "react-dom";
 
-import { QuickSearchFieldErrors } from "@/modules/quick-search/types";
-import { QuickSearchCopyKey } from "@/modules/shared/quickSearchCopy";
+import type { QuickSearchFieldErrors } from "@/modules/quick-search/types";
+import type { QuickSearchCopyKey } from "@/modules/shared/quickSearchCopy";
 import { useEscapeClose } from "@/modules/shared/useEscapeClose";
 
 type AdvancedDrawerProps = {
   isOpen: boolean;
   onClose: () => void;
   closeRef?: RefObject<HTMLButtonElement | null>;
-  
+
   departAfter: string;
   departBefore: string;
   strictFilters: boolean;
@@ -22,7 +22,7 @@ type AdvancedDrawerProps = {
   excludeDestinationInput: string;
   fieldErrors: QuickSearchFieldErrors;
   t: (key: QuickSearchCopyKey) => string;
-  
+
   setDepartAfter: (value: string) => void;
   setDepartBefore: (value: string) => void;
   setStrictFilters: (value: boolean) => void;
@@ -92,7 +92,6 @@ function QuickSearchAdvancedDrawerInner(props: AdvancedDrawerProps) {
         </div>
 
         <div className="qs-filter-console-drawer">
-          
           <section className="qs-filter-group qs-filter-group-guided" data-ui="qs-filter-stops">
             <div className="qs-filter-section-head">
               <div>
@@ -111,7 +110,14 @@ function QuickSearchAdvancedDrawerInner(props: AdvancedDrawerProps) {
                 />
                 <span className="qs-check-ui" aria-hidden="true">
                   <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                    <path d="M5.5 12.5 10 17l8.5-9" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                      d="M5.5 12.5 10 17l8.5-9"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </span>
                 {props.t("includeStops")}
@@ -146,19 +152,22 @@ function QuickSearchAdvancedDrawerInner(props: AdvancedDrawerProps) {
                       aria-invalid={Boolean(props.fieldErrors.buffer_min)}
                       data-ui="qs-filter-buffer-min"
                     />
-                    {props.fieldErrors.buffer_min ? <small className="qs-error">{props.fieldErrors.buffer_min}</small> : null}
+                    {props.fieldErrors.buffer_min ? (
+                      <small className="qs-error">{props.fieldErrors.buffer_min}</small>
+                    ) : null}
                   </label>
                 </>
               )}
             </div>
             {props.includeStops && (
-              <div className="qs-warning">
-                {props.t("selfConnectWarningDetail")}
-              </div>
+              <div className="qs-warning">{props.t("selfConnectWarningDetail")}</div>
             )}
           </section>
 
-          <section className="qs-filter-group qs-filter-group-guided" data-ui="qs-filter-exclusions">
+          <section
+            className="qs-filter-group qs-filter-group-guided"
+            data-ui="qs-filter-exclusions"
+          >
             <div className="qs-filter-section-head">
               <div>
                 <span className="qs-filter-eyebrow">{props.t("filterAppliedOnSearch")}</span>
@@ -278,23 +287,41 @@ function QuickSearchAdvancedDrawerInner(props: AdvancedDrawerProps) {
                 />
                 <span className="qs-check-ui" aria-hidden="true">
                   <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-                    <path d="M5.5 12.5 10 17l8.5-9" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                      d="M5.5 12.5 10 17l8.5-9"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </span>
                 {props.t("strictMode")}
               </label>
             </div>
-            {!props.strictFilters ? <div className="qs-warning">{props.t("strictWarning")}</div> : null}
+            {!props.strictFilters ? (
+              <div className="qs-warning">{props.t("strictWarning")}</div>
+            ) : null}
           </section>
-
         </div>
 
         <div className="qs-filter-actions">
-          <button type="button" className="btn-ghost qs-reset-all" onClick={props.onClearAll} data-ui="qs-filter-reset-advanced">
+          <button
+            type="button"
+            className="btn-ghost qs-reset-all"
+            onClick={props.onClearAll}
+            data-ui="qs-filter-reset-advanced"
+          >
             {props.t("resetAll")}
           </button>
           {props.pendingSearchChanges && props.onApplyAndSearch ? (
-            <button type="button" className="btn-search" onClick={props.onApplyAndSearch} data-ui="qs-filter-apply-search">
+            <button
+              type="button"
+              className="btn-search"
+              onClick={props.onApplyAndSearch}
+              data-ui="qs-filter-apply-search"
+            >
               {props.t("applyAndSearch")}
             </button>
           ) : null}
@@ -306,22 +333,28 @@ function QuickSearchAdvancedDrawerInner(props: AdvancedDrawerProps) {
   return typeof document !== "undefined" ? createPortal(drawer, document.body) : null;
 }
 
-function areAdvancedDrawerPropsEqual(prev: AdvancedDrawerProps, next: AdvancedDrawerProps): boolean {
+function areAdvancedDrawerPropsEqual(
+  prev: AdvancedDrawerProps,
+  next: AdvancedDrawerProps,
+): boolean {
   return (
-    prev.isOpen === next.isOpen
-    && prev.departAfter === next.departAfter
-    && prev.departBefore === next.departBefore
-    && prev.strictFilters === next.strictFilters
-    && prev.includeStops === next.includeStops
-    && prev.maxStops === next.maxStops
-    && prev.bufferMin === next.bufferMin
-    && prev.excludeOrigins === next.excludeOrigins
-    && prev.excludeDestinations === next.excludeDestinations
-    && prev.excludeOriginInput === next.excludeOriginInput
-    && prev.excludeDestinationInput === next.excludeDestinationInput
-    && prev.fieldErrors === next.fieldErrors
-    && prev.pendingSearchChanges === next.pendingSearchChanges
+    prev.isOpen === next.isOpen &&
+    prev.departAfter === next.departAfter &&
+    prev.departBefore === next.departBefore &&
+    prev.strictFilters === next.strictFilters &&
+    prev.includeStops === next.includeStops &&
+    prev.maxStops === next.maxStops &&
+    prev.bufferMin === next.bufferMin &&
+    prev.excludeOrigins === next.excludeOrigins &&
+    prev.excludeDestinations === next.excludeDestinations &&
+    prev.excludeOriginInput === next.excludeOriginInput &&
+    prev.excludeDestinationInput === next.excludeDestinationInput &&
+    prev.fieldErrors === next.fieldErrors &&
+    prev.pendingSearchChanges === next.pendingSearchChanges
   );
 }
 
-export const QuickSearchAdvancedDrawer = memo(QuickSearchAdvancedDrawerInner, areAdvancedDrawerPropsEqual);
+export const QuickSearchAdvancedDrawer = memo(
+  QuickSearchAdvancedDrawerInner,
+  areAdvancedDrawerPropsEqual,
+);

@@ -45,13 +45,22 @@ export function HotelSavedSearchesPanel({
             placeholder={t("hotels.savedSearches.labelPlaceholder")}
             aria-label={t("hotels.savedSearches.label")}
           />
-          <button type="button" className="btn-ghost btn-compact" disabled={saving} onClick={() => void onSave(label)}>
+          <button
+            type="button"
+            className="btn-ghost btn-compact"
+            disabled={saving}
+            onClick={() => void onSave(label)}
+          >
             {saving ? t("shared.states.loading") : t("hotels.savedSearches.save")}
           </button>
         </div>
       ) : null}
       {loading ? <p className="panel-note">{t("shared.states.loading")}</p> : null}
-      {error ? <p className="panel-note" role="alert">{t("hotels.savedSearches.loadError")}</p> : null}
+      {error ? (
+        <p className="panel-note" role="alert">
+          {t("hotels.savedSearches.loadError")}
+        </p>
+      ) : null}
       {!loading && !error && searches.length === 0 ? (
         <p className="panel-note">{t("hotels.savedSearches.empty")}</p>
       ) : null}
@@ -61,21 +70,38 @@ export function HotelSavedSearchesPanel({
             <article key={search.id} className="list-row hotel-saved-search-item">
               <div>
                 <strong>{search.label || t("hotels.savedSearches.untitled")}</strong>
-                <p className="panel-note">{search.status === "paused" ? t("hotels.savedSearches.paused") : t("hotels.savedSearches.active")}</p>
+                <p className="panel-note">
+                  {search.status === "paused"
+                    ? t("hotels.savedSearches.paused")
+                    : t("hotels.savedSearches.active")}
+                </p>
               </div>
               <div className="hotel-tracked-offer-actions">
-                <button type="button" className="btn-ghost btn-compact" onClick={() => onRestore(search)}>
+                <button
+                  type="button"
+                  className="btn-ghost btn-compact"
+                  onClick={() => onRestore(search)}
+                >
                   {t("hotels.savedSearches.restore")}
                 </button>
                 <button
                   type="button"
                   className="btn-ghost btn-compact"
                   disabled={busyId === search.id}
-                  onClick={() => void onPause(search.id, search.status === "paused" ? "active" : "paused")}
+                  onClick={() =>
+                    void onPause(search.id, search.status === "paused" ? "active" : "paused")
+                  }
                 >
-                  {search.status === "paused" ? t("hotels.savedSearches.resume") : t("hotels.savedSearches.pause")}
+                  {search.status === "paused"
+                    ? t("hotels.savedSearches.resume")
+                    : t("hotels.savedSearches.pause")}
                 </button>
-                <button type="button" className="btn-ghost btn-compact" disabled={busyId === search.id} onClick={() => void onDelete(search.id)}>
+                <button
+                  type="button"
+                  className="btn-ghost btn-compact"
+                  disabled={busyId === search.id}
+                  onClick={() => void onDelete(search.id)}
+                >
                   {t("hotels.savedSearches.delete")}
                 </button>
               </div>

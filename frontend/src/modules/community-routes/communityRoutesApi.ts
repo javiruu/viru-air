@@ -21,15 +21,11 @@ function normalizeIata(value: unknown): string | null {
 }
 
 function normalizeCount(value: unknown): number {
-  return typeof value === "number" && Number.isFinite(value) && value >= 0
-    ? Math.floor(value)
-    : 0;
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? Math.floor(value) : 0;
 }
 
 function normalizeNullablePrice(value: unknown): number | null {
-  return typeof value === "number" && Number.isFinite(value) && value >= 0
-    ? value
-    : null;
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null;
 }
 
 function normalizePopularRoute(value: unknown): CommunityPopularRoute | null {
@@ -45,65 +41,67 @@ function normalizePopularRoute(value: unknown): CommunityPopularRoute | null {
   };
 }
 
-export function normalizePopularRoutesResponse(
-  value: unknown,
-): CommunityPopularRoutesResponse {
+export function normalizePopularRoutesResponse(value: unknown): CommunityPopularRoutesResponse {
   if (!isRecord(value) || value.window_days !== 7) {
     return { window_days: 7, routes: [] };
   }
-  const routes = isRecord(value) && Array.isArray(value.routes)
-    ? value.routes.map(normalizePopularRoute).filter((route): route is CommunityPopularRoute => route !== null)
-    : [];
+  const routes =
+    isRecord(value) && Array.isArray(value.routes)
+      ? value.routes
+          .map(normalizePopularRoute)
+          .filter((route): route is CommunityPopularRoute => route !== null)
+      : [];
   return { window_days: 7, routes: routes.slice(0, 10) };
 }
 
-export function normalizeRouteInsightsResponse(
-  value: unknown,
-): CommunityRouteInsightsResponse {
-  const routes = isRecord(value) && Array.isArray(value.routes)
-    ? value.routes.flatMap((candidate): CommunityRouteInsight[] => {
-        const route = normalizePopularRoute(candidate);
-        if (!route || !isRecord(candidate)) return [];
-        const sampleSize = normalizeCount(candidate.sample_size);
-        const minPrice = normalizeNullablePrice(candidate.min_price);
-        const maxPrice = normalizeNullablePrice(candidate.max_price);
-        const isPublic = sampleSize >= COMMUNITY_MIN_SAMPLE_SIZE && minPrice !== null && maxPrice !== null;
-        return [{
-          ...route,
-          sample_size: isPublic ? sampleSize : 0,
-          min_price: isPublic ? minPrice : null,
-          max_price: isPublic ? maxPrice : null,
-          currency: "EUR",
-        }];
-      })
-    : [];
+export function normalizeRouteInsightsResponse(value: unknown): CommunityRouteInsightsResponse {
+  const routes =
+    isRecord(value) && Array.isArray(value.routes)
+      ? value.routes.flatMap((candidate): CommunityRouteInsight[] => {
+          const route = normalizePopularRoute(candidate);
+          if (!route || !isRecord(candidate)) return [];
+          const sampleSize = normalizeCount(candidate.sample_size);
+          const minPrice = normalizeNullablePrice(candidate.min_price);
+          const maxPrice = normalizeNullablePrice(candidate.max_price);
+          const isPublic =
+            sampleSize >= COMMUNITY_MIN_SAMPLE_SIZE && minPrice !== null && maxPrice !== null;
+          return [
+            {
+              ...route,
+              sample_size: isPublic ? sampleSize : 0,
+              min_price: isPublic ? minPrice : null,
+              max_price: isPublic ? maxPrice : null,
+              currency: "EUR",
+            },
+          ];
+        })
+      : [];
   return { routes };
 }
 
-export function normalizeRelatedRoutesResponse(
-  value: unknown,
-): CommunityRelatedRoutesResponse {
-  const routes = isRecord(value) && Array.isArray(value.routes)
-    ? value.routes.flatMap((candidate): CommunityRelatedRoute[] => {
-        if (!isRecord(candidate)) return [];
-        const origin = normalizeIata(candidate.origin_iata);
-        const destination = normalizeIata(candidate.destination_iata);
-        const travelersCount = normalizeCount(candidate.travelers_count);
-        if (!origin || !destination || travelersCount < COMMUNITY_MIN_SAMPLE_SIZE) return [];
-        return [{
-          origin_iata: origin,
-          destination_iata: destination,
-          travelers_count: travelersCount,
-        }];
-      })
-    : [];
+export function normalizeRelatedRoutesResponse(value: unknown): CommunityRelatedRoutesResponse {
+  const routes =
+    isRecord(value) && Array.isArray(value.routes)
+      ? value.routes.flatMap((candidate): CommunityRelatedRoute[] => {
+          if (!isRecord(candidate)) return [];
+          const origin = normalizeIata(candidate.origin_iata);
+          const destination = normalizeIata(candidate.destination_iata);
+          const travelersCount = normalizeCount(candidate.travelers_count);
+          if (!origin || !destination || travelersCount < COMMUNITY_MIN_SAMPLE_SIZE) return [];
+          return [
+            {
+              origin_iata: origin,
+              destination_iata: destination,
+              travelers_count: travelersCount,
+            },
+          ];
+        })
+      : [];
   return { routes: routes.slice(0, 3) };
 }
 
 export async function fetchPopularCommunityRoutes(): Promise<CommunityPopularRoutesResponse> {
-  return normalizePopularRoutesResponse(
-    await apiFetch<unknown>("/community/routes/popular"),
-  );
+  return normalizePopularRoutesResponse(await apiFetch<unknown>("/community/routes/popular"));
 }
 
 export async function fetchCommunityRouteInsights(
@@ -137,9 +135,7 @@ export async function fetchPopularDestinationsFromOrigin(
   origin: string,
 ): Promise<CommunityPopularRoutesResponse> {
   return normalizePopularRoutesResponse(
-    await apiFetch<unknown>(
-      `/community/routes/popular-from/${encodeURIComponent(origin)}`,
-    ),
+    await apiFetch<unknown>(`/community/routes/popular-from/${encodeURIComponent(origin)}`),
   );
 }
 

@@ -95,11 +95,17 @@ export default function ProductHealthPage() {
       <section className="page-header">
         <div>
           <h1>Product Health</h1>
-          <p className="panel-note">Observabilidad de uso, errores, rendimiento y Fare Memory (solo admin).</p>
+          <p className="panel-note">
+            Observabilidad de uso, errores, rendimiento y Fare Memory (solo admin).
+          </p>
         </div>
         <div className="hotel-observability-hero-actions">
-          <Link href="/admin/hotels-observability" className="btn-secondary">{t("admin.hotelObservability.title")}</Link>
-          <Link href="/admin" className="btn-ghost">{t("admin.hotelObservability.back")}</Link>
+          <Link href="/admin/hotels-observability" className="btn-secondary">
+            {t("admin.hotelObservability.title")}
+          </Link>
+          <Link href="/admin" className="btn-ghost">
+            {t("admin.hotelObservability.back")}
+          </Link>
         </div>
       </section>
 
@@ -114,18 +120,40 @@ export default function ProductHealthPage() {
                 {systemMeta?.label ?? data.system.status}
               </span>
             </div>
-            <p className="panel-note">Ultima actualizacion de datos: {data.system.last_data_update ?? "sin datos"}</p>
-            <p className="panel-note">Ultima ejecucion de alertas: {data.system.last_alert_execution ?? "sin datos"}</p>
+            <p className="panel-note">
+              Ultima actualizacion de datos: {data.system.last_data_update ?? "sin datos"}
+            </p>
+            <p className="panel-note">
+              Ultima ejecucion de alertas: {data.system.last_alert_execution ?? "sin datos"}
+            </p>
           </section>
 
           <section className="section-gap">
             <div className="dashboard-primary-grid">
-              <article className="module-card"><strong>Visitas dashboard</strong><span>{data.usage.dashboard_view?.weekly ?? 0}</span></article>
-              <article className="module-card"><strong>Busquedas rapidas</strong><span>{data.usage.quick_search_executed?.weekly ?? 0}</span></article>
-              <article className="module-card"><strong>Refresh watchlist</strong><span>{data.usage.watchlist_refresh?.weekly ?? 0}</span></article>
-              <article className="module-card"><strong>Alertas creadas</strong><span>{data.usage.alert_created?.weekly ?? 0}</span></article>
-              <article className="module-card"><strong>Alertas disparadas</strong><span>{data.usage.alert_triggered?.weekly ?? 0}</span></article>
-              <article className="module-card"><strong>Search empty</strong><span>{data.usage.search_empty_results?.weekly ?? 0}</span></article>
+              <article className="module-card">
+                <strong>Visitas dashboard</strong>
+                <span>{data.usage.dashboard_view?.weekly ?? 0}</span>
+              </article>
+              <article className="module-card">
+                <strong>Busquedas rapidas</strong>
+                <span>{data.usage.quick_search_executed?.weekly ?? 0}</span>
+              </article>
+              <article className="module-card">
+                <strong>Refresh watchlist</strong>
+                <span>{data.usage.watchlist_refresh?.weekly ?? 0}</span>
+              </article>
+              <article className="module-card">
+                <strong>Alertas creadas</strong>
+                <span>{data.usage.alert_created?.weekly ?? 0}</span>
+              </article>
+              <article className="module-card">
+                <strong>Alertas disparadas</strong>
+                <span>{data.usage.alert_triggered?.weekly ?? 0}</span>
+              </article>
+              <article className="module-card">
+                <strong>Search empty</strong>
+                <span>{data.usage.search_empty_results?.weekly ?? 0}</span>
+              </article>
             </div>
           </section>
 
@@ -159,7 +187,9 @@ export default function ProductHealthPage() {
           <section className="split section-gap">
             <article className="panel">
               <h2 className="panel-title">Errores recientes</h2>
-              {data.errors.recent.length === 0 ? <p className="panel-note">Sin errores recientes.</p> : (
+              {data.errors.recent.length === 0 ? (
+                <p className="panel-note">Sin errores recientes.</p>
+              ) : (
                 <ul>
                   {data.errors.recent.map((item, idx) => (
                     <li key={`${item.created_at}-${idx}`}>
@@ -172,7 +202,9 @@ export default function ProductHealthPage() {
 
             <article className="panel">
               <h2 className="panel-title">Errores frecuentes</h2>
-              {data.errors.frequent.length === 0 ? <p className="panel-note">Sin errores frecuentes.</p> : (
+              {data.errors.frequent.length === 0 ? (
+                <p className="panel-note">Sin errores frecuentes.</p>
+              ) : (
                 <ul>
                   {data.errors.frequent.map((item, idx) => (
                     <li key={`${item.message}-${idx}`}>
@@ -190,6 +222,3 @@ export default function ProductHealthPage() {
     </main>
   );
 }
-
-
-

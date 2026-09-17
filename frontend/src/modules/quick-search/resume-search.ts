@@ -38,7 +38,10 @@ export type ResumeSearchSnapshot = {
   resultsCount: number;
 };
 
-type SnapshotInput = Omit<ResumeSearchSnapshot, "key" | "ownerTokenHint" | "savedAt" | "href" | "summary" | "detail">;
+type SnapshotInput = Omit<
+  ResumeSearchSnapshot,
+  "key" | "ownerTokenHint" | "savedAt" | "href" | "summary" | "detail"
+>;
 
 function tokenHint(): string | null {
   const token = getToken();
@@ -109,7 +112,9 @@ function buildHref(input: SnapshotInput): string {
   return `/quick-search?resume=1${query ? `&${query}` : ""}`;
 }
 
-export function buildResumeSearchSnapshot(args: SnapshotInput & { summary: string; detail: string; now?: Date }): ResumeSearchSnapshot | null {
+export function buildResumeSearchSnapshot(
+  args: SnapshotInput & { summary: string; detail: string; now?: Date },
+): ResumeSearchSnapshot | null {
   const input: SnapshotInput = {
     origin: args.origin,
     destination: args.destination,

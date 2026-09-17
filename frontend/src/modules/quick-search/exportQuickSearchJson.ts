@@ -1,5 +1,10 @@
 import type { QuickSearchCanonicalPayload } from "@/modules/quick-search/api/buildQuickSearchRequest";
-import type { QuickSearchSortBy, SearchFilters, SearchResponse, SearchResult } from "@/modules/quick-search/types";
+import type {
+  QuickSearchSortBy,
+  SearchFilters,
+  SearchResponse,
+  SearchResult,
+} from "@/modules/quick-search/types";
 
 export const QUICK_SEARCH_EXPORT_PAGE_SIZE = 100;
 

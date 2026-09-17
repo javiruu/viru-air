@@ -2,7 +2,9 @@ import { translate } from "@/i18n/shell";
 import { getToken, hasToken } from "@/modules/shared/auth";
 
 const RAW_API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1").trim();
-const RAW_LOCAL_API_ORIGIN = (process.env.NEXT_PUBLIC_LOCAL_API_ORIGIN || "http://127.0.0.1:8000").trim();
+const RAW_LOCAL_API_ORIGIN = (
+  process.env.NEXT_PUBLIC_LOCAL_API_ORIGIN || "http://127.0.0.1:8000"
+).trim();
 
 export function resolveApiBase(rawBase: string): string {
   if (typeof window === "undefined") return rawBase;
@@ -52,7 +54,10 @@ function withApiVersion(origin: string): string {
   return `${origin.replace(/\/$/, "")}/api/v1`;
 }
 
-export function resolveLongRunningApiBase(rawBase: string, localApiOrigin: string = RAW_LOCAL_API_ORIGIN): string {
+export function resolveLongRunningApiBase(
+  rawBase: string,
+  localApiOrigin: string = RAW_LOCAL_API_ORIGIN,
+): string {
   const apiBase = resolveApiBase(rawBase);
   if (typeof window === "undefined") return apiBase;
   if (!rawBase.trim().startsWith("/") || !localApiOrigin.trim()) return apiBase;
@@ -117,7 +122,10 @@ function shouldSetJsonContentType(init?: RequestInit): boolean {
   if (typeof Blob !== "undefined" && body instanceof Blob) {
     return false;
   }
-  if (typeof ArrayBuffer !== "undefined" && (body instanceof ArrayBuffer || ArrayBuffer.isView(body as ArrayBufferView))) {
+  if (
+    typeof ArrayBuffer !== "undefined" &&
+    (body instanceof ArrayBuffer || ArrayBuffer.isView(body as ArrayBufferView))
+  ) {
     return false;
   }
   return true;
@@ -135,6 +143,9 @@ function buildHeaders(init?: RequestInit): Headers {
 
 function clearStoredToken() {
   if (typeof window !== "undefined") {
+    window.localStorage.removeItem("sb_access_token");
+    window.localStorage.removeItem("sb_refresh_token");
+    // Purge pre-Supabase session keys left by older deployments.
     window.localStorage.removeItem("viru_token");
     window.localStorage.removeItem("viru_refresh_token");
   }
@@ -254,22 +265,24 @@ function extractDetailMessage(detail: unknown): string | null {
 function extractTopLevelErrorEnvelope(parsed: unknown): ParsedErrorEnvelope | null {
   if (!parsed || typeof parsed !== "object") return null;
   const candidate = parsed as Record<string, unknown>;
-  const hasKnownKey = (
-    "code" in candidate
-    || "message" in candidate
-    || "details" in candidate
-    || "retry_after_sec" in candidate
-    || "correlation_id" in candidate
-    || "client_event_id" in candidate
-  );
+  const hasKnownKey =
+    "code" in candidate ||
+    "message" in candidate ||
+    "details" in candidate ||
+    "retry_after_sec" in candidate ||
+    "correlation_id" in candidate ||
+    "client_event_id" in candidate;
   if (!hasKnownKey) return null;
   return {
     code: typeof candidate.code === "string" ? candidate.code : undefined,
     message: typeof candidate.message === "string" ? candidate.message : undefined,
     details: candidate.details,
-    retry_after_sec: typeof candidate.retry_after_sec === "number" ? candidate.retry_after_sec : undefined,
-    correlation_id: typeof candidate.correlation_id === "string" ? candidate.correlation_id : undefined,
-    client_event_id: typeof candidate.client_event_id === "string" ? candidate.client_event_id : undefined,
+    retry_after_sec:
+      typeof candidate.retry_after_sec === "number" ? candidate.retry_after_sec : undefined,
+    correlation_id:
+      typeof candidate.correlation_id === "string" ? candidate.correlation_id : undefined,
+    client_event_id:
+      typeof candidate.client_event_id === "string" ? candidate.client_event_id : undefined,
   };
 }
 
@@ -309,8 +322,8 @@ export async function apiFetchWithStatus<T>(
   }
   const timeoutId = timeoutMs
     ? globalThis.setTimeout(() => {
-      timeoutController?.abort();
-    }, timeoutMs)
+        timeoutController?.abort();
+      }, timeoutMs)
     : null;
   let response: Response;
   try {
@@ -373,13 +386,21 @@ export async function apiFetchWithStatus<T>(
           status: response.status,
           code: authCode || "INVALID_TOKEN",
           message: translate("shared.errors.sessionExpired"),
-          correlation_id: topLevelEnvelope?.correlation_id || response.headers.get("x-correlation-id") || undefined,
-          client_event_id: topLevelEnvelope?.client_event_id || response.headers.get("x-client-event-id") || undefined,
+          correlation_id:
+            topLevelEnvelope?.correlation_id ||
+            response.headers.get("x-correlation-id") ||
+            undefined,
+          client_event_id:
+            topLevelEnvelope?.client_event_id ||
+            response.headers.get("x-client-event-id") ||
+            undefined,
         },
       };
     }
     if (response.status === 401) {
-      const authEntryMessage = topLevelEnvelope?.message || (isAuthEntryPath(path) && rawText.trim().length > 0 ? rawText : undefined);
+      const authEntryMessage =
+        topLevelEnvelope?.message ||
+        (isAuthEntryPath(path) && rawText.trim().length > 0 ? rawText : undefined);
       return {
         ok: false,
         status: response.status,
@@ -389,12 +410,19 @@ export async function apiFetchWithStatus<T>(
           code: authCode || "UNAUTHORIZED",
           message: authEntryMessage || translate("shared.errors.sessionRequired"),
           details: topLevelEnvelope?.details,
-          correlation_id: topLevelEnvelope?.correlation_id || response.headers.get("x-correlation-id") || undefined,
-          client_event_id: topLevelEnvelope?.client_event_id || response.headers.get("x-client-event-id") || undefined,
+          correlation_id:
+            topLevelEnvelope?.correlation_id ||
+            response.headers.get("x-correlation-id") ||
+            undefined,
+          client_event_id:
+            topLevelEnvelope?.client_event_id ||
+            response.headers.get("x-client-event-id") ||
+            undefined,
         },
       };
     }
-    const parsedObj = parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+    const parsedObj =
+      parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
     const errorObj =
       parsed && typeof parsed === "object" && "error" in (parsed as Record<string, unknown>)
         ? (parsed as { error?: Record<string, unknown> }).error || {}
@@ -404,7 +432,9 @@ export async function apiFetchWithStatus<T>(
       topLevelEnvelope?.message ||
       extractDetailMessage(detail) ||
       (errorObj?.message as string | undefined) ||
-      (typeof rawText === "string" && rawText.trim().length > 0 ? rawText : `HTTP ${response.status}`);
+      (typeof rawText === "string" && rawText.trim().length > 0
+        ? rawText
+        : `HTTP ${response.status}`);
     const retryAfter =
       topLevelEnvelope?.retry_after_sec ||
       (typeof errorObj?.retry_after_sec === "number"
@@ -420,8 +450,12 @@ export async function apiFetchWithStatus<T>(
         message,
         details: topLevelEnvelope?.details ?? errorObj?.details ?? detail,
         retry_after_sec: retryAfter,
-        correlation_id: topLevelEnvelope?.correlation_id || response.headers.get("x-correlation-id") || undefined,
-        client_event_id: topLevelEnvelope?.client_event_id || response.headers.get("x-client-event-id") || undefined,
+        correlation_id:
+          topLevelEnvelope?.correlation_id || response.headers.get("x-correlation-id") || undefined,
+        client_event_id:
+          topLevelEnvelope?.client_event_id ||
+          response.headers.get("x-client-event-id") ||
+          undefined,
       },
     };
   }

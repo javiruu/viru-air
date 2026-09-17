@@ -39,9 +39,7 @@ export function useCommunityRouteInsights(
     void fetchCommunityRouteInsights(requestedRoutes)
       .then((response) => {
         if (!active) return;
-        setInsights(
-          new Map(response.routes.map((route) => [communityRouteKey(route), route])),
-        );
+        setInsights(new Map(response.routes.map((route) => [communityRouteKey(route), route])));
       })
       .catch(() => {
         if (active) setInsights(new Map());

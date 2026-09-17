@@ -1,8 +1,15 @@
 import React from "react";
-
 import { resolveQuickSearchProviderPresentation } from "@/modules/quick-search/providerPresentation";
 import type { QuickSearchProviderId } from "@/modules/quick-search/providerPresentation";
-import { RyanairIcon, VuelingIcon, WizzAirIcon, EasyJetIcon, IberiaIcon, DuffelIcon, GenericProviderIcon } from "@/icons";
+import {
+  RyanairIcon,
+  VuelingIcon,
+  WizzAirIcon,
+  EasyJetIcon,
+  IberiaIcon,
+  DuffelIcon,
+  GenericProviderIcon,
+} from "@/icons";
 
 function ProviderLogo({
   providerId,

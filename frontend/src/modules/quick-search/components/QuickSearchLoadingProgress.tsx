@@ -1,7 +1,7 @@
-import React from "react";
+import type React from "react";
 
 import { BoneyardLoad, LoadReference } from "@/modules/shared/BoneyardLoad";
-import { QuickSearchLoadingSubcheckStatus } from "@/modules/quick-search/types";
+import type { QuickSearchLoadingSubcheckStatus } from "@/modules/quick-search/types";
 import { RyanairIcon, WizzAirIcon, GenericProviderIcon } from "@/icons";
 
 type LoadingSubcheck = {
@@ -52,10 +52,19 @@ function ProviderSearchIcon({ status }: { status: ProviderSearchStatus["status"]
   }
   if (status === "found") {
     return (
-      <span className="qs-provider-status-icon qs-provider-status-icon--found" aria-label="Resultados encontrados">
+      <span
+        className="qs-provider-status-icon qs-provider-status-icon--found"
+        aria-label="Resultados encontrados"
+      >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.15" />
-          <path d="M8 12l3 3 5-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M8 12l3 3 5-6"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </span>
     );
@@ -65,14 +74,22 @@ function ProviderSearchIcon({ status }: { status: ProviderSearchStatus["status"]
       <span className="qs-provider-status-icon qs-provider-status-icon--error" aria-label="Error">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.15" />
-          <path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+          <path
+            d="M8 8l8 8M16 8l-8 8"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
         </svg>
       </span>
     );
   }
   // pending
   return (
-    <span className="qs-provider-status-icon qs-provider-status-icon--pending" aria-label="Pendiente">
+    <span
+      className="qs-provider-status-icon qs-provider-status-icon--pending"
+      aria-label="Pendiente"
+    >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.1" />
         <circle cx="12" cy="12" r="4" fill="currentColor" opacity="0.3" />
@@ -105,7 +122,13 @@ export function QuickSearchLoadingProgress(props: Props) {
       >
         <div
           className="qs-boarding-head"
-          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 8,
+            marginBottom: 8,
+          }}
         >
           <span className="muted">{props.loadingPhaseLabel}</span>
           <strong>{props.progressPercent}%</strong>
@@ -114,7 +137,10 @@ export function QuickSearchLoadingProgress(props: Props) {
           <span className="qs-boarding-subchecks-title">{props.loadingSubcheckTitle}</span>
           <ul className="qs-boarding-subchecks-list">
             {props.loadingSubchecks.map((item) => (
-              <li key={item.id} className={`qs-boarding-subcheck qs-boarding-subcheck--${item.status}`}>
+              <li
+                key={item.id}
+                className={`qs-boarding-subcheck qs-boarding-subcheck--${item.status}`}
+              >
                 <span className="qs-boarding-subcheck-dot" aria-hidden="true" />
                 <span className="qs-boarding-subcheck-text">{item.label}</span>
                 <span className="qs-boarding-subcheck-state">
@@ -145,10 +171,12 @@ export function QuickSearchLoadingProgress(props: Props) {
           <div
             className="qs-boarding-passengers"
             data-no-marker="true"
-            style={{
-              "--qs-board-step": props.boardedCount,
-              visibility: props.showBoarding ? "visible" : "hidden",
-            } as React.CSSProperties}
+            style={
+              {
+                "--qs-board-step": props.boardedCount,
+                visibility: props.showBoarding ? "visible" : "hidden",
+              } as React.CSSProperties
+            }
           >
             {Array.from({ length: props.boardingPassengers }).map((_, idx) => {
               const isHidden = !props.showBoarding || idx < props.boardedCount;
@@ -167,8 +195,12 @@ export function QuickSearchLoadingProgress(props: Props) {
 
         {/* Provider search status badges */}
         {hasProviders && (
-          <div className="qs-provider-loading-badges" role="status" aria-label="Estado de búsqueda por aerolínea">
-            {props.providerStatuses!.map((pv) => (
+          <div
+            className="qs-provider-loading-badges"
+            role="status"
+            aria-label="Estado de búsqueda por aerolínea"
+          >
+            {props.providerStatuses?.map((pv) => (
               <div
                 key={pv.id}
                 className={`qs-provider-loading-badge qs-provider-loading-badge--${pv.status}`}
@@ -188,10 +220,16 @@ export function QuickSearchLoadingProgress(props: Props) {
       <p>{props.loadingText}</p>
       <div className="qs-loading-kpis" aria-live="polite">
         <p className="qs-loading-kpi">{props.loadingTotalText}</p>
-        <p className="qs-loading-kpi"><strong>{props.loadingProgressText}</strong></p>
+        <p className="qs-loading-kpi">
+          <strong>{props.loadingProgressText}</strong>
+        </p>
         <p className="qs-loading-kpi qs-loading-kpi-muted">{props.loadingScopeText}</p>
       </div>
-      <BoneyardLoad name="quick-search-progress-load" className="qs-loading-bones" ariaLabel={props.loadingAria}>
+      <BoneyardLoad
+        name="quick-search-progress-load"
+        className="qs-loading-bones"
+        ariaLabel={props.loadingAria}
+      >
         {Array.from({ length: 4 }).map((_, idx) => (
           <article key={`quick-search-load-${idx}`} className="qs-loading-card">
             <LoadReference className="qs-load-route" />

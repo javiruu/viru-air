@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
+import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiFetch } from "@/modules/shared/api";
 import { BoneyardPanel } from "@/modules/shared/BoneyardLoad";
 
@@ -12,7 +14,11 @@ export type HelpSection = {
   cta_label?: string;
   cta_href?: string;
 };
-type HelpPayload = { title: string; status?: { state: string; message: string }; sections: HelpSection[] };
+type HelpPayload = {
+  title: string;
+  status?: { state: string; message: string };
+  sections: HelpSection[];
+};
 
 type HelpBaseProps = {
   endpoint: "/public/help" | "/support/help";
@@ -48,7 +54,11 @@ export default function HelpBase(props: HelpBaseProps) {
             <p>{props.subtitle}</p>
           </div>
         </div>
-        <BoneyardPanel name="help-page-load" className="air-loader-section" ariaLabel={props.loadingLabel} />
+        <BoneyardPanel
+          name="help-page-load"
+          className="air-loader-section"
+          ariaLabel={props.loadingLabel}
+        />
       </main>
     );
   }
@@ -89,14 +99,17 @@ export default function HelpBase(props: HelpBaseProps) {
       </div>
 
       {help.status ? (
-        <section className="panel panel-soft">
-          <div className="panel-header">
-            <h2>{props.systemStatusLabel}</h2>
-            <span className={`status-badge ${help.status.state === "ok" ? "status-ok" : "status-degraded"}`}>
+        <Card className="panel panel-soft">
+          <CardHeader className="panel-header">
+            <CardTitle className="text-base font-semibold">{props.systemStatusLabel}</CardTitle>
+            <Badge
+              variant={help.status.state === "ok" ? "default" : "destructive"}
+              className={`status-badge ${help.status.state === "ok" ? "status-ok" : "status-degraded"}`}
+            >
               {help.status.message}
-            </span>
-          </div>
-        </section>
+            </Badge>
+          </CardHeader>
+        </Card>
       ) : null}
 
       <HelpSections sections={help.sections} />

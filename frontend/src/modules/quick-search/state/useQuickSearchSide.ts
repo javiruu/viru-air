@@ -7,7 +7,10 @@ import {
   type QuickSearchCanonicalPayload,
   type QuickSearchQueryParams,
 } from "@/modules/quick-search/api/buildQuickSearchRequest";
-import { collectQuickSearchWarningCodes, normalizeQuickSearchResponse } from "@/modules/quick-search/api/normalizeQuickSearchResponse";
+import {
+  collectQuickSearchWarningCodes,
+  normalizeQuickSearchResponse,
+} from "@/modules/quick-search/api/normalizeQuickSearchResponse";
 import type {
   DeepLinkResponse,
   QuickSearchLoadingPhase,
@@ -189,16 +192,21 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
         return;
       }
 
-      const canonicalPayload: QuickSearchCanonicalPayload =
-        buildQuickSearchCanonicalPayload(prepared.params);
+      const canonicalPayload: QuickSearchCanonicalPayload = buildQuickSearchCanonicalPayload(
+        prepared.params,
+      );
 
       try {
         if (!isCurrentRequest()) return;
 
-        const result = await apiFetchWithStatus<SearchResponseRaw>("/search/quick", {
-          method: "POST",
-          body: JSON.stringify(canonicalPayload),
-        }, { apiBase: LONG_RUNNING_API_BASE });
+        const result = await apiFetchWithStatus<SearchResponseRaw>(
+          "/search/quick",
+          {
+            method: "POST",
+            body: JSON.stringify(canonicalPayload),
+          },
+          { apiBase: LONG_RUNNING_API_BASE },
+        );
 
         if (!isCurrentRequest()) return;
 
@@ -217,8 +225,7 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
           setJobId(data.job_id || null);
 
           const providerOverallStatus =
-            data.meta?.provider_status?.overall_status ??
-            data.meta?.provider_status?.overall;
+            data.meta?.provider_status?.overall_status ?? data.meta?.provider_status?.overall;
           setIsDegraded(
             Boolean(
               data.meta?.stale_data ||
@@ -240,8 +247,7 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
           }
           setHasSearched(true);
 
-          const isEmptyResult =
-            (data.meta?.pagination?.total_results ?? data.results.length) === 0;
+          const isEmptyResult = (data.meta?.pagination?.total_results ?? data.results.length) === 0;
           setSearchState(isEmptyResult ? "empty" : "success");
         } else {
           const { status, error } = result;
@@ -260,7 +266,7 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
           }
           setHasSearched(true);
         }
-      } catch (err) {
+      } catch (_err) {
         if (!isCurrentRequest()) return;
         if (!isPageChange) {
           setTargetProgress(95);
@@ -317,23 +323,25 @@ export function useQuickSearchSide(sideId: QuickSearchSideId) {
       query.set("infants", "0");
       query.set("locale", params.locale === "en" ? "en-us" : "es-es");
 
-      void apiFetchWithStatus<DeepLinkResponse>(
-        `/search/deeplink?${query.toString()}`,
-        { method: "GET", signal: controller.signal },
-      ).then((result) => {
-        if (controller.signal.aborted) return;
-        if (result.ok) {
-          setDeepLink(result.data);
-          setDeepLinkError("");
-        } else {
+      void apiFetchWithStatus<DeepLinkResponse>(`/search/deeplink?${query.toString()}`, {
+        method: "GET",
+        signal: controller.signal,
+      })
+        .then((result) => {
+          if (controller.signal.aborted) return;
+          if (result.ok) {
+            setDeepLink(result.data);
+            setDeepLinkError("");
+          } else {
+            setDeepLink(null);
+            setDeepLinkError("deeplink_failed");
+          }
+        })
+        .catch(() => {
+          if (controller.signal.aborted) return;
           setDeepLink(null);
           setDeepLinkError("deeplink_failed");
-        }
-      }).catch(() => {
-        if (controller.signal.aborted) return;
-        setDeepLink(null);
-        setDeepLinkError("deeplink_failed");
-      });
+        });
     },
     [],
   );

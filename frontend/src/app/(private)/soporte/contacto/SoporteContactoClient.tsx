@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
@@ -53,8 +53,12 @@ export default function SoporteContactoClient() {
 
   function validateForm(): boolean {
     const nextMessageError =
-      trimmedLength < 20 ? t(trimmedLength === 0 ? "support.contact.validation" : "support.contact.messageMin") : "";
-    const nextAttachmentError = isValidOptionalUrl(attachmentUrl) ? "" : t("support.contact.attachmentInvalid");
+      trimmedLength < 20
+        ? t(trimmedLength === 0 ? "support.contact.validation" : "support.contact.messageMin")
+        : "";
+    const nextAttachmentError = isValidOptionalUrl(attachmentUrl)
+      ? ""
+      : t("support.contact.attachmentInvalid");
     setMessageError(nextMessageError);
     setAttachmentError(nextAttachmentError);
     return !nextMessageError && !nextAttachmentError;
@@ -216,7 +220,10 @@ export default function SoporteContactoClient() {
                 {t("support.contact.messageHint")}
               </small>
               {messageError ? (
-                <small id="support-contact-message-error" className="field-error support-contact-field-error">
+                <small
+                  id="support-contact-message-error"
+                  className="field-error support-contact-field-error"
+                >
                   {messageError}
                 </small>
               ) : null}
@@ -242,7 +249,10 @@ export default function SoporteContactoClient() {
                 {t("support.contact.attachmentHint")}
               </small>
               {attachmentError ? (
-                <small id="support-contact-attachment-error" className="field-error support-contact-field-error">
+                <small
+                  id="support-contact-attachment-error"
+                  className="field-error support-contact-field-error"
+                >
                   {attachmentError}
                 </small>
               ) : null}

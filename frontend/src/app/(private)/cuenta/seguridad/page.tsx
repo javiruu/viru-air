@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
@@ -87,8 +87,14 @@ export default function SeguridadPage() {
               />
             </label>
             <div className="row-actions">
-              <button type="submit" className="btn-primary" disabled={saving || !currentPassword || !newPassword}>
-                {saving ? t("account.security.passwordSaving") : t("account.security.passwordAction")}
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={saving || !currentPassword || !newPassword}
+              >
+                {saving
+                  ? t("account.security.passwordSaving")
+                  : t("account.security.passwordAction")}
               </button>
             </div>
           </form>
@@ -122,9 +128,16 @@ export default function SeguridadPage() {
           <span className="muted">{t("account.security.activityHint")}</span>
         </div>
         {loading ? (
-          <BoneyardLoad name="account-security-activity-load" className="boneyard-list air-loader-section" ariaLabel={t("account.security.activityLoading")}>
+          <BoneyardLoad
+            name="account-security-activity-load"
+            className="boneyard-list air-loader-section"
+            ariaLabel={t("account.security.activityLoading")}
+          >
             {Array.from({ length: 3 }).map((_, idx) => (
-              <article key={`security-activity-load-${idx}`} className="boneyard-list-reference-row">
+              <article
+                key={`security-activity-load-${idx}`}
+                className="boneyard-list-reference-row"
+              >
                 <div className="boneyard-list-reference-main">
                   <LoadReference width="52%" />
                   <LoadReference width="44%" />
@@ -141,10 +154,14 @@ export default function SeguridadPage() {
               <div key={`${item.event_type}-${idx}`} className="panel-list-row">
                 <div>
                   <strong>{item.event_type.replace(/_/g, " ")}</strong>
-                  <p className="panel-note">{new Date(item.created_at).toLocaleString(localeTag)}</p>
+                  <p className="panel-note">
+                    {new Date(item.created_at).toLocaleString(localeTag)}
+                  </p>
                 </div>
                 <div>
-                  <span className="muted">{item.ip || t("account.security.activityIpMissing")}</span>
+                  <span className="muted">
+                    {item.ip || t("account.security.activityIpMissing")}
+                  </span>
                 </div>
               </div>
             ))}

@@ -31,7 +31,9 @@ export function DashboardAccessSwitch() {
       <span className="dashboard-access-toggle__copy">
         <strong>{t("dashboard.access.title")}</strong>
         <span>
-          {dashboardAutoEntryEnabled ? t("dashboard.access.demoMode") : t("dashboard.access.loginRequired")}
+          {dashboardAutoEntryEnabled
+            ? t("dashboard.access.demoMode")
+            : t("dashboard.access.loginRequired")}
         </span>
       </span>
       <input

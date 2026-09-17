@@ -36,10 +36,18 @@ export default function AirLoader({
       style={style}
     >
       <div className="cloud-layer back">
-        <span className="cloud"></span><span className="cloud"></span><span className="cloud"></span>
-        <span className="cloud"></span><span className="cloud"></span><span className="cloud"></span>
-        <span className="cloud"></span><span className="cloud"></span><span className="cloud"></span>
-        <span className="cloud"></span><span className="cloud"></span><span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
         <span className="cloud"></span>
       </div>
 
@@ -54,15 +62,24 @@ export default function AirLoader({
       </div>
 
       <div className="cloud-layer front">
-        <span className="cloud"></span><span className="cloud"></span><span className="cloud"></span>
-        <span className="cloud"></span><span className="cloud"></span><span className="cloud"></span>
-        <span className="cloud"></span><span className="cloud"></span><span className="cloud"></span>
-        <span className="cloud"></span><span className="cloud"></span><span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
+        <span className="cloud"></span>
         <span className="cloud"></span>
       </div>
 
       <p className="label" data-text={resolvedLabel}>
-        {resolvedLabel}<span className="dots"></span>
+        {resolvedLabel}
+        <span className="dots"></span>
       </p>
     </div>
   );

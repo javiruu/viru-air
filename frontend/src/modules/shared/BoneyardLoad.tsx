@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { Skeleton as BoneyardFrame } from "boneyard-js/react";
 
 import "@/bones/registry";
@@ -34,12 +34,7 @@ function withUnit(value: number | string | undefined): string | number | undefin
   return typeof value === "number" ? `${value}px` : value;
 }
 
-export function LoadReference({
-  shape = "line",
-  width,
-  height,
-  className,
-}: LoadReferenceProps) {
+export function LoadReference({ shape = "line", width, height, className }: LoadReferenceProps) {
   const style: CSSProperties = {};
 
   if (width !== undefined) style.width = withUnit(width);
@@ -54,7 +49,13 @@ export function LoadReference({
   );
 }
 
-export function BoneyardLoad({ name, className, ariaLabel, inline = false, children }: BoneyardLoadProps) {
+export function BoneyardLoad({
+  name,
+  className,
+  ariaLabel,
+  inline = false,
+  children,
+}: BoneyardLoadProps) {
   return (
     <section
       className={classNames("boneyard-status", inline ? "boneyard-status--inline" : undefined)}
@@ -147,7 +148,11 @@ function ListReference({ rows }: { rows: number }) {
 
 export function BoneyardPanel({ name, className, ariaLabel, children }: BoneyardSectionProps) {
   return (
-    <BoneyardLoad name={name} className={classNames("panel panel-soft boneyard-panel", className)} ariaLabel={ariaLabel}>
+    <BoneyardLoad
+      name={name}
+      className={classNames("panel panel-soft boneyard-panel", className)}
+      ariaLabel={ariaLabel}
+    >
       {children ?? <PanelReference />}
     </BoneyardLoad>
   );
@@ -155,7 +160,11 @@ export function BoneyardPanel({ name, className, ariaLabel, children }: Boneyard
 
 export function BoneyardForm({ name, className, ariaLabel, children }: BoneyardSectionProps) {
   return (
-    <BoneyardLoad name={name} className={classNames("panel panel-soft boneyard-form", className)} ariaLabel={ariaLabel}>
+    <BoneyardLoad
+      name={name}
+      className={classNames("panel panel-soft boneyard-form", className)}
+      ariaLabel={ariaLabel}
+    >
       {children ?? <FormReference />}
     </BoneyardLoad>
   );
@@ -169,7 +178,11 @@ export function BoneyardList({
   children,
 }: BoneyardSectionProps & { rows?: number }) {
   return (
-    <BoneyardLoad name={name} className={classNames("panel panel-soft boneyard-list", className)} ariaLabel={ariaLabel}>
+    <BoneyardLoad
+      name={name}
+      className={classNames("panel panel-soft boneyard-list", className)}
+      ariaLabel={ariaLabel}
+    >
       {children ?? <ListReference rows={rows} />}
     </BoneyardLoad>
   );

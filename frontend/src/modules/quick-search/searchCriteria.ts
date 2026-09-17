@@ -78,11 +78,16 @@ function mergeIataTokens(current: string[], raw: string): string[] {
 // Keep fields in sync with submit payload-relevant UI inputs.
 export function buildCriteriaSignature(input: CriteriaSignatureInput): string {
   const normalizedExcludeOrigins = mergeIataTokens(input.excludeOrigins, input.excludeOriginInput);
-  const normalizedExcludeDestinations = mergeIataTokens(input.excludeDestinations, input.excludeDestinationInput);
+  const normalizedExcludeDestinations = mergeIataTokens(
+    input.excludeDestinations,
+    input.excludeDestinationInput,
+  );
   return JSON.stringify({
     ...input,
     additionalOrigins: input.additionalOrigins?.map((value) => value.trim().toUpperCase()),
-    additionalDestinations: input.additionalDestinations?.map((value) => value.trim().toUpperCase()),
+    additionalDestinations: input.additionalDestinations?.map((value) =>
+      value.trim().toUpperCase(),
+    ),
     excludeOrigins: normalizedExcludeOrigins,
     excludeDestinations: normalizedExcludeDestinations,
     // The exclusion textboxes are transient draft UI; compare the applied semantic state.

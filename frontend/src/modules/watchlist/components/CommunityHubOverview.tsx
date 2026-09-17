@@ -1,10 +1,4 @@
-import {
-  CheckCircle2,
-  Flame,
-  ShieldCheck,
-  TicketCheck,
-  UsersRound,
-} from "lucide-react";
+import { CheckCircle2, Flame, ShieldCheck, TicketCheck, UsersRound } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { useI18n } from "@/i18n";
@@ -42,7 +36,9 @@ export function CommunityHubOverview({
         if (!cancelled) setContributorStats(data);
       })
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
   const pricing = watch.community_pricing;
   const aggregate = pricing.aggregate;
@@ -64,13 +60,9 @@ export function CommunityHubOverview({
     [localeTag],
   );
   const watchersRaw = Number(watch.watchers_count ?? 0);
-  const watchersCount = Number.isFinite(watchersRaw)
-    ? Math.max(0, Math.floor(watchersRaw))
-    : 0;
+  const watchersCount = Number.isFinite(watchersRaw) ? Math.max(0, Math.floor(watchersRaw)) : 0;
   const publicRange =
-    aggregate.is_public &&
-    aggregate.min_price !== null &&
-    aggregate.max_price !== null;
+    aggregate.is_public && aggregate.min_price !== null && aggregate.max_price !== null;
   const responsePrice =
     pricing.response?.flew && pricing.response.price_per_traveler !== null
       ? currencyFormatter.format(pricing.response.price_per_traveler)

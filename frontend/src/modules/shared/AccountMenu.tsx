@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { type KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type KeyboardEvent as ReactKeyboardEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
@@ -55,7 +61,10 @@ export default function AccountMenu() {
     firstItem?.focus();
   }, [open]);
 
-  const initials = useMemo(() => getInitials(me?.email || me?.id || t("account.menu.label")), [me?.email, me?.id, t]);
+  const initials = useMemo(
+    () => getInitials(me?.email || me?.id || t("account.menu.label")),
+    [me?.email, me?.id, t],
+  );
   const accountLabel = me?.email || t("account.menu.label");
 
   const menuGroups = useMemo(() => buildAccountMenuGroups(t), [t]);
@@ -94,12 +103,16 @@ export default function AccountMenu() {
         onKeyDown={onTriggerKeyDown}
         ref={triggerRef}
       >
-        <span className="account-avatar" aria-hidden="true">{initials}</span>
+        <span className="account-avatar" aria-hidden="true">
+          {initials}
+        </span>
         <span className="account-meta">
           <strong>{accountLabel}</strong>
           <small>{t("account.menu.status")}</small>
         </span>
-        <span className="account-caret" aria-hidden="true">v</span>
+        <span className="account-caret" aria-hidden="true">
+          v
+        </span>
       </button>
 
       {open ? (

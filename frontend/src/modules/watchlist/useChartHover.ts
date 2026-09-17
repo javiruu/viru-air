@@ -1,4 +1,4 @@
-import { MouseEvent, useCallback, useState } from "react";
+import { type MouseEvent, useCallback, useState } from "react";
 
 import type { HoverPoint } from "@/modules/watchlist/types";
 

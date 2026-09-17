@@ -1,6 +1,6 @@
 import {
-  MouseEvent as ReactMouseEvent,
-  PointerEvent as ReactPointerEvent,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -153,11 +153,7 @@ function toChartRect(rect: DOMRect): ChartRect {
   };
 }
 
-function clientToChart(
-  client: ClientPoint,
-  rect: ChartRect,
-  viewBox: ViewBox,
-): Point | null {
+function clientToChart(client: ClientPoint, rect: ChartRect, viewBox: ViewBox): Point | null {
   if (rect.width <= 0 || rect.height <= 0) return null;
   const ratioX = (client.clientX - rect.left) / rect.width;
   const ratioY = (client.clientY - rect.top) / rect.height;
@@ -203,7 +199,7 @@ export function useChartViewport({
     dragRef.current = null;
     pinchRef.current = null;
     pointersRef.current.clear();
-  }, [baseViewBox, resetKey]);
+  }, [baseViewBox]);
 
   const isZoomed = useMemo(
     () =>
@@ -222,11 +218,7 @@ export function useChartViewport({
   const resolveChartCoordinates = useCallback(
     (event: ReactMouseEvent<SVGSVGElement>) => {
       const rect = toChartRect(event.currentTarget.getBoundingClientRect());
-      return clientToChart(
-        { clientX: event.clientX, clientY: event.clientY },
-        rect,
-        viewBox,
-      );
+      return clientToChart({ clientX: event.clientX, clientY: event.clientY }, rect, viewBox);
     },
     [viewBox],
   );

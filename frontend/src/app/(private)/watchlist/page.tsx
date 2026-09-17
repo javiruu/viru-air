@@ -6,7 +6,10 @@ import dynamic from "next/dynamic";
 import { Download } from "lucide-react";
 
 import { buildJsonExportFilename, downloadJson } from "@/modules/shared/jsonExport";
-import { readWatchlistNavigationParams, buildWatchlistViewSearchParams } from "@/modules/shared/useRouteState";
+import {
+  readWatchlistNavigationParams,
+  buildWatchlistViewSearchParams,
+} from "@/modules/shared/useRouteState";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
@@ -43,7 +46,11 @@ const WatchlistMapDecisionPanel = dynamic(
 function WatchlistMapLoadingPanel() {
   const { t } = useI18n();
   return (
-    <BoneyardPanel name="watchlist-map-load" className="watch-map-panel section-gap" ariaLabel={t("watchlist.mapLoadingBody")}>
+    <BoneyardPanel
+      name="watchlist-map-load"
+      className="watch-map-panel section-gap"
+      ariaLabel={t("watchlist.mapLoadingBody")}
+    >
       <LoadReference shape="chip" width={170} height={18} />
       <LoadReference width="64%" />
       <LoadReference shape="card" />
@@ -64,12 +71,13 @@ export default function WatchlistPage() {
 
   const watchlistHint = useFtueHint("watchlist");
 
-  const { view, actions, derived, hover, viewport, selectWatch, selectWatchById } = useWatchlistController({
-    chartBaseHeight: CHART_HEIGHT,
-    chartWidth: CHART_WIDTH,
-    chartPad: CHART_PAD,
-    lineColors: LINE_COLORS,
-  });
+  const { view, actions, derived, hover, viewport, selectWatch, selectWatchById } =
+    useWatchlistController({
+      chartBaseHeight: CHART_HEIGHT,
+      chartWidth: CHART_WIDTH,
+      chartPad: CHART_PAD,
+      lineColors: LINE_COLORS,
+    });
   const liveFlight = useWatchLiveFlight(derived.selectedWatch?.id ?? null);
   const livePosition = selectPrimaryLivePosition(liveFlight.data);
   const liveFlightLabel = selectPrimaryFlightLabel(liveFlight.data);
@@ -116,7 +124,8 @@ export default function WatchlistPage() {
       origin === prev.origin &&
       destination === prev.destination &&
       travelDate === prev.travelDate
-    ) return;
+    )
+      return;
     prevSelectionRef.current = { watchId, origin, destination, travelDate };
     const qs = buildWatchlistViewSearchParams({
       watchId,
@@ -134,26 +143,40 @@ export default function WatchlistPage() {
     (derived.chartModel?.some((serie) => serie.points.length > 0) ?? false) ||
       Object.keys(derived.calendarEvents).length > 0,
   );
-  const isLoadingHistory = Boolean(derived.selectedWatch && actions.isLoadingHistoryInitial && !hasHistoryData);
+  const isLoadingHistory = Boolean(
+    derived.selectedWatch && actions.isLoadingHistoryInitial && !hasHistoryData,
+  );
   const isRefreshingHistory = Boolean(actions.isRefreshingFiltered && hasHistoryData);
   const hasNotices = Boolean(watchlistHint.visible || derived.lastUpdatedGlobal || actions.message);
-  const selectedRouteContext = useMemo(() => derived.selectedWatch ? ({
-    origin: derived.selectedWatch.origin_iata,
-    destination: derived.selectedWatch.destination_iata,
-    travelDate: derived.selectedWatch.travel_date_local,
-    status: derived.selectedWatch.status,
-    lastCaptureAt: actions.selectedWatchDetail?.latest_snapshot?.captured_at_utc ?? null,
-  }) : null, [derived.selectedWatch, actions.selectedWatchDetail]);
+  const selectedRouteContext = useMemo(
+    () =>
+      derived.selectedWatch
+        ? {
+            origin: derived.selectedWatch.origin_iata,
+            destination: derived.selectedWatch.destination_iata,
+            travelDate: derived.selectedWatch.travel_date_local,
+            status: derived.selectedWatch.status,
+            lastCaptureAt: actions.selectedWatchDetail?.latest_snapshot?.captured_at_utc ?? null,
+          }
+        : null,
+    [derived.selectedWatch, actions.selectedWatchDetail],
+  );
 
-  const handleSelectWatch = useCallback((watch: Parameters<typeof selectWatch>[0]) => {
-    selectWatch(watch);
-    notify({ tone: "success", title: t("watchlist.messages.flightSelected") });
-  }, [selectWatch, notify, t]);
-  const onFocusWatch = useCallback((watchId: string) => {
-    const watch = actions.items.find((item) => item.id === watchId);
-    if (!watch) return;
-    handleSelectWatch(watch);
-  }, [actions.items, handleSelectWatch]);
+  const handleSelectWatch = useCallback(
+    (watch: Parameters<typeof selectWatch>[0]) => {
+      selectWatch(watch);
+      notify({ tone: "success", title: t("watchlist.messages.flightSelected") });
+    },
+    [selectWatch, notify, t],
+  );
+  const onFocusWatch = useCallback(
+    (watchId: string) => {
+      const watch = actions.items.find((item) => item.id === watchId);
+      if (!watch) return;
+      handleSelectWatch(watch);
+    },
+    [actions.items, handleSelectWatch],
+  );
   const handleSelectWatchById = (watchId: string) => {
     const watchExists = actions.items.some((item) => item.id === watchId);
     if (!watchExists) return;
@@ -183,7 +206,11 @@ export default function WatchlistPage() {
     <main className="shell watchlist-page" id="main-content">
       <div className="page-header watchlist-header watchlist-page-header-shell">
         <div className="watchlist-header-left">
-          <button className="btn-ghost watchlist-back-link" type="button" onClick={() => router.push("/dashboard")}>
+          <button
+            className="btn-ghost watchlist-back-link"
+            type="button"
+            onClick={() => router.push("/dashboard")}
+          >
             {t("shared.actions.back")}
           </button>
         </div>
@@ -202,7 +229,11 @@ export default function WatchlistPage() {
             <Download className="qs-inline-icon" aria-hidden="true" />
             {t("watchlist.export.button")}
           </button>
-          <button className="btn-primary watchlist-add-cta" type="button" onClick={() => actions.setShowAdd(true)}>
+          <button
+            className="btn-primary watchlist-add-cta"
+            type="button"
+            onClick={() => actions.setShowAdd(true)}
+          >
             {t("watchlist.addFlight")}
           </button>
         </div>
@@ -211,13 +242,21 @@ export default function WatchlistPage() {
       {hasNotices ? (
         <div className="watchlist-notice-stack section-gap">
           {watchlistHint.visible ? (
-            <section className="notice notice-compact notice-info watchlist-notice watchlist-notice--hint" role="status" aria-live="polite">
+            <section
+              className="notice notice-compact notice-info watchlist-notice watchlist-notice--hint"
+              role="status"
+              aria-live="polite"
+            >
               <div>
                 <strong>{t("watchlist.quickStartTitle")}</strong>
                 <p>{t("watchlist.quickStartBody")}</p>
               </div>
               <div className="notice-actions">
-                <button type="button" className="btn-ghost btn-compact" onClick={watchlistHint.dismiss}>
+                <button
+                  type="button"
+                  className="btn-ghost btn-compact"
+                  onClick={watchlistHint.dismiss}
+                >
                   {t("watchlist.quickStartConfirm")}
                 </button>
               </div>
@@ -225,7 +264,11 @@ export default function WatchlistPage() {
           ) : null}
 
           {derived.lastUpdatedGlobal ? (
-            <div className="notice notice-compact notice-info watchlist-notice watchlist-notice--freshness" role="status" aria-live="polite">
+            <div
+              className="notice notice-compact notice-info watchlist-notice watchlist-notice--freshness"
+              role="status"
+              aria-live="polite"
+            >
               {t("watchlist.lastUpdate", { value: derived.lastUpdatedGlobal })}
             </div>
           ) : null}
@@ -433,4 +476,3 @@ export default function WatchlistPage() {
     </main>
   );
 }
-

@@ -9,7 +9,12 @@ import { apiFetch } from "@/modules/shared/api";
 
 import { buildRankingReasons } from "./rankingExplainers";
 import { getScoreBand, getScoreClass } from "./scoreBands";
-import { DEFAULT_WEIGHTS, getWeightImpactLines, getWeightPrioritySummary, type WeightKey } from "./weightImpact";
+import {
+  DEFAULT_WEIGHTS,
+  getWeightImpactLines,
+  getWeightPrioritySummary,
+  type WeightKey,
+} from "./weightImpact";
 
 type ExperienceMode = "discover" | "optimize";
 type SortKey = "ai" | "price" | "speed" | "climate" | "trend";
@@ -95,11 +100,11 @@ function normalizeWeightPercent(weights: WeightsPercent): Record<WeightKey, numb
 function computeLiveScore(item: RecommendationItem, weights: Record<WeightKey, number>): number {
   if (!item.signals) return item.score;
   const weighted =
-    (weights.price * (item.signals.price ?? 0.5)
-      + weights.speed * (item.signals.speed ?? 0.5)
-      + weights.climate * (item.signals.climate ?? 0.5)
-      + weights.trend * (item.signals.trend ?? 0.5)
-      + weights.novelty * (item.signals.novelty ?? 0.5)) *
+    (weights.price * (item.signals.price ?? 0.5) +
+      weights.speed * (item.signals.speed ?? 0.5) +
+      weights.climate * (item.signals.climate ?? 0.5) +
+      weights.trend * (item.signals.trend ?? 0.5) +
+      weights.novelty * (item.signals.novelty ?? 0.5)) *
     100;
   return Number(weighted.toFixed(2));
 }
@@ -113,7 +118,10 @@ function defaultTravelDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function formatRouteMeta(item: RecommendationItem, t: (key: string, params?: Record<string, string | number>) => string): string {
+function formatRouteMeta(
+  item: RecommendationItem,
+  t: (key: string, params?: Record<string, string | number>) => string,
+): string {
   const flightText = item.duration_minutes_est
     ? `Directo | ${t("recommendations.duration", { value: Math.round(item.duration_minutes_est) })}`
     : t("recommendations.unknownDuration");
@@ -131,7 +139,8 @@ function formatRouteMeta(item: RecommendationItem, t: (key: string, params?: Rec
 function smartTagKey(item: RecommendationItem, score: number): string {
   if (score >= 70) return "recommendations.smartTag.opportunity";
   if (item.trend === "down") return "recommendations.smartTag.trendingDown";
-  if ((item.avg_price ?? 0) > 0 && item.price > (item.avg_price ?? 0) * 1.08) return "recommendations.smartTag.aboveAvg";
+  if ((item.avg_price ?? 0) > 0 && item.price > (item.avg_price ?? 0) * 1.08)
+    return "recommendations.smartTag.aboveAvg";
   if (score >= 45) return "recommendations.smartTag.stable";
   return "recommendations.smartTag.watch";
 }
@@ -247,13 +256,18 @@ export default function RecommendationsExplorer() {
         return directionFactor * (a.price - b.price);
       }
       if (sortBy === "speed") {
-        return directionFactor * ((a.duration_minutes_est ?? Number.MAX_SAFE_INTEGER) - (b.duration_minutes_est ?? Number.MAX_SAFE_INTEGER));
+        return (
+          directionFactor *
+          ((a.duration_minutes_est ?? Number.MAX_SAFE_INTEGER) -
+            (b.duration_minutes_est ?? Number.MAX_SAFE_INTEGER))
+        );
       }
       if (sortBy === "climate") {
         return directionFactor * ((a.signals?.climate ?? 0) - (b.signals?.climate ?? 0));
       }
       if (sortBy === "trend") {
-        const trendValue = (value: RecommendationItem["trend"]) => (value === "down" ? 2 : value === "flat" ? 1 : 0);
+        const trendValue = (value: RecommendationItem["trend"]) =>
+          value === "down" ? 2 : value === "flat" ? 1 : 0;
         return directionFactor * (trendValue(a.trend) - trendValue(b.trend));
       }
       return directionFactor * (a.liveScore - b.liveScore);
@@ -261,7 +275,10 @@ export default function RecommendationsExplorer() {
   }, [items, normalizedWeights, sortBy, sortDirection]);
 
   const impactLines = useMemo(() => getWeightImpactLines(normalizedWeights), [normalizedWeights]);
-  const prioritySummary = useMemo(() => getWeightPrioritySummary(normalizedWeights), [normalizedWeights]);
+  const prioritySummary = useMemo(
+    () => getWeightPrioritySummary(normalizedWeights),
+    [normalizedWeights],
+  );
 
   async function refreshRecommendations() {
     setError("");
@@ -311,7 +328,8 @@ export default function RecommendationsExplorer() {
     }
   }
 
-  const activeSignalsText = aiMeta?.active_signals?.join(" | ") || "price | trend | speed | climate | novelty";
+  const activeSignalsText =
+    aiMeta?.active_signals?.join(" | ") || "price | trend | speed | climate | novelty";
 
   return (
     <main className="shell reco-shell" id="main-content">
@@ -323,7 +341,11 @@ export default function RecommendationsExplorer() {
           <h1>{t("recommendations.title")}</h1>
           <p>{t("recommendations.subtitle")}</p>
         </div>
-        <div className="reco-mode-toggle" role="tablist" aria-label={t("recommendations.modeTitle")}>
+        <div
+          className="reco-mode-toggle"
+          role="tablist"
+          aria-label={t("recommendations.modeTitle")}
+        >
           <button
             type="button"
             className={mode === "discover" ? "is-active" : ""}
@@ -345,11 +367,20 @@ export default function RecommendationsExplorer() {
       </header>
 
       <section className="panel panel-soft reco-status-line" aria-live="polite">
-        <span><strong>{t("recommendations.originLabel")}:</strong> {origin || t("recommendations.emptyOrigin")}</span>
+        <span>
+          <strong>{t("recommendations.originLabel")}:</strong>{" "}
+          {origin || t("recommendations.emptyOrigin")}
+        </span>
         <span className="reco-status-sep">|</span>
-        <span><strong>{t("recommendations.destinationLabel")}:</strong> {destination || t("recommendations.emptyDestination")}</span>
+        <span>
+          <strong>{t("recommendations.destinationLabel")}:</strong>{" "}
+          {destination || t("recommendations.emptyDestination")}
+        </span>
         <span className="reco-status-sep">|</span>
-        <span><strong>{t("recommendations.dateLabel")}:</strong> {travelDate || t("recommendations.pendingDate")}</span>
+        <span>
+          <strong>{t("recommendations.dateLabel")}:</strong>{" "}
+          {travelDate || t("recommendations.pendingDate")}
+        </span>
         <span className="reco-status-sep">|</span>
         <span>
           <strong>{t("recommendations.systemLabel")}:</strong>{" "}
@@ -358,11 +389,19 @@ export default function RecommendationsExplorer() {
       </section>
 
       <section className="reco-layout-2">
-        <aside className={`panel panel-soft reco-config-panel ${panelCollapsed ? "is-collapsed" : ""}`}>
+        <aside
+          className={`panel panel-soft reco-config-panel ${panelCollapsed ? "is-collapsed" : ""}`}
+        >
           <div className="reco-panel-header">
             <h2>{t("recommendations.mode.optimize")}</h2>
-            <button type="button" className="btn-ghost" onClick={() => setPanelCollapsed((prev) => !prev)}>
-              {panelCollapsed ? t("recommendations.editCriteria") : t("recommendations.hideCriteria")}
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => setPanelCollapsed((prev) => !prev)}
+            >
+              {panelCollapsed
+                ? t("recommendations.editCriteria")
+                : t("recommendations.hideCriteria")}
             </button>
           </div>
 
@@ -387,7 +426,11 @@ export default function RecommendationsExplorer() {
             </label>
             <label className="field">
               <span>{t("recommendations.dateLabel")}</span>
-              <input type="date" value={travelDate} onChange={(event) => setTravelDate(event.target.value)} />
+              <input
+                type="date"
+                value={travelDate}
+                onChange={(event) => setTravelDate(event.target.value)}
+              />
             </label>
           </div>
 
@@ -396,12 +439,24 @@ export default function RecommendationsExplorer() {
               <div className="reco-flex">
                 <label className="field">
                   <span>{t("recommendations.daysBefore")}</span>
-                  <input type="number" min={0} max={7} value={daysBefore} onChange={(event) => setDaysBefore(Number(event.target.value))} />
+                  <input
+                    type="number"
+                    min={0}
+                    max={7}
+                    value={daysBefore}
+                    onChange={(event) => setDaysBefore(Number(event.target.value))}
+                  />
                   <small className="panel-note">{t("recommendations.daysBeforeHelp")}</small>
                 </label>
                 <label className="field">
                   <span>{t("recommendations.daysAfter")}</span>
-                  <input type="number" min={0} max={7} value={daysAfter} onChange={(event) => setDaysAfter(Number(event.target.value))} />
+                  <input
+                    type="number"
+                    min={0}
+                    max={7}
+                    value={daysAfter}
+                    onChange={(event) => setDaysAfter(Number(event.target.value))}
+                  />
                   <small className="panel-note">{t("recommendations.daysAfterHelp")}</small>
                 </label>
               </div>
@@ -430,8 +485,13 @@ export default function RecommendationsExplorer() {
                           }))
                         }
                       />
-                      <small className={`reco-impact ${impact > 0 ? "is-positive" : impact < 0 ? "is-negative" : ""}`}>
-                        {t("recommendations.impactByWeight", { signal: t(signalLabelKey(key)), delta })}
+                      <small
+                        className={`reco-impact ${impact > 0 ? "is-positive" : impact < 0 ? "is-negative" : ""}`}
+                      >
+                        {t("recommendations.impactByWeight", {
+                          signal: t(signalLabelKey(key)),
+                          delta,
+                        })}
                       </small>
                     </label>
                   );
@@ -451,7 +511,11 @@ export default function RecommendationsExplorer() {
                 <h3>{t("recommendations.filtersTitle")}</h3>
                 <p className="panel-note">{t("recommendations.filtersSubtitle")}</p>
 
-                <div className="reco-filter-mode" role="radiogroup" aria-label={t("recommendations.filterMode")}>
+                <div
+                  className="reco-filter-mode"
+                  role="radiogroup"
+                  aria-label={t("recommendations.filterMode")}
+                >
                   <label>
                     <input
                       type="radio"
@@ -491,7 +555,13 @@ export default function RecommendationsExplorer() {
 
                 <label className="field">
                   <span>{t("recommendations.radiusLabel")}</span>
-                  <input type="number" min={0} max={500} value={radiusKm} onChange={(event) => setRadiusKm(Number(event.target.value))} />
+                  <input
+                    type="number"
+                    min={0}
+                    max={500}
+                    value={radiusKm}
+                    onChange={(event) => setRadiusKm(Number(event.target.value))}
+                  />
                 </label>
 
                 <div className="reco-flex">
@@ -516,11 +586,19 @@ export default function RecommendationsExplorer() {
                 <div className="reco-flex">
                   <label className="field">
                     <span>{t("recommendations.departAfter")}</span>
-                    <input type="time" value={departAfter} onChange={(event) => setDepartAfter(event.target.value)} />
+                    <input
+                      type="time"
+                      value={departAfter}
+                      onChange={(event) => setDepartAfter(event.target.value)}
+                    />
                   </label>
                   <label className="field">
                     <span>{t("recommendations.departBefore")}</span>
-                    <input type="time" value={departBefore} onChange={(event) => setDepartBefore(event.target.value)} />
+                    <input
+                      type="time"
+                      value={departBefore}
+                      onChange={(event) => setDepartBefore(event.target.value)}
+                    />
                   </label>
                 </div>
 
@@ -549,7 +627,12 @@ export default function RecommendationsExplorer() {
           ) : null}
 
           <div className="reco-cta-sticky">
-            <button type="button" className="btn-primary reco-cta-main" onClick={refreshRecommendations} disabled={isLoading}>
+            <button
+              type="button"
+              className="btn-primary reco-cta-main"
+              onClick={refreshRecommendations}
+              disabled={isLoading}
+            >
               {isLoading ? t("recommendations.loadingRadar") : t("recommendations.searchStrong")}
             </button>
           </div>
@@ -565,7 +648,10 @@ export default function RecommendationsExplorer() {
               <div className="reco-sort">
                 <label className="field">
                   <span>{t("recommendations.sortLabel")}</span>
-                  <select value={sortBy} onChange={(event) => setSortBy(event.target.value as SortKey)}>
+                  <select
+                    value={sortBy}
+                    onChange={(event) => setSortBy(event.target.value as SortKey)}
+                  >
                     <option value="ai">{t("recommendations.sort.ai")}</option>
                     <option value="price">{t("recommendations.sort.price")}</option>
                     <option value="speed">{t("recommendations.sort.speed")}</option>
@@ -575,7 +661,10 @@ export default function RecommendationsExplorer() {
                 </label>
                 <label className="field">
                   <span>{t("recommendations.sortDirection")}</span>
-                  <select value={sortDirection} onChange={(event) => setSortDirection(event.target.value as SortDirection)}>
+                  <select
+                    value={sortDirection}
+                    onChange={(event) => setSortDirection(event.target.value as SortDirection)}
+                  >
                     <option value="desc">{t("recommendations.sortDesc")}</option>
                     <option value="asc">{t("recommendations.sortAsc")}</option>
                   </select>
@@ -624,20 +713,35 @@ export default function RecommendationsExplorer() {
                     .join(" | "),
                 );
 
-                const topPercent = Math.max(1, Math.round(((index + 1) / Math.max(1, rankedItems.length)) * 100));
+                const topPercent = Math.max(
+                  1,
+                  Math.round(((index + 1) / Math.max(1, rankedItems.length)) * 100),
+                );
                 const smartTag = t(smartTagKey(item, score));
 
                 return (
-                  <article key={item.id} className="reco-card-v2" style={{ animationDelay: `${Math.min(index, 8) * 50}ms` }}>
+                  <article
+                    key={item.id}
+                    className="reco-card-v2"
+                    style={{ animationDelay: `${Math.min(index, 8) * 50}ms` }}
+                  >
                     <div className="reco-card-summary">
                       <div className="reco-card-main">
                         <span className="reco-rank-pill">#{index + 1}</span>
                         <h3 className="reco-route-xl">
                           {item.origin_iata} {"->"} {item.destination_iata}
                         </h3>
-                        <p className="reco-price-xl">{formatCurrency(item.price, item.currency || "EUR", localeTag)}</p>
+                        <p className="reco-price-xl">
+                          {formatCurrency(item.price, item.currency || "EUR", localeTag)}
+                        </p>
                         <p className="reco-smart-tag">{smartTag}</p>
-                        <p className="panel-note">{t("recommendations.whyShownShort", { reason: reasons[0] ? t(reasons[0].key, reasons[0].params) : t("recommendations.emptyBody") })}</p>
+                        <p className="panel-note">
+                          {t("recommendations.whyShownShort", {
+                            reason: reasons[0]
+                              ? t(reasons[0].key, reasons[0].params)
+                              : t("recommendations.emptyBody"),
+                          })}
+                        </p>
                         <p className="reco-topby-line">{topByLine}</p>
                         <p className="reco-meta-line">{formatRouteMeta(item, t)}</p>
                       </div>
@@ -655,7 +759,9 @@ export default function RecommendationsExplorer() {
                           </button>
                         </div>
                         <small>{t("recommendations.scoreShort")}</small>
-                        <small className="reco-score-band-text">{t(`recommendations.scoreBand.${scoreBand}`)}</small>
+                        <small className="reco-score-band-text">
+                          {t(`recommendations.scoreBand.${scoreBand}`)}
+                        </small>
                         <small className="reco-score-percentile">
                           {t("recommendations.topPercentToday", { percent: topPercent })}
                         </small>
@@ -666,7 +772,10 @@ export default function RecommendationsExplorer() {
                       <strong>{t("recommendations.whyTop")}</strong>
                       <ul>
                         {reasons.map((reason, reasonIndex) => (
-                          <li key={`${item.id}-reason-${reasonIndex}`} className={`tone-${reason.tone}`}>
+                          <li
+                            key={`${item.id}-reason-${reasonIndex}`}
+                            className={`tone-${reason.tone}`}
+                          >
                             {t(reason.key, reason.params)}
                           </li>
                         ))}
@@ -677,29 +786,45 @@ export default function RecommendationsExplorer() {
                       type="button"
                       className="btn-ghost reco-expand-btn"
                       aria-expanded={detailsOpen}
-                      onClick={() => setExpandedCards((prev) => ({ ...prev, [item.id]: !prev[item.id] }))}
+                      onClick={() =>
+                        setExpandedCards((prev) => ({ ...prev, [item.id]: !prev[item.id] }))
+                      }
                     >
-                      {detailsOpen ? t("recommendations.hideDetails") : t("recommendations.showDetails")}
+                      {detailsOpen
+                        ? t("recommendations.hideDetails")
+                        : t("recommendations.showDetails")}
                     </button>
 
                     {detailsOpen ? (
                       <div className="reco-card-details">
                         <p className="reco-detail-row">
-                          <strong>{t("recommendations.avgPrice", { value: item.avg_price ? formatCurrency(item.avg_price, item.currency || "EUR", localeTag) : "--" })}</strong>
+                          <strong>
+                            {t("recommendations.avgPrice", {
+                              value: item.avg_price
+                                ? formatCurrency(item.avg_price, item.currency || "EUR", localeTag)
+                                : "--",
+                            })}
+                          </strong>
                         </p>
                         <p className="reco-detail-row">
-                          {item.distance_km ? `${formatNumber(item.distance_km, { maximumFractionDigits: 0 }, localeTag)} km` : t("recommendations.unknownDistance")}
+                          {item.distance_km
+                            ? `${formatNumber(item.distance_km, { maximumFractionDigits: 0 }, localeTag)} km`
+                            : t("recommendations.unknownDistance")}
                         </p>
                         <p className="reco-detail-row">
                           {item.weather
                             ? `${t("recommendations.weather")}: ${item.weather.temp_min ?? "--"}C-${item.weather.temp_max ?? "--"}C | ${item.weather.precip_probability ?? "--"}%`
                             : t("recommendations.weatherUnavailable")}
                         </p>
-                        {item.ai_reason ? <p className="reco-detail-row">{item.ai_reason}</p> : null}
+                        {item.ai_reason ? (
+                          <p className="reco-detail-row">{item.ai_reason}</p>
+                        ) : null}
                         {item.tags && item.tags.length > 0 ? (
                           <div className="reco-tags">
                             {item.tags.map((tag) => (
-                              <span key={`${item.id}-${tag}`} className="chip chip-soft">{tag}</span>
+                              <span key={`${item.id}-${tag}`} className="chip chip-soft">
+                                {tag}
+                              </span>
                             ))}
                           </div>
                         ) : null}

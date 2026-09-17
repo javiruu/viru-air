@@ -1,4 +1,4 @@
-import {
+import type {
   QuickSearchFreshness,
   QuickSearchFreshnessStatus,
   SearchResponse,
@@ -50,10 +50,12 @@ function toFreshnessStatus(value: unknown): QuickSearchFreshnessStatus | null {
 }
 
 function isFreshnessStale(status: QuickSearchFreshnessStatus | null | undefined): boolean {
-  return status === "stale"
-    || status === "expired"
-    || status === "negative_stale"
-    || status === "provider_error_stale";
+  return (
+    status === "stale" ||
+    status === "expired" ||
+    status === "negative_stale" ||
+    status === "provider_error_stale"
+  );
 }
 
 function normalizeFreshness(value: unknown): QuickSearchFreshness | null {
@@ -72,14 +74,14 @@ function normalizeFreshness(value: unknown): QuickSearchFreshness | null {
   const validationStatus = toOptionalString(raw.validation_status);
 
   if (
-    status === null
-    && observedAt === null
-    && expiresAt === null
-    && ageSeconds === null
-    && confidenceScore === null
-    && source === null
-    && requiresRevalidation === false
-    && validationStatus === null
+    status === null &&
+    observedAt === null &&
+    expiresAt === null &&
+    ageSeconds === null &&
+    confidenceScore === null &&
+    source === null &&
+    requiresRevalidation === false &&
+    validationStatus === null
   ) {
     return null;
   }
@@ -121,9 +123,9 @@ function normalizeProviderStatus(
     return providerStatus;
   }
   const overallStatus =
-    providerStatus.overall_status
-    ?? providerStatus.overall
-    ?? (providerStatus.total_outage
+    providerStatus.overall_status ??
+    providerStatus.overall ??
+    (providerStatus.total_outage
       ? "total_outage"
       : providerStatus.partial_results_served
         ? "partial_degraded"
@@ -143,7 +145,9 @@ function normalizeProviderStatus(
 
 export function collectQuickSearchWarningCodes(response: SearchResponseRaw): string[] {
   const filterWarnings = Array.isArray(response.filters?.warnings)
-    ? response.filters.warnings.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    ? response.filters.warnings.filter(
+        (item): item is string => typeof item === "string" && item.trim().length > 0,
+      )
     : [];
   const structuredWarnings = Array.isArray(response.meta?.warnings_structured)
     ? response.meta.warnings_structured
@@ -173,7 +177,10 @@ export function normalizeQuickSearchResults(results: SearchResultRaw[]): SearchR
       currency: toRequiredString(item.currency, "EUR"),
       source: toRequiredString(item.source, ""),
       duration_total: toFiniteNumber(item.duration_total),
-      duration_total_min: toFiniteNumber(item.duration_total_min, toFiniteNumber(item.duration_total)),
+      duration_total_min: toFiniteNumber(
+        item.duration_total_min,
+        toFiniteNumber(item.duration_total),
+      ),
       stop_count: toFiniteNumber(item.stop_count),
       minutes_buffer: toFiniteNumber(item.minutes_buffer),
       distance_km_ground: toFiniteNumber(item.distance_km_ground),
@@ -183,7 +190,8 @@ export function normalizeQuickSearchResults(results: SearchResultRaw[]): SearchR
       ai_preferred: Boolean(item.ai_preferred),
       ai_preferred_reason: toOptionalString(item.ai_preferred_reason),
       deeplink_url: toOptionalString(item.deeplink_url),
-      itinerary_type: item.itinerary_type ?? (item.stop_count && item.stop_count > 0 ? "self_connect" : "direct"),
+      itinerary_type:
+        item.itinerary_type ?? (item.stop_count && item.stop_count > 0 ? "self_connect" : "direct"),
       legs: item.legs ?? item.segments?.legs ?? [],
     };
   });
@@ -192,7 +200,9 @@ export function normalizeQuickSearchResults(results: SearchResultRaw[]): SearchR
 export function normalizeQuickSearchResponse(response: SearchResponseRaw): SearchResponse {
   const normalizedSearchCacheFreshness = normalizeFreshness(response.meta?.search_cache?.freshness);
   const normalizedMetaFreshnessTs =
-    toOptionalString(response.meta?.freshness_ts) ?? normalizedSearchCacheFreshness?.observed_at ?? null;
+    toOptionalString(response.meta?.freshness_ts) ??
+    normalizedSearchCacheFreshness?.observed_at ??
+    null;
   const normalizedMetaStaleData =
     Boolean(response.meta?.stale_data) || isFreshnessStale(normalizedSearchCacheFreshness?.status);
 
@@ -209,7 +219,9 @@ export function normalizeQuickSearchResponse(response: SearchResponseRaw): Searc
                 exact_hit: toOptionalBoolean(response.meta.search_cache.exact_hit),
                 search_fingerprint: toOptionalString(response.meta.search_cache.search_fingerprint),
                 provider: toOptionalString(response.meta.search_cache.provider),
-                requires_revalidation: toOptionalBoolean(response.meta.search_cache.requires_revalidation),
+                requires_revalidation: toOptionalBoolean(
+                  response.meta.search_cache.requires_revalidation,
+                ),
                 freshness: normalizedSearchCacheFreshness,
               }
             : response.meta.search_cache,

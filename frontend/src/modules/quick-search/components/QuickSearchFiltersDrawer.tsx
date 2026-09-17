@@ -1,4 +1,4 @@
-import { ReactNode, RefObject } from "react";
+import type { ReactNode, RefObject } from "react";
 
 import { useEscapeClose } from "@/modules/shared/useEscapeClose";
 
@@ -26,14 +26,29 @@ export function QuickSearchFiltersDrawer({
 
   return (
     <>
-      <button type="button" className="qs-filters-backdrop" aria-label={closeLabel} onClick={onClose} />
-      <aside className={`panel panel-soft qs-filters-panel ${open ? "is-open" : ""}`} role="dialog" aria-modal="true" aria-label={title}>
+      <button
+        type="button"
+        className="qs-filters-backdrop"
+        aria-label={closeLabel}
+        onClick={onClose}
+      />
+      <aside
+        className={`panel panel-soft qs-filters-panel ${open ? "is-open" : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
         <header className="qs-filters-header">
           <div>
             <h3>{title}</h3>
             <p className="muted">{subtitle}</p>
           </div>
-          <button ref={closeRef} type="button" className="btn-ghost btn-compact qs-filters-close" onClick={onClose}>
+          <button
+            ref={closeRef}
+            type="button"
+            className="btn-ghost btn-compact qs-filters-close"
+            onClick={onClose}
+          >
             {closeLabel}
           </button>
         </header>

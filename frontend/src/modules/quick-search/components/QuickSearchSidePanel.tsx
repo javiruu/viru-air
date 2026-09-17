@@ -173,7 +173,10 @@ export function QuickSearchSidePanel({
             viewBox="0 0 24 24"
             fill="none"
             aria-hidden="true"
-            style={{ transform: collapsed ? "rotate(180deg)" : undefined, transition: "transform 200ms" }}
+            style={{
+              transform: collapsed ? "rotate(180deg)" : undefined,
+              transition: "transform 200ms",
+            }}
           >
             <path
               d="m6 9 6 6 6-6"

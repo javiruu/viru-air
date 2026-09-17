@@ -51,34 +51,46 @@ export function PopularDestinationsChips({
   if (!loading && !hasRoutes) return null;
 
   return (
-    <div className="community-popular-destinations-strip" aria-label={t("popularDestinationsLabel")} aria-busy={loading}>
+    <div
+      className="community-popular-destinations-strip"
+      aria-label={t("popularDestinationsLabel")}
+      aria-busy={loading}
+    >
       <span className="community-popular-destinations-strip-label">
         <TrendingUp aria-hidden="true" size={14} />
         {t("popularDestinationsLabel")}
       </span>
       <div className="community-popular-destinations-chips">
-        {loading
-          ? (
-            <BoneyardLoad name="community-popular-destinations-load" className="community-popular-destination-loads" ariaLabel={t("popularDestinationsLabel")}>
-              {Array.from({ length: 3 }).map((_, i) => (
-                <LoadReference key={`community-popular-destination-load-${i}`} shape="chip" className="community-popular-destination-chip-load" />
-              ))}
-            </BoneyardLoad>
-          )
-          : routes.map((route) => (
-              <button
-                key={`${route.origin_iata}-${route.destination_iata}`}
-                type="button"
-                className="community-popular-destination-chip"
-                onClick={() => onSelectDestination(route.destination_iata)}
-                title={t("popularDestinationAria", {
-                  origin: route.origin_iata,
-                  destination: route.destination_iata,
-                })}
-              >
-                {route.destination_iata}
-              </button>
+        {loading ? (
+          <BoneyardLoad
+            name="community-popular-destinations-load"
+            className="community-popular-destination-loads"
+            ariaLabel={t("popularDestinationsLabel")}
+          >
+            {Array.from({ length: 3 }).map((_, i) => (
+              <LoadReference
+                key={`community-popular-destination-load-${i}`}
+                shape="chip"
+                className="community-popular-destination-chip-load"
+              />
             ))}
+          </BoneyardLoad>
+        ) : (
+          routes.map((route) => (
+            <button
+              key={`${route.origin_iata}-${route.destination_iata}`}
+              type="button"
+              className="community-popular-destination-chip"
+              onClick={() => onSelectDestination(route.destination_iata)}
+              title={t("popularDestinationAria", {
+                origin: route.origin_iata,
+                destination: route.destination_iata,
+              })}
+            >
+              {route.destination_iata}
+            </button>
+          ))
+        )}
       </div>
     </div>
   );

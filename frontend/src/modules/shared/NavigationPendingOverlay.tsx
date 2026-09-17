@@ -13,23 +13,26 @@ function isModifiedEvent(event: MouseEvent | PointerEvent | KeyboardEvent): bool
 
 function isExternalOrInvalidHref(rawHref: string): boolean {
   return (
-    rawHref.startsWith("#")
-    || rawHref.startsWith("mailto:")
-    || rawHref.startsWith("tel:")
-    || rawHref.startsWith("javascript:")
+    rawHref.startsWith("#") ||
+    rawHref.startsWith("mailto:") ||
+    rawHref.startsWith("tel:") ||
+    rawHref.startsWith("javascript:")
   );
 }
 
 function isSameDocumentHashNavigation(url: URL): boolean {
   return (
-    url.origin === window.location.origin
-    && url.pathname === window.location.pathname
-    && url.search === window.location.search
-    && url.hash.length > 0
+    url.origin === window.location.origin &&
+    url.pathname === window.location.pathname &&
+    url.search === window.location.search &&
+    url.hash.length > 0
   );
 }
 
-function shouldStartForAnchor(anchor: HTMLAnchorElement, event: MouseEvent | PointerEvent | KeyboardEvent): boolean {
+function shouldStartForAnchor(
+  anchor: HTMLAnchorElement,
+  event: MouseEvent | PointerEvent | KeyboardEvent,
+): boolean {
   if (isModifiedEvent(event)) return false;
   if (anchor.hasAttribute("download")) return false;
 
@@ -55,7 +58,7 @@ function shouldStartForAnchor(anchor: HTMLAnchorElement, event: MouseEvent | Poi
 export default function NavigationPendingOverlay() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const routeKey = useMemo(() => {
+  const _routeKey = useMemo(() => {
     const qs = searchParams?.toString() || "";
     return `${pathname || ""}?${qs}`;
   }, [pathname, searchParams]);
@@ -70,7 +73,7 @@ export default function NavigationPendingOverlay() {
       timeoutRef.current = null;
     }
     setIsPending(false);
-  }, [routeKey]);
+  }, []);
 
   useEffect(() => {
     function startPending() {
@@ -146,4 +149,3 @@ export default function NavigationPendingOverlay() {
 
   return <BoneyardOverlay name="navigation-pending-load" ariaLabel="Cargando navegacion" />;
 }
-

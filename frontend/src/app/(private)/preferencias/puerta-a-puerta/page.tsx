@@ -1,11 +1,15 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
-import { deleteDoorToDoorLocation, fetchSavedDoorToDoorLocation, saveDoorToDoorLocation } from "@/modules/door-to-door/api";
+import {
+  deleteDoorToDoorLocation,
+  fetchSavedDoorToDoorLocation,
+  saveDoorToDoorLocation,
+} from "@/modules/door-to-door/api";
 import type { DoorToDoorLocationType, DoorToDoorSavedLocation } from "@/modules/door-to-door/types";
 import { BoneyardLoad, LoadReference } from "@/modules/shared/BoneyardLoad";
 
@@ -66,7 +70,9 @@ export default function PreferenciasPuertaAPuertaPage() {
   return (
     <main className="shell prefs-shell" id="main-content">
       <div className="page-header prefs-header">
-        <button className="btn-ghost" type="button" onClick={() => router.push("/preferencias")}>{t("shared.actions.back")}</button>
+        <button className="btn-ghost" type="button" onClick={() => router.push("/preferencias")}>
+          {t("shared.actions.back")}
+        </button>
         <div className="page-title">
           <h1>{t("doorToDoor.title")}</h1>
           <p>{t("doorToDoor.preferences.subtitle")}</p>
@@ -79,22 +85,41 @@ export default function PreferenciasPuertaAPuertaPage() {
           <h2>{saved ? saved.label : t("doorToDoor.preferences.emptySaved")}</h2>
           <p className="prefs-hero-summary">{t("doorToDoor.preferences.permission")}</p>
         </div>
-        {saved ? <span className="status-pill success">{t("doorToDoor.preferences.saved")}</span> : <span className="status-pill warning">{t("doorToDoor.preferences.pending")}</span>}
+        {saved ? (
+          <span className="status-pill success">{t("doorToDoor.preferences.saved")}</span>
+        ) : (
+          <span className="status-pill warning">{t("doorToDoor.preferences.pending")}</span>
+        )}
       </section>
 
-      <form className="panel panel-soft prefs-form d2d-location-form prefs-priority-block" onSubmit={onSubmit}>
+      <form
+        className="panel panel-soft prefs-form d2d-location-form prefs-priority-block"
+        onSubmit={onSubmit}
+      >
         {loading ? (
-          <BoneyardLoad name="door-to-door-preferences-load" className="air-loader-section" ariaLabel={t("doorToDoor.preferences.loading")}>
+          <BoneyardLoad
+            name="door-to-door-preferences-load"
+            className="air-loader-section"
+            ariaLabel={t("doorToDoor.preferences.loading")}
+          >
             <LoadReference width="62%" />
           </BoneyardLoad>
         ) : null}
         <label className="field">
           {t("doorToDoor.preferences.label")}
-          <input className="prefs-control" value={label} onChange={(event) => setLabel(event.target.value)} />
+          <input
+            className="prefs-control"
+            value={label}
+            onChange={(event) => setLabel(event.target.value)}
+          />
         </label>
         <label className="field">
           {t("doorToDoor.preferences.type")}
-          <select className="prefs-control" value={type} onChange={(event) => setType(event.target.value as DoorToDoorLocationType)}>
+          <select
+            className="prefs-control"
+            value={type}
+            onChange={(event) => setType(event.target.value as DoorToDoorLocationType)}
+          >
             <option value="city">{t("doorToDoor.preferences.city")}</option>
             <option value="address">{t("doorToDoor.preferences.address")}</option>
             <option value="station">{t("doorToDoor.preferences.station")}</option>
@@ -102,11 +127,27 @@ export default function PreferenciasPuertaAPuertaPage() {
           </select>
         </label>
         <div className="d2d-location-coords">
-          <label className="field">{t("doorToDoor.preferences.lat")}<input className="prefs-control" value={lat} onChange={(event) => setLat(event.target.value)} /></label>
-          <label className="field">{t("doorToDoor.preferences.lng")}<input className="prefs-control" value={lng} onChange={(event) => setLng(event.target.value)} /></label>
+          <label className="field">
+            {t("doorToDoor.preferences.lat")}
+            <input
+              className="prefs-control"
+              value={lat}
+              onChange={(event) => setLat(event.target.value)}
+            />
+          </label>
+          <label className="field">
+            {t("doorToDoor.preferences.lng")}
+            <input
+              className="prefs-control"
+              value={lng}
+              onChange={(event) => setLng(event.target.value)}
+            />
+          </label>
         </div>
         <div className="row-actions">
-          <button className="btn-primary" type="submit" disabled={saving || !label.trim()}>{saving ? t("doorToDoor.preferences.saving") : t("doorToDoor.preferences.save")}</button>
+          <button className="btn-primary" type="submit" disabled={saving || !label.trim()}>
+            {saving ? t("doorToDoor.preferences.saving") : t("doorToDoor.preferences.save")}
+          </button>
         </div>
       </form>
 
@@ -119,7 +160,9 @@ export default function PreferenciasPuertaAPuertaPage() {
           <span className="status-pill warning">{t("doorToDoor.preferences.destructive")}</span>
         </div>
         <div className="row-actions">
-          <button className="btn-ghost" type="button" onClick={onDelete} disabled={!saved}>{t("doorToDoor.preferences.delete")}</button>
+          <button className="btn-ghost" type="button" onClick={onDelete} disabled={!saved}>
+            {t("doorToDoor.preferences.delete")}
+          </button>
         </div>
       </section>
     </main>

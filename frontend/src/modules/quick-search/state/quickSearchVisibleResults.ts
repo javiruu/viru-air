@@ -25,7 +25,8 @@ export function deriveQuickSearchVisibleResults({
   let list = normalizedResults.filter((item) => {
     if (min !== null && item.price_total !== undefined && item.price_total < min) return false;
     if (max !== null && item.price_total !== undefined && item.price_total > max) return false;
-    if (durMax !== null && item.duration_total_min != null && item.duration_total_min > durMax) return false;
+    if (durMax !== null && item.duration_total_min != null && item.duration_total_min > durMax)
+      return false;
     return true;
   });
 

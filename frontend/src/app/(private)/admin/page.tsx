@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useI18n } from "@/i18n";
@@ -84,8 +84,10 @@ export default function AdminPage() {
   const [metrics, setMetrics] = useState<ProductMetrics | null>(null);
 
   const statusMeta = useMemo(() => {
-    if (systemStatus === "ok") return { label: t("admin.status.ok"), detail: t("admin.status.okDetail") };
-    if (systemStatus === "down") return { label: t("admin.status.down"), detail: t("admin.status.downDetail") };
+    if (systemStatus === "ok")
+      return { label: t("admin.status.ok"), detail: t("admin.status.okDetail") };
+    if (systemStatus === "down")
+      return { label: t("admin.status.down"), detail: t("admin.status.downDetail") };
     return { label: t("admin.status.degraded"), detail: t("admin.status.degradedDetail") };
   }, [systemStatus, t]);
 
@@ -101,27 +103,42 @@ export default function AdminPage() {
       {
         label: t("admin.checks.validSession"),
         ok: checks[0].status === "fulfilled",
-        detail: checks[0].status === "fulfilled" ? t("admin.checks.detailTokenOk") : t("admin.checks.detailTokenFail"),
+        detail:
+          checks[0].status === "fulfilled"
+            ? t("admin.checks.detailTokenOk")
+            : t("admin.checks.detailTokenFail"),
       },
       {
         label: t("admin.checks.adminEndpoints"),
         ok: checks[1].status === "fulfilled",
-        detail: checks[1].status === "fulfilled" ? t("admin.checks.detailAdminOk") : t("admin.checks.detailAdminFail"),
+        detail:
+          checks[1].status === "fulfilled"
+            ? t("admin.checks.detailAdminOk")
+            : t("admin.checks.detailAdminFail"),
       },
       {
         label: t("admin.checks.watchlistConsistency"),
         ok: checks[2].status === "fulfilled",
-        detail: checks[2].status === "fulfilled" ? t("admin.checks.detailWatchlistOk") : t("admin.checks.detailWatchlistFail"),
+        detail:
+          checks[2].status === "fulfilled"
+            ? t("admin.checks.detailWatchlistOk")
+            : t("admin.checks.detailWatchlistFail"),
       },
       {
         label: t("admin.checks.tokenRefresh"),
         ok: checks[0].status === "fulfilled",
-        detail: checks[0].status === "fulfilled" ? t("admin.checks.detailRefreshOk") : t("admin.checks.detailRefreshFail"),
+        detail:
+          checks[0].status === "fulfilled"
+            ? t("admin.checks.detailRefreshOk")
+            : t("admin.checks.detailRefreshFail"),
       },
       {
         label: t("admin.checks.priceCorrelation"),
         ok: checks[2].status === "fulfilled",
-        detail: checks[2].status === "fulfilled" ? t("admin.checks.detailPriceOk") : t("admin.checks.detailPriceFail"),
+        detail:
+          checks[2].status === "fulfilled"
+            ? t("admin.checks.detailPriceOk")
+            : t("admin.checks.detailPriceFail"),
       },
     ];
 
@@ -140,7 +157,13 @@ export default function AdminPage() {
       setSystemStatus("degraded");
     }
 
-    setUpdatedAt(new Date().toLocaleString(localeTag, { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+    setUpdatedAt(
+      new Date().toLocaleString(localeTag, {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }),
+    );
   }, [localeTag, t]);
 
   useEffect(() => {
@@ -287,7 +310,11 @@ export default function AdminPage() {
   if (!me?.is_admin) {
     return (
       <main className="shell" id="main-content">
-        <BoneyardPanel name="admin-access-load" className="air-loader-section" ariaLabel={t("admin.loading")} />
+        <BoneyardPanel
+          name="admin-access-load"
+          className="air-loader-section"
+          ariaLabel={t("admin.loading")}
+        />
       </main>
     );
   }
@@ -304,7 +331,11 @@ export default function AdminPage() {
         </div>
       </div>
       {message ? (
-        <div className={`notice ${messageType === "success" ? "notice-success" : "notice-error"}`} role="status" aria-live="polite">
+        <div
+          className={`notice ${messageType === "success" ? "notice-success" : "notice-error"}`}
+          role="status"
+          aria-live="polite"
+        >
           {message}
         </div>
       ) : null}
@@ -314,9 +345,13 @@ export default function AdminPage() {
           <h2 className="panel-title">{t("admin.systemTitle")}</h2>
           <span className={`status-badge status-${systemStatus}`}>{statusMeta.label}</span>
         </div>
-        <p className="panel-note">{statusMeta.detail} {t("admin.status.lastCheck")}: {updatedAt || "--:--:--"}.</p>
+        <p className="panel-note">
+          {statusMeta.detail} {t("admin.status.lastCheck")}: {updatedAt || "--:--:--"}.
+        </p>
         <p className="section-gap-sm">
-          <button type="button" className="btn-secondary btn-compact" onClick={runSystemChecks}>{t("admin.retryChecks")}</button>
+          <button type="button" className="btn-secondary btn-compact" onClick={runSystemChecks}>
+            {t("admin.retryChecks")}
+          </button>
         </p>
       </section>
 
@@ -327,7 +362,11 @@ export default function AdminPage() {
         </div>
         <div className="stack">
           {qaChecks.length === 0 ? (
-            <BoneyardLoad name="admin-checks-load" className="boneyard-list" ariaLabel={t("admin.loading")}>
+            <BoneyardLoad
+              name="admin-checks-load"
+              className="boneyard-list"
+              ariaLabel={t("admin.loading")}
+            >
               {Array.from({ length: 3 }).map((_, idx) => (
                 <article key={`admin-check-load-${idx}`} className="boneyard-list-reference-row">
                   <div className="boneyard-list-reference-main">
@@ -345,7 +384,9 @@ export default function AdminPage() {
                   <strong>{check.label}</strong>
                   <div className="panel-note">{check.detail}</div>
                 </div>
-                <span className={`status-badge ${check.ok ? "status-ok" : "status-down"}`}>{check.ok ? t("admin.checks.ok") : t("admin.checks.failed")}</span>
+                <span className={`status-badge ${check.ok ? "status-ok" : "status-down"}`}>
+                  {check.ok ? t("admin.checks.ok") : t("admin.checks.failed")}
+                </span>
               </article>
             ))
           )}
@@ -358,7 +399,11 @@ export default function AdminPage() {
           <span className="panel-note">{t("admin.metricsSubtitle")}</span>
         </div>
         {!metrics ? (
-          <BoneyardLoad name="admin-metrics-load" className="dashboard-primary-grid" ariaLabel={t("admin.loading")}>
+          <BoneyardLoad
+            name="admin-metrics-load"
+            className="dashboard-primary-grid"
+            ariaLabel={t("admin.loading")}
+          >
             {Array.from({ length: 6 }).map((_, idx) => (
               <article key={`admin-metric-load-${idx}`} className="module-card">
                 <LoadReference width="70%" />
@@ -368,15 +413,42 @@ export default function AdminPage() {
           </BoneyardLoad>
         ) : (
           <div className="dashboard-primary-grid">
-            <article className="module-card"><strong>{t("admin.metricsQuickSearches")}</strong><span>{metrics.quick_search_executed}</span></article>
-            <article className="module-card"><strong>{t("admin.metricsEmptyRate")}</strong><span>{metrics.search_empty_rate_pct}%</span></article>
-            <article className="module-card"><strong>{t("admin.metricsAlertsCreated")}</strong><span>{metrics.alert_created}</span></article>
-            <article className="module-card"><strong>{t("admin.metricsAlertsTriggered")}</strong><span>{metrics.alert_triggered}</span></article>
-            <article className="module-card"><strong>{t("admin.metricsWatchRefreshes")}</strong><span>{metrics.watchlist_refresh}</span></article>
-            <article className="module-card"><strong>{t("admin.metricsDashboardViews")}</strong><span>{metrics.dashboard_views}</span></article>
-            <article className="module-card"><strong>{t("admin.metricsAvgSearchMs")}</strong><span>{metrics.quick_search_avg_ms}</span></article>
-            <article className="module-card"><strong>{t("admin.metricsRefreshToAlertRate")}</strong><span>{metrics.watchlist_refresh_to_alert_created_pct}%</span></article>
-            <article className="module-card"><strong>{t("admin.metricsAlertCreateRate")}</strong><span>{metrics.alert_created_rate_pct}%</span></article>
+            <article className="module-card">
+              <strong>{t("admin.metricsQuickSearches")}</strong>
+              <span>{metrics.quick_search_executed}</span>
+            </article>
+            <article className="module-card">
+              <strong>{t("admin.metricsEmptyRate")}</strong>
+              <span>{metrics.search_empty_rate_pct}%</span>
+            </article>
+            <article className="module-card">
+              <strong>{t("admin.metricsAlertsCreated")}</strong>
+              <span>{metrics.alert_created}</span>
+            </article>
+            <article className="module-card">
+              <strong>{t("admin.metricsAlertsTriggered")}</strong>
+              <span>{metrics.alert_triggered}</span>
+            </article>
+            <article className="module-card">
+              <strong>{t("admin.metricsWatchRefreshes")}</strong>
+              <span>{metrics.watchlist_refresh}</span>
+            </article>
+            <article className="module-card">
+              <strong>{t("admin.metricsDashboardViews")}</strong>
+              <span>{metrics.dashboard_views}</span>
+            </article>
+            <article className="module-card">
+              <strong>{t("admin.metricsAvgSearchMs")}</strong>
+              <span>{metrics.quick_search_avg_ms}</span>
+            </article>
+            <article className="module-card">
+              <strong>{t("admin.metricsRefreshToAlertRate")}</strong>
+              <span>{metrics.watchlist_refresh_to_alert_created_pct}%</span>
+            </article>
+            <article className="module-card">
+              <strong>{t("admin.metricsAlertCreateRate")}</strong>
+              <span>{metrics.alert_created_rate_pct}%</span>
+            </article>
           </div>
         )}
       </section>
@@ -397,7 +469,9 @@ export default function AdminPage() {
             >
               <option value="">{t("admin.users.selectPlaceholder")}</option>
               {users.map((u) => (
-                <option key={u.id} value={u.id}>{u.email}</option>
+                <option key={u.id} value={u.id}>
+                  {u.email}
+                </option>
               ))}
             </select>
           </label>
@@ -407,14 +481,17 @@ export default function AdminPage() {
                 <div>
                   <strong>{u.email}</strong>
                   <div className="panel-note">
-                    {u.is_admin ? t("admin.users.roleAdmin") : t("admin.users.roleUser")} · {u.locale} · {u.timezone}
+                    {u.is_admin ? t("admin.users.roleAdmin") : t("admin.users.roleUser")} ·{" "}
+                    {u.locale} · {u.timezone}
                   </div>
                 </div>
                 <div className="row-actions">
                   <button className="btn-ghost" onClick={() => onToggleAdmin(u)}>
                     {u.is_admin ? t("admin.users.removeAdmin") : t("admin.users.makeAdmin")}
                   </button>
-                  <button className="btn-ghost" onClick={() => onDeleteUser(u.id)}>{t("admin.users.delete")}</button>
+                  <button className="btn-ghost" onClick={() => onDeleteUser(u.id)}>
+                    {t("admin.users.delete")}
+                  </button>
                 </div>
               </div>
             ))}
@@ -438,7 +515,9 @@ export default function AdminPage() {
                 placeholder={t("admin.actions.resetPasswordPlaceholder")}
               />
             </label>
-            <button type="submit" className="btn-primary">{t("admin.actions.changePassword")}</button>
+            <button type="submit" className="btn-primary">
+              {t("admin.actions.changePassword")}
+            </button>
           </form>
 
           <form className="form form-spaced" onSubmit={onCreateWatch}>
@@ -480,21 +559,29 @@ export default function AdminPage() {
                 onChange={(e) => setTargetPrice(e.target.value)}
               />
             </label>
-            <button type="submit" className="btn-primary">{t("admin.actions.injectWatch")}</button>
+            <button type="submit" className="btn-primary">
+              {t("admin.actions.injectWatch")}
+            </button>
           </form>
 
           <div className="stack section-gap-lg">
             <div className="row-between">
               <h3 className="panel-title">{t("admin.actions.userFlights")}</h3>
-              <span className="panel-note">{t("admin.actions.routesCount", { count: selectedWatches.length })}</span>
+              <span className="panel-note">
+                {t("admin.actions.routesCount", { count: selectedWatches.length })}
+              </span>
             </div>
             {selectedWatches.length === 0 ? (
               <p className="panel-note">{t("admin.actions.noFlights")}</p>
             ) : (
               selectedWatches.map((w) => (
                 <div key={w.id} className="list-row">
-                  <span>{w.origin_iata} {" -> "} {w.destination_iata} ({w.travel_date_local})</span>
-                  <button className="btn-ghost" onClick={() => onDeleteWatch(w.id)}>{t("admin.users.delete")}</button>
+                  <span>
+                    {w.origin_iata} {" -> "} {w.destination_iata} ({w.travel_date_local})
+                  </span>
+                  <button className="btn-ghost" onClick={() => onDeleteWatch(w.id)}>
+                    {t("admin.users.delete")}
+                  </button>
                 </div>
               ))
             )}
@@ -504,16 +591,21 @@ export default function AdminPage() {
 
       <footer className="tech-footer section-gap">
         <div className="tech-chips">
-          <span className="tech-chip">{t("admin.footer.web")}: {statusMeta.label}</span>
+          <span className="tech-chip">
+            {t("admin.footer.web")}: {statusMeta.label}
+          </span>
           <span className="tech-chip">{t("admin.footer.api")}: /api/v1</span>
           <span className="tech-chip">{t("admin.footer.port")}: 3000/8000</span>
-          <span className="tech-chip">{t("admin.footer.updated")}: {updatedAt || "--:--:--"}</span>
+          <span className="tech-chip">
+            {t("admin.footer.updated")}: {updatedAt || "--:--:--"}
+          </span>
         </div>
         <div className="tech-chips">
-          <span className="tech-chip">{t("admin.footer.routes")}: {t("admin.footer.routesValue")}</span>
+          <span className="tech-chip">
+            {t("admin.footer.routes")}: {t("admin.footer.routesValue")}
+          </span>
         </div>
       </footer>
     </main>
   );
 }
-

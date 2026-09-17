@@ -42,7 +42,9 @@ export default function ThemeToggle() {
     notify({
       tone: "info",
       title: t("shared.notifications.themeChangedTitle"),
-      description: next ? t("shared.notifications.themeDarkBody") : t("shared.notifications.themeLightBody"),
+      description: next
+        ? t("shared.notifications.themeDarkBody")
+        : t("shared.notifications.themeLightBody"),
       durationMs: 2800,
     });
   }

@@ -1,5 +1,3 @@
-import React from "react";
-
 import { useI18n } from "@/i18n";
 import type { DoorToDoorPreferences, DoorToDoorSortBy } from "@/modules/door-to-door/types";
 
@@ -23,7 +21,11 @@ export function DoorToDoorFilters({
         <div className="d2d-filter-grid">
           <label className="field">
             <span className="d2d-filter-label">{t("doorToDoor.filters.sortBy")}</span>
-            <select className="qs-input-neutral" value={preferences.sort_by} onChange={(event) => patch({ sort_by: event.target.value as DoorToDoorSortBy })}>
+            <select
+              className="qs-input-neutral"
+              value={preferences.sort_by}
+              onChange={(event) => patch({ sort_by: event.target.value as DoorToDoorSortBy })}
+            >
               <option value="best_balance">{t("doorToDoor.filters.bestBalance")}</option>
               <option value="cheapest">{t("doorToDoor.filters.cheapest")}</option>
               <option value="fastest">{t("doorToDoor.filters.fastest")}</option>
@@ -33,24 +35,63 @@ export function DoorToDoorFilters({
           <label className="field">
             <span className="d2d-filter-label">{t("doorToDoor.filters.minBuffer")}</span>
             <div className="d2d-input-with-suffix">
-              <input className="qs-input-neutral" type="number" min={45} max={360} value={preferences.min_airport_buffer_minutes} onChange={(event) => patch({ min_airport_buffer_minutes: Number(event.target.value) })} />
-              <span className="d2d-input-suffix" aria-hidden="true">min</span>
+              <input
+                className="qs-input-neutral"
+                type="number"
+                min={45}
+                max={360}
+                value={preferences.min_airport_buffer_minutes}
+                onChange={(event) =>
+                  patch({ min_airport_buffer_minutes: Number(event.target.value) })
+                }
+              />
+              <span className="d2d-input-suffix" aria-hidden="true">
+                min
+              </span>
             </div>
           </label>
           <label className="field">
             <span className="d2d-filter-label">{t("doorToDoor.filters.passengers")}</span>
-            <input className="qs-input-neutral" type="number" min={1} max={9} value={preferences.passengers} onChange={(event) => patch({ passengers: Number(event.target.value) })} />
+            <input
+              className="qs-input-neutral"
+              type="number"
+              min={1}
+              max={9}
+              value={preferences.passengers}
+              onChange={(event) => patch({ passengers: Number(event.target.value) })}
+            />
           </label>
           <label className="field">
             <span className="d2d-filter-label">{t("doorToDoor.filters.maxPrice")}</span>
-            <input className="qs-input-neutral" type="number" min={0} value={preferences.max_price ?? ""} placeholder="80" onChange={(event) => patch({ max_price: event.target.value === "" ? null : Number(event.target.value) })} />
+            <input
+              className="qs-input-neutral"
+              type="number"
+              min={0}
+              value={preferences.max_price ?? ""}
+              placeholder="80"
+              onChange={(event) =>
+                patch({ max_price: event.target.value === "" ? null : Number(event.target.value) })
+              }
+            />
           </label>
           <label className="field">
             <span className="d2d-filter-label-with-help">
               <span className="d2d-filter-label">{t("doorToDoor.filters.luggage")}</span>
-              <span className="d2d-filter-help" title={t("doorToDoor.filters.maxPriceHint")} aria-label={t("doorToDoor.filters.luggageHelpAria")}>?</span>
+              <span
+                className="d2d-filter-help"
+                title={t("doorToDoor.filters.maxPriceHint")}
+                aria-label={t("doorToDoor.filters.luggageHelpAria")}
+              >
+                ?
+              </span>
             </span>
-            <select className="qs-input-neutral" value={preferences.luggage} onChange={(event) => patch({ luggage: event.target.value as DoorToDoorPreferences["luggage"] })}>
+            <select
+              className="qs-input-neutral"
+              value={preferences.luggage}
+              onChange={(event) =>
+                patch({ luggage: event.target.value as DoorToDoorPreferences["luggage"] })
+              }
+            >
               <option value="backpack">{t("doorToDoor.filters.backpack")}</option>
               <option value="cabin">{t("doorToDoor.filters.cabin")}</option>
               <option value="checked">{t("doorToDoor.filters.checked")}</option>
@@ -74,7 +115,11 @@ export function DoorToDoorFilters({
               <span className="prefs-toggle-track" aria-hidden="true">
                 <span className="prefs-toggle-knob" />
               </span>
-              <span className="sr-only">{preferences.public_transport_only ? t("doorToDoor.filters.enabled") : t("doorToDoor.filters.disabled")}</span>
+              <span className="sr-only">
+                {preferences.public_transport_only
+                  ? t("doorToDoor.filters.enabled")
+                  : t("doorToDoor.filters.disabled")}
+              </span>
             </button>
           </div>
           <div className="field">
@@ -90,7 +135,11 @@ export function DoorToDoorFilters({
               <span className="prefs-toggle-track" aria-hidden="true">
                 <span className="prefs-toggle-knob" />
               </span>
-              <span className="sr-only">{preferences.allow_rideshare ? t("doorToDoor.filters.enabled") : t("doorToDoor.filters.disabled")}</span>
+              <span className="sr-only">
+                {preferences.allow_rideshare
+                  ? t("doorToDoor.filters.enabled")
+                  : t("doorToDoor.filters.disabled")}
+              </span>
             </button>
           </div>
           <div className="field">
@@ -106,7 +155,11 @@ export function DoorToDoorFilters({
               <span className="prefs-toggle-track" aria-hidden="true">
                 <span className="prefs-toggle-knob" />
               </span>
-              <span className="sr-only">{preferences.allow_shuttle ? t("doorToDoor.filters.enabled") : t("doorToDoor.filters.disabled")}</span>
+              <span className="sr-only">
+                {preferences.allow_shuttle
+                  ? t("doorToDoor.filters.enabled")
+                  : t("doorToDoor.filters.disabled")}
+              </span>
             </button>
           </div>
         </div>

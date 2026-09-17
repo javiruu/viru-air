@@ -13,7 +13,8 @@ export const watchlistEs = {
     kicker: "Motor multi-provider",
     heading: "Cobertura de búsqueda",
     summary: "{observed} de {total} proveedores con capturas observadas en tu Watchlist.",
-    pendingSummary: "Los refrescos usan el motor multi-provider; todavía no hay capturas por proveedor en tus rutas.",
+    pendingSummary:
+      "Los refrescos usan el motor multi-provider; todavía no hay capturas por proveedor en tus rutas.",
     observed: "{count} capturas",
     ready: "Listo",
     latest: "Último {value}",
@@ -56,7 +57,8 @@ export const watchlistEs = {
     },
     noOtherWatchers: "No hay ninguna persona que tenga este vuelo guardado en su watchlist.",
     loadingAria: "Cargando rutas vigiladas",
-    inlineLoadError: "No se pudo actualizar la lista ahora. Puedes reintentar sin perder los datos visibles.",
+    inlineLoadError:
+      "No se pudo actualizar la lista ahora. Puedes reintentar sin perder los datos visibles.",
     retryLoad: "Reintentar carga",
     emptyTitle: "Todavía no tienes vuelos vigilados.",
     emptyStep1Title: "1. Define tu ruta",
@@ -103,47 +105,36 @@ export const watchlistEs = {
     purchaseBody:
       "Registra la compra solo cuando quieras. Después te preguntaremos si llegaste a volar.",
     contributeTitle: "Tu experiencia puede completar la ruta",
-    contributeBody:
-      "Cuéntanos si volaste y, si fue así, el precio final de una persona.",
+    contributeBody: "Cuéntanos si volaste y, si fue así, el precio final de una persona.",
     contributedTitle: "Ya has ayudado a esta ruta",
     contributedPrice: "Compartiste {price} por viajero de forma anónima.",
     contributedNoFlight: "Nos contaste que finalmente no volaste.",
     thanksTitle: "Gracias por compartir 🧡",
-    thanksBody:
-      "Tu precio ayuda a otros viajeros a decidir mejor. Todo es anónimo y privado.",
+    thanksBody: "Tu precio ayuda a otros viajeros a decidir mejor. Todo es anónimo y privado.",
     streakBanner: "{weeks} semanas seguidas compartiendo · {total} aportaciones en total",
     indicator: {
-      available:
-        "Abrir comunidad de {origin} a {destination}",
-      public:
-        "Abrir comunidad de {origin} a {destination}; hay precios reales",
-      pending:
-        "Abrir comunidad de {origin} a {destination}; tu aportación está pendiente",
-      contributed:
-        "Abrir comunidad de {origin} a {destination}; ya has aportado",
+      available: "Abrir comunidad de {origin} a {destination}",
+      public: "Abrir comunidad de {origin} a {destination}; hay precios reales",
+      pending: "Abrir comunidad de {origin} a {destination}; tu aportación está pendiente",
+      contributed: "Abrir comunidad de {origin} a {destination}; ya has aportado",
     },
     stepFlight: "Paso 1 de 2",
     stepPrice: "Paso 2 de 2",
     didFly: "¿Llegaste a montar en este vuelo?",
-    didFlyBody:
-      "Tu respuesta nos ayuda a separar compras reales de planes que cambiaron.",
+    didFlyBody: "Tu respuesta nos ayuda a separar compras reales de planes que cambiaron.",
     yesFlew: "Sí, volé",
     noFlight: "No llegué a volar",
     priceTitle: "¿Qué precio final pagaste?",
-    priceBody:
-      "Indica el importe de una persona, con tasas y extras incluidos.",
+    priceBody: "Indica el importe de una persona, con tasas y extras incluidos.",
     priceLabel: "Precio final por viajero",
     priceHint: "No incluyas el total de toda la reserva.",
     save: "Compartir de forma anónima",
     saving: "Guardando...",
     later: "Ahora no",
     deleteResponse: "Eliminar mi respuesta",
-    thresholdPending:
-      "Tu precio ya suma. Mostraremos el rango cuando haya 3 viajeros.",
-    aggregatePublic:
-      "{count} viajeros de Viru pagaron {min}–{max} € por persona.",
-    publicAggregateInline:
-      "{count} viajeros de Viru pagaron {range} por persona en esta ruta.",
+    thresholdPending: "Tu precio ya suma. Mostraremos el rango cuando haya 3 viajeros.",
+    aggregatePublic: "{count} viajeros de Viru pagaron {min}–{max} € por persona.",
+    publicAggregateInline: "{count} viajeros de Viru pagaron {range} por persona en esta ruta.",
     errors: {
       markPurchased: "No se pudo registrar la compra. Inténtalo de nuevo.",
       save: "No se pudo guardar tu respuesta. No hemos perdido lo escrito.",
@@ -228,7 +219,8 @@ export const watchlistEs = {
     comparePill: "Modo comparación",
     focusPill: "Modo enfoque",
     compareLimitHint: "Se muestran hasta 4 rutas para mantener la lectura limpia.",
-    insightOpportunity: "Oportunidad activa: {origin} -> {destination} tiene el precio más bajo ahora.",
+    insightOpportunity:
+      "Oportunidad activa: {origin} -> {destination} tiene el precio más bajo ahora.",
     insightStability: "Más estable ahora: {origin} -> {destination}.",
     insightFocus: "Ruta en foco: {origin} -> {destination}.",
     unavailableTitle: "Mapa no disponible para estas rutas.",
@@ -243,7 +235,8 @@ export const watchlistEs = {
     legendOther: "Otras rutas",
     legendLive: "Posición observada",
     livePositionAria: "Posición observada de {flight}",
-    noObservedPosition: "Sin posición observada: la línea muestra la ruta, no la ubicación del avión.",
+    noObservedPosition:
+      "Sin posición observada: la línea muestra la ruta, no la ubicación del avión.",
     targetLabel: "Objetivo {value}",
     targetLabelShort: "Objetivo",
     noTarget: "Sin objetivo",
@@ -267,7 +260,8 @@ export const watchlistEs = {
     positionOnMap: "Posición real en el mapa",
     legDetails: "Detalle del tramo",
     legUnavailableShort: "Sin dato",
-    legUnavailable: "Este tramo está enlazado, pero todavía no tiene una observación operacional fiable.",
+    legUnavailable:
+      "Este tramo está enlazado, pero todavía no tiene una observación operacional fiable.",
     providerSource: "Fuente {provider}",
     observedAt: "Observado {time}",
     altitude: "Altitud {value} m",
@@ -333,10 +327,14 @@ export const watchlistEs = {
       temporarily_unavailable: "La señal se ha interrumpido un momento",
     },
     states: {
-      identityMissing: "Guarda un resultado exacto desde Búsqueda rápida y Viru enlazará número, horario y trayecto sin alterar tu seguimiento de precio.",
-      preparing: "Tu Watchlist sigue funcionando. El seguimiento operativo aparecerá aquí cuando la fuente live esté disponible.",
-      noCoverage: "Conservamos el vuelo y volveremos a comprobarlo; no mostramos una posición si no podemos validarla.",
-      temporarilyUnavailable: "Mantenemos el último dato conocido y reintentamos con calma, sin hacerte perder el contexto.",
+      identityMissing:
+        "Guarda un resultado exacto desde Búsqueda rápida y Viru enlazará número, horario y trayecto sin alterar tu seguimiento de precio.",
+      preparing:
+        "Tu Watchlist sigue funcionando. El seguimiento operativo aparecerá aquí cuando la fuente live esté disponible.",
+      noCoverage:
+        "Conservamos el vuelo y volveremos a comprobarlo; no mostramos una posición si no podemos validarla.",
+      temporarilyUnavailable:
+        "Mantenemos el último dato conocido y reintentamos con calma, sin hacerte perder el contexto.",
       connectionTitle: "La última comprobación no ha respondido",
       connectionBody: "Conservamos lo que ya sabíamos. Puedes reintentar sin perder la lectura.",
     },
@@ -462,7 +460,8 @@ export const watchlistEs = {
     resetZoom: "Reset zoom",
     chartAriaLabel: "Gráfico de histórico de precios",
     chartEmpty: "Selecciona filtros con datos históricos para ver el gráfico.",
-    backfillTooltip: "Incluye precios que Viru ya había observado antes de añadir este seguimiento.",
+    backfillTooltip:
+      "Incluye precios que Viru ya había observado antes de añadir este seguimiento.",
     departureAt: "Salida {value}",
     prevMonth: "Mes anterior",
     nextMonth: "Mes siguiente",
@@ -495,7 +494,8 @@ export const watchlistEs = {
     legendLow: "Más barato",
     legendMid: "Precio medio",
     legendHigh: "Más caro",
-    heatLegendExplainer: "Verde indica el precio más bajo del rango visible y terracota el más alto.",
+    heatLegendExplainer:
+      "Verde indica el precio más bajo del rango visible y terracota el más alto.",
     priceMeaningTitle: "¿Qué significa este precio?",
     priceMeaningBody: "Precio orientativo base 1 adulto, sin extras.",
   },
@@ -561,7 +561,8 @@ export const watchlistEn = {
     kicker: "Multi-provider engine",
     heading: "Search coverage",
     summary: "{observed} of {total} providers have observed captures in your Watchlist.",
-    pendingSummary: "Refreshes use the multi-provider engine; your routes do not have provider-level captures yet.",
+    pendingSummary:
+      "Refreshes use the multi-provider engine; your routes do not have provider-level captures yet.",
     observed: "{count} captures",
     ready: "Ready",
     latest: "Latest {value}",
@@ -604,7 +605,8 @@ export const watchlistEn = {
     },
     noOtherWatchers: "No one else has this flight saved in their watchlist.",
     loadingAria: "Loading monitored routes",
-    inlineLoadError: "The list could not be refreshed right now. You can retry without losing visible data.",
+    inlineLoadError:
+      "The list could not be refreshed right now. You can retry without losing visible data.",
     retryLoad: "Retry load",
     emptyTitle: "You do not have monitored flights yet.",
     emptyStep1Title: "1. Define your route",
@@ -651,8 +653,7 @@ export const watchlistEn = {
     purchaseBody:
       "Record the purchase only when you choose. Then we will ask whether you actually flew.",
     contributeTitle: "Your experience can complete this route",
-    contributeBody:
-      "Tell us whether you flew and, if so, the final price for one traveler.",
+    contributeBody: "Tell us whether you flew and, if so, the final price for one traveler.",
     contributedTitle: "You have already helped this route",
     contributedPrice: "You anonymously shared {price} per traveler.",
     contributedNoFlight: "You told us that you did not end up flying.",
@@ -661,37 +662,28 @@ export const watchlistEn = {
       "Your price helps other travelers make better decisions. Everything is anonymous and private.",
     streakBanner: "{weeks} weeks sharing in a row · {total} total contributions",
     indicator: {
-      available:
-        "Open community for {origin} to {destination}",
-      public:
-        "Open community for {origin} to {destination}; real prices available",
-      pending:
-        "Open community for {origin} to {destination}; your contribution is pending",
-      contributed:
-        "Open community for {origin} to {destination}; you have contributed",
+      available: "Open community for {origin} to {destination}",
+      public: "Open community for {origin} to {destination}; real prices available",
+      pending: "Open community for {origin} to {destination}; your contribution is pending",
+      contributed: "Open community for {origin} to {destination}; you have contributed",
     },
     stepFlight: "Step 1 of 2",
     stepPrice: "Step 2 of 2",
     didFly: "Did you take this flight?",
-    didFlyBody:
-      "Your response helps us separate real purchases from plans that changed.",
+    didFlyBody: "Your response helps us separate real purchases from plans that changed.",
     yesFlew: "Yes, I flew",
     noFlight: "I did not fly",
     priceTitle: "What final price did you pay?",
-    priceBody:
-      "Enter the amount for one traveler, including fees and extras.",
+    priceBody: "Enter the amount for one traveler, including fees and extras.",
     priceLabel: "Final price per traveler",
     priceHint: "Do not enter the total for the whole booking.",
     save: "Share anonymously",
     saving: "Saving...",
     later: "Not now",
     deleteResponse: "Delete my response",
-    thresholdPending:
-      "Your price now counts. We will show the range after 3 travelers.",
-    aggregatePublic:
-      "{count} Viru travelers paid €{min}–€{max} per person.",
-    publicAggregateInline:
-      "{count} Viru travelers paid {range} per person on this route.",
+    thresholdPending: "Your price now counts. We will show the range after 3 travelers.",
+    aggregatePublic: "{count} Viru travelers paid €{min}–€{max} per person.",
+    publicAggregateInline: "{count} Viru travelers paid {range} per person on this route.",
     errors: {
       markPurchased: "The purchase could not be recorded. Please try again.",
       save: "Your response could not be saved. Your input is still here.",
@@ -776,7 +768,8 @@ export const watchlistEn = {
     comparePill: "Compare mode",
     focusPill: "Focus mode",
     compareLimitHint: "Up to 4 routes are shown to keep the view readable.",
-    insightOpportunity: "Active opportunity: {origin} -> {destination} has the lowest price right now.",
+    insightOpportunity:
+      "Active opportunity: {origin} -> {destination} has the lowest price right now.",
     insightStability: "Most stable now: {origin} -> {destination}.",
     insightFocus: "Route in focus: {origin} -> {destination}.",
     unavailableTitle: "Map is not available for these routes.",
@@ -791,7 +784,8 @@ export const watchlistEn = {
     legendOther: "Other routes",
     legendLive: "Observed position",
     livePositionAria: "Observed position for {flight}",
-    noObservedPosition: "No observed position: the line shows the route, not the aircraft location.",
+    noObservedPosition:
+      "No observed position: the line shows the route, not the aircraft location.",
     targetLabel: "Target {value}",
     targetLabelShort: "Target",
     noTarget: "No target",
@@ -815,7 +809,8 @@ export const watchlistEn = {
     positionOnMap: "Real position on the map",
     legDetails: "Leg details",
     legUnavailableShort: "No data",
-    legUnavailable: "This leg is linked, but it does not have a reliable operational observation yet.",
+    legUnavailable:
+      "This leg is linked, but it does not have a reliable operational observation yet.",
     providerSource: "Source {provider}",
     observedAt: "Observed {time}",
     altitude: "Altitude {value} m",
@@ -881,12 +876,17 @@ export const watchlistEn = {
       temporarily_unavailable: "The signal paused for a moment",
     },
     states: {
-      identityMissing: "Save an exact Quick Search result and Viru will link its flight number, schedule, and route without changing your price tracking.",
-      preparing: "Your Watchlist keeps working. Operational tracking will appear here when the live source is available.",
-      noCoverage: "We keep the flight and will check again; we never show a position we cannot validate.",
-      temporarilyUnavailable: "We preserve the last known data and retry calmly, without making you lose context.",
+      identityMissing:
+        "Save an exact Quick Search result and Viru will link its flight number, schedule, and route without changing your price tracking.",
+      preparing:
+        "Your Watchlist keeps working. Operational tracking will appear here when the live source is available.",
+      noCoverage:
+        "We keep the flight and will check again; we never show a position we cannot validate.",
+      temporarilyUnavailable:
+        "We preserve the last known data and retry calmly, without making you lose context.",
       connectionTitle: "The latest check did not respond",
-      connectionBody: "We kept what we already knew. You can retry without losing the current reading.",
+      connectionBody:
+        "We kept what we already knew. You can retry without losing the current reading.",
     },
     status: {
       scheduled: "Scheduled",
@@ -1043,7 +1043,8 @@ export const watchlistEn = {
     legendLow: "Cheapest",
     legendMid: "Mid price",
     legendHigh: "Most expensive",
-    heatLegendExplainer: "Green marks the lowest price in the visible range and terracotta the highest.",
+    heatLegendExplainer:
+      "Green marks the lowest price in the visible range and terracotta the highest.",
     priceMeaningTitle: "What does this price mean?",
     priceMeaningBody: "Indicative base fare for 1 adult, no extras.",
   },
@@ -1093,4 +1094,3 @@ export const watchlistEn = {
     selectedRefreshError: "Price could not be refreshed.",
   },
 };
-

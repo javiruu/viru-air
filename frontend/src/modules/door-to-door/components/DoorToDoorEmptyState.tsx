@@ -1,5 +1,3 @@
-import React from "react";
-
 import { useI18n } from "@/i18n";
 import type { DoorToDoorCorridor } from "@/modules/door-to-door/types";
 
@@ -17,9 +15,14 @@ function statusTone(status: DoorToDoorCorridor["status"]): string {
 
 export function DoorToDoorEmptyState({ hasWatch, corridors, corridorsLoaded }: Props) {
   const { t } = useI18n();
-  const verified = corridors.filter((c) => c.status === "verified" || c.status === "verified_limited");
+  const verified = corridors.filter(
+    (c) => c.status === "verified" || c.status === "verified_limited",
+  );
   return (
-    <section className="panel panel-soft d2d-state-card d2d-empty-state d2d-state-enter" role="status">
+    <section
+      className="panel panel-soft d2d-state-card d2d-empty-state d2d-state-enter"
+      role="status"
+    >
       <div className="d2d-empty-visual" aria-hidden="true">
         <div className="d2d-empty-route">
           <span className="d2d-empty-dot d2d-empty-origin" />
@@ -30,8 +33,16 @@ export function DoorToDoorEmptyState({ hasWatch, corridors, corridorsLoaded }: P
         </div>
         <span className="d2d-radar-dot" aria-hidden="true" />
       </div>
-      <h2>{hasWatch ? t("doorToDoor.states.emptyTitleWithWatch") : t("doorToDoor.states.emptyTitleNoWatch")}</h2>
-      <p>{hasWatch ? t("doorToDoor.states.emptyBodyWithWatch") : t("doorToDoor.states.emptyBodyNoWatch")}</p>
+      <h2>
+        {hasWatch
+          ? t("doorToDoor.states.emptyTitleWithWatch")
+          : t("doorToDoor.states.emptyTitleNoWatch")}
+      </h2>
+      <p>
+        {hasWatch
+          ? t("doorToDoor.states.emptyBodyWithWatch")
+          : t("doorToDoor.states.emptyBodyNoWatch")}
+      </p>
 
       {corridorsLoaded && verified.length > 0 ? (
         <aside className="d2d-empty-corridors" aria-label={t("doorToDoor.corridors.title")}>
@@ -46,10 +57,15 @@ export function DoorToDoorEmptyState({ hasWatch, corridors, corridorsLoaded }: P
                   {t(`doorToDoor.corridors.status.${corridor.status}`)}
                 </span>
                 <strong>{corridor.origin_area}</strong>
-                <span className="d2d-empty-corridor-arrow" aria-hidden="true">→</span>
+                <span className="d2d-empty-corridor-arrow" aria-hidden="true">
+                  →
+                </span>
                 <strong>{corridor.destination_airport}</strong>
                 {corridor.both_legs ? (
-                  <span className="d2d-empty-corridor-pill" title={t("doorToDoor.corridors.bothLegs")}>
+                  <span
+                    className="d2d-empty-corridor-pill"
+                    title={t("doorToDoor.corridors.bothLegs")}
+                  >
                     {t("doorToDoor.corridors.bothLegs")}
                   </span>
                 ) : null}

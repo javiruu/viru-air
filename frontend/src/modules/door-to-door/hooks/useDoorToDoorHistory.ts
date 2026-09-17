@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchDoorToDoorHistory } from "@/modules/door-to-door/api";
 import type { DoorToDoorHistoryItem } from "@/modules/door-to-door/types";
 
-export function useDoorToDoorHistory(selectedWatchId: string, triggerVersion: number) {
+export function useDoorToDoorHistory(selectedWatchId: string, _triggerVersion: number) {
   const [history, setHistory] = useState<DoorToDoorHistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const requestIdRef = useRef(0);
@@ -29,11 +29,11 @@ export function useDoorToDoorHistory(selectedWatchId: string, triggerVersion: nu
 
   useEffect(() => {
     void refreshHistory();
-  }, [refreshHistory, triggerVersion]);
+  }, [refreshHistory]);
 
   useEffect(() => {
     setShowHistory(false);
-  }, [selectedWatchId]);
+  }, []);
 
   return { history, showHistory, setShowHistory, refreshHistory };
 }

@@ -41,10 +41,12 @@ export const supportEs = {
     panelTitle: "Escribe tu mensaje",
     panelSubtitle: "Lo enviaremos al equipo como contacto general.",
     signedInAs: "Sesión activa como",
-    responseWindow: "Normalmente respondemos con contexto útil, no con una respuesta automática vacía.",
+    responseWindow:
+      "Normalmente respondemos con contexto útil, no con una respuesta automática vacía.",
     formKicker: "Mensaje guiado",
     messageLabel: "En que te podemos ayudar?",
-    messagePlaceholder: "Ejemplo: no consigo actualizar mi perfil desde el panel y me gustaria revisar que esta fallando.",
+    messagePlaceholder:
+      "Ejemplo: no consigo actualizar mi perfil desde el panel y me gustaria revisar que esta fallando.",
     messageHint: "Cuanto más concreto sea el contexto, mejor podremos orientarte.",
     messageMin: "Añade un poco mas de contexto para que podamos ayudarte mejor.",
     attachmentLabel: "Captura o enlace de apoyo (opcional)",
@@ -94,13 +96,13 @@ export const supportEs = {
     team: {
       kicker: "Quienes somos",
       title: "La capa humana detras del panel.",
-      body:
-        "Este bloque toma la composicion de una team section editorial, pero aterrizada al lenguaje visual de Viru: perfiles claros, foco operativo y una lectura rapida de quien hace que.",
+      body: "Este bloque toma la composicion de una team section editorial, pero aterrizada al lenguaje visual de Viru: perfiles claros, foco operativo y una lectura rapida de quien hace que.",
       members: {
         aria: {
           name: "Aria Soler",
           role: "Support lead",
-          summary: "Orquesta el triaje delicado y marca el tono de las respuestas cuando hay bloqueos o incidencias con impacto real.",
+          summary:
+            "Orquesta el triaje delicado y marca el tono de las respuestas cuando hay bloqueos o incidencias con impacto real.",
           focus: {
             one: "Triage prioritario",
             two: "Contexto para producto",
@@ -109,7 +111,8 @@ export const supportEs = {
         luca: {
           name: "Luca Marin",
           role: "Ops and delivery",
-          summary: "Aterriza casos difusos en pasos operativos y mantiene la coordinacion entre soporte, proveedor y seguimiento interno.",
+          summary:
+            "Aterriza casos difusos en pasos operativos y mantiene la coordinacion entre soporte, proveedor y seguimiento interno.",
           focus: {
             one: "Ritmo operativo",
             two: "Seguimiento claro",
@@ -118,7 +121,8 @@ export const supportEs = {
         sara: {
           name: "Sara Vidal",
           role: "Customer experience",
-          summary: "Cuida el detalle del mensaje, detecta friccion en el flujo y devuelve recomendaciones accionables para mejorar la experiencia.",
+          summary:
+            "Cuida el detalle del mensaje, detecta friccion en el flujo y devuelve recomendaciones accionables para mejorar la experiencia.",
           focus: {
             one: "Copy y claridad",
             two: "Senales UX",
@@ -127,7 +131,8 @@ export const supportEs = {
         diego: {
           name: "Diego Rios",
           role: "Product liaison",
-          summary: "Conecta incidencias repetidas con decisiones de producto para que los hallazgos de soporte no se queden en una bandeja.",
+          summary:
+            "Conecta incidencias repetidas con decisiones de producto para que los hallazgos de soporte no se queden en una bandeja.",
           focus: {
             one: "Loop con producto",
             two: "Prioridad compartida",
@@ -186,7 +191,8 @@ export const supportEn = {
     responseWindow: "We usually reply with useful context, not with an empty automated answer.",
     formKicker: "Guided message",
     messageLabel: "How can we help?",
-    messagePlaceholder: "Example: I can't update my profile from the dashboard and I'd like to understand what is failing.",
+    messagePlaceholder:
+      "Example: I can't update my profile from the dashboard and I'd like to understand what is failing.",
     messageHint: "The more concrete the context, the better we can guide you.",
     messageMin: "Add a bit more context so we can help more effectively.",
     attachmentLabel: "Screenshot or supporting link (optional)",
@@ -236,13 +242,13 @@ export const supportEn = {
     team: {
       kicker: "Who we are",
       title: "The human layer behind the panel.",
-      body:
-        "This block borrows the composition of an editorial team section, but grounds it in Viru's visual language: clear profiles, operational focus, and a fast read on who does what.",
+      body: "This block borrows the composition of an editorial team section, but grounds it in Viru's visual language: clear profiles, operational focus, and a fast read on who does what.",
       members: {
         aria: {
           name: "Aria Soler",
           role: "Support lead",
-          summary: "She orchestrates delicate triage and sets the tone when blockers or incidents carry real user impact.",
+          summary:
+            "She orchestrates delicate triage and sets the tone when blockers or incidents carry real user impact.",
           focus: {
             one: "Priority triage",
             two: "Product context",
@@ -251,7 +257,8 @@ export const supportEn = {
         luca: {
           name: "Luca Marin",
           role: "Ops and delivery",
-          summary: "He turns fuzzy cases into operational steps and keeps alignment across support, providers, and internal follow-up.",
+          summary:
+            "He turns fuzzy cases into operational steps and keeps alignment across support, providers, and internal follow-up.",
           focus: {
             one: "Operational rhythm",
             two: "Clear follow-up",
@@ -260,7 +267,8 @@ export const supportEn = {
         sara: {
           name: "Sara Vidal",
           role: "Customer experience",
-          summary: "She sharpens messaging, spots flow friction, and feeds back actionable recommendations to improve the experience.",
+          summary:
+            "She sharpens messaging, spots flow friction, and feeds back actionable recommendations to improve the experience.",
           focus: {
             one: "Copy and clarity",
             two: "UX signals",
@@ -269,7 +277,8 @@ export const supportEn = {
         diego: {
           name: "Diego Rios",
           role: "Product liaison",
-          summary: "He connects repeated incidents with product decisions so support findings do not stay trapped in an inbox.",
+          summary:
+            "He connects repeated incidents with product decisions so support findings do not stay trapped in an inbox.",
           focus: {
             one: "Product loop",
             two: "Shared priority",

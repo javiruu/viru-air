@@ -5,7 +5,10 @@ export function clampQuickSearchFlexDays(value: number): number {
   return Math.min(7, Math.max(0, Math.trunc(value)));
 }
 
-export function getQuickSearchFlexPreset(daysBefore: number, daysAfter: number): QuickSearchFlexPreset {
+export function getQuickSearchFlexPreset(
+  daysBefore: number,
+  daysAfter: number,
+): QuickSearchFlexPreset {
   if (daysBefore === 0 && daysAfter === 0) return "exact";
   if (daysBefore === 1 && daysAfter === 1) return "plus-1";
   if (daysBefore === 2 && daysAfter === 2) return "plus-2";

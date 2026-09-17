@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
 import { trackUxEvent } from "@/lib/uxTracking";
-import { getDeliveryStateCopy, getNotificationChannelCopy } from "@/modules/alerts/deliveryPresentation";
+import {
+  getDeliveryStateCopy,
+  getNotificationChannelCopy,
+} from "@/modules/alerts/deliveryPresentation";
 import { apiFetch } from "@/modules/shared/api";
 import { formatCurrency, formatRelativeTime } from "@/modules/shared/format";
 import { getDeliveryStatusMeta, getWatchStatusMeta } from "@/modules/shared/statusCatalog";
@@ -170,7 +173,9 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
         setWatches(rows);
         if (rows.length > 0) {
           setSelectedWatchId(
-            requestedWatchId && rows.some((row) => row.id === requestedWatchId) ? requestedWatchId : rows[0].id,
+            requestedWatchId && rows.some((row) => row.id === requestedWatchId)
+              ? requestedWatchId
+              : rows[0].id,
           );
         }
       })
@@ -261,7 +266,9 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
   const summary = useMemo(() => {
     const active = rules.filter((rule) => rule.enabled).length;
     const paused = Math.max(0, rules.length - active);
-    const queued = events.filter((eventItem) => (eventItem.delivery_status || "").toLowerCase() === "queued").length;
+    const queued = events.filter(
+      (eventItem) => (eventItem.delivery_status || "").toLowerCase() === "queued",
+    ).length;
     const delivered = events.filter((eventItem) => {
       const normalized = (eventItem.delivery_status || "").toLowerCase();
       return normalized === "delivered" || normalized === "sent";
@@ -284,7 +291,10 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
 
   const minimumActiveCooldown = useMemo(() => {
     const activeCooldowns = rules
-      .filter((rule) => rule.enabled && Number.isFinite(rule.cooldown_minutes) && rule.cooldown_minutes > 0)
+      .filter(
+        (rule) =>
+          rule.enabled && Number.isFinite(rule.cooldown_minutes) && rule.cooldown_minutes > 0,
+      )
       .map((rule) => rule.cooldown_minutes);
 
     return activeCooldowns.length > 0 ? Math.min(...activeCooldowns) : null;
@@ -305,11 +315,17 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
 
   const filteredRules = useMemo(() => {
     if (segmentFilter === "all") return rules;
-    if (segmentFilter === "security") return rules.filter((rule) => rule.rule_type === "every_change");
-    return rules.filter((rule) => rule.rule_type === "threshold_low" || rule.rule_type === "threshold_high");
+    if (segmentFilter === "security")
+      return rules.filter((rule) => rule.rule_type === "every_change");
+    return rules.filter(
+      (rule) => rule.rule_type === "threshold_low" || rule.rule_type === "threshold_high",
+    );
   }, [rules, segmentFilter]);
 
-  const deliveryCopy = useCallback((deliveryStatus: string) => getDeliveryStateCopy(deliveryStatus, t), [t]);
+  const deliveryCopy = useCallback(
+    (deliveryStatus: string) => getDeliveryStateCopy(deliveryStatus, t),
+    [t],
+  );
   const channelCopy = useCallback((channel: string) => getNotificationChannelCopy(channel, t), [t]);
 
   function focusRuleForm() {
@@ -435,7 +451,9 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
         body: JSON.stringify({ watch_id: selectedWatchId }),
       });
       const previousEventCount = events.length;
-      const updatedEvents = await apiFetch<AlertEvent[]>(`/alerts/events?watch_id=${selectedWatchId}&limit=50`);
+      const updatedEvents = await apiFetch<AlertEvent[]>(
+        `/alerts/events?watch_id=${selectedWatchId}&limit=50`,
+      );
       setEvents(updatedEvents);
 
       const triggeredCount = Math.max(0, updatedEvents.length - previousEventCount);
@@ -499,7 +517,12 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
             <button className="btn-primary" type="button" onClick={focusRuleForm}>
               {t("alerts.hero.createRule")}
             </button>
-            <button className="btn-secondary" type="button" onClick={evaluateNow} disabled={isEvaluating}>
+            <button
+              className="btn-secondary"
+              type="button"
+              onClick={evaluateNow}
+              disabled={isEvaluating}
+            >
               {isEvaluating ? t("alerts.form.buttonEvaluating") : t("alerts.form.buttonSimulate")}
             </button>
             <button className="btn-ghost" type="button" onClick={() => router.push("/dashboard")}>
@@ -517,7 +540,12 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
           <article className="alerts-metric-card">
             <span>{t("alerts.hero.cards.deliveryHealth")}</span>
             <strong>{summary.delivered}</strong>
-            <small>{t("alerts.hero.cards.pendingAndFailed", { pending: summary.queued, failed: summary.failed })}</small>
+            <small>
+              {t("alerts.hero.cards.pendingAndFailed", {
+                pending: summary.queued,
+                failed: summary.failed,
+              })}
+            </small>
           </article>
           <article className="alerts-metric-card">
             <span>{t("alerts.hero.cards.lastEvaluation")}</span>
@@ -534,19 +562,29 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
           {watches.length === 0 ? (
             <>
               <p className="panel-note">{t("alerts.flow.emptyWatchlistHint")}</p>
-              <Link href="/watchlist" className="btn-ghost btn-compact">{t("alerts.flow.goWatchlist")}</Link>
-              <Link href="/quick-search" className="btn-ghost btn-compact">{t("alerts.flow.goQuickSearch")}</Link>
+              <Link href="/watchlist" className="btn-ghost btn-compact">
+                {t("alerts.flow.goWatchlist")}
+              </Link>
+              <Link href="/quick-search" className="btn-ghost btn-compact">
+                {t("alerts.flow.goQuickSearch")}
+              </Link>
             </>
           ) : !summary.hasSignal ? (
             <>
               <p className="panel-note">{t("alerts.flow.noSignalHint")}</p>
-              <Link href="/watchlist" className="btn-ghost btn-compact">{t("alerts.flow.goWatchlist")}</Link>
-              <Link href="/quick-search" className="btn-ghost btn-compact">{t("alerts.flow.goQuickSearch")}</Link>
+              <Link href="/watchlist" className="btn-ghost btn-compact">
+                {t("alerts.flow.goWatchlist")}
+              </Link>
+              <Link href="/quick-search" className="btn-ghost btn-compact">
+                {t("alerts.flow.goQuickSearch")}
+              </Link>
             </>
           ) : (
             <>
               <p className="panel-note">{t("alerts.flow.hasSignalHint")}</p>
-              <Link href="/dashboard" className="btn-ghost btn-compact">{t("alerts.flow.goDashboard")}</Link>
+              <Link href="/dashboard" className="btn-ghost btn-compact">
+                {t("alerts.flow.goDashboard")}
+              </Link>
             </>
           )}
         </div>
@@ -582,7 +620,8 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
           {selectedWatch ? (
             <div className="stack" style={{ alignItems: "flex-end", gap: "0.35rem" }}>
               <span className="alert-chip">
-                {selectedWatch.origin_iata} {" ? "} {selectedWatch.destination_iata} · {selectedWatch.travel_date_local}
+                {selectedWatch.origin_iata} {" ? "} {selectedWatch.destination_iata} ·{" "}
+                {selectedWatch.travel_date_local}
               </span>
               {selectedWatchFreshness ? (
                 <span className="panel-note">
@@ -598,7 +637,12 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
             <strong>{t("alerts.presets.title")}</strong>
             <div className="alert-actions">
               {quickPresets.map((preset) => (
-                <button key={preset.id} type="button" className="btn-ghost btn-compact" onClick={preset.apply}>
+                <button
+                  key={preset.id}
+                  type="button"
+                  className="btn-ghost btn-compact"
+                  onClick={preset.apply}
+                >
                   {preset.label}
                 </button>
               ))}
@@ -624,7 +668,12 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
 
           <label className="field">
             {t("alerts.form.ruleType")}
-            <select name="rule_type" autoComplete="off" value={ruleType} onChange={(e) => setRuleType(e.target.value)}>
+            <select
+              name="rule_type"
+              autoComplete="off"
+              value={ruleType}
+              onChange={(e) => setRuleType(e.target.value)}
+            >
               {ruleOptions.map((rule) => (
                 <option key={rule.value} value={rule.value}>
                   {rule.label}
@@ -644,7 +693,9 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
                 onChange={(e) => setThresholdValue(e.target.value)}
                 placeholder={t("alerts.form.placeholder")}
               />
-              {thresholdFieldError ? <small className="prefs-error">{thresholdFieldError}</small> : null}
+              {thresholdFieldError ? (
+                <small className="prefs-error">{thresholdFieldError}</small>
+              ) : null}
             </label>
           ) : null}
 
@@ -674,7 +725,9 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
               onChange={(e) => setMinChangePct(e.target.value)}
               placeholder={t("alerts.form.minChangePctPlaceholder")}
             />
-            {minChangeFieldError ? <small className="prefs-error">{minChangeFieldError}</small> : null}
+            {minChangeFieldError ? (
+              <small className="prefs-error">{minChangeFieldError}</small>
+            ) : null}
             <small className="panel-note">{t("alerts.form.minChangePctHelp")}</small>
           </label>
 
@@ -704,13 +757,17 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
             <strong>{t("alerts.form.previewLabel")}</strong> {previewText}
           </div>
           {selectedWatchFreshnessGuidance ? (
-            <div className={`notice notice-compact ${
-              selectedWatchFreshness?.state === "fresh" ? "notice-info" : "notice-warning"
-            }`}>
+            <div
+              className={`notice notice-compact ${
+                selectedWatchFreshness?.state === "fresh" ? "notice-info" : "notice-warning"
+              }`}
+            >
               <strong>{t("alerts.form.freshnessLabel")}</strong>
               <p>
                 {selectedWatchFreshnessGuidance}
-                {selectedWatchFreshness?.observationNote ? ` ${selectedWatchFreshness.observationNote}` : ""}
+                {selectedWatchFreshness?.observationNote
+                  ? ` ${selectedWatchFreshness.observationNote}`
+                  : ""}
               </p>
             </div>
           ) : null}
@@ -719,7 +776,12 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
             <button className="btn-primary" type="submit" disabled={status === "sending"}>
               {status === "sending" ? t("alerts.form.buttonSaving") : t("alerts.form.buttonSave")}
             </button>
-            <button className="btn-secondary" type="button" onClick={evaluateNow} disabled={isEvaluating}>
+            <button
+              className="btn-secondary"
+              type="button"
+              onClick={evaluateNow}
+              disabled={isEvaluating}
+            >
               {isEvaluating ? t("alerts.form.buttonEvaluating") : t("alerts.form.buttonSimulate")}
             </button>
             <span className="panel-note">{t("alerts.note.description")}</span>
@@ -730,10 +792,16 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
       <section className="panel panel-soft stack section-gap">
         <div className="row-between">
           <h2 className="panel-title">{t("alerts.list.title")}</h2>
-          <span className="panel-note">{t("alerts.list.count", { count: filteredRules.length })}</span>
+          <span className="panel-note">
+            {t("alerts.list.count", { count: filteredRules.length })}
+          </span>
         </div>
 
-        <div className="alerts-segment-toolbar" role="toolbar" aria-label={t("alerts.form.category")}>
+        <div
+          className="alerts-segment-toolbar"
+          role="toolbar"
+          aria-label={t("alerts.form.category")}
+        >
           {categoryOptions.map((option) => {
             const isActive = option.value === segmentFilter;
             return (
@@ -758,8 +826,16 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
               <span />
             </div>
             <div className="alerts-empty-copy">
-              <strong>{segmentFilter === "all" ? t("alerts.list.emptyAll") : t("alerts.list.emptySegment")}</strong>
-              <p>{segmentFilter === "all" ? t("alerts.list.emptyAllBody") : t("alerts.list.emptySegmentBody")}</p>
+              <strong>
+                {segmentFilter === "all"
+                  ? t("alerts.list.emptyAll")
+                  : t("alerts.list.emptySegment")}
+              </strong>
+              <p>
+                {segmentFilter === "all"
+                  ? t("alerts.list.emptyAllBody")
+                  : t("alerts.list.emptySegmentBody")}
+              </p>
               <div className="alerts-empty-steps" aria-label={t("alerts.list.emptyStepsLabel")}>
                 <span>{t("alerts.list.emptyStepFlight")}</span>
                 <span>{t("alerts.list.emptyStepRule")}</span>
@@ -775,7 +851,9 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
             const watchStatus = getWatchStatusMeta(rule.enabled ? "active" : "paused", t);
             const thresholdText =
               rule.rule_type !== "every_change" && rule.threshold_value != null
-                ? t("alerts.row.threshold", { value: formatEur(Number(rule.threshold_value), localeTag) })
+                ? t("alerts.row.threshold", {
+                    value: formatEur(Number(rule.threshold_value), localeTag),
+                  })
                 : "";
             const minChangeText =
               rule.min_change_pct != null
@@ -793,10 +871,20 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
                   </div>
                 </div>
                 <div className="alert-actions">
-                  <button className="btn-secondary btn-compact" type="button" onClick={() => toggleRule(rule)}>
-                    {rule.enabled ? t("alerts.row.actions.pause") : t("alerts.row.actions.activate")}
+                  <button
+                    className="btn-secondary btn-compact"
+                    type="button"
+                    onClick={() => toggleRule(rule)}
+                  >
+                    {rule.enabled
+                      ? t("alerts.row.actions.pause")
+                      : t("alerts.row.actions.activate")}
                   </button>
-                  <button className="btn-danger btn-compact" type="button" onClick={() => removeRule(rule)}>
+                  <button
+                    className="btn-danger btn-compact"
+                    type="button"
+                    onClick={() => removeRule(rule)}
+                  >
                     {t("alerts.row.actions.delete")}
                   </button>
                   <span className={`status-pill ${watchStatus.tone}`}>{watchStatus.label}</span>
@@ -838,7 +926,12 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
                 <span>{t("alerts.history.emptyStepDelivery")}</span>
               </div>
             </div>
-            <button className="btn-secondary btn-compact" type="button" onClick={evaluateNow} disabled={isEvaluating || !selectedWatchId}>
+            <button
+              className="btn-secondary btn-compact"
+              type="button"
+              onClick={evaluateNow}
+              disabled={isEvaluating || !selectedWatchId}
+            >
               {isEvaluating ? t("alerts.form.buttonEvaluating") : t("alerts.form.buttonSimulate")}
             </button>
           </div>
@@ -848,7 +941,9 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
             return (
               <div key={eventItem.id} className="list-row alert-event">
                 <div className="alert-event-main">
-                  <strong>{eventItem.origin_iata} {" ? "} {eventItem.destination_iata}</strong>
+                  <strong>
+                    {eventItem.origin_iata} {" ? "} {eventItem.destination_iata}
+                  </strong>
                   <div className="panel-note">
                     {t("alerts.history.timeLabel", {
                       date: eventItem.travel_date_local,
@@ -859,16 +954,21 @@ export function AlertRulesWorkspace({ requestedWatchId }: { requestedWatchId?: s
                 </div>
                 <div className="alert-event-side">
                   <time className="alert-timestamp" dateTime={eventItem.created_at}>
-                    {new Date(eventItem.created_at).toLocaleTimeString(localeTag, { hour: "2-digit", minute: "2-digit" })}
+                    {new Date(eventItem.created_at).toLocaleTimeString(localeTag, {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </time>
                   <span className="alert-channel">{channelCopy(eventItem.channel)}</span>
                   <span className="panel-note">{deliveryCopy(eventItem.delivery_status)}</span>
                   {eventItem.is_digest || (eventItem.grouped_count ?? 1) > 1 ? (
                     <span className="panel-note">
-                      {t("alerts.history.groupedLabel")} · {t("alerts.history.digestSummary", { count: eventItem.grouped_count ?? 1 })}
+                      {t("alerts.history.groupedLabel")} ·{" "}
+                      {t("alerts.history.digestSummary", { count: eventItem.grouped_count ?? 1 })}
                     </span>
                   ) : null}
-                  {eventItem.delivery_status === "queued" && eventItem.last_error === "quiet_hours_active" ? (
+                  {eventItem.delivery_status === "queued" &&
+                  eventItem.last_error === "quiet_hours_active" ? (
                     <span className="panel-note">{t("alerts.history.quietHoursPending")}</span>
                   ) : null}
                   <span className={`status-pill ${delivery.tone}`}>{delivery.label}</span>

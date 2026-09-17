@@ -1,5 +1,8 @@
 import { findCountryByIata } from "@/modules/shared/airports";
-import type { DashboardHistoryRow, DashboardWatch } from "@/modules/dashboard/next-best-action-types";
+import type {
+  DashboardHistoryRow,
+  DashboardWatch,
+} from "@/modules/dashboard/next-best-action-types";
 import type { ResumeSearchSnapshot } from "@/modules/quick-search/resume-search";
 
 const FOUND_FOR_YOU_MAX_AGE_HOURS = 24;
@@ -46,7 +49,10 @@ function groupHistoryByWatch(rows: DashboardHistoryRow[]): Map<string, Dashboard
     grouped.set(row.watch_id, [row]);
   }
   for (const watchRows of grouped.values()) {
-    watchRows.sort((left, right) => new Date(left.captured_at_utc).getTime() - new Date(right.captured_at_utc).getTime());
+    watchRows.sort(
+      (left, right) =>
+        new Date(left.captured_at_utc).getTime() - new Date(right.captured_at_utc).getTime(),
+    );
   }
   return grouped;
 }
@@ -83,10 +89,14 @@ export function getFoundForYouSuggestion(args: {
 
     const avgPrice = rows.reduce((sum, row) => sum + row.raw_price, 0) / rows.length;
     const destinationCountry = findCountryByIata(watch.destination_iata)?.name ?? "";
-    const interestCountry = args.resumeSnapshot ? findCountryByIata(args.resumeSnapshot.destination)?.name ?? "" : "";
+    const interestCountry = args.resumeSnapshot
+      ? (findCountryByIata(args.resumeSnapshot.destination)?.name ?? "")
+      : "";
     const affinity = affinityScore(watch, args.resumeSnapshot);
     const isVeryCheap = latest.raw_price <= CHEAP_PRICE_HARD_LIMIT;
-    const isGoodRelativeDeal = latest.raw_price <= CHEAP_PRICE_SOFT_LIMIT && latest.raw_price <= avgPrice * RELATIVE_DEAL_RATIO;
+    const isGoodRelativeDeal =
+      latest.raw_price <= CHEAP_PRICE_SOFT_LIMIT &&
+      latest.raw_price <= avgPrice * RELATIVE_DEAL_RATIO;
     if (!isVeryCheap && !isGoodRelativeDeal) continue;
     if (affinity <= 0) continue;
 

@@ -51,9 +51,20 @@ export function AddWatchModal({
             <h2 className="panel-title">{t("watchlist.modal.title")}</h2>
             <p className="panel-subtitle">{t("watchlist.modal.subtitle")}</p>
           </div>
-          <button className="modal-close" type="button" aria-label={t("watchlist.modal.close")} onClick={onClose}>
+          <button
+            className="modal-close"
+            type="button"
+            aria-label={t("watchlist.modal.close")}
+            onClick={onClose}
+          >
             <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              <path
+                d="M6 6l12 12M18 6L6 18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
             </svg>
           </button>
         </div>
@@ -85,7 +96,12 @@ export function AddWatchModal({
                 {travelDate ? t("watchlist.modal.hintEnabled") : t("watchlist.modal.hintDisabled")}
               </small>
             </label>
-            <button type="button" className="btn-ghost" onClick={() => onOpenPicker("origin")} disabled={!travelDate}>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => onOpenPicker("origin")}
+              disabled={!travelDate}
+            >
               {t("watchlist.modal.pickAirport")}
             </button>
           </div>
@@ -105,7 +121,12 @@ export function AddWatchModal({
                 {travelDate ? t("watchlist.modal.hintEnabled") : t("watchlist.modal.hintDisabled")}
               </small>
             </label>
-            <button type="button" className="btn-ghost" onClick={() => onOpenPicker("destination")} disabled={!travelDate}>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => onOpenPicker("destination")}
+              disabled={!travelDate}
+            >
               {t("watchlist.modal.pickAirport")}
             </button>
           </div>
@@ -135,4 +156,3 @@ export function AddWatchModal({
     </div>
   );
 }
-

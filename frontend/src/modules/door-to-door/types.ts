@@ -1,4 +1,10 @@
-export type DoorToDoorLocationType = "city" | "address" | "station" | "saved_location" | "airport" | "airport_only";
+export type DoorToDoorLocationType =
+  | "city"
+  | "address"
+  | "station"
+  | "saved_location"
+  | "airport"
+  | "airport_only";
 export type DoorToDoorConfidence = "live" | "cached" | "estimated" | "deeplink" | "unavailable";
 export type DoorToDoorSortBy = "best_balance" | "cheapest" | "fastest" | "fewest_changes";
 export type DoorToDoorLuggage = "backpack" | "cabin" | "checked";
@@ -29,7 +35,16 @@ export type DoorToDoorPreferences = {
 export type DoorToDoorSource = {
   provider: string;
   source_provider: string;
-  source_type: "api" | "open_data" | "aggregator" | "deeplink" | "scraper" | "mock" | "maps" | "estimate" | "external_deeplink";
+  source_type:
+    | "api"
+    | "open_data"
+    | "aggregator"
+    | "deeplink"
+    | "scraper"
+    | "mock"
+    | "maps"
+    | "estimate"
+    | "external_deeplink";
   confidence: DoorToDoorConfidence;
   checked_at: string;
   expires_at?: string | null;
@@ -110,14 +125,26 @@ export type DoorToDoorOption = {
   trust_copy?: string | null;
 };
 
-export type DecisionReasonKind = "price" | "buffer" | "tight_buffer" | "transfers" | "duration" | "confidence" | "completeness";
+export type DecisionReasonKind =
+  | "price"
+  | "buffer"
+  | "tight_buffer"
+  | "transfers"
+  | "duration"
+  | "confidence"
+  | "completeness";
 
 export type DecisionReason = {
   kind: DecisionReasonKind;
   label: string;
 };
 
-export type DecisionBadgeKind = "fastest" | "longest_buffer" | "fewest_changes" | "best_estimated_price" | "most_complete";
+export type DecisionBadgeKind =
+  | "fastest"
+  | "longest_buffer"
+  | "fewest_changes"
+  | "best_estimated_price"
+  | "most_complete";
 
 export type DecisionBadge = {
   kind: DecisionBadgeKind;
@@ -153,7 +180,9 @@ export type DoorToDoorResponse = {
   };
   options: DoorToDoorOption[];
   warnings: Array<{ code: string; message: string; provider?: string | null }>;
-  map_capabilities?: Partial<Record<DoorToDoorMapCapabilityKey, Omit<DoorToDoorMapCapability, "key">>>;
+  map_capabilities?: Partial<
+    Record<DoorToDoorMapCapabilityKey, Omit<DoorToDoorMapCapability, "key">>
+  >;
 };
 
 export type DoorToDoorSuggestion = DoorToDoorLocation & {

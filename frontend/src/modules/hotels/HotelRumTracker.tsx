@@ -14,7 +14,9 @@ import {
 
 function readNavigationType(): string {
   if (typeof performance === "undefined") return "navigate";
-  const entry = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+  const entry = performance.getEntriesByType("navigation")[0] as
+    | PerformanceNavigationTiming
+    | undefined;
   return entry?.type || "navigate";
 }
 
@@ -40,7 +42,11 @@ export function HotelRumTracker() {
     ) => {
       try {
         const observer = new PerformanceObserver((list) => list.getEntries().forEach(callback));
-        observer.observe({ type, buffered: options.buffered ?? true, ...options } as PerformanceObserverInit);
+        observer.observe({
+          type,
+          buffered: options.buffered ?? true,
+          ...options,
+        } as PerformanceObserverInit);
         observers.push({ observer, callback });
       } catch {
         // Unsupported metric must not affect hotel search.
@@ -58,13 +64,24 @@ export function HotelRumTracker() {
         remember("cls", (observations.get("cls") || 0) + (shift.value || 0));
       }
     });
-    observe("event", (entry) => {
-      const interaction = entry as PerformanceEntry & { duration?: number; interactionId?: number };
-      if ((interaction.interactionId || 0) > 0) remember("inp", Math.max(observations.get("inp") || 0, interaction.duration || 0));
-    }, { buffered: false, durationThreshold: 16 });
+    observe(
+      "event",
+      (entry) => {
+        const interaction = entry as PerformanceEntry & {
+          duration?: number;
+          interactionId?: number;
+        };
+        if ((interaction.interactionId || 0) > 0)
+          remember("inp", Math.max(observations.get("inp") || 0, interaction.duration || 0));
+      },
+      { buffered: false, durationThreshold: 16 },
+    );
 
-    const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
-    if (navigation && Number.isFinite(navigation.responseStart)) remember("ttfb", navigation.responseStart - navigation.startTime);
+    const navigation = performance.getEntriesByType("navigation")[0] as
+      | PerformanceNavigationTiming
+      | undefined;
+    if (navigation && Number.isFinite(navigation.responseStart))
+      remember("ttfb", navigation.responseStart - navigation.startTime);
 
     let flushed = false;
     const flush = () => {

@@ -45,7 +45,12 @@ function clean(value: string | null): string {
   return value?.trim() ?? "";
 }
 
-function readBoundedInteger(value: string | null, fallback: number, min: number, max: number): number {
+function readBoundedInteger(
+  value: string | null,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
   const normalized = clean(value);
   if (!normalized) return fallback;
   const parsed = Number(normalized);
@@ -57,9 +62,11 @@ function isRealIsoDate(value: string): boolean {
   if (!ISO_DATE.test(value)) return false;
   const [year, month, day] = value.split("-").map(Number);
   const parsed = new Date(Date.UTC(year, month - 1, day));
-  return parsed.getUTCFullYear() === year
-    && parsed.getUTCMonth() === month - 1
-    && parsed.getUTCDate() === day;
+  return (
+    parsed.getUTCFullYear() === year &&
+    parsed.getUTCMonth() === month - 1 &&
+    parsed.getUTCDate() === day
+  );
 }
 
 function readDate(value: string | null): string {
@@ -94,22 +101,23 @@ export function readHotelSearchUrlState(params: Pick<URLSearchParams, "get">): H
   const areaLatitude = Number(areaLatitudeRaw);
   const areaLongitude = Number(areaLongitudeRaw);
   const hasResolvedArea =
-    areaLabel.length > 0
-    && areaLatitudeRaw.length > 0
-    && areaLongitudeRaw.length > 0
-    && Number.isFinite(areaLatitude)
-    && areaLatitude >= -90
-    && areaLatitude <= 90
-    && Number.isFinite(areaLongitude)
-    && areaLongitude >= -180
-    && areaLongitude <= 180;
+    areaLabel.length > 0 &&
+    areaLatitudeRaw.length > 0 &&
+    areaLongitudeRaw.length > 0 &&
+    Number.isFinite(areaLatitude) &&
+    areaLatitude >= -90 &&
+    areaLatitude <= 90 &&
+    Number.isFinite(areaLongitude) &&
+    areaLongitude >= -180 &&
+    areaLongitude <= 180;
 
   const selectedHotelId = clean(params.get("hotel_id")) || null;
-  const panel = params.get("panel") === "mis-hoteles"
-    ? "mis-hoteles"
-    : params.get("panel") === "detail" || selectedHotelId
-      ? "detail"
-      : "search";
+  const panel =
+    params.get("panel") === "mis-hoteles"
+      ? "mis-hoteles"
+      : params.get("panel") === "detail" || selectedHotelId
+        ? "detail"
+        : "search";
 
   return {
     panel,
@@ -187,9 +195,10 @@ export function buildRestoredHotelSearchQuery(query: Record<string, unknown>): s
 
   const state = readHotelSearchUrlState(rawParams);
   if (state.mode === "area" && !isHotelDateRangeValid(state.checkIn, state.checkOut)) return null;
-  const safeCheckIn = state.checkIn && state.checkOut && isHotelDateRangeValid(state.checkIn, state.checkOut)
-    ? state.checkIn
-    : "";
+  const safeCheckIn =
+    state.checkIn && state.checkOut && isHotelDateRangeValid(state.checkIn, state.checkOut)
+      ? state.checkIn
+      : "";
   const safeCheckOut = safeCheckIn ? state.checkOut : "";
 
   return buildHotelSearchQuery({
@@ -215,7 +224,11 @@ export function isHotelDateRangeValid(checkIn: string, checkOut: string): boolea
 
 export function hasHotelSearchIntent(state: HotelSearchUrlState): boolean {
   if (state.mode === "area") {
-    return Boolean(state.areaResolved && isHotelDateRangeValid(state.checkIn, state.checkOut) && state.guests > 0);
+    return Boolean(
+      state.areaResolved &&
+        isHotelDateRangeValid(state.checkIn, state.checkOut) &&
+        state.guests > 0,
+    );
   }
   return Boolean(state.query || state.city);
 }

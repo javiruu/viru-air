@@ -48,5 +48,10 @@ export function useWatchlistDetail({
     return () => {
       isMounted = false;
     };
-  }, [selectedWatchId, setIsLoadingSelectedWatchDetail, setSelectedWatchDetail, setSelectedWatchSummary]);
+  }, [
+    selectedWatchId,
+    setIsLoadingSelectedWatchDetail,
+    setSelectedWatchDetail,
+    setSelectedWatchSummary,
+  ]);
 }

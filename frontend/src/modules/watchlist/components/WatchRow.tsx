@@ -1,4 +1,15 @@
-import { ArrowRight, Check, Clock3, Minus, Pause, Plane, Play, Trash2, TrendingDown, TrendingUp } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  Clock3,
+  Minus,
+  Pause,
+  Plane,
+  Play,
+  Trash2,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 
 import { useI18n } from "@/i18n";
 import { CommunityRouteSignal } from "@/modules/community-routes/CommunityRouteSignal";
@@ -84,9 +95,7 @@ function ticketDate(value: string, localeTag: string) {
 
   return {
     day: new Intl.DateTimeFormat(localeTag, { day: "2-digit" }).format(date),
-    month: new Intl.DateTimeFormat(localeTag, { month: "long" })
-      .format(date)
-      .toUpperCase(),
+    month: new Intl.DateTimeFormat(localeTag, { month: "long" }).format(date).toUpperCase(),
     year: new Intl.DateTimeFormat(localeTag, { year: "numeric" }).format(date),
   };
 }
@@ -97,10 +106,7 @@ type WatchRowProps = {
   readonly communityInsight: CommunityRouteInsight | undefined;
   readonly isSelected: boolean;
   readonly onSelect: (watch: Watch) => void;
-  readonly onOpenCommunity: (
-    watch: Watch,
-    trigger: HTMLButtonElement,
-  ) => void;
+  readonly onOpenCommunity: (watch: Watch, trigger: HTMLButtonElement) => void;
   readonly onPause: (watchId: string) => void;
   readonly onResume: (watchId: string) => void;
   readonly onDelete: (watchId: string) => void;
@@ -125,8 +131,7 @@ export function WatchRow({
   const departureTime = watch.latest_snapshot?.departure_time_local;
   const watchStatus = getWatchStatusMeta(watch.status, t);
   const showWatchStatus = watch.status !== "active";
-  const canManageTracking =
-    !watch.community_pricing.eligible && watch.status !== "purchased";
+  const canManageTracking = !watch.community_pricing.eligible && watch.status !== "purchased";
   const trend =
     !meta?.latest || !meta.previous
       ? "flat"
@@ -153,10 +158,7 @@ export function WatchRow({
       : null;
   const percentDelta =
     meta?.previous && meta.previous.price > 0 && meta.latest
-      ? Math.round(
-          ((meta.latest.price - meta.previous.price) / meta.previous.price) *
-            100,
-        )
+      ? Math.round(((meta.latest.price - meta.previous.price) / meta.previous.price) * 100)
       : null;
   const trendPercentLabel =
     percentDelta !== null && percentDelta !== 0
@@ -165,9 +167,7 @@ export function WatchRow({
         })
       : "";
   const hasMeaningfulDrop =
-    priceDropAmount !== null &&
-    priceDropPercent !== null &&
-    priceDropPercent > 0;
+    priceDropAmount !== null && priceDropPercent !== null && priceDropPercent > 0;
   const isBestPrice = Boolean(
     meta?.latest &&
       meta.min !== null &&
@@ -176,7 +176,13 @@ export function WatchRow({
       meta.max > meta.min,
   );
   const trendIcon =
-    trend === "up" ? <TrendingUp aria-hidden="true" /> : trend === "down" ? <TrendingDown aria-hidden="true" /> : <Minus aria-hidden="true" />;
+    trend === "up" ? (
+      <TrendingUp aria-hidden="true" />
+    ) : trend === "down" ? (
+      <TrendingDown aria-hidden="true" />
+    ) : (
+      <Minus aria-hidden="true" />
+    );
   return (
     <article
       className={`list-row watch-row watch-ticket-row ${isSelected ? "watch-selected" : ""}`}
@@ -199,9 +205,7 @@ export function WatchRow({
         className="watch-ticket-art"
         aria-hidden="true"
         style={
-          ticketArt
-            ? { backgroundImage: `url("/illustraciones/${ticketArt}.webp")` }
-            : undefined
+          ticketArt ? { backgroundImage: `url("/illustraciones/${ticketArt}.webp")` } : undefined
         }
       />
       <div className="watch-ticket-main">
@@ -215,7 +219,9 @@ export function WatchRow({
             <span>{destination.label}</span>
             <strong>{watch.destination_iata}</strong>
           </div>
-          <span className="sr-only">{watch.origin_iata} → {watch.destination_iata}</span>
+          <span className="sr-only">
+            {watch.origin_iata} → {watch.destination_iata}
+          </span>
         </div>
         <svg className="watch-ticket-path" viewBox="0 0 460 70" fill="none" aria-hidden="true">
           <circle cx="20" cy="35" r="5" />
@@ -223,8 +229,13 @@ export function WatchRow({
           <circle cx="449" cy="32" r="5" />
         </svg>
         <div className="watch-ticket-status-line">
-          {showWatchStatus ? <span className={`status-pill ${watchStatus.tone}`}>{watchStatus.label}</span> : null}
-          <CommunityRouteSignal watchersCount={watch.watchers_count ?? 0} insight={communityInsight} />
+          {showWatchStatus ? (
+            <span className={`status-pill ${watchStatus.tone}`}>{watchStatus.label}</span>
+          ) : null}
+          <CommunityRouteSignal
+            watchersCount={watch.watchers_count ?? 0}
+            insight={communityInsight}
+          />
           {departureTime ? (
             <span className="watch-ticket-departure-time tabular-nums">
               <Clock3 aria-hidden="true" />
@@ -236,12 +247,14 @@ export function WatchRow({
           <div className="watch-price tabular-nums">
             <span className="watch-price-caption">{t("watchlist.smartList.currentPrice")}</span>
             <strong className="watch-ticket-price">
-              {meta?.latest ? formatCurrency(meta.latest.price, meta.latest.currency, localeTag) : "--"}
+              {meta?.latest
+                ? formatCurrency(meta.latest.price, meta.latest.currency, localeTag)
+                : "--"}
             </strong>
           </div>
           <div className={`watch-ticket-trend trend-${trend}`}>
             <span className="watch-ticket-trend-icon">{trendIcon}</span>
-            <strong>{meta && meta.previous ? (deltaLabel) : "--"}</strong>
+            <strong>{meta && meta.previous ? deltaLabel : "--"}</strong>
             <span>
               <b className="trend-chip-percent">{trendPercentLabel || "--"}</b>
             </span>
@@ -271,36 +284,43 @@ export function WatchRow({
               {meta?.latest && (hasMeaningfulDrop || isBestPrice) ? (
                 <div className="watch-price-badges">
                   {hasMeaningfulDrop && priceDropAmount !== null && priceDropPercent !== null ? (
-                    <span className="price-drop-badge tabular-nums">{formatCurrency(priceDropAmount, meta.latest.currency, localeTag)} ({priceDropPercent}%)</span>
+                    <span className="price-drop-badge tabular-nums">
+                      {formatCurrency(priceDropAmount, meta.latest.currency, localeTag)} (
+                      {priceDropPercent}%)
+                    </span>
                   ) : null}
-                  {isBestPrice ? <span className="best-price-badge">{t("watchlist.compare.bestPriceBadge")}</span> : null}
+                  {isBestPrice ? (
+                    <span className="best-price-badge">
+                      {t("watchlist.compare.bestPriceBadge")}
+                    </span>
+                  ) : null}
                 </div>
               ) : null}
               <div className="alert-actions watch-ticket-action-buttons">
                 {canManageTracking && watch.status === "paused" ? (
-              <button
-                className="btn-ghost btn-compact"
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onResume(watch.id);
-                }}
-              >
-                  <Play aria-hidden="true" />
-                {t("watchlist.smartList.resume")}
-              </button>
+                  <button
+                    className="btn-ghost btn-compact"
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onResume(watch.id);
+                    }}
+                  >
+                    <Play aria-hidden="true" />
+                    {t("watchlist.smartList.resume")}
+                  </button>
                 ) : canManageTracking ? (
-              <button
-                className="btn-ghost btn-compact"
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onPause(watch.id);
-                }}
-              >
-                <Pause aria-hidden="true" />
-                {t("watchlist.smartList.pause")}
-              </button>
+                  <button
+                    className="btn-ghost btn-compact"
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onPause(watch.id);
+                    }}
+                  >
+                    <Pause aria-hidden="true" />
+                    {t("watchlist.smartList.pause")}
+                  </button>
                 ) : null}
                 <button
                   className="btn-danger btn-compact"
@@ -320,7 +340,13 @@ export function WatchRow({
       </div>
       <aside className="watch-ticket-stub" aria-label={watch.travel_date_local}>
         <div className="watch-ticket-date-zone">
-          <div className="watch-ticket-date-caption"><span /><b>FECHA <Plane aria-hidden="true" /></b><span /></div>
+          <div className="watch-ticket-date-caption">
+            <span />
+            <b>
+              FECHA <Plane aria-hidden="true" />
+            </b>
+            <span />
+          </div>
           <strong className="watch-ticket-day tabular-nums">{departureDate.day}</strong>
           <span className="watch-ticket-month">{departureDate.month}</span>
           <span className="watch-ticket-year tabular-nums">{departureDate.year}</span>
