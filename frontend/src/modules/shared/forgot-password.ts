@@ -1,12 +1,10 @@
-import { apiFetchWithStatus } from "@/modules/shared/api";
+import { createClient } from "@/lib/supabase/client";
 
 export async function submitForgotPassword(email: string): Promise<"success" | "error"> {
   try {
-    const result = await apiFetchWithStatus<{ message: string }>("/auth/forgot-password", {
-      method: "POST",
-      body: JSON.stringify({ email }),
-    });
-    return result.ok ? "success" : "error";
+    const supabase = createClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    return error ? "error" : "success";
   } catch {
     return "error";
   }

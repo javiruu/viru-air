@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useI18n } from "@/i18n";
 import { FareMemoryHealthPanel } from "@/modules/admin/FareMemoryHealthPanel";
 import type { FareMemoryHealth } from "@/modules/admin/fareMemoryHealth";
-import { apiFetch } from "@/modules/shared/api";
+import { customClient as apiFetch } from "@/api/mutator/custom-client";
 import { getSystemStatusMeta } from "@/modules/shared/statusCatalog";
 import { BoneyardPanel } from "@/modules/shared/BoneyardLoad";
 
@@ -222,3 +222,4 @@ export default function ProductHealthPage() {
     </main>
   );
 }
+

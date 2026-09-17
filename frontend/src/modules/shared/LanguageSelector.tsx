@@ -5,7 +5,7 @@ import { Check, ChevronDown } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { LANGUAGES, persistLocale, useI18n, type Locale } from "@/i18n/shell";
-import { apiFetch } from "@/modules/shared/api";
+import { getRegionPreferencesApiV1PreferencesRegionGet, setRegionPreferencesApiV1PreferencesRegionPut } from "@/api/generated/preferences/preferences";
 
 import { createClient } from "@/lib/supabase/client";
 
@@ -23,11 +23,8 @@ async function persistProfileLanguage(locale: Locale) {
   if (!session) return;
 
   try {
-    const preference = await apiFetch<RegionPref>("/preferences/region");
-    await apiFetch<{ status: string }>("/preferences/region", {
-      method: "PUT",
-      body: JSON.stringify({ ...preference, language: locale }),
-    });
+    const preference = await getRegionPreferencesApiV1PreferencesRegionGet();
+    await setRegionPreferencesApiV1PreferencesRegionPut({ ...preference, language: locale });
   } catch {
     // The active locale is already stored locally; a transient profile sync failure must not undo it.
   }

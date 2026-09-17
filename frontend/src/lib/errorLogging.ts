@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import { apiFetchBestEffort } from "@/modules/shared/api";
+import { createClientErrorApiV1UxErrorsPost } from "@/api/generated/ux/ux";
 
 const MAX_SECTION_LEN = 64;
 const MAX_MESSAGE_LEN = 500;
@@ -23,13 +23,11 @@ export async function reportClientError(section: string, error: Error): Promise<
     truncate(error.message || "unknown_error", MAX_MESSAGE_LEN) || "unknown_error";
   const safeStack = truncate(error.stack || null, MAX_STACK_LEN);
 
-  await apiFetchBestEffort("/ux/errors", {
-    method: "POST",
-    body: JSON.stringify({
+  try {
+    await createClientErrorApiV1UxErrorsPost({
       section: safeSection,
       message: safeMessage,
       stack: safeStack,
-    }),
-    keepalive: true,
-  });
+    });
+  } catch {}
 }

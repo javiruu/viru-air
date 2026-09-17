@@ -1,4 +1,17 @@
-﻿import { apiFetch } from "@/modules/shared/api";
+﻿import {
+  suggestionsApiV1DoorToDoorSuggestionsGet,
+  providersStatusApiV1DoorToDoorProvidersStatusGet,
+  corridorsApiV1DoorToDoorCorridorsGet,
+  getSavedLocationApiV1DoorToDoorSavedLocationGet,
+  putSavedLocationApiV1DoorToDoorSavedLocationPut,
+  deleteSavedLocationApiV1DoorToDoorSavedLocationDelete,
+  searchDoorToDoorApiV1DoorToDoorSearchPost,
+  listHistoryApiV1DoorToDoorHistoryGet,
+  chooseOptionApiV1DoorToDoorHistoryHistoryIdChosenPost,
+  listSavedPlacesApiV1DoorToDoorSavedPlacesGet,
+  createSavedPlaceApiV1DoorToDoorSavedPlacesPost,
+  deleteSavedPlaceApiV1DoorToDoorSavedPlacesPlaceIdDelete,
+} from "@/api/generated/door-to-door/door-to-door";
 import type {
   DoorToDoorCorridorsResponse,
   DoorToDoorHistoryItem,
@@ -22,34 +35,29 @@ export function fetchDoorToDoorSuggestions(
   if (sessionToken) params.set("session_token", sessionToken);
   if (field) params.set("field", field);
   if (watchId) params.set("watch_id", watchId);
-  return apiFetch<DoorToDoorSuggestionsResponse>(`/door-to-door/suggestions?${params.toString()}`, {
-    signal,
-  });
+  return suggestionsApiV1DoorToDoorSuggestionsGet({ q: query, session_token: sessionToken, field, watch_id: watchId }, { signal }) as unknown as Promise<DoorToDoorSuggestionsResponse>;
 }
 
 export function fetchDoorToDoorProviderStatus(): Promise<DoorToDoorProviderStatus[]> {
-  return apiFetch<DoorToDoorProviderStatus[]>("/door-to-door/providers/status");
+  return providersStatusApiV1DoorToDoorProvidersStatusGet() as unknown as Promise<DoorToDoorProviderStatus[]>;
 }
 
 export function fetchDoorToDoorCorridors(): Promise<DoorToDoorCorridorsResponse> {
-  return apiFetch<DoorToDoorCorridorsResponse>("/door-to-door/corridors");
+  return corridorsApiV1DoorToDoorCorridorsGet() as unknown as Promise<DoorToDoorCorridorsResponse>;
 }
 
 export function fetchSavedDoorToDoorLocation(): Promise<DoorToDoorSavedLocation | null> {
-  return apiFetch<DoorToDoorSavedLocation | null>("/door-to-door/saved-location");
+  return getSavedLocationApiV1DoorToDoorSavedLocationGet() as unknown as Promise<DoorToDoorSavedLocation | null>;
 }
 
 export function saveDoorToDoorLocation(
   location: DoorToDoorLocation,
 ): Promise<DoorToDoorSavedLocation> {
-  return apiFetch<DoorToDoorSavedLocation>("/door-to-door/saved-location", {
-    method: "PUT",
-    body: JSON.stringify({ location }),
-  });
+  return putSavedLocationApiV1DoorToDoorSavedLocationPut({ location: location as any }) as unknown as Promise<DoorToDoorSavedLocation>;
 }
 
 export function deleteDoorToDoorLocation(): Promise<{ status: string }> {
-  return apiFetch<{ status: string }>("/door-to-door/saved-location", { method: "DELETE" });
+  return deleteSavedLocationApiV1DoorToDoorSavedLocationDelete() as unknown as Promise<{ status: string }>;
 }
 
 export function searchDoorToDoor(input: {
@@ -59,15 +67,11 @@ export function searchDoorToDoor(input: {
   preferences: DoorToDoorPreferences;
   save_origin_as_default: boolean;
 }): Promise<DoorToDoorResponse> {
-  return apiFetch<DoorToDoorResponse>("/door-to-door/search", {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
+  return searchDoorToDoorApiV1DoorToDoorSearchPost(input as any) as unknown as Promise<DoorToDoorResponse>;
 }
 
 export function fetchDoorToDoorHistory(watchId?: string): Promise<DoorToDoorHistoryItem[]> {
-  const suffix = watchId ? `?watch_id=${encodeURIComponent(watchId)}` : "";
-  return apiFetch<DoorToDoorHistoryItem[]>(`/door-to-door/history${suffix}`);
+  return listHistoryApiV1DoorToDoorHistoryGet({ watch_id: watchId }) as unknown as Promise<DoorToDoorHistoryItem[]>;
 }
 
 export function chooseDoorToDoorOption(input: {
@@ -76,19 +80,15 @@ export function chooseDoorToDoorOption(input: {
   optionLabel: string;
   optionSummary: Record<string, unknown>;
 }): Promise<{ id: string; option_id: string; option_label: string; chosen_at: string }> {
-  return apiFetch(`/door-to-door/history/${encodeURIComponent(input.historyId)}/chosen`, {
-    method: "POST",
-    body: JSON.stringify({
-      option_id: input.optionId,
-      option_label: input.optionLabel,
-      option_summary: input.optionSummary,
-    }),
-  });
+  return chooseOptionApiV1DoorToDoorHistoryHistoryIdChosenPost(input.historyId, {
+    option_id: input.optionId,
+    option_label: input.optionLabel,
+    option_summary: input.optionSummary as any,
+  }) as unknown as Promise<{ id: string; option_id: string; option_label: string; chosen_at: string }>;
 }
 
 export function fetchDoorToDoorSavedPlaces(watchId?: string): Promise<DoorToDoorSavedPlace[]> {
-  const suffix = watchId ? `?watch_id=${encodeURIComponent(watchId)}` : "";
-  return apiFetch<DoorToDoorSavedPlace[]>(`/door-to-door/saved-places${suffix}`);
+  return listSavedPlacesApiV1DoorToDoorSavedPlacesGet({ watch_id: watchId }) as unknown as Promise<DoorToDoorSavedPlace[]>;
 }
 
 export function createDoorToDoorSavedPlace(input: {
@@ -96,14 +96,9 @@ export function createDoorToDoorSavedPlace(input: {
   note: string;
   watch_id: string | null;
 }): Promise<DoorToDoorSavedPlace> {
-  return apiFetch<DoorToDoorSavedPlace>("/door-to-door/saved-places", {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
+  return createSavedPlaceApiV1DoorToDoorSavedPlacesPost(input) as unknown as Promise<DoorToDoorSavedPlace>;
 }
 
 export function deleteDoorToDoorSavedPlace(placeId: string): Promise<{ status: string }> {
-  return apiFetch<{ status: string }>(`/door-to-door/saved-places/${encodeURIComponent(placeId)}`, {
-    method: "DELETE",
-  });
+  return deleteSavedPlaceApiV1DoorToDoorSavedPlacesPlaceIdDelete(placeId) as unknown as Promise<{ status: string }>;
 }

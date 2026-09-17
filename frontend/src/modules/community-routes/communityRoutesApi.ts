@@ -1,5 +1,10 @@
 import { COMMUNITY_MIN_SAMPLE_SIZE } from "@/modules/community-routes/communityConstants";
-import { apiFetch } from "@/modules/shared/api";
+import {
+  popularRoutesApiV1CommunityRoutesPopularGet,
+  routeInsightsApiV1CommunityRoutesInsightsPost,
+  relatedRoutesApiV1CommunityRoutesOriginIataDestinationIataRelatedGet,
+  popularDestinationsFromOriginApiV1CommunityRoutesPopularFromOriginIataGet,
+} from "@/api/generated/community/community";
 import type {
   CommunityPopularRoute,
   CommunityPopularRoutesResponse,
@@ -101,7 +106,7 @@ export function normalizeRelatedRoutesResponse(value: unknown): CommunityRelated
 }
 
 export async function fetchPopularCommunityRoutes(): Promise<CommunityPopularRoutesResponse> {
-  return normalizePopularRoutesResponse(await apiFetch<unknown>("/community/routes/popular"));
+  return normalizePopularRoutesResponse(await popularRoutesApiV1CommunityRoutesPopularGet());
 }
 
 export async function fetchCommunityRouteInsights(
@@ -110,9 +115,8 @@ export async function fetchCommunityRouteInsights(
   const normalizedRoutes: CommunityRouteInsight[] = [];
   for (let index = 0; index < routes.length; index += 100) {
     const response = normalizeRouteInsightsResponse(
-      await apiFetch<unknown>("/community/routes/insights", {
-        method: "POST",
-        body: JSON.stringify({ routes: routes.slice(index, index + 100) }),
+      await routeInsightsApiV1CommunityRoutesInsightsPost({
+        routes: routes.slice(index, index + 100) as CommunityRoute[],
       }),
     );
     normalizedRoutes.push(...response.routes);
@@ -125,9 +129,7 @@ export async function fetchRelatedCommunityRoutes(
   destination: string,
 ): Promise<CommunityRelatedRoutesResponse> {
   return normalizeRelatedRoutesResponse(
-    await apiFetch<unknown>(
-      `/community/routes/${encodeURIComponent(origin)}/${encodeURIComponent(destination)}/related`,
-    ),
+    await relatedRoutesApiV1CommunityRoutesOriginIataDestinationIataRelatedGet(origin, destination),
   );
 }
 
@@ -135,7 +137,7 @@ export async function fetchPopularDestinationsFromOrigin(
   origin: string,
 ): Promise<CommunityPopularRoutesResponse> {
   return normalizePopularRoutesResponse(
-    await apiFetch<unknown>(`/community/routes/popular-from/${encodeURIComponent(origin)}`),
+    await popularDestinationsFromOriginApiV1CommunityRoutesPopularFromOriginIataGet(origin),
   );
 }
 

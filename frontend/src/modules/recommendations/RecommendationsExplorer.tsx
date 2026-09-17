@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { useI18n } from "@/i18n";
 import { formatCurrency, formatNumber } from "@/modules/shared/format";
-import { apiFetch } from "@/modules/shared/api";
+import { recommendationsApiV1RecommendationsPost } from "@/api/generated/recommendations/recommendations";
 
 import { buildRankingReasons } from "./rankingExplainers";
 import { getScoreBand, getScoreClass } from "./scoreBands";
@@ -312,10 +312,7 @@ export default function RecommendationsExplorer() {
 
     try {
       setIsLoading(true);
-      const response = await apiFetch<RecommendationResponse>("/recommendations", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
+      const response = await recommendationsApiV1RecommendationsPost(payload as any) as unknown as RecommendationResponse;
       setItems(response.items || []);
       setAiMeta(response.ai || null);
       setExpandedCards({});
