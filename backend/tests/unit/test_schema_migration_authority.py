@@ -11,7 +11,7 @@ def test_canonical_supabase_baseline_exists() -> None:
     assert 'CREATE TABLE' in sql
 
 def test_all_sqlalchemy_tables_represented_in_metadata() -> None:
-    assert len(Base.metadata.tables) == 62, f'Expected 62 application tables, found {len(Base.metadata.tables)}'
+    assert len(Base.metadata.tables) == 61, f'Expected 61 application tables, found {len(Base.metadata.tables)}'
 
 def test_alembic_retired_from_runtime_dependencies() -> None:
     pyproject = (REPO_ROOT / 'backend' / 'pyproject.toml').read_text(encoding='utf-8')

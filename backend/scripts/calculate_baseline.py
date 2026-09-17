@@ -44,22 +44,6 @@ results["sqlite_runtime_refs"] = {
     "files": sqlite_files
 }
 
-# 4. PBKDF2 production call sites
-pbkdf2_files = []
-for root, dirs, files in os.walk('backend/app'):
-    for f in files:
-        if f.endswith('.py'):
-            p = os.path.join(root, f)
-            content = open(p, encoding='utf-8', errors='ignore').read()
-            if 'pbkdf2' in content.lower() or 'pwd_context' in content.lower() or 'cryptcontext' in content.lower():
-                matches = len(re.findall(r'pbkdf2|pwd_context|cryptcontext', content, re.IGNORECASE))
-                pbkdf2_files.append((p.replace('\\', '/'), matches))
-results["pbkdf2_production_call_sites"] = {
-    "total_matches": sum(m for _, m in pbkdf2_files),
-    "files_count": len(pbkdf2_files),
-    "files": pbkdf2_files
-}
-
 # 5. Legacy JWT issuer refs
 jwt_files = []
 for root, dirs, files in os.walk('backend/app'):

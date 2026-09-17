@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Iterator
 from unittest.mock import patch
 
-from passlib.context import CryptContext
+
 from sqlalchemy import and_, column, delete, func, inspect, or_, select, table, text, update
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -45,7 +45,6 @@ from app.services.hotels_service import create_hotel_delivery_intent  # noqa: E4
 
 
 MANIFEST_PATH = Path(__file__).resolve().parents[1] / "app" / "hotels" / "fixtures" / "hoteles_demo_manifest.json"
-PASSWORD_CONTEXT = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 SAFE_APP_ENVS = frozenset({"test", "demo", "local_fixture"})
 DATASET_ID = "hoteles-demo-v1"
 SEED_REVISION = "hotel-demo-seed-v1"
@@ -221,7 +220,7 @@ def _ensure_user(db: Session, email: str, created: dict[str, int]) -> User:
         return user
     user = User(
         email=email,
-        password_hash=PASSWORD_CONTEXT.hash(DEMO_PASSWORD),
+        password_hash="[SUPABASE_AUTH_MANAGED]",
         is_verified=True,
         is_admin=False,
         locale="es",

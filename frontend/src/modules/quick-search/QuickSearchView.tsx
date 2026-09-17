@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Download } from "lucide-react";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
-import { apiFetch, apiFetchWithStatus, LONG_RUNNING_API_BASE } from "@/modules/shared/api";
 import { saveResultApiV1SearchSaveResultPost } from "@/api/generated/search/search";
 import type { ApiError } from "@/modules/shared/api";
 import { buildJsonExportFilename, downloadJson } from "@/modules/shared/jsonExport";
@@ -48,6 +47,10 @@ import {
   RECENT_AIRPORTS_DESTINATION_KEY,
   writeRecentAirports,
 } from "@/modules/quick-search/recentAirports";
+import { listSeedAirportsRouteApiV1AirportsSeedsGet, listSeedCountriesRouteApiV1AirportsCountriesGet } from "@/api/generated/airports/airports";
+import { getSearchPreferencesApiV1PreferencesSearchGet, getRegionPreferencesApiV1PreferencesRegionGet } from "@/api/generated/preferences/preferences";
+import { quickSearchCalendarHintsApiV1SearchQuickCalendarHintsPost, deeplinkApiV1SearchDeeplinkGet, quickSearchApiV1SearchQuickPost } from "@/api/generated/search/search";
+import { createWatchesBulkApiV1WatchlistBulkCreatePost, refreshWatchApiV1WatchlistWatchIdRefreshNowPost } from "@/api/generated/watchlist/watchlist";
 
 function isTransientChunkLoadError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
@@ -285,45 +288,6 @@ function buildEmptyCalendarHintsCacheEntry(
     dayHintsByIso: {},
     scopeMode,
   };
-}
-
-async function apiFetchWithRetry<T>(
-  path: string,
-  init?: RequestInit,
-  options?: { timeoutMs?: number; maxRetries?: number; apiBase?: string },
-): Promise<
-  | { ok: true; data: T; status: number; headers: Headers }
-  | { ok: false; error: ApiError; status: number; headers: Headers }
-> {
-  const maxRetries = options?.maxRetries ?? 2;
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    if (init?.signal && (init.signal as AbortSignal).aborted) {
-      return {
-        ok: false,
-        status: 0,
-        headers: new Headers(),
-        error: { status: 0, code: "ABORTED", message: "" },
-      };
-    }
-    if (attempt > 0) {
-      await new Promise((r) => setTimeout(r, 1000 * 2 ** (attempt - 1)));
-      if (init?.signal && (init.signal as AbortSignal).aborted) {
-        return {
-          ok: false,
-          status: 0,
-          headers: new Headers(),
-          error: { status: 0, code: "ABORTED", message: "" },
-        };
-      }
-    }
-    const result = await apiFetchWithStatus<T>(path, init, options);
-    if (result.ok) return result;
-    if (result.status >= 500 && result.status < 600 && attempt < maxRetries) {
-      continue;
-    }
-    return result;
-  }
-  throw new Error("apiFetchWithRetry unreachable");
 }
 
 function currentMonthIso(): string {
@@ -1215,12 +1179,15 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         total?: number;
         next_offset?: number;
       };
-      const data = await apiFetch<QuickSearchSeedAirportResponse>(
-        `/airports/seeds${query ? `?${query}` : ""}`,
-      );
-      const items = Array.isArray(data?.items) ? data.items : [];
+      const data = await listSeedAirportsRouteApiV1AirportsSeedsGet({
+        q: params.q,
+        country_code: params.country_code,
+        limit: params.limit,
+        offset: params.offset,
+      });
+      const items = Array.isArray((data as unknown as QuickSearchSeedAirportResponse)?.items) ? ((data as unknown as QuickSearchSeedAirportResponse).items || []) : [];
       mergeSeedAirportEntries(items);
-      return data;
+      return data as unknown as QuickSearchSeedAirportResponse;
     },
     [mergeSeedAirportEntries],
   );
@@ -1276,8 +1243,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
   useEffect(() => {
     let cancelled = false;
-    apiFetch<QuickSearchCountrySeedResponse>("/airports/countries")
-      .then((data) => {
+    listSeedCountriesRouteApiV1AirportsCountriesGet()
+      .then((res) => {
+        const data = res as unknown as QuickSearchCountrySeedResponse;
         if (cancelled) return;
         setSeedCountries(Array.isArray(data?.items) ? data.items : []);
       })
@@ -1503,8 +1471,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   }, [destination, airportsByIata, fetchSeedAirports, logQuickSearchApiError]);
 
   useEffect(() => {
-    apiFetch<Pref>("/preferences/search")
-      .then((data) => {
+    getSearchPreferencesApiV1PreferencesSearchGet()
+      .then((res) => {
+        const data = res as unknown as Pref;
         const normalized: Pref = {
           ...data,
           country_price_hint_mode_default: data.country_price_hint_mode_default || "min",
@@ -1548,8 +1517,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   ]);
 
   useEffect(() => {
-    apiFetch<RegionPref>("/preferences/region")
-      .then(setRegionPref)
+    getRegionPreferencesApiV1PreferencesRegionGet()
+      .then((res) => setRegionPref(res as unknown as RegionPref))
       .catch(() => setRegionPref(null));
   }, [setRegionPref]);
 
@@ -1793,54 +1762,30 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     const requestKey = calendarHintsRequestKey;
     setCalendarHintsLoadingKey(requestKey);
 
-    apiFetchWithRetry<QuickSearchCalendarHintsResponse>(
-      "/search/quick/calendar-hints",
+    quickSearchCalendarHintsApiV1SearchQuickCalendarHintsPost(
       {
-        method: "POST",
-        signal: controller.signal,
-        body: JSON.stringify({
-          origin_iata: originCountryOnly
-            ? originCalendarHintPool
-            : originCalendarHintPool[0] || originCode,
-          destination_iata: destinationCountryOnly
-            ? destinationCalendarHintPool
-            : destinationCalendarHintPool[0] || destinationCode,
-          month: requestedMonth,
-          adults,
-          currency: calendarHintCurrency,
-          leg: "outbound",
-          cabin: "economy",
-          aggregation_mode: calendarHintAggregationMode,
-          bucket_mode: calendarHintBucketMode,
-          guideline_thresholds:
-            calendarHintBucketMode === "guidelines" ? calendarHintGuidelineThresholds : undefined,
-        }),
+        origin_iata: originCountryOnly
+          ? originCalendarHintPool as any
+          : originCalendarHintPool[0] || originCode,
+        destination_iata: destinationCountryOnly
+          ? destinationCalendarHintPool as any
+          : destinationCalendarHintPool[0] || destinationCode,
+        month: requestedMonth,
+        adults,
+        currency: calendarHintCurrency as any,
+        leg: "outbound",
+        cabin: "economy",
+        aggregation_mode: calendarHintAggregationMode as any,
+        bucket_mode: calendarHintBucketMode as any,
+        guideline_thresholds:
+          calendarHintBucketMode === "guidelines" ? (calendarHintGuidelineThresholds as any) : undefined,
       },
-      { maxRetries: 2, apiBase: LONG_RUNNING_API_BASE },
+      { signal: controller.signal }
     )
-      .then((result) => {
+      .then((data) => {
         if (controller.signal.aborted) return;
-        if (!result.ok) {
-          setCalendarHintsByKey((prev) => ({
-            ...prev,
-            [requestKey]: buildEmptyCalendarHintsCacheEntry(calendarHintsScopeMode),
-          }));
-          logQuickSearchApiError("calendar_hints_failed", {
-            status: result.status,
-            error: result.error,
-            origin_iata: originCountryOnly ? originCalendarHintPool : originCode,
-            destination_iata: destinationCountryOnly
-              ? destinationCalendarHintPool
-              : destinationCode,
-            month: requestedMonth,
-            aggregation_mode: calendarHintAggregationMode,
-            bucket_mode: calendarHintBucketMode,
-            guideline_thresholds:
-              calendarHintBucketMode === "guidelines" ? calendarHintGuidelineThresholds : undefined,
-          });
-          return;
-        }
-        const days = Array.isArray(result.data.days) ? result.data.days : [];
+        const resultData = data as unknown as QuickSearchCalendarHintsResponse;
+        const days = Array.isArray(resultData.days) ? resultData.days : [];
         const hintsForMonth = days.reduce<Record<string, QuickSearchCalendarDayHint>>(
           (acc, day) => {
             if (!day?.date) return acc;
@@ -1849,7 +1794,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           },
           {},
         );
-        const scopeMode = result.data.meta?.scope_mode || calendarHintsScopeMode;
+        const scopeMode = resultData.meta?.scope_mode || calendarHintsScopeMode;
         setCalendarHintsByKey((prev) => ({
           ...prev,
           [requestKey]: {
@@ -1914,53 +1859,31 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     const requestKey = calendarHintsRequestKeyReturn;
     setCalendarHintsLoadingKeyReturn(requestKey);
 
-    apiFetchWithRetry<QuickSearchCalendarHintsResponse>(
-      "/search/quick/calendar-hints",
+    quickSearchCalendarHintsApiV1SearchQuickCalendarHintsPost(
       {
-        method: "POST",
-        signal: controller.signal,
-        body: JSON.stringify({
-          // Invert IATA pair for return leg: destination → origin
-          origin_iata: destinationCountryOnly
-            ? destinationCalendarHintPool
-            : destinationCalendarHintPool[0] || destinationCode,
-          destination_iata: originCountryOnly
-            ? originCalendarHintPool
-            : originCalendarHintPool[0] || originCode,
-          month: requestedMonth,
-          adults,
-          currency: calendarHintCurrency,
-          leg: "return",
-          cabin: "economy",
-          aggregation_mode: calendarHintAggregationMode,
-          bucket_mode: calendarHintBucketMode,
-          guideline_thresholds:
-            calendarHintBucketMode === "guidelines" ? calendarHintGuidelineThresholds : undefined,
-        }),
+        // Invert IATA pair for return leg: destination → origin
+        origin_iata: destinationCountryOnly
+          ? destinationCalendarHintPool as any
+          : destinationCalendarHintPool[0] || destinationCode,
+        destination_iata: originCountryOnly
+          ? originCalendarHintPool as any
+          : originCalendarHintPool[0] || originCode,
+        month: requestedMonth,
+        adults,
+        currency: calendarHintCurrency as any,
+        leg: "return",
+        cabin: "economy",
+        aggregation_mode: calendarHintAggregationMode as any,
+        bucket_mode: calendarHintBucketMode as any,
+        guideline_thresholds:
+          calendarHintBucketMode === "guidelines" ? (calendarHintGuidelineThresholds as any) : undefined,
       },
-      { maxRetries: 2, apiBase: LONG_RUNNING_API_BASE },
+      { signal: controller.signal }
     )
-      .then((result) => {
+      .then((data) => {
         if (controller.signal.aborted) return;
-        if (!result.ok) {
-          setCalendarHintsByKeyReturn((prev) => ({
-            ...prev,
-            [requestKey]: buildEmptyCalendarHintsCacheEntry(calendarHintsScopeMode),
-          }));
-          logQuickSearchApiError("calendar_hints_return_failed", {
-            status: result.status,
-            error: result.error,
-            origin_iata: destinationCountryOnly ? destinationCalendarHintPool : destinationCode,
-            destination_iata: originCountryOnly ? originCalendarHintPool : originCode,
-            month: requestedMonth,
-            aggregation_mode: calendarHintAggregationMode,
-            bucket_mode: calendarHintBucketMode,
-            guideline_thresholds:
-              calendarHintBucketMode === "guidelines" ? calendarHintGuidelineThresholds : undefined,
-          });
-          return;
-        }
-        const days = Array.isArray(result.data.days) ? result.data.days : [];
+        const resultData = data as unknown as QuickSearchCalendarHintsResponse;
+        const days = Array.isArray(resultData.days) ? resultData.days : [];
         const hintsForMonth = days.reduce<Record<string, QuickSearchCalendarDayHint>>(
           (acc, day) => {
             if (!day?.date) return acc;
@@ -1969,7 +1892,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           },
           {},
         );
-        const scopeMode = result.data.meta?.scope_mode || calendarHintsScopeMode;
+        const scopeMode = resultData.meta?.scope_mode || calendarHintsScopeMode;
         setCalendarHintsByKeyReturn((prev) => ({
           ...prev,
           [requestKey]: {
@@ -2051,26 +1974,16 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     params.set("children", "0");
     params.set("infants", "0");
     params.set("locale", locale === "en" ? "en-us" : "es-es");
-    apiFetchWithStatus<DeepLinkResponse>(`/search/deeplink?${params.toString()}`, {
-      method: "GET",
-      signal: controller.signal,
-    })
-      .then((result) => {
+    deeplinkApiV1SearchDeeplinkGet(
+      Object.fromEntries(params.entries()) as any,
+      { signal: controller.signal }
+    )
+      .then((data) => {
         if (controller.signal.aborted) {
           return;
         }
-        if (result.ok) {
-          setDeepLink(result.data);
-          setDeepLinkError("");
-          return;
-        }
-        logQuickSearchApiError("deeplink_failed", {
-          status: result.status,
-          error: result.error,
-          params: Object.fromEntries(params.entries()),
-        });
-        setDeepLink(null);
-        setDeepLinkError(t("deepLinkError"));
+        setDeepLink(data as unknown as DeepLinkResponse);
+        setDeepLinkError("");
       })
       .catch((error) => {
         if (controller.signal.aborted) {
@@ -2306,18 +2219,12 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
       )
         return;
 
-      const watchResponse = await apiFetchWithStatus<BulkWatchCreateResponse>(
-        "/watchlist/bulk-create",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            origin_iata: originRequestValue,
-            destination_iata: destinationRequestValue,
-            travel_dates: exactTravelDates,
-          }),
-        },
-        { timeoutMs: 5000 },
-      );
+      const watchResponse = await createWatchesBulkApiV1WatchlistBulkCreatePost({
+        origin_iata: originRequestValue,
+        destination_iata: destinationRequestValue,
+        travel_dates: exactTravelDates,
+      }).then((res) => ({ ok: true as const, data: res as unknown as BulkWatchCreateResponse }))
+      .catch((error) => ({ ok: false as const, error }));
       if (!watchResponse.ok) {
         notify({
           tone: "error",
@@ -2592,14 +2499,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
           },
         );
       }
-      const searchResult = await apiFetchWithStatus<SearchResponseRaw>(
-        "/search/quick",
-        {
-          method: "POST",
-          body: JSON.stringify(canonicalPayload),
-        },
-        { apiBase: LONG_RUNNING_API_BASE },
-      );
+      const searchResult = await quickSearchApiV1SearchQuickPost(canonicalPayload as any)
+        .then((res) => ({ ok: true as const, data: res as unknown as SearchResponseRaw }))
+        .catch((error) => ({ ok: false as const, error, status: error?.status || 500 }));
       if (!isCurrentRequest()) return;
       if (!isPageChange) {
         setProgress("response_parsed", 80);
@@ -2773,14 +2675,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
 
       for (let page = 1; page <= totalPagesForExport; page += 1) {
         const pagePayload = buildQuickSearchExportPagePayload(basePayload, page, sortBy);
-        const response = await apiFetchWithStatus<SearchResponseRaw>(
-          "/search/quick",
-          {
-            method: "POST",
-            body: JSON.stringify(pagePayload),
-          },
-          { apiBase: LONG_RUNNING_API_BASE },
-        );
+        const response = await quickSearchApiV1SearchQuickPost(pagePayload as any)
+          .then((res) => ({ ok: true as const, data: res as unknown as SearchResponseRaw }))
+          .catch((error) => ({ ok: false as const, error, status: error?.status || 500 }));
         if (!response.ok) {
           logQuickSearchApiError("quick_search_export_failed", {
             status: response.status,
@@ -2929,12 +2826,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         return;
       }
 
-      const refreshResponse = await apiFetchWithStatus<{
-        status: string;
-        watch_id: string;
-        stale_data?: boolean;
-        provider_status?: string;
-      }>(`/watchlist/${watchId}/refresh-now`, { method: "POST" });
+      const refreshResponse = await refreshWatchApiV1WatchlistWatchIdRefreshNowPost(watchId)
+        .then((res) => ({ ok: true as const, data: res as any }))
+        .catch((error) => ({ ok: false as const, error, status: error?.status || 500 }));
 
       if (!refreshResponse.ok) {
         if (refreshResponse.status === 429) {
