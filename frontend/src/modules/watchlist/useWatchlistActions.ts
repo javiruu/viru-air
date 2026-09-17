@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 
 import { useI18n } from "@/i18n";
-import { COUNTRY_AIRPORTS, CountryAirports, findCountryByIata } from "@/modules/shared/airports";
+import {
+  COUNTRY_AIRPORTS,
+  type CountryAirports,
+  findCountryByIata,
+} from "@/modules/shared/airports";
 import { useWatchlistCompatibility } from "@/modules/watchlist/useWatchlistCompatibility";
 import { useCommunityPricing } from "@/modules/watchlist/useCommunityPricing";
 import { useWatchlistDataLoader } from "@/modules/watchlist/useWatchlistDataLoader";
@@ -78,10 +82,9 @@ export function useWatchlistActions({
   });
 
   useEffect(() => {
-    load()
-      .catch(() => {});
+    load().catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [load]);
 
   useEffect(() => {
     if (!showAdd) return;
@@ -114,18 +117,24 @@ export function useWatchlistActions({
     setIsLoadingSelectedWatchDetail,
   });
 
-  const { refreshFiltered, updateWatchStatus, updateFareProfile, deleteWatch, bulkUpdateStatus, bulkDelete } =
-    useWatchlistMutations({
-      t,
-      load,
-      items,
-      selectedOrigin,
-      selectedDestination,
-      selectedDates,
-      setMessage,
-      setMessageType,
-      setIsRefreshingFiltered,
-    });
+  const {
+    refreshFiltered,
+    updateWatchStatus,
+    updateFareProfile,
+    deleteWatch,
+    bulkUpdateStatus,
+    bulkDelete,
+  } = useWatchlistMutations({
+    t,
+    load,
+    items,
+    selectedOrigin,
+    selectedDestination,
+    selectedDates,
+    setMessage,
+    setMessageType,
+    setIsRefreshingFiltered,
+  });
 
   const { onSubmit, openPicker, clearSelection, selectAirport } = useWatchlistForm({
     t,
@@ -191,4 +200,3 @@ export function useWatchlistActions({
     communityPricing,
   };
 }
-

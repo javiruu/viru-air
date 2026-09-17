@@ -303,7 +303,12 @@ export type QuickSearchMode = "quick-search" | "recommendations";
 export type QuickSearchTagTone = "low" | "med" | "high" | "fresh" | "stale" | "ai";
 export type QuickSearchExplainTag = { key: string; label: string; tone: QuickSearchTagTone };
 export type QuickSearchTripType = "one_way" | "round_trip" | "round_trip_incomplete";
-export type QuickSearchLoadingPhase = "idle" | "requesting" | "response_parsed" | "client_done" | "committed";
+export type QuickSearchLoadingPhase =
+  | "idle"
+  | "requesting"
+  | "response_parsed"
+  | "client_done"
+  | "committed";
 export type QuickSearchLoadingSubcheckStatus = "pending" | "active" | "done";
 export type QuickSearchSortBy = "ranking" | "price" | "duration" | "freshness";
 export type ZeroResultRelaxAction =
@@ -316,7 +321,14 @@ export type ZeroResultRelaxAction =
   | "open_nearby"
   | "max_coverage"
   | "open_more_options";
-export type SummaryHighlightKey = "strict" | "duration" | "radius" | "exclusions" | "date_flex" | "advanced" | null;
+export type SummaryHighlightKey =
+  | "strict"
+  | "duration"
+  | "radius"
+  | "exclusions"
+  | "date_flex"
+  | "advanced"
+  | null;
 export type QuickSearchVisibleFiltersState = {
   priceMin: string;
   priceMax: string;
@@ -365,7 +377,7 @@ export type RelaxUndoPayload =
       radiusKm: number;
     };
 
-  export type AirportIataEntry = {
+export type AirportIataEntry = {
   iata: string;
   name: string;
   municipality: string;

@@ -36,15 +36,29 @@ export function useWatchlistCompatibility({
       return;
     }
 
-    apiFetch<CompatibleResponse>(`/airports/compatible?origin_iata=${origin}&travel_date=${travelDate}`)
+    apiFetch<CompatibleResponse>(
+      `/airports/compatible?origin_iata=${origin}&travel_date=${travelDate}`,
+    )
       .then((data) => {
         setCompatibleDestinations(data.compatible_iata);
-        if (destination && data.compatible_iata.length > 0 && !data.compatible_iata.includes(destination)) {
+        if (
+          destination &&
+          data.compatible_iata.length > 0 &&
+          !data.compatible_iata.includes(destination)
+        ) {
           setDestination("");
         }
       })
       .catch(() => setCompatibleDestinations([]));
-  }, [origin, travelDate, destination, setCompatibleDestinations, setCompatibleOrigins, setDestination, setOrigin]);
+  }, [
+    origin,
+    travelDate,
+    destination,
+    setCompatibleDestinations,
+    setCompatibleOrigins,
+    setDestination,
+    setOrigin,
+  ]);
 
   useEffect(() => {
     if (!travelDate) {
@@ -57,7 +71,9 @@ export function useWatchlistCompatibility({
       return;
     }
 
-    apiFetch<CompatibleResponse>(`/airports/compatible?destination_iata=${destination}&travel_date=${travelDate}`)
+    apiFetch<CompatibleResponse>(
+      `/airports/compatible?destination_iata=${destination}&travel_date=${travelDate}`,
+    )
       .then((data) => {
         setCompatibleOrigins(data.compatible_iata);
         if (origin && data.compatible_iata.length > 0 && !data.compatible_iata.includes(origin)) {

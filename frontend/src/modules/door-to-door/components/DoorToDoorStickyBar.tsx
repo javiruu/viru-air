@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Clock, DollarSign, Shield } from "lucide-react";
 
 import { useI18n } from "@/i18n";
@@ -31,10 +31,10 @@ export function DoorToDoorStickyBar({
     const sentinel = document.getElementById("d2d-results-sentinel");
     if (!sentinel) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => setVisible(!entry.isIntersecting),
-      { threshold: 0, rootMargin: "-48px 0px 0px 0px" }
-    );
+    const observer = new IntersectionObserver(([entry]) => setVisible(!entry.isIntersecting), {
+      threshold: 0,
+      rootMargin: "-48px 0px 0px 0px",
+    });
     observer.observe(sentinel);
     return () => observer.disconnect();
   }, []);

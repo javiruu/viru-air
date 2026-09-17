@@ -8,15 +8,9 @@ type CommunityPriceReferenceBandProps = {
   readonly aggregate: CommunityPriceAggregate | undefined;
 };
 
-export function CommunityPriceReferenceBand({
-  aggregate,
-}: CommunityPriceReferenceBandProps) {
+export function CommunityPriceReferenceBand({ aggregate }: CommunityPriceReferenceBandProps) {
   const { t, localeTag } = useI18n();
-  if (
-    !aggregate?.is_public ||
-    aggregate.min_price === null ||
-    aggregate.max_price === null
-  ) {
+  if (!aggregate?.is_public || aggregate.min_price === null || aggregate.max_price === null) {
     return null;
   }
   const formatter = new Intl.NumberFormat(localeTag, { maximumFractionDigits: 0 });

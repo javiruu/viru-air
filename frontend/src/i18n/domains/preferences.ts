@@ -29,7 +29,8 @@ export const preferencesEs = {
     calendarHintGuidelinesTitle: "Umbrales de precio",
     calendarHintGuidelineLowLabel: "Barato hasta",
     calendarHintGuidelineMidLabel: "Medio hasta",
-    calendarHintGuidelinesHint: "Tramos: bajo <= {low} {currency}, medio <= {mid} {currency}, alto > {mid} {currency}.",
+    calendarHintGuidelinesHint:
+      "Tramos: bajo <= {low} {currency}, medio <= {mid} {currency}, alto > {mid} {currency}.",
     guidelineLowError: "El limite low debe ser >= 0.",
     guidelineMidError: "El limite mid debe ser mayor que low.",
     timingTitle: "Horario y criterio",
@@ -163,7 +164,8 @@ export const preferencesEn = {
     calendarHintGuidelinesTitle: "Price guidelines",
     calendarHintGuidelineLowLabel: "Cheap up to",
     calendarHintGuidelineMidLabel: "Medium up to",
-    calendarHintGuidelinesHint: "Ranges: low <= {low} {currency}, mid <= {mid} {currency}, high > {mid} {currency}.",
+    calendarHintGuidelinesHint:
+      "Ranges: low <= {low} {currency}, mid <= {mid} {currency}, high > {mid} {currency}.",
     guidelineLowError: "Low limit must be >= 0.",
     guidelineMidError: "Mid limit must be greater than low.",
     timingTitle: "Window and criteria",

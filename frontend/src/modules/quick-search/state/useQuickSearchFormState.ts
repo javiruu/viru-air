@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 
-import {
+import type {
   CountryAirports,
   QuickSearchAutocompleteField,
   QuickSearchFieldErrors,
@@ -23,9 +23,13 @@ export function useQuickSearchFormState(initialOrigin: string, initialDestinatio
 
   // ── Country scope ──
   const [originCountryOnly, setOriginCountryOnly] = useState<CountryAirports | null>(null);
-  const [destinationCountryOnly, setDestinationCountryOnly] = useState<CountryAirports | null>(null);
+  const [destinationCountryOnly, setDestinationCountryOnly] = useState<CountryAirports | null>(
+    null,
+  );
   const [originSelectedCountryCode, setOriginSelectedCountryCode] = useState<string | null>(null);
-  const [destinationSelectedCountryCode, setDestinationSelectedCountryCode] = useState<string | null>(null);
+  const [destinationSelectedCountryCode, setDestinationSelectedCountryCode] = useState<
+    string | null
+  >(null);
 
   // ── Time window ──
   const [departAfter, setDepartAfter] = useState("07:00");
@@ -73,7 +77,8 @@ export function useQuickSearchFormState(initialOrigin: string, initialDestinatio
   const [destinationTouched, setDestinationTouched] = useState(false);
   const [dateTouched, setDateTouched] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<QuickSearchFieldErrors>({});
-  const [activeAutocompleteField, setActiveAutocompleteField] = useState<QuickSearchAutocompleteField | null>(null);
+  const [activeAutocompleteField, setActiveAutocompleteField] =
+    useState<QuickSearchAutocompleteField | null>(null);
   const [activeAutocompleteIndex, setActiveAutocompleteIndex] = useState(-1);
 
   // ── Filter drawer ──

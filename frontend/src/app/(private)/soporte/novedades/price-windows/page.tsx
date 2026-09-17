@@ -31,8 +31,7 @@ type ArticleContent = {
 const contentEs: ArticleContent = {
   eyebrow: "Product note",
   title: "Ventanas de precio, señales y contexto: así leeremos las próximas oportunidades en Viru.",
-  dek:
-    "Estamos preparando una lectura más editorial de las oportunidades para que cada alerta importante se entienda rápido, pero con suficiente contexto para decidir de verdad.",
+  dek: "Estamos preparando una lectura más editorial de las oportunidades para que cada alerta importante se entienda rápido, pero con suficiente contexto para decidir de verdad.",
   category: "Actualización de producto",
   publishedAt: "20 abr 2026",
   readTime: "4 min de lectura",
@@ -72,8 +71,7 @@ const contentEs: ArticleContent = {
 const contentEn: ArticleContent = {
   eyebrow: "Product note",
   title: "Price windows, signals, and context: how Viru will frame the next opportunities.",
-  dek:
-    "We are building a more editorial reading layer for key opportunities so each important update becomes clear quickly, while still carrying enough context to support a real decision.",
+  dek: "We are building a more editorial reading layer for key opportunities so each important update becomes clear quickly, while still carrying enough context to support a real decision.",
   category: "Product update",
   publishedAt: "Apr 20, 2026",
   readTime: "4 min read",

@@ -1,8 +1,4 @@
-import type {
-  CommunityPricing,
-  Watch,
-  WatchDetail,
-} from "@/modules/watchlist/types";
+import type { CommunityPricing, Watch, WatchDetail } from "@/modules/watchlist/types";
 
 export function createEmptyCommunityPricing(): CommunityPricing {
   return {
@@ -31,17 +27,13 @@ export type WatchDetailApiResponse = Omit<WatchDetail, "community_pricing"> & {
 export function normalizeWatchApiResponse(response: WatchApiResponse): Watch {
   return {
     ...response,
-    community_pricing:
-      response.community_pricing ?? createEmptyCommunityPricing(),
+    community_pricing: response.community_pricing ?? createEmptyCommunityPricing(),
   };
 }
 
-export function normalizeWatchDetailApiResponse(
-  response: WatchDetailApiResponse,
-): WatchDetail {
+export function normalizeWatchDetailApiResponse(response: WatchDetailApiResponse): WatchDetail {
   return {
     ...response,
-    community_pricing:
-      response.community_pricing ?? createEmptyCommunityPricing(),
+    community_pricing: response.community_pricing ?? createEmptyCommunityPricing(),
   };
 }

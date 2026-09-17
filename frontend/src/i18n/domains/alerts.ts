@@ -20,7 +20,8 @@
   cadence: {
     kicker: "Conexión de señales",
     title: "Así viajan tus reglas hasta la bandeja",
-    subtitle: "Una lectura simple del alcance, el ritmo y la última conexión de la ruta seleccionada.",
+    subtitle:
+      "Una lectura simple del alcance, el ritmo y la última conexión de la ruta seleccionada.",
     openPending: "Abrir pendientes",
     saveQuietHours: "Guardar horario",
     scope: "Ruta conectada",
@@ -35,8 +36,10 @@
     connectionHint: "Se actualiza cuando una regla genera historial",
   },
   flow: {
-    emptyWatchlistHint: "No hay vuelos en seguimiento. Empieza por Watchlist para activar alertas útiles.",
-    noSignalHint: "Si todavia no hay un precio fiable, actualiza Watchlist o busca nuevas rutas primero.",
+    emptyWatchlistHint:
+      "No hay vuelos en seguimiento. Empieza por Watchlist para activar alertas útiles.",
+    noSignalHint:
+      "Si todavia no hay un precio fiable, actualiza Watchlist o busca nuevas rutas primero.",
     hasSignalHint: "Todo conectado. Puedes revisar el resumen global desde dashboard.",
     goWatchlist: "Ir a Watchlist",
     goQuickSearch: "Ir a Búsqueda rápida",
@@ -67,9 +70,12 @@
     previewThresholdHigh: "Te avisaremos cuando supere {value}.",
     freshnessLabel: "Señal actual",
     freshnessFresh: "La regla tomará como base la última señal verificada.",
-    freshnessWarm: "Ya tenemos un precio, pero no se ha comprobado hace poco. Actualizalo antes de confiar en el umbral.",
-    freshnessStale: "Precio histórico. Guardamos la regla, pero conviene revalidar antes de decidir.",
-    freshnessNoData: "Todavia no hay un precio fiable para esta ruta. Actualizalo antes de confiar en la alerta.",
+    freshnessWarm:
+      "Ya tenemos un precio, pero no se ha comprobado hace poco. Actualizalo antes de confiar en el umbral.",
+    freshnessStale:
+      "Precio histórico. Guardamos la regla, pero conviene revalidar antes de decidir.",
+    freshnessNoData:
+      "Todavia no hay un precio fiable para esta ruta. Actualizalo antes de confiar en la alerta.",
     placeholder: "Ej: 29.90",
     category: "Categoría",
     ruleTypeHelp: "Usa umbral para precio objetivo, o cada cambio para monitoreo continuo.",
@@ -119,7 +125,8 @@
     emptyAll: "No hay reglas activas para este vuelo.",
     emptySegment: "No hay resultados para este segmento.",
     emptyAllBody: "Elige una ruta, define sensibilidad y deja que Viru vigile sin ruido de fondo.",
-    emptySegmentBody: "Este filtro está limpio. Cambia de segmento o crea una regla nueva para cubrir esta ruta.",
+    emptySegmentBody:
+      "Este filtro está limpio. Cambia de segmento o crea una regla nueva para cubrir esta ruta.",
     emptyStepsLabel: "Pasos para activar una regla",
     emptyStepFlight: "Ruta elegida",
     emptyStepRule: "Regla calibrada",
@@ -143,7 +150,8 @@
   history: {
     title: "Historial de alertas",
     empty: "Aún no hay alertas generadas para este vuelo.",
-    emptyBody: "Cuando una regla detecte movimiento, este panel guardará la señal, el canal y el estado de entrega.",
+    emptyBody:
+      "Cuando una regla detecte movimiento, este panel guardará la señal, el canal y el estado de entrega.",
     emptyStepsLabel: "Etapas del historial de alertas",
     emptyStepWatching: "Vigilancia activa",
     emptyStepEvaluate: "Evaluación",
@@ -239,9 +247,12 @@ export const alertsEn = {
     previewThresholdHigh: "We'll notify you when it exceeds {value}.",
     freshnessLabel: "Current signal",
     freshnessFresh: "The rule will use the latest verified signal as its baseline.",
-    freshnessWarm: "The signal exists, but it is no longer recent. Revalidate before trusting the threshold.",
-    freshnessStale: "Historical price. We can save the rule, but you should revalidate before deciding.",
-    freshnessNoData: "There is no valid signal for this route yet. Revalidate before trusting this alert.",
+    freshnessWarm:
+      "The signal exists, but it is no longer recent. Revalidate before trusting the threshold.",
+    freshnessStale:
+      "Historical price. We can save the rule, but you should revalidate before deciding.",
+    freshnessNoData:
+      "There is no valid signal for this route yet. Revalidate before trusting this alert.",
     placeholder: "E.g.: 29.90",
     category: "Category",
     ruleTypeHelp: "Use threshold for target prices, or every change for continuous monitoring.",
@@ -290,8 +301,10 @@ export const alertsEn = {
     count: "{count} rules",
     emptyAll: "No active rules for this flight.",
     emptySegment: "No results for this segment.",
-    emptyAllBody: "Choose a route, define sensitivity, and let Viru watch without background noise.",
-    emptySegmentBody: "This filter is clean. Switch segment or create a new rule to cover this route.",
+    emptyAllBody:
+      "Choose a route, define sensitivity, and let Viru watch without background noise.",
+    emptySegmentBody:
+      "This filter is clean. Switch segment or create a new rule to cover this route.",
     emptyStepsLabel: "Steps to activate a rule",
     emptyStepFlight: "Route selected",
     emptyStepRule: "Rule calibrated",
@@ -315,7 +328,8 @@ export const alertsEn = {
   history: {
     title: "Alert history",
     empty: "No alerts generated for this flight yet.",
-    emptyBody: "When a rule detects movement, this panel will keep the signal, channel, and delivery state.",
+    emptyBody:
+      "When a rule detects movement, this panel will keep the signal, channel, and delivery state.",
     emptyStepsLabel: "Alert history stages",
     emptyStepWatching: "Active watch",
     emptyStepEvaluate: "Evaluation",
@@ -341,4 +355,3 @@ export const alertsEn = {
     attention: "Attention",
   },
 };
-

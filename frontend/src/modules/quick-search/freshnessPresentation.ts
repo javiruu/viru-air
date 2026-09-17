@@ -1,4 +1,7 @@
-import { QuickSearchFreshness, QuickSearchFreshnessStatus } from "@/modules/quick-search/types";
+import type {
+  QuickSearchFreshness,
+  QuickSearchFreshnessStatus,
+} from "@/modules/quick-search/types";
 
 type QuickSearchFreshnessPresentationTone = "fresh" | "warn" | "stale" | "neutral";
 
@@ -25,7 +28,10 @@ function formatRelativeMinutes(totalMinutes: number): string {
   return `${hours} h`;
 }
 
-export function formatQuickSearchFreshnessRelative(value?: string | null, now = Date.now()): string | null {
+export function formatQuickSearchFreshnessRelative(
+  value?: string | null,
+  now = Date.now(),
+): string | null {
   if (!value) return null;
   const ts = new Date(value).getTime();
   if (Number.isNaN(ts)) return null;
@@ -69,7 +75,9 @@ export function getQuickSearchFreshnessPresentation({
     case "warm":
       return {
         status,
-        label: relative ? `Visto hace ${relative}. Revalida antes de decidir.` : "Revalida antes de decidir.",
+        label: relative
+          ? `Visto hace ${relative}. Revalida antes de decidir.`
+          : "Revalida antes de decidir.",
         shortLabel: relative ? `Visto ${relative}` : "Revalida antes de decidir",
         tone: "warn",
         observedAt,

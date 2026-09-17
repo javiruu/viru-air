@@ -84,7 +84,9 @@ export function useWatchlistDerived({
       return acc;
     }, {});
     Object.entries(grouped).forEach(([watchId, rows]) => {
-      const sorted = rows.slice().sort((a, b) => new Date(a.capturedAt).getTime() - new Date(b.capturedAt).getTime());
+      const sorted = rows
+        .slice()
+        .sort((a, b) => new Date(a.capturedAt).getTime() - new Date(b.capturedAt).getTime());
       const latest = sorted[sorted.length - 1] || null;
       const previous = sorted.length > 1 ? sorted[sorted.length - 2] : null;
       const prices = sorted.map((row) => row.price);
@@ -108,7 +110,10 @@ export function useWatchlistDerived({
   }, [historyRows, localeTag]);
   const providerCoverage = useMemo(() => buildWatchProviderCoverage(historyRows), [historyRows]);
 
-  const allOrigins = useMemo(() => Array.from(new Set(items.map((watch) => watch.origin_iata))).sort(), [items]);
+  const allOrigins = useMemo(
+    () => Array.from(new Set(items.map((watch) => watch.origin_iata))).sort(),
+    [items],
+  );
 
   const allDestinations = useMemo(
     () =>
@@ -128,7 +133,9 @@ export function useWatchlistDerived({
         new Set(
           items
             .filter((watch) => (selectedOrigin ? watch.origin_iata === selectedOrigin : true))
-            .filter((watch) => (selectedDestination ? watch.destination_iata === selectedDestination : true))
+            .filter((watch) =>
+              selectedDestination ? watch.destination_iata === selectedDestination : true,
+            )
             .map((watch) => watch.travel_date_local),
         ),
       ).sort(),
@@ -141,9 +148,14 @@ export function useWatchlistDerived({
   );
 
   const watchRouteDestinations = useMemo(
-    () => Array.from(new Set(items
-      .filter((item) => !watchRouteOrigin || item.origin_iata === watchRouteOrigin)
-      .map((item) => item.destination_iata))).sort(),
+    () =>
+      Array.from(
+        new Set(
+          items
+            .filter((item) => !watchRouteOrigin || item.origin_iata === watchRouteOrigin)
+            .map((item) => item.destination_iata),
+        ),
+      ).sort(),
     [items, watchRouteOrigin],
   );
 
@@ -158,8 +170,10 @@ export function useWatchlistDerived({
       const metaB = watchMeta.get(b.id);
       const latestA = metaA?.latest?.price ?? Infinity;
       const latestB = metaB?.latest?.price ?? Infinity;
-      const deltaA = metaA?.latest && metaA.previous ? Math.abs(metaA.latest.price - metaA.previous.price) : -1;
-      const deltaB = metaB?.latest && metaB.previous ? Math.abs(metaB.latest.price - metaB.previous.price) : -1;
+      const deltaA =
+        metaA?.latest && metaA.previous ? Math.abs(metaA.latest.price - metaA.previous.price) : -1;
+      const deltaB =
+        metaB?.latest && metaB.previous ? Math.abs(metaB.latest.price - metaB.previous.price) : -1;
       const freshA = metaA?.latest ? new Date(metaA.latest.capturedAt).getTime() : 0;
       const freshB = metaB?.latest ? new Date(metaB.latest.capturedAt).getTime() : 0;
       if (watchSort === "price_asc") return latestA - latestB;
@@ -189,7 +203,11 @@ export function useWatchlistDerived({
       .map(([groupId, watches]) => {
         const legs = watches
           .slice()
-          .sort((a, b) => a.travel_date_local.localeCompare(b.travel_date_local) || a.origin_iata.localeCompare(b.origin_iata))
+          .sort(
+            (a, b) =>
+              a.travel_date_local.localeCompare(b.travel_date_local) ||
+              a.origin_iata.localeCompare(b.origin_iata),
+          )
           .map((watch) => {
             const meta = watchMeta.get(watch.id);
             return {
@@ -326,17 +344,20 @@ export function useWatchlistDerived({
   }, [flatChartPoints, selectedPoint]);
 
   const calendarEvents = useMemo(() => {
-    return filteredRows.reduce<Record<string, { min: number; max: number; count: number }>>((acc, row) => {
-      const current = acc[row.travelDate];
-      if (!current) {
-        acc[row.travelDate] = { min: row.price, max: row.price, count: 1 };
-      } else {
-        current.min = Math.min(current.min, row.price);
-        current.max = Math.max(current.max, row.price);
-        current.count += 1;
-      }
-      return acc;
-    }, {});
+    return filteredRows.reduce<Record<string, { min: number; max: number; count: number }>>(
+      (acc, row) => {
+        const current = acc[row.travelDate];
+        if (!current) {
+          acc[row.travelDate] = { min: row.price, max: row.price, count: 1 };
+        } else {
+          current.min = Math.min(current.min, row.price);
+          current.max = Math.max(current.max, row.price);
+          current.count += 1;
+        }
+        return acc;
+      },
+      {},
+    );
   }, [filteredRows]);
 
   const visibleMonth = useMemo(() => {
@@ -408,7 +429,9 @@ export function useWatchlistDerived({
   const calendarSelectorEvents = useMemo(() => {
     const out: Record<string, { min: number; max: number; count: number }> = {};
     calendarSelectorFlightsByDay.forEach((flights, day) => {
-      const prices = flights.map((flight) => flight.latestPrice).filter((price): price is number => price != null);
+      const prices = flights
+        .map((flight) => flight.latestPrice)
+        .filter((price): price is number => price != null);
       if (prices.length === 0) {
         out[day] = { min: 0, max: 0, count: flights.length };
         return;
@@ -481,7 +504,13 @@ export function useWatchlistDerived({
         const latest = meta?.latest ?? null;
         const previous = meta?.previous ?? null;
         const trend: "up" | "down" | "flat" =
-          !latest || !previous ? "flat" : latest.price > previous.price ? "up" : latest.price < previous.price ? "down" : "flat";
+          !latest || !previous
+            ? "flat"
+            : latest.price > previous.price
+              ? "up"
+              : latest.price < previous.price
+                ? "down"
+                : "flat";
 
         return {
           watchId: watch.id,
@@ -490,7 +519,10 @@ export function useWatchlistDerived({
           travelDate: watch.travel_date_local,
           status: watch.status,
           originCoordinates: [originMeta.longitude, originMeta.latitude] as [number, number],
-          destinationCoordinates: [destinationMeta.longitude, destinationMeta.latitude] as [number, number],
+          destinationCoordinates: [destinationMeta.longitude, destinationMeta.latitude] as [
+            number,
+            number,
+          ],
           priceCurrent: latest?.price ?? null,
           priceTarget: watch.target_price ?? null,
           currency: latest?.currency ?? "EUR",
@@ -550,20 +582,30 @@ export function useWatchlistDerived({
     const activeRoutes = watchMapRoutes.filter((route) => route.isCompared || route.isPrimary);
     const withPrice = activeRoutes.filter((route) => route.priceCurrent != null);
     if (withPrice.length > 1) {
-      const cheapest = withPrice.reduce((acc, route) => ((route.priceCurrent ?? Infinity) < (acc.priceCurrent ?? Infinity) ? route : acc));
+      const cheapest = withPrice.reduce((acc, route) =>
+        (route.priceCurrent ?? Infinity) < (acc.priceCurrent ?? Infinity) ? route : acc,
+      );
       return {
         type: "opportunity",
-        text: t("watchlist.map.insightOpportunity", { origin: cheapest.origin, destination: cheapest.destination }),
+        text: t("watchlist.map.insightOpportunity", {
+          origin: cheapest.origin,
+          destination: cheapest.destination,
+        }),
         relatedWatchIds: [cheapest.watchId],
       };
     }
 
     const withVolatility = activeRoutes.filter((route) => route.volatility != null);
     if (withVolatility.length > 1) {
-      const stable = withVolatility.reduce((acc, route) => ((route.volatility ?? Infinity) < (acc.volatility ?? Infinity) ? route : acc));
+      const stable = withVolatility.reduce((acc, route) =>
+        (route.volatility ?? Infinity) < (acc.volatility ?? Infinity) ? route : acc,
+      );
       return {
         type: "stability",
-        text: t("watchlist.map.insightStability", { origin: stable.origin, destination: stable.destination }),
+        text: t("watchlist.map.insightStability", {
+          origin: stable.origin,
+          destination: stable.destination,
+        }),
         relatedWatchIds: [stable.watchId],
       };
     }
@@ -571,7 +613,10 @@ export function useWatchlistDerived({
     const primary = activeRoutes.find((route) => route.isPrimary) ?? activeRoutes[0];
     return {
       type: "neutral",
-      text: t("watchlist.map.insightFocus", { origin: primary.origin, destination: primary.destination }),
+      text: t("watchlist.map.insightFocus", {
+        origin: primary.origin,
+        destination: primary.destination,
+      }),
       relatedWatchIds: [primary.watchId],
     };
   }, [items.length, t, watchMapRoutes]);

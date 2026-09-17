@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 
 import { useI18n } from "@/i18n";
@@ -91,7 +91,13 @@ export function DoorToDoorFilterPanel({
               <button
                 type="button"
                 className="btn-secondary btn-compact"
-                onClick={() => onChange({ ...DEFAULT_PREFERENCES, sort_by: "fewest_changes", min_airport_buffer_minutes: 180 })}
+                onClick={() =>
+                  onChange({
+                    ...DEFAULT_PREFERENCES,
+                    sort_by: "fewest_changes",
+                    min_airport_buffer_minutes: 180,
+                  })
+                }
               >
                 {t("doorToDoor.filters.presetSafe")}
               </button>

@@ -15,7 +15,8 @@ export const doorToDoorEs = {
     origin: "Origen terrestre",
     finalDestination: "Destino final al aterrizar",
     airportOnly: "Terminar solo en el aeropuerto de llegada",
-    saveOrigin: "¿Quieres guardar este origen para futuros vuelos? Puedes borrarlo cuando quieras en Preferencias.",
+    saveOrigin:
+      "¿Quieres guardar este origen para futuros vuelos? Puedes borrarlo cuando quieras en Preferencias.",
     preparationTitle: "Preparación de ruta",
     essentialsTitle: "Datos esenciales",
     decisionSettings: "Ajustes de decisión",
@@ -42,20 +43,25 @@ export const doorToDoorEs = {
   states: {
     emptyTitleWithWatch: "Elige origen y destino final",
     emptyTitleNoWatch: "Selecciona un vuelo guardado",
-    emptyBodyWithWatch: "Elige desde dónde sales y dónde quieres terminar el viaje. Viru montará la ruta completa alrededor de tu vuelo.",
-    emptyBodyNoWatch: "Puerta a puerta se activa cuando hay un vuelo de tu Watchlist para usarlo como tramo aéreo.",
+    emptyBodyWithWatch:
+      "Elige desde dónde sales y dónde quieres terminar el viaje. Viru montará la ruta completa alrededor de tu vuelo.",
+    emptyBodyNoWatch:
+      "Puerta a puerta se activa cuando hay un vuelo de tu Watchlist para usarlo como tramo aéreo.",
     loadingTitle: "Buscando combinaciones terrestres, márgenes y fuentes disponibles…",
     loadingBody: "Revisamos coste, tiempo, cambios y margen alrededor del vuelo guardado.",
     errorTitle: "No hemos podido completar todas las fuentes.",
     errorBody: "Te mostramos las opciones con datos suficientes cuando estén disponibles.",
     retry: "Reintentar",
     noCoverageTitle: "No hay cobertura suficiente para esta ruta.",
-    noCoverageBody: "Prueba a subir el margen, permitir shuttle/coche compartido o terminar solo en aeropuerto.",
+    noCoverageBody:
+      "Prueba a subir el margen, permitir shuttle/coche compartido o terminar solo en aeropuerto.",
     noCoverageCta: "Aplicar ajustes sugeridos",
     noRealCoverageTitle: "Sin cobertura real todavía",
-    noRealCoverageBody: "No hay proveedores reales activos para esta ruta en este entorno. Activa proveedores reales o usa mock para estimación.",
+    noRealCoverageBody:
+      "No hay proveedores reales activos para esta ruta en este entorno. Activa proveedores reales o usa mock para estimación.",
     partialTitle: "Fuente parcial",
-    partialBody: "No todas las fuentes están activas; revisa precio, margen y confianza antes de decidir.",
+    partialBody:
+      "No todas las fuentes están activas; revisa precio, margen y confianza antes de decidir.",
     successTitle: "Ruta completa calculada.",
     successBody: "Revisa precio, margen y confianza antes de decidir.",
   },
@@ -110,17 +116,21 @@ export const doorToDoorEs = {
     providersStatus: "Estado de proveedores",
     providersMix: "{enabled} activos · {real} reales · {estimate} estimación",
     limitedComparisonTitle: "Fuente externa",
-    limitedComparisonBody: "Este enlace abre el proveedor. Revisa horarios, precio y disponibilidad antes de decidir.",
-    blablacarAlwaysVisibleHint: "BlaBlaCar solo aparece si coche compartido está habilitado y no activas modo solo transporte público.",
+    limitedComparisonBody:
+      "Este enlace abre el proveedor. Revisa horarios, precio y disponibilidad antes de decidir.",
+    blablacarAlwaysVisibleHint:
+      "BlaBlaCar solo aparece si coche compartido está habilitado y no activas modo solo transporte público.",
     attemptedRoute: "Ruta consultada",
     coverageActions: "Qué puedes hacer ahora",
     noActiveProviders: "sin providers activos",
-    coverageActionsDetail: "Abre proveedores externos (Google Maps, BlaBlaCar, GoOpti), permite shuttle/coche compartido, o termina en solo aeropuerto.",
+    coverageActionsDetail:
+      "Abre proveedores externos (Google Maps, BlaBlaCar, GoOpti), permite shuttle/coche compartido, o termina en solo aeropuerto.",
     sourceLegend: "Lectura rápida de fuentes",
     sourceMockHint: "Estimación: orientativa, sin datos reales confirmados.",
     sourceDeeplinkHint: "Búsqueda externa: abre proveedor; precio y plazas se confirman fuera.",
     sourceApiHint: "API/Open data: datos reales cuando están activos.",
-    openDataHint: "GTFS/Open Data: horarios publicados por fuente pública; precio y compra no confirmados.",
+    openDataHint:
+      "GTFS/Open Data: horarios publicados por fuente pública; precio y compra no confirmados.",
     sourceScraperHint: "Scraper: no activo en esta fase.",
     googleRoutesHint: "Duración y distancia calculadas con proveedor de rutas.",
     googleMapsHint: "Google Maps: direcciones reales para navegación.",
@@ -148,24 +158,30 @@ export const doorToDoorEs = {
     moreActions: "Más",
     openPublicTransport: "Ver transporte público",
     noPriceConfirmed: "Sin precio confirmado",
-    noScheduleConfirmed: "Sin horario confirmado. Abre el proveedor para ver duración, precio y disponibilidad.",
+    noScheduleConfirmed:
+      "Sin horario confirmado. Abre el proveedor para ver duración, precio y disponibilidad.",
     noExternalSearch: "No hay búsquedas externas disponibles para este tramo.",
     externalSource: "Fuente externa",
-    partialCoverageBody: "Cobertura parcial detectada: algunas fuentes de ruta estan degradadas, pero puedes seguir operando con transparencia.",
+    partialCoverageBody:
+      "Cobertura parcial detectada: algunas fuentes de ruta estan degradadas, pero puedes seguir operando con transparencia.",
     estimateExplanation: "Estimación orientativa mientras no hay fuentes reales suficientes.",
     trustModalTrigger: "Ver confianza de datos del plan elegido",
     trustConfirmed: "Dato confirmado",
     trustEstimated: "Dato estimado",
     trustNoPlan: "Marca un plan para ver el estado de confianza del dato principal.",
     trustModalTitle: "Confianza del dato",
-    trustModalBodyConfirmed: "Este plan usa mayoría de fuentes confirmadas y actualizadas para duración o disponibilidad.",
-    trustModalBodyEstimated: "Este plan depende de estimaciones o enlaces externos; confirma precio y plazas antes de reservar.",
-    trustModalBodyAction: "Viru te da una base clara para decidir, pero la verificación final siempre ocurre en el proveedor.",
+    trustModalBodyConfirmed:
+      "Este plan usa mayoría de fuentes confirmadas y actualizadas para duración o disponibilidad.",
+    trustModalBodyEstimated:
+      "Este plan depende de estimaciones o enlaces externos; confirma precio y plazas antes de reservar.",
+    trustModalBodyAction:
+      "Viru te da una base clara para decidir, pero la verificación final siempre ocurre en el proveedor.",
   },
   mapHub: {
     title: "Hub de capas y herramientas",
     subtitle: "Base completa parcial inspirada en Google Maps",
-    summary: "Mantenemos timeline + decision como eje, y sembramos capacidades de mapa con estado transparente para evolucionarlas por fases.",
+    summary:
+      "Mantenemos timeline + decision como eje, y sembramos capacidades de mapa con estado transparente para evolucionarlas por fases.",
     sections: {
       layers: "Capas del mapa",
       layersBody: "Cobertura de navegacion, trafico y transporte.",
@@ -188,16 +204,46 @@ export const doorToDoorEs = {
     confidence: "Confianza",
     pending: "Pendiente",
     cards: {
-      navigation: { title: "Navegacion guiada", description: "Direccion puerta-a-aeropuerto y llegada final con soporte de rutas reales." },
-      traffic: { title: "Trafico en ruta", description: "Lectura de trafico en tiempo real sembrada como capa parcial." },
-      transit: { title: "Transporte publico", description: "Cobertura GTFS/open data para horarios y modos urbanos." },
-      alternatives: { title: "Alternativas inteligentes", description: "Trade-offs entre opcion rapida, barata y con mas margen." },
-      eco_route: { title: "Ruta eco", description: "Base para mostrar rutas mas eficientes en consumo y emisiones." },
-      nearby_pois: { title: "POIs cercanos", description: "Exploracion de zonas utiles en llegada: estaciones, accesos y servicios." },
-      incidents: { title: "Incidencias", description: "Panel para eventos de ruta, cierres y alertas operativas." },
-      street_view_preview: { title: "Street View / preview", description: "Vista previa del entorno para validar entradas y puntos de recogida." },
-      offline: { title: "Modo offline", description: "Estructura preparada para operar con conectividad limitada." },
-      saved_places: { title: "Lugares guardados", description: "Base para listas, notas y reutilizacion de puntos frecuentes." },
+      navigation: {
+        title: "Navegacion guiada",
+        description: "Direccion puerta-a-aeropuerto y llegada final con soporte de rutas reales.",
+      },
+      traffic: {
+        title: "Trafico en ruta",
+        description: "Lectura de trafico en tiempo real sembrada como capa parcial.",
+      },
+      transit: {
+        title: "Transporte publico",
+        description: "Cobertura GTFS/open data para horarios y modos urbanos.",
+      },
+      alternatives: {
+        title: "Alternativas inteligentes",
+        description: "Trade-offs entre opcion rapida, barata y con mas margen.",
+      },
+      eco_route: {
+        title: "Ruta eco",
+        description: "Base para mostrar rutas mas eficientes en consumo y emisiones.",
+      },
+      nearby_pois: {
+        title: "POIs cercanos",
+        description: "Exploracion de zonas utiles en llegada: estaciones, accesos y servicios.",
+      },
+      incidents: {
+        title: "Incidencias",
+        description: "Panel para eventos de ruta, cierres y alertas operativas.",
+      },
+      street_view_preview: {
+        title: "Street View / preview",
+        description: "Vista previa del entorno para validar entradas y puntos de recogida.",
+      },
+      offline: {
+        title: "Modo offline",
+        description: "Estructura preparada para operar con conectividad limitada.",
+      },
+      saved_places: {
+        title: "Lugares guardados",
+        description: "Base para listas, notas y reutilizacion de puntos frecuentes.",
+      },
     },
     savedPlaces: {
       label: "Lugar",
@@ -207,29 +253,33 @@ export const doorToDoorEs = {
       add: "Guardar punto",
       remove: "Quitar",
       empty: "Aun no hay puntos guardados en puerta a puerta.",
-    savedToast: "Punto guardado",
-    deletedToast: "Punto eliminado",
-    saveError: "No se pudo guardar el punto",
-    deleteError: "No se pudo eliminar el punto",
+      savedToast: "Punto guardado",
+      deletedToast: "Punto eliminado",
+      saveError: "No se pudo guardar el punto",
+      deleteError: "No se pudo eliminar el punto",
     },
     whyMissing: {
       google_routes_disabled: "Sin clave de Google Maps. Actívala para rutas reales.",
       live_traffic_not_wired: "Capa de tráfico no conectada a fuente en tiempo real.",
       traffic_layer_pending: "Capa de tráfico pendiente de implementación.",
-      corridor_limited: "Cobertura limitada a corredores verificados. Consulta los corredores activos en la documentación.",
-      driving_only: "Cobertura parcial: el trafico en vivo solo esta disponible para tramos por carretera.",
+      corridor_limited:
+        "Cobertura limitada a corredores verificados. Consulta los corredores activos en la documentación.",
+      driving_only:
+        "Cobertura parcial: el trafico en vivo solo esta disponible para tramos por carretera.",
       gtfs_provider_disabled: "GTFS no activo. Configura feeds de transporte público.",
       route_candidates_pending: "Sin rutas calculadas todavía.",
       immersive_preview_pending: "Vista previa inmersiva pendiente de cablear.",
       street_view_not_connected: "Street View requiere Google Routes activo.",
       shared_lists_pending: "Listas compartidas pendientes de implementar.",
       nearby_pois_pending: "Exploración de POIs cercanos pendiente de implementar.",
-      search_endpoint_not_wired: "La exploracion cercana existe, pero aun no esta conectada al endpoint real de busqueda.",
+      search_endpoint_not_wired:
+        "La exploracion cercana existe, pero aun no esta conectada al endpoint real de busqueda.",
       google_places_disabled: "Google Places no activo.",
       offline_cache_not_implemented: "Caché offline no implementado aún.",
       incident_feed_pending: "Feed de incidencias pendiente de cablear.",
       incident_source_not_connected: "Fuente de incidencias no conectada.",
-      incident_source_limited: "Incidencias parciales: la fuente actual cubre navegacion basica, no eventos completos.",
+      incident_source_limited:
+        "Incidencias parciales: la fuente actual cubre navegacion basica, no eventos completos.",
       eco_scoring_pending: "Puntuación ecológica pendiente de implementar.",
       eco_route_provider_pending: "Sin proveedor de ruta ecológica.",
     },
@@ -298,11 +348,13 @@ export const doorToDoorEs = {
     reasons: {
       price: "Mejor equilibrio de coste frente a alternativas.",
       buffer: "Deja más margen útil antes del embarque.",
-      tight_buffer: "Margen ajustado: el tiempo de conexión puede ser insuficiente si hay retrasos.",
+      tight_buffer:
+        "Margen ajustado: el tiempo de conexión puede ser insuficiente si hay retrasos.",
       transfers: "Reduce cambios innecesarios en el trayecto.",
       duration: "Recorta tiempo total de viaje.",
       confidence: "Incluye fuentes con validación parcial y transparencia de límites.",
-      completeness: "Más datos confirmados que las alternativas: horarios reales, fuentes vivas, precios claros.",
+      completeness:
+        "Más datos confirmados que las alternativas: horarios reales, fuentes vivas, precios claros.",
     },
     bufferRiskLabel: "Margen ajustado",
     segmentActions: "Acciones por tramo",
@@ -331,7 +383,8 @@ export const doorToDoorEs = {
     feedUnavailable: "No se ha podido acceder a los horarios públicos en este momento.",
     noNearbyStops: "No hemos encontrado paradas públicas cercanas para esta ruta.",
     noServiceForDate: "Hay paradas, pero no hay servicio compatible para la fecha del vuelo.",
-    noMatchingService: "No se encontraron viajes de transporte público que encajen con el horario del vuelo.",
+    noMatchingService:
+      "No se encontraron viajes de transporte público que encajen con el horario del vuelo.",
     partialCoverage: "Cobertura parcial: solo hay transporte público para uno de los tramos.",
     priceUnavailable: "Horarios públicos disponibles. El precio debe consultarse con el operador.",
   },
@@ -358,8 +411,6 @@ export const doorToDoorEs = {
     groundRideshare: "Coche compartido",
     flightInfo: "Información del vuelo",
     empty: "Calcula una ruta para ver el radar visual.",
-
-
   },
   watchSuggestion: {
     aria: "Sugerencia Puerta a puerta",
@@ -403,9 +454,11 @@ export const doorToDoorEs = {
 
 export const doorToDoorEn = {
   title: "Door to door",
-  subtitle: "Your flight does not start at the gate. We calculate how to reach the airport and continue after landing.",
+  subtitle:
+    "Your flight does not start at the gate. We calculate how to reach the airport and continue after landing.",
   heroTitle: "Decide the whole trip, not just the flight fare.",
-  heroBody: "We combine buffer, cost, duration, transfers, and source confidence so AGP → TSF has context from your real origin to your final destination.",
+  heroBody:
+    "We combine buffer, cost, duration, transfers, and source confidence so AGP → TSF has context from your real origin to your final destination.",
   cta: "Calculate full route",
   miniKicker: "AGP · TSF · real door",
   flightIntelligence: "Flight intelligence",
@@ -445,20 +498,25 @@ export const doorToDoorEn = {
   states: {
     emptyTitleWithWatch: "Choose origin and final destination",
     emptyTitleNoWatch: "Select a saved flight",
-    emptyBodyWithWatch: "Choose where you start and where you want to end the trip. Viru will assemble the full route around your flight.",
-    emptyBodyNoWatch: "Door to door activates when there is a Watchlist flight to use as the air segment.",
+    emptyBodyWithWatch:
+      "Choose where you start and where you want to end the trip. Viru will assemble the full route around your flight.",
+    emptyBodyNoWatch:
+      "Door to door activates when there is a Watchlist flight to use as the air segment.",
     loadingTitle: "Searching ground combinations, buffers, and available sources…",
     loadingBody: "We check cost, time, transfers, and buffer around the saved flight.",
     errorTitle: "We could not complete all sources.",
     errorBody: "We will show options with enough data when available.",
     retry: "Retry",
     noCoverageTitle: "There is not enough coverage for this route.",
-    noCoverageBody: "Try increasing the buffer, allowing shuttle/rideshare, or ending at the airport only.",
+    noCoverageBody:
+      "Try increasing the buffer, allowing shuttle/rideshare, or ending at the airport only.",
     noCoverageCta: "Apply suggested adjustments",
     noRealCoverageTitle: "No real coverage yet",
-    noRealCoverageBody: "There are no active real providers for this route in this environment. Enable real providers or use mock estimation.",
+    noRealCoverageBody:
+      "There are no active real providers for this route in this environment. Enable real providers or use mock estimation.",
     partialTitle: "Partial source",
-    partialBody: "Not all sources are active; review price, buffer, and confidence before deciding.",
+    partialBody:
+      "Not all sources are active; review price, buffer, and confidence before deciding.",
     successTitle: "Full route calculated.",
     successBody: "Review price, buffer, and confidence before deciding.",
   },
@@ -513,12 +571,15 @@ export const doorToDoorEn = {
     providersStatus: "Provider status",
     providersMix: "{enabled} active · {real} real · {estimate} estimate",
     limitedComparisonTitle: "External source",
-    limitedComparisonBody: "This link opens the provider. Check times, price, and availability before deciding.",
-    blablacarAlwaysVisibleHint: "BlaBlaCar appears only when rideshare is enabled and public-transport-only mode is off.",
+    limitedComparisonBody:
+      "This link opens the provider. Check times, price, and availability before deciding.",
+    blablacarAlwaysVisibleHint:
+      "BlaBlaCar appears only when rideshare is enabled and public-transport-only mode is off.",
     attemptedRoute: "Requested route",
     coverageActions: "What you can do now",
     noActiveProviders: "no active providers",
-    coverageActionsDetail: "Open external providers (Google Maps, BlaBlaCar, GoOpti), allow shuttle/rideshare, or end at airport only.",
+    coverageActionsDetail:
+      "Open external providers (Google Maps, BlaBlaCar, GoOpti), allow shuttle/rideshare, or end at airport only.",
     sourceLegend: "Quick source legend",
     sourceMockHint: "Estimate: indicative, no real data confirmed.",
     sourceDeeplinkHint: "External search: opens provider; price and seats confirmed outside.",
@@ -551,24 +612,30 @@ export const doorToDoorEn = {
     moreActions: "More",
     openPublicTransport: "View public transport",
     noPriceConfirmed: "Price not confirmed",
-    noScheduleConfirmed: "No schedule confirmed. Open the provider to see duration, price, and availability.",
+    noScheduleConfirmed:
+      "No schedule confirmed. Open the provider to see duration, price, and availability.",
     noExternalSearch: "No external searches available for this segment.",
     externalSource: "External source",
-    partialCoverageBody: "Partial coverage detected: some route sources are degraded, but you can continue with transparent fallbacks.",
+    partialCoverageBody:
+      "Partial coverage detected: some route sources are degraded, but you can continue with transparent fallbacks.",
     estimateExplanation: "Indicative estimate while there are not enough real sources.",
     trustModalTrigger: "View chosen-plan data confidence",
     trustConfirmed: "Confirmed data",
     trustEstimated: "Estimated data",
     trustNoPlan: "Mark a plan to see the main data confidence state.",
     trustModalTitle: "Data confidence",
-    trustModalBodyConfirmed: "This plan is mostly backed by confirmed and refreshed sources for duration or availability.",
-    trustModalBodyEstimated: "This plan depends on estimates or external deep links; confirm fare and seats before booking.",
-    trustModalBodyAction: "Viru gives you a clear baseline, but final verification always happens at the provider.",
+    trustModalBodyConfirmed:
+      "This plan is mostly backed by confirmed and refreshed sources for duration or availability.",
+    trustModalBodyEstimated:
+      "This plan depends on estimates or external deep links; confirm fare and seats before booking.",
+    trustModalBodyAction:
+      "Viru gives you a clear baseline, but final verification always happens at the provider.",
   },
   mapHub: {
     title: "Layers and tools hub",
     subtitle: "Partial complete base inspired by Google Maps",
-    summary: "Timeline + decision remains the core, while map capabilities are seeded with transparent status to evolve by phases.",
+    summary:
+      "Timeline + decision remains the core, while map capabilities are seeded with transparent status to evolve by phases.",
     sections: {
       layers: "Map layers",
       layersBody: "Coverage for navigation, traffic, and transit.",
@@ -591,16 +658,46 @@ export const doorToDoorEn = {
     confidence: "Confidence",
     pending: "Pending",
     cards: {
-      navigation: { title: "Guided navigation", description: "Door-to-airport and final arrival directions with real-route support." },
-      traffic: { title: "Traffic layer", description: "Real-time traffic reading seeded as a partial layer." },
-      transit: { title: "Public transit", description: "GTFS/open-data coverage for schedules and urban modes." },
-      alternatives: { title: "Smart alternatives", description: "Trade-offs across fastest, cheapest, and higher-buffer options." },
-      eco_route: { title: "Eco route", description: "Foundation to surface more energy-efficient and lower-emission options." },
-      nearby_pois: { title: "Nearby POIs", description: "Arrival exploration for stations, entrances, and useful services." },
-      incidents: { title: "Incidents", description: "Route events, closures, and operational alerts panel." },
-      street_view_preview: { title: "Street View / preview", description: "Area preview to validate entrances and pickup points." },
-      offline: { title: "Offline mode", description: "Structure prepared for limited-connectivity operation." },
-      saved_places: { title: "Saved places", description: "Foundation for lists, notes, and frequent-point reuse." },
+      navigation: {
+        title: "Guided navigation",
+        description: "Door-to-airport and final arrival directions with real-route support.",
+      },
+      traffic: {
+        title: "Traffic layer",
+        description: "Real-time traffic reading seeded as a partial layer.",
+      },
+      transit: {
+        title: "Public transit",
+        description: "GTFS/open-data coverage for schedules and urban modes.",
+      },
+      alternatives: {
+        title: "Smart alternatives",
+        description: "Trade-offs across fastest, cheapest, and higher-buffer options.",
+      },
+      eco_route: {
+        title: "Eco route",
+        description: "Foundation to surface more energy-efficient and lower-emission options.",
+      },
+      nearby_pois: {
+        title: "Nearby POIs",
+        description: "Arrival exploration for stations, entrances, and useful services.",
+      },
+      incidents: {
+        title: "Incidents",
+        description: "Route events, closures, and operational alerts panel.",
+      },
+      street_view_preview: {
+        title: "Street View / preview",
+        description: "Area preview to validate entrances and pickup points.",
+      },
+      offline: {
+        title: "Offline mode",
+        description: "Structure prepared for limited-connectivity operation.",
+      },
+      saved_places: {
+        title: "Saved places",
+        description: "Foundation for lists, notes, and frequent-point reuse.",
+      },
     },
     savedPlaces: {
       label: "Place",
@@ -610,16 +707,17 @@ export const doorToDoorEn = {
       add: "Save point",
       remove: "Remove",
       empty: "No door-to-door saved points yet.",
-    savedToast: "Point saved",
-    deletedToast: "Point removed",
-    saveError: "Could not save the point",
-    deleteError: "Could not delete the point",
+      savedToast: "Point saved",
+      deletedToast: "Point removed",
+      saveError: "Could not save the point",
+      deleteError: "Could not delete the point",
     },
     whyMissing: {
       google_routes_disabled: "No Google Maps key. Enable for real routes.",
       live_traffic_not_wired: "Traffic layer not connected to real-time source.",
       traffic_layer_pending: "Traffic layer pending implementation.",
-      corridor_limited: "Coverage limited to verified corridors. See active corridors in documentation.",
+      corridor_limited:
+        "Coverage limited to verified corridors. See active corridors in documentation.",
       driving_only: "Partial coverage: live traffic is only available for road-based legs.",
       gtfs_provider_disabled: "GTFS not active. Configure public transit feeds.",
       route_candidates_pending: "No routes calculated yet.",
@@ -627,12 +725,14 @@ export const doorToDoorEn = {
       street_view_not_connected: "Street View requires active Google Routes.",
       shared_lists_pending: "Shared lists pending implementation.",
       nearby_pois_pending: "Nearby POI exploration pending implementation.",
-      search_endpoint_not_wired: "Nearby exploration exists, but it is not wired to the live search endpoint yet.",
+      search_endpoint_not_wired:
+        "Nearby exploration exists, but it is not wired to the live search endpoint yet.",
       google_places_disabled: "Google Places not active.",
       offline_cache_not_implemented: "Offline cache not yet implemented.",
       incident_feed_pending: "Incident feed pending wiring.",
       incident_source_not_connected: "Incident source not connected.",
-      incident_source_limited: "Partial incidents coverage: the current source only covers basic routing events.",
+      incident_source_limited:
+        "Partial incidents coverage: the current source only covers basic routing events.",
       eco_scoring_pending: "Eco scoring pending implementation.",
       eco_route_provider_pending: "No eco route provider.",
     },
@@ -704,7 +804,8 @@ export const doorToDoorEn = {
       tight_buffer: "Tight buffer: connection time may be insufficient if delays occur.",
       transfers: "Reduces unnecessary transfers.",
       duration: "Cuts overall travel time.",
-      completeness: "More confirmed data than alternatives: real schedules, live sources, clear prices.",
+      completeness:
+        "More confirmed data than alternatives: real schedules, live sources, clear prices.",
       confidence: "Includes partially validated sources with clear caveats.",
     },
     bufferRiskLabel: "Tight buffer",
@@ -761,8 +862,6 @@ export const doorToDoorEn = {
     groundRideshare: "Rideshare",
     flightInfo: "Flight information",
     empty: "Calculate a route to see the visual radar.",
-
-
   },
   watchSuggestion: {
     aria: "Door to door suggestion",

@@ -7,8 +7,10 @@ export const QUICK_SEARCH_COPY = {
     subtitle: "Encuentra rutas y guarda oportunidades en tu Watchlist.",
     titleRecommendations: "Recomendaciones",
     subtitleRecommendations: "Selecciona países y descubre rutas ordenadas por valor.",
-    workspaceHint: "Espacio de busqueda con filtros claros, explicacion del orden y selector por pais.",
-    workspaceHintRecommendations: "Selecciona países o aeropuertos y ajusta filtros avanzados si quieres afinar.",
+    workspaceHint:
+      "Espacio de busqueda con filtros claros, explicacion del orden y selector por pais.",
+    workspaceHintRecommendations:
+      "Selecciona países o aeropuertos y ajusta filtros avanzados si quieres afinar.",
     originLabel: "Origen (IATA)",
     originTip: "Codigo IATA de 3 letras del aeropuerto.",
     originHelp: "Escribe el codigo o usa el selector por pais.",
@@ -98,7 +100,8 @@ export const QUICK_SEARCH_COPY = {
     resumeRestoredTitle: "Listo, seguimos desde donde lo dejaste.",
     resumeRestoredBody: "He recuperado tus ajustes.",
     quickLookTitle: "Primer vistazo",
-    quickLookBody: "Configura ruta, fecha y filtros, y luego pulsa Buscar vuelos para ver oportunidades.",
+    quickLookBody:
+      "Configura ruta, fecha y filtros, y luego pulsa Buscar vuelos para ver oportunidades.",
     quickLookAcknowledge: "Entendido",
     autocompleteSuggestionsAvailable: "{count} sugerencias disponibles",
     autocompleteNoSuggestions: "No hay sugerencias",
@@ -138,7 +141,8 @@ export const QUICK_SEARCH_COPY = {
     filterConsoleEyebrow: "Ajustes de busqueda",
     filterConsoleTitle: "Ajustes de busqueda",
     filterConsoleSubtitle: "Revisa como busca Viru y que vuelos te muestra.",
-    filterConsoleSubtitleExact: "Tienes la busqueda en modo exacto. Puedes ampliarla si lo necesitas.",
+    filterConsoleSubtitleExact:
+      "Tienes la busqueda en modo exacto. Puedes ampliarla si lo necesitas.",
     filterConsoleSubtitleFlex: "Viru tambien esta mirando aeropuertos cercanos.",
     filterConsoleToggleOpen: "Ver ajustes",
     filterConsoleToggleClose: "Ocultar ajustes",
@@ -153,9 +157,11 @@ export const QUICK_SEARCH_COPY = {
     filterExperimentalOn: "Vuelos separados activos",
     filterExperimentalOff: "Vuelos directos primero",
     coverageTitle: "Aeropuertos cercanos",
-    coverageBody: "Viru puede mirar solo tu ruta exacta o sumar aeropuertos cercanos cuando quieras abrir el mapa.",
+    coverageBody:
+      "Viru puede mirar solo tu ruta exacta o sumar aeropuertos cercanos cuando quieras abrir el mapa.",
     visibleResultsTitle: "Filtros de resultados",
-    visibleResultsBody: "Filtra y ordena los vuelos que Viru ya encontro sin lanzar una nueva busqueda.",
+    visibleResultsBody:
+      "Filtra y ordena los vuelos que Viru ya encontro sin lanzar una nueva busqueda.",
     filterPresetDirect: "Exacta",
     filterPresetDirectHint: "Origen y destino exactos.",
     filterPresetOriginNearby: "Origen flexible",
@@ -188,13 +194,16 @@ export const QUICK_SEARCH_COPY = {
     departBefore: "Salida hasta",
     durationMax: "Duracion maxima (min)",
     strictMode: "Solo mostrar vuelos que encajen",
-    strictWarning: "Busqueda flexible: si no hay resultados, Viru puede abrir un poco los horarios para mostrar opciones utiles.",
+    strictWarning:
+      "Busqueda flexible: si no hay resultados, Viru puede abrir un poco los horarios para mostrar opciones utiles.",
     stopsTitle: "Vuelos separados",
     stopsSubtitle: "Viru puede combinar tramos separados si dejas tiempo suficiente entre vuelos.",
     includeStops: "Permitir vuelos separados",
     separateFlightsTitle: "Combinar vuelos separados",
-    separateFlightsBody: "Viru puede unir vuelos que no van en la misma reserva. Puede salir más barato, pero la conexión corre por tu cuenta.",
-    selfConnectWarningDetail: "Revisa bien el margen. Si el primer vuelo se retrasa, la segunda reserva puede no estar protegida.",
+    separateFlightsBody:
+      "Viru puede unir vuelos que no van en la misma reserva. Puede salir más barato, pero la conexión corre por tu cuenta.",
+    selfConnectWarningDetail:
+      "Revisa bien el margen. Si el primer vuelo se retrasa, la segunda reserva puede no estar protegida.",
     exclusionsTitle: "Exclusiones",
     exclusionsBody: "Evita aeropuertos específicos en tu búsqueda.",
     maxStops: "Maximo de escalas",
@@ -202,13 +211,15 @@ export const QUICK_SEARCH_COPY = {
     bufferMinHint: "Margen recomendado para cambiar de vuelo con calma.",
     excludeOrigins: "Excluir origenes (IATA)",
     excludeDestinations: "Excluir destinos (IATA)",
-    selfConnectWarning: "Los vuelos separados no comparten reserva. Revisa siempre el tiempo entre vuelos.",
+    selfConnectWarning:
+      "Los vuelos separados no comparten reserva. Revisa siempre el tiempo entre vuelos.",
     resetPrefs: "Restablecer a mis preferencias",
     resetAll: "Limpiar ajustes",
     deepLink: "Abrir vuelo",
     deepLinkAlt: "Copiar parametros",
     deepLinkModalTitle: "Sin enlace directo",
-    deepLinkModalBody: "No se pudo generar enlace directo. Copia la busqueda o abre la aerolinea manualmente.",
+    deepLinkModalBody:
+      "No se pudo generar enlace directo. Copia la busqueda o abre la aerolinea manualmente.",
     deepLinkCopy: "Copiar parametros",
     deepLinkCopied: "Parametros copiados",
     loadingFlight: "cargando vuelo",
@@ -248,7 +259,8 @@ export const QUICK_SEARCH_COPY = {
     weatherStorm: "Tormenta",
     weatherVariable: "Variable",
     explainTitle: "Como ordenamos",
-    explainSubtitle: "Orden inteligente basado en precio, cercania a tu fecha, distancia y ultima comprobacion.",
+    explainSubtitle:
+      "Orden inteligente basado en precio, cercania a tu fecha, distancia y ultima comprobacion.",
     explainPriceTitle: "Precio",
     explainTimeTitle: "Desviacion temporal",
     explainAltTitle: "Alternativos",
@@ -260,7 +272,8 @@ export const QUICK_SEARCH_COPY = {
     degraded: "El proveedor no responde ahora mismo. Te mostramos el ultimo dato confirmado.",
     degradedBadge: "Resultados parciales",
     degradedChip: "Ultimo dato confirmado",
-    degradedHint: "Si el proveedor no responde, mantenemos el ultimo dato confirmado para que puedas decidir con contexto.",
+    degradedHint:
+      "Si el proveedor no responde, mantenemos el ultimo dato confirmado para que puedas decidir con contexto.",
     filtersRelaxed: "Se relajaron filtros",
     relaxedDateFlexAuto: "flexibilidad de fecha automatica",
     relaxedNearbyAuto: "ampliacion automatica a aeropuertos cercanos",
@@ -288,9 +301,12 @@ export const QUICK_SEARCH_COPY = {
     warningDetailsClose: "Ocultar detalles",
     warningsGroupedTitle: "Avisos",
     warningProblemTitle: "Problema",
-    providerPartialAvailabilityNotice: "Hay resultados confirmados, pero Ryanair no ha devuelto toda la disponibilidad. Actualiza antes de comprar.",
-    providerPartialFaresNotice: "Hay resultados confirmados, pero Ryanair no ha devuelto todas las tarifas. Actualiza antes de comprar.",
-    providerPartialMixedNotice: "Hay resultados confirmados, pero Ryanair ha respondido solo en parte en esta busqueda.",
+    providerPartialAvailabilityNotice:
+      "Hay resultados confirmados, pero Ryanair no ha devuelto toda la disponibilidad. Actualiza antes de comprar.",
+    providerPartialFaresNotice:
+      "Hay resultados confirmados, pero Ryanair no ha devuelto todas las tarifas. Actualiza antes de comprar.",
+    providerPartialMixedNotice:
+      "Hay resultados confirmados, pero Ryanair ha respondido solo en parte en esta busqueda.",
     emptyStateMainTitle: "0 resultados con estos filtros",
     emptyStateProviderTitle: "Ryanair no respondio ahora mismo",
     emptyStateProviderPartialTitle: "Busqueda parcial: faltan respuestas de Ryanair",
@@ -335,7 +351,8 @@ export const QUICK_SEARCH_COPY = {
     relaxPreviewNoChanges: "No hay cambios propuestos con la configuración actual.",
     emptyLikelyCausesTitle: "Causas probables",
     emptySoftline: "Prueba a {action}, a veces aparecen rutas válidas que antes no encajaban.",
-    emptyCalendarFallback: "Aún no tenemos histórico reciente para esta ruta. Te avisaremos cuando tengamos datos de varios días.",
+    emptyCalendarFallback:
+      "Aún no tenemos histórico reciente para esta ruta. Te avisaremos cuando tengamos datos de varios días.",
     emptyRelaxActionsTitle: "Prueba rapido",
     emptyCauseStrict: "Viru no esta abriendo margen automaticamente.",
     emptyCauseDuration: "Duracion maxima ajustada puede estar filtrando rutas.",
@@ -401,7 +418,8 @@ export const QUICK_SEARCH_COPY = {
     detailsWindow: "Ventanas horarias",
     detailsAlt: "Alternativos y distancia",
     detailsBuffer: "Tiempo entre vuelos",
-    detailsNote: "Viru prioriza precio, tiempo y ultima comprobacion para ayudarte a decidir antes.",
+    detailsNote:
+      "Viru prioriza precio, tiempo y ultima comprobacion para ayudarte a decidir antes.",
     aiPreferredPrice: "Mejor opcion encontrada",
     aiPreferredAria: "Resultado preferido por IA",
     aiPreferredReasonLabel: "Por qué lo recomendamos",
@@ -409,7 +427,8 @@ export const QUICK_SEARCH_COPY = {
     selectReturn: "Selecciona una fecha de vuelta",
     selectReturnHint: "Selecciona una fecha de vuelta para completar ida y vuelta",
     returnBefore: "La fecha de vuelta no puede ser anterior a la ida",
-    returnResetAfterOutboundChange: "Hemos limpiado la vuelta para que puedas elegir una nueva fecha coherente.",
+    returnResetAfterOutboundChange:
+      "Hemos limpiado la vuelta para que puedas elegir una nueva fecha coherente.",
     weatherError: "No se pudo cargar el clima para todas las fechas.",
     weatherUnavailableRange: "Clima no disponible para las fechas seleccionadas.",
 
@@ -442,25 +461,35 @@ export const QUICK_SEARCH_COPY = {
     combinationSaved: "Ida y vuelta guardada en Watchlist",
     combinationError: "No se pudo guardar la ida y vuelta",
     combinationPartial: "Solo se guardó una parte",
-    combinationSelectBoth: "Selecciona un resultado de ida y otro de vuelta para guardar la combinación",
+    combinationSelectBoth:
+      "Selecciona un resultado de ida y otro de vuelta para guardar la combinación",
 
     warnings: {
       stops_no_disponible_en_modo_rapido: "Las escalas no estan disponibles en la busqueda rapida.",
       origen_no_disponible_en_catalogo: "El origen no tiene catalogo de aeropuertos cercanos.",
       destino_no_disponible_en_catalogo: "El destino no tiene catalogo de aeropuertos cercanos.",
-      limite_combinaciones_alternativas: "Se limitaron combinaciones para mantener la busqueda rapida.",
+      limite_combinaciones_alternativas:
+        "Se limitaron combinaciones para mantener la busqueda rapida.",
       ryanair_unavailable_parcial: "Algunas combinaciones no pudieron consultarse.",
       ryanair_unavailable_partial: "Algunas combinaciones no pudieron consultarse.",
-      ryanair_availability_failed_partial: "No pudimos confirmar toda la disponibilidad de Ryanair; te mostramos solo lo que si respondio.",
-      ryanair_fares_failed_partial: "No pudimos confirmar todas las tarifas directas de Ryanair; te mostramos los resultados que si quedaron confirmados.",
+      ryanair_availability_failed_partial:
+        "No pudimos confirmar toda la disponibilidad de Ryanair; te mostramos solo lo que si respondio.",
+      ryanair_fares_failed_partial:
+        "No pudimos confirmar todas las tarifas directas de Ryanair; te mostramos los resultados que si quedaron confirmados.",
       ryanair_availability_failed: "La consulta completa de Ryanair no respondio.",
       ryanair_fares_failed: "La consulta rapida de tarifas de Ryanair no respondio.",
-      ryanair_provider_unavailable_total: "Ryanair no respondio y no pudimos confirmar vuelos en este momento.",
-      vueling_provider_unavailable_total: "Vueling no respondio y no pudimos confirmar vuelos en este momento.",
-      wizzair_provider_unavailable_total: "Wizz Air no respondio y no pudimos confirmar vuelos en este momento.",
-      easyjet_provider_unavailable_total: "easyJet no respondio y no pudimos confirmar vuelos en este momento.",
-      iberia_provider_unavailable_total: "La web publica de Iberia no respondio y no pudimos confirmar vuelos ahora mismo.",
-      duffel_provider_unavailable_total: "Duffel no respondio y no pudimos confirmar vuelos en este momento.",
+      ryanair_provider_unavailable_total:
+        "Ryanair no respondio y no pudimos confirmar vuelos en este momento.",
+      vueling_provider_unavailable_total:
+        "Vueling no respondio y no pudimos confirmar vuelos en este momento.",
+      wizzair_provider_unavailable_total:
+        "Wizz Air no respondio y no pudimos confirmar vuelos en este momento.",
+      easyjet_provider_unavailable_total:
+        "easyJet no respondio y no pudimos confirmar vuelos en este momento.",
+      iberia_provider_unavailable_total:
+        "La web publica de Iberia no respondio y no pudimos confirmar vuelos ahora mismo.",
+      duffel_provider_unavailable_total:
+        "Duffel no respondio y no pudimos confirmar vuelos en este momento.",
     },
   },
   en: {
@@ -470,7 +499,8 @@ export const QUICK_SEARCH_COPY = {
     titleRecommendations: "Recommendations",
     subtitleRecommendations: "Pick countries and see routes ranked by value.",
     workspaceHint: "Search workspace with filters, explainable ranking, and country picker.",
-    workspaceHintRecommendations: "Pick countries or airports and refine with advanced filters if needed.",
+    workspaceHintRecommendations:
+      "Pick countries or airports and refine with advanced filters if needed.",
     originLabel: "Origin (IATA)",
     originTip: "3-letter IATA airport code.",
     originHelp: "Type the code or use the country picker.",
@@ -498,7 +528,8 @@ export const QUICK_SEARCH_COPY = {
     popularDestinationsLabel: "Popular destinations",
     popularDestinationAria: "Search {origin} → {destination}",
     pickCountryOnly: "Use all {country}",
-    pickCountryOnlyHint: "If you choose a country without an airport, we search all airports in that country.",
+    pickCountryOnlyHint:
+      "If you choose a country without an airport, we search all airports in that country.",
     countryOnlySelected: "Country selected: {country}",
     countryOnlyClear: "Clear country",
     swapRoute: "Swap route",
@@ -560,7 +591,8 @@ export const QUICK_SEARCH_COPY = {
     resumeRestoredTitle: "Done, we picked up where you left off.",
     resumeRestoredBody: "Your settings are back in place.",
     quickLookTitle: "Quick start",
-    quickLookBody: "Set route, dates, and filters, then press Search flights to explore opportunities.",
+    quickLookBody:
+      "Set route, dates, and filters, then press Search flights to explore opportunities.",
     quickLookAcknowledge: "Got it",
     autocompleteSuggestionsAvailable: "{count} suggestions available",
     autocompleteNoSuggestions: "No suggestions",
@@ -615,7 +647,8 @@ export const QUICK_SEARCH_COPY = {
     filterExperimentalOn: "Separate flights on",
     filterExperimentalOff: "Direct flights first",
     coverageTitle: "Nearby airports",
-    coverageBody: "Viru can check only your exact route or add nearby airports when you want a wider map.",
+    coverageBody:
+      "Viru can check only your exact route or add nearby airports when you want a wider map.",
     visibleResultsTitle: "Result filters",
     visibleResultsBody: "Filter and sort flights Viru already found without starting a new search.",
     filterPresetDirect: "Exact",
@@ -655,8 +688,10 @@ export const QUICK_SEARCH_COPY = {
     stopsSubtitle: "Viru can combine separate legs if you leave enough time between flights.",
     includeStops: "Allow separate flights",
     separateFlightsTitle: "Combine separate flights",
-    separateFlightsBody: "Viru can combine flights that are not on the same booking. It may be cheaper, but the connection is at your own risk.",
-    selfConnectWarningDetail: "Check the margin carefully. If the first flight is delayed, the second booking may not be protected.",
+    separateFlightsBody:
+      "Viru can combine flights that are not on the same booking. It may be cheaper, but the connection is at your own risk.",
+    selfConnectWarningDetail:
+      "Check the margin carefully. If the first flight is delayed, the second booking may not be protected.",
     exclusionsTitle: "Exclusions",
     exclusionsBody: "Avoid specific airports in your search.",
     maxStops: "Max stops",
@@ -664,13 +699,15 @@ export const QUICK_SEARCH_COPY = {
     bufferMinHint: "Recommended margin to change flights calmly.",
     excludeOrigins: "Exclude origins (IATA)",
     excludeDestinations: "Exclude destinations (IATA)",
-    selfConnectWarning: "Separate flights are not on one booking. Always review the time between flights.",
+    selfConnectWarning:
+      "Separate flights are not on one booking. Always review the time between flights.",
     resetPrefs: "Reset to my preferences",
     resetAll: "Clear settings",
     deepLink: "Open flight",
     deepLinkAlt: "Copy parameters",
     deepLinkModalTitle: "No direct link",
-    deepLinkModalBody: "We could not generate a direct link. Copy the search or open the airline manually.",
+    deepLinkModalBody:
+      "We could not generate a direct link. Copy the search or open the airline manually.",
     deepLinkCopy: "Copy parameters",
     deepLinkCopied: "Parameters copied",
     loadingFlight: "loading flight",
@@ -750,9 +787,12 @@ export const QUICK_SEARCH_COPY = {
     warningDetailsClose: "Hide details",
     warningsGroupedTitle: "Warnings",
     warningProblemTitle: "Problem",
-    providerPartialAvailabilityNotice: "Showing confirmed results, but some Ryanair availability checks did not respond.",
-    providerPartialFaresNotice: "Showing confirmed results, but some Ryanair fare checks did not respond.",
-    providerPartialMixedNotice: "Showing confirmed results, but Ryanair only partially responded in this search.",
+    providerPartialAvailabilityNotice:
+      "Showing confirmed results, but some Ryanair availability checks did not respond.",
+    providerPartialFaresNotice:
+      "Showing confirmed results, but some Ryanair fare checks did not respond.",
+    providerPartialMixedNotice:
+      "Showing confirmed results, but Ryanair only partially responded in this search.",
     emptyStateMainTitle: "0 results with these filters",
     emptyStateProviderTitle: "Ryanair is not responding right now",
     emptyStateProviderPartialTitle: "Partial search: Ryanair did not fully respond",
@@ -796,7 +836,8 @@ export const QUICK_SEARCH_COPY = {
     relaxPreviewNoChanges: "No changes are needed with the current settings.",
     emptyLikelyCausesTitle: "Likely causes",
     emptySoftline: "Try {action} — sometimes valid routes appear once it opens up.",
-    emptyCalendarFallback: "We don\u2019t have recent history for this route yet. We will let you know when we have several days of data.",
+    emptyCalendarFallback:
+      "We don\u2019t have recent history for this route yet. We will let you know when we have several days of data.",
     emptyRelaxActionsTitle: "Quick relax",
     emptyCauseStrict: "Viru is not opening extra margin automatically.",
     emptyCauseDuration: "Max duration may be filtering valid routes.",
@@ -870,7 +911,8 @@ export const QUICK_SEARCH_COPY = {
     selectReturn: "Select a return date",
     selectReturnHint: "Select a return date to complete round trip",
     returnBefore: "Return date cannot be earlier than outbound",
-    returnResetAfterOutboundChange: "We cleared the return so you can pick a date that still fits the outbound.",
+    returnResetAfterOutboundChange:
+      "We cleared the return so you can pick a date that still fits the outbound.",
     weatherError: "Weather data could not be loaded for all dates.",
     weatherUnavailableRange: "Weather unavailable for the selected dates.",
     searchFailed: "Search failed.",
@@ -911,16 +953,24 @@ export const QUICK_SEARCH_COPY = {
       limite_combinaciones_alternativas: "Combinations were limited to keep quick search fast.",
       ryanair_unavailable_parcial: "Some combinations could not be queried.",
       ryanair_unavailable_partial: "Some combinations could not be queried.",
-      ryanair_availability_failed_partial: "Some Ryanair availability checks failed; showing direct fares that did respond.",
-      ryanair_fares_failed_partial: "Some Ryanair fare checks failed; showing results confirmed by availability.",
+      ryanair_availability_failed_partial:
+        "Some Ryanair availability checks failed; showing direct fares that did respond.",
+      ryanair_fares_failed_partial:
+        "Some Ryanair fare checks failed; showing results confirmed by availability.",
       ryanair_availability_failed: "Ryanair full availability did not respond.",
       ryanair_fares_failed: "Ryanair fare lookup did not respond.",
-      ryanair_provider_unavailable_total: "Ryanair did not respond and we could not confirm flights right now.",
-      vueling_provider_unavailable_total: "Vueling did not respond and we could not confirm flights right now.",
-      wizzair_provider_unavailable_total: "Wizz Air did not respond and we could not confirm flights right now.",
-      easyjet_provider_unavailable_total: "easyJet did not respond and we could not confirm flights right now.",
-      iberia_provider_unavailable_total: "Iberia's public website did not respond and we could not confirm flights right now.",
-      duffel_provider_unavailable_total: "Duffel did not respond and we could not confirm flights right now.",
+      ryanair_provider_unavailable_total:
+        "Ryanair did not respond and we could not confirm flights right now.",
+      vueling_provider_unavailable_total:
+        "Vueling did not respond and we could not confirm flights right now.",
+      wizzair_provider_unavailable_total:
+        "Wizz Air did not respond and we could not confirm flights right now.",
+      easyjet_provider_unavailable_total:
+        "easyJet did not respond and we could not confirm flights right now.",
+      iberia_provider_unavailable_total:
+        "Iberia's public website did not respond and we could not confirm flights right now.",
+      duffel_provider_unavailable_total:
+        "Duffel did not respond and we could not confirm flights right now.",
     },
   },
 } as const;
@@ -930,7 +980,7 @@ type QuickSearchWarnings = QuickSearchCopyMap["warnings"];
 export type QuickSearchCopyKey = Exclude<keyof QuickSearchCopyMap, "warnings">;
 
 export function resolveQuickSearchLocale(raw?: string | null): QuickSearchLocale {
-  if (raw && raw.toLowerCase().startsWith("en")) return "en";
+  if (raw?.toLowerCase().startsWith("en")) return "en";
   return "es";
 }
 

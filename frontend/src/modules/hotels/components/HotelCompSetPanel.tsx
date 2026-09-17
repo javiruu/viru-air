@@ -2,7 +2,13 @@
 
 import { useI18n } from "@/i18n";
 
-import type { HotelCompSetDetailOut, HotelCompSetOut, HotelDetailOut, HotelNearbySuggestionOut, HotelSearchOut } from "../types";
+import type {
+  HotelCompSetDetailOut,
+  HotelCompSetOut,
+  HotelDetailOut,
+  HotelNearbySuggestionOut,
+  HotelSearchOut,
+} from "../types";
 
 export function HotelCompSetPanel({
   compSets,
@@ -39,7 +45,8 @@ export function HotelCompSetPanel({
 }) {
   const { t } = useI18n();
   const selectedHotelAlreadyInCompSet = selectedCompSet
-    ? selectedHotelId === selectedCompSet.anchor_hotel_id || selectedCompSet.members.some((member) => member.hotel_id === selectedHotelId)
+    ? selectedHotelId === selectedCompSet.anchor_hotel_id ||
+      selectedCompSet.members.some((member) => member.hotel_id === selectedHotelId)
     : false;
 
   return (
@@ -52,7 +59,9 @@ export function HotelCompSetPanel({
           type="button"
           className="btn-secondary btn-compact"
           disabled={!selectedHotelId}
-          onClick={() => selectedHotelId && onCreateCompSet(t("hotels.compSet.defaultName"), selectedHotelId)}
+          onClick={() =>
+            selectedHotelId && onCreateCompSet(t("hotels.compSet.defaultName"), selectedHotelId)
+          }
         >
           {t("hotels.compSet.create")}
         </button>
@@ -78,13 +87,18 @@ export function HotelCompSetPanel({
               <strong>{selectedCompSet.name}</strong>
               {anchorDetail ? (
                 <p className="panel-note">
-                  {t("hotels.compSet.anchor")}: {anchorDetail.canonical_name} · {anchorDetail.city}, {anchorDetail.country_code}
+                  {t("hotels.compSet.anchor")}: {anchorDetail.canonical_name} · {anchorDetail.city},{" "}
+                  {anchorDetail.country_code}
                 </p>
               ) : null}
-              {anchorLoading ? <p className="panel-note">{t("hotels.compSet.anchorLoading")}</p> : null}
+              {anchorLoading ? (
+                <p className="panel-note">{t("hotels.compSet.anchorLoading")}</p>
+              ) : null}
               {anchorError ? <p className="panel-note">{anchorError}</p> : null}
             </div>
-            <span className="status-pill info">{t("hotels.compSet.members")}: {selectedCompSet.members.length}</span>
+            <span className="status-pill info">
+              {t("hotels.compSet.members")}: {selectedCompSet.members.length}
+            </span>
           </div>
           <div className="hotel-comp-set-actions">
             <button
@@ -118,7 +132,11 @@ export function HotelCompSetPanel({
                     <article key={member.id} className="list-row hotel-comp-set-member-item">
                       <div className="hotel-comp-set-member-copy">
                         <strong>{memberHotel?.canonical_name || member.hotel_id}</strong>
-                        {memberHotel ? <p className="panel-note">{memberHotel.city}, {memberHotel.country_code}</p> : null}
+                        {memberHotel ? (
+                          <p className="panel-note">
+                            {memberHotel.city}, {memberHotel.country_code}
+                          </p>
+                        ) : null}
                       </div>
                       <button
                         type="button"
@@ -133,7 +151,9 @@ export function HotelCompSetPanel({
               </div>
             )}
           </section>
-          {selectedHotelAlreadyInCompSet ? <p className="panel-note">{t("hotels.compSet.addSelectedDisabled")}</p> : null}
+          {selectedHotelAlreadyInCompSet ? (
+            <p className="panel-note">{t("hotels.compSet.addSelectedDisabled")}</p>
+          ) : null}
           <section className="hotel-nearby-suggestions section-gap-sm">
             <div className="panel-header">
               <h3 className="panel-title">{t("hotels.compSet.nearbyTitle")}</h3>
@@ -151,11 +171,15 @@ export function HotelCompSetPanel({
                       <p className="panel-note">
                         {suggestion.city}, {suggestion.country_code}
                       </p>
-                      <p className="panel-note">{suggestion.stars ? `${suggestion.stars}\u2605` : t("hotels.card.noStars")}</p>
+                      <p className="panel-note">
+                        {suggestion.stars ? `${suggestion.stars}\u2605` : t("hotels.card.noStars")}
+                      </p>
                     </div>
                     <div className="hotel-nearby-actions">
                       <span className="status-pill info">
-                        {t("hotels.compSet.nearbyDistance", { distance: suggestion.distance_km.toFixed(1) })}
+                        {t("hotels.compSet.nearbyDistance", {
+                          distance: suggestion.distance_km.toFixed(1),
+                        })}
                       </span>
                       <button
                         type="button"
@@ -167,14 +191,18 @@ export function HotelCompSetPanel({
                     </div>
                   </article>
                 ))}
-                {nearbySuggestions.length === 0 ? <p className="panel-note">{t("hotels.compSet.nearbyEmpty")}</p> : null}
+                {nearbySuggestions.length === 0 ? (
+                  <p className="panel-note">{t("hotels.compSet.nearbyEmpty")}</p>
+                ) : null}
               </div>
             ) : null}
           </section>
         </div>
       ) : null}
       <div className="section-gap-sm">
-        <p className="panel-note">{t("hotels.compSet.availableHotels")}: {hotels.length}</p>
+        <p className="panel-note">
+          {t("hotels.compSet.availableHotels")}: {hotels.length}
+        </p>
       </div>
     </div>
   );

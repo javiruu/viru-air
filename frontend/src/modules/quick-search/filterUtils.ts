@@ -2,7 +2,10 @@ export const QUICK_SEARCH_RADIUS_MIN = 10;
 export const QUICK_SEARCH_RADIUS_MAX = 500;
 export const QUICK_SEARCH_RADIUS_DEFAULT = 150;
 
-export function clampQuickSearchRadius(value: number, fallback = QUICK_SEARCH_RADIUS_DEFAULT): number {
+export function clampQuickSearchRadius(
+  value: number,
+  fallback = QUICK_SEARCH_RADIUS_DEFAULT,
+): number {
   if (!Number.isFinite(value)) return fallback;
   return Math.min(QUICK_SEARCH_RADIUS_MAX, Math.max(QUICK_SEARCH_RADIUS_MIN, Math.trunc(value)));
 }

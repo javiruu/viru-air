@@ -1,8 +1,5 @@
 import type { SearchResult } from "../types";
-import {
-  attachFareAirline,
-  type FareComparisonProfile,
-} from "@/modules/shared/fareComparison";
+import { attachFareAirline, type FareComparisonProfile } from "@/modules/shared/fareComparison";
 
 export type QuickSearchSaveResultPayload = {
   readonly job_id?: string | null;

@@ -235,8 +235,7 @@ export const sharedEn = {
     navLabel: "Footer navigation",
     publicBody:
       "Public signal cockpit to track Ryanair fares with context, alerts, and better booking timing.",
-    privateBody:
-      "Your Viru workspace for tracking routes, alerts, and decisions with clarity.",
+    privateBody: "Your Viru workspace for tracking routes, alerts, and decisions with clarity.",
     statusLabel: "Active context",
     statusPublic: "Open route",
     statusPrivate: "Private space",

@@ -1,8 +1,8 @@
-import { Pref } from "@/modules/quick-search/types";
+import type { Pref } from "@/modules/quick-search/types";
 
 export type SearchPreferenceErrors = Partial<
   Record<
-    "default_radius_km"
+    | "default_radius_km"
     | "avoid_departure_before"
     | "depart_before_default"
     | "calendar_hint_guideline_low_max_default"
@@ -39,29 +39,25 @@ export function validateSearchPreferences(
     });
   }
 
-  if (
-    nextPref.avoid_departure_before &&
-    nextPref.avoid_departure_before.trim() &&
-    !isValidHour(nextPref.avoid_departure_before)
-  ) {
+  if (nextPref.avoid_departure_before?.trim() && !isValidHour(nextPref.avoid_departure_before)) {
     nextErrors.avoid_departure_before = t("preferences.search.timeError");
   }
 
-  if (
-    nextPref.depart_before_default &&
-    nextPref.depart_before_default.trim() &&
-    !isValidHour(nextPref.depart_before_default)
-  ) {
+  if (nextPref.depart_before_default?.trim() && !isValidHour(nextPref.depart_before_default)) {
     nextErrors.depart_before_default = t("preferences.search.timeError");
   }
 
-  if (Number.isNaN(nextPref.calendar_hint_guideline_low_max_default) || nextPref.calendar_hint_guideline_low_max_default < 0) {
+  if (
+    Number.isNaN(nextPref.calendar_hint_guideline_low_max_default) ||
+    nextPref.calendar_hint_guideline_low_max_default < 0
+  ) {
     nextErrors.calendar_hint_guideline_low_max_default = t("preferences.search.guidelineLowError");
   }
 
   if (
-    Number.isNaN(nextPref.calendar_hint_guideline_mid_max_default)
-    || nextPref.calendar_hint_guideline_mid_max_default <= nextPref.calendar_hint_guideline_low_max_default
+    Number.isNaN(nextPref.calendar_hint_guideline_mid_max_default) ||
+    nextPref.calendar_hint_guideline_mid_max_default <=
+      nextPref.calendar_hint_guideline_low_max_default
   ) {
     nextErrors.calendar_hint_guideline_mid_max_default = t("preferences.search.guidelineMidError");
   }
@@ -70,11 +66,15 @@ export function validateSearchPreferences(
 }
 
 export function buildSearchPreferenceSummary(pref: Pref, t: (key: string) => string) {
-  const nearbyEnabled = pref.include_nearby_origins_default || pref.include_nearby_destinations_default;
-  const coverage = nearbyEnabled ? t("preferences.search.summaryCoverageRegional") : t("preferences.search.summaryCoverageDirect");
-  const timing = pref.avoid_departure_before || pref.depart_before_default
-    ? t("preferences.search.summaryTimingWindow")
-    : t("preferences.search.summaryTimingOpen");
+  const nearbyEnabled =
+    pref.include_nearby_origins_default || pref.include_nearby_destinations_default;
+  const coverage = nearbyEnabled
+    ? t("preferences.search.summaryCoverageRegional")
+    : t("preferences.search.summaryCoverageDirect");
+  const timing =
+    pref.avoid_departure_before || pref.depart_before_default
+      ? t("preferences.search.summaryTimingWindow")
+      : t("preferences.search.summaryTimingOpen");
   const strict = pref.strict_filters_default
     ? t("preferences.search.summaryStrictTight")
     : t("preferences.search.summaryStrictFlexible");
@@ -85,8 +85,12 @@ export function buildSearchPreferenceSummary(pref: Pref, t: (key: string) => str
       : t("preferences.search.summaryTitleDirect"),
     body: [coverage, strict, timing].join(" | "),
     chips: [
-      pref.include_stops_default ? t("preferences.search.summaryStopsOn") : t("preferences.search.summaryStopsOff"),
-      pref.strict_filters_default ? t("preferences.search.summaryStrictTight") : t("preferences.search.summaryStrictFlexible"),
+      pref.include_stops_default
+        ? t("preferences.search.summaryStopsOn")
+        : t("preferences.search.summaryStopsOff"),
+      pref.strict_filters_default
+        ? t("preferences.search.summaryStrictTight")
+        : t("preferences.search.summaryStrictFlexible"),
       `${pref.default_radius_km} km`,
     ],
   };

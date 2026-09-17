@@ -72,7 +72,9 @@ export default function PrivateNav({ unreadSignals = 0 }: { unreadSignals?: numb
 
   return (
     <>
-      {menuOpen ? <div className="private-nav-backdrop" onClick={() => closeMenu()} aria-hidden="true" /> : null}
+      {menuOpen ? (
+        <div className="private-nav-backdrop" onClick={() => closeMenu()} aria-hidden="true" />
+      ) : null}
       <button
         ref={toggleRef}
         className="private-nav-toggle"
@@ -120,7 +122,9 @@ export default function PrivateNav({ unreadSignals = 0 }: { unreadSignals?: numb
                 <Icon className="private-nav-icon" size={18} strokeWidth={1.8} aria-hidden="true" />
                 <span className="private-nav-label">{t(item.labelKey)}</span>
                 {item.href === "/notifications" && unreadSignals > 0 ? (
-                  <span className="private-nav-badge" aria-hidden="true">{unreadSignals > 99 ? "99+" : unreadSignals}</span>
+                  <span className="private-nav-badge" aria-hidden="true">
+                    {unreadSignals > 99 ? "99+" : unreadSignals}
+                  </span>
                 ) : null}
               </Link>
             );

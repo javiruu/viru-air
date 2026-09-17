@@ -22,7 +22,9 @@ export function getOfficialRyanairFlightDeepLink(value: string | null | undefine
     const dateOut = pick("dateOut", "date_out", "tpStartDate");
     if (!origin || !destination || !dateOut) return "";
     const localeMatch = parsed.pathname.match(/^\/([a-z]{2})\/([a-z]{2})\/trip\/flights\/select/i);
-    const localePath = localeMatch ? `/${localeMatch[1].toLowerCase()}/${localeMatch[2].toLowerCase()}` : "/es/es";
+    const localePath = localeMatch
+      ? `/${localeMatch[1].toLowerCase()}/${localeMatch[2].toLowerCase()}`
+      : "/es/es";
     const normalized = new URL(`https://www.ryanair.com${localePath}/trip/flights/select`);
     const adults = pick("adults", "tpAdults") || "1";
     const teens = pick("teens", "tpTeens") || "0";

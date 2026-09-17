@@ -2,7 +2,12 @@
 
 import { useI18n } from "@/i18n";
 
-import type { HotelAlertEventOut, HotelTrackedOfferOut, HotelTrackedOfferV2State, HotelWatchlistEntry } from "../types";
+import type {
+  HotelAlertEventOut,
+  HotelTrackedOfferOut,
+  HotelTrackedOfferV2State,
+  HotelWatchlistEntry,
+} from "../types";
 import { HotelTrackedOffersPanel } from "./HotelTrackedOffersPanel";
 import { HotelWatchlistPanel } from "./HotelWatchlistPanel";
 
@@ -52,9 +57,11 @@ export function HotelMyHotelsPanel({
   watchlistLoading,
 }: HotelMyHotelsPanelProps) {
   const { localeTag, t } = useI18n();
-  const hasVisibleItems = trackedOffers.length > 0 || alertEvents.length > 0 || watchlistEntries.length > 0;
+  const hasVisibleItems =
+    trackedOffers.length > 0 || alertEvents.length > 0 || watchlistEntries.length > 0;
   const loading = trackedOffersLoading || alertEventsLoading || watchlistLoading;
-  const hasError = alertEventsError !== null || trackedOffersError !== null || watchlistError !== null;
+  const hasError =
+    alertEventsError !== null || trackedOffersError !== null || watchlistError !== null;
 
   return (
     <section className="hotel-my-hotels-panel section-gap" aria-labelledby="hotel-my-hotels-title">
@@ -99,12 +106,19 @@ export function HotelMyHotelsPanel({
           ) : null}
 
           {alertEventsLoading || alertEvents.length > 0 || alertEventsError ? (
-            <section className="panel panel-soft hotel-my-hotels-alerts" aria-labelledby="hotel-my-hotels-alerts-title">
+            <section
+              className="panel panel-soft hotel-my-hotels-alerts"
+              aria-labelledby="hotel-my-hotels-alerts-title"
+            >
               <div className="panel-header">
-                <h3 id="hotel-my-hotels-alerts-title" className="panel-title">{t("hotels.myHotels.alertsTitle")}</h3>
+                <h3 id="hotel-my-hotels-alerts-title" className="panel-title">
+                  {t("hotels.myHotels.alertsTitle")}
+                </h3>
                 <span className="status-pill info">{alertEvents.length}</span>
               </div>
-              {alertEventsLoading ? <p className="panel-note section-gap-sm">{t("hotels.alerts.loadingEvents")}</p> : null}
+              {alertEventsLoading ? (
+                <p className="panel-note section-gap-sm">{t("hotels.alerts.loadingEvents")}</p>
+              ) : null}
               {!alertEventsLoading && !alertEventsError ? (
                 <div className="hotel-my-hotels-alert-list section-gap-sm">
                   {alertEvents.map((event) => (
@@ -113,7 +127,11 @@ export function HotelMyHotelsPanel({
                         <strong>{event.message}</strong>
                         <p className="panel-note">{formatEventDate(event.created_at, localeTag)}</p>
                       </div>
-                      <button type="button" className="btn-ghost btn-compact" onClick={() => onOpenHotel(event.hotel_id)}>
+                      <button
+                        type="button"
+                        className="btn-ghost btn-compact"
+                        onClick={() => onOpenHotel(event.hotel_id)}
+                      >
                         {t("hotels.myHotels.review")}
                       </button>
                     </article>

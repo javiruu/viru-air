@@ -9,10 +9,7 @@ type CommunityPriceSignalProps = {
   readonly localeTag: string;
 };
 
-export function CommunityPriceSignal({
-  insight,
-  localeTag,
-}: CommunityPriceSignalProps) {
+export function CommunityPriceSignal({ insight, localeTag }: CommunityPriceSignalProps) {
   const { t } = useI18n(localeTag);
   if (
     !insight ||

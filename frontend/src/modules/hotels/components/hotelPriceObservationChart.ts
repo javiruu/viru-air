@@ -28,12 +28,13 @@ export function buildHotelPriceObservationChart(
   hasCompleteSeries: boolean,
 ) {
   const comparable = observations
-    .filter((observation) => (
-      observation.eligible
-      && observation.totalPrice
-      && observation.amount !== null
-      && observation.amount > 0
-    ))
+    .filter(
+      (observation) =>
+        observation.eligible &&
+        observation.totalPrice &&
+        observation.amount !== null &&
+        observation.amount > 0,
+    )
     .sort((left, right) => observationTime(left.observedAt) - observationTime(right.observedAt));
 
   if (comparable.length === 0) {
@@ -49,17 +50,19 @@ export function buildHotelPriceObservationChart(
   const minAmount = Math.min(...amounts);
   const maxAmount = Math.max(...amounts);
   const valueRange = maxAmount - minAmount;
-  const drawableWidth = chartWidth - (chartPadding * 2);
-  const drawableHeight = chartHeight - (chartPadding * 2);
+  const drawableWidth = chartWidth - chartPadding * 2;
+  const drawableHeight = chartHeight - chartPadding * 2;
 
   return {
     points: comparable.map((observation, index) => {
-      const x = comparable.length === 1
-        ? chartWidth / 2
-        : chartPadding + ((drawableWidth * index) / (comparable.length - 1));
-      const y = valueRange === 0
-        ? chartHeight / 2
-        : chartPadding + (drawableHeight * (1 - ((observation.amount! - minAmount) / valueRange)));
+      const x =
+        comparable.length === 1
+          ? chartWidth / 2
+          : chartPadding + (drawableWidth * index) / (comparable.length - 1);
+      const y =
+        valueRange === 0
+          ? chartHeight / 2
+          : chartPadding + drawableHeight * (1 - (observation.amount! - minAmount) / valueRange);
       return {
         id: observation.id,
         observedAt: observation.observedAt,

@@ -17,7 +17,11 @@ function normalizeIata(value: string): string {
   return value.trim().toUpperCase();
 }
 
-function matchesRecentAirportQuery(entry: AirportIataEntry | undefined, iata: string, query: string): boolean {
+function matchesRecentAirportQuery(
+  entry: AirportIataEntry | undefined,
+  iata: string,
+  query: string,
+): boolean {
   if (!query) return true;
   const normalizedQuery = query.trim().toUpperCase();
   if (!normalizedQuery) return true;
@@ -25,7 +29,11 @@ function matchesRecentAirportQuery(entry: AirportIataEntry | undefined, iata: st
   const name = entry?.name?.toUpperCase() || "";
   const municipality = entry?.municipality?.toUpperCase() || "";
 
-  return iata.includes(normalizedQuery) || name.includes(normalizedQuery) || municipality.includes(normalizedQuery);
+  return (
+    iata.includes(normalizedQuery) ||
+    name.includes(normalizedQuery) ||
+    municipality.includes(normalizedQuery)
+  );
 }
 
 export function dedupeRecentAirports(items: string[], limit = RECENT_AIRPORTS_LIMIT): string[] {
@@ -43,7 +51,10 @@ export function dedupeRecentAirports(items: string[], limit = RECENT_AIRPORTS_LI
   return next;
 }
 
-export function readRecentAirports(storage?: StorageLike | null, key = RECENT_AIRPORTS_STORAGE_KEY): string[] {
+export function readRecentAirports(
+  storage?: StorageLike | null,
+  key = RECENT_AIRPORTS_STORAGE_KEY,
+): string[] {
   try {
     const raw = storage?.getItem(key);
     if (!raw) return [];
@@ -55,7 +66,12 @@ export function readRecentAirports(storage?: StorageLike | null, key = RECENT_AI
   }
 }
 
-export function writeRecentAirports(items: string[], storage?: StorageLike | null, limit = RECENT_AIRPORTS_LIMIT, key = RECENT_AIRPORTS_STORAGE_KEY): string[] {
+export function writeRecentAirports(
+  items: string[],
+  storage?: StorageLike | null,
+  limit = RECENT_AIRPORTS_LIMIT,
+  key = RECENT_AIRPORTS_STORAGE_KEY,
+): string[] {
   const next = dedupeRecentAirports(items, limit);
   try {
     storage?.setItem(key, JSON.stringify(next));
@@ -65,13 +81,24 @@ export function writeRecentAirports(items: string[], storage?: StorageLike | nul
   return next;
 }
 
-export function rememberRecentAirport(current: string[], iata: string, limit = RECENT_AIRPORTS_LIMIT): string[] {
+export function rememberRecentAirport(
+  current: string[],
+  iata: string,
+  limit = RECENT_AIRPORTS_LIMIT,
+): string[] {
   return dedupeRecentAirports([normalizeIata(iata), ...current], limit);
 }
 
-export function forgetRecentAirport(current: string[], iata: string, limit = RECENT_AIRPORTS_LIMIT): string[] {
+export function forgetRecentAirport(
+  current: string[],
+  iata: string,
+  limit = RECENT_AIRPORTS_LIMIT,
+): string[] {
   const target = normalizeIata(iata);
-  return dedupeRecentAirports(current.filter((item) => normalizeIata(item) !== target), limit);
+  return dedupeRecentAirports(
+    current.filter((item) => normalizeIata(item) !== target),
+    limit,
+  );
 }
 
 /**
@@ -82,14 +109,18 @@ export function forgetRecentAirport(current: string[], iata: string, limit = REC
  * writes both field-specific keys, removes the old key, and returns the
  * migrated lists. Returns `null` when no migration is necessary.
  */
-export function migrateRecentAirports(storage?: StorageLike | null): { origin: string[]; destination: string[] } | null {
+export function migrateRecentAirports(
+  storage?: StorageLike | null,
+): { origin: string[]; destination: string[] } | null {
   try {
     const raw = storage?.getItem(RECENT_AIRPORTS_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed) || parsed.length === 0) return null;
 
-    const normalized = dedupeRecentAirports(parsed.filter((item): item is string => typeof item === "string"));
+    const normalized = dedupeRecentAirports(
+      parsed.filter((item): item is string => typeof item === "string"),
+    );
     if (normalized.length === 0) return null;
 
     const origin: string[] = [];

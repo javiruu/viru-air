@@ -285,4 +285,3 @@ export const recommendationsEn = {
   scaleMidLow: "30-49 Interesting",
   scaleLow: "<30 Neutral for now",
 };
-

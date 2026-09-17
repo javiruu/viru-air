@@ -1,8 +1,11 @@
 ﻿"use client";
 
-import React, { memo } from "react";
+import { memo } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { QuickSearchCalendarDayHint, QuickSearchCalendarScopeMode } from "@/modules/quick-search/types";
+import type {
+  QuickSearchCalendarDayHint,
+  QuickSearchCalendarScopeMode,
+} from "@/modules/quick-search/types";
 
 type Props = {
   name: string;
@@ -71,13 +74,17 @@ function addDays(value: Date, amount: number): Date {
 function sameDay(left: Date | null, right: Date | null): boolean {
   if (!left || !right) return false;
   return (
-    left.getFullYear() === right.getFullYear()
-    && left.getMonth() === right.getMonth()
-    && left.getDate() === right.getDate()
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate()
   );
 }
 
-function buildCalendarDays(viewMonth: Date, selected: readonly Date[], minDate: Date | null): CalendarDay[] {
+function buildCalendarDays(
+  viewMonth: Date,
+  selected: readonly Date[],
+  minDate: Date | null,
+): CalendarDay[] {
   const monthStart = startOfMonth(viewMonth);
   const dayOffset = (monthStart.getDay() + 6) % 7;
   const gridStart = addDays(monthStart, -dayOffset);
@@ -104,60 +111,61 @@ function QuickSearchDatePickerInner(props: Props) {
   const onVisibleMonthChange = props.onVisibleMonthChange;
   const locale = props.localeTag.toLowerCase().startsWith("es")
     ? {
-      openCalendar: "Abrir calendario",
-      closeCalendar: "Cerrar calendario",
-      previousMonth: "Mes anterior",
-      nextMonth: "Mes siguiente",
-      chooseDate: "Elige una fecha para continuar",
-      selectedDate: "Fecha seleccionada",
-      selectOutbound: "Selecciona salida",
-      selectReturn: "Añade vuelta",
-      outboundReady: "Salida elegida",
-      returnReady: "Vuelta elegida",
-      noPriceHint: "Sin datos de precio para este día",
-      stalePriceHint: "Referencia de precio anterior",
-      partialPriceHint: "Precio disponible con cobertura parcial",
-      providerTimeoutHint: "El proveedor tardó demasiado en responder",
-      providerUnavailableHint: "El proveedor no está disponible ahora",
-      currencyHint: "El precio recibido no se puede comparar en esta moneda",
-      limitedCoverageHint: "Cobertura limitada para este día",
-      referenceHint: "Precio disponible sin referencia suficiente para colorearlo",
-      countryEstimateMixed: "Estimación país",
-      countryEstimateCountryCountry: "Estimación país-país",
-      enableMultiple: "Seleccionar varios días",
-      disableMultiple: "Volver a una fecha",
-      selectedDates: "días seleccionados",
-      selectedLimit: "Máx. {count}",
-    }
+        openCalendar: "Abrir calendario",
+        closeCalendar: "Cerrar calendario",
+        previousMonth: "Mes anterior",
+        nextMonth: "Mes siguiente",
+        chooseDate: "Elige una fecha para continuar",
+        selectedDate: "Fecha seleccionada",
+        selectOutbound: "Selecciona salida",
+        selectReturn: "Añade vuelta",
+        outboundReady: "Salida elegida",
+        returnReady: "Vuelta elegida",
+        noPriceHint: "Sin datos de precio para este día",
+        stalePriceHint: "Referencia de precio anterior",
+        partialPriceHint: "Precio disponible con cobertura parcial",
+        providerTimeoutHint: "El proveedor tardó demasiado en responder",
+        providerUnavailableHint: "El proveedor no está disponible ahora",
+        currencyHint: "El precio recibido no se puede comparar en esta moneda",
+        limitedCoverageHint: "Cobertura limitada para este día",
+        referenceHint: "Precio disponible sin referencia suficiente para colorearlo",
+        countryEstimateMixed: "Estimación país",
+        countryEstimateCountryCountry: "Estimación país-país",
+        enableMultiple: "Seleccionar varios días",
+        disableMultiple: "Volver a una fecha",
+        selectedDates: "días seleccionados",
+        selectedLimit: "Máx. {count}",
+      }
     : {
-      openCalendar: "Open calendar",
-      closeCalendar: "Close calendar",
-      previousMonth: "Previous month",
-      nextMonth: "Next month",
-      chooseDate: "Choose a date to continue",
-      selectedDate: "Selected date",
-      selectOutbound: "Select outbound",
-      selectReturn: "Add return",
-      outboundReady: "Outbound selected",
-      returnReady: "Return selected",
-      noPriceHint: "No fare data for this day",
-      stalePriceHint: "Earlier price reference",
-      partialPriceHint: "Price available with partial coverage",
-      providerTimeoutHint: "The provider took too long to respond",
-      providerUnavailableHint: "The provider is unavailable right now",
-      currencyHint: "This price cannot be compared in the selected currency",
-      limitedCoverageHint: "Limited coverage for this day",
-      referenceHint: "Price is available but needs more reference data for a color",
-      countryEstimateMixed: "Country estimate",
-      countryEstimateCountryCountry: "Country-country estimate",
-      enableMultiple: "Select multiple days",
-      disableMultiple: "Return to one date",
-      selectedDates: "selected days",
-      selectedLimit: "Max. {count}",
-    };
-  const countryEstimateLabel = props.hintScopeMode === "country_country"
-    ? locale.countryEstimateCountryCountry
-    : locale.countryEstimateMixed;
+        openCalendar: "Open calendar",
+        closeCalendar: "Close calendar",
+        previousMonth: "Previous month",
+        nextMonth: "Next month",
+        chooseDate: "Choose a date to continue",
+        selectedDate: "Selected date",
+        selectOutbound: "Select outbound",
+        selectReturn: "Add return",
+        outboundReady: "Outbound selected",
+        returnReady: "Return selected",
+        noPriceHint: "No fare data for this day",
+        stalePriceHint: "Earlier price reference",
+        partialPriceHint: "Price available with partial coverage",
+        providerTimeoutHint: "The provider took too long to respond",
+        providerUnavailableHint: "The provider is unavailable right now",
+        currencyHint: "This price cannot be compared in the selected currency",
+        limitedCoverageHint: "Limited coverage for this day",
+        referenceHint: "Price is available but needs more reference data for a color",
+        countryEstimateMixed: "Country estimate",
+        countryEstimateCountryCountry: "Country-country estimate",
+        enableMultiple: "Select multiple days",
+        disableMultiple: "Return to one date",
+        selectedDates: "selected days",
+        selectedLimit: "Max. {count}",
+      };
+  const countryEstimateLabel =
+    props.hintScopeMode === "country_country"
+      ? locale.countryEstimateCountryCountry
+      : locale.countryEstimateMixed;
   const calendarHintLabel = (
     reason: string | null | undefined,
     hasPrice: boolean,
@@ -176,7 +184,10 @@ function QuickSearchDatePickerInner(props: Props) {
 
   const selectedDate = useMemo(() => parseIsoDate(props.value), [props.value]);
   const selectedDates = useMemo(
-    () => (props.selectedValues || []).map(parseIsoDate).filter((value): value is Date => value !== null),
+    () =>
+      (props.selectedValues || [])
+        .map(parseIsoDate)
+        .filter((value): value is Date => value !== null),
     [props.selectedValues],
   );
   const minDate = useMemo(() => parseIsoDate(props.min), [props.min]);
@@ -218,7 +229,9 @@ function QuickSearchDatePickerInner(props: Props) {
   }, [handleBlur, open]);
 
   const monthLabel = useMemo(() => {
-    return new Intl.DateTimeFormat(props.localeTag, { month: "long", year: "numeric" }).format(viewMonth);
+    return new Intl.DateTimeFormat(props.localeTag, { month: "long", year: "numeric" }).format(
+      viewMonth,
+    );
   }, [props.localeTag, viewMonth]);
 
   const weekdayLabels = useMemo(() => {
@@ -240,31 +253,40 @@ function QuickSearchDatePickerInner(props: Props) {
 
   const selectedCount = multipleSelection ? selectedDates.length : Number(Boolean(selectedDate));
   const maxSelections = props.maxSelections || 15;
-  const multipleSummary = multipleSelection && selectedCount > 1
-    ? `${selectedCount} ${locale.selectedDates}`
-    : null;
-  const selectedLabel = multipleSummary || (selectedDate
-    ? new Intl.DateTimeFormat(props.localeTag, {
-      day: "numeric",
-      month: "short",
-    }).format(selectedDate)
-    : props.placeholder);
+  const multipleSummary =
+    multipleSelection && selectedCount > 1 ? `${selectedCount} ${locale.selectedDates}` : null;
+  const selectedLabel =
+    multipleSummary ||
+    (selectedDate
+      ? new Intl.DateTimeFormat(props.localeTag, {
+          day: "numeric",
+          month: "short",
+        }).format(selectedDate)
+      : props.placeholder);
   const selectedMeta = selectedDate
     ? new Intl.DateTimeFormat(props.localeTag, {
-      weekday: "long",
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }).format(selectedDate)
+        weekday: "long",
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }).format(selectedDate)
     : props.variant === "return"
       ? locale.selectReturn
       : locale.selectOutbound;
   const selectedStateLabel = selectedDate
-    ? (props.variant === "return" ? locale.returnReady : locale.outboundReady)
+    ? props.variant === "return"
+      ? locale.returnReady
+      : locale.outboundReady
     : props.label;
 
   const calendarDays = useMemo(() => {
-    return buildCalendarDays(viewMonth, multipleSelection ? selectedDates : [selectedDate].filter((value): value is Date => value !== null), minDate);
+    return buildCalendarDays(
+      viewMonth,
+      multipleSelection
+        ? selectedDates
+        : [selectedDate].filter((value): value is Date => value !== null),
+      minDate,
+    );
   }, [viewMonth, multipleSelection, selectedDate, selectedDates, minDate]);
 
   return (
@@ -294,7 +316,16 @@ function QuickSearchDatePickerInner(props: Props) {
         <span className="qs-date-trigger__actions" aria-hidden="true">
           <span className="qs-date-inline-icon">
             <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-              <rect x="3" y="4" width="18" height="17" rx="3" fill="none" stroke="currentColor" strokeWidth="1.6" />
+              <rect
+                x="3"
+                y="4"
+                width="18"
+                height="17"
+                rx="3"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+              />
               <path
                 d="M8 2v4M16 2v4M3 9h18"
                 fill="none"
@@ -306,7 +337,14 @@ function QuickSearchDatePickerInner(props: Props) {
           </span>
           <span className={`qs-date-trigger__caret${open ? " is-open" : ""}`}>
             <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-              <path d="m6.5 9 5.5 6 5.5-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="m6.5 9 5.5 6 5.5-6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </span>
         </span>
@@ -340,8 +378,21 @@ function QuickSearchDatePickerInner(props: Props) {
                   }}
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M7 7h10M7 12h10M7 17h6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                    <path d="m15.5 16.5 1.6 1.6 3-3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                      d="M7 7h10M7 12h10M7 17h6"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="m15.5 16.5 1.6 1.6 3-3"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </button>
               ) : null}
@@ -352,7 +403,14 @@ function QuickSearchDatePickerInner(props: Props) {
                 onClick={() => setViewMonth((current) => addMonths(current, -1))}
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="m14.5 6-6 6 6 6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  <path
+                    d="m14.5 6-6 6 6 6"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </button>
               <button
@@ -362,7 +420,14 @@ function QuickSearchDatePickerInner(props: Props) {
                 onClick={() => setViewMonth((current) => addMonths(current, 1))}
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="m9.5 6 6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  <path
+                    d="m9.5 6 6 6-6 6"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </button>
             </div>
@@ -373,14 +438,16 @@ function QuickSearchDatePickerInner(props: Props) {
             ))}
           </div>
           <div className="qs-date-popover__grid">
-            {calendarDays.map((day) => (
+            {calendarDays.map((day) =>
               (() => {
                 const hint = day.inMonth ? props.dayHintsByIso?.[day.iso] : undefined;
                 const noData = Boolean(hint && hint.min_price === null);
                 const qualityMarker = Boolean(
-                  hint
-                  && hint.min_price !== null
-                  && (hint.bucket === "none" || hint.data_quality === "partial" || hint.data_quality === "stale"),
+                  hint &&
+                    hint.min_price !== null &&
+                    (hint.bucket === "none" ||
+                      hint.data_quality === "partial" ||
+                      hint.data_quality === "stale"),
                 );
                 const hintClass = hint && hint.bucket !== "none" ? `hint-${hint.bucket}` : "";
                 const hintLabel = calendarHintLabel(
@@ -388,7 +455,8 @@ function QuickSearchDatePickerInner(props: Props) {
                   Boolean(hint?.min_price !== null),
                   hint?.data_quality,
                 );
-                const loadingClass = props.hintsLoading && day.inMonth && !day.isDisabled ? "is-hints-loading" : "";
+                const loadingClass =
+                  props.hintsLoading && day.inMonth && !day.isDisabled ? "is-hints-loading" : "";
                 return (
                   <button
                     key={`${props.name}-${day.iso}`}
@@ -404,7 +472,9 @@ function QuickSearchDatePickerInner(props: Props) {
                       noData ? "is-no-price-data" : "",
                       qualityMarker ? "is-price-quality-data" : "",
                       loadingClass,
-                    ].filter(Boolean).join(" ")}
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
                     disabled={day.isDisabled}
                     aria-pressed={day.isSelected}
                     aria-label={dayLabelFormatter.format(day.date)}
@@ -425,26 +495,51 @@ function QuickSearchDatePickerInner(props: Props) {
                     {noData || qualityMarker ? (
                       <span className="qs-date-day__no-price" aria-hidden="true">
                         <span className="qs-date-day__no-price-icon">
-                          {qualityMarker ? "~" : (
+                          {qualityMarker ? (
+                            "~"
+                          ) : (
                             <svg viewBox="0 0 20 20" role="img" aria-hidden="true">
-                              <circle cx="10" cy="10" r="7.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
-                              <path d="M6 14 14 6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                              <circle
+                                cx="10"
+                                cy="10"
+                                r="7.2"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.4"
+                              />
+                              <path
+                                d="M6 14 14 6"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.6"
+                                strokeLinecap="round"
+                              />
                             </svg>
                           )}
                         </span>
-                        <span className={qualityMarker ? "qs-date-day__quality-marker qs-date-day__no-price-tooltip" : "qs-date-day__no-price-tooltip"}>{hintLabel}</span>
+                        <span
+                          className={
+                            qualityMarker
+                              ? "qs-date-day__quality-marker qs-date-day__no-price-tooltip"
+                              : "qs-date-day__no-price-tooltip"
+                          }
+                        >
+                          {hintLabel}
+                        </span>
                       </span>
                     ) : null}
                   </button>
                 );
-              })()
-            ))}
+              })(),
+            )}
           </div>
           <div className="qs-date-popover__footer">
             <span className="qs-date-popover__footer-label">
               {multipleSummary
                 ? `${multipleSummary} · ${locale.selectedLimit.replace("{count}", String(maxSelections))}`
-                : selectedDate ? locale.selectedDate : locale.chooseDate}
+                : selectedDate
+                  ? locale.selectedDate
+                  : locale.chooseDate}
             </span>
             <strong>{multipleSummary || (selectedDate ? selectedLabel : props.placeholder)}</strong>
           </div>
@@ -456,26 +551,26 @@ function QuickSearchDatePickerInner(props: Props) {
 
 function areDatePickerPropsEqual(prev: Props, next: Props): boolean {
   return (
-    prev.name === next.name
-    && prev.label === next.label
-    && prev.value === next.value
-    && prev.placeholder === next.placeholder
-    && prev.localeTag === next.localeTag
-    && prev.variant === next.variant
-    && prev.min === next.min
-    && prev.invalid === next.invalid
-    && prev.onBlur === next.onBlur
-    && prev.onChange === next.onChange
-    && prev.defaultOpen === next.defaultOpen
-    && prev.dayHintsByIso === next.dayHintsByIso
-    && prev.hintsLoading === next.hintsLoading
-    && prev.onVisibleMonthChange === next.onVisibleMonthChange
-    && prev.showCountryEstimateBadge === next.showCountryEstimateBadge
-    && prev.hintScopeMode === next.hintScopeMode
-    && prev.multiple === next.multiple
-    && prev.selectedValues === next.selectedValues
-    && prev.onSelectedValuesChange === next.onSelectedValuesChange
-    && prev.maxSelections === next.maxSelections
+    prev.name === next.name &&
+    prev.label === next.label &&
+    prev.value === next.value &&
+    prev.placeholder === next.placeholder &&
+    prev.localeTag === next.localeTag &&
+    prev.variant === next.variant &&
+    prev.min === next.min &&
+    prev.invalid === next.invalid &&
+    prev.onBlur === next.onBlur &&
+    prev.onChange === next.onChange &&
+    prev.defaultOpen === next.defaultOpen &&
+    prev.dayHintsByIso === next.dayHintsByIso &&
+    prev.hintsLoading === next.hintsLoading &&
+    prev.onVisibleMonthChange === next.onVisibleMonthChange &&
+    prev.showCountryEstimateBadge === next.showCountryEstimateBadge &&
+    prev.hintScopeMode === next.hintScopeMode &&
+    prev.multiple === next.multiple &&
+    prev.selectedValues === next.selectedValues &&
+    prev.onSelectedValuesChange === next.onSelectedValuesChange &&
+    prev.maxSelections === next.maxSelections
   );
 }
 

@@ -13,11 +13,7 @@ export type WatchlistItemBrief = {
 /**
  * Builds a stable key from a SearchResult that can be compared with watchlist items.
  */
-export function buildWatchKey(
-  origin: string,
-  destination: string,
-  travelDate: string,
-): string {
+export function buildWatchKey(origin: string, destination: string, travelDate: string): string {
   return `${origin}_${destination}_${travelDate}`;
 }
 
@@ -44,7 +40,10 @@ export function useQuickSearchWatchlist() {
         if (Array.isArray(items)) {
           for (const item of items) {
             if (item.id && item.origin_iata && item.destination_iata && item.travel_date_local) {
-              nextWatchedByKey.set(buildWatchKey(item.origin_iata, item.destination_iata, item.travel_date_local), item.id);
+              nextWatchedByKey.set(
+                buildWatchKey(item.origin_iata, item.destination_iata, item.travel_date_local),
+                item.id,
+              );
             }
           }
         }
@@ -74,22 +73,19 @@ export function useQuickSearchWatchlist() {
     [watchedByKey],
   );
 
-  const markAsSaved = useCallback(
-    (result: SearchResult, watchId?: string | null) => {
-      const key = buildWatchKeyFromResult(result);
-      setWatchedByKey((prev) => {
-        if (prev.get(key) === watchId || (!watchId && prev.has(key))) return prev;
-        const next = new Map(prev);
-        if (watchId) {
-          next.set(key, watchId);
-        } else if (!next.has(key)) {
-          next.set(key, "");
-        }
-        return next;
-      });
-    },
-    [],
-  );
+  const markAsSaved = useCallback((result: SearchResult, watchId?: string | null) => {
+    const key = buildWatchKeyFromResult(result);
+    setWatchedByKey((prev) => {
+      if (prev.get(key) === watchId || (!watchId && prev.has(key))) return prev;
+      const next = new Map(prev);
+      if (watchId) {
+        next.set(key, watchId);
+      } else if (!next.has(key)) {
+        next.set(key, "");
+      }
+      return next;
+    });
+  }, []);
 
   return { isInWatchlist, getWatchId, markAsSaved };
 }

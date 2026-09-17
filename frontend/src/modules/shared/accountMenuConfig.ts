@@ -23,7 +23,9 @@ export function buildAccountMenuGroups(t: (key: string) => string): AccountMenuG
     {
       title: t("account.menu.preferencesGroup"),
       hint: t("account.menu.hints.preferencesGroup"),
-      items: [{ label: t("account.menu.preferencesHub"), href: "/preferencias", icon: "fa-sliders" }],
+      items: [
+        { label: t("account.menu.preferencesHub"), href: "/preferencias", icon: "fa-sliders" },
+      ],
     },
     {
       title: t("account.menu.supportGroup"),

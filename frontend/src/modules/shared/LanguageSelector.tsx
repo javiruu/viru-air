@@ -77,11 +77,14 @@ export default function LanguageSelector() {
     };
   }, [closeMenu, isOpen]);
 
-  const selectLanguage = useCallback((nextLocale: Locale) => {
-    persistLocale(nextLocale);
-    closeMenu(true);
-    void persistProfileLanguage(nextLocale);
-  }, [closeMenu]);
+  const selectLanguage = useCallback(
+    (nextLocale: Locale) => {
+      persistLocale(nextLocale);
+      closeMenu(true);
+      void persistProfileLanguage(nextLocale);
+    },
+    [closeMenu],
+  );
 
   const moveFocus = (currentIndex: number, direction: 1 | -1) => {
     const nextIndex = (currentIndex + direction + LANGUAGES.length) % LANGUAGES.length;
@@ -120,11 +123,21 @@ export default function LanguageSelector() {
           aria-hidden="true"
         />
         <span className="language-selector__short-label">{activeLanguage.shortLabel}</span>
-        <ChevronDown className={`language-selector__chevron${isOpen ? " is-open" : ""}`} size={15} strokeWidth={2} aria-hidden="true" />
+        <ChevronDown
+          className={`language-selector__chevron${isOpen ? " is-open" : ""}`}
+          size={15}
+          strokeWidth={2}
+          aria-hidden="true"
+        />
       </button>
 
       {isOpen ? (
-        <div id={menuId} className="language-selector__menu" role="menu" aria-label={t("shared.a11y.languageMenu")}>
+        <div
+          id={menuId}
+          className="language-selector__menu"
+          role="menu"
+          aria-label={t("shared.a11y.languageMenu")}
+        >
           {LANGUAGES.map((language, index) => {
             const selected = language.locale === locale;
             return (
@@ -169,7 +182,14 @@ export default function LanguageSelector() {
                   <span>{language.label}</span>
                   <span className="language-selector__option-code">{language.shortLabel}</span>
                 </span>
-                {selected ? <Check className="language-selector__check" size={17} strokeWidth={2.2} aria-hidden="true" /> : null}
+                {selected ? (
+                  <Check
+                    className="language-selector__check"
+                    size={17}
+                    strokeWidth={2.2}
+                    aria-hidden="true"
+                  />
+                ) : null}
               </button>
             );
           })}

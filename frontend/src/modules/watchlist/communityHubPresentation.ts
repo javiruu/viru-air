@@ -1,15 +1,8 @@
 import type { CommunityPricing } from "@/modules/watchlist/types";
 
-export type CommunityHubIndicator =
-  | "available"
-  | "public"
-  | "pending"
-  | "contributed";
+export type CommunityHubIndicator = "available" | "public" | "pending" | "contributed";
 
-export type CommunityHubParticipation =
-  | "purchase"
-  | "contribute"
-  | "review";
+export type CommunityHubParticipation = "purchase" | "contribute" | "review";
 
 export function getCommunityHubIndicator(
   communityPricing: CommunityPricing,

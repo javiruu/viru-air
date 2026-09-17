@@ -46,7 +46,7 @@ export function QuickSearchAdditionalAirports(props: Props) {
   const activeEntry = props.entries.find((entry) => entry.id === activeId) ?? null;
   const activeValue = activeEntry?.value.trim() ?? "";
   const visibleSuggestions = useMemo(
-    () => activeValue ? suggestions : props.recentSuggestions,
+    () => (activeValue ? suggestions : props.recentSuggestions),
     [activeValue, props.recentSuggestions, suggestions],
   );
 
@@ -64,11 +64,13 @@ export function QuickSearchAdditionalAirports(props: Props) {
     }
     let cancelled = false;
     const timeout = window.setTimeout(() => {
-      fetchSuggestions(activeValue).then((next) => {
-        if (!cancelled) setSuggestions(next);
-      }).catch(() => {
-        if (!cancelled) setSuggestions([]);
-      });
+      fetchSuggestions(activeValue)
+        .then((next) => {
+          if (!cancelled) setSuggestions(next);
+        })
+        .catch(() => {
+          if (!cancelled) setSuggestions([]);
+        });
     }, 120);
     return () => {
       cancelled = true;
@@ -96,7 +98,9 @@ export function QuickSearchAdditionalAirports(props: Props) {
           <div className="qs-additional-airport" key={entry.id}>
             <div className="qs-input-wrap">
               <span className="qs-input-prefix" aria-hidden="true">
-                <span className="qs-input-icon"><MapPin /></span>
+                <span className="qs-input-icon">
+                  <MapPin />
+                </span>
               </span>
               <input
                 ref={(node) => {
@@ -114,9 +118,11 @@ export function QuickSearchAdditionalAirports(props: Props) {
                 aria-label={`${props.inputLabel} ${rowIndex + 2}`}
                 aria-expanded={activeId === entry.id && visibleSuggestions.length > 0}
                 aria-controls={listboxId}
-                aria-activedescendant={activeId === entry.id && activeIndex >= 0
-                  ? `${listboxId}-${activeIndex}`
-                  : undefined}
+                aria-activedescendant={
+                  activeId === entry.id && activeIndex >= 0
+                    ? `${listboxId}-${activeIndex}`
+                    : undefined
+                }
                 aria-invalid={showError}
                 aria-describedby={showError ? errorId : undefined}
                 value={entry.value}
@@ -128,7 +134,7 @@ export function QuickSearchAdditionalAirports(props: Props) {
                 onBlur={() => {
                   setTouchedIds((current) => new Set(current).add(entry.id));
                   window.setTimeout(() => {
-                    setActiveId((current) => current === entry.id ? null : current);
+                    setActiveId((current) => (current === entry.id ? null : current));
                     setActiveIndex(-1);
                   }, 120);
                 }}
@@ -143,7 +149,9 @@ export function QuickSearchAdditionalAirports(props: Props) {
                     setActiveIndex((current) => (current + 1) % visibleSuggestions.length);
                   } else if (event.key === "ArrowUp" && visibleSuggestions.length > 0) {
                     event.preventDefault();
-                    setActiveIndex((current) => current <= 0 ? visibleSuggestions.length - 1 : current - 1);
+                    setActiveIndex((current) =>
+                      current <= 0 ? visibleSuggestions.length - 1 : current - 1,
+                    );
                   } else if (event.key === "Escape") {
                     setActiveId(null);
                     setActiveIndex(-1);
@@ -166,22 +174,27 @@ export function QuickSearchAdditionalAirports(props: Props) {
               </button>
               {activeId === entry.id && visibleSuggestions.length > 0 ? (
                 <ul
-                  className={!activeValue ? "qs-autocomplete qs-autocomplete-recents" : "qs-autocomplete"}
+                  className={
+                    !activeValue ? "qs-autocomplete qs-autocomplete-recents" : "qs-autocomplete"
+                  }
                   id={listboxId}
                   role="listbox"
                 >
-                  {!activeValue ? <li className="qs-autocomplete-group-label">{props.recentLabel}</li> : null}
+                  {!activeValue ? (
+                    <li className="qs-autocomplete-group-label">{props.recentLabel}</li>
+                  ) : null}
                   {visibleSuggestions.map((suggestion, index) => (
-                    <li
-                      key={suggestion.iata}
-                      role="none"
-                    >
+                    <li key={suggestion.iata} role="none">
                       <button
                         id={`${listboxId}-${index}`}
                         type="button"
                         role="option"
                         aria-selected={index === activeIndex}
-                        className={index === activeIndex ? "qs-autocomplete-item active" : "qs-autocomplete-item"}
+                        className={
+                          index === activeIndex
+                            ? "qs-autocomplete-item active"
+                            : "qs-autocomplete-item"
+                        }
                         onMouseDown={(event) => event.preventDefault()}
                         onClick={() => selectSuggestion(entry.id, suggestion.iata)}
                       >
@@ -217,13 +230,22 @@ export function QuickSearchAdditionalAirports(props: Props) {
             >
               <X aria-hidden="true" />
             </button>
-            {showError ? <small className="qs-error" id={errorId}>{props.invalidLabel}</small> : null}
+            {showError ? (
+              <small className="qs-error" id={errorId}>
+                {props.invalidLabel}
+              </small>
+            ) : null}
           </div>
         );
       })}
 
       {props.entries.length < props.maxEntries ? (
-        <button ref={addButtonRef} type="button" className="qs-additional-airports__add" onClick={props.onAdd}>
+        <button
+          ref={addButtonRef}
+          type="button"
+          className="qs-additional-airports__add"
+          onClick={props.onAdd}
+        >
           <span>{props.addLabel}</span>
           <Plus aria-hidden="true" />
         </button>

@@ -1,4 +1,8 @@
-import type { FareMemoryCountMap, FareMemoryHealth, FareMemoryHistoricalAggregate } from "@/modules/admin/fareMemoryHealth";
+import type {
+  FareMemoryCountMap,
+  FareMemoryHealth,
+  FareMemoryHistoricalAggregate,
+} from "@/modules/admin/fareMemoryHealth";
 import { buildFareMemorySummary } from "@/modules/admin/fareMemoryHealth";
 
 type FareMemoryHealthPanelProps = {
@@ -90,7 +94,9 @@ export function FareMemoryHealthPanel({ snapshot }: FareMemoryHealthPanelProps) 
       <div className="panel panel-soft section-gap">
         <div className="panel-header">
           <div>
-            <h2 className="panel-title" id="fare-memory-health-title">Fare Memory</h2>
+            <h2 className="panel-title" id="fare-memory-health-title">
+              Fare Memory
+            </h2>
             <p className="panel-subtitle">
               Radar operativo de cache, revalidaciones y memoria historica agregada.
             </p>
@@ -139,7 +145,8 @@ export function FareMemoryHealthPanel({ snapshot }: FareMemoryHealthPanelProps) 
                   <div>
                     <strong>{route.route}</strong>
                     <div className="panel-note">
-                      {route.travel_date} - {route.active_watch_count} watches - {route.recent_search_count} busquedas
+                      {route.travel_date} - {route.active_watch_count} watches -{" "}
+                      {route.recent_search_count} busquedas
                     </div>
                   </div>
                   <span className="status-pill warning">P{route.suggested_job_priority}</span>
@@ -159,14 +166,20 @@ export function FareMemoryHealthPanel({ snapshot }: FareMemoryHealthPanelProps) 
               <p className="panel-note">Aun no hay agregados historicos suficientes.</p>
             ) : (
               snapshot.historical_aggregates.top_routes.map((route) => (
-                <div className="list-row" key={`${route.route}-${route.departure_date}-${route.currency}`}>
+                <div
+                  className="list-row"
+                  key={`${route.route}-${route.departure_date}-${route.currency}`}
+                >
                   <div>
                     <strong>{route.route}</strong>
                     <div className="panel-note">
-                      {route.departure_date} - {route.observation_count} observaciones - ultimo {formatPrice(route)}
+                      {route.departure_date} - {route.observation_count} observaciones - ultimo{" "}
+                      {formatPrice(route)}
                     </div>
                   </div>
-                  <span className={`status-pill ${route.compaction_candidate ? "warning" : "info"}`}>
+                  <span
+                    className={`status-pill ${route.compaction_candidate ? "warning" : "info"}`}
+                  >
                     {route.compaction_candidate ? "Compactar luego" : "Lectura viva"}
                   </span>
                 </div>

@@ -13,7 +13,9 @@ export default async function AlertsAliasPage({ searchParams }: AlertsAliasPageP
       nextSearchParams.append(key, value);
       continue;
     }
-    value?.forEach((item) => nextSearchParams.append(key, item));
+    value?.forEach((item) => {
+      nextSearchParams.append(key, item);
+    });
   }
 
   nextSearchParams.set("view", "rules");

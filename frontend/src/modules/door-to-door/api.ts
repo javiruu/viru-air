@@ -22,7 +22,9 @@ export function fetchDoorToDoorSuggestions(
   if (sessionToken) params.set("session_token", sessionToken);
   if (field) params.set("field", field);
   if (watchId) params.set("watch_id", watchId);
-  return apiFetch<DoorToDoorSuggestionsResponse>(`/door-to-door/suggestions?${params.toString()}`, { signal });
+  return apiFetch<DoorToDoorSuggestionsResponse>(`/door-to-door/suggestions?${params.toString()}`, {
+    signal,
+  });
 }
 
 export function fetchDoorToDoorProviderStatus(): Promise<DoorToDoorProviderStatus[]> {
@@ -37,7 +39,9 @@ export function fetchSavedDoorToDoorLocation(): Promise<DoorToDoorSavedLocation 
   return apiFetch<DoorToDoorSavedLocation | null>("/door-to-door/saved-location");
 }
 
-export function saveDoorToDoorLocation(location: DoorToDoorLocation): Promise<DoorToDoorSavedLocation> {
+export function saveDoorToDoorLocation(
+  location: DoorToDoorLocation,
+): Promise<DoorToDoorSavedLocation> {
   return apiFetch<DoorToDoorSavedLocation>("/door-to-door/saved-location", {
     method: "PUT",
     body: JSON.stringify({ location }),

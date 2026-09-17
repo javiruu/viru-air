@@ -56,7 +56,8 @@ type DashboardSuggestion = {
 export default function DashboardPage() {
   const { t, localeTag } = useI18n();
   const [me, setMe] = useState<Me | null>(null);
-  const [notificationSummary, setNotificationSummary] = useState<DashboardNotificationSummary | null>(null);
+  const [notificationSummary, setNotificationSummary] =
+    useState<DashboardNotificationSummary | null>(null);
   const notificationSummaryRequest = useRef(0);
   const [watches, setWatches] = useState<Watch[]>([]);
   const [heroPriceSummary, setHeroPriceSummary] = useState<PriceSummary | null>(null);
@@ -84,8 +85,11 @@ export default function DashboardPage() {
       setNotes(noteData);
       setBackendBanner(null);
       const requestId = ++notificationSummaryRequest.current;
-      const notificationData = await apiFetch<DashboardNotificationSummary>("/notifications/summary").catch(() => null);
-      if (requestId === notificationSummaryRequest.current) setNotificationSummary(notificationData);
+      const notificationData = await apiFetch<DashboardNotificationSummary>(
+        "/notifications/summary",
+      ).catch(() => null);
+      if (requestId === notificationSummaryRequest.current)
+        setNotificationSummary(notificationData);
     } catch {
       setNotificationSummary(null);
       const fallback = t("dashboard.banner.warmMessage");
@@ -133,20 +137,23 @@ export default function DashboardPage() {
     };
   }, [watches]);
 
-  const formattedNoteDate = useCallback((value: string) => {
-    if (!value) return "";
-    try {
-      return new Intl.DateTimeFormat(localeTag, {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(new Date(value));
-    } catch (error) {
-      return value;
-    }
-  }, [localeTag]);
+  const formattedNoteDate = useCallback(
+    (value: string) => {
+      if (!value) return "";
+      try {
+        return new Intl.DateTimeFormat(localeTag, {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }).format(new Date(value));
+      } catch (_error) {
+        return value;
+      }
+    },
+    [localeTag],
+  );
 
   const formatRelative = useCallback(
     (value: string) => {
@@ -159,10 +166,13 @@ export default function DashboardPage() {
       if (hours < 24) return t("dashboard.activity.lastSearchHours", { count: hours });
       const days = Math.floor(hours / 24);
       if (days < 7) return t("dashboard.activity.lastSearchDays", { count: days });
-      const dateLabel = new Intl.DateTimeFormat(localeTag, { day: "2-digit", month: "short" }).format(date);
+      const dateLabel = new Intl.DateTimeFormat(localeTag, {
+        day: "2-digit",
+        month: "short",
+      }).format(date);
       return t("dashboard.activity.lastSearchDate", { date: dateLabel });
     },
-    [localeTag, t]
+    [localeTag, t],
   );
 
   const startNewNote = useCallback(() => {
@@ -204,7 +214,7 @@ export default function DashboardPage() {
         setNoteActiveId(created.id);
         setNoteStatus(t("dashboard.notes.status.created"));
       }
-    } catch (error) {
+    } catch (_error) {
       setNoteStatus(t("dashboard.notes.status.saveFail"));
     }
   }, [noteActiveId, noteDraft.body, noteDraft.title, t]);
@@ -218,16 +228,19 @@ export default function DashboardPage() {
           startNewNote();
         }
         setNoteStatus(t("dashboard.notes.status.deleted"));
-      } catch (error) {
+      } catch (_error) {
         setNoteStatus(t("dashboard.notes.status.deleteFail"));
       }
     },
-    [noteActiveId, startNewNote, t]
+    [noteActiveId, startNewNote, t],
   );
 
   const sortedNotes = useMemo(
-    () => [...notes].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
-    [notes]
+    () =>
+      [...notes].sort(
+        (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+      ),
+    [notes],
   );
 
   const activityLabel = useMemo(() => {
@@ -266,7 +279,10 @@ export default function DashboardPage() {
     watches.slice(0, 2).forEach((watch) => {
       out.push({
         id: `watch-${watch.id}`,
-        text: t("dashboard.activity.watchActive", { origin: watch.origin_iata, destination: watch.destination_iata }),
+        text: t("dashboard.activity.watchActive", {
+          origin: watch.origin_iata,
+          destination: watch.destination_iata,
+        }),
         when: t("dashboard.activity.watchWhen"),
       });
     });
@@ -288,12 +304,14 @@ export default function DashboardPage() {
     () => getHeroOpportunityMetrics(watches[0] ?? null, heroPriceSummary),
     [heroPriceSummary, watches],
   );
-  const heroPriceLabel = heroMetrics.latestPrice != null && heroMetrics.currency
-    ? formatCurrency(heroMetrics.latestPrice, heroMetrics.currency, localeTag)
-    : t("dashboard.hero.opportunityValueUnknown");
-  const heroDeltaLabel = heroMetrics.deltaPct != null
-    ? `${heroMetrics.deltaPct > 0 ? "+" : ""}${formatPercent(heroMetrics.deltaPct, localeTag)}`
-    : t("dashboard.hero.opportunityValueUnknown");
+  const heroPriceLabel =
+    heroMetrics.latestPrice != null && heroMetrics.currency
+      ? formatCurrency(heroMetrics.latestPrice, heroMetrics.currency, localeTag)
+      : t("dashboard.hero.opportunityValueUnknown");
+  const heroDeltaLabel =
+    heroMetrics.deltaPct != null
+      ? `${heroMetrics.deltaPct > 0 ? "+" : ""}${formatPercent(heroMetrics.deltaPct, localeTag)}`
+      : t("dashboard.hero.opportunityValueUnknown");
   const heroStatus = t("dashboard.hero.status", { count: watches.length, activity: activityLabel });
   const heroCtaHref = "/quick-search";
   const featuredNews = useMemo(() => getDashboardFeaturedNews(localeTag), [localeTag]);
@@ -318,17 +336,23 @@ export default function DashboardPage() {
                 ) : hasOpportunity && topSuggestion ? (
                   <div className="hero-opportunity">
                     <div>
-                      <span className="hero-label">{t("dashboard.hero.opportunityRouteLabel")}</span>
+                      <span className="hero-label">
+                        {t("dashboard.hero.opportunityRouteLabel")}
+                      </span>
                       <strong>{topSuggestion.title}</strong>
                       <p>{topSuggestion.detail}</p>
                     </div>
                     <div className="hero-opportunity-metrics">
                       <div>
-                        <span className="hero-label">{t("dashboard.hero.opportunityPriceLabel")}</span>
+                        <span className="hero-label">
+                          {t("dashboard.hero.opportunityPriceLabel")}
+                        </span>
                         <strong>{heroPriceLabel}</strong>
                       </div>
                       <div>
-                        <span className="hero-label">{t("dashboard.hero.opportunityDeltaLabel")}</span>
+                        <span className="hero-label">
+                          {t("dashboard.hero.opportunityDeltaLabel")}
+                        </span>
                         <strong>{heroDeltaLabel}</strong>
                       </div>
                     </div>
@@ -344,7 +368,9 @@ export default function DashboardPage() {
                 <Link
                   href={heroCtaHref}
                   className="btn-primary"
-                  onClick={() => trackEvent("dashboard_click_hero_cta", { area: "dashboard", source: "hero" })}
+                  onClick={() =>
+                    trackEvent("dashboard_click_hero_cta", { area: "dashboard", source: "hero" })
+                  }
                 >
                   {t("dashboard.hero.ctaExplore")}
                 </Link>
@@ -367,7 +393,16 @@ export default function DashboardPage() {
                 <div className="module-head">
                   <h4 className="module-title">{t("dashboard.modules.watchlist.title")}</h4>
                   <span className="module-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="22"
+                      height="22"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <path d="M5 3h14v18l-7-4-7 4V3z" />
                     </svg>
                   </span>
@@ -377,7 +412,12 @@ export default function DashboardPage() {
                   <Link
                     href="/watchlist"
                     className="btn-secondary"
-                    onClick={() => trackEvent("dashboard_click_watchlist", { area: "dashboard", source: "watchlist_card" })}
+                    onClick={() =>
+                      trackEvent("dashboard_click_watchlist", {
+                        area: "dashboard",
+                        source: "watchlist_card",
+                      })
+                    }
                   >
                     {t("dashboard.modules.watchlist.primary")}
                   </Link>
@@ -391,7 +431,16 @@ export default function DashboardPage() {
                 <div className="module-head">
                   <h4 className="module-title">{t("dashboard.modules.alerts.title")}</h4>
                   <span className="module-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="22"
+                      height="22"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <path d="M12 2a6 6 0 0 1 6 6v4l2 3H4l2-3V8a6 6 0 0 1 6-6z" />
                       <path d="M9 18a3 3 0 0 0 6 0" />
                     </svg>
@@ -407,7 +456,12 @@ export default function DashboardPage() {
                   <Link
                     href="/notifications?view=rules"
                     className="btn-secondary"
-                    onClick={() => trackEvent("dashboard_alerts_open", { area: "dashboard", source: "alerts_card" })}
+                    onClick={() =>
+                      trackEvent("dashboard_alerts_open", {
+                        area: "dashboard",
+                        source: "alerts_card",
+                      })
+                    }
                   >
                     {t("dashboard.modules.alerts.primary")}
                   </Link>
@@ -424,7 +478,11 @@ export default function DashboardPage() {
       </section>
 
       {dashboardHint.visible ? (
-        <section className="notice notice-compact notice-info section-gap" role="status" aria-live="polite">
+        <section
+          className="notice notice-compact notice-info section-gap"
+          role="status"
+          aria-live="polite"
+        >
           <div>
             <strong>{t("dashboard.ftue.title")}</strong>
             <p>{t("dashboard.ftue.body")}</p>
@@ -438,7 +496,11 @@ export default function DashboardPage() {
       ) : null}
 
       {backendBanner ? (
-        <section className={`notice notice-compact notice-${backendBanner.severity} section-gap`} role="status" aria-live="polite">
+        <section
+          className={`notice notice-compact notice-${backendBanner.severity} section-gap`}
+          role="status"
+          aria-live="polite"
+        >
           <div>
             <strong>{t("dashboard.banner.title")}</strong>
             <p>{backendBanner.message}</p>
@@ -459,41 +521,57 @@ export default function DashboardPage() {
         </div>
         <div className={communityStyles.discoveryGrid}>
           <CommunityCorridorsPanel />
-        <article className={`module-card module-card-opportunity ${communityStyles.opportunityCard}`}>
-          <div className="module-head">
-            <h4 className="module-title">{t("dashboard.opportunities.title")}</h4>
-            <span className="module-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2l3 7 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" />
-              </svg>
-            </span>
-          </div>
-          {hasPersonalSuggestions && topSuggestion ? (
-            <div className="suggestions-card-content">
-              <div className="suggestion-highlight">
-                <strong>{topSuggestion.title}</strong>
-                <p>{topSuggestion.detail}</p>
-                <span className="suggestion-badge">
-                  {t(`dashboard.suggestions.badgeType.${topSuggestion.type}` as const)}
-                </span>
+          <article
+            className={`module-card module-card-opportunity ${communityStyles.opportunityCard}`}
+          >
+            <div className="module-head">
+              <h4 className="module-title">{t("dashboard.opportunities.title")}</h4>
+              <span className="module-icon" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="22"
+                  height="22"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 2l3 7 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" />
+                </svg>
+              </span>
+            </div>
+            {hasPersonalSuggestions && topSuggestion ? (
+              <div className="suggestions-card-content">
+                <div className="suggestion-highlight">
+                  <strong>{topSuggestion.title}</strong>
+                  <p>{topSuggestion.detail}</p>
+                  <span className="suggestion-badge">
+                    {t(`dashboard.suggestions.badgeType.${topSuggestion.type}` as const)}
+                  </span>
+                </div>
               </div>
+            ) : (
+              <div className="suggestion-empty">
+                <strong>{t("dashboard.opportunities.emptyTitle")}</strong>
+                <p>{t("dashboard.opportunities.emptyBody")}</p>
+              </div>
+            )}
+            <div className="module-actions">
+              <Link
+                href="/recomendaciones"
+                className="btn-secondary"
+                onClick={() =>
+                  trackEvent("dashboard_click_suggestions", {
+                    area: "dashboard",
+                    source: "opportunities_card",
+                  })
+                }
+              >
+                {t("dashboard.opportunities.cta")}
+              </Link>
             </div>
-          ) : (
-            <div className="suggestion-empty">
-              <strong>{t("dashboard.opportunities.emptyTitle")}</strong>
-              <p>{t("dashboard.opportunities.emptyBody")}</p>
-            </div>
-          )}
-          <div className="module-actions">
-            <Link
-              href="/recomendaciones"
-              className="btn-secondary"
-              onClick={() => trackEvent("dashboard_click_suggestions", { area: "dashboard", source: "opportunities_card" })}
-            >
-              {t("dashboard.opportunities.cta")}
-            </Link>
-          </div>
-        </article>
+          </article>
         </div>
       </section>
 
@@ -517,7 +595,10 @@ export default function DashboardPage() {
         </ul>
       </section>
 
-      <section className={`notes-board${notesCollapsed ? " is-collapsed" : ""}`} aria-label={t("dashboard.notes.boardLabel")}>
+      <section
+        className={`notes-board${notesCollapsed ? " is-collapsed" : ""}`}
+        aria-label={t("dashboard.notes.boardLabel")}
+      >
         <div className="notes-board-header">
           <div>
             <h3>{t("dashboard.notes.headerTitle")}</h3>
@@ -527,7 +608,11 @@ export default function DashboardPage() {
             <button className="btn-ghost btn-compact" type="button" onClick={startNewNote}>
               {t("dashboard.notes.newNote")}
             </button>
-            <button className="btn-ghost btn-compact" type="button" onClick={() => setNotesCollapsed((prev) => !prev)}>
+            <button
+              className="btn-ghost btn-compact"
+              type="button"
+              onClick={() => setNotesCollapsed((prev) => !prev)}
+            >
               {notesCollapsed ? t("dashboard.notes.expand") : t("dashboard.notes.collapse")}
             </button>
           </div>
@@ -543,7 +628,9 @@ export default function DashboardPage() {
                     autoComplete="off"
                     type="text"
                     value={noteDraft.title}
-                    onChange={(event) => setNoteDraft((prev) => ({ ...prev, title: event.target.value }))}
+                    onChange={(event) =>
+                      setNoteDraft((prev) => ({ ...prev, title: event.target.value }))
+                    }
                     placeholder={t("dashboard.notes.placeholderTitle")}
                   />
                 </label>
@@ -554,16 +641,24 @@ export default function DashboardPage() {
                     autoComplete="off"
                     rows={6}
                     value={noteDraft.body}
-                    onChange={(event) => setNoteDraft((prev) => ({ ...prev, body: event.target.value }))}
+                    onChange={(event) =>
+                      setNoteDraft((prev) => ({ ...prev, body: event.target.value }))
+                    }
                     placeholder={t("dashboard.notes.placeholderContent")}
                   />
                 </label>
                 <div className="notes-actions">
                   <button className="btn-primary" type="button" onClick={handleSaveNote}>
-                    {noteActiveId ? t("dashboard.notes.actions.saveChanges") : t("dashboard.notes.actions.save")}
+                    {noteActiveId
+                      ? t("dashboard.notes.actions.saveChanges")
+                      : t("dashboard.notes.actions.save")}
                   </button>
                   {noteActiveId ? (
-                    <button className="btn-danger" type="button" onClick={() => handleDeleteNote(noteActiveId)}>
+                    <button
+                      className="btn-danger"
+                      type="button"
+                      onClick={() => handleDeleteNote(noteActiveId)}
+                    >
                       {t("dashboard.notes.actions.delete")}
                     </button>
                   ) : null}
@@ -612,5 +707,3 @@ export default function DashboardPage() {
     </main>
   );
 }
-
-

@@ -70,7 +70,8 @@ export function HotelSearchPanel({
   const areaSuggestionListId = useId();
   const [areaSuggestionsOpen, setAreaSuggestionsOpen] = useState(true);
   const [activeAreaSuggestionIndex, setActiveAreaSuggestionIndex] = useState(-1);
-  const showAreaSuggestions = searchMode === "area" && areaSuggestionsOpen && areaSuggestions.length > 0;
+  const showAreaSuggestions =
+    searchMode === "area" && areaSuggestionsOpen && areaSuggestions.length > 0;
 
   // Debounced area resolve
   useEffect(() => {
@@ -304,7 +305,12 @@ export function HotelSearchPanel({
         ) : null}
 
         <div className="action-row section-gap-sm">
-          <button type="submit" className="btn-primary" data-testid="hotel-search-submit" disabled={disabled || !canSearch}>
+          <button
+            type="submit"
+            className="btn-primary"
+            data-testid="hotel-search-submit"
+            disabled={disabled || !canSearch}
+          >
             {loading ? t("shared.states.loading") : t("hotels.actions.search")}
           </button>
           <button type="button" className="btn-secondary" onClick={onIngest} disabled={disabled}>
@@ -399,9 +405,13 @@ export function HotelResultCard({
       <button type="button" className="hotel-result-main" onClick={() => onSelect(hotel.id)}>
         <div>
           <h3>{hotel.canonical_name}</h3>
-          <p>{hotel.city}, {hotel.country_code}</p>
+          <p>
+            {hotel.city}, {hotel.country_code}
+          </p>
         </div>
-        <span className="status-pill info">{hotel.stars ? `${hotel.stars}\u2605` : t("hotels.card.noStars")}</span>
+        <span className="status-pill info">
+          {hotel.stars ? `${hotel.stars}\u2605` : t("hotels.card.noStars")}
+        </span>
       </button>
       <div className="row-actions hotel-result-actions">
         {onTrackPrice ? (
@@ -425,7 +435,11 @@ export function HotelResultCard({
           disabled={watchlistBusy}
           aria-pressed={isInWatchlist}
         >
-          {watchlistBusy ? t("shared.states.loading") : isInWatchlist ? t("hotels.actions.inWatchlist") : t("hotels.actions.addToWatchlist")}
+          {watchlistBusy
+            ? t("shared.states.loading")
+            : isInWatchlist
+              ? t("hotels.actions.inWatchlist")
+              : t("hotels.actions.addToWatchlist")}
         </button>
       </div>
     </article>

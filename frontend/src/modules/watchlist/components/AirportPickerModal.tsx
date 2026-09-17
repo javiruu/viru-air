@@ -66,9 +66,8 @@ export function AirportPickerModal({
 
   if (!activePicker) return null;
 
-  const displayAirports = searchQuery.trim().length >= 2 
-    ? searchResults 
-    : (selectedCountry?.airports || []);
+  const displayAirports =
+    searchQuery.trim().length >= 2 ? searchResults : selectedCountry?.airports || [];
 
   return (
     <div className="airport-modal-overlay" onClick={onClose}>
@@ -110,17 +109,22 @@ export function AirportPickerModal({
                   A cualquier lugar
                 </button>
               )}
-              <button type="button" className="modal-close" aria-label="Cerrar selector de aeropuerto" onClick={onClose}>
+              <button
+                type="button"
+                className="modal-close"
+                aria-label="Cerrar selector de aeropuerto"
+                onClick={onClose}
+              >
                 X
               </button>
             </div>
           </div>
 
           <div className="airport-list">
-            <input 
-              type="text" 
-              className="ui-input" 
-              placeholder="Buscar aeropuerto o ciudad..." 
+            <input
+              type="text"
+              className="ui-input"
+              placeholder="Buscar aeropuerto o ciudad..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{ marginBottom: "1rem" }}
@@ -129,21 +133,30 @@ export function AirportPickerModal({
             {!isSearching && displayAirports.length === 0 && searchQuery.trim().length >= 2 && (
               <p className="muted">No se encontraron aeropuertos.</p>
             )}
-            {!isSearching && displayAirports.map((airport) => {
-              const allowed =
-                activePicker === "origin"
-                  ? compatibleOrigins.length === 0 || compatibleOrigins.includes(airport.iata)
-                  : compatibleDestinations.length === 0 || compatibleDestinations.includes(airport.iata);
+            {!isSearching &&
+              displayAirports.map((airport) => {
+                const allowed =
+                  activePicker === "origin"
+                    ? compatibleOrigins.length === 0 || compatibleOrigins.includes(airport.iata)
+                    : compatibleDestinations.length === 0 ||
+                      compatibleDestinations.includes(airport.iata);
 
-              return (
-                <button key={airport.iata} type="button" onClick={() => onSelectAirport(airport.iata)} disabled={!allowed}>
-                  {airport.name} <span>{airport.iata}</span>
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={airport.iata}
+                    type="button"
+                    onClick={() => onSelectAirport(airport.iata)}
+                    disabled={!allowed}
+                  >
+                    {airport.name} <span>{airport.iata}</span>
+                  </button>
+                );
+              })}
           </div>
 
-          <p className="muted section-gap-sm">La compatibilidad se valida en tiempo real segun rutas disponibles.</p>
+          <p className="muted section-gap-sm">
+            La compatibilidad se valida en tiempo real segun rutas disponibles.
+          </p>
         </div>
       </section>
     </div>

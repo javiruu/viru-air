@@ -13,7 +13,8 @@ import {
   useState,
 } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import maplibregl, { type LngLatBoundsLike, type LngLatLike, type Map as MapLibreMap } from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
+import type { LngLatBoundsLike, LngLatLike, Map as MapLibreMap } from "maplibre-gl";
 
 type MapStyleSet = {
   light: string;
@@ -70,7 +71,7 @@ function createRendererHost() {
 }
 
 function renderInHost(root: Root, children: ReactNode) {
-  root.render(<>{children}</>);
+  root.render(children);
 }
 
 function runWhenMapStyleReady(map: MapLibreMap, action: () => void) {
@@ -89,14 +90,29 @@ function useMapContext(): MapContextValue {
   return context;
 }
 
-export const Map = forwardRef<MapRef, MapProps>(function Map(
-  { center = [-3.7, 40.4], zoom = 4, styles = DEFAULT_STYLES, viewport, onViewportChange, onReady, fadeDuration = 0, className, children },
+export const Map = forwardRef<MapRef, MapProps>(function ViruMap(
+  {
+    center = [-3.7, 40.4],
+    zoom = 4,
+    styles = DEFAULT_STYLES,
+    viewport,
+    onViewportChange,
+    onReady,
+    fadeDuration = 0,
+    className,
+    children,
+  },
   ref,
 ) {
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const [readyMap, setReadyMap] = useState<MapLibreMap | null>(null);
-  const activeThemeRef = useRef<"light" | "dark">(typeof document !== "undefined" && document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light");
+  const activeThemeRef = useRef<"light" | "dark">(
+    typeof document !== "undefined" &&
+      document.documentElement.getAttribute("data-theme") === "dark"
+      ? "dark"
+      : "light",
+  );
   const currentStyles = useMemo(() => styles, [styles]);
 
   useEffect(() => {
@@ -159,12 +175,16 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
   useEffect(() => {
     if (!readyMap) return;
     const observer = new MutationObserver(() => {
-      const nextTheme = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+      const nextTheme =
+        document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
       if (nextTheme === activeThemeRef.current) return;
       activeThemeRef.current = nextTheme;
       readyMap.setStyle(nextTheme === "dark" ? currentStyles.dark : currentStyles.light);
     });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
     return () => observer.disconnect();
   }, [readyMap, currentStyles]);
 
@@ -208,7 +228,11 @@ export function MapControls({ showNavigation = true }: MapControlsProps) {
   const { map } = useMapContext();
   useEffect(() => {
     if (!map || !showNavigation) return;
-    const nav = new maplibregl.NavigationControl({ visualizePitch: true, showCompass: true, showZoom: true });
+    const nav = new maplibregl.NavigationControl({
+      visualizePitch: true,
+      showCompass: true,
+      showZoom: true,
+    });
     map.addControl(nav, "top-right");
     return () => {
       try {
@@ -257,7 +281,9 @@ export function MapRoute({
     const addOrUpdate = () => {
       const data: GeoJSON.FeatureCollection = {
         type: "FeatureCollection",
-        features: [{ type: "Feature", geometry: { type: "LineString", coordinates }, properties: {} }],
+        features: [
+          { type: "Feature", geometry: { type: "LineString", coordinates }, properties: {} },
+        ],
       };
       const existing = map.getSource(sourceId) as maplibregl.GeoJSONSource | undefined;
       if (existing) {
@@ -318,7 +344,20 @@ export function MapRoute({
         // During fast teardown the style can be disposed before this cleanup executes.
       }
     };
-  }, [color, coordinates, dashArray, interactive, layerId, map, onClick, onMouseEnter, onMouseLeave, opacity, sourceId, width]);
+  }, [
+    color,
+    coordinates,
+    dashArray,
+    interactive,
+    layerId,
+    map,
+    onClick,
+    onMouseEnter,
+    onMouseLeave,
+    opacity,
+    sourceId,
+    width,
+  ]);
 
   return null;
 }
@@ -344,7 +383,9 @@ export function MapMarker({ longitude, latitude, children, onClick }: MapMarkerP
     if (onClick) {
       host.element.addEventListener("click", onClick);
     }
-    const marker = new maplibregl.Marker({ element: host.element }).setLngLat([longitude, latitude]).addTo(map);
+    const marker = new maplibregl.Marker({ element: host.element })
+      .setLngLat([longitude, latitude])
+      .addTo(map);
     markerRef.current = marker;
     return () => {
       if (onClick) {

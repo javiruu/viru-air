@@ -4,11 +4,13 @@
     policies: "Políticas",
     heroEyebrow: "Cabina personal de compra",
     heroTitle: "Deja de abrir diez pestañas para decidir un vuelo.",
-    heroClaim: "Viru te dice qué ruta vigilar, cómo se mueve el precio y cuándo merece la pena actuar.",
+    heroClaim:
+      "Viru te dice qué ruta vigilar, cómo se mueve el precio y cuándo merece la pena actuar.",
     heroBody:
       "No es un buscador más. Es una cabina cálida y precisa para seguir rutas, leer histórico, detectar señales reales y entrar a comprar con contexto en vez de con prisa.",
     heroPointsLabel: "Diferenciales de Viru Air",
-    heroPointQuickSearch: "Abre una ruta y su contexto útil en segundos, sin empezar siempre desde cero.",
+    heroPointQuickSearch:
+      "Abre una ruta y su contexto útil en segundos, sin empezar siempre desde cero.",
     heroPointWatchlists: "Guarda solo lo importante y vuelve a ello con histórico, foco y memoria.",
     heroPointPulse: "Lee la tendencia del precio con pulso e histórico, no con una cifra aislada.",
     heroPointAlerts: "Recibe alertas accionables cuando la ruta de verdad cambia de estado.",
@@ -41,9 +43,11 @@
     metricNoSmokeLabel: "decisión apoyada en datos legibles",
     proofEyebrow: "Por qué confiar",
     proofTitle: "La landing no te enseña widgets: te enseña cómo decide mejor una ruta.",
-    proofBody: "Viru ordena búsqueda, seguimiento, histórico y alerta en una sola lectura para que la decisión de compra llegue antes y con menos fricción.",
+    proofBody:
+      "Viru ordena búsqueda, seguimiento, histórico y alerta en una sola lectura para que la decisión de compra llegue antes y con menos fricción.",
     signalTitle: "Ruta en foco",
-    signalSubtitle: "Una escena de decisión con tendencia, ventana útil y señales suficientes para no comprar a ciegas.",
+    signalSubtitle:
+      "Una escena de decisión con tendencia, ventana útil y señales suficientes para no comprar a ciegas.",
     signalPill: "Radar activo",
     signalRouteLabel: "Ruta en foco",
     signalRouteMeta: "Ryanair · actualización continua",
@@ -54,18 +58,23 @@
     signalSource: "Fuente: precio observado",
     signalUpdated: "Actualizado hace 18m",
     capMainTitle: "Así pasa una ruta de idea suelta a decisión clara.",
-    capMainSubtitle: "Primero detectas, luego vigilas, después entiendes la tendencia y al final compras sin romper el hilo mental.",
+    capMainSubtitle:
+      "Primero detectas, luego vigilas, después entiendes la tendencia y al final compras sin romper el hilo mental.",
     capMainPill: "Flujo Viru",
     whyTitle: "Why Viru",
     whySubtitle: "Micro-beneficios para decidir rápido sin perder contexto.",
     whyVisibility: "Radar de ruta",
-    whyVisibilityBody: "Ves rápido qué ruta merece seguimiento antes de perder tiempo comparando por intuición.",
+    whyVisibilityBody:
+      "Ves rápido qué ruta merece seguimiento antes de perder tiempo comparando por intuición.",
     whyAlerts: "Alertas con criterio",
-    whyAlertsBody: "Las alertas no interrumpen por deporte: aparecen cuando hay un cambio que puede mover tu decisión.",
+    whyAlertsBody:
+      "Las alertas no interrumpen por deporte: aparecen cuando hay un cambio que puede mover tu decisión.",
     whyCompare: "Pulso + histórico",
-    whyCompareBody: "No compras mirando solo el precio actual; compras entendiendo si la ruta se está abriendo o cerrando.",
+    whyCompareBody:
+      "No compras mirando solo el precio actual; compras entendiendo si la ruta se está abriendo o cerrando.",
     whyQuickSearch: "Entrada rápida",
-    whyQuickSearchBody: "Empieza por buscar, pero termina con una lectura completa y accionable de la ruta.",
+    whyQuickSearchBody:
+      "Empieza por buscar, pero termina con una lectura completa y accionable de la ruta.",
     pulseTitle: "Vista de pulso",
     pulseSubtitle: "KPIs claros y estados semánticos antes de entrar al panel.",
     pulseEdition: "Edición semanal",
@@ -88,20 +97,25 @@
     stepAlerts: "Activa alertas",
     stepAlertsBody: "Recibe umbrales claros y con frescura visible para saber si toca reaccionar.",
     stepBuy: "Compra en Ryanair",
-    stepBuyBody: "Salta a comprar cuando el contexto acompaña, no solo cuando ves una cifra que te tienta.",
+    stepBuyBody:
+      "Salta a comprar cuando el contexto acompaña, no solo cuando ves una cifra que te tienta.",
     closeEyebrow: "Cuando quieras dejar de improvisar",
     closeTitle: "Activa tu radar y compra con mejor timing.",
-    closeBody: "Guarda rutas, sigue señales y vuelve a una cabina que recuerda lo importante por ti hasta que aparezca una oportunidad real.",
+    closeBody:
+      "Guarda rutas, sigue señales y vuelve a una cabina que recuerda lo importante por ti hasta que aparezca una oportunidad real.",
     closeProofLabel: "Razones finales para usar Viru",
     closeProofFreshness: "Sabes cuándo se comprobó el precio, no solo cuánto marca.",
     closeProofContext: "Ves tendencia, histórico y foco de ruta en una sola lectura.",
     closeProofTiming: "Entras a comprar cuando la ruta acompaña, no por cansancio.",
     gridWatch: "Seguimiento claro",
-    gridWatchBody: "Rutas activas, señales y memoria de precio con densidad útil y cero sensación de plantilla genérica.",
+    gridWatchBody:
+      "Rutas activas, señales y memoria de precio con densidad útil y cero sensación de plantilla genérica.",
     gridCompare: "Comparativa que ayuda",
-    gridCompareBody: "Histórico, calendario y puntos de inflexión para decidir con más criterio que un buscador plano.",
+    gridCompareBody:
+      "Histórico, calendario y puntos de inflexión para decidir con más criterio que un buscador plano.",
     gridSearch: "Búsqueda que aterriza",
-    gridSearchBody: "Quick Search abre la puerta, pero la decisión se cocina con contexto, no con prisas.",
+    gridSearchBody:
+      "Quick Search abre la puerta, pero la decisión se cocina con contexto, no con prisas.",
     footerProduct: "Producto",
     footerSupport: "Soporte",
     footerHelp: "Centro de ayuda",
@@ -134,8 +148,10 @@
     passwordMin: "La contraseña debe tener al menos 8 caracteres.",
     loginAction: "Iniciar sesión",
     loginError: "No pudimos iniciar sesión. Revisa tus credenciales.",
-    loginNetworkError: "No pudimos conectar con el servidor. Revisa la conexión o configuración (CORS/API) e inténtalo de nuevo.",
-    loginServerError: "El servidor no ha podido procesar el inicio de sesión. Revisa el backend local e inténtalo de nuevo.",
+    loginNetworkError:
+      "No pudimos conectar con el servidor. Revisa la conexión o configuración (CORS/API) e inténtalo de nuevo.",
+    loginServerError:
+      "El servidor no ha podido procesar el inicio de sesión. Revisa el backend local e inténtalo de nuevo.",
     loginSuccess: "Sesión iniciada.",
     loginSocialContinue: "Continuar con",
     loginOr: "o",
@@ -194,18 +210,22 @@ export const publicEn = {
     policies: "Policies",
     heroEyebrow: "Personal booking cockpit",
     heroTitle: "Stop opening ten tabs just to decide on one flight.",
-    heroClaim: "Viru shows what route to watch, how price is moving, and when it is actually worth acting.",
+    heroClaim:
+      "Viru shows what route to watch, how price is moving, and when it is actually worth acting.",
     heroBody:
       "This is not another flight search. It is a warm, precise cockpit for tracking routes, reading history, spotting real signals, and booking with context instead of hurry.",
     heroPointsLabel: "Viru Air differentiators",
-    heroPointQuickSearch: "Open a route and its useful context in seconds, without starting from scratch every time.",
-    heroPointWatchlists: "Save only what matters and come back to it with history, focus, and memory.",
+    heroPointQuickSearch:
+      "Open a route and its useful context in seconds, without starting from scratch every time.",
+    heroPointWatchlists:
+      "Save only what matters and come back to it with history, focus, and memory.",
     heroPointPulse: "Read fare trend through pulse plus history, not a single isolated number.",
     heroPointAlerts: "Receive alerts that matter when a route truly changes state.",
     ctaEnter: "Open the radar",
     ctaNoAccount: "No account yet?",
     ctaCreate: "Create account",
-    ctaSupport: "No smoke, no theatrical promises: signals, context, and timing you can act on calmly.",
+    ctaSupport:
+      "No smoke, no theatrical promises: signals, context, and timing you can act on calmly.",
     heroTrustLabel: "Viru value guarantees",
     heroTrustFreshness: "Visible freshness, not opaque intuition.",
     heroTrustNoNoise: "Less noise, more routes actually worth attention.",
@@ -231,9 +251,11 @@ export const publicEn = {
     metricNoSmokeLabel: "decision backed by readable data",
     proofEyebrow: "Why trust it",
     proofTitle: "This landing does not show widgets. It shows how a route gets decided better.",
-    proofBody: "Viru brings search, tracking, history, and alerts into one read so booking decisions arrive earlier and with less friction.",
+    proofBody:
+      "Viru brings search, tracking, history, and alerts into one read so booking decisions arrive earlier and with less friction.",
     signalTitle: "Route in focus",
-    signalSubtitle: "One decision scene with trend, useful window, and enough signal to avoid booking blind.",
+    signalSubtitle:
+      "One decision scene with trend, useful window, and enough signal to avoid booking blind.",
     signalPill: "Radar active",
     signalRouteLabel: "Route in focus",
     signalRouteMeta: "Ryanair · continuous update",
@@ -244,16 +266,20 @@ export const publicEn = {
     signalSource: "Source: observed price",
     signalUpdated: "Updated 18m ago",
     capMainTitle: "This is how a loose route becomes a clear decision.",
-    capMainSubtitle: "First you detect it, then you track it, then you understand the trend, and finally you book without breaking your mental thread.",
+    capMainSubtitle:
+      "First you detect it, then you track it, then you understand the trend, and finally you book without breaking your mental thread.",
     capMainPill: "Viru flow",
     whyTitle: "Why Viru",
     whySubtitle: "Micro-benefits to decide fast without losing context.",
     whyVisibility: "Route radar",
-    whyVisibilityBody: "You quickly see which route deserves attention before wasting time comparing by instinct.",
+    whyVisibilityBody:
+      "You quickly see which route deserves attention before wasting time comparing by instinct.",
     whyAlerts: "Alerts with judgment",
-    whyAlertsBody: "Alerts do not interrupt for sport; they appear when something can actually move your decision.",
+    whyAlertsBody:
+      "Alerts do not interrupt for sport; they appear when something can actually move your decision.",
     whyCompare: "Pulse + history",
-    whyCompareBody: "You do not buy by looking only at the current fare; you buy by reading whether the route is opening or closing.",
+    whyCompareBody:
+      "You do not buy by looking only at the current fare; you buy by reading whether the route is opening or closing.",
     whyQuickSearch: "Fast entry point",
     whyQuickSearchBody: "Start with search, but end with a full and actionable route read.",
     pulseTitle: "Pulse view",
@@ -272,26 +298,32 @@ export const publicEn = {
     stepsTitle: "From radar to booking",
     stepsSubtitle: "Four steps to turn repetitive searching into a calmer decision.",
     stepRoute: "Register your route",
-    stepRouteBody: "Open origin, destination, and date without losing focus on the real opportunity.",
+    stepRouteBody:
+      "Open origin, destination, and date without losing focus on the real opportunity.",
     stepTrends: "Watch trends",
     stepTrendsBody: "Read history and pulse before assuming the current fare is a good one.",
     stepAlerts: "Activate alerts",
     stepAlertsBody: "Get clear thresholds with visible freshness so you know whether to react.",
     stepBuy: "Buy on Ryanair",
-    stepBuyBody: "Jump to booking when the context supports it, not just when a tempting number appears.",
+    stepBuyBody:
+      "Jump to booking when the context supports it, not just when a tempting number appears.",
     closeEyebrow: "When you want to stop improvising",
     closeTitle: "Switch on your radar and book with better timing.",
-    closeBody: "Save routes, follow signals, and come back to a cockpit that remembers what matters until a real opening appears.",
+    closeBody:
+      "Save routes, follow signals, and come back to a cockpit that remembers what matters until a real opening appears.",
     closeProofLabel: "Final reasons to use Viru",
     closeProofFreshness: "You know when the price was checked, not only what it says.",
     closeProofContext: "You see trend, history, and route focus in one read.",
     closeProofTiming: "You enter to book when the route supports it, not because you are tired.",
     gridWatch: "Clear tracking",
-    gridWatchBody: "Active routes, signals, and fare memory with useful density and zero template feeling.",
+    gridWatchBody:
+      "Active routes, signals, and fare memory with useful density and zero template feeling.",
     gridCompare: "Comparison that helps",
-    gridCompareBody: "History, calendar, and inflection points to decide with more judgment than a flat search page.",
+    gridCompareBody:
+      "History, calendar, and inflection points to decide with more judgment than a flat search page.",
     gridSearch: "Search that lands",
-    gridSearchBody: "Quick Search opens the door, but the decision is built with context, not hurry.",
+    gridSearchBody:
+      "Quick Search opens the door, but the decision is built with context, not hurry.",
     footerProduct: "Product",
     footerSupport: "Support",
     footerHelp: "Help center",
@@ -324,8 +356,10 @@ export const publicEn = {
     passwordMin: "Password must be at least 8 characters.",
     loginAction: "Sign in",
     loginError: "We couldn't sign you in. Check your credentials and try again.",
-    loginNetworkError: "We couldn't reach the server. Check connection or config (CORS/API) and try again.",
-    loginServerError: "The server could not process sign-in. Check the local backend and try again.",
+    loginNetworkError:
+      "We couldn't reach the server. Check connection or config (CORS/API) and try again.",
+    loginServerError:
+      "The server could not process sign-in. Check the local backend and try again.",
     loginSuccess: "Signed in.",
     loginSocialContinue: "Continue with",
     loginOr: "or",
@@ -377,4 +411,3 @@ export const publicEn = {
     toIndex: "Index",
   },
 };
-

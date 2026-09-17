@@ -1,9 +1,11 @@
-import React from "react";
-
 import { Car, Plane, TrainFront } from "lucide-react";
 
 import { useI18n } from "@/i18n";
-import type { DoorToDoorFlight, DoorToDoorLeg, DoorToDoorOption } from "@/modules/door-to-door/types";
+import type {
+  DoorToDoorFlight,
+  DoorToDoorLeg,
+  DoorToDoorOption,
+} from "@/modules/door-to-door/types";
 
 function resolveModeIcon(mode: DoorToDoorLeg["mode"]) {
   if (mode === "flight") return <Plane size={15} aria-hidden="true" />;
@@ -44,15 +46,11 @@ export function DoorToDoorRouteVisual({
   // Filter out ground legs whose .from duplicates the previous flight leg's .to.
   // The arrival airport is already shown inside the flight node;
   // the final destination node at the end of the trace handles showing the endpoint.
-  const visibleNodes = legs.reduce<{ leg: typeof legs[number]; index: number }[]>(
+  const visibleNodes = legs.reduce<{ leg: (typeof legs)[number]; index: number }[]>(
     (acc, leg, idx) => {
       const prev = acc[acc.length - 1];
       const prevLeg = prev?.leg;
-      if (
-        prevLeg?.type === "flight" &&
-        leg.type === "ground" &&
-        leg.from === prevLeg.to
-      ) {
+      if (prevLeg?.type === "flight" && leg.type === "ground" && leg.from === prevLeg.to) {
         // Skip entirely — flight node already showed the arrival airport,
         // and the final destination node will show the real endpoint.
         return acc;
@@ -60,7 +58,7 @@ export function DoorToDoorRouteVisual({
       acc.push({ leg, index: idx });
       return acc;
     },
-    []
+    [],
   );
 
   return (
@@ -80,9 +78,7 @@ export function DoorToDoorRouteVisual({
               {visualIdx > 0 ? (
                 <span className="d2d-route-connector" aria-hidden="true">
                   <span className="d2d-route-connector-line" />
-                  <span className="d2d-route-connector-icon">
-                    {resolveModeIcon(leg.mode)}
-                  </span>
+                  <span className="d2d-route-connector-icon">{resolveModeIcon(leg.mode)}</span>
                 </span>
               ) : null}
 
@@ -114,7 +110,9 @@ export function DoorToDoorRouteVisual({
           </span>
           <div className="d2d-route-node is-arrival-node">
             <span className="d2d-route-iata">
-              <strong>{legs[legs.length - 1]?.to || t("doorToDoor.routeVisual.destination")}</strong>
+              <strong>
+                {legs[legs.length - 1]?.to || t("doorToDoor.routeVisual.destination")}
+              </strong>
             </span>
           </div>
         </li>

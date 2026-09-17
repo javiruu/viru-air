@@ -8,12 +8,7 @@ export const FARE_EXTRA_KINDS = [
   "flexible_ticket",
 ] as const;
 
-export const FARE_AIRLINE_IDS = [
-  "ryanair",
-  "vueling",
-  "wizzair",
-  "easyjet",
-] as const;
+export const FARE_AIRLINE_IDS = ["ryanair", "vueling", "wizzair", "easyjet"] as const;
 
 export type FareExtraKind = (typeof FARE_EXTRA_KINDS)[number];
 export type FareAirlineId = (typeof FARE_AIRLINE_IDS)[number];
@@ -184,9 +179,11 @@ function findFareAirline(value: string): FareAirlineId | null {
     candidate.aliases.some((alias) => {
       const normalizedAlias = normalizeAirlineToken(alias);
       const compactAlias = normalizedAlias.replace(/\s+/g, "");
-      return normalized === normalizedAlias
-        || normalized.includes(normalizedAlias)
-        || compact.includes(compactAlias);
+      return (
+        normalized === normalizedAlias ||
+        normalized.includes(normalizedAlias) ||
+        compact.includes(compactAlias)
+      );
     }),
   );
   return tariff?.id ?? null;
@@ -258,9 +255,10 @@ export function calculateFareExtrasImpact(
   );
   const travelers = normalizeFareTravelers(profile.travelers);
   const billableFlights = Math.max(1, Math.min(8, Math.trunc(flightCount)));
-  const matchedOffers = tariff && tariff.currency === currency.toUpperCase()
-    ? tariff.offers.filter((offer) => offer.covers.some((kind) => selectedKinds.has(kind)))
-    : [];
+  const matchedOffers =
+    tariff && tariff.currency === currency.toUpperCase()
+      ? tariff.offers.filter((offer) => offer.covers.some((kind) => selectedKinds.has(kind)))
+      : [];
   const pricedKinds = new Set<FareExtraKind>();
   const unavailableKinds = new Set<FareExtraKind>();
   let knownExtraTotal = 0;
@@ -268,9 +266,10 @@ export function calculateFareExtrasImpact(
   for (const offer of matchedOffers) {
     const selectedOfferKinds = offer.covers.filter((kind) => selectedKinds.has(kind));
     const unitCount = offer.billing_unit === "per_flight" ? billableFlights : 1;
-    const maximumTotal = offer.maximum_per_traveler_per_unit === null
-      ? null
-      : roundMoney(offer.maximum_per_traveler_per_unit * unitCount * travelers);
+    const maximumTotal =
+      offer.maximum_per_traveler_per_unit === null
+        ? null
+        : roundMoney(offer.maximum_per_traveler_per_unit * unitCount * travelers);
     for (const kind of selectedOfferKinds) {
       pricedKinds.add(kind);
       if (maximumTotal === null) unavailableKinds.add(kind);
@@ -311,9 +310,10 @@ export function calculateComparableFare(
     profile.extras.filter((extra) => extra.selected).map((extra) => extra.kind),
   );
   const pricedKinds = new Set<FareExtraKind>();
-  const matchedOffers = tariff && tariff.currency === currency.toUpperCase()
-    ? tariff.offers.filter((offer) => offer.covers.some((kind) => selectedKinds.has(kind)))
-    : [];
+  const matchedOffers =
+    tariff && tariff.currency === currency.toUpperCase()
+      ? tariff.offers.filter((offer) => offer.covers.some((kind) => selectedKinds.has(kind)))
+      : [];
   const billableFlights = Math.max(1, Math.min(8, Math.trunc(flightCount)));
 
   let minimumPerTraveler = 0;
@@ -334,18 +334,17 @@ export function calculateComparableFare(
 
   const unavailableKinds = [...selectedKinds].filter((kind) => !pricedKinds.has(kind));
   const extrasMinTotal = roundMoney(minimumPerTraveler * profile.travelers);
-  const extrasMaxTotal = hasOpenMaximum || unavailableKinds.length > 0
-    ? null
-    : roundMoney(maximumPerTraveler * profile.travelers);
+  const extrasMaxTotal =
+    hasOpenMaximum || unavailableKinds.length > 0
+      ? null
+      : roundMoney(maximumPerTraveler * profile.travelers);
 
   return {
     base_total: baseTotal,
     extras_min_total: extrasMinTotal,
     extras_max_total: extrasMaxTotal,
     comparable_min_total: roundMoney(baseTotal + extrasMinTotal),
-    comparable_max_total: extrasMaxTotal === null
-      ? null
-      : roundMoney(baseTotal + extrasMaxTotal),
+    comparable_max_total: extrasMaxTotal === null ? null : roundMoney(baseTotal + extrasMaxTotal),
     is_complete: unavailableKinds.length === 0,
     unavailable_kinds: unavailableKinds,
     airline_id: airlineId,

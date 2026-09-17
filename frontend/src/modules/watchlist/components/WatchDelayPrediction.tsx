@@ -25,12 +25,12 @@ export function WatchDelayPrediction({ prediction }: WatchDelayPredictionProps) 
 
   const incomingAircraft = prediction.incoming_aircraft;
   const incomingFlight =
-    incomingAircraft.flight_number
-    ?? `${incomingAircraft.origin_iata} → ${incomingAircraft.destination_iata}`;
+    incomingAircraft.flight_number ??
+    `${incomingAircraft.origin_iata} → ${incomingAircraft.destination_iata}`;
   const incomingArrival =
-    incomingAircraft.actual_arrival_at
-    ?? incomingAircraft.estimated_arrival_at
-    ?? incomingAircraft.scheduled_arrival_at;
+    incomingAircraft.actual_arrival_at ??
+    incomingAircraft.estimated_arrival_at ??
+    incomingAircraft.scheduled_arrival_at;
 
   return (
     <aside
@@ -74,7 +74,9 @@ export function WatchDelayPrediction({ prediction }: WatchDelayPredictionProps) 
         <span className="watch-delay-prediction-route" aria-hidden="true" />
         <div>
           <span>{t("watchlist.live.prediction.incomingLabel")}</span>
-          <strong>{incomingFlight} · {incomingAircraft.registration}</strong>
+          <strong>
+            {incomingFlight} · {incomingAircraft.registration}
+          </strong>
           <small>
             {incomingAircraft.origin_iata} → {incomingAircraft.destination_iata}
             {" · "}

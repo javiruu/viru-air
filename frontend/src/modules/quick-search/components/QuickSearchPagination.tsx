@@ -115,11 +115,7 @@ export function QuickSearchPagination({
         <div className="qs-pagination-pages">
           {getPageNumbers(activePage, totalPages).map((num, idx) =>
             num === "..." ? (
-              <span
-                key={`ellipsis-${idx}`}
-                className="qs-pagination-ellipsis"
-                aria-hidden="true"
-              >
+              <span key={`ellipsis-${idx}`} className="qs-pagination-ellipsis" aria-hidden="true">
                 …
               </span>
             ) : (

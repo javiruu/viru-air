@@ -65,7 +65,14 @@ export type HotelWatchlistEntry = {
   detailUnavailable: boolean;
 };
 
-export type HotelAlertRuleType = "price_below" | "price_above" | "percentage_drop" | "percentage_increase" | "provider_changed" | "availability_returned" | "parity_break";
+export type HotelAlertRuleType =
+  | "price_below"
+  | "price_above"
+  | "percentage_drop"
+  | "percentage_increase"
+  | "provider_changed"
+  | "availability_returned"
+  | "parity_break";
 
 export type HotelAlertRuleOut = {
   id: string;
@@ -264,7 +271,14 @@ export type HotelAreaSearchV2Out = {
     providers: Array<{
       id: string;
       operation: string;
-      status: "ok" | "empty" | "timeout" | "rate_limited" | "disabled" | "failed" | "not_configured";
+      status:
+        | "ok"
+        | "empty"
+        | "timeout"
+        | "rate_limited"
+        | "disabled"
+        | "failed"
+        | "not_configured";
       results_count: number;
       used_for_results: boolean;
       fallback_used: boolean;
@@ -319,7 +333,14 @@ export type HotelV2FreshnessOut = {
   mixed: boolean;
   requires_revalidation: boolean;
   policy_version: string | null;
-  provenance_kind: "provider_observed" | "provider_revalidated" | "cache_current" | "historical_snapshot" | "fixture_demo" | "derived" | "unknown";
+  provenance_kind:
+    | "provider_observed"
+    | "provider_revalidated"
+    | "cache_current"
+    | "historical_snapshot"
+    | "fixture_demo"
+    | "derived"
+    | "unknown";
 };
 
 export type HotelTrackedOfferV2Out = {
@@ -443,4 +464,3 @@ export type HotelAreaResolveOut = {
   confidence: string;
   source: string;
 };
-

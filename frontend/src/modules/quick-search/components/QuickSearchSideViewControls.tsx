@@ -1,6 +1,9 @@
 "use client";
 
-import type { QuickSearchSortBy, QuickSearchVisibleFiltersState } from "@/modules/quick-search/types";
+import type {
+  QuickSearchSortBy,
+  QuickSearchVisibleFiltersState,
+} from "@/modules/quick-search/types";
 import type { QuickSearchCopyKey } from "@/modules/shared/quickSearchCopy";
 
 type Props = {
@@ -12,7 +15,14 @@ type Props = {
   onReset: () => void;
 };
 
-export function QuickSearchSideViewControls({ title, subtitle, state, t, onChange, onReset }: Props) {
+export function QuickSearchSideViewControls({
+  title,
+  subtitle,
+  state,
+  t,
+  onChange,
+  onReset,
+}: Props) {
   return (
     <section className="qs-dual-view-controls" aria-label={title}>
       <div className="qs-dual-view-controls__head">

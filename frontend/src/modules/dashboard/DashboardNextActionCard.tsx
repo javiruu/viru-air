@@ -41,12 +41,27 @@ export function DashboardNextActionCard(args: {
         <div className="dashboard-next-action dashboard-next-action-success">
           <div className="dashboard-next-action-copy">
             <span className="dashboard-next-action-eyebrow">{t("dashboard.nextAction.title")}</span>
-            <strong>{t("dashboard.nextAction.messages.strongDrop", { route: action.routeLabel, amount: formatCurrency(action.dropAmount, action.currency, locale) })}</strong>
-            <p>{t("dashboard.nextAction.reasons.strongDrop", { price: formatCurrency(action.latestPrice, action.currency, locale) })}</p>
+            <strong>
+              {t("dashboard.nextAction.messages.strongDrop", {
+                route: action.routeLabel,
+                amount: formatCurrency(action.dropAmount, action.currency, locale),
+              })}
+            </strong>
+            <p>
+              {t("dashboard.nextAction.reasons.strongDrop", {
+                price: formatCurrency(action.latestPrice, action.currency, locale),
+              })}
+            </p>
           </div>
           <div className="dashboard-next-action-meta">
-            <span className="status-pill success">{t("dashboard.nextAction.badges.priceMove")}</span>
-            <Link href={buildWatchHref(action)} className="btn-primary" onClick={() => onAction(action)}>
+            <span className="status-pill success">
+              {t("dashboard.nextAction.badges.priceMove")}
+            </span>
+            <Link
+              href={buildWatchHref(action)}
+              className="btn-primary"
+              onClick={() => onAction(action)}
+            >
               {t("dashboard.nextAction.actions.viewWatch")}
             </Link>
           </div>
@@ -57,12 +72,23 @@ export function DashboardNextActionCard(args: {
         <div className="dashboard-next-action dashboard-next-action-success">
           <div className="dashboard-next-action-copy">
             <span className="dashboard-next-action-eyebrow">{t("dashboard.nextAction.title")}</span>
-            <strong>{t("dashboard.nextAction.messages.newLow", { route: action.routeLabel })}</strong>
-            <p>{t("dashboard.nextAction.reasons.newLow", { price: formatCurrency(action.latestPrice, action.currency, locale), previous: formatCurrency(action.previousLowPrice, action.currency, locale) })}</p>
+            <strong>
+              {t("dashboard.nextAction.messages.newLow", { route: action.routeLabel })}
+            </strong>
+            <p>
+              {t("dashboard.nextAction.reasons.newLow", {
+                price: formatCurrency(action.latestPrice, action.currency, locale),
+                previous: formatCurrency(action.previousLowPrice, action.currency, locale),
+              })}
+            </p>
           </div>
           <div className="dashboard-next-action-meta">
             <span className="status-pill success">{t("dashboard.nextAction.badges.newLow")}</span>
-            <Link href={buildWatchHref(action)} className="btn-primary" onClick={() => onAction(action)}>
+            <Link
+              href={buildWatchHref(action)}
+              className="btn-primary"
+              onClick={() => onAction(action)}
+            >
               {t("dashboard.nextAction.actions.viewWatch")}
             </Link>
           </div>
@@ -73,12 +99,23 @@ export function DashboardNextActionCard(args: {
         <div className="dashboard-next-action dashboard-next-action-calm">
           <div className="dashboard-next-action-copy">
             <span className="dashboard-next-action-eyebrow">{t("dashboard.nextAction.title")}</span>
-            <strong>{t("dashboard.nextAction.messages.bestMonth", { route: action.routeLabel })}</strong>
-            <p>{t("dashboard.nextAction.reasons.bestMonth", { count: action.monthlyObservationCount, price: formatCurrency(action.latestPrice, action.currency, locale) })}</p>
+            <strong>
+              {t("dashboard.nextAction.messages.bestMonth", { route: action.routeLabel })}
+            </strong>
+            <p>
+              {t("dashboard.nextAction.reasons.bestMonth", {
+                count: action.monthlyObservationCount,
+                price: formatCurrency(action.latestPrice, action.currency, locale),
+              })}
+            </p>
           </div>
           <div className="dashboard-next-action-meta">
             <span className="status-pill info">{t("dashboard.nextAction.badges.monthBest")}</span>
-            <Link href={buildWatchHref(action)} className="btn-primary" onClick={() => onAction(action)}>
+            <Link
+              href={buildWatchHref(action)}
+              className="btn-primary"
+              onClick={() => onAction(action)}
+            >
               {t("dashboard.nextAction.actions.viewWatch")}
             </Link>
           </div>
@@ -89,7 +126,9 @@ export function DashboardNextActionCard(args: {
         <div className="dashboard-next-action dashboard-next-action-warning">
           <div className="dashboard-next-action-copy">
             <span className="dashboard-next-action-eyebrow">{t("dashboard.nextAction.title")}</span>
-            <strong>{t("dashboard.nextAction.messages.unreadAlerts", { count: action.unreadCount })}</strong>
+            <strong>
+              {t("dashboard.nextAction.messages.unreadAlerts", { count: action.unreadCount })}
+            </strong>
             <p>{t("dashboard.nextAction.reasons.unreadAlerts")}</p>
           </div>
           <div className="dashboard-next-action-meta">
@@ -105,12 +144,22 @@ export function DashboardNextActionCard(args: {
         <div className="dashboard-next-action dashboard-next-action-warning">
           <div className="dashboard-next-action-copy">
             <span className="dashboard-next-action-eyebrow">{t("dashboard.nextAction.title")}</span>
-            <strong>{t("dashboard.nextAction.messages.staleWatch", { route: action.routeLabel })}</strong>
-            <p>{t("dashboard.nextAction.reasons.staleWatch", { duration: formatStaleLabel(action.staleHours, t) })}</p>
+            <strong>
+              {t("dashboard.nextAction.messages.staleWatch", { route: action.routeLabel })}
+            </strong>
+            <p>
+              {t("dashboard.nextAction.reasons.staleWatch", {
+                duration: formatStaleLabel(action.staleHours, t),
+              })}
+            </p>
           </div>
           <div className="dashboard-next-action-meta">
             <span className="status-pill warning">{t("dashboard.nextAction.badges.review")}</span>
-            <Link href={buildWatchHref(action)} className="btn-primary" onClick={() => onAction(action)}>
+            <Link
+              href={buildWatchHref(action)}
+              className="btn-primary"
+              onClick={() => onAction(action)}
+            >
               {t("dashboard.nextAction.actions.viewWatch")}
             </Link>
           </div>

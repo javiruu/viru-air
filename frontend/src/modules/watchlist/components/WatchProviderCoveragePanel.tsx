@@ -12,13 +12,19 @@ export function WatchProviderCoveragePanel({ coverage }: WatchProviderCoveragePa
   const totalCount = coverage.length;
 
   return (
-    <section className="watch-provider-panel section-gap" aria-label={t("watchlist.providerCoverage.ariaLabel")}>
+    <section
+      className="watch-provider-panel section-gap"
+      aria-label={t("watchlist.providerCoverage.ariaLabel")}
+    >
       <div className="watch-provider-copy">
         <span className="watch-provider-kicker">{t("watchlist.providerCoverage.kicker")}</span>
         <strong>{t("watchlist.providerCoverage.heading")}</strong>
         <p>
           {observedCount > 0
-            ? t("watchlist.providerCoverage.summary", { observed: observedCount, total: totalCount })
+            ? t("watchlist.providerCoverage.summary", {
+                observed: observedCount,
+                total: totalCount,
+              })
             : t("watchlist.providerCoverage.pendingSummary")}
         </p>
       </div>
@@ -38,7 +44,9 @@ export function WatchProviderCoveragePanel({ coverage }: WatchProviderCoveragePa
             </span>
             <span className="watch-provider-latest tabular-nums">
               {provider.latestCapturedAt
-                ? t("watchlist.providerCoverage.latest", { value: safeDateTime(provider.latestCapturedAt, localeTag) })
+                ? t("watchlist.providerCoverage.latest", {
+                    value: safeDateTime(provider.latestCapturedAt, localeTag),
+                  })
                 : t("watchlist.providerCoverage.readyDetail")}
             </span>
           </div>

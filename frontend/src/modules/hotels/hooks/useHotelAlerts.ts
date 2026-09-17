@@ -33,9 +33,7 @@ export function useHotelAlerts() {
       const items = await listHotelAlertRules();
       setAlertRules(items);
     } catch (error) {
-      setAlertRulesError(
-        resolveHotelMessage(error, t) || t("hotels.alerts.loadRulesError"),
-      );
+      setAlertRulesError(resolveHotelMessage(error, t) || t("hotels.alerts.loadRulesError"));
     } finally {
       setAlertRulesLoading(false);
     }
@@ -46,12 +44,12 @@ export function useHotelAlerts() {
       setAlertEventsLoading(true);
       setAlertEventsError(null);
       try {
-        const items = await listHotelAlertEvents(hotelId ? { hotel_id: hotelId, limit: 50 } : { limit: 50 });
+        const items = await listHotelAlertEvents(
+          hotelId ? { hotel_id: hotelId, limit: 50 } : { limit: 50 },
+        );
         setAlertEvents(items);
       } catch (error) {
-        setAlertEventsError(
-          resolveHotelMessage(error, t) || t("hotels.alerts.loadEventsError"),
-        );
+        setAlertEventsError(resolveHotelMessage(error, t) || t("hotels.alerts.loadEventsError"));
       } finally {
         setAlertEventsLoading(false);
       }

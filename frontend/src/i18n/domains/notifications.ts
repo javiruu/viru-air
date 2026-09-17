@@ -7,7 +7,8 @@ export const notificationsEs = {
     openAlerts: "Configurar alertas",
     briefingKicker: "Checklist de cabina",
     briefingTitle: "señales piden una decisión",
-    briefingBody: "Tienes {unread} avisos sin leer. Empieza por los que te llevan a una acción concreta.",
+    briefingBody:
+      "Tienes {unread} avisos sin leer. Empieza por los que te llevan a una acción concreta.",
     summaryLabel: "Resumen de señales recientes",
   },
   sections: {
@@ -40,11 +41,13 @@ export const notificationsEs = {
   states: {
     loading: "Sintonizando señales...",
     empty: "La bandeja está limpia.",
-    emptyBody: "Cuando una alerta, una actividad de seguridad o un worker deje rastro, aparecerá aquí.",
+    emptyBody:
+      "Cuando una alerta, una actividad de seguridad o un worker deje rastro, aparecerá aquí.",
     error: "No se pudo cargar la bandeja de señales.",
     retry: "Reintentar",
     actionableEmpty: "Cabina despejada.",
-    actionableEmptyBody: "No hay señales pendientes con una acción concreta. Puedes revisar el resto sin prisa.",
+    actionableEmptyBody:
+      "No hay señales pendientes con una acción concreta. Puedes revisar el resto sin prisa.",
   },
   timeline: {
     today: "Hoy",
@@ -81,7 +84,8 @@ export const notificationsEn = {
     openAlerts: "Configure alerts",
     briefingKicker: "Cockpit checklist",
     briefingTitle: "signals need a decision",
-    briefingBody: "You have {unread} unread notices. Start with the ones that lead to a concrete action.",
+    briefingBody:
+      "You have {unread} unread notices. Start with the ones that lead to a concrete action.",
     summaryLabel: "Recent signal summary",
   },
   sections: {
@@ -118,7 +122,8 @@ export const notificationsEn = {
     error: "Could not load the signal inbox.",
     retry: "Try again",
     actionableEmpty: "Cockpit clear.",
-    actionableEmptyBody: "There are no pending signals with a concrete action. You can review the rest at your pace.",
+    actionableEmptyBody:
+      "There are no pending signals with a concrete action. You can review the rest at your pace.",
   },
   timeline: {
     today: "Today",

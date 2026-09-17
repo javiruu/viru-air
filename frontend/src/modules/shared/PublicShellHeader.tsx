@@ -23,10 +23,7 @@ export default function PublicShellHeader() {
       <Link href="/" className="public-shell-brand" aria-label="Viru Air, inicio">
         <ViruWordmark />
       </Link>
-      <nav
-        className="public-shell-nav"
-        aria-label={t("shared.a11y.mainNavigation")}
-      >
+      <nav className="public-shell-nav" aria-label={t("shared.a11y.mainNavigation")}>
         {PUBLIC_NAV_ITEMS.map((item) => {
           const active = pathnameValue === item.href;
           return (

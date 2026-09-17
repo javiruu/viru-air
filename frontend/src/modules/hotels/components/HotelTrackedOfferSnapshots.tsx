@@ -50,14 +50,16 @@ export function HotelTrackedOfferSnapshots({
 
   const priceChart = useMemo(() => {
     if (history === null) return null;
-    const completeObservations = history.capabilities.gap_detection === "supported"
-      && history.series.gaps.length === 0
-      && history.series.points.every((snap) => (
-        snap.eligibility === "eligible"
-        && snap.price_semantics === "total"
-        && snap.price.amount !== null
-        && snap.price.amount > 0
-      ));
+    const completeObservations =
+      history.capabilities.gap_detection === "supported" &&
+      history.series.gaps.length === 0 &&
+      history.series.points.every(
+        (snap) =>
+          snap.eligibility === "eligible" &&
+          snap.price_semantics === "total" &&
+          snap.price.amount !== null &&
+          snap.price.amount > 0,
+      );
     return buildHotelPriceObservationChart(
       history.series.points.map((snap) => ({
         id: snap.snapshot_id,
@@ -91,7 +93,10 @@ export function HotelTrackedOfferSnapshots({
           ) : null}
           {priceChart !== null && priceChart.points.length > 0 ? (
             <figure className="hotel-price-observations">
-              <figcaption id={`${panelId}-observations-title`} className="hotel-price-observations-header">
+              <figcaption
+                id={`${panelId}-observations-title`}
+                className="hotel-price-observations-header"
+              >
                 <span>{t("hotels.trackedOffers.snapshotsVisualTitle")}</span>
                 <strong>
                   {formatPrice(priceChart.minAmount, history.aggregates.currency, localeTag)}

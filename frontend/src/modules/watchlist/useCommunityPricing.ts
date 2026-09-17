@@ -3,10 +3,7 @@ import { flushSync } from "react-dom";
 
 import { useI18n } from "@/i18n";
 import { apiFetch } from "@/modules/shared/api";
-import type {
-  CommunityPriceMutationResponse,
-  Watch,
-} from "@/modules/watchlist/types";
+import type { CommunityPriceMutationResponse, Watch } from "@/modules/watchlist/types";
 
 type CommunityPricingStage = "overview" | "flight" | "price" | "thanks";
 
@@ -14,9 +11,7 @@ type UseCommunityPricingInput = {
   readonly load: () => Promise<void>;
 };
 
-export function useCommunityPricing({
-  load,
-}: UseCommunityPricingInput) {
+export function useCommunityPricing({ load }: UseCommunityPricingInput) {
   const { t } = useI18n();
   const [activeWatch, setActiveWatch] = useState<Watch | null>(null);
   const [stage, setStage] = useState<CommunityPricingStage>("overview");
@@ -100,10 +95,7 @@ export function useCommunityPricing({
     setError("");
   }
 
-  async function saveReport(
-    flew: boolean,
-    pricePerTraveler?: number,
-  ): Promise<void> {
+  async function saveReport(flew: boolean, pricePerTraveler?: number): Promise<void> {
     if (!activeWatch) return;
     setIsSaving(true);
     setError("");
@@ -173,10 +165,9 @@ export function useCommunityPricing({
     setIsSaving(true);
     setError("");
     try {
-      await apiFetch<{ readonly status: string }>(
-        `/watchlist/${activeWatch.id}/community-price`,
-        { method: "DELETE" },
-      );
+      await apiFetch<{ readonly status: string }>(`/watchlist/${activeWatch.id}/community-price`, {
+        method: "DELETE",
+      });
       await load().catch(() => undefined);
       close();
     } catch (caught) {

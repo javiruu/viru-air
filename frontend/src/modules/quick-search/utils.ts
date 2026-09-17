@@ -19,8 +19,12 @@ const AIRPORT_SUGGESTIONS: AirportSuggestion[] = COUNTRY_AIRPORTS.flatMap((count
 export function getAirportSuggestions(query: string, limit = 8): AirportSuggestion[] {
   const q = query.trim().toLowerCase();
   if (!q) return AIRPORT_SUGGESTIONS.slice(0, limit);
-  const startsWithCode = AIRPORT_SUGGESTIONS.filter((airport) => airport.iata.toLowerCase().startsWith(q));
-  const startsWithName = AIRPORT_SUGGESTIONS.filter((airport) => airport.name.toLowerCase().startsWith(q));
+  const startsWithCode = AIRPORT_SUGGESTIONS.filter((airport) =>
+    airport.iata.toLowerCase().startsWith(q),
+  );
+  const startsWithName = AIRPORT_SUGGESTIONS.filter((airport) =>
+    airport.name.toLowerCase().startsWith(q),
+  );
   const contains = AIRPORT_SUGGESTIONS.filter((airport) => {
     const haystack = `${airport.iata} ${airport.name} ${airport.countryName}`.toLowerCase();
     return haystack.includes(q);

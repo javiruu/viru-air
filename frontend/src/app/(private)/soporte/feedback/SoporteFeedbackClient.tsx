@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
@@ -21,7 +21,8 @@ export default function SoporteFeedbackClient({
   const router = useRouter();
   const { t } = useI18n();
   const { notify } = useNotificationCenter();
-  const [feedbackType, setFeedbackType] = useState<Props["initialFeedbackType"]>(initialFeedbackType);
+  const [feedbackType, setFeedbackType] =
+    useState<Props["initialFeedbackType"]>(initialFeedbackType);
   const [message, setMessage] = useState(initialMessage);
   const [attachmentUrl, setAttachmentUrl] = useState(initialAttachmentUrl);
   const [saving, setSaving] = useState(false);
@@ -72,7 +73,12 @@ export default function SoporteFeedbackClient({
         <form className="form" onSubmit={onSubmit}>
           <label>
             {t("support.feedback.typeLabel")}
-            <select value={feedbackType} onChange={(event) => setFeedbackType(event.target.value as Props["initialFeedbackType"])}>
+            <select
+              value={feedbackType}
+              onChange={(event) =>
+                setFeedbackType(event.target.value as Props["initialFeedbackType"])
+              }
+            >
               <option value="bug">{t("support.feedback.typeBug")}</option>
               <option value="idea">{t("support.feedback.typeIdea")}</option>
               <option value="general">{t("support.feedback.typeGeneral")}</option>

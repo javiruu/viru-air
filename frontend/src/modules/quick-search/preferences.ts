@@ -1,5 +1,8 @@
-import { QUICK_SEARCH_RADIUS_DEFAULT, clampQuickSearchRadius } from "@/modules/quick-search/filterUtils";
-import { Pref } from "@/modules/quick-search/types";
+import {
+  QUICK_SEARCH_RADIUS_DEFAULT,
+  clampQuickSearchRadius,
+} from "@/modules/quick-search/filterUtils";
+import type { Pref } from "@/modules/quick-search/types";
 
 export type QuickSearchPreferenceDefaults = {
   radiusKm: number;

@@ -29,7 +29,10 @@ type UseWatchlistDataLoaderInput = {
   inlineLoadErrorMessage: string;
 };
 
-export function resolveSelectedWatchId(rows: Pick<Watch, "id">[], currentSelectedWatchId: string): string {
+export function resolveSelectedWatchId(
+  rows: Pick<Watch, "id">[],
+  currentSelectedWatchId: string,
+): string {
   if (rows.length === 0) return "";
   if (currentSelectedWatchId && rows.some((row) => row.id === currentSelectedWatchId)) {
     return currentSelectedWatchId;
@@ -73,10 +76,13 @@ export function useWatchlistDataLoader({
       }
 
       const batchResponse = rows.length
-        ? await apiFetchWithStatus<Array<Snapshot & { watch_id: string }>>("/prices/history/batch", {
-            method: "POST",
-            body: JSON.stringify({ watch_ids: rows.map((watch) => watch.id) }),
-          })
+        ? await apiFetchWithStatus<Array<Snapshot & { watch_id: string }>>(
+            "/prices/history/batch",
+            {
+              method: "POST",
+              body: JSON.stringify({ watch_ids: rows.map((watch) => watch.id) }),
+            },
+          )
         : null;
 
       const batchHistoryRows = batchResponse?.ok

@@ -58,7 +58,7 @@ export function useWatchLiveFlight(watchId: string | null) {
         setData(response);
         setHasError(false);
         schedule(response.refresh_after_seconds);
-      } catch (error) {
+      } catch (_error) {
         if (disposed || requestController.signal.aborted) return;
         setHasError(true);
         schedule(ERROR_RETRY_SECONDS);

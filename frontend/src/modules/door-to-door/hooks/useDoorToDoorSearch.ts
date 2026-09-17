@@ -46,7 +46,9 @@ export function useDoorToDoorSearch() {
   const [finalDestination, setFinalDestination] = useState<DoorToDoorLocation>(defaultDestination);
   const [preferences, setPreferences] = useState<DoorToDoorPreferences>(DEFAULT_PREFERENCES);
   const [saveOrigin, setSaveOrigin] = useState(false);
-  const [status, setStatus] = useState<"empty" | "loading" | "success" | "partial" | "error" | "no_coverage">("empty");
+  const [status, setStatus] = useState<
+    "empty" | "loading" | "success" | "partial" | "error" | "no_coverage"
+  >("empty");
   const [response, setResponse] = useState<DoorToDoorResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [corridors, setCorridors] = useState<DoorToDoorCorridor[]>([]);
@@ -80,7 +82,8 @@ export function useDoorToDoorSearch() {
             .then((items) => {
               const lastForWatch = items.find((item) => item.origin);
               if (lastForWatch?.origin) setOrigin(lastForWatch.origin);
-              if (lastForWatch?.final_destination) setFinalDestination(lastForWatch.final_destination);
+              if (lastForWatch?.final_destination)
+                setFinalDestination(lastForWatch.final_destination);
               if (lastForWatch?.preferences) setPreferences(lastForWatch.preferences);
             })
             .catch(() => undefined);
@@ -118,7 +121,9 @@ export function useDoorToDoorSearch() {
     if (!selectedWatch) return;
     setFinalDestination((current) => {
       if (current.type !== "airport_only") return current;
-      const nextLabel = t("doorToDoor.defaults.airportOnly", { iata: selectedWatch.destination_iata || "TSF" });
+      const nextLabel = t("doorToDoor.defaults.airportOnly", {
+        iata: selectedWatch.destination_iata || "TSF",
+      });
       if (current.label === nextLabel) return current;
       return { ...current, label: nextLabel };
     });
@@ -128,7 +133,7 @@ export function useDoorToDoorSearch() {
     setResponse(null);
     setErrorMessage("");
     setStatus("empty");
-  }, [selectedWatchId]);
+  }, []);
 
   const calculate = useCallback(async () => {
     if (!selectedWatch) {

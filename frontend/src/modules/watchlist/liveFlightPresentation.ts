@@ -10,8 +10,7 @@ export function selectCurrentLiveLeg(tracking: LiveFlightTracking | null): LiveF
   const activeStatuses = new Set(["active", "diverted"]);
   return (
     tracking.legs.find(
-      (leg) =>
-        leg.operational?.freshness === "fresh" && activeStatuses.has(leg.operational.status),
+      (leg) => leg.operational?.freshness === "fresh" && activeStatuses.has(leg.operational.status),
     ) ??
     tracking.legs.find((leg) => leg.operational && activeStatuses.has(leg.operational.status)) ??
     tracking.legs.find((leg) => leg.operational?.status === "scheduled") ??
@@ -31,7 +30,9 @@ export function selectPrimaryLivePosition(
 export function selectPrimaryFlightLabel(tracking: LiveFlightTracking | null): string | null {
   const leg = selectCurrentLiveLeg(tracking);
   if (!leg) return null;
-  return leg.identity.flight_number ?? `${leg.identity.origin_iata} → ${leg.identity.destination_iata}`;
+  return (
+    leg.identity.flight_number ?? `${leg.identity.origin_iata} → ${leg.identity.destination_iata}`
+  );
 }
 
 export function milestoneTimestamp(milestone: LiveFlightMilestone): string | null {

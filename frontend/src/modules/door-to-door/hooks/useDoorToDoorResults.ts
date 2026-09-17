@@ -5,7 +5,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { useI18n } from "@/i18n";
 import { chooseDoorToDoorOption } from "@/modules/door-to-door/api";
-import { getAlternativeDeltas, getDecisionBadges, getDecisionReasons } from "@/modules/door-to-door/decision";
+import {
+  getAlternativeDeltas,
+  getDecisionBadges,
+  getDecisionReasons,
+} from "@/modules/door-to-door/decision";
 import type { DoorToDoorOption, DoorToDoorResponse } from "@/modules/door-to-door/types";
 
 type TrustTone = "success" | "warning";
@@ -30,7 +34,10 @@ function deriveTrustTone(option: DoorToDoorOption | null): TrustTone {
   return "warning";
 }
 
-function resolveActiveOption(response: DoorToDoorResponse | null, chosenOptionId: string): DoorToDoorOption | null {
+function resolveActiveOption(
+  response: DoorToDoorResponse | null,
+  chosenOptionId: string,
+): DoorToDoorOption | null {
   if (!response || response.options.length === 0) return null;
   const chosenFromServer = response.summary?.chosen_option_id || null;
   const recommendedFromServer = response.summary?.recommended_option_id || null;
@@ -81,7 +88,11 @@ export function useDoorToDoorResults(
 
   const recommendedOption = useMemo(() => {
     if (!response) return null;
-    return response.options.find((o) => o.id === response.summary.recommended_option_id) || response.options[0] || null;
+    return (
+      response.options.find((o) => o.id === response.summary.recommended_option_id) ||
+      response.options[0] ||
+      null
+    );
   }, [response]);
 
   const recommendedReasons = useMemo(() => {
@@ -112,7 +123,13 @@ export function useDoorToDoorResults(
   const hasGtfsPartialCoverage = warningCodes.has("GTFS_PARTIAL_COVERAGE");
   const hasGtfsPriceUnavailable = warningCodes.has("GTFS_PRICE_UNAVAILABLE");
 
-  const hasAnyGtfsWarning = hasGtfsFeedUnavailable || hasGtfsNoNearbyStops || hasGtfsNoServiceForDate || hasGtfsNoMatchingService || hasGtfsPartialCoverage || hasGtfsPriceUnavailable;
+  const hasAnyGtfsWarning =
+    hasGtfsFeedUnavailable ||
+    hasGtfsNoNearbyStops ||
+    hasGtfsNoServiceForDate ||
+    hasGtfsNoMatchingService ||
+    hasGtfsPartialCoverage ||
+    hasGtfsPriceUnavailable;
 
   const gtfsWarningCodes: string[] = useMemo(() => {
     const codes: string[] = [];
@@ -123,30 +140,40 @@ export function useDoorToDoorResults(
     if (hasGtfsPartialCoverage) codes.push("GTFS_PARTIAL_COVERAGE");
     if (hasGtfsPriceUnavailable) codes.push("GTFS_PRICE_UNAVAILABLE");
     return codes;
-  }, [hasGtfsFeedUnavailable, hasGtfsNoNearbyStops, hasGtfsNoServiceForDate, hasGtfsNoMatchingService, hasGtfsPartialCoverage, hasGtfsPriceUnavailable]);
+  }, [
+    hasGtfsFeedUnavailable,
+    hasGtfsNoNearbyStops,
+    hasGtfsNoServiceForDate,
+    hasGtfsNoMatchingService,
+    hasGtfsPartialCoverage,
+    hasGtfsPriceUnavailable,
+  ]);
 
   const hasChosenPlan = Boolean(response?.summary.chosen_option_id);
 
-  const markChosen = useCallback(async (option: DoorToDoorOption) => {
-    if (!response?.summary.history_id) return;
-    try {
-      await chooseDoorToDoorOption({
-        historyId: response.summary.history_id,
-        optionId: option.id,
-        optionLabel: option.label,
-        optionSummary: {
-          total_price_min: option.total_price_min,
-          total_price_max: option.total_price_max,
-          total_duration_minutes: option.total_duration_minutes,
-        },
-      });
-      setChosenOptionId(option.id);
-      await onHistoryRefresh();
-      notify({ tone: "success", title: t("doorToDoor.option.chosenSaved") });
-    } catch {
-      notify({ tone: "error", title: t("doorToDoor.option.chosenError") });
-    }
-  }, [response, onHistoryRefresh, t, notify]);
+  const markChosen = useCallback(
+    async (option: DoorToDoorOption) => {
+      if (!response?.summary.history_id) return;
+      try {
+        await chooseDoorToDoorOption({
+          historyId: response.summary.history_id,
+          optionId: option.id,
+          optionLabel: option.label,
+          optionSummary: {
+            total_price_min: option.total_price_min,
+            total_price_max: option.total_price_max,
+            total_duration_minutes: option.total_duration_minutes,
+          },
+        });
+        setChosenOptionId(option.id);
+        await onHistoryRefresh();
+        notify({ tone: "success", title: t("doorToDoor.option.chosenSaved") });
+      } catch {
+        notify({ tone: "error", title: t("doorToDoor.option.chosenError") });
+      }
+    },
+    [response, onHistoryRefresh, t, notify],
+  );
 
   return {
     chosenOptionId,

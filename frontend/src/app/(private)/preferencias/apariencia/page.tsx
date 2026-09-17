@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
@@ -25,17 +25,37 @@ export default function PreferenciasAparienciaPage() {
 
   const themeOptions = useMemo(
     () => [
-      { value: "light" as const, label: t("preferences.appearance.themeLight"), desc: t("preferences.appearance.themeLightDesc") },
-      { value: "dark" as const, label: t("preferences.appearance.themeDark"), desc: t("preferences.appearance.themeDarkDesc") },
-      { value: "system" as const, label: t("preferences.appearance.themeSystem"), desc: t("preferences.appearance.themeSystemDesc") },
+      {
+        value: "light" as const,
+        label: t("preferences.appearance.themeLight"),
+        desc: t("preferences.appearance.themeLightDesc"),
+      },
+      {
+        value: "dark" as const,
+        label: t("preferences.appearance.themeDark"),
+        desc: t("preferences.appearance.themeDarkDesc"),
+      },
+      {
+        value: "system" as const,
+        label: t("preferences.appearance.themeSystem"),
+        desc: t("preferences.appearance.themeSystemDesc"),
+      },
     ],
     [t],
   );
 
   const densityOptions = useMemo(
     () => [
-      { value: "comfortable" as const, label: t("preferences.appearance.densityComfortable"), desc: t("preferences.appearance.densityComfortableDesc") },
-      { value: "compact" as const, label: t("preferences.appearance.densityCompact"), desc: t("preferences.appearance.densityCompactDesc") },
+      {
+        value: "comfortable" as const,
+        label: t("preferences.appearance.densityComfortable"),
+        desc: t("preferences.appearance.densityComfortableDesc"),
+      },
+      {
+        value: "compact" as const,
+        label: t("preferences.appearance.densityCompact"),
+        desc: t("preferences.appearance.densityCompactDesc"),
+      },
     ],
     [t],
   );
@@ -46,7 +66,9 @@ export default function PreferenciasAparienciaPage() {
         setPref(data);
         setInitialPref(data);
       })
-      .catch(() => notify({ tone: "error", title: t("preferences.appearance.loadError"), durationMs: 3200 }));
+      .catch(() =>
+        notify({ tone: "error", title: t("preferences.appearance.loadError"), durationMs: 3200 }),
+      );
   }, [notify, t]);
 
   const dirty = useMemo(() => {
@@ -84,7 +106,11 @@ export default function PreferenciasAparienciaPage() {
             <p>{t("preferences.appearance.subtitle")}</p>
           </div>
         </div>
-        <BoneyardForm name="preferences-appearance-load" className="air-loader-section" ariaLabel={t("preferences.appearance.loading")} />
+        <BoneyardForm
+          name="preferences-appearance-load"
+          className="air-loader-section"
+          ariaLabel={t("preferences.appearance.loading")}
+        />
       </main>
     );
   }
@@ -106,7 +132,11 @@ export default function PreferenciasAparienciaPage() {
           <h2>{t("preferences.appearance.themeLabel")}</h2>
           <span className="muted">{t("preferences.appearance.themeHint")}</span>
         </div>
-        <div className="prefs-chip-row" role="group" aria-label={t("preferences.appearance.themeLabel")}>
+        <div
+          className="prefs-chip-row"
+          role="group"
+          aria-label={t("preferences.appearance.themeLabel")}
+        >
           {themeOptions.map((option) => (
             <button
               key={option.value}
@@ -127,7 +157,11 @@ export default function PreferenciasAparienciaPage() {
           <h2>{t("preferences.appearance.densityLabel")}</h2>
           <span className="muted">{t("preferences.appearance.densityHint")}</span>
         </div>
-        <div className="prefs-chip-row" role="group" aria-label={t("preferences.appearance.densityLabel")}>
+        <div
+          className="prefs-chip-row"
+          role="group"
+          aria-label={t("preferences.appearance.densityLabel")}
+        >
           {densityOptions.map((option) => (
             <button
               key={option.value}
@@ -163,7 +197,9 @@ export default function PreferenciasAparienciaPage() {
                 <span className="prefs-toggle-knob" />
               </span>
               <span className="prefs-toggle-text">
-                {pref.reduce_motion ? t("preferences.search.enabled") : t("preferences.search.disabled")}
+                {pref.reduce_motion
+                  ? t("preferences.search.enabled")
+                  : t("preferences.search.disabled")}
               </span>
             </button>
           </div>
@@ -181,7 +217,9 @@ export default function PreferenciasAparienciaPage() {
                 <span className="prefs-toggle-knob" />
               </span>
               <span className="prefs-toggle-text">
-                {pref.high_contrast ? t("preferences.search.enabled") : t("preferences.search.disabled")}
+                {pref.high_contrast
+                  ? t("preferences.search.enabled")
+                  : t("preferences.search.disabled")}
               </span>
             </button>
           </div>

@@ -5,7 +5,10 @@ import { getTranslatedCityName, matchesCityTranslation } from "@/modules/shared/
 
 export function normalizeText(text: string): string {
   if (!text) return "";
-  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 }
 
 // ── Build suggestions from airport seed data ─────────────────────────

@@ -8,20 +8,18 @@ type CommunityRouteSignalProps = {
   readonly insight: CommunityRouteInsight | undefined;
 };
 
-export function CommunityRouteSignal({
-  watchersCount,
-  insight,
-}: CommunityRouteSignalProps) {
+export function CommunityRouteSignal({ watchersCount, insight }: CommunityRouteSignalProps) {
   const { t } = useI18n();
   const showWatchers = watchersCount > 5;
   const isTrending = insight?.is_trending === true;
   if (!showWatchers && !isTrending) return null;
 
-  const label = showWatchers && isTrending
-    ? t("watchlist.communitySignals.combined", { count: watchersCount })
-    : showWatchers
-      ? t("watchlist.communitySignals.watching", { count: watchersCount })
-      : t("watchlist.communitySignals.trending");
+  const label =
+    showWatchers && isTrending
+      ? t("watchlist.communitySignals.combined", { count: watchersCount })
+      : showWatchers
+        ? t("watchlist.communitySignals.watching", { count: watchersCount })
+        : t("watchlist.communitySignals.trending");
 
   return (
     <span className="community-watch-signal">

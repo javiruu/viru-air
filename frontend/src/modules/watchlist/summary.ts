@@ -16,9 +16,13 @@ export type RefreshBulkSummary = {
 };
 
 export function summarizeRefreshBulkResult(result: RefreshBulkResponse): RefreshBulkSummary {
-  const skippedCooldown = result.failed.filter((item) => item.code === "refresh_cooldown_active").length;
+  const skippedCooldown = result.failed.filter(
+    (item) => item.code === "refresh_cooldown_active",
+  ).length;
   const skippedPaused = result.failed.filter((item) => item.code === "watch_paused").length;
-  const degradedOrStale = result.failed.filter((item) => item.code.includes("degraded") || item.code.includes("stale")).length;
+  const degradedOrStale = result.failed.filter(
+    (item) => item.code.includes("degraded") || item.code.includes("stale"),
+  ).length;
   return {
     updated: result.refreshed.length,
     skippedCooldown,
@@ -87,14 +91,26 @@ export function getFreshnessPresentation(args: {
   if (!lastUpdatedAt) {
     const label = t("watchlist.freshness.noDataLabel");
     const detail = t("watchlist.freshness.noDataDetail");
-    return { state: "no_data", label, detail, fullText: `${label} · ${detail}`, observationNote: null };
+    return {
+      state: "no_data",
+      label,
+      detail,
+      fullText: `${label} · ${detail}`,
+      observationNote: null,
+    };
   }
 
   const date = new Date(lastUpdatedAt);
   if (Number.isNaN(date.getTime())) {
     const label = t("watchlist.freshness.noDataLabel");
     const detail = t("watchlist.freshness.noDataDetail");
-    return { state: "no_data", label, detail, fullText: `${label} · ${detail}`, observationNote: null };
+    return {
+      state: "no_data",
+      label,
+      detail,
+      fullText: `${label} · ${detail}`,
+      observationNote: null,
+    };
   }
 
   const nowMs = now?.getTime() ?? Date.now();
@@ -107,9 +123,10 @@ export function getFreshnessPresentation(args: {
     },
     now: nowMs,
   });
-  const observationNote = observationCount != null && observationCount <= 1
-    ? t("watchlist.freshness.insufficientDataDetail")
-    : null;
+  const observationNote =
+    observationCount != null && observationCount <= 1
+      ? t("watchlist.freshness.insufficientDataDetail")
+      : null;
 
   return {
     state,

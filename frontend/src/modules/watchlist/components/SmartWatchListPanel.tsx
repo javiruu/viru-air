@@ -6,10 +6,7 @@ import { useCommunityRouteInsights } from "@/modules/community-routes/useCommuni
 import { formatCurrency } from "@/modules/shared/format";
 import { getAirportMeta } from "@/modules/shared/airports";
 import { BoneyardLoad, LoadReference } from "@/modules/shared/BoneyardLoad";
-import {
-  WatchRow,
-  type WatchMetaEntry,
-} from "@/modules/watchlist/components/WatchRow";
+import { WatchRow, type WatchMetaEntry } from "@/modules/watchlist/components/WatchRow";
 import { monthLabel } from "@/modules/watchlist/dateUtils";
 import { safeDateTime } from "@/modules/watchlist/presentation";
 import type { CalendarSelectorFlight, Watch } from "@/modules/watchlist/types";
@@ -125,7 +122,8 @@ export function SmartWatchListPanel({
     [t],
   );
   const calendarDayFlights = useMemo(
-    () => (calendarSelectorDay ? calendarSelectorFlightsByDay.get(calendarSelectorDay) ?? [] : []),
+    () =>
+      calendarSelectorDay ? (calendarSelectorFlightsByDay.get(calendarSelectorDay) ?? []) : [],
     [calendarSelectorDay, calendarSelectorFlightsByDay],
   );
   const lastUpdatedGlobal = useMemo(
@@ -158,11 +156,17 @@ export function SmartWatchListPanel({
     const airport = getAirportMeta(iata);
     return {
       code: iata || allLabel,
-      city: iata ? airport?.city ?? iata : "",
+      city: iata ? (airport?.city ?? iata) : "",
     };
   };
-  const routeOriginPresentation = airportPresentation(watchRouteOrigin, t("watchlist.smartList.allOrigins"));
-  const routeDestinationPresentation = airportPresentation(watchRouteDestination, t("watchlist.smartList.allDestinations"));
+  const routeOriginPresentation = airportPresentation(
+    watchRouteOrigin,
+    t("watchlist.smartList.allOrigins"),
+  );
+  const routeDestinationPresentation = airportPresentation(
+    watchRouteDestination,
+    t("watchlist.smartList.allDestinations"),
+  );
 
   return (
     <section className="panel panel-soft section-gap watch-smart-panel">
@@ -180,11 +184,19 @@ export function SmartWatchListPanel({
         <div className="watch-smart-tools" aria-label={t("watchlist.smartList.routeToolsAria")}>
           <div className="watch-smart-tool-group watch-smart-tool-group--route-tools">
             <div className="watch-smart-route-picker">
-              <label className="watch-smart-route-field" data-side="origin" htmlFor="watch-smart-route-origin">
-                <span className="watch-smart-route-field-label">{t("watchlist.smartList.origin")}</span>
+              <label
+                className="watch-smart-route-field"
+                data-side="origin"
+                htmlFor="watch-smart-route-origin"
+              >
+                <span className="watch-smart-route-field-label">
+                  {t("watchlist.smartList.origin")}
+                </span>
                 <span className="watch-smart-route-airport" aria-hidden="true">
                   <strong>{routeOriginPresentation.code}</strong>
-                  {routeOriginPresentation.city ? <span>{routeOriginPresentation.city}</span> : null}
+                  {routeOriginPresentation.city ? (
+                    <span>{routeOriginPresentation.city}</span>
+                  ) : null}
                 </span>
                 <select
                   id="watch-smart-route-origin"
@@ -196,15 +208,29 @@ export function SmartWatchListPanel({
                   }}
                 >
                   <option value="">{t("watchlist.smartList.allOrigins")}</option>
-                  {watchRouteOrigins.map((origin) => <option key={origin} value={origin}>{airportLabel(origin)}</option>)}
+                  {watchRouteOrigins.map((origin) => (
+                    <option key={origin} value={origin}>
+                      {airportLabel(origin)}
+                    </option>
+                  ))}
                 </select>
               </label>
-              <span className="watch-smart-route-arrow" aria-hidden="true"><i /> <b>→</b></span>
-              <label className="watch-smart-route-field" data-side="destination" htmlFor="watch-smart-route-destination">
-                <span className="watch-smart-route-field-label">{t("watchlist.smartList.destination")}</span>
+              <span className="watch-smart-route-arrow" aria-hidden="true">
+                <i /> <b>→</b>
+              </span>
+              <label
+                className="watch-smart-route-field"
+                data-side="destination"
+                htmlFor="watch-smart-route-destination"
+              >
+                <span className="watch-smart-route-field-label">
+                  {t("watchlist.smartList.destination")}
+                </span>
                 <span className="watch-smart-route-airport" aria-hidden="true">
                   <strong>{routeDestinationPresentation.code}</strong>
-                  {routeDestinationPresentation.city ? <span>{routeDestinationPresentation.city}</span> : null}
+                  {routeDestinationPresentation.city ? (
+                    <span>{routeDestinationPresentation.city}</span>
+                  ) : null}
                 </span>
                 <select
                   id="watch-smart-route-destination"
@@ -216,7 +242,11 @@ export function SmartWatchListPanel({
                   }}
                 >
                   <option value="">{t("watchlist.smartList.allDestinations")}</option>
-                  {watchRouteDestinations.map((destination) => <option key={destination} value={destination}>{airportLabel(destination)}</option>)}
+                  {watchRouteDestinations.map((destination) => (
+                    <option key={destination} value={destination}>
+                      {airportLabel(destination)}
+                    </option>
+                  ))}
                 </select>
               </label>
             </div>
@@ -276,19 +306,25 @@ export function SmartWatchListPanel({
             </button>
           </div>
           <div className="history-calendar-grid history-primary">
-            {(calendarWeekdays.length === 7 ? calendarWeekdays : ["L", "M", "X", "J", "V", "S", "D"]).map((weekday, index) => (
-              <div key={`watchlist-selector-weekday-${index}`} className="history-weekday">{weekday}</div>
+            {(calendarWeekdays.length === 7
+              ? calendarWeekdays
+              : ["L", "M", "X", "J", "V", "S", "D"]
+            ).map((weekday, index) => (
+              <div key={`watchlist-selector-weekday-${index}`} className="history-weekday">
+                {weekday}
+              </div>
             ))}
             {calendarSelectorMonthCells.map((day, idx) => {
               const event = day ? calendarSelectorEvents[day] : undefined;
               const isSelectedDay = day === calendarSelectorDay;
-              const dayFlights = day ? calendarSelectorFlightsByDay.get(day) ?? [] : [];
+              const dayFlights = day ? (calendarSelectorFlightsByDay.get(day) ?? []) : [];
               const firstDayFlight = dayFlights[0];
-              const dayTitle = !day || !event
-                ? undefined
-                : firstDayFlight
-                  ? `${firstDayFlight.origin} -> ${firstDayFlight.destination} · ${firstDayFlight.travelDate}${dayFlights.length > 1 ? ` · +${dayFlights.length - 1}` : ""}`
-                  : t("watchlist.history.calendarFlightsCount", { count: event.count });
+              const dayTitle =
+                !day || !event
+                  ? undefined
+                  : firstDayFlight
+                    ? `${firstDayFlight.origin} -> ${firstDayFlight.destination} · ${firstDayFlight.travelDate}${dayFlights.length > 1 ? ` · +${dayFlights.length - 1}` : ""}`
+                    : t("watchlist.history.calendarFlightsCount", { count: event.count });
               return (
                 <button
                   key={`${day || "empty"}-${idx}`}
@@ -310,7 +346,11 @@ export function SmartWatchListPanel({
                   {day ? (
                     <>
                       <div className="history-day-number">{day.slice(-2)}</div>
-                      {event ? <div className="history-day-meta">{t("watchlist.history.calendarFlightsCount", { count: event.count })}</div> : null}
+                      {event ? (
+                        <div className="history-day-meta">
+                          {t("watchlist.history.calendarFlightsCount", { count: event.count })}
+                        </div>
+                      ) : null}
                     </>
                   ) : null}
                 </button>
@@ -318,17 +358,39 @@ export function SmartWatchListPanel({
             })}
           </div>
           {calendarSelectorDay && calendarDayFlights.length > 1 ? (
-            <div className="history-compact-note history-compact-note--calendar" role="dialog" aria-label={t("watchlist.history.dayFlightsTitle", { day: calendarSelectorDay })}>
-              <strong>{t("watchlist.history.dayFlightsTitle", { day: calendarSelectorDay })}</strong>
+            <div
+              className="history-compact-note history-compact-note--calendar"
+              role="dialog"
+              aria-label={t("watchlist.history.dayFlightsTitle", { day: calendarSelectorDay })}
+            >
+              <strong>
+                {t("watchlist.history.dayFlightsTitle", { day: calendarSelectorDay })}
+              </strong>
               <div className="watch-bulk-toolbar">
                 {calendarDayFlights.map((flight) => (
-                  <button key={flight.watchId} type="button" className="btn-ghost btn-compact" onClick={() => onSelectWatchById(flight.watchId)}>
-                    {flight.origin}{" -> "}{flight.destination} · {flight.travelDate} · {flight.latestPrice == null ? "--" : formatCurrency(flight.latestPrice, flight.latestCurrency, localeTag)}
-                    {flight.latestCapturedAt ? ` (${safeDateTime(flight.latestCapturedAt, localeTag)})` : ""}
+                  <button
+                    key={flight.watchId}
+                    type="button"
+                    className="btn-ghost btn-compact"
+                    onClick={() => onSelectWatchById(flight.watchId)}
+                  >
+                    {flight.origin}
+                    {" -> "}
+                    {flight.destination} · {flight.travelDate} ·{" "}
+                    {flight.latestPrice == null
+                      ? "--"
+                      : formatCurrency(flight.latestPrice, flight.latestCurrency, localeTag)}
+                    {flight.latestCapturedAt
+                      ? ` (${safeDateTime(flight.latestCapturedAt, localeTag)})`
+                      : ""}
                   </button>
                 ))}
               </div>
-              <button type="button" className="btn-ghost btn-compact" onClick={onCloseCalendarSelector}>
+              <button
+                type="button"
+                className="btn-ghost btn-compact"
+                onClick={onCloseCalendarSelector}
+              >
                 {t("watchlist.history.closeCalendarSelector")}
               </button>
             </div>
@@ -336,7 +398,11 @@ export function SmartWatchListPanel({
         </div>
       ) : null}
       {showListMode && isLoading && items.length === 0 ? (
-        <BoneyardLoad name="watchlist-list-load" className="watchlist-load-list" ariaLabel={t("watchlist.smartList.loadingAria")}>
+        <BoneyardLoad
+          name="watchlist-list-load"
+          className="watchlist-load-list"
+          ariaLabel={t("watchlist.smartList.loadingAria")}
+        >
           {[0, 1, 2].map((index) => (
             <article key={index} className="watch-row watch-row-load" aria-hidden="true">
               <div className="watch-details">
@@ -367,7 +433,11 @@ export function SmartWatchListPanel({
         </BoneyardLoad>
       ) : null}
       {listErrorMessage ? (
-        <div className={`notice notice-compact section-gap-sm ${items.length === 0 ? "notice-error" : "notice-info"}`} role="alert" aria-live="assertive">
+        <div
+          className={`notice notice-compact section-gap-sm ${items.length === 0 ? "notice-error" : "notice-info"}`}
+          role="alert"
+          aria-live="assertive"
+        >
           <span>{listErrorMessage}</span>
           <button type="button" className="btn-ghost btn-compact" onClick={onRetryLoad}>
             {t("watchlist.smartList.retryLoad")}
@@ -407,28 +477,38 @@ export function SmartWatchListPanel({
       {showListMode
         ? pagedListItems.map((watch) => {
             return (
-            <WatchRow
-              key={watch.id}
-              watch={watch}
-              meta={watchMeta.get(watch.id)}
-              communityInsight={communityInsights.get(communityRouteKey({
-                origin_iata: watch.origin_iata,
-                destination_iata: watch.destination_iata,
-              }))}
-              isSelected={selectedWatchId === watch.id}
-              onSelect={onSelectWatch}
-              onOpenCommunity={onCommunityAction}
-              onPause={onPauseWatch}
-              onResume={onResumeWatch}
-              onDelete={onDeleteWatch}
-            />
-          );
+              <WatchRow
+                key={watch.id}
+                watch={watch}
+                meta={watchMeta.get(watch.id)}
+                communityInsight={communityInsights.get(
+                  communityRouteKey({
+                    origin_iata: watch.origin_iata,
+                    destination_iata: watch.destination_iata,
+                  }),
+                )}
+                isSelected={selectedWatchId === watch.id}
+                onSelect={onSelectWatch}
+                onOpenCommunity={onCommunityAction}
+                onPause={onPauseWatch}
+                onResume={onResumeWatch}
+                onDelete={onDeleteWatch}
+              />
+            );
           })
         : null}
       {showListMode && smartListItems.length > 0 ? (
-        <div className="qs-pagination animate-fade-in" role="navigation" aria-label="Watchlist pagination">
+        <div
+          className="qs-pagination animate-fade-in"
+          role="navigation"
+          aria-label="Watchlist pagination"
+        >
           <div className="qs-pagination-stats">
-            {t("watchlist.smartList.showingCount", { shown: shownEnd, total: smartListItems.length })} · {shownStart}-{shownEnd}
+            {t("watchlist.smartList.showingCount", {
+              shown: shownEnd,
+              total: smartListItems.length,
+            })}{" "}
+            · {shownStart}-{shownEnd}
           </div>
           <div className="qs-pagination-nav">
             <button
@@ -444,7 +524,11 @@ export function SmartWatchListPanel({
               {getPageNumbers(boundedPage, totalPages).map((num, idx) => {
                 if (num === "...") {
                   return (
-                    <span key={`watchlist-ellipsis-${idx}`} className="qs-pagination-ellipsis" aria-hidden="true">
+                    <span
+                      key={`watchlist-ellipsis-${idx}`}
+                      className="qs-pagination-ellipsis"
+                      aria-hidden="true"
+                    >
                       ...
                     </span>
                   );
@@ -478,8 +562,3 @@ export function SmartWatchListPanel({
     </section>
   );
 }
-
-
-
-
-

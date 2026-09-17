@@ -9,7 +9,11 @@ type Props = {
 /**
  * Generic provider icon (fallback when no brand-specific icon exists).
  */
-export function GenericProviderIcon({ className, size = 24, "aria-hidden": ariaHidden = true }: Props) {
+export function GenericProviderIcon({
+  className,
+  size = 24,
+  "aria-hidden": ariaHidden = true,
+}: Props) {
   return (
     <svg
       className={className}

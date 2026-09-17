@@ -34,7 +34,12 @@ export function useWatchlistMutations({
 }: UseWatchlistMutationsInput) {
   async function refreshFiltered(): Promise<void> {
     setMessage("");
-    const targets = filterWatchesBySelection(items, selectedOrigin, selectedDestination, selectedDates);
+    const targets = filterWatchesBySelection(
+      items,
+      selectedOrigin,
+      selectedDestination,
+      selectedDates,
+    );
 
     if (targets.length === 0) {
       setMessage(t("watchlist.messages.noFlightsForFilteredUpdate"));
@@ -81,7 +86,11 @@ export function useWatchlistMutations({
         body: JSON.stringify({ status }),
       });
       await load();
-      setMessage(status === "paused" ? t("watchlist.messages.flightPaused") : t("watchlist.messages.flightResumed"));
+      setMessage(
+        status === "paused"
+          ? t("watchlist.messages.flightPaused")
+          : t("watchlist.messages.flightResumed"),
+      );
       setMessageType("success");
     } catch {
       setMessage(t("watchlist.messages.statusUpdateError"));
@@ -136,10 +145,19 @@ export function useWatchlistMutations({
       const failedCount = response.failed.length;
       await load();
       if (failedCount > 0) {
-        setMessage(t("watchlist.messages.bulkPartialError", { failed: failedCount, total: response.requested }));
+        setMessage(
+          t("watchlist.messages.bulkPartialError", {
+            failed: failedCount,
+            total: response.requested,
+          }),
+        );
         setMessageType(failedCount === response.requested ? "error" : "success");
       } else {
-        setMessage(status === "paused" ? t("watchlist.messages.flightsPaused") : t("watchlist.messages.flightsResumed"));
+        setMessage(
+          status === "paused"
+            ? t("watchlist.messages.flightsPaused")
+            : t("watchlist.messages.flightsResumed"),
+        );
         setMessageType("success");
       }
     } catch {
@@ -163,7 +181,12 @@ export function useWatchlistMutations({
       const failedCount = response.failed.length;
       await load();
       if (failedCount > 0) {
-        setMessage(t("watchlist.messages.bulkPartialError", { failed: failedCount, total: response.requested }));
+        setMessage(
+          t("watchlist.messages.bulkPartialError", {
+            failed: failedCount,
+            total: response.requested,
+          }),
+        );
         setMessageType(failedCount === response.requested ? "error" : "success");
       } else {
         setMessage(t("watchlist.messages.flightsDeleted"));

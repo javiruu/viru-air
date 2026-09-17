@@ -79,17 +79,20 @@ export function useWatchlistViewState() {
     setCalendarCursor((month) => shiftMonth(month, 1));
   }, []);
 
-  const toggleCompare = useCallback((id: string) => {
-    setCompareNotice("");
-    setCompareIds((prev) => {
-      if (prev.includes(id)) return prev.filter((item) => item !== id);
-      if (prev.length >= 4) {
-        setCompareNotice(t("watchlist.compare.maxSelectionMessage"));
-        return prev;
-      }
-      return [...prev, id];
-    });
-  }, [t]);
+  const toggleCompare = useCallback(
+    (id: string) => {
+      setCompareNotice("");
+      setCompareIds((prev) => {
+        if (prev.includes(id)) return prev.filter((item) => item !== id);
+        if (prev.length >= 4) {
+          setCompareNotice(t("watchlist.compare.maxSelectionMessage"));
+          return prev;
+        }
+        return [...prev, id];
+      });
+    },
+    [t],
+  );
 
   return {
     selectedOrigin,

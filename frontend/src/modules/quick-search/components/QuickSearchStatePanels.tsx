@@ -1,4 +1,3 @@
-import React from "react";
 import {
   AlertTriangle,
   Clock3,
@@ -84,7 +83,9 @@ export function QuickSearchStatePanels(props: Props) {
           <h3>{props.t("rateLimitTitle")}</h3>
           <p>{props.t("rateLimitText")}</p>
           <span className="muted">{props.t("stateRateHint")}</span>
-          <span className="muted">{props.t("rateLimitCountdown")} {props.rateLimitSeconds}s</span>
+          <span className="muted">
+            {props.t("rateLimitCountdown")} {props.rateLimitSeconds}s
+          </span>
         </div>
       </div>
     );
@@ -99,7 +100,11 @@ export function QuickSearchStatePanels(props: Props) {
           <h3>{props.t("errorTitle")}</h3>
           <p>{props.searchError || props.t("searchFailed")}</p>
           <span className="muted">{props.t("stateErrorHint")}</span>
-          <button type="button" className="btn-ghost qs-state-inline-action" onClick={props.onRunSearch}>
+          <button
+            type="button"
+            className="btn-ghost qs-state-inline-action"
+            onClick={props.onRunSearch}
+          >
             <Search className="qs-button-icon" aria-hidden="true" />
             {props.t("errorRetry")}
           </button>
@@ -118,7 +123,11 @@ export function QuickSearchStatePanels(props: Props) {
           <p>{props.t("emptyText")}</p>
           <p className="qs-empty-calendar-fallback muted">{props.t("emptyCalendarFallback")}</p>
           <span className="muted">{props.t("stateEmptyHint")}</span>
-          <button type="button" className="btn-search qs-empty-primary-cta" onClick={props.onEmptyCta}>
+          <button
+            type="button"
+            className="btn-search qs-empty-primary-cta"
+            onClick={props.onEmptyCta}
+          >
             <SlidersHorizontal className="qs-button-icon" aria-hidden="true" />
             {props.t("emptyCta")}
           </button>
@@ -151,7 +160,12 @@ export function QuickSearchStatePanels(props: Props) {
               ) : null}
               <span className="muted">{props.t("emptyRelaxActionsTitle")}</span>
               {props.zeroResultActions.map((action) => (
-                <button key={action.id} type="button" className="btn-ghost" onClick={() => props.onRelaxAction(action.id)}>
+                <button
+                  key={action.id}
+                  type="button"
+                  className="btn-ghost"
+                  onClick={() => props.onRelaxAction(action.id)}
+                >
                   <SlidersHorizontal className="qs-button-icon" aria-hidden="true" />
                   {action.label}
                 </button>

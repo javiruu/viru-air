@@ -6,7 +6,14 @@ const PROVIDER_PRESENTATIONS = [
   {
     id: "iberia",
     label: "Iberia",
-    aliases: ["iberia", "iberia public", "iberia availability", "iberia ndc", "iberia airshopping", "ib"],
+    aliases: [
+      "iberia",
+      "iberia public",
+      "iberia availability",
+      "iberia ndc",
+      "iberia airshopping",
+      "ib",
+    ],
   },
   { id: "duffel", label: "Duffel", aliases: ["duffel"] },
 ] as const;
@@ -40,7 +47,10 @@ function sourceIncludesAlias(source: string, alias: string): boolean {
   return normalizedSource.includes(normalizedAlias) || compactSource.includes(compactAlias);
 }
 
-export function resolveProviderPresentation(source: unknown, unknownLabel = "Unknown"): ProviderPresentation {
+export function resolveProviderPresentation(
+  source: unknown,
+  unknownLabel = "Unknown",
+): ProviderPresentation {
   const rawSource = typeof source === "string" ? source.trim() : "";
   if (!rawSource) {
     return {

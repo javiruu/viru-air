@@ -13,7 +13,9 @@ const LOCALE_CHANGE_EVENT = "viru:locale-changed";
 export function normalizeLocale(raw?: string | null): Locale {
   if (!raw) return DEFAULT_LOCALE;
   const lower = raw.trim().toLowerCase();
-  const language = LANGUAGES.find(({ locale }) => lower === locale || lower.startsWith(`${locale}-`));
+  const language = LANGUAGES.find(
+    ({ locale }) => lower === locale || lower.startsWith(`${locale}-`),
+  );
   return language?.locale ?? DEFAULT_LOCALE;
 }
 
@@ -71,11 +73,16 @@ export function createI18n(dictionaries: Dictionaries) {
     if (!entry) return key;
     if (typeof entry === "string") return formatTemplate(entry, params);
     const countValue = typeof params?.count === "number" ? params.count : Number(params?.count);
-    const choice = Number.isFinite(countValue) && Number(countValue) === 1 ? entry.one : entry.other;
+    const choice =
+      Number.isFinite(countValue) && Number(countValue) === 1 ? entry.one : entry.other;
     return formatTemplate(choice, params);
   }
 
-  function translate(key: string, params?: Record<string, string | number>, rawLocale?: string | null): string {
+  function translate(
+    key: string,
+    params?: Record<string, string | number>,
+    rawLocale?: string | null,
+  ): string {
     return t(resolveLocale(rawLocale), key, params);
   }
 

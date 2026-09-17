@@ -4,7 +4,12 @@ import { useMemo, useState, type FormEvent } from "react";
 
 import { useI18n } from "@/i18n";
 
-import type { HotelAlertEventOut, HotelAlertRuleOut, HotelAlertRuleType, HotelSearchOut } from "../types";
+import type {
+  HotelAlertEventOut,
+  HotelAlertRuleOut,
+  HotelAlertRuleType,
+  HotelSearchOut,
+} from "../types";
 
 type AlertFormDraft = {
   ruleType: HotelAlertRuleType;
@@ -55,19 +60,32 @@ function parseThreshold(value: string): number | null {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
 
-function validateAlertDraft(draft: AlertFormDraft, t: ReturnType<typeof useI18n>["t"]): string | null {
+function validateAlertDraft(
+  draft: AlertFormDraft,
+  t: ReturnType<typeof useI18n>["t"],
+): string | null {
   const thresholdAmount = parseThreshold(draft.thresholdAmount);
   const thresholdPercent = parseThreshold(draft.thresholdPercent);
 
-  if ((draft.thresholdAmount.trim() && thresholdAmount === null) || (draft.thresholdPercent.trim() && thresholdPercent === null)) {
+  if (
+    (draft.thresholdAmount.trim() && thresholdAmount === null) ||
+    (draft.thresholdPercent.trim() && thresholdPercent === null)
+  ) {
     return t("hotels.alerts.validation.invalidNumber");
   }
 
-  if ((draft.ruleType === "price_below" || draft.ruleType === "price_above") && thresholdAmount === null && thresholdPercent === null) {
+  if (
+    (draft.ruleType === "price_below" || draft.ruleType === "price_above") &&
+    thresholdAmount === null &&
+    thresholdPercent === null
+  ) {
     return t("hotels.alerts.validation.priceThresholdRequired");
   }
 
-  if ((draft.ruleType === "percentage_drop" || draft.ruleType === "percentage_increase") && thresholdPercent === null) {
+  if (
+    (draft.ruleType === "percentage_drop" || draft.ruleType === "percentage_increase") &&
+    thresholdPercent === null
+  ) {
     return t("hotels.alerts.validation.parityThresholdRequired");
   }
 
@@ -136,8 +154,10 @@ export function HotelAlertsPanel({
     [t],
   );
   const shouldShowAmount = draft.ruleType === "price_below" || draft.ruleType === "price_above";
-  const shouldShowPercent = draft.ruleType !== "provider_changed" && draft.ruleType !== "availability_returned";
-  const shouldShowCompareAgainst = draft.ruleType === "percentage_drop" || draft.ruleType === "percentage_increase";
+  const shouldShowPercent =
+    draft.ruleType !== "provider_changed" && draft.ruleType !== "availability_returned";
+  const shouldShowCompareAgainst =
+    draft.ruleType === "percentage_drop" || draft.ruleType === "percentage_increase";
 
   function resetDraft(nextRuleType?: HotelAlertRuleType) {
     setDraft({
@@ -195,7 +215,11 @@ export function HotelAlertsPanel({
       <section className="hotel-alerts-form-block section-gap-sm">
         <div className="hotel-alerts-block-head">
           <strong>{t("hotels.alerts.createTitle")}</strong>
-          {selectedHotelName ? <p className="panel-note">{t("hotels.alerts.createHint", { hotel: selectedHotelName })}</p> : null}
+          {selectedHotelName ? (
+            <p className="panel-note">
+              {t("hotels.alerts.createHint", { hotel: selectedHotelName })}
+            </p>
+          ) : null}
         </div>
 
         {!selectedHotel ? <p className="panel-note">{t("hotels.alerts.noHotelSelected")}</p> : null}
@@ -212,8 +236,19 @@ export function HotelAlertsPanel({
                   setDraft((current) => ({
                     ...current,
                     ruleType: nextRuleType,
-                    thresholdAmount: (nextRuleType === "parity_break" || nextRuleType === "percentage_drop" || nextRuleType === "percentage_increase" || nextRuleType === "provider_changed" || nextRuleType === "availability_returned") ? "" : current.thresholdAmount,
-                    thresholdPercent: (nextRuleType === "provider_changed" || nextRuleType === "availability_returned") ? "" : current.thresholdPercent,
+                    thresholdAmount:
+                      nextRuleType === "parity_break" ||
+                      nextRuleType === "percentage_drop" ||
+                      nextRuleType === "percentage_increase" ||
+                      nextRuleType === "provider_changed" ||
+                      nextRuleType === "availability_returned"
+                        ? ""
+                        : current.thresholdAmount,
+                    thresholdPercent:
+                      nextRuleType === "provider_changed" ||
+                      nextRuleType === "availability_returned"
+                        ? ""
+                        : current.thresholdPercent,
                   }));
                   setValidationMessage(null);
                 }}
@@ -249,22 +284,39 @@ export function HotelAlertsPanel({
                       setDraft((current) => ({
                         ...current,
                         ruleType: nextRuleType,
-                        thresholdAmount: (nextRuleType === "parity_break" || nextRuleType === "percentage_drop" || nextRuleType === "percentage_increase" || nextRuleType === "provider_changed" || nextRuleType === "availability_returned") ? "" : current.thresholdAmount,
-                        thresholdPercent: (nextRuleType === "provider_changed" || nextRuleType === "availability_returned") ? "" : current.thresholdPercent,
+                        thresholdAmount:
+                          nextRuleType === "parity_break" ||
+                          nextRuleType === "percentage_drop" ||
+                          nextRuleType === "percentage_increase" ||
+                          nextRuleType === "provider_changed" ||
+                          nextRuleType === "availability_returned"
+                            ? ""
+                            : current.thresholdAmount,
+                        thresholdPercent:
+                          nextRuleType === "provider_changed" ||
+                          nextRuleType === "availability_returned"
+                            ? ""
+                            : current.thresholdPercent,
                       }));
                       setValidationMessage(null);
                     }}
                   >
-                    <option value="" disabled>—</option>
+                    <option value="" disabled>
+                      —
+                    </option>
                     {advancedRuleTypes.map((at) => (
-                      <option key={at} value={at}>{ruleTypeLabel[at]}</option>
+                      <option key={at} value={at}>
+                        {ruleTypeLabel[at]}
+                      </option>
                     ))}
                   </select>
                 </label>
               </>
             )}
 
-            <div className={`hotel-alerts-thresholds${shouldShowAmount || shouldShowPercent ? "" : " is-no-thresholds"}`}>
+            <div
+              className={`hotel-alerts-thresholds${shouldShowAmount || shouldShowPercent ? "" : " is-no-thresholds"}`}
+            >
               {shouldShowAmount ? (
                 <label className="field qs-label">
                   <span>{t("hotels.alerts.fields.thresholdAmount")}</span>
@@ -312,16 +364,28 @@ export function HotelAlertsPanel({
                 min={1}
                 max={10080}
                 value={draft.cooldownMinutes}
-                onChange={(event) => setDraft((current) => ({ ...current, cooldownMinutes: event.target.value }))}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, cooldownMinutes: event.target.value }))
+                }
               />
             </label>
 
             {shouldShowCompareAgainst ? (
               <label className="field qs-label">
                 <span>{t("hotels.alerts.fields.compareAgainst")}</span>
-                <select className="qs-input-neutral" value={draft.compareAgainst} onChange={(event) => setDraft((current) => ({ ...current, compareAgainst: event.target.value }))}>
-                  <option value="snapshot_previous">{t("hotels.alerts.compareAgainstOptions.snapshotPrevious")}</option>
-                  <option value="initial_price">{t("hotels.alerts.compareAgainstOptions.initialPrice")}</option>
+                <select
+                  className="qs-input-neutral"
+                  value={draft.compareAgainst}
+                  onChange={(event) =>
+                    setDraft((current) => ({ ...current, compareAgainst: event.target.value }))
+                  }
+                >
+                  <option value="snapshot_previous">
+                    {t("hotels.alerts.compareAgainstOptions.snapshotPrevious")}
+                  </option>
+                  <option value="initial_price">
+                    {t("hotels.alerts.compareAgainstOptions.initialPrice")}
+                  </option>
                 </select>
               </label>
             ) : null}
@@ -330,13 +394,19 @@ export function HotelAlertsPanel({
               <input
                 type="checkbox"
                 checked={draft.isActive}
-                onChange={(event) => setDraft((current) => ({ ...current, isActive: event.target.checked }))}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, isActive: event.target.checked }))
+                }
               />
               <span>{t("hotels.alerts.fields.isActive")}</span>
             </label>
 
             {validationMessage ? (
-              <p id="hotel-alerts-validation" className="panel-note hotel-alerts-validation" role="alert">
+              <p
+                id="hotel-alerts-validation"
+                className="panel-note hotel-alerts-validation"
+                role="alert"
+              >
                 {validationMessage}
               </p>
             ) : null}
@@ -357,9 +427,13 @@ export function HotelAlertsPanel({
         </div>
 
         {!selectedHotel ? <p className="panel-note">{t("hotels.alerts.rulesNoHotel")}</p> : null}
-        {selectedHotel && rulesLoading ? <p className="panel-note">{t("hotels.alerts.loadingRules")}</p> : null}
+        {selectedHotel && rulesLoading ? (
+          <p className="panel-note">{t("hotels.alerts.loadingRules")}</p>
+        ) : null}
         {selectedHotel && rulesError ? <p className="panel-note">{rulesError}</p> : null}
-        {selectedHotel && !rulesLoading && !rulesError && rules.length === 0 ? <p className="panel-note">{t("hotels.alerts.emptyRules")}</p> : null}
+        {selectedHotel && !rulesLoading && !rulesError && rules.length === 0 ? (
+          <p className="panel-note">{t("hotels.alerts.emptyRules")}</p>
+        ) : null}
 
         {selectedHotel && !rulesLoading && !rulesError && rules.length > 0 ? (
           <div className="hotel-alert-rule-list">
@@ -371,18 +445,38 @@ export function HotelAlertsPanel({
                   <div className="hotel-alert-rule-copy">
                     <div className="hotel-alert-rule-meta">
                       <span className={`status-pill ${rule.is_active ? "success" : "warning"}`}>
-                        {rule.is_active ? t("hotels.alerts.states.active") : t("hotels.alerts.states.inactive")}
+                        {rule.is_active
+                          ? t("hotels.alerts.states.active")
+                          : t("hotels.alerts.states.inactive")}
                       </span>
                       <span className="status-pill info">{ruleTypeLabel[rule.rule_type]}</span>
                       <span className="status-pill neutral">{rule.evaluation_state}</span>
                     </div>
-                    <strong>{summaryParts.length > 0 ? summaryParts.join(" · ") : t("hotels.alerts.thresholdFallback")}</strong>
+                    <strong>
+                      {summaryParts.length > 0
+                        ? summaryParts.join(" · ")
+                        : t("hotels.alerts.thresholdFallback")}
+                    </strong>
                   </div>
                   <div className="hotel-alert-rule-actions">
-                    <button type="button" className="btn-ghost btn-compact" disabled={busy} onClick={() => onToggleRule(rule.id, !rule.is_active)}>
-                      {busy ? t("shared.states.loading") : rule.is_active ? t("hotels.alerts.deactivateCta") : t("hotels.alerts.activateCta")}
+                    <button
+                      type="button"
+                      className="btn-ghost btn-compact"
+                      disabled={busy}
+                      onClick={() => onToggleRule(rule.id, !rule.is_active)}
+                    >
+                      {busy
+                        ? t("shared.states.loading")
+                        : rule.is_active
+                          ? t("hotels.alerts.deactivateCta")
+                          : t("hotels.alerts.activateCta")}
                     </button>
-                    <button type="button" className="btn-ghost btn-compact" disabled={busy} onClick={() => onDeleteRule(rule.id)}>
+                    <button
+                      type="button"
+                      className="btn-ghost btn-compact"
+                      disabled={busy}
+                      onClick={() => onDeleteRule(rule.id)}
+                    >
                       {busy ? t("shared.states.loading") : t("hotels.alerts.deleteCta")}
                     </button>
                   </div>
@@ -400,9 +494,13 @@ export function HotelAlertsPanel({
         </div>
 
         {!selectedHotel ? <p className="panel-note">{t("hotels.alerts.eventsNoHotel")}</p> : null}
-        {selectedHotel && eventsLoading ? <p className="panel-note">{t("hotels.alerts.loadingEvents")}</p> : null}
+        {selectedHotel && eventsLoading ? (
+          <p className="panel-note">{t("hotels.alerts.loadingEvents")}</p>
+        ) : null}
         {selectedHotel && eventsError ? <p className="panel-note">{eventsError}</p> : null}
-        {selectedHotel && !eventsLoading && !eventsError && events.length === 0 ? <p className="panel-note">{t("hotels.alerts.emptyEvents")}</p> : null}
+        {selectedHotel && !eventsLoading && !eventsError && events.length === 0 ? (
+          <p className="panel-note">{t("hotels.alerts.emptyEvents")}</p>
+        ) : null}
 
         {selectedHotel && !eventsLoading && !eventsError && events.length > 0 ? (
           <div className="hotel-alert-events-list">
@@ -410,7 +508,11 @@ export function HotelAlertsPanel({
               <article key={event.id} className="hotel-alert-event-item">
                 <strong>{event.message}</strong>
                 <p className="panel-note">{formatCreatedAt(event.created_at, localeTag)}</p>
-                {event.trigger_value !== null ? <p className="panel-note">{t("hotels.alerts.triggerValue", { value: event.trigger_value })}</p> : null}
+                {event.trigger_value !== null ? (
+                  <p className="panel-note">
+                    {t("hotels.alerts.triggerValue", { value: event.trigger_value })}
+                  </p>
+                ) : null}
               </article>
             ))}
           </div>

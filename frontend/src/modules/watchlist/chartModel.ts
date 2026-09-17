@@ -80,7 +80,9 @@ export function buildWatchlistChartModel({
     const firstPoint = points[0];
     const lastPoint = points[points.length - 1];
     const areaPoints =
-      firstPoint && lastPoint ? `${firstPoint.x},${baselineY} ${linePoints} ${lastPoint.x},${baselineY}` : "";
+      firstPoint && lastPoint
+        ? `${firstPoint.x},${baselineY} ${linePoints} ${lastPoint.x},${baselineY}`
+        : "";
 
     return {
       date,

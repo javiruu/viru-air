@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
@@ -36,7 +36,9 @@ export default function PreferenciasRegionPage() {
           persistLocale(data.language === "en" ? "en" : "es");
         }
       })
-      .catch(() => notify({ tone: "error", title: t("preferences.region.loadError"), durationMs: 3200 }));
+      .catch(() =>
+        notify({ tone: "error", title: t("preferences.region.loadError"), durationMs: 3200 }),
+      );
   }, [notify, t]);
 
   const dirty = useMemo(() => {
@@ -77,7 +79,11 @@ export default function PreferenciasRegionPage() {
             <p>{t("preferences.region.subtitleLoading")}</p>
           </div>
         </div>
-        <BoneyardForm name="preferences-region-load" className="air-loader-section" ariaLabel={t("preferences.region.loading")} />
+        <BoneyardForm
+          name="preferences-region-load"
+          className="air-loader-section"
+          ariaLabel={t("preferences.region.loading")}
+        />
       </main>
     );
   }
@@ -167,7 +173,9 @@ export default function PreferenciasRegionPage() {
                 name="currency"
                 list="region-currency-options"
                 value={pref.currency}
-                onChange={(event) => setPref({ ...pref, currency: event.target.value.toUpperCase() })}
+                onChange={(event) =>
+                  setPref({ ...pref, currency: event.target.value.toUpperCase() })
+                }
               />
               <datalist id="region-currency-options">
                 {CURRENCY_OPTIONS.map((option) => (

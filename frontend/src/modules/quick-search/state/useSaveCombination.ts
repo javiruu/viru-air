@@ -58,75 +58,86 @@ export function useSaveCombination() {
   });
 
   const reset = useCallback(() => {
-    setState({ status: "idle", messageKey: null, outboundWatchId: "", returnWatchId: "", groupId: "" });
+    setState({
+      status: "idle",
+      messageKey: null,
+      outboundWatchId: "",
+      returnWatchId: "",
+      groupId: "",
+    });
   }, []);
 
-  const saveCombination = useCallback(
-    async (params: SaveCombinationParams) => {
-      setState({ status: "saving", messageKey: null, outboundWatchId: "", returnWatchId: "", groupId: params.groupId });
-      const [outboundPayload, returnPayload] = buildQuickSearchSaveCombinationPayloads({
-        outbound: params.outbound,
-        returnResult: params.return,
-        groupId: params.groupId,
-        outboundFareProfile: params.outboundFareProfile,
-        returnFareProfile: params.returnFareProfile,
-      });
-
-      const [outboundResult, returnResult] = await Promise.allSettled([
-        apiFetch<SaveResult>("/search/save-result", {
-          method: "POST",
-          body: JSON.stringify(outboundPayload),
-        }),
-        apiFetch<SaveResult>("/search/save-result", {
-          method: "POST",
-          body: JSON.stringify(returnPayload),
-        }),
-      ]);
-
-      const outboundOk =
-        outboundResult.status === "fulfilled" && outboundResult.value;
-      const returnOk =
-        returnResult.status === "fulfilled" && returnResult.value;
-      const outboundWatchId = outboundOk ? outboundResult.value.watch_id ?? "" : "";
-      const returnWatchId = returnOk ? returnResult.value.watch_id ?? "" : "";
-
-      if (outboundOk && returnOk) {
-        setState({ status: "saved", messageKey: null, outboundWatchId, returnWatchId, groupId: params.groupId });
-      } else if (outboundOk || returnOk) {
-        setState({
-          status: "partial",
-          messageKey: "combinationPartial",
-          outboundWatchId,
-          returnWatchId,
-          groupId: params.groupId,
-        });
-      } else {
-        setState({
-          status: "error",
-          messageKey: "combinationError",
-          outboundWatchId: "",
-          returnWatchId: "",
-          groupId: params.groupId,
-        });
-      }
-    },
-    [],
-  );
-
-  const navigateToWatchlistWithContext = useCallback((
-    origin?: string,
-    destination?: string,
-    travelDate?: string,
-    watchId?: string,
-  ) => {
-    const url = buildWatchlistUrl({
-      origin: origin || "",
-      destination: destination || "",
-      travelDate: travelDate || "",
-      watchId: watchId || "",
+  const saveCombination = useCallback(async (params: SaveCombinationParams) => {
+    setState({
+      status: "saving",
+      messageKey: null,
+      outboundWatchId: "",
+      returnWatchId: "",
+      groupId: params.groupId,
     });
-    router.push(url);
-  }, [router]);
+    const [outboundPayload, returnPayload] = buildQuickSearchSaveCombinationPayloads({
+      outbound: params.outbound,
+      returnResult: params.return,
+      groupId: params.groupId,
+      outboundFareProfile: params.outboundFareProfile,
+      returnFareProfile: params.returnFareProfile,
+    });
+
+    const [outboundResult, returnResult] = await Promise.allSettled([
+      apiFetch<SaveResult>("/search/save-result", {
+        method: "POST",
+        body: JSON.stringify(outboundPayload),
+      }),
+      apiFetch<SaveResult>("/search/save-result", {
+        method: "POST",
+        body: JSON.stringify(returnPayload),
+      }),
+    ]);
+
+    const outboundOk = outboundResult.status === "fulfilled" && outboundResult.value;
+    const returnOk = returnResult.status === "fulfilled" && returnResult.value;
+    const outboundWatchId = outboundOk ? (outboundResult.value.watch_id ?? "") : "";
+    const returnWatchId = returnOk ? (returnResult.value.watch_id ?? "") : "";
+
+    if (outboundOk && returnOk) {
+      setState({
+        status: "saved",
+        messageKey: null,
+        outboundWatchId,
+        returnWatchId,
+        groupId: params.groupId,
+      });
+    } else if (outboundOk || returnOk) {
+      setState({
+        status: "partial",
+        messageKey: "combinationPartial",
+        outboundWatchId,
+        returnWatchId,
+        groupId: params.groupId,
+      });
+    } else {
+      setState({
+        status: "error",
+        messageKey: "combinationError",
+        outboundWatchId: "",
+        returnWatchId: "",
+        groupId: params.groupId,
+      });
+    }
+  }, []);
+
+  const navigateToWatchlistWithContext = useCallback(
+    (origin?: string, destination?: string, travelDate?: string, watchId?: string) => {
+      const url = buildWatchlistUrl({
+        origin: origin || "",
+        destination: destination || "",
+        travelDate: travelDate || "",
+        watchId: watchId || "",
+      });
+      router.push(url);
+    },
+    [router],
+  );
 
   return {
     ...state,
