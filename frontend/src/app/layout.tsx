@@ -1,8 +1,8 @@
 import "../styles/globals.css";
+import { MotionConfig } from "framer-motion";
 import type { Metadata } from "next";
 import Script from "next/script";
-import { MotionConfig } from "framer-motion";
-
+import QueryProvider from "@/app/providers/QueryProvider";
 import { NotificationCenterProvider } from "@/components/components/notifications/notification-center";
 import ScrollActivityScrollbar from "@/modules/shared/ScrollActivityScrollbar";
 import { SHELL_SCROLL_STATE_CSS } from "@/modules/shared/shellScrollStateCss";
@@ -38,14 +38,16 @@ gtag('config', '${gaMeasurementId}');`}
       <body>
         <ScrollActivityScrollbar />
         <MotionConfig reducedMotion="user">
-          <NotificationCenterProvider>
-            <a className="skip-link" href="#main-content">
-              Saltar al contenido
-            </a>
-            <div className="app-root">
-              <div className="app-content">{children}</div>
-            </div>
-          </NotificationCenterProvider>
+          <QueryProvider>
+            <NotificationCenterProvider>
+              <a className="skip-link" href="#main-content">
+                Saltar al contenido
+              </a>
+              <div className="app-root">
+                <div className="app-content">{children}</div>
+              </div>
+            </NotificationCenterProvider>
+          </QueryProvider>
         </MotionConfig>
       </body>
     </html>

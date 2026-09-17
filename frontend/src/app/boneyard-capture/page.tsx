@@ -60,7 +60,10 @@ function CardReferences({ count, lines = 3 }: { count: number; lines?: number })
       {Array.from({ length: count }).map((_, cardIndex) => (
         <div className="boneyard-stack" key={`capture-card-${cardIndex}`}>
           {Array.from({ length: lines }).map((__, lineIndex) => (
-            <LoadReference key={`capture-card-${cardIndex}-line-${lineIndex}`} width={`${76 - lineIndex * 14}%`} />
+            <LoadReference
+              key={`capture-card-${cardIndex}-line-${lineIndex}`}
+              width={`${76 - lineIndex * 14}%`}
+            />
           ))}
         </div>
       ))}
@@ -148,7 +151,12 @@ function CompactReference({ name }: { name: (typeof compactLoads)[number] }) {
       return (
         <div className="boneyard-reference-row">
           {Array.from({ length: 3 }).map((_, index) => (
-            <LoadReference key={`capture-destination-${index}`} shape="chip" width={72} height={30} />
+            <LoadReference
+              key={`capture-destination-${index}`}
+              shape="chip"
+              width={72}
+              height={30}
+            />
           ))}
         </div>
       );
@@ -178,34 +186,56 @@ export default async function BoneyardCapturePage({ searchParams }: BoneyardCapt
   const isDarkPreview = theme === "dark";
 
   return (
-    <main className={`shell section-gap-lg${isDarkPreview ? " dark" : ""}`} aria-label="Boneyard capture fixtures">
+    <main
+      className={`shell section-gap-lg${isDarkPreview ? " dark" : ""}`}
+      aria-label="Boneyard capture fixtures"
+    >
       <section className="page-header">
         <p className="panel-subtitle">Captura de desarrollo para los estados de carga de Viru.</p>
         <h1 className="panel-title">Boneyard</h1>
       </section>
 
       <section className="split section-gap" aria-label="Paneles de carga">
-        {panelLoads.map((name) => <BoneyardPanel key={name} name={name} ariaLabel="Cargando contenido" />)}
+        {panelLoads.map((name) => (
+          <BoneyardPanel key={name} name={name} ariaLabel="Cargando contenido" />
+        ))}
       </section>
 
       <section className="split section-gap" aria-label="Formularios de carga">
-        {formLoads.map((name) => <BoneyardForm key={name} name={name} ariaLabel="Cargando formulario" />)}
+        {formLoads.map((name) => (
+          <BoneyardForm key={name} name={name} ariaLabel="Cargando formulario" />
+        ))}
       </section>
 
       <section className="split section-gap" aria-label="Listas de carga">
-        {listLoads.map((name) => <BoneyardList key={name} name={name} ariaLabel="Cargando lista" rows={3} />)}
+        {listLoads.map((name) => (
+          <BoneyardList key={name} name={name} ariaLabel="Cargando lista" rows={3} />
+        ))}
       </section>
 
       <section className="split section-gap" aria-label="Muestras compactas">
         {compactLoads.map((name) => (
-          <BoneyardLoad key={name} name={name} className="panel panel-soft boneyard-panel" ariaLabel="Cargando módulo">
+          <BoneyardLoad
+            key={name}
+            name={name}
+            className="panel panel-soft boneyard-panel"
+            ariaLabel="Cargando módulo"
+          >
             <CompactReference name={name} />
           </BoneyardLoad>
         ))}
       </section>
 
-      <BoneyardInline name="watch-detail-title-load" shape="chip" width={112} height={18} ariaLabel="Cargando detalle" />
-      {!isVisualReview ? <BoneyardOverlay name="navigation-pending-load" ariaLabel="Cargando navegación" /> : null}
+      <BoneyardInline
+        name="watch-detail-title-load"
+        shape="chip"
+        width={112}
+        height={18}
+        ariaLabel="Cargando detalle"
+      />
+      {!isVisualReview ? (
+        <BoneyardOverlay name="navigation-pending-load" ariaLabel="Cargando navegación" />
+      ) : null}
     </main>
   );
 }

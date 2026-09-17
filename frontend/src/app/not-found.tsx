@@ -6,7 +6,8 @@ export default function NotFound() {
       <section className="sky-door-card">
         <h1 className="door-title">Viru Air no encontro esta ruta</h1>
         <p className="door-description">
-          La puerta que buscas no existe en el mapa de vuelo. Revisa la ruta o vuelve al panel principal.
+          La puerta que buscas no existe en el mapa de vuelo. Revisa la ruta o vuelve al panel
+          principal.
         </p>
         <div className="sky-door">
           <div className="door-left">
@@ -18,8 +19,12 @@ export default function NotFound() {
           <div className="door-content">
             <p className="door-message">Viru no puede aterrizar aqui.</p>
             <div className="action-buttons">
-              <Link className="btn" href="/dashboard">Ir al panel</Link>
-              <Link className="btn" href="/login">Iniciar sesion</Link>
+              <Link className="btn" href="/dashboard">
+                Ir al panel
+              </Link>
+              <Link className="btn" href="/login">
+                Iniciar sesion
+              </Link>
             </div>
           </div>
         </div>

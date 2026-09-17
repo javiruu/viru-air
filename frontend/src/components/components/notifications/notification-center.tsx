@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, BellRing, CheckCircle2, CircleAlert, X } from "lucide-react";
 
@@ -46,7 +54,10 @@ function toneClass(tone: NotificationTone) {
   return "notice-info";
 }
 
-function toneLiveMode(tone: NotificationTone): { role: "status" | "alert"; live: "polite" | "assertive" } {
+function toneLiveMode(tone: NotificationTone): {
+  role: "status" | "alert";
+  live: "polite" | "assertive";
+} {
   if (tone === "error" || tone === "warning") return { role: "alert", live: "assertive" };
   return { role: "status", live: "polite" };
 }
