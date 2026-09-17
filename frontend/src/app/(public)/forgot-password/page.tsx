@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, Suspense, useState } from "react";
+import { type FormEvent, Suspense, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { GlassForgotPasswordCard } from "@/components/components/forms/glass-forgot-password";
@@ -68,7 +68,11 @@ export default function ForgotPasswordPage() {
     <Suspense
       fallback={
         <main className="shell" id="main-content">
-          <BoneyardForm name="forgot-password-session-load" className="air-loader-section" ariaLabel={t("public.auth.forgotLoading")} />
+          <BoneyardForm
+            name="forgot-password-session-load"
+            className="air-loader-section"
+            ariaLabel={t("public.auth.forgotLoading")}
+          />
         </main>
       }
     >

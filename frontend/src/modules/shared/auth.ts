@@ -1,7 +1,7 @@
 export type AuthOut = { access_token: string; refresh_token?: string; token_type: string };
 
-const TOKEN_KEY = "viru_token";
-const REFRESH_TOKEN_KEY = "viru_refresh_token";
+const TOKEN_KEY = "sb_access_token";
+const REFRESH_TOKEN_KEY = "sb_refresh_token";
 const DASHBOARD_LOGIN_REQUIRED_KEY = "viru_dashboard_login_required";
 
 export const DASHBOARD_DEMO_ACCOUNT = {

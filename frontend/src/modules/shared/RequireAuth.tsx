@@ -8,7 +8,10 @@ import { useNotificationCenter } from "@/components/components/notifications/not
 import { apiFetchWithStatus } from "@/modules/shared/api";
 import { AuthProvider, type AuthUser } from "@/modules/shared/AuthProvider";
 import { clearToken, hasToken } from "@/modules/shared/auth";
-import { isDashboardDemoAccessEnabled, signInDashboardDemoAccount } from "@/modules/shared/dashboard-demo-session";
+import {
+  isDashboardDemoAccessEnabled,
+  signInDashboardDemoAccount,
+} from "@/modules/shared/dashboard-demo-session";
 import { buildLoginRedirect, currentPathWithSearch } from "@/modules/shared/navigation";
 import { BoneyardPanel, LoadReference } from "@/modules/shared/BoneyardLoad";
 import { persistLocale, useI18n } from "@/i18n";
@@ -32,7 +35,8 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
 
     async function validateSession() {
       if (!hasToken()) {
-        const canUseDashboardDemoAccount = pathname === "/dashboard" && isDashboardDemoAccessEnabled();
+        const canUseDashboardDemoAccount =
+          pathname === "/dashboard" && isDashboardDemoAccessEnabled();
         if (canUseDashboardDemoAccount) {
           const didSignIn = await signInDashboardDemoAccount();
           if (!active) return;
@@ -75,7 +79,12 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
           persistLocale(me.locale === "en" ? "en" : "es");
         }
         if (active) {
-          setAuthUser({ id: me.id ?? "", email: me.email ?? "", locale: me.locale ?? "es", is_admin: me.is_admin ?? false });
+          setAuthUser({
+            id: me.id ?? "",
+            email: me.email ?? "",
+            locale: me.locale ?? "es",
+            is_admin: me.is_admin ?? false,
+          });
           setState("authed");
         }
         return;
@@ -105,7 +114,11 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
   if (state !== "authed") {
     return (
       <main className="shell auth-guard" id="main-content">
-        <BoneyardPanel name="auth-guard-load" className="auth-guard-card air-loader-wrap" ariaLabel={t("account.authGuard.title")}>
+        <BoneyardPanel
+          name="auth-guard-load"
+          className="auth-guard-card air-loader-wrap"
+          ariaLabel={t("account.authGuard.title")}
+        >
           <LoadReference shape="chip" width={220} height={18} />
           <LoadReference width="74%" />
           <LoadReference width="58%" />

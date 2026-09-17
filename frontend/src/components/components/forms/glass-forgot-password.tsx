@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent } from "react";
+import type { FormEvent } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
 type TranslateFn = (key: string, params?: Record<string, string>) => string;

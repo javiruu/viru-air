@@ -1,9 +1,18 @@
-import { BoneyardForm, BoneyardLoad, BoneyardPanel, LoadReference } from "@/modules/shared/BoneyardLoad";
+import {
+  BoneyardForm,
+  BoneyardLoad,
+  BoneyardPanel,
+  LoadReference,
+} from "@/modules/shared/BoneyardLoad";
 
 export default function PublicLoading() {
   return (
     <main className="shell glass-signin-shell" id="main-content" aria-busy="true">
-      <BoneyardLoad name="public-topbar-load" className="panel panel-soft" ariaLabel="Cargando cabecera publica">
+      <BoneyardLoad
+        name="public-topbar-load"
+        className="panel panel-soft"
+        ariaLabel="Cargando cabecera publica"
+      >
         <div className="glass-signin-topbar" aria-hidden="true">
           <LoadReference shape="chip" width={96} height={30} />
           <LoadReference shape="round" width={30} height={30} />

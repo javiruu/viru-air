@@ -9,11 +9,7 @@ def test_account_profile_sessions_and_security_activity(client: TestClient) -> N
     token = register_and_token(client)
     headers = {"Authorization": f"Bearer {token}"}
 
-    login = client.post(
-        "/api/v1/auth/login",
-        json={"email": "qa@viru.dev", "password": "password123"},
-    )
-    assert login.status_code == 200
+    # /auth/login decommissioned in favor of Supabase Auth
 
     profile = client.get("/api/v1/account/profile", headers=headers)
     assert profile.status_code == 200

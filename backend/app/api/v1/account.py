@@ -1,7 +1,6 @@
 from app.core.time import utc_now_naive
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from passlib.context import CryptContext
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
@@ -36,7 +35,6 @@ from app.infrastructure.db.session import get_db
 from app.services.security_activity import log_security_event
 
 router = APIRouter()
-pwd = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 def ensure_profile(db: Session, user: User) -> UserProfile:
@@ -144,11 +142,9 @@ def change_password(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
-    if not pwd.verify(payload.current_password, current_user.password_hash):
-        raise HTTPException(status_code=401, detail=INVALID_AUTH)
-    current_user.password_hash = pwd.hash(payload.new_password)
-    log_security_event(db, current_user.id, "password_change", request.client.host if request.client else None)
-    db.commit()
+    # Password changes are managed via Supabase Auth
+    log_security_event(db, current_user.id, "password_change_requested", request.client.host if request.client else None)
+    return {"status": "ok", "detail": "password_managed_by_supabase"}
     return {"status": "ok"}
 
 
