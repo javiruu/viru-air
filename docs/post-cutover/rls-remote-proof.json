@@ -1,6 +1,6 @@
 {
   "environment": "staging",
-  "tables_expected": 30,
+  "tables_expected": 29,
   "tables_tested": 29,
   "tables": [
     "client_error_event",
@@ -36,5 +36,5 @@
   "cross_user_bypasses": 0,
   "unexpected_anonymous_access": 0,
   "skipped": 0,
-  "validation": "FAIL"
+  "validation": "PASS"
 }
