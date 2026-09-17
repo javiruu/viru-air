@@ -36,7 +36,10 @@ test("quick search copy includes precise partial-provider warnings", () => {
     en.tWarn("ryanair_fares_failed_partial"),
     "Some Ryanair fare checks failed; showing results confirmed by availability.",
   );
-  assert.equal(es.tWarn("ryanair_unavailable_partial"), "Algunas combinaciones no pudieron consultarse.");
+  assert.equal(
+    es.tWarn("ryanair_unavailable_partial"),
+    "Algunas combinaciones no pudieron consultarse.",
+  );
   assert.equal(
     es.tWarn("easyjet_provider_unavailable_total"),
     "easyJet no respondio y no pudimos confirmar vuelos en este momento.",
@@ -49,21 +52,36 @@ test("quick search copy includes precise partial-provider warnings", () => {
 
 test("quick search copy exposes state microcopy in es", () => {
   const { t } = getQuickSearchCopy("es");
-  assert.equal(t("stateEmptyHint"), "Ajusta filtros o usa una accion rapida para recuperar resultados.");
+  assert.equal(
+    t("stateEmptyHint"),
+    "Ajusta filtros o usa una accion rapida para recuperar resultados.",
+  );
   assert.equal(t("stateErrorHint"), "Revisa los datos del formulario y vuelve a intentarlo.");
-  assert.equal(t("stateRateHint"), "Hemos limitado temporalmente la frecuencia para proteger el servicio.");
+  assert.equal(
+    t("stateRateHint"),
+    "Hemos limitado temporalmente la frecuencia para proteger el servicio.",
+  );
   assert.equal(t("loadingSubcheckTitle"), "Comprobaciones en curso");
   assert.equal(t("flexTitle"), "Que margen tienes con la fecha?");
   assert.equal(t("flexPresetCustom"), "Personalizar");
-  assert.equal(t("flexCustomSummary"), "Fecha flexible: {before} dias antes y {after} dias despues");
+  assert.equal(
+    t("flexCustomSummary"),
+    "Fecha flexible: {before} dias antes y {after} dias despues",
+  );
   assert.equal(t("aiPreferredPrice"), "Mejor opcion encontrada");
   assert.equal(t("aiPreferredAria"), "Resultado preferido por IA");
   assert.equal(t("aiPreferredReasonLabel"), "Por qué lo recomendamos");
   assert.equal(t("swapRoute"), "Intercambiar ruta");
   assert.equal(t("recentAutocompleteLabel"), "Recientes guardados");
   assert.equal(t("sideViewControlsSubtitle"), "Estos filtros solo cambian este panel.");
-  assert.equal(t("roundTripToggleHint"), "Activalo cuando quieras ver ida y vuelta en dos paneles coordinados.");
+  assert.equal(
+    t("roundTripToggleHint"),
+    "Activalo cuando quieras ver ida y vuelta en dos paneles coordinados.",
+  );
   assert.equal(t("passengersBaseFareHint"), "Precio base orientativo.");
-  assert.equal(t("returnResetAfterOutboundChange"), "Hemos limpiado la vuelta para que puedas elegir una nueva fecha coherente.");
+  assert.equal(
+    t("returnResetAfterOutboundChange"),
+    "Hemos limpiado la vuelta para que puedas elegir una nueva fecha coherente.",
+  );
   assert.equal(t("deepLink"), "Abrir vuelo");
 });

@@ -98,19 +98,21 @@ const historyFixture = {
       currency: "EUR",
       provider_scope: "mock",
     },
-    points: [{
-      snapshot_id: "snapshot-1",
-      observed_at: "2026-08-11T12:00:00Z",
-      observation_time_source: "provider_observed",
-      provider: "mock",
-      availability_status: "available",
-      conditions_completeness: "complete",
-      canonical_stay_offer_id: "stay-offer-1",
-      price_semantics: "total",
-      price: trackingFixture.latest_observation.price,
-      eligibility: "eligible",
-      excluded_reason: null,
-    }],
+    points: [
+      {
+        snapshot_id: "snapshot-1",
+        observed_at: "2026-08-11T12:00:00Z",
+        observation_time_source: "provider_observed",
+        provider: "mock",
+        availability_status: "available",
+        conditions_completeness: "complete",
+        canonical_stay_offer_id: "stay-offer-1",
+        price_semantics: "total",
+        price: trackingFixture.latest_observation.price,
+        eligibility: "eligible",
+        excluded_reason: null,
+      },
+    ],
     gaps: [],
     segments: [],
   },
@@ -140,7 +142,8 @@ test("V2 tracking accepts only the declared list and creation contracts", () => 
   });
   assert.equal(created.creation.outcome, "created");
   assert.equal(
-    parseTrackedOfferV2LifecycleResponse({ tracking: trackingFixture, outcome: "applied" }).tracking.state_version,
+    parseTrackedOfferV2LifecycleResponse({ tracking: trackingFixture, outcome: "applied" }).tracking
+      .state_version,
     1,
   );
   assert.equal(
@@ -156,52 +159,69 @@ test("V2 tracking accepts only the declared list and creation contracts", () => 
     (error: unknown) => error instanceof HotelsRequestError && error.status === 502,
   );
   assert.throws(
-    () => parseTrackedOfferV2LifecycleResponse({ tracking: { ...trackingFixture, state: "expired" }, outcome: "applied" }),
+    () =>
+      parseTrackedOfferV2LifecycleResponse({
+        tracking: { ...trackingFixture, state: "expired" },
+        outcome: "applied",
+      }),
     (error: unknown) => error instanceof HotelsRequestError && error.status === 502,
   );
   assert.throws(
-    () => parseTrackedOfferV2CreateResponse({ tracking: trackingFixture, creation: { outcome: "other" } }),
+    () =>
+      parseTrackedOfferV2CreateResponse({
+        tracking: trackingFixture,
+        creation: { outcome: "other" },
+      }),
     (error: unknown) => error instanceof HotelsRequestError && error.status === 502,
   );
   assert.throws(
-    () => parseTrackedOffersV2Response({
-      ...listFixture,
-      data: [{ ...trackingFixture, latest_observation: null }],
-    }),
+    () =>
+      parseTrackedOffersV2Response({
+        ...listFixture,
+        data: [{ ...trackingFixture, latest_observation: null }],
+      }),
     (error: unknown) => error instanceof HotelsRequestError && error.status === 502,
   );
   assert.throws(
-    () => parseTrackedOffersV2Response({
-      ...listFixture,
-      data: [{
-        ...trackingFixture,
-        stay_context: { ...trackingFixture.stay_context, check_in: null, check_out: null },
-      }],
-    }),
+    () =>
+      parseTrackedOffersV2Response({
+        ...listFixture,
+        data: [
+          {
+            ...trackingFixture,
+            stay_context: { ...trackingFixture.stay_context, check_in: null, check_out: null },
+          },
+        ],
+      }),
     (error: unknown) => error instanceof HotelsRequestError && error.status === 502,
   );
   assert.throws(
-    () => parseTrackedOfferV2CreateResponse({
-      tracking: trackingFixture,
-      creation: { outcome: "created", semantic_dedupe: true },
-    }),
+    () =>
+      parseTrackedOfferV2CreateResponse({
+        tracking: trackingFixture,
+        creation: { outcome: "created", semantic_dedupe: true },
+      }),
     (error: unknown) => error instanceof HotelsRequestError && error.status === 502,
   );
   assert.throws(
-    () => parseTrackedOffersV2Response({
-      ...listFixture,
-      data: [{
-        ...trackingFixture,
-        state: "unavailable",
-      }],
-    }),
+    () =>
+      parseTrackedOffersV2Response({
+        ...listFixture,
+        data: [
+          {
+            ...trackingFixture,
+            state: "unavailable",
+          },
+        ],
+      }),
     (error: unknown) => error instanceof HotelsRequestError && error.status === 502,
   );
   assert.throws(
-    () => parseTrackedOffersV2Response({
-      ...listFixture,
-      data: [{ ...trackingFixture, state_version: 0 }],
-    }),
+    () =>
+      parseTrackedOffersV2Response({
+        ...listFixture,
+        data: [{ ...trackingFixture, state_version: 0 }],
+      }),
     (error: unknown) => error instanceof HotelsRequestError && error.status === 502,
   );
 });
@@ -214,13 +234,16 @@ test("V2 tracking creation posts only its canonical source rate identifier", asy
   globalThis.fetch = async (input, init) => {
     path = String(input);
     body = String(init?.body);
-    return new Response(JSON.stringify({
-      tracking: trackingFixture,
-      creation: { outcome: "created", semantic_dedupe: false },
-    }), {
-      status: 201,
-      headers: { "content-type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        tracking: trackingFixture,
+        creation: { outcome: "created", semantic_dedupe: false },
+      }),
+      {
+        status: 201,
+        headers: { "content-type": "application/json" },
+      },
+    );
   };
 
   try {
@@ -237,17 +260,22 @@ test("V2 history accepts only chronological private observations with declared e
   const parsed = parseTrackedOfferHistoryV2Response(historyFixture);
   assert.equal(parsed.series.points[0]?.price.basis, "total_stay");
   assert.throws(
-    () => parseTrackedOfferHistoryV2Response({
-      ...historyFixture,
-      aggregates: { ...historyFixture.aggregates, sample_size_total: 2 },
-    }),
+    () =>
+      parseTrackedOfferHistoryV2Response({
+        ...historyFixture,
+        aggregates: { ...historyFixture.aggregates, sample_size_total: 2 },
+      }),
     (error: unknown) => error instanceof HotelsRequestError && error.status === 502,
   );
   assert.throws(
-    () => parseTrackedOfferHistoryV2Response({
-      ...historyFixture,
-      series: { ...historyFixture.series, points: [{ ...historyFixture.series.points[0], eligibility: "other" }] },
-    }),
+    () =>
+      parseTrackedOfferHistoryV2Response({
+        ...historyFixture,
+        series: {
+          ...historyFixture.series,
+          points: [{ ...historyFixture.series.points[0], eligibility: "other" }],
+        },
+      }),
     (error: unknown) => error instanceof HotelsRequestError && error.status === 502,
   );
 });

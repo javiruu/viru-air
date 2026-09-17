@@ -20,7 +20,8 @@ test("hotel search intent ids are opaque and unique per operation", () => {
 
 test("hotel result requests propagate the explicit search intent beside per-request correlation", async () => {
   const originalFetch = globalThis.fetch;
-  const captured: Array<{ path: string; intentId: string | null; correlationId: string | null }> = [];
+  const captured: Array<{ path: string; intentId: string | null; correlationId: string | null }> =
+    [];
 
   globalThis.fetch = async (input, init) => {
     const headers = new Headers(init?.headers);
@@ -37,12 +38,16 @@ test("hotel result requests propagate the explicit search intent beside per-requ
 
   try {
     await searchHotels({ city: "Madrid" }, undefined, "intent-search-01");
-    await areaSearch({
-      latitude: 40.4168,
-      longitude: -3.7038,
-      check_in: "2026-09-12",
-      check_out: "2026-09-15",
-    }, undefined, "intent-search-01");
+    await areaSearch(
+      {
+        latitude: 40.4168,
+        longitude: -3.7038,
+        check_in: "2026-09-12",
+        check_out: "2026-09-15",
+      },
+      undefined,
+      "intent-search-01",
+    );
 
     assert.equal(captured.length, 2);
     assertIntentId(captured[0].intentId, "intent-search-01");
@@ -87,21 +92,25 @@ test("concurrent hotel searches keep their explicit intents isolated", async () 
 test("hotel request errors retain the server-returned search intent", async () => {
   const originalFetch = globalThis.fetch;
 
-  globalThis.fetch = async () => new Response(JSON.stringify({
-    status: 503,
-    code: "provider_unavailable",
-    message: "Provider unavailable.",
-    details: [],
-    correlation_id: "corr-search-error",
-    client_event_id: "intent-search-error",
-  }), {
-    status: 503,
-    headers: {
-      "content-type": "application/json",
-      "x-correlation-id": "corr-search-error",
-      "x-client-event-id": "intent-search-error",
-    },
-  });
+  globalThis.fetch = async () =>
+    new Response(
+      JSON.stringify({
+        status: 503,
+        code: "provider_unavailable",
+        message: "Provider unavailable.",
+        details: [],
+        correlation_id: "corr-search-error",
+        client_event_id: "intent-search-error",
+      }),
+      {
+        status: 503,
+        headers: {
+          "content-type": "application/json",
+          "x-correlation-id": "corr-search-error",
+          "x-client-event-id": "intent-search-error",
+        },
+      },
+    );
 
   try {
     await assert.rejects(
@@ -109,7 +118,10 @@ test("hotel request errors retain the server-returned search intent", async () =
       (error: unknown) => {
         assert.equal((error as { status: number }).status, 503);
         assert.equal((error as { correlation_id?: string }).correlation_id, "corr-search-error");
-        assert.equal((error as { client_event_id?: string }).client_event_id, "intent-search-error");
+        assert.equal(
+          (error as { client_event_id?: string }).client_event_id,
+          "intent-search-error",
+        );
         return true;
       },
     );

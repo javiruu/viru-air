@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { QuickSearchDatePicker } from "../src/modules/quick-search/components/QuickSearchDatePicker";

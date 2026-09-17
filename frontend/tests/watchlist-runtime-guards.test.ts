@@ -3,7 +3,14 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
-const DETAIL_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");
+const DETAIL_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "WatchDetailPanel.tsx",
+);
 const MAP_COMPONENT = path.join(process.cwd(), "src", "components", "ui", "map.tsx");
 
 test("watchlist detail omits empty snapshot metadata while preserving valid detail copy", () => {
@@ -21,6 +28,9 @@ test("map runtime waits for style readiness before exposing controls and viewpor
 
   assert.match(source, /function runWhenMapStyleReady\(map: MapLibreMap, action: \(\) => void\)/);
   assert.match(source, /runWhenMapStyleReady\(map, \(\) => \{\s*setReadyMap\(map\);/);
-  assert.match(source, /runWhenMapStyleReady\(map, \(\) => \{\s*map\.fitBounds\(bounds, options\);/);
+  assert.match(
+    source,
+    /runWhenMapStyleReady\(map, \(\) => \{\s*map\.fitBounds\(bounds, options\);/,
+  );
   assert.match(source, /runWhenMapStyleReady\(map, \(\) => \{\s*map\.easeTo\(options\);/);
 });

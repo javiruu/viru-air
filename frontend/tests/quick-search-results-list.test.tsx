@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { QuickSearchResultsList } from "../src/modules/quick-search/components/QuickSearchResultsList";
@@ -126,7 +125,10 @@ test("QuickSearchResultsList renders the simplified result-row hierarchy without
   assert.doesNotMatch(html, /Actualizar precio/);
   assert.doesNotMatch(html, /Ver detalle/);
   assert.match(html, /Ryanair/);
-  assert.match(html, /<a class="qs-provider-logo qs-provider-logo--ryanair" href="https:\/\/www\.ryanair\.com\/es\/es\/trip\/flights\/select\?/);
+  assert.match(
+    html,
+    /<a class="qs-provider-logo qs-provider-logo--ryanair" href="https:\/\/www\.ryanair\.com\/es\/es\/trip\/flights\/select\?/,
+  );
   assert.match(html, /originIata=NDR/);
   assert.match(html, /destinationIata=BVA/);
   assert.match(html, /aria-label="Abrir vuelo: Ryanair"/);
@@ -190,7 +192,13 @@ test("QuickSearchResultsList derives arrival and flight time when legs are missi
 test("QuickSearchResultsList canonicalizes Ryanair deeplinks and rejects landing pages", () => {
   const htmlWithRelativeLink = renderToStaticMarkup(
     <QuickSearchResultsList
-      visibleResults={[{ ...buildResult(), deeplink_url: "/es/es/trip/flights/select?origin_iata=MAD&destination_iata=LIS&date_out=2026-06-01&adults=1" }]}
+      visibleResults={[
+        {
+          ...buildResult(),
+          deeplink_url:
+            "/es/es/trip/flights/select?origin_iata=MAD&destination_iata=LIS&date_out=2026-06-01&adults=1",
+        },
+      ]}
       compactView={false}
       expandedRows={{}}
       openRowMenuId={"res-1"}
@@ -227,7 +235,10 @@ test("QuickSearchResultsList canonicalizes Ryanair deeplinks and rejects landing
   );
 
   assert.match(htmlWithRelativeLink, /Abrir vuelo/);
-  assert.match(htmlWithRelativeLink, /href="https:\/\/www\.ryanair\.com\/es\/es\/trip\/flights\/select\?/);
+  assert.match(
+    htmlWithRelativeLink,
+    /href="https:\/\/www\.ryanair\.com\/es\/es\/trip\/flights\/select\?/,
+  );
   assert.match(htmlWithRelativeLink, /originIata=MAD/);
   assert.match(htmlWithRelativeLink, /destinationIata=LIS/);
   assert.match(htmlWithRelativeLink, /dateOut=2026-06-01/);
@@ -239,7 +250,13 @@ test("QuickSearchResultsList canonicalizes Ryanair deeplinks and rejects landing
 
   const htmlWithAbsoluteInternalParams = renderToStaticMarkup(
     <QuickSearchResultsList
-      visibleResults={[{ ...buildResult(), deeplink_url: "https://www.ryanair.com/es/es/trip/flights/select?origin_iata=AGP&destination_iata=DUB&date_out=2026-06-02&adults=2" }]}
+      visibleResults={[
+        {
+          ...buildResult(),
+          deeplink_url:
+            "https://www.ryanair.com/es/es/trip/flights/select?origin_iata=AGP&destination_iata=DUB&date_out=2026-06-02&adults=2",
+        },
+      ]}
       compactView={false}
       expandedRows={{}}
       openRowMenuId={null}
@@ -275,7 +292,10 @@ test("QuickSearchResultsList canonicalizes Ryanair deeplinks and rejects landing
     />,
   );
 
-  assert.match(htmlWithAbsoluteInternalParams, /href="https:\/\/www\.ryanair\.com\/es\/es\/trip\/flights\/select\?/);
+  assert.match(
+    htmlWithAbsoluteInternalParams,
+    /href="https:\/\/www\.ryanair\.com\/es\/es\/trip\/flights\/select\?/,
+  );
   assert.match(htmlWithAbsoluteInternalParams, /originIata=AGP/);
   assert.match(htmlWithAbsoluteInternalParams, /destinationIata=DUB/);
   assert.match(htmlWithAbsoluteInternalParams, /dateOut=2026-06-02/);
@@ -349,7 +369,9 @@ test("QuickSearchResultsList turns saved rows into a watchlist link action", () 
       refreshingResultId={null}
       refreshPrice={() => undefined}
       isInWatchlist={() => true}
-      getWatchlistHref={() => "/watchlist?watchId=watch_123&origin=NDR&destination=BVA&travelDate=2026-06-01"}
+      getWatchlistHref={() =>
+        "/watchlist?watchId=watch_123&origin=NDR&destination=BVA&travelDate=2026-06-01"
+      }
       addToWatchlist={() => undefined}
       viewInWatchlist={() => undefined}
       setExpandedRows={() => undefined}
@@ -365,7 +387,10 @@ test("QuickSearchResultsList turns saved rows into a watchlist link action", () 
   );
 
   assert.match(html, /Ver Watchlist/);
-  assert.match(html, /href="\/watchlist\?watchId=watch_123&amp;origin=NDR&amp;destination=BVA&amp;travelDate=2026-06-01"/);
+  assert.match(
+    html,
+    /href="\/watchlist\?watchId=watch_123&amp;origin=NDR&amp;destination=BVA&amp;travelDate=2026-06-01"/,
+  );
   assert.doesNotMatch(html, /Guardar/);
 });
 
@@ -423,7 +448,13 @@ test("QuickSearchResultsList renders Wizz Air branding and avoids Ryanair fallba
 test("QuickSearchResultsList renders the preferred result as an accessible star tooltip", () => {
   const html = renderToStaticMarkup(
     <QuickSearchResultsList
-      visibleResults={[{ ...buildResult(), ai_preferred: true, ai_preferred_reason: "Precio recomendado por equilibrio." }]}
+      visibleResults={[
+        {
+          ...buildResult(),
+          ai_preferred: true,
+          ai_preferred_reason: "Precio recomendado por equilibrio.",
+        },
+      ]}
       compactView={false}
       expandedRows={{}}
       openRowMenuId={null}
@@ -519,7 +550,13 @@ test("QuickSearchResultsList keeps the star and provider logo but removes compac
 test("QuickSearchResultsList keeps the AI reason on the star and omits detail badges", () => {
   const html = renderToStaticMarkup(
     <QuickSearchResultsList
-      visibleResults={[{ ...buildResult(), ai_preferred: true, ai_preferred_reason: "Mas barato sin sacrificar frescura." }]}
+      visibleResults={[
+        {
+          ...buildResult(),
+          ai_preferred: true,
+          ai_preferred_reason: "Mas barato sin sacrificar frescura.",
+        },
+      ]}
       compactView={false}
       expandedRows={{ "res-1": true }}
       openRowMenuId={null}

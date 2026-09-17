@@ -139,17 +139,9 @@ def _session_factory(db_url: str):
     environment["WATCHLIST_STARTUP_REFRESH_ENABLED"] = "false"
     environment["FARE_MEMORY_BOOT_WARMUP_ENABLED"] = "false"
     environment["FARE_MEMORY_REVALIDATION_WORKER_ENABLED"] = "false"
-    migration = subprocess.run(
-        [sys.executable, "-m", "alembic", "upgrade", MIGRATION_REVISION],
-        cwd=backend_root,
-        env=environment,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if migration.returncode != 0:
-        raise CanaryConfigurationError("hotel_canary_migration_failed")
+    from app.infrastructure.db.session import Base
     engine = create_engine(db_url, connect_args={"check_same_thread": False})
+    Base.metadata.create_all(bind=engine)
     return engine, sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 

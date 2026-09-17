@@ -18,7 +18,10 @@ test("sanitizeReturnUrl rejects open redirects", () => {
 });
 
 test("buildLoginRedirect preserves encoded returnUrl", () => {
-  assert.equal(buildLoginRedirect("/watchlist?month=2026-04"), "/login?returnUrl=%2Fwatchlist%3Fmonth%3D2026-04");
+  assert.equal(
+    buildLoginRedirect("/watchlist?month=2026-04"),
+    "/login?returnUrl=%2Fwatchlist%3Fmonth%3D2026-04",
+  );
 });
 
 test("resolvePostAuthUrl uses safe fallback", () => {

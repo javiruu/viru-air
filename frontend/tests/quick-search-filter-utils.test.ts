@@ -17,7 +17,11 @@ test("clampQuickSearchRadius keeps radius inside the canonical quick-search rang
 });
 
 test("parseQuickSearchIataTokens accepts valid IATA tokens only and removes duplicates", () => {
-  assert.deepEqual(parseQuickSearchIataTokens("mad, BCN invalid B1B mad AGP"), ["MAD", "BCN", "AGP"]);
+  assert.deepEqual(parseQuickSearchIataTokens("mad, BCN invalid B1B mad AGP"), [
+    "MAD",
+    "BCN",
+    "AGP",
+  ]);
   assert.deepEqual(parseQuickSearchIataTokens("  dub\nlis\topo  "), ["DUB", "LIS", "OPO"]);
   assert.deepEqual(parseQuickSearchIataTokens("M A D, 12, LONG"), []);
 });

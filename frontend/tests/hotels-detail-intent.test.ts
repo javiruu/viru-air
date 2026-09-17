@@ -3,10 +3,10 @@ import test from "node:test";
 
 import { getHotelDetail, getHotelParity, getHotelRates } from "@/modules/hotels/api";
 
-
 test("hotel detail reads share the originating intent and keep request correlations distinct", async () => {
   const originalFetch = globalThis.fetch;
-  const captured: Array<{ path: string; intentId: string | null; correlationId: string | null }> = [];
+  const captured: Array<{ path: string; intentId: string | null; correlationId: string | null }> =
+    [];
 
   globalThis.fetch = async (input, init) => {
     const headers = new Headers(init?.headers);
@@ -39,7 +39,6 @@ test("hotel detail reads share the originating intent and keep request correlati
     globalThis.fetch = originalFetch;
   }
 });
-
 
 test("legacy detail callers remain valid without an intent header", async () => {
   const originalFetch = globalThis.fetch;

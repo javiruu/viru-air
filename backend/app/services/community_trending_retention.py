@@ -20,7 +20,7 @@ from app.infrastructure.db.models import (
 
 COMMUNITY_TRENDING_RETENTION_MIN_DAYS = 30
 COMMUNITY_TRENDING_BUILDING_RETENTION_HOURS = 1
-# Keep DELETE/IN statements safely below SQLite's default parameter limit.
+# Keep DELETE/IN statements safely below default parameter limit.
 COMMUNITY_TRENDING_SQL_BATCH_SIZE = 200
 
 

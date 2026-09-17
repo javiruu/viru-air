@@ -59,7 +59,7 @@ test("Phase 16: AI preferred renders as a warm star, not a badge or overlay", ()
   );
   assert.doesNotMatch(
     source,
-    /className=\{\`qs-tag qs-tag-\$\{tag\.tone\}\`\}/,
+    /className=\{`qs-tag qs-tag-\$\{tag\.tone\}`\}/,
     "AI preferred must not render as a tag badge",
   );
 
@@ -104,7 +104,7 @@ test("Phase 16: AI reason is trimmed before display", () => {
 
   assert.match(
     source,
-    /const aiReason = typeof r\.ai_preferred_reason === \"string\" \? r\.ai_preferred_reason\.trim\(\) : \"\"/,
+    /const aiReason =\s*typeof r\.ai_preferred_reason === "string" \? r\.ai_preferred_reason\.trim\(\) : ""/,
     "AI reason must be trimmed to handle whitespace-only strings",
   );
 });
@@ -131,7 +131,7 @@ test("Phase 16: AI preferred row gets qs-result-row-ai class", () => {
 
   assert.match(
     source,
-    /\$\{r\.ai_preferred \? \"qs-result-row-ai\" : \"\"\}/,
+    /\$\{r\.ai_preferred \? "qs-result-row-ai" : ""\}/,
     "AI preferred row must get qs-result-row-ai CSS class",
   );
 });
@@ -141,7 +141,7 @@ test("Phase 16: AI preferred star exposes an accessible tooltip", () => {
 
   assert.match(
     source,
-    /aria-label=\{props\.t\(\"aiPreferredAria\"\)\}/,
+    /aria-label=\{props\.t\("aiPreferredAria"\)\}/,
     "AI preferred star must expose a concise accessible name",
   );
   assert.match(
@@ -191,7 +191,7 @@ test("Phase 16: Heuristic fallback reason mentions the route", () => {
 
   assert.match(
     source,
-    /reason=f\"Mejor equilibrio.*\{route\}/,
+    /reason=f"Mejor equilibrio.*\{route\}/,
     "Heuristic reason must mention the route for transparency",
   );
 });
@@ -201,11 +201,7 @@ test("Phase 16: Heuristic fallback reason mentions the route", () => {
 test("Phase 16: Backend falls back to heuristic when OpenAI fails", () => {
   const source = readSource(BACKEND_PREFERENCE);
 
-  assert.match(
-    source,
-    /fallback_used=True/,
-    "Fallback must set fallback_used=True",
-  );
+  assert.match(source, /fallback_used=True/, "Fallback must set fallback_used=True");
 });
 
 test("Phase 16: Backend validates preferred_result_id exists in candidates", () => {
@@ -213,7 +209,7 @@ test("Phase 16: Backend validates preferred_result_id exists in candidates", () 
 
   assert.match(
     source,
-    /valid_ids = \{str\(item\.get\(\"result_id\"\)/,
+    /valid_ids = \{str\(item\.get\("result_id"\)/,
     "Backend must validate preferred_result_id against actual result IDs",
   );
 });
@@ -221,24 +217,14 @@ test("Phase 16: Backend validates preferred_result_id exists in candidates", () 
 test("Phase 16: Backend handles missing OpenAI key gracefully", () => {
   const source = readSource(BACKEND_PREFERENCE);
 
-  assert.match(
-    source,
-    /missing_openai_key/,
-    "Backend must handle missing OPENAI_API_KEY",
-  );
+  assert.match(source, /missing_openai_key/, "Backend must handle missing OPENAI_API_KEY");
 });
 
 // ── 7. Copy: i18n keys exist for both ES and EN ─────────────────────
 
 test("Phase 16: Copy keys aiPreferredPrice, aiPreferredAria, aiPreferredReasonLabel exist", () => {
   const copySource = readSource(
-    path.join(
-      process.cwd(),
-      "src",
-      "modules",
-      "shared",
-      "quickSearchCopy.ts",
-    ),
+    path.join(process.cwd(), "src", "modules", "shared", "quickSearchCopy.ts"),
   );
 
   assert.match(copySource, /aiPreferredPrice:/, "ES copy missing aiPreferredPrice");

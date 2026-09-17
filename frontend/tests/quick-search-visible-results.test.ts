@@ -39,7 +39,10 @@ test("deriveQuickSearchVisibleResults filters and sorts by price", () => {
     sortBy: "price",
   });
 
-  assert.deepEqual(results.map((item) => item.result_id), ["fit-1", "fit-2"]);
+  assert.deepEqual(
+    results.map((item) => item.result_id),
+    ["fit-1", "fit-2"],
+  );
 });
 
 test("deriveQuickSearchVisibleResults supports freshness sorting", () => {
@@ -54,5 +57,8 @@ test("deriveQuickSearchVisibleResults supports freshness sorting", () => {
     sortBy: "freshness",
   });
 
-  assert.deepEqual(results.map((item) => item.result_id), ["newer", "older"]);
+  assert.deepEqual(
+    results.map((item) => item.result_id),
+    ["newer", "older"],
+  );
 });

@@ -16,7 +16,7 @@ async function createSessionToken() {
       body: JSON.stringify({ email, password }),
     });
     if (!response.ok) return null;
-    const auth = await response.json() as { access_token?: string };
+    const auth = (await response.json()) as { access_token?: string };
     return auth.access_token ?? null;
   } catch {
     return null;
@@ -25,7 +25,10 @@ async function createSessionToken() {
 
 async function openQuickSearch(page: import("playwright").Page) {
   await Promise.all([
-    page.waitForResponse((response) => response.url().includes("/api/v1/airports/seeds") && response.status() === 200, { timeout: 30000 }),
+    page.waitForResponse(
+      (response) => response.url().includes("/api/v1/airports/seeds") && response.status() === 200,
+      { timeout: 30000 },
+    ),
     page.goto(`${BASE_URL}/quick-search`, { waitUntil: "networkidle", timeout: 30000 }),
   ]);
 }
@@ -89,7 +92,10 @@ test("quick-search relax filters preview supports cancel and confirm", async (t)
     await originInput.fill("MAD");
     await destinationInput.fill("DUB");
     await datePicker.locator(".qs-date-trigger").click();
-    await page.locator(".qs-date-popover .qs-date-day:not(.is-disabled):not(.is-outside)").nth(10).click();
+    await page
+      .locator(".qs-date-popover .qs-date-day:not(.is-disabled):not(.is-outside)")
+      .nth(10)
+      .click();
     await page.getByRole("button", { name: "Buscar" }).click();
 
     const relaxButton = page.getByRole("button", { name: "Relajar filtros" }).first();

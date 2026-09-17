@@ -4,13 +4,47 @@ import path from "node:path";
 import test from "node:test";
 
 const WATCHLIST_PAGE = path.join(process.cwd(), "src", "app", "(private)", "watchlist", "page.tsx");
-const SMART_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "SmartWatchListPanel.tsx");
-const DETAIL_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");
-const HISTORY_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "HistoryIntegratedPanel.tsx");
-const COMPARE_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "ComparePanels.tsx");
+const SMART_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "SmartWatchListPanel.tsx",
+);
+const DETAIL_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "WatchDetailPanel.tsx",
+);
+const HISTORY_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "HistoryIntegratedPanel.tsx",
+);
+const COMPARE_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "ComparePanels.tsx",
+);
 const NAV_V1 = path.join(process.cwd(), "src", "modules", "shared", "navigationV1.ts");
 
-const FORBIDDEN_WATCHLIST_COPY = ["Back", "Flight Watchlist", "Add flight", "Quick start", "Last update"];
+const FORBIDDEN_WATCHLIST_COPY = [
+  "Back",
+  "Flight Watchlist",
+  "Add flight",
+  "Quick start",
+  "Last update",
+];
 
 test("W0: /watchlist render path keeps main building blocks wired", () => {
   const source = fs.readFileSync(WATCHLIST_PAGE, "utf8");
@@ -38,7 +72,11 @@ test("W0: watchlist list/detail/history/compare copies remain present in current
 test("W0: watchlist private copy keeps EN blocked literals out of route source", () => {
   const source = fs.readFileSync(WATCHLIST_PAGE, "utf8");
   for (const snippet of FORBIDDEN_WATCHLIST_COPY) {
-    assert.equal(source.includes(snippet), false, `watchlist page still contains forbidden EN copy: ${snippet}`);
+    assert.equal(
+      source.includes(snippet),
+      false,
+      `watchlist page still contains forbidden EN copy: ${snippet}`,
+    );
   }
 });
 
@@ -46,4 +84,3 @@ test("W0: private navigation does not expose /suggestions as core module", () =>
   const source = fs.readFileSync(NAV_V1, "utf8");
   assert.doesNotMatch(source, /href:\s*"\/suggestions"/);
 });
-

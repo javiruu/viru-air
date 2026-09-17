@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { QuickSearchLoadingProgress } from "../src/modules/quick-search/components/QuickSearchLoadingProgress";
@@ -44,7 +43,12 @@ test("QuickSearchStatePanels renders empty state causes and relax actions", () =
       searchError={null}
       emptyStateMainTitle="0 resultados con estos filtros"
       locale="es"
-      zeroResultCauses={["Strict activo", "Escalas desactivadas", "Radio corto", "Exclusiones activas"]}
+      zeroResultCauses={[
+        "Strict activo",
+        "Escalas desactivadas",
+        "Radio corto",
+        "Exclusiones activas",
+      ]}
       visibleZeroResultCauses={["Strict activo", "Escalas desactivadas", "Radio corto"]}
       canExpandZeroResultCauses={true}
       emptyCausesExpanded={false}

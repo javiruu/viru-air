@@ -44,17 +44,11 @@ test("readRecentAirports is safe against invalid storage payloads", () => {
 });
 
 test("rememberRecentAirport moves latest selection to the front", () => {
-  assert.deepEqual(
-    rememberRecentAirport(["MAD", "BCN", "LIS"], "bcn"),
-    ["BCN", "MAD", "LIS"],
-  );
+  assert.deepEqual(rememberRecentAirport(["MAD", "BCN", "LIS"], "bcn"), ["BCN", "MAD", "LIS"]);
 });
 
 test("forgetRecentAirport removes one normalized recent without disturbing the rest", () => {
-  assert.deepEqual(
-    forgetRecentAirport(["MAD", "bcn", "LIS", "MAD"], "BCN"),
-    ["MAD", "LIS"],
-  );
+  assert.deepEqual(forgetRecentAirport(["MAD", "bcn", "LIS", "MAD"], "BCN"), ["MAD", "LIS"]);
 });
 
 test("writeRecentAirports persists normalized recents", () => {
@@ -93,18 +87,26 @@ test("migrateRecentAirports returns null when old key is absent", () => {
 });
 
 test("migrateRecentAirports returns null on invalid old payload", () => {
-  const storage = { getItem: () => "{invalid", setItem: () => undefined, removeItem: () => undefined };
+  const storage = {
+    getItem: () => "{invalid",
+    setItem: () => undefined,
+    removeItem: () => undefined,
+  };
   assert.equal(migrateRecentAirports(storage), null);
 });
 
 test("migrateRecentAirports splits items alternating between origin and destination", () => {
-  let stored: Record<string, string> = {
+  const stored: Record<string, string> = {
     [RECENT_AIRPORTS_STORAGE_KEY]: JSON.stringify(["MAD", "BCN", "AGP", "LIS"]),
   };
   const storage = {
     getItem: (key: string) => stored[key] ?? null,
-    setItem: (key: string, value: string) => { stored[key] = value; },
-    removeItem: (key: string) => { delete stored[key]; },
+    setItem: (key: string, value: string) => {
+      stored[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete stored[key];
+    },
   };
 
   const result = migrateRecentAirports(storage);
@@ -118,7 +120,7 @@ test("migrateRecentAirports splits items alternating between origin and destinat
 });
 
 test("migrateRecentAirports returns null when old payload is empty array", () => {
-  let stored: Record<string, string> = {
+  const stored: Record<string, string> = {
     [RECENT_AIRPORTS_STORAGE_KEY]: JSON.stringify([]),
   };
   const storage = {

@@ -8,7 +8,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const frontendRoot = path.resolve(__dirname, "..");
 const repoRoot = path.resolve(frontendRoot, "..");
 const baseUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3102";
-const screenshotDir = path.join(repoRoot, "docs", "qa", "screenshots", "watchlist-live-flight-tracking");
+const screenshotDir = path.join(
+  repoRoot,
+  "docs",
+  "qa",
+  "screenshots",
+  "watchlist-live-flight-tracking",
+);
 const reportDir = path.join(repoRoot, "docs", "qa", "reports");
 const reportPath = path.join(reportDir, "2026-07-21-watchlist-live-flight-tracking.json");
 
@@ -93,7 +99,9 @@ const snapshots = [
 
 function watchDetail(id) {
   const watch = watches.find((item) => item.id === id);
-  const history = snapshots.filter((item) => item.watch_id === id).map(({ watch_id: _watchId, ...snapshot }) => snapshot);
+  const history = snapshots
+    .filter((item) => item.watch_id === id)
+    .map(({ watch_id: _watchId, ...snapshot }) => snapshot);
   return {
     ...watch,
     latest_snapshot: history[0] ?? null,
@@ -298,7 +306,12 @@ async function installMocks(page) {
     const apiPath = url.pathname.replace(/^.*\/api\/v1/, "");
 
     if (apiPath === "/auth/me") {
-      await fulfillJson(route, { id: "qa-user", email: "qa@viru.local", locale: "es", is_admin: false });
+      await fulfillJson(route, {
+        id: "qa-user",
+        email: "qa@viru.local",
+        locale: "es",
+        is_admin: false,
+      });
       return;
     }
     if (apiPath === "/watchlist" && request.method() === "GET") {
@@ -345,7 +358,12 @@ async function installMocks(page) {
       return;
     }
     if (apiPath.startsWith("/airports/compatible")) {
-      await fulfillJson(route, { seed_iata: "MAD", travel_date: "2026-07-21", compatible_iata: [], source: "qa" });
+      await fulfillJson(route, {
+        seed_iata: "MAD",
+        travel_date: "2026-07-21",
+        compatible_iata: [],
+        source: "qa",
+      });
       return;
     }
     await fulfillJson(route, {});
@@ -354,21 +372,29 @@ async function installMocks(page) {
 
 async function createPage(browser, viewport, theme, locale = "es") {
   const context = await browser.newContext({ viewport, reducedMotion: "reduce" });
-  await context.addInitScript(({ selectedTheme, selectedLocale }) => {
-    localStorage.setItem("viru_token", "qa_token_for_mocked_browser_session_1234567890");
-    localStorage.setItem("viru-theme", selectedTheme);
-    localStorage.setItem("viru-locale", selectedLocale);
-    localStorage.setItem("viru-ftue-watchlist", "dismissed");
-  }, { selectedTheme: theme, selectedLocale: locale });
+  await context.addInitScript(
+    ({ selectedTheme, selectedLocale }) => {
+      localStorage.setItem("viru_token", "qa_token_for_mocked_browser_session_1234567890");
+      localStorage.setItem("viru-theme", selectedTheme);
+      localStorage.setItem("viru-locale", selectedLocale);
+      localStorage.setItem("viru-ftue-watchlist", "dismissed");
+    },
+    { selectedTheme: theme, selectedLocale: locale },
+  );
   const page = await context.newPage();
   await installMocks(page);
   return { context, page };
 }
 
 async function openWatchlist(page) {
-  await page.goto(`${baseUrl}/watchlist?watch_id=watch-live`, { waitUntil: "domcontentloaded", timeout: 30_000 });
+  await page.goto(`${baseUrl}/watchlist?watch_id=watch-live`, {
+    waitUntil: "domcontentloaded",
+    timeout: 30_000,
+  });
   await page.locator(".watch-live-flight-leg").waitFor({ state: "visible", timeout: 20_000 });
-  await page.locator(".watch-map-stage .maplibregl-canvas").waitFor({ state: "visible", timeout: 20_000 });
+  await page
+    .locator(".watch-map-stage .maplibregl-canvas")
+    .waitFor({ state: "visible", timeout: 20_000 });
   await page.waitForTimeout(1_000);
 }
 
@@ -383,7 +409,9 @@ async function capture(page, filename, locator = null) {
 }
 
 async function assertNoHorizontalOverflow(page, label) {
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
   report.assertions[`${label}_horizontal_overflow_px`] = overflow;
   if (overflow > 1) throw new Error(`${label} has ${overflow}px horizontal overflow`);
 }
@@ -393,10 +421,18 @@ const browser = await chromium.launch({ headless: true });
 try {
   const desktopDark = await createPage(browser, { width: 1440, height: 1100 }, "dark");
   await openWatchlist(desktopDark.page);
-  report.assertions.active_status_visible = await desktopDark.page.getByText("En vuelo", { exact: true }).isVisible();
-  report.assertions.position_label_visible = await desktopDark.page.getByText("Posición real en el mapa", { exact: true }).isVisible();
-  report.assertions.callsign_visible = await desktopDark.page.getByText("ITY61", { exact: true }).isVisible();
-  report.assertions.telemetry_visible = await desktopDark.page.getByText("Altitud 10.363 m", { exact: true }).isVisible();
+  report.assertions.active_status_visible = await desktopDark.page
+    .getByText("En vuelo", { exact: true })
+    .isVisible();
+  report.assertions.position_label_visible = await desktopDark.page
+    .getByText("Posición real en el mapa", { exact: true })
+    .isVisible();
+  report.assertions.callsign_visible = await desktopDark.page
+    .getByText("ITY61", { exact: true })
+    .isVisible();
+  report.assertions.telemetry_visible = await desktopDark.page
+    .getByText("Altitud 10.363 m", { exact: true })
+    .isVisible();
   const observedMarker = desktopDark.page.locator(".watch-map-live-marker");
   await observedMarker.waitFor({ state: "visible", timeout: 20_000 });
   report.assertions.observed_marker_visible = (await observedMarker.count()) === 1;
@@ -407,7 +443,10 @@ try {
     const marker = element.getBoundingClientRect();
     const stage = element.closest(".watch-map-stage")?.getBoundingClientRect();
     if (!stage) return { inside: false, marker: null, stage: null, topElement: null };
-    const topElement = document.elementFromPoint(marker.left + marker.width / 2, marker.top + marker.height / 2);
+    const topElement = document.elementFromPoint(
+      marker.left + marker.width / 2,
+      marker.top + marker.height / 2,
+    );
     return {
       inside:
         marker.left >= stage.left + 2 &&
@@ -428,8 +467,16 @@ try {
   );
   await assertNoHorizontalOverflow(desktopDark.page, "desktop_dark");
   await capture(desktopDark.page, "01-desktop-dark-page.png");
-  await capture(desktopDark.page, "02-desktop-dark-live-panel.png", desktopDark.page.locator(".watch-live-flight"));
-  await capture(desktopDark.page, "14-desktop-dark-observed-position-map.png", desktopDark.page.locator(".watch-map-panel"));
+  await capture(
+    desktopDark.page,
+    "02-desktop-dark-live-panel.png",
+    desktopDark.page.locator(".watch-live-flight"),
+  );
+  await capture(
+    desktopDark.page,
+    "14-desktop-dark-observed-position-map.png",
+    desktopDark.page.locator(".watch-map-panel"),
+  );
 
   const requestsBeforeHidden = report.request_counts.live_total;
   await desktopDark.page.evaluate(() => {
@@ -437,24 +484,35 @@ try {
     document.dispatchEvent(new Event("visibilitychange"));
   });
   await desktopDark.page.waitForTimeout(31_000);
-  report.assertions.hidden_tab_suppressed_polling = report.request_counts.live_total === requestsBeforeHidden;
+  report.assertions.hidden_tab_suppressed_polling =
+    report.request_counts.live_total === requestsBeforeHidden;
   await desktopDark.page.evaluate(() => {
     Object.defineProperty(document, "hidden", { configurable: true, get: () => false });
     document.dispatchEvent(new Event("visibilitychange"));
   });
   await desktopDark.page.waitForTimeout(800);
-  report.assertions.visible_tab_resumed_polling = report.request_counts.live_total > requestsBeforeHidden;
+  report.assertions.visible_tab_resumed_polling =
+    report.request_counts.live_total > requestsBeforeHidden;
 
   const legacyRow = desktopDark.page.locator(".watch-row", { hasText: "AGP → DUB" });
   await legacyRow.click();
-  await desktopDark.page.getByText("Esta ruta aún no sabe qué avión seguir", { exact: true }).waitFor({ state: "visible" });
+  await desktopDark.page
+    .getByText("Esta ruta aún no sabe qué avión seguir", { exact: true })
+    .waitFor({ state: "visible" });
   report.assertions.identity_copy_has_no_raw_i18n_keys =
     (await desktopDark.page.getByText(/^watchlist\.(live|map)\./).count()) === 0;
   report.assertions.identity_map_popup_not_auto_open =
     (await desktopDark.page.locator(".watch-map-panel .maplibregl-popup").count()) === 0;
-  report.assertions.identity_recovery_cta_visible = await desktopDark.page.getByRole("link", { name: "Buscar este vuelo exacto" }).isVisible();
-  report.assertions.identity_state_hides_useless_refresh = (await desktopDark.page.locator(".watch-live-flight-refresh").count()) === 0;
-  await capture(desktopDark.page, "06-desktop-dark-identity-missing.png", desktopDark.page.locator(".watch-live-flight"));
+  report.assertions.identity_recovery_cta_visible = await desktopDark.page
+    .getByRole("link", { name: "Buscar este vuelo exacto" })
+    .isVisible();
+  report.assertions.identity_state_hides_useless_refresh =
+    (await desktopDark.page.locator(".watch-live-flight-refresh").count()) === 0;
+  await capture(
+    desktopDark.page,
+    "06-desktop-dark-identity-missing.png",
+    desktopDark.page.locator(".watch-live-flight"),
+  );
 
   const multiRow = desktopDark.page.locator(".watch-row", { hasText: "MAD → DUB" });
   await multiRow.click();
@@ -462,32 +520,63 @@ try {
   const secondaryLegs = desktopDark.page.locator(".watch-live-flight-leg--secondary");
   report.assertions.multileg_secondary_legs_collapsed =
     (await secondaryLegs.count()) === 2 &&
-    (await secondaryLegs.evaluateAll((elements) => elements.every((element) => !element.hasAttribute("open"))));
-  await capture(desktopDark.page, "08-desktop-dark-multileg-collapsed.png", desktopDark.page.locator(".watch-live-flight"));
+    (await secondaryLegs.evaluateAll((elements) =>
+      elements.every((element) => !element.hasAttribute("open")),
+    ));
+  await capture(
+    desktopDark.page,
+    "08-desktop-dark-multileg-collapsed.png",
+    desktopDark.page.locator(".watch-live-flight"),
+  );
   await secondaryLegs.nth(1).locator("summary").click();
-  report.assertions.multileg_missing_leg_visible = await secondaryLegs.nth(1).getByText(
-    "Este tramo está enlazado, pero todavía no tiene una observación operacional fiable.",
-    { exact: true },
-  ).isVisible();
-  report.assertions.no_synthetic_route_dot = (await desktopDark.page.locator(".watch-map-route-dot").count()) === 0;
-  report.assertions.no_position_copy_visible = await desktopDark.page.getByText(
-    "Sin posición observada: la línea muestra la ruta, no la ubicación del avión.",
-    { exact: true },
-  ).isVisible();
-  await capture(desktopDark.page, "13-desktop-dark-multileg-partial.png", desktopDark.page.locator(".watch-live-flight"));
+  report.assertions.multileg_missing_leg_visible = await secondaryLegs
+    .nth(1)
+    .getByText(
+      "Este tramo está enlazado, pero todavía no tiene una observación operacional fiable.",
+      { exact: true },
+    )
+    .isVisible();
+  report.assertions.no_synthetic_route_dot =
+    (await desktopDark.page.locator(".watch-map-route-dot").count()) === 0;
+  report.assertions.no_position_copy_visible = await desktopDark.page
+    .getByText("Sin posición observada: la línea muestra la ruta, no la ubicación del avión.", {
+      exact: true,
+    })
+    .isVisible();
+  await capture(
+    desktopDark.page,
+    "13-desktop-dark-multileg-partial.png",
+    desktopDark.page.locator(".watch-live-flight"),
+  );
   await desktopDark.page.waitForTimeout(1_200);
-  await capture(desktopDark.page, "09-desktop-dark-no-position-map.png", desktopDark.page.locator(".watch-map-panel"));
+  await capture(
+    desktopDark.page,
+    "09-desktop-dark-no-position-map.png",
+    desktopDark.page.locator(".watch-map-panel"),
+  );
 
   const liveRow = desktopDark.page.locator(".watch-row", { hasText: "MAD → FCO" });
   await liveRow.click();
   await desktopDark.page.locator(".watch-live-flight-leg").waitFor({ state: "visible" });
   failLiveRequests = true;
   await desktopDark.page.locator(".watch-live-flight-refresh").click();
-  await desktopDark.page.getByText("La última comprobación no ha respondido", { exact: true }).waitFor({ state: "visible" });
-  report.assertions.stale_while_error_preserved = await desktopDark.page.locator(".watch-live-flight-leg").isVisible();
-  report.assertions.error_degrades_coverage_badge = await desktopDark.page.getByText("Señal intermitente", { exact: true }).isVisible();
-  report.assertions.error_labels_retained_data = await desktopDark.page.getByText("Último dato conocido", { exact: true }).isVisible();
-  await capture(desktopDark.page, "07-desktop-dark-stale-error.png", desktopDark.page.locator(".watch-live-flight"));
+  await desktopDark.page
+    .getByText("La última comprobación no ha respondido", { exact: true })
+    .waitFor({ state: "visible" });
+  report.assertions.stale_while_error_preserved = await desktopDark.page
+    .locator(".watch-live-flight-leg")
+    .isVisible();
+  report.assertions.error_degrades_coverage_badge = await desktopDark.page
+    .getByText("Señal intermitente", { exact: true })
+    .isVisible();
+  report.assertions.error_labels_retained_data = await desktopDark.page
+    .getByText("Último dato conocido", { exact: true })
+    .isVisible();
+  await capture(
+    desktopDark.page,
+    "07-desktop-dark-stale-error.png",
+    desktopDark.page.locator(".watch-live-flight"),
+  );
   failLiveRequests = false;
   liveStatus = "landed";
   await desktopDark.page.locator(".watch-live-flight-refresh").click();
@@ -503,10 +592,16 @@ try {
   const desktopLight = await createPage(browser, { width: 1440, height: 1100 }, "light");
   await openWatchlist(desktopLight.page);
   await assertNoHorizontalOverflow(desktopLight.page, "desktop_light");
-  await capture(desktopLight.page, "03-desktop-light-live-panel.png", desktopLight.page.locator(".watch-live-flight"));
+  await capture(
+    desktopLight.page,
+    "03-desktop-light-live-panel.png",
+    desktopLight.page.locator(".watch-live-flight"),
+  );
   const cdp = await desktopLight.context.newCDPSession(desktopLight.page);
   await cdp.send("Emulation.setPageScaleFactor", { pageScaleFactor: 2 });
-  report.assertions.zoom_200_live_panel_visible = await desktopLight.page.locator(".watch-live-flight").isVisible();
+  report.assertions.zoom_200_live_panel_visible = await desktopLight.page
+    .locator(".watch-live-flight")
+    .isVisible();
   await desktopLight.context.close();
 
   const reportedViewport = await createPage(browser, { width: 1074, height: 787 }, "light");
@@ -549,10 +644,17 @@ try {
   const tablet = await createPage(browser, { width: 768, height: 1024 }, "light");
   await openWatchlist(tablet.page);
   await assertNoHorizontalOverflow(tablet.page, "tablet_light");
-  await capture(tablet.page, "10-tablet-light-live-panel.png", tablet.page.locator(".watch-live-flight"));
+  await capture(
+    tablet.page,
+    "10-tablet-light-live-panel.png",
+    tablet.page.locator(".watch-live-flight"),
+  );
   await tablet.context.close();
 
-  for (const [theme, filename] of [["dark", "04-mobile-dark-live-panel.png"], ["light", "05-mobile-light-live-panel.png"]]) {
+  for (const [theme, filename] of [
+    ["dark", "04-mobile-dark-live-panel.png"],
+    ["light", "05-mobile-light-live-panel.png"],
+  ]) {
     const mobile = await createPage(browser, { width: 390, height: 844 }, theme);
     await openWatchlist(mobile.page);
     await assertNoHorizontalOverflow(mobile.page, `mobile_${theme}`);
@@ -579,14 +681,22 @@ try {
 
   delayNextLiveRequest = true;
   const race = await createPage(browser, { width: 1280, height: 900 }, "dark");
-  await race.page.goto(`${baseUrl}/watchlist?watch_id=watch-live`, { waitUntil: "domcontentloaded", timeout: 30_000 });
-  await race.page.locator(".watch-row", { hasText: "AGP → DUB" }).waitFor({ state: "visible", timeout: 20_000 });
+  await race.page.goto(`${baseUrl}/watchlist?watch_id=watch-live`, {
+    waitUntil: "domcontentloaded",
+    timeout: 30_000,
+  });
+  await race.page
+    .locator(".watch-row", { hasText: "AGP → DUB" })
+    .waitFor({ state: "visible", timeout: 20_000 });
   await race.page.locator(".watch-row", { hasText: "AGP → DUB" }).click();
-  await race.page.getByText("Esta ruta aún no sabe qué avión seguir", { exact: true }).waitFor({ state: "visible", timeout: 5_000 });
+  await race.page
+    .getByText("Esta ruta aún no sabe qué avión seguir", { exact: true })
+    .waitFor({ state: "visible", timeout: 5_000 });
   await race.page.waitForTimeout(900);
   report.assertions.race_did_not_overwrite_selection =
-    (await race.page.getByText("Esta ruta aún no sabe qué avión seguir", { exact: true }).isVisible()) &&
-    (await race.page.locator(".watch-live-flight-leg").count()) === 0;
+    (await race.page
+      .getByText("Esta ruta aún no sabe qué avión seguir", { exact: true })
+      .isVisible()) && (await race.page.locator(".watch-live-flight-leg").count()) === 0;
   await capture(race.page, "18-race-1280-dark-page.png");
   await race.context.close();
 
@@ -624,8 +734,10 @@ try {
   for (const assertion of requiredAssertions) {
     if (report.assertions[assertion] !== true) throw new Error(`Failed assertion: ${assertion}`);
   }
-  if (report.console_errors.length) throw new Error(`Console errors: ${report.console_errors.length}`);
-  if (report.unexpected_http_errors.length) throw new Error(`Unexpected HTTP errors: ${report.unexpected_http_errors.length}`);
+  if (report.console_errors.length)
+    throw new Error(`Console errors: ${report.console_errors.length}`);
+  if (report.unexpected_http_errors.length)
+    throw new Error(`Unexpected HTTP errors: ${report.unexpected_http_errors.length}`);
   report.completed = true;
 } finally {
   await browser.close();

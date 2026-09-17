@@ -34,8 +34,12 @@ const report = {
   screenshots: {},
 };
 
-page.on("console", (msg) => { if (msg.type() === "error") report.consoleErrors.push(msg.text()); });
-page.on("response", (res) => { if (res.status() >= 500) report.request500.push({ url: res.url(), status: res.status() }); });
+page.on("console", (msg) => {
+  if (msg.type() === "error") report.consoleErrors.push(msg.text());
+});
+page.on("response", (res) => {
+  if (res.status() >= 500) report.request500.push({ url: res.url(), status: res.status() });
+});
 
 try {
   await page.goto(`${BASE_URL}/login`, { waitUntil: "domcontentloaded", timeout: 25000 });
@@ -57,29 +61,47 @@ try {
   await page.waitForTimeout(600);
   const route2 = (await page.locator(".watch-detail-route strong").innerText()).trim();
 
-  report.interactions.routeSwitch = { firstRoute: route1, secondRoute: route2, changed: route1 !== route2 };
+  report.interactions.routeSwitch = {
+    firstRoute: route1,
+    secondRoute: route2,
+    changed: route1 !== route2,
+  };
 
   const detailActions = page.locator(".watch-detail-actions button");
-  if (await detailActions.count() >= 1) {
+  if ((await detailActions.count()) >= 1) {
     await detailActions.nth(0).click();
     await page.waitForTimeout(700);
     report.interactions.refreshClicked = true;
   }
-  if (await detailActions.count() >= 2) {
+  if ((await detailActions.count()) >= 2) {
     const beforeLabel = (await detailActions.nth(1).innerText()).trim();
     await detailActions.nth(1).click();
     await page.waitForTimeout(900);
-    const afterLabel = (await page.locator(".watch-detail-actions button").nth(1).innerText()).trim();
-    report.interactions.pauseResumeFromDet = { beforeLabel, afterLabel, changed: beforeLabel !== afterLabel };
+    const afterLabel = (
+      await page.locator(".watch-detail-actions button").nth(1).innerText()
+    ).trim();
+    report.interactions.pauseResumeFromDet = {
+      beforeLabel,
+      afterLabel,
+      changed: beforeLabel !== afterLabel,
+    };
   }
 
   const bulkChecks = page.locator(".watch-bulk-checkbox");
   await bulkChecks.nth(0).check();
   await bulkChecks.nth(1).check();
   await page.waitForTimeout(500);
-  report.interactions.comparePanelVisibleAfterSelection = await page.locator(".compare-tabs").first().isVisible().catch(() => false);
+  report.interactions.comparePanelVisibleAfterSelection = await page
+    .locator(".compare-tabs")
+    .first()
+    .isVisible()
+    .catch(() => false);
 
-  const historyLine = await page.locator(".history-route-line-text").first().innerText().catch(() => "");
+  const historyLine = await page
+    .locator(".history-route-line-text")
+    .first()
+    .innerText()
+    .catch(() => "");
   report.interactions.historyResponds = historyLine.trim().length > 0;
 
   const desktopPath = path.join(screenshotsDir, "watchlist-fase4-det-desktop-1440x900.png");
@@ -87,8 +109,13 @@ try {
 
   const mobile = await context.newPage();
   await mobile.setViewportSize({ width: 375, height: 812 });
-  mobile.on("console", (msg) => { if (msg.type() === "error") report.consoleErrors.push(`[mobile] ${msg.text()}`); });
-  mobile.on("response", (res) => { if (res.status() >= 500) report.request500.push({ url: res.url(), status: res.status(), viewport: "mobile" }); });
+  mobile.on("console", (msg) => {
+    if (msg.type() === "error") report.consoleErrors.push(`[mobile] ${msg.text()}`);
+  });
+  mobile.on("response", (res) => {
+    if (res.status() >= 500)
+      report.request500.push({ url: res.url(), status: res.status(), viewport: "mobile" });
+  });
   await mobile.goto(`${BASE_URL}/login`, { waitUntil: "domcontentloaded", timeout: 25000 });
   await mobile.evaluate((access) => localStorage.setItem("viru_token", access), token);
   await gotoWatchlist(mobile);
@@ -101,11 +128,15 @@ try {
   report.screenshots.mobile = path.relative(repoRoot, mobilePath);
 
   const reportPath = path.join(screenshotsDir, "watchlist-fase4-det-verification.json");
-  await writeFile(reportPath, JSON.stringify(report, null, 2) + "\n", "utf8");
+  await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
 
-  if (!report.interactions.routeSwitch.changed) throw new Error("DET did not change with route selection.");
-  const blockingConsoleErrors = report.consoleErrors.filter((entry) => !entry.includes("Failed to fetch RSC payload") && !entry.includes("status of 409"));
-  if (blockingConsoleErrors.length) throw new Error(`Console errors: ${blockingConsoleErrors.length}`);
+  if (!report.interactions.routeSwitch.changed)
+    throw new Error("DET did not change with route selection.");
+  const blockingConsoleErrors = report.consoleErrors.filter(
+    (entry) => !entry.includes("Failed to fetch RSC payload") && !entry.includes("status of 409"),
+  );
+  if (blockingConsoleErrors.length)
+    throw new Error(`Console errors: ${blockingConsoleErrors.length}`);
   if (report.request500.length) throw new Error(`HTTP 500 detected: ${report.request500.length}`);
 
   console.log(`Saved: ${path.relative(repoRoot, desktopPath)}`);
@@ -146,8 +177,18 @@ async function ensureMinimumWatches(token) {
   if (Array.isArray(list) && list.length >= 2) return;
 
   const seeds = [
-    { origin_iata: "MAD", destination_iata: "KUN", travel_date_local: "2026-09-15", target_price: 95 },
-    { origin_iata: "ALC", destination_iata: "TSF", travel_date_local: "2026-09-20", target_price: 70 },
+    {
+      origin_iata: "MAD",
+      destination_iata: "KUN",
+      travel_date_local: "2026-09-15",
+      target_price: 95,
+    },
+    {
+      origin_iata: "ALC",
+      destination_iata: "TSF",
+      travel_date_local: "2026-09-20",
+      target_price: 70,
+    },
   ];
 
   for (const seed of seeds) {

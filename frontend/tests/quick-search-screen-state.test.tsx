@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { getQuickSearchVisualState } from "../src/modules/quick-search/state/getQuickSearchVisualState";
 import { useQuickSearchScreenState } from "../src/modules/quick-search/state/useQuickSearchScreenState";
 import type { SearchResult } from "../src/modules/quick-search/types";
 
-function renderScreenState(overrides: Partial<Parameters<typeof useQuickSearchScreenState>[0]> = {}) {
+function renderScreenState(
+  overrides: Partial<Parameters<typeof useQuickSearchScreenState>[0]> = {},
+) {
   let snapshot: ReturnType<typeof useQuickSearchScreenState> | undefined;
 
   function Harness() {
@@ -70,7 +71,11 @@ test("useQuickSearchScreenState exposes degraded state and groups warnings", () 
       buildResult({ result_id: "res-1", ranking_score: 0.9 }),
       buildResult({ result_id: "res-2", destination: "LIS", ranking_score: 0.95 }),
     ],
-    filtersWarningCodes: ["ryanair_unavailable_partial", "provider_error_partial", "ryanair_provider_unavailable_total"],
+    filtersWarningCodes: [
+      "ryanair_unavailable_partial",
+      "provider_error_partial",
+      "ryanair_provider_unavailable_total",
+    ],
     searchMeta: { stale_data: true },
   });
 
@@ -80,7 +85,9 @@ test("useQuickSearchScreenState exposes degraded state and groups warnings", () 
     { message: "ryanair_unavailable_partial", count: 1 },
     { message: "provider_error_partial", count: 1 },
   ]);
-  assert.deepEqual(state.groupedCriticalWarnings, [{ message: "ryanair_provider_unavailable_total", count: 1 }]);
+  assert.deepEqual(state.groupedCriticalWarnings, [
+    { message: "ryanair_provider_unavailable_total", count: 1 },
+  ]);
   assert.equal(state.infoItemsCount, 3);
 });
 
@@ -102,7 +109,9 @@ test("useQuickSearchScreenState treats easyJet outage codes as provider outages"
   assert.equal(state.showDegradedState, true);
   assert.equal(state.emptyStateMainTitle, "emptyStateProviderTitle");
   assert.deepEqual(state.zeroResultCauses, ["emptyCauseProvider"]);
-  assert.deepEqual(state.groupedCriticalWarnings, [{ message: "easyjet_provider_unavailable_total", count: 1 }]);
+  assert.deepEqual(state.groupedCriticalWarnings, [
+    { message: "easyjet_provider_unavailable_total", count: 1 },
+  ]);
   assert.deepEqual(state.zeroResultActions, []);
 });
 
@@ -114,7 +123,9 @@ test("useQuickSearchScreenState treats Iberia outage codes as provider outages",
   assert.equal(state.showDegradedState, true);
   assert.equal(state.emptyStateMainTitle, "emptyStateProviderTitle");
   assert.deepEqual(state.zeroResultCauses, ["emptyCauseProvider"]);
-  assert.deepEqual(state.groupedCriticalWarnings, [{ message: "iberia_provider_unavailable_total", count: 1 }]);
+  assert.deepEqual(state.groupedCriticalWarnings, [
+    { message: "iberia_provider_unavailable_total", count: 1 },
+  ]);
   assert.deepEqual(state.zeroResultActions, []);
 });
 
@@ -215,15 +226,33 @@ test("useQuickSearchScreenState applies visible result filters for price and dur
   const state = renderScreenState({
     results: [
       buildResult({ result_id: "cheap-fast", price_total: 45, duration_total_min: 80 }),
-      buildResult({ result_id: "expensive", destination: "LIS", price_total: 170, duration_total_min: 85 }),
-      buildResult({ result_id: "slow", destination: "OPO", price_total: 60, duration_total_min: 220 }),
-      buildResult({ result_id: "second-fit", destination: "STN", price_total: 50, duration_total_min: 90 }),
+      buildResult({
+        result_id: "expensive",
+        destination: "LIS",
+        price_total: 170,
+        duration_total_min: 85,
+      }),
+      buildResult({
+        result_id: "slow",
+        destination: "OPO",
+        price_total: 60,
+        duration_total_min: 220,
+      }),
+      buildResult({
+        result_id: "second-fit",
+        destination: "STN",
+        price_total: 50,
+        duration_total_min: 90,
+      }),
     ],
     priceMax: "100",
     durationMax: "120",
   });
 
-  assert.deepEqual(state.visibleResults.map((item) => item.result_id), ["cheap-fast", "second-fit"]);
+  assert.deepEqual(
+    state.visibleResults.map((item) => item.result_id),
+    ["cheap-fast", "second-fit"],
+  );
 });
 
 test("useQuickSearchScreenState groups sources defensively when raw source values are malformed", () => {
@@ -234,7 +263,9 @@ test("useQuickSearchScreenState groups sources defensively when raw source value
     ],
   });
 
-  assert.deepEqual(state.sourcesSummary.entries, [{ id: "unknown", label: "sourceUnknown", count: 2 }]);
+  assert.deepEqual(state.sourcesSummary.entries, [
+    { id: "unknown", label: "sourceUnknown", count: 2 },
+  ]);
   assert.equal(state.sourcesSummary.preview, "sourceUnknown (2)");
 });
 

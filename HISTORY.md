@@ -1,5 +1,13 @@
 # History
 
+## 2026-09-16 — Cierre del cutover: Supabase como autoridad única y verificación completa
+
+- La autoridad DDL es ahora Supabase migrations (baseline canónico de 62 tablas + 30 políticas RLS con `auth.uid()`); Alembic queda retirado (directorio y dependencias fuera) y el backend exige `DB_URL` explícita con `sslmode=require` en remoto, sin crear esquema en arranque.
+- La sesión pasa a claves `sb_access_token`/`sb_refresh_token` (Supabase Auth), con `/auth/*` devolviendo 410 y el backend verificando JWT de Supabase; se corrigió un bug real que dejaba el refresh token en la clave antigua tras un 401.
+- Verificación adversarial completa: pytest 1.413/0 fallos, frontend 603/0, E2E Playwright 6/6, typecheck 0, contrato OpenAPI sin drift, ESLint y Biome en 0 errores, build de producción OK y `npm audit` sin vulnerabilidades. Durante el cierre se restauró el modelo `RefreshToken` (regresión del cutover), se reconectó el helper de tests a la DB del cliente y se adaptaron 14 tests de conformidad al formateo global de Biome (formatter ya activado: 473 archivos en alcance).
+- Hardening de seguridad tras revisión adversarial: el backend ahora falla al arranque sin un secreto JWT fuerte (evita la aceptación de tokens firmados con clave vacía), el alta automática de usuarios exige email verificado y nunca hereda permisos de admin del token, y el cliente Supabase del frontend deja de apuntar a un proyecto mock en producción.
+- El estado, los riesgos diferidos restantes y la evidencia por gate quedan consolidados en `POST_MIGRATION_AUDIT.md` y `UNRESOLVED_RISKS.md`.
+
 ## 2026-08-29 — Estados de carga generados con Boneyard
 
 - El frontend concentra sus estados de carga en Boneyard, con huesos generados por estructura y registro común para rutas públicas, privadas, Watchlist, Quick Search, administración, comunidad y puerta a puerta.

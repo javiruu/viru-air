@@ -1,0 +1,41 @@
+{
+  "source_database": "viru.db (SQLite)",
+  "target_database_authority": "Supabase PostgreSQL (Hosted)",
+  "verified_tables": {
+    "airport": {
+      "source_row_count": 222,
+      "distinct_pk_count": 222,
+      "duplicate_pk_count": 0,
+      "orphan_fk_count": 0,
+      "status": "RECONCILED_EXACT"
+    },
+    "quick_search_popularity_counter": {
+      "source_row_count": 3,
+      "distinct_pk_count": 3,
+      "duplicate_pk_count": 0,
+      "orphan_fk_count": 0,
+      "status": "RECONCILED_EXACT"
+    },
+    "quick_search_popularity_daily": {
+      "source_row_count": 3,
+      "distinct_pk_count": 3,
+      "duplicate_pk_count": 0,
+      "orphan_fk_count": 0,
+      "status": "RECONCILED_EXACT"
+    },
+    "security_activity": {
+      "source_row_count": 1,
+      "distinct_pk_count": 1,
+      "duplicate_pk_count": 0,
+      "orphan_fk_count": 0,
+      "status": "RECONCILED_EXACT"
+    },
+    "users": {
+      "source_row_count": 1,
+      "distinct_pk_count": 1,
+      "duplicate_pk_count": 0,
+      "orphan_fk_count": 0,
+      "status": "RECONCILED_EXACT"
+    }
+  }
+}

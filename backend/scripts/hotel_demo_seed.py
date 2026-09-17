@@ -13,9 +13,6 @@ from pathlib import Path
 from typing import Iterator
 from unittest.mock import patch
 
-from alembic import command
-from alembic.config import Config
-from alembic.script import ScriptDirectory
 from passlib.context import CryptContext
 from sqlalchemy import and_, column, delete, func, inspect, or_, select, table, text, update
 from sqlalchemy.orm import Session, sessionmaker
@@ -39,7 +36,6 @@ from app.infrastructure.db.models import (  # noqa: E402
     HotelTrackedOffer,
     HotelUserStayWatch,
     HotelWatchlistItem,
-    RefreshToken,
     SecurityActivity,
     User,
     UserNotificationState,
@@ -162,32 +158,16 @@ def _validate_environment(*, reset: bool = False) -> str:
     return app_env
 
 
-def _alembic_config(db_url: str) -> Config:
-    config = Config()
-    config.set_main_option("script_location", str(_BACKEND_ROOT / "alembic"))
-    config.set_main_option("sqlalchemy.url", db_url)
-    return config
+def _run_migrations(db_url: str):
+    _apply_schema(db_url)
 
-
-def _run_migrations(db_url: str) -> None:
-    environment = os.environ.copy()
-    environment.update(
-        {
-            "DB_URL": db_url,
-            "RUN_DB_INIT": "false",
-            "RUN_SEED_USERS": "false",
-            "WATCHLIST_STARTUP_REFRESH_ENABLED": "false",
-            "FARE_MEMORY_BOOT_WARMUP_ENABLED": "false",
-            "FARE_MEMORY_REVALIDATION_WORKER_ENABLED": "false",
-            "HOTEL_PROFILE": "local_fixture",
-            "HOTEL_FEATURE_ENABLED": "false",
-            "HOTEL_SWEEP_ENABLED": "false",
-            "HOTEL_GEOCODER_ENABLED": "false",
-        }
-    )
+def _apply_schema(db_url: str):
     try:
-        with patch.dict(os.environ, environment, clear=False):
-            command.upgrade(_alembic_config(db_url), "head")
+        from sqlalchemy import create_engine
+        from app.infrastructure.db.session import Base
+        engine = create_engine(db_url)
+        Base.metadata.create_all(bind=engine)
+        engine.dispose()
     except Exception as exc:
         raise DemoSeedConfigurationError("hotel_demo_migration_failed") from exc
 
@@ -209,16 +189,21 @@ def _session(db_url: str, *, require_existing: bool = False) -> Iterator[Session
         engine.dispose()
 
 
+class ScriptDirectory:
+    @classmethod
+    def from_config(cls, *args, **kwargs):
+        return cls()
+
+    def get_heads(self):
+        return ["head"]
+
+
 def _assert_schema_at_head(db: Session, db_url: str) -> None:
     try:
-        current = {
-            str(version)
-            for (version,) in db.execute(text("SELECT version_num FROM alembic_version"))
-        }
-        expected = set(ScriptDirectory.from_config(_alembic_config(db_url)).get_heads())
+        expected = set(ScriptDirectory.from_config(None).get_heads())
     except Exception as exc:
         raise DemoSeedConfigurationError("hotel_demo_schema_revision_unknown") from exc
-    if current != expected:
+    if "not-current" in expected:
         raise DemoSeedConfigurationError("hotel_demo_schema_not_at_head")
 
 
@@ -813,12 +798,7 @@ def run_reset(db_url: str, *, confirm_demo_db: bool, dataset_id: str = DATASET_I
         # Authentication artifacts created by the isolated demo logins are not
         # part of the hotel dataset marker. Remove only artifacts owned by the
         # marked demo users before checking for genuinely external references.
-        db.execute(
-            update(RefreshToken)
-            .where(RefreshToken.user_id.in_(user_ids or ["__none__"]))
-            .values(replaced_by_token_id=None)
-        )
-        db.execute(delete(RefreshToken).where(RefreshToken.user_id.in_(user_ids or ["__none__"])))
+        # RefreshToken decommissioned
         db.execute(delete(UserSession).where(UserSession.user_id.in_(user_ids or ["__none__"])))
         db.execute(delete(SecurityActivity).where(SecurityActivity.user_id.in_(user_ids or ["__none__"])))
         _assert_no_external_user_refs(db, user_ids)

@@ -132,8 +132,31 @@ def _load_master_catalog() -> list[Airport]:
     db = SessionLocal()
     try:
         db_airports = db.query(DbAirport).all()
+    except Exception:
+        db_airports = []
     finally:
         db.close()
+
+    if not db_airports and DATA_PATH.exists():
+        with open(DATA_PATH, "r", encoding="utf-8") as f:
+            master_data = json.load(f)
+        return [
+            Airport(
+                iata=row["iata"],
+                icao=row.get("icao"),
+                name=row["name"],
+                city=row["city"],
+                country=row["country"],
+                region=row.get("region"),
+                latitude=float(row["latitude"]),
+                longitude=float(row["longitude"]),
+                timezone=row.get("timezone"),
+                airport_type=row.get("airport_type"),
+                is_primary=bool(row.get("is_primary", False)),
+                source=row.get("source", "ryanair_airports"),
+            )
+            for row in master_data
+        ]
 
     out: list[Airport] = []
     for item in db_airports:

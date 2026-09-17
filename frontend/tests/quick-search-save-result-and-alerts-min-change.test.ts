@@ -3,9 +3,27 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
-const QUICK_SEARCH_VIEW = path.join(process.cwd(), "src", "modules", "quick-search", "QuickSearchView.tsx");
-const QUICK_SEARCH_COPY = path.join(process.cwd(), "src", "modules", "shared", "quickSearchCopy.ts");
-const ALERTS_PAGE = path.join(process.cwd(), "src", "modules", "signals", "AlertRulesWorkspace.tsx");
+const QUICK_SEARCH_VIEW = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "quick-search",
+  "QuickSearchView.tsx",
+);
+const QUICK_SEARCH_COPY = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "shared",
+  "quickSearchCopy.ts",
+);
+const ALERTS_PAGE = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "signals",
+  "AlertRulesWorkspace.tsx",
+);
 
 test("quick search save uses save-result without fallback manual create", () => {
   const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
@@ -23,14 +41,17 @@ test("quick search refresh price reuses watchlist refresh-now flow with rate-lim
   assert.match(source, /refreshPriceSuccess/);
 });
 
-test("quick search save result copies are aligned to created\/existing\/error", () => {
+test("quick search save result copies are aligned to created/existing/error", () => {
   const source = fs.readFileSync(QUICK_SEARCH_COPY, "utf8");
   assert.match(source, /watchAdded: "Guardado en Watchlist"/);
   assert.match(source, /watchExists: "Ya estaba en Watchlist"/);
   assert.match(source, /watchFailed: "No se pudo guardar"/);
   assert.match(source, /refreshPrice: "Actualizar precio"/);
   assert.match(source, /refreshPriceLoading: "Actualizando precio\.\.\."?/);
-  assert.match(source, /refreshPriceRateLimited: "Demasiadas consultas seguidas\. Reintentamos luego\."/);
+  assert.match(
+    source,
+    /refreshPriceRateLimited: "Demasiadas consultas seguidas\. Reintentamos luego\."/,
+  );
 });
 
 test("alerts includes min_change_pct in create and update payloads and active rows", () => {

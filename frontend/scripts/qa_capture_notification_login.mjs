@@ -24,7 +24,10 @@ async function run() {
   const toast = page.locator(".notification-center .notification-card").first();
   await toast.waitFor({ state: "visible", timeout: 15000 });
 
-  await page.screenshot({ path: path.join(outDir, "notifications-login-desktop-full.png"), fullPage: true });
+  await page.screenshot({
+    path: path.join(outDir, "notifications-login-desktop-full.png"),
+    fullPage: true,
+  });
   await toast.screenshot({ path: path.join(outDir, "notifications-login-desktop-component.png") });
 
   await browser.close();

@@ -11,7 +11,10 @@ test("account support menu exposes the about-us route", () => {
   const supportGroup = groups.find((group) => group.title === "Soporte");
 
   assert.ok(supportGroup);
-  assert.equal(supportGroup?.items.some((item) => item.href === "/soporte/about-us"), true);
+  assert.equal(
+    supportGroup?.items.some((item) => item.href === "/soporte/about-us"),
+    true,
+  );
   assert.equal(supportGroup?.items.at(-1)?.label, "About us");
 });
 

@@ -4,10 +4,37 @@ import path from "node:path";
 import test from "node:test";
 
 const WATCHLIST_PAGE = path.join(process.cwd(), "src", "app", "(private)", "watchlist", "page.tsx");
-const SMART_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "SmartWatchListPanel.tsx");
-const WATCH_ROW = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchRow.tsx");
-const DETAIL_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");
-const ACTIONS_FILE = path.join(process.cwd(), "src", "modules", "watchlist", "useWatchlistActions.ts");
+const SMART_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "SmartWatchListPanel.tsx",
+);
+const WATCH_ROW = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "WatchRow.tsx",
+);
+const DETAIL_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "WatchDetailPanel.tsx",
+);
+const ACTIONS_FILE = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "useWatchlistActions.ts",
+);
 
 test("watchlist route no longer wires manual refresh actions into list or detail panels", () => {
   const pageSource = fs.readFileSync(WATCHLIST_PAGE, "utf8");
@@ -25,7 +52,10 @@ test("watchlist keeps freshness context outside compact list rows", () => {
 
   assert.doesNotMatch(rowSource, /watchlist\.detail\.(latestSnapshot|freshness)/);
   assert.match(smartSource, /watchlist\.lastUpdateInline/);
-  assert.doesNotMatch(`${smartSource}\n${rowSource}`, /watchlist\.smartList\.refresh|watchlist\.smartList\.updating/);
+  assert.doesNotMatch(
+    `${smartSource}\n${rowSource}`,
+    /watchlist\.smartList\.refresh|watchlist\.smartList\.updating/,
+  );
   assert.doesNotMatch(detailSource, /watchlist\.detail\.actions\.refresh/);
 });
 

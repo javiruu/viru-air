@@ -104,10 +104,12 @@ try {
 }
 
 report.summary.pagesScanned = report.pages.length;
-report.summary.pagesWithPotentialSpanish = report.pages.filter((item) => item.matches.length > 0).length;
+report.summary.pagesWithPotentialSpanish = report.pages.filter(
+  (item) => item.matches.length > 0,
+).length;
 
 const reportPath = path.join(qaDir, "i18n-english-audit-report.json");
-await writeFile(reportPath, JSON.stringify(report, null, 2) + "\n", "utf8");
+await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
 
 console.log(`I18N English audit report: ${path.relative(repoRoot, reportPath)}`);
 console.log(`Scanned pages: ${report.summary.pagesScanned}`);

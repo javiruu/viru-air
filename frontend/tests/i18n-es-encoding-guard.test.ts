@@ -5,11 +5,7 @@ import test from "node:test";
 
 const I18N_ROOT = path.join(process.cwd(), "src", "i18n");
 
-const FORBIDDEN_PATTERNS = [
-  /Ã/,
-  /Â/,
-  /â€¦/,
-];
+const FORBIDDEN_PATTERNS = [/Ã/, /Â/, /â€¦/];
 
 const DEGRADED_SPANISH_TOKENS = [
   /\bcontrasena\b/i,

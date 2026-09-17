@@ -13,7 +13,8 @@ const repoRoot = path.resolve(frontendRoot, "..");
 const backendRoot = path.join(repoRoot, "backend");
 const outputDir = path.resolve(
   repoRoot,
-  process.env.H44_OUTPUT_DIR?.trim() || path.join("docs", "qa", "evidence", "hotels-h44-browser-current"),
+  process.env.H44_OUTPUT_DIR?.trim() ||
+    path.join("docs", "qa", "evidence", "hotels-h44-browser-current"),
 );
 const configuredBaseUrl = process.env.H44_BASE_URL?.trim() || "";
 const configuredApiBaseUrl = process.env.H44_API_BASE_URL?.trim() || "";
@@ -46,7 +47,10 @@ function sanitize(value) {
     .replace(/https?:\/\/[^\s"'<>]+/gi, redactUrl)
     .replace(/(authorization\s*[:=]\s*bearer\s+)[^\s,;]+/gi, "$1[redacted]")
     .replace(/((?:token|api[_-]?key|password|secret)\s*[:=]\s*)[^\s,;]+/gi, "$1[redacted]")
-    .replace(/([?&](?:token|api[_-]?key|password|secret|access_token)\s*=\s*)[^&\s]+/gi, "$1[redacted]")
+    .replace(
+      /([?&](?:token|api[_-]?key|password|secret|access_token)\s*=\s*)[^&\s]+/gi,
+      "$1[redacted]",
+    )
     .replace(/\b[\w.+-]+@[\w.-]+\.[A-Z]{2,}\b/gi, "[email-redacted]")
     .slice(0, 500);
 }
@@ -79,9 +83,14 @@ function runProcess(command, args, { cwd, env, timeoutMs = 120_000 } = {}) {
     let stdout = "";
     let stderr = "";
     let timedOut = false;
-    const append = (target, chunk) => chunk.length > 12_000 ? `${target}${chunk}`.slice(-12_000) : `${target}${chunk}`;
-    child.stdout.on("data", (chunk) => { stdout = append(stdout, chunk.toString()); });
-    child.stderr.on("data", (chunk) => { stderr = append(stderr, chunk.toString()); });
+    const append = (target, chunk) =>
+      chunk.length > 12_000 ? `${target}${chunk}`.slice(-12_000) : `${target}${chunk}`;
+    child.stdout.on("data", (chunk) => {
+      stdout = append(stdout, chunk.toString());
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr = append(stderr, chunk.toString());
+    });
     const timeout = setTimeout(() => {
       timedOut = true;
       terminateProcess(child);
@@ -92,7 +101,13 @@ function runProcess(command, args, { cwd, env, timeoutMs = 120_000 } = {}) {
     });
     child.once("error", (error) => {
       clearTimeout(timeout);
-      resolve({ code: null, signal: null, stdout, stderr: `${stderr}\n${error.message}`, timedOut });
+      resolve({
+        code: null,
+        signal: null,
+        stdout,
+        stderr: `${stderr}\n${error.message}`,
+        timedOut,
+      });
     });
   });
 }
@@ -101,10 +116,17 @@ function startProcess(command, args, { cwd, env }) {
   const child = spawn(command, args, { cwd, env, stdio: ["ignore", "pipe", "pipe"] });
   let stdout = "";
   let stderr = "";
-  const append = (target, chunk) => chunk.length > 12_000 ? `${target}${chunk}`.slice(-12_000) : `${target}${chunk}`;
-  child.stdout.on("data", (chunk) => { stdout = append(stdout, chunk.toString()); });
-  child.stderr.on("data", (chunk) => { stderr = append(stderr, chunk.toString()); });
-  child.on("error", (error) => { stderr = append(stderr, error.message); });
+  const append = (target, chunk) =>
+    chunk.length > 12_000 ? `${target}${chunk}`.slice(-12_000) : `${target}${chunk}`;
+  child.stdout.on("data", (chunk) => {
+    stdout = append(stdout, chunk.toString());
+  });
+  child.stderr.on("data", (chunk) => {
+    stderr = append(stderr, chunk.toString());
+  });
+  child.on("error", (error) => {
+    stderr = append(stderr, error.message);
+  });
   return { child, getLogs: () => ({ stdout, stderr }) };
 }
 
@@ -112,10 +134,7 @@ async function stopProcess(processHandle) {
   const child = processHandle?.child;
   if (!child || child.exitCode !== null || child.signalCode !== null) return;
   terminateProcess(child);
-  await Promise.race([
-    new Promise((resolve) => child.once("close", resolve)),
-    sleep(5_000),
-  ]);
+  await Promise.race([new Promise((resolve) => child.once("close", resolve)), sleep(5_000)]);
   if (child.exitCode === null && child.signalCode === null) {
     child.kill("SIGKILL");
     await sleep(250);
@@ -161,7 +180,13 @@ function lastJsonLine(output) {
 }
 
 async function loadProfileManifest() {
-  const manifestPath = path.join(backendRoot, "app", "hotels", "fixtures", "hotel_fault_profiles.json");
+  const manifestPath = path.join(
+    backendRoot,
+    "app",
+    "hotels",
+    "fixtures",
+    "hotel_fault_profiles.json",
+  );
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
   const profile = manifest.profiles?.[faultProfile];
   assertCondition(profile && typeof profile === "object", `unknown_fault_profile:${faultProfile}`);
@@ -198,10 +223,17 @@ async function seedDatabase(dbUrl) {
   const result = await runProcess(
     pythonCommand,
     ["scripts/hotel_demo_seed.py", "seed", "--db-url", dbUrl],
-    { cwd: backendRoot, env: demoEnvironment(dbUrl, { profile: "happy_path" }), timeoutMs: 180_000 },
+    {
+      cwd: backendRoot,
+      env: demoEnvironment(dbUrl, { profile: "happy_path" }),
+      timeoutMs: 180_000,
+    },
   );
   const report = lastJsonLine(result.stdout);
-  assertCondition(result.code === 0 && report?.result === "passed", `seed_failed:${sanitize(result.stderr || result.stdout)}`);
+  assertCondition(
+    result.code === 0 && report?.result === "passed",
+    `seed_failed:${sanitize(result.stderr || result.stdout)}`,
+  );
   assertCondition(report.dataset_id === datasetId, "seed_dataset_mismatch");
   assertCondition(report.external_calls_observed === 0, "seed_external_calls_observed");
   return report;
@@ -221,7 +253,10 @@ async function resetDatabase(dbUrl) {
     },
   );
   const report = lastJsonLine(result.stdout);
-  assertCondition(result.code === 0 && report?.result === "passed", `reset_failed:${sanitize(result.stderr || result.stdout)}`);
+  assertCondition(
+    result.code === 0 && report?.result === "passed",
+    `reset_failed:${sanitize(result.stderr || result.stdout)}`,
+  );
   assertCondition(report.dataset_id === datasetId, "reset_dataset_mismatch");
   return report;
 }
@@ -229,7 +264,10 @@ async function resetDatabase(dbUrl) {
 async function login(api, email) {
   const response = await api.post("auth/login", { data: { email, password: demoPassword } });
   const body = await response.json();
-  assertCondition(response.ok() && typeof body.access_token === "string", `login_failed:${response.status()}`);
+  assertCondition(
+    response.ok() && typeof body.access_token === "string",
+    `login_failed:${response.status()}`,
+  );
   return body;
 }
 
@@ -240,21 +278,30 @@ async function apiJson(api, token, method, endpoint, body) {
     data: body,
   });
   const parsed = await response.json().catch(() => null);
-  assertCondition(response.ok(), `api_${method.toLowerCase()}_failed:${response.status()}:${endpoint}`);
+  assertCondition(
+    response.ok(),
+    `api_${method.toLowerCase()}_failed:${response.status()}:${endpoint}`,
+  );
   return parsed;
 }
 
-async function setupPage(browser, auth, label, consoleErrors, requestLog, appUrl) {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 1200 }, locale: "es-ES" });
-  await context.addInitScript(({ accessToken, refreshToken }) => {
-    window.localStorage.setItem("viru_token", accessToken);
-    if (refreshToken) window.localStorage.setItem("viru_refresh_token", refreshToken);
-    window.localStorage.setItem("viru_dashboard_login_required", "false");
-    window.localStorage.setItem("viru-theme", "light");
-  }, {
-    accessToken: auth.access_token ?? auth.accessToken,
-    refreshToken: auth.refresh_token ?? auth.refreshToken,
+async function setupPage(browser, auth, label, consoleErrors, requestLog, _appUrl) {
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 1200 },
+    locale: "es-ES",
   });
+  await context.addInitScript(
+    ({ accessToken, refreshToken }) => {
+      window.localStorage.setItem("viru_token", accessToken);
+      if (refreshToken) window.localStorage.setItem("viru_refresh_token", refreshToken);
+      window.localStorage.setItem("viru_dashboard_login_required", "false");
+      window.localStorage.setItem("viru-theme", "light");
+    },
+    {
+      accessToken: auth.access_token ?? auth.accessToken,
+      refreshToken: auth.refresh_token ?? auth.refreshToken,
+    },
+  );
   const page = await context.newPage();
   // The authenticated dashboard emits best-effort UX telemetry. Keep this
   // isolated E2E deterministic and prevent synthetic events from becoming
@@ -262,16 +309,27 @@ async function setupPage(browser, auth, label, consoleErrors, requestLog, appUrl
   await page.route("**/api/v1/ux/events**", (route) => route.fulfill({ status: 204, body: "" }));
   await page.route("**/api/v1/ux/errors**", (route) => route.fulfill({ status: 204, body: "" }));
   page.on("console", (message) => {
-    if (message.type() === "error") consoleErrors.push({ user: label, message: sanitize(message.text()) });
+    if (message.type() === "error")
+      consoleErrors.push({ user: label, message: sanitize(message.text()) });
   });
   page.on("requestfailed", (request) => {
     if (request.url().includes("/api/v1/")) {
-      requestLog.push({ user: label, method: request.method(), url: redactUrl(request.url()), failed: true });
+      requestLog.push({
+        user: label,
+        method: request.method(),
+        url: redactUrl(request.url()),
+        failed: true,
+      });
     }
   });
   page.on("response", (response) => {
     if (response.url().includes("/api/v1/")) {
-      requestLog.push({ user: label, method: response.request().method(), url: redactUrl(response.url()), status: response.status() });
+      requestLog.push({
+        user: label,
+        method: response.request().method(),
+        url: redactUrl(response.url()),
+        status: response.status(),
+      });
     }
   });
   return { context, page };
@@ -279,15 +337,23 @@ async function setupPage(browser, auth, label, consoleErrors, requestLog, appUrl
 
 async function waitForHotelSearch(page) {
   try {
-    await page.locator('[data-testid="hotel-city-input"]').waitFor({ state: "visible", timeout: 60_000 });
-    await page.locator('[data-testid="hotel-search-submit"]').waitFor({ state: "visible", timeout: 15_000 });
+    await page
+      .locator('[data-testid="hotel-city-input"]')
+      .waitFor({ state: "visible", timeout: 60_000 });
+    await page
+      .locator('[data-testid="hotel-search-submit"]')
+      .waitFor({ state: "visible", timeout: 15_000 });
   } catch (error) {
-    const diagnostic = await page.evaluate(() => ({
-      url: window.location.href,
-      title: document.title,
-      bodyText: document.body.innerText.slice(0, 800),
-    })).catch(() => ({ url: page.url(), title: "", bodyText: "" }));
-    throw new Error(`hotel_shell_not_ready:${JSON.stringify(diagnostic)}:${sanitize(error?.message || error)}`);
+    const diagnostic = await page
+      .evaluate(() => ({
+        url: window.location.href,
+        title: document.title,
+        bodyText: document.body.innerText.slice(0, 800),
+      }))
+      .catch(() => ({ url: page.url(), title: "", bodyText: "" }));
+    throw new Error(
+      `hotel_shell_not_ready:${JSON.stringify(diagnostic)}:${sanitize(error?.message || error)}`,
+    );
   }
 }
 
@@ -295,9 +361,10 @@ async function searchCity(page, city) {
   const cityInput = page.locator('[data-testid="hotel-city-input"]');
   await cityInput.fill(city);
   const searchResponse = page.waitForResponse(
-    (response) => new URL(response.url()).pathname === "/api/v1/hotels/search"
-      && response.request().method() === "GET"
-      && response.status() === 200,
+    (response) =>
+      new URL(response.url()).pathname === "/api/v1/hotels/search" &&
+      response.request().method() === "GET" &&
+      response.status() === 200,
     { timeout: 60_000 },
   );
   await page.locator('[data-testid="hotel-search-submit"]').click();
@@ -308,9 +375,9 @@ async function searchCity(page, city) {
 }
 
 async function runOwnerFlow(page, appUrl) {
-  let step = "open";
+  let _step = "open";
   const waitForStep = async (promise, name) => {
-    step = name;
+    _step = name;
     try {
       return await promise;
     } catch (error) {
@@ -318,97 +385,138 @@ async function runOwnerFlow(page, appUrl) {
     }
   };
 
-  await waitForStep(page.goto(`${appUrl}/hoteles`, { waitUntil: "domcontentloaded", timeout: 60_000 }), "open");
+  await waitForStep(
+    page.goto(`${appUrl}/hoteles`, { waitUntil: "domcontentloaded", timeout: 60_000 }),
+    "open",
+  );
   await waitForStep(waitForHotelSearch(page), "shell");
   const results = await waitForStep(searchCity(page, "Malaga"), "search");
-  assertCondition(await results.count() === 1, "owner_expected_one_malaga_result");
+  assertCondition((await results.count()) === 1, "owner_expected_one_malaga_result");
   const firstResult = results.first();
-  assertCondition((await firstResult.innerText()).includes("Hotel Sol Madrid"), "owner_target_hotel_missing");
+  assertCondition(
+    (await firstResult.innerText()).includes("Hotel Sol Madrid"),
+    "owner_target_hotel_missing",
+  );
 
   await waitForStep(firstResult.locator(".hotel-result-main").click(), "select");
   // The detail hook requests detail, rates and parity concurrently. The visible
   // rate row is the stable browser contract; waiting on one response can race
   // with the hook's allSettled update even when the API returned 200.
-  await waitForStep(page.locator(".hotel-rate-row").first().waitFor({ state: "visible", timeout: 60_000 }), "rate_ui");
+  await waitForStep(
+    page.locator(".hotel-rate-row").first().waitFor({ state: "visible", timeout: 60_000 }),
+    "rate_ui",
+  );
 
   const trackButton = firstResult.getByRole("button", { name: /Seguir precio|Follow price/ });
-  assertCondition(await trackButton.count() === 1, "owner_track_button_missing");
+  assertCondition((await trackButton.count()) === 1, "owner_track_button_missing");
   assertCondition(await trackButton.isEnabled(), "owner_track_button_disabled");
   const trackResponse = page.waitForResponse(
-    (response) => new URL(response.url()).pathname === "/api/v1/hotels/v2/tracked-offers"
-      && response.request().method() === "POST",
+    (response) =>
+      new URL(response.url()).pathname === "/api/v1/hotels/v2/tracked-offers" &&
+      response.request().method() === "POST",
     { timeout: 60_000 },
   );
   await waitForStep(trackButton.click(), "track_click");
   const confirmation = page.getByRole("dialog");
-  await waitForStep(confirmation.waitFor({ state: "visible", timeout: 60_000 }), "track_confirmation_visible");
-  const confirmTracking = confirmation.getByRole("button", { name: /Confirmar seguimiento|Confirm tracking/ });
-  assertCondition(await confirmTracking.count() === 1, "owner_track_confirmation_missing");
+  await waitForStep(
+    confirmation.waitFor({ state: "visible", timeout: 60_000 }),
+    "track_confirmation_visible",
+  );
+  const confirmTracking = confirmation.getByRole("button", {
+    name: /Confirmar seguimiento|Confirm tracking/,
+  });
+  assertCondition((await confirmTracking.count()) === 1, "owner_track_confirmation_missing");
   await waitForStep(confirmTracking.click(), "track_confirm_click");
   const tracked = await waitForStep(trackResponse, "track_response");
-  assertCondition(tracked.status() === 200 || tracked.status() === 201, `owner_track_status_${tracked.status()}`);
+  assertCondition(
+    tracked.status() === 200 || tracked.status() === 201,
+    `owner_track_status_${tracked.status()}`,
+  );
   const trackedOffer = page.locator(".hotel-tracked-offer-item").first();
   await waitForStep(trackedOffer.waitFor({ state: "visible", timeout: 60_000 }), "track_ui");
 
-  const pauseButton = trackedOffer.getByRole("button", { name: /Pausar seguimiento|Pause tracking/ });
-  assertCondition(await pauseButton.count() === 1, "owner_pause_tracking_missing");
+  const pauseButton = trackedOffer.getByRole("button", {
+    name: /Pausar seguimiento|Pause tracking/,
+  });
+  assertCondition((await pauseButton.count()) === 1, "owner_pause_tracking_missing");
   const pauseResponse = page.waitForResponse(
-    (response) => new URL(response.url()).pathname.includes("/api/v1/hotels/tracked-offers/")
-      && response.request().method() === "PATCH",
+    (response) =>
+      new URL(response.url()).pathname.includes("/api/v1/hotels/tracked-offers/") &&
+      response.request().method() === "PATCH",
     { timeout: 60_000 },
   );
   await waitForStep(pauseButton.click(), "pause_click");
   const paused = await waitForStep(pauseResponse, "pause_response");
   assertCondition(paused.status() === 200, `owner_pause_status_${paused.status()}`);
-  const resumeButton = trackedOffer.getByRole("button", { name: /Reanudar seguimiento|Resume tracking/ });
+  const resumeButton = trackedOffer.getByRole("button", {
+    name: /Reanudar seguimiento|Resume tracking/,
+  });
   await waitForStep(resumeButton.waitFor({ state: "visible", timeout: 60_000 }), "resume_visible");
   const resumeResponse = page.waitForResponse(
-    (response) => new URL(response.url()).pathname.includes("/api/v1/hotels/tracked-offers/")
-      && response.request().method() === "PATCH",
+    (response) =>
+      new URL(response.url()).pathname.includes("/api/v1/hotels/tracked-offers/") &&
+      response.request().method() === "PATCH",
     { timeout: 60_000 },
   );
   await waitForStep(resumeButton.click(), "resume_click");
   const resumed = await waitForStep(resumeResponse, "resume_response");
   assertCondition(resumed.status() === 200, `owner_resume_status_${resumed.status()}`);
-  const deleteButton = trackedOffer.getByRole("button", { name: /Eliminar seguimiento|Delete tracking/ });
+  const deleteButton = trackedOffer.getByRole("button", {
+    name: /Eliminar seguimiento|Delete tracking/,
+  });
   await waitForStep(deleteButton.click(), "delete_confirmation_open");
   const cancelDelete = trackedOffer.getByRole("button", { name: /Cancelar|Cancel/ });
   await waitForStep(cancelDelete.click(), "delete_confirmation_cancel");
 
   const watchButton = firstResult.getByRole("button", { name: /Guardar hotel|Save hotel/ });
-  assertCondition(await watchButton.count() === 1, "owner_watch_button_missing");
+  assertCondition((await watchButton.count()) === 1, "owner_watch_button_missing");
   const watchResponse = page.waitForResponse(
-    (response) => new URL(response.url()).pathname === "/api/v1/hotels/watchlist"
-      && response.request().method() === "POST",
+    (response) =>
+      new URL(response.url()).pathname === "/api/v1/hotels/watchlist" &&
+      response.request().method() === "POST",
     { timeout: 60_000 },
   );
   await waitForStep(watchButton.click(), "watch_click");
   const watched = await waitForStep(watchResponse, "watch_response");
   assertCondition(watched.status() === 200, `owner_watch_status_${watched.status()}`);
-  await waitForStep(page.locator(".hotel-watchlist-item").filter({ hasText: "Malaga" }).waitFor({ state: "visible", timeout: 60_000 }), "watch_ui");
+  await waitForStep(
+    page
+      .locator(".hotel-watchlist-item")
+      .filter({ hasText: "Malaga" })
+      .waitFor({ state: "visible", timeout: 60_000 }),
+    "watch_ui",
+  );
 
   const threshold = page.locator('.hotel-alerts-form input[inputmode="decimal"]').first();
   await waitForStep(threshold.fill("120"), "alert_fill");
   const alertResponse = page.waitForResponse(
-    (response) => new URL(response.url()).pathname === "/api/v1/hotels/alert-rules"
-      && response.request().method() === "POST",
+    (response) =>
+      new URL(response.url()).pathname === "/api/v1/hotels/alert-rules" &&
+      response.request().method() === "POST",
     { timeout: 60_000 },
   );
-  await waitForStep(page.getByRole("button", { name: /Crear alerta|Create alert/ }).click(), "alert_click");
+  await waitForStep(
+    page.getByRole("button", { name: /Crear alerta|Create alert/ }).click(),
+    "alert_click",
+  );
   const alerted = await waitForStep(alertResponse, "alert_response");
   assertCondition(alerted.status() === 200, `owner_alert_status_${alerted.status()}`);
-  await waitForStep(page.locator(".hotel-alert-rule-item").first().waitFor({ state: "visible", timeout: 60_000 }), "alert_ui");
+  await waitForStep(
+    page.locator(".hotel-alert-rule-item").first().waitFor({ state: "visible", timeout: 60_000 }),
+    "alert_ui",
+  );
 
   await page.screenshot({ path: path.join(outputDir, "owner-flow-light.png"), fullPage: true });
   return {
     targetCity: "Malaga",
     resultCount: await results.count(),
     targetVisible: true,
-    trackedOfferVisible: await page.locator(".hotel-tracked-offer-item").count() > 0,
+    trackedOfferVisible: (await page.locator(".hotel-tracked-offer-item").count()) > 0,
     trackingPauseAndResumeWorked: true,
     trackingDeleteRequiredConfirmation: true,
-    watchlistVisible: await page.locator(".hotel-watchlist-item").filter({ hasText: "Malaga" }).count() > 0,
-    alertRuleVisible: await page.locator(".hotel-alert-rule-item").count() > 0,
+    watchlistVisible:
+      (await page.locator(".hotel-watchlist-item").filter({ hasText: "Malaga" }).count()) > 0,
+    alertRuleVisible: (await page.locator(".hotel-alert-rule-item").count()) > 0,
   };
 }
 
@@ -434,19 +542,25 @@ async function runObserverIsolation(page, appUrl) {
   await page.locator("#signals-inbox-list").waitFor({ state: "visible", timeout: 60_000 });
   const inboxText = await page.locator("body").innerText();
 
-  await page.screenshot({ path: path.join(outputDir, "observer-isolation-light.png"), fullPage: true });
+  await page.screenshot({
+    path: path.join(outputDir, "observer-isolation-light.png"),
+    fullPage: true,
+  });
   return {
-    targetAbsentFromWatchlist: !watchlistBeforeSelection.includes("Malaga")
-      && !watchlistAfterSelection.includes("Malaga"),
-    targetAbsentFromTrackedOffers: !trackedBeforeSelection.includes("Malaga")
-      && !trackedAfterSelection.includes("Malaga"),
+    targetAbsentFromWatchlist:
+      !watchlistBeforeSelection.includes("Malaga") && !watchlistAfterSelection.includes("Malaga"),
+    targetAbsentFromTrackedOffers:
+      !trackedBeforeSelection.includes("Malaga") && !trackedAfterSelection.includes("Malaga"),
     targetAlertRulesVisible: await alertPanel.locator(".hotel-alert-rule-item").count(),
     targetAbsentFromInbox: !inboxText.includes("Malaga"),
   };
 }
 
 async function runMyHotelsReturn(page, appUrl) {
-  await page.goto(`${appUrl}/hoteles?panel=mis-hoteles`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+  await page.goto(`${appUrl}/hoteles?panel=mis-hoteles`, {
+    waitUntil: "domcontentloaded",
+    timeout: 60_000,
+  });
   const panel = page.locator(".hotel-my-hotels-panel");
   await panel.waitFor({ state: "visible", timeout: 60_000 });
 
@@ -457,22 +571,28 @@ async function runMyHotelsReturn(page, appUrl) {
   await saved.waitFor({ state: "visible", timeout: 60_000 });
   await alerts.waitFor({ state: "visible", timeout: 60_000 });
   const canonicalPanelUrl = new URL(page.url()).searchParams.get("panel") === "mis-hoteles";
-  const trackedVisible = await tracked.count() === 1;
-  const alertsVisible = await alerts.count() === 1;
-  const savedVisible = await saved.count() === 1;
+  const trackedVisible = (await tracked.count()) === 1;
+  const alertsVisible = (await alerts.count()) === 1;
+  const savedVisible = (await saved.count()) === 1;
 
   const explore = panel.getByRole("button", { name: /Explorar hoteles|Explore hotels/ });
   const review = alerts.getByRole("button", { name: /Revisar|Review/ }).first();
-  assertCondition(await explore.count() === 1, "my_hotels_explore_action_missing");
-  assertCondition(await review.count() === 1, "my_hotels_review_action_missing");
-  await page.screenshot({ path: path.join(outputDir, "owner-my-hotels-light.png"), fullPage: true });
+  assertCondition((await explore.count()) === 1, "my_hotels_explore_action_missing");
+  assertCondition((await review.count()) === 1, "my_hotels_review_action_missing");
+  await page.screenshot({
+    path: path.join(outputDir, "owner-my-hotels-light.png"),
+    fullPage: true,
+  });
 
   await review.click();
   await page.waitForURL((url) => url.searchParams.get("panel") === "detail", { timeout: 60_000 });
   await page.locator(".hotel-rate-row").first().waitFor({ state: "visible", timeout: 60_000 });
   const reviewOpenedHotel = new URL(page.url()).searchParams.get("panel") === "detail";
 
-  await page.goto(`${appUrl}/hoteles?panel=mis-hoteles`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+  await page.goto(`${appUrl}/hoteles?panel=mis-hoteles`, {
+    waitUntil: "domcontentloaded",
+    timeout: 60_000,
+  });
   await panel.waitFor({ state: "visible", timeout: 60_000 });
   await explore.click();
   await page.waitForURL((url) => !url.searchParams.has("panel"), { timeout: 60_000 });
@@ -505,7 +625,9 @@ async function cleanupCreatedRows(api, token, baseline) {
     await apiJson(api, token, "DELETE", `/hotels/tracked-offers/${row.id}`);
     removed.trackedOffers += 1;
   }
-  for (const row of currentWatchlist.filter((item) => !baselineIds(baseline.watchlist).has(item.id))) {
+  for (const row of currentWatchlist.filter(
+    (item) => !baselineIds(baseline.watchlist).has(item.id),
+  )) {
     await apiJson(api, token, "DELETE", `/hotels/watchlist/${row.id}`);
     removed.watchlist += 1;
   }
@@ -531,10 +653,15 @@ async function writeBlockedReport(failure, extra = {}) {
   await mkdir(outputDir, { recursive: true });
   const reportPath = path.join(outputDir, "report.json");
   const serialized = JSON.stringify(report);
-  if (/eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/.test(serialized) || /(?:authorization|bearer|password|secret|api[_-]?key)\s*[:=]/i.test(serialized)) {
+  if (
+    /eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/.test(serialized) ||
+    /(?:authorization|bearer|password|secret|api[_-]?key)\s*[:=]/i.test(serialized)
+  ) {
     report.privacy = { status: "failed", violations: ["credential-marker"] };
   }
-  await import("node:fs/promises").then(({ writeFile }) => writeFile(reportPath, `${JSON.stringify(report, null, 2)}\\n`, "utf8"));
+  await import("node:fs/promises").then(({ writeFile }) =>
+    writeFile(reportPath, `${JSON.stringify(report, null, 2)}\\n`, "utf8"),
+  );
   console.log(`H44 browser report: ${path.relative(repoRoot, reportPath)}`);
 }
 
@@ -560,13 +687,20 @@ async function main() {
   }
   const configuredFrontend = configuredBaseUrl ? new URL(configuredBaseUrl) : null;
   const configuredBackend = configuredApiBaseUrl ? new URL(configuredApiBaseUrl) : null;
-  const frontendPort = configuredFrontend?.port ? Number(configuredFrontend.port) : await reservePort();
-  const backendPort = configuredBackend?.port ? Number(configuredBackend.port) : await reservePort();
+  const frontendPort = configuredFrontend?.port
+    ? Number(configuredFrontend.port)
+    : await reservePort();
+  const backendPort = configuredBackend?.port
+    ? Number(configuredBackend.port)
+    : await reservePort();
   const effectiveBaseUrl = configuredFrontend?.origin || `http://127.0.0.1:${frontendPort}`;
   const effectiveApiBase = configuredBackend?.origin
     ? `${configuredBackend.origin}${configuredBackend.pathname.replace(/\/$/, "")}`
     : `http://127.0.0.1:${backendPort}/api/v1`;
-  const dbPath = path.join(os.tmpdir(), `viru-h44-browser-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.db`);
+  const dbPath = path.join(
+    os.tmpdir(),
+    `viru-h44-browser-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.db`,
+  );
   const dbUrl = dbUrlFor(dbPath);
   const report = {
     result: "blocked",
@@ -581,7 +715,8 @@ async function main() {
     provider_mode: "mock",
     external_calls_expected: 0,
     external_calls_observed: null,
-    external_calls_observation: "seed_observed;mock_api_provider;browser_telemetry_intercepted;api_egress_not_observed",
+    external_calls_observation:
+      "seed_observed;mock_api_provider;browser_telemetry_intercepted;api_egress_not_observed",
     user_scope: "synthetic_demo_users_only",
     browser_engine: "chromium",
     base_url: redactUrl(effectiveBaseUrl),
@@ -620,7 +755,13 @@ async function main() {
 
     frontendProcess = startProcess(
       process.execPath,
-      [path.join(frontendRoot, "scripts", "dev-server.mjs"), "--hostname", "127.0.0.1", "--port", String(frontendPort)],
+      [
+        path.join(frontendRoot, "scripts", "dev-server.mjs"),
+        "--hostname",
+        "127.0.0.1",
+        "--port",
+        String(frontendPort),
+      ],
       {
         cwd: frontendRoot,
         env: {
@@ -646,31 +787,78 @@ async function main() {
     browser = await chromium.launch({ headless: true });
     const consoleErrors = [];
     const requestLog = [];
-      ownerContext = await setupPage(browser, ownerAuth, "owner", consoleErrors, requestLog, effectiveBaseUrl);
-    observerContext = await setupPage(browser, observerAuth, "observer", consoleErrors, requestLog, effectiveBaseUrl);
+    ownerContext = await setupPage(
+      browser,
+      ownerAuth,
+      "owner",
+      consoleErrors,
+      requestLog,
+      effectiveBaseUrl,
+    );
+    observerContext = await setupPage(
+      browser,
+      observerAuth,
+      "observer",
+      consoleErrors,
+      requestLog,
+      effectiveBaseUrl,
+    );
     report.scenarios.owner = await runOwnerFlow(ownerContext.page, effectiveBaseUrl);
     report.scenarios.owner_my_hotels = await runMyHotelsReturn(ownerContext.page, effectiveBaseUrl);
-    report.scenarios.observer_isolation = await runObserverIsolation(observerContext.page, effectiveBaseUrl);
+    report.scenarios.observer_isolation = await runObserverIsolation(
+      observerContext.page,
+      effectiveBaseUrl,
+    );
     report.console_errors = consoleErrors;
     report.request_failures = requestLog.filter((item) => item.failed);
 
     assertCondition(report.scenarios.owner.targetVisible, "owner_target_not_visible");
     assertCondition(report.scenarios.owner.trackedOfferVisible, "owner_tracking_not_visible");
-    assertCondition(report.scenarios.owner.trackingPauseAndResumeWorked, "owner_tracking_pause_resume_failed");
-    assertCondition(report.scenarios.owner.trackingDeleteRequiredConfirmation, "owner_tracking_delete_confirmation_failed");
+    assertCondition(
+      report.scenarios.owner.trackingPauseAndResumeWorked,
+      "owner_tracking_pause_resume_failed",
+    );
+    assertCondition(
+      report.scenarios.owner.trackingDeleteRequiredConfirmation,
+      "owner_tracking_delete_confirmation_failed",
+    );
     assertCondition(report.scenarios.owner.watchlistVisible, "owner_watchlist_not_visible");
     assertCondition(report.scenarios.owner.alertRuleVisible, "owner_alert_not_visible");
     assertCondition(report.scenarios.owner_my_hotels.panelVisible, "my_hotels_panel_not_visible");
-    assertCondition(report.scenarios.owner_my_hotels.trackedVisible, "my_hotels_tracking_not_visible");
+    assertCondition(
+      report.scenarios.owner_my_hotels.trackedVisible,
+      "my_hotels_tracking_not_visible",
+    );
     assertCondition(report.scenarios.owner_my_hotels.alertsVisible, "my_hotels_alerts_not_visible");
     assertCondition(report.scenarios.owner_my_hotels.savedVisible, "my_hotels_saved_not_visible");
-    assertCondition(report.scenarios.owner_my_hotels.canonicalPanelUrl, "my_hotels_url_not_canonical");
-    assertCondition(report.scenarios.owner_my_hotels.reviewOpenedHotel, "my_hotels_review_did_not_open_hotel");
-    assertCondition(report.scenarios.owner_my_hotels.exploreReturnedToSearch, "my_hotels_explore_did_not_return_to_search");
-    assertCondition(report.scenarios.observer_isolation.targetAbsentFromWatchlist, "observer_watchlist_leak");
-    assertCondition(report.scenarios.observer_isolation.targetAbsentFromTrackedOffers, "observer_tracking_leak");
-    assertCondition(report.scenarios.observer_isolation.targetAlertRulesVisible === 0, "observer_alert_rule_leak");
-    assertCondition(report.scenarios.observer_isolation.targetAbsentFromInbox, "observer_inbox_leak");
+    assertCondition(
+      report.scenarios.owner_my_hotels.canonicalPanelUrl,
+      "my_hotels_url_not_canonical",
+    );
+    assertCondition(
+      report.scenarios.owner_my_hotels.reviewOpenedHotel,
+      "my_hotels_review_did_not_open_hotel",
+    );
+    assertCondition(
+      report.scenarios.owner_my_hotels.exploreReturnedToSearch,
+      "my_hotels_explore_did_not_return_to_search",
+    );
+    assertCondition(
+      report.scenarios.observer_isolation.targetAbsentFromWatchlist,
+      "observer_watchlist_leak",
+    );
+    assertCondition(
+      report.scenarios.observer_isolation.targetAbsentFromTrackedOffers,
+      "observer_tracking_leak",
+    );
+    assertCondition(
+      report.scenarios.observer_isolation.targetAlertRulesVisible === 0,
+      "observer_alert_rule_leak",
+    );
+    assertCondition(
+      report.scenarios.observer_isolation.targetAbsentFromInbox,
+      "observer_inbox_leak",
+    );
     assertCondition(report.console_errors.length === 0, "browser_console_errors");
     assertCondition(report.request_failures.length === 0, "browser_request_failures");
 
@@ -687,7 +875,11 @@ async function main() {
     if (browser) await browser.close().catch(() => undefined);
     if (api && ownerAuth && baselineOwner) {
       try {
-        report.cleanup.rows_deleted = await cleanupCreatedRows(api, ownerAuth.access_token, baselineOwner);
+        report.cleanup.rows_deleted = await cleanupCreatedRows(
+          api,
+          ownerAuth.access_token,
+          baselineOwner,
+        );
       } catch (error) {
         report.cleanup.cleanup_error = sanitize(error?.message || error);
       }
@@ -704,7 +896,13 @@ async function main() {
         report.cleanup.reset_error = sanitize(error?.message || error);
       }
     }
-    const cleanupPaths = [dbPath, `${dbPath}.h44-demo.json`, `${dbPath}-wal`, `${dbPath}-shm`, `${dbPath}-journal`];
+    const cleanupPaths = [
+      dbPath,
+      `${dbPath}.h44-demo.json`,
+      `${dbPath}-wal`,
+      `${dbPath}-shm`,
+      `${dbPath}-journal`,
+    ];
     for (const cleanupPath of cleanupPaths) await unlink(cleanupPath).catch(() => undefined);
     const remainingPaths = [];
     for (const cleanupPath of cleanupPaths) {
@@ -716,7 +914,8 @@ async function main() {
       }
     }
     report.cleanup.temporary_database_removed = remainingPaths.length === 0;
-    if (remainingPaths.length > 0) report.cleanup.remaining_paths = remainingPaths.map((item) => path.basename(item));
+    if (remainingPaths.length > 0)
+      report.cleanup.remaining_paths = remainingPaths.map((item) => path.basename(item));
   }
 
   if (report.result === "passed" && report.cleanup.reset !== "passed") {
@@ -731,22 +930,32 @@ async function main() {
   const serialized = JSON.stringify(report);
   const privacyViolations = [];
   if (/eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/.test(serialized)) privacyViolations.push("jwt-marker");
-  if (/(?:authorization|bearer|password|secret|api[_-]?key)\s*[:=]/i.test(serialized)) privacyViolations.push("credential-marker");
-  if (/[?&](?:token|password|secret|access_token|api[_-]?key)=/i.test(serialized)) privacyViolations.push("sensitive-query-marker");
+  if (/(?:authorization|bearer|password|secret|api[_-]?key)\s*[:=]/i.test(serialized))
+    privacyViolations.push("credential-marker");
+  if (/[?&](?:token|password|secret|access_token|api[_-]?key)=/i.test(serialized))
+    privacyViolations.push("sensitive-query-marker");
   if (/\b[\w.+-]+@[\w.-]+\.[A-Z]{2,}\b/i.test(serialized)) privacyViolations.push("email-marker");
   if (privacyViolations.length > 0) {
     report.result = "blocked";
     report.failure = `privacy_validation_failed:${privacyViolations.join(",")}`;
   }
-  report.privacy = { status: privacyViolations.length === 0 ? "passed" : "failed", violations: privacyViolations };
+  report.privacy = {
+    status: privacyViolations.length === 0 ? "passed" : "failed",
+    violations: privacyViolations,
+  };
   await mkdir(outputDir, { recursive: true });
-  await import("node:fs/promises").then(({ writeFile }) => writeFile(
-    path.join(outputDir, "report.json"),
-    `${JSON.stringify(report, null, 2)}\n`,
-    "utf8",
-  ));
-  console.log(`H44 browser report: ${path.relative(repoRoot, path.join(outputDir, "report.json"))}`);
-  if (report.result !== "passed" || report.cleanup.reset !== "passed" || report.privacy.status !== "passed") process.exitCode = 1;
+  await import("node:fs/promises").then(({ writeFile }) =>
+    writeFile(path.join(outputDir, "report.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8"),
+  );
+  console.log(
+    `H44 browser report: ${path.relative(repoRoot, path.join(outputDir, "report.json"))}`,
+  );
+  if (
+    report.result !== "passed" ||
+    report.cleanup.reset !== "passed" ||
+    report.privacy.status !== "passed"
+  )
+    process.exitCode = 1;
 }
 
 await main();

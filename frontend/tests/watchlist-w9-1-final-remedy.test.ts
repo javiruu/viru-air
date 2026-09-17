@@ -4,15 +4,65 @@ import path from "node:path";
 import test from "node:test";
 
 const WATCHLIST_PAGE = path.join(process.cwd(), "src", "app", "(private)", "watchlist", "page.tsx");
-const WATCH_ROW = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchRow.tsx");
-const DETAIL_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");
-const HISTORY_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "HistoryIntegratedPanel.tsx");
-const COMPARE_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "ComparePanels.tsx");
-const COMBINATION_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchlistCombinationPanel.tsx");
-const PROVIDER_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchProviderCoveragePanel.tsx");
+const WATCH_ROW = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "WatchRow.tsx",
+);
+const DETAIL_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "WatchDetailPanel.tsx",
+);
+const HISTORY_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "HistoryIntegratedPanel.tsx",
+);
+const COMPARE_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "ComparePanels.tsx",
+);
+const COMBINATION_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "WatchlistCombinationPanel.tsx",
+);
+const PROVIDER_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "WatchProviderCoveragePanel.tsx",
+);
 const WATCHLIST_I18N = path.join(process.cwd(), "src", "i18n", "domains", "watchlist.ts");
 
-const FORBIDDEN_EN_COPY = ["Back", "Flight Watchlist", "Add flight", "Quick start", "Last update", "Min", "Max"];
+const FORBIDDEN_EN_COPY = [
+  "Back",
+  "Flight Watchlist",
+  "Add flight",
+  "Quick start",
+  "Last update",
+  "Min",
+  "Max",
+];
 
 test("W9.1: watchlist keeps main surfaces and removes detail calendar table", () => {
   const page = fs.readFileSync(WATCHLIST_PAGE, "utf8");
@@ -24,7 +74,10 @@ test("W9.1: watchlist keeps main surfaces and removes detail calendar table", ()
   assert.doesNotMatch(page, /<WatchProviderCoveragePanel/);
 
   assert.doesNotMatch(detail, /Calendario/);
-  assert.doesNotMatch(detail, /Los precios son orientativos y dependen de la frescura del proveedor\./);
+  assert.doesNotMatch(
+    detail,
+    /Los precios son orientativos y dependen de la frescura del proveedor\./,
+  );
   assert.doesNotMatch(detail, /Día|Mín|Máx|Media|Capturas|Señal/);
   assert.doesNotMatch(detail, /prices\/calendar/);
 });
@@ -52,8 +105,8 @@ test("W9.1: functional routes keep arrows while decorative repetitions stay remo
 
   assert.match(row, /watch\.origin_iata\} → \{watch\.destination_iata/);
   assert.match(compare, /{option\.origin} → {option\.destination}/);
-  assert.match(compare, /<strong>{origin} → {destination}<\/strong>/);
-  assert.match(combination, /leg\.origin\}\{\" → \"\}\{leg\.destination/);
+  assert.match(compare, /<strong>\s*\{origin\} → \{destination\}\s*<\/strong>/);
+  assert.match(combination, /leg\.origin\}\s*\{" → "\}\s*\{leg\.destination/);
 
   assert.doesNotMatch(detail, /origin_iata\} \{"→"\} \{focus\.destination_iata\}/);
   assert.doesNotMatch(history, /origin_iata\} → \$\{selectedWatch\.destination_iata\}/);
@@ -73,12 +126,19 @@ test("W9.1: no duplicate 'Rango RANGO' and confidence copy remains intact", () =
 
   assert.match(detail, /history-confidence-notice/);
   assert.match(i18n, /limitedTitle:\s*"Histórico limitado"/);
-  assert.match(i18n, /limitedMessage:\s*"Hay pocas capturas\. Interpreta la tendencia con cautela\."/);
+  assert.match(
+    i18n,
+    /limitedMessage:\s*"Hay pocas capturas\. Interpreta la tendencia con cautela\."/,
+  );
 });
 
 test("W9.1: watchlist remains free of blocked EN copy", () => {
   const page = fs.readFileSync(WATCHLIST_PAGE, "utf8");
   for (const snippet of FORBIDDEN_EN_COPY) {
-    assert.equal(page.includes(snippet), false, `watchlist page still contains forbidden EN copy: ${snippet}`);
+    assert.equal(
+      page.includes(snippet),
+      false,
+      `watchlist page still contains forbidden EN copy: ${snippet}`,
+    );
   }
 });

@@ -18,6 +18,7 @@ from app.core.request_context import (
     set_correlation_id,
 )
 from app.core.request_diagnostics import AccessLogMiddleware
+from app.core.telemetry import init_telemetry
 
 from app.api.v1.router import api_v1
 from app.core.logging import configure_logging
@@ -49,8 +50,6 @@ configure_logging()
 run_seed_users = os.getenv("RUN_SEED_USERS", "false").lower() in {"1", "true", "yes"}
 enable_in_process_workers = os.getenv("ENABLE_IN_PROCESS_WORKERS", "false").lower() in {"1", "true", "yes"}
 
-if run_seed_users:
-    ensure_seed_users()
 
 def _parse_cors_origins() -> list[str]:
     default_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
@@ -123,6 +122,9 @@ async def _run_periodic_fare_memory_revalidation_worker() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    if run_seed_users:
+        ensure_seed_users()
+    init_telemetry()
     startup_route_task = None
     retention_task = None
     revalidation_worker_task = None

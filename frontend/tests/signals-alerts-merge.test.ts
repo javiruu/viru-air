@@ -3,12 +3,31 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
-const SIGNALS_PAGE = path.join(process.cwd(), "src", "app", "(private)", "notifications", "page.tsx");
+const SIGNALS_PAGE = path.join(
+  process.cwd(),
+  "src",
+  "app",
+  "(private)",
+  "notifications",
+  "page.tsx",
+);
 const ALERTS_ALIAS_PAGE = path.join(process.cwd(), "src", "app", "(private)", "alerts", "page.tsx");
 const DASHBOARD_PAGE = path.join(process.cwd(), "src", "app", "(private)", "dashboard", "page.tsx");
-const SIGNALS_RULES = path.join(process.cwd(), "src", "modules", "signals", "AlertRulesWorkspace.tsx");
+const SIGNALS_RULES = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "signals",
+  "AlertRulesWorkspace.tsx",
+);
 const SIGNALS_INBOX = path.join(process.cwd(), "src", "modules", "signals", "SignalsInbox.tsx");
-const SIGNALS_CADENCE = path.join(process.cwd(), "src", "modules", "signals", "SignalCadencePanel.tsx");
+const SIGNALS_CADENCE = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "signals",
+  "SignalCadencePanel.tsx",
+);
 
 test("signals page owns both inbox and rules views", () => {
   const source = fs.readFileSync(SIGNALS_PAGE, "utf8");

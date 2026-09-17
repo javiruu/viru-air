@@ -49,28 +49,44 @@ test("QuickSearchStatePanels renders empty softline + calendar fallback", () => 
   assert.match(
     source,
     /props\.zeroResultActions\.length === 1/,
-    "softline should only appear when there is exactly one relax action"
+    "softline should only appear when there is exactly one relax action",
   );
 });
 
 // ── #4 Microtoast preserved (skipped by design — locked working tree) ──
 test("QuickSearchView still saves resume snapshot (no microtoast regression)", () => {
   const source = read("modules/quick-search/QuickSearchView.tsx");
-  assert.match(source, /saveResumeSearchSnapshot/, "snapshot save call missing — no regressions wanted");
+  assert.match(
+    source,
+    /saveResumeSearchSnapshot/,
+    "snapshot save call missing — no regressions wanted",
+  );
 });
 
 // ── #5 Watchlist price-delta percent chip ─────────────────────────────
 test("WatchRow only renders trend metadata when a previous snapshot exists", () => {
   const source = read("modules/watchlist/components/WatchRow.tsx");
-  assert.match(source, /meta\?\.latest && meta\.previous/, "trend status must require two snapshots");
-  assert.match(source, /meta\.previous \? \(/, "trend chip must require a previous snapshot");
+  assert.match(
+    source,
+    /meta\?\.latest && meta\.previous/,
+    "trend status must require two snapshots",
+  );
+  assert.match(
+    source,
+    /meta\.previous\s*\?\s*(\(|"flat")/,
+    "trend chip must require a previous snapshot",
+  );
 });
 
 test("WatchRow renders a signed trend percentage without period copy", () => {
   const source = read("modules/watchlist/components/WatchRow.tsx");
   assert.match(source, /trendPercentLabel/, "missing trendPercentLabel wiring");
   assert.match(source, /trend-chip-percent/, "missing trend-chip-percent rendering");
-  assert.doesNotMatch(source, /vs periodo anterior/, "trend chip must not include a period qualifier");
+  assert.doesNotMatch(
+    source,
+    /vs periodo anterior/,
+    "trend chip must not include a period qualifier",
+  );
   assert.doesNotMatch(
     source,
     /trend-chip-percent"[^>]*>{trendPercentLabel}<\/span>(\s|\S)*<svg[\s\S]*?d="M6 15l6-6 6 6"/,
@@ -83,9 +99,17 @@ test("WatchRow renders a signed trend percentage without period copy", () => {
 test("WatchRow shows the known departure time without the redundant trend action", () => {
   const source = read("modules/watchlist/components/WatchRow.tsx");
 
-  assert.match(source, /watch\.latest_snapshot\?\.departure_time_local/, "departure time must come from the latest snapshot");
+  assert.match(
+    source,
+    /watch\.latest_snapshot\?\.departure_time_local/,
+    "departure time must come from the latest snapshot",
+  );
   assert.match(source, /watch-ticket-departure-time/, "missing departure time rendering");
-  assert.doesNotMatch(source, /watch-ticket-trend-action/, "redundant trend action must stay removed");
+  assert.doesNotMatch(
+    source,
+    /watch-ticket-trend-action/,
+    "redundant trend action must stay removed",
+  );
 });
 
 test("watchlist i18n exposes a bare trendPercentDelta in es + en", () => {
@@ -97,32 +121,71 @@ test("watchlist i18n exposes a bare trendPercentDelta in es + en", () => {
 
 test("Dashboard page restores the historical quick-search hero and keeps unread alerts inside the alerts card", () => {
   const source = read("app/(private)/dashboard/page.tsx");
-  assert.match(source, /const heroCtaHref = ["']\/quick-search["']/, "hero CTA must point to quick search");
+  assert.match(
+    source,
+    /const heroCtaHref = ["']\/quick-search["']/,
+    "hero CTA must point to quick search",
+  );
   assert.match(source, /dashboard_click_hero_cta/, "missing historical hero CTA tracking");
   assert.match(source, /dashboard-hero-actions/, "missing historical hero actions block");
   assert.match(source, /hero-empty/, "missing historical hero empty state");
   assert.match(source, /hero-opportunity/, "missing historical hero opportunity state");
-  assert.doesNotMatch(source, /DashboardNextActionCard/, "next-best-action card must not replace the hero quick-search CTA");
-  assert.match(source, /const unreadAlertsCount = notificationSummary\?\.unread \?\? 0/, "missing compact unread count");
+  assert.doesNotMatch(
+    source,
+    /DashboardNextActionCard/,
+    "next-best-action card must not replace the hero quick-search CTA",
+  );
+  assert.match(
+    source,
+    /const unreadAlertsCount = notificationSummary\?\.unread \?\? 0/,
+    "missing compact unread count",
+  );
   assert.match(source, /unreadAlertsCount\s*>\s*0/, "missing unread count guard");
-  assert.match(source, /module-inline-status module-inline-status-warning/, "unread alert copy should live as compact card text");
+  assert.match(
+    source,
+    /module-inline-status module-inline-status-warning/,
+    "unread alert copy should live as compact card text",
+  );
   assert.doesNotMatch(source, /unread-alerts-banner/, "legacy custom class must be gone");
-  assert.doesNotMatch(source, /data-testid="dashboard-unread-alerts-banner"/, "unused testid must be gone");
-  assert.doesNotMatch(source, /dashboard_unread_alerts_banner_click/, "banner tracking should be gone");
+  assert.doesNotMatch(
+    source,
+    /data-testid="dashboard-unread-alerts-banner"/,
+    "unused testid must be gone",
+  );
+  assert.doesNotMatch(
+    source,
+    /dashboard_unread_alerts_banner_click/,
+    "banner tracking should be gone",
+  );
   assert.match(
     source,
     /t\(\s*["']dashboard\.nextAction\.messages\.unreadAlerts["']\s*,\s*\{\s*count:\s*unreadAlertsCount\s*\}/,
     "missing title i18n lookup with count",
   );
-  const heroSection = source.slice(source.indexOf("<section className=\"dashboard-hero-state\""), source.indexOf("<section className=\"dashboard-section dashboard-section-manage\""));
+  const heroSection = source.slice(
+    source.indexOf('<section className="dashboard-hero-state"'),
+    source.indexOf('<section className="dashboard-section dashboard-section-manage"'),
+  );
   assert.match(heroSection, /href=\{heroCtaHref\}/, "hero must render the quick-search CTA");
-  assert.doesNotMatch(heroSection, /unreadAlertsCount|dashboard\.nextAction\.messages\.unreadAlerts|DashboardNextActionCard/, "hero must not render unread alerts or next-best-action");
+  assert.doesNotMatch(
+    heroSection,
+    /unreadAlertsCount|dashboard\.nextAction\.messages\.unreadAlerts|DashboardNextActionCard/,
+    "hero must not render unread alerts or next-best-action",
+  );
 });
 
 test("dashboard i18n keeps the pre-existing unreadAlerts / viewAlerts copy (no new keys added)", () => {
   const i18n = read("i18n/domains/dashboard.ts");
-  assert.match(i18n, /unreadAlerts:\s*"Tienes \{count\} alertas sin leer\."/, "missing ES unreadAlerts copy");
-  assert.match(i18n, /unreadAlerts:\s*"You have \{count\} unread alerts\."/, "missing EN unreadAlerts copy");
+  assert.match(
+    i18n,
+    /unreadAlerts:\s*"Tienes \{count\} alertas sin leer\."/,
+    "missing ES unreadAlerts copy",
+  );
+  assert.match(
+    i18n,
+    /unreadAlerts:\s*"You have \{count\} unread alerts\."/,
+    "missing EN unreadAlerts copy",
+  );
   assert.match(i18n, /viewAlerts:\s*"Ver alertas"/, "missing ES viewAlerts CTA");
   assert.match(i18n, /viewAlerts:\s*"View alerts"/, "missing EN viewAlerts CTA");
 });
@@ -133,7 +196,11 @@ test("DoorToDoorPanel renders timezone pill + known-route tag", () => {
   assert.match(source, /d2d-timezone-pill/, "missing timezone pill class");
   assert.match(source, /d2d-known-route-tag/, "missing known-route tag class");
   assert.match(source, /userTimeZone/, "missing timezone computation");
-  assert.match(source, /(?:knownRouteCount|history\.history\.length)\s*>\s*1/, "missing known-route history rule");
+  assert.match(
+    source,
+    /(?:knownRouteCount|history\.history\.length)\s*>\s*1/,
+    "missing known-route history rule",
+  );
   assert.match(source, /doorToDoor\.form\.timezonePill/, "missing timezone i18n lookup");
   assert.match(source, /doorToDoor\.form\.knownRouteTag/, "missing known-route i18n lookup");
 });
@@ -157,7 +224,11 @@ test("global text selection uses dual-theme design tokens", () => {
   const selectionCss = selectionRule[0];
   assert.match(selectionCss, /background-color:\s*var\(--color-selection-bg\)/);
   assert.match(selectionCss, /color:\s*var\(--color-selection-text\)/);
-  assert.match(base, /::-moz-selection\s*\{[\s\S]*?--color-selection-bg/, "missing Firefox selection fallback");
+  assert.match(
+    base,
+    /::-moz-selection\s*\{[\s\S]*?--color-selection-bg/,
+    "missing Firefox selection fallback",
+  );
   assert.match(tokens, /--color-selection-bg:\s*color-mix\(in srgb,\s*var\(--accent\)/);
   assert.match(tokens, /--color-selection-text:\s*var\(--ink\)/);
   assert.ok(darkTokens?.[0], "missing dark theme token block");

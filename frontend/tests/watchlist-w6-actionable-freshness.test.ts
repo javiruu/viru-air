@@ -4,19 +4,51 @@ import path from "node:path";
 import test from "node:test";
 
 const SUMMARY_FILE = path.join(process.cwd(), "src", "modules", "watchlist", "summary.ts");
-const WATCH_ROW = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchRow.tsx");
-const DETAIL_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");
-const HISTORY_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "HistoryIntegratedPanel.tsx");
+const WATCH_ROW = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "WatchRow.tsx",
+);
+const DETAIL_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "WatchDetailPanel.tsx",
+);
+const HISTORY_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "HistoryIntegratedPanel.tsx",
+);
 const WATCHLIST_I18N = path.join(process.cwd(), "src", "i18n", "domains", "watchlist.ts");
 const WATCHLIST_PAGE = path.join(process.cwd(), "src", "app", "(private)", "watchlist", "page.tsx");
 
-const FORBIDDEN_EN_COPY = ["Back", "Flight Watchlist", "Add flight", "Quick start", "Last update", "Min", "Max"];
+const FORBIDDEN_EN_COPY = [
+  "Back",
+  "Flight Watchlist",
+  "Add flight",
+  "Quick start",
+  "Last update",
+  "Min",
+  "Max",
+];
 
 test("W6: helper de frescura reutiliza estados semanticos de fresh/warm/stale", () => {
   const source = fs.readFileSync(SUMMARY_FILE, "utf8");
   assert.match(source, /function getFreshnessPresentation/);
   assert.match(source, /getQuickSearchFreshnessPresentation/);
-  assert.match(source, /const state = diffHours >= 24 \? "stale" : diffHours >= 1 \? "warm" : "fresh"/);
+  assert.match(
+    source,
+    /const state = diffHours >= 24 \? "stale" : diffHours >= 1 \? "warm" : "fresh"/,
+  );
   assert.match(source, /status: state/);
 });
 
@@ -60,7 +92,10 @@ test("W6: i18n agrega copy de frescura accionable en ES", () => {
 test("W6: watchlist mantiene bloqueo de copy EN", () => {
   const source = fs.readFileSync(WATCHLIST_PAGE, "utf8");
   for (const snippet of FORBIDDEN_EN_COPY) {
-    assert.equal(source.includes(snippet), false, `watchlist page still contains forbidden EN copy: ${snippet}`);
+    assert.equal(
+      source.includes(snippet),
+      false,
+      `watchlist page still contains forbidden EN copy: ${snippet}`,
+    );
   }
 });
-

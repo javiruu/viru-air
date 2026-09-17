@@ -1,0 +1,46 @@
+{
+  "authority": "01_DATABASE_SINGLE_AUTHORITY.md Phase C",
+  "database": "Supabase PostgreSQL (target)",
+  "populated_tables": {
+    "airport": {
+      "row_count": 222,
+      "pk_column": "id",
+      "distinct_pk_count": 222,
+      "duplicate_pk_count": 0,
+      "orphan_fk_count": 0,
+      "data_sha256": "486ea3e50fa369ae952e4167f5a09f23a02286eac625af4844c4a8fc72553c32"
+    },
+    "quick_search_popularity_counter": {
+      "row_count": 3,
+      "pk_column": "id",
+      "distinct_pk_count": 3,
+      "duplicate_pk_count": 0,
+      "orphan_fk_count": 0,
+      "data_sha256": "97e107909de311fbcb943e777236a6ae89433033284757b40b9f22d262435f9c"
+    },
+    "quick_search_popularity_daily": {
+      "row_count": 3,
+      "pk_column": "id",
+      "distinct_pk_count": 3,
+      "duplicate_pk_count": 0,
+      "orphan_fk_count": 0,
+      "data_sha256": "b69809c90386eaa0c50e0aef57c55680a0c687762b448b0a6d08fb664cf5222f"
+    },
+    "security_activity": {
+      "row_count": 1,
+      "pk_column": "id",
+      "distinct_pk_count": 1,
+      "duplicate_pk_count": 0,
+      "orphan_fk_count": 0,
+      "data_sha256": "367eb3df244fb38ca4686261e88c60fa63f6f3d753a2a036c126bb4acff6ff86"
+    },
+    "users": {
+      "row_count": 1,
+      "pk_column": "id",
+      "distinct_pk_count": 1,
+      "duplicate_pk_count": 0,
+      "orphan_fk_count": 0,
+      "data_sha256": "daeef6fd91f886c7328731ae03ad6934913ca4d4b7d80d5abba9bd378feff78c"
+    }
+  }
+}

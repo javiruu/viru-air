@@ -33,11 +33,7 @@ test("key loading fallbacks use Boneyard", () => {
       /import\s+AirLoader\s+from/,
       `expected no AirLoader import in ${relativePath}`,
     );
-    assert.match(
-      content,
-      /Boneyard/,
-      `expected Boneyard usage in ${relativePath}`,
-    );
+    assert.match(content, /Boneyard/, `expected Boneyard usage in ${relativePath}`);
   }
 });
 

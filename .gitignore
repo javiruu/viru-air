@@ -94,6 +94,7 @@ Thumbs.db
 .kiro/
 .zcode/
 .codex-temp/
+.freebuff/
 frontend/tests/artifacts/
 
 # Windows NUL device: stray files named "nul" can appear when shell
@@ -110,3 +111,9 @@ docs/generated/
 # One-off analysis artifacts
 premortem-*
 viru-air-mega-plan-*
+
+# Historical agent program working folders (local artifacts, state consolidated in repo docs)
+viru-completion-no-docker/
+viru-final-decommission-v3/
+viru-final-modernization-cutover/
+viru-post-migration-audit/

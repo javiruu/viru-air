@@ -1,0 +1,50 @@
+{
+  "authority": "01_DATABASE_SINGLE_AUTHORITY.md Phase C",
+  "verdict": "PASS",
+  "source_database": "viru.db (SQLite)",
+  "target_database": "Supabase PostgreSQL",
+  "total_migrated_tables": 5,
+  "mismatches": 0,
+  "tables": {
+    "airport": {
+      "source_rows": 222,
+      "target_rows": 222,
+      "status": "RECONCILED_EXACT",
+      "duplicate_pks": 0,
+      "orphan_fks": 0,
+      "checksum_match": true
+    },
+    "quick_search_popularity_counter": {
+      "source_rows": 3,
+      "target_rows": 3,
+      "status": "RECONCILED_EXACT",
+      "duplicate_pks": 0,
+      "orphan_fks": 0,
+      "checksum_match": true
+    },
+    "quick_search_popularity_daily": {
+      "source_rows": 3,
+      "target_rows": 3,
+      "status": "RECONCILED_EXACT",
+      "duplicate_pks": 0,
+      "orphan_fks": 0,
+      "checksum_match": true
+    },
+    "security_activity": {
+      "source_rows": 1,
+      "target_rows": 1,
+      "status": "RECONCILED_EXACT",
+      "duplicate_pks": 0,
+      "orphan_fks": 0,
+      "checksum_match": true
+    },
+    "users": {
+      "source_rows": 1,
+      "target_rows": 1,
+      "status": "RECONCILED_EXACT",
+      "duplicate_pks": 0,
+      "orphan_fks": 0,
+      "checksum_match": true
+    }
+  }
+}

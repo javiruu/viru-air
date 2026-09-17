@@ -5,9 +5,28 @@ import test from "node:test";
 
 import { resolveSelectedWatchId } from "../src/modules/watchlist/useWatchlistDataLoader";
 
-const ACTIONS_FILE = path.join(process.cwd(), "src", "modules", "watchlist", "useWatchlistActions.ts");
-const HISTORY_PANEL_FILE = path.join(process.cwd(), "src", "modules", "watchlist", "components", "HistoryIntegratedPanel.tsx");
-const PRESENTATION_FILE = path.join(process.cwd(), "src", "modules", "watchlist", "presentation.ts");
+const ACTIONS_FILE = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "useWatchlistActions.ts",
+);
+const HISTORY_PANEL_FILE = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "HistoryIntegratedPanel.tsx",
+);
+const PRESENTATION_FILE = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "presentation.ts",
+);
 
 test("F1A: resolveSelectedWatchId preserves user selection when still present", () => {
   const rows = [{ id: "A" }, { id: "B" }];

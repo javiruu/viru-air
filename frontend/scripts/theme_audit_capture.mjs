@@ -22,22 +22,25 @@ async function setTheme(theme) {
 
 async function login() {
   await page.goto(`${BASE_URL}/login`, { waitUntil: "domcontentloaded" });
-  const ok = await page.evaluate(async ({ email, password }) => {
-    try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      if (!res.ok) return false;
-      const data = await res.json();
-      if (!data?.access_token) return false;
-      localStorage.setItem("viru_token", data.access_token);
-      return true;
-    } catch {
-      return false;
-    }
-  }, { email: LOGIN_EMAIL, password: LOGIN_PASSWORD });
+  const ok = await page.evaluate(
+    async ({ email, password }) => {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/v1/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        if (!res.ok) return false;
+        const data = await res.json();
+        if (!data?.access_token) return false;
+        localStorage.setItem("viru_token", data.access_token);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    { email: LOGIN_EMAIL, password: LOGIN_PASSWORD },
+  );
 
   if (!ok) {
     await page.getByRole("textbox", { name: /email/i }).fill(LOGIN_EMAIL);

@@ -3,12 +3,27 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
-const DETAIL_PANEL_FILE = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");
+const DETAIL_PANEL_FILE = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "WatchDetailPanel.tsx",
+);
 const SUMMARY_FILE = path.join(process.cwd(), "src", "modules", "watchlist", "summary.ts");
 const WATCHLIST_I18N = path.join(process.cwd(), "src", "i18n", "domains", "watchlist.ts");
 const WATCHLIST_PAGE = path.join(process.cwd(), "src", "app", "(private)", "watchlist", "page.tsx");
 
-const FORBIDDEN_EN_COPY = ["Back", "Flight Watchlist", "Add flight", "Quick start", "Last update", "Min", "Max"];
+const FORBIDDEN_EN_COPY = [
+  "Back",
+  "Flight Watchlist",
+  "Add flight",
+  "Quick start",
+  "Last update",
+  "Min",
+  "Max",
+];
 
 test("W5: helper de confianza clasifica snapshot_count segun reglas", () => {
   const source = fs.readFileSync(SUMMARY_FILE, "utf8");
@@ -33,7 +48,10 @@ test("W5: con 1 snapshot muestra histórico inicial y mantiene KPIs", () => {
 
   assert.match(source, /t\(confidence\.titleKey\)/);
   assert.match(i18nSource, /initialTitle:\s*"Histórico inicial"/);
-  assert.match(i18nSource, /initialMessage:\s*"Solo hay 1 captura\. Todavía no hay suficiente tendencia para decidir\."/);
+  assert.match(
+    i18nSource,
+    /initialMessage:\s*"Solo hay 1 captura\. Todavía no hay suficiente tendencia para decidir\."/,
+  );
   assert.match(source, /watchlist\.summary\.latest/);
   assert.match(source, /watchlist\.summary\.min/);
   assert.match(source, /watchlist\.summary\.max/);
@@ -45,13 +63,19 @@ test("W5: con 1 snapshot muestra histórico inicial y mantiene KPIs", () => {
 test("W5: con 2 o 3 snapshots muestra histórico limitado", () => {
   const i18nSource = fs.readFileSync(WATCHLIST_I18N, "utf8");
   assert.match(i18nSource, /limitedTitle:\s*"Histórico limitado"/);
-  assert.match(i18nSource, /limitedMessage:\s*"Hay pocas capturas\. Interpreta la tendencia con cautela\."/);
+  assert.match(
+    i18nSource,
+    /limitedMessage:\s*"Hay pocas capturas\. Interpreta la tendencia con cautela\."/,
+  );
 });
 
 test("W5: con 4 o más snapshots muestra histórico suficiente", () => {
   const i18nSource = fs.readFileSync(WATCHLIST_I18N, "utf8");
   assert.match(i18nSource, /sufficientTitle:\s*"Histórico suficiente"/);
-  assert.match(i18nSource, /sufficientMessage:\s*"Ya hay varias capturas para comparar la evolución\."/);
+  assert.match(
+    i18nSource,
+    /sufficientMessage:\s*"Ya hay varias capturas para comparar la evolución\."/,
+  );
 });
 
 test("W5: se mantiene formateo de KPIs y se bloquea copy EN en watchlist", () => {
@@ -65,6 +89,10 @@ test("W5: se mantiene formateo de KPIs y se bloquea copy EN en watchlist", () =>
   assert.match(source, /formatPercent\(summaryData\.delta_pct\)/);
 
   for (const snippet of FORBIDDEN_EN_COPY) {
-    assert.equal(pageSource.includes(snippet), false, `watchlist page still contains forbidden EN copy: ${snippet}`);
+    assert.equal(
+      pageSource.includes(snippet),
+      false,
+      `watchlist page still contains forbidden EN copy: ${snippet}`,
+    );
   }
 });

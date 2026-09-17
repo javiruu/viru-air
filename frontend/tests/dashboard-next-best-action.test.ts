@@ -27,7 +27,9 @@ function buildRow(partial: Partial<DashboardHistoryRow> = {}): DashboardHistoryR
   };
 }
 
-function buildSummary(partial: Partial<DashboardNotificationSummary> = {}): DashboardNotificationSummary {
+function buildSummary(
+  partial: Partial<DashboardNotificationSummary> = {},
+): DashboardNotificationSummary {
   return {
     total: partial.total ?? 0,
     unread: partial.unread ?? 0,

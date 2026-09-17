@@ -37,7 +37,7 @@ spec:
             readOnlyRootFilesystem: true
             capabilities:
               drop: ["ALL"]
-          command: ["alembic", "upgrade", "head"]
+          command: ["echo", "migrations_managed_by_supabase"]
           volumeMounts:
             - name: tmp
               mountPath: /tmp

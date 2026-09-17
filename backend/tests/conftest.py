@@ -1,4 +1,8 @@
-﻿import os
+import os
+os.environ.setdefault("DB_URL", "sqlite:///:memory:")
+os.environ.setdefault("TEST_DB_URL", "sqlite:///:memory:")
+os.environ.setdefault("APP_ENV", "test")
+os.environ.setdefault("SUPABASE_JWT_SECRET", "test-suite-supabase-jwt-secret")
 import tempfile
 from collections.abc import Generator
 

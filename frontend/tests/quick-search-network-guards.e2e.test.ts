@@ -16,7 +16,7 @@ async function createSessionToken() {
       body: JSON.stringify({ email, password }),
     });
     if (!response.ok) return null;
-    const auth = await response.json() as { access_token?: string };
+    const auth = (await response.json()) as { access_token?: string };
     return auth.access_token ?? null;
   } catch {
     return null;
@@ -49,7 +49,11 @@ async function openQuickSearch(context: BrowserContext) {
 
   try {
     await Promise.all([
-      page.waitForResponse((response) => response.url().includes("/api/v1/airports/seeds") && response.status() === 200, { timeout: 30000 }),
+      page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/v1/airports/seeds") && response.status() === 200,
+        { timeout: 30000 },
+      ),
       page.goto(`${BASE_URL}/quick-search`, { waitUntil: "networkidle", timeout: 30000 }),
     ]);
   } catch {
@@ -73,9 +77,15 @@ async function openQuickSearch(context: BrowserContext) {
   return { page, originInput, destinationInput, datePicker, trackedRequests, trackedResponses };
 }
 
-async function selectFirstAvailableDate(page: Page, datePickerTrigger: ReturnType<Page["locator"]>) {
+async function selectFirstAvailableDate(
+  page: Page,
+  datePickerTrigger: ReturnType<Page["locator"]>,
+) {
   await datePickerTrigger.locator(".qs-date-trigger").click();
-  await page.locator(".qs-date-popover .qs-date-day:not(.is-disabled):not(.is-outside)").first().click();
+  await page
+    .locator(".qs-date-popover .qs-date-day:not(.is-disabled):not(.is-outside)")
+    .first()
+    .click();
   await page.keyboard.press("Escape");
 }
 
@@ -83,7 +93,10 @@ async function waitForAutocomplete(page: Page, selector: string, state: "visible
   await page.locator(selector).waitFor({ state, timeout: 10000 });
 }
 
-async function clearRoute(originInput: ReturnType<Page["locator"]>, destinationInput: ReturnType<Page["locator"]>) {
+async function clearRoute(
+  originInput: ReturnType<Page["locator"]>,
+  destinationInput: ReturnType<Page["locator"]>,
+) {
   await originInput.fill("");
   await destinationInput.fill("");
 }
@@ -99,7 +112,8 @@ test("quick-search blocks partial and unsupported IATAs before network search re
       return;
     }
 
-    const { page, originInput, destinationInput, datePicker, trackedRequests, trackedResponses } = setup;
+    const { page, originInput, destinationInput, datePicker, trackedRequests, trackedResponses } =
+      setup;
     await originInput.fill("");
     await destinationInput.fill("");
     trackedRequests.length = 0;
@@ -117,7 +131,10 @@ test("quick-search blocks partial and unsupported IATAs before network search re
     await selectFirstAvailableDate(page, datePicker);
     await page.waitForTimeout(1000);
 
-    assert.equal(trackedResponses.filter((item) => item.url.includes("/search/deeplink")).length, 0);
+    assert.equal(
+      trackedResponses.filter((item) => item.url.includes("/search/deeplink")).length,
+      0,
+    );
 
     const searchButton = page.getByRole("button", { name: "Buscar" });
     await searchButton.waitFor({ state: "visible", timeout: 10000 });
@@ -148,16 +165,24 @@ test("quick-search keeps supported AGP to DUB requests below 400", async (t) => 
     await selectFirstAvailableDate(page, datePicker);
     await page.waitForTimeout(1200);
 
-    const deeplinkResponses = trackedResponses.filter((item) => item.url.includes("/search/deeplink"));
+    const deeplinkResponses = trackedResponses.filter((item) =>
+      item.url.includes("/search/deeplink"),
+    );
     assert.ok(deeplinkResponses.length >= 1);
-    assert.equal(deeplinkResponses.every((item) => item.status < 400), true);
+    assert.equal(
+      deeplinkResponses.every((item) => item.status < 400),
+      true,
+    );
 
     await page.getByRole("button", { name: "Buscar" }).click();
     await page.waitForTimeout(2500);
 
     const quickResponses = trackedResponses.filter((item) => item.url.includes("/search/quick"));
     assert.ok(quickResponses.length >= 1);
-    assert.equal(quickResponses.every((item) => item.status < 400), true);
+    assert.equal(
+      quickResponses.every((item) => item.status < 400),
+      true,
+    );
   } finally {
     await browser.close();
   }
@@ -190,18 +215,27 @@ test("quick-search loads calendar hints and updates the selected date in the tri
     await originInput.fill("AGP");
     await destinationInput.fill("DUB");
     const calendarHintsResponsePromise = page.waitForResponse(
-      (response) => response.url().includes("/api/v1/search/quick/calendar-hints") && response.status() < 400,
+      (response) =>
+        response.url().includes("/api/v1/search/quick/calendar-hints") && response.status() < 400,
       { timeout: 20000 },
     );
     await datePicker.locator(".qs-date-trigger").click();
     await calendarHintsResponsePromise;
 
-    const calendarHintSelector = ".qs-date-popover .hint-low, .qs-date-popover .hint-mid, .qs-date-popover .hint-high, .qs-date-popover .is-no-price-data";
-    await page.waitForFunction((selector) => document.querySelectorAll(selector).length > 0, calendarHintSelector, { timeout: 10000 });
+    const calendarHintSelector =
+      ".qs-date-popover .hint-low, .qs-date-popover .hint-mid, .qs-date-popover .hint-high, .qs-date-popover .is-no-price-data";
+    await page.waitForFunction(
+      (selector) => document.querySelectorAll(selector).length > 0,
+      calendarHintSelector,
+      { timeout: 10000 },
+    );
     const hintCount = await page.locator(calendarHintSelector).count();
     assert.ok(hintCount > 0);
 
-    await page.locator(".qs-date-popover .qs-date-day:not(.is-disabled):not(.is-outside)").first().click();
+    await page
+      .locator(".qs-date-popover .qs-date-day:not(.is-disabled):not(.is-outside)")
+      .first()
+      .click();
 
     const hiddenValue = await page.locator('input[name="travel_date"]').inputValue();
     const triggerText = await datePicker.locator(".qs-date-trigger__value").textContent();
@@ -209,8 +243,14 @@ test("quick-search loads calendar hints and updates the selected date in the tri
     assert.match(hiddenValue, /^\d{4}-\d{2}-\d{2}$/);
     assert.ok((triggerText || "").trim().length > 0);
     assert.ok(calendarHintResponses.length >= 1);
-    assert.equal(calendarHintResponses.every((item) => item.status < 400), true);
-    assert.equal(calendarHintResponses.some((item) => /"bucket":"(?:low|mid|high|none)"/.test(item.body)), true);
+    assert.equal(
+      calendarHintResponses.every((item) => item.status < 400),
+      true,
+    );
+    assert.equal(
+      calendarHintResponses.some((item) => /"bucket":"(?:low|mid|high|none)"/.test(item.body)),
+      true,
+    );
   } finally {
     await browser.close();
   }
@@ -286,7 +326,10 @@ test("quick-search blocks empty route submission with validation feedback", asyn
 
     await originInput.press("Enter");
 
-    await page.getByText(/Please enter a search/i).first().waitFor({ state: "visible", timeout: 10000 });
+    await page
+      .getByText(/Please enter a search/i)
+      .first()
+      .waitFor({ state: "visible", timeout: 10000 });
     assert.equal(await originInput.getAttribute("aria-invalid"), "true");
     assert.equal(await destinationInput.getAttribute("aria-invalid"), "true");
     assert.match(page.url(), /\/quick-search$/);

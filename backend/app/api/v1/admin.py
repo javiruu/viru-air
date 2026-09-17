@@ -1,5 +1,4 @@
 ﻿from fastapi import APIRouter, Depends, HTTPException, Query
-from passlib.context import CryptContext
 from datetime import timedelta
 
 from sqlalchemy import delete, desc, func, select
@@ -41,7 +40,6 @@ from app.services.hotel_observability_metrics import (
 )
 
 router = APIRouter()
-pwd = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 def _delete_watch(db: Session, watch_id: str) -> None:
@@ -126,7 +124,7 @@ def reset_password(
     user = db.scalar(select(User).where(User.id == user_id))
     if not user:
         raise HTTPException(status_code=404, detail="user_not_found")
-    user.password_hash = pwd.hash(payload.password)
+    user.password_hash = "[SUPABASE_AUTH_MANAGED]"
     db.commit()
     return {"status": "ok"}
 

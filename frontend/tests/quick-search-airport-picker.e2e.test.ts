@@ -16,7 +16,7 @@ async function createSessionToken() {
       body: JSON.stringify({ email, password }),
     });
     if (!response.ok) return null;
-    const auth = await response.json() as { access_token?: string };
+    const auth = (await response.json()) as { access_token?: string };
     return auth.access_token ?? null;
   } catch {
     return null;
@@ -40,7 +40,11 @@ test("quick-search airport picker opens before search and can be dismissed", asy
 
     try {
       await Promise.all([
-        page.waitForResponse((response) => response.url().includes("/api/v1/airports/seeds") && response.status() === 200, { timeout: 30000 }),
+        page.waitForResponse(
+          (response) =>
+            response.url().includes("/api/v1/airports/seeds") && response.status() === 200,
+          { timeout: 30000 },
+        ),
         page.goto(`${BASE_URL}/quick-search`, { waitUntil: "networkidle", timeout: 30000 }),
       ]);
     } catch {

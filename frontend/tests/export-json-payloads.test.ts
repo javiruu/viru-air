@@ -80,7 +80,11 @@ test("quick-search JSON export preserves criteria, backend meta, and all result 
     adults: 1,
     departure_window: { after: "06:00", before: "12:00" },
     flexibility: { days_before: 1, days_after: 2, apply_to_return: false },
-    route_scope: { include_nearby_origins: true, include_nearby_destinations: false, radius_km: 150 },
+    route_scope: {
+      include_nearby_origins: true,
+      include_nearby_destinations: false,
+      radius_km: 150,
+    },
     constraints: {
       include_stops: true,
       max_stops: 1,

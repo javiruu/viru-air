@@ -3,8 +3,20 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
-const ALERTS_PAGE = path.join(process.cwd(), "src", "modules", "signals", "AlertRulesWorkspace.tsx");
-const CADENCE_PANEL = path.join(process.cwd(), "src", "modules", "signals", "SignalCadencePanel.tsx");
+const ALERTS_PAGE = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "signals",
+  "AlertRulesWorkspace.tsx",
+);
+const CADENCE_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "signals",
+  "SignalCadencePanel.tsx",
+);
 const ALERTS_I18N = path.join(process.cwd(), "src", "i18n", "domains", "alerts.ts");
 
 test("alerts page renders quiet hours controls and persists payload", () => {
@@ -40,15 +52,24 @@ test("alerts empty states provide an actionable monitoring path", () => {
   assert.match(pageSource, /alerts-empty-state--history/);
   assert.match(pageSource, /alerts\.list\.emptyStepFlight/);
   assert.match(pageSource, /alerts\.history\.emptyStepDelivery/);
-  assert.match(copySource, /emptyAllBody: "Elige una ruta, define sensibilidad y deja que Viru vigile sin ruido de fondo\."/);
-  assert.match(copySource, /emptyBody: "Cuando una regla detecte movimiento, este panel guardará la señal, el canal y el estado de entrega\."/);
+  assert.match(
+    copySource,
+    /emptyAllBody: "Elige una ruta, define sensibilidad y deja que Viru vigile sin ruido de fondo\."/,
+  );
+  assert.match(
+    copySource,
+    /emptyBody:\s*"Cuando una regla detecte movimiento, este panel guardará la señal, el canal y el estado de entrega\."/,
+  );
 });
 
 test("alerts page integrates selected watch freshness before promising threshold behavior", () => {
   const source = fs.readFileSync(ALERTS_PAGE, "utf8");
   assert.match(source, /getFreshnessPresentation/);
   assert.match(source, /apiFetch<WatchDetail>\(`\/watchlist\/\$\{selectedWatchId\}`\)/);
-  assert.match(source, /apiFetch<PriceSummary>\(`\/prices\/summary\?watch_id=\$\{selectedWatchId\}`\)/);
+  assert.match(
+    source,
+    /apiFetch<PriceSummary>\(`\/prices\/summary\?watch_id=\$\{selectedWatchId\}`\)/,
+  );
   assert.match(source, /alerts\.form\.freshnessLabel/);
   assert.match(source, /selectedWatchFreshnessGuidance/);
   assert.match(source, /selectedWatchFreshness\?\.observationNote/);
@@ -61,5 +82,8 @@ test("spanish alerts copy includes grouped, quiet hours and freshness messaging"
   assert.match(source, /kicker: "Reglas de señales"/);
   assert.match(source, /quietHoursSaved: "Horas tranquilas actualizadas\."/);
   assert.match(source, /freshnessLabel: "Señal actual"/);
-  assert.match(source, /freshnessStale: "Precio histórico\. Guardamos la regla, pero conviene revalidar antes de decidir\."/);
+  assert.match(
+    source,
+    /freshnessStale:\s*"Precio histórico\. Guardamos la regla, pero conviene revalidar antes de decidir\."/,
+  );
 });

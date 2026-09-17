@@ -46,7 +46,10 @@ test("buildQuickSearchQuerySignature degrades safely when Web Crypto is unavaila
 
   try {
     const payload = buildQuickSearchCanonicalPayload(createParams());
-    const signature = await buildQuickSearchQuerySignature({ payload, winningStep: "pass_1_exact" });
+    const signature = await buildQuickSearchQuerySignature({
+      payload,
+      winningStep: "pass_1_exact",
+    });
     const expected = await buildQuickSearchExpectedSignatures(payload);
 
     assert.equal(signature, null);

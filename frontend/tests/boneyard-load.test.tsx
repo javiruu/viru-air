@@ -36,10 +36,16 @@ test("Boneyard honors reduced-motion preferences", () => {
 test("every captured loading state is registered for runtime use", () => {
   const captureSource = fs.readFileSync(CAPTURE_PAGE, "utf8");
   const registry = fs.readFileSync(REGISTRY, "utf8");
-  const loadNames = new Set(Array.from(captureSource.matchAll(/"([a-z0-9-]+-load)"/g), ([, name]) => name));
+  const loadNames = new Set(
+    Array.from(captureSource.matchAll(/"([a-z0-9-]+-load)"/g), ([, name]) => name),
+  );
 
   assert.ok(loadNames.size >= 38, "expected the capture route to cover every named loading state");
   for (const name of loadNames) {
-    assert.match(registry, new RegExp(`"${name}"`), `expected generated registry entry for ${name}`);
+    assert.match(
+      registry,
+      new RegExp(`"${name}"`),
+      `expected generated registry entry for ${name}`,
+    );
   }
 });

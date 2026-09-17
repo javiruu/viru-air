@@ -6,7 +6,9 @@ const baseUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3600";
 const apiBase = process.env.E2E_API_BASE_URL || "http://127.0.0.1:8000/api/v1";
 const email = process.env.LOGIN_EMAIL || "";
 const password = process.env.LOGIN_PASSWORD || "";
-const outputDir = path.resolve(process.env.GATE_M_OUTPUT_DIR || "../docs/qa/evidence/hotels-h36-gate-m");
+const outputDir = path.resolve(
+  process.env.GATE_M_OUTPUT_DIR || "../docs/qa/evidence/hotels-h36-gate-m",
+);
 
 if (!email || !password) throw new Error("Gate M requires LOGIN_EMAIL and LOGIN_PASSWORD");
 
@@ -17,7 +19,8 @@ const loginResponse = await fetch(`${apiBase}/auth/login`, {
 });
 if (!loginResponse.ok) throw new Error(`login_http_${loginResponse.status}`);
 const tokens = await loginResponse.json();
-if (typeof tokens.access_token !== "string" || !tokens.access_token) throw new Error("missing_access_token");
+if (typeof tokens.access_token !== "string" || !tokens.access_token)
+  throw new Error("missing_access_token");
 
 const profiles = [
   { name: "desktop", viewport: { width: 1440, height: 1200 }, isMobile: false, hasTouch: false },
@@ -62,10 +65,19 @@ function sanitize(value) {
     })
     .replace(/(authorization\s*[:=]\s*bearer\s+)[^\s,;]+/gi, "$1[redacted]")
     .replace(/((?:token|api[_-]?key|password|secret)\s*[:=]\s*)[^\s,;]+/gi, "$1[redacted]")
-    .replace(/([?&](?:token|api[_-]?key|password|secret|access_token)\s*=\s*)[^&\s]+/gi, "$1[redacted]")
-    .replace(/(["'](?:token|api[_-]?key|password|secret|access_token|cookie)["']\s*[:=]\s*["'])[^"']*(["'])/gi, "$1[redacted]$2")
+    .replace(
+      /([?&](?:token|api[_-]?key|password|secret|access_token)\s*=\s*)[^&\s]+/gi,
+      "$1[redacted]",
+    )
+    .replace(
+      /(["'](?:token|api[_-]?key|password|secret|access_token|cookie)["']\s*[:=]\s*["'])[^"']*(["'])/gi,
+      "$1[redacted]$2",
+    )
     .replace(/((?:cookie|set-cookie)\s*[:=]\s*)[^\s,;]+/gi, "$1[redacted]")
-    .replace(/(["'](?:email|user(?:name)?|phone|address|query|search)["']\s*[:=]\s*["'])[^"']*(["'])/gi, "$1[redacted]$2")
+    .replace(
+      /(["'](?:email|user(?:name)?|phone|address|query|search)["']\s*[:=]\s*["'])[^"']*(["'])/gi,
+      "$1[redacted]$2",
+    )
     .replace(/((?:email|username|phone|address|query|search)\s*[:=]\s*)[^\s,;]+/gi, "$1[redacted]")
     .slice(0, 500);
 }
@@ -75,11 +87,14 @@ async function createAuthState() {
   try {
     const page = await context.newPage();
     await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 60_000 });
-    await page.evaluate(({ accessToken, refreshToken }) => {
-      window.localStorage.setItem("viru_token", accessToken);
-      if (refreshToken) window.localStorage.setItem("viru_refresh_token", refreshToken);
-      window.localStorage.setItem("viru_dashboard_login_required", "true");
-    }, { accessToken: tokens.access_token, refreshToken: tokens.refresh_token });
+    await page.evaluate(
+      ({ accessToken, refreshToken }) => {
+        window.localStorage.setItem("viru_token", accessToken);
+        if (refreshToken) window.localStorage.setItem("viru_refresh_token", refreshToken);
+        window.localStorage.setItem("viru_dashboard_login_required", "true");
+      },
+      { accessToken: tokens.access_token, refreshToken: tokens.refresh_token },
+    );
     return await context.storageState();
   } finally {
     await context.close();
@@ -157,26 +172,38 @@ async function runProfile(profile, authState) {
     page.on("request", (request) => {
       const url = new URL(request.url());
       if (!url.pathname.startsWith("/api/v1/hotels")) return;
-      if (request.method() !== "GET") writeViolations.push({ method: request.method(), path: redactPath(url.pathname) });
+      if (request.method() !== "GET")
+        writeViolations.push({ method: request.method(), path: redactPath(url.pathname) });
     });
     page.on("response", (response) => {
       const url = new URL(response.url());
       if (!url.pathname.startsWith("/api/v1/hotels")) return;
-      const record = { method: response.request().method(), path: redactPath(url.pathname), status: response.status() };
+      const record = {
+        method: response.request().method(),
+        path: redactPath(url.pathname),
+        status: response.status(),
+      };
       hotelRequests.push(record);
       if (response.status() >= 500) hotelResponseFailures.push(record);
     });
     page.on("requestfailed", (request) => {
       const url = new URL(request.url());
       if (!url.pathname.startsWith("/api/v1/hotels")) return;
-      requestFailures.push({ method: request.method(), path: redactPath(url.pathname), error: sanitize(request.failure()?.errorText || "failed") });
+      requestFailures.push({
+        method: request.method(),
+        path: redactPath(url.pathname),
+        error: sanitize(request.failure()?.errorText || "failed"),
+      });
     });
     page.on("console", (message) => {
       if (message.type() === "error") consoleErrors.push(sanitize(message.text()));
     });
 
     phase = "navigation";
-    const navigationResponse = await page.goto(`${baseUrl}/hoteles`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    const navigationResponse = await page.goto(`${baseUrl}/hoteles`, {
+      waitUntil: "domcontentloaded",
+      timeout: 60_000,
+    });
     navigationStatus = navigationResponse?.status() ?? null;
     finalUrl = page.url().split("?")[0];
 
@@ -185,17 +212,22 @@ async function runProfile(profile, authState) {
     const submit = page.locator('[data-testid="hotel-search-submit"]');
     await city.waitFor({ state: "visible", timeout: 60_000 });
     const shellInteractiveAt = Date.now() - navigationStartedAt;
-    const authReady = finalUrl.endsWith("/hoteles") && await city.isVisible();
+    const authReady = finalUrl.endsWith("/hoteles") && (await city.isVisible());
 
     await city.focus();
-    const focusBeforeSearch = await page.evaluate(() => document.activeElement?.getAttribute("data-testid") === "hotel-city-input");
+    const focusBeforeSearch = await page.evaluate(
+      () => document.activeElement?.getAttribute("data-testid") === "hotel-city-input",
+    );
     await city.fill("Madrid");
 
     phase = "search";
-    const searchResponse = page.waitForResponse((response) => {
-      const url = new URL(response.url());
-      return url.pathname === "/api/v1/hotels/search" && response.status() === 200;
-    }, { timeout: 60_000 });
+    const searchResponse = page.waitForResponse(
+      (response) => {
+        const url = new URL(response.url());
+        return url.pathname === "/api/v1/hotels/search" && response.status() === 200;
+      },
+      { timeout: 60_000 },
+    );
     await submit.click();
     await searchResponse;
 
@@ -322,19 +354,45 @@ try {
 const report = {
   generatedAt: new Date().toISOString(),
   baseUrl: baseUrl.split("?")[0],
-  profiles: profiles.map(({ name, viewport, network, cpuRate }) => ({ name, viewport, network: Boolean(network), cpuRate: cpuRate || 1 })),
+  profiles: profiles.map(({ name, viewport, network, cpuRate }) => ({
+    name,
+    viewport,
+    network: Boolean(network),
+    cpuRate: cpuRate || 1,
+  })),
   results,
-  failedGateMAssertions: results.reduce((sum, result) => sum + (result.failedAssertionCount || 0), 0),
+  failedGateMAssertions: results.reduce(
+    (sum, result) => sum + (result.failedAssertionCount || 0),
+    0,
+  ),
   traceEnabled: false,
-  privacy: { credentials: false, tokens: false, queryStrings: false, authenticatedTrace: false, violations: [] },
+  privacy: {
+    credentials: false,
+    tokens: false,
+    queryStrings: false,
+    authenticatedTrace: false,
+    violations: [],
+  },
 };
 const serializedReport = JSON.stringify(report);
 const privacyViolations = [];
-if (/[?&](?:token|api[_-]?key|password|secret|access_token)=/i.test(serializedReport)) privacyViolations.push("query-or-secret-marker");
-if (/eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/.test(serializedReport)) privacyViolations.push("jwt-marker");
-if (/authorization\s*[:=]\s*(?!\[redacted\])[^\s,;]+|bearer\s+(?!\[redacted\])[^\s,;]+/i.test(serializedReport)) privacyViolations.push("authorization-marker");
+if (/[?&](?:token|api[_-]?key|password|secret|access_token)=/i.test(serializedReport))
+  privacyViolations.push("query-or-secret-marker");
+if (/eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/.test(serializedReport))
+  privacyViolations.push("jwt-marker");
+if (
+  /authorization\s*[:=]\s*(?!\[redacted\])[^\s,;]+|bearer\s+(?!\[redacted\])[^\s,;]+/i.test(
+    serializedReport,
+  )
+)
+  privacyViolations.push("authorization-marker");
 report.privacy.violations = privacyViolations;
-if (privacyViolations.length > 0) throw new Error(`gate_m_privacy_validation_failed:${privacyViolations.join(",")}`);
-await fs.writeFile(path.join(outputDir, "gate-m.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
+if (privacyViolations.length > 0)
+  throw new Error(`gate_m_privacy_validation_failed:${privacyViolations.join(",")}`);
+await fs.writeFile(
+  path.join(outputDir, "gate-m.json"),
+  `${JSON.stringify(report, null, 2)}\n`,
+  "utf8",
+);
 console.log(`Saved Gate M evidence to ${outputDir}`);
 if (report.failedGateMAssertions > 0) process.exitCode = 1;

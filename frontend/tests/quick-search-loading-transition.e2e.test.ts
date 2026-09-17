@@ -19,7 +19,7 @@ async function createSessionToken() {
       body: JSON.stringify({ email, password }),
     });
     if (!response.ok) return null;
-    const auth = await response.json() as { access_token?: string };
+    const auth = (await response.json()) as { access_token?: string };
     return auth.access_token ?? null;
   } catch {
     return null;
@@ -39,7 +39,11 @@ async function openQuickSearch(context: BrowserContext) {
   const page = await context.newPage();
   try {
     await Promise.all([
-      page.waitForResponse((response) => response.url().includes("/api/v1/airports/seeds") && response.status() === 200, { timeout: 30000 }),
+      page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/v1/airports/seeds") && response.status() === 200,
+        { timeout: 30000 },
+      ),
       page.goto(`${BASE_URL}/quick-search`, { waitUntil: "networkidle", timeout: 30000 }),
     ]);
   } catch {
@@ -66,7 +70,10 @@ async function openQuickSearch(context: BrowserContext) {
 async function selectStableFutureDate(page: Page, datePickerTrigger: ReturnType<Page["locator"]>) {
   await datePickerTrigger.locator(".qs-date-trigger").click();
   await page.getByRole("button", { name: /Mes siguiente|Next month/ }).click();
-  await page.locator('.qs-date-popover .qs-date-day:not(.is-disabled):not(.is-outside)', { hasText: "8" }).first().click();
+  await page
+    .locator(".qs-date-popover .qs-date-day:not(.is-disabled):not(.is-outside)", { hasText: "8" })
+    .first()
+    .click();
   await page.keyboard.press("Escape");
 }
 
@@ -158,7 +165,10 @@ test("quick-search keeps loading exclusive until empty state is final", async (t
     assert.equal(await emptyState.isVisible(), true);
     assert.equal(await loadingState.isVisible().catch(() => false), false);
 
-    await page.screenshot({ path: path.join(screenshotDir, "quick-search-empty-final.png"), fullPage: true });
+    await page.screenshot({
+      path: path.join(screenshotDir, "quick-search-empty-final.png"),
+      fullPage: true,
+    });
   } finally {
     await browser.close();
   }

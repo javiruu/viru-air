@@ -54,7 +54,10 @@ try {
     await page.goto(`${BASE_URL}${TARGET_PATH}`, { waitUntil: "domcontentloaded", timeout: 25000 });
     if (page.url().includes("/login")) {
       await ensureAuthenticated(page, report.auth);
-      await page.goto(`${BASE_URL}${TARGET_PATH}`, { waitUntil: "domcontentloaded", timeout: 25000 });
+      await page.goto(`${BASE_URL}${TARGET_PATH}`, {
+        waitUntil: "domcontentloaded",
+        timeout: 25000,
+      });
     }
     await waitForStableQuickSearch(page);
 
@@ -73,7 +76,9 @@ try {
       const rowMenuTrigger = firstResult.locator("button.qs-row-menu-trigger");
       if (await rowMenuTrigger.count()) {
         await rowMenuTrigger.click();
-        const detailsMenuItem = firstResult.locator('button[role="menuitem"][aria-controls^="details-"]');
+        const detailsMenuItem = firstResult.locator(
+          'button[role="menuitem"][aria-controls^="details-"]',
+        );
         detailsMenuItems = await detailsMenuItem.count();
         if (detailsMenuItems > 0) {
           await detailsMenuItem.click();
@@ -102,24 +107,54 @@ try {
       const maxStops = drawer?.querySelector('[data-ui="qs-filter-max-stops"]');
       const bufferMin = drawer?.querySelector('[data-ui="qs-filter-buffer-min"]');
       const excludeOrigins = drawer?.querySelector('[data-ui="qs-filter-exclude-origins"]');
-      const excludeDestinations = drawer?.querySelector('[data-ui="qs-filter-exclude-destinations"]');
+      const excludeDestinations = drawer?.querySelector(
+        '[data-ui="qs-filter-exclude-destinations"]',
+      );
       const departAfter = drawer?.querySelector('[data-ui="qs-filter-depart-after"]');
       const departBefore = drawer?.querySelector('[data-ui="qs-filter-depart-before"]');
       const strict = drawer?.querySelector('[data-ui="qs-filter-strict"] input');
       const resetVisible = drawer?.querySelector('[data-ui="qs-filter-reset-advanced"]');
       const summaryPanel = document.querySelector('[data-ui="qs-summary-chips"]');
-      if (!drawer || !close || !includeStops || !maxStops || !bufferMin || !excludeOrigins || !excludeDestinations || !departAfter || !departBefore || !strict || !resetVisible || !summaryPanel) {
+      if (
+        !drawer ||
+        !close ||
+        !includeStops ||
+        !maxStops ||
+        !bufferMin ||
+        !excludeOrigins ||
+        !excludeDestinations ||
+        !departAfter ||
+        !departBefore ||
+        !strict ||
+        !resetVisible ||
+        !summaryPanel
+      ) {
         return { ok: false };
       }
       const viewportW = window.innerWidth;
       const viewportH = window.innerHeight;
       const dr = drawer.getBoundingClientRect();
       const cr = close.getBoundingClientRect();
-      const controls = [maxStops, bufferMin, excludeOrigins, excludeDestinations, departAfter, departBefore].map((el) => {
+      const controls = [
+        maxStops,
+        bufferMin,
+        excludeOrigins,
+        excludeDestinations,
+        departAfter,
+        departBefore,
+      ].map((el) => {
         const r = el.getBoundingClientRect();
-        return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, height: r.height };
+        return {
+          left: r.left,
+          right: r.right,
+          top: r.top,
+          bottom: r.bottom,
+          width: r.width,
+          height: r.height,
+        };
       });
-      const overlap = (a, b) => !(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top);
+      const overlap = (a, b) =>
+        !(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top);
       let overlaps = 0;
       for (let i = 0; i < controls.length; i += 1) {
         for (let j = i + 1; j < controls.length; j += 1) {
@@ -130,8 +165,10 @@ try {
       const summaryStyle = window.getComputedStyle(summaryPanel);
       return {
         ok: true,
-        drawerFullyVisible: dr.left >= 0 && dr.top >= 0 && dr.right <= viewportW && dr.bottom <= viewportH,
-        closeFullyVisible: cr.left >= dr.left && cr.top >= dr.top && cr.right <= dr.right && cr.bottom <= dr.bottom,
+        drawerFullyVisible:
+          dr.left >= 0 && dr.top >= 0 && dr.right <= viewportW && dr.bottom <= viewportH,
+        closeFullyVisible:
+          cr.left >= dr.left && cr.top >= dr.top && cr.right <= dr.right && cr.bottom <= dr.bottom,
         hasVerticalScroll: drawer.scrollHeight > drawer.clientHeight,
         overflowYAuto: ["auto", "overlay", "scroll"].includes(drawerStyle.overflowY),
         controlsOverlapCount: overlaps,
@@ -152,7 +189,9 @@ try {
       if (!drawer || !input) return false;
       const dr = drawer.getBoundingClientRect();
       const ir = input.getBoundingClientRect();
-      return ir.left >= dr.left && ir.right <= dr.right && ir.top >= dr.top && ir.bottom <= dr.bottom;
+      return (
+        ir.left >= dr.left && ir.right <= dr.right && ir.top >= dr.top && ir.bottom <= dr.bottom
+      );
     });
 
     await page.locator('[data-ui="qs-advanced-drawer"]').evaluate((el) => {
@@ -208,7 +247,8 @@ try {
     if (check.ok && check.controlsOverlapCount > 0) reasons.push("controls-overlap");
     if (check.ok && check.controlsAnyTooNarrow) reasons.push("controls-too-narrow");
     if (check.ok && !check.overflowYAuto) reasons.push("drawer-overflow-not-scrollable");
-    if (check.ok && !check.bottomReachableAfterScroll) reasons.push("footer-controls-not-reachable-after-scroll");
+    if (check.ok && !check.bottomReachableAfterScroll)
+      reasons.push("footer-controls-not-reachable-after-scroll");
     if (check.ok && !check.focusVisible) reasons.push("focus-clipped");
     if (reasons.length > 0) {
       report.failures.push({ viewport: vp.name, reasons });
@@ -222,7 +262,7 @@ try {
 }
 
 const reportPath = path.join(qaDir, "quick-search-visual-report.json");
-await writeFile(reportPath, JSON.stringify(report, null, 2) + "\n", "utf8");
+await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
 
 console.log(`Visual QA report: ${path.relative(repoRoot, reportPath)}`);
 if (!report.auth.success) {
@@ -258,23 +298,26 @@ async function ensureAuthenticated(page, authReport) {
   authReport.attempted = true;
   authReport.loginUrlDetected = true;
 
-  const apiLoginOk = await page.evaluate(async ({ email, password }) => {
-    try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      if (!res.ok) return false;
-      const data = await res.json();
-      const token = typeof data?.access_token === "string" ? data.access_token : "";
-      if (!token) return false;
-      window.localStorage.setItem("viru_token", token);
-      return true;
-    } catch {
-      return false;
-    }
-  }, { email: LOGIN_EMAIL, password: LOGIN_PASSWORD });
+  const apiLoginOk = await page.evaluate(
+    async ({ email, password }) => {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/v1/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        if (!res.ok) return false;
+        const data = await res.json();
+        const token = typeof data?.access_token === "string" ? data.access_token : "";
+        if (!token) return false;
+        window.localStorage.setItem("viru_token", token);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    { email: LOGIN_EMAIL, password: LOGIN_PASSWORD },
+  );
 
   if (!apiLoginOk) {
     await page.locator('input[name="email"]').first().fill(LOGIN_EMAIL);
@@ -290,7 +333,9 @@ async function ensureAuthenticated(page, authReport) {
   authReport.success = authReport.tokenFound && !finalUrl.includes("/login");
 
   if (!authReport.success) {
-    throw new Error("Unable to authenticate for /quick-search visual QA. Check frontend/backend services and QA_LOGIN_EMAIL/QA_LOGIN_PASSWORD.");
+    throw new Error(
+      "Unable to authenticate for /quick-search visual QA. Check frontend/backend services and QA_LOGIN_EMAIL/QA_LOGIN_PASSWORD.",
+    );
   }
 
   await waitForStableQuickSearch(page);
@@ -316,9 +361,10 @@ async function waitForStableQuickSearch(page) {
   await page.waitForFunction(
     (expectedPath) => {
       const visibleText = (document.body?.innerText || "").toLowerCase();
-      const hasQuickSearchHeading = visibleText.includes("búsqueda rápida")
-        || visibleText.includes("busqueda rapida")
-        || visibleText.includes("quick search");
+      const hasQuickSearchHeading =
+        visibleText.includes("búsqueda rápida") ||
+        visibleText.includes("busqueda rapida") ||
+        visibleText.includes("quick search");
       const pathOk = window.location.pathname.includes(expectedPath);
       return pathOk && hasQuickSearchHeading;
     },
@@ -326,6 +372,14 @@ async function waitForStableQuickSearch(page) {
     { timeout: 25000 },
   );
 
-  await page.locator(".navigation-pending-overlay").first().waitFor({ state: "hidden", timeout: 10000 }).catch(() => {});
-  await page.locator(".qs-loading-shell").first().waitFor({ state: "hidden", timeout: 10000 }).catch(() => {});
+  await page
+    .locator(".navigation-pending-overlay")
+    .first()
+    .waitFor({ state: "hidden", timeout: 10000 })
+    .catch(() => {});
+  await page
+    .locator(".qs-loading-shell")
+    .first()
+    .waitFor({ state: "hidden", timeout: 10000 })
+    .catch(() => {});
 }

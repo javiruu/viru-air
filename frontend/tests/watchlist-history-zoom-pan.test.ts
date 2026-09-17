@@ -4,8 +4,21 @@ import path from "node:path";
 import test from "node:test";
 
 const WATCHLIST_PAGE = path.join(process.cwd(), "src", "app", "(private)", "watchlist", "page.tsx");
-const HISTORY_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "HistoryIntegratedPanel.tsx");
-const CONTROLLER = path.join(process.cwd(), "src", "modules", "watchlist", "useWatchlistController.ts");
+const HISTORY_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "HistoryIntegratedPanel.tsx",
+);
+const CONTROLLER = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "useWatchlistController.ts",
+);
 
 test("watchlist page wires chart viewport props and handlers into history panel", () => {
   const source = fs.readFileSync(WATCHLIST_PAGE, "utf8");

@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from typing import Callable, Generic, TypeVar
 
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
-from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now_naive
@@ -315,23 +314,16 @@ def persist_hotel_provider_latency_aggregates(
                 },
                 )
             )
-        elif dialect_name == "sqlite":
-            sqlite_stmt = sqlite_insert(HotelProviderLatencyAggregate).values(**values)
-            excluded = sqlite_stmt.excluded
-            db.execute(
-                sqlite_stmt.on_conflict_do_update(
-                index_elements=["provider_run_id", "provider", "operation", "outcome", "error_code"],
-                set_={
-                    "sample_count": excluded.sample_count,
-                    "total_duration_ms": excluded.total_duration_ms,
-                    "min_duration_ms": excluded.min_duration_ms,
-                    "max_duration_ms": excluded.max_duration_ms,
-                    "updated_at": utc_now_naive(),
-                },
-                )
-            )
         else:
-            raise RuntimeError("hotel_provider_latency_aggregate_unsupported_dialect")
+            existing = db.query(HotelProviderLatencyAggregate).filter_by(provider_run_id=values["provider_run_id"], provider=values["provider"], operation=values["operation"], outcome=values["outcome"], error_code=values["error_code"]).first()
+            if existing:
+                existing.sample_count = values["sample_count"]
+                existing.total_duration_ms = values["total_duration_ms"]
+                existing.min_duration_ms = values["min_duration_ms"]
+                existing.max_duration_ms = values["max_duration_ms"]
+                existing.updated_at = utc_now_naive()
+            else:
+                db.add(HotelProviderLatencyAggregate(**values))
     return len(aggregates)
 
 

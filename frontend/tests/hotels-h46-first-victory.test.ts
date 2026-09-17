@@ -5,11 +5,46 @@ import test from "node:test";
 
 const HOTELS_I18N = path.join(process.cwd(), "src", "i18n", "domains", "hotels.ts");
 const HOTELS_PAGE = path.join(process.cwd(), "src", "modules", "hotels", "HotelRadarPage.tsx");
-const HOTELS_EMPTY = path.join(process.cwd(), "src", "modules", "hotels", "components", "HotelCompSetPanel.tsx");
-const HOTELS_SEARCH_HOOK = path.join(process.cwd(), "src", "modules", "hotels", "hooks", "useHotelSearch.ts");
-const HOTELS_TRACKED = path.join(process.cwd(), "src", "modules", "hotels", "hooks", "useTrackedOffers.ts");
-const HOTELS_TIMELINE = path.join(process.cwd(), "src", "modules", "hotels", "components", "HotelTimelineAndSignals.tsx");
-const HOTELS_TRACKING_CONFIRMATION = path.join(process.cwd(), "src", "modules", "hotels", "components", "HotelTrackingConfirmationDialog.tsx");
+const HOTELS_EMPTY = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "hotels",
+  "components",
+  "HotelCompSetPanel.tsx",
+);
+const HOTELS_SEARCH_HOOK = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "hotels",
+  "hooks",
+  "useHotelSearch.ts",
+);
+const HOTELS_TRACKED = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "hotels",
+  "hooks",
+  "useTrackedOffers.ts",
+);
+const HOTELS_TIMELINE = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "hotels",
+  "components",
+  "HotelTimelineAndSignals.tsx",
+);
+const HOTELS_TRACKING_CONFIRMATION = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "hotels",
+  "components",
+  "HotelTrackingConfirmationDialog.tsx",
+);
 
 test("H46: watchlist copy is save semantics, not tracking semantics (ES/EN)", () => {
   const i18n = fs.readFileSync(HOTELS_I18N, "utf8");
@@ -28,14 +63,17 @@ test("H46: watchlist copy is save semantics, not tracking semantics (ES/EN)", ()
 test("H46: save confirmation never promises price tracking", () => {
   const i18n = fs.readFileSync(HOTELS_I18N, "utf8");
 
-  assert.match(i18n, /watchAdded: "Hotel guardado\. No se ha activado ningún seguimiento de precio\."/);
+  assert.match(
+    i18n,
+    /watchAdded: "Hotel guardado\. No se ha activado ningún seguimiento de precio\."/,
+  );
   assert.match(i18n, /watchAdded: "Hotel saved\. No price tracking was activated\."/);
   assert.match(i18n, /watchAlreadyAdded: "Este hotel ya está guardado\."/);
   // The daily-review promise is only valid once H09/H23/H45 demonstrate the
   // policy; with the sweep CronJob suspended it must not be claimed.
   assert.ok(!/revisará la señal disponible cada día/.test(i18n));
   assert.ok(!/review the available signal daily/.test(i18n));
-  assert.match(i18n, /trackedOfferCreated: "Seguimiento creado con el precio observado/);
+  assert.match(i18n, /trackedOfferCreated:\s*"Seguimiento creado con el precio observado/);
 });
 
 test("H46: idle and empty states are distinct and recoverable", () => {
@@ -64,7 +102,7 @@ test("H46: tracking is blocked without an eligible stay context", () => {
   assert.match(tracked, /trackingNeedsContext/);
   assert.match(tracked, /cheapest === null/);
   assert.match(i18n, /trackingNeedsContext:/);
-  assert.match(i18n, /trackingNeedsContext: "Para seguir el precio hace falta una estancia/);
+  assert.match(i18n, /trackingNeedsContext:\s*"Para seguir el precio hace falta una estancia/);
 });
 
 test("H23: tracking confirms a concrete observed offer through the V2 source rate", () => {

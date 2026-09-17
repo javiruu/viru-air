@@ -65,7 +65,7 @@ def _create_watch(client, email: str, origin: str, destination: str) -> str:
         json={
             "origin_iata": origin,
             "destination_iata": destination,
-            "travel_date_local": "2026-09-03",
+            "travel_date_local": str(date.today() + timedelta(days=30)),
         },
     )
     assert response.status_code == 200
@@ -89,13 +89,13 @@ def test_notify_persists_stable_top_twenty_percent_and_seven_day_window(client) 
         ("MAD", "BCN", 20),
         ("MAD", "LIS", 15),
         ("AGP", "FCO", 10),
-        ("SVQ", "BIO", 8),
+        ("SVQ", "VLC", 8),
         ("ALC", "PMI", 5),
-        ("BIO", "LPA", 4),
+        ("VLC", "LPA", 4),
     ]
     for origin, destination, count in routes:
         _seed_route(origin, destination, count, search_date=reporting_date)
-    _seed_route("LPA", "TFN", 99, search_date=reporting_date - timedelta(days=7))
+    _seed_route("LPA", "TFS", 99, search_date=reporting_date - timedelta(days=7))
     _create_watch(client, "trending-persist@viru.dev", "MAD", "BCN")
 
     db, generator = _open_db()

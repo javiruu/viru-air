@@ -4,8 +4,22 @@ import path from "node:path";
 import test from "node:test";
 
 const API = path.join(process.cwd(), "src", "modules", "hotels", "api.ts");
-const HOOK = path.join(process.cwd(), "src", "modules", "hotels", "hooks", "useSavedHotelSearches.ts");
-const PANEL = path.join(process.cwd(), "src", "modules", "hotels", "components", "HotelSavedSearchesPanel.tsx");
+const HOOK = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "hotels",
+  "hooks",
+  "useSavedHotelSearches.ts",
+);
+const PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "hotels",
+  "components",
+  "HotelSavedSearchesPanel.tsx",
+);
 const PAGE = path.join(process.cwd(), "src", "modules", "hotels", "HotelRadarPage.tsx");
 const I18N = path.join(process.cwd(), "src", "i18n", "domains", "hotels.ts");
 

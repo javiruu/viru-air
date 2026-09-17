@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { QuickSearchSummaryChips } from "../src/modules/quick-search/components/QuickSearchSummaryChips";
@@ -43,7 +42,12 @@ test("QuickSearchSummaryChips renders compact relevant chips", () => {
 
 test("QuickSearchSummaryChips renders nothing when no chip is relevant", () => {
   const html = renderToStaticMarkup(
-    <QuickSearchSummaryChips title="Plan de vuelo" headline="MAD -> TSF" caption="1 pasajero" chips={[]} />,
+    <QuickSearchSummaryChips
+      title="Plan de vuelo"
+      headline="MAD -> TSF"
+      caption="1 pasajero"
+      chips={[]}
+    />,
   );
 
   assert.equal(html, "");

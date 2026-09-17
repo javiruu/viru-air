@@ -3,11 +3,26 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
-const SMART_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "SmartWatchListPanel.tsx");
+const SMART_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "SmartWatchListPanel.tsx",
+);
 const WATCHLIST_I18N = path.join(process.cwd(), "src", "i18n", "domains", "watchlist.ts");
 const WATCHLIST_PAGE = path.join(process.cwd(), "src", "app", "(private)", "watchlist", "page.tsx");
 
-const FORBIDDEN_WATCHLIST_COPY = ["Back", "Flight Watchlist", "Add flight", "Quick start", "Last update", "Min", "Max"];
+const FORBIDDEN_WATCHLIST_COPY = [
+  "Back",
+  "Flight Watchlist",
+  "Add flight",
+  "Quick start",
+  "Last update",
+  "Min",
+  "Max",
+];
 
 test("W4: smart list heading uses rutas vigiladas copy and removes old long title", () => {
   const panelSource = fs.readFileSync(SMART_PANEL, "utf8");
@@ -41,6 +56,10 @@ test("W4: summary copy uses rutas terminology and avoids vuelos in count line", 
 test("W4: watchlist page keeps forbidden EN literals blocked", () => {
   const source = fs.readFileSync(WATCHLIST_PAGE, "utf8");
   for (const snippet of FORBIDDEN_WATCHLIST_COPY) {
-    assert.equal(source.includes(snippet), false, `watchlist page still contains forbidden EN copy: ${snippet}`);
+    assert.equal(
+      source.includes(snippet),
+      false,
+      `watchlist page still contains forbidden EN copy: ${snippet}`,
+    );
   }
 });

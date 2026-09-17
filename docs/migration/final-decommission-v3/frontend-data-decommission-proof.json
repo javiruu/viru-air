@@ -1,0 +1,29 @@
+{
+  "authority": "03_FRONTEND_ORVAL_TANSTACK_COMPLETION.md",
+  "phase": "03 Frontend Orval TanStack Completion",
+  "generated_at": "2026-09-12T23:45:00Z",
+  "verdict": "PASS",
+  "counters": {
+    "legacy_api_client_consumers": 0,
+    "eligible_manual_fetches": 0,
+    "server_state_useeffects": 0,
+    "orval_contract_drift": 0
+  },
+  "justified_direct_fetches": [
+    {
+      "file": "frontend/src/api/mutator/custom-client.ts",
+      "reason": "Canonical Orval client mutator connecting generated TanStack Query hooks to Supabase Auth tokens and base URL."
+    },
+    {
+      "file": "frontend/src/modules/quick-search/weatherUtils.ts",
+      "reason": "Non-Viru external third-party API call to open-meteo.com for destination weather forecast."
+    }
+  ],
+  "evidence": {
+    "orval_config": "frontend/orval.config.ts",
+    "openapi_spec": "docs/architecture/openapi.json",
+    "api_check_exit_code": 0,
+    "migration_ledger": "docs/migration/final-decommission-v3/frontend-data-migration-ledger.csv",
+    "custom_client_mutator": "frontend/src/api/mutator/custom-client.ts"
+  }
+}

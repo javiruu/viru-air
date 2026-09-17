@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildQuickSearchCanonicalPayload, prepareQuickSearchRequest } from "../src/modules/quick-search/api/buildQuickSearchRequest";
+import {
+  buildQuickSearchCanonicalPayload,
+  prepareQuickSearchRequest,
+} from "../src/modules/quick-search/api/buildQuickSearchRequest";
 
 test("Quick Search preserves selected sparse dates as exact travel dates", () => {
   const prepared = prepareQuickSearchRequest({

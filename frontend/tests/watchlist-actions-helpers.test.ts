@@ -74,9 +74,10 @@ test("mapLatestWatchSnapshotsToHistoryRows exposes the persisted save-result pri
     },
   ]);
 
-  assert.deepEqual(rows.map((row) => [row.watchId, row.price, row.currency]), [
-    ["w1", 47, "EUR"],
-  ]);
+  assert.deepEqual(
+    rows.map((row) => [row.watchId, row.price, row.currency]),
+    [["w1", 47, "EUR"]],
+  );
 });
 
 test("mergeLatestWatchSnapshotsIntoHistoryRows keeps a newly saved price when batch history is stale", () => {
@@ -103,10 +104,7 @@ test("mergeLatestWatchSnapshotsIntoHistoryRows keeps a newly saved price when ba
     },
   ];
 
-  const rows = mergeLatestWatchSnapshotsIntoHistoryRows(
-    batchRows,
-    watchesWithSavedPrice,
-  );
+  const rows = mergeLatestWatchSnapshotsIntoHistoryRows(batchRows, watchesWithSavedPrice);
 
   assert.deepEqual(
     rows.map((row) => [row.watchId, row.capturedAt, row.price, row.currency]),
@@ -131,9 +129,10 @@ test("mergeLatestWatchSnapshotsIntoHistoryRows keeps a saved price when batch hi
     },
   ]);
 
-  assert.deepEqual(rows.map((row) => [row.watchId, row.price, row.currency]), [
-    ["w1", 47, "EUR"],
-  ]);
+  assert.deepEqual(
+    rows.map((row) => [row.watchId, row.price, row.currency]),
+    [["w1", 47, "EUR"]],
+  );
 });
 
 test("mapSnapshotsToHistoryRows collapses same-refresh legacy snapshots to one canonical point", () => {
@@ -233,10 +232,16 @@ test("mergeWatchDetailPriceHistoryRows adds selected watch backfill points witho
 
 test("filterWatchesBySelection filters by origin, destination and optional dates", () => {
   const strict = filterWatchesBySelection(WATCHES, "MAD", "DUB", ["2026-07-10"]);
-  assert.deepEqual(strict.map((w) => w.id), ["w1"]);
+  assert.deepEqual(
+    strict.map((w) => w.id),
+    ["w1"],
+  );
 
   const noDateFilter = filterWatchesBySelection(WATCHES, "MAD", "DUB", []);
-  assert.deepEqual(noDateFilter.map((w) => w.id), ["w1"]);
+  assert.deepEqual(
+    noDateFilter.map((w) => w.id),
+    ["w1"],
+  );
 });
 
 test("resolveCurrentWatchDetail rejects detail from the previously selected watch", () => {

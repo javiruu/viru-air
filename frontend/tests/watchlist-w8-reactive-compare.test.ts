@@ -3,12 +3,40 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
-const COMPARE_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "ComparePanels.tsx");
-const VIEW_STATE = path.join(process.cwd(), "src", "modules", "watchlist", "useWatchlistViewState.ts");
-const SMART_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "SmartWatchListPanel.tsx");
+const COMPARE_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "ComparePanels.tsx",
+);
+const VIEW_STATE = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "useWatchlistViewState.ts",
+);
+const SMART_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "SmartWatchListPanel.tsx",
+);
 const WATCHLIST_PAGE = path.join(process.cwd(), "src", "app", "(private)", "watchlist", "page.tsx");
 
-const FORBIDDEN_EN_COPY = ["Back", "Flight Watchlist", "Add flight", "Quick start", "Last update", "Min", "Max"];
+const FORBIDDEN_EN_COPY = [
+  "Back",
+  "Flight Watchlist",
+  "Add flight",
+  "Quick start",
+  "Last update",
+  "Min",
+  "Max",
+];
 
 test("W8: compare empty/one/mixed states and compare data source are explicit", () => {
   const source = fs.readFileSync(COMPARE_PANEL, "utf8");
@@ -21,7 +49,10 @@ test("W8: compare empty/one/mixed states and compare data source are explicit", 
   assert.match(source, /watchlist\.compare\.maxSelectionMessage/);
   assert.match(source, /currency_mode === "mixed"/);
   assert.match(source, /watchlist\.compare\.mixedCurrencyWarning/);
-  assert.match(source, /apiFetch<PriceCompareResponse>\(`\/prices\/compare\?watch_ids=\$\{compareQuery\}`\)/);
+  assert.match(
+    source,
+    /apiFetch<PriceCompareResponse>\(`\/prices\/compare\?watch_ids=\$\{compareQuery\}`\)/,
+  );
 });
 
 test("W8: badges are derived from compare response, not local history rows", () => {
@@ -40,14 +71,23 @@ test("W8: badges are derived from compare response, not local history rows", () 
 test("W8: multi compare chart is rendered under compare-card--multi and sourced from compare points", () => {
   const source = fs.readFileSync(COMPARE_PANEL, "utf8");
 
-  assert.match(source, /className=\{`compare-card compare-card--multi \$\{hoveredWatchId === card\.watch_id \? "is-hovered" : ""\}`\}/);
+  assert.match(
+    source,
+    /className=\{`compare-card compare-card--multi \$\{hoveredWatchId === card\.watch_id \? "is-hovered" : ""\}`\}/,
+  );
   assert.match(source, /className="compare-chart compare-chart--global"/);
   assert.match(source, /data-testid="compare-master-chart"/);
   assert.match(source, /compareChartSeries/);
-  assert.match(source, /const \[hoveredWatchId, setHoveredWatchId\] = useState<string \| null>\(null\)/);
+  assert.match(
+    source,
+    /const \[hoveredWatchId, setHoveredWatchId\] = useState<string \| null>\(null\)/,
+  );
   assert.match(source, /sortedChartSeries/);
   assert.match(source, /const pointBlocks = compareResponse\?\.points \?\? \[\]/);
-  assert.match(source, /const routeByWatchId = new Map\(watches\.map\(\(item\) => \[item\.watch_id, item\.route\]\)\)/);
+  assert.match(
+    source,
+    /const routeByWatchId = new Map\(watches\.map\(\(item\) => \[item\.watch_id, item\.route\]\)\)/,
+  );
   assert.match(source, /aria-label="Gr.*comparativo de vuelos seleccionados"/);
   assert.doesNotMatch(source, /historyRows/);
 });
@@ -73,6 +113,10 @@ test("W8: compare selection remains isolated from ticket selection", () => {
 test("W8: watchlist route source still blocks forbidden EN literals", () => {
   const source = fs.readFileSync(WATCHLIST_PAGE, "utf8");
   for (const snippet of FORBIDDEN_EN_COPY) {
-    assert.equal(source.includes(snippet), false, `watchlist page still contains forbidden EN copy: ${snippet}`);
+    assert.equal(
+      source.includes(snippet),
+      false,
+      `watchlist page still contains forbidden EN copy: ${snippet}`,
+    );
   }
 });

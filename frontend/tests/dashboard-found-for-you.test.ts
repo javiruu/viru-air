@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { getFoundForYouSuggestion } from "@/modules/dashboard/found-for-you";
-import type { DashboardHistoryRow, DashboardWatch } from "@/modules/dashboard/next-best-action-types";
+import type {
+  DashboardHistoryRow,
+  DashboardWatch,
+} from "@/modules/dashboard/next-best-action-types";
 import type { ResumeSearchSnapshot } from "@/modules/quick-search/resume-search";
 
 function watch(partial: Partial<DashboardWatch> = {}): DashboardWatch {

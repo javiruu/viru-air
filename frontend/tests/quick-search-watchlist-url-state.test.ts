@@ -12,17 +12,14 @@ import {
   sanitizeFlag,
   sanitizeViewMode,
   sanitizeRangeParam,
-
   // QuickSearch → Watchlist navigation
   buildWatchlistUrl,
   readWatchlistNavigationParams,
   readWatchlistViewParams,
   buildWatchlistViewSearchParams,
-
   // QuickSearch URL persistence
   readQuickSearchUrlState,
   buildQuickSearchSearchParams,
-
   // Param constants (used to verify contract consistency)
   WL_PARAM_ORIGIN,
   WL_PARAM_DESTINATION,
@@ -170,7 +167,10 @@ test("buildWatchlistUrl includes watchId before route params", () => {
     travelDate: "2026-07-15",
     watchId: "watch_12345",
   });
-  assert.equal(url, "/watchlist?watchId=watch_12345&origin=MAD&destination=DUB&travelDate=2026-07-15");
+  assert.equal(
+    url,
+    "/watchlist?watchId=watch_12345&origin=MAD&destination=DUB&travelDate=2026-07-15",
+  );
 });
 
 test("buildWatchlistUrl sanitizes lowercase and whitespace", () => {
@@ -223,7 +223,9 @@ test("readWatchlistNavigationParams reads valid params", () => {
 });
 
 test("readWatchlistNavigationParams reads watchId", () => {
-  const sp = new URLSearchParams("?watchId=watch_12345&origin=MAD&destination=DUB&travelDate=2026-07-15");
+  const sp = new URLSearchParams(
+    "?watchId=watch_12345&origin=MAD&destination=DUB&travelDate=2026-07-15",
+  );
   const nav = readWatchlistNavigationParams(sp);
   assert.deepEqual(nav, {
     origin: "MAD",
@@ -300,7 +302,10 @@ test("buildWatchlistViewSearchParams includes non-default values", () => {
     view: "calendar",
     range: "all",
   });
-  assert.equal(qs, "watchId=watch_12345&origin=MAD&destination=DUB&travelDate=2026-07-15&view=calendar&range=all");
+  assert.equal(
+    qs,
+    "watchId=watch_12345&origin=MAD&destination=DUB&travelDate=2026-07-15&view=calendar&range=all",
+  );
 });
 
 test("buildWatchlistViewSearchParams returns empty for all defaults", () => {
@@ -313,7 +318,7 @@ test("buildWatchlistViewSearchParams returns empty for all defaults", () => {
 test("readQuickSearchUrlState reads all params", () => {
   const sp = new URLSearchParams(
     "?origin=MAD&destination=DUB&origins=FCO,BCN&destinations=AMS,LGW&travelDate=2026-07-15&returnDate=2026-07-22" +
-    "&isReturn=1&adults=2&flexB=1&flexA=2&radius=250&strict=0"
+      "&isReturn=1&adults=2&flexB=1&flexA=2&radius=250&strict=0",
   );
   const state = readQuickSearchUrlState(sp);
   assert.deepEqual(state, {
@@ -351,13 +356,13 @@ test("readQuickSearchUrlState returns defaults for missing params", () => {
 
 test("readQuickSearchUrlState sanitizes invalid values", () => {
   const sp = new URLSearchParams(
-    "?origin=12&destination=X&travelDate=not-date&adults=0&flexB=-1&radius=999&strict=maybe"
+    "?origin=12&destination=X&travelDate=not-date&adults=0&flexB=-1&radius=999&strict=maybe",
   );
   const state = readQuickSearchUrlState(sp);
   assert.equal(state.origin, "");
   assert.equal(state.destination, "");
   assert.equal(state.travelDate, "");
-  assert.equal(state.adults, 1);   // clamped to default (min 1)
+  assert.equal(state.adults, 1); // clamped to default (min 1)
   assert.equal(state.flexBefore, 0);
   // radius=999 clamped to [10, 500] → 500
   assert.equal(state.radius, 500);

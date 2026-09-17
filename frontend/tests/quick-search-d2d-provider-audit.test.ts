@@ -14,8 +14,8 @@
 
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "fs";
-import { resolve } from "path";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 const PROJECT_ROOT = resolve(process.cwd(), "..");
 const REGISTRY_PATH = resolve(
@@ -26,14 +26,7 @@ const REGISTRY_PATH = resolve(
   "providers",
   "registry.py",
 );
-const BASE_PATH = resolve(
-  PROJECT_ROOT,
-  "backend",
-  "app",
-  "door_to_door",
-  "providers",
-  "base.py",
-);
+const BASE_PATH = resolve(PROJECT_ROOT, "backend", "app", "door_to_door", "providers", "base.py");
 
 function readSource(absPath: string): string {
   return readFileSync(absPath, "utf-8");
@@ -78,10 +71,7 @@ describe("Phase 20 — door-to-door provider registry audit", () => {
       "notes=",
     ];
     for (const field of fields) {
-      assert.ok(
-        registrySrc.includes(field),
-        `Registry must set ${field} for all descriptors`,
-      );
+      assert.ok(registrySrc.includes(field), `Registry must set ${field} for all descriptors`);
     }
   });
 
@@ -108,17 +98,11 @@ describe("Phase 20 — door-to-door provider registry audit", () => {
       registrySrc.includes("DOOR_TO_DOOR_GTFS_FEEDS_JSON"),
       "GTFS must check for feed configuration",
     );
-    assert.ok(
-      registrySrc.includes("_has_gtfs_feeds"),
-      "Registry must have _has_gtfs_feeds helper",
-    );
+    assert.ok(registrySrc.includes("_has_gtfs_feeds"), "Registry must have _has_gtfs_feeds helper");
   });
 
   it("Navitia requires API key", () => {
-    assert.ok(
-      registrySrc.includes("NAVITIA_API_KEY"),
-      "Navitia must check for NAVITIA_API_KEY",
-    );
+    assert.ok(registrySrc.includes("NAVITIA_API_KEY"), "Navitia must check for NAVITIA_API_KEY");
   });
 });
 
@@ -128,22 +112,9 @@ describe("Phase 20 — provider classification audit", () => {
   const registrySrc = readSource(REGISTRY_PATH);
 
   const PROVIDER_CATEGORIES = {
-    real: [
-      "google_routes",
-      "gtfs_transit",
-      "navitia",
-      "google_maps_deeplink",
-      "google_places",
-    ],
+    real: ["google_routes", "gtfs_transit", "navitia", "google_maps_deeplink", "google_places"],
     deeplink: ["blablacar_deeplink", "goopti_deeplink", "external_deeplink"],
-    stub: [
-      "opentripplanner",
-      "amadeus_transfers",
-      "mozio",
-      "omio",
-      "distribusion",
-      "rome2rio",
-    ],
+    stub: ["opentripplanner", "amadeus_transfers", "mozio", "omio", "distribusion", "rome2rio"],
     mock: ["mock_multimodal"],
     scraper: ["blablacar_scraper", "goopti_scraper", "alsa_scraper", "renfe_scraper"],
   };
@@ -167,17 +138,12 @@ describe("Phase 20 — provider classification audit", () => {
       "functional_maps",
       "functional_deeplink",
     ];
-    const hasFunctional = functionalPrefixes.some((p) =>
-      registrySrc.includes(p),
-    );
+    const hasFunctional = functionalPrefixes.some((p) => registrySrc.includes(p));
     assert.ok(hasFunctional, "Registry must define functional status values");
   });
 
   it("stub providers have pure_stub or deeplink_stub status", () => {
-    assert.ok(
-      registrySrc.includes("pure_stub"),
-      "Registry must have pure_stub status for stubs",
-    );
+    assert.ok(registrySrc.includes("pure_stub"), "Registry must have pure_stub status for stubs");
     assert.ok(
       registrySrc.includes("deeplink_stub"),
       "Registry must have deeplink_stub status for rome2rio",
@@ -208,26 +174,17 @@ describe("Phase 20 — base provider contract", () => {
     assert.ok(baseSrc.includes("class DoorToDoorProvider(ABC)"), "Must be abstract");
     assert.ok(baseSrc.includes("@abstractmethod"), "Must have abstract methods");
     assert.ok(baseSrc.includes("async def search"), "Must define search method");
-    assert.ok(
-      baseSrc.includes("async def healthcheck"),
-      "Must define healthcheck method",
-    );
+    assert.ok(baseSrc.includes("async def healthcheck"), "Must define healthcheck method");
   });
 
   it("base provider has timeout and rate limiting", () => {
     assert.ok(baseSrc.includes("timeout_seconds"), "Must have timeout_seconds");
-    assert.ok(
-      baseSrc.includes("rate_limit_per_minute"),
-      "Must have rate_limit_per_minute",
-    );
+    assert.ok(baseSrc.includes("rate_limit_per_minute"), "Must have rate_limit_per_minute");
   });
 
   it("base provider has warning system", () => {
     assert.ok(baseSrc.includes("push_warning"), "Must have push_warning method");
-    assert.ok(
-      baseSrc.includes("consume_warnings"),
-      "Must have consume_warnings method",
-    );
+    assert.ok(baseSrc.includes("consume_warnings"), "Must have consume_warnings method");
   });
 });
 

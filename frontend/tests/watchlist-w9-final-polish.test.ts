@@ -5,16 +5,66 @@ import test from "node:test";
 import { readStylesheetTree } from "./helpers/read-stylesheet-tree";
 
 const WATCHLIST_PAGE = path.join(process.cwd(), "src", "app", "(private)", "watchlist", "page.tsx");
-const SMART_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "SmartWatchListPanel.tsx");
-const WATCH_ROW = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchRow.tsx");
-const DETAIL_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchDetailPanel.tsx");
-const HISTORY_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "HistoryIntegratedPanel.tsx");
-const MAP_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "WatchlistMapDecisionPanel.tsx");
-const COMPARE_PANEL = path.join(process.cwd(), "src", "modules", "watchlist", "components", "ComparePanels.tsx");
+const SMART_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "SmartWatchListPanel.tsx",
+);
+const WATCH_ROW = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "WatchRow.tsx",
+);
+const DETAIL_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "WatchDetailPanel.tsx",
+);
+const HISTORY_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "HistoryIntegratedPanel.tsx",
+);
+const MAP_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "WatchlistMapDecisionPanel.tsx",
+);
+const COMPARE_PANEL = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "watchlist",
+  "components",
+  "ComparePanels.tsx",
+);
 const SCREENS = path.join(process.cwd(), "src", "styles", "screens.css");
 const SUMMARY = path.join(process.cwd(), "src", "modules", "watchlist", "summary.ts");
 
-const FORBIDDEN_EN_COPY = ["Back", "Flight Watchlist", "Add flight", "Quick start", "Last update", "Min", "Max"];
+const FORBIDDEN_EN_COPY = [
+  "Back",
+  "Flight Watchlist",
+  "Add flight",
+  "Quick start",
+  "Last update",
+  "Min",
+  "Max",
+];
 
 test("W9: main reading order keeps history and selection before embedded detail map and compare", () => {
   const source = fs.readFileSync(WATCHLIST_PAGE, "utf8");
@@ -35,7 +85,11 @@ test("W9: old/forbidden copy does not reappear in watchlist page", () => {
   const source = fs.readFileSync(WATCHLIST_PAGE, "utf8");
   assert.equal(source.includes("Lista inteligente de vuelos"), false);
   for (const snippet of FORBIDDEN_EN_COPY) {
-    assert.equal(source.includes(snippet), false, `watchlist page still contains forbidden EN copy: ${snippet}`);
+    assert.equal(
+      source.includes(snippet),
+      false,
+      `watchlist page still contains forbidden EN copy: ${snippet}`,
+    );
   }
 });
 
@@ -43,9 +97,15 @@ test("W9: history keeps selected-date context without repeating the selected rou
   const source = fs.readFileSync(HISTORY_PANEL, "utf8");
   assert.doesNotMatch(source, /watchlist\.history\.selectedRouteLabel/);
   assert.match(source, /selectedWatch\.travel_date_local/);
-  const communityRouteReferences = source.match(/<RelatedCommunityRoutes[\s\S]*?origin=\{selectedWatch\.origin_iata\}[\s\S]*?destination=\{selectedWatch\.destination_iata\}/g) ?? [];
+  const communityRouteReferences =
+    source.match(
+      /<RelatedCommunityRoutes[\s\S]*?origin=\{selectedWatch\.origin_iata\}[\s\S]*?destination=\{selectedWatch\.destination_iata\}/g,
+    ) ?? [];
   assert.equal(communityRouteReferences.length, 2);
-  assert.doesNotMatch(source, /selectedWatch\.origin_iata\}\s*→\s*\$\{selectedWatch\.destination_iata\}/);
+  assert.doesNotMatch(
+    source,
+    /selectedWatch\.origin_iata\}\s*→\s*\$\{selectedWatch\.destination_iata\}/,
+  );
   assert.doesNotMatch(source, /Origen/);
   assert.doesNotMatch(source, /Destino/);
   assert.doesNotMatch(source, /Fechas de vuelo/);
@@ -83,7 +143,10 @@ test("W9: map and compare keep non-contradictory and reactive states", () => {
   assert.doesNotMatch(mapSource, /selectedRouteLabel|fallbackRouteLabel/);
   assert.doesNotMatch(mapSource, /watchlist\.map\.(originLabel|destinationLabel|dateLabel)/);
   assert.match(mapSource, /watchlist\.map\.lastCaptureLabel/);
-  assert.match(screensSource, /\.watch-map-meta-item:only-child\s*\{\s*grid-column:\s*1\s*\/\s*-1;/);
+  assert.match(
+    screensSource,
+    /\.watch-map-meta-item:only-child\s*\{\s*grid-column:\s*1\s*\/\s*-1;/,
+  );
   assert.match(mapSource, /watchlist\.map\.unavailableTitle/);
   assert.match(compareSource, /option\.origin\} → \{option\.destination/);
   assert.match(compareSource, /selectedCount === 0/);
