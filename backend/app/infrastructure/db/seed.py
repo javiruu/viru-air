@@ -1,4 +1,3 @@
-﻿from passlib.context import CryptContext
 from typing import TypedDict
 
 from sqlalchemy import inspect, text
@@ -7,7 +6,6 @@ from sqlalchemy.orm import Session
 from app.infrastructure.db.models import User
 from app.infrastructure.db.session import SessionLocal
 
-pwd = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 class SeedUser(TypedDict):
     email: str
@@ -64,7 +62,7 @@ def ensure_seed_users() -> None:
                 continue
             user = User(
                 email=seed["email"],
-                password_hash=pwd.hash(seed["password"]),
+                password_hash="supabase_managed",
                 is_admin=seed["is_admin"],
                 is_verified=seed["is_verified"],
             )
