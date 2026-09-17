@@ -1404,8 +1404,8 @@ class RevalidationJob(Base):
             "target_fingerprint",
             text("coalesce(provider, '')"),
             unique=True,
-            postgresql_where=text("status IN ('queued', 'running')"),
             sqlite_where=text("status IN ('queued', 'running')"),
+            postgresql_where=text("status IN ('queued', 'running')"),
         ),
     )
 
