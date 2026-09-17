@@ -15,13 +15,7 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue>({ user: null });
 
-export function AuthProvider({
-  user,
-  children,
-}: {
-  user: AuthUser | null;
-  children: ReactNode;
-}) {
+export function AuthProvider({ user, children }: { user: AuthUser | null; children: ReactNode }) {
   const value = useMemo<AuthContextValue>(() => ({ user }), [user]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

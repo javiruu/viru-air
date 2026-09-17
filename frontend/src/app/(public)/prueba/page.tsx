@@ -25,7 +25,9 @@ export default function PruebaLandingPage() {
         return;
       }
 
-      const meResult = await apiFetchWithStatus<{ id: string }>("/auth/me", undefined, { timeoutMs: 7000 });
+      const meResult = await apiFetchWithStatus<{ id: string }>("/auth/me", undefined, {
+        timeoutMs: 7000,
+      });
       if (meResult.ok) {
         router.replace("/dashboard");
         return;
@@ -47,7 +49,11 @@ export default function PruebaLandingPage() {
   if (state === "checking") {
     return (
       <main className="shell landing-prueba-shell" id="main-content">
-        <BoneyardPanel name="landing-preview-session-load" className="landing-check air-loader-section" ariaLabel={t("public.landing.checkingSession")}>
+        <BoneyardPanel
+          name="landing-preview-session-load"
+          className="landing-check air-loader-section"
+          ariaLabel={t("public.landing.checkingSession")}
+        >
           <LoadReference shape="chip" width={188} height={18} />
           <LoadReference width="66%" />
           <LoadReference width="52%" />
@@ -58,22 +64,35 @@ export default function PruebaLandingPage() {
 
   return (
     <main className="landing-prueba-cinema" id="main-content">
-      <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover z-0">
-        <source src="https://res.cloudinary.com/dfonotyfb/video/upload/v1775585556/dds3_1_rqhg7x.mp4" type="video/mp4" />
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover z-0"
+      >
+        <source
+          src="https://res.cloudinary.com/dfonotyfb/video/upload/v1775585556/dds3_1_rqhg7x.mp4"
+          type="video/mp4"
+        />
       </video>
       <div className="landing-prueba-overlay" aria-hidden="true" />
 
-<section className="landing-prueba-cinema-body landing-stage landing-stage-delay">
+      <section className="landing-prueba-cinema-body landing-stage landing-stage-delay">
         <p className="landing-prueba-kicker">flight intelligence</p>
         <h1>{t("public.landing.heroTitle")}</h1>
         <p className="landing-claim">{t("public.landing.heroClaim")}</p>
         <p className="landing-prueba-body">{t("public.landing.heroBody")}</p>
         <div className="landing-cta">
-          <Link href="/login" className="btn-primary btn-layered">{t("public.landing.ctaEnter")}</Link>
+          <Link href="/login" className="btn-primary btn-layered">
+            {t("public.landing.ctaEnter")}
+          </Link>
         </div>
         <p className="landing-cta-note">
           {t("public.landing.ctaNoAccount")}{" "}
-          <Link href="/register" className="linkInline">{t("public.landing.ctaCreate")}</Link>
+          <Link href="/register" className="linkInline">
+            {t("public.landing.ctaCreate")}
+          </Link>
         </p>
       </section>
     </main>

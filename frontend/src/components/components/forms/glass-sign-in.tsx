@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent } from "react";
+import type { FormEvent } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { BadgeCheck, ShieldCheck, Sparkles } from "lucide-react";
@@ -52,7 +52,9 @@ export function GlassSignInCard({
   const titleText = t(isRegister ? "public.auth.registerPageTitle" : "public.auth.loginPageTitle");
   const taglineText = t(isRegister ? "public.auth.registerTagline" : "public.auth.loginTagline");
   const emailLabel = t(isRegister ? "public.auth.registerEmail" : "public.auth.loginEmail");
-  const passwordLabel = t(isRegister ? "public.auth.registerPassword" : "public.auth.loginPassword");
+  const passwordLabel = t(
+    isRegister ? "public.auth.registerPassword" : "public.auth.loginPassword",
+  );
   const submitText = t(isRegister ? "public.auth.registerAction" : "public.auth.loginAction");
 
   return (
@@ -105,7 +107,11 @@ export function GlassSignInCard({
             aria-invalid={Boolean(fieldError.email)}
             aria-describedby={fieldError.email ? "auth-email-error" : undefined}
           />
-          {fieldError.email ? <small id="auth-email-error" className="field-error" role="alert">{fieldError.email}</small> : null}
+          {fieldError.email ? (
+            <small id="auth-email-error" className="field-error" role="alert">
+              {fieldError.email}
+            </small>
+          ) : null}
         </label>
 
         <label htmlFor="auth-password">
@@ -121,7 +127,11 @@ export function GlassSignInCard({
             aria-invalid={Boolean(fieldError.password)}
             aria-describedby={fieldError.password ? "auth-password-error" : undefined}
           />
-          {fieldError.password ? <small id="auth-password-error" className="field-error" role="alert">{fieldError.password}</small> : null}
+          {fieldError.password ? (
+            <small id="auth-password-error" className="field-error" role="alert">
+              {fieldError.password}
+            </small>
+          ) : null}
         </label>
 
         {!isRegister ? (
@@ -151,7 +161,9 @@ export function GlassSignInCard({
 
         {secondaryHref && secondaryLabel ? (
           <div className="glass-signin-alt-actions">
-            {secondaryIntro ? <span className="glass-signin-alt-copy">{secondaryIntro}</span> : null}
+            {secondaryIntro ? (
+              <span className="glass-signin-alt-copy">{secondaryIntro}</span>
+            ) : null}
             <Link href={secondaryHref} className="glass-signin-alt-link">
               {secondaryLabel}
             </Link>

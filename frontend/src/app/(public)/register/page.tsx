@@ -1,14 +1,19 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
+import { type FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { registerApiV1AuthRegisterPost } from "@/api/generated/auth/auth";
 import { GlassSignInCard } from "@/components/components/forms/glass-sign-in";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
-import { apiFetch, apiFetchWithStatus } from "@/modules/shared/api";
+import { apiFetchWithStatus } from "@/modules/shared/api";
 import type { AuthOut } from "@/modules/shared/auth";
 import { clearToken, hasToken, saveAuthTokens } from "@/modules/shared/auth";
-import { isDashboardDemoAccessEnabled, signInDashboardDemoAccount } from "@/modules/shared/dashboard-demo-session";
+import {
+  isDashboardDemoAccessEnabled,
+  signInDashboardDemoAccount,
+} from "@/modules/shared/dashboard-demo-session";
 import { resolvePostAuthUrl } from "@/modules/shared/navigation";
 import { BoneyardForm } from "@/modules/shared/BoneyardLoad";
 import { useI18n } from "@/i18n/shell";
@@ -85,10 +90,9 @@ function RegisterContent() {
     }
     setFieldError({});
     try {
-      const data = await apiFetch<AuthOut>("/auth/register", {
-        method: "POST",
-        body: JSON.stringify({ email: normalizedEmail, password }),
-      });
+      const res = await registerApiV1AuthRegisterPost({ email: normalizedEmail, password });
+      const data: AuthOut =
+        (res as unknown as { data: AuthOut })?.data ?? (res as unknown as AuthOut);
       saveAuthTokens(data);
       notify({
         tone: "success",
@@ -110,7 +114,11 @@ function RegisterContent() {
   if (entryState === "checking") {
     return (
       <main className="shell" id="main-content">
-        <BoneyardForm name="register-session-load" className="air-loader-section" ariaLabel={t("public.auth.registerLoading")} />
+        <BoneyardForm
+          name="register-session-load"
+          className="air-loader-section"
+          ariaLabel={t("public.auth.registerLoading")}
+        />
       </main>
     );
   }
@@ -118,9 +126,14 @@ function RegisterContent() {
   return (
     <main className="shell glass-signin-shell" id="main-content">
       <div className="glass-signin-topbar">
-        <button className="btn-ghost" type="button" onClick={() => router.push("/")}>
+        <Button
+          variant="ghost"
+          className="btn-ghost"
+          type="button"
+          onClick={() => router.push("/")}
+        >
           {t("shared.actions.back")}
-        </button>
+        </Button>
       </div>
       <GlassSignInCard
         variant="register"
@@ -146,7 +159,11 @@ export default function RegisterPage() {
     <Suspense
       fallback={
         <main className="shell" id="main-content">
-          <BoneyardForm name="register-session-load" className="air-loader-section" ariaLabel={t("public.auth.registerLoading")} />
+          <BoneyardForm
+            name="register-session-load"
+            className="air-loader-section"
+            ariaLabel={t("public.auth.registerLoading")}
+          />
         </main>
       }
     >

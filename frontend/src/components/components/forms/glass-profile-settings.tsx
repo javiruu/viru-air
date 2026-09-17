@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, ReactNode, useMemo } from "react";
+import { type FormEvent, type ReactNode, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -109,7 +109,9 @@ export function GlassProfileSettingsCard({
   const statusClass = useMemo(() => {
     if (!profile?.status) return "status-degraded";
     const normalized = profile.status.toLowerCase();
-    return normalized.includes("activa") || normalized.includes("active") ? "status-ok" : "status-degraded";
+    return normalized.includes("activa") || normalized.includes("active")
+      ? "status-ok"
+      : "status-degraded";
   }, [profile?.status]);
 
   const formattedCreatedAt = useMemo(() => {
@@ -153,7 +155,11 @@ export function GlassProfileSettingsCard({
           </button>
         </div>
 
-        <BoneyardLoad name="account-profile-load" className="account-profile-glass account-profile-loading" ariaLabel={t("account.profile.title")}>
+        <BoneyardLoad
+          name="account-profile-load"
+          className="account-profile-glass account-profile-loading"
+          ariaLabel={t("account.profile.title")}
+        >
           <div className="account-profile-loading-copy">
             <LoadReference shape="chip" width={152} height={16} />
             <LoadReference width="78%" height={20} />
@@ -228,7 +234,10 @@ export function GlassProfileSettingsCard({
                       />
                     </>
                   ) : (
-                    <div className="account-profile-avatar account-profile-avatar-fallback" aria-hidden="true">
+                    <div
+                      className="account-profile-avatar account-profile-avatar-fallback"
+                      aria-hidden="true"
+                    >
                       {initials}
                     </div>
                   )}
@@ -269,10 +278,13 @@ export function GlassProfileSettingsCard({
                   </div>
 
                   <div className="account-profile-banner">
-                    <span className="account-profile-banner-label">Glass Profile Settings Card</span>
+                    <span className="account-profile-banner-label">
+                      Glass Profile Settings Card
+                    </span>
                     <p>
-                      Profile identity, recent sessions, and destructive actions are now grouped inside a single
-                      reusable glass settings component instead of living inline in the route.
+                      Profile identity, recent sessions, and destructive actions are now grouped
+                      inside a single reusable glass settings component instead of living inline in
+                      the route.
                     </p>
                   </div>
                 </div>
@@ -291,7 +303,9 @@ export function GlassProfileSettingsCard({
                     <Sparkles size={18} />
                   </span>
                   <div>
-                    <span className="account-profile-kicker">{t("account.profile.identityTitle")}</span>
+                    <span className="account-profile-kicker">
+                      {t("account.profile.identityTitle")}
+                    </span>
                     <h3>{t("account.profile.pageSubtitle")}</h3>
                   </div>
                 </div>
@@ -299,7 +313,10 @@ export function GlassProfileSettingsCard({
               </div>
 
               <form className="account-profile-form" onSubmit={onSave}>
-                <GlassInfoField icon={<Sparkles size={15} />} label={t("account.profile.displayNameLabel")}>
+                <GlassInfoField
+                  icon={<Sparkles size={15} />}
+                  label={t("account.profile.displayNameLabel")}
+                >
                   <input
                     type="text"
                     name="display_name"
@@ -308,7 +325,10 @@ export function GlassProfileSettingsCard({
                   />
                 </GlassInfoField>
 
-                <GlassInfoField icon={<Camera size={15} />} label={t("account.profile.avatarLabel")}>
+                <GlassInfoField
+                  icon={<Camera size={15} />}
+                  label={t("account.profile.avatarLabel")}
+                >
                   <input
                     type="url"
                     name="avatar_url"
@@ -321,7 +341,10 @@ export function GlassProfileSettingsCard({
                   <input type="email" name="email" value={profile.email} readOnly />
                 </GlassInfoField>
 
-                <GlassInfoField icon={<CalendarClock size={15} />} label={t("account.profile.createdLabel")}>
+                <GlassInfoField
+                  icon={<CalendarClock size={15} />}
+                  label={t("account.profile.createdLabel")}
+                >
                   <input type="text" value={accountAgeLabel} readOnly />
                 </GlassInfoField>
 
@@ -332,7 +355,9 @@ export function GlassProfileSettingsCard({
                     disabled={saving}
                   >
                     <Save size={16} />
-                    <span>{saving ? t("account.profile.saving") : t("account.profile.saveAction")}</span>
+                    <span>
+                      {saving ? t("account.profile.saving") : t("account.profile.saveAction")}
+                    </span>
                   </button>
                 </div>
               </form>
@@ -352,7 +377,9 @@ export function GlassProfileSettingsCard({
                     <Monitor size={18} />
                   </span>
                   <div>
-                    <span className="account-profile-kicker">{t("account.profile.sessionsTitle")}</span>
+                    <span className="account-profile-kicker">
+                      {t("account.profile.sessionsTitle")}
+                    </span>
                     <h3>{t("account.profile.sessionsTitle")}</h3>
                   </div>
                 </div>
@@ -373,14 +400,19 @@ export function GlassProfileSettingsCard({
                           <strong>{session.device}</strong>
                         </div>
                         <p>
-                          {t("account.profile.lastAccess")}: {new Date(session.last_seen).toLocaleString(localeTag)}
+                          {t("account.profile.lastAccess")}:{" "}
+                          {new Date(session.last_seen).toLocaleString(localeTag)}
                         </p>
                         {session.ip ? <span>{session.ip}</span> : null}
                       </div>
-                      <span className={`account-profile-status ${session.is_active ? "status-ok" : "status-degraded"}`}>
+                      <span
+                        className={`account-profile-status ${session.is_active ? "status-ok" : "status-degraded"}`}
+                      >
                         {session.is_active ? <BadgeCheck size={14} /> : <LogOut size={14} />}
                         <span>
-                          {session.is_active ? t("account.profile.sessionActive") : t("account.profile.sessionClosed")}
+                          {session.is_active
+                            ? t("account.profile.sessionActive")
+                            : t("account.profile.sessionClosed")}
                         </span>
                       </span>
                     </div>
@@ -397,7 +429,9 @@ export function GlassProfileSettingsCard({
                 >
                   <LogOut size={16} />
                   <span>
-                    {closingSessions ? t("account.profile.closingSessions") : t("account.profile.closeAllSessions")}
+                    {closingSessions
+                      ? t("account.profile.closingSessions")
+                      : t("account.profile.closeAllSessions")}
                   </span>
                 </button>
               </div>
@@ -411,11 +445,16 @@ export function GlassProfileSettingsCard({
             >
               <div className="account-profile-panel-header">
                 <div className="account-profile-panel-title">
-                  <span className="account-profile-panel-icon account-profile-panel-icon-danger" aria-hidden="true">
+                  <span
+                    className="account-profile-panel-icon account-profile-panel-icon-danger"
+                    aria-hidden="true"
+                  >
                     <AlertTriangle size={18} />
                   </span>
                   <div>
-                    <span className="account-profile-kicker">{t("account.profile.dangerTitle")}</span>
+                    <span className="account-profile-kicker">
+                      {t("account.profile.dangerTitle")}
+                    </span>
                     <h3>{t("account.profile.dangerTitle")}</h3>
                   </div>
                 </div>
@@ -462,7 +501,9 @@ export function GlassProfileSettingsCard({
               <div className="modal-header">
                 <div>
                   <h2 id="delete-account-title">{t("account.profile.confirmTitle")}</h2>
-                  <p className="panel-note">{t("account.profile.confirmHint", { keyword: confirmKeyword })}</p>
+                  <p className="panel-note">
+                    {t("account.profile.confirmHint", { keyword: confirmKeyword })}
+                  </p>
                 </div>
                 <button
                   className="modal-close"
@@ -502,7 +543,6 @@ export function GlassProfileSettingsCard({
           </motion.div>
         ) : null}
       </AnimatePresence>
-
     </main>
   );
 }

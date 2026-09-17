@@ -10,7 +10,10 @@ import {
   saveAuthTokens,
   saveDashboardLoginRequired,
 } from "@/modules/shared/auth";
-import { isDashboardDemoAccessEnabled, signInDashboardDemoAccount } from "@/modules/shared/dashboard-demo-session";
+import {
+  isDashboardDemoAccessEnabled,
+  signInDashboardDemoAccount,
+} from "@/modules/shared/dashboard-demo-session";
 
 async function withMockStorage(fn: () => void | Promise<void>): Promise<void> {
   const originalWindow = (globalThis as { window?: unknown }).window;
@@ -62,10 +65,17 @@ test("dashboard access mode defaults to required login and can enable demo auto-
 test("signInDashboardDemoAccount persists demo auth tokens when demo access is enabled", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () =>
-    new Response(JSON.stringify({ access_token: "demo-access", refresh_token: "demo-refresh", token_type: "bearer" }), {
-      status: 200,
-      headers: { "content-type": "application/json" },
-    });
+    new Response(
+      JSON.stringify({
+        access_token: "demo-access",
+        refresh_token: "demo-refresh",
+        token_type: "bearer",
+      }),
+      {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      },
+    );
 
   try {
     await withMockStorage(async () => {

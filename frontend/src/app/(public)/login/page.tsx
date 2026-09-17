@@ -1,13 +1,16 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
+import { type FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 
 import { GlassSignInCard } from "@/components/components/forms/glass-sign-in";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import { apiFetchWithStatus } from "@/modules/shared/api";
 import { clearToken, hasToken, saveAuthTokens } from "@/modules/shared/auth";
-import { isDashboardDemoAccessEnabled, signInDashboardDemoAccount } from "@/modules/shared/dashboard-demo-session";
+import {
+  isDashboardDemoAccessEnabled,
+  signInDashboardDemoAccount,
+} from "@/modules/shared/dashboard-demo-session";
 import { submitLogin } from "@/modules/shared/login-submit";
 import { resolvePostAuthUrl } from "@/modules/shared/navigation";
 import { BoneyardForm } from "@/modules/shared/BoneyardLoad";
@@ -114,7 +117,11 @@ function LoginContent() {
   if (entryState === "checking") {
     return (
       <main className="shell" id="main-content">
-        <BoneyardForm name="login-session-load" className="air-loader-section" ariaLabel={t("public.auth.loginLoading")} />
+        <BoneyardForm
+          name="login-session-load"
+          className="air-loader-section"
+          ariaLabel={t("public.auth.loginLoading")}
+        />
       </main>
     );
   }
@@ -150,7 +157,11 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <main className="shell" id="main-content">
-          <BoneyardForm name="login-session-load" className="air-loader-section" ariaLabel={t("public.auth.loginLoading")} />
+          <BoneyardForm
+            name="login-session-load"
+            className="air-loader-section"
+            ariaLabel={t("public.auth.loginLoading")}
+          />
         </main>
       }
     >
