@@ -18,7 +18,9 @@ export function DashboardNewsRail({ item, localeTag }: DashboardNewsRailProps) {
         <div className="dashboard-news-media-wrap">
           <div
             className="dashboard-news-media"
-            style={{ backgroundImage: `linear-gradient(180deg, color-mix(in srgb, var(--color-overlay) 18%, transparent), color-mix(in srgb, var(--color-overlay) 82%, transparent)), url("${item.image}")` }}
+            style={{
+              backgroundImage: `linear-gradient(180deg, color-mix(in srgb, var(--color-overlay) 18%, transparent), color-mix(in srgb, var(--color-overlay) 82%, transparent)), url("${item.image}")`,
+            }}
           />
           <span className="dashboard-news-chip">{item.eyebrow}</span>
         </div>

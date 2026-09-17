@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 function userKeyFromToken(): string {
   if (typeof window === "undefined") return "anon";
-  const token = window.localStorage.getItem("viru_token");
+  const token = window.localStorage.getItem("sb_access_token");
   if (!token) return "anon";
   const parts = token.split(".");
   if (parts.length < 2) return "anon";
