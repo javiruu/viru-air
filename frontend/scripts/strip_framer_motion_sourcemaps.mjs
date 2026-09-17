@@ -10,13 +10,15 @@ const sourceMapCommentPattern = /\r?\n\/\/# sourceMappingURL=.*?\.map\s*$/m;
 
 async function walk(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
-  const files = await Promise.all(entries.map(async (entry) => {
-    const fullPath = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      return walk(fullPath);
-    }
-    return [fullPath];
-  }));
+  const files = await Promise.all(
+    entries.map(async (entry) => {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        return walk(fullPath);
+      }
+      return [fullPath];
+    }),
+  );
   return files.flat();
 }
 
@@ -34,13 +36,15 @@ async function main() {
   const targetFiles = files.filter((filePath) => filePath.endsWith(".mjs"));
   let updatedFiles = 0;
 
-  await Promise.all(targetFiles.map(async (filePath) => {
-    const content = await readFile(filePath, "utf8");
-    const nextContent = content.replace(sourceMapCommentPattern, "");
-    if (nextContent === content) return;
-    await writeFile(filePath, nextContent, "utf8");
-    updatedFiles += 1;
-  }));
+  await Promise.all(
+    targetFiles.map(async (filePath) => {
+      const content = await readFile(filePath, "utf8");
+      const nextContent = content.replace(sourceMapCommentPattern, "");
+      if (nextContent === content) return;
+      await writeFile(filePath, nextContent, "utf8");
+      updatedFiles += 1;
+    }),
+  );
 
   if (updatedFiles > 0) {
     process.stdout.write(`[strip-framer-motion-sourcemaps] patched ${updatedFiles} files\n`);

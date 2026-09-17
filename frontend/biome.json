@@ -1,0 +1,77 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
+  "vcs": {
+    "enabled": false,
+    "clientKind": "git",
+    "useIgnoreFile": false
+  },
+  "files": {
+    "includes": [
+      "src/**/*.ts",
+      "src/**/*.tsx",
+      "!**/src/api/generated",
+      "tests/**/*.ts",
+      "tests/**/*.tsx",
+      "scripts/**/*.mjs",
+      "scripts/**/*.js"
+    ],
+    "ignoreUnknown": false
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "a11y": {
+        "recommended": false
+      },
+      "suspicious": {
+        "noDocumentImportInPage": "error",
+        "noHeadImportInDocument": "error",
+        "noArrayIndexKey": "warn",
+        "noShadowRestrictedNames": "warn",
+        "useIterableCallbackReturn": "warn",
+        "noExplicitAny": "warn"
+      },
+      "complexity": {
+        "noUselessFragments": "warn",
+        "noUselessEscapeInRegex": "warn",
+        "useOptionalChain": "warn"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "warn"
+      },
+      "correctness": {
+        "noNextAsyncClientComponent": "warn",
+        "noUnusedVariables": "warn",
+        "noUnusedFunctionParameters": "warn"
+      },
+      "performance": {
+        "noImgElement": "warn"
+      },
+      "style": {
+        "useImportType": "warn",
+        "noNonNullAssertion": "warn"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "always"
+    }
+  },
+  "assist": {
+    "enabled": false,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  }
+}

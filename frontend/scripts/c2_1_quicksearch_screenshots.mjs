@@ -40,7 +40,10 @@ async function setupPage(page, scenario) {
       return;
     }
 
-    const results = scenario === "empty" ? [] : [baseResult, { ...baseResult, result_id: "res-2", destination: "LIS" }];
+    const results =
+      scenario === "empty"
+        ? []
+        : [baseResult, { ...baseResult, result_id: "res-2", destination: "LIS" }];
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -65,7 +68,12 @@ async function setupPage(page, scenario) {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ default_radius_km: 150, include_stops_default: false, avoid_departure_before: "07:00", language: "es" }),
+      body: JSON.stringify({
+        default_radius_km: 150,
+        include_stops_default: false,
+        avoid_departure_before: "07:00",
+        language: "es",
+      }),
     });
   });
 
@@ -95,14 +103,20 @@ async function fillAndSearch(page) {
   await page.fill('input[name="destination_iata"]', "DUB");
   await page.waitForSelector('[data-ui="qs-date-picker-v2"]', { timeout: 10000 });
   await page.locator('[data-ui="qs-date-picker-v2"] .qs-date-trigger').first().click();
-  await page.locator(".qs-date-popover .qs-date-day:not(.is-disabled):not(.is-outside)").nth(12).click();
+  await page
+    .locator(".qs-date-popover .qs-date-day:not(.is-disabled):not(.is-outside)")
+    .nth(12)
+    .click();
   await page.click('button[type="submit"]');
 }
 
 async function runScenario(browser, scenario, fileName) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 2200 } });
   await context.addInitScript(() => {
-    window.localStorage.setItem("viru_token", "tok_12345678901234567890123456789012345678901234567890");
+    window.localStorage.setItem(
+      "viru_token",
+      "tok_12345678901234567890123456789012345678901234567890",
+    );
   });
   const page = await context.newPage();
   await setupPage(page, scenario);
@@ -123,7 +137,10 @@ async function runScenario(browser, scenario, fileName) {
 async function runStrictSoft(browser) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 2200 } });
   await context.addInitScript(() => {
-    window.localStorage.setItem("viru_token", "tok_12345678901234567890123456789012345678901234567890");
+    window.localStorage.setItem(
+      "viru_token",
+      "tok_12345678901234567890123456789012345678901234567890",
+    );
   });
   const page = await context.newPage();
   await setupPage(page, "normal");
