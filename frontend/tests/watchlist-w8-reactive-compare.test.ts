@@ -49,10 +49,7 @@ test("W8: compare empty/one/mixed states and compare data source are explicit", 
   assert.match(source, /watchlist\.compare\.maxSelectionMessage/);
   assert.match(source, /currency_mode === "mixed"/);
   assert.match(source, /watchlist\.compare\.mixedCurrencyWarning/);
-  assert.match(
-    source,
-    /apiFetch<PriceCompareResponse>\(`\/prices\/compare\?watch_ids=\$\{compareQuery\}`\)/,
-  );
+  assert.match(source, /useCompareApiV1PricesCompareGet/);
 });
 
 test("W8: badges are derived from compare response, not local history rows", () => {

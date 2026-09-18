@@ -5,6 +5,19 @@
  */
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
 
+/**
+ * Opaque per-request correlation id. Restores the observability contract of the
+ * retired `apiFetch` helper: every request carries a unique `x-correlation-id`
+ * so browser→API traces can be grouped without leaking PII.
+ */
+function generateCorrelationId(): string {
+  try {
+    return crypto.randomUUID();
+  } catch {
+    return `corr-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+  }
+}
+
 export interface CustomClientConfig {
   url: string;
   method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS";
@@ -60,6 +73,9 @@ export async function customClient<T>(
   const fullUrl = url.startsWith("http") ? url : apiBase + (url.startsWith("/") ? "" : "/") + url;
 
   const finalHeaders = new Headers(init.headers);
+  if (!finalHeaders.has("x-correlation-id")) {
+    finalHeaders.set("x-correlation-id", generateCorrelationId());
+  }
   if (typeof window !== "undefined" && !finalHeaders.has("Authorization")) {
     try {
       const supabase = createBrowserSupabaseClient();
@@ -80,9 +96,19 @@ export async function customClient<T>(
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({ message: response.statusText }));
-    throw new Error(
+    const error = new Error(
       errorBody.detail || errorBody.message || `Request failed with status ${response.status}`,
-    );
+    ) as Error & {
+      status?: number;
+      correlation_id?: string;
+      client_event_id?: string;
+    };
+    error.status = response.status;
+    error.correlation_id =
+      errorBody.correlation_id || response.headers.get("x-correlation-id") || undefined;
+    error.client_event_id =
+      errorBody.client_event_id || response.headers.get("x-client-event-id") || undefined;
+    throw error;
   }
 
   if (response.status === 204) {

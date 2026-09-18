@@ -3,6 +3,8 @@ import test from "node:test";
 
 import { chromium } from "playwright";
 
+import { seedSupabaseSession } from "./helpers/e2e-session";
+
 const BASE_URL = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 const API_BASE = process.env.E2E_API_BASE_URL || "http://127.0.0.1:8000/api/v1";
 
@@ -46,9 +48,9 @@ test("quick-search relax filters preview supports cancel and confirm", async (t)
     await context.addInitScript((value) => {
       window.localStorage.clear();
       window.sessionStorage.clear();
-      window.localStorage.setItem("viru_token", value);
       window.localStorage.setItem("viru_locale", "es");
     }, token);
+    await seedSupabaseSession(context, token);
     const page = await context.newPage();
 
     try {

@@ -33,7 +33,7 @@ function installWindow() {
       localStorage,
     },
   });
-  localStorage.setItem("viru_token", "token-1234567890-abcdef");
+  // Session authority is Supabase SSR; resume-search only reads its own keys.
   return localStorage;
 }
 

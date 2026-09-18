@@ -56,16 +56,19 @@ test("private shell refreshes unread notifications after inbox read actions", ()
   );
   assert.match(
     dashboard,
-    /setNotificationSummary\(\(current\) => \(current \? \{ \.\.\.current, unread: 0 \} : current\)\)/,
+    /queryClient\.setQueryData\(\["notificationsSummary"\]/,
+  );
+  assert.match(dashboard, /unread: 0/);
+  assert.match(
+    inbox,
+    /markReadApiV1NotificationsSourceTypeSourceIdReadPost\(sourceType, sourceId\)/,
   );
   assert.match(
     inbox,
-    /apiFetch\(`\/notifications\/\$\{item\.source_type\}\/\$\{item\.source_id\}\/read`,\s*\{\s*method:\s*"POST",?\s*\}\);\s*window\.dispatchEvent\(new Event\("viru:notifications-changed"\)\)/,
+    /markAllReadApiV1NotificationsReadAllPost\(\)/,
   );
-  assert.match(
-    inbox,
-    /apiFetch\("\/notifications\/read-all", \{ method: "POST" \}\);\s*window\.dispatchEvent\(\s*new CustomEvent\("viru:notifications-changed", \{ detail: \{ unread: 0 \} \}\),?\s*\)/,
-  );
+  assert.match(inbox, /new Event\("viru:notifications-changed"\)/);
+  assert.match(inbox, /new CustomEvent\("viru:notifications-changed", \{ detail: \{ unread: 0 \} \}\)/);
 });
 
 test("root metadata and manifest expose the Viru Air tab identity", () => {

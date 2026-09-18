@@ -105,15 +105,17 @@ nul
 # oma docs generated artifacts
 docs/generated/
 
+# uv package cache
+.uv-cache/
+
 # Serena MCP local memory
 .serena/
 
-# One-off analysis artifacts
-premortem-*
-viru-air-mega-plan-*
-
-# Historical agent program working folders (local artifacts, state consolidated in repo docs)
+# Historical migration-era guides now archived in docs/archive/migration-era/
 viru-completion-no-docker/
 viru-final-decommission-v3/
 viru-final-modernization-cutover/
 viru-post-migration-audit/
+
+# Third-party repo accidentally copied in (removed from git; keep untracked)
+skills/remodex/

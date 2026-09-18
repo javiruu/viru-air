@@ -120,11 +120,12 @@ test("hotel observability bars remain bounded and the page exposes semantic tabl
   assert.match(source, /requestVersion/);
   assert.match(source, /mounted\.current/);
   assert.match(source, /hotel-observability-auth-error/);
-  assert.match(source, /admin\/hotels\/health/);
-  assert.match(source, /admin\/hotels\/runs/);
-  assert.match(source, /admin\/hotels\/provider-controls/);
-  assert.match(source, /admin\/hotels\/sweep-leases/);
-  assert.match(source, /admin\/hotels\/provider-outcomes/);
+  // Orval generated admin clients replaced the raw endpoint paths.
+  assert.match(source, /hotelHealthApiV1AdminHotelsHealthGet/);
+  assert.match(source, /hotelProviderRunsApiV1AdminHotelsRunsGet/);
+  assert.match(source, /hotelProviderControlsApiV1AdminHotelsProviderControlsGet/);
+  assert.match(source, /hotelSweepLeasesApiV1AdminHotelsSweepLeasesGet/);
+  assert.match(source, /hotelProviderOutcomesApiV1AdminHotelsProviderOutcomesGet/);
   assert.match(source, /outcomesTitle/);
   assert.match(source, /providerOutcome/);
   assert.match(source, /leasesTitle/);

@@ -49,7 +49,7 @@ test("alert management lives in signals and exposes the shared section navigatio
   const source = fs.readFileSync(SIGNALS_RULES, "utf8");
 
   assert.match(source, /SignalsSectionNav activeSection="rules"/);
-  assert.match(source, /apiFetch<AlertRule\[\]>\(`\/alerts\/rules/);
+  assert.match(source, /getRulesApiV1AlertsRulesGet/);
   assert.match(source, /AlertRulesWorkspace\(\{ requestedWatchId \}/);
   assert.match(source, /SignalCadencePanel/);
 });
@@ -57,7 +57,7 @@ test("alert management lives in signals and exposes the shared section navigatio
 test("signals inbox normalizes transport data and preserves exact read identifiers", () => {
   const source = fs.readFileSync(SIGNALS_INBOX, "utf8");
 
-  assert.match(source, /apiFetch<unknown>\("\/notifications"\)/);
+  assert.match(source, /getNotificationsApiV1NotificationsGet/);
   assert.match(source, /normalizeNotificationInboxResponse/);
   assert.match(source, /item\.source_type/);
   assert.match(source, /item\.source_id/);

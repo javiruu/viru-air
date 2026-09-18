@@ -27,15 +27,14 @@ const ALERTS_PAGE = path.join(
 
 test("quick search save uses save-result without fallback manual create", () => {
   const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
-  assert.match(source, /apiFetch<SaveResult>\("\/search\/save-result"/);
+  assert.match(source, /saveResultApiV1SearchSaveResultPost\(/);
   assert.match(source, /response\.created_or_existing === "existing"/);
-  assert.doesNotMatch(source, /await apiFetch\("\/watchlist", \{\s*method: "POST"/);
+  assert.doesNotMatch(source, /"\/watchlist", \{\s*method: "POST"/);
 });
 
 test("quick search refresh price reuses watchlist refresh-now flow with rate-limit handling", () => {
   const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
-  assert.match(source, /apiFetchWithStatus<\{\s*status: string;/);
-  assert.match(source, /`\/watchlist\/\$\{watchId\}\/refresh-now`/);
+  assert.match(source, /refreshWatchApiV1WatchlistWatchIdRefreshNowPost\(watchId\)/);
   assert.match(source, /refreshResponse\.status === 429/);
   assert.match(source, /refreshPriceRateLimited/);
   assert.match(source, /refreshPriceSuccess/);
