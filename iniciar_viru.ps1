@@ -9,6 +9,7 @@ $backendDir = Join-Path $root "backend"
 $backendPython = Join-Path $root "backend\.venv\Scripts\python.exe"
 $backendDbPath = Join-Path $backendDir "viru.db"
 $backendDbUrl = "sqlite:///$($backendDbPath.Replace('\', '/'))"
+$backendEnvFile = Join-Path $backendDir ".env"
 
 function Invoke-PythonCommand {
   param(

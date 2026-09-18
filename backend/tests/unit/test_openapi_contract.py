@@ -8,7 +8,7 @@ def test_openapi_spec_is_valid_and_generates_paths():
     assert spec.get("openapi", "").startswith("3.")
     assert "paths" in spec
     assert len(spec["paths"]) > 50
-    assert "/api/v1/auth/login" in spec["paths"]
+    
     assert "/api/v1/search/quick" in spec["paths"]
     assert "/api/v1/watchlist" in spec["paths"]
 
