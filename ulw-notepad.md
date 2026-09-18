@@ -1,36 +1,30 @@
-# Ultrawork Notepad ï¿½ Viru Final Modernization Sweep
+# Ultrawork Notepad — Optimization & Dead Code Removal
 Started: 2026-09-17
 
 ## Plan (exhaustive, atomic)
-1. Frontend: Migrate Private Routes (4 files)
-2. Frontend: Migrate Public Routes (4 files)
-3. Frontend: Migrate Components/Hooks (3 files)
-4. Backend: API Cleanup (delete auth.py, remove from api.py)
-5. Backend: Scripts Cleanup (remove JWT refs from baseline scripts)
-6. Docs: Update CURRENT_STATE.md (staging is complete)
-7. Frontend: Delete Legacy API Utility (api.ts) - depends on 1, 2, 3
+1. Delete temporary SQLite databases (tmp*.db, _tmp*.db)
+2. Delete single-use migration scripts
+3. Prune dead integration tests (test_auth_flow.py, etc.)
+4. Verify Test Suite Execution (pytest)
 
 ## Scenarios (the contract)
-1. Frontend Migration: tsc --noEmit passes without any apiFetch references.
-2. Backend API Cleanup: pytest passes successfully, api.py router works.
-3. Backend Scripts Cleanup: scripts execute without errors.
-4. Docs: CURRENT_STATE.md reflects staging accurately.
+1. Database Deletion: Only viru.db remains in backend/*.db
+2. Scripts Deletion: Specified scripts no longer exist
+3. Test Pruning: test_auth_flow.py absent, no dead routes in test_account_flow.py
+4. Verification: Pytest passes without hanging
 
 ## Now (single step in progress)
-- Executing Wave 1 (Parallel)
+- Executing Wave 1 (Tasks 1, 2, 3 in parallel)
 
 ## Todo (remaining, ordered)
-- [x] Task 1: Migrate Frontend Private Routes (app/(private)/layout.tsx, admin/page.tsx, admin/hotels-observability/page.tsx, admin/product-health/page.tsx)
-- [x] Task 2: Migrate Frontend Public Routes (app/(public)/page.tsx, login/page.tsx, prueba/page.tsx, register/page.tsx)
-- [x] Task 3: Migrate Frontend Components/Hooks (SoporteContactoClient.tsx, useDoorToDoorSearch.ts, AlertRulesWorkspace.tsx)
-- [x] Task 5: Backend API Cleanup (delete auth.py, remove from api.py)
-- [x] Task 6: Backend Scripts Cleanup (remove jwt_issuer_occurrences)
-- [x] Task 7: Update Documentation (CURRENT_STATE.md)
-- [ ] Task 4: Delete Legacy API Utility (src/modules/shared/api.ts) - AFTER tasks 1, 2, 3
+- [x] 1. Delete SQLite Migration Artifacts
+- [x] 2. Delete Single-Use Migration Scripts
+- [x] 3. Prune Dead Integration Tests
+- [x] 4. Verify Test Suite Execution
 
 ## Findings (non-obvious facts with file:line refs)
-- Staging environment is already linked to Supabase (ref: ttwvoliuqaqhxkkyhdvf).
-- Supabase auth client is at \@/lib/supabase/client\.
-- Backend \uth.py\ currently returns 410 GONE and should be deleted entirely.
+- test_auth_flow.py hangs/loops pytest and targets deleted endpoints.
+- Dozens of tmp*.db and _tmp*.db leftover from SQLite era.
+- Multiple single-use migration scripts in backend/scripts/ are now dead weight.
 
 ## Learnings (patterns / pitfalls for next turn)
