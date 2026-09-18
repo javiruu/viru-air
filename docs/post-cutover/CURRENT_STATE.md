@@ -1,34 +1,43 @@
 # ESTADO ACTUAL (POST-HARDENING)
 
-**Fecha de recuento:** 17 Septiembre 2026
+**Fecha de recuento:** 18 Septiembre 2026
 **Ubicación:** `docs/post-cutover/CURRENT_STATE.md`
+**Recuento:** verificación directa con grep/tests sobre el working tree.
 
 ## 1. Estado de Git (Recuento)
-- **Archivos modificados/staged:** 468 archivos (`24322 insertions(+), 19105 deletions(-)`)
-- **Archivos untracked (nuevos):** Múltiples scripts, pruebas de migraciones, reportes finales (e.g. `FINAL_CUTOVER_REPORT.md`, `backend/scripts/`, `docs/migration/final-decommission-v3/`, `supabase/`).
-- **Riesgo:** El volumen de cambios en el working tree es masivo. Es imperativo separar y commitear estos cambios antes de realizar nuevas implementaciones de código.
+- Los artefactos de la era de migración (reportes raíz, notepad temporal, scripts ledger) se han
+  archivado o eliminado. Ver `docs/archive/migration-era/` para el histórico.
+- No quedan bases de datos SQLite temporales en `backend/` (solo `viru.db` del launcher local,
+  ignorado por git, y `viru_local.db` con seeds de demo).
 
 ## 2. Inventario de Código (Recuento de referencias)
 
-Se han analizado las referencias clave para medir la adopción real y la deuda pendiente.
-
 ### 2.1. Frontend (`frontend/src`)
-- **Auth storage mechanisms** (`localStorage`, `sessionStorage`, `sb_access_token`, etc.): **6 referencias**
-- **Consumidores del cliente API legacy** (`apiFetch`, `apiFetchWithStatus`, `fetch(`, `@/modules/shared/api`): **4 referencias**
-- **Imports de Orval/TanStack** (`src/api/generated`, `useQuery`, `useMutation`, etc.): **6 referencias**
+- **Auth storage mechanisms** (`localStorage`, `sessionStorage`): solo usos legítimos
+  (preferencias de UI, temas, FTUE por usuario, borradores de búsqueda). **0 referencias** a
+  `viru_token` / `sb_access_token` como autoridad de sesión.
+- **Consumidores del cliente API legacy** (`apiFetch`, `apiFetchWithStatus`, `@/modules/shared/api`):
+  **0 referencias** (solo comentarios históricos).
+- **Autoridad de sesión**: 1 (Supabase SSR via `@supabase/supabase-js` + middleware
+  `updateSession` en `frontend/middleware.ts`).
 
-*Nota:* Aún existe uso residual del sistema antiguo de fetching. El storage local para auth se utiliza en 6 puntos, lo que exige consolidar a una sola autoridad (Cookies/SSR) en la próxima fase.
+### 2.2. Backend
+- **Menciones SQLite/Alembic en código de runtime (`backend/app`)**: solo `sqlite_where`
+  (índices parciales condicionales, válidos también en Postgres) y tests.
+- **Scripts**: eliminados los scripts de auditoría pre-Orval y los scripts ledger muertos
+  (`update_ledger.js`, `test_patch.py`).
 
-### 2.2. Global y Deuda Técnica
-- **Referencias a SQLite, Alembic y Docker:** **131 referencias** (en código, comentarios o documentación, excluyendo dependencias/builds). 
-- **Estado de los slices CUTOVER:** **9 referencias** encontradas (el estado de la base de datos y la auth aún figuran como `CUTOVER` en la documentación/auditorías en lugar de estar 100% probados en un entorno remoto puro).
+### 2.3. Tests E2E
+- Todos los specs Playwright usan `tests/helpers/e2e-session.ts` (siembra de sesión Supabase
+  SSR) en lugar del `viru_token` retirado.
 
 ## 3. Estado de los Gates Rápidos
 - **Frontend Typecheck (`tsc --noEmit`):** PASS
 - **Frontend Lint (`eslint . --max-warnings 0`):** PASS
-- **Backend Tests (`pytest`):** PENDIENTE (entorno virtual no cargado correctamente en la primera pasada, requiere ejecución manual o CI).
+- **Frontend Tests (`npm test`):** 609 tests, 592 passed, 17 skipped (pre-existentes), 0 failed
+- **Backend Tests (`pytest`):** 1414 passed, 3 skipped, 0 failed
 
 ## 4. Conclusión y Siguientes Pasos
-El estado "verde" en compilación es engañoso frente a la cantidad de deuda remanente (`CUTOVER` y 131 menciones de tecnologías legacy). 
-1. **Paso inmediato:** Aislar los 468 archivos en commits semánticos separados.
-2. **Setup STAGING:** Desplegar el esquema a un proyecto Supabase real remoto para validar schema y matriz RLS sin Docker, tal y como exige `VIRU_NEXT_STEPS_AFTER_CUTOVER.md`.
+Los gates están verdes y la deuda de la era de migración está archivada. Pendientes de producto:
+1. Validar el esquema/RLS contra un proyecto Supabase remoto real (staging).
+2. Decidir el destino de la cuenta demo (`dashboard-demo-session.ts`, actualmente inerte).

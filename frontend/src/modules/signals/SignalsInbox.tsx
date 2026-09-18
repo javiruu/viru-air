@@ -74,7 +74,7 @@ export function SignalsInbox({ requestedFilter }: { requestedFilter?: string | n
     },
   });
 
-  const items = data?.items ?? [];
+  const items = useMemo(() => data?.items ?? [], [data]);
   const summary = data?.summary ?? EMPTY_SUMMARY;
   const loadStatus = status === "pending" ? "loading" : status === "error" ? "error" : "ready";
 

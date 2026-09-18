@@ -28,38 +28,38 @@ const DETAIL_PANEL_FILE = path.join(
 
 test("watchlist selected route loads detail and prices summary endpoints", () => {
   const source = fs.readFileSync(DETAIL_LOADER_FILE, "utf8");
-  assert.match(source, /apiFetch<WatchDetailApiResponse>\(`\/watchlist\/\$\{selectedWatchId\}`\)/);
+  assert.match(source, /getWatchDetailApiV1WatchlistWatchIdGet\(selectedWatchId\)/);
   assert.match(
     source,
-    /apiFetch<PriceSummary>\(`\/prices\/summary\?watch_id=\$\{selectedWatchId\}`\)/,
+    /summaryApiV1PricesSummaryGet\(\{ watch_id: selectedWatchId \}\)/,
   );
-  assert.match(source, /setSelectedWatchDetail\(normalizeWatchDetailApiResponse\(detail\)\)/);
+  assert.match(source, /normalizeWatchDetailApiResponse\(detail/);
 });
 
 test("watchlist bulk refresh uses refresh-bulk endpoint", () => {
   const source = fs.readFileSync(MUTATIONS_FILE, "utf8");
-  assert.match(source, /"\/watchlist\/refresh-bulk"/);
+  assert.match(source, /refreshWatchBulkApiV1WatchlistRefreshBulkPost/);
   assert.doesNotMatch(
     source,
-    /Promise\.allSettled\(\s*targets\.map\(\(item\) => apiFetch<\{ status: string \}>\(`\/watchlist\/\$\{item\.id\}\/refresh-now`/,
+    /Promise\.allSettled\(\s*targets\.map\(\(item\) => \(?\w*\)?\s*`\/watchlist\/\$\{item\.id\}\/refresh-now`/,
   );
 });
 
 test("watchlist bulk status uses status-bulk endpoint with a single request", () => {
   const source = fs.readFileSync(MUTATIONS_FILE, "utf8");
-  assert.match(source, /"\/watchlist\/status-bulk"/);
+  assert.match(source, /updateWatchStatusBulkApiV1WatchlistStatusBulkPost/);
   assert.doesNotMatch(
     source,
-    /Promise\.allSettled\(\s*ids\.map\(\(id\) =>\s*apiFetch<Watch>\(`\/watchlist\/\$\{id\}`/,
+    /Promise\.allSettled\(\s*ids\.map\(\(id\) =>\s*\(?\w*\)?\s*`\/watchlist\/\$\{id\}`/,
   );
 });
 
 test("watchlist bulk delete uses delete-bulk endpoint with a single request", () => {
   const source = fs.readFileSync(MUTATIONS_FILE, "utf8");
-  assert.match(source, /"\/watchlist\/delete-bulk"/);
+  assert.match(source, /deleteWatchBulkApiV1WatchlistDeleteBulkPost/);
   assert.doesNotMatch(
     source,
-    /Promise\.allSettled\(\s*ids\.map\(\(id\) =>\s*apiFetch<\{ status: string \}>\(`\/watchlist\/\$\{id\}`/,
+    /Promise\.allSettled\(\s*ids\.map\(\(id\) =>\s*\(?\w*\)?\s*`\/watchlist\/\$\{id\}`/,
   );
 });
 

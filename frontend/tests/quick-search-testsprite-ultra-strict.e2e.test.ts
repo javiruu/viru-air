@@ -5,6 +5,8 @@ import test from "node:test";
 
 import { chromium, type BrowserContext, type Page, type Route } from "playwright";
 
+import { seedSupabaseSession } from "./helpers/e2e-session";
+
 const BASE_URL = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 const API_BASE = process.env.E2E_API_BASE_URL || "http://127.0.0.1:8000/api/v1";
 const TMP_DIR = path.resolve(process.cwd(), "..", "testsprite_tests", "tmp");
@@ -71,9 +73,7 @@ async function createSessionToken() {
 async function openQuickSearch(context: BrowserContext) {
   const token = await createSessionToken();
   if (!token) return null;
-  await context.addInitScript((value) => {
-    window.localStorage.setItem("viru_token", value);
-  }, token);
+  await seedSupabaseSession(context, token);
 
   const page = await context.newPage();
   try {

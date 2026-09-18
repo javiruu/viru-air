@@ -29,7 +29,7 @@ inventory = {
 target_exts = ('.py', '.ts', '.tsx', '.json', '.env', '.example', '.yml', '.yaml', '.ps1', '.sh', '.ini')
 for root, dirs, files in os.walk(repo_root):
     norm_root = root.replace('\\', '/')
-    if any(p in norm_root for p in ['node_modules', '.git', '.venv', 'alembic/versions', 'viru-completion', 'viru-final-decommission', 'docs/migration', '.agents']):
+    if any(p in norm_root for p in ['node_modules', '.git', '.venv', 'alembic/versions', 'viru-completion', 'viru-final-decommission', 'docs/archive/migration-era', '.agents']):
         continue
     for f in files:
         if f.endswith(target_exts):
@@ -53,7 +53,7 @@ for root, dirs, files in os.walk(repo_root):
 # 2. Alembic references
 for root, dirs, files in os.walk(repo_root):
     norm_root = root.replace('\\', '/')
-    if any(p in norm_root for p in ['node_modules', '.git', '.venv', 'alembic/versions', 'viru-completion', 'viru-final-decommission', 'docs/migration', '.agents']):
+    if any(p in norm_root for p in ['node_modules', '.git', '.venv', 'alembic/versions', 'viru-completion', 'viru-final-decommission', 'docs/archive/migration-era', '.agents']):
         continue
     for f in files:
         if f.endswith(target_exts):

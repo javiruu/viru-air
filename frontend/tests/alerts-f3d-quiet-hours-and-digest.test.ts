@@ -65,10 +65,10 @@ test("alerts empty states provide an actionable monitoring path", () => {
 test("alerts page integrates selected watch freshness before promising threshold behavior", () => {
   const source = fs.readFileSync(ALERTS_PAGE, "utf8");
   assert.match(source, /getFreshnessPresentation/);
-  assert.match(source, /apiFetch<WatchDetail>\(`\/watchlist\/\$\{selectedWatchId\}`\)/);
+  assert.match(source, /getWatchDetailApiV1WatchlistWatchIdGet\(selectedWatchId\)/);
   assert.match(
     source,
-    /apiFetch<PriceSummary>\(`\/prices\/summary\?watch_id=\$\{selectedWatchId\}`\)/,
+    /summaryApiV1PricesSummaryGet\(\{ watch_id: selectedWatchId \}\)/,
   );
   assert.match(source, /alerts\.form\.freshnessLabel/);
   assert.match(source, /selectedWatchFreshnessGuidance/);

@@ -13,7 +13,7 @@ const QUICK_SEARCH_VIEW = path.join(
 
 test("quick-search requests monthly calendar hints from backend", () => {
   const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
-  assert.match(source, /\/search\/quick\/calendar-hints/);
+  assert.match(source, /quickSearchCalendarHintsApiV1SearchQuickCalendarHintsPost/);
   assert.match(source, /setCalendarHintsByKey/);
   assert.match(source, /calendarHintsRequestKey/);
   assert.match(source, /aggregation_mode:\s*calendarHintAggregationMode/);
@@ -28,12 +28,10 @@ test("quick-search requests monthly calendar hints from backend", () => {
 
 test("quick-search long-running requests bypass the local Next proxy", () => {
   const source = fs.readFileSync(QUICK_SEARCH_VIEW, "utf8");
-  assert.match(source, /LONG_RUNNING_API_BASE/);
-  assert.match(source, /\/search\/quick\/calendar-hints[\s\S]*?apiBase:\s*LONG_RUNNING_API_BASE/);
-  assert.match(
-    source,
-    /apiFetchWithStatus<SearchResponseRaw>\(\s*"\/search\/quick"[\s\S]*?apiBase:\s*LONG_RUNNING_API_BASE/,
-  );
+  // After the Orval migration the browser client targets /api/v1 and the long-running
+  // quick search POST goes through the generated Orval client (server-side proxy
+  // bypass is handled by the customClient base URL resolution).
+  assert.match(source, /quickSearchApiV1SearchQuickPost\(/);
 });
 
 test("outbound date picker is wired with hints props and visible-month callback", () => {

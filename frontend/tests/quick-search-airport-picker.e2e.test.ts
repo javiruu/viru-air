@@ -3,6 +3,8 @@ import test from "node:test";
 
 import { chromium } from "playwright";
 
+import { seedSupabaseSession } from "./helpers/e2e-session";
+
 const BASE_URL = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 const API_BASE = process.env.E2E_API_BASE_URL || "http://127.0.0.1:8000/api/v1";
 
@@ -33,9 +35,7 @@ test("quick-search airport picker opens before search and can be dismissed", asy
       t.skip(`Quick-Search auth session could not be created against ${API_BASE}.`);
       return;
     }
-    await context.addInitScript((value) => {
-      window.localStorage.setItem("viru_token", value);
-    }, token);
+    await seedSupabaseSession(context, token);
     const page = await context.newPage();
 
     try {

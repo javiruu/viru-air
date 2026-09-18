@@ -40,10 +40,7 @@ test("watch detail panel removes tabular calendar block and calendar fetch", () 
 
 test("compare panel consumes compare endpoint and uses required states", () => {
   const source = fs.readFileSync(COMPARE_PANEL_FILE, "utf8");
-  assert.match(
-    source,
-    /apiFetch<PriceCompareResponse>\(`\/prices\/compare\?watch_ids=\$\{compareQuery\}`\)/,
-  );
+  assert.match(source, /useCompareApiV1PricesCompareGet/);
   assert.match(source, /watchlist\.compare\.emptySelectionMessage/);
   assert.match(source, /watchlist\.compare\.oneSelectionMessage/);
   assert.match(source, /watchlist\.compare\.mixedCurrencyWarning/);

@@ -10,12 +10,7 @@ test("admin users and account sessions consume paginated backend contracts", () 
     "utf8",
   );
 
-  assert.match(
-    adminSource,
-    /\/admin\/users\?limit=\$\{ADMIN_USERS_PAGE_SIZE\}&offset=\$\{offset\}/,
-  );
-  assert.match(
-    profileSource,
-    /\/account\/sessions\?limit=\$\{ACCOUNT_SESSIONS_PAGE_SIZE\}&offset=\$\{offset\}/,
-  );
+  // Pagination now travels through the generated Orval clients' typed params.
+  assert.match(adminSource, /listUsersApiV1AdminUsersGet\(\{\s*limit: ADMIN_USERS_PAGE_SIZE,\s*offset,/);
+  assert.match(profileSource, /getSessionsApiV1AccountSessionsGet\(\{\s*limit: ACCOUNT_SESSIONS_PAGE_SIZE,\s*offset,/);
 });
