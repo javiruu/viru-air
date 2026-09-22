@@ -40,6 +40,14 @@ test("submitLogin maps Supabase server failures to server_error", async () => {
   assert.deepEqual(result, { kind: "server_error" });
 });
 
+test("submitLogin maps an unreachable auth server to network_error", async () => {
+  const result = await submitLogin("qa@viru.dev", "goodpass123", stubClient(async () => {
+    throw new TypeError("Failed to fetch");
+  }));
+  assert.deepEqual(result, { kind: "network_error" });
+});
+;
+
 test("submitLogin returns the access token on a successful session", async () => {
   const result = await submitLogin(
     "qa@viru.dev",
@@ -51,6 +59,10 @@ test("submitLogin returns the access token on a successful session", async () =>
   );
   assert.deepEqual(result, {
     kind: "success",
-    data: { access_token: "token-abc", token_type: "bearer" },
+    data: {
+      access_token: "token-abc",
+      refresh_token: "refresh-abc",
+      token_type: "bearer",
+    },
   });
 });

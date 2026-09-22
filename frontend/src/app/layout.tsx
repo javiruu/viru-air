@@ -6,6 +6,7 @@ import QueryProvider from "@/app/providers/QueryProvider";
 import { NotificationCenterProvider } from "@/components/components/notifications/notification-center";
 import ScrollActivityScrollbar from "@/modules/shared/ScrollActivityScrollbar";
 import { SHELL_SCROLL_STATE_CSS } from "@/modules/shared/shellScrollStateCss";
+import { EXTENSION_ATTRIBUTE_CLEANUP_SCRIPT } from "@/modules/shared/hydrationGuard";
 
 export const metadata: Metadata = {
   title: "Viru Air",
@@ -16,9 +17,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
   return (
-    <html lang="es" suppressHydrationWarning data-theme="light">
+    <html lang="es" suppressHydrationWarning data-theme="light" data-scroll-behavior="smooth">
       <head>
         <style>{SHELL_SCROLL_STATE_CSS}</style>
+        {/*
+          Runs synchronously before hydration to strip attributes injected by
+          browser extensions (Bitdefender's bis_* markers), which otherwise
+          cause false-positive hydration mismatches across the whole tree.
+        */}
+        <script dangerouslySetInnerHTML={{ __html: EXTENSION_ATTRIBUTE_CLEANUP_SCRIPT }} />
         {gaMeasurementId ? (
           <>
             <Script

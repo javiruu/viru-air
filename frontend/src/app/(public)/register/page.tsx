@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { registerApiV1AuthRegisterPost } from "@/api/generated/auth/auth";
 import { GlassSignInCard } from "@/components/components/forms/glass-sign-in";
 import { useNotificationCenter } from "@/components/components/notifications/notification-center";
 import type { AuthOut } from "@/modules/shared/auth";
@@ -15,6 +14,7 @@ import {
   signInDashboardDemoAccount,
 } from "@/modules/shared/dashboard-demo-session";
 import { resolvePostAuthUrl } from "@/modules/shared/navigation";
+import { submitRegister } from "@/modules/shared/register-submit";
 import { BoneyardForm } from "@/modules/shared/BoneyardLoad";
 import { useI18n } from "@/i18n/shell";
 
@@ -91,10 +91,9 @@ function RegisterContent() {
       return;
     }
     setFieldError({});
-    try {
-      const res = await registerApiV1AuthRegisterPost({ email: normalizedEmail, password });
-      const data: AuthOut =
-        (res as unknown as { data: AuthOut })?.data ?? (res as unknown as AuthOut);
+    const result = await submitRegister(normalizedEmail, password);
+    if (result.kind === "success" && result.data.access_token) {
+      const data: AuthOut = result.data;
       await supabase.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token || "" });;
       notify({
         tone: "success",
@@ -102,15 +101,36 @@ function RegisterContent() {
         description: t("shared.notifications.registerSuccessBody"),
       });
       router.push(returnUrl);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : t("public.auth.registerError");
-      setError(message);
-      notify({
-        tone: "error",
-        title: t("shared.notices.error"),
-        description: message,
-      });
+      return;
     }
+    if (result.kind === "success") {
+      // Supabase returned a user but no session (email confirmation required).
+      notify({
+        tone: "success",
+        title: t("public.auth.registerSuccess"),
+        description: t("shared.notifications.registerSuccessBody"),
+      });
+      router.push(`/login?returnUrl=${encodeURIComponent(returnUrl)}`);
+      return;
+    }
+
+    const nextError = t(
+      result.kind === "email_in_use"
+        ? "public.auth.registerEmailInUse"
+        : result.kind === "weak_password"
+          ? "public.auth.registerWeakPassword"
+          : result.kind === "invalid_email"
+            ? "public.auth.emailInvalid"
+            : result.kind === "network_error"
+              ? "public.auth.loginNetworkError"
+              : "public.auth.registerError",
+    );
+    setError(nextError);
+    notify({
+      tone: "error",
+      title: t("shared.notices.error"),
+      description: nextError,
+    });
   }
 
   if (entryState === "checking") {

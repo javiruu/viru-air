@@ -18,6 +18,31 @@ function generateCorrelationId(): string {
   }
 }
 
+/**
+ * Path prefix shared by every route in the OpenAPI spec. Orval bakes it into
+ * the generated URLs (e.g. `/api/v1/notifications/summary`), so the apiBase
+ * must never be joined on top of it blindly: doing so produced
+ * `/api/v1/api/v1/...` requests that 404'd against the backend.
+ */
+const API_PATH_PREFIX = "/api/v1";
+
+function resolveFullUrl(url: string): string {
+  if (url.startsWith("http")) return url;
+
+  const apiBase =
+    typeof window !== "undefined"
+      ? "/api/v1"
+      : process.env.INTERNAL_API_URL || "http://127.0.0.1:8000/api/v1";
+
+  const path = url.startsWith("/") ? url : `/${url}`;
+  // Idempotent join: strip the spec prefix when the generated path already
+  // carries it, then prepend the base exactly once.
+  const relativePath = path.startsWith(`${API_PATH_PREFIX}/`)
+    ? path.slice(API_PATH_PREFIX.length)
+    : path;
+  return `${apiBase.replace(/\/+$/, "")}${relativePath}`;
+}
+
 export interface CustomClientConfig {
   url: string;
   method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS";
@@ -25,6 +50,25 @@ export interface CustomClientConfig {
   data?: unknown;
   headers?: HeadersInit;
   signal?: AbortSignal;
+}
+
+/**
+ * Extract a human-readable message from an API error body. FastAPI returns
+ * `detail` as either a string (HTTPException) or an array of validation
+ * objects (422 RequestValidationError) — normalize both to text.
+ */
+function extractErrorMessage(errorBody: Record<string, unknown>, statusText: string): string {
+  const detail = errorBody?.detail;
+  if (typeof detail === "string" && detail.trim()) return detail;
+  if (Array.isArray(detail) && detail.length > 0) {
+    const first = detail[0] as { msg?: string; loc?: unknown[] };
+    const field = Array.isArray(first.loc) ? first.loc.filter((p) => p !== "body").join(".") : "";
+    return first.msg ? (field ? `${field}: ${first.msg}` : first.msg) : statusText;
+  }
+  if (typeof errorBody?.message === "string" && errorBody.message.trim()) {
+    return errorBody.message;
+  }
+  return statusText;
 }
 
 export async function customClient<T>(
@@ -65,12 +109,7 @@ export async function customClient<T>(
     };
   }
 
-  const apiBase =
-    typeof window !== "undefined"
-      ? "/api/v1"
-      : process.env.INTERNAL_API_URL || "http://127.0.0.1:8000/api/v1";
-
-  const fullUrl = url.startsWith("http") ? url : apiBase + (url.startsWith("/") ? "" : "/") + url;
+  const fullUrl = resolveFullUrl(url);
 
   const finalHeaders = new Headers(init.headers);
   if (!finalHeaders.has("x-correlation-id")) {
@@ -95,10 +134,8 @@ export async function customClient<T>(
   });
 
   if (!response.ok) {
-    const errorBody = await response.json().catch(() => ({ message: response.statusText }));
-    const error = new Error(
-      errorBody.detail || errorBody.message || `Request failed with status ${response.status}`,
-    ) as Error & {
+    const errorBody = await response.json().catch(() => ({}));
+    const error = new Error(extractErrorMessage(errorBody, response.statusText)) as Error & {
       status?: number;
       correlation_id?: string;
       client_event_id?: string;
