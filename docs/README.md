@@ -1,7 +1,7 @@
 # Documentación de Viru Air
 
 **Estado:** vivo  
-**Última revisión:** 2026-07-14
+**Última revisión:** 2026-09-22
 **Fuente de verdad:** sí  
 **Área:** documentación
 
@@ -22,6 +22,10 @@ Empieza por:
 2. [Overview del proyecto](overview/project-overview.md)
 3. [Estado actual](overview/current-state.md)
 4. [Mapa del repo](overview/repo-map.md)
+
+Login, Supabase, base de datos, JWT o conectividad local del API? Lee primero el
+[Runbook Supabase nativo](runbooks/runbook-supabase-native.md) y la
+[matriz de variables de entorno](architecture/environment.md).
 
 ## Qué carpetas importan
 

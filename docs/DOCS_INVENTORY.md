@@ -1,13 +1,23 @@
 # Inventario documental
 
 **Estado:** vivo
-**Ultima revision:** 2026-08-04
+**Ultima revision:** 2026-09-22
 **Fuente de verdad:** si
 **Area:** documentacion
 
 ## Resumen
 
 Inventario completo de documentos `.md` y `.txt` relevantes del repositorio tras el saneamiento documental. Excluye dependencias, cach?s, builds, entornos virtuales, `_publish_repo` y otras salidas generadas masivas.
+
+## Actualizacion manual 2026-09-22 (setup nativo de Supabase)
+
+Entrada viva agregada:
+
+- `docs/runbooks/runbook-supabase-native.md`
+
+Motivo:
+
+- Documenta la configuracion nativa vigente: auth ES256/JWKS (sin secret HS256), rol de BD `viru_app` por pooler de sesion, esquema via `create_all`, Data API bloqueada para `anon`/`authenticated`, arranque local (backend 8000/8001, frontend 3000) y tabla de troubleshooting. Referenciada desde `AGENTS.md` raiz, `backend/AGENTS.md` y `docs/INDICE_UNICO.md`.
 
 ## Actualizacion manual 2026-08-27 (seguimiento diario de watches comprados)
 
@@ -694,7 +704,6 @@ Entradas vivas actualizadas:
 - `docs/DOCS_INVENTORY.md`
 - `VIRU_PANEL.bat`
 - `infra/Caddyfile`
-- infra/docker-compose.prod.yml
 
 Entradas vivas retiradas (sin referencia verificable activa):
 
@@ -1361,13 +1370,10 @@ Entradas historicas agregadas y retiradas posteriormente:
 
 - docs/runbooks/runbook-duckdns-public-domain.md
 - `infra/Caddyfile`
-- infra/docker-compose.prod.yml
 - `infra/.env.prod.example`
 
 Entradas vivas actualizadas:
 
-- infra/docker-compose.yml
-- infra/docker-compose.relaunch.yml
 - `backend/.env.example`
 - `frontend/.env.example`
 - `backend/app/main.py`

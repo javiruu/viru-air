@@ -6,6 +6,20 @@ The root `/AGENTS.md` still applies. This file adds specific guidance for API be
 
 ---
 
+## Environment and auth quick reference
+
+- Canonical setup (Supabase Auth ES256/JWKS, DB role `viru_app`, pooler, local boot, ports):
+  `/docs/runbooks/runbook-supabase-native.md`. Read it before debugging login, 401s,
+  DB connections or JWT verification.
+- Env-var matrix: `/docs/architecture/environment.md`.
+- JWT verification lives in `app/api/deps.py`: ES256 via project JWKS when `SUPABASE_URL`
+  is set; legacy HS256 via `SUPABASE_JWT_SECRET`/`JWT_SECRET` otherwise. The hosted
+  Supabase project uses asymmetric keys — there is no HS256 secret.
+- The database schema is created with `Base.metadata.create_all` (no Alembic in this repo);
+  additive column changes go through `app/infrastructure/db/schema_compat.py`.
+
+---
+
 ## Backend mission
 
 Backend work must be:

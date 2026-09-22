@@ -155,6 +155,15 @@ Then read only the area relevant to the task:
 - QA: `/docs/qa/`
 - prompts/AI context: `/docs/prompts/`
 
+**Environment, auth and local boot (read first for any login, Supabase, database,
+`/api` connectivity, JWT, CORS, ports or env-var task):**
+
+- `/docs/runbooks/runbook-supabase-native.md` — canonical setup: Supabase Auth ES256/JWKS,
+  database role `viru_app` + session pooler, schema via `create_all`, Data API lockdown,
+  local boot of backend (8000/8001) and frontend (3000), troubleshooting table.
+- `/docs/architecture/environment.md` — canonical matrix of every env var (frontend and backend),
+  including which variable activates which verification mode.
+
 Use `/docs/archive/` only for historical context or traceability.
 
 If archive content conflicts with live documentation, prefer the live/canonical document.

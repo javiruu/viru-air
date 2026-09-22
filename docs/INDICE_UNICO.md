@@ -1,7 +1,7 @@
 # Índice Único de Documentación
 
 **Estado:** vivo
-**Última revisión:** 2026-08-04
+**Última revisión:** 2026-09-22
 **Fuente de verdad:** sí
 **Área:** documentación
 
@@ -18,6 +18,8 @@
 ### Backend
 
 - [Backend](engineering/backend.md)
+- [Runbook Supabase nativo (auth ES256, BD, arranque)](runbooks/runbook-supabase-native.md)
+- [Matriz de variables de entorno](architecture/environment.md)
 - [Reference](reference/README.md)
 - [Quick Search contract](reference/backend/quick-search-contract.md)
 - [Community Pricing contract](reference/backend/community-pricing-contract.md)
@@ -111,6 +113,7 @@
 ### Runbooks
 
 - [Runbooks operativos](runbooks/)
+- [Runbook Supabase nativo (auth ES256/JWKS, rol viru_app, pooler, arranque local, troubleshooting)](runbooks/runbook-supabase-native.md)
 - [Runbook de estabilización watchlist + quick-search](runbooks/runbook-watchlist-quick-search-stabilization.md)
 - [Runbook live flight tracking desde Watchlist](runbooks/runbook-live-flight-tracking.md)
 - [Runbook QA de puerta a puerta](runbooks/runbook-puerta-a-puerta-qa.md)
