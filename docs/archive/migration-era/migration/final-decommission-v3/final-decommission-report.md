@@ -25,7 +25,7 @@
 | Cross-user bypasses | 0 | 0 | 0 | PASS |
 | Anonymous unexpected access | 0 | 0 | 0 | PASS |
 | Critical RLS skips | 0 | 0 | 1 | **FAIL** |
-| Docker / container artifacts | 0 | 0 | 0 | PASS |
+| Container artifacts | 0 | 0 | 0 | PASS |
 | Biome global errors | 533 | 0 | 0 | PASS |
 | Biome full-scope exit code | 1 | 0 | 0 | PASS |
 

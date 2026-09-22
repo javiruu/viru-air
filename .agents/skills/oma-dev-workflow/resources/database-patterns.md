@@ -66,25 +66,25 @@ description = "Reset all databases"
 depends = ["//apps/api:migrate:reset"]
 ```
 
-## Local Infrastructure (Docker)
+## Local Infrastructure
 
 ```toml
 # apps/api/mise.toml
 [tasks.infra:up]
 description = "Start local infrastructure (PostgreSQL, Redis, etc.)"
-run = "docker compose -f docker-compose.infra.yml up -d"
+run = "mise run infra:start"
 
 [tasks.infra:down]
 description = "Stop local infrastructure"
-run = "docker compose -f docker-compose.infra.yml down"
+run = "mise run infra:stop"
 
 [tasks.infra:logs]
 description = "View infrastructure logs"
-run = "docker compose -f docker-compose.infra.yml logs -f"
+run = "mise run infra:logs"
 
 [tasks.infra:reset]
-description = "Reset infrastructure (remove volumes)"
-run = "docker compose -f docker-compose.infra.yml down -v"
+description = "Reset infrastructure (remove data)"
+run = "mise run infra:reset"
 ```
 
 ## Root-Level Infrastructure Tasks

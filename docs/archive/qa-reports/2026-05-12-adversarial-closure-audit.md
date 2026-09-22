@@ -79,7 +79,7 @@ Clasificacion:
 - D) Riesgo real: **no blocker demostrado** en runtime actual; migracion desde cero a `head` funciona y suites integracion pasan.
 
 PostgreSQL drift check:
-- **No ejecutado** (`docker` no disponible en entorno): `PostgreSQL drift check not run`.
+- **No ejecutado** (`psql` no disponible en entorno): `PostgreSQL drift check not run`.
 
 ### Fresh runtime + smoke
 - `alembic upgrade head` sobre `sqlite:///./_tmp_fresh_runtime.db`: OK (`0001 -> 0015`).
@@ -144,7 +144,7 @@ PostgreSQL drift check:
 - E2E quick-search formal en este run queda skipped por guard reachability/auth.
 
 ### Accepted/Postponed
-- `PostgreSQL drift check not run` por ausencia de Docker local.
+- `PostgreSQL drift check not run` por ausencia de `psql` local.
 - Pendientes globales F3 ya documentados como postponed (email real, scheduler productivo, explainability recomendaciones, etc.).
 
 ## 4) Fixes aplicados
@@ -202,7 +202,7 @@ Decisiones:
 - Mantener caveat documentado para hardening posterior en entorno PostgreSQL real.
 
 ### PostgreSQL drift check
-- `docker --version` y `psql --version` no disponibles en este entorno.
+- `psql --version` no disponible en este entorno.
 - Estado: **PostgreSQL drift check not run** (no bloqueante RC).
 
 ### Ruff cleanup

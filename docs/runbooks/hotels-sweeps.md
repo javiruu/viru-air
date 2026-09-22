@@ -173,28 +173,6 @@ WantedBy=multi-user.target
 
 Ventajas: reinicio automático, logging vía journald, gestión nativa del SO.
 
-**Opción C — Docker Compose (objetivo; la imagen existe, no el compose):**
-
-El patrón previsto sería añadir el worker como servicio adicional en `docker-compose.yml`:
-
-```yaml
-hotel-sweep:
-  build:
-    context: .
-    dockerfile: infra/docker/backend.Dockerfile
-  command: python -m app.worker.hotels_sweep --loop --sleep-seconds 3600
-  environment:
-    - HOTEL_SWEEP_ENABLED=true
-    - HOTEL_PROVIDER=${HOTEL_PROVIDER:-mock}
-    - MAKCORPS_API_KEY=${MAKCORPS_API_KEY:-}
-  depends_on:
-    - backend
-```
-
-Ventajas previstas: ciclo de despliegue compartido y configuración reproducible.
-
-**Estado actual:** el repositorio no contiene `docker-compose.yml` ni `infra/docker/backend.Dockerfile`, pero sí incluye `backend/Dockerfile` (multi-stage Python 3.12 + `uv.lock`, non-root, logs en `/tmp`) construido y validado localmente, CI que lo construye sin push, y los manifests `infra/k8s/hotels-sweep-cronjob.yaml` (CronJob `--once` suspendido, `concurrencyPolicy: Forbid`, `DB_URL`/`JWT_SECRET` desde Secret) y `infra/k8s/hotels-migrate-job.yaml` (Job Alembic separado y suspendido). No hay imagen publicada ni despliegue: el CronJob y el Job de migración siguen `suspend: true` hasta aprobar imagen inmutable, Secret/DB, migración y gates H43/H45/H55. El workflow `infra/github/workflows/release.yml` publica la imagen a GHCR al ejecutarse (tags `sha-<commit>`/`latest`), la plantilla del Secret está en `infra/k8s/runtime-secret.example.yaml`, el overlay de activación Mock en `infra/k8s/overlays/staging/` y el procedimiento completo en `docs/runbooks/hotels-runtime-activation.md`.
-
 **Opción D — Loop manual (desarrollo/pruebas):**
 
 ```bash

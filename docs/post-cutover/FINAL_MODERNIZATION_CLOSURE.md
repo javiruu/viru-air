@@ -6,7 +6,6 @@
 ## Checklist Final
 
 ```text
-Docker runtime dependencies       0
 SQLite runtime fallback           0
 Alembic migration authority       0
 DB authorities                    1

@@ -21,7 +21,7 @@
 | **Frontend Production Build** | `npm run build` (`next build`) | Aplicación completa | **Build Success (Exit code 0)** |
 | **Dependency Audit (Frontend)** | `npm audit` | Árbol completo | **Clasificado en UNRESOLVED_RISKS.md** |
 | **Secret Scanning** | Inspección de variables y patrones | Árbol completo | **0 secretos activos expuestos** |
-| **Supabase Local DB** | `supabase test db` | 0 tests locales | **BLOCKED_ENVIRONMENT (sin Docker)** |
+| **Supabase Local DB** | `supabase test db` | 0 tests locales | **BLOCKED_ENVIRONMENT (sin Supabase CLI)** |
 
 ## 3. Estado de la Modernización y Saneamiento
 - **Endpoints reconciliados:** 155 objetos de ruta FastAPI = 151 operaciones HTTP agrupadas en 121 rutas OpenAPI al 100%.

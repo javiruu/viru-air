@@ -3,7 +3,7 @@
 **Estado:** vivo  **Última revisión:** 2026-08-06  **Fuente de verdad:** sí  **Área:** runbooks
 
 > Este runbook publica y activa el runtime hotelero preparado en la Fase H09/H45/H55/H56:
-> imagen multi-stage `backend/Dockerfile`, Job de migración separado y CronJob de sweep `--once`
+> Job de migración separado y CronJob de sweep `--once`
 > suspendidos por defecto. La activación aquí documentada es **solo Mock y staging**:
 > no autoriza provider comercial ni tráfico live (gates H07/H37/H43).
 
@@ -27,10 +27,10 @@ Antes de empezar:
    `https://github.com/<owner>/<repo>/pkgs/container/<repo>%2Fbackend`.
 3. Registrar el digest inmutable del build:
    ```bash
-   docker buildx imagetools inspect ghcr.io/<owner>/<repo>/backend:sha-<commit>
+   gh api /orgs/<owner>/packages/container/<repo>%2Fbackend/versions
    ```
 
-Límite: no declarar la imagen "aprobada" hasta ver el digest y un `docker run` de smoke
+Límite: no declarar la imagen "aprobada" hasta ver el digest y un smoke
 (build exit 0, `/health` 200) contra la imagen publicada.
 
 ## 2. Crear el Secret `viru-backend-runtime`

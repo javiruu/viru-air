@@ -1,7 +1,7 @@
 # OpenTelemetry Runtime Proof & Verification
 
 **Date:** 2026-09-12  
-**Authority:** iru-completion-no-docker/05_OBSERVABILITY_ANALYTICS_COMPLETION.md  
+**Authority:** 05_OBSERVABILITY_ANALYTICS_COMPLETION.md  
 **Target Architecture:** FastAPI OpenTelemetry Lifespan Integration
 
 ---

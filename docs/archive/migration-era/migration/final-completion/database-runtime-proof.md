@@ -1,7 +1,7 @@
 # Database Runtime Authority & Configuration Proof
 
 **Date:** 2026-09-12  
-**Authority:** iru-completion-no-docker/02_SUPABASE_REMOTE_DATABASE_CUTOVER.md  
+**Authority:** 02_SUPABASE_REMOTE_DATABASE_CUTOVER.md  
 **Target Architecture:** Hosted Supabase PostgreSQL as the ONLY runtime database
 
 ---

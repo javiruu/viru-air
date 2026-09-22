@@ -50,7 +50,7 @@ For each criterion, execute the defined verification method:
 | C1        | PASS      | `bun test` exit 0, 13/13 passed                                  |
 | C2        | FAIL      | `bun build` exit 1, TypeError in Form.tsx:42                     |
 | C3        | BLOCKED   | Failed 3x: same import resolution error                          |
-| C4        | REGRESSED | previously PASS at iter 1 — `curl :3000/health` now timeouts; docker-compose.yml modified in iter 2 |
+| C4        | REGRESSED | previously PASS at iter 1 — `curl :3000/health` now timeouts; compose config modified in iter 2 |
 
 verdict: PASS | FAIL
 ```
@@ -157,7 +157,7 @@ This gives the REPLAN phase enough context to dispatch a diff-aware diagnosis ra
 
 ## Caching for Heavy Verification
 
-Re-verifying every criterion every iteration is correct but can be expensive when verifications include long-running steps (e2e tests, Docker rebuilds, full integration suites). Use the cache rules below to skip re-execution when no relevant files changed since the last successful verification.
+Re-verifying every criterion every iteration is correct but can be expensive when verifications include long-running steps (e2e tests, full rebuilds, full integration suites). Use the cache rules below to skip re-execution when no relevant files changed since the last successful verification.
 
 ### Cache eligibility
 

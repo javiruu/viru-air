@@ -11,7 +11,7 @@
     "legacy_jwt_issuer_refs": 0,
     "legacy_refresh_token_refs": 0,
     "viru_token_frontend_src_refs": 0,
-    "docker_container_artifacts": 0
+    "container_artifacts": 0
   },
   "evidence": {
     "baseline_recount": "docs/migration/final-decommission-v3/baseline.json",

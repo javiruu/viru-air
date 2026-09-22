@@ -19,8 +19,7 @@ No se permite que Supabase ejecute DDL compitiendo con Alembic sobre el schema `
 
 ## 2. Reproducibilidad Local Supabase
 - **Supabase CLI:** No instalado en el host (`not installed`).
-- **Docker Daemon:** Servicio no iniciado en el entorno de ejecucion (`failed to connect to docker API`).
-- **Estado de reproduccion:** `BLOCKED_ENVIRONMENT`. No se ejecuto `supabase db reset` ni `supabase test db` por indisponibilidad de motor de contenedores en la maquina local.
+- **Estado de reproduccion:** `BLOCKED_ENVIRONMENT`. No se ejecuto `supabase db reset` ni `supabase test db` por indisponibilidad de Supabase CLI en la maquina local.
 - **Garantia de seguridad:** NO se ejecutaron comandos remotos destructivos (`--linked` / `db push`).
 
 ## 3. Analisis de Politicas RLS (`supabase/migrations/20260912000001_create_flight_watch.sql`)

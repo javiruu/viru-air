@@ -59,7 +59,7 @@
 - Archivo: `backend/tests/integration/test_time_ordering_regression.py`.
 
 2. Regresion de asercion por acento en catalogo de aeropuertos
-- Sintoma: test esperaba `almeria` y datos devuelven `almería`.
+- Sintoma: test esperaba `almeria` y datos devuelven `almerï¿½a`.
 - Fix: asercion robusta con normalizacion unicode (fold ASCII) en test.
 - Archivo: `backend/tests/unit/test_airports_catalog_master.py`.
 
@@ -67,7 +67,7 @@
 
 - `alembic check` reporta diferencias de autogeneracion (indices/tipos) en entorno SQLite de control.
 - No impidio upgrade limpio a `head` ni ejecucion de suites de regresion/arranque.
-- Se marca como deuda tecnica de migraciones para revisión posterior, fuera de cierre bloqueante.
+- Se marca como deuda tecnica de migraciones para revisiï¿½n posterior, fuera de cierre bloqueante.
 
 ## Pendientes postponed (explicito)
 
@@ -110,7 +110,7 @@ Validaciones ejecutadas:
   - `DB_URL=sqlite:///./_tmp_clean_audit2.db python -m alembic upgrade head` -> OK
   - `DB_URL=sqlite:///./_tmp_clean_audit2.db python -m alembic check` -> drift residual limitado a `remove_index` (sin `ix_users_email` ni cambios add/unique de token_hash).
 - PostgreSQL drift:
-  - `docker --version` y `psql --version` no disponibles.
+  - `psql --version` no disponible.
   - Estado: `PostgreSQL drift check not run`.
 - Ruff:
   - `backend/.venv/Scripts/python -m ruff check .` -> OK.

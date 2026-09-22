@@ -8,13 +8,12 @@
 
 - Backend: Python >= 3.12, FastAPI, SQLAlchemy, Alembic.
 - Frontend: Next.js 15.1, React 19, TypeScript.
-- Local infra: docker-compose with backend, frontend, Postgres, and Redis.
 
 ## Repo shape
 
 - `backend/`: API, domain, infrastructure, and tests.
 - `frontend/`: app routes, product modules, shared code, styles, tests.
-- `infra/`: Docker, workflows, manifests.
+- `infra/`: workflows, manifests.
 - `scripts/`: support utilities.
 - `docs/`: the live documentation center.
 

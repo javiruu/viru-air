@@ -123,7 +123,7 @@ Data changes: Nueva migración de esquema declarativo en `supabase/migrations/`.
 Security impact: RLS obligatorio impide que usuarios lean o modifiquen registros de otros usuarios incluso ante vulnerabilidad de consulta en frontend.
 Performance impact: Índices dedicados en `user_id` y claves compuestas de ruta para acelerar evaluación de políticas RLS.
 Rollback: Eliminar carpeta `supabase/`.
-Deferred work: Conexión con proyecto remoto / Docker daemon local (diferido según política del host).
+Deferred work: Conexión con proyecto remoto (diferido según política del host).
 
 ### 09_DRIZZLE_DECISION — 2026-09-12
 Status: NOT_APPLICABLE

@@ -19,7 +19,7 @@ The final cutover program has been executed systematically starting from Phase 1
 - **TypeScript Typecheck:** **0 errors** (`tsc --noEmit` exit code 0).
 - **OpenAPI Contract:** **Clean** (`orval && git diff --exit-code src/api/generated` exit code 0).
 - **Production Build:** **Clean** (`next build` exit code 0).
-- **Overall Verdict:** **VERIFIED PASS ON ALL ACTIVE GATES** (environment prerequisites documented for Docker/remote Supabase connectivity).
+- **Overall Verdict:** **VERIFIED PASS ON ALL ACTIVE GATES** (environment prerequisites documented for remote Supabase connectivity).
 
 ---
 

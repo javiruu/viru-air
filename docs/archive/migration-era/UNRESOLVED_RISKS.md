@@ -13,9 +13,9 @@ Este documento registra únicamente los riesgos reales que permanecen diferidos,
 
 ## 2. Pruebas locales de Supabase (`supabase test db`)
 - **Severidad:** P2 / Informativa
-- **Descripción:** Ausencia de Docker daemon y CLI de Supabase en la estación de trabajo local.
+- **Descripción:** Ausencia de CLI de Supabase en la estación de trabajo local.
 - **Motivo de diferimiento:** La autoridad DDL ya es Supabase migrations sobre PostgreSQL; sin entorno local no se puede ejecutar el reset/test del CLI. No existe doble autoridad: el backend no crea esquema en runtime y exige `DB_URL`.
-- **Next Action / Owner:** Instalar Docker Desktop (o configurar un proyecto remoto de Supabase) para validar el baseline canónico con `supabase db reset` antes del primer despliegue real.
+- **Next Action / Owner:** Configurar un proyecto remoto de Supabase para validar el baseline canónico con `supabase db reset` antes del primer despliegue real.
 
 ## 3. Playwright multi-navegador (Firefox/WebKit)
 - **Severidad:** P3 / Baja

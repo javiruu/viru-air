@@ -315,7 +315,7 @@ metadata:
   namespace: observability
 spec:
   mode: daemonset          # deployment | daemonset | statefulset | sidecar
-  image: otel/opentelemetry-collector-contrib:0.122.1   # pin to current contrib release; verify tag exists via docker pull before apply
+  image: otel/opentelemetry-collector-contrib:0.122.1   # pin to current contrib release; verify tag exists before apply
   config:
     receivers:
       otlp:

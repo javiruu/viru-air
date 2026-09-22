@@ -13,7 +13,7 @@
 | **Frontend Typecheck (`tsc --noEmit`)** | N/A | 100% | 0 | 0 | 0 | 9.0s | Cero errores de compilacion TypeScript en todo el proyecto. |
 | **API Contract (`api:check`)** | 121 paths | 100% | 0 | 0 | 0 | 18.4s | OpenAPI regenerado sin diff; Orval cliente generado sincronizado. |
 | **Frontend Production Build (`next build`)** | N/A | Exitoso | 0 | 0 | 0 | 45.0s | Compilacion de produccion completa y empaquetado Next.js 15 limpio. |
-| **Supabase DB Tests (`supabase test db`)** | 0 | 0 | 0 | 0 | 0 | 0s | `BLOCKED_ENVIRONMENT` (Docker / Supabase CLI no disponibles en entorno local). |
+| **Supabase DB Tests (`supabase test db`)** | 0 | 0 | 0 | 0 | 0 | 0s | `BLOCKED_ENVIRONMENT` (Supabase CLI no disponible en entorno local). |
 
 ## Reconciliacion de 1.114 vs 5 Tests de Backend
 - **Origen de la cifra 1.114:** Corresponde al conteo historico en fases anteriores del repositorio. Con las fases sucesivas (hoteles, live tracking, community pricing, door-to-door), la suite crecio de forma legitima hasta alcanzar los **1.441 tests**.

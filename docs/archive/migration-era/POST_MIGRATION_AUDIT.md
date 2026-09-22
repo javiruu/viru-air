@@ -35,7 +35,7 @@ El cutover de modernización (Alembic/SQLite → Supabase PostgreSQL + RLS, Supa
 - **Alembic:** retirado (directorio eliminado, dependencia fuera de `pyproject.toml` y `uv.lock` regenerado).
 
 ## Supabase status
-**ACTIVO COMO AUTORIDAD DE ESQUEMA.** Migraciones canónicas versionadas + RLS. La validación con `supabase test db` local sigue bloqueada por ausencia de Docker (ver `UNRESOLVED_RISKS.md`).
+**ACTIVO COMO AUTORIDAD DE ESQUEMA.** Migraciones canónicas versionadas + RLS. La validación con `supabase test db` local sigue bloqueada por ausencia de CLI de Supabase (ver `UNRESOLVED_RISKS.md`).
 
 ## Security
 - Cero claves de servicio, tokens de base de datos o secretos expuestos en frontend (`NEXT_PUBLIC_*` limpio).
@@ -67,7 +67,7 @@ La revisión de código posterior a la verificación encontró una cadena de aut
 Tests nuevos: `test_empty_key_signature_token_returns_401`, `test_provisioning_requires_email_verified`, `test_provisioning_requires_email_claim`, `test_provisioning_never_grants_admin_from_claims`, `test_provisioned_user_records_real_ip_and_user_agent` y 7 casos del guard de secretos (`TestSecretResolutionGuard`).
 
 ## Remaining deferred risks
-Ver `UNRESOLVED_RISKS.md`: adopción TanStack por pantalla (SL-08), validación local de Supabase sin Docker, Playwright multi-navegador y exporter OTLP.
+Ver `UNRESOLVED_RISKS.md`: adopción TanStack por pantalla (SL-08), validación local de Supabase, Playwright multi-navegador y exporter OTLP.
 
 ## Cleanup delta (cierre 2026-09-16)
 - Restaurado `RefreshToken` en `backend/app/infrastructure/db/models.py`.

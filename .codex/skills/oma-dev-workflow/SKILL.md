@@ -226,7 +226,7 @@ mise run //apps/web:build
 | Topic | Resource File | When to Load |
 |-------|---------------|--------------|
 | Validation Pipeline | `resources/validation-pipeline.md` | Git hooks, CI/CD, change-based testing |
-| Database & Infrastructure | `resources/database-patterns.md` | Migrations, local Docker infra |
+| Database & Infrastructure | `resources/database-patterns.md` | Migrations, local infra |
 | API Generation | `resources/api-workflows.md` | Generating API clients |
 | i18n Patterns | `resources/i18n-patterns.md` | Internationalization |
 | Release Coordination | `resources/release-coordination.md` | Versioning, changelog, releases |

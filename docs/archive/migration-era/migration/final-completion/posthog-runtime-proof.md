@@ -1,7 +1,7 @@
 # PostHog Analytics Runtime Proof & Governance
 
 **Date:** 2026-09-12  
-**Authority:** iru-completion-no-docker/05_OBSERVABILITY_ANALYTICS_COMPLETION.md  
+**Authority:** 05_OBSERVABILITY_ANALYTICS_COMPLETION.md  
 **Target Architecture:** Privacy-First Client-Side PostHog Integration
 
 ---

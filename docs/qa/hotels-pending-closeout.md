@@ -364,5 +364,5 @@ Se abordaron las 3 áreas de deuda técnica identificadas tras el cierre de Fase
 ### Deudas futuras actualizadas
 
 1. Resolver rate-limiting de Makcorps para sweep real.
-2. Scheduler automático de sweeps (cron/systemd/docker).
+2. Scheduler automático de sweeps (cron/systemd).
 3. Verificación visual manual en navegador real.

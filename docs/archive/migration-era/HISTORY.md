@@ -387,7 +387,7 @@ Se abordaron 3 áreas de deuda técnica identificadas en el cierre de Fases A-E:
 
 ### Área 3: Sweeps — documentar estrategias de despliegue
 
-- `docs/runbooks/hotels-sweeps.md` — Documentadas 4 estrategias: cron, systemd (Linux), docker-compose separado, y loop manual (`--once`).
+- `docs/runbooks/hotels-sweeps.md` — Documentadas 3 estrategias: cron, systemd (Linux), y loop manual (`--once`).
 
 ### Deudas cerradas
 

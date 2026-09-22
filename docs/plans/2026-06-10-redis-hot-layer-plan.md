@@ -208,22 +208,15 @@ logger.debug("quick_search_redis hit=%d miss=%d errors=%d", redis_hits, redis_mi
 
 **Verify:** tests pasan con y sin Redis.
 
-## Fase R7. Docker Compose y documentación
+## Fase R7. Documentación
 
 **Objetivo:** facilitar el desarrollo local con Redis.
 
 **Archivos:**
-- `infra/docker-compose.yml` — añadir servicio `redis` (opcional, comentado):
-  ```yaml
-  # redis:
-  #   image: redis:7-alpine
-  #   ports:
-  #     - "6379:6379"
-  ```
 - `backend/.env.example` — documentar `REDIS_URL` y `QUICK_SEARCH_REDIS_TTL_SECONDS`
 - `docs/engineering/backend.md` — añadir sección "Redis hot layer"
 
-**Verify:** `docker compose up redis` + `REDIS_URL=redis://localhost:6379/0` → cache funcional.
+**Verify:** `REDIS_URL=redis://localhost:6379/0` → cache funcional.
 
 ## Riesgos
 
@@ -248,7 +241,7 @@ logger.debug("quick_search_redis hit=%d miss=%d errors=%d", redis_hits, redis_mi
 4. R4 (clave y TTL)
 5. R5 (observabilidad)
 6. R6 (tests)
-7. R7 (docker + docs)
+7. R7 (docs)
 
 ## Handoff
 

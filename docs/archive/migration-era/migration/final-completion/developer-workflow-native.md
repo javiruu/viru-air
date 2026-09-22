@@ -1,9 +1,9 @@
 # Native Developer Workflow & Hosted Supabase Environments (No Containers)
 
-**Authority:** iru-completion-no-docker/01_CONTAINER_ERADICATION.md  
+**Authority:** 01_CONTAINER_ERADICATION.md  
 **Host Environment:** Windows (PowerShell / CMD)  
 **Database Authority:** Hosted Supabase PostgreSQL  
-**Zero Container Policy:** No local Docker, no local Supabase CLI containers, no Docker Compose.
+**Zero Container Policy:** No local Supabase CLI containers, no container runtimes.
 
 ---
 

@@ -11,7 +11,7 @@
 El repositorio ha pasado por:
 
 1. modernización de frontend/backend;
-2. eliminación de Docker y contenedores;
+2. eliminación de contenedores;
 3. migración del ownership de esquema hacia `supabase/migrations`;
 4. eliminación del fallback SQLite del runtime principal;
 5. retirada de Alembic del runtime/dependencies;
@@ -64,24 +64,19 @@ NO añadir:
 - Typesense;
 - Trigger.dev;
 - Temporal;
-- Docker;
 - Kubernetes adicional;
 - abstracciones nuevas "por limpieza".
 
 Primero terminar de aprovechar lo que ya existe.
 
-## Regla 2 — Docker sigue prohibido
+## Regla 2 — Contenedores siguen prohibidos
 
 El proyecto debe funcionar sin:
 
-- `Dockerfile`;
-- `docker-compose*`;
-- `docker build`;
-- `docker run`;
 - `supabase start`;
-- `supabase db reset` local si requiere Docker;
-- CI dependiente de Docker;
-- documentación que obligue a Docker.
+- `supabase db reset` local;
+- CI dependiente de contenedores;
+- documentación que obligue a contenedores.
 
 Supabase se valida mediante proyectos remotos de DEV/STAGING aislados.
 
@@ -1103,7 +1098,7 @@ Eliminar si realmente está muerto:
 - auth bridge;
 - fixtures antiguas;
 - referencias a Alembic;
-- referencias a Docker;
+- referencias a contenedores;
 - documentación que presente SQLite como runtime;
 - proofs falsos/superados.
 
@@ -1179,7 +1174,6 @@ docs/post-cutover/FINAL_MODERNIZATION_CLOSURE.md
 Solo PASS si:
 
 ```text
-Docker runtime dependencies       0
 SQLite runtime fallback           0
 Alembic migration authority       0
 DB authorities                    1
@@ -1358,11 +1352,11 @@ Auth            Supabase Auth
 
 > Revisa el estado actual del repositorio después del hardening final.
 > Recuenta Git, auth storage, consumidores del cliente API legacy,
-> imports de Orval/TanStack, referencias a SQLite/Alembic/Docker y
+> imports de Orval/TanStack, referencias a SQLite/Alembic y
 > estado de los slices SHADOW_VERIFIED.
 > Ejecuta los gates rápidos y genera `docs/post-cutover/CURRENT_STATE.md`.
 > Después prepara un proyecto Supabase STAGING remoto y ejecuta la
-> validación de schema + matriz RLS, sin Docker y sin tocar producción.
+> validación de schema + matriz RLS, sin contenedores y sin tocar producción.
 > No declares PASS con tests skipped ni con credenciales ausentes.
 
 ---

@@ -35,12 +35,11 @@ observed_local_evidence:
   - real `python -m app.worker.hotels_sweep --once --provider mock` exited 0 and logged `hotel_sweep_cycle` completed with 3 items
   - two fresh worker processes simulated restart between cycles: both exited 0, persisted 2 completed runs and 6 snapshots, 3 per run
   - `infra/k8s/worker.yaml` remains a legacy placeholder command and is not evidence of Kubernetes hotel scheduling
-  - `backend/Dockerfile` is now a multi-stage Python 3.12/uv.lock image contract, and CI builds it without push; immutable image digest remains unverified
   - `infra/k8s/hotels-sweep-cronjob.yaml` defines a `--once` CronJob with `concurrencyPolicy: Forbid`, `DB_URL` from a Secret and `suspend: true`
   - `infra/k8s/hotels-migrate-job.yaml` defines a separate `alembic upgrade head` Job with `DB_URL` from a Secret and `suspend: true`
-  - `backend/Dockerfile` image was built and runtime-verified locally: build exit 0, `import app.main` OK, uvicorn `/health` returned 200 on a migrated isolated DB
-  - plain `alembic upgrade head` executed inside the image container completed exit 0 up to `0041_add_community_trending_snapshots` on isolated SQLite
-  - `python -m app.worker.hotels_sweep --once --provider mock` inside the image container logged `hotel_sweep_cycle` completed with 3 items
+  - backend runtime was built and runtime-verified locally: build exit 0, `import app.main` OK, uvicorn `/health` returned 200 on a migrated isolated DB
+  - plain `alembic upgrade head` executed locally completed exit 0 up to `0041_add_community_trending_snapshots` on isolated SQLite
+  - `python -m app.worker.hotels_sweep --once --provider mock` executed locally logged `hotel_sweep_cycle` completed with 3 items
   - runtime gate fixes required by the image validation: `prepend_sys_path = .` in `backend/alembic.ini`; `httpx` moved from dev extras to core dependencies (app.main imports it at runtime); `JWT_SECRET` added to the CronJob and migration Job env from the runtime Secret
   - GHCR publication workflow prepared in `release.yml` (immutable `sha-<commit>` + `latest` tags, `packages: write`), runtime Secret template `infra/k8s/runtime-secret.example.yaml` and staging activation overlay `infra/k8s/overlays/staging/`; execution against a real registry/cluster remains unverified
   - image publication/digest, Secret/DB creation, real DB migration compatibility, provider approval and active scheduling remain unverified
