@@ -14,7 +14,7 @@ from typing import Iterator
 from unittest.mock import patch
 
 
-from sqlalchemy import and_, column, delete, func, inspect, or_, select, table, text, update
+from sqlalchemy import and_, column, delete, func, inspect, or_, select, table
 from sqlalchemy.orm import Session, sessionmaker
 
 # Support both ``python scripts/hotel_demo_seed.py`` and module/test imports.

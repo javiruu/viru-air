@@ -10,7 +10,6 @@ backend_dir = Path(__file__).resolve().parents[1]
 repo_root = backend_dir.parent
 sys.path.insert(0, str(backend_dir))
 
-import app.infrastructure.db.models as models
 from app.infrastructure.db.session import Base
 from sqlalchemy.dialects import postgresql
 

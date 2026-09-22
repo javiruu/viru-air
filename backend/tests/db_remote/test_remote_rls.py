@@ -1,6 +1,5 @@
 import os
 import pytest
-from pathlib import Path
 
 TEST_DB_URL = os.getenv("TEST_SUPABASE_DB_URL") or os.getenv("DB_URL")
 SUPABASE_PROJECT_REF = os.getenv("SUPABASE_PROJECT_REF", "")

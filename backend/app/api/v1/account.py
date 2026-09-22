@@ -5,7 +5,6 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
-from app.core.auth_errors import INVALID_AUTH
 from app.domain.schemas import PasswordChangeIn, ProfileUpdateIn
 from app.infrastructure.db.models import (
     AlertRule,

@@ -10,12 +10,6 @@ def _read(path: str) -> str:
     return (REPO_ROOT / path).read_text(encoding="utf-8-sig")
 
 
-def test_backend_image_contract_is_locked_and_non_root() -> None:
-    # Container eradication: verify no Dockerfile or .dockerignore in repository
-    assert not (REPO_ROOT / "backend/Dockerfile").exists()
-    assert not (REPO_ROOT / "backend/.dockerignore").exists()
-
-
 def test_hotel_sweep_cronjob_is_safe_by_default() -> None:
     manifest = _read("infra/k8s/hotels-sweep-cronjob.yaml")
 

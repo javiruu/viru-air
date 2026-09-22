@@ -3217,7 +3217,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
   function onEmptySearchValidation() {
     const detail = `${EMPTY_SEARCH_VALIDATION_MESSAGE}. Search query is required.`;
     setSearchState("error");
-    setSearchError(`${detail} / Por favor, introduce una bÃºsqueda.`);
+    setSearchError(`${detail} / Por favor, introduce una búsqueda.`);
     setOriginTouched(true);
     setDestinationTouched(true);
     setFieldErrors({
@@ -6563,7 +6563,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                         {formatFreshnessTime(globalFreshness.observedAt) ? (
                           <span>
                             {" "}
-                            Â· {t("lastData")}: {formatFreshnessTime(globalFreshness.observedAt)}
+                            · {t("lastData")}: {formatFreshnessTime(globalFreshness.observedAt)}
                           </span>
                         ) : null}
                       </p>
@@ -6583,7 +6583,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                                   (group) =>
                                     `${group.message}${group.count > 1 ? ` (${group.count})` : ""}`,
                                 )
-                                .join(" Â· ")}
+                                .join(" · ")}
                             </span>
                           </div>
                         ) : null}
@@ -6602,7 +6602,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                                   (group) =>
                                     `${group.message}${group.count > 1 ? ` (${group.count})` : ""}`,
                                 )
-                                .join(" Â· ")}
+                                .join(" · ")}
                             </span>
                           </div>
                         ) : null}

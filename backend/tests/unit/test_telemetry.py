@@ -1,7 +1,6 @@
 import pytest
 from app.core.telemetry import init_telemetry, trace_operation, get_tracer
 from app.core.request_context import set_correlation_id
-from opentelemetry.trace import StatusCode
 
 def test_telemetry_initialization():
     tracer = init_telemetry()

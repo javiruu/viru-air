@@ -1,4 +1,3 @@
-import json
 from app.main import app
 
 def audit():

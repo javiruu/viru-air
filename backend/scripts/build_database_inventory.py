@@ -10,7 +10,6 @@ backend_dir = Path(__file__).resolve().parents[1]
 repo_root = backend_dir.parent
 sys.path.insert(0, str(backend_dir))
 
-import app.infrastructure.db.models as models
 from app.infrastructure.db.session import Base
 from sqlalchemy.dialects import postgresql
 
@@ -74,10 +73,10 @@ for root, dirs, files in os.walk(repo_root):
 rev_files = sorted(glob.glob(str(backend_dir / "alembic" / "versions" / "*.py")))
 for rf in rev_files:
     content = Path(rf).read_text(encoding='utf-8', errors='ignore')
-    rev_match = re.search(r"^revisions*[:=]s*['"]([^'"]+)['"]", content, re.M)
-    down_match = re.search(r"^down_revisions*[:=]s*['"]?([^'"\n,]+)['"]?", content, re.M)
-    branch_match = re.search(r"^branch_labelss*[:=]s*(.+)$", content, re.M)
-    depends_match = re.search(r"^depends_ons*[:=]s*(.+)$", content, re.M)
+    rev_match = re.search(r"^revision\s*[:=]\s*['\"]([^'\"]+)['\"]", content, re.M)
+    down_match = re.search(r"^down_revision\s*[:=]\s*['\"]?([^'\"\n,]+)['\"]?", content, re.M)
+    branch_match = re.search(r"^branch_labels\s*[:=]\s*(.+)$", content, re.M)
+    depends_match = re.search(r"^depends_on\s*[:=]\s*(.+)$", content, re.M)
     
     rev_id = rev_match.group(1) if rev_match else "unknown"
     down_rev = down_match.group(1) if down_match else None
@@ -151,21 +150,21 @@ for table in Base.metadata.sorted_tables:
 # 6. Extensions / Triggers / Functions in supabase/migrations
 for mf in inventory["supabase_migration_files"]:
     sql = (sb_dir / mf["name"]).read_text(encoding='utf-8', errors='ignore')
-    ext_matches = re.findall(r'CREATE EXTENSION IF NOT EXISTS ["']?([a-zA-Z0-9_-]+)["']?', sql, re.I)
+    ext_matches = re.findall(r'CREATE EXTENSION IF NOT EXISTS ["\']?([a-zA-Z0-9_-]+)["\']?', sql, re.I)
     for ext in set(ext_matches):
         inventory["database_extensions_triggers_functions"].append({
             "kind": "extension",
             "name": ext,
             "defined_in": mf["name"]
         })
-    func_matches = re.findall(r'CREATE (?:OR REPLACE )?FUNCTION ["']?([a-zA-Z0-9_.]+)["']?', sql, re.I)
+    func_matches = re.findall(r'CREATE (?:OR REPLACE )?FUNCTION ["\']?([a-zA-Z0-9_.]+)["\']?', sql, re.I)
     for fn in set(func_matches):
         inventory["database_extensions_triggers_functions"].append({
             "kind": "function",
             "name": fn,
             "defined_in": mf["name"]
         })
-    trig_matches = re.findall(r'CREATE TRIGGER ["']?([a-zA-Z0-9_.]+)["']?', sql, re.I)
+    trig_matches = re.findall(r'CREATE TRIGGER ["\']?([a-zA-Z0-9_.]+)["\']?', sql, re.I)
     for tr in set(trig_matches):
         inventory["database_extensions_triggers_functions"].append({
             "kind": "trigger",

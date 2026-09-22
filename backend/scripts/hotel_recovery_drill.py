@@ -12,6 +12,9 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+from alembic.config import Config
+from alembic.script import ScriptDirectory
+
 
 # Support both ``python scripts/hotel_recovery_drill.py`` and module/test imports.
 _BACKEND_ROOT = Path(__file__).resolve().parents[1]

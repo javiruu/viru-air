@@ -1,5 +1,4 @@
 from pathlib import Path
-import pytest
 from app.infrastructure.db.models import Base
 
 REPO_ROOT = Path(__file__).resolve().parents[3]

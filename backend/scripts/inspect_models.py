@@ -1,4 +1,3 @@
-import os
 import sys
 import json
 from pathlib import Path
@@ -6,8 +5,7 @@ from pathlib import Path
 backend_dir = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(backend_dir))
 
-import app.infrastructure.db.models as models
-from app.infrastructure.db.session import Base, DB_URL
+from app.infrastructure.db.session import Base
 
 tables_info = {}
 for name, table in Base.metadata.tables.items():
