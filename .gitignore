@@ -119,3 +119,7 @@ viru-post-migration-audit/
 
 # Third-party repo accidentally copied in (removed from git; keep untracked)
 skills/remodex/
+
+# Tokens de QA / sesiones locales (no commitear nunca)
+qa_token*.txt
+cookie_expr.txt
