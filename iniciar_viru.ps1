@@ -7,9 +7,10 @@ $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $runBackground = -not $Foreground
 $backendDir = Join-Path $root "backend"
 $backendPython = Join-Path $root "backend\.venv\Scripts\python.exe"
-$backendDbPath = Join-Path $backendDir "viru.db"
-$backendDbUrl = "sqlite:///$($backendDbPath.Replace('\', '/'))"
 $backendEnvFile = Join-Path $backendDir ".env"
+
+# DB_URL ya no se fuerza aquí: se toma de backend/.env (Supabase nativo).
+# Ver docs/runbooks/runbook-supabase-native.md.
 
 function Invoke-PythonCommand {
   param(
@@ -457,29 +458,39 @@ if (Test-Path $backendEnvFile) {
 }
 
 if ([string]::IsNullOrWhiteSpace($jwtSecret) -or $jwtSecret -eq "change-me") {
-  $bytes = New-Object byte[] 48
-  $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
-  $rng.GetBytes($bytes)
-  $rng.Dispose()
-  $jwtSecret = [Convert]::ToBase64String($bytes).TrimEnd("=").Replace("+", "-").Replace("/", "_")
+  # No sobrescribir backend/.env si ya existe (puede contener la config nativa de
+  # Supabase: SUPABASE_URL, DB_URL del pooler, etc.). Solo generar la plantilla
+  # legacy si el fichero no existe. Ver docs/runbooks/runbook-supabase-native.md.
+  if (-not (Test-Path $backendEnvFile)) {
+    $bytes = New-Object byte[] 48
+    $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    $rng.GetBytes($bytes)
+    $rng.Dispose()
+    $jwtSecret = [Convert]::ToBase64String($bytes).TrimEnd("=").Replace("+", "-").Replace("/", "_")
 
-  $envContent = @"
+    $envContent = @"
 DB_URL=sqlite:///./viru.db
 JWT_SECRET=$jwtSecret
 JWT_ALG=HS256
 ACCESS_TOKEN_MINUTES=30
 APP_ENV=local
 "@
-  Set-Content -Path $backendEnvFile -Value $envContent -Encoding UTF8
-  Write-Host "Se genero backend/.env con un JWT_SECRET seguro para desarrollo local."
+    Set-Content -Path $backendEnvFile -Value $envContent -Encoding UTF8
+    Write-Host "Se genero backend/.env con una plantilla local (SQLite). Para el setup nativo de Supabase sigue docs/runbooks/runbook-supabase-native.md."
+  } else {
+    Write-Host "backend/.env ya existe; no se sobrescribe."
+  }
 }
 
 Set-ProcessEnvFromDotEnv -Path $backendEnvFile
 $env:JWT_SECRET = $jwtSecret
-$env:DB_URL = $backendDbUrl
 $env:PYTHONUNBUFFERED = "1"
+# DB_URL llega desde backend/.env via Set-ProcessEnvFromDotEnv (Supabase pooler o sqlite local).
+if ([string]::IsNullOrWhiteSpace($env:DB_URL)) {
+  Write-Host "AVISO: DB_URL no esta definida en backend/.env; el backend no arrancara."
+}
 
-Write-Host "Base de datos: SQLite local de desarrollo (viru.db). Produccion usa Supabase PostgreSQL (esquema gobernado por supabase/migrations/)."
+Write-Host "Base de datos: $($env:DB_URL -replace ':[^:@/]+@', ':***@')"
 # Logs (timestamped, no overwrite)
 $logsDir = Join-Path $root "logs"
 New-Item -ItemType Directory -Force -Path $logsDir | Out-Null
@@ -549,10 +560,10 @@ if ($runBackground) {
   # Backend (modo foreground en nueva ventana)
   $uvicornReloadArg = if ($uvicornWorkers -gt 1) { "" } else { "--reload" }
   $uvicornWorkersArg = if ($uvicornWorkers -gt 1) { "--workers $uvicornWorkers" } else { "" }
-  $backendCmd = "title Viru Backend && cd /d `"$root\backend`" && set LOG_FILE=$backendLog && set DB_URL=$backendDbUrl && `"$backendPython`" -m uvicorn app.main:app --host 127.0.0.1 --port 8000 $uvicornReloadArg $uvicornWorkersArg"
+  $backendCmd = "title Viru Backend && cd /d `"$root\backend`" && set LOG_FILE=$backendLog && `"$backendPython`" -m uvicorn app.main:app --host 127.0.0.1 --port 8000 $uvicornReloadArg $uvicornWorkersArg"
   Start-Process -FilePath "cmd.exe" -ArgumentList "/k", $backendCmd | Out-Null
 
-  $revalidationWorkerCmd = "title Viru Revalidation && cd /d `"$root\backend`" && set DB_URL=$backendDbUrl && `"$backendPython`" -m app.services.revalidation_worker_entrypoint"
+  $revalidationWorkerCmd = "title Viru Revalidation && cd /d `"$root\backend`" && `"$backendPython`" -m app.services.revalidation_worker_entrypoint"
   Start-Process -FilePath "cmd.exe" -ArgumentList "/k", $revalidationWorkerCmd | Out-Null
 
   # Frontend (modo foreground en nueva ventana)
@@ -573,7 +584,7 @@ try {
   Write-Host "Estabilizando backend tras arranque (3s)..."
   Start-Sleep -Seconds 3
   Write-Host "Backend estabilizado."
-  Write-Host "DB_URL:" $backendDbUrl
+  Write-Host "DB_URL: $($env:DB_URL -replace ':[^:@/]+@', ':***@')"
   Write-Host "Backend log:" $backendLog
   Write-Host "Backend err log:" $backendErrLog
   Write-Host "Worker log:" $revalidationWorkerLog
