@@ -74,10 +74,10 @@ Total de endpoints registrados: **155** (151 API + 4 documentación/OpenAPI).
 
 ## 3. Inventario de Persistencia
 
-- **Driver / ORM:** SQLAlchemy 2.0.36 + Alembic 1.14.0.
+- **Driver / ORM:** SQLAlchemy 2.0.36 (sin Alembic: retirado según ADR 0003).
 - **Motores Soportados:**
   - Desarrollo local / tests: SQLite (`viru.db`, `viru_local.db`, DBs en memoria en tests).
-  - Producción: PostgreSQL (con driver binario `psycopg` v3).
+  - Producción: Supabase PostgreSQL vía pooler de sesión (`psycopg` v3, `sslmode=require`). Ver `docs/runbooks/runbook-supabase-native.md`.
 - **Tablas Mapeadas (62 tablas):**
   - *Usuarios y Sesiones (6):* `users`, `user_profile`, `user_session`, `refresh_token`, `password_reset_token`, `security_activity`.
   - *Preferencias y Personalización (3):* `user_preference`, `user_preference_appearance`, `user_preference_region`.
@@ -177,7 +177,7 @@ Total de endpoints registrados: **155** (151 API + 4 documentación/OpenAPI).
 | Componente / Dominio | Clasificación | Justificación y Plan |
 |---|---|---|
 | Esquemas Pydantic (`domain/schemas.py`) | **KEEP** | Base sólida y validada para la generación de OpenAPI. |
-| Migraciones Alembic (`alembic/versions`) | **KEEP** | Historial limpio y reproducible de 62 tablas. |
+| Migraciones Alembic (`alembic/versions`) | **RETIRED** | Retirado (ADR 0003); autoridad de esquema: `supabase/migrations/` + `create_all`/`schema_compat.py`. |
 | Scrapers y conectores de aerolíneas | **KEEP** | Lógica de negocio esencial y probada con singleflight y resiliencia. |
 | Catálogo maestro de aeropuertos | **KEEP** | Base de datos geoespacial validada y optimizada para autocompletado. |
 | Sistema de i18n (@/i18n) | **KEEP** | Estructura bilingüe centralizada sin mojibake. |

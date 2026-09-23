@@ -1,213 +1,75 @@
--- Enable Row Level Security (RLS) on all user-scoped tables
--- Policy: Authenticated users can only access their own data via auth.uid()
--- Backend services / workers using service_role have full access
+-- Canonical security posture of viru-air (Supabase-native, see
+-- docs/runbooks/runbook-supabase-native.md — source of truth):
+--
+--   * Row Level Security is DISABLED on every application table in `public`.
+--   * `anon` and `authenticated` hold ZERO privileges on `public` (Data API
+--     is effectively read/write-denied; verified live: rest/v1 responds
+--     `permission denied`).
+--   * The FastAPI backend, connecting as the dedicated role `viru_app`
+--     through the session pooler, is the ONLY write/read path and owns all
+--     authorization logic (`get_current_user`, `require_admin`).
+--
+-- HISTORY: this migration previously ENABLED RLS with `auth.uid()` policies
+-- for `authenticated`. That posture was never applied to the hosted project
+-- and contradicts the runbook; enabling RLS would break every backend insert
+-- (`viru_app` is not `authenticated` and PostgREST access is not used). This
+-- file is now a GUARD: re-running it (or any `supabase db push`) restores the
+-- canonical posture instead of enabling RLS. Do not re-add policies here; if
+-- PostgREST access is ever needed, design it deliberately with new policies
+-- and update the runbook first.
 
-ALTER TABLE public.client_error_event ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own client_error_event" ON public.client_error_event;
-CREATE POLICY "Users own client_error_event" ON public.client_error_event
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
+-- ---------------------------------------------------------------------------
+-- 1. Ensure RLS is disabled on all user-facing application tables.
+--    (No-op for tables already in the canonical state.)
+-- ---------------------------------------------------------------------------
+DO $$
+DECLARE
+    t record;
+BEGIN
+    FOR t IN
+        SELECT tablename FROM pg_tables
+        WHERE schemaname = 'public'
+          AND rowsecurity = true
+    LOOP
+        RAISE NOTICE 'Disabling RLS on %.%', 'public', t.tablename;
+        EXECUTE format('ALTER TABLE public.%I DISABLE ROW LEVEL SECURITY', t.tablename);
+    END LOOP;
+END $$;
 
-ALTER TABLE public.community_price_report ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own community_price_report" ON public.community_price_report;
-CREATE POLICY "Users own community_price_report" ON public.community_price_report
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
+-- ---------------------------------------------------------------------------
+-- 2. Revoke every table/sequence privilege from the Data API roles.
+--    (Idempotent: revoking something not granted is a no-op.)
+-- ---------------------------------------------------------------------------
+DO $$
+DECLARE
+    r text;
+BEGIN
+    FOREACH r IN ARRAY ARRAY['anon', 'authenticated']
+    LOOP
+        EXECUTE format(
+            'REVOKE ALL ON ALL TABLES IN SCHEMA public FROM %I', r);
+        EXECUTE format(
+            'REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM %I', r);
+        EXECUTE format(
+            'REVOKE ALL ON SCHEMA public FROM %I', r);
+        EXECUTE format(
+            'REVOKE USAGE ON SCHEMA public FROM %I', r);
+    END LOOP;
+END $$;
 
-ALTER TABLE public.door_to_door_chosen_option ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own door_to_door_chosen_option" ON public.door_to_door_chosen_option;
-CREATE POLICY "Users own door_to_door_chosen_option" ON public.door_to_door_chosen_option
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.door_to_door_saved_location ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own door_to_door_saved_location" ON public.door_to_door_saved_location;
-CREATE POLICY "Users own door_to_door_saved_location" ON public.door_to_door_saved_location
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.door_to_door_saved_place ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own door_to_door_saved_place" ON public.door_to_door_saved_place;
-CREATE POLICY "Users own door_to_door_saved_place" ON public.door_to_door_saved_place
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.door_to_door_search_history ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own door_to_door_search_history" ON public.door_to_door_search_history;
-CREATE POLICY "Users own door_to_door_search_history" ON public.door_to_door_search_history
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.flight_watch ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own flight_watch" ON public.flight_watch;
-CREATE POLICY "Users own flight_watch" ON public.flight_watch
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.hotel_alert_event ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own hotel_alert_event" ON public.hotel_alert_event;
-CREATE POLICY "Users own hotel_alert_event" ON public.hotel_alert_event
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.hotel_alert_rule ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own hotel_alert_rule" ON public.hotel_alert_rule;
-CREATE POLICY "Users own hotel_alert_rule" ON public.hotel_alert_rule
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.hotel_comp_set ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own hotel_comp_set" ON public.hotel_comp_set;
-CREATE POLICY "Users own hotel_comp_set" ON public.hotel_comp_set
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.hotel_notification_delivery ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own hotel_notification_delivery" ON public.hotel_notification_delivery;
-CREATE POLICY "Users own hotel_notification_delivery" ON public.hotel_notification_delivery
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = recipient_user_id::text)
-    WITH CHECK ((auth.uid())::text = recipient_user_id::text);
-
-ALTER TABLE public.hotel_saved_search ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own hotel_saved_search" ON public.hotel_saved_search;
-CREATE POLICY "Users own hotel_saved_search" ON public.hotel_saved_search
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.hotel_tracked_offer ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own hotel_tracked_offer" ON public.hotel_tracked_offer;
-CREATE POLICY "Users own hotel_tracked_offer" ON public.hotel_tracked_offer
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.hotel_tracked_offer_lifecycle_event ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own hotel_tracked_offer_lifecycle_event" ON public.hotel_tracked_offer_lifecycle_event;
-CREATE POLICY "Users own hotel_tracked_offer_lifecycle_event" ON public.hotel_tracked_offer_lifecycle_event
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.hotel_user_stay_watch ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own hotel_user_stay_watch" ON public.hotel_user_stay_watch;
-CREATE POLICY "Users own hotel_user_stay_watch" ON public.hotel_user_stay_watch
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.hotel_watchlist_item ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own hotel_watchlist_item" ON public.hotel_watchlist_item;
-CREATE POLICY "Users own hotel_watchlist_item" ON public.hotel_watchlist_item
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.idempotency_record ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own idempotency_record" ON public.idempotency_record;
-CREATE POLICY "Users own idempotency_record" ON public.idempotency_record
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.password_reset_token ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own password_reset_token" ON public.password_reset_token;
-CREATE POLICY "Users own password_reset_token" ON public.password_reset_token
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.refresh_token ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own refresh_token" ON public.refresh_token;
-CREATE POLICY "Users own refresh_token" ON public.refresh_token
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.security_activity ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own security_activity" ON public.security_activity;
-CREATE POLICY "Users own security_activity" ON public.security_activity
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.suggestion ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own suggestion" ON public.suggestion;
-CREATE POLICY "Users own suggestion" ON public.suggestion
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.support_feedback ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own support_feedback" ON public.support_feedback;
-CREATE POLICY "Users own support_feedback" ON public.support_feedback
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.user_note ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own user_note" ON public.user_note;
-CREATE POLICY "Users own user_note" ON public.user_note
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.user_notification_state ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own user_notification_state" ON public.user_notification_state;
-CREATE POLICY "Users own user_notification_state" ON public.user_notification_state
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.user_preference ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own user_preference" ON public.user_preference;
-CREATE POLICY "Users own user_preference" ON public.user_preference
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.user_preference_appearance ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own user_preference_appearance" ON public.user_preference_appearance;
-CREATE POLICY "Users own user_preference_appearance" ON public.user_preference_appearance
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.user_preference_region ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own user_preference_region" ON public.user_preference_region;
-CREATE POLICY "Users own user_preference_region" ON public.user_preference_region
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.user_profile ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own user_profile" ON public.user_profile;
-CREATE POLICY "Users own user_profile" ON public.user_profile
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.user_session ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own user_session" ON public.user_session;
-CREATE POLICY "Users own user_session" ON public.user_session
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
-
-ALTER TABLE public.ux_event ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users own ux_event" ON public.ux_event;
-CREATE POLICY "Users own ux_event" ON public.ux_event
-    FOR ALL TO authenticated
-    USING ((auth.uid())::text = user_id::text)
-    WITH CHECK ((auth.uid())::text = user_id::text);
+-- ---------------------------------------------------------------------------
+-- 3. Ensure the backend role owns the canonical grants.
+--    (`viru_app` must exist; created once via the Management API/SQL editor —
+--    see the runbook for the exact statements. Skipped gracefully here if the
+--    role is absent so the migration also works on pristine local stacks.)
+-- ---------------------------------------------------------------------------
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'viru_app') THEN
+        EXECUTE 'GRANT USAGE ON SCHEMA public TO viru_app';
+        EXECUTE 'GRANT ALL ON ALL TABLES IN SCHEMA public TO viru_app';
+        EXECUTE 'GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO viru_app';
+    ELSE
+        RAISE NOTICE 'Role viru_app not found; grants skipped (create it per runbook)';
+    END IF;
+END $$;

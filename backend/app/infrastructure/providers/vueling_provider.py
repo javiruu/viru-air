@@ -138,6 +138,9 @@ class VuelingProvider(FlightProvider):
             timeout_ms=timeout_ms,
             token=token,
         )
+        # 204/empty body means "no sellable availability for this pair/date":
+        # normalize to an empty list so the caller records provider_empty_result
+        # instead of a total outage.
         return payload if isinstance(payload, list) else []
 
     def _post_json(self, url: str, *, json_body: dict, timeout_ms: int, token: str | None = None):
@@ -153,6 +156,16 @@ class VuelingProvider(FlightProvider):
             headers["Authorization"] = f"Bearer {token}"
         response = self._session.post(url, json=json_body, timeout=max(2.0, timeout_ms / 1000), headers=headers)
         response.raise_for_status()
+        # Vueling answers 204 No Content (and sometimes 200 with an empty body)
+        # for dates with no sellable availability (past dates, dates beyond the
+        # sellable window, or pairs the AMS API does not price). That is a
+        # legitimate empty result, not an outage: parsing an empty body as JSON
+        # raised JSONDecodeError and misclassified the pair as a provider total
+        # outage ("Vueling no respondio...").
+        status = getattr(response, "status_code", None)
+        raw_body = (response.text or "").strip()
+        if status == 204 or not raw_body:
+            return None
         try:
             return response.json()
         except ValueError as exc:

@@ -35,18 +35,15 @@ Related: docs/INDICE_UNICO.md, README.md
 - `docs/product/`: resúmenes funcionales por área de producto.
 - `docs/engineering/`: resúmenes técnicos por capa.
 - `docs/runbooks/`: operación y respuesta ante incidentes.
-- `docs/qa/`: checklists, reportes y referencias QA reutilizables.
+- `docs/qa/`: checklists, reportes y referencias QA reutilizables (evidencia binaria solo de runs vigentes; los reruns históricos se purgaron el 2026-09-23).
 - `docs/plans/`: planes activos y completados.
 - `HISTORY.md`: historial resumido de cambios relevantes.
 
 ## Archivo histórico
 
-- `docs/archive/fases/`: originales `.docx` y transcripciones de las fases 1-10.
-- `docs/archive/qa/`: evidencia de QA por fecha y por iniciativa.
-- `docs/archive/prompts/`: prompts operativos antiguos.
-- `docs/archive/tooling/`: reportes de Testsprite y salidas visuales.
-- `docs/archive/root-legacy/`: restos históricos que antes vivían en la raíz.
-- `docs/archive/duplicated/`: copias de seguridad de documentos reubicados.
+- `docs/archive/qa-reports/`: reportes QA de ciclos cerrados.
+- `docs/archive/plans/`, `docs/archive/reports/`, `docs/archive/migration-era/`: material histórico.
+- Nota: las carpetas pesadas (`qa-visual`, `qa-evidence`, `qa-screenshots`, `qa-snapshots`, `duplicated`, `fases`, `prompts`, `old-reports`, `extracted-txt`) se purgaron el 2026-09-23 con aprobación del usuario.
 
 ## Qué esperar en la raíz
 

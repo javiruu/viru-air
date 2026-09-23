@@ -146,7 +146,7 @@ When creating or editing test data:
 
 If stable project fixtures already exist, prefer using them over inventing new large fixtures.
 
-Do not modify `users_prueba.txt` unless the user explicitly asks and the impact is understood.
+`users_prueba.txt` was removed on 2026-09-23 with user approval. Do not recreate it; use the backend seed users (`RUN_SEED_USERS=true`) for local test credentials.
 
 ---
 

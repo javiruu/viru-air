@@ -103,7 +103,7 @@ Never treat these as project documentation:
 - secrets;
 - private user data.
 
-`users_prueba.txt` is intentional project data, not documentation. Do not delete it, rewrite it, cite it as docs, or treat its presence as an error unless the user explicitly asks.
+`users_prueba.txt` was removed on 2026-09-23 with user approval. Do not recreate it, cite it as docs, or treat its absence as an error.
 
 Do not create or preserve documentation that exposes secrets, API keys, tokens, credentials, private user data, production dumps, or security-sensitive details that do not belong in repo docs.
 

@@ -1,24 +1,24 @@
-# Documentación de Viru Air
+# Documentaciï¿½n de Viru Air
 
 **Estado:** vivo  
-**Última revisión:** 2026-09-22
-**Fuente de verdad:** sí  
-**Área:** documentación
+**ï¿½ltima revisiï¿½n:** 2026-09-22
+**Fuente de verdad:** sï¿½  
+**ï¿½rea:** documentaciï¿½n
 
 ## Resumen
 
 `docs/` es el centro documental del proyecto. La regla general es simple:
 
-- la documentación viva debe vivir aquí, cerca de su dominio;
-- `docs/archive/` conserva histórico y trazabilidad;
+- la documentaciï¿½n viva debe vivir aquï¿½, cerca de su dominio;
+- `docs/archive/` conserva histï¿½rico y trazabilidad;
 - los prompts y contexto IA se documentan sin competir con `AGENTS.md`;
 - las evidencias pesadas se guardan separadas de las specs y de la referencia viva.
 
-## Cómo navegar esta carpeta
+## Cï¿½mo navegar esta carpeta
 
 Empieza por:
 
-1. [Indice único](INDICE_UNICO.md)
+1. [Indice ï¿½nico](INDICE_UNICO.md)
 2. [Overview del proyecto](overview/project-overview.md)
 3. [Estado actual](overview/current-state.md)
 4. [Mapa del repo](overview/repo-map.md)
@@ -27,80 +27,80 @@ Login, Supabase, base de datos, JWT o conectividad local del API? Lee primero el
 [Runbook Supabase nativo](runbooks/runbook-supabase-native.md) y la
 [matriz de variables de entorno](architecture/environment.md).
 
-## Qué carpetas importan
+## Quï¿½ carpetas importan
 
-- `overview/`: reentrada rápida, estado actual y mapas de navegación.
-- `product/`: resúmenes funcionales por área de producto.
-- `engineering/`: resúmenes técnicos por capa.
-- `reference/`: contratos y referencias técnicas activas.
+- `overview/`: reentrada rï¿½pida, estado actual y mapas de navegaciï¿½n.
+- `product/`: resï¿½menes funcionales por ï¿½rea de producto.
+- `engineering/`: resï¿½menes tï¿½cnicos por capa.
+- `reference/`: contratos y referencias tï¿½cnicas activas.
 - `specs/`: especificaciones vivas.
 - `ui/`: sistema visual y contrato UI.
-- `runbooks/`: operación y respuesta.
+- `runbooks/`: operaciï¿½n y respuesta.
 - `qa/`: QA reutilizable, evidencias activas y capturas vivas.
 - `adr/`: decisiones de arquitectura.
 - `plans/`: planes de trabajo; no son fuente de verdad de producto.
 - `prompts/`: material para agentes y prompts antiguos organizados.
-- `reports/`: auditorías y reportes de saneamiento/documentación.
-- `archive/`: histórico. No es fuente de verdad activa.
+- `reports/`: auditorï¿½as y reportes de saneamiento/documentaciï¿½n.
+- `archive/`: histï¿½rico. No es fuente de verdad activa.
 
-## Documentación viva vs histórica
+## Documentaciï¿½n viva vs histï¿½rica
 
-Documentación viva:
+Documentaciï¿½n viva:
 
 - describe comportamiento actual o proceso vigente;
-- se enlaza desde `README.md`, `INDICE_UNICO.md` o docs por área;
+- se enlaza desde `README.md`, `INDICE_UNICO.md` o docs por ï¿½rea;
 - tiene una fuente de verdad identificable;
-- evita logs, dumps y reportes de una sola sesión.
+- evita logs, dumps y reportes de una sola sesiï¿½n.
 
-Documentación histórica:
+Documentaciï¿½n histï¿½rica:
 
 - conserva decisiones antiguas, fases, reportes cerrados o prompts legacy;
-- puede contradecir la documentación viva;
+- puede contradecir la documentaciï¿½n viva;
 - debe vivir en `docs/archive/` o en `docs/prompts/legacy/`.
 
-## Cómo decidir dónde añadir una nueva doc
+## Cï¿½mo decidir dï¿½nde aï¿½adir una nueva doc
 
-- `product/`: visión funcional, flujos, comportamiento visible.
-- `engineering/`: capa técnica resumida por dominio.
+- `product/`: visiï¿½n funcional, flujos, comportamiento visible.
+- `engineering/`: capa tï¿½cnica resumida por dominio.
 - `reference/`: contratos o tablas de referencia activas.
-- `specs/`: requisitos de implementación todavía vigentes.
-- `runbooks/`: operación, recuperación, despliegue, validación.
-- `qa/`: checklists vivas, catálogos TestSprite, evidencia ligera y reportes útiles.
+- `specs/`: requisitos de implementaciï¿½n todavï¿½a vigentes.
+- `runbooks/`: operaciï¿½n, recuperaciï¿½n, despliegue, validaciï¿½n.
+- `qa/`: checklists vivas, catï¿½logos TestSprite, evidencia ligera y reportes ï¿½tiles.
 - `adr/`: decisiones de arquitectura ya tomadas.
 - `plans/`: trabajo pendiente o completado, pero no normativa viva.
 - `prompts/`: prompts y contexto IA.
-- `archive/`: histórico o duplicado preservado.
+- `archive/`: histï¿½rico o duplicado preservado.
 
 ## Convenciones
 
 - Usa `kebab-case` para nuevos documentos.
-- Mantén `README.md`, `AGENTS.md` y ADRs con sus convenciones propias.
-- Cada doc viva debe incluir estado, fecha, fuente de verdad y área.
-- Si un documento consolida otros, añade una sección `Fuentes consolidadas`.
+- Mantï¿½n `README.md`, `AGENTS.md` y ADRs con sus convenciones propias.
+- Cada doc viva debe incluir estado, fecha, fuente de verdad y ï¿½rea.
+- Si un documento consolida otros, aï¿½ade una secciï¿½n `Fuentes consolidadas`.
 
-## Cómo tratar evidencias pesadas
+## Cï¿½mo tratar evidencias pesadas
 
 - Las capturas, snapshots y reportes JSON no deben mezclarse con specs.
 - Evidencia activa y ligera: `docs/qa/visual/`, `docs/qa/reports/`, `docs/qa/evidence/`.
-- Evidencia histórica o de ciclos cerrados: `docs/archive/qa-reports/`, `docs/archive/qa-evidence/`, `docs/archive/qa-screenshots/`, `docs/archive/qa-snapshots/` o `docs/archive/qa-visual/`.
+- Evidencia histÃ³rica o de ciclos cerrados: `docs/archive/qa-reports/`. Las carpetas histÃ³ricas pesadas (`qa-evidence`, `qa-screenshots`, `qa-snapshots`, `qa-visual`) se purgaron el 2026-09-23 con aprobaciÃ³n del usuario.
 
-## Cómo tratar prompts antiguos
+## Cï¿½mo tratar prompts antiguos
 
 - `AGENTS.md` es el contrato operativo principal para agentes.
 - `docs/reference/codex-operating-contract.md` complementa reglas persistentes.
 - Los prompts antiguos deben vivir en `docs/prompts/legacy/`.
 
-## Cómo mantener el inventario
+## Cï¿½mo mantener el inventario
 
 - Cada cambio documental relevante debe reflejarse en [DOCS_INVENTORY.md](DOCS_INVENTORY.md).
-- Si se mueve una fuente de verdad, actualiza también:
+- Si se mueve una fuente de verdad, actualiza tambiï¿½n:
   - `README.md`
   - `docs/INDICE_UNICO.md`
   - la doc relacionada por dominio
 
 ## Relacionado
 
-- [README raíz](../README.md)
-- [Indice único](INDICE_UNICO.md)
+- [README raï¿½z](../README.md)
+- [Indice ï¿½nico](INDICE_UNICO.md)
 - [Inventario documental](DOCS_INVENTORY.md)
-- [Archivo histórico](archive/)
+- [Archivo histï¿½rico](archive/)

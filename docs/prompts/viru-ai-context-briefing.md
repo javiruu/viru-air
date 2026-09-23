@@ -49,7 +49,7 @@ Estas viven en AGENTS.md, frontend/AGENTS.md, tests/AGENTS.md y DESIGN.md. Cualq
 
 - Repo canonico = C:\Users\javiru\Desktop\viru-tracker. No uses _publish_repo, ni crees mirrors, ni empujes desde otro lado.
 - Default: commits directos a main. No crear ramas ni PRs salvo que el usuario lo pida.
-- users_prueba.txt es un archivo intencional del proyecto. No tocar.
+- users_prueba.txt fue eliminado el 2026-09-23 con aprobacion del usuario. No recrearlo; los usuarios de prueba los crea el backend con RUN_SEED_USERS=true.
 - No uses la guia de diseno para justificar cambios de logica, rutas o contratos.
 - Cambios visuales sin pedirlo: no introduzcas dependencias, no reescribas pantallas completas, no redishenes areas no relacionadas, no inventes paletas paralelas, no uses shadcn/ui si no lo piden, no sustituyas el caracter calido por UI generica.
 - Verificacion: nada de  should be fixed o looks fine. Si es visible, exige captura real. Si es logico, exige test que falle antes y pase despues.
@@ -253,10 +253,10 @@ FlightWatch, PriceSnapshot, AlertRule, NotificationEvent, UserNotificationState,
 
 ### Stack
 
-- Backend: FastAPI + SQLAlchemy + Alembic. PostgreSQL como objetivo, SQLite para arranque local.
+- Backend: FastAPI + SQLAlchemy (sin Alembic). Supabase PostgreSQL vía pooler de sesión; SQLite para arranque local/tests.
 - Frontend: Next.js 15 + React 19 + TypeScript.
 - Package manager: npm (frontend/package-lock.json).
-- Datos sensibles y secretos: JWT_SECRET obligatorio, no puede ser change-me. Alembic gestiona esquema; no se ejecuta bootstrap global en runtime.
+- Datos sensibles y secretos: en modo Supabase hosted basta `SUPABASE_URL` (verificación ES256/JWKS; sin secret HS256). `JWT_SECRET` solo como fallback local de tests. Esquema vía `create_all` + `supabase/migrations/`; ver `docs/runbooks/runbook-supabase-native.md`.
 
 ---
 
@@ -347,7 +347,7 @@ docs/archive/ conserva historico y trazabilidad; NO es fuente de verdad activa.
 
 _publish_repo, node_modules, .venv, venv, .next, caches, logs, test outputs, generated files, snapshots, dependency docs, local artifacts.
 
-users_prueba.txt no es documentacion, pero se conserva intencionalmente.
+users_prueba.txt fue eliminado intencionalmente el 2026-09-23 (limpieza aprobada); no recrearlo.
 
 ### Preferencia de documentos
 
@@ -371,7 +371,7 @@ Preferir los marcados como Estado: vivo y Fuente de verdad: si.
 - Diff grande cuando un fix pequeno y verificado basta.
 - Cambiar estado, logica, rutas o contratos para encajar con una regla visual.
 - Introducir una dependencia nueva para un retoque visual menor.
-- Tocar users_prueba.txt.
+- Recrear users_prueba.txt (eliminado el 2026-09-23 con aprobacion del usuario).
 
 ---
 
@@ -381,7 +381,7 @@ Preferir los marcados como Estado: vivo y Fuente de verdad: si.
 | --- | --- |
 | Producto | Vuelo + watchlist + historico + alertas. Cabina viva, calida, aeronautica. |
 | Identidad | No generic SaaS. Dual-theme (Aviation Dark-Luxe + day-light). |
-| Reglas duras | Repo canonico, commits a main, sin _publish_repo, sin tocar users_prueba.txt. |
+| Reglas duras | Repo canonico, commits a main, sin _publish_repo, sin recrear users_prueba.txt (eliminado 2026-09-23). |
 | Tipografia | Playfair Display (identidad) + IBM Plex Sans (cuerpo) + mono (datos). |
 | Acento | #d95d39 (terracota). Estados: #2e6e62 ok, #cd9a56 warn, #4f7fa6 info. |
 | Tokens | frontend/src/styles/tokens.css + screens.css. No inventar valores. |

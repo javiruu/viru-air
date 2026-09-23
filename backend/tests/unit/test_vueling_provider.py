@@ -9,6 +9,8 @@ from app.infrastructure.providers.vueling_provider import RequestsError, Vueling
 class _FakeResponse:
     def __init__(self, payload):
         self._payload = payload
+        self.status_code = 200
+        self.text = "stub-body"
 
     def raise_for_status(self) -> None:
         return None
@@ -235,3 +237,34 @@ def test_get_flights_raises_canonical_outage_when_availability_response_is_not_j
     assert exc_info.value.provider_id == "vueling"
     assert "vueling_provider_unavailable_total" in exc_info.value.warning_codes
     assert "provider_total_outage" in exc_info.value.warning_codes
+
+
+def test_get_flights_treats_204_no_content_as_empty_result(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Regression: Vueling answers 204 No Content for dates with no sellable
+    availability (past dates, beyond the sellable window). The empty body is a
+    legitimate empty result, not a provider total outage."""
+
+    class _NoContentResponse(_FakeResponse):
+        def __init__(self) -> None:
+            super().__init__(None)
+            self.status_code = 204
+            self.text = ""
+
+        def json(self):  # pragma: no cover - must not be reached
+            raise json.JSONDecodeError("Expecting value", "", 0)
+
+    provider = VuelingProvider()
+
+    def fake_post(url: str, *, json, timeout: float, headers):
+        if url.endswith("/asm/v1/Auth"):
+            return _FakeResponse({"tokenType": "Bearer", "accessToken": "anonymous-token"})
+        return _NoContentResponse()
+
+    monkeypatch.setattr(provider._session, "post", fake_post)
+
+    result = provider.get_flights("MAD", "FCO", "2020-01-01")
+
+    assert result.flights == []
+    assert [w.code for w in result.warnings_structured] == ["provider_empty_result"]

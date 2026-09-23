@@ -1,9 +1,9 @@
 # Testing y QA
 
 **Estado:** vivo  
-**Última revisión:** 2026-05-11  
-**Fuente de verdad:** sí  
-**Área:** engineering
+**ï¿½ltima revisiï¿½n:** 2026-05-11  
+**Fuente de verdad:** sï¿½  
+**ï¿½rea:** engineering
 
 ## Resumen
 
@@ -20,10 +20,8 @@ La estrategia de testing queda dividida asi:
   - [Traceability matrix](../qa/traceability-matrix.md)
 - Evidencia visual:
   - [Runbook UI captures](../runbooks/runbook-ui-captures.md)
-- Histórico:
+- Histï¿½rico:
   - [Reportes QA archivados](../archive/qa-reports/)
-  - [Evidencia QA archivada](../archive/qa-evidence/)
-  - [QA visual archivada](../archive/qa-visual/)
 
 ## Relacionado
 

@@ -36,16 +36,41 @@ RequestsError = CurlRequestsError
 
 _PROVIDER_POOL_SIZE = 32
 
+# Ryanair's edge has blocked server-side clients from /api/booking/*/availability
+# with a persistent 409 ("Availability declined") since 2024-2025. It is not a
+# rate limit: it fires on every attempt regardless of TLS fingerprint, session
+# cookies or query-parameter shape. The farfnd fare-finder and the public
+# timetable remain open. After observing a 409 we stop paying the doomed
+# round-trip for this long, and self-heal afterwards in case the block is lifted.
+_AVAILABILITY_BLOCK_TTL_SECONDS = 1800.0
+
+
+class _RyanairAvailabilityBlocked(Exception):
+    """Raised when Ryanair's edge refuses availability with its known 409 block."""
+
 
 class RyanairPublicProvider(FlightProvider):
     provider_id = "ryanair"
 
+    # Operational notes for maintainers:
+    # - Primary source is farfnd/3 oneWayFares: real price + flightNumber + times
+    #   for the cheapest flight of each day. It has been stable and unblocked.
+    # - /api/booking/*/availability used to list every flight of the day with
+    #   per-flight prices, but is now 409-blocked for non-browser clients; see
+    #   _RyanairAvailabilityBlocked. While blocked we serve fares-only results
+    #   without signalling provider degradation (the data is correct, just the
+    #   cheapest flight per day).
+    # - The public timetable (timtbl/3/schedules) lists all flights per day but
+    #   carries no prices; merging it would mean displaying flights with wrong
+    #   or missing prices, so it is deliberately not used.
+
     def __init__(self) -> None:
         self._session: Any
+        self._availability_blocked_until = 0.0
         try:
             if curl_requests is None:
                 raise TypeError("curl_cffi_unavailable")
-            self._session = curl_requests.Session(impersonate="chrome110")
+            self._session = curl_requests.Session(impersonate="chrome124")
         except TypeError:
             self._session = requests.Session()
             adapter = HTTPAdapter(pool_connections=_PROVIDER_POOL_SIZE, pool_maxsize=_PROVIDER_POOL_SIZE)
@@ -63,13 +88,26 @@ class RyanairPublicProvider(FlightProvider):
         warnings: list[str] = []
         availability_error = False
         fares_error = False
+        availability_blocked = False
+        availability: list[ProviderFlight] = []
 
-        try:
-            availability = self._fetch_availability(origin, destination, travel_date, timeout_ms=timeout_ms, currency=currency)
-        except (CurlRequestsError, RequestException, ValueError):
-            availability = []
-            availability_error = True
-            warnings.append("ryanair_availability_failed_partial")
+        if self._availability_recently_blocked():
+            # Known 409 block, still within TTL: skip the doomed call entirely.
+            availability_blocked = True
+            warnings.append("ryanair_availability_blocked")
+        else:
+            try:
+                availability = self._fetch_availability(
+                    origin, destination, travel_date, timeout_ms=timeout_ms, currency=currency
+                )
+            except _RyanairAvailabilityBlocked:
+                self._mark_availability_blocked()
+                availability_blocked = True
+                warnings.append("ryanair_availability_blocked")
+            except (CurlRequestsError, RequestException, ValueError):
+                availability = []
+                availability_error = True
+                warnings.append("ryanair_availability_failed_partial")
 
         try:
             fares = self._fetch_one_way_fares(origin, destination, travel_date, timeout_ms=timeout_ms, currency=currency)
@@ -103,12 +141,33 @@ class RyanairPublicProvider(FlightProvider):
                 severity="error",
             )
 
+        if availability_blocked and fares_error:
+            # Both sources unusable (block + network failure): a silent empty
+            # result would mask a real outage from the orchestrator.
+            raise ProviderSourceFetchError(
+                warning_codes=[
+                    "ryanair_availability_blocked",
+                    "ryanair_fares_failed",
+                    "ryanair_provider_unavailable_total",
+                    "provider_total_outage",
+                ],
+                message=f"Ryanair provider unavailable for {origin}->{destination} on {travel_date}",
+                provider_id=self.provider_id,
+                severity="error",
+            )
+
         return ProviderFetchResult(flights=[], warnings=warnings, warnings_structured=warnings_structured)
 
     def _to_canonical_warning(self, warning_code: str) -> str:
         if warning_code.endswith("_failed_partial") or warning_code.endswith("_unavailable_partial"):
             return "provider_error_partial"
         return warning_code
+
+    def _availability_recently_blocked(self) -> bool:
+        return time.monotonic() < self._availability_blocked_until
+
+    def _mark_availability_blocked(self) -> None:
+        self._availability_blocked_until = time.monotonic() + _AVAILABILITY_BLOCK_TTL_SECONDS
 
     def get_cheapest_price(self, origin: str, destination: str, travel_date: str, currency: str = "EUR") -> ProviderPrice | None:
         result = self.get_flights(origin, destination, travel_date, currency=currency)
@@ -177,7 +236,12 @@ class RyanairPublicProvider(FlightProvider):
             f"&IncludeConnectingFlights=false"
             f"&Currency={currency}"
         )
-        data = self._get_json(url, timeout_ms=timeout_ms)
+        resp = self._get_response(url, timeout_ms=timeout_ms)
+        if resp.status_code == 409:
+            # Known edge block ("Availability declined"), not a transient error.
+            raise _RyanairAvailabilityBlocked("Ryanair availability returned 409")
+        resp.raise_for_status()
+        data = resp.json()
         trips = data.get("trips") or []
         flights: list[ProviderFlight] = []
         deeplink_url = self._build_deeplink(origin, destination, travel_date, currency)
@@ -220,9 +284,9 @@ class RyanairPublicProvider(FlightProvider):
             unique.append(flight)
         return unique
 
-    def _get_json(self, url: str, *, timeout_ms: int = 12000) -> dict[str, Any]:
+    def _get_response(self, url: str, *, timeout_ms: int = 12000) -> Any:
         time.sleep(random.uniform(0.1, 0.4))
-        resp = self._session.get(
+        return self._session.get(
             url,
             timeout=max(1, timeout_ms / 1000),
             headers={
@@ -230,6 +294,9 @@ class RyanairPublicProvider(FlightProvider):
                 "Accept": "application/json",
             },
         )
+
+    def _get_json(self, url: str, *, timeout_ms: int = 12000) -> dict[str, Any]:
+        resp = self._get_response(url, timeout_ms=timeout_ms)
         resp.raise_for_status()
         return resp.json()
 

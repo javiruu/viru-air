@@ -113,7 +113,12 @@ cd frontend
 npm run dev
 ```
 
-Si el 8000 está ocupado (proceso zombi de otra sesión, p. ej.), arranca el backend en 8001 y añade `NEXT_PUBLIC_LOCAL_API_ORIGIN`/`INTERNAL_API_URL` al `frontend/.env.local`. El rewrite de `frontend/next.config.js` lee esas variables al arrancar.
+El rewrite de `frontend/next.config.js` apunta al **8000 por defecto** y lee
+`NEXT_PUBLIC_LOCAL_API_ORIGIN`/`INTERNAL_API_URL` **solo al arrancar** el dev server:
+si cambias esas variables, hay que reiniciar `npm run dev`. El 8001 es un fallback
+temporal (p. ej. 8000 ocupado por un proceso zombi); en cuanto el 8000 quede libre,
+quita los overrides de `frontend/.env.local` y vuelve al 8000 para no mantener dos
+backends en paralelo.
 
 ### Verificación rápida (smoke)
 
@@ -136,6 +141,7 @@ curl -H "Authorization: Bearer <ACCESS_TOKEN>" \
 | 404 en `/api/v1/api/v1/...` | Doble prefijo por mutator | Ya corregido (`resolveFullUrl` idempotente); si reaparece, revisar `custom-client.ts` |
 | Backend no arranca: `error while attempting to bind on port 8000` | Puerto ocupado por proceso de otra sesión | Arrancar en 8001 y usar `NEXT_PUBLIC_LOCAL_API_ORIGIN` + `INTERNAL_API_URL` |
 | Login correcto pero dashboard vacío / 404 en notificaciones | Backend caído o rewrite apuntando a otro puerto | Confirmar `curl /health` del backend y las variables de rewrite del frontend |
+| `Failed to proxy .../api/v1/... [ECONNRESET]` + 500 en `/api/v1/*` | El rewrite del frontend apunta a un puerto donde no hay backend vivo (p. ej. 8001 apagado) | Alinear `NEXT_PUBLIC_LOCAL_API_ORIGIN`/`INTERNAL_API_URL` con el puerto real del backend y reiniciar el dev server de Next |
 
 ## Mantenimiento y rotación
 

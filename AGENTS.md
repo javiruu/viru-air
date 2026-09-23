@@ -31,7 +31,7 @@ These rules override softer guidance elsewhere in this file.
 - Default workflow is **direct commits to `main`**, unless the user explicitly asks for a branch or PR.
 - Do not create feature branches or PRs unless the user explicitly asks for them.
 - Do not leave requested changes only locally if the user asked for a real completed change.
-- `users_prueba.txt` is an intentional project file. Do not delete it, replace it, untrack it, or treat its presence as an error unless the user explicitly asks.
+- `users_prueba.txt` was removed on 2026-09-23 with explicit user approval (it contained local test credentials). Do not recreate it; the test users are seeded by the backend when `RUN_SEED_USERS=true` (see `docs/runbooks/runbook-supabase-native.md`).
 
 Expected path for real completed changes:
 
@@ -188,7 +188,7 @@ Never use these as project documentation:
 - dependency docs;
 - local artifacts.
 
-`users_prueba.txt` is not documentation, but it is intentionally kept in the project. Do not delete it or treat it as a documentation source.
+`users_prueba.txt` was intentionally removed on 2026-09-23 (user-approved cleanup); do not recreate it or treat its absence as an error.
 
 Read only what is needed for the current task. If sources conflict, report the conflict instead of inventing a synthesis. If information is missing, state it clearly and leave a verifiable TODO.
 
