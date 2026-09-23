@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -3500,14 +3501,16 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
         </span>
       );
     }
-    const OFFSET = 127397;
-    const flag = String.fromCodePoint(
-      normalizedCode.charCodeAt(0) + OFFSET,
-      normalizedCode.charCodeAt(1) + OFFSET,
-    );
     return (
-      <span className="qs-flag-emoji" aria-hidden="true">
-        {flag}
+      <span className="qs-flag-emoji" aria-hidden="true" style={{ display: "inline-flex", alignItems: "center" }}>
+        <Image
+          src={`/flags/${normalizedCode.toLowerCase()}.svg`}
+          alt={normalizedCode}
+          width={20}
+          height={14}
+          unoptimized
+          aria-hidden="true"
+        />
       </span>
     );
   }
