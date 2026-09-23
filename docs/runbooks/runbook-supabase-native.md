@@ -23,6 +23,45 @@ Resumen mental en 30 segundos:
 - Python >= 3.12 con `backend/.venv` y Node >= 20 para el frontend.
 - Sin dependencia de Docker ni del CLI de Supabase para el desarrollo diario.
 
+### Arranque desde cero (clonado fresco)
+
+La historia del repo fue reescrita el 2026-09-23 con `git-filter-repo` (purga de
+binarios accidentales: runtime de Python, builds `.next_broken`, dumps y media de
+skills eliminadas). Los SHAs anteriores ya no existen; cualquier clon previo a esa
+fecha debe descartarse y re-clonarse. Flujo limpio:
+
+```bash
+# 1. Clonar fresco (los SHAs post-rewrite son los únicos válidos)
+git clone https://github.com/javiruu/viru-air.git viru-tracker
+cd viru-tracker
+
+# 2. Backend: venv + dependencias (uv o pip)
+cd backend
+python -m venv .venv
+.venv/Scripts/python -m pip install -e .   # o: uv sync
+
+# 3. Config: crear backend/.env y frontend/.env.local siguiendo las secciones
+#    de abajo (DB_URL con el rol viru_app, SUPABASE_URL, NEXT_PUBLIC_*).
+#    El valor SUPABASE_ACCESS_TOKEN se añade a backend/.env cuando se necesite
+#    el Management API (ver sección SQL puntual).
+
+# 4. Frontend
+cd ../frontend
+npm ci
+
+# 5. Arrancar (secciones Arranque local y Verificación rápida de este runbook)
+```
+
+Notas post-rewrite:
+
+- El tamaño de `.git` quedó en ~223MB (antes 396MB). El backup temporal
+  `viru-tracker-backup-rewrite.git` fue eliminado el 2026-09-23 tras verificar
+  fsck, tests, tsc y smoke del backend; no hay recuperación de SHAs viejos.
+- Si un PR antiguo de GitHub muestra SHAs inexistentes, es cosmético: la rama
+  canónica es `main` post-rewrite.
+- Referencias a rutas borradas de la historia (p. ej. `docs/archive/qa-visual/`)
+  en docs históricos son válidas solo como registro; no intentes recuperarlas.
+
 ## Configuración
 
 ### Frontend — `frontend/.env.local` (git-ignored)
